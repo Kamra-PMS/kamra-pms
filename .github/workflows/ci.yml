@@ -70,8 +70,10 @@ jobs:
       - name: Init bench
         run: |
           pip install frappe-bench
+          # pinned to the stable release tag: the version-16 branch tip
+          # currently ships an UnboundLocalError in frappe/locale.py
           bench init --skip-redis-config-generation --skip-assets \
-            --frappe-branch version-16 frappe-bench
+            --frappe-branch v16.25.0 frappe-bench
           cd frappe-bench
           bench set-config -g db_host 127.0.0.1
           bench set-config -g redis_cache redis://127.0.0.1:6379
