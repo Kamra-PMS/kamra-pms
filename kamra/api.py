@@ -868,6 +868,83 @@ def availability_calendar(property: str, start_date: str | None = None, days: in
 
 
 @frappe.whitelist()
+def tape_chart(property: str, start_date: str | None = None, days: int = 14):
+	"""Rooms × dates grid with reservation bars — the front desk's home."""
+	from frappe.utils import getdate
+
+	start = getdate(start_date or nowdate())
+	days = min(int(days), 31)
+	end = add_days(start, days)
+
+	rooms = frappe.get_all(
+		"Room", filters={"property": property},
+		fields=["name", "room_number", "room_type", "housekeeping_status",
+		        "occupancy_status"],
+		order_by="room_type asc, room_number asc",
+	)
+	bookings = frappe.get_all(
+		"Reservation",
+		filters={
+			"property": property, "room": ("is", "set"),
+			"status": ("in", ["Confirmed", "Checked In"]),
+			"check_in_date": ("<", end), "check_out_date": (">", start),
+		},
+		fields=["name", "room", "guest_name", "status", "check_in_date",
+		        "check_out_date", "is_day_use", "adults",
+		        "precheckin_status", "source"],
+	)
+	by_room = {}
+	for b in bookings:
+		by_room.setdefault(b.room, []).append(b)
+	for r in rooms:
+		r["bookings"] = by_room.get(r.name, [])
+	return {
+		"start": str(start), "days": days,
+		"dates": [str(add_days(start, i)) for i in range(days)],
+		"rooms": rooms,
+	}
+
+
+@frappe.whitelist()
+def move_reservation(reservation: str, new_room: str):
+	"""Room move — mid-stay or before arrival. Overlap guard re-runs."""
+	doc = frappe.get_doc("Reservation", reservation)
+	if doc.status not in ("Confirmed", "Checked In"):
+		frappe.throw("Only active reservations can be moved.")
+	old_room = doc.room
+	doc.room = new_room
+	doc.save()
+	if doc.status == "Checked In" and old_room and old_room != new_room:
+		frappe.db.set_value("Room", old_room,
+		                    {"occupancy_status": "Vacant",
+		                     "housekeeping_status": "Dirty"})
+		frappe.db.set_value("Room", new_room, "occupancy_status", "Occupied")
+	from kamra.savings import log_action
+	log_action("room_move", "Reservation", doc.name, doc.property,
+	           rationale=f"{old_room} → {new_room}")
+	return {"ok": True, "room": doc.room}
+
+
+@frappe.whitelist()
+def amend_stay(reservation: str, check_in_date: str, check_out_date: str):
+	"""Extend / shorten a stay. Re-prices when auto_price is on; the
+	overlap guard validates the new window."""
+	doc = frappe.get_doc("Reservation", reservation)
+	if doc.status not in ("Confirmed", "Checked In"):
+		frappe.throw("Only active reservations can be amended.")
+	old = f"{doc.check_in_date}→{doc.check_out_date}"
+	doc.check_in_date = check_in_date
+	doc.check_out_date = check_out_date
+	doc.save()
+	from kamra.savings import log_action
+	log_action("amend_stay", "Reservation", doc.name, doc.property,
+	           rationale=f"{old} → {check_in_date}→{check_out_date}; "
+	                     f"new total ₹{doc.amount_after_tax or 0:,.0f}")
+	return {"ok": True, "nights": doc.nights,
+	        "amount_after_tax": doc.amount_after_tax}
+
+
+@frappe.whitelist()
 def booking_options(property: str):
 	"""Everything the booking form needs to render its dropdowns."""
 	return {

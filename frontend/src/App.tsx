@@ -11,6 +11,7 @@ import GuestJourney from "./screens/GuestJourney"
 import HkApp from "./screens/HkApp"
 import Guests from "./screens/Guests"
 import Setup from "./screens/Setup"
+import TapeChart from "./screens/TapeChart"
 import Tickets from "./screens/Tickets"
 import Today from "./screens/Today"
 import {
@@ -93,6 +94,7 @@ export default function App() {
         <Route element={<AppShell />}>
           <Route index element={<Today />} />
           <Route path="calendar" element={<CalendarScreen />} />
+          <Route path="tape" element={<TapeChart />} />
           <Route
             path="reservations"
             element={<ResourceScreen config={reservationsConfig} />}

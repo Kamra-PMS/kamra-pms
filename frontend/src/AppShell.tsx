@@ -61,6 +61,7 @@ const NAV: NavGroup[] = [
     roles: ["Front Desk", "System Manager", "Administrator"],
     items: [
       { to: "/", label: "Today", icon: Home },
+      { to: "/tape", label: "Tape Chart", icon: LayoutGrid },
       { to: "/calendar", label: "Calendar", icon: CalendarDays },
       { to: "/reservations", label: "Reservations", icon: ClipboardList },
       { to: "/guests", label: "Guests", icon: Users },
