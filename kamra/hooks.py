@@ -2,7 +2,7 @@ app_name = "kamra"
 app_title = "Kamra"
 app_publisher = "HeyKoala"
 app_description = "Open-source, AI-native hotel PMS"
-app_email = "hello@rock8.ai"
+app_email = "azzaxp@users.noreply.github.com"
 app_license = "agpl-3.0"
 
 # Automated end-of-day: post room charges, flag no-shows, per property.
