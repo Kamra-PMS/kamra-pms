@@ -43,6 +43,13 @@ Hotels deserve better than:
 | Guests | Self check-in links, experiences showcase |
 | Platform | Multi-property with per-user scoping, six-role RBAC, onboarding wizard + **AI migration tools**, savings ledger, eval harness + CI |
 
+## Documentation
+
+- [Self-hosting guide & prerequisites](docs/self-hosting.md)
+- [Email setup](docs/email-setup.md)
+- [Listing on the Frappe Cloud Marketplace](docs/frappe-marketplace.md)
+- [Developer notes](docs-dev.md) · [Brand assets](branding/README.md)
+
 ## Quickstart (development)
 
 ```bash

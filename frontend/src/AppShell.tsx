@@ -176,7 +176,7 @@ export default function AppShell() {
 
   return (
     <div className="flex min-h-screen">
-      <aside className="hidden w-52 shrink-0 border-r border-zinc-200 bg-white px-3 py-5 sm:block">
+      <aside className="hidden w-52 shrink-0 border-r border-zinc-200 bg-white px-3 py-5 sm:sticky sm:top-0 sm:block sm:h-screen sm:overflow-y-auto">
         <div className="mb-6 flex items-center gap-2 px-2">
           <img src="/kamra-mark.svg" alt="" className="size-7" aria-hidden />
           <span className="text-lg font-semibold tracking-tight">
