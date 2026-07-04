@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Kamra mark">
+  <!-- Kamra: a door opening into a K. Palette: #1E7B4F primary, #56C589 accent. -->
+  <g fill="none" stroke="#1E7B4F" stroke-width="56" stroke-linejoin="round" stroke-linecap="round">
+    <!-- the door: leaning open bracket -->
+    <path d="M 306 150 L 152 96 L 152 416 L 306 362" />
+  </g>
+  <!-- K arms: angled cuts via butt caps -->
+  <g fill="none" stroke="#1E7B4F" stroke-width="64" stroke-linecap="butt">
+    <path d="M 330 256 L 468 106" />
+    <path d="M 330 256 L 468 406" />
+  </g>
+  <!-- the peephole / handle -->
+  <circle cx="272" cy="256" r="23" fill="#56C589" />
+</svg>

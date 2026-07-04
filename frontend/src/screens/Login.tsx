@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { DoorOpen } from "lucide-react"
+
 import { login } from "../lib/api"
 import { Button } from "../components/ui/button"
 
@@ -36,9 +36,14 @@ export default function Login(props: { onSuccess: () => void }) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-zinc-50 px-4">
       <div className="w-full max-w-sm">
-        <div className="mb-6 flex items-center justify-center gap-2">
-          <DoorOpen className="size-7 text-brand-600" aria-hidden />
-          <span className="text-2xl font-semibold tracking-tight">kamra</span>
+        <div className="mb-6 flex flex-col items-center gap-2">
+          <img src="/kamra-mark.svg" alt="Kamra" className="size-16" />
+          <span className="text-2xl font-semibold tracking-tight">
+            kamra
+            <span className="ml-1.5 align-middle text-xs font-semibold tracking-[0.25em] text-brand-600">
+              PMS
+            </span>
+          </span>
         </div>
 
         <form

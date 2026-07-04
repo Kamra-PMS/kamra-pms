@@ -10,7 +10,6 @@ import {
   PackageSearch,
   PartyPopper,
   ClipboardList,
-  DoorOpen,
   Home,
   IndianRupee,
   LayoutGrid,
@@ -174,8 +173,13 @@ export default function AppShell() {
     <div className="flex min-h-screen">
       <aside className="hidden w-52 shrink-0 border-r border-zinc-200 bg-white px-3 py-5 sm:block">
         <div className="mb-6 flex items-center gap-2 px-2">
-          <DoorOpen className="size-6 text-brand-600" aria-hidden />
-          <span className="text-lg font-semibold tracking-tight">kamra</span>
+          <img src="/kamra-mark.svg" alt="" className="size-7" aria-hidden />
+          <span className="text-lg font-semibold tracking-tight">
+            kamra
+            <span className="ml-1 align-middle text-[10px] font-semibold tracking-[0.2em] text-brand-600">
+              PMS
+            </span>
+          </span>
         </div>
         <nav className="space-y-5">
           {NAV.filter(canSee).map((group) => (
