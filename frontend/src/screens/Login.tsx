@@ -12,6 +12,7 @@ const DEMO_ACCOUNTS = [
   { label: "Front Desk", usr: "frontdesk@kamra.local", pwd: "KamraDesk1!" },
   { label: "Revenue", usr: "revenue@kamra.local", pwd: "KamraRev1!" },
   { label: "Finance", usr: "finance@kamra.local", pwd: "KamraFin1!" },
+  { label: "Housekeeping", usr: "hk@kamra.local", pwd: "KamraHK1!" },
 ]
 
 export default function Login(props: { onSuccess: () => void }) {

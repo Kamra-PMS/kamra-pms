@@ -8,6 +8,7 @@ import PublicBooking from "./screens/PublicBooking"
 import PublicCheckin from "./screens/PublicCheckin"
 import FolioView from "./screens/FolioView"
 import GuestJourney from "./screens/GuestJourney"
+import HkApp from "./screens/HkApp"
 import Guests from "./screens/Guests"
 import Tickets from "./screens/Tickets"
 import Today from "./screens/Today"
@@ -86,6 +87,8 @@ export default function App() {
         />
         {/* pre-arrival self check-in, tokenized per reservation */}
         <Route path="checkin/:token" element={<PublicCheckin />} />
+        {/* housekeeping phone app — share the /hk URL with the HK team */}
+        <Route path="hk" element={<HkApp />} />
         <Route element={<AppShell />}>
           <Route index element={<Today />} />
           <Route path="calendar" element={<CalendarScreen />} />

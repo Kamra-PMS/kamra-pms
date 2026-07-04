@@ -171,6 +171,67 @@ def owner_briefing(property: str, date: str | None = None):
 
 
 @frappe.whitelist()
+def hk_queue(property: str):
+	"""The housekeeper's phone view: prioritized task queue + room board.
+	Checkout cleans for rooms with an arrival today jump the queue."""
+	today = nowdate()
+	arriving_rooms = set(frappe.get_all(
+		"Reservation",
+		filters={"property": property, "status": "Confirmed",
+		         "check_in_date": today, "room": ("is", "set")},
+		pluck="room",
+	))
+
+	tasks = frappe.get_all(
+		"Housekeeping Task",
+		filters={"property": property,
+		         "status": ("in", ["Pending", "In Progress"])},
+		fields=["name", "room", "task_type", "priority", "status", "notes",
+		        "creation"],
+		order_by="creation asc",
+	)
+	prio_rank = {"Urgent": 0, "High": 1, "Medium": 2, "Low": 3}
+	for t in tasks:
+		t["arrival_today"] = t.room in arriving_rooms
+		t["room_number"] = (t.room or "").split("-")[-1]
+	tasks.sort(key=lambda t: (
+		not t["arrival_today"],
+		0 if t.task_type == "Checkout Clean" else 1,
+		prio_rank.get(t.priority, 9),
+		str(t.creation),
+	))
+
+	rooms = frappe.get_all(
+		"Room",
+		filters={"property": property},
+		fields=["name", "room_number", "housekeeping_status",
+		        "occupancy_status"],
+		order_by="room_number asc",
+	)
+	for r in rooms:
+		r["arrival_today"] = r.name in arriving_rooms
+
+	return {"date": today, "tasks": tasks, "rooms": rooms}
+
+
+@frappe.whitelist()
+def hk_update_task(task: str, status: str):
+	"""Start or complete a housekeeping task from the phone."""
+	if status not in ("In Progress", "Done", "Verified"):
+		frappe.throw("Status must be In Progress, Done or Verified.")
+	doc = frappe.get_doc("Housekeeping Task", task)
+	doc.status = status
+	doc.save()
+	if status in ("Done", "Verified"):
+		from kamra.savings import log_action
+		log_action("housekeeping_done", "Housekeeping Task", doc.name,
+		           doc.property, minutes_saved=3,
+		           rationale=f"{doc.task_type} for {doc.room} closed from mobile",
+		           channel="API")
+	return {"ok": True, "task": doc.name, "status": doc.status}
+
+
+@frappe.whitelist()
 def create_ticket(property: str, subject: str, category: str,
                   priority: str = "Medium", room: str | None = None,
                   reservation: str | None = None, guest: str | None = None,

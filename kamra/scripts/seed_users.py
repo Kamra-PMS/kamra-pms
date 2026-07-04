@@ -45,6 +45,15 @@ ROLE_GRANTS = {
 		"Company": (1, 1, 1),
 		"Agent Action Log": (1, 0, 0),
 	},
+	"Housekeeping": {
+		"Property": (1, 0, 0),
+		"Room": (1, 1, 0),
+		"Room Type": (1, 0, 0),
+		"Housekeeping Task": (1, 1, 1),
+		"Reservation": (1, 0, 0),
+		"Service Ticket": (1, 1, 1),
+		"Lost And Found Item": (1, 1, 1),
+	},
 	"Finance": {
 		"Property": (1, 0, 0),
 		"Reservation": (1, 0, 0),
@@ -67,6 +76,9 @@ USERS = [
 	{"email": "finance@kamra.local", "first_name": "Suresh",
 	 "last_name": "Finance", "password": "KamraFin1!",
 	 "roles": ["Finance"]},
+	{"email": "hk@kamra.local", "first_name": "Lakshmi",
+	 "last_name": "Housekeeping", "password": "KamraHK1!",
+	 "roles": ["Housekeeping"]},
 ]
 
 
