@@ -296,6 +296,34 @@ def import_bookings(property: str, bookings):
 
 
 @frappe.whitelist()
+def record_advance(reservation: str, amount: float, mode: str = "UPI",
+                   reference: str | None = None):
+	"""Advance/deposit against a Confirmed booking — opens the folio early
+	so the money sits on the stay from day one (GM gap: deposits arrive at
+	booking, not at check-in)."""
+	res = frappe.get_doc("Reservation", reservation)
+	if res.status not in ("Confirmed", "Checked In"):
+		frappe.throw("Advances only apply to active reservations.")
+	from kamra.folio import _recalculate, open_folio
+
+	folio = frappe.get_doc("Folio", open_folio(res))
+	folio.append("payments", {
+		"posting_date": nowdate(),
+		"mode": mode,
+		"amount": float(amount),
+		"reference": reference or f"advance:{reservation}",
+	})
+	_recalculate(folio)
+	folio.save(ignore_permissions=True)
+	frappe.db.set_value("Reservation", reservation, "advance_paid",
+	                    float(res.advance_paid or 0) + float(amount))
+	from kamra.savings import log_action
+	log_action("record_advance", "Folio", folio.name, res.property,
+	           rationale=f"₹{float(amount):,.0f} advance on {reservation}")
+	return {"folio": folio.name, "balance": folio.balance}
+
+
+@frappe.whitelist()
 def folio_payment_link(folio: str):
 	from kamra.payments import create_payment_link
 	return create_payment_link(folio)
@@ -535,8 +563,17 @@ def folio_invoice(folio: str):
 		slot["taxable"] += float(c.amount or 0)
 		slot["tax"] += float(c.gst_amount or 0)
 
+	# B2B: corporate bookings carry the buyer's GSTIN on the invoice
+	bill_to = None
+	if res.company:
+		company = frappe.db.get_value(
+			"Company", res.company, ["company_name", "gstin"], as_dict=True)
+		if company:
+			bill_to = {"name": company.company_name, "gstin": company.gstin}
+
 	return {
 		"folio": doc.as_dict(),
+		"bill_to": bill_to,
 		"property": {
 			"name": prop.property_name, "legal_name": prop.legal_name,
 			"address": ", ".join(filter(None, [prop.address_line, prop.city,

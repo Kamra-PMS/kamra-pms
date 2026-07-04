@@ -65,6 +65,7 @@ interface InvoiceData {
     sgst: number
     total_tax: number
   }[]
+  bill_to: { name: string; gstin: string | null } | null
 }
 
 const CHARGE_TYPES = [
@@ -241,6 +242,15 @@ export default function FolioView() {
             </div>
           </div>
 
+          {data.bill_to && (
+            <div className="mb-4 rounded-lg bg-zinc-50 px-4 py-2.5 text-sm">
+              <span className="text-zinc-500">Bill to: </span>
+              <span className="font-medium">{data.bill_to.name}</span>
+              {data.bill_to.gstin && (
+                <span className="text-zinc-500"> · GSTIN {data.bill_to.gstin}</span>
+              )}
+            </div>
+          )}
           <div className="mb-6 grid gap-1 text-sm sm:grid-cols-2">
             <p>
               <span className="text-zinc-500">Guest: </span>
