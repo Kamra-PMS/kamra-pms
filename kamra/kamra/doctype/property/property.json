@@ -1,0 +1,283 @@
+{
+ "actions": [],
+ "allow_bulk_edit": 1,
+ "allow_rename": 1,
+ "autoname": "field:property_name",
+ "creation": "2026-07-04 13:57:41.580283",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "property_name",
+  "legal_name",
+  "column_break_a",
+  "phone",
+  "email",
+  "website",
+  "sb_address",
+  "address_line",
+  "city",
+  "state",
+  "column_break_b",
+  "country",
+  "pincode",
+  "timezone",
+  "sb_ops",
+  "currency",
+  "checkin_time",
+  "checkout_time",
+  "column_break_c",
+  "gstin",
+  "sb_gst",
+  "gst_mode",
+  "gst_slab_threshold",
+  "gst_rate_low",
+  "gst_rate_high",
+  "rates_include_tax",
+  "sb_showcase",
+  "booking_engine_enabled",
+  "logo_url",
+  "showcase_description",
+  "hero_image",
+  "star_category",
+  "google_reviews_url",
+  "tripadvisor_url",
+  "property_amenities",
+  "disabled"
+ ],
+ "fields": [
+  {
+   "fieldname": "property_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Property Name",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "legal_name",
+   "fieldtype": "Data",
+   "label": "Legal Name"
+  },
+  {
+   "fieldname": "column_break_a",
+   "fieldtype": "Column Break",
+   "label": "Column Break A"
+  },
+  {
+   "fieldname": "phone",
+   "fieldtype": "Data",
+   "label": "Phone",
+   "options": "Phone"
+  },
+  {
+   "fieldname": "email",
+   "fieldtype": "Data",
+   "label": "Email",
+   "options": "Email"
+  },
+  {
+   "fieldname": "website",
+   "fieldtype": "Data",
+   "label": "Website"
+  },
+  {
+   "fieldname": "sb_address",
+   "fieldtype": "Section Break",
+   "label": "Address"
+  },
+  {
+   "fieldname": "address_line",
+   "fieldtype": "Data",
+   "label": "Address Line"
+  },
+  {
+   "fieldname": "city",
+   "fieldtype": "Data",
+   "label": "City"
+  },
+  {
+   "fieldname": "state",
+   "fieldtype": "Data",
+   "label": "State"
+  },
+  {
+   "fieldname": "column_break_b",
+   "fieldtype": "Column Break",
+   "label": "Column Break B"
+  },
+  {
+   "default": "India",
+   "fieldname": "country",
+   "fieldtype": "Data",
+   "label": "Country"
+  },
+  {
+   "fieldname": "pincode",
+   "fieldtype": "Data",
+   "label": "Pincode"
+  },
+  {
+   "default": "Asia/Kolkata",
+   "fieldname": "timezone",
+   "fieldtype": "Data",
+   "label": "Timezone"
+  },
+  {
+   "fieldname": "sb_ops",
+   "fieldtype": "Section Break",
+   "label": "Operations"
+  },
+  {
+   "default": "INR",
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "label": "Currency",
+   "options": "Currency"
+  },
+  {
+   "default": "14:00:00",
+   "fieldname": "checkin_time",
+   "fieldtype": "Time",
+   "label": "Check-in Time"
+  },
+  {
+   "default": "11:00:00",
+   "fieldname": "checkout_time",
+   "fieldtype": "Time",
+   "label": "Check-out Time"
+  },
+  {
+   "fieldname": "column_break_c",
+   "fieldtype": "Column Break",
+   "label": "Column Break C"
+  },
+  {
+   "fieldname": "gstin",
+   "fieldtype": "Data",
+   "label": "GSTIN"
+  },
+  {
+   "default": "0",
+   "fieldname": "disabled",
+   "fieldtype": "Check",
+   "label": "Disabled"
+  },
+  {
+   "fieldname": "sb_gst",
+   "fieldtype": "Section Break",
+   "label": "GST Rules"
+  },
+  {
+   "default": "Slab",
+   "description": "Slab: rate decides GST (India). Fixed: use the room type's tax_percent.",
+   "fieldname": "gst_mode",
+   "fieldtype": "Select",
+   "label": "Room GST Mode",
+   "options": "Slab\nFixed"
+  },
+  {
+   "default": "7500",
+   "fieldname": "gst_slab_threshold",
+   "fieldtype": "Currency",
+   "label": "Slab Threshold (\u20b9/night)"
+  },
+  {
+   "default": "5",
+   "fieldname": "gst_rate_low",
+   "fieldtype": "Percent",
+   "label": "GST at/below threshold"
+  },
+  {
+   "default": "18",
+   "fieldname": "gst_rate_high",
+   "fieldtype": "Percent",
+   "label": "GST above threshold"
+  },
+  {
+   "default": "0",
+   "description": "On: configured room prices are tax-inclusive; the engine back-computes the taxable value.",
+   "fieldname": "rates_include_tax",
+   "fieldtype": "Check",
+   "label": "Rates Include Tax"
+  },
+  {
+   "fieldname": "sb_showcase",
+   "fieldtype": "Section Break",
+   "label": "Booking Engine"
+  },
+  {
+   "default": "1",
+   "fieldname": "booking_engine_enabled",
+   "fieldtype": "Check",
+   "label": "Booking Engine Enabled"
+  },
+  {
+   "fieldname": "showcase_description",
+   "fieldtype": "Small Text",
+   "label": "Description (public)"
+  },
+  {
+   "fieldname": "hero_image",
+   "fieldtype": "Data",
+   "label": "Hero Image URL"
+  },
+  {
+   "fieldname": "star_category",
+   "fieldtype": "Select",
+   "label": "Category",
+   "options": "\n1 Star\n2 Star\n3 Star\n4 Star\n5 Star\nBoutique\nHomestay"
+  },
+  {
+   "fieldname": "google_reviews_url",
+   "fieldtype": "Data",
+   "label": "Google Reviews URL"
+  },
+  {
+   "fieldname": "tripadvisor_url",
+   "fieldtype": "Data",
+   "label": "TripAdvisor URL"
+  },
+  {
+   "description": "Comma-separated, e.g. Pool, Parking, Restaurant",
+   "fieldname": "property_amenities",
+   "fieldtype": "Small Text",
+   "label": "Property Amenities (public)"
+  },
+  {
+   "description": "Square logo shown on the booking page and invoices",
+   "fieldname": "logo_url",
+   "fieldtype": "Data",
+   "label": "Logo URL"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-07-04 19:37:15.698580",
+ "modified_by": "Administrator",
+ "module": "Kamra",
+ "name": "Property",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

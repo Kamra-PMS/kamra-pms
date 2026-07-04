@@ -1,0 +1,317 @@
+{
+ "actions": [],
+ "allow_bulk_edit": 1,
+ "allow_rename": 1,
+ "autoname": "format:RES-{YYYY}-{#####}",
+ "creation": "2026-07-04 13:57:41.998809",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "property",
+  "guest",
+  "guest_name",
+  "column_break_a",
+  "status",
+  "booking_type",
+  "company",
+  "group_booking",
+  "source",
+  "channel",
+  "sb_stay",
+  "room_type",
+  "room",
+  "meal_plan",
+  "rate_plan",
+  "column_break_b",
+  "check_in_date",
+  "check_out_date",
+  "nights",
+  "is_day_use",
+  "column_break_c",
+  "adults",
+  "children",
+  "sb_actual",
+  "actual_check_in",
+  "column_break_d",
+  "actual_check_out",
+  "sb_money",
+  "amount_before_tax",
+  "tax_amount",
+  "column_break_e",
+  "amount_after_tax",
+  "advance_paid",
+  "is_pay_at_hotel",
+  "voucher",
+  "discount_amount",
+  "auto_price",
+  "sb_notes",
+  "special_requests"
+ ],
+ "fields": [
+  {
+   "fieldname": "property",
+   "fieldtype": "Link",
+   "label": "Property",
+   "options": "Property",
+   "reqd": 1
+  },
+  {
+   "fieldname": "guest",
+   "fieldtype": "Link",
+   "label": "Guest",
+   "options": "Guest",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "guest.full_name",
+   "fieldname": "guest_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Guest Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_a",
+   "fieldtype": "Column Break",
+   "label": "Column Break A"
+  },
+  {
+   "default": "Confirmed",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Confirmed\nChecked In\nChecked Out\nCancelled\nNo Show"
+  },
+  {
+   "default": "Manual",
+   "fieldname": "source",
+   "fieldtype": "Select",
+   "label": "Source",
+   "options": "Manual\nAI Agent\nPhone\nWalk-in\nOTA\nWebsite"
+  },
+  {
+   "description": "OTA name for channel bookings, e.g. booking.com",
+   "fieldname": "channel",
+   "fieldtype": "Data",
+   "label": "Channel"
+  },
+  {
+   "fieldname": "sb_stay",
+   "fieldtype": "Section Break",
+   "label": "Stay"
+  },
+  {
+   "fieldname": "room_type",
+   "fieldtype": "Link",
+   "label": "Room Type",
+   "options": "Room Type",
+   "reqd": 1
+  },
+  {
+   "fieldname": "room",
+   "fieldtype": "Link",
+   "label": "Room",
+   "options": "Room"
+  },
+  {
+   "fieldname": "column_break_b",
+   "fieldtype": "Column Break",
+   "label": "Column Break B"
+  },
+  {
+   "fieldname": "check_in_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Check In Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "check_out_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Check Out Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "nights",
+   "fieldtype": "Int",
+   "label": "Nights",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_c",
+   "fieldtype": "Column Break",
+   "label": "Column Break C"
+  },
+  {
+   "default": "2",
+   "fieldname": "adults",
+   "fieldtype": "Int",
+   "label": "Adults"
+  },
+  {
+   "default": "0",
+   "fieldname": "children",
+   "fieldtype": "Int",
+   "label": "Children"
+  },
+  {
+   "fieldname": "sb_actual",
+   "fieldtype": "Section Break",
+   "label": "Actuals"
+  },
+  {
+   "fieldname": "actual_check_in",
+   "fieldtype": "Datetime",
+   "label": "Actual Check In",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_d",
+   "fieldtype": "Column Break",
+   "label": "Column Break D"
+  },
+  {
+   "fieldname": "actual_check_out",
+   "fieldtype": "Datetime",
+   "label": "Actual Check Out",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_money",
+   "fieldtype": "Section Break",
+   "label": "Money"
+  },
+  {
+   "fieldname": "amount_before_tax",
+   "fieldtype": "Currency",
+   "label": "Amount Before Tax"
+  },
+  {
+   "fieldname": "tax_amount",
+   "fieldtype": "Currency",
+   "label": "Tax Amount"
+  },
+  {
+   "fieldname": "column_break_e",
+   "fieldtype": "Column Break",
+   "label": "Column Break E"
+  },
+  {
+   "fieldname": "amount_after_tax",
+   "fieldtype": "Currency",
+   "label": "Amount After Tax"
+  },
+  {
+   "fieldname": "advance_paid",
+   "fieldtype": "Currency",
+   "label": "Advance Paid"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_pay_at_hotel",
+   "fieldtype": "Check",
+   "label": "Pay at Hotel"
+  },
+  {
+   "fieldname": "sb_notes",
+   "fieldtype": "Section Break",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "special_requests",
+   "fieldtype": "Small Text",
+   "label": "Special Requests"
+  },
+  {
+   "default": "Individual",
+   "fieldname": "booking_type",
+   "fieldtype": "Select",
+   "label": "Booking Type",
+   "options": "Individual\nGroup\nCorporate"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company"
+  },
+  {
+   "fieldname": "group_booking",
+   "fieldtype": "Link",
+   "label": "Group Booking",
+   "options": "Group Booking"
+  },
+  {
+   "fieldname": "meal_plan",
+   "fieldtype": "Link",
+   "label": "Meal Plan",
+   "options": "Meal Plan"
+  },
+  {
+   "fieldname": "rate_plan",
+   "fieldtype": "Link",
+   "label": "Rate Plan",
+   "options": "Rate Plan"
+  },
+  {
+   "fieldname": "voucher",
+   "fieldtype": "Link",
+   "label": "Voucher",
+   "options": "Discount Voucher"
+  },
+  {
+   "fieldname": "discount_amount",
+   "fieldtype": "Currency",
+   "label": "Discount",
+   "read_only": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "auto_price",
+   "fieldtype": "Check",
+   "label": "Auto Price"
+  },
+  {
+   "default": "0",
+   "description": "Same-day stay: check-out date equals check-in date.",
+   "fieldname": "is_day_use",
+   "fieldtype": "Check",
+   "label": "Day Use"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-07-04 19:20:50.997297",
+ "modified_by": "Administrator",
+ "module": "Kamra",
+ "name": "Reservation",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "guest_name",
+ "track_changes": 1
+}

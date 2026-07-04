@@ -1,0 +1,65 @@
+@import "tailwindcss";
+
+@theme {
+  /* Kamra brand: deep hotel green, warm neutrals */
+  --color-brand-50: #ecf7f2;
+  --color-brand-100: #d2ece0;
+  --color-brand-600: #0f6b54;
+  --color-brand-700: #0b5442;
+  --color-brand-900: #073527;
+}
+
+html {
+  font-feature-settings: "tnum" 1; /* tabular numbers for counts and money */
+}
+
+body {
+  @apply bg-zinc-50 text-zinc-900 antialiased;
+}
+
+@keyframes sheet-in {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-sheet-in {
+  animation: sheet-in 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.animate-fade-in {
+  animation: fade-in 0.18s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-sheet-in,
+  .animate-fade-in {
+    animation: none;
+  }
+}
+
+@media print {
+  aside,
+  header {
+    display: none !important;
+  }
+  body {
+    background: white;
+  }
+  main {
+    max-width: none !important;
+    padding: 0 !important;
+  }
+}

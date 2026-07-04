@@ -1,0 +1,116 @@
+{
+ "actions": [],
+ "allow_bulk_edit": 1,
+ "allow_rename": 1,
+ "autoname": "format:AUDIT-{business_date}",
+ "creation": "2026-07-04 17:55:11.005571",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "property",
+  "business_date",
+  "status",
+  "column_break_a",
+  "room_charges_posted",
+  "amount_posted",
+  "no_shows_flagged",
+  "folios_opened",
+  "sb_log",
+  "log"
+ ],
+ "fields": [
+  {
+   "fieldname": "property",
+   "fieldtype": "Link",
+   "label": "Property",
+   "options": "Property",
+   "reqd": 1
+  },
+  {
+   "fieldname": "business_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Business Date",
+   "reqd": 1
+  },
+  {
+   "default": "Completed",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Completed\nCompleted with Warnings"
+  },
+  {
+   "fieldname": "column_break_a",
+   "fieldtype": "Column Break",
+   "label": "Column Break A"
+  },
+  {
+   "fieldname": "room_charges_posted",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Room Charges Posted",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amount_posted",
+   "fieldtype": "Currency",
+   "label": "Amount Posted",
+   "read_only": 1
+  },
+  {
+   "fieldname": "no_shows_flagged",
+   "fieldtype": "Int",
+   "label": "No Shows Flagged",
+   "read_only": 1
+  },
+  {
+   "fieldname": "folios_opened",
+   "fieldtype": "Int",
+   "label": "Folios Opened",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_log",
+   "fieldtype": "Section Break",
+   "label": "Log"
+  },
+  {
+   "fieldname": "log",
+   "fieldtype": "Small Text",
+   "label": "Log",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-07-04 17:55:11.005571",
+ "modified_by": "Administrator",
+ "module": "Kamra",
+ "name": "Night Audit Run",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

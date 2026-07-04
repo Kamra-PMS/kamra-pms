@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.pyc
+*.egg-info/
+.venv/
+
+# Node / frontend
+node_modules/
+frontend/dist/
+frontend/tsconfig.tsbuildinfo
+
+# Frappe
+kamra/public/dist/
+kamra/public/node_modules/
+*.log
+
+# Local
+.DS_Store
+.env

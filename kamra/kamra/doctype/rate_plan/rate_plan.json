@@ -1,0 +1,108 @@
+{
+ "actions": [],
+ "allow_bulk_edit": 1,
+ "allow_rename": 1,
+ "autoname": "format:{property}-{code}",
+ "creation": "2026-07-04 13:57:41.944631",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "property",
+  "rate_plan_name",
+  "code",
+  "column_break_a",
+  "modifier_type",
+  "modifier_value",
+  "cancellation_policy",
+  "is_default",
+  "disabled"
+ ],
+ "fields": [
+  {
+   "fieldname": "property",
+   "fieldtype": "Link",
+   "label": "Property",
+   "options": "Property",
+   "reqd": 1
+  },
+  {
+   "fieldname": "rate_plan_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Rate Plan Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "code",
+   "fieldtype": "Data",
+   "label": "Code"
+  },
+  {
+   "fieldname": "column_break_a",
+   "fieldtype": "Column Break",
+   "label": "Column Break A"
+  },
+  {
+   "default": "Percent",
+   "description": "How this plan adjusts the occupancy-computed room total",
+   "fieldname": "modifier_type",
+   "fieldtype": "Select",
+   "label": "Modifier Type",
+   "options": "Percent\nAmount\nAbsolute"
+  },
+  {
+   "description": "-10 = 10% off; 0 = base rate (BAR)",
+   "fieldname": "modifier_value",
+   "fieldtype": "Float",
+   "label": "Modifier Value"
+  },
+  {
+   "fieldname": "cancellation_policy",
+   "fieldtype": "Small Text",
+   "label": "Cancellation Policy"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_default",
+   "fieldtype": "Check",
+   "label": "Is Default"
+  },
+  {
+   "default": "0",
+   "fieldname": "disabled",
+   "fieldtype": "Check",
+   "label": "Disabled"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-07-04 13:57:41.944631",
+ "modified_by": "Administrator",
+ "module": "Kamra",
+ "name": "Rate Plan",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "rate_plan_name",
+ "track_changes": 1
+}
