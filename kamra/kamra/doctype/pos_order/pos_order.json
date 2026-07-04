@@ -1,0 +1,153 @@
+{
+ "actions": [],
+ "allow_bulk_edit": 1,
+ "allow_rename": 1,
+ "autoname": "format:ORD-{YYYY}-{#####}",
+ "creation": "2026-07-04 21:48:59.828338",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "property",
+  "outlet",
+  "column_break_a",
+  "status",
+  "source",
+  "sb_who",
+  "room",
+  "reservation",
+  "sb_items",
+  "items",
+  "sb_totals",
+  "order_total",
+  "column_break_b",
+  "posted_to_folio",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "property",
+   "fieldtype": "Link",
+   "label": "Property",
+   "options": "Property",
+   "reqd": 1
+  },
+  {
+   "fieldname": "outlet",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Outlet",
+   "options": "POS Outlet",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_a",
+   "fieldtype": "Column Break",
+   "label": "Column Break A"
+  },
+  {
+   "default": "Placed",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Placed\nPreparing\nDelivered\nCancelled"
+  },
+  {
+   "default": "Manual",
+   "fieldname": "source",
+   "fieldtype": "Select",
+   "label": "Source",
+   "options": "Manual\nAI Agent\nQR\nPhone"
+  },
+  {
+   "fieldname": "sb_who",
+   "fieldtype": "Section Break",
+   "label": "Guest / Room"
+  },
+  {
+   "fieldname": "room",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Room",
+   "options": "Room"
+  },
+  {
+   "description": "Set to post the order to the guest folio on delivery",
+   "fieldname": "reservation",
+   "fieldtype": "Link",
+   "label": "Reservation",
+   "options": "Reservation"
+  },
+  {
+   "fieldname": "sb_items",
+   "fieldtype": "Section Break",
+   "label": "Items"
+  },
+  {
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "label": "Items",
+   "options": "POS Order Item"
+  },
+  {
+   "fieldname": "sb_totals",
+   "fieldtype": "Section Break",
+   "label": "Totals"
+  },
+  {
+   "fieldname": "order_total",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Order Total",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_b",
+   "fieldtype": "Column Break",
+   "label": "Column Break B"
+  },
+  {
+   "default": "0",
+   "fieldname": "posted_to_folio",
+   "fieldtype": "Check",
+   "label": "Posted To Folio",
+   "read_only": 1
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-07-04 21:48:59.828338",
+ "modified_by": "Administrator",
+ "module": "Kamra",
+ "name": "POS Order",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

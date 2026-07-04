@@ -40,6 +40,15 @@ def showcase(property: str):
 			],
 		})
 
+	experiences = frappe.get_all(
+		"Experience",
+		filters={"property": property, "disabled": 0,
+		         "show_on_booking_page": 1},
+		fields=["experience_name", "category", "price", "duration",
+		        "description", "image_url"],
+		order_by="category asc",
+	)
+
 	meal_plans = frappe.get_all(
 		"Meal Plan", filters={"property": property, "disabled": 0},
 		fields=["name", "code", "label", "price_per_adult"],
@@ -64,6 +73,7 @@ def showcase(property: str):
 		},
 		"room_types": room_types,
 		"meal_plans": meal_plans,
+		"experiences": experiences,
 	}
 
 
