@@ -25,7 +25,12 @@ def check(name):
 			except AssertionError as e:
 				RESULTS.append((name, False, str(e)))
 			except Exception as e:
-				RESULTS.append((name, False, f"{type(e).__name__}: {e}"))
+				import traceback
+				tail = " | ".join(
+					line.strip()
+					for line in traceback.format_exc().splitlines()[-6:]
+				)
+				RESULTS.append((name, False, f"{type(e).__name__}: {e} [{tail}]"))
 		run.__name__ = name
 		return run
 	return wrap
