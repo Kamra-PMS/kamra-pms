@@ -83,6 +83,7 @@ jobs:
       - name: Install app & site
         run: |
           cd frappe-bench
+          bench get-app payments
           bench get-app kamra "${GITHUB_WORKSPACE}/apps/kamra"
           bench new-site test.localhost \
             --mariadb-user-host-login-scope='%' \
