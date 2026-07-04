@@ -10,6 +10,7 @@ import FolioView from "./screens/FolioView"
 import GuestJourney from "./screens/GuestJourney"
 import HkApp from "./screens/HkApp"
 import Guests from "./screens/Guests"
+import Setup from "./screens/Setup"
 import Tickets from "./screens/Tickets"
 import Today from "./screens/Today"
 import {
@@ -152,6 +153,7 @@ export default function App() {
             path="shifts"
             element={<ResourceScreen config={shiftsConfig} />}
           />
+          <Route path="setup" element={<Setup />} />
           <Route path="tickets" element={<Tickets />} />
           <Route
             path="housekeeping"

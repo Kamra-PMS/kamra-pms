@@ -183,7 +183,7 @@ def execute():
           options="Confirmed\nChecked In\nChecked Out\nCancelled\nNo Show",
           default="Confirmed"),
         f("source", "Select",
-          options="Manual\nAI Agent\nPhone\nWalk-in\nOTA\nWebsite",
+          options="Manual\nAI Agent\nPhone\nWalk-in\nOTA\nWebsite\nPMS",
           default="Manual"),
         f("channel", "Data",
           description="OTA name for channel bookings, e.g. booking.com"),

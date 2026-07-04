@@ -4,6 +4,8 @@ Every endpoint here is also, by design, an agent tool: the same governed
 surface serves the React console today and the MCP layer next.
 """
 
+import json
+
 import frappe
 from frappe.utils import add_days, nowdate
 
@@ -168,6 +170,135 @@ def owner_briefing(property: str, date: str | None = None):
 		"open_tickets": open_tickets,
 		"next_7_days_availability": pickup,
 	}
+
+
+@frappe.whitelist()
+def setup_property(payload):
+	"""One-call property onboarding — the wizard's submit button and the
+	migration agent's tool. payload = {property:{property_name, city,
+	gstin?, phone?, ...}, room_types:[{code,name,base_price,adults?,
+	extra_adult_price?,tax_percent?}], rooms:[{room_type_code,
+	numbers:["101","102"]}], meal_plans:[{code,label?,price_per_adult}]}"""
+	if isinstance(payload, str):
+		payload = json.loads(payload)
+	frappe.only_for(("System Manager", "Hotel Admin"))
+
+	p = payload["property"]
+	if frappe.db.exists("Property", p["property_name"]):
+		frappe.throw(f"Property '{p['property_name']}' already exists.")
+
+	prop = frappe.get_doc({"doctype": "Property", **p})
+	prop.insert()
+
+	rt_by_code = {}
+	for rt in payload.get("room_types", []):
+		doc = frappe.get_doc({
+			"doctype": "Room Type",
+			"property": prop.name,
+			"room_type_code": rt["code"],
+			"room_type_name": rt["name"],
+			"base_price": rt["base_price"],
+			"base_occupancy": rt.get("base_occupancy", 2),
+			"extra_adult_price": rt.get("extra_adult_price", 0),
+			"adults_capacity": rt.get("adults", 2),
+			"children_capacity": rt.get("children", 1),
+			"tax_percent": rt.get("tax_percent", 5),
+		})
+		doc.insert()
+		rt_by_code[rt["code"]] = doc.name
+
+	rooms_created = 0
+	for spec in payload.get("rooms", []):
+		rt_name = rt_by_code.get(spec["room_type_code"])
+		if not rt_name:
+			frappe.throw(f"Unknown room type code {spec['room_type_code']}")
+		for num in spec["numbers"]:
+			frappe.get_doc({
+				"doctype": "Room", "property": prop.name,
+				"room_number": str(num).strip(), "room_type": rt_name,
+			}).insert()
+			rooms_created += 1
+
+	for mp in payload.get("meal_plans", []):
+		frappe.get_doc({
+			"doctype": "Meal Plan", "property": prop.name,
+			"code": mp["code"], "label": mp.get("label"),
+			"price_per_adult": mp.get("price_per_adult", 0),
+			"price_per_child": mp.get("price_per_child", 0),
+			"is_default": mp.get("is_default", 0),
+		}).insert()
+
+	from kamra.savings import log_action
+	log_action("setup_property", "Property", prop.name, prop.name,
+	           minutes_saved=45,
+	           rationale=f"Onboarded {prop.name}: {len(rt_by_code)} room types, "
+	                     f"{rooms_created} rooms",
+	           channel="API")
+	return {"property": prop.name, "room_types": len(rt_by_code),
+	        "rooms": rooms_created,
+	        "meal_plans": len(payload.get("meal_plans", []))}
+
+
+@frappe.whitelist()
+def import_bookings(property: str, bookings):
+	"""Bulk booking import — the switch-over tool. Each row: {guest_name,
+	phone?, room_type_code, check_in, check_out, adults?, children?,
+	amount_after_tax?, channel?, status?}. Rows with a fixed amount keep
+	it (auto_price off); others are priced by the engine."""
+	if isinstance(bookings, str):
+		bookings = json.loads(bookings)
+	frappe.only_for(("System Manager", "Hotel Admin"))
+
+	created, errors = [], []
+	for i, row in enumerate(bookings):
+		try:
+			rt = frappe.db.get_value(
+				"Room Type",
+				{"property": property, "room_type_code": row["room_type_code"]},
+			)
+			if not rt:
+				raise frappe.ValidationError(
+					f"unknown room type code {row['room_type_code']}")
+			guest = _find_or_create_guest(row["guest_name"], row.get("phone"))
+			doc = frappe.get_doc({
+				"doctype": "Reservation",
+				"property": property,
+				"guest": guest,
+				"room_type": rt,
+				"check_in_date": row["check_in"],
+				"check_out_date": row["check_out"],
+				"adults": row.get("adults", 2),
+				"children": row.get("children", 0),
+				"source": "PMS",
+				"channel": row.get("channel"),
+				"auto_price": 0 if row.get("amount_after_tax") else 1,
+			})
+			if row.get("amount_after_tax"):
+				doc.amount_after_tax = row["amount_after_tax"]
+			doc.insert()
+			if row.get("status") in ("Checked In", "Cancelled"):
+				doc.status = row["status"]
+				doc.save()
+			created.append(doc.name)
+		except Exception as e:
+			errors.append({"row": i + 1,
+			               "guest": row.get("guest_name"),
+			               "error": str(e)[:160]})
+
+	from kamra.savings import log_action
+	log_action("import_bookings", "Property", property, property,
+	           minutes_saved=2 * len(created),
+	           rationale=f"Imported {len(created)} bookings "
+	                     f"({len(errors)} skipped)",
+	           channel="API")
+	return {"created": len(created), "reservations": created[:50],
+	        "errors": errors}
+
+
+@frappe.whitelist()
+def folio_payment_link(folio: str):
+	from kamra.payments import create_payment_link
+	return create_payment_link(folio)
 
 
 @frappe.whitelist()

@@ -28,7 +28,9 @@
   "column_break_b",
   "grand_total",
   "payments_total",
-  "balance"
+  "balance",
+  "payment_link_url",
+  "payment_link_id"
  ],
  "fields": [
   {
@@ -164,12 +166,24 @@
    "fieldtype": "Select",
    "label": "Folio Type",
    "options": "Guest\nExtra\nCompany"
+  },
+  {
+   "fieldname": "payment_link_url",
+   "fieldtype": "Data",
+   "label": "Payment Link",
+   "read_only": 1
+  },
+  {
+   "fieldname": "payment_link_id",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Payment Link ID"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-07-04 19:20:51.193926",
+ "modified": "2026-07-04 21:10:02.276506",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Folio",

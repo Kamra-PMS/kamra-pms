@@ -103,6 +103,11 @@ const NAV: NavGroup[] = [
     ],
   },
   {
+    label: "Admin",
+    roles: ["System Manager", "Administrator"],
+    items: [{ to: "/setup", label: "New Property", icon: Plus }],
+  },
+  {
     label: "Ops",
     roles: ["Front Desk", "System Manager", "Administrator"],
     items: [

@@ -189,6 +189,35 @@ def owner_briefing(date: str = "") -> dict:
 
 
 @mcp.tool()
+def setup_property(payload: dict) -> dict:
+    """Onboard a whole property in one call — the migration assistant's
+    tool. Ask the hotel for their room list/rate card (any format), map
+    it into: {property:{property_name, city, gstin?, phone?},
+    room_types:[{code,name,base_price,adults?}], rooms:[{room_type_code,
+    numbers:[..]}], meal_plans:[{code,price_per_adult}]}. Confirm the
+    mapping with the user before calling."""
+    return api("setup_property", payload=payload)
+
+
+@mcp.tool()
+def import_bookings(bookings: list, property: str = "") -> dict:
+    """Migrate existing reservations from another PMS/spreadsheet. Each:
+    {guest_name, phone?, room_type_code, check_in, check_out, adults?,
+    amount_after_tax?, channel?, status?}. Fixed amounts are preserved;
+    otherwise the pricing engine quotes. Returns per-row errors — report
+    them to the user rather than silently dropping rows."""
+    return api("import_bookings", property=property or PROPERTY,
+               bookings=bookings)
+
+
+@mcp.tool()
+def send_payment_link(folio: str) -> dict:
+    """Create a Razorpay payment link for a folio's outstanding balance
+    (SMS/email to the guest when contact details exist)."""
+    return api("folio_payment_link", folio=folio)
+
+
+@mcp.tool()
 def run_night_audit(business_date: str = "") -> dict:
     """Run the end-of-day: post the night's room charges for in-house
     guests and flag no-shows. Idempotent per date."""

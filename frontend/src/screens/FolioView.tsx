@@ -159,6 +159,24 @@ export default function FolioView() {
               ))}
             </div>
           )}
+          {open && folio.balance > 0 && (
+            <Button
+              variant="outline"
+              disabled={busy}
+              onClick={() =>
+                act(async () => {
+                  const r = await call<{ url: string }>(
+                    "kamra.api.folio_payment_link",
+                    { folio: folio.name },
+                  )
+                  navigator.clipboard.writeText(r.url)
+                })
+              }
+              title="Creates a Razorpay link for the balance and copies it"
+            >
+              Payment link
+            </Button>
+          )}
           {open && (
             <Button
               variant="outline"
