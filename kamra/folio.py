@@ -479,7 +479,11 @@ def close_folio(folio_name: str) -> str:
 
 	folio.status = "Closed"
 	folio.closed_on = now_datetime()
-	folio.invoice_number = make_autoname("INV-.YYYY.-.#####")
+	# one series per property: each GSTIN must have its own unique
+	# invoice series, and GST caps invoice numbers at 16 chars — a short
+	# initials code keeps INV-KDP-26-00001 inside the limit
+	code = "".join(w[0] for w in folio.property.split())[:3].upper()
+	folio.invoice_number = make_autoname(f"INV-{code}-.YY.-.#####")
 	_recalculate(folio)
 	folio.save(ignore_permissions=True)
 	return folio.invoice_number
