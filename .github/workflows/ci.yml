@@ -24,6 +24,10 @@ jobs:
         working-directory: frontend
       - run: npm run build
         working-directory: frontend
+      - name: Verify production serve base
+        # The served SPA must reference its assets under /assets/kamra/frontend/;
+        # a wrong base here silently breaks the /kamra install.
+        run: grep -q "/assets/kamra/frontend/assets/" kamra/public/frontend/index.html
 
   evals:
     name: Backend eval harness
@@ -97,3 +101,22 @@ jobs:
           printf 'from kamra.scripts.eval_harness import execute\nexecute()\nexit\n' \
             | bench --site test.localhost console | tee eval.out
           grep -q "19/19 passed" eval.out
+
+      - name: Fresh-install correctness (roles bind, SPA serves)
+        run: |
+          cd frappe-bench
+          cat > /tmp/fresh_check.py <<'PY'
+          import os, frappe
+          roles = ["Front Desk","Housekeeping","Finance","Revenue Manager","Kamra Agent","Hotel Admin"]
+          missing = [r for r in roles if not frappe.db.exists("Role", r)]
+          assert not missing, f"roles auto-create failed: {missing}"
+          assert frappe.get_all("DocPerm", filters={"parent":"Reservation"}), "no Reservation perms bound"
+          assert os.path.exists(frappe.get_app_path("kamra","public","frontend","index.html")), "built SPA not shipped"
+          assert os.path.exists(frappe.get_app_path("kamra","www","kamra.py")), "SPA boot page missing"
+          rules = str(frappe.get_hooks("website_route_rules"))
+          assert "/kamra/<path:app_path>" in rules, "/kamra route rule missing"
+          print("FRESH-INSTALL CHECKS PASSED")
+          PY
+          printf 'exec(open("/tmp/fresh_check.py").read())\nexit\n' \
+            | bench --site test.localhost console | tee fresh.out
+          grep -q "FRESH-INSTALL CHECKS PASSED" fresh.out
