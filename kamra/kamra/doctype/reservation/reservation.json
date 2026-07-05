@@ -58,7 +58,9 @@
   "precheckin_token",
   "precheckin_status",
   "precheckin_on",
-  "eta"
+  "eta",
+  "sb_occupants",
+  "occupants"
  ],
  "fields": [
   {
@@ -367,6 +369,18 @@
    "fieldtype": "Select",
    "label": "Contact For This Stay",
    "options": "Guest\nBooker\nBoth"
+  },
+  {
+   "fieldname": "sb_occupants",
+   "fieldtype": "Section Break",
+   "label": "Occupants"
+  },
+  {
+   "description": "Everyone staying in the room \u2014 the legal hotel register. Printed on the GRC.",
+   "fieldname": "occupants",
+   "fieldtype": "Table",
+   "label": "Occupants",
+   "options": "Stay Occupant"
   }
  ],
  "grid_page_length": 50,

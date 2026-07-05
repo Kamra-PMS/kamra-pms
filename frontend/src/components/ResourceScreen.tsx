@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useState, type ComponentType } from "react"
 import { Plus, Trash2 } from "lucide-react"
 import { Sheet } from "./ui/sheet"
 import { getCurrentProperty } from "../lib/api"
@@ -33,6 +33,8 @@ export interface ScreenConfig {
   allowCreate?: boolean
   allowDelete?: boolean
   orderBy?: string
+  /** Custom section rendered in the drawer below the form (existing rows only). */
+  extra?: ComponentType<{ row: Row; reload: () => void }>
 }
 
 const inputCls =
@@ -331,6 +333,9 @@ export function ResourceScreen({ config }: { config: ScreenConfig }) {
                 />
               </label>
             ))}
+            {editing !== "new" && config.extra && (
+              <config.extra row={editing} reload={load} />
+            )}
             {error && (
               <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
                 {error}

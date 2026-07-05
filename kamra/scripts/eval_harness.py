@@ -193,10 +193,8 @@ def t10():
 	folio_name = frappe.db.get_value(
 		"Folio", {"reservation": res.name, "folio_type": "Guest"})
 	assert folio_name, "folio not opened at check-in"
-	folio = frappe.get_doc("Folio", folio_name)
-	assert post_room_night(folio, res, nowdate()) is True
-	folio = frappe.get_doc("Folio", folio_name)
-	assert post_room_night(folio, res, nowdate()) is False, "double posted"
+	assert post_room_night(res, nowdate()) is True
+	assert post_room_night(res, nowdate()) is False, "double posted"
 	folio = frappe.get_doc("Folio", folio_name)
 	assert folio.charges_total == 4000, folio.charges_total
 	assert folio.grand_total == 4200, folio.grand_total  # +5% GST
@@ -213,14 +211,48 @@ def t11():
 	main = frappe.db.get_value(
 		"Folio", {"reservation": res.name, "folio_type": "Guest"})
 	from kamra.folio import post_room_night
-	fd = frappe.get_doc("Folio", main)
-	post_room_night(fd, res, "2030-07-01")
+	post_room_night(res, "2030-07-01")
 	second = split_folio(res.name, "Company")
 	fd = frappe.get_doc("Folio", main)
 	transfer_charge(main, fd.charges[0].name, second)
 	a = frappe.get_doc("Folio", main)
 	b = frappe.get_doc("Folio", second)
 	assert a.grand_total + b.grand_total == 4200, (a.grand_total, b.grand_total)
+
+
+@check("billing rules: corporate room→Company folio, alcohol→Guest")
+def t13():
+	from kamra import api
+	from kamra.folio import post_room_night
+	comp = frappe.get_doc({
+		"doctype": "Company", "company_name": "EVAL Corp",
+		"billing_rules": [{"charge_type": "Room", "pay_by": "Company"}],
+	}).insert(ignore_permissions=True)
+	g = _guest("Eval G", "+91 70000 00007")
+	res = _res(g, "2030-08-01", "2030-08-02", ROOM)
+	res.booking_type = "Corporate"
+	res.company = comp.name
+	res.status = "Checked In"
+	res.save(ignore_permissions=True)
+	assert post_room_night(res, "2030-08-01") is True
+	room_folio_type = frappe.db.sql("""
+		SELECT f.folio_type FROM `tabFolio Charge` fc
+		JOIN `tabFolio` f ON fc.parent = f.name
+		WHERE f.reservation = %s AND fc.charge_type = 'Room'""",
+		res.name)[0][0]
+	assert room_folio_type == "Company", room_folio_type
+	out = api.post_stay_charge(res.name, "Food & Beverage",
+	                           "eval beer", 300, 0, is_alcohol=1)
+	assert out["folio_type"] == "Guest", out
+	# the guard: alcohol may never be posted onto a Company folio
+	company_folio = frappe.db.get_value(
+		"Folio", {"reservation": res.name, "folio_type": "Company"})
+	try:
+		api.add_folio_charge(company_folio, "Food & Beverage",
+		                     "eval whisky", 500, 0, is_alcohol=1)
+		raise AssertionError("alcohol accepted on Company folio")
+	except frappe.ValidationError:
+		pass
 
 
 @check("ticket SLA: priority sets due window")
@@ -242,7 +274,7 @@ def execute():
 	frappe.db.savepoint("eval_start")
 	try:
 		RT, ROOM = setup()
-		for fn in (t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12):
+		for fn in (t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13):
 			fn()
 	finally:
 		frappe.db.rollback(save_point="eval_start")

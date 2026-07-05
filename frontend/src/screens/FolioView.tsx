@@ -94,6 +94,7 @@ export default function FolioView() {
 
   const [charge, setCharge] = useState({
     charge_type: "Food & Beverage", description: "", amount: "", gst_rate: "5",
+    is_alcohol: false,
   })
   const [payment, setPayment] = useState({ mode: "UPI", amount: "", reference: "" })
 
@@ -445,6 +446,17 @@ export default function FolioView() {
                   </option>
                 ))}
               </select>
+              <label className="flex items-center gap-1.5 text-sm text-zinc-600">
+                <input
+                  type="checkbox"
+                  className="size-4 accent-brand-600"
+                  checked={charge.is_alcohol}
+                  onChange={(e) =>
+                    setCharge({ ...charge, is_alcohol: e.target.checked })
+                  }
+                />
+                Alcohol
+              </label>
               <Button
                 disabled={busy || !charge.amount}
                 onClick={() =>
@@ -454,6 +466,7 @@ export default function FolioView() {
                       ...charge,
                       amount: Number(charge.amount),
                       gst_rate: Number(charge.gst_rate),
+                      is_alcohol: charge.is_alcohol ? 1 : 0,
                     }),
                   )
                 }

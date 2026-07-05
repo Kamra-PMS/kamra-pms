@@ -28,6 +28,7 @@
   "checkout_time",
   "column_break_c",
   "gstin",
+  "id_retention",
   "sb_gst",
   "gst_mode",
   "gst_slab_threshold",
@@ -249,6 +250,14 @@
    "fieldname": "logo_url",
    "fieldtype": "Data",
    "label": "Logo URL"
+  },
+  {
+   "default": "Store",
+   "description": "Verify & Discard masks occupant/guest ID numbers to the last 4 digits at checkout.",
+   "fieldname": "id_retention",
+   "fieldtype": "Select",
+   "label": "ID Retention",
+   "options": "Store\nVerify & Discard"
   }
  ],
  "grid_page_length": 50,

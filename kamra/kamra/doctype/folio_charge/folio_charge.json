@@ -16,7 +16,8 @@
   "gst_rate",
   "gst_amount",
   "total",
-  "auto_posted"
+  "auto_posted",
+  "is_alcohol"
  ],
  "fields": [
   {
@@ -85,6 +86,12 @@
    "fieldtype": "Check",
    "label": "Auto Posted",
    "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_alcohol",
+   "fieldtype": "Check",
+   "label": "Is Alcohol"
   }
  ],
  "grid_page_length": 50,

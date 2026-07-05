@@ -169,6 +169,29 @@ def add_folio_charge(folio: str, charge_type: str, description: str,
 
 
 @mcp.tool()
+def post_stay_charge(reservation: str, charge_type: str, description: str,
+                     amount: float, gst_rate: float = 5,
+                     is_alcohol: bool = False) -> dict:
+    """Post a charge to a stay and let the company billing rules pick the
+    folio — corporate room/meals go to the Company folio, alcohol and
+    unruled charges to the guest. Prefer this over add_folio_charge when
+    you don't know which folio should carry the line."""
+    return api("post_stay_charge", reservation=reservation,
+               charge_type=charge_type, description=description,
+               amount=amount, gst_rate=gst_rate,
+               is_alcohol=1 if is_alcohol else 0)
+
+
+@mcp.tool()
+def update_occupants(reservation: str, occupants: list) -> dict:
+    """Record everyone staying in the room (the legal hotel register,
+    printed on the GRC). occupants = [{full_name, age, gender,
+    nationality, id_type, id_number, phone}] — replaces the list."""
+    return api("update_occupants", reservation=reservation,
+               occupants=occupants)
+
+
+@mcp.tool()
 def set_room_rate(room_type: str, start_date: str, end_date: str,
                   rate: float, reason: str = "") -> dict:
     """Set the nightly rate for a room type over a date range. Bounded by

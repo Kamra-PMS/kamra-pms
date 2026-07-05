@@ -18,7 +18,9 @@
   "negotiated_rate_plan",
   "column_break_b",
   "credit_allowed",
-  "disabled"
+  "disabled",
+  "sb_billing_rules",
+  "billing_rules"
  ],
  "fields": [
   {
@@ -85,6 +87,18 @@
    "fieldname": "disabled",
    "fieldtype": "Check",
    "label": "Disabled"
+  },
+  {
+   "fieldname": "sb_billing_rules",
+   "fieldtype": "Section Break",
+   "label": "Billing Rules"
+  },
+  {
+   "description": "Route these charge types to the Company folio on corporate stays. Anything not listed (and all alcohol) bills to the guest.",
+   "fieldname": "billing_rules",
+   "fieldtype": "Table",
+   "label": "Billing Rules",
+   "options": "Company Billing Rule"
   }
  ],
  "grid_page_length": 50,

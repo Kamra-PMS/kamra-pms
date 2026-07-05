@@ -21,13 +21,20 @@ class POSOrder(Document):
 			return
 		if self.posted_to_folio or not self.reservation:
 			return
-		# room-service charge lands on the guest folio, outlet GST applied
-		from kamra.folio import _recalculate, open_folio
+		# room-service charge routed by the company's billing rules; any
+		# alcohol on the order forces the whole order to the guest folio
+		from kamra.folio import _recalculate, target_folio
 
 		res = frappe.get_doc("Reservation", self.reservation)
-		folio = frappe.get_doc("Folio", open_folio(res))
+		has_alcohol = any(
+			frappe.db.get_value("Menu Item", it.menu_item, "is_alcohol")
+			for it in self.items if it.menu_item
+		)
+		folio = frappe.get_doc(
+			"Folio",
+			target_folio(res, "Food & Beverage", is_alcohol=has_alcohol))
 		if folio.status == "Closed":
-			frappe.throw("Guest folio is closed — settle the order directly.")
+			frappe.throw("Folio is closed — settle the order directly.")
 		gst = frappe.db.get_value("POS Outlet", self.outlet, "gst_rate") or 5
 		detail = ", ".join(
 			f"{it.item_name} ×{int(it.qty)}" for it in self.items)
@@ -40,6 +47,7 @@ class POSOrder(Document):
 			"amount": self.order_total,
 			"gst_rate": float(gst),
 			"auto_posted": 1,
+			"is_alcohol": 1 if has_alcohol else 0,
 		})
 		_recalculate(folio)
 		folio.save(ignore_permissions=True)

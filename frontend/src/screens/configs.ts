@@ -1,4 +1,5 @@
 import type { ScreenConfig } from "../components/ResourceScreen"
+import BillingRulesEditor from "../components/BillingRulesEditor"
 
 export const roomsConfig: ScreenConfig = {
   doctype: "Room",
@@ -310,6 +311,7 @@ export const companiesConfig: ScreenConfig = {
     { field: "credit_allowed", label: "Credit allowed (city ledger)", type: "check" },
     { field: "disabled", label: "Disabled", type: "check" },
   ],
+  extra: BillingRulesEditor,
 }
 
 export const housekeepingConfig: ScreenConfig = {

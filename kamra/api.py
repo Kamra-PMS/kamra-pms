@@ -334,6 +334,12 @@ def registration_card(reservation: str):
 			"address": ", ".join(filter(None, [
 				guest.get("address_line"), guest.get("city")])),
 		},
+		"occupants": [
+			{"full_name": o.full_name, "age": o.age, "gender": o.gender,
+			 "nationality": o.nationality, "id_type": o.id_type,
+			 "id_number": o.id_number, "phone": o.phone}
+			for o in (res.get("occupants") or [])
+		],
 	}
 
 
@@ -536,10 +542,13 @@ def get_folio(reservation: str):
 @frappe.whitelist()
 def add_folio_charge(folio: str, charge_type: str, description: str,
                      amount: float, gst_rate: float = 0,
-                     posting_date: str | None = None):
+                     posting_date: str | None = None, is_alcohol: int = 0):
 	doc = frappe.get_doc("Folio", folio)
 	if doc.status == "Closed":
 		frappe.throw("Folio is closed.")
+	if int(is_alcohol or 0) and doc.folio_type == "Company":
+		frappe.throw("Alcohol cannot be billed to a company folio — "
+		             "post it to the guest folio.")
 	doc.append("charges", {
 		"posting_date": posting_date or nowdate(),
 		"charge_type": charge_type,
@@ -548,6 +557,7 @@ def add_folio_charge(folio: str, charge_type: str, description: str,
 		"rate": float(amount),
 		"amount": float(amount),
 		"gst_rate": float(gst_rate),
+		"is_alcohol": 1 if int(is_alcohol or 0) else 0,
 	})
 	from kamra.folio import _recalculate
 	_recalculate(doc)
@@ -572,6 +582,71 @@ def add_folio_payment(folio: str, mode: str, amount: float,
 	_recalculate(doc)
 	doc.save()
 	return doc.as_dict()
+
+
+@frappe.whitelist()
+def post_stay_charge(reservation: str, charge_type: str, description: str,
+                     amount: float, gst_rate: float = 0, is_alcohol: int = 0):
+	"""Post a charge to a stay letting the billing rules pick the folio —
+	corporate room/meals land on the Company folio, alcohol and anything
+	unruled lands on the guest. The agent-facing way to post charges."""
+	res = frappe.get_doc("Reservation", reservation)
+	if res.status not in ("Confirmed", "Checked In", "Checked Out"):
+		frappe.throw("Reservation is not active.")
+	from kamra.folio import target_folio
+	is_alcohol = 1 if int(is_alcohol or 0) else 0
+	folio_name = target_folio(res, charge_type, is_alcohol)
+	out = add_folio_charge(folio_name, charge_type, description, amount,
+	                       gst_rate, is_alcohol=is_alcohol)
+	return {"folio": folio_name, "folio_type": out.get("folio_type"),
+	        "balance": out.get("balance")}
+
+
+@frappe.whitelist()
+def set_billing_rules(company: str, rules):
+	"""Replace a company's billing rules. rules = [{charge_type, pay_by}]."""
+	if isinstance(rules, str):
+		rules = frappe.parse_json(rules)
+	doc = frappe.get_doc("Company", company)
+	doc.set("billing_rules", [])
+	for r in rules or []:
+		doc.append("billing_rules", {
+			"charge_type": r.get("charge_type"),
+			"pay_by": r.get("pay_by") or "Company",
+		})
+	doc.save()
+	return {"company": company, "rules": len(doc.billing_rules)}
+
+
+@frappe.whitelist()
+def get_billing_rules(company: str):
+	doc = frappe.get_doc("Company", company)
+	return [{"charge_type": r.charge_type, "pay_by": r.pay_by}
+	        for r in (doc.get("billing_rules") or [])]
+
+
+@frappe.whitelist()
+def update_occupants(reservation: str, occupants):
+	"""Replace the stay's occupant register.
+	occupants = [{full_name, age, gender, nationality, id_type, id_number, phone}]"""
+	if isinstance(occupants, str):
+		occupants = frappe.parse_json(occupants)
+	doc = frappe.get_doc("Reservation", reservation)
+	doc.set("occupants", [])
+	for o in occupants or []:
+		if not (o.get("full_name") or "").strip():
+			continue
+		doc.append("occupants", {
+			"full_name": o["full_name"].strip(),
+			"age": o.get("age") or None,
+			"gender": o.get("gender") or "",
+			"nationality": o.get("nationality") or "Indian",
+			"id_type": o.get("id_type") or "",
+			"id_number": (o.get("id_number") or "").strip(),
+			"phone": o.get("phone") or "",
+		})
+	doc.save()
+	return {"reservation": reservation, "occupants": len(doc.occupants)}
 
 
 @frappe.whitelist()
@@ -889,11 +964,36 @@ def check_in(reservation: str, room: str | None = None):
 	return {"ok": True, "reservation": doc.name, "room": doc.room}
 
 
+def _mask_id(value: str | None) -> str | None:
+	"""'987654321012' → '••••••••1012' — enough for the register audit
+	trail without holding the full number."""
+	if not value or len(value) <= 4 or value.startswith("•"):
+		return value
+	return "•" * (len(value) - 4) + value[-4:]
+
+
+def _scrub_stay_ids(res):
+	"""Verify & Discard retention: after checkout, keep only the last 4
+	digits of every ID collected for the stay."""
+	if frappe.db.get_value("Property", res.property, "id_retention") \
+			!= "Verify & Discard":
+		return
+	for o in res.get("occupants") or []:
+		if o.id_number:
+			frappe.db.set_value("Stay Occupant", o.name, "id_number",
+			                    _mask_id(o.id_number), update_modified=False)
+	guest_id = frappe.db.get_value("Guest", res.guest, "id_number")
+	if guest_id:
+		frappe.db.set_value("Guest", res.guest, "id_number",
+		                    _mask_id(guest_id), update_modified=False)
+
+
 @frappe.whitelist()
 def check_out(reservation: str):
 	doc = frappe.get_doc("Reservation", reservation)
 	doc.status = "Checked Out"
 	doc.save()
+	_scrub_stay_ids(doc)
 	return {"ok": True, "reservation": doc.name}
 
 

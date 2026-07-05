@@ -15,6 +15,7 @@
   "category",
   "price",
   "is_veg",
+  "is_alcohol",
   "available"
  ],
  "fields": [
@@ -70,6 +71,13 @@
    "fieldtype": "Check",
    "in_list_view": 1,
    "label": "Available"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_alcohol",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Is Alcohol"
   }
  ],
  "grid_page_length": 50,
