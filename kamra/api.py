@@ -296,6 +296,67 @@ def import_bookings(property: str, bookings):
 
 
 @frappe.whitelist()
+def registration_card(reservation: str):
+	"""Everything the printed GRC (guest registration card) needs."""
+	res = frappe.get_doc("Reservation", reservation)
+	guest = frappe.get_doc("Guest", res.guest)
+	prop = frappe.get_doc("Property", res.property)
+	return {
+		"property": {
+			"property_name": prop.property_name,
+			"logo_url": prop.get("logo_url"),
+			"address": ", ".join(filter(None, [
+				prop.address_line, prop.city, prop.state, prop.pincode])),
+			"gstin": prop.gstin, "phone": prop.phone, "email": prop.email,
+			"checkin_time": str(prop.checkin_time or ""),
+			"checkout_time": str(prop.checkout_time or ""),
+		},
+		"reservation": {
+			"name": res.name, "status": res.status,
+			"room": (res.room or "").split("-")[-1],
+			"room_type": res.room_type.split("-")[-1],
+			"check_in_date": str(res.check_in_date),
+			"check_out_date": str(res.check_out_date),
+			"nights": res.nights, "adults": res.adults,
+			"children": res.children, "is_day_use": res.get("is_day_use"),
+			"rate_total": float(res.amount_after_tax or 0),
+			"advance_paid": float(res.advance_paid or 0),
+			"company": res.get("company"),
+			"booked_by_name": res.get("booked_by_name"),
+			"source": res.source, "eta": res.get("eta"),
+			"special_requests": res.special_requests,
+			"precheckin_status": res.get("precheckin_status"),
+		},
+		"guest": {
+			"full_name": guest.full_name, "phone": guest.phone,
+			"email": guest.email, "nationality": guest.nationality,
+			"id_type": guest.id_type, "id_number": guest.id_number,
+			"address": ", ".join(filter(None, [
+				guest.get("address_line"), guest.get("city")])),
+		},
+	}
+
+
+@frappe.whitelist()
+def cash_summary(property: str, date: str | None = None):
+	"""Cashier reconciliation: what the system says was collected today,
+	per payment mode — the number the drawer must match at shift close."""
+	date = date or nowdate()
+	rows = frappe.db.sql(
+		"""
+		SELECT fp.mode, COUNT(*) AS txns, COALESCE(SUM(fp.amount), 0) AS total
+		FROM `tabFolio Payment` fp
+		JOIN `tabFolio` f ON fp.parent = f.name
+		WHERE f.property = %(property)s AND fp.posting_date = %(date)s
+		GROUP BY fp.mode ORDER BY total DESC
+		""",
+		{"property": property, "date": date}, as_dict=True,
+	)
+	return {"date": date, "modes": rows,
+	        "grand_total": float(sum(r.total for r in rows))}
+
+
+@frappe.whitelist()
 def record_advance(reservation: str, amount: float, mode: str = "UPI",
                    reference: str | None = None):
 	"""Advance/deposit against a Confirmed booking — opens the folio early

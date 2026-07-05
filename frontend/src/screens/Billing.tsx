@@ -15,6 +15,12 @@ import {
 const inr = (n: unknown) =>
   Number(n ?? 0).toLocaleString("en-IN", { maximumFractionDigits: 0 })
 
+interface CashSummary {
+  date: string
+  modes: { mode: string; txns: number; total: number }[]
+  grand_total: number
+}
+
 interface AuditResult {
   audit?: string
   already_ran?: boolean
@@ -26,6 +32,7 @@ interface AuditResult {
 
 export default function Billing() {
   const [folios, setFolios] = useState<Row[]>([])
+  const [cash, setCash] = useState<CashSummary | null>(null)
   const [audit, setAudit] = useState<AuditResult | null>(null)
   const [busy, setBusy] = useState(false)
   const navigate = useNavigate()
@@ -39,6 +46,9 @@ export default function Billing() {
       filters: [["property", "=", getCurrentProperty()]],
       orderBy: "modified desc",
     }).then(setFolios)
+    call<CashSummary>("kamra.api.cash_summary", {
+      property: getCurrentProperty(),
+    }).then(setCash)
   }, [])
 
   useEffect(load, [load])
@@ -89,6 +99,30 @@ export default function Billing() {
                 {audit.no_shows_flagged === 1 ? "" : "s"}.
               </p>
             )}
+          </CardContent>
+        )}
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <div>
+            <CardTitle>Today's collections</CardTitle>
+            <p className="mt-0.5 text-xs text-zinc-400">
+              What the system says was collected — the drawer must match this
+              at shift close.
+            </p>
+          </div>
+          <span className="text-xl font-semibold">
+            ₹{inr(cash?.grand_total ?? 0)}
+          </span>
+        </CardHeader>
+        {cash && cash.modes.length > 0 && (
+          <CardContent className="flex flex-wrap gap-2 pt-0">
+            {cash.modes.map((m) => (
+              <Badge key={m.mode} tone="zinc">
+                {m.mode}: ₹{inr(m.total)} · {m.txns} txn
+              </Badge>
+            ))}
           </CardContent>
         )}
       </Card>

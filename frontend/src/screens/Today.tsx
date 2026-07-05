@@ -85,6 +85,15 @@ function ReservationList(props: {
               {row.nights} night{row.nights === 1 ? "" : "s"} · {row.adults} ad
               {row.children ? ` + ${row.children} ch` : ""}
               {row.eta && ` · ETA ${row.eta}`}
+              {row.status === "Confirmed" && (
+                <a
+                  href={`/grc/${encodeURIComponent(row.name)}`}
+                  className="ml-2 font-medium text-brand-700 hover:underline"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  GRC
+                </a>
+              )}
               {row.status === "Confirmed" &&
                 row.precheckin_status !== "Submitted" &&
                 row.precheckin_token && (

@@ -10,6 +10,7 @@ import FolioView from "./screens/FolioView"
 import GuestJourney from "./screens/GuestJourney"
 import HkApp from "./screens/HkApp"
 import Guests from "./screens/Guests"
+import RegistrationCard from "./screens/RegistrationCard"
 import Setup from "./screens/Setup"
 import TapeChart from "./screens/TapeChart"
 import Tickets from "./screens/Tickets"
@@ -99,6 +100,7 @@ export default function App() {
             path="reservations"
             element={<ResourceScreen config={reservationsConfig} />}
           />
+          <Route path="grc/:name" element={<RegistrationCard />} />
           <Route path="guests" element={<Guests />} />
           <Route path="guests/:name" element={<GuestJourney />} />
           <Route
