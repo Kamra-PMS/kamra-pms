@@ -20,6 +20,7 @@ import {
   Settings as SettingsIcon,
   Code2,
   ExternalLink,
+  UserCog,
   Sun,
   ShieldCheck,
   Tags,
@@ -155,9 +156,19 @@ const NAV: NavGroup[] = [
         roles: ["System Manager", "Administrator"],
       },
       {
-        // Prod: the Desk is same-origin at /app. Dev (Vite :5173): the Desk
-        // lives on the bench at :8000, not the dev server.
-        href: import.meta.env.PROD ? "/app" : "http://localhost:8000/app",
+        // Direct to the User list. Bare /app bounces to the Kamra app (Kamra is
+        // registered via add_to_apps_screen), so link a specific Desk route.
+        href: import.meta.env.PROD
+          ? "/app/user"
+          : "http://localhost:8000/app/user",
+        label: "Manage Users",
+        icon: UserCog,
+        roles: ["Administrator", "System Manager"],
+      },
+      {
+        href: import.meta.env.PROD
+          ? "/app/home"
+          : "http://localhost:8000/app/home",
         label: "Frappe Desk",
         icon: ExternalLink,
         // The raw admin surface — site admins only, never a business Hotel Admin.
