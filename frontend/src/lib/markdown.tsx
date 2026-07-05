@@ -66,9 +66,17 @@ export function Markdown({ text }: { text: string }) {
   }
 
   lines.forEach((line, i) => {
+    const heading = line.match(/^\s*#{1,6}\s+(.*)/)
     const bullet = line.match(/^\s*[-*]\s+(.*)/)
     const num = line.match(/^\s*\d+\.\s+(.*)/)
-    if (bullet) {
+    if (heading) {
+      flushList("l" + i)
+      blocks.push(
+        <p key={"h" + i} className="font-semibold">
+          {renderInline(heading[1])}
+        </p>,
+      )
+    } else if (bullet) {
       if (listType !== "ul") flushList("l" + i)
       listType = "ul"
       items.push(bullet[1])
