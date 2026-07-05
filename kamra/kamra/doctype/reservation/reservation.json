@@ -61,7 +61,13 @@
   "eta",
   "sb_occupants",
   "occupants",
-  "addons"
+  "addons",
+  "sb_cancellation",
+  "cancellation_reason",
+  "cancellation_note",
+  "cancellation_number",
+  "cancellation_fee",
+  "cancelled_on"
  ],
  "fields": [
   {
@@ -389,6 +395,43 @@
    "fieldtype": "Table",
    "label": "Add-ons",
    "options": "Stay Addon"
+  },
+  {
+   "depends_on": "eval:doc.status=='Cancelled'",
+   "fieldname": "sb_cancellation",
+   "fieldtype": "Section Break",
+   "label": "Cancellation"
+  },
+  {
+   "fieldname": "cancellation_reason",
+   "fieldtype": "Select",
+   "label": "Cancellation Reason",
+   "options": "\nGuest request\nChange of plans\nDuplicate booking\nPayment failed\nWeather / travel disruption\nBooked elsewhere\nOther",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cancellation_note",
+   "fieldtype": "Small Text",
+   "label": "Cancellation Note",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cancellation_number",
+   "fieldtype": "Data",
+   "label": "Cancellation Number",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cancellation_fee",
+   "fieldtype": "Currency",
+   "label": "Cancellation Fee",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cancelled_on",
+   "fieldtype": "Datetime",
+   "label": "Cancelled On",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,

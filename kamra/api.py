@@ -1220,41 +1220,120 @@ def _scrub_stay_ids(res):
 		                    _mask_id(guest_id), update_modified=False)
 
 
-@frappe.whitelist()
-def cancel_reservation(reservation: str, waive_fee: int = 0):
-	"""Cancel a booking, applying the property's cancellation policy:
-	free outside the window, else the configured fee lands on the folio.
-	Pass waive_fee=1 to cancel graciously (logged)."""
+def _cancellation_terms(res):
+	"""Policy + fee estimate for a reservation, before anyone commits."""
 	from frappe.utils import date_diff
+	from kamra.folio import policy_fee
 
-	res = frappe.get_doc("Reservation", reservation)
-	if res.status != "Confirmed":
-		frappe.throw("Only confirmed bookings can be cancelled — "
-		             "checked-in stays check out.")
 	policy = frappe.db.get_value(
 		"Property", res.property,
 		["free_cancel_days", "cancellation_fee"], as_dict=True)
 	days_before = date_diff(res.check_in_date, nowdate())
 	inside_window = days_before < int(policy.free_cancel_days or 0)
+	basis = policy.cancellation_fee or "None"
+	fee = policy_fee(res, basis) if inside_window and basis != "None" else 0.0
+	return {
+		"days_before_arrival": days_before,
+		"free_cancel_days": int(policy.free_cancel_days or 0),
+		"inside_window": inside_window,
+		"fee_basis": basis,
+		"estimated_fee": fee,
+	}
+
+
+@frappe.whitelist()
+def cancellation_preview(reservation: str):
+	"""What cancelling right now would cost — shown before confirming."""
+	res = frappe.get_doc("Reservation", reservation)
+	return _cancellation_terms(res)
+
+
+CANCEL_REASONS = ["Guest request", "Change of plans", "Duplicate booking",
+                  "Payment failed", "Weather / travel disruption",
+                  "Booked elsewhere", "Other"]
+
+
+@frappe.whitelist()
+def cancel_reservation(reservation: str, reason: str = "Guest request",
+                       note: str | None = None, waive_fee: int = 0):
+	"""Cancel a booking, applying the property's cancellation policy:
+	free outside the window, else the configured fee lands on the folio.
+	Issues a cancellation number the guest can hold on to. Pass
+	waive_fee=1 to cancel graciously (logged)."""
+	from frappe.model.naming import make_autoname
+
+	res = frappe.get_doc("Reservation", reservation)
+	if res.status != "Confirmed":
+		frappe.throw("Only confirmed bookings can be cancelled — "
+		             "checked-in stays check out.")
+	if reason not in CANCEL_REASONS:
+		reason = "Other"
+	terms = _cancellation_terms(res)
 
 	fee = 0.0
-	if inside_window and not int(waive_fee or 0) \
-			and (policy.cancellation_fee or "None") != "None":
+	if terms["inside_window"] and not int(waive_fee or 0) \
+			and terms["fee_basis"] != "None":
 		from kamra.folio import post_policy_fee
 		fee = post_policy_fee(
-			res, policy.cancellation_fee,
-			f"Cancellation fee ({policy.cancellation_fee})")
+			res, terms["fee_basis"],
+			f"Cancellation fee ({terms['fee_basis']})")
 
 	res.status = "Cancelled"
-	res.save()
+	res.cancellation_reason = reason
+	res.cancellation_note = note or ""
+	res.cancellation_number = make_autoname("CXL-.YYYY.-.#####")
+	res.cancellation_fee = fee
+	res.cancelled_on = frappe.utils.now_datetime()
+	frappe.flags.kamra_cancelling = True
+	try:
+		res.save()
+	finally:
+		frappe.flags.kamra_cancelling = False
+
 	from kamra.savings import log_action
 	log_action("cancel_reservation", "Reservation", res.name, res.property,
-	           rationale=f"Cancelled {days_before}d before arrival — "
+	           rationale=f"{res.cancellation_number} · {reason} · "
+	                     f"{terms['days_before_arrival']}d before arrival — "
 	                     + (f"fee ₹{fee:,.0f}" if fee else
 	                        ("fee waived" if int(waive_fee or 0)
 	                         else "no fee (outside window)")))
-	return {"reservation": res.name, "fee": fee,
-	        "waived": bool(int(waive_fee or 0))}
+	return {"reservation": res.name,
+	        "cancellation_number": res.cancellation_number,
+	        "fee": fee, "waived": bool(int(waive_fee or 0))}
+
+
+@frappe.whitelist()
+def cancellation_letter(reservation: str):
+	"""Everything the printable cancellation confirmation needs."""
+	res = frappe.get_doc("Reservation", reservation)
+	if res.status != "Cancelled":
+		frappe.throw("This reservation is not cancelled.")
+	prop = frappe.get_doc("Property", res.property)
+	guest = frappe.get_doc("Guest", res.guest)
+	return {
+		"property": {
+			"property_name": prop.property_name,
+			"logo_url": prop.get("logo_url"),
+			"address": ", ".join(filter(None, [
+				prop.address_line, prop.city, prop.state, prop.pincode])),
+			"phone": prop.phone, "email": prop.email,
+		},
+		"guest": {"full_name": guest.full_name, "phone": guest.phone,
+		          "email": guest.email},
+		"reservation": {
+			"name": res.name,
+			"room_type": (res.room_type or "").split("-")[-1],
+			"check_in_date": str(res.check_in_date),
+			"check_out_date": str(res.check_out_date),
+			"nights": res.nights,
+			"amount_after_tax": float(res.amount_after_tax or 0),
+			"cancellation_number": res.cancellation_number,
+			"cancellation_reason": res.cancellation_reason,
+			"cancellation_fee": float(res.cancellation_fee or 0),
+			"cancelled_on": str(res.cancelled_on or ""),
+			"advance_paid": float(res.advance_paid or 0),
+		},
+	}
 
 
 @frappe.whitelist()

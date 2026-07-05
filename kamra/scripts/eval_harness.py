@@ -433,14 +433,28 @@ def t18():
 	out = api.cancel_reservation(far.name)
 	assert out["fee"] == 0, out
 
-	# cancel inside the window → first night lands on the folio
+	# cancel inside the window → first night lands on the folio, and the
+	# guest gets a cancellation number
 	g2 = _guest("Eval Late", "+91 70000 00016")
 	late = _res(g2, add_days(nowdate(), 1), add_days(nowdate(), 2))
-	out = api.cancel_reservation(late.name)
+	preview = api.cancellation_preview(late.name)
+	assert preview["inside_window"] and preview["estimated_fee"] == 4000
+	out = api.cancel_reservation(late.name, reason="Change of plans")
 	assert out["fee"] == 4000, out
+	assert out["cancellation_number"].startswith("CXL-"), out
 	folio = frappe.db.get_value(
 		"Folio", {"reservation": late.name, "folio_type": "Guest"})
 	assert frappe.db.get_value("Folio", folio, "grand_total") == 4200
+
+	# flipping the status field directly must NOT bypass the policy
+	g4 = _guest("Eval Bypass", "+91 70000 00018")
+	byp = _res(g4, add_days(nowdate(), 1), add_days(nowdate(), 2))
+	byp.status = "Cancelled"
+	try:
+		byp.save(ignore_permissions=True)
+		raise AssertionError("status flip bypassed the cancellation policy")
+	except frappe.ValidationError:
+		pass
 
 	# yesterday's un-arrived booking → no-show flagged AND charged
 	g3 = _guest("Eval NoShow", "+91 70000 00017")

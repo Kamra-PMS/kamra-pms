@@ -1,5 +1,6 @@
 import type { ScreenConfig } from "../components/ResourceScreen"
 import BillingRulesEditor from "../components/BillingRulesEditor"
+import CancelPanel from "../components/CancelPanel"
 
 export const roomsConfig: ScreenConfig = {
   doctype: "Room",
@@ -385,7 +386,8 @@ export const reservationsConfig: ScreenConfig = {
   form: [
     { field: "guest_name", label: "Guest", type: "readonly" },
     { field: "room", label: "Room", type: "link", linkDoctype: "Room" },
-    { field: "status", label: "Status", type: "select", options: ["Confirmed", "Checked In", "Checked Out", "Cancelled", "No Show"] },
+    { field: "status", label: "Status", type: "select", options: ["Confirmed", "Checked In", "Checked Out"] },
     { field: "special_requests", label: "Special requests", type: "data" },
   ],
+  extra: CancelPanel,
 }

@@ -11,6 +11,7 @@ import GuestJourney from "./screens/GuestJourney"
 import HkApp from "./screens/HkApp"
 import Guests from "./screens/Guests"
 import RegistrationCard from "./screens/RegistrationCard"
+import CancellationLetter from "./screens/CancellationLetter"
 import Setup from "./screens/Setup"
 import Settings from "./screens/Settings"
 import TapeChart from "./screens/TapeChart"
@@ -102,6 +103,7 @@ export default function App() {
             element={<ResourceScreen config={reservationsConfig} />}
           />
           <Route path="grc/:name" element={<RegistrationCard />} />
+          <Route path="cancelled/:name" element={<CancellationLetter />} />
           <Route path="guests" element={<Guests />} />
           <Route path="guests/:name" element={<GuestJourney />} />
           <Route

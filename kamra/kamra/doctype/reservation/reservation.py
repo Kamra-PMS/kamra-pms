@@ -14,7 +14,20 @@ class Reservation(Document):
 		self.validate_blacklist()
 		self.validate_room_belongs_to_type()
 		self.validate_no_overlap()
+		self.validate_cancellation_path()
 		self.apply_pricing()
+
+	def validate_cancellation_path(self):
+		"""Cancellations must go through cancel_reservation so the
+		property's cancellation policy is applied (or knowingly waived) —
+		flipping the status field would silently skip the fee."""
+		if self.is_new() or frappe.flags.kamra_cancelling:
+			return
+		old = self.get_doc_before_save()
+		if old and old.status != "Cancelled" and self.status == "Cancelled":
+			frappe.throw(_(
+				"Use the Cancel action (or the cancel_reservation API) so "
+				"the cancellation policy is applied."))
 
 	def validate_dates(self):
 		diff = date_diff(self.check_out_date, self.check_in_date)

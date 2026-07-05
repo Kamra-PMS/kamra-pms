@@ -110,13 +110,24 @@ def create_booking(guest_name: str, room_type: str, check_in_date: str,
 
 
 @mcp.tool()
-def cancel_booking(reservation: str, waive_fee: bool = False) -> dict:
+def cancellation_preview(reservation: str) -> dict:
+    """What cancelling would cost right now (policy window, fee basis,
+    estimated fee). ALWAYS read this to the guest before cancelling."""
+    return api("cancellation_preview", reservation=reservation)
+
+
+@mcp.tool()
+def cancel_booking(reservation: str, reason: str = "Guest request",
+                   note: str = "", waive_fee: bool = False) -> dict:
     """Cancel a confirmed booking. The property's cancellation policy
     applies automatically — free outside the window, else the configured
-    fee posts to the folio. Only waive the fee when a manager authorizes
-    it; the waiver is logged."""
+    fee posts to the folio. Returns a cancellation number — always give
+    it to the guest. Reasons: Guest request, Change of plans, Duplicate
+    booking, Payment failed, Weather / travel disruption, Booked
+    elsewhere, Other. Only waive the fee when a manager authorizes it;
+    the waiver is logged."""
     return api("cancel_reservation", reservation=reservation,
-               waive_fee=1 if waive_fee else 0)
+               reason=reason, note=note, waive_fee=1 if waive_fee else 0)
 
 
 @mcp.tool()
