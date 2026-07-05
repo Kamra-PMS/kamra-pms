@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react"
-import { Loader2, Send, Sparkles, X } from "lucide-react"
+import { Loader2, Send, Sparkles, Trash2, X } from "lucide-react"
 import { call, getCurrentProperty } from "../lib/api"
 import { serverError } from "../lib/resource"
 import { cn } from "../lib/utils"
+import { Markdown } from "../lib/markdown"
 
 /** The front-desk copilot — appears only when the property has enabled
  * it with their own key. Model talks; the governed tool layer acts. */
@@ -108,14 +109,38 @@ export default function AssistantPanel() {
             <span className="ml-auto text-[10px] uppercase tracking-wider text-zinc-400">
               your key · your data
             </span>
+            {msgs.length > 0 && (
+              <button
+                aria-label="Clear conversation"
+                title="Clear conversation"
+                onClick={() => {
+                  setMsgs([])
+                  setError(null)
+                }}
+                className="rounded-md p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700"
+              >
+                <Trash2 className="size-3.5" aria-hidden />
+              </button>
+            )}
           </div>
 
           <div className="flex-1 space-y-3 overflow-y-auto px-4 py-3">
             {msgs.length === 0 && (
               <div className="space-y-2">
-                <p className="text-sm text-zinc-500">
-                  Ask anything about today's board, price a stay, book,
-                  check in, take a payment, cancel with the policy applied.
+                <p className="text-sm text-zinc-600">
+                  I can act on the property through Kamra's governed tools:
+                </p>
+                <ul className="list-disc space-y-0.5 pl-5 text-sm text-zinc-500">
+                  <li>Read today's board — arrivals, departures, in-house</li>
+                  <li>Check availability &amp; price a stay</li>
+                  <li>Create bookings, check guests in / out</li>
+                  <li>Open folios, post charges, take payments</li>
+                  <li>Preview &amp; apply cancellations with the policy</li>
+                  <li>Search guests and their history</li>
+                </ul>
+                <p className="text-xs text-zinc-400">
+                  Every action is audit-logged. This chat lives on your device
+                  and clears when you close or clear it.
                 </p>
                 {SUGGESTIONS.map((s) => (
                   <button
@@ -132,13 +157,17 @@ export default function AssistantPanel() {
               <div key={i}>
                 <div
                   className={cn(
-                    "max-w-[85%] whitespace-pre-wrap rounded-2xl px-3.5 py-2 text-sm",
+                    "max-w-[85%] rounded-2xl px-3.5 py-2 text-sm",
                     m.role === "user"
-                      ? "ml-auto bg-brand-600 text-white"
-                      : "bg-zinc-100 text-zinc-800",
+                      ? "ml-auto whitespace-pre-wrap bg-brand-600 text-white"
+                      : "space-y-1.5 bg-zinc-100 text-zinc-800",
                   )}
                 >
-                  {m.content}
+                  {m.role === "assistant" ? (
+                    <Markdown text={m.content} />
+                  ) : (
+                    m.content
+                  )}
                 </div>
                 {m.actions && m.actions.length > 0 && (
                   <div className="mt-1 flex flex-wrap gap-1">
