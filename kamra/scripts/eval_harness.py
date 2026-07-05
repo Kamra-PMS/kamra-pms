@@ -468,6 +468,31 @@ def t18():
 	assert any("No-show" in (c.description or "") for c in charges)
 
 
+@check("closed folio is frozen: charges immutable, payments still settle")
+def t19():
+	from kamra import api
+	from kamra.folio import close_folio, post_room_night
+	g = _guest("Eval Frozen", "+91 70000 00019")
+	res = _res(g, "2031-02-01", "2031-02-02", ROOM)
+	res.status = "Checked In"
+	res.save(ignore_permissions=True)
+	post_room_night(res, "2031-02-01")
+	folio = frappe.db.get_value(
+		"Folio", {"reservation": res.name, "folio_type": "Guest"})
+	inv = close_folio(folio)
+	assert inv.startswith("INV-"), inv
+	fd = frappe.get_doc("Folio", folio)
+	fd.charges[0].amount = 1
+	try:
+		fd.save(ignore_permissions=True)
+		raise AssertionError("closed folio accepted a charge edit")
+	except frappe.ValidationError:
+		pass
+	# settling the balance is still allowed
+	out = api.add_folio_payment(folio, "UPI", 4200)
+	assert out["balance"] == 0, out["balance"]
+
+
 @check("ticket SLA: priority sets due window")
 def t12():
 	from frappe.utils import get_datetime, now_datetime, time_diff_in_seconds
@@ -490,7 +515,7 @@ def execute():
 	frappe.db.savepoint("eval_start")
 	try:
 		RT, ROOM = setup()
-		for fn in (t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18):
+		for fn in (t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19):
 			fn()
 	finally:
 		frappe.db.commit = real_commit
