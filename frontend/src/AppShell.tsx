@@ -79,7 +79,7 @@ interface NavGroup {
 const NAV: NavGroup[] = [
   {
     label: "Front Desk",
-    roles: ["Front Desk", "System Manager", "Administrator"],
+    roles: ["Front Desk", "Hotel Admin", "System Manager", "Administrator"],
     items: [
       { to: "/", label: "Today", icon: Home },
       { to: "/tape", label: "Tape Chart", icon: LayoutGrid },
@@ -90,7 +90,7 @@ const NAV: NavGroup[] = [
   },
   {
     label: "Ops",
-    roles: ["Front Desk", "System Manager", "Administrator"],
+    roles: ["Front Desk", "Hotel Admin", "System Manager", "Administrator"],
     items: [
       { to: "/tickets", label: "Tickets", icon: Ticket },
       { to: "/housekeeping", label: "Housekeeping", icon: ListChecks },
@@ -100,7 +100,7 @@ const NAV: NavGroup[] = [
   },
   {
     label: "Finance",
-    roles: ["Finance", "System Manager", "Administrator"],
+    roles: ["Finance", "Hotel Admin", "System Manager", "Administrator"],
     items: [
       { to: "/billing", label: "Billing", icon: Receipt },
       { to: "/reports", label: "Reports", icon: IndianRupee },
@@ -109,7 +109,7 @@ const NAV: NavGroup[] = [
   },
   {
     label: "Revenue",
-    roles: ["Revenue Manager", "System Manager", "Administrator"],
+    roles: ["Revenue Manager", "Hotel Admin", "System Manager", "Administrator"],
     items: [
       { to: "/rate-plans", label: "Rate Plans", icon: Tags },
       { to: "/guardrails", label: "Guardrails", icon: ShieldCheck },
@@ -121,7 +121,7 @@ const NAV: NavGroup[] = [
   },
   {
     label: "Events",
-    roles: ["Front Desk", "Revenue Manager", "System Manager", "Administrator"],
+    roles: ["Front Desk", "Revenue Manager", "Hotel Admin", "System Manager", "Administrator"],
     items: [
       { to: "/events", label: "Event Bookings", icon: PartyPopper },
       { to: "/venues", label: "Venues", icon: Landmark },
@@ -129,19 +129,31 @@ const NAV: NavGroup[] = [
   },
   {
     label: "Inventory",
-    roles: ["Front Desk", "Revenue Manager", "System Manager", "Administrator"],
+    roles: ["Front Desk", "Revenue Manager", "Hotel Admin", "System Manager", "Administrator"],
     items: [
       { to: "/rooms", label: "Rooms", icon: BedDouble },
       { to: "/room-types", label: "Room Types", icon: LayoutGrid },
     ],
   },
   {
+    // GM (Hotel Admin) sees high-level Settings here; the IT-only items below
+    // (Developers, New Property, Frappe Desk) are gated to site admins.
     label: "Admin",
-    roles: ["System Manager", "Administrator"],
+    roles: ["Hotel Admin", "System Manager", "Administrator"],
     items: [
       { to: "/settings", label: "Settings", icon: SettingsIcon },
-      { to: "/developers", label: "Developers", icon: Code2 },
-      { to: "/setup", label: "New Property", icon: Plus },
+      {
+        to: "/developers",
+        label: "Developers",
+        icon: Code2,
+        roles: ["System Manager", "Administrator"],
+      },
+      {
+        to: "/setup",
+        label: "New Property",
+        icon: Plus,
+        roles: ["System Manager", "Administrator"],
+      },
       {
         // Prod: the Desk is same-origin at /app. Dev (Vite :5173): the Desk
         // lives on the bench at :8000, not the dev server.

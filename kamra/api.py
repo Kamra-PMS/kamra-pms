@@ -7,7 +7,7 @@ surface serves the React console today and the MCP layer next.
 import json
 
 import frappe
-from kamra.authz import require_roles
+from kamra.authz import require_it_admin, require_roles
 from frappe.utils import add_days, nowdate
 
 
@@ -27,6 +27,7 @@ def whoami():
 
 
 @frappe.whitelist()
+@require_it_admin
 def developer_info():
 	"""REST base URL + whether the current user already has an API key.
 
@@ -42,6 +43,7 @@ def developer_info():
 
 
 @frappe.whitelist(methods=["POST"])
+@require_it_admin
 def generate_api_key():
 	"""Generate (or rotate) the current user's REST API key + secret.
 

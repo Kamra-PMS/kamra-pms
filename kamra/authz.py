@@ -8,6 +8,24 @@ import frappe
 
 ADMIN = ("System Manager", "Administrator", "Hotel Admin")
 
+# IT / site admins only — deliberately EXCLUDES the Hotel Admin business role.
+# For user management, developer settings and API keys.
+IT_ADMIN = ("System Manager", "Administrator")
+
+
+def require_it_admin(fn):
+	"""Stricter than require_roles: System / site administrators only, not the
+	Hotel Admin (GM) business role. Place below @frappe.whitelist()."""
+
+	@wraps(fn)
+	def guarded(*args, **kwargs):
+		if not set(IT_ADMIN) & set(frappe.get_roles()):
+			frappe.throw(
+				"Needs a System / site administrator (IT).", frappe.PermissionError)
+		return fn(*args, **kwargs)
+
+	return guarded
+
 
 def require_roles(*roles):
 	"""Allow the listed roles (plus admins). Usage — below the

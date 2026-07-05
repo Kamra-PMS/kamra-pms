@@ -10,6 +10,7 @@ const inputCls =
 
 const DEMO_ACCOUNTS = [
   { label: "System Admin", usr: "admin@kamra.local", pwd: "KamraAdmin1!" },
+  { label: "Hotel Admin (GM)", usr: "gm@kamra.local", pwd: "KamraGM1!" },
   { label: "Front Desk", usr: "frontdesk@kamra.local", pwd: "KamraDesk1!" },
   { label: "Revenue", usr: "revenue@kamra.local", pwd: "KamraRev1!" },
   { label: "Finance", usr: "finance@kamra.local", pwd: "KamraFin1!" },

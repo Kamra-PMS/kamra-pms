@@ -67,6 +67,10 @@ ROLE_GRANTS = {
 USERS = [
 	{"email": "admin@kamra.local", "first_name": "Demo", "last_name": "Admin",
 	 "password": "KamraAdmin1!", "roles": ["System Manager"]},
+	# The GM / Hotel Admin — business super-user (ops + finance + revenue +
+	# high-level settings) but NOT an IT admin: no users, developers or Desk.
+	{"email": "gm@kamra.local", "first_name": "Gita", "last_name": "Menon",
+	 "password": "KamraGM1!", "roles": ["Hotel Admin"]},
 	{"email": "frontdesk@kamra.local", "first_name": "Ravi",
 	 "last_name": "FrontDesk", "password": "KamraDesk1!",
 	 "roles": ["Front Desk"]},
