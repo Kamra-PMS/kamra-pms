@@ -76,7 +76,6 @@ Full docs live in [`docs/`](docs/):
 - [AI & API setup](docs/ai-and-api.md) — the BYOK copilot, MCP, API keys, REST
 - [Self-hosting guide & prerequisites](docs/self-hosting.md)
 - [Email setup](docs/email-setup.md)
-- [Listing on the Frappe Cloud Marketplace](docs/frappe-marketplace.md)
 - [Developer notes](docs-dev.md) · [Brand assets](branding/README.md)
 
 ## Install
