@@ -36,6 +36,7 @@ def open_folio(reservation) -> str:
 		"Folio", {"reservation": reservation.name, "folio_type": "Guest"}
 	)
 	if existing:
+		_post_addons(reservation, existing)
 		return existing
 	folio = frappe.get_doc({
 		"doctype": "Folio",
@@ -58,7 +59,36 @@ def open_folio(reservation) -> str:
 		})
 	_recalculate(folio)
 	folio.insert(ignore_permissions=True)
+	_post_addons(reservation, folio.name)
 	return folio.name
+
+
+def _post_addons(reservation, folio_name: str):
+	"""Post booking-time add-ons (experiences) that haven't hit the folio
+	yet. Idempotent via the row's posted flag."""
+	pending = [a for a in reservation.get("addons") or [] if not a.posted]
+	if not pending:
+		return
+	doc = frappe.get_doc("Folio", folio_name)
+	if doc.status == "Closed":
+		return
+	for a in pending:
+		doc.append("charges", {
+			"posting_date": nowdate(),
+			"charge_type": "Misc",
+			"reservation": reservation.name,
+			"description": a.description or a.experience,
+			"qty": a.qty or 1,
+			"rate": a.rate,
+			"amount": a.amount,
+			"gst_rate": a.gst_rate,
+			"auto_posted": 1,
+		})
+		frappe.db.set_value("Stay Addon", a.name, "posted", 1,
+		                    update_modified=False)
+		a.posted = 1
+	_recalculate(doc)
+	doc.save(ignore_permissions=True)
 
 
 def open_group_folio(group_booking: str) -> str:
@@ -401,6 +431,45 @@ def split_charge(from_folio: str, charge_row: str, to_folio: str,
 	return {"kept": float(remainder), "moved": float(part)}
 
 
+def policy_fee(reservation, basis: str) -> float:
+	"""₹ for a cancellation/no-show fee basis: 'First Night' or
+	'Full Stay' (pre-tax; GST rides on the folio line)."""
+	if basis == "First Night":
+		return float(_nightly_room_rate(reservation,
+		                                reservation.check_in_date))
+	if basis == "Full Stay":
+		return float(reservation.amount_before_tax or 0)
+	return 0.0
+
+
+def post_policy_fee(reservation, basis: str, label: str) -> float:
+	"""Open the guest folio and post a policy fee (no-show / late
+	cancellation). Returns the pre-tax amount posted."""
+	amount = policy_fee(reservation, basis)
+	if amount <= 0:
+		return 0.0
+	folio = frappe.get_doc("Folio", open_folio(reservation))
+	if folio.status == "Closed":
+		return 0.0
+	already = any(c.description == label for c in folio.charges)
+	if already:
+		return 0.0
+	folio.append("charges", {
+		"posting_date": nowdate(),
+		"charge_type": "Misc",
+		"reservation": reservation.name,
+		"description": label,
+		"qty": 1,
+		"rate": amount,
+		"amount": amount,
+		"gst_rate": _room_gst(reservation),
+		"auto_posted": 1,
+	})
+	_recalculate(folio)
+	folio.save(ignore_permissions=True)
+	return amount
+
+
 def close_folio(folio_name: str) -> str:
 	"""Close the folio and assign the GST invoice number."""
 	folio = frappe.get_doc("Folio", folio_name)
@@ -420,8 +489,13 @@ def run_night_audit(property: str, business_date: str | None = None) -> dict:
 	"""Automated end-of-day: open missing folios, post the night's room
 	charges for every in-house guest, flag no-shows. Idempotent per date."""
 	business_date = business_date or nowdate()
-	audit_name = f"AUDIT-{business_date}"
-	if frappe.db.exists("Night Audit Run", audit_name):
+	# per property AND date — a global AUDIT-<date> name would make the
+	# second property's audit silently no-op every night
+	audit_name = f"AUDIT-{business_date}-{property}"
+	if frappe.db.exists("Night Audit Run", audit_name) or \
+			frappe.db.exists("Night Audit Run",
+			                 {"property": property,
+			                  "business_date": business_date}):
 		return {"already_ran": True, "audit": audit_name}
 
 	log_lines = []
@@ -450,7 +524,10 @@ def run_night_audit(property: str, business_date: str | None = None) -> dict:
 			amount_posted += Decimal(str(_nightly_room_rate(res, business_date)))
 			log_lines.append(f"posted room night {business_date} for {res.name}")
 
-	# no-shows: confirmed arrivals whose date has passed
+	# no-shows: confirmed arrivals whose date has passed — flagged AND
+	# charged per the property's policy
+	no_show_basis = frappe.db.get_value(
+		"Property", property, "no_show_charge") or "None"
 	stale = frappe.get_all(
 		"Reservation",
 		filters={
@@ -464,6 +541,14 @@ def run_night_audit(property: str, business_date: str | None = None) -> dict:
 		frappe.db.set_value("Reservation", row.name, "status", "No Show")
 		no_shows += 1
 		log_lines.append(f"flagged no-show: {row.name}")
+		if no_show_basis != "None":
+			res = frappe.get_doc("Reservation", row.name)
+			fee = post_policy_fee(res, no_show_basis,
+			                      f"No-show charge ({no_show_basis})")
+			if fee:
+				amount_posted += Decimal(str(fee))
+				log_lines.append(
+					f"posted no-show charge ₹{fee:,.0f} for {row.name}")
 
 	audit = frappe.get_doc({
 		"doctype": "Night Audit Run",

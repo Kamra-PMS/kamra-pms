@@ -60,7 +60,8 @@
   "precheckin_on",
   "eta",
   "sb_occupants",
-  "occupants"
+  "occupants",
+  "addons"
  ],
  "fields": [
   {
@@ -381,6 +382,13 @@
    "fieldtype": "Table",
    "label": "Occupants",
    "options": "Stay Occupant"
+  },
+  {
+   "description": "Extras chosen at booking \u2014 posted to the guest folio when it opens.",
+   "fieldname": "addons",
+   "fieldtype": "Table",
+   "label": "Add-ons",
+   "options": "Stay Addon"
   }
  ],
  "grid_page_length": 50,

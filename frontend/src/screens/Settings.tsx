@@ -227,11 +227,44 @@ const BOOKING_SPECS: Spec[] = [
     options: ["", "1 Star", "2 Star", "3 Star", "4 Star", "5 Star", "Boutique", "Homestay"],
   },
   { field: "showcase_description", label: "Description", type: "textarea" },
+  {
+    field: "sell_message",
+    label: "Sell message",
+    type: "textarea",
+    hint: "Shown to staff in the booking dialog and used by the AI agent as its upsell prompt",
+  },
   { field: "property_amenities", label: "Amenities (one per line)", type: "textarea" },
   { field: "google_reviews_url", label: "Google reviews URL" },
   { field: "tripadvisor_url", label: "TripAdvisor URL" },
   { field: "logo_url", label: "Logo URL" },
   { field: "hero_image", label: "Hero image URL" },
+]
+
+const POLICY_SPECS: Spec[] = [
+  {
+    field: "free_cancel_days",
+    label: "Free cancellation window (days before arrival)",
+    type: "number",
+    hint: "Cancellations earlier than this are always free",
+  },
+  {
+    field: "cancellation_fee",
+    label: "Late cancellation fee",
+    type: "select",
+    options: ["None", "First Night", "Full Stay"],
+  },
+  {
+    field: "no_show_charge",
+    label: "No-show charge",
+    type: "select",
+    options: ["None", "First Night", "Full Stay"],
+    hint: "Posted automatically by the night audit",
+  },
+  {
+    field: "deposit_pct",
+    label: "Deposit expected at booking (%)",
+    type: "number",
+  },
 ]
 
 const GATEWAY_SPECS: Spec[] = [
@@ -302,6 +335,16 @@ export default function Settings() {
         title="Booking page"
         description="What guests see on the public booking engine."
         specs={BOOKING_SPECS}
+        doc={prop}
+        onSave={async (changes) => {
+          await updateResource("Property", property, changes)
+          load()
+        }}
+      />
+      <SettingsCard
+        title="Cancellation, no-show & deposit"
+        description="The money rules quoted at booking and enforced by cancel and the night audit."
+        specs={POLICY_SPECS}
         doc={prop}
         onSave={async (changes) => {
           await updateResource("Property", property, changes)

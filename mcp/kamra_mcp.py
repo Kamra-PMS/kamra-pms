@@ -110,6 +110,16 @@ def create_booking(guest_name: str, room_type: str, check_in_date: str,
 
 
 @mcp.tool()
+def cancel_booking(reservation: str, waive_fee: bool = False) -> dict:
+    """Cancel a confirmed booking. The property's cancellation policy
+    applies automatically — free outside the window, else the configured
+    fee posts to the folio. Only waive the fee when a manager authorizes
+    it; the waiver is logged."""
+    return api("cancel_reservation", reservation=reservation,
+               waive_fee=1 if waive_fee else 0)
+
+
+@mcp.tool()
 def check_in(reservation: str, room: str = "") -> dict:
     """Check a guest in (opens their folio, marks the room occupied)."""
     return api("check_in", reservation=reservation, room=room or None)

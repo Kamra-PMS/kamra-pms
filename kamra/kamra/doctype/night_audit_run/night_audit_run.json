@@ -2,7 +2,7 @@
  "actions": [],
  "allow_bulk_edit": 1,
  "allow_rename": 1,
- "autoname": "format:AUDIT-{business_date}",
+ "autoname": "format:AUDIT-{business_date}-{property}",
  "creation": "2026-07-04 17:55:11.005571",
  "doctype": "DocType",
  "editable_grid": 1,

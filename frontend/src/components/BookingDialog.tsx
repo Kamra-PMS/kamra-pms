@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react"
-import { Loader2, Star, X } from "lucide-react"
+import { Loader2, Megaphone, Plus, Star, Trash2, X } from "lucide-react"
 import {
+  call,
   createBooking,
   getBookingOptions,
+  getCurrentProperty,
   getQuote,
   guestSearch,
   type BookingOptions,
@@ -10,6 +12,13 @@ import {
   type Quote,
 } from "../lib/api"
 import { Button } from "./ui/button"
+
+interface ExtraRoom {
+  room_type: string
+  adults: number
+  children: number
+  meal_plan: string
+}
 
 const inputCls =
   "w-full rounded-lg border border-zinc-300 bg-white px-3.5 py-2.5 text-base " +
@@ -68,6 +77,9 @@ export function BookingDialog(props: {
     contact_preference: "Booker",
   })
   const [onBehalf, setOnBehalf] = useState(false)
+  const [moreRooms, setMoreRooms] = useState<ExtraRoom[]>([])
+  const [moreQuotes, setMoreQuotes] = useState<(Quote | null)[]>([])
+  const [addonQty, setAddonQty] = useState<Record<string, number>>({})
   const [profile, setProfile] = useState<GuestHit | null>(() =>
     props.initial.guest
       ? {
@@ -149,6 +161,31 @@ export function BookingDialog(props: {
     checkOut,
   ])
 
+  // quotes for the additional rooms
+  useEffect(() => {
+    if (moreRooms.length === 0) {
+      setMoreQuotes([])
+      return
+    }
+    const t = setTimeout(() => {
+      Promise.all(
+        moreRooms.map((r) =>
+          r.room_type
+            ? getQuote({
+                room_type: r.room_type,
+                check_in_date: form.check_in_date,
+                check_out_date: checkOut,
+                adults: r.adults,
+                children: r.children,
+                meal_plan: r.meal_plan || undefined,
+              }).catch(() => null)
+            : Promise.resolve(null),
+        ),
+      ).then(setMoreQuotes)
+    }, 300)
+    return () => clearTimeout(t)
+  }, [moreRooms, form.check_in_date, checkOut])
+
   function shortErr(e: unknown): string {
     const body = (e as { body?: string }).body
     if (body) {
@@ -167,6 +204,49 @@ export function BookingDialog(props: {
     setBusy(true)
     setError(null)
     try {
+      if (moreRooms.length > 0) {
+        // several rooms → one group booking, billable as a block
+        const rooms = [
+          {
+            room_type: form.room_type,
+            count: 1,
+            adults: form.adults,
+            children: form.children,
+            meal_plan: form.meal_plan || undefined,
+          },
+          ...moreRooms.map((r) => ({
+            room_type: r.room_type,
+            count: 1,
+            adults: r.adults,
+            children: r.children,
+            meal_plan: r.meal_plan || undefined,
+          })),
+        ]
+        const out = await call<{
+          group_booking: string
+          created: string[]
+          skipped: { room_type: string; reason: string }[]
+        }>("kamra.api.create_group_booking", {
+          property: getCurrentProperty(),
+          group_name: `${form.guest_name} · ${rooms.length} rooms`,
+          check_in_date: form.check_in_date,
+          check_out_date: checkOut,
+          rooms,
+          guest_name: form.guest_name,
+          phone: form.phone || undefined,
+          company: form.company || undefined,
+        })
+        if (out.skipped.length > 0) {
+          setError(
+            `Booked ${out.created.length} of ${rooms.length} rooms — ` +
+              out.skipped.map((s) => s.reason).join("; "),
+          )
+          if (out.created.length === 0) return
+        }
+        setDone({ ref: out.group_booking, room: null })
+        props.onBooked()
+        return
+      }
       const res = await createBooking({
         guest_name: form.guest_name,
         phone: form.phone || undefined,
@@ -190,6 +270,9 @@ export function BookingDialog(props: {
           : undefined,
         contact_preference:
           onBehalf && form.booked_by_name ? form.contact_preference : undefined,
+        addons: Object.entries(addonQty)
+          .filter(([, q]) => q > 0)
+          .map(([experience, qty]) => ({ experience, qty })),
       })
       setDone({ ref: res.reservation, room: res.room })
       props.onBooked()
@@ -247,6 +330,15 @@ export function BookingDialog(props: {
           <div className="grid gap-0 md:grid-cols-5">
             {/* form — left 3/5 */}
             <div className="space-y-5 px-7 py-6 md:col-span-3">
+              {options?.property?.sell_message && (
+                <div className="flex items-start gap-2 rounded-xl bg-brand-50 px-4 py-3 text-sm text-brand-900">
+                  <Megaphone
+                    className="mt-0.5 size-4 shrink-0 text-brand-700"
+                    aria-hidden
+                  />
+                  <span>{options.property.sell_message}</span>
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-4">
                 <Field label="Guest name">
                   <div className="relative">
@@ -380,6 +472,97 @@ export function BookingDialog(props: {
                 </Field>
               </div>
 
+              {/* additional rooms — books the lot as one group */}
+              {moreRooms.map((r, i) => (
+                <div
+                  key={i}
+                  className="flex flex-wrap items-end gap-2 rounded-xl border border-zinc-200 px-3 py-2.5"
+                >
+                  <span className="w-full text-xs font-medium uppercase tracking-wider text-zinc-400">
+                    Room {i + 2}
+                  </span>
+                  <select
+                    className={`${inputCls} !w-auto flex-1`}
+                    aria-label={`Room ${i + 2} type`}
+                    value={r.room_type}
+                    onChange={(e) =>
+                      setMoreRooms((rs) =>
+                        rs.map((x, j) =>
+                          j === i ? { ...x, room_type: e.target.value } : x,
+                        ),
+                      )
+                    }
+                  >
+                    {options?.room_types.map((rt) => (
+                      <option key={rt.name} value={rt.name}>
+                        {rt.room_type_name}
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    type="number"
+                    min={1}
+                    aria-label={`Room ${i + 2} adults`}
+                    className={`${inputCls} !w-16`}
+                    value={r.adults}
+                    onChange={(e) =>
+                      setMoreRooms((rs) =>
+                        rs.map((x, j) =>
+                          j === i
+                            ? { ...x, adults: Math.max(1, Number(e.target.value)) }
+                            : x,
+                        ),
+                      )
+                    }
+                  />
+                  <select
+                    className={`${inputCls} !w-auto`}
+                    aria-label={`Room ${i + 2} meal plan`}
+                    value={r.meal_plan}
+                    onChange={(e) =>
+                      setMoreRooms((rs) =>
+                        rs.map((x, j) =>
+                          j === i ? { ...x, meal_plan: e.target.value } : x,
+                        ),
+                      )
+                    }
+                  >
+                    <option value="">Room only</option>
+                    {options?.meal_plans.map((mp) => (
+                      <option key={mp.name} value={mp.name}>
+                        {mp.label}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    className="rounded p-1.5 text-zinc-400 hover:text-rose-500"
+                    aria-label={`Remove room ${i + 2}`}
+                    onClick={() =>
+                      setMoreRooms((rs) => rs.filter((_, j) => j !== i))
+                    }
+                  >
+                    <Trash2 className="size-4" aria-hidden />
+                  </button>
+                </div>
+              ))}
+              <button
+                className="inline-flex items-center gap-1 text-sm font-medium text-brand-700 hover:underline"
+                onClick={() =>
+                  setMoreRooms((rs) => [
+                    ...rs,
+                    {
+                      room_type: form.room_type,
+                      adults: 2,
+                      children: 0,
+                      meal_plan: form.meal_plan,
+                    },
+                  ])
+                }
+              >
+                <Plus className="size-4" aria-hidden />
+                Add another room
+              </button>
+
               <div className="grid grid-cols-2 gap-4">
                 <Field label="Meal plan">
                   <select
@@ -438,6 +621,48 @@ export function BookingDialog(props: {
                 </Field>
               </div>
 
+              {moreRooms.length === 0 &&
+                (options?.experiences.length ?? 0) > 0 && (
+                  <div>
+                    <span className="mb-1.5 block text-sm font-medium text-zinc-600">
+                      Add-ons
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {options?.experiences.map((x) => {
+                        const on = (addonQty[x.name] ?? 0) > 0
+                        return (
+                          <button
+                            key={x.name}
+                            type="button"
+                            aria-pressed={on}
+                            className={
+                              on
+                                ? "rounded-full bg-brand-600 px-3 py-1.5 text-sm font-medium text-white"
+                                : "rounded-full border border-zinc-300 px-3 py-1.5 text-sm text-zinc-600 hover:border-brand-600"
+                            }
+                            onClick={() =>
+                              setAddonQty((q) => ({
+                                ...q,
+                                [x.name]: on ? 0 : 1,
+                              }))
+                            }
+                          >
+                            {x.experience_name} · ₹{inr(x.price)}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+
+              {moreRooms.length > 0 && (
+                <p className="text-xs text-zinc-400">
+                  Multi-room bookings are created as a group — vouchers,
+                  add-ons and booker details can be added per stay afterwards.
+                </p>
+              )}
+
+              {moreRooms.length === 0 && (
               <div className="rounded-xl border border-zinc-200 px-4 py-3">
                 <label className="flex items-center gap-2 text-sm font-medium text-zinc-700">
                   <input
@@ -509,6 +734,7 @@ export function BookingDialog(props: {
                   </div>
                 )}
               </div>
+              )}
             </div>
 
             {/* quote — right 2/5 */}
@@ -550,17 +776,81 @@ export function BookingDialog(props: {
                       <span>GST {quote.tax_percent}%</span>
                       <span>₹{inr(quote.tax_amount)}</span>
                     </div>
-                    <div className="mt-2 flex items-baseline justify-between border-t border-zinc-200 pt-3">
-                      <span className="text-sm font-medium text-zinc-500">
-                        Total
-                      </span>
-                      <span className="text-2xl font-semibold">
-                        ₹{inr(quote.amount_after_tax)}
-                      </span>
-                    </div>
-                    <p className="text-xs text-zinc-400">
-                      {form.check_in_date} → {checkOut}
-                    </p>
+                    {moreQuotes.map((mq, i) =>
+                      mq ? (
+                        <div
+                          key={i}
+                          className="flex justify-between text-zinc-600"
+                        >
+                          <span>
+                            Room {i + 2} ·{" "}
+                            {options?.room_types.find(
+                              (rt) => rt.name === moreRooms[i]?.room_type,
+                            )?.room_type_name ?? ""}
+                          </span>
+                          <span>₹{inr(mq.amount_after_tax)}</span>
+                        </div>
+                      ) : null,
+                    )}
+                    {(() => {
+                      const addonsGross = Object.entries(addonQty).reduce(
+                        (s, [n, q]) => {
+                          const x = options?.experiences.find(
+                            (e) => e.name === n,
+                          )
+                          return x && q > 0
+                            ? s + q * x.price * (1 + x.gst_rate / 100)
+                            : s
+                        },
+                        0,
+                      )
+                      const grand =
+                        quote.amount_after_tax +
+                        moreQuotes.reduce(
+                          (s, q) => s + (q?.amount_after_tax ?? 0),
+                          0,
+                        ) +
+                        addonsGross
+                      const pol = options?.property
+                      const cutoff = (() => {
+                        if (!pol) return ""
+                        const d = new Date(form.check_in_date + "T00:00:00")
+                        d.setDate(d.getDate() - (pol.free_cancel_days || 0))
+                        return d.toISOString().slice(0, 10)
+                      })()
+                      return (
+                        <>
+                          {addonsGross > 0 && (
+                            <div className="flex justify-between text-zinc-600">
+                              <span>Add-ons (incl. GST)</span>
+                              <span>₹{inr(addonsGross)}</span>
+                            </div>
+                          )}
+                          <div className="mt-2 flex items-baseline justify-between border-t border-zinc-200 pt-3">
+                            <span className="text-sm font-medium text-zinc-500">
+                              Total{moreRooms.length > 0 ? " · all rooms" : ""}
+                            </span>
+                            <span className="text-2xl font-semibold">
+                              ₹{inr(grand)}
+                            </span>
+                          </div>
+                          <p className="text-xs text-zinc-400">
+                            {form.check_in_date} → {checkOut}
+                          </p>
+                          {pol && (
+                            <p className="mt-2 border-t border-zinc-200 pt-2 text-xs leading-relaxed text-zinc-500">
+                              {pol.cancellation_fee === "None"
+                                ? "Free cancellation."
+                                : `Free cancellation until ${cutoff}; after that the ${pol.cancellation_fee.toLowerCase()} is charged.`}
+                              {pol.no_show_charge !== "None" &&
+                                ` No-show: ${pol.no_show_charge.toLowerCase()} charged.`}
+                              {pol.deposit_pct > 0 &&
+                                ` Deposit expected now: ₹${inr((grand * pol.deposit_pct) / 100)} (${pol.deposit_pct}%).`}
+                            </p>
+                          )}
+                        </>
+                      )
+                    })()}
                   </div>
                 ) : (
                   <p className="text-sm text-zinc-400">

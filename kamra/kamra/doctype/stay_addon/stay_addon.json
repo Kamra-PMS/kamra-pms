@@ -1,0 +1,80 @@
+{
+ "actions": [],
+ "allow_bulk_edit": 1,
+ "allow_rename": 1,
+ "creation": "2026-07-05 16:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "experience",
+  "description",
+  "qty",
+  "rate",
+  "amount",
+  "gst_rate",
+  "posted"
+ ],
+ "fields": [
+  {
+   "fieldname": "experience",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Experience",
+   "options": "Experience",
+   "reqd": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Description"
+  },
+  {
+   "default": "1",
+   "fieldname": "qty",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Qty"
+  },
+  {
+   "fieldname": "rate",
+   "fieldtype": "Currency",
+   "label": "Rate"
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Amount"
+  },
+  {
+   "fieldname": "gst_rate",
+   "fieldtype": "Percent",
+   "label": "GST %"
+  },
+  {
+   "default": "0",
+   "description": "Posted to the folio",
+   "fieldname": "posted",
+   "fieldtype": "Check",
+   "label": "Posted",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-07-05 16:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kamra",
+ "name": "Stay Addon",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

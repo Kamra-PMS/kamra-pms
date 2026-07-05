@@ -393,6 +393,67 @@ def t16():
 	assert frappe.db.get_value("Folio", folio, "grand_total") == total_before
 
 
+@check("add-ons: booked extras post to the folio once, priced from Experience")
+def t17():
+	from kamra import api
+	exp = frappe.get_doc({
+		"doctype": "Experience", "property": P,
+		"experience_name": "EVAL Sunset Cruise", "category": "Activity",
+		"price": 1500, "gst_rate": 18}).insert(ignore_permissions=True)
+	out = api.create_booking(
+		property=P, room_type=RT, check_in_date="2031-01-05",
+		check_out_date="2031-01-06", guest_name="Eval Addon",
+		phone="+91 70000 00014", addons=[{"experience": exp.name, "qty": 2}])
+	api.check_in(out["reservation"])
+	folio = frappe.db.get_value(
+		"Folio", {"reservation": out["reservation"], "folio_type": "Guest"})
+	fd = frappe.get_doc("Folio", folio)
+	line = next(c for c in fd.charges if c.charge_type == "Misc")
+	assert line.amount == 3000 and line.gst_rate == 18, (line.amount,
+	                                                     line.gst_rate)
+	# reopening the folio must not double-post
+	from kamra.folio import open_folio
+	res = frappe.get_doc("Reservation", out["reservation"])
+	open_folio(res)
+	fd = frappe.get_doc("Folio", folio)
+	assert len([c for c in fd.charges if c.charge_type == "Misc"]) == 1
+
+
+@check("policies: late cancel fee, free outside window, no-show charged")
+def t18():
+	from kamra import api
+	from kamra.folio import run_night_audit
+	frappe.db.set_value("Property", P, {
+		"free_cancel_days": 2, "cancellation_fee": "First Night",
+		"no_show_charge": "First Night"})
+
+	# cancel far in advance → free
+	g = _guest("Eval Far", "+91 70000 00015")
+	far = _res(g, add_days(nowdate(), 30), add_days(nowdate(), 31))
+	out = api.cancel_reservation(far.name)
+	assert out["fee"] == 0, out
+
+	# cancel inside the window → first night lands on the folio
+	g2 = _guest("Eval Late", "+91 70000 00016")
+	late = _res(g2, add_days(nowdate(), 1), add_days(nowdate(), 2))
+	out = api.cancel_reservation(late.name)
+	assert out["fee"] == 4000, out
+	folio = frappe.db.get_value(
+		"Folio", {"reservation": late.name, "folio_type": "Guest"})
+	assert frappe.db.get_value("Folio", folio, "grand_total") == 4200
+
+	# yesterday's un-arrived booking → no-show flagged AND charged
+	g3 = _guest("Eval NoShow", "+91 70000 00017")
+	ns = _res(g3, add_days(nowdate(), -1), nowdate())
+	run_night_audit(P, nowdate())
+	assert frappe.db.get_value("Reservation", ns.name, "status") == "No Show"
+	ns_folio = frappe.db.get_value(
+		"Folio", {"reservation": ns.name, "folio_type": "Guest"})
+	assert ns_folio, "no-show folio not opened"
+	charges = frappe.get_doc("Folio", ns_folio).charges
+	assert any("No-show" in (c.description or "") for c in charges)
+
+
 @check("ticket SLA: priority sets due window")
 def t12():
 	from frappe.utils import get_datetime, now_datetime, time_diff_in_seconds
@@ -409,12 +470,16 @@ def execute():
 	# frappe.locale.get_locale_value crashes (UnboundLocalError) when no
 	# language is set on the session — true in bare CI consoles.
 	frappe.local.lang = frappe.local.lang or "en"
+	# night audit (and friends) commit mid-run in production; under the
+	# harness a commit would release the savepoint and leak test data
+	real_commit, frappe.db.commit = frappe.db.commit, lambda *a, **k: None
 	frappe.db.savepoint("eval_start")
 	try:
 		RT, ROOM = setup()
-		for fn in (t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16):
+		for fn in (t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18):
 			fn()
 	finally:
+		frappe.db.commit = real_commit
 		frappe.db.rollback(save_point="eval_start")
 
 	passed = sum(1 for _, ok, _ in RESULTS if ok)

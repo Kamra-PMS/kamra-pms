@@ -1221,6 +1221,43 @@ def _scrub_stay_ids(res):
 
 
 @frappe.whitelist()
+def cancel_reservation(reservation: str, waive_fee: int = 0):
+	"""Cancel a booking, applying the property's cancellation policy:
+	free outside the window, else the configured fee lands on the folio.
+	Pass waive_fee=1 to cancel graciously (logged)."""
+	from frappe.utils import date_diff
+
+	res = frappe.get_doc("Reservation", reservation)
+	if res.status != "Confirmed":
+		frappe.throw("Only confirmed bookings can be cancelled — "
+		             "checked-in stays check out.")
+	policy = frappe.db.get_value(
+		"Property", res.property,
+		["free_cancel_days", "cancellation_fee"], as_dict=True)
+	days_before = date_diff(res.check_in_date, nowdate())
+	inside_window = days_before < int(policy.free_cancel_days or 0)
+
+	fee = 0.0
+	if inside_window and not int(waive_fee or 0) \
+			and (policy.cancellation_fee or "None") != "None":
+		from kamra.folio import post_policy_fee
+		fee = post_policy_fee(
+			res, policy.cancellation_fee,
+			f"Cancellation fee ({policy.cancellation_fee})")
+
+	res.status = "Cancelled"
+	res.save()
+	from kamra.savings import log_action
+	log_action("cancel_reservation", "Reservation", res.name, res.property,
+	           rationale=f"Cancelled {days_before}d before arrival — "
+	                     + (f"fee ₹{fee:,.0f}" if fee else
+	                        ("fee waived" if int(waive_fee or 0)
+	                         else "no fee (outside window)")))
+	return {"reservation": res.name, "fee": fee,
+	        "waived": bool(int(waive_fee or 0))}
+
+
+@frappe.whitelist()
 def check_out(reservation: str):
 	doc = frappe.get_doc("Reservation", reservation)
 	doc.status = "Checked Out"
@@ -1401,6 +1438,18 @@ def booking_options(property: str):
 			fields=["name", "agent_name", "commission_pct"],
 			order_by="agent_name asc",
 		),
+		"experiences": frappe.get_all(
+			"Experience", filters={"property": property, "disabled": 0},
+			fields=["name", "experience_name", "category", "price",
+			        "gst_rate"],
+			order_by="price asc",
+		),
+		"property": frappe.db.get_value(
+			"Property", property,
+			["sell_message", "free_cancel_days", "cancellation_fee",
+			 "no_show_charge", "deposit_pct"],
+			as_dict=True,
+		),
 	}
 
 
@@ -1447,7 +1496,8 @@ def create_booking(property: str, room_type: str, check_in_date: str,
                    booked_by_phone: str | None = None,
                    booker_relation: str | None = None,
                    contact_preference: str | None = None,
-                   guest: str | None = None):
+                   guest: str | None = None,
+                   addons=None):
 	"""One-call booking: attach to an existing guest profile when given,
 	else dedup by phone / create one. Optional auto room assignment,
 	voucher applied, price computed by the engine."""
@@ -1497,6 +1547,27 @@ def create_booking(property: str, room_type: str, check_in_date: str,
 			or ("Booker" if booked_by_name else "Guest"),
 		"auto_price": 1,
 	})
+
+	# extras chosen at booking — priced from the Experience, posted to the
+	# folio the moment it opens
+	if isinstance(addons, str):
+		addons = frappe.parse_json(addons)
+	for a in addons or []:
+		exp = frappe.db.get_value(
+			"Experience", a.get("experience"),
+			["experience_name", "price", "gst_rate"], as_dict=True)
+		if not exp:
+			continue
+		qty = float(a.get("qty") or 1)
+		doc.append("addons", {
+			"experience": a["experience"],
+			"description": exp.experience_name,
+			"qty": qty,
+			"rate": float(exp.price or 0),
+			"amount": qty * float(exp.price or 0),
+			"gst_rate": float(exp.gst_rate or 0),
+		})
+
 	doc.insert(ignore_permissions=False)
 
 	from kamra.savings import log_action
@@ -1551,9 +1622,11 @@ def create_group_booking(property: str, group_name: str, check_in_date: str,
 					room_type=spec["room_type"],
 					check_in_date=check_in_date,
 					check_out_date=check_out_date,
-					guest_name=guest_name,
-					phone=phone,
-					meal_plan=meal_plan,
+					guest_name=spec.get("guest_name") or guest_name,
+					phone=spec.get("phone") or phone,
+					adults=int(spec.get("adults", 2)),
+					children=int(spec.get("children", 0)),
+					meal_plan=spec.get("meal_plan") or meal_plan,
 					rate_plan=rate_plan,
 					booking_type="Corporate" if company else "Group",
 					company=company,

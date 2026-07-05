@@ -29,6 +29,10 @@
   "column_break_c",
   "gstin",
   "id_retention",
+  "free_cancel_days",
+  "cancellation_fee",
+  "no_show_charge",
+  "deposit_pct",
   "sb_gst",
   "gst_mode",
   "gst_slab_threshold",
@@ -39,6 +43,7 @@
   "booking_engine_enabled",
   "logo_url",
   "showcase_description",
+  "sell_message",
   "hero_image",
   "star_category",
   "google_reviews_url",
@@ -258,6 +263,40 @@
    "fieldtype": "Select",
    "label": "ID Retention",
    "options": "Store\nVerify & Discard"
+  },
+  {
+   "description": "Shown to staff in the booking dialog and read by the AI agent as its upsell prompt.",
+   "fieldname": "sell_message",
+   "fieldtype": "Small Text",
+   "label": "Sell Message"
+  },
+  {
+   "default": "1",
+   "description": "Cancellations at least this many days before arrival are free.",
+   "fieldname": "free_cancel_days",
+   "fieldtype": "Int",
+   "label": "Free Cancellation (days before arrival)"
+  },
+  {
+   "default": "First Night",
+   "fieldname": "cancellation_fee",
+   "fieldtype": "Select",
+   "label": "Late Cancellation Fee",
+   "options": "None\nFirst Night\nFull Stay"
+  },
+  {
+   "default": "First Night",
+   "fieldname": "no_show_charge",
+   "fieldtype": "Select",
+   "label": "No-show Charge",
+   "options": "None\nFirst Night\nFull Stay"
+  },
+  {
+   "default": "0",
+   "description": "Advance expected at booking, as % of the stay total.",
+   "fieldname": "deposit_pct",
+   "fieldtype": "Percent",
+   "label": "Deposit %"
   }
  ],
  "grid_page_length": 50,

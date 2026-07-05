@@ -141,6 +141,20 @@ export interface BookingOptions {
   rate_plans: { name: string; rate_plan_name: string; code: string }[]
   companies: { name: string; company_name: string }[]
   travel_agents: { name: string; agent_name: string; commission_pct: number }[]
+  experiences: {
+    name: string
+    experience_name: string
+    category: string | null
+    price: number
+    gst_rate: number
+  }[]
+  property: {
+    sell_message: string | null
+    free_cancel_days: number
+    cancellation_fee: "None" | "First Night" | "Full Stay"
+    no_show_charge: "None" | "First Night" | "Full Stay"
+    deposit_pct: number
+  }
 }
 
 export interface Quote {
@@ -235,6 +249,7 @@ export const createBooking = (
     booked_by_phone?: string
     booker_relation?: string
     contact_preference?: string
+    addons?: { experience: string; qty: number }[]
   },
 ) =>
   call<{ reservation: string; room: string | null; amount_after_tax: number }>(
