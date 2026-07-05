@@ -267,6 +267,23 @@ const POLICY_SPECS: Spec[] = [
   },
 ]
 
+const AI_SPECS: Spec[] = [
+  { field: "enabled", label: "Enabled", type: "check" },
+  {
+    field: "base_url",
+    label: "Provider base URL",
+    hint: "any OpenAI-compatible endpoint: OpenAI, OpenRouter, Groq, Ollama…",
+  },
+  { field: "model", label: "Model" },
+  { field: "api_key", label: "API key", type: "password" },
+  {
+    field: "extra_instructions",
+    label: "Extra instructions",
+    type: "textarea",
+    hint: "property-specific guidance — upsell priorities, tone",
+  },
+]
+
 const GATEWAY_SPECS: Spec[] = [
   { field: "enabled", label: "Enabled", type: "check" },
   {
@@ -291,6 +308,7 @@ export default function Settings() {
   const property = getCurrentProperty()
   const [prop, setProp] = useState<Doc | null>(null)
   const [gateway, setGateway] = useState<Doc | null>(null)
+  const [ai, setAi] = useState<Doc | null>(null)
   const [theme, setThemeState] = useState<Theme>(getTheme())
 
   const load = useCallback(() => {
@@ -302,11 +320,15 @@ export default function Settings() {
       fields: ["name", "gateway", "enabled", "test_mode", "key_id"],
       filters: [["property", "=", property]],
     }).then((rows) => setGateway(rows[0] ?? {}))
+    listResource("AI Assistant Settings", {
+      fields: ["name", "enabled", "base_url", "model", "extra_instructions"],
+      filters: [["property", "=", property]],
+    }).then((rows) => setAi(rows[0] ?? {}))
   }, [property])
 
   useEffect(load, [load])
 
-  if (!prop || !gateway)
+  if (!prop || !gateway || !ai)
     return <p className="py-10 text-center text-zinc-400">Loading…</p>
 
   return (
@@ -372,6 +394,29 @@ export default function Settings() {
             )
           } else {
             await createResource("Payment Gateway Settings", {
+              ...payload,
+              property,
+            })
+          }
+          load()
+        }}
+      />
+
+      <SettingsCard
+        title="AI assistant (bring your own key)"
+        description="Optional in-app copilot for staff. Your key, your data — the model can only act through Kamra's governed tools, and every action is audit-logged."
+        specs={AI_SPECS}
+        doc={ai}
+        onSave={async (changes) => {
+          const payload = Object.fromEntries(
+            Object.entries(changes).filter(
+              ([k, v]) => k !== "api_key" || v !== "",
+            ),
+          )
+          if (ai.name) {
+            await updateResource("AI Assistant Settings", String(ai.name), payload)
+          } else {
+            await createResource("AI Assistant Settings", {
               ...payload,
               property,
             })

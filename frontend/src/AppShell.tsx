@@ -27,6 +27,7 @@ import {
 } from "lucide-react"
 import { NavLink, Outlet } from "react-router-dom"
 import { BookingDialog } from "./components/BookingDialog"
+import AssistantPanel from "./components/AssistantPanel"
 import { Button } from "./components/ui/button"
 import {
   getCurrentProperty,
@@ -306,6 +307,8 @@ export default function AppShell() {
           />
         </main>
       </div>
+
+      <AssistantPanel key={`ai-${property}`} />
 
       {booking && (
         <BookingDialog

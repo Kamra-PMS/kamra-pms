@@ -58,6 +58,8 @@ Hotels deserve better than:
 
 ## Documentation
 
+- [Front-desk user guide](docs/user-guide.md) — a day at the desk, end to end
+- [AI & API setup](docs/ai-and-api.md) — the BYOK copilot, MCP, API keys, REST
 - [Self-hosting guide & prerequisites](docs/self-hosting.md)
 - [Email setup](docs/email-setup.md)
 - [Listing on the Frappe Cloud Marketplace](docs/frappe-marketplace.md)
