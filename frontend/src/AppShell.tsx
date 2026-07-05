@@ -166,9 +166,11 @@ const NAV: NavGroup[] = [
         roles: ["Administrator", "System Manager"],
       },
       {
+        // /app/build is Frappe's default workspace (there is no "home"
+        // workspace); bare /app bounces to the Kamra app.
         href: import.meta.env.PROD
-          ? "/app/home"
-          : "http://localhost:8000/app/home",
+          ? "/app/build"
+          : "http://localhost:8000/app/build",
         label: "Frappe Desk",
         icon: ExternalLink,
         // The raw admin surface — site admins only, never a business Hotel Admin.
