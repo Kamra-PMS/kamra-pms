@@ -65,6 +65,7 @@ interface NavItem {
   href?: string // external link (e.g. the Frappe Desk), opens in a new tab
   label: string
   icon: React.ComponentType<{ className?: string }>
+  roles?: string[] // optional per-item gate (in addition to the group's)
 }
 
 interface NavGroup {
@@ -141,7 +142,15 @@ const NAV: NavGroup[] = [
       { to: "/settings", label: "Settings", icon: SettingsIcon },
       { to: "/developers", label: "Developers", icon: Code2 },
       { to: "/setup", label: "New Property", icon: Plus },
-      { href: "/app", label: "Frappe Desk", icon: ExternalLink },
+      {
+        // Prod: the Desk is same-origin at /app. Dev (Vite :5173): the Desk
+        // lives on the bench at :8000, not the dev server.
+        href: import.meta.env.PROD ? "/app" : "http://localhost:8000/app",
+        label: "Frappe Desk",
+        icon: ExternalLink,
+        // The raw admin surface — site admins only, never a business Hotel Admin.
+        roles: ["Administrator", "System Manager"],
+      },
     ],
   },
 ]
@@ -239,7 +248,13 @@ export default function AppShell() {
               <div className="mb-1 px-2 text-[10px] font-semibold uppercase tracking-widest text-zinc-400">
                 {group.label}
               </div>
-              {group.items.map((item) =>
+              {group.items
+                .filter(
+                  (item) =>
+                    !item.roles ||
+                    item.roles.some((r) => me.roles.includes(r)),
+                )
+                .map((item) =>
                 item.href ? (
                   <a
                     key={item.href}
