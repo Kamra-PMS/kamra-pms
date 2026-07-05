@@ -380,6 +380,7 @@ export const reservationsConfig: ScreenConfig = {
     { field: "booking_type", label: "Type" },
     { field: "source", label: "Source" },
     { field: "amount_after_tax", label: "Total ₹" },
+    { field: "advance_paid", label: "Advance ₹" },
   ],
   form: [
     { field: "guest_name", label: "Guest", type: "readonly" },

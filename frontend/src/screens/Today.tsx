@@ -35,6 +35,21 @@ const hkTone: Record<RoomRow["housekeeping_status"], string> = {
   "Out of Order": "border-rose-300 bg-rose-50 text-rose-900",
 }
 
+const inr0 = (n: number) =>
+  Number(n).toLocaleString("en-IN", { maximumFractionDigits: 0 })
+
+/** Paid / due / unpaid at a glance — the folio is the source of truth,
+ * this chip just saves the trip to Billing. */
+function paymentChip(row: ReservationRow) {
+  const paid = Number(row.paid_total ?? 0)
+  const due = Number(row.balance_due ?? 0)
+  if (due <= 0 && paid > 0) return <Badge tone="green">Paid</Badge>
+  if (paid > 0)
+    return <Badge tone="amber">₹{inr0(due)} due</Badge>
+  if (due > 0) return <Badge tone="zinc">Unpaid</Badge>
+  return null
+}
+
 function sourceBadge(row: ReservationRow) {
   if (row.source === "AI Agent") return <Badge tone="brand">AI Agent</Badge>
   if (row.source === "OTA")
@@ -76,6 +91,7 @@ function ReservationList(props: {
                 {row.guest_name}
               </span>
               {sourceBadge(row)}
+              {paymentChip(row)}
               {row.precheckin_status === "Submitted" && (
                 <Badge tone="green">Pre-checked-in</Badge>
               )}

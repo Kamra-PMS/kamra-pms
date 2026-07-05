@@ -1123,6 +1123,40 @@ def front_desk_snapshot(property: str | None = None, date: str | None = None):
 		"Reservation", filters=inh_filters, fields=res_fields,
 		order_by="room asc",
 	)
+
+	# payment state per stay, straight off the folios (the group master is
+	# the company's bill, not this guest's — excluded from the chip)
+	all_rows = arrivals + departures + in_house
+	names = list({r.name for r in all_rows})
+	paid_map = {}
+	if names:
+		for row in frappe.db.sql(
+			"""
+			SELECT reservation,
+			       COALESCE(SUM(payments_total), 0) AS paid,
+			       COALESCE(SUM(balance), 0) AS due
+			FROM `tabFolio`
+			WHERE reservation IN %(names)s AND folio_type != 'Group'
+			GROUP BY reservation
+			""",
+			{"names": names}, as_dict=True,
+		):
+			paid_map[row.reservation] = row
+	amounts = {r.name: r for r in frappe.get_all(
+		"Reservation", filters={"name": ("in", names or [""])},
+		fields=["name", "amount_after_tax", "advance_paid"])}
+	for r in all_rows:
+		hit = paid_map.get(r.name)
+		amt = amounts.get(r.name)
+		if hit:
+			r["paid_total"] = float(hit.paid)
+			r["balance_due"] = float(hit.due)
+		else:
+			# no folio yet — the booking-time advance is all we know
+			adv = float(amt.advance_paid or 0) if amt else 0
+			total = float(amt.amount_after_tax or 0) if amt else 0
+			r["paid_total"] = adv
+			r["balance_due"] = max(0.0, total - adv)
 	rooms = frappe.get_all(
 		"Room",
 		filters=room_filters,

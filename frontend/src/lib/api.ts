@@ -82,6 +82,8 @@ export interface ReservationRow {
   booker_relation: string | null
   contact_preference: "Guest" | "Booker" | "Both" | null
   company: string | null
+  paid_total: number
+  balance_due: number
 }
 
 export interface RoomRow {
