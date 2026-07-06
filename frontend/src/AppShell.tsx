@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react"
+import { Fragment, useEffect, useState } from "react"
 import {
   BadgePercent,
   BedDouble,
   Briefcase,
   Building2,
   CalendarDays,
+  ChevronDown,
   Clock,
   Landmark,
   PackageSearch,
@@ -71,10 +72,15 @@ interface NavGroup {
   label: string
   roles: string[] // any of these roles can see the group
   items: NavItem[]
+  // Configuration/admin groups — the once-in-a-while stuff. Tucked under a
+  // collapsible "Setup" section (collapsed by default), the way Frappe keeps
+  // day-to-day workspaces up top and masters/settings out of the way.
+  setup?: boolean
 }
 
-/* Ordered by how often each group is touched in a working day:
-   desk first, ops second, money third, configuration last. */
+/* Day-to-day work stays visible up top (desk → ops → money → events); the
+   configuration and admin that you touch once in a while is collapsed under
+   Setup. */
 const NAV: NavGroup[] = [
   {
     label: "Front Desk",
@@ -82,18 +88,18 @@ const NAV: NavGroup[] = [
     items: [
       { to: "/", label: "Today", icon: Home },
       { to: "/assistant", label: "Copilot", icon: Sparkles },
+      { to: "/reservations", label: "Reservations", icon: ClipboardList },
       { to: "/tape", label: "Tape Chart", icon: LayoutGrid },
       { to: "/calendar", label: "Calendar", icon: CalendarDays },
-      { to: "/reservations", label: "Reservations", icon: ClipboardList },
       { to: "/guests", label: "Guests", icon: Users },
     ],
   },
   {
-    label: "Ops",
+    label: "Operations",
     roles: ["Front Desk", "Hotel Admin", "System Manager", "Administrator"],
     items: [
-      { to: "/tickets", label: "Tickets", icon: Ticket },
       { to: "/housekeeping", label: "Housekeeping", icon: ListChecks },
+      { to: "/tickets", label: "Tickets", icon: Ticket },
       { to: "/lost-found", label: "Lost & Found", icon: PackageSearch },
       { to: "/shifts", label: "Shifts", icon: Clock },
     ],
@@ -108,38 +114,42 @@ const NAV: NavGroup[] = [
     ],
   },
   {
-    label: "Revenue",
+    label: "Events",
+    roles: ["Front Desk", "Revenue Manager", "Hotel Admin", "System Manager", "Administrator"],
+    items: [
+      { to: "/events", label: "Event Bookings", icon: PartyPopper },
+      { to: "/venue-calendar", label: "Venue Calendar", icon: CalendarDays },
+    ],
+  },
+  // ---- Setup (collapsed by default) ----
+  {
+    label: "Inventory",
+    setup: true,
+    roles: ["Front Desk", "Revenue Manager", "Hotel Admin", "System Manager", "Administrator"],
+    items: [
+      { to: "/rooms", label: "Rooms", icon: BedDouble },
+      { to: "/room-types", label: "Room Types", icon: LayoutGrid },
+      { to: "/venues", label: "Venues", icon: Landmark },
+    ],
+  },
+  {
+    label: "Rates & Offers",
+    setup: true,
     roles: ["Revenue Manager", "Hotel Admin", "System Manager", "Administrator"],
     items: [
       { to: "/rate-plans", label: "Rate Plans", icon: Tags },
-      { to: "/guardrails", label: "Guardrails", icon: ShieldCheck },
       { to: "/seasons", label: "Seasons", icon: CalendarDays },
+      { to: "/guardrails", label: "Guardrails", icon: ShieldCheck },
       { to: "/vouchers", label: "Vouchers", icon: BadgePercent },
       { to: "/meal-plans", label: "Meal Plans", icon: UtensilsCrossed },
       { to: "/travel-agents", label: "Travel Agents", icon: Briefcase },
     ],
   },
   {
-    label: "Events",
-    roles: ["Front Desk", "Revenue Manager", "Hotel Admin", "System Manager", "Administrator"],
-    items: [
-      { to: "/events", label: "Event Bookings", icon: PartyPopper },
-      { to: "/venue-calendar", label: "Venue Calendar", icon: CalendarDays },
-      { to: "/venues", label: "Venues", icon: Landmark },
-    ],
-  },
-  {
-    label: "Inventory",
-    roles: ["Front Desk", "Revenue Manager", "Hotel Admin", "System Manager", "Administrator"],
-    items: [
-      { to: "/rooms", label: "Rooms", icon: BedDouble },
-      { to: "/room-types", label: "Room Types", icon: LayoutGrid },
-    ],
-  },
-  {
     // GM (Hotel Admin) sees high-level Settings here; the IT-only items below
     // (Developers, New Property, Frappe Desk) are gated to site admins.
     label: "Admin",
+    setup: true,
     roles: ["Hotel Admin", "System Manager", "Administrator"],
     items: [
       { to: "/settings", label: "Settings", icon: SettingsIcon },
@@ -227,8 +237,59 @@ export default function AppShell() {
     setProperty(name)
   }
 
+  // Which Setup groups are expanded — collapsed by default, remembered locally.
+  const [openSetup, setOpenSetup] = useState<Set<string>>(() => {
+    try {
+      return new Set(
+        JSON.parse(localStorage.getItem("kamra:nav-setup") || "[]"),
+      )
+    } catch {
+      return new Set()
+    }
+  })
+  function toggleSetup(label: string) {
+    setOpenSetup((prev) => {
+      const next = new Set(prev)
+      if (next.has(label)) next.delete(label)
+      else next.add(label)
+      localStorage.setItem("kamra:nav-setup", JSON.stringify([...next]))
+      return next
+    })
+  }
+
   const canSee = (group: NavGroup) =>
     group.roles.some((r) => roles.includes(r))
+
+  const renderItem = (item: NavItem) =>
+    item.href ? (
+      <a
+        key={item.href}
+        href={item.href}
+        target="_blank"
+        rel="noreferrer"
+        className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium text-zinc-600 hover:bg-zinc-100"
+      >
+        <item.icon className="size-4" aria-hidden />
+        {item.label}
+      </a>
+    ) : (
+      <NavLink
+        key={item.to}
+        to={item.to!}
+        end={item.to === "/"}
+        className={({ isActive }) =>
+          cn(
+            "flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium",
+            isActive
+              ? "bg-brand-50 text-brand-700"
+              : "text-zinc-600 hover:bg-zinc-100",
+          )
+        }
+      >
+        <item.icon className="size-4" aria-hidden />
+        {item.label}
+      </NavLink>
+    )
 
   return (
     <div className="flex min-h-screen">
@@ -243,50 +304,50 @@ export default function AppShell() {
           </span>
         </div>
         <nav className="space-y-5">
-          {NAV.filter(canSee).map((group) => (
-            <div key={group.label}>
-              <div className="mb-1 px-2 text-[10px] font-semibold uppercase tracking-widest text-zinc-400">
-                {group.label}
-              </div>
-              {group.items
-                .filter(
-                  (item) =>
-                    !item.roles ||
-                    item.roles.some((r) => roles.includes(r)),
-                )
-                .map((item) =>
-                item.href ? (
-                  <a
-                    key={item.href}
-                    href={item.href}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium text-zinc-600 hover:bg-zinc-100"
-                  >
-                    <item.icon className="size-4" aria-hidden />
-                    {item.label}
-                  </a>
-                ) : (
-                  <NavLink
-                    key={item.to}
-                    to={item.to!}
-                    end={item.to === "/"}
-                    className={({ isActive }) =>
-                      cn(
-                        "flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium",
-                        isActive
-                          ? "bg-brand-50 text-brand-700"
-                          : "text-zinc-600 hover:bg-zinc-100",
-                      )
-                    }
-                  >
-                    <item.icon className="size-4" aria-hidden />
-                    {item.label}
-                  </NavLink>
-                ),
-              )}
-            </div>
-          ))}
+          {(() => {
+            let setupSeen = false
+            return NAV.filter(canSee).map((group) => {
+              const items = group.items.filter(
+                (item) =>
+                  !item.roles || item.roles.some((r) => roles.includes(r)),
+              )
+              if (items.length === 0) return null
+              const firstSetup = group.setup && !setupSeen
+              if (group.setup) setupSeen = true
+              const expanded = openSetup.has(group.label)
+              return (
+                <Fragment key={group.label}>
+                  {firstSetup && (
+                    <div className="!mt-6 border-t border-zinc-100 px-2 pb-1 pt-4 text-[10px] font-semibold uppercase tracking-widest text-zinc-300">
+                      Setup
+                    </div>
+                  )}
+                  <div className={firstSetup ? "!mt-1" : undefined}>
+                    {group.setup ? (
+                      <button
+                        onClick={() => toggleSetup(group.label)}
+                        className="mb-1 flex w-full items-center justify-between rounded px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-zinc-400 hover:text-zinc-600"
+                      >
+                        {group.label}
+                        <ChevronDown
+                          className={cn(
+                            "size-3 transition-transform",
+                            expanded ? "" : "-rotate-90",
+                          )}
+                          aria-hidden
+                        />
+                      </button>
+                    ) : (
+                      <div className="mb-1 px-2 text-[10px] font-semibold uppercase tracking-widest text-zinc-400">
+                        {group.label}
+                      </div>
+                    )}
+                    {(!group.setup || expanded) && items.map(renderItem)}
+                  </div>
+                </Fragment>
+              )
+            })
+          })()}
         </nav>
       </aside>
 

@@ -1,5 +1,5 @@
 import { Fragment, useCallback, useEffect, useState } from "react"
-import { ArrowLeft, Printer, X } from "lucide-react"
+import { ArrowLeft, ArrowRightLeft, Printer, X } from "lucide-react"
 import { Link, useNavigate, useParams } from "react-router-dom"
 import { call } from "../lib/api"
 import { serverError } from "../lib/resource"
@@ -119,7 +119,7 @@ export default function FolioView() {
     is_alcohol: false,
   })
   const [selected, setSelected] = useState<Set<string>>(new Set())
-  const [splitFor, setSplitFor] = useState<string | null>(null)
+  const [routeFor, setRouteFor] = useState<string | null>(null)
   const [splitVal, setSplitVal] = useState("50%")
   const [splitTarget, setSplitTarget] = useState("")
   const [payment, setPayment] = useState({ mode: "UPI", amount: "", reference: "" })
@@ -432,7 +432,7 @@ export default function FolioView() {
                       <option value="">Move all to…</option>
                       {targets.map((s) => (
                         <option key={s.name} value={s.name}>
-                          → {s.folio_type}
+                          → {folioLabel(siblings, s)}
                         </option>
                       ))}
                     </select>
@@ -495,96 +495,113 @@ export default function FolioView() {
                           <td className="py-2 pr-3 text-right">{inr(c.gst_amount)}</td>
                           <td className="py-2 text-right font-medium">{inr(c.total)}</td>
                           {routable && (
-                            <td className="whitespace-nowrap py-2 pl-3 text-right print:hidden">
+                            <td className="relative whitespace-nowrap py-2 pl-3 text-right print:hidden">
                               <button
-                                className="mr-2 text-xs font-medium text-zinc-400 hover:text-zinc-700"
+                                aria-label="Route this charge"
+                                className="inline-flex items-center gap-1 rounded-md border border-zinc-200 px-2 py-1 text-xs text-zinc-500 hover:border-brand-400 hover:text-zinc-800"
                                 onClick={() => {
-                                  setSplitFor(splitFor === c.name ? null : c.name)
+                                  setRouteFor(routeFor === c.name ? null : c.name)
                                   setSplitTarget(targets[0]?.name ?? "")
+                                  setSplitVal("")
                                 }}
                               >
-                                Split
+                                <ArrowRightLeft className="size-3" aria-hidden />
+                                Route
                               </button>
-                              <select
-                                className="rounded-md border border-zinc-200 px-1.5 py-1 text-xs text-zinc-500"
-                                value=""
-                                aria-label="Move charge to another folio"
-                                onChange={(e) =>
-                                  e.target.value &&
-                                  act(() =>
-                                    call("kamra.api.transfer_folio_charge", {
-                                      from_folio: folio.name,
-                                      charge_row: c.name,
-                                      to_folio: e.target.value,
-                                    }),
-                                  )
-                                }
-                              >
-                                <option value="">Move…</option>
-                                {targets.map((s) => (
-                                  <option key={s.name} value={s.name}>
-                                    → {s.folio_type}
-                                  </option>
-                                ))}
-                              </select>
+                              {routeFor === c.name && (
+                                <div className="absolute right-0 z-30 mt-1 w-72 rounded-xl border border-zinc-200 bg-white p-3 text-left shadow-xl">
+                                  <div className="mb-1.5 text-xs font-medium text-zinc-500">
+                                    Move all ₹{inr(c.total)} to
+                                  </div>
+                                  <div className="flex flex-wrap gap-1.5">
+                                    {targets.map((s) => (
+                                      <button
+                                        key={s.name}
+                                        className="rounded-md border border-zinc-200 px-2 py-1 text-xs hover:border-brand-400 hover:bg-zinc-50"
+                                        onClick={() =>
+                                          act(async () => {
+                                            await call(
+                                              "kamra.api.transfer_folio_charge",
+                                              {
+                                                from_folio: folio.name,
+                                                charge_row: c.name,
+                                                to_folio: s.name,
+                                              },
+                                            )
+                                            setRouteFor(null)
+                                          })
+                                        }
+                                      >
+                                        {folioLabel(siblings, s)}
+                                      </button>
+                                    ))}
+                                  </div>
+                                  <div className="my-2.5 border-t border-zinc-100" />
+                                  <div className="mb-1.5 text-xs font-medium text-zinc-500">
+                                    Or split a part
+                                  </div>
+                                  <div className="flex items-center gap-1.5">
+                                    <input
+                                      className="w-24 rounded-md border border-zinc-300 bg-white px-2 py-1 text-xs"
+                                      aria-label="Split share (percent or amount)"
+                                      placeholder="30% or 1500"
+                                      value={splitVal}
+                                      onChange={(e) => setSplitVal(e.target.value)}
+                                    />
+                                    <span className="text-xs text-zinc-400">to</span>
+                                    <select
+                                      className="min-w-0 flex-1 rounded-md border border-zinc-300 bg-white px-1.5 py-1 text-xs"
+                                      aria-label="Split target folio"
+                                      value={splitTarget}
+                                      onChange={(e) => setSplitTarget(e.target.value)}
+                                    >
+                                      {targets.map((s) => (
+                                        <option key={s.name} value={s.name}>
+                                          {folioLabel(siblings, s)}
+                                        </option>
+                                      ))}
+                                    </select>
+                                  </div>
+                                  <div className="mt-2.5 flex items-center justify-end gap-2">
+                                    <button
+                                      className="text-xs text-zinc-400 hover:text-zinc-700"
+                                      onClick={() => setRouteFor(null)}
+                                    >
+                                      Cancel
+                                    </button>
+                                    <Button
+                                      variant="outline"
+                                      disabled={
+                                        busy || !splitTarget || !splitVal.trim()
+                                      }
+                                      onClick={() => {
+                                        const v = splitVal.trim()
+                                        const isPct = v.endsWith("%")
+                                        const num = Number(v.replace("%", ""))
+                                        if (!num || num <= 0) return
+                                        act(async () => {
+                                          await call(
+                                            "kamra.api.split_folio_charge",
+                                            {
+                                              from_folio: folio.name,
+                                              charge_row: c.name,
+                                              to_folio: splitTarget,
+                                              percent: isPct ? num : null,
+                                              amount: isPct ? null : num,
+                                            },
+                                          )
+                                          setRouteFor(null)
+                                        })
+                                      }}
+                                    >
+                                      Split
+                                    </Button>
+                                  </div>
+                                </div>
+                              )}
                             </td>
                           )}
                         </tr>
-                        {routable && splitFor === c.name && (
-                          <tr className="print:hidden">
-                            <td colSpan={8} className="bg-zinc-50 px-3 py-2">
-                              <div className="flex flex-wrap items-center gap-2 text-sm">
-                                <span className="text-zinc-500">
-                                  Split ₹{inr(c.amount)} —
-                                </span>
-                                <input
-                                  className="w-20 rounded-md border border-zinc-200 bg-white px-2 py-1 text-xs"
-                                  aria-label="Split share (percent or amount)"
-                                  value={splitVal}
-                                  onChange={(e) => setSplitVal(e.target.value)}
-                                />
-                                <span className="text-xs text-zinc-400">
-                                  ("30%" or "1500")
-                                </span>
-                                <span className="text-zinc-500">to</span>
-                                <select
-                                  className="rounded-md border border-zinc-200 bg-white px-1.5 py-1 text-xs"
-                                  aria-label="Split target folio"
-                                  value={splitTarget}
-                                  onChange={(e) => setSplitTarget(e.target.value)}
-                                >
-                                  {targets.map((s) => (
-                                    <option key={s.name} value={s.name}>
-                                      {s.folio_type}
-                                    </option>
-                                  ))}
-                                </select>
-                                <Button
-                                  variant="outline"
-                                  disabled={busy || !splitTarget || !splitVal.trim()}
-                                  onClick={() => {
-                                    const v = splitVal.trim()
-                                    const isPct = v.endsWith("%")
-                                    const num = Number(v.replace("%", ""))
-                                    if (!num || num <= 0) return
-                                    act(async () => {
-                                      await call("kamra.api.split_folio_charge", {
-                                        from_folio: folio.name,
-                                        charge_row: c.name,
-                                        to_folio: splitTarget,
-                                        percent: isPct ? num : null,
-                                        amount: isPct ? null : num,
-                                      })
-                                      setSplitFor(null)
-                                    })
-                                  }}
-                                >
-                                  Split
-                                </Button>
-                              </div>
-                            </td>
-                          </tr>
-                        )}
                       </Fragment>
                     ))}
                   </tbody>

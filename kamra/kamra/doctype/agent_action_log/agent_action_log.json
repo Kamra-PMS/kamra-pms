@@ -12,13 +12,20 @@
   "action_type",
   "column_break_a",
   "autonomy",
+  "approval_status",
   "action_channel",
   "sb_ref",
   "reference_doctype",
   "reference_name",
+  "executed_at",
   "column_break_b",
   "property",
   "minutes_saved",
+  "approver",
+  "sb_snapshots",
+  "before_snapshot",
+  "column_break_snap",
+  "after_snapshot",
   "sb_why",
   "rationale"
  ],
@@ -51,6 +58,15 @@
    "options": "Full\nSuggest\nApproved"
   },
   {
+   "default": "Executed",
+   "description": "Executed: ran under Full autonomy. Suggested: draft returned, not applied. Pending: awaiting human approval. Approved / Rejected: outcome of a pending item.",
+   "fieldname": "approval_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Executed\nSuggested\nPending\nApproved\nRejected"
+  },
+  {
    "fieldname": "action_channel",
    "fieldtype": "Select",
    "label": "Channel",
@@ -74,6 +90,12 @@
    "options": "reference_doctype"
   },
   {
+   "description": "When the underlying action actually ran (may differ from creation for Pending → Approved rows)",
+   "fieldname": "executed_at",
+   "fieldtype": "Datetime",
+   "label": "Executed At"
+  },
+  {
    "fieldname": "column_break_b",
    "fieldtype": "Column Break",
    "label": "Column Break B"
@@ -90,6 +112,36 @@
    "fieldtype": "Float",
    "in_list_view": 1,
    "label": "Minutes Saved"
+  },
+  {
+   "description": "Set when a Pending action is Approved or Rejected — the human on the hook",
+   "fieldname": "approver",
+   "fieldtype": "Link",
+   "label": "Approver",
+   "options": "User"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "sb_snapshots",
+   "fieldtype": "Section Break",
+   "label": "Snapshots (undo)"
+  },
+  {
+   "description": "JSON of the reference doc immediately before the action ran — enables undo and audit diffs",
+   "fieldname": "before_snapshot",
+   "fieldtype": "Long Text",
+   "label": "Before Snapshot"
+  },
+  {
+   "fieldname": "column_break_snap",
+   "fieldtype": "Column Break",
+   "label": "Column Break Snap"
+  },
+  {
+   "description": "JSON of the reference doc immediately after the action ran",
+   "fieldname": "after_snapshot",
+   "fieldtype": "Long Text",
+   "label": "After Snapshot"
   },
   {
    "fieldname": "sb_why",
