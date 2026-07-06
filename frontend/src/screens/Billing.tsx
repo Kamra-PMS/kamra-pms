@@ -15,6 +15,22 @@ import {
 const inr = (n: unknown) =>
   Number(n ?? 0).toLocaleString("en-IN", { maximumFractionDigits: 0 })
 
+const fmtDate = (d: unknown) =>
+  d
+    ? new Date(String(d) + "T00:00:00").toLocaleDateString("en-IN", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      })
+    : "—"
+const fmtWhen = (d: unknown) =>
+  d
+    ? new Date(String(d).replace(" ", "T").slice(0, 19)).toLocaleString(
+        "en-IN",
+        { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" },
+      )
+    : ""
+
 interface CashSummary {
   date: string
   modes: { mode: string; txns: number; total: number }[]
@@ -35,6 +51,7 @@ export default function Billing() {
   const [cash, setCash] = useState<CashSummary | null>(null)
   const [audit, setAudit] = useState<AuditResult | null>(null)
   const [auditErr, setAuditErr] = useState<string | null>(null)
+  const [auditRuns, setAuditRuns] = useState<Row[]>([])
   const [busy, setBusy] = useState(false)
   const navigate = useNavigate()
 
@@ -50,6 +67,17 @@ export default function Billing() {
     call<CashSummary>("kamra.api.cash_summary", {
       property: getCurrentProperty(),
     }).then(setCash)
+    listResource("Night Audit Run", {
+      fields: [
+        "name", "business_date", "status", "room_charges_posted",
+        "amount_posted", "no_shows_flagged", "folios_opened", "creation",
+      ],
+      filters: [["property", "=", getCurrentProperty()]],
+      orderBy: "creation desc",
+      limit: 8,
+    })
+      .then(setAuditRuns)
+      .catch(() => setAuditRuns([]))
   }, [])
 
   useEffect(load, [load])
@@ -111,6 +139,36 @@ export default function Billing() {
                 {audit.no_shows_flagged === 1 ? "" : "s"}.
               </p>
             )}
+          </CardContent>
+        )}
+        {auditRuns.length > 0 && (
+          <CardContent className="pt-0">
+            <div className="mb-1.5 text-xs font-medium uppercase tracking-wider text-zinc-400">
+              Recent runs
+            </div>
+            <ul className="divide-y divide-zinc-100 text-sm">
+              {auditRuns.map((r) => (
+                <li
+                  key={String(r.name)}
+                  className="flex flex-wrap items-center justify-between gap-x-3 gap-y-0.5 py-1.5"
+                >
+                  <span className="w-28 font-medium">
+                    {fmtDate(r.business_date)}
+                  </span>
+                  <span className="flex-1 text-zinc-500">
+                    {Number(r.room_charges_posted) || 0} night
+                    {Number(r.room_charges_posted) === 1 ? "" : "s"} · ₹
+                    {inr(r.amount_posted)} · {Number(r.folios_opened) || 0} folio
+                    {Number(r.folios_opened) === 1 ? "" : "s"} ·{" "}
+                    {Number(r.no_shows_flagged) || 0} no-show
+                    {Number(r.no_shows_flagged) === 1 ? "" : "s"}
+                  </span>
+                  <span className="text-xs text-zinc-400">
+                    ran {fmtWhen(r.creation)}
+                  </span>
+                </li>
+              ))}
+            </ul>
           </CardContent>
         )}
       </Card>
