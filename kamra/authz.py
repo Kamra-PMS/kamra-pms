@@ -47,3 +47,34 @@ def require_roles(*roles):
 			return fn(*args, **kwargs)
 		return guarded
 	return deco
+
+
+def require_cashier_pin(property: str, pin=None):
+	"""The walk-up-to-an-unlocked-terminal guard: money actions re-confirm
+	WHO is acting with a personal PIN, even inside a valid session.
+
+	Skipped for agents (Kamra Agent role, the copilot's in-process tool calls,
+	and gated replays) — their identity and accountability come from the
+	autonomy gate + action log, not a keypad. Off unless the property enables
+	require_cashier_pin."""
+	if not property or not frappe.db.get_value(
+			"Property", property, "require_cashier_pin"):
+		return
+	if getattr(frappe.flags, "kamra_agent_call", False) or \
+	   getattr(frappe.flags, "kamra_gate_bypass", False):
+		return
+	if "Kamra Agent" in frappe.get_roles():
+		return
+	user = frappe.session.user
+	if user == "Administrator":
+		return
+	if not frappe.db.exists("Cashier PIN", user):
+		frappe.throw("PIN_NOT_SET: set your cashier PIN first (ask for it on "
+		             "this screen), then retry.")
+	if not pin:
+		frappe.throw("PIN_REQUIRED: this action needs your cashier PIN.")
+	from frappe.utils.password import get_decrypted_password
+	stored = get_decrypted_password("Cashier PIN", user, "pin",
+	                                raise_exception=False)
+	if not stored or str(pin).strip() != str(stored):
+		frappe.throw("Wrong cashier PIN.")

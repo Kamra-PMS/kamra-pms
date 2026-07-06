@@ -212,6 +212,12 @@ const STAY_TAX_SPECS: Spec[] = [
     options: ["Store", "Verify & Discard"],
     hint: "Verify & Discard masks ID numbers to the last 4 digits at checkout",
   },
+  {
+    field: "require_cashier_pin",
+    label: "Require cashier PIN on money actions",
+    type: "check",
+    hint: "Payments, invoices, allowances and settlements re-confirm who is acting with a personal PIN — agents are exempt (the action log covers them)",
+  },
 ]
 
 const BOOKING_SPECS: Spec[] = [

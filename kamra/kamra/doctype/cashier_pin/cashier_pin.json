@@ -1,0 +1,26 @@
+{
+ "actions": [],
+ "autoname": "field:user",
+ "creation": "2026-07-06 00:00:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": ["user", "pin"],
+ "fields": [
+  {"fieldname": "user", "fieldtype": "Link", "label": "User", "options": "User", "reqd": 1, "unique": 1},
+  {"fieldname": "pin", "fieldtype": "Password", "label": "PIN", "reqd": 1}
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-07-06 00:00:00",
+ "modified_by": "Administrator",
+ "module": "Kamra",
+ "name": "Cashier PIN",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {"role": "System Manager", "read": 1, "write": 1, "create": 1, "delete": 1}
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 0
+}

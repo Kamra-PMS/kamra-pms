@@ -41,6 +41,7 @@
   "rates_include_tax",
   "sb_showcase",
   "booking_engine_enabled",
+  "require_cashier_pin",
   "logo_url",
   "showcase_description",
   "sell_message",
@@ -217,6 +218,12 @@
    "fieldname": "booking_engine_enabled",
    "fieldtype": "Check",
    "label": "Booking Engine Enabled"
+  },
+  {
+   "fieldname": "require_cashier_pin",
+   "fieldtype": "Check",
+   "label": "Require cashier PIN on money actions",
+   "default": "0"
   },
   {
    "fieldname": "showcase_description",

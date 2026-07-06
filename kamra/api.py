@@ -650,10 +650,17 @@ def add_folio_charge(folio: str, charge_type: str, description: str,
 	return doc.as_dict()
 
 
+
+
+def _pin_guard(folio: str, pin=None):
+	from kamra.authz import require_cashier_pin
+	require_cashier_pin(frappe.db.get_value("Folio", folio, "property"), pin)
+
 @frappe.whitelist()
 @require_roles("Finance", "Front Desk", "Kamra Agent")
 def add_folio_payment(folio: str, mode: str, amount: float,
-                      reference: str | None = None):
+                      reference: str | None = None, pin: str | None = None):
+	_pin_guard(folio, pin)
 	doc = frappe.get_doc("Folio", folio)
 	doc.append("payments", {
 		"posting_date": nowdate(),
@@ -866,7 +873,8 @@ def group_folios(group_booking: str):
 
 @frappe.whitelist()
 @require_roles("Finance", "Front Desk", "Kamra Agent")
-def close_folio(folio: str):
+def close_folio(folio: str, pin: str | None = None):
+	_pin_guard(folio, pin)
 	from kamra.folio import close_folio as _close
 	invoice_number = _close(folio)
 	return {"invoice_number": invoice_number}
@@ -875,8 +883,9 @@ def close_folio(folio: str):
 @frappe.whitelist(methods=["POST"])
 @require_roles("Finance", "Front Desk", "Kamra Agent")
 def post_allowance(folio: str, amount: float, reason: str,
-                   gst_rate: float = 0):
+                   gst_rate: float = 0, pin: str | None = None):
 	"""Write off part of a bill against a specific folio, with a reason."""
+	_pin_guard(folio, pin)
 	from kamra.folio import post_allowance as _allow
 	_allow(folio, float(amount), reason, float(gst_rate or 0))
 	from kamra.savings import log_action
@@ -887,16 +896,18 @@ def post_allowance(folio: str, amount: float, reason: str,
 
 @frappe.whitelist(methods=["POST"])
 @require_roles("Finance", "Front Desk", "Kamra Agent")
-def part_settle_folio(folio: str):
+def part_settle_folio(folio: str, pin: str | None = None):
 	"""Interim invoice mid-stay: freeze the paid folio, open a fresh one."""
+	_pin_guard(folio, pin)
 	from kamra.folio import part_settle as _settle
 	return _settle(folio)
 
 
 @frappe.whitelist(methods=["POST"])
 @require_roles("Finance", "Front Desk", "Kamra Agent")
-def cancel_invoice(folio: str, reason: str):
+def cancel_invoice(folio: str, reason: str, pin: str | None = None):
 	"""Void an invoice into the register and reopen the folio for correction."""
+	_pin_guard(folio, pin)
 	from kamra.folio import cancel_invoice as _cancel
 	out = _cancel(folio, reason)
 	from kamra.savings import log_action
@@ -2204,3 +2215,40 @@ def available_rooms(property: str, room_type: str, check_in_date: str, check_out
 		},
 		as_dict=True,
 	)
+
+
+@frappe.whitelist()
+@require_roles("Finance", "Front Desk", "Revenue Manager", "Housekeeping")
+def cashier_pin_status(property: str):
+	"""Does this property demand a PIN on money actions, and does the
+	signed-in user have one set yet?"""
+	return {
+		"required": bool(frappe.db.get_value(
+			"Property", property, "require_cashier_pin")),
+		"has_pin": bool(frappe.db.exists("Cashier PIN", frappe.session.user)),
+	}
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Finance", "Front Desk", "Revenue Manager", "Housekeeping")
+def set_cashier_pin(pin: str, current_pin: str | None = None):
+	"""Set or change your own cashier PIN (4-8 digits). Changing an existing
+	PIN needs the current one."""
+	pin = str(pin or "").strip()
+	if not pin.isdigit() or not (4 <= len(pin) <= 8):
+		frappe.throw("The PIN must be 4 to 8 digits.")
+	user = frappe.session.user
+	if frappe.db.exists("Cashier PIN", user):
+		from frappe.utils.password import get_decrypted_password
+		stored = get_decrypted_password("Cashier PIN", user, "pin",
+		                                raise_exception=False)
+		if not current_pin or str(current_pin).strip() != str(stored):
+			frappe.throw("Your current PIN is needed to change it.")
+		doc = frappe.get_doc("Cashier PIN", user)
+		doc.pin = pin
+		doc.save(ignore_permissions=True)
+	else:
+		frappe.get_doc({"doctype": "Cashier PIN", "user": user,
+		                "pin": pin}).insert(ignore_permissions=True)
+	frappe.db.commit()
+	return {"ok": True}

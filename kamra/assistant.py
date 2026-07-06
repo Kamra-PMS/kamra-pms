@@ -228,7 +228,13 @@ def _run_tool(name: str, args: dict, property: str):
 	         if k in params and v not in (None, "")}
 	if inject:
 		clean["property"] = property
-	result = fn(**clean)
+	# copilot tool calls are agent actions: accountability comes from the
+	# action log, not the cashier PIN (which guards humans at a terminal)
+	frappe.flags.kamra_agent_call = True
+	try:
+		result = fn(**clean)
+	finally:
+		frappe.flags.kamra_agent_call = False
 	if mutating:
 		# a guaranteed audit line for every state-changing chat action,
 		# on top of whatever the API itself logs

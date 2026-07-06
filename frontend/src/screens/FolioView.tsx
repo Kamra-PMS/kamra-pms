@@ -1,7 +1,7 @@
 import { Fragment, useCallback, useEffect, useState } from "react"
 import { ArrowLeft, ArrowRightLeft, Printer, X } from "lucide-react"
 import { Link, useNavigate, useParams } from "react-router-dom"
-import { call } from "../lib/api"
+import { call, getCurrentProperty } from "../lib/api"
 import { serverError } from "../lib/resource"
 import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
@@ -126,6 +126,10 @@ export default function FolioView() {
   const [showCancel, setShowCancel] = useState(false)
   const [cancelReason, setCancelReason] = useState("")
   const [allowance, setAllowance] = useState({ amount: "", reason: "", gst_rate: "0" })
+  // cashier PIN: when the property demands it, every money action carries it
+  const [pinStatus, setPinStatus] = useState<{ required: boolean; has_pin: boolean } | null>(null)
+  const [pin, setPin] = useState("")
+  const [newPin, setNewPin] = useState("")
 
   const load = useCallback(() => {
     if (name)
@@ -142,6 +146,19 @@ export default function FolioView() {
   }, [name])
 
   useEffect(load, [load])
+
+  useEffect(() => {
+    call<{ required: boolean; has_pin: boolean }>(
+      "kamra.api.cashier_pin_status",
+      { property: getCurrentProperty() },
+    )
+      .then(setPinStatus)
+      .catch(() => setPinStatus(null))
+  }, [])
+
+  /** PIN travels with every money call when the property demands it. */
+  const withPin = (params: Record<string, unknown>) =>
+    pinStatus?.required ? { ...params, pin } : params
 
   async function act(fn: () => Promise<unknown>) {
     setBusy(true)
@@ -312,7 +329,7 @@ export default function FolioView() {
                   act(async () => {
                     const r = await call<{ new_folio: string }>(
                       "kamra.api.part_settle_folio",
-                      { folio: folio.name },
+                      withPin({ folio: folio.name }),
                     )
                     navigate(`/billing/${encodeURIComponent(r.new_folio)}`)
                   })
@@ -334,7 +351,7 @@ export default function FolioView() {
             <Button
               disabled={busy}
               onClick={() =>
-                act(() => call("kamra.api.close_folio", { folio: folio.name }))
+                act(() => call("kamra.api.close_folio", withPin({ folio: folio.name })))
               }
             >
               Close & generate invoice
@@ -360,10 +377,10 @@ export default function FolioView() {
             disabled={busy || !cancelReason.trim()}
             onClick={() =>
               act(async () => {
-                await call("kamra.api.cancel_invoice", {
+                await call("kamra.api.cancel_invoice", withPin({
                   folio: folio.name,
                   reason: cancelReason.trim(),
-                })
+                }))
                 setShowCancel(false)
                 setCancelReason("")
               })
@@ -374,6 +391,49 @@ export default function FolioView() {
         </div>
       )}
 
+      {pinStatus?.required && !pinStatus.has_pin && (
+        <div className="mb-4 flex flex-wrap items-center gap-2 rounded-lg border border-sky-200 bg-sky-50 px-4 py-2.5 text-sm print:hidden">
+          <span className="text-sky-800">
+            This property requires a cashier PIN on money actions — set yours
+            (4–8 digits):
+          </span>
+          <input
+            className="w-28 rounded-lg border border-sky-300 bg-white px-3 py-1.5 text-sm"
+            type="password"
+            inputMode="numeric"
+            placeholder="New PIN"
+            value={newPin}
+            onChange={(e) => setNewPin(e.target.value)}
+          />
+          <Button
+            variant="outline"
+            disabled={busy || newPin.trim().length < 4}
+            onClick={() =>
+              act(async () => {
+                await call("kamra.api.set_cashier_pin", { pin: newPin.trim() })
+                setNewPin("")
+                setPinStatus((s) => (s ? { ...s, has_pin: true } : s))
+              })
+            }
+          >
+            Set PIN
+          </Button>
+        </div>
+      )}
+      {pinStatus?.required && pinStatus.has_pin && (
+        <div className="mb-4 flex flex-wrap items-center gap-2 rounded-lg bg-zinc-50 px-4 py-2 text-sm text-zinc-600 print:hidden">
+          <span>Cashier PIN (needed for payments, settling and invoices):</span>
+          <input
+            className="w-24 rounded-lg border border-zinc-300 bg-white px-3 py-1 text-sm"
+            type="password"
+            inputMode="numeric"
+            aria-label="Cashier PIN"
+            placeholder="••••"
+            value={pin}
+            onChange={(e) => setPin(e.target.value)}
+          />
+        </div>
+      )}
       {error && (
         <div className="mb-4 rounded-lg border border-rose-200 bg-rose-50 px-4 py-2 text-sm text-rose-700 print:hidden">
           {error}
@@ -875,12 +935,12 @@ export default function FolioView() {
                     disabled={busy || !allowance.amount || !allowance.reason.trim()}
                     onClick={() =>
                       act(async () => {
-                        await call("kamra.api.post_allowance", {
+                        await call("kamra.api.post_allowance", withPin({
                           folio: folio.name,
                           amount: Number(allowance.amount),
                           reason: allowance.reason.trim(),
                           gst_rate: Number(allowance.gst_rate),
-                        })
+                        }))
                         setAllowance({ amount: "", reason: "", gst_rate: "0" })
                       })
                     }
@@ -927,12 +987,12 @@ export default function FolioView() {
                 disabled={busy || !payment.amount}
                 onClick={() =>
                   act(() =>
-                    call("kamra.api.add_folio_payment", {
+                    call("kamra.api.add_folio_payment", withPin({
                       folio: folio.name,
                       mode: payment.mode,
                       amount: Number(payment.amount),
                       reference: payment.reference || undefined,
-                    }),
+                    })),
                   )
                 }
               >
