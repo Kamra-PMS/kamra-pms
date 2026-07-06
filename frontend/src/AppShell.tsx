@@ -31,6 +31,7 @@ import {
 import { NavLink, Outlet } from "react-router-dom"
 import { BookingDialog } from "./components/BookingDialog"
 import AssistantPanel from "./components/AssistantPanel"
+import HelpPanel from "./components/HelpPanel"
 import { Button } from "./components/ui/button"
 import {
   getCurrentProperty,
@@ -341,6 +342,7 @@ export default function AppShell() {
       </div>
 
       <AssistantPanel key={`ai-${property}`} />
+      <HelpPanel />
 
       {booking && (
         <BookingDialog

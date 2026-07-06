@@ -399,3 +399,101 @@ def ask_stream(property: str, messages):
 		"Cache-Control": "no-cache",
 		"X-Accel-Buffering": "no",  # tell nginx not to buffer this response
 	})
+
+
+HELP_SYSTEM = """You are the Kamra PMS help assistant. You explain HOW to use
+Kamra — an open-source, AI-native hotel PMS — to hotel staff. You do NOT act on
+hotel data (the front-desk copilot does that); you give short, concrete how-to
+answers and point to where things live in the app.
+
+What Kamra does and where to find it:
+- Front desk: "Today" (arrivals, departures, in-house, room board, check in /
+  out), Tape Chart (rooms × dates; move rooms, amend stays), Calendar
+  (availability).
+- New booking: the "New booking" button opens a side drawer — pick the guest
+  (returning guests autocomplete), room type, dates, meal plan and add-ons, with
+  a live quote. "Add to waitlist" parks a stay when the dates are sold out or
+  restricted; promote it later from the reservation when a room frees.
+- Reservations: a searchable, filterable, paginated list; click a booking for
+  the 360 panel — live billing, editable dates, guest journey, check in/out,
+  cancel, registration card.
+- Guests: profiles with stay history, VIP/blacklist, merge and anonymize.
+- Billing: folios, post charges, take payments, payment links. Closing a folio
+  assigns a GST tax invoice (logo, GSTIN, place of supply, SAC 996311).
+- Reports: occupancy, ADR, RevPAR, RevPAX, MTD, collections, 14-day trend.
+- Housekeeping: room board + a phone app at /kamra/hk.
+- Revenue: rate plans, seasons, vouchers, rate guardrails.
+- Events: Venue Bookings and a Venue Calendar (banquet/function diary);
+  Experiences cover spa/tours as booking add-ons.
+- Inventory: Rooms; Room Types — open a room type to add photos (image URLs),
+  amenities (one per line) and a description shown on the public booking engine.
+- Settings: property & GST, booking page (hero image, amenities, description),
+  cancellation/deposit policy, payment gateway, and the AI assistant (your own
+  key). Admins also have Developers (API keys), New Property and the Frappe Desk.
+- Public booking engine at /book; pre-arrival self check-in via the guest link.
+- Roles: a System Admin (IT — users, API keys, Frappe Desk) versus a Hotel
+  Admin / GM (runs the property, no IT access). Manage staff from
+  Admin → Manage Users.
+- The front-desk copilot (the sparkle button) can act — quote, book, check in,
+  post charges, cancel, and watch the waitlist. This help assistant only
+  explains how to do things yourself.
+
+Be brief and practical. Use short steps. If you're unsure, say so and point to
+the docs (github.com/Kamra-PMS/kamra-pms/tree/main/docs)."""
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Front Desk", "Finance", "Revenue Manager", "Housekeeping")
+def help_ask(property: str, messages):
+	"""Streaming how-to help (SSE). No tools, no data access — just explains
+	how to use Kamra, grounded in the app's features. Reuses the property's
+	AI key. Events: token {text} · error {message} · done {}."""
+	from werkzeug.wrappers import Response
+
+	s = _settings(property)
+	if not (s and s.enabled):
+		frappe.throw("The AI assistant is not enabled for this property.")
+	api_key = s.get_password("api_key", raise_exception=False)
+	if not api_key:
+		frappe.throw("No API key configured — Settings → AI assistant.")
+	if isinstance(messages, str):
+		messages = frappe.parse_json(messages)
+	base = (s.base_url or "https://api.openai.com/v1").rstrip("/")
+	model = s.model or "gpt-4o-mini"
+	headers = {"Authorization": f"Bearer {api_key}",
+	           "Content-Type": "application/json"}
+	convo = [{"role": "system", "content": HELP_SYSTEM}] + list(messages)
+
+	def sse(event, data):
+		return f"event: {event}\ndata: {json.dumps(data)}\n\n"
+
+	def gen():
+		try:
+			r = requests.post(f"{base}/chat/completions", headers=headers,
+				json={"model": model, "messages": convo, "temperature": 0.3,
+				      "stream": True}, stream=True, timeout=TIMEOUT)
+			if r.status_code != 200:
+				yield sse("error", {"message": f"AI provider error ({r.status_code})"})
+			else:
+				for raw in r.iter_lines():
+					if not raw:
+						continue
+					line = raw.decode("utf-8")
+					if not line.startswith("data: "):
+						continue
+					chunk = line[6:]
+					if chunk == "[DONE]":
+						break
+					try:
+						delta = json.loads(chunk)["choices"][0].get("delta", {})
+					except (ValueError, KeyError, IndexError):
+						continue
+					if delta.get("content"):
+						yield sse("token", {"text": delta["content"]})
+		except Exception as e:
+			yield sse("error", {"message": str(e)[:150]})
+		yield sse("done", {})
+
+	return Response(gen(), mimetype="text/event-stream", headers={
+		"Cache-Control": "no-cache", "X-Accel-Buffering": "no",
+	})
