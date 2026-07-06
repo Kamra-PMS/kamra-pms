@@ -146,6 +146,35 @@ TOOLS = {
 		"promote_waitlist",
 		"Promote a waitlisted reservation into a free room (Confirmed).",
 		{"reservation": {"type": "string"}}, False, True),
+	"create_group_block": (
+		"create_group_block",
+		"Draft a MICE piece of business in one go: a group booking with a "
+		"room block (list of {room_type, rooms_blocked, block_rate}) and "
+		"optionally its banquet event (venue, event_type, event_date, "
+		"attendees). Starts as Open (a proposal) — confirm it to hold rooms.",
+		{"group_name": {"type": "string"},
+		 "check_in_date": {"type": "string"},
+		 "check_out_date": {"type": "string"},
+		 "blocks": {"type": "array", "items": {"type": "object"}},
+		 "company": {"type": "string"},
+		 "cutoff_date": {"type": "string"},
+		 "venue": {"type": "string"},
+		 "event_type": {"type": "string"},
+		 "event_date": {"type": "string"},
+		 "attendees": {"type": "integer"}}, True, True),
+	"group_pickup_status": (
+		"group_detail",
+		"Group Rooms Control for a group booking: the block, per-room-type "
+		"pickup (blocked/picked/remaining), rooming list, event, folio.",
+		{"group_booking": {"type": "string"}}, False, False),
+	"pickup_group_room": (
+		"pickup_group_room",
+		"Name a guest into a group's room block (creates their reservation "
+		"on the group dates).",
+		{"group_booking": {"type": "string"},
+		 "room_type": {"type": "string"},
+		 "guest_name": {"type": "string"},
+		 "phone": {"type": "string"}}, False, True),
 	"guest_search": (
 		"guest_search",
 		"Find a guest profile by name or phone (returning guests, VIPs).",

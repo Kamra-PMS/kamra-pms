@@ -27,7 +27,8 @@
   "column_break_c",
   "advance_received",
   "sb_notes",
-  "requirements"
+  "requirements",
+  "group_booking"
  ],
  "fields": [
   {
@@ -147,6 +148,12 @@
    "fieldname": "requirements",
    "fieldtype": "Small Text",
    "label": "Requirements"
+  },
+  {
+   "fieldname": "group_booking",
+   "fieldtype": "Link",
+   "label": "Group Booking",
+   "options": "Group Booking"
   }
  ],
  "grid_page_length": 50,

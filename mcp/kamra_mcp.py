@@ -320,3 +320,37 @@ def run_night_audit(business_date: str = "") -> dict:
 
 if __name__ == "__main__":
     mcp.run()
+
+
+@mcp.tool()
+def create_group_block(group_name: str, check_in_date: str, check_out_date: str,
+                       blocks: list, company: str = None,
+                       cutoff_date: str = None, venue: str = None,
+                       event_type: str = None, event_date: str = None,
+                       attendees: int = 0, customer_phone: str = None) -> dict:
+    """Draft a MICE piece of business in one call: a group booking with a room
+    block (list of {room_type, rooms_blocked, block_rate}) and optionally its
+    banquet event. The agent wedge: turn "30 rooms + a 200-pax wedding on
+    Dec 12" into a live proposal. Starts Open; confirming it holds the rooms
+    out of general sale until the cutoff date."""
+    return api("create_group_block", property=PROPERTY, group_name=group_name,
+               check_in_date=check_in_date, check_out_date=check_out_date,
+               blocks=blocks, company=company, cutoff_date=cutoff_date,
+               venue=venue, event_type=event_type, event_date=event_date,
+               attendees=attendees, customer_phone=customer_phone)
+
+
+@mcp.tool()
+def group_pickup_status(group_booking: str) -> dict:
+    """Group Rooms Control: the block, per-room-type pickup (blocked / picked
+    up / remaining), rooming list, tied event and master folio."""
+    return api("group_detail", group_booking=group_booking)
+
+
+@mcp.tool()
+def pickup_group_room(group_booking: str, room_type: str, guest_name: str,
+                      phone: str = None) -> dict:
+    """Name a guest into a group's room block — creates their reservation on
+    the group's dates against the held inventory."""
+    return api("pickup_group_room", group_booking=group_booking,
+               room_type=room_type, guest_name=guest_name, phone=phone)

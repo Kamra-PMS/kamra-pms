@@ -2002,7 +2002,9 @@ def create_booking(property: str, room_type: str, check_in_date: str,
 
 	room = None
 	if int(assign_room) and not int(waitlist or 0):
-		free = available_rooms(property, room_type, check_in_date, check_out_date)
+		# a group pickup books against its own block, not general inventory
+		free = available_rooms(property, room_type, check_in_date,
+		                       check_out_date, group_booking=group_booking)
 		room = free[0].name if free else None
 
 	doc = frappe.get_doc({
@@ -2184,11 +2186,58 @@ def create_group_booking(property: str, group_name: str, check_in_date: str,
 	return {"group_booking": group.name, "created": created, "skipped": skipped}
 
 
+def _block_hold(property: str, room_type: str, check_in_date: str,
+                check_out_date: str, for_group: str | None = None) -> int:
+	"""Rooms held by confirmed group blocks overlapping the window that
+	haven't been picked up yet. A block stops holding inventory once its
+	cutoff date passes (unsold rooms flow back — no release step needed).
+	The group's own pickups see their held rooms, not a shortage."""
+	from frappe.utils import getdate
+
+	hold = 0
+	for gb in frappe.get_all(
+		"Group Booking",
+		filters={"property": property, "status": "Confirmed",
+		         "check_in_date": ("<", check_out_date),
+		         "check_out_date": (">", check_in_date)},
+		fields=["name", "cutoff_date"],
+	):
+		if gb.name == for_group:
+			continue
+		if gb.cutoff_date and getdate(gb.cutoff_date) < getdate(nowdate()):
+			continue
+		blocked = frappe.db.get_value(
+			"Group Room Block",
+			{"parent": gb.name, "room_type": room_type},
+			"rooms_blocked") or 0
+		if not blocked:
+			continue
+		picked = frappe.db.count("Reservation", {
+			"group_booking": gb.name, "room_type": room_type,
+			"status": ("in", ["Confirmed", "Checked In"])})
+		hold += max(0, int(blocked) - int(picked))
+	return hold
+
+
 @frappe.whitelist()
 @require_roles("Front Desk", "Kamra Agent")
-def available_rooms(property: str, room_type: str, check_in_date: str, check_out_date: str):
+def available_rooms(property: str, room_type: str, check_in_date: str,
+                    check_out_date: str, group_booking: str | None = None):
 	"""Rooms of a type with no overlapping live reservation — the same
-	logic the double-booking guard enforces, exposed as a query."""
+	logic the double-booking guard enforces, exposed as a query. Confirmed
+	group blocks hold their unsold rooms out of general sale; pass the
+	group to book against its own block."""
+	rooms = _available_rooms_raw(property, room_type, check_in_date,
+	                             check_out_date)
+	hold = _block_hold(property, room_type, check_in_date, check_out_date,
+	                   for_group=group_booking)
+	if hold:
+		rooms = rooms[:max(0, len(rooms) - hold)]
+	return rooms
+
+
+def _available_rooms_raw(property: str, room_type: str, check_in_date: str,
+                         check_out_date: str):
 	return frappe.db.sql(
 		"""
 		SELECT r.name, r.room_number, r.housekeeping_status
@@ -2252,3 +2301,169 @@ def set_cashier_pin(pin: str, current_pin: str | None = None):
 		                "pin": pin}).insert(ignore_permissions=True)
 	frappe.db.commit()
 	return {"ok": True}
+
+
+# ---------------------------------------------------------------------------
+# MICE: group room blocks + pickup (Group Rooms Control)
+# ---------------------------------------------------------------------------
+
+@frappe.whitelist()
+@require_roles("Front Desk", "Revenue Manager", "Kamra Agent")
+def group_detail(group_booking: str):
+	"""Everything Group Rooms Control needs: the block, per-type pickup,
+	the rooming list, the tied event and the master folio."""
+	gb = frappe.get_doc("Group Booking", group_booking)
+	pickup = []
+	for b in gb.blocks:
+		picked = frappe.db.count("Reservation", {
+			"group_booking": gb.name, "room_type": b.room_type,
+			"status": ("in", ["Confirmed", "Checked In"])})
+		pickup.append({
+			"room_type": b.room_type,
+			"rooms_blocked": b.rooms_blocked,
+			"block_rate": b.block_rate,
+			"picked_up": picked,
+			"remaining": max(0, int(b.rooms_blocked) - picked),
+		})
+	rooming = frappe.get_all(
+		"Reservation",
+		filters={"group_booking": gb.name},
+		fields=["name", "guest_name", "room_type", "room", "status",
+		        "check_in_date", "check_out_date"],
+		order_by="creation asc")
+	event = None
+	if gb.get("event"):
+		event = frappe.db.get_value(
+			"Venue Booking", gb.event,
+			["name", "venue", "event_type", "event_date", "status",
+			 "attendees", "quoted_amount"], as_dict=True)
+	master = frappe.db.get_value(
+		"Folio", {"group_booking": gb.name, "folio_type": "Group"}, "name")
+	return {
+		"group": {
+			"name": gb.name, "group_name": gb.group_name,
+			"company": gb.company, "status": gb.status,
+			"check_in_date": str(gb.check_in_date),
+			"check_out_date": str(gb.check_out_date),
+			"cutoff_date": str(gb.cutoff_date) if gb.cutoff_date else None,
+			"notes": gb.notes,
+		},
+		"pickup": pickup,
+		"rooming_list": rooming,
+		"event": event,
+		"master_folio": master,
+	}
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Front Desk", "Revenue Manager", "Kamra Agent")
+def save_group_blocks(group_booking: str, blocks, cutoff_date: str | None = None,
+                      status: str | None = None):
+	"""Set the room block (list of {room_type, rooms_blocked, block_rate})
+	and optionally the cutoff/status. Confirmed blocks hold inventory."""
+	if isinstance(blocks, str):
+		blocks = frappe.parse_json(blocks)
+	gb = frappe.get_doc("Group Booking", group_booking)
+	gb.blocks = []
+	for b in blocks or []:
+		if not b.get("room_type") or not int(b.get("rooms_blocked") or 0):
+			continue
+		gb.append("blocks", {
+			"room_type": b["room_type"],
+			"rooms_blocked": int(b["rooms_blocked"]),
+			"block_rate": float(b.get("block_rate") or 0),
+		})
+	if cutoff_date is not None:
+		gb.cutoff_date = cutoff_date or None
+	if status:
+		gb.status = status
+	gb.save(ignore_permissions=True)
+	frappe.db.commit()
+	return {"ok": True, "blocks": len(gb.blocks)}
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Front Desk", "Kamra Agent")
+def pickup_group_room(group_booking: str, room_type: str, guest_name: str,
+                      phone: str | None = None, adults: int = 2,
+                      children: int = 0):
+	"""Name a guest into the block: creates a reservation on the group's
+	dates against its held inventory."""
+	gb = frappe.get_doc("Group Booking", group_booking)
+	out = create_booking(
+		property=gb.property, room_type=room_type,
+		check_in_date=str(gb.check_in_date),
+		check_out_date=str(gb.check_out_date),
+		guest_name=guest_name, phone=phone,
+		adults=int(adults), children=int(children),
+		booking_type="Group", company=gb.company,
+		group_booking=gb.name, source="Manual")
+	from kamra.savings import log_action
+	log_action("group_pickup", "Group Booking", gb.name, gb.property,
+	           rationale=f"{guest_name} picked up a {room_type.split('-')[-1]}"
+	                     f" from block {gb.group_name}")
+	return out
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Front Desk", "Revenue Manager", "Kamra Agent")
+def create_group_block(property: str, group_name: str, check_in_date: str,
+                       check_out_date: str, blocks,
+                       company: str | None = None,
+                       cutoff_date: str | None = None,
+                       venue: str | None = None,
+                       event_type: str | None = None,
+                       event_date: str | None = None,
+                       attendees: int = 0,
+                       customer_phone: str | None = None,
+                       notes: str | None = None):
+	"""One call drafts the whole piece of MICE business: the group, its room
+	block, and (optionally) the banquet event — the agent wedge: an inquiry
+	agent turns "30 rooms + a 200-pax wedding on Dec 12" into a proposal."""
+	if isinstance(blocks, str):
+		blocks = frappe.parse_json(blocks)
+	gb = frappe.get_doc({
+		"doctype": "Group Booking",
+		"property": property,
+		"group_name": group_name,
+		"company": company,
+		"check_in_date": check_in_date,
+		"check_out_date": check_out_date,
+		"cutoff_date": cutoff_date,
+		"status": "Open",
+		"notes": notes,
+	})
+	for b in blocks or []:
+		gb.append("blocks", {
+			"room_type": b["room_type"],
+			"rooms_blocked": int(b.get("rooms_blocked") or 0),
+			"block_rate": float(b.get("block_rate") or 0),
+		})
+	gb.insert(ignore_permissions=True)
+	event = None
+	if venue:
+		ev = frappe.get_doc({
+			"doctype": "Venue Booking",
+			"property": property,
+			"venue": venue,
+			"event_type": event_type or "Other",
+			"status": "Enquiry",
+			"event_date": event_date or check_in_date,
+			"customer_name": group_name,
+			"customer_phone": customer_phone,
+			"company": company,
+			"attendees": int(attendees or 0),
+			"group_booking": gb.name,
+		})
+		ev.insert(ignore_permissions=True)
+		gb.event = ev.name
+		gb.save(ignore_permissions=True)
+		event = ev.name
+	frappe.db.commit()
+	from kamra.savings import log_action
+	log_action("group_block_drafted", "Group Booking", gb.name, property,
+	           minutes_saved=15,
+	           rationale=f"Drafted block '{group_name}' "
+	                     f"({sum(int(b.get('rooms_blocked') or 0) for b in blocks or [])} rooms"
+	                     f"{' + event' if event else ''})")
+	return {"group_booking": gb.name, "event": event, "status": gb.status}

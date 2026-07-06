@@ -129,6 +129,7 @@ const NAV: NavGroup[] = [
     items: [
       { to: "/events", label: "Event Bookings", icon: PartyPopper },
       { to: "/venue-calendar", label: "Venue Calendar", icon: CalendarDays },
+      { to: "/groups", label: "Groups & Blocks", icon: Users },
     ],
   },
   // ---- Setup (collapsed by default) ----

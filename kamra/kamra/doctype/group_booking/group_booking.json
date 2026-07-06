@@ -15,7 +15,11 @@
   "check_in_date",
   "check_out_date",
   "status",
-  "notes"
+  "notes",
+  "cutoff_date",
+  "event",
+  "sb_blocks",
+  "blocks"
  ],
  "fields": [
   {
@@ -69,6 +73,29 @@
    "fieldname": "notes",
    "fieldtype": "Small Text",
    "label": "Notes"
+  },
+  {
+   "fieldname": "cutoff_date",
+   "fieldtype": "Date",
+   "label": "Block Cutoff Date",
+   "description": "Unsold blocked rooms release back to inventory after this date"
+  },
+  {
+   "fieldname": "event",
+   "fieldtype": "Link",
+   "label": "Event (Venue Booking)",
+   "options": "Venue Booking"
+  },
+  {
+   "fieldname": "sb_blocks",
+   "fieldtype": "Section Break",
+   "label": "Room Block"
+  },
+  {
+   "fieldname": "blocks",
+   "fieldtype": "Table",
+   "label": "Blocked Rooms",
+   "options": "Group Room Block"
   }
  ],
  "grid_page_length": 50,

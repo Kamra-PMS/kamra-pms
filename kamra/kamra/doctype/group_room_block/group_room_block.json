@@ -1,0 +1,27 @@
+{
+ "actions": [],
+ "autoname": "hash",
+ "creation": "2026-07-06 00:00:00",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": ["room_type", "rooms_blocked", "block_rate"],
+ "fields": [
+  {"fieldname": "room_type", "fieldtype": "Link", "label": "Room Type", "options": "Room Type", "reqd": 1, "in_list_view": 1},
+  {"fieldname": "rooms_blocked", "fieldtype": "Int", "label": "Rooms Blocked", "reqd": 1, "in_list_view": 1},
+  {"fieldname": "block_rate", "fieldtype": "Currency", "label": "Negotiated Rate / Night", "in_list_view": 1}
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-07-06 00:00:00",
+ "modified_by": "Administrator",
+ "module": "Kamra",
+ "name": "Group Room Block",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 0
+}

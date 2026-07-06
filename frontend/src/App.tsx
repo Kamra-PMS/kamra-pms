@@ -46,6 +46,7 @@ import {
   seasonsConfig,
   shiftsConfig,
   travelAgentsConfig,
+  groupsConfig,
   venueBookingsConfig,
   venuesConfig,
   vouchersConfig,
@@ -219,6 +220,10 @@ export default function App() {
             element={<ResourceScreen config={venuesConfig} />}
           />
           <Route path="venue-calendar" element={<VenueCalendar />} />
+          <Route
+            path="groups"
+            element={<ResourceScreen config={groupsConfig} />}
+          />
           <Route
             path="lost-found"
             element={<ResourceScreen config={lostFoundConfig} />}

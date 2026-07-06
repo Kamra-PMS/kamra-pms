@@ -1,5 +1,6 @@
 import type { ScreenConfig } from "../components/ResourceScreen"
 import BillingRulesEditor from "../components/BillingRulesEditor"
+import GroupControl from "../components/GroupControl"
 import RoomTypeMedia from "../components/RoomTypeMedia"
 import ReservationDetail from "./ReservationDetail"
 
@@ -407,4 +408,35 @@ export const reservationsConfig: ScreenConfig = {
     { field: "special_requests", label: "Special requests", type: "data" },
   ],
   detailPanel: ReservationDetail,
+}
+
+export const groupsConfig: ScreenConfig = {
+  doctype: "Group Booking",
+  title: "Groups & Blocks",
+  description: "Group Rooms Control — blocks, pickup and rooming lists.",
+  propertyScoped: true,
+  orderBy: "check_in_date desc",
+  pageSize: 25,
+  searchFields: ["group_name", "company"],
+  filters: [
+    { field: "status", label: "Status", options: ["Open", "Confirmed", "Cancelled"] },
+  ],
+  columns: [
+    { field: "group_name", label: "Group" },
+    { field: "company", label: "Company" },
+    { field: "check_in_date", label: "Arrive" },
+    { field: "check_out_date", label: "Depart" },
+    { field: "cutoff_date", label: "Cutoff" },
+    { field: "status", label: "Status", badge: true },
+  ],
+  form: [
+    { field: "group_name", label: "Group name", type: "data", required: true },
+    { field: "company", label: "Company", type: "link", linkDoctype: "Company" },
+    { field: "check_in_date", label: "Arrival", type: "date", required: true },
+    { field: "check_out_date", label: "Departure", type: "date", required: true },
+    { field: "cutoff_date", label: "Block cutoff", type: "date" },
+    { field: "status", label: "Status", type: "select", options: ["Open", "Confirmed", "Cancelled"] },
+    { field: "notes", label: "Notes", type: "data" },
+  ],
+  detailPanel: GroupControl,
 }
