@@ -301,3 +301,101 @@ def ask(property: str, messages):
 	return {"reply": "I hit my tool-call limit for one question — "
 	                 "try breaking it into smaller steps.",
 	        "actions": actions}
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Front Desk", "Finance", "Revenue Manager")
+def ask_stream(property: str, messages):
+	"""Streaming copilot turn (Server-Sent Events). Governed tools run FIRST
+	(they need the DB, which the request context still holds), emitting an
+	`action` event each; then the final answer is streamed token-by-token as
+	`token` events. The generator itself touches no DB — only the OpenAI stream
+	— so it's safe to iterate after the request handler returns.
+
+	Events: action {tool, ok} · token {text} · error {message} · done {}
+	"""
+	from werkzeug.wrappers import Response
+
+	s = _settings(property)
+	if not (s and s.enabled):
+		frappe.throw("The AI assistant is not enabled for this property.")
+	api_key = s.get_password("api_key", raise_exception=False)
+	if not api_key:
+		frappe.throw("No API key configured — Settings → AI assistant.")
+	if isinstance(messages, str):
+		messages = frappe.parse_json(messages)
+
+	base = (s.base_url or "https://api.openai.com/v1").rstrip("/")
+	model = s.model or "gpt-4o-mini"
+	headers = {"Authorization": f"Bearer {api_key}",
+	           "Content-Type": "application/json"}
+	prop_name = frappe.db.get_value("Property", property, "property_name")
+	system = SYSTEM.format(
+		property_name=prop_name or property, today=nowdate(),
+		extra=("\n" + s.extra_instructions) if s.extra_instructions else "")
+	convo = [{"role": "system", "content": system}] + list(messages)
+
+	# --- resolve tools synchronously (DB access happens here, before streaming)
+	actions = []
+	for _ in range(MAX_TOOL_ROUNDS):
+		resp = requests.post(f"{base}/chat/completions", headers=headers,
+			json={"model": model, "messages": convo, "tools": _tool_defs(),
+			      "temperature": 0.2}, timeout=TIMEOUT)
+		if resp.status_code != 200:
+			frappe.throw(f"AI provider error ({resp.status_code}): {resp.text[:200]}")
+		msg = resp.json()["choices"][0]["message"]
+		calls = msg.get("tool_calls") or []
+		if not calls:
+			break  # data gathered; regenerate the answer streamed (no tools)
+		convo.append(msg)
+		for call in calls:
+			try:
+				args = json.loads(call["function"]["arguments"] or "{}")
+			except ValueError:
+				args = {}
+			try:
+				result = _run_tool(call["function"]["name"], args, property)
+				actions.append({"tool": call["function"]["name"], "ok": True})
+			except Exception as e:
+				result = {"error": str(e)}
+				actions.append({"tool": call["function"]["name"], "ok": False})
+			convo.append({"role": "tool", "tool_call_id": call["id"],
+			              "content": frappe.as_json(result)})
+
+	def sse(event, data):
+		return f"event: {event}\ndata: {json.dumps(data)}\n\n"
+
+	def gen():
+		for a in actions:
+			yield sse("action", a)
+		try:
+			# final answer streamed WITHOUT tools → the model must produce text
+			r = requests.post(f"{base}/chat/completions", headers=headers,
+				json={"model": model, "messages": convo, "temperature": 0.2,
+				      "stream": True}, stream=True, timeout=TIMEOUT)
+			if r.status_code != 200:
+				yield sse("error", {"message": f"AI provider error ({r.status_code})"})
+			else:
+				for raw in r.iter_lines():
+					if not raw:
+						continue
+					line = raw.decode("utf-8")
+					if not line.startswith("data: "):
+						continue
+					chunk = line[6:]
+					if chunk == "[DONE]":
+						break
+					try:
+						delta = json.loads(chunk)["choices"][0].get("delta", {})
+					except (ValueError, KeyError, IndexError):
+						continue
+					if delta.get("content"):
+						yield sse("token", {"text": delta["content"]})
+		except Exception as e:
+			yield sse("error", {"message": str(e)[:150]})
+		yield sse("done", {})
+
+	return Response(gen(), mimetype="text/event-stream", headers={
+		"Cache-Control": "no-cache",
+		"X-Accel-Buffering": "no",  # tell nginx not to buffer this response
+	})

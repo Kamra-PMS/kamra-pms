@@ -70,22 +70,83 @@ export default function AssistantPanel() {
     setInput("")
     setError(null)
     const history = [...msgs, { role: "user" as const, content: q }]
-    setMsgs(history)
+    // append a growing assistant bubble right after the user's message
+    const aIdx = history.length
+    setMsgs([...history, { role: "assistant", content: "", actions: [] }])
     setBusy(true)
+
+    const patch = (fn: (m: Msg) => Msg) =>
+      setMsgs((ms) => ms.map((m, i) => (i === aIdx ? fn(m) : m)))
+    const payload = {
+      property: getCurrentProperty(),
+      messages: history.map(({ role, content }) => ({ role, content })),
+    }
+
     try {
-      const out = await call<{ reply: string; actions: Msg["actions"] }>(
-        "kamra.assistant.ask",
-        {
-          property: getCurrentProperty(),
-          messages: history.map(({ role, content }) => ({ role, content })),
+      const csrf = (window as unknown as { csrf_token?: string }).csrf_token
+      const res = await fetch("/api/method/kamra.assistant.ask_stream", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(csrf && csrf !== "None"
+            ? { "X-Frappe-CSRF-Token": csrf }
+            : {}),
         },
-      )
-      setMsgs((m) => [
-        ...m,
-        { role: "assistant", content: out.reply, actions: out.actions },
-      ])
-    } catch (e) {
-      setError(serverError(e))
+        credentials: "include",
+        body: JSON.stringify(payload),
+      })
+      if (!res.ok || !res.body) throw new Error(`stream ${res.status}`)
+
+      const reader = res.body.getReader()
+      const dec = new TextDecoder()
+      let buf = ""
+      let gotAny = false
+      for (;;) {
+        const { done, value } = await reader.read()
+        if (done) break
+        buf += dec.decode(value, { stream: true })
+        let sep: number
+        while ((sep = buf.indexOf("\n\n")) >= 0) {
+          const block = buf.slice(0, sep)
+          buf = buf.slice(sep + 2)
+          let event = ""
+          let data = ""
+          for (const line of block.split("\n")) {
+            if (line.startsWith("event:")) event = line.slice(6).trim()
+            else if (line.startsWith("data:")) data = line.slice(5).trim()
+          }
+          if (!event || !data) continue
+          const d = JSON.parse(data)
+          if (event === "token") {
+            gotAny = true
+            patch((m) => ({ ...m, content: m.content + d.text }))
+          } else if (event === "action") {
+            patch((m) => ({
+              ...m,
+              actions: [...(m.actions ?? []), { tool: d.tool, ok: d.ok }],
+            }))
+          } else if (event === "error") {
+            setError(d.message)
+          }
+        }
+      }
+      if (!gotAny) throw new Error("empty stream")
+    } catch {
+      // fallback to the non-streaming endpoint (older server / stream blocked)
+      try {
+        const out = await call<{ reply: string; actions: Msg["actions"] }>(
+          "kamra.assistant.ask",
+          payload,
+        )
+        patch(() => ({
+          role: "assistant",
+          content: out.reply,
+          actions: out.actions,
+        }))
+      } catch (e) {
+        setError(serverError(e))
+        setMsgs((ms) => ms.filter((_, i) => i !== aIdx)) // drop empty bubble
+      }
     } finally {
       setBusy(false)
     }
