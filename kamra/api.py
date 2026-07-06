@@ -1828,10 +1828,14 @@ def create_booking(property: str, room_type: str, check_in_date: str,
                    booker_relation: str | None = None,
                    contact_preference: str | None = None,
                    guest: str | None = None,
+                   waitlist: int = 0,
                    addons=None):
 	"""One-call booking: attach to an existing guest profile when given,
 	else dedup by phone / create one. Optional auto room assignment,
-	voucher applied, price computed by the engine."""
+	voucher applied, price computed by the engine.
+
+	waitlist=1 parks the stay with no room and status Waitlist — for dates
+	that are sold out or restricted; promote it later when a room frees."""
 	if guest:
 		if not frappe.db.exists("Guest", guest):
 			frappe.throw(f"Guest profile {guest} not found.")
@@ -1848,7 +1852,7 @@ def create_booking(property: str, room_type: str, check_in_date: str,
 		).name
 
 	room = None
-	if int(assign_room):
+	if int(assign_room) and not int(waitlist or 0):
 		free = available_rooms(property, room_type, check_in_date, check_out_date)
 		room = free[0].name if free else None
 
@@ -1878,6 +1882,8 @@ def create_booking(property: str, room_type: str, check_in_date: str,
 			or ("Booker" if booked_by_name else "Guest"),
 		"auto_price": 1,
 	})
+	if int(waitlist or 0):
+		doc.status = "Waitlist"
 
 	# extras chosen at booking — priced from the Experience, posted to the
 	# folio the moment it opens
@@ -1917,7 +1923,65 @@ def create_booking(property: str, room_type: str, check_in_date: str,
 		"guest": guest,
 		"amount_after_tax": doc.amount_after_tax,
 		"discount": doc.discount_amount,
+		"status": doc.status,
 	}
+
+
+@frappe.whitelist()
+@require_roles("Front Desk", "Kamra Agent", "Revenue Manager")
+def waitlist(property: str):
+	"""All waitlisted stays for the property, by arrival date."""
+	return frappe.get_all(
+		"Reservation",
+		filters={"property": property, "status": "Waitlist"},
+		fields=["name", "guest_name", "room_type", "check_in_date",
+		        "check_out_date", "nights", "adults", "children",
+		        "amount_after_tax"],
+		order_by="check_in_date asc")
+
+
+@frappe.whitelist()
+@require_roles("Front Desk", "Kamra Agent")
+def promote_waitlist(reservation: str):
+	"""Promote a waitlisted stay to Confirmed when a room is free for its
+	dates. Assigns the first free room; the overlap guard validates it."""
+	doc = frappe.get_doc("Reservation", reservation)
+	if doc.status != "Waitlist":
+		frappe.throw("Only waitlisted reservations can be promoted.")
+	free = available_rooms(doc.property, doc.room_type,
+	                       doc.check_in_date, doc.check_out_date)
+	if not free:
+		frappe.throw("Still no room free for those dates.")
+	doc.room = free[0].name
+	doc.status = "Confirmed"
+	doc.save()
+	from kamra.savings import log_action
+	log_action("waitlist_promote", "Reservation", doc.name, doc.property,
+	           rationale=f"Promoted from waitlist into {doc.room}")
+	return {"ok": True, "reservation": doc.name, "room": doc.room}
+
+
+@frappe.whitelist()
+@require_roles("Front Desk", "Kamra Agent")
+def waitlist_ready(property: str):
+	"""Waitlisted stays that CAN now be accommodated — a room is free for
+	their dates. This is the signal the voice/WhatsApp agent watches so it
+	can proactively reach the guest the moment a room opens."""
+	ready = []
+	for r in frappe.get_all(
+			"Reservation",
+			filters={"property": property, "status": "Waitlist"},
+			fields=["name", "guest", "guest_name", "room_type",
+			        "check_in_date", "check_out_date", "nights",
+			        "adults", "children", "amount_after_tax"]):
+		free = available_rooms(property, r.room_type,
+		                       r.check_in_date, r.check_out_date)
+		if free:
+			r["rooms_free"] = len(free)
+			r["phone"] = frappe.db.get_value(
+				"Guest", r.guest, "phone") if r.guest else None
+			ready.append(r)
+	return ready
 
 
 @frappe.whitelist()

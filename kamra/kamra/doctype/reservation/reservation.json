@@ -104,7 +104,7 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Status",
-   "options": "Confirmed\nChecked In\nChecked Out\nCancelled\nNo Show"
+   "options": "Waitlist\nConfirmed\nChecked In\nChecked Out\nCancelled\nNo Show"
   },
   {
    "default": "Manual",

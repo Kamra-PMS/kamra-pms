@@ -137,6 +137,15 @@ TOOLS = {
 		"Full detail for one reservation: dates, room, guest + stay history, "
 		"folio balance (paid/due), booker, and which actions are available.",
 		{"reservation": {"type": "string"}}, False, False),
+	"waitlist_ready": (
+		"waitlist_ready",
+		"Waitlisted stays that can now be booked — a room freed for their "
+		"dates — with the guest's phone, so you can proactively reach out.",
+		{}, True, False),
+	"promote_waitlist": (
+		"promote_waitlist",
+		"Promote a waitlisted reservation into a free room (Confirmed).",
+		{"reservation": {"type": "string"}}, False, True),
 	"guest_search": (
 		"guest_search",
 		"Find a guest profile by name or phone (returning guests, VIPs).",

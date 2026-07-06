@@ -559,6 +559,17 @@ def run_night_audit(property: str, business_date: str | None = None) -> dict:
 				log_lines.append(
 					f"posted no-show charge ₹{fee:,.0f} for {row.name}")
 
+	# purge stale waitlist entries — two days after their requested departure
+	from frappe.utils import add_days as _add_days
+	purged = 0
+	for wl in frappe.get_all("Reservation", filters={
+			"property": property, "status": "Waitlist",
+			"check_out_date": ("<=", _add_days(business_date, -2))}, pluck="name"):
+		frappe.delete_doc("Reservation", wl, ignore_permissions=True, force=True)
+		purged += 1
+	if purged:
+		log_lines.append(f"purged {purged} stale waitlist entries")
+
 	audit = frappe.get_doc({
 		"doctype": "Night Audit Run",
 		"property": property,

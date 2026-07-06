@@ -110,6 +110,34 @@ def create_booking(guest_name: str, room_type: str, check_in_date: str,
 
 
 @mcp.tool()
+def add_to_waitlist(guest_name: str, room_type: str, check_in_date: str,
+                    check_out_date: str, phone: str = "", adults: int = 2,
+                    children: int = 0) -> dict:
+    """Park a stay on the waitlist (no room) — for dates that are sold out or
+    restricted. Promote it later with promote_waitlist when a room frees."""
+    return api("create_booking", property=PROPERTY, guest_name=guest_name,
+               phone=phone or None, room_type=room_type,
+               check_in_date=check_in_date, check_out_date=check_out_date,
+               adults=adults, children=children, waitlist=1, source="AI Agent")
+
+
+@mcp.tool()
+def waitlist_ready() -> list:
+    """Waitlisted stays that can NOW be booked — a room has freed up for their
+    dates. Each item includes the guest name and phone, so you can proactively
+    reach out. Poll this to catch openings the moment they appear — the wedge
+    for turning a sold-out 'no' into a booking."""
+    return api("waitlist_ready", property=PROPERTY)
+
+
+@mcp.tool()
+def promote_waitlist(reservation: str) -> dict:
+    """Promote a waitlisted stay into a free room (Confirmed). Fails if no room
+    is free for its dates."""
+    return api("promote_waitlist", reservation=reservation)
+
+
+@mcp.tool()
 def cancellation_preview(reservation: str) -> dict:
     """What cancelling would cost right now (policy window, fee basis,
     estimated fee). ALWAYS read this to the guest before cancelling."""

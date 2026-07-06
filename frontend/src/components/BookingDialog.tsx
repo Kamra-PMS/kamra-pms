@@ -55,7 +55,11 @@ export function BookingDialog(props: {
   const [quoting, setQuoting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
-  const [done, setDone] = useState<{ ref: string; room: string | null } | null>(
+  const [done, setDone] = useState<{
+    ref: string
+    room: string | null
+    waitlist?: boolean
+  } | null>(
     null,
   )
 
@@ -200,10 +204,29 @@ export function BookingDialog(props: {
     return (e as Error).message
   }
 
-  async function submit() {
+  async function submit(waitlist = false) {
     setBusy(true)
     setError(null)
     try {
+      if (waitlist) {
+        const res = await createBooking({
+          guest_name: form.guest_name,
+          phone: form.phone || undefined,
+          guest: profile?.name,
+          room_type: form.room_type,
+          check_in_date: form.check_in_date,
+          check_out_date: checkOut,
+          adults: form.adults,
+          children: form.children,
+          meal_plan: form.meal_plan || undefined,
+          voucher_code: form.voucher_code || undefined,
+          company: form.company || undefined,
+          waitlist: 1,
+        })
+        setDone({ ref: res.reservation, room: null, waitlist: true })
+        props.onBooked()
+        return
+      }
       if (moreRooms.length > 0) {
         // several rooms → one group booking, billable as a block
         const rooms = [
@@ -318,15 +341,28 @@ export function BookingDialog(props: {
 
         {done ? (
           <div className="space-y-5 px-7 py-8">
-            <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-emerald-800">
-              <p className="text-lg font-semibold">Booked — {done.ref}</p>
-              <p className="mt-1 text-sm">
-                {done.room
-                  ? `Room ${done.room.split("-").pop()} assigned.`
-                  : "No room auto-assigned — pick one from Reservations."}{" "}
-                Find it under Arrivals on the stay date.
-              </p>
-            </div>
+            {done.waitlist ? (
+              <div className="rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 text-amber-800">
+                <p className="text-lg font-semibold">
+                  Waitlisted — {done.ref}
+                </p>
+                <p className="mt-1 text-sm">
+                  Parked with no room. Promote it from the reservation when a
+                  room frees — or let the agent watch availability and reach
+                  the guest proactively. Auto-purges 2 days after departure.
+                </p>
+              </div>
+            ) : (
+              <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-emerald-800">
+                <p className="text-lg font-semibold">Booked — {done.ref}</p>
+                <p className="mt-1 text-sm">
+                  {done.room
+                    ? `Room ${done.room.split("-").pop()} assigned.`
+                    : "No room auto-assigned — pick one from Reservations."}{" "}
+                  Find it under Arrivals on the stay date.
+                </p>
+              </div>
+            )}
             <Button className="px-5 py-2.5 text-base" onClick={props.onClose}>
               Done
             </Button>
@@ -873,15 +909,24 @@ export function BookingDialog(props: {
               <div className="mt-6 flex gap-3">
                 <Button
                   variant="outline"
-                  className="flex-1 justify-center py-2.5 text-base"
+                  className="justify-center py-2.5 text-base"
                   onClick={props.onClose}
                 >
                   Cancel
                 </Button>
                 <Button
+                  variant="outline"
+                  className="justify-center py-2.5 text-base"
+                  disabled={busy || !form.guest_name}
+                  onClick={() => submit(true)}
+                  title="Park this stay with no room (sold out / restricted dates); promote it when a room frees"
+                >
+                  Add to waitlist
+                </Button>
+                <Button
                   className="flex-1 justify-center py-2.5 text-base"
                   disabled={busy || !form.guest_name || !quote}
-                  onClick={submit}
+                  onClick={() => submit()}
                 >
                   {busy ? "Booking…" : "Confirm"}
                 </Button>

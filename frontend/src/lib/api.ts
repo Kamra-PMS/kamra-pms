@@ -272,12 +272,21 @@ export const createBooking = (
     booked_by_phone?: string
     booker_relation?: string
     contact_preference?: string
+    waitlist?: number
     addons?: { experience: string; qty: number }[]
   },
 ) =>
-  call<{ reservation: string; room: string | null; amount_after_tax: number }>(
-    "kamra.api.create_booking",
-    { property: getCurrentProperty(), ...params },
+  call<{
+    reservation: string
+    room: string | null
+    amount_after_tax: number
+    status?: string
+  }>("kamra.api.create_booking", { property: getCurrentProperty(), ...params })
+
+export const promoteWaitlist = (reservation: string) =>
+  call<{ ok: boolean; reservation: string; room: string }>(
+    "kamra.api.promote_waitlist",
+    { reservation },
   )
 
 export const checkIn = (reservation: string) =>

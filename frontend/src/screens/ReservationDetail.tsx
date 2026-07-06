@@ -15,6 +15,7 @@ import {
   amendStay,
   checkIn,
   checkOut,
+  promoteWaitlist,
   reservationDetail,
   type ReservationDetail as Detail,
 } from "../lib/api"
@@ -27,6 +28,7 @@ const inr = (n: number) =>
   "₹" + Number(n || 0).toLocaleString("en-IN", { maximumFractionDigits: 0 })
 
 const STATUS_TONE: Record<string, string> = {
+  Waitlist: "bg-amber-100 text-amber-800",
   Confirmed: "bg-sky-100 text-sky-800",
   "Checked In": "bg-emerald-100 text-emerald-800",
   "Checked Out": "bg-zinc-200 text-zinc-700",
@@ -396,6 +398,18 @@ export default function ReservationDetail({
 
       {/* primary actions */}
       <div className="flex flex-wrap items-center gap-2 border-t border-zinc-200 pt-4">
+        {d.status === "Waitlist" && (
+          <Button
+            disabled={busy}
+            onClick={() =>
+              act(async () => {
+                await promoteWaitlist(name)
+              })
+            }
+          >
+            <LogIn className="size-4" /> Promote to a room
+          </Button>
+        )}
         {d.actions.can_check_in && (
           <Button disabled={busy} onClick={() => act(() => checkIn(name))}>
             <LogIn className="size-4" /> Check in
