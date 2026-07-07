@@ -9,6 +9,7 @@ import {
   X,
   Zap,
   MessageSquare,
+  Plug,
   ScrollText,
 } from "lucide-react"
 import { call, getCurrentProperty } from "../lib/api"
@@ -24,7 +25,7 @@ import {
 } from "../components/ui/card"
 import { cn } from "../lib/utils"
 
-type Tab = "chat" | "team" | "inbox" | "timeline"
+type Tab = "chat" | "team" | "inbox" | "timeline" | "connect"
 
 interface AutonomyRule {
   action_type: string
@@ -161,12 +162,16 @@ export default function Agents() {
         <TabButton current={tab} value="timeline" onSet={setTab} icon={ScrollText}>
           Activity
         </TabButton>
+        <TabButton current={tab} value="connect" onSet={setTab} icon={Plug}>
+          Connect
+        </TabButton>
       </div>
 
       {tab === "chat" && <Assistant />}
       {tab === "team" && manager && <TeamTab property={property} />}
       {tab === "inbox" && manager && <InboxTab property={property} />}
       {tab === "timeline" && <ActivityTab property={property} />}
+      {tab === "connect" && <ConnectTab property={property} />}
     </div>
   )
 }
@@ -929,6 +934,133 @@ function ActivityTab({ property }: { property: string }) {
           </Button>
         </div>
       </div>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Connect tab - bring your own Claude: personal, role-scoped MCP credentials
+// ---------------------------------------------------------------------------
+
+interface ConnectorCreds {
+  api_key: string
+  api_secret: string
+  base_url: string
+  property: string
+  user: string
+}
+
+function ConnectTab({ property }: { property: string }) {
+  const [creds, setCreds] = useState<ConnectorCreds | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
+
+  const snippet = creds
+    ? JSON.stringify(
+        {
+          mcpServers: {
+            kamra: {
+              command: "python",
+              args: ["apps/kamra/mcp/kamra_mcp.py"],
+              env: {
+                KAMRA_URL: creds.base_url,
+                KAMRA_API_KEY: creds.api_key,
+                KAMRA_API_SECRET: creds.api_secret,
+                KAMRA_PROPERTY: creds.property,
+              },
+            },
+          },
+        },
+        null,
+        2,
+      )
+    : ""
+
+  return (
+    <div className="max-w-2xl space-y-4">
+      <Card>
+        <CardHeader>
+          <div>
+            <CardTitle>Claude Desktop</CardTitle>
+            <p className="mt-0.5 text-xs text-zinc-500">
+              Connect Claude to this hotel like any connector. It acts as YOU:
+              your role decides what it can see and do - a front desk
+              connection books and checks in; it cannot touch rates or
+              finance. Every action lands in Activity under your name.
+            </p>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {!creds ? (
+            <Button
+              disabled={busy}
+              onClick={async () => {
+                setBusy(true)
+                setError(null)
+                try {
+                  const r = await call<ConnectorCreds>(
+                    "kamra.api.my_connector_credentials",
+                    { property },
+                  )
+                  setCreds(r)
+                } catch (e) {
+                  setError((e as Error).message)
+                } finally {
+                  setBusy(false)
+                }
+              }}
+            >
+              Generate my connection
+            </Button>
+          ) : (
+            <>
+              <p className="text-sm text-zinc-600">
+                Paste this into your{" "}
+                <code className="rounded bg-zinc-100 px-1">
+                  claude_desktop_config.json
+                </code>{" "}
+                (Claude Desktop → Settings → Developer → Edit Config), then
+                restart Claude:
+              </p>
+              <pre className="overflow-x-auto rounded-lg bg-zinc-100 p-3 text-xs leading-relaxed text-zinc-700">
+                {snippet}
+              </pre>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    navigator.clipboard.writeText(snippet)
+                    setCopied(true)
+                    setTimeout(() => setCopied(false), 1500)
+                  }}
+                >
+                  {copied ? "Copied" : "Copy config"}
+                </Button>
+                <span className="text-xs text-amber-600">
+                  The secret is shown once - regenerating invalidates the old
+                  one.
+                </span>
+              </div>
+              <p className="text-xs text-zinc-500">
+                Then ask Claude things like "occupancy this week", "build me an
+                MIS report from today's numbers", or "book a Deluxe for
+                Friday" - it uses Kamra's governed tools with your
+                permissions.
+              </p>
+            </>
+          )}
+          {error && (
+            <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-600">
+              {error}
+            </p>
+          )}
+        </CardContent>
+      </Card>
+      <p className="text-xs text-zinc-400">
+        Need a platform-wide or service key (all properties, custom scope)?
+        That is issued by your system admin under Developers.
+      </p>
     </div>
   )
 }

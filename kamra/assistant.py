@@ -234,6 +234,18 @@ def assistant_status(property: str):
 	}
 
 
+def _tool_allowed(name: str) -> bool:
+	"""RBAC for the copilot: a tool is only visible/callable when the
+	signed-in user's roles pass the SAME gate as the underlying API
+	endpoint. The model never even sees tools this user couldn't use."""
+	from kamra import api
+	fn = getattr(api, TOOLS[name][0], None)
+	allowed = getattr(fn, "_kamra_roles", None)
+	if not allowed:
+		return True
+	return bool(set(frappe.get_roles()) & set(allowed))
+
+
 def _tool_defs():
 	return [{
 		"type": "function",
@@ -246,11 +258,15 @@ def _tool_defs():
 				"required": [],
 			},
 		},
-	} for name, (_, desc, params, _inject, _mut) in TOOLS.items()]
+	} for name, (_, desc, params, _inject, _mut) in TOOLS.items()
+	  if _tool_allowed(name)]
 
 
 def _run_tool(name: str, args: dict, property: str):
 	from kamra import api
+	if not _tool_allowed(name):
+		frappe.throw("Your role doesn't include this action.",
+		             frappe.PermissionError)
 	fn_name, _desc, params, inject, mutating = TOOLS[name]
 	fn = getattr(api, fn_name)
 	clean = {k: v for k, v in args.items()

@@ -45,6 +45,8 @@ def require_roles(*roles):
 					f"Not permitted - needs one of: {', '.join(sorted(roles))}.",
 					frappe.PermissionError)
 			return fn(*args, **kwargs)
+		# introspectable RBAC: the copilot filters its tool list by this
+		guarded._kamra_roles = allowed
 		return guarded
 	return deco
 

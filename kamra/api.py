@@ -2474,3 +2474,31 @@ def create_group_block(property: str, group_name: str, check_in_date: str,
 	                     f"({sum(int(b.get('rooms_blocked') or 0) for b in blocks or [])} rooms"
 	                     f"{' + event' if event else ''})")
 	return {"group_booking": gb.name, "event": event, "status": gb.status}
+
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Front Desk", "Finance", "Revenue Manager", "Housekeeping")
+def my_connector_credentials(property: str):
+	"""Personal MCP credentials for connecting Claude (or any MCP client)
+	AS YOURSELF. The key acts with exactly your roles - Frappe enforces the
+	same gates as the UI, so a front-desk connection can do front-desk
+	things and nothing more. Regenerating invalidates the old secret.
+
+	Platform-wide / service keys stay on the Developers page (IT admin)."""
+	user = frappe.session.user
+	api_key = frappe.db.get_value("User", user, "api_key")
+	if not api_key:
+		api_key = frappe.generate_hash(length=15)
+	api_secret = frappe.generate_hash(length=15)
+	u = frappe.get_doc("User", user)
+	u.api_key = api_key
+	u.api_secret = api_secret
+	u.save(ignore_permissions=True)
+	frappe.db.commit()
+	from kamra.savings import log_action
+	log_action("connector_key_issued", "User", user,
+	           rationale="Personal MCP connector credentials (re)generated")
+	return {"api_key": api_key, "api_secret": api_secret,
+	        "base_url": frappe.utils.get_url(), "property": property,
+	        "user": user}
