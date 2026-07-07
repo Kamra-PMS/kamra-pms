@@ -189,13 +189,15 @@ website_redirects = [
 # ---------------
 # Hook on document methods and events
 
-# doc_events = {
-# 	"*": {
-# 		"on_update": "method",
-# 		"on_cancel": "method",
-# 		"on_trash": "method"
-# 	}
-# }
+doc_events = {
+	doctype: {
+		"on_update": "kamra.realtime.notify",
+		"after_insert": "kamra.realtime.notify",
+		"on_trash": "kamra.realtime.notify",
+	}
+	for doctype in ("Reservation", "Folio", "Room", "Housekeeping Task",
+	                "Venue Booking", "Group Booking")
+}
 
 # Scheduled Tasks
 # ---------------

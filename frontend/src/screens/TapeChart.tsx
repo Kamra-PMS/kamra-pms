@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useState } from "react"
+import { useOutletContext } from "react-router-dom"
+import type { ShellContext } from "../AppShell"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { call, getCurrentProperty } from "../lib/api"
 import { listResource, serverError } from "../lib/resource"
@@ -53,11 +55,14 @@ export default function TapeChart() {
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
+  const { refreshKey } = useOutletContext<ShellContext>()
+
   const load = useCallback(() => {
     call<TapeData>("kamra.api.tape_chart", {
       property: getCurrentProperty(), start_date: start, days: DAYS,
     }).then(setData)
-  }, [start])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [start, refreshKey])
 
   useEffect(load, [load])
 

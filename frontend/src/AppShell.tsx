@@ -45,6 +45,7 @@ import {
 } from "./lib/api"
 import { asset } from "./lib/asset"
 import { useAuth } from "./lib/auth"
+import { subscribeRealtime } from "./lib/realtime"
 import { getTheme, setTheme } from "./lib/theme"
 import { cn } from "./lib/utils"
 
@@ -255,6 +256,9 @@ export default function AppShell() {
       }
     })
   }, [])
+
+  // live updates: any watched change on the server nudges every screen
+  useEffect(() => subscribeRealtime(() => setRefreshKey((k) => k + 1)), [])
 
   function switchProperty(name: string) {
     setCurrentProperty(name)
