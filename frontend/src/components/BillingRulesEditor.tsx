@@ -4,7 +4,7 @@ import { Button } from "./ui/button"
 import type { Row } from "../lib/resource"
 
 /** Which charge types bill to the company on corporate stays. Anything
- * unchecked — and all alcohol, always — goes to the guest folio. */
+ * unchecked - and all alcohol, always - goes to the guest folio. */
 
 const ROUTABLE = [
   "Room",
@@ -70,7 +70,7 @@ export default function BillingRulesEditor({ row }: { row: Row; reload: () => vo
       <h3 className="text-sm font-medium text-zinc-600">Billing rules</h3>
       <p className="mb-2 mt-0.5 text-xs text-zinc-400">
         Ticked charge types post to the Company folio on corporate stays.
-        Everything else — and alcohol, always — bills to the guest.
+        Everything else - and alcohol, always - bills to the guest.
       </p>
       <div className="mb-2 flex gap-1.5">
         <button

@@ -22,7 +22,7 @@ const fmtDate = (d: unknown) =>
         month: "short",
         year: "numeric",
       })
-    : "—"
+    : "-"
 const fmtWhen = (d: unknown) =>
   d
     ? new Date(String(d).replace(" ", "T").slice(0, 19)).toLocaleString(
@@ -130,7 +130,7 @@ export default function Billing() {
               </p>
             ) : (
               <p className="text-sm text-zinc-600">
-                <span className="font-medium">{audit.audit}</span> — posted{" "}
+                <span className="font-medium">{audit.audit}</span> - posted{" "}
                 {audit.room_charges_posted} room night
                 {audit.room_charges_posted === 1 ? "" : "s"} (₹
                 {inr(audit.amount_posted)}), opened {audit.folios_opened}{" "}
@@ -178,7 +178,7 @@ export default function Billing() {
           <div>
             <CardTitle>Today's collections</CardTitle>
             <p className="mt-0.5 text-xs text-zinc-400">
-              What the system says was collected — the drawer must match this
+              What the system says was collected - the drawer must match this
               at shift close.
             </p>
           </div>
@@ -226,14 +226,14 @@ export default function Billing() {
                     onClick={() => navigate(`/billing/${encodeURIComponent(f.name)}`)}
                   >
                     <td className="py-2.5 pr-4 font-medium">{f.name}</td>
-                    <td className="py-2.5 pr-4">{String(f.guest_name ?? "—")}</td>
+                    <td className="py-2.5 pr-4">{String(f.guest_name ?? "-")}</td>
                     <td className="py-2.5 pr-4">
                       <Badge tone={f.status === "Open" ? "amber" : "green"}>
                         {String(f.status)}
                       </Badge>
                     </td>
                     <td className="py-2.5 pr-4 text-zinc-500">
-                      {String(f.invoice_number ?? "—")}
+                      {String(f.invoice_number ?? "-")}
                     </td>
                     <td className="py-2.5 pr-4">₹{inr(f.grand_total)}</td>
                     <td className="py-2.5 pr-4">₹{inr(f.payments_total)}</td>
@@ -249,7 +249,7 @@ export default function Billing() {
                 {folios.length === 0 && (
                   <tr>
                     <td colSpan={7} className="py-6 text-center text-zinc-400">
-                      No folios yet — they open automatically at check-in.
+                      No folios yet - they open automatically at check-in.
                     </td>
                   </tr>
                 )}

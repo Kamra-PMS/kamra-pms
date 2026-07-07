@@ -13,7 +13,7 @@ from frappe.utils import add_days, nowdate
 
 @frappe.whitelist(allow_guest=True)
 def whoami():
-	"""Current user + roles — drives which modules the UI shows.
+	"""Current user + roles - drives which modules the UI shows.
 
 	allow_guest so the SPA's initial "am I logged in?" probe returns
 	{user: "Guest"} cleanly instead of a 403 in the console.
@@ -32,7 +32,7 @@ def developer_info():
 	"""REST base URL + whether the current user already has an API key.
 
 	Drives the on-site Developers page. The secret itself is never returned
-	here — Frappe stores it hashed; it's only shown once, at generation time.
+	here - Frappe stores it hashed; it's only shown once, at generation time.
 	"""
 	user = frappe.session.user
 	return {
@@ -69,12 +69,12 @@ def generate_api_key():
 def set_room_rate(property: str, room_type: str, start_date: str,
                   end_date: str, rate: float, reason: str = "",
                   agent: str | None = None):
-	"""Set the nightly rate for a room type over a date range — bounded by
+	"""Set the nightly rate for a room type over a date range - bounded by
 	the owner's Rate Guardrails (PRD FR-30). This is the Revenue Agent's
 	write tool: it can never price outside the rails.
 
 	Autonomy: routes through the gate under the caller's agent identity
-	(default seed 'Ravi' has this as Approve — a Pending row is created
+	(default seed 'Ravi' has this as Approve - a Pending row is created
 	and the season only inserts when the human approves in the Inbox).
 	"""
 	from kamra.autonomy import GateExecute, GatePending, GateSuggest, finalize_after, guard
@@ -125,7 +125,7 @@ def set_room_rate(property: str, room_type: str, start_date: str,
 		return {"gate": "pending", "pending": decision.pending_name,
 		        "log": decision.log_name, "summary": decision.summary}
 
-	# Executed — do the real work.
+	# Executed - do the real work.
 	season = frappe.get_doc({
 		"doctype": "Season",
 		"property": property,
@@ -138,7 +138,7 @@ def set_room_rate(property: str, room_type: str, start_date: str,
 		"priority": 100,
 	})
 	# absolute seasons apply per room type via the pricing engine only when
-	# scoped — v0 seasons are property-wide, so callers should set rates per
+	# scoped - v0 seasons are property-wide, so callers should set rates per
 	# room type ranges deliberately. Tracked as a follow-up to scope seasons.
 	season.insert()
 	finalize_after(decision.log_name, {"season": season.name, "rate": rate,
@@ -243,7 +243,7 @@ def owner_briefing(property: str, date: str | None = None):
 
 @frappe.whitelist()
 def setup_property(payload):
-	"""One-call property onboarding — the wizard's submit button and the
+	"""One-call property onboarding - the wizard's submit button and the
 	migration agent's tool. payload = {property:{property_name, city,
 	gstin?, phone?, ...}, room_types:[{code,name,base_price,adults?,
 	extra_adult_price?,tax_percent?}], rooms:[{room_type_code,
@@ -310,7 +310,7 @@ def setup_property(payload):
 
 @frappe.whitelist()
 def import_bookings(property: str, bookings):
-	"""Bulk booking import — the switch-over tool. Each row: {guest_name,
+	"""Bulk booking import - the switch-over tool. Each row: {guest_name,
 	phone?, room_type_code, check_in, check_out, adults?, children?,
 	amount_after_tax?, channel?, status?}. Rows with a fixed amount keep
 	it (auto_price off); others are priced by the engine."""
@@ -417,7 +417,7 @@ def registration_card(reservation: str):
 @require_roles("Finance", "Front Desk", "Kamra Agent")
 def cash_summary(property: str, date: str | None = None):
 	"""Cashier reconciliation: what the system says was collected today,
-	per payment mode — the number the drawer must match at shift close."""
+	per payment mode - the number the drawer must match at shift close."""
 	date = date or nowdate()
 	rows = frappe.db.sql(
 		"""
@@ -437,7 +437,7 @@ def cash_summary(property: str, date: str | None = None):
 @require_roles("Front Desk", "Kamra Agent")
 def record_advance(reservation: str, amount: float, mode: str = "UPI",
                    reference: str | None = None):
-	"""Advance/deposit against a Confirmed booking — opens the folio early
+	"""Advance/deposit against a Confirmed booking - opens the folio early
 	so the money sits on the stay from day one (GM gap: deposits arrive at
 	booking, not at check-in)."""
 	res = frappe.get_doc("Reservation", reservation)
@@ -539,7 +539,7 @@ def create_ticket(property: str, subject: str, category: str,
                   reservation: str | None = None, guest: str | None = None,
                   description: str | None = None, source: str = "Manual"):
 	"""Create a guest-request ticket. This is also the agent tool for
-	'guest wants towels / AC is broken' — PRD FR-42."""
+	'guest wants towels / AC is broken' - PRD FR-42."""
 	doc = frappe.get_doc({
 		"doctype": "Service Ticket",
 		"property": property,
@@ -604,7 +604,7 @@ def advance_ticket(ticket: str, status: str, resolution_note: str | None = None)
 @frappe.whitelist()
 @require_roles("Finance", "Front Desk", "Kamra Agent")
 def get_folio(reservation: str):
-	"""Folio for a reservation — opens one if the guest is checked in."""
+	"""Folio for a reservation - opens one if the guest is checked in."""
 	name = frappe.db.get_value(
 		"Folio", {"reservation": reservation, "folio_type": "Guest"}
 	)
@@ -628,7 +628,7 @@ def add_folio_charge(folio: str, charge_type: str, description: str,
 	if doc.status == "Closed":
 		frappe.throw("Folio is closed.")
 	if int(is_alcohol or 0) and doc.folio_type in ("Company", "Group"):
-		frappe.throw("Alcohol cannot be billed to a company folio — "
+		frappe.throw("Alcohol cannot be billed to a company folio - "
 		             "post it to the guest folio.")
 	doc.append("charges", {
 		"posting_date": posting_date or nowdate(),
@@ -678,7 +678,7 @@ def add_folio_payment(folio: str, mode: str, amount: float,
 @require_roles("Finance", "Front Desk", "Kamra Agent")
 def post_stay_charge(reservation: str, charge_type: str, description: str,
                      amount: float, gst_rate: float = 0, is_alcohol: int = 0):
-	"""Post a charge to a stay letting the billing rules pick the folio —
+	"""Post a charge to a stay letting the billing rules pick the folio -
 	corporate room/meals land on the Company folio, alcohol and anything
 	unruled lands on the guest. The agent-facing way to post charges."""
 	res = frappe.get_doc("Reservation", reservation)
@@ -757,14 +757,14 @@ def delete_folio(folio: str):
 	"""Remove an empty split/extra folio created by mistake.
 
 	Guards: never the primary Guest folio, and only when it carries no
-	charges and no payments — money is never dropped this way.
+	charges and no payments - money is never dropped this way.
 	"""
 	doc = frappe.get_doc("Folio", folio)
 	if doc.folio_type == "Guest":
 		frappe.throw("The primary guest folio can't be deleted.")
 	if doc.get("charges") or doc.get("payments"):
 		frappe.throw(
-			"This folio has charges or payments — move them to another folio first."
+			"This folio has charges or payments - move them to another folio first."
 		)
 	if doc.docstatus == 1:
 		doc.cancel()
@@ -803,7 +803,7 @@ def transfer_folio_charges(from_folio: str, charge_rows, to_folio: str):
 def split_folio_charge(from_folio: str, charge_row: str, to_folio: str,
                        percent: float | None = None,
                        amount: float | None = None):
-	"""Split one charge line between two folios — by percent or amount."""
+	"""Split one charge line between two folios - by percent or amount."""
 	from kamra.folio import split_charge
 	out = split_charge(from_folio, charge_row, to_folio,
 	                   percent=float(percent) if percent else None,
@@ -822,7 +822,7 @@ _FOLIO_LIST_FIELDS = ["name", "folio_type", "status", "invoice_number",
 @frappe.whitelist()
 @require_roles("Finance", "Front Desk", "Kamra Agent")
 def reservation_folios(reservation: str):
-	"""All folios of a stay (guest + splits) with balances — plus the
+	"""All folios of a stay (guest + splits) with balances - plus the
 	group master folio when the stay belongs to a group, so charges can
 	be moved between a guest's bill and the company's consolidated one."""
 	rows = frappe.get_all(
@@ -924,7 +924,7 @@ def folio_invoice(folio: str):
 	prop = frappe.get_doc("Property", doc.property)
 	res = frappe.get_doc("Reservation", doc.reservation)
 
-	# GST summary grouped by rate — the GSTR-compliant breakup
+	# GST summary grouped by rate - the GSTR-compliant breakup
 	by_rate: dict = {}
 	for c in doc.charges:
 		key = float(c.gst_rate or 0)
@@ -992,7 +992,7 @@ def run_night_audit(property: str, business_date: str | None = None):
 @require_roles()
 def gstr1_rows(from_date: str, to_date: str, property: str | None = None):
 	"""Invoice-level rows for a GSTR-1 style export (v0: B2C summary).
-	Filter by property — each GSTIN files its own return."""
+	Filter by property - each GSTIN files its own return."""
 	filters = {
 		"status": "Closed",
 		"closed_on": ("between", [from_date, to_date]),
@@ -1012,7 +1012,7 @@ def gstr1_rows(from_date: str, to_date: str, property: str | None = None):
 @frappe.whitelist()
 @require_roles("Front Desk", "Kamra Agent")
 def guests_with_stats(search: str | None = None):
-	"""Guest list with stay stats — the CRM index."""
+	"""Guest list with stay stats - the CRM index."""
 	where = ""
 	params: dict = {}
 	if search:
@@ -1073,7 +1073,7 @@ _GUEST_LINKS = [  # every doctype that points at a Guest
 def merge_guests(source: str, target: str):
 	"""Merge a duplicate profile into the surviving one: every linked
 	document is repointed, missing contact fields are copied over, and
-	the duplicate is deleted. Money is untouched — folios keep their
+	the duplicate is deleted. Money is untouched - folios keep their
 	lines and totals."""
 	if source == target:
 		frappe.throw("Pick two different profiles to merge.")
@@ -1155,7 +1155,7 @@ def anonymize_guest(guest: str):
 @require_roles("Front Desk", "Kamra Agent")
 def guest_journey(guest: str):
 	"""One guest's full story: profile, stats, chronological timeline.
-	This is the CRM detail view — and the context an AI concierge loads
+	This is the CRM detail view - and the context an AI concierge loads
 	before speaking to a returning guest."""
 	doc = frappe.get_doc("Guest", guest)
 
@@ -1197,7 +1197,7 @@ def guest_journey(guest: str):
 		if r.actual_check_in:
 			timeline.append({
 				"ts": str(r.actual_check_in), "type": "check_in",
-				"title": f"Checked in · Room {r.room.split('-')[-1] if r.room else '—'}",
+				"title": f"Checked in · Room {r.room.split('-')[-1] if r.room else '-'}",
 				"detail": r.special_requests or "", "reference": r.name,
 			})
 		if r.actual_check_out:
@@ -1304,7 +1304,7 @@ def front_desk_snapshot(property: str | None = None, date: str | None = None):
 	)
 
 	# payment state per stay, straight off the folios (the group master is
-	# the company's bill, not this guest's — excluded from the chip)
+	# the company's bill, not this guest's - excluded from the chip)
 	all_rows = arrivals + departures + in_house
 	names = list({r.name for r in all_rows})
 	paid_map = {}
@@ -1331,7 +1331,7 @@ def front_desk_snapshot(property: str | None = None, date: str | None = None):
 			r["paid_total"] = float(hit.paid)
 			r["balance_due"] = float(hit.due)
 		else:
-			# no folio yet — the booking-time advance is all we know
+			# no folio yet - the booking-time advance is all we know
 			adv = float(amt.advance_paid or 0) if amt else 0
 			total = float(amt.amount_after_tax or 0) if amt else 0
 			r["paid_total"] = adv
@@ -1369,7 +1369,7 @@ def front_desk_snapshot(property: str | None = None, date: str | None = None):
 @require_roles("Front Desk", "Kamra Agent", "Finance", "Revenue Manager")
 def find_reservations(property: str, query: str | None = None,
                       status: str | None = None, limit: int = 20):
-	"""Search reservations by guest name, room number, or reference — optionally
+	"""Search reservations by guest name, room number, or reference - optionally
 	filtered by status. The way to resolve a room number or a name to an actual
 	reservation before acting on it."""
 	filters = {"property": property}
@@ -1388,7 +1388,7 @@ def find_reservations(property: str, query: str | None = None,
 		filters=filters,
 		or_filters=or_filters,
 		fields=[
-			"name", "guest_name", "room", "room_type", "status",
+			"name", "guest", "guest_name", "room", "room_type", "status",
 			"check_in_date", "check_out_date", "nights", "adults", "children",
 			"amount_after_tax", "advance_paid",
 		],
@@ -1400,7 +1400,7 @@ def find_reservations(property: str, query: str | None = None,
 @frappe.whitelist()
 @require_roles("Front Desk", "Kamra Agent", "Finance", "Revenue Manager")
 def reservation_detail(reservation: str):
-	"""Everything about one booking in a single call — stay, money, guest,
+	"""Everything about one booking in a single call - stay, money, guest,
 	booker and the actions currently available. Powers the reservation drawer."""
 	res = frappe.get_doc("Reservation", reservation)
 
@@ -1421,7 +1421,7 @@ def reservation_detail(reservation: str):
 				"check_out_date", order_by="check_out_date desc")
 			guest = g
 
-	# money — the guest folio for this stay (the group master is the company's
+	# money - the guest folio for this stay (the group master is the company's
 	# bill, not this guest's, so it is never the source here)
 	folio = frappe.db.get_value(
 		"Folio", {"reservation": reservation, "folio_type": "Guest"},
@@ -1436,7 +1436,7 @@ def reservation_detail(reservation: str):
 			"has_folio": True,
 		}
 	else:
-		# no folio yet (still Confirmed) — the booking-time advance is all we know
+		# no folio yet (still Confirmed) - the booking-time advance is all we know
 		adv = float(res.advance_paid or 0)
 		total = float(res.amount_after_tax or 0)
 		money = {"total": total, "paid": adv,
@@ -1516,7 +1516,7 @@ def check_in(reservation: str, room: str | None = None):
 
 
 def _mask_id(value: str | None) -> str | None:
-	"""'987654321012' → '••••••••1012' — enough for the register audit
+	"""'987654321012' → '••••••••1012' - enough for the register audit
 	trail without holding the full number."""
 	if not value or len(value) <= 4 or value.startswith("•"):
 		return value
@@ -1563,7 +1563,7 @@ def _cancellation_terms(res):
 @frappe.whitelist()
 @require_roles("Front Desk", "Kamra Agent")
 def cancellation_preview(reservation: str):
-	"""What cancelling right now would cost — shown before confirming."""
+	"""What cancelling right now would cost - shown before confirming."""
 	res = frappe.get_doc("Reservation", reservation)
 	return _cancellation_terms(res)
 
@@ -1584,7 +1584,7 @@ def cancel_reservation(reservation: str, reason: str = "Guest request",
 	waive_fee=1 to cancel graciously (logged).
 
 	Autonomy: routes through the gate. Front Desk Copilot's default seed
-	autonomy is Approve — a Pending row lands in the Inbox with a preview
+	autonomy is Approve - a Pending row lands in the Inbox with a preview
 	of the fee/refund, and the cancellation only fires on Approve.
 	"""
 	from frappe.model.naming import make_autoname
@@ -1592,7 +1592,7 @@ def cancel_reservation(reservation: str, reason: str = "Guest request",
 
 	res = frappe.get_doc("Reservation", reservation)
 	if res.status != "Confirmed":
-		frappe.throw("Only confirmed bookings can be cancelled — "
+		frappe.throw("Only confirmed bookings can be cancelled - "
 		             "checked-in stays check out.")
 	if reason not in CANCEL_REASONS:
 		reason = "Other"
@@ -1627,7 +1627,7 @@ def cancel_reservation(reservation: str, reason: str = "Guest request",
 		        "log": decision.log_name, "summary": decision.summary,
 		        "terms": terms}
 
-	# Executed — actually cancel.
+	# Executed - actually cancel.
 	fee = 0.0
 	if terms["inside_window"] and not int(waive_fee or 0) \
 			and terms["fee_basis"] != "None":
@@ -1781,7 +1781,7 @@ def availability_calendar(property: str, start_date: str | None = None, days: in
 @frappe.whitelist()
 @require_roles("Front Desk", "Kamra Agent")
 def tape_chart(property: str, start_date: str | None = None, days: int = 14):
-	"""Rooms × dates grid with reservation bars — the front desk's home."""
+	"""Rooms × dates grid with reservation bars - the front desk's home."""
 	from frappe.utils import getdate
 
 	start = getdate(start_date or nowdate())
@@ -1820,7 +1820,7 @@ def tape_chart(property: str, start_date: str | None = None, days: int = 14):
 @frappe.whitelist()
 @require_roles("Front Desk", "Revenue Manager", "Kamra Agent")
 def venue_calendar(property: str, start_date: str | None = None, days: int = 14):
-	"""Venues × dates with their bookings — the banquet/function diary. Shows
+	"""Venues × dates with their bookings - the banquet/function diary. Shows
 	each venue's schedule so you can see availability and spot conflicts."""
 	from frappe.utils import getdate
 
@@ -1857,7 +1857,7 @@ def venue_calendar(property: str, start_date: str | None = None, days: int = 14)
 @frappe.whitelist()
 @require_roles("Front Desk", "Kamra Agent")
 def move_reservation(reservation: str, new_room: str):
-	"""Room move — mid-stay or before arrival. Overlap guard re-runs."""
+	"""Room move - mid-stay or before arrival. Overlap guard re-runs."""
 	doc = frappe.get_doc("Reservation", reservation)
 	if doc.status not in ("Confirmed", "Checked In"):
 		frappe.throw("Only active reservations can be moved.")
@@ -1990,7 +1990,7 @@ def create_booking(property: str, room_type: str, check_in_date: str,
 	else dedup by phone / create one. Optional auto room assignment,
 	voucher applied, price computed by the engine.
 
-	waitlist=1 parks the stay with no room and status Waitlist — for dates
+	waitlist=1 parks the stay with no room and status Waitlist - for dates
 	that are sold out or restricted; promote it later when a room frees."""
 	if guest:
 		if not frappe.db.exists("Guest", guest):
@@ -2043,7 +2043,7 @@ def create_booking(property: str, room_type: str, check_in_date: str,
 	if int(waitlist or 0):
 		doc.status = "Waitlist"
 
-	# extras chosen at booking — priced from the Experience, posted to the
+	# extras chosen at booking - priced from the Experience, posted to the
 	# folio the moment it opens
 	if isinstance(addons, str):
 		addons = frappe.parse_json(addons)
@@ -2122,7 +2122,7 @@ def promote_waitlist(reservation: str):
 @frappe.whitelist()
 @require_roles("Front Desk", "Kamra Agent")
 def waitlist_ready(property: str):
-	"""Waitlisted stays that CAN now be accommodated — a room is free for
+	"""Waitlisted stays that CAN now be accommodated - a room is free for
 	their dates. This is the signal the voice/WhatsApp agent watches so it
 	can proactively reach the guest the moment a room opens."""
 	ready = []
@@ -2197,7 +2197,7 @@ def _block_hold(property: str, room_type: str, check_in_date: str,
                 check_out_date: str, for_group: str | None = None) -> int:
 	"""Rooms held by confirmed group blocks overlapping the window that
 	haven't been picked up yet. A block stops holding inventory once its
-	cutoff date passes (unsold rooms flow back — no release step needed).
+	cutoff date passes (unsold rooms flow back - no release step needed).
 	The group's own pickups see their held rooms, not a shortage."""
 	from frappe.utils import getdate
 
@@ -2230,7 +2230,7 @@ def _block_hold(property: str, room_type: str, check_in_date: str,
 @require_roles("Front Desk", "Kamra Agent")
 def available_rooms(property: str, room_type: str, check_in_date: str,
                     check_out_date: str, group_booking: str | None = None):
-	"""Rooms of a type with no overlapping live reservation — the same
+	"""Rooms of a type with no overlapping live reservation - the same
 	logic the double-booking guard enforces, exposed as a query. Confirmed
 	group blocks hold their unsold rooms out of general sale; pass the
 	group to book against its own block."""
@@ -2425,7 +2425,7 @@ def create_group_block(property: str, group_name: str, check_in_date: str,
                        customer_phone: str | None = None,
                        notes: str | None = None):
 	"""One call drafts the whole piece of MICE business: the group, its room
-	block, and (optionally) the banquet event — the agent wedge: an inquiry
+	block, and (optionally) the banquet event - the agent wedge: an inquiry
 	agent turns "30 rooms + a 200-pax wedding on Dec 12" into a proposal."""
 	if isinstance(blocks, str):
 		blocks = frappe.parse_json(blocks)

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { Loader2, Plus, Send, Sparkles, Trash2, Wrench } from "lucide-react"
 
 import {
+  call,
   createConversation,
   deleteConversation,
   getConversation,
@@ -34,11 +35,42 @@ const toolLabel = (t: string) =>
   TOOL_LABEL[t] ?? t.replace(/_/g, " ")
 
 const SUGGESTIONS = [
-  "What does today look like — arrivals, departures, occupancy?",
+  "What does today look like - arrivals, departures, occupancy?",
   "Find the reservation for room 101 and show me the folio.",
   "Quote 2 nights in a Deluxe for 2 adults from this Friday.",
   "Which waitlisted guests can I now give a room?",
 ]
+
+function AiSetupNotice() {
+  return (
+    <div className="mx-auto max-w-lg space-y-3 rounded-xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-900">
+      <p className="font-semibold">NOVA needs an AI key to start working.</p>
+      <ol className="list-decimal space-y-1 pl-5">
+        <li>
+          Get an OpenAI API key at{" "}
+          <a
+            className="underline"
+            href="https://platform.openai.com/api-keys"
+            target="_blank"
+            rel="noreferrer"
+          >
+            platform.openai.com/api-keys
+          </a>{" "}
+          (sign up, add billing, create a key).
+        </li>
+        <li>
+          In Kamra, open <b>Settings, AI assistant</b>: paste the key, pick a
+          model (gpt-4o-mini works well), switch it on, save.
+        </li>
+        <li>Come back here and give NOVA a task.</li>
+      </ol>
+      <p className="text-xs text-amber-700">
+        The key stays on your server and is stored masked. Usage is billed to
+        your own OpenAI account.
+      </p>
+    </div>
+  )
+}
 
 export default function Assistant() {
   const [convos, setConvos] = useState<ConversationSummary[]>([])
@@ -48,6 +80,15 @@ export default function Assistant() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const endRef = useRef<HTMLDivElement>(null)
+  const [aiEnabled, setAiEnabled] = useState<boolean | null>(null)
+
+  useEffect(() => {
+    call<{ enabled: boolean }>("kamra.assistant.assistant_status", {
+      property: getCurrentProperty(),
+    })
+      .then((s) => setAiEnabled(s.enabled))
+      .catch(() => setAiEnabled(true))
+  }, [])
 
   const refreshList = useCallback(
     () => listConversations().then(setConvos).catch(() => setConvos([])),
@@ -171,7 +212,7 @@ export default function Assistant() {
       )
       if (isFirst) refreshList()
     } catch {
-      setError("The agent couldn't finish — check the AI key in Settings.")
+      setError("The agent couldn't finish - check the AI key in Settings.")
       if (!content) setMsgs((ms) => ms.filter((_, i) => i !== aIdx))
     } finally {
       setBusy(false)
@@ -224,21 +265,27 @@ export default function Assistant() {
       <div className="flex min-w-0 flex-1 flex-col rounded-xl border border-zinc-200 bg-white">
         <div className="flex items-center gap-2 border-b border-zinc-100 px-4 py-3">
           <Sparkles className="size-4 text-brand-600" />
-          <span className="text-sm font-semibold">Copilot</span>
+          <span className="text-sm font-semibold">NOVA</span>
           <span className="text-[10px] uppercase tracking-wider text-zinc-400">
-            agent · acts on {getCurrentProperty()?.split("-")[0] ?? "your hotel"}
+            your AI front desk · acts on{" "}
+            {getCurrentProperty()?.split("-")[0] ?? "your hotel"}
           </span>
         </div>
 
         <div className="flex-1 space-y-4 overflow-y-auto px-4 py-5">
-          {msgs.length === 0 && (
+          {msgs.length === 0 && aiEnabled === false && (
+            <div className="py-8">
+              <AiSetupNotice />
+            </div>
+          )}
+          {msgs.length === 0 && aiEnabled !== false && (
             <div className="mx-auto max-w-xl space-y-3 py-8 text-center">
               <Sparkles className="mx-auto size-8 text-brand-500" />
               <h2 className="text-lg font-semibold">
-                Give the copilot a task
+                NOVA - your AI front desk
               </h2>
               <p className="text-sm text-zinc-500">
-                It can look things up and act — quote and book stays, check
+                It can look things up and act - quote and book stays, check
                 guests in and out, post charges and payments, work the waitlist,
                 and read the day's numbers.
               </p>
@@ -322,7 +369,7 @@ export default function Assistant() {
         >
           <input
             className="flex-1 rounded-xl border border-zinc-300 bg-white px-4 py-2.5 text-sm focus:outline-2 focus:outline-offset-1 focus:outline-brand-600"
-            placeholder="Give the copilot a task…"
+            placeholder="Ask NOVA…"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             disabled={busy}

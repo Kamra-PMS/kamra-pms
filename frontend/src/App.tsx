@@ -143,7 +143,7 @@ export default function App() {
   return (
     <ErrorBoundary>
       <Routes>
-        {/* public booking engine — no login; stay state lives in the URL
+        {/* public booking engine - no login; stay state lives in the URL
             (/book/2026-07-10/2026-07-12/2/0) so links are shareable and
             crawlable */}
         <Route path="book" element={<PublicBooking />} />
@@ -153,7 +153,7 @@ export default function App() {
         />
         {/* pre-arrival self check-in, tokenized per reservation */}
         <Route path="checkin/:token" element={<PublicCheckin />} />
-        {/* housekeeping phone app — share the /hk URL with the HK team */}
+        {/* housekeeping phone app - share the /hk URL with the HK team */}
         <Route path="hk" element={<HkApp />} />
         {/* dedicated login route so signing out changes the URL */}
         <Route path="login" element={<LoginPage />} />

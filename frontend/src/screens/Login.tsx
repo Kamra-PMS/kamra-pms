@@ -110,7 +110,7 @@ export default function Login(props: { onSuccess: () => void }) {
         {demoMode && (
         <div className="mt-4 rounded-xl border border-dashed border-zinc-300 p-4">
           <p className="mb-2 text-center text-xs text-zinc-400">
-            Demo accounts — one tap to try each role
+            Demo accounts - one tap to try each role
           </p>
           <div className="grid grid-cols-2 gap-2">
             {DEMO_ACCOUNTS.map((a) => (

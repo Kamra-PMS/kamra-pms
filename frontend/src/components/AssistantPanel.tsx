@@ -5,7 +5,7 @@ import { serverError } from "../lib/resource"
 import { cn } from "../lib/utils"
 import { Markdown } from "../lib/markdown"
 
-/** The front-desk copilot — appears only when the property has enabled
+/** The front-desk copilot - appears only when the property has enabled
  * it with their own key. Model talks; the governed tool layer acts. */
 
 interface Msg {
@@ -196,7 +196,7 @@ export default function AssistantPanel() {
                   I can act on the property through Kamra's governed tools:
                 </p>
                 <ul className="list-disc space-y-0.5 pl-5 text-sm text-zinc-500">
-                  <li>Read today's board — arrivals, departures, in-house</li>
+                  <li>Read today's board - arrivals, departures, in-house</li>
                   <li>Check availability &amp; price a stay</li>
                   <li>Create bookings, check guests in / out</li>
                   <li>Open folios, post charges, take payments</li>
@@ -247,7 +247,7 @@ export default function AssistantPanel() {
                         )}
                       >
                         {toolLabel[a.tool] ?? a.tool}
-                        {!a.ok && " — failed"}
+                        {!a.ok && " - failed"}
                       </span>
                     ))}
                   </div>

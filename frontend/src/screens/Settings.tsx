@@ -10,7 +10,7 @@ import { getTheme, setTheme, type Theme } from "../lib/theme"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 
-/** Settings hub — everything an owner/GM configures once and forgets:
+/** Settings hub - everything an owner/GM configures once and forgets:
  * property identity, GST, privacy, booking page, payments, agent access. */
 
 type Doc = Record<string, unknown>
@@ -59,7 +59,7 @@ function Field(props: {
         >
           {spec.options?.map((o) => (
             <option key={o} value={o}>
-              {o || "—"}
+              {o || "-"}
             </option>
           ))}
         </select>
@@ -216,7 +216,7 @@ const STAY_TAX_SPECS: Spec[] = [
     field: "require_cashier_pin",
     label: "Require cashier PIN on money actions",
     type: "check",
-    hint: "Payments, invoices, allowances and settlements re-confirm who is acting with a personal PIN — agents are exempt (the action log covers them)",
+    hint: "Payments, invoices, allowances and settlements re-confirm who is acting with a personal PIN - agents are exempt (the action log covers them)",
   },
 ]
 
@@ -286,7 +286,7 @@ const AI_SPECS: Spec[] = [
     field: "extra_instructions",
     label: "Extra instructions",
     type: "textarea",
-    hint: "property-specific guidance — upsell priorities, tone",
+    hint: "property-specific guidance - upsell priorities, tone",
   },
 ]
 
@@ -341,7 +341,7 @@ export default function Settings() {
     <div className="space-y-4">
       <SettingsCard
         title="Property"
-        description="Identity and contact details — printed on invoices and the GRC."
+        description="Identity and contact details - printed on invoices and the GRC."
         specs={PROPERTY_SPECS}
         doc={prop}
         onSave={async (changes) => {
@@ -385,7 +385,7 @@ export default function Settings() {
         specs={GATEWAY_SPECS}
         doc={gateway}
         onSave={async (changes) => {
-          // never send empty secrets — blank means "unchanged"
+          // never send empty secrets - blank means "unchanged"
           const payload = Object.fromEntries(
             Object.entries(changes).filter(
               ([k, v]) =>
@@ -410,7 +410,7 @@ export default function Settings() {
 
       <SettingsCard
         title="AI assistant (bring your own key)"
-        description="Optional in-app copilot for staff. Your key, your data — the model can only act through Kamra's governed tools, and every action is audit-logged."
+        description="Optional in-app copilot for staff. Your key, your data - the model can only act through Kamra's governed tools, and every action is audit-logged."
         specs={AI_SPECS}
         doc={ai}
         onSave={async (changes) => {
@@ -451,8 +451,8 @@ export default function Settings() {
             <code className="rounded bg-zinc-100 px-1 py-0.5 text-xs">
               agent@kamra.local
             </code>{" "}
-            user (Kamra Agent role). Generate an API key &amp; secret — and see
-            the full REST reference — on the{" "}
+            user (Kamra Agent role). Generate an API key &amp; secret - and see
+            the full REST reference - on the{" "}
             <a href="/kamra/developers" className="font-medium text-brand-700 hover:underline">
               Developers
             </a>{" "}

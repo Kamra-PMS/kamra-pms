@@ -1,4 +1,4 @@
-"""Guest-facing booking engine API — the only allow_guest surface.
+"""Guest-facing booking engine API - the only allow_guest surface.
 
 Read: property showcase + live availability with real quotes.
 Write: one endpoint, create a Website booking. Everything else stays
@@ -172,7 +172,7 @@ def precheckin_submit(token: str, id_type: str, id_number: str,
                       email: str = "", nationality: str = "",
                       address_line: str = "", city: str = "",
                       eta: str = "", special_requests: str = ""):
-	"""Guest completes pre-arrival check-in (PRD FR-20 v0 — details +
+	"""Guest completes pre-arrival check-in (PRD FR-20 v0 - details +
 	declaration; ID photo/KYC vendor integration comes later)."""
 	if not id_type or not id_number.strip():
 		frappe.throw("ID type and number are required.")

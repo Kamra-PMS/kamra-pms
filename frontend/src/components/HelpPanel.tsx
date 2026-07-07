@@ -5,7 +5,7 @@ import { call, getCurrentProperty } from "../lib/api"
 import { cn } from "../lib/utils"
 import { Markdown } from "../lib/markdown"
 
-/** How-to help assistant — explains how to use Kamra (it never acts on data;
+/** How-to help assistant - explains how to use Kamra (it never acts on data;
  *  that's the front-desk copilot). Streams answers, grounded in the app. */
 
 interface Msg {
@@ -102,7 +102,7 @@ export default function HelpPanel() {
       if (!gotAny) throw new Error("empty")
     } catch {
       setError(
-        "Couldn't reach the help assistant — check the AI key in Settings.",
+        "Couldn't reach the help assistant - check the AI key in Settings.",
       )
       setMsgs((ms) => ms.filter((_, i) => i !== aIdx))
     } finally {
@@ -134,7 +134,7 @@ export default function HelpPanel() {
             {msgs.length === 0 && (
               <div className="space-y-2">
                 <p className="text-sm text-zinc-600">
-                  Ask how to do anything in Kamra — I'll walk you through it.
+                  Ask how to do anything in Kamra - I'll walk you through it.
                 </p>
                 {SUGGESTIONS.map((s) => (
                   <button

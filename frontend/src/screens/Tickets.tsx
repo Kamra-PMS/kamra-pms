@@ -110,7 +110,7 @@ export default function Tickets() {
         <div>
           <CardTitle>Service Tickets</CardTitle>
           <p className="mt-0.5 text-xs text-zinc-400">
-            Guest requests with SLA — Urgent 15m · High 30m · Medium 1h · Low 4h
+            Guest requests with SLA - Urgent 15m · High 30m · Medium 1h · Low 4h
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -200,7 +200,7 @@ export default function Tickets() {
           ))}
           {rows.length === 0 && (
             <li className="py-8 text-center text-sm text-zinc-400">
-              No open tickets — a quiet day at the desk.
+              No open tickets - a quiet day at the desk.
             </li>
           )}
         </ul>
@@ -209,7 +209,7 @@ export default function Tickets() {
       {creating && (
         <Sheet
           title="New ticket"
-          description="Guest request — SLA starts from priority at creation"
+          description="Guest request - SLA starts from priority at creation"
           onClose={() => setCreating(false)}
           footer={
             <div className="flex justify-end gap-2">

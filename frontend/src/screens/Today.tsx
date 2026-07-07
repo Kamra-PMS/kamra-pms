@@ -38,7 +38,7 @@ const hkTone: Record<RoomRow["housekeeping_status"], string> = {
 const inr0 = (n: number) =>
   Number(n).toLocaleString("en-IN", { maximumFractionDigits: 0 })
 
-/** Paid / due / unpaid at a glance — the folio is the source of truth,
+/** Paid / due / unpaid at a glance - the folio is the source of truth,
  * this chip just saves the trip to Billing. */
 function paymentChip(row: ReservationRow) {
   const paid = Number(row.paid_total ?? 0)
@@ -135,7 +135,7 @@ function ReservationList(props: {
                         `${window.location.origin}/checkin/${row.precheckin_token}`,
                       )
                     }}
-                    title={`Copy the self check-in link — send to the ${
+                    title={`Copy the self check-in link - send to the ${
                       row.contact_preference === "Booker" && row.booked_by_name
                         ? `booker, ${row.booked_by_name}${row.booked_by_phone ? ` (${row.booked_by_phone})` : ""}`
                         : row.contact_preference === "Both" && row.booked_by_name
@@ -213,7 +213,7 @@ export default function Today() {
 
       {error && (
         <div className="mb-4 rounded-lg border border-rose-200 bg-rose-50 px-4 py-2 text-sm text-rose-700">
-          {error} — is the bench running on :8000?
+          {error} - is the bench running on :8000?
         </div>
       )}
 

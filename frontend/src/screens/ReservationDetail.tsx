@@ -60,7 +60,7 @@ function Field(props: { label: string; value: React.ReactNode }) {
   return (
     <div>
       <dt className="text-xs text-zinc-400">{props.label}</dt>
-      <dd className="mt-0.5 text-sm text-zinc-800">{props.value || "—"}</dd>
+      <dd className="mt-0.5 text-sm text-zinc-800">{props.value || "-"}</dd>
     </div>
   )
 }
@@ -162,7 +162,7 @@ export default function ReservationDetail({
         </div>
       )}
 
-      {/* money — the question everyone asks first */}
+      {/* money - the question everyone asks first */}
       <Card
         icon={<CreditCard className="size-4" />}
         title="Billing"
@@ -208,7 +208,7 @@ export default function ReservationDetail({
             ? "Live from the guest folio."
             : d.advance_paid > 0
               ? `Booking advance of ${inr(d.advance_paid)} received. The folio opens at check-in.`
-              : "No folio yet — it opens at check-in."}
+              : "No folio yet - it opens at check-in."}
         </p>
       </Card>
 
@@ -271,12 +271,12 @@ export default function ReservationDetail({
           </dl>
           {!d.room && d.status === "Confirmed" && (
             <p className="mt-2 text-xs text-amber-600">
-              No room assigned yet — assign from the Tape Chart before check-in.
+              No room assigned yet - assign from the Tape Chart before check-in.
             </p>
           )}
         </Card>
 
-        {/* guest — connected to the journey */}
+        {/* guest - connected to the journey */}
         <Card
           icon={<User className="size-4" />}
           title="Guest"
@@ -341,7 +341,7 @@ export default function ReservationDetail({
         )}
       </div>
 
-      {/* special requests — editable */}
+      {/* special requests - editable */}
       <Card icon={<FileText className="size-4" />} title="Special requests">
         <textarea
           value={req}
@@ -375,7 +375,7 @@ export default function ReservationDetail({
       {d.cancellation && (
         <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
           <p className="font-semibold">
-            Cancelled — {d.cancellation.number}
+            Cancelled - {d.cancellation.number}
           </p>
           <p className="mt-0.5">
             {d.cancellation.reason}

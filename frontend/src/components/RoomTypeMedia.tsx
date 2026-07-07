@@ -16,7 +16,7 @@ interface RTDoc {
   media?: MediaRow[]
 }
 
-/** Room-type photos, amenities and description — what the public booking page
+/** Room-type photos, amenities and description - what the public booking page
  *  shows. Photos are image URLs (the app is URL-based throughout). */
 export default function RoomTypeMedia({
   row,

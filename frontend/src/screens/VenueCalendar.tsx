@@ -46,7 +46,7 @@ function Booking({ b }: { b: VenueBookingCell }) {
       <div className="font-semibold">{b.event_type}</div>
       <div className="truncate">{b.customer_name}</div>
       <div className="text-[10px] opacity-80">
-        {b.start_time || "—"}
+        {b.start_time || "-"}
         {b.attendees ? ` · ${b.attendees}p` : ""}
       </div>
     </div>
@@ -74,7 +74,7 @@ export default function VenueCalendar() {
         <div>
           <CardTitle>Venue calendar</CardTitle>
           <p className="mt-0.5 text-xs text-zinc-400">
-            Banquet &amp; function diary — each venue's schedule.
+            Banquet &amp; function diary - each venue's schedule.
           </p>
         </div>
         <div className="flex items-center gap-1.5">
@@ -97,7 +97,7 @@ export default function VenueCalendar() {
         )}
         {data && data.venues.length === 0 && (
           <p className="py-8 text-center text-sm text-zinc-400">
-            No venues yet — add them under Venues.
+            No venues yet - add them under Venues.
           </p>
         )}
         {data && data.venues.length > 0 && (

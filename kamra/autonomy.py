@@ -1,4 +1,4 @@
-"""The Autonomy Gate — Kamra's per-action approval router.
+"""The Autonomy Gate - Kamra's per-action approval router.
 
 Every mutating tool call routes through here to decide one of:
 
@@ -11,12 +11,12 @@ Every mutating tool call routes through here to decide one of:
                    when the human taps Approve.
 
 The gate reads per-Agent autonomy_rules, so the decision is configuration,
-not code. An unregistered caller (no matching Agent row) defaults to Full —
+not code. An unregistered caller (no matching Agent row) defaults to Full -
 that preserves today's behaviour for existing endpoints during rollout.
 
 Bypass:
     Set `frappe.flags.kamra_gate_bypass = True` to skip the gate for
-    one call. The approve() replayer uses this — a Pending row that just
+    one call. The approve() replayer uses this - a Pending row that just
     got approved should NOT re-enter the gate and get parked again.
 """
 
@@ -155,7 +155,7 @@ def guard(
 			reference_name=reference_name,
 			property=property,
 			minutes_saved=0,  # nothing happened, no time saved yet
-			rationale=rationale or "Suggested by agent — awaiting human application.",
+			rationale=rationale or "Suggested by agent - awaiting human application.",
 			agent_name=agent_name,
 			autonomy="Suggest",
 			channel=channel or _infer_channel(agent),
@@ -164,7 +164,7 @@ def guard(
 		)
 		return GateSuggest(log_name=log_name, summary=summary or action_type)
 
-	# Approve — park in Pending Agent Action + log Pending.
+	# Approve - park in Pending Agent Action + log Pending.
 	approver = (agent.default_approver if agent else None) or _fallback_approver(property)
 	pending = frappe.get_doc(
 		{
@@ -288,7 +288,7 @@ def reject_pending(pending_name: str, approver: str | None = None, reason: str =
 
 
 def expire_stale_pending() -> int:
-	"""Scheduler hook — flip anything past expires_at from Pending to Expired."""
+	"""Scheduler hook - flip anything past expires_at from Pending to Expired."""
 	now = frappe.utils.now_datetime()
 	stale = frappe.get_all(
 		"Pending Agent Action",
@@ -321,7 +321,7 @@ def _resolve_agent(agent_name: str | None, property: str | None):
 	    1. Exact (property, agent_name) match.
 	    2. Property-scoped active row with matching persona.
 	    3. Chain-global (blank property) row with matching persona.
-	None if no row is found — caller treats as Full autonomy.
+	None if no row is found - caller treats as Full autonomy.
 	"""
 	if not agent_name:
 		return None
@@ -399,7 +399,7 @@ def _guard_pending_state(pending) -> None:
 
 
 def _resolve_endpoint(endpoint: str) -> Callable:
-	"""Import the method by dotted path. Whitelisted at Frappe layer already —
+	"""Import the method by dotted path. Whitelisted at Frappe layer already -
 	we're just calling the Python function directly."""
 	if not endpoint:
 		frappe.throw("Missing action_endpoint on Pending Agent Action.")

@@ -100,7 +100,7 @@ export function BookingDialog(props: {
   )
   const [hits, setHits] = useState<GuestHit[]>([])
 
-  // profile typeahead — find the returning guest before creating a dupe
+  // profile typeahead - find the returning guest before creating a dupe
   useEffect(() => {
     if (profile || form.guest_name.trim().length < 2) {
       setHits([])
@@ -261,7 +261,7 @@ export function BookingDialog(props: {
         })
         if (out.skipped.length > 0) {
           setError(
-            `Booked ${out.created.length} of ${rooms.length} rooms — ` +
+            `Booked ${out.created.length} of ${rooms.length} rooms - ` +
               out.skipped.map((s) => s.reason).join("; "),
           )
           if (out.created.length === 0) return
@@ -344,21 +344,21 @@ export function BookingDialog(props: {
             {done.waitlist ? (
               <div className="rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 text-amber-800">
                 <p className="text-lg font-semibold">
-                  Waitlisted — {done.ref}
+                  Waitlisted - {done.ref}
                 </p>
                 <p className="mt-1 text-sm">
                   Parked with no room. Promote it from the reservation when a
-                  room frees — or let the agent watch availability and reach
+                  room frees - or let the agent watch availability and reach
                   the guest proactively. Auto-purges 2 days after departure.
                 </p>
               </div>
             ) : (
               <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-emerald-800">
-                <p className="text-lg font-semibold">Booked — {done.ref}</p>
+                <p className="text-lg font-semibold">Booked - {done.ref}</p>
                 <p className="mt-1 text-sm">
                   {done.room
                     ? `Room ${done.room.split("-").pop()} assigned.`
-                    : "No room auto-assigned — pick one from Reservations."}{" "}
+                    : "No room auto-assigned - pick one from Reservations."}{" "}
                   Find it under Arrivals on the stay date.
                 </p>
               </div>
@@ -369,7 +369,7 @@ export function BookingDialog(props: {
           </div>
         ) : (
           <div className="grid gap-0 md:grid-cols-5">
-            {/* form — left 3/5 */}
+            {/* form - left 3/5 */}
             <div className="space-y-5 px-7 py-6 md:col-span-3">
               {options?.property?.sell_message && (
                 <div className="flex items-start gap-2 rounded-xl bg-brand-50 px-4 py-3 text-sm text-brand-900">
@@ -433,7 +433,7 @@ export function BookingDialog(props: {
                       {profile.stays === 1 ? "" : "s"}
                       <button
                         type="button"
-                        aria-label="Detach profile — create a new guest instead"
+                        aria-label="Detach profile - create a new guest instead"
                         onClick={() => setProfile(null)}
                         className="text-brand-700/60 hover:text-brand-700"
                       >
@@ -513,7 +513,7 @@ export function BookingDialog(props: {
                 </Field>
               </div>
 
-              {/* additional rooms — books the lot as one group */}
+              {/* additional rooms - books the lot as one group */}
               {moreRooms.map((r, i) => (
                 <div
                   key={i}
@@ -638,7 +638,7 @@ export function BookingDialog(props: {
                     value={form.company}
                     onChange={(e) => set("company", e.target.value)}
                   >
-                    <option value="">—</option>
+                    <option value="">-</option>
                     {options?.companies.map((c) => (
                       <option key={c.name} value={c.name}>
                         {c.company_name}
@@ -652,7 +652,7 @@ export function BookingDialog(props: {
                     value={form.travel_agent}
                     onChange={(e) => set("travel_agent", e.target.value)}
                   >
-                    <option value="">—</option>
+                    <option value="">-</option>
                     {options?.travel_agents.map((t) => (
                       <option key={t.name} value={t.name}>
                         {t.agent_name} ({t.commission_pct}%)
@@ -698,7 +698,7 @@ export function BookingDialog(props: {
 
               {moreRooms.length > 0 && (
                 <p className="text-xs text-zinc-400">
-                  Multi-room bookings are created as a group — vouchers,
+                  Multi-room bookings are created as a group - vouchers,
                   add-ons and booker details can be added per stay afterwards.
                 </p>
               )}
@@ -747,7 +747,7 @@ export function BookingDialog(props: {
                             set("booker_relation", e.target.value)
                           }
                         >
-                          <option value="">—</option>
+                          <option value="">-</option>
                           {[
                             "Assistant",
                             "Family",
@@ -778,7 +778,7 @@ export function BookingDialog(props: {
               )}
             </div>
 
-            {/* quote — right 2/5 */}
+            {/* quote - right 2/5 */}
             <div className="flex flex-col justify-between border-t border-zinc-100 bg-zinc-50 px-7 py-6 md:col-span-2 md:border-l md:border-t-0">
               <div>
                 <div className="mb-4 flex items-center justify-between">

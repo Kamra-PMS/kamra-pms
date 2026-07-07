@@ -1,7 +1,7 @@
 """Whitelisted APIs backing the Agents screen (Team / Inbox / Timeline).
 
 Every write here (approve / reject) routes through the Autonomy Gate so
-the audit trail is honest — an approver's tap is itself an action, logged
+the audit trail is honest - an approver's tap is itself an action, logged
 under their identity, with the replayed endpoint's own log entry linked.
 """
 
@@ -95,7 +95,7 @@ def agents_list(property: str | None = None, include_inactive: int = 0) -> list[
 @frappe.whitelist()
 @require_roles("Hotel Admin")
 def toggle_agent(agent: str, active: int) -> dict:
-	"""Pause or resume a named agent. Hotel Admin only — turning off Revenue
+	"""Pause or resume a named agent. Hotel Admin only - turning off Revenue
 	Bot mid-day should be an intentional GM decision."""
 	frappe.db.set_value("Agent", agent, "active", 1 if int(active) else 0)
 	return {"agent": agent, "active": 1 if int(active) else 0}
@@ -148,7 +148,7 @@ def pending_actions(
 		limit=int(limit),
 	)
 
-	# Hydrate before-snapshot for the diff preview — kept out of the list
+	# Hydrate before-snapshot for the diff preview - kept out of the list
 	# call so a wide table stays cheap; here we're capped at `limit`.
 	for row in rows:
 		if row.get("action_log"):
@@ -163,7 +163,7 @@ def pending_actions(
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Hotel Admin", "Front Desk")
+@require_roles("Hotel Admin")
 def approve_action(pending: str, note: str = "") -> dict:
 	"""Replay the parked call. Hotel Admin bypasses any per-property approver
 	restriction; Front Desk can approve their own department's items."""
@@ -171,7 +171,7 @@ def approve_action(pending: str, note: str = "") -> dict:
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Hotel Admin", "Front Desk")
+@require_roles("Hotel Admin")
 def reject_action(pending: str, reason: str = "") -> dict:
 	return autonomy.reject_pending(pending, approver=frappe.session.user, reason=reason)
 
@@ -232,7 +232,7 @@ def agent_timeline(
 @require_roles("Front Desk", "Hotel Admin", "Kamra Agent")
 def agents_savings_summary(property: str | None = None, days: int = 7) -> dict:
 	"""Roll-up for the 'hours saved this week' card. Minutes across agents,
-	broken down by channel — humans still get counted since human actions
+	broken down by channel - humans still get counted since human actions
 	log too, but the interesting story is the agent split."""
 	filters = "1=1"
 	values: dict = {}
@@ -285,7 +285,7 @@ def _parse_json(raw):
 def activity_feed(property: str | None = None, actor_kind: str | None = None,
                   action_type: str | None = None, limit: int = 50,
                   start: int = 0) -> list[dict]:
-	"""The one ledger: every action anyone took — human or agent — newest
+	"""The one ledger: every action anyone took - human or agent - newest
 	first. actor_kind filters to "human" or "agent"."""
 	conds, params = [], {"limit": min(int(limit), 200), "start": int(start)}
 	if property:

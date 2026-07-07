@@ -96,7 +96,7 @@ interface SiblingFolio {
   payments_total: number
 }
 
-/** A distinct label per folio — Extras get numbered when there's more than one. */
+/** A distinct label per folio - Extras get numbered when there's more than one. */
 function folioLabel(siblings: SiblingFolio[], s: SiblingFolio) {
   if (s.folio_type !== "Extra") return s.folio_type
   const extras = siblings.filter((x) => x.folio_type === "Extra")
@@ -265,7 +265,7 @@ export default function FolioView() {
                   navigator.clipboard.writeText(r.url)
                 })
               }
-              title={`Creates a payment link for the balance and copies it — send to the ${
+              title={`Creates a payment link for the balance and copies it - send to the ${
                 data.stay.contact_preference === "Booker" &&
                 data.stay.booked_by_name
                   ? `booker, ${data.stay.booked_by_name}${data.stay.booked_by_phone ? ` (${data.stay.booked_by_phone})` : ""}`
@@ -324,7 +324,7 @@ export default function FolioView() {
               <Button
                 variant="outline"
                 disabled={busy}
-                title="Interim invoice: freeze this paid folio and keep the stay running on a fresh one — for long stays settled every few days"
+                title="Interim invoice: freeze this paid folio and keep the stay running on a fresh one - for long stays settled every few days"
                 onClick={() =>
                   act(async () => {
                     const r = await call<{ new_folio: string }>(
@@ -368,7 +368,7 @@ export default function FolioView() {
           </span>
           <input
             className="min-w-56 flex-1 rounded-lg border border-amber-300 bg-white px-3 py-1.5 text-sm"
-            placeholder="Reason (required — goes on the record)"
+            placeholder="Reason (required - goes on the record)"
             value={cancelReason}
             onChange={(e) => setCancelReason(e.target.value)}
           />
@@ -394,7 +394,7 @@ export default function FolioView() {
       {pinStatus?.required && !pinStatus.has_pin && (
         <div className="mb-4 flex flex-wrap items-center gap-2 rounded-lg border border-sky-200 bg-sky-50 px-4 py-2.5 text-sm print:hidden">
           <span className="text-sky-800">
-            This property requires a cashier PIN on money actions — set yours
+            This property requires a cashier PIN on money actions - set yours
             (4–8 digits):
           </span>
           <input
@@ -610,7 +610,7 @@ export default function FolioView() {
                           <td className="py-2 pr-3">
                             <span className="font-medium">{c.charge_type}</span>
                             {c.description && (
-                              <span className="text-zinc-500"> — {c.description}</span>
+                              <span className="text-zinc-500"> - {c.description}</span>
                             )}
                           </td>
                           <td className="py-2 pr-3 text-right">{inr(c.amount)}</td>
@@ -896,7 +896,7 @@ export default function FolioView() {
                 <div className="mb-2 text-xs font-medium uppercase tracking-wider text-zinc-400">
                   Pass an allowance
                   <span className="ml-1.5 normal-case tracking-normal">
-                    — write off part of the bill, with a reason
+                    - write off part of the bill, with a reason
                   </span>
                 </div>
                 <div className="flex flex-wrap items-end gap-2">

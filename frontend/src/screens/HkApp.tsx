@@ -12,7 +12,7 @@ import { cn } from "../lib/utils"
 import { asset } from "../lib/asset"
 import Login from "./Login"
 
-/** The housekeeper's phone app — big targets, one thumb, zero training. */
+/** The housekeeper's phone app - big targets, one thumb, zero training. */
 
 interface HkTask {
   name: string
@@ -105,7 +105,7 @@ export default function HkApp() {
           <>
             <p className="mb-3 px-1 text-sm text-zinc-500">
               {data?.tasks.length ?? "…"} task
-              {data?.tasks.length === 1 ? "" : "s"} — arrivals first
+              {data?.tasks.length === 1 ? "" : "s"} - arrivals first
             </p>
             <ul className="space-y-3">
               {(data?.tasks ?? []).map((t) => (
@@ -169,7 +169,7 @@ export default function HkApp() {
               ))}
               {data && data.tasks.length === 0 && (
                 <li className="rounded-2xl border border-dashed border-zinc-300 p-8 text-center text-zinc-400">
-                  All caught up — nothing in the queue.
+                  All caught up - nothing in the queue.
                 </li>
               )}
             </ul>

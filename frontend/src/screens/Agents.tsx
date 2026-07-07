@@ -12,6 +12,7 @@ import {
   ScrollText,
 } from "lucide-react"
 import { call, getCurrentProperty } from "../lib/api"
+import { useAuth } from "../lib/auth"
 import Assistant from "./Assistant"
 import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
@@ -107,12 +108,19 @@ export default function Agents() {
   const [tab, setTab] = useState<Tab>("chat")
   const [pendingCount, setPendingCount] = useState(0)
   const property = getCurrentProperty()
+  const { roles } = useAuth()
+  // Front desk gets Chat + the Activity logbook; managing the AI staff and
+  // countersigning their work is a manager's job.
+  const manager = ["Hotel Admin", "System Manager", "Administrator"].some(
+    (r) => roles.includes(r),
+  )
 
   useEffect(() => {
+    if (!manager) return
     call<unknown[]>("kamra.agents_api.pending_actions", { property })
       .then((r) => setPendingCount(Array.isArray(r) ? r.length : 0))
       .catch(() => setPendingCount(0))
-  }, [property, tab])
+  }, [property, tab, manager])
 
   return (
     <div className="space-y-6">
@@ -123,7 +131,7 @@ export default function Agents() {
         </div>
         <p className="text-sm text-zinc-500">
           Your AI workforce: give it tasks, see your AI staff, approve the
-          sensitive stuff, and audit everything anyone did — human or AI.
+          sensitive stuff, and audit everything anyone did - human or AI.
         </p>
       </header>
 
@@ -135,9 +143,12 @@ export default function Agents() {
         <TabButton current={tab} value="chat" onSet={setTab} icon={MessageSquare}>
           Chat
         </TabButton>
+        {manager && (
         <TabButton current={tab} value="team" onSet={setTab} icon={Users}>
           AI Staff
         </TabButton>
+        )}
+        {manager && (
         <TabButton current={tab} value="inbox" onSet={setTab} icon={Inbox}>
           Approvals
           {pendingCount > 0 && (
@@ -146,14 +157,15 @@ export default function Agents() {
             </span>
           )}
         </TabButton>
+        )}
         <TabButton current={tab} value="timeline" onSet={setTab} icon={ScrollText}>
           Activity
         </TabButton>
       </div>
 
       {tab === "chat" && <Assistant />}
-      {tab === "team" && <TeamTab property={property} />}
-      {tab === "inbox" && <InboxTab property={property} />}
+      {tab === "team" && manager && <TeamTab property={property} />}
+      {tab === "inbox" && manager && <InboxTab property={property} />}
       {tab === "timeline" && <ActivityTab property={property} />}
     </div>
   )
@@ -302,10 +314,10 @@ function SavingsBanner({ s }: { s: SavingsSummary }) {
 }
 
 
-// Plain hotel lingo for the starter agents — what they do, not how.
+// Plain hotel lingo for the starter agents - what they do, not how.
 const personaBlurb: Record<string, string> = {
   "Front Desk Copilot":
-    "Answers and acts at the desk — quotes, bookings, check-ins, payments — whenever staff ask.",
+    "Answers and acts at the desk - quotes, bookings, check-ins, payments - whenever staff ask.",
   "Night Auditor":
     "Closes the day every night: posts room charges and flags no-shows, so nobody stays up for it.",
   "Owner Digest":
@@ -449,7 +461,7 @@ function ToolList({ tools }: { tools: string[] }) {
 
 function AutonomyList({ rules }: { rules: AutonomyRule[] }) {
   if (!rules.length) {
-    return <p className="text-xs text-zinc-400">No overrides — all Full.</p>
+    return <p className="text-xs text-zinc-400">No overrides - all Full.</p>
   }
   return (
     <ul className="space-y-1 text-xs">
@@ -651,8 +663,8 @@ function SnapshotDiff({
   before?: Record<string, unknown> | null
   after?: Record<string, unknown> | null
 }) {
-  const beforeStr = before ? JSON.stringify(before, null, 2) : "—"
-  const afterStr = after ? JSON.stringify(after, null, 2) : "(pending — not yet applied)"
+  const beforeStr = before ? JSON.stringify(before, null, 2) : "-"
+  const afterStr = after ? JSON.stringify(after, null, 2) : "(pending - not yet applied)"
   return (
     <div className="grid grid-cols-1 gap-2 text-xs md:grid-cols-2">
       <div>
@@ -715,7 +727,7 @@ function EmptyState({
 }
 
 function formatMinutes(min: number): string {
-  if (!min) return "—"
+  if (!min) return "-"
   if (min < 60) return `${Math.round(min)}m`
   return `${(min / 60).toFixed(1)}h`
 }
@@ -751,7 +763,7 @@ function referenceLink(row: {
 }
 
 // ---------------------------------------------------------------------------
-// Activity tab — the one ledger: everything anyone did, human or AI
+// Activity tab - the one ledger: everything anyone did, human or AI
 // ---------------------------------------------------------------------------
 
 interface ActivityRow {
@@ -825,7 +837,7 @@ function ActivityTab({ property }: { property: string }) {
           <option value="agent">AI staff only</option>
         </select>
         <p className="text-xs text-zinc-400">
-          Every action on the property, newest first — who did it, what, and
+          Every action on the property, newest first - who did it, what, and
           who approved it.
         </p>
       </div>
@@ -876,11 +888,11 @@ function ActivityTab({ property }: { property: string }) {
                       {prettyAction(r.action_type)}
                     </span>
                     {r.rationale && (
-                      <span className="text-zinc-500"> — {r.rationale}</span>
+                      <span className="text-zinc-500"> - {r.rationale}</span>
                     )}
                   </td>
                   <td className="whitespace-nowrap px-3 py-2 text-xs text-zinc-400">
-                    {r.reference_name ?? "—"}
+                    {r.reference_name ?? "-"}
                   </td>
                   <td className="whitespace-nowrap px-3 py-2">
                     <Badge tone={statusTone[r.approval_status] ?? "zinc"}>

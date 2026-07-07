@@ -119,7 +119,7 @@ export default function Setup() {
       <h1 className="mb-1 text-lg font-semibold">Set up a new property</h1>
       <p className="mb-4 text-sm text-zinc-500">
         Five minutes to a working hotel. Prefer talking? Connect Claude to
-        Kamra's MCP and say "onboard my hotel" — same result.
+        Kamra's MCP and say "onboard my hotel" - same result.
       </p>
 
       <ol className="mb-6 flex flex-wrap gap-2">
@@ -264,12 +264,12 @@ export default function Setup() {
             <div className="space-y-4">
               <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
                 <span className="font-semibold">{createdProperty}</span> is live.
-                Bring your existing bookings over — paste a CSV, or let the AI
+                Bring your existing bookings over - paste a CSV, or let the AI
                 migration assistant do the mapping for you via MCP.
               </div>
               <label className="block">
                 <span className="mb-1.5 block text-sm font-medium text-zinc-600">
-                  CSV — header row then data
+                  CSV - header row then data
                 </span>
                 <textarea
                   className={cn(inputCls, "font-mono text-xs")}

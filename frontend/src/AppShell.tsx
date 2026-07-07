@@ -18,6 +18,7 @@ import {
   Moon,
   Plus,
   Receipt,
+  Search,
   Settings as SettingsIcon,
   Code2,
   ExternalLink,
@@ -72,7 +73,7 @@ interface NavGroup {
   label: string
   roles: string[] // any of these roles can see the group
   items: NavItem[]
-  // Configuration/admin groups — the once-in-a-while stuff. Tucked under a
+  // Configuration/admin groups - the once-in-a-while stuff. Tucked under a
   // collapsible "Setup" section (collapsed by default), the way Frappe keeps
   // day-to-day workspaces up top and masters/settings out of the way.
   setup?: boolean
@@ -184,12 +185,32 @@ const NAV: NavGroup[] = [
           : "http://localhost:8000/app/build",
         label: "Frappe Desk",
         icon: ExternalLink,
-        // The raw admin surface — site admins only, never a business Hotel Admin.
+        // The raw admin surface - site admins only, never a business Hotel Admin.
         roles: ["Administrator", "System Manager"],
       },
     ],
   },
 ]
+
+function SearchShortcut() {
+  // One habit to teach: the palette. Mac shows ⌘K, everyone else Ctrl+K.
+  const isMac = /Mac|iP(hone|ad|od)/.test(navigator.platform)
+  const combo = isMac ? "\u2318K" : "Ctrl+K"
+  return (
+    <button
+      onClick={() => window.dispatchEvent(new Event("kamra:open-palette"))}
+      title={`Concierge: find a guest or booking, or jump anywhere - press ${isMac ? "\u2318 Command" : "Ctrl"} + K`}
+      aria-label="Open the Concierge (search and commands)"
+      className="flex items-center gap-1.5 rounded-lg border border-zinc-200 px-2.5 py-1.5 text-sm text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700"
+    >
+      <Search className="size-4" aria-hidden />
+      <span className="hidden md:inline">Concierge</span>
+      <kbd className="hidden rounded border border-zinc-200 bg-zinc-50 px-1.5 py-0.5 text-[10px] font-semibold text-zinc-500 md:inline">
+        {combo}
+      </kbd>
+    </button>
+  )
+}
 
 function ThemeToggle() {
   const [dark, setDark] = useState(() =>
@@ -238,7 +259,7 @@ export default function AppShell() {
     setProperty(name)
   }
 
-  // Which Setup groups are expanded — collapsed by default, remembered locally.
+  // Which Setup groups are expanded - collapsed by default, remembered locally.
   const [openSetup, setOpenSetup] = useState<Set<string>>(() => {
     try {
       return new Set(
@@ -375,6 +396,7 @@ export default function AppShell() {
             </span>
           )}
           <div className="ml-auto flex items-center gap-3">
+            <SearchShortcut />
             <ThemeToggle />
             <span className="hidden text-xs text-zinc-500 md:inline">
               {user}

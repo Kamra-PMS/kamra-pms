@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, type ComponentType } from "react"
-import { Plus, Search, Trash2 } from "lucide-react"
+import { Columns3, Plus, Search, Trash2 } from "lucide-react"
 import { Sheet } from "./ui/sheet"
 import { getCurrentProperty } from "../lib/api"
 import {
@@ -70,7 +70,7 @@ function FieldInput(props: {
           value={String(value ?? "")}
           onChange={(e) => onChange(e.target.value)}
         >
-          <option value="">—</option>
+          <option value="">-</option>
           {spec.options?.map((o) => (
             <option key={o} value={o}>
               {o}
@@ -85,7 +85,7 @@ function FieldInput(props: {
           value={String(value ?? "")}
           onChange={(e) => onChange(e.target.value)}
         >
-          <option value="">—</option>
+          <option value="">-</option>
           {(props.linkOptions[spec.linkDoctype ?? ""] ?? []).map((o) => (
             <option key={o} value={o}>
               {o}
@@ -147,6 +147,27 @@ export function ResourceScreen({ config }: { config: ScreenConfig }) {
   const [busy, setBusy] = useState(false)
   const [linkOptions, setLinkOptions] = useState<Record<string, string[]>>({})
   const [search, setSearch] = useState("")
+  // Frappe-style list settings: choose which columns this table shows,
+  // remembered per user per doctype.
+  const colsKey = `kamra:cols:${config.doctype}`
+  const [hiddenCols, setHiddenCols] = useState<Set<string>>(() => {
+    try {
+      return new Set(JSON.parse(localStorage.getItem(colsKey) || "[]"))
+    } catch {
+      return new Set()
+    }
+  })
+  const [colsOpen, setColsOpen] = useState(false)
+  const toggleCol = (field: string) => {
+    setHiddenCols((prev) => {
+      const next = new Set(prev)
+      if (next.has(field)) next.delete(field)
+      else if (next.size < config.columns.length - 1) next.add(field)
+      localStorage.setItem(colsKey, JSON.stringify([...next]))
+      return next
+    })
+  }
+  const visibleCols = config.columns.filter((c) => !hiddenCols.has(c.field))
   const [debounced, setDebounced] = useState("")
   const [filterVals, setFilterVals] = useState<Record<string, string>>({})
   const [page, setPage] = useState(0)
@@ -277,8 +298,7 @@ export function ResourceScreen({ config }: { config: ScreenConfig }) {
             {error}
           </div>
         )}
-        {(config.searchFields?.length || config.filters?.length) && (
-          <div className="mb-4 flex flex-wrap items-center gap-2">
+        <div className="mb-4 flex flex-wrap items-center gap-2">
             {config.searchFields?.length ? (
               <div className="relative">
                 <Search className="pointer-events-none absolute left-2.5 top-2 size-4 text-zinc-400" />
@@ -307,13 +327,47 @@ export function ResourceScreen({ config }: { config: ScreenConfig }) {
                 ))}
               </select>
             ))}
+            <div className="relative ml-auto">
+              <button
+                onClick={() => setColsOpen((o) => !o)}
+                title="Choose which columns this table shows"
+                aria-label="Configure table columns"
+                className="flex items-center gap-1.5 rounded-lg border border-zinc-200 px-2.5 py-1.5 text-sm text-zinc-500 hover:bg-zinc-50 hover:text-zinc-700"
+              >
+                <Columns3 className="size-4" aria-hidden />
+                Columns
+              </button>
+              {colsOpen && (
+                <div className="absolute right-0 z-30 mt-1 w-56 rounded-xl border border-zinc-200 bg-white p-2 shadow-xl">
+                  {config.columns.map((c) => (
+                    <label
+                      key={c.field}
+                      className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-sm hover:bg-zinc-50"
+                    >
+                      <input
+                        type="checkbox"
+                        className="size-4 accent-brand-600"
+                        checked={!hiddenCols.has(c.field)}
+                        onChange={() => toggleCol(c.field)}
+                      />
+                      {c.label}
+                    </label>
+                  ))}
+                  <button
+                    className="mt-1 w-full rounded-lg px-2 py-1 text-left text-xs text-zinc-400 hover:text-zinc-600"
+                    onClick={() => setColsOpen(false)}
+                  >
+                    Done
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
-        )}
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-zinc-200 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">
-                {config.columns.map((c) => (
+                {visibleCols.map((c) => (
                   <th key={c.field} className="py-2 pr-4">
                     {c.label}
                   </th>
@@ -327,12 +381,12 @@ export function ResourceScreen({ config }: { config: ScreenConfig }) {
                   className="cursor-pointer hover:bg-zinc-50"
                   onClick={() => openEdit(row)}
                 >
-                  {config.columns.map((c) => (
+                  {visibleCols.map((c) => (
                     <td key={c.field} className="py-2.5 pr-4">
                       {c.badge && row[c.field] ? (
                         <Badge tone="zinc">{String(row[c.field])}</Badge>
                       ) : (
-                        String(row[c.field] ?? "—")
+                        String(row[c.field] ?? "-")
                       )}
                     </td>
                   ))}

@@ -7,7 +7,7 @@ import { listResource, serverError, type Row } from "../lib/resource"
 import { Badge } from "./ui/badge"
 import { Button } from "./ui/button"
 
-/** Group Rooms Control — the MICE cockpit for one piece of business:
+/** Group Rooms Control - the MICE cockpit for one piece of business:
  *  the room block (with pickup progress), the rooming list, the tied
  *  banquet event and the group master folio. */
 

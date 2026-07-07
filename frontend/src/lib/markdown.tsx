@@ -1,6 +1,6 @@
 import { Fragment, type ReactNode } from "react"
 
-// Minimal, dependency-free markdown for the copilot's replies — bold, italic,
+// Minimal, dependency-free markdown for the copilot's replies - bold, italic,
 // inline code, links, and bullet/numbered lists. Renders to React elements
 // (no HTML injection), so it's XSS-safe by construction.
 

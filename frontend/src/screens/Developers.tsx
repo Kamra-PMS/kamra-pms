@@ -135,7 +135,7 @@ export default function Developers() {
             </CardTitle>
             <p className="mt-0.5 text-xs text-zinc-400">
               Signed in as <code className="text-zinc-500">{info?.user}</code>.
-              The secret is shown once — copy it now.
+              The secret is shown once - copy it now.
             </p>
           </div>
         </CardHeader>
@@ -145,7 +145,7 @@ export default function Developers() {
               <Copyable label="API key" value={key.api_key} />
               <Copyable label="API secret" value={key.api_secret} />
               <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-700">
-                Store the secret somewhere safe now — it can't be shown again.
+                Store the secret somewhere safe now - it can't be shown again.
                 Rotate any time from here.
               </p>
             </>
@@ -184,7 +184,7 @@ export default function Developers() {
           <Copyable label="Authorization header" value={`Authorization: ${authHeader}`} />
           <div>
             <div className="mb-1 text-xs font-medium text-zinc-500">
-              Example — today's front desk
+              Example - today's front desk
             </div>
             <pre className="overflow-x-auto rounded-lg bg-zinc-900 p-3 text-xs leading-relaxed text-zinc-100">
 {`curl -X POST ${base}/api/method/kamra.api.front_desk_snapshot \\

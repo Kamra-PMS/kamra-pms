@@ -29,16 +29,23 @@ const inr = (n: number) =>
 export default function Guests() {
   const [rows, setRows] = useState<GuestRow[]>([])
   const [search, setSearch] = useState("")
+  const [page, setPage] = useState(0)
+  const PAGE = 25
   const navigate = useNavigate()
 
   useEffect(() => {
     const t = setTimeout(() => {
       call<GuestRow[]>("kamra.api.guests_with_stats", {
         search: search || undefined,
-      }).then(setRows)
+      }).then((r) => {
+        setRows(r)
+        setPage(0)
+      })
     }, 250)
     return () => clearTimeout(t)
   }, [search])
+
+  const visible = rows.slice(page * PAGE, page * PAGE + PAGE)
 
   return (
     <Card>
@@ -78,7 +85,7 @@ export default function Guests() {
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100">
-              {rows.map((g) => (
+              {visible.map((g) => (
                 <tr
                   key={g.name}
                   className="cursor-pointer hover:bg-zinc-50"
@@ -94,7 +101,7 @@ export default function Guests() {
                     )}
                   </td>
                   <td className="py-2.5 pr-4 text-zinc-500">
-                    {g.phone ?? "—"}
+                    {g.phone ?? "-"}
                   </td>
                   <td className="py-2.5 pr-4">{g.bookings}</td>
                   <td className="py-2.5 pr-4">{g.stays}</td>

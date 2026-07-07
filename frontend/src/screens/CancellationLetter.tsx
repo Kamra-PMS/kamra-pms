@@ -4,7 +4,7 @@ import { Link, useParams } from "react-router-dom"
 import { call } from "../lib/api"
 import { Button } from "../components/ui/button"
 
-/** Printable cancellation confirmation — the guest's proof, with the
+/** Printable cancellation confirmation - the guest's proof, with the
  * cancellation number front and center. */
 
 interface Letter {
@@ -90,9 +90,9 @@ export default function CancellationLetter() {
           <br />
           <br />
           This confirms that your reservation{" "}
-          <span className="font-medium">{r.name}</span> — {r.room_type},{" "}
+          <span className="font-medium">{r.name}</span> - {r.room_type},{" "}
           {r.check_in_date} to {r.check_out_date} ({r.nights} night
-          {r.nights === 1 ? "" : "s"}) — has been cancelled
+          {r.nights === 1 ? "" : "s"}) - has been cancelled
           {r.cancellation_reason
             ? ` (${r.cancellation_reason.toLowerCase()})`
             : ""}
@@ -129,7 +129,7 @@ export default function CancellationLetter() {
           <span className="font-medium text-zinc-900">
             {r.cancellation_number}
           </span>{" "}
-          for your records. We'd love to host you another time —{" "}
+          for your records. We'd love to host you another time -{" "}
           {d.property.phone
             ? `call us on ${d.property.phone} and we'll find you a room.`
             : "reach out any time and we'll find you a room."}

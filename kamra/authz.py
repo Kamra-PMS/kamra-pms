@@ -1,4 +1,4 @@
-"""Endpoint authorization — Frappe checks doctype permissions on ORM
+"""Endpoint authorization - Frappe checks doctype permissions on ORM
 paths, but raw-SQL reads and db.set_value writes sail past them. Every
 whitelisted Kamra endpoint therefore declares who may call it."""
 
@@ -8,7 +8,7 @@ import frappe
 
 ADMIN = ("System Manager", "Administrator", "Hotel Admin")
 
-# IT / site admins only — deliberately EXCLUDES the Hotel Admin business role.
+# IT / site admins only - deliberately EXCLUDES the Hotel Admin business role.
 # For user management, developer settings and API keys.
 IT_ADMIN = ("System Manager", "Administrator")
 
@@ -28,7 +28,7 @@ def require_it_admin(fn):
 
 
 def require_roles(*roles):
-	"""Allow the listed roles (plus admins). Usage — below the
+	"""Allow the listed roles (plus admins). Usage - below the
 	whitelist decorator so the registered function is the guarded one:
 
 	    @frappe.whitelist()
@@ -42,7 +42,7 @@ def require_roles(*roles):
 		def guarded(*args, **kwargs):
 			if not allowed & set(frappe.get_roles()):
 				frappe.throw(
-					f"Not permitted — needs one of: {', '.join(sorted(roles))}.",
+					f"Not permitted - needs one of: {', '.join(sorted(roles))}.",
 					frappe.PermissionError)
 			return fn(*args, **kwargs)
 		return guarded
@@ -54,7 +54,7 @@ def require_cashier_pin(property: str, pin=None):
 	WHO is acting with a personal PIN, even inside a valid session.
 
 	Skipped for agents (Kamra Agent role, the copilot's in-process tool calls,
-	and gated replays) — their identity and accountability come from the
+	and gated replays) - their identity and accountability come from the
 	autonomy gate + action log, not a keypad. Off unless the property enables
 	require_cashier_pin."""
 	if not property or not frappe.db.get_value(

@@ -71,7 +71,7 @@ export default function PublicCheckin() {
       await call("kamra.public_api.precheckin_submit", { token, ...form })
       setDone(true)
     } catch {
-      setError("Couldn't save — please check the details and try again.")
+      setError("Couldn't save - please check the details and try again.")
     } finally {
       setBusy(false)
     }
@@ -131,14 +131,14 @@ export default function PublicCheckin() {
               You're checked in online
             </p>
             <p className="mt-1 text-sm">
-              Skip the paperwork at the desk — just show your ID on arrival
+              Skip the paperwork at the desk - just show your ID on arrival
               and pick up the key. See you soon!
             </p>
           </div>
         ) : (
           <div className="space-y-4 rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
             <p className="text-sm text-zinc-500">
-              Save time at the desk — fill your details now, show the ID once
+              Save time at the desk - fill your details now, show the ID once
               on arrival.
             </p>
             <div className="grid grid-cols-2 gap-3">

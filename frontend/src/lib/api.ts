@@ -194,7 +194,7 @@ export interface Quote {
 
 export const DEMO_PROPERTY = "Kamra Demo Palace"
 
-// Active property — set by the header switcher, read at call time.
+// Active property - set by the header switcher, read at call time.
 let currentProperty =
   localStorage.getItem("kamra_property") || DEMO_PROPERTY
 

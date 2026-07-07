@@ -6,7 +6,7 @@ import { Button } from "./ui/button"
 
 /** Cancel a stay the right way: see what it costs, say why, get a
  * cancellation number the guest can keep. Lives in the reservation
- * drawer — the status field itself refuses direct flips to Cancelled. */
+ * drawer - the status field itself refuses direct flips to Cancelled. */
 
 const REASONS = [
   "Guest request",
@@ -54,7 +54,7 @@ export default function CancelPanel({ row, reload }: { row: Row; reload: () => v
     return (
       <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
         <p className="font-semibold">
-          Cancelled — {done.cancellation_number}
+          Cancelled - {done.cancellation_number}
         </p>
         <p className="mt-0.5">
           {done.fee > 0
@@ -85,7 +85,7 @@ export default function CancelPanel({ row, reload }: { row: Row; reload: () => v
               {preview.days_before_arrival === 1 ? "" : "s"} before arrival.{" "}
               {preview.inside_window && preview.fee_basis !== "None" ? (
                 <>
-                  Inside the {preview.free_cancel_days}-day window — the{" "}
+                  Inside the {preview.free_cancel_days}-day window - the{" "}
                   <span className="font-medium">
                     {preview.fee_basis.toLowerCase()} (₹
                     {inr(preview.estimated_fee)})
@@ -93,7 +93,7 @@ export default function CancelPanel({ row, reload }: { row: Row; reload: () => v
                   will be charged.
                 </>
               ) : (
-                "Outside the fee window — cancellation is free."
+                "Outside the fee window - cancellation is free."
               )}
             </p>
           )}
@@ -125,7 +125,7 @@ export default function CancelPanel({ row, reload }: { row: Row; reload: () => v
                 checked={waive}
                 onChange={(e) => setWaive(e.target.checked)}
               />
-              Waive the fee (logged — manager's call)
+              Waive the fee (logged - manager's call)
             </label>
           )}
           <div className="flex items-center gap-2">

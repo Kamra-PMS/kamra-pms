@@ -4,7 +4,7 @@ import { call, getCurrentProperty } from "../lib/api"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 
-/** The manager's flash — sign it off with the morning chai. */
+/** The manager's flash - sign it off with the morning chai. */
 
 interface Day {
   date: string
@@ -100,7 +100,7 @@ export default function Reports() {
       </div>
       <p className="-mt-2 mb-4 text-xs text-zinc-400">
         RevPAX = total guest spend (room + F&amp;B + experiences + extras) per
-        in-house guest — the ancillary revenue RevPAR can't see.
+        in-house guest - the ancillary revenue RevPAR can't see.
       </p>
 
       <div className="grid gap-4 lg:grid-cols-3">

@@ -4,7 +4,7 @@ import { Link, useParams } from "react-router-dom"
 import { call } from "../lib/api"
 import { Button } from "../components/ui/button"
 
-/** Printable Guest Registration Card (GRC) — sign at check-in. */
+/** Printable Guest Registration Card (GRC) - sign at check-in. */
 
 interface Occupant {
   full_name: string
@@ -61,7 +61,7 @@ function Row(props: { label: string; value?: string | null }) {
   return (
     <div className="flex border-b border-zinc-200 py-1.5 text-sm">
       <span className="w-40 shrink-0 text-zinc-500">{props.label}</span>
-      <span className="font-medium">{props.value || "—"}</span>
+      <span className="font-medium">{props.value || "-"}</span>
     </div>
   )
 }
@@ -106,7 +106,7 @@ function OccupantsEditor(props: {
     <div className="mt-4 rounded-xl border border-zinc-200 bg-white p-4 print:hidden">
       <h2 className="text-sm font-semibold">Occupant register</h2>
       <p className="mb-3 mt-0.5 text-xs text-zinc-400">
-        Everyone staying in the room — required for the hotel register.
+        Everyone staying in the room - required for the hotel register.
         Saved occupants print on the GRC above.
       </p>
       <div className="space-y-2">
@@ -275,11 +275,11 @@ export default function RegistrationCard() {
               {d.occupants.map((o, i) => (
                 <tr key={i} className="border-b border-zinc-200">
                   <td className="py-1.5 pr-3 font-medium">{o.full_name}</td>
-                  <td className="py-1.5 pr-3">{o.age ?? "—"}</td>
-                  <td className="py-1.5 pr-3">{o.gender || "—"}</td>
-                  <td className="py-1.5 pr-3">{o.nationality || "—"}</td>
+                  <td className="py-1.5 pr-3">{o.age ?? "-"}</td>
+                  <td className="py-1.5 pr-3">{o.gender || "-"}</td>
+                  <td className="py-1.5 pr-3">{o.nationality || "-"}</td>
                   <td className="py-1.5">
-                    {o.id_type ? `${o.id_type} · ${o.id_number ?? ""}` : "—"}
+                    {o.id_type ? `${o.id_type} · ${o.id_number ?? ""}` : "-"}
                   </td>
                 </tr>
               ))}

@@ -3,7 +3,7 @@ import { X } from "lucide-react"
 import { Button } from "./button"
 
 /**
- * Right-side drawer for create/edit forms — Kamra's standard form surface.
+ * Right-side drawer for create/edit forms - Kamra's standard form surface.
  * Content scrolls; header and footer stay pinned.
  */
 export function Sheet(props: {

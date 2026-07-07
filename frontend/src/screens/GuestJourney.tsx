@@ -28,7 +28,7 @@ import {
 } from "../components/ui/card"
 import { cn } from "../lib/utils"
 
-/** Guest profile hub — the person is the center, stays hang off them.
+/** Guest profile hub - the person is the center, stays hang off them.
  * Everything the desk needs when a returning guest calls: history at a
  * glance (the stay strip), what's coming up, and the profile actions
  * (book, merge duplicates, anonymize). */
@@ -108,7 +108,7 @@ const stripTone: Record<string, string> = {
   "No Show": "bg-rose-300",
 }
 
-/** Every stay as one block, width ∝ nights — a guest's whole relationship
+/** Every stay as one block, width ∝ nights - a guest's whole relationship
  * with the hotel readable in half a second. */
 function StayStrip({ rows }: { rows: ResRow[] }) {
   const ordered = [...rows].sort((a, b) =>
@@ -442,7 +442,7 @@ export default function GuestJourney() {
           <CardContent>
             {timeline.length === 0 ? (
               <p className="py-4 text-sm text-zinc-400">
-                No activity yet — their story starts with the first booking.
+                No activity yet - their story starts with the first booking.
               </p>
             ) : (
               <ol className="relative ml-3 space-y-5 border-l border-zinc-200 pb-1">
@@ -564,7 +564,7 @@ export default function GuestJourney() {
                 >
                   <ShieldOff className="size-4" aria-hidden />
                   {confirmAnon
-                    ? "Confirm — erase identity forever"
+                    ? "Confirm - erase identity forever"
                     : "Anonymize profile"}
                 </Button>
                 <p className="mt-1.5 text-xs text-zinc-400">

@@ -1,6 +1,6 @@
 /*  Command palette (⌘K / Ctrl+K).
 
-    The humans' agent surface — Opera's "I Want To…" menu, reimagined as a
+    The humans' agent surface - Opera's "I Want To…" menu, reimagined as a
     fuzzy typeable overlay that dispatches through the same autonomy gate
     as the AI agents. Nav shortcuts on a cold prompt; guest / reservation
     search once you start typing; a couple of high-value quick actions.
@@ -15,20 +15,33 @@ import {
 import { useNavigate } from "react-router-dom"
 import {
   ArrowRight,
+  BadgePercent,
   Bed,
-  Bot,
+  BedDouble,
+  Briefcase,
+  Building2,
   CalendarDays,
   ClipboardList,
+  Clock,
   Command as CmdIcon,
   Home,
   IndianRupee,
+  Landmark,
   LayoutGrid,
   ListChecks,
   Loader2,
+  PackageSearch,
+  PartyPopper,
+  Receipt,
   Search,
+  Settings as SettingsIcon,
+  ShieldCheck,
+  Sparkles,
+  Tags,
   Ticket as TicketIcon,
   UserCircle2,
   Users,
+  UtensilsCrossed,
 } from "lucide-react"
 import { call, getCurrentProperty } from "../lib/api"
 import { cn } from "../lib/utils"
@@ -51,15 +64,32 @@ interface Result {
 }
 
 const NAV_COMMANDS: NavCmd[] = [
-  { kind: "nav", id: "nav:today", label: "Go to Today", hint: "front desk snapshot", path: "/", icon: Home },
+  { kind: "nav", id: "nav:today", label: "Go to Today", hint: "arrivals, departures, room board", path: "/", icon: Home },
+  { kind: "nav", id: "nav:copilot", label: "Open Copilot", hint: "chat with NOVA · AI staff · approvals · activity", path: "/assistant", icon: Sparkles },
   { kind: "nav", id: "nav:reservations", label: "Go to Reservations", hint: "search & manage bookings", path: "/reservations", icon: ClipboardList },
-  { kind: "nav", id: "nav:tape", label: "Go to Tape Chart", hint: "grid of rooms by date", path: "/tape", icon: LayoutGrid },
+  { kind: "nav", id: "nav:tape", label: "Go to Tape Chart", hint: "rooms × dates grid", path: "/tape", icon: LayoutGrid },
   { kind: "nav", id: "nav:calendar", label: "Go to Calendar", hint: "availability by room type", path: "/calendar", icon: CalendarDays },
-  { kind: "nav", id: "nav:guests", label: "Go to Guests", hint: "guest CRM & stays", path: "/guests", icon: Users },
-  { kind: "nav", id: "nav:agents", label: "Open Agents Inbox", hint: "pending approvals & timeline", path: "/agents", icon: Bot },
-  { kind: "nav", id: "nav:billing", label: "Go to Billing", hint: "folios, invoices, cash", path: "/billing", icon: IndianRupee },
-  { kind: "nav", id: "nav:tickets", label: "Go to Tickets", hint: "open service tickets", path: "/tickets", icon: TicketIcon },
-  { kind: "nav", id: "nav:hk", label: "Open Housekeeping board", hint: "task queue", path: "/housekeeping", icon: ListChecks },
+  { kind: "nav", id: "nav:guests", label: "Go to Guests", hint: "profiles & stay history", path: "/guests", icon: Users },
+  { kind: "nav", id: "nav:hk", label: "Open Housekeeping", hint: "room status board", path: "/housekeeping", icon: ListChecks },
+  { kind: "nav", id: "nav:requests", label: "Go to Guest Requests", hint: "open service requests", path: "/tickets", icon: TicketIcon },
+  { kind: "nav", id: "nav:lostfound", label: "Go to Lost & Found", hint: "items found & claimed", path: "/lost-found", icon: PackageSearch },
+  { kind: "nav", id: "nav:shifts", label: "Go to Shifts", hint: "handover & cash counts", path: "/shifts", icon: Clock },
+  { kind: "nav", id: "nav:billing", label: "Go to Billing", hint: "folios, invoices, night audit", path: "/billing", icon: Receipt },
+  { kind: "nav", id: "nav:reports", label: "Go to Reports", hint: "occupancy, ADR, RevPAR", path: "/reports", icon: IndianRupee },
+  { kind: "nav", id: "nav:companies", label: "Go to Companies", hint: "corporate accounts & rates", path: "/companies", icon: Building2 },
+  { kind: "nav", id: "nav:events", label: "Go to Event Bookings", hint: "banquets & functions", path: "/events", icon: PartyPopper },
+  { kind: "nav", id: "nav:venuecal", label: "Open Venue Calendar", hint: "function diary", path: "/venue-calendar", icon: CalendarDays },
+  { kind: "nav", id: "nav:groups", label: "Go to Groups & Blocks", hint: "room blocks & pickup", path: "/groups", icon: Users },
+  { kind: "nav", id: "nav:rooms", label: "Go to Rooms", hint: "room inventory", path: "/rooms", icon: BedDouble },
+  { kind: "nav", id: "nav:roomtypes", label: "Go to Room Types", hint: "categories, photos, pricing", path: "/room-types", icon: LayoutGrid },
+  { kind: "nav", id: "nav:venues", label: "Go to Venues", hint: "halls, lawns & rates", path: "/venues", icon: Landmark },
+  { kind: "nav", id: "nav:rateplans", label: "Go to Rate Plans", hint: "packages & modifiers", path: "/rate-plans", icon: Tags },
+  { kind: "nav", id: "nav:seasons", label: "Go to Seasons", hint: "seasonal pricing windows", path: "/seasons", icon: CalendarDays },
+  { kind: "nav", id: "nav:guardrails", label: "Go to Guardrails", hint: "rate floors & ceilings", path: "/guardrails", icon: ShieldCheck },
+  { kind: "nav", id: "nav:vouchers", label: "Go to Vouchers", hint: "discount codes", path: "/vouchers", icon: BadgePercent },
+  { kind: "nav", id: "nav:mealplans", label: "Go to Meal Plans", hint: "CP, MAP, AP rates", path: "/meal-plans", icon: UtensilsCrossed },
+  { kind: "nav", id: "nav:agents-ta", label: "Go to Travel Agents", hint: "agents & commissions", path: "/travel-agents", icon: Briefcase },
+  { kind: "nav", id: "nav:settings", label: "Go to Settings", hint: "property, GST, booking page, AI", path: "/settings", icon: SettingsIcon },
 ]
 
 // Simple substring fuzzy: every character of q must appear in order in text.
@@ -79,7 +109,7 @@ export function CommandPalette() {
   const [open, setOpen] = useState(false)
   const [q, setQ] = useState("")
   const [guests, setGuests] = useState<{ name: string; full_name: string; phone?: string }[]>([])
-  const [reservations, setReservations] = useState<{ name: string; guest_name: string; check_in_date: string; status: string; room?: string | null }[]>([])
+  const [reservations, setReservations] = useState<{ name: string; guest?: string; guest_name: string; check_in_date: string; status: string; room?: string | null }[]>([])
   const [searching, setSearching] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const navigate = useNavigate()
@@ -95,8 +125,13 @@ export function CommandPalette() {
         setOpen(false)
       }
     }
+    const onOpen = () => setOpen(true)
     window.addEventListener("keydown", onKey)
-    return () => window.removeEventListener("keydown", onKey)
+    window.addEventListener("kamra:open-palette", onOpen)
+    return () => {
+      window.removeEventListener("keydown", onKey)
+      window.removeEventListener("kamra:open-palette", onOpen)
+    }
   }, [open])
 
   useEffect(() => {
@@ -126,6 +161,7 @@ export function CommandPalette() {
           ).catch(() => []),
           call<{
             name: string
+            guest?: string
             guest_name: string
             check_in_date: string
             status: string
@@ -187,7 +223,13 @@ export function CommandPalette() {
         icon: Bed,
         onSelect: () => {
           setOpen(false)
-          navigate(`/reservations?q=${encodeURIComponent(r.name)}`)
+          // land on the guest's own screen (their stay, folio, journey),
+          // not a filtered list
+          navigate(
+            r.guest
+              ? `/guests/${encodeURIComponent(r.guest)}`
+              : `/reservations?q=${encodeURIComponent(r.name)}`,
+          )
         },
       })),
     [reservations, navigate],
@@ -206,7 +248,7 @@ export function CommandPalette() {
     <div
       role="dialog"
       aria-modal="true"
-      aria-label="Command palette"
+      aria-label="Concierge"
       className="fixed inset-0 z-50 flex items-start justify-center bg-zinc-900/40 px-4 pt-24 backdrop-blur-sm"
       onClick={() => setOpen(false)}
     >
@@ -220,7 +262,7 @@ export function CommandPalette() {
             ref={inputRef}
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Search a guest, a reservation, or type an action…"
+            placeholder="Concierge - find a guest, a booking, or jump to any screen…"
             className="flex-1 bg-transparent text-sm outline-none placeholder:text-zinc-400"
           />
           {searching ? (

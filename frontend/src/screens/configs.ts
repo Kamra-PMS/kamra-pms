@@ -7,7 +7,10 @@ import ReservationDetail from "./ReservationDetail"
 export const roomsConfig: ScreenConfig = {
   doctype: "Room",
   title: "Rooms",
-  description: "Physical rooms — number, type, floor and live status.",
+  description: "Physical rooms - number, type, floor and live status.",
+  searchFields: ["room_number", "name"],
+  filters: [{ field: "housekeeping_status", label: "Status", options: ["Clean", "Dirty", "Inspected", "Out of Order"] }],
+  pageSize: 25,
   propertyScoped: true,
   orderBy: "room_number asc",
   columns: [
@@ -61,6 +64,8 @@ export const ratePlansConfig: ScreenConfig = {
   doctype: "Rate Plan",
   title: "Rate Plans",
   description: "Sellable plans (BAR, non-refundable, corporate) that adjust the room total.",
+  searchFields: ["plan_name"],
+  pageSize: 25,
   propertyScoped: true,
   columns: [
     { field: "rate_plan_name", label: "Name" },
@@ -109,6 +114,8 @@ export const vouchersConfig: ScreenConfig = {
   doctype: "Discount Voucher",
   title: "Vouchers",
   description: "Discount codes guests or agents can apply at booking.",
+  searchFields: ["code"],
+  pageSize: 25,
   propertyScoped: true,
   columns: [
     { field: "voucher_code", label: "Code", badge: true },
@@ -156,7 +163,9 @@ export const mealPlansConfig: ScreenConfig = {
 export const travelAgentsConfig: ScreenConfig = {
   doctype: "Travel Agent",
   title: "Travel Agents",
-  description: "Business sources with commission tracking — commissions compute automatically on their bookings.",
+  description: "Business sources with commission tracking - commissions compute automatically on their bookings.",
+  searchFields: ["agent_name"],
+  pageSize: 25,
   columns: [
     { field: "agent_name", label: "Agent" },
     { field: "agent_type", label: "Type", badge: true },
@@ -177,7 +186,7 @@ export const travelAgentsConfig: ScreenConfig = {
 export const venuesConfig: ScreenConfig = {
   doctype: "Venue",
   title: "Venues",
-  description: "Banquet halls, lawns, board rooms — enquiry-based event spaces.",
+  description: "Banquet halls, lawns, board rooms - enquiry-based event spaces.",
   propertyScoped: true,
   columns: [
     { field: "venue_name", label: "Venue" },
@@ -197,6 +206,9 @@ export const venueBookingsConfig: ScreenConfig = {
   doctype: "Venue Booking",
   title: "Events",
   description: "Banquet & event pipeline: enquiry → confirmed → completed.",
+  searchFields: ["customer_name", "venue"],
+  filters: [{ field: "status", label: "Status", options: ["Enquiry", "Confirmed", "Completed", "Cancelled"] }],
+  pageSize: 25,
   propertyScoped: true,
   orderBy: "event_date asc",
   columns: [
@@ -278,7 +290,7 @@ export const guardrailsConfig: ScreenConfig = {
   doctype: "Rate Guardrail",
   title: "Rate Guardrails",
   description:
-    "Owner-set floor and ceiling. No rate move — human or AI agent — can price outside these rails.",
+    "Owner-set floor and ceiling. No rate move - human or AI agent - can price outside these rails.",
   propertyScoped: true,
   columns: [
     { field: "name", label: "Rail" },
@@ -298,6 +310,8 @@ export const companiesConfig: ScreenConfig = {
   doctype: "Company",
   title: "Corporate Accounts",
   description: "Companies with negotiated rates and credit terms.",
+  searchFields: ["company_name", "gstin"],
+  pageSize: 25,
   columns: [
     { field: "company_name", label: "Company" },
     { field: "gstin", label: "GSTIN" },
@@ -322,6 +336,9 @@ export const housekeepingConfig: ScreenConfig = {
   doctype: "Housekeeping Task",
   title: "Housekeeping Tasks",
   description: "Cleans and inspections. Completing a task updates the room's live status.",
+  searchFields: ["room"],
+  filters: [{ field: "status", label: "Status", options: ["Open", "In Progress", "Done"] }],
+  pageSize: 25,
   propertyScoped: true,
   orderBy: "creation desc",
   columns: [
@@ -413,7 +430,7 @@ export const reservationsConfig: ScreenConfig = {
 export const groupsConfig: ScreenConfig = {
   doctype: "Group Booking",
   title: "Groups & Blocks",
-  description: "Group Rooms Control — blocks, pickup and rooming lists.",
+  description: "Group Rooms Control - blocks, pickup and rooming lists.",
   propertyScoped: true,
   orderBy: "check_in_date desc",
   pageSize: 25,

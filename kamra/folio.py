@@ -2,7 +2,7 @@
 
 All amounts flow from the deterministic pricing engine. GST is carried
 per line so a folio can mix rates (room 5/18%, F&B 5%) and still produce
-a correct multi-rate invoice — the PRD's FR-60.
+a correct multi-rate invoice - the PRD's FR-60.
 """
 
 from decimal import Decimal
@@ -92,7 +92,7 @@ def _post_addons(reservation, folio_name: str):
 
 
 def open_group_folio(group_booking: str) -> str:
-	"""Open (or return) the group's master folio — one consolidated bill
+	"""Open (or return) the group's master folio - one consolidated bill
 	for everything the company pays across all rooms of the group. It is
 	anchored to the group's lead (first) reservation so invoicing and
 	printing work unchanged."""
@@ -151,7 +151,7 @@ def target_folio(reservation, charge_type: str, is_alcohol: int = 0) -> str:
 	Group stays route company-payable charge types to the ONE group
 	master folio (company pays the stay for every room, each guest pays
 	their own extras). Individual corporate stays route to the stay's
-	Company folio. Alcohol never bills to a company — Indian corporates
+	Company folio. Alcohol never bills to a company - Indian corporates
 	won't settle it and most travel policies prohibit it.
 	"""
 	if not is_alcohol:
@@ -231,7 +231,7 @@ def _append_charge(folios, reservation, charge_type, line, is_alcohol=0):
 
 def post_room_night(reservation, date, folios=None) -> bool:
 	"""Post one night's room (and meal plan) charge, routed by the
-	company's billing rules. Skips dates already posted — safe to call
+	company's billing rules. Skips dates already posted - safe to call
 	from both audit and checkout. Pass `folios` (a dict) to batch saves
 	across nights; when omitted the touched folios save immediately."""
 	date = str(date)
@@ -307,10 +307,10 @@ def post_remaining_nights(reservation) -> int:
 
 def split_folio(reservation: str, folio_type: str = "Extra") -> str:
 	"""Open an additional folio for a stay (Extra or Company) so charges
-	can be routed/split — e.g. 70/30 corporate vs personal.
+	can be routed/split - e.g. 70/30 corporate vs personal.
 
 	If an empty folio of this type already exists, reuse it rather than
-	piling up blank duplicates — you only ever need one unused split open."""
+	piling up blank duplicates - you only ever need one unused split open."""
 	res = frappe.get_doc("Reservation", reservation)
 	for f in frappe.get_all(
 		"Folio",
@@ -345,7 +345,7 @@ def _folio_group(folio) -> str | None:
 
 
 def _assert_same_stay(src, dst):
-	"""Charges may move within a stay, or within a group — company pays
+	"""Charges may move within a stay, or within a group - company pays
 	some rooms' charges on the master, guests settle the rest."""
 	if src.reservation == dst.reservation:
 		return
@@ -356,7 +356,7 @@ def _assert_same_stay(src, dst):
 
 
 def transfer_charges(from_folio: str, charge_rows: list, to_folio: str):
-	"""Move several charge lines at once — one save per folio, so a
+	"""Move several charge lines at once - one save per folio, so a
 	corporate re-bill of a whole stay is a single operation."""
 	src = frappe.get_doc("Folio", from_folio)
 	dst = frappe.get_doc("Folio", to_folio)
@@ -391,7 +391,7 @@ def transfer_charges(from_folio: str, charge_rows: list, to_folio: str):
 def split_charge(from_folio: str, charge_row: str, to_folio: str,
                  percent: float | None = None,
                  amount: float | None = None) -> dict:
-	"""Split one charge line between two open folios of the same stay —
+	"""Split one charge line between two open folios of the same stay -
 	the 70/30 corporate deal, the shared room, the disputed minibar.
 	Give either a percent (of the line) or an absolute amount to move.
 	Conservation is exact: source keeps base − part, target gets part."""
@@ -491,7 +491,7 @@ def close_folio(folio_name: str) -> str:
 	folio.status = "Closed"
 	folio.closed_on = now_datetime()
 	# one series per property: each GSTIN must have its own unique
-	# invoice series, and GST caps invoice numbers at 16 chars — a short
+	# invoice series, and GST caps invoice numbers at 16 chars - a short
 	# initials code keeps INV-KDP-26-00001 inside the limit
 	code = "".join(w[0] for w in folio.property.split())[:3].upper()
 	folio.invoice_number = make_autoname(f"INV-{code}-.YY.-.#####")
@@ -502,19 +502,19 @@ def close_folio(folio_name: str) -> str:
 
 def post_allowance(folio_name: str, amount: float, reason: str,
                    gst_rate: float = 0) -> str:
-	"""A negative adjustment against a specific folio — the hotel writes off
+	"""A negative adjustment against a specific folio - the hotel writes off
 	part of a charge (service recovery, dispute) WITHOUT touching the original
 	line, so the trail stays honest. GST reverses at the same rate as the
 	charge being adjusted."""
 	folio = frappe.get_doc("Folio", folio_name)
 	if folio.status == "Closed":
-		frappe.throw("This folio is settled — pass the allowance on the "
+		frappe.throw("This folio is settled - pass the allowance on the "
 		             "guest's open folio, or cancel the invoice first.")
 	amount = abs(float(amount))
 	if not amount:
 		frappe.throw("Allowance amount is required.")
 	if not (reason or "").strip():
-		frappe.throw("An allowance needs a reason — it goes on the record.")
+		frappe.throw("An allowance needs a reason - it goes on the record.")
 	folio.append("charges", {
 		"posting_date": frappe.utils.nowdate(),
 		"charge_type": "Allowance",
@@ -531,7 +531,7 @@ def post_allowance(folio_name: str, amount: float, reason: str,
 
 def part_settle(folio_name: str) -> dict:
 	"""Interim invoice mid-stay: freeze the fully-paid folio with a real
-	invoice number and open a fresh one so the stay keeps running — the
+	invoice number and open a fresh one so the stay keeps running - the
 	long-stay pattern (guests settling every N days without checking out).
 	The room stays occupied; only the bill closes."""
 	folio = frappe.get_doc("Folio", folio_name)
@@ -539,7 +539,7 @@ def part_settle(folio_name: str) -> dict:
 		frappe.throw("This folio is already settled.")
 	_recalculate(folio)
 	if round(folio.balance or 0, 2) != 0:
-		frappe.throw("Settle the balance first — an interim invoice needs "
+		frappe.throw("Settle the balance first - an interim invoice needs "
 		             "the folio fully paid.")
 	if not folio.charges:
 		frappe.throw("Nothing to invoice on this folio.")
@@ -569,7 +569,7 @@ def cancel_invoice(folio_name: str, reason: str) -> dict:
 	if folio.status != "Closed" or not folio.invoice_number:
 		frappe.throw("Only a settled folio with an invoice can be cancelled.")
 	if not (reason or "").strip():
-		frappe.throw("A cancellation needs a reason — it goes on the record.")
+		frappe.throw("A cancellation needs a reason - it goes on the record.")
 	frappe.get_doc({
 		"doctype": "Cancelled Invoice",
 		"property": folio.property,
@@ -600,7 +600,7 @@ def run_night_audit(property: str, business_date: str | None = None) -> dict:
 	if not getattr(frappe.local, "lang", None):
 		frappe.local.lang = "en"
 	business_date = business_date or nowdate()
-	# per property AND date — a global AUDIT-<date> name would make the
+	# per property AND date - a global AUDIT-<date> name would make the
 	# second property's audit silently no-op every night
 	audit_name = f"AUDIT-{business_date}-{property}"
 	if frappe.db.exists("Night Audit Run", audit_name) or \
@@ -635,7 +635,7 @@ def run_night_audit(property: str, business_date: str | None = None) -> dict:
 			amount_posted += Decimal(str(_nightly_room_rate(res, business_date)))
 			log_lines.append(f"posted room night {business_date} for {res.name}")
 
-	# no-shows: confirmed arrivals whose date has passed — flagged AND
+	# no-shows: confirmed arrivals whose date has passed - flagged AND
 	# charged per the property's policy
 	no_show_basis = frappe.db.get_value(
 		"Property", property, "no_show_charge") or "None"
@@ -661,7 +661,7 @@ def run_night_audit(property: str, business_date: str | None = None) -> dict:
 				log_lines.append(
 					f"posted no-show charge ₹{fee:,.0f} for {row.name}")
 
-	# purge stale waitlist entries — two days after their requested departure
+	# purge stale waitlist entries - two days after their requested departure
 	from frappe.utils import add_days as _add_days
 	purged = 0
 	for wl in frappe.get_all("Reservation", filters={
@@ -709,7 +709,7 @@ def run_night_audit(property: str, business_date: str | None = None) -> dict:
 
 
 def nightly_audit_all_properties():
-	"""Scheduler entry point — runs the audit for every active property."""
+	"""Scheduler entry point - runs the audit for every active property."""
 	for p in frappe.get_all("Property", filters={"disabled": 0}):
 		try:
 			run_night_audit(p.name)

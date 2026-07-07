@@ -1,4 +1,4 @@
-"""Front-desk copilot — BYOK, optional, governed.
+"""Front-desk copilot - BYOK, optional, governed.
 
 Talks to any OpenAI-compatible chat endpoint (OpenAI, OpenRouter, Groq,
 Ollama, …) with the owner's own key. The model only ever acts through
@@ -35,11 +35,11 @@ Rules:
 - Before cancelling, run the cancellation preview and state the fee.
 - Confirm irreversible actions (cancel, checkout with balance) in one
   short question before calling the tool.
-- Be brief and concrete — front desk answers, not essays. Amounts in ₹.
+- Be brief and concrete - front desk answers, not essays. Amounts in ₹.
 {extra}"""
 
 # tool name → (kamra.api function, description, JSON-schema params,
-# inject property?, mutating? — mutating calls are audit-logged)
+# inject property?, mutating? - mutating calls are audit-logged)
 EXTRA_TOOLS = {
 	"amend_stay": (
 		"amend_stay",
@@ -79,7 +79,7 @@ EXTRA_TOOLS = {
 		False, True),
 	"set_room_rate": (
 		"set_room_rate",
-		"Set a nightly rate for a room type over dates. Owner guardrails apply — give a reason.",
+		"Set a nightly rate for a room type over dates. Owner guardrails apply - give a reason.",
 		{"room_type": {"type": "string"}, "start_date": {"type": "string"},
 		 "end_date": {"type": "string"}, "rate": {"type": "number"},
 		 "reason": {"type": "string"}}, True, True),
@@ -126,7 +126,7 @@ TOOLS = {
 		 "booked_by_phone": {"type": "string"}}, True, True),
 	"find_reservations": (
 		"find_reservations",
-		"Find reservations by guest name, room number, or reference — optionally "
+		"Find reservations by guest name, room number, or reference - optionally "
 		"filtered by status (Confirmed, Checked In, Checked Out, Cancelled, No "
 		"Show). Use this to resolve a room number or a name to a reservation "
 		"before acting, or to list stays by status (e.g. who checked out).",
@@ -139,8 +139,8 @@ TOOLS = {
 		{"reservation": {"type": "string"}}, False, False),
 	"waitlist_ready": (
 		"waitlist_ready",
-		"Waitlisted stays that can now be booked — a room freed for their "
-		"dates — with the guest's phone, so you can proactively reach out.",
+		"Waitlisted stays that can now be booked - a room freed for their "
+		"dates - with the guest's phone, so you can proactively reach out.",
 		{}, True, False),
 	"promote_waitlist": (
 		"promote_waitlist",
@@ -151,7 +151,7 @@ TOOLS = {
 		"Draft a MICE piece of business in one go: a group booking with a "
 		"room block (list of {room_type, rooms_blocked, block_rate}) and "
 		"optionally its banquet event (venue, event_type, event_date, "
-		"attendees). Starts as Open (a proposal) — confirm it to hold rooms.",
+		"attendees). Starts as Open (a proposal) - confirm it to hold rooms.",
 		{"group_name": {"type": "string"},
 		 "check_in_date": {"type": "string"},
 		 "check_out_date": {"type": "string"},
@@ -225,7 +225,7 @@ def _settings(property: str):
 def assistant_status(property: str):
 	s = _settings(property)
 	key = s.get_password("api_key", raise_exception=False) if s else None
-	# Never return the key — only a masked tail so admins can confirm one is set.
+	# Never return the key - only a masked tail so admins can confirm one is set.
 	key_hint = ("••••" + key[-4:]) if key and len(key) >= 4 else None
 	return {
 		"enabled": bool(s and s.enabled and key),
@@ -282,7 +282,7 @@ def ask(property: str, messages):
 	show what actually happened."""
 	s = _settings(property)
 	if not (s and s.enabled):
-		frappe.throw("The AI assistant is not enabled for this property — "
+		frappe.throw("The AI assistant is not enabled for this property - "
 		             "an admin can switch it on under Settings.")
 	api_key = s.get_password("api_key", raise_exception=False)
 	if not api_key:
@@ -333,7 +333,7 @@ def ask(property: str, messages):
 			              "tool_call_id": call["id"],
 			              "content": frappe.as_json(result)})
 
-	return {"reply": "I hit my tool-call limit for one question — "
+	return {"reply": "I hit my tool-call limit for one question - "
 	                 "try breaking it into smaller steps.",
 	        "actions": actions}
 
@@ -344,8 +344,8 @@ def ask_stream(property: str, messages):
 	"""Streaming copilot turn (Server-Sent Events). Governed tools run FIRST
 	(they need the DB, which the request context still holds), emitting an
 	`action` event each; then the final answer is streamed token-by-token as
-	`token` events. The generator itself touches no DB — only the OpenAI stream
-	— so it's safe to iterate after the request handler returns.
+	`token` events. The generator itself touches no DB - only the OpenAI stream
+	- so it's safe to iterate after the request handler returns.
 
 	Events: action {tool, ok} · token {text} · error {message} · done {}
 	"""
@@ -356,7 +356,7 @@ def ask_stream(property: str, messages):
 		frappe.throw("The AI assistant is not enabled for this property.")
 	api_key = s.get_password("api_key", raise_exception=False)
 	if not api_key:
-		frappe.throw("No API key configured — Settings → AI assistant.")
+		frappe.throw("No API key configured - Settings → AI assistant.")
 	if isinstance(messages, str):
 		messages = frappe.parse_json(messages)
 
@@ -437,7 +437,7 @@ def ask_stream(property: str, messages):
 
 
 HELP_SYSTEM = """You are the Kamra PMS help assistant. You explain HOW to use
-Kamra — an open-source, AI-native hotel PMS — to hotel staff. You do NOT act on
+Kamra - an open-source, AI-native hotel PMS - to hotel staff. You do NOT act on
 hotel data (the front-desk copilot does that); you give short, concrete how-to
 answers and point to where things live in the app.
 
@@ -445,12 +445,12 @@ What Kamra does and where to find it:
 - Front desk: "Today" (arrivals, departures, in-house, room board, check in /
   out), Tape Chart (rooms × dates; move rooms, amend stays), Calendar
   (availability).
-- New booking: the "New booking" button opens a side drawer — pick the guest
+- New booking: the "New booking" button opens a side drawer - pick the guest
   (returning guests autocomplete), room type, dates, meal plan and add-ons, with
   a live quote. "Add to waitlist" parks a stay when the dates are sold out or
   restricted; promote it later from the reservation when a room frees.
 - Reservations: a searchable, filterable, paginated list; click a booking for
-  the 360 panel — live billing, editable dates, guest journey, check in/out,
+  the 360 panel - live billing, editable dates, guest journey, check in/out,
   cancel, registration card.
 - Guests: profiles with stay history, VIP/blacklist, merge and anonymize.
 - Billing: folios, post charges, take payments, payment links. Closing a folio
@@ -460,16 +460,16 @@ What Kamra does and where to find it:
 - Revenue: rate plans, seasons, vouchers, rate guardrails.
 - Events: Venue Bookings and a Venue Calendar (banquet/function diary);
   Experiences cover spa/tours as booking add-ons.
-- Inventory: Rooms; Room Types — open a room type to add photos (image URLs),
+- Inventory: Rooms; Room Types - open a room type to add photos (image URLs),
   amenities (one per line) and a description shown on the public booking engine.
 - Settings: property & GST, booking page (hero image, amenities, description),
   cancellation/deposit policy, payment gateway, and the AI assistant (your own
   key). Admins also have Developers (API keys), New Property and the Frappe Desk.
 - Public booking engine at /book; pre-arrival self check-in via the guest link.
-- Roles: a System Admin (IT — users, API keys, Frappe Desk) versus a Hotel
+- Roles: a System Admin (IT - users, API keys, Frappe Desk) versus a Hotel
   Admin / GM (runs the property, no IT access). Manage staff from
   Admin → Manage Users.
-- The front-desk copilot (the sparkle button) can act — quote, book, check in,
+- The front-desk copilot (the sparkle button) can act - quote, book, check in,
   post charges, cancel, and watch the waitlist. This help assistant only
   explains how to do things yourself.
 
@@ -480,7 +480,7 @@ the docs (github.com/Kamra-PMS/kamra-pms/tree/main/docs)."""
 @frappe.whitelist(methods=["POST"])
 @require_roles("Front Desk", "Finance", "Revenue Manager", "Housekeeping")
 def help_ask(property: str, messages):
-	"""Streaming how-to help (SSE). No tools, no data access — just explains
+	"""Streaming how-to help (SSE). No tools, no data access - just explains
 	how to use Kamra, grounded in the app's features. Reuses the property's
 	AI key. Events: token {text} · error {message} · done {}."""
 	from werkzeug.wrappers import Response
@@ -490,7 +490,7 @@ def help_ask(property: str, messages):
 		frappe.throw("The AI assistant is not enabled for this property.")
 	api_key = s.get_password("api_key", raise_exception=False)
 	if not api_key:
-		frappe.throw("No API key configured — Settings → AI assistant.")
+		frappe.throw("No API key configured - Settings → AI assistant.")
 	if isinstance(messages, str):
 		messages = frappe.parse_json(messages)
 	base = (s.base_url or "https://api.openai.com/v1").rstrip("/")
@@ -537,7 +537,7 @@ def help_ask(property: str, messages):
 # ---------------------------------------------------------------------------
 # Persistent conversations for the full-page assistant module. Each row is one
 # chat, owned by the user who created it and scoped to a property. Messages are
-# the display history [{role, content, actions?}] — the agent re-runs its tools
+# the display history [{role, content, actions?}] - the agent re-runs its tools
 # each turn, so it only needs the text history for context.
 # ---------------------------------------------------------------------------
 

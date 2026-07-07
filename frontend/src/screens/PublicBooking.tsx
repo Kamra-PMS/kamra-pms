@@ -115,7 +115,7 @@ export default function PublicBooking() {
     })
   }, [])
 
-  // stay state lives in the URL — shareable, crawlable, UTM params kept
+  // stay state lives in the URL - shareable, crawlable, UTM params kept
   useEffect(() => {
     navigate(
       `/book/${search.check_in_date}/${checkOut}/${search.adults}/${search.children}${location.search}`,
@@ -129,7 +129,7 @@ export default function PublicBooking() {
     if (!data) return
     const p = data.property
     const minPrice = Math.min(...data.room_types.map((r) => r.base_price))
-    document.title = `${p.property_name}, ${p.city} — book direct from ₹${inr(minPrice)}/night`
+    document.title = `${p.property_name}, ${p.city} - book direct from ₹${inr(minPrice)}/night`
     setMetaTag(
       "description",
       `${p.property_name} in ${p.city}: ${data.room_types.length} room types from ₹${inr(minPrice)}/night. ` +
@@ -248,7 +248,7 @@ export default function PublicBooking() {
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
         <div className="absolute inset-x-0 bottom-0 mx-auto flex max-w-5xl items-end gap-4 px-5 pb-6 text-white">
-          {/* hotel logo slot — falls back to a monogram until one is set */}
+          {/* hotel logo slot - falls back to a monogram until one is set */}
           <div className="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-white/30 bg-white shadow-lg sm:size-20">
             {p.logo_url ? (
               <img
@@ -474,7 +474,7 @@ export default function PublicBooking() {
         </div>
 
         <p className="mt-10 text-center text-xs text-zinc-400">
-          Powered by Kamra — open-source, AI-native hotel PMS
+          Powered by Kamra - open-source, AI-native hotel PMS
         </p>
       </div>
 
@@ -501,7 +501,7 @@ export default function PublicBooking() {
                 disabled={busy || !form.guest_name || !form.phone}
                 onClick={submitBooking}
               >
-                {busy ? "Booking…" : "Confirm — pay at hotel"}
+                {busy ? "Booking…" : "Confirm - pay at hotel"}
               </Button>
             )
           }
@@ -511,7 +511,7 @@ export default function PublicBooking() {
               <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-emerald-800">
                 <p className="text-lg font-semibold">{done.reservation}</p>
                 <p className="mt-1 text-sm">
-                  Total ₹{inr(done.amount)} — payable at the hotel. We've saved
+                  Total ₹{inr(done.amount)} - payable at the hotel. We've saved
                   your number; the front desk will reach out before arrival.
                 </p>
               </div>
