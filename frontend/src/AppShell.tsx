@@ -18,6 +18,7 @@ import {
   Moon,
   Plus,
   Receipt,
+  ScrollText,
   Search,
   Settings as SettingsIcon,
   Code2,
@@ -155,6 +156,7 @@ const NAV: NavGroup[] = [
     roles: ["Hotel Admin", "System Manager", "Administrator"],
     items: [
       { to: "/settings", label: "Settings", icon: SettingsIcon },
+      { to: "/activity", label: "Activity Log", icon: ScrollText },
       {
         to: "/developers",
         label: "Developers",

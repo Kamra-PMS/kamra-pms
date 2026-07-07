@@ -8,9 +8,8 @@ import {
   Users,
   X,
   Zap,
-  MessageSquare,
   Plug,
-  ScrollText,
+  Sparkles,
 } from "lucide-react"
 import { call, getCurrentProperty } from "../lib/api"
 import { useAuth } from "../lib/auth"
@@ -25,7 +24,6 @@ import {
 } from "../components/ui/card"
 import { cn } from "../lib/utils"
 
-type Tab = "chat" | "team" | "inbox" | "timeline" | "connect"
 
 interface AutonomyRule {
   action_type: string
@@ -106,105 +104,60 @@ const statusTone: Record<string, "zinc" | "sky" | "amber" | "rose" | "green"> = 
 }
 
 export default function Agents() {
-  const [tab, setTab] = useState<Tab>("chat")
-  const [pendingCount, setPendingCount] = useState(0)
   const property = getCurrentProperty()
   const { roles } = useAuth()
-  // Front desk gets Chat + the Activity logbook; managing the AI staff and
-  // countersigning their work is a manager's job.
   const manager = ["Hotel Admin", "System Manager", "Administrator"].some(
     (r) => roles.includes(r),
   )
+  const [pendingCount, setPendingCount] = useState(0)
+  const [panel, setPanel] = useState<"none" | "approvals" | "connect">("none")
 
   useEffect(() => {
     if (!manager) return
     call<unknown[]>("kamra.agents_api.pending_actions", { property })
       .then((r) => setPendingCount(Array.isArray(r) ? r.length : 0))
       .catch(() => setPendingCount(0))
-  }, [property, tab, manager])
+  }, [property, manager])
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <header className="flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-2">
-          <Bot className="size-6 text-brand-600" aria-hidden />
+          <Sparkles className="size-5 text-brand-600" aria-hidden />
           <h1 className="text-xl font-semibold tracking-tight">Copilot</h1>
         </div>
         <p className="text-sm text-zinc-500">
-          Your AI workforce: give it tasks, see your AI staff, approve the
-          sensitive stuff, and audit everything anyone did - human or AI.
+          NOVA, your AI front desk. Ask, and it does.
         </p>
+        <div className="ml-auto flex items-center gap-2">
+          {manager && pendingCount > 0 && (
+            <button
+              onClick={() =>
+                setPanel((p) => (p === "approvals" ? "none" : "approvals"))
+              }
+              className="flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-sm font-medium text-amber-800 hover:bg-amber-100"
+            >
+              <Inbox className="size-4" aria-hidden />
+              {pendingCount} waiting for approval
+            </button>
+          )}
+          <button
+            onClick={() =>
+              setPanel((p) => (p === "connect" ? "none" : "connect"))
+            }
+            title="Connect Claude Desktop to this hotel with your own access"
+            className="flex items-center gap-1.5 rounded-full border border-zinc-200 px-3 py-1.5 text-sm text-zinc-500 hover:bg-zinc-50 hover:text-zinc-700"
+          >
+            <Plug className="size-4" aria-hidden />
+            Connect
+          </button>
+        </div>
       </header>
 
-      <div
-        role="tablist"
-        aria-label="Agents view"
-        className="inline-flex rounded-lg border border-zinc-200 bg-white p-1"
-      >
-        <TabButton current={tab} value="chat" onSet={setTab} icon={MessageSquare}>
-          Chat
-        </TabButton>
-        {manager && (
-        <TabButton current={tab} value="team" onSet={setTab} icon={Users}>
-          AI Staff
-        </TabButton>
-        )}
-        {manager && (
-        <TabButton current={tab} value="inbox" onSet={setTab} icon={Inbox}>
-          Approvals
-          {pendingCount > 0 && (
-            <span className="ml-1 rounded-full bg-amber-100 px-1.5 text-[11px] font-semibold text-amber-700">
-              {pendingCount}
-            </span>
-          )}
-        </TabButton>
-        )}
-        <TabButton current={tab} value="timeline" onSet={setTab} icon={ScrollText}>
-          Activity
-        </TabButton>
-        <TabButton current={tab} value="connect" onSet={setTab} icon={Plug}>
-          Connect
-        </TabButton>
-      </div>
-
-      {tab === "chat" && <Assistant />}
-      {tab === "team" && manager && <TeamTab property={property} />}
-      {tab === "inbox" && manager && <InboxTab property={property} />}
-      {tab === "timeline" && <ActivityTab property={property} />}
-      {tab === "connect" && <ConnectTab property={property} />}
+      {panel === "approvals" && manager && <InboxTab property={property} />}
+      {panel === "connect" && <ConnectTab property={property} />}
+      {panel === "none" && <Assistant />}
     </div>
-  )
-}
-
-function TabButton({
-  current,
-  value,
-  onSet,
-  icon: Icon,
-  children,
-}: {
-  current: Tab
-  value: Tab
-  onSet: (v: Tab) => void
-  icon: React.ComponentType<{ className?: string }>
-  children: React.ReactNode
-}) {
-  const active = current === value
-  return (
-    <button
-      role="tab"
-      aria-selected={active}
-      onClick={() => onSet(value)}
-      className={cn(
-        "inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition",
-        active
-          ? "bg-brand-50 text-brand-700"
-          : "text-zinc-500 hover:bg-zinc-50 hover:text-zinc-700",
-      )}
-    >
-      <Icon className="size-4" aria-hidden />
-      {children}
-    </button>
   )
 }
 
@@ -212,7 +165,7 @@ function TabButton({
 // Team tab
 // ---------------------------------------------------------------------------
 
-function TeamTab({ property }: { property: string }) {
+export function TeamTab({ property }: { property: string }) {
   const [rows, setRows] = useState<AgentRow[]>([])
   const [savings, setSavings] = useState<SavingsSummary | null>(null)
   const [loading, setLoading] = useState(true)
@@ -288,7 +241,7 @@ function TeamTab({ property }: { property: string }) {
   )
 }
 
-function SavingsBanner({ s }: { s: SavingsSummary }) {
+export function SavingsBanner({ s }: { s: SavingsSummary }) {
   return (
     <Card className="border-brand-100 bg-brand-50/40">
       <CardContent className="flex flex-wrap items-center gap-4 py-4">
@@ -338,7 +291,7 @@ function humanTrigger(a: AgentRow): string {
   return "Runs on a schedule"
 }
 
-function AgentCard({
+export function AgentCard({
   agent,
   busy,
   onToggle,
@@ -438,7 +391,7 @@ function AgentCard({
   )
 }
 
-function Stat({ label, value }: { label: string; value: string | number }) {
+export function Stat({ label, value }: { label: string; value: string | number }) {
   return (
     <div className="rounded-md bg-zinc-50 px-2 py-1.5">
       <div className="font-semibold text-zinc-800">{value}</div>
@@ -449,7 +402,7 @@ function Stat({ label, value }: { label: string; value: string | number }) {
   )
 }
 
-function ToolList({ tools }: { tools: string[] }) {
+export function ToolList({ tools }: { tools: string[] }) {
   return (
     <div className="flex flex-wrap gap-1">
       {tools.map((t) => (
@@ -464,7 +417,7 @@ function ToolList({ tools }: { tools: string[] }) {
   )
 }
 
-function AutonomyList({ rules }: { rules: AutonomyRule[] }) {
+export function AutonomyList({ rules }: { rules: AutonomyRule[] }) {
   if (!rules.length) {
     return <p className="text-xs text-zinc-400">No overrides - all Full.</p>
   }
@@ -500,7 +453,7 @@ function AutonomyList({ rules }: { rules: AutonomyRule[] }) {
 // Inbox tab
 // ---------------------------------------------------------------------------
 
-function InboxTab({ property }: { property: string }) {
+export function InboxTab({ property }: { property: string }) {
   const [rows, setRows] = useState<PendingRow[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -797,7 +750,7 @@ const fmtWhen = (d: string) =>
     minute: "2-digit",
   })
 
-function ActivityTab({ property }: { property: string }) {
+export function ActivityTab({ property }: { property: string }) {
   const [rows, setRows] = useState<ActivityRow[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -950,7 +903,7 @@ interface ConnectorCreds {
   user: string
 }
 
-function ConnectTab({ property }: { property: string }) {
+export function ConnectTab({ property }: { property: string }) {
   const [creds, setCreds] = useState<ConnectorCreds | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)

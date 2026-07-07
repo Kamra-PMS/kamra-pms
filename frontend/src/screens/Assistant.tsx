@@ -41,6 +41,19 @@ const SUGGESTIONS = [
   "Which waitlisted guests can I now give a room?",
 ]
 
+function ThinkingDots() {
+  return (
+    <span className="inline-flex items-center gap-1.5 text-sm text-zinc-500">
+      NOVA is thinking
+      <span className="inline-flex gap-0.5">
+        <span className="size-1.5 animate-bounce rounded-full bg-zinc-400 [animation-delay:0ms]" />
+        <span className="size-1.5 animate-bounce rounded-full bg-zinc-400 [animation-delay:150ms]" />
+        <span className="size-1.5 animate-bounce rounded-full bg-zinc-400 [animation-delay:300ms]" />
+      </span>
+    </span>
+  )
+}
+
 function AiSetupNotice() {
   return (
     <div className="mx-auto max-w-lg space-y-3 rounded-xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-900">
@@ -306,16 +319,21 @@ export default function Assistant() {
             <div
               key={i}
               className={cn(
-                "flex",
+                "flex items-end gap-2",
                 m.role === "user" ? "justify-end" : "justify-start",
               )}
             >
+              {m.role === "assistant" && (
+                <span className="mb-1 flex size-7 shrink-0 items-center justify-center rounded-full bg-brand-600/10">
+                  <Sparkles className="size-3.5 text-brand-600" aria-hidden />
+                </span>
+              )}
               <div
                 className={cn(
-                  "max-w-[75%] rounded-2xl px-4 py-2.5 text-sm",
+                  "max-w-[75%] rounded-2xl px-4 py-2.5 text-sm shadow-sm",
                   m.role === "user"
-                    ? "whitespace-pre-wrap bg-brand-600 text-white"
-                    : "space-y-2 bg-zinc-100 text-zinc-800",
+                    ? "whitespace-pre-wrap rounded-br-md bg-brand-600 text-white"
+                    : "space-y-2 rounded-bl-md border border-zinc-100 bg-white text-zinc-800",
                 )}
               >
                 {m.role === "assistant" ? (
@@ -341,9 +359,7 @@ export default function Assistant() {
                     {m.content ? (
                       <Markdown text={m.content} />
                     ) : (
-                      busy && (
-                        <Loader2 className="size-4 animate-spin text-zinc-400" />
-                      )
+                      busy && <ThinkingDots />
                     )}
                   </>
                 ) : (
@@ -361,31 +377,33 @@ export default function Assistant() {
         </div>
 
         <form
-          className="flex items-center gap-2 border-t border-zinc-100 p-3"
+          className="border-t border-zinc-100 p-3"
           onSubmit={(e) => {
             e.preventDefault()
             send(input)
           }}
         >
-          <input
-            className="flex-1 rounded-xl border border-zinc-300 bg-white px-4 py-2.5 text-sm focus:outline-2 focus:outline-offset-1 focus:outline-brand-600"
-            placeholder="Ask NOVA…"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            disabled={busy}
-          />
-          <button
-            type="submit"
-            aria-label="Send"
-            disabled={busy || !input.trim()}
-            className="rounded-xl bg-brand-600 p-2.5 text-white disabled:opacity-40"
-          >
-            {busy ? (
-              <Loader2 className="size-5 animate-spin" />
-            ) : (
-              <Send className="size-5" />
-            )}
-          </button>
+          <div className="flex items-center gap-2 rounded-2xl border border-zinc-200 bg-white px-4 py-1.5 shadow-sm transition focus-within:border-brand-400 focus-within:ring-2 focus-within:ring-brand-100">
+            <input
+              className="flex-1 bg-transparent py-2 text-sm outline-none placeholder:text-zinc-400"
+              placeholder="Ask NOVA anything about the hotel…"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              disabled={busy}
+            />
+            <button
+              type="submit"
+              aria-label="Send"
+              disabled={busy || !input.trim()}
+              className="flex size-9 items-center justify-center rounded-full bg-brand-600 text-white transition hover:bg-brand-700 disabled:opacity-40"
+            >
+              {busy ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Send className="size-4" />
+              )}
+            </button>
+          </div>
         </form>
       </div>
     </div>
