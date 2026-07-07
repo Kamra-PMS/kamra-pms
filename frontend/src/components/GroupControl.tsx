@@ -4,6 +4,7 @@ import { Plus, Trash2 } from "lucide-react"
 
 import { call } from "../lib/api"
 import { listResource, serverError, type Row } from "../lib/resource"
+import LinkedRecords from "./LinkedRecords"
 import { Badge } from "./ui/badge"
 import { Button } from "./ui/button"
 
@@ -181,6 +182,8 @@ export default function GroupControl({
           </Button>
         )}
       </div>
+
+      <LinkedRecords doctype="Group Booking" name={name} exclude={["group"]} />
 
       {error && (
         <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">

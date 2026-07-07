@@ -2,6 +2,7 @@ import { Fragment, useCallback, useEffect, useState } from "react"
 import { ArrowLeft, ArrowRightLeft, Printer, X } from "lucide-react"
 import { Link, useNavigate, useParams } from "react-router-dom"
 import { call, getCurrentProperty } from "../lib/api"
+import LinkedRecords from "../components/LinkedRecords"
 import { serverError } from "../lib/resource"
 import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
@@ -390,6 +391,10 @@ export default function FolioView() {
           </Button>
         </div>
       )}
+
+      <div className="mb-4 print:hidden">
+        <LinkedRecords doctype="Reservation" name={stay.reservation} />
+      </div>
 
       {pinStatus?.required && !pinStatus.has_pin && (
         <div className="mb-4 flex flex-wrap items-center gap-2 rounded-lg border border-sky-200 bg-sky-50 px-4 py-2.5 text-sm print:hidden">

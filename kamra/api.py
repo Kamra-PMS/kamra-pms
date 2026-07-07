@@ -2502,3 +2502,64 @@ def my_connector_credentials(property: str):
 	return {"api_key": api_key, "api_secret": api_secret,
 	        "base_url": frappe.utils.get_url(), "property": property,
 	        "user": user}
+
+
+@frappe.whitelist()
+@require_roles("Front Desk", "Finance", "Revenue Manager", "Housekeeping")
+def linked_records(doctype: str, name: str):
+	"""The connective tissue: for any record, everything it's attached to -
+	guest, reservation(s), folio(s), company, group, event - so every screen
+	can offer one-tap paths to billing and editing. One endpoint, all types."""
+	out = {"guest": None, "guest_name": None, "reservations": [],
+	       "folios": [], "company": None, "group_booking": None,
+	       "group_name": None, "event": None, "event_type": None}
+
+	def folios_for(filters):
+		return frappe.get_all("Folio", filters=filters,
+			fields=["name", "folio_type", "status", "balance",
+			        "invoice_number"], order_by="creation asc")
+
+	if doctype == "Reservation":
+		r = frappe.db.get_value("Reservation", name,
+			["guest", "guest_name", "company", "group_booking"], as_dict=True)
+		if not r:
+			frappe.throw("Reservation not found.")
+		out.update(guest=r.guest, guest_name=r.guest_name, company=r.company,
+		           group_booking=r.group_booking)
+		out["folios"] = folios_for({"reservation": name})
+	elif doctype == "Venue Booking":
+		v = frappe.db.get_value("Venue Booking", name,
+			["company", "group_booking", "customer_name", "event_type"],
+			as_dict=True)
+		if not v:
+			frappe.throw("Event not found.")
+		out.update(company=v.company, group_booking=v.group_booking,
+		           guest_name=v.customer_name, event=name,
+		           event_type=v.event_type)
+		if v.group_booking:
+			out["folios"] = folios_for(
+				{"group_booking": v.group_booking, "folio_type": "Group"})
+	elif doctype == "Group Booking":
+		g = frappe.db.get_value("Group Booking", name,
+			["company", "event", "group_name"], as_dict=True)
+		if not g:
+			frappe.throw("Group not found.")
+		out.update(company=g.company, event=g.event, group_booking=name,
+		           group_name=g.group_name)
+		if g.event:
+			out["event_type"] = frappe.db.get_value(
+				"Venue Booking", g.event, "event_type")
+		out["folios"] = folios_for(
+			{"group_booking": name, "folio_type": "Group"})
+	elif doctype == "Guest":
+		out["guest"] = name
+		out["guest_name"] = frappe.db.get_value("Guest", name, "full_name")
+		out["reservations"] = frappe.get_all("Reservation",
+			filters={"guest": name},
+			fields=["name", "status", "check_in_date"],
+			order_by="check_in_date desc", limit=5)
+		out["folios"] = folios_for({"guest": name})[-5:]
+	if out["group_booking"] and not out.get("group_name"):
+		out["group_name"] = frappe.db.get_value(
+			"Group Booking", out["group_booking"], "group_name")
+	return out

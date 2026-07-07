@@ -1,5 +1,6 @@
 import type { ScreenConfig } from "../components/ResourceScreen"
 import BillingRulesEditor from "../components/BillingRulesEditor"
+import EventLinks from "../components/EventLinks"
 import GroupControl from "../components/GroupControl"
 import RoomTypeMedia from "../components/RoomTypeMedia"
 import ReservationDetail from "./ReservationDetail"
@@ -234,6 +235,7 @@ export const venueBookingsConfig: ScreenConfig = {
     { field: "status", label: "Status", type: "select", options: ["Enquiry", "Confirmed", "Completed", "Cancelled"] },
     { field: "requirements", label: "Requirements", type: "data" },
   ],
+  extra: EventLinks,
 }
 
 export const lostFoundConfig: ScreenConfig = {

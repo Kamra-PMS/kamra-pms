@@ -23,6 +23,7 @@ import { serverError, updateResource, type Row } from "../lib/resource"
 import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
 import CancelPanel from "../components/CancelPanel"
+import LinkedRecords from "../components/LinkedRecords"
 
 const inr = (n: number) =>
   "₹" + Number(n || 0).toLocaleString("en-IN", { maximumFractionDigits: 0 })
@@ -133,6 +134,7 @@ export default function ReservationDetail({
 
   return (
     <div className="space-y-4">
+      <LinkedRecords doctype="Reservation" name={String(row.name)} />
       {/* status + provenance */}
       <div className="flex flex-wrap items-center gap-2">
         <span
