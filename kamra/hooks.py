@@ -32,6 +32,8 @@ scheduler_events = {
 		"0 3 * * *": ["kamra.folio.nightly_audit_all_properties"],
 		# 03:30 - ORION pre-assigns tomorrow's arrivals (after the night audit)
 		"30 3 * * *": ["kamra.allocation.run_nightly_allocation"],
+		# 09:00 - MAYA sends self check-in links to upcoming arrivals
+		"0 9 * * *": ["kamra.prearrival.run_prearrival_outreach"],
 	},
 	"hourly": [
 		# Expire Pending Agent Actions past their TTL so they don't linger in the

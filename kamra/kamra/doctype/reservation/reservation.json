@@ -60,6 +60,9 @@
   "precheckin_token",
   "precheckin_status",
   "precheckin_on",
+  "precheckin_signature",
+  "precheckin_consent",
+  "precheckin_link_sent",
   "eta",
   "sb_occupants",
   "occupants",
@@ -341,6 +344,25 @@
    "fieldname": "precheckin_on",
    "fieldtype": "Datetime",
    "label": "Pre-checkin Submitted On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "precheckin_signature",
+   "fieldtype": "Long Text",
+   "label": "Pre-check-in Signature",
+   "read_only": 1,
+   "description": "Guest e-signature (data URL) from self check-in"
+  },
+  {
+   "fieldname": "precheckin_consent",
+   "fieldtype": "Check",
+   "label": "Registration Consent Given",
+   "read_only": 1
+  },
+  {
+   "fieldname": "precheckin_link_sent",
+   "fieldtype": "Datetime",
+   "label": "Check-in Link Sent",
    "read_only": 1
   },
   {

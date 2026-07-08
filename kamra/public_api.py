@@ -171,14 +171,22 @@ def precheckin_info(token: str):
 def precheckin_submit(token: str, id_type: str, id_number: str,
                       email: str = "", nationality: str = "",
                       address_line: str = "", city: str = "",
-                      eta: str = "", special_requests: str = ""):
-	"""Guest completes pre-arrival check-in (PRD FR-20 v0 - details +
-	declaration; ID photo/KYC vendor integration comes later)."""
+                      eta: str = "", special_requests: str = "",
+                      signature: str = "", consent: int = 0):
+	"""Guest completes pre-arrival check-in and signs the registration card
+	(PRD FR-20 - details + declaration + e-signature; the signed card becomes
+	the paperless GRC the desk views at arrival). ID photo/KYC vendor
+	integration comes later."""
 	if not id_type or not id_number.strip():
 		frappe.throw("ID type and number are required.")
 	res = _res_by_token(token)
 	if res.precheckin_status == "Verified":
 		frappe.throw("Check-in details were already verified by the desk.")
+
+	# a signed card requires the declaration to be accepted
+	signed = bool(signature and str(signature).startswith("data:image"))
+	if signed and not int(consent or 0):
+		frappe.throw("Please accept the registration declaration to sign.")
 
 	frappe.db.set_value("Guest", res.guest, {
 		"id_type": id_type,
@@ -193,6 +201,8 @@ def precheckin_submit(token: str, id_type: str, id_number: str,
 		"precheckin_on": frappe.utils.now_datetime(),
 		"eta": eta or None,
 		"special_requests": special_requests or res.special_requests,
+		"precheckin_signature": signature if signed else None,
+		"precheckin_consent": 1 if int(consent or 0) else 0,
 	})
 
 	from kamra.savings import log_action

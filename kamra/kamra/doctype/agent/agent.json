@@ -47,7 +47,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Persona",
-   "options": "Front Desk Copilot\nRevenue\nHousekeeping\nVoice Concierge\nWhatsApp Concierge\nNight Auditor\nAllocation\nSales\nCollections\nOwner Digest\nCustom",
+   "options": "Front Desk Copilot\nRevenue\nHousekeeping\nVoice Concierge\nWhatsApp Concierge\nNight Auditor\nAllocation\nPre-arrival\nSales\nCollections\nOwner Digest\nCustom",
    "reqd": 1
   },
   {

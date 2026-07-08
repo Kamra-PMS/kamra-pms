@@ -1839,6 +1839,47 @@ def tape_chart(property: str, start_date: str | None = None, days: int = 14):
 
 @frappe.whitelist(methods=["POST"])
 @require_roles("Front Desk", "Kamra Agent")
+def send_precheckin_link(reservation: str, channel: str = "WhatsApp"):
+	"""Send the guest their self check-in link (mints a token if needed). Sends
+	over a connected channel when there is one; otherwise returns the link for
+	the desk to share. Marks when it went out so the arrivals board can show it."""
+	res = frappe.db.get_value(
+		"Reservation", reservation,
+		["name", "property", "guest", "guest_name", "precheckin_token"],
+		as_dict=True)
+	if not res:
+		frappe.throw("Reservation not found.")
+	if not res.precheckin_token:
+		res.precheckin_token = frappe.generate_hash(length=32)
+		frappe.db.set_value("Reservation", reservation, "precheckin_token",
+		                    res.precheckin_token)
+
+	link = f"{frappe.utils.get_url()}/kamra/checkin/{res.precheckin_token}"
+	phone = frappe.db.get_value("Guest", res.guest, "phone") if res.guest else None
+	sent = False
+	if phone:
+		try:
+			from kamra.agents_channels import send_outbound
+			send_outbound(res.property, channel, phone,
+			              f"Hi {res.guest_name}, check in early and skip the "
+			              f"front-desk queue for your stay: {link}")
+			sent = True
+		except Exception:
+			sent = False  # no live channel; fall back to returning the link
+
+	frappe.db.set_value("Reservation", reservation, "precheckin_link_sent",
+	                    frappe.utils.now_datetime())
+	from kamra.savings import log_action
+	log_action("send_precheckin_link", "Reservation", reservation, res.property,
+	           minutes_saved=2,
+	           rationale=f"Self check-in link {'sent via ' + channel if sent else 'generated'}")
+	frappe.db.commit()
+	return {"ok": True, "link": link, "sent": sent,
+	        "channel": channel if sent else None}
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Front Desk", "Kamra Agent")
 def set_day_use_times(reservation: str, from_time: str, to_time: str):
 	"""Set planned check-in/out times for a day-use booking (drives the hourly
 	tape view)."""

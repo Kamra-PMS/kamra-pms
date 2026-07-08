@@ -3,6 +3,7 @@ import { CalendarDays, Check, Clock } from "lucide-react"
 import { useParams } from "react-router-dom"
 import { call } from "../lib/api"
 import { Button } from "../components/ui/button"
+import { SignaturePad } from "../components/SignaturePad"
 
 const inputCls =
   "w-full rounded-lg border border-zinc-300 bg-white px-3.5 py-2.5 text-base " +
@@ -47,6 +48,8 @@ export default function PublicCheckin() {
     id_type: "Aadhaar", id_number: "", email: "", nationality: "Indian",
     address_line: "", city: "", eta: "", special_requests: "",
   })
+  const [signature, setSignature] = useState("")
+  const [consent, setConsent] = useState(false)
 
   useEffect(() => {
     if (!token) return
@@ -68,7 +71,9 @@ export default function PublicCheckin() {
     setBusy(true)
     setError(null)
     try {
-      await call("kamra.public_api.precheckin_submit", { token, ...form })
+      await call("kamra.public_api.precheckin_submit", {
+        token, ...form, signature, consent: consent ? 1 : 0,
+      })
       setDone(true)
     } catch {
       setError("Couldn't save - please check the details and try again.")
@@ -190,6 +195,25 @@ export default function PublicCheckin() {
               <textarea className={inputCls} rows={2} value={form.special_requests}
                 onChange={(e) => setForm({ ...form, special_requests: e.target.value })} />
             </label>
+            <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3">
+              <span className="mb-1.5 block text-sm font-medium text-zinc-600">
+                Registration card - your signature
+              </span>
+              <p className="mb-2 text-xs text-zinc-500">
+                I confirm the details above are correct and agree to the hotel's
+                registration terms and house rules.
+              </p>
+              <SignaturePad onChange={setSignature} />
+              <label className="mt-2 flex items-start gap-2 text-xs text-zinc-600">
+                <input
+                  type="checkbox"
+                  className="mt-0.5"
+                  checked={consent}
+                  onChange={(e) => setConsent(e.target.checked)}
+                />
+                I accept the registration declaration.
+              </label>
+            </div>
             {error && (
               <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
                 {error}
@@ -197,13 +221,13 @@ export default function PublicCheckin() {
             )}
             <Button
               className="w-full justify-center py-2.5 text-base"
-              disabled={busy || !form.id_number}
+              disabled={busy || !form.id_number || !signature || !consent}
               onClick={submit}
             >
-              {busy ? "Saving…" : "Complete check-in"}
+              {busy ? "Saving…" : "Sign & complete check-in"}
             </Button>
             <p className="text-center text-xs text-zinc-400">
-              Your details are used only for the guest register required by law.
+              Your details and signature form the guest register required by law.
             </p>
           </div>
         )}

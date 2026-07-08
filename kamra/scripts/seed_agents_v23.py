@@ -231,6 +231,39 @@ def _wire_allocation(property_name: str | None) -> str:
 	return name
 
 
+PREARRIVAL_PROMPT = (
+	"You are MAYA, the Pre-arrival concierge. Each day you reach out to guests "
+	"arriving in the next day or two who haven't checked in yet, sending their "
+	"self check-in link so they arrive registered and ready. Be warm and brief. "
+	"Only send over a connected channel; never spam."
+)
+
+
+def _wire_prearrival(property_name: str | None) -> str:
+	name = _get_or_create(
+		property_name,
+		"Pre-arrival",
+		{
+			"agent_name": "MAYA",
+			"active": 1,
+			"trigger_type": "Cron",
+			"schedule_cron": "0 9 * * *",
+			"channel": "WhatsApp",
+			"model": "claude-haiku-4-5",
+			"system_prompt": PREARRIVAL_PROMPT,
+		},
+	)
+	doc = frappe.get_doc("Agent", name)
+	_replace_tools(doc, READ_TOOLS + ["kamra.api.send_precheckin_link"])
+	_replace_autonomy(doc, [
+		# Sending the guest their own check-in link is safe; let MAYA do it.
+		("send_precheckin_link", "Full", None, None, 0,
+		 "Sending a guest their check-in link is low-risk."),
+	])
+	doc.save(ignore_permissions=True)
+	return name
+
+
 def _replace_tools(doc, tool_names: list[str]) -> None:
 	doc.set("tool_allowlist", [])
 	for t in sorted(set(tool_names)):
@@ -264,5 +297,6 @@ def execute(property_name: str | None = None) -> dict:
 		created.append(_wire_night_auditor(prop))
 		created.append(_wire_owner_digest(prop))
 		created.append(_wire_allocation(prop))
+		created.append(_wire_prearrival(prop))
 	frappe.db.commit()
 	return {"seeded": len(created), "agents": created}
