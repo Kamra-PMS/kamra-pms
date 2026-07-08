@@ -2,8 +2,8 @@
 
 Three kinds of card, three install models - never conflated:
 
-  module     a Kamra app that ships in this codebase; the card just states
-             whether it's Included or Premium (no install, no lock yet).
+  module     a Kamra app that ships in this codebase, open and included
+             (no install, no lock).
   connector  a live integration backed by a config row (a channel, a payment
              gateway, an AI key) - the card connects/configures it here.
   bench_app  a separate Frappe app you install on the bench (country packs,
@@ -42,20 +42,16 @@ def registry(property: str):
 	return [
 		{
 			"category": "Kamra apps",
-			"blurb": "The rooms of your PMS. Core apps ship with every Kamra; "
-			         "premium apps are part of the paid plan.",
+			"blurb": "The rooms of your PMS - every app is open and included.",
 			"cards": [
-				_module("Front Desk", "Reservations, arrivals, the desk.", "core"),
-				_module("Housekeeping", "Room board and the phone app.", "core"),
-				_module("Operations", "Guest requests and shifts.", "core"),
-				_module("Finance", "Folios, invoices, night audit.", "core"),
-				_module("Copilot", "NOVA, your AI front desk.", "core"),
-				_module("Events & Groups", "Banquets, blocks and pickup.",
-				        "premium"),
-				_module("Revenue", "Rates, seasons, offers, partners.",
-				        "premium"),
-				_module("POS", "Restaurant & outlet billing.", "premium",
-				        planned=True),
+				_module("Front Desk", "Reservations, arrivals, the desk."),
+				_module("Housekeeping", "Room board and the phone app."),
+				_module("Operations", "Guest requests and shifts."),
+				_module("Finance", "Folios, invoices, night audit."),
+				_module("Copilot", "Chat with your PMS using your own AI key."),
+				_module("Events & Groups", "Banquets, blocks and pickup."),
+				_module("Revenue", "Rates, seasons, offers, partners."),
+				_module("POS", "Restaurant & outlet billing.", planned=True),
 			],
 		},
 		{
@@ -137,7 +133,7 @@ def registry(property: str):
 			         "operate. Install the pack for your country.",
 			"cards": [
 				_module("India", "GST slabs, SAC, GSTIN, GSTR-1, e-invoice.",
-				        "core", detail="Included"),
+				        detail="Included"),
 				_bench("United Arab Emirates", "UAE VAT, FTA reports.", None,
 				       status="planned"),
 				_bench("Saudi Arabia", "ZATCA Phase 2, QR, e-invoice.", None,
@@ -151,8 +147,8 @@ def registry(property: str):
 	]
 
 
-def _module(name, blurb, tier, planned=False, detail=None):
-	return {"kind": "module", "name": name, "blurb": blurb, "tier": tier,
+def _module(name, blurb, planned=False, detail=None):
+	return {"kind": "module", "name": name, "blurb": blurb,
 	        "status": "planned" if planned else "included", "detail": detail}
 
 

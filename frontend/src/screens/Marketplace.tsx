@@ -10,7 +10,6 @@ interface Card {
   kind: "module" | "connector" | "bench_app" | "enterprise"
   name: string
   blurb: string
-  tier?: "core" | "premium"
   status: string
   detail?: string | null
   action?: string | null
@@ -154,11 +153,6 @@ export default function Marketplace() {
                     </span>
                   </div>
                   <p className="mt-1 flex-1 text-sm text-zinc-500">{c.blurb}</p>
-                  {c.tier === "premium" && (
-                    <span className="mt-2 text-[10px] font-semibold uppercase tracking-wider text-amber-600">
-                      Premium plan
-                    </span>
-                  )}
 
                   {c.status === "connected" && c.detail && (
                     <p className="mt-2 text-xs text-emerald-700">{c.detail}</p>

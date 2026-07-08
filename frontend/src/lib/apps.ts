@@ -4,9 +4,7 @@
     bar and the /apps launcher move between them; Search (Ctrl/Cmd+K) jumps
     anywhere and the sidebar follows.
 
-    tier is packaging metadata for the Marketplace ("core" ships with every
-    Kamra; "premium" is part of the paid offering). Nothing is locked here -
-    enforcement, when it comes, will live behind a per-property doctype. */
+    Every app is open and included - Kamra is fully open source. */
 
 import {
   BadgePercent,
@@ -59,7 +57,6 @@ export interface AppDef {
   icon: React.ComponentType<{ className?: string }>
   tint: string // tile accent classes for switcher/launcher
   description: string
-  tier: "core" | "premium"
   roles: string[] // any of these roles can see the app
   items: AppNavItem[]
   /** extra route prefixes that belong to this app (detail pages etc.) */
@@ -75,7 +72,6 @@ export const APPS: AppDef[] = [
     icon: ConciergeBell,
     tint: "bg-brand-50 text-brand-700",
     description: "Arrivals, departures, bookings and guests - the day's work.",
-    tier: "core",
     roles: ["Front Desk", "Hotel Admin", "System Manager", "Administrator"],
     items: [
       { to: "/", label: "Today", icon: Home },
@@ -93,7 +89,6 @@ export const APPS: AppDef[] = [
     icon: Brush,
     tint: "bg-emerald-50 text-emerald-700",
     description: "Room status board, lost & found, and the phone app.",
-    tier: "core",
     roles: ["Housekeeping", "Front Desk", "Hotel Admin", "System Manager", "Administrator"],
     items: [
       { to: "/housekeeping", label: "Room Board", icon: ListChecks },
@@ -107,7 +102,6 @@ export const APPS: AppDef[] = [
     icon: Wrench,
     tint: "bg-sky-50 text-sky-700",
     description: "Guest requests and shift handovers.",
-    tier: "core",
     roles: ["Front Desk", "Hotel Admin", "System Manager", "Administrator"],
     items: [
       { to: "/tickets", label: "Guest Requests", icon: Ticket },
@@ -120,7 +114,6 @@ export const APPS: AppDef[] = [
     icon: PartyPopper,
     tint: "bg-violet-50 text-violet-700",
     description: "Banquets, the function diary, room blocks and pickup.",
-    tier: "premium",
     roles: ["Front Desk", "Revenue Manager", "Hotel Admin", "System Manager", "Administrator"],
     items: [
       { to: "/events", label: "Event Bookings", icon: PartyPopper },
@@ -135,7 +128,6 @@ export const APPS: AppDef[] = [
     icon: PiggyBank,
     tint: "bg-amber-50 text-amber-700",
     description: "Rates, seasons, offers and the partners who sell you.",
-    tier: "premium",
     roles: ["Revenue Manager", "Hotel Admin", "System Manager", "Administrator"],
     items: [
       { to: "/revenue-reports", label: "Revenue Reports", icon: PiggyBank },
@@ -154,7 +146,6 @@ export const APPS: AppDef[] = [
     icon: Receipt,
     tint: "bg-teal-50 text-teal-700",
     description: "Folios, invoices, the night audit and reports.",
-    tier: "core",
     roles: ["Finance", "Hotel Admin", "System Manager", "Administrator"],
     items: [
       { to: "/billing", label: "Billing", icon: Receipt },
@@ -169,7 +160,6 @@ export const APPS: AppDef[] = [
     icon: SettingsIcon,
     tint: "bg-zinc-100 text-zinc-700",
     description: "Property setup, inventory, users, audit and the Marketplace.",
-    tier: "core",
     roles: ["Hotel Admin", "System Manager", "Administrator"],
     items: [
       { to: "/settings", label: "Settings", icon: SettingsIcon },

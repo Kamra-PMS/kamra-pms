@@ -44,11 +44,6 @@ export default function AppLauncher() {
             <div className="min-w-0">
               <div className="flex items-center gap-2">
                 <span className="font-semibold text-zinc-800">{app.name}</span>
-                {app.tier === "premium" && (
-                  <span className="rounded-full bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-700">
-                    Premium
-                  </span>
-                )}
               </div>
               <p className="mt-0.5 text-sm text-zinc-500">{app.description}</p>
             </div>

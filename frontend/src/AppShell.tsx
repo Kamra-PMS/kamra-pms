@@ -140,11 +140,6 @@ function AppSwitcher({ apps, current }: { apps: AppDef[]; current: AppDef }) {
                 <span className="text-[11px] font-medium leading-tight text-zinc-700">
                   {app.name}
                 </span>
-                {app.tier === "premium" && (
-                  <span className="text-[9px] font-semibold uppercase tracking-wider text-amber-600">
-                    Premium
-                  </span>
-                )}
               </button>
             ))}
           </div>
