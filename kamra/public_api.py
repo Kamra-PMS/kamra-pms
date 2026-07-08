@@ -117,7 +117,10 @@ def showcase(property: str):
 def search_stay(property: str, check_in_date: str, check_out_date: str,
                 adults: int = 2, children: int = 0):
 	"""Availability + real quoted price per room type for the stay."""
-	from kamra.api import available_rooms
+	# available_rooms is staff-only (@require_roles) since it's also an
+	# MCP/copilot tool; guests need the same availability math without the
+	# role gate, so this calls the same underlying helpers directly.
+	from kamra.api import _available_rooms_raw, _block_hold
 	from kamra.pricing import quote
 
 	if date_diff(check_out_date, check_in_date) < 1:
@@ -130,7 +133,10 @@ def search_stay(property: str, check_in_date: str, check_out_date: str,
 		"Room Type", filters={"property": property, "disabled": 0},
 		pluck="name", order_by="base_price asc",
 	):
-		free = available_rooms(property, rt, check_in_date, check_out_date)
+		free = _available_rooms_raw(property, rt, check_in_date, check_out_date)
+		hold = _block_hold(property, rt, check_in_date, check_out_date)
+		if hold:
+			free = free[:max(0, len(free) - hold)]
 		row = {"room_type": rt, "rooms_left": len(free), "quote": None}
 		if free:
 			try:
