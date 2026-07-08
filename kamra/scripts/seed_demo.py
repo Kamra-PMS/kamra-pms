@@ -14,9 +14,9 @@ from frappe.utils import add_days, nowdate
 PROPERTY = "Kamra Demo Palace"
 
 ROOM_TYPES = [
-	("STD", "Standard", 2800, ["101", "102", "103", "104", "105", "106"]),
-	("DLX", "Deluxe", 4200, ["201", "202", "203", "204", "205"]),
-	("STE", "Suite", 7500, ["301", "302", "303"]),
+	("STD", "Standard", 2800, "City", ["101", "102", "103", "104", "105", "106"]),
+	("DLX", "Deluxe", 4200, "Pool", ["201", "202", "203", "204", "205"]),
+	("STE", "Suite", 7500, "Lake", ["301", "302", "303"]),
 ]
 
 GUESTS = [
@@ -59,7 +59,7 @@ def execute():
 	).insert(ignore_permissions=True)
 
 	rooms_by_type = {}
-	for code, label, price, room_numbers in ROOM_TYPES:
+	for code, label, price, view, room_numbers in ROOM_TYPES:
 		rt = frappe.get_doc(
 			{
 				"doctype": "Room Type",
@@ -72,19 +72,23 @@ def execute():
 				"adults_capacity": 2 if code != "STE" else 3,
 				"children_capacity": 1,
 				"bed_type": "King" if code == "STE" else "Queen",
+				"room_view": view,
 				"tax_percent": 5 if price <= 7500 else 18,
 				"amenities": "WiFi, AC, TV, Tea/Coffee",
 			}
 		).insert(ignore_permissions=True)
 		rooms_by_type[rt.name] = []
-		for num in room_numbers:
+		# spread the rooms across two floors so "high/low floor" preferences
+		# have something to resolve against
+		for idx, num in enumerate(room_numbers):
+			floor = int(num[0]) + (1 if idx >= len(room_numbers) // 2 else 0)
 			room = frappe.get_doc(
 				{
 					"doctype": "Room",
 					"property": prop.name,
 					"room_number": num,
 					"room_type": rt.name,
-					"floor": num[0],
+					"floor": str(floor),
 				}
 			).insert(ignore_permissions=True)
 			rooms_by_type[rt.name].append(room.name)

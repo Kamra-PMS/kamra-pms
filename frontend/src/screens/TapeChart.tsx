@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { useOutletContext } from "react-router-dom"
 import type { ShellContext } from "../AppShell"
-import { ChevronDown, ChevronLeft, ChevronRight, Star } from "lucide-react"
+import { ChevronDown, ChevronLeft, ChevronRight, Sparkles, Star } from "lucide-react"
 import { call, getCurrentProperty } from "../lib/api"
 import { listResource, serverError } from "../lib/resource"
 import { Badge } from "../components/ui/badge"
@@ -84,6 +84,22 @@ const hhmmToNum = (t?: string) => {
   return h + (m || 0) / 60
 }
 
+interface AllocProposal {
+  reservation: string
+  guest_name: string
+  vip: 0 | 1
+  room_type_name: string
+  suggested_room: string
+  room_number: string
+  why: string
+  needs_review: 0 | 1
+}
+interface AllocData {
+  date: string
+  proposals: AllocProposal[]
+  unfittable: { reservation: string; guest_name: string; reason: string }[]
+}
+
 const DAYS = 14
 const inputCls =
   "w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm " +
@@ -108,6 +124,8 @@ export default function TapeChart() {
   const [rtFilter, setRtFilter] = useState("")
   const [mode, setMode] = useState<"day" | "hour">("day")
   const [hourly, setHourly] = useState<HourlyData | null>(null)
+  const [alloc, setAlloc] = useState<AllocData | null>(null)
+  const [allocBusy, setAllocBusy] = useState(false)
   const [collapsed, setCollapsed] = useState<Set<string>>(() => {
     try {
       return new Set(JSON.parse(localStorage.getItem("kamra:tape-collapsed") || "[]"))
@@ -194,6 +212,37 @@ export default function TapeChart() {
     }
   }
 
+  async function suggestAlloc() {
+    setAllocBusy(true)
+    try {
+      const d = await call<AllocData>("kamra.allocation.suggest_allocation", {
+        property: getCurrentProperty(), date: start,
+      })
+      setAlloc(d)
+    } catch (e) {
+      setError(serverError(e))
+    } finally {
+      setAllocBusy(false)
+    }
+  }
+
+  async function applyAlloc() {
+    if (!alloc) return
+    setAllocBusy(true)
+    try {
+      await call("kamra.allocation.apply_allocation", {
+        property: getCurrentProperty(),
+        assignments: JSON.stringify(alloc.proposals),
+      })
+      setAlloc(null)
+      load()
+    } catch (e) {
+      setError(serverError(e))
+    } finally {
+      setAllocBusy(false)
+    }
+  }
+
   const cellW = 64 // px per day
 
   return (
@@ -229,6 +278,10 @@ export default function TapeChart() {
             </button>
           ))}
         </div>
+        <Button variant="outline" disabled={allocBusy} onClick={suggestAlloc}>
+          <Sparkles className="size-4 text-brand-600" />
+          {allocBusy ? "Thinking..." : "Auto-assign arrivals"}
+        </Button>
         <div className="ml-auto flex items-center gap-1">
           <Button variant="outline" aria-label="Previous"
             onClick={() => setStart(shiftDate(start, mode === "day" ? -7 : -1))}>
@@ -357,6 +410,67 @@ export default function TapeChart() {
         </span>
         <span>Click a bar to move rooms or change dates.</span>
       </div>
+
+      {alloc && (
+        <Sheet
+          title="Auto-assign arrivals"
+          description={`ORION's room plan for ${alloc.date}`}
+          onClose={() => setAlloc(null)}
+          footer={
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setAlloc(null)}>Close</Button>
+              {alloc.proposals.length > 0 && (
+                <Button disabled={allocBusy} onClick={applyAlloc}>
+                  {allocBusy ? "Assigning..." : `Assign ${alloc.proposals.length} room${alloc.proposals.length === 1 ? "" : "s"}`}
+                </Button>
+              )}
+            </div>
+          }
+        >
+          <div className="space-y-3">
+            {alloc.proposals.length === 0 && alloc.unfittable.length === 0 && (
+              <p className="text-sm text-zinc-500">
+                Every arrival for this day already has a room.
+              </p>
+            )}
+            {alloc.proposals.map((p) => (
+              <div key={p.reservation}
+                className="flex items-start gap-3 rounded-xl border border-zinc-200 p-3">
+                <div className="flex-1">
+                  <div className="flex items-center gap-1.5 font-medium">
+                    {p.vip === 1 && (
+                      <Star className="size-3.5 fill-amber-400 text-amber-400" />
+                    )}
+                    {p.guest_name}
+                    <span className="text-xs font-normal text-zinc-400">
+                      · {p.room_type_name}
+                    </span>
+                  </div>
+                  <p className="mt-0.5 text-xs text-zinc-500">{p.why}</p>
+                </div>
+                <div className="text-right">
+                  <div className="text-sm font-semibold">Room {p.room_number}</div>
+                  {p.needs_review === 1 && (
+                    <span className="text-[10px] font-medium uppercase tracking-wide text-amber-600">
+                      Review
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
+            {alloc.unfittable.map((u) => (
+              <div key={u.reservation}
+                className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
+                {u.guest_name} - {u.reason}
+              </div>
+            ))}
+            <p className="text-xs text-zinc-400">
+              Assigning here places the rooms now. Overnight, ORION runs this for
+              the next day and routes the judgement calls to Approvals.
+            </p>
+          </div>
+        </Sheet>
+      )}
 
       {sel && (
         <Sheet

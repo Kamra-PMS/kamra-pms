@@ -30,6 +30,8 @@ scheduler_events = {
 	"cron": {
 		# 03:00 site time, daily
 		"0 3 * * *": ["kamra.folio.nightly_audit_all_properties"],
+		# 03:30 - ORION pre-assigns tomorrow's arrivals (after the night audit)
+		"30 3 * * *": ["kamra.allocation.run_nightly_allocation"],
 	},
 	"hourly": [
 		# Expire Pending Agent Actions past their TTL so they don't linger in the

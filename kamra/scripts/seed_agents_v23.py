@@ -192,6 +192,45 @@ def _wire_owner_digest(property_name: str | None) -> str:
 	return name
 
 
+ALLOCATION_PROMPT = (
+	"You are ORION, the Allocation agent. Each night you give tomorrow's "
+	"arrivals the right room - matching room type, honouring guest preferences "
+	"(a lake view, a high floor, a quiet corner), giving VIPs the best available "
+	"room, and keeping groups together. Assign the obvious ones yourself; when "
+	"there is a real choice, a VIP, or a preference to weigh, propose it and let "
+	"the front desk approve. Never move a guest who is already placed."
+)
+
+
+def _wire_allocation(property_name: str | None) -> str:
+	name = _get_or_create(
+		property_name,
+		"Allocation",
+		{
+			"agent_name": "ORION",
+			"active": 1,
+			"trigger_type": "Cron",
+			"schedule_cron": "30 3 * * *",
+			"channel": "API",
+			"model": "claude-haiku-4-5",
+			"system_prompt": ALLOCATION_PROMPT,
+		},
+	)
+	doc = frappe.get_doc("Agent", name)
+	_replace_tools(doc, READ_TOOLS + [
+		"kamra.allocation.suggest_allocation",
+		"kamra.allocation.apply_allocation",
+	])
+	_replace_autonomy(doc, [
+		# Assign freely when it's the only sensible room; when the proposal
+		# needed a judgement call (choice / VIP / preference), route to approval.
+		("allocate_room", "Approve", "needs_review", ">=", 1,
+		 "Preference, VIP or a real choice - the desk confirms."),
+	])
+	doc.save(ignore_permissions=True)
+	return name
+
+
 def _replace_tools(doc, tool_names: list[str]) -> None:
 	doc.set("tool_allowlist", [])
 	for t in sorted(set(tool_names)):
@@ -224,5 +263,6 @@ def execute(property_name: str | None = None) -> dict:
 		created.append(_wire_front_desk(prop))
 		created.append(_wire_night_auditor(prop))
 		created.append(_wire_owner_digest(prop))
+		created.append(_wire_allocation(prop))
 	frappe.db.commit()
 	return {"seeded": len(created), "agents": created}
