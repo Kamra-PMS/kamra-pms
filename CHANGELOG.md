@@ -6,6 +6,14 @@ All notable changes to Kamra PMS are documented here. Format follows
 existing install on upgrade (removed doctypes, removed API endpoints),
 MINOR for new features, PATCH for fixes.
 
+## [2.0.1](https://github.com/Kamra-PMS/kamra-pms/compare/v2.0.0...v2.0.1) (2026-07-08)
+
+
+### Bug Fixes
+
+* clear leftover agent-era copy from the UI ([ebaf62a](https://github.com/Kamra-PMS/kamra-pms/commit/ebaf62a0c97893940edc66317d763da6b3bc9367))
+* issue-template config.yml was invalid YAML ([b83a391](https://github.com/Kamra-PMS/kamra-pms/commit/b83a391c5a1c83800c0ba0f08cdd8e3de5dd7280))
+
 ## [2.0.0] - 2026-07-08
 
 ### Added
