@@ -53,15 +53,20 @@ Hotels deserve better than:
 | **Tape chart** — rooms × dates, booking bars, room moves & stay amendments | **Reports** — occupancy/ADR/RevPAR, MTD, collections, 14-day trend, printable flash |
 | ![New booking with live quote](docs/screenshots/booking-dialog.png) | ![Guest profile with the stay strip](docs/screenshots/guest-profile.png) |
 | **New booking** — returning-guest typeahead, live quote, sell message, multi-room, add-ons, cancellation policy in plain words | **Guest profile** — the stay strip, lifetime stats, upcoming stays, merge & anonymize |
-| ![GST invoice](docs/screenshots/invoice.png) | ![Public booking engine](docs/screenshots/public-booking.png) |
-| **Folio & GST invoice** — per-line GST, splits/transfers, payment links, multi-rate breakup | **Public booking page** — SEO-friendly, live rates, pay-at-hotel, zero commission |
+| ![GST invoice](docs/screenshots/invoice.png) | ![Booking Engine console](docs/screenshots/booking-engine.png) |
+| **Folio & GST invoice** — per-line GST, splits/transfers, payment links, multi-rate breakup | **Booking Engine console** — manage your direct-booking page: hotel profile, photo gallery, policies, FAQ, map & directions, and SEO |
+
+**The direct booking page your guests see** — photo gallery, live per-date rates, hotel policies, an FAQ, map & directions, and pay-at-hotel — commission-free, and yours to brand.
+
+[![Public booking page](docs/screenshots/public-booking.png)](https://demo.kamrapms.com/book)
 
 ## What's inside (today)
 
 | Area | Included |
 |---|---|
 | Front desk | Today dashboard with paid/due chips, one-click check-in/out, tape chart, reservations, guest **profile hub** (stay strip, merge duplicates, anonymize/DPDP), blacklist |
-| Booking | Public SEO-friendly booking engine, **multi-room bookings in one flow**, group & corporate bookings, booked-on-behalf (booker vs guest), returning-guest typeahead, **add-ons at booking**, sell messages, travel agents with commissions, day-use |
+| Booking Engine | Direct booking page with a **manageable console** — hotel profile, **photo gallery**, policies, **FAQ**, map & driving directions, and **SEO** (meta title/description, OG image); SEO-friendly public page with live rates and pay-at-hotel, commission-free |
+| Booking | **Multi-room bookings in one flow**, group & corporate bookings, booked-on-behalf (booker vs guest), returning-guest typeahead, **add-ons at booking**, sell messages, travel agents with commissions, day-use |
 | Revenue | Occupancy-based pricing, seasons, rate plans, vouchers, meal plans, **rate guardrails**, cancellation/no-show/deposit **policies enforced in code**, owner-briefing API |
 | Billing | Folios with per-line GST (₹7,500 slab auto-switch), **corporate billing rules** (charge routing, alcohol always to guest), **group master folios**, %/₹ **charge splits** with exact conservation, bulk transfers, automated night audit that also charges no-shows, GST invoices with B2B GSTIN, GSTR-1 export, cashier reconciliation, payment links via frappe/payments |
 | Operations | Service tickets with SLA, housekeeping **mobile app** (`/hk`), lost & found, shift handover, POS-lite (outlets/menu/orders → folio, alcohol-aware), venues & events |
@@ -120,7 +125,7 @@ claude mcp add kamra -e KAMRA_URL=... -e KAMRA_API_KEY=... \
 
 ## For hotel owners
 
-You own the software, the server, and every byte of your data. Costs don't scale with your room count. Your AI front desk works from day one — and if you ever want managed hosting or AI staff (voice, WhatsApp) on top, those are choices, not ransoms.
+You own the software, the server, and every byte of your data. Costs don't scale with your room count. Connect your own AI and it works from day one — and if you ever want managed hosting or an AI concierge (voice, WhatsApp) on top, those are choices, not ransoms.
 
 ## For IT teams
 
