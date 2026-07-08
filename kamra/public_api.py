@@ -76,13 +76,36 @@ def showcase(property: str):
 			"logo_url": prop.get("logo_url"),
 			"hero_image": prop.get("hero_image"),
 			"star_category": prop.get("star_category"),
+			"address_line": prop.address_line,
 			"city": prop.city, "state": prop.state,
+			"pincode": prop.pincode,
 			"phone": prop.phone, "email": prop.email,
+			"website": prop.website,
 			"google_reviews_url": prop.get("google_reviews_url"),
 			"tripadvisor_url": prop.get("tripadvisor_url"),
 			"amenities": [a.strip() for a in re.split(r"[,\n]", prop.get("property_amenities") or "") if a.strip()],
 			"checkin_time": str(prop.checkin_time or ""),
 			"checkout_time": str(prop.checkout_time or ""),
+			"driving_directions": prop.get("driving_directions"),
+			"latitude": prop.get("latitude"),
+			"longitude": prop.get("longitude"),
+			"gallery": [
+				{"url": m.url, "caption": m.caption}
+				for m in (prop.get("gallery") or [])
+			],
+			"faqs": [
+				{"question": f.question, "answer": f.answer}
+				for f in (prop.get("faqs") or [])
+			],
+			"house_rules": prop.get("house_rules"),
+			"pets_policy": prop.get("pets_policy"),
+			"children_policy": prop.get("children_policy"),
+			"extra_bed_policy": prop.get("extra_bed_policy"),
+			"meta_title": prop.get("meta_title"),
+			"meta_description": prop.get("meta_description"),
+			"og_image": prop.get("og_image"),
+			"page_slug": prop.get("page_slug"),
+			"booking_engine_enabled": prop.get("booking_engine_enabled"),
 		},
 		"room_types": room_types,
 		"meal_plans": meal_plans,
@@ -145,6 +168,10 @@ def precheckin_info(token: str):
 			"city": prop.city,
 			"checkin_time": str(prop.checkin_time or ""),
 			"phone": prop.phone,
+			"house_rules": prop.get("house_rules"),
+			"pets_policy": prop.get("pets_policy"),
+			"children_policy": prop.get("children_policy"),
+			"extra_bed_policy": prop.get("extra_bed_policy"),
 		},
 		"stay": {
 			"reservation": res.name,

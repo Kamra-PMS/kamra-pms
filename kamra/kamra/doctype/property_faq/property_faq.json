@@ -1,0 +1,36 @@
+{
+ "actions": [],
+ "creation": "2026-07-08 07:54:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "question",
+  "answer"
+ ],
+ "fields": [
+  {
+   "fieldname": "question",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Question",
+   "reqd": 1
+  },
+  {
+   "fieldname": "answer",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "label": "Answer",
+   "reqd": 1
+  }
+ ],
+ "istable": 1,
+ "modified": "2026-07-08 07:54:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kamra",
+ "name": "Property FAQ",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "states": []
+}

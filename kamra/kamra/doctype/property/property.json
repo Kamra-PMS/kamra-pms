@@ -54,6 +54,19 @@
   "google_reviews_url",
   "tripadvisor_url",
   "property_amenities",
+  "driving_directions",
+  "latitude",
+  "longitude",
+  "gallery",
+  "house_rules",
+  "pets_policy",
+  "children_policy",
+  "extra_bed_policy",
+  "faqs",
+  "meta_title",
+  "meta_description",
+  "og_image",
+  "page_slug",
   "disabled"
  ],
  "fields": [
@@ -331,6 +344,73 @@
    "fieldname": "deposit_pct",
    "fieldtype": "Percent",
    "label": "Deposit %"
+  },
+  {
+   "fieldname": "driving_directions",
+   "fieldtype": "Small Text",
+   "label": "Driving Directions"
+  },
+  {
+   "fieldname": "latitude",
+   "fieldtype": "Float",
+   "label": "Latitude"
+  },
+  {
+   "fieldname": "longitude",
+   "fieldtype": "Float",
+   "label": "Longitude"
+  },
+  {
+   "fieldname": "gallery",
+   "fieldtype": "Table",
+   "label": "Photo Gallery",
+   "options": "Property Photo"
+  },
+  {
+   "fieldname": "house_rules",
+   "fieldtype": "Small Text",
+   "label": "House Rules"
+  },
+  {
+   "fieldname": "pets_policy",
+   "fieldtype": "Small Text",
+   "label": "Pets Policy"
+  },
+  {
+   "fieldname": "children_policy",
+   "fieldtype": "Small Text",
+   "label": "Children Policy"
+  },
+  {
+   "fieldname": "extra_bed_policy",
+   "fieldtype": "Small Text",
+   "label": "Extra Bed Policy"
+  },
+  {
+   "fieldname": "faqs",
+   "fieldtype": "Table",
+   "label": "FAQs",
+   "options": "Property FAQ"
+  },
+  {
+   "fieldname": "meta_title",
+   "fieldtype": "Data",
+   "label": "Meta Title"
+  },
+  {
+   "fieldname": "meta_description",
+   "fieldtype": "Small Text",
+   "label": "Meta Description"
+  },
+  {
+   "fieldname": "og_image",
+   "fieldtype": "Data",
+   "label": "OG Image URL"
+  },
+  {
+   "fieldname": "page_slug",
+   "fieldtype": "Data",
+   "label": "Page Slug"
   }
  ],
  "grid_page_length": 50,

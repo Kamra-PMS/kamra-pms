@@ -25,14 +25,29 @@ interface Showcase {
     logo_url: string | null
     hero_image: string | null
     star_category: string | null
+    address_line: string | null
     city: string
     state: string
+    pincode: string | null
     phone: string | null
     google_reviews_url: string | null
     tripadvisor_url: string | null
     amenities: string[]
     checkin_time: string
     checkout_time: string
+    driving_directions: string | null
+    latitude: number | null
+    longitude: number | null
+    gallery: { url: string; caption: string | null }[]
+    faqs: { question: string; answer: string }[]
+    house_rules: string | null
+    pets_policy: string | null
+    children_policy: string | null
+    extra_bed_policy: string | null
+    meta_title: string | null
+    meta_description: string | null
+    og_image: string | null
+    page_slug: string | null
   }
   room_types: {
     name: string
@@ -129,12 +144,16 @@ export default function PublicBooking() {
     if (!data) return
     const p = data.property
     const minPrice = Math.min(...data.room_types.map((r) => r.base_price))
-    document.title = `${p.property_name}, ${p.city} - book direct from ₹${inr(minPrice)}/night`
+    document.title = p.meta_title || `${p.property_name}, ${p.city} - book direct from ₹${inr(minPrice)}/night`
     setMetaTag(
       "description",
-      `${p.property_name} in ${p.city}: ${data.room_types.length} room types from ₹${inr(minPrice)}/night. ` +
-        `Best-rate direct booking, pay at hotel. ${p.description ?? ""}`.slice(0, 158),
+      p.meta_description ||
+        (`${p.property_name} in ${p.city}: ${data.room_types.length} room types from ₹${inr(minPrice)}/night. ` +
+          `Best-rate direct booking, pay at hotel. ${p.description ?? ""}`).slice(0, 158),
     )
+    if (p.og_image) {
+      setMetaTag("og:image", p.og_image)
+    }
     let canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]')
     if (!canonical) {
       canonical = document.createElement("link")
@@ -381,6 +400,24 @@ export default function PublicBooking() {
           </Badge>
         </div>
 
+        {p.gallery && p.gallery.length > 0 && (
+          <div className="mb-8">
+            <h2 className="mb-3 text-lg font-semibold text-zinc-800">Photo Gallery</h2>
+            <div className="flex gap-3 overflow-x-auto pb-3 scrollbar-thin">
+              {p.gallery.map((img: any, i: number) => (
+                <div key={i} className="relative h-40 w-64 shrink-0 rounded-xl overflow-hidden shadow-sm border border-zinc-200 bg-zinc-100">
+                  <img src={img.url} alt={img.caption || ""} className="size-full object-cover" />
+                  {img.caption && (
+                    <div className="absolute inset-x-0 bottom-0 bg-black/60 px-3 py-1 text-center text-xs text-white truncate">
+                      {img.caption}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* room cards */}
         <div className="space-y-5">
           {data.room_types.map((rt) => {
@@ -473,8 +510,100 @@ export default function PublicBooking() {
           })}
         </div>
 
+        <div className="mt-12 grid gap-8 md:grid-cols-2 border-t border-zinc-200 pt-8">
+          {/* Policies & Rules */}
+          <div className="space-y-4">
+            <h2 className="text-xl font-bold text-zinc-800">Hotel Policies & Rules</h2>
+            <div className="rounded-xl border border-zinc-200 bg-white p-5 space-y-4 shadow-sm text-sm">
+              <div className="flex justify-between border-b border-zinc-100 pb-2">
+                <span className="font-medium text-zinc-500">Check-in</span>
+                <span className="font-semibold text-zinc-800">{p.checkin_time?.slice(0, 5)} onwards</span>
+              </div>
+              <div className="flex justify-between border-b border-zinc-100 pb-2">
+                <span className="font-medium text-zinc-500">Check-out</span>
+                <span className="font-semibold text-zinc-800">Before {p.checkout_time?.slice(0, 5)}</span>
+              </div>
+              {p.house_rules && (
+                <div>
+                  <span className="block font-semibold text-zinc-700 mb-1">House Rules</span>
+                  <p className="text-zinc-600 text-xs leading-relaxed whitespace-pre-line">{p.house_rules}</p>
+                </div>
+              )}
+              {p.pets_policy && (
+                <div>
+                  <span className="block font-semibold text-zinc-700 mb-1">Pets Policy</span>
+                  <p className="text-zinc-600 text-xs leading-relaxed whitespace-pre-line">{p.pets_policy}</p>
+                </div>
+              )}
+              {p.children_policy && (
+                <div>
+                  <span className="block font-semibold text-zinc-700 mb-1">Children & Extra Beds</span>
+                  <p className="text-zinc-600 text-xs leading-relaxed whitespace-pre-line">{p.children_policy}</p>
+                </div>
+              )}
+              {p.extra_bed_policy && (
+                <div>
+                  <span className="block font-semibold text-zinc-700 mb-1">Extra Bed Policy</span>
+                  <p className="text-zinc-600 text-xs leading-relaxed whitespace-pre-line">{p.extra_bed_policy}</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Map & Directions */}
+          <div className="space-y-4">
+            <h2 className="text-xl font-bold text-zinc-800">Location & Directions</h2>
+            <div className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm space-y-3">
+              {p.latitude && p.longitude ? (
+                <iframe
+                  title="Hotel Location Map"
+                  width="100%"
+                  height="220"
+                  src={`https://maps.google.com/maps?q=${p.latitude},${p.longitude}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
+                  className="rounded-lg border border-zinc-200 shadow-inner"
+                />
+              ) : (
+                <div className="flex h-40 items-center justify-center bg-zinc-50 rounded-lg border border-zinc-200">
+                  <span className="text-sm text-zinc-400">Map location not set</span>
+                </div>
+              )}
+              <p className="text-sm font-medium text-zinc-800 flex items-start gap-2">
+                <MapPin className="size-4 shrink-0 text-brand-600 mt-0.5" />
+                {p.address_line ? `${p.address_line}, ` : ""}{p.city}, {p.state} {p.pincode ? `- ${p.pincode}` : ""}
+              </p>
+              {p.driving_directions && (
+                <div className="text-xs text-zinc-600 border-t border-zinc-100 pt-3">
+                  <span className="block font-semibold text-zinc-700 mb-1">Driving Directions</span>
+                  <p className="leading-relaxed whitespace-pre-line">{p.driving_directions}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {p.faqs && p.faqs.length > 0 && (
+          <div className="mt-12 border-t border-zinc-200 pt-8 max-w-3xl mx-auto space-y-4">
+            <h2 className="text-xl font-bold text-zinc-800 text-center mb-6">Frequently Asked Questions</h2>
+            <div className="space-y-3">
+              {p.faqs.map((faq: any, i: number) => (
+                <details key={i} className="group rounded-xl border border-zinc-200 bg-white p-4 shadow-sm [&_summary::-webkit-details-marker]:hidden cursor-pointer">
+                  <summary className="flex items-center justify-between text-sm font-medium text-zinc-800 select-none">
+                    <span>{faq.question}</span>
+                    <span className="transition group-open:rotate-180">
+                      <svg fill="none" height="24" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" width="24" className="size-4 text-zinc-500"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </span>
+                  </summary>
+                  <p className="mt-3 text-xs leading-relaxed text-zinc-600 border-t border-zinc-100 pt-3">
+                    {faq.answer}
+                  </p>
+                </details>
+              ))}
+            </div>
+          </div>
+        )}
+
         <p className="mt-10 text-center text-xs text-zinc-400">
-          Powered by Kamra - open-source, AI-native hotel PMS
+          Powered by Kamra - the open-source, agent-ready hotel PMS
         </p>
       </div>
 

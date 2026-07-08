@@ -41,6 +41,10 @@ import {
   Wrench,
   PiggyBank,
   ShieldCheck,
+  Globe,
+  Camera,
+  HelpCircle,
+  Search,
 } from "lucide-react"
 
 export interface AppNavItem {
@@ -153,6 +157,23 @@ export const APPS: AppDef[] = [
       { to: "/accounting-export", label: "Accounting Export", icon: FileSpreadsheet },
     ],
     extraPrefixes: ["/billing/"],
+  },
+  {
+    id: "booking-engine",
+    name: "Booking Engine",
+    icon: Globe,
+    tint: "bg-indigo-50 text-indigo-700",
+    description: "Manage direct booking setup, property profile, photo gallery, FAQs, and SEO rules.",
+    roles: ["Revenue Manager", "Hotel Admin", "System Manager", "Administrator"],
+    items: [
+      { to: "/booking-settings/profile", label: "Hotel Profile", icon: Home },
+      { to: "/booking-settings/amenities", label: "Amenities", icon: ClipboardList },
+      { to: "/booking-settings/photos", label: "Photos", icon: Camera },
+      { to: "/booking-settings/policies", label: "Policies", icon: ScrollText },
+      { to: "/booking-settings/faq", label: "FAQ", icon: HelpCircle },
+      { to: "/booking-settings/seo", label: "SEO", icon: Search },
+    ],
+    extraPrefixes: ["/booking-settings"],
   },
   {
     id: "admin",

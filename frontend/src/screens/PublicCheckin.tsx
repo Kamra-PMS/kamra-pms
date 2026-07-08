@@ -16,6 +16,10 @@ interface Info {
     city: string
     checkin_time: string
     phone: string | null
+    house_rules: string | null
+    pets_policy: string | null
+    children_policy: string | null
+    extra_bed_policy: string | null
   }
   stay: {
     reservation: string
@@ -195,6 +199,43 @@ export default function PublicCheckin() {
               <textarea className={inputCls} rows={2} value={form.special_requests}
                 onChange={(e) => setForm({ ...form, special_requests: e.target.value })} />
             </label>
+            {(p.house_rules || p.pets_policy || p.children_policy || p.extra_bed_policy) && (
+              <details className="group rounded-lg border border-zinc-200 bg-zinc-50/50 p-3 text-xs">
+                <summary className="flex items-center justify-between font-medium text-zinc-700 cursor-pointer select-none [&::-webkit-details-marker]:hidden">
+                  <span>View Hotel House Rules & Policies</span>
+                  <span className="transition group-open:rotate-180">
+                    <svg fill="none" height="16" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" width="16" className="size-3.5 text-zinc-500"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                  </span>
+                </summary>
+                <div className="mt-2 space-y-2 border-t border-zinc-200/60 pt-2 text-zinc-600 leading-relaxed whitespace-pre-line">
+                  {p.house_rules && (
+                    <div>
+                      <span className="font-semibold text-zinc-700">House Rules: </span>
+                      {p.house_rules}
+                    </div>
+                  )}
+                  {p.pets_policy && (
+                    <div>
+                      <span className="font-semibold text-zinc-700">Pets Policy: </span>
+                      {p.pets_policy}
+                    </div>
+                  )}
+                  {p.children_policy && (
+                    <div>
+                      <span className="font-semibold text-zinc-700">Children Policy: </span>
+                      {p.children_policy}
+                    </div>
+                  )}
+                  {p.extra_bed_policy && (
+                    <div>
+                      <span className="font-semibold text-zinc-700">Extra Bed Policy: </span>
+                      {p.extra_bed_policy}
+                    </div>
+                  )}
+                </div>
+              </details>
+            )}
+
             <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3">
               <span className="mb-1.5 block text-sm font-medium text-zinc-600">
                 Registration card - your signature
