@@ -70,6 +70,10 @@ MINOR for new features, PATCH for fixes.
   anything you need first.**
 
 ### Fixed
+- The public booking page's live availability/price search was silently
+  failing for every real guest (403) because it depended on a staff-only,
+  role-gated internal function. It now computes availability the same way
+  without the role check, so `/book` shows real per-date quotes again.
 - Copilot could mis-tax a food & beverage charge, double-post a charge, and
   claim it had notified housekeeping when no such tool existed. Tax now comes
   from the tax engine, the system prompt forbids claiming un-actioned work,
