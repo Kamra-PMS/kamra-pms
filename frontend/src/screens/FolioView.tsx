@@ -1,5 +1,5 @@
 import { Fragment, useCallback, useEffect, useState } from "react"
-import { ArrowLeft, ArrowRightLeft, Printer, X } from "lucide-react"
+import { ArrowLeft, ArrowRightLeft, Printer, Trash2, X } from "lucide-react"
 import { Link, useNavigate, useParams } from "react-router-dom"
 import { call, getCurrentProperty } from "../lib/api"
 import LinkedRecords from "../components/LinkedRecords"
@@ -122,6 +122,7 @@ export default function FolioView() {
   })
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [routeFor, setRouteFor] = useState<string | null>(null)
+  const [voidFor, setVoidFor] = useState<string | null>(null)
   const [splitVal, setSplitVal] = useState("50%")
   const [splitTarget, setSplitTarget] = useState("")
   const [payment, setPayment] = useState({ mode: "UPI", amount: "", reference: "" })
@@ -538,6 +539,7 @@ export default function FolioView() {
               (s) => s.status === "Open" && s.name !== folio.name,
             )
             const routable = open && targets.length > 0
+            const editable = open // charges can be voided on any open folio
             return (
               <>
                 {routable && selected.size > 0 && (
@@ -589,7 +591,7 @@ export default function FolioView() {
                       <th className="py-2 pr-3 text-right">GST %</th>
                       <th className="py-2 pr-3 text-right">GST ₹</th>
                       <th className="py-2 text-right">Total ₹</th>
-                      {routable && (
+                      {editable && (
                         <th className="py-2 pl-3 print:hidden" aria-label="Actions" />
                       )}
                     </tr>
@@ -627,13 +629,52 @@ export default function FolioView() {
                           <td className="py-2 pr-3 text-right">{c.gst_rate}%</td>
                           <td className="py-2 pr-3 text-right">{inr(c.gst_amount)}</td>
                           <td className="py-2 text-right font-medium">{inr(c.total)}</td>
-                          {routable && (
+                          {editable && (
                             <td className="relative whitespace-nowrap py-2 pl-3 text-right print:hidden">
+                              {c.charge_type !== "Allowance" &&
+                                (voidFor === c.name ? (
+                                  <span className="mr-1.5 inline-flex items-center gap-1">
+                                    <button
+                                      className="rounded-md border border-rose-300 bg-rose-50 px-2 py-1 text-xs font-medium text-rose-700 hover:bg-rose-100"
+                                      disabled={busy}
+                                      onClick={() =>
+                                        act(async () => {
+                                          await call("kamra.api.void_folio_charge",
+                                            withPin({ folio: folio.name, charge_row: c.name }))
+                                          setVoidFor(null)
+                                        })
+                                      }
+                                    >
+                                      Confirm void
+                                    </button>
+                                    <button
+                                      className="text-xs text-zinc-400 hover:text-zinc-700"
+                                      onClick={() => setVoidFor(null)}
+                                    >
+                                      Cancel
+                                    </button>
+                                  </span>
+                                ) : (
+                                  <button
+                                    aria-label="Void this charge"
+                                    className="mr-1.5 inline-flex items-center gap-1 rounded-md border border-zinc-200 px-2 py-1 text-xs text-zinc-500 hover:border-rose-400 hover:text-rose-700"
+                                    onClick={() => {
+                                      setVoidFor(c.name)
+                                      setRouteFor(null)
+                                    }}
+                                  >
+                                    <Trash2 className="size-3" aria-hidden />
+                                    Void
+                                  </button>
+                                ))}
+                              {routable && (
+                              <>
                               <button
                                 aria-label="Route this charge"
                                 className="inline-flex items-center gap-1 rounded-md border border-zinc-200 px-2 py-1 text-xs text-zinc-500 hover:border-brand-400 hover:text-zinc-800"
                                 onClick={() => {
                                   setRouteFor(routeFor === c.name ? null : c.name)
+                                  setVoidFor(null)
                                   setSplitTarget(targets[0]?.name ?? "")
                                   setSplitVal("")
                                 }}
@@ -731,6 +772,8 @@ export default function FolioView() {
                                     </Button>
                                   </div>
                                 </div>
+                              )}
+                              </>
                               )}
                             </td>
                           )}
