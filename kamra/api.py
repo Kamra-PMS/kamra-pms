@@ -1837,6 +1837,83 @@ def tape_chart(property: str, start_date: str | None = None, days: int = 14):
 	}
 
 
+@frappe.whitelist(methods=["POST"])
+@require_roles("Front Desk", "Kamra Agent")
+def set_day_use_times(reservation: str, from_time: str, to_time: str):
+	"""Set planned check-in/out times for a day-use booking (drives the hourly
+	tape view)."""
+	frappe.db.set_value("Reservation", reservation, {
+		"planned_check_in_time": from_time or None,
+		"planned_check_out_time": to_time or None,
+	})
+	frappe.db.commit()
+	return {"ok": True}
+
+
+@frappe.whitelist()
+@require_roles("Front Desk", "Kamra Agent")
+def tape_chart_hourly(property: str, date: str | None = None):
+	"""Single-day, rooms x hours. Day-use bookings sit at their planned times;
+	an overnight stay covering this day shows as a full-width occupied band."""
+	from frappe.utils import getdate
+
+	d = getdate(date or nowdate())
+	prop = frappe.get_cached_doc("Property", property)
+
+	def _hour(v, default):
+		try:
+			return int(str(v).split(":")[0])
+		except (ValueError, AttributeError):
+			return default
+
+	start_h = _hour(prop.get("hourly_view_start"), 6)
+	end_h = _hour(prop.get("hourly_view_end"), 23) or 23
+	if end_h <= start_h:
+		start_h, end_h = 6, 23
+
+	rooms = frappe.get_all(
+		"Room", filters={"property": property},
+		fields=["name", "room_number", "room_type", "housekeeping_status"],
+		order_by="room_type asc, room_number asc")
+	rt_names = {rt.name: rt.room_type_name for rt in frappe.get_all(
+		"Room Type", filters={"property": property},
+		fields=["name", "room_type_name"])}
+	for r in rooms:
+		r["room_type_name"] = rt_names.get(r.room_type, r.room_type)
+
+	rows = frappe.get_all(
+		"Reservation",
+		filters={"property": property, "room": ("is", "set"),
+		         "status": ("in", ["Confirmed", "Checked In"]),
+		         "check_in_date": ("<=", str(d)),
+		         "check_out_date": (">=", str(d))},
+		fields=["name", "room", "guest", "guest_name", "status", "is_day_use",
+		        "check_in_date", "check_out_date", "planned_check_in_time",
+		        "planned_check_out_time", "source", "booking_type", "company",
+		        "group_booking", "travel_agent"])
+	vipset = set(frappe.get_all(
+		"Guest", filters={"name": ("in", [r.guest for r in rows if r.guest] or [""]),
+		                  "vip": 1}, pluck="name"))
+	by_room = {}
+	for b in rows:
+		b["vip"] = 1 if b.guest in vipset else 0
+		# overnight (multi-day) stay that includes today -> full band, no times
+		b["overnight"] = 0 if b.is_day_use else 1
+		if b.is_day_use:
+			def _hhmm(t, fallback):
+				if not t:
+					return fallback
+				parts = str(t).split(":")
+				return f"{int(parts[0]):02d}:{parts[1] if len(parts) > 1 else '00'}"
+			b["from_hour"] = _hhmm(b.planned_check_in_time, "10:00")
+			b["to_hour"] = _hhmm(b.planned_check_out_time, "18:00")
+		by_room.setdefault(b.room, []).append(b)
+	for r in rooms:
+		r["bookings"] = by_room.get(r.name, [])
+	return {"date": str(d), "start_hour": start_h, "end_hour": end_h,
+	        "rooms": rooms}
+
+
 @frappe.whitelist()
 @require_roles("Front Desk", "Revenue Manager", "Kamra Agent")
 def venue_calendar(property: str, start_date: str | None = None, days: int = 14):

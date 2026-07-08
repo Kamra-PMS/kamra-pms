@@ -35,6 +35,8 @@
   "check_out_date",
   "nights",
   "is_day_use",
+  "planned_check_in_time",
+  "planned_check_out_time",
   "column_break_c",
   "adults",
   "children",
@@ -303,6 +305,17 @@
    "fieldname": "is_day_use",
    "fieldtype": "Check",
    "label": "Day Use"
+  },
+  {
+   "fieldname": "planned_check_in_time",
+   "fieldtype": "Time",
+   "label": "Planned Check-in Time",
+   "description": "For day-use / hourly bookings"
+  },
+  {
+   "fieldname": "planned_check_out_time",
+   "fieldtype": "Time",
+   "label": "Planned Check-out Time"
   },
   {
    "fieldname": "sb_precheckin",

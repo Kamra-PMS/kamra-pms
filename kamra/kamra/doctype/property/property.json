@@ -26,6 +26,8 @@
   "currency",
   "checkin_time",
   "checkout_time",
+  "hourly_view_start",
+  "hourly_view_end",
   "column_break_c",
   "gstin",
   "id_retention",
@@ -154,6 +156,18 @@
    "fieldname": "checkout_time",
    "fieldtype": "Time",
    "label": "Check-out Time"
+  },
+  {
+   "fieldname": "hourly_view_start",
+   "fieldtype": "Time",
+   "label": "Hourly View Start",
+   "default": "06:00:00"
+  },
+  {
+   "fieldname": "hourly_view_end",
+   "fieldtype": "Time",
+   "label": "Hourly View End",
+   "default": "23:00:00"
   },
   {
    "fieldname": "column_break_c",

@@ -59,6 +59,31 @@ interface TapeData {
   rooms: TapeRoom[]
 }
 
+interface HourlyBooking extends TapeBooking {
+  overnight: 0 | 1
+  from_hour?: string
+  to_hour?: string
+}
+interface HourlyRoom {
+  name: string
+  room_number: string
+  room_type: string
+  room_type_name?: string
+  housekeeping_status: string
+  bookings: HourlyBooking[]
+}
+interface HourlyData {
+  date: string
+  start_hour: number
+  end_hour: number
+  rooms: HourlyRoom[]
+}
+const hhmmToNum = (t?: string) => {
+  if (!t) return 0
+  const [h, m] = t.split(":").map(Number)
+  return h + (m || 0) / 60
+}
+
 const DAYS = 14
 const inputCls =
   "w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm " +
@@ -75,10 +100,14 @@ export default function TapeChart() {
   const [data, setData] = useState<TapeData | null>(null)
   const [sel, setSel] = useState<TapeBooking | null>(null)
   const [freeRooms, setFreeRooms] = useState<string[]>([])
-  const [draft, setDraft] = useState({ room: "", check_in: "", check_out: "" })
+  const [draft, setDraft] = useState({
+    room: "", check_in: "", check_out: "", from_time: "", to_time: "",
+  })
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [rtFilter, setRtFilter] = useState("")
+  const [mode, setMode] = useState<"day" | "hour">("day")
+  const [hourly, setHourly] = useState<HourlyData | null>(null)
   const [collapsed, setCollapsed] = useState<Set<string>>(() => {
     try {
       return new Set(JSON.parse(localStorage.getItem("kamra:tape-collapsed") || "[]"))
@@ -122,18 +151,28 @@ export default function TapeChart() {
   )
 
   const load = useCallback(() => {
-    call<TapeData>("kamra.api.tape_chart", {
-      property: getCurrentProperty(), start_date: start, days: DAYS,
-    }).then(setData)
+    if (mode === "day") {
+      call<TapeData>("kamra.api.tape_chart", {
+        property: getCurrentProperty(), start_date: start, days: DAYS,
+      }).then(setData)
+    } else {
+      call<HourlyData>("kamra.api.tape_chart_hourly", {
+        property: getCurrentProperty(), date: start,
+      }).then(setHourly)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [start, refreshKey])
+  }, [start, refreshKey, mode])
 
   useEffect(load, [load])
 
   function openBooking(b: TapeBooking) {
     setSel(b)
     setError(null)
-    setDraft({ room: b.room, check_in: b.check_in_date, check_out: b.check_out_date })
+    const hb = b as HourlyBooking
+    setDraft({
+      room: b.room, check_in: b.check_in_date, check_out: b.check_out_date,
+      from_time: hb.from_hour ?? "10:00", to_time: hb.to_hour ?? "18:00",
+    })
     listResource("Room", {
       fields: ["name"],
       filters: [["property", "=", getCurrentProperty()]],
@@ -174,20 +213,41 @@ export default function TapeChart() {
             </option>
           ))}
         </select>
+        <div className="inline-flex rounded-lg border border-zinc-200 p-0.5 text-sm">
+          {(["day", "hour"] as const).map((m) => (
+            <button
+              key={m}
+              onClick={() => setMode(m)}
+              className={cn(
+                "rounded-md px-2.5 py-1 font-medium transition",
+                mode === m
+                  ? "bg-brand-50 text-brand-700"
+                  : "text-zinc-500 hover:text-zinc-700",
+              )}
+            >
+              {m === "day" ? "Days" : "Hourly"}
+            </button>
+          ))}
+        </div>
         <div className="ml-auto flex items-center gap-1">
-          <Button variant="outline" aria-label="Previous week"
-            onClick={() => setStart(shiftDate(start, -7))}>
+          <Button variant="outline" aria-label="Previous"
+            onClick={() => setStart(shiftDate(start, mode === "day" ? -7 : -1))}>
             <ChevronLeft className="size-4" />
           </Button>
           <input type="date" className={cn(inputCls, "w-40")} value={start}
             onChange={(e) => setStart(e.target.value)} />
-          <Button variant="outline" aria-label="Next week"
-            onClick={() => setStart(shiftDate(start, 7))}>
+          <Button variant="outline" aria-label="Next"
+            onClick={() => setStart(shiftDate(start, mode === "day" ? 7 : 1))}>
             <ChevronRight className="size-4" />
           </Button>
         </div>
       </div>
 
+      {mode === "hour" && hourly && (
+        <TapeHourly data={hourly} onOpen={openBooking} />
+      )}
+
+      {mode === "day" && (
       <div className="overflow-x-auto rounded-xl border border-zinc-200 bg-white shadow-sm">
         <div style={{ minWidth: 130 + DAYS * cellW }}>
           {/* header row */}
@@ -277,6 +337,7 @@ export default function TapeChart() {
             })}
         </div>
       </div>
+      )}
       <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-zinc-400">
         <span className="flex items-center gap-1.5">
           <Badge tone="sky">Confirmed</Badge>
@@ -346,6 +407,26 @@ export default function TapeChart() {
                   onChange={(e) => setDraft({ ...draft, check_out: e.target.value })} />
               </label>
             </div>
+            {sel.is_day_use === 1 && (
+              <div className="rounded-lg border border-zinc-200 p-3">
+                <span className="mb-2 block text-sm font-medium text-zinc-600">
+                  Day-use hours
+                </span>
+                <div className="flex items-end gap-2">
+                  <input type="time" className={inputCls} value={draft.from_time}
+                    onChange={(e) => setDraft({ ...draft, from_time: e.target.value })} />
+                  <span className="pb-2 text-zinc-400">to</span>
+                  <input type="time" className={inputCls} value={draft.to_time}
+                    onChange={(e) => setDraft({ ...draft, to_time: e.target.value })} />
+                  <Button variant="outline" disabled={busy}
+                    onClick={() => act(() => call("kamra.api.set_day_use_times", {
+                      reservation: sel.name, from_time: draft.from_time,
+                      to_time: draft.to_time }))}>
+                    Set
+                  </Button>
+                </div>
+              </div>
+            )}
             <p className="text-xs text-zinc-400">
               Date changes re-price automatically (unless the booking holds a
               manual amount) and the double-booking guard re-checks the room.
@@ -358,6 +439,97 @@ export default function TapeChart() {
           </div>
         </Sheet>
       )}
+    </div>
+  )
+}
+
+/** Single-day, rooms x hours. Day-use bookings sit at their planned times;
+ *  overnight stays crossing the day show as a full-width occupied band. */
+function TapeHourly({
+  data,
+  onOpen,
+}: {
+  data: HourlyData
+  onOpen: (b: TapeBooking) => void
+}) {
+  const hours: number[] = []
+  for (let h = data.start_hour; h <= data.end_hour; h++) hours.push(h)
+  const span = data.end_hour - data.start_hour || 1
+  const hourW = 56
+  const gridW = hours.length * hourW
+
+  const left = (t?: string) =>
+    ((hhmmToNum(t) - data.start_hour) / span) * gridW
+  const width = (from?: string, to?: string) =>
+    Math.max(hourW * 0.6, ((hhmmToNum(to) - hhmmToNum(from)) / span) * gridW)
+
+  return (
+    <div className="overflow-x-auto rounded-xl border border-zinc-200 bg-white shadow-sm">
+      <div style={{ minWidth: 130 + gridW }}>
+        <div className="flex border-b border-zinc-200 bg-zinc-50 text-xs font-medium text-zinc-500">
+          <div className="w-[130px] shrink-0 px-3 py-2">Room</div>
+          {hours.map((h) => (
+            <div
+              key={h}
+              style={{ width: hourW }}
+              className="shrink-0 border-l border-zinc-100 px-1 py-2 text-center"
+            >
+              {String(h).padStart(2, "0")}:00
+            </div>
+          ))}
+        </div>
+        {data.rooms.map((room) => (
+          <div key={room.name} className="relative flex border-b border-zinc-100">
+            <div className="w-[130px] shrink-0 px-3 py-3">
+              <span className="text-sm font-semibold">{room.room_number}</span>
+              <span className="ml-1.5 text-[9px] uppercase text-zinc-400">
+                {room.room_type_name}
+              </span>
+            </div>
+            {hours.map((h) => (
+              <div key={h} style={{ width: hourW }} className="shrink-0 border-l border-zinc-100" />
+            ))}
+            {room.bookings.map((b) => {
+              const seg = segment(b)
+              if (b.overnight) {
+                return (
+                  <button
+                    key={b.name}
+                    onClick={() => onOpen(b)}
+                    style={{ left: 130, width: gridW }}
+                    className="absolute top-2 flex h-9 items-center gap-1 rounded-md bg-zinc-200/70 px-2 text-left text-xs font-medium text-zinc-600 hover:bg-zinc-300/70"
+                    title={`${b.guest_name} · overnight stay`}
+                  >
+                    {seg.vip && <Star className="size-3 fill-amber-400 text-amber-400" />}
+                    <span className="truncate">{b.guest_name} · staying over</span>
+                  </button>
+                )
+              }
+              return (
+                <button
+                  key={b.name}
+                  onClick={() => onOpen(b)}
+                  style={{ left: 130 + left(b.from_hour) + 2, width: width(b.from_hour, b.to_hour) - 4 }}
+                  className={cn(
+                    "absolute top-2 flex h-9 items-center gap-1 truncate rounded-md px-1.5 text-left text-xs font-medium text-white",
+                    b.status === "Checked In" ? "bg-brand-600 hover:bg-brand-700" : "bg-sky-500 hover:bg-sky-600",
+                  )}
+                  title={`${b.guest_name} · ${b.from_hour}-${b.to_hour} · day use`}
+                >
+                  {seg.vip ? (
+                    <Star className="size-3 shrink-0 fill-amber-300 text-amber-300" />
+                  ) : (
+                    <span className={cn("size-2 shrink-0 rounded-full", seg.dot)} />
+                  )}
+                  <span className="truncate">
+                    {b.guest_name} · {b.from_hour}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
