@@ -45,6 +45,9 @@
   "rates_include_tax",
   "sb_showcase",
   "booking_engine_enabled",
+  "booking_payment_mode",
+  "advance_percent",
+  "registration_fee",
   "require_cashier_pin",
   "logo_url",
   "brand_accent",
@@ -259,6 +262,28 @@
    "fieldname": "booking_engine_enabled",
    "fieldtype": "Check",
    "label": "Booking Engine Enabled"
+  },
+  {
+   "fieldname": "booking_payment_mode",
+   "fieldtype": "Select",
+   "label": "Booking Payment",
+   "options": "Pay at hotel\nAdvance percent\nRegistration fee\nFull online",
+   "default": "Pay at hotel",
+   "description": "What the guest pays online when booking on the public page. Existing bookings keep the terms they were made under."
+  },
+  {
+   "fieldname": "advance_percent",
+   "fieldtype": "Percent",
+   "label": "Advance %",
+   "depends_on": "eval:doc.booking_payment_mode=='Advance percent'",
+   "description": "Percent of the total collected upfront; the rest is paid at the hotel."
+  },
+  {
+   "fieldname": "registration_fee",
+   "fieldtype": "Currency",
+   "label": "Registration Fee",
+   "depends_on": "eval:doc.booking_payment_mode=='Registration fee'",
+   "description": "Flat amount collected upfront; the rest is paid at the hotel."
   },
   {
    "fieldname": "require_cashier_pin",

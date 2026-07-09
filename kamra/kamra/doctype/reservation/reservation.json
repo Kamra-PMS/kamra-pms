@@ -72,7 +72,9 @@
   "cancellation_note",
   "cancellation_number",
   "cancellation_fee",
-  "cancelled_on"
+  "cancelled_on",
+  "advance_due",
+  "payment_policy"
  ],
  "fields": [
   {
@@ -418,14 +420,14 @@
    "label": "Occupants"
   },
   {
-   "description": "Everyone staying in the room \u2014 the legal hotel register. Printed on the GRC.",
+   "description": "Everyone staying in the room — the legal hotel register. Printed on the GRC.",
    "fieldname": "occupants",
    "fieldtype": "Table",
    "label": "Occupants",
    "options": "Stay Occupant"
   },
   {
-   "description": "Extras chosen at booking \u2014 posted to the guest folio when it opens.",
+   "description": "Extras chosen at booking — posted to the guest folio when it opens.",
    "fieldname": "addons",
    "fieldtype": "Table",
    "label": "Add-ons",
@@ -466,6 +468,19 @@
    "fieldname": "cancelled_on",
    "fieldtype": "Datetime",
    "label": "Cancelled On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "advance_due",
+   "fieldtype": "Currency",
+   "label": "Advance Due",
+   "read_only": 1,
+   "description": "Amount asked upfront at booking, snapshotted from the policy in force then."
+  },
+  {
+   "fieldname": "payment_policy",
+   "fieldtype": "Data",
+   "label": "Payment Policy",
    "read_only": 1
   }
  ],

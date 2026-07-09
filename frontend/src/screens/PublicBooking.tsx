@@ -26,6 +26,9 @@ interface Showcase {
     logo_url: string | null
     hero_image: string | null
     brand_accent: string | null
+    payment_mode: string
+    advance_percent: number
+    registration_fee: number
     star_category: string | null
     address_line: string | null
     city: string
@@ -125,6 +128,8 @@ export default function PublicBooking() {
   const [form, setForm] = useState({ guest_name: "", phone: "", email: "", meal_plan: "", special_requests: "" })
   // experience add-ons the guest picked: docname -> quantity
   const [addons, setAddons] = useState<Record<string, number>>({})
+  const [voucher, setVoucher] = useState("")
+  const [voucherMsg, setVoucherMsg] = useState<{ ok: boolean; text: string } | null>(null)
   const [done, setDone] = useState<{ reservation: string; amount: number } | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
@@ -253,6 +258,7 @@ export default function PublicBooking() {
           adults: search.adults,
           children: search.children,
           ...form,
+          voucher_code: voucherMsg?.ok ? voucher.trim() : "",
           addons: Object.entries(addons)
             .filter(([, qty]) => qty > 0)
             .map(([experience, qty]) => ({ experience, qty })),
@@ -793,6 +799,61 @@ export default function PublicBooking() {
                 <textarea className={inputCls} rows={2} value={form.special_requests}
                   onChange={(e) => setForm({ ...form, special_requests: e.target.value })} />
               </label>
+              <div className="block">
+                <span className="mb-1.5 block text-sm font-medium text-zinc-600">
+                  Promo code
+                </span>
+                <div className="flex gap-2">
+                  <input className={inputCls} placeholder="Have a code?"
+                    value={voucher}
+                    onChange={(e) => {
+                      setVoucher(e.target.value)
+                      setVoucherMsg(null)
+                    }} />
+                  <button type="button"
+                    className="shrink-0 rounded-lg border border-brand-500 px-4 text-sm font-medium text-brand-700 hover:bg-brand-50 disabled:opacity-50"
+                    disabled={!voucher.trim()}
+                    onClick={async () => {
+                      const nights = Math.max(
+                        1,
+                        Math.round(
+                          (new Date(checkOut).getTime() -
+                            new Date(search.check_in_date).getTime()) /
+                            86_400_000,
+                        ),
+                      )
+                      try {
+                        const r = await call<{ ok: boolean; message: string }>(
+                          "kamra.public_api.check_voucher",
+                          { property: DEMO_PROPERTY, code: voucher.trim(), nights },
+                        )
+                        setVoucherMsg({ ok: r.ok, text: r.message })
+                      } catch {
+                        setVoucherMsg({ ok: false, text: "Couldn't check that code." })
+                      }
+                    }}>
+                    Apply
+                  </button>
+                </div>
+                {voucherMsg && (
+                  <p className={
+                    "mt-1 text-xs " +
+                    (voucherMsg.ok ? "text-brand-700" : "text-rose-600")
+                  }>
+                    {voucherMsg.text}
+                  </p>
+                )}
+              </div>
+              {data.property.payment_mode &&
+                data.property.payment_mode !== "Pay at hotel" && (
+                  <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2.5 text-sm text-zinc-600">
+                    {data.property.payment_mode === "Full online"
+                      ? "Full amount is paid online to confirm this booking."
+                      : data.property.payment_mode === "Advance percent"
+                        ? `A ${data.property.advance_percent}% advance is collected to confirm; the rest is paid at the hotel.`
+                        : `A ₹${inr(data.property.registration_fee)} registration fee is collected to confirm; the rest is paid at the hotel.`}
+                  </div>
+                )}
               {error && (
                 <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
                   {error}

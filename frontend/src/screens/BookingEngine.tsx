@@ -80,6 +80,7 @@ export default function BookingEngine() {
     { id: "amenities", label: "Amenities" },
     { id: "photos", label: "Photos" },
     { id: "policies", label: "Policies" },
+    { id: "payments", label: "Payments" },
     { id: "faq", label: "FAQ" },
     { id: "seo", label: "SEO" },
   ]
@@ -480,6 +481,64 @@ export default function BookingEngine() {
                           ))}
                       </div>
                     )}
+                  </div>
+                </div>
+              )}
+
+              {section === "payments" && (
+                <div className="space-y-4">
+                  <p className="text-sm text-zinc-500">
+                    What guests pay online when booking on your public page.
+                    Existing bookings keep the terms they were made under - a
+                    change here only affects new bookings.
+                  </p>
+                  <label className="block">
+                    <span className="mb-1 block text-sm font-medium text-zinc-600">
+                      Collect on booking
+                    </span>
+                    <select
+                      className={inputCls}
+                      value={doc.booking_payment_mode ?? "Pay at hotel"}
+                      onChange={(e) => updateField("booking_payment_mode", e.target.value)}
+                    >
+                      <option>Pay at hotel</option>
+                      <option>Advance percent</option>
+                      <option>Registration fee</option>
+                      <option>Full online</option>
+                    </select>
+                  </label>
+                  {doc.booking_payment_mode === "Advance percent" && (
+                    <label className="block max-w-xs">
+                      <span className="mb-1 block text-sm font-medium text-zinc-600">
+                        Advance percentage
+                      </span>
+                      <input
+                        type="number" min={0} max={100} className={inputCls}
+                        value={doc.advance_percent ?? ""}
+                        onChange={(e) => updateField("advance_percent", Number(e.target.value))}
+                      />
+                      <span className="mt-1 block text-xs text-zinc-400">
+                        Collected upfront; the rest is paid at the hotel.
+                      </span>
+                    </label>
+                  )}
+                  {doc.booking_payment_mode === "Registration fee" && (
+                    <label className="block max-w-xs">
+                      <span className="mb-1 block text-sm font-medium text-zinc-600">
+                        Registration fee (₹)
+                      </span>
+                      <input
+                        type="number" min={0} className={inputCls}
+                        value={doc.registration_fee ?? ""}
+                        onChange={(e) => updateField("registration_fee", Number(e.target.value))}
+                      />
+                    </label>
+                  )}
+                  <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                    Online collection uses whatever payment gateway is configured
+                    in the Payments app (Razorpay, Stripe, etc.). Until a gateway
+                    is connected, the advance is recorded as due and settled at
+                    the desk.
                   </div>
                 </div>
               )}
