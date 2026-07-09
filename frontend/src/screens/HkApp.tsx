@@ -30,6 +30,7 @@ interface HkTask {
   vip: number
   special_requests: string | null
   eta: string | null
+  overdue: boolean
 }
 
 interface HkRoom {
@@ -128,6 +129,7 @@ export default function HkApp() {
             {t.assignment_status === "Assigned" && t.mine && (
               <Badge tone="amber">assigned to you</Badge>
             )}
+            {t.overdue && <Badge tone="rose">overdue</Badge>}
           </div>
         </div>
       </div>

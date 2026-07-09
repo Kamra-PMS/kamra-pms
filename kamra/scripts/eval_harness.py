@@ -583,6 +583,25 @@ def t22():
 	assert row["mine"] and not row["claimable"], (row["mine"], row["claimable"])
 
 
+@check("housekeeping SLA: due_by set, overdue task escalates & breaches")
+def t23():
+	from frappe.utils import add_to_date, now_datetime
+	from kamra.housekeeping import escalate_overdue_tasks
+	# a task born already overdue (due_by in the past)
+	task = frappe.get_doc({
+		"doctype": "Housekeeping Task", "property": P, "room": ROOM,
+		"task_type": "Checkout Clean", "priority": "Urgent", "status": "Pending",
+	}).insert(ignore_permissions=True)
+	assert task.due_by, "SLA due_by not set on insert"
+	frappe.db.set_value("Housekeeping Task", task.name, "due_by",
+		add_to_date(now_datetime(), minutes=-90), update_modified=False)
+	escalate_overdue_tasks()
+	d = frappe.get_doc("Housekeeping Task", task.name)
+	# 90 min over on a 20-min SLA → straight to level 2 (manager)
+	assert d.breached == 1, "overdue task not marked breached"
+	assert d.escalation_level == 2, d.escalation_level
+
+
 @check("ticket SLA: priority sets due window")
 def t12():
 	from frappe.utils import get_datetime, now_datetime, time_diff_in_seconds
@@ -605,7 +624,7 @@ def execute():
 	frappe.db.savepoint("eval_start")
 	try:
 		RT, ROOM = setup()
-		for fn in (t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19, t20, t21, t22):
+		for fn in (t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19, t20, t21, t22, t23):
 			fn()
 	finally:
 		frappe.db.commit = real_commit

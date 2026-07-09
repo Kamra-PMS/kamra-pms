@@ -8,7 +8,7 @@ import json
 
 import frappe
 from kamra.authz import require_it_admin, require_roles
-from frappe.utils import add_days, nowdate
+from frappe.utils import add_days, get_datetime, now_datetime, nowdate
 
 
 @frappe.whitelist(allow_guest=True)
@@ -461,12 +461,14 @@ def hk_queue(property: str):
 		order_by="creation asc",
 	)
 	me = frappe.session.user
+	now_dt = now_datetime()
 	prio_rank = {"Urgent": 0, "High": 1, "Medium": 2, "Low": 3}
 	for t in tasks:
 		t["arrival_today"] = t.room in arriving_rooms
 		t["room_number"] = (t.room or "").split("-")[-1]
 		t["mine"] = bool(t.assigned_to_user) and t.assigned_to_user == me
 		t["claimable"] = not t.assigned_to_user
+		t["overdue"] = bool(t.due_by and get_datetime(t.due_by) < now_dt)
 	tasks.sort(key=lambda t: (
 		not t["arrival_today"],
 		0 if t.task_type == "Checkout Clean" else 1,

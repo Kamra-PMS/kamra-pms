@@ -19,7 +19,9 @@
   "due_by",
   "notes",
   "reservation",
-  "reject_reason"
+  "reject_reason",
+  "breached",
+  "escalation_level"
  ],
  "fields": [
   {
@@ -104,6 +106,20 @@
    "fieldtype": "Small Text",
    "label": "Last Reject Reason",
    "read_only": 1
+  },
+  {
+   "fieldname": "breached",
+   "fieldtype": "Check",
+   "label": "SLA Breached",
+   "read_only": 1
+  },
+  {
+   "fieldname": "escalation_level",
+   "fieldtype": "Int",
+   "label": "Escalation Level",
+   "read_only": 1,
+   "default": "0",
+   "description": "0 = on time, 1 = escalated to supervisor, 2 = escalated to manager."
   }
  ],
  "grid_page_length": 50,
