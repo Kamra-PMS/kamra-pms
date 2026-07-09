@@ -47,6 +47,7 @@ import {
   HelpCircle,
   Search,
   Lock,
+  AlarmClock,
 } from "lucide-react"
 
 export interface AppNavItem {
@@ -112,6 +113,7 @@ export const APPS: AppDef[] = [
     roles: ["Front Desk", "Hotel Admin", "System Manager", "Administrator"],
     items: [
       { to: "/tickets", label: "Guest Requests", icon: Ticket },
+      { to: "/ops-sla", label: "SLA Report", icon: AlarmClock },
       { to: "/shifts", label: "Shifts", icon: Clock },
     ],
   },

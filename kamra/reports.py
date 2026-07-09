@@ -245,3 +245,93 @@ def contribution(property: str, from_date: str, to_date: str,
 		x["revenue"] = round(float(x.revenue or 0), 0)
 		x["share"] = round(100 * x["revenue"] / total, 1)
 	return {"by": by, "total": round(total, 0), "rows": rows}
+
+
+@frappe.whitelist()
+@require_roles("Front Desk", "Hotel Admin", "Kamra Agent")
+def sla_report(property: str, from_date: str, to_date: str):
+	"""Operations SLA health from Service Tickets over a window: overall
+	resolution and breach rates, a breakdown by category and by priority,
+	and the currently-overdue queue aged by how long it's past its due time.
+
+	Time-to-resolve is measured creation -> resolved_on; a ticket counts as
+	breached if it was resolved after due_by, or is still open past due_by."""
+	tickets = frappe.db.sql(
+		"""
+		SELECT name, category, priority, status, breached,
+		       creation, due_by, resolved_on
+		FROM `tabService Ticket`
+		WHERE property=%(p)s AND DATE(creation)>=%(f)s AND DATE(creation)<=%(t)s
+		""",
+		{"p": property, "f": from_date, "t": to_date}, as_dict=True)
+
+	from frappe.utils import get_datetime, now_datetime, time_diff_in_seconds
+	now = now_datetime()
+
+	def resolve_mins(tk):
+		if tk.resolved_on:
+			return time_diff_in_seconds(get_datetime(tk.resolved_on),
+			                            get_datetime(tk.creation)) / 60
+		return None
+
+	def is_breached(tk):
+		if tk.breached:
+			return True
+		if not tk.due_by:
+			return False
+		end = get_datetime(tk.resolved_on) if tk.resolved_on else now
+		return end > get_datetime(tk.due_by)
+
+	total = len(tickets)
+	resolved = [t for t in tickets if t.status in ("Resolved", "Closed")]
+	breached = [t for t in tickets if is_breached(t)]
+	res_mins = [m for m in (resolve_mins(t) for t in resolved) if m is not None]
+
+	def group_by(key):
+		g: dict[str, dict] = {}
+		for t in tickets:
+			k = t.get(key) or "Other"
+			row = g.setdefault(k, {"label": k, "count": 0, "breached": 0,
+			                       "resolved": 0, "mins": []})
+			row["count"] += 1
+			if is_breached(t):
+				row["breached"] += 1
+			m = resolve_mins(t)
+			if m is not None:
+				row["resolved"] += 1
+				row["mins"].append(m)
+		out = []
+		for row in g.values():
+			mins = row.pop("mins")
+			row["avg_resolve_mins"] = round(sum(mins) / len(mins)) if mins else None
+			row["breach_pct"] = round(100 * row["breached"] / row["count"], 1) \
+				if row["count"] else 0
+			out.append(row)
+		return sorted(out, key=lambda r: r["count"], reverse=True)
+
+	# overdue queue: still open, past due, aged
+	overdue = []
+	for t in tickets:
+		if t.status in ("Resolved", "Closed", "Cancelled") or not t.due_by:
+			continue
+		over_min = time_diff_in_seconds(now, get_datetime(t.due_by)) / 60
+		if over_min <= 0:
+			continue
+		overdue.append({
+			"name": t.name, "category": t.category, "priority": t.priority,
+			"overdue_hours": round(over_min / 60, 1),
+		})
+	overdue.sort(key=lambda r: r["overdue_hours"], reverse=True)
+
+	return {
+		"from": from_date, "to": to_date,
+		"total": total,
+		"resolved": len(resolved),
+		"open": total - len(resolved),
+		"breached": len(breached),
+		"breach_pct": round(100 * len(breached) / total, 1) if total else 0,
+		"avg_resolve_mins": round(sum(res_mins) / len(res_mins)) if res_mins else None,
+		"by_category": group_by("category"),
+		"by_priority": group_by("priority"),
+		"overdue": overdue,
+	}
