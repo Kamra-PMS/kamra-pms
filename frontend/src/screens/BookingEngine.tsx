@@ -3,6 +3,8 @@ import { useParams, useNavigate } from "react-router-dom"
 import { Globe, Plus, Trash2, Eye } from "lucide-react"
 
 import { getCurrentProperty, frappeFetch } from "../lib/api"
+import ImageField from "../components/ImageField"
+import { ACCENTS } from "../lib/accents"
 import { serverError, updateResource } from "../lib/resource"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
@@ -358,29 +360,63 @@ export default function BookingEngine() {
 
               {section === "photos" && (
                 <div className="space-y-4">
-                  <label className="block">
-                    <span className="mb-1 block text-sm font-medium text-zinc-600">Logo Image URL</span>
-                    <input
-                      className={inputCls}
-                      placeholder="https://…/logo.png"
-                      value={doc.logo_url ?? ""}
-                      onChange={(e) => updateField("logo_url", e.target.value)}
-                    />
-                  </label>
+                  <ImageField
+                    label="Logo"
+                    hint="Square, 512×512px · PNG or SVG with a transparent background. Shown on the booking page and invoices."
+                    accept="image/png,image/svg+xml,image/webp"
+                    value={doc.logo_url ?? ""}
+                    onChange={(v) => updateField("logo_url", v)}
+                  />
 
-                  <label className="block">
-                    <span className="mb-1 block text-sm font-medium text-zinc-600">Hero Showcase Image URL</span>
-                    <input
-                      className={inputCls}
-                      placeholder="https://…/hero.jpg"
-                      value={doc.hero_image ?? ""}
-                      onChange={(e) => updateField("hero_image", e.target.value)}
-                    />
-                  </label>
+                  <ImageField
+                    label="Hero showcase image"
+                    hint="1920×1080px (16:9 landscape) · JPG or WebP, under 2 MB. The big photo at the top of the booking page."
+                    value={doc.hero_image ?? ""}
+                    onChange={(v) => updateField("hero_image", v)}
+                  />
+
+                  <div className="block">
+                    <span className="mb-1 block text-sm font-medium text-zinc-600">
+                      Booking page accent
+                    </span>
+                    <div className="flex flex-wrap gap-2">
+                      {Object.entries(ACCENTS).map(([accentName, a]) => {
+                        const active = (doc.brand_accent || "Emerald") === accentName
+                        return (
+                          <button
+                            key={accentName}
+                            type="button"
+                            className={
+                              "inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs " +
+                              (active
+                                ? "border-zinc-800 font-medium"
+                                : "border-zinc-200 hover:border-zinc-400")
+                            }
+                            onClick={() => updateField("brand_accent", accentName)}
+                          >
+                            <span
+                              className="size-3.5 rounded-full"
+                              style={{ background: a[600] }}
+                            />
+                            {accentName}
+                          </button>
+                        )
+                      })}
+                    </div>
+                    <p className="mt-1 text-xs text-zinc-400">
+                      Buttons, links and highlights on the guest page take this
+                      colour — pick the one closest to the hotel's branding.
+                    </p>
+                  </div>
 
                   <div className="border-t border-zinc-100 pt-4">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-semibold text-zinc-700">Photo Gallery</span>
+                      <span className="text-sm font-semibold text-zinc-700">
+                        Photo Gallery
+                        <span className="ml-2 text-xs font-normal text-zinc-400">
+                          1600×900px (16:9), JPG/WebP — same shape keeps the grid tidy
+                        </span>
+                      </span>
                       <Button
                         variant="outline"
                         onClick={() => {
@@ -395,17 +431,19 @@ export default function BookingEngine() {
                     <div className="space-y-2">
                       {(doc.gallery || []).map((photo: any, index: number) => (
                         <div key={index} className="flex gap-2">
-                          <input
-                            className="flex-1 rounded-lg border border-zinc-300 px-3 py-1.5 text-sm"
-                            placeholder="https://…/photo.jpg"
-                            value={photo.url ?? ""}
-                            onChange={(e) => {
-                              const gallery = (doc.gallery || []).map((g: any, idx: number) =>
-                                idx === index ? { ...g, url: e.target.value } : g
-                              )
-                              updateField("gallery", gallery)
-                            }}
-                          />
+                          <div className="min-w-0 flex-1">
+                            <ImageField
+                              hint=""
+                              placeholder="Upload, or paste a photo URL"
+                              value={photo.url ?? ""}
+                              onChange={(v) => {
+                                const gallery = (doc.gallery || []).map((g: any, idx: number) =>
+                                  idx === index ? { ...g, url: v } : g
+                                )
+                                updateField("gallery", gallery)
+                              }}
+                            />
+                          </div>
                           <input
                             className="w-48 rounded-lg border border-zinc-300 px-3 py-1.5 text-sm"
                             placeholder="Caption"
@@ -653,15 +691,12 @@ export default function BookingEngine() {
                   </label>
 
                   <div className="grid gap-4 sm:grid-cols-2">
-                    <label className="block">
-                      <span className="mb-1 block text-sm font-medium text-zinc-600">OG Image URL (OpenGraph share card)</span>
-                      <input
-                        className={inputCls}
-                        placeholder="https://…/og_banner.jpg"
-                        value={doc.og_image ?? ""}
-                        onChange={(e) => updateField("og_image", e.target.value)}
-                      />
-                    </label>
+                    <ImageField
+                      label="OG image (share card)"
+                      hint="Exactly 1200×630px · JPG or PNG. What WhatsApp, Google and social previews show."
+                      value={doc.og_image ?? ""}
+                      onChange={(v) => updateField("og_image", v)}
+                    />
                     <label className="block">
                       <span className="mb-1 block text-sm font-medium text-zinc-600">Page Slug Prefix</span>
                       <input

@@ -21,7 +21,7 @@
    "options": "Image\nVideo"
   },
   {
-   "description": "Image URL or MP4/embed URL",
+   "description": "Image: 1600×900px (16:9) JPG/WebP — upload or paste a URL. Video: paste an MP4/embed URL.",
    "fieldname": "url",
    "fieldtype": "Data",
    "in_list_view": 1,

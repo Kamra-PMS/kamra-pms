@@ -10,6 +10,7 @@ import {
   Users,
 } from "lucide-react"
 import { call, DEMO_PROPERTY } from "../lib/api"
+import { accentVars } from "../lib/accents"
 import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
 import { Sheet } from "../components/ui/sheet"
@@ -24,6 +25,7 @@ interface Showcase {
     description: string | null
     logo_url: string | null
     hero_image: string | null
+    brand_accent: string | null
     star_category: string | null
     address_line: string | null
     city: string
@@ -255,7 +257,10 @@ export default function PublicBooking() {
   const p = data.property
 
   return (
-    <div className="min-h-screen bg-zinc-50">
+    <div
+      className="min-h-screen bg-zinc-50"
+      style={accentVars(data?.property.brand_accent)}
+    >
       {/* hero */}
       <div className="relative h-72 overflow-hidden sm:h-80">
         {p.hero_image && (

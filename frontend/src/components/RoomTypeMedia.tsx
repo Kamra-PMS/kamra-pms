@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import ImageField from "./ImageField"
 import { Plus, Trash2 } from "lucide-react"
 
 import { frappeFetch } from "../lib/api"
@@ -92,20 +93,23 @@ export default function RoomTypeMedia({
     <div className="space-y-4 border-t border-zinc-200 pt-4">
       <div>
         <div className="mb-1 text-sm font-medium text-zinc-600">
-          Photos (image URLs)
+          Photos
         </div>
         <p className="mb-2 text-xs text-zinc-400">
-          Shown in the public booking engine. Paste image URLs.
+          Shown in the public booking engine. Upload or paste a URL —
+          1600×900px (16:9), JPG/WebP; videos as MP4/embed URLs.
         </p>
         <div className="space-y-2">
           {media.map((m, i) => (
             <div key={i} className="flex gap-2">
-              <input
-                className="flex-1 rounded-lg border border-zinc-300 px-2 py-1.5 text-sm focus:outline-2 focus:outline-offset-1 focus:outline-brand-600"
-                placeholder="https://…/photo.jpg"
-                value={m.url}
-                onChange={(e) => setMedia(i, "url", e.target.value)}
-              />
+              <div className="min-w-0 flex-1">
+                <ImageField
+                  hint=""
+                  placeholder="Upload, or paste an image/video URL"
+                  value={m.url}
+                  onChange={(v) => setMedia(i, "url", v)}
+                />
+              </div>
               <input
                 className="w-28 rounded-lg border border-zinc-300 px-2 py-1.5 text-sm"
                 placeholder="Caption"

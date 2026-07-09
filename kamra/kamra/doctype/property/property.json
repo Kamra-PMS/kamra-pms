@@ -47,6 +47,7 @@
   "booking_engine_enabled",
   "require_cashier_pin",
   "logo_url",
+  "brand_accent",
   "showcase_description",
   "sell_message",
   "hero_image",
@@ -227,7 +228,7 @@
    "default": "7500",
    "fieldname": "gst_slab_threshold",
    "fieldtype": "Currency",
-   "label": "Slab Threshold (\u20b9/night)"
+   "label": "Slab Threshold (₹/night)"
   },
   {
    "default": "5",
@@ -272,8 +273,9 @@
   },
   {
    "fieldname": "hero_image",
-   "fieldtype": "Data",
-   "label": "Hero Image URL"
+   "fieldtype": "Attach Image",
+   "label": "Hero Image",
+   "description": "1920×1080px (16:9 landscape), JPG or WebP under 2 MB. The big photo at the top of the booking page."
   },
   {
    "fieldname": "star_category",
@@ -298,10 +300,18 @@
    "label": "Property Amenities (public)"
   },
   {
-   "description": "Square logo shown on the booking page and invoices",
+   "description": "Square, 512×512px. PNG or SVG with a transparent background. Shown on the booking page and invoices.",
    "fieldname": "logo_url",
-   "fieldtype": "Data",
-   "label": "Logo URL"
+   "fieldtype": "Attach Image",
+   "label": "Logo"
+  },
+  {
+   "default": "Emerald",
+   "description": "The accent colour on the public booking page — buttons, links and highlights. Pick the one closest to the hotel's branding.",
+   "fieldname": "brand_accent",
+   "fieldtype": "Select",
+   "label": "Booking Page Accent",
+   "options": "Emerald\nOcean\nRoyal\nSunset\nBurgundy\nSlate"
   },
   {
    "default": "Store",
@@ -404,8 +414,9 @@
   },
   {
    "fieldname": "og_image",
-   "fieldtype": "Data",
-   "label": "OG Image URL"
+   "fieldtype": "Attach Image",
+   "label": "OG Image",
+   "description": "Exactly 1200×630px, JPG or PNG. What WhatsApp, Google and social previews show when the booking page is shared."
   },
   {
    "fieldname": "page_slug",

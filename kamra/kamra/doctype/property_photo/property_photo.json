@@ -11,10 +11,11 @@
  "fields": [
   {
    "fieldname": "url",
-   "fieldtype": "Data",
+   "fieldtype": "Attach Image",
    "in_list_view": 1,
-   "label": "Url",
-   "reqd": 1
+   "label": "Photo",
+   "reqd": 1,
+   "description": "1600×900px (16:9), JPG or WebP. Keep every gallery photo the same shape so the grid stays tidy."
   },
   {
    "fieldname": "caption",

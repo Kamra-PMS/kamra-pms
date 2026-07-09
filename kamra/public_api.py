@@ -75,6 +75,7 @@ def showcase(property: str):
 			"description": prop.get("showcase_description"),
 			"logo_url": prop.get("logo_url"),
 			"hero_image": prop.get("hero_image"),
+			"brand_accent": prop.get("brand_accent") or "Emerald",
 			"star_category": prop.get("star_category"),
 			"address_line": prop.address_line,
 			"city": prop.city, "state": prop.state,
