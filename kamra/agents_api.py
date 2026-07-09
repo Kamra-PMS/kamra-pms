@@ -38,3 +38,39 @@ def activity_feed(property: str | None = None, actor_kind: str | None = None,
 		ORDER BY creation DESC
 		LIMIT %(limit)s OFFSET %(start)s
 	""", params, as_dict=True)
+
+
+@frappe.whitelist()
+@require_roles("Front Desk", "Finance", "Revenue Manager", "Kamra Agent")
+def activity_detail(name: str) -> dict:
+	"""Everything one ledger row knows — including the before/after
+	snapshots that are too heavy for the feed."""
+	doc = frappe.get_doc("Agent Action Log", name)
+
+	def _json(v):
+		if not v:
+			return None
+		try:
+			return frappe.parse_json(v)
+		except Exception:
+			return v
+
+	return {
+		"name": doc.name,
+		"creation": doc.creation,
+		"executed_at": doc.executed_at,
+		"property": doc.property,
+		"actor": doc.actor,
+		"agent_name": doc.agent_name,
+		"action_type": doc.action_type,
+		"action_channel": doc.action_channel,
+		"autonomy": doc.autonomy,
+		"approval_status": doc.approval_status,
+		"approver": doc.approver,
+		"reference_doctype": doc.reference_doctype,
+		"reference_name": doc.reference_name,
+		"rationale": doc.rationale,
+		"minutes_saved": doc.minutes_saved,
+		"before_snapshot": _json(doc.before_snapshot),
+		"after_snapshot": _json(doc.after_snapshot),
+	}
