@@ -15,45 +15,17 @@ import {
 import { useNavigate } from "react-router-dom"
 import {
   ArrowRight,
-  BadgePercent,
   Bed,
-  BedDouble,
-  Briefcase,
-  Building2,
-  CalendarDays,
-  ClipboardList,
-  Clock,
   Command as CmdIcon,
-  Home,
-  IndianRupee,
-  Landmark,
-  LayoutGrid,
-  ListChecks,
+  FileText,
   Loader2,
-  PackageSearch,
-  PartyPopper,
-  Receipt,
   Search,
-  Settings as SettingsIcon,
-  ShieldCheck,
-  Sparkles,
-  Tags,
-  Ticket as TicketIcon,
   UserCircle2,
-  Users,
-  UtensilsCrossed,
 } from "lucide-react"
 import { call, getCurrentProperty } from "../lib/api"
+import { useAuth } from "../lib/auth"
+import { visibleApps, type AppNavItem } from "../lib/apps"
 import { cn } from "../lib/utils"
-
-interface NavCmd {
-  kind: "nav"
-  id: string
-  label: string
-  hint: string
-  path: string
-  icon: React.ComponentType<{ className?: string }>
-}
 
 interface Result {
   id: string
@@ -62,35 +34,6 @@ interface Result {
   icon: React.ComponentType<{ className?: string }>
   onSelect: () => void
 }
-
-const NAV_COMMANDS: NavCmd[] = [
-  { kind: "nav", id: "nav:today", label: "Go to Today", hint: "arrivals, departures, room board", path: "/", icon: Home },
-  { kind: "nav", id: "nav:copilot", label: "Open Copilot", hint: "chat with your AI over the hotel's tools", path: "/assistant", icon: Sparkles },
-  { kind: "nav", id: "nav:reservations", label: "Go to Reservations", hint: "search & manage bookings", path: "/reservations", icon: ClipboardList },
-  { kind: "nav", id: "nav:tape", label: "Go to Tape Chart", hint: "rooms × dates grid", path: "/tape", icon: LayoutGrid },
-  { kind: "nav", id: "nav:calendar", label: "Go to Calendar", hint: "availability by room type", path: "/calendar", icon: CalendarDays },
-  { kind: "nav", id: "nav:guests", label: "Go to Guests", hint: "profiles & stay history", path: "/guests", icon: Users },
-  { kind: "nav", id: "nav:hk", label: "Open Housekeeping", hint: "room status board", path: "/housekeeping", icon: ListChecks },
-  { kind: "nav", id: "nav:requests", label: "Go to Guest Requests", hint: "open service requests", path: "/tickets", icon: TicketIcon },
-  { kind: "nav", id: "nav:lostfound", label: "Go to Lost & Found", hint: "items found & claimed", path: "/lost-found", icon: PackageSearch },
-  { kind: "nav", id: "nav:shifts", label: "Go to Shifts", hint: "handover & cash counts", path: "/shifts", icon: Clock },
-  { kind: "nav", id: "nav:billing", label: "Go to Billing", hint: "folios, invoices, night audit", path: "/billing", icon: Receipt },
-  { kind: "nav", id: "nav:reports", label: "Go to Reports", hint: "occupancy, ADR, RevPAR", path: "/reports", icon: IndianRupee },
-  { kind: "nav", id: "nav:companies", label: "Go to Companies", hint: "corporate accounts & rates", path: "/companies", icon: Building2 },
-  { kind: "nav", id: "nav:events", label: "Go to Event Bookings", hint: "banquets & functions", path: "/events", icon: PartyPopper },
-  { kind: "nav", id: "nav:venuecal", label: "Open Venue Calendar", hint: "function diary", path: "/venue-calendar", icon: CalendarDays },
-  { kind: "nav", id: "nav:groups", label: "Go to Groups & Blocks", hint: "room blocks & pickup", path: "/groups", icon: Users },
-  { kind: "nav", id: "nav:rooms", label: "Go to Rooms", hint: "room inventory", path: "/rooms", icon: BedDouble },
-  { kind: "nav", id: "nav:roomtypes", label: "Go to Room Types", hint: "categories, photos, pricing", path: "/room-types", icon: LayoutGrid },
-  { kind: "nav", id: "nav:venues", label: "Go to Venues", hint: "halls, lawns & rates", path: "/venues", icon: Landmark },
-  { kind: "nav", id: "nav:rateplans", label: "Go to Rate Plans", hint: "packages & modifiers", path: "/rate-plans", icon: Tags },
-  { kind: "nav", id: "nav:seasons", label: "Go to Seasons", hint: "seasonal pricing windows", path: "/seasons", icon: CalendarDays },
-  { kind: "nav", id: "nav:guardrails", label: "Go to Guardrails", hint: "rate floors & ceilings", path: "/guardrails", icon: ShieldCheck },
-  { kind: "nav", id: "nav:vouchers", label: "Go to Vouchers", hint: "discount codes", path: "/vouchers", icon: BadgePercent },
-  { kind: "nav", id: "nav:mealplans", label: "Go to Meal Plans", hint: "CP, MAP, AP rates", path: "/meal-plans", icon: UtensilsCrossed },
-  { kind: "nav", id: "nav:agents-ta", label: "Go to Travel Agents", hint: "agents & commissions", path: "/travel-agents", icon: Briefcase },
-  { kind: "nav", id: "nav:settings", label: "Go to Settings", hint: "property, GST, booking page, AI", path: "/settings", icon: SettingsIcon },
-]
 
 // Simple substring fuzzy: every character of q must appear in order in text.
 function fuzzy(text: string, q: string): boolean {
@@ -105,13 +48,39 @@ function fuzzy(text: string, q: string): boolean {
   return false
 }
 
+// Nav commands are derived from the same role-filtered app registry the
+// sidebar uses, so the palette reaches exactly the pages the user may open -
+// no second list to keep in sync, and item-level gates (Developers, Frappe
+// Desk) are honoured too.
+function navItemsForRoles(roles: string[]): {
+  item: AppNavItem
+  app: string
+}[] {
+  const out: { item: AppNavItem; app: string }[] = []
+  const seen = new Set<string>()
+  for (const app of visibleApps(roles)) {
+    for (const item of app.items) {
+      if (item.roles && !item.roles.some((r) => roles.includes(r))) continue
+      const key = item.to ?? item.href ?? item.label
+      if (seen.has(key)) continue
+      seen.add(key)
+      out.push({ item, app: app.name })
+    }
+  }
+  return out
+}
+
 export function CommandPalette() {
+  const { roles } = useAuth()
   const [open, setOpen] = useState(false)
   const [q, setQ] = useState("")
   const [guests, setGuests] = useState<{ name: string; full_name: string; phone?: string }[]>([])
   const [reservations, setReservations] = useState<{ name: string; guest?: string; guest_name: string; check_in_date: string; status: string; room?: string | null }[]>([])
+  const [invoices, setInvoices] = useState<{ name: string; invoice_number: string; reservation?: string; guest?: string; guest_name?: string; grand_total: number; status: string }[]>([])
   const [searching, setSearching] = useState(false)
+  const [cursor, setCursor] = useState(0)
   const inputRef = useRef<HTMLInputElement>(null)
+  const listRef = useRef<HTMLDivElement>(null)
   const navigate = useNavigate()
 
   // Global shortcut: ⌘K on Mac, Ctrl+K elsewhere.
@@ -140,21 +109,27 @@ export function CommandPalette() {
       setQ("")
       setGuests([])
       setReservations([])
+      setInvoices([])
+      setCursor(0)
     }
   }, [open])
+
+  // typing moves the highlight back to the top of the fresh result set
+  useEffect(() => setCursor(0), [q])
 
   // Debounced remote search once the user has typed at least 2 chars.
   useEffect(() => {
     if (!open || q.trim().length < 2) {
       setGuests([])
       setReservations([])
+      setInvoices([])
       return
     }
     let cancelled = false
     setSearching(true)
     const handle = setTimeout(async () => {
       try {
-        const [g, r] = await Promise.all([
+        const [g, r, inv] = await Promise.all([
           call<{ name: string; full_name: string; phone?: string }[]>(
             "kamra.api.guest_search",
             { q: q.trim() },
@@ -170,10 +145,23 @@ export function CommandPalette() {
             property: getCurrentProperty(),
             query: q.trim(),
           }).catch(() => []),
+          call<{
+            name: string
+            invoice_number: string
+            reservation?: string
+            guest?: string
+            guest_name?: string
+            grand_total: number
+            status: string
+          }[]>("kamra.api.find_invoices", {
+            property: getCurrentProperty(),
+            query: q.trim(),
+          }).catch(() => []),
         ])
         if (cancelled) return
         setGuests((g || []).slice(0, 5))
         setReservations((r || []).slice(0, 5))
+        setInvoices((inv || []).slice(0, 5))
       } finally {
         if (!cancelled) setSearching(false)
       }
@@ -184,19 +172,24 @@ export function CommandPalette() {
     }
   }, [q, open])
 
+  const navItems = useMemo(() => navItemsForRoles(roles), [roles])
+
   const navResults = useMemo<Result[]>(
     () =>
-      NAV_COMMANDS.filter((c) => fuzzy(c.label + " " + c.hint, q)).map((c) => ({
-        id: c.id,
-        label: c.label,
-        hint: c.hint,
-        icon: c.icon,
-        onSelect: () => {
-          setOpen(false)
-          navigate(c.path)
-        },
-      })),
-    [q, navigate],
+      navItems
+        .filter(({ item, app }) => fuzzy(`${item.label} ${app}`, q))
+        .map(({ item, app }) => ({
+          id: `nav:${item.to ?? item.href ?? item.label}`,
+          label: item.label,
+          hint: app,
+          icon: item.icon,
+          onSelect: () => {
+            setOpen(false)
+            if (item.href) window.open(item.href, "_blank", "noreferrer")
+            else if (item.to) navigate(item.to)
+          },
+        })),
+    [navItems, q, navigate],
   )
 
   const guestResults = useMemo<Result[]>(
@@ -235,14 +228,45 @@ export function CommandPalette() {
     [reservations, navigate],
   )
 
-  if (!open) return null
+  const invoiceResults = useMemo<Result[]>(
+    () =>
+      invoices.map((f) => ({
+        id: `inv:${f.name}`,
+        label: `${f.invoice_number} · ${f.guest_name || ""}`.trim(),
+        hint: `Invoice · ₹${(f.grand_total || 0).toLocaleString("en-IN")} · ${f.status}`,
+        icon: FileText,
+        onSelect: () => {
+          setOpen(false)
+          navigate(`/billing/${encodeURIComponent(f.name)}`)
+        },
+      })),
+    [invoices, navigate],
+  )
 
   const groups: { title: string; items: Result[] }[] = [
     { title: "Reservations", items: reservationResults },
+    { title: "Invoices", items: invoiceResults },
     { title: "Guests", items: guestResults },
     { title: "Navigate", items: navResults },
   ]
-  const totalCount = groups.reduce((s, g) => s + g.items.length, 0)
+  // one flat, ordered list for arrow-key navigation across all groups
+  const flat = groups.flatMap((g) => g.items)
+  const totalCount = flat.length
+
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "ArrowDown") {
+      e.preventDefault()
+      setCursor((c) => (totalCount ? (c + 1) % totalCount : 0))
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault()
+      setCursor((c) => (totalCount ? (c - 1 + totalCount) % totalCount : 0))
+    } else if (e.key === "Enter") {
+      e.preventDefault()
+      flat[cursor]?.onSelect()
+    }
+  }
+
+  if (!open) return null
 
   return (
     <div
@@ -262,7 +286,8 @@ export function CommandPalette() {
             ref={inputRef}
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Search - find a guest, a booking, or jump to any screen…"
+            onKeyDown={onKeyDown}
+            placeholder="Search a guest, phone, booking, invoice - or jump to any screen…"
             className="flex-1 bg-transparent text-sm outline-none placeholder:text-zinc-400"
           />
           {searching ? (
@@ -274,11 +299,17 @@ export function CommandPalette() {
           )}
         </div>
 
-        <div className="max-h-[60vh] overflow-y-auto p-2">
+        <div ref={listRef} className="max-h-[60vh] overflow-y-auto p-2">
           {totalCount === 0 && (
             <div className="px-3 py-8 text-center text-sm text-zinc-500">
-              No matches.{" "}
-              <span className="text-zinc-400">Try a name, a phone, or RES-…</span>
+              {q.trim().length >= 2 ? (
+                "No matches."
+              ) : (
+                <>
+                  Search a guest, phone, booking or invoice.{" "}
+                  <span className="text-zinc-400">Or jump to any screen.</span>
+                </>
+              )}
             </div>
           )}
 
@@ -290,26 +321,37 @@ export function CommandPalette() {
                     {grp.title}
                   </div>
                   <ul>
-                    {grp.items.map((item) => (
-                      <li key={item.id}>
-                        <button
-                          onClick={item.onSelect}
-                          className={cn(
-                            "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm",
-                            "hover:bg-brand-50 hover:text-brand-700",
-                          )}
-                        >
-                          <item.icon className="size-4 shrink-0 text-zinc-400" aria-hidden />
-                          <div className="min-w-0 flex-1">
-                            <div className="truncate font-medium">{item.label}</div>
-                            <div className="truncate text-xs text-zinc-500">
-                              {item.hint}
+                    {grp.items.map((item) => {
+                      const idx = flat.findIndex((f) => f.id === item.id)
+                      const active = idx === cursor
+                      return (
+                        <li key={item.id}>
+                          <button
+                            onClick={item.onSelect}
+                            onMouseEnter={() => setCursor(idx)}
+                            ref={(el) => {
+                              if (active && el)
+                                el.scrollIntoView({ block: "nearest" })
+                            }}
+                            className={cn(
+                              "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm",
+                              active
+                                ? "bg-brand-50 text-brand-700"
+                                : "hover:bg-brand-50 hover:text-brand-700",
+                            )}
+                          >
+                            <item.icon className="size-4 shrink-0 text-zinc-400" aria-hidden />
+                            <div className="min-w-0 flex-1">
+                              <div className="truncate font-medium">{item.label}</div>
+                              <div className="truncate text-xs text-zinc-500">
+                                {item.hint}
+                              </div>
                             </div>
-                          </div>
-                          <ArrowRight className="size-3.5 shrink-0 text-zinc-300" aria-hidden />
-                        </button>
-                      </li>
-                    ))}
+                            <ArrowRight className="size-3.5 shrink-0 text-zinc-300" aria-hidden />
+                          </button>
+                        </li>
+                      )
+                    })}
                   </ul>
                 </div>
               ),

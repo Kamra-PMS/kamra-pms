@@ -1413,6 +1413,25 @@ def find_reservations(property: str, query: str | None = None,
 
 
 @frappe.whitelist()
+@require_roles("Front Desk", "Finance", "Revenue Manager", "Kamra Agent")
+def find_invoices(property: str, query: str | None = None, limit: int = 8):
+	"""Resolve an invoice number (or partial) to its folio and stay, so the
+	command palette can jump straight from 'INV-KDP-26-00042' to the bill."""
+	q = (query or "").strip()
+	if not q:
+		return []
+	rows = frappe.get_all(
+		"Folio",
+		filters={"property": property, "invoice_number": ["like", f"%{q}%"]},
+		fields=["name", "invoice_number", "reservation", "guest",
+		        "guest_name", "grand_total", "status", "folio_type"],
+		order_by="modified desc",
+		limit=int(limit or 8),
+	)
+	return rows
+
+
+@frappe.whitelist()
 @require_roles("Front Desk", "Kamra Agent", "Finance", "Revenue Manager")
 def reservation_detail(reservation: str):
 	"""Everything about one booking in a single call - stay, money, guest,
