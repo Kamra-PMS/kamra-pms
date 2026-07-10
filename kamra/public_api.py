@@ -367,3 +367,50 @@ def check_voucher(property: str, code: str, nights: int = 1):
 	         else f"₹{v.value:,.0f} off")
 	return {"ok": True, "message": f"'{v.voucher_code}' applied - {label}.",
 	        "discount_type": v.discount_type, "value": float(v.value)}
+
+
+@frappe.whitelist(allow_guest=True)
+def qr_menu(outlet: str):
+	"""The guest-facing digital menu behind a table/room QR code. Only shows
+	outlets a hotel has published items for; no prices are trusted from the
+	guest - they're read here."""
+	o = frappe.db.get_value(
+		"POS Outlet", outlet, ["outlet_name", "disabled", "property"],
+		as_dict=True)
+	if not o or o.disabled:
+		frappe.throw("This menu isn't available.")
+	items = frappe.get_all(
+		"Menu Item",
+		filters={"outlet": outlet, "available": 1},
+		fields=["name", "item_name", "category", "price", "is_veg",
+		        "is_alcohol", "image", "description"],
+		order_by="category, item_name")
+	cats: dict[str, list] = {}
+	for it in items:
+		cats.setdefault(it.category or "Other", []).append(it)
+	return {
+		"outlet": outlet, "outlet_name": o.outlet_name,
+		"property_name": frappe.db.get_value("Property", o.property, "property_name"),
+		"categories": [{"category": c, "items": v} for c, v in cats.items()],
+	}
+
+
+@frappe.whitelist(allow_guest=True, methods=["POST"])
+@rate_limit(limit=30, seconds=3600)
+def qr_order(outlet: str, items, room: str | None = None,
+             table_no: str | None = None):
+	"""A guest places an order from the QR menu. It lands as a QR order that
+	a captain must confirm before it fires to the kitchen or touches a bill -
+	the guest can never post directly to a folio."""
+	if frappe.db.get_value("POS Outlet", outlet, "disabled"):
+		frappe.throw("This menu isn't available.")
+	from kamra import pos
+	frappe.set_user("agent@kamra.local")  # governed writer, like public bookings
+	try:
+		out = pos.create_order(outlet=outlet, items=items, room=room or None,
+		                       table_no=table_no or None, source="QR")
+		frappe.db.commit()
+	finally:
+		frappe.set_user("Guest")
+	return {"ok": True, "order": out["order"], "order_total": out["order_total"],
+	        "message": "Order placed - a server will confirm it shortly."}

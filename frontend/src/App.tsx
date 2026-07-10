@@ -38,6 +38,8 @@ import OpsSLA from "./screens/OpsSLA"
 import Dashboard from "./screens/Dashboard"
 import CRS from "./screens/CRS"
 import POS from "./screens/POS"
+import Kitchen from "./screens/Kitchen"
+import QrMenu from "./screens/QrMenu"
 import AccountingExport from "./screens/AccountingExport"
 import TapeChart from "./screens/TapeChart"
 import Tickets from "./screens/Tickets"
@@ -166,6 +168,7 @@ export default function App() {
         <Route path="checkin/:token" element={<PublicCheckin />} />
         {/* housekeeping phone app - share the /hk URL with the HK team */}
         <Route path="hk" element={<HkApp />} />
+        <Route path="menu/:outlet" element={<QrMenu />} />
         {/* dedicated login route so signing out changes the URL */}
         <Route path="login" element={<LoginPage />} />
         <Route element={<RequireAuth />}>
@@ -260,6 +263,7 @@ export default function App() {
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="crs" element={<CRS />} />
           <Route path="pos" element={<POS />} />
+          <Route path="kitchen" element={<Kitchen />} />
           <Route path="accounting-export" element={<AccountingExport />} />
           <Route path="tickets" element={<Tickets />} />
           <Route
