@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react"
-import { useParams, useNavigate } from "react-router-dom"
+import { useParams } from "react-router-dom"
 import { Globe, Plus, Trash2, Eye } from "lucide-react"
 
 import { getCurrentProperty, frappeFetch } from "../lib/api"
@@ -18,7 +18,6 @@ const inputCls =
 export default function BookingEngine() {
   const property = getCurrentProperty()
   const { section = "profile" } = useParams()
-  const navigate = useNavigate()
 
   const [doc, setDoc] = useState<Doc | null>(null)
   const [busy, setBusy] = useState(false)
@@ -122,29 +121,10 @@ export default function BookingEngine() {
         </CardContent>
       </Card>
 
-      <div className="grid gap-6 md:grid-cols-4">
-        {/* Navigation panel */}
-        <div className="space-y-1">
-          {sections.map((s) => (
-            <button
-              key={s.id}
-              onClick={() => {
-                setState("idle")
-                navigate(`/booking-settings/${s.id}`)
-              }}
-              className={`w-full text-left px-3.5 py-2.5 rounded-xl text-sm font-medium transition ${
-                section === s.id
-                  ? "bg-brand-600 text-white shadow-sm"
-                  : "text-zinc-600 hover:bg-zinc-100"
-              }`}
-            >
-              {s.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Dynamic section fields */}
-        <div className="md:col-span-3">
+      {/* The app sidebar already lists the sections, so this screen just
+          renders the active one (from the URL) full-width - no second nav. */}
+      <div>
+        <div>
           <Card>
             <CardHeader>
               <CardTitle>{sections.find((s) => s.id === section)?.label}</CardTitle>

@@ -192,6 +192,7 @@ export const APPS: AppDef[] = [
       { to: "/booking-settings/amenities", label: "Amenities", icon: ClipboardList },
       { to: "/booking-settings/photos", label: "Photos", icon: Camera },
       { to: "/booking-settings/policies", label: "Policies", icon: ScrollText },
+      { to: "/booking-settings/payments", label: "Payments", icon: Receipt },
       { to: "/booking-settings/faq", label: "FAQ", icon: HelpCircle },
       { to: "/booking-settings/seo", label: "SEO", icon: Search },
     ],

@@ -459,7 +459,17 @@ export default function GuestJourney() {
                         <Icon className="size-3.5" aria-hidden />
                       </span>
                       <div className="flex flex-wrap items-baseline gap-x-3">
-                        <span className="text-sm font-medium">{e.title}</span>
+                        {e.reference && e.type !== "agent" ? (
+                          <Link
+                            to={`/reservations?q=${encodeURIComponent(e.reference)}`}
+                            className="text-sm font-medium text-brand-700 hover:underline"
+                            title={`Open ${e.reference}`}
+                          >
+                            {e.title}
+                          </Link>
+                        ) : (
+                          <span className="text-sm font-medium">{e.title}</span>
+                        )}
                         {e.amount ? (
                           <span className="text-sm text-zinc-500">
                             ₹{inr(e.amount)}
