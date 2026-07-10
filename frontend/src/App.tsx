@@ -35,6 +35,7 @@ import Marketplace from "./screens/Marketplace"
 import Reports from "./screens/Reports"
 import RevenueReports from "./screens/RevenueReports"
 import OpsSLA from "./screens/OpsSLA"
+import Dashboard from "./screens/Dashboard"
 import AccountingExport from "./screens/AccountingExport"
 import TapeChart from "./screens/TapeChart"
 import Tickets from "./screens/Tickets"
@@ -254,6 +255,7 @@ export default function App() {
           <Route path="reports" element={<Reports />} />
           <Route path="revenue-reports" element={<RevenueReports />} />
           <Route path="ops-sla" element={<OpsSLA />} />
+          <Route path="dashboard" element={<Dashboard />} />
           <Route path="accounting-export" element={<AccountingExport />} />
           <Route path="tickets" element={<Tickets />} />
           <Route

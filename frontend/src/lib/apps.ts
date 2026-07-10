@@ -48,6 +48,7 @@ import {
   Search,
   Lock,
   AlarmClock,
+  LayoutDashboard,
 } from "lucide-react"
 
 export interface AppNavItem {
@@ -82,6 +83,7 @@ export const APPS: AppDef[] = [
     roles: ["Front Desk", "Hotel Admin", "System Manager", "Administrator"],
     items: [
       { to: "/", label: "Today", icon: Home },
+      { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
       { to: "/assistant", label: "Copilot", icon: Sparkles },
       { to: "/reservations", label: "Reservations", icon: ClipboardList },
       { to: "/tape", label: "Tape Chart", icon: LayoutGrid },
