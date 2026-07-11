@@ -28,7 +28,6 @@ import { asset } from "./lib/asset"
 import { useAuth } from "./lib/auth"
 import { subscribeRealtime } from "./lib/realtime"
 import { getTheme, setTheme } from "./lib/theme"
-import { getLang, setLang, type Lang } from "./lib/dir"
 import { t as translate, useT } from "./lib/i18n"
 import { cn } from "./lib/utils"
 
@@ -84,24 +83,6 @@ function ThemeToggle() {
       ) : (
         <Moon className="size-4" aria-hidden />
       )}
-    </button>
-  )
-}
-
-function LangToggle() {
-  const [lang, setL] = useState<Lang>(getLang())
-  return (
-    <button
-      aria-label={lang === "ar" ? "التبديل إلى الإنجليزية" : "Switch to Arabic"}
-      className="rounded-lg px-2 py-1.5 text-xs font-semibold text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700"
-      title={lang === "ar" ? "العربية / English" : "English / العربية"}
-      onClick={() => {
-        const next: Lang = lang === "ar" ? "en" : "ar"
-        setLang(next)
-        setL(next)
-      }}
-    >
-      {lang === "ar" ? "EN" : "ع"}
     </button>
   )
 }
@@ -298,7 +279,6 @@ export default function AppShell() {
           )}
           <div className="ml-auto flex items-center gap-3">
             <SearchShortcut />
-            <LangToggle />
             <ThemeToggle />
             <span className="hidden text-xs text-zinc-500 md:inline">
               {user}

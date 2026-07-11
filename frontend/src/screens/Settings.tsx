@@ -7,6 +7,7 @@ import {
   updateResource,
 } from "../lib/resource"
 import { getTheme, setTheme, type Theme } from "../lib/theme"
+import { getLang, setLang, type Lang } from "../lib/dir"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 
@@ -321,6 +322,7 @@ export default function Settings() {
   const [gateway, setGateway] = useState<Doc | null>(null)
   const [ai, setAi] = useState<Doc | null>(null)
   const [theme, setThemeState] = useState<Theme>(getTheme())
+  const [lang, setLangState] = useState<Lang>(getLang())
 
   const load = useCallback(() => {
     call<Doc>("frappe.client.get", {
@@ -483,9 +485,9 @@ export default function Settings() {
         <CardHeader>
           <CardTitle>Appearance</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           <div className="flex items-center gap-3">
-            <span className="text-sm font-medium text-zinc-600">Theme</span>
+            <span className="w-20 text-sm font-medium text-zinc-600">Theme</span>
             <select
               className="rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm focus:outline-2 focus:outline-offset-1 focus:outline-brand-600"
               value={theme}
@@ -501,6 +503,24 @@ export default function Settings() {
             </select>
             <span className="text-xs text-zinc-400">
               applies to this browser only
+            </span>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="w-20 text-sm font-medium text-zinc-600">Language</span>
+            <select
+              className="rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm focus:outline-2 focus:outline-offset-1 focus:outline-brand-600"
+              value={lang}
+              onChange={(e) => {
+                const l = e.target.value as Lang
+                setLang(l)
+                setLangState(l)
+              }}
+            >
+              <option value="en">English</option>
+              <option value="ar">العربية (Arabic)</option>
+            </select>
+            <span className="text-xs text-zinc-400">
+              Arabic switches the interface to right-to-left · this browser only
             </span>
           </div>
         </CardContent>
