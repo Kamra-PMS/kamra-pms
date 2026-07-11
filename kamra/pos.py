@@ -97,6 +97,59 @@ def create_order(outlet: str, items, property: str | None = None,
 	        "status": doc.status}
 
 
+@frappe.whitelist()
+@require_roles(*POS_ROLES)
+def open_orders(outlet: str):
+	"""Every running tab at an outlet - the tables/rooms being served right
+	now, so a captain can juggle several at once."""
+	rows = frappe.get_all(
+		"POS Order",
+		filters={"outlet": outlet,
+		         "status": ("in", ["Placed", "Confirmed", "Preparing"])},
+		fields=["name", "status", "source", "room", "table_no",
+		        "order_total", "kot_fired", "modified"],
+		order_by="creation asc")
+	for r in rows:
+		r["room_no"] = (r.room or "").split("-")[-1]
+		r["items"] = frappe.db.count("POS Order Item", {"parent": r.name})
+		r["label"] = (f"Room {r['room_no']}" if r.room
+		              else f"Table {r.table_no}" if r.table_no else r.name)
+	return rows
+
+
+@frappe.whitelist()
+@require_roles(*POS_ROLES)
+def order_detail(order: str):
+	"""One order's full contents - to load a running tab back into the till."""
+	doc = frappe.get_doc("POS Order", order)
+	return {
+		"name": doc.name, "outlet": doc.outlet, "status": doc.status,
+		"source": doc.source, "room": doc.room, "table_no": doc.table_no,
+		"discount_amount": doc.discount_amount, "discount_reason": doc.discount_reason,
+		"subtotal": doc.subtotal, "order_total": doc.order_total,
+		"kot_fired": doc.kot_fired, "notes": doc.notes,
+		"items": [
+			{"row": it.name, "menu_item": it.menu_item, "item_name": it.item_name,
+			 "qty": it.qty, "rate": it.rate, "amount": it.amount,
+			 "instructions": it.instructions, "kot_status": it.kot_status}
+			for it in doc.items],
+	}
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles(*POS_ROLES)
+def add_items(order: str, items):
+	"""Add rounds to a running tab - new lines are priced from the menu and
+	start as New (a later fire_kot sends them to the kitchen)."""
+	doc = frappe.get_doc("POS Order", order)
+	if doc.status in ("Delivered", "Cancelled"):
+		frappe.throw(_("This order is already closed."))
+	for line in _load_items(items):
+		doc.append("items", line)
+	doc.save()
+	return {"ok": True, "order_total": doc.order_total}
+
+
 @frappe.whitelist(methods=["POST"])
 @require_roles(*POS_ROLES)
 def confirm_order(order: str):
@@ -140,11 +193,15 @@ def fire_kot(order: str):
 
 @frappe.whitelist()
 @require_roles(*POS_ROLES)
-def kitchen_queue(property: str, station: str | None = None):
-	"""The kitchen display: fired orders with items still to prepare."""
+def kitchen_queue(property: str, outlet: str | None = None,
+                  station: str | None = None):
+	"""The kitchen display: fired orders with items still to prepare. Scope
+	to one outlet (each restaurant's own kitchen) and/or one station."""
+	filters = {"property": property, "status": "Preparing", "kot_fired": 1}
+	if outlet:
+		filters["outlet"] = outlet
 	orders = frappe.get_all(
-		"POS Order",
-		filters={"property": property, "status": "Preparing", "kot_fired": 1},
+		"POS Order", filters=filters,
 		fields=["name", "outlet", "room", "table_no", "creation", "notes"],
 		order_by="creation asc")
 	out = []

@@ -27,15 +27,23 @@ function minsAgo(iso: string): number {
 
 export default function Kitchen() {
   const [station, setStation] = useState("")
+  const [outlet, setOutlet] = useState("")
+  const [outlets, setOutlets] = useState<{ name: string; outlet_name: string }[]>([])
   const [orders, setOrders] = useState<KotOrder[]>([])
   const [busy, setBusy] = useState<string | null>(null)
+
+  useEffect(() => {
+    call<{ name: string; outlet_name: string }[]>("kamra.pos.outlets", { property: getCurrentProperty() })
+      .then(setOutlets).catch(() => {})
+  }, [])
 
   const load = useCallback(() => {
     call<KotOrder[]>("kamra.pos.kitchen_queue", {
       property: getCurrentProperty(),
+      outlet: outlet || null,
       station: station || null,
     }).then(setOrders).catch(() => {})
-  }, [station])
+  }, [station, outlet])
 
   useEffect(() => {
     load()
@@ -59,7 +67,13 @@ export default function Kitchen() {
         <h1 className="flex items-center gap-2 text-xl font-bold text-zinc-800">
           <ChefHat className="size-5 text-brand-600" />Kitchen display
         </h1>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <select
+            className="rounded-lg border border-zinc-300 bg-white px-2.5 py-1.5 text-sm"
+            value={outlet} onChange={(e) => setOutlet(e.target.value)}>
+            <option value="">All outlets</option>
+            {outlets.map((o) => <option key={o.name} value={o.name}>{o.outlet_name}</option>)}
+          </select>
           <div className="flex rounded-lg border border-zinc-200 bg-white p-0.5 text-sm">
             {["", "Kitchen", "Bar"].map((s) => (
               <button key={s} onClick={() => setStation(s)}
