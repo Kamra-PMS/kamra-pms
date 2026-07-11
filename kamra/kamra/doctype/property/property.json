@@ -331,12 +331,11 @@
    "label": "Logo"
   },
   {
-   "default": "Emerald",
-   "description": "The accent colour on the public booking page — buttons, links and highlights. Pick the one closest to the hotel's branding.",
+   "default": "#0f6b54",
+   "description": "Accent hex (e.g. #0f6b54) for the booking page - buttons, links, highlights.",
    "fieldname": "brand_accent",
-   "fieldtype": "Select",
-   "label": "Booking Page Accent",
-   "options": "Emerald\nOcean\nRoyal\nSunset\nBurgundy\nSlate"
+   "fieldtype": "Data",
+   "label": "Booking Page Accent"
   },
   {
    "default": "Store",

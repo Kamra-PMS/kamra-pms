@@ -1,58 +1,59 @@
-/** Curated booking-page accents. A fixed set (not a free colour picker) so
- * every choice keeps AA contrast for buttons and links on white. Keys match
- * Property.brand_accent options; values map onto the --color-brand-* CSS
- * variables the Tailwind utilities read. */
-export const ACCENTS: Record<
-  string,
-  { 50: string; 100: string; 600: string; 700: string; 900: string }
-> = {
-  Emerald: {
-    50: "#ecf7f2",
-    100: "#d2ece0",
-    600: "#0f6b54",
-    700: "#0b5442",
-    900: "#073527",
-  },
-  Ocean: {
-    50: "#eff8ff",
-    100: "#d8edfc",
-    600: "#0369a1",
-    700: "#075985",
-    900: "#0c4a6e",
-  },
-  Royal: {
-    50: "#eef2ff",
-    100: "#e0e7ff",
-    600: "#4f46e5",
-    700: "#4338ca",
-    900: "#312e81",
-  },
-  Sunset: {
-    50: "#fff7ed",
-    100: "#ffedd5",
-    600: "#c2410c",
-    700: "#9a3412",
-    900: "#7c2d12",
-  },
-  Burgundy: {
-    50: "#fff1f2",
-    100: "#ffe4e6",
-    600: "#be123c",
-    700: "#9f1239",
-    900: "#881337",
-  },
-  Slate: {
-    50: "#f8fafc",
-    100: "#f1f5f9",
-    600: "#334155",
-    700: "#1e293b",
-    900: "#0f172a",
-  },
+/** Booking-page accent. The admin picks any colour (a hex); the full
+ * 50/100/600/700/900 ramp the UI needs is derived from it. A few presets are
+ * offered as quick swatches, and older named values (Emerald, Ocean…) still
+ * resolve for backward compatibility. */
+
+export const PRESETS: { name: string; hex: string }[] = [
+  { name: "Emerald", hex: "#0f6b54" },
+  { name: "Ocean", hex: "#0369a1" },
+  { name: "Royal", hex: "#4f46e5" },
+  { name: "Sunset", hex: "#c2410c" },
+  { name: "Burgundy", hex: "#be123c" },
+  { name: "Slate", hex: "#334155" },
+]
+const PRESET_HEX: Record<string, string> = Object.fromEntries(
+  PRESETS.map((p) => [p.name, p.hex]),
+)
+
+const DEFAULT = "#0f6b54"
+
+function toRgb(hex: string): [number, number, number] {
+  const h = hex.replace("#", "")
+  const n = h.length === 3 ? h.split("").map((c) => c + c).join("") : h
+  const v = parseInt(n, 16)
+  return [(v >> 16) & 255, (v >> 8) & 255, v & 255]
+}
+function toHex([r, g, b]: number[]): string {
+  return "#" + [r, g, b].map((x) => Math.round(x).toString(16).padStart(2, "0")).join("")
+}
+/** Blend a colour toward white (ratio>0) or black; ratio 0..1. */
+function mix(hex: string, target: number, ratio: number): string {
+  const [r, g, b] = toRgb(hex)
+  return toHex([r, g, b].map((c) => c + (target - c) * ratio))
+}
+
+/** Resolve any stored value (hex, preset name, or empty) to a hex. */
+export function accentHex(value: string | null | undefined): string {
+  if (!value) return DEFAULT
+  if (value.startsWith("#")) return value
+  return PRESET_HEX[value] ?? DEFAULT
+}
+
+/** The 5-stop ramp the app's --color-brand-* variables expect. */
+export function accentRamp(value: string | null | undefined) {
+  const base = accentHex(value)
+  return {
+    50: mix(base, 255, 0.92),
+    100: mix(base, 255, 0.82),
+    600: base,
+    700: mix(base, 0, 0.16),
+    900: mix(base, 0, 0.45),
+  }
 }
 
 /** Inline style that re-points the brand CSS variables for a subtree. */
-export function accentVars(name: string | null | undefined) {
-  const a = ACCENTS[name ?? ""] ?? ACCENTS.Emerald
+export function accentVars(value: string | null | undefined) {
+  const a = accentRamp(value)
   return {
     "--color-brand-50": a[50],
     "--color-brand-100": a[100],

@@ -4,7 +4,7 @@ import { Globe, Plus, Trash2, Eye } from "lucide-react"
 
 import { getCurrentProperty, frappeFetch } from "../lib/api"
 import ImageField from "../components/ImageField"
-import { ACCENTS } from "../lib/accents"
+import { PRESETS, accentHex } from "../lib/accents"
 import { serverError, updateResource } from "../lib/resource"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
@@ -360,33 +360,41 @@ export default function BookingEngine() {
                     <span className="mb-1 block text-sm font-medium text-zinc-600">
                       Booking page accent
                     </span>
-                    <div className="flex flex-wrap gap-2">
-                      {Object.entries(ACCENTS).map(([accentName, a]) => {
-                        const active = (doc.brand_accent || "Emerald") === accentName
-                        return (
-                          <button
-                            key={accentName}
-                            type="button"
-                            className={
-                              "inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs " +
-                              (active
-                                ? "border-zinc-800 font-medium"
-                                : "border-zinc-200 hover:border-zinc-400")
-                            }
-                            onClick={() => updateField("brand_accent", accentName)}
-                          >
-                            <span
-                              className="size-3.5 rounded-full"
-                              style={{ background: a[600] }}
-                            />
-                            {accentName}
-                          </button>
-                        )
-                      })}
+                    <div className="flex flex-wrap items-center gap-2">
+                      <input
+                        type="color"
+                        aria-label="Accent colour"
+                        className="size-10 cursor-pointer rounded-lg border border-zinc-300 bg-white p-0.5"
+                        value={accentHex(doc.brand_accent)}
+                        onChange={(e) => updateField("brand_accent", e.target.value)}
+                      />
+                      <input
+                        className={inputCls + " !w-32 font-mono"}
+                        placeholder="#0f6b54"
+                        value={doc.brand_accent ?? ""}
+                        onChange={(e) => updateField("brand_accent", e.target.value)}
+                      />
+                      <span className="text-xs text-zinc-400">or a quick preset:</span>
+                      {PRESETS.map((p) => (
+                        <button
+                          key={p.name}
+                          type="button"
+                          title={p.name}
+                          aria-label={p.name}
+                          className={
+                            "size-6 rounded-full border-2 " +
+                            (accentHex(doc.brand_accent).toLowerCase() === p.hex
+                              ? "border-zinc-800"
+                              : "border-white shadow")
+                          }
+                          style={{ background: p.hex }}
+                          onClick={() => updateField("brand_accent", p.hex)}
+                        />
+                      ))}
                     </div>
                     <p className="mt-1 text-xs text-zinc-400">
                       Buttons, links and highlights on the guest page take this
-                      colour — pick the one closest to the hotel's branding.
+                      colour — pick any hex to match the hotel's branding.
                     </p>
                   </div>
 
