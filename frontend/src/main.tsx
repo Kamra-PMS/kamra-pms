@@ -4,11 +4,13 @@ import { BrowserRouter } from "react-router-dom"
 import "./index.css"
 import App from "./App"
 import { initTheme } from "./lib/theme"
+import { initLang } from "./lib/dir"
 import { asset } from "./lib/asset"
 import { AuthProvider } from "./lib/auth"
 import { ROUTER_BASENAME } from "./lib/routing"
 
 initTheme()
+initLang()
 
 // Favicons, base-aware (see index.html note).
 function setIcon(rel: string, href: string, type?: string) {

@@ -28,6 +28,8 @@ import { asset } from "./lib/asset"
 import { useAuth } from "./lib/auth"
 import { subscribeRealtime } from "./lib/realtime"
 import { getTheme, setTheme } from "./lib/theme"
+import { getLang, setLang, type Lang } from "./lib/dir"
+import { t as translate, useT } from "./lib/i18n"
 import { cn } from "./lib/utils"
 
 export interface BookingInitial {
@@ -86,6 +88,24 @@ function ThemeToggle() {
   )
 }
 
+function LangToggle() {
+  const [lang, setL] = useState<Lang>(getLang())
+  return (
+    <button
+      aria-label={lang === "ar" ? "التبديل إلى الإنجليزية" : "Switch to Arabic"}
+      className="rounded-lg px-2 py-1.5 text-xs font-semibold text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700"
+      title={lang === "ar" ? "العربية / English" : "English / العربية"}
+      onClick={() => {
+        const next: Lang = lang === "ar" ? "en" : "ar"
+        setLang(next)
+        setL(next)
+      }}
+    >
+      {lang === "ar" ? "EN" : "ع"}
+    </button>
+  )
+}
+
 /** Gmail-style grid: the app switcher popover in the top bar. */
 function AppSwitcher({ apps, current }: { apps: AppDef[]; current: AppDef }) {
   const [open, setOpen] = useState(false)
@@ -138,7 +158,7 @@ function AppSwitcher({ apps, current }: { apps: AppDef[]; current: AppDef }) {
                   <app.icon className="size-5" aria-hidden />
                 </span>
                 <span className="text-[11px] font-medium leading-tight text-zinc-700">
-                  {app.name}
+                  {translate(app.name)}
                 </span>
               </button>
             ))}
@@ -158,6 +178,7 @@ function AppSwitcher({ apps, current }: { apps: AppDef[]; current: AppDef }) {
 
 export default function AppShell() {
   const { user, roles, signOut } = useAuth()
+  const { t } = useT()
   const location = useLocation()
   const [booking, setBooking] = useState<BookingInitial | null>(null)
   const [refreshKey, setRefreshKey] = useState(0)
@@ -200,7 +221,7 @@ export default function AppShell() {
         className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100"
       >
         <item.icon className="size-4" aria-hidden />
-        {item.label}
+        {t(item.label)}
       </a>
     ) : (
       <NavLink
@@ -217,7 +238,7 @@ export default function AppShell() {
         }
       >
         <item.icon className="size-4" aria-hidden />
-        {item.label}
+        {t(item.label)}
       </NavLink>
     )
 
@@ -245,7 +266,7 @@ export default function AppShell() {
               <currentApp.icon className="size-3.5" aria-hidden />
             </span>
             <span className="text-sm font-semibold text-zinc-800">
-              {currentApp.name}
+              {t(currentApp.name)}
             </span>
           </div>
         )}
@@ -277,6 +298,7 @@ export default function AppShell() {
           )}
           <div className="ml-auto flex items-center gap-3">
             <SearchShortcut />
+            <LangToggle />
             <ThemeToggle />
             <span className="hidden text-xs text-zinc-500 md:inline">
               {user}
