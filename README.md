@@ -8,7 +8,7 @@ Bring your own AI — Claude over MCP, or HeyKoala for voice/WhatsApp — on inf
 
 <p align="center">
   <a href="https://demo.kamrapms.com"><b>▶ Live demo</b></a> ·
-  <a href="https://github.com/Kamra-PMS/kamra-pms/tree/main/docs"><b>Docs</b></a> ·
+  <a href="https://kamrapms.com/docs/"><b>Docs</b></a> ·
   <a href="https://github.com/Kamra-PMS/kamra-pms"><b>Source</b></a> ·
   <a href="mailto:hello@kamrapms.com"><b>Contact</b></a>
 </p>
@@ -75,13 +75,37 @@ Hotels deserve better than:
 
 ## Documentation
 
-Full docs live in [`docs/`](docs/):
+**[kamrapms.com/docs](https://kamrapms.com/docs/)** is the full manual —
+quickstart, per-provider self-hosting guides, features tour, user guide,
+AI/MCP setup and FAQ.
 
-- [Front-desk user guide](docs/user-guide.md) — a day at the desk, end to end
-- [AI & API setup](docs/ai-and-api.md) — the BYOK copilot, MCP, API keys, REST
-- [Self-hosting guide & prerequisites](docs/self-hosting.md)
-- [Email setup](docs/email-setup.md)
-- [Developer notes](docs-dev.md) · [Brand assets](branding/README.md)
+### REST API
+
+Kamra exposes **120 REST endpoints** — the same governed layer the UI and
+the AI use:
+
+- **[REST API reference](https://kamrapms.com/docs/api-reference)** —
+  every endpoint with method, required roles, parameters and description,
+  generated from the source so it never drifts
+- **[Postman collection](https://kamrapms.com/docs/kamra.postman_collection.json)**
+  — import it, set `base_url` (your Kamra URL), `api_key` and `api_secret`
+  collection variables, and every request is ready to try
+- [MCP tool reference](https://kamrapms.com/docs/mcp-tools) — the 31 tools
+  AI agents get
+
+```bash
+# the calling convention
+curl -X POST https://<your-kamra>/api/method/kamra.api.get_quote \
+  -H "Authorization: token <api_key>:<api_secret>" \
+  -H "Content-Type: application/json" \
+  -d '{"property":"Your Property","room_type":"Your Property-DLX",
+       "check_in_date":"2026-08-01","check_out_date":"2026-08-03"}'
+```
+
+In-repo markdown lives in [`docs/`](docs/):
+[user guide](docs/user-guide.md) · [AI & API setup](docs/ai-and-api.md) ·
+[self-hosting](docs/self-hosting.md) · [email setup](docs/email-setup.md) ·
+[developer notes](docs-dev.md) · [brand assets](branding/README.md)
 
 ## Install
 
