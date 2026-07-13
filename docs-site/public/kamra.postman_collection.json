@@ -3444,10 +3444,47 @@
         "kamra.pos.table_map"
        ]
       },
-      "description": "The table view a captain starts from: every table at the outlet with\nits live state - vacant, running (open bill), fired (KOT in the kitchen)\nor ready (everything prepared, awaiting service/settle).",
+      "description": "The table view a captain starts from: every table at the outlet with\nits live state - vacant, running (open bill), fired (KOT in the kitchen)\nor ready (everything prepared, awaiting service/settle). A table holds\nany number of bills (separate parties, split bills); the tile carries\nthem all and shows the most urgent state.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"outlet\": \"Your Property-Restaurant\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "split_order",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.pos.split_order",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.pos.split_order"
+       ]
+      },
+      "description": "Split a bill: move the chosen lines to a new bill on the same table\n(or a named one) - separate bills for two parties sharing a table, or\none party paying separately. Fired lines keep their kitchen status, and\nthe two bills conserve the original total.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"order\": \"ORD-2026-00001\",\n  \"item_rows\": \"<item_rows>\"\n}",
        "options": {
         "raw": {
          "language": "json"

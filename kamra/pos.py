@@ -122,7 +122,20 @@ def open_orders(outlet: str):
 		r["label"] = (f"Room {r['room_no']}" if r.room
 		              else f"Table {r.table_no}" if r.table_no
 		              else "Takeaway" if r.order_type == "Takeaway" else r.name)
+	# two parties on one table (or a split bill) share a label - number them
+	groups: dict[str, list] = {}
+	for r in rows:
+		groups.setdefault(r["label"], []).append(r)
+	for label, group in groups.items():
+		if len(group) > 1:
+			for i, r in enumerate(group, 1):
+				r["label"] = f"{label} · {i}"
 	return rows
+
+
+def _order_state(o) -> str:
+	return ("running" if not o["kot_fired"]
+	        else "fired" if o["pending"] else "ready")
 
 
 @frappe.whitelist()
@@ -130,27 +143,90 @@ def open_orders(outlet: str):
 def table_map(outlet: str):
 	"""The table view a captain starts from: every table at the outlet with
 	its live state - vacant, running (open bill), fired (KOT in the kitchen)
-	or ready (everything prepared, awaiting service/settle)."""
+	or ready (everything prepared, awaiting service/settle). A table holds
+	any number of bills (separate parties, split bills); the tile carries
+	them all and shows the most urgent state."""
 	raw = frappe.db.get_value("POS Outlet", outlet, "tables") or ""
 	tables = [t.strip() for t in raw.replace(",", "\n").splitlines()
 	          if t.strip()]
 	running = open_orders(outlet)
-	by_table = {r["table_no"]: r for r in running if r.get("table_no")}
+	by_table: dict[str, list] = {}
+	for r in running:
+		if r.get("table_no"):
+			by_table.setdefault(r["table_no"], []).append(r)
 	out = []
 	for t in tables:
-		o = by_table.get(t)
-		if not o:
-			out.append({"table": t, "state": "vacant"})
+		orders = by_table.get(t, [])
+		if not orders:
+			out.append({"table": t, "state": "vacant", "bills": 0,
+			            "orders": []})
 			continue
-		state = ("running" if not o["kot_fired"]
-		         else "fired" if o["pending"] else "ready")
-		out.append({"table": t, "state": state, "order": o["name"],
-		            "order_total": o["order_total"], "items": o["items"],
-		            "kot_no": o["kot_no"], "since": o["creation"]})
-	# tabs not shown on a tile (rooms, takeaway, unlisted or doubled tables)
-	shown = {o.get("order") for o in out if o.get("order")}
+		states = [_order_state(o) for o in orders]
+		state = ("fired" if "fired" in states
+		         else "running" if "running" in states else "ready")
+		out.append({
+			"table": t, "state": state, "bills": len(orders),
+			"order_total": sum(o["order_total"] or 0 for o in orders),
+			"orders": [{"order": o["name"], "label": o["label"],
+			            "order_total": o["order_total"], "state": s}
+			           for o, s in zip(orders, states)],
+		})
+	# tabs not shown on a tile (rooms, takeaway, ad-hoc/temp tables)
+	shown = {b["order"] for t in out for b in t["orders"]}
 	other = [r for r in running if r["name"] not in shown]
 	return {"tables": out, "other": other}
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles(*POS_ROLES)
+def split_order(order: str, item_rows, table_no: str | None = None):
+	"""Split a bill: move the chosen lines to a new bill on the same table
+	(or a named one) - separate bills for two parties sharing a table, or
+	one party paying separately. Fired lines keep their kitchen status, and
+	the two bills conserve the original total."""
+	if isinstance(item_rows, str):
+		item_rows = frappe.parse_json(item_rows)
+	rows = {r for r in (item_rows or []) if r}
+	if not rows:
+		frappe.throw(_("Pick at least one line to move."))
+	src = frappe.get_doc("POS Order", order)
+	if src.status in ("Delivered", "Cancelled"):
+		frappe.throw(_("This order is already closed."))
+	move = [it for it in src.items if it.name in rows and not it.voided]
+	if len(move) != len(rows):
+		frappe.throw(_("Some lines were not found (or already voided)."))
+	if not [it for it in src.items
+	        if it.name not in rows and not it.voided]:
+		frappe.throw(_("Every line is moving - rename the table on this "
+		              "bill instead of splitting it."))
+	new = frappe.get_doc({
+		"doctype": "POS Order",
+		"property": src.property,
+		"outlet": src.outlet,
+		"status": ("Preparing"
+		           if any(it.kot_status != "New" for it in move)
+		           else src.status),
+		"source": src.source,
+		"order_type": src.order_type,
+		"room": src.room,
+		"reservation": src.reservation,
+		"table_no": table_no or src.table_no,
+		"captain": frappe.session.user,
+		"kot_fired": 1 if any(it.kot_status != "New" for it in move) else 0,
+		"kot_no": src.kot_no,  # shared: the kitchen knows it by this ticket
+		"notes": src.notes,
+		"items": [{
+			"menu_item": it.menu_item, "item_name": it.item_name,
+			"qty": it.qty, "rate": it.rate,
+			"instructions": it.instructions, "kot_status": it.kot_status,
+		} for it in move],
+	})
+	new.insert()
+	for it in move:
+		src.remove(it)
+	src.save()
+	return {"ok": True, "new_order": new.name,
+	        "source_total": src.order_total, "new_total": new.order_total}
 
 
 @frappe.whitelist()

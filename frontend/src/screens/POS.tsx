@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import {
   Plus, Minus, Trash2, Send, UtensilsCrossed, Leaf, Search,
   Maximize2, Minimize2, Wallet, ChevronLeft, ChevronRight,
-  Printer, Receipt, XCircle, Ban,
+  Printer, Receipt, XCircle, Ban, Scissors, Users,
 } from "lucide-react"
 import { call, getCurrentProperty } from "../lib/api"
 import { subscribeRealtime } from "../lib/realtime"
@@ -33,13 +33,18 @@ interface OpenOrder {
   kot_no: number | null
   order_type: string | null
 }
+interface TableBill {
+  order: string
+  label: string
+  order_total: number
+  state: "running" | "fired" | "ready"
+}
 interface TableTile {
   table: string
   state: "vacant" | "running" | "fired" | "ready"
-  order?: string
+  bills: number
   order_total?: number
-  items?: number
-  kot_no?: number | null
+  orders: TableBill[]
 }
 interface CartLine {
   menu_item: string
@@ -109,6 +114,10 @@ export default function POS() {
   const [voidReason, setVoidReason] = useState("")
   const [cancelling, setCancelling] = useState(false)
   const [cancelReason, setCancelReason] = useState("")
+  const [chooser, setChooser] = useState<string | null>(null) // table with several bills
+  const [splitMode, setSplitMode] = useState(false)
+  const [splitSel, setSplitSel] = useState<Set<string>>(new Set())
+  const [customTable, setCustomTable] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [full, setFull] = useState(false)
@@ -150,10 +159,11 @@ export default function POS() {
   function resetPanel() {
     setCart([]); setDiscount(""); setSettling(false)
     setVoiding(null); setVoidReason(""); setCancelling(false); setCancelReason("")
+    setSplitMode(false); setSplitSel(new Set()); setChooser(null)
   }
   function newOrder(atTable?: string) {
     setSelected(null); setDetail(null); setRoom(""); resetPanel()
-    setTable(atTable || "")
+    setTable(atTable || ""); setCustomTable(false)
     if (atTable) setOrderType("Dine In")
   }
   async function openTab(name: string) {
@@ -290,6 +300,23 @@ export default function POS() {
       newOrder()
     })
   }
+  function toggleSplitSel(row: string) {
+    setSplitSel((s) => {
+      const n = new Set(s)
+      if (n.has(row)) n.delete(row); else n.add(row)
+      return n
+    })
+  }
+  async function confirmSplit() {
+    if (!selected || splitSel.size === 0) return
+    const order = selected
+    await act(async () => {
+      const r = await call<{ new_order: string }>("kamra.pos.split_order", {
+        order, item_rows: [...splitSel],
+      })
+      await openTab(r.new_order) // land on the party's new bill
+    })
+  }
 
   function toggleFull() {
     if (document.fullscreenElement) document.exitFullscreen()
@@ -337,12 +364,19 @@ export default function POS() {
             <div className="grid grid-cols-4 gap-2 sm:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10">
               {tables.map((t) => (
                 <button key={t.table}
-                  onClick={() => t.order ? openTab(t.order) : newOrder(t.table)}
-                  className={"rounded-xl border p-2 text-center transition " + TILE[t.state] +
-                    (t.order && selected === t.order ? " ring-2 ring-brand-600 ring-offset-1" :
-                      !t.order && selected === null && table === t.table ? " ring-2 ring-brand-600 ring-offset-1" : "")}>
+                  onClick={() => t.bills === 0 ? newOrder(t.table)
+                    : t.bills === 1 ? openTab(t.orders[0].order)
+                      : setChooser(chooser === t.table ? null : t.table)}
+                  className={"relative rounded-xl border p-2 text-center transition " + TILE[t.state] +
+                    (t.orders.some((b) => b.order === selected) || chooser === t.table ? " ring-2 ring-brand-600 ring-offset-1" :
+                      t.bills === 0 && selected === null && table === t.table ? " ring-2 ring-brand-600 ring-offset-1" : "")}>
+                  {t.bills > 1 && (
+                    <span className="absolute -right-1.5 -top-1.5 flex items-center gap-0.5 rounded-full bg-brand-600 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                      <Users className="size-2.5" />{t.bills}
+                    </span>
+                  )}
                   <div className="text-sm font-bold">{t.table}</div>
-                  {t.order ? (
+                  {t.bills > 0 ? (
                     <div className="text-[11px] tabular-nums">₹{inr(t.order_total)}</div>
                   ) : (
                     <div className="text-[11px] opacity-60">+</div>
@@ -350,6 +384,26 @@ export default function POS() {
                 </button>
               ))}
             </div>
+            {chooser && (() => {
+              const t = tables.find((x) => x.table === chooser)
+              if (!t) return null
+              return (
+                <div className="mt-2 flex flex-wrap items-center gap-2 rounded-xl bg-zinc-50 p-2">
+                  <span className="text-xs font-semibold text-zinc-500">{t.table} — {t.bills} bills:</span>
+                  {t.orders.map((b) => (
+                    <button key={b.order} onClick={() => openTab(b.order)}
+                      className={"rounded-lg border px-2.5 py-1 text-sm transition " + TILE[b.state]}>
+                      {b.label} <span className="text-xs tabular-nums opacity-70">₹{inr(b.order_total)}</span>
+                    </button>
+                  ))}
+                  <button onClick={() => newOrder(t.table)}
+                    className="rounded-lg border border-dashed border-zinc-400 px-2.5 py-1 text-sm text-zinc-600 hover:border-brand-500 hover:text-brand-700">
+                    <Plus className="mr-0.5 inline size-3.5" />New bill
+                  </button>
+                  <button onClick={() => setChooser(null)} className="ml-auto text-zinc-400 hover:text-zinc-600">✕</button>
+                </div>
+              )
+            })()}
           </div>
         )}
 
@@ -365,8 +419,10 @@ export default function POS() {
           </button>
           <div className="flex flex-1 gap-2 overflow-x-auto pb-1">
             <button onClick={() => newOrder()}
-              className={"inline-flex shrink-0 items-center gap-1 rounded-lg border px-3 py-1.5 text-sm font-medium " +
-                (selected === null ? "border-brand-600 bg-brand-600 text-white" : "border-dashed border-zinc-300 text-zinc-600 hover:border-brand-400")}>
+              className={"inline-flex shrink-0 items-center gap-1 rounded-lg border px-3 py-1.5 text-sm font-semibold shadow-sm transition " +
+                (selected === null
+                  ? "border-brand-600 bg-brand-600 text-white"
+                  : "border-brand-300 bg-white text-brand-700 hover:border-brand-500 hover:bg-brand-50")}>
               <Plus className="size-4" />New order
             </button>
             {open.map((o) => (
@@ -419,21 +475,41 @@ export default function POS() {
             {selected && detail ? (
               <>
                 <div className="mb-2 flex items-center justify-between">
-                  <h2 className="font-semibold">{orderLabel(detail)}</h2>
+                  <h2 className="flex items-center gap-1.5 font-semibold">
+                    {orderLabel(detail)}
+                    {detail.table_no && detail.status !== "Delivered" && (
+                      <button title="New bill on this table (another party)"
+                        onClick={() => newOrder(detail.table_no!)}
+                        className="rounded-md border border-dashed border-zinc-300 px-1.5 py-0.5 text-[11px] font-medium text-zinc-500 hover:border-brand-500 hover:text-brand-700">
+                        + bill
+                      </button>
+                    )}
+                  </h2>
                   <span className="text-xs text-zinc-400">
                     {detail.kot_no ? `KOT #${detail.kot_no} · ` : ""}{detail.status}
                   </span>
                 </div>
+                {splitMode && (
+                  <p className="mb-1 rounded-lg bg-brand-50 px-2 py-1 text-xs text-brand-700">
+                    Tick the lines moving to the new bill.
+                  </p>
+                )}
                 <ul className="mb-2 space-y-1 border-b border-zinc-100 pb-2 text-sm">
                   {detail.items.map((it) => (
                     <li key={it.row} className="group flex items-center justify-between gap-1">
-                      <span className={it.voided ? "text-zinc-400 line-through" : ""}>
-                        {Math.round(it.qty)}× {it.item_name}
-                        {!it.voided && it.kot_status !== "New" && <span className="ml-1 text-[10px] text-zinc-400">{it.kot_status}</span>}
+                      <span className={"flex items-center gap-1.5 " + (it.voided ? "text-zinc-400 line-through" : "")}>
+                        {splitMode && !it.voided && (
+                          <input type="checkbox" className="accent-brand-600"
+                            checked={splitSel.has(it.row)} onChange={() => toggleSplitSel(it.row)} />
+                        )}
+                        <span>
+                          {Math.round(it.qty)}× {it.item_name}
+                          {!it.voided && it.kot_status !== "New" && <span className="ml-1 text-[10px] text-zinc-400">{it.kot_status}</span>}
+                        </span>
                       </span>
                       <span className="flex items-center gap-1">
                         <span className="tabular-nums">₹{inr(it.amount)}</span>
-                        {!it.voided && detail.status !== "Delivered" && (
+                        {!splitMode && !it.voided && detail.status !== "Delivered" && (
                           <button title="Void line" onClick={() => { setVoiding(it); setVoidReason("") }}
                             className="text-zinc-300 opacity-0 transition group-hover:opacity-100 hover:text-rose-500">
                             <XCircle className="size-3.5" />
@@ -443,6 +519,16 @@ export default function POS() {
                     </li>
                   ))}
                 </ul>
+                {splitMode && (
+                  <div className="mb-2 flex gap-1.5">
+                    <Button className="flex-1" disabled={busy || splitSel.size === 0 ||
+                      splitSel.size >= detail.items.filter((i) => !i.voided).length}
+                      onClick={confirmSplit}>
+                      <Scissors className="size-4" />Move {splitSel.size || ""} to new bill
+                    </Button>
+                    <Button variant="ghost" onClick={() => { setSplitMode(false); setSplitSel(new Set()) }}>✕</Button>
+                  </div>
+                )}
                 {voiding && (
                   <div className="mb-2 rounded-lg border border-rose-200 bg-rose-50 p-2">
                     <p className="mb-1 text-xs font-medium text-rose-700">Void {voiding.item_name} — reason required</p>
@@ -475,17 +561,28 @@ export default function POS() {
                   </select>
                 )}
                 {orderType === "Dine In" && (
-                  tables.length > 0 ? (
-                    <select className={inputCls} value={table} onChange={(e) => setTable(e.target.value)}>
+                  tables.length > 0 && !customTable ? (
+                    <select className={inputCls} value={table}
+                      onChange={(e) => {
+                        if (e.target.value === "__custom__") { setCustomTable(true); setTable("") }
+                        else setTable(e.target.value)
+                      }}>
                       <option value="">Table…</option>
                       {tables.map((t) => (
                         <option key={t.table} value={t.table}>
-                          {t.table}{t.state !== "vacant" ? " (occupied)" : ""}
+                          {t.table}{t.bills > 0 ? ` (${t.bills} bill${t.bills > 1 ? "s" : ""} running)` : ""}
                         </option>
                       ))}
+                      <option value="__custom__">Temp / custom table…</option>
                     </select>
                   ) : (
-                    <input className={inputCls} placeholder="Table" value={table} onChange={(e) => setTable(e.target.value)} />
+                    <div className="flex gap-1.5">
+                      <input autoFocus={customTable} className={inputCls} placeholder="Table name (e.g. Patio 2)"
+                        value={table} onChange={(e) => setTable(e.target.value)} />
+                      {customTable && (
+                        <Button variant="ghost" className="!px-2" onClick={() => { setCustomTable(false); setTable("") }}>✕</Button>
+                      )}
+                    </div>
                   )
                 )}
               </div>
@@ -547,6 +644,11 @@ export default function POS() {
                     </Button>
                     <Button variant="ghost" className="flex-1 !px-2 !py-1 text-xs" onClick={printBill}>
                       <Receipt className="size-3.5" />Bill
+                    </Button>
+                    <Button variant="ghost" className="flex-1 !px-2 !py-1 text-xs"
+                      disabled={detail.items.filter((i) => !i.voided).length < 2 || detail.status === "Delivered"}
+                      onClick={() => { setSplitMode(true); setSplitSel(new Set()) }}>
+                      <Scissors className="size-3.5" />Split
                     </Button>
                     <Button variant="ghost" className="flex-1 !px-2 !py-1 text-xs text-rose-600 hover:bg-rose-50"
                       onClick={() => { setCancelling(true); setCancelReason("") }}>

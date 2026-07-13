@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function — the same governed layer
-the UI and the AI use. **125 endpoints**, generated from the source
+the UI and the AI use. **126 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -1196,11 +1196,28 @@ now, so a captain can juggle several at once.
 
 The table view a captain starts from: every table at the outlet with
 its live state - vacant, running (open bill), fired (KOT in the kitchen)
-or ready (everything prepared, awaiting service/settle).
+or ready (everything prepared, awaiting service/settle). A table holds
+any number of bills (separate parties, split bills); the tile carries
+them all and shows the most urgent state.
 
 | Param | Required | Default |
 | --- | --- | --- |
 | `outlet` | yes |  |
+
+### `kamra.pos.split_order`
+
+**POST**
+
+Split a bill: move the chosen lines to a new bill on the same table
+(or a named one) - separate bills for two parties sharing a table, or
+one party paying separately. Fired lines keep their kitchen status, and
+the two bills conserve the original total.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `order` | yes |  |
+| `item_rows` | yes |  |
+| `table_no` | no | `None` |
 
 ### `kamra.pos.order_detail`
 

@@ -736,6 +736,51 @@ def t26():
 	assert frappe.db.get_value("POS Order", o2["order"], "status") == "Cancelled"
 
 
+@check("POS: two parties share a table, split bill conserves the total")
+def t27():
+	from kamra import pos
+	outlet = frappe.get_doc({
+		"doctype": "POS Outlet", "property": P, "outlet_name": "Eval Bistro",
+		"outlet_type": "Restaurant", "gst_rate": 5, "tables": "T1\nT2",
+	}).insert(ignore_permissions=True).name
+	mk = lambda n, p: frappe.get_doc({
+		"doctype": "Menu Item", "property": P, "outlet": outlet,
+		"item_name": n, "category": "Food", "price": p,
+		"is_veg": 1, "available": 1, "prep_station": "Kitchen",
+	}).insert(ignore_permissions=True).name
+	soup, curry, rice = mk("Eval Soup", 150), mk("Eval Curry", 250), mk("Eval Rice", 100)
+
+	# party A and party B share T1 - two separate bills on one table
+	a = pos.create_order(outlet, [{"menu_item": soup, "qty": 1}], table_no="T1")
+	b = pos.create_order(outlet, [{"menu_item": curry, "qty": 1},
+	                              {"menu_item": rice, "qty": 2}], table_no="T1")
+	t1 = [t for t in pos.table_map(outlet)["tables"] if t["table"] == "T1"][0]
+	assert t1["bills"] == 2 and len(t1["orders"]) == 2, t1
+	assert t1["order_total"] == 600, t1  # 150 + 450
+	labels = {o["label"] for o in t1["orders"]}
+	assert labels == {"Table T1 · 1", "Table T1 · 2"}, labels
+
+	# split party B's bill: rice moves to its own bill, total conserved
+	pos.fire_kot(b["order"])
+	det = pos.order_detail(b["order"])
+	rice_row = next(i["row"] for i in det["items"] if i["item_name"] == "Eval Rice")
+	s = pos.split_order(b["order"], [rice_row])
+	assert s["source_total"] == 250 and s["new_total"] == 200, s
+	moved = pos.order_detail(s["new_order"])
+	assert moved["items"][0]["kot_status"] == "Fired", moved  # kitchen state kept
+	assert moved["table_no"] == "T1" and moved["kot_no"] == det["kot_no"], moved
+	t1 = [t for t in pos.table_map(outlet)["tables"] if t["table"] == "T1"][0]
+	assert t1["bills"] == 3 and t1["order_total"] == 600, t1
+
+	# guard: a split can't take every line
+	det_a = pos.order_detail(a["order"])
+	try:
+		pos.split_order(a["order"], [det_a["items"][0]["row"]])
+		raise AssertionError("split of every line was allowed")
+	except frappe.exceptions.ValidationError:
+		pass
+
+
 @check("ticket SLA: priority sets due window")
 def t12():
 	from frappe.utils import get_datetime, now_datetime, time_diff_in_seconds
@@ -758,7 +803,7 @@ def execute():
 	frappe.db.savepoint("eval_start")
 	try:
 		RT, ROOM = setup()
-		for fn in (t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19, t20, t21, t22, t23, t24, t25, t26):
+		for fn in (t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19, t20, t21, t22, t23, t24, t25, t26, t27):
 			fn()
 	finally:
 		frappe.db.commit = real_commit
