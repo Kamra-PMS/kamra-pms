@@ -32,7 +32,11 @@
   "order_type",
   "kot_no",
   "paid",
-  "payment_mode"
+  "payment_mode",
+  "guests",
+  "customer_name",
+  "customer_phone",
+  "delivery_address"
  ],
  "fields": [
   {
@@ -168,7 +172,7 @@
    "fieldname": "order_type",
    "fieldtype": "Select",
    "label": "Order Type",
-   "options": "Dine In\nRoom Service\nTakeaway",
+   "options": "Dine In\nRoom Service\nTakeaway\nDelivery",
    "default": "Dine In",
    "in_list_view": 1
   },
@@ -191,6 +195,26 @@
    "label": "Payment Mode",
    "options": "\nCash\nCard\nUPI",
    "read_only": 1
+  },
+  {
+   "fieldname": "guests",
+   "fieldtype": "Int",
+   "label": "Guests"
+  },
+  {
+   "fieldname": "customer_name",
+   "fieldtype": "Data",
+   "label": "Customer Name"
+  },
+  {
+   "fieldname": "customer_phone",
+   "fieldtype": "Data",
+   "label": "Customer Phone"
+  },
+  {
+   "fieldname": "delivery_address",
+   "fieldtype": "Small Text",
+   "label": "Delivery Address"
   }
  ],
  "grid_page_length": 50,

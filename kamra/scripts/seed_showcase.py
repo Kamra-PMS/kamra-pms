@@ -124,8 +124,10 @@ def execute():
 
 	added_outlet = added_item = 0
 	for oname, otype, gst, items in POS:
-		# dine-in outlets get a table layout so the POS table map lights up
-		tables = ("\n".join(f"T{i}" for i in range(1, 13))
+		# dine-in outlets get a table layout ("name:seats") so the POS
+		# table map lights up with seat counts
+		seat_plan = [2, 4, 4, 2, 4, 6, 2, 4, 6, 2, 4, 6]
+		tables = ("\n".join(f"T{i}:{s}" for i, s in enumerate(seat_plan, 1))
 		          if otype in ("Restaurant", "Bar") else None)
 		outlet = frappe.db.get_value(
 			"POS Outlet", {"property": PROPERTY, "outlet_name": oname})
@@ -136,8 +138,10 @@ def execute():
 				"tables": tables,
 			}).insert(ignore_permissions=True).name
 			added_outlet += 1
-		elif tables and not frappe.db.get_value("POS Outlet", outlet, "tables"):
-			frappe.db.set_value("POS Outlet", outlet, "tables", tables)
+		elif tables:
+			current = frappe.db.get_value("POS Outlet", outlet, "tables") or ""
+			if not current or ":" not in current:  # upgrade plain layouts
+				frappe.db.set_value("POS Outlet", outlet, "tables", tables)
 		for item, cat, price, veg, station, img in items:
 			if frappe.db.exists("Menu Item", {"outlet": outlet, "item_name": item}):
 				continue

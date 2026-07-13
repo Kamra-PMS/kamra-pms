@@ -781,6 +781,53 @@ def t27():
 		pass
 
 
+@check("POS: delivery & takeaway orders, seats, guests, recent bills")
+def t28():
+	from kamra import pos
+	outlet = frappe.get_doc({
+		"doctype": "POS Outlet", "property": P, "outlet_name": "Eval Express",
+		"outlet_type": "Restaurant", "gst_rate": 5, "tables": "T1:2\nT2:4",
+	}).insert(ignore_permissions=True).name
+	mi = frappe.get_doc({
+		"doctype": "Menu Item", "property": P, "outlet": outlet,
+		"item_name": "Eval Biryani", "category": "Food", "price": 400,
+		"is_veg": 0, "available": 1, "prep_station": "Kitchen",
+	}).insert(ignore_permissions=True).name
+
+	# seats come from the "name:seats" layout
+	tm = pos.table_map(outlet)
+	assert [t["seats"] for t in tm["tables"]] == [2, 4], tm
+
+	# delivery needs the customer; carries name/phone/address end to end
+	try:
+		pos.create_order(outlet, [{"menu_item": mi, "qty": 1}],
+		                 order_type="Delivery")
+		raise AssertionError("delivery without customer accepted")
+	except frappe.exceptions.ValidationError:
+		pass
+	d = pos.create_order(outlet, [{"menu_item": mi, "qty": 2}],
+	                     order_type="Delivery", customer_name="Asha Rao",
+	                     customer_phone="+91 90000 00028",
+	                     delivery_address="12 MG Road")
+	opened = [o for o in pos.open_orders(outlet) if o["name"] == d["order"]]
+	assert opened and opened[0]["label"] == "Delivery · Asha", opened
+	b = pos.bill_data(d["order"])
+	assert b["delivery_address"] == "12 MG Road", b
+
+	# dine-in with a guest count lands on the table tile
+	pos.create_order(outlet, [{"menu_item": mi, "qty": 1}],
+	                 table_no="T2", order_type="Dine In", guests=3)
+	t2 = [t for t in pos.table_map(outlet)["tables"] if t["table"] == "T2"][0]
+	assert t2["guests"] == 3 and t2["since"], t2
+
+	# recent bills reflect settlement
+	pos.fire_kot(d["order"])
+	pos.pay_order(d["order"], "UPI")
+	rec = [r for r in pos.recent_orders(outlet) if r["name"] == d["order"]]
+	assert rec and rec[0]["paid"] and rec[0]["payment_mode"] == "UPI", rec
+	assert not rec[0]["open"], rec
+
+
 @check("ticket SLA: priority sets due window")
 def t12():
 	from frappe.utils import get_datetime, now_datetime, time_diff_in_seconds
@@ -803,7 +850,7 @@ def execute():
 	frappe.db.savepoint("eval_start")
 	try:
 		RT, ROOM = setup()
-		for fn in (t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19, t20, t21, t22, t23, t24, t25, t26, t27):
+		for fn in (t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19, t20, t21, t22, t23, t24, t25, t26, t27, t28):
 			fn()
 	finally:
 		frappe.db.commit = real_commit

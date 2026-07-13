@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function — the same governed layer
-the UI and the AI use. **126 endpoints**, generated from the source
+the UI and the AI use. **127 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -1165,7 +1165,8 @@ The digital menu for an outlet: available items grouped by category.
 **POST**
 
 Captain takes an order. If a room is given but no reservation, the
-in-house stay is resolved so it can post to the folio later.
+in-house stay is resolved so it can post to the folio later. Takeaway
+and delivery carry the customer's details instead of a table/room.
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -1178,6 +1179,10 @@ in-house stay is resolved so it can post to the folio later.
 | `source` | no | `'Manual'` |
 | `notes` | no | `None` |
 | `order_type` | no | `None` |
+| `guests` | no | `None` |
+| `customer_name` | no | `None` |
+| `customer_phone` | no | `None` |
+| `delivery_address` | no | `None` |
 
 ### `kamra.pos.open_orders`
 
@@ -1203,6 +1208,18 @@ them all and shows the most urgent state.
 | Param | Required | Default |
 | --- | --- | --- |
 | `outlet` | yes |  |
+
+### `kamra.pos.recent_orders`
+
+**GET/POST**
+
+The outlet's latest bills, newest first - open or settled - so a
+captain can jump back to a running bill or reprint a settled one.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `outlet` | yes |  |
+| `limit` | no | `8` |
 
 ### `kamra.pos.split_order`
 

@@ -25,7 +25,8 @@ allowances, part-settlement, invoice cancellation with a register;
 Outlet-based restaurant POS with a photo menu, per-item instructions and
 guest discounts. The captain works from a colour-coded **table map**
 (vacant / running / in kitchen / ready) and can juggle several running
-bills at once — dine-in, room service and takeaway. A table holds **any
+bills at once — dine-in, room service, takeaway and delivery (with the
+customer's name, phone and address carried onto the KOT and bill). A table holds **any
 number of bills** (two parties sharing a table each get their own), bills
 **split by items** onto a new bill with kitchen status preserved, and
 ad-hoc **temp tables** can be named on the fly. Firing a KOT stamps a

@@ -69,9 +69,13 @@ def _load_items(rows):
 def create_order(outlet: str, items, property: str | None = None,
                  room: str | None = None, reservation: str | None = None,
                  table_no: str | None = None, source: str = "Manual",
-                 notes: str | None = None, order_type: str | None = None):
+                 notes: str | None = None, order_type: str | None = None,
+                 guests=None, customer_name: str | None = None,
+                 customer_phone: str | None = None,
+                 delivery_address: str | None = None):
 	"""Captain takes an order. If a room is given but no reservation, the
-	in-house stay is resolved so it can post to the folio later."""
+	in-house stay is resolved so it can post to the folio later. Takeaway
+	and delivery carry the customer's details instead of a table/room."""
 	property = property or frappe.db.get_value("POS Outlet", outlet, "property")
 	if room and not reservation:
 		reservation = frappe.db.get_value(
@@ -79,8 +83,10 @@ def create_order(outlet: str, items, property: str | None = None,
 	lines = _load_items(items)
 	if not lines:
 		frappe.throw(_("Add at least one available item."))
-	if order_type not in ("Dine In", "Room Service", "Takeaway"):
+	if order_type not in ("Dine In", "Room Service", "Takeaway", "Delivery"):
 		order_type = "Room Service" if room else "Dine In"
+	if order_type == "Delivery" and not (customer_phone or customer_name):
+		frappe.throw(_("Delivery needs the customer's name or phone."))
 	doc = frappe.get_doc({
 		"doctype": "POS Order",
 		"property": property,
@@ -91,6 +97,10 @@ def create_order(outlet: str, items, property: str | None = None,
 		"room": room or None,
 		"reservation": reservation or None,
 		"table_no": table_no or None,
+		"guests": int(guests) if guests else None,
+		"customer_name": (customer_name or "").strip() or None,
+		"customer_phone": (customer_phone or "").strip() or None,
+		"delivery_address": (delivery_address or "").strip() or None,
 		"captain": frappe.session.user if source != "QR" else None,
 		"notes": notes or None,
 		"items": lines,
@@ -110,7 +120,8 @@ def open_orders(outlet: str):
 		filters={"outlet": outlet,
 		         "status": ("in", ["Placed", "Confirmed", "Preparing"])},
 		fields=["name", "status", "source", "room", "table_no", "order_type",
-		        "order_total", "kot_fired", "kot_no", "creation", "modified"],
+		        "order_total", "kot_fired", "kot_no", "guests",
+		        "customer_name", "creation", "modified"],
 		order_by="creation asc")
 	for r in rows:
 		r["room_no"] = (r.room or "").split("-")[-1]
@@ -119,9 +130,7 @@ def open_orders(outlet: str):
 		r["pending"] = frappe.db.count(
 			"POS Order Item",
 			{"parent": r.name, "kot_status": "Fired", "voided": 0})
-		r["label"] = (f"Room {r['room_no']}" if r.room
-		              else f"Table {r.table_no}" if r.table_no
-		              else "Takeaway" if r.order_type == "Takeaway" else r.name)
+		r["label"] = _label(r)
 	# two parties on one table (or a split bill) share a label - number them
 	groups: dict[str, list] = {}
 	for r in rows:
@@ -131,6 +140,18 @@ def open_orders(outlet: str):
 			for i, r in enumerate(group, 1):
 				r["label"] = f"{label} · {i}"
 	return rows
+
+
+def _label(r) -> str:
+	"""A human tag for a bill: where it is, or who it's for."""
+	if r.get("room"):
+		return f"Room {(r['room'] or '').split('-')[-1]}"
+	if r.get("table_no"):
+		return f"Table {r['table_no']}"
+	who = (r.get("customer_name") or "").split(" ")[0]
+	if r.get("order_type") in ("Takeaway", "Delivery"):
+		return f"{r['order_type']} · {who}" if who else r["order_type"]
+	return r["name"]
 
 
 def _order_state(o) -> str:
@@ -147,26 +168,35 @@ def table_map(outlet: str):
 	any number of bills (separate parties, split bills); the tile carries
 	them all and shows the most urgent state."""
 	raw = frappe.db.get_value("POS Outlet", outlet, "tables") or ""
-	tables = [t.strip() for t in raw.replace(",", "\n").splitlines()
-	          if t.strip()]
+	tables = []
+	for line in raw.replace(",", "\n").splitlines():
+		line = line.strip()
+		if not line:
+			continue
+		# "T1:4" = table T1 with 4 seats; plain "T1" works too
+		name, _sep, seats = line.partition(":")
+		tables.append((name.strip(),
+		               int(seats) if seats.strip().isdigit() else None))
 	running = open_orders(outlet)
 	by_table: dict[str, list] = {}
 	for r in running:
 		if r.get("table_no"):
 			by_table.setdefault(r["table_no"], []).append(r)
 	out = []
-	for t in tables:
+	for t, seats in tables:
 		orders = by_table.get(t, [])
 		if not orders:
-			out.append({"table": t, "state": "vacant", "bills": 0,
-			            "orders": []})
+			out.append({"table": t, "seats": seats, "state": "vacant",
+			            "bills": 0, "orders": []})
 			continue
 		states = [_order_state(o) for o in orders]
 		state = ("fired" if "fired" in states
 		         else "running" if "running" in states else "ready")
 		out.append({
-			"table": t, "state": state, "bills": len(orders),
+			"table": t, "seats": seats, "state": state, "bills": len(orders),
 			"order_total": sum(o["order_total"] or 0 for o in orders),
+			"guests": sum(o.get("guests") or 0 for o in orders) or None,
+			"since": str(min(o["creation"] for o in orders)),
 			"orders": [{"order": o["name"], "label": o["label"],
 			            "order_total": o["order_total"], "state": s}
 			           for o, s in zip(orders, states)],
@@ -175,6 +205,23 @@ def table_map(outlet: str):
 	shown = {b["order"] for t in out for b in t["orders"]}
 	other = [r for r in running if r["name"] not in shown]
 	return {"tables": out, "other": other}
+
+
+@frappe.whitelist()
+@require_roles(*POS_ROLES)
+def recent_orders(outlet: str, limit: int = 8):
+	"""The outlet's latest bills, newest first - open or settled - so a
+	captain can jump back to a running bill or reprint a settled one."""
+	rows = frappe.get_all(
+		"POS Order", filters={"outlet": outlet},
+		fields=["name", "status", "order_type", "room", "table_no",
+		        "customer_name", "order_total", "paid", "payment_mode",
+		        "creation", "modified"],
+		order_by="modified desc", limit=min(int(limit or 8), 25))
+	for r in rows:
+		r["label"] = _label(r)
+		r["open"] = r.status in ("Placed", "Confirmed", "Preparing")
+	return rows
 
 
 @frappe.whitelist(methods=["POST"])
@@ -210,6 +257,9 @@ def split_order(order: str, item_rows, table_no: str | None = None):
 		"order_type": src.order_type,
 		"room": src.room,
 		"reservation": src.reservation,
+		"customer_name": src.customer_name,
+		"customer_phone": src.customer_phone,
+		"delivery_address": src.delivery_address,
 		"table_no": table_no or src.table_no,
 		"captain": frappe.session.user,
 		"kot_fired": 1 if any(it.kot_status != "New" for it in move) else 0,
@@ -238,6 +288,9 @@ def order_detail(order: str):
 		"name": doc.name, "outlet": doc.outlet, "status": doc.status,
 		"source": doc.source, "room": doc.room, "table_no": doc.table_no,
 		"order_type": doc.order_type, "kot_no": doc.kot_no,
+		"guests": doc.guests, "customer_name": doc.customer_name,
+		"customer_phone": doc.customer_phone,
+		"delivery_address": doc.delivery_address,
 		"paid": doc.paid, "payment_mode": doc.payment_mode,
 		"discount_amount": doc.discount_amount, "discount_reason": doc.discount_reason,
 		"subtotal": doc.subtotal, "order_total": doc.order_total,
@@ -453,6 +506,9 @@ def bill_data(order: str):
 		"property_name": property_name, "outlet_name": outlet.outlet_name,
 		"order_type": doc.order_type, "table_no": doc.table_no,
 		"room_no": (doc.room or "").split("-")[-1] if doc.room else None,
+		"customer_name": doc.customer_name,
+		"customer_phone": doc.customer_phone,
+		"delivery_address": doc.delivery_address,
 		"captain": doc.captain, "created": str(doc.creation),
 		"items": [
 			{"item_name": it.item_name, "qty": it.qty, "rate": it.rate,

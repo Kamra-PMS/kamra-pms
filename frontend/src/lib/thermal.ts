@@ -52,6 +52,8 @@ export function kotHtml(o: {
   order_type?: string | null
   order: string
   reprint?: boolean
+  customer?: string | null
+  address?: string | null
   items: KotLine[]
 }) {
   const when = new Date().toLocaleString("en-IN", {
@@ -69,6 +71,8 @@ export function kotHtml(o: {
     <div class="rule"></div>
     <div class="row"><span class="b lg">${esc(o.label)}</span><span class="sm">${esc(o.order_type || "")}</span></div>
     <div class="row sm"><span>${esc(o.order)}</span><span>${when}</span></div>
+    ${o.customer ? `<div class="sm">For: ${esc(o.customer)}</div>` : ""}
+    ${o.address ? `<div class="sm">→ ${esc(o.address)}</div>` : ""}
     <div class="rule"></div>
     <table>${rows}</table>
     <div class="rule"></div>
@@ -83,6 +87,9 @@ export interface BillData {
   order_type: string | null
   table_no: string | null
   room_no: string | null
+  customer_name: string | null
+  customer_phone: string | null
+  delivery_address: string | null
   captain: string | null
   items: { item_name: string; qty: number; rate: number; amount: number }[]
   subtotal: number
@@ -115,6 +122,9 @@ export function billHtml(b: BillData) {
     <div class="rule"></div>
     <div class="row"><span class="b">${esc(label)}</span><span>${when}</span></div>
     <div class="row sm"><span>Bill: ${esc(b.order)}</span><span>KOT #${b.kot_no ?? "—"}</span></div>
+    ${b.customer_name || b.customer_phone
+      ? `<div class="sm">${esc([b.customer_name, b.customer_phone].filter(Boolean).join(" · "))}</div>` : ""}
+    ${b.delivery_address ? `<div class="sm">→ ${esc(b.delivery_address)}</div>` : ""}
     <div class="rule"></div>
     <table>
       <tr class="sm"><td>Item</td><td class="num">Qty</td><td class="num">Rate</td><td class="num">Amt</td></tr>

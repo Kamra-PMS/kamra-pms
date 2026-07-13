@@ -3370,7 +3370,7 @@
         "kamra.pos.create_order"
        ]
       },
-      "description": "Captain takes an order. If a room is given but no reservation, the\nin-house stay is resolved so it can post to the folio later.",
+      "description": "Captain takes an order. If a room is given but no reservation, the\nin-house stay is resolved so it can post to the folio later. Takeaway\nand delivery carry the customer's details instead of a table/room.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"outlet\": \"Your Property-Restaurant\",\n  \"items\": \"<items>\",\n  \"property\": \"Your Property\",\n  \"room\": \"Your Property-101\",\n  \"reservation\": \"RES-2026-00001\",\n  \"source\": \"Manual\"\n}",
@@ -3448,6 +3448,43 @@
       "body": {
        "mode": "raw",
        "raw": "{\n  \"outlet\": \"Your Property-Restaurant\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "recent_orders",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.pos.recent_orders",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.pos.recent_orders"
+       ]
+      },
+      "description": "The outlet's latest bills, newest first - open or settled - so a\ncaptain can jump back to a running bill or reprint a settled one.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"outlet\": \"Your Property-Restaurant\",\n  \"limit\": 8\n}",
        "options": {
         "raw": {
          "language": "json"
