@@ -139,6 +139,13 @@ jobs:
           mkdir -p ~/.ssh
           printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
+          # Pre-deploy self-heal: the containerd store fills the disk after
+          # ~15 image pulls, and a deploy that dies mid-way never reaches
+          # its post-deploy prune. Prune FIRST so a full disk can't wedge
+          # the channel (unused images only - running stacks are untouched).
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new \
+            "${DEPLOY_USER:-root}@${DEPLOY_HOST}" \
+            "df -h / | tail -1; docker system prune -af 2>/dev/null | tail -1; df -h / | tail -1"
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new \
             "${DEPLOY_USER:-root}@${DEPLOY_HOST}" \
             "bash ~/kamra-deploy/redeploy.sh nightly"

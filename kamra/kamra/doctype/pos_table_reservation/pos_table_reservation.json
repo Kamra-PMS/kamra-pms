@@ -1,0 +1,155 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "format:TRES-{YYYY}-{#####}",
+ "creation": "2026-07-14 10:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "property",
+  "outlet",
+  "table_no",
+  "column_break_a",
+  "reserved_at",
+  "status",
+  "sb_guest",
+  "guest_name",
+  "phone",
+  "column_break_b",
+  "party_size",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "property",
+   "fieldtype": "Link",
+   "label": "Property",
+   "options": "Property"
+  },
+  {
+   "fieldname": "outlet",
+   "fieldtype": "Link",
+   "label": "Outlet",
+   "options": "POS Outlet",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "table_no",
+   "fieldtype": "Data",
+   "label": "Table",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "column_break_a",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "reserved_at",
+   "fieldtype": "Datetime",
+   "label": "Reserved At",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Booked\nSeated\nCancelled\nNo Show",
+   "default": "Booked",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "sb_guest",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "guest_name",
+   "fieldtype": "Data",
+   "label": "Guest Name",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "phone",
+   "fieldtype": "Data",
+   "label": "Phone"
+  },
+  {
+   "fieldname": "column_break_b",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "party_size",
+   "fieldtype": "Int",
+   "label": "Party Size"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  }
+ ],
+ "links": [],
+ "modified": "2026-07-14 10:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kamra",
+ "name": "POS Table Reservation",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Hotel Admin",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Front Desk",
+   "write": 1
+  },
+  {
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Finance"
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Kamra Agent",
+   "write": 1
+  }
+ ],
+ "sort_field": "reserved_at",
+ "sort_order": "DESC",
+ "states": []
+}

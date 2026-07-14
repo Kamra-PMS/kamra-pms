@@ -33,7 +33,10 @@ ad-hoc **temp tables** can be named on the fly (they appear as live
 tiles until settled). Table layouts group **area-wise** — Main Hall,
 Patio, Rooftop — with area filters on the map. **NC (no charge)** bills
 need an authorizer (captain / chef / GM) and a reference, print "NC — NO
-CHARGE" on the KOT and bill, close at zero and never touch a folio. Firing a KOT stamps a
+CHARGE" on the KOT and bill, close at zero and never touch a folio. Tables can be **reserved**
+(guest, phone, party size, time) - the tile shows "Res 10:30" with
+seat / no-show / cancel actions - and a settled table flips to
+**Cleaning** until marked done (auto-clears in 30 min). Firing a KOT stamps a
 daily **KOT number** and prints an **80mm thermal ticket** (KDS-only
 kitchens can turn printing off); a live **kitchen display** per outlet
 (Kitchen/Bar stations, colour-aged tickets) runs alongside. Bills print on

@@ -3457,6 +3457,117 @@
      }
     },
     {
+     "name": "reserve_table",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.pos.reserve_table",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.pos.reserve_table"
+       ]
+      },
+      "description": "Reserve a table - it shows as Reserved on the map from an hour\nbefore the time until it's seated, cancelled or marked a no-show.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"outlet\": \"Your Property-Restaurant\",\n  \"table_no\": \"<table_no>\",\n  \"guest_name\": \"A. Guest\",\n  \"reserved_at\": \"<reserved_at>\",\n  \"phone\": \"+91 90000 00000\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "set_reservation",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.pos.set_reservation",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.pos.set_reservation"
+       ]
+      },
+      "description": "Seat / cancel / no-show a table reservation.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"status\": \"<status>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "mark_table_clean",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.pos.mark_table_clean",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.pos.mark_table_clean"
+       ]
+      },
+      "description": "Housekeeping done - the table goes back to vacant on the map.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"outlet\": \"Your Property-Restaurant\",\n  \"table_no\": \"<table_no>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
      "name": "recent_orders",
      "request": {
       "method": "POST",

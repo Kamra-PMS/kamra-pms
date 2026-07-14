@@ -47,11 +47,16 @@ interface TableTile {
   seats: number | null
   area: string | null
   temp?: boolean
-  state: "vacant" | "running" | "fired" | "ready"
+  state: "vacant" | "running" | "fired" | "ready" | "reserved" | "cleaning"
   bills: number
   order_total?: number
   guests?: number | null
   since?: string
+  reservation?: string
+  res_guest?: string
+  res_party?: number | null
+  res_phone?: string | null
+  res_time?: string
   orders: TableBill[]
 }
 interface RecentOrder {
@@ -113,6 +118,8 @@ const TILE: Record<TableTile["state"], string> = {
   running: "border-amber-300 bg-amber-50 text-amber-900 hover:border-amber-400",
   fired: "border-sky-300 bg-sky-50 text-sky-900 hover:border-sky-400",
   ready: "border-emerald-300 bg-emerald-50 text-emerald-900 hover:border-emerald-400",
+  reserved: "border-violet-300 bg-violet-50 text-violet-900 hover:border-violet-400",
+  cleaning: "border-zinc-300 bg-zinc-100 text-zinc-500 hover:border-brand-400",
 }
 
 const inputCls =
@@ -142,6 +149,9 @@ export default function POS() {
   const [tableQuery, setTableQuery] = useState("")
   const [tableFilter, setTableFilter] = useState<"all" | "available" | "occupied">("all")
   const [areaFilter, setAreaFilter] = useState("All")
+  const [resTile, setResTile] = useState<string | null>(null) // reserved table with panel open
+  const [reserveOpen, setReserveOpen] = useState(false)
+  const [resForm, setResForm] = useState({ table: "", guest: "", phone: "", party: "", at: "" })
   const [ncOpen, setNcOpen] = useState(false)
   const [ncBy, setNcBy] = useState("Captain")
   const [ncNote, setNcNote] = useState("")
@@ -213,6 +223,7 @@ export default function POS() {
     setVoiding(null); setVoidReason(""); setCancelling(false); setCancelReason("")
     setSplitMode(false); setSplitSel(new Set()); setChooser(null)
     setNcOpen(false); setNcBy("Captain"); setNcNote("")
+    setResTile(null); setReserveOpen(false)
   }
   function newOrder(atTable?: string) {
     setSelected(null); setDetail(null); setRoom(""); resetPanel()
@@ -431,6 +442,39 @@ export default function POS() {
       await openTab(r.new_order) // land on the party's new bill
     })
   }
+  async function saveReservation() {
+    const f = resForm
+    if (!f.table || !f.guest.trim() || !f.at) return
+    await act(async () => {
+      await call("kamra.pos.reserve_table", {
+        outlet, table_no: f.table, guest_name: f.guest, phone: f.phone || null,
+        party_size: f.party || null, reserved_at: f.at.replace("T", " "),
+      })
+      setReserveOpen(false)
+      setResForm({ table: "", guest: "", phone: "", party: "", at: "" })
+    })
+  }
+  async function seatReservation(t: TableTile) {
+    if (!t.reservation) return
+    await act(async () => {
+      await call("kamra.pos.set_reservation", { reservation: t.reservation, status: "Seated" })
+      newOrder(t.table)
+      if (t.res_party) setGuests(String(t.res_party))
+    })
+  }
+  async function closeReservation(t: TableTile, status: "Cancelled" | "No Show") {
+    if (!t.reservation) return
+    await act(async () => {
+      await call("kamra.pos.set_reservation", { reservation: t.reservation, status })
+      setResTile(null)
+    })
+  }
+  async function cleanTable(t: TableTile) {
+    await act(async () => {
+      await call("kamra.pos.mark_table_clean", { outlet, table_no: t.table })
+      newOrder(t.table)
+    })
+  }
 
   function toggleFull() {
     if (document.fullscreenElement) document.exitFullscreen()
@@ -519,7 +563,41 @@ export default function POS() {
           {/* ── left: tables + recent ── */}
           <div className="space-y-4 lg:col-span-3">
             <div className="rounded-2xl border border-zinc-200 bg-white p-3">
-              <h3 className="mb-2 text-sm font-bold text-zinc-800">Tables</h3>
+              <div className="mb-2 flex items-center justify-between">
+                <h3 className="text-sm font-bold text-zinc-800">Tables</h3>
+                {tables.length > 0 && (
+                  <button onClick={() => setReserveOpen((v) => !v)}
+                    className="rounded-lg border border-zinc-200 px-2 py-0.5 text-[11px] font-medium text-zinc-600 hover:border-violet-400 hover:text-violet-700">
+                    + Reserve
+                  </button>
+                )}
+              </div>
+              {reserveOpen && (
+                <div className="mb-2 space-y-1.5 rounded-xl border border-violet-200 bg-violet-50 p-2">
+                  <div className="grid grid-cols-2 gap-1.5">
+                    <select className={inputCls + " !py-1 text-xs"} value={resForm.table}
+                      onChange={(e) => setResForm({ ...resForm, table: e.target.value })}>
+                      <option value="">Table…</option>
+                      {tables.filter((t) => !t.temp).map((t) => <option key={t.table} value={t.table}>{t.table}</option>)}
+                    </select>
+                    <input className={inputCls + " !py-1 text-xs"} type="datetime-local" value={resForm.at}
+                      onChange={(e) => setResForm({ ...resForm, at: e.target.value })} />
+                  </div>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    <input className={inputCls + " !py-1 text-xs"} placeholder="Guest name" value={resForm.guest}
+                      onChange={(e) => setResForm({ ...resForm, guest: e.target.value })} />
+                    <input className={inputCls + " !py-1 text-xs"} placeholder="Phone" value={resForm.phone}
+                      onChange={(e) => setResForm({ ...resForm, phone: e.target.value })} />
+                  </div>
+                  <div className="flex gap-1.5">
+                    <input className={inputCls + " !w-20 !py-1 text-xs"} placeholder="Party" inputMode="numeric" value={resForm.party}
+                      onChange={(e) => setResForm({ ...resForm, party: e.target.value.replace(/\D/g, "") })} />
+                    <Button className="flex-1 !py-1 text-xs" disabled={busy || !resForm.table || !resForm.guest.trim() || !resForm.at}
+                      onClick={saveReservation}>Reserve</Button>
+                    <Button variant="ghost" className="!px-2 !py-1 text-xs" onClick={() => setReserveOpen(false)}>✕</Button>
+                  </div>
+                </div>
+              )}
               {tables.length > 0 ? (
                 <>
                   <div className="relative mb-2">
@@ -556,9 +634,11 @@ export default function POS() {
                       <div className="grid grid-cols-3 gap-2">
                         {group.map((t) => (
                           <button key={t.table}
-                            onClick={() => t.bills === 0 ? newOrder(t.table)
-                              : t.bills === 1 ? openTab(t.orders[0].order)
-                                : setChooser(chooser === t.table ? null : t.table)}
+                            onClick={() => t.state === "reserved" ? setResTile(resTile === t.table ? null : t.table)
+                              : t.state === "cleaning" ? cleanTable(t)
+                                : t.bills === 0 ? newOrder(t.table)
+                                  : t.bills === 1 ? openTab(t.orders[0].order)
+                                    : setChooser(chooser === t.table ? null : t.table)}
                             className={"relative rounded-xl border p-2 text-left transition " + TILE[t.state] +
                               (t.temp ? " border-dashed" : "") +
                               (t.orders.some((b) => b.order === selected) || chooser === t.table ? " ring-2 ring-brand-600 ring-offset-1" :
@@ -577,7 +657,9 @@ export default function POS() {
                             <div className="truncate text-[10px] opacity-70">
                               {t.bills > 0
                                 ? <>₹{inr(t.order_total)}{t.guests ? <> · <Users className="inline size-2.5" />{t.guests}</> : null}</>
-                                : t.seats ? `${t.seats} seats` : " "}
+                                : t.state === "reserved" ? `Res ${t.res_time} · ${t.res_guest || ""}`
+                                  : t.state === "cleaning" ? "Cleaning"
+                                    : t.seats ? `${t.seats} seats` : " "}
                             </div>
                           </button>
                         ))}
@@ -587,6 +669,27 @@ export default function POS() {
                       </div>
                     </div>
                   ))}
+                  {resTile && (() => {
+                    const t = tables.find((x) => x.table === resTile)
+                    if (!t || t.state !== "reserved") return null
+                    return (
+                      <div className="mb-2 space-y-1.5 rounded-xl border border-violet-200 bg-violet-50 p-2">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-semibold text-violet-900">
+                            {t.table} · {t.res_time} · {t.res_guest}
+                            {t.res_party ? ` · ${t.res_party} pax` : ""}
+                          </span>
+                          <button onClick={() => setResTile(null)} className="text-violet-400 hover:text-violet-700">✕</button>
+                        </div>
+                        {t.res_phone && <p className="text-[11px] text-violet-700">{t.res_phone}</p>}
+                        <div className="flex gap-1.5">
+                          <Button className="flex-1 !py-1 text-xs" disabled={busy} onClick={() => seatReservation(t)}>Seat now</Button>
+                          <Button variant="outline" className="!px-2 !py-1 text-xs" disabled={busy} onClick={() => closeReservation(t, "No Show")}>No show</Button>
+                          <Button variant="outline" className="!px-2 !py-1 text-xs text-rose-600" disabled={busy} onClick={() => closeReservation(t, "Cancelled")}>Cancel</Button>
+                        </div>
+                      </div>
+                    )
+                  })()}
                   <button onClick={() => { newOrder(); setOrderType("Dine In"); setCustomTable(true) }}
                     className="w-full rounded-xl border border-dashed border-zinc-300 px-2 py-1.5 text-xs font-medium text-zinc-500 transition hover:border-brand-500 hover:text-brand-700">
                     <Plus className="mr-0.5 inline size-3.5" />Temp table

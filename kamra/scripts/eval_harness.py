@@ -695,6 +695,10 @@ def t26():
 		"is_veg": 1, "available": 1, "prep_station": "Bar",
 	}).insert(ignore_permissions=True).name
 
+	# the cleaning flag lives in redis, which the harness rollback doesn't
+	# touch - clear leftovers from any previous run first
+	for t in ("T1", "T2", "T3"):
+		pos.mark_table_clean(outlet, t)
 	tm = pos.table_map(outlet)
 	assert len(tm["tables"]) == 3, tm
 	assert all(t["state"] == "vacant" for t in tm["tables"]), tm
@@ -725,6 +729,10 @@ def t26():
 	assert p["paid"] and p["order_total"] == 300, p
 	doc = frappe.get_doc("POS Order", o["order"])
 	assert doc.status == "Delivered" and not doc.posted_to_folio, doc.status
+	# settling frees the table into Cleaning; Mark clean returns it to vacant
+	assert [t for t in pos.table_map(outlet)["tables"]
+	        if t["table"] == "T2"][0]["state"] == "cleaning"
+	pos.mark_table_clean(outlet, "T2")
 	assert [t for t in pos.table_map(outlet)["tables"]
 	        if t["table"] == "T2"][0]["state"] == "vacant"
 
@@ -883,6 +891,57 @@ def t29():
 	assert not back["nc"] and back["order_total"] == 350, back
 
 
+@check("POS: table reservation lifecycle and cleaning state")
+def t30():
+	from frappe.utils import add_to_date, now_datetime
+	from kamra import pos
+	outlet = frappe.get_doc({
+		"doctype": "POS Outlet", "property": P, "outlet_name": "Eval Garden",
+		"outlet_type": "Restaurant", "gst_rate": 5, "tables": "G1:4\nG2:2",
+	}).insert(ignore_permissions=True).name
+	mi = frappe.get_doc({
+		"doctype": "Menu Item", "property": P, "outlet": outlet,
+		"item_name": "Eval Salad", "category": "Food", "price": 200,
+		"is_veg": 1, "available": 1, "prep_station": "Kitchen",
+	}).insert(ignore_permissions=True).name
+
+	for t in ("G1", "G2"):  # redis cleaning flags survive the rollback
+		pos.mark_table_clean(outlet, t)
+
+	# reserve G1 an hour out - the tile flips to Reserved with the details
+	r = pos.reserve_table(outlet, "G1", "Asha Rao",
+	                      str(add_to_date(now_datetime(), hours=1)),
+	                      phone="+91 90000 00030", party_size=4)
+	g1 = [t for t in pos.table_map(outlet)["tables"] if t["table"] == "G1"][0]
+	assert g1["state"] == "reserved" and g1["res_guest"] == "Asha Rao", g1
+	assert g1["res_party"] == 4 and g1["res_time"], g1
+
+	# a reservation needs a guest name
+	try:
+		pos.reserve_table(outlet, "G2", "  ",
+		                  str(add_to_date(now_datetime(), hours=2)))
+		raise AssertionError("nameless reservation accepted")
+	except frappe.exceptions.ValidationError:
+		pass
+
+	# seating clears the Reserved state
+	pos.set_reservation(r["reservation"], "Seated")
+	g1 = [t for t in pos.table_map(outlet)["tables"] if t["table"] == "G1"][0]
+	assert g1["state"] == "vacant", g1
+
+	# settling the party's bill flags the table for cleaning...
+	o = pos.create_order(outlet, [{"menu_item": mi, "qty": 2}],
+	                     table_no="G1", order_type="Dine In", guests=4)
+	pos.fire_kot(o["order"])
+	pos.pay_order(o["order"], "Card")
+	g1 = [t for t in pos.table_map(outlet)["tables"] if t["table"] == "G1"][0]
+	assert g1["state"] == "cleaning", g1
+	# ...and Mark clean returns it to vacant
+	pos.mark_table_clean(outlet, "G1")
+	g1 = [t for t in pos.table_map(outlet)["tables"] if t["table"] == "G1"][0]
+	assert g1["state"] == "vacant", g1
+
+
 @check("ticket SLA: priority sets due window")
 def t12():
 	from frappe.utils import get_datetime, now_datetime, time_diff_in_seconds
@@ -905,7 +964,7 @@ def execute():
 	frappe.db.savepoint("eval_start")
 	try:
 		RT, ROOM = setup()
-		for fn in (t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19, t20, t21, t22, t23, t24, t25, t26, t27, t28, t29):
+		for fn in (t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19, t20, t21, t22, t23, t24, t25, t26, t27, t28, t29, t30):
 			fn()
 	finally:
 		frappe.db.commit = real_commit

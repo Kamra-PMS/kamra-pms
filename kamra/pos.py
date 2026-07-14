@@ -159,6 +159,38 @@ def _order_state(o) -> str:
 	        else "fired" if o["pending"] else "ready")
 
 
+def _cleaning_key(outlet: str, table_no: str) -> str:
+	return f"kamra_pos_cleaning|{outlet}|{table_no}"
+
+
+def _flag_cleaning_if_freed(doc):
+	"""When the last bill on a dine-in table closes, flag the table for
+	cleaning (auto-clears after 30 minutes, or on Mark clean)."""
+	if not doc.table_no or doc.order_type != "Dine In":
+		return
+	still_open = frappe.db.count("POS Order", {
+		"outlet": doc.outlet, "table_no": doc.table_no,
+		"status": ("in", ["Placed", "Confirmed", "Preparing"])})
+	if not still_open:
+		frappe.cache.set_value(_cleaning_key(doc.outlet, doc.table_no), "1",
+		                       expires_in_sec=30 * 60)
+
+
+def _upcoming_reservations(outlet: str):
+	"""Booked reservations from an hour ago to four hours out - the window
+	in which a table should read as Reserved on the map."""
+	from frappe.utils import add_to_date, now_datetime
+	now = now_datetime()
+	return frappe.get_all(
+		"POS Table Reservation",
+		filters={"outlet": outlet, "status": "Booked",
+		         "reserved_at": ("between", [add_to_date(now, hours=-1),
+		                                     add_to_date(now, hours=4)])},
+		fields=["name", "table_no", "guest_name", "phone", "party_size",
+		        "reserved_at", "notes"],
+		order_by="reserved_at asc")
+
+
 @frappe.whitelist()
 @require_roles(*POS_ROLES)
 def table_map(outlet: str):
@@ -188,11 +220,25 @@ def table_map(outlet: str):
 		if r.get("table_no"):
 			by_table.setdefault(r["table_no"], []).append(r)
 
+	reserved = {}
+	for r in _upcoming_reservations(outlet):
+		reserved.setdefault(r.table_no, {
+			"reservation": r.name, "res_guest": r.guest_name,
+			"res_party": r.party_size, "res_phone": r.phone,
+			"res_time": frappe.utils.get_datetime(r.reserved_at).strftime("%H:%M"),
+		})
+
 	def tile(t, seats, area, temp=False):
 		orders = by_table.get(t, [])
-		base = {"table": t, "seats": seats, "area": area, "temp": temp}
+		base = {"table": t, "seats": seats, "area": area, "temp": temp,
+		        **reserved.get(t, {})}
 		if not orders:
-			return {**base, "state": "vacant", "bills": 0, "orders": []}
+			# an empty table can still be reserved or waiting on a clean
+			state = ("reserved" if t in reserved
+			         else "cleaning"
+			         if frappe.cache.get_value(_cleaning_key(outlet, t))
+			         else "vacant")
+			return {**base, "state": state, "bills": 0, "orders": []}
 		states = [_order_state(o) for o in orders]
 		state = ("fired" if "fired" in states
 		         else "running" if "running" in states else "ready")
@@ -216,6 +262,49 @@ def table_map(outlet: str):
 	shown = {b["order"] for t in out for b in t["orders"]}
 	other = [r for r in running if r["name"] not in shown]
 	return {"tables": out, "other": other}
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles(*POS_ROLES)
+def reserve_table(outlet: str, table_no: str, guest_name: str,
+                  reserved_at: str, phone: str | None = None,
+                  party_size=None, notes: str | None = None):
+	"""Reserve a table - it shows as Reserved on the map from an hour
+	before the time until it's seated, cancelled or marked a no-show."""
+	if not (guest_name or "").strip():
+		frappe.throw(_("Whose reservation is it?"))
+	doc = frappe.get_doc({
+		"doctype": "POS Table Reservation",
+		"outlet": outlet,
+		"table_no": (table_no or "").strip(),
+		"guest_name": guest_name.strip()[:100],
+		"phone": (phone or "").strip() or None,
+		"party_size": int(party_size) if party_size else None,
+		"reserved_at": reserved_at,
+		"notes": (notes or "").strip()[:200] or None,
+	})
+	doc.insert()
+	return {"ok": True, "reservation": doc.name}
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles(*POS_ROLES)
+def set_reservation(reservation: str, status: str):
+	"""Seat / cancel / no-show a table reservation."""
+	if status not in ("Seated", "Cancelled", "No Show"):
+		frappe.throw(_("Status must be Seated, Cancelled or No Show."))
+	doc = frappe.get_doc("POS Table Reservation", reservation)
+	doc.status = status
+	doc.save()
+	return {"ok": True, "status": status}
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles(*POS_ROLES)
+def mark_table_clean(outlet: str, table_no: str):
+	"""Housekeeping done - the table goes back to vacant on the map."""
+	frappe.cache.delete_value(_cleaning_key(outlet, table_no))
+	return {"ok": True}
 
 
 @frappe.whitelist()
@@ -440,6 +529,7 @@ def deliver_order(order: str):
 	doc = frappe.get_doc("POS Order", order)
 	doc.status = "Delivered"
 	doc.save()
+	_flag_cleaning_if_freed(doc)
 	return {"ok": True, "status": "Delivered",
 	        "posted_to_folio": bool(doc.posted_to_folio)}
 
@@ -466,6 +556,7 @@ def pay_order(order: str, mode: str):
 	doc.payment_mode = mode
 	doc.status = "Delivered"
 	doc.save()
+	_flag_cleaning_if_freed(doc)
 	return {"ok": True, "status": "Delivered", "paid": True, "mode": mode,
 	        "order_total": doc.order_total}
 
@@ -508,6 +599,7 @@ def cancel_order(order: str, reason: str):
 	doc.status = "Cancelled"
 	doc.notes = (f"{doc.notes}\n" if doc.notes else "") + f"Cancelled: {reason}"
 	doc.save()
+	_flag_cleaning_if_freed(doc)
 	return {"ok": True, "status": "Cancelled"}
 
 

@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function — the same governed layer
-the UI and the AI use. **128 endpoints**, generated from the source
+the UI and the AI use. **131 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -1208,6 +1208,45 @@ them all and shows the most urgent state.
 | Param | Required | Default |
 | --- | --- | --- |
 | `outlet` | yes |  |
+
+### `kamra.pos.reserve_table`
+
+**POST**
+
+Reserve a table - it shows as Reserved on the map from an hour
+before the time until it's seated, cancelled or marked a no-show.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `outlet` | yes |  |
+| `table_no` | yes |  |
+| `guest_name` | yes |  |
+| `reserved_at` | yes |  |
+| `phone` | no | `None` |
+| `party_size` | no | `None` |
+| `notes` | no | `None` |
+
+### `kamra.pos.set_reservation`
+
+**POST**
+
+Seat / cancel / no-show a table reservation.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `reservation` | yes |  |
+| `status` | yes |  |
+
+### `kamra.pos.mark_table_clean`
+
+**POST**
+
+Housekeeping done - the table goes back to vacant on the map.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `outlet` | yes |  |
+| `table_no` | yes |  |
 
 ### `kamra.pos.recent_orders`
 
