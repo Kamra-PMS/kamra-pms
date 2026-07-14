@@ -25,6 +25,7 @@ APP = os.path.join(HERE, "..", "kamra")
 MODULES = [
     ("api", "Core (front desk, folios, guests, rooms)", ""),
     ("pos", "Restaurant POS & kitchen", ""),
+    ("laundry", "Laundry (housekeeping)", ""),
     ("crs", "Central reservations (chain)", ""),
     ("dashboards", "Dashboards", ""),
     ("reports", "Reports", ""),

@@ -6,7 +6,8 @@ after commit means the re-fetch always sees the new state."""
 import frappe
 
 WATCHED = {"Reservation", "Folio", "Room", "Housekeeping Task",
-           "Venue Booking", "Group Booking", "POS Order", "Service Ticket", "Agent Action Log"}
+           "Venue Booking", "Group Booking", "POS Order", "Service Ticket",
+           "Laundry Order", "Agent Action Log"}
 
 
 def notify(doc, method=None):

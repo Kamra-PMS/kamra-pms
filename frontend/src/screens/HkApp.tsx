@@ -12,6 +12,7 @@ import { Badge } from "../components/ui/badge"
 import { cn } from "../lib/utils"
 import { asset } from "../lib/asset"
 import Login from "./Login"
+import HkLaundry from "./HkLaundry"
 
 /** The housekeeper's phone app - big targets, one thumb, zero training. */
 
@@ -59,7 +60,7 @@ export default function HkApp() {
   const [auth, setAuth] = useState<"loading" | "anon" | "ok">("loading")
   const [data, setData] = useState<{ tasks: HkTask[]; rooms: HkRoom[] } | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
-  const [view, setView] = useState<"mine" | "pool" | "rooms">("mine")
+  const [view, setView] = useState<"mine" | "pool" | "rooms" | "laundry">("mine")
   const [rejecting, setRejecting] = useState<string | null>(null)
   const [reason, setReason] = useState("")
   const [logItem, setLogItem] = useState<{ desc: string; condition: string; room: string } | null>(null)
@@ -337,14 +338,17 @@ export default function HkApp() {
             Tap an occupied room to post minibar or laundry.
           </p>
         )}
+
+        {view === "laundry" && <HkLaundry rooms={data?.rooms ?? []} />}
       </main>
 
-      <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-3 border-t border-zinc-200 bg-white">
+      <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t border-zinc-200 bg-white">
         {(
           [
             ["mine", `My Tasks${mine.length ? ` (${mine.length})` : ""}`],
             ["pool", `Available${pool.length ? ` (${pool.length})` : ""}`],
             ["rooms", "Rooms"],
+            ["laundry", "Laundry"],
           ] as const
         ).map(([key, label]) => (
           <button

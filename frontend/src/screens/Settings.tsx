@@ -438,6 +438,8 @@ export default function Settings() {
         }}
       />
 
+      <LaundryRatesCard property={property} />
+
       <Card>
         <CardHeader>
           <div>
@@ -526,5 +528,110 @@ export default function Settings() {
         </CardContent>
       </Card>
     </div>
+  )
+}
+
+interface LaundryRate {
+  name: string
+  item_name: string
+  service_type: string
+  rate: number
+  express_rate: number
+}
+
+/** The laundry rate card - what the floor team quotes and bills from.
+ * Express defaults to 1.5x when its column is left blank. */
+function LaundryRatesCard({ property }: { property: string }) {
+  const [rates, setRates] = useState<LaundryRate[]>([])
+  const [form, setForm] = useState<{ name?: string; item: string; service: string; rate: string; express: string } | null>(null)
+  const [err, setErr] = useState<string | null>(null)
+
+  const load = useCallback(() => {
+    call<LaundryRate[]>("kamra.laundry.laundry_rates", { property }).then(setRates).catch(() => {})
+  }, [property])
+  useEffect(load, [load])
+
+  async function save() {
+    if (!form) return
+    setErr(null)
+    try {
+      await call("kamra.laundry.save_laundry_rate", {
+        property, name: form.name || null, item_name: form.item,
+        service_type: form.service, rate: form.rate,
+        express_rate: form.express || null,
+      })
+      setForm(null)
+      load()
+    } catch (e) {
+      setErr(serverError(e))
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <div>
+          <CardTitle>Laundry rate card</CardTitle>
+          <p className="mt-0.5 text-xs text-zinc-400">
+            Per-item prices the housekeeping app quotes and bills from.
+            Blank express = 1.5× the normal rate.
+          </p>
+        </div>
+        <Button variant="outline" onClick={() => setForm({ item: "", service: "Wash & Iron", rate: "", express: "" })}>
+          Add rate
+        </Button>
+      </CardHeader>
+      <CardContent>
+        {err && <p className="mb-2 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">{err}</p>}
+        {form && (
+          <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl bg-zinc-50 p-2">
+            <input className="w-36 rounded-lg border border-zinc-300 px-2 py-1.5 text-sm" placeholder="Item (Shirt…)"
+              value={form.item} onChange={(e) => setForm({ ...form, item: e.target.value })} autoFocus />
+            <select className="rounded-lg border border-zinc-300 px-2 py-1.5 text-sm"
+              value={form.service} onChange={(e) => setForm({ ...form, service: e.target.value })}>
+              {["Wash & Iron", "Dry Clean", "Iron Only"].map((s) => <option key={s}>{s}</option>)}
+            </select>
+            <input className="w-24 rounded-lg border border-zinc-300 px-2 py-1.5 text-sm" placeholder="Rate ₹" inputMode="numeric"
+              value={form.rate} onChange={(e) => setForm({ ...form, rate: e.target.value.replace(/[^\d.]/g, "") })} />
+            <input className="w-28 rounded-lg border border-zinc-300 px-2 py-1.5 text-sm" placeholder="Express ₹ (opt)" inputMode="numeric"
+              value={form.express} onChange={(e) => setForm({ ...form, express: e.target.value.replace(/[^\d.]/g, "") })} />
+            <Button disabled={!form.item.trim() || !form.rate} onClick={save}>Save</Button>
+            <Button variant="ghost" onClick={() => setForm(null)}>Cancel</Button>
+          </div>
+        )}
+        {rates.length === 0 ? (
+          <p className="py-3 text-sm text-zinc-400">No rates yet — add the first item.</p>
+        ) : (
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-xs uppercase tracking-wide text-zinc-400">
+                <th className="py-1.5">Item</th><th>Service</th>
+                <th className="text-right">Rate</th><th className="text-right">Express</th><th />
+              </tr>
+            </thead>
+            <tbody>
+              {rates.map((r) => (
+                <tr key={r.name} className="border-t border-zinc-100">
+                  <td className="py-1.5 font-medium">{r.item_name}</td>
+                  <td className="text-zinc-500">{r.service_type}</td>
+                  <td className="text-right tabular-nums">₹{r.rate.toLocaleString("en-IN")}</td>
+                  <td className="text-right tabular-nums text-zinc-500">₹{r.express_rate.toLocaleString("en-IN")}</td>
+                  <td className="text-right">
+                    <button className="text-xs font-medium text-brand-700 hover:underline"
+                      onClick={() => setForm({ name: r.name, item: r.item_name, service: r.service_type, rate: String(r.rate), express: "" })}>
+                      Edit
+                    </button>
+                    <button className="ml-2 text-xs text-zinc-400 hover:text-rose-600"
+                      onClick={async () => { await call("kamra.laundry.delete_laundry_rate", { name: r.name }); load() }}>
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </CardContent>
+    </Card>
   )
 }

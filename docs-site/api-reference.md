@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function — the same governed layer
-the UI and the AI use. **131 endpoints**, generated from the source
+the UI and the AI use. **141 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -1432,6 +1432,132 @@ live lines, the discount, and the CGST/SGST split at the outlet's rate.
 | Param | Required | Default |
 | --- | --- | --- |
 | `order` | yes |  |
+
+
+## Laundry (housekeeping)
+
+### `kamra.laundry.laundry_rates`
+
+**GET/POST** · roles: `Finance`
+
+The property's laundry price list (the card the attendant quotes
+from). Grouped by item for the pickers.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+
+### `kamra.laundry.save_laundry_rate`
+
+**POST**
+
+Add or edit one line of the rate card.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `item_name` | yes |  |
+| `service_type` | yes |  |
+| `rate` | yes |  |
+| `express_rate` | no | `None` |
+| `name` | no | `None` |
+| `disabled` | no | `0` |
+
+### `kamra.laundry.delete_laundry_rate`
+
+**POST**
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `name` | yes |  |
+
+### `kamra.laundry.request_pickup`
+
+**POST**
+
+Log that a guest wants laundry picked up - it lands on the floor
+team's queue. Items are counted at the door, not here.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `room` | yes |  |
+| `notes` | no | `None` |
+| `express` | no | `0` |
+
+### `kamra.laundry.collect_laundry`
+
+**POST**
+
+The attendant counts the bag with the guest. Prices come from the
+rate card (express uses the express column, or 1.5x). Pass `order` to
+fulfil a pickup request, or omit it to log a walk-up collection.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `room` | yes |  |
+| `items` | yes |  |
+| `order` | no | `None` |
+| `express` | no | `None` |
+| `notes` | no | `None` |
+
+### `kamra.laundry.laundry_status`
+
+**POST**
+
+Move the bag along: Collected -> In Process -> Ready.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `order` | yes |  |
+| `status` | yes |  |
+
+### `kamra.laundry.return_items`
+
+**POST**
+
+Tick items back in as they return from the laundry. rows =
+{child_row_name: returned_qty} - counts, not deltas.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `order` | yes |  |
+| `rows` | yes |  |
+
+### `kamra.laundry.deliver_laundry`
+
+**POST**
+
+Hand the bag back and bill the stay. If pieces are still pending, a
+shortage note is required - the discrepancy is recorded, never silent.
+Posting rides the governed agent path (HK can only bill laundry).
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `order` | yes |  |
+| `shortage_note` | no | `None` |
+
+### `kamra.laundry.cancel_laundry`
+
+**POST**
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `order` | yes |  |
+| `reason` | yes |  |
+
+### `kamra.laundry.laundry_board`
+
+**GET/POST** · roles: `Finance`
+
+Everything the floor and the desk need at a glance: open bags by
+status with piece counts and what's still pending, plus the last few
+delivered ones for reprints/queries.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
 
 
 ## Central reservations (chain)

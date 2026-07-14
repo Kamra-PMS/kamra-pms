@@ -942,6 +942,82 @@ def t30():
 	assert g1["state"] == "vacant", g1
 
 
+@check("laundry: rate card pricing, shortage guard, folio bill at 18% GST")
+def t31():
+	from kamra import laundry
+	from kamra.folio import post_room_night
+
+	# rate card: upsert enforces service names and positive rates
+	laundry.save_laundry_rate(P, "Shirt", "Wash & Iron", 60)
+	laundry.save_laundry_rate(P, "Trousers", "Dry Clean", 140, express_rate=200)
+	try:
+		laundry.save_laundry_rate(P, "Shirt", "Boil", 10)
+		raise AssertionError("bad service accepted")
+	except frappe.exceptions.ValidationError:
+		pass
+	rates = laundry.laundry_rates(P)
+	assert {(r["item_name"], r["service_type"]) for r in rates} >= {
+		("Shirt", "Wash & Iron"), ("Trousers", "Dry Clean")}, rates
+	shirt = next(r for r in rates if r["item_name"] == "Shirt")
+	assert shirt["express_rate"] == 90, shirt  # blank express = 1.5x
+
+	# an in-house guest requests a pickup; the attendant counts the bag
+	# (own room - the shared eval room already has a checked-in stay)
+	lroom = frappe.db.exists("Room", {"property": P, "room_number": "E102"})
+	if not lroom:
+		lroom = frappe.get_doc({
+			"doctype": "Room", "property": P, "room_number": "E102",
+			"room_type": RT,
+		}).insert(ignore_permissions=True).name
+	g = _guest("Eval Laundry", "+91 70000 00031")
+	res = _res(g, nowdate(), add_days(nowdate(), 2), lroom)
+	res.status = "Checked In"
+	res.save(ignore_permissions=True)
+	folio = frappe.db.get_value(
+		"Folio", {"reservation": res.name, "folio_type": "Guest"})
+	base = frappe.get_doc("Folio", folio).grand_total
+
+	r = laundry.request_pickup(P, lroom, notes="bag on door")
+	c = laundry.collect_laundry(P, lroom, [
+		{"item_name": "Shirt", "service_type": "Wash & Iron", "qty": 2},
+		{"item_name": "Trousers", "service_type": "Dry Clean", "qty": 1},
+	], order=r["order"])
+	assert c["total"] == 260 and c["pieces"] == 3, c
+	# unknown items can't be priced, so they can't be collected
+	try:
+		laundry.collect_laundry(P, lroom, [
+			{"item_name": "Cape", "service_type": "Dry Clean", "qty": 1}])
+		raise AssertionError("unpriced item accepted")
+	except frappe.exceptions.ValidationError:
+		pass
+
+	laundry.laundry_status(r["order"], "In Process")
+	laundry.laundry_status(r["order"], "Ready")
+	doc = frappe.get_doc("Laundry Order", r["order"])
+	laundry.return_items(r["order"], {doc.items[0].name: 2})
+	# a missing piece blocks delivery unless it's explicitly noted
+	try:
+		laundry.deliver_laundry(r["order"])
+		raise AssertionError("shortage delivered silently")
+	except frappe.exceptions.ValidationError:
+		pass
+	laundry.return_items(r["order"], {doc.items[1].name: 1})
+	out = laundry.deliver_laundry(r["order"])
+	assert out["posted_to_folio"], out
+
+	fd = frappe.get_doc("Folio", folio)
+	# 260 + 18% services GST = 306.80 lands on the guest folio
+	assert round(fd.grand_total - base, 2) == 306.80, fd.grand_total - base
+	board = laundry.laundry_board(P)
+	assert any(o["name"] == r["order"] for o in board["recent"]), board
+
+	# express pricing: explicit express column wins over the 1.5x default
+	c2 = laundry.collect_laundry(P, lroom, [
+		{"item_name": "Trousers", "service_type": "Dry Clean", "qty": 1},
+	], express=1)
+	assert c2["total"] == 200, c2
+
+
 @check("ticket SLA: priority sets due window")
 def t12():
 	from frappe.utils import get_datetime, now_datetime, time_diff_in_seconds
@@ -964,7 +1040,7 @@ def execute():
 	frappe.db.savepoint("eval_start")
 	try:
 		RT, ROOM = setup()
-		for fn in (t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19, t20, t21, t22, t23, t24, t25, t26, t27, t28, t29, t30):
+		for fn in (t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19, t20, t21, t22, t23, t24, t25, t26, t27, t28, t29, t30, t31):
 			fn()
 	finally:
 		frappe.db.commit = real_commit

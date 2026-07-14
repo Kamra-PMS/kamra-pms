@@ -170,6 +170,35 @@ def execute():
 			}).insert(ignore_permissions=True)
 			added_item += 1
 
+	# laundry rate card - the price list the attendant quotes from
+	LAUNDRY = [
+		("Shirt", [("Wash & Iron", 60), ("Dry Clean", 120), ("Iron Only", 25)]),
+		("T-Shirt", [("Wash & Iron", 50), ("Iron Only", 20)]),
+		("Trousers", [("Wash & Iron", 70), ("Dry Clean", 140), ("Iron Only", 30)]),
+		("Jeans", [("Wash & Iron", 80), ("Iron Only", 35)]),
+		("Kurta", [("Wash & Iron", 60), ("Dry Clean", 130), ("Iron Only", 25)]),
+		("Saree", [("Dry Clean", 220), ("Iron Only", 80)]),
+		("Suit (2 pc)", [("Dry Clean", 380)]),
+		("Blazer", [("Dry Clean", 260)]),
+		("Dress", [("Wash & Iron", 110), ("Dry Clean", 200)]),
+		("Undergarments", [("Wash & Iron", 25)]),
+		("Socks (pair)", [("Wash & Iron", 20)]),
+		("Nightwear", [("Wash & Iron", 55)]),
+	]
+	added_rate = 0
+	for item, services in LAUNDRY:
+		for service, rate in services:
+			if frappe.db.exists("Laundry Rate", {
+					"property": PROPERTY, "item_name": item,
+					"service_type": service}):
+				continue
+			frappe.get_doc({
+				"doctype": "Laundry Rate", "property": PROPERTY,
+				"item_name": item, "service_type": service, "rate": rate,
+			}).insert(ignore_permissions=True)
+			added_rate += 1
+
 	frappe.db.commit()
 	print(f"Showcase seed: +{added_exp} experiences, +{added_venue} venues, "
-	      f"+{added_outlet} outlets, +{added_item} menu items on '{PROPERTY}'.")
+	      f"+{added_outlet} outlets, +{added_item} menu items, "
+	      f"+{added_rate} laundry rates on '{PROPERTY}'.")

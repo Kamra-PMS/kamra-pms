@@ -54,6 +54,15 @@ minibar/laundry posting from the room grid, lost & found logging, and
 SLA escalation (overdue → supervisor → manager, with WhatsApp alerts
 when a channel is connected).
 
+**Guest laundry, end to end**: a per-item **rate card** (wash & iron /
+dry clean / iron only, with express pricing) managed in Settings; pickup
+requests queue to the floor; the attendant **counts the bag with the
+guest** — priced from the card, never by hand; the bag tracks
+Collected → In Process → Ready; items **return piece by piece**, and a
+missing piece blocks delivery unless a shortage note says why. Delivery
+bills the stay automatically at the services GST rate through the same
+governed path as the minibar.
+
 ## Direct bookings
 
 A public booking page with live availability and real quotes, photo
