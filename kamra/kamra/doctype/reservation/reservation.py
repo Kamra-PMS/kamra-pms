@@ -25,8 +25,10 @@ class Reservation(Document):
 		pct = float(frappe.db.get_value(
 			"Room Type", self.room_type, "overbooking_pct") or 0)
 		if not pct:
-			pct = float(frappe.get_cached_doc(
-				"Property", self.property).get("overbooking_pct") or 0)
+			# db read, not the document cache - enforcement must see the
+			# committed value, not a stale cached doc
+			pct = float(frappe.db.get_value(
+				"Property", self.property, "overbooking_pct") or 0)
 		limit = int(total * (1 + pct / 100))
 		from frappe.utils import add_days, date_diff
 		nights = max(1, date_diff(self.check_out_date, self.check_in_date))

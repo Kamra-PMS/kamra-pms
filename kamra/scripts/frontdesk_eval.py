@@ -208,6 +208,9 @@ def f7():
 
 @check("double booking the same room is refused at the desk")
 def f8():
+	# this scenario is about a hard sold-out house - pin the allowance to 0
+	# (the shared eval setup opens it up for the stacking tests)
+	frappe.db.set_value("Property", P, "overbooking_pct", 0)
 	with at_the_desk():
 		_book("FD First", "+91 71000 00008", "2032-03-01", "2032-03-03")
 		_book("FD Second", "+91 71000 00009", "2032-03-01", "2032-03-03")
@@ -223,6 +226,7 @@ def f8():
 		            "2032-03-03", waitlist=1)
 		res = frappe.get_doc("Reservation", out["reservation"])
 		assert res.status == "Waitlist" and not res.room, res.status
+	frappe.db.set_value("Property", P, "overbooking_pct", 400)
 
 
 @check("blacklisted guest is refused with the reason")

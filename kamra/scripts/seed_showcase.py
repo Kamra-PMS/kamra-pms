@@ -198,7 +198,88 @@ def execute():
 			}).insert(ignore_permissions=True)
 			added_rate += 1
 
+	# operations: guest requests / tickets across teams and states, so the
+	# Operations screens, SLA report and dashboards have a story to tell
+	TICKETS = [
+		("Extra towels for 204", "Housekeeping", "Medium", "Open", "WhatsApp"),
+		("AC not cooling in 310", "Maintenance", "Urgent", "In Progress", "Manual"),
+		("Airport cab at 6 AM", "Concierge", "High", "Open", "Voice"),
+		("Late checkout request — 112", "Front Desk", "Medium", "Resolved", "Manual"),
+		("Crib for the baby, room 218", "Housekeeping", "High", "Resolved", "AI Agent"),
+		("Wi-Fi drops on 3rd floor", "Maintenance", "High", "Open", "QR"),
+		("Birthday cake for table F2 tonight", "Room Service", "Medium", "In Progress", "Manual"),
+		("Noise complaint — corridor, 2nd floor", "Complaint", "Urgent", "Resolved", "Manual"),
+		("Iron & board to 415", "Housekeeping", "Low", "Closed", "WhatsApp"),
+		("Spare adapter (Type G) needed", "Concierge", "Low", "Open", "Manual"),
+	]
+	added_ticket = 0
+	rooms = frappe.get_all("Room", filters={"property": PROPERTY},
+	                       fields=["name"], limit=12)
+	for i, (subject, cat, prio, status, source) in enumerate(TICKETS):
+		if frappe.db.exists("Service Ticket",
+		                    {"property": PROPERTY, "subject": subject}):
+			continue
+		t = frappe.get_doc({
+			"doctype": "Service Ticket", "property": PROPERTY,
+			"subject": subject, "category": cat, "priority": prio,
+			"source": source,
+			"room": rooms[i % len(rooms)].name if rooms else None,
+		})
+		t.insert(ignore_permissions=True)
+		if status != "Open":
+			t.status = status
+			t.save(ignore_permissions=True)
+		added_ticket += 1
+
+	# a shift-handover trail: yesterday's closed shifts + today's open one
+	from frappe.utils import add_days, nowdate
+	added_ho = 0
+	HANDOVERS = [
+		(add_days(nowdate(), -1), "Morning", "Closed", 5000, 42350, 1200,
+		 "Two early check-ins done. 310 AC ticket open for maintenance."),
+		(add_days(nowdate(), -1), "Evening", "Closed", 8000, 61200, 800,
+		 "Full house tonight. Cab booked for 6 AM airport drop (ticket)."),
+		(nowdate(), "Morning", "Open", 6000, 18500, 0,
+		 "Waiting on laundry return for 204. F2 birthday setup at 7 PM."),
+	]
+	for date, shift, status, opening, collected, payouts, notes in HANDOVERS:
+		if frappe.db.exists("Shift Handover", {
+				"property": PROPERTY, "shift_date": date, "shift": shift}):
+			continue
+		frappe.get_doc({
+			"doctype": "Shift Handover", "property": PROPERTY,
+			"shift_date": date, "shift": shift, "status": status,
+			"opening_cash": opening, "cash_collected": collected,
+			"payouts": payouts,
+			"closing_cash": opening + collected - payouts,
+			"handover_notes": notes,
+		}).insert(ignore_permissions=True)
+		added_ho += 1
+
+	# a live laundry story for the HK app: one bag in process, one ready
+	added_lnd = 0
+	inhouse = frappe.get_all(
+		"Reservation", filters={"property": PROPERTY, "status": "Checked In"},
+		fields=["name", "room"], limit=2)
+	if (inhouse and frappe.db.exists("Laundry Rate", {"property": PROPERTY})
+			and not frappe.db.count("Laundry Order", {"property": PROPERTY})):
+		from kamra.laundry import collect_laundry, laundry_status
+		for i, res in enumerate(inhouse):
+			order = collect_laundry(PROPERTY, res.room, [
+				{"item_name": "Shirt", "service_type": "Wash & Iron", "qty": 2},
+				{"item_name": "Trousers", "service_type": "Wash & Iron", "qty": 1},
+			] if i == 0 else [
+				{"item_name": "Saree", "service_type": "Dry Clean", "qty": 1},
+				{"item_name": "Kurta", "service_type": "Wash & Iron", "qty": 2},
+			])["order"]
+			laundry_status(order, "In Process")
+			if i == 1:
+				laundry_status(order, "Ready")
+			added_lnd += 1
+
 	frappe.db.commit()
 	print(f"Showcase seed: +{added_exp} experiences, +{added_venue} venues, "
 	      f"+{added_outlet} outlets, +{added_item} menu items, "
-	      f"+{added_rate} laundry rates on '{PROPERTY}'.")
+	      f"+{added_rate} laundry rates, +{added_ticket} tickets, "
+	      f"+{added_ho} handovers, +{added_lnd} laundry orders "
+	      f"on '{PROPERTY}'.")

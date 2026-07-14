@@ -122,6 +122,22 @@ jobs:
           mkdir -p ~/.ssh
           printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
+          # same pre-deploy self-heal as nightly: prune, and shed running
+          # containers' writable layers when the disk is critical
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new \
+            "${DEPLOY_USER:-root}@${DEPLOY_HOST}" \
+            "df -h / | tail -1; docker system prune -af 2>/dev/null | tail -1; df -h / | tail -1"
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new \
             "${DEPLOY_USER:-root}@${DEPLOY_HOST}" \
             "bash ~/kamra-deploy/redeploy.sh stable '${{ steps.tag.outputs.tag }}'"
+          # refresh the demo's showcase data (idempotent) so new demo
+          # content - menu, tables, laundry rates, tickets - shows up
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new \
+            "${DEPLOY_USER:-root}@${DEPLOY_HOST}" bash -s <<'SEED'
+          cd ~/kamra-deploy/frappe_docker
+          docker compose --project-name kamra --env-file kamra.env \
+            -f compose.yaml -f overrides/compose.mariadb.yaml \
+            -f overrides/compose.redis.yaml -f overrides/compose.noproxy.yaml \
+            exec -T backend bench --site demo.kamrapms.com \
+            execute kamra.scripts.seed_showcase.execute || true
+          SEED
