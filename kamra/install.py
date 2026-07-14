@@ -3,16 +3,13 @@ import frappe
 
 def after_install():
 	set_site_favicon()
-	ensure_agent_user()
-
-
-def ensure_agent_user():
-	"""The governed agent user must exist on every install - public
-	bookings, QR orders and housekeeping/laundry billing all post through
-	it. Without this, those flows fail on a fresh site until the RBAC seed
-	is run by hand."""
-	from kamra.scripts.seed_rbac_v2 import ensure_agent_user as ensure
-	ensure()
+	# NOTE: the governed agent user (agent@kamra.local) is deliberately NOT
+	# created here. seed_rbac_v2.ensure_agent_user() writes custom DocPerms,
+	# and in Frappe ANY custom perm on a doctype replaces ALL its standard
+	# perms - seeding just the agent's grants at install silently revoked
+	# every other role's access to Property on fresh sites. The full RBAC
+	# seed (setup wizard / seed scripts) creates the agent user with the
+	# complete permission set instead.
 
 
 def set_site_favicon():
