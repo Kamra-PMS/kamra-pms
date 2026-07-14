@@ -24,7 +24,7 @@ features:
     details: Runs on a ₹549/month VPS (2 vCPU · 4 GB). Step-by-step guides for Hostinger, DigitalOcean, Linode and AWS.
     link: /self-hosting/
   - title: Connect your AI over MCP
-    details: 31 governed tools. Claude (or any MCP client) quotes, books and posts charges as a permission-checked user, fully audited.
+    details: 32 governed tools. Claude (or any MCP client) quotes, books and posts charges as a permission-checked user, fully audited.
     link: /ai-and-mcp
   - title: Everything included, always
     details: No feature gates, no editions, no per-room pricing. The same complete system whether you self-host or use Kamra Cloud.

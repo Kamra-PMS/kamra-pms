@@ -110,7 +110,7 @@ one.
 
 ## AI & audit
 
-An MCP server with 31 governed tools, an in-app copilot (bring your own
+An MCP server with 32 governed tools, an in-app copilot (bring your own
 key), rate guardrails agents cannot price outside, deterministic pricing
 verified by an automated eval suite, and an activity ledger recording
 every action — human or AI — with who, what and why.

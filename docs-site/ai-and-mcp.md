@@ -26,7 +26,7 @@ API key, save.
 ## 2. MCP — Claude and any MCP client
 
 The MCP server ships in the app (`mcp/kamra_mcp.py`) and exposes
-[31 tools](/mcp-tools): availability, quotes, bookings, group billing,
+[32 tools](/mcp-tools): availability, quotes, bookings, group billing,
 splits, check-in/out, tickets, rate changes within guardrails, the owner
 briefing and the night audit.
 
