@@ -38,6 +38,7 @@ export default function Login(props: { onSuccess: () => void }) {
       await login(u, p)
       // Navigation + the production CSRF re-boot are handled by the /login
       // route (LoginPage.onSuccess).
+      sessionStorage.removeItem("kamra_session_ended")
       props.onSuccess()
     } catch {
       setError("Wrong email or password.")
@@ -46,9 +47,16 @@ export default function Login(props: { onSuccess: () => void }) {
     }
   }
 
+  const sessionEnded = sessionStorage.getItem("kamra_session_ended") === "1"
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-zinc-50 px-4">
       <div className="w-full max-w-sm">
+        {sessionEnded && (
+          <p className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-center text-sm text-amber-800">
+            Your session ended — sign in to pick up where you left off.
+          </p>
+        )}
         <div className="mb-6 flex flex-col items-center gap-2">
           <img src={asset("kamra-mark.svg")} alt="Kamra" className="size-16" />
           <span className="text-2xl font-semibold tracking-tight">

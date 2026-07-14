@@ -3,7 +3,7 @@ import { BedDouble, LogOut, Plane, RefreshCw, Star, Clock, PackageSearch } from 
 import {
   call,
   getCurrentProperty,
-  isAuthError,
+  isNetworkError,
   logout,
   whoami,
 } from "../lib/api"
@@ -13,6 +13,7 @@ import { cn } from "../lib/utils"
 import { asset } from "../lib/asset"
 import Login from "./Login"
 import HkLaundry from "./HkLaundry"
+import { serverError } from "../lib/resource"
 
 /** The housekeeper's phone app - big targets, one thumb, zero training. */
 
@@ -71,7 +72,11 @@ export default function HkApp() {
   const checkAuth = () =>
     whoami()
       .then((w) => setAuth(w.user === "Guest" ? "anon" : "ok"))
-      .catch((e) => setAuth(isAuthError(e) ? "anon" : "anon"))
+      .catch((e) => {
+        // an unreachable server is not a sign-out - keep trying quietly
+        if (isNetworkError(e)) setTimeout(checkAuth, 4000)
+        else setAuth("anon")
+      })
 
   useEffect(() => {
     checkAuth()
@@ -533,7 +538,7 @@ export default function HkApp() {
                         setChargeMsg(`Posted ₹${charge.amount} ${charge.type.toLowerCase()} to room ${charge.num}.`)
                         load()
                       } catch (e) {
-                        setChargeMsg((e as Error).message || "Couldn't post - is the guest checked in?")
+                        setChargeMsg(serverError(e))
                       } finally {
                         setBusy(null)
                       }

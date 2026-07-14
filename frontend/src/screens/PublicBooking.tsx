@@ -10,6 +10,7 @@ import {
   Users,
 } from "lucide-react"
 import { call, DEMO_PROPERTY } from "../lib/api"
+import { serverError } from "../lib/resource"
 import { accentVars } from "../lib/accents"
 import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
@@ -266,7 +267,7 @@ export default function PublicBooking() {
       )
       setDone({ reservation: res.reservation, amount: res.amount_after_tax })
     } catch (e) {
-      setError((e as Error).message)
+      setError(serverError(e))
     } finally {
       setBusy(false)
     }

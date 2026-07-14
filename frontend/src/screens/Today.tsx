@@ -20,6 +20,7 @@ import {
 } from "../components/ui/card"
 import { cn } from "../lib/utils"
 import type { ShellContext } from "../AppShell"
+import { serverError } from "../lib/resource"
 
 const HK_CYCLE: RoomRow["housekeeping_status"][] = [
   "Dirty",
@@ -166,7 +167,7 @@ export default function Today() {
       setSnap(await getSnapshot())
       setError(null)
     } catch (e) {
-      setError((e as Error).message)
+      setError(serverError(e))
     }
   }, [])
 
@@ -182,7 +183,7 @@ export default function Today() {
       await fn()
       await refresh()
     } catch (e) {
-      setError((e as Error).message)
+      setError(serverError(e))
     } finally {
       setBusy(null)
     }
@@ -213,7 +214,7 @@ export default function Today() {
 
       {error && (
         <div className="mb-4 rounded-lg border border-rose-200 bg-rose-50 px-4 py-2 text-sm text-rose-700">
-          {error} - is the bench running on :8000?
+          {error}
         </div>
       )}
 

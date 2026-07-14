@@ -65,6 +65,7 @@ import {
   venuesConfig,
   vouchersConfig,
 } from "./screens/configs"
+import ConnectionBanner from "./components/ConnectionBanner"
 
 class ErrorBoundary extends Component<
   { children: ReactNode },
@@ -157,6 +158,7 @@ function CalendarScreen() {
 export default function App() {
   return (
     <ErrorBoundary>
+      <ConnectionBanner />
       <Routes>
         {/* public booking engine - no login; stay state lives in the URL
             (/book/2026-07-10/2026-07-12/2/0) so links are shareable and

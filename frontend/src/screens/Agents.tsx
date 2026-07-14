@@ -24,6 +24,7 @@ import {
   CardTitle,
 } from "../components/ui/card"
 import { cn } from "../lib/utils"
+import { serverError } from "../lib/resource"
 
 
 interface AutonomyRule {
@@ -180,7 +181,7 @@ export function TeamTab({ property }: { property: string }) {
         setSavings(s)
         setError(null)
       })
-      .catch((e) => setError((e as Error).message))
+      .catch((e) => setError(serverError(e)))
       .finally(() => setLoading(false))
   }, [property])
 
@@ -197,7 +198,7 @@ export function TeamTab({ property }: { property: string }) {
       })
       load()
     } catch (e) {
-      setError((e as Error).message)
+      setError(serverError(e))
     } finally {
       setBusy(null)
     }
@@ -461,7 +462,7 @@ export function InboxTab({ property }: { property: string }) {
         setRows(r)
         setError(null)
       })
-      .catch((e) => setError((e as Error).message))
+      .catch((e) => setError(serverError(e)))
       .finally(() => setLoading(false))
   }, [property])
 
@@ -480,7 +481,7 @@ export function InboxTab({ property }: { property: string }) {
       setExpanded(null)
       load()
     } catch (e) {
-      setError((e as Error).message)
+      setError(serverError(e))
     } finally {
       setBusy(null)
     }
@@ -497,7 +498,7 @@ export function InboxTab({ property }: { property: string }) {
       setExpanded(null)
       load()
     } catch (e) {
-      setError((e as Error).message)
+      setError(serverError(e))
     } finally {
       setBusy(null)
     }
@@ -783,7 +784,7 @@ export function ActivityTab({ property }: { property: string }) {
         setRows(r)
         setError(null)
       })
-      .catch((e) => setError((e as Error).message))
+      .catch((e) => setError(serverError(e)))
       .finally(() => { if (!silent) setLoading(false) })
   }, [property, kind, page])
 
@@ -1049,7 +1050,7 @@ export function ConnectTab({ property }: { property: string }) {
                   )
                   setCreds(r)
                 } catch (e) {
-                  setError((e as Error).message)
+                  setError(serverError(e))
                 } finally {
                   setBusy(false)
                 }
