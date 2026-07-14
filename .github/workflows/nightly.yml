@@ -149,15 +149,31 @@ jobs:
             "${DEPLOY_USER:-root}@${DEPLOY_HOST}" bash -s <<'HEAL'
           df -h / | tail -1
           echo "--- disk breakdown ---"
-          du -xh -d1 /var/lib/docker 2>/dev/null | sort -h | tail -8
           du -xh -d1 /var/lib/containerd 2>/dev/null | sort -h | tail -3
-          du -xh -d1 /var/log 2>/dev/null | sort -h | tail -3
+          docker ps -s --format '{{.Names}}\t{{.Size}}' | sort -k2 -h | tail -8
           echo "--- healing ---"
           docker system prune -af 2>/dev/null | tail -1
           docker builder prune -af 2>/dev/null | tail -1
           docker volume ls -qf dangling=true | xargs -r docker volume rm 2>/dev/null || true
           truncate -s 0 /var/lib/docker/containers/*/*-json.log 2>/dev/null || true
           journalctl --vacuum-size=200M 2>/dev/null | tail -1 || true
+          # The big one: bench containers write logs INSIDE their writable
+          # layer (containerd snapshots), which no prune can reclaim while
+          # they run. Recreating the app services discards those layers -
+          # identical to what every deploy does; data volumes untouched.
+          USE=$(df --output=pcent / | tail -1 | tr -dc '0-9')
+          if [ "${USE:-0}" -ge 85 ]; then
+            echo "disk at ${USE}% - recreating app services to shed writable layers"
+            cd ~/kamra-deploy/frappe_docker
+            for PROJ in kamra:kamra.env kamra-nightly:kamra-nightly.env; do
+              docker compose --project-name "${PROJ%%:*}" --env-file "${PROJ##*:}" \
+                -f compose.yaml -f overrides/compose.mariadb.yaml \
+                -f overrides/compose.redis.yaml -f overrides/compose.noproxy.yaml \
+                up -d --force-recreate backend frontend websocket \
+                queue-short queue-long scheduler >/dev/null 2>&1 || true
+            done
+            docker system prune -af 2>/dev/null | tail -1
+          fi
           df -h / | tail -1
           HEAL
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new \
