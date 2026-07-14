@@ -4685,6 +4685,85 @@
    ]
   },
   {
+   "name": "Migration (CSV import)",
+   "item": [
+    {
+     "name": "preview_import",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.migrate.preview_import",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.migrate.preview_import"
+       ]
+      },
+      "description": "Dry run: how the file's columns map, which date convention was\ndetected, and every row that would be skipped - nothing is written.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"csv_text\": \"<csv_text>\",\n  \"preset\": \"auto\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "run_import",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.migrate.run_import",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.migrate.run_import"
+       ]
+      },
+      "description": "Import the file. Live rows (confirmed / in-house) go through the\nfull booking validation; history rows (checked-out / cancelled /\nno-show) are stored as records with their status stamped directly, so\nguest history survives the migration.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"csv_text\": \"<csv_text>\",\n  \"preset\": \"auto\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
    "name": "Central reservations (chain)",
    "item": [
     {

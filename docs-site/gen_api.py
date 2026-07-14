@@ -26,6 +26,7 @@ MODULES = [
     ("api", "Core (front desk, folios, guests, rooms)", ""),
     ("pos", "Restaurant POS & kitchen", ""),
     ("laundry", "Laundry (housekeeping)", ""),
+    ("migrate", "Migration (CSV import)", ""),
     ("crs", "Central reservations (chain)", ""),
     ("dashboards", "Dashboards", ""),
     ("reports", "Reports", ""),

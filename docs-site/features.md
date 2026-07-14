@@ -96,6 +96,18 @@ month-to-date statistics (ADR, RevPAR, occupancy), manager flash,
 budget vs actual, contribution by source/company/agent, operations SLA
 report, cashier reconciliation.
 
+## Switching from another PMS
+
+Export your bookings from eZee, Cloudbeds or anything that produces a
+CSV, and the importer does the rest: it recognises each vendor's column
+names, detects the date convention (day-first vs month-first), matches
+room types by code or name, and maps their status words onto ours. A
+**preview** shows the mapping, the rows that will import and exactly why
+any row would be skipped — before anything is written. Past stays come
+in as guest **history** (checked-out / cancelled / no-show) without
+tripping live-booking rules, so returning guests are recognised from day
+one.
+
 ## AI & audit
 
 An MCP server with 31 governed tools, an in-app copilot (bring your own

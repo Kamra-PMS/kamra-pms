@@ -1123,6 +1123,61 @@ def t32():
 	assert pb["demand_tier"] and pb["demand_tier"]["premium_pct"] == 25, pb
 
 
+@check("migration: vendor CSV maps, day-first dates, history stamped, misfits skipped")
+def t33():
+	from kamra import migrate
+
+	P3 = "EVAL Import Hotel"
+	if not frappe.db.exists("Property", P3):
+		frappe.get_doc({
+			"doctype": "Property", "property_name": P3, "city": "Testville",
+			"gst_mode": "Fixed", "gst_rate_low": 5, "gst_rate_high": 5,
+		}).insert(ignore_permissions=True)
+	rt = frappe.get_doc({
+		"doctype": "Room Type", "property": P3, "room_type_code": "DLX",
+		"room_type_name": "Deluxe", "base_price": 4000, "base_occupancy": 2,
+		"adults_capacity": 3, "children_capacity": 2, "tax_percent": 5,
+	}).insert(ignore_permissions=True).name
+	frappe.get_doc({
+		"doctype": "Room", "property": P3, "room_number": "I101",
+		"room_type": rt,
+	}).insert(ignore_permissions=True)
+
+	# an eZee-flavoured export: renamed headers, DD/MM dates, quoted name
+	# with a comma, thousands separators, vendor status words
+	csv_text = (
+		"Guest Name,Mobile No,Email,Room Type,Arrival Date,Departure Date,"
+		"Adult,Child,Total Amount,Reservation Status,Business Source\n"
+		'"Rao, Import",+91 70000 00033,rao@x.in,Deluxe,25/12/2025,'
+		'28/12/2025,2,1,"18,500.00",Checked Out,MakeMyTrip\n'
+		"Import Two,+91 70000 00034,,Deluxe Room,14/01/2026,16/01/2026,"
+		"2,0,,Cancelled,Walk-in\n"
+		"Import Three,+91 70000 00035,,Deluxe,20/08/2033,22/08/2033,"
+		"2,0,,Confirmed,Direct\n"
+		"Import Four,+91 70000 00036,,Presidential Villa,05/09/2033,"
+		"07/09/2033,2,0,,Confirmed,Direct\n")
+
+	p = migrate.preview_import(P3, csv_text, "auto")
+	assert p["mapping"]["check_in"] == "Arrival Date", p["mapping"]
+	assert p["date_format"].startswith("day-first"), p["date_format"]
+	assert p["ok"] == 3 and p["skipped"] == 1, (p["ok"], p["skipped"])
+	assert "Presidential Villa" in p["issues"][0]["error"], p["issues"]
+	assert p["sample"][0]["check_in"] == "2025-12-25", p["sample"][0]
+	assert p["sample"][0]["amount_after_tax"] == 18500.0, p["sample"][0]
+
+	r = migrate.run_import(P3, csv_text, "auto")
+	assert r["created"] == 3 and r["history"] == 2, r
+	assert len(r["errors"]) == 1, r["errors"]
+	first = frappe.get_doc("Reservation", r["reservations"][0])
+	# history keeps the vendor's final status and the fixed amount
+	assert first.status == "Checked Out", first.status
+	assert float(first.amount_after_tax) == 18500.0, first.amount_after_tax
+	assert frappe.db.get_value("Guest", first.guest, "email") == "rao@x.in"
+	# "Deluxe Room" fuzzy-resolved onto the Deluxe type
+	second = frappe.get_doc("Reservation", r["reservations"][1])
+	assert second.room_type == rt and second.status == "Cancelled", second
+
+
 @check("ticket SLA: priority sets due window")
 def t12():
 	from frappe.utils import get_datetime, now_datetime, time_diff_in_seconds
@@ -1145,7 +1200,7 @@ def execute():
 	frappe.db.savepoint("eval_start")
 	try:
 		RT, ROOM = setup()
-		for fn in (t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19, t20, t21, t22, t23, t24, t25, t26, t27, t28, t29, t30, t31, t32):
+		for fn in (t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19, t20, t21, t22, t23, t24, t25, t26, t27, t28, t29, t30, t31, t32, t33):
 			fn()
 	finally:
 		frappe.db.commit = real_commit

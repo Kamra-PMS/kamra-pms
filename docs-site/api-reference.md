@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function — the same governed layer
-the UI and the AI use. **146 endpoints**, generated from the source
+the UI and the AI use. **148 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -1620,6 +1620,37 @@ delivered ones for reprints/queries.
 | Param | Required | Default |
 | --- | --- | --- |
 | `property` | yes |  |
+
+
+## Migration (CSV import)
+
+### `kamra.migrate.preview_import`
+
+**POST**
+
+Dry run: how the file's columns map, which date convention was
+detected, and every row that would be skipped - nothing is written.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `csv_text` | yes |  |
+| `preset` | no | `'auto'` |
+
+### `kamra.migrate.run_import`
+
+**POST**
+
+Import the file. Live rows (confirmed / in-house) go through the
+full booking validation; history rows (checked-out / cancelled /
+no-show) are stored as records with their status stamped directly, so
+guest history survives the migration.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `csv_text` | yes |  |
+| `preset` | no | `'auto'` |
 
 
 ## Central reservations (chain)

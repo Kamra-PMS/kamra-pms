@@ -28,7 +28,17 @@ export default function Setup() {
   const [createdProperty, setCreatedProperty] = useState<string | null>(null)
   const [importReport, setImportReport] = useState<{
     created: number
+    history?: number
     errors: { row: number; guest: string; error: string }[]
+  } | null>(null)
+  const [preset, setPreset] = useState("auto")
+  const [preview, setPreview] = useState<{
+    mapping: Record<string, string>
+    unmapped: string[]
+    date_format: string
+    ok: number
+    skipped: number
+    issues: { row: number; guest: string; error: string }[]
   } | null>(null)
 
   const [prop, setProp] = useState({
@@ -90,23 +100,36 @@ export default function Setup() {
     }
   }
 
+  async function previewImport() {
+    setBusy(true)
+    setError(null)
+    setImportReport(null)
+    try {
+      const res = await call<NonNullable<typeof preview>>(
+        "kamra.migrate.preview_import",
+        { property: createdProperty, csv_text: csv, preset },
+      )
+      setPreview(res)
+    } catch (e) {
+      setError(serverError(e))
+    } finally {
+      setBusy(false)
+    }
+  }
+
   async function runImport() {
     setBusy(true)
     setError(null)
     try {
-      const lines = csv.trim().split("\n").filter(Boolean)
-      const headers = lines[0].split(",").map((h) => h.trim())
-      const rows = lines.slice(1).map((line) => {
-        const cells = line.split(",").map((c) => c.trim())
-        return Object.fromEntries(headers.map((h, i) => [h, cells[i] ?? ""]))
-      })
       const res = await call<{
         created: number
+        history: number
         errors: { row: number; guest: string; error: string }[]
-      }>("kamra.api.import_bookings", {
-        property: createdProperty, bookings: rows,
+      }>("kamra.migrate.run_import", {
+        property: createdProperty, csv_text: csv, preset,
       })
       setImportReport(res)
+      setPreview(null)
     } catch (e) {
       setError(serverError(e))
     } finally {
@@ -267,25 +290,72 @@ export default function Setup() {
                 Bring your existing bookings over - paste a CSV, or let the AI
                 migration assistant do the mapping for you via MCP.
               </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <select
+                  className={cn(inputCls, "w-auto")}
+                  value={preset}
+                  onChange={(e) => { setPreset(e.target.value); setPreview(null) }}
+                  aria-label="Which system is this export from?"
+                >
+                  <option value="auto">Auto-detect format</option>
+                  <option value="ezee">eZee export</option>
+                  <option value="cloudbeds">Cloudbeds export</option>
+                </select>
+                <label className="cursor-pointer rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-700 hover:border-brand-400">
+                  Upload CSV file
+                  <input
+                    type="file"
+                    accept=".csv,text/csv"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const f = e.target.files?.[0]
+                      if (f) { setCsv(await f.text()); setPreview(null) }
+                    }}
+                  />
+                </label>
+                <span className="text-xs text-zinc-400">or paste it below</span>
+              </div>
               <label className="block">
-                <span className="mb-1.5 block text-sm font-medium text-zinc-600">
-                  CSV - header row then data
-                </span>
                 <textarea
                   className={cn(inputCls, "font-mono text-xs")}
                   rows={7}
                   placeholder={
-                    "guest_name,phone,room_type_code,check_in,check_out,adults\n" +
-                    "Asha Rao,+91 98xxxx,STD,2026-07-10,2026-07-12,2"
+                    "Guest Name,Mobile,Room Type,Arrival Date,Departure Date,Adults,Status\n" +
+                    '"Rao, Asha",+91 98xxxx,Deluxe,25/12/2025,28/12/2025,2,Checked Out'
                   }
                   value={csv}
-                  onChange={(e) => setCsv(e.target.value)}
+                  onChange={(e) => { setCsv(e.target.value); setPreview(null) }}
                 />
               </label>
+              {preview && (
+                <div className="space-y-2 rounded-lg bg-zinc-50 px-4 py-3 text-sm">
+                  <p>
+                    <span className="font-medium text-emerald-700">{preview.ok} ready to import</span>
+                    {preview.skipped > 0 && (
+                      <span className="ml-2 font-medium text-rose-600">{preview.skipped} will be skipped</span>
+                    )}
+                    <span className="ml-2 text-zinc-400">dates read as {preview.date_format}</span>
+                  </p>
+                  <div className="flex flex-wrap gap-1">
+                    {Object.entries(preview.mapping).map(([k, v]) => (
+                      <Badge key={k} tone="zinc">{v} → {k.replace(/_/g, " ")}</Badge>
+                    ))}
+                    {preview.unmapped.map((h) => (
+                      <Badge key={h} tone="amber">{h} (ignored)</Badge>
+                    ))}
+                  </div>
+                  {preview.issues.map((iss) => (
+                    <p key={iss.row} className="text-rose-600">
+                      Row {iss.row}{iss.guest ? ` (${iss.guest})` : ""}: {iss.error}
+                    </p>
+                  ))}
+                </div>
+              )}
               {importReport && (
                 <div className="rounded-lg bg-zinc-50 px-4 py-3 text-sm">
                   <p className="font-medium text-emerald-700">
                     {importReport.created} booking{importReport.created === 1 ? "" : "s"} imported
+                    {importReport.history ? ` (${importReport.history} as past-stay history)` : ""}
                   </p>
                   {importReport.errors.map((e) => (
                     <p key={e.row} className="text-rose-600">
@@ -322,9 +392,14 @@ export default function Setup() {
                 {busy ? "Creating…" : "Create property"}
               </Button>
             )}
-            {step === 5 && (
-              <Button disabled={busy || !csv.trim()} onClick={runImport}>
-                {busy ? "Importing…" : "Import bookings"}
+            {step === 5 && !preview && (
+              <Button disabled={busy || !csv.trim()} onClick={previewImport}>
+                {busy ? "Checking…" : "Preview import"}
+              </Button>
+            )}
+            {step === 5 && preview && (
+              <Button disabled={busy || preview.ok === 0} onClick={runImport}>
+                {busy ? "Importing…" : `Import ${preview.ok} booking${preview.ok === 1 ? "" : "s"}`}
               </Button>
             )}
           </div>
