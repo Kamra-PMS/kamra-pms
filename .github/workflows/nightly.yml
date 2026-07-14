@@ -179,3 +179,15 @@ jobs:
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new \
             "${DEPLOY_USER:-root}@${DEPLOY_HOST}" \
             "bash ~/kamra-deploy/redeploy.sh nightly"
+          # Refresh the showcase seed (idempotent) so new demo data - menu
+          # items, table layouts, laundry rates - appears without a manual
+          # step. Best effort: a seed hiccup must not fail the deploy.
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new \
+            "${DEPLOY_USER:-root}@${DEPLOY_HOST}" bash -s <<'SEED'
+          cd ~/kamra-deploy/frappe_docker
+          docker compose --project-name kamra-nightly --env-file kamra-nightly.env \
+            -f compose.yaml -f overrides/compose.mariadb.yaml \
+            -f overrides/compose.redis.yaml -f overrides/compose.noproxy.yaml \
+            exec -T backend bench --site nightly.kamrapms.com \
+            execute kamra.scripts.seed_showcase.execute || true
+          SEED
