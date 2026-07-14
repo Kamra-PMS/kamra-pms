@@ -277,9 +277,184 @@ def execute():
 				laundry_status(order, "Ready")
 			added_lnd += 1
 
+	extra = seed_sample_content()
+
 	frappe.db.commit()
 	print(f"Showcase seed: +{added_exp} experiences, +{added_venue} venues, "
 	      f"+{added_outlet} outlets, +{added_item} menu items, "
 	      f"+{added_rate} laundry rates, +{added_ticket} tickets, "
-	      f"+{added_ho} handovers, +{added_lnd} laundry orders "
+	      f"+{added_ho} handovers, +{added_lnd} laundry orders, {extra} "
 	      f"on '{PROPERTY}'.")
+
+
+def seed_sample_content():
+	"""Fill the long tail of demo fields so every screen has a story:
+	property profile & policies, revenue controls, a rolling 'today' with
+	arrivals/departures and ETAs, table reservations, a room block, lost &
+	found. Idempotent - only fills what's empty."""
+	from frappe.utils import add_days, add_to_date, now_datetime, nowdate
+
+	# ── property profile: fill only blank fields ────────────────────────
+	PROFILE = {
+		"website": "https://demo.kamrapms.com",
+		"driving_directions": (
+			"From Kempegowda International Airport take NH-44 south "
+			"(45 min). We're 500 m past the Lalbagh West Gate - look for "
+			"the green porte-cochère."),
+		"latitude": 12.9507, "longitude": 77.5848,
+		"house_rules": (
+			"Check-in 14:00, check-out 11:00. Government ID required for "
+			"all adult guests. Quiet hours 22:00-07:00. Smoking only on "
+			"the terrace."),
+		"pets_policy": ("Small pets (under 10 kg) welcome in Garden rooms "
+		                "at ₹750/night - please tell us in advance."),
+		"children_policy": ("Children under 6 stay free in the parents' "
+		                    "room; 6-11 at the child rate. Cribs on "
+		                    "request, free."),
+		"extra_bed_policy": "Rollaway bed ₹900/night, subject to room size.",
+		"meta_title": "Kamra Demo Palace, Bengaluru - boutique stays near Lalbagh",
+		"meta_description": (
+			"38 rooms of quiet luxury by Lalbagh Botanical Garden. Direct "
+			"rates, pay at hotel, instant confirmation."),
+		"page_slug": "kamra-demo-palace",
+		"overbooking_pct": 10,
+	}
+	prop = frappe.get_doc("Property", PROPERTY)
+	filled = 0
+	for k, v in PROFILE.items():
+		if not (prop.get(k) or ""):
+			prop.set(k, v)
+			filled += 1
+	if filled:
+		prop.flags.ignore_validate = True
+		prop.save(ignore_permissions=True)
+
+	# ── demand pricing tiers (Settings → Demand pricing) ────────────────
+	tiers = 0
+	for occ, prem, floor in ((70, 10, 0), (85, 20, 6500)):
+		if not frappe.db.exists("Hurdle Rate",
+		                        {"property": PROPERTY, "occupancy_from": occ}):
+			frappe.get_doc({
+				"doctype": "Hurdle Rate", "property": PROPERTY,
+				"occupancy_from": occ, "premium_pct": prem, "min_rate": floor,
+			}).insert(ignore_permissions=True)
+			tiers += 1
+
+	# ── a rolling 'today': arrivals with ETAs, departures with ETDs ─────
+	def _mk_guest(name, phone):
+		g = frappe.db.get_value("Guest", {"phone": phone})
+		if g:
+			return g
+		first, _, last = name.partition(" ")
+		return frappe.get_doc({
+			"doctype": "Guest", "first_name": first, "last_name": last,
+			"phone": phone,
+		}).insert(ignore_permissions=True).name
+
+	def _free_room(ci, co):
+		for r in frappe.get_all("Room", filters={"property": PROPERTY},
+		                        pluck="name"):
+			clash = frappe.db.sql(
+				"""select name from tabReservation where room=%s
+				   and status in ('Confirmed','Checked In')
+				   and check_in_date < %s and check_out_date > %s limit 1""",
+				(r, co, ci))
+			if not clash and not frappe.db.exists("Room Block", {
+					"room": r, "block_status": "Active",
+					"from_date": ("<", co), "to_date": (">", ci)}):
+				return r
+		return None
+
+	today, added_story = nowdate(), 0
+	story = [
+		# (guest, phone, ci offset, co offset, eta, etd, checkin?)
+		("Ananya Iyer", "+91 98860 11001", 0, 2, "11:30", None, 0),
+		("Rohan Kapoor", "+91 98860 11002", 0, 1, "14:00", None, 0),
+		("Meera & Arjun Shah", "+91 98860 11003", 0, 3, "18:45", None, 0),
+		("David Chen", "+91 98860 11004", -1, 0, None, "10:30", 1),
+		("Fatima Khan", "+91 98860 11005", -2, 0, None, "11:00", 1),
+		("Karthik Rao", "+91 98860 11006", -1, 1, None, None, 1),
+	]
+	arrivals_today = frappe.db.count("Reservation", {
+		"property": PROPERTY, "check_in_date": today, "status": "Confirmed"})
+	if arrivals_today < 2:
+		rt = frappe.get_all("Room Type", filters={"property": PROPERTY},
+		                    pluck="name", limit=1)[0]
+		for name, phone, ci_off, co_off, eta, etd, check_in in story:
+			ci, co = add_days(today, ci_off), add_days(today, co_off)
+			guest = _mk_guest(name, phone)
+			if frappe.db.exists("Reservation", {
+					"guest": guest, "check_in_date": ci,
+					"status": ("in", ["Confirmed", "Checked In"])}):
+				continue
+			room = _free_room(ci, co)
+			try:
+				res = frappe.get_doc({
+					"doctype": "Reservation", "property": PROPERTY,
+					"guest": guest, "room_type": rt, "room": room,
+					"check_in_date": ci, "check_out_date": co,
+					"adults": 2, "auto_price": 1, "source": "Website",
+					"planned_check_in_time": eta,
+					"planned_check_out_time": etd,
+				}).insert(ignore_permissions=True)
+				if check_in:
+					res.status = "Checked In"
+					res.save(ignore_permissions=True)
+				added_story += 1
+			except Exception:
+				continue  # full house is fine - the demo stays consistent
+
+	# ── tonight's table reservations ────────────────────────────────────
+	added_tres = 0
+	outlet = frappe.db.get_value(
+		"POS Outlet", {"property": PROPERTY, "outlet_type": "Restaurant"})
+	if outlet and not frappe.db.count("POS Table Reservation", {
+			"outlet": outlet, "status": "Booked"}):
+		tonight = now_datetime().replace(minute=0, second=0, microsecond=0)
+		for tbl, guest, phone, party, hrs in (
+				("F2", "Nisha Reddy", "+91 98860 11007", 6, 3),
+				("T6", "Imran Sheikh", "+91 98860 11008", 4, 4)):
+			frappe.get_doc({
+				"doctype": "POS Table Reservation", "outlet": outlet,
+				"table_no": tbl, "guest_name": guest, "phone": phone,
+				"party_size": party,
+				"reserved_at": add_to_date(tonight, hours=hrs),
+				"notes": "Birthday cake at the table" if tbl == "F2" else None,
+			}).insert(ignore_permissions=True)
+			added_tres += 1
+
+	# ── a maintenance hold on the tape chart ────────────────────────────
+	added_block = 0
+	if not frappe.db.count("Room Block", {
+			"property": PROPERTY, "block_status": "Active"}):
+		room = _free_room(add_days(today, 5), add_days(today, 8))
+		if room:
+			frappe.get_doc({
+				"doctype": "Room Block", "property": PROPERTY, "room": room,
+				"from_date": add_days(today, 5), "to_date": add_days(today, 8),
+				"reason": "Maintenance",
+				"note": "AC compressor replacement - vendor booked",
+			}).insert(ignore_permissions=True)
+			added_block = 1
+
+	# ── lost & found shelf ──────────────────────────────────────────────
+	added_lf = 0
+	rooms = frappe.get_all("Room", filters={"property": PROPERTY},
+	                       pluck="name", limit=4)
+	for desc, cond, i in (("Black leather wallet", "Found", 0),
+	                      ("Kids' blue water bottle", "Found", 1),
+	                      ("Silver bracelet", "Missing", 2)):
+		if frappe.db.exists("Lost And Found Item", {
+				"property": PROPERTY, "item_description": desc}):
+			continue
+		frappe.get_doc({
+			"doctype": "Lost And Found Item", "property": PROPERTY,
+			"item_description": desc, "condition": cond,
+			"found_in_room": rooms[i % len(rooms)] if rooms else None,
+			"found_on": today,
+		}).insert(ignore_permissions=True)
+		added_lf += 1
+
+	return (f"+{filled} profile fields, +{tiers} demand tiers, "
+	        f"+{added_story} today-stays, +{added_tres} table res, "
+	        f"+{added_block} blocks, +{added_lf} lost&found")
