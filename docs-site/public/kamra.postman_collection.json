@@ -4448,10 +4448,10 @@
         "kamra.laundry.request_pickup"
        ]
       },
-      "description": "Log that a guest wants laundry picked up - it lands on the floor\nteam's queue. Items are counted at the door, not here.",
+      "description": "Log that a guest wants laundry picked up - it lands on the floor\nteam's queue. Items are counted at the door, not here. A House order\n(staff uniforms / hotel linen) needs no room or guest and is never billed.",
       "body": {
        "mode": "raw",
-       "raw": "{\n  \"property\": \"Your Property\",\n  \"room\": \"Your Property-101\",\n  \"express\": 0\n}",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"room\": \"Your Property-101\",\n  \"express\": 0,\n  \"order_type\": \"Guest\"\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -4485,10 +4485,10 @@
         "kamra.laundry.collect_laundry"
        ]
       },
-      "description": "The attendant counts the bag with the guest. Prices come from the\nrate card (express uses the express column, or 1.5x). Pass `order` to\nfulfil a pickup request, or omit it to log a walk-up collection.",
+      "description": "The attendant counts the bag with the guest. Prices come from the\nrate card (express uses the express column, or 1.5x). Pass `order` to\nfulfil a pickup request, or omit it to log a walk-up collection. A House\nwalk-up (uniforms / linen) needs no room or guest and is never billed.",
       "body": {
        "mode": "raw",
-       "raw": "{\n  \"property\": \"Your Property\",\n  \"room\": \"Your Property-101\",\n  \"items\": \"<items>\",\n  \"order\": \"ORD-2026-00001\"\n}",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"room\": \"Your Property-101\",\n  \"order\": \"ORD-2026-00001\",\n  \"order_type\": \"Guest\",\n  \"complimentary\": 0\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -4674,6 +4674,43 @@
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "laundry_revenue",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.laundry.laundry_revenue",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.laundry.laundry_revenue"
+       ]
+      },
+      "description": "Delivered-laundry revenue over the last N days, with a per-service\nbreakdown. Only billed guest orders count as revenue; House and\ncomplimentary bags are counted as volume but earn nothing.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"days\": 30\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -5304,6 +5341,72 @@
       "body": {
        "mode": "raw",
        "raw": "{\n  \"token\": \"<token>\",\n  \"id_type\": \"<id_type>\",\n  \"id_number\": \"<id_number>\",\n  \"email\": \"guest@example.com\",\n  \"nationality\": \"\",\n  \"address_line\": \"\",\n  \"city\": \"\",\n  \"eta\": \"\",\n  \"special_requests\": \"\",\n  \"signature\": \"\",\n  \"consent\": 0\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "laundry_info",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.public_api.laundry_info",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.public_api.laundry_info"
+       ]
+      },
+      "description": "Laundry price list + stay context for the in-stay guest page.\nRead-only \u2014 the guest sees what things cost, never a folio.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"token\": \"<token>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "request_guest_laundry",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.public_api.request_guest_laundry",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.public_api.request_guest_laundry"
+       ]
+      },
+      "description": "In-house guest asks housekeeping to pick their laundry up. Written on\nthe guest's behalf by the governed agent \u2014 the guest never touches pricing\nor the folio; staff count and price the bag at the door (status\n'Requested', exactly where a staff-logged pickup lands).",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"token\": \"<token>\",\n  \"notes\": \"\",\n  \"express\": 0\n}",
        "options": {
         "raw": {
          "language": "json"

@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function — the same governed layer
-the UI and the AI use. **148 endpoints**, generated from the source
+the UI and the AI use. **151 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -1538,14 +1538,17 @@ Add or edit one line of the rate card.
 **POST**
 
 Log that a guest wants laundry picked up - it lands on the floor
-team's queue. Items are counted at the door, not here.
+team's queue. Items are counted at the door, not here. A House order
+(staff uniforms / hotel linen) needs no room or guest and is never billed.
 
 | Param | Required | Default |
 | --- | --- | --- |
 | `property` | yes |  |
-| `room` | yes |  |
+| `room` | no | `None` |
 | `notes` | no | `None` |
 | `express` | no | `0` |
+| `order_type` | no | `'Guest'` |
+| `house_label` | no | `None` |
 
 ### `kamra.laundry.collect_laundry`
 
@@ -1553,16 +1556,20 @@ team's queue. Items are counted at the door, not here.
 
 The attendant counts the bag with the guest. Prices come from the
 rate card (express uses the express column, or 1.5x). Pass `order` to
-fulfil a pickup request, or omit it to log a walk-up collection.
+fulfil a pickup request, or omit it to log a walk-up collection. A House
+walk-up (uniforms / linen) needs no room or guest and is never billed.
 
 | Param | Required | Default |
 | --- | --- | --- |
 | `property` | yes |  |
-| `room` | yes |  |
-| `items` | yes |  |
+| `room` | no | `None` |
+| `items` | no | `None` |
 | `order` | no | `None` |
 | `express` | no | `None` |
 | `notes` | no | `None` |
+| `order_type` | no | `'Guest'` |
+| `house_label` | no | `None` |
+| `complimentary` | no | `0` |
 
 ### `kamra.laundry.laundry_status`
 
@@ -1620,6 +1627,19 @@ delivered ones for reprints/queries.
 | Param | Required | Default |
 | --- | --- | --- |
 | `property` | yes |  |
+
+### `kamra.laundry.laundry_revenue`
+
+**GET/POST** · roles: `Finance`, `Front Desk`, `Hotel Admin`, `Kamra Agent`
+
+Delivered-laundry revenue over the last N days, with a per-service
+breakdown. Only billed guest orders count as revenue; House and
+complimentary bags are counted as volume but earn nothing.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `days` | no | `30` |
 
 
 ## Migration (CSV import)
@@ -1865,6 +1885,32 @@ integration comes later.
 | `special_requests` | no | `''` |
 | `signature` | no | `''` |
 | `consent` | no | `0` |
+
+### `kamra.public_api.laundry_info` <Badge type='tip' text='public' />
+
+**GET/POST**
+
+Laundry price list + stay context for the in-stay guest page.
+Read-only — the guest sees what things cost, never a folio.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `token` | yes |  |
+
+### `kamra.public_api.request_guest_laundry` <Badge type='tip' text='public' />
+
+**POST**
+
+In-house guest asks housekeeping to pick their laundry up. Written on
+the guest's behalf by the governed agent — the guest never touches pricing
+or the folio; staff count and price the bag at the door (status
+'Requested', exactly where a staff-logged pickup lands).
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `token` | yes |  |
+| `notes` | no | `''` |
+| `express` | no | `0` |
 
 ### `kamra.public_api.check_voucher` <Badge type='tip' text='public' />
 
