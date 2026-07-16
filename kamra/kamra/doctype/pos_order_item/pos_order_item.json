@@ -14,8 +14,11 @@
   "amount",
   "instructions",
   "kot_status",
+  "fired_at",
+  "prepared_at",
   "voided",
-  "void_reason"
+  "void_reason",
+  "void_seen"
  ],
  "fields": [
   {
@@ -68,6 +71,19 @@
    "default": "New"
   },
   {
+   "fieldname": "fired_at",
+   "fieldtype": "Datetime",
+   "label": "Fired At",
+   "read_only": 1,
+   "description": "When this line was sent to the kitchen. The cook's clock starts here - not when the captain opened the tab."
+  },
+  {
+   "fieldname": "prepared_at",
+   "fieldtype": "Datetime",
+   "label": "Prepared At",
+   "read_only": 1
+  },
+  {
    "fieldname": "voided",
    "fieldtype": "Check",
    "label": "Voided"
@@ -76,6 +92,12 @@
    "fieldname": "void_reason",
    "fieldtype": "Data",
    "label": "Void Reason"
+  },
+  {
+   "fieldname": "void_seen",
+   "fieldtype": "Check",
+   "label": "Void Seen",
+   "description": "The kitchen has acknowledged a line voided after the KOT fired."
   }
  ],
  "grid_page_length": 50,

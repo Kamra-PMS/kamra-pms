@@ -1178,6 +1178,165 @@ def t33():
 	assert second.room_type == rt and second.status == "Cancelled", second
 
 
+@check("kitchen display: chef context, post-fire void alert, recall undo")
+def t34():
+	from kamra import pos
+	outlet = frappe.get_doc({
+		"doctype": "POS Outlet", "property": P, "outlet_name": "Eval Kitchen",
+		"outlet_type": "Restaurant", "gst_rate": 5,
+	}).insert(ignore_permissions=True).name
+	def _mi(name, station, veg, course="Main", allergens=None):
+		return frappe.get_doc({
+			"doctype": "Menu Item", "property": P, "outlet": outlet,
+			"item_name": name, "category": "Food", "price": 100,
+			"is_veg": veg, "available": 1, "prep_station": station,
+			"course": course, "allergens": allergens,
+		}).insert(ignore_permissions=True).name
+	food = _mi("Eval Paneer", "Kitchen", 1)
+	drink = _mi("Eval Lager", "Bar", 0)
+
+	o = pos.create_order(outlet, [{"menu_item": food, "qty": 2, "instructions": "no onions"},
+	                              {"menu_item": drink, "qty": 1}],
+	                     table_no="T9", guests=3)
+	# not fired yet: the kitchen must not see it
+	assert not [r for r in pos.kitchen_queue(P, outlet=outlet)], "unfired order on the board"
+	pos.fire_kot(o["order"])
+
+	tick = next(r for r in pos.kitchen_queue(P, outlet=outlet) if r["name"] == o["order"])
+	# the chef's context: ticket number, where it goes, who to ask
+	assert tick["kot_no"] >= 1 and tick["order_type"] == "Dine In", tick
+	assert tick["guests"] == 3 and tick["captain"], tick
+	paneer = next(i for i in tick["items"] if i["item_name"] == "Eval Paneer")
+	assert paneer["is_veg"] == 1 and paneer["state"] == "cooking", paneer
+	assert paneer["instructions"] == "no onions", paneer
+	# station routing splits food from drink
+	assert [i["item_name"] for i in next(
+		r for r in pos.kitchen_queue(P, outlet=outlet, station="Bar")
+		if r["name"] == o["order"])["items"]] == ["Eval Lager"]
+
+	# a line voided AFTER firing must shout, not vanish: the chef is cooking it
+	rows = {i["item_name"]: i["row"] for i in pos.order_detail(o["order"])["items"]}
+	pos.void_item(o["order"], rows["Eval Lager"], reason="guest changed mind")
+	tick = next(r for r in pos.kitchen_queue(P, outlet=outlet) if r["name"] == o["order"])
+	lager = next(i for i in tick["items"] if i["item_name"] == "Eval Lager")
+	assert lager["state"] == "cancelled", lager
+	assert lager["void_reason"] == "guest changed mind", lager
+
+	# "all ready" must never mark cancelled food as cooked
+	assert pos.mark_prepared(o["order"])["all_prepared"], "void blocked all_prepared"
+	assert frappe.db.get_value("POS Order Item", rows["Eval Lager"], "kot_status") == "Fired"
+	# the ack clears the alert, and with it the ticket
+	pos.acknowledge_void(o["order"], rows["Eval Lager"])
+	assert not [r for r in pos.kitchen_queue(P, outlet=outlet) if r["name"] == o["order"]]
+
+	# a mis-tap is recoverable: recall puts the ticket back on the board
+	pos.recall_prepared(o["order"])
+	tick = next(r for r in pos.kitchen_queue(P, outlet=outlet) if r["name"] == o["order"])
+	assert [i["state"] for i in tick["items"]] == ["cooking"], tick
+	pos.mark_prepared(o["order"])
+	pos.deliver_order(o["order"])
+	# once it has left the kitchen there is nothing to recall
+	try:
+		pos.recall_prepared(o["order"])
+		raise AssertionError("recall allowed after delivery")
+	except frappe.ValidationError:
+		pass
+
+
+@check("kitchen display: coursing holds & fires, cook's clock starts at fire, allergen alarm")
+def t35():
+	from kamra import pos
+	from frappe.utils import add_to_date, now_datetime
+	outlet = frappe.get_doc({
+		"doctype": "POS Outlet", "property": P, "outlet_name": "Eval Pass",
+		"outlet_type": "Restaurant", "gst_rate": 5,
+	}).insert(ignore_permissions=True).name
+	def _mi(name, course, station, allergens=None):
+		return frappe.get_doc({
+			"doctype": "Menu Item", "property": P, "outlet": outlet,
+			"item_name": name, "category": "Food", "price": 100, "is_veg": 1,
+			"available": 1, "prep_station": station, "course": course,
+			"allergens": allergens,
+		}).insert(ignore_permissions=True).name
+	tikka = _mi("Pass Tikka", "Starter", "Tandoor")
+	curry = _mi("Pass Curry", "Main", "Tandoor", "Nuts, Dairy")
+	lager = _mi("Pass Lager", "Drink", "Bar")
+
+	o = pos.create_order(outlet, [{"menu_item": tikka, "qty": 2},
+	                              {"menu_item": curry, "qty": 1},
+	                              {"menu_item": lager, "qty": 1}],
+	                     table_no="C2", guests=2,
+	                     allergy_note="nut allergy - child at the table")
+
+	# coursing: only the starter goes; the rest is held where the chef can see it
+	pos.fire_kot(o["order"], course="Starter")
+	tick = next(r for r in pos.kitchen_queue(P, outlet=outlet) if r["name"] == o["order"])
+	state = {i["item_name"]: i["state"] for i in tick["items"]}
+	assert state == {"Pass Tikka": "cooking", "Pass Curry": "held",
+	                 "Pass Lager": "held"}, state
+	assert tick["held_courses"] == ["Main", "Drink"], tick["held_courses"]
+
+	# the allergen alarm fires on the dish that contains it, and only that one
+	curry_line = next(i for i in tick["items"] if i["item_name"] == "Pass Curry")
+	assert curry_line["allergy_hits"] == ["Nuts"], curry_line["allergy_hits"]
+	assert not next(i for i in tick["items"] if i["item_name"] == "Pass Tikka")["allergy_hits"]
+	assert tick["allergy_note"], "guest's own words must ride along with the match"
+
+	# THE COOK'S CLOCK: a tab opened an hour ago must not hand the kitchen a
+	# ticket that is already late. Age runs from the fire, not the order.
+	frappe.db.set_value("POS Order", o["order"], "creation",
+	                    add_to_date(now_datetime(), hours=-1), update_modified=False)
+	tick = next(r for r in pos.kitchen_queue(P, outlet=outlet) if r["name"] == o["order"])
+	fired = next(i for i in tick["items"] if i["state"] == "cooking")["fired_at"]
+	assert (now_datetime() - fired).total_seconds() < 120, "cook's clock inherited the tab's age"
+
+	# each course keeps its own clock
+	pos.mark_prepared(o["order"])
+	frappe.db.set_value("POS Order Item", next(
+		i["name"] for i in tick["items"] if i["item_name"] == "Pass Tikka"),
+		"fired_at", add_to_date(now_datetime(), minutes=-30), update_modified=False)
+	pos.fire_kot(o["order"], course="Main")
+	tick = next(r for r in pos.kitchen_queue(P, outlet=outlet) if r["name"] == o["order"])
+	main = next(i for i in tick["items"] if i["item_name"] == "Pass Curry")
+	assert main["state"] == "cooking" and main["fired_at"], main
+	assert (now_datetime() - main["fired_at"]).total_seconds() < 120, \
+		"mains inherited the starter's clock"
+	assert tick["held_courses"] == ["Drink"], tick["held_courses"]
+
+	# a course already sent cannot be fired twice
+	try:
+		pos.fire_kot(o["order"], course="Main")
+		raise AssertionError("re-fired a course that was already away")
+	except frappe.ValidationError:
+		pass
+
+	# the floor can tell whether anyone has actually picked the ticket up
+	assert not tick["accepted_at"], "ticket accepted before the kitchen touched it"
+	assert tick["order_total"], "ticket carries no order value"
+	pos.accept_ticket(o["order"])
+	tick = next(r for r in pos.kitchen_queue(P, outlet=outlet) if r["name"] == o["order"])
+	first_accept = tick["accepted_at"]
+	assert first_accept, "accept did not stick"
+	pos.accept_ticket(o["order"])  # accepting twice must not reset the clock
+	tick = next(r for r in pos.kitchen_queue(P, outlet=outlet) if r["name"] == o["order"])
+	assert tick["accepted_at"] == first_accept, "re-accept moved the timestamp"
+
+	# station routing follows the course to its section
+	bar = next(r for r in pos.kitchen_queue(P, outlet=outlet, station="Bar")
+	           if r["name"] == o["order"])
+	assert [i["item_name"] for i in bar["items"]] == ["Pass Lager"], bar["items"]
+	assert bar["held_courses"] == ["Drink"], bar["held_courses"]
+
+	# a menu written before coursing existed still fires with everything else
+	legacy = _mi("Pass Legacy", "Main", "Kitchen")
+	frappe.db.set_value("Menu Item", legacy, "course", None)
+	o2 = pos.create_order(outlet, [{"menu_item": legacy, "qty": 1}], table_no="C9")
+	pos.fire_kot(o2["order"], course="Main")
+	t2 = next(r for r in pos.kitchen_queue(P, outlet=outlet) if r["name"] == o2["order"])
+	assert t2["items"][0]["state"] == "cooking", "legacy line was held back forever"
+	assert t2["items"][0]["course"] == "Main", t2["items"][0]["course"]
+
+
 @check("ticket SLA: priority sets due window")
 def t12():
 	from frappe.utils import get_datetime, now_datetime, time_diff_in_seconds
@@ -1200,7 +1359,7 @@ def execute():
 	frappe.db.savepoint("eval_start")
 	try:
 		RT, ROOM = setup()
-		for fn in (t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19, t20, t21, t22, t23, t24, t25, t26, t27, t28, t29, t30, t31, t32, t33):
+		for fn in (t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19, t20, t21, t22, t23, t24, t25, t26, t27, t28, t29, t30, t31, t32, t33, t34, t35):
 			fn()
 	finally:
 		frappe.db.commit = real_commit

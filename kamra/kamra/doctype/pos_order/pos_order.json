@@ -23,6 +23,7 @@
   "column_break_b",
   "posted_to_folio",
   "notes",
+  "allergy_note",
   "captain",
   "table_no",
   "discount_amount",
@@ -31,6 +32,7 @@
   "subtotal",
   "order_type",
   "kot_no",
+  "accepted_at",
   "paid",
   "payment_mode",
   "guests",
@@ -138,6 +140,12 @@
    "label": "Notes"
   },
   {
+   "fieldname": "allergy_note",
+   "fieldtype": "Data",
+   "label": "Guest Allergy",
+   "description": "What the guest cannot eat. Alarms the kitchen display and flags any dish containing it."
+  },
+  {
    "fieldname": "captain",
    "fieldtype": "Link",
    "label": "Captain",
@@ -185,6 +193,13 @@
    "label": "KOT #",
    "read_only": 1,
    "description": "Daily sequence per outlet, stamped when the KOT first fires."
+  },
+  {
+   "fieldname": "accepted_at",
+   "fieldtype": "Datetime",
+   "label": "Accepted At",
+   "read_only": 1,
+   "description": "When the kitchen took the ticket on. Until then the floor cannot assume anyone has seen it."
   },
   {
    "fieldname": "paid",

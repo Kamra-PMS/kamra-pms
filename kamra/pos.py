@@ -13,6 +13,9 @@ from frappe import _
 from kamra.authz import require_roles
 
 POS_ROLES = ("Front Desk", "Finance", "Kamra Agent")
+# Menus written before coursing existed have no course; they behave as mains.
+DEFAULT_COURSE = "Main"
+COURSE_ORDER = ("Starter", "Main", "Dessert", "Drink")
 
 
 @frappe.whitelist()
@@ -64,6 +67,32 @@ def _load_items(rows):
 	return out
 
 
+def _courses_of(doc) -> dict:
+	"""menu_item -> course, for every line on the order. A menu that predates
+	coursing has no course set; treat it as a main so it fires with everything
+	else rather than being silently held back forever."""
+	ids = list({it.menu_item for it in doc.items if it.menu_item})
+	if not ids:
+		return {}
+	return {m.name: (m.course or DEFAULT_COURSE) for m in frappe.get_all(
+		"Menu Item", filters={"name": ["in", ids]}, fields=["name", "course"])}
+
+
+def _allergy_hits(allergy_note: str | None, allergens: str | None) -> list:
+	"""Which of a dish's allergens the guest actually declared. Loose on
+	purpose: the captain types "nut allergy" and the menu says "Nuts", and
+	the line must still light up. Matching is a guard, never a guarantee -
+	the guest note is always shown in full alongside it."""
+	if not (allergy_note or "").strip() or not (allergens or "").strip():
+		return []
+	note = allergy_note.lower()
+	hits = []
+	for a in (x.strip() for x in allergens.split(",")):
+		if a and a.lower().rstrip("s") in note:
+			hits.append(a)
+	return hits
+
+
 @frappe.whitelist(methods=["POST"])
 @require_roles(*POS_ROLES)
 def create_order(outlet: str, items, property: str | None = None,
@@ -72,7 +101,8 @@ def create_order(outlet: str, items, property: str | None = None,
                  notes: str | None = None, order_type: str | None = None,
                  guests=None, customer_name: str | None = None,
                  customer_phone: str | None = None,
-                 delivery_address: str | None = None):
+                 delivery_address: str | None = None,
+                 allergy_note: str | None = None):
 	"""Captain takes an order. If a room is given but no reservation, the
 	in-house stay is resolved so it can post to the folio later. Takeaway
 	and delivery carry the customer's details instead of a table/room."""
@@ -103,6 +133,7 @@ def create_order(outlet: str, items, property: str | None = None,
 		"delivery_address": (delivery_address or "").strip() or None,
 		"captain": frappe.session.user if source != "QR" else None,
 		"notes": notes or None,
+		"allergy_note": (allergy_note or "").strip() or None,
 		"items": lines,
 	})
 	doc.insert()
@@ -449,17 +480,29 @@ def apply_discount(order: str, amount: float, reason: str = ""):
 
 @frappe.whitelist(methods=["POST"])
 @require_roles(*POS_ROLES)
-def fire_kot(order: str):
+def fire_kot(order: str, course: str | None = None):
 	"""Send the order to the kitchen: new lines become Fired and show on the
 	kitchen display. Stamps the KOT number (a daily sequence per outlet) and
-	returns just-fired lines so the till can print the thermal KOT ticket."""
+	returns just-fired lines so the till can print the thermal KOT ticket.
+
+	Pass a course to send only that course and hold the rest - the table
+	orders once, the kitchen cooks the mains when the starters are cleared.
+	Each line is stamped with the moment it was fired: that, not when the
+	captain opened the tab, is when the cook's clock starts."""
 	doc = frappe.get_doc("POS Order", order)
+	courses = _courses_of(doc) if course else {}
+	now = frappe.utils.now()
 	fired = []
 	for it in doc.items:
 		if it.kot_status == "New" and not it.voided:
+			if course and courses.get(it.menu_item) != course:
+				continue
 			it.kot_status = "Fired"
+			it.fired_at = now
 			fired.append({"item_name": it.item_name, "qty": it.qty,
 			              "instructions": it.instructions})
+	if course and not fired:
+		frappe.throw(_("Nothing is held on that course."))
 	if not doc.kot_no:
 		last = frappe.db.sql(
 			"""select max(kot_no) from `tabPOS Order`
@@ -478,32 +521,90 @@ def fire_kot(order: str):
 @require_roles(*POS_ROLES)
 def kitchen_queue(property: str, outlet: str | None = None,
                   station: str | None = None):
-	"""The kitchen display: fired orders with items still to prepare. Scope
-	to one outlet (each restaurant's own kitchen) and/or one station."""
+	"""The kitchen display: fired orders the kitchen still has work on. Scope
+	to one outlet (each restaurant's own kitchen) and/or one station.
+
+	Each line carries a `state` the screen renders directly:
+	  cooking   - fired, still to make
+	  held      - a later course, or a round added to a running tab; the
+	              kitchen can see it coming but must not start it
+	  cancelled - voided after the KOT fired; the chef may be cooking it right
+	              now, so it stays on the ticket (loudly) until acknowledged
+	  done      - already prepared; kept for context and to allow a recall
+
+	A ticket is on the board while it has cooking, held or cancelled lines.
+	Done lines ride along but never hold a ticket open, so "all ready" still
+	clears it.
+
+	`fired_at` per line is what the display ages against - a table that sat an
+	hour over drinks must not hand the kitchen a ticket that is already red."""
 	filters = {"property": property, "status": "Preparing", "kot_fired": 1}
 	if outlet:
 		filters["outlet"] = outlet
 	orders = frappe.get_all(
 		"POS Order", filters=filters,
-		fields=["name", "outlet", "room", "table_no", "creation", "notes"],
+		fields=["name", "outlet", "room", "table_no", "creation", "notes",
+		        "kot_no", "order_type", "guests", "captain", "allergy_note",
+		        "order_total", "accepted_at"],
 		order_by="creation asc")
+	if not orders:
+		return []
+
+	# One query for every line, one for the menu meta, one for the outlet
+	# names: the display polls this, so it must not scale with ticket count.
+	rows = frappe.get_all(
+		"POS Order Item", filters={"parent": ["in", [o.name for o in orders]]},
+		fields=["name", "parent", "item_name", "qty", "instructions",
+		        "kot_status", "menu_item", "voided", "void_reason",
+		        "void_seen", "fired_at", "prepared_at", "idx"],
+		order_by="idx asc")
+	menu = {
+		m.name: m for m in frappe.get_all(
+			"Menu Item", filters={"name": ["in", list({r.menu_item for r in rows})]},
+			fields=["name", "is_veg", "is_alcohol", "prep_station", "course",
+			        "allergens"])
+	} if rows else {}
+	outlet_names = {
+		o.name: o.outlet_name for o in frappe.get_all(
+			"POS Outlet", filters={"name": ["in", list({o.outlet for o in orders})]},
+			fields=["name", "outlet_name"])
+	}
+	allergy_of = {o.name: o.allergy_note for o in orders}
+
+	by_order = {}
+	for r in rows:
+		if r.voided and (r.void_seen or r.kot_status not in ("Fired", "Prepared")):
+			continue  # acknowledged, or voided before it ever reached the line
+		meta = menu.get(r.menu_item) or {}
+		if station and meta.get("prep_station") != station:
+			continue
+		if r.voided:
+			r["state"] = "cancelled"
+		elif r.kot_status == "New":
+			r["state"] = "held"
+		elif r.kot_status == "Prepared":
+			r["state"] = "done"
+		else:
+			r["state"] = "cooking"
+		r["is_veg"] = meta.get("is_veg")
+		r["is_alcohol"] = meta.get("is_alcohol")
+		r["prep_station"] = meta.get("prep_station")
+		r["course"] = meta.get("course") or DEFAULT_COURSE
+		r["allergens"] = meta.get("allergens")
+		r["allergy_hits"] = _allergy_hits(allergy_of.get(r.parent), meta.get("allergens"))
+		by_order.setdefault(r.parent, []).append(r)
+
 	out = []
 	for o in orders:
-		items = frappe.get_all(
-			"POS Order Item", filters={"parent": o.name},
-			fields=["name", "item_name", "qty", "instructions", "kot_status",
-			        "menu_item", "voided"])
-		pending = [i for i in items if i.kot_status == "Fired" and not i.voided]
-		if station:
-			pending = [
-				i for i in pending
-				if frappe.db.get_value("Menu Item", i.menu_item, "prep_station")
-				== station]
-		if not pending:
+		items = by_order.get(o.name) or []
+		if not any(i["state"] in ("cooking", "held", "cancelled") for i in items):
 			continue
-		o["outlet_name"] = frappe.db.get_value("POS Outlet", o.outlet, "outlet_name")
+		o["outlet_name"] = outlet_names.get(o.outlet)
 		o["room_no"] = (o.room or "").split("-")[-1]
-		o["items"] = pending
+		o["items"] = items
+		# courses still held back, in the order they would be served
+		held = {i["course"] for i in items if i["state"] == "held"}
+		o["held_courses"] = [c for c in COURSE_ORDER if c in held]
 		out.append(o)
 	return out
 
@@ -511,14 +612,66 @@ def kitchen_queue(property: str, outlet: str | None = None,
 @frappe.whitelist(methods=["POST"])
 @require_roles(*POS_ROLES)
 def mark_prepared(order: str, item_row: str | None = None):
-	"""Kitchen marks one line (or the whole order) prepared."""
+	"""Kitchen marks one line (or every cooking line) prepared. Voided lines
+	are never swept up by "all ready" - that food is cancelled, not cooked."""
 	doc = frappe.get_doc("POS Order", order)
+	now = frappe.utils.now()
 	for it in doc.items:
+		if it.voided:
+			continue
 		if (item_row and it.name == item_row) or (not item_row and it.kot_status == "Fired"):
 			it.kot_status = "Prepared"
+			it.prepared_at = now
 	doc.save()
-	all_done = all(it.kot_status == "Prepared" for it in doc.items)
+	live = [it for it in doc.items if not it.voided]
+	all_done = bool(live) and all(it.kot_status == "Prepared" for it in live)
 	return {"ok": True, "all_prepared": all_done}
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles(*POS_ROLES)
+def accept_ticket(order: str):
+	"""The kitchen takes the ticket on. Until a ticket is accepted the floor
+	has no evidence anyone has seen it - a KOT can print to an empty pass."""
+	doc = frappe.get_doc("POS Order", order)
+	if not doc.accepted_at:
+		doc.accepted_at = frappe.utils.now()
+		doc.save()
+	return {"ok": True, "accepted_at": doc.accepted_at}
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles(*POS_ROLES)
+def recall_prepared(order: str, item_row: str | None = None):
+	"""Undo a mark-prepared: the line goes back to Fired and reappears on the
+	display. A mis-tap on a greasy touchscreen must not be one-way."""
+	doc = frappe.get_doc("POS Order", order)
+	if doc.status in ("Delivered", "Cancelled"):
+		frappe.throw(_("This order has already left the kitchen."))
+	for it in doc.items:
+		if it.voided:
+			continue
+		if (item_row and it.name == item_row) or (not item_row and it.kot_status == "Prepared"):
+			it.kot_status = "Fired"
+			it.prepared_at = None
+	doc.save()
+	return {"ok": True}
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles(*POS_ROLES)
+def acknowledge_void(order: str, item_row: str):
+	"""The chef has seen that a fired line was cancelled and can stop cooking
+	it; drop it from the display. The void itself stays on the order."""
+	doc = frappe.get_doc("POS Order", order)
+	target = next((it for it in doc.items if it.name == item_row), None)
+	if not target:
+		frappe.throw(_("Order line not found."))
+	if not target.voided:
+		frappe.throw(_("That line is not voided."))
+	target.void_seen = 1
+	doc.save()
+	return {"ok": True}
 
 
 @frappe.whitelist(methods=["POST"])

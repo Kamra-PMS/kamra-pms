@@ -19,6 +19,8 @@
   "available",
   "image",
   "description",
+  "course",
+  "allergens",
   "prep_station"
  ],
  "fields": [
@@ -94,10 +96,24 @@
    "label": "Description"
   },
   {
+   "fieldname": "course",
+   "fieldtype": "Select",
+   "label": "Course",
+   "options": "Starter\nMain\nDessert\nDrink",
+   "default": "Main",
+   "description": "When it is served. The kitchen holds later courses until the table is ready for them."
+  },
+  {
+   "fieldname": "allergens",
+   "fieldtype": "Data",
+   "label": "Allergens",
+   "description": "What this dish contains, comma separated (e.g. Nuts, Dairy). Matched against the guest's declared allergy to alarm the line."
+  },
+  {
    "fieldname": "prep_station",
    "fieldtype": "Select",
    "label": "Prep Station",
-   "options": "Kitchen\nBar",
+   "options": "Kitchen\nTandoor\nGrill\nFryer\nBar",
    "default": "Kitchen",
    "description": "Which KOT this item prints to."
   }
