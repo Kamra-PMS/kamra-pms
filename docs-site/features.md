@@ -72,7 +72,11 @@ guest** — priced from the card, never by hand; the bag tracks
 Collected → In Process → Ready; items **return piece by piece**, and a
 missing piece blocks delivery unless a shortage note says why. Delivery
 bills the stay automatically at the services GST rate through the same
-governed path as the minibar.
+governed path as the minibar. Guests can **request pickup themselves**
+from their in-stay page; the desk gets a **laundry console** with
+promised ready-by times, overdue flags, printable dockets and a revenue
+panel; **house laundry** (uniforms, hotel linen) and complimentary bags
+are tracked as volume but never billed.
 
 ## Direct bookings
 
