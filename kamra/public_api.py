@@ -182,6 +182,9 @@ def precheckin_info(token: str):
 			"pets_policy": prop.get("pets_policy"),
 			"children_policy": prop.get("children_policy"),
 			"extra_bed_policy": prop.get("extra_bed_policy"),
+			# drives what the guest is promised about their ID photo; the
+			# page must not claim "deleted at checkout" under Store mode
+			"id_retention": prop.get("id_retention") or "Store",
 		},
 		"stay": {
 			"reservation": res.name,
@@ -199,6 +202,12 @@ def precheckin_info(token: str):
 			"email": guest.email,
 			"id_type": guest.id_type,
 			"nationality": guest.nationality,
+			# a boolean, never a URL: Frappe refuses a Guest session any
+			# private file, so the guest cannot see their own scan back and a
+			# read-back endpoint would only be a brute-force oracle for the
+			# token. "We have it" is all the page needs to say.
+			"has_id_document": bool(res.get("id_document")),
+			"id_document_on": str(res.get("id_document_on") or ""),
 		},
 	}
 
@@ -255,6 +264,54 @@ def precheckin_submit(token: str, id_type: str, id_number: str,
 	)
 	frappe.db.commit()
 	return {"ok": True, "reservation": res.name}
+
+
+@frappe.whitelist(allow_guest=True, methods=["POST"])
+@rate_limit(limit=10, seconds=3600)
+def precheckin_upload_id(token: str, data: str):
+	"""The guest photographs their ID during pre-arrival check-in.
+
+	Deliberately NOT Frappe's upload_file. That endpoint would need the
+	site-wide `allow_guests_to_upload_files` setting, which opens
+	unauthenticated upload to the whole site; on its guest branch it sets
+	ignore_permissions and never sees a token, so it cannot tell whether this
+	guest owns this booking; and it takes is_private from the client - i.e.
+	it trusts the browser to protect an Aadhaar scan. Here the token is the
+	gate, the rate limit is real, and privacy is not negotiable.
+
+	Optional by design: nothing downstream requires a document. A guest with
+	a cracked camera or a bad lobby connection must still be able to
+	pre-register, so the submit gate never mentions this.
+	"""
+	from kamra.id_documents import store_id_document
+
+	res = _res_by_token(token)
+	if res.precheckin_status == "Verified":
+		frappe.throw("The desk has already verified your check-in details.")
+
+	me = frappe.session.user
+	frappe.set_user(GUEST_AGENT)  # governed writer, as with QR orders/laundry
+	try:
+		# owning the File as the agent matters: File.has_permission short-
+		# circuits True for doc.owner, so a human owner would hand that
+		# person a way in that skips the booking's own permission check
+		store_id_document(res, data, source="Guest")
+	finally:
+		frappe.set_user(me)
+
+	from kamra.savings import log_action
+	log_action(
+		action_type="id_document_upload",
+		reference_doctype="Reservation",
+		reference_name=res.name,
+		property=res.property,
+		minutes_saved=3,
+		rationale="Guest uploaded their ID photo at self check-in",
+		agent_name="Self Check-in",
+		channel="API",
+	)
+	frappe.db.commit()
+	return {"ok": True}
 
 
 # The governed writer: guest-initiated actions are always written as this user

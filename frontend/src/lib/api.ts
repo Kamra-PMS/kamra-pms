@@ -467,16 +467,38 @@ export interface ReservationDetail {
     fee: number
     cancelled_on: string | null
   } | null
+  id_document: string | null
+  id_document_source: string | null
+  id_document_on: string | null
+  id_document_discarded: 0 | 1
+  precheckin_verified_by: string | null
+  precheckin_verified_on: string | null
   actions: {
     can_check_in: boolean
     can_check_out: boolean
     can_cancel: boolean
     can_amend: boolean
   }
+  /** Things the desk should see but which must never gate an arrival. Kept
+   *  apart from `actions` on purpose: a missing ID is a warning, not a
+   *  capability, and conflating the two is how check-in quietly gets blocked. */
+  warnings: {
+    id_document_missing: boolean
+    id_unverified: boolean
+  }
 }
 
 export const reservationDetail = (name: string) =>
   call<ReservationDetail>("kamra.api.reservation_detail", { reservation: name })
+
+/** The ID scan as a data URL. Served through a role-gated endpoint rather than
+ *  its /private/files/ URL: Frappe would authorise that via the Reservation's
+ *  doctype perms, which this site's Custom DocPerm rows deny to Front Desk. */
+export const idDocumentImage = (reservation: string) =>
+  call<{ data: string; captured_on: string }>("kamra.api.id_document_image", { reservation })
+
+export const verifyPrecheckin = (reservation: string) =>
+  call<{ ok: boolean; status: string }>("kamra.api.verify_precheckin", { reservation })
 
 export const developerInfo = () =>
   call<{ user: string; has_key: boolean; base_url: string }>(

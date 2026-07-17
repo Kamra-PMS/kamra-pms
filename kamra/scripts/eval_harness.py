@@ -1553,6 +1553,191 @@ def t37():
 		frappe.set_user(me)
 
 
+def _id_photo(colour=(180, 40, 40)):
+	"""A real PNG data URL, built in memory - no fixture file to go missing."""
+	import base64
+	import io
+
+	from PIL import Image
+	buf = io.BytesIO()
+	Image.new("RGB", (48, 30), colour).save(buf, format="PNG")
+	return "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode()
+
+
+def _id_files(reservation):
+	return frappe.get_all("File", filters={
+		"attached_to_doctype": "Reservation", "attached_to_name": reservation,
+		"attached_to_field": "id_document"}, pluck="name")
+
+
+@check("ID document: private storage, token gate, never blocks check-in, discarded at checkout")
+def t38():
+	import base64
+
+	from kamra import api, public_api as pub
+	g = _guest("ID Doc Guest", "+91 70000 00038")
+	res = _res(g, "2035-02-01", "2035-02-03", ROOM)
+	token = frappe.db.get_value("Reservation", res.name, "precheckin_token")
+	assert token and len(token) >= 20, "a booking minted no pre-check-in token"
+
+	# the guest uploads with nothing but the link they were sent
+	pub.precheckin_upload_id(token, _id_photo())
+	files = _id_files(res.name)
+	assert len(files) == 1, files
+	f = frappe.get_doc("File", files[0])
+	# THE assertion: an ID scan is never reachable without a session. Frappe's
+	# own upload_file would have taken is_private from the client.
+	assert f.is_private == 1, "the ID scan is world-readable"
+	assert f.file_url.startswith("/private/files/"), f.file_url
+	assert f.owner == pub.GUEST_AGENT, f.owner
+	assert frappe.db.get_value("Reservation", res.name, "id_document") == f.file_url
+	assert frappe.db.get_value("Reservation", res.name, "id_document_source") == "Guest"
+
+	# the guest page is told a boolean, never a path - a read-back would only
+	# be a brute-force oracle for the token
+	info = pub.precheckin_info(token)
+	assert info["guest"]["has_id_document"] is True, info["guest"]
+	assert not any("private/files" in str(v) for v in info["guest"].values()), info["guest"]
+
+	# a bad link buys nothing
+	for bad in ("z" * 24, "short"):
+		try:
+			pub.precheckin_upload_id(bad, _id_photo())
+			raise AssertionError(f"upload accepted the token {bad!r}")
+		except frappe.ValidationError:
+			pass
+
+	# re-encoding is the boundary: a payload wearing a JPEG's name dies, and
+	# leaves nothing behind
+	before = len(_id_files(res.name))
+	try:
+		pub.precheckin_upload_id(token, "data:image/jpeg;base64," +
+		                         base64.b64encode(b"<?php system($_GET[0]); ?>").decode())
+		raise AssertionError("a PHP payload was stored as an ID")
+	except frappe.ValidationError:
+		pass
+	assert len(_id_files(res.name)) == before, "a rejected upload still wrote a File"
+	try:
+		pub.precheckin_upload_id(token, "data:image/png;base64," + ("A" * (6 * 1024 * 1024)))
+		raise AssertionError("an oversize photo was stored")
+	except frappe.ValidationError:
+		pass
+
+	# what we store is a JPEG we wrote, with the guest's home GPS stripped out
+	from PIL import Image as _Image
+	import io as _io
+	stored = _Image.open(_io.BytesIO(frappe.get_doc("File", _id_files(res.name)[0]).get_content()))
+	assert stored.format == "JPEG", stored.format
+	assert not (stored.getexif() or {}), "EXIF survived - GPS may ride on the scan"
+
+	# one scan per booking: replace, never append
+	old = _id_files(res.name)[0]
+	pub.precheckin_upload_id(token, _id_photo((20, 90, 20)))
+	assert len(_id_files(res.name)) == 1, "a second upload appended instead of replacing"
+	assert not frappe.db.exists("File", old), "the replaced file was left on disk"
+
+	# A MISSING DOCUMENT MUST NEVER BLOCK AN ARRIVAL. This is the regression
+	# test for that promise: it exists so a future `and bool(res.id_document)`
+	# in can_check_in goes red instead of stranding a guest at the counter.
+	frappe.db.set_value("Reservation", res.name, "id_document", None)
+	d = api.reservation_detail(res.name)
+	assert d["warnings"]["id_document_missing"] is True, d["warnings"]
+	assert d["actions"]["can_check_in"] is True, "a missing ID blocked check-in"
+	api.check_in(res.name, ROOM)
+	assert frappe.db.get_value("Reservation", res.name, "status") == "Checked In"
+	frappe.db.set_value("Reservation", res.name, "id_document",
+	                    frappe.db.get_value("File", _id_files(res.name)[0], "file_url"))
+
+	# Verify & Discard: the scan leaves with the guest. Masking the number
+	# while a photo of the same card sat on disk would make the setting a lie.
+	frappe.db.set_value("Property", P, "id_retention", "Verify & Discard")
+	try:
+		api.check_out(res.name)
+	finally:
+		frappe.db.set_value("Property", P, "id_retention", "Store")
+	assert _id_files(res.name) == [], "the ID scan survived a Verify & Discard checkout"
+	assert frappe.db.get_value("Reservation", res.name, "id_document") is None
+	assert frappe.db.get_value("Reservation", res.name, "id_document_discarded") == 1, \
+		"nothing records that the scan was discarded on purpose"
+	# the pre-existing number masking still works alongside it
+	assert str(frappe.db.get_value("Guest", g, "id_number") or "").startswith("•") \
+		or not frappe.db.get_value("Guest", g, "id_number")
+
+	# Store mode keeps both - the property chose to hold the register
+	g2 = _guest("ID Keep Guest", "+91 70000 00039")
+	res2 = _res(g2, "2035-03-01", "2035-03-03", ROOM)
+	tok2 = frappe.db.get_value("Reservation", res2.name, "precheckin_token")
+	pub.precheckin_upload_id(tok2, _id_photo())
+	api.check_in(res2.name, ROOM)
+	api.check_out(res2.name)
+	assert len(_id_files(res2.name)) == 1, "Store mode discarded the scan anyway"
+	for n in _id_files(res2.name):  # this one has no retention to clean it up
+		frappe.delete_doc("File", n, ignore_permissions=True, delete_permanently=True)
+
+
+@check("ID document: desk captures and verifies, roles gate the look")
+def t39():
+	from kamra import api, id_documents, public_api as pub
+	g = _guest("ID Verify Guest", "+91 70000 00040")
+	res = _res(g, "2035-04-01", "2035-04-03", ROOM)
+	token = frappe.db.get_value("Reservation", res.name, "precheckin_token")
+
+	# the desk captures at the counter for a guest who never uploaded
+	frappe.set_user("frontdesk@kamra.local")
+	try:
+		api.upload_id_document(res.name, _id_photo())
+		assert frappe.db.get_value("Reservation", res.name, "id_document_source") == "Desk"
+		f = frappe.get_doc("File", _id_files(res.name)[0])
+		assert f.is_private == 1, "the desk's capture is world-readable"
+
+		# the image is served through the role gate, not its private URL: this
+		# site's Custom DocPerm rows omit Front Desk, so Frappe's own File
+		# permission would deny the very people who must look at it
+		img = api.id_document_image(res.name)
+		assert img["data"].startswith("data:image/jpeg;base64,"), img["data"][:30]
+
+		# verify makes precheckin_status="Verified" real - no code path ever
+		# wrote that enum before
+		frappe.db.set_value("Reservation", res.name, "precheckin_status", "Submitted")
+		api.verify_precheckin(res.name)
+		assert frappe.db.get_value("Reservation", res.name, "precheckin_status") == "Verified"
+		assert frappe.db.get_value("Reservation", res.name,
+		                           "precheckin_verified_by") == "frontdesk@kamra.local"
+		assert frappe.db.get_value("Reservation", res.name, "precheckin_verified_on")
+		try:
+			api.verify_precheckin(res.name)
+			raise AssertionError("a verified booking was verified twice")
+		except frappe.ValidationError:
+			pass
+	finally:
+		frappe.set_user("Administrator")
+
+	# once the desk has checked the card, the guest cannot quietly swap it
+	try:
+		pub.precheckin_upload_id(token, _id_photo())
+		raise AssertionError("the guest replaced the ID after it was verified")
+	except frappe.ValidationError:
+		pass
+
+	# looking is not everyone's business
+	frappe.set_user("hk@kamra.local")
+	try:
+		for fn, args in (("id_document_image", (res.name,)),
+		                 ("verify_precheckin", (res.name,)),
+		                 ("upload_id_document", (res.name, _id_photo()))):
+			try:
+				getattr(api, fn)(*args)
+				raise AssertionError(f"housekeeping was allowed to call {fn}")
+			except frappe.PermissionError:
+				pass
+	finally:
+		frappe.set_user("Administrator")
+
+	# the harness rolls the DB back but save_file wrote real bytes to disk;
+	# clean up after ourselves rather than leaving them for the runner
+	id_documents.discard_id_document(res.name)
+
+
 @check("ticket SLA: priority sets due window")
 def t12():
 	from frappe.utils import get_datetime, now_datetime, time_diff_in_seconds
@@ -1575,7 +1760,7 @@ def execute():
 	frappe.db.savepoint("eval_start")
 	try:
 		RT, ROOM = setup()
-		for fn in (t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19, t20, t21, t22, t23, t24, t25, t26, t27, t28, t29, t30, t31, t32, t33, t34, t35, t36, t37):
+		for fn in (t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19, t20, t21, t22, t23, t24, t25, t26, t27, t28, t29, t30, t31, t32, t33, t34, t35, t36, t37, t38, t39):
 			fn()
 	finally:
 		frappe.db.commit = real_commit

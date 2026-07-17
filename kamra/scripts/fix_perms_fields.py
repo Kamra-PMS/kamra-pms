@@ -1,4 +1,4 @@
-"""Fix two v1 mistakes:
+"""Fix three v1 mistakes:
 
 1. Reservation booking fields (booking_type, company, …) were inserted
    into DocType.fields as raw DocField docs and silently dropped —
@@ -7,12 +7,32 @@
    Frappe, so seeding role perms locked System Manager out. Grant
    System Manager full custom perms on every Kamra doctype, and give
    Front Desk / Finance their missing folio-era grants.
+3. The same trap, one layer deeper: seed_rbac_v2.ensure_agent_user()
+   writes Custom DocPerms for Kamra Agent, and the moment ONE lands the
+   doctype's whole standard permission block stops applying — silently
+   revoking Front Desk, Finance, Revenue Manager and Housekeeping on
+   every doctype it touched. Symptom: "Insufficient Permission" for a
+   Front Desk user on Reservation/Guest/Room/Property/Folio, while the
+   SPA mostly keeps working because Kamra's whitelisted endpoints go
+   through require_roles and db.set_value, which never consult doctype
+   perms at all (see authz.py). sync_standard_perms() repairs it.
 
 Run via bench console:
     from kamra.scripts.fix_perms_fields import execute; execute()
 """
 
 import frappe
+
+# The flags DocPerm and Custom DocPerm have in common - mirrored wholesale
+# rather than cherry-picked, because a half-copied permission is how this mess
+# started. (Custom DocPerm is a standalone doctype, not a child table: it has
+# `parent` but no parenttype/parentfield, and no set_user_permissions column.
+# Copying those across is what makes the insert fail.)
+PERM_FLAGS = [
+	"permlevel", "if_owner", "select", "read", "write", "create", "delete",
+	"submit", "cancel", "amend", "report", "export", "import", "share",
+	"print", "email",
+]
 
 ALL_DOCTYPES = [
 	"Property", "Room Type", "Room", "Rate Plan", "Guest", "Reservation",
@@ -114,9 +134,54 @@ def fix_permissions():
 		print(f"{role}: extra grants on {list(grants)}")
 
 
+def sync_standard_perms():
+	"""Mirror each doctype's own DocPerm rows into Custom DocPerm.
+
+	Frappe's rule: if a doctype has ANY Custom DocPerm row, its entire
+	standard permission block is ignored. So granting one role a custom perm
+	silently revokes every other role - which is exactly what happened here.
+
+	The repair is deliberately data-driven. The doctype JSONs in this repo are
+	the source of truth and already declare every role correctly; this copies
+	whatever they say into Custom DocPerm for any role that is missing. No
+	hardcoded role list, so it cannot drift from the JSONs and it stays right
+	when a new doctype or role is added - just re-run it.
+
+	Only touches doctypes that ALREADY have Custom DocPerm rows: adding rows
+	to a clean doctype would switch off its standard perms and create the very
+	bug this fixes. Never overwrites an existing custom row, so deliberate
+	overrides (System Manager's full grant above) survive.
+	"""
+	parents = frappe.db.sql_list(
+		"select distinct parent from `tabCustom DocPerm`")
+	added = 0
+	for doctype in parents:
+		std = frappe.get_all("DocPerm", filters={"parent": doctype},
+		                     fields=["role"] + PERM_FLAGS)
+		have = {(c.role, c.permlevel or 0) for c in frappe.get_all(
+			"Custom DocPerm", filters={"parent": doctype},
+			fields=["role", "permlevel"])}
+		for row in std:
+			key = (row.role, row.permlevel or 0)
+			if key in have:
+				continue
+			doc = frappe.get_doc({
+				"doctype": "Custom DocPerm", "parent": doctype,
+				"role": row.role,
+				**{f: row.get(f) or 0 for f in PERM_FLAGS},
+			})
+			doc.insert(ignore_permissions=True)
+			added += 1
+			print(f"  {doctype}: restored {row.role}")
+	print(f"sync_standard_perms: {added} role(s) restored across "
+	      f"{len(parents)} doctype(s)")
+	return added
+
+
 def execute():
 	fix_reservation_fields()
 	fix_permissions()
+	sync_standard_perms()
 	frappe.clear_cache()
 	frappe.db.commit()
 	print("Fixed. Reload the UI.")

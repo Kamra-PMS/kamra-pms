@@ -62,6 +62,12 @@
   "precheckin_on",
   "precheckin_signature",
   "precheckin_consent",
+  "id_document",
+  "id_document_source",
+  "id_document_on",
+  "id_document_discarded",
+  "precheckin_verified_by",
+  "precheckin_verified_on",
   "precheckin_link_sent",
   "eta",
   "sb_occupants",
@@ -360,6 +366,53 @@
    "fieldtype": "Check",
    "label": "Registration Consent Given",
    "read_only": 1
+  },
+  {
+   "fieldname": "id_document",
+   "fieldtype": "Attach",
+   "label": "ID Document",
+   "read_only": 1,
+   "no_copy": 1,
+   "description": "The guest's ID scan for THIS stay. Always private: it is served only to staff who can read this booking, never over a public /files/ URL. Attached to the reservation, not the guest profile, so a repeat guest's other live stay keeps its own copy."
+  },
+  {
+   "fieldname": "id_document_source",
+   "fieldtype": "Select",
+   "label": "ID Captured By",
+   "options": "\nGuest\nDesk",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "id_document_on",
+   "fieldtype": "Datetime",
+   "label": "ID Captured On",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "id_document_discarded",
+   "fieldtype": "Check",
+   "label": "ID Discarded",
+   "read_only": 1,
+   "no_copy": 1,
+   "default": "0",
+   "description": "The scan was deleted at checkout under Verify & Discard retention. Distinguishes 'deleted on purpose' from 'never uploaded' - without it a checked-out booking looks non-compliant forever."
+  },
+  {
+   "fieldname": "precheckin_verified_by",
+   "fieldtype": "Link",
+   "label": "Verified By",
+   "options": "User",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "precheckin_verified_on",
+   "fieldtype": "Datetime",
+   "label": "Verified On",
+   "read_only": 1,
+   "no_copy": 1
   },
   {
    "fieldname": "precheckin_link_sent",

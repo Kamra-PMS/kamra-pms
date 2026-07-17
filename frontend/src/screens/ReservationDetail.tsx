@@ -4,10 +4,13 @@ import {
   BedDouble,
   CalendarDays,
   CreditCard,
+  Fingerprint,
   FileText,
   LogIn,
   LogOut,
+  ShieldCheck,
   Star,
+  TriangleAlert,
   User,
 } from "lucide-react"
 
@@ -15,10 +18,13 @@ import {
   amendStay,
   checkIn,
   checkOut,
+  idDocumentImage,
   promoteWaitlist,
   reservationDetail,
+  verifyPrecheckin,
   type ReservationDetail as Detail,
 } from "../lib/api"
+import { IdDocumentField } from "../components/IdDocumentField"
 import { serverError, updateResource, type Row } from "../lib/resource"
 import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
@@ -63,6 +69,96 @@ function Field(props: { label: string; value: React.ReactNode }) {
       <dt className="text-xs text-zinc-400">{props.label}</dt>
       <dd className="mt-0.5 text-sm text-zinc-800">{props.value || "-"}</dd>
     </div>
+  )
+}
+
+/* The guest's ID for this stay: the photo, and whether a human has checked it
+   against the person. The image is fetched through a role-gated endpoint, not
+   linked by its /private/files/ URL - Frappe authorises that URL through the
+   Reservation's doctype permissions, which this site's Custom DocPerm rows
+   deny to Front Desk. Linking it would show the GM a photo and the desk a
+   broken image. */
+function IdentityCard({ d, reload }: { d: Detail; reload: () => void }) {
+  const [img, setImg] = useState<string | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState<string | null>(null)
+
+  useEffect(() => {
+    setImg(null)
+    if (!d.id_document) return
+    idDocumentImage(d.name).then((r) => setImg(r.data)).catch(() => setImg(null))
+  }, [d.id_document, d.name])
+
+  const verify = async () => {
+    setBusy(true)
+    setErr(null)
+    try {
+      await verifyPrecheckin(d.name)
+      reload()
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : String(e))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const open = d.status === "Confirmed" || d.status === "Checked In"
+
+  return (
+    <Card
+      icon={<Fingerprint className="size-4" />}
+      title="Identity"
+      action={
+        d.warnings.id_unverified ? (
+          <Button variant="outline" disabled={busy} onClick={verify}>
+            <ShieldCheck className="size-4" /> Verify identity
+          </Button>
+        ) : d.precheckin_verified_by ? (
+          <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700">
+            <ShieldCheck className="size-3.5" />
+            Verified by {d.precheckin_verified_by.split("@")[0]}
+          </span>
+        ) : undefined
+      }
+    >
+      <dl className="mb-3 grid grid-cols-2 gap-3">
+        <Field label="Pre-check-in" value={d.precheckin_status} />
+        <Field label="ID captured by" value={d.id_document_source} />
+      </dl>
+
+      {img ? (
+        <img src={img} alt="Guest ID document"
+          className="max-h-56 w-auto rounded-lg border border-zinc-200" />
+      ) : d.id_document ? (
+        <p className="text-sm text-zinc-400">Loading the document…</p>
+      ) : d.id_document_discarded ? (
+        <p className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs text-zinc-500">
+          ID document discarded at checkout, per this property's retention policy.
+        </p>
+      ) : open ? (
+        <div className="space-y-2">
+          {/* A warning, never a gate. The guest is standing here with a
+              physical card; check-in works with or without this. */}
+          <div className="flex items-start gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800">
+            <TriangleAlert className="mt-px size-3.5 shrink-0" />
+            No ID document on file — capture it at the counter.
+          </div>
+          <IdDocumentField
+            method="kamra.api.upload_id_document"
+            params={{ reservation: d.name }}
+            uploaded={false}
+            onUploaded={reload}
+            label="Photograph the guest's ID"
+          />
+        </div>
+      ) : null}
+
+      {err && (
+        <p className="mt-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700">
+          {err}
+        </p>
+      )}
+    </Card>
   )
 }
 
@@ -263,6 +359,8 @@ export default function ReservationDetail({
           </dl>
         </Card>
 
+        <IdentityCard d={d} reload={refresh} />
+
         {/* room */}
         <Card icon={<BedDouble className="size-4" />} title="Room">
           <dl className="grid grid-cols-2 gap-3">
@@ -411,6 +509,14 @@ export default function ReservationDetail({
           >
             <LogIn className="size-4" /> Promote to a room
           </Button>
+        )}
+        {/* Adjacent to the button, never wired into it: can_check_in stays
+            `status === "Confirmed" && room`. A stale or missing upload must
+            not turn a real guest away at the counter. */}
+        {d.actions.can_check_in && d.warnings.id_document_missing && (
+          <span className="inline-flex items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-2.5 py-1.5 text-xs font-medium text-amber-800">
+            <TriangleAlert className="size-3.5" /> No ID document on file
+          </span>
         )}
         {d.actions.can_check_in && (
           <Button disabled={busy} onClick={() => act(() => checkIn(name))}>

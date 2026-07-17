@@ -1689,6 +1689,15 @@ def reservation_detail(reservation: str):
 		"eta": res.eta,
 		"precheckin_status": res.precheckin_status,
 		"precheckin_token": res.get("precheckin_token"),
+		# the scan itself is never in this payload - id_document is only the
+		# private path, fetched separately through id_document_image so one
+		# role gate governs who ever sees the picture
+		"id_document": res.get("id_document"),
+		"id_document_source": res.get("id_document_source"),
+		"id_document_on": str(res.get("id_document_on") or "") or None,
+		"id_document_discarded": res.get("id_document_discarded") or 0,
+		"precheckin_verified_by": res.get("precheckin_verified_by"),
+		"precheckin_verified_on": str(res.get("precheckin_verified_on") or "") or None,
 		"amount_after_tax": float(res.amount_after_tax or 0),
 		"advance_paid": float(res.advance_paid or 0),
 		"company": res.company,
@@ -1704,7 +1713,95 @@ def reservation_detail(reservation: str):
 			"can_cancel": res.status in ("Confirmed", "Checked In"),
 			"can_amend": res.status in ("Confirmed", "Checked In"),
 		},
+		# Warnings are NOT capabilities, and they live apart on purpose. A
+		# missing ID must never appear in `actions` - the guest is standing
+		# at the desk with a physical card, and no arrival gets blocked over
+		# an upload that didn't happen. The desk sees it and decides.
+		"warnings": {
+			"id_document_missing": not res.get("id_document")
+			and not res.get("id_document_discarded"),
+			"id_unverified": res.precheckin_status == "Submitted",
+		},
 	}
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Front Desk", "Kamra Agent")
+def upload_id_document(reservation: str, data: str):
+	"""Capture the guest's ID at the counter, when they never uploaded one.
+
+	Same storage as the guest path, different gate: there the token proves
+	ownership, here @require_roles does. This exists so that "never block
+	check-in" has somewhere to go - the desk flags a missing document, then
+	fixes it in the same breath instead of turning the guest away."""
+	from kamra.id_documents import store_id_document
+
+	res = frappe.get_doc("Reservation", reservation)
+	store_id_document(res, data, source="Desk")
+	from kamra.savings import log_action
+	log_action("id_document_capture", "Reservation", res.name, res.property,
+	           minutes_saved=1,
+	           rationale=f"ID captured at the desk for {res.guest_name}")
+	return {"ok": True}
+
+
+@frappe.whitelist()
+@require_roles("Front Desk", "Kamra Agent")
+def id_document_image(reservation: str):
+	"""The ID scan as a data URL, for the desk to eyeball.
+
+	Why not just point an <img> at the /private/files/ URL: Frappe would
+	authorise that through File.has_permission -> the Reservation's own
+	doctype permissions. On a site whose Custom DocPerm rows omit Front Desk
+	(as ours do - any custom perm on a doctype REPLACES all its standard
+	perms), that check says no, and the desk gets a broken image while a
+	Hotel Admin sees it. Kamra's authorization has always lived on the
+	endpoint rather than the doctype (see authz.py), so the image is served
+	the same way as everything else here: one gate, one rule, works for
+	every role the app actually grants.
+	"""
+	import base64
+
+	url = frappe.db.get_value("Reservation", reservation, "id_document")
+	if not url:
+		frappe.throw("No ID document on this booking.")
+	name = frappe.db.get_value("File", {
+		"attached_to_doctype": "Reservation", "attached_to_name": reservation,
+		"attached_to_field": "id_document",
+	})
+	if not name:
+		frappe.throw("That ID document is no longer stored.")
+	content = frappe.get_doc("File", name).get_content()
+	return {
+		"data": "data:image/jpeg;base64," + base64.b64encode(content).decode(),
+		"captured_on": str(frappe.db.get_value("Reservation", reservation,
+		                                       "id_document_on") or ""),
+	}
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Front Desk", "Kamra Agent")
+def verify_precheckin(reservation: str):
+	"""The desk has held the document against the human and agrees.
+
+	This is the write that finally makes precheckin_status="Verified" real -
+	the enum has existed since pre-arrival check-in shipped and no code path
+	ever set it. precheckin_submit already refuses to touch a Verified
+	booking, so the guest is locked out of rewriting a checked card the
+	moment this lands; that guard was clearly written for this."""
+	res = frappe.get_doc("Reservation", reservation)
+	if res.precheckin_status != "Submitted":
+		frappe.throw("Only a submitted pre-check-in can be verified.")
+	frappe.db.set_value("Reservation", res.name, {
+		"precheckin_status": "Verified",
+		"precheckin_verified_by": frappe.session.user,
+		"precheckin_verified_on": frappe.utils.now_datetime(),
+	})
+	from kamra.savings import log_action
+	log_action("verify_precheckin", "Reservation", res.name, res.property,
+	           minutes_saved=2,
+	           rationale=f"Desk verified {res.guest_name}'s ID against the document")
+	return {"ok": True, "status": "Verified"}
 
 
 @frappe.whitelist()
@@ -1732,7 +1829,12 @@ def _mask_id(value: str | None) -> str | None:
 
 def _scrub_stay_ids(res):
 	"""Verify & Discard retention: after checkout, keep only the last 4
-	digits of every ID collected for the stay."""
+	digits of every ID collected for the stay - and the ID scan itself leaves
+	with the guest.
+
+	The scan has to go with the number. Masking the digits while a full
+	photograph of the same Aadhaar sits on disk would make the whole setting
+	a lie."""
 	if frappe.db.get_value("Property", res.property, "id_retention") \
 			!= "Verify & Discard":
 		return
@@ -1744,6 +1846,8 @@ def _scrub_stay_ids(res):
 	if guest_id:
 		frappe.db.set_value("Guest", res.guest, "id_number",
 		                    _mask_id(guest_id), update_modified=False)
+	from kamra.id_documents import discard_id_document
+	discard_id_document(res.name)  # logs and moves on; never breaks checkout
 
 
 def _cancellation_terms(res):
