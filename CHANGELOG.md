@@ -6,6 +6,18 @@ All notable changes to Kamra PMS are documented here. Format follows
 existing install on upgrade (removed doctypes, removed API endpoints),
 MINOR for new features, PATCH for fixes.
 
+## [2.2.0](https://github.com/Kamra-PMS/kamra-pms/compare/v2.1.0...v2.2.0) (2026-07-22)
+
+
+### Features
+
+* **laundry:** guest self-service pickup, desk console, house & complimentary orders ([#3](https://github.com/Kamra-PMS/kamra-pms/issues/3)) ([b275383](https://github.com/Kamra-PMS/kamra-pms/commit/b2753831be13910c437daee4328627d8edb03658))
+
+
+### Bug Fixes
+
+* **nav:** GRC & cancellation links 404'd in production; feat: ID photo capture at pre-check-in ([d3064ea](https://github.com/Kamra-PMS/kamra-pms/commit/d3064ea31a08fef7fd75b12bf19cb059fafdecae))
+
 ## [2.1.0](https://github.com/Kamra-PMS/kamra-pms/compare/v2.0.0...v2.1.0) (2026-07-14)
 
 
