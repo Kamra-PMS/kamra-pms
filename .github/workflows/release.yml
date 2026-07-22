@@ -127,6 +127,10 @@ jobs:
           mkdir -p ~/.ssh
           printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
+          # the deploy's docker build is silent for minutes (output goes to a
+          # log file on the host) - without keep-alives the idle SSH session
+          # gets dropped by the network path ("broken pipe" mid-build)
+          printf 'Host *\n  ServerAliveInterval 30\n  ServerAliveCountMax 40\n' >> ~/.ssh/config
           # same pre-deploy self-heal as nightly: prune, and shed running
           # containers' writable layers when the disk is critical
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new \

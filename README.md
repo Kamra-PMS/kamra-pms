@@ -57,6 +57,8 @@ Hotels deserve better than:
 | **Folio & GST invoice** — per-line GST, splits/transfers, payment links, multi-rate breakup | **Booking Engine console** — manage your direct-booking page: hotel profile, photo gallery, policies, FAQ, map & directions, and SEO |
 | ![Restaurant POS with the table map](docs/screenshots/pos.png) | ![Property dashboard](docs/screenshots/dashboard.png) |
 | **Restaurant POS** — area-wise table map with live states (running / in kitchen / reserved / cleaning), concurrent bills, thermal KOT & bill printing, F-key shortcuts | **Dashboard** — occupancy, movement, revenue and collections with department slices, chain-wide roll-up |
+| ![Laundry console](docs/screenshots/laundry.png) | ![Self check-in with ID capture](docs/screenshots/checkin-id.png) |
+| **Laundry console** — pickup queue, ready-by tracking, printable dockets, guest self-service requests | **Self check-in** — guests fill details, photograph their ID with the phone camera and sign; stored privately, discarded per retention policy |
 
 **The direct booking page your guests see** — photo gallery, live per-date rates, hotel policies, an FAQ, map & directions, and pay-at-hotel — commission-free, and yours to brand.
 

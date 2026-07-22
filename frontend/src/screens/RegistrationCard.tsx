@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react"
 import { ArrowLeft, Plus, Printer, Trash2 } from "lucide-react"
 import { Link, useParams } from "react-router-dom"
 import { call } from "../lib/api"
+import { toFullPath } from "../lib/routing"
 import { Button } from "../components/ui/button"
 
 /** Printable Guest Registration Card (GRC) - sign at check-in. */
@@ -31,6 +32,8 @@ interface Grc {
     room: string
     room_type: string
     check_in_date: string
+    actual_check_in?: string | null
+    actual_check_out?: string | null
     check_out_date: string
     nights: number
     adults: number
@@ -42,6 +45,15 @@ interface Grc {
     source: string
     special_requests: string | null
   }
+  money?: {
+    folio: string
+    grand_total: number
+    paid_total: number
+    balance: number
+    advance: number
+    deposit_held: number
+    refunded: number
+  } | null
   guest: {
     full_name: string
     phone: string | null
@@ -49,6 +61,9 @@ interface Grc {
     nationality: string | null
     id_type: string | null
     id_number: string | null
+    id_file?: string | null
+    address_proof_file?: string | null
+    guest_id?: string
     address: string
   }
   occupants: Occupant[]
@@ -186,6 +201,76 @@ function OccupantsEditor(props: {
   )
 }
 
+
+/** One editable "what actually happened" moment - shown on the printed
+ * card, corrected inline by the desk (early check-in, late checkout). */
+function ActualTimeRow(props: {
+  label: string
+  reservation: string
+  field: "actual_check_in" | "actual_check_out"
+  value?: string | null
+  onSaved: () => void
+}) {
+  const [editing, setEditing] = useState(false)
+  const [val, setVal] = useState("")
+  const shown = props.value ? props.value.slice(0, 16).replace("T", " ") : "—"
+  return (
+    <div className="flex items-baseline justify-between gap-2 py-0.5 text-sm">
+      <span className="shrink-0 text-zinc-500">{props.label}</span>
+      {editing ? (
+        <span className="flex items-center gap-1 print:hidden">
+          <input type="datetime-local" className="rounded-lg border border-zinc-300 px-2 py-1 text-sm"
+            value={val} onChange={(e) => setVal(e.target.value)} />
+          <Button variant="outline" className="!px-2 !py-1 text-xs"
+            onClick={async () => {
+              if (!val) return
+              await call("kamra.api.set_actual_times", {
+                reservation: props.reservation,
+                [props.field]: val.replace("T", " ") + ":00",
+              })
+              setEditing(false)
+              props.onSaved()
+            }}>
+            Save
+          </Button>
+          <button className="text-xs text-zinc-400" onClick={() => setEditing(false)}>✕</button>
+        </span>
+      ) : (
+        <span className="text-right font-medium">
+          {shown}
+          <button
+            className="ml-2 text-xs font-medium text-brand-700 hover:underline print:hidden"
+            onClick={() => {
+              setVal((props.value || new Date().toISOString()).slice(0, 16))
+              setEditing(true)
+            }}>
+            edit
+          </button>
+        </span>
+      )}
+    </div>
+  )
+}
+
+function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    const url = URL.createObjectURL(file)
+    img.onload = () => {
+      const max = 1600
+      const scale = Math.min(1, max / Math.max(img.width, img.height))
+      const canvas = document.createElement("canvas")
+      canvas.width = Math.round(img.width * scale)
+      canvas.height = Math.round(img.height * scale)
+      canvas.getContext("2d")!.drawImage(img, 0, 0, canvas.width, canvas.height)
+      URL.revokeObjectURL(url)
+      resolve(canvas.toDataURL("image/jpeg", 0.85))
+    }
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("unreadable image")) }
+    img.src = url
+  })
+}
+
 export default function RegistrationCard() {
   const { name } = useParams()
   const [d, setD] = useState<Grc | null>(null)
@@ -234,6 +319,35 @@ export default function RegistrationCard() {
             <Row label="Email" value={d.guest.email} />
             <Row label="Nationality" value={d.guest.nationality} />
             <Row label="ID" value={d.guest.id_type ? `${d.guest.id_type} · ${d.guest.id_number ?? ""}` : null} />
+            <div className="mt-2 grid grid-cols-2 gap-3 print:grid-cols-2">
+              {([["id", "ID document", d.guest.id_file],
+                 ["address", "Address proof", d.guest.address_proof_file]] as const).map(([kind, label, url]) => (
+                <div key={kind}>
+                  <span className="text-xs font-medium uppercase tracking-wide text-zinc-400">{label}</span>
+                  {url ? (
+                    <a href={url} target="_blank" rel="noreferrer">
+                      <img src={url} alt={label}
+                        className="mt-1 max-h-28 rounded-lg border border-zinc-200 object-contain" />
+                    </a>
+                  ) : (
+                    <p className="mt-1 text-xs text-zinc-400 print:hidden">Not on file</p>
+                  )}
+                  <label className="mt-1 inline-block cursor-pointer text-xs font-medium text-brand-700 hover:underline print:hidden">
+                    {url ? "Replace with newer" : "Capture / upload"}
+                    <input type="file" accept="image/*" capture="environment" className="hidden"
+                      onChange={async (e) => {
+                        const f = e.target.files?.[0]
+                        if (!f || !d.guest.guest_id) return
+                        await call("kamra.api.upload_guest_document", {
+                          guest: d.guest.guest_id, kind,
+                          image: await fileToDataUrl(f),
+                        })
+                        load()
+                      }} />
+                  </label>
+                </div>
+              ))}
+            </div>
             <Row label="Address" value={d.guest.address} />
             {d.reservation.company && <Row label="Company" value={d.reservation.company} />}
             {d.reservation.booked_by_name && (
@@ -245,10 +359,26 @@ export default function RegistrationCard() {
             <Row label="Room" value={`${d.reservation.room} · ${d.reservation.room_type}`} />
             <Row label="Check-in" value={`${d.reservation.check_in_date} (${d.property.checkin_time.slice(0, 5)})`} />
             <Row label="Check-out" value={`${d.reservation.check_out_date} (${d.property.checkout_time.slice(0, 5)})`} />
+            <ActualTimeRow label="Actual check-in" reservation={d.reservation.name}
+              field="actual_check_in" value={d.reservation.actual_check_in} onSaved={load} />
+            <ActualTimeRow label="Actual check-out" reservation={d.reservation.name}
+              field="actual_check_out" value={d.reservation.actual_check_out} onSaved={load} />
             <Row label="Nights" value={String(d.reservation.nights)} />
             <Row label="Guests" value={`${d.reservation.adults} adult(s)${d.reservation.children ? ` + ${d.reservation.children} child` : ""}`} />
             <Row label="Stay total" value={`₹${inr(d.reservation.rate_total)} (incl. GST)`} />
             <Row label="Advance paid" value={`₹${inr(d.reservation.advance_paid)}`} />
+            {d.money && (
+              <>
+                <Row label="Ledger" value={`Paid ₹${inr(d.money.paid_total)} · Balance ₹${inr(d.money.balance)}` +
+                  (d.money.deposit_held ? ` · Deposit held ₹${inr(d.money.deposit_held)}` : "")} />
+                <div className="print:hidden">
+                  <a className="text-sm font-medium text-brand-700 hover:underline"
+                    href={toFullPath(`/billing/${encodeURIComponent(d.money.folio)}`)}>
+                    Open folio — collect advance / deposit, settle & generate the invoice →
+                  </a>
+                </div>
+              </>
+            )}
             <Row label="Source" value={d.reservation.source} />
           </div>
         </div>

@@ -100,7 +100,7 @@ jobs:
           cd frappe-bench
           printf 'from kamra.scripts.eval_harness import execute\nexecute()\nexit\n' \
             | bench --site test.localhost console | tee eval.out
-          grep -q "39/39 passed" eval.out
+          grep -q "43/43 passed" eval.out
 
       - name: Run front-desk persona journey
         run: |

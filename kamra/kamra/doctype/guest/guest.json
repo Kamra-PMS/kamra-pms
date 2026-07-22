@@ -24,7 +24,9 @@
   "nationality",
   "address_line",
   "city",
-  "guest_notes"
+  "guest_notes",
+  "id_file",
+  "address_proof_file"
  ],
  "fields": [
   {
@@ -125,6 +127,18 @@
    "fieldname": "city",
    "fieldtype": "Data",
    "label": "City"
+  },
+  {
+   "fieldname": "id_file",
+   "fieldtype": "Attach",
+   "label": "ID Document",
+   "description": "Private photo/scan of the ID. Deleted at checkout when the property uses Verify & Discard retention."
+  },
+  {
+   "fieldname": "address_proof_file",
+   "fieldtype": "Attach",
+   "label": "Address Proof",
+   "description": "Private photo/scan of the address proof. Deleted at checkout under Verify & Discard retention."
   }
  ],
  "grid_page_length": 50,

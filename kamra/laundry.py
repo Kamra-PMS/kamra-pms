@@ -75,6 +75,70 @@ def delete_laundry_rate(name: str):
 	return {"ok": True}
 
 
+@frappe.whitelist(methods=["POST"])
+@require_roles(*RATE_ROLES)
+def import_laundry_rates(property: str, csv_text: str):
+	"""Bulk-load or bulk-update the rate card from a CSV - the same file
+	the Export button produces (item, service, rate, express rate).
+	Upserts by (item, service): existing rows update, new rows are
+	created, nothing is deleted. Headers are matched tolerantly."""
+	import csv as csvmod
+	import io as iomod
+	import re
+
+	def norm(h):
+		return re.sub(r"[^a-z]", "", (h or "").lower())
+
+	SERVICE_ALIASES = {
+		"washiron": "Wash & Iron", "washandiron": "Wash & Iron",
+		"wi": "Wash & Iron", "wash": "Wash & Iron",
+		"dryclean": "Dry Clean", "dc": "Dry Clean",
+		"irononly": "Iron Only", "iron": "Iron Only", "press": "Iron Only",
+		"pressonly": "Iron Only",
+	}
+	rows = [r for r in csvmod.reader(iomod.StringIO(
+		(csv_text or "").lstrip("﻿"))) if any(c.strip() for c in r)]
+	if len(rows) < 2:
+		frappe.throw(_("The CSV needs a header row and at least one rate."))
+	headers = [norm(h) for h in rows[0]]
+
+	def col(*names):
+		for n in names:
+			if n in headers:
+				return headers.index(n)
+		return None
+
+	c_item = col("item", "itemname", "garment")
+	c_service = col("service", "servicetype")
+	c_rate = col("rate", "price")
+	c_express = col("expressrate", "express", "expressprice")
+	if c_item is None or c_service is None or c_rate is None:
+		frappe.throw(_("Couldn't find the item / service / rate columns."))
+
+	created = updated = 0
+	issues = []
+	for i, r in enumerate(rows[1:], start=1):
+		get = lambda c: (r[c].strip() if c is not None and c < len(r) else "")  # noqa: E731
+		item = get(c_item)
+		service = SERVICE_ALIASES.get(norm(get(c_service)), get(c_service))
+		rate = re.sub(r"[^0-9.]", "", get(c_rate))
+		express = re.sub(r"[^0-9.]", "", get(c_express)) if c_express is not None else ""
+		if not item or service not in SERVICES or not rate or float(rate) <= 0:
+			issues.append({"row": i, "item": item,
+			               "error": "needs an item, a valid service "
+			                        "(Wash & Iron / Dry Clean / Iron Only) "
+			                        "and a positive rate"})
+			continue
+		existing = frappe.db.get_value("Laundry Rate", {
+			"property": property, "item_name": item, "service_type": service})
+		save_laundry_rate(property, item, service, float(rate),
+		                  express_rate=float(express) if express else None,
+		                  name=existing)
+		updated += 1 if existing else 0
+		created += 0 if existing else 1
+	return {"created": created, "updated": updated, "issues": issues}
+
+
 def _price(property: str, item_name: str, service_type: str,
            express: bool) -> float:
 	row = frappe.db.get_value(

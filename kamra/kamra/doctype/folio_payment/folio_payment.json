@@ -8,6 +8,7 @@
  "engine": "InnoDB",
  "field_order": [
   "posting_date",
+  "payment_kind",
   "mode",
   "amount",
   "currency",
@@ -22,6 +23,14 @@
    "in_list_view": 1,
    "label": "Posting Date",
    "reqd": 1
+  },
+  {
+   "fieldname": "payment_kind",
+   "fieldtype": "Select",
+   "label": "Kind",
+   "in_list_view": 1,
+   "default": "Payment",
+   "options": "Payment\nAdvance\nSecurity Deposit\nRefund"
   },
   {
    "fieldname": "mode",

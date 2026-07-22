@@ -21,6 +21,7 @@ import {
 import { cn } from "../lib/utils"
 import type { ShellContext } from "../AppShell"
 import { serverError } from "../lib/resource"
+import { toFullPath } from "../lib/routing"
 
 const HK_CYCLE: RoomRow["housekeeping_status"][] = [
   "Dirty",
@@ -118,7 +119,7 @@ function ReservationList(props: {
               )}
               {row.status === "Confirmed" && (
                 <a
-                  href={`/grc/${encodeURIComponent(row.name)}`}
+                  href={toFullPath(`/grc/${encodeURIComponent(row.name)}`)}
                   className="ml-2 font-medium text-brand-700 hover:underline"
                   onClick={(e) => e.stopPropagation()}
                 >

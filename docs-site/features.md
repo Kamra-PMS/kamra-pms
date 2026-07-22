@@ -10,8 +10,9 @@ overbooking flags), **ETA/ETD on every stay** and automatic
 **changeover-conflict warnings** when an arrival lands before the room
 frees; the Today board (arrivals/departures/in-house with payment chips),
 calendar selling by room type, group bookings with room blocks and pickup
-tracking, **room blocks** for VIP/house-use/maintenance holds, waitlists
-with one-tap promote, self check-in links, and a **central reservations**
+tracking, **room blocks** for VIP/house-use/maintenance holds, self check-in links (guests attach a
+**photo of their ID** — camera capture or upload — stored privately and
+**deleted at checkout** under Verify & Discard retention), and a **central reservations**
 screen that searches availability across every property you manage.
 
 **Revenue controls**: a per-property (or per-room-type) **overbooking

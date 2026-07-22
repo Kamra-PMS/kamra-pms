@@ -251,43 +251,6 @@
      }
     },
     {
-     "name": "registration_card",
-     "request": {
-      "method": "POST",
-      "header": [
-       {
-        "key": "Content-Type",
-        "value": "application/json"
-       },
-       {
-        "key": "Authorization",
-        "value": "token {{api_key}}:{{api_secret}}"
-       }
-      ],
-      "url": {
-       "raw": "{{base_url}}/api/method/kamra.api.registration_card",
-       "host": [
-        "{{base_url}}"
-       ],
-       "path": [
-        "api",
-        "method",
-        "kamra.api.registration_card"
-       ]
-      },
-      "description": "Everything the printed GRC (guest registration card) needs.",
-      "body": {
-       "mode": "raw",
-       "raw": "{\n  \"reservation\": \"RES-2026-00001\"\n}",
-       "options": {
-        "raw": {
-         "language": "json"
-        }
-       }
-      }
-     }
-    },
-    {
      "name": "cash_summary",
      "request": {
       "method": "POST",
@@ -904,10 +867,84 @@
         "kamra.api.add_folio_payment"
        ]
       },
-      "description": "",
+      "description": "Record money received on the stay ledger. kind labels WHY it came\nin - Payment (against the bill), Advance (collected before/at\ncheck-in) or Security Deposit (held, refundable). Refunds go through\nrefund_folio_payment so they can never be entered by accident.",
       "body": {
        "mode": "raw",
-       "raw": "{\n  \"folio\": \"FOLIO-2026-00001\",\n  \"mode\": \"<mode>\",\n  \"amount\": 1000\n}",
+       "raw": "{\n  \"folio\": \"FOLIO-2026-00001\",\n  \"mode\": \"<mode>\",\n  \"amount\": 1000,\n  \"kind\": \"Payment\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "refund_folio_payment",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.refund_folio_payment",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.refund_folio_payment"
+       ]
+      },
+      "description": "Give money back on an open folio - a held security deposit at\ncheckout, or an over-collected advance. Stored as a negative ledger\nrow so every balance still sums exactly; a reason is mandatory.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"folio\": \"FOLIO-2026-00001\",\n  \"amount\": 1000,\n  \"mode\": \"<mode>\",\n  \"reason\": \"<reason>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "set_actual_times",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.set_actual_times",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.set_actual_times"
+       ]
+      },
+      "description": "Correct the recorded arrival/departure moments - early check-ins\nand late checkouts should show what actually happened, not just when\nthe button was pressed. Early/late charges stay explicit folio lines.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"reservation\": \"RES-2026-00001\"\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -2037,6 +2074,43 @@
       "body": {
        "mode": "raw",
        "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"room\": \"Your Property-101\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "upload_guest_document",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.upload_guest_document",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.upload_guest_document"
+       ]
+      },
+      "description": "The desk captures or replaces a guest's document while preparing\nthe GRC - walk-ins, or a newer copy over last visit's. kind is 'id'\nor 'address'; stored privately, one current copy per slot.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"guest\": \"G-00001\",\n  \"kind\": \"<kind>\",\n  \"image\": \"<image>\"\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -4424,6 +4498,43 @@
      }
     },
     {
+     "name": "import_laundry_rates",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.laundry.import_laundry_rates",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.laundry.import_laundry_rates"
+       ]
+      },
+      "description": "Bulk-load or bulk-update the rate card from a CSV - the same file\nthe Export button produces (item, service, rate, express rate).\nUpserts by (item, service): existing rows update, new rows are\ncreated, nothing is deleted. Headers are matched tolerantly.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"csv_text\": \"<csv_text>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
      "name": "request_pickup",
      "request": {
       "method": "POST",
@@ -5308,39 +5419,6 @@
       "body": {
        "mode": "raw",
        "raw": "{\n  \"token\": \"<token>\"\n}",
-       "options": {
-        "raw": {
-         "language": "json"
-        }
-       }
-      }
-     }
-    },
-    {
-     "name": "precheckin_submit",
-     "request": {
-      "method": "POST",
-      "header": [
-       {
-        "key": "Content-Type",
-        "value": "application/json"
-       }
-      ],
-      "url": {
-       "raw": "{{base_url}}/api/method/kamra.public_api.precheckin_submit",
-       "host": [
-        "{{base_url}}"
-       ],
-       "path": [
-        "api",
-        "method",
-        "kamra.public_api.precheckin_submit"
-       ]
-      },
-      "description": "Guest completes pre-arrival check-in and signs the registration card\n(PRD FR-20 - details + declaration + e-signature; the signed card becomes\nthe paperless GRC the desk views at arrival). ID photo/KYC vendor\nintegration comes later.",
-      "body": {
-       "mode": "raw",
-       "raw": "{\n  \"token\": \"<token>\",\n  \"id_type\": \"<id_type>\",\n  \"id_number\": \"<id_number>\",\n  \"email\": \"guest@example.com\",\n  \"nationality\": \"\",\n  \"address_line\": \"\",\n  \"city\": \"\",\n  \"eta\": \"\",\n  \"special_requests\": \"\",\n  \"signature\": \"\",\n  \"consent\": 0\n}",
        "options": {
         "raw": {
          "language": "json"

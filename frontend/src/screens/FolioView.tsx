@@ -34,6 +34,7 @@ interface InvoiceData {
       total: number
     }[]
     payments: {
+      payment_kind?: string | null
       posting_date: string
       mode: string
       amount: number
@@ -123,7 +124,8 @@ export default function FolioView() {
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [voidFor, setVoidFor] = useState<string | null>(null)
   const [partVal, setPartVal] = useState("")
-  const [payment, setPayment] = useState({ mode: "UPI", amount: "", reference: "" })
+  const [payment, setPayment] = useState({ mode: "UPI", amount: "", reference: "", kind: "Payment" })
+  const [refund, setRefund] = useState<{ amount: string; mode: string; reason: string } | null>(null)
   const [showCancel, setShowCancel] = useState(false)
   const [cancelReason, setCancelReason] = useState("")
   const [allowance, setAllowance] = useState({ amount: "", reason: "", gst_rate: "0" })
@@ -846,14 +848,50 @@ export default function FolioView() {
                   <li key={i} className="flex justify-between py-1.5">
                     <span>
                       {p.posting_date} · {p.mode}
+                      {p.payment_kind && p.payment_kind !== "Payment" && (
+                        <span className={"ml-1.5 rounded px-1.5 py-0.5 text-[10px] font-semibold " +
+                          (p.payment_kind === "Refund" ? "bg-rose-50 text-rose-600"
+                            : p.payment_kind === "Security Deposit" ? "bg-violet-50 text-violet-700"
+                              : "bg-sky-50 text-sky-700")}>
+                          {p.payment_kind}
+                        </span>
+                      )}
                       {p.reference && (
                         <span className="text-zinc-400"> · {p.reference}</span>
                       )}
                     </span>
-                    <span>₹{inr(p.amount)}</span>
+                    <span className={Number(p.amount) < 0 ? "font-medium text-rose-600" : ""}>₹{inr(p.amount)}</span>
                   </li>
                 ))}
               </ul>
+              {refund ? (
+                <div className="mt-2 flex flex-wrap items-end gap-2 rounded-lg border border-rose-200 bg-rose-50 p-2">
+                  <input className={`${inputCls} w-24`} type="number" placeholder="₹"
+                    value={refund.amount} onChange={(e) => setRefund({ ...refund, amount: e.target.value })} />
+                  <select className={inputCls} value={refund.mode}
+                    onChange={(e) => setRefund({ ...refund, mode: e.target.value })}>
+                    {PAY_MODES.map((m) => <option key={m}>{m}</option>)}
+                  </select>
+                  <input className={`${inputCls} flex-1`} placeholder="Reason (required — e.g. deposit returned)"
+                    value={refund.reason} onChange={(e) => setRefund({ ...refund, reason: e.target.value })} />
+                  <Button variant="outline" className="text-rose-600" disabled={busy || !refund.amount || !refund.reason.trim()}
+                    onClick={() => act(async () => {
+                      await call("kamra.api.refund_folio_payment", withPin({
+                        folio: folio.name, amount: Number(refund.amount),
+                        mode: refund.mode, reason: refund.reason,
+                      }))
+                      setRefund(null)
+                    })}>
+                    Refund
+                  </Button>
+                  <Button variant="ghost" onClick={() => setRefund(null)}>✕</Button>
+                </div>
+              ) : (
+                <button className="mt-1 text-xs font-medium text-rose-600 hover:underline"
+                  onClick={() => setRefund({ amount: "", mode: "Cash", reason: "" })}>
+                  Refund money (deposit return / over-collection)
+                </button>
+              )}
             </div>
           )}
 
@@ -1016,6 +1054,16 @@ export default function FolioView() {
             <CardContent className="flex flex-wrap items-end gap-2">
               <select
                 className={inputCls}
+                value={payment.kind}
+                title="What this money is: against the bill, an advance, or a refundable deposit"
+                onChange={(e) => setPayment({ ...payment, kind: e.target.value })}
+              >
+                {["Payment", "Advance", "Security Deposit"].map((k) => (
+                  <option key={k}>{k}</option>
+                ))}
+              </select>
+              <select
+                className={inputCls}
                 value={payment.mode}
                 onChange={(e) => setPayment({ ...payment, mode: e.target.value })}
               >
@@ -1047,6 +1095,7 @@ export default function FolioView() {
                     call("kamra.api.add_folio_payment", withPin({
                       folio: folio.name,
                       mode: payment.mode,
+                      kind: payment.kind,
                       amount: Number(payment.amount),
                       reference: payment.reference || undefined,
                     })),

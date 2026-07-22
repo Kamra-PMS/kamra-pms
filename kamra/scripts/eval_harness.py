@@ -1193,7 +1193,7 @@ def t33():
 
 
 @check("kitchen display: chef context, post-fire void alert, recall undo")
-def t34():
+def t38():
 	from kamra import pos
 	outlet = frappe.get_doc({
 		"doctype": "POS Outlet", "property": P, "outlet_name": "Eval Kitchen",
@@ -1258,7 +1258,7 @@ def t34():
 
 
 @check("kitchen display: coursing holds & fires, cook's clock starts at fire, allergen alarm")
-def t35():
+def t39():
 	from kamra import pos
 	from frappe.utils import add_to_date, now_datetime
 	outlet = frappe.get_doc({
@@ -1352,7 +1352,7 @@ def t35():
 
 
 @check("kitchen stock: fire deducts per outlet, shortage never blocks, ledger reconciles")
-def t36():
+def t40():
 	from kamra import inventory, pos
 	kitchen = frappe.get_doc({
 		"doctype": "POS Outlet", "property": P, "outlet_name": "Stock Kitchen",
@@ -1450,7 +1450,7 @@ def t36():
 
 
 @check("kitchen stock: post-fire void is wastage not a reversal, count is an explicit decision, no auto-86")
-def t37():
+def t41():
 	from kamra import inventory, pos
 	outlet = frappe.get_doc({
 		"doctype": "POS Outlet", "property": P, "outlet_name": "Waste Kitchen",
@@ -1585,7 +1585,7 @@ def _id_files(reservation):
 
 
 @check("ID document: private storage, token gate, never blocks check-in, discarded at checkout")
-def t38():
+def t42():
 	import base64
 
 	from kamra import api, public_api as pub
@@ -1690,7 +1690,7 @@ def t38():
 
 
 @check("ID document: desk captures and verifies, roles gate the look")
-def t39():
+def t43():
 	from kamra import api, id_documents, public_api as pub
 	g = _guest("ID Verify Guest", "+91 70000 00040")
 	res = _res(g, "2035-04-01", "2035-04-03", ROOM)
@@ -1750,6 +1750,200 @@ def t39():
 	# the harness rolls the DB back but save_file wrote real bytes to disk;
 	# clean up after ourselves rather than leaving them for the runner
 	id_documents.discard_id_document(res.name)
+@check("pre-checkin: ID photo stored privately, discarded at checkout per policy")
+def t34():
+	import base64
+	from kamra import api, public_api
+
+	idroom = frappe.db.exists("Room", {"property": P, "room_number": "E103"})
+	if not idroom:
+		idroom = frappe.get_doc({
+			"doctype": "Room", "property": P, "room_number": "E103",
+			"room_type": RT,
+		}).insert(ignore_permissions=True).name
+	else:
+		frappe.db.set_value("Room", idroom, "room_type", RT)
+	g = _guest("Eval IdPhoto", "+91 70000 00034")
+	res = _res(g, nowdate(), add_days(nowdate(), 1), idroom)
+	tok = frappe.generate_hash(length=32)
+	frappe.db.set_value("Reservation", res.name, "precheckin_token", tok)
+
+	# a real (tiny) JPEG - frappe's File doctype runs PIL over uploads
+	from io import BytesIO
+	from PIL import Image
+	buf = BytesIO()
+	Image.new("RGB", (8, 8), (200, 180, 40)).save(buf, format="JPEG")
+	jpg = base64.b64encode(buf.getvalue()).decode()
+	frappe.set_user("Guest")
+	try:
+		public_api.precheckin_submit(
+			tok, "Aadhaar", "987654321012", email="id@x.in", consent=0,
+			id_image=f"data:image/jpeg;base64,{jpg}")
+		# junk uploads are refused
+		try:
+			public_api.precheckin_submit(
+				tok, "Aadhaar", "987654321012",
+				id_image="data:text/html;base64,PGI+")
+			raise AssertionError("non-image ID accepted")
+		except frappe.exceptions.ValidationError:
+			pass
+	finally:
+		frappe.set_user("Administrator")
+
+	f = frappe.get_all("File", filters={
+		"attached_to_doctype": "Guest", "attached_to_name": g,
+		"attached_to_field": "id_file"},
+		fields=["name", "is_private", "file_url"])
+	assert len(f) == 1 and f[0].is_private == 1, f
+	assert frappe.db.get_value("Guest", g, "id_file") == f[0].file_url
+
+	# the GRC shows the document to the desk
+	card = api.registration_card(res.name)
+	assert card["guest"]["id_file"] == f[0].file_url, card["guest"]
+
+	# Verify & Discard: checkout masks the number AND deletes the photo
+	frappe.db.set_value("Property", P, "id_retention", "Verify & Discard")
+	res.reload()
+	res.status = "Checked In"
+	res.save(ignore_permissions=True)
+	api.check_out(res.name)  # the desk path - runs the retention scrub
+	assert frappe.db.get_value("Guest", g, "id_number").startswith("•"), \
+		frappe.db.get_value("Guest", g, "id_number")
+	assert not frappe.db.get_value("Guest", g, "id_file")
+	assert not frappe.get_all("File", filters={
+		"attached_to_doctype": "Guest", "attached_to_name": g,
+		"attached_to_field": "id_file"})
+	frappe.db.set_value("Property", P, "id_retention", "Store")
+
+
+@check("laundry rates: CSV bulk import upserts by item+service, refuses junk")
+def t35():
+	from kamra import laundry
+
+	laundry.save_laundry_rate(P, "Shirt", "Wash & Iron", 60)
+	csv_text = (
+		"Item,Service,Rate,Express Rate\n"
+		"Shirt,Wash & Iron,75,\n"          # update (blank express -> 1.5x)
+		'"Blazer, Wool",Dry Clean,300,450\n'  # create, quoted comma
+		"Cap,dry clean,90,\n"               # alias-cased service -> create
+		"Ghost,Boiling,50,\n"               # bad service -> skipped
+		"NoRate,Iron Only,,\n")             # missing rate -> skipped
+	out = laundry.import_laundry_rates(P, csv_text)
+	assert out["created"] == 2 and out["updated"] == 1, out
+	assert len(out["issues"]) == 2, out["issues"]
+	rates = {(r["item_name"], r["service_type"]): r
+	         for r in laundry.laundry_rates(P)}
+	assert rates[("Shirt", "Wash & Iron")]["rate"] == 75
+	assert rates[("Blazer, Wool", "Dry Clean")]["express_rate"] == 450
+	assert ("Cap", "Dry Clean") in rates
+
+
+@check("guest documents: address proof + staff upload + both discarded per policy")
+def t36():
+	import base64
+	from io import BytesIO
+	from PIL import Image
+	from kamra import api, public_api
+
+	def img64():
+		buf = BytesIO()
+		Image.new("RGB", (8, 8), (10, 20, 30)).save(buf, format="JPEG")
+		return "data:image/jpeg;base64," + base64.b64encode(buf.getvalue()).decode()
+
+	docroom = frappe.db.exists("Room", {"property": P, "room_number": "E104"})
+	if not docroom:
+		docroom = frappe.get_doc({
+			"doctype": "Room", "property": P, "room_number": "E104",
+			"room_type": RT,
+		}).insert(ignore_permissions=True).name
+	else:
+		frappe.db.set_value("Room", docroom, "room_type", RT)
+	g = _guest("Eval AddrProof", "+91 70000 00036")
+	res = _res(g, nowdate(), add_days(nowdate(), 1), docroom)
+	tok = frappe.generate_hash(length=32)
+	frappe.db.set_value("Reservation", res.name, "precheckin_token", tok)
+
+	# guest sends BOTH documents from the self check-in page
+	frappe.set_user("Guest")
+	try:
+		public_api.precheckin_submit(tok, "Passport", "P1234567",
+		                             id_image=img64(), address_image=img64())
+	finally:
+		frappe.set_user("Administrator")
+	assert frappe.db.get_value("Guest", g, "id_file")
+	addr1 = frappe.db.get_value("Guest", g, "address_proof_file")
+	assert addr1
+
+	# desk replaces the address proof with a newer copy - still ONE file
+	api.upload_guest_document(g, "address", img64())
+	files = frappe.get_all("File", filters={
+		"attached_to_doctype": "Guest", "attached_to_name": g,
+		"attached_to_field": "address_proof_file"}, fields=["is_private"])
+	assert len(files) == 1 and files[0].is_private == 1, files
+	card = api.registration_card(res.name)
+	assert card["guest"]["address_proof_file"], card["guest"]
+	assert card["guest"]["guest_id"] == g
+
+	# Verify & Discard wipes BOTH slots at checkout
+	frappe.db.set_value("Property", P, "id_retention", "Verify & Discard")
+	res.reload()
+	res.status = "Checked In"
+	res.save(ignore_permissions=True)
+	api.check_out(res.name)
+	assert not frappe.db.get_value("Guest", g, "id_file")
+	assert not frappe.db.get_value("Guest", g, "address_proof_file")
+	frappe.db.set_value("Property", P, "id_retention", "Store")
+
+
+@check("stay ledger: advance/deposit kinds, guarded refunds, actual times on GRC")
+def t37():
+	from kamra import api
+	from kamra.folio import post_room_night
+
+	lroom2 = frappe.db.exists("Room", {"property": P, "room_number": "E105"})
+	if not lroom2:
+		lroom2 = frappe.get_doc({
+			"doctype": "Room", "property": P, "room_number": "E105",
+			"room_type": RT,
+		}).insert(ignore_permissions=True).name
+	else:
+		frappe.db.set_value("Room", lroom2, "room_type", RT)
+	g = _guest("Eval Ledger", "+91 70000 00037")
+	res = _res(g, nowdate(), add_days(nowdate(), 1), lroom2)
+	res.status = "Checked In"
+	res.save(ignore_permissions=True)
+	folio = frappe.db.get_value(
+		"Folio", {"reservation": res.name, "folio_type": "Guest"})
+
+	# advance and a refundable deposit land as labelled ledger rows
+	api.add_folio_payment(folio, "UPI", 2000, kind="Advance")
+	api.add_folio_payment(folio, "Cash", 1000, kind="Security Deposit")
+	try:
+		api.add_folio_payment(folio, "Cash", 100, kind="Bribe")
+		raise AssertionError("junk payment kind accepted")
+	except frappe.exceptions.ValidationError:
+		pass
+
+	# refunds: reason mandatory, can't exceed what was collected
+	try:
+		api.refund_folio_payment(folio, 5000, "Cash", "too much")
+		raise AssertionError("over-refund accepted")
+	except frappe.exceptions.ValidationError:
+		pass
+	out = api.refund_folio_payment(folio, 1000, "Cash", "deposit returned")
+	fd = frappe.get_doc("Folio", folio)
+	kinds = {(p.payment_kind, float(p.amount)) for p in fd.payments}
+	assert ("Advance", 2000.0) in kinds and ("Security Deposit", 1000.0) in kinds
+	assert ("Refund", -1000.0) in kinds, kinds
+	assert float(fd.payments_total) == 2000.0, fd.payments_total  # 2000+1000-1000
+
+	# actual times: corrected by the desk, visible on the GRC with money
+	api.set_actual_times(res.name, actual_check_in=f"{nowdate()} 07:15:00")
+	card = api.registration_card(res.name)
+	assert card["reservation"]["actual_check_in"].endswith("07:15:00")
+	assert card["money"]["folio"] == folio, card["money"]
+	assert card["money"]["advance"] == 2000.0, card["money"]
+	assert card["money"]["refunded"] == 1000.0, card["money"]
 
 
 @check("ticket SLA: priority sets due window")
@@ -1774,7 +1968,10 @@ def execute():
 	frappe.db.savepoint("eval_start")
 	try:
 		RT, ROOM = setup()
-		for fn in (t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19, t20, t21, t22, t23, t24, t25, t26, t27, t28, t29, t30, t31, t32, t33, t34, t35, t36, t37, t38, t39):
+		for fn in (t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13,
+		           t14, t15, t16, t17, t18, t19, t20, t21, t22, t23, t24,
+		           t25, t26, t27, t28, t29, t30, t31, t32, t33, t34, t35,
+		           t36, t37, t38, t39, t40, t41, t42, t43):
 			fn()
 	finally:
 		frappe.db.commit = real_commit
