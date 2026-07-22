@@ -6,6 +6,25 @@ All notable changes to Kamra PMS are documented here. Format follows
 existing install on upgrade (removed doctypes, removed API endpoints),
 MINOR for new features, PATCH for fixes.
 
+## [2.2.1](https://github.com/Kamra-PMS/kamra-pms/compare/v2.2.0...v2.2.1) (2026-07-22)
+
+
+### Features
+
+* **grc:** document uploads, actual stay times, and a real stay ledger ([8f6483b](https://github.com/Kamra-PMS/kamra-pms/commit/8f6483b02325df0131418a2f5275ae124342f5de))
+* inventory & recipes, menu bulk import, KDS v2, hardened ID documents ([#6](https://github.com/Kamra-PMS/kamra-pms/issues/6)) ([20affc0](https://github.com/Kamra-PMS/kamra-pms/commit/20affc061698b0204c771bb0a9bf2b62bebe3bff))
+* **laundry:** export the rate card as CSV, bulk import/update it back ([c82ebdd](https://github.com/Kamra-PMS/kamra-pms/commit/c82ebdda148c7db02fc05d06b00f7f2ded0dfeba))
+
+
+### Bug Fixes
+
+* drop superseded local id-image state after pipeline unification ([9c4b9ff](https://github.com/Kamra-PMS/kamra-pms/commit/9c4b9ff4e349084b71b4b15d3fd88daa5e2c2ebc))
+
+
+### Miscellaneous Chores
+
+* pin next release version ([19fbe5f](https://github.com/Kamra-PMS/kamra-pms/commit/19fbe5f88397452e8c381ea08a6979c7da9c4520))
+
 ## [2.2.0](https://github.com/Kamra-PMS/kamra-pms/compare/v2.1.0...v2.2.0) (2026-07-22)
 
 
