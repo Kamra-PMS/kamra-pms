@@ -563,11 +563,42 @@ function LaundryRatesCard({ property }: { property: string }) {
   const [rates, setRates] = useState<LaundryRate[]>([])
   const [form, setForm] = useState<{ name?: string; item: string; service: string; rate: string; express: string } | null>(null)
   const [err, setErr] = useState<string | null>(null)
+  const [importMsg, setImportMsg] = useState<string | null>(null)
 
   const load = useCallback(() => {
     call<LaundryRate[]>("kamra.laundry.laundry_rates", { property }).then(setRates).catch(() => {})
   }, [property])
   useEffect(load, [load])
+
+  function exportCsv() {
+    const lines = ["item,service,rate,express rate",
+      ...rates.map((r) =>
+        `"${r.item_name.replace(/"/g, '""')}",${r.service_type},${r.rate},${r.express_rate}`)]
+    const blob = new Blob([lines.join("\n") + "\n"], { type: "text/csv" })
+    const a = document.createElement("a")
+    a.href = URL.createObjectURL(blob)
+    a.download = "laundry-rates.csv"
+    a.click()
+    URL.revokeObjectURL(a.href)
+  }
+
+  async function importCsv(file: File) {
+    setErr(null)
+    setImportMsg(null)
+    try {
+      const res = await call<{ created: number; updated: number; issues: { row: number; item: string; error: string }[] }>(
+        "kamra.laundry.import_laundry_rates",
+        { property, csv_text: await file.text() },
+      )
+      setImportMsg(
+        `${res.created} added, ${res.updated} updated` +
+        (res.issues.length ? ` — ${res.issues.length} row(s) skipped: ` +
+          res.issues.slice(0, 3).map((i) => `row ${i.row} (${i.error})`).join("; ") : ""))
+      load()
+    } catch (e) {
+      setErr(serverError(e))
+    }
+  }
 
   async function save() {
     if (!form) return
@@ -595,12 +626,27 @@ function LaundryRatesCard({ property }: { property: string }) {
             Blank express = 1.5× the normal rate.
           </p>
         </div>
-        <Button variant="outline" onClick={() => setForm({ item: "", service: "Wash & Iron", rate: "", express: "" })}>
-          Add rate
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="ghost" disabled={rates.length === 0} onClick={exportCsv}>
+            Export CSV
+          </Button>
+          <label className="inline-flex cursor-pointer items-center rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm font-medium text-zinc-800 transition-colors hover:bg-zinc-100">
+            Import CSV
+            <input type="file" accept=".csv,text/csv" className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0]
+                if (f) importCsv(f)
+                e.target.value = ""
+              }} />
+          </label>
+          <Button variant="outline" onClick={() => setForm({ item: "", service: "Wash & Iron", rate: "", express: "" })}>
+            Add rate
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         {err && <p className="mb-2 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">{err}</p>}
+        {importMsg && <p className="mb-2 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{importMsg}</p>}
         {form && (
           <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl bg-zinc-50 p-2">
             <input className="w-36 rounded-lg border border-zinc-300 px-2 py-1.5 text-sm" placeholder="Item (Shirt…)"

@@ -1244,6 +1244,28 @@ def t34():
 	frappe.db.set_value("Property", P, "id_retention", "Store")
 
 
+@check("laundry rates: CSV bulk import upserts by item+service, refuses junk")
+def t35():
+	from kamra import laundry
+
+	laundry.save_laundry_rate(P, "Shirt", "Wash & Iron", 60)
+	csv_text = (
+		"Item,Service,Rate,Express Rate\n"
+		"Shirt,Wash & Iron,75,\n"          # update (blank express -> 1.5x)
+		'"Blazer, Wool",Dry Clean,300,450\n'  # create, quoted comma
+		"Cap,dry clean,90,\n"               # alias-cased service -> create
+		"Ghost,Boiling,50,\n"               # bad service -> skipped
+		"NoRate,Iron Only,,\n")             # missing rate -> skipped
+	out = laundry.import_laundry_rates(P, csv_text)
+	assert out["created"] == 2 and out["updated"] == 1, out
+	assert len(out["issues"]) == 2, out["issues"]
+	rates = {(r["item_name"], r["service_type"]): r
+	         for r in laundry.laundry_rates(P)}
+	assert rates[("Shirt", "Wash & Iron")]["rate"] == 75
+	assert rates[("Blazer, Wool", "Dry Clean")]["express_rate"] == 450
+	assert ("Cap", "Dry Clean") in rates
+
+
 @check("ticket SLA: priority sets due window")
 def t12():
 	from frappe.utils import get_datetime, now_datetime, time_diff_in_seconds
@@ -1266,7 +1288,7 @@ def execute():
 	frappe.db.savepoint("eval_start")
 	try:
 		RT, ROOM = setup()
-		for fn in (t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19, t20, t21, t22, t23, t24, t25, t26, t27, t28, t29, t30, t31, t32, t33, t34):
+		for fn in (t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19, t20, t21, t22, t23, t24, t25, t26, t27, t28, t29, t30, t31, t32, t33, t34, t35):
 			fn()
 	finally:
 		frappe.db.commit = real_commit

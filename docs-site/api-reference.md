@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function — the same governed layer
-the UI and the AI use. **150 endpoints**, generated from the source
+the UI and the AI use. **151 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -1532,6 +1532,20 @@ Add or edit one line of the rate card.
 | Param | Required | Default |
 | --- | --- | --- |
 | `name` | yes |  |
+
+### `kamra.laundry.import_laundry_rates`
+
+**POST**
+
+Bulk-load or bulk-update the rate card from a CSV - the same file
+the Export button produces (item, service, rate, express rate).
+Upserts by (item, service): existing rows update, new rows are
+created, nothing is deleted. Headers are matched tolerantly.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `csv_text` | yes |  |
 
 ### `kamra.laundry.request_pickup`
 

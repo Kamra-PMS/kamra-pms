@@ -4424,6 +4424,43 @@
      }
     },
     {
+     "name": "import_laundry_rates",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.laundry.import_laundry_rates",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.laundry.import_laundry_rates"
+       ]
+      },
+      "description": "Bulk-load or bulk-update the rate card from a CSV - the same file\nthe Export button produces (item, service, rate, express rate).\nUpserts by (item, service): existing rows update, new rows are\ncreated, nothing is deleted. Headers are matched tolerantly.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"csv_text\": \"<csv_text>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
      "name": "request_pickup",
      "request": {
       "method": "POST",
