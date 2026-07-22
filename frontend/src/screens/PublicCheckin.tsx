@@ -133,7 +133,6 @@ export default function PublicCheckin() {
     address_line: "", city: "", eta: "", special_requests: "",
   })
   const [signature, setSignature] = useState("")
-  const [idImage, setIdImage] = useState("") // data-URL of the ID photo
   const [addrImage, setAddrImage] = useState("") // data-URL of the address proof
   const [consent, setConsent] = useState(false)
   const [idUploaded, setIdUploaded] = useState(false)
@@ -164,7 +163,6 @@ export default function PublicCheckin() {
     try {
       await call("kamra.public_api.precheckin_submit", {
         token, ...form, signature, consent: consent ? 1 : 0,
-        id_image: idImage || "",
         address_image: addrImage || "",
       })
       setDone(true)
