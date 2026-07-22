@@ -49,6 +49,7 @@ interface Grc {
     nationality: string | null
     id_type: string | null
     id_number: string | null
+    id_file?: string | null
     address: string
   }
   occupants: Occupant[]
@@ -234,6 +235,15 @@ export default function RegistrationCard() {
             <Row label="Email" value={d.guest.email} />
             <Row label="Nationality" value={d.guest.nationality} />
             <Row label="ID" value={d.guest.id_type ? `${d.guest.id_type} · ${d.guest.id_number ?? ""}` : null} />
+            {d.guest.id_file && (
+              <div className="mt-1">
+                <span className="text-xs font-medium uppercase tracking-wide text-zinc-400">ID document on file</span>
+                <a href={d.guest.id_file} target="_blank" rel="noreferrer">
+                  <img src={d.guest.id_file} alt="Guest ID document"
+                    className="mt-1 max-h-28 rounded-lg border border-zinc-200 object-contain" />
+                </a>
+              </div>
+            )}
             <Row label="Address" value={d.guest.address} />
             {d.reservation.company && <Row label="Company" value={d.reservation.company} />}
             {d.reservation.booked_by_name && (

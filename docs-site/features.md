@@ -10,8 +10,9 @@ overbooking flags), **ETA/ETD on every stay** and automatic
 **changeover-conflict warnings** when an arrival lands before the room
 frees; the Today board (arrivals/departures/in-house with payment chips),
 calendar selling by room type, group bookings with room blocks and pickup
-tracking, **room blocks** for VIP/house-use/maintenance holds, waitlists
-with one-tap promote, self check-in links, and a **central reservations**
+tracking, **room blocks** for VIP/house-use/maintenance holds, self check-in links (guests attach a
+**photo of their ID** — camera capture or upload — stored privately and
+**deleted at checkout** under Verify & Discard retention), and a **central reservations**
 screen that searches availability across every property you manage.
 
 **Revenue controls**: a per-property (or per-room-type) **overbooking
@@ -72,7 +73,11 @@ guest** — priced from the card, never by hand; the bag tracks
 Collected → In Process → Ready; items **return piece by piece**, and a
 missing piece blocks delivery unless a shortage note says why. Delivery
 bills the stay automatically at the services GST rate through the same
-governed path as the minibar.
+governed path as the minibar. Guests can **request pickup themselves**
+from their in-stay page; the desk gets a **laundry console** with
+promised ready-by times, overdue flags, printable dockets and a revenue
+panel; **house laundry** (uniforms, hotel linen) and complimentary bags
+are tracked as volume but never billed.
 
 ## Direct bookings
 
@@ -110,7 +115,7 @@ one.
 
 ## AI & audit
 
-An MCP server with 31 governed tools, an in-app copilot (bring your own
+An MCP server with 32 governed tools, an in-app copilot (bring your own
 key), rate guardrails agents cannot price outside, deterministic pricing
 verified by an automated eval suite, and an activity ledger recording
 every action — human or AI — with who, what and why.

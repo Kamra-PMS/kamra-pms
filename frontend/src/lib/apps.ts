@@ -28,6 +28,7 @@ import {
   Receipt,
   ScrollText,
   Settings as SettingsIcon,
+  Shirt,
   Smartphone,
   Sparkles,
   Store,
@@ -103,6 +104,7 @@ export const APPS: AppDef[] = [
     roles: ["Housekeeping", "Front Desk", "Hotel Admin", "System Manager", "Administrator"],
     items: [
       { to: "/housekeeping", label: "Room Board", icon: ListChecks },
+      { to: "/laundry", label: "Laundry", icon: Shirt },
       { to: "/lost-found", label: "Lost & Found", icon: PackageSearch },
       { href: "/kamra/hk", label: "Phone App", icon: Smartphone },
     ],
@@ -177,6 +179,7 @@ export const APPS: AppDef[] = [
       { to: "/billing", label: "Billing", icon: Receipt },
       { to: "/reports", label: "Reports", icon: IndianRupee },
       { to: "/accounting-export", label: "Accounting Export", icon: FileSpreadsheet },
+      { to: "/laundry", label: "Laundry", icon: Shirt },
     ],
     extraPrefixes: ["/billing/"],
   },

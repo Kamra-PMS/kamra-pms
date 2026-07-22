@@ -3,6 +3,7 @@ import { call } from "../lib/api"
 import { serverError } from "../lib/resource"
 import type { Row } from "../lib/resource"
 import { Button } from "./ui/button"
+import { toFullPath } from "../lib/routing"
 
 /** Cancel a stay the right way: see what it costs, say why, get a
  * cancellation number the guest can keep. Lives in the reservation
@@ -63,7 +64,7 @@ export default function CancelPanel({ row, reload }: { row: Row; reload: () => v
           Give the guest the cancellation number.
         </p>
         <a
-          href={`/cancelled/${encodeURIComponent(String(row.name))}`}
+          href={toFullPath(`/cancelled/${encodeURIComponent(String(row.name))}`)}
           className="mt-1.5 inline-block font-medium text-emerald-900 underline"
         >
           Print / share the confirmation letter

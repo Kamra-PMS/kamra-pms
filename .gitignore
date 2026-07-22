@@ -20,3 +20,5 @@ kamra/public/node_modules/
 docs-site/node_modules/
 docs-site/.vitepress/dist/
 docs-site/.vitepress/cache/
+
+graphify-out/

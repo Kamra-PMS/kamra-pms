@@ -43,6 +43,7 @@ import QrMenu from "./screens/QrMenu"
 import AccountingExport from "./screens/AccountingExport"
 import TapeChart from "./screens/TapeChart"
 import Tickets from "./screens/Tickets"
+import Laundry from "./screens/Laundry"
 import Today from "./screens/Today"
 import {
   companiesConfig,
@@ -272,6 +273,7 @@ export default function App() {
           <Route path="outlets" element={<ResourceScreen config={outletsConfig} />} />
           <Route path="accounting-export" element={<AccountingExport />} />
           <Route path="tickets" element={<Tickets />} />
+          <Route path="laundry" element={<Laundry />} />
           <Route
             path="housekeeping"
             element={<ResourceScreen config={housekeepingConfig} />}

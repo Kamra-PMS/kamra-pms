@@ -83,6 +83,42 @@ export function kotHtml(o: {
     <div class="c sm">${o.items.length} item${o.items.length === 1 ? "" : "s"}</div>`
 }
 
+export function laundryDocketHtml(o: {
+  property_name?: string
+  order: string
+  room_no: string
+  guest_name?: string | null
+  order_type?: string
+  express?: boolean
+  ready_by?: string | null
+  items: { item_name: string; service_type: string; qty: number }[]
+  total: number
+}) {
+  const when = new Date().toLocaleString("en-IN", {
+    day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit",
+  })
+  const rows = o.items.map((it) =>
+    `<tr><td class="num b" style="width:26px">${Math.round(it.qty)}×</td>` +
+    `<td class="b">${esc(it.item_name)}` +
+    `<div class="sm" style="font-weight:400">${esc(it.service_type)}</div>` +
+    `</td></tr>`).join("")
+  return `
+    <div class="c b lg">${esc(o.property_name || "Laundry")}</div>
+    <div class="c xl b">LAUNDRY DOCKET</div>
+    <div class="rule"></div>
+    <div class="row"><span class="b lg">${esc(o.room_no)}</span>` +
+    `<span class="sm">${esc(o.order_type || "Guest")}</span></div>
+    <div class="row sm"><span>${esc(o.order)}</span><span>${when}</span></div>
+    ${o.guest_name ? `<div class="sm">${esc(o.guest_name)}</div>` : ""}
+    ${o.express ? `<div class="c b">EXPRESS — SAME DAY</div>` : ""}
+    ${o.ready_by ? `<div class="sm">Ready by: ${esc(o.ready_by)}</div>` : ""}
+    <div class="rule"></div>
+    <table>${rows}</table>
+    <div class="rule"></div>
+    <div class="row b lg"><span>Total</span><span class="num">₹${inr(o.total)}</span></div>
+    <div class="c sm">Counted with the guest. Billed to the room.</div>`
+}
+
 export interface BillData {
   order: string
   kot_no: number | null

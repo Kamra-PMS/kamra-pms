@@ -4,6 +4,29 @@ import { useParams } from "react-router-dom"
 import { call } from "../lib/api"
 import { Button } from "../components/ui/button"
 import { SignaturePad } from "../components/SignaturePad"
+import { GuestLaundryCard } from "./laundry/GuestLaundryCard"
+
+
+/** Downscale a picked/captured photo so the upload stays small (max edge
+ * 1600px, JPEG) - phone camera originals are 5-12 MB otherwise. */
+function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    const url = URL.createObjectURL(file)
+    img.onload = () => {
+      const max = 1600
+      const scale = Math.min(1, max / Math.max(img.width, img.height))
+      const canvas = document.createElement("canvas")
+      canvas.width = Math.round(img.width * scale)
+      canvas.height = Math.round(img.height * scale)
+      canvas.getContext("2d")!.drawImage(img, 0, 0, canvas.width, canvas.height)
+      URL.revokeObjectURL(url)
+      resolve(canvas.toDataURL("image/jpeg", 0.85))
+    }
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("unreadable image")) }
+    img.src = url
+  })
+}
 
 const inputCls =
   "w-full rounded-lg border border-zinc-300 bg-white px-3.5 py-2.5 text-base " +
@@ -20,6 +43,7 @@ interface Info {
     pets_policy: string | null
     children_policy: string | null
     extra_bed_policy: string | null
+    id_retention?: string | null
   }
   stay: {
     reservation: string
@@ -36,6 +60,7 @@ interface Info {
     phone: string | null
     email: string | null
     id_type: string | null
+    has_id_file?: boolean
     nationality: string | null
   }
 }
@@ -53,6 +78,7 @@ export default function PublicCheckin() {
     address_line: "", city: "", eta: "", special_requests: "",
   })
   const [signature, setSignature] = useState("")
+  const [idImage, setIdImage] = useState("") // data-URL of the ID photo
   const [consent, setConsent] = useState(false)
 
   useEffect(() => {
@@ -77,6 +103,7 @@ export default function PublicCheckin() {
     try {
       await call("kamra.public_api.precheckin_submit", {
         token, ...form, signature, consent: consent ? 1 : 0,
+        id_image: idImage || "",
       })
       setDone(true)
     } catch {
@@ -133,6 +160,10 @@ export default function PublicCheckin() {
           </p>
         </div>
 
+        {/* self-hides unless the reservation is actually Checked In —
+            stay.status here is the pre-check-in status, not the stay status */}
+        {token && <GuestLaundryCard token={token} />}
+
         {done ? (
           <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-5 text-emerald-800">
             <p className="flex items-center gap-2 text-lg font-semibold">
@@ -163,6 +194,51 @@ export default function PublicCheckin() {
                 <input className={inputCls} value={form.id_number}
                   onChange={(e) => setForm({ ...form, id_number: e.target.value })} />
               </label>
+            </div>
+
+            {/* photo of the ID: camera on phones, file picker anywhere */}
+            <div className="rounded-xl border border-zinc-200 p-3">
+              <span className="block text-sm font-medium text-zinc-600">
+                Photo of your {form.id_type || "ID"}
+              </span>
+              <p className="mb-2 mt-0.5 text-xs text-zinc-400">
+                Stored privately, shown only to the front desk
+                {info?.property?.id_retention === "Verify & Discard"
+                  ? " — and deleted after checkout." : "."}
+              </p>
+              {idImage ? (
+                <div className="flex items-center gap-3">
+                  <img src={idImage} alt="Your ID" className="h-20 rounded-lg border border-zinc-200 object-cover" />
+                  <button type="button" className="text-sm font-medium text-rose-600 hover:underline"
+                    onClick={() => setIdImage("")}>
+                    Remove & retake
+                  </button>
+                </div>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  <label className="cursor-pointer rounded-lg bg-brand-600 px-3 py-2 text-sm font-semibold text-white">
+                    Take photo
+                    <input type="file" accept="image/*" capture="environment" className="hidden"
+                      onChange={async (e) => {
+                        const f = e.target.files?.[0]
+                        if (f) setIdImage(await fileToDataUrl(f))
+                      }} />
+                  </label>
+                  <label className="cursor-pointer rounded-lg border border-zinc-300 px-3 py-2 text-sm font-semibold text-zinc-700">
+                    Upload image
+                    <input type="file" accept="image/*" className="hidden"
+                      onChange={async (e) => {
+                        const f = e.target.files?.[0]
+                        if (f) setIdImage(await fileToDataUrl(f))
+                      }} />
+                  </label>
+                  {info?.guest?.has_id_file && (
+                    <span className="self-center text-xs font-medium text-emerald-700">
+                      ✓ Already on file — add a new one only to replace it
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
             <div className="grid grid-cols-2 gap-3">
               <label className="block">

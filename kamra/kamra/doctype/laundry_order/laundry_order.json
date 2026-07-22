@@ -7,12 +7,15 @@
  "engine": "InnoDB",
  "field_order": [
   "property",
+  "order_type",
   "room",
   "reservation",
   "guest_name",
+  "house_label",
   "column_break_a",
   "status",
   "express",
+  "complimentary",
   "notes",
   "sb_items",
   "items",
@@ -20,6 +23,7 @@
   "sb_who",
   "collected_by",
   "collected_at",
+  "ready_by",
   "column_break_b",
   "delivered_by",
   "delivered_at",
@@ -35,11 +39,18 @@
    "reqd": 1
   },
   {
+   "fieldname": "order_type",
+   "fieldtype": "Select",
+   "label": "Order Type",
+   "options": "Guest\nHouse",
+   "default": "Guest",
+   "in_list_view": 1
+  },
+  {
    "fieldname": "room",
    "fieldtype": "Link",
    "label": "Room",
    "options": "Room",
-   "reqd": 1,
    "in_list_view": 1
   },
   {
@@ -53,6 +64,13 @@
    "fieldtype": "Data",
    "label": "Guest",
    "in_list_view": 1
+  },
+  {
+   "fieldname": "house_label",
+   "fieldtype": "Data",
+   "label": "House Item",
+   "depends_on": "eval:doc.order_type==\"House\"",
+   "description": "What this house batch is (e.g. Staff uniforms, Pool towels)."
   },
   {
    "fieldname": "column_break_a",
@@ -70,6 +88,11 @@
    "fieldname": "express",
    "fieldtype": "Check",
    "label": "Express"
+  },
+  {
+   "fieldname": "complimentary",
+   "fieldtype": "Check",
+   "label": "Complimentary (no charge)"
   },
   {
    "fieldname": "notes",
@@ -109,6 +132,13 @@
    "fieldtype": "Datetime",
    "label": "Collected At",
    "read_only": 1
+  },
+  {
+   "fieldname": "ready_by",
+   "fieldtype": "Datetime",
+   "label": "Ready By",
+   "read_only": 1,
+   "description": "Promised turnaround: same day for express, next day for standard."
   },
   {
    "fieldname": "column_break_b",

@@ -139,6 +139,10 @@ jobs:
           mkdir -p ~/.ssh
           printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
+          # the deploy's docker build is silent for minutes (output goes to a
+          # log file on the host) - without keep-alives the idle SSH session
+          # gets dropped by the network path ("broken pipe" mid-build)
+          printf 'Host *\n  ServerAliveInterval 30\n  ServerAliveCountMax 40\n' >> ~/.ssh/config
           # Pre-deploy self-heal: a deploy that dies mid-way never reaches
           # its post-deploy prune, and image prune alone has proven too
           # weak (4GB back on a 96GB-full disk). Show WHERE the space went,

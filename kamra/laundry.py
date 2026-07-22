@@ -11,7 +11,7 @@ accident.
 
 import frappe
 from frappe import _
-from frappe.utils import now_datetime
+from frappe.utils import add_to_date, get_datetime, now_datetime
 
 from kamra.authz import require_roles
 
@@ -113,20 +113,35 @@ def _load_lines(property: str, items, express: bool):
 
 # ── the bag's life ───────────────────────────────────────────────────────
 
+def _ready_by(express: bool):
+	"""Promised turnaround: same-day for express, next-day for standard,
+	both by 8pm (the last laundry-room drop of the day)."""
+	base = now_datetime()
+	day = base if express else add_to_date(base, days=1)
+	return day.replace(hour=20, minute=0, second=0, microsecond=0)
+
+
 @frappe.whitelist(methods=["POST"])
 @require_roles(*LAUNDRY_ROLES)
-def request_pickup(property: str, room: str, notes: str | None = None,
-                   express: int = 0):
+def request_pickup(property: str, room: str | None = None,
+                   notes: str | None = None, express: int = 0,
+                   order_type: str = "Guest", house_label: str | None = None):
 	"""Log that a guest wants laundry picked up - it lands on the floor
-	team's queue. Items are counted at the door, not here."""
-	reservation = frappe.db.get_value(
-		"Reservation", {"room": room, "status": "Checked In"}, "name")
-	if not reservation:
-		frappe.throw(_("No checked-in guest in that room."))
+	team's queue. Items are counted at the door, not here. A House order
+	(staff uniforms / hotel linen) needs no room or guest and is never billed."""
+	order_type = "House" if order_type == "House" else "Guest"
+	reservation = None
+	if order_type == "Guest":
+		reservation = frappe.db.get_value(
+			"Reservation", {"room": room, "status": "Checked In"}, "name")
+		if not reservation:
+			frappe.throw(_("No checked-in guest in that room."))
 	doc = frappe.get_doc({
-		"doctype": "Laundry Order", "property": property, "room": room,
+		"doctype": "Laundry Order", "property": property,
+		"order_type": order_type, "room": room or None,
 		"reservation": reservation, "status": "Requested",
 		"express": 1 if int(express or 0) else 0,
+		"house_label": (house_label or "").strip()[:80] or None,
 		"notes": (notes or "").strip()[:200] or None,
 	})
 	doc.insert()
@@ -135,12 +150,14 @@ def request_pickup(property: str, room: str, notes: str | None = None,
 
 @frappe.whitelist(methods=["POST"])
 @require_roles(*LAUNDRY_ROLES)
-def collect_laundry(property: str, room: str, items,
+def collect_laundry(property: str, room: str | None = None, items=None,
                     order: str | None = None, express=None,
-                    notes: str | None = None):
+                    notes: str | None = None, order_type: str = "Guest",
+                    house_label: str | None = None, complimentary=0):
 	"""The attendant counts the bag with the guest. Prices come from the
 	rate card (express uses the express column, or 1.5x). Pass `order` to
-	fulfil a pickup request, or omit it to log a walk-up collection."""
+	fulfil a pickup request, or omit it to log a walk-up collection. A House
+	walk-up (uniforms / linen) needs no room or guest and is never billed."""
 	if order:
 		doc = frappe.get_doc("Laundry Order", order)
 		if doc.status != "Requested":
@@ -148,20 +165,27 @@ def collect_laundry(property: str, room: str, items,
 		if express is not None:
 			doc.express = 1 if int(express) else 0
 	else:
-		reservation = frappe.db.get_value(
-			"Reservation", {"room": room, "status": "Checked In"}, "name")
-		if not reservation:
-			frappe.throw(_("No checked-in guest in that room."))
+		order_type = "House" if order_type == "House" else "Guest"
+		reservation = None
+		if order_type == "Guest":
+			reservation = frappe.db.get_value(
+				"Reservation", {"room": room, "status": "Checked In"}, "name")
+			if not reservation:
+				frappe.throw(_("No checked-in guest in that room."))
 		doc = frappe.get_doc({
-			"doctype": "Laundry Order", "property": property, "room": room,
+			"doctype": "Laundry Order", "property": property,
+			"order_type": order_type, "room": room or None,
 			"reservation": reservation,
 			"express": 1 if int(express or 0) else 0,
+			"house_label": (house_label or "").strip()[:80] or None,
+			"complimentary": 1 if int(complimentary or 0) else 0,
 			"notes": (notes or "").strip()[:200] or None,
 		})
 	doc.set("items", _load_lines(doc.property, items, bool(doc.express)))
 	doc.status = "Collected"
 	doc.collected_by = frappe.session.user
 	doc.collected_at = now_datetime()
+	doc.ready_by = _ready_by(bool(doc.express))
 	doc.save() if order else doc.insert()
 	return {"ok": True, "order": doc.name, "total": doc.total,
 	        "pieces": sum(int(i.qty) for i in doc.items)}
@@ -227,7 +251,11 @@ def deliver_laundry(order: str, shortage_note: str | None = None):
 		doc.shortage_note = (shortage_note or "").strip()[:200]
 
 	posted = False
-	if doc.reservation and float(doc.total or 0) > 0:
+	billable = (
+		(doc.order_type or "Guest") == "Guest"
+		and not int(doc.complimentary or 0)
+		and doc.reservation and float(doc.total or 0) > 0)
+	if billable:
 		detail = ", ".join(
 			f"{int(it.qty)}× {it.item_name} ({it.service_type})"
 			for it in doc.items)
@@ -282,10 +310,16 @@ def laundry_board(property: str):
 			"Laundry Order", filters=filters,
 			fields=["name", "room", "guest_name", "status", "express",
 			        "total", "notes", "collected_at", "delivered_at",
-			        "shortage_note", "posted_to_folio", "modified"],
+			        "shortage_note", "posted_to_folio", "modified",
+			        "order_type", "complimentary", "house_label", "ready_by"],
 			order_by="modified desc", limit=limit)
+		now = now_datetime()
 		for o in out:
-			o["room_no"] = (o.room or "").split("-")[-1]
+			o["room_no"] = ((o.room or "").split("-")[-1]
+			                or o.house_label or "House")
+			o["overdue"] = bool(
+				o.status in ("Collected", "In Process", "Ready")
+				and o.ready_by and get_datetime(o.ready_by) < now)
 			items = frappe.get_all(
 				"Laundry Order Item", filters={"parent": o.name},
 				fields=["name", "item_name", "service_type", "qty",
@@ -303,4 +337,50 @@ def laundry_board(property: str):
 		"recent": rows({"property": property,
 		                "status": ("in", ["Delivered", "Cancelled"])},
 		               limit=8),
+	}
+
+
+@frappe.whitelist()
+@require_roles("Finance", "Front Desk", "Hotel Admin", "Kamra Agent")
+def laundry_revenue(property: str, days: int = 30):
+	"""Delivered-laundry revenue over the last N days, with a per-service
+	breakdown. Only billed guest orders count as revenue; House and
+	complimentary bags are counted as volume but earn nothing."""
+	since = add_to_date(now_datetime(), days=-int(days or 30))
+	orders = frappe.get_all(
+		"Laundry Order",
+		filters={"property": property, "status": "Delivered",
+		         "delivered_at": (">=", since)},
+		fields=["name", "total", "posted_to_folio", "order_type",
+		        "complimentary", "express"])
+	billed = [o for o in orders if o.posted_to_folio]
+	billed_names = {o.name for o in billed}
+	revenue = sum(float(o.total or 0) for o in billed)
+
+	pieces = 0
+	by_service: dict[str, dict] = {}
+	if orders:
+		items = frappe.get_all(
+			"Laundry Order Item",
+			filters={"parent": ("in", [o.name for o in orders])},
+			fields=["service_type", "qty", "amount", "parent"])
+		for it in items:
+			pieces += int(it.qty or 0)
+			s = by_service.setdefault(
+				it.service_type or "Other", {"pieces": 0, "revenue": 0.0})
+			s["pieces"] += int(it.qty or 0)
+			if it.parent in billed_names:
+				s["revenue"] += float(it.amount or 0)
+
+	return {
+		"days": int(days or 30),
+		"orders": len(orders),
+		"billed_orders": len(billed),
+		"pieces": pieces,
+		"revenue": revenue,
+		"express_orders": sum(1 for o in orders if o.express),
+		"non_billable_orders": sum(
+			1 for o in orders if o.order_type == "House" or o.complimentary),
+		"by_service": [
+			{"service_type": k, **v} for k, v in sorted(by_service.items())],
 	}

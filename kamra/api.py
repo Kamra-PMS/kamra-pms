@@ -385,6 +385,7 @@ def registration_card(reservation: str):
 			"full_name": guest.full_name, "phone": guest.phone,
 			"email": guest.email, "nationality": guest.nationality,
 			"id_type": guest.id_type, "id_number": guest.id_number,
+			"id_file": guest.get("id_file"),
 			"address": ", ".join(filter(None, [
 				guest.get("address_line"), guest.get("city")])),
 		},
@@ -1744,6 +1745,15 @@ def _scrub_stay_ids(res):
 	if guest_id:
 		frappe.db.set_value("Guest", res.guest, "id_number",
 		                    _mask_id(guest_id), update_modified=False)
+	# the ID photo is part of the same promise: verified, then discarded
+	if frappe.db.get_value("Guest", res.guest, "id_file"):
+		for f in frappe.get_all("File", filters={
+				"attached_to_doctype": "Guest",
+				"attached_to_name": res.guest,
+				"attached_to_field": "id_file"}, pluck="name"):
+			frappe.delete_doc("File", f, force=True, ignore_permissions=True)
+		frappe.db.set_value("Guest", res.guest, "id_file", None,
+		                    update_modified=False)
 
 
 def _cancellation_terms(res):

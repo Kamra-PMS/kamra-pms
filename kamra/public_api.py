@@ -182,6 +182,7 @@ def precheckin_info(token: str):
 			"pets_policy": prop.get("pets_policy"),
 			"children_policy": prop.get("children_policy"),
 			"extra_bed_policy": prop.get("extra_bed_policy"),
+			"id_retention": prop.get("id_retention"),
 		},
 		"stay": {
 			"reservation": res.name,
@@ -198,6 +199,7 @@ def precheckin_info(token: str):
 			"phone": guest.phone,
 			"email": guest.email,
 			"id_type": guest.id_type,
+			"has_id_file": bool(guest.get("id_file")),
 			"nationality": guest.nationality,
 		},
 	}
@@ -205,15 +207,47 @@ def precheckin_info(token: str):
 
 @frappe.whitelist(allow_guest=True, methods=["POST"])
 @rate_limit(limit=20, seconds=3600)
+def _save_id_image(guest: str, data_url: str) -> str | None:
+	"""Store the guest's ID photo as a PRIVATE file attached to their
+	profile (upload or camera capture from the pre-check-in page). Replaces
+	any earlier copy; deleted at checkout under Verify & Discard."""
+	import base64
+	import re as _re
+	m = _re.match(r"^data:image/(jpeg|jpg|png|webp);base64,(.+)$",
+	              data_url or "", _re.S)
+	if not m:
+		frappe.throw("The ID photo must be a JPEG, PNG or WebP image.")
+	if len(m.group(2)) > 8_000_000:  # ~6 MB decoded
+		frappe.throw("The ID photo is too large - please retake it.")
+	content = base64.b64decode(m.group(2))
+	# replace, never accumulate: one current ID document per guest
+	for f in frappe.get_all("File", filters={
+			"attached_to_doctype": "Guest", "attached_to_name": guest,
+			"attached_to_field": "id_file"}, pluck="name"):
+		frappe.delete_doc("File", f, force=True, ignore_permissions=True)
+	ext = "jpg" if m.group(1) in ("jpeg", "jpg") else m.group(1)
+	fdoc = frappe.get_doc({
+		"doctype": "File",
+		"file_name": f"id-{guest}.{ext}",
+		"attached_to_doctype": "Guest",
+		"attached_to_name": guest,
+		"attached_to_field": "id_file",
+		"is_private": 1,
+		"content": content,
+	}).insert(ignore_permissions=True)
+	return fdoc.file_url
+
+
 def precheckin_submit(token: str, id_type: str, id_number: str,
                       email: str = "", nationality: str = "",
                       address_line: str = "", city: str = "",
                       eta: str = "", special_requests: str = "",
-                      signature: str = "", consent: int = 0):
+                      signature: str = "", consent: int = 0,
+                      id_image: str = ""):
 	"""Guest completes pre-arrival check-in and signs the registration card
 	(PRD FR-20 - details + declaration + e-signature; the signed card becomes
-	the paperless GRC the desk views at arrival). ID photo/KYC vendor
-	integration comes later."""
+	the paperless GRC the desk views at arrival). The guest can attach a
+	photo of their ID - camera capture or upload - stored privately."""
 	if not id_type or not id_number.strip():
 		frappe.throw("ID type and number are required.")
 	res = _res_by_token(token)
@@ -225,6 +259,7 @@ def precheckin_submit(token: str, id_type: str, id_number: str,
 	if signed and not int(consent or 0):
 		frappe.throw("Please accept the registration declaration to sign.")
 
+	id_file = _save_id_image(res.guest, id_image) if id_image else None
 	frappe.db.set_value("Guest", res.guest, {
 		"id_type": id_type,
 		"id_number": id_number.strip(),
@@ -232,6 +267,7 @@ def precheckin_submit(token: str, id_type: str, id_number: str,
 		"nationality": nationality or None,
 		"address_line": address_line or None,
 		"city": city or None,
+		**({"id_file": id_file} if id_file else {}),
 	})
 	frappe.db.set_value("Reservation", res.name, {
 		"precheckin_status": "Submitted",
@@ -255,6 +291,89 @@ def precheckin_submit(token: str, id_type: str, id_number: str,
 	)
 	frappe.db.commit()
 	return {"ok": True, "reservation": res.name}
+
+
+# The governed writer: guest-initiated actions are always written as this user
+# so a guest can never post directly (same pattern as the QR order flow).
+GUEST_AGENT = "agent@kamra.local"
+
+
+@frappe.whitelist(allow_guest=True)
+def laundry_info(token: str):
+	"""Laundry price list + stay context for the in-stay guest page.
+	Read-only — the guest sees what things cost, never a folio."""
+	res = _res_by_token(token)
+	if res.status != "Checked In":
+		frappe.throw("Laundry pickup is available once you're checked in.")
+	guest = frappe.get_doc("Guest", res.guest)
+	rates = frappe.get_all(
+		"Laundry Rate",
+		filters={"property": res.property, "disabled": 0},
+		fields=["item_name", "service_type", "rate", "express_rate"],
+		order_by="item_name asc, service_type asc",
+	)
+	for r in rates:
+		r["express_rate"] = r["express_rate"] or round((r["rate"] or 0) * 1.5, 0)
+	# is there already an open pickup for this room? (so the page can say so)
+	pending = frappe.db.exists(
+		"Laundry Order",
+		{"room": res.room, "status": ["in", ["Requested", "Collected",
+		                                     "In Process", "Ready"]]})
+	return {
+		"reservation": res.name,
+		"room": res.room,
+		"room_no": (res.room or "").split("-")[-1],
+		"guest_name": guest.full_name,
+		"property": res.property,
+		"rates": rates,
+		"has_open_order": bool(pending),
+	}
+
+
+@frappe.whitelist(allow_guest=True, methods=["POST"])
+@rate_limit(limit=10, seconds=3600)
+def request_guest_laundry(token: str, notes: str = "", express: int = 0):
+	"""In-house guest asks housekeeping to pick their laundry up. Written on
+	the guest's behalf by the governed agent — the guest never touches pricing
+	or the folio; staff count and price the bag at the door (status
+	'Requested', exactly where a staff-logged pickup lands)."""
+	res = _res_by_token(token)
+	if res.status != "Checked In":
+		frappe.throw("Laundry pickup is available once you're checked in.")
+	# don't stack duplicate open requests for the same room
+	existing = frappe.db.exists(
+		"Laundry Order", {"room": res.room, "status": "Requested"})
+	if existing:
+		return {"ok": True, "order": existing, "already": True}
+
+	me = frappe.session.user
+	frappe.set_user(GUEST_AGENT)
+	try:
+		doc = frappe.get_doc({
+			"doctype": "Laundry Order",
+			"property": res.property,
+			"room": res.room,
+			"reservation": res.name,
+			"status": "Requested",
+			"express": 1 if int(express or 0) else 0,
+			"notes": (notes or "").strip()[:200] or None,
+		})
+		doc.insert()
+	finally:
+		frappe.set_user(me)
+
+	from kamra.savings import log_action
+	log_action(
+		action_type="guest_laundry_request",
+		reference_doctype="Laundry Order",
+		reference_name=doc.name,
+		property=res.property,
+		rationale=f"Guest requested laundry pickup for {res.room}",
+		agent_name="Guest Self-Service",
+		channel="API",
+	)
+	frappe.db.commit()
+	return {"ok": True, "order": doc.name}
 
 
 @frappe.whitelist(allow_guest=True, methods=["POST"])

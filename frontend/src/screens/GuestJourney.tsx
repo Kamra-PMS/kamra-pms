@@ -27,6 +27,7 @@ import {
   CardTitle,
 } from "../components/ui/card"
 import { cn } from "../lib/utils"
+import { toFullPath } from "../lib/routing"
 
 /** Guest profile hub - the person is the center, stays hang off them.
  * Everything the desk needs when a returning guest calls: history at a
@@ -418,7 +419,7 @@ export default function GuestJourney() {
                   <span className="ml-auto flex items-center gap-3">
                     <span>₹{inr(r.amount_after_tax)}</span>
                     <a
-                      href={`/grc/${encodeURIComponent(r.name)}`}
+                      href={toFullPath(`/grc/${encodeURIComponent(r.name)}`)}
                       className="font-medium text-brand-700 hover:underline"
                     >
                       GRC

@@ -1,91 +1,34 @@
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useMemo, useState } from "react"
 import { Shirt, Zap, Plus, Minus, ChevronRight } from "lucide-react"
 import { call, getCurrentProperty } from "../lib/api"
-import { subscribeRealtime } from "../lib/realtime"
-import { serverError } from "../lib/resource"
 import { Badge } from "../components/ui/badge"
 import { cn } from "../lib/utils"
+import {
+  ExpressToggle,
+  inr,
+  STATUS_TONE,
+  useLaundryBoard,
+  type LaundryOrder,
+  type Room,
+} from "./laundry/shared"
 
 /** The laundry side of the housekeeping phone app: pickup queue, counting
  * the bag with the guest, tracking what's out, and returning it piece by
- * piece. Prices always come from the property's rate card. */
-
-interface Rate {
-  name: string
-  item_name: string
-  service_type: string
-  rate: number
-  express_rate: number
-}
-interface LaundryItem {
-  name: string
-  item_name: string
-  service_type: string
-  qty: number
-  returned_qty: number
-  rate: number
-  amount: number
-}
-interface LaundryOrder {
-  name: string
-  room: string
-  room_no: string
-  guest_name: string | null
-  status: string
-  express: number
-  total: number
-  notes: string | null
-  pieces: number
-  pending: number
-  shortage_note: string | null
-  posted_to_folio: number
-  items: LaundryItem[]
-}
-interface Room { name: string; room_number: string; occupancy_status?: string }
-
-const STATUS_TONE: Record<string, "zinc" | "amber" | "sky" | "green" | "rose"> = {
-  Requested: "rose", Collected: "amber", "In Process": "sky",
-  Ready: "green", Delivered: "zinc", Cancelled: "zinc",
-}
-
-const inr = (n: unknown) =>
-  Number(n ?? 0).toLocaleString("en-IN", { maximumFractionDigits: 0 })
+ * piece. Prices always come from the property's rate card. Types, the rate
+ * card / board data hook and helpers are shared with the desktop Laundry
+ * module (see ./laundry/shared). */
 
 export default function HkLaundry({ rooms }: { rooms: Room[] }) {
   const property = getCurrentProperty()
-  const [board, setBoard] = useState<{ open: LaundryOrder[]; recent: LaundryOrder[] } | null>(null)
-  const [rates, setRates] = useState<Rate[]>([])
-  const [error, setError] = useState<string | null>(null)
-  const [busy, setBusy] = useState(false)
+  const { board, rates, error, busy, act } = useLaundryBoard(property)
   // sheets
   const [pickup, setPickup] = useState<{ room: string; notes: string; express: boolean } | null>(null)
   const [counting, setCounting] = useState<{ order: string | null; room: string; express: boolean; qty: Record<string, number> } | null>(null)
   const [returning, setReturning] = useState<{ order: LaundryOrder; back: Record<string, number>; note: string } | null>(null)
 
-  const load = useCallback(() => {
-    call<{ open: LaundryOrder[]; recent: LaundryOrder[] }>("kamra.laundry.laundry_board", { property })
-      .then(setBoard).catch((e) => setError(serverError(e)))
-    call<Rate[]>("kamra.laundry.laundry_rates", { property })
-      .then(setRates).catch(() => {})
-  }, [property])
-
-  useEffect(() => {
-    load()
-    const unsub = subscribeRealtime(load)
-    const t = setInterval(load, 20_000)
-    return () => { unsub(); clearInterval(t) }
-  }, [load])
-
   const occupied = useMemo(
     () => rooms.filter((r) => r.occupancy_status === "Occupied"),
     [rooms])
-
-  async function act(fn: () => Promise<unknown>) {
-    setBusy(true); setError(null)
-    try { await fn(); load() }
-    catch (e) { setError(serverError(e)) }
-    finally { setBusy(false) }
-  }
 
   const countTotal = counting
     ? rates.reduce((s, r) => s + (counting.qty[r.name] || 0) *
@@ -387,17 +330,6 @@ export default function HkLaundry({ rooms }: { rooms: Room[] }) {
         </Sheet>
       )}
     </div>
-  )
-}
-
-function ExpressToggle({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) {
-  return (
-    <button
-      className={cn("flex w-full items-center justify-center gap-1.5 rounded-xl border py-2.5 text-sm font-semibold",
-        value ? "border-amber-400 bg-amber-50 text-amber-700" : "border-zinc-300 text-zinc-500")}
-      onClick={() => onChange(!value)}>
-      <Zap className="size-4" />{value ? "Express — same day (higher rate)" : "Standard service"}
-    </button>
   )
 }
 

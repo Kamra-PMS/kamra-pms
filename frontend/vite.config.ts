@@ -15,10 +15,12 @@ export default defineConfig(({ command }) => ({
     sourcemap: false,
   },
   server: {
-    port: 5173,
+    // Defaults preserved; override with env when the standard ports are taken
+    // (e.g. KAMRA_DEV_PORT=5174 KAMRA_API_TARGET=http://localhost:8080).
+    port: Number(process.env.KAMRA_DEV_PORT) || 5173,
     proxy: {
       "/api": {
-        target: "http://localhost:8000",
+        target: process.env.KAMRA_API_TARGET || "http://localhost:8000",
         headers: { Host: "kamra.localhost" },
       },
     },

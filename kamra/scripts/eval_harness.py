@@ -1178,6 +1178,72 @@ def t33():
 	assert second.room_type == rt and second.status == "Cancelled", second
 
 
+@check("pre-checkin: ID photo stored privately, discarded at checkout per policy")
+def t34():
+	import base64
+	from kamra import api, public_api
+
+	idroom = frappe.db.exists("Room", {"property": P, "room_number": "E103"})
+	if not idroom:
+		idroom = frappe.get_doc({
+			"doctype": "Room", "property": P, "room_number": "E103",
+			"room_type": RT,
+		}).insert(ignore_permissions=True).name
+	else:
+		frappe.db.set_value("Room", idroom, "room_type", RT)
+	g = _guest("Eval IdPhoto", "+91 70000 00034")
+	res = _res(g, nowdate(), add_days(nowdate(), 1), idroom)
+	tok = frappe.generate_hash(length=32)
+	frappe.db.set_value("Reservation", res.name, "precheckin_token", tok)
+
+	# a real (tiny) JPEG - frappe's File doctype runs PIL over uploads
+	from io import BytesIO
+	from PIL import Image
+	buf = BytesIO()
+	Image.new("RGB", (8, 8), (200, 180, 40)).save(buf, format="JPEG")
+	jpg = base64.b64encode(buf.getvalue()).decode()
+	frappe.set_user("Guest")
+	try:
+		public_api.precheckin_submit(
+			tok, "Aadhaar", "987654321012", email="id@x.in", consent=0,
+			id_image=f"data:image/jpeg;base64,{jpg}")
+		# junk uploads are refused
+		try:
+			public_api.precheckin_submit(
+				tok, "Aadhaar", "987654321012",
+				id_image="data:text/html;base64,PGI+")
+			raise AssertionError("non-image ID accepted")
+		except frappe.exceptions.ValidationError:
+			pass
+	finally:
+		frappe.set_user("Administrator")
+
+	f = frappe.get_all("File", filters={
+		"attached_to_doctype": "Guest", "attached_to_name": g,
+		"attached_to_field": "id_file"},
+		fields=["name", "is_private", "file_url"])
+	assert len(f) == 1 and f[0].is_private == 1, f
+	assert frappe.db.get_value("Guest", g, "id_file") == f[0].file_url
+
+	# the GRC shows the document to the desk
+	card = api.registration_card(res.name)
+	assert card["guest"]["id_file"] == f[0].file_url, card["guest"]
+
+	# Verify & Discard: checkout masks the number AND deletes the photo
+	frappe.db.set_value("Property", P, "id_retention", "Verify & Discard")
+	res.reload()
+	res.status = "Checked In"
+	res.save(ignore_permissions=True)
+	api.check_out(res.name)  # the desk path - runs the retention scrub
+	assert frappe.db.get_value("Guest", g, "id_number").startswith("•"), \
+		frappe.db.get_value("Guest", g, "id_number")
+	assert not frappe.db.get_value("Guest", g, "id_file")
+	assert not frappe.get_all("File", filters={
+		"attached_to_doctype": "Guest", "attached_to_name": g,
+		"attached_to_field": "id_file"})
+	frappe.db.set_value("Property", P, "id_retention", "Store")
+
+
 @check("ticket SLA: priority sets due window")
 def t12():
 	from frappe.utils import get_datetime, now_datetime, time_diff_in_seconds
@@ -1200,7 +1266,7 @@ def execute():
 	frappe.db.savepoint("eval_start")
 	try:
 		RT, ROOM = setup()
-		for fn in (t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19, t20, t21, t22, t23, t24, t25, t26, t27, t28, t29, t30, t31, t32, t33):
+		for fn in (t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19, t20, t21, t22, t23, t24, t25, t26, t27, t28, t29, t30, t31, t32, t33, t34):
 			fn()
 	finally:
 		frappe.db.commit = real_commit
