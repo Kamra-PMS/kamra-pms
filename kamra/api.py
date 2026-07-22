@@ -348,8 +348,6 @@ def import_bookings(property: str, bookings):
 	        "errors": errors}
 
 
-@frappe.whitelist()
-@require_roles("Front Desk", "Kamra Agent")
 def _stay_money(res):
 	"""The GRC's money line: what the stay owes and what's been taken -
 	advances and held deposits called out separately."""

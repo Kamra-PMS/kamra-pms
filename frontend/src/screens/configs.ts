@@ -4,6 +4,7 @@ import EventLinks from "../components/EventLinks"
 import GroupControl from "../components/GroupControl"
 import RoomTypeMedia from "../components/RoomTypeMedia"
 import ReservationDetail from "./ReservationDetail"
+import { cur } from "../lib/money"
 
 export const roomsConfig: ScreenConfig = {
   doctype: "Room",
@@ -39,9 +40,9 @@ export const roomTypesConfig: ScreenConfig = {
   columns: [
     { field: "room_type_name", label: "Name" },
     { field: "room_type_code", label: "Code", badge: true },
-    { field: "base_price", label: "Base ₹/night" },
+    { field: "base_price", label: `Base ${cur()}/night` },
     { field: "base_occupancy", label: "Base occ." },
-    { field: "extra_adult_price", label: "Extra adult ₹" },
+    { field: "extra_adult_price", label: `Extra adult ${cur()}` },
     { field: "tax_percent", label: "GST %" },
   ],
   form: [
@@ -129,7 +130,7 @@ export const vouchersConfig: ScreenConfig = {
   form: [
     { field: "voucher_code", label: "Code", type: "data", required: true },
     { field: "discount_type", label: "Type", type: "select", options: ["Percent", "Amount"] },
-    { field: "value", label: "Value (10 = 10% or ₹10)", type: "float", required: true },
+    { field: "value", label: `Value (10 = 10% or ${cur()}10)`, type: "float", required: true },
     { field: "valid_from", label: "Valid from", type: "date" },
     { field: "valid_to", label: "Valid to", type: "date" },
     { field: "min_nights", label: "Minimum nights", type: "int" },
@@ -147,8 +148,8 @@ export const mealPlansConfig: ScreenConfig = {
   columns: [
     { field: "code", label: "Code", badge: true },
     { field: "label", label: "Label" },
-    { field: "price_per_adult", label: "₹ / adult / night" },
-    { field: "price_per_child", label: "₹ / child / night" },
+    { field: "price_per_adult", label: `${cur()} / adult / night` },
+    { field: "price_per_child", label: `${cur()} / child / night` },
     { field: "is_default", label: "Default" },
   ],
   form: [
@@ -192,7 +193,7 @@ export const venuesConfig: ScreenConfig = {
   columns: [
     { field: "venue_name", label: "Venue" },
     { field: "capacity", label: "Capacity" },
-    { field: "base_price", label: "Indicative ₹" },
+    { field: "base_price", label: `Indicative ${cur()}` },
   ],
   form: [
     { field: "venue_name", label: "Venue name", type: "data", required: true },
@@ -251,7 +252,7 @@ export const venueBookingsConfig: ScreenConfig = {
     { field: "event_type", label: "Type", badge: true },
     { field: "event_date", label: "Date" },
     { field: "status", label: "Status", badge: true },
-    { field: "quoted_amount", label: "Quoted ₹" },
+    { field: "quoted_amount", label: `Quoted ${cur()}` },
   ],
   form: [
     { field: "venue", label: "Venue", type: "link", linkDoctype: "Venue", required: true },
@@ -312,7 +313,7 @@ export const shiftsConfig: ScreenConfig = {
     { field: "shift_date", label: "Date" },
     { field: "shift", label: "Slot", badge: true },
     { field: "status", label: "Status", badge: true },
-    { field: "closing_cash", label: "Closing cash ₹" },
+    { field: "closing_cash", label: `Closing cash ${cur()}` },
   ],
   form: [
     { field: "shift", label: "Shift", type: "select", options: ["Morning", "Evening", "Night"], required: true },
@@ -336,8 +337,8 @@ export const guardrailsConfig: ScreenConfig = {
   columns: [
     { field: "name", label: "Rail" },
     { field: "room_type", label: "Room type (blank = all)" },
-    { field: "floor_price", label: "Floor ₹" },
-    { field: "ceiling_price", label: "Ceiling ₹" },
+    { field: "floor_price", label: `Floor ${cur()}` },
+    { field: "ceiling_price", label: `Ceiling ${cur()}` },
   ],
   form: [
     { field: "room_type", label: "Room type (blank = all)", type: "link", linkDoctype: "Room Type" },
@@ -413,10 +414,10 @@ export const billingConfig: ScreenConfig = {
     { field: "guest_name", label: "Guest" },
     { field: "status", label: "Status", badge: true },
     { field: "check_in_date", label: "Check-in" },
-    { field: "amount_before_tax", label: "Pre-tax ₹" },
-    { field: "discount_amount", label: "Discount ₹" },
-    { field: "tax_amount", label: "GST ₹" },
-    { field: "amount_after_tax", label: "Total ₹" },
+    { field: "amount_before_tax", label: `Pre-tax ${cur()}` },
+    { field: "discount_amount", label: `Discount ${cur()}` },
+    { field: "tax_amount", label: `GST ${cur()}` },
+    { field: "amount_after_tax", label: `Total ${cur()}` },
   ],
   form: [
     { field: "guest_name", label: "Guest", type: "readonly" },
@@ -459,8 +460,8 @@ export const reservationsConfig: ScreenConfig = {
     { field: "status", label: "Status", badge: true },
     { field: "booking_type", label: "Type" },
     { field: "source", label: "Source" },
-    { field: "amount_after_tax", label: "Total ₹" },
-    { field: "advance_paid", label: "Advance ₹" },
+    { field: "amount_after_tax", label: `Total ${cur()}` },
+    { field: "advance_paid", label: `Advance ${cur()}` },
   ],
   // Editing happens in the bespoke detail panel; keep a minimal form as the
   // fallback shape the generic screen still expects.

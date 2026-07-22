@@ -3,6 +3,7 @@ import { Search, Star } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { call } from "../lib/api"
 import { Badge } from "../components/ui/badge"
+import { cur, moneyLocale } from "../lib/money"
 import {
   Card,
   CardContent,
@@ -24,7 +25,7 @@ interface GuestRow {
 }
 
 const inr = (n: number) =>
-  Number(n).toLocaleString("en-IN", { maximumFractionDigits: 0 })
+  Number(n).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
 
 export default function Guests() {
   const [rows, setRows] = useState<GuestRow[]>([])
@@ -80,7 +81,7 @@ export default function Guests() {
                 <th className="py-2 pr-4">Bookings</th>
                 <th className="py-2 pr-4">Stays</th>
                 <th className="py-2 pr-4">Nights</th>
-                <th className="py-2 pr-4">Lifetime ₹</th>
+                <th className="py-2 pr-4">Lifetime {cur()}</th>
                 <th className="py-2 pr-4">Last stay</th>
               </tr>
             </thead>
@@ -107,7 +108,7 @@ export default function Guests() {
                   <td className="py-2.5 pr-4">{g.stays}</td>
                   <td className="py-2.5 pr-4">{g.nights}</td>
                   <td className="py-2.5 pr-4 font-medium">
-                    ₹{inr(g.lifetime_value)}
+                    {cur()}{inr(g.lifetime_value)}
                   </td>
                   <td className="py-2.5 pr-4 text-zinc-500">
                     {g.last_stay ? (

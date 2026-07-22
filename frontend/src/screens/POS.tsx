@@ -9,11 +9,12 @@ import { subscribeRealtime } from "../lib/realtime"
 import { serverError } from "../lib/resource"
 import { printThermal, kotHtml, billHtml, type BillData } from "../lib/thermal"
 import { Button } from "../components/ui/button"
+import { cur, moneyLocale } from "../lib/money"
 
 const inr = (n: unknown) =>
-  Number(n ?? 0).toLocaleString("en-IN", { maximumFractionDigits: 0 })
+  Number(n ?? 0).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
 const inr2 = (n: unknown) =>
-  Number(n ?? 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  Number(n ?? 0).toLocaleString(moneyLocale(), { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
 interface MenuItem {
   name: string
@@ -656,7 +657,7 @@ export default function POS() {
                             </div>
                             <div className="truncate text-[10px] opacity-70">
                               {t.bills > 0
-                                ? <>₹{inr(t.order_total)}{t.guests ? <> · <Users className="inline size-2.5" />{t.guests}</> : null}</>
+                                ? <>{cur()}{inr(t.order_total)}{t.guests ? <> · <Users className="inline size-2.5" />{t.guests}</> : null}</>
                                 : t.state === "reserved" ? `Res ${t.res_time} · ${t.res_guest || ""}`
                                   : t.state === "cleaning" ? "Cleaning"
                                     : t.seats ? `${t.seats} seats` : " "}
@@ -706,7 +707,7 @@ export default function POS() {
                         {t.orders.map((b) => (
                           <button key={b.order} onClick={() => openTab(b.order)}
                             className={"flex w-full items-center justify-between rounded-lg border px-2 py-1 text-xs transition " + TILE[b.state]}>
-                            <span>{b.label}</span><span className="tabular-nums">₹{inr(b.order_total)}</span>
+                            <span>{b.label}</span><span className="tabular-nums">{cur()}{inr(b.order_total)}</span>
                           </button>
                         ))}
                         <button onClick={() => newOrder(t.table)}
@@ -731,7 +732,7 @@ export default function POS() {
                       <button key={o.name} onClick={() => openTab(o.name)}
                         className={"rounded-lg border px-2 py-1 text-xs transition " +
                           (selected === o.name ? "border-brand-600 bg-brand-50 font-semibold text-brand-700" : "border-zinc-200 bg-white hover:border-brand-400")}>
-                        {o.label} <span className="tabular-nums text-zinc-400">₹{inr(o.order_total)}</span>
+                        {o.label} <span className="tabular-nums text-zinc-400">{cur()}{inr(o.order_total)}</span>
                       </button>
                     ))}
                   </div>
@@ -752,7 +753,7 @@ export default function POS() {
                         <span className="ml-1 text-zinc-400">· {r.order_type}</span>
                       </span>
                       <span className="flex shrink-0 items-center gap-1.5 tabular-nums">
-                        <span className="font-semibold">₹{inr(r.order_total)}</span>
+                        <span className="font-semibold">{cur()}{inr(r.order_total)}</span>
                         {r.nc ? <span className="rounded bg-amber-50 px-1 text-[10px] font-bold text-amber-700">NC</span>
                           : r.paid ? <span className="rounded bg-emerald-50 px-1 text-[10px] font-medium text-emerald-700">{r.payment_mode}</span>
                             : r.status === "Cancelled" ? <span className="rounded bg-rose-50 px-1 text-[10px] font-medium text-rose-600">✕</span>
@@ -908,7 +909,7 @@ export default function POS() {
                         </span>
                       </span>
                       <span className="flex items-center gap-1">
-                        <span className="tabular-nums">₹{inr(it.amount)}</span>
+                        <span className="tabular-nums">{cur()}{inr(it.amount)}</span>
                         {!splitMode && !it.voided && detail.status !== "Delivered" && (
                           <button title="Void line" onClick={() => { setVoiding(it); setVoidReason("") }}
                             className="text-zinc-300 opacity-0 transition group-hover:opacity-100 hover:text-rose-500">
@@ -956,7 +957,7 @@ export default function POS() {
                       <button onClick={() => setQty(l.menu_item, -1)} className="rounded border border-zinc-300 p-0.5"><Minus className="size-3.5" /></button>
                       <span className="w-5 text-center text-sm tabular-nums">{l.qty}</span>
                       <button onClick={() => setQty(l.menu_item, 1)} className="rounded border border-zinc-300 p-0.5"><Plus className="size-3.5" /></button>
-                      <span className="w-14 text-right text-sm font-semibold tabular-nums">₹{inr(l.qty * l.price)}</span>
+                      <span className="w-14 text-right text-sm font-semibold tabular-nums">{cur()}{inr(l.qty * l.price)}</span>
                       <button onClick={() => setQty(l.menu_item, -l.qty)} className="text-zinc-300 hover:text-rose-500"><Trash2 className="size-3.5" /></button>
                     </div>
                     <input className="mt-1 w-full rounded border border-zinc-200 px-2 py-1 text-xs" placeholder="Instructions"
@@ -972,7 +973,7 @@ export default function POS() {
                 <span className="text-zinc-500">Discount</span>
                 {discOpen ? (
                   <span className="flex items-center gap-1">
-                    <input autoFocus className={inputCls + " !w-24 !py-0.5 text-xs"} placeholder="₹" inputMode="numeric"
+                    <input autoFocus className={inputCls + " !w-24 !py-0.5 text-xs"} placeholder={`${cur()}`} inputMode="numeric"
                       value={discount} onChange={(e) => setDiscount(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && applyDiscount()} />
                     <Button variant="outline" className="!px-2 !py-0.5 text-xs" disabled={busy} onClick={applyDiscount}>OK</Button>
@@ -981,15 +982,15 @@ export default function POS() {
                   <button onClick={() => setDiscOpen(true)} className="flex items-center gap-1 text-xs font-medium text-brand-700 hover:underline">
                     <Tag className="size-3" />
                     {(selected && detail ? detail.discount_amount : disc) > 0
-                      ? `−₹${inr(selected && detail ? detail.discount_amount : disc)}`
+                      ? `−${cur()}${inr(selected && detail ? detail.discount_amount : disc)}`
                       : "Add discount"}
                   </button>
                 )}
               </div>
-              <div className="flex justify-between text-zinc-500"><span>Subtotal</span><span className="tabular-nums">₹{inr2(taxable)}</span></div>
-              <div className="flex justify-between text-xs text-zinc-400"><span>CGST ({gstRate / 2}%)</span><span className="tabular-nums">₹{inr2(gstAmt / 2)}</span></div>
-              <div className="flex justify-between text-xs text-zinc-400"><span>SGST ({gstRate / 2}%)</span><span className="tabular-nums">₹{inr2(gstAmt / 2)}</span></div>
-              <div className="flex justify-between text-base font-bold"><span>Total</span><span className="tabular-nums">₹{inr2(grand)}</span></div>
+              <div className="flex justify-between text-zinc-500"><span>Subtotal</span><span className="tabular-nums">{cur()}{inr2(taxable)}</span></div>
+              <div className="flex justify-between text-xs text-zinc-400"><span>CGST ({gstRate / 2}%)</span><span className="tabular-nums">{cur()}{inr2(gstAmt / 2)}</span></div>
+              <div className="flex justify-between text-xs text-zinc-400"><span>SGST ({gstRate / 2}%)</span><span className="tabular-nums">{cur()}{inr2(gstAmt / 2)}</span></div>
+              <div className="flex justify-between text-base font-bold"><span>Total</span><span className="tabular-nums">{cur()}{inr2(grand)}</span></div>
             </div>
 
             {ncOpen && selected && (
@@ -1118,7 +1119,7 @@ function MenuCard({ it, onAdd }: { it: MenuItem; onAdd: () => void }) {
           <span className="truncate text-sm font-medium">{it.item_name}</span>
         </div>
         <div className="mt-0.5 flex items-center justify-between">
-          <span className="text-sm font-semibold text-zinc-700">₹{inr(it.price)}</span>
+          <span className="text-sm font-semibold text-zinc-700">{cur()}{inr(it.price)}</span>
           <Plus className="size-4 text-brand-600" />
         </div>
       </div>

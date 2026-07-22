@@ -3,6 +3,7 @@ import { Printer } from "lucide-react"
 import { call, getCurrentProperty } from "../lib/api"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
+import { cur, moneyLocale } from "../lib/money"
 
 /** The manager's flash - sign it off with the morning chai. */
 
@@ -32,7 +33,7 @@ interface Flash {
 }
 
 const inr = (n: number) =>
-  Number(n).toLocaleString("en-IN", { maximumFractionDigits: 0 })
+  Number(n).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
 
 function Stat(props: { label: string; value: string; sub?: string }) {
   return (
@@ -85,17 +86,17 @@ export default function Reports() {
           value={`${t?.occupancy_pct ?? 0}%`}
           sub={`${t?.rooms_sold ?? 0} of ${d.total_rooms} rooms`}
         />
-        <Stat label="ADR" value={`₹${inr(t?.adr ?? 0)}`} sub="room rate / room sold" />
-        <Stat label="RevPAR" value={`₹${inr(t?.revpar ?? 0)}`} sub="room rev / room" />
+        <Stat label="ADR" value={`${cur()}${inr(t?.adr ?? 0)}`} sub="room rate / room sold" />
+        <Stat label="RevPAR" value={`${cur()}${inr(t?.revpar ?? 0)}`} sub="room rev / room" />
         <Stat
           label="RevPAX"
-          value={`₹${inr(t?.revpax ?? 0)}`}
+          value={`${cur()}${inr(t?.revpax ?? 0)}`}
           sub={`total spend / guest · ${t?.pax ?? 0} pax`}
         />
         <Stat
           label="Revenue (day)"
-          value={`₹${inr(t?.total_revenue ?? 0)}`}
-          sub={`room ₹${inr(t?.room_revenue ?? 0)} · F&B ₹${inr(t?.fnb_revenue ?? 0)} · other ₹${inr(t?.other_revenue ?? 0)}`}
+          value={`${cur()}${inr(t?.total_revenue ?? 0)}`}
+          sub={`room ${cur()}${inr(t?.room_revenue ?? 0)} · F&B ${cur()}${inr(t?.fnb_revenue ?? 0)} · other ${cur()}${inr(t?.other_revenue ?? 0)}`}
         />
       </div>
       <p className="-mt-2 mb-4 text-xs text-zinc-400">
@@ -114,9 +115,9 @@ export default function Reports() {
                 <tr className="border-b border-zinc-200 text-left text-xs uppercase tracking-wider text-zinc-500">
                   <th className="py-1.5 pr-3">Date</th>
                   <th className="py-1.5 pr-3 text-right">Occ %</th>
-                  <th className="py-1.5 pr-3 text-right">ADR ₹</th>
-                  <th className="py-1.5 pr-3 text-right">RevPAR ₹</th>
-                  <th className="py-1.5 text-right">Revenue ₹</th>
+                  <th className="py-1.5 pr-3 text-right">ADR {cur()}</th>
+                  <th className="py-1.5 pr-3 text-right">RevPAR {cur()}</th>
+                  <th className="py-1.5 text-right">Revenue {cur()}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-100">
@@ -170,12 +171,12 @@ export default function Reports() {
               {d.collections.modes.map((m) => (
                 <div key={m.mode} className="flex justify-between py-0.5">
                   <span>{m.mode} · {m.txns}</span>
-                  <span>₹{inr(m.total)}</span>
+                  <span>{cur()}{inr(m.total)}</span>
                 </div>
               ))}
               <div className="mt-1 flex justify-between border-t border-zinc-200 pt-1 font-medium">
                 <span>Total</span>
-                <span>₹{inr(d.collections.grand_total)}</span>
+                <span>{cur()}{inr(d.collections.grand_total)}</span>
               </div>
             </CardContent>
           </Card>

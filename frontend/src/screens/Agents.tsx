@@ -25,6 +25,7 @@ import {
 } from "../components/ui/card"
 import { cn } from "../lib/utils"
 import { serverError } from "../lib/resource"
+import { moneyLocale } from "../lib/money"
 
 
 interface AutonomyRule {
@@ -743,7 +744,7 @@ const prettyAction = (t: string) =>
   t.replace(/^copilot_/, "").replace(/_/g, " ")
 
 const fmtWhen = (d: string) =>
-  new Date(d.replace(" ", "T")).toLocaleString("en-IN", {
+  new Date(d.replace(" ", "T")).toLocaleString(moneyLocale(), {
     day: "2-digit",
     month: "short",
     hour: "2-digit",

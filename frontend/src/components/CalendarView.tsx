@@ -4,9 +4,10 @@ import { getCalendar, type CalendarData } from "../lib/api"
 import { Button } from "./ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
 import { cn } from "../lib/utils"
+import { cur, moneyLocale } from "../lib/money"
 
 const inr = (n: number) =>
-  n.toLocaleString("en-IN", { maximumFractionDigits: 0 })
+  n.toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
 
 function cellTone(available: number, total: number) {
   if (available === 0) return "bg-rose-50 text-rose-700"
@@ -147,7 +148,7 @@ export function CalendarView(props: {
                       <button
                         onClick={() => props.onPick(rt.room_type, c.date)}
                         disabled={c.available === 0}
-                        title={`${rt.room_type_name} · ${c.date} · ${c.available} left · ₹${inr(c.rate)}`}
+                        title={`${rt.room_type_name} · ${c.date} · ${c.available} left · ${cur()}${inr(c.rate)}`}
                         className={cn(
                           "w-full rounded-md border border-zinc-200 px-1 py-1.5 text-center transition-colors",
                           "hover:border-brand-600 focus-visible:outline-2 focus-visible:outline-brand-600",
@@ -159,7 +160,7 @@ export function CalendarView(props: {
                           {c.available}
                         </div>
                         <div className="mt-0.5 text-[10px] leading-none opacity-70">
-                          ₹{inr(c.rate)}
+                          {cur()}{inr(c.rate)}
                         </div>
                       </button>
                     </td>

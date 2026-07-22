@@ -7,6 +7,7 @@ import { call, getCurrentProperty } from "../lib/api"
 import { subscribeRealtime } from "../lib/realtime"
 import { Button } from "../components/ui/button"
 import { cn } from "../lib/utils"
+import { cur } from "../lib/money"
 
 type LineState = "cooking" | "held" | "cancelled" | "done"
 
@@ -347,7 +348,7 @@ function TicketDetail({ order, onClose, onAction, busy, now }: {
             {[order.captain ? `Captain: ${order.captain.split("@")[0]}` : null,
               order.guests ? `${order.guests} guests` : null,
               order.outlet_name,
-              order.order_total ? `Order ₹${Math.round(order.order_total)}` : null]
+              order.order_total ? `Order ${cur()}${Math.round(order.order_total)}` : null]
               .filter(Boolean).join(" · ")}
           </div>
         </div>

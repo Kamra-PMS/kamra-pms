@@ -22,6 +22,7 @@ import { cn } from "../lib/utils"
 import type { ShellContext } from "../AppShell"
 import { serverError } from "../lib/resource"
 import { toFullPath } from "../lib/routing"
+import { cur, moneyLocale } from "../lib/money"
 
 const HK_CYCLE: RoomRow["housekeeping_status"][] = [
   "Dirty",
@@ -38,7 +39,7 @@ const hkTone: Record<RoomRow["housekeeping_status"], string> = {
 }
 
 const inr0 = (n: number) =>
-  Number(n).toLocaleString("en-IN", { maximumFractionDigits: 0 })
+  Number(n).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
 
 /** Paid / due / unpaid at a glance - the folio is the source of truth,
  * this chip just saves the trip to Billing. */
@@ -47,7 +48,7 @@ function paymentChip(row: ReservationRow) {
   const due = Number(row.balance_due ?? 0)
   if (due <= 0 && paid > 0) return <Badge tone="green">Paid</Badge>
   if (paid > 0)
-    return <Badge tone="amber">₹{inr0(due)} due</Badge>
+    return <Badge tone="amber">{cur()}{inr0(due)} due</Badge>
   if (due > 0) return <Badge tone="zinc">Unpaid</Badge>
   return null
 }

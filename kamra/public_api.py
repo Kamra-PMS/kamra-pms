@@ -23,6 +23,16 @@ def site_info():
 	return {"demo_mode": frappe.db.get_default("kamra_demo_mode") == "1"}
 
 
+def _public_locale(property: str) -> dict:
+	from kamra.localization import pack_for
+	prop = frappe.get_cached_doc("Property", property)
+	loc = pack_for(property).locale(prop)
+	# "" is a valid symbol (generic pack shows bare numbers) - only the
+	# missing key falls back to the rupee
+	return {"currency_symbol": loc.get("currency_symbol", "₹"),
+	        "locale": loc.get("locale") or "en-IN"}
+
+
 @frappe.whitelist(allow_guest=True)
 def showcase(property: str):
 	"""Everything the public booking page needs to render."""
@@ -69,6 +79,7 @@ def showcase(property: str):
 	)
 
 	return {
+		"ui_locale": _public_locale(property),
 		"property": {
 			"name": prop.name,
 			"property_name": prop.property_name,
@@ -172,6 +183,7 @@ def precheckin_info(token: str):
 	prop = frappe.get_doc("Property", res.property)
 	guest = frappe.get_doc("Guest", res.guest)
 	return {
+		"ui_locale": _public_locale(res.property),
 		"property": {
 			"property_name": prop.property_name,
 			"logo_url": prop.get("logo_url"),
@@ -571,6 +583,7 @@ def qr_menu(outlet: str):
 	for it in items:
 		cats.setdefault(it.category or "Other", []).append(it)
 	return {
+		"ui_locale": _public_locale(frappe.db.get_value("POS Outlet", outlet, "property")),
 		"outlet": outlet, "outlet_name": o.outlet_name,
 		"property_name": frappe.db.get_value("Property", o.property, "property_name"),
 		"categories": [{"category": c, "items": v} for c, v in cats.items()],

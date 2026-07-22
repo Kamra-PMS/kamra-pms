@@ -4,6 +4,7 @@ import { Link, useParams } from "react-router-dom"
 import { call } from "../lib/api"
 import { toFullPath } from "../lib/routing"
 import { Button } from "../components/ui/button"
+import { cur, moneyLocale } from "../lib/money"
 
 /** Printable Guest Registration Card (GRC) - sign at check-in. */
 
@@ -70,7 +71,7 @@ interface Grc {
 }
 
 const inr = (n: number) =>
-  n.toLocaleString("en-IN", { maximumFractionDigits: 0 })
+  n.toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
 
 function Row(props: { label: string; value?: string | null }) {
   return (
@@ -365,12 +366,12 @@ export default function RegistrationCard() {
               field="actual_check_out" value={d.reservation.actual_check_out} onSaved={load} />
             <Row label="Nights" value={String(d.reservation.nights)} />
             <Row label="Guests" value={`${d.reservation.adults} adult(s)${d.reservation.children ? ` + ${d.reservation.children} child` : ""}`} />
-            <Row label="Stay total" value={`₹${inr(d.reservation.rate_total)} (incl. GST)`} />
-            <Row label="Advance paid" value={`₹${inr(d.reservation.advance_paid)}`} />
+            <Row label="Stay total" value={`${cur()}${inr(d.reservation.rate_total)} (incl. GST)`} />
+            <Row label="Advance paid" value={`${cur()}${inr(d.reservation.advance_paid)}`} />
             {d.money && (
               <>
-                <Row label="Ledger" value={`Paid ₹${inr(d.money.paid_total)} · Balance ₹${inr(d.money.balance)}` +
-                  (d.money.deposit_held ? ` · Deposit held ₹${inr(d.money.deposit_held)}` : "")} />
+                <Row label="Ledger" value={`Paid ${cur()}${inr(d.money.paid_total)} · Balance ${cur()}${inr(d.money.balance)}` +
+                  (d.money.deposit_held ? ` · Deposit held ${cur()}${inr(d.money.deposit_held)}` : "")} />
                 <div className="print:hidden">
                   <a className="text-sm font-medium text-brand-700 hover:underline"
                     href={toFullPath(`/billing/${encodeURIComponent(d.money.folio)}`)}>

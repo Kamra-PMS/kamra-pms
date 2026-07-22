@@ -3,9 +3,10 @@ import { useParams, useSearchParams } from "react-router-dom"
 import { Plus, Minus, Leaf, ShoppingBag } from "lucide-react"
 import { call } from "../lib/api"
 import { accentVars } from "../lib/accents"
+import { cur, moneyLocale, adoptUiLocale } from "../lib/money"
 
 const inr = (n: unknown) =>
-  Number(n ?? 0).toLocaleString("en-IN", { maximumFractionDigits: 0 })
+  Number(n ?? 0).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
 
 interface MenuItem {
   name: string
@@ -38,7 +39,7 @@ export default function QrMenu() {
 
   const load = useCallback(() => {
     call<Menu>("kamra.public_api.qr_menu", { outlet })
-      .then(setMenu)
+      .then((m) => { adoptUiLocale((m as { ui_locale?: { currency_symbol?: string; locale?: string } }).ui_locale); setMenu(m) })
       .catch((e) => setError((e as Error).message))
   }, [outlet])
   useEffect(load, [load])
@@ -116,7 +117,7 @@ export default function QrMenu() {
                         <span className="text-sm font-medium">{it.item_name}</span>
                       </div>
                       {it.description && <p className="mt-0.5 line-clamp-2 text-xs text-zinc-500">{it.description}</p>}
-                      <div className="mt-1 text-sm font-semibold">₹{inr(it.price)}</div>
+                      <div className="mt-1 text-sm font-semibold">{cur()}{inr(it.price)}</div>
                     </div>
                     <div className="flex shrink-0 items-center gap-1.5 self-center">
                       {qty(it.name) > 0 && (
@@ -140,7 +141,7 @@ export default function QrMenu() {
           <button disabled={busy} onClick={order}
             className="mx-auto flex w-full max-w-lg items-center justify-between rounded-xl bg-brand-600 px-4 py-3 font-semibold text-white disabled:opacity-60">
             <span>{count} item{count === 1 ? "" : "s"}</span>
-            <span>Place order · ₹{inr(total)}</span>
+            <span>Place order · {cur()}{inr(total)}</span>
           </button>
           <p className="mx-auto mt-1 max-w-lg text-center text-[11px] text-zinc-400">
             A server confirms your order before the kitchen starts.

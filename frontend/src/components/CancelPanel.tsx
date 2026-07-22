@@ -4,6 +4,7 @@ import { serverError } from "../lib/resource"
 import type { Row } from "../lib/resource"
 import { Button } from "./ui/button"
 import { toFullPath } from "../lib/routing"
+import { cur, moneyLocale } from "../lib/money"
 
 /** Cancel a stay the right way: see what it costs, say why, get a
  * cancellation number the guest can keep. Lives in the reservation
@@ -28,7 +29,7 @@ interface Preview {
 }
 
 const inr = (n: number) =>
-  Number(n).toLocaleString("en-IN", { maximumFractionDigits: 0 })
+  Number(n).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
 
 export default function CancelPanel({ row, reload }: { row: Row; reload: () => void }) {
   const [open, setOpen] = useState(false)
@@ -59,7 +60,7 @@ export default function CancelPanel({ row, reload }: { row: Row; reload: () => v
         </p>
         <p className="mt-0.5">
           {done.fee > 0
-            ? `Cancellation fee ₹${inr(done.fee)} posted to the folio.`
+            ? `Cancellation fee ${cur()}${inr(done.fee)} posted to the folio.`
             : "No fee applied."}{" "}
           Give the guest the cancellation number.
         </p>
@@ -88,7 +89,7 @@ export default function CancelPanel({ row, reload }: { row: Row; reload: () => v
                 <>
                   Inside the {preview.free_cancel_days}-day window - the{" "}
                   <span className="font-medium">
-                    {preview.fee_basis.toLowerCase()} (₹
+                    {preview.fee_basis.toLowerCase()} ({cur()}
                     {inr(preview.estimated_fee)})
                   </span>{" "}
                   will be charged.

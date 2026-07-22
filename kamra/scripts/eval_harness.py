@@ -1984,6 +1984,23 @@ def t44():
 	assert loc["currency_symbol"] == "Rp" and loc["locale"] == "id-ID", loc
 
 
+@check("currency follows the pack: locale endpoint + public ui_locale")
+def t45():
+	from kamra.api import property_locale
+	from kamra.public_api import _public_locale
+
+	# staff endpoint: India property keeps the rupee, Indonesia gets Rp
+	loc = property_locale(P)
+	assert loc["currency_symbol"] == "₹" and loc["locale"] == "en-IN", loc
+	loc4 = property_locale("EVAL Bali Hotel")  # created by t44
+	assert loc4["currency_symbol"] == "Rp" and loc4["locale"] == "id-ID", loc4
+
+	# the dict showcase / qr_menu / precheckin_info embed as ui_locale
+	pub = _public_locale("EVAL Bali Hotel")
+	assert pub == {"currency_symbol": "Rp", "locale": "id-ID"}, pub
+	assert _public_locale(P)["currency_symbol"] == "₹"
+
+
 @check("ticket SLA: priority sets due window")
 def t12():
 	from frappe.utils import get_datetime, now_datetime, time_diff_in_seconds
@@ -2009,7 +2026,7 @@ def execute():
 		for fn in (t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13,
 		           t14, t15, t16, t17, t18, t19, t20, t21, t22, t23, t24,
 		           t25, t26, t27, t28, t29, t30, t31, t32, t33, t34, t35,
-		           t36, t37, t38, t39, t40, t41, t42, t43, t44):
+		           t36, t37, t38, t39, t40, t41, t42, t43, t44, t45):
 			fn()
 	finally:
 		frappe.db.commit = real_commit

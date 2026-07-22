@@ -3,6 +3,7 @@ import { Check, Shirt, Zap } from "lucide-react"
 import { call } from "../../lib/api"
 import { Button } from "../../components/ui/button"
 import { inr, type Rate } from "./shared"
+import { cur } from "../../lib/money"
 
 /** In-stay guest self-service: request a laundry pickup from the check-in page.
  * Read-only price list + a request button. The guest never sees a folio or a
@@ -129,7 +130,7 @@ export function GuestLaundryCard({ token }: Readonly<{ token: string }>) {
                         {r.service_type}
                       </td>
                       <td className="px-3 py-1.5 text-right tabular-nums">
-                        ₹{inr(r.rate)}
+                        {cur()}{inr(r.rate)}
                       </td>
                     </tr>
                   ))}

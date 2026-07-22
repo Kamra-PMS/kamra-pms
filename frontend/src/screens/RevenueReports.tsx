@@ -5,9 +5,10 @@ import { call, getCurrentProperty } from "../lib/api"
 import { serverError } from "../lib/resource"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
+import { cur, moneyLocale } from "../lib/money"
 
 const inr = (n: number) =>
-  Number(n || 0).toLocaleString("en-IN", { maximumFractionDigits: 0 })
+  Number(n || 0).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
 
 interface BvaRow {
   metric: string
@@ -37,7 +38,7 @@ function shiftMonth(period: string, by: number) {
 }
 const isPct = (k: string) => k === "occupancy_pct"
 const fmt = (k: string, n: number) =>
-  isPct(k) ? `${n}%` : `₹${inr(n)}`
+  isPct(k) ? `${n}%` : `${cur()}${inr(n)}`
 
 function attainTone(a: number | null) {
   if (a === null) return "text-zinc-400"
@@ -287,7 +288,7 @@ function Contribution() {
                 <th className="py-2 pr-3">{BY_OPTIONS.find((o) => o.key === by)?.label.replace("By ", "")}</th>
                 <th className="py-2 pr-3 text-right">Bookings</th>
                 <th className="py-2 pr-3 text-right">Room nights</th>
-                <th className="py-2 pr-3 text-right">Revenue ₹</th>
+                <th className="py-2 pr-3 text-right">Revenue {cur()}</th>
                 <th className="py-2 text-right">Share</th>
               </tr>
             </thead>

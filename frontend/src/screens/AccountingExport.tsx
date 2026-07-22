@@ -5,6 +5,7 @@ import { call, getCurrentProperty } from "../lib/api"
 import { serverError } from "../lib/resource"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader } from "../components/ui/card"
+import { cur, moneyLocale } from "../lib/money"
 
 interface ExportData {
   rows: Record<string, string | number>[]
@@ -183,10 +184,10 @@ export default function AccountingExport() {
             <>
               <p className="mb-3 text-sm text-zinc-500">
                 {data.totals.invoices} invoice
-                {data.totals.invoices === 1 ? "" : "s"} · taxable ₹
-                {data.totals.taxable.toLocaleString("en-IN")} · {data.tax_label} ₹
-                {data.totals.total_tax.toLocaleString("en-IN")} · total ₹
-                {data.totals.grand_total.toLocaleString("en-IN")}
+                {data.totals.invoices === 1 ? "" : "s"} · taxable {cur()}
+                {data.totals.taxable.toLocaleString(moneyLocale())} · {data.tax_label} {cur()}
+                {data.totals.total_tax.toLocaleString(moneyLocale())} · total {cur()}
+                {data.totals.grand_total.toLocaleString(moneyLocale())}
               </p>
               {data.rows.length === 0 ? (
                 <p className="py-6 text-center text-sm text-zinc-400">

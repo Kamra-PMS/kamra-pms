@@ -10,6 +10,7 @@ import { getTheme, setTheme, type Theme } from "../lib/theme"
 import { getLang, setLang, type Lang } from "../lib/dir"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
+import { cur, moneyLocale } from "../lib/money"
 
 /** Settings hub - everything an owner/GM configures once and forgets:
  * property identity, GST, privacy, booking page, payments, agent access. */
@@ -201,7 +202,7 @@ const STAY_TAX_SPECS: Spec[] = [
   },
   {
     field: "gst_slab_threshold",
-    label: "Slab threshold (₹)",
+    label: `Slab threshold (${cur()})`,
     type: "number",
   },
   { field: "gst_rate_low", label: "GST % below threshold", type: "number" },
@@ -655,9 +656,9 @@ function LaundryRatesCard({ property }: { property: string }) {
               value={form.service} onChange={(e) => setForm({ ...form, service: e.target.value })}>
               {["Wash & Iron", "Dry Clean", "Iron Only"].map((s) => <option key={s}>{s}</option>)}
             </select>
-            <input className="w-24 rounded-lg border border-zinc-300 px-2 py-1.5 text-sm" placeholder="Rate ₹" inputMode="numeric"
+            <input className="w-24 rounded-lg border border-zinc-300 px-2 py-1.5 text-sm" placeholder={`Rate ${cur()}`} inputMode="numeric"
               value={form.rate} onChange={(e) => setForm({ ...form, rate: e.target.value.replace(/[^\d.]/g, "") })} />
-            <input className="w-28 rounded-lg border border-zinc-300 px-2 py-1.5 text-sm" placeholder="Express ₹ (opt)" inputMode="numeric"
+            <input className="w-28 rounded-lg border border-zinc-300 px-2 py-1.5 text-sm" placeholder={`Express ${cur()} (opt)`} inputMode="numeric"
               value={form.express} onChange={(e) => setForm({ ...form, express: e.target.value.replace(/[^\d.]/g, "") })} />
             <Button disabled={!form.item.trim() || !form.rate} onClick={save}>Save</Button>
             <Button variant="ghost" onClick={() => setForm(null)}>Cancel</Button>
@@ -678,8 +679,8 @@ function LaundryRatesCard({ property }: { property: string }) {
                 <tr key={r.name} className="border-t border-zinc-100">
                   <td className="py-1.5 font-medium">{r.item_name}</td>
                   <td className="text-zinc-500">{r.service_type}</td>
-                  <td className="text-right tabular-nums">₹{r.rate.toLocaleString("en-IN")}</td>
-                  <td className="text-right tabular-nums text-zinc-500">₹{r.express_rate.toLocaleString("en-IN")}</td>
+                  <td className="text-right tabular-nums">{cur()}{r.rate.toLocaleString(moneyLocale())}</td>
+                  <td className="text-right tabular-nums text-zinc-500">{cur()}{r.express_rate.toLocaleString(moneyLocale())}</td>
                   <td className="text-right">
                     <button className="text-xs font-medium text-brand-700 hover:underline"
                       onClick={() => setForm({ name: r.name, item: r.item_name, service: r.service_type, rate: String(r.rate), express: "" })}>
@@ -767,7 +768,7 @@ function HurdleRatesCard({ property }: { property: string }) {
               %
             </label>
             <label className="flex items-center gap-1 text-sm text-zinc-600">
-              Hurdle ₹
+              Hurdle {cur()}
               <input className="w-24 rounded-lg border border-zinc-300 px-2 py-1.5 text-sm" placeholder="min rate" inputMode="numeric"
                 value={form.min} onChange={(e) => setForm({ ...form, min: e.target.value.replace(/[^\d.]/g, "") })} />
             </label>
@@ -777,7 +778,7 @@ function HurdleRatesCard({ property }: { property: string }) {
         )}
         {tiers.length === 0 ? (
           <p className="py-3 text-sm text-zinc-400">
-            No tiers yet — e.g. "at 80% occupancy, +15% premium, minimum ₹6,000".
+            No tiers yet — e.g. `at 80% occupancy, +15% premium, minimum ${cur()}6,000`.
           </p>
         ) : (
           <table className="w-full text-sm">
@@ -793,7 +794,7 @@ function HurdleRatesCard({ property }: { property: string }) {
                 <tr key={t.name} className="border-t border-zinc-100">
                   <td className="py-1.5 font-medium">{t.occupancy_from}%</td>
                   <td className="text-right tabular-nums">{t.premium_pct ? `+${t.premium_pct}%` : "—"}</td>
-                  <td className="text-right tabular-nums">{t.min_rate ? `₹${t.min_rate.toLocaleString("en-IN")}` : "—"}</td>
+                  <td className="text-right tabular-nums">{t.min_rate ? `${cur()}${t.min_rate.toLocaleString(moneyLocale())}` : "—"}</td>
                   <td className="text-right">
                     <button className="text-xs font-medium text-brand-700 hover:underline"
                       onClick={() => setForm({ name: t.name, from: String(t.occupancy_from), premium: String(t.premium_pct || ""), min: String(t.min_rate || "") })}>
