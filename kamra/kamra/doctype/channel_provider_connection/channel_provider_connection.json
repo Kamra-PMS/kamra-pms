@@ -24,7 +24,13 @@
   "column_break_auth",
   "credentials",
   "sb_notes",
-  "notes"
+  "notes",
+  "sb_meta",
+  "meta_language",
+  "column_break_meta",
+  "tpl_booking_confirmation",
+  "tpl_precheckin",
+  "tpl_payment_request"
  ],
  "fields": [
   {
@@ -132,6 +138,42 @@
    "fieldname": "notes",
    "fieldtype": "Small Text",
    "label": "Notes"
+  },
+  {
+   "fieldname": "sb_meta",
+   "fieldtype": "Section Break",
+   "label": "Meta Cloud API (bring your own number)",
+   "depends_on": "eval:doc.provider==\"Meta Business\""
+  },
+  {
+   "fieldname": "meta_language",
+   "fieldtype": "Data",
+   "label": "Template Language Code",
+   "default": "en",
+   "description": "Language your Meta templates are approved in"
+  },
+  {
+   "fieldname": "column_break_meta",
+   "fieldtype": "Column Break",
+   "label": ""
+  },
+  {
+   "fieldname": "tpl_booking_confirmation",
+   "fieldtype": "Data",
+   "label": "Template: booking confirmation",
+   "description": "Args: guest, property, check-in, check-out"
+  },
+  {
+   "fieldname": "tpl_precheckin",
+   "fieldtype": "Data",
+   "label": "Template: self check-in link",
+   "description": "Args: guest, link"
+  },
+  {
+   "fieldname": "tpl_payment_request",
+   "fieldtype": "Data",
+   "label": "Template: payment request",
+   "description": "Args: guest, amount, note"
   }
  ],
  "grid_page_length": 50,

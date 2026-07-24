@@ -8,6 +8,18 @@ from frappe.utils import cint, date_diff, now_datetime
 
 
 class Reservation(Document):
+	def after_insert(self):
+		# WhatsApp booking confirmation - enqueued so a booking never
+		# waits on Meta; skipped entirely unless the property connected
+		# its own number (Channel Provider Connection, Meta Business)
+		if self.status == "Confirmed":
+			from kamra import whatsapp
+			if whatsapp.has_connection(self.property):
+				frappe.enqueue(
+					"kamra.whatsapp.notify_booking_confirmed",
+					reservation=self.name, queue="short",
+					enqueue_after_commit=True)
+
 	def validate_type_capacity(self):
 		"""Room-type capacity with a controlled overbooking allowance.
 

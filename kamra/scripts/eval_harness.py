@@ -2067,6 +2067,81 @@ def t47():
 	assert sym and ("£" in sym or sym.strip() == "GBP"), loc
 
 
+@check("WhatsApp: native Meta send, booking flow, inbound -> ticket")
+def t48():
+	from kamra import whatsapp
+	from kamra.agents_channels import send_outbound
+
+	# a connection with our own number - fake creds, intercepted transport
+	conn = frappe.get_doc({
+		"doctype": "Channel Provider Connection", "property": P,
+		"channel": "WhatsApp", "provider": "Meta Business", "active": 1,
+		"phone_number": "+91 98450 00000",
+		"external_account_id": "eval-phone-id",
+		"credentials": "eval-token", "webhook_secret": "eval-verify",
+		"meta_language": "en",
+		"tpl_booking_confirmation": "kamra_booking_confirmation",
+		"tpl_precheckin": "kamra_precheckin_link",
+		"tpl_payment_request": "kamra_payment_request",
+	}).insert(ignore_permissions=True)
+
+	sent = []
+	real_post = whatsapp._post_graph
+	whatsapp._post_graph = lambda c, payload: (
+		sent.append(payload) or (True, f"wamid.eval{len(sent)}"))
+	try:
+		# an existing confirmed stay whose guest has a phone
+		res_name = frappe.get_all(
+			"Reservation", filters={"property": P,
+			                        "status": ("in", ["Confirmed", "Checked In"])},
+			pluck="name", limit=1)[0]
+		res = frappe.get_doc("Reservation", res_name)
+		frappe.db.set_value("Guest", res.guest, "phone", "919812340048")
+		if not res.get("precheckin_token"):
+			frappe.db.set_value("Reservation", res_name,
+			                    "precheckin_token", "evaltoken" + "x" * 16)
+
+		out = whatsapp.notify_booking_confirmed(res_name)
+		assert out.get("sent"), out
+		# confirmation template with the 4 args + the check-in link follow-up
+		assert sent[0]["type"] == "template"
+		assert sent[0]["template"]["name"] == "kamra_booking_confirmation"
+		params = sent[0]["template"]["components"][0]["parameters"]
+		assert len(params) == 4 and params[1]["text"], params
+		assert sent[1]["template"]["name"] == "kamra_precheckin_link"
+		assert "/kamra/checkin/" in sent[1]["template"]["components"][0][
+			"parameters"][1]["text"]
+
+		rows = frappe.get_all("WhatsApp Message",
+		                      filters={"property": P, "direction": "Outbound"},
+		                      fields=["status", "template_name"])
+		assert len(rows) == 2 and all(r.status == "Sent" for r in rows), rows
+
+		# the generic channel seam now dispatches natively (no relay URL)
+		r = send_outbound(P, "WhatsApp", "919812340048", "Your room is ready")
+		assert r.get("sent"), r
+		assert sent[-1]["type"] == "text"
+
+		# inbound webhook block: message row + a desk ticket for the stay
+		whatsapp._handle_inbound({
+			"metadata": {"phone_number_id": "eval-phone-id"},
+			"messages": [{"from": "919812340048", "id": "wamid.in1",
+			              "type": "text",
+			              "text": {"body": "Can we get a late checkout?"}}],
+		})
+		inbound = frappe.get_all("WhatsApp Message",
+		                         filters={"property": P, "direction": "Inbound"},
+		                         fields=["guest", "reservation", "status"])
+		assert inbound and inbound[0].status == "Received", inbound
+		assert inbound[0].reservation == res_name, inbound
+		tickets = frappe.get_all("Service Ticket",
+		                         filters={"property": P,
+		                                  "subject": ("like", "WhatsApp:%")})
+		assert tickets, "inbound message did not raise a Service Ticket"
+	finally:
+		whatsapp._post_graph = real_post
+
+
 @check("ticket SLA: priority sets due window")
 def t12():
 	from frappe.utils import get_datetime, now_datetime, time_diff_in_seconds
@@ -2092,7 +2167,7 @@ def execute():
 		for fn in (t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13,
 		           t14, t15, t16, t17, t18, t19, t20, t21, t22, t23, t24,
 		           t25, t26, t27, t28, t29, t30, t31, t32, t33, t34, t35,
-		           t36, t37, t38, t39, t40, t41, t42, t43, t44, t45, t46, t47):
+		           t36, t37, t38, t39, t40, t41, t42, t43, t44, t45, t46, t47, t48):
 			fn()
 	finally:
 		frappe.db.commit = real_commit

@@ -55,6 +55,26 @@ def registry(property: str):
 			],
 		},
 		{
+			"category": "Guest messaging (WhatsApp)",
+			"blurb": "WhatsApp is the guest channel in India, Southeast Asia "
+			         "and the Gulf. The Meta Cloud API integration is open "
+			         "source and included - bring your own number. Managed "
+			         "gateway and the AI concierge are connected services.",
+			"cards": [
+				_module("WhatsApp - Meta Cloud API",
+				        "Booking confirmations, self check-in links, payment "
+				        "requests and a desk-side guest thread on your own "
+				        "WhatsApp Business number. Meta bills you directly "
+				        "per conversation; Kamra adds nothing.",
+				        detail="Included - bring your own number"),
+				_bench("WhatsApp managed gateway",
+				       "Same features, our number and Meta relationship - "
+				       "for hotels that don't want Meta business "
+				       "verification. Per conversation.", None,
+				       status="planned"),
+			],
+		},
+		{
 			"category": "AI on your phone lines (HeyKoala)",
 			"blurb": "Kamra is agent-ready. HeyKoala is the AI that answers your "
 			         "phone and WhatsApp - it books, quotes and handles requests "

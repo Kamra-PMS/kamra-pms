@@ -550,3 +550,61 @@ export const menuItemsConfig: ScreenConfig = {
     { field: "available", label: "Available", type: "check" },
   ],
 }
+
+export const whatsappMessagesConfig: ScreenConfig = {
+  doctype: "WhatsApp Message",
+  title: "WhatsApp",
+  description:
+    "Every WhatsApp message in and out on your own Meta Cloud API number: confirmations, check-in links, payment requests and guest replies. Inbound messages from in-house guests also raise a Service Ticket.",
+  searchFields: ["content", "to_number", "from_number", "guest"],
+  filters: [
+    { field: "direction", label: "Direction", options: ["Outbound", "Inbound"] },
+    { field: "status", label: "Status", options: ["Sent", "Failed", "Received", "Queued"] },
+  ],
+  pageSize: 30,
+  propertyScoped: true,
+  orderBy: "creation desc",
+  columns: [
+    { field: "direction", label: "Direction", badge: true },
+    { field: "guest", label: "Guest" },
+    { field: "content", label: "Message" },
+    { field: "template_name", label: "Template" },
+    { field: "status", label: "Status", badge: true },
+  ],
+  form: [],
+  allowCreate: false,
+}
+
+export const channelConnectionsConfig: ScreenConfig = {
+  doctype: "Channel Provider Connection",
+  title: "Channels",
+  description:
+    "Phone and messaging lines connected to this property. For WhatsApp on your own number, add a Meta Business connection: phone number ID, access token, webhook verify token, and the names of your approved templates.",
+  searchFields: ["phone_number", "provider"],
+  filters: [
+    { field: "channel", label: "Channel", options: ["WhatsApp", "Voice", "SMS"] },
+    { field: "active", label: "Active", options: ["1", "0"] },
+  ],
+  pageSize: 20,
+  propertyScoped: true,
+  orderBy: "modified desc",
+  columns: [
+    { field: "channel", label: "Channel", badge: true },
+    { field: "provider", label: "Provider" },
+    { field: "phone_number", label: "Number" },
+    { field: "active", label: "Active", badge: true },
+  ],
+  form: [
+    { field: "channel", label: "Channel", type: "select", options: ["WhatsApp", "Voice", "SMS"], required: true },
+    { field: "provider", label: "Provider", type: "select", options: ["Meta Business", "HeyKoala", "Twilio", "Retell", "Vapi", "Custom"], required: true },
+    { field: "phone_number", label: "Phone number (display)", type: "data" },
+    { field: "external_account_id", label: "Meta phone number ID", type: "data", hint: "From Meta Business Manager > WhatsApp > API setup" },
+    { field: "credentials", label: "Access token", type: "data", hint: "Permanent Cloud API token - stored encrypted" },
+    { field: "webhook_secret", label: "Webhook verify token", type: "data", hint: "Any string; use the same one in Meta's webhook setup" },
+    { field: "meta_language", label: "Template language code", type: "data" },
+    { field: "tpl_booking_confirmation", label: "Template: booking confirmation", type: "data", hint: "Args: guest, property, check-in, check-out" },
+    { field: "tpl_precheckin", label: "Template: self check-in link", type: "data", hint: "Args: guest, link" },
+    { field: "tpl_payment_request", label: "Template: payment request", type: "data", hint: "Args: guest, amount, note" },
+    { field: "active", label: "Active", type: "check" },
+  ],
+}

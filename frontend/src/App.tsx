@@ -52,6 +52,8 @@ import {
   guardrailsConfig,
   housekeepingConfig,
   lostFoundConfig,
+  whatsappMessagesConfig,
+  channelConnectionsConfig,
   mealPlansConfig,
   ratePlansConfig,
   reservationsConfig,
@@ -266,6 +268,14 @@ export default function App() {
           <Route path="reports" element={<Reports />} />
           <Route path="revenue-reports" element={<RevenueReports />} />
           <Route path="ops-sla" element={<OpsSLA />} />
+          <Route
+            path="whatsapp"
+            element={<ResourceScreen config={whatsappMessagesConfig} />}
+          />
+          <Route
+            path="channels"
+            element={<ResourceScreen config={channelConnectionsConfig} />}
+          />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="crs" element={<CRS />} />
           <Route path="pos" element={<POS />} />

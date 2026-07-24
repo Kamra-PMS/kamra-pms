@@ -8,6 +8,8 @@
 
 import {
   BadgePercent,
+  MessageCircle,
+  PhoneCall,
   BedDouble,
   Briefcase,
   Building2,
@@ -118,6 +120,9 @@ export const APPS: AppDef[] = [
     roles: ["Front Desk", "Hotel Admin", "System Manager", "Administrator"],
     items: [
       { to: "/tickets", label: "Guest Requests", icon: Ticket },
+      { to: "/whatsapp", label: "WhatsApp", icon: MessageCircle },
+      { to: "/channels", label: "Channels", icon: PhoneCall,
+        roles: ["Hotel Admin", "System Manager", "Administrator"] },
       { to: "/ops-sla", label: "SLA Report", icon: AlarmClock },
       { to: "/shifts", label: "Shifts", icon: Clock },
     ],

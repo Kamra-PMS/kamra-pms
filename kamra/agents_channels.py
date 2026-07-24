@@ -224,6 +224,10 @@ def send_outbound(
 		return {"sent": False, "reason": "no_channel"}
 
 	c = conn[0]
+	if c["provider"] == "Meta Business" and channel == "WhatsApp":
+		# native Cloud API send - no relay URL needed
+		from kamra import whatsapp
+		return whatsapp.send_text(property, to, body)
 	url = c.get("outbound_send_url")
 	if not url:
 		return {"sent": False, "reason": "no_outbound_url"}
