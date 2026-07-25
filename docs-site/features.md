@@ -15,6 +15,23 @@ tracking, **room blocks** for VIP/house-use/maintenance holds, self check-in lin
 **deleted at checkout** under Verify & Discard retention), and a **central reservations**
 screen that searches availability across every property you manage.
 
+**Check-in is a flow, not a button**: from the arrivals board, one
+click shows how ready the stay is (online check-in state, ID and
+address proof on file, phone/email, VIP flag) with the GRC a click
+away — then the room: the **allocator proposes one with its
+reasoning** (VIP → quiet high floor, preference matches) or the desk
+picks from every free room with housekeeping state shown, and a
+warning before handing over an uncleaned room.
+
+**The GRC and the register**: a printable registration card per stay
+with **ID and address-proof capture** (camera or upload, privately
+stored), an **occupant register** — every person in the room with
+their own **ID scan per occupant** — editable actual check-in/out
+times, and the stay's money line (advances, security deposits held,
+refunds) with a guarded refund flow. Under **Verify & Discard**
+retention, every scan and full ID number — the guest's and each
+occupant's — is masked and deleted at checkout.
+
 **Revenue controls**: a per-property (or per-room-type) **overbooking
 allowance** enforced in code — unassigned bookings can never quietly
 oversell a category; **hurdle rates** — when forecast occupancy crosses a
@@ -31,6 +48,31 @@ reach a company folio); night audit that posts room nights idempotently
 and charges no-shows per policy; GST invoices with per-property series;
 allowances, part-settlement, invoice cancellation with a register;
 **GSTR-1 export** in Tally / Zoho Books / ERPNext formats.
+
+## Your country's taxes
+
+Localization packs make invoices native to where you operate, resolved
+automatically from the property's country: **India** (GST slabs by
+tariff, GSTIN, GSTR-1), **Indonesia** (PB1/PBJT regional hotel tax,
+NPWP, Rupiah — community-contributed), **Thailand** (7% VAT, Thai tax
+invoice labels, Baht), **Malaysia** (SST with the real 8% rooms / 6%
+F&B split, Tourism Tax as a folio line, SST registration number),
+**UAE** (5% VAT, TRN tax invoices, Dirham), and a clean flat-tax pack
+for everywhere else. **Currency symbols and number formats follow the
+pack** across every screen, report and thermal ticket — an Indonesian
+property reads Rp 3.300.000, an Indian one ₹ and lakhs. The pack seam
+is open source; contributing your country is a single Python file.
+
+## WhatsApp on your own number
+
+Connect your own Meta Cloud API number (no gateway, no markup — Meta
+bills you directly) and Kamra sends **booking confirmations and self
+check-in links automatically**, takes **payment requests** from the
+desk, and escalates housekeeping SLAs to managers. Guest replies land
+in a **conversations inbox** — threads per guest, chat bubbles,
+replies inside the 24-hour session window — and messages from
+in-house guests also raise a Service Ticket on the desk queue.
+[Step-by-step setup guide →](/whatsapp)
 
 ## F&B — POS and kitchen
 

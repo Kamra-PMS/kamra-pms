@@ -38,10 +38,26 @@ both re-priced and overlap-checked).
 
 ## Check-in
 
-From the arrival row: open the **GRC**, record the **occupants**
-(everyone in the room — the legal register), print, sign, then
-**Check in**. Pre-checked-in guests arrive with ID details already
-submitted.
+**Check in** on the arrival row opens the check-in flow:
+
+1. **Registration at a glance** — chips show whether the guest
+   pre-checked-in online, whether ID and address proof are on file,
+   phone and email, and a VIP flag. Nothing blocks check-in, but you
+   see what's missing. **Open GRC** is one click for capture or print.
+2. **The room** — if none is assigned, the allocator suggests one with
+   its reason ("VIP → high floor", preference matches). Take it, or
+   pick from every free room of the type; housekeeping state shows on
+   each, with a warning before handing over an uncleaned room.
+3. Confirm — the room is assigned and the guest is in.
+
+**On the GRC**: record the **occupants** (everyone in the room — the
+legal register) and capture **each occupant's ID** with the camera
+button on their row; capture or replace the guest's ID and address
+proof; correct the **actual check-in/out times** when reality differs
+from plan; and manage the stay's money line — advances, security
+deposits, refunds (reason required, capped at what was collected).
+Under Verify & Discard retention, every scan and full ID number is
+masked and deleted at checkout.
 
 ## Money — folios
 
@@ -78,6 +94,16 @@ GSTR-1 export lives in the billing APIs for your accountant.
 `/hk` on any phone: prioritized clean queue (rooms with arrivals jump
 the line), tap Start/Done — Done marks the room clean on everyone's
 board.
+
+## WhatsApp
+
+If your property connected its own number ([setup guide](/whatsapp)):
+booking confirmations and self check-in links go out on their own.
+**Operations → WhatsApp** is the inbox — threads per guest, chat on the
+right, reply box at the bottom. Replies deliver while the guest's
+24-hour session window is open (any message from them reopens it);
+outside it, only templates deliver, and the screen says so. Messages
+from in-house guests also raise a ticket on **Guest Requests**.
 
 ## The AI helpers
 
