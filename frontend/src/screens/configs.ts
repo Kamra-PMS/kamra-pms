@@ -575,6 +575,7 @@ export const channelConnectionsConfig: ScreenConfig = {
     { field: "provider", label: "Provider", type: "select", options: ["Meta Business", "HeyKoala", "Twilio", "Retell", "Vapi", "Custom"], required: true },
     { field: "phone_number", label: "Phone number (display)", type: "data" },
     { field: "external_account_id", label: "Meta phone number ID", type: "data", hint: "From Meta Business Manager > WhatsApp > API setup" },
+    { field: "waba_id", label: "WhatsApp Business Account ID", type: "data", hint: "Also on the API setup page - needed to register templates from Kamra" },
     { field: "credentials", label: "Access token", type: "data", hint: "Permanent Cloud API token - stored encrypted" },
     { field: "webhook_secret", label: "Webhook verify token", type: "data", hint: "Any string; use the same one in Meta's webhook setup" },
     { field: "meta_language", label: "Template language code", type: "data" },

@@ -368,3 +368,177 @@ def reply(property: str, number: str, text: str):
 
 
 
+
+
+# ---------------------------------------------------------------------------
+# Template builder (design in Kamra, register with Meta)
+# ---------------------------------------------------------------------------
+
+
+def _template_components(doc) -> list:
+	"""The Meta message_templates components array for one of our rows."""
+	import re
+
+	comps = []
+	if (doc.header_type or "None") == "Text" and (doc.header_text or "").strip():
+		comps.append({"type": "HEADER", "format": "TEXT",
+		              "text": doc.header_text.strip()})
+	nvars = len(set(re.findall(r"\{\{(\d+)\}\}", doc.body or "")))
+	body = {"type": "BODY", "text": (doc.body or "").strip()}
+	if nvars:
+		samples = json.loads(doc.samples_json or "[]")
+		if len(samples) < nvars:
+			frappe.throw(f"Body uses {nvars} variable(s) - provide a sample "
+			             "value for each (Meta reviews with them).")
+		body["example"] = {"body_text": [[str(x) for x in samples[:nvars]]]}
+	comps.append(body)
+	if (doc.footer or "").strip():
+		comps.append({"type": "FOOTER", "text": doc.footer.strip()})
+	buttons = json.loads(doc.buttons_json or "[]")
+	if buttons:
+		if len(buttons) > 10:
+			frappe.throw("Meta allows at most 10 buttons.")
+		out = []
+		for b in buttons:
+			t = (b.get("type") or "").upper().replace(" ", "_")
+			if t == "QUICK_REPLY":
+				out.append({"type": "QUICK_REPLY", "text": b.get("text") or ""})
+			elif t == "URL":
+				out.append({"type": "URL", "text": b.get("text") or "",
+				            "url": b.get("url") or ""})
+			elif t == "PHONE_NUMBER":
+				out.append({"type": "PHONE_NUMBER", "text": b.get("text") or "",
+				            "phone_number": b.get("phone_number") or ""})
+		if out:
+			comps.append({"type": "BUTTONS", "buttons": out})
+	return comps
+
+
+def _graph(conn, method: str, path: str, payload=None) -> tuple[bool, dict]:
+	"""A WABA-level Graph call (templates live on the business account)."""
+	import requests
+
+	token = conn.get_password("credentials", raise_exception=False)
+	if not (token and conn.get("waba_id")):
+		return False, {"error": "connection missing token or WABA ID"}
+	try:
+		res = requests.request(
+			method, f"{GRAPH_BASE}/{conn.waba_id}/{path}",
+			json=payload if method == "POST" else None,
+			params=payload if method == "GET" else None,
+			headers={"Authorization": f"Bearer {token}"}, timeout=15)
+		body = {}
+		try:
+			body = res.json()
+		except Exception:
+			body = {"raw": res.text[:300]}
+		return 200 <= res.status_code < 300, body
+	except Exception as exc:
+		return False, {"error": str(exc)[:300]}
+
+
+@frappe.whitelist()
+@require_roles("Front Desk", "Hotel Admin", "Kamra Agent")
+def list_templates(property: str):
+	return frappe.get_all(
+		"WhatsApp Template", filters={"property": property},
+		fields=["name", "template_name", "category", "language", "header_type",
+		        "header_text", "body", "footer", "buttons_json", "samples_json",
+		        "meta_status", "meta_id", "rejection_reason", "modified"],
+		order_by="modified desc")
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Hotel Admin", "Kamra Agent")
+def save_template(payload):
+	"""Save a draft locally - no Meta round trip until Submit."""
+	if isinstance(payload, str):
+		payload = frappe.parse_json(payload)
+	name = payload.get("name")
+	doc = (frappe.get_doc("WhatsApp Template", name) if name
+	       else frappe.new_doc("WhatsApp Template"))
+	if doc.get("meta_id"):
+		frappe.throw("This template is already registered with Meta and "
+		             "cannot be edited - duplicate it as a new draft.")
+	for f in ("property", "template_name", "category", "language",
+	          "header_type", "header_text", "body", "footer",
+	          "buttons_json", "samples_json"):
+		if f in payload:
+			doc.set(f, payload[f])
+	doc.meta_status = "Draft"
+	doc.save(ignore_permissions=True)
+	return {"ok": True, "name": doc.name}
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Hotel Admin", "Kamra Agent")
+def submit_template(name: str):
+	"""Register the draft with Meta. Approval is Meta's; Sync pulls it."""
+	doc = frappe.get_doc("WhatsApp Template", name)
+	if doc.meta_id:
+		frappe.throw("Already submitted to Meta.")
+	conn = _conn(doc.property)
+	if not conn:
+		frappe.throw("No active Meta Business WhatsApp connection for this "
+		             "property - connect one under Channels first.")
+	ok, body = _graph(conn, "POST", "message_templates", {
+		"name": doc.template_name,
+		"language": doc.language or "en",
+		"category": (doc.category or "Utility").upper(),
+		"components": _template_components(doc),
+	})
+	if not ok:
+		err = ((body.get("error") or {}).get("message")
+		       if isinstance(body.get("error"), dict) else body.get("error")) 		      or str(body)[:300]
+		frappe.throw(f"Meta rejected the submission: {err}")
+	doc.meta_id = body.get("id")
+	doc.meta_status = (body.get("status") or "Pending").title()
+	doc.save(ignore_permissions=True)
+	return {"ok": True, "meta_id": doc.meta_id, "status": doc.meta_status}
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Hotel Admin", "Kamra Agent")
+def sync_templates(property: str):
+	"""Pull template statuses from Meta (approved / rejected / paused)."""
+	conn = _conn(property)
+	if not conn:
+		frappe.throw("No active Meta Business WhatsApp connection.")
+	ok, body = _graph(conn, "GET", "message_templates",
+	                  {"fields": "name,status,id,rejected_reason",
+	                   "limit": 200})
+	if not ok:
+		frappe.throw(f"Could not reach Meta: {str(body)[:200]}")
+	by_name = {t.get("name"): t for t in body.get("data") or []}
+	updated = 0
+	for row in frappe.get_all("WhatsApp Template",
+	                          filters={"property": property},
+	                          fields=["name", "template_name"]):
+		m = by_name.get(row.template_name)
+		if not m:
+			continue
+		frappe.db.set_value("WhatsApp Template", row.name, {
+			"meta_status": (m.get("status") or "Pending").title(),
+			"meta_id": m.get("id"),
+			"rejection_reason": m.get("rejected_reason") or None,
+		}, update_modified=False)
+		updated += 1
+	return {"ok": True, "updated": updated,
+	        "on_meta": len(by_name)}
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Hotel Admin", "Kamra Agent")
+def assign_template(property: str, slot: str, template_name: str):
+	"""Wire an approved template into an automatic flow."""
+	slots = {"booking_confirmation": "tpl_booking_confirmation",
+	         "precheckin": "tpl_precheckin",
+	         "payment_request": "tpl_payment_request"}
+	if slot not in slots:
+		frappe.throw(f"slot must be one of {', '.join(slots)}")
+	conn = _conn(property)
+	if not conn:
+		frappe.throw("No active Meta Business WhatsApp connection.")
+	frappe.db.set_value("Channel Provider Connection", conn.name,
+	                    slots[slot], template_name)
+	return {"ok": True, "slot": slots[slot], "template": template_name}

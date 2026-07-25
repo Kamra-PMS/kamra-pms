@@ -123,8 +123,14 @@ export default function WhatsAppChat() {
           automatically, replies land here and on the desk queue.
         </p>
         <Link
-          to="/channels"
+          to="/whatsapp/templates"
           className="ml-auto flex items-center gap-1.5 rounded-full border border-zinc-200 px-3 py-1.5 text-sm text-zinc-500 hover:bg-zinc-50 hover:text-zinc-700"
+        >
+          Templates
+        </Link>
+        <Link
+          to="/channels"
+          className="flex items-center gap-1.5 rounded-full border border-zinc-200 px-3 py-1.5 text-sm text-zinc-500 hover:bg-zinc-50 hover:text-zinc-700"
         >
           <Settings2 className="size-4" aria-hidden />
           Connect a number

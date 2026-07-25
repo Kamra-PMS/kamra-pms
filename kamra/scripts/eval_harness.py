@@ -2291,6 +2291,72 @@ def t51():
 		frappe.db.set_value("Property", P, "id_retention", real)
 
 
+@check("template builder: draft, Meta payload, submit, lock, sync")
+def t52():
+	import json as _json
+
+	from kamra import whatsapp
+	from kamra.whatsapp import (list_templates, save_template,
+	                            submit_template, sync_templates)
+
+	if not frappe.db.exists("Channel Provider Connection", {
+			"property": P, "channel": "WhatsApp",
+			"provider": "Meta Business"}):
+		frappe.get_doc({
+			"doctype": "Channel Provider Connection", "property": P,
+			"channel": "WhatsApp", "provider": "Meta Business", "active": 1,
+			"external_account_id": "eval-phone-id",
+			"credentials": "eval-token", "webhook_secret": "eval-verify",
+		}).insert(ignore_permissions=True)
+	conn_name = frappe.db.get_value("Channel Provider Connection", {
+		"property": P, "channel": "WhatsApp", "provider": "Meta Business"})
+	frappe.db.set_value("Channel Provider Connection", conn_name,
+	                    {"waba_id": "eval-waba", "active": 1})
+
+	out = save_template({
+		"property": P, "template_name": "eval_offer", "category": "Utility",
+		"language": "en", "header_type": "Text", "header_text": "Good news!",
+		"body": "Hello {{1}}, your stay at {{2}} awaits.",
+		"footer": "Reply STOP to opt out",
+		"buttons_json": _json.dumps([
+			{"type": "URL", "text": "Book again", "url": "https://x.example"},
+			{"type": "Quick reply", "text": "Talk to us"}]),
+		"samples_json": _json.dumps(["Asha", "Kamra Demo Palace"]),
+	})
+	name = out["name"]
+	doc = frappe.get_doc("WhatsApp Template", name)
+	comps = whatsapp._template_components(doc)
+	kinds = [c["type"] for c in comps]
+	assert kinds == ["HEADER", "BODY", "FOOTER", "BUTTONS"], kinds
+	assert comps[1]["example"]["body_text"] == [["Asha", "Kamra Demo Palace"]]
+	assert comps[3]["buttons"][0]["type"] == "URL"
+
+	graph_calls = []
+	real = whatsapp._graph
+	whatsapp._graph = lambda c, m, path, payload=None: (
+		graph_calls.append((m, path, payload)) or (True, (
+			{"id": "tpl-meta-1", "status": "PENDING"} if m == "POST"
+			else {"data": [{"name": "eval_offer", "status": "APPROVED",
+			                "id": "tpl-meta-1"}]})))
+	try:
+		sub = submit_template(name)
+		assert sub["status"] == "Pending", sub
+		assert graph_calls[0][2]["category"] == "UTILITY"
+		# Meta owns it now - edits must refuse
+		try:
+			save_template({"name": name, "body": "changed"})
+			raise AssertionError("editing a submitted template was allowed")
+		except frappe.ValidationError:
+			pass
+		sync_templates(P)
+		assert frappe.db.get_value("WhatsApp Template", name,
+		                           "meta_status") == "Approved"
+	finally:
+		whatsapp._graph = real
+	rows = list_templates(P)
+	assert any(r["template_name"] == "eval_offer" for r in rows)
+
+
 @check("ticket SLA: priority sets due window")
 def t12():
 	from frappe.utils import get_datetime, now_datetime, time_diff_in_seconds
@@ -2316,7 +2382,7 @@ def execute():
 		for fn in (t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13,
 		           t14, t15, t16, t17, t18, t19, t20, t21, t22, t23, t24,
 		           t25, t26, t27, t28, t29, t30, t31, t32, t33, t34, t35,
-		           t36, t37, t38, t39, t40, t41, t42, t43, t44, t45, t46, t47, t48, t49, t50, t51):
+		           t36, t37, t38, t39, t40, t41, t42, t43, t44, t45, t46, t47, t48, t49, t50, t51, t52):
 			fn()
 	finally:
 		frappe.db.commit = real_commit

@@ -48,6 +48,7 @@ import Laundry from "./screens/Laundry"
 import MenuItems from "./screens/MenuItems"
 import Today from "./screens/Today"
 import WhatsAppChat from "./screens/WhatsAppChat"
+import WhatsAppTemplates from "./screens/WhatsAppTemplates"
 import {
   companiesConfig,
   guardrailsConfig,
@@ -269,6 +270,7 @@ export default function App() {
           <Route path="revenue-reports" element={<RevenueReports />} />
           <Route path="ops-sla" element={<OpsSLA />} />
           <Route path="whatsapp" element={<WhatsAppChat />} />
+          <Route path="whatsapp/templates" element={<WhatsAppTemplates />} />
           <Route
             path="channels"
             element={<ResourceScreen config={channelConnectionsConfig} />}

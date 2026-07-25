@@ -26,6 +26,7 @@
   "sb_notes",
   "notes",
   "sb_meta",
+  "waba_id",
   "meta_language",
   "column_break_meta",
   "tpl_booking_confirmation",
@@ -144,6 +145,12 @@
    "fieldtype": "Section Break",
    "label": "Meta Cloud API (bring your own number)",
    "depends_on": "eval:doc.provider==\"Meta Business\""
+  },
+  {
+   "fieldname": "waba_id",
+   "fieldtype": "Data",
+   "label": "WhatsApp Business Account ID",
+   "description": "From Meta's API Setup page - needed to register templates from Kamra"
   },
   {
    "fieldname": "meta_language",
