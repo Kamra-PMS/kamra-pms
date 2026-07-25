@@ -98,10 +98,20 @@ def registry(property: str):
 			"blurb": "Sync rates and availability across OTAs. Delivered as an "
 			         "enterprise integration tailored to your channel mix.",
 			"cards": [
-				_enterprise("Channel Manager",
-				            "Two-way OTA sync (Booking.com, MakeMyTrip, Agoda "
-				            "and more) via a channel-manager partner - scoped "
-				            "and connected for your property."),
+				_module("Channex.io",
+				        "Two-way OTA sync (Booking.com, Agoda, Expedia, "
+				        "Airbnb) - bring your own Channex account, self-"
+				        "serve. Map rooms, paste an API key, push.",
+				        detail="Included - bring your own account"),
+				_module("STAAH",
+				        "Adapter ready; activates with STAAH connectivity-"
+				        "partner credentials.", detail="Partner activation"),
+				_module("AioSell",
+				        "Adapter ready; activates with AioSell PMS-connect "
+				        "credentials.", detail="Partner activation"),
+				_enterprise("Other channel managers",
+				            "SiteMinder, RateGain and friends - the provider "
+				            "seam is open; scoped per property."),
 			],
 		},
 		{

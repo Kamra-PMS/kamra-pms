@@ -2291,6 +2291,92 @@ def t51():
 		frappe.db.set_value("Property", P, "id_retention", real)
 
 
+@check("channel manager: ARI snapshot, push, OTA book/modify/cancel")
+def t53():
+	from frappe.utils import add_days, nowdate
+
+	from kamra import channel_manager as cm
+	from kamra.channels import channex
+
+	conn = frappe.get_doc({
+		"doctype": "Channel Manager Connection", "property": P,
+		"provider": "Channex", "active": 1, "api_key": "eval-key",
+		"external_property_id": "chx-prop-1", "webhook_secret": "eval-hook",
+		"sync_days": 5,
+	}).insert(ignore_permissions=True)
+	frappe.get_doc({
+		"doctype": "Channel Room Mapping", "connection": conn.name,
+		"room_type": RT, "external_room_id": "chx-room-1",
+		"external_rate_id": "chx-rate-1",
+	}).insert(ignore_permissions=True)
+
+	snap = cm.ari_snapshot(P, conn.name, days=3)
+	assert len(snap) == 1 and len(snap[0]["days"]) == 3, snap
+	assert snap[0]["external_room_id"] == "chx-room-1"
+	day0 = snap[0]["days"][0]
+	assert day0["available"] >= 0 and day0["rate"] > 0, day0
+
+	pushes = []
+	real_call = channex._call
+	channex._call = lambda c, m, path, payload=None: (
+		pushes.append((path, payload)) or (True, {"data": "ok"}))
+	try:
+		out = cm.push_ari(conn.name)
+		assert out["ok"], out
+		assert {p_ for p_, _ in pushes} == {"availability", "restrictions"}
+		before = frappe.db.get_value("Channel Manager Connection",
+		                             conn.name, "last_push_status")
+		assert before and before.startswith("OK"), before
+
+		# inbound booking in Channex webhook shape
+		ci, co = nowdate(), add_days(nowdate(), 2)
+		events = channex.parse_webhook(conn, {"payload": {
+			"status": "new", "ota_reservation_code": "BDC-777",
+			"ota_name": "Booking.com", "currency": "INR",
+			"customer": {"name": "Nina", "surname": "Rao",
+			             "phone": "+91 90000 11111",
+			             "mail": "nina@example.com"},
+			"rooms": [{"room_type_id": "chx-room-1",
+			           "checkin_date": str(ci), "checkout_date": str(co),
+			           "occupancy": {"adults": 2, "children": 1},
+			           "days": {str(ci): "4200.00",
+			                    str(add_days(ci, 1)): "4200.00"}}],
+		}})
+		assert events[0]["event"] == "book" and events[0]["total"] == 8400.0
+		r1 = cm._apply_event(conn, events[0])
+		assert r1["result"] == "booked", r1
+		res = frappe.get_doc("Reservation", r1["reservation"])
+		assert res.source == "OTA" and res.channel == "Booking.com"
+		assert res.ota_ref == "BDC-777"
+		assert float(res.amount_after_tax) == 8400.0, res.amount_after_tax
+		assert frappe.db.get_value("Guest", res.guest, "email") 			== "nina@example.com"
+
+		# same ref again = ignored, not double-booked
+		r2 = cm._apply_event(conn, events[0])
+		assert r2["result"] == "duplicate_ignored", r2
+
+		# modify moves the dates
+		mod = dict(events[0], event="modify",
+		           check_out=str(add_days(ci, 3)))
+		r3 = cm._apply_event(conn, mod)
+		assert r3["result"] == "modified", r3
+		res.reload()
+		assert str(res.check_out_date) == str(add_days(ci, 3))
+
+		# cancel closes it through the policy-safe path
+		r4 = cm._apply_event(conn, dict(events[0], event="cancel"))
+		assert r4["result"] == "cancelled", r4
+		res.reload()
+		assert res.status == "Cancelled"
+
+		# unmapped room never lands silently
+		bad = dict(events[0], ota_ref="X-1",
+		           room_type_external_id="unknown-room")
+		assert cm._apply_event(conn, bad)["result"] == "unmapped_room"
+	finally:
+		channex._call = real_call
+
+
 @check("ticket SLA: priority sets due window")
 def t12():
 	from frappe.utils import get_datetime, now_datetime, time_diff_in_seconds
@@ -2316,7 +2402,7 @@ def execute():
 		for fn in (t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13,
 		           t14, t15, t16, t17, t18, t19, t20, t21, t22, t23, t24,
 		           t25, t26, t27, t28, t29, t30, t31, t32, t33, t34, t35,
-		           t36, t37, t38, t39, t40, t41, t42, t43, t44, t45, t46, t47, t48, t49, t50, t51):
+		           t36, t37, t38, t39, t40, t41, t42, t43, t44, t45, t46, t47, t48, t49, t50, t51, t53):
 			fn()
 	finally:
 		frappe.db.commit = real_commit

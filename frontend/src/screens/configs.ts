@@ -584,3 +584,56 @@ export const channelConnectionsConfig: ScreenConfig = {
     { field: "active", label: "Active", type: "check" },
   ],
 }
+
+export const channelManagerConfig: ScreenConfig = {
+  doctype: "Channel Manager Connection",
+  title: "Channel Manager",
+  description:
+    "Two-way OTA sync through a channel manager. Bring your own Channex.io account (self-serve, covers Booking.com / Agoda / Expedia / Airbnb); STAAH and AioSell adapters activate with their partner credentials. Map your room types under OTA Room Mappings, then availability and rates push automatically every hour and after every booking - and their bookings land as reservations here.",
+  searchFields: ["provider", "external_property_id"],
+  filters: [
+    { field: "provider", label: "Provider", options: ["Channex", "STAAH", "AioSell", "Custom"] },
+    { field: "active", label: "Active", options: ["1", "0"] },
+  ],
+  pageSize: 20,
+  propertyScoped: true,
+  orderBy: "modified desc",
+  columns: [
+    { field: "provider", label: "Provider", badge: true },
+    { field: "external_property_id", label: "Property ID" },
+    { field: "last_push", label: "Last push" },
+    { field: "last_push_status", label: "Result" },
+    { field: "active", label: "Active", badge: true },
+  ],
+  form: [
+    { field: "provider", label: "Provider", type: "select", options: ["Channex", "STAAH", "AioSell", "Custom"], required: true },
+    { field: "api_key", label: "API key / token", type: "data", hint: "Stored encrypted. Channex: your user API key; STAAH/AioSell: from partner onboarding" },
+    { field: "external_property_id", label: "Provider's property ID", type: "data", required: true },
+    { field: "endpoint", label: "API endpoint override", type: "data", hint: "Leave blank for the provider default" },
+    { field: "webhook_secret", label: "Webhook secret", type: "data", hint: "Set the same value on the provider's booking webhook" },
+    { field: "sync_days", label: "Days to push", type: "int" },
+    { field: "active", label: "Active", type: "check" },
+  ],
+}
+
+export const channelRoomMappingsConfig: ScreenConfig = {
+  doctype: "Channel Room Mapping",
+  title: "OTA Room Mappings",
+  description:
+    "Your room types matched to the channel manager's room and rate-plan ids. Every mapped type gets availability and rates pushed; incoming bookings resolve their room through this table.",
+  searchFields: ["external_room_id", "room_type"],
+  pageSize: 30,
+  orderBy: "modified desc",
+  columns: [
+    { field: "connection", label: "Connection" },
+    { field: "room_type", label: "Room Type" },
+    { field: "external_room_id", label: "Provider room ID" },
+    { field: "external_rate_id", label: "Provider rate ID" },
+  ],
+  form: [
+    { field: "connection", label: "Connection", type: "link", linkDoctype: "Channel Manager Connection", required: true },
+    { field: "room_type", label: "Room type", type: "link", linkDoctype: "Room Type", required: true },
+    { field: "external_room_id", label: "Provider room ID", type: "data", required: true },
+    { field: "external_rate_id", label: "Provider rate plan ID", type: "data" },
+  ],
+}

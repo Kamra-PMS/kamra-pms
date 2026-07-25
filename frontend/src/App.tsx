@@ -54,6 +54,8 @@ import {
   housekeepingConfig,
   lostFoundConfig,
   channelConnectionsConfig,
+  channelManagerConfig,
+  channelRoomMappingsConfig,
   mealPlansConfig,
   ratePlansConfig,
   reservationsConfig,
@@ -272,6 +274,14 @@ export default function App() {
           <Route
             path="channels"
             element={<ResourceScreen config={channelConnectionsConfig} />}
+          />
+          <Route
+            path="channel-manager"
+            element={<ResourceScreen config={channelManagerConfig} />}
+          />
+          <Route
+            path="ota-mappings"
+            element={<ResourceScreen config={channelRoomMappingsConfig} />}
           />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="crs" element={<CRS />} />

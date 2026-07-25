@@ -8,6 +8,8 @@
 
 import {
   BadgePercent,
+  Share2,
+  Network,
   MessageCircle,
   PhoneCall,
   BedDouble,
@@ -165,6 +167,8 @@ export const APPS: AppDef[] = [
     roles: ["Revenue Manager", "Hotel Admin", "System Manager", "Administrator"],
     items: [
       { to: "/revenue-reports", label: "Revenue Reports", icon: ChartLine },
+      { to: "/channel-manager", label: "Channel Manager", icon: Share2 },
+      { to: "/ota-mappings", label: "OTA Room Mappings", icon: Network },
       { to: "/rate-plans", label: "Rate Plans", icon: Tags },
       { to: "/seasons", label: "Seasons", icon: CalendarDays },
       { to: "/guardrails", label: "Guardrails", icon: ShieldCheck },

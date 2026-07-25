@@ -18,6 +18,7 @@
   "group_booking",
   "source",
   "channel",
+  "ota_ref",
   "travel_agent",
   "commission_amount",
   "sb_booker",
@@ -131,6 +132,13 @@
    "fieldname": "channel",
    "fieldtype": "Data",
    "label": "Channel"
+  },
+  {
+   "fieldname": "ota_ref",
+   "fieldtype": "Data",
+   "label": "OTA Booking Ref",
+   "read_only": 1,
+   "description": "The channel manager's booking id - modifications and cancellations match on it"
   },
   {
    "fieldname": "sb_stay",
