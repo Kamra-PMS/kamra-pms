@@ -9,6 +9,7 @@ import {
 import { getTheme, setTheme, type Theme } from "../lib/theme"
 import { getLang, setLang, type Lang } from "../lib/dir"
 import { Button } from "../components/ui/button"
+import ImageField from "../components/ImageField"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { cur, moneyLocale } from "../lib/money"
 
@@ -24,7 +25,7 @@ const inputCls =
 interface Spec {
   field: string
   label: string
-  type?: "text" | "number" | "time" | "check" | "select" | "textarea" | "password"
+  type?: "text" | "number" | "time" | "check" | "select" | "textarea" | "password" | "image"
   options?: string[]
   hint?: string
 }
@@ -35,6 +36,15 @@ function Field(props: {
   onChange: (v: unknown) => void
 }) {
   const { spec, value, onChange } = props
+  if (spec.type === "image")
+    return (
+      <ImageField
+        label={spec.label}
+        hint={spec.hint ?? ""}
+        value={String(value ?? "")}
+        onChange={onChange}
+      />
+    )
   if (spec.type === "check")
     return (
       <label className="flex items-center gap-2 py-1 text-sm text-zinc-700">
@@ -249,8 +259,18 @@ const BOOKING_SPECS: Spec[] = [
   { field: "property_amenities", label: "Amenities (one per line)", type: "textarea" },
   { field: "google_reviews_url", label: "Google reviews URL" },
   { field: "tripadvisor_url", label: "TripAdvisor URL" },
-  { field: "logo_url", label: "Logo URL" },
-  { field: "hero_image", label: "Hero image URL" },
+  {
+    field: "logo_url",
+    label: "Logo",
+    type: "image",
+    hint: "Square, 512px+ - PNG or SVG with transparency looks best",
+  },
+  {
+    field: "hero_image",
+    label: "Hero image",
+    type: "image",
+    hint: "Landscape, 1920x1080 or larger - the booking page's opening photo",
+  },
 ]
 
 const POLICY_SPECS: Spec[] = [
