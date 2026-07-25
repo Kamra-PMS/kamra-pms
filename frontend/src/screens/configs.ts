@@ -551,30 +551,6 @@ export const menuItemsConfig: ScreenConfig = {
   ],
 }
 
-export const whatsappMessagesConfig: ScreenConfig = {
-  doctype: "WhatsApp Message",
-  title: "WhatsApp",
-  description:
-    "Every WhatsApp message in and out on your own Meta Cloud API number: confirmations, check-in links, payment requests and guest replies. Inbound messages from in-house guests also raise a Service Ticket.",
-  searchFields: ["content", "to_number", "from_number", "guest"],
-  filters: [
-    { field: "direction", label: "Direction", options: ["Outbound", "Inbound"] },
-    { field: "status", label: "Status", options: ["Sent", "Failed", "Received", "Queued"] },
-  ],
-  pageSize: 30,
-  propertyScoped: true,
-  orderBy: "creation desc",
-  columns: [
-    { field: "direction", label: "Direction", badge: true },
-    { field: "guest", label: "Guest" },
-    { field: "content", label: "Message" },
-    { field: "template_name", label: "Template" },
-    { field: "status", label: "Status", badge: true },
-  ],
-  form: [],
-  allowCreate: false,
-}
-
 export const channelConnectionsConfig: ScreenConfig = {
   doctype: "Channel Provider Connection",
   title: "Channels",

@@ -2138,6 +2138,16 @@ def t48():
 		                         filters={"property": P,
 		                                  "subject": ("like", "WhatsApp:%")})
 		assert tickets, "inbound message did not raise a Service Ticket"
+
+		# the desk's conversation view: threads, one thread, a reply
+		th = whatsapp.threads(P)
+		assert any(t["number"] == "919812340048" for t in th), th
+		conv = whatsapp.thread(P, "919812340048")
+		assert conv["session_open"], "fresh guest message should open the window"
+		assert len(conv["messages"]) >= 3
+		assert conv["messages"][0]["creation"] <= conv["messages"][-1]["creation"]
+		r2 = whatsapp.reply(P, "919812340048", "Late checkout till 2 PM is fine.")
+		assert r2["sent"], r2
 	finally:
 		whatsapp._post_graph = real_post
 
@@ -2221,6 +2231,66 @@ def t50():
 	assert ctx2["rooms"] == [] and ctx2["suggestion"] is None
 
 
+@check("occupant register: per-occupant ID scans, edit-safe, discarded at checkout")
+def t51():
+	import base64
+	import io as _io
+
+	from PIL import Image
+
+	from kamra.api import (_scrub_stay_ids, check_in, update_occupants,
+	                       upload_occupant_id)
+
+	from frappe.utils import add_days, nowdate
+
+	guest = frappe.get_doc({
+		"doctype": "Guest", "first_name": "Occ", "last_name": "Primary",
+	}).insert(ignore_permissions=True)
+	res = frappe.get_doc({
+		"doctype": "Reservation", "property": P, "guest": guest.name,
+		"room_type": RT, "check_in_date": nowdate(),
+		"check_out_date": add_days(nowdate(), 1), "adults": 2,
+		"source": "PMS",
+	}).insert(ignore_permissions=True)
+
+	out = update_occupants(res.name, [
+		{"full_name": "Asha Kumar", "age": 34, "id_type": "Aadhaar",
+		 "id_number": "987654321012"},
+	])
+	assert out["rows"] and out["rows"][0]["row"], out
+	row = out["rows"][0]["row"]
+
+	# a real JPEG through the sanitising pipeline
+	buf = _io.BytesIO()
+	Image.new("RGB", (60, 40), (200, 30, 30)).save(buf, format="JPEG")
+	data_url = ("data:image/jpeg;base64,"
+	            + base64.b64encode(buf.getvalue()).decode())
+	up = upload_occupant_id(res.name, row, data_url)
+	assert up["ok"] and up["file"].startswith("/private/"), up
+
+	# register edits keep the scan
+	out2 = update_occupants(res.name, out["rows"] + [
+		{"full_name": "Dev Kumar", "age": 8}])
+	kept = [r for r in out2["rows"] if r["full_name"] == "Asha Kumar"][0]
+	assert kept["id_file"] == up["file"], out2["rows"]
+
+	# Verify & Discard: the scan and the digits leave with the party
+	real = frappe.db.get_value("Property", P, "id_retention")
+	frappe.db.set_value("Property", P, "id_retention", "Verify & Discard")
+	try:
+		res.reload()
+		_scrub_stay_ids(res)
+		occ = frappe.get_all("Stay Occupant",
+		                     filters={"parent": res.name,
+		                              "full_name": "Asha Kumar"},
+		                     fields=["id_number", "id_file"])[0]
+		assert occ.id_file is None, occ
+		assert occ.id_number.endswith("1012") and occ.id_number.startswith("•")
+		assert not frappe.get_all("File", filters={"file_url": up["file"]})
+	finally:
+		frappe.db.set_value("Property", P, "id_retention", real)
+
+
 @check("ticket SLA: priority sets due window")
 def t12():
 	from frappe.utils import get_datetime, now_datetime, time_diff_in_seconds
@@ -2246,7 +2316,7 @@ def execute():
 		for fn in (t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13,
 		           t14, t15, t16, t17, t18, t19, t20, t21, t22, t23, t24,
 		           t25, t26, t27, t28, t29, t30, t31, t32, t33, t34, t35,
-		           t36, t37, t38, t39, t40, t41, t42, t43, t44, t45, t46, t47, t48, t49, t50):
+		           t36, t37, t38, t39, t40, t41, t42, t43, t44, t45, t46, t47, t48, t49, t50, t51):
 			fn()
 	finally:
 		frappe.db.commit = real_commit

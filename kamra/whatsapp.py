@@ -30,6 +30,8 @@ import json
 
 import frappe
 
+from kamra.authz import require_roles
+
 GRAPH_BASE = "https://graph.facebook.com/v19.0"
 
 
@@ -285,3 +287,84 @@ def _handle_inbound(value: dict) -> None:
 				"priority": "Medium",
 				"reservation": reservation,
 			}).insert(ignore_permissions=True)
+
+
+# ---------------------------------------------------------------------------
+# Desk conversations (the CRM-style chat view)
+# ---------------------------------------------------------------------------
+
+
+@frappe.whitelist()
+@require_roles("Front Desk", "Hotel Admin", "Kamra Agent")
+def threads(property: str):
+	"""One row per guest number: who, the last message, when. The desk's
+	inbox - modeled on Frappe CRM's WhatsApp tab, but per hotel."""
+	rows = frappe.get_all(
+		"WhatsApp Message", filters={"property": property},
+		fields=["name", "direction", "to_number", "from_number", "content",
+		        "guest", "reservation", "status", "template_name", "creation"],
+		order_by="creation desc", limit=500)
+	out, seen = [], set()
+	for r in rows:
+		number = r.from_number if r.direction == "Inbound" else r.to_number
+		if not number or number in seen:
+			continue
+		seen.add(number)
+		guest_name = (frappe.db.get_value("Guest", r.guest, "full_name")
+		              if r.guest else None)
+		out.append({
+			"number": number,
+			"guest": r.guest,
+			"guest_name": guest_name or number,
+			"reservation": r.reservation,
+			"last_message": r.content,
+			"last_direction": r.direction,
+			"last_status": r.status,
+			"last_at": str(r.creation),
+		})
+	return out
+
+
+@frappe.whitelist()
+@require_roles("Front Desk", "Hotel Admin", "Kamra Agent")
+def thread(property: str, number: str):
+	"""Full conversation with one number, oldest first, plus whether the
+	24-hour session window is open (a guest message in the last day)."""
+	rows = frappe.get_all(
+		"WhatsApp Message",
+		filters={"property": property},
+		or_filters=[["to_number", "=", number], ["from_number", "=", number]],
+		fields=["name", "direction", "message_type", "template_name",
+		        "content", "status", "error", "creation", "guest",
+		        "reservation"],
+		order_by="creation asc", limit=200)
+	from frappe.utils import add_to_date, get_datetime, now_datetime
+	last_in = [r.creation for r in rows if r.direction == "Inbound"]
+	session_open = bool(last_in) and get_datetime(max(last_in)) > \
+		add_to_date(now_datetime(), hours=-24)
+	return {
+		"messages": [{**r, "creation": str(r.creation)} for r in rows],
+		"session_open": session_open,
+	}
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Front Desk", "Hotel Admin", "Kamra Agent")
+def reply(property: str, number: str, text: str):
+	"""Desk reply into the guest's session window."""
+	if not (text or "").strip():
+		frappe.throw("Nothing to send.")
+	guest = frappe.db.get_value("Guest", {"phone": number}) or \
+		frappe.db.get_value("Guest", {"phone": f"+{number}"})
+	out = send_text(property, number, text.strip(), guest=guest)
+	if not out.get("sent"):
+		frappe.throw(
+			"WhatsApp did not accept the message"
+			+ (f": {out.get('detail')}" if out.get("detail")
+			   else f" ({out.get('reason')})")
+			+ ". Outside the 24-hour window only template messages "
+			  "deliver - the guest writing to you reopens it.")
+	return out
+
+
+

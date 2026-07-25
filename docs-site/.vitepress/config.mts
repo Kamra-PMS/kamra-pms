@@ -49,6 +49,7 @@ export default defineConfig({
         text: "Using Kamra",
         items: [
           { text: "Features tour", link: "/features" },
+          { text: "WhatsApp on your number", link: "/whatsapp" },
           { text: "User guide", link: "/user-guide" },
         ],
       },

@@ -421,9 +421,10 @@ def registration_card(reservation: str):
 				guest.get("address_line"), guest.get("city")])),
 		},
 		"occupants": [
-			{"full_name": o.full_name, "age": o.age, "gender": o.gender,
-			 "nationality": o.nationality, "id_type": o.id_type,
-			 "id_number": o.id_number, "phone": o.phone}
+			{"row": o.name, "full_name": o.full_name, "age": o.age,
+			 "gender": o.gender, "nationality": o.nationality,
+			 "id_type": o.id_type, "id_number": o.id_number,
+			 "phone": o.phone, "id_file": o.get("id_file")}
 			for o in (res.get("occupants") or [])
 		],
 	}
@@ -1012,6 +1013,10 @@ def update_occupants(reservation: str, occupants):
 	if isinstance(occupants, str):
 		occupants = frappe.parse_json(occupants)
 	doc = frappe.get_doc("Reservation", reservation)
+	# scans survive edits even when the client sends stale rows: carry the
+	# stored id_file for any row that comes back without one
+	existing_scans = {o.name: o.get("id_file")
+	                  for o in (doc.get("occupants") or [])}
 	doc.set("occupants", [])
 	for o in occupants or []:
 		if not (o.get("full_name") or "").strip():
@@ -1024,9 +1029,18 @@ def update_occupants(reservation: str, occupants):
 			"id_type": o.get("id_type") or "",
 			"id_number": (o.get("id_number") or "").strip(),
 			"phone": o.get("phone") or "",
+			# an uploaded ID survives a register edit
+			"id_file": o.get("id_file")
+			           or existing_scans.get(o.get("row")) or None,
 		})
 	doc.save()
-	return {"reservation": reservation, "occupants": len(doc.occupants)}
+	return {"reservation": reservation, "occupants": len(doc.occupants),
+	        "rows": [
+	            {"row": o.name, "full_name": o.full_name, "age": o.age,
+	             "gender": o.gender, "nationality": o.nationality,
+	             "id_type": o.id_type, "id_number": o.id_number,
+	             "phone": o.phone, "id_file": o.get("id_file")}
+	            for o in doc.occupants]}
 
 
 @frappe.whitelist()
@@ -1988,6 +2002,37 @@ def check_in(reservation: str, room: str | None = None):
 
 @frappe.whitelist(methods=["POST"])
 @require_roles("Front Desk", "Kamra Agent")
+def upload_occupant_id(reservation: str, row: str, image: str):
+	"""ID document for one occupant on the stay register. Same security
+	pipeline as every ID image: decoded, re-encoded through PIL (the
+	sanitisation boundary), stored private, attached to the reservation
+	so checkout retention rules find it."""
+	from kamra.id_documents import _decode, _sanitise
+
+	res = frappe.get_doc("Reservation", reservation)
+	match = [o for o in (res.get("occupants") or []) if o.name == row]
+	if not match:
+		frappe.throw("No such occupant row on this stay.")
+	occ = match[0]
+	content = _sanitise(_decode(image))
+	fdoc = frappe.get_doc({
+		"doctype": "File",
+		"file_name": f"occupant-id-{res.name}-{occ.idx}.jpg",
+		"attached_to_doctype": "Reservation",
+		"attached_to_name": res.name,
+		"is_private": 1,
+		"content": content,
+	}).insert(ignore_permissions=True)
+	frappe.db.set_value("Stay Occupant", occ.name, "id_file", fdoc.file_url,
+	                    update_modified=False)
+	from kamra.savings import log_action
+	log_action("occupant_id_capture", "Reservation", res.name, res.property,
+	           rationale=f"ID captured for occupant {occ.full_name}")
+	return {"ok": True, "file": fdoc.file_url, "row": occ.name}
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Front Desk", "Kamra Agent")
 def upload_guest_document(guest: str, kind: str, image: str):
 	"""The desk captures or replaces a guest's document while preparing
 	the GRC - walk-ins, or a newer copy over last visit's. kind is 'id'
@@ -2026,6 +2071,16 @@ def _scrub_stay_ids(res):
 		if o.id_number:
 			frappe.db.set_value("Stay Occupant", o.name, "id_number",
 			                    _mask_id(o.id_number), update_modified=False)
+		if o.get("id_file"):
+			# occupant scans leave with the party, like every other ID
+			for f in frappe.get_all("File", filters={
+					"attached_to_doctype": "Reservation",
+					"attached_to_name": res.name,
+					"file_url": o.id_file}, pluck="name"):
+				frappe.delete_doc("File", f, force=True,
+				                  ignore_permissions=True)
+			frappe.db.set_value("Stay Occupant", o.name, "id_file", None,
+			                    update_modified=False)
 	guest_id = frappe.db.get_value("Guest", res.guest, "id_number")
 	if guest_id:
 		frappe.db.set_value("Guest", res.guest, "id_number",

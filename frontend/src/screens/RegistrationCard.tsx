@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react"
-import { ArrowLeft, Plus, Printer, Trash2 } from "lucide-react"
+import {
+  Camera, ArrowLeft, Plus, Printer, Trash2 } from "lucide-react"
 import { Link, useParams } from "react-router-dom"
 import { call } from "../lib/api"
 import { toFullPath } from "../lib/routing"
@@ -9,6 +10,8 @@ import { cur, moneyLocale } from "../lib/money"
 /** Printable Guest Registration Card (GRC) - sign at check-in. */
 
 interface Occupant {
+  row?: string | null
+  id_file?: string | null
   full_name: string
   age: number | null
   gender: string | null
@@ -108,10 +111,14 @@ function OccupantsEditor(props: {
   async function save() {
     setBusy(true)
     try {
-      await call("kamra.api.update_occupants", {
-        reservation: props.reservation,
-        occupants: rows.filter((r) => r.full_name.trim()),
-      })
+      const out = await call<{ rows: Occupant[] }>(
+        "kamra.api.update_occupants",
+        {
+          reservation: props.reservation,
+          occupants: rows.filter((r) => r.full_name.trim()),
+        },
+      )
+      setRows(out.rows.length ? out.rows : [emptyOccupant()])
       props.onSaved()
     } finally {
       setBusy(false)
@@ -177,6 +184,43 @@ function OccupantsEditor(props: {
               value={o.id_number ?? ""}
               onChange={(e) => set(i, { id_number: e.target.value })}
             />
+            {o.row ? (
+              <label
+                className={`flex cursor-pointer items-center gap-1 rounded-lg border px-2 py-1 text-xs font-medium ${
+                  o.id_file
+                    ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                    : "border-zinc-200 text-zinc-500 hover:border-brand-400 hover:text-brand-700"
+                }`}
+                title={o.id_file ? "Replace this occupant's ID document" : "Capture or upload this occupant's ID document"}
+              >
+                <Camera className="size-3.5" aria-hidden />
+                {o.id_file ? "ID ✓ Replace" : "Capture ID"}
+                <input
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const f = e.target.files?.[0]
+                    if (!f || !o.row) return
+                    const r = await call<{ file: string }>(
+                      "kamra.api.upload_occupant_id",
+                      {
+                        reservation: props.reservation,
+                        row: o.row,
+                        image: await fileToDataUrl(f),
+                      },
+                    )
+                    set(i, { id_file: r.file })
+                    e.target.value = ""
+                  }}
+                />
+              </label>
+            ) : (
+              <span className="text-xs text-zinc-400" title="Save the register first, then capture this occupant's ID">
+                save row → ID
+              </span>
+            )}
             <button
               className="rounded p-1 text-zinc-400 hover:text-rose-500"
               aria-label="Remove occupant"
