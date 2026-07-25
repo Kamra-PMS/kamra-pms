@@ -1909,6 +1909,70 @@ def verify_precheckin(reservation: str):
 
 @frappe.whitelist()
 @require_roles("Front Desk", "Kamra Agent")
+def checkin_context(reservation: str):
+	"""Everything the check-in flow needs in one round trip: how complete
+	the guest's registration is, the assigned room - or the allocator's
+	suggestion plus every room the desk may hand over instead."""
+	res = frappe.get_doc("Reservation", reservation)
+	guest = frappe.get_doc("Guest", res.guest) if res.guest else None
+
+	room_assigned = None
+	if res.room:
+		room_assigned = frappe.db.get_value(
+			"Room", res.room,
+			["name", "room_number", "housekeeping_status"], as_dict=True)
+
+	suggestion = None
+	rooms = []
+	if not res.room and res.status == "Confirmed":
+		rooms = [
+			{"name": r["name"], "room_number": r["room_number"],
+			 "housekeeping_status": r["housekeeping_status"]}
+			for r in available_rooms(res.property, res.room_type,
+			                         res.check_in_date, res.check_out_date,
+			                         group_booking=res.group_booking)]
+		from kamra.allocation import suggest_allocation
+		for p_ in suggest_allocation(
+				res.property, str(res.check_in_date))["proposals"]:
+			if p_["reservation"] == res.name:
+				suggestion = {
+					"room": p_["suggested_room"],
+					"room_number": p_["room_number"],
+					"why": p_["why"],
+					"needs_review": p_["needs_review"],
+				}
+				break
+
+	return {
+		"reservation": {
+			"name": res.name, "status": res.status,
+			"guest": res.guest, "guest_name": res.guest_name,
+			"room_type": res.room_type,
+			"room_type_name": frappe.db.get_value(
+				"Room Type", res.room_type, "room_type_name"),
+			"check_in_date": str(res.check_in_date),
+			"check_out_date": str(res.check_out_date),
+			"adults": res.adults, "children": res.children,
+			"planned_check_in_time": str(res.get("planned_check_in_time") or ""),
+			"vip": frappe.db.get_value("Guest", res.guest, "vip")
+			       if res.guest else 0,
+		},
+		"readiness": {
+			"phone": bool(guest and guest.get("phone")),
+			"email": bool(guest and guest.get("email")),
+			"id_on_file": bool(guest and guest.get("id_file")),
+			"address_on_file": bool(guest and guest.get("address_proof_file")),
+			"precheckin_status": res.get("precheckin_status") or "Not sent",
+			"link_sent": bool(res.get("precheckin_link_sent")),
+		},
+		"room_assigned": room_assigned,
+		"suggestion": suggestion,
+		"rooms": rooms,
+	}
+
+
+@frappe.whitelist()
+@require_roles("Front Desk", "Kamra Agent")
 def check_in(reservation: str, room: str | None = None):
 	doc = frappe.get_doc("Reservation", reservation)
 	if room:

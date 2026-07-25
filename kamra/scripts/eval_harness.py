@@ -2179,6 +2179,48 @@ def t49():
 	assert not leaked, f"private helpers are whitelisted: {leaked}"
 
 
+@check("check-in flow: context, allocator suggestion, room handover")
+def t50():
+	from frappe.utils import add_days, nowdate
+
+	from kamra.api import check_in, checkin_context
+
+	# an unassigned arrival for today - the flow's home case
+	guest = frappe.get_doc({
+		"doctype": "Guest", "first_name": "Flow", "last_name": "Guest",
+		"phone": "+91 98111 22334", "email": "flow@example.com",
+	}).insert(ignore_permissions=True)
+	res = frappe.get_doc({
+		"doctype": "Reservation", "property": P, "guest": guest.name,
+		"room_type": RT, "check_in_date": nowdate(),
+		"check_out_date": add_days(nowdate(), 2), "adults": 2,
+		"source": "PMS",
+	}).insert(ignore_permissions=True)
+	assert not res.room
+
+	ctx = checkin_context(res.name)
+	assert ctx["reservation"]["status"] == "Confirmed"
+	assert ctx["readiness"]["phone"] and ctx["readiness"]["email"]
+	assert not ctx["readiness"]["id_on_file"]
+	assert ctx["room_assigned"] is None
+	assert ctx["rooms"], "no free rooms offered for an open room type"
+	# the allocator proposes one of the offered rooms, with a reason
+	assert ctx["suggestion"], "allocator made no suggestion"
+	assert ctx["suggestion"]["room"] in [r["name"] for r in ctx["rooms"]]
+	assert ctx["suggestion"]["why"]
+
+	# desk takes the suggestion - check-in lands guest in that room
+	out = check_in(res.name, room=ctx["suggestion"]["room"])
+	assert out["room"] == ctx["suggestion"]["room"], out
+	res.reload()
+	assert res.status == "Checked In" and res.room == out["room"]
+
+	# once assigned, the context reports the room instead of choices
+	ctx2 = checkin_context(res.name)
+	assert ctx2["room_assigned"] and ctx2["room_assigned"]["name"] == res.room
+	assert ctx2["rooms"] == [] and ctx2["suggestion"] is None
+
+
 @check("ticket SLA: priority sets due window")
 def t12():
 	from frappe.utils import get_datetime, now_datetime, time_diff_in_seconds
@@ -2204,7 +2246,7 @@ def execute():
 		for fn in (t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13,
 		           t14, t15, t16, t17, t18, t19, t20, t21, t22, t23, t24,
 		           t25, t26, t27, t28, t29, t30, t31, t32, t33, t34, t35,
-		           t36, t37, t38, t39, t40, t41, t42, t43, t44, t45, t46, t47, t48, t49):
+		           t36, t37, t38, t39, t40, t41, t42, t43, t44, t45, t46, t47, t48, t49, t50):
 			fn()
 	finally:
 		frappe.db.commit = real_commit

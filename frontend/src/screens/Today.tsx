@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from "react"
 import { BedDouble, LogIn, LogOut, Sparkles } from "lucide-react"
 import { useOutletContext } from "react-router-dom"
 import {
-  checkIn,
   checkOut,
   getSnapshot,
   setHousekeepingStatus,
@@ -20,6 +19,7 @@ import {
 } from "../components/ui/card"
 import { cn } from "../lib/utils"
 import type { ShellContext } from "../AppShell"
+import CheckInDialog from "../components/CheckInDialog"
 import { serverError } from "../lib/resource"
 import { toFullPath } from "../lib/routing"
 import { cur, moneyLocale } from "../lib/money"
@@ -162,6 +162,7 @@ export default function Today() {
   const { refreshKey } = useOutletContext<ShellContext>()
   const [snap, setSnap] = useState<Snapshot | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
+  const [checkingIn, setCheckingIn] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const refresh = useCallback(async () => {
@@ -253,8 +254,8 @@ export default function Today() {
                 empty="No arrivals expected today."
                 action={(row) => (
                   <Button
-                    disabled={busy === row.name || !row.room}
-                    onClick={() => act(row.name, () => checkIn(row.name))}
+                    disabled={busy === row.name}
+                    onClick={() => setCheckingIn(row.name)}
                   >
                     Check in
                   </Button>
@@ -363,6 +364,16 @@ export default function Today() {
           </Card>
         </div>
       </div>
+      {checkingIn && (
+        <CheckInDialog
+          reservation={checkingIn}
+          onClose={() => setCheckingIn(null)}
+          onDone={() => {
+            setCheckingIn(null)
+            refresh()
+          }}
+        />
+      )}
     </div>
   )
 }
