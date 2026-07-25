@@ -103,6 +103,11 @@ jobs:
     needs: [gate, docker]
     if: needs.gate.outputs.proceed == 'true'
     runs-on: ubuntu-latest
+    # cosmetic (moves the rolling GitHub release) - never fail the deploy;
+    # job-level write in case the repo default drops to read again
+    permissions:
+      contents: write
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
         with:
