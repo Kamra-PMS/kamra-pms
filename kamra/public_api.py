@@ -226,8 +226,6 @@ def precheckin_info(token: str):
 	}
 
 
-@frappe.whitelist(allow_guest=True, methods=["POST"])
-@rate_limit(limit=20, seconds=3600)
 def _save_id_image(guest: str, data_url: str,
                    field: str = "id_file") -> str | None:
 	"""Store a guest document (ID or address proof) as a PRIVATE file
@@ -261,6 +259,8 @@ def _save_id_image(guest: str, data_url: str,
 	return fdoc.file_url
 
 
+@frappe.whitelist(allow_guest=True, methods=["POST"])
+@rate_limit(limit=20, seconds=3600)
 def precheckin_submit(token: str, id_type: str, id_number: str,
                       email: str = "", nationality: str = "",
                       address_line: str = "", city: str = "",
@@ -451,8 +451,6 @@ def request_guest_laundry(token: str, notes: str = "", express: int = 0):
 	return {"ok": True, "order": doc.name}
 
 
-@frappe.whitelist(allow_guest=True, methods=["POST"])
-@rate_limit(limit=10, seconds=3600)
 def _advance_terms(prop, total: float) -> tuple[float, str]:
 	"""What the guest pays online now, and a human label - computed from the
 	property's CURRENT booking-payment policy. Snapshotted onto the booking so
@@ -471,6 +469,8 @@ def _advance_terms(prop, total: float) -> tuple[float, str]:
 	return 0.0, "Pay at the hotel"
 
 
+@frappe.whitelist(allow_guest=True, methods=["POST"])
+@rate_limit(limit=10, seconds=3600)
 def book(property: str, room_type: str, check_in_date: str,
          check_out_date: str, guest_name: str, phone: str,
          email: str = "", adults: int = 2, children: int = 0,

@@ -374,6 +374,8 @@ def _stay_money(res):
 	}
 
 
+@frappe.whitelist()
+@require_roles("Front Desk", "Kamra Agent")
 def registration_card(reservation: str):
 	"""Everything the printed GRC (guest registration card) needs."""
 	res = frappe.get_doc("Reservation", reservation)

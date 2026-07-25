@@ -2142,6 +2142,43 @@ def t48():
 		whatsapp._post_graph = real_post
 
 
+@check("whitelist audit: every endpoint the frontend calls is callable")
+def t49():
+	"""Guards against decorator orphaning: inserting a helper between a
+	function and its decorators silently un-whitelists the endpoint (broke
+	registration_card, precheckin_submit and public book at various
+	points) and, worse, whitelists the helper. Sweep every kamra.* method
+	the frontend references and prove each is a registered endpoint."""
+	import pathlib
+	import re
+
+	src = pathlib.Path(frappe.get_app_path("kamra")).parent / "frontend" / "src"
+	assert src.exists(), f"frontend source not found at {src}"
+	calls = set()
+	for f in src.rglob("*.ts*"):
+		calls |= set(re.findall(r'"(kamra\.\w+\.\w+)"', f.read_text()))
+	assert len(calls) > 50, f"suspiciously few frontend calls found: {len(calls)}"
+	# dotted strings that are NOT api calls (localStorage keys etc.)
+	calls -= {"kamra.kds.chime"}
+
+	missing = []
+	for path in sorted(calls):
+		try:
+			target = frappe.get_attr(path)
+		except Exception:
+			missing.append(f"{path} (does not resolve)")
+			continue
+		if target not in frappe.whitelisted:
+			missing.append(path)
+	assert not missing, f"frontend calls unwhitelisted endpoints: {missing}"
+
+	# and no private helper may be an endpoint
+	leaked = [str(fn) for fn in frappe.whitelisted
+	          if getattr(fn, "__module__", "").startswith("kamra.")
+	          and fn.__name__.startswith("_")]
+	assert not leaked, f"private helpers are whitelisted: {leaked}"
+
+
 @check("ticket SLA: priority sets due window")
 def t12():
 	from frappe.utils import get_datetime, now_datetime, time_diff_in_seconds
@@ -2167,7 +2204,7 @@ def execute():
 		for fn in (t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13,
 		           t14, t15, t16, t17, t18, t19, t20, t21, t22, t23, t24,
 		           t25, t26, t27, t28, t29, t30, t31, t32, t33, t34, t35,
-		           t36, t37, t38, t39, t40, t41, t42, t43, t44, t45, t46, t47, t48):
+		           t36, t37, t38, t39, t40, t41, t42, t43, t44, t45, t46, t47, t48, t49):
 			fn()
 	finally:
 		frappe.db.commit = real_commit
