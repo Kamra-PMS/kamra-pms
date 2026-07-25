@@ -86,6 +86,12 @@ Hotels deserve better than:
 quickstart, per-provider self-hosting guides, features tour, user guide,
 AI/MCP setup and FAQ.
 
+Taking a real hotel live? Follow the
+**[go-live checklist](https://kamrapms.com/docs/go-live)** — install →
+property & taxes → staff → data migration → OTA sync → WhatsApp/email →
+a dress-rehearsal stay → cut-over day, as checkboxes with links into
+each guide.
+
 ### REST API
 
 Kamra exposes **178 REST endpoints** — the same governed layer the UI and
