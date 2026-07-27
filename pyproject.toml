@@ -4,7 +4,7 @@ authors = [
     { name = "HeyKoala", email = "azzaxp@users.noreply.github.com"}
 ]
 description = "Open-source, AI-native hotel PMS"
-requires-python = ">=3.14"
+requires-python = ">=3.10"
 readme = "README.md"
 dynamic = ["version"]
 dependencies = [
@@ -25,7 +25,7 @@ packages = []
 
 [tool.ruff]
 line-length = 110
-target-version = "py314"
+target-version = "py310"
 
 [tool.ruff.lint]
 select = [

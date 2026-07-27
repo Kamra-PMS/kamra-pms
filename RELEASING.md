@@ -65,15 +65,19 @@ The maintainer runbook. Contributors don't need this — see
 
 - [x] Public repo, AGPL-3.0 `license.txt`
 - [x] `pyproject.toml` valid, version dynamic from `kamra/__init__.py`
+- [x] `requires-python` floor at or below the Frappe Cloud v16 Python
+      (`>=3.10`) — a floor above the bench's interpreter makes pip refuse the
+      install during the marketplace build
 - [x] `required_apps = ["payments"]` in hooks
 - [x] `add_to_apps_screen` entry (logo, `/kamra` route)
 - [x] Prebuilt SPA committed under `kamra/public/frontend` (built by
       `frontend/`'s `npm run build`; keep committing the build output —
       marketplace benches don't run npm)
 - [x] Root `package.json` build script for Frappe Cloud
+- [x] README compatibility table (Kamra `main` releases ↔ Frappe v16)
 - [ ] Publisher account on frappecloud.com + listing (title, description,
-      screenshots from `docs/screenshots/`, category "Hospitality")
-- [ ] README compatibility table (Kamra x.y ↔ Frappe v16)
+      screenshots from `docs/screenshots/`, category "Hospitality"), then
+      create a marketplace release from `main` and submit for review
 
 ## Secrets the pipelines need (repo → Settings → Secrets)
 
