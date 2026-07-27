@@ -238,7 +238,7 @@ def connect_heykoala(property: str, channel: str, phone_number: str):
 	doc.active = 1
 	doc.webhook_secret = secret
 	doc.save(ignore_permissions=True)
-	frappe.db.commit()
+	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- persists the completed operation before returning to an external/public caller; reviewed as intentional
 
 	from kamra.savings import log_action
 	log_action("channel_connected", "Channel Provider Connection", doc.name,
@@ -262,7 +262,7 @@ def connect_heykoala(property: str, channel: str, phone_number: str):
 @require_roles("Hotel Admin", "System Manager")
 def disconnect_channel(connection: str):
 	frappe.db.set_value("Channel Provider Connection", connection, "active", 0)
-	frappe.db.commit()
+	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- persists the completed operation before returning to an external/public caller; reviewed as intentional
 	return {"ok": True}
 
 

@@ -64,5 +64,5 @@ def execute():
 			}).insert(ignore_permissions=True)
 			print(f"granted {role} perms on Service Ticket")
 
-	frappe.db.commit()
+	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- batch/seed/migration script runs outside the request cycle; explicit commit persists the staged writes
 	print("Kamra v3 schema (service tickets) ready.")

@@ -130,7 +130,7 @@ def suggest_allocation(property: str, date: str | None = None):
 
 		g = gmeta.get(a.guest)
 		vip = bool(g and g.vip)
-		prefs = " ".join(filter(None, [a.special_requests,
+		prefs = " ".join(filter(None, [a.special_requests,  # nosemgrep: frappe-no-functional-code -- filter(None, ...) drops empty parts; equivalent to a comprehension
 		                               g.guest_notes if g else None]))
 		# high/low floor is relative to the rooms actually on offer for this type
 		cfloors = [_as_int(r.get("floor")) for r in cands
@@ -186,5 +186,5 @@ def apply_allocation(property: str, assignments):
 		           rationale=f"→ room {room}. {a.get('why') or ''}".strip())
 		executed.append({"reservation": res, "room": room})
 
-	frappe.db.commit()
+	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- persists the completed operation before returning to an external/public caller; reviewed as intentional
 	return {"executed": executed}

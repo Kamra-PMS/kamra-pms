@@ -644,7 +644,7 @@ def create_conversation(property: str, title: str = "New chat"):
 	doc.title = title or "New chat"
 	doc.messages = "[]"
 	doc.insert(ignore_permissions=True)
-	frappe.db.commit()
+	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- persists the completed operation before returning to an external/public caller; reviewed as intentional
 	return {"name": doc.name, "title": doc.title}
 
 
@@ -658,7 +658,7 @@ def save_conversation(name: str, messages, title: str | None = None):
 	if title:
 		updates["title"] = title[:140]
 	frappe.db.set_value("Copilot Conversation", name, updates)
-	frappe.db.commit()
+	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- persists the completed operation before returning to an external/public caller; reviewed as intentional
 	return {"ok": True}
 
 
@@ -668,7 +668,7 @@ def rename_conversation(name: str, title: str):
 	_own_convo(name)
 	frappe.db.set_value("Copilot Conversation", name, "title",
 	                    (title or "Untitled")[:140])
-	frappe.db.commit()
+	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- persists the completed operation before returning to an external/public caller; reviewed as intentional
 	return {"ok": True}
 
 
@@ -677,5 +677,5 @@ def rename_conversation(name: str, title: str):
 def delete_conversation(name: str):
 	_own_convo(name)
 	frappe.delete_doc("Copilot Conversation", name, ignore_permissions=True)
-	frappe.db.commit()
+	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- persists the completed operation before returning to an external/public caller; reviewed as intentional
 	return {"ok": True}

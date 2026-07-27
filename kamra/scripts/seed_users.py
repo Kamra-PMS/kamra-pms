@@ -146,5 +146,5 @@ def ensure_users():
 def execute():
 	ensure_roles()
 	ensure_users()
-	frappe.db.commit()
+	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- batch/seed/migration script runs outside the request cycle; explicit commit persists the staged writes
 	print("Roles and demo users ready.")

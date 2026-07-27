@@ -86,5 +86,5 @@ def execute():
 	ensure_hotel_admin()
 	ensure_agent_user()
 	frappe.clear_cache()
-	frappe.db.commit()
+	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- batch/seed/migration script runs outside the request cycle; explicit commit persists the staged writes
 	print("RBAC v2 ready.")

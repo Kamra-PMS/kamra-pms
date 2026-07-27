@@ -53,5 +53,5 @@ def execute():
 		     description="Comma-separated, e.g. Pool, Parking, Restaurant"),
 	])
 
-	frappe.db.commit()
+	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- batch/seed/migration script runs outside the request cycle; explicit commit persists the staged writes
 	print("Kamra v6 schema (booking engine) ready.")

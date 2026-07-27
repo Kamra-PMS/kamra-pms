@@ -77,7 +77,7 @@ def voice_webhook(payload: str | dict | None = None) -> dict:
 		channel="Voice",
 		approval_status="Executed",
 	)
-	frappe.db.commit()
+	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- persists the completed operation before returning to an external/public caller; reviewed as intentional
 
 	return {
 		"ok": True,
@@ -126,7 +126,7 @@ def messaging_webhook(payload: str | dict | None = None) -> dict:
 		channel="WhatsApp",
 		approval_status="Executed",
 	)
-	frappe.db.commit()
+	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- persists the completed operation before returning to an external/public caller; reviewed as intentional
 
 	return {
 		"ok": True,

@@ -728,7 +728,7 @@ def run_night_audit(property: str, business_date: str | None = None) -> dict:
 		autonomy="Full",
 		channel="API",
 	)
-	frappe.db.commit()
+	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- persists the completed operation before returning to an external/public caller; reviewed as intentional
 	return {
 		"audit": audit.name,
 		"room_charges_posted": charges_posted,

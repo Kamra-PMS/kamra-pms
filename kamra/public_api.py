@@ -316,7 +316,7 @@ def precheckin_submit(token: str, id_type: str, id_number: str,
 		agent_name="Self Check-in",
 		channel="API",
 	)
-	frappe.db.commit()
+	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- persists the completed operation before returning to an external/public caller; reviewed as intentional
 	return {"ok": True, "reservation": res.name}
 
 
@@ -364,7 +364,7 @@ def precheckin_upload_id(token: str, data: str):
 		agent_name="Self Check-in",
 		channel="API",
 	)
-	frappe.db.commit()
+	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- persists the completed operation before returning to an external/public caller; reviewed as intentional
 	return {"ok": True}
 
 
@@ -447,7 +447,7 @@ def request_guest_laundry(token: str, notes: str = "", express: int = 0):
 		agent_name="Guest Self-Service",
 		channel="API",
 	)
-	frappe.db.commit()
+	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- persists the completed operation before returning to an external/public caller; reviewed as intentional
 	return {"ok": True, "order": doc.name}
 
 
@@ -532,7 +532,7 @@ def book(property: str, room_type: str, check_in_date: str,
 		frappe.db.set_value("Reservation", result["reservation"], updates)
 		if email:
 			frappe.db.set_value("Guest", result["guest"], "email", email)
-		frappe.db.commit()
+		frappe.db.commit()  # nosemgrep: frappe-manual-commit -- persists the completed operation before returning to an external/public caller; reviewed as intentional
 	finally:
 		frappe.set_user("Guest")
 
@@ -604,7 +604,7 @@ def qr_order(outlet: str, items, room: str | None = None,
 	try:
 		out = pos.create_order(outlet=outlet, items=items, room=room or None,
 		                       table_no=table_no or None, source="QR")
-		frappe.db.commit()
+		frappe.db.commit()  # nosemgrep: frappe-manual-commit -- persists the completed operation before returning to an external/public caller; reviewed as intentional
 	finally:
 		frappe.set_user("Guest")
 	return {"ok": True, "order": out["order"], "order_total": out["order_total"],
@@ -638,7 +638,7 @@ def hosting_enquiry(full_name: str, email: str, phone: str = "",
 		"status": "New",
 	})
 	doc.insert(ignore_permissions=True)
-	frappe.db.commit()
+	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- persists the completed operation before returning to an external/public caller; reviewed as intentional
 	try:
 		frappe.sendmail(
 			recipients=["hello@kamrapms.com"],

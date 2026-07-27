@@ -118,5 +118,5 @@ def execute():
 		f("log", "Small Text", read_only=1),
 	], naming_rule="Expression", autoname="format:AUDIT-{business_date}")
 
-	frappe.db.commit()
+	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- batch/seed/migration script runs outside the request cycle; explicit commit persists the staged writes
 	print("Kamra v2 schema (folio, night audit) ready.")

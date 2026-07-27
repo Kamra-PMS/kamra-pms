@@ -25,7 +25,7 @@ def get_context(context):
 			title="Kamra not built",
 		)
 
-	with open(index_path, encoding="utf-8") as f:
+	with open(index_path, encoding="utf-8") as f:  # nosemgrep: frappe-security-file-traversal -- serves the app's own built index.html from a fixed app path, not user input
 		html = f.read()
 
 	csrf = frappe.sessions.get_csrf_token()

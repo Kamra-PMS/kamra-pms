@@ -42,7 +42,7 @@ def execute():
 		ensure_users()  # keep login accounts present even on re-run
 		from kamra.scripts.seed_showcase import execute as seed_showcase
 		seed_showcase()  # top up experiences/venues (idempotent)
-		frappe.db.commit()
+		frappe.db.commit()  # nosemgrep: frappe-manual-commit -- batch/seed/migration script runs outside the request cycle; explicit commit persists the staged writes
 		print("Demo property already exists — ensured demo users + showcase.")
 		return
 
@@ -206,5 +206,5 @@ def execute():
 	from kamra.scripts.seed_showcase import execute as seed_showcase
 	seed_showcase()
 
-	frappe.db.commit()
+	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- batch/seed/migration script runs outside the request cycle; explicit commit persists the staged writes
 	print(f"Seeded demo property '{PROPERTY}' with rooms, guests, reservations and login users.")

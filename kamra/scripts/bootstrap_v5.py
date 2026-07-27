@@ -92,5 +92,5 @@ def execute():
 		except Exception:
 			pass
 
-	frappe.db.commit()
+	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- batch/seed/migration script runs outside the request cycle; explicit commit persists the staged writes
 	print("Kamra v5 schema ready.")

@@ -2069,7 +2069,7 @@ def t47():
 
 @check("WhatsApp: native Meta send, booking flow, inbound -> ticket")
 def t48():
-	from kamra import whatsapp
+	from kamra import whatsapp  # nosemgrep: frappe-monkey-patching-not-allowed -- offline eval harness stubs the outbound transport for tests; not a production code path
 	from kamra.agents_channels import send_outbound
 
 	# a connection with our own number - fake creds, intercepted transport
@@ -2296,7 +2296,7 @@ def t53():
 	from frappe.utils import add_days, nowdate
 
 	from kamra import channel_manager as cm
-	from kamra.channels import channex
+	from kamra.channels import channex  # nosemgrep: frappe-monkey-patching-not-allowed -- offline eval harness stubs the outbound transport for tests; not a production code path
 
 	conn = frappe.get_doc({
 		"doctype": "Channel Manager Connection", "property": P,

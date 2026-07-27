@@ -57,5 +57,5 @@ def execute():
 	       {"gstin": "29AAViCR1234A1Z1", "contact_name": "Priya Nair",
 	        "contact_email": "travel@rock8.ai", "credit_allowed": 1})
 
-	frappe.db.commit()
+	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- batch/seed/migration script runs outside the request cycle; explicit commit persists the staged writes
 	print("v1 demo data ready.")

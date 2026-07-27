@@ -95,5 +95,5 @@ def execute():
 		_grant(doctype, "Revenue Manager", 1, 1, 1)
 		_grant(doctype, "Housekeeping", 1, 0, 0)
 
-	frappe.db.commit()
+	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- batch/seed/migration script runs outside the request cycle; explicit commit persists the staged writes
 	print("Kamra v10 schema (POS + experiences) ready.")
