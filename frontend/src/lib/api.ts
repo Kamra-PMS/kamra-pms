@@ -321,6 +321,9 @@ export const createBooking = (
     contact_preference?: string
     waitlist?: number
     addons?: { experience: string; qty: number }[]
+    guest_category?: string
+    stay_details?: Record<string, unknown>
+    instructions?: { department: string; instruction: string }[]
   },
 ) =>
   call<{

@@ -85,6 +85,23 @@ export function BookingDialog(props: {
   const [moreRooms, setMoreRooms] = useState<ExtraRoom[]>([])
   const [moreQuotes, setMoreQuotes] = useState<(Quote | null)[]>([])
   const [addonQty, setAddonQty] = useState<Record<string, number>>({})
+  const [extra, setExtra] = useState({
+    special_requests: "",
+    arrival_mode: "",
+    arrival_ref: "",
+    arrival_datetime: "",
+    purpose: "",
+    guest_category: "",
+    extra_beds: 0,
+    pickup_required: false,
+    valet_parking: false,
+    early_checkin: false,
+    late_checkout: false,
+  })
+  const setX = (
+    k: keyof typeof extra,
+    v: string | number | boolean,
+  ) => setExtra((e) => ({ ...e, [k]: v }))
   const [profile, setProfile] = useState<GuestHit | null>(() =>
     props.initial.guest
       ? {
@@ -294,6 +311,26 @@ export function BookingDialog(props: {
           : undefined,
         contact_preference:
           onBehalf && form.booked_by_name ? form.contact_preference : undefined,
+        guest_category: extra.guest_category || undefined,
+        stay_details: {
+          arrival_mode: extra.arrival_mode || undefined,
+          arrival_ref: extra.arrival_ref || undefined,
+          arrival_datetime: extra.arrival_datetime || undefined,
+          purpose: extra.purpose || undefined,
+          extra_beds: extra.extra_beds || undefined,
+          pickup_required: extra.pickup_required ? 1 : undefined,
+          valet_parking: extra.valet_parking ? 1 : undefined,
+          early_checkin: extra.early_checkin ? 1 : undefined,
+          late_checkout: extra.late_checkout ? 1 : undefined,
+        },
+        instructions: extra.special_requests
+          ? [
+              {
+                department: "Front Desk",
+                instruction: extra.special_requests,
+              },
+            ]
+          : undefined,
         addons: Object.entries(addonQty)
           .filter(([, q]) => q > 0)
           .map(([experience, qty]) => ({ experience, qty })),
@@ -854,6 +891,120 @@ export function BookingDialog(props: {
                     </div>
                   </div>
                 )}
+
+              <div className="mt-2 border-t border-zinc-100 pt-4">
+                <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-zinc-500">
+                  Requests &amp; arrival
+                </h3>
+                <Field label="Special requests">
+                  <textarea
+                    className={inputCls}
+                    rows={2}
+                    placeholder="e.g. prayer mat, high floor, allergy notes"
+                    value={extra.special_requests}
+                    onChange={(e) => setX("special_requests", e.target.value)}
+                  />
+                </Field>
+                <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-sm">
+                  {(
+                    [
+                      ["pickup_required", "Airport pickup"],
+                      ["valet_parking", "Valet parking"],
+                      ["early_checkin", "Early check-in"],
+                      ["late_checkout", "Late check-out"],
+                    ] as const
+                  ).map(([k, lbl]) => (
+                    <label
+                      key={k}
+                      className="flex items-center gap-1.5 font-medium text-zinc-700"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={extra[k]}
+                        onChange={(e) => setX(k, e.target.checked)}
+                      />
+                      {lbl}
+                    </label>
+                  ))}
+                </div>
+                {extra.pickup_required && (
+                  <div className="mt-3 grid grid-cols-2 gap-3">
+                    <Field label="Arrival mode">
+                      <select
+                        className={inputCls}
+                        value={extra.arrival_mode}
+                        onChange={(e) => setX("arrival_mode", e.target.value)}
+                      >
+                        <option value="">—</option>
+                        <option>Air</option>
+                        <option>Road</option>
+                        <option>Rail</option>
+                        <option>Sea</option>
+                        <option>Own vehicle</option>
+                      </select>
+                    </Field>
+                    <Field label="Flight / train no.">
+                      <input
+                        className={inputCls}
+                        value={extra.arrival_ref}
+                        onChange={(e) => setX("arrival_ref", e.target.value)}
+                      />
+                    </Field>
+                    <Field label="Arrival time">
+                      <input
+                        type="datetime-local"
+                        className={inputCls}
+                        value={extra.arrival_datetime}
+                        onChange={(e) =>
+                          setX("arrival_datetime", e.target.value)
+                        }
+                      />
+                    </Field>
+                    <Field label="Extra beds">
+                      <input
+                        type="number"
+                        min={0}
+                        className={inputCls}
+                        value={extra.extra_beds}
+                        onChange={(e) =>
+                          setX("extra_beds", Number(e.target.value))
+                        }
+                      />
+                    </Field>
+                  </div>
+                )}
+                <div className="mt-3 grid grid-cols-2 gap-3">
+                  <Field label="Purpose of visit">
+                    <select
+                      className={inputCls}
+                      value={extra.purpose}
+                      onChange={(e) => setX("purpose", e.target.value)}
+                    >
+                      <option value="">—</option>
+                      <option>Leisure</option>
+                      <option>Business</option>
+                      <option>Event / Wedding</option>
+                      <option>Medical</option>
+                      <option>Pilgrimage</option>
+                      <option>Crew</option>
+                      <option>Other</option>
+                    </select>
+                  </Field>
+                  <Field label="Guest category">
+                    <select
+                      className={inputCls}
+                      value={extra.guest_category}
+                      onChange={(e) => setX("guest_category", e.target.value)}
+                    >
+                      <option value="">Standard</option>
+                      <option>VIP</option>
+                      <option>Corporate</option>
+                      <option>Complimentary</option>
+                      <option>Crew</option>
+                    </select>
+                  </Field>
+                </div>
+              </div>
               </div>
               )}
             </div>
