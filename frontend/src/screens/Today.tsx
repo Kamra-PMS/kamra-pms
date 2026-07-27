@@ -30,6 +30,7 @@ import {
   CardTitle,
 } from "../components/ui/card"
 import { StatCard } from "../components/ui/stat-card"
+import { Avatar } from "../components/ui/avatar"
 import { cn } from "../lib/utils"
 import type { ShellContext } from "../AppShell"
 import CheckInDialog from "../components/CheckInDialog"
@@ -161,6 +162,92 @@ function ReservationList(props: {
         </li>
       ))}
     </ul>
+  )
+}
+
+function relDay(dateStr: string, today?: string) {
+  const base = today ? new Date(today + "T00:00:00") : new Date()
+  const d = Math.round(
+    (new Date(dateStr + "T00:00:00").getTime() - base.getTime()) / 86_400_000,
+  )
+  if (d <= 0) return "Today"
+  if (d === 1) return "Tomorrow"
+  return `In ${d} days`
+}
+
+function InHouseTable({
+  rows,
+  today,
+}: {
+  rows: ReservationRow[]
+  today?: string
+}) {
+  if (!rows.length) {
+    return (
+      <p className="px-1 py-3 text-sm text-zinc-400">
+        Nobody is checked in right now.
+      </p>
+    )
+  }
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full min-w-[560px] text-sm">
+        <thead>
+          <tr className="text-left text-[11px] font-medium uppercase tracking-wider text-zinc-400">
+            <th className="pb-2 pl-1 font-medium">Guest</th>
+            <th className="pb-2 font-medium">Room</th>
+            <th className="pb-2 font-medium">Source</th>
+            <th className="pb-2 font-medium">Balance</th>
+            <th className="pb-2 font-medium">Stay</th>
+            <th className="pb-2 pr-1 text-right font-medium">Check-out</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-zinc-100">
+          {rows.map((row) => {
+            const due = Number(row.balance_due ?? 0)
+            return (
+              <tr key={row.name} className="hover:bg-zinc-50/70">
+                <td className="py-2.5 pl-1">
+                  <div className="flex items-center gap-2.5">
+                    <Avatar name={row.guest_name} />
+                    <span className="font-medium text-zinc-800">
+                      {row.guest_name}
+                    </span>
+                  </div>
+                </td>
+                <td className="py-2.5 tabular-nums text-zinc-600">
+                  {row.room ? row.room.split("-").pop() : "—"}
+                </td>
+                <td className="py-2.5">{sourceBadge(row)}</td>
+                <td className="py-2.5">
+                  {due > 0 ? (
+                    <span className="inline-flex items-center gap-1.5 tabular-nums text-zinc-700">
+                      {cur()}
+                      {inr0(due)}
+                      <Badge tone="amber">Due</Badge>
+                    </span>
+                  ) : (
+                    <span className="tabular-nums text-zinc-400">{cur()}0</span>
+                  )}
+                </td>
+                <td className="py-2.5 text-zinc-500">
+                  {row.nights} night{row.nights === 1 ? "" : "s"} · {row.adults}{" "}
+                  adult{row.adults === 1 ? "" : "s"}
+                </td>
+                <td className="py-2.5 pr-1 text-right">
+                  <div className="tabular-nums text-zinc-600">
+                    {row.check_out_date}
+                  </div>
+                  <div className="text-[11px] text-zinc-400">
+                    {relDay(row.check_out_date, today)}
+                  </div>
+                </td>
+              </tr>
+            )
+          })}
+        </tbody>
+      </table>
+    </div>
   )
 }
 
@@ -419,17 +506,10 @@ export default function Today() {
           <Card>
             <CardHeader>
               <CardTitle>In-house guests</CardTitle>
+              <span className="text-xs text-zinc-400">{inhouseN} staying</span>
             </CardHeader>
             <CardContent className="pt-1">
-              <ReservationList
-                rows={snap?.in_house ?? []}
-                empty="Nobody is checked in right now."
-                action={(row) => (
-                  <span className="text-xs text-zinc-400">
-                    until {row.check_out_date}
-                  </span>
-                )}
-              />
+              <InHouseTable rows={snap?.in_house ?? []} today={snap?.date} />
             </CardContent>
           </Card>
         </div>
