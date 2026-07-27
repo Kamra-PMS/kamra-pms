@@ -2835,7 +2835,10 @@ def create_booking(property: str, room_type: str, check_in_date: str,
                    contact_preference: str | None = None,
                    guest: str | None = None,
                    waitlist: int = 0,
-                   addons=None):
+                   addons=None,
+                   guest_category: str | None = None,
+                   stay_details=None,
+                   instructions=None):
 	"""One-call booking: attach to an existing guest profile when given,
 	else dedup by phone / create one. Optional auto room assignment,
 	voucher applied, price computed by the engine.
@@ -2849,6 +2852,10 @@ def create_booking(property: str, room_type: str, check_in_date: str,
 			frappe.throw(f"Guest profile {guest} not found.")
 	else:
 		guest = _find_or_create_guest(guest_name, phone)
+	if guest_category:
+		frappe.db.set_value("Guest", guest, "guest_category", guest_category)
+		if guest_category == "VIP":
+			frappe.db.set_value("Guest", guest, "vip", 1)
 
 	voucher = None
 	if voucher_code:
@@ -2914,6 +2921,46 @@ def create_booking(property: str, room_type: str, check_in_date: str,
 			"amount": qty * float(exp.price or 0),
 			"gst_rate": float(exp.gst_rate or 0),
 		})
+
+	# Arrival, transport, purpose and service flags - the details a real
+	# front desk collects. Whitelisted so a caller can't set arbitrary fields.
+	_STAY_KEYS = {
+		"arrival_mode", "arrival_ref", "arrival_datetime", "pickup_required",
+		"pickup_note", "departure_mode", "departure_ref", "departure_datetime",
+		"drop_required", "drop_note", "purpose", "extra_beds", "infants",
+		"valet_parking", "early_checkin", "late_checkout",
+	}
+	if isinstance(stay_details, str):
+		stay_details = frappe.parse_json(stay_details)
+	for k, v in (stay_details or {}).items():
+		if k in _STAY_KEYS and v not in (None, ""):
+			doc.set(k, v)
+
+	# Special instructions, each routed to the team that acts on it.
+	if isinstance(instructions, str):
+		instructions = frappe.parse_json(instructions)
+	for ins in instructions or []:
+		if ins.get("instruction"):
+			doc.append("instructions", {
+				"department": ins.get("department") or "Front Desk",
+				"instruction": ins["instruction"],
+			})
+	# One-tap service flags become instructions for the right department, so
+	# a pickup or a valet request reaches the people who fulfil it.
+	for flag, dept, text in (
+		("pickup_required", "Transport", "Airport / station pickup"),
+		("drop_required", "Transport", "Airport / station drop"),
+		("valet_parking", "Concierge", "Valet parking"),
+		("early_checkin", "Front Desk", "Early check-in requested"),
+		("late_checkout", "Front Desk", "Late check-out requested"),
+	):
+		if doc.get(flag):
+			note = text
+			if flag == "pickup_required" and doc.get("arrival_ref"):
+				note = f"{text} · {doc.arrival_ref}"
+			doc.append("instructions", {
+				"department": dept, "instruction": note, "status": "Open",
+			})
 
 	doc.insert(ignore_permissions=False)
 

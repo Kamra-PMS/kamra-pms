@@ -15,6 +15,9 @@
   "phone",
   "email",
   "vip",
+  "guest_category",
+  "date_of_birth",
+  "gender",
   "blacklisted",
   "blacklist_reason",
   "sb_id",
@@ -139,6 +142,25 @@
    "fieldtype": "Attach",
    "label": "Address Proof",
    "description": "Private photo/scan of the address proof. Deleted at checkout under Verify & Discard retention."
+  },
+  {
+   "fieldname": "guest_category",
+   "fieldtype": "Select",
+   "label": "Guest Category",
+   "options": "Standard\nVIP\nCorporate\nComplimentary\nCrew",
+   "default": "Standard",
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "date_of_birth",
+   "fieldtype": "Date",
+   "label": "Date of Birth"
+  },
+  {
+   "fieldname": "gender",
+   "fieldtype": "Select",
+   "label": "Gender",
+   "options": "\nMale\nFemale\nOther\nPrefer not to say"
   }
  ],
  "grid_page_length": 50,
