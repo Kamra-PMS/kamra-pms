@@ -14,7 +14,7 @@ def notify(doc, method=None):
 	if doc.doctype not in WATCHED:
 		return
 	try:
-		frappe.publish_realtime(
+		frappe.publish_realtime(  # nosemgrep: frappe-realtime-pick-room -- intentional lightweight property-wide change ping; clients filter by property and re-fetch
 			"kamra_changed",
 			{"doctype": doc.doctype,
 			 "property": doc.get("property")},

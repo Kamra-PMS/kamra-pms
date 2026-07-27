@@ -36,5 +36,5 @@ def execute():
 		_grant("Rate Guardrail", role, r, w, c, delete=d)
 	print("Rate Guardrail perms granted")
 
-	frappe.db.commit()
+	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- batch/seed/migration script runs outside the request cycle; explicit commit persists the staged writes
 	print("Kamra v4 schema (rate guardrails) ready.")

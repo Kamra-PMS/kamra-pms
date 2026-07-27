@@ -51,5 +51,5 @@ def execute():
 		rt.save(ignore_permissions=True)
 		print(f"media added: {code}")
 
-	frappe.db.commit()
+	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- batch/seed/migration script runs outside the request cycle; explicit commit persists the staged writes
 	print("v6 showcase seed done.")

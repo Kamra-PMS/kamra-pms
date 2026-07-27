@@ -43,5 +43,5 @@ def execute():
 		     label="Payment Link ID", insert_after="payment_link_url"),
 	])
 
-	frappe.db.commit()
+	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- batch/seed/migration script runs outside the request cycle; explicit commit persists the staged writes
 	print("Kamra v9 schema (payments) ready.")

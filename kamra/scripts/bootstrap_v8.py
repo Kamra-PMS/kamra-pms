@@ -183,5 +183,5 @@ def execute():
 			_grant(doctype, role, r, w, c, delete=1 if role in ("System Manager", "Hotel Admin") else 0)
 	print("perms granted for v8 doctypes")
 
-	frappe.db.commit()
+	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- batch/seed/migration script runs outside the request cycle; explicit commit persists the staged writes
 	print("Kamra v8 schema (eZee parity long tail) ready.")

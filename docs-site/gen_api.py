@@ -123,7 +123,7 @@ def collect():
     modules = []
     for mod, folder, note in MODULES:
         path = os.path.join(APP, f"{mod}.py")
-        tree = ast.parse(open(path).read())
+        tree = ast.parse(open(path).read())  # nosemgrep: frappe-security-file-traversal -- path is derived from the app source tree, not from user input
         eps = []
         for node in tree.body:
             if not isinstance(node, ast.FunctionDef):
@@ -200,7 +200,7 @@ Content-Type: application/json
                     out.append(f"| `{n}` | {'yes' if req else 'no'} | "
                                f"{'' if d in (None,) else f'`{d}`'} |")
                 out.append("")
-    open(os.path.join(HERE, "api-reference.md"), "w").write("\n".join(out))
+    open(os.path.join(HERE, "api-reference.md"), "w").write("\n".join(out))  # nosemgrep: frappe-security-file-traversal -- path is derived from the app source tree, not from user input
     return total
 
 
@@ -258,7 +258,7 @@ def write_postman(modules):
         "item": items,
     }
     path = os.path.join(HERE, "public", "kamra.postman_collection.json")
-    open(path, "w").write(json.dumps(collection, indent=1))
+    open(path, "w").write(json.dumps(collection, indent=1))  # nosemgrep: frappe-security-file-traversal -- path is derived from the app source tree, not from user input
 
 
 if __name__ == "__main__":

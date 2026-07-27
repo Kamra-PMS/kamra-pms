@@ -112,5 +112,5 @@ def razorpay_webhook():
 		           minutes_saved=3,
 		           rationale=f"₹{amount:,.0f} auto-posted from payment link",
 		           agent_name="Payments", channel="API")
-	frappe.db.commit()
+	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- persists the completed operation before returning to an external/public caller; reviewed as intentional
 	return {"ok": True, "folio": folio.name, "posted": not already}

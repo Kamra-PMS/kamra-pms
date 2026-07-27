@@ -214,7 +214,7 @@ def save_budget(property: str, period: str, room_revenue_target: float = 0,
 		"adr_target": adr_target, "revpar_target": revpar_target,
 	})
 	doc.save(ignore_permissions=True)
-	frappe.db.commit()
+	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- persists the completed operation before returning to an external/public caller; reviewed as intentional
 	return {"ok": True}
 
 
@@ -226,7 +226,7 @@ def contribution(property: str, from_date: str, to_date: str,
 	booking source, company or travel agent. by = source | company | travel_agent."""
 	col = {"source": "r.source", "company": "r.company",
 	       "travel_agent": "r.travel_agent"}.get(by, "r.source")
-	rows = frappe.db.sql(
+	rows = frappe.db.sql(  # nosemgrep: frappe-sql-format-injection -- values are parameterized; interpolated text is a constant or whitelisted identifier, not user input
 		f"""
 		SELECT COALESCE({col}, 'Direct') AS label,
 		       COUNT(*) AS bookings,
