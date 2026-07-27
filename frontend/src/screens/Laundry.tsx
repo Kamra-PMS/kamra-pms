@@ -9,6 +9,7 @@ import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { cn } from "../lib/utils"
+import { cur } from "../lib/money"
 import {
   ExpressToggle,
   inr,
@@ -205,7 +206,7 @@ export default function Laundry() {
         </div>
         {o.total > 0 && (
           <span className="text-sm font-semibold tabular-nums">
-            ₹{inr(o.total)}
+            {cur()}{inr(o.total)}
           </span>
         )}
       </div>
@@ -529,7 +530,7 @@ export default function Laundry() {
               }
               onClick={submitCollect}
             >
-              Collect {countPieces} piece{countPieces === 1 ? "" : "s"} · ₹
+              Collect {countPieces} piece{countPieces === 1 ? "" : "s"} · {cur()}
               {inr(countTotal)}
             </Button>
           }
@@ -596,7 +597,7 @@ export default function Laundry() {
                         {r.item_name}
                       </p>
                       <p className="text-xs text-zinc-400">
-                        {r.service_type} · ₹{inr(price)}
+                        {r.service_type} · {cur()}{inr(price)}
                       </p>
                     </div>
                     <Stepper
@@ -641,7 +642,7 @@ export default function Laundry() {
               disabled={busy || (returnPending > 0 && !returning.note.trim())}
               onClick={submitDeliver}
             >
-              Deliver &amp; bill ₹{inr(returning.order.total)}
+              Deliver &amp; bill {cur()}{inr(returning.order.total)}
               {returnPending > 0 ? ` (${returnPending} short)` : ""}
             </Button>
           }
@@ -943,7 +944,7 @@ function PriceMenu({
             </select>
             <input
               className="w-24 rounded-lg border border-zinc-300 px-2 py-1.5 text-sm"
-              placeholder="Rate ₹"
+              placeholder={`Rate ${cur()}`}
               inputMode="numeric"
               value={form.rate}
               onChange={(e) =>
@@ -952,7 +953,7 @@ function PriceMenu({
             />
             <input
               className="w-28 rounded-lg border border-zinc-300 px-2 py-1.5 text-sm"
-              placeholder="Express ₹ (opt)"
+              placeholder={`Express ${cur()} (opt)`}
               inputMode="numeric"
               value={form.express}
               onChange={(e) =>
@@ -990,9 +991,9 @@ function PriceMenu({
                 <tr key={r.name} className="border-t border-zinc-100">
                   <td className="py-1.5 font-medium">{r.item_name}</td>
                   <td className="text-zinc-500">{r.service_type}</td>
-                  <td className="text-right tabular-nums">₹{inr(r.rate)}</td>
+                  <td className="text-right tabular-nums">{cur()}{inr(r.rate)}</td>
                   <td className="text-right tabular-nums text-zinc-500">
-                    ₹{inr(r.express_rate)}
+                    {cur()}{inr(r.express_rate)}
                   </td>
                   {canEdit && (
                     <td className="text-right">
@@ -1072,7 +1073,7 @@ function Billing({
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              <Stat label="Revenue" value={`₹${inr(rev.revenue)}`} />
+              <Stat label="Revenue" value={`${cur()}${inr(rev.revenue)}`} />
               <Stat label="Billed orders" value={rev.billed_orders} />
               <Stat label="Pieces" value={rev.pieces} />
               <Stat label="Express" value={rev.express_orders} />
@@ -1101,7 +1102,7 @@ function Billing({
                       <td className="py-1.5">{s.service_type}</td>
                       <td className="text-right tabular-nums">{s.pieces}</td>
                       <td className="text-right tabular-nums">
-                        ₹{inr(s.revenue)}
+                        {cur()}{inr(s.revenue)}
                       </td>
                     </tr>
                   ))}
@@ -1147,7 +1148,7 @@ function Billing({
                   <td className="text-zinc-500">{o.guest_name || o.name}</td>
                   <td className="text-right tabular-nums">{o.pieces}</td>
                   <td className="text-right tabular-nums">
-                    {o.total > 0 ? `₹${inr(o.total)}` : "—"}
+                    {o.total > 0 ? `${cur()}${inr(o.total)}` : "—"}
                   </td>
                   <td>
                     <Badge tone={STATUS_TONE[o.status] || "zinc"}>
@@ -1175,7 +1176,7 @@ function Billing({
         )}
         {delivered.length > 0 && (
           <p className="mt-3 text-right text-sm font-semibold">
-            Delivered today: ₹{inr(daySum)}
+            Delivered today: {cur()}{inr(daySum)}
           </p>
         )}
       </CardContent>

@@ -6,6 +6,8 @@
  * the body is 72mm, the common printable width).
  */
 
+import { cur, moneyLocale } from "./money"
+
 const CSS = `
   @page { size: 80mm auto; margin: 0 }
   * { margin: 0; padding: 0; box-sizing: border-box }
@@ -29,7 +31,7 @@ const esc = (s: unknown) =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c] as string))
 
 const inr = (n: unknown) =>
-  Number(n ?? 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  Number(n ?? 0).toLocaleString(moneyLocale(), { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
 export function printThermal(title: string, body: string) {
   const w = window.open("", "_blank", "width=380,height=640")
@@ -58,7 +60,7 @@ export function kotHtml(o: {
   nc_by?: string | null
   items: KotLine[]
 }) {
-  const when = new Date().toLocaleString("en-IN", {
+  const when = new Date().toLocaleString(moneyLocale(), {
     day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit",
   })
   const rows = o.items.map((it) =>
@@ -94,7 +96,7 @@ export function laundryDocketHtml(o: {
   items: { item_name: string; service_type: string; qty: number }[]
   total: number
 }) {
-  const when = new Date().toLocaleString("en-IN", {
+  const when = new Date().toLocaleString(moneyLocale(), {
     day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit",
   })
   const rows = o.items.map((it) =>
@@ -115,7 +117,7 @@ export function laundryDocketHtml(o: {
     <div class="rule"></div>
     <table>${rows}</table>
     <div class="rule"></div>
-    <div class="row b lg"><span>Total</span><span class="num">₹${inr(o.total)}</span></div>
+    <div class="row b lg"><span>Total</span><span class="num">${cur()}${inr(o.total)}</span></div>
     <div class="c sm">Counted with the guest. Billed to the room.</div>`
 }
 
@@ -147,7 +149,7 @@ export interface BillData {
 }
 
 export function billHtml(b: BillData) {
-  const when = new Date().toLocaleString("en-IN", {
+  const when = new Date().toLocaleString(moneyLocale(), {
     day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit",
   })
   const label = b.table_no ? `Table ${b.table_no}`
@@ -158,7 +160,7 @@ export function billHtml(b: BillData) {
     `<td class="num" style="width:52px">${inr(it.rate)}</td>` +
     `<td class="num" style="width:62px">${inr(it.amount)}</td></tr>`).join("")
   const money = (l: string, v: number, cls = "") =>
-    `<div class="row ${cls}"><span>${l}</span><span class="num">₹${inr(v)}</span></div>`
+    `<div class="row ${cls}"><span>${l}</span><span class="num">${cur()}${inr(v)}</span></div>`
   return `
     <div class="c b lg">${esc(b.property_name)}</div>
     <div class="c">${esc(b.outlet_name)}</div>

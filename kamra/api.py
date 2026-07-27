@@ -255,7 +255,8 @@ def setup_property(payload):
 			"extra_adult_price": rt.get("extra_adult_price", 0),
 			"adults_capacity": rt.get("adults", 2),
 			"children_capacity": rt.get("children", 1),
-			"tax_percent": rt.get("tax_percent", 5),
+			# unset = the country pack's standard rate, not an Indian slab
+			"tax_percent": rt.get("tax_percent"),
 		})
 		doc.insert()
 		rt_by_code[rt["code"]] = doc.name
@@ -348,8 +349,6 @@ def import_bookings(property: str, bookings):
 	        "errors": errors}
 
 
-@frappe.whitelist()
-@require_roles("Front Desk", "Kamra Agent")
 def _stay_money(res):
 	"""The GRC's money line: what the stay owes and what's been taken -
 	advances and held deposits called out separately."""
@@ -375,6 +374,8 @@ def _stay_money(res):
 	}
 
 
+@frappe.whitelist()
+@require_roles("Front Desk", "Kamra Agent")
 def registration_card(reservation: str):
 	"""Everything the printed GRC (guest registration card) needs."""
 	res = frappe.get_doc("Reservation", reservation)
@@ -420,9 +421,10 @@ def registration_card(reservation: str):
 				guest.get("address_line"), guest.get("city")])),
 		},
 		"occupants": [
-			{"full_name": o.full_name, "age": o.age, "gender": o.gender,
-			 "nationality": o.nationality, "id_type": o.id_type,
-			 "id_number": o.id_number, "phone": o.phone}
+			{"row": o.name, "full_name": o.full_name, "age": o.age,
+			 "gender": o.gender, "nationality": o.nationality,
+			 "id_type": o.id_type, "id_number": o.id_number,
+			 "phone": o.phone, "id_file": o.get("id_file")}
 			for o in (res.get("occupants") or [])
 		],
 	}
@@ -1011,6 +1013,10 @@ def update_occupants(reservation: str, occupants):
 	if isinstance(occupants, str):
 		occupants = frappe.parse_json(occupants)
 	doc = frappe.get_doc("Reservation", reservation)
+	# scans survive edits even when the client sends stale rows: carry the
+	# stored id_file for any row that comes back without one
+	existing_scans = {o.name: o.get("id_file")
+	                  for o in (doc.get("occupants") or [])}
 	doc.set("occupants", [])
 	for o in occupants or []:
 		if not (o.get("full_name") or "").strip():
@@ -1023,9 +1029,18 @@ def update_occupants(reservation: str, occupants):
 			"id_type": o.get("id_type") or "",
 			"id_number": (o.get("id_number") or "").strip(),
 			"phone": o.get("phone") or "",
+			# an uploaded ID survives a register edit
+			"id_file": o.get("id_file")
+			           or existing_scans.get(o.get("row")) or None,
 		})
 	doc.save()
-	return {"reservation": reservation, "occupants": len(doc.occupants)}
+	return {"reservation": reservation, "occupants": len(doc.occupants),
+	        "rows": [
+	            {"row": o.name, "full_name": o.full_name, "age": o.age,
+	             "gender": o.gender, "nationality": o.nationality,
+	             "id_type": o.id_type, "id_number": o.id_number,
+	             "phone": o.phone, "id_file": o.get("id_file")}
+	            for o in doc.occupants]}
 
 
 @frappe.whitelist()
@@ -1908,6 +1923,70 @@ def verify_precheckin(reservation: str):
 
 @frappe.whitelist()
 @require_roles("Front Desk", "Kamra Agent")
+def checkin_context(reservation: str):
+	"""Everything the check-in flow needs in one round trip: how complete
+	the guest's registration is, the assigned room - or the allocator's
+	suggestion plus every room the desk may hand over instead."""
+	res = frappe.get_doc("Reservation", reservation)
+	guest = frappe.get_doc("Guest", res.guest) if res.guest else None
+
+	room_assigned = None
+	if res.room:
+		room_assigned = frappe.db.get_value(
+			"Room", res.room,
+			["name", "room_number", "housekeeping_status"], as_dict=True)
+
+	suggestion = None
+	rooms = []
+	if not res.room and res.status == "Confirmed":
+		rooms = [
+			{"name": r["name"], "room_number": r["room_number"],
+			 "housekeeping_status": r["housekeeping_status"]}
+			for r in available_rooms(res.property, res.room_type,
+			                         res.check_in_date, res.check_out_date,
+			                         group_booking=res.group_booking)]
+		from kamra.allocation import suggest_allocation
+		for p_ in suggest_allocation(
+				res.property, str(res.check_in_date))["proposals"]:
+			if p_["reservation"] == res.name:
+				suggestion = {
+					"room": p_["suggested_room"],
+					"room_number": p_["room_number"],
+					"why": p_["why"],
+					"needs_review": p_["needs_review"],
+				}
+				break
+
+	return {
+		"reservation": {
+			"name": res.name, "status": res.status,
+			"guest": res.guest, "guest_name": res.guest_name,
+			"room_type": res.room_type,
+			"room_type_name": frappe.db.get_value(
+				"Room Type", res.room_type, "room_type_name"),
+			"check_in_date": str(res.check_in_date),
+			"check_out_date": str(res.check_out_date),
+			"adults": res.adults, "children": res.children,
+			"planned_check_in_time": str(res.get("planned_check_in_time") or ""),
+			"vip": frappe.db.get_value("Guest", res.guest, "vip")
+			       if res.guest else 0,
+		},
+		"readiness": {
+			"phone": bool(guest and guest.get("phone")),
+			"email": bool(guest and guest.get("email")),
+			"id_on_file": bool(guest and guest.get("id_file")),
+			"address_on_file": bool(guest and guest.get("address_proof_file")),
+			"precheckin_status": res.get("precheckin_status") or "Not sent",
+			"link_sent": bool(res.get("precheckin_link_sent")),
+		},
+		"room_assigned": room_assigned,
+		"suggestion": suggestion,
+		"rooms": rooms,
+	}
+
+
+@frappe.whitelist()
+@require_roles("Front Desk", "Kamra Agent")
 def check_in(reservation: str, room: str | None = None):
 	doc = frappe.get_doc("Reservation", reservation)
 	if room:
@@ -1919,6 +1998,37 @@ def check_in(reservation: str, room: str | None = None):
 	           rationale=f"{doc.guest_name} into "
 	                     f"{(doc.room or '').split('-')[-1] or 'unassigned'}")
 	return {"ok": True, "reservation": doc.name, "room": doc.room}
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Front Desk", "Kamra Agent")
+def upload_occupant_id(reservation: str, row: str, image: str):
+	"""ID document for one occupant on the stay register. Same security
+	pipeline as every ID image: decoded, re-encoded through PIL (the
+	sanitisation boundary), stored private, attached to the reservation
+	so checkout retention rules find it."""
+	from kamra.id_documents import _decode, _sanitise
+
+	res = frappe.get_doc("Reservation", reservation)
+	match = [o for o in (res.get("occupants") or []) if o.name == row]
+	if not match:
+		frappe.throw("No such occupant row on this stay.")
+	occ = match[0]
+	content = _sanitise(_decode(image))
+	fdoc = frappe.get_doc({
+		"doctype": "File",
+		"file_name": f"occupant-id-{res.name}-{occ.idx}.jpg",
+		"attached_to_doctype": "Reservation",
+		"attached_to_name": res.name,
+		"is_private": 1,
+		"content": content,
+	}).insert(ignore_permissions=True)
+	frappe.db.set_value("Stay Occupant", occ.name, "id_file", fdoc.file_url,
+	                    update_modified=False)
+	from kamra.savings import log_action
+	log_action("occupant_id_capture", "Reservation", res.name, res.property,
+	           rationale=f"ID captured for occupant {occ.full_name}")
+	return {"ok": True, "file": fdoc.file_url, "row": occ.name}
 
 
 @frappe.whitelist(methods=["POST"])
@@ -1961,6 +2071,16 @@ def _scrub_stay_ids(res):
 		if o.id_number:
 			frappe.db.set_value("Stay Occupant", o.name, "id_number",
 			                    _mask_id(o.id_number), update_modified=False)
+		if o.get("id_file"):
+			# occupant scans leave with the party, like every other ID
+			for f in frappe.get_all("File", filters={
+					"attached_to_doctype": "Reservation",
+					"attached_to_name": res.name,
+					"file_url": o.id_file}, pluck="name"):
+				frappe.delete_doc("File", f, force=True,
+				                  ignore_permissions=True)
+			frappe.db.set_value("Stay Occupant", o.name, "id_file", None,
+			                    update_modified=False)
 	guest_id = frappe.db.get_value("Guest", res.guest, "id_number")
 	if guest_id:
 		frappe.db.set_value("Guest", res.guest, "id_number",

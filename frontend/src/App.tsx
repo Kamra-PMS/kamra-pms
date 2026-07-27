@@ -47,11 +47,15 @@ import Tickets from "./screens/Tickets"
 import Laundry from "./screens/Laundry"
 import MenuItems from "./screens/MenuItems"
 import Today from "./screens/Today"
+import WhatsAppChat from "./screens/WhatsAppChat"
 import {
   companiesConfig,
   guardrailsConfig,
   housekeepingConfig,
   lostFoundConfig,
+  channelConnectionsConfig,
+  channelManagerConfig,
+  channelRoomMappingsConfig,
   mealPlansConfig,
   ratePlansConfig,
   reservationsConfig,
@@ -266,6 +270,19 @@ export default function App() {
           <Route path="reports" element={<Reports />} />
           <Route path="revenue-reports" element={<RevenueReports />} />
           <Route path="ops-sla" element={<OpsSLA />} />
+          <Route path="whatsapp" element={<WhatsAppChat />} />
+          <Route
+            path="channels"
+            element={<ResourceScreen config={channelConnectionsConfig} />}
+          />
+          <Route
+            path="channel-manager"
+            element={<ResourceScreen config={channelManagerConfig} />}
+          />
+          <Route
+            path="ota-mappings"
+            element={<ResourceScreen config={channelRoomMappingsConfig} />}
+          />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="crs" element={<CRS />} />
           <Route path="pos" element={<POS />} />

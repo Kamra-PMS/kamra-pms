@@ -8,7 +8,8 @@ export default defineConfig({
   cleanUrls: true,
   head: [["link", { rel: "icon", type: "image/svg+xml", href: "/docs/kamra-mark.svg" }]],
   themeConfig: {
-    logo: "/kamra-mark.svg",
+    logo: { src: "/kamra-horizontal.svg", height: 28 },
+    siteTitle: false,
     nav: [
       { text: "Website", link: "https://kamrapms.com" },
       { text: "Live demo", link: "https://demo.kamrapms.com" },
@@ -29,6 +30,7 @@ export default defineConfig({
           { text: "Introduction", link: "/" },
           { text: "Quickstart (Docker)", link: "/quickstart" },
           { text: "Try the live demo", link: "/demo" },
+          { text: "Go-live checklist", link: "/go-live" },
         ],
       },
       {
@@ -48,6 +50,8 @@ export default defineConfig({
         text: "Using Kamra",
         items: [
           { text: "Features tour", link: "/features" },
+          { text: "WhatsApp on your number", link: "/whatsapp" },
+          { text: "Channel manager (OTA sync)", link: "/channel-manager" },
           { text: "User guide", link: "/user-guide" },
         ],
       },

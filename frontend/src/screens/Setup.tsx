@@ -6,6 +6,7 @@ import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { cn } from "../lib/utils"
+import { cur } from "../lib/money"
 
 const inputCls =
   "w-full rounded-lg border border-zinc-300 bg-white px-3.5 py-2.5 text-base " +
@@ -205,7 +206,7 @@ export default function Setup() {
                     value={rt.code} onChange={(e) => setRT(i, "code", e.target.value)} />
                   <input className={cn(inputCls, "flex-1")} placeholder="Name (Deluxe)"
                     value={rt.name} onChange={(e) => setRT(i, "name", e.target.value)} />
-                  <input className={cn(inputCls, "w-28")} type="number" placeholder="₹/night"
+                  <input className={cn(inputCls, "w-28")} type="number" placeholder={`${cur()}/night`}
                     value={rt.base_price} onChange={(e) => setRT(i, "base_price", e.target.value)} />
                   <input className={cn(inputCls, "w-20")} type="number" placeholder="Adults"
                     value={rt.adults} onChange={(e) => setRT(i, "adults", e.target.value)} />
@@ -256,7 +257,7 @@ export default function Setup() {
                     value={mp.price_per_adult}
                     onChange={(e) => setMealPlans((m) =>
                       m.map((x, j) => (j === i ? { ...x, price_per_adult: e.target.value } : x)))} />
-                  <span className="text-xs text-zinc-400">₹/adult/night</span>
+                  <span className="text-xs text-zinc-400">{cur()}/adult/night</span>
                 </div>
               ))}
             </>
@@ -269,7 +270,7 @@ export default function Setup() {
               <div className="flex flex-wrap gap-1.5">
                 {roomTypes.filter((r) => r.code).map((r) => (
                   <Badge key={r.code} tone="zinc">
-                    {r.name} ₹{r.base_price} ×{r.numbers.split(",").filter((x) => x.trim()).length}
+                    {r.name} {cur()}{r.base_price} ×{r.numbers.split(",").filter((x) => x.trim()).length}
                   </Badge>
                 ))}
                 {mealPlans.filter((m) => m.on).map((m) => (

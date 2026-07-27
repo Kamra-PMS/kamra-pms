@@ -26,6 +26,7 @@ import { call, getCurrentProperty } from "../lib/api"
 import { useAuth } from "../lib/auth"
 import { visibleApps, type AppNavItem } from "../lib/apps"
 import { cn } from "../lib/utils"
+import { cur, moneyLocale } from "../lib/money"
 
 interface Result {
   id: string
@@ -233,7 +234,7 @@ export function CommandPalette() {
       invoices.map((f) => ({
         id: `inv:${f.name}`,
         label: `${f.invoice_number} · ${f.guest_name || ""}`.trim(),
-        hint: `Invoice · ₹${(f.grand_total || 0).toLocaleString("en-IN")} · ${f.status}`,
+        hint: `Invoice · ${cur()}${(f.grand_total || 0).toLocaleString(moneyLocale())} · ${f.status}`,
         icon: FileText,
         onSelect: () => {
           setOpen(false)

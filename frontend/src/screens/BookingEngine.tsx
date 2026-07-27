@@ -8,6 +8,7 @@ import { PRESETS, accentHex } from "../lib/accents"
 import { serverError, updateResource } from "../lib/resource"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
+import { cur } from "../lib/money"
 
 type Doc = Record<string, any>
 
@@ -513,7 +514,7 @@ export default function BookingEngine() {
                   {doc.booking_payment_mode === "Registration fee" && (
                     <label className="block max-w-xs">
                       <span className="mb-1 block text-sm font-medium text-zinc-600">
-                        Registration fee (₹)
+                        Registration fee ({cur()})
                       </span>
                       <input
                         type="number" min={0} className={inputCls}
@@ -642,7 +643,7 @@ export default function BookingEngine() {
                       <textarea
                         rows={2}
                         className={inputCls}
-                        placeholder="Extra bed available for select rooms at ₹1,000 per night."
+                        placeholder={`Extra bed available for select rooms at ${cur()}1,000 per night.`}
                         value={doc.extra_bed_policy ?? ""}
                         onChange={(e) => updateField("extra_bed_policy", e.target.value)}
                       />

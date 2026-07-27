@@ -30,9 +30,10 @@ import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
 import CancelPanel from "../components/CancelPanel"
 import LinkedRecords from "../components/LinkedRecords"
+import { cur, moneyLocale } from "../lib/money"
 
 const inr = (n: number) =>
-  "₹" + Number(n || 0).toLocaleString("en-IN", { maximumFractionDigits: 0 })
+  `${cur()}` + Number(n || 0).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
 
 const STATUS_TONE: Record<string, string> = {
   Waitlist: "bg-amber-100 text-amber-800",

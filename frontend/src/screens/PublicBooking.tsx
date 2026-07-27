@@ -15,9 +15,10 @@ import { accentVars } from "../lib/accents"
 import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
 import { Sheet } from "../components/ui/sheet"
+import { cur, moneyLocale, adoptUiLocale } from "../lib/money"
 
 const inr = (n: number) =>
-  n.toLocaleString("en-IN", { maximumFractionDigits: 0 })
+  n.toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
 
 interface Showcase {
   property: {
@@ -145,6 +146,7 @@ export default function PublicBooking() {
     call<Showcase>("kamra.public_api.showcase", {
       property: DEMO_PROPERTY,
     }).then((d) => {
+      adoptUiLocale((d as unknown as { ui_locale?: { currency_symbol?: string; locale?: string } }).ui_locale)
       setData(d)
       setForm((f) => ({ ...f, meal_plan: d.meal_plans[0]?.name ?? "" }))
     })
@@ -164,11 +166,11 @@ export default function PublicBooking() {
     if (!data) return
     const p = data.property
     const minPrice = Math.min(...data.room_types.map((r) => r.base_price))
-    document.title = p.meta_title || `${p.property_name}, ${p.city} - book direct from ₹${inr(minPrice)}/night`
+    document.title = p.meta_title || `${p.property_name}, ${p.city} - book direct from ${cur()}${inr(minPrice)}/night`
     setMetaTag(
       "description",
       p.meta_description ||
-        (`${p.property_name} in ${p.city}: ${data.room_types.length} room types from ₹${inr(minPrice)}/night. ` +
+        (`${p.property_name} in ${p.city}: ${data.room_types.length} room types from ${cur()}${inr(minPrice)}/night. ` +
           `Best-rate direct booking, pay at hotel. ${p.description ?? ""}`).slice(0, 158),
     )
     if (p.og_image) {
@@ -502,7 +504,7 @@ export default function PublicBooking() {
                       {r?.quote ? (
                         <>
                           <p className="text-2xl font-semibold">
-                            ₹{inr(r.quote.amount_after_tax)}
+                            {cur()}{inr(r.quote.amount_after_tax)}
                             <span className="ml-1 text-sm font-normal text-zinc-500">
                               total · {r.quote.nights} night{r.quote.nights === 1 ? "" : "s"}, taxes in
                             </span>
@@ -519,7 +521,7 @@ export default function PublicBooking() {
                         </p>
                       ) : (
                         <p className="text-sm text-zinc-400">
-                          from ₹{inr(rt.base_price)}/night
+                          from {cur()}{inr(rt.base_price)}/night
                         </p>
                       )}
                     </div>
@@ -667,7 +669,7 @@ export default function PublicBooking() {
               <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-emerald-800">
                 <p className="text-lg font-semibold">{done.reservation}</p>
                 <p className="mt-1 text-sm">
-                  Total ₹{inr(done.amount)} - payable at the hotel. We've saved
+                  Total {cur()}{inr(done.amount)} - payable at the hotel. We've saved
                   your number; the front desk will reach out before arrival.
                 </p>
               </div>
@@ -696,7 +698,7 @@ export default function PublicBooking() {
                   <option value="">Room only</option>
                   {data.meal_plans.map((mp) => (
                     <option key={mp.name} value={mp.name}>
-                      {mp.label} (+₹{inr(mp.price_per_adult)}/adult/night)
+                      {mp.label} (+{cur()}{inr(mp.price_per_adult)}/adult/night)
                     </option>
                   ))}
                 </select>
@@ -737,7 +739,7 @@ export default function PublicBooking() {
                               )}
                             </div>
                             <div className="truncate text-xs text-zinc-500">
-                              ₹{inr(exp.price)}
+                              {cur()}{inr(exp.price)}
                               {exp.duration ? ` · ${exp.duration}` : ""}
                               {exp.description ? ` · ${exp.description}` : ""}
                             </div>
@@ -788,7 +790,7 @@ export default function PublicBooking() {
                     )
                     return addonTotal > 0 ? (
                       <p className="mt-2 text-right text-xs text-zinc-500">
-                        Experiences: +₹{inr(addonTotal)} · added to your bill at
+                        Experiences: +{cur()}{inr(addonTotal)} · added to your bill at
                         the hotel
                       </p>
                     ) : null
@@ -852,7 +854,7 @@ export default function PublicBooking() {
                       ? "Full amount is paid online to confirm this booking."
                       : data.property.payment_mode === "Advance percent"
                         ? `A ${data.property.advance_percent}% advance is collected to confirm; the rest is paid at the hotel.`
-                        : `A ₹${inr(data.property.registration_fee)} registration fee is collected to confirm; the rest is paid at the hotel.`}
+                        : `A ${cur()}${inr(data.property.registration_fee)} registration fee is collected to confirm; the rest is paid at the hotel.`}
                   </div>
                 )}
               {error && (

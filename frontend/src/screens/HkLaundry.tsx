@@ -3,6 +3,7 @@ import { Shirt, Zap, Plus, Minus, ChevronRight } from "lucide-react"
 import { call, getCurrentProperty } from "../lib/api"
 import { Badge } from "../components/ui/badge"
 import { cn } from "../lib/utils"
+import { cur } from "../lib/money"
 import {
   ExpressToggle,
   inr,
@@ -87,7 +88,7 @@ export default function HkLaundry({ rooms }: { rooms: Room[] }) {
             )}
           </div>
         </div>
-        {o.total > 0 && <span className="text-sm font-semibold tabular-nums">₹{inr(o.total)}</span>}
+        {o.total > 0 && <span className="text-sm font-semibold tabular-nums">{cur()}{inr(o.total)}</span>}
       </div>
       {o.notes && <p className="mt-2 text-sm text-zinc-500">{o.notes}</p>}
       {o.shortage_note && (
@@ -185,7 +186,7 @@ export default function HkLaundry({ rooms }: { rooms: Room[] }) {
                 </span>
                 <span className="flex items-center gap-2">
                   <Badge tone={STATUS_TONE[o.status] || "zinc"}>{o.status}</Badge>
-                  {o.total > 0 && <span className="tabular-nums font-medium">₹{inr(o.total)}</span>}
+                  {o.total > 0 && <span className="tabular-nums font-medium">{cur()}{inr(o.total)}</span>}
                 </span>
               </li>
             ))}
@@ -247,7 +248,7 @@ export default function HkLaundry({ rooms }: { rooms: Room[] }) {
                     q > 0 ? "border-brand-300 bg-brand-50" : "border-zinc-200")}>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium">{r.item_name}</p>
-                    <p className="text-xs text-zinc-400">{r.service_type} · ₹{inr(price)}</p>
+                    <p className="text-xs text-zinc-400">{r.service_type} · {cur()}{inr(price)}</p>
                   </div>
                   <button className="rounded-lg border border-zinc-300 p-1.5" aria-label="less"
                     onClick={() => setCounting({ ...counting, qty: { ...counting.qty, [r.name]: Math.max(0, q - 1) } })}>
@@ -271,7 +272,7 @@ export default function HkLaundry({ rooms }: { rooms: Room[] }) {
             className="w-full rounded-xl bg-brand-600 py-3 text-base font-semibold text-white disabled:opacity-50"
             disabled={busy || countPieces === 0 || (!counting.order && !counting.room)}
             onClick={submitCollect}>
-            Collect {countPieces} piece{countPieces === 1 ? "" : "s"} · ₹{inr(countTotal)}
+            Collect {countPieces} piece{countPieces === 1 ? "" : "s"} · {cur()}{inr(countTotal)}
           </button>
         </Sheet>
       )}
@@ -324,7 +325,7 @@ export default function HkLaundry({ rooms }: { rooms: Room[] }) {
             disabled={busy || (returnPending > 0 && !returning.note.trim())}
             onClick={submitDeliver}>
             <ChevronRight className="mr-1 inline size-4" />
-            Deliver & bill ₹{inr(returning.order.total)}
+            Deliver & bill {cur()}{inr(returning.order.total)}
             {returnPending > 0 ? ` (${returnPending} short)` : ""}
           </button>
         </Sheet>

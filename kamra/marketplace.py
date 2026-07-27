@@ -55,6 +55,26 @@ def registry(property: str):
 			],
 		},
 		{
+			"category": "Guest messaging (WhatsApp)",
+			"blurb": "WhatsApp is the guest channel in India, Southeast Asia "
+			         "and the Gulf. The Meta Cloud API integration is open "
+			         "source and included - bring your own number. Managed "
+			         "gateway and the AI concierge are connected services.",
+			"cards": [
+				_module("WhatsApp - Meta Cloud API",
+				        "Booking confirmations, self check-in links, payment "
+				        "requests and a desk-side guest thread on your own "
+				        "WhatsApp Business number. Meta bills you directly "
+				        "per conversation; Kamra adds nothing.",
+				        detail="Included - bring your own number"),
+				_bench("WhatsApp managed gateway",
+				       "Same features, our number and Meta relationship - "
+				       "for hotels that don't want Meta business "
+				       "verification. Per conversation.", None,
+				       status="planned"),
+			],
+		},
+		{
 			"category": "AI on your phone lines (HeyKoala)",
 			"blurb": "Kamra is agent-ready. HeyKoala is the AI that answers your "
 			         "phone and WhatsApp - it books, quotes and handles requests "
@@ -78,10 +98,20 @@ def registry(property: str):
 			"blurb": "Sync rates and availability across OTAs. Delivered as an "
 			         "enterprise integration tailored to your channel mix.",
 			"cards": [
-				_enterprise("Channel Manager",
-				            "Two-way OTA sync (Booking.com, MakeMyTrip, Agoda "
-				            "and more) via a channel-manager partner - scoped "
-				            "and connected for your property."),
+				_module("Channex.io",
+				        "Two-way OTA sync (Booking.com, Agoda, Expedia, "
+				        "Airbnb) - bring your own Channex account, self-"
+				        "serve. Map rooms, paste an API key, push.",
+				        detail="Included - bring your own account"),
+				_module("STAAH",
+				        "Adapter ready; activates with STAAH connectivity-"
+				        "partner credentials.", detail="Partner activation"),
+				_module("AioSell",
+				        "Adapter ready; activates with AioSell PMS-connect "
+				        "credentials.", detail="Partner activation"),
+				_enterprise("Other channel managers",
+				            "SiteMinder, RateGain and friends - the provider "
+				            "seam is open; scoped per property."),
 			],
 		},
 		{
@@ -136,8 +166,22 @@ def registry(property: str):
 			"cards": [
 				_module("India", "GST slabs, SAC, GSTIN, GSTR-1, e-invoice.",
 				        detail="Included"),
-				_bench("United Arab Emirates", "UAE VAT, FTA reports.", None,
-				       status="planned"),
+				_module("Indonesia",
+				        "PB1/PBJT regional hotel tax (flat, per-region rate), "
+				        "NPWP on invoices, Rupiah. Community-contributed "
+				        "(issue #4).",
+				        detail="Included"),
+				_module("Thailand",
+				        "7% VAT, Thai tax invoice labels, Baht.",
+				        detail="Included"),
+				_module("Malaysia",
+				        "SST 8% rooms / 6% F&B, SST registration no., "
+				        "Ringgit. Tourism Tax as folio line.",
+				        detail="Included"),
+				_module("United Arab Emirates",
+				        "5% VAT, TRN tax invoices, Dirham. Municipality "
+				        "fee & Tourism Dirham as folio lines.",
+				        detail="Included"),
 				_bench("Saudi Arabia", "ZATCA Phase 2, QR, e-invoice.", None,
 				       status="planned"),
 				_bench("United Kingdom", "VAT, Making Tax Digital.", None,

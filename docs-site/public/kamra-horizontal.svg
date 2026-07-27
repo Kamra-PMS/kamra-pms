@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1560 480" role="img" aria-label="Kamra PMS logo">
+  <!-- horizontal lockup: mark left, wordmark right -->
+  <g transform="translate(24 -16)">
+    <g fill="none" stroke="#1E7B4F" stroke-width="56" stroke-linejoin="round" stroke-linecap="round">
+      <path d="M 306 150 L 152 96 L 152 416 L 306 362" />
+    </g>
+    <g fill="none" stroke="#1E7B4F" stroke-width="64" stroke-linecap="butt">
+      <path d="M 330 256 L 468 106" />
+      <path d="M 330 256 L 468 406" />
+    </g>
+    <circle cx="272" cy="256" r="23" fill="#56C589" />
+  </g>
+  <text x="560" y="298" font-family="Poppins, 'Avenir Next', Montserrat, 'Century Gothic', sans-serif"
+        font-weight="600" font-size="230" letter-spacing="2" fill="#1C3F38">kamra</text>
+  <g fill="#1E7B4F" font-family="Poppins, 'Avenir Next', Montserrat, sans-serif"
+     font-weight="600" font-size="64" letter-spacing="40">
+    <text x="568" y="402">PMS</text>
+  </g>
+  <line x1="880" y1="380" x2="1500" y2="380" stroke="#1E7B4F" stroke-width="5" />
+</svg>

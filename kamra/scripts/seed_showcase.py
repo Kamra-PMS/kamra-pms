@@ -562,6 +562,55 @@ def seed_sample_content():
 		}).insert(ignore_permissions=True)
 		added_lf += 1
 
+	# ── WhatsApp: connection staged in admin + a sample guest thread ────
+	added_wa = 0
+	if not frappe.db.exists("Channel Provider Connection", {
+			"property": PROPERTY, "channel": "WhatsApp",
+			"provider": "Meta Business"}):
+		frappe.get_doc({
+			"doctype": "Channel Provider Connection", "property": PROPERTY,
+			"channel": "WhatsApp", "provider": "Meta Business",
+			"active": 0,  # flip on after entering your own Meta credentials
+			"phone_number": "+91 98450 00000",
+			"external_account_id": "demo-phone-number-id",
+			"meta_language": "en",
+			"tpl_booking_confirmation": "kamra_booking_confirmation",
+			"tpl_precheckin": "kamra_precheckin_link",
+			"tpl_payment_request": "kamra_payment_request",
+			"notes": "Demo connection - enter your Meta Cloud API phone "
+			         "number ID and token, then tick Active.",
+		}).insert(ignore_permissions=True)
+		added_wa += 1
+	if not frappe.db.exists("WhatsApp Message", {"property": PROPERTY}):
+		demo_guest = frappe.get_all(
+			"Guest", filters={"phone": ("!=", "")},
+			fields=["name", "first_name", "phone"], limit=1)
+		g = demo_guest[0] if demo_guest else None
+		thread = [
+			("Outbound", "Template", "kamra_booking_confirmation", "Sent",
+			 "Rohan · Kamra Demo Palace · 2026-07-24 · 2026-07-26"),
+			("Outbound", "Template", "kamra_precheckin_link", "Sent",
+			 "Rohan · https://demo.kamrapms.com/kamra/checkin/…"),
+			("Inbound", "Text", None, "Received",
+			 "Hi! Could we get a late checkout on Sunday?"),
+			("Outbound", "Text", None, "Sent",
+			 "Of course - late checkout till 2 PM is confirmed for you."),
+		]
+		for direction, mtype, tpl, status, content in thread:
+			frappe.get_doc({
+				"doctype": "WhatsApp Message", "property": PROPERTY,
+				"direction": direction, "message_type": mtype,
+				"template_name": tpl, "status": status,
+				"content": content,
+				"to_number": (g["phone"] if g and direction == "Outbound"
+				              else "+91 98450 00000"),
+				"from_number": ("+91 98450 00000" if direction == "Outbound"
+				                else (g["phone"] if g else "+91 98000 11223")),
+				"guest": g["name"] if g else None,
+			}).insert(ignore_permissions=True)
+			added_wa += 1
+
 	return (f"+{filled} profile fields, +{tiers} demand tiers, "
 	        f"+{added_story} today-stays, +{added_tres} table res, "
-	        f"+{added_block} blocks, +{added_lf} lost&found")
+	        f"+{added_block} blocks, +{added_lf} lost&found, "
+	        f"+{added_wa} whatsapp")

@@ -8,6 +8,7 @@ import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
 import { Sheet } from "../components/ui/sheet"
 import { cn } from "../lib/utils"
+import { cur, moneyLocale } from "../lib/money"
 
 /** The tape chart: rooms × dates, bookings as bars. Click a bar to act. */
 
@@ -382,7 +383,7 @@ export default function TapeChart() {
                 title={`${p.sold}/${p.capacity} sold (${p.occupancy}%)` +
                   (p.limit > p.capacity ? ` · can sell to ${p.limit} (overbooking)` : "") +
                   (p.premium_pct ? ` · demand premium +${p.premium_pct}%` : "") +
-                  (p.min_rate ? ` · hurdle ₹${p.min_rate.toLocaleString("en-IN")}` : "")}
+                  (p.min_rate ? ` · hurdle ${cur()}${p.min_rate.toLocaleString(moneyLocale())}` : "")}
                 className={cn("shrink-0 border-l border-zinc-100 px-1 py-1 text-center tabular-nums",
                   p.overbooked ? "bg-rose-50 font-bold text-rose-600"
                     : p.occupancy >= 80 ? "bg-emerald-50 font-semibold text-emerald-700"

@@ -7,6 +7,7 @@ import { loadLocale, taxRates } from "../lib/money"
 import { serverError } from "../lib/resource"
 import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
+import { cur, moneyLocale } from "../lib/money"
 import {
   Card,
   CardContent,
@@ -15,7 +16,7 @@ import {
 } from "../components/ui/card"
 
 const inr = (n: unknown) =>
-  Number(n ?? 0).toLocaleString("en-IN", { maximumFractionDigits: 2 })
+  Number(n ?? 0).toLocaleString(moneyLocale(), { maximumFractionDigits: 2 })
 
 interface InvoiceData {
   folio: {
@@ -240,7 +241,7 @@ export default function FolioView() {
                           (s.balance > 0 ? "text-amber-600" : "text-zinc-400")
                         }
                       >
-                        ₹{inr(s.balance)}
+                        {cur()}{inr(s.balance)}
                       </span>
                     </Link>
                     {canDelete && (
@@ -607,7 +608,7 @@ export default function FolioView() {
                     <div className="mb-3 rounded-xl border border-brand-200 bg-brand-50/40 p-3 text-sm print:hidden">
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="font-medium">
-                          {sel.length} line{sel.length > 1 ? "s" : ""} · ₹
+                          {sel.length} line{sel.length > 1 ? "s" : ""} · {cur()}
                           {inr(selTotal)} selected
                         </span>
                         {one && (
@@ -615,13 +616,13 @@ export default function FolioView() {
                             <span>· move only</span>
                             <input
                               className="w-24 rounded-md border border-zinc-300 bg-white px-2 py-1 text-xs"
-                              aria-label="Part to move (percent, or ₹ before GST)"
+                              aria-label={`Part to move (percent, or ${cur()} before GST)`}
                               placeholder="30% or 1500"
                               value={partVal}
                               onChange={(e) => setPartVal(e.target.value)}
                             />
                             <span className="text-zinc-400">
-                              (₹ = before GST)
+                              ({cur()} = before GST)
                             </span>
                           </span>
                         )}
@@ -637,13 +638,13 @@ export default function FolioView() {
                       </div>
                       {partBad && (
                         <p className="mt-1.5 text-xs text-rose-600">
-                          Enter 1–99%, or a ₹ amount under the line's ₹
+                          Enter 1–99%, or a {cur()} amount under the line's {cur()}
                           {inr(one!.amount)} (before GST).
                         </p>
                       )}
                       <div className="mt-2 flex flex-wrap items-center gap-1.5">
                         <span className="text-xs text-zinc-500">
-                          Send ₹{inr(movedTotal)} to
+                          Send {cur()}{inr(movedTotal)} to
                         </span>
                         {targets.map((s) => (
                           <button
@@ -662,7 +663,7 @@ export default function FolioView() {
                                   : "ml-1.5 text-zinc-400"
                               }
                             >
-                              owes ₹{inr(s.balance)}
+                              owes {cur()}{inr(s.balance)}
                             </span>
                           </button>
                         ))}
@@ -692,10 +693,10 @@ export default function FolioView() {
                       )}
                       <th className="py-2 pr-3">Date</th>
                       <th className="py-2 pr-3">Item</th>
-                      <th className="py-2 pr-3 text-right">Amount ₹</th>
+                      <th className="py-2 pr-3 text-right">Amount {cur()}</th>
                       <th className="py-2 pr-3 text-right">GST %</th>
-                      <th className="py-2 pr-3 text-right">GST ₹</th>
-                      <th className="py-2 text-right">Total ₹</th>
+                      <th className="py-2 pr-3 text-right">GST {cur()}</th>
+                      <th className="py-2 text-right">Total {cur()}</th>
                       {editable && (
                         <th className="py-2 pl-3 print:hidden" aria-label="Actions" />
                       )}
@@ -803,10 +804,10 @@ export default function FolioView() {
                     <tr key={r.rate}>
                       <td className="py-1.5 pr-3">{r.rate}% slab</td>
                       <td className="py-1.5 pr-3 text-right text-zinc-500">
-                        taxable ₹{inr(r.taxable)}
+                        taxable {cur()}{inr(r.taxable)}
                       </td>
                       <td className="py-1.5 text-right">
-                        CGST ₹{inr(r.cgst)} · SGST ₹{inr(r.sgst)}
+                        CGST {cur()}{inr(r.cgst)} · SGST {cur()}{inr(r.sgst)}
                       </td>
                     </tr>
                   ))}
@@ -815,16 +816,16 @@ export default function FolioView() {
             </div>
             <div className="space-y-1.5 text-sm sm:text-right">
               <p className="text-zinc-500">
-                Charges: <span className="text-zinc-900">₹{inr(folio.charges_total)}</span>
+                Charges: <span className="text-zinc-900">{cur()}{inr(folio.charges_total)}</span>
               </p>
               <p className="text-zinc-500">
-                GST: <span className="text-zinc-900">₹{inr(folio.tax_total)}</span>
+                GST: <span className="text-zinc-900">{cur()}{inr(folio.tax_total)}</span>
               </p>
               <p className="text-lg font-semibold">
-                Grand total: ₹{inr(folio.grand_total)}
+                Grand total: {cur()}{inr(folio.grand_total)}
               </p>
               <p className="text-zinc-500">
-                Paid: ₹{inr(folio.payments_total)} · Balance:{" "}
+                Paid: {cur()}{inr(folio.payments_total)} · Balance:{" "}
                 <span
                   className={
                     folio.balance > 0
@@ -832,7 +833,7 @@ export default function FolioView() {
                       : "font-medium text-emerald-600"
                   }
                 >
-                  ₹{inr(folio.balance)}
+                  {cur()}{inr(folio.balance)}
                 </span>
               </p>
             </div>
@@ -860,13 +861,13 @@ export default function FolioView() {
                         <span className="text-zinc-400"> · {p.reference}</span>
                       )}
                     </span>
-                    <span className={Number(p.amount) < 0 ? "font-medium text-rose-600" : ""}>₹{inr(p.amount)}</span>
+                    <span className={Number(p.amount) < 0 ? "font-medium text-rose-600" : ""}>{cur()}{inr(p.amount)}</span>
                   </li>
                 ))}
               </ul>
               {refund ? (
                 <div className="mt-2 flex flex-wrap items-end gap-2 rounded-lg border border-rose-200 bg-rose-50 p-2">
-                  <input className={`${inputCls} w-24`} type="number" placeholder="₹"
+                  <input className={`${inputCls} w-24`} type="number" placeholder="${cur()}"
                     value={refund.amount} onChange={(e) => setRefund({ ...refund, amount: e.target.value })} />
                   <select className={inputCls} value={refund.mode}
                     onChange={(e) => setRefund({ ...refund, mode: e.target.value })}>
@@ -943,7 +944,7 @@ export default function FolioView() {
               <input
                 className={`${inputCls} w-24`}
                 type="number"
-                placeholder="₹"
+                placeholder={`${cur()}`}
                 value={charge.amount}
                 onChange={(e) => setCharge({ ...charge, amount: e.target.value })}
               />
@@ -998,7 +999,7 @@ export default function FolioView() {
                   <input
                     className={`${inputCls} w-24`}
                     type="number"
-                    placeholder="₹"
+                    placeholder={`${cur()}`}
                     value={allowance.amount}
                     onChange={(e) =>
                       setAllowance({ ...allowance, amount: e.target.value })
@@ -1074,7 +1075,7 @@ export default function FolioView() {
               <input
                 className={`${inputCls} w-28`}
                 type="number"
-                placeholder="₹"
+                placeholder={`${cur()}`}
                 value={payment.amount}
                 onChange={(e) =>
                   setPayment({ ...payment, amount: e.target.value })

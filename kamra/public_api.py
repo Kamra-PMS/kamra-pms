@@ -23,6 +23,16 @@ def site_info():
 	return {"demo_mode": frappe.db.get_default("kamra_demo_mode") == "1"}
 
 
+def _public_locale(property: str) -> dict:
+	from kamra.localization import pack_for
+	prop = frappe.get_cached_doc("Property", property)
+	loc = pack_for(property).locale(prop)
+	# "" is a valid symbol (generic pack shows bare numbers) - only the
+	# missing key falls back to the rupee
+	return {"currency_symbol": loc.get("currency_symbol", "₹"),
+	        "locale": loc.get("locale") or "en-IN"}
+
+
 @frappe.whitelist(allow_guest=True)
 def showcase(property: str):
 	"""Everything the public booking page needs to render."""
@@ -69,6 +79,7 @@ def showcase(property: str):
 	)
 
 	return {
+		"ui_locale": _public_locale(property),
 		"property": {
 			"name": prop.name,
 			"property_name": prop.property_name,
@@ -172,6 +183,7 @@ def precheckin_info(token: str):
 	prop = frappe.get_doc("Property", res.property)
 	guest = frappe.get_doc("Guest", res.guest)
 	return {
+		"ui_locale": _public_locale(res.property),
 		"property": {
 			"property_name": prop.property_name,
 			"logo_url": prop.get("logo_url"),
@@ -214,8 +226,6 @@ def precheckin_info(token: str):
 	}
 
 
-@frappe.whitelist(allow_guest=True, methods=["POST"])
-@rate_limit(limit=20, seconds=3600)
 def _save_id_image(guest: str, data_url: str,
                    field: str = "id_file") -> str | None:
 	"""Store a guest document (ID or address proof) as a PRIVATE file
@@ -249,6 +259,8 @@ def _save_id_image(guest: str, data_url: str,
 	return fdoc.file_url
 
 
+@frappe.whitelist(allow_guest=True, methods=["POST"])
+@rate_limit(limit=20, seconds=3600)
 def precheckin_submit(token: str, id_type: str, id_number: str,
                       email: str = "", nationality: str = "",
                       address_line: str = "", city: str = "",
@@ -439,8 +451,6 @@ def request_guest_laundry(token: str, notes: str = "", express: int = 0):
 	return {"ok": True, "order": doc.name}
 
 
-@frappe.whitelist(allow_guest=True, methods=["POST"])
-@rate_limit(limit=10, seconds=3600)
 def _advance_terms(prop, total: float) -> tuple[float, str]:
 	"""What the guest pays online now, and a human label - computed from the
 	property's CURRENT booking-payment policy. Snapshotted onto the booking so
@@ -459,6 +469,8 @@ def _advance_terms(prop, total: float) -> tuple[float, str]:
 	return 0.0, "Pay at the hotel"
 
 
+@frappe.whitelist(allow_guest=True, methods=["POST"])
+@rate_limit(limit=10, seconds=3600)
 def book(property: str, room_type: str, check_in_date: str,
          check_out_date: str, guest_name: str, phone: str,
          email: str = "", adults: int = 2, children: int = 0,
@@ -571,6 +583,7 @@ def qr_menu(outlet: str):
 	for it in items:
 		cats.setdefault(it.category or "Other", []).append(it)
 	return {
+		"ui_locale": _public_locale(frappe.db.get_value("POS Outlet", outlet, "property")),
 		"outlet": outlet, "outlet_name": o.outlet_name,
 		"property_name": frappe.db.get_value("Property", o.property, "property_name"),
 		"categories": [{"category": c, "items": v} for c, v in cats.items()],
@@ -602,7 +615,8 @@ def qr_order(outlet: str, items, room: str | None = None,
 @rate_limit(limit=10, seconds=3600)
 def hosting_enquiry(full_name: str, email: str, phone: str = "",
                     property_name: str = "", rooms: int = 0, city: str = "",
-                    message: str = ""):
+                    message: str = "", country: str = "",
+                    interest: str = ""):
 	"""Kamra Cloud hosting enquiry from kamrapms.com. Stored first (a lead is
 	never lost even without SMTP), then a best-effort email to the team."""
 	if not (full_name or "").strip() or not (email or "").strip():
@@ -615,6 +629,11 @@ def hosting_enquiry(full_name: str, email: str, phone: str = "",
 		"property_name": (property_name or "").strip()[:140] or None,
 		"rooms": int(rooms or 0),
 		"city": (city or "").strip()[:80] or None,
+		"country": (country or "").strip()[:80] or None,
+		"interest": (interest or "").strip()[:40]
+		            if (interest or "").strip() in
+		            ("Hosting", "Implementation", "Support AMC", "Partnership")
+		            else None,
 		"message": (message or "").strip()[:2000] or None,
 		"status": "New",
 	})
@@ -623,7 +642,7 @@ def hosting_enquiry(full_name: str, email: str, phone: str = "",
 	try:
 		frappe.sendmail(
 			recipients=["hello@kamrapms.com"],
-			subject=f"Kamra Cloud enquiry: {doc.full_name}"
+			subject=f"Kamra {doc.interest or 'Cloud'} enquiry: {doc.full_name}"
 			        + (f" ({doc.property_name})" if doc.property_name else ""),
 			message=(
 				f"<p><b>{doc.full_name}</b> &lt;{doc.email}&gt;"

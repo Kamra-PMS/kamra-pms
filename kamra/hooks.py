@@ -28,6 +28,7 @@ add_to_apps_screen = [
 # Automated end-of-day: post room charges, flag no-shows, per property.
 scheduler_events = {
 	"cron": {
+		"0 * * * *": ["kamra.channel_manager.push_all_ari"],
 		# 03:00 site time, daily - the night audit closes the day
 		"0 3 * * *": ["kamra.folio.nightly_audit_all_properties"],
 		# 09:00 - send self check-in links to upcoming arrivals, for properties
@@ -47,6 +48,10 @@ required_apps = ["payments"]
 # kamra_uae APP declares its own to claim "United Arab Emirates".
 kamra_localization = {
 	"India": "kamra.localization.india",
+	"Indonesia": "kamra.localization.indonesia",
+	"Thailand": "kamra.localization.thailand",
+	"Malaysia": "kamra.localization.malaysia",
+	"United Arab Emirates": "kamra.localization.uae",
 }
 
 # Served single-page app

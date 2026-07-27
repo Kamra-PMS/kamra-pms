@@ -5,6 +5,7 @@ import { call, getCurrentProperty } from "../lib/api"
 import { listResource, serverError, type Row } from "../lib/resource"
 import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
+import { cur, moneyLocale } from "../lib/money"
 import {
   Card,
   CardContent,
@@ -13,7 +14,7 @@ import {
 } from "../components/ui/card"
 
 const inr = (n: unknown) =>
-  Number(n ?? 0).toLocaleString("en-IN", { maximumFractionDigits: 0 })
+  Number(n ?? 0).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
 
 const fmtDate = (d: unknown) =>
   d
@@ -132,7 +133,7 @@ export default function Billing() {
               <p className="text-sm text-zinc-600">
                 <span className="font-medium">{audit.audit}</span> - posted{" "}
                 {audit.room_charges_posted} room night
-                {audit.room_charges_posted === 1 ? "" : "s"} (₹
+                {audit.room_charges_posted === 1 ? "" : "s"} ({cur()}
                 {inr(audit.amount_posted)}), opened {audit.folios_opened}{" "}
                 folio{audit.folios_opened === 1 ? "" : "s"}, flagged{" "}
                 {audit.no_shows_flagged} no-show
@@ -157,7 +158,7 @@ export default function Billing() {
                   </span>
                   <span className="flex-1 text-zinc-500">
                     {Number(r.room_charges_posted) || 0} night
-                    {Number(r.room_charges_posted) === 1 ? "" : "s"} · ₹
+                    {Number(r.room_charges_posted) === 1 ? "" : "s"} · {cur()}
                     {inr(r.amount_posted)} · {Number(r.folios_opened) || 0} folio
                     {Number(r.folios_opened) === 1 ? "" : "s"} ·{" "}
                     {Number(r.no_shows_flagged) || 0} no-show
@@ -183,14 +184,14 @@ export default function Billing() {
             </p>
           </div>
           <span className="text-xl font-semibold">
-            ₹{inr(cash?.grand_total ?? 0)}
+            {cur()}{inr(cash?.grand_total ?? 0)}
           </span>
         </CardHeader>
         {cash && cash.modes.length > 0 && (
           <CardContent className="flex flex-wrap gap-2 pt-0">
             {cash.modes.map((m) => (
               <Badge key={m.mode} tone="zinc">
-                {m.mode}: ₹{inr(m.total)} · {m.txns} txn
+                {m.mode}: {cur()}{inr(m.total)} · {m.txns} txn
               </Badge>
             ))}
           </CardContent>
@@ -213,9 +214,9 @@ export default function Billing() {
                   <th className="py-2 pr-4">Guest</th>
                   <th className="py-2 pr-4">Status</th>
                   <th className="py-2 pr-4">Invoice</th>
-                  <th className="py-2 pr-4">Total ₹</th>
-                  <th className="py-2 pr-4">Paid ₹</th>
-                  <th className="py-2 pr-4">Balance ₹</th>
+                  <th className="py-2 pr-4">Total {cur()}</th>
+                  <th className="py-2 pr-4">Paid {cur()}</th>
+                  <th className="py-2 pr-4">Balance {cur()}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-100">
@@ -235,13 +236,13 @@ export default function Billing() {
                     <td className="py-2.5 pr-4 text-zinc-500">
                       {String(f.invoice_number ?? "-")}
                     </td>
-                    <td className="py-2.5 pr-4">₹{inr(f.grand_total)}</td>
-                    <td className="py-2.5 pr-4">₹{inr(f.payments_total)}</td>
+                    <td className="py-2.5 pr-4">{cur()}{inr(f.grand_total)}</td>
+                    <td className="py-2.5 pr-4">{cur()}{inr(f.payments_total)}</td>
                     <td className="py-2.5 pr-4 font-medium">
                       {Number(f.balance) > 0 ? (
-                        <span className="text-amber-600">₹{inr(f.balance)}</span>
+                        <span className="text-amber-600">{cur()}{inr(f.balance)}</span>
                       ) : (
-                        <span className="text-emerald-600">₹0</span>
+                        <span className="text-emerald-600">{cur()}0</span>
                       )}
                     </td>
                   </tr>

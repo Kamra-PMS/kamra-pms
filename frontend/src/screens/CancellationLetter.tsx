@@ -3,6 +3,7 @@ import { ArrowLeft, Printer } from "lucide-react"
 import { Link, useParams } from "react-router-dom"
 import { call } from "../lib/api"
 import { Button } from "../components/ui/button"
+import { cur, moneyLocale } from "../lib/money"
 
 /** Printable cancellation confirmation - the guest's proof, with the
  * cancellation number front and center. */
@@ -32,7 +33,7 @@ interface Letter {
 }
 
 const inr = (n: number) =>
-  Number(n).toLocaleString("en-IN", { maximumFractionDigits: 0 })
+  Number(n).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
 
 export default function CancellationLetter() {
   const { name } = useParams()
@@ -102,23 +103,23 @@ export default function CancellationLetter() {
         <div className="mt-5 space-y-1.5 rounded-lg bg-zinc-50 px-4 py-3 text-sm">
           <div className="flex justify-between">
             <span className="text-zinc-500">Stay value</span>
-            <span>₹{inr(r.amount_after_tax)}</span>
+            <span>{cur()}{inr(r.amount_after_tax)}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-zinc-500">Cancellation fee</span>
             <span>
-              {r.cancellation_fee > 0 ? `₹${inr(r.cancellation_fee)}` : "None"}
+              {r.cancellation_fee > 0 ? `${cur()}${inr(r.cancellation_fee)}` : "None"}
             </span>
           </div>
           {r.advance_paid > 0 && (
             <>
               <div className="flex justify-between">
                 <span className="text-zinc-500">Advance paid</span>
-                <span>₹{inr(r.advance_paid)}</span>
+                <span>{cur()}{inr(r.advance_paid)}</span>
               </div>
               <div className="flex justify-between border-t border-zinc-200 pt-1.5 font-medium">
                 <span>Refund due</span>
-                <span>₹{inr(refundDue)}</span>
+                <span>{cur()}{inr(refundDue)}</span>
               </div>
             </>
           )}

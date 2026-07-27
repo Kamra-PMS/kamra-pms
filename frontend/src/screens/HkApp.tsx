@@ -14,6 +14,7 @@ import { asset } from "../lib/asset"
 import Login from "./Login"
 import HkLaundry from "./HkLaundry"
 import { serverError } from "../lib/resource"
+import { cur } from "../lib/money"
 
 /** The housekeeper's phone app - big targets, one thumb, zero training. */
 
@@ -511,7 +512,7 @@ export default function HkApp() {
                 />
                 <input
                   className="w-full rounded-xl border border-zinc-300 px-3 py-3 text-base"
-                  placeholder="Amount ₹"
+                  placeholder={`Amount ${cur()}`}
                   inputMode="numeric"
                   value={charge.amount}
                   onChange={(e) => setCharge({ ...charge, amount: e.target.value })}
@@ -535,7 +536,7 @@ export default function HkApp() {
                           description: charge.desc.trim(),
                           amount: Number(charge.amount),
                         })
-                        setChargeMsg(`Posted ₹${charge.amount} ${charge.type.toLowerCase()} to room ${charge.num}.`)
+                        setChargeMsg(`Posted ${cur()}${charge.amount} ${charge.type.toLowerCase()} to room ${charge.num}.`)
                         load()
                       } catch (e) {
                         setChargeMsg(serverError(e))
@@ -544,7 +545,7 @@ export default function HkApp() {
                       }
                     }}
                   >
-                    Post ₹{charge.amount || "0"}
+                    Post {cur()}{charge.amount || "0"}
                   </button>
                 </div>
               </div>

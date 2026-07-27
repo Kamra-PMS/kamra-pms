@@ -16,6 +16,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { Button } from "../components/ui/button"
 import { Sheet } from "../components/ui/sheet"
+import { cur, moneyLocale } from "../lib/money"
 
 const DAYS = 14
 const EVENT_TYPES = ["Wedding", "Conference", "Birthday", "Corporate Offsite", "Other"]
@@ -61,7 +62,7 @@ const STATUS: Record<string, string> = {
 }
 
 const inr = (n: number) =>
-  "₹" + Number(n || 0).toLocaleString("en-IN", { maximumFractionDigits: 0 })
+  `${cur()}` + Number(n || 0).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
 
 function shift(date: string, by: number) {
   const d = new Date(date + "T00:00:00")

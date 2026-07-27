@@ -12,23 +12,93 @@
   "property_name",
   "rooms",
   "city",
+  "country",
+  "interest",
   "sb_detail",
   "message",
   "status",
   "notes"
  ],
  "fields": [
-  {"fieldname": "full_name", "fieldtype": "Data", "in_list_view": 1, "label": "Name", "reqd": 1},
-  {"fieldname": "email", "fieldtype": "Data", "in_list_view": 1, "label": "Email", "options": "Email", "reqd": 1},
-  {"fieldname": "phone", "fieldtype": "Data", "in_list_view": 1, "label": "Phone"},
-  {"fieldname": "column_break_a", "fieldtype": "Column Break"},
-  {"fieldname": "property_name", "fieldtype": "Data", "in_list_view": 1, "label": "Property"},
-  {"fieldname": "rooms", "fieldtype": "Int", "label": "Rooms"},
-  {"fieldname": "city", "fieldtype": "Data", "label": "City"},
-  {"fieldname": "sb_detail", "fieldtype": "Section Break"},
-  {"fieldname": "message", "fieldtype": "Small Text", "label": "Message"},
-  {"default": "New", "fieldname": "status", "fieldtype": "Select", "in_list_view": 1, "in_standard_filter": 1, "label": "Status", "options": "New\nContacted\nWon\nLost"},
-  {"fieldname": "notes", "fieldtype": "Small Text", "label": "Internal Notes"}
+  {
+   "fieldname": "full_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "email",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Email",
+   "options": "Email",
+   "reqd": 1
+  },
+  {
+   "fieldname": "phone",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Phone"
+  },
+  {
+   "fieldname": "column_break_a",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "property_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Property"
+  },
+  {
+   "fieldname": "rooms",
+   "fieldtype": "Int",
+   "label": "Rooms"
+  },
+  {
+   "fieldname": "city",
+   "fieldtype": "Data",
+   "label": "City"
+  },
+  {
+   "fieldname": "country",
+   "fieldtype": "Data",
+   "label": "Country",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "interest",
+   "fieldtype": "Select",
+   "label": "Interested in",
+   "options": "\nHosting\nImplementation\nSupport AMC\nPartnership",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "sb_detail",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "message",
+   "fieldtype": "Small Text",
+   "label": "Message"
+  },
+  {
+   "default": "New",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "New\nContacted\nWon\nLost"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Internal Notes"
+  }
  ],
  "index_web_pages_for_search": 0,
  "links": [],
@@ -38,8 +108,27 @@
  "name": "Hosting Enquiry",
  "owner": "Administrator",
  "permissions": [
-  {"create": 1, "delete": 1, "email": 1, "export": 1, "print": 1, "read": 1, "report": 1, "role": "System Manager", "share": 1, "write": 1},
-  {"create": 1, "email": 1, "print": 1, "read": 1, "report": 1, "role": "Hotel Admin", "write": 1}
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Hotel Admin",
+   "write": 1
+  }
  ],
  "sort_field": "creation",
  "sort_order": "DESC",

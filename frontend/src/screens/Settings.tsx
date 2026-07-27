@@ -9,7 +9,9 @@ import {
 import { getTheme, setTheme, type Theme } from "../lib/theme"
 import { getLang, setLang, type Lang } from "../lib/dir"
 import { Button } from "../components/ui/button"
+import ImageField from "../components/ImageField"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
+import { cur, moneyLocale } from "../lib/money"
 
 /** Settings hub - everything an owner/GM configures once and forgets:
  * property identity, GST, privacy, booking page, payments, agent access. */
@@ -23,7 +25,7 @@ const inputCls =
 interface Spec {
   field: string
   label: string
-  type?: "text" | "number" | "time" | "check" | "select" | "textarea" | "password"
+  type?: "text" | "number" | "time" | "check" | "select" | "textarea" | "password" | "image"
   options?: string[]
   hint?: string
 }
@@ -34,6 +36,15 @@ function Field(props: {
   onChange: (v: unknown) => void
 }) {
   const { spec, value, onChange } = props
+  if (spec.type === "image")
+    return (
+      <ImageField
+        label={spec.label}
+        hint={spec.hint ?? ""}
+        value={String(value ?? "")}
+        onChange={onChange}
+      />
+    )
   if (spec.type === "check")
     return (
       <label className="flex items-center gap-2 py-1 text-sm text-zinc-700">
@@ -177,7 +188,7 @@ const PROPERTY_SPECS: Spec[] = [
   {
     field: "country",
     label: "Country",
-    hint: "Selects the tax & invoicing pack. India today; more via the Marketplace.",
+    hint: "Selects the tax & invoicing pack. India and Indonesia today; more via the Marketplace.",
   },
   { field: "phone", label: "Phone" },
   { field: "email", label: "Email" },
@@ -201,7 +212,7 @@ const STAY_TAX_SPECS: Spec[] = [
   },
   {
     field: "gst_slab_threshold",
-    label: "Slab threshold (₹)",
+    label: `Slab threshold (${cur()})`,
     type: "number",
   },
   { field: "gst_rate_low", label: "GST % below threshold", type: "number" },
@@ -248,8 +259,18 @@ const BOOKING_SPECS: Spec[] = [
   { field: "property_amenities", label: "Amenities (one per line)", type: "textarea" },
   { field: "google_reviews_url", label: "Google reviews URL" },
   { field: "tripadvisor_url", label: "TripAdvisor URL" },
-  { field: "logo_url", label: "Logo URL" },
-  { field: "hero_image", label: "Hero image URL" },
+  {
+    field: "logo_url",
+    label: "Logo",
+    type: "image",
+    hint: "Square, 512px+ - PNG or SVG with transparency looks best",
+  },
+  {
+    field: "hero_image",
+    label: "Hero image",
+    type: "image",
+    hint: "Landscape, 1920x1080 or larger - the booking page's opening photo",
+  },
 ]
 
 const POLICY_SPECS: Spec[] = [
@@ -655,9 +676,9 @@ function LaundryRatesCard({ property }: { property: string }) {
               value={form.service} onChange={(e) => setForm({ ...form, service: e.target.value })}>
               {["Wash & Iron", "Dry Clean", "Iron Only"].map((s) => <option key={s}>{s}</option>)}
             </select>
-            <input className="w-24 rounded-lg border border-zinc-300 px-2 py-1.5 text-sm" placeholder="Rate ₹" inputMode="numeric"
+            <input className="w-24 rounded-lg border border-zinc-300 px-2 py-1.5 text-sm" placeholder={`Rate ${cur()}`} inputMode="numeric"
               value={form.rate} onChange={(e) => setForm({ ...form, rate: e.target.value.replace(/[^\d.]/g, "") })} />
-            <input className="w-28 rounded-lg border border-zinc-300 px-2 py-1.5 text-sm" placeholder="Express ₹ (opt)" inputMode="numeric"
+            <input className="w-28 rounded-lg border border-zinc-300 px-2 py-1.5 text-sm" placeholder={`Express ${cur()} (opt)`} inputMode="numeric"
               value={form.express} onChange={(e) => setForm({ ...form, express: e.target.value.replace(/[^\d.]/g, "") })} />
             <Button disabled={!form.item.trim() || !form.rate} onClick={save}>Save</Button>
             <Button variant="ghost" onClick={() => setForm(null)}>Cancel</Button>
@@ -678,8 +699,8 @@ function LaundryRatesCard({ property }: { property: string }) {
                 <tr key={r.name} className="border-t border-zinc-100">
                   <td className="py-1.5 font-medium">{r.item_name}</td>
                   <td className="text-zinc-500">{r.service_type}</td>
-                  <td className="text-right tabular-nums">₹{r.rate.toLocaleString("en-IN")}</td>
-                  <td className="text-right tabular-nums text-zinc-500">₹{r.express_rate.toLocaleString("en-IN")}</td>
+                  <td className="text-right tabular-nums">{cur()}{r.rate.toLocaleString(moneyLocale())}</td>
+                  <td className="text-right tabular-nums text-zinc-500">{cur()}{r.express_rate.toLocaleString(moneyLocale())}</td>
                   <td className="text-right">
                     <button className="text-xs font-medium text-brand-700 hover:underline"
                       onClick={() => setForm({ name: r.name, item: r.item_name, service: r.service_type, rate: String(r.rate), express: "" })}>
@@ -767,7 +788,7 @@ function HurdleRatesCard({ property }: { property: string }) {
               %
             </label>
             <label className="flex items-center gap-1 text-sm text-zinc-600">
-              Hurdle ₹
+              Hurdle {cur()}
               <input className="w-24 rounded-lg border border-zinc-300 px-2 py-1.5 text-sm" placeholder="min rate" inputMode="numeric"
                 value={form.min} onChange={(e) => setForm({ ...form, min: e.target.value.replace(/[^\d.]/g, "") })} />
             </label>
@@ -777,7 +798,7 @@ function HurdleRatesCard({ property }: { property: string }) {
         )}
         {tiers.length === 0 ? (
           <p className="py-3 text-sm text-zinc-400">
-            No tiers yet — e.g. "at 80% occupancy, +15% premium, minimum ₹6,000".
+            No tiers yet — e.g. `at 80% occupancy, +15% premium, minimum ${cur()}6,000`.
           </p>
         ) : (
           <table className="w-full text-sm">
@@ -793,7 +814,7 @@ function HurdleRatesCard({ property }: { property: string }) {
                 <tr key={t.name} className="border-t border-zinc-100">
                   <td className="py-1.5 font-medium">{t.occupancy_from}%</td>
                   <td className="text-right tabular-nums">{t.premium_pct ? `+${t.premium_pct}%` : "—"}</td>
-                  <td className="text-right tabular-nums">{t.min_rate ? `₹${t.min_rate.toLocaleString("en-IN")}` : "—"}</td>
+                  <td className="text-right tabular-nums">{t.min_rate ? `${cur()}${t.min_rate.toLocaleString(moneyLocale())}` : "—"}</td>
                   <td className="text-right">
                     <button className="text-xs font-medium text-brand-700 hover:underline"
                       onClick={() => setForm({ name: t.name, from: String(t.occupancy_from), premium: String(t.premium_pct || ""), min: String(t.min_rate || "") })}>

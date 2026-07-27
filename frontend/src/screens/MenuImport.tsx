@@ -6,6 +6,7 @@ import { Sheet } from "../components/ui/sheet"
 import { Button } from "../components/ui/button"
 import { Badge } from "../components/ui/badge"
 import { cn } from "../lib/utils"
+import { cur } from "../lib/money"
 
 /** Bulk menu upload: paste or drop a spreadsheet export, see exactly how the
  * columns map and what would be created vs updated, then import. Mirrors the
@@ -288,7 +289,7 @@ export default function MenuImport({
                             {s.category || "—"}
                           </td>
                           <td className="px-2 text-right tabular-nums">
-                            ₹{s.price}
+                            {cur()}{s.price}
                           </td>
                           <td className="px-2">
                             <span

@@ -20,6 +20,7 @@ import { Badge } from "./ui/badge"
 import { Button } from "./ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
 import ImageField from "./ImageField"
+import { moneyLocale } from "../lib/money"
 
 export interface FieldSpec {
   field: string
@@ -167,7 +168,7 @@ const BADGE_TONES: Record<string, "green" | "sky" | "amber" | "rose" | "zinc"> =
 
 const cellValue = (v: unknown) =>
   typeof v === "number"
-    ? v.toLocaleString("en-IN", { maximumFractionDigits: 2 })
+    ? v.toLocaleString(moneyLocale(), { maximumFractionDigits: 2 })
     : String(v ?? "-")
 
 export function ResourceScreen({

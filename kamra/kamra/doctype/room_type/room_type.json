@@ -153,10 +153,10 @@
    "label": "Child Price"
   },
   {
-   "default": "5",
    "fieldname": "tax_percent",
    "fieldtype": "Percent",
-   "label": "GST %"
+   "label": "Tax %",
+   "description": "Leave blank to use your country's standard rate (India: GST slabs by tariff)"
   },
   {
    "fieldname": "sb_capacity",

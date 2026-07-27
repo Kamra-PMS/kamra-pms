@@ -12,6 +12,7 @@ import {
   type Quote,
 } from "../lib/api"
 import { Button } from "./ui/button"
+import { cur, moneyLocale } from "../lib/money"
 
 interface ExtraRoom {
   room_type: string
@@ -36,7 +37,7 @@ function Field(props: { label: string; children: React.ReactNode }) {
 }
 
 const inr = (n: number) =>
-  n.toLocaleString("en-IN", { maximumFractionDigits: 0 })
+  n.toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
 
 export function BookingDialog(props: {
   initial: {
@@ -507,7 +508,7 @@ export function BookingDialog(props: {
                 >
                   {options?.room_types.map((rt) => (
                     <option key={rt.name} value={rt.name}>
-                      {rt.room_type_name} · ₹{inr(rt.base_price)}/night
+                      {rt.room_type_name} · {cur()}{inr(rt.base_price)}/night
                     </option>
                   ))}
                 </select>
@@ -693,7 +694,7 @@ export function BookingDialog(props: {
                     <option value="">Room only</option>
                     {options?.meal_plans.map((mp) => (
                       <option key={mp.name} value={mp.name}>
-                        {mp.label} (+₹{inr(mp.price_per_adult)}/adult)
+                        {mp.label} (+{cur()}{inr(mp.price_per_adult)}/adult)
                       </option>
                     ))}
                   </select>
@@ -767,7 +768,7 @@ export function BookingDialog(props: {
                               }))
                             }
                           >
-                            {x.experience_name} · ₹{inr(x.price)}
+                            {x.experience_name} · {cur()}{inr(x.price)}
                           </button>
                         )
                       })}
@@ -878,23 +879,23 @@ export function BookingDialog(props: {
                         {roomTypeName} · {quote.nights} night
                         {quote.nights === 1 ? "" : "s"}
                       </span>
-                      <span>₹{inr(quote.room_total)}</span>
+                      <span>{cur()}{inr(quote.room_total)}</span>
                     </div>
                     {quote.meal_total > 0 && (
                       <div className="flex justify-between text-zinc-600">
                         <span>Meals</span>
-                        <span>₹{inr(quote.meal_total)}</span>
+                        <span>{cur()}{inr(quote.meal_total)}</span>
                       </div>
                     )}
                     {quote.discount > 0 && (
                       <div className="flex justify-between font-medium text-emerald-700">
                         <span>Voucher</span>
-                        <span>−₹{inr(quote.discount)}</span>
+                        <span>−{cur()}{inr(quote.discount)}</span>
                       </div>
                     )}
                     <div className="flex justify-between text-zinc-600">
                       <span>GST {quote.tax_percent}%</span>
-                      <span>₹{inr(quote.tax_amount)}</span>
+                      <span>{cur()}{inr(quote.tax_amount)}</span>
                     </div>
                     {moreQuotes.map((mq, i) =>
                       mq ? (
@@ -908,7 +909,7 @@ export function BookingDialog(props: {
                               (rt) => rt.name === moreRooms[i]?.room_type,
                             )?.room_type_name ?? ""}
                           </span>
-                          <span>₹{inr(mq.amount_after_tax)}</span>
+                          <span>{cur()}{inr(mq.amount_after_tax)}</span>
                         </div>
                       ) : null,
                     )}
@@ -943,7 +944,7 @@ export function BookingDialog(props: {
                           {addonsGross > 0 && (
                             <div className="flex justify-between text-zinc-600">
                               <span>Add-ons (incl. GST)</span>
-                              <span>₹{inr(addonsGross)}</span>
+                              <span>{cur()}{inr(addonsGross)}</span>
                             </div>
                           )}
                           <div className="mt-2 flex items-baseline justify-between border-t border-zinc-200 pt-3">
@@ -951,7 +952,7 @@ export function BookingDialog(props: {
                               Total{moreRooms.length > 0 ? " · all rooms" : ""}
                             </span>
                             <span className="text-2xl font-semibold">
-                              ₹{inr(grand)}
+                              {cur()}{inr(grand)}
                             </span>
                           </div>
                           <p className="text-xs text-zinc-400">
@@ -965,7 +966,7 @@ export function BookingDialog(props: {
                               {pol.no_show_charge !== "None" &&
                                 ` No-show: ${pol.no_show_charge.toLowerCase()} charged.`}
                               {pol.deposit_pct > 0 &&
-                                ` Deposit expected now: ₹${inr((grand * pol.deposit_pct) / 100)} (${pol.deposit_pct}%).`}
+                                ` Deposit expected now: ${cur()}${inr((grand * pol.deposit_pct) / 100)} (${pol.deposit_pct}%).`}
                             </p>
                           )}
                         </>

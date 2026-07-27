@@ -6,6 +6,7 @@ import { Button } from "../components/ui/button"
 import { SignaturePad } from "../components/SignaturePad"
 import { IdDocumentField } from "../components/IdDocumentField"
 import { GuestLaundryCard } from "./laundry/GuestLaundryCard"
+import { adoptUiLocale } from "../lib/money"
 
 
 /** Downscale a picked/captured photo so the upload stays small (max edge
@@ -141,6 +142,7 @@ export default function PublicCheckin() {
     if (!token) return
     call<Info>("kamra.public_api.precheckin_info", { token })
       .then((i) => {
+        adoptUiLocale((i as unknown as { ui_locale?: { currency_symbol?: string; locale?: string } }).ui_locale)
         setInfo(i)
         setForm((f) => ({
           ...f,

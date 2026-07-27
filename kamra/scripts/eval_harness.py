@@ -1946,6 +1946,437 @@ def t37():
 	assert card["money"]["refunded"] == 1000.0, card["money"]
 
 
+@check("Indonesia pack: PBJT flat tax, NPWP labels, Rupiah locale")
+def t44():
+	from kamra.localization import pack_for
+	from kamra.pricing import quote
+
+	P4 = "EVAL Bali Hotel"
+	if not frappe.db.exists("Property", P4):
+		frappe.get_doc({
+			"doctype": "Property", "property_name": P4, "city": "Ubud",
+			"country": "Indonesia",
+		}).insert(ignore_permissions=True)
+	rt = frappe.get_doc({
+		"doctype": "Room Type", "property": P4, "room_type_code": "VIL",
+		"room_type_name": "Villa", "base_price": 1500000,
+		"base_occupancy": 2, "adults_capacity": 3, "children_capacity": 2,
+		"tax_percent": 10,
+	}).insert(ignore_permissions=True).name
+
+	pack = pack_for(P4)
+	assert pack.__name__.endswith("indonesia"), pack.__name__
+
+	# flat PBJT: same rate whatever the tariff (no Indian slab switching)
+	q = quote(P4, rt, "2031-05-01", "2031-05-02", 2, 0)
+	assert q["nightly"][0]["gst_rate"] == 10, q["nightly"]
+	q2 = quote(P4, rt, "2031-05-01", "2031-05-02", 3, 1)
+	assert q2["nightly"][0]["gst_rate"] == 10, q2["nightly"]
+	# a region with a different PBJT sets it on the room type
+	frappe.db.set_value("Room Type", rt, "tax_percent", 8)
+	q3 = quote(P4, rt, "2031-05-01", "2031-05-02", 2, 0)
+	assert q3["nightly"][0]["gst_rate"] == 8, q3["nightly"]
+
+	prop = frappe.get_doc("Property", P4)
+	ctx = pack.invoice_context(prop)
+	assert ctx["tax_id_label"] == "NPWP" and ctx["split"][0][0] == "pb1", ctx
+	loc = pack.locale(prop)
+	assert loc["currency_symbol"] == "Rp" and loc["locale"] == "id-ID", loc
+
+
+@check("currency follows the pack: locale endpoint + public ui_locale")
+def t45():
+	from kamra.api import property_locale
+	from kamra.public_api import _public_locale
+
+	# staff endpoint: India property keeps the rupee, Indonesia gets Rp
+	loc = property_locale(P)
+	assert loc["currency_symbol"] == "₹" and loc["locale"] == "en-IN", loc
+	loc4 = property_locale("EVAL Bali Hotel")  # created by t44
+	assert loc4["currency_symbol"] == "Rp" and loc4["locale"] == "id-ID", loc4
+
+	# the dict showcase / qr_menu / precheckin_info embed as ui_locale
+	pub = _public_locale("EVAL Bali Hotel")
+	assert pub == {"currency_symbol": "Rp", "locale": "id-ID"}, pub
+	assert _public_locale(P)["currency_symbol"] == "₹"
+
+
+@check("SEA/ME packs: Thai VAT, Malaysian SST room/F&B split, UAE TRN")
+def t46():
+	from kamra.localization import pack_for
+	from kamra.pricing import quote
+
+	fixtures = [
+		("EVAL Bangkok Hotel", "Thailand", "thailand", 7, "฿", "th-TH"),
+		("EVAL KL Hotel", "Malaysia", "malaysia", 8, "RM", "ms-MY"),
+		("EVAL Dubai Hotel", "United Arab Emirates", "uae", 5,
+		 "AED ", "en-AE"),
+	]
+	for pname, country, mod, rate, symbol, loc_code in fixtures:
+		if not frappe.db.exists("Property", pname):
+			frappe.get_doc({
+				"doctype": "Property", "property_name": pname,
+				"city": "Eval", "country": country,
+			}).insert(ignore_permissions=True)
+		rt = frappe.get_doc({
+			"doctype": "Room Type", "property": pname,
+			"room_type_code": "STD", "room_type_name": "Standard",
+			"base_price": 4000, "base_occupancy": 2,
+			"adults_capacity": 2, "children_capacity": 1,
+		}).insert(ignore_permissions=True).name
+
+		pack = pack_for(pname)
+		assert pack.__name__.endswith(mod), (pname, pack.__name__)
+		# flat default rate, no Indian slab switching by tariff
+		q = quote(pname, rt, "2031-06-01", "2031-06-02", 2, 0)
+		assert q["nightly"][0]["gst_rate"] == rate, (pname, q["nightly"])
+		loc = pack.locale(frappe.get_doc("Property", pname))
+		assert loc["currency_symbol"] == symbol, (pname, loc)
+		assert loc["locale"] == loc_code, (pname, loc)
+
+	# Malaysia is the one seam country where F&B differs from rooms
+	from kamra.localization import malaysia
+	assert malaysia.fnb_tax_rate("EVAL KL Hotel") == 6.0
+	ctx = malaysia.invoice_context(frappe.get_doc("Property", "EVAL KL Hotel"))
+	assert ctx["tax_id_label"] == "SST Registration No.", ctx
+	from kamra.localization import uae
+	assert uae.invoice_context(
+		frappe.get_doc("Property", "EVAL Dubai Hotel"))["tax_id_label"] == "TRN"
+
+
+@check("generic pack: currency symbol comes from the Currency master")
+def t47():
+	from kamra.localization import pack_for
+
+	if not frappe.db.exists("Currency", "GBP"):
+		frappe.get_doc({"doctype": "Currency", "currency_name": "GBP",
+		                "symbol": "£", "enabled": 1}).insert(
+			ignore_permissions=True)
+	P5 = "EVAL London Hotel"
+	if not frappe.db.exists("Property", P5):
+		frappe.get_doc({"doctype": "Property", "property_name": P5,
+		                "city": "London", "country": "United Kingdom",
+		                "currency": "GBP"}).insert(ignore_permissions=True)
+
+	pack = pack_for(P5)
+	assert pack.__name__.endswith("generic"), pack.__name__
+	loc = pack.locale(frappe.get_doc("Property", P5))
+	sym = loc["currency_symbol"]
+	# the master's symbol when it has one, the code itself when it doesn't -
+	# never again a bare unlabelled amount
+	assert sym and ("£" in sym or sym.strip() == "GBP"), loc
+
+
+@check("WhatsApp: native Meta send, booking flow, inbound -> ticket")
+def t48():
+	from kamra import whatsapp
+	from kamra.agents_channels import send_outbound
+
+	# a connection with our own number - fake creds, intercepted transport
+	conn = frappe.get_doc({
+		"doctype": "Channel Provider Connection", "property": P,
+		"channel": "WhatsApp", "provider": "Meta Business", "active": 1,
+		"phone_number": "+91 98450 00000",
+		"external_account_id": "eval-phone-id",
+		"credentials": "eval-token", "webhook_secret": "eval-verify",
+		"meta_language": "en",
+		"tpl_booking_confirmation": "kamra_booking_confirmation",
+		"tpl_precheckin": "kamra_precheckin_link",
+		"tpl_payment_request": "kamra_payment_request",
+	}).insert(ignore_permissions=True)
+
+	sent = []
+	real_post = whatsapp._post_graph
+	whatsapp._post_graph = lambda c, payload: (
+		sent.append(payload) or (True, f"wamid.eval{len(sent)}"))
+	try:
+		# an existing confirmed stay whose guest has a phone
+		res_name = frappe.get_all(
+			"Reservation", filters={"property": P,
+			                        "status": ("in", ["Confirmed", "Checked In"])},
+			pluck="name", limit=1)[0]
+		res = frappe.get_doc("Reservation", res_name)
+		frappe.db.set_value("Guest", res.guest, "phone", "919812340048")
+		if not res.get("precheckin_token"):
+			frappe.db.set_value("Reservation", res_name,
+			                    "precheckin_token", "evaltoken" + "x" * 16)
+
+		out = whatsapp.notify_booking_confirmed(res_name)
+		assert out.get("sent"), out
+		# confirmation template with the 4 args + the check-in link follow-up
+		assert sent[0]["type"] == "template"
+		assert sent[0]["template"]["name"] == "kamra_booking_confirmation"
+		params = sent[0]["template"]["components"][0]["parameters"]
+		assert len(params) == 4 and params[1]["text"], params
+		assert sent[1]["template"]["name"] == "kamra_precheckin_link"
+		assert "/kamra/checkin/" in sent[1]["template"]["components"][0][
+			"parameters"][1]["text"]
+
+		rows = frappe.get_all("WhatsApp Message",
+		                      filters={"property": P, "direction": "Outbound"},
+		                      fields=["status", "template_name"])
+		assert len(rows) == 2 and all(r.status == "Sent" for r in rows), rows
+
+		# the generic channel seam now dispatches natively (no relay URL)
+		r = send_outbound(P, "WhatsApp", "919812340048", "Your room is ready")
+		assert r.get("sent"), r
+		assert sent[-1]["type"] == "text"
+
+		# inbound webhook block: message row + a desk ticket for the stay
+		whatsapp._handle_inbound({
+			"metadata": {"phone_number_id": "eval-phone-id"},
+			"messages": [{"from": "919812340048", "id": "wamid.in1",
+			              "type": "text",
+			              "text": {"body": "Can we get a late checkout?"}}],
+		})
+		inbound = frappe.get_all("WhatsApp Message",
+		                         filters={"property": P, "direction": "Inbound"},
+		                         fields=["guest", "reservation", "status"])
+		assert inbound and inbound[0].status == "Received", inbound
+		assert inbound[0].reservation == res_name, inbound
+		tickets = frappe.get_all("Service Ticket",
+		                         filters={"property": P,
+		                                  "subject": ("like", "WhatsApp:%")})
+		assert tickets, "inbound message did not raise a Service Ticket"
+
+		# the desk's conversation view: threads, one thread, a reply
+		th = whatsapp.threads(P)
+		assert any(t["number"] == "919812340048" for t in th), th
+		conv = whatsapp.thread(P, "919812340048")
+		assert conv["session_open"], "fresh guest message should open the window"
+		assert len(conv["messages"]) >= 3
+		assert conv["messages"][0]["creation"] <= conv["messages"][-1]["creation"]
+		r2 = whatsapp.reply(P, "919812340048", "Late checkout till 2 PM is fine.")
+		assert r2["sent"], r2
+	finally:
+		whatsapp._post_graph = real_post
+
+
+@check("whitelist audit: every endpoint the frontend calls is callable")
+def t49():
+	"""Guards against decorator orphaning: inserting a helper between a
+	function and its decorators silently un-whitelists the endpoint (broke
+	registration_card, precheckin_submit and public book at various
+	points) and, worse, whitelists the helper. Sweep every kamra.* method
+	the frontend references and prove each is a registered endpoint."""
+	import pathlib
+	import re
+
+	src = pathlib.Path(frappe.get_app_path("kamra")).parent / "frontend" / "src"
+	assert src.exists(), f"frontend source not found at {src}"
+	calls = set()
+	for f in src.rglob("*.ts*"):
+		calls |= set(re.findall(r'"(kamra\.\w+\.\w+)"', f.read_text()))
+	assert len(calls) > 50, f"suspiciously few frontend calls found: {len(calls)}"
+	# dotted strings that are NOT api calls (localStorage keys etc.)
+	calls -= {"kamra.kds.chime"}
+
+	missing = []
+	for path in sorted(calls):
+		try:
+			target = frappe.get_attr(path)
+		except Exception:
+			missing.append(f"{path} (does not resolve)")
+			continue
+		if target not in frappe.whitelisted:
+			missing.append(path)
+	assert not missing, f"frontend calls unwhitelisted endpoints: {missing}"
+
+	# and no private helper may be an endpoint
+	leaked = [str(fn) for fn in frappe.whitelisted
+	          if getattr(fn, "__module__", "").startswith("kamra.")
+	          and fn.__name__.startswith("_")]
+	assert not leaked, f"private helpers are whitelisted: {leaked}"
+
+
+@check("check-in flow: context, allocator suggestion, room handover")
+def t50():
+	from frappe.utils import add_days, nowdate
+
+	from kamra.api import check_in, checkin_context
+
+	# an unassigned arrival for today - the flow's home case
+	guest = frappe.get_doc({
+		"doctype": "Guest", "first_name": "Flow", "last_name": "Guest",
+		"phone": "+91 98111 22334", "email": "flow@example.com",
+	}).insert(ignore_permissions=True)
+	res = frappe.get_doc({
+		"doctype": "Reservation", "property": P, "guest": guest.name,
+		"room_type": RT, "check_in_date": nowdate(),
+		"check_out_date": add_days(nowdate(), 2), "adults": 2,
+		"source": "PMS",
+	}).insert(ignore_permissions=True)
+	assert not res.room
+
+	ctx = checkin_context(res.name)
+	assert ctx["reservation"]["status"] == "Confirmed"
+	assert ctx["readiness"]["phone"] and ctx["readiness"]["email"]
+	assert not ctx["readiness"]["id_on_file"]
+	assert ctx["room_assigned"] is None
+	assert ctx["rooms"], "no free rooms offered for an open room type"
+	# the allocator proposes one of the offered rooms, with a reason
+	assert ctx["suggestion"], "allocator made no suggestion"
+	assert ctx["suggestion"]["room"] in [r["name"] for r in ctx["rooms"]]
+	assert ctx["suggestion"]["why"]
+
+	# desk takes the suggestion - check-in lands guest in that room
+	out = check_in(res.name, room=ctx["suggestion"]["room"])
+	assert out["room"] == ctx["suggestion"]["room"], out
+	res.reload()
+	assert res.status == "Checked In" and res.room == out["room"]
+
+	# once assigned, the context reports the room instead of choices
+	ctx2 = checkin_context(res.name)
+	assert ctx2["room_assigned"] and ctx2["room_assigned"]["name"] == res.room
+	assert ctx2["rooms"] == [] and ctx2["suggestion"] is None
+
+
+@check("occupant register: per-occupant ID scans, edit-safe, discarded at checkout")
+def t51():
+	import base64
+	import io as _io
+
+	from PIL import Image
+
+	from kamra.api import (_scrub_stay_ids, check_in, update_occupants,
+	                       upload_occupant_id)
+
+	from frappe.utils import add_days, nowdate
+
+	guest = frappe.get_doc({
+		"doctype": "Guest", "first_name": "Occ", "last_name": "Primary",
+	}).insert(ignore_permissions=True)
+	res = frappe.get_doc({
+		"doctype": "Reservation", "property": P, "guest": guest.name,
+		"room_type": RT, "check_in_date": nowdate(),
+		"check_out_date": add_days(nowdate(), 1), "adults": 2,
+		"source": "PMS",
+	}).insert(ignore_permissions=True)
+
+	out = update_occupants(res.name, [
+		{"full_name": "Asha Kumar", "age": 34, "id_type": "Aadhaar",
+		 "id_number": "987654321012"},
+	])
+	assert out["rows"] and out["rows"][0]["row"], out
+	row = out["rows"][0]["row"]
+
+	# a real JPEG through the sanitising pipeline
+	buf = _io.BytesIO()
+	Image.new("RGB", (60, 40), (200, 30, 30)).save(buf, format="JPEG")
+	data_url = ("data:image/jpeg;base64,"
+	            + base64.b64encode(buf.getvalue()).decode())
+	up = upload_occupant_id(res.name, row, data_url)
+	assert up["ok"] and up["file"].startswith("/private/"), up
+
+	# register edits keep the scan
+	out2 = update_occupants(res.name, out["rows"] + [
+		{"full_name": "Dev Kumar", "age": 8}])
+	kept = [r for r in out2["rows"] if r["full_name"] == "Asha Kumar"][0]
+	assert kept["id_file"] == up["file"], out2["rows"]
+
+	# Verify & Discard: the scan and the digits leave with the party
+	real = frappe.db.get_value("Property", P, "id_retention")
+	frappe.db.set_value("Property", P, "id_retention", "Verify & Discard")
+	try:
+		res.reload()
+		_scrub_stay_ids(res)
+		occ = frappe.get_all("Stay Occupant",
+		                     filters={"parent": res.name,
+		                              "full_name": "Asha Kumar"},
+		                     fields=["id_number", "id_file"])[0]
+		assert occ.id_file is None, occ
+		assert occ.id_number.endswith("1012") and occ.id_number.startswith("•")
+		assert not frappe.get_all("File", filters={"file_url": up["file"]})
+	finally:
+		frappe.db.set_value("Property", P, "id_retention", real)
+
+
+@check("channel manager: ARI snapshot, push, OTA book/modify/cancel")
+def t53():
+	from frappe.utils import add_days, nowdate
+
+	from kamra import channel_manager as cm
+	from kamra.channels import channex
+
+	conn = frappe.get_doc({
+		"doctype": "Channel Manager Connection", "property": P,
+		"provider": "Channex", "active": 1, "api_key": "eval-key",
+		"external_property_id": "chx-prop-1", "webhook_secret": "eval-hook",
+		"sync_days": 5,
+	}).insert(ignore_permissions=True)
+	frappe.get_doc({
+		"doctype": "Channel Room Mapping", "connection": conn.name,
+		"room_type": RT, "external_room_id": "chx-room-1",
+		"external_rate_id": "chx-rate-1",
+	}).insert(ignore_permissions=True)
+
+	snap = cm.ari_snapshot(P, conn.name, days=3)
+	assert len(snap) == 1 and len(snap[0]["days"]) == 3, snap
+	assert snap[0]["external_room_id"] == "chx-room-1"
+	day0 = snap[0]["days"][0]
+	assert day0["available"] >= 0 and day0["rate"] > 0, day0
+
+	pushes = []
+	real_call = channex._call
+	channex._call = lambda c, m, path, payload=None: (
+		pushes.append((path, payload)) or (True, {"data": "ok"}))
+	try:
+		out = cm.push_ari(conn.name)
+		assert out["ok"], out
+		assert {p_ for p_, _ in pushes} == {"availability", "restrictions"}
+		before = frappe.db.get_value("Channel Manager Connection",
+		                             conn.name, "last_push_status")
+		assert before and before.startswith("OK"), before
+
+		# inbound booking in Channex webhook shape
+		ci, co = nowdate(), add_days(nowdate(), 2)
+		events = channex.parse_webhook(conn, {"payload": {
+			"status": "new", "ota_reservation_code": "BDC-777",
+			"ota_name": "Booking.com", "currency": "INR",
+			"customer": {"name": "Nina", "surname": "Rao",
+			             "phone": "+91 90000 11111",
+			             "mail": "nina@example.com"},
+			"rooms": [{"room_type_id": "chx-room-1",
+			           "checkin_date": str(ci), "checkout_date": str(co),
+			           "occupancy": {"adults": 2, "children": 1},
+			           "days": {str(ci): "4200.00",
+			                    str(add_days(ci, 1)): "4200.00"}}],
+		}})
+		assert events[0]["event"] == "book" and events[0]["total"] == 8400.0
+		r1 = cm._apply_event(conn, events[0])
+		assert r1["result"] == "booked", r1
+		res = frappe.get_doc("Reservation", r1["reservation"])
+		assert res.source == "OTA" and res.channel == "Booking.com"
+		assert res.ota_ref == "BDC-777"
+		assert float(res.amount_after_tax) == 8400.0, res.amount_after_tax
+		assert frappe.db.get_value("Guest", res.guest, "email") 			== "nina@example.com"
+
+		# same ref again = ignored, not double-booked
+		r2 = cm._apply_event(conn, events[0])
+		assert r2["result"] == "duplicate_ignored", r2
+
+		# modify moves the dates
+		mod = dict(events[0], event="modify",
+		           check_out=str(add_days(ci, 3)))
+		r3 = cm._apply_event(conn, mod)
+		assert r3["result"] == "modified", r3
+		res.reload()
+		assert str(res.check_out_date) == str(add_days(ci, 3))
+
+		# cancel closes it through the policy-safe path
+		r4 = cm._apply_event(conn, dict(events[0], event="cancel"))
+		assert r4["result"] == "cancelled", r4
+		res.reload()
+		assert res.status == "Cancelled"
+
+		# unmapped room never lands silently
+		bad = dict(events[0], ota_ref="X-1",
+		           room_type_external_id="unknown-room")
+		assert cm._apply_event(conn, bad)["result"] == "unmapped_room"
+	finally:
+		channex._call = real_call
+
+
 @check("ticket SLA: priority sets due window")
 def t12():
 	from frappe.utils import get_datetime, now_datetime, time_diff_in_seconds
@@ -1971,7 +2402,7 @@ def execute():
 		for fn in (t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13,
 		           t14, t15, t16, t17, t18, t19, t20, t21, t22, t23, t24,
 		           t25, t26, t27, t28, t29, t30, t31, t32, t33, t34, t35,
-		           t36, t37, t38, t39, t40, t41, t42, t43):
+		           t36, t37, t38, t39, t40, t41, t42, t43, t44, t45, t46, t47, t48, t49, t50, t51, t53):
 			fn()
 	finally:
 		frappe.db.commit = real_commit

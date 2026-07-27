@@ -1,13 +1,17 @@
 import { useCallback, useEffect, useState } from "react"
-import { ArrowLeft, Plus, Printer, Trash2 } from "lucide-react"
+import {
+  Camera, ArrowLeft, Plus, Printer, Trash2 } from "lucide-react"
 import { Link, useParams } from "react-router-dom"
 import { call } from "../lib/api"
 import { toFullPath } from "../lib/routing"
 import { Button } from "../components/ui/button"
+import { cur, moneyLocale } from "../lib/money"
 
 /** Printable Guest Registration Card (GRC) - sign at check-in. */
 
 interface Occupant {
+  row?: string | null
+  id_file?: string | null
   full_name: string
   age: number | null
   gender: string | null
@@ -70,7 +74,7 @@ interface Grc {
 }
 
 const inr = (n: number) =>
-  n.toLocaleString("en-IN", { maximumFractionDigits: 0 })
+  n.toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
 
 function Row(props: { label: string; value?: string | null }) {
   return (
@@ -107,10 +111,14 @@ function OccupantsEditor(props: {
   async function save() {
     setBusy(true)
     try {
-      await call("kamra.api.update_occupants", {
-        reservation: props.reservation,
-        occupants: rows.filter((r) => r.full_name.trim()),
-      })
+      const out = await call<{ rows: Occupant[] }>(
+        "kamra.api.update_occupants",
+        {
+          reservation: props.reservation,
+          occupants: rows.filter((r) => r.full_name.trim()),
+        },
+      )
+      setRows(out.rows.length ? out.rows : [emptyOccupant()])
       props.onSaved()
     } finally {
       setBusy(false)
@@ -176,6 +184,43 @@ function OccupantsEditor(props: {
               value={o.id_number ?? ""}
               onChange={(e) => set(i, { id_number: e.target.value })}
             />
+            {o.row ? (
+              <label
+                className={`flex cursor-pointer items-center gap-1 rounded-lg border px-2 py-1 text-xs font-medium ${
+                  o.id_file
+                    ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                    : "border-zinc-200 text-zinc-500 hover:border-brand-400 hover:text-brand-700"
+                }`}
+                title={o.id_file ? "Replace this occupant's ID document" : "Capture or upload this occupant's ID document"}
+              >
+                <Camera className="size-3.5" aria-hidden />
+                {o.id_file ? "ID ✓ Replace" : "Capture ID"}
+                <input
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const f = e.target.files?.[0]
+                    if (!f || !o.row) return
+                    const r = await call<{ file: string }>(
+                      "kamra.api.upload_occupant_id",
+                      {
+                        reservation: props.reservation,
+                        row: o.row,
+                        image: await fileToDataUrl(f),
+                      },
+                    )
+                    set(i, { id_file: r.file })
+                    e.target.value = ""
+                  }}
+                />
+              </label>
+            ) : (
+              <span className="text-xs text-zinc-400" title="Save the register first, then capture this occupant's ID">
+                save row → ID
+              </span>
+            )}
             <button
               className="rounded p-1 text-zinc-400 hover:text-rose-500"
               aria-label="Remove occupant"
@@ -365,12 +410,12 @@ export default function RegistrationCard() {
               field="actual_check_out" value={d.reservation.actual_check_out} onSaved={load} />
             <Row label="Nights" value={String(d.reservation.nights)} />
             <Row label="Guests" value={`${d.reservation.adults} adult(s)${d.reservation.children ? ` + ${d.reservation.children} child` : ""}`} />
-            <Row label="Stay total" value={`₹${inr(d.reservation.rate_total)} (incl. GST)`} />
-            <Row label="Advance paid" value={`₹${inr(d.reservation.advance_paid)}`} />
+            <Row label="Stay total" value={`${cur()}${inr(d.reservation.rate_total)} (incl. GST)`} />
+            <Row label="Advance paid" value={`${cur()}${inr(d.reservation.advance_paid)}`} />
             {d.money && (
               <>
-                <Row label="Ledger" value={`Paid ₹${inr(d.money.paid_total)} · Balance ₹${inr(d.money.balance)}` +
-                  (d.money.deposit_held ? ` · Deposit held ₹${inr(d.money.deposit_held)}` : "")} />
+                <Row label="Ledger" value={`Paid ${cur()}${inr(d.money.paid_total)} · Balance ${cur()}${inr(d.money.balance)}` +
+                  (d.money.deposit_held ? ` · Deposit held ${cur()}${inr(d.money.deposit_held)}` : "")} />
                 <div className="print:hidden">
                   <a className="text-sm font-medium text-brand-700 hover:underline"
                     href={toFullPath(`/billing/${encodeURIComponent(d.money.folio)}`)}>

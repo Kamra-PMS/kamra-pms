@@ -28,6 +28,7 @@ import {
 } from "../components/ui/card"
 import { cn } from "../lib/utils"
 import { toFullPath } from "../lib/routing"
+import { cur, moneyLocale } from "../lib/money"
 
 /** Guest profile hub - the person is the center, stays hang off them.
  * Everything the desk needs when a returning guest calls: history at a
@@ -83,7 +84,7 @@ interface Journey {
 }
 
 const inr = (n: number) =>
-  Number(n).toLocaleString("en-IN", { maximumFractionDigits: 0 })
+  Number(n).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
 
 const eventIcon = {
   booking: CalendarPlus,
@@ -122,7 +123,7 @@ function StayStrip({ rows }: { rows: ResRow[] }) {
         {ordered.map((r) => (
           <span
             key={r.name}
-            title={`${r.check_in_date} → ${r.check_out_date} · ${r.status} · ₹${inr(r.amount_after_tax)}`}
+            title={`${r.check_in_date} → ${r.check_out_date} · ${r.status} · ${cur()}${inr(r.amount_after_tax)}`}
             className={cn(
               "rounded-sm",
               stripTone[r.status] ?? "bg-zinc-300",
@@ -381,9 +382,9 @@ export default function GuestJourney() {
                 <StatCell label="Nights" value={String(stats.nights)} />
                 <StatCell
                   label="Lifetime"
-                  value={`₹${inr(stats.lifetime_value)}`}
+                  value={`${cur()}${inr(stats.lifetime_value)}`}
                 />
-                <StatCell label="Per night" value={`₹${inr(avgNight)}`} />
+                <StatCell label="Per night" value={`${cur()}${inr(avgNight)}`} />
               </div>
             </div>
           </div>
@@ -417,7 +418,7 @@ export default function GuestJourney() {
                   </span>
                   {r.company && <Badge tone="zinc">{r.company}</Badge>}
                   <span className="ml-auto flex items-center gap-3">
-                    <span>₹{inr(r.amount_after_tax)}</span>
+                    <span>{cur()}{inr(r.amount_after_tax)}</span>
                     <a
                       href={toFullPath(`/grc/${encodeURIComponent(r.name)}`)}
                       className="font-medium text-brand-700 hover:underline"
@@ -473,7 +474,7 @@ export default function GuestJourney() {
                         )}
                         {e.amount ? (
                           <span className="text-sm text-zinc-500">
-                            ₹{inr(e.amount)}
+                            {cur()}{inr(e.amount)}
                           </span>
                         ) : null}
                         {e.channel && <Badge tone="indigo">{e.channel}</Badge>}

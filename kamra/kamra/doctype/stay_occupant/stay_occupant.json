@@ -13,7 +13,8 @@
   "nationality",
   "id_type",
   "id_number",
-  "phone"
+  "phone",
+  "id_file"
  ],
  "fields": [
   {
@@ -61,6 +62,12 @@
    "fieldtype": "Data",
    "label": "Phone",
    "options": "Phone"
+  },
+  {
+   "fieldname": "id_file",
+   "fieldtype": "Data",
+   "label": "ID Document",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,

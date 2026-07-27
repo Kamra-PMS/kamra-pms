@@ -29,6 +29,7 @@ import { useAuth } from "./lib/auth"
 import { subscribeRealtime } from "./lib/realtime"
 import { getTheme, setTheme } from "./lib/theme"
 import { t as translate, useT } from "./lib/i18n"
+import { loadLocale } from "./lib/money"
 import { cn } from "./lib/utils"
 
 export interface BookingInitial {
@@ -177,6 +178,11 @@ export default function AppShell() {
   }, [])
 
   useEffect(() => subscribeRealtime(() => setRefreshKey((k) => k + 1)), [])
+
+  // currency symbol + number locale follow the property's country pack
+  useEffect(() => {
+    loadLocale().then(() => setRefreshKey((k) => k + 1))
+  }, [property])
 
   function switchProperty(name: string) {
     setCurrentProperty(name)

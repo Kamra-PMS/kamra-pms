@@ -7,9 +7,10 @@ import {
 import { call, getCurrentProperty } from "../lib/api"
 import { serverError } from "../lib/resource"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
+import { cur, moneyLocale } from "../lib/money"
 
 const inr = (n: unknown) =>
-  Number(n ?? 0).toLocaleString("en-IN", { maximumFractionDigits: 0 })
+  Number(n ?? 0).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
 
 interface PropDash {
   property_name: string
@@ -161,9 +162,9 @@ export default function Dashboard() {
             <Tile icon={LogIn} label="Arrivals" value={String(prop.arrivals)} />
             <Tile icon={LogOut} label="Departures" value={String(prop.departures)} />
             <Tile icon={Users} label="In house" value={String(prop.in_house)} />
-            <Tile icon={IndianRupee} label="Revenue" value={`₹${inr(prop.revenue_today)}`}
+            <Tile icon={IndianRupee} label="Revenue" value={`${cur()}${inr(prop.revenue_today)}`}
               sub="today" />
-            <Tile icon={Wallet} label="Collections" value={`₹${inr(prop.collections_today)}`}
+            <Tile icon={Wallet} label="Collections" value={`${cur()}${inr(prop.collections_today)}`}
               sub="today" />
           </div>
 
@@ -173,9 +174,9 @@ export default function Dashboard() {
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
                 {[
                   ["Occupancy", `${prop.statistics.mtd_occupancy_pct}%`],
-                  ["Revenue", `₹${inr(prop.statistics.mtd_revenue)}`],
-                  ["ADR", `₹${inr(prop.statistics.adr)}`],
-                  ["RevPAR", `₹${inr(prop.statistics.revpar)}`],
+                  ["Revenue", `${cur()}${inr(prop.statistics.mtd_revenue)}`],
+                  ["ADR", `${cur()}${inr(prop.statistics.adr)}`],
+                  ["RevPAR", `${cur()}${inr(prop.statistics.revpar)}`],
                   ["Rooms sold", inr(prop.statistics.rooms_sold_mtd)],
                 ].map(([k, v]) => (
                   <div key={k}>
@@ -211,8 +212,8 @@ export default function Dashboard() {
             <Card>
               <CardHeader><CardTitle className="flex items-center gap-1.5"><Receipt className="size-4 text-brand-600" />Finance</CardTitle></CardHeader>
               <CardContent className="space-y-1.5 text-sm">
-                <Row label="Collected today" value={`₹${inr(prop.finance.collections_today)}`} />
-                <Row label="Outstanding" value={`₹${inr(prop.finance.outstanding)}`} tone={prop.finance.outstanding ? "text-amber-600" : undefined} />
+                <Row label="Collected today" value={`${cur()}${inr(prop.finance.collections_today)}`} />
+                <Row label="Outstanding" value={`${cur()}${inr(prop.finance.outstanding)}`} tone={prop.finance.outstanding ? "text-amber-600" : undefined} />
                 <Row label="Open folios" value={prop.finance.open_folios} />
               </CardContent>
             </Card>
@@ -228,8 +229,8 @@ export default function Dashboard() {
             <Tile icon={BedDouble} label="Occupancy" value={`${port.totals.occupancy_pct}%`} tone="text-brand-600" />
             <Tile icon={LogIn} label="Arrivals" value={String(port.totals.arrivals)} />
             <Tile icon={Users} label="In house" value={String(port.totals.in_house)} />
-            <Tile icon={IndianRupee} label="Revenue" value={`₹${inr(port.totals.revenue_today)}`} sub="today" />
-            <Tile icon={Wallet} label="Collections" value={`₹${inr(port.totals.collections_today)}`} sub="today" />
+            <Tile icon={IndianRupee} label="Revenue" value={`${cur()}${inr(port.totals.revenue_today)}`} sub="today" />
+            <Tile icon={Wallet} label="Collections" value={`${cur()}${inr(port.totals.collections_today)}`} sub="today" />
           </div>
 
           <Card>
@@ -257,9 +258,9 @@ export default function Dashboard() {
                         <td className="py-2 pr-3 text-right tabular-nums">{p.arrivals}</td>
                         <td className="py-2 pr-3 text-right tabular-nums">{p.departures}</td>
                         <td className="py-2 pr-3 text-right tabular-nums">{p.in_house}</td>
-                        <td className="py-2 pr-3 text-right tabular-nums">₹{inr(p.revenue_today)}</td>
-                        <td className="py-2 pr-3 text-right tabular-nums">₹{inr(p.collections_today)}</td>
-                        <td className="py-2 text-right tabular-nums">₹{inr(p.outstanding)}</td>
+                        <td className="py-2 pr-3 text-right tabular-nums">{cur()}{inr(p.revenue_today)}</td>
+                        <td className="py-2 pr-3 text-right tabular-nums">{cur()}{inr(p.collections_today)}</td>
+                        <td className="py-2 text-right tabular-nums">{cur()}{inr(p.outstanding)}</td>
                       </tr>
                     ))}
                   </tbody>

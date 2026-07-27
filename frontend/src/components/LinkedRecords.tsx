@@ -9,6 +9,7 @@ import {
 } from "lucide-react"
 
 import { call } from "../lib/api"
+import { cur, moneyLocale } from "../lib/money"
 
 /** The connective tissue, rendered: one strip of chips on any record that
  *  jumps straight to its guest, folios (billing), company, group or event.
@@ -58,7 +59,7 @@ export default function LinkedRecords({
 
   if (!links) return null
   const inr = (n: number) =>
-    Number(n || 0).toLocaleString("en-IN", { maximumFractionDigits: 0 })
+    Number(n || 0).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
 
   const chips: React.ReactNode[] = []
   if (links.guest && !exclude.includes("guest"))
@@ -88,7 +89,7 @@ export default function LinkedRecords({
               f.balance > 0 ? "text-amber-600" : "text-zinc-400"
             }
           >
-            ₹{inr(f.balance)}
+            {cur()}{inr(f.balance)}
           </span>
         </button>,
       )

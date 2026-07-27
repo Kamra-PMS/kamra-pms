@@ -8,6 +8,7 @@ import { listResource, serverError, type Row } from "../lib/resource"
 import LinkedRecords from "./LinkedRecords"
 import { Badge } from "./ui/badge"
 import { Button } from "./ui/button"
+import { cur, moneyLocale } from "../lib/money"
 
 /** Group Rooms Control - the MICE cockpit for one piece of business:
  *  the room block (with pickup progress), the rooming list, the tied
@@ -60,7 +61,7 @@ interface BlockDraft {
 
 const short = (rt: string) => rt.split("-").pop() ?? rt
 const inr = (n: number) =>
-  "₹" + Number(n || 0).toLocaleString("en-IN", { maximumFractionDigits: 0 })
+  `${cur()}` + Number(n || 0).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
 
 const STATUS_TONE: Record<string, "green" | "amber" | "zinc"> = {
   Confirmed: "green",
@@ -252,7 +253,7 @@ export default function GroupControl({
                 <input
                   type="number"
                   className="w-28 rounded-lg border border-zinc-300 px-2 py-1.5 text-sm"
-                  placeholder="₹/night"
+                  placeholder={`${cur()}/night`}
                   value={b.block_rate}
                   onChange={(e) =>
                     setBlocks((bs) =>

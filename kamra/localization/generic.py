@@ -34,10 +34,15 @@ def invoice_context(prop_doc) -> dict:
 
 
 def locale(prop_doc) -> dict:
+	currency = prop_doc.get("currency") or "USD"
+	# the Currency master knows the symbol ($, £, €, S$, ...); on a bare
+	# site with no currency records the code itself becomes the symbol -
+	# "USD 1,500" beats a bare unlabelled number
+	symbol = frappe.db.get_value("Currency", currency, "symbol")
 	return {
-		"currency_symbol": "",
+		"currency_symbol": symbol or f"{currency} ",
 		"locale": "en-US",
-		"currency": prop_doc.get("currency") or "USD",
+		"currency": currency,
 		"tax_label": "Tax",
 		"tax_id_label": "Tax ID",
 		"tax_rates": tax_rate_options(prop_doc.name),
