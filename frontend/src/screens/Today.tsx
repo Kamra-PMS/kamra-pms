@@ -251,6 +251,15 @@ function InHouseTable({
   )
 }
 
+function InsightRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between">
+      <span className="text-zinc-500">{label}</span>
+      <span className="font-semibold tabular-nums text-zinc-800">{value}</span>
+    </div>
+  )
+}
+
 export default function Today() {
   const { refreshKey } = useOutletContext<ShellContext>()
   const [snap, setSnap] = useState<Snapshot | null>(null)
@@ -259,6 +268,7 @@ export default function Today() {
   const [busy, setBusy] = useState<string | null>(null)
   const [checkingIn, setCheckingIn] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [floor, setFloor] = useState("All")
 
   const refresh = useCallback(async () => {
     try {
@@ -308,6 +318,54 @@ export default function Today() {
   const revpar = Number(kpi?.statistics?.revpar ?? 0)
   const tasksN = Number(kpi?.housekeeping?.open_tasks ?? 0)
   const overdueN = Number(kpi?.housekeeping?.overdue_tasks ?? 0)
+  const allRooms = snap?.rooms ?? []
+  const floors = Array.from(
+    new Set(allRooms.map((r) => r.floor).filter(Boolean)),
+  ).sort() as string[]
+  const shownFloors = floor === "All" ? floors : [floor]
+  const renderRoom = (room: RoomRow) => {
+    const next =
+      HK_CYCLE[
+        (HK_CYCLE.indexOf(room.housekeeping_status) + 1) % HK_CYCLE.length
+      ]
+    const occupied = room.occupancy_status === "Occupied"
+    return (
+      <button
+        key={room.name}
+        title={`${room.housekeeping_status} → ${next}`}
+        disabled={busy === room.name}
+        onClick={() =>
+          act(room.name, () => setHousekeepingStatus(room.name, next))
+        }
+        className={cn(
+          "rounded-lg border px-2 pb-1.5 pt-2 text-left transition-transform",
+          "hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600",
+          occupied
+            ? "border-brand-700 bg-brand-700 text-white"
+            : hkTone[room.housekeeping_status],
+        )}
+      >
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-semibold">{room.room_number}</span>
+          {occupied && <BedDouble className="size-3.5" aria-hidden />}
+        </div>
+        <div className="mt-0.5 truncate text-[10px] font-medium uppercase tracking-wide opacity-70">
+          {occupied ? "Occupied" : room.housekeeping_status}
+        </div>
+      </button>
+    )
+  }
+  const hkRoom = kpi?.housekeeping?.room_status ?? {}
+  const hkStats = [
+    { label: "Clean", value: hkRoom.Clean ?? 0, dot: "bg-emerald-500" },
+    { label: "Dirty", value: hkRoom.Dirty ?? 0, dot: "bg-amber-500" },
+    { label: "Inspected", value: hkRoom.Inspected ?? 0, dot: "bg-sky-500" },
+    {
+      label: "Out of Order",
+      value: hkRoom["Out of Order"] ?? 0,
+      dot: "bg-rose-500",
+    },
+  ]
   const hh = new Date().getHours()
   const greeting =
     hh < 12 ? "Good morning" : hh < 17 ? "Good afternoon" : "Good evening"
@@ -453,43 +511,38 @@ export default function Today() {
               </span>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-3 gap-2 sm:grid-cols-5 md:grid-cols-7">
-                {(snap?.rooms ?? []).map((room) => {
-                  const next =
-                    HK_CYCLE[
-                      (HK_CYCLE.indexOf(room.housekeeping_status) + 1) %
-                        HK_CYCLE.length
-                    ]
-                  return (
-                    <button
-                      key={room.name}
-                      title={`${room.housekeeping_status} → ${next}`}
-                      disabled={busy === room.name}
-                      onClick={() =>
-                        act(room.name, () =>
-                          setHousekeepingStatus(room.name, next),
-                        )
-                      }
-                      className={cn(
-                        "rounded-lg border px-2 pb-1.5 pt-2 text-left transition-transform",
-                        "hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600",
-                        hkTone[room.housekeeping_status],
-                      )}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-semibold">
-                          {room.room_number}
-                        </span>
-                        {room.occupancy_status === "Occupied" && (
-                          <BedDouble className="size-3.5" aria-hidden />
-                        )}
-                      </div>
-                      <div className="mt-0.5 truncate text-[10px] font-medium uppercase tracking-wide opacity-70">
-                        {room.housekeeping_status}
-                      </div>
-                    </button>
-                  )
-                })}
+              <div className="mb-3 flex flex-wrap gap-1 border-b border-zinc-100">
+                {["All", ...floors].map((f) => (
+                  <button
+                    key={f}
+                    onClick={() => setFloor(f)}
+                    className={cn(
+                      "relative px-3 py-1.5 text-sm font-medium",
+                      floor === f
+                        ? "text-brand-700"
+                        : "text-zinc-500 hover:text-zinc-700",
+                    )}
+                  >
+                    {f === "All" ? "All Floors" : `${f} Floor`}
+                    {floor === f && (
+                      <span className="absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-brand-600" />
+                    )}
+                  </button>
+                ))}
+              </div>
+              <div className="space-y-3">
+                {shownFloors.map((fl) => (
+                  <div key={fl} className="flex items-start gap-3">
+                    <div className="w-14 shrink-0 pt-2 text-xs font-medium text-zinc-500">
+                      {fl} Floor
+                    </div>
+                    <div className="grid flex-1 grid-cols-3 gap-2 sm:grid-cols-5 md:grid-cols-7">
+                      {allRooms
+                        .filter((r) => r.floor === fl)
+                        .map((room) => renderRoom(room))}
+                    </div>
+                  </div>
+                ))}
               </div>
               <div className="mt-3 flex flex-wrap gap-2 text-xs text-zinc-500">
                 <Badge tone="green">Clean</Badge>
@@ -512,6 +565,66 @@ export default function Today() {
               <InHouseTable rows={snap?.in_house ?? []} today={snap?.date} />
             </CardContent>
           </Card>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle>Housekeeping summary</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-2">
+                  {hkStats.map((s) => (
+                    <div
+                      key={s.label}
+                      className="flex items-center gap-2 rounded-lg border border-zinc-200 px-3 py-2"
+                    >
+                      <span className={cn("size-2 rounded-full", s.dot)} />
+                      <span className="text-lg font-semibold tabular-nums">
+                        {s.value}
+                      </span>
+                      <span className="text-xs text-zinc-500">{s.label}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-3">
+                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-zinc-100">
+                    <div
+                      className="h-full rounded-full bg-brand-600"
+                      style={{ width: `${occupancyPct}%` }}
+                    />
+                  </div>
+                  <div className="mt-1 text-xs text-zinc-400">
+                    {occupancyPct}% occupied · {occupied ?? 0} of {roomsN} rooms
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Quick insights</CardTitle>
+                <span className="text-xs text-zinc-400">Month to date</span>
+              </CardHeader>
+              <CardContent className="space-y-2.5 text-sm">
+                <InsightRow
+                  label="Occupancy"
+                  value={`${kpi?.statistics?.mtd_occupancy_pct ?? 0}%`}
+                />
+                <InsightRow
+                  label="Avg. daily rate"
+                  value={`${cur()}${inr0(Number(kpi?.statistics?.adr ?? 0))}`}
+                />
+                <InsightRow
+                  label="RevPAR"
+                  value={`${cur()}${inr0(revpar)}`}
+                />
+                <InsightRow
+                  label="Rooms sold"
+                  value={String(kpi?.statistics?.rooms_sold_mtd ?? 0)}
+                />
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
       {checkingIn && (
