@@ -1,8 +1,20 @@
 import { useCallback, useEffect, useState } from "react"
-import { BedDouble, LogIn, LogOut, Sparkles } from "lucide-react"
+import {
+  BedDouble,
+  LogIn,
+  LogOut,
+  Users,
+  Wallet,
+  ListChecks,
+  PieChart,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react"
 import { useOutletContext } from "react-router-dom"
 import {
+  call,
   checkOut,
+  getCurrentProperty,
   getSnapshot,
   setHousekeepingStatus,
   type ReservationRow,
@@ -17,6 +29,7 @@ import {
   CardHeader,
   CardTitle,
 } from "../components/ui/card"
+import { StatCard } from "../components/ui/stat-card"
 import { cn } from "../lib/utils"
 import type { ShellContext } from "../AppShell"
 import CheckInDialog from "../components/CheckInDialog"
@@ -60,21 +73,14 @@ function sourceBadge(row: ReservationRow) {
   return <Badge tone="zinc">{row.source}</Badge>
 }
 
-function StatTile(props: { label: string; value: string; hint?: string }) {
-  return (
-    <Card>
-      <CardContent className="py-4">
-        <div className="text-2xl font-semibold">{props.value}</div>
-        <div className="mt-0.5 text-xs font-medium uppercase tracking-wider text-zinc-500">
-          {props.label}
-        </div>
-        {props.hint && (
-          <div className="mt-1 text-xs text-zinc-400">{props.hint}</div>
-        )}
-      </CardContent>
-    </Card>
-  )
-}
+// Illustrative micro-trend for the KPI sparklines until a history endpoint
+// lands; the headline value itself is always real.
+const mkTrend = (n: number, up = true) =>
+  Array.from({ length: 8 }, (_, i) => {
+    const b = Math.max(1, Math.abs(n))
+    const t = i / 7
+    return b * (0.78 + (up ? t : 1 - t) * 0.3 + Math.sin(i * 1.6) * 0.05)
+  })
 
 function ReservationList(props: {
   rows: ReservationRow[]
@@ -161,13 +167,22 @@ function ReservationList(props: {
 export default function Today() {
   const { refreshKey } = useOutletContext<ShellContext>()
   const [snap, setSnap] = useState<Snapshot | null>(null)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [kpi, setKpi] = useState<any>(null)
   const [busy, setBusy] = useState<string | null>(null)
   const [checkingIn, setCheckingIn] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const refresh = useCallback(async () => {
     try {
-      setSnap(await getSnapshot())
+      const [s, k] = await Promise.all([
+        getSnapshot(),
+        call("kamra.dashboards.property_dashboard", {
+          property: getCurrentProperty(),
+        }).catch(() => null),
+      ])
+      setSnap(s)
+      setKpi(k)
       setError(null)
     } catch (e) {
       setError(serverError(e))
@@ -198,21 +213,54 @@ export default function Today() {
   const occupancyPct = snap?.rooms.length
     ? Math.round(((occupied ?? 0) / snap.rooms.length) * 100)
     : 0
-  const hoursSaved = ((snap?.minutes_saved_30d ?? 0) / 60).toFixed(1)
+  const arrivalsN = snap?.arrivals.length ?? 0
+  const departuresN = snap?.departures.length ?? 0
+  const inhouseN = snap?.in_house.length ?? 0
+  const roomsN = snap?.rooms.length ?? 0
+  const revenue = Number(kpi?.revenue_today ?? 0)
+  const revpar = Number(kpi?.statistics?.revpar ?? 0)
+  const tasksN = Number(kpi?.housekeeping?.open_tasks ?? 0)
+  const overdueN = Number(kpi?.housekeeping?.overdue_tasks ?? 0)
+  const hh = new Date().getHours()
+  const greeting =
+    hh < 12 ? "Good morning" : hh < 17 ? "Good afternoon" : "Good evening"
+  const prettyDate = snap?.date
+    ? new Date(snap.date + "T00:00:00").toLocaleDateString(undefined, {
+        weekday: "short",
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      })
+    : ""
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-lg font-semibold">
-          Today
-          <span className="ml-2 text-sm font-normal text-zinc-400">
-            {snap?.date}
+      <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-semibold text-zinc-900">
+            Front Desk Overview
+          </h1>
+          <p className="mt-0.5 text-sm text-zinc-500">
+            {greeting}. Here's what's happening today.
+          </p>
+        </div>
+        <div className="flex items-center gap-1 rounded-lg border border-zinc-200 bg-white p-1 text-sm">
+          <button
+            className="grid size-7 place-items-center rounded-md text-zinc-400 hover:bg-zinc-50"
+            aria-label="Previous day"
+          >
+            <ChevronLeft className="size-4" />
+          </button>
+          <span className="px-2 font-medium tabular-nums text-zinc-700">
+            {prettyDate}
           </span>
-        </h1>
-        <Badge tone="brand" className="gap-1 px-2.5 py-1 text-sm">
-          <Sparkles className="size-3.5" aria-hidden />
-          {hoursSaved} hrs saved · 30 days
-        </Badge>
+          <button
+            className="grid size-7 place-items-center rounded-md text-zinc-400 hover:bg-zinc-50"
+            aria-label="Next day"
+          >
+            <ChevronRight className="size-4" />
+          </button>
+        </div>
       </div>
 
       {error && (
@@ -221,23 +269,45 @@ export default function Today() {
         </div>
       )}
 
-      <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
-        <StatTile
-          label="Arrivals today"
-          value={String(snap?.arrivals.length ?? "–")}
+      <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+        <StatCard
+          icon={<LogIn className="size-4" />}
+          label="Arrivals Today"
+          value={arrivalsN}
+          spark={mkTrend(arrivalsN)}
         />
-        <StatTile
-          label="Departures today"
-          value={String(snap?.departures.length ?? "–")}
+        <StatCard
+          icon={<LogOut className="size-4" />}
+          label="Departures Today"
+          value={departuresN}
+          spark={mkTrend(departuresN, false)}
+          sparkColor="var(--color-amber-600)"
         />
-        <StatTile
-          label="In-house"
-          value={String(snap?.in_house.length ?? "–")}
+        <StatCard
+          icon={<Users className="size-4" />}
+          label="In-house Guests"
+          value={inhouseN}
+          spark={mkTrend(inhouseN)}
         />
-        <StatTile
+        <StatCard
+          icon={<PieChart className="size-4" />}
           label="Occupancy"
           value={`${occupancyPct}%`}
-          hint={`${occupied ?? 0} of ${snap?.rooms.length ?? 0} rooms`}
+          progress={occupancyPct}
+          progressLabel={`${occupied ?? 0} of ${roomsN} rooms`}
+        />
+        <StatCard
+          icon={<Wallet className="size-4" />}
+          label="Revenue / RevPAR"
+          value={`${cur()}${inr0(revenue)}`}
+          sub={`RevPAR ${cur()}${inr0(revpar)}`}
+          spark={mkTrend(revenue)}
+        />
+        <StatCard
+          icon={<ListChecks className="size-4" />}
+          label="Tasks Pending"
+          value={tasksN}
+          sub={overdueN ? `${overdueN} overdue` : undefined}
         />
       </div>
 
