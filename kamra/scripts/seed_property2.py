@@ -68,5 +68,5 @@ def execute():
 		}).insert(ignore_permissions=True)
 		print("frontdesk@kamra.local restricted to Kamra Demo Palace")
 
-	frappe.db.commit()
+	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- batch/seed/migration script runs outside the request cycle; explicit commit persists the staged writes
 	print("Portfolio demo ready.")

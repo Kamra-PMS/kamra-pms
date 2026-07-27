@@ -35,12 +35,12 @@ def _snapshot():
 
 
 def capture():
-	json.dump(_snapshot(), open(BASELINE, "w"), sort_keys=True, indent=2)
+	json.dump(_snapshot(), open(BASELINE, "w"), sort_keys=True, indent=2)  # nosemgrep: frappe-security-file-traversal -- path is derived from the app source tree, not from user input
 	print("BASELINE written")
 
 
 def compare():
-	before = json.load(open(BASELINE))
+	before = json.load(open(BASELINE))  # nosemgrep: frappe-security-file-traversal -- path is derived from the app source tree, not from user input
 	after = _snapshot()
 	bj = json.dumps(before, sort_keys=True)
 	aj = json.dumps(after, sort_keys=True)

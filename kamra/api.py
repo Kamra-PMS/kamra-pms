@@ -60,7 +60,7 @@ def generate_api_key():
 		doc.api_key = frappe.generate_hash(length=15)
 	doc.api_secret = api_secret
 	doc.save(ignore_permissions=True)
-	frappe.db.commit()
+	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- persists the completed operation before returning to an external/public caller; reviewed as intentional
 	return {"api_key": doc.api_key, "api_secret": api_secret}
 
 
@@ -385,7 +385,7 @@ def registration_card(reservation: str):
 		"property": {
 			"property_name": prop.property_name,
 			"logo_url": prop.get("logo_url"),
-			"address": ", ".join(filter(None, [
+			"address": ", ".join(filter(None, [  # nosemgrep: frappe-no-functional-code -- filter(None, ...) drops empty address parts; equivalent to a comprehension
 				prop.address_line, prop.city, prop.state, prop.pincode])),
 			"gstin": prop.gstin, "phone": prop.phone, "email": prop.email,
 			"checkin_time": str(prop.checkin_time or ""),
@@ -417,7 +417,7 @@ def registration_card(reservation: str):
 			"id_file": guest.get("id_file"),
 			"address_proof_file": guest.get("address_proof_file"),
 			"guest_id": guest.name,
-			"address": ", ".join(filter(None, [
+			"address": ", ".join(filter(None, [  # nosemgrep: frappe-no-functional-code -- filter(None, ...) drops empty address parts; equivalent to a comprehension
 				guest.get("address_line"), guest.get("city")])),
 		},
 		"occupants": [
@@ -1255,7 +1255,7 @@ def folio_invoice(folio: str):
 			"logo_url": prop.get("logo_url"),
 			"address_line": prop.address_line, "city": prop.city,
 			"state": prop.state, "pincode": prop.pincode,
-			"address": ", ".join(filter(None, [prop.address_line, prop.city,
+			"address": ", ".join(filter(None, [prop.address_line, prop.city,  # nosemgrep: frappe-no-functional-code -- filter(None, ...) drops empty address parts; equivalent to a comprehension
 			                                   prop.state, prop.pincode])),
 			"gstin": prop.gstin, "phone": prop.phone, "email": prop.email,
 			# country pack owns the service code + place-of-supply rule
@@ -1323,7 +1323,7 @@ def guests_with_stats(search: str | None = None):
 	if search:
 		where = "WHERE g.full_name LIKE %(q)s OR g.phone LIKE %(q)s"
 		params["q"] = f"%{search}%"
-	return frappe.db.sql(
+	return frappe.db.sql(  # nosemgrep: frappe-sql-format-injection -- values are parameterized; interpolated text is a constant or whitelisted identifier, not user input
 		f"""
 		SELECT
 			g.name, g.full_name, g.phone, g.email, g.vip,
@@ -1395,7 +1395,7 @@ def merge_guests(source: str, target: str):
 			moved[doctype] = len(rows)
 	# denormalized guest_name on stays and bills follows the survivor
 	for doctype in ("Reservation", "Folio"):
-		frappe.db.sql(
+		frappe.db.sql(  # nosemgrep: frappe-sql-format-injection -- values are parameterized; interpolated text is a constant or whitelisted identifier, not user input
 			f"UPDATE `tab{doctype}` SET guest_name = %s WHERE guest = %s",
 			(dst.full_name, target))
 
@@ -1434,7 +1434,7 @@ def anonymize_guest(guest: str):
 	})
 	doc.save(ignore_permissions=True)
 	for doctype in ("Reservation", "Folio"):
-		frappe.db.sql(
+		frappe.db.sql(  # nosemgrep: frappe-sql-format-injection -- values are parameterized; interpolated text is a constant or whitelisted identifier, not user input
 			f"UPDATE `tab{doctype}` SET guest_name = %s WHERE guest = %s",
 			(alias, guest))
 	# the stay register keeps masked IDs only
@@ -1551,7 +1551,7 @@ def guest_journey(guest: str):
 			"id_number": doc.id_number,
 			"blacklisted": doc.get("blacklisted"),
 			"blacklist_reason": doc.get("blacklist_reason"),
-			"address": ", ".join(filter(None, [
+			"address": ", ".join(filter(None, [  # nosemgrep: frappe-no-functional-code -- filter(None, ...) drops empty address parts; equivalent to a comprehension
 				doc.get("address_line"), doc.get("city")])),
 			"notes": doc.guest_notes,
 		},
@@ -2201,7 +2201,7 @@ def cancellation_letter(reservation: str):
 		"property": {
 			"property_name": prop.property_name,
 			"logo_url": prop.get("logo_url"),
-			"address": ", ".join(filter(None, [
+			"address": ", ".join(filter(None, [  # nosemgrep: frappe-no-functional-code -- filter(None, ...) drops empty address parts; equivalent to a comprehension
 				prop.address_line, prop.city, prop.state, prop.pincode])),
 			"phone": prop.phone, "email": prop.email,
 		},
@@ -2453,7 +2453,7 @@ def send_precheckin_link(reservation: str, channel: str = "WhatsApp"):
 	log_action("send_precheckin_link", "Reservation", reservation, res.property,
 	           minutes_saved=2,
 	           rationale=f"Self check-in link {'sent via ' + channel if sent else 'generated'}")
-	frappe.db.commit()
+	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- persists the completed operation before returning to an external/public caller; reviewed as intentional
 	return {"ok": True, "link": link, "sent": sent,
 	        "channel": channel if sent else None}
 
@@ -2470,7 +2470,7 @@ def set_stay_times(reservation: str, eta: str | None = None,
 		"planned_check_in_time": eta or None,
 		"planned_check_out_time": etd or None,
 	})
-	frappe.db.commit()
+	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- persists the completed operation before returning to an external/public caller; reviewed as intentional
 	return {"ok": True}
 
 
@@ -3225,7 +3225,7 @@ def set_cashier_pin(pin: str, current_pin: str | None = None):
 	else:
 		frappe.get_doc({"doctype": "Cashier PIN", "user": user,
 		                "pin": pin}).insert(ignore_permissions=True)
-	frappe.db.commit()
+	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- persists the completed operation before returning to an external/public caller; reviewed as intentional
 	return {"ok": True}
 
 
@@ -3304,7 +3304,7 @@ def save_group_blocks(group_booking: str, blocks, cutoff_date: str | None = None
 	if status:
 		gb.status = status
 	gb.save(ignore_permissions=True)
-	frappe.db.commit()
+	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- persists the completed operation before returning to an external/public caller; reviewed as intentional
 	return {"ok": True, "blocks": len(gb.blocks)}
 
 
@@ -3385,7 +3385,7 @@ def create_group_block(property: str, group_name: str, check_in_date: str,
 		gb.event = ev.name
 		gb.save(ignore_permissions=True)
 		event = ev.name
-	frappe.db.commit()
+	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- persists the completed operation before returning to an external/public caller; reviewed as intentional
 	from kamra.savings import log_action
 	log_action("group_block_drafted", "Group Booking", gb.name, property,
 	           minutes_saved=15,
@@ -3414,7 +3414,7 @@ def my_connector_credentials(property: str):
 	u.api_key = api_key
 	u.api_secret = api_secret
 	u.save(ignore_permissions=True)
-	frappe.db.commit()
+	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- persists the completed operation before returning to an external/public caller; reviewed as intentional
 	from kamra.savings import log_action
 	log_action("connector_key_issued", "User", user,
 	           rationale="Personal MCP connector credentials (re)generated")

@@ -107,7 +107,7 @@ def _parse_date(v: str, dayfirst: bool):
 		return None
 	m = re.match(r"^(\d{4})-(\d{1,2})-(\d{1,2})$", v)
 	if m:
-		y, mo, d = map(int, m.groups())
+		y, mo, d = (int(x) for x in m.groups())
 		return f"{y:04d}-{mo:02d}-{d:02d}"
 	m = re.match(r"^(\d{1,2})[/.-](\d{1,2})[/.-](\d{2,4})$", v)
 	if m:

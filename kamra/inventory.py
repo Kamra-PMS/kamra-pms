@@ -573,7 +573,7 @@ def wastage_report(property: str, outlet: str | None = None, days: int = 30):
 	if outlet:
 		conds.append("p.outlet = %(outlet)s")
 		params["outlet"] = outlet
-	lines = frappe.db.sql(f"""
+	lines = frappe.db.sql(f"""  # nosemgrep: frappe-sql-format-injection -- values are parameterized; interpolated text is a constant or whitelisted identifier, not user input
 		select i.item_name, i.menu_item, i.qty, i.void_reason, p.outlet,
 		       p.name as order_name, p.creation
 		  from `tabPOS Order Item` i

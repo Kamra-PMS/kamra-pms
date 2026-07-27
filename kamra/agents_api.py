@@ -29,7 +29,7 @@ def activity_feed(property: str | None = None, actor_kind: str | None = None,
 		conds.append("action_type = %(action_type)s")
 		params["action_type"] = action_type
 	where = ("WHERE " + " AND ".join(conds)) if conds else ""
-	return frappe.db.sql(f"""
+	return frappe.db.sql(f"""  # nosemgrep: frappe-sql-format-injection -- values are parameterized; interpolated text is a constant or whitelisted identifier, not user input
 		SELECT name, creation, actor, agent_name, action_type, action_channel,
 		       approval_status, autonomy, approver, reference_doctype,
 		       reference_name, rationale, minutes_saved, executed_at

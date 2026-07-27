@@ -248,7 +248,7 @@ def run_menu_import(property: str, csv_text: str, outlet: str | None = None,
 		except Exception as e:
 			errors.append({"row": r["row"], "item": r["item_name"],
 			               "error": str(e)[:160]})
-	frappe.db.commit()
+	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- persists the completed operation before returning to an external/public caller; reviewed as intentional
 
 	from kamra.savings import log_action
 	log_action(

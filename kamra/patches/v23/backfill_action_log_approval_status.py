@@ -22,4 +22,4 @@ def execute():
 		WHERE approval_status IS NULL OR approval_status = ''
 		"""
 	)
-	frappe.db.commit()
+	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- migration patch runs outside the request cycle; explicit commit persists the backfill

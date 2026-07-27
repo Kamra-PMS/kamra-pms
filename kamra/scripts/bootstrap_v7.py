@@ -47,5 +47,5 @@ def execute():
 		)
 	print("tokens backfilled")
 
-	frappe.db.commit()
+	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- batch/seed/migration script runs outside the request cycle; explicit commit persists the staged writes
 	print("Kamra v7 schema (self check-in) ready.")

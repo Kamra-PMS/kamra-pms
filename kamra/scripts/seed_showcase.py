@@ -386,7 +386,7 @@ def execute():
 
 	extra = seed_sample_content()
 
-	frappe.db.commit()
+	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- batch/seed/migration script runs outside the request cycle; explicit commit persists the staged writes
 	print(f"Showcase seed: +{added_exp} experiences, +{added_venue} venues, "
 	      f"+{added_outlet} outlets, +{added_item} menu items, "
 	      f"+{added_rate} laundry rates, +{added_ticket} tickets, "

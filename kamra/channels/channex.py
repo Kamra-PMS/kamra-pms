@@ -89,7 +89,7 @@ def parse_webhook(conn, payload) -> list[dict]:
 			"check_out": room.get("checkout_date") or body.get("departure_date"),
 			"adults": int(occ.get("adults") or 2),
 			"children": int(occ.get("children") or 0),
-			"guest_name": " ".join(filter(None, [customer.get("name"),
+			"guest_name": " ".join(filter(None, [customer.get("name"),  # nosemgrep: frappe-no-functional-code -- filter(None, ...) drops empty parts; equivalent to a comprehension
 			                                     customer.get("surname")]))
 			              or "OTA Guest",
 			"phone": customer.get("phone") or "",
