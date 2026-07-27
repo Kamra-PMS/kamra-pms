@@ -6,6 +6,28 @@ All notable changes to Kamra PMS are documented here. Format follows
 existing install on upgrade (removed doctypes, removed API endpoints),
 MINOR for new features, PATCH for fixes.
 
+## [2.3.0](https://github.com/Kamra-PMS/kamra-pms/compare/v2.2.1...v2.3.0) (2026-07-27)
+
+
+### Features
+
+* channel manager seam - Channex live, STAAH and AioSell adapters ready ([a768e3c](https://github.com/Kamra-PMS/kamra-pms/commit/a768e3c40c094d3c3abe324ff51c45c49e8373be))
+* check-in becomes a flow - registration readiness, then a room ([b1a9608](https://github.com/Kamra-PMS/kamra-pms/commit/b1a960861abed795504dd57d1b6fa73d7072239b))
+* currency and number locale follow the property's country pack ([72cb83c](https://github.com/Kamra-PMS/kamra-pms/commit/72cb83c4c65baef06b454bb33730fbf796a258e9))
+* generic pack resolves the currency symbol from the Currency master ([abad702](https://github.com/Kamra-PMS/kamra-pms/commit/abad702871c604b7dc830c180d8240e1529a1cdc))
+* **localization:** Indonesia country pack — PBJT hotel tax, NPWP, Rupiah ([#4](https://github.com/Kamra-PMS/kamra-pms/issues/4)) ([b753579](https://github.com/Kamra-PMS/kamra-pms/commit/b7535793acf77eab8bca090d3bc5bf6188b860ba))
+* occupant ID capture on the GRC; WhatsApp conversations inbox; setup guide ([4db3387](https://github.com/Kamra-PMS/kamra-pms/commit/4db3387ee1cd05381cfe80c2cb35fd0765e45f60))
+* Thailand, Malaysia and UAE country packs; enquiry routing fields ([7a5ce2b](https://github.com/Kamra-PMS/kamra-pms/commit/7a5ce2b3288cbca34ed07429802160463750febb))
+* WhatsApp on your own number - Meta Cloud API, open source ([eaabab2](https://github.com/Kamra-PMS/kamra-pms/commit/eaabab23542ef645482e89222efd0eb0fe97a812))
+
+
+### Bug Fixes
+
+* declare Frappe v16 for the marketplace + listing copy ([#14](https://github.com/Kamra-PMS/kamra-pms/issues/14)) ([9e128ea](https://github.com/Kamra-PMS/kamra-pms/commit/9e128eae0beb2f54d55edf95aad0c9740e6b3a5b))
+* GRC, self check-in submit and public booking were silently un-whitelisted ([0616b1f](https://github.com/Kamra-PMS/kamra-pms/commit/0616b1fb5d8ad219231ab800f94f5e98fe3b14ae))
+* resolve Frappe Cloud marketplace Semgrep findings ([#16](https://github.com/Kamra-PMS/kamra-pms/issues/16)) ([378c44d](https://github.com/Kamra-PMS/kamra-pms/commit/378c44d063223bc1a150825c450c924e5a812ef9))
+* Settings booking-page logo and hero become upload fields ([4edc370](https://github.com/Kamra-PMS/kamra-pms/commit/4edc37075d4c57e21141f3542f7c6908a426437c))
+
 ## [2.2.1](https://github.com/Kamra-PMS/kamra-pms/compare/v2.2.0...v2.2.1) (2026-07-22)
 
 
