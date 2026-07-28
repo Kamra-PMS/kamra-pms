@@ -6,6 +6,25 @@ All notable changes to Kamra PMS are documented here. Format follows
 existing install on upgrade (removed doctypes, removed API endpoints),
 MINOR for new features, PATCH for fixes.
 
+## [2.4.0](https://github.com/Kamra-PMS/kamra-pms/compare/v2.3.0...v2.4.0) (2026-07-28)
+
+
+### Features
+
+* capture arrival, transport and routed instructions at booking ([fc6849e](https://github.com/Kamra-PMS/kamra-pms/commit/fc6849e67a23a38bb2a4dd395033e6e17ce1c509))
+* folio audit integrity - mandatory void reason, allowance logging, report ([4e8477d](https://github.com/Kamra-PMS/kamra-pms/commit/4e8477d83dd7a66cb139a9ab81793b0c52905fea))
+* shadcn-green console redesign + booking details + folio audit + code-split ([3c8a55a](https://github.com/Kamra-PMS/kamra-pms/commit/3c8a55aa2f29a32ff7b6e266882913e63d05a1b6))
+* **ui:** capture requests & arrival in the booking dialog ([3084757](https://github.com/Kamra-PMS/kamra-pms/commit/308475776a3645ac8cb0dccf3a4563bb0096a753))
+* **ui:** Dashboard on the shared shadcn-green StatCard ([0df81f5](https://github.com/Kamra-PMS/kamra-pms/commit/0df81f513760c3572e2287aead53ba49d4df20ac))
+* **ui:** in-house guests as a data table with avatar chips ([e2c6577](https://github.com/Kamra-PMS/kamra-pms/commit/e2c6577b7a32886f36dc9b6b172902df5c21119d))
+* **ui:** room board floor tabs, HK/insights panels, centered search ([a5d6ffe](https://github.com/Kamra-PMS/kamra-pms/commit/a5d6ffe13172e136cc0dfad16e31b147795e67a2))
+* **ui:** shadcn-green front-desk overview - KPI strip with sparklines ([b79f1f1](https://github.com/Kamra-PMS/kamra-pms/commit/b79f1f1090ae01cadcb0c455d29d20fdcf4c16fd))
+
+
+### Performance Improvements
+
+* **ui:** code-split routes with React.lazy ([3f5e28f](https://github.com/Kamra-PMS/kamra-pms/commit/3f5e28f60aa207cc4a48d622df85ed9d7da3405e))
+
 ## [2.3.0](https://github.com/Kamra-PMS/kamra-pms/compare/v2.2.1...v2.3.0) (2026-07-27)
 
 
