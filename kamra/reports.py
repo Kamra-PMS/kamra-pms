@@ -61,6 +61,56 @@ def _day_stats(property: str, date: str, total_rooms: int) -> dict:
 
 
 @frappe.whitelist()
+@require_roles("Finance", "Hotel Admin")
+def void_allowance_report(
+	property: str,
+	from_date: str | None = None,
+	to_date: str | None = None,
+):
+	"""Audit trail of every void, allowance and invoice cancellation on a
+	property: who reversed what, when, and why. The compliance answer to
+	"show me every write-off" - read straight from the action log, so it
+	cannot drift from what actually happened."""
+	from kamra.crs import assert_property_access
+
+	assert_property_access(property)
+	filters = [
+		["property", "=", property],
+		[
+			"action_type",
+			"in",
+			["void_charge", "post_allowance", "cancel_invoice"],
+		],
+	]
+	if from_date:
+		filters.append(["creation", ">=", from_date])
+	if to_date:
+		filters.append(["creation", "<=", f"{to_date} 23:59:59"])
+	rows = frappe.get_all(
+		"Agent Action Log",
+		filters=filters,
+		fields=["creation", "actor", "action_type", "reference_name", "rationale"],
+		order_by="creation desc",
+		limit_page_length=0,
+	)
+	label = {
+		"void_charge": "Void",
+		"post_allowance": "Allowance",
+		"cancel_invoice": "Invoice cancelled",
+	}
+	return [
+		{
+			"when": str(r.creation),
+			"actor": r.actor,
+			"action": label.get(r.action_type, r.action_type),
+			"folio": r.reference_name,
+			"detail": r.rationale,
+		}
+		for r in rows
+	]
+
+
+@frappe.whitelist()
 @require_roles("Finance", "Front Desk", "Kamra Agent")
 def manager_flash(property: str, date: str | None = None):
 	"""The daily flash: yesterday's performance, month to date, today's

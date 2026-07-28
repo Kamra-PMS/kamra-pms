@@ -54,11 +54,11 @@ function SearchShortcut() {
       onClick={() => window.dispatchEvent(new Event("kamra:open-palette"))}
       title={`Search: find a guest or booking, or jump anywhere - press ${isMac ? "⌘ Command" : "Ctrl"} + K`}
       aria-label="Open search"
-      className="flex items-center gap-1.5 rounded-lg border border-zinc-200 px-2.5 py-1.5 text-sm text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700"
+      className="flex w-full items-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50/70 px-3 py-2 text-sm text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600"
     >
       <Search className="size-4" aria-hidden />
-      <span className="hidden md:inline">Search</span>
-      <kbd className="hidden rounded border border-zinc-200 bg-zinc-50 px-1.5 py-0.5 text-[10px] font-semibold text-zinc-500 md:inline">
+      <span>Search reservations, guests, rooms…</span>
+      <kbd className="ml-auto hidden rounded border border-zinc-200 bg-white px-1.5 py-0.5 text-[10px] font-semibold text-zinc-500 md:inline">
         {combo}
       </kbd>
     </button>
@@ -283,8 +283,12 @@ export default function AppShell() {
               {properties[0]?.property_name ?? ""}
             </span>
           )}
-          <div className="ml-auto flex items-center gap-3">
-            <SearchShortcut />
+          <div className="flex flex-1 justify-center px-2">
+            <div className="hidden w-full max-w-md md:block">
+              <SearchShortcut />
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
             <ThemeToggle />
             <span className="hidden text-xs text-zinc-500 md:inline">
               {user}
