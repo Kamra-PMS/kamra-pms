@@ -7,6 +7,12 @@
   --color-brand-600: #0f6b54;
   --color-brand-700: #0b5442;
   --color-brand-900: #073527;
+
+  /* Neutrals carry a faint warm bias so the greys read as chosen, not the
+     stock cool zinc. Dark mode + print remap these below. */
+  --color-zinc-50: #f8f7f5;
+  --color-zinc-100: #f1efec;
+  --color-zinc-200: #e6e3de;
 }
 
 html {

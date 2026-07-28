@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useState } from "react"
 import { useRealtime } from "../lib/realtime"
 import {
-  BedDouble, LogIn, LogOut, Users, IndianRupee, Wallet,
-  Building2, Sparkles, Brush, Receipt,
+  BedDouble, LogIn, Users, IndianRupee, Wallet, Building2, Brush, Receipt,
+  PieChart, TrendingUp, BarChart3,
 } from "lucide-react"
 import { call, getCurrentProperty } from "../lib/api"
 import { serverError } from "../lib/resource"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
+import { StatCard } from "../components/ui/stat-card"
 import { cur, moneyLocale } from "../lib/money"
 
 const inr = (n: unknown) =>
@@ -79,16 +80,13 @@ function Tile({ icon: Icon, label, value, sub, tone }: {
   tone?: string
 }) {
   return (
-    <Card>
-      <CardContent className="p-4">
-        <div className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider text-zinc-400">
-          <Icon className="size-3.5" aria-hidden />
-          {label}
-        </div>
-        <div className={`mt-1 text-2xl font-bold ${tone ?? "text-zinc-800"}`}>{value}</div>
-        {sub && <div className="mt-0.5 text-xs text-zinc-400">{sub}</div>}
-      </CardContent>
-    </Card>
+    <StatCard
+      icon={<Icon className="size-4" />}
+      label={label}
+      value={value}
+      sub={sub}
+      accent={tone === "text-brand-600"}
+    />
   )
 }
 
@@ -123,7 +121,7 @@ export default function Dashboard() {
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold text-zinc-800">Dashboard</h1>
+          <h1 className="text-xl font-semibold text-zinc-900">Dashboard</h1>
           <p className="text-xs text-zinc-500">
             {scope === "property"
               ? "Today at this property, by department."
@@ -157,15 +155,18 @@ export default function Dashboard() {
       {scope === "property" && prop && (
         <>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-            <Tile icon={BedDouble} label="Occupancy" value={`${prop.occupancy_pct}%`}
+            <Tile icon={PieChart} label="Occupancy" value={`${prop.occupancy_pct}%`}
               sub={`${prop.total_rooms} rooms`} tone="text-brand-600" />
-            <Tile icon={LogIn} label="Arrivals" value={String(prop.arrivals)} />
-            <Tile icon={LogOut} label="Departures" value={String(prop.departures)} />
-            <Tile icon={Users} label="In house" value={String(prop.in_house)} />
+            <Tile icon={TrendingUp} label="ADR" value={`${cur()}${inr(prop.statistics.adr)}`}
+              sub="month to date" />
+            <Tile icon={BarChart3} label="RevPAR" value={`${cur()}${inr(prop.statistics.revpar)}`}
+              sub="month to date" />
             <Tile icon={IndianRupee} label="Revenue" value={`${cur()}${inr(prop.revenue_today)}`}
               sub="today" />
             <Tile icon={Wallet} label="Collections" value={`${cur()}${inr(prop.collections_today)}`}
               sub="today" />
+            <Tile icon={Receipt} label="Outstanding" value={`${cur()}${inr(prop.finance.outstanding)}`}
+              sub="receivable" />
           </div>
 
           <Card>
@@ -188,16 +189,7 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          <div className="grid gap-4 lg:grid-cols-3">
-            <Card>
-              <CardHeader><CardTitle className="flex items-center gap-1.5"><Sparkles className="size-4 text-brand-600" />Front desk</CardTitle></CardHeader>
-              <CardContent className="space-y-1.5 text-sm">
-                <Row label="Arrivals" value={prop.arrivals} />
-                <Row label="Departures" value={prop.departures} />
-                <Row label="In house" value={prop.in_house} />
-                <Row label="No-shows" value={prop.no_shows} tone={prop.no_shows ? "text-rose-600" : undefined} />
-              </CardContent>
-            </Card>
+          <div className="grid gap-4 lg:grid-cols-2">
             <Card>
               <CardHeader><CardTitle className="flex items-center gap-1.5"><Brush className="size-4 text-brand-600" />Housekeeping</CardTitle></CardHeader>
               <CardContent className="space-y-1.5 text-sm">

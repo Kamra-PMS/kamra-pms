@@ -71,6 +71,28 @@
   "precheckin_verified_on",
   "precheckin_link_sent",
   "eta",
+  "sb_arrival",
+  "arrival_mode",
+  "arrival_ref",
+  "arrival_datetime",
+  "pickup_required",
+  "pickup_note",
+  "cb_arrival",
+  "departure_mode",
+  "departure_ref",
+  "departure_datetime",
+  "drop_required",
+  "drop_note",
+  "sb_extras",
+  "purpose",
+  "extra_beds",
+  "infants",
+  "cb_extras",
+  "valet_parking",
+  "early_checkin",
+  "late_checkout",
+  "sb_instructions",
+  "instructions",
   "sb_occupants",
   "occupants",
   "addons",
@@ -481,14 +503,14 @@
    "label": "Occupants"
   },
   {
-   "description": "Everyone staying in the room — the legal hotel register. Printed on the GRC.",
+   "description": "Everyone staying in the room \u2014 the legal hotel register. Printed on the GRC.",
    "fieldname": "occupants",
    "fieldtype": "Table",
    "label": "Occupants",
    "options": "Stay Occupant"
   },
   {
-   "description": "Extras chosen at booking — posted to the guest folio when it opens.",
+   "description": "Extras chosen at booking \u2014 posted to the guest folio when it opens.",
    "fieldname": "addons",
    "fieldtype": "Table",
    "label": "Add-ons",
@@ -543,6 +565,122 @@
    "fieldtype": "Data",
    "label": "Payment Policy",
    "read_only": 1
+  },
+  {
+   "fieldname": "sb_arrival",
+   "fieldtype": "Section Break",
+   "label": "Arrival & transport",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "arrival_mode",
+   "fieldtype": "Select",
+   "label": "Arrival Mode",
+   "options": "\nAir\nRoad\nRail\nSea\nOwn vehicle"
+  },
+  {
+   "fieldname": "arrival_ref",
+   "fieldtype": "Data",
+   "label": "Flight / Train No."
+  },
+  {
+   "fieldname": "arrival_datetime",
+   "fieldtype": "Datetime",
+   "label": "Arrival Time"
+  },
+  {
+   "fieldname": "pickup_required",
+   "fieldtype": "Check",
+   "label": "Airport / Station Pickup"
+  },
+  {
+   "fieldname": "pickup_note",
+   "fieldtype": "Data",
+   "label": "Pickup Note",
+   "depends_on": "pickup_required"
+  },
+  {
+   "fieldname": "cb_arrival",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "departure_mode",
+   "fieldtype": "Select",
+   "label": "Departure Mode",
+   "options": "\nAir\nRoad\nRail\nSea\nOwn vehicle"
+  },
+  {
+   "fieldname": "departure_ref",
+   "fieldtype": "Data",
+   "label": "Departure Flight / Train No."
+  },
+  {
+   "fieldname": "departure_datetime",
+   "fieldtype": "Datetime",
+   "label": "Departure Time"
+  },
+  {
+   "fieldname": "drop_required",
+   "fieldtype": "Check",
+   "label": "Airport / Station Drop"
+  },
+  {
+   "fieldname": "drop_note",
+   "fieldtype": "Data",
+   "label": "Drop Note",
+   "depends_on": "drop_required"
+  },
+  {
+   "fieldname": "sb_extras",
+   "fieldtype": "Section Break",
+   "label": "Stay details",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "purpose",
+   "fieldtype": "Select",
+   "label": "Purpose of Visit",
+   "options": "\nLeisure\nBusiness\nEvent / Wedding\nMedical\nPilgrimage\nCrew\nOther"
+  },
+  {
+   "fieldname": "extra_beds",
+   "fieldtype": "Int",
+   "label": "Extra Beds"
+  },
+  {
+   "fieldname": "infants",
+   "fieldtype": "Int",
+   "label": "Infants"
+  },
+  {
+   "fieldname": "cb_extras",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "valet_parking",
+   "fieldtype": "Check",
+   "label": "Valet Parking"
+  },
+  {
+   "fieldname": "early_checkin",
+   "fieldtype": "Check",
+   "label": "Early Check-in Requested"
+  },
+  {
+   "fieldname": "late_checkout",
+   "fieldtype": "Check",
+   "label": "Late Check-out Requested"
+  },
+  {
+   "fieldname": "sb_instructions",
+   "fieldtype": "Section Break",
+   "label": "Special instructions"
+  },
+  {
+   "fieldname": "instructions",
+   "fieldtype": "Table",
+   "label": "Special Instructions",
+   "options": "Stay Instruction"
   }
  ],
  "grid_page_length": 50,

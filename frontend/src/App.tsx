@@ -1,4 +1,4 @@
-import { Component, type ReactNode } from "react"
+import { Component, lazy, Suspense, type ReactNode } from "react"
 import {
   Navigate,
   Outlet,
@@ -9,45 +9,45 @@ import {
   useOutletContext,
 } from "react-router-dom"
 import AppShell, { type ShellContext } from "./AppShell"
-import Login from "./screens/Login"
+const Login = lazy(() => import("./screens/Login"))
 import { useAuth } from "./lib/auth"
 import { toFullPath } from "./lib/routing"
 import { CalendarView } from "./components/CalendarView"
 import { ResourceScreen } from "./components/ResourceScreen"
-import Billing from "./screens/Billing"
-import PublicBooking from "./screens/PublicBooking"
-import PublicCheckin from "./screens/PublicCheckin"
-import FolioView from "./screens/FolioView"
-import GuestJourney from "./screens/GuestJourney"
-import HkApp from "./screens/HkApp"
-import Guests from "./screens/Guests"
-import RegistrationCard from "./screens/RegistrationCard"
-import CancellationLetter from "./screens/CancellationLetter"
-import Setup from "./screens/Setup"
-import Settings from "./screens/Settings"
-import BookingEngine from "./screens/BookingEngine"
-import Developers from "./screens/Developers"
-import VenueCalendar from "./screens/VenueCalendar"
-import Agents from "./screens/Agents"
-import Activity from "./screens/Activity"
-import AppLauncher from "./screens/AppLauncher"
-import Marketplace from "./screens/Marketplace"
-import Reports from "./screens/Reports"
-import RevenueReports from "./screens/RevenueReports"
-import OpsSLA from "./screens/OpsSLA"
-import Dashboard from "./screens/Dashboard"
-import CRS from "./screens/CRS"
-import POS from "./screens/POS"
-import Kitchen from "./screens/Kitchen"
-import Inventory from "./screens/Inventory"
-import QrMenu from "./screens/QrMenu"
-import AccountingExport from "./screens/AccountingExport"
-import TapeChart from "./screens/TapeChart"
-import Tickets from "./screens/Tickets"
-import Laundry from "./screens/Laundry"
-import MenuItems from "./screens/MenuItems"
-import Today from "./screens/Today"
-import WhatsAppChat from "./screens/WhatsAppChat"
+const Billing = lazy(() => import("./screens/Billing"))
+const PublicBooking = lazy(() => import("./screens/PublicBooking"))
+const PublicCheckin = lazy(() => import("./screens/PublicCheckin"))
+const FolioView = lazy(() => import("./screens/FolioView"))
+const GuestJourney = lazy(() => import("./screens/GuestJourney"))
+const HkApp = lazy(() => import("./screens/HkApp"))
+const Guests = lazy(() => import("./screens/Guests"))
+const RegistrationCard = lazy(() => import("./screens/RegistrationCard"))
+const CancellationLetter = lazy(() => import("./screens/CancellationLetter"))
+const Setup = lazy(() => import("./screens/Setup"))
+const Settings = lazy(() => import("./screens/Settings"))
+const BookingEngine = lazy(() => import("./screens/BookingEngine"))
+const Developers = lazy(() => import("./screens/Developers"))
+const VenueCalendar = lazy(() => import("./screens/VenueCalendar"))
+const Agents = lazy(() => import("./screens/Agents"))
+const Activity = lazy(() => import("./screens/Activity"))
+const AppLauncher = lazy(() => import("./screens/AppLauncher"))
+const Marketplace = lazy(() => import("./screens/Marketplace"))
+const Reports = lazy(() => import("./screens/Reports"))
+const RevenueReports = lazy(() => import("./screens/RevenueReports"))
+const OpsSLA = lazy(() => import("./screens/OpsSLA"))
+const Dashboard = lazy(() => import("./screens/Dashboard"))
+const CRS = lazy(() => import("./screens/CRS"))
+const POS = lazy(() => import("./screens/POS"))
+const Kitchen = lazy(() => import("./screens/Kitchen"))
+const Inventory = lazy(() => import("./screens/Inventory"))
+const QrMenu = lazy(() => import("./screens/QrMenu"))
+const AccountingExport = lazy(() => import("./screens/AccountingExport"))
+const TapeChart = lazy(() => import("./screens/TapeChart"))
+const Tickets = lazy(() => import("./screens/Tickets"))
+const Laundry = lazy(() => import("./screens/Laundry"))
+const MenuItems = lazy(() => import("./screens/MenuItems"))
+const Today = lazy(() => import("./screens/Today"))
+const WhatsAppChat = lazy(() => import("./screens/WhatsAppChat"))
 import {
   companiesConfig,
   guardrailsConfig,
@@ -165,6 +165,11 @@ export default function App() {
   return (
     <ErrorBoundary>
       <ConnectionBanner />
+      <Suspense
+        fallback={
+          <div className="p-10 text-center text-sm text-zinc-400">Loading…</div>
+        }
+      >
       <Routes>
         {/* public booking engine - no login; stay state lives in the URL
             (/book/2026-07-10/2026-07-12/2/0) so links are shareable and
@@ -308,6 +313,7 @@ export default function App() {
           </Route>
         </Route>
       </Routes>
+      </Suspense>
     </ErrorBoundary>
   )
 }

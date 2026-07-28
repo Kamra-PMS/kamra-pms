@@ -531,6 +531,9 @@ def post_allowance(folio_name: str, amount: float, reason: str,
 	})
 	_recalculate(folio)
 	folio.save(ignore_permissions=True)
+	from kamra.savings import log_action
+	log_action("post_allowance", "Folio", folio.name, folio.property,
+	           rationale=f"Allowance ₹{amount:.0f} - {reason.strip()}")
 	return folio.name
 
 
@@ -543,6 +546,8 @@ def void_charge(folio_name: str, charge_row: str, reason: str = "") -> dict:
 	if folio.status == "Closed":
 		frappe.throw("This folio is settled - post an allowance to reverse a "
 		             "charge, or cancel the invoice first.")
+	if not (reason or "").strip():
+		frappe.throw("A void needs a reason - it goes on the record.")
 	row = next((c for c in folio.charges if c.name == charge_row), None)
 	if not row:
 		frappe.throw("That charge line is not on this folio.")
