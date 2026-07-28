@@ -18,6 +18,7 @@ export function StatCard({
   progressLabel,
   delta,
   sub,
+  accent,
   className,
 }: {
   icon: ReactNode
@@ -29,6 +30,7 @@ export function StatCard({
   progressLabel?: string
   delta?: { value: string; dir?: "up" | "down" } // e.g. { value: "20% vs yesterday", dir: "up" }
   sub?: ReactNode
+  accent?: boolean
   className?: string
 }) {
   const down = delta?.dir === "down"
@@ -49,7 +51,12 @@ export function StatCard({
       </div>
       <div className="mt-2.5 flex items-end justify-between gap-2">
         <div className="min-w-0">
-          <div className="text-2xl font-semibold tracking-tight text-zinc-900 tabular-nums">
+          <div
+            className={cn(
+              "text-2xl font-semibold tracking-tight tabular-nums",
+              accent ? "text-brand-700" : "text-zinc-900",
+            )}
+          >
             {value}
           </div>
           {sub ? (

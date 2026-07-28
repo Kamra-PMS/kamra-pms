@@ -7,6 +7,7 @@ import {
 import { call, getCurrentProperty } from "../lib/api"
 import { serverError } from "../lib/resource"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
+import { StatCard } from "../components/ui/stat-card"
 import { cur, moneyLocale } from "../lib/money"
 
 const inr = (n: unknown) =>
@@ -79,16 +80,13 @@ function Tile({ icon: Icon, label, value, sub, tone }: {
   tone?: string
 }) {
   return (
-    <Card>
-      <CardContent className="p-4">
-        <div className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider text-zinc-400">
-          <Icon className="size-3.5" aria-hidden />
-          {label}
-        </div>
-        <div className={`mt-1 text-2xl font-bold ${tone ?? "text-zinc-800"}`}>{value}</div>
-        {sub && <div className="mt-0.5 text-xs text-zinc-400">{sub}</div>}
-      </CardContent>
-    </Card>
+    <StatCard
+      icon={<Icon className="size-4" />}
+      label={label}
+      value={value}
+      sub={sub}
+      accent={tone === "text-brand-600"}
+    />
   )
 }
 
@@ -123,7 +121,7 @@ export default function Dashboard() {
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold text-zinc-800">Dashboard</h1>
+          <h1 className="text-xl font-semibold text-zinc-900">Dashboard</h1>
           <p className="text-xs text-zinc-500">
             {scope === "property"
               ? "Today at this property, by department."
