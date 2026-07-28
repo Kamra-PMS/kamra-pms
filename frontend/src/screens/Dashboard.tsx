@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from "react"
 import { useRealtime } from "../lib/realtime"
 import {
-  BedDouble, LogIn, LogOut, Users, IndianRupee, Wallet,
-  Building2, Sparkles, Brush, Receipt,
+  BedDouble, LogIn, Users, IndianRupee, Wallet, Building2, Brush, Receipt,
+  PieChart, TrendingUp, BarChart3,
 } from "lucide-react"
 import { call, getCurrentProperty } from "../lib/api"
 import { serverError } from "../lib/resource"
@@ -155,15 +155,18 @@ export default function Dashboard() {
       {scope === "property" && prop && (
         <>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-            <Tile icon={BedDouble} label="Occupancy" value={`${prop.occupancy_pct}%`}
+            <Tile icon={PieChart} label="Occupancy" value={`${prop.occupancy_pct}%`}
               sub={`${prop.total_rooms} rooms`} tone="text-brand-600" />
-            <Tile icon={LogIn} label="Arrivals" value={String(prop.arrivals)} />
-            <Tile icon={LogOut} label="Departures" value={String(prop.departures)} />
-            <Tile icon={Users} label="In house" value={String(prop.in_house)} />
+            <Tile icon={TrendingUp} label="ADR" value={`${cur()}${inr(prop.statistics.adr)}`}
+              sub="month to date" />
+            <Tile icon={BarChart3} label="RevPAR" value={`${cur()}${inr(prop.statistics.revpar)}`}
+              sub="month to date" />
             <Tile icon={IndianRupee} label="Revenue" value={`${cur()}${inr(prop.revenue_today)}`}
               sub="today" />
             <Tile icon={Wallet} label="Collections" value={`${cur()}${inr(prop.collections_today)}`}
               sub="today" />
+            <Tile icon={Receipt} label="Outstanding" value={`${cur()}${inr(prop.finance.outstanding)}`}
+              sub="receivable" />
           </div>
 
           <Card>
@@ -186,16 +189,7 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          <div className="grid gap-4 lg:grid-cols-3">
-            <Card>
-              <CardHeader><CardTitle className="flex items-center gap-1.5"><Sparkles className="size-4 text-brand-600" />Front desk</CardTitle></CardHeader>
-              <CardContent className="space-y-1.5 text-sm">
-                <Row label="Arrivals" value={prop.arrivals} />
-                <Row label="Departures" value={prop.departures} />
-                <Row label="In house" value={prop.in_house} />
-                <Row label="No-shows" value={prop.no_shows} tone={prop.no_shows ? "text-rose-600" : undefined} />
-              </CardContent>
-            </Card>
+          <div className="grid gap-4 lg:grid-cols-2">
             <Card>
               <CardHeader><CardTitle className="flex items-center gap-1.5"><Brush className="size-4 text-brand-600" />Housekeeping</CardTitle></CardHeader>
               <CardContent className="space-y-1.5 text-sm">
