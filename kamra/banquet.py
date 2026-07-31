@@ -1067,22 +1067,52 @@ def banquet_document(function: str, kind: str = "quote"):
 	prop = frappe.db.get_value(
 		"Property", doc.property,
 		["property_name", "legal_name", "address_line", "city", "state",
-		 "pincode", "country", "phone", "email", "gstin", "logo_url"],
-		as_dict=True) or {}
+		 "pincode", "country", "phone", "email", "website", "gstin",
+		 "logo_url"], as_dict=True) or {}
+	prop["address"] = ", ".join(filter(None, [  # nosemgrep: frappe-no-functional-code -- drops empty address parts
+		prop.get("address_line"), prop.get("city"), prop.get("state"),
+		prop.get("pincode")]))
 	venue = frappe.db.get_value(
 		"Venue", doc.venue, ["venue_name", "venue_type", "capacity"],
 		as_dict=True) or {}
+
+	from kamra import localization as loc
+
+	pack = loc.pack_for(doc.property)
+	ctx = pack.invoice_context(frappe.get_cached_doc("Property", doc.property))
+	prop_doc = frappe.get_cached_doc("Property", doc.property)
+
+	# the number a customer quotes back at you - each document has its own
+	number = {
+		"quote": doc.quote_number, "contract": doc.quote_number,
+		"invoice": doc.invoice_number, "beo": doc.beo_number,
+	}.get(kind) or doc.name
+	issued = {
+		"quote": doc.quote_sent_on, "contract": doc.contract_signed_on,
+		"invoice": doc.invoice_date,
+		"beo": str(doc.beo_generated_on or "")[:10] or None,
+	}.get(kind)
 
 	header = {
 		"kind": kind,
 		"title": {"quote": _("Quotation"), "contract": _("Function Contract"),
 		          "beo": _("Banquet Event Order"), "pack_list": _("Pack List"),
-		          "invoice": _("Function Invoice")}[kind],
+		          "invoice": _("Tax Invoice")}[kind],
+		"number": number,
+		"is_final": bool(number != doc.name),
+		"function": doc.name,
 		"reference": doc.name,
+		"issued_on": str(issued) if issued else None,
 		"version": int(doc.quote_version or 0),
 		"printed_on": str(now_datetime()),
 		"valid_till": str(doc.quote_valid_till) if doc.quote_valid_till else None,
 		"beo_number": doc.beo_number,
+		"amount_in_words": loc.amount_in_words(pack, prop_doc, doc.grand_total),
+		"service_code_label": (ctx.get("service_code") or {}).get("label", "SAC"),
+		"footer": ctx.get("footer"),
+		"place_of_supply": ctx.get("place_of_supply"),
+		"tax_label": ctx.get("tax_label"),
+		"tax_id_label": ctx.get("tax_id_label"),
 	}
 	customer = {
 		"name": doc.billing_name or doc.customer_name,
@@ -1112,8 +1142,10 @@ def banquet_document(function: str, kind: str = "quote"):
 	}
 
 	def line(r):
+		code = loc.service_code_for(pack, prop_doc, r.item_type)
 		return {
 			"row": r.name, "item_type": r.item_type, "item_name": r.item_name,
+			"service_code": (code or {}).get("value"),
 			"description": r.description, "qty": r.qty, "uom": r.uom,
 			"list_rate": r.list_rate, "rate": r.rate,
 			"chargeable": bool(r.chargeable), "is_alcohol": bool(r.is_alcohol),
@@ -1137,6 +1169,7 @@ def banquet_document(function: str, kind: str = "quote"):
 	body = {
 		"header": header, "property": prop, "customer": customer,
 		"event": event, "totals": totals,
+		"tax_breakup": _tax_breakup(doc, loc.tax_split(pack, prop_doc, doc.gstin)),
 		"lines": chargeable, "complimentary": complimentary,
 		"terms": [{"milestone": t.milestone,
 		           "due_date": str(t.due_date) if t.due_date else None,
@@ -1185,6 +1218,26 @@ def _tax_summary(doc):
 		b["taxable"] += float(r.net_amount or 0)
 		b["tax"] += float(r.gst_amount or 0)
 	return [buckets[k] for k in sorted(buckets)]
+
+
+def _tax_breakup(doc, split):
+	"""Tax by rate, split into the parts the invoice has to name - CGST and
+	SGST here, a single VAT line elsewhere. The country pack decides."""
+	buckets: dict = {}
+	for r in doc.items:
+		if not r.chargeable:
+			continue
+		rate = float(r.gst_rate or 0)
+		b = buckets.setdefault(rate, {"rate": rate, "taxable": 0.0, "tax": 0.0})
+		b["taxable"] += float(r.net_amount or 0)
+		b["tax"] += float(r.gst_amount or 0)
+	return [{
+		"rate": k, "taxable": v["taxable"], "total_tax": v["tax"],
+		"parts": [{"label": label.upper(),
+		           "rate": round(k * float(share), 4),
+		           "amount": v["tax"] * float(share)}
+		          for label, share in split],
+	} for k, v in sorted(buckets.items())]
 
 
 def _menu_detail(doc):
@@ -1266,6 +1319,9 @@ def generate_quote(function: str, valid_days: int = 15,
 	if not doc.items:
 		frappe.throw(_("There's nothing to quote yet - put some lines on it."))
 	doc.quote_version = int(doc.quote_version or 0) + 1
+	if not doc.quote_number:
+		from frappe.model.naming import make_autoname
+		doc.quote_number = make_autoname(f"QTN-{str(doc.event_date)[:4]}-.#####")
 	doc.quote_sent_on = nowdate()
 	doc.quote_valid_till = add_days(nowdate(), int(valid_days or 15))
 	doc.save()
@@ -1298,6 +1354,34 @@ def generate_beo(function: str):
 	           rationale=f"Event order {doc.beo_number} for {doc.customer_name} "
 	                     f"({doc.billable_pax} pax on {doc.event_date})")
 	return banquet_document(function, "beo")
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles(*BANQUET_ROLES, "Finance")
+def generate_invoice(function: str):
+	"""Raise the tax invoice for a function.
+
+	The number is assigned once and never moves - re-printing an invoice
+	must give the same document, because the customer's books and ours
+	have to agree on what it was called."""
+	doc = _fn(function)
+	if doc.status not in ("Confirmed", "Completed"):
+		frappe.throw(_("Invoice a confirmed function, not a {0} one.")
+		             .format(doc.status))
+	if not doc.items:
+		frappe.throw(_("There's nothing to invoice."))
+	if not doc.invoice_number:
+		from frappe.model.naming import make_autoname
+		doc.invoice_number = make_autoname(
+			f"BINV-{str(doc.event_date)[:4]}-.#####")
+		doc.invoice_date = nowdate()
+		doc.save()
+		from kamra.savings import log_action
+		log_action("banquet_invoice", "Venue Booking", doc.name, doc.property,
+		           minutes_saved=10,
+		           rationale=f"Invoice {doc.invoice_number} for "
+		                     f"{doc.customer_name}: ₹{doc.grand_total:,.0f}")
+	return banquet_document(function, "invoice")
 
 
 # ══ settlement ═══════════════════════════════════════════════════════════

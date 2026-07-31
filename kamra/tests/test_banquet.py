@@ -815,3 +815,85 @@ class TestQuoteAdvisor(BanquetTestCase):
 		hall = bq.quote_advisor(fn)["hall"]
 		self.assertFalse(hall["waived"])
 		self.assertEqual(hall["short_by"], 80000)
+
+
+class TestDocumentCompliance(BanquetTestCase):
+	"""A quotation and a tax invoice are documents a customer files and an
+	auditor reads. They need the hotel's identity on them, a number of
+	their own that never moves, and the tax stated the way the law states
+	it."""
+
+	def _sold(self):
+		fn = enquiry(self.f)
+		bq.update_function(fn, {"pax_guaranteed": 100})
+		bq.add_menu(fn, self.f["menu"])          # food at 5%
+		bq.add_service(fn, self.f["led"])        # AV at 18%
+		bq.set_status(fn, "Confirmed")
+		return fn
+
+	def test_the_hotels_identity_is_on_the_paper(self):
+		doc = bq.banquet_document(self._sold(), "quote")
+		p = doc["property"]
+		self.assertTrue(p["property_name"])
+		self.assertTrue(p["address"])
+		self.assertTrue(p["gstin"])
+		self.assertIn("logo_url", p)
+
+	def test_a_quotation_gets_a_number_that_survives_revisions(self):
+		fn = self._sold()
+		first = bq.generate_quote(fn)["header"]
+		self.assertTrue(first["number"].startswith("QTN-"))
+		self.assertEqual(first["version"], 1)
+		second = bq.generate_quote(fn)["header"]
+		self.assertEqual(second["number"], first["number"])
+		self.assertEqual(second["version"], 2)
+
+	def test_an_invoice_number_is_assigned_once_and_never_moves(self):
+		fn = self._sold()
+		first = bq.generate_invoice(fn)["header"]
+		self.assertTrue(first["number"].startswith("BINV-"))
+		self.assertEqual(bq.generate_invoice(fn)["header"]["number"],
+		                 first["number"])
+		# and re-printing gives the same document
+		self.assertEqual(bq.banquet_document(fn, "invoice")["header"]["number"],
+		                 first["number"])
+
+	def test_an_unissued_document_says_it_is_a_draft(self):
+		fn = self._sold()
+		self.assertFalse(bq.banquet_document(fn, "quote")["header"]["is_final"])
+		bq.generate_quote(fn)
+		self.assertTrue(bq.banquet_document(fn, "quote")["header"]["is_final"])
+
+	def test_every_line_carries_its_service_code(self):
+		doc = bq.banquet_document(self._sold(), "invoice")
+		codes = {l["item_name"]: l["service_code"] for l in doc["lines"]}
+		# a hall, a menu and a hired LED wall are three different supplies
+		self.assertEqual(len(set(codes.values())), 3)
+		self.assertTrue(all(codes.values()))
+
+	def test_the_tax_is_broken_out_by_rate_and_named(self):
+		doc = bq.banquet_document(self._sold(), "invoice")
+		rates = {r["rate"] for r in doc["tax_breakup"]}
+		self.assertEqual(rates, {5.0, 18.0})       # food and services
+		parts = doc["tax_breakup"][0]["parts"]
+		self.assertEqual([p["label"] for p in parts], ["CGST", "SGST"])
+		# each half is half the rate, and they add back to the whole
+		self.assertAlmostEqual(sum(p["amount"] for p in parts),
+		                       doc["tax_breakup"][0]["total_tax"], places=2)
+
+	def test_the_total_is_written_out_in_words(self):
+		doc = bq.banquet_document(self._sold(), "invoice")
+		self.assertTrue(doc["header"]["amount_in_words"].startswith("Rupees"))
+		self.assertTrue(doc["header"]["amount_in_words"].endswith("Only"))
+
+	def test_it_carries_the_compliance_footer_and_place_of_supply(self):
+		h = bq.banquet_document(self._sold(), "invoice")["header"]
+		self.assertIn("computer-generated", h["footer"])
+		self.assertEqual(h["place_of_supply"], "Karnataka")
+		self.assertEqual(h["tax_id_label"], "GSTIN")
+
+	def test_an_unsold_function_cannot_be_invoiced(self):
+		fn = enquiry(self.f)
+		bq.add_menu(fn, self.f["menu"])
+		with self.assertRaises(frappe.ValidationError):
+			bq.generate_invoice(fn)

@@ -94,11 +94,14 @@
   "balance_due",
   "sb_quote",
   "quote_version",
+  "quote_number",
   "quote_sent_on",
   "quote_valid_till",
   "column_break_quote",
   "beo_number",
   "beo_generated_on",
+  "invoice_number",
+  "invoice_date",
   "contract_signed_on",
   "sb_revisions",
   "revisions",
@@ -647,6 +650,13 @@
    "read_only": 1
   },
   {
+   "fieldname": "quote_number",
+   "fieldtype": "Data",
+   "label": "Quote Number",
+   "read_only": 1,
+   "description": "Minted when the first quotation is issued and kept across revisions - the number the customer quotes back."
+  },
+  {
    "fieldname": "quote_sent_on",
    "fieldtype": "Date",
    "label": "Quote Sent On",
@@ -671,6 +681,19 @@
    "fieldname": "beo_generated_on",
    "fieldtype": "Datetime",
    "label": "Beo Generated On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "invoice_number",
+   "fieldtype": "Data",
+   "label": "Invoice No.",
+   "read_only": 1,
+   "description": "Assigned once, when the function is invoiced."
+  },
+  {
+   "fieldname": "invoice_date",
+   "fieldtype": "Date",
+   "label": "Invoice Date",
    "read_only": 1
   },
   {
@@ -834,7 +857,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-07-31 20:00:00.000000",
+ "modified": "2026-07-31 21:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Venue Booking",

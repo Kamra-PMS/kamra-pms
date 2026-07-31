@@ -704,11 +704,21 @@ export interface BanquetDocument {
   header: {
     kind: DocumentKind
     title: string
+    number: string
+    is_final: boolean
+    function: string
     reference: string
+    issued_on: string | null
     version: number
     printed_on: string
     valid_till: string | null
     beo_number: string | null
+    amount_in_words: string
+    service_code_label: string
+    footer: string | null
+    place_of_supply: string | null
+    tax_label: string
+    tax_id_label: string
   }
   property: Record<string, string | null>
   customer: Record<string, string | null>
@@ -724,8 +734,14 @@ export interface BanquetDocument {
     balance_due: number
     tax_summary: { gst_rate: number; taxable: number; tax: number }[]
   }
-  lines: FunctionItem[]
-  complimentary: FunctionItem[]
+  lines: (FunctionItem & { service_code: string | null })[]
+  complimentary: (FunctionItem & { service_code: string | null })[]
+  tax_breakup?: {
+    rate: number
+    taxable: number
+    total_tax: number
+    parts: { label: string; rate: number; amount: number }[]
+  }[]
   terms: Omit<PaymentTerm, "name" | "received_on">[]
   terms_note: string | null
   open_items: Omit<OpenItem, "name">[]
@@ -1286,6 +1302,8 @@ export const banquet = {
     }),
   generateBeo: (fn: string) =>
     call<BanquetDocument>("kamra.banquet.generate_beo", { function: fn }),
+  generateInvoice: (fn: string) =>
+    call<BanquetDocument>("kamra.banquet.generate_invoice", { function: fn }),
   postToFolio: (fn: string, folio?: string) =>
     call<{
       ok: boolean

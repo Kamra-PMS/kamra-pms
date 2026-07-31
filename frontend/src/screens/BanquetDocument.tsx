@@ -127,6 +127,7 @@ export default function BanquetDocument() {
           <Menus doc={doc} />
         )}
 
+        {showsMoney && <TaxBreakup doc={doc} />}
         {showsMoney && <Totals doc={doc} />}
 
         {kind === "invoice" && doc.receipts && doc.receipts.length > 0 && (
@@ -253,6 +254,23 @@ export default function BanquetDocument() {
             Signed on {doc.signed_on}.
           </p>
         )}
+
+        {/* every priced document closes the same way: who it's from, and
+            the note that says it needs no wet signature */}
+        {showsMoney && !doc.signatures && (
+          <footer className="mt-10 flex items-end justify-between gap-6 border-t border-zinc-200 pt-4">
+            <p className="max-w-sm text-[11px] leading-relaxed text-zinc-400">
+              {doc.header.footer}
+            </p>
+            <div className="shrink-0 text-center">
+              <div className="mb-1 h-10 w-44 border-b border-zinc-300" />
+              <p className="text-xs">
+                For {doc.property.legal_name || doc.property.property_name}
+              </p>
+              <p className="text-[11px] text-zinc-400">Authorised signatory</p>
+            </div>
+          </footer>
+        )}
       </article>
     </div>
   )
@@ -279,45 +297,106 @@ function Section({
 
 function Letterhead({ doc }: { doc: Doc }) {
   const p = doc.property
+  const h = doc.header
   return (
-    <header className="flex items-start justify-between gap-6 border-b border-zinc-200 pb-4">
-      <div>
-        <h1 className="text-lg font-semibold">
-          {p.property_name ?? p.legal_name}
-        </h1>
-        <p className="mt-0.5 text-xs leading-relaxed text-zinc-500">
-          {[p.address_line, p.city, p.state, p.pincode].filter(Boolean).join(", ")}
-          {p.phone && <br />}
-          {p.phone}
-          {p.email ? ` · ${p.email}` : ""}
-          {p.gstin && (
-            <>
-              <br />
-              {taxLabel()}: {p.gstin}
-            </>
+    <header className="border-b-2 border-zinc-900 pb-4">
+      <div className="flex items-start justify-between gap-6">
+        <div className="flex items-start gap-3">
+          {/* the hotel's own mark - a document without it doesn't look
+              like it came from the hotel */}
+          {p.logo_url && (
+            <img
+              src={p.logo_url}
+              alt=""
+              className="h-14 w-14 shrink-0 rounded object-contain"
+              onError={(e) => {
+                ;(e.target as HTMLImageElement).style.display = "none"
+              }}
+            />
           )}
-        </p>
-      </div>
-      <div className="text-right">
-        <h2 className="text-base font-semibold uppercase tracking-wide">
-          {doc.header.title}
-        </h2>
-        <p className="mt-0.5 font-mono text-xs text-zinc-500">
-          {doc.header.beo_number ?? doc.header.reference}
-        </p>
-        {doc.header.version > 0 && doc.header.kind !== "beo" && (
-          <p className="text-xs text-zinc-400">Revision {doc.header.version}</p>
-        )}
-        <p className="text-xs text-zinc-400">
-          {doc.header.printed_on.slice(0, 10)}
-        </p>
-        {doc.header.valid_till && doc.header.kind === "quote" && (
-          <p className="mt-1 text-xs text-amber-700">
-            Valid till {doc.header.valid_till}
-          </p>
-        )}
+          <div>
+            <h1 className="text-lg font-semibold leading-tight">
+              {p.legal_name || p.property_name}
+            </h1>
+            {p.legal_name && p.legal_name !== p.property_name && (
+              <p className="text-sm text-zinc-500">{p.property_name}</p>
+            )}
+            <p className="mt-1 text-xs leading-relaxed text-zinc-500">
+              {p.address}
+              {(p.phone || p.email) && (
+                <>
+                  <br />
+                  {[p.phone, p.email].filter(Boolean).join(" · ")}
+                </>
+              )}
+              {p.website && (
+                <>
+                  <br />
+                  {p.website}
+                </>
+              )}
+              {p.gstin && (
+                <>
+                  <br />
+                  <span className="font-medium text-zinc-700">
+                    {h.tax_id_label ?? "GSTIN"}: {p.gstin}
+                  </span>
+                </>
+              )}
+            </p>
+          </div>
+        </div>
+
+        <div className="shrink-0 text-right">
+          <h2 className="text-base font-semibold uppercase tracking-[0.15em]">
+            {h.title}
+          </h2>
+          <table className="ml-auto mt-2 text-xs">
+            <tbody>
+              <Meta label="No." value={h.number} mono />
+              {h.issued_on && <Meta label="Dated" value={h.issued_on} />}
+              {!h.issued_on && (
+                <Meta label="Printed" value={h.printed_on.slice(0, 10)} />
+              )}
+              {h.version > 0 && h.kind !== "beo" && (
+                <Meta label="Revision" value={String(h.version)} />
+              )}
+              {h.valid_till && h.kind === "quote" && (
+                <Meta label="Valid till" value={h.valid_till} />
+              )}
+              {h.place_of_supply && h.kind === "invoice" && (
+                <Meta label="Place of supply" value={h.place_of_supply} />
+              )}
+              <Meta label="Function" value={h.function ?? h.reference} mono />
+            </tbody>
+          </table>
+          {!h.is_final && h.kind !== "pack_list" && h.kind !== "beo" && (
+            <p className="mt-1.5 max-w-48 text-[11px] text-amber-700">
+              Draft — no number issued yet.
+            </p>
+          )}
+        </div>
       </div>
     </header>
+  )
+}
+
+function Meta({
+  label,
+  value,
+  mono,
+}: {
+  label: string
+  value: string
+  mono?: boolean
+}) {
+  return (
+    <tr>
+      <td className="pr-3 text-right align-top text-zinc-400">{label}</td>
+      <td className={"text-left font-medium" + (mono ? " font-mono" : "")}>
+        {value}
+      </td>
+    </tr>
   )
 }
 
@@ -446,6 +525,11 @@ function Lines({ doc, showsMoney }: { doc: Doc; showsMoney: boolean }) {
         <thead>
           <tr className="border-b border-zinc-200 text-left text-xs uppercase tracking-wider text-zinc-400">
             <th className="py-1.5 font-medium">Item</th>
+            {showsMoney && (
+              <th className="py-1.5 font-medium">
+                {doc.header.service_code_label}
+              </th>
+            )}
             <th className="py-1.5 text-right font-medium">Qty</th>
             {showsMoney && (
               <>
@@ -475,6 +559,11 @@ function Lines({ doc, showsMoney }: { doc: Doc; showsMoney: boolean }) {
                   <p className="text-xs text-zinc-400">{l.notes}</p>
                 )}
               </td>
+              {showsMoney && (
+                <td className="py-1.5 font-mono text-[11px] text-zinc-400">
+                  {l.service_code ?? ""}
+                </td>
+              )}
               <td className="py-1.5 text-right tabular-nums">
                 {l.qty % 1 === 0 ? l.qty : l.qty.toFixed(2)}{" "}
                 <span className="text-zinc-400">{l.uom}</span>
@@ -607,6 +696,49 @@ function PackList({ doc }: { doc: Doc }) {
   )
 }
 
+function TaxBreakup({ doc }: { doc: Doc }) {
+  const rows = doc.tax_breakup ?? []
+  if (!rows.length) return null
+  const label = doc.header.tax_label ?? "GST"
+  return (
+    <Section title={`${label} breakup`}>
+      <table className="w-full">
+        <thead>
+          <tr className="border-b border-zinc-200 text-left text-xs uppercase tracking-wider text-zinc-400">
+            <th className="py-1.5 font-medium">Rate</th>
+            <th className="py-1.5 text-right font-medium">Taxable</th>
+            {rows[0].parts.map((p) => (
+              <th key={p.label} className="py-1.5 text-right font-medium">
+                {p.label}
+              </th>
+            ))}
+            <th className="py-1.5 text-right font-medium">Total {label}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr key={r.rate} className="border-b border-zinc-100">
+              <td className="py-1.5">{r.rate}%</td>
+              <td className="py-1.5 text-right tabular-nums">
+                {inrExact(r.taxable)}
+              </td>
+              {r.parts.map((p) => (
+                <td key={p.label} className="py-1.5 text-right tabular-nums">
+                  <span className="text-zinc-400">{p.rate}% </span>
+                  {inrExact(p.amount)}
+                </td>
+              ))}
+              <td className="py-1.5 text-right tabular-nums font-medium">
+                {inrExact(r.total_tax)}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </Section>
+  )
+}
+
 function Totals({ doc }: { doc: Doc }) {
   const t = doc.totals
   return (
@@ -640,6 +772,11 @@ function Totals({ doc }: { doc: Doc }) {
           <p className="pt-2 text-xs text-zinc-400">
             Complimentary items worth {inrExact(t.complimentary_value)} are
             included at no charge.
+          </p>
+        )}
+        {doc.header.amount_in_words && (
+          <p className="border-t border-zinc-200 pt-2 text-xs italic text-zinc-600">
+            {doc.header.amount_in_words}
           </p>
         )}
       </div>
