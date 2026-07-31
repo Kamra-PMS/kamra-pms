@@ -162,7 +162,6 @@ export const APPS: AppDef[] = [
       { to: "/events", label: "All Functions", icon: ListChecks },
       { to: "/groups", label: "Groups & Blocks", icon: Users },
       { to: "/venues", label: "Halls & Venues", icon: Landmark },
-      { to: "/venue-calendar", label: "Venue Calendar", icon: CalendarDays },
     ],
     extraPrefixes: ["/banquet"],
   },

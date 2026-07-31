@@ -7,7 +7,7 @@
     its own sheet at /banquet/:name. */
 
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useSearchParams } from "react-router-dom"
 import {
   AlertTriangle,
   CalendarDays,
@@ -74,6 +74,20 @@ export default function Banquet() {
   const [query, setQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState("")
   const [enquiry, setEnquiry] = useState(false)
+  // the diary and the month grid send an open slot here as query params;
+  // without this the click was a dead end
+  const [params, setParams] = useSearchParams()
+  const slot = params.get("venue")
+    ? {
+        venue: params.get("venue") ?? "",
+        date: params.get("date") ?? today(),
+        session: params.get("session") ?? "Evening",
+      }
+    : null
+  useEffect(() => {
+    if (slot) setEnquiry(true)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params])
 
   const load = useCallback(() => {
     banquet
@@ -320,7 +334,11 @@ export default function Banquet() {
 
       {enquiry && (
         <EnquirySheet
-          onClose={() => setEnquiry(false)}
+          slot={slot}
+          onClose={() => {
+            setEnquiry(false)
+            if (slot) setParams({}, { replace: true })
+          }}
           onCreated={(fn) => {
             setEnquiry(false)
             navigate(`/banquet/${encodeURIComponent(fn)}`)
@@ -551,9 +569,12 @@ function BreakdownCard({
 /* ── the new enquiry ──────────────────────────────────────────────────── */
 
 function EnquirySheet({
+  slot,
   onClose,
   onCreated,
 }: {
+  /** A hall, day and session picked straight off the diary. */
+  slot: { venue: string; date: string; session: string } | null
   onClose: () => void
   onCreated: (fn: string) => void
 }) {
@@ -563,13 +584,13 @@ function EnquirySheet({
     customer_email: "",
     company: "",
     event_type: "Wedding",
-    event_date: today(),
+    event_date: slot?.date ?? today(),
     end_date: "",
-    session: "Evening",
+    session: slot?.session ?? "Evening",
     start_time: "19:00",
     end_time: "23:00",
     attendees: "",
-    venue: "",
+    venue: slot?.venue ?? "",
     source: "Phone",
     requirements: "",
   })
@@ -613,7 +634,11 @@ function EnquirySheet({
         setForm((f) =>
           f.venue && r.venues.some((v) => v.name === f.venue)
             ? f
-            : { ...f, venue: r.venues.find((v) => v.available && v.fits)?.name ?? "" },
+            : {
+                ...f,
+                venue:
+                  r.venues.find((v) => v.available && v.fits)?.name ?? "",
+              },
         )
       })
       .catch((e) => live && setError(serverError(e)))

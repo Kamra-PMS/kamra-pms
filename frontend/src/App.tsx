@@ -27,7 +27,6 @@ const Setup = lazy(() => import("./screens/Setup"))
 const Settings = lazy(() => import("./screens/Settings"))
 const BookingEngine = lazy(() => import("./screens/BookingEngine"))
 const Developers = lazy(() => import("./screens/Developers"))
-const VenueCalendar = lazy(() => import("./screens/VenueCalendar"))
 const Banquet = lazy(() => import("./screens/Banquet"))
 const BanquetDiary = lazy(() => import("./screens/BanquetDiary"))
 const BanquetMonth = lazy(() => import("./screens/BanquetMonth"))
@@ -261,7 +260,13 @@ export default function App() {
             path="venues"
             element={<ResourceScreen config={venuesConfig} />}
           />
-          <Route path="venue-calendar" element={<VenueCalendar />} />
+          {/* The old venue calendar created bare Venue Bookings with no
+              rental line, no follow-up and no owner - a function that
+              quoted zero. The diary is its superset, and the only door. */}
+          <Route
+            path="venue-calendar"
+            element={<Navigate to="/banquet-diary" replace />}
+          />
           {/* banquets: the function business, enquiry → event order → bill */}
           <Route path="banquet" element={<Banquet />} />
           <Route path="banquet-diary" element={<BanquetDiary />} />

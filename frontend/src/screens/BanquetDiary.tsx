@@ -158,10 +158,24 @@ export default function BanquetDiary() {
                         <td
                           key={d}
                           className={
-                            "border-b border-l border-zinc-100 p-1 align-top " +
+                            "group border-b border-l border-zinc-100 p-1 align-top " +
                             (d === today() ? "bg-brand-50/40" : "")
                           }
                         >
+                          {cells.length === 0 && (
+                            <button
+                              onClick={() =>
+                                navigate(
+                                  `/banquet?venue=${encodeURIComponent(v.name)}` +
+                                    `&date=${d}`,
+                                )
+                              }
+                              aria-label="Open - start an enquiry"
+                              className="flex w-full items-center justify-center rounded py-2 text-zinc-300 opacity-0 transition-opacity hover:bg-brand-50 hover:text-brand-600 group-hover:opacity-100"
+                            >
+                              +
+                            </button>
+                          )}
                           {cells.map((b) => (
                             <button
                               key={b.name + d}

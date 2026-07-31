@@ -20,8 +20,10 @@ import {
   type BanquetMenuCourse,
   type BanquetDish,
   type BanquetService,
+  type RecipeRow,
 } from "../lib/api"
-import { serverError } from "../lib/resource"
+import { getCurrentProperty } from "../lib/api"
+import { listResource, serverError, type Row } from "../lib/resource"
 import { useAuth } from "../lib/auth"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
@@ -63,6 +65,7 @@ export default function BanquetCatalogue() {
   const [busy, setBusy] = useState(false)
   const [menuDraft, setMenuDraft] = useState<Partial<BanquetMenu> | null>(null)
   const [svcDraft, setSvcDraft] = useState<Partial<BanquetService> | null>(null)
+  const [dishDraft, setDishDraft] = useState<Partial<BanquetDish> | null>(null)
 
   const load = useCallback(() => {
     banquet
@@ -124,31 +127,45 @@ export default function BanquetCatalogue() {
           </div>
           {canEdit && (
             <Button
-              onClick={() =>
-                tab === "menus"
-                  ? setMenuDraft({
-                      menu_name: "",
-                      meal_period: "Dinner",
-                      food_type: "Veg",
-                      service_style: "Buffet",
-                      rate_per_pax: 0,
-                      gst_rate: 5,
-                      courses: [],
-                    })
-                  : setSvcDraft({
-                      item_name: "",
-                      category: "Audio Visual",
-                      uom: "Per Event",
-                      rate: 0,
-                      gst_rate: 18,
-                      chargeable: 1,
-                      on_pack_list: 1,
-                      is_alcohol: 0,
-                    })
-              }
+              onClick={() => {
+                if (tab === "menus")
+                  setMenuDraft({
+                    menu_name: "",
+                    meal_period: "Dinner",
+                    food_type: "Veg",
+                    service_style: "Buffet",
+                    rate_per_pax: 0,
+                    gst_rate: 5,
+                    courses: [],
+                  })
+                else if (tab === "dishes")
+                  setDishDraft({
+                    dish_name: "",
+                    course_type: "Main Course",
+                    food_type: "Veg",
+                    kitchen: "Main Kitchen",
+                    portion_per_pax: 1,
+                    recipe: [],
+                  })
+                else
+                  setSvcDraft({
+                    item_name: "",
+                    category: "Audio Visual",
+                    uom: "Per Event",
+                    rate: 0,
+                    gst_rate: 18,
+                    chargeable: 1,
+                    on_pack_list: 1,
+                    is_alcohol: 0,
+                  })
+              }}
             >
               <Plus className="size-4" />
-              {tab === "menus" ? "New menu" : "New service"}
+              {tab === "menus"
+                ? "New menu"
+                : tab === "dishes"
+                  ? "New dish"
+                  : "New service"}
             </Button>
           )}
         </div>
@@ -185,6 +202,8 @@ export default function BanquetCatalogue() {
             canEdit={canEdit}
             busy={busy}
             onChanged={load}
+            onEdit={setDishDraft}
+            onDelete={(name) => act(() => banquet.deleteDish(name))}
           />
         )}
 
@@ -356,6 +375,17 @@ export default function BanquetCatalogue() {
           onSave={async (payload) => {
             await act(() => banquet.saveMenu(payload))
             setMenuDraft(null)
+          }}
+        />
+      )}
+      {dishDraft && (
+        <DishSheet
+          draft={dishDraft}
+          busy={busy}
+          onClose={() => setDishDraft(null)}
+          onSave={async (payload) => {
+            await act(() => banquet.saveDish(payload))
+            setDishDraft(null)
           }}
         />
       )}
@@ -772,14 +802,19 @@ function DishLibrary({
   canEdit,
   busy,
   onChanged,
+  onEdit,
+  onDelete,
 }: {
   dishes: BanquetDish[] | null
   canEdit: boolean
   busy: boolean
   onChanged: () => void
+  onEdit: (d: BanquetDish) => void
+  onDelete: (name: string) => void
 }) {
   const [error, setError] = useState<string | null>(null)
   const [working, setWorking] = useState(false)
+  const [changes, setChanges] = useState<string | null>(null)
 
   if (!dishes) return <Empty>Loading…</Empty>
 
@@ -793,7 +828,12 @@ function DishLibrary({
     setWorking(true)
     setError(null)
     try {
-      await banquet.recostDishes()
+      const out = await banquet.recostDishes()
+      setChanges(
+        out.recosted
+          ? `${out.recosted} dish${out.recosted === 1 ? "" : "es"} re-costed.`
+          : "Every dish already matches today's prices.",
+      )
       onChanged()
     } catch (e) {
       setError(serverError(e))
@@ -816,11 +856,30 @@ function DishLibrary({
           )}
         </p>
         {canEdit && (
-          <Button variant="outline" disabled={busy || working} onClick={recost}>
-            Re-cost from today's ingredient prices
+          <Button
+            variant="outline"
+            disabled={busy || working}
+            onClick={recost}
+            title="Recomputes every dish as the sum of its recipe: each ingredient's quantity per portion times that ingredient's current cost per unit."
+          >
+            Re-cost from today&apos;s ingredient prices
           </Button>
         )}
       </div>
+
+      {/* the number on every card is arithmetic, not an estimate - say so */}
+      <p className="rounded-lg bg-zinc-50 px-3 py-2 text-xs text-zinc-500">
+        A dish costs the sum of its recipe: for each ingredient,{" "}
+        <span className="font-medium text-zinc-700">
+          quantity per portion x that ingredient&apos;s cost per unit
+        </span>
+        . Re-costing walks every dish and recomputes it at today&apos;s
+        ingredient prices, so a quote is never priced off last season&apos;s
+        onions.
+      </p>
+      {changes && (
+        <p className="text-xs text-emerald-700">{changes}</p>
+      )}
 
       {dishes.length === 0 ? (
         <Empty>
@@ -876,12 +935,31 @@ function DishLibrary({
                         )}
                       </div>
                     </div>
-                    {d.recipe.length > 0 && (
-                      <p className="mt-1 line-clamp-1 text-xs text-zinc-400">
-                        {d.recipe.length} ingredient
-                        {d.recipe.length === 1 ? "" : "s"}
+                    <div className="mt-1 flex items-center justify-between gap-2">
+                      <p className="text-xs text-zinc-400">
+                        {d.recipe.length
+                          ? `${d.recipe.length} ingredient${d.recipe.length === 1 ? "" : "s"}`
+                          : "no recipe"}
                       </p>
-                    )}
+                      {canEdit && (
+                        <span className="flex gap-1">
+                          <button
+                            className="text-xs font-medium text-brand-700 hover:underline"
+                            onClick={() => onEdit(d)}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            className="text-zinc-300 hover:text-rose-600"
+                            aria-label={`Delete ${d.dish_name}`}
+                            disabled={busy}
+                            onClick={() => onDelete(d.name)}
+                          >
+                            <Trash2 className="size-3.5" />
+                          </button>
+                        </span>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -892,3 +970,294 @@ function DishLibrary({
     </div>
   )
 }
+
+/* ── the dish editor ──────────────────────────────────────────────────── */
+
+/** A dish is only worth what its recipe says. This is where that recipe
+ *  gets written, and the cost adds up line by line as you type — so the
+ *  person entering it can see immediately whether the number looks right,
+ *  rather than discovering at month end that the paneer was priced per
+ *  gram. */
+function DishSheet({
+  draft,
+  busy,
+  onClose,
+  onSave,
+}: {
+  draft: Partial<BanquetDish>
+  busy: boolean
+  onClose: () => void
+  onSave: (payload: Record<string, unknown>) => void
+}) {
+  const [d, setD] = useState<Partial<BanquetDish>>(draft)
+  const [recipe, setRecipe] = useState<Partial<RecipeRow>[]>(draft.recipe ?? [])
+  const [ingredients, setIngredients] = useState<Row[]>([])
+  const set = (k: keyof BanquetDish, v: unknown) =>
+    setD((x) => ({ ...x, [k]: v }))
+
+  useEffect(() => {
+    listResource("Ingredient", {
+      fields: ["name", "ingredient_name", "uom", "cost_per_unit"],
+      filters: [["property", "=", getCurrentProperty()], ["is_active", "=", 1]],
+      orderBy: "ingredient_name asc",
+      limit: 500,
+    })
+      .then(setIngredients)
+      .catch(() => {})
+  }, [])
+
+  const priceOf = (name?: string) =>
+    Number(ingredients.find((i) => i.name === name)?.cost_per_unit ?? 0)
+  const uomOf = (name?: string) =>
+    String(ingredients.find((i) => i.name === name)?.uom ?? "")
+
+  const cost = recipe.reduce(
+    (sum, r) => sum + Number(r.qty || 0) * priceOf(r.ingredient),
+    0,
+  )
+
+  return (
+    <Sheet
+      title={draft.name ? `Edit ${draft.dish_name}` : "New dish"}
+      description="What it is, which section cooks it, and what one portion costs to make."
+      onClose={onClose}
+      wide
+      footer={
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <span className="text-sm text-zinc-500">
+            {recipe.length
+              ? `Costs ${inr(cost)} a portion`
+              : "No recipe yet — this dish will cost nothing"}
+          </span>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button
+              disabled={busy || !(d.dish_name ?? "").trim()}
+              onClick={() =>
+                onSave({
+                  name: draft.name ?? null,
+                  dish_name: d.dish_name,
+                  course_type: d.course_type,
+                  food_type: d.food_type,
+                  kitchen: d.kitchen,
+                  portion_per_pax: Number(d.portion_per_pax) || 1,
+                  allergens: d.allergens ?? null,
+                  description: d.description ?? null,
+                  recipe: recipe
+                    .filter((r) => r.ingredient && Number(r.qty) > 0)
+                    .map((r) => ({
+                      ingredient: r.ingredient,
+                      qty: Number(r.qty),
+                      note: r.note ?? null,
+                    })),
+                })
+              }
+            >
+              Save dish
+            </Button>
+          </div>
+        </div>
+      }
+    >
+      <div className="space-y-4">
+        <div className="grid gap-3 sm:grid-cols-3">
+          <Field label="Dish name" className="sm:col-span-2">
+            <input
+              className={inputCls}
+              placeholder="Paneer Tikka"
+              value={d.dish_name ?? ""}
+              onChange={(e) => set("dish_name", e.target.value)}
+            />
+          </Field>
+          <Field label="Course">
+            <Select
+              value={d.course_type ?? "Main Course"}
+              onChange={(v) => set("course_type", v)}
+              options={DISH_COURSES}
+            />
+          </Field>
+          <Field label="Veg / non-veg">
+            <Select
+              value={d.food_type ?? "Veg"}
+              onChange={(v) => set("food_type", v)}
+              options={["Veg", "Non-Veg", "Jain", "Vegan", "Egg"]}
+            />
+          </Field>
+          <Field label="Which section cooks it" hint="Splits the event order">
+            <Select
+              value={d.kitchen ?? "Main Kitchen"}
+              onChange={(v) => set("kitchen", v)}
+              options={KITCHENS}
+            />
+          </Field>
+          <Field
+            label="Portions per head"
+            hint="0.5 means one portion feeds two"
+          >
+            <input
+              type="number"
+              step="0.1"
+              className={inputCls}
+              value={d.portion_per_pax ?? 1}
+              onChange={(e) => set("portion_per_pax", e.target.value)}
+            />
+          </Field>
+          <Field label="Allergens" className="sm:col-span-2">
+            <input
+              className={inputCls}
+              placeholder="Nuts, dairy"
+              value={d.allergens ?? ""}
+              onChange={(e) => set("allergens", e.target.value)}
+            />
+          </Field>
+        </div>
+
+        <div>
+          <div className="mb-2 flex items-center justify-between">
+            <div>
+              <p className="text-xs font-medium text-zinc-500">
+                Recipe — one portion
+              </p>
+              <p className="text-[11px] text-zinc-400">
+                Quantities are per portion, in each ingredient&apos;s own unit.
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              className="!px-2 !py-1 !text-xs"
+              onClick={() =>
+                setRecipe((rs) => [...rs, { ingredient: "", qty: 0 }])
+              }
+            >
+              <Plus className="size-3.5" />
+              Ingredient
+            </Button>
+          </div>
+
+          {ingredients.length === 0 ? (
+            <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
+              No ingredients on this property yet. Add them under Kitchen
+              Inventory first — a dish can only cost what its ingredients
+              cost.
+            </p>
+          ) : recipe.length === 0 ? (
+            <p className="text-sm text-zinc-400">
+              No recipe yet. Without one the dish costs nothing, and every
+              quote built on it will look more profitable than it is.
+            </p>
+          ) : (
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-zinc-200 text-left text-xs uppercase tracking-wider text-zinc-400">
+                  <th className="py-1.5 font-medium">Ingredient</th>
+                  <th className="w-24 py-1.5 text-right font-medium">Qty</th>
+                  <th className="w-28 py-1.5 text-right font-medium">Price</th>
+                  <th className="w-24 py-1.5 text-right font-medium">Cost</th>
+                  <th className="w-8" />
+                </tr>
+              </thead>
+              <tbody>
+                {recipe.map((r, i) => (
+                  <tr key={i} className="border-b border-zinc-100">
+                    <td className="py-1.5 pr-2">
+                      <select
+                        className={inputCls + " !py-1"}
+                        value={r.ingredient ?? ""}
+                        onChange={(e) =>
+                          setRecipe((rs) =>
+                            rs.map((x, n) =>
+                              n === i ? { ...x, ingredient: e.target.value } : x,
+                            ),
+                          )
+                        }
+                      >
+                        <option value="">Choose…</option>
+                        {ingredients.map((ing) => (
+                          <option key={ing.name} value={ing.name}>
+                            {String(ing.ingredient_name)}
+                          </option>
+                        ))}
+                      </select>
+                    </td>
+                    <td className="py-1.5 pr-2">
+                      <input
+                        type="number"
+                        step="0.001"
+                        className={inputCls + " !py-1 text-right"}
+                        value={r.qty ?? ""}
+                        onChange={(e) =>
+                          setRecipe((rs) =>
+                            rs.map((x, n) =>
+                              n === i
+                                ? { ...x, qty: Number(e.target.value) }
+                                : x,
+                            ),
+                          )
+                        }
+                      />
+                    </td>
+                    <td className="py-1.5 pr-2 text-right text-xs tabular-nums text-zinc-400">
+                      {r.ingredient
+                        ? `${inr(priceOf(r.ingredient))}/${uomOf(r.ingredient)}`
+                        : "—"}
+                    </td>
+                    <td className="py-1.5 pr-2 text-right tabular-nums">
+                      {inr(Number(r.qty || 0) * priceOf(r.ingredient))}
+                    </td>
+                    <td className="py-1.5 text-right">
+                      <button
+                        className="text-zinc-300 hover:text-rose-600"
+                        aria-label="Remove ingredient"
+                        onClick={() =>
+                          setRecipe((rs) => rs.filter((_, n) => n !== i))
+                        }
+                      >
+                        <Trash2 className="size-4" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+                <tr>
+                  <td colSpan={3} className="py-2 text-right font-medium">
+                    One portion costs
+                  </td>
+                  <td className="py-2 text-right font-semibold tabular-nums">
+                    {inr(cost)}
+                  </td>
+                  <td />
+                </tr>
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
+    </Sheet>
+  )
+}
+
+const DISH_COURSES = [
+  "Welcome Drink",
+  "Starters",
+  "Soup",
+  "Salad",
+  "Main Course",
+  "Breads",
+  "Rice",
+  "Accompaniments",
+  "Live Counter",
+  "Dessert",
+  "Beverage",
+  "Other",
+]
+const KITCHENS = [
+  "Main Kitchen",
+  "Tandoor",
+  "Chinese",
+  "Continental",
+  "Bakery",
+  "Cold Kitchen",
+  "Live Counter",
+  "Outsourced",
+]
