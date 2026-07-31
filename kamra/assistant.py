@@ -1,4 +1,4 @@
-"""Front-desk copilot - BYOK, optional, governed.
+"""Kamra Agent - the in-app assistant. BYOK, optional, governed.
 
 Talks to any OpenAI-compatible chat endpoint (OpenAI, OpenRouter, Groq,
 Ollama, …) with the owner's own key. The model only ever acts through
@@ -17,7 +17,7 @@ from frappe.utils import nowdate
 MAX_TOOL_ROUNDS = 6
 TIMEOUT = 60
 
-SYSTEM = """You are the front-desk copilot for {property_name}, a hotel
+SYSTEM = """You are Kamra Agent, the assistant for {property_name}, a hotel
 running Kamra PMS. Today is {today}. You help staff work faster: look
 things up, quote, book, check guests in and out, post charges, take
 payments, preview and process cancellations.
@@ -257,6 +257,118 @@ TOOLS = {
 		"Cancel a confirmed booking (policy applies; returns a cancellation number to read out).",
 		{"reservation": {"type": "string"}, "reason": {"type": "string"},
 		 "note": {"type": "string"}}, False, True),
+
+	# ── banquets ────────────────────────────────────────────────────────
+	# The whole reason a banquet enquiry is worth answering in seconds: by
+	# the time the caller has finished describing the wedding, the hall is
+	# checked, the sheet exists and the menu is priced.
+	"banquet_availability": (
+		"banquet.venue_availability",
+		"Which halls are free for a date (and hours, and pax). A confirmed "
+		"function takes the hall; a tentative hold shows as a soft hold you "
+		"can still sell over. Always run this before opening an enquiry.",
+		{"event_date": {"type": "string"}, "end_date": {"type": "string"},
+		 "start_time": {"type": "string"}, "end_time": {"type": "string"},
+		 "pax": {"type": "integer"}}, True, False),
+	"banquet_catalogue": (
+		"banquet.banquet_catalogue",
+		"What the property sells at a function: menu packages (per plate, "
+		"with their courses) and services (LED wall, projector, DJ, podium, "
+		"stage, decor, bar). Read this before quoting anything.",
+		{}, True, False),
+	"banquet_enquiry": (
+		"banquet.create_enquiry",
+		"Open a function sheet from an enquiry. The hall's rack rental goes "
+		"on as the first line and a follow-up is diarised. Check "
+		"banquet_availability first.",
+		{"venue": {"type": "string"}, "event_date": {"type": "string"},
+		 "customer_name": {"type": "string"}, "event_type": {"type": "string"},
+		 "attendees": {"type": "integer"}, "customer_phone": {"type": "string"},
+		 "customer_email": {"type": "string"}, "company": {"type": "string"},
+		 "end_date": {"type": "string"}, "start_time": {"type": "string"},
+		 "end_time": {"type": "string"}, "source": {"type": "string"},
+		 "requirements": {"type": "string"}}, True, True),
+	"banquet_sheet": (
+		"banquet.function_sheet",
+		"One function in full: dates, pax, every line item, the negotiation "
+		"history, payment terms, what's been received and what it still "
+		"needs from somebody.",
+		{"function": {"type": "string"}}, False, False),
+	"banquet_add_menu": (
+		"banquet.add_menu",
+		"Put a menu package on a function. The quantity follows the "
+		"guaranteed pax on its own. Pass chargeable=0 to give it away - it "
+		"still prints on the event order, it just leaves the quote.",
+		{"function": {"type": "string"}, "menu": {"type": "string"},
+		 "qty": {"type": "number"}, "rate": {"type": "number"},
+		 "chargeable": {"type": "integer"}}, False, True),
+	"banquet_add_service": (
+		"banquet.add_service",
+		"Put a service on a function - projector, LED wall, DJ, podium, "
+		"stage, decor, laptop, bar. chargeable=0 makes it complimentary.",
+		{"function": {"type": "string"}, "service_item": {"type": "string"},
+		 "qty": {"type": "number"}, "rate": {"type": "number"},
+		 "chargeable": {"type": "integer"}}, False, True),
+	"banquet_negotiate": (
+		"banquet.negotiate",
+		"Move the price: a headline discount, or the hall rate. Every move "
+		"is snapshotted, so 'what did we send on the 3rd' stays answerable. "
+		"Confirm the new total with staff before calling.",
+		{"function": {"type": "string"}, "discount_amount": {"type": "number"},
+		 "venue_rental": {"type": "number"}, "note": {"type": "string"}},
+		False, True),
+	"banquet_status": (
+		"banquet.set_status",
+		"Move a function along: Enquiry → Tentative → Confirmed → Completed, "
+		"or out as Cancelled / Lost (a reason is required). Confirming takes "
+		"the hall and will refuse a clash.",
+		{"function": {"type": "string"}, "status": {"type": "string"},
+		 "reason": {"type": "string"}}, False, True),
+	"banquet_quote": (
+		"banquet.generate_quote",
+		"Stamp a quotation - bumps the version, dates it, and returns the "
+		"whole document to read back to the customer.",
+		{"function": {"type": "string"}, "valid_days": {"type": "integer"}},
+		False, True),
+	"banquet_pipeline": (
+		"banquet.banquet_pipeline",
+		"The banquet sales picture by month and by status: what's confirmed, "
+		"what's still in play, what's outstanding, conversion, and why "
+		"business went away.",
+		{"from_date": {"type": "string"}, "to_date": {"type": "string"},
+		 "months": {"type": "integer"}}, True, False),
+	"banquet_month": (
+		"banquet.month_availability",
+		"Every hall and every session across a whole month - the grid that "
+		"answers 'do you have the 14th of December?' in one look. Sessions "
+		"are Morning / Afternoon / Evening, which is how halls are sold.",
+		{"month": {"type": "string"}}, True, False),
+	"banquet_close_out": (
+		"banquet.close_out",
+		"Hand the hall back after the function: record the covers actually "
+		"served, deduct any damage from the refundable deposit (a reason is "
+		"required) and return the rest. Closes the function.",
+		{"function": {"type": "string"}, "damage_amount": {"type": "number"},
+		 "damage_note": {"type": "string"}, "pax_actual": {"type": "integer"},
+		 "refund_deposit": {"type": "integer"}}, False, True),
+	"banquet_register": (
+		"banquet.banquet_register",
+		"The banquet office's books for a period: functions, quotations, "
+		"enquiries, receipts (the cash book) or sales - a rollup by hall, "
+		"event type and session.",
+		{"register": {"type": "string"}, "from_date": {"type": "string"},
+		 "to_date": {"type": "string"}}, True, False),
+	"banquet_menu_card": (
+		"banquet.menu_card",
+		"What will actually be served, course by course, with no prices on "
+		"it - the sheet the customer signs off and the kitchen cooks from.",
+		{"function": {"type": "string"}}, False, False),
+	"banquet_reminders": (
+		"banquet.banquet_reminders",
+		"Everything across the property that needs chasing today: follow-ups "
+		"gone quiet, tentative holds about to lapse, payments due, event "
+		"orders missing before the date.",
+		{"days": {"type": "integer"}}, True, False),
 }
 
 
@@ -279,12 +391,25 @@ def assistant_status(property: str):
 	}
 
 
+def _resolve(fn_name: str):
+	"""A tool's target. Bare names live in kamra.api (where most of the
+	front-desk surface is); a dotted name reaches a sibling module, so a
+	whole domain like banquets can be wired in without re-exporting every
+	endpoint through api.py."""
+	import importlib
+
+	if "." in fn_name:
+		module, attr = fn_name.rsplit(".", 1)
+		return getattr(importlib.import_module(f"kamra.{module}"), attr, None)
+	from kamra import api
+	return getattr(api, fn_name, None)
+
+
 def _tool_allowed(name: str) -> bool:
-	"""RBAC for the copilot: a tool is only visible/callable when the
+	"""RBAC for Kamra Agent: a tool is only visible/callable when the
 	signed-in user's roles pass the SAME gate as the underlying API
 	endpoint. The model never even sees tools this user couldn't use."""
-	from kamra import api
-	fn = getattr(api, TOOLS[name][0], None)
+	fn = _resolve(TOOLS[name][0])
 	allowed = getattr(fn, "_kamra_roles", None)
 	if not allowed:
 		return True
@@ -308,17 +433,16 @@ def _tool_defs():
 
 
 def _run_tool(name: str, args: dict, property: str):
-	from kamra import api
 	if not _tool_allowed(name):
 		frappe.throw("Your role doesn't include this action.",
 		             frappe.PermissionError)
 	fn_name, _desc, params, inject, mutating = TOOLS[name]
-	fn = getattr(api, fn_name)
+	fn = _resolve(fn_name)
 	clean = {k: v for k, v in args.items()
 	         if k in params and v not in (None, "")}
 	if inject:
 		clean["property"] = property
-	# copilot tool calls are agent actions: accountability comes from the
+	# Kamra Agent tool calls are agent actions: accountability comes from
 	# action log, not the cashier PIN (which guards humans at a terminal)
 	frappe.flags.kamra_agent_call = True
 	try:
@@ -338,7 +462,7 @@ def _run_tool(name: str, args: dict, property: str):
 @frappe.whitelist()
 @require_roles("Front Desk", "Finance", "Revenue Manager")
 def ask(property: str, messages):
-	"""One copilot turn: history in, answer out. The model may call
+	"""One Kamra Agent turn: history in, answer out. The model may call
 	governed tools along the way; every call is returned so the UI can
 	show what actually happened."""
 	s = _settings(property)
@@ -402,7 +526,7 @@ def ask(property: str, messages):
 @frappe.whitelist(methods=["POST"])
 @require_roles("Front Desk", "Finance", "Revenue Manager")
 def ask_stream(property: str, messages):
-	"""Streaming copilot turn (Server-Sent Events). Governed tools run FIRST
+	"""Streaming Kamra Agent turn (Server-Sent Events). Governed tools run FIRST
 	(they need the DB, which the request context still holds), emitting an
 	`action` event each; then the final answer is streamed token-by-token as
 	`token` events. The generator itself touches no DB - only the OpenAI stream
@@ -499,7 +623,7 @@ def ask_stream(property: str, messages):
 
 HELP_SYSTEM = """You are the Kamra PMS help assistant. You explain HOW to use
 Kamra - an open-source, AI-native hotel PMS - to hotel staff. You do NOT act on
-hotel data (the front-desk copilot does that); you give short, concrete how-to
+hotel data (Kamra Agent does that); you give short, concrete how-to
 answers and point to where things live in the app.
 
 What Kamra does and where to find it:
@@ -530,7 +654,7 @@ What Kamra does and where to find it:
 - Roles: a System Admin (IT - users, API keys, Frappe Desk) versus a Hotel
   Admin / GM (runs the property, no IT access). Manage staff from
   Admin → Manage Users.
-- The front-desk copilot (the sparkle button) can act - quote, book, check in,
+- Kamra Agent (the sparkle button) can act - quote, book, check in,
   post charges, cancel, and watch the waitlist. This help assistant only
   explains how to do things yourself.
 

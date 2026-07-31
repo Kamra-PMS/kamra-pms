@@ -224,3 +224,135 @@ up / remaining), rooming list, tied event and master folio.
 Name a guest into a group's room block — creates their reservation on
 the group's dates against the held inventory.
 
+
+
+## Banquets
+The function business: enquiry → quotation → contract → event order →
+bill → close-out. Halls, sessions, menu packages, services and the whole
+negotiation live in the PMS, so an agent on the phone quotes the
+property's real prices — never its own guess.
+
+### `banquet_availability(event_date, end_date, start_time, end_time, pax)`
+
+Which halls are free for a date, hours and pax. A confirmed function
+takes the hall; a tentative hold is shown as a soft hold you can still
+sell over. Two functions can share a hall morning and evening — only a
+real overlap in hours counts as taken. Run this before every enquiry.
+
+### `banquet_catalogue()`
+
+What the property sells at a function: menu packages priced per plate
+(with their courses), and the service list — LED wall, projector, DJ,
+podium, stage, decor, laptop, bar. Read this before quoting anything;
+never invent a price.
+
+### `banquet_enquiry(venue, event_date, customer_name, event_type, attendees, customer_phone, customer_email, company, end_date, start_time, end_time, source, requirements)`
+
+Open a function sheet from an enquiry. The hall's rack rental goes on
+as the first line and a follow-up is diarised, so the enquiry can't go
+quiet. Check banquet_availability first.
+
+### `banquet_sheet(function)`
+
+One function in full: dates, pax (expected / guaranteed / actual),
+every line item with its chargeable flag, the negotiation history,
+payment terms, receipts, and what it still needs from somebody.
+
+### `banquet_add_menu(function, menu, qty, rate, chargeable)`
+
+Put a menu package on a function. Left alone the quantity follows the
+pax rule (guaranteed, or actual if more turned up) and the price is the
+package's own plate price. chargeable=0 gives it away — it still prints
+on the event order, it just leaves the quote.
+
+### `banquet_add_service(function, service_item, qty, rate, chargeable)`
+
+Put a service on a function — projector, LED wall, DJ, podium, stage,
+decor, laptop, bar. The catalogue decides chargeable by default; pass
+chargeable=0 to throw it in for this function.
+
+### `banquet_negotiate(function, discount_amount, venue_rental, note)`
+
+Move the price: a headline discount on the whole quote, or the hall
+rate on its own. Every move is snapshotted with what the quote was worth
+before and after, so the fourth revision stays explainable. Confirm the
+new total with the user before calling.
+
+### `banquet_payment_terms(function, terms, note)`
+
+Set the payment schedule: [{milestone, due_date, percent | amount}].
+A term stated as a percentage follows the quote as it moves; one stated
+as an amount is a number both sides agreed and stays put.
+
+### `banquet_receipt(function, amount, mode, kind, reference)`
+
+Record money in against a function (Advance / Payment / Security
+Deposit / Refund).
+
+### `banquet_status(function, status, reason)`
+
+Move a function along: Enquiry → Tentative → Confirmed → Completed, or
+out as Cancelled / Lost. Cancelling or losing needs a reason. Confirming
+takes the hall and will refuse a clash with another confirmed function.
+
+### `banquet_quote(function, valid_days)`
+
+Stamp a quotation — bumps the version, dates it, and returns the whole
+document so it can be read back or emailed.
+
+### `banquet_event_order(function)`
+
+Issue the banquet event order — the running sheet the banquet, kitchen
+and AV teams work the day from, with the menus expanded into courses.
+Only a confirmed function gets one.
+
+### `banquet_document(function, kind)`
+
+Fetch a function's paper without re-issuing it. kind: quote, contract,
+beo, pack_list, invoice. The pack list is what physically has to reach
+the hall, complimentary items included.
+
+### `banquet_pipeline(from_date, to_date, months)`
+
+The banquet sales picture, month by month and by status: what's
+confirmed, what's still in play, what's outstanding, the conversion
+rate, and why business went away. Dated on the event, not the enquiry.
+
+### `banquet_reminders(days)`
+
+Everything that needs chasing: follow-ups gone quiet, tentative holds
+about to lapse, payments due, event orders missing before the date,
+functions confirmed with nothing received.
+
+### `banquet_month(month)`
+
+Every hall and every session across a whole month — the grid that
+answers "do you have the 14th of December?" in one look. Halls are sold
+by session (Morning / Afternoon / Evening), not by the hour, so a hall
+can take a morning conference and an evening wedding on the same day.
+month is YYYY-MM; omit for the current one.
+
+### `banquet_close_out(function, damage_amount, damage_note, pax_actual, refund_deposit)`
+
+Hand the hall back after the function. Records the covers actually
+served, deducts any damage from the refundable deposit — a reason is
+required, and you can't deduct more than is held — and returns the rest
+as a real refund line. Closes the function.
+
+### `banquet_register(register, from_date, to_date)`
+
+The banquet office's books for a period. register is one of:
+functions (everything booked), quotations (what was quoted and whether
+it landed), enquiries (what came in), receipts (the cash book, by
+mode), sales (revenue rolled up by hall, event type, session and
+source).
+
+### `banquet_menu_card(function)`
+
+What will actually be served, course by course, with no prices on it
+— the sheet the customer signs off and the kitchen cooks from.
+
+### `banquet_receipt(function, receipt)`
+
+One receipt as a document the customer can keep, with the amount in
+words and the running balance on the function.

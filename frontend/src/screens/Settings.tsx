@@ -438,7 +438,7 @@ export default function Settings() {
 
       <SettingsCard
         title="AI assistant (bring your own key)"
-        description="Optional in-app copilot for staff. Your key, your data - the model can only act through Kamra's governed tools, and every action is audit-logged."
+        description="Kamra Agent, the in-app assistant for staff. Your key, your data - the model can only act through Kamra's governed tools, and every action is audit-logged."
         specs={AI_SPECS}
         doc={ai}
         onSave={async (changes) => {

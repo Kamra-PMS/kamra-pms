@@ -1,4 +1,4 @@
-"""Schema v5 — eZee-parity billing correctness:
+"""Schema v5 — billing correctness:
 
 - Property: GST slab config (auto 5%/18% by nightly rate) + tax-inclusive mode
 - Reservation: day-use flag

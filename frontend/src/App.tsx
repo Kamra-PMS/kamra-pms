@@ -28,6 +28,13 @@ const Settings = lazy(() => import("./screens/Settings"))
 const BookingEngine = lazy(() => import("./screens/BookingEngine"))
 const Developers = lazy(() => import("./screens/Developers"))
 const VenueCalendar = lazy(() => import("./screens/VenueCalendar"))
+const Banquet = lazy(() => import("./screens/Banquet"))
+const BanquetDiary = lazy(() => import("./screens/BanquetDiary"))
+const BanquetMonth = lazy(() => import("./screens/BanquetMonth"))
+const BanquetRegisters = lazy(() => import("./screens/BanquetRegisters"))
+const BanquetCatalogue = lazy(() => import("./screens/BanquetCatalogue"))
+const BanquetFunction = lazy(() => import("./screens/BanquetFunction"))
+const BanquetDocument = lazy(() => import("./screens/BanquetDocument"))
 const Agents = lazy(() => import("./screens/Agents"))
 const Activity = lazy(() => import("./screens/Activity"))
 const AppLauncher = lazy(() => import("./screens/AppLauncher"))
@@ -255,6 +262,14 @@ export default function App() {
             element={<ResourceScreen config={venuesConfig} />}
           />
           <Route path="venue-calendar" element={<VenueCalendar />} />
+          {/* banquets: the function business, enquiry → event order → bill */}
+          <Route path="banquet" element={<Banquet />} />
+          <Route path="banquet-diary" element={<BanquetDiary />} />
+          <Route path="banquet-month" element={<BanquetMonth />} />
+          <Route path="banquet-registers" element={<BanquetRegisters />} />
+          <Route path="banquet-catalogue" element={<BanquetCatalogue />} />
+          <Route path="banquet/:name" element={<BanquetFunction />} />
+          <Route path="banquet/:name/:kind" element={<BanquetDocument />} />
           <Route
             path="groups"
             element={<ResourceScreen config={groupsConfig} />}

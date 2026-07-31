@@ -1157,7 +1157,7 @@ def t33():
 		"room_type": rt,
 	}).insert(ignore_permissions=True)
 
-	# an eZee-flavoured export: renamed headers, DD/MM dates, quoted name
+	# a day-first export: renamed headers, DD/MM dates, quoted name
 	# with a comma, thousands separators, vendor status words
 	csv_text = (
 		"Guest Name,Mobile No,Email,Room Type,Arrival Date,Departure Date,"
@@ -2388,6 +2388,681 @@ def t12():
 	assert 13 <= mins <= 16, mins
 
 
+# ══ banquets ═════════════════════════════════════════════════════════════
+# Everything an agent quoting a wedding relies on: that the plate count
+# follows the guarantee, that a complimentary line is free without
+# disappearing, that a mixed-rate discount still taxes each line correctly,
+# and that a confirmed function actually owns the hall.
+
+BQ = {}
+
+
+def _banquet_setup():
+	"""A hall, a menu and two services - one billed, one thrown in."""
+	if BQ:
+		return BQ
+	BQ["venue"] = frappe.get_doc({
+		"doctype": "Venue", "property": P, "venue_name": "Eval Hall",
+		"venue_type": "Banquet Hall", "capacity": 300, "base_price": 50000,
+		"hourly_rate": 8000, "min_hours": 4, "gst_rate": 18,
+	}).insert(ignore_permissions=True).name
+	BQ["small"] = frappe.get_doc({
+		"doctype": "Venue", "property": P, "venue_name": "Eval Board Room",
+		"venue_type": "Board Room", "capacity": 20, "base_price": 8000,
+	}).insert(ignore_permissions=True).name
+	BQ["menu"] = frappe.get_doc({
+		"doctype": "Banquet Menu", "property": P, "menu_name": "Eval Buffet",
+		"meal_period": "Dinner", "food_type": "Veg", "rate_per_pax": 1200,
+		"min_pax": 100, "gst_rate": 5,
+		"courses": [{"course": "Starters", "dishes": "Paneer tikka"}],
+	}).insert(ignore_permissions=True).name
+	BQ["led"] = frappe.get_doc({
+		"doctype": "Banquet Service Item", "property": P,
+		"item_name": "LED wall", "category": "Audio Visual",
+		"uom": "Per Event", "rate": 40000, "gst_rate": 18,
+		"cost_rate": 25000, "cost_gst_rate": 18,
+		"chargeable": 1, "on_pack_list": 1,
+	}).insert(ignore_permissions=True).name
+	BQ["podium"] = frappe.get_doc({
+		"doctype": "Banquet Service Item", "property": P,
+		"item_name": "Podium", "category": "Furniture & Setup",
+		"uom": "Per Event", "rate": 2000, "gst_rate": 18,
+		"chargeable": 0, "on_pack_list": 1,
+	}).insert(ignore_permissions=True).name
+	BQ["onion"] = frappe.get_doc({
+		"doctype": "Ingredient", "property": P, "ingredient_name": "Eval Onion",
+		"uom": "kg", "cost_per_unit": 40, "gst_rate": 5, "is_active": 1,
+	}).insert(ignore_permissions=True).name
+	BQ["chicken"] = frappe.get_doc({
+		"doctype": "Ingredient", "property": P,
+		"ingredient_name": "Eval Chicken", "uom": "kg", "cost_per_unit": 300,
+		"gst_rate": 5, "is_active": 1,
+	}).insert(ignore_permissions=True).name
+	BQ["dish_veg"] = frappe.get_doc({
+		"doctype": "Banquet Dish", "property": P, "dish_name": "Eval Paneer",
+		"course_type": "Starters", "food_type": "Veg", "kitchen": "Tandoor",
+		"portion_per_pax": 1, "cost_per_portion": 8,
+		"recipe": [{"ingredient": BQ["onion"], "qty": 0.2}],
+	}).insert(ignore_permissions=True).name
+	BQ["dish_nv"] = frappe.get_doc({
+		"doctype": "Banquet Dish", "property": P, "dish_name": "Eval Chicken Tikka",
+		"course_type": "Starters", "food_type": "Non-Veg", "kitchen": "Tandoor",
+		"portion_per_pax": 1, "cost_per_portion": 30,
+		"recipe": [{"ingredient": BQ["chicken"], "qty": 0.1}],
+	}).insert(ignore_permissions=True).name
+	# a menu whose starter course offers a choice of one
+	menu = frappe.get_doc("Banquet Menu", BQ["menu"])
+	menu.courses[0].choice_of = 1
+	course = menu.courses[0].course
+	menu.set("dish_options", [
+		{"course": course, "dish": BQ["dish_veg"], "is_default": 1},
+		{"course": course, "dish": BQ["dish_nv"], "supplement_per_pax": 150},
+	])
+	menu.save(ignore_permissions=True)
+	return BQ
+
+
+
+def _starter(b):
+	"""The first course's name - the eval menu's starters."""
+	return frappe.get_doc("Banquet Menu", b["menu"]).courses[0].course
+
+
+def _function(day_offset=60, **kw):
+	from kamra import banquet as bq
+
+	b = _banquet_setup()
+	args = {
+		"property": P, "venue": b["venue"],
+		"event_date": add_days(nowdate(), day_offset),
+		"customer_name": "Eval Banquet", "attendees": 200,
+		"start_time": "19:00", "end_time": "23:00",
+	}
+	args.update(kw)
+	return bq.create_enquiry(**args)["function"]
+
+
+@check("banquet: per-pax lines bill the guarantee, and honour the menu minimum")
+def t54():
+	from kamra import banquet as bq
+
+	b = _banquet_setup()
+	fn = _function()
+	bq.update_function(fn, {"pax_guaranteed": 180})
+	bq.add_menu(fn, b["menu"])
+	doc = frappe.get_doc("Venue Booking", fn)
+	menu_line = next(r for r in doc.items if r.item_type == "Menu")
+	assert menu_line.qty == 180, menu_line.qty
+	assert menu_line.amount == 180 * 1200, menu_line.amount
+
+	# more people turned up than were guaranteed: bill the higher count
+	bq.update_function(fn, {"pax_actual": 210})
+	doc.reload()
+	assert doc.billable_pax == 210, doc.billable_pax
+
+	# and a tiny function still pays the package's floor
+	small = _function(day_offset=61, attendees=40)
+	bq.update_function(small, {"pax_guaranteed": 40})
+	bq.add_menu(small, b["menu"])
+	line = next(r for r in frappe.get_doc("Venue Booking", small).items
+	            if r.item_type == "Menu")
+	assert line.qty == 100, f"min_pax floor not applied: {line.qty}"
+
+
+@check("banquet: complimentary lines are free but never disappear")
+def t55():
+	from kamra import banquet as bq
+
+	b = _banquet_setup()
+	fn = _function(day_offset=62)
+	bq.update_function(fn, {"pax_guaranteed": 100})
+	bq.add_service(fn, b["led"])       # chargeable
+	bq.add_service(fn, b["podium"])    # complimentary by catalogue default
+	bq.add_service(fn, b["led"], chargeable=0)   # given away for this one
+	doc = frappe.get_doc("Venue Booking", fn)
+	free = [r for r in doc.items if not r.chargeable]
+	assert len(free) == 2, [r.item_name for r in free]
+	assert all(r.amount == 0 and r.total == 0 for r in free), "comp line billed"
+	# ...but the hotel can still see what it gave away
+	assert doc.non_chargeable_value == 2000 + 40000, doc.non_chargeable_value
+	# and it still has to be carried to the hall
+	pack = bq.banquet_document(fn, "pack_list")["pack"]
+	names = [i["item_name"] for g in pack["groups"] for i in g["items"]]
+	assert names.count("Podium") == 1 and names.count("LED wall") == 2, names
+
+
+@check("banquet: a discount spreads pro-rata and each line keeps its own GST")
+def t56():
+	from kamra import banquet as bq
+
+	b = _banquet_setup()
+	fn = _function(day_offset=63)
+	bq.update_function(fn, {"pax_guaranteed": 100})
+	# hall 50,000 @18% + food 120,000 @5% + LED 40,000 @18% = 210,000
+	bq.add_menu(fn, b["menu"])
+	bq.add_service(fn, b["led"])
+	doc = frappe.get_doc("Venue Booking", fn)
+	assert doc.subtotal == 210000, doc.subtotal
+	assert round(doc.tax_amount, 2) == round(
+		50000 * .18 + 120000 * .05 + 40000 * .18, 2), doc.tax_amount
+
+	bq.negotiate(fn, discount_amount=21000)   # 10% off the whole quote
+	doc.reload()
+	assert doc.taxable_amount == 189000, doc.taxable_amount
+	food = next(r for r in doc.items if r.item_type == "Menu")
+	assert food.gst_rate == 5, food.gst_rate
+	assert round(food.net_amount, 2) == 108000, food.net_amount
+	assert round(doc.tax_amount, 2) == round(
+		45000 * .18 + 108000 * .05 + 36000 * .18, 2), doc.tax_amount
+	assert round(doc.grand_total, 2) == round(
+		189000 + doc.tax_amount, 2), doc.grand_total
+	# a discount bigger than the quote is not a negotiation, it's a mistake
+	try:
+		bq.negotiate(fn, discount_amount=500000)
+		raise AssertionError("discount exceeded the quote")
+	except frappe.ValidationError:
+		pass
+
+
+@check("banquet: hourly halls bill real hours, including past midnight")
+def t57():
+	fn = _function(day_offset=64, start_time="20:00", end_time="01:00")
+	doc = frappe.get_doc("Venue Booking", fn)
+	assert doc.billable_hours == 5, doc.billable_hours
+	row = doc.items[0]
+	row.uom, row.qty, row.rate = "Hour", 0, 8000
+	doc.save(ignore_permissions=True)
+	assert doc.items[0].qty == 5, doc.items[0].qty
+	assert doc.items[0].amount == 40000, doc.items[0].amount
+
+
+@check("banquet: a confirmed function owns the hall; tentative holds don't")
+def t58():
+	from kamra import banquet as bq
+
+	day = add_days(nowdate(), 70)
+	first = _function(event_date=day, customer_name="Eval Wedding A")
+	bq.set_status(first, "Confirmed")
+
+	# same hall, same hours → refused
+	clash = _function(event_date=day, customer_name="Eval Wedding B")
+	try:
+		bq.set_status(clash, "Confirmed")
+		raise AssertionError("double-booked the hall")
+	except frappe.ValidationError:
+		pass
+
+	# a tentative hold is a soft hold - it may be sold over
+	bq.set_status(clash, "Tentative")
+	# ...and a hall can take two functions in a day where the hours don't
+	# actually overlap: morning and evening are two bookings, not a conflict
+	morning = _function(event_date=day, customer_name="Eval Conference",
+	                    start_time="09:00", end_time="13:00")
+	bq.set_status(morning, "Confirmed")
+	assert frappe.db.get_value("Venue Booking", morning, "status") == "Confirmed"
+
+	avail = bq.venue_availability(P, day, start_time="19:00", end_time="23:00")
+	hall = next(v for v in avail["venues"] if v["name"] == _banquet_setup()["venue"])
+	assert not hall["available"], "a confirmed evening function left the hall free"
+	assert any(c["kind"] == "tentative" for c in hall["conflicts"]), hall
+
+
+@check("banquet: the pipeline only moves through legal states, with a reason")
+def t59():
+	from kamra import banquet as bq
+
+	fn = _function(day_offset=80)
+	try:
+		bq.set_status(fn, "Completed")   # enquiry → completed skips the work
+		raise AssertionError("illegal transition allowed")
+	except frappe.ValidationError:
+		pass
+	try:
+		bq.set_status(fn, "Lost")        # no reason
+		raise AssertionError("lost a function without saying why")
+	except frappe.ValidationError:
+		pass
+	out = bq.set_status(fn, "Lost", reason="Went to a competitor on price")
+	assert out["status"] == "Lost", out
+	assert frappe.db.get_value("Venue Booking", fn, "lost_reason")
+
+
+@check("banquet: holding a green room takes the room out of sale")
+def t60():
+	from kamra import banquet as bq
+
+	fn = _function(day_offset=90)
+	bq.assign_green_room(fn, room=ROOM, complimentary=1)
+	doc = frappe.get_doc("Venue Booking", fn)
+	assert doc.green_room_block, "no room block created"
+	block = frappe.get_doc("Room Block", doc.green_room_block)
+	assert block.block_status == "Active" and block.room == ROOM, block.as_dict()
+	# a complimentary green room is on the sheet but not on the bill
+	line = next(r for r in doc.items if r.item_type == "Accommodation")
+	assert not line.chargeable and line.amount == 0, line.as_dict()
+	# losing the function gives the room back
+	bq.set_status(fn, "Lost", reason="Date moved")
+	assert frappe.db.get_value(
+		"Room Block", doc.green_room_block, "block_status") == "Released"
+
+
+@check("banquet: every price move is recorded, and quotes are versioned")
+def t61():
+	from kamra import banquet as bq
+
+	b = _banquet_setup()
+	fn = _function(day_offset=95)
+	bq.update_function(fn, {"pax_guaranteed": 100})
+	bq.add_menu(fn, b["menu"])
+	first = bq.generate_quote(fn)
+	assert first["header"]["version"] == 1, first["header"]
+
+	moved = bq.negotiate(fn, venue_rental=40000, note="Matched the competitor")
+	assert moved["was"] > moved["now"], moved
+	assert moved["moved_by"] < 0, moved
+	second = bq.generate_quote(fn)
+	assert second["header"]["version"] == 2, second["header"]
+
+	doc = frappe.get_doc("Venue Booking", fn)
+	assert len(doc.revisions) == 3, [r.change_note for r in doc.revisions]
+	assert doc.venue_rental == 40000, doc.venue_rental
+	assert doc.venue_rental_list == 50000, doc.venue_rental_list
+
+
+@check("banquet: terms follow the quote, receipts settle them")
+def t62():
+	from kamra import banquet as bq
+
+	b = _banquet_setup()
+	fn = _function(day_offset=100)
+	bq.update_function(fn, {"pax_guaranteed": 100})
+	bq.add_menu(fn, b["menu"])
+	bq.default_payment_terms(fn, advance_percent=25, interim_percent=50)
+	doc = frappe.get_doc("Venue Booking", fn)
+	total = doc.grand_total
+	assert len(doc.payment_terms) == 3, len(doc.payment_terms)
+	assert round(doc.payment_terms[0].amount, 2) == round(total * .25, 2)
+
+	advance = doc.payment_terms[0]
+	bq.record_receipt(fn, advance.amount, kind="Advance", mode="UPI",
+	                  settle_term=advance.name)
+	doc.reload()
+	assert doc.payment_terms[0].status == "Received"
+	assert round(doc.advance_received, 2) == round(total * .25, 2)
+	assert round(doc.balance_due, 2) == round(total * .75, 2)
+
+	# a refund gives money back on the same ledger
+	bq.record_receipt(fn, 1000, kind="Refund", mode="UPI")
+	doc.reload()
+	assert round(doc.advance_received, 2) == round(total * .25 - 1000, 2)
+
+
+@check("banquet: the event order needs a confirmed function and prints the menu")
+def t63():
+	from kamra import banquet as bq
+
+	b = _banquet_setup()
+	fn = _function(day_offset=110, customer_name="Eval BEO")
+	bq.update_function(fn, {"pax_guaranteed": 150})
+	bq.add_menu(fn, b["menu"])
+	try:
+		bq.generate_beo(fn)
+		raise AssertionError("issued an event order for an unsold function")
+	except frappe.ValidationError:
+		pass
+	bq.set_status(fn, "Confirmed")
+	beo = bq.generate_beo(fn)
+	assert beo["header"]["beo_number"], beo["header"]
+	assert beo["menus"] and beo["menus"][0]["courses"][0]["dishes"], beo["menus"]
+	assert beo["event"]["billable_pax"] == 150, beo["event"]
+
+
+@check("banquet: month-wise tracking counts the pipeline by event date")
+def t64():
+	from kamra import banquet as bq
+
+	out = bq.banquet_pipeline(P, months=12)
+	assert out["months"], "no months in the pipeline"
+	assert out["totals"]["functions"] > 0, out["totals"]
+	statuses = {r["key"] for r in out["by_status"]}
+	assert {"Confirmed", "Lost"} <= statuses, statuses
+	assert out["totals"]["conversion_rate"] is not None, out["totals"]
+	assert any(r["reason"] for r in out["lost_reasons"]), out["lost_reasons"]
+
+
+@check("banquet: a session sets the clock, custom hours must state one")
+def t65():
+	from kamra import banquet as bq
+
+	fn = _function(day_offset=120)
+	bq.update_function(fn, {"session": "Morning"})
+	doc = frappe.get_doc("Venue Booking", fn)
+	assert str(doc.start_time) == "7:00:00", doc.start_time
+	assert doc.billable_hours == 5, doc.billable_hours
+
+	bq.update_function(fn, {"session": "Full Day"})
+	doc.reload()
+	assert doc.billable_hours > 16, doc.billable_hours
+
+	# custom hours without hours is not a booking, it's a blank
+	doc.session = "Custom Hours"
+	doc.start_time = doc.end_time = None
+	try:
+		doc.save(ignore_permissions=True)
+		raise AssertionError("custom hours accepted with no times")
+	except frappe.ValidationError:
+		pass
+
+
+@check("banquet: service charge rides the food, not the hall")
+def t66():
+	from kamra import banquet as bq
+
+	b = _banquet_setup()
+	fn = _function(day_offset=125)
+	bq.update_function(fn, {"pax_guaranteed": 100})
+	bq.add_menu(fn, b["menu"])          # 120,000 food @5%
+	bq.add_service(fn, b["led"])        # 40,000 AV @18%
+	# hall 50,000 @18% came with the enquiry
+	bq.update_function(fn, {"service_charge_percent": 10})
+	doc = frappe.get_doc("Venue Booking", fn)
+	# 10% of the food only - not the hall, not the LED wall
+	assert doc.service_charge == 12000, doc.service_charge
+	assert doc.taxable_amount == 210000 + 12000, doc.taxable_amount
+	# and it carries the food's own rate
+	assert round(doc.tax_amount, 2) == round(
+		50000 * .18 + 120000 * .05 + 40000 * .18 + 12000 * .05, 2), doc.tax_amount
+
+
+@check("banquet: a deposit is held money, not payment")
+def t67():
+	from kamra import banquet as bq
+
+	b = _banquet_setup()
+	fn = _function(day_offset=130)
+	bq.update_function(fn, {"pax_guaranteed": 100})
+	bq.add_menu(fn, b["menu"])
+	bq.set_status(fn, "Confirmed")
+	doc = frappe.get_doc("Venue Booking", fn)
+	total = doc.grand_total
+
+	bq.record_receipt(fn, 25000, kind="Security Deposit", mode="Cash")
+	doc.reload()
+	# the deposit must NOT make an unpaid function look part-settled
+	assert doc.advance_received == 0, doc.advance_received
+	assert doc.deposit_held == 25000, doc.deposit_held
+	assert doc.balance_due == total, doc.balance_due
+
+	bq.record_receipt(fn, 50000, kind="Advance", mode="UPI")
+	doc.reload()
+	assert doc.advance_received == 50000, doc.advance_received
+	assert doc.deposit_held == 25000, doc.deposit_held
+
+
+@check("banquet: close-out deducts damage and returns the rest")
+def t68():
+	from kamra import banquet as bq
+
+	b = _banquet_setup()
+	fn = _function(day_offset=135)
+	bq.update_function(fn, {"pax_guaranteed": 100})
+	bq.add_menu(fn, b["menu"])
+	bq.set_status(fn, "Confirmed")
+	bq.record_receipt(fn, 20000, kind="Security Deposit", mode="Cash")
+
+	# a deduction nobody can see the reason for is a dispute waiting
+	try:
+		bq.close_out(fn, damage_amount=3000)
+		raise AssertionError("deducted damages with no reason")
+	except frappe.ValidationError:
+		pass
+	# and you can't keep more than you hold
+	try:
+		bq.close_out(fn, damage_amount=50000, damage_note="everything")
+		raise AssertionError("over-deducted the deposit")
+	except frappe.ValidationError:
+		pass
+
+	out = bq.close_out(fn, damage_amount=3000, damage_note="Two chairs",
+	                   pax_actual=118)
+	assert out["refunded"] == 17000, out
+	doc = frappe.get_doc("Venue Booking", fn)
+	assert doc.status == "Completed", doc.status
+	assert doc.deposit_held == 0, doc.deposit_held
+	assert doc.pax_actual == 118, doc.pax_actual
+	# the damage money is the hotel's now - it belongs on the bill
+	recovery = next(r for r in doc.items if r.notes == "damage-recovery")
+	assert recovery.rate == 3000 and recovery.chargeable, recovery.as_dict()
+	# closing out twice would refund twice
+	try:
+		bq.close_out(fn)
+		raise AssertionError("closed out twice")
+	except frappe.ValidationError:
+		pass
+
+
+@check("banquet: the month grid puts a function in its own session")
+def t69():
+	from frappe.utils import get_first_day, getdate
+
+	from kamra import banquet as bq
+
+	day = add_days(nowdate(), 140)
+	fn = _function(event_date=day, customer_name="Eval Month")
+	bq.update_function(fn, {"session": "Morning"})
+	bq.set_status(fn, "Confirmed")
+
+	grid = bq.month_availability(P, str(get_first_day(getdate(day)))[:7])
+	hall = _banquet_setup()["venue"]
+	morning = next(r for r in grid["rows"]
+	               if r["venue"] == hall and r["session"] == "Morning")
+	evening = next(r for r in grid["rows"]
+	               if r["venue"] == hall and r["session"] == "Evening")
+	assert str(day) in morning["by_date"], morning["by_date"].keys()
+	assert str(day) not in evening["by_date"], "a morning function blocked the evening"
+	assert grid["utilisation"] >= 0, grid["utilisation"]
+
+
+@check("banquet: the registers add up and the cash book reads by payment")
+def t70():
+	from kamra import banquet as bq
+
+	reg = bq.banquet_register(P, "functions", add_days(nowdate(), -1),
+	                          add_days(nowdate(), 200))
+	assert reg["totals"]["count"] > 0, reg["totals"]
+	assert reg["totals"]["value"] == sum(
+		float(r["grand_total"] or 0) for r in reg["rows"]), reg["totals"]
+
+	cash = bq.banquet_register(P, "receipts", add_days(nowdate(), -1),
+	                           add_days(nowdate(), 200))
+	assert cash["rows"], "no receipts in the cash book"
+	assert round(cash["totals"]["value"], 2) == round(
+		sum(x["amount"] for x in cash["by_mode"]), 2), cash["by_mode"]
+
+	sales = bq.banquet_register(P, "sales", add_days(nowdate(), -1),
+	                            add_days(nowdate(), 200))
+	assert sales["by_venue"] and sales["by_session"], sales.keys()
+	# lost business is not sales
+	assert all(r["status"] not in ("Cancelled", "Lost") for r in sales["rows"])
+
+
+@check("banquet: a dish costs what its recipe costs")
+def t71():
+	from kamra import banquet as bq
+
+	b = _banquet_setup()
+	out = bq.save_dish(P, "Eval Dal", course_type="Main Course",
+	                   recipe=[{"ingredient": b["onion"], "qty": 0.5}])
+	assert out["cost_per_portion"] == 20, out          # 0.5kg x ₹40
+
+	# the price of onions moved; the quote must move with it
+	frappe.db.set_value("Ingredient", b["onion"], "cost_per_unit", 60)
+	re = bq.recost_dishes(P)
+	assert re["recosted"] >= 1, re
+	assert frappe.db.get_value(
+		"Banquet Dish", out["name"], "cost_per_portion") == 30
+	frappe.db.set_value("Ingredient", b["onion"], "cost_per_unit", 40)
+	bq.recost_dishes(P)
+
+
+@check("banquet: choosing dishes costs the menu line and prices the upgrade")
+def t72():
+	from kamra import banquet as bq
+
+	b = _banquet_setup()
+	fn = _function(day_offset=150)
+	bq.update_function(fn, {"pax_guaranteed": 100})
+	bq.add_menu(fn, b["menu"])
+
+	choices = bq.menu_choices(fn, b["menu"])
+	starters = choices["courses"][0]
+	assert starters["choice_of"] == 1, starters
+	assert len(starters["options"]) == 2, starters
+
+	# the customer upgrades to the chicken, which carries a supplement
+	course = choices["courses"][0]["course"]
+	out = bq.compose_menu(fn, b["menu"], [
+		{"course": course, "dish": b["dish_nv"],
+		 "supplement_per_pax": 150, "note": "less spicy"}])
+	assert out["cost_per_pax"] == 30, out
+	assert out["supplement_per_pax"] == 150, out
+
+	doc = frappe.get_doc("Venue Booking", fn)
+	# the upgrade is its own visible line, not buried in the package rate
+	upgrade = next(r for r in doc.items if (r.notes or "").startswith("supplement:"))
+	assert upgrade.rate == 150 and upgrade.qty == 100, upgrade.as_dict()
+	# and the menu line now knows what it costs to make
+	menu_line = next(r for r in doc.items if r.banquet_menu == b["menu"]
+	                 and not (r.notes or "").startswith("supplement:"))
+	assert menu_line.cost_rate == 30, menu_line.cost_rate
+	assert menu_line.cost_amount == 3000, menu_line.cost_amount
+
+	# the card prints what they chose, not the whole catalogue
+	card = bq.menu_card(fn)
+	served = card["menus"][0]
+	assert served["chosen"], served
+	assert "Eval Chicken Tikka" in served["courses"][0]["dishes"], served
+
+
+@check("banquet: input credit follows the OUTPUT rate, not the invoice")
+def t73():
+	from kamra import banquet as bq
+
+	b = _banquet_setup()
+	fn = _function(day_offset=155)
+	bq.update_function(fn, {"pax_guaranteed": 100})
+	bq.add_menu(fn, b["menu"])
+	bq.compose_menu(fn, b["menu"], [{"course": _starter(b), "dish": b["dish_veg"]}])
+	bq.add_service(fn, b["led"])
+	doc = frappe.get_doc("Venue Booking", fn)
+
+	# food costs 8/pax x 100, the LED wall 25,000
+	assert doc.food_cost == 800, doc.food_cost
+	assert doc.service_cost == 25000, doc.service_cost
+	assert doc.total_cost == 25800, doc.total_cost
+
+	# billed at the 5% food rate → that supply cannot claim the credit back
+	assert not doc.itc_eligible, "claimed ITC on a 5% supply"
+	assert doc.net_cost == doc.total_cost, doc.net_cost
+	assert round(doc.gross_margin, 2) == round(
+		doc.taxable_amount - doc.total_cost, 2), doc.gross_margin
+
+	# bill the same food at 18% and the credit becomes real
+	for r in doc.items:
+		if r.item_type == "Menu":
+			r.gst_rate = 18
+	doc.save(ignore_permissions=True)
+	assert doc.itc_eligible, "18% supply should claim the credit"
+	assert doc.net_cost < doc.total_cost, (doc.net_cost, doc.total_cost)
+	assert round(doc.input_tax_credit, 2) == round(
+		800 * .05 + 25000 * .18, 2), doc.input_tax_credit
+
+
+@check("banquet: the indent explodes the picks into ingredients")
+def t74():
+	from kamra import banquet as bq
+
+	b = _banquet_setup()
+	fn = _function(day_offset=160)
+	bq.update_function(fn, {"pax_guaranteed": 200})
+	bq.add_menu(fn, b["menu"])
+
+	# nothing chosen: the kitchen can't be told what to pull
+	try:
+		bq.kitchen_indent(fn)
+		raise AssertionError("indented with no menu chosen")
+	except frappe.ValidationError:
+		pass
+
+	bq.compose_menu(fn, b["menu"], [{"course": _starter(b), "dish": b["dish_veg"]}])
+	ind = bq.kitchen_indent(fn)
+	onion = next(r for r in ind["ingredients"] if r["ingredient"] == b["onion"])
+	assert onion["required"] == 40, onion      # 0.2kg x 1 portion x 200 pax
+	assert onion["cost"] == 1600, onion        # x ₹40
+	assert ind["pax"] == 200, ind
+	# and the chefs get it split by section
+	tandoor = next(k for k in ind["by_kitchen"] if k["kitchen"] == "Tandoor")
+	assert tandoor["dishes"][0]["portions"] == 200, tandoor
+
+
+@check("banquet: the night bills what was served, not what was quoted")
+def t75():
+	from kamra import banquet as bq
+
+	b = _banquet_setup()
+	fn = _function(day_offset=165)
+	bq.update_function(fn, {"pax_guaranteed": 100})
+	bq.add_menu(fn, b["menu"])
+	bq.compose_menu(fn, b["menu"], [{"course": _starter(b), "dish": b["dish_veg"]}])
+	doc = frappe.get_doc("Venue Booking", fn)
+	quoted = doc.grand_total
+	menu_line = next(r for r in doc.items if r.item_type == "Menu")
+
+	# 118 turned up
+	bq.record_consumption(fn, {menu_line.name: 118}, pax_actual=118)
+	doc.reload()
+	assert doc.grand_total > quoted, (quoted, doc.grand_total)
+	line = next(r for r in doc.items if r.name == menu_line.name)
+	assert line.actual_qty == 118 and line.amount == 118 * 1200, line.as_dict()
+	# the cost follows the plates we actually cooked
+	assert line.cost_amount == 118 * 8, line.cost_amount
+
+	# and the bar ran on after the quote closed
+	bq.add_supplementary(fn, "Extra bar round", qty=2, rate=6000,
+	                     item_type="Alcohol", cost_rate=3500, is_alcohol=1)
+	econ = bq.function_economics(fn)
+	assert econ["revenue"]["supplementary"] > 0, econ["revenue"]
+	assert any(x["is_supplementary"] for x in econ["lines"]), econ["lines"]
+	assert econ["margin"]["percent"] == frappe.db.get_value(
+		"Venue Booking", fn, "margin_percent")
+
+
+@check("banquet: the customer is a person with a history")
+def t76():
+	from kamra import banquet as bq
+
+	fn = _function(day_offset=170, customer_name="Eval Repeat Client",
+	               customer_phone="+91 90000 12121")
+	bq.link_customer(fn)
+	guest = frappe.db.get_value("Venue Booking", fn, "customer")
+	assert guest, "no guest linked"
+
+	# a second enquiry from the same number is the same client
+	again = _function(day_offset=171, customer_name="Eval Repeat Client",
+	                  customer_phone="+91 90000 12121")
+	bq.link_customer(again)
+	assert frappe.db.get_value("Venue Booking", again, "customer") == guest
+
+	bq.set_status(fn, "Confirmed")
+	profile = bq.customer_profile(P, guest=guest)
+	assert profile["found"], profile
+	assert profile["stats"]["functions"] >= 2, profile["stats"]
+	assert profile["stats"]["won"] >= 1, profile["stats"]
+	assert profile["stats"]["lifetime_value"] > 0, profile["stats"]
+	# and findable by the number the phone rang from
+	assert bq.customer_profile(P, phone="+91 90000 12121")["found"]
+
+
 def execute():
 	global RT, ROOM
 	# frappe.locale.get_locale_value crashes (UnboundLocalError) when no
@@ -2402,7 +3077,10 @@ def execute():
 		for fn in (t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13,
 		           t14, t15, t16, t17, t18, t19, t20, t21, t22, t23, t24,
 		           t25, t26, t27, t28, t29, t30, t31, t32, t33, t34, t35,
-		           t36, t37, t38, t39, t40, t41, t42, t43, t44, t45, t46, t47, t48, t49, t50, t51, t53):
+		           t36, t37, t38, t39, t40, t41, t42, t43, t44, t45, t46, t47, t48, t49, t50, t51, t53,
+		           t54, t55, t56, t57, t58, t59, t60, t61, t62, t63, t64,
+		           t65, t66, t67, t68, t69, t70,
+		           t71, t72, t73, t74, t75, t76):
 			fn()
 	finally:
 		frappe.db.commit = real_commit

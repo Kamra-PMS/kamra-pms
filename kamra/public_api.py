@@ -133,7 +133,7 @@ def search_stay(property: str, check_in_date: str, check_out_date: str,
                 adults: int = 2, children: int = 0):
 	"""Availability + real quoted price per room type for the stay."""
 	# available_rooms is staff-only (@require_roles) since it's also an
-	# MCP/copilot tool; guests need the same availability math without the
+	# MCP / Kamra Agent tool; guests need the same availability math without
 	# role gate, so this calls the same underlying helpers directly.
 	from kamra.api import _available_rooms_raw, _block_hold
 	from kamra.pricing import quote

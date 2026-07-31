@@ -100,7 +100,15 @@ jobs:
           cd frappe-bench
           printf 'from kamra.scripts.eval_harness import execute\nexecute()\nexit\n' \
             | bench --site test.localhost console | tee eval.out
-          grep -q "52/52 passed" eval.out
+          grep -q "75/75 passed" eval.out
+
+      - name: Run the banquet unit tests
+        run: |
+          cd frappe-bench
+          bench --site test.localhost set-config allow_tests true
+          bench --site test.localhost run-tests --module kamra.tests.test_banquet \
+            2>&1 | tee banquet.out
+          grep -qE "^OK$" banquet.out
 
       - name: Run front-desk persona journey
         run: |

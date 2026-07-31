@@ -40,9 +40,11 @@ mcp = FastMCP(
 )
 
 
-def api(method: str, **params):
+def call(dotted: str, **params):
+    """POST to any whitelisted Kamra endpoint, e.g. "api.get_quote" or
+    "banquet.create_enquiry"."""
     res = requests.post(
-        f"{KAMRA_URL}/api/method/kamra.api.{method}",
+        f"{KAMRA_URL}/api/method/kamra.{dotted}",
         json=params,
         headers={"Authorization": f"token {API_KEY}:{API_SECRET}"},
         timeout=30,
@@ -58,6 +60,16 @@ def api(method: str, **params):
             pass
         res.raise_for_status()
     return res.json()["message"]
+
+
+def api(method: str, **params):
+    """The front-desk surface - kamra.api.*"""
+    return call(f"api.{method}", **params)
+
+
+def banquet(method: str, **params):
+    """The function business - kamra.banquet.*"""
+    return call(f"banquet.{method}", **params)
 
 
 @mcp.tool()
@@ -365,3 +377,208 @@ def pickup_group_room(group_booking: str, room_type: str, guest_name: str,
     the group's dates against the held inventory."""
     return api("pickup_group_room", group_booking=group_booking,
                room_type=room_type, guest_name=guest_name, phone=phone)
+
+
+# ── banquets: the function business ──────────────────────────────────────
+# Enquiry to event order. The wedge here is speed on the phone: by the time
+# the caller has finished describing the wedding, the hall is checked, the
+# sheet exists and the menu is priced.
+
+
+@mcp.tool()
+def banquet_availability(event_date: str, end_date: str = None,
+                         start_time: str = None, end_time: str = None,
+                         pax: int = 0) -> dict:
+    """Which halls are free for a date, hours and pax. A confirmed function
+    takes the hall; a tentative hold is shown as a soft hold you can still
+    sell over. Two functions can share a hall morning and evening — only a
+    real overlap in hours counts as taken. Run this before every enquiry."""
+    return banquet("venue_availability", property=PROPERTY,
+                   event_date=event_date, end_date=end_date,
+                   start_time=start_time, end_time=end_time, pax=pax)
+
+
+@mcp.tool()
+def banquet_catalogue() -> dict:
+    """What the property sells at a function: menu packages priced per plate
+    (with their courses), and the service list — LED wall, projector, DJ,
+    podium, stage, decor, laptop, bar. Read this before quoting anything;
+    never invent a price."""
+    return banquet("banquet_catalogue", property=PROPERTY)
+
+
+@mcp.tool()
+def banquet_enquiry(venue: str, event_date: str, customer_name: str,
+                    event_type: str = "Wedding", attendees: int = 0,
+                    customer_phone: str = None, customer_email: str = None,
+                    company: str = None, end_date: str = None,
+                    start_time: str = None, end_time: str = None,
+                    source: str = "Phone", requirements: str = None) -> dict:
+    """Open a function sheet from an enquiry. The hall's rack rental goes on
+    as the first line and a follow-up is diarised, so the enquiry can't go
+    quiet. Check banquet_availability first."""
+    return banquet("create_enquiry", property=PROPERTY, venue=venue,
+                   event_date=event_date, customer_name=customer_name,
+                   event_type=event_type, attendees=attendees,
+                   customer_phone=customer_phone, customer_email=customer_email,
+                   company=company, end_date=end_date, start_time=start_time,
+                   end_time=end_time, source=source, requirements=requirements)
+
+
+@mcp.tool()
+def banquet_sheet(function: str) -> dict:
+    """One function in full: dates, pax (expected / guaranteed / actual),
+    every line item with its chargeable flag, the negotiation history,
+    payment terms, receipts, and what it still needs from somebody."""
+    return banquet("function_sheet", function=function)
+
+
+@mcp.tool()
+def banquet_add_menu(function: str, menu: str, qty: float = 0,
+                     rate: float = None, chargeable: int = 1) -> dict:
+    """Put a menu package on a function. Left alone the quantity follows the
+    pax rule (guaranteed, or actual if more turned up) and the price is the
+    package's own plate price. chargeable=0 gives it away — it still prints
+    on the event order, it just leaves the quote."""
+    return banquet("add_menu", function=function, menu=menu, qty=qty or None,
+                   rate=rate, chargeable=chargeable)
+
+
+@mcp.tool()
+def banquet_add_service(function: str, service_item: str, qty: float = 0,
+                        rate: float = None, chargeable: int = None) -> dict:
+    """Put a service on a function — projector, LED wall, DJ, podium, stage,
+    decor, laptop, bar. The catalogue decides chargeable by default; pass
+    chargeable=0 to throw it in for this function."""
+    return banquet("add_service", function=function, service_item=service_item,
+                   qty=qty or None, rate=rate, chargeable=chargeable)
+
+
+@mcp.tool()
+def banquet_negotiate(function: str, discount_amount: float = None,
+                      venue_rental: float = None, note: str = None) -> dict:
+    """Move the price: a headline discount on the whole quote, or the hall
+    rate on its own. Every move is snapshotted with what the quote was worth
+    before and after, so the fourth revision stays explainable. Confirm the
+    new total with the user before calling."""
+    return banquet("negotiate", function=function,
+                   discount_amount=discount_amount, venue_rental=venue_rental,
+                   note=note)
+
+
+@mcp.tool()
+def banquet_payment_terms(function: str, terms: list = None,
+                          note: str = None) -> dict:
+    """Set the payment schedule: [{milestone, due_date, percent | amount}].
+    A term stated as a percentage follows the quote as it moves; one stated
+    as an amount is a number both sides agreed and stays put."""
+    return banquet("set_payment_terms", function=function, terms=terms or [],
+                   note=note)
+
+
+@mcp.tool()
+def banquet_receipt(function: str, amount: float, mode: str = "Bank Transfer",
+                    kind: str = "Advance", reference: str = None) -> dict:
+    """Record money in against a function (Advance / Payment / Security
+    Deposit / Refund)."""
+    return banquet("record_receipt", function=function, amount=amount,
+                   mode=mode, kind=kind, reference=reference)
+
+
+@mcp.tool()
+def banquet_status(function: str, status: str, reason: str = None) -> dict:
+    """Move a function along: Enquiry → Tentative → Confirmed → Completed, or
+    out as Cancelled / Lost. Cancelling or losing needs a reason. Confirming
+    takes the hall and will refuse a clash with another confirmed function."""
+    return banquet("set_status", function=function, status=status,
+                   reason=reason)
+
+
+@mcp.tool()
+def banquet_quote(function: str, valid_days: int = 15) -> dict:
+    """Stamp a quotation — bumps the version, dates it, and returns the whole
+    document so it can be read back or emailed."""
+    return banquet("generate_quote", function=function, valid_days=valid_days)
+
+
+@mcp.tool()
+def banquet_event_order(function: str) -> dict:
+    """Issue the banquet event order — the running sheet the banquet, kitchen
+    and AV teams work the day from, with the menus expanded into courses.
+    Only a confirmed function gets one."""
+    return banquet("generate_beo", function=function)
+
+
+@mcp.tool()
+def banquet_document(function: str, kind: str = "quote") -> dict:
+    """Fetch a function's paper without re-issuing it. kind: quote, contract,
+    beo, pack_list, invoice. The pack list is what physically has to reach
+    the hall, complimentary items included."""
+    return banquet("banquet_document", function=function, kind=kind)
+
+
+@mcp.tool()
+def banquet_pipeline(from_date: str = None, to_date: str = None,
+                     months: int = 6) -> dict:
+    """The banquet sales picture, month by month and by status: what's
+    confirmed, what's still in play, what's outstanding, the conversion
+    rate, and why business went away. Dated on the event, not the enquiry."""
+    return banquet("banquet_pipeline", property=PROPERTY, from_date=from_date,
+                   to_date=to_date, months=months)
+
+
+@mcp.tool()
+def banquet_reminders(days: int = 30) -> dict:
+    """Everything that needs chasing: follow-ups gone quiet, tentative holds
+    about to lapse, payments due, event orders missing before the date,
+    functions confirmed with nothing received."""
+    return banquet("banquet_reminders", property=PROPERTY, days=days)
+
+
+@mcp.tool()
+def banquet_month(month: str = None) -> dict:
+    """Every hall and every session across a whole month — the grid that
+    answers "do you have the 14th of December?" in one look. Halls are sold
+    by session (Morning / Afternoon / Evening), not by the hour, so a hall
+    can take a morning conference and an evening wedding on the same day.
+    month is YYYY-MM; omit for the current one."""
+    return banquet("month_availability", property=PROPERTY, month=month)
+
+
+@mcp.tool()
+def banquet_close_out(function: str, damage_amount: float = 0,
+                      damage_note: str = None, pax_actual: int = None,
+                      refund_deposit: int = 1) -> dict:
+    """Hand the hall back after the function. Records the covers actually
+    served, deducts any damage from the refundable deposit — a reason is
+    required, and you can't deduct more than is held — and returns the rest
+    as a real refund line. Closes the function."""
+    return banquet("close_out", function=function,
+                   damage_amount=damage_amount, damage_note=damage_note,
+                   pax_actual=pax_actual, refund_deposit=refund_deposit)
+
+
+@mcp.tool()
+def banquet_register(register: str = "functions", from_date: str = None,
+                     to_date: str = None) -> dict:
+    """The banquet office's books for a period. register is one of:
+    functions (everything booked), quotations (what was quoted and whether
+    it landed), enquiries (what came in), receipts (the cash book, by
+    mode), sales (revenue rolled up by hall, event type, session and
+    source)."""
+    return banquet("banquet_register", property=PROPERTY, register=register,
+                   from_date=from_date, to_date=to_date)
+
+
+@mcp.tool()
+def banquet_menu_card(function: str) -> dict:
+    """What will actually be served, course by course, with no prices on it
+    — the sheet the customer signs off and the kitchen cooks from."""
+    return banquet("menu_card", function=function)
+
+
+@mcp.tool()
+def banquet_receipt(function: str, receipt: str) -> dict:
+    """One receipt as a document the customer can keep, with the amount in
+    words and the running balance on the function."""
+    return banquet("receipt_document", function=function, receipt=receipt)

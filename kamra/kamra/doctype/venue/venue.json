@@ -10,9 +10,17 @@
  "field_order": [
   "property",
   "venue_name",
+  "venue_code",
+  "venue_type",
   "capacity",
+  "min_capacity",
+  "area_sqft",
   "column_break_a",
   "base_price",
+  "hourly_rate",
+  "min_hours",
+  "gst_rate",
+  "setup_styles",
   "amenities",
   "disabled"
  ],
@@ -32,10 +40,34 @@
    "reqd": 1
   },
   {
+   "fieldname": "venue_code",
+   "fieldtype": "Data",
+   "label": "Venue Code",
+   "description": "Short code used on the BEO."
+  },
+  {
+   "fieldname": "venue_type",
+   "fieldtype": "Select",
+   "label": "Venue Type",
+   "default": "Banquet Hall",
+   "in_list_view": 1,
+   "options": "Banquet Hall\nLawn\nPoolside\nRooftop\nBoard Room\nConference Hall\nRestaurant\nOther"
+  },
+  {
    "fieldname": "capacity",
    "fieldtype": "Int",
    "in_list_view": 1,
    "label": "Capacity"
+  },
+  {
+   "fieldname": "min_capacity",
+   "fieldtype": "Int",
+   "label": "Minimum Pax"
+  },
+  {
+   "fieldname": "area_sqft",
+   "fieldtype": "Int",
+   "label": "Area (sq ft)"
   },
   {
    "fieldname": "column_break_a",
@@ -48,6 +80,30 @@
    "fieldtype": "Currency",
    "in_list_view": 1,
    "label": "Base Price"
+  },
+  {
+   "fieldname": "hourly_rate",
+   "fieldtype": "Currency",
+   "label": "Hourly Rate",
+   "description": "Used when the hall is sold by the hour."
+  },
+  {
+   "fieldname": "min_hours",
+   "fieldtype": "Float",
+   "label": "Minimum Hours",
+   "default": "4"
+  },
+  {
+   "fieldname": "gst_rate",
+   "fieldtype": "Percent",
+   "label": "Rental GST %",
+   "default": "18"
+  },
+  {
+   "fieldname": "setup_styles",
+   "fieldtype": "Small Text",
+   "label": "Setup Styles",
+   "description": "Which layouts this room takes, comma separated."
   },
   {
    "fieldname": "amenities",
@@ -64,7 +120,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-07-04 20:27:10.770551",
+ "modified": "2026-07-31 10:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Venue",

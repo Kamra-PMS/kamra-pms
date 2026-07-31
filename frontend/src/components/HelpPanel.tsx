@@ -6,7 +6,7 @@ import { cn } from "../lib/utils"
 import { Markdown } from "../lib/markdown"
 
 /** How-to help assistant - explains how to use Kamra (it never acts on data;
- *  that's the front-desk copilot). Streams answers, grounded in the app. */
+ *  that's Kamra Agent). Streams answers, grounded in the app. */
 
 interface Msg {
   role: "user" | "assistant"

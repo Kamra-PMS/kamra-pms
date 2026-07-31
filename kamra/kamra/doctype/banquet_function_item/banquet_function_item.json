@@ -1,0 +1,214 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-07-31 10:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "item_type",
+  "item_name",
+  "banquet_menu",
+  "service_item",
+  "description",
+  "column_break_a",
+  "qty",
+  "actual_qty",
+  "uom",
+  "list_rate",
+  "rate",
+  "cost_rate",
+  "sb_billing",
+  "chargeable",
+  "is_alcohol",
+  "on_pack_list",
+  "column_break_b",
+  "amount",
+  "net_amount",
+  "tax_exempt",
+  "gst_rate",
+  "gst_amount",
+  "total",
+  "cost_amount",
+  "input_tax",
+  "notes",
+  "is_supplementary"
+ ],
+ "fields": [
+  {
+   "fieldname": "item_type",
+   "fieldtype": "Select",
+   "label": "Item Type",
+   "reqd": 1,
+   "in_list_view": 1,
+   "default": "Other",
+   "options": "Venue Rental\nMenu\nFood & Beverage\nAlcohol\nAudio Visual\nDecor\nEntertainment\nFurniture & Setup\nStaffing\nAccommodation\nStationery\nOther"
+  },
+  {
+   "fieldname": "item_name",
+   "fieldtype": "Data",
+   "label": "Item Name",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "banquet_menu",
+   "fieldtype": "Link",
+   "label": "Menu",
+   "options": "Banquet Menu"
+  },
+  {
+   "fieldname": "service_item",
+   "fieldtype": "Link",
+   "label": "Service",
+   "options": "Banquet Service Item"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description"
+  },
+  {
+   "fieldname": "column_break_a",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "qty",
+   "fieldtype": "Float",
+   "label": "Qty",
+   "default": "1",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "actual_qty",
+   "fieldtype": "Float",
+   "label": "Actually Served",
+   "description": "Counted on the day. When set, this is what bills - the quote said 300 plates, the night served 318."
+  },
+  {
+   "fieldname": "uom",
+   "fieldtype": "Select",
+   "label": "Per",
+   "default": "Lot",
+   "in_list_view": 1,
+   "options": "Pax\nHour\nDay\nUnit\nLot"
+  },
+  {
+   "fieldname": "list_rate",
+   "fieldtype": "Currency",
+   "label": "Rack Rate",
+   "description": "The published price, kept so the discount is visible."
+  },
+  {
+   "fieldname": "rate",
+   "fieldtype": "Currency",
+   "label": "Agreed Rate",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "cost_rate",
+   "fieldtype": "Currency",
+   "label": "Cost Rate",
+   "description": "Per unit. Menus cost from their recipes; services from the catalogue."
+  },
+  {
+   "fieldname": "sb_billing",
+   "fieldtype": "Section Break",
+   "label": "Billing"
+  },
+  {
+   "fieldname": "chargeable",
+   "fieldtype": "Check",
+   "label": "Chargeable",
+   "default": "1",
+   "in_list_view": 1,
+   "description": "Off = complimentary. Shows on the event order, zero on the quote."
+  },
+  {
+   "fieldname": "is_alcohol",
+   "fieldtype": "Check",
+   "label": "Alcohol"
+  },
+  {
+   "fieldname": "on_pack_list",
+   "fieldtype": "Check",
+   "label": "On Pack List"
+  },
+  {
+   "fieldname": "column_break_b",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "label": "Amount",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "net_amount",
+   "fieldtype": "Currency",
+   "label": "After Discount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "tax_exempt",
+   "fieldtype": "Check",
+   "label": "Tax Exempt",
+   "description": "Zero-rated on purpose. Without this a blank GST falls back to the rate for this kind of item."
+  },
+  {
+   "fieldname": "gst_rate",
+   "fieldtype": "Percent",
+   "label": "GST %"
+  },
+  {
+   "fieldname": "gst_amount",
+   "fieldtype": "Currency",
+   "label": "GST",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total",
+   "fieldtype": "Currency",
+   "label": "Total",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cost_amount",
+   "fieldtype": "Currency",
+   "label": "Cost Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "input_tax",
+   "fieldtype": "Currency",
+   "label": "Input Tax",
+   "read_only": 1,
+   "description": "Tax paid on this line's cost."
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Data",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "is_supplementary",
+   "fieldtype": "Check",
+   "label": "Ordered On The Day",
+   "description": "Added during the function, not part of the agreed quote."
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-07-31 14:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kamra",
+ "name": "Banquet Function Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "istable": 1
+}

@@ -1,0 +1,100 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-07-31 14:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "banquet_menu",
+  "course",
+  "dish",
+  "dish_name",
+  "food_type",
+  "kitchen",
+  "column_break_a",
+  "supplement_per_pax",
+  "cost_per_portion",
+  "portion_per_pax",
+  "note"
+ ],
+ "fields": [
+  {
+   "fieldname": "banquet_menu",
+   "fieldtype": "Link",
+   "label": "Banquet Menu",
+   "options": "Banquet Menu",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "course",
+   "fieldtype": "Data",
+   "label": "Course",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "dish",
+   "fieldtype": "Link",
+   "label": "Dish",
+   "options": "Banquet Dish"
+  },
+  {
+   "fieldname": "dish_name",
+   "fieldtype": "Data",
+   "label": "Dish Name",
+   "reqd": 1,
+   "in_list_view": 1,
+   "description": "Kept as text so a dish renamed later doesn't rewrite a menu the customer already signed."
+  },
+  {
+   "fieldname": "food_type",
+   "fieldtype": "Data",
+   "label": "Food Type"
+  },
+  {
+   "fieldname": "kitchen",
+   "fieldtype": "Data",
+   "label": "Kitchen"
+  },
+  {
+   "fieldname": "column_break_a",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "supplement_per_pax",
+   "fieldtype": "Currency",
+   "label": "Supplement Per Pax"
+  },
+  {
+   "fieldname": "cost_per_portion",
+   "fieldtype": "Currency",
+   "label": "Cost Per Portion",
+   "read_only": 1
+  },
+  {
+   "fieldname": "portion_per_pax",
+   "fieldtype": "Float",
+   "label": "Portion Per Pax",
+   "default": "1"
+  },
+  {
+   "fieldname": "note",
+   "fieldtype": "Data",
+   "label": "Note",
+   "description": "Less spicy, no garlic, serve at 8:30…"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-07-31 14:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kamra",
+ "name": "Banquet Selection",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "istable": 1
+}

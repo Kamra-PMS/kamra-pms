@@ -7,6 +7,7 @@ surface serves the React console today and the MCP layer next.
 import json
 
 import frappe
+from frappe import _
 from kamra.authz import require_it_admin, require_roles
 from frappe.utils import add_days, get_datetime, now_datetime, nowdate
 
@@ -1218,21 +1219,23 @@ def cancel_invoice(folio: str, reason: str, pin: str | None = None):
 @frappe.whitelist()
 @require_roles("Finance", "Front Desk", "Kamra Agent")
 def folio_invoice(folio: str):
-	"""Everything a GST invoice print needs, with the multi-rate breakup."""
+	"""Everything the bill needs to print itself.
+
+	A tax invoice is a legal document, not a screenshot of a table: the
+	service code belongs on each LINE (a room night, a restaurant cover
+	and a laundry bag are three different supplies), the tax has to be
+	named the way the country names it, the total has to appear in words,
+	and the guest wants a summary by what they bought before they read
+	forty lines. All of that is assembled here so every surface that
+	prints a bill - the folio screen, a PDF, an email - agrees.
+	"""
+	from kamra import localization as loc
+
 	doc = frappe.get_doc("Folio", folio)
 	prop = frappe.get_doc("Property", doc.property)
 	res = frappe.get_doc("Reservation", doc.reservation)
-
-	# GST summary grouped by rate - the GSTR-compliant breakup
-	by_rate: dict = {}
-	for c in doc.charges:
-		key = float(c.gst_rate or 0)
-		slot = by_rate.setdefault(key, {"taxable": 0.0, "tax": 0.0})
-		slot["taxable"] += float(c.amount or 0)
-		slot["tax"] += float(c.gst_amount or 0)
-
-	from kamra.localization import pack_for
-	_loc_ctx = pack_for(doc.property).invoice_context(prop)
+	pack = loc.pack_for(doc.property)
+	_loc_ctx = pack.invoice_context(prop)
 
 	# B2B: corporate bookings carry the buyer's GSTIN on the invoice.
 	# A group master folio bills to the GROUP's company.
@@ -1247,9 +1250,52 @@ def folio_invoice(folio: str):
 		if company:
 			bill_to = {"name": company.company_name, "gstin": company.gstin}
 
+	buyer_tax_id = (bill_to or {}).get("gstin")
+	split = loc.tax_split(pack, prop, buyer_tax_id)
+
+	# per-line service codes + a summary of what was actually bought
+	lines, by_rate, by_head = [], {}, {}
+	for c in doc.charges:
+		code = loc.service_code_for(pack, prop, c.charge_type)
+		lines.append({
+			"row": c.name, "posting_date": str(c.posting_date),
+			"charge_type": c.charge_type, "description": c.description,
+			"qty": c.qty, "rate": c.rate, "amount": c.amount,
+			"gst_rate": c.gst_rate, "gst_amount": c.gst_amount,
+			"total": c.total, "is_alcohol": c.is_alcohol,
+			"auto_posted": c.auto_posted,
+			"service_code": (code or {}).get("value"),
+		})
+		key = float(c.gst_rate or 0)
+		slot = by_rate.setdefault(key, {"taxable": 0.0, "tax": 0.0})
+		slot["taxable"] += float(c.amount or 0)
+		slot["tax"] += float(c.gst_amount or 0)
+		head = by_head.setdefault(
+			c.charge_type or "Other",
+			{"head": c.charge_type or "Other", "amount": 0.0, "tax": 0.0,
+			 "total": 0.0, "lines": 0, "service_code": (code or {}).get("value")})
+		head["amount"] += float(c.amount or 0)
+		head["tax"] += float(c.gst_amount or 0)
+		head["total"] += float(c.total or 0)
+		head["lines"] += 1
+
+	settled = bool(doc.invoice_number)
 	return {
 		"folio": doc.as_dict(),
+		"lines": lines,
 		"bill_to": bill_to,
+		"document": {
+			# a bill before settlement is provisional and must say so - the
+			# invoice number only exists once the folio closes
+			"title": _("Tax Invoice") if settled else _("Provisional Bill"),
+			"is_final": settled,
+			"number": doc.invoice_number or doc.name,
+			"date": str(doc.closed_on or "")[:10] or nowdate(),
+			"amount_in_words": loc.amount_in_words(pack, prop, doc.grand_total),
+			"footer": _loc_ctx.get("footer"),
+			"service_code_label": (_loc_ctx.get("service_code") or {}).get(
+				"label", "SAC"),
+		},
 		"property": {
 			"name": prop.property_name, "legal_name": prop.legal_name,
 			"logo_url": prop.get("logo_url"),
@@ -1258,30 +1304,65 @@ def folio_invoice(folio: str):
 			"address": ", ".join(filter(None, [prop.address_line, prop.city,  # nosemgrep: frappe-no-functional-code -- filter(None, ...) drops empty address parts; equivalent to a comprehension
 			                                   prop.state, prop.pincode])),
 			"gstin": prop.gstin, "phone": prop.phone, "email": prop.email,
+			"website": prop.get("website"),
 			# country pack owns the service code + place-of-supply rule
 			"sac": _loc_ctx["sac"],
 			"place_of_supply": _loc_ctx["place_of_supply"],
 			"tax_label": _loc_ctx["tax_label"],
 			"tax_id_label": _loc_ctx["tax_id_label"],
 		},
+		"guest": _invoice_guest(res),
 		"stay": {
 			"reservation": res.name,
 			"check_in": str(res.check_in_date),
 			"check_out": str(res.check_out_date),
+			"arrival": str(res.get("actual_check_in") or "") or None,
+			"departure": str(res.get("actual_check_out") or "") or None,
 			"nights": res.nights, "room": res.room,
+			"room_type": res.room_type,
+			"adults": res.adults, "children": res.children,
+			"pax": int(res.adults or 0) + int(res.children or 0),
+			"meal_plan": res.get("meal_plan"),
 			"company": res.company,
 			"group_booking": res.get("group_booking"),
 			"booked_by_name": res.get("booked_by_name"),
 			"booked_by_phone": res.get("booked_by_phone"),
 			"contact_preference": res.get("contact_preference"),
 		},
+		"summary_by_head": sorted(by_head.values(), key=lambda h: -h["total"]),
+		"tax_summary": [
+			{"rate": rate, "taxable": v["taxable"], "total_tax": v["tax"],
+			 "parts": [{"label": label.upper(),
+			            "rate": round(rate * float(share), 4),
+			            "amount": v["tax"] * float(share)}
+			           for label, share in split]}
+			for rate, v in sorted(by_rate.items())
+		],
+		# kept for callers written against the pre-v2 shape
 		"gst_summary": [
 			{"rate": rate, "taxable": v["taxable"],
-			 "cgst": v["tax"] * float(_loc_ctx["split"][0][1]),
-			 "sgst": v["tax"] * float(_loc_ctx["split"][-1][1]),
+			 "cgst": v["tax"] * float(split[0][1]),
+			 "sgst": v["tax"] * float(split[-1][1]),
 			 "total_tax": v["tax"]}
 			for rate, v in sorted(by_rate.items())
 		],
+	}
+
+
+def _invoice_guest(res) -> dict:
+	"""Who the bill is addressed to, as the guest register knows them -
+	nationality included, because a foreign guest's invoice needs it and
+	so does the police report."""
+	g = frappe.db.get_value(
+		"Guest", res.guest,
+		["full_name", "phone", "email", "nationality", "address_line",
+		 "city", "id_type", "id_number"], as_dict=True) or {}
+	return {
+		"name": g.get("full_name") or res.guest_name,
+		"phone": g.get("phone"), "email": g.get("email"),
+		"nationality": g.get("nationality"),
+		"address": ", ".join(filter(None, [g.get("address_line"), g.get("city")])),  # nosemgrep: frappe-no-functional-code -- drops empty address parts
+		"id_type": g.get("id_type"),
 	}
 
 
@@ -2485,7 +2566,7 @@ def set_day_use_times(reservation: str, from_time: str, to_time: str):
 @frappe.whitelist()
 @require_roles("Front Desk", "Finance", "Kamra Agent")
 def position_briefing(property: str, date: str | None = None):
-	"""The GM / front-desk position briefing - what the copilot reads out
+	"""The GM / front-desk position briefing - what Kamra Agent reads out
 	at the morning meeting: today's occupancy against the overbooking
 	ceiling, arrivals with ETAs, departures with ETDs and balances,
 	back-to-back conflicts, the demand tier pricing is applying, and a

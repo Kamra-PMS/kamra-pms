@@ -26,6 +26,7 @@ MODULES = [
     ("api", "Core (front desk, folios, guests, rooms)", ""),
     ("pos", "Restaurant POS & kitchen", ""),
     ("laundry", "Laundry (housekeeping)", ""),
+    ("banquet", "Banquets (functions, quotations, event orders)", ""),
     ("migrate", "Migration (CSV import)", ""),
     ("inventory", "Inventory & recipes", ""),
     ("menu_import", "Menu bulk import", ""),
@@ -62,6 +63,12 @@ SAMPLE = {
     "amount": 1000,
     "adults": 2,
     "children": 0,
+    "function": "EVT-2026-0001",
+    "venue": "Your Property-Grand Ballroom",
+    "menu": "BMENU-00001",
+    "service_item": "BSVC-00001",
+    "event_date": "2026-12-12",
+    "customer_name": "A. Customer",
 }
 
 

@@ -5,7 +5,7 @@ import { serverError } from "../lib/resource"
 import { cn } from "../lib/utils"
 import { Markdown } from "../lib/markdown"
 
-/** The front-desk copilot - appears only when the property has enabled
+/** Kamra Agent, docked to the front desk - appears only when the property has enabled
  * it with their own key. Model talks; the governed tool layer acts. */
 
 interface Msg {
@@ -170,7 +170,7 @@ export default function AssistantPanel() {
         <div className="fixed bottom-20 right-5 z-40 flex h-[560px] w-[380px] max-w-[calc(100vw-2.5rem)] flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-2xl print:hidden">
           <div className="flex items-center gap-2 border-b border-zinc-100 px-4 py-3">
             <Sparkles className="size-4 text-brand-600" aria-hidden />
-            <span className="text-sm font-semibold">Front-desk copilot</span>
+            <span className="text-sm font-semibold">Kamra Agent</span>
             <span className="ml-auto text-[10px] uppercase tracking-wider text-zinc-400">
               your key · your data
             </span>
@@ -277,7 +277,7 @@ export default function AssistantPanel() {
           >
             <input
               className="flex-1 rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm focus:outline-2 focus:outline-offset-1 focus:outline-brand-600"
-              placeholder="Ask the copilot…"
+              placeholder="Ask Kamra Agent…"
               value={input}
               onChange={(e) => setInput(e.target.value)}
             />

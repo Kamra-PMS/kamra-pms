@@ -1,4 +1,4 @@
-"""Schema v8 — eZee-parity long tail:
+"""Schema v8 — the operational long tail:
 
 - Travel Agent (business source with commission %) + Reservation link
 - Venue + Venue Booking (banquets/events, enquiry→confirmed pipeline)
@@ -184,4 +184,4 @@ def execute():
 	print("perms granted for v8 doctypes")
 
 	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- batch/seed/migration script runs outside the request cycle; explicit commit persists the staged writes
-	print("Kamra v8 schema (eZee parity long tail) ready.")
+	print("Kamra v8 schema (operational long tail) ready.")

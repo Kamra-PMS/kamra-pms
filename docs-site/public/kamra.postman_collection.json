@@ -251,6 +251,43 @@
      }
     },
     {
+     "name": "registration_card",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.registration_card",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.registration_card"
+       ]
+      },
+      "description": "Everything the printed GRC (guest registration card) needs.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"reservation\": \"RES-2026-00001\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
      "name": "cash_summary",
      "request": {
       "method": "POST",
@@ -1607,7 +1644,7 @@
         "kamra.api.folio_invoice"
        ]
       },
-      "description": "Everything a GST invoice print needs, with the multi-rate breakup.",
+      "description": "Everything the bill needs to print itself.\n\nA tax invoice is a legal document, not a screenshot of a table: the\nservice code belongs on each LINE (a room night, a restaurant cover\nand a laundry bag are three different supplies), the tax has to be\nnamed the way the country names it, the total has to appear in words,\nand the guest wants a summary by what they bought before they read\nforty lines. All of that is assembled here so every surface that\nprints a bill - the folio screen, a PDF, an email - agrees.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"folio\": \"FOLIO-2026-00001\"\n}",
@@ -2157,6 +2194,43 @@
      }
     },
     {
+     "name": "checkin_context",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.checkin_context",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.checkin_context"
+       ]
+      },
+      "description": "Everything the check-in flow needs in one round trip: how complete\nthe guest's registration is, the assigned room - or the allocator's\nsuggestion plus every room the desk may hand over instead.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"reservation\": \"RES-2026-00001\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
      "name": "check_in",
      "request": {
       "method": "POST",
@@ -2185,6 +2259,43 @@
       "body": {
        "mode": "raw",
        "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"room\": \"Your Property-101\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "upload_occupant_id",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.upload_occupant_id",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.upload_occupant_id"
+       ]
+      },
+      "description": "ID document for one occupant on the stay register. Same security\npipeline as every ID image: decoded, re-encoded through PIL (the\nsanitisation boundary), stored private, attached to the reservation\nso checkout retention rules find it.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"row\": \"<row>\",\n  \"image\": \"<image>\"\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -2625,7 +2736,7 @@
         "kamra.api.position_briefing"
        ]
       },
-      "description": "The GM / front-desk position briefing - what the copilot reads out\nat the morning meeting: today's occupancy against the overbooking\nceiling, arrivals with ETAs, departures with ETDs and balances,\nback-to-back conflicts, the demand tier pricing is applying, and a\n7-day outlook.",
+      "description": "The GM / front-desk position briefing - what Kamra Agent reads out\nat the morning meeting: today's occupancy against the overbooking\nceiling, arrivals with ETAs, departures with ETDs and balances,\nback-to-back conflicts, the demand tier pricing is applying, and a\n7-day outlook.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\",\n  \"date\": \"2026-08-01\"\n}",
@@ -3516,7 +3627,7 @@
       "description": "One call drafts the whole piece of MICE business: the group, its room\nblock, and (optionally) the banquet event - the agent wedge: an inquiry\nagent turns \"30 rooms + a 200-pax wedding on Dec 12\" into a proposal.",
       "body": {
        "mode": "raw",
-       "raw": "{\n  \"property\": \"Your Property\",\n  \"group_name\": \"<group_name>\",\n  \"check_in_date\": \"2026-08-01\",\n  \"check_out_date\": \"2026-08-03\",\n  \"blocks\": \"<blocks>\",\n  \"attendees\": 0\n}",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"group_name\": \"<group_name>\",\n  \"check_in_date\": \"2026-08-01\",\n  \"check_out_date\": \"2026-08-03\",\n  \"blocks\": \"<blocks>\",\n  \"venue\": \"Your Property-Grand Ballroom\",\n  \"event_date\": \"2026-12-12\",\n  \"attendees\": 0\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -3743,7 +3854,7 @@
       "description": "Captain takes an order. If a room is given but no reservation, the\nin-house stay is resolved so it can post to the folio later. Takeaway\nand delivery carry the customer's details instead of a table/room.",
       "body": {
        "mode": "raw",
-       "raw": "{\n  \"outlet\": \"Your Property-Restaurant\",\n  \"items\": \"<items>\",\n  \"property\": \"Your Property\",\n  \"room\": \"Your Property-101\",\n  \"reservation\": \"RES-2026-00001\",\n  \"source\": \"Manual\"\n}",
+       "raw": "{\n  \"outlet\": \"Your Property-Restaurant\",\n  \"items\": \"<items>\",\n  \"property\": \"Your Property\",\n  \"room\": \"Your Property-101\",\n  \"reservation\": \"RES-2026-00001\",\n  \"source\": \"Manual\",\n  \"customer_name\": \"A. Customer\"\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -5055,6 +5166,1713 @@
    ]
   },
   {
+   "name": "Banquets (functions, quotations, event orders)",
+   "item": [
+    {
+     "name": "banquet_catalogue",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.banquet.banquet_catalogue",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.banquet.banquet_catalogue"
+       ]
+      },
+      "description": "What the property sells: the menu packages (with their courses) and\nthe service list. This is the picker behind every line item.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "save_banquet_menu",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.banquet.save_banquet_menu",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.banquet.save_banquet_menu"
+       ]
+      },
+      "description": "Add or edit one menu package. Courses replace wholesale - the grid\nthe user is looking at is the truth.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"menu_name\": \"<menu_name>\",\n  \"rate_per_pax\": \"<rate_per_pax>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "delete_banquet_menu",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.banquet.delete_banquet_menu",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.banquet.delete_banquet_menu"
+       ]
+      },
+      "description": "",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"name\": \"<name>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "save_service_item",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.banquet.save_service_item",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.banquet.save_service_item"
+       ]
+      },
+      "description": "Add or edit one service - a projector, an LED wall, a DJ, a podium,\na stage, a decor package, bar service. `chargeable = 0` marks the ones\nthe hotel throws in as standard; they still appear on the event order\nand the pack list.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"item_name\": \"<item_name>\",\n  \"category\": \"<category>\",\n  \"rate\": 0,\n  \"uom\": \"Per Event\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "delete_service_item",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.banquet.delete_service_item",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.banquet.delete_service_item"
+       ]
+      },
+      "description": "",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"name\": \"<name>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "create_enquiry",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.banquet.create_enquiry",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.banquet.create_enquiry"
+       ]
+      },
+      "description": "Open a function sheet from an enquiry. The hall's rack rental goes on\nas the first line (that's the number the conversation starts from), and\na follow-up lands in the diary so the enquiry doesn't go quiet.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"venue\": \"Your Property-Grand Ballroom\",\n  \"event_date\": \"2026-12-12\",\n  \"customer_name\": \"A. Customer\",\n  \"event_type\": \"Wedding\",\n  \"attendees\": 0,\n  \"end_date\": \"2026-08-31\",\n  \"source\": \"Phone\",\n  \"follow_up_days\": 2,\n  \"with_venue_line\": 1\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "function_sheet",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.banquet.function_sheet",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.banquet.function_sheet"
+       ]
+      },
+      "description": "One function, everything about it - the sheet the banquet screen\nrenders and Kamra Agent reads.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"function\": \"EVT-2026-0001\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "update_function",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.banquet.update_function",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.banquet.update_function"
+       ]
+      },
+      "description": "Edit the sheet's own fields (not its tables - those have their own\ncalls, because each one means something different).",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"function\": \"EVT-2026-0001\",\n  \"fields\": \"<fields>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "set_status",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.banquet.set_status",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.banquet.set_status"
+       ]
+      },
+      "description": "Move the function along its pipeline. Confirming takes the hall -\nthe controller refuses a clash with another confirmed function.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"function\": \"EVT-2026-0001\",\n  \"status\": \"<status>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "add_menu",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.banquet.add_menu",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.banquet.add_menu"
+       ]
+      },
+      "description": "Put a menu package on the function. Left alone the quantity follows\nthe pax rule (guaranteed, or actual if more turned up) and the price is\nthe package's own plate price - pass `rate` when it's been negotiated.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"function\": \"EVT-2026-0001\",\n  \"menu\": \"BMENU-00001\",\n  \"chargeable\": 1\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "add_service",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.banquet.add_service",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.banquet.add_service"
+       ]
+      },
+      "description": "Put a service on the function - projector, LED wall, DJ, podium,\nstage, decor, laptop, bar. The catalogue decides whether it's chargeable\nby default; pass `chargeable` to override for this function.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"function\": \"EVT-2026-0001\",\n  \"service_item\": \"BSVC-00001\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "save_items",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.banquet.save_items",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.banquet.save_items"
+       ]
+      },
+      "description": "Replace the line grid wholesale - what the user is looking at is the\ntruth. Rows keep their catalogue links so the event order can still\nprint a menu's courses.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"function\": \"EVT-2026-0001\",\n  \"items\": \"<items>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "remove_item",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.banquet.remove_item",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.banquet.remove_item"
+       ]
+      },
+      "description": "",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"function\": \"EVT-2026-0001\",\n  \"row\": \"<row>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "negotiate",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.banquet.negotiate",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.banquet.negotiate"
+       ]
+      },
+      "description": "The price moves. `rows` is {line_row_name: new_rate} - or pass\n`venue_rental` to move just the hall - and `discount_amount` is the\nheadline reduction on the whole quote.\n\nEvery move is snapshotted with what the quote was worth before and\nafter, so the fourth revision of a wedding quote can be explained.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"function\": \"EVT-2026-0001\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "save_open_items",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.banquet.save_open_items",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.banquet.save_open_items"
+       ]
+      },
+      "description": "What is still unsettled while the price is being agreed - the\nsangeet stage, whether the bar is on consumption, who pays for the\nextra generator. Each carries what agreeing it would do to the price.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"function\": \"EVT-2026-0001\",\n  \"rows\": \"<rows>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "set_payment_terms",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.banquet.set_payment_terms",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.banquet.set_payment_terms"
+       ]
+      },
+      "description": "The schedule the customer signs up to. A term stated as a percentage\nfollows the quote as it moves; one stated as an amount is a number both\nsides agreed and stays put.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"function\": \"EVT-2026-0001\",\n  \"terms\": \"<terms>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "default_payment_terms",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.banquet.default_payment_terms",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.banquet.default_payment_terms"
+       ]
+      },
+      "description": "The usual three-milestone schedule, dated off this function: an\nadvance to hold the hall, a second call before the date, the rest on\ncompletion. Editable afterwards like any other term.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"function\": \"EVT-2026-0001\",\n  \"advance_percent\": 25,\n  \"interim_percent\": 50,\n  \"interim_days_before\": 15\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "record_receipt",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.banquet.record_receipt",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.banquet.record_receipt"
+       ]
+      },
+      "description": "Money in against the function. Pass `settle_term` to tick off the\npayment-term row it pays, so the schedule and the ledger agree.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"function\": \"EVT-2026-0001\",\n  \"amount\": 1000,\n  \"mode\": \"Bank Transfer\",\n  \"kind\": \"Advance\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "assign_green_room",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.banquet.assign_green_room",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.banquet.assign_green_room"
+       ]
+      },
+      "description": "Hold a changing room for the wedding party. The controller puts a\nRoom Block on it so it genuinely leaves the sellable inventory; pass\n`complimentary=0` (with a rate) to bill it as an Accommodation line.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"function\": \"EVT-2026-0001\",\n  \"room\": \"Your Property-101\",\n  \"from_date\": \"2026-08-01\",\n  \"to_date\": \"2026-08-31\",\n  \"complimentary\": 1,\n  \"rate\": 0\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "venue_availability",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.banquet.venue_availability",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.banquet.venue_availability"
+       ]
+      },
+      "description": "Which halls are free for these dates and hours. A confirmed function\ntakes the hall; a tentative one is shown as a soft hold you can still\nsell over. Halls too small for the pax are flagged, not hidden.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"event_date\": \"2026-12-12\",\n  \"end_date\": \"2026-08-31\",\n  \"pax\": 0\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "banquet_calendar",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.banquet.banquet_calendar",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.banquet.banquet_calendar"
+       ]
+      },
+      "description": "The function diary - halls down the side, days across the top, every\nfunction in its cell with what it's worth and what's still owed.\nMulti-day functions appear on each of their days.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"start_date\": \"2026-08-01\",\n  \"days\": 31\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "banquet_pipeline",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.banquet.banquet_pipeline",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.banquet.banquet_pipeline"
+       ]
+      },
+      "description": "The sales view: where the business is by month and by status, what\nconverted, what died and why. Dated on the event, not the enquiry -\na banquet team's month is the month the function happens.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"from_date\": \"2026-08-01\",\n  \"to_date\": \"2026-08-31\",\n  \"months\": 6\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "banquet_reminders",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.banquet.banquet_reminders",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.banquet.banquet_reminders"
+       ]
+      },
+      "description": "Everything across the property that needs chasing - the banquet\nteam's morning list.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"days\": 30\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "banquet_document",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.banquet.banquet_document",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.banquet.banquet_document"
+       ]
+      },
+      "description": "The paper. One shape for every document so the front end can print\nthem all the same way:\n\n  quote      what it costs, line by line, with the terms\n  contract   the quote plus the terms, the policy and signature blocks\n  beo        the banquet event order - the running sheet for the day\n  pack_list  what physically has to reach the hall, and by when\n  invoice    the bill, against what's already been received",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"function\": \"EVT-2026-0001\",\n  \"kind\": \"quote\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "generate_quote",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.banquet.generate_quote",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.banquet.generate_quote"
+       ]
+      },
+      "description": "Stamp a quotation. Bumps the version, dates it, and snapshots what\nit was worth - so 'the price we sent on the 3rd' is answerable.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"function\": \"EVT-2026-0001\",\n  \"valid_days\": 15\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "generate_beo",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.banquet.generate_beo",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.banquet.generate_beo"
+       ]
+      },
+      "description": "Issue the banquet event order - the sheet the banquet, kitchen and\nAV teams run the day from. Only a confirmed function gets one; the\nteams shouldn't be preparing for business that isn't sold.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"function\": \"EVT-2026-0001\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "post_to_folio",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.banquet.post_to_folio",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.banquet.post_to_folio"
+       ]
+      },
+      "description": "Push the chargeable lines onto a bill. A function tied to a group\nrides the group's master folio; otherwise pass one explicitly.\n\nAlcohol is reported back rather than posted when the bill is a company\nor group folio - the same rule the folio itself enforces - so it can be\nsettled separately instead of failing the whole post.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"function\": \"EVT-2026-0001\",\n  \"folio\": \"FOLIO-2026-00001\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "close_out",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.banquet.close_out",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.banquet.close_out"
+       ]
+      },
+      "description": "Hand the hall back. The last ritual of a function, and the one that\nusually happens on a WhatsApp message and a scrap of paper: walk the\nroom, count the actual covers, note what got broken, take that off the\ndeposit and give the rest back.\n\nDoing it here means the deduction has a reason attached, the refund is\na real ledger line, and the function closes in one motion instead of\nthree people remembering to do three things.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"function\": \"EVT-2026-0001\",\n  \"damage_amount\": 0,\n  \"refund_deposit\": 1,\n  \"refund_mode\": \"Bank Transfer\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "receipt_document",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.banquet.receipt_document",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.banquet.receipt_document"
+       ]
+      },
+      "description": "One receipt, as a document the customer can keep. Every advance a\nbanquet office takes needs a piece of paper against it - this is that\npiece of paper.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"function\": \"EVT-2026-0001\",\n  \"receipt\": \"<receipt>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "menu_card",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.banquet.menu_card",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.banquet.menu_card"
+       ]
+      },
+      "description": "The menu the customer signs off - what will actually be served,\ncourse by course, with nothing about money on it. The kitchen and the\ncustomer read the same sheet, which is the whole point.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"function\": \"EVT-2026-0001\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "month_availability",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.banquet.month_availability",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.banquet.month_availability"
+       ]
+      },
+      "description": "Every hall \u00d7 every session, across a whole month.\n\nThe question a banquet office is actually asked - \"do you have the\n14th of December?\" - is about a hall and a session, not a range of\nhours. This is the grid that answers it in one look: halls down the\nside split by session, days across the top, and what's in each cell.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "banquet_register",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.banquet.banquet_register",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.banquet.banquet_register"
+       ]
+      },
+      "description": "The listings a banquet office runs the week on - the same five books\nevery hall has kept on paper forever, dated and totalled:\n\n  functions   every booking in the window, with pax, rate and value\n  quotations  what was quoted, and whether it converted\n  enquiries   what came in, and what happened to it\n  receipts    the cash book: every payment, by mode\n  sales       revenue by hall, event type and month",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"register\": \"functions\",\n  \"from_date\": \"2026-08-01\",\n  \"to_date\": \"2026-08-31\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "dish_library",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.banquet.dish_library",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.banquet.dish_library"
+       ]
+      },
+      "description": "Every dish the banquet kitchen can produce, with what it costs to\nmake. This is the picker behind menu building and the spine of margin.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "save_dish",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.banquet.save_dish",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.banquet.save_dish"
+       ]
+      },
+      "description": "Add or edit a dish. The recipe is what makes it cost something -\nwithout one the dish is free, and so is the margin it reports.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"dish_name\": \"<dish_name>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "delete_dish",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.banquet.delete_dish",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.banquet.delete_dish"
+       ]
+      },
+      "description": "",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"name\": \"<name>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "recost_dishes",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.banquet.recost_dishes",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.banquet.recost_dishes"
+       ]
+      },
+      "description": "Ingredient prices moved - re-cost every dish. Run it after a delivery\nor a price revision, so quotes stop being priced off last season's\nonions.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "menu_cost",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.banquet.menu_cost",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.banquet.menu_cost"
+       ]
+      },
+      "description": "What one plate of this menu costs to make, and what it earns.\n\nCosts the DEFAULT selection - one dish per choice where the course\noffers a choice, everything where it doesn't - so a menu can be judged\nbefore anyone has booked it.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"menu\": \"BMENU-00001\",\n  \"pax\": 0\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "menu_choices",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.banquet.menu_choices",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.banquet.menu_choices"
+       ]
+      },
+      "description": "The course-by-course picker for one menu on one function: what the\ncourse offers, how many the guest may take, and what's chosen so far.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"function\": \"EVT-2026-0001\",\n  \"menu\": \"BMENU-00001\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "compose_menu",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.banquet.compose_menu",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.banquet.compose_menu"
+       ]
+      },
+      "description": "Record what the customer actually chose - \"one soup of these two, the\npaneer not the mushroom\".\n\nThe dish NAME is stored alongside the link on purpose: renaming a dish\nnext season must not rewrite a menu card the customer already signed.\nAny supplement the choice carries goes on as its own line, because an\nupgrade is a price change and should be visible as one.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"function\": \"EVT-2026-0001\",\n  \"menu\": \"BMENU-00001\",\n  \"picks\": \"<picks>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "kitchen_indent",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.banquet.kitchen_indent",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.banquet.kitchen_indent"
+       ]
+      },
+      "description": "What the kitchen has to buy and pull for this function.\n\nThe artifact that has always sat between the event order and the store\nroom, written by hand: chosen dishes x portions x guaranteed pax,\nexploded through the recipes into ingredient quantities, checked against\nwhat's actually on the shelf.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"function\": \"EVT-2026-0001\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "issue_indent",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.banquet.issue_indent",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.banquet.issue_indent"
+       ]
+      },
+      "description": "Pull the indent off the shelf. Writes real stock movements through\nthe same single writer the restaurant uses, so the store room reflects\na banquet the way it reflects a table.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"function\": \"EVT-2026-0001\",\n  \"outlet\": \"Your Property-Restaurant\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "record_consumption",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.banquet.record_consumption",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.banquet.record_consumption"
+       ]
+      },
+      "description": "What was actually served, against what was quoted.\n\nThe quote said 300 plates; 318 people ate and the bar went through\nanother two cases. Until this is recorded the bill is a forecast -\nrows = {line_row_name: actual_qty}.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"function\": \"EVT-2026-0001\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "add_supplementary",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.banquet.add_supplementary",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.banquet.add_supplementary"
+       ]
+      },
+      "description": "Something ordered on the night that wasn't on the quote - another\nround at the bar, twenty extra plates, a second cake. It bills on top\nand is marked so the final bill can show it apart from what was\nagreed.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"function\": \"EVT-2026-0001\",\n  \"item_name\": \"<item_name>\",\n  \"qty\": \"<qty>\",\n  \"rate\": \"<rate>\",\n  \"item_type\": \"Food & Beverage\",\n  \"uom\": \"Unit\",\n  \"cost_rate\": 0,\n  \"is_alcohol\": 0\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "function_economics",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.banquet.function_economics",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.banquet.function_economics"
+       ]
+      },
+      "description": "The P&L of one function: what it sold, what it cost, what the input\ncredit is worth, and what's left - plus where the quote and the night\ndisagreed.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"function\": \"EVT-2026-0001\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "link_customer",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.banquet.link_customer",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.banquet.link_customer"
+       ]
+      },
+      "description": "Tie the function to a real guest record instead of a name in a box.\n\nWithout this a banquet customer is a string: no history, no notes, no\n'they complained about the AC last time'. With it, the banquet office\nsees the same person the front desk does.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"function\": \"EVT-2026-0001\",\n  \"guest\": \"G-00001\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "customer_profile",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.banquet.customer_profile",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.banquet.customer_profile"
+       ]
+      },
+      "description": "Everything the banquet office should know before picking up the\nphone: what this client has run with us, what they spent, what they\nusually book, and what's still owed.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"guest\": \"G-00001\",\n  \"phone\": \"+91 90000 00000\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
    "name": "Migration (CSV import)",
    "item": [
     {
@@ -5929,6 +7747,43 @@
    "name": "Reports",
    "item": [
     {
+     "name": "void_allowance_report",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.reports.void_allowance_report",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.reports.void_allowance_report"
+       ]
+      },
+      "description": "Audit trail of every void, allowance and invoice cancellation on a\nproperty: who reversed what, when, and why. The compliance answer to\n\"show me every write-off\" - read straight from the action log, so it\ncannot drift from what actually happened.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"from_date\": \"2026-08-01\",\n  \"to_date\": \"2026-08-31\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
      "name": "manager_flash",
      "request": {
       "method": "POST",
@@ -6321,6 +8176,39 @@
      }
     },
     {
+     "name": "precheckin_submit",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.public_api.precheckin_submit",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.public_api.precheckin_submit"
+       ]
+      },
+      "description": "Guest completes pre-arrival check-in and signs the registration card\n(PRD FR-20 - details + declaration + e-signature; the signed card becomes\nthe paperless GRC the desk views at arrival). The guest can attach a\nphoto of their ID - camera capture or upload - stored privately.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"token\": \"<token>\",\n  \"id_type\": \"<id_type>\",\n  \"id_number\": \"<id_number>\",\n  \"email\": \"guest@example.com\",\n  \"nationality\": \"\",\n  \"address_line\": \"\",\n  \"city\": \"\",\n  \"eta\": \"\",\n  \"special_requests\": \"\",\n  \"signature\": \"\",\n  \"consent\": 0,\n  \"id_image\": \"\",\n  \"address_image\": \"\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
      "name": "precheckin_upload_id",
      "request": {
       "method": "POST",
@@ -6411,6 +8299,39 @@
       "body": {
        "mode": "raw",
        "raw": "{\n  \"token\": \"<token>\",\n  \"notes\": \"\",\n  \"express\": 0\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "book",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.public_api.book",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.public_api.book"
+       ]
+      },
+      "description": "Create a Website booking. Guest identity is the phone number; staff\nverify at check-in. The advance owed is computed from the property's\ncurrent payment policy and snapshotted onto the booking.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"room_type\": \"Your Property-DLX\",\n  \"check_in_date\": \"2026-08-01\",\n  \"check_out_date\": \"2026-08-03\",\n  \"guest_name\": \"A. Guest\",\n  \"phone\": \"+91 90000 00000\",\n  \"email\": \"guest@example.com\",\n  \"adults\": 2,\n  \"children\": 0,\n  \"meal_plan\": \"\",\n  \"special_requests\": \"\",\n  \"voucher_code\": \"\"\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -6542,7 +8463,7 @@
       "description": "Kamra Cloud hosting enquiry from kamrapms.com. Stored first (a lead is\nnever lost even without SMTP), then a best-effort email to the team.",
       "body": {
        "mode": "raw",
-       "raw": "{\n  \"full_name\": \"A. Guest\",\n  \"email\": \"guest@example.com\",\n  \"phone\": \"+91 90000 00000\",\n  \"property_name\": \"\",\n  \"rooms\": 0,\n  \"city\": \"\",\n  \"message\": \"\"\n}",
+       "raw": "{\n  \"full_name\": \"A. Guest\",\n  \"email\": \"guest@example.com\",\n  \"phone\": \"+91 90000 00000\",\n  \"property_name\": \"\",\n  \"rooms\": 0,\n  \"city\": \"\",\n  \"message\": \"\",\n  \"country\": \"\",\n  \"interest\": \"\"\n}",
        "options": {
         "raw": {
          "language": "json"

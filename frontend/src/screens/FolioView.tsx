@@ -7,7 +7,7 @@ import { loadLocale, taxRates } from "../lib/money"
 import { serverError } from "../lib/resource"
 import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
-import { cur, moneyLocale } from "../lib/money"
+import { cur, moneyLocale, taxLabel } from "../lib/money"
 import {
   Card,
   CardContent,
@@ -63,7 +63,14 @@ interface InvoiceData {
     reservation: string
     check_in: string
     check_out: string
+    arrival: string | null
+    departure: string | null
     nights: number
+    adults: number
+    children: number
+    pax: number
+    meal_plan: string | null
+    room_type: string | null
     room: string | null
     company: string | null
     group_booking: string | null
@@ -79,6 +86,55 @@ interface InvoiceData {
     total_tax: number
   }[]
   bill_to: { name: string; gstin: string | null } | null
+  /** The document's own identity: a bill before settlement is provisional
+   *  and says so; only a closed folio carries an invoice number. */
+  document: {
+    title: string
+    is_final: boolean
+    number: string
+    date: string
+    amount_in_words: string
+    footer: string | null
+    service_code_label: string
+  }
+  /** Charges with the service code the tax authority expects per LINE -
+   *  a room night, a restaurant cover and a laundry bag are three
+   *  different supplies and can't share one code. */
+  lines: {
+    row: string
+    posting_date: string
+    charge_type: string
+    description: string | null
+    qty: number
+    rate: number
+    amount: number
+    gst_rate: number
+    gst_amount: number
+    total: number
+    service_code: string | null
+  }[]
+  guest: {
+    name: string
+    phone: string | null
+    email: string | null
+    nationality: string | null
+    address: string
+    id_type: string | null
+  }
+  summary_by_head: {
+    head: string
+    amount: number
+    tax: number
+    total: number
+    lines: number
+    service_code: string | null
+  }[]
+  tax_summary: {
+    rate: number
+    taxable: number
+    total_tax: number
+    parts: { label: string; rate: number; amount: number }[]
+  }[]
 }
 
 const CHARGE_TYPES = [
@@ -109,6 +165,17 @@ function folioLabel(siblings: SiblingFolio[], s: SiblingFolio) {
 }
 const isEmptyFolio = (s: SiblingFolio) =>
   !s.grand_total && !s.payments_total
+
+/** One labelled fact on the printed bill - label and value stay on the
+ *  same line so the header block reads as a form, not a paragraph. */
+function Fact({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex gap-2">
+      <dt className="w-24 shrink-0 text-zinc-500">{label}</dt>
+      <dd className="min-w-0">{children}</dd>
+    </div>
+  )
+}
 
 export default function FolioView() {
   const { name } = useParams()
@@ -197,6 +264,11 @@ export default function FolioView() {
     return <p className="py-10 text-center text-sm text-zinc-400">Loading…</p>
 
   const { folio, property, stay, gst_summary } = data
+  const doc = data.document
+  // the server sends charges enriched with their service code; fall back
+  // to the raw folio rows so a cached older payload still renders
+  const lines = data.lines ?? folio.charges.map((c) => ({ ...c, row: c.name, qty: 1, rate: c.amount, service_code: null }))
+  const taxRows = data.tax_summary ?? []
   const open = folio.status === "Open"
 
   return (
@@ -455,11 +527,18 @@ export default function FolioView() {
       {/* printable document */}
       <Card className="print:border-0 print:shadow-none">
         <CardContent className="py-6">
-          {folio.invoice_number && (
-            <p className="mb-3 text-center text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">
-              Tax Invoice
-            </p>
-          )}
+          <div className="mb-4 flex items-center justify-center gap-3">
+            <span
+              className={
+                "rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] " +
+                (doc?.is_final
+                  ? "bg-zinc-900 text-white"
+                  : "border border-dashed border-amber-400 bg-amber-50 text-amber-700")
+              }
+            >
+              {doc?.title ?? (folio.invoice_number ? "Tax Invoice" : "Provisional Bill")}
+            </span>
+          </div>
           <div className="mb-6 flex flex-wrap items-start justify-between gap-4 border-b border-zinc-200 pb-5">
             <div className="flex items-start gap-3">
               {property.logo_url && (
@@ -493,17 +572,21 @@ export default function FolioView() {
               </div>
             </div>
             <div className="text-right">
-              <p className="text-lg font-semibold">
-                {folio.invoice_number ?? folio.name}
+              <p className="font-mono text-lg font-semibold">
+                {doc?.number ?? folio.invoice_number ?? folio.name}
               </p>
               <p className="text-sm text-zinc-500">
-                {folio.invoice_number ? "Tax Invoice" : "Folio (unsettled)"}
+                {doc?.date ?? ""}
               </p>
-              {folio.invoice_number && property.place_of_supply && (
+              {property.place_of_supply && (
                 <p className="mt-1 text-xs text-zinc-500">
                   Place of supply: {property.place_of_supply}
-                  <br />
-                  SAC: {property.sac}
+                </p>
+              )}
+              {!doc?.is_final && (
+                <p className="mt-1 max-w-52 text-xs text-amber-700">
+                  Not a tax invoice yet — the number is issued when the folio
+                  is settled.
                 </p>
               )}
               <Badge tone={open ? "amber" : "green"}>{folio.status}</Badge>
@@ -519,21 +602,55 @@ export default function FolioView() {
               )}
             </div>
           )}
-          <div className="mb-6 grid gap-1 text-sm sm:grid-cols-2">
-            <p>
-              <span className="text-zinc-500">Guest: </span>
-              <span className="font-medium">{folio.guest_name}</span>
+          {/* The facts a bill is expected to state - who, which room, how
+              many people, on what plan, and for a foreign guest their
+              nationality (the same field the police report needs). */}
+          <dl className="mb-6 grid gap-x-6 gap-y-1 text-sm sm:grid-cols-2">
+            <Fact label="Guest">
+              <span className="font-medium">
+                {data.guest?.name ?? folio.guest_name}
+              </span>
               {stay.company && (
                 <span className="text-zinc-500"> · {stay.company}</span>
               )}
-            </p>
-            <p>
-              <span className="text-zinc-500">Stay: </span>
+            </Fact>
+            <Fact label="Room">
+              {stay.room ? stay.room.split("-").pop() : "—"}
+              {stay.room_type && (
+                <span className="text-zinc-500">
+                  {" "}
+                  · {stay.room_type.split("-").pop()}
+                </span>
+              )}
+            </Fact>
+            <Fact label="Stay">
               {stay.check_in} → {stay.check_out} · {stay.nights} night
               {stay.nights === 1 ? "" : "s"}
-              {stay.room && ` · Room ${stay.room.split("-").pop()}`}
-            </p>
-          </div>
+            </Fact>
+            <Fact label="Pax / plan">
+              {stay.pax || stay.adults || "—"}
+              {stay.children ? ` (${stay.adults}+${stay.children})` : ""}
+              {stay.meal_plan && (
+                <span className="text-zinc-500">
+                  {" "}
+                  · {stay.meal_plan.split("-").pop()}
+                </span>
+              )}
+            </Fact>
+            {(stay.arrival || stay.departure) && (
+              <Fact label="In / out">
+                {(stay.arrival ?? "").slice(0, 16).replace("T", " ") || "—"}
+                {" → "}
+                {(stay.departure ?? "").slice(0, 16).replace("T", " ") || "—"}
+              </Fact>
+            )}
+            {data.guest?.nationality && (
+              <Fact label="Nationality">{data.guest.nationality}</Fact>
+            )}
+            {data.guest?.address && (
+              <Fact label="Address">{data.guest.address}</Fact>
+            )}
+          </dl>
 
           {(() => {
             const targets = siblings.filter(
@@ -693,9 +810,12 @@ export default function FolioView() {
                       )}
                       <th className="py-2 pr-3">Date</th>
                       <th className="py-2 pr-3">Item</th>
+                      <th className="hidden py-2 pr-3 print:table-cell">
+                        {doc?.service_code_label ?? "SAC"}
+                      </th>
                       <th className="py-2 pr-3 text-right">Amount {cur()}</th>
-                      <th className="py-2 pr-3 text-right">GST %</th>
-                      <th className="py-2 pr-3 text-right">GST {cur()}</th>
+                      <th className="py-2 pr-3 text-right">{taxLabel()} %</th>
+                      <th className="py-2 pr-3 text-right">{taxLabel()} {cur()}</th>
                       <th className="py-2 text-right">Total {cur()}</th>
                       {editable && (
                         <th className="py-2 pl-3 print:hidden" aria-label="Actions" />
@@ -730,6 +850,9 @@ export default function FolioView() {
                             {c.description && (
                               <span className="text-zinc-500"> - {c.description}</span>
                             )}
+                          </td>
+                          <td className="hidden py-2 pr-3 font-mono text-xs text-zinc-400 print:table-cell">
+                            {lines.find((l) => l.row === c.name)?.service_code ?? ""}
                           </td>
                           <td className="py-2 pr-3 text-right">{inr(c.amount)}</td>
                           <td className="py-2 pr-3 text-right">{c.gst_rate}%</td>
@@ -793,21 +916,61 @@ export default function FolioView() {
             )
           })()}
 
+          {/* What the guest actually bought, before they read forty lines. */}
+          {(data.summary_by_head?.length ?? 0) > 1 && (
+            <div className="mb-6 break-inside-avoid rounded-xl bg-zinc-50 px-4 py-3">
+              <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-zinc-500">
+                Summary
+              </h3>
+              <table className="w-full text-sm">
+                <tbody>
+                  {data.summary_by_head.map((h) => (
+                    <tr key={h.head}>
+                      <td className="py-1">
+                        {h.head}
+                        <span className="ml-1.5 text-xs text-zinc-400">
+                          {h.lines} line{h.lines === 1 ? "" : "s"}
+                        </span>
+                      </td>
+                      <td className="py-1 text-right text-zinc-500">
+                        {cur()}{inr(h.amount)}
+                      </td>
+                      <td className="py-1 text-right text-zinc-400">
+                        + {cur()}{inr(h.tax)} {taxLabel().toLowerCase()}
+                      </td>
+                      <td className="py-1 text-right font-medium">
+                        {cur()}{inr(h.total)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
           <div className="mb-6 grid gap-6 sm:grid-cols-2">
             <div>
               <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-zinc-500">
-                GST summary
+                {taxLabel()} summary
               </h3>
               <table className="w-full text-sm">
                 <tbody className="divide-y divide-zinc-100">
-                  {gst_summary.map((r) => (
+                  {(taxRows.length ? taxRows : gst_summary.map((g) => ({
+                    rate: g.rate, taxable: g.taxable, total_tax: g.total_tax,
+                    parts: [
+                      { label: "CGST", rate: g.rate / 2, amount: g.cgst },
+                      { label: "SGST", rate: g.rate / 2, amount: g.sgst },
+                    ],
+                  }))).map((r) => (
                     <tr key={r.rate}>
-                      <td className="py-1.5 pr-3">{r.rate}% slab</td>
+                      <td className="py-1.5 pr-3">{r.rate}%</td>
                       <td className="py-1.5 pr-3 text-right text-zinc-500">
                         taxable {cur()}{inr(r.taxable)}
                       </td>
                       <td className="py-1.5 text-right">
-                        CGST {cur()}{inr(r.cgst)} · SGST {cur()}{inr(r.sgst)}
+                        {r.parts
+                          .map((x) => `${x.label} @ ${x.rate}% ${cur()}${inr(x.amount)}`)
+                          .join(" · ")}
                       </td>
                     </tr>
                   ))}
@@ -824,6 +987,11 @@ export default function FolioView() {
               <p className="text-lg font-semibold">
                 Grand total: {cur()}{inr(folio.grand_total)}
               </p>
+              {doc?.amount_in_words && (
+                <p className="text-xs italic text-zinc-500">
+                  {doc.amount_in_words}
+                </p>
+              )}
               <p className="text-zinc-500">
                 Paid: {cur()}{inr(folio.payments_total)} · Balance:{" "}
                 <span

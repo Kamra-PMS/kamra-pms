@@ -1,0 +1,54 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-07-31 10:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "course",
+  "dishes",
+  "choice_of",
+  "is_live_counter"
+ ],
+ "fields": [
+  {
+   "fieldname": "course",
+   "fieldtype": "Data",
+   "label": "Course",
+   "reqd": 1,
+   "in_list_view": 1,
+   "description": "Starters (Veg), Main Course, Live Counter, Desserts…"
+  },
+  {
+   "fieldname": "dishes",
+   "fieldtype": "Small Text",
+   "label": "Dishes",
+   "in_list_view": 1,
+   "description": "The dishes in this course, comma separated."
+  },
+  {
+   "fieldname": "choice_of",
+   "fieldtype": "Int",
+   "label": "Guest Picks",
+   "description": "0 = all served. N = the guest chooses N from the list."
+  },
+  {
+   "fieldname": "is_live_counter",
+   "fieldtype": "Check",
+   "label": "Live Counter"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-07-31 14:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kamra",
+ "name": "Banquet Menu Course",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "istable": 1
+}
