@@ -76,6 +76,8 @@ class VenueBooking(Document):
 		self._defaults()
 		self._session()
 		self._hours()
+		self._fill_quantities()
+		self._hall_deal()
 		self._price_lines()
 		self._totals()
 		self._cost_and_margin()
@@ -143,14 +145,11 @@ class VenueBooking(Document):
 			return float(_fnb_gst(self.property))
 		return _SERVICE_GST
 
-	def _price_lines(self):
-		"""Fill in what the line is actually worth. Quantities that follow
-		the function (pax, hours) are filled from the function so a menu
-		can't quietly bill 1 plate for a 300-person wedding.
-
-		Once the night is counted, `actual_qty` is what bills: the quote
-		said 300 plates, 318 people ate. Until then the quoted quantity
-		stands."""
+	def _fill_quantities(self):
+		"""Quantities that follow the function - pax, hours - are filled
+		from the function, so a menu can't quietly bill 1 plate for a
+		300-person wedding. Done before anything is priced, because the
+		hall deal reads the food spend off these numbers."""
 		for row in self.items:
 			if row.uom == "Pax" and not row.qty:
 				row.qty = self.billable_pax
@@ -164,6 +163,15 @@ class VenueBooking(Document):
 				if min_pax and row.qty < int(min_pax):
 					# the package's floor: a 50-plate minimum bills 50
 					row.qty = int(min_pax)
+
+	def _price_lines(self):
+		"""What each line is actually worth, once the quantities are known
+		and the hall deal has decided which lines are chargeable.
+
+		Once the night is counted, `actual_qty` is what bills: the quote
+		said 300 plates, 318 people ate. Until then the quoted quantity
+		stands."""
+		for row in self.items:
 			row.gst_rate = self._default_gst(row)
 			billed = Decimal(str(row.actual_qty or row.qty or 0))
 			gross = billed * Decimal(str(row.rate or 0))
@@ -224,6 +232,44 @@ class VenueBooking(Document):
 		self.margin_percent = float(
 			round(Decimal(str(self.gross_margin)) / revenue * 100, 2)
 		) if revenue else 0.0
+
+	def _hall_deal(self):
+		"""How the hall was sold, applied to the hall line.
+
+		The common wedding deal is "no rental if the food bill clears X".
+		Selling it is easy; remembering to waive it on the night is not,
+		and remembering to put it BACK when the guest count drops is
+		harder still. So the rule owns the line: the rental is chargeable
+		exactly while the food is short, and the sheet always says how
+		much more food would tip it.
+		"""
+		deal = self.hall_deal or "Hall & Food"
+		fnb = sum((Decimal(str(r.qty or 0)) * Decimal(str(r.rate or 0))
+		           for r in self.items
+		           if r.item_type in _FOOD_TYPES and r.chargeable), Decimal(0))
+		self.fnb_spend = float(fnb)
+
+		rental = next((r for r in self.items
+		               if r.item_type == "Venue Rental"), None)
+		waived = False
+		if rental:
+			if deal == "Food only":
+				waived = True
+			elif deal == "Hall free over a minimum spend":
+				waived = fnb >= Decimal(str(self.minimum_fnb_spend or 0))
+			# a waived hall is complimentary, not deleted: it still prints
+			# on the event order and the customer still sees what it was
+			# worth
+			rental.chargeable = 0 if waived else 1
+			if waived and not rental.notes:
+				rental.notes = "hall-waived"
+			# the hall costs the hotel to open whether or not it was billed
+			if not rental.cost_rate:
+				running = frappe.db.get_value("Venue", self.venue, "running_cost")
+				if running:
+					rental.cost_rate = float(running)
+					rental.cost_amount = float(running) * float(rental.qty or 1)
+		self.hall_waived = 1 if waived else 0
 
 	def _totals(self):
 		chargeable = [r for r in self.items if r.chargeable]
@@ -365,12 +411,15 @@ class VenueBooking(Document):
 			statuses=BLOCKING_STATUSES)
 		if clash:
 			other = clash[0]
+			shared = other.venue != self.venue
 			frappe.throw(_(
-				"{0} is already confirmed for {1} on {2}{3}. Move one of "
+				"{0} is already confirmed for {1} on {2}{3}.{4} Move one of "
 				"them, or use a different hall.").format(
-					self.venue, other.customer_name, other.event_date,
+					other.venue, other.customer_name, other.event_date,
 					f" {other.start_time}-{other.end_time}"
-					if other.start_time else ""))
+					if other.start_time else "",
+					_(" It shares part of {0}.").format(self.venue)
+					if shared else ""))
 
 	def on_update(self):
 		self._sync_green_room()
@@ -414,14 +463,47 @@ class VenueBooking(Document):
 				self.green_room, str(e)))
 
 
+def _sections_of(venue: str) -> set:
+	"""The physical pieces a bookable space occupies."""
+	return set(frappe.get_all(
+		"Venue Section", filters={"parent": venue, "parenttype": "Venue"},
+		pluck="section"))
+
+
+def clashing_venues(property: str, venue: str) -> list:
+	"""Every bookable space that cannot be sold while this one is.
+
+	A ballroom that splits into A and B is three sellable spaces - A, B,
+	and A+B - and A+B occupies both pieces. Selling A must therefore take
+	A+B off the market, though it leaves B free. Without this, a hall gets
+	sold twice on the same evening and nobody finds out until the trucks
+	arrive.
+
+	A venue with no sections declared behaves exactly as before: it only
+	conflicts with itself.
+	"""
+	mine = _sections_of(venue)
+	if not mine:
+		return [venue]
+	out = [venue]
+	for other in frappe.get_all(
+		"Venue", filters={"property": property, "name": ("!=", venue)},
+		pluck="name"):
+		if mine & _sections_of(other):
+			out.append(other)
+	return out
+
+
 def overlapping(property: str, venue: str, event_date, end_date,
                 start_time, end_time, exclude: str | None = None,
                 statuses=BLOCKING_STATUSES):
-	"""Other functions in the same hall whose dates - and, when both sides
-	state them, whose hours - run into this one."""
+	"""Other functions whose dates - and, when both sides state them, whose
+	hours - run into this one, in this hall or any hall that shares a
+	physical piece of it."""
 	last_day = end_date or event_date
 	filters = {
-		"property": property, "venue": venue,
+		"property": property,
+		"venue": ("in", clashing_venues(property, venue)),
 		"status": ("in", list(statuses)),
 		"event_date": ("<=", last_day),
 	}
@@ -430,7 +512,7 @@ def overlapping(property: str, venue: str, event_date, end_date,
 	rows = frappe.get_all(
 		"Venue Booking", filters=filters,
 		fields=["name", "customer_name", "event_date", "end_date",
-		        "start_time", "end_time", "status"])
+		        "start_time", "end_time", "status", "venue"])
 	out = []
 	for r in rows:
 		r_last = r.end_date or r.event_date

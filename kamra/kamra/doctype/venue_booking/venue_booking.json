@@ -51,6 +51,10 @@
   "column_break_pax",
   "pax_actual",
   "rate_basis",
+  "hall_deal",
+  "minimum_fnb_spend",
+  "fnb_spend",
+  "hall_waived",
   "sb_green",
   "green_room",
   "green_room_from",
@@ -385,6 +389,33 @@
    "label": "Rate Basis",
    "default": "Per Pax",
    "options": "Per Pax\nPer Plate\nLump Sum\nPer Hour"
+  },
+  {
+   "fieldname": "hall_deal",
+   "fieldtype": "Select",
+   "label": "Hall deal",
+   "default": "Hall & Food",
+   "options": "Hall & Food\nHall free over a minimum spend\nHall rent only\nFood only",
+   "description": "How this one was sold. 'Hall free over a minimum spend' is the common wedding deal: no rental if the food bill clears the number."
+  },
+  {
+   "fieldname": "minimum_fnb_spend",
+   "fieldtype": "Currency",
+   "label": "Minimum F&B spend",
+   "depends_on": "eval:doc.hall_deal==\"Hall free over a minimum spend\"",
+   "description": "The food bill that waives the rental."
+  },
+  {
+   "fieldname": "fnb_spend",
+   "fieldtype": "Currency",
+   "label": "F&B So Far",
+   "read_only": 1
+  },
+  {
+   "fieldname": "hall_waived",
+   "fieldtype": "Check",
+   "label": "Hall Waived",
+   "read_only": 1
   },
   {
    "fieldname": "sb_green",
@@ -803,7 +834,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-07-31 14:00:00.000000",
+ "modified": "2026-07-31 20:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Venue Booking",

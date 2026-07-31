@@ -140,21 +140,24 @@ export default function BanquetMonth() {
                 )}
               </div>
 
-              <div className="overflow-x-auto">
-                <table className="border-separate border-spacing-0 text-sm">
+              {/* table-fixed with narrow day columns: 31 days plus the two
+                  sticky columns land inside a normal desktop width, so the
+                  month reads in one look instead of two scrolls. */}
+              <div className="-mx-1 overflow-x-auto px-1">
+                <table className="w-full table-fixed border-separate border-spacing-0 text-sm">
                   <thead>
                     <tr>
-                      <th className="sticky left-0 z-20 bg-white p-2 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">
+                      <th className="sticky left-0 z-20 w-28 bg-white p-2 text-left text-[11px] font-medium uppercase tracking-wider text-zinc-500">
                         Hall
                       </th>
-                      <th className="sticky left-[9.5rem] z-20 bg-white p-2 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">
+                      <th className="sticky left-28 z-20 w-20 bg-white p-2 text-left text-[11px] font-medium uppercase tracking-wider text-zinc-500">
                         Session
                       </th>
                       {data.dates.map((d) => (
                         <th
                           key={d}
                           className={
-                            "min-w-8 border-b border-zinc-200 px-0.5 pb-1.5 text-center text-[11px] font-medium " +
+                            "border-b border-zinc-200 px-0 pb-1.5 text-center text-[10px] font-medium " +
                             (d === today()
                               ? "bg-brand-50 text-brand-700"
                               : weekend(d)
@@ -180,18 +183,20 @@ export default function BanquetMonth() {
                           {firstOfVenue ? (
                             <td
                               rowSpan={SESSIONS.length}
-                              className="sticky left-0 z-10 w-38 border-b border-zinc-100 bg-white p-2 align-top"
+                              className="sticky left-0 z-10 w-28 border-b border-zinc-100 bg-white p-2 align-top"
                             >
-                              <div className="font-medium">{r.venue_name}</div>
-                              <div className="text-xs text-zinc-400">
-                                {r.capacity ? `${r.capacity} pax · ` : ""}
+                              <div className="truncate font-medium" title={r.venue_name}>
+                                {r.venue_name}
+                              </div>
+                              <div className="text-[11px] leading-tight text-zinc-400">
+                                {r.capacity ? <>{r.capacity} pax<br /></> : null}
                                 {inr(r.base_price)}
                               </div>
                             </td>
                           ) : null}
                           <td
                             className={
-                              "sticky left-[9.5rem] z-10 whitespace-nowrap bg-white px-2 py-1 text-xs text-zinc-500 " +
+                              "sticky left-28 z-10 w-20 whitespace-nowrap bg-white px-2 py-1 text-xs text-zinc-500 " +
                               (r.session === "Evening"
                                 ? "border-b border-zinc-100"
                                 : "")
@@ -207,7 +212,7 @@ export default function BanquetMonth() {
                               <td
                                 key={d}
                                 className={
-                                  "px-0.5 py-0.5 " +
+                                  "px-px py-0.5 " +
                                   (r.session === "Evening"
                                     ? "border-b border-zinc-100"
                                     : "") +

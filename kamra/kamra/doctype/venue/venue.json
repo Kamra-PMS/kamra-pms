@@ -21,6 +21,13 @@
   "min_hours",
   "gst_rate",
   "setup_styles",
+  "sb_plan",
+  "sections",
+  "floor_plan",
+  "layout_note",
+  "sb_amenities",
+  "amenities_list",
+  "running_cost",
   "amenities",
   "disabled"
  ],
@@ -106,6 +113,47 @@
    "description": "Which layouts this room takes, comma separated."
   },
   {
+   "fieldname": "sb_plan",
+   "fieldtype": "Section Break",
+   "label": "Floor plan"
+  },
+  {
+   "fieldname": "sections",
+   "fieldtype": "Table",
+   "label": "Sections",
+   "options": "Venue Section",
+   "description": "The physical pieces this space occupies. A ballroom that splits into A and B is three bookable venues: A, B, and A+B - and A+B lists both pieces, so selling either half takes the whole room off the market."
+  },
+  {
+   "fieldname": "floor_plan",
+   "fieldtype": "Attach Image",
+   "label": "Floor Plan",
+   "description": "The layout drawing the sales team shows a customer."
+  },
+  {
+   "fieldname": "layout_note",
+   "fieldtype": "Small Text",
+   "label": "Layout Note",
+   "description": "Pillars, power points, where the stage can go."
+  },
+  {
+   "fieldname": "sb_amenities",
+   "fieldtype": "Section Break",
+   "label": "What it comes with"
+  },
+  {
+   "fieldname": "amenities_list",
+   "fieldtype": "Table",
+   "label": "Amenities List",
+   "options": "Venue Amenity"
+  },
+  {
+   "fieldname": "running_cost",
+   "fieldtype": "Currency",
+   "label": "Running Cost",
+   "description": "What opening this hall costs the hotel for one function - power, cleaning, setup labour, linen. Without it every function reports a margin the hall never earned."
+  },
+  {
    "fieldname": "amenities",
    "fieldtype": "Small Text",
    "label": "Amenities"
@@ -120,7 +168,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-07-31 10:00:00.000000",
+ "modified": "2026-07-31 20:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Venue",

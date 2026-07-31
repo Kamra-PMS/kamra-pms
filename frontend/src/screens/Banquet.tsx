@@ -37,6 +37,8 @@ import {
   inr,
   monthName,
   Select,
+  SESSION_HOURS,
+  SESSIONS,
   SOURCES,
   Stat,
   StatusPill,
@@ -563,6 +565,7 @@ function EnquirySheet({
     event_type: "Wedding",
     event_date: today(),
     end_date: "",
+    session: "Evening",
     start_time: "19:00",
     end_time: "23:00",
     attendees: "",
@@ -577,6 +580,13 @@ function EnquirySheet({
 
   const set = (k: keyof typeof form, v: string) =>
     setForm((f) => ({ ...f, [k]: v }))
+
+  const custom = form.session === "Custom Hours"
+  // the window an availability check should ask about, and the times the
+  // enquiry is saved with - the session owns both unless it's custom
+  const [from, to] = custom
+    ? [form.start_time, form.end_time]
+    : (SESSION_HOURS[form.session] ?? ["", ""])
 
   useEffect(() => {
     listResource("Company", { fields: ["name", "company_name"], limit: 200 })
@@ -593,8 +603,8 @@ function EnquirySheet({
       .availability({
         event_date: form.event_date,
         end_date: form.end_date || null,
-        start_time: form.start_time || null,
-        end_time: form.end_time || null,
+        start_time: from || null,
+        end_time: to || null,
         pax: Number(form.attendees) || 0,
       })
       .then((r) => {
@@ -610,7 +620,7 @@ function EnquirySheet({
     return () => {
       live = false
     }
-  }, [form.event_date, form.end_date, form.start_time, form.end_time, form.attendees])
+  }, [form.event_date, form.end_date, from, to, form.attendees])
 
   async function submit() {
     if (!form.customer_name.trim()) return setError("Whose function is this?")
@@ -622,8 +632,9 @@ function EnquirySheet({
         venue: form.venue,
         event_date: form.event_date,
         end_date: form.end_date || null,
-        start_time: form.start_time || null,
-        end_time: form.end_time || null,
+        session: form.session,
+        start_time: from || null,
+        end_time: to || null,
         customer_name: form.customer_name,
         customer_phone: form.customer_phone || null,
         customer_email: form.customer_email || null,
@@ -735,22 +746,36 @@ function EnquirySheet({
               onChange={(e) => set("attendees", e.target.value)}
             />
           </Field>
-          <Field label="From">
-            <input
-              type="time"
-              className={inputCls}
-              value={form.start_time}
-              onChange={(e) => set("start_time", e.target.value)}
+          <Field
+            label="Session"
+            hint={custom ? undefined : `${from}–${to}`}
+          >
+            <Select
+              value={form.session}
+              onChange={(v) => set("session", v)}
+              options={SESSIONS}
             />
           </Field>
-          <Field label="To">
-            <input
-              type="time"
-              className={inputCls}
-              value={form.end_time}
-              onChange={(e) => set("end_time", e.target.value)}
-            />
-          </Field>
+          {custom && (
+            <>
+              <Field label="From">
+                <input
+                  type="time"
+                  className={inputCls}
+                  value={form.start_time}
+                  onChange={(e) => set("start_time", e.target.value)}
+                />
+              </Field>
+              <Field label="To">
+                <input
+                  type="time"
+                  className={inputCls}
+                  value={form.end_time}
+                  onChange={(e) => set("end_time", e.target.value)}
+                />
+              </Field>
+            </>
+          )}
           <Field label="Came from">
             <Select
               value={form.source}

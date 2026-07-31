@@ -1,0 +1,72 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-07-31 20:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "amenity",
+  "category",
+  "included",
+  "rate",
+  "uom",
+  "note"
+ ],
+ "fields": [
+  {
+   "fieldname": "amenity",
+   "fieldtype": "Data",
+   "label": "Amenity",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "category",
+   "fieldtype": "Select",
+   "label": "Category",
+   "in_list_view": 1,
+   "default": "Climate",
+   "options": "Climate\nPower\nAudio Visual\nParking\nAccess\nService\nKitchen\nSafety\nOther"
+  },
+  {
+   "fieldname": "included",
+   "fieldtype": "Check",
+   "label": "Included",
+   "default": "1",
+   "in_list_view": 1,
+   "description": "On = it comes with the hall. Off = it's an extra the customer pays for, and it can go on the quote."
+  },
+  {
+   "fieldname": "rate",
+   "fieldtype": "Currency",
+   "label": "Rate",
+   "in_list_view": 1,
+   "description": "What it costs when it isn't included."
+  },
+  {
+   "fieldname": "uom",
+   "fieldtype": "Select",
+   "label": "Charged",
+   "default": "Per Event",
+   "options": "Per Event\nPer Hour\nPer Day\nPer Pax\nPer Unit"
+  },
+  {
+   "fieldname": "note",
+   "fieldtype": "Data",
+   "label": "Note"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-07-31 20:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kamra",
+ "name": "Venue Amenity",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

@@ -235,8 +235,9 @@ class TestCostAndMargin(BanquetTestCase):
 		bq.add_service(fn, self.f["led"])
 		doc = self.sheet(fn)
 		self.assertEqual(doc.food_cost, 800)       # 8/pax x 100 pax
-		self.assertEqual(doc.service_cost, 25000)  # the LED wall's buy price
-		self.assertEqual(doc.total_cost, 25800)
+		# the LED wall's buy price, plus what opening the hall costs
+		self.assertEqual(doc.service_cost, 30000)
+		self.assertEqual(doc.total_cost, 30800)
 		self.assertAlmostEqual(doc.gross_margin,
 		                       doc.taxable_amount - doc.net_cost, places=2)
 
@@ -628,3 +629,189 @@ class TestAccess(BanquetTestCase):
 			bq.save_dish(PROPERTY, "Sneaky dish")
 		frappe.set_user("banquet.revenue@test.local")
 		self.assertTrue(bq.save_dish(PROPERTY, "Allowed dish")["name"])
+
+
+# ══ the hall itself ══════════════════════════════════════════════════════
+
+class TestFloorPlan(BanquetTestCase):
+	"""A ballroom that splits into A and B is three sellable spaces sharing
+	two physical pieces. Selling half must take the whole room off the
+	market - without this a hall gets sold twice and nobody finds out
+	until the trucks arrive."""
+
+	def test_selling_a_half_takes_the_whole_room(self):
+		day = add_days(nowdate(), 300)
+		bq.set_status(enquiry(self.f, venue=self.f["hall_a"],
+		                      event_date=day), "Confirmed")
+		whole = enquiry(self.f, venue=self.f["hall_ab"], event_date=day,
+		                customer_name="Big wedding")
+		with self.assertRaises(frappe.ValidationError):
+			bq.set_status(whole, "Confirmed")
+
+	def test_selling_the_whole_room_takes_both_halves(self):
+		day = add_days(nowdate(), 301)
+		bq.set_status(enquiry(self.f, venue=self.f["hall_ab"],
+		                      event_date=day), "Confirmed")
+		half = enquiry(self.f, venue=self.f["hall_b"], event_date=day,
+		               customer_name="Small party")
+		with self.assertRaises(frappe.ValidationError):
+			bq.set_status(half, "Confirmed")
+
+	def test_the_two_halves_sell_independently(self):
+		day = add_days(nowdate(), 302)
+		bq.set_status(enquiry(self.f, venue=self.f["hall_a"],
+		                      event_date=day), "Confirmed")
+		other = enquiry(self.f, venue=self.f["hall_b"], event_date=day,
+		                customer_name="Other half")
+		bq.set_status(other, "Confirmed")
+		self.assertEqual(self.sheet(other).status, "Confirmed")
+
+	def test_a_hall_with_no_sections_only_clashes_with_itself(self):
+		day = add_days(nowdate(), 303)
+		bq.set_status(enquiry(self.f, event_date=day), "Confirmed")
+		elsewhere = enquiry(self.f, venue=self.f["small"], event_date=day,
+		                    customer_name="Boardroom")
+		bq.set_status(elsewhere, "Confirmed")
+		self.assertEqual(self.sheet(elsewhere).status, "Confirmed")
+
+	def test_the_hall_reports_what_it_shares_a_floor_with(self):
+		out = bq.venue_detail(self.f["hall_ab"])
+		self.assertCountEqual(out["shares_floor_with"],
+		                      [self.f["hall_a"], self.f["hall_b"]])
+		self.assertEqual(len(out["sections"]), 2)
+
+
+class TestHallDeal(BanquetTestCase):
+	def test_hall_and_food_bills_both(self):
+		fn = enquiry(self.f)
+		bq.update_function(fn, {"pax_guaranteed": 100})
+		bq.add_menu(fn, self.f["menu"])
+		doc = self.sheet(fn)
+		self.assertFalse(doc.hall_waived)
+		rental = next(r for r in doc.items if r.item_type == "Venue Rental")
+		self.assertTrue(rental.chargeable)
+
+	def test_the_hall_is_free_once_the_food_bill_clears_the_number(self):
+		fn = enquiry(self.f)
+		bq.update_function(fn, {
+			"pax_guaranteed": 100,
+			"hall_deal": "Hall free over a minimum spend",
+			"minimum_fnb_spend": 100000})
+		bq.add_menu(fn, self.f["menu"])          # 100 x 1200 = 120,000
+		doc = self.sheet(fn)
+		self.assertEqual(doc.fnb_spend, 120000)
+		self.assertTrue(doc.hall_waived)
+		rental = next(r for r in doc.items if r.item_type == "Venue Rental")
+		self.assertFalse(rental.chargeable)
+		self.assertEqual(rental.amount, 0)
+
+	def test_the_rental_comes_back_when_the_food_bill_drops(self):
+		fn = enquiry(self.f)
+		bq.update_function(fn, {
+			"pax_guaranteed": 100,
+			"hall_deal": "Hall free over a minimum spend",
+			"minimum_fnb_spend": 100000})
+		bq.add_menu(fn, self.f["menu"])
+		self.assertTrue(self.sheet(fn).hall_waived)
+		# the guest count falls and the deal no longer holds
+		bq.update_function(fn, {"minimum_fnb_spend": 500000})
+		doc = self.sheet(fn)
+		self.assertFalse(doc.hall_waived)
+		rental = next(r for r in doc.items if r.item_type == "Venue Rental")
+		self.assertTrue(rental.chargeable)
+
+	def test_a_waived_hall_still_costs_the_hotel_to_open(self):
+		fn = enquiry(self.f, venue=self.f["hall_ab"])
+		bq.update_function(fn, {"pax_guaranteed": 100,
+		                        "hall_deal": "Food only"})
+		doc = self.sheet(fn)
+		self.assertTrue(doc.hall_waived)
+		rental = next(r for r in doc.items if r.item_type == "Venue Rental")
+		self.assertEqual(rental.cost_rate, 6000)   # the venue's running cost
+
+
+class TestAmenities(BanquetTestCase):
+	def test_included_amenities_are_not_billed(self):
+		out = bq.venue_detail(self.f["hall_ab"])
+		included = [a["amenity"] for a in out["amenities"] if a["included"]]
+		self.assertIn("Air conditioning", included)
+		self.assertIn("Generator backup", included)
+
+	def test_chargeable_extras_can_be_priced_onto_the_quote(self):
+		fn = enquiry(self.f, venue=self.f["hall_ab"])
+		out = bq.offer_amenities(fn)
+		self.assertEqual(out["added"], 1)          # only the valet parking
+		line = next(r for r in self.sheet(fn).items
+		            if r.notes == "hall-amenity")
+		self.assertEqual(line.rate, 12000)
+
+	def test_or_parked_as_open_items_while_it_is_undecided(self):
+		fn = enquiry(self.f, venue=self.f["hall_ab"])
+		bq.offer_amenities(fn, as_open_items=1)
+		doc = self.sheet(fn)
+		self.assertTrue(any(o.title == "Valet parking" for o in doc.open_items))
+		self.assertFalse(any(r.notes == "hall-amenity" for r in doc.items))
+
+
+class TestQuoteAdvisor(BanquetTestCase):
+	"""Margin after the event is an autopsy. This is the number that
+	changes a decision, while the discount is still being typed."""
+
+	def _priced(self):
+		fn = enquiry(self.f)
+		bq.update_function(fn, {"pax_guaranteed": 100})
+		bq.add_menu(fn, self.f["menu"])          # 120,000 sell / 800 cost
+		bq.add_service(fn, self.f["led"])        # 40,000 sell / 25,000 cost
+		return fn
+
+	def test_it_says_what_is_left_at_the_current_price(self):
+		out = bq.quote_advisor(self._priced())
+		self.assertEqual(out["revenue"], 210000)
+		# 800 food + 25,000 LED wall + 5,000 to open the hall
+		self.assertEqual(out["cost"], 30800)
+		self.assertEqual(out["margin"], 179200)
+		self.assertEqual(out["verdict"], "good")
+
+	def test_it_prices_a_what_if_without_touching_the_quote(self):
+		fn = self._priced()
+		before = self.sheet(fn).discount_amount
+		out = bq.quote_advisor(fn, at_discount=100000)
+		self.assertEqual(out["revenue"], 110000)
+		self.assertLess(out["margin_percent"], 80)
+		self.assertEqual(self.sheet(fn).discount_amount, before)
+
+	def test_it_says_how_much_more_can_be_given_away(self):
+		out = bq.quote_advisor(self._priced())
+		self.assertAlmostEqual(out["max_discount"]["to_break_even"],
+		                       210000 - 30800, places=2)
+		self.assertLess(out["max_discount"]["to_target"],
+		                out["max_discount"]["to_break_even"])
+
+	def test_it_refuses_to_pretend_when_nothing_is_costed(self):
+		# the boardroom carries no running cost, so nothing on this quote
+		# has a buy price at all
+		fn = enquiry(self.f, venue=self.f["small"])
+		doc = self.sheet(fn)
+		for r in doc.items:
+			r.cost_rate = 0
+		doc.save(ignore_permissions=True)
+		out = bq.quote_advisor(fn)
+		self.assertEqual(out["verdict"], "unknown")
+		self.assertIn("imaginary", out["advice"])
+
+	def test_it_calls_a_loss_a_loss(self):
+		fn = self._priced()
+		out = bq.quote_advisor(fn, at_discount=200000)
+		self.assertEqual(out["verdict"], "loss")
+		self.assertLess(out["margin"], 0)
+
+	def test_it_says_how_much_more_food_would_free_the_hall(self):
+		fn = enquiry(self.f)
+		bq.update_function(fn, {
+			"pax_guaranteed": 100,
+			"hall_deal": "Hall free over a minimum spend",
+			"minimum_fnb_spend": 200000})
+		bq.add_menu(fn, self.f["menu"])          # 120,000 of 200,000
+		hall = bq.quote_advisor(fn)["hall"]
+		self.assertFalse(hall["waived"])
+		self.assertEqual(hall["short_by"], 80000)

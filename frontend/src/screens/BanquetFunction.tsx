@@ -58,17 +58,18 @@ import {
   StatusPill,
   UOMS,
 } from "./banquet/shared"
+import { Steps, stepsFor, type StepId } from "./banquet/Steps"
 import Economics from "./banquet/Economics"
 import MenuComposer from "./banquet/MenuComposer"
 
-type Tab = "detail" | "items" | "cost" | "money" | "paper"
+
 
 export default function BanquetFunction() {
   const { name = "" } = useParams()
   const navigate = useNavigate()
   const [fn, setFn] = useState<FunctionSheet | null>(null)
   const [cat, setCat] = useState<BanquetCatalogue | null>(null)
-  const [tab, setTab] = useState<Tab>("detail")
+  const [step, setStep] = useState<StepId>("enquiry")
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
@@ -102,18 +103,31 @@ export default function BanquetFunction() {
   if (!fn) return <Empty>{error ?? "Loading…"}</Empty>
 
   const away = daysAway(fn.event_date)
+  const steps = stepsFor(fn)
 
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <button
-            onClick={() => navigate("/banquet")}
-            className="mb-1 inline-flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700"
-          >
-            <ArrowLeft className="size-3.5" />
-            Banquets
-          </button>
+          <nav aria-label="Breadcrumb" className="mb-1">
+            <ol className="flex items-center gap-1.5 text-xs text-zinc-400">
+              <li>
+                <button
+                  onClick={() => navigate("/banquet")}
+                  className="inline-flex items-center gap-1 hover:text-zinc-700"
+                >
+                  <ArrowLeft className="size-3.5" />
+                  Banquets
+                </button>
+              </li>
+              <li aria-hidden>/</li>
+              <li className="font-mono">{fn.name}</li>
+              <li aria-hidden>/</li>
+              <li className="text-zinc-600">
+                {steps.find((x) => x.id === step)?.label}
+              </li>
+            </ol>
+          </nav>
           <h1 className="flex flex-wrap items-center gap-2 text-lg font-semibold">
             {fn.customer_name}
             <StatusPill status={fn.status} />
@@ -172,17 +186,19 @@ export default function BanquetFunction() {
           value={fn.balance_due}
           tone={fn.balance_due > 0 ? "text-rose-700" : "text-emerald-700"}
         />
+        {/* Claiming 100% because nothing has been costed is the most
+            flattering possible lie - say "not costed yet" instead. */}
         <Money
           label="Margin"
-          value={fn.gross_margin}
+          value={fn.total_cost ? fn.gross_margin : null}
           sub={
-            fn.margin_percent
+            fn.total_cost
               ? `${fn.margin_percent}% after ${inr(fn.net_cost)} cost`
-              : "no costs recorded yet"
+              : "nothing costed yet — see Cost & margin"
           }
           tone={
-            !fn.margin_percent
-              ? "text-zinc-400"
+            !fn.total_cost
+              ? "text-zinc-300"
               : fn.margin_percent >= 35
                 ? "text-emerald-700"
                 : "text-amber-700"
@@ -190,38 +206,16 @@ export default function BanquetFunction() {
         />
       </div>
 
-      <div className="flex gap-1 border-b border-zinc-200">
-        {(
-          [
-            ["detail", "Function"],
-            ["items", `Items & pricing (${fn.items.length})`],
-            ["cost", "Cost & margin"],
-            ["money", "Terms & money"],
-            ["paper", "Documents"],
-          ] as [Tab, string][]
-        ).map(([id, label]) => (
-          <button
-            key={id}
-            onClick={() => setTab(id)}
-            className={
-              "-mb-px border-b-2 px-3 py-2 text-sm font-medium transition-colors " +
-              (tab === id
-                ? "border-brand-600 text-brand-700"
-                : "border-transparent text-zinc-500 hover:text-zinc-800")
-            }
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+      <Steps steps={steps} current={step} onPick={setStep} />
 
-      {tab === "detail" && <DetailTab fn={fn} busy={busy} act={act} />}
-      {tab === "items" && (
-        <ItemsTab fn={fn} cat={cat} busy={busy} act={act} />
+      {step === "enquiry" && <DetailTab fn={fn} busy={busy} act={act} />}
+      {step === "quote" && <ItemsTab fn={fn} cat={cat} busy={busy} act={act} />}
+      {step === "margin" && <Economics fn={fn} busy={busy} act={act} />}
+      {step === "money" && <MoneyTab fn={fn} busy={busy} act={act} />}
+      {step === "documents" && <PaperTab fn={fn} busy={busy} act={act} />}
+      {step === "close" && (
+        <CloseOutCard fn={fn} busy={busy} act={act} onCount={() => setStep("margin")} />
       )}
-      {tab === "cost" && <Economics fn={fn} busy={busy} act={act} />}
-      {tab === "money" && <MoneyTab fn={fn} busy={busy} act={act} />}
-      {tab === "paper" && <PaperTab fn={fn} busy={busy} act={act} />}
     </div>
   )
 }
@@ -235,7 +229,9 @@ function Money({
   tone = "",
 }: {
   label: string
-  value: number
+  /** null when the number isn't known yet - shown as a dash, never as a
+   *  confident zero or a flattering percentage. */
+  value: number | null
   sub?: string
   tone?: string
 }) {
@@ -245,7 +241,7 @@ function Money({
         {label}
       </p>
       <p className={"mt-1 text-xl font-semibold tabular-nums " + tone}>
-        {inr(value)}
+        {value === null ? "—" : inr(value)}
       </p>
       {sub && <p className="mt-0.5 text-xs text-zinc-400">{sub}</p>}
     </div>
@@ -898,19 +894,19 @@ function ItemsTab({
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-zinc-200 text-left text-xs uppercase tracking-wider text-zinc-400">
-                    <th className="py-2 pr-2 font-medium">Type</th>
-                    <th className="py-2 pr-2 font-medium">Item</th>
-                    <th className="py-2 pr-2 text-right font-medium">Qty</th>
-                    <th className="py-2 pr-2 font-medium">Per</th>
-                    <th className="py-2 pr-2 text-right font-medium">Rack</th>
-                    <th className="py-2 pr-2 text-right font-medium">Agreed</th>
-                    <th className="py-2 pr-2 text-center font-medium">Charge</th>
-                    <th className="py-2 pr-2 text-right font-medium">
+                  <tr className="border-b border-zinc-200 text-left text-[11px] uppercase tracking-wider text-zinc-400">
+                    <th className="w-36 py-2 pr-2 font-medium">Type</th>
+                    <th className="min-w-56 py-2 pr-2 font-medium">Item</th>
+                    <th className="w-20 py-2 pr-2 text-right font-medium">Qty</th>
+                    <th className="w-24 py-2 pr-2 font-medium">Per</th>
+                    <th className="w-24 py-2 pr-2 text-right font-medium">Rack</th>
+                    <th className="w-28 py-2 pr-2 text-right font-medium">Agreed</th>
+                    <th className="w-16 py-2 pr-2 text-center font-medium">Charge</th>
+                    <th className="w-20 py-2 pr-2 text-right font-medium">
                       {taxLabel()} %
                     </th>
-                    <th className="py-2 pr-2 text-right font-medium">Amount</th>
-                    <th className="py-2 w-8" />
+                    <th className="w-28 py-2 pr-2 text-right font-medium">Amount</th>
+                    <th className="w-8 py-2" />
                   </tr>
                 </thead>
                 <tbody>
@@ -924,7 +920,7 @@ function ItemsTab({
                     >
                       <td className="py-1.5 pr-2">
                         <select
-                          className={inputCls + " !w-36 !py-1"}
+                          className={inputCls + " !py-1"}
                           value={l.item_type}
                           onChange={(e) =>
                             edit(i, { item_type: e.target.value })
@@ -937,7 +933,7 @@ function ItemsTab({
                       </td>
                       <td className="py-1.5 pr-2">
                         <input
-                          className={inputCls + " !w-56 !py-1"}
+                          className={inputCls + " !py-1"}
                           value={l.item_name}
                           placeholder="What is it?"
                           onChange={(e) =>
@@ -960,7 +956,7 @@ function ItemsTab({
                       <td className="py-1.5 pr-2">
                         <input
                           type="number"
-                          className={inputCls + " !w-20 !py-1 text-right"}
+                          className={inputCls + " !py-1 text-right"}
                           value={l.qty}
                           onChange={(e) =>
                             edit(i, { qty: Number(e.target.value) })
@@ -969,7 +965,7 @@ function ItemsTab({
                       </td>
                       <td className="py-1.5 pr-2">
                         <select
-                          className={inputCls + " !w-20 !py-1"}
+                          className={inputCls + " !py-1"}
                           value={l.uom}
                           onChange={(e) => edit(i, { uom: e.target.value })}
                         >
@@ -978,13 +974,13 @@ function ItemsTab({
                           ))}
                         </select>
                       </td>
-                      <td className="py-1.5 pr-2 text-right tabular-nums text-zinc-400">
-                        {l.list_rate ? inr(l.list_rate) : "-"}
+                      <td className="py-1.5 pr-2 text-right text-xs tabular-nums text-zinc-400">
+                        {l.list_rate ? inr(l.list_rate) : "—"}
                       </td>
                       <td className="py-1.5 pr-2">
                         <input
                           type="number"
-                          className={inputCls + " !w-24 !py-1 text-right"}
+                          className={inputCls + " !py-1 text-right"}
                           value={l.rate}
                           onChange={(e) =>
                             edit(i, { rate: Number(e.target.value) })
@@ -1010,7 +1006,7 @@ function ItemsTab({
                         {l.chargeable ? (
                           <input
                             type="number"
-                            className={inputCls + " !w-16 !py-1 text-right"}
+                            className={inputCls + " !py-1 text-right"}
                             title={
                               l.tax_exempt
                                 ? "Zero-rated on purpose"
@@ -1041,7 +1037,7 @@ function ItemsTab({
                           </span>
                         )}
                       </td>
-                      <td className="py-1.5">
+                      <td className="py-1.5 text-right">
                         <button
                           className="text-zinc-300 hover:text-rose-600"
                           onClick={() =>
@@ -1730,8 +1726,6 @@ function MoneyTab({
         </CardContent>
       </Card>
 
-      <CloseOutCard fn={fn} busy={busy} act={act} />
-
       <Card>
         <CardHeader>
           <CardTitle>
@@ -1882,10 +1876,12 @@ function CloseOutCard({
   fn,
   busy,
   act,
+  onCount,
 }: {
   fn: FunctionSheet
   busy: boolean
   act: Act
+  onCount?: () => void
 }) {
   const [open, setOpen] = useState(false)
   const [pax, setPax] = useState(String(fn.pax_actual || fn.pax_guaranteed || ""))
@@ -1907,9 +1903,16 @@ function CloseOutCard({
             Deposit &amp; close-out
           </span>
         </CardTitle>
-        {!done && fn.status === "Confirmed" && (
-          <Button onClick={() => setOpen(true)}>Close out the function</Button>
-        )}
+        <div className="flex gap-2">
+          {onCount && (
+            <Button variant="outline" onClick={onCount}>
+              Count what was served
+            </Button>
+          )}
+          {!done && fn.status === "Confirmed" && (
+            <Button onClick={() => setOpen(true)}>Close out the function</Button>
+          )}
+        </div>
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="grid gap-3 sm:grid-cols-3">

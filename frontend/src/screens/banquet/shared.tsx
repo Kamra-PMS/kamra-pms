@@ -85,6 +85,15 @@ export const SESSIONS = [
   "Full Day",
   "Custom Hours",
 ]
+/** The clock behind each session - mirrors SESSION_HOURS on the server so
+ *  an availability check made before saving asks about the right window. */
+export const SESSION_HOURS: Record<string, [string, string]> = {
+  Morning: ["07:00", "12:00"],
+  Afternoon: ["12:00", "17:00"],
+  Evening: ["18:00", "23:59"],
+  "Full Day": ["07:00", "23:59"],
+}
+
 export const CATALOGUE_UOMS = [
   "Per Event",
   "Per Hour",

@@ -74,8 +74,36 @@ def build() -> dict:
 		"property": PROPERTY, "venue_name": "Test Hall",
 		"venue_type": "Banquet Hall", "capacity": 300, "min_capacity": 50,
 		"base_price": 50000, "hourly_rate": 8000, "min_hours": 4,
-		"gst_rate": 18,
+		"gst_rate": 18, "running_cost": 5000,
 	})
+	# a divisible ballroom: A, B and the whole room are three sellable
+	# spaces sharing two physical pieces
+	f["hall_a"] = _upsert("Venue", {"property": PROPERTY,
+	                                "venue_name": "Test Hall A"}, {
+		"property": PROPERTY, "venue_name": "Test Hall A",
+		"venue_type": "Banquet Hall", "capacity": 150, "base_price": 30000,
+		"gst_rate": 18, "sections": [{"section": "A"}],
+	})
+	f["hall_b"] = _upsert("Venue", {"property": PROPERTY,
+	                                "venue_name": "Test Hall B"}, {
+		"property": PROPERTY, "venue_name": "Test Hall B",
+		"venue_type": "Banquet Hall", "capacity": 150, "base_price": 30000,
+		"gst_rate": 18, "sections": [{"section": "B"}],
+	})
+	f["hall_ab"] = _upsert("Venue", {"property": PROPERTY,
+	                                 "venue_name": "Test Hall AB"}, {
+		"property": PROPERTY, "venue_name": "Test Hall AB",
+		"venue_type": "Banquet Hall", "capacity": 300, "base_price": 55000,
+		"gst_rate": 18, "running_cost": 6000,
+		"sections": [{"section": "A"}, {"section": "B"}],
+		"amenities_list": [
+			{"amenity": "Air conditioning", "category": "Climate", "included": 1},
+			{"amenity": "Generator backup", "category": "Power", "included": 1},
+			{"amenity": "Valet parking", "category": "Parking", "included": 0,
+			 "rate": 12000, "uom": "Per Event"},
+		],
+	})
+
 	f["small"] = _upsert("Venue", {"property": PROPERTY,
 	                                      "venue_name": "Test Boardroom"}, {
 		"property": PROPERTY, "venue_name": "Test Boardroom",

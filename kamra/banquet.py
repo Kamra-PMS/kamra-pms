@@ -31,6 +31,8 @@ posted by an agent, the Desk or this API is taxed and totalled the same
 way. See kamra/kamra/doctype/venue_booking/venue_booking.py.
 """
 
+from decimal import Decimal
+
 import frappe
 from frappe import _
 from frappe.utils import (
@@ -328,6 +330,7 @@ def update_function(function: str, fields):
 		"requirements", "beo_notes", "internal_notes", "payment_terms_note",
 		"discount_amount", "group_booking", "session",
 		"service_charge_percent", "refundable_deposit",
+		"hall_deal", "minimum_fnb_spend",
 	}
 	fields = _map(fields)
 	unknown = set(fields) - editable
@@ -2349,4 +2352,191 @@ def customer_profile(property: str, guest: str | None = None,
 			"room_stays": stays,
 			"last_event": str(won[0].event_date) if won else None,
 		},
+	}
+
+
+# ══ before you send the price ════════════════════════════════════════════
+
+# What a banquet is expected to hold. Below the floor a function is worth
+# arguing about; below break-even it is worth refusing.
+TARGET_MARGIN = 40.0
+FLOOR_MARGIN = 25.0
+
+
+@frappe.whitelist()
+@require_roles(*BANQUET_ROLES, "Finance")
+def quote_advisor(function: str, at_discount: float | None = None):
+	"""Would this function make money at the price we're about to send?
+
+	Margin after the event is an autopsy. The number that changes a
+	decision is the one on screen while the discount is still being typed
+	- so this answers, for the price as it stands: what's left, how much
+	more could be given away before it stops being worth doing, and where
+	the cost actually sits.
+
+	`at_discount` prices a what-if without touching the quote.
+	"""
+	doc = _fn(function)
+	discount = (Decimal(str(at_discount)) if at_discount is not None
+	            else Decimal(str(doc.discount_amount or 0)))
+
+	subtotal = Decimal(str(doc.subtotal or 0))
+	if discount > subtotal:
+		frappe.throw(_("That discount is more than the quote itself."))
+	cost = Decimal(str(doc.net_cost or 0))
+	revenue = subtotal - discount
+	margin = revenue - cost
+	pct = float(round(margin / revenue * 100, 2)) if revenue else 0.0
+
+	# the most that can be given away and still clear each bar
+	def headroom(target: float) -> float:
+		if not cost:
+			return float(subtotal)          # nothing costed: no honest answer
+		keep = cost / (1 - Decimal(str(target)) / 100) if target < 100 else cost
+		return float(max(Decimal(0), subtotal - keep))
+
+	uncosted = [r.item_name for r in doc.items
+	            if r.chargeable and not float(r.cost_rate or 0)]
+	drivers = sorted(
+		({"item_name": r.item_name, "cost": float(r.cost_amount or 0),
+		  "share": round(float(r.cost_amount or 0) / float(cost) * 100, 1)
+		  if cost else 0}
+		 for r in doc.items if float(r.cost_amount or 0)),
+		key=lambda x: -x["cost"])[:5]
+
+	verdict, advice = _verdict(pct, bool(uncosted), cost)
+	return {
+		"function": doc.name, "pax": doc.billable_pax,
+		"subtotal": float(subtotal), "discount": float(discount),
+		"revenue": float(revenue), "cost": float(cost),
+		"margin": float(margin), "margin_percent": pct,
+		"per_pax": {
+			"revenue": round(float(revenue) / doc.billable_pax, 2)
+			if doc.billable_pax else 0,
+			"cost": round(float(cost) / doc.billable_pax, 2)
+			if doc.billable_pax else 0,
+			"margin": round(float(margin) / doc.billable_pax, 2)
+			if doc.billable_pax else 0,
+		},
+		"break_even_price": float(cost),
+		"max_discount": {
+			"to_break_even": headroom(0),
+			"to_floor": headroom(FLOOR_MARGIN),
+			"to_target": headroom(TARGET_MARGIN),
+		},
+		"target_margin": TARGET_MARGIN, "floor_margin": FLOOR_MARGIN,
+		"verdict": verdict, "advice": advice,
+		"cost_drivers": drivers,
+		"uncosted_lines": uncosted,
+		"hall": {
+			"deal": doc.hall_deal, "waived": bool(doc.hall_waived),
+			"fnb_spend": doc.fnb_spend,
+			"minimum": doc.minimum_fnb_spend,
+			"short_by": max(0.0, float(doc.minimum_fnb_spend or 0)
+			                - float(doc.fnb_spend or 0))
+			if doc.hall_deal == "Hall free over a minimum spend" else 0,
+		},
+	}
+
+
+def _verdict(pct: float, uncosted: bool, cost) -> tuple:
+	if not cost:
+		return "unknown", _(
+			"Nothing on this quote carries a cost yet, so any margin shown "
+			"is imaginary. Choose the menu's dishes and put cost rates on "
+			"the services before trusting the number.")
+	if pct < 0:
+		return "loss", _(
+			"This loses money at the current price.") + (
+			_(" And some lines still cost nothing, so it loses more.")
+			if uncosted else "")
+	if uncosted:
+		return "partial", _(
+			"Some lines still cost nothing, so the real margin is lower "
+			"than this. Treat it as a ceiling, not an answer.")
+	if pct < FLOOR_MARGIN:
+		return "thin", _(
+			"Below the {0}% floor. Worth taking only for the rooms it "
+			"brings, or a date that would otherwise sit empty.").format(
+				FLOOR_MARGIN)
+	if pct < TARGET_MARGIN:
+		return "ok", _("Workable, though under the {0}% a banquet "
+		              "normally holds.").format(TARGET_MARGIN)
+	return "good", _("Comfortably profitable at this price.")
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles(*BANQUET_ROLES)
+def offer_amenities(function: str, amenities=None, as_open_items: int = 0):
+	"""Put the hall's chargeable extras on the function.
+
+	A hall's air-conditioning and generator come with it; its extra mics,
+	its valet parking and its second generator do not. Those live on the
+	venue, and this is how they reach a quote - either priced onto it, or
+	parked as open items when the customer hasn't decided yet, which is
+	where most of them actually sit while a wedding is being agreed.
+	"""
+	doc = _fn(function)
+	_guard_closed(doc)
+	wanted = set(_rows(amenities) or [])
+	rows = frappe.get_all(
+		"Venue Amenity",
+		filters={"parent": doc.venue, "parenttype": "Venue", "included": 0},
+		fields=["name", "amenity", "category", "rate", "uom", "note"])
+	picked = [r for r in rows if not wanted or r.amenity in wanted]
+	if not picked:
+		return {"ok": True, "added": 0,
+		        "note": _("This hall has no chargeable extras on it.")}
+
+	for a in picked:
+		if int(as_open_items or 0):
+			doc.append("open_items", {
+				"title": a.amenity,
+				"detail": _("{0} on {1} - not yet agreed.").format(
+					a.category, doc.venue),
+				"owner_side": "Client", "status": "Open",
+				"price_impact": float(a.rate or 0),
+			})
+		else:
+			doc.append("items", {
+				"item_type": _AMENITY_TYPE.get(a.category, "Other"),
+				"item_name": a.amenity, "description": a.note,
+				"qty": 0, "uom": _UOM_FROM_CATALOGUE.get(a.uom, "Lot"),
+				"list_rate": float(a.rate or 0), "rate": float(a.rate or 0),
+				"chargeable": 1, "notes": "hall-amenity",
+			})
+	doc.save()
+	return {"ok": True, "added": len(picked),
+	        "as_open_items": bool(int(as_open_items or 0)),
+	        "grand_total": doc.grand_total}
+
+
+_AMENITY_TYPE = {
+	"Audio Visual": "Audio Visual", "Climate": "Furniture & Setup",
+	"Power": "Furniture & Setup", "Parking": "Staffing",
+	"Service": "Staffing", "Access": "Other", "Kitchen": "Food & Beverage",
+	"Safety": "Other", "Other": "Other",
+}
+
+
+@frappe.whitelist()
+@require_roles(*READ_ROLES)
+def venue_detail(venue: str):
+	"""One hall in full: what it holds, what it comes with, what it costs
+	to open, and which other spaces it shares its floor with."""
+	from kamra.kamra.doctype.venue_booking.venue_booking import clashing_venues
+
+	v = frappe.get_doc("Venue", venue)
+	shares = [x for x in clashing_venues(v.property, venue) if x != venue]
+	return {
+		"venue": v.as_dict(),
+		"amenities": [
+			{"amenity": a.amenity, "category": a.category,
+			 "included": bool(a.included), "rate": a.rate, "uom": a.uom,
+			 "note": a.note}
+			for a in v.get("amenities_list") or []],
+		"sections": [{"section": s.section, "area_sqft": s.area_sqft,
+		              "seats": s.seats} for s in v.get("sections") or []],
+		"shares_floor_with": shares,
+		"floor_plan": v.floor_plan,
 	}
