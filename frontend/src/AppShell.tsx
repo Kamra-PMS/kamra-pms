@@ -19,6 +19,7 @@ import {
   type AppNavItem,
 } from "./lib/apps"
 import {
+  enabledModules,
   getCurrentProperty,
   myProperties,
   setCurrentProperty,
@@ -189,7 +190,16 @@ export default function AppShell() {
     setProperty(name)
   }
 
-  const apps = visibleApps(roles)
+  // which parts of the product this property runs - undefined until it
+  // answers, so nothing flashes in and then disappears
+  const [modules, setModules] = useState<string[] | undefined>(undefined)
+  useEffect(() => {
+    enabledModules()
+      .then(setModules)
+      .catch(() => setModules(undefined))
+  }, [property])
+
+  const apps = visibleApps(roles, modules)
   // Which app the current route belongs to - falls back to the user's first.
   const routeApp = appForPath(location.pathname)
   const currentApp = apps.some((a) => a.id === routeApp.id) ? routeApp : apps[0]

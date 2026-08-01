@@ -129,6 +129,18 @@ export interface WhoAmI {
 
 export const whoami = () => call<WhoAmI>("kamra.api.whoami")
 
+/** Which parts of Kamra this property runs. Empty on the server means
+ *  "all of them", so an existing property is untouched. */
+export const enabledModules = () =>
+  call<string[]>("kamra.api.enabled_modules", {
+    property: getCurrentProperty(),
+  })
+export const setEnabledModules = (modules: string[]) =>
+  call<{ ok: boolean; modules: string[] }>("kamra.api.set_enabled_modules", {
+    property: getCurrentProperty(),
+    modules,
+  })
+
 export interface ReservationRow {
   name: string
   guest_name: string

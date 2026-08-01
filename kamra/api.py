@@ -12,6 +12,38 @@ from kamra.authz import require_it_admin, require_roles
 from frappe.utils import add_days, get_datetime, now_datetime, nowdate
 
 
+# The apps a property actually runs. The launcher and the sidebar read
+# this so a serviced-apartment operator never sees an empty restaurant.
+ALL_MODULES = ("front-desk", "housekeeping", "operations", "fnb", "events",
+               "revenue", "finance", "booking-engine", "admin")
+
+
+@frappe.whitelist()
+@require_roles()
+def enabled_modules(property: str) -> list:
+	"""Which parts of Kamra this property runs. Empty setting = all of
+	them, so an existing property keeps working untouched."""
+	raw = frappe.db.get_value("Property", property, "enabled_modules")
+	picked = [m.strip() for m in (raw or "").split(",") if m.strip()]
+	return picked or list(ALL_MODULES)
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Hotel Admin")
+def set_enabled_modules(property: str, modules) -> dict:
+	"""Turn parts of the product on or off for one property."""
+	if isinstance(modules, str):
+		modules = [m.strip() for m in modules.split(",")]
+	unknown = [m for m in modules if m and m not in ALL_MODULES]
+	if unknown:
+		frappe.throw(_("Unknown module(s): {0}").format(", ".join(unknown)))
+	# the front desk is the product; it can't be switched off
+	picked = sorted({m for m in modules if m} | {"front-desk"})
+	frappe.db.set_value("Property", property, "enabled_modules",
+	                    ",".join(picked))
+	return {"ok": True, "modules": picked}
+
+
 @frappe.whitelist(allow_guest=True)
 def whoami():
 	"""Current user + roles - drives which modules the UI shows.

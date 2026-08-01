@@ -277,6 +277,14 @@ export function appForPath(pathname: string): AppDef {
   return best?.app ?? APPS[0]
 }
 
-export function visibleApps(roles: string[]): AppDef[] {
-  return APPS.filter((a) => a.roles.some((r) => roles.includes(r)))
+/** The apps this user can reach: their roles must allow it AND the
+ *  property must actually run it. Roles alone were never enough - Front
+ *  Desk unlocks both F&B and Banquets, so a serviced-apartment operator
+ *  had no way to not see them. */
+export function visibleApps(roles: string[], modules?: string[]): AppDef[] {
+  return APPS.filter(
+    (a) =>
+      a.roles.some((r) => roles.includes(r)) &&
+      (!modules?.length || modules.includes(a.id)),
+  )
 }
