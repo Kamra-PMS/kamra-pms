@@ -37,8 +37,10 @@ def set_enabled_modules(property: str, modules) -> dict:
 	unknown = [m for m in modules if m and m not in ALL_MODULES]
 	if unknown:
 		frappe.throw(_("Unknown module(s): {0}").format(", ".join(unknown)))
-	# the front desk is the product; it can't be switched off
-	picked = sorted({m for m in modules if m} | {"front-desk"})
+	# Front desk is the product. Admin holds Settings, Rooms and Room
+	# Types - switch it off and you lose the only screen that could switch
+	# it back on, and the ability to add a room at all. Neither is optional.
+	picked = sorted({m for m in modules if m} | {"front-desk", "admin"})
 	frappe.db.set_value("Property", property, "enabled_modules",
 	                    ",".join(picked))
 	return {"ok": True, "modules": picked}

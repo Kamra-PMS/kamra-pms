@@ -897,3 +897,39 @@ class TestDocumentCompliance(BanquetTestCase):
 		bq.add_menu(fn, self.f["menu"])
 		with self.assertRaises(frappe.ValidationError):
 			bq.generate_invoice(fn)
+
+
+class TestModuleGate(BanquetTestCase):
+	"""A property runs only the parts of Kamra it bought - but two of them
+	can't be given up, or the site becomes unadministrable."""
+
+	def test_a_property_runs_only_what_it_switched_on(self):
+		from kamra.api import enabled_modules, set_enabled_modules
+
+		set_enabled_modules(PROPERTY, "front-desk,housekeeping,finance")
+		on = enabled_modules(PROPERTY)
+		self.assertIn("housekeeping", on)
+		self.assertNotIn("fnb", on)
+		self.assertNotIn("events", on)
+
+	def test_admin_and_the_front_desk_cannot_be_switched_off(self):
+		from kamra.api import enabled_modules, set_enabled_modules
+
+		# without admin there is no Settings screen to turn anything back
+		# on with, and no way to add a room
+		set_enabled_modules(PROPERTY, "finance")
+		on = enabled_modules(PROPERTY)
+		self.assertIn("admin", on)
+		self.assertIn("front-desk", on)
+
+	def test_an_empty_setting_means_everything(self):
+		from kamra.api import ALL_MODULES, enabled_modules
+
+		frappe.db.set_value("Property", PROPERTY, "enabled_modules", "")
+		self.assertCountEqual(enabled_modules(PROPERTY), list(ALL_MODULES))
+
+	def test_a_module_that_does_not_exist_is_refused(self):
+		from kamra.api import set_enabled_modules
+
+		with self.assertRaises(frappe.ValidationError):
+			set_enabled_modules(PROPERTY, "front-desk,spa-and-wellness")
