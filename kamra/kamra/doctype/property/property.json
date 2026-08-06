@@ -26,6 +26,8 @@
   "currency",
   "checkin_time",
   "checkout_time",
+  "minimum_nights",
+  "security_deposit_amount",
   "hourly_view_start",
   "hourly_view_end",
   "auto_send_checkin_links",
@@ -179,12 +181,25 @@
    "label": "Check-out Time"
   },
   {
-   "fieldname": "hourly_view_start",
-   "fieldtype": "Time",
-   "label": "Hourly View Start",
-   "default": "06:00:00"
+   "default": "1",
+   "fieldname": "minimum_nights",
+   "fieldtype": "Int",
+   "label": "Minimum Stay Nights"
   },
   {
+   "default": "5000",
+   "fieldname": "security_deposit_amount",
+   "fieldtype": "Currency",
+   "label": "Security Deposit Amount"
+  },
+  {
+   "default": "06:00:00",
+   "fieldname": "hourly_view_start",
+   "fieldtype": "Time",
+   "label": "Hourly View Start"
+  },
+  {
+   "default": "23:00:00",
    "fieldname": "hourly_view_end",
    "fieldtype": "Time",
    "label": "Hourly View End",

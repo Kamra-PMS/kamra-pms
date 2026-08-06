@@ -39,9 +39,10 @@ def execute():
 	# Mark this as a demo site so the login screen shows the demo accounts.
 	frappe.db.set_default("kamra_demo_mode", "1")
 	if frappe.db.exists("Property", PROPERTY):
-		ensure_users()  # keep login accounts present even on re-run
+		ensure_users()
 		from kamra.scripts.seed_showcase import execute as seed_showcase
-		seed_showcase()  # top up experiences/venues (idempotent)
+		seed_showcase()
+		seed_generic_properties()
 		frappe.db.commit()  # nosemgrep: frappe-manual-commit -- batch/seed/migration script runs outside the request cycle; explicit commit persists the staged writes
 		print("Demo property already exists — ensured demo users + showcase.")
 		return
@@ -206,5 +207,128 @@ def execute():
 	from kamra.scripts.seed_showcase import execute as seed_showcase
 	seed_showcase()
 
+	# Seed generic demo properties (lakeside villa with whole-property lock, and beach homestay with AC/non-AC rooms)
+	seed_generic_properties()
+
 	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- batch/seed/migration script runs outside the request cycle; explicit commit persists the staged writes
 	print(f"Seeded demo property '{PROPERTY}' with rooms, guests, reservations and login users.")
+
+
+def seed_generic_properties():
+	# 1. Seed Kamra Lakeside Villa (Generic Tatasth structure)
+	p1 = "Kamra Lakeside Villa"
+	if not frappe.db.exists("Property", p1):
+		prop = frappe.get_doc({
+			"doctype": "Property",
+			"property_name": p1,
+			"city": "Bengaluru",
+			"state": "Karnataka",
+			"gstin": "29ABCDE1234F3Z3",
+			"checkin_time": "14:00:00",
+			"checkout_time": "11:00:00",
+			"minimum_nights": 1,
+			"booking_payment_mode": "Advance percent",
+			"advance_percent": 100,
+			"security_deposit_amount": 5000,
+		}).insert(ignore_permissions=True)
+		
+		rt_std = frappe.get_doc({
+			"doctype": "Room Type",
+			"property": prop.name,
+			"room_type_code": "STD",
+			"room_type_name": "Standard Room",
+			"room_category": "Private",
+			"base_price": 7400,
+			"base_occupancy": 2,
+			"extra_adult_price": 2100,
+			"child_price": 1000,
+			"free_child_age": 6,
+			"adults_capacity": 2,
+			"children_capacity": 1,
+			"max_total_occupants": 3,
+		}).insert(ignore_permissions=True)
+		
+		rt_villa = frappe.get_doc({
+			"doctype": "Room Type",
+			"property": prop.name,
+			"room_type_code": "VILLA",
+			"room_type_name": "Entire Property",
+			"room_category": "Villa",
+			"base_price": 31500,
+			"base_occupancy": 10,
+			"extra_adult_price": 2100,
+			"child_price": 1000,
+			"free_child_age": 6,
+			"adults_capacity": 10,
+			"children_capacity": 5,
+			"max_total_occupants": 15,
+		}).insert(ignore_permissions=True)
+		
+		# Tatasth physical rooms (Ground Floor & First Floor)
+		for i in range(1, 6):
+			floor = "Ground Floor" if i <= 3 else "First Floor"
+			frappe.get_doc({
+				"doctype": "Room",
+				"property": prop.name,
+				"room_number": f"Room {i}",
+				"room_type": rt_std.name,
+				"floor": floor
+			}).insert(ignore_permissions=True)
+			
+		from kamra.api import set_room_rate
+		set_room_rate(prop.name, rt_std.name, "2026-08-01", "2027-08-01", 8600, reason="Weekend Rate", days_of_week=["Fri", "Sat"])
+		set_room_rate(prop.name, rt_villa.name, "2026-08-01", "2027-08-01", 36800, reason="Weekend Rate", days_of_week=["Fri", "Sat"])
+		print("Seeded generic Kamra Lakeside Villa.")
+
+	# 2. Seed Kamra Beach Homestay (Generic Waterfront structure)
+	p2 = "Kamra Beach Homestay"
+	if not frappe.db.exists("Property", p2):
+		prop = frappe.get_doc({
+			"doctype": "Property",
+			"property_name": p2,
+			"city": "Bengaluru",
+			"state": "Karnataka",
+			"gstin": "29ABCDE1234F4Z2",
+			"checkin_time": "14:00:00",
+			"checkout_time": "11:00:00",
+			"minimum_nights": 1,
+			"booking_payment_mode": "Advance percent",
+			"advance_percent": 100,
+			"security_deposit_amount": 5000,
+		}).insert(ignore_permissions=True)
+		
+		rt_tfac = frappe.get_doc({
+			"doctype": "Room Type", "property": prop.name,
+			"room_type_code": "TFAC", "room_type_name": "Top Floor AC",
+			"room_category": "Private", "base_price": 4000, "base_occupancy": 2,
+			"adults_capacity": 2, "children_capacity": 1, "max_total_occupants": 3
+		}).insert(ignore_permissions=True)
+		
+		rt_uf2r = frappe.get_doc({
+			"doctype": "Room Type", "property": prop.name,
+			"room_type_code": "UF2R", "room_type_name": "Upper Floor (2-room)",
+			"room_category": "Private", "base_price": 6000, "base_occupancy": 4,
+			"adults_capacity": 4, "children_capacity": 2, "max_total_occupants": 6
+		}).insert(ignore_permissions=True)
+		
+		rt_gfna = frappe.get_doc({
+			"doctype": "Room Type", "property": prop.name,
+			"room_type_code": "GFNA", "room_type_name": "Ground Floor Non-AC – Room A",
+			"room_category": "Private", "base_price": 2700, "base_occupancy": 2,
+			"adults_capacity": 2, "children_capacity": 1, "max_total_occupants": 3
+		}).insert(ignore_permissions=True)
+		
+		rt_gfnb = frappe.get_doc({
+			"doctype": "Room Type", "property": prop.name,
+			"room_type_code": "GFNB", "room_type_name": "Ground Floor Non-AC – Room B",
+			"room_category": "Private", "base_price": 3100, "base_occupancy": 2,
+			"adults_capacity": 2, "children_capacity": 1, "max_total_occupants": 3
+		}).insert(ignore_permissions=True)
+		
+		# Physical Rooms (Top Floor, Upper Floor, Ground Floor)
+		frappe.get_doc({"doctype": "Room", "property": prop.name, "room_number": "Room 1", "room_type": rt_tfac.name, "floor": "Top Floor"}).insert(ignore_permissions=True)
+		frappe.get_doc({"doctype": "Room", "property": prop.name, "room_number": "Room 2", "room_type": rt_uf2r.name, "floor": "Upper Floor"}).insert(ignore_permissions=True)
+		frappe.get_doc({"doctype": "Room", "property": prop.name, "room_number": "Room 3", "room_type": rt_uf2r.name, "floor": "Upper Floor"}).insert(ignore_permissions=True)
+		frappe.get_doc({"doctype": "Room", "property": prop.name, "room_number": "Room 4", "room_type": rt_gfna.name, "floor": "Ground Floor"}).insert(ignore_permissions=True)
+		frappe.get_doc({"doctype": "Room", "property": prop.name, "room_number": "Room 5", "room_type": rt_gfnb.name, "floor": "Ground Floor"}).insert(ignore_permissions=True)
+		print("Seeded generic Kamra Beach Homestay.")

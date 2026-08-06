@@ -10,13 +10,15 @@
  "field_order": [
   "property",
   "season_name",
+  "room_type",
   "start_date",
   "end_date",
   "column_break_a",
   "adjustment_type",
   "adjustment_value",
   "priority",
-  "disabled"
+  "disabled",
+  "days_of_week"
  ],
  "fields": [
   {
@@ -32,6 +34,13 @@
    "in_list_view": 1,
    "label": "Season Name",
    "reqd": 1
+  },
+  {
+   "fieldname": "room_type",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Room Type",
+   "options": "Room Type"
   },
   {
    "fieldname": "start_date",
@@ -80,6 +89,12 @@
    "fieldname": "disabled",
    "fieldtype": "Check",
    "label": "Disabled"
+  },
+  {
+   "description": "Comma-separated days (e.g. sat, sun). Blank = all days.",
+   "fieldname": "days_of_week",
+   "fieldtype": "Data",
+   "label": "Days of Week"
   }
  ],
  "grid_page_length": 50,

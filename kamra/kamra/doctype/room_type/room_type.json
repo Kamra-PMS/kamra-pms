@@ -12,6 +12,7 @@
   "room_type_code",
   "column_break_a",
   "room_type_name",
+  "room_category",
   "description",
   "sb_pricing",
   "base_price",
@@ -35,6 +36,9 @@
   "column_break_at",
   "room_view",
   "smoking_allowed",
+  "air_conditioning",
+  "bathroom",
+  "kitchen",
   "amenities",
   "image",
   "sb_media",
@@ -70,6 +74,13 @@
    "reqd": 1
   },
   {
+   "default": "Private",
+   "fieldname": "room_category",
+   "fieldtype": "Select",
+   "label": "Room Category",
+   "options": "Villa\nPrivate\nShared"
+  },
+  {
    "fieldname": "description",
    "fieldtype": "Small Text",
    "label": "Description"
@@ -95,6 +106,7 @@
    "label": "Base Occupancy"
   },
   {
+   "depends_on": "eval:doc.room_category !== 'Villa'",
    "description": "Blank = use base price",
    "fieldname": "single_occupancy_price",
    "fieldtype": "Currency",
@@ -181,6 +193,7 @@
    "label": "Max Total Occupants"
   },
   {
+   "depends_on": "eval:doc.room_category !== 'Villa'",
    "fieldname": "bed_type",
    "fieldtype": "Select",
    "label": "Bed Type",
@@ -192,15 +205,40 @@
    "label": "Column Break At"
   },
   {
+   "depends_on": "eval:doc.room_category !== 'Villa'",
    "fieldname": "room_view",
    "fieldtype": "Data",
    "label": "View"
   },
   {
    "default": "0",
+   "depends_on": "eval:doc.room_category !== 'Villa'",
    "fieldname": "smoking_allowed",
    "fieldtype": "Check",
    "label": "Smoking Allowed"
+  },
+  {
+   "fieldname": "air_conditioning",
+   "fieldtype": "Select",
+   "label": "Air Conditioning",
+   "options": "\nAC\nNon AC",
+   "default": "Non AC",
+   "depends_on": "eval:doc.room_category !== 'Villa'"
+  },
+  {
+   "fieldname": "bathroom",
+   "fieldtype": "Select",
+   "label": "Bathroom Type",
+   "options": "\nAttached\nCommon",
+   "default": "Attached",
+   "depends_on": "eval:doc.room_category !== 'Villa'"
+  },
+  {
+   "fieldname": "kitchen",
+   "fieldtype": "Check",
+   "label": "Kitchen Access",
+   "default": "0",
+   "depends_on": "eval:doc.room_category !== 'Villa'"
   },
   {
    "description": "Comma-separated, e.g. WiFi, AC, TV",

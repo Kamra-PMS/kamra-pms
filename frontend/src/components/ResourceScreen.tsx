@@ -30,6 +30,7 @@ export interface FieldSpec {
   linkDoctype?: string // for link
   required?: boolean
   hint?: string // for image: recommended size/format
+  dependsOn?: (draft: Record<string, unknown>) => boolean
 }
 
 export interface ScreenConfig {
@@ -615,7 +616,7 @@ export function ResourceScreen({
           ) : (
             <div className="space-y-4">
               <div className="grid gap-x-5 gap-y-4 sm:grid-cols-2">
-                {config.form.map((spec) => (
+                {config.form.filter(spec => spec.dependsOn ? spec.dependsOn(draft) : true).map((spec) => (
                   <label
                     key={spec.field}
                     className={
