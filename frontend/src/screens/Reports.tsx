@@ -49,6 +49,11 @@ function Stat(props: { label: string; value: string; sub?: string }) {
 
 export default function Reports() {
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10))
+  const [sortBy, setSortBy] = useState<
+    "date" | "occupancy" | "adr" | "revpar" | "revenue"
+  >("date")
+
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc")
   const [d, setD] = useState<Flash | null>(null)
 
   const load = useCallback(() => {
@@ -61,6 +66,45 @@ export default function Reports() {
 
   if (!d) return <p className="py-10 text-center text-zinc-400">Loading…</p>
   const t = d.today
+  const sortedTrend = [...d.trend].sort((a, b) => {
+    let aValue = 0
+    let bValue = 0
+
+    switch (sortBy) {
+      case "date":
+        aValue = new Date(a.date).getTime()
+        bValue = new Date(b.date).getTime()
+        break
+
+      case "occupancy":
+        aValue = a.occupancy_pct
+        bValue = b.occupancy_pct
+        break
+
+      case "adr":
+        aValue = a.adr
+        bValue = b.adr
+        break
+
+      case "revpar":
+        aValue = a.revpar
+        bValue = b.revpar
+        break
+
+      case "revenue":
+        aValue =
+          a.room_revenue + a.fnb_revenue + a.other_revenue
+
+        bValue =
+          b.room_revenue + b.fnb_revenue + b.other_revenue
+
+        break
+    }
+
+    return sortDirection === "asc"
+      ? aValue - bValue
+      : bValue - aValue
+  })
 
   return (
     <div>
@@ -113,15 +157,41 @@ export default function Reports() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-zinc-200 text-left text-xs uppercase tracking-wider text-zinc-500">
-                  <th className="py-1.5 pr-3">Date</th>
-                  <th className="py-1.5 pr-3 text-right">Occ %</th>
-                  <th className="py-1.5 pr-3 text-right">ADR {cur()}</th>
-                  <th className="py-1.5 pr-3 text-right">RevPAR {cur()}</th>
-                  <th className="py-1.5 text-right">Revenue {cur()}</th>
+                  {([
+                    { key: "date" as const, label: "Date", align: "left" as const, last: false },
+                    { key: "occupancy" as const, label: "Occ %", align: "right" as const, last: false },
+                    { key: "adr" as const, label: `ADR ${cur()}`, align: "right" as const, last: false },
+                    { key: "revpar" as const, label: `RevPAR ${cur()}`, align: "right" as const, last: false },
+                    { key: "revenue" as const, label: `Revenue ${cur()}`, align: "right" as const, last: true },
+                  ]).map((col) => {
+                    const active = sortBy === col.key
+                    const arrow = active ? (sortDirection === "asc" ? " ▲" : " ▼") : ""
+                    return (
+                      <th
+                        key={col.key}
+                        className={`py-1.5 ${col.last ? "" : "pr-3"} ${col.align === "right" ? "text-right" : ""}`}
+                      >
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (active) {
+                              setSortDirection(sortDirection === "asc" ? "desc" : "asc")
+                            } else {
+                              setSortBy(col.key)
+                              setSortDirection("desc")
+                            }
+                          }}
+                          className="inline-flex items-center gap-1 hover:text-emerald-600"
+                        >
+                          {col.label}{arrow}
+                        </button>
+                      </th>
+                    )
+                  })}
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-100">
-                {d.trend.map((r) => (
+                {sortedTrend.map((r) => (
                   <tr key={r.date}>
                     <td className="py-1.5 pr-3 text-zinc-500">{r.date}</td>
                     <td className="py-1.5 pr-3 text-right">{r.occupancy_pct}</td>
