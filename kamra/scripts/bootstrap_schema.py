@@ -82,6 +82,8 @@ def execute():
           description="Short unique code per property, e.g. DELUXE"),
         f("column_break_a", "Column Break"),
         f("room_type_name", "Data", reqd=1, in_list_view=1),
+        f("room_category", "Select", default="Private",
+          options="\nVilla\nPrivate\nShared", label="Room Category"),
         f("description", "Small Text"),
         f("sb_pricing", "Section Break", label="Occupancy-based Pricing"),
         f("base_price", "Currency", reqd=1, in_list_view=1,

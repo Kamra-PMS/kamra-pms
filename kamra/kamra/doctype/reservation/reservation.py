@@ -9,6 +9,18 @@ from frappe.utils import cint, date_diff, now_datetime
 
 class Reservation(Document):
 	def after_insert(self):
+		# every booking gets a pre-arrival check-in link
+		self.db_set(
+			"precheckin_token", frappe.generate_hash(length=24),
+			update_modified=False,
+		)
+		if self.voucher:
+			frappe.db.sql(
+				"""UPDATE `tabDiscount Voucher`
+				   SET times_used = COALESCE(times_used, 0) + 1
+				   WHERE name = %s""",
+				self.voucher,
+			)
 		# WhatsApp booking confirmation - enqueued so a booking never
 		# waits on Meta; skipped entirely unless the property connected
 		# its own number (Channel Provider Connection, Meta Business)
@@ -69,6 +81,7 @@ class Reservation(Document):
 		self.validate_occupancy()
 		self.validate_room_belongs_to_type()
 		self.validate_no_overlap()
+		self.validate_villa_lockout()
 		self.validate_type_capacity()
 		self.validate_cancellation_path()
 		self.apply_pricing()
@@ -155,13 +168,30 @@ class Reservation(Document):
 			voucher_code = frappe.db.get_value(
 				"Discount Voucher", self.voucher, "voucher_code"
 			)
+		# Deduct free children under free_child_age from billing
+		free_children = 0
+		free_child_age = frappe.db.get_value("Room Type", self.room_type, "free_child_age")
+		if free_child_age is None:
+			free_child_age = 6
+		else:
+			free_child_age = int(free_child_age)
+
+		if getattr(self, "occupants", None):
+			for occ in self.occupants:
+				if occ.age and int(occ.age) <= free_child_age:
+					free_children += 1
+		if getattr(self, "infants", None):
+			free_children = max(free_children, int(self.infants))
+
+		billable_children = max(0, int(self.children or 0) - free_children)
+
 		q = quote(
 			property=self.property,
 			room_type=self.room_type,
 			check_in_date=self.check_in_date,
 			check_out_date=self.check_out_date,
 			adults=self.adults,
-			children=self.children,
+			children=billable_children,
 			meal_plan=self.meal_plan,
 			rate_plan=self.rate_plan,
 			voucher_code=voucher_code,
@@ -176,20 +206,6 @@ class Reservation(Document):
 			self.commission_amount = float(self.amount_before_tax or 0) * float(pct) / 100
 		else:
 			self.commission_amount = 0
-
-	def after_insert(self):
-		# every booking gets a pre-arrival check-in link
-		self.db_set(
-			"precheckin_token", frappe.generate_hash(length=24),
-			update_modified=False,
-		)
-		if self.voucher:
-			frappe.db.sql(
-				"""UPDATE `tabDiscount Voucher`
-				   SET times_used = COALESCE(times_used, 0) + 1
-				   WHERE name = %s""",
-				self.voucher,
-			)
 
 	def validate_room_belongs_to_type(self):
 		if not self.room:
@@ -245,6 +261,70 @@ class Reservation(Document):
 				),
 				title=_("Double booking blocked"),
 			)
+
+	def validate_villa_lockout(self):
+		if self.status in ("Cancelled", "No Show", "Checked Out", "Waitlist") or not self.room_type:
+			return
+		
+		# Get Room Category of the requested Room Type
+		category = frappe.db.get_value("Room Type", self.room_type, "room_category")
+		
+		if category == "Villa":
+			# A Villa is being booked. Check if ANY individual/shared room booking is confirmed/checked-in
+			overlap = frappe.db.sql(
+				"""
+				SELECT r.name FROM `tabReservation` r
+				LEFT JOIN `tabRoom Type` rt ON r.room_type = rt.name
+				WHERE r.property = %(property)s
+				  AND r.name != %(name)s
+				  AND r.status IN ('Confirmed', 'Checked In')
+				  AND (rt.room_category != 'Villa' OR rt.room_category IS NULL)
+				  AND r.check_in_date < GREATEST(%(check_out)s, DATE_ADD(%(check_in)s, INTERVAL 1 DAY))
+				  AND GREATEST(r.check_out_date, DATE_ADD(r.check_in_date, INTERVAL 1 DAY)) > %(check_in)s
+				LIMIT 1
+				""",
+				{
+					"property": self.property,
+					"name": self.name or "new",
+					"check_in": self.check_in_date,
+					"check_out": self.check_out_date,
+				}
+			)
+			if overlap:
+				frappe.throw(
+					_("This property cannot be booked as an Entire Villa for these dates because an individual room is already booked at {0} under Reservation {1}.").format(
+						self.property, overlap[0][0]
+					),
+					title=_("Double Booking Blocked"),
+				)
+		else:
+			# An individual room is being booked. Check if the Entire Property (Villa) is booked.
+			overlap = frappe.db.sql(
+				"""
+				SELECT r.name FROM `tabReservation` r
+				LEFT JOIN `tabRoom Type` rt ON r.room_type = rt.name
+				WHERE r.property = %(property)s
+				  AND r.name != %(name)s
+				  AND r.status IN ('Confirmed', 'Checked In')
+				  AND rt.room_category = 'Villa'
+				  AND r.check_in_date < GREATEST(%(check_out)s, DATE_ADD(%(check_in)s, INTERVAL 1 DAY))
+				  AND GREATEST(r.check_out_date, DATE_ADD(r.check_in_date, INTERVAL 1 DAY)) > %(check_in)s
+				LIMIT 1
+				""",
+				{
+					"property": self.property,
+					"name": self.name or "new",
+					"check_in": self.check_in_date,
+					"check_out": self.check_out_date,
+				}
+			)
+			if overlap:
+				frappe.throw(
+					_("This room cannot be booked for these dates because the Entire Villa is already booked at {0} under Reservation {1}.").format(
+						self.property, overlap[0][0]
+					),
+					title=_("Double Booking Blocked"),
+				)
 
 	def on_update(self):
 		previous = self.get_doc_before_save()

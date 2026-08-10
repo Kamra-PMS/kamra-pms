@@ -20,6 +20,10 @@ interface RoomTypeRow {
   base_price: string
   adults: string
   numbers: string // comma-separated room numbers, edited on the Rooms step
+  room_category: string
+  free_child_age: string
+  extra_adult_price: string
+  air_conditioning: string
 }
 
 export default function Setup() {
@@ -44,9 +48,15 @@ export default function Setup() {
 
   const [prop, setProp] = useState({
     property_name: "", city: "", state: "", phone: "", gstin: "",
+    checkin_time: "14:00:00",
+    checkout_time: "11:00:00",
+    minimum_nights: "1",
+    booking_payment_mode: "Advance percent",
+    advance_percent: "100",
+    security_deposit_amount: "5000",
   })
   const [roomTypes, setRoomTypes] = useState<RoomTypeRow[]>([
-    { code: "STD", name: "Standard", base_price: "2500", adults: "2", numbers: "" },
+    { code: "STD", name: "Standard", base_price: "2500", adults: "2", numbers: "", room_category: "Private", free_child_age: "6", extra_adult_price: "2100", air_conditioning: "AC" },
   ])
   const [mealPlans, setMealPlans] = useState([
     { code: "EP", label: "Room Only", price_per_adult: "0", on: true },
@@ -54,17 +64,24 @@ export default function Setup() {
     { code: "MAP", label: "Breakfast + Dinner", price_per_adult: "700", on: false },
   ])
   const [csv, setCsv] = useState("")
-
+ 
   const setRT = (i: number, k: keyof RoomTypeRow, v: string) =>
     setRoomTypes((rows) => rows.map((r, j) => (j === i ? { ...r, [k]: v } : r)))
-
+ 
   async function create() {
     setBusy(true)
     setError(null)
     try {
       const payload = {
         property: Object.fromEntries(
-          Object.entries(prop).filter(([, v]) => v),
+          Object.entries(prop)
+            .filter(([, v]) => v)
+            .map(([k, v]) => {
+              if (["minimum_nights", "advance_percent", "security_deposit_amount"].includes(k)) {
+                return [k, Number(v) || 0];
+              }
+              return [k, v];
+            })
         ),
         room_types: roomTypes
           .filter((r) => r.code && r.name && r.base_price)
@@ -73,6 +90,10 @@ export default function Setup() {
             name: r.name,
             base_price: Number(r.base_price),
             adults: Number(r.adults) || 2,
+            room_category: r.room_category,
+            free_child_age: Number(r.free_child_age) || 0,
+            extra_adult_price: Number(r.extra_adult_price) || 0,
+            air_conditioning: r.room_category === "Villa" ? "" : r.air_conditioning,
           })),
         rooms: roomTypes
           .filter((r) => r.numbers.trim())
@@ -176,54 +197,151 @@ export default function Setup() {
             <>
               {(
                 [
-                  ["property_name", "Property name *", "Sunrise Residency"],
-                  ["city", "City", "Bengaluru"],
-                  ["state", "State", "Karnataka"],
-                  ["phone", "Phone", "+91 …"],
-                  ["gstin", "GSTIN", "29XXXXX…"],
+                  ["property_name", "Property name *", "text", "Sunrise Residency"],
+                  ["city", "City", "text", "Bengaluru"],
+                  ["state", "State", "text", "Karnataka"],
+                  ["phone", "Phone", "text", "+91 …"],
+                  ["gstin", "GSTIN", "text", "29XXXXX…"],
+                  ["checkin_time", "Check-in Time", "time", ""],
+                  ["checkout_time", "Check-out Time", "time", ""],
+                  ["minimum_nights", "Minimum Nights", "number", "1"],
+                  ["booking_payment_mode", "Booking Payment Mode", "select", ""],
+                  ["advance_percent", "Advance Percent", "number", "100"],
+                  ["security_deposit_amount", "Security Deposit Amount", "number", "5000"],
                 ] as const
-              ).map(([k, label, ph]) => (
+              ).map(([k, label, type, ph]) => (
                 <label key={k} className="block">
                   <span className="mb-1.5 block text-sm font-medium text-zinc-600">
                     {label}
                   </span>
-                  <input
-                    className={inputCls}
-                    placeholder={ph}
-                    value={prop[k]}
-                    onChange={(e) => setProp({ ...prop, [k]: e.target.value })}
-                  />
+                  {k === "booking_payment_mode" ? (
+                    <select
+                      className={cn(inputCls, "bg-white")}
+                      value={prop[k]}
+                      onChange={(e) => setProp({ ...prop, [k]: e.target.value })}
+                    >
+                      <option value="Full payment">Full payment</option>
+                      <option value="Advance percent">Advance percent</option>
+                      <option value="Pay at hotel">Pay at hotel</option>
+                    </select>
+                  ) : type === "time" ? (
+                    <select
+                      className={cn(inputCls, "bg-white")}
+                      value={prop[k]}
+                      onChange={(e) => setProp({ ...prop, [k]: e.target.value })}
+                    >
+                      {[
+                        { label: "12:00 AM", value: "00:00:00" },
+                        { label: "1:00 AM", value: "01:00:00" },
+                        { label: "2:00 AM", value: "02:00:00" },
+                        { label: "3:00 AM", value: "03:00:00" },
+                        { label: "4:00 AM", value: "04:00:00" },
+                        { label: "5:00 AM", value: "05:00:00" },
+                        { label: "6:00 AM", value: "06:00:00" },
+                        { label: "7:00 AM", value: "07:00:00" },
+                        { label: "8:00 AM", value: "08:00:00" },
+                        { label: "9:00 AM", value: "09:00:00" },
+                        { label: "10:00 AM", value: "10:00:00" },
+                        { label: "11:00 AM", value: "11:00:00" },
+                        { label: "12:00 PM", value: "12:00:00" },
+                        { label: "1:00 PM", value: "13:00:00" },
+                        { label: "2:00 PM", value: "14:00:00" },
+                        { label: "3:00 PM", value: "15:00:00" },
+                        { label: "4:00 PM", value: "16:00:00" },
+                        { label: "5:00 PM", value: "17:00:00" },
+                        { label: "6:00 PM", value: "18:00:00" },
+                        { label: "7:00 PM", value: "19:00:00" },
+                        { label: "8:00 PM", value: "20:00:00" },
+                        { label: "9:00 PM", value: "21:00:00" },
+                        { label: "10:00 PM", value: "22:00:00" },
+                        { label: "11:00 PM", value: "23:00:00" }
+                      ].map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      type={type}
+                      className={inputCls}
+                      placeholder={ph}
+                      value={prop[k]}
+                      onChange={(e) => setProp({ ...prop, [k]: e.target.value })}
+                    />
+                  )}
                 </label>
               ))}
             </>
           )}
 
           {step === 1 && (
-            <>
+            <div className="space-y-4">
               {roomTypes.map((rt, i) => (
-                <div key={i} className="flex flex-wrap items-end gap-2">
-                  <input className={cn(inputCls, "w-20")} placeholder="CODE"
-                    value={rt.code} onChange={(e) => setRT(i, "code", e.target.value)} />
-                  <input className={cn(inputCls, "flex-1")} placeholder="Name (Deluxe)"
-                    value={rt.name} onChange={(e) => setRT(i, "name", e.target.value)} />
-                  <input className={cn(inputCls, "w-28")} type="number" placeholder={`${cur()}/night`}
-                    value={rt.base_price} onChange={(e) => setRT(i, "base_price", e.target.value)} />
-                  <input className={cn(inputCls, "w-20")} type="number" placeholder="Adults"
-                    value={rt.adults} onChange={(e) => setRT(i, "adults", e.target.value)} />
+                <div key={i} className="space-y-3 p-4 border border-zinc-200 rounded-xl bg-zinc-50/50 relative">
                   {roomTypes.length > 1 && (
-                    <Button variant="ghost" aria-label="Remove"
+                    <Button variant="ghost" aria-label="Remove" className="absolute top-2 right-2"
                       onClick={() => setRoomTypes((r) => r.filter((_, j) => j !== i))}>
                       <Trash2 className="size-4 text-rose-500" />
                     </Button>
                   )}
+                  <label className="block">
+                    <span className="mb-1 block text-xs font-semibold text-zinc-500">Room Type Code (e.g. STD)</span>
+                    <input className={inputCls} placeholder="CODE"
+                      value={rt.code} onChange={(e) => setRT(i, "code", e.target.value)} />
+                  </label>
+                  <label className="block">
+                    <span className="mb-1 block text-xs font-semibold text-zinc-500">Room Type Name (e.g. Standard Room)</span>
+                    <input className={inputCls} placeholder="Name (Deluxe)"
+                      value={rt.name} onChange={(e) => setRT(i, "name", e.target.value)} />
+                  </label>
+                  <label className="block">
+                    <span className="mb-1 block text-xs font-semibold text-zinc-500">Base Price / Night</span>
+                    <input className={inputCls} type="number" placeholder={`${cur()}/night`}
+                      value={rt.base_price} onChange={(e) => setRT(i, "base_price", e.target.value)} />
+                  </label>
+                  <label className="block">
+                    <span className="mb-1 block text-xs font-semibold text-zinc-500">Base Occupancy (Adults)</span>
+                    <input className={inputCls} type="number" placeholder="Adults"
+                      value={rt.adults} onChange={(e) => setRT(i, "adults", e.target.value)} />
+                  </label>
+                  <label className="block">
+                    <span className="mb-1 block text-xs font-semibold text-zinc-500">Category</span>
+                    <select className={cn(inputCls, "bg-white")} value={rt.room_category}
+                      onChange={(e) => setRT(i, "room_category", e.target.value)}>
+                      <option value="Private">Private</option>
+                      <option value="Villa">Villa</option>
+                      <option value="Shared">Shared</option>
+                    </select>
+                  </label>
+                  {rt.room_category !== "Villa" && (
+                    <label className="block">
+                      <span className="mb-1 block text-xs font-semibold text-zinc-500">Air Conditioning</span>
+                      <select className={cn(inputCls, "bg-white")} value={rt.air_conditioning}
+                        onChange={(e) => setRT(i, "air_conditioning", e.target.value)}>
+                        <option value="AC">AC</option>
+                        <option value="Non AC">Non AC</option>
+                      </select>
+                    </label>
+                  )}
+                  <label className="block">
+                    <span className="mb-1 block text-xs font-semibold text-zinc-500">Free Child Age Limit (Years)</span>
+                    <input className={inputCls} type="number" placeholder="6"
+                      value={rt.free_child_age} onChange={(e) => setRT(i, "free_child_age", e.target.value)} />
+                  </label>
+                  <label className="block">
+                    <span className="mb-1 block text-xs font-semibold text-zinc-500">Extra Adult Price / Night</span>
+                    <input className={inputCls} type="number" placeholder="2100"
+                      value={rt.extra_adult_price} onChange={(e) => setRT(i, "extra_adult_price", e.target.value)} />
+                  </label>
                 </div>
               ))}
               <Button variant="outline"
                 onClick={() => setRoomTypes((r) => [...r,
-                  { code: "", name: "", base_price: "", adults: "2", numbers: "" }])}>
+                  { code: "", name: "", base_price: "", adults: "2", numbers: "", room_category: "Private", free_child_age: "6", extra_adult_price: "2100", air_conditioning: "AC" }])}>
                 <Plus className="size-4" aria-hidden /> Add room type
               </Button>
-            </>
+            </div>
           )}
 
           {step === 2 && (

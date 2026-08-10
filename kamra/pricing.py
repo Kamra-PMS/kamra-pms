@@ -95,19 +95,38 @@ def season_adjust(property: str, date, base: Decimal) -> Decimal:
 			"start_date": ("<=", date),
 			"end_date": (">=", date),
 		},
-		fields=["adjustment_type", "adjustment_value"],
+		fields=["adjustment_type", "adjustment_value", "days_of_week"],
 		order_by="priority desc",
-		limit=1,
 	)
 	if not seasons:
 		return base
-	s = seasons[0]
-	v = _dec(s.adjustment_value)
-	if s.adjustment_type == "Percent":
-		return base * (Decimal(1) + v / Decimal(100))
-	if s.adjustment_type == "Amount":
-		return base + v
-	return v  # Absolute
+
+	from frappe.utils import getdate
+	dt = getdate(date)
+	day_abbr = dt.strftime("%a").lower()
+
+	for s in seasons:
+		if s.days_of_week:
+			days = [d.strip().lower() for d in s.days_of_week.split(",")]
+			normalized_days = set()
+			for d in days:
+				if d in ("weekend", "weekends"):
+					normalized_days.update(["sat", "sun"])
+				elif d in ("weekday", "weekdays"):
+					normalized_days.update(["mon", "tue", "wed", "thu", "fri"])
+				else:
+					normalized_days.add(d[:3])
+			if day_abbr not in normalized_days:
+				continue
+
+		v = _dec(s.adjustment_value)
+		if s.adjustment_type == "Percent":
+			return base * (Decimal(1) + v / Decimal(100))
+		if s.adjustment_type == "Amount":
+			return base + v
+		return v  # Absolute
+
+	return base
 
 
 def room_gst_rate(property: str, room_type_doc, nightly_rate: Decimal) -> Decimal:
