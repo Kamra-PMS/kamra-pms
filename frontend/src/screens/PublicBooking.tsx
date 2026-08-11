@@ -9,7 +9,7 @@ import {
   Star,
   Users,
 } from "lucide-react"
-import { call, DEMO_PROPERTY } from "../lib/api"
+import { call, getDefaultProperty } from "../lib/api"
 import { serverError } from "../lib/resource"
 import { accentVars } from "../lib/accents"
 import { Badge } from "../components/ui/badge"
@@ -128,6 +128,7 @@ export default function PublicBooking() {
   const params = useParams()
   const navigate = useNavigate()
   const location = useLocation()
+  const [property, setProperty] = useState<string | null>(null)
   const [data, setData] = useState<Showcase | null>(null)
   const [search, setSearch] = useState(() => ({
     check_in_date: params.checkin ?? todayPlus(1),
@@ -156,13 +157,17 @@ export default function PublicBooking() {
   }, [search])
 
   useEffect(() => {
-    call<Showcase>("kamra.public_api.showcase", {
-      property: DEMO_PROPERTY,
-    }).then((d) => {
-      adoptUiLocale((d as unknown as { ui_locale?: { currency_symbol?: string; locale?: string } }).ui_locale)
-      setData(d)
-      setForm((f) => ({ ...f, meal_plan: d.meal_plans[0]?.name ?? "" }))
-    })
+    getDefaultProperty()
+      .then((p) => {
+        setProperty(p)
+        return call<Showcase>("kamra.public_api.showcase", { property: p })
+      })
+      .then((d) => {
+        adoptUiLocale((d as unknown as { ui_locale?: { currency_symbol?: string; locale?: string } }).ui_locale)
+        setData(d)
+        setForm((f) => ({ ...f, meal_plan: d.meal_plans[0]?.name ?? "" }))
+      })
+      .catch((e) => setError(serverError(e)))
   }, [])
 
   // stay state lives in the URL - shareable, crawlable, UTM params kept
@@ -243,9 +248,10 @@ export default function PublicBooking() {
   }, [data])
 
   useEffect(() => {
+    if (!property) return
     const t = setTimeout(() => {
       call<StayResult[]>("kamra.public_api.search_stay", {
-        property: DEMO_PROPERTY,
+        property,
         check_in_date: search.check_in_date,
         check_out_date: checkOut,
         adults: search.adults,
@@ -257,17 +263,17 @@ export default function PublicBooking() {
       })
     }, 300)
     return () => clearTimeout(t)
-  }, [search, checkOut])
+  }, [property, search, checkOut])
 
   async function submitBooking() {
-    if (!booking) return
+    if (!booking || !property) return
     setBusy(true)
     setError(null)
     try {
       const res = await call<{ reservation: string; amount_after_tax: number }>(
         "kamra.public_api.book",
         {
-          property: DEMO_PROPERTY,
+          property,
           room_type: booking,
           check_in_date: search.check_in_date,
           check_out_date: checkOut,
@@ -289,7 +295,11 @@ export default function PublicBooking() {
   }
 
   if (!data)
-    return <p className="py-20 text-center text-zinc-400">Loading…</p>
+    return (
+      <p className="py-20 text-center text-zinc-400">
+        {error ?? "Loading…"}
+      </p>
+    )
 
   const p = data.property
 
@@ -869,8 +879,9 @@ export default function PublicBooking() {
                     }} />
                   <button type="button"
                     className="shrink-0 rounded-lg border border-brand-500 px-4 text-sm font-medium text-brand-700 hover:bg-brand-50 disabled:opacity-50"
-                    disabled={!voucher.trim()}
+                    disabled={!voucher.trim() || !property}
                     onClick={async () => {
+                      if (!property) return
                       const nights = Math.max(
                         1,
                         Math.round(
@@ -882,7 +893,7 @@ export default function PublicBooking() {
                       try {
                         const r = await call<{ ok: boolean; message: string }>(
                           "kamra.public_api.check_voucher",
-                          { property: DEMO_PROPERTY, code: voucher.trim(), nights },
+                          { property, code: voucher.trim(), nights },
                         )
                         setVoucherMsg({ ok: r.ok, text: r.message })
                       } catch {

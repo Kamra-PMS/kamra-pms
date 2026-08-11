@@ -23,6 +23,30 @@ def site_info():
 	return {"demo_mode": frappe.db.get_default("kamra_demo_mode") == "1"}
 
 
+@frappe.whitelist(allow_guest=True)
+def default_property():
+	"""Which Property the public booking engine (``/book``) should show.
+
+	Each Kamra deploy is single-tenant: one site = one hotel/villa. The
+	frontend used to hardcode the demo property name, which only worked
+	on the seeded demo site and broke the booking engine on every other
+	tenant (``Property <name> not found`` / permission error for Guest).
+
+	Picks the Property with booking_engine_enabled=1; if none are flagged
+	(fresh install) or several are, falls back to the first Property so
+	the page still renders instead of hanging on a guest permission error.
+	"""
+	enabled = frappe.get_all(
+		"Property", filters={"booking_engine_enabled": 1}, pluck="name", limit=1,
+	)
+	if enabled:
+		return enabled[0]
+	any_property = frappe.get_all("Property", pluck="name", limit=1)
+	if any_property:
+		return any_property[0]
+	frappe.throw("No property configured for this site.")
+
+
 def _public_locale(property: str) -> dict:
 	from kamra.localization import pack_for
 	prop = frappe.get_cached_doc("Property", property)

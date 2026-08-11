@@ -253,6 +253,12 @@ export interface Quote {
 
 export const DEMO_PROPERTY = "Kamra Demo Palace"
 
+// Every Kamra site hosts exactly one Property. The public booking engine
+// (/book) has no logged-in session to read a chosen property from, so it
+// asks the site which one to show instead of assuming the demo property.
+export const getDefaultProperty = () =>
+  call<string>("kamra.public_api.default_property")
+
 // Active property - set by the header switcher, read at call time.
 let currentProperty =
   localStorage.getItem("kamra_property") || DEMO_PROPERTY
