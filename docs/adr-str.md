@@ -301,8 +301,11 @@ Those rules are driven by explicit SIU, competition group, and policy settings.
 
 ### Questions to resolve
 
-- Should `property_kind` include `Homestay / B&B` and `Serviced Apartment` in v1?
-- Is it acceptable to default all unset properties to `Hotel`?
+- ~~Should `property_kind` include `Homestay / B&B` and `Serviced Apartment` in v1?~~
+  **Decision (2026-08-11):** v1 ships `Hotel` and `Short Term Rental` only.
+  Additional presets stay future values of the same field.
+- ~~Is it acceptable to default all unset properties to `Hotel`?~~
+  **Yes** — patch `v28.backfill_property_kind` defaults blanks to `Hotel`.
 
 ---
 

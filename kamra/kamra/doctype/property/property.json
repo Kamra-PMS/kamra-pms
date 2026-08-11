@@ -10,6 +10,7 @@
  "field_order": [
   "property_name",
   "legal_name",
+  "property_kind",
   "column_break_a",
   "phone",
   "email",
@@ -91,6 +92,16 @@
    "fieldname": "legal_name",
    "fieldtype": "Data",
    "label": "Legal Name"
+  },
+  {
+   "default": "Hotel",
+   "description": "Setup / presentation preset only (ADR-005). Does not fork pricing, availability, or channel sync.",
+   "fieldname": "property_kind",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Property Kind",
+   "options": "Hotel\nShort Term Rental"
   },
   {
    "fieldname": "column_break_a",

@@ -186,6 +186,12 @@ const PROPERTY_SPECS: Spec[] = [
   { field: "property_name", label: "Property name" },
   { field: "legal_name", label: "Legal name" },
   {
+    field: "property_kind",
+    label: "Property kind",
+    type: "select",
+    options: ["Hotel", "Short Term Rental"],
+  },
+  {
     field: "country",
     label: "Country",
     hint: "Selects the tax & invoicing pack. India and Indonesia today; more via the Marketplace.",

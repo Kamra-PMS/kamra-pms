@@ -296,6 +296,13 @@ def setup_property(payload):
 	frappe.only_for(("System Manager", "Hotel Admin"))
 
 	p = payload["property"]
+	from kamra.property_presets import apply_kind_defaults, skip_meal_plans
+	apply_kind_defaults(p)
+	# Inventory topology: rooms (hotel / multi-unit) or whole_property (entire place).
+	topology = (payload.get("inventory_topology") or "rooms").strip()
+	if topology not in ("rooms", "whole_property"):
+		frappe.throw(f"Unknown inventory_topology '{topology}'")
+
 	if frappe.db.exists("Property", p["property_name"]):
 		frappe.throw(f"Property '{p['property_name']}' already exists.")
 
@@ -305,6 +312,11 @@ def setup_property(payload):
 	rt_by_code = {}
 	weekends_created = 0
 	for rt in payload.get("room_types", []):
+		# Entire-place listings use Villa so the SIU backfill creates a
+		# whole_property sellable unit (ADR-001 / ADR-002).
+		category = rt.get("room_category", "Private")
+		if topology == "whole_property":
+			category = "Villa"
 		doc = frappe.get_doc({
 			"doctype": "Room Type",
 			"property": prop.name,
@@ -315,7 +327,7 @@ def setup_property(payload):
 			"extra_adult_price": rt.get("extra_adult_price", 0),
 			"adults_capacity": rt.get("adults", 2),
 			"children_capacity": rt.get("children", 1),
-			"room_category": rt.get("room_category", "Private"),
+			"room_category": category,
 			"air_conditioning": rt.get("air_conditioning", ""),
 			"free_child_age": rt.get("free_child_age", 0),
 			# unset = the country pack's standard rate, not an Indian slab
@@ -355,20 +367,25 @@ def setup_property(payload):
 			}).insert()
 			rooms_created += 1
 
-	for mp in payload.get("meal_plans", []):
-		frappe.get_doc({
-			"doctype": "Meal Plan", "property": prop.name,
-			"code": mp["code"], "label": mp.get("label"),
-			"price_per_adult": mp.get("price_per_adult", 0),
-			"price_per_child": mp.get("price_per_child", 0),
-			"is_default": mp.get("is_default", 0),
-		}).insert()
+	# Entire-place with no physical rooms: still create a whole_property SIU
+	# via Room Type Villa sync / backfill.
+	meal_plans_created = 0
+	if not skip_meal_plans(prop.property_kind):
+		for mp in payload.get("meal_plans", []):
+			frappe.get_doc({
+				"doctype": "Meal Plan", "property": prop.name,
+				"code": mp["code"], "label": mp.get("label"),
+				"price_per_adult": mp.get("price_per_adult", 0),
+				"price_per_child": mp.get("price_per_child", 0),
+				"is_default": mp.get("is_default", 0),
+			}).insert()
+			meal_plans_created += 1
 
 	from kamra.savings import log_action
 	log_action("setup_property", "Property", prop.name, prop.name,
 	           minutes_saved=45,
-	           rationale=f"Onboarded {prop.name}: {len(rt_by_code)} room types, "
-	                     f"{rooms_created} rooms",
+	           rationale=f"Onboarded {prop.name} ({prop.property_kind}): "
+	                     f"{len(rt_by_code)} room types, {rooms_created} rooms",
 	           channel="API")
 	# Ensure Sellable Units exist for the new inventory (ADR-001).
 	siu_stats = {}
@@ -379,8 +396,11 @@ def setup_property(payload):
 		frappe.log_error(title="Sellable Unit backfill after setup_property")
 	return {"property": prop.name, "room_types": len(rt_by_code),
 	        "rooms": rooms_created,
-	        "meal_plans": len(payload.get("meal_plans", [])),
+	        "meal_plans": meal_plans_created,
+	        "property_kind": prop.property_kind,
+	        "inventory_topology": topology,
 	        "sellable_units": siu_stats}
+
 
 
 @frappe.whitelist()
