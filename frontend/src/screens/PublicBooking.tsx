@@ -31,6 +31,13 @@ interface Showcase {
     payment_mode: string
     advance_percent: number
     registration_fee: number
+    cleaning_fee: number
+    security_deposit_amount: number
+    minimum_nights: number
+    free_cancel_days: number
+    cancellation_fee: string
+    booking_mode: string
+    property_kind: string
     star_category: string | null
     address_line: string | null
     city: string
@@ -83,7 +90,13 @@ interface Showcase {
 interface StayResult {
   room_type: string
   rooms_left: number
-  quote: { nights: number; amount_after_tax: number; discount: number } | null
+  quote: {
+    nights: number
+    amount_after_tax: number
+    discount: number
+    cleaning_fee?: number
+    totals?: { deposit_required?: number }
+  } | null
 }
 
 const inputCls =
@@ -509,6 +522,16 @@ export default function PublicBooking() {
                               total · {r.quote.nights} night{r.quote.nights === 1 ? "" : "s"}, taxes in
                             </span>
                           </p>
+                          {(r.quote.cleaning_fee || 0) > 0 && (
+                            <p className="text-xs text-zinc-500">
+                              Includes {cur()}{inr(r.quote.cleaning_fee || 0)} cleaning fee
+                            </p>
+                          )}
+                          {(r.quote.totals?.deposit_required || 0) > 0 && (
+                            <p className="text-xs text-zinc-500">
+                              Refundable deposit {cur()}{inr(r.quote.totals?.deposit_required || 0)} due separately
+                            </p>
+                          )}
                           {r.rooms_left <= 2 && (
                             <p className="text-xs font-medium text-rose-600">
                               Only {r.rooms_left} left for these dates
@@ -542,7 +565,9 @@ export default function PublicBooking() {
         <div className="mt-12 grid gap-8 md:grid-cols-2 border-t border-zinc-200 pt-8">
           {/* Policies & Rules */}
           <div className="space-y-4">
-            <h2 className="text-xl font-bold text-zinc-800">Hotel Policies & Rules</h2>
+            <h2 className="text-xl font-bold text-zinc-800">
+              {p.property_kind === "Short Term Rental" ? "Stay policies" : "Hotel Policies & Rules"}
+            </h2>
             <div className="rounded-xl border border-zinc-200 bg-white p-5 space-y-4 shadow-sm text-sm">
               <div className="flex justify-between border-b border-zinc-100 pb-2">
                 <span className="font-medium text-zinc-500">Check-in</span>
@@ -550,7 +575,36 @@ export default function PublicBooking() {
               </div>
               <div className="flex justify-between border-b border-zinc-100 pb-2">
                 <span className="font-medium text-zinc-500">Check-out</span>
-                <span className="font-semibold text-zinc-800">Before {p.checkout_time?.slice(0, 5)}</span>
+                <span className="font-semibold text-zinc-800">by {p.checkout_time?.slice(0, 5)}</span>
+              </div>
+              {(p.minimum_nights || 1) > 1 && (
+                <div className="flex justify-between border-b border-zinc-100 pb-2">
+                  <span className="font-medium text-zinc-500">Minimum stay</span>
+                  <span className="font-semibold text-zinc-800">{p.minimum_nights} nights</span>
+                </div>
+              )}
+              {(p.cleaning_fee || 0) > 0 && (
+                <div className="flex justify-between border-b border-zinc-100 pb-2">
+                  <span className="font-medium text-zinc-500">Cleaning fee</span>
+                  <span className="font-semibold text-zinc-800">{cur()}{inr(p.cleaning_fee)} (one-time)</span>
+                </div>
+              )}
+              {(p.security_deposit_amount || 0) > 0 && (
+                <div className="flex justify-between border-b border-zinc-100 pb-2">
+                  <span className="font-medium text-zinc-500">Security deposit</span>
+                  <span className="font-semibold text-zinc-800">{cur()}{inr(p.security_deposit_amount)} (refundable)</span>
+                </div>
+              )}
+              <div className="flex justify-between border-b border-zinc-100 pb-2">
+                <span className="font-medium text-zinc-500">Cancellation</span>
+                <span className="font-semibold text-zinc-800 text-right max-w-[60%]">
+                  {(p.free_cancel_days || 0) > 0
+                    ? `Free up to ${p.free_cancel_days} day${p.free_cancel_days === 1 ? "" : "s"} before arrival`
+                    : "Per property policy"}
+                  {p.cancellation_fee && p.cancellation_fee !== "None"
+                    ? ` · fee: ${p.cancellation_fee}`
+                    : ""}
+                </span>
               </div>
               {p.house_rules && (
                 <div>
@@ -857,6 +911,16 @@ export default function PublicBooking() {
                         : `A ${cur()}${inr(data.property.registration_fee)} registration fee is collected to confirm; the rest is paid at the hotel.`}
                   </div>
                 )}
+              {(data.property.cleaning_fee || 0) > 0 && (
+                <p className="text-xs text-zinc-500">
+                  Cleaning fee {cur()}{inr(data.property.cleaning_fee)} is included in the total.
+                </p>
+              )}
+              {(data.property.security_deposit_amount || 0) > 0 && (
+                <p className="text-xs text-zinc-500">
+                  A refundable security deposit of {cur()}{inr(data.property.security_deposit_amount)} may be collected separately.
+                </p>
+              )}
               {error && (
                 <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
                   {error}

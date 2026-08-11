@@ -1,0 +1,187 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "format:DEP-{#####}",
+ "creation": "2026-08-11 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "reservation",
+  "property",
+  "guest",
+  "column_break_a",
+  "status",
+  "method",
+  "sb_amounts",
+  "required_amount",
+  "collected_amount",
+  "withheld_amount",
+  "refunded_amount",
+  "column_break_b",
+  "balance",
+  "sb_audit",
+  "reason",
+  "evidence",
+  "refund_reference",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "reservation",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Reservation",
+   "options": "Reservation",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fetch_from": "reservation.property",
+   "fieldname": "property",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Property",
+   "options": "Property",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "reservation.guest",
+   "fieldname": "guest",
+   "fieldtype": "Link",
+   "label": "Guest",
+   "options": "Guest",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_a",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Required",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Required\nWaived\nCollected\nHeld\nWithheld\nRefunded",
+   "reqd": 1
+  },
+  {
+   "default": "payment",
+   "fieldname": "method",
+   "fieldtype": "Select",
+   "label": "Method",
+   "options": "payment\ncash\nauthorization\nwaiver"
+  },
+  {
+   "fieldname": "sb_amounts",
+   "fieldtype": "Section Break",
+   "label": "Amounts"
+  },
+  {
+   "fieldname": "required_amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Required Amount",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "collected_amount",
+   "fieldtype": "Currency",
+   "label": "Collected Amount"
+  },
+  {
+   "default": "0",
+   "fieldname": "withheld_amount",
+   "fieldtype": "Currency",
+   "label": "Withheld Amount"
+  },
+  {
+   "default": "0",
+   "fieldname": "refunded_amount",
+   "fieldtype": "Currency",
+   "label": "Refunded Amount"
+  },
+  {
+   "fieldname": "column_break_b",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "balance",
+   "fieldtype": "Currency",
+   "label": "Refundable Balance",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_audit",
+   "fieldtype": "Section Break",
+   "label": "Audit"
+  },
+  {
+   "fieldname": "reason",
+   "fieldtype": "Small Text",
+   "label": "Reason"
+  },
+  {
+   "fieldname": "evidence",
+   "fieldtype": "Data",
+   "label": "Evidence URL / Ref"
+  },
+  {
+   "fieldname": "refund_reference",
+   "fieldtype": "Data",
+   "label": "Refund Reference"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  }
+ ],
+ "links": [],
+ "modified": "2026-08-11 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kamra",
+ "name": "Security Deposit",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "Hotel Admin",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "read": 1,
+   "role": "Front Desk",
+   "write": 1
+  },
+  {
+   "read": 1,
+   "role": "Finance",
+   "write": 1
+  },
+  {
+   "read": 1,
+   "role": "Kamra Agent",
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

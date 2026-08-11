@@ -266,6 +266,32 @@ const BOOKING_SPECS: Spec[] = [
     type: "number",
   },
   {
+    field: "cleaning_fee",
+    label: "Cleaning fee",
+    type: "number",
+  },
+  {
+    field: "cleaning_fee_taxable",
+    label: "Cleaning fee taxable",
+    type: "check",
+  },
+  {
+    field: "security_deposit_amount",
+    label: "Security deposit amount",
+    type: "number",
+  },
+  {
+    field: "access_instructions",
+    label: "Access instructions",
+    type: "textarea",
+    hint: "Released to guests only after payment, deposit, and optional pre-check-in gates",
+  },
+  {
+    field: "require_precheckin_for_access",
+    label: "Require pre-check-in for access",
+    type: "check",
+  },
+  {
     field: "star_category",
     label: "Category",
     type: "select",

@@ -106,7 +106,10 @@
   "cancellation_fee",
   "cancelled_on",
   "advance_due",
-  "payment_policy"
+  "payment_policy",
+  "quote_snapshot",
+  "access_released",
+  "access_released_on"
  ],
  "fields": [
   {
@@ -587,6 +590,27 @@
    "fieldname": "payment_policy",
    "fieldtype": "Data",
    "label": "Payment Policy",
+   "read_only": 1
+  },
+  {
+   "description": "Immutable typed quote at booking (ADR-008).",
+   "fieldname": "quote_snapshot",
+   "fieldtype": "Code",
+   "label": "Quote Snapshot",
+   "options": "JSON",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "access_released",
+   "fieldtype": "Check",
+   "label": "Access Released",
+   "read_only": 1
+  },
+  {
+   "fieldname": "access_released_on",
+   "fieldtype": "Datetime",
+   "label": "Access Released On",
    "read_only": 1
   },
   {

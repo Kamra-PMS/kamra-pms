@@ -9,7 +9,7 @@ no LLM ever computes money. Resolution order per night:
 from decimal import Decimal
 
 import frappe
-from frappe.utils import add_days, date_diff, getdate, nowdate
+from frappe.utils import add_days, cint, date_diff, getdate, nowdate
 
 
 def _dec(v) -> Decimal:
@@ -259,58 +259,87 @@ def quote(
 	# discount reduces tax proportionally across the blended rate
 	gross_tax = room_tax + meal_tax
 	tax = gross_tax * (taxable / subtotal) if subtotal else Decimal(0)
-	total = taxable + tax
-	effective_pct = float(tax / taxable * 100) if taxable else 0
 
+	# Cleaning fee (ADR-008): separate line; taxable at room GST when enabled.
+	prop = frappe.get_cached_doc("Property", property)
+	cleaning = _dec(prop.get("cleaning_fee") or 0)
+	cleaning_tax = Decimal(0)
+	if cleaning > 0:
+		# Use the stay's average room GST as the cleaning tax rate.
+		avg_gst = (room_tax / room_total * Decimal(100)) if room_total else Decimal(0)
+		if cint(prop.get("cleaning_fee_taxable") if prop.get("cleaning_fee_taxable") is not None else 1):
+			if inclusive:
+				cleaning = cleaning / (Decimal(1) + avg_gst / Decimal(100))
+			cleaning_tax = cleaning * avg_gst / Decimal(100)
+		tax += cleaning_tax
+		total_base = taxable + cleaning
+	else:
+		total_base = taxable
+
+	total = total_base + tax
+	effective_pct = float(tax / total_base * 100) if total_base else 0
+
+	deposit_required = float(prop.get("security_deposit_amount") or 0)
+
+	line_items = [
+		{
+			"component": "accommodation",
+			"description": "Room nights",
+			"amount": float(room_total),
+			"tax_amount": float(room_tax * (taxable / subtotal) if subtotal else 0),
+			"tax_rate": float(room_tax / room_total * 100) if room_total else 0,
+			"is_tax_inclusive": bool(inclusive),
+			"nights_applied": billable_nights,
+		},
+	]
+	if meal_total:
+		line_items.append({
+			"component": "meal_plan",
+			"description": "Meal plan",
+			"amount": float(meal_total),
+			"tax_amount": float(meal_tax * (taxable / subtotal) if subtotal else 0),
+			"nights_applied": billable_nights,
+		})
+	if cleaning > 0:
+		line_items.append({
+			"component": "cleaning_fee",
+			"description": "Cleaning fee",
+			"amount": float(cleaning),
+			"tax_amount": float(cleaning_tax),
+			"nights_applied": 0,
+		})
+	if discount:
+		line_items.append({
+			"component": "promotion",
+			"description": "Discount",
+			"amount": -float(discount),
+			"tax_amount": 0.0,
+			"nights_applied": billable_nights,
+		})
+
+	from frappe.utils import now_datetime
 	return {
 		"nights": nights,
 		"day_use": day_use,
 		"nightly": nightly,
 		"room_total": float(room_total),
 		"meal_total": float(meal_total),
+		"cleaning_fee": float(cleaning),
 		"discount": float(discount),
 		"voucher": voucher_name,
-		"amount_before_tax": float(taxable),
+		"amount_before_tax": float(total_base),
 		"tax_percent": round(effective_pct, 2),
 		"tax_amount": float(tax),
 		"amount_after_tax": float(total),
-		# Typed components (ADR-008 hedge): shape only — not persisted yet.
-		"line_items": [
-			{
-				"component": "accommodation",
-				"description": "Room nights",
-				"amount": float(room_total),
-				"tax_amount": float(room_tax * (taxable / subtotal) if subtotal else 0),
-				"nights_applied": billable_nights,
-			},
-			*(
-				[{
-					"component": "meal_plan",
-					"description": "Meal plan",
-					"amount": float(meal_total),
-					"tax_amount": float(meal_tax * (taxable / subtotal) if subtotal else 0),
-					"nights_applied": billable_nights,
-				}]
-				if meal_total
-				else []
-			),
-			*(
-				[{
-					"component": "promotion",
-					"description": "Discount",
-					"amount": -float(discount),
-					"tax_amount": 0.0,
-					"nights_applied": billable_nights,
-				}]
-				if discount
-				else []
-			),
-		],
+		"line_items": line_items,
 		"totals": {
-			"subtotal": float(subtotal),
+			"subtotal": float(subtotal + cleaning),
 			"discount": float(discount),
 			"tax": float(tax),
 			"total": float(total),
-			"deposit_required": 0.0,
+			"deposit_required": deposit_required,
 		},
+		"currency": prop.get("currency") or "INR",
+		"quote_version": 1,
+		"quoted_at": str(now_datetime()),
 	}

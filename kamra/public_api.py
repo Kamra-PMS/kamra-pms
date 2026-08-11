@@ -121,6 +121,13 @@ def showcase(property: str):
 			"payment_mode": prop.get("booking_payment_mode") or "Pay at hotel",
 			"advance_percent": float(prop.get("advance_percent") or 0),
 			"registration_fee": float(prop.get("registration_fee") or 0),
+			"cleaning_fee": float(prop.get("cleaning_fee") or 0),
+			"security_deposit_amount": float(prop.get("security_deposit_amount") or 0),
+			"minimum_nights": int(prop.get("minimum_nights") or 1),
+			"free_cancel_days": int(prop.get("free_cancel_days") or 0),
+			"cancellation_fee": prop.get("cancellation_fee") or "None",
+			"booking_mode": prop.get("booking_mode") or "Instant",
+			"property_kind": prop.get("property_kind") or "Hotel",
 		},
 		"room_types": room_types,
 		"meal_plans": meal_plans,
@@ -602,7 +609,20 @@ def book(property: str, room_type: str, check_in_date: str,
 		"pay_at_hotel": advance_due <= 0,
 		"status": final_status,
 		"idempotent_replay": int(result.get("idempotent_replay") or 0),
+		"cleaning_fee": float(
+			frappe.db.get_value("Property", property, "cleaning_fee") or 0
+		),
+		"security_deposit_amount": float(
+			frappe.db.get_value("Property", property, "security_deposit_amount") or 0
+		),
 	}
+
+
+@frappe.whitelist(allow_guest=True)
+def access_info(token: str):
+	"""Guest access instructions when gates pass (precheckin token)."""
+	from kamra.access import guest_access_info
+	return guest_access_info(token)
 
 
 @frappe.whitelist(allow_guest=True)

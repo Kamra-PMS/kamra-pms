@@ -308,6 +308,15 @@ def setup_property(payload):
 
 	prop = frappe.get_doc({"doctype": "Property", **p})
 	prop.insert()
+	try:
+		from kamra.turnover import ensure_default_profile
+		from kamra.property_presets import KIND_STR, normalize_kind
+		ensure_default_profile(
+			prop.name,
+			str_defaults=normalize_kind(prop.property_kind) == KIND_STR,
+		)
+	except Exception:
+		frappe.log_error(title="Turnover Profile ensure after setup_property")
 
 	rt_by_code = {}
 	weekends_created = 0
@@ -602,6 +611,44 @@ def record_advance(reservation: str, amount: float, mode: str = "UPI",
 
 
 @frappe.whitelist()
+@require_roles("Front Desk", "Finance", "Kamra Agent")
+def collect_security_deposit(reservation: str, amount: float,
+                             mode: str = "UPI", reference: str | None = None):
+	from kamra.deposit import collect_deposit
+	return collect_deposit(reservation, amount, mode=mode, reference=reference)
+
+
+@frappe.whitelist()
+@require_roles("Front Desk", "Hotel Admin", "Kamra Agent")
+def waive_security_deposit(reservation: str, reason: str):
+	from kamra.deposit import waive_deposit
+	return waive_deposit(reservation, reason)
+
+
+@frappe.whitelist()
+@require_roles("Front Desk", "Hotel Admin", "Finance")
+def withhold_security_deposit(reservation: str, amount: float, reason: str,
+                              evidence: str | None = None):
+	from kamra.deposit import withhold_deposit
+	return withhold_deposit(reservation, amount, reason, evidence)
+
+
+@frappe.whitelist()
+@require_roles("Front Desk", "Finance", "Hotel Admin")
+def refund_security_deposit(reservation: str, amount: float | None = None,
+                            reference: str | None = None):
+	from kamra.deposit import refund_deposit
+	return refund_deposit(reservation, amount, reference)
+
+
+@frappe.whitelist()
+@require_roles("Front Desk", "Hotel Admin", "Kamra Agent")
+def release_access_instructions(reservation: str, force: int = 0):
+	from kamra.access import release_access
+	return release_access(reservation, force=int(force or 0))
+
+
+@frappe.whitelist()
 @require_roles("Front Desk", "Hotel Admin", "Kamra Agent")
 def confirm_pending_reservation(reservation: str):
 	"""Mark Held / Pending Payment / Requested as Confirmed (host or payment)."""
@@ -615,6 +662,11 @@ def confirm_pending_reservation(reservation: str):
 		res.save(ignore_permissions=True)
 	finally:
 		frappe.flags.kamra_status_transition = False
+	try:
+		from kamra.deposit import ensure_deposit_for_reservation
+		ensure_deposit_for_reservation(res)
+	except Exception:
+		frappe.log_error(title="Security deposit ensure on confirm failed")
 	return {"reservation": res.name, "status": res.status}
 
 
@@ -2482,7 +2534,7 @@ def check_out(reservation: str):
 @frappe.whitelist()
 @require_roles("Housekeeping", "Front Desk", "Kamra Agent")
 def set_housekeeping_status(room: str, status: str):
-	allowed = {"Clean", "Dirty", "Inspected", "Out of Order"}
+	allowed = {"Clean", "Dirty", "Inspected", "Ready", "Out of Order"}
 	if status not in allowed:
 		frappe.throw(f"Invalid status. Use one of {sorted(allowed)}")
 	frappe.db.set_value("Room", room, "housekeeping_status", status)

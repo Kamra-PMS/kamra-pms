@@ -30,5 +30,22 @@ class HousekeepingTask(Document):
 				self.db_set("breached", 1, update_modified=False)
 			from kamra.housekeeping import notify_room_ready
 			notify_room_ready(self)
+			try:
+				from kamra.turnover import on_checkout_clean_done
+				on_checkout_clean_done(self)
+			except Exception:
+				frappe.log_error(title="Turnover inspection spawn failed")
 		elif self.status == "Verified":
-			frappe.db.set_value("Room", self.room, "housekeeping_status", "Inspected")
+			# Inspection verified → Ready (STR) or Inspected (hotel default).
+			profile = None
+			try:
+				from kamra.turnover import get_turnover_profile, mark_room_ready
+				profile = get_turnover_profile(self.property)
+			except Exception:
+				profile = None
+			if profile and profile.get("requires_inspection"):
+				mark_room_ready(self.room)
+			else:
+				frappe.db.set_value(
+					"Room", self.room, "housekeeping_status", "Inspected"
+				)

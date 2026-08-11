@@ -31,6 +31,12 @@ class Reservation(Document):
 					"kamra.whatsapp.notify_booking_confirmed",
 					reservation=self.name, queue="short",
 					enqueue_after_commit=True)
+		# ADR-009: open deposit liability when property policy requires one.
+		try:
+			from kamra.deposit import ensure_deposit_for_reservation
+			ensure_deposit_for_reservation(self)
+		except Exception:
+			frappe.log_error(title="Security deposit ensure failed")
 
 	def validate_type_capacity(self):
 		"""Room-type capacity with a controlled overbooking allowance.
@@ -231,6 +237,12 @@ class Reservation(Document):
 		self.tax_amount = q["tax_amount"]
 		self.amount_after_tax = q["amount_after_tax"]
 		self.discount_amount = q["discount"]
+		# Persist immutable quote snapshot (ADR-008).
+		if hasattr(self, "quote_snapshot"):
+			import json
+			snap = dict(q)
+			snap["idempotency_key"] = getattr(self, "idempotency_key", None)
+			self.quote_snapshot = json.dumps(snap, default=str)
 		if getattr(self, "travel_agent", None):
 			pct = frappe.db.get_value(
 				"Travel Agent", self.travel_agent, "commission_pct") or 0

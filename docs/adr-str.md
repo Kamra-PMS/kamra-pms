@@ -1,9 +1,9 @@
 # Architecture Decision Records — Short-Term Rental Support (Ewa Reserve)
 
-Status: ADR-001 through ADR-007 **approved** (2026-08-11).
-ADR-008 through ADR-014 remain draft.
-Ewa Reserve operator decisions deferred; Phase 1A implementation proceeds on
-the approved inventory / availability foundation.
+Status: ADR-001 through ADR-009 **approved** (2026-08-11).
+ADR-010 through ADR-014 remain draft (010 partially implemented for Phase 2B).
+Ewa Reserve operator decisions deferred; product defaults below apply until
+the operator/CA overrides them.
 
 ---
 
@@ -455,9 +455,14 @@ modification creates a new quote version with a delta.
 
 ### Questions to resolve
 
-- Which components are taxable for Ewa? (Needs operator/CA verification.)
-- Should the quote snapshot be a Child Table or a JSON field?
-- How do promotions and LOS discounts stack with seasons and demand hurdles?
+- ~~Which components are taxable for Ewa?~~
+  **Product default (2026-08-11):** Cleaning fee taxable at the room GST
+  rate. Operator/CA may override later via Property `cleaning_fee_taxable`.
+- ~~Should the quote snapshot be a Child Table or a JSON field?~~
+  **JSON** on Reservation (`quote_snapshot`) — immutable per version.
+- ~~How do promotions and LOS discounts stack with seasons and demand hurdles?~~
+  Promotions apply after season/demand on accommodation subtotal (existing
+  engine). LOS adjustments deferred until a dedicated rule DocType exists.
 
 ---
 
@@ -502,9 +507,14 @@ tracks:
 
 ### Questions to resolve
 
-- Is the deposit an authorization hold or a collected payment? (Gateway capability.)
-- Who approves partial withholds and what evidence is required?
-- Does Ewa want damage close-out at check-out or after inspection?
+- ~~Is the deposit an authorization hold or a collected payment?~~
+  **Product default:** collected `payment` (cash / UPI / gateway capture).
+  Authorization holds remain a future method value.
+- ~~Who approves partial withholds and what evidence is required?~~
+  Front Desk / Hotel Admin; free-text reason required; optional evidence URL.
+- ~~Does Ewa want damage close-out at check-out or after inspection?~~
+  **Product default:** withhold allowed from check-out onward; remaining
+  balance refundable after inspection / Ready.
 
 ---
 
@@ -549,9 +559,12 @@ tasks are property-scoped.
 
 ### Questions to resolve
 
-- Does Ewa allow same-day turns? If yes, what SLA and staffing supports it?
-- Who marks a unit ready — cleaner, inspector, or property manager?
+- ~~Does Ewa allow same-day turns?~~
+  **Product default:** `same_day_turn_allowed=0` for STR profiles; hotels `1`.
+- ~~Who marks a unit ready?~~
+  Housekeeping Verified → Ready when profile requires inspection.
 - What happens if a unit is not ready and the next guest arrives?
+  Front desk override via room status; access release still gated.
 
 ---
 
