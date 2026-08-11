@@ -564,13 +564,24 @@ def cash_summary(property: str, date: str | None = None):
 @require_roles("Front Desk", "Kamra Agent")
 def record_advance(reservation: str, amount: float, mode: str = "UPI",
                    reference: str | None = None):
-	"""Advance/deposit against a Confirmed booking - opens the folio early
+	"""Advance/deposit against a live booking - opens the folio early
 	so the money sits on the stay from day one (GM gap: deposits arrive at
-	booking, not at check-in)."""
+	booking, not at check-in). Pending Payment → Confirmed when paid."""
 	res = frappe.get_doc("Reservation", reservation)
-	if res.status not in ("Confirmed", "Checked In"):
-		frappe.throw("Advances only apply to active reservations.")
+	if res.status not in ("Confirmed", "Checked In", "Pending Payment", "Held"):
+		frappe.throw("Advances only apply to active or held reservations.")
 	from kamra.folio import _recalculate, open_folio
+
+	# Promote Pending Payment / Held → Confirmed before opening folio.
+	if res.status in ("Pending Payment", "Held"):
+		frappe.flags.kamra_status_transition = True
+		try:
+			res.status = "Confirmed"
+			res.hold_expires_on = None
+			res.save(ignore_permissions=True)
+		finally:
+			frappe.flags.kamra_status_transition = False
+		res.reload()
 
 	folio = frappe.get_doc("Folio", open_folio(res))
 	folio.append("payments", {
@@ -586,7 +597,25 @@ def record_advance(reservation: str, amount: float, mode: str = "UPI",
 	from kamra.savings import log_action
 	log_action("record_advance", "Folio", folio.name, res.property,
 	           rationale=f"₹{float(amount):,.0f} advance on {reservation}")
-	return {"folio": folio.name, "balance": folio.balance}
+	return {"folio": folio.name, "balance": folio.balance,
+	        "status": res.status}
+
+
+@frappe.whitelist()
+@require_roles("Front Desk", "Hotel Admin", "Kamra Agent")
+def confirm_pending_reservation(reservation: str):
+	"""Mark Held / Pending Payment / Requested as Confirmed (host or payment)."""
+	res = frappe.get_doc("Reservation", reservation)
+	if res.status not in ("Held", "Pending Payment", "Requested", "Waitlist"):
+		frappe.throw(f"Cannot confirm from status {res.status}.")
+	frappe.flags.kamra_status_transition = True
+	try:
+		res.status = "Confirmed"
+		res.hold_expires_on = None
+		res.save(ignore_permissions=True)
+	finally:
+		frappe.flags.kamra_status_transition = False
+	return {"reservation": res.name, "status": res.status}
 
 
 @frappe.whitelist()
@@ -3065,15 +3094,38 @@ def create_booking(property: str, room_type: str, check_in_date: str,
                    guest_category: str | None = None,
                    stay_details=None,
                    instructions=None,
-                   room: str | None = None):
+                   room: str | None = None,
+                   status: str | None = None,
+                   idempotency_key: str | None = None,
+                   hold_expires_on: str | None = None):
 	"""One-call booking: attach to an existing guest profile when given,
 	else dedup by phone / create one. Optional auto room assignment,
 	voucher applied, price computed by the engine.
 
 	waitlist=1 parks the stay with no room and status Waitlist - for dates
-	that are sold out or restricted; promote it later when a room frees."""
+	that are sold out or restricted; promote it later when a room frees.
+
+	status / idempotency_key / hold_expires_on support Instant public booking
+	(ADR-006 / ADR-007). Desk callers leave them unset → Confirmed."""
 	from kamra.crs import assert_property_access
+	from kamra.reservation_state import find_by_idempotency, lock_sius_for_booking
 	assert_property_access(property)
+
+	key = (idempotency_key or "").strip() or None
+	if key:
+		existing = find_by_idempotency(property, key)
+		if existing:
+			doc = frappe.get_doc("Reservation", existing)
+			return {
+				"reservation": doc.name,
+				"room": doc.room,
+				"guest": doc.guest,
+				"amount_after_tax": doc.amount_after_tax,
+				"discount": doc.discount_amount,
+				"status": doc.status,
+				"idempotent_replay": 1,
+			}
+
 	if guest:
 		if not frappe.db.exists("Guest", guest):
 			frappe.throw(f"Guest profile {guest} not found.")
@@ -3094,10 +3146,14 @@ def create_booking(property: str, room_type: str, check_in_date: str,
 		).name
 
 	if not room and int(assign_room) and not int(waitlist or 0):
+		# Serialize hybrid / SIU capacity before reading free rooms (ADR-007).
+		lock_sius_for_booking(property, room_type)
 		# a group pickup books against its own block, not general inventory
 		free = available_rooms(property, room_type, check_in_date,
 		                       check_out_date, group_booking=group_booking)
 		room = free[0].name if free else None
+	elif not int(waitlist or 0):
+		lock_sius_for_booking(property, room_type)
 
 	doc = frappe.get_doc({
 		"doctype": "Reservation",
@@ -3124,9 +3180,13 @@ def create_booking(property: str, room_type: str, check_in_date: str,
 		"contact_preference": contact_preference
 			or ("Booker" if booked_by_name else "Guest"),
 		"auto_price": 1,
+		"idempotency_key": key,
+		"hold_expires_on": hold_expires_on or None,
 	})
 	if int(waitlist or 0):
 		doc.status = "Waitlist"
+	elif status:
+		doc.status = status
 
 	# extras chosen at booking - priced from the Experience, posted to the
 	# folio the moment it opens

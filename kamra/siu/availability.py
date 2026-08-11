@@ -15,9 +15,8 @@ from typing import Any
 import frappe
 from frappe.utils import add_days, date_diff, getdate
 
-# Statuses that consume inventory. Held / Pending Payment join when ADR-006
-# lands; keep this list centralized so every consumer stays in sync.
-LIVE_STATUSES = ("Confirmed", "Checked In", "Held", "Pending Payment")
+# Single source: kamra.reservation_state (ADR-006).
+from kamra.reservation_state import LIVE_STATUSES  # noqa: F401
 
 
 def availability(

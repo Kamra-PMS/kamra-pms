@@ -274,4 +274,43 @@ def quote(
 		"tax_percent": round(effective_pct, 2),
 		"tax_amount": float(tax),
 		"amount_after_tax": float(total),
+		# Typed components (ADR-008 hedge): shape only — not persisted yet.
+		"line_items": [
+			{
+				"component": "accommodation",
+				"description": "Room nights",
+				"amount": float(room_total),
+				"tax_amount": float(room_tax * (taxable / subtotal) if subtotal else 0),
+				"nights_applied": billable_nights,
+			},
+			*(
+				[{
+					"component": "meal_plan",
+					"description": "Meal plan",
+					"amount": float(meal_total),
+					"tax_amount": float(meal_tax * (taxable / subtotal) if subtotal else 0),
+					"nights_applied": billable_nights,
+				}]
+				if meal_total
+				else []
+			),
+			*(
+				[{
+					"component": "promotion",
+					"description": "Discount",
+					"amount": -float(discount),
+					"tax_amount": 0.0,
+					"nights_applied": billable_nights,
+				}]
+				if discount
+				else []
+			),
+		],
+		"totals": {
+			"subtotal": float(subtotal),
+			"discount": float(discount),
+			"tax": float(tax),
+			"total": float(total),
+			"deposit_required": 0.0,
+		},
 	}

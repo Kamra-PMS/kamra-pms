@@ -28,6 +28,8 @@
   "checkin_time",
   "checkout_time",
   "minimum_nights",
+  "booking_mode",
+  "hold_minutes",
   "security_deposit_amount",
   "hourly_view_start",
   "hourly_view_end",
@@ -196,6 +198,22 @@
    "fieldname": "minimum_nights",
    "fieldtype": "Int",
    "label": "Minimum Stay Nights"
+  },
+  {
+   "default": "Instant",
+   "description": "Instant: guest books into Pending Payment or Confirmed. Request to Book: guest waits for host approval (Requested). ADR-006.",
+   "fieldname": "booking_mode",
+   "fieldtype": "Select",
+   "in_standard_filter": 1,
+   "label": "Booking Mode",
+   "options": "Instant\nRequest to Book"
+  },
+  {
+   "default": "120",
+   "description": "Minutes a Held / Pending Payment reservation keeps inventory before auto-cancel.",
+   "fieldname": "hold_minutes",
+   "fieldtype": "Int",
+   "label": "Hold Window (minutes)"
   },
   {
    "default": "5000",

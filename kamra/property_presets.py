@@ -61,6 +61,8 @@ def apply_kind_defaults(property_fields: dict) -> dict:
 		# explicit list so F&B / events / operations stay off by default.
 		if not (property_fields.get("enabled_modules") or "").strip():
 			property_fields["enabled_modules"] = ",".join(STR_MODULES)
+		property_fields.setdefault("booking_mode", "Instant")
+		property_fields.setdefault("hold_minutes", 120)
 		# Day-use calendar windows off by default for vacation rentals.
 		if not property_fields.get("hourly_view_start"):
 			property_fields["hourly_view_start"] = ""
@@ -69,6 +71,7 @@ def apply_kind_defaults(property_fields: dict) -> dict:
 	else:
 		# Hotel: leave modules empty (= all) unless the caller set them.
 		property_fields.setdefault("property_kind", KIND_HOTEL)
+		property_fields.setdefault("booking_mode", "Instant")
 
 	return property_fields
 

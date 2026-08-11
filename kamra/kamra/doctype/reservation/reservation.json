@@ -19,6 +19,8 @@
   "source",
   "channel",
   "ota_ref",
+  "idempotency_key",
+  "hold_expires_on",
   "travel_agent",
   "commission_amount",
   "sb_booker",
@@ -162,6 +164,19 @@
    "label": "OTA Booking Ref",
    "read_only": 1,
    "description": "The channel manager's booking id - modifications and cancellations match on it"
+  },
+  {
+   "description": "Caller-supplied key so duplicate public/OTA book requests return the same reservation (ADR-007).",
+   "fieldname": "idempotency_key",
+   "fieldtype": "Data",
+   "label": "Idempotency Key",
+   "read_only": 1
+  },
+  {
+   "description": "When set, Held / Pending Payment auto-cancels after this time.",
+   "fieldname": "hold_expires_on",
+   "fieldtype": "Datetime",
+   "label": "Hold Expires On"
   },
   {
    "fieldname": "sb_stay",

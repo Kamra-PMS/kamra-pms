@@ -250,6 +250,22 @@ const BOOKING_SPECS: Spec[] = [
     type: "check",
   },
   {
+    field: "booking_mode",
+    label: "Booking mode",
+    type: "select",
+    options: ["Instant", "Request to Book"],
+  },
+  {
+    field: "hold_minutes",
+    label: "Hold window (minutes)",
+    type: "number",
+  },
+  {
+    field: "minimum_nights",
+    label: "Minimum stay nights",
+    type: "number",
+  },
+  {
     field: "star_category",
     label: "Category",
     type: "select",

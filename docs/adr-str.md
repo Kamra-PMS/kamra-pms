@@ -359,9 +359,14 @@ implemented.
 ### Questions to resolve
 
 - Is Ewa launch instant-book or request-to-book?
+  **Product default (2026-08-11):** Instant. `Property.booking_mode` stubs
+  Request to Book for later.
 - If request-to-book, what is the default approval timeout and hold policy?
+  Deferred with Request to Book path.
 - Do we implement full state machine in v1, or simplify to `Confirmed` + `Held`
   for launch?
+  **Approved full.** Instant uses Confirmed (pay-at-property) or Pending
+  Payment + hold expiry (advance due). Desk hotels remain Confirmed-first.
 
 ---
 

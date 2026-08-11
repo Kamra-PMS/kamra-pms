@@ -9,7 +9,7 @@ import re
 
 import frappe
 from frappe.rate_limiter import rate_limit
-from frappe.utils import date_diff
+from frappe.utils import cint, date_diff
 
 
 @frappe.whitelist(allow_guest=True)
@@ -482,10 +482,15 @@ def book(property: str, room_type: str, check_in_date: str,
          check_out_date: str, guest_name: str, phone: str,
          email: str = "", adults: int = 2, children: int = 0,
          meal_plan: str = "", special_requests: str = "", addons=None,
-         voucher_code: str = ""):
+         voucher_code: str = "", idempotency_key: str = ""):
 	"""Create a Website booking. Guest identity is the phone number; staff
 	verify at check-in. The advance owed is computed from the property's
-	current payment policy and snapshotted onto the booking."""
+	current payment policy and snapshotted onto the booking.
+
+	Instant mode (default): Confirmed when nothing is due now, else
+	Pending Payment with a hold window. Request to Book: Requested (no
+	inventory) until the host approves.
+	"""
 	if not guest_name.strip() or not phone.strip():
 		frappe.throw("Name and phone are required.")
 
@@ -508,6 +513,31 @@ def book(property: str, room_type: str, check_in_date: str,
 	]
 
 	from kamra.api import create_booking
+	from kamra.pricing import quote as price_quote
+	from kamra.reservation_state import resolve_instant_status
+
+	mode = getattr(prop, "booking_mode", None) or "Instant"
+	hold_minutes = cint(getattr(prop, "hold_minutes", None) or 120)
+	key = (idempotency_key or "").strip() or None
+
+	# Peek at payment terms before insert so Instant can choose status.
+	q = price_quote(
+		property, room_type, check_in_date, check_out_date,
+		int(adults), int(children), meal_plan or None,
+		voucher_code=voucher_code or None,
+	)
+	advance_due, policy = _advance_terms(prop, float(q["amount_after_tax"] or 0))
+
+	status = None
+	hold_expires_on = None
+	assign_room = 1
+	if mode == "Request to Book":
+		status = "Requested"
+		assign_room = 0
+	else:
+		status, hold_expires_on = resolve_instant_status(
+			advance_due=advance_due, hold_minutes=hold_minutes,
+		)
 
 	frappe.set_user("agent@kamra.local")  # governed writer for guest bookings
 	try:
@@ -524,10 +554,15 @@ def book(property: str, room_type: str, check_in_date: str,
 			voucher_code=voucher_code or None,
 			source="Website",
 			addons=safe_addons or None,
+			assign_room=assign_room,
+			status=status,
+			idempotency_key=key,
+			hold_expires_on=str(hold_expires_on) if hold_expires_on else None,
 		)
 		# snapshot the advance owed from the policy in force RIGHT NOW, so a
 		# later change to the property's payment config never re-bills this guest
 		total = float(result["amount_after_tax"] or 0)
+		# Recompute against the saved total (voucher / engine may differ).
 		advance_due, policy = _advance_terms(prop, total)
 		updates = {
 			"advance_due": advance_due,
@@ -536,6 +571,20 @@ def book(property: str, room_type: str, check_in_date: str,
 		}
 		if special_requests:
 			updates["special_requests"] = special_requests
+		# Instant + pay-at-hotel: if pre-insert peek overestimated advance,
+		# promote Pending Payment → Confirmed.
+		if (
+			mode == "Instant"
+			and not result.get("idempotent_replay")
+			and result.get("status") == "Pending Payment"
+			and advance_due <= 0
+		):
+			frappe.flags.kamra_status_transition = True
+			try:
+				updates["status"] = "Confirmed"
+				updates["hold_expires_on"] = None
+			finally:
+				frappe.flags.kamra_status_transition = False
 		frappe.db.set_value("Reservation", result["reservation"], updates)
 		if email:
 			frappe.db.set_value("Guest", result["guest"], "email", email)
@@ -543,12 +592,16 @@ def book(property: str, room_type: str, check_in_date: str,
 	finally:
 		frappe.set_user("Guest")
 
+	final_status = frappe.db.get_value(
+		"Reservation", result["reservation"], "status")
 	return {
 		"reservation": result["reservation"],
 		"amount_after_tax": result["amount_after_tax"],
 		"advance_due": advance_due,
 		"payment_policy": policy,
 		"pay_at_hotel": advance_due <= 0,
+		"status": final_status,
+		"idempotent_replay": int(result.get("idempotent_replay") or 0),
 	}
 
 
