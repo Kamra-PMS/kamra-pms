@@ -370,9 +370,17 @@ def setup_property(payload):
 	           rationale=f"Onboarded {prop.name}: {len(rt_by_code)} room types, "
 	                     f"{rooms_created} rooms",
 	           channel="API")
+	# Ensure Sellable Units exist for the new inventory (ADR-001).
+	siu_stats = {}
+	try:
+		from kamra.siu.units import backfill_property
+		siu_stats = backfill_property(prop.name)
+	except Exception:
+		frappe.log_error(title="Sellable Unit backfill after setup_property")
 	return {"property": prop.name, "room_types": len(rt_by_code),
 	        "rooms": rooms_created,
-	        "meal_plans": len(payload.get("meal_plans", []))}
+	        "meal_plans": len(payload.get("meal_plans", [])),
+	        "sellable_units": siu_stats}
 
 
 @frappe.whitelist()
@@ -2438,6 +2446,7 @@ def availability_calendar(property: str, start_date: str | None = None, days: in
 	"""Per room-type, per date: rooms available and the 2-adult rate.
 	Powers the calendar view and, later, the agent's availability tool."""
 	from kamra.pricing import occupancy_rate, season_adjust
+	from kamra.siu.availability import capacity_by_night, has_active_sius
 
 	start = start_date or nowdate()
 	days = min(int(days), 31)
@@ -2455,33 +2464,44 @@ def availability_calendar(property: str, start_date: str | None = None, days: in
 	rows = []
 	for rt in room_types:
 		rt_doc = frappe.get_doc("Room Type", rt.name)
-		total = frappe.db.count(
-			"Room",
-			{"property": property, "room_type": rt.name},
-		)
-		bookings = frappe.get_all(
-			"Reservation",
-			filters={
-				"room_type": rt.name,
-				"status": ("in", ["Confirmed", "Checked In"]),
-				"check_in_date": ("<", end),
-				"check_out_date": (">", start),
-			},
-			fields=["check_in_date", "check_out_date"],
-		)
 		base = occupancy_rate(rt_doc, 2, 0)
-		cells = []
-		for date in dates:
-			d = getdate(date)
-			taken = sum(
-				1 for b in bookings
-				if getdate(b.check_in_date) <= d < getdate(b.check_out_date)
+		if has_active_sius(property, rt.name):
+			caps = capacity_by_night(property, rt.name, start, end)
+			total = max(caps) if caps else 0
+			cells = []
+			for i, date in enumerate(dates):
+				cells.append({
+					"date": str(date),
+					"available": caps[i] if i < len(caps) else 0,
+					"rate": float(season_adjust(property, date, base)),
+				})
+		else:
+			total = frappe.db.count(
+				"Room",
+				{"property": property, "room_type": rt.name},
 			)
-			cells.append({
-				"date": str(date),
-				"available": max(0, total - taken),
-				"rate": float(season_adjust(property, date, base)),
-			})
+			bookings = frappe.get_all(
+				"Reservation",
+				filters={
+					"room_type": rt.name,
+					"status": ("in", ["Confirmed", "Checked In"]),
+					"check_in_date": ("<", end),
+					"check_out_date": (">", start),
+				},
+				fields=["check_in_date", "check_out_date"],
+			)
+			cells = []
+			for date in dates:
+				d = getdate(date)
+				taken = sum(
+					1 for b in bookings
+					if getdate(b.check_in_date) <= d < getdate(b.check_out_date)
+				)
+				cells.append({
+					"date": str(date),
+					"available": max(0, total - taken),
+					"rate": float(season_adjust(property, date, base)),
+				})
 		rows.append({
 			"room_type": rt.name,
 			"room_type_name": rt.room_type_name,
@@ -3313,6 +3333,23 @@ def _block_hold(property: str, room_type: str, check_in_date: str,
 
 
 @frappe.whitelist()
+@require_roles("Front Desk", "Kamra Agent", "Revenue Manager", "Hotel Admin")
+def inventory_availability(property: str, check_in_date: str, check_out_date: str,
+                           room_type: str | None = None, siu: str | None = None,
+                           include_reasons: int = 0):
+	"""Sellable Unit availability (ADR-003). Prefer this over ad-hoc room SQL."""
+	from kamra.siu.availability import availability as avail
+	return avail(
+		property,
+		siu=siu or None,
+		room_type=room_type or None,
+		check_in_date=check_in_date,
+		check_out_date=check_out_date,
+		include_reasons=bool(int(include_reasons or 0)),
+	)
+
+
+@frappe.whitelist()
 @require_roles("Front Desk", "Kamra Agent")
 def available_rooms(property: str, room_type: str, check_in_date: str,
                     check_out_date: str, group_booking: str | None = None):
@@ -3320,8 +3357,18 @@ def available_rooms(property: str, room_type: str, check_in_date: str,
 	logic the double-booking guard enforces, exposed as a query. Confirmed
 	group blocks hold their unsold rooms out of general sale; pass the
 	group to book against its own block."""
-	rooms = _available_rooms_raw(property, room_type, check_in_date,
-	                             check_out_date)
+	# Prefer Sellable Unit availability when SIUs exist for this type
+	# (ADR-003). Fall back to legacy Room SQL during migration.
+	rooms = None
+	from kamra.siu.availability import has_active_sius
+	if has_active_sius(property, room_type):
+		from kamra.siu.availability import available_rooms_via_siu
+		rooms = available_rooms_via_siu(
+			property, room_type, check_in_date, check_out_date
+		)
+	if rooms is None:
+		rooms = _available_rooms_raw(property, room_type, check_in_date,
+		                             check_out_date)
 	hold = _block_hold(property, room_type, check_in_date, check_out_date,
 	                   for_group=group_booking)
 	if hold:

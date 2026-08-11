@@ -29,6 +29,7 @@
   "sb_stay",
   "room_type",
   "room",
+  "sellable_unit",
   "meal_plan",
   "rate_plan",
   "column_break_b",
@@ -140,7 +141,7 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Status",
-   "options": "Waitlist\nConfirmed\nChecked In\nChecked Out\nCancelled\nNo Show"
+   "options": "Waitlist\nInquiry\nQuoted\nRequested\nHeld\nPending Payment\nConfirmed\nChecked In\nChecked Out\nCancelled\nNo Show"
   },
   {
    "default": "Manual",
@@ -179,6 +180,13 @@
    "fieldtype": "Link",
    "label": "Room",
    "options": "Room"
+  },
+  {
+   "description": "Atomic sellable inventory unit (ADR-001). Optional during migration; availability prefers this when set.",
+   "fieldname": "sellable_unit",
+   "fieldtype": "Link",
+   "label": "Sellable Unit",
+   "options": "Sellable Unit"
   },
   {
    "fieldname": "column_break_b",

@@ -8,3 +8,4 @@ kamra.patches.v23.backfill_action_log_approval_status
 kamra.patches.v24.split_actor_from_agent_name
 kamra.patches.v25.backfill_property_country
 kamra.patches.v26.set_site_favicon
+kamra.patches.v27.backfill_sellable_units

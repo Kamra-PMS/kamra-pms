@@ -1,0 +1,214 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "format:{property}-{unit_name}",
+ "creation": "2026-08-11 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "property",
+  "unit_name",
+  "unit_kind",
+  "is_active",
+  "column_break_a",
+  "room_type",
+  "competition_group",
+  "is_auto_assignable",
+  "sb_capacity",
+  "base_occupancy",
+  "max_occupants",
+  "column_break_b",
+  "turnover_buffer_hours",
+  "sb_rooms",
+  "physical_rooms",
+  "sb_channel",
+  "external_ids",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "property",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Property",
+   "options": "Property",
+   "reqd": 1
+  },
+  {
+   "fieldname": "unit_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Unit Name",
+   "reqd": 1
+  },
+  {
+   "default": "individual",
+   "fieldname": "unit_kind",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Unit Kind",
+   "options": "individual\nwhole_property\ncomposite",
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "label": "Active"
+  },
+  {
+   "fieldname": "column_break_a",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "room_type",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Room Type / Listing",
+   "options": "Room Type",
+   "reqd": 1
+  },
+  {
+   "description": "SIUs that share a competition group cannot be double-sold for the same nights (hybrid entire-place vs rooms).",
+   "fieldname": "competition_group",
+   "fieldtype": "Data",
+   "in_standard_filter": 1,
+   "label": "Competition Group",
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "description": "Hotel rooms are usually auto-assignable; entire-place units often are not until staff ready the space.",
+   "fieldname": "is_auto_assignable",
+   "fieldtype": "Check",
+   "label": "Auto Assignable"
+  },
+  {
+   "fieldname": "sb_capacity",
+   "fieldtype": "Section Break",
+   "label": "Capacity"
+  },
+  {
+   "default": "2",
+   "fieldname": "base_occupancy",
+   "fieldtype": "Int",
+   "label": "Base Occupancy"
+  },
+  {
+   "fieldname": "max_occupants",
+   "fieldtype": "Int",
+   "label": "Max Occupants"
+  },
+  {
+   "fieldname": "column_break_b",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "description": "Hours after checkout before the unit is sellable again (turnover buffer). 0 = no buffer yet.",
+   "fieldname": "turnover_buffer_hours",
+   "fieldtype": "Int",
+   "label": "Turnover Buffer (hours)"
+  },
+  {
+   "fieldname": "sb_rooms",
+   "fieldtype": "Section Break",
+   "label": "Physical Rooms"
+  },
+  {
+   "fieldname": "physical_rooms",
+   "fieldtype": "Table",
+   "label": "Physical Rooms",
+   "options": "Sellable Unit Room"
+  },
+  {
+   "fieldname": "sb_channel",
+   "fieldtype": "Section Break",
+   "label": "Channel / Notes"
+  },
+  {
+   "description": "JSON map of channel → external listing / unit id.",
+   "fieldname": "external_ids",
+   "fieldtype": "Code",
+   "label": "External IDs",
+   "options": "JSON"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-11 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kamra",
+ "name": "Sellable Unit",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Hotel Admin",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Front Desk",
+   "write": 1
+  },
+  {
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Revenue Manager",
+   "write": 1
+  },
+  {
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Kamra Agent",
+   "write": 1
+  },
+  {
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Housekeeping"
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "unit_name",
+ "track_changes": 1
+}

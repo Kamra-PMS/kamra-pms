@@ -137,6 +137,7 @@ def search_stay(property: str, check_in_date: str, check_out_date: str,
 	# role gate, so this calls the same underlying helpers directly.
 	from kamra.api import _available_rooms_raw, _block_hold
 	from kamra.pricing import quote
+	from kamra.siu.availability import has_active_sius, sellable_count
 
 	if date_diff(check_out_date, check_in_date) < 1:
 		frappe.throw("Check-out must be after check-in.")
@@ -148,12 +149,18 @@ def search_stay(property: str, check_in_date: str, check_out_date: str,
 		"Room Type", filters={"property": property, "disabled": 0},
 		pluck="name", order_by="base_price asc",
 	):
-		free = _available_rooms_raw(property, rt, check_in_date, check_out_date)
 		hold = _block_hold(property, rt, check_in_date, check_out_date)
-		if hold:
-			free = free[:max(0, len(free) - hold)]
-		row = {"room_type": rt, "rooms_left": len(free), "quote": None}
-		if free:
+		if has_active_sius(property, rt):
+			left = max(0, sellable_count(
+				property, rt, check_in_date, check_out_date) - (hold or 0))
+		else:
+			free = _available_rooms_raw(
+				property, rt, check_in_date, check_out_date)
+			if hold:
+				free = free[:max(0, len(free) - hold)]
+			left = len(free)
+		row = {"room_type": rt, "rooms_left": left, "quote": None}
+		if left:
 			try:
 				row["quote"] = quote(
 					property, rt, check_in_date, check_out_date,
