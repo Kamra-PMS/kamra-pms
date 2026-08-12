@@ -15,6 +15,7 @@ import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
 import { Sheet } from "../components/ui/sheet"
 import { cur, moneyLocale, adoptUiLocale } from "../lib/money"
+import { formatPhoneDisplay, formatPhoneTel } from "../lib/phone"
 
 const inr = (n: number) =>
   n.toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
@@ -51,6 +52,7 @@ interface Showcase {
     city: string
     state: string
     phone: string | null
+    country?: string | null
     gallery: { url: string; caption: string | null }[]
   }
   room_types: {
@@ -166,12 +168,16 @@ function HostBlock({
   brand,
   phone,
   city,
+  country,
 }: {
   brand: string
   phone: string | null | undefined
   city: string
+  country?: string | null
 }) {
   if (!phone) return null
+  const display = formatPhoneDisplay(phone, country)
+  const tel = formatPhoneTel(phone, country)
   return (
     <section className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
       <h2 className="text-lg font-semibold text-zinc-900">Host & caretaker</h2>
@@ -180,11 +186,11 @@ function HostBlock({
         {city ? ` · ${city}` : ""}
       </p>
       <a
-        href={`tel:${phone.replace(/\s+/g, "")}`}
+        href={`tel:${tel}`}
         className="mt-4 inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-base font-semibold text-zinc-900 transition hover:border-brand-300 hover:bg-brand-50"
       >
         <Phone className="size-4 text-brand-700" aria-hidden />
-        {phone}
+        {display}
       </a>
       <p className="mt-2 text-xs text-zinc-400">
         Call for directions, check-in help, or on-site questions.
@@ -554,7 +560,12 @@ export default function PublicListing() {
 
             <MapBlock address={address} mapsUrl={mapsUrl} lat={lat} lng={lng} />
 
-            <HostBlock brand={p.property_name} phone={phone} city={p.city} />
+            <HostBlock
+              brand={p.property_name}
+              phone={phone}
+              city={p.city}
+              country={p.country}
+            />
 
             {(p.house_rules || p.pets_policy || p.children_policy) && (
               <section className="rounded-2xl border border-zinc-200 bg-white p-5 text-sm shadow-sm">
@@ -681,11 +692,11 @@ export default function PublicListing() {
 
               {phone && (
                 <a
-                  href={`tel:${phone.replace(/\s+/g, "")}`}
+                  href={`tel:${formatPhoneTel(phone, p.country)}`}
                   className="flex items-center justify-center gap-2 text-sm font-medium text-brand-700 hover:underline"
                 >
                   <Phone className="size-3.5" aria-hidden />
-                  Call caretaker {phone}
+                  Call caretaker {formatPhoneDisplay(phone, p.country)}
                 </a>
               )}
             </div>

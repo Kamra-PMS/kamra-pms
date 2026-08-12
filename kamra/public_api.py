@@ -64,6 +64,7 @@ def _property_payload(prop) -> dict:
 		"address_line": prop.address_line,
 		"city": prop.city, "state": prop.state,
 		"pincode": prop.pincode,
+		"country": prop.get("country") or "India",
 		"phone": prop.phone, "email": prop.email,
 		"website": prop.website,
 		"google_reviews_url": prop.get("google_reviews_url"),

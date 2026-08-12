@@ -16,6 +16,7 @@ import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
 import { Sheet } from "../components/ui/sheet"
 import { cur, moneyLocale, adoptUiLocale } from "../lib/money"
+import { formatPhoneDisplay, formatPhoneTel } from "../lib/phone"
 
 const inr = (n: number) =>
   n.toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
@@ -43,6 +44,7 @@ interface Showcase {
     city: string
     state: string
     pincode: string | null
+    country?: string | null
     phone: string | null
     google_reviews_url: string | null
     tripadvisor_url: string | null
@@ -269,7 +271,9 @@ export default function PublicBooking() {
       description: p.description ?? undefined,
       image: p.hero_image ?? undefined,
       logo: p.logo_url ?? undefined,
-      telephone: p.phone ?? undefined,
+      telephone: p.phone
+        ? formatPhoneTel(p.phone, p.country)
+        : undefined,
       address: {
         "@type": "PostalAddress",
         addressLocality: p.city,
@@ -449,10 +453,13 @@ export default function PublicBooking() {
               </a>
             )}
             {p.phone && (
-              <span className="inline-flex items-center gap-1 text-white/80">
+              <a
+                href={`tel:${formatPhoneTel(p.phone, p.country)}`}
+                className="inline-flex items-center gap-1 text-white/80 underline-offset-2 hover:underline"
+              >
                 <Phone className="size-3.5" aria-hidden />
-                {p.phone}
-              </span>
+                {formatPhoneDisplay(p.phone, p.country)}
+              </a>
             )}
           </div>
           </div>
