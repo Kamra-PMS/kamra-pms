@@ -85,7 +85,35 @@ def showcase(property: str):
 				{"media_type": m.media_type, "url": m.url, "caption": m.caption}
 				for m in (rt.get("media") or [])
 			],
+			# Only set on multi-site portfolios (e.g. several villas under one
+			# property) where a room type's address differs from the
+			# property's own. Blank means "use the property address".
+			"location_name": rt.get("location_name"),
+			"location_address": rt.get("location_address"),
+			"google_maps_url": rt.get("google_maps_url"),
+			"latitude": rt.get("latitude"),
+			"longitude": rt.get("longitude"),
 		})
+
+	# Distinct pins for the map section: group room types that share a
+	# location_name (a villa/site) so multi-property portfolios show one
+	# pin per villa instead of one pin for the whole business. Room types
+	# without a location_name fall back to the property's own address/pin.
+	locations = []
+	seen = {}
+	for rt in room_types:
+		key = rt["location_name"] or "__property__"
+		if key not in seen:
+			seen[key] = {
+				"name": rt["location_name"] or prop.property_name,
+				"address": rt["location_address"] or prop.address_line,
+				"google_maps_url": rt["google_maps_url"],
+				"latitude": rt["latitude"] if rt["location_name"] else prop.get("latitude"),
+				"longitude": rt["longitude"] if rt["location_name"] else prop.get("longitude"),
+				"room_types": [],
+			}
+			locations.append(seen[key])
+		seen[key]["room_types"].append(rt["name"])
 
 	experiences = frappe.get_all(
 		"Experience",
@@ -154,6 +182,7 @@ def showcase(property: str):
 			"property_kind": prop.get("property_kind") or "Hotel",
 		},
 		"room_types": room_types,
+		"locations": locations,
 		"meal_plans": meal_plans,
 		"experiences": experiences,
 	}

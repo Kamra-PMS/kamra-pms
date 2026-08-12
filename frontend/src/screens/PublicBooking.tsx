@@ -73,6 +73,22 @@ interface Showcase {
     room_view: string | null
     amenities: string[]
     media: { media_type: string; url: string; caption: string | null }[]
+    location_name: string | null
+    location_address: string | null
+    google_maps_url: string | null
+    latitude: number | null
+    longitude: number | null
+  }[]
+  // One pin per distinct site - a single-property hotel gets one entry
+  // (the property's own address); a multi-villa portfolio like Ewa gets
+  // one per villa, each listing which room types live there.
+  locations: {
+    name: string
+    address: string | null
+    google_maps_url: string | null
+    latitude: number | null
+    longitude: number | null
+    room_types: string[]
   }[]
   meal_plans: { name: string; code: string; label: string; price_per_adult: number }[]
   experiences: {
@@ -302,6 +318,10 @@ export default function PublicBooking() {
     )
 
   const p = data.property
+  const locations = data.locations?.length
+    ? data.locations
+    : [{ name: p.property_name, address: p.address_line, google_maps_url: null,
+         latitude: p.latitude, longitude: p.longitude, room_types: [] }]
 
   return (
     <div
@@ -510,6 +530,12 @@ export default function PublicBooking() {
                         up to {rt.adults_capacity} adults
                       </span>
                     </div>
+                    {locations.length > 1 && rt.location_name && (
+                      <p className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-brand-700">
+                        <MapPin className="size-3.5" aria-hidden />
+                        {rt.location_name}
+                      </p>
+                    )}
                     {rt.description && (
                       <p className="mt-1 text-sm text-zinc-500">{rt.description}</p>
                     )}
@@ -643,33 +669,57 @@ export default function PublicBooking() {
             </div>
           </div>
 
-          {/* Map & Directions */}
+          {/* Map & Directions - one card per villa/site when the property
+              spans multiple addresses, one card when it doesn't. */}
           <div className="space-y-4">
-            <h2 className="text-xl font-bold text-zinc-800">Location & Directions</h2>
-            <div className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm space-y-3">
-              {p.latitude && p.longitude ? (
-                <iframe
-                  title="Hotel Location Map"
-                  width="100%"
-                  height="220"
-                  src={`https://maps.google.com/maps?q=${p.latitude},${p.longitude}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
-                  className="rounded-lg border border-zinc-200 shadow-inner"
-                />
-              ) : (
-                <div className="flex h-40 items-center justify-center bg-zinc-50 rounded-lg border border-zinc-200">
-                  <span className="text-sm text-zinc-400">Map location not set</span>
+            <h2 className="text-xl font-bold text-zinc-800">
+              {locations.length > 1 ? "Our Locations" : "Location & Directions"}
+            </h2>
+            <div className="space-y-4">
+              {locations.map((loc, i) => (
+                <div key={loc.name + i} className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm space-y-3">
+                  {locations.length > 1 && (
+                    <p className="text-sm font-semibold text-zinc-800">{loc.name}</p>
+                  )}
+                  {loc.latitude && loc.longitude ? (
+                    <iframe
+                      title={`${loc.name} map`}
+                      width="100%"
+                      height="220"
+                      src={`https://maps.google.com/maps?q=${loc.latitude},${loc.longitude}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
+                      className="rounded-lg border border-zinc-200 shadow-inner"
+                    />
+                  ) : (
+                    <div className="flex h-40 items-center justify-center bg-zinc-50 rounded-lg border border-zinc-200">
+                      <span className="text-sm text-zinc-400">Map location not set</span>
+                    </div>
+                  )}
+                  <p className="text-sm font-medium text-zinc-800 flex items-start gap-2">
+                    <MapPin className="size-4 shrink-0 text-brand-600 mt-0.5" />
+                    {loc.address || `${p.city}, ${p.state}`}
+                  </p>
+                  {loc.google_maps_url && (
+                    <a href={loc.google_maps_url} target="_blank" rel="noreferrer"
+                      className="inline-flex items-center gap-1 text-xs font-medium text-brand-700 hover:underline">
+                      Open in Google Maps <ExternalLink className="size-3" />
+                    </a>
+                  )}
+                  {locations.length > 1 && loc.room_types.length > 0 && (
+                    <p className="text-xs text-zinc-500 border-t border-zinc-100 pt-3">
+                      Rooms here:{" "}
+                      {loc.room_types
+                        .map((rt) => data.room_types.find((r) => r.name === rt)?.room_type_name || rt)
+                        .join(", ")}
+                    </p>
+                  )}
+                  {locations.length <= 1 && p.driving_directions && (
+                    <div className="text-xs text-zinc-600 border-t border-zinc-100 pt-3">
+                      <span className="block font-semibold text-zinc-700 mb-1">Driving Directions</span>
+                      <p className="leading-relaxed whitespace-pre-line">{p.driving_directions}</p>
+                    </div>
+                  )}
                 </div>
-              )}
-              <p className="text-sm font-medium text-zinc-800 flex items-start gap-2">
-                <MapPin className="size-4 shrink-0 text-brand-600 mt-0.5" />
-                {p.address_line ? `${p.address_line}, ` : ""}{p.city}, {p.state} {p.pincode ? `- ${p.pincode}` : ""}
-              </p>
-              {p.driving_directions && (
-                <div className="text-xs text-zinc-600 border-t border-zinc-100 pt-3">
-                  <span className="block font-semibold text-zinc-700 mb-1">Driving Directions</span>
-                  <p className="leading-relaxed whitespace-pre-line">{p.driving_directions}</p>
-                </div>
-              )}
+              ))}
             </div>
           </div>
         </div>
@@ -702,6 +752,7 @@ export default function PublicBooking() {
 
       {booking && (
         <Sheet
+          wide
           title={done ? "Booking confirmed" : "Complete your booking"}
           description={
             done
@@ -739,7 +790,7 @@ export default function PublicBooking() {
               </div>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2">
               <label className="block">
                 <span className="mb-1.5 block text-sm font-medium text-zinc-600">Full name</span>
                 <input className={inputCls} value={form.guest_name} autoFocus
@@ -768,11 +819,11 @@ export default function PublicBooking() {
                 </select>
               </label>
               {data.experiences.length > 0 && (
-                <div className="block">
+                <div className="block sm:col-span-2">
                   <span className="mb-1.5 block text-sm font-medium text-zinc-600">
                     Add experiences
                   </span>
-                  <div className="space-y-2">
+                  <div className="grid gap-2 sm:grid-cols-2">
                     {data.experiences.map((exp) => {
                       const qty = addons[exp.name] || 0
                       const on = qty > 0
@@ -861,12 +912,12 @@ export default function PublicBooking() {
                   })()}
                 </div>
               )}
-              <label className="block">
+              <label className="block sm:col-span-2">
                 <span className="mb-1.5 block text-sm font-medium text-zinc-600">Special requests</span>
                 <textarea className={inputCls} rows={2} value={form.special_requests}
                   onChange={(e) => setForm({ ...form, special_requests: e.target.value })} />
               </label>
-              <div className="block">
+              <div className="block sm:col-span-2">
                 <span className="mb-1.5 block text-sm font-medium text-zinc-600">
                   Promo code
                 </span>
@@ -914,7 +965,7 @@ export default function PublicBooking() {
               </div>
               {data.property.payment_mode &&
                 data.property.payment_mode !== "Pay at hotel" && (
-                  <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2.5 text-sm text-zinc-600">
+                  <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2.5 text-sm text-zinc-600 sm:col-span-2">
                     {data.property.payment_mode === "Full online"
                       ? "Full amount is paid online to confirm this booking."
                       : data.property.payment_mode === "Advance percent"
@@ -923,17 +974,17 @@ export default function PublicBooking() {
                   </div>
                 )}
               {(data.property.cleaning_fee || 0) > 0 && (
-                <p className="text-xs text-zinc-500">
+                <p className="text-xs text-zinc-500 sm:col-span-2">
                   Cleaning fee {cur()}{inr(data.property.cleaning_fee)} is included in the total.
                 </p>
               )}
               {(data.property.security_deposit_amount || 0) > 0 && (
-                <p className="text-xs text-zinc-500">
+                <p className="text-xs text-zinc-500 sm:col-span-2">
                   A refundable security deposit of {cur()}{inr(data.property.security_deposit_amount)} may be collected separately.
                 </p>
               )}
               {error && (
-                <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+                <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700 sm:col-span-2">
                   {error}
                 </div>
               )}
