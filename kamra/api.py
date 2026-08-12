@@ -1641,6 +1641,9 @@ def guest_search(q: str):
 _GUEST_LINKS = [  # every doctype that points at a Guest
 	("Reservation", "guest"), ("Folio", "guest"),
 	("Service Ticket", "guest"), ("Lost And Found Item", "guest"),
+	("Security Deposit", "guest"),
+	("Venue Booking", "guest"),
+	("WhatsApp Message", "guest"),
 ]
 
 
@@ -1658,6 +1661,8 @@ def merge_guests(source: str, target: str):
 
 	moved = {}
 	for doctype, field in _GUEST_LINKS:
+		if not frappe.db.exists("DocType", doctype):
+			continue
 		rows = frappe.get_all(doctype, filters={field: source}, pluck="name")
 		for name in rows:
 			frappe.db.set_value(doctype, name, field, target,
@@ -3203,7 +3208,8 @@ def create_booking(property: str, room_type: str, check_in_date: str,
 		# a group pickup books against its own block, not general inventory
 		free = available_rooms(property, room_type, check_in_date,
 		                       check_out_date, group_booking=group_booking)
-		room = free[0].name if free else None
+		# SIU path returns plain dicts; legacy SQL returns frappe._dict.
+		room = free[0]["name"] if free else None
 	elif not int(waitlist or 0):
 		lock_sius_for_booking(property, room_type)
 
@@ -3347,7 +3353,7 @@ def promote_waitlist(reservation: str):
 	                       doc.check_in_date, doc.check_out_date)
 	if not free:
 		frappe.throw("Still no room free for those dates.")
-	doc.room = free[0].name
+	doc.room = free[0]["name"]
 	doc.status = "Confirmed"
 	doc.save()
 	from kamra.savings import log_action
@@ -3505,7 +3511,8 @@ def available_rooms(property: str, room_type: str, check_in_date: str,
 	                   for_group=group_booking)
 	if hold:
 		rooms = rooms[:max(0, len(rooms) - hold)]
-	return rooms
+	# Always frappe._dict so callers can use row["name"] or row.name.
+	return [frappe._dict(r) for r in (rooms or [])]
 
 
 def _available_rooms_raw(property: str, room_type: str, check_in_date: str,

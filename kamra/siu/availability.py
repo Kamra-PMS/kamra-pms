@@ -159,7 +159,8 @@ def available_rooms_via_siu(
 			if room["name"] in seen:
 				continue
 			seen.add(room["name"])
-			rooms.append(room)
+			# Match legacy SQL as_dict shape (attribute + key access).
+			rooms.append(frappe._dict(room))
 	return rooms
 
 
