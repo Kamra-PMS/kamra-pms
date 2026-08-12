@@ -39,7 +39,9 @@ export default function BookingEngine() {
     setBusy(true)
     setState("idle")
     try {
-      // Clean child table objects before sending to Frappe PUT API
+      // Only send fields this screen edits — spreading the full Property
+      // doc caused TimestampMismatch / silent failures when uploads had
+      // already bumped related File rows or another tab saved.
       const cleanGallery = (doc?.gallery || [])
         .filter((g: any) => g.url?.trim())
         .map((g: any) => ({
@@ -54,8 +56,48 @@ export default function BookingEngine() {
           answer: f.answer.trim(),
         }))
 
-      const payload = {
-        ...doc,
+      const payload: Record<string, unknown> = {
+        property_name: doc?.property_name,
+        legal_name: doc?.legal_name,
+        showcase_description: doc?.showcase_description,
+        phone: doc?.phone,
+        email: doc?.email,
+        website: doc?.website,
+        address_line: doc?.address_line,
+        city: doc?.city,
+        state: doc?.state,
+        pincode: doc?.pincode,
+        country: doc?.country,
+        star_category: doc?.star_category,
+        google_reviews_url: doc?.google_reviews_url,
+        tripadvisor_url: doc?.tripadvisor_url,
+        property_amenities: doc?.property_amenities,
+        logo_url: doc?.logo_url || null,
+        hero_image: doc?.hero_image || null,
+        brand_accent: doc?.brand_accent,
+        og_image: doc?.og_image || null,
+        page_slug: doc?.page_slug,
+        meta_title: doc?.meta_title,
+        meta_description: doc?.meta_description,
+        house_rules: doc?.house_rules,
+        pets_policy: doc?.pets_policy,
+        children_policy: doc?.children_policy,
+        extra_bed_policy: doc?.extra_bed_policy,
+        driving_directions: doc?.driving_directions,
+        latitude: doc?.latitude,
+        longitude: doc?.longitude,
+        booking_engine_enabled: doc?.booking_engine_enabled,
+        booking_payment_mode: doc?.booking_payment_mode,
+        advance_percent: doc?.advance_percent,
+        registration_fee: doc?.registration_fee,
+        booking_mode: doc?.booking_mode,
+        minimum_nights: doc?.minimum_nights,
+        free_cancel_days: doc?.free_cancel_days,
+        cancellation_fee: doc?.cancellation_fee,
+        cleaning_fee: doc?.cleaning_fee,
+        security_deposit_amount: doc?.security_deposit_amount,
+        checkin_time: doc?.checkin_time,
+        checkout_time: doc?.checkout_time,
         gallery: cleanGallery,
         faqs: cleanFaqs,
       }
@@ -63,6 +105,33 @@ export default function BookingEngine() {
       await updateResource("Property", property, payload)
       setState("saved")
       load()
+    } catch (e) {
+      setState(serverError(e))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function persistPhotoFields(patch: Record<string, unknown>) {
+    setBusy(true)
+    setState("idle")
+    try {
+      const merged = { ...doc!, ...patch }
+      const cleanGallery = (merged.gallery || [])
+        .filter((g: any) => g.url?.trim())
+        .map((g: any) => ({
+          url: g.url.trim(),
+          caption: g.caption || null,
+        }))
+      await updateResource("Property", property, {
+        logo_url: merged.logo_url || null,
+        hero_image: merged.hero_image || null,
+        brand_accent: merged.brand_accent,
+        og_image: merged.og_image || null,
+        gallery: cleanGallery,
+      })
+      setDoc(merged)
+      setState("saved")
     } catch (e) {
       setState(serverError(e))
     } finally {
@@ -344,17 +413,21 @@ export default function BookingEngine() {
                 <div className="space-y-4">
                   <ImageField
                     label="Logo"
-                    hint="Square, 512×512px · PNG or SVG with a transparent background. Shown on the booking page and invoices."
+                    hint="Square, 512×512px · PNG or SVG with a transparent background. Shown on the booking page and invoices. Uploads save automatically."
                     accept="image/png,image/svg+xml,image/webp"
                     value={doc.logo_url ?? ""}
+                    attach={{ doctype: "Property", docname: property, fieldname: "logo_url" }}
                     onChange={(v) => updateField("logo_url", v)}
+                    onUploaded={(v) => void persistPhotoFields({ logo_url: v })}
                   />
 
                   <ImageField
                     label="Hero showcase image"
-                    hint="1920×1080px (16:9 landscape) · JPG or WebP, under 2 MB. The big photo at the top of the booking page."
+                    hint="1920×1080px (16:9 landscape) · JPG or WebP, under 2 MB. Uploads save automatically."
                     value={doc.hero_image ?? ""}
+                    attach={{ doctype: "Property", docname: property, fieldname: "hero_image" }}
                     onChange={(v) => updateField("hero_image", v)}
+                    onUploaded={(v) => void persistPhotoFields({ hero_image: v })}
                   />
 
                   <div className="block">
@@ -431,6 +504,12 @@ export default function BookingEngine() {
                                   idx === index ? { ...g, url: v } : g
                                 )
                                 updateField("gallery", gallery)
+                              }}
+                              onUploaded={(v) => {
+                                const gallery = (doc.gallery || []).map((g: any, idx: number) =>
+                                  idx === index ? { ...g, url: v } : g
+                                )
+                                void persistPhotoFields({ gallery })
                               }}
                             />
                           </div>

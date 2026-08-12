@@ -30,6 +30,7 @@ export default function RoomTypeMedia({
   const [doc, setDoc] = useState<RTDoc | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [savedFlash, setSavedFlash] = useState(false)
 
   useEffect(() => {
     frappeFetch<{ data: RTDoc }>(
@@ -66,14 +67,15 @@ export default function RoomTypeMedia({
   const rmMedia = (i: number) =>
     setDoc((d) => ({ ...d!, media: (d!.media ?? []).filter((_, j) => j !== i) }))
 
-  async function save() {
+  async function persist(next: RTDoc) {
     setBusy(true)
     setError(null)
+    setSavedFlash(false)
     try {
       await updateResource("Room Type", name, {
-        amenities: doc!.amenities || null,
-        description: doc!.description || null,
-        media: media
+        amenities: next.amenities || null,
+        description: next.description || null,
+        media: (next.media ?? [])
           .filter((m) => m.url.trim())
           .map((m) => ({
             media_type: m.media_type || "Image",
@@ -81,12 +83,18 @@ export default function RoomTypeMedia({
             caption: m.caption || null,
           })),
       })
+      setSavedFlash(true)
       reload()
     } catch (e) {
       setError(serverError(e))
     } finally {
       setBusy(false)
     }
+  }
+
+  async function save() {
+    if (!doc) return
+    await persist(doc)
   }
 
   return (
@@ -96,7 +104,7 @@ export default function RoomTypeMedia({
           Photos
         </div>
         <p className="mb-2 text-xs text-zinc-400">
-          Shown in the public booking engine. Upload or paste a URL —
+          Shown on the public listing page. Uploads save automatically —
           1600×900px (16:9), JPG/WebP; videos as MP4/embed URLs.
         </p>
         <div className="space-y-2">
@@ -108,6 +116,16 @@ export default function RoomTypeMedia({
                   placeholder="Upload, or paste an image/video URL"
                   value={m.url}
                   onChange={(v) => setMedia(i, "url", v)}
+                  onUploaded={(v) => {
+                    const next = {
+                      ...doc,
+                      media: (doc.media ?? []).map((row, j) =>
+                        j === i ? { ...row, url: v } : row,
+                      ),
+                    }
+                    setDoc(next)
+                    void persist(next)
+                  }}
                 />
               </div>
               <input
@@ -176,6 +194,9 @@ export default function RoomTypeMedia({
       </label>
 
       {error && <p className="text-xs text-rose-600">{error}</p>}
+      {savedFlash && !error && (
+        <p className="text-xs font-medium text-emerald-600">Photos saved</p>
+      )}
       <Button disabled={busy} onClick={save}>
         {busy ? "Saving…" : "Save photos & details"}
       </Button>

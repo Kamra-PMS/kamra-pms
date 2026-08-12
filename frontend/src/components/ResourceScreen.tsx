@@ -16,6 +16,7 @@ import {
   updateResource,
   type Row,
 } from "../lib/resource"
+import { frappeFetch } from "../lib/api"
 import { Badge } from "./ui/badge"
 import { Button } from "./ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
@@ -320,15 +321,30 @@ export function ResourceScreen({
 
   function openEdit(row: Row | "new") {
     setEditing(row)
-    setDraft(row === "new" ? {} : { ...row })
     setError(null)
+    if (row === "new") {
+      setDraft({})
+      return
+    }
+    // List rows only carry column fields — fetch the full document so
+    // form extras (location, slugs, etc.) aren't blank and can't wipe DB values.
+    setDraft({ ...row })
+    frappeFetch<{ data: Row }>(
+      `/api/resource/${encodeURIComponent(config.doctype)}/${encodeURIComponent(row.name)}`,
+    )
+      .then((r) => setDraft(r.data))
+      .catch((e) => setError(serverError(e)))
   }
 
   async function save() {
     setBusy(true)
     try {
-      const payload = { ...draft }
-      delete payload.name
+      // Only persist form fields — never the raw list-row or full-doc dump.
+      const payload: Record<string, unknown> = {}
+      for (const f of config.form) {
+        if (f.type === "readonly") continue
+        if (f.field in draft) payload[f.field] = draft[f.field]
+      }
       if (config.propertyScoped) payload.property = getCurrentProperty()
       if (editing === "new") {
         await createResource(config.doctype, payload)

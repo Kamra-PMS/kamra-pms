@@ -83,12 +83,20 @@ export function isAuthError(err: unknown): boolean {
   return status === 401 || status === 403
 }
 
-/** Upload an image to Frappe's public files; resolves to its served URL. */
-export async function uploadFile(file: File): Promise<string> {
+/** Upload an image to Frappe's public files; resolves to its served URL.
+ *  Pass doctype/docname/fieldname so Attach Image fields keep a real File
+ *  link — otherwise the URL shows in the form but is easy to lose on save. */
+export async function uploadFile(
+  file: File,
+  opts?: { doctype?: string; docname?: string; fieldname?: string },
+): Promise<string> {
   const token = csrfToken()
   const fd = new FormData()
   fd.append("file", file, file.name)
   fd.append("is_private", "0")
+  if (opts?.doctype) fd.append("doctype", opts.doctype)
+  if (opts?.docname) fd.append("docname", opts.docname)
+  if (opts?.fieldname) fd.append("fieldname", opts.fieldname)
   const res = await fetch("/api/method/upload_file", {
     method: "POST",
     // no Content-Type header: the browser sets the multipart boundary
@@ -96,7 +104,19 @@ export async function uploadFile(file: File): Promise<string> {
     body: fd,
     credentials: "include",
   })
-  if (!res.ok) throw new Error(`upload failed (${res.status})`)
+  if (!res.ok) {
+    let detail = `upload failed (${res.status})`
+    try {
+      const body = await res.json()
+      const msgs = JSON.parse(body._server_messages ?? "[]")
+      if (msgs.length) {
+        detail = String(JSON.parse(msgs[0]).message).replace(/<[^>]+>/g, "")
+      }
+    } catch {
+      /* keep status text */
+    }
+    throw new Error(detail)
+  }
   const out = (await res.json()) as { message?: { file_url?: string } }
   const url = out.message?.file_url
   if (!url) throw new Error("upload returned no file URL")
