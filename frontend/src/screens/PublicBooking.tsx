@@ -155,6 +155,14 @@ export default function PublicBooking() {
       address: string | null
       from_rate: number
       room_types: string[]
+      listing_count?: number
+      cover_image?: string | null
+      google_maps_url?: string | null
+      phone?: string | null
+      city?: string | null
+      state?: string | null
+      latitude?: number | null
+      longitude?: number | null
     }[]
   >([])
   const [data, setData] = useState<Showcase | null>(null)
@@ -300,7 +308,7 @@ export default function PublicBooking() {
   }, [data])
 
   useEffect(() => {
-    if (!property) return
+    if (!property || catalogMode === "sites") return
     const t = setTimeout(() => {
       call<StayResult[]>("kamra.public_api.search_stay", {
         property,
@@ -315,7 +323,7 @@ export default function PublicBooking() {
       })
     }, 300)
     return () => clearTimeout(t)
-  }, [property, search, checkOut])
+  }, [property, search, checkOut, catalogMode])
 
   async function submitBooking() {
     if (!booking || !property) return
@@ -539,154 +547,212 @@ export default function PublicBooking() {
           </div>
         )}
 
-        {catalogMode === "sites" && sites.length > 1 && (
+        {catalogMode === "sites" && sites.length > 0 ? (
           <div className="mb-10">
-            <h2 className="mb-4 text-xl font-semibold text-zinc-800">
-              {isStr ? "Our stays" : "Our locations"}
-            </h2>
-            <div className="grid gap-4 sm:grid-cols-2">
-              {sites.map((site) => (
-                <Link
-                  key={site.slug ?? site.name}
-                  to={site.slug ? `/stay/${site.slug}` : "/book"}
-                  className="group rounded-xl border border-zinc-200 bg-white p-5 shadow-sm transition hover:border-brand-400 hover:shadow-md"
-                >
-                  <h3 className="text-lg font-semibold text-zinc-900 group-hover:text-brand-800">
-                    {site.name}
-                  </h3>
-                  {site.address && (
-                    <p className="mt-1 text-sm text-zinc-500">{site.address}</p>
-                  )}
-                  <p className="mt-3 text-sm font-medium text-zinc-700">
-                    from {cur()}
-                    {inr(site.from_rate)}/night · {site.room_types.length}{" "}
-                    listing{site.room_types.length === 1 ? "" : "s"}
-                  </p>
-                </Link>
-              ))}
+            <div className="mb-5">
+              <h2 className="text-2xl font-semibold tracking-tight text-zinc-900">
+                Places to stay
+              </h2>
+              <p className="mt-1 text-sm text-zinc-500">
+                Pick a villa, then choose a room or the whole house.
+              </p>
+            </div>
+            <div className="grid gap-6 sm:grid-cols-2">
+              {sites.map((site) => {
+                const stayPath = site.slug
+                  ? `/stay/${site.slug}/${search.check_in_date}/${checkOut}/${search.adults}/${search.children}`
+                  : "/book"
+                const count = site.listing_count ?? site.room_types.length
+                return (
+                  <Link
+                    key={site.slug ?? site.name}
+                    to={stayPath}
+                    className="group overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-brand-300 hover:shadow-md"
+                  >
+                    <div className="relative aspect-[4/3] bg-zinc-100">
+                      {site.cover_image ? (
+                        <img
+                          src={site.cover_image}
+                          alt=""
+                          className="size-full object-cover transition duration-500 group-hover:scale-[1.02]"
+                        />
+                      ) : (
+                        <div className="flex size-full items-center justify-center bg-gradient-to-br from-brand-700 to-brand-900 text-white">
+                          <span className="text-4xl font-semibold tracking-tight">
+                            {site.name
+                              .split(" ")
+                              .map((w) => w[0])
+                              .slice(0, 2)
+                              .join("")}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-5">
+                      <h3 className="text-xl font-semibold text-zinc-900 group-hover:text-brand-800">
+                        {site.name}
+                      </h3>
+                      {(site.address || site.city) && (
+                        <p className="mt-1.5 inline-flex items-start gap-1.5 text-sm text-zinc-500">
+                          <MapPin className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+                          <span>
+                            {site.address ||
+                              [site.city, site.state].filter(Boolean).join(", ")}
+                          </span>
+                        </p>
+                      )}
+                      <div className="mt-4 flex flex-wrap items-end justify-between gap-2 border-t border-zinc-100 pt-4">
+                        <p className="text-sm text-zinc-600">
+                          <span className="text-lg font-semibold text-zinc-900">
+                            {cur()}
+                            {inr(site.from_rate)}
+                          </span>
+                          <span className="text-zinc-500"> / night</span>
+                        </p>
+                        <p className="text-sm font-medium text-brand-700">
+                          {count} listing{count === 1 ? "" : "s"} →
+                        </p>
+                      </div>
+                    </div>
+                  </Link>
+                )
+              })}
             </div>
           </div>
+        ) : (
+          <>
+            {/* room cards — hotel / single-site catalog */}
+            <div className="space-y-5">
+              {data.room_types.map((rt) => {
+                const r = results[rt.name]
+                const soldOut = r && r.rooms_left === 0
+                return (
+                  <div
+                    key={rt.name}
+                    className="grid overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm sm:grid-cols-5"
+                  >
+                    <div className="relative sm:col-span-2">
+                      {rt.media[0] ? (
+                        <img
+                          src={rt.media[0].url}
+                          alt={rt.media[0].caption ?? rt.room_type_name}
+                          className="h-52 w-full object-cover sm:h-full"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="flex h-52 items-center justify-center bg-zinc-100 sm:h-full">
+                          <BedDouble className="size-10 text-zinc-300" aria-hidden />
+                        </div>
+                      )}
+                      {rt.media.length > 1 && (
+                        <span className="absolute bottom-2 right-2 rounded-md bg-black/70 px-2 py-0.5 text-xs text-white">
+                          {rt.media.length} photos
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex flex-col justify-between p-5 sm:col-span-3">
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h2 className="text-lg font-semibold">{rt.room_type_name}</h2>
+                          {rt.bed_type && <Badge tone="zinc">{rt.bed_type} bed</Badge>}
+                          {rt.room_view && <Badge tone="sky">{rt.room_view}</Badge>}
+                          <span className="inline-flex items-center gap-1 text-xs text-zinc-500">
+                            <Users className="size-3.5" aria-hidden />
+                            up to {rt.adults_capacity} adults
+                          </span>
+                        </div>
+                        {locations.length > 1 && rt.location_name && (
+                          <p className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-brand-700">
+                            <MapPin className="size-3.5" aria-hidden />
+                            {rt.location_name}
+                          </p>
+                        )}
+                        {rt.description && (
+                          <p className="mt-1 text-sm text-zinc-500">{rt.description}</p>
+                        )}
+                        <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+                          {rt.amenities.map((a) => (
+                            <li
+                              key={a}
+                              className="inline-flex items-center gap-1 text-xs text-zinc-500"
+                            >
+                              <Check className="size-3 text-brand-600" aria-hidden />
+                              {a}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div className="mt-4 flex flex-wrap items-end justify-between gap-3">
+                        <div>
+                          {r?.quote ? (
+                            <>
+                              <p className="text-2xl font-semibold">
+                                {cur()}
+                                {inr(r.quote.amount_after_tax)}
+                                <span className="ml-1 text-sm font-normal text-zinc-500">
+                                  total · {r.quote.nights} night
+                                  {r.quote.nights === 1 ? "" : "s"}, taxes in
+                                </span>
+                              </p>
+                              {(r.quote.cleaning_fee || 0) > 0 && (
+                                <p className="text-xs text-zinc-500">
+                                  Includes {cur()}
+                                  {inr(r.quote.cleaning_fee || 0)} cleaning fee
+                                </p>
+                              )}
+                              {(r.quote.totals?.deposit_required || 0) > 0 && (
+                                <p className="text-xs text-zinc-500">
+                                  Refundable deposit {cur()}
+                                  {inr(r.quote.totals?.deposit_required || 0)} due
+                                  separately
+                                </p>
+                              )}
+                              {r.rooms_left <= 2 && (
+                                <p className="text-xs font-medium text-rose-600">
+                                  Only {r.rooms_left} left for these dates
+                                </p>
+                              )}
+                            </>
+                          ) : soldOut ? (
+                            <p className="text-sm font-medium text-rose-600">
+                              Sold out for these dates
+                            </p>
+                          ) : (
+                            <p className="text-sm text-zinc-400">
+                              from {cur()}
+                              {inr(rt.base_price)}/night
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {rt.listing_slug && (
+                            <Button
+                              variant="outline"
+                              className="px-4 py-2.5"
+                              onClick={() => navigate(`/stay/${rt.listing_slug}`)}
+                            >
+                              View listing
+                            </Button>
+                          )}
+                          <Button
+                            className="px-5 py-2.5 text-base"
+                            disabled={!r?.quote}
+                            onClick={() => setBooking(rt.name)}
+                          >
+                            {bookCta}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </>
         )}
 
-        {/* room cards */}
-        <div className="space-y-5">
-          {data.room_types.map((rt) => {
-            const r = results[rt.name]
-            const soldOut = r && r.rooms_left === 0
-            return (
-              <div
-                key={rt.name}
-                className="grid overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm sm:grid-cols-5"
-              >
-                <div className="relative sm:col-span-2">
-                  {rt.media[0] ? (
-                    <img
-                      src={rt.media[0].url}
-                      alt={rt.media[0].caption ?? rt.room_type_name}
-                      className="h-52 w-full object-cover sm:h-full"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <div className="flex h-52 items-center justify-center bg-zinc-100 sm:h-full">
-                      <BedDouble className="size-10 text-zinc-300" aria-hidden />
-                    </div>
-                  )}
-                  {rt.media.length > 1 && (
-                    <span className="absolute bottom-2 right-2 rounded-md bg-black/70 px-2 py-0.5 text-xs text-white">
-                      {rt.media.length} photos
-                    </span>
-                  )}
-                </div>
-                <div className="flex flex-col justify-between p-5 sm:col-span-3">
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h2 className="text-lg font-semibold">{rt.room_type_name}</h2>
-                      {rt.bed_type && <Badge tone="zinc">{rt.bed_type} bed</Badge>}
-                      {rt.room_view && <Badge tone="sky">{rt.room_view}</Badge>}
-                      <span className="inline-flex items-center gap-1 text-xs text-zinc-500">
-                        <Users className="size-3.5" aria-hidden />
-                        up to {rt.adults_capacity} adults
-                      </span>
-                    </div>
-                    {locations.length > 1 && rt.location_name && (
-                      <p className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-brand-700">
-                        <MapPin className="size-3.5" aria-hidden />
-                        {rt.location_name}
-                      </p>
-                    )}
-                    {rt.description && (
-                      <p className="mt-1 text-sm text-zinc-500">{rt.description}</p>
-                    )}
-                    <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
-                      {rt.amenities.map((a) => (
-                        <li key={a} className="inline-flex items-center gap-1 text-xs text-zinc-500">
-                          <Check className="size-3 text-brand-600" aria-hidden />
-                          {a}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                    <div className="mt-4 flex flex-wrap items-end justify-between gap-3">
-                    <div>
-                      {r?.quote ? (
-                        <>
-                          <p className="text-2xl font-semibold">
-                            {cur()}{inr(r.quote.amount_after_tax)}
-                            <span className="ml-1 text-sm font-normal text-zinc-500">
-                              total · {r.quote.nights} night{r.quote.nights === 1 ? "" : "s"}, taxes in
-                            </span>
-                          </p>
-                          {(r.quote.cleaning_fee || 0) > 0 && (
-                            <p className="text-xs text-zinc-500">
-                              Includes {cur()}{inr(r.quote.cleaning_fee || 0)} cleaning fee
-                            </p>
-                          )}
-                          {(r.quote.totals?.deposit_required || 0) > 0 && (
-                            <p className="text-xs text-zinc-500">
-                              Refundable deposit {cur()}{inr(r.quote.totals?.deposit_required || 0)} due separately
-                            </p>
-                          )}
-                          {r.rooms_left <= 2 && (
-                            <p className="text-xs font-medium text-rose-600">
-                              Only {r.rooms_left} left for these dates
-                            </p>
-                          )}
-                        </>
-                      ) : soldOut ? (
-                        <p className="text-sm font-medium text-rose-600">
-                          Sold out for these dates
-                        </p>
-                      ) : (
-                        <p className="text-sm text-zinc-400">
-                          from {cur()}{inr(rt.base_price)}/night
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {rt.listing_slug && (
-                        <Button
-                          variant="outline"
-                          className="px-4 py-2.5"
-                          onClick={() => navigate(`/stay/${rt.listing_slug}`)}
-                        >
-                          View listing
-                        </Button>
-                      )}
-                      <Button
-                        className="px-5 py-2.5 text-base"
-                        disabled={!r?.quote}
-                        onClick={() => setBooking(rt.name)}
-                      >
-                        {bookCta}
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )
-          })}
-        </div>
-
+        {catalogMode !== "sites" && (
+        <>
         <div className="mt-12 grid gap-8 md:grid-cols-2 border-t border-zinc-200 pt-8">
           {/* Policies & Rules */}
           <div className="space-y-4">
@@ -832,6 +898,8 @@ export default function PublicBooking() {
               ))}
             </div>
           </div>
+        )}
+        </>
         )}
 
         <p className="mt-10 text-center text-xs text-zinc-400">

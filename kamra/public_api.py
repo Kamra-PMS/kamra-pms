@@ -105,11 +105,17 @@ def _property_payload(prop) -> dict:
 
 
 def _build_locations(prop, room_types: list[dict]) -> list[dict]:
+	"""Group room types into shareable site/property cards for the catalog."""
 	locations = []
 	seen = {}
 	for rt in room_types:
 		key = rt["location_slug"] or rt["location_name"] or "__property__"
 		if key not in seen:
+			cover = None
+			for m in rt.get("media") or []:
+				if m.get("url"):
+					cover = m["url"]
+					break
 			seen[key] = {
 				"name": rt["location_name"] or prop.property_name,
 				"slug": rt["location_slug"] or None,
@@ -117,12 +123,29 @@ def _build_locations(prop, room_types: list[dict]) -> list[dict]:
 				"google_maps_url": rt["google_maps_url"],
 				"latitude": rt["latitude"] if rt["location_name"] else prop.get("latitude"),
 				"longitude": rt["longitude"] if rt["location_name"] else prop.get("longitude"),
+				"phone": prop.get("phone"),
+				"cover_image": cover or prop.get("hero_image"),
+				"city": prop.city,
+				"state": prop.state,
 				"room_types": [],
+				"listing_count": 0,
 				"from_rate": rt["base_price"],
 			}
 			locations.append(seen[key])
 		seen[key]["room_types"].append(rt["name"])
+		seen[key]["listing_count"] = len(seen[key]["room_types"])
 		seen[key]["from_rate"] = min(seen[key]["from_rate"], rt["base_price"])
+		if not seen[key].get("cover_image"):
+			for m in rt.get("media") or []:
+				if m.get("url"):
+					seen[key]["cover_image"] = m["url"]
+					break
+		# Prefer a maps pin from any listing that has one.
+		if not seen[key].get("google_maps_url") and rt.get("google_maps_url"):
+			seen[key]["google_maps_url"] = rt["google_maps_url"]
+		if seen[key].get("latitude") is None and rt.get("latitude") is not None:
+			seen[key]["latitude"] = rt["latitude"]
+			seen[key]["longitude"] = rt["longitude"]
 	return locations
 
 
