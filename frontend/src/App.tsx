@@ -16,6 +16,7 @@ import { CalendarView } from "./components/CalendarView"
 import { ResourceScreen } from "./components/ResourceScreen"
 const Billing = lazy(() => import("./screens/Billing"))
 const PublicBooking = lazy(() => import("./screens/PublicBooking"))
+const PublicListing = lazy(() => import("./screens/PublicListing"))
 const PublicCheckin = lazy(() => import("./screens/PublicCheckin"))
 const FolioView = lazy(() => import("./screens/FolioView"))
 const GuestJourney = lazy(() => import("./screens/GuestJourney"))
@@ -184,6 +185,11 @@ export default function App() {
         <Route
           path="book/:checkin/:checkout?/:adults?/:children?"
           element={<PublicBooking />}
+        />
+        <Route path="stay/:slug" element={<PublicListing />} />
+        <Route
+          path="stay/:slug/:checkin/:checkout?/:adults?/:children?"
+          element={<PublicListing />}
         />
         {/* pre-arrival self check-in, tokenized per reservation */}
         <Route path="checkin/:token" element={<PublicCheckin />} />

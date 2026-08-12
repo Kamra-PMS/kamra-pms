@@ -11,6 +11,172 @@ import frappe
 from frappe.rate_limiter import rate_limit
 from frappe.utils import cint, date_diff
 
+from kamra.booking_slugs import resolve_public_slug, slugify
+
+
+def _room_type_filters(property: str, listing_slug: str | None = None,
+                       location_slug: str | None = None) -> dict:
+	filters: dict = {"property": property, "disabled": 0}
+	if listing_slug:
+		filters["listing_slug"] = listing_slug
+	if location_slug:
+		filters["location_slug"] = location_slug
+	return filters
+
+
+def _room_type_payload(rt) -> dict:
+	return {
+		"name": rt.name,
+		"room_type_name": rt.room_type_name,
+		"listing_slug": rt.get("listing_slug"),
+		"location_slug": rt.get("location_slug"),
+		"description": rt.description,
+		"base_price": float(rt.base_price),
+		"base_occupancy": rt.base_occupancy,
+		"adults_capacity": rt.adults_capacity,
+		"children_capacity": rt.children_capacity,
+		"bed_type": rt.bed_type,
+		"room_view": rt.room_view,
+		"room_category": rt.get("room_category"),
+		"amenities": [a.strip() for a in re.split(r"[,\n]", rt.amenities or "") if a.strip()],
+		"media": [
+			{"media_type": m.media_type, "url": m.url, "caption": m.caption}
+			for m in (rt.get("media") or [])
+		],
+		"location_name": rt.get("location_name"),
+		"location_address": rt.get("location_address"),
+		"google_maps_url": rt.get("google_maps_url"),
+		"latitude": rt.get("latitude"),
+		"longitude": rt.get("longitude"),
+	}
+
+
+def _property_payload(prop) -> dict:
+	return {
+		"name": prop.name,
+		"property_name": prop.property_name,
+		"property_slug": prop.get("page_slug") or slugify(prop.property_name),
+		"description": prop.get("showcase_description"),
+		"logo_url": prop.get("logo_url"),
+		"hero_image": prop.get("hero_image"),
+		"brand_accent": prop.get("brand_accent") or "Emerald",
+		"star_category": prop.get("star_category"),
+		"address_line": prop.address_line,
+		"city": prop.city, "state": prop.state,
+		"pincode": prop.pincode,
+		"phone": prop.phone, "email": prop.email,
+		"website": prop.website,
+		"google_reviews_url": prop.get("google_reviews_url"),
+		"tripadvisor_url": prop.get("tripadvisor_url"),
+		"amenities": [a.strip() for a in re.split(r"[,\n]", prop.get("property_amenities") or "") if a.strip()],
+		"checkin_time": str(prop.checkin_time or ""),
+		"checkout_time": str(prop.checkout_time or ""),
+		"driving_directions": prop.get("driving_directions"),
+		"latitude": prop.get("latitude"),
+		"longitude": prop.get("longitude"),
+		"gallery": [
+			{"url": m.url, "caption": m.caption}
+			for m in (prop.get("gallery") or [])
+		],
+		"faqs": [
+			{"question": f.question, "answer": f.answer}
+			for f in (prop.get("faqs") or [])
+		],
+		"house_rules": prop.get("house_rules"),
+		"pets_policy": prop.get("pets_policy"),
+		"children_policy": prop.get("children_policy"),
+		"extra_bed_policy": prop.get("extra_bed_policy"),
+		"meta_title": prop.get("meta_title"),
+		"meta_description": prop.get("meta_description"),
+		"og_image": prop.get("og_image"),
+		"page_slug": prop.get("page_slug"),
+		"booking_engine_enabled": prop.get("booking_engine_enabled"),
+		"payment_mode": prop.get("booking_payment_mode") or "Pay at hotel",
+		"advance_percent": float(prop.get("advance_percent") or 0),
+		"registration_fee": float(prop.get("registration_fee") or 0),
+		"cleaning_fee": float(prop.get("cleaning_fee") or 0),
+		"security_deposit_amount": float(prop.get("security_deposit_amount") or 0),
+		"minimum_nights": int(prop.get("minimum_nights") or 1),
+		"free_cancel_days": int(prop.get("free_cancel_days") or 0),
+		"cancellation_fee": prop.get("cancellation_fee") or "None",
+		"booking_mode": prop.get("booking_mode") or "Instant",
+		"property_kind": prop.get("property_kind") or "Hotel",
+	}
+
+
+def _build_locations(prop, room_types: list[dict]) -> list[dict]:
+	locations = []
+	seen = {}
+	for rt in room_types:
+		key = rt["location_slug"] or rt["location_name"] or "__property__"
+		if key not in seen:
+			seen[key] = {
+				"name": rt["location_name"] or prop.property_name,
+				"slug": rt["location_slug"] or None,
+				"address": rt["location_address"] or prop.address_line,
+				"google_maps_url": rt["google_maps_url"],
+				"latitude": rt["latitude"] if rt["location_name"] else prop.get("latitude"),
+				"longitude": rt["longitude"] if rt["location_name"] else prop.get("longitude"),
+				"room_types": [],
+				"from_rate": rt["base_price"],
+			}
+			locations.append(seen[key])
+		seen[key]["room_types"].append(rt["name"])
+		seen[key]["from_rate"] = min(seen[key]["from_rate"], rt["base_price"])
+	return locations
+
+
+@frappe.whitelist(allow_guest=True)
+def catalog_index():
+	"""Entry point for /book — how many properties, sites, or listings to show."""
+	properties = frappe.get_all(
+		"Property",
+		filters={"booking_engine_enabled": 1, "disabled": 0},
+		fields=["name", "property_name", "page_slug", "city", "hero_image", "property_kind"],
+		order_by="property_name asc",
+	)
+	if len(properties) > 1:
+		for p in properties:
+			p["property_slug"] = p.get("page_slug") or slugify(p["property_name"])
+		return {"mode": "properties", "properties": properties}
+
+	property_name = properties[0].name if properties else default_property()
+	prop = frappe.get_doc("Property", property_name)
+	room_types = []
+	for rt_name in frappe.get_all(
+		"Room Type", filters={"property": property_name, "disabled": 0},
+		pluck="name", order_by="base_price asc",
+	):
+		room_types.append(_room_type_payload(frappe.get_doc("Room Type", rt_name)))
+	locations = _build_locations(prop, room_types)
+	sites = [loc for loc in locations if loc.get("slug")]
+
+	if len(sites) > 1:
+		return {
+			"mode": "sites",
+			"property": property_name,
+			"sites": sites,
+			"ui_locale": _public_locale(property_name),
+		}
+	if len(room_types) == 1 and room_types[0].get("listing_slug"):
+		return {
+			"mode": "single_listing",
+			"property": property_name,
+			"listing_slug": room_types[0]["listing_slug"],
+		}
+	return {
+		"mode": "catalog",
+		"property": property_name,
+		"listing_count": len(room_types),
+		"ui_locale": _public_locale(property_name),
+	}
+
+
+@frappe.whitelist(allow_guest=True)
+def resolve_slug(slug: str):
+	"""Resolve /stay/:slug to a listing or multi-listing site."""
+	return resolve_public_slug(slug)
+
 
 @frappe.whitelist(allow_guest=True)
 def site_info():
@@ -58,7 +224,8 @@ def _public_locale(property: str) -> dict:
 
 
 @frappe.whitelist(allow_guest=True)
-def showcase(property: str):
+def showcase(property: str, listing_slug: str | None = None,
+             location_slug: str | None = None):
 	"""Everything the public booking page needs to render."""
 	prop = frappe.get_doc("Property", property)
 	if not prop.get("booking_engine_enabled"):
@@ -66,54 +233,13 @@ def showcase(property: str):
 
 	room_types = []
 	for rt_name in frappe.get_all(
-		"Room Type", filters={"property": property, "disabled": 0},
+		"Room Type",
+		filters=_room_type_filters(property, listing_slug, location_slug),
 		pluck="name", order_by="base_price asc",
 	):
-		rt = frappe.get_doc("Room Type", rt_name)
-		room_types.append({
-			"name": rt.name,
-			"room_type_name": rt.room_type_name,
-			"description": rt.description,
-			"base_price": float(rt.base_price),
-			"base_occupancy": rt.base_occupancy,
-			"adults_capacity": rt.adults_capacity,
-			"children_capacity": rt.children_capacity,
-			"bed_type": rt.bed_type,
-			"room_view": rt.room_view,
-			"amenities": [a.strip() for a in re.split(r"[,\n]", rt.amenities or "") if a.strip()],
-			"media": [
-				{"media_type": m.media_type, "url": m.url, "caption": m.caption}
-				for m in (rt.get("media") or [])
-			],
-			# Only set on multi-site portfolios (e.g. several villas under one
-			# property) where a room type's address differs from the
-			# property's own. Blank means "use the property address".
-			"location_name": rt.get("location_name"),
-			"location_address": rt.get("location_address"),
-			"google_maps_url": rt.get("google_maps_url"),
-			"latitude": rt.get("latitude"),
-			"longitude": rt.get("longitude"),
-		})
+		room_types.append(_room_type_payload(frappe.get_doc("Room Type", rt_name)))
 
-	# Distinct pins for the map section: group room types that share a
-	# location_name (a villa/site) so multi-property portfolios show one
-	# pin per villa instead of one pin for the whole business. Room types
-	# without a location_name fall back to the property's own address/pin.
-	locations = []
-	seen = {}
-	for rt in room_types:
-		key = rt["location_name"] or "__property__"
-		if key not in seen:
-			seen[key] = {
-				"name": rt["location_name"] or prop.property_name,
-				"address": rt["location_address"] or prop.address_line,
-				"google_maps_url": rt["google_maps_url"],
-				"latitude": rt["latitude"] if rt["location_name"] else prop.get("latitude"),
-				"longitude": rt["longitude"] if rt["location_name"] else prop.get("longitude"),
-				"room_types": [],
-			}
-			locations.append(seen[key])
-		seen[key]["room_types"].append(rt["name"])
+	locations = _build_locations(prop, room_types)
 
 	experiences = frappe.get_all(
 		"Experience",
@@ -132,65 +258,23 @@ def showcase(property: str):
 
 	return {
 		"ui_locale": _public_locale(property),
-		"property": {
-			"name": prop.name,
-			"property_name": prop.property_name,
-			"description": prop.get("showcase_description"),
-			"logo_url": prop.get("logo_url"),
-			"hero_image": prop.get("hero_image"),
-			"brand_accent": prop.get("brand_accent") or "Emerald",
-			"star_category": prop.get("star_category"),
-			"address_line": prop.address_line,
-			"city": prop.city, "state": prop.state,
-			"pincode": prop.pincode,
-			"phone": prop.phone, "email": prop.email,
-			"website": prop.website,
-			"google_reviews_url": prop.get("google_reviews_url"),
-			"tripadvisor_url": prop.get("tripadvisor_url"),
-			"amenities": [a.strip() for a in re.split(r"[,\n]", prop.get("property_amenities") or "") if a.strip()],
-			"checkin_time": str(prop.checkin_time or ""),
-			"checkout_time": str(prop.checkout_time or ""),
-			"driving_directions": prop.get("driving_directions"),
-			"latitude": prop.get("latitude"),
-			"longitude": prop.get("longitude"),
-			"gallery": [
-				{"url": m.url, "caption": m.caption}
-				for m in (prop.get("gallery") or [])
-			],
-			"faqs": [
-				{"question": f.question, "answer": f.answer}
-				for f in (prop.get("faqs") or [])
-			],
-			"house_rules": prop.get("house_rules"),
-			"pets_policy": prop.get("pets_policy"),
-			"children_policy": prop.get("children_policy"),
-			"extra_bed_policy": prop.get("extra_bed_policy"),
-			"meta_title": prop.get("meta_title"),
-			"meta_description": prop.get("meta_description"),
-			"og_image": prop.get("og_image"),
-			"page_slug": prop.get("page_slug"),
-			"booking_engine_enabled": prop.get("booking_engine_enabled"),
-			"payment_mode": prop.get("booking_payment_mode") or "Pay at hotel",
-			"advance_percent": float(prop.get("advance_percent") or 0),
-			"registration_fee": float(prop.get("registration_fee") or 0),
-			"cleaning_fee": float(prop.get("cleaning_fee") or 0),
-			"security_deposit_amount": float(prop.get("security_deposit_amount") or 0),
-			"minimum_nights": int(prop.get("minimum_nights") or 1),
-			"free_cancel_days": int(prop.get("free_cancel_days") or 0),
-			"cancellation_fee": prop.get("cancellation_fee") or "None",
-			"booking_mode": prop.get("booking_mode") or "Instant",
-			"property_kind": prop.get("property_kind") or "Hotel",
-		},
+		"property": _property_payload(prop),
 		"room_types": room_types,
 		"locations": locations,
 		"meal_plans": meal_plans,
 		"experiences": experiences,
+		"scope": {
+			"listing_slug": listing_slug,
+			"location_slug": location_slug,
+		},
 	}
 
 
 @frappe.whitelist(allow_guest=True)
 def search_stay(property: str, check_in_date: str, check_out_date: str,
-                adults: int = 2, children: int = 0):
+                adults: int = 2, children: int = 0,
+                listing_slug: str | None = None,
+                location_slug: str | None = None):
 	"""Availability + real quoted price per room type for the stay."""
 	# available_rooms is staff-only (@require_roles) since it's also an
 	# MCP / Kamra Agent tool; guests need the same availability math without
@@ -206,7 +290,8 @@ def search_stay(property: str, check_in_date: str, check_out_date: str,
 
 	results = []
 	for rt in frappe.get_all(
-		"Room Type", filters={"property": property, "disabled": 0},
+		"Room Type",
+		filters=_room_type_filters(property, listing_slug, location_slug),
 		pluck="name", order_by="base_price asc",
 	):
 		hold = _block_hold(property, rt, check_in_date, check_out_date)

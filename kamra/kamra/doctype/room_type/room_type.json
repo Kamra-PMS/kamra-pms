@@ -12,10 +12,12 @@
   "room_type_code",
   "column_break_a",
   "room_type_name",
+  "listing_slug",
   "room_category",
   "description",
   "sb_location",
   "location_name",
+  "location_slug",
   "location_address",
   "column_break_loc",
   "google_maps_url",
@@ -81,6 +83,12 @@
    "reqd": 1
   },
   {
+   "description": "Public URL slug for this listing (e.g. waterfront-ac-room). Used at /stay/your-slug on the booking engine.",
+   "fieldname": "listing_slug",
+   "fieldtype": "Data",
+   "label": "Listing Slug"
+  },
+  {
    "default": "Private",
    "fieldname": "room_category",
    "fieldtype": "Select",
@@ -103,6 +111,12 @@
    "fieldtype": "Data",
    "label": "Location Name",
    "description": "e.g. \"WaterFront Villa By Ewa\". Groups room types sharing a villa/site on the booking engine."
+  },
+  {
+   "description": "URL slug for this site when several villas share one property (e.g. waterfront-villa-by-ewa). Guests open /stay/your-site-slug.",
+   "fieldname": "location_slug",
+   "fieldtype": "Data",
+   "label": "Site Slug"
   },
   {
    "fieldname": "location_address",

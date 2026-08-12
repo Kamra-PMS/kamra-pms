@@ -75,6 +75,8 @@ website_route_rules = [
 website_redirects = [
 	{"source": r"/book$", "target": "/kamra/book"},
 	{"source": r"/book/(.*)", "target": r"/kamra/book/\1"},
+	{"source": r"/stay$", "target": "/kamra/stay"},
+	{"source": r"/stay/(.*)", "target": r"/kamra/stay/\1"},
 	{"source": r"/hk$", "target": "/kamra/hk"},
 	{"source": r"/checkin/(.*)", "target": r"/kamra/checkin/\1"},
 ]

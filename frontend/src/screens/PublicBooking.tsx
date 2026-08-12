@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
-import { useLocation, useNavigate, useParams } from "react-router-dom"
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom"
 import {
   BedDouble,
   Check,
@@ -66,6 +66,7 @@ interface Showcase {
   room_types: {
     name: string
     room_type_name: string
+    listing_slug: string | null
     description: string | null
     base_price: number
     adults_capacity: number
@@ -84,6 +85,7 @@ interface Showcase {
   // one per villa, each listing which room types live there.
   locations: {
     name: string
+    slug: string | null
     address: string | null
     google_maps_url: string | null
     latitude: number | null
@@ -145,6 +147,16 @@ export default function PublicBooking() {
   const navigate = useNavigate()
   const location = useLocation()
   const [property, setProperty] = useState<string | null>(null)
+  const [catalogMode, setCatalogMode] = useState<string | null>(null)
+  const [sites, setSites] = useState<
+    {
+      name: string
+      slug: string | null
+      address: string | null
+      from_rate: number
+      room_types: string[]
+    }[]
+  >([])
   const [data, setData] = useState<Showcase | null>(null)
   const [search, setSearch] = useState(() => ({
     check_in_date: params.checkin ?? todayPlus(1),
@@ -173,18 +185,39 @@ export default function PublicBooking() {
   }, [search])
 
   useEffect(() => {
-    getDefaultProperty()
-      .then((p) => {
+    call<{
+      mode: string
+      property?: string
+      sites?: typeof sites
+      listing_slug?: string
+    }>("kamra.public_api.catalog_index")
+      .then((idx) => {
+        setCatalogMode(idx.mode)
+        if (idx.mode === "single_listing" && idx.listing_slug) {
+          navigate(`/stay/${idx.listing_slug}`, { replace: true })
+          return null
+        }
+        if (idx.mode === "sites" && idx.sites) {
+          setSites(idx.sites)
+        }
+        const p = idx.property
+        if (!p) return getDefaultProperty().then((name) => ({ p: name, idx }))
+        return { p, idx }
+      })
+      .then((ctx) => {
+        if (!ctx) return
+        const p = typeof ctx === "object" && "p" in ctx ? ctx.p : ctx
         setProperty(p)
         return call<Showcase>("kamra.public_api.showcase", { property: p })
       })
       .then((d) => {
+        if (!d) return
         adoptUiLocale((d as unknown as { ui_locale?: { currency_symbol?: string; locale?: string } }).ui_locale)
         setData(d)
         setForm((f) => ({ ...f, meal_plan: d.meal_plans[0]?.name ?? "" }))
       })
       .catch((e) => setError(serverError(e)))
-  }, [])
+  }, [navigate])
 
   // stay state lives in the URL - shareable, crawlable, UTM params kept
   useEffect(() => {
@@ -218,9 +251,12 @@ export default function PublicBooking() {
     }
     canonical.href = `${window.location.origin}/book`
 
+    const isStr = p.property_kind === "Short Term Rental"
+    const schemaType = isStr ? "VacationRental" : "Hotel"
+    const offerType = isStr ? "Accommodation" : "HotelRoom"
     const jsonld = {
       "@context": "https://schema.org",
-      "@type": "Hotel",
+      "@type": schemaType,
       name: p.property_name,
       description: p.description ?? undefined,
       image: p.hero_image ?? undefined,
@@ -244,7 +280,7 @@ export default function PublicBooking() {
         priceCurrency: "INR",
         price: rt.base_price,
         itemOffered: {
-          "@type": "HotelRoom",
+          "@type": offerType,
           name: rt.room_type_name,
           occupancy: {
             "@type": "QuantitativeValue",
@@ -318,6 +354,16 @@ export default function PublicBooking() {
     )
 
   const p = data.property
+  const minNights = p.minimum_nights || 1
+  const isStr = p.property_kind === "Short Term Rental"
+  const bookCta =
+    p.booking_mode === "Request to Book"
+      ? "Request to book"
+      : p.payment_mode === "Full online"
+        ? "Confirm & pay"
+        : isStr
+          ? "Book this listing"
+          : "Book now"
   const locations = data.locations?.length
     ? data.locations
     : [{ name: p.property_name, address: p.address_line, google_maps_url: null,
@@ -424,11 +470,14 @@ export default function PublicBooking() {
             <span className="mb-1 block text-xs font-medium text-zinc-500">Nights</span>
             <input
               type="number"
-              min={1}
+              min={minNights}
               className={inputCls}
               value={search.nights}
               onChange={(e) =>
-                setSearch({ ...search, nights: Math.max(1, Number(e.target.value)) })
+                setSearch({
+                  ...search,
+                  nights: Math.max(minNights, Number(e.target.value)),
+                })
               }
             />
           </label>
@@ -485,6 +534,35 @@ export default function PublicBooking() {
                     </div>
                   )}
                 </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {catalogMode === "sites" && sites.length > 1 && (
+          <div className="mb-10">
+            <h2 className="mb-4 text-xl font-semibold text-zinc-800">
+              {isStr ? "Our stays" : "Our locations"}
+            </h2>
+            <div className="grid gap-4 sm:grid-cols-2">
+              {sites.map((site) => (
+                <Link
+                  key={site.slug ?? site.name}
+                  to={site.slug ? `/stay/${site.slug}` : "/book"}
+                  className="group rounded-xl border border-zinc-200 bg-white p-5 shadow-sm transition hover:border-brand-400 hover:shadow-md"
+                >
+                  <h3 className="text-lg font-semibold text-zinc-900 group-hover:text-brand-800">
+                    {site.name}
+                  </h3>
+                  {site.address && (
+                    <p className="mt-1 text-sm text-zinc-500">{site.address}</p>
+                  )}
+                  <p className="mt-3 text-sm font-medium text-zinc-700">
+                    from {cur()}
+                    {inr(site.from_rate)}/night · {site.room_types.length}{" "}
+                    listing{site.room_types.length === 1 ? "" : "s"}
+                  </p>
+                </Link>
               ))}
             </div>
           </div>
@@ -548,7 +626,7 @@ export default function PublicBooking() {
                       ))}
                     </ul>
                   </div>
-                  <div className="mt-4 flex flex-wrap items-end justify-between gap-3">
+                    <div className="mt-4 flex flex-wrap items-end justify-between gap-3">
                     <div>
                       {r?.quote ? (
                         <>
@@ -584,13 +662,24 @@ export default function PublicBooking() {
                         </p>
                       )}
                     </div>
-                    <Button
-                      className="px-5 py-2.5 text-base"
-                      disabled={!r?.quote}
-                      onClick={() => setBooking(rt.name)}
-                    >
-                      Book now
-                    </Button>
+                    <div className="flex flex-wrap gap-2">
+                      {rt.listing_slug && (
+                        <Button
+                          variant="outline"
+                          className="px-4 py-2.5"
+                          onClick={() => navigate(`/stay/${rt.listing_slug}`)}
+                        >
+                          View listing
+                        </Button>
+                      )}
+                      <Button
+                        className="px-5 py-2.5 text-base"
+                        disabled={!r?.quote}
+                        onClick={() => setBooking(rt.name)}
+                      >
+                        {bookCta}
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -774,7 +863,7 @@ export default function PublicBooking() {
                 disabled={busy || !form.guest_name || !form.phone}
                 onClick={submitBooking}
               >
-                {busy ? "Booking…" : "Confirm - pay at hotel"}
+                {busy ? "Booking…" : bookCta}
               </Button>
             )
           }

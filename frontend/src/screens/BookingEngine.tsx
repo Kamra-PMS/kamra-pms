@@ -753,6 +753,9 @@ export default function BookingEngine() {
                         value={doc.page_slug ?? ""}
                         onChange={(e) => updateField("page_slug", e.target.value)}
                       />
+                      <p className="mt-1 text-xs text-zinc-400">
+                        Used when several properties share one site: /book/your-slug. Single-property tenants use /book and /stay/listing-slug on room types.
+                      </p>
                     </label>
                   </div>
                 </div>
