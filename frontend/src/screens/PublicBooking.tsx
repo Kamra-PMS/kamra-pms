@@ -380,22 +380,44 @@ export default function PublicBooking() {
     ? data.locations
     : [{ name: p.property_name, address: p.address_line, google_maps_url: null,
          latitude: p.latitude, longitude: p.longitude, room_types: [] }]
+  // Prefer the booking-engine hero, then gallery / listing cover so /book
+  // never shows an empty grey strip when photos exist elsewhere.
+  const heroSrc =
+    p.hero_image ||
+    p.gallery?.find((g) => g.url)?.url ||
+    data.room_types.find((rt) => rt.media?.[0]?.url)?.media?.[0]?.url ||
+    sites.find((s) => s.cover_image)?.cover_image ||
+    null
 
   return (
     <div
       className="min-h-screen bg-zinc-50"
       style={accentVars(data?.property.brand_accent)}
     >
-      {/* hero */}
-      <div className="relative h-72 overflow-hidden sm:h-80">
-        {p.hero_image && (
+      {/* hero — photo when available, otherwise brand accent fill */}
+      <div className="relative h-72 overflow-hidden sm:h-96">
+        {heroSrc ? (
           <img
-            src={p.hero_image}
+            src={heroSrc}
             alt=""
             className="absolute inset-0 size-full object-cover"
           />
+        ) : (
+          <div
+            className="absolute inset-0"
+            style={{
+              background: `linear-gradient(145deg, var(--color-brand-600) 0%, var(--color-brand-900) 100%)`,
+            }}
+          />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+        <div
+          className={
+            "absolute inset-0 " +
+            (heroSrc
+              ? "bg-gradient-to-t from-black/75 via-black/25 to-black/10"
+              : "bg-gradient-to-t from-black/40 via-transparent to-transparent")
+          }
+        />
         <div className="absolute inset-x-0 bottom-0 mx-auto flex max-w-5xl items-end gap-4 px-5 pb-6 text-white">
           {/* hotel logo slot - falls back to a monogram until one is set */}
           <div className="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-white/30 bg-white shadow-lg sm:size-20">
