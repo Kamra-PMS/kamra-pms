@@ -21,7 +21,6 @@ connected service can wire it later without touching this seam.
 
 from decimal import Decimal
 
-import frappe
 
 DEFAULT_SST = Decimal("8")   # accommodation, since 2024-03-01
 FNB_SST = Decimal("6")       # food & beverage kept the old rate

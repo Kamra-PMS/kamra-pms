@@ -235,6 +235,7 @@ def default_property():
 	if any_property:
 		return any_property[0]
 	frappe.throw("No property configured for this site.")
+	raise  # frappe.throw always raises; CodeQL does not treat it as noreturn
 
 
 def _public_locale(property: str) -> dict:
@@ -336,7 +337,7 @@ def search_stay(property: str, check_in_date: str, check_out_date: str,
 					int(adults), int(children),
 				)
 			except Exception:
-				pass
+				pass  # still list the room type even if this date range cannot be quoted
 		results.append(row)
 	return results
 

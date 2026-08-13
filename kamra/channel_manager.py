@@ -74,7 +74,7 @@ def ari_snapshot(property: str, connection: str, days: int = 90) -> list[dict]:
 				q = quote(property, m.room_type, str(d), str(d2), 2, 0)
 				rate = float(q["nightly"][0]["rate"])
 			except Exception:
-				pass
+				pass  # keep availability for the day even when the rate cannot be quoted
 			row["days"].append({"date": str(d), "available": avail,
 			                    "rate": round(rate, 2)})
 		out.append(row)

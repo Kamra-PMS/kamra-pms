@@ -33,6 +33,10 @@ features:
 
 ## What is Kamra?
 
+::: tip New — short-term rentals
+Kamra 2.5 runs villa portfolios as well as hotels. [Read the announcement](https://kamrapms.com/updates/short-term-rentals/) · see a live catalog at [ewa.kamrapms.com/book](https://ewa.kamrapms.com/kamra/book).
+:::
+
 Kamra is a complete property-management system for hotels and short-term
 rentals, built on
 [Frappe](https://frappeframework.com) and released under AGPL-3.0:

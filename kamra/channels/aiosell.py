@@ -14,7 +14,6 @@ pending rather than pretending to sync.
 
 from __future__ import annotations
 
-import frappe
 
 DEFAULT_ENDPOINT = "https://live.aiosell.com/api/v1/pms"
 

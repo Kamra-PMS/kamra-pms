@@ -84,4 +84,4 @@ def _notify_role(property, role, body):
 			try:
 				send_outbound(property, "WhatsApp", p.mobile_no, body)
 			except Exception:
-				pass
+				pass  # notify every recipient independently; one failure must not stop the rest

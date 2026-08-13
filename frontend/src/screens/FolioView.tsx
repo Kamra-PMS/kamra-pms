@@ -1035,7 +1035,7 @@ export default function FolioView() {
               </ul>
               {refund ? (
                 <div className="mt-2 flex flex-wrap items-end gap-2 rounded-lg border border-rose-200 bg-rose-50 p-2">
-                  <input className={`${inputCls} w-24`} type="number" placeholder="${cur()}"
+                  <input className={`${inputCls} w-24`} type="number" placeholder={cur()}
                     value={refund.amount} onChange={(e) => setRefund({ ...refund, amount: e.target.value })} />
                   <select className={inputCls} value={refund.mode}
                     onChange={(e) => setRefund({ ...refund, mode: e.target.value })}>

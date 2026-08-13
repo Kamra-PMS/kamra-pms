@@ -3395,8 +3395,6 @@ def create_group_booking(property: str, group_name: str, check_in_date: str,
                          rate_plan: str | None = None):
 	"""Create a Group Booking plus one reservation per requested room.
 	`rooms` = [{"room_type": <name>, "count": 2}, ...] (JSON string ok)."""
-	import json
-
 	if isinstance(rooms, str):
 		rooms = json.loads(rooms)
 

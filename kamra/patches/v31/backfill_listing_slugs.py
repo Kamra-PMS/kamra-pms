@@ -2,7 +2,7 @@
 
 import frappe
 
-from kamra.booking_slugs import ensure_room_type_slugs, slugify, unique_listing_slug
+from kamra.booking_slugs import slugify, unique_listing_slug
 
 
 def execute():
