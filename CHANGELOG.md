@@ -6,10 +6,10 @@ All notable changes to Kamra PMS are documented here. Format follows
 existing install on upgrade (removed doctypes, removed API endpoints),
 MINOR for new features, PATCH for fixes.
 
-## [Unreleased]
+## [2.5.0](https://github.com/Kamra-PMS/kamra-pms/compare/v2.4.0...v2.5.0) (2026-08-13)
 
-**2.5 — Short-term rentals.** Kamra is no longer hotel-only. A property can be
-a hotel *or* a short-term rental portfolio: several villas at different
+**Short-term rentals.** Kamra is no longer hotel-only. A property can be a
+hotel *or* a short-term rental portfolio: several villas at different
 addresses, sold room-wise or as the whole house, with deposits, cleaning fees,
 and a guest catalog that looks like a listing site.
 
@@ -24,12 +24,18 @@ sellable-unit inventory.
 * **Multi-villa booking engine** — `/book` catalog of sites, `/stay/:slug` villa and listing pages, per-room-type location (name, address, map, lat/long)
 * **Guest search that looks like a booking site** — check-in and check-out dates (not a nights spinner), adults/children, and a **Check availability** button on both the catalog and the villa page
 * Instant book with holds/locks, or request-to-book; cleaning fee and refundable security deposit on the quote
+* **Banquet** — enquiry-to-close-out functions, floor plans, hall deals, GST-ready documents
+* **Cloud** — per-property modules and one-command tenant provisioning
 
 ### Bug Fixes
 
 * Copilot works with current OpenAI models (`gpt-5.6-luna`, `gpt-5.6-terra`, `gpt-5.6-sol`) — Chat Completions + tools no longer 400 ([#23](https://github.com/Kamra-PMS/kamra-pms/issues/23))
 * Public phone numbers: a 10-digit Indian mobile starting with `91` is no longer stripped to eight digits
 * Public booking engine resolves the tenant's property instead of a hardcoded demo name
+* POS KOT daily sequence uses site-local today (no UTC reset after 18:30)
+* Guest merge repoints Venue Booking via `customer`; eval harness isolates failed checks
+* Provision SMTP supports implicit SSL on port 465
+* Dependabot CVEs and Code Quality findings closed
 
 ## [2.4.0](https://github.com/Kamra-PMS/kamra-pms/compare/v2.3.0...v2.4.0) (2026-07-28)
 
