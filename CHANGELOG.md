@@ -6,6 +6,45 @@ All notable changes to Kamra PMS are documented here. Format follows
 existing install on upgrade (removed doctypes, removed API endpoints),
 MINOR for new features, PATCH for fixes.
 
+## [2.5.0](https://github.com/Kamra-PMS/kamra-pms/compare/v2.4.0...v2.5.0) (2026-08-13)
+
+
+### Features
+
+* **banquet:** floor plans, hall deals, pre-costing and a stepped flow ([94b2a11](https://github.com/Kamra-PMS/kamra-pms/commit/94b2a1122d46f9b359d8756c7d31a4e08dfa6e35))
+* **banquet:** function management from enquiry to close-out ([21a8642](https://github.com/Kamra-PMS/kamra-pms/commit/21a8642aeccadbe212d1745c084a790ac09246ac))
+* **banquet:** proper document templates - logo, numbers, GST compliance ([385e8c8](https://github.com/Kamra-PMS/kamra-pms/commit/385e8c866fe4d22edf31788de883cbe44acad429))
+* **booking:** Airbnb-style property catalog, villa page, and listing detail ([2f79a2b](https://github.com/Kamra-PMS/kamra-pms/commit/2f79a2bc17f7ce559241daa1120024973e3c4b08))
+* **booking:** Instant path with holds, locks, and idempotency ([0c55aa2](https://github.com/Kamra-PMS/kamra-pms/commit/0c55aa28d7638a0ddc067b44e5ec22201a2a7fd7))
+* **booking:** per-villa location on Room Type for multi-site portfolios ([18f57fa](https://github.com/Kamra-PMS/kamra-pms/commit/18f57fa75179abfe4fe94df40138397b57b6c046))
+* **booking:** public /stay listing and site slugs for STR catalogs ([f99c5b8](https://github.com/Kamra-PMS/kamra-pms/commit/f99c5b8d8abe0af9085b29bd443da1b262ea860c))
+* **cloud:** per-property modules and one-command tenant provisioning ([ce6f8a2](https://github.com/Kamra-PMS/kamra-pms/commit/ce6f8a225257c57746285270d2b91cf8148ca6a2))
+* enhance property management and booking flow ([6f877e7](https://github.com/Kamra-PMS/kamra-pms/commit/6f877e780fad3bdf16a7dfbd70712c7a53350c40))
+* Enhance property management and booking flow ([7138cb3](https://github.com/Kamra-PMS/kamra-pms/commit/7138cb37783f5061ca073595707c6c4fc44d2f18))
+* **setup:** property_kind preset and STR wizard branch ([132e34c](https://github.com/Kamra-PMS/kamra-pms/commit/132e34cbf8e796a402f9b01c4096872f16c7657f))
+* **siu:** sellable units and availability SSOT for STR ([31e9403](https://github.com/Kamra-PMS/kamra-pms/commit/31e940323104a5cbfb16d63f412e01d3247f7dfd))
+* sortable columns on manager flash trend table ([103a422](https://github.com/Kamra-PMS/kamra-pms/commit/103a42280e86ce40ef261883145c31fb7008cda8))
+* **str:** quote ledger, deposits, turnover, and access gates ([265e2ae](https://github.com/Kamra-PMS/kamra-pms/commit/265e2ae73acc2bd4cbd8aa1913018a203948eeb0))
+
+
+### Bug Fixes
+
+* **assistant:** GPT-5.6 luna/terra/sol tool calling on chat completions ([84c8bf9](https://github.com/Kamra-PMS/kamra-pms/commit/84c8bf972be3d9128b6789319a925693a0bf7fae)), closes [#23](https://github.com/Kamra-PMS/kamra-pms/issues/23)
+* **banquet:** one door to create a function, and a real dish editor ([e3ca25b](https://github.com/Kamra-PMS/kamra-pms/commit/e3ca25b9d6744709f75643e3bf3fc6425e3b2502))
+* **booking:** always show country code on public phone numbers ([0016525](https://github.com/Kamra-PMS/kamra-pms/commit/001652536d2ee4c1054d788e4294f9f11ee504d0))
+* **booking:** fill /book hero with showcase photo or brand accent ([abb7e3d](https://github.com/Kamra-PMS/kamra-pms/commit/abb7e3d4c7367500b4d35b414951c55ebdfb662b))
+* **booking:** persist uploaded images automatically ([737b4c5](https://github.com/Kamra-PMS/kamra-pms/commit/737b4c5d9ea8da6d0a50c5db7b01cdb9187148b9))
+* **booking:** real check-in/out date range + explicit search CTA ([ea7e6e0](https://github.com/Kamra-PMS/kamra-pms/commit/ea7e6e0e12e5497f93f1066594bdbf609907054b))
+* **booking:** resolve tenant property for public booking engine ([2acc59c](https://github.com/Kamra-PMS/kamra-pms/commit/2acc59c491b72452d4126aaae82a40568a84e70f))
+* close Dependabot CVEs and Code Quality findings ([7d51e08](https://github.com/Kamra-PMS/kamra-pms/commit/7d51e08b640808f9c92e92ce7a387d541d4ee243))
+* close Dependabot CVEs and GitHub Code Quality findings ([c0d6cdc](https://github.com/Kamra-PMS/kamra-pms/commit/c0d6cdcf512255fe81abb47eed18a4dfe3fc82d8))
+* **cloud:** admin cannot be switched off, and module-gate tests ([41734be](https://github.com/Kamra-PMS/kamra-pms/commit/41734be30e5ff2b2b3ce84227d3973fa1399ab03))
+* **eval:** guest merge + SIU room pick for booking harness ([9101ce5](https://github.com/Kamra-PMS/kamra-pms/commit/9101ce509628ddd5f95a96b6b9ffd7308dcc6df5))
+* **eval:** Venue Booking merge uses customer field ([bbd310d](https://github.com/Kamra-PMS/kamra-pms/commit/bbd310d9a17631d25567f20161f96c4cda6136ef))
+* **eval:** Venue Booking merge uses customer field ([5028d10](https://github.com/Kamra-PMS/kamra-pms/commit/5028d10e68a5c1edd2c890f9c6578a8c549f1fc5))
+* **pos:** KOT daily sequence uses site-local today ([8e58c3b](https://github.com/Kamra-PMS/kamra-pms/commit/8e58c3b299b38db4778abef36e0f907fc2580f9b))
+* **provision:** support implicit SSL for SMTP on port 465 ([d8bfaa8](https://github.com/Kamra-PMS/kamra-pms/commit/d8bfaa8b284932a3b53faa46d33ead51fd108a11))
+
 ## [Unreleased]
 
 **2.5 — Short-term rentals.** Kamra is no longer hotel-only. A property can be
