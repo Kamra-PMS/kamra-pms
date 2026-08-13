@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useState } from "react"
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom"
 import {
   BedDouble,
@@ -6,6 +6,7 @@ import {
   ExternalLink,
   MapPin,
   Phone,
+  Search,
   Star,
   Users,
 } from "lucide-react"
@@ -134,6 +135,12 @@ function nightsBetween(a: string, b: string) {
   return Math.max(1, Math.round(ms / 86_400_000))
 }
 
+function addDays(date: string, days: number) {
+  const d = new Date(date)
+  d.setDate(d.getDate() + days)
+  return d.toISOString().slice(0, 10)
+}
+
 function setMetaTag(name: string, content: string) {
   let el = document.querySelector<HTMLMetaElement>(`meta[name="${name}"]`)
   if (!el) {
@@ -168,15 +175,15 @@ export default function PublicBooking() {
     }[]
   >([])
   const [data, setData] = useState<Showcase | null>(null)
-  const [search, setSearch] = useState(() => ({
-    check_in_date: params.checkin ?? todayPlus(1),
-    nights:
-      params.checkin && params.checkout
-        ? nightsBetween(params.checkin, params.checkout)
-        : 2,
-    adults: Number(params.adults ?? 2) || 2,
-    children: Number(params.children ?? 0) || 0,
-  }))
+  const [search, setSearch] = useState(() => {
+    const check_in_date = params.checkin ?? todayPlus(1)
+    return {
+      check_in_date,
+      check_out_date: params.checkout ?? addDays(check_in_date, 2),
+      adults: Number(params.adults ?? 2) || 2,
+      children: Number(params.children ?? 0) || 0,
+    }
+  })
   const [results, setResults] = useState<Record<string, StayResult>>({})
   const [booking, setBooking] = useState<string | null>(null) // room type name
   const [form, setForm] = useState({ guest_name: "", phone: "", email: "", meal_plan: "", special_requests: "" })
@@ -188,11 +195,7 @@ export default function PublicBooking() {
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
-  const checkOut = useMemo(() => {
-    const d = new Date(search.check_in_date)
-    d.setDate(d.getDate() + Math.max(1, search.nights))
-    return d.toISOString().slice(0, 10)
-  }, [search])
+  const checkOut = search.check_out_date
 
   useEffect(() => {
     call<{
@@ -313,21 +316,24 @@ export default function PublicBooking() {
 
   useEffect(() => {
     if (!property || catalogMode === "sites") return
-    const t = setTimeout(() => {
-      call<StayResult[]>("kamra.public_api.search_stay", {
-        property,
-        check_in_date: search.check_in_date,
-        check_out_date: checkOut,
-        adults: search.adults,
-        children: search.children,
-      }).then((rows) => {
-        const map: Record<string, StayResult> = {}
-        rows.forEach((r) => (map[r.room_type] = r))
-        setResults(map)
-      })
-    }, 300)
+    const t = setTimeout(fetchResults, 300)
     return () => clearTimeout(t)
   }, [property, search, checkOut, catalogMode])
+
+  function fetchResults() {
+    if (!property) return
+    call<StayResult[]>("kamra.public_api.search_stay", {
+      property,
+      check_in_date: search.check_in_date,
+      check_out_date: checkOut,
+      adults: search.adults,
+      children: search.children,
+    }).then((rows) => {
+      const map: Record<string, StayResult> = {}
+      rows.forEach((r) => (map[r.room_type] = r))
+      setResults(map)
+    })
+  }
 
   async function submitBooking() {
     if (!booking || !property) return
@@ -490,58 +496,81 @@ export default function PublicBooking() {
 
       <div className="mx-auto max-w-5xl px-5 pb-16">
         {/* search bar */}
-        <div className="relative z-10 -mt-6 mb-8 grid gap-3 rounded-xl border border-zinc-200 bg-white p-4 shadow-lg sm:grid-cols-4">
-          <label className="block">
-            <span className="mb-1 block text-xs font-medium text-zinc-500">Check-in</span>
-            <input
-              type="date"
-              className={inputCls}
-              value={search.check_in_date}
-              min={todayPlus(0)}
-              onChange={(e) =>
-                setSearch({ ...search, check_in_date: e.target.value })
-              }
-            />
-          </label>
-          <label className="block">
-            <span className="mb-1 block text-xs font-medium text-zinc-500">Nights</span>
-            <input
-              type="number"
-              min={minNights}
-              className={inputCls}
-              value={search.nights}
-              onChange={(e) =>
-                setSearch({
-                  ...search,
-                  nights: Math.max(minNights, Number(e.target.value)),
-                })
-              }
-            />
-          </label>
-          <label className="block">
-            <span className="mb-1 block text-xs font-medium text-zinc-500">Adults</span>
-            <input
-              type="number"
-              min={1}
-              className={inputCls}
-              value={search.adults}
-              onChange={(e) =>
-                setSearch({ ...search, adults: Math.max(1, Number(e.target.value)) })
-              }
-            />
-          </label>
-          <label className="block">
-            <span className="mb-1 block text-xs font-medium text-zinc-500">Children</span>
-            <input
-              type="number"
-              min={0}
-              className={inputCls}
-              value={search.children}
-              onChange={(e) =>
-                setSearch({ ...search, children: Math.max(0, Number(e.target.value)) })
-              }
-            />
-          </label>
+        <div className="relative z-10 -mt-6 mb-8 rounded-xl border border-zinc-200 bg-white p-4 shadow-lg">
+          <div className="grid gap-3 sm:grid-cols-4">
+            <label className="block">
+              <span className="mb-1 block text-xs font-medium text-zinc-500">Check-in</span>
+              <input
+                type="date"
+                className={inputCls}
+                value={search.check_in_date}
+                min={todayPlus(0)}
+                onChange={(e) => {
+                  const check_in_date = e.target.value
+                  const minCheckOut = addDays(check_in_date, minNights)
+                  setSearch((s) => ({
+                    ...s,
+                    check_in_date,
+                    check_out_date:
+                      s.check_out_date > minCheckOut ? s.check_out_date : minCheckOut,
+                  }))
+                }}
+              />
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-xs font-medium text-zinc-500">Check-out</span>
+              <input
+                type="date"
+                className={inputCls}
+                value={search.check_out_date}
+                min={addDays(search.check_in_date, minNights)}
+                onChange={(e) =>
+                  setSearch({ ...search, check_out_date: e.target.value })
+                }
+              />
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-xs font-medium text-zinc-500">Adults</span>
+              <input
+                type="number"
+                min={1}
+                className={inputCls}
+                value={search.adults}
+                onChange={(e) =>
+                  setSearch({ ...search, adults: Math.max(1, Number(e.target.value)) })
+                }
+              />
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-xs font-medium text-zinc-500">Children</span>
+              <input
+                type="number"
+                min={0}
+                className={inputCls}
+                value={search.children}
+                onChange={(e) =>
+                  setSearch({ ...search, children: Math.max(0, Number(e.target.value)) })
+                }
+              />
+            </label>
+          </div>
+          <p className="mt-1.5 text-xs text-zinc-400">
+            {nightsBetween(search.check_in_date, search.check_out_date)} night
+            {nightsBetween(search.check_in_date, search.check_out_date) === 1 ? "" : "s"}
+            {minNights > 1 ? ` · ${minNights}-night minimum` : ""}
+          </p>
+          <Button
+            className="mt-3 w-full justify-center gap-2 py-2.5 text-base"
+            onClick={() => {
+              fetchResults()
+              document
+                .getElementById("stay-results")
+                ?.scrollIntoView({ behavior: "smooth", block: "start" })
+            }}
+          >
+            <Search className="size-4" aria-hidden />
+            Check availability
+          </Button>
         </div>
 
         {p.description && (
@@ -577,7 +606,7 @@ export default function PublicBooking() {
         )}
 
         {catalogMode === "sites" && sites.length > 0 ? (
-          <div className="mb-10">
+          <div id="stay-results" className="mb-10">
             <div className="mb-5">
               <h2 className="text-2xl font-semibold tracking-tight text-zinc-900">
                 Places to stay
@@ -651,7 +680,7 @@ export default function PublicBooking() {
         ) : (
           <>
             {/* room cards — hotel / single-site catalog */}
-            <div className="space-y-5">
+            <div id="stay-results" className="space-y-5">
               {data.room_types.map((rt) => {
                 const r = results[rt.name]
                 const soldOut = r && r.rooms_left === 0

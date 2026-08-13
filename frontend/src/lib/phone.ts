@@ -52,8 +52,10 @@ export function formatPhoneDisplay(
   }
   const dial = dialForCountry(country)
   let local = digitsOnly(raw)
-  // Strip country code if already present without +
-  if (local.startsWith(dial) && local.length > dial.length + 6) {
+  // Strip an embedded country code, e.g. "919148869914" -> "9148869914".
+  // Guard on length > 10: a plain 10-digit local number (India) can itself
+  // start with "91" (e.g. 9148869914) and must NOT be stripped.
+  if (local.length > 10 && local.startsWith(dial)) {
     local = local.slice(dial.length)
   }
   if (local.length === 10) {
@@ -74,7 +76,7 @@ export function formatPhoneTel(
   }
   const dial = dialForCountry(country)
   let local = digitsOnly(raw)
-  if (local.startsWith(dial) && local.length > dial.length + 6) {
+  if (local.length > 10 && local.startsWith(dial)) {
     local = local.slice(dial.length)
   }
   return `+${dial}${local}`

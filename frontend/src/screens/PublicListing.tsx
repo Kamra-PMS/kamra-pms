@@ -6,6 +6,7 @@ import {
   ExternalLink,
   MapPin,
   Phone,
+  Search,
   Users,
 } from "lucide-react"
 import { call } from "../lib/api"
@@ -114,6 +115,12 @@ function nightsBetween(a: string, b: string) {
   return Math.max(1, Math.round(ms / 86_400_000))
 }
 
+function addDays(date: string, days: number) {
+  const d = new Date(date)
+  d.setDate(d.getDate() + days)
+  return d.toISOString().slice(0, 10)
+}
+
 function mapEmbedUrl(lat: number, lng: number) {
   const d = 0.02
   return (
@@ -206,12 +213,15 @@ export default function PublicListing() {
   const [searchParams] = useSearchParams()
   const [resolved, setResolved] = useState<Resolved | null>(null)
   const [data, setData] = useState<Showcase | null>(null)
-  const [search, setSearch] = useState(() => ({
-    check_in_date: checkin ?? todayPlus(1),
-    nights: checkin && checkout ? nightsBetween(checkin, checkout) : 2,
-    adults: Number(adultsParam ?? 2) || 2,
-    children: Number(childrenParam ?? 0) || 0,
-  }))
+  const [search, setSearch] = useState(() => {
+    const check_in_date = checkin ?? todayPlus(1)
+    return {
+      check_in_date,
+      check_out_date: checkout ?? addDays(check_in_date, 2),
+      adults: Number(adultsParam ?? 2) || 2,
+      children: Number(childrenParam ?? 0) || 0,
+    }
+  })
   const [results, setResults] = useState<Record<string, StayResult>>({})
   const [booking, setBooking] = useState<string | null>(null)
   const [form, setForm] = useState({
@@ -225,11 +235,7 @@ export default function PublicListing() {
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
-  const checkOut = useMemo(() => {
-    const d = new Date(search.check_in_date)
-    d.setDate(d.getDate() + Math.max(1, search.nights))
-    return d.toISOString().slice(0, 10)
-  }, [search])
+  const checkOut = search.check_out_date
 
   const listingSlug = resolved?.listing_slug
   const locationSlug = resolved?.location_slug
@@ -281,23 +287,26 @@ export default function PublicListing() {
 
   useEffect(() => {
     if (!resolved) return
-    const t = setTimeout(() => {
-      call<StayResult[]>("kamra.public_api.search_stay", {
-        property: resolved.property,
-        check_in_date: search.check_in_date,
-        check_out_date: checkOut,
-        adults: search.adults,
-        children: search.children,
-        listing_slug: listingSlug,
-        location_slug: locationSlug,
-      }).then((rows) => {
-        const map: Record<string, StayResult> = {}
-        rows.forEach((r) => (map[r.room_type] = r))
-        setResults(map)
-      })
-    }, 300)
+    const t = setTimeout(fetchResults, 300)
     return () => clearTimeout(t)
   }, [resolved, search, checkOut, listingSlug, locationSlug])
+
+  function fetchResults() {
+    if (!resolved) return
+    call<StayResult[]>("kamra.public_api.search_stay", {
+      property: resolved.property,
+      check_in_date: search.check_in_date,
+      check_out_date: checkOut,
+      adults: search.adults,
+      children: search.children,
+      listing_slug: listingSlug,
+      location_slug: locationSlug,
+    }).then((rows) => {
+      const map: Record<string, StayResult> = {}
+      rows.forEach((r) => (map[r.room_type] = r))
+      setResults(map)
+    })
+  }
 
   useEffect(() => {
     if (!data || !resolved) return
@@ -474,7 +483,7 @@ export default function PublicListing() {
 
             {/* Property page: listings */}
             {isSite && (
-              <section className="space-y-4">
+              <section id="choose-listing" className="space-y-4">
                 <h2 className="text-xl font-semibold text-zinc-900">
                   Choose a listing
                 </h2>
@@ -618,7 +627,7 @@ export default function PublicListing() {
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <label className="col-span-2 block">
+                <label className="block">
                   <span className="mb-1 block text-sm font-medium text-zinc-600">
                     Check-in
                   </span>
@@ -627,31 +636,35 @@ export default function PublicListing() {
                     className={inputCls}
                     value={search.check_in_date}
                     min={todayPlus(0)}
-                    onChange={(e) =>
-                      setSearch({ ...search, check_in_date: e.target.value })
-                    }
+                    onChange={(e) => {
+                      const check_in_date = e.target.value
+                      const minCheckOut = addDays(check_in_date, minNights)
+                      setSearch((s) => ({
+                        ...s,
+                        check_in_date,
+                        check_out_date:
+                          s.check_out_date > minCheckOut ? s.check_out_date : minCheckOut,
+                      }))
+                    }}
                   />
                 </label>
                 <label className="block">
                   <span className="mb-1 block text-sm font-medium text-zinc-600">
-                    Nights
+                    Check-out
                   </span>
                   <input
-                    type="number"
-                    min={minNights}
+                    type="date"
                     className={inputCls}
-                    value={search.nights}
+                    value={search.check_out_date}
+                    min={addDays(search.check_in_date, minNights)}
                     onChange={(e) =>
-                      setSearch({
-                        ...search,
-                        nights: Math.max(minNights, Number(e.target.value)),
-                      })
+                      setSearch({ ...search, check_out_date: e.target.value })
                     }
                   />
                 </label>
                 <label className="block">
                   <span className="mb-1 block text-sm font-medium text-zinc-600">
-                    Guests
+                    Adults
                   </span>
                   <input
                     type="number"
@@ -666,10 +679,46 @@ export default function PublicListing() {
                     }
                   />
                 </label>
+                <label className="block">
+                  <span className="mb-1 block text-sm font-medium text-zinc-600">
+                    Children
+                  </span>
+                  <input
+                    type="number"
+                    min={0}
+                    className={inputCls}
+                    value={search.children}
+                    onChange={(e) =>
+                      setSearch({
+                        ...search,
+                        children: Math.max(0, Number(e.target.value)),
+                      })
+                    }
+                  />
+                </label>
               </div>
+              <p className="text-center text-xs text-zinc-400">
+                {nightsBetween(search.check_in_date, search.check_out_date)} night
+                {nightsBetween(search.check_in_date, search.check_out_date) === 1 ? "" : "s"}
+              </p>
+
+              <Button
+                variant={isSite ? "outline" : undefined}
+                className="w-full justify-center gap-2 py-2.5 text-base"
+                onClick={() => {
+                  fetchResults()
+                  document
+                    .getElementById(isSite ? "choose-listing" : "sticky-book")
+                    ?.scrollIntoView({ behavior: "smooth", block: "start" })
+                }}
+              >
+                <Search className="size-4" aria-hidden />
+                Check availability
+              </Button>
 
               {!isSite && primary && (
                 <Button
+                  id="sticky-book"
                   className="w-full justify-center py-2.5 text-base"
                   disabled={!results[primary.name]?.quote}
                   onClick={() => setBooking(primary.name)}
