@@ -3,7 +3,7 @@
 </p>
 
 <h1 align="center">Kamra PMS</h1>
-<p align="center"><b>The open-source, agent-ready hotel PMS.</b><br/>
+<p align="center"><b>The open-source, agent-ready PMS for hotels and short-term rentals.</b><br/>
 Bring your own AI — Claude over MCP, or HeyKoala for voice/WhatsApp — on infrastructure you own.</p>
 
 <p align="center">
@@ -64,12 +64,35 @@ Hotels deserve better than:
 
 [![Public booking page](docs/screenshots/public-booking.png)](https://demo.kamrapms.com/book)
 
+## Short-term rentals (2.5)
+
+Kamra now runs villas and multi-site STR portfolios the same way it runs
+hotels — one property, several physical addresses, room-wise or entire-place
+selling, deposits and credit notes, and a guest-facing catalog that looks like
+a listing site rather than a hotel room grid.
+
+Pick **Short Term Rental** when you create the property (or later in Settings).
+The booking engine then shows a villa catalog, per-site maps, a real
+check-in / check-out date range, and a **Check availability** button.
+
+| | |
+|---|---|
+| ![STR catalog — villas, date range, Check availability](docs/screenshots/str-catalog.png) | ![Two villas on one booking page](docs/screenshots/str-villas.png) |
+| **Catalog** — check-in and check-out, guest counts, and Check availability | **Places to stay** — each villa is its own card, with its own address and from-rate |
+
+[![Villa listing with rooms, dates and caretaker](docs/screenshots/str-listing.png)](https://ewa.kamrapms.com/kamra/book)
+
+**Villa page** — pick a room or the whole house, live stay totals, check-in / check-out, Check availability, and a caretaker number guests can tap.
+
+Live example: [ewa.kamrapms.com/book](https://ewa.kamrapms.com/kamra/book) (Ewa Reserve — WaterFront in Mangaluru and Tatasth in Kundapur).
+
 ## What's inside (today)
 
 | Area | Included |
 |---|---|
 | Front desk | Today dashboard with paid/due chips, a **check-in flow** (registration readiness + AI room suggestion with reasons, or pick from free rooms with HK state), tape chart with a live **house-position row**, **ETA/ETD on every stay** and changeover-conflict warnings, reservations, guest **profile hub** (stay strip, merge duplicates, anonymize/DPDP), blacklist |
-| Booking Engine | Direct booking page with a **manageable console** — hotel profile, **photo gallery**, policies, **FAQ**, map & driving directions, and **SEO** (meta title/description, OG image); SEO-friendly public page with live rates and pay-at-hotel, commission-free |
+| Booking Engine | Direct booking page with a **manageable console** — hotel/villa profile, **photo gallery**, policies, **FAQ**, map & driving directions, and **SEO**; guests pick **check-in and check-out** and hit **Check availability**. Hotels get a room grid; STRs get a **villa catalog** and per-listing pages |
+| Short-term rentals | **Property kind** Hotel vs Short Term Rental, **sellable units** (room, whole-place, package) with competition groups so booking the villa blocks its rooms, **per-villa locations** on the public page, cleaning fees & refundable deposits, Instant or Request-to-book |
 | Booking | **Multi-room bookings in one flow**, group & corporate bookings, booked-on-behalf (booker vs guest), returning-guest typeahead, **add-ons at booking**, sell messages, travel agents with commissions, day-use |
 | Revenue | Occupancy-based pricing, seasons, rate plans, vouchers, meal plans, **rate guardrails**, **hurdle rates** (demand tiers apply premiums and a dynamic floor automatically), a controlled **overbooking allowance** enforced in code, cancellation/no-show/deposit **policies enforced in code**, owner & **GM position briefings** via API/copilot |
 | Billing | Folios with per-line GST (₹7,500 slab auto-switch), **corporate billing rules** (charge routing, alcohol always to guest), **group master folios**, %/₹ **charge splits** with exact conservation, bulk transfers, automated night audit that also charges no-shows, GST invoices with B2B GSTIN, GSTR-1 export, cashier reconciliation, payment links via frappe/payments |

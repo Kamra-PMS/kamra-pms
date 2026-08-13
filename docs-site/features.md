@@ -195,7 +195,18 @@ A public booking page with live availability and real quotes, photo
 galleries, policies and FAQs, promo codes, **experiences as add-ons**
 (spa, safari, dinner), configurable advance collection (percent / fixed /
 full / pay-at-hotel — terms are snapshotted per booking), your brand
-colour, and SEO baked in (schema.org hotel markup, OG images).
+colour, and SEO baked in (schema.org hotel markup, OG images). Guests
+pick **check-in and check-out** and tap **Check availability**.
+
+## Short-term rentals
+
+Kamra runs villas the same way it runs hotels. Set the property kind to
+**Short Term Rental** and the public site becomes a catalog of places —
+each villa at its own address, sold as private rooms or the whole house.
+Inventory is **sellable units** (room / whole-place / package) with
+competition groups, so booking the villa takes its rooms off sale.
+Quotes carry cleaning fees and refundable deposits. Instant book or
+request-to-book.
 
 ## Multi-property
 

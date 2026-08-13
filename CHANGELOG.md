@@ -6,6 +6,31 @@ All notable changes to Kamra PMS are documented here. Format follows
 existing install on upgrade (removed doctypes, removed API endpoints),
 MINOR for new features, PATCH for fixes.
 
+## [Unreleased]
+
+**2.5 — Short-term rentals.** Kamra is no longer hotel-only. A property can be
+a hotel *or* a short-term rental portfolio: several villas at different
+addresses, sold room-wise or as the whole house, with deposits, cleaning fees,
+and a guest catalog that looks like a listing site.
+
+Hotel installs are unchanged. Set **Property kind** to Short Term Rental (on
+create, or later in Settings) to get the STR catalog, per-villa maps, and
+sellable-unit inventory.
+
+### Features
+
+* **STR property kind** — setup wizard and Settings branch for villas vs hotels (`property_kind`)
+* **Sellable inventory units** — room, whole-place, or package, with competition groups so booking the villa blocks its rooms
+* **Multi-villa booking engine** — `/book` catalog of sites, `/stay/:slug` villa and listing pages, per-room-type location (name, address, map, lat/long)
+* **Guest search that looks like a booking site** — check-in and check-out dates (not a nights spinner), adults/children, and a **Check availability** button on both the catalog and the villa page
+* Instant book with holds/locks, or request-to-book; cleaning fee and refundable security deposit on the quote
+
+### Bug Fixes
+
+* Copilot works with current OpenAI models (`gpt-5.6-luna`, `gpt-5.6-terra`, `gpt-5.6-sol`) — Chat Completions + tools no longer 400 ([#23](https://github.com/Kamra-PMS/kamra-pms/issues/23))
+* Public phone numbers: a 10-digit Indian mobile starting with `91` is no longer stripped to eight digits
+* Public booking engine resolves the tenant's property instead of a hardcoded demo name
+
 ## [2.4.0](https://github.com/Kamra-PMS/kamra-pms/compare/v2.3.0...v2.4.0) (2026-07-28)
 
 
