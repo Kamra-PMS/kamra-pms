@@ -1642,7 +1642,7 @@ _GUEST_LINKS = [  # every doctype that points at a Guest
 	("Reservation", "guest"), ("Folio", "guest"),
 	("Service Ticket", "guest"), ("Lost And Found Item", "guest"),
 	("Security Deposit", "guest"),
-	("Venue Booking", "guest"),
+	("Venue Booking", "customer"),  # banquet uses customer, not guest
 	("WhatsApp Message", "guest"),
 ]
 
@@ -1662,6 +1662,8 @@ def merge_guests(source: str, target: str):
 	moved = {}
 	for doctype, field in _GUEST_LINKS:
 		if not frappe.db.exists("DocType", doctype):
+			continue
+		if not frappe.get_meta(doctype).has_field(field):
 			continue
 		rows = frappe.get_all(doctype, filters={field: source}, pluck="name")
 		for name in rows:

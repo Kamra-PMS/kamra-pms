@@ -19,12 +19,18 @@ RESULTS = []
 def check(name):
 	def wrap(fn):
 		def run():
+			# Isolate each check: an OperationalError aborts the MySQL
+			# transaction and would poison later tests without a rollback.
+			sp = f"eval_{frappe.generate_hash(length=8)}"
+			frappe.db.savepoint(sp)
 			try:
 				fn()
 				RESULTS.append((name, True, ""))
 			except AssertionError as e:
+				frappe.db.rollback(save_point=sp)
 				RESULTS.append((name, False, str(e)))
 			except Exception as e:
+				frappe.db.rollback(save_point=sp)
 				import traceback
 				tail = " | ".join(
 					line.strip()
@@ -763,17 +769,18 @@ def t26():
 	assert p["paid"] and p["order_total"] == 300, p
 	doc = frappe.get_doc("POS Order", o["order"])
 	assert doc.status == "Delivered" and not doc.posted_to_folio, doc.status
-	# settling frees the table into Cleaning; Mark clean returns it to vacant
-	assert [t for t in pos.table_map(outlet)["tables"]
-	        if t["table"] == "T2"][0]["state"] == "cleaning"
+	# Settling frees the table into Cleaning; Mark clean returns it to vacant
+	t2_after = [t for t in pos.table_map(outlet)["tables"] if t["table"] == "T2"][0]
+	assert t2_after["state"] == "cleaning", t2_after
 	pos.mark_table_clean(outlet, "T2")
-	assert [t for t in pos.table_map(outlet)["tables"]
-	        if t["table"] == "T2"][0]["state"] == "vacant"
+	t2_clean = [t for t in pos.table_map(outlet)["tables"] if t["table"] == "T2"][0]
+	assert t2_clean["state"] == "vacant", t2_clean
 
 	# a second order the same day gets the next KOT number
 	o2 = pos.create_order(outlet, [{"menu_item": mi1, "qty": 1}],
 	                      order_type="Takeaway")
-	assert pos.fire_kot(o2["order"])["kot_no"] == fk["kot_no"] + 1
+	fk2 = pos.fire_kot(o2["order"])
+	assert fk2["kot_no"] == fk["kot_no"] + 1, (fk, fk2)
 	pos.cancel_order(o2["order"], "guest left")
 	assert frappe.db.get_value("POS Order", o2["order"], "status") == "Cancelled"
 
