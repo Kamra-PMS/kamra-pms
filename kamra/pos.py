@@ -513,10 +513,13 @@ def fire_kot(order: str, course: str | None = None):
 	if course and not fired:
 		frappe.throw(_("Nothing is held on that course."))
 	if not doc.kot_no:
+		# Site-local "today", not MariaDB UTC date(now()) — those diverge after
+		# 18:30 UTC on IST sites and every KOT would reset to 1.
+		from frappe.utils import today
 		last = frappe.db.sql(
 			"""select max(kot_no) from `tabPOS Order`
-			   where outlet=%s and date(creation)=date(now())""",
-			doc.outlet)[0][0] or 0
+			   where outlet=%s and creation >= %s""",
+			(doc.outlet, today()))[0][0] or 0
 		doc.kot_no = int(last) + 1
 	doc.kot_fired = 1
 	if doc.status in ("Placed", "Confirmed"):
