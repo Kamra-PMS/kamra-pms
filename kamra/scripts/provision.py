@@ -147,20 +147,33 @@ def mail_ready() -> dict:
 
 def configure_smtp(host: str, port: int = 587, login: str = "",
                    password: str = "", from_address: str = "",
-                   from_name: str = "", use_tls: int = 1) -> dict:
+                   from_name: str = "", use_tls: int = 1,
+                   use_ssl: int = 0) -> dict:
 	"""Outgoing mail for this tenant.
 
 	Without it the product silently can't send a booking confirmation, a
 	payment link or a self-check-in invitation - and nothing tells anyone
-	until a guest complains they never got the email."""
+	until a guest complains they never got the email.
+
+	Kamra Cloud outbound mail is usually Resend SMTP
+	(``smtp.resend.com:465``, username ``resend``, password = API key).
+	Port 465 needs ``use_ssl=1`` (implicit TLS) and ``use_tls=0``.
+	Other providers (Brevo, Hostinger, Cloudflare Email Sending, custom)
+	work the same path — pass host/port/login/password and the matching
+	TLS flags.
+	"""
 	name = frappe.db.get_value("Email Account", {"default_outgoing": 1})
 	doc = (frappe.get_doc("Email Account", name) if name
 	       else frappe.new_doc("Email Account"))
+	ssl = 1 if int(use_ssl or 0) else 0
+	# Port 465 with Cloudflare is always implicit SSL; don't also set STARTTLS.
+	tls = 0 if ssl else (1 if int(use_tls or 0) else 0)
 	doc.update({
 		"email_account_name": doc.get("email_account_name") or "Outgoing",
 		"email_id": from_address or login,
 		"smtp_server": host, "smtp_port": int(port),
-		"use_tls": 1 if int(use_tls or 0) else 0,
+		"use_tls": tls,
+		"use_ssl_for_outgoing": ssl,
 		"login_id": login or from_address,
 		"login_id_is_different": bool(login and login != from_address),
 		"enable_outgoing": 1, "default_outgoing": 1,
@@ -172,7 +185,8 @@ def configure_smtp(host: str, port: int = 587, login: str = "",
 		doc.name_of_sender = from_name
 	doc.save(ignore_permissions=True)
 	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- provisioning script runs outside the request cycle
-	return {"ok": True, "outgoing": doc.email_id}
+	return {"ok": True, "outgoing": doc.email_id,
+	        "smtp": f"{host}:{port}", "ssl": bool(ssl)}
 
 
 def status(property_name: str | None = None) -> dict:
