@@ -11,6 +11,7 @@ import json
 
 import frappe
 from kamra.authz import require_roles
+from kamra.llm_compat import chat_payload, retry_chat_payload
 import requests
 from frappe.utils import nowdate
 
@@ -432,6 +433,25 @@ def _tool_defs():
 	  if _tool_allowed(name)]
 
 
+def _post_chat(base: str, headers: dict, body: dict, *, stream: bool = False):
+	"""POST /chat/completions, retrying once if the model rejects the payload.
+
+	GPT-5.6 luna/terra/sol refuse function tools on Chat Completions unless
+	``reasoning_effort`` is ``none`` (#23). Compatible hosts that already
+	accept the first body are unchanged.
+	"""
+	url = f"{base}/chat/completions"
+	resp = requests.post(url, headers=headers, json=body,
+	                     timeout=TIMEOUT, stream=stream)
+	if resp.status_code != 400:
+		return resp
+	retry = retry_chat_payload(body, resp.text or "")
+	if not retry:
+		return resp
+	return requests.post(url, headers=headers, json=retry,
+	                     timeout=TIMEOUT, stream=stream)
+
+
 def _run_tool(name: str, args: dict, property: str):
 	if not _tool_allowed(name):
 		frappe.throw("Your role doesn't include this action.",
@@ -482,16 +502,14 @@ def ask(property: str, messages):
 		extra=("\n" + s.extra_instructions) if s.extra_instructions else "")
 	convo = [{"role": "system", "content": system}] + list(messages)
 
+	base = (s.base_url or "https://api.openai.com/v1").rstrip("/")
+	model = s.model or "gpt-4o-mini"
+	headers = {"Authorization": f"Bearer {api_key}",
+	           "Content-Type": "application/json"}
 	actions = []
 	for _ in range(MAX_TOOL_ROUNDS):
-		resp = requests.post(
-			f"{(s.base_url or 'https://api.openai.com/v1').rstrip('/')}/chat/completions",
-			headers={"Authorization": f"Bearer {api_key}",
-			         "Content-Type": "application/json"},
-			json={"model": s.model or "gpt-4o-mini", "messages": convo,
-			      "tools": _tool_defs(), "temperature": 0.2},
-			timeout=TIMEOUT,
-		)
+		resp = _post_chat(base, headers, chat_payload(
+			model, convo, tools=_tool_defs(), temperature=0.2))
 		if resp.status_code != 200:
 			frappe.throw(f"AI provider error ({resp.status_code}): "
 			             f"{resp.text[:300]}")
@@ -558,9 +576,8 @@ def ask_stream(property: str, messages):
 	# --- resolve tools synchronously (DB access happens here, before streaming)
 	actions = []
 	for _ in range(MAX_TOOL_ROUNDS):
-		resp = requests.post(f"{base}/chat/completions", headers=headers,
-			json={"model": model, "messages": convo, "tools": _tool_defs(),
-			      "temperature": 0.2}, timeout=TIMEOUT)
+		resp = _post_chat(base, headers, chat_payload(
+			model, convo, tools=_tool_defs(), temperature=0.2))
 		if resp.status_code != 200:
 			frappe.throw(f"AI provider error ({resp.status_code}): {resp.text[:200]}")
 		msg = resp.json()["choices"][0]["message"]
@@ -590,9 +607,8 @@ def ask_stream(property: str, messages):
 			yield sse("action", a)
 		try:
 			# final answer streamed WITHOUT tools → the model must produce text
-			r = requests.post(f"{base}/chat/completions", headers=headers,
-				json={"model": model, "messages": convo, "temperature": 0.2,
-				      "stream": True}, stream=True, timeout=TIMEOUT)
+			r = _post_chat(base, headers, chat_payload(
+				model, convo, stream=True, temperature=0.2), stream=True)
 			if r.status_code != 200:
 				yield sse("error", {"message": f"AI provider error ({r.status_code})"})
 			else:
@@ -689,9 +705,8 @@ def help_ask(property: str, messages):
 
 	def gen():
 		try:
-			r = requests.post(f"{base}/chat/completions", headers=headers,
-				json={"model": model, "messages": convo, "temperature": 0.3,
-				      "stream": True}, stream=True, timeout=TIMEOUT)
+			r = _post_chat(base, headers, chat_payload(
+				model, convo, stream=True, temperature=0.3), stream=True)
 			if r.status_code != 200:
 				yield sse("error", {"message": f"AI provider error ({r.status_code})"})
 			else:

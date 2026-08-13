@@ -355,7 +355,11 @@ const AI_SPECS: Spec[] = [
     label: "Provider base URL",
     hint: "any OpenAI-compatible endpoint: OpenAI, OpenRouter, Groq, Ollama…",
   },
-  { field: "model", label: "Model" },
+  {
+    field: "model",
+    label: "Model",
+    hint: "gpt-4o-mini, gpt-5.6-luna, gpt-5.6-terra, gpt-5.6-sol, or any OpenAI-compatible slug",
+  },
   { field: "api_key", label: "API key", type: "password" },
   {
     field: "extra_instructions",
