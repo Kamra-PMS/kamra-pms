@@ -14,7 +14,7 @@ Bring your own AI — Claude over MCP, or HeyKoala for voice/WhatsApp — on inf
 </p>
 
 > ### 🏨 Try it now → **[demo.kamrapms.com](https://demo.kamrapms.com)**
-> A live sandbox pre-loaded with a sample hotel. **Tap any role to sign in — the demo usernames and passwords are listed right on the page.** The guest booking engine is at [/book](https://demo.kamrapms.com/book) and the housekeeping phone app at [/kamra/hk](https://demo.kamrapms.com/kamra/hk).
+> A live sandbox pre-loaded with a sample hotel. **Tap any role to sign in — the demo usernames and passwords are listed right on the page.** The guest booking engine is at [/book](https://demo.kamrapms.com/book) (check-in / check-out + Check availability) and the housekeeping phone app at [/kamra/hk](https://demo.kamrapms.com/kamra/hk). For a live villa catalog, open [ewa.kamrapms.com/book](https://ewa.kamrapms.com/kamra/book).
 
 ---
 
@@ -60,9 +60,9 @@ Hotels deserve better than:
 | ![Laundry console](docs/screenshots/laundry.png) | ![Self check-in with ID capture](docs/screenshots/checkin-id.png) |
 | **Laundry console** — pickup queue, ready-by tracking, printable dockets, guest self-service requests | **Self check-in** — guests fill details, photograph their ID with the phone camera and sign; stored privately, discarded per retention policy |
 
-**The direct booking page your guests see** — photo gallery, live per-date rates, hotel policies, an FAQ, map & directions, and pay-at-hotel — commission-free, and yours to brand.
+**The direct booking page your guests see** — check-in / check-out, **Check availability**, live per-date rates, photo gallery, hotel policies, FAQ, map & directions, and pay-at-hotel — commission-free, and yours to brand.
 
-[![Public booking page](docs/screenshots/public-booking.png)](https://demo.kamrapms.com/book)
+[![Public booking page with check-in, check-out and Check availability](docs/screenshots/public-booking.png)](https://demo.kamrapms.com/book)
 
 ## Short-term rentals (2.5)
 

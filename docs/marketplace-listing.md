@@ -15,29 +15,30 @@ Keep this file in sync with the README when the feature set changes.
 ## Title
 
 ```
-Kamra — Hotel PMS
+Kamra — Hotel & Short-Term Rental PMS
 ```
 
 ## Short description (one line / summary field)
 
 ```
-The open-source, agent-ready hotel PMS — front desk, direct booking, POS, housekeeping, folios and tax billing, on infrastructure you own.
+The open-source, agent-ready PMS for hotels and short-term rentals — front desk, villa catalogs, direct booking, POS, housekeeping, folios and tax billing, on infrastructure you own.
 ```
 
 ## Tagline alternatives (pick per field length)
 
-- `Open-source, agent-ready hotel property management.`
-- `Run your hotel — booking, front desk, folios, POS — and bring your own AI.`
+- `Open-source PMS for hotels and short-term rentals.`
+- `Run your hotel or villa portfolio — booking, front desk, folios, POS — and bring your own AI.`
 
 ---
 
 ## Long description (About — markdown)
 
 ```markdown
-**Kamra is a complete, open-source hotel property management system built on
-Frappe.** Front desk, direct booking, restaurant POS, housekeeping, folios and
-tax-correct billing — one app, no per-room or per-module rent, and your data
-stays on infrastructure you own.
+**Kamra is a complete, open-source property management system for hotels and
+short-term rentals, built on Frappe.** Front desk, direct booking, villa
+catalogs, restaurant POS, housekeeping, folios and tax-correct billing — one
+app, no per-room or per-module rent, and your data stays on infrastructure you
+own.
 
 Most hotel software was built twenty years ago: click-heavy screens, add-on
 fees for night audit and reports, and your guest and rate history locked in a
@@ -68,8 +69,14 @@ property.
   with AI room suggestions, tape chart with a live house-position row, ETA/ETD
   and changeover warnings, guest profile hub, blacklist.
 - **Direct booking engine** — a commission-free, SEO-friendly public booking
-  page with a photo gallery, live per-date rates, policies, FAQ, map and
-  pay-at-hotel — fully brandable, managed from an in-app console.
+  page with check-in / check-out, Check availability, a photo gallery, live
+  per-date rates, policies, FAQ, map and pay-at-hotel — fully brandable,
+  managed from an in-app console. Hotels get a room grid; short-term rentals
+  get a villa catalog and per-listing pages.
+- **Short-term rentals** — property kind Hotel vs Short Term Rental, sellable
+  units (room, whole-place, package) with competition groups, per-villa
+  locations on the public page, cleaning fees and refundable deposits, Instant
+  or Request-to-book.
 - **Bookings** — multi-room in one flow, group & corporate, booked-on-behalf,
   returning-guest typeahead, add-ons, travel agents with commissions, day-use.
 - **Revenue** — occupancy-based pricing, seasons, rate plans, vouchers, meal
@@ -105,7 +112,8 @@ your property and taxes, then add staff. Full manual at
 
 **Try the live demo first:** [demo.kamrapms.com](https://demo.kamrapms.com) —
 a sandbox pre-loaded with a sample hotel; the role logins are printed on the
-page.
+page. For a live short-term rental catalog, see
+[ewa.kamrapms.com/book](https://ewa.kamrapms.com/kamra/book).
 ```
 
 ---
@@ -123,9 +131,12 @@ Lead with the most legible, "what is this product" shots first.
 | 5 | `invoice.png` | Folio & tax invoice — per-line tax, splits/transfers, payment links |
 | 6 | `pos.png` | Restaurant POS — area-wise table map, concurrent bills, thermal KOT |
 | 7 | `dashboard.png` | Property dashboard — occupancy, revenue and collections with a chain-wide roll-up |
-| 8 | `public-booking.png` | The commission-free direct booking page your guests see |
-| 9 | `reports.png` | Manager reports — occupancy/ADR/RevPAR, MTD, collections, printable flash |
-| 10 | `checkin-id.png` | Self check-in — guests photograph their ID on the phone; stored privately |
+| 8 | `public-booking.png` | Direct booking — check-in / check-out, Check availability, live rates |
+| 9 | `str-catalog.png` | Short-term rental catalog — villa portfolio, date range, Check availability |
+| 10 | `str-villas.png` | Places to stay — each villa at its own address with a from-rate |
+| 11 | `str-listing.png` | Villa page — rooms or the whole house, live totals, caretaker call |
+| 12 | `reports.png` | Manager reports — occupancy/ADR/RevPAR, MTD, collections, printable flash |
+| 13 | `checkin-id.png` | Self check-in — guests photograph their ID on the phone; stored privately |
 
 ## Logo / icon
 
