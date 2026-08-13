@@ -9,5 +9,10 @@
   },
   "devDependencies": {
     "vitepress": "^1.6.3"
+  },
+  "overrides": {
+    "postcss": "8.5.23",
+    "vite": "6.4.3",
+    "esbuild": "0.25.0"
   }
 }

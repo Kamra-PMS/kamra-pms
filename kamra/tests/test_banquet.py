@@ -10,7 +10,7 @@ from frappe.tests import IntegrationTestCase
 from frappe.utils import add_days, nowdate
 
 from kamra import banquet as bq
-from kamra.tests.fixtures import PROPERTY, USERS, build, enquiry
+from kamra.tests.fixtures import PROPERTY, build, enquiry
 
 
 class BanquetTestCase(IntegrationTestCase):

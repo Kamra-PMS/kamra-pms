@@ -57,7 +57,7 @@ def call(dotted: str, **params):
             if msgs:
                 raise RuntimeError(_json.loads(msgs[0]).get("message", res.text))
         except (ValueError, KeyError):
-            pass
+            pass  # not a Frappe _server_messages payload; raise HTTP status below
         res.raise_for_status()
     return res.json()["message"]
 

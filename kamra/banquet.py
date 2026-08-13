@@ -1037,7 +1037,7 @@ def run_banquet_reminders():
 						send_outbound(prop, "WhatsApp", mobile, body)
 						sent = True
 					except Exception:
-						pass
+						pass  # fall through to role notify when WhatsApp is unavailable
 			if not sent:
 				_notify_role(prop, "Front Desk", body)
 			log_action("banquet_reminder", "Venue Booking", f["function"], prop,

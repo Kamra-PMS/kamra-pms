@@ -1930,7 +1930,7 @@ def t37():
 		raise AssertionError("over-refund accepted")
 	except frappe.exceptions.ValidationError:
 		pass
-	out = api.refund_folio_payment(folio, 1000, "Cash", "deposit returned")
+	api.refund_folio_payment(folio, 1000, "Cash", "deposit returned")
 	fd = frappe.get_doc("Folio", folio)
 	kinds = {(p.payment_kind, float(p.amount)) for p in fd.payments}
 	assert ("Advance", 2000.0) in kinds and ("Security Deposit", 1000.0) in kinds
@@ -2073,7 +2073,7 @@ def t48():
 	from kamra.agents_channels import send_outbound
 
 	# a connection with our own number - fake creds, intercepted transport
-	conn = frappe.get_doc({
+	frappe.get_doc({
 		"doctype": "Channel Provider Connection", "property": P,
 		"channel": "WhatsApp", "provider": "Meta Business", "active": 1,
 		"phone_number": "+91 98450 00000",

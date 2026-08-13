@@ -11,7 +11,6 @@ against the partner doc.
 
 from __future__ import annotations
 
-import frappe
 
 DEFAULT_ENDPOINT = "https://sua.staah.net/PMSService"
 

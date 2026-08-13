@@ -63,7 +63,7 @@ def _post_graph(conn, payload: dict) -> tuple[bool, str]:
 			try:
 				mid = res.json()["messages"][0]["id"]
 			except Exception:
-				pass
+				pass  # Graph can succeed without a message id; delivery still counts
 			return True, mid
 		return False, f"HTTP {res.status_code}: {res.text[:300]}"
 	except Exception as exc:
@@ -241,7 +241,7 @@ def webhook(**kwargs):
 	try:
 		body = json.loads(frappe.request.data or b"{}")
 	except Exception:
-		pass
+		pass  # malformed webhook JSON: acknowledge and skip handling
 	for entry in body.get("entry") or []:
 		for change in entry.get("changes") or []:
 			_handle_inbound((change.get("value") or {}))

@@ -110,3 +110,4 @@ def resolve_public_slug(slug: str) -> dict:
 		}
 
 	frappe.throw("Listing not found.", frappe.DoesNotExistError)
+	raise  # frappe.throw always raises; CodeQL does not treat it as noreturn

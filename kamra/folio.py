@@ -85,7 +85,7 @@ def _post_cleaning_fee(reservation, folio_name: str):
 					tax_rate = (tax / amount * 100) if amount else 0
 					break
 		except Exception:
-			pass
+			pass  # snapshot unreadable; fall back to the property's current cleaning fee
 	if amount <= 0:
 		amount = float(
 			frappe.db.get_value(
