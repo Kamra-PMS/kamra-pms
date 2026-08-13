@@ -45,25 +45,36 @@ def ari_snapshot(property: str, connection: str, days: int = 90) -> list[dict]:
 	sell rate (base occupancy, demand premiums and hurdle floors applied)."""
 	from kamra.api import _available_rooms_raw, _block_hold
 	from kamra.pricing import quote
+	from kamra.siu.availability import capacity_by_night, has_active_sius
 
 	out = []
 	start = nowdate()
+	end = add_days(start, days)
 	for m in _mappings(connection):
 		row = {"room_type": m.room_type,
 		       "external_room_id": m.external_room_id,
 		       "external_rate_id": m.external_rate_id, "days": []}
+		use_siu = has_active_sius(property, m.room_type)
+		siu_caps = (
+			capacity_by_night(property, m.room_type, start, end)
+			if use_siu else []
+		)
 		for i in range(days):
 			d = add_days(start, i)
 			d2 = add_days(d, 1)
-			free = _available_rooms_raw(property, m.room_type, d, d2)
 			hold = _block_hold(property, m.room_type, d, d2)
-			avail = max(0, len(free) - (hold or 0))
+			if use_siu:
+				base = siu_caps[i] if i < len(siu_caps) else 0
+				avail = max(0, base - (hold or 0))
+			else:
+				free = _available_rooms_raw(property, m.room_type, d, d2)
+				avail = max(0, len(free) - (hold or 0))
 			rate = 0.0
 			try:
 				q = quote(property, m.room_type, str(d), str(d2), 2, 0)
 				rate = float(q["nightly"][0]["rate"])
 			except Exception:
-				pass
+				pass  # keep availability for the day even when the rate cannot be quoted
 			row["days"].append({"date": str(d), "available": avail,
 			                    "rate": round(rate, 2)})
 		out.append(row)

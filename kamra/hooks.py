@@ -34,8 +34,15 @@ scheduler_events = {
 		# 09:00 - send self check-in links to upcoming arrivals, for properties
 		# that turned the setting on (a plain automation, not an agent)
 		"0 9 * * *": ["kamra.prearrival.run_prearrival_outreach"],
-		# every 15 min - escalate overdue housekeeping tasks up the ladder
-		"*/15 * * * *": ["kamra.housekeeping.escalate_overdue_tasks"],
+		# every 15 min - escalate overdue housekeeping tasks up the ladder;
+		# also release expired Held / Pending Payment reservations (ADR-006)
+		"*/15 * * * *": [
+			"kamra.housekeeping.escalate_overdue_tasks",
+			"kamra.reservation_state.expire_holds",
+		],
+		# 08:30 - the banquet team's morning list: follow-ups gone quiet,
+		# tentative holds about to lapse, payments due, event orders missing
+		"30 8 * * *": ["kamra.banquet.run_banquet_reminders"],
 	},
 }
 
@@ -68,6 +75,8 @@ website_route_rules = [
 website_redirects = [
 	{"source": r"/book$", "target": "/kamra/book"},
 	{"source": r"/book/(.*)", "target": r"/kamra/book/\1"},
+	{"source": r"/stay$", "target": "/kamra/stay"},
+	{"source": r"/stay/(.*)", "target": r"/kamra/stay/\1"},
 	{"source": r"/hk$", "target": "/kamra/hk"},
 	{"source": r"/checkin/(.*)", "target": r"/kamra/checkin/\1"},
 ]

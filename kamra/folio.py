@@ -65,7 +65,59 @@ def open_folio(reservation) -> str:
 	_recalculate(folio)
 	folio.insert(ignore_permissions=True)
 	_post_addons(reservation, folio.name)
+	_post_cleaning_fee(reservation, folio.name)
 	return folio.name
+
+
+def _post_cleaning_fee(reservation, folio_name: str):
+	"""Post one-time cleaning fee from quote snapshot / property (ADR-008)."""
+	import json
+	amount = 0.0
+	tax_rate = 0.0
+	snap = getattr(reservation, "quote_snapshot", None)
+	if snap:
+		try:
+			data = json.loads(snap) if isinstance(snap, str) else snap
+			for li in data.get("line_items") or []:
+				if li.get("component") == "cleaning_fee":
+					amount = float(li.get("amount") or 0)
+					tax = float(li.get("tax_amount") or 0)
+					tax_rate = (tax / amount * 100) if amount else 0
+					break
+		except Exception:
+			pass  # snapshot unreadable; fall back to the property's current cleaning fee
+	if amount <= 0:
+		amount = float(
+			frappe.db.get_value(
+				"Property", reservation.property, "cleaning_fee"
+			)
+			or 0
+		)
+	if amount <= 0:
+		return
+	if frappe.db.exists(
+		"Folio Charge",
+		{"parent": folio_name, "charge_type": "Cleaning Fee", "auto_posted": 1},
+	):
+		return
+	doc = frappe.get_doc("Folio", folio_name)
+	if doc.status == "Closed":
+		return
+	doc.append(
+		"charges",
+		{
+			"posting_date": nowdate(),
+			"charge_type": "Cleaning Fee",
+			"description": "Cleaning fee",
+			"qty": 1,
+			"rate": amount,
+			"amount": amount,
+			"gst_rate": tax_rate,
+			"auto_posted": 1,
+		},
+	)
+	_recalculate(doc)
+	doc.save(ignore_permissions=True)
 
 
 def _post_addons(reservation, folio_name: str):

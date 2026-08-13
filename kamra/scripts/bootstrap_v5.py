@@ -1,4 +1,4 @@
-"""Schema v5 — eZee-parity billing correctness:
+"""Schema v5 — billing correctness:
 
 - Property: GST slab config (auto 5%/18% by nightly rate) + tax-inclusive mode
 - Reservation: day-use flag
@@ -90,7 +90,7 @@ def execute():
 		try:
 			frappe.db.sql_ddl("ALTER TABLE `tabFolio` DROP INDEX reservation")
 		except Exception:
-			pass
+			pass  # index already dropped on a previous bootstrap
 
 	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- batch/seed/migration script runs outside the request cycle; explicit commit persists the staged writes
 	print("Kamra v5 schema ready.")

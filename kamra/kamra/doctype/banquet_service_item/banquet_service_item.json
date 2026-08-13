@@ -1,0 +1,199 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-07-31 10:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "property",
+  "item_name",
+  "category",
+  "column_break_a",
+  "uom",
+  "rate",
+  "cost_rate",
+  "cost_gst_rate",
+  "gst_rate",
+  "sb_flags",
+  "chargeable",
+  "is_alcohol",
+  "on_pack_list",
+  "column_break_b",
+  "description",
+  "disabled"
+ ],
+ "fields": [
+  {
+   "fieldname": "property",
+   "fieldtype": "Link",
+   "label": "Property",
+   "options": "Property",
+   "reqd": 1
+  },
+  {
+   "fieldname": "item_name",
+   "fieldtype": "Data",
+   "label": "Item Name",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "category",
+   "fieldtype": "Select",
+   "label": "Category",
+   "in_list_view": 1,
+   "default": "Audio Visual",
+   "options": "Audio Visual\nDecor\nEntertainment\nFurniture & Setup\nStaffing\nBeverage\nAlcohol\nAccommodation\nStationery\nOther"
+  },
+  {
+   "fieldname": "column_break_a",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "uom",
+   "fieldtype": "Select",
+   "label": "Charged",
+   "in_list_view": 1,
+   "default": "Per Event",
+   "options": "Per Event\nPer Hour\nPer Day\nPer Pax\nPer Unit"
+  },
+  {
+   "fieldname": "rate",
+   "fieldtype": "Currency",
+   "label": "Rate",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "cost_rate",
+   "fieldtype": "Currency",
+   "label": "Cost Rate",
+   "description": "What it costs the hotel - hire, sub-contractor, consumables. Drives the margin on every function."
+  },
+  {
+   "fieldname": "cost_gst_rate",
+   "fieldtype": "Percent",
+   "label": "Input GST %",
+   "default": "18"
+  },
+  {
+   "fieldname": "gst_rate",
+   "fieldtype": "Percent",
+   "label": "GST %",
+   "default": "18"
+  },
+  {
+   "fieldname": "sb_flags",
+   "fieldtype": "Section Break",
+   "label": "How it bills"
+  },
+  {
+   "fieldname": "chargeable",
+   "fieldtype": "Check",
+   "label": "Chargeable",
+   "default": "1",
+   "in_list_view": 1,
+   "description": "Off = complimentary by default (house mics, podium, water). It still prints on the event order and pack list, it just doesn't hit the quote."
+  },
+  {
+   "fieldname": "is_alcohol",
+   "fieldtype": "Check",
+   "label": "Alcohol",
+   "description": "Alcohol never lands on a company folio."
+  },
+  {
+   "fieldname": "on_pack_list",
+   "fieldtype": "Check",
+   "label": "On Pack List",
+   "default": "1",
+   "description": "A physical thing someone has to carry to the venue."
+  },
+  {
+   "fieldname": "column_break_b",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description"
+  },
+  {
+   "fieldname": "disabled",
+   "fieldtype": "Check",
+   "label": "Disabled"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-07-31 14:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kamra",
+ "name": "Banquet Service Item",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 1,
+   "print": 1,
+   "email": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "export": 1,
+   "share": 1
+  },
+  {
+   "role": "Hotel Admin",
+   "read": 1,
+   "report": 1,
+   "print": 1,
+   "email": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "export": 1,
+   "share": 1
+  },
+  {
+   "role": "Front Desk",
+   "read": 1,
+   "report": 1,
+   "print": 1,
+   "email": 1,
+   "write": 1,
+   "create": 1
+  },
+  {
+   "role": "Revenue Manager",
+   "read": 1,
+   "report": 1,
+   "print": 1,
+   "email": 1,
+   "write": 1,
+   "create": 1
+  },
+  {
+   "role": "Finance",
+   "read": 1,
+   "report": 1,
+   "print": 1,
+   "email": 1
+  },
+  {
+   "role": "Kamra Agent",
+   "read": 1,
+   "report": 1,
+   "print": 1,
+   "email": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "format:BSVC-{#####}",
+ "naming_rule": "Expression (old style)",
+ "title_field": "item_name",
+ "search_fields": "item_name,category"
+}

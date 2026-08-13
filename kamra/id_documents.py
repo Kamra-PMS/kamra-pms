@@ -89,8 +89,10 @@ def _sanitise(raw: bytes) -> bytes:
 		raise
 	except Exception:
 		frappe.throw(_("That doesn't look like a photo. Please retake it."))
+		raise  # frappe.throw always raises; CodeQL does not treat it as noreturn
 	if fmt not in ALLOWED_FORMATS:
 		frappe.throw(_("Please upload a JPG or PNG photo."))
+		raise
 	try:
 		img = Image.open(io.BytesIO(raw))  # reopen: verify() consumed it
 		img = img.convert("RGB")  # drops alpha/palette tricks
@@ -100,6 +102,7 @@ def _sanitise(raw: bytes) -> bytes:
 		return out.getvalue()
 	except Exception:
 		frappe.throw(_("That photo couldn't be processed. Please retake it."))
+		raise
 
 
 def _existing(reservation: str) -> list:

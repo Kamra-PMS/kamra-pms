@@ -9,7 +9,197 @@ import re
 
 import frappe
 from frappe.rate_limiter import rate_limit
-from frappe.utils import date_diff
+from frappe.utils import cint, date_diff
+
+from kamra.booking_slugs import resolve_public_slug, slugify
+
+
+def _room_type_filters(property: str, listing_slug: str | None = None,
+                       location_slug: str | None = None) -> dict:
+	filters: dict = {"property": property, "disabled": 0}
+	if listing_slug:
+		filters["listing_slug"] = listing_slug
+	if location_slug:
+		filters["location_slug"] = location_slug
+	return filters
+
+
+def _room_type_payload(rt) -> dict:
+	return {
+		"name": rt.name,
+		"room_type_name": rt.room_type_name,
+		"listing_slug": rt.get("listing_slug"),
+		"location_slug": rt.get("location_slug"),
+		"description": rt.description,
+		"base_price": float(rt.base_price),
+		"base_occupancy": rt.base_occupancy,
+		"adults_capacity": rt.adults_capacity,
+		"children_capacity": rt.children_capacity,
+		"bed_type": rt.bed_type,
+		"room_view": rt.room_view,
+		"room_category": rt.get("room_category"),
+		"amenities": [a.strip() for a in re.split(r"[,\n]", rt.amenities or "") if a.strip()],
+		"media": [
+			{"media_type": m.media_type, "url": m.url, "caption": m.caption}
+			for m in (rt.get("media") or [])
+		],
+		"location_name": rt.get("location_name"),
+		"location_address": rt.get("location_address"),
+		"google_maps_url": rt.get("google_maps_url"),
+		"latitude": rt.get("latitude"),
+		"longitude": rt.get("longitude"),
+	}
+
+
+def _property_payload(prop) -> dict:
+	return {
+		"name": prop.name,
+		"property_name": prop.property_name,
+		"property_slug": prop.get("page_slug") or slugify(prop.property_name),
+		"description": prop.get("showcase_description"),
+		"logo_url": prop.get("logo_url"),
+		"hero_image": prop.get("hero_image"),
+		"brand_accent": prop.get("brand_accent") or "Emerald",
+		"star_category": prop.get("star_category"),
+		"address_line": prop.address_line,
+		"city": prop.city, "state": prop.state,
+		"pincode": prop.pincode,
+		"country": prop.get("country") or "India",
+		"phone": prop.phone, "email": prop.email,
+		"website": prop.website,
+		"google_reviews_url": prop.get("google_reviews_url"),
+		"tripadvisor_url": prop.get("tripadvisor_url"),
+		"amenities": [a.strip() for a in re.split(r"[,\n]", prop.get("property_amenities") or "") if a.strip()],
+		"checkin_time": str(prop.checkin_time or ""),
+		"checkout_time": str(prop.checkout_time or ""),
+		"driving_directions": prop.get("driving_directions"),
+		"latitude": prop.get("latitude"),
+		"longitude": prop.get("longitude"),
+		"gallery": [
+			{"url": m.url, "caption": m.caption}
+			for m in (prop.get("gallery") or [])
+		],
+		"faqs": [
+			{"question": f.question, "answer": f.answer}
+			for f in (prop.get("faqs") or [])
+		],
+		"house_rules": prop.get("house_rules"),
+		"pets_policy": prop.get("pets_policy"),
+		"children_policy": prop.get("children_policy"),
+		"extra_bed_policy": prop.get("extra_bed_policy"),
+		"meta_title": prop.get("meta_title"),
+		"meta_description": prop.get("meta_description"),
+		"og_image": prop.get("og_image"),
+		"page_slug": prop.get("page_slug"),
+		"booking_engine_enabled": prop.get("booking_engine_enabled"),
+		"payment_mode": prop.get("booking_payment_mode") or "Pay at hotel",
+		"advance_percent": float(prop.get("advance_percent") or 0),
+		"registration_fee": float(prop.get("registration_fee") or 0),
+		"cleaning_fee": float(prop.get("cleaning_fee") or 0),
+		"security_deposit_amount": float(prop.get("security_deposit_amount") or 0),
+		"minimum_nights": int(prop.get("minimum_nights") or 1),
+		"free_cancel_days": int(prop.get("free_cancel_days") or 0),
+		"cancellation_fee": prop.get("cancellation_fee") or "None",
+		"booking_mode": prop.get("booking_mode") or "Instant",
+		"property_kind": prop.get("property_kind") or "Hotel",
+	}
+
+
+def _build_locations(prop, room_types: list[dict]) -> list[dict]:
+	"""Group room types into shareable site/property cards for the catalog."""
+	locations = []
+	seen = {}
+	for rt in room_types:
+		key = rt["location_slug"] or rt["location_name"] or "__property__"
+		if key not in seen:
+			cover = None
+			for m in rt.get("media") or []:
+				if m.get("url"):
+					cover = m["url"]
+					break
+			seen[key] = {
+				"name": rt["location_name"] or prop.property_name,
+				"slug": rt["location_slug"] or None,
+				"address": rt["location_address"] or prop.address_line,
+				"google_maps_url": rt["google_maps_url"],
+				"latitude": rt["latitude"] if rt["location_name"] else prop.get("latitude"),
+				"longitude": rt["longitude"] if rt["location_name"] else prop.get("longitude"),
+				"phone": prop.get("phone"),
+				"cover_image": cover or prop.get("hero_image"),
+				"city": prop.city,
+				"state": prop.state,
+				"room_types": [],
+				"listing_count": 0,
+				"from_rate": rt["base_price"],
+			}
+			locations.append(seen[key])
+		seen[key]["room_types"].append(rt["name"])
+		seen[key]["listing_count"] = len(seen[key]["room_types"])
+		seen[key]["from_rate"] = min(seen[key]["from_rate"], rt["base_price"])
+		if not seen[key].get("cover_image"):
+			for m in rt.get("media") or []:
+				if m.get("url"):
+					seen[key]["cover_image"] = m["url"]
+					break
+		# Prefer a maps pin from any listing that has one.
+		if not seen[key].get("google_maps_url") and rt.get("google_maps_url"):
+			seen[key]["google_maps_url"] = rt["google_maps_url"]
+		if seen[key].get("latitude") is None and rt.get("latitude") is not None:
+			seen[key]["latitude"] = rt["latitude"]
+			seen[key]["longitude"] = rt["longitude"]
+	return locations
+
+
+@frappe.whitelist(allow_guest=True)
+def catalog_index():
+	"""Entry point for /book — how many properties, sites, or listings to show."""
+	properties = frappe.get_all(
+		"Property",
+		filters={"booking_engine_enabled": 1, "disabled": 0},
+		fields=["name", "property_name", "page_slug", "city", "hero_image", "property_kind"],
+		order_by="property_name asc",
+	)
+	if len(properties) > 1:
+		for p in properties:
+			p["property_slug"] = p.get("page_slug") or slugify(p["property_name"])
+		return {"mode": "properties", "properties": properties}
+
+	property_name = properties[0].name if properties else default_property()
+	prop = frappe.get_doc("Property", property_name)
+	room_types = []
+	for rt_name in frappe.get_all(
+		"Room Type", filters={"property": property_name, "disabled": 0},
+		pluck="name", order_by="base_price asc",
+	):
+		room_types.append(_room_type_payload(frappe.get_doc("Room Type", rt_name)))
+	locations = _build_locations(prop, room_types)
+	sites = [loc for loc in locations if loc.get("slug")]
+
+	if len(sites) > 1:
+		return {
+			"mode": "sites",
+			"property": property_name,
+			"sites": sites,
+			"ui_locale": _public_locale(property_name),
+		}
+	if len(room_types) == 1 and room_types[0].get("listing_slug"):
+		return {
+			"mode": "single_listing",
+			"property": property_name,
+			"listing_slug": room_types[0]["listing_slug"],
+		}
+	return {
+		"mode": "catalog",
+		"property": property_name,
+		"listing_count": len(room_types),
+		"ui_locale": _public_locale(property_name),
+	}
+
+
+@frappe.whitelist(allow_guest=True)
+def resolve_slug(slug: str):
+	"""Resolve /stay/:slug to a listing or multi-listing site."""
+	return resolve_public_slug(slug)
 
 
 @frappe.whitelist(allow_guest=True)
@@ -23,6 +213,31 @@ def site_info():
 	return {"demo_mode": frappe.db.get_default("kamra_demo_mode") == "1"}
 
 
+@frappe.whitelist(allow_guest=True)
+def default_property():
+	"""Which Property the public booking engine (``/book``) should show.
+
+	Each Kamra deploy is single-tenant: one site = one hotel/villa. The
+	frontend used to hardcode the demo property name, which only worked
+	on the seeded demo site and broke the booking engine on every other
+	tenant (``Property <name> not found`` / permission error for Guest).
+
+	Picks the Property with booking_engine_enabled=1; if none are flagged
+	(fresh install) or several are, falls back to the first Property so
+	the page still renders instead of hanging on a guest permission error.
+	"""
+	enabled = frappe.get_all(
+		"Property", filters={"booking_engine_enabled": 1}, pluck="name", limit=1,
+	)
+	if enabled:
+		return enabled[0]
+	any_property = frappe.get_all("Property", pluck="name", limit=1)
+	if any_property:
+		return any_property[0]
+	frappe.throw("No property configured for this site.")
+	raise  # frappe.throw always raises; CodeQL does not treat it as noreturn
+
+
 def _public_locale(property: str) -> dict:
 	from kamra.localization import pack_for
 	prop = frappe.get_cached_doc("Property", property)
@@ -34,7 +249,8 @@ def _public_locale(property: str) -> dict:
 
 
 @frappe.whitelist(allow_guest=True)
-def showcase(property: str):
+def showcase(property: str, listing_slug: str | None = None,
+             location_slug: str | None = None):
 	"""Everything the public booking page needs to render."""
 	prop = frappe.get_doc("Property", property)
 	if not prop.get("booking_engine_enabled"):
@@ -42,26 +258,13 @@ def showcase(property: str):
 
 	room_types = []
 	for rt_name in frappe.get_all(
-		"Room Type", filters={"property": property, "disabled": 0},
+		"Room Type",
+		filters=_room_type_filters(property, listing_slug, location_slug),
 		pluck="name", order_by="base_price asc",
 	):
-		rt = frappe.get_doc("Room Type", rt_name)
-		room_types.append({
-			"name": rt.name,
-			"room_type_name": rt.room_type_name,
-			"description": rt.description,
-			"base_price": float(rt.base_price),
-			"base_occupancy": rt.base_occupancy,
-			"adults_capacity": rt.adults_capacity,
-			"children_capacity": rt.children_capacity,
-			"bed_type": rt.bed_type,
-			"room_view": rt.room_view,
-			"amenities": [a.strip() for a in re.split(r"[,\n]", rt.amenities or "") if a.strip()],
-			"media": [
-				{"media_type": m.media_type, "url": m.url, "caption": m.caption}
-				for m in (rt.get("media") or [])
-			],
-		})
+		room_types.append(_room_type_payload(frappe.get_doc("Room Type", rt_name)))
+
+	locations = _build_locations(prop, room_types)
 
 	experiences = frappe.get_all(
 		"Experience",
@@ -80,63 +283,30 @@ def showcase(property: str):
 
 	return {
 		"ui_locale": _public_locale(property),
-		"property": {
-			"name": prop.name,
-			"property_name": prop.property_name,
-			"description": prop.get("showcase_description"),
-			"logo_url": prop.get("logo_url"),
-			"hero_image": prop.get("hero_image"),
-			"brand_accent": prop.get("brand_accent") or "Emerald",
-			"star_category": prop.get("star_category"),
-			"address_line": prop.address_line,
-			"city": prop.city, "state": prop.state,
-			"pincode": prop.pincode,
-			"phone": prop.phone, "email": prop.email,
-			"website": prop.website,
-			"google_reviews_url": prop.get("google_reviews_url"),
-			"tripadvisor_url": prop.get("tripadvisor_url"),
-			"amenities": [a.strip() for a in re.split(r"[,\n]", prop.get("property_amenities") or "") if a.strip()],
-			"checkin_time": str(prop.checkin_time or ""),
-			"checkout_time": str(prop.checkout_time or ""),
-			"driving_directions": prop.get("driving_directions"),
-			"latitude": prop.get("latitude"),
-			"longitude": prop.get("longitude"),
-			"gallery": [
-				{"url": m.url, "caption": m.caption}
-				for m in (prop.get("gallery") or [])
-			],
-			"faqs": [
-				{"question": f.question, "answer": f.answer}
-				for f in (prop.get("faqs") or [])
-			],
-			"house_rules": prop.get("house_rules"),
-			"pets_policy": prop.get("pets_policy"),
-			"children_policy": prop.get("children_policy"),
-			"extra_bed_policy": prop.get("extra_bed_policy"),
-			"meta_title": prop.get("meta_title"),
-			"meta_description": prop.get("meta_description"),
-			"og_image": prop.get("og_image"),
-			"page_slug": prop.get("page_slug"),
-			"booking_engine_enabled": prop.get("booking_engine_enabled"),
-			"payment_mode": prop.get("booking_payment_mode") or "Pay at hotel",
-			"advance_percent": float(prop.get("advance_percent") or 0),
-			"registration_fee": float(prop.get("registration_fee") or 0),
-		},
+		"property": _property_payload(prop),
 		"room_types": room_types,
+		"locations": locations,
 		"meal_plans": meal_plans,
 		"experiences": experiences,
+		"scope": {
+			"listing_slug": listing_slug,
+			"location_slug": location_slug,
+		},
 	}
 
 
 @frappe.whitelist(allow_guest=True)
 def search_stay(property: str, check_in_date: str, check_out_date: str,
-                adults: int = 2, children: int = 0):
+                adults: int = 2, children: int = 0,
+                listing_slug: str | None = None,
+                location_slug: str | None = None):
 	"""Availability + real quoted price per room type for the stay."""
 	# available_rooms is staff-only (@require_roles) since it's also an
-	# MCP/copilot tool; guests need the same availability math without the
+	# MCP / Kamra Agent tool; guests need the same availability math without
 	# role gate, so this calls the same underlying helpers directly.
 	from kamra.api import _available_rooms_raw, _block_hold
 	from kamra.pricing import quote
+	from kamra.siu.availability import has_active_sius, sellable_count
 
 	if date_diff(check_out_date, check_in_date) < 1:
 		frappe.throw("Check-out must be after check-in.")
@@ -145,22 +315,29 @@ def search_stay(property: str, check_in_date: str, check_out_date: str,
 
 	results = []
 	for rt in frappe.get_all(
-		"Room Type", filters={"property": property, "disabled": 0},
+		"Room Type",
+		filters=_room_type_filters(property, listing_slug, location_slug),
 		pluck="name", order_by="base_price asc",
 	):
-		free = _available_rooms_raw(property, rt, check_in_date, check_out_date)
 		hold = _block_hold(property, rt, check_in_date, check_out_date)
-		if hold:
-			free = free[:max(0, len(free) - hold)]
-		row = {"room_type": rt, "rooms_left": len(free), "quote": None}
-		if free:
+		if has_active_sius(property, rt):
+			left = max(0, sellable_count(
+				property, rt, check_in_date, check_out_date) - (hold or 0))
+		else:
+			free = _available_rooms_raw(
+				property, rt, check_in_date, check_out_date)
+			if hold:
+				free = free[:max(0, len(free) - hold)]
+			left = len(free)
+		row = {"room_type": rt, "rooms_left": left, "quote": None}
+		if left:
 			try:
 				row["quote"] = quote(
 					property, rt, check_in_date, check_out_date,
 					int(adults), int(children),
 				)
 			except Exception:
-				pass
+				pass  # still list the room type even if this date range cannot be quoted
 		results.append(row)
 	return results
 
@@ -475,10 +652,15 @@ def book(property: str, room_type: str, check_in_date: str,
          check_out_date: str, guest_name: str, phone: str,
          email: str = "", adults: int = 2, children: int = 0,
          meal_plan: str = "", special_requests: str = "", addons=None,
-         voucher_code: str = ""):
+         voucher_code: str = "", idempotency_key: str = ""):
 	"""Create a Website booking. Guest identity is the phone number; staff
 	verify at check-in. The advance owed is computed from the property's
-	current payment policy and snapshotted onto the booking."""
+	current payment policy and snapshotted onto the booking.
+
+	Instant mode (default): Confirmed when nothing is due now, else
+	Pending Payment with a hold window. Request to Book: Requested (no
+	inventory) until the host approves.
+	"""
 	if not guest_name.strip() or not phone.strip():
 		frappe.throw("Name and phone are required.")
 
@@ -501,6 +683,31 @@ def book(property: str, room_type: str, check_in_date: str,
 	]
 
 	from kamra.api import create_booking
+	from kamra.pricing import quote as price_quote
+	from kamra.reservation_state import resolve_instant_status
+
+	mode = getattr(prop, "booking_mode", None) or "Instant"
+	hold_minutes = cint(getattr(prop, "hold_minutes", None) or 120)
+	key = (idempotency_key or "").strip() or None
+
+	# Peek at payment terms before insert so Instant can choose status.
+	q = price_quote(
+		property, room_type, check_in_date, check_out_date,
+		int(adults), int(children), meal_plan or None,
+		voucher_code=voucher_code or None,
+	)
+	advance_due, policy = _advance_terms(prop, float(q["amount_after_tax"] or 0))
+
+	status = None
+	hold_expires_on = None
+	assign_room = 1
+	if mode == "Request to Book":
+		status = "Requested"
+		assign_room = 0
+	else:
+		status, hold_expires_on = resolve_instant_status(
+			advance_due=advance_due, hold_minutes=hold_minutes,
+		)
 
 	frappe.set_user("agent@kamra.local")  # governed writer for guest bookings
 	try:
@@ -517,10 +724,15 @@ def book(property: str, room_type: str, check_in_date: str,
 			voucher_code=voucher_code or None,
 			source="Website",
 			addons=safe_addons or None,
+			assign_room=assign_room,
+			status=status,
+			idempotency_key=key,
+			hold_expires_on=str(hold_expires_on) if hold_expires_on else None,
 		)
 		# snapshot the advance owed from the policy in force RIGHT NOW, so a
 		# later change to the property's payment config never re-bills this guest
 		total = float(result["amount_after_tax"] or 0)
+		# Recompute against the saved total (voucher / engine may differ).
 		advance_due, policy = _advance_terms(prop, total)
 		updates = {
 			"advance_due": advance_due,
@@ -529,6 +741,20 @@ def book(property: str, room_type: str, check_in_date: str,
 		}
 		if special_requests:
 			updates["special_requests"] = special_requests
+		# Instant + pay-at-hotel: if pre-insert peek overestimated advance,
+		# promote Pending Payment → Confirmed.
+		if (
+			mode == "Instant"
+			and not result.get("idempotent_replay")
+			and result.get("status") == "Pending Payment"
+			and advance_due <= 0
+		):
+			frappe.flags.kamra_status_transition = True
+			try:
+				updates["status"] = "Confirmed"
+				updates["hold_expires_on"] = None
+			finally:
+				frappe.flags.kamra_status_transition = False
 		frappe.db.set_value("Reservation", result["reservation"], updates)
 		if email:
 			frappe.db.set_value("Guest", result["guest"], "email", email)
@@ -536,13 +762,30 @@ def book(property: str, room_type: str, check_in_date: str,
 	finally:
 		frappe.set_user("Guest")
 
+	final_status = frappe.db.get_value(
+		"Reservation", result["reservation"], "status")
 	return {
 		"reservation": result["reservation"],
 		"amount_after_tax": result["amount_after_tax"],
 		"advance_due": advance_due,
 		"payment_policy": policy,
 		"pay_at_hotel": advance_due <= 0,
+		"status": final_status,
+		"idempotent_replay": int(result.get("idempotent_replay") or 0),
+		"cleaning_fee": float(
+			frappe.db.get_value("Property", property, "cleaning_fee") or 0
+		),
+		"security_deposit_amount": float(
+			frappe.db.get_value("Property", property, "security_deposit_amount") or 0
+		),
 	}
+
+
+@frappe.whitelist(allow_guest=True)
+def access_info(token: str):
+	"""Guest access instructions when gates pass (precheckin token)."""
+	from kamra.access import guest_access_info
+	return guest_access_info(token)
 
 
 @frappe.whitelist(allow_guest=True)

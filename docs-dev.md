@@ -77,7 +77,7 @@ bench --site kamra.localhost execute kamra.scripts.seed_demo.execute
 bench --site kamra.localhost migrate
 ```
 
-## What works in v9 (eZee-parity long tail)
+## What works in v9 (the operational long tail)
 
 - **Travel Agents** (Revenue menu): business sources with commission % —
   commissions auto-compute on their bookings

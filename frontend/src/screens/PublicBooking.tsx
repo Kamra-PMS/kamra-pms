@@ -1,21 +1,23 @@
-import { useEffect, useMemo, useState } from "react"
-import { useLocation, useNavigate, useParams } from "react-router-dom"
+import { useEffect, useState } from "react"
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom"
 import {
   BedDouble,
   Check,
   ExternalLink,
   MapPin,
   Phone,
+  Search,
   Star,
   Users,
 } from "lucide-react"
-import { call, DEMO_PROPERTY } from "../lib/api"
+import { call, getDefaultProperty } from "../lib/api"
 import { serverError } from "../lib/resource"
 import { accentVars } from "../lib/accents"
 import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
 import { Sheet } from "../components/ui/sheet"
 import { cur, moneyLocale, adoptUiLocale } from "../lib/money"
+import { formatPhoneDisplay, formatPhoneTel } from "../lib/phone"
 
 const inr = (n: number) =>
   n.toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
@@ -31,11 +33,19 @@ interface Showcase {
     payment_mode: string
     advance_percent: number
     registration_fee: number
+    cleaning_fee: number
+    security_deposit_amount: number
+    minimum_nights: number
+    free_cancel_days: number
+    cancellation_fee: string
+    booking_mode: string
+    property_kind: string
     star_category: string | null
     address_line: string | null
     city: string
     state: string
     pincode: string | null
+    country?: string | null
     phone: string | null
     google_reviews_url: string | null
     tripadvisor_url: string | null
@@ -59,6 +69,7 @@ interface Showcase {
   room_types: {
     name: string
     room_type_name: string
+    listing_slug: string | null
     description: string | null
     base_price: number
     adults_capacity: number
@@ -66,6 +77,23 @@ interface Showcase {
     room_view: string | null
     amenities: string[]
     media: { media_type: string; url: string; caption: string | null }[]
+    location_name: string | null
+    location_address: string | null
+    google_maps_url: string | null
+    latitude: number | null
+    longitude: number | null
+  }[]
+  // One pin per distinct site - a single-property hotel gets one entry
+  // (the property's own address); a multi-villa portfolio like Ewa gets
+  // one per villa, each listing which room types live there.
+  locations: {
+    name: string
+    slug: string | null
+    address: string | null
+    google_maps_url: string | null
+    latitude: number | null
+    longitude: number | null
+    room_types: string[]
   }[]
   meal_plans: { name: string; code: string; label: string; price_per_adult: number }[]
   experiences: {
@@ -83,7 +111,13 @@ interface Showcase {
 interface StayResult {
   room_type: string
   rooms_left: number
-  quote: { nights: number; amount_after_tax: number; discount: number } | null
+  quote: {
+    nights: number
+    amount_after_tax: number
+    discount: number
+    cleaning_fee?: number
+    totals?: { deposit_required?: number }
+  } | null
 }
 
 const inputCls =
@@ -101,6 +135,12 @@ function nightsBetween(a: string, b: string) {
   return Math.max(1, Math.round(ms / 86_400_000))
 }
 
+function addDays(date: string, days: number) {
+  const d = new Date(date)
+  d.setDate(d.getDate() + days)
+  return d.toISOString().slice(0, 10)
+}
+
 function setMetaTag(name: string, content: string) {
   let el = document.querySelector<HTMLMetaElement>(`meta[name="${name}"]`)
   if (!el) {
@@ -115,16 +155,35 @@ export default function PublicBooking() {
   const params = useParams()
   const navigate = useNavigate()
   const location = useLocation()
+  const [property, setProperty] = useState<string | null>(null)
+  const [catalogMode, setCatalogMode] = useState<string | null>(null)
+  const [sites, setSites] = useState<
+    {
+      name: string
+      slug: string | null
+      address: string | null
+      from_rate: number
+      room_types: string[]
+      listing_count?: number
+      cover_image?: string | null
+      google_maps_url?: string | null
+      phone?: string | null
+      city?: string | null
+      state?: string | null
+      latitude?: number | null
+      longitude?: number | null
+    }[]
+  >([])
   const [data, setData] = useState<Showcase | null>(null)
-  const [search, setSearch] = useState(() => ({
-    check_in_date: params.checkin ?? todayPlus(1),
-    nights:
-      params.checkin && params.checkout
-        ? nightsBetween(params.checkin, params.checkout)
-        : 2,
-    adults: Number(params.adults ?? 2) || 2,
-    children: Number(params.children ?? 0) || 0,
-  }))
+  const [search, setSearch] = useState(() => {
+    const check_in_date = params.checkin ?? todayPlus(1)
+    return {
+      check_in_date,
+      check_out_date: params.checkout ?? addDays(check_in_date, 2),
+      adults: Number(params.adults ?? 2) || 2,
+      children: Number(params.children ?? 0) || 0,
+    }
+  })
   const [results, setResults] = useState<Record<string, StayResult>>({})
   const [booking, setBooking] = useState<string | null>(null) // room type name
   const [form, setForm] = useState({ guest_name: "", phone: "", email: "", meal_plan: "", special_requests: "" })
@@ -136,21 +195,42 @@ export default function PublicBooking() {
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
-  const checkOut = useMemo(() => {
-    const d = new Date(search.check_in_date)
-    d.setDate(d.getDate() + Math.max(1, search.nights))
-    return d.toISOString().slice(0, 10)
-  }, [search])
+  const checkOut = search.check_out_date
 
   useEffect(() => {
-    call<Showcase>("kamra.public_api.showcase", {
-      property: DEMO_PROPERTY,
-    }).then((d) => {
-      adoptUiLocale((d as unknown as { ui_locale?: { currency_symbol?: string; locale?: string } }).ui_locale)
-      setData(d)
-      setForm((f) => ({ ...f, meal_plan: d.meal_plans[0]?.name ?? "" }))
-    })
-  }, [])
+    call<{
+      mode: string
+      property?: string
+      sites?: typeof sites
+      listing_slug?: string
+    }>("kamra.public_api.catalog_index")
+      .then((idx) => {
+        setCatalogMode(idx.mode)
+        if (idx.mode === "single_listing" && idx.listing_slug) {
+          navigate(`/stay/${idx.listing_slug}`, { replace: true })
+          return null
+        }
+        if (idx.mode === "sites" && idx.sites) {
+          setSites(idx.sites)
+        }
+        const p = idx.property
+        if (!p) return getDefaultProperty().then((name) => ({ p: name, idx }))
+        return { p, idx }
+      })
+      .then((ctx) => {
+        if (!ctx) return
+        const p = typeof ctx === "object" && "p" in ctx ? ctx.p : ctx
+        setProperty(p)
+        return call<Showcase>("kamra.public_api.showcase", { property: p })
+      })
+      .then((d) => {
+        if (!d) return
+        adoptUiLocale((d as unknown as { ui_locale?: { currency_symbol?: string; locale?: string } }).ui_locale)
+        setData(d)
+        setForm((f) => ({ ...f, meal_plan: d.meal_plans[0]?.name ?? "" }))
+      })
+      .catch((e) => setError(serverError(e)))
+  }, [navigate])
 
   // stay state lives in the URL - shareable, crawlable, UTM params kept
   useEffect(() => {
@@ -184,14 +264,19 @@ export default function PublicBooking() {
     }
     canonical.href = `${window.location.origin}/book`
 
+    const isStr = p.property_kind === "Short Term Rental"
+    const schemaType = isStr ? "VacationRental" : "Hotel"
+    const offerType = isStr ? "Accommodation" : "HotelRoom"
     const jsonld = {
       "@context": "https://schema.org",
-      "@type": "Hotel",
+      "@type": schemaType,
       name: p.property_name,
       description: p.description ?? undefined,
       image: p.hero_image ?? undefined,
       logo: p.logo_url ?? undefined,
-      telephone: p.phone ?? undefined,
+      telephone: p.phone
+        ? formatPhoneTel(p.phone, p.country)
+        : undefined,
       address: {
         "@type": "PostalAddress",
         addressLocality: p.city,
@@ -210,7 +295,7 @@ export default function PublicBooking() {
         priceCurrency: "INR",
         price: rt.base_price,
         itemOffered: {
-          "@type": "HotelRoom",
+          "@type": offerType,
           name: rt.room_type_name,
           occupancy: {
             "@type": "QuantitativeValue",
@@ -230,31 +315,35 @@ export default function PublicBooking() {
   }, [data])
 
   useEffect(() => {
-    const t = setTimeout(() => {
-      call<StayResult[]>("kamra.public_api.search_stay", {
-        property: DEMO_PROPERTY,
-        check_in_date: search.check_in_date,
-        check_out_date: checkOut,
-        adults: search.adults,
-        children: search.children,
-      }).then((rows) => {
-        const map: Record<string, StayResult> = {}
-        rows.forEach((r) => (map[r.room_type] = r))
-        setResults(map)
-      })
-    }, 300)
+    if (!property || catalogMode === "sites") return
+    const t = setTimeout(fetchResults, 300)
     return () => clearTimeout(t)
-  }, [search, checkOut])
+  }, [property, search, checkOut, catalogMode])
+
+  function fetchResults() {
+    if (!property) return
+    call<StayResult[]>("kamra.public_api.search_stay", {
+      property,
+      check_in_date: search.check_in_date,
+      check_out_date: checkOut,
+      adults: search.adults,
+      children: search.children,
+    }).then((rows) => {
+      const map: Record<string, StayResult> = {}
+      rows.forEach((r) => (map[r.room_type] = r))
+      setResults(map)
+    })
+  }
 
   async function submitBooking() {
-    if (!booking) return
+    if (!booking || !property) return
     setBusy(true)
     setError(null)
     try {
       const res = await call<{ reservation: string; amount_after_tax: number }>(
         "kamra.public_api.book",
         {
-          property: DEMO_PROPERTY,
+          property,
           room_type: booking,
           check_in_date: search.check_in_date,
           check_out_date: checkOut,
@@ -276,25 +365,65 @@ export default function PublicBooking() {
   }
 
   if (!data)
-    return <p className="py-20 text-center text-zinc-400">Loading…</p>
+    return (
+      <p className="py-20 text-center text-zinc-400">
+        {error ?? "Loading…"}
+      </p>
+    )
 
   const p = data.property
+  const minNights = p.minimum_nights || 1
+  const isStr = p.property_kind === "Short Term Rental"
+  const bookCta =
+    p.booking_mode === "Request to Book"
+      ? "Request to book"
+      : p.payment_mode === "Full online"
+        ? "Confirm & pay"
+        : isStr
+          ? "Book this listing"
+          : "Book now"
+  const locations = data.locations?.length
+    ? data.locations
+    : [{ name: p.property_name, address: p.address_line, google_maps_url: null,
+         latitude: p.latitude, longitude: p.longitude, room_types: [] }]
+  // Prefer the booking-engine hero, then gallery / listing cover so /book
+  // never shows an empty grey strip when photos exist elsewhere.
+  const heroSrc =
+    p.hero_image ||
+    p.gallery?.find((g) => g.url)?.url ||
+    data.room_types.find((rt) => rt.media?.[0]?.url)?.media?.[0]?.url ||
+    sites.find((s) => s.cover_image)?.cover_image ||
+    null
 
   return (
     <div
       className="min-h-screen bg-zinc-50"
       style={accentVars(data?.property.brand_accent)}
     >
-      {/* hero */}
-      <div className="relative h-72 overflow-hidden sm:h-80">
-        {p.hero_image && (
+      {/* hero — photo when available, otherwise brand accent fill */}
+      <div className="relative h-72 overflow-hidden sm:h-96">
+        {heroSrc ? (
           <img
-            src={p.hero_image}
+            src={heroSrc}
             alt=""
             className="absolute inset-0 size-full object-cover"
           />
+        ) : (
+          <div
+            className="absolute inset-0"
+            style={{
+              background: `linear-gradient(145deg, var(--color-brand-600) 0%, var(--color-brand-900) 100%)`,
+            }}
+          />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+        <div
+          className={
+            "absolute inset-0 " +
+            (heroSrc
+              ? "bg-gradient-to-t from-black/75 via-black/25 to-black/10"
+              : "bg-gradient-to-t from-black/40 via-transparent to-transparent")
+          }
+        />
         <div className="absolute inset-x-0 bottom-0 mx-auto flex max-w-5xl items-end gap-4 px-5 pb-6 text-white">
           {/* hotel logo slot - falls back to a monogram until one is set */}
           <div className="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-white/30 bg-white shadow-lg sm:size-20">
@@ -352,10 +481,13 @@ export default function PublicBooking() {
               </a>
             )}
             {p.phone && (
-              <span className="inline-flex items-center gap-1 text-white/80">
+              <a
+                href={`tel:${formatPhoneTel(p.phone, p.country)}`}
+                className="inline-flex items-center gap-1 text-white/80 underline-offset-2 hover:underline"
+              >
                 <Phone className="size-3.5" aria-hidden />
-                {p.phone}
-              </span>
+                {formatPhoneDisplay(p.phone, p.country)}
+              </a>
             )}
           </div>
           </div>
@@ -364,55 +496,81 @@ export default function PublicBooking() {
 
       <div className="mx-auto max-w-5xl px-5 pb-16">
         {/* search bar */}
-        <div className="relative z-10 -mt-6 mb-8 grid gap-3 rounded-xl border border-zinc-200 bg-white p-4 shadow-lg sm:grid-cols-4">
-          <label className="block">
-            <span className="mb-1 block text-xs font-medium text-zinc-500">Check-in</span>
-            <input
-              type="date"
-              className={inputCls}
-              value={search.check_in_date}
-              min={todayPlus(0)}
-              onChange={(e) =>
-                setSearch({ ...search, check_in_date: e.target.value })
-              }
-            />
-          </label>
-          <label className="block">
-            <span className="mb-1 block text-xs font-medium text-zinc-500">Nights</span>
-            <input
-              type="number"
-              min={1}
-              className={inputCls}
-              value={search.nights}
-              onChange={(e) =>
-                setSearch({ ...search, nights: Math.max(1, Number(e.target.value)) })
-              }
-            />
-          </label>
-          <label className="block">
-            <span className="mb-1 block text-xs font-medium text-zinc-500">Adults</span>
-            <input
-              type="number"
-              min={1}
-              className={inputCls}
-              value={search.adults}
-              onChange={(e) =>
-                setSearch({ ...search, adults: Math.max(1, Number(e.target.value)) })
-              }
-            />
-          </label>
-          <label className="block">
-            <span className="mb-1 block text-xs font-medium text-zinc-500">Children</span>
-            <input
-              type="number"
-              min={0}
-              className={inputCls}
-              value={search.children}
-              onChange={(e) =>
-                setSearch({ ...search, children: Math.max(0, Number(e.target.value)) })
-              }
-            />
-          </label>
+        <div className="relative z-10 -mt-6 mb-8 rounded-xl border border-zinc-200 bg-white p-4 shadow-lg">
+          <div className="grid gap-3 sm:grid-cols-4">
+            <label className="block">
+              <span className="mb-1 block text-xs font-medium text-zinc-500">Check-in</span>
+              <input
+                type="date"
+                className={inputCls}
+                value={search.check_in_date}
+                min={todayPlus(0)}
+                onChange={(e) => {
+                  const check_in_date = e.target.value
+                  const minCheckOut = addDays(check_in_date, minNights)
+                  setSearch((s) => ({
+                    ...s,
+                    check_in_date,
+                    check_out_date:
+                      s.check_out_date > minCheckOut ? s.check_out_date : minCheckOut,
+                  }))
+                }}
+              />
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-xs font-medium text-zinc-500">Check-out</span>
+              <input
+                type="date"
+                className={inputCls}
+                value={search.check_out_date}
+                min={addDays(search.check_in_date, minNights)}
+                onChange={(e) =>
+                  setSearch({ ...search, check_out_date: e.target.value })
+                }
+              />
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-xs font-medium text-zinc-500">Adults</span>
+              <input
+                type="number"
+                min={1}
+                className={inputCls}
+                value={search.adults}
+                onChange={(e) =>
+                  setSearch({ ...search, adults: Math.max(1, Number(e.target.value)) })
+                }
+              />
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-xs font-medium text-zinc-500">Children</span>
+              <input
+                type="number"
+                min={0}
+                className={inputCls}
+                value={search.children}
+                onChange={(e) =>
+                  setSearch({ ...search, children: Math.max(0, Number(e.target.value)) })
+                }
+              />
+            </label>
+          </div>
+          <p className="mt-1.5 text-xs text-zinc-400">
+            {nightsBetween(search.check_in_date, search.check_out_date)} night
+            {nightsBetween(search.check_in_date, search.check_out_date) === 1 ? "" : "s"}
+            {minNights > 1 ? ` · ${minNights}-night minimum` : ""}
+          </p>
+          <Button
+            className="mt-3 w-full justify-center gap-2 py-2.5 text-base"
+            onClick={() => {
+              fetchResults()
+              document
+                .getElementById("stay-results")
+                ?.scrollIntoView({ behavior: "smooth", block: "start" })
+            }}
+          >
+            <Search className="size-4" aria-hidden />
+            Check availability
+          </Button>
         </div>
 
         {p.description && (
@@ -447,102 +605,218 @@ export default function PublicBooking() {
           </div>
         )}
 
-        {/* room cards */}
-        <div className="space-y-5">
-          {data.room_types.map((rt) => {
-            const r = results[rt.name]
-            const soldOut = r && r.rooms_left === 0
-            return (
-              <div
-                key={rt.name}
-                className="grid overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm sm:grid-cols-5"
-              >
-                <div className="relative sm:col-span-2">
-                  {rt.media[0] ? (
-                    <img
-                      src={rt.media[0].url}
-                      alt={rt.media[0].caption ?? rt.room_type_name}
-                      className="h-52 w-full object-cover sm:h-full"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <div className="flex h-52 items-center justify-center bg-zinc-100 sm:h-full">
-                      <BedDouble className="size-10 text-zinc-300" aria-hidden />
-                    </div>
-                  )}
-                  {rt.media.length > 1 && (
-                    <span className="absolute bottom-2 right-2 rounded-md bg-black/70 px-2 py-0.5 text-xs text-white">
-                      {rt.media.length} photos
-                    </span>
-                  )}
-                </div>
-                <div className="flex flex-col justify-between p-5 sm:col-span-3">
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h2 className="text-lg font-semibold">{rt.room_type_name}</h2>
-                      {rt.bed_type && <Badge tone="zinc">{rt.bed_type} bed</Badge>}
-                      {rt.room_view && <Badge tone="sky">{rt.room_view}</Badge>}
-                      <span className="inline-flex items-center gap-1 text-xs text-zinc-500">
-                        <Users className="size-3.5" aria-hidden />
-                        up to {rt.adults_capacity} adults
-                      </span>
-                    </div>
-                    {rt.description && (
-                      <p className="mt-1 text-sm text-zinc-500">{rt.description}</p>
-                    )}
-                    <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
-                      {rt.amenities.map((a) => (
-                        <li key={a} className="inline-flex items-center gap-1 text-xs text-zinc-500">
-                          <Check className="size-3 text-brand-600" aria-hidden />
-                          {a}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  <div className="mt-4 flex flex-wrap items-end justify-between gap-3">
-                    <div>
-                      {r?.quote ? (
-                        <>
-                          <p className="text-2xl font-semibold">
-                            {cur()}{inr(r.quote.amount_after_tax)}
-                            <span className="ml-1 text-sm font-normal text-zinc-500">
-                              total · {r.quote.nights} night{r.quote.nights === 1 ? "" : "s"}, taxes in
-                            </span>
-                          </p>
-                          {r.rooms_left <= 2 && (
-                            <p className="text-xs font-medium text-rose-600">
-                              Only {r.rooms_left} left for these dates
-                            </p>
-                          )}
-                        </>
-                      ) : soldOut ? (
-                        <p className="text-sm font-medium text-rose-600">
-                          Sold out for these dates
-                        </p>
+        {catalogMode === "sites" && sites.length > 0 ? (
+          <div id="stay-results" className="mb-10">
+            <div className="mb-5">
+              <h2 className="text-2xl font-semibold tracking-tight text-zinc-900">
+                Places to stay
+              </h2>
+              <p className="mt-1 text-sm text-zinc-500">
+                Pick a villa, then choose a room or the whole house.
+              </p>
+            </div>
+            <div className="grid gap-6 sm:grid-cols-2">
+              {sites.map((site) => {
+                const stayPath = site.slug
+                  ? `/stay/${site.slug}/${search.check_in_date}/${checkOut}/${search.adults}/${search.children}`
+                  : "/book"
+                const count = site.listing_count ?? site.room_types.length
+                return (
+                  <Link
+                    key={site.slug ?? site.name}
+                    to={stayPath}
+                    className="group overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-brand-300 hover:shadow-md"
+                  >
+                    <div className="relative aspect-[4/3] bg-zinc-100">
+                      {site.cover_image ? (
+                        <img
+                          src={site.cover_image}
+                          alt=""
+                          className="size-full object-cover transition duration-500 group-hover:scale-[1.02]"
+                        />
                       ) : (
-                        <p className="text-sm text-zinc-400">
-                          from {cur()}{inr(rt.base_price)}/night
-                        </p>
+                        <div className="flex size-full items-center justify-center bg-gradient-to-br from-brand-700 to-brand-900 text-white">
+                          <span className="text-4xl font-semibold tracking-tight">
+                            {site.name
+                              .split(" ")
+                              .map((w) => w[0])
+                              .slice(0, 2)
+                              .join("")}
+                          </span>
+                        </div>
                       )}
                     </div>
-                    <Button
-                      className="px-5 py-2.5 text-base"
-                      disabled={!r?.quote}
-                      onClick={() => setBooking(rt.name)}
-                    >
-                      Book now
-                    </Button>
+                    <div className="p-5">
+                      <h3 className="text-xl font-semibold text-zinc-900 group-hover:text-brand-800">
+                        {site.name}
+                      </h3>
+                      {(site.address || site.city) && (
+                        <p className="mt-1.5 inline-flex items-start gap-1.5 text-sm text-zinc-500">
+                          <MapPin className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+                          <span>
+                            {site.address ||
+                              [site.city, site.state].filter(Boolean).join(", ")}
+                          </span>
+                        </p>
+                      )}
+                      <div className="mt-4 flex flex-wrap items-end justify-between gap-2 border-t border-zinc-100 pt-4">
+                        <p className="text-sm text-zinc-600">
+                          <span className="text-lg font-semibold text-zinc-900">
+                            {cur()}
+                            {inr(site.from_rate)}
+                          </span>
+                          <span className="text-zinc-500"> / night</span>
+                        </p>
+                        <p className="text-sm font-medium text-brand-700">
+                          {count} listing{count === 1 ? "" : "s"} →
+                        </p>
+                      </div>
+                    </div>
+                  </Link>
+                )
+              })}
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* room cards — hotel / single-site catalog */}
+            <div id="stay-results" className="space-y-5">
+              {data.room_types.map((rt) => {
+                const r = results[rt.name]
+                const soldOut = r && r.rooms_left === 0
+                return (
+                  <div
+                    key={rt.name}
+                    className="grid overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm sm:grid-cols-5"
+                  >
+                    <div className="relative sm:col-span-2">
+                      {rt.media[0] ? (
+                        <img
+                          src={rt.media[0].url}
+                          alt={rt.media[0].caption ?? rt.room_type_name}
+                          className="h-52 w-full object-cover sm:h-full"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="flex h-52 items-center justify-center bg-zinc-100 sm:h-full">
+                          <BedDouble className="size-10 text-zinc-300" aria-hidden />
+                        </div>
+                      )}
+                      {rt.media.length > 1 && (
+                        <span className="absolute bottom-2 right-2 rounded-md bg-black/70 px-2 py-0.5 text-xs text-white">
+                          {rt.media.length} photos
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex flex-col justify-between p-5 sm:col-span-3">
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h2 className="text-lg font-semibold">{rt.room_type_name}</h2>
+                          {rt.bed_type && <Badge tone="zinc">{rt.bed_type} bed</Badge>}
+                          {rt.room_view && <Badge tone="sky">{rt.room_view}</Badge>}
+                          <span className="inline-flex items-center gap-1 text-xs text-zinc-500">
+                            <Users className="size-3.5" aria-hidden />
+                            up to {rt.adults_capacity} adults
+                          </span>
+                        </div>
+                        {locations.length > 1 && rt.location_name && (
+                          <p className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-brand-700">
+                            <MapPin className="size-3.5" aria-hidden />
+                            {rt.location_name}
+                          </p>
+                        )}
+                        {rt.description && (
+                          <p className="mt-1 text-sm text-zinc-500">{rt.description}</p>
+                        )}
+                        <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+                          {rt.amenities.map((a) => (
+                            <li
+                              key={a}
+                              className="inline-flex items-center gap-1 text-xs text-zinc-500"
+                            >
+                              <Check className="size-3 text-brand-600" aria-hidden />
+                              {a}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div className="mt-4 flex flex-wrap items-end justify-between gap-3">
+                        <div>
+                          {r?.quote ? (
+                            <>
+                              <p className="text-2xl font-semibold">
+                                {cur()}
+                                {inr(r.quote.amount_after_tax)}
+                                <span className="ml-1 text-sm font-normal text-zinc-500">
+                                  total · {r.quote.nights} night
+                                  {r.quote.nights === 1 ? "" : "s"}, taxes in
+                                </span>
+                              </p>
+                              {(r.quote.cleaning_fee || 0) > 0 && (
+                                <p className="text-xs text-zinc-500">
+                                  Includes {cur()}
+                                  {inr(r.quote.cleaning_fee || 0)} cleaning fee
+                                </p>
+                              )}
+                              {(r.quote.totals?.deposit_required || 0) > 0 && (
+                                <p className="text-xs text-zinc-500">
+                                  Refundable deposit {cur()}
+                                  {inr(r.quote.totals?.deposit_required || 0)} due
+                                  separately
+                                </p>
+                              )}
+                              {r.rooms_left <= 2 && (
+                                <p className="text-xs font-medium text-rose-600">
+                                  Only {r.rooms_left} left for these dates
+                                </p>
+                              )}
+                            </>
+                          ) : soldOut ? (
+                            <p className="text-sm font-medium text-rose-600">
+                              Sold out for these dates
+                            </p>
+                          ) : (
+                            <p className="text-sm text-zinc-400">
+                              from {cur()}
+                              {inr(rt.base_price)}/night
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {rt.listing_slug && (
+                            <Button
+                              variant="outline"
+                              className="px-4 py-2.5"
+                              onClick={() => navigate(`/stay/${rt.listing_slug}`)}
+                            >
+                              View listing
+                            </Button>
+                          )}
+                          <Button
+                            className="px-5 py-2.5 text-base"
+                            disabled={!r?.quote}
+                            onClick={() => setBooking(rt.name)}
+                          >
+                            {bookCta}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-            )
-          })}
-        </div>
+                )
+              })}
+            </div>
+          </>
+        )}
 
+        {catalogMode !== "sites" && (
+        <>
         <div className="mt-12 grid gap-8 md:grid-cols-2 border-t border-zinc-200 pt-8">
           {/* Policies & Rules */}
           <div className="space-y-4">
-            <h2 className="text-xl font-bold text-zinc-800">Hotel Policies & Rules</h2>
+            <h2 className="text-xl font-bold text-zinc-800">
+              {p.property_kind === "Short Term Rental" ? "Stay policies" : "Hotel Policies & Rules"}
+            </h2>
             <div className="rounded-xl border border-zinc-200 bg-white p-5 space-y-4 shadow-sm text-sm">
               <div className="flex justify-between border-b border-zinc-100 pb-2">
                 <span className="font-medium text-zinc-500">Check-in</span>
@@ -550,7 +824,36 @@ export default function PublicBooking() {
               </div>
               <div className="flex justify-between border-b border-zinc-100 pb-2">
                 <span className="font-medium text-zinc-500">Check-out</span>
-                <span className="font-semibold text-zinc-800">Before {p.checkout_time?.slice(0, 5)}</span>
+                <span className="font-semibold text-zinc-800">by {p.checkout_time?.slice(0, 5)}</span>
+              </div>
+              {(p.minimum_nights || 1) > 1 && (
+                <div className="flex justify-between border-b border-zinc-100 pb-2">
+                  <span className="font-medium text-zinc-500">Minimum stay</span>
+                  <span className="font-semibold text-zinc-800">{p.minimum_nights} nights</span>
+                </div>
+              )}
+              {(p.cleaning_fee || 0) > 0 && (
+                <div className="flex justify-between border-b border-zinc-100 pb-2">
+                  <span className="font-medium text-zinc-500">Cleaning fee</span>
+                  <span className="font-semibold text-zinc-800">{cur()}{inr(p.cleaning_fee)} (one-time)</span>
+                </div>
+              )}
+              {(p.security_deposit_amount || 0) > 0 && (
+                <div className="flex justify-between border-b border-zinc-100 pb-2">
+                  <span className="font-medium text-zinc-500">Security deposit</span>
+                  <span className="font-semibold text-zinc-800">{cur()}{inr(p.security_deposit_amount)} (refundable)</span>
+                </div>
+              )}
+              <div className="flex justify-between border-b border-zinc-100 pb-2">
+                <span className="font-medium text-zinc-500">Cancellation</span>
+                <span className="font-semibold text-zinc-800 text-right max-w-[60%]">
+                  {(p.free_cancel_days || 0) > 0
+                    ? `Free up to ${p.free_cancel_days} day${p.free_cancel_days === 1 ? "" : "s"} before arrival`
+                    : "Per property policy"}
+                  {p.cancellation_fee && p.cancellation_fee !== "None"
+                    ? ` · fee: ${p.cancellation_fee}`
+                    : ""}
+                </span>
               </div>
               {p.house_rules && (
                 <div>
@@ -579,33 +882,57 @@ export default function PublicBooking() {
             </div>
           </div>
 
-          {/* Map & Directions */}
+          {/* Map & Directions - one card per villa/site when the property
+              spans multiple addresses, one card when it doesn't. */}
           <div className="space-y-4">
-            <h2 className="text-xl font-bold text-zinc-800">Location & Directions</h2>
-            <div className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm space-y-3">
-              {p.latitude && p.longitude ? (
-                <iframe
-                  title="Hotel Location Map"
-                  width="100%"
-                  height="220"
-                  src={`https://maps.google.com/maps?q=${p.latitude},${p.longitude}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
-                  className="rounded-lg border border-zinc-200 shadow-inner"
-                />
-              ) : (
-                <div className="flex h-40 items-center justify-center bg-zinc-50 rounded-lg border border-zinc-200">
-                  <span className="text-sm text-zinc-400">Map location not set</span>
+            <h2 className="text-xl font-bold text-zinc-800">
+              {locations.length > 1 ? "Our Locations" : "Location & Directions"}
+            </h2>
+            <div className="space-y-4">
+              {locations.map((loc, i) => (
+                <div key={loc.name + i} className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm space-y-3">
+                  {locations.length > 1 && (
+                    <p className="text-sm font-semibold text-zinc-800">{loc.name}</p>
+                  )}
+                  {loc.latitude && loc.longitude ? (
+                    <iframe
+                      title={`${loc.name} map`}
+                      width="100%"
+                      height="220"
+                      src={`https://maps.google.com/maps?q=${loc.latitude},${loc.longitude}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
+                      className="rounded-lg border border-zinc-200 shadow-inner"
+                    />
+                  ) : (
+                    <div className="flex h-40 items-center justify-center bg-zinc-50 rounded-lg border border-zinc-200">
+                      <span className="text-sm text-zinc-400">Map location not set</span>
+                    </div>
+                  )}
+                  <p className="text-sm font-medium text-zinc-800 flex items-start gap-2">
+                    <MapPin className="size-4 shrink-0 text-brand-600 mt-0.5" />
+                    {loc.address || `${p.city}, ${p.state}`}
+                  </p>
+                  {loc.google_maps_url && (
+                    <a href={loc.google_maps_url} target="_blank" rel="noreferrer"
+                      className="inline-flex items-center gap-1 text-xs font-medium text-brand-700 hover:underline">
+                      Open in Google Maps <ExternalLink className="size-3" />
+                    </a>
+                  )}
+                  {locations.length > 1 && loc.room_types.length > 0 && (
+                    <p className="text-xs text-zinc-500 border-t border-zinc-100 pt-3">
+                      Rooms here:{" "}
+                      {loc.room_types
+                        .map((rt) => data.room_types.find((r) => r.name === rt)?.room_type_name || rt)
+                        .join(", ")}
+                    </p>
+                  )}
+                  {locations.length <= 1 && p.driving_directions && (
+                    <div className="text-xs text-zinc-600 border-t border-zinc-100 pt-3">
+                      <span className="block font-semibold text-zinc-700 mb-1">Driving Directions</span>
+                      <p className="leading-relaxed whitespace-pre-line">{p.driving_directions}</p>
+                    </div>
+                  )}
                 </div>
-              )}
-              <p className="text-sm font-medium text-zinc-800 flex items-start gap-2">
-                <MapPin className="size-4 shrink-0 text-brand-600 mt-0.5" />
-                {p.address_line ? `${p.address_line}, ` : ""}{p.city}, {p.state} {p.pincode ? `- ${p.pincode}` : ""}
-              </p>
-              {p.driving_directions && (
-                <div className="text-xs text-zinc-600 border-t border-zinc-100 pt-3">
-                  <span className="block font-semibold text-zinc-700 mb-1">Driving Directions</span>
-                  <p className="leading-relaxed whitespace-pre-line">{p.driving_directions}</p>
-                </div>
-              )}
+              ))}
             </div>
           </div>
         </div>
@@ -630,6 +957,8 @@ export default function PublicBooking() {
             </div>
           </div>
         )}
+        </>
+        )}
 
         <p className="mt-10 text-center text-xs text-zinc-400">
           Powered by Kamra - the open-source, agent-ready hotel PMS
@@ -638,6 +967,7 @@ export default function PublicBooking() {
 
       {booking && (
         <Sheet
+          wide
           title={done ? "Booking confirmed" : "Complete your booking"}
           description={
             done
@@ -659,7 +989,7 @@ export default function PublicBooking() {
                 disabled={busy || !form.guest_name || !form.phone}
                 onClick={submitBooking}
               >
-                {busy ? "Booking…" : "Confirm - pay at hotel"}
+                {busy ? "Booking…" : bookCta}
               </Button>
             )
           }
@@ -675,7 +1005,7 @@ export default function PublicBooking() {
               </div>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2">
               <label className="block">
                 <span className="mb-1.5 block text-sm font-medium text-zinc-600">Full name</span>
                 <input className={inputCls} value={form.guest_name} autoFocus
@@ -704,11 +1034,11 @@ export default function PublicBooking() {
                 </select>
               </label>
               {data.experiences.length > 0 && (
-                <div className="block">
+                <div className="block sm:col-span-2">
                   <span className="mb-1.5 block text-sm font-medium text-zinc-600">
                     Add experiences
                   </span>
-                  <div className="space-y-2">
+                  <div className="grid gap-2 sm:grid-cols-2">
                     {data.experiences.map((exp) => {
                       const qty = addons[exp.name] || 0
                       const on = qty > 0
@@ -797,12 +1127,12 @@ export default function PublicBooking() {
                   })()}
                 </div>
               )}
-              <label className="block">
+              <label className="block sm:col-span-2">
                 <span className="mb-1.5 block text-sm font-medium text-zinc-600">Special requests</span>
                 <textarea className={inputCls} rows={2} value={form.special_requests}
                   onChange={(e) => setForm({ ...form, special_requests: e.target.value })} />
               </label>
-              <div className="block">
+              <div className="block sm:col-span-2">
                 <span className="mb-1.5 block text-sm font-medium text-zinc-600">
                   Promo code
                 </span>
@@ -815,8 +1145,9 @@ export default function PublicBooking() {
                     }} />
                   <button type="button"
                     className="shrink-0 rounded-lg border border-brand-500 px-4 text-sm font-medium text-brand-700 hover:bg-brand-50 disabled:opacity-50"
-                    disabled={!voucher.trim()}
+                    disabled={!voucher.trim() || !property}
                     onClick={async () => {
+                      if (!property) return
                       const nights = Math.max(
                         1,
                         Math.round(
@@ -828,7 +1159,7 @@ export default function PublicBooking() {
                       try {
                         const r = await call<{ ok: boolean; message: string }>(
                           "kamra.public_api.check_voucher",
-                          { property: DEMO_PROPERTY, code: voucher.trim(), nights },
+                          { property, code: voucher.trim(), nights },
                         )
                         setVoucherMsg({ ok: r.ok, text: r.message })
                       } catch {
@@ -849,7 +1180,7 @@ export default function PublicBooking() {
               </div>
               {data.property.payment_mode &&
                 data.property.payment_mode !== "Pay at hotel" && (
-                  <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2.5 text-sm text-zinc-600">
+                  <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2.5 text-sm text-zinc-600 sm:col-span-2">
                     {data.property.payment_mode === "Full online"
                       ? "Full amount is paid online to confirm this booking."
                       : data.property.payment_mode === "Advance percent"
@@ -857,8 +1188,18 @@ export default function PublicBooking() {
                         : `A ${cur()}${inr(data.property.registration_fee)} registration fee is collected to confirm; the rest is paid at the hotel.`}
                   </div>
                 )}
+              {(data.property.cleaning_fee || 0) > 0 && (
+                <p className="text-xs text-zinc-500 sm:col-span-2">
+                  Cleaning fee {cur()}{inr(data.property.cleaning_fee)} is included in the total.
+                </p>
+              )}
+              {(data.property.security_deposit_amount || 0) > 0 && (
+                <p className="text-xs text-zinc-500 sm:col-span-2">
+                  A refundable security deposit of {cur()}{inr(data.property.security_deposit_amount)} may be collected separately.
+                </p>
+              )}
               {error && (
-                <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+                <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700 sm:col-span-2">
                   {error}
                 </div>
               )}

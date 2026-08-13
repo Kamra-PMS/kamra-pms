@@ -3,8 +3,8 @@ layout: home
 
 hero:
   name: Kamra
-  text: The open-source hotel PMS
-  tagline: Front desk, billing & GST, POS, housekeeping, direct bookings — 100% open source, AI-ready, no per-room fees. This is the manual.
+  text: The open-source PMS for hotels and villas
+  tagline: Front desk, billing & GST, POS, housekeeping, direct bookings and short-term rentals — 100% open source, AI-ready, no per-room fees. This is the manual.
   image:
     src: /kamra-mark.svg
     alt: Kamra
@@ -33,14 +33,20 @@ features:
 
 ## What is Kamra?
 
-Kamra is a complete property-management system for hotels, built on
+::: tip New — short-term rentals
+Kamra 2.5 runs villa portfolios as well as hotels. [Read the announcement](https://kamrapms.com/updates/short-term-rentals/) · see a live catalog at [ewa.kamrapms.com/book](https://ewa.kamrapms.com/kamra/book).
+:::
+
+Kamra is a complete property-management system for hotels and short-term
+rentals, built on
 [Frappe](https://frappeframework.com) and released under AGPL-3.0:
 
 - **Front desk** — tape chart, arrivals, group bookings, room blocks, waitlists, self check-in
 - **Money** — folios with per-line GST, split/route billing, night audit, GST invoices, GSTR-1 export
 - **F&B** — restaurant POS, live kitchen display, guest QR ordering, room posting
 - **Housekeeping** — a phone app for floor staff with task assignment, SLA escalation, lost & found
-- **Direct bookings** — a public booking page with live rates, promo codes and experience add-ons
+- **Direct bookings** — a public booking page with live rates, check-in / check-out, and Check availability
+- **Short-term rentals** — villa catalogs, per-site maps, room-wise or entire-place selling, deposits
 - **Multi-property** — one login, shared guest profiles, central reservations, portfolio dashboard
 - **AI-native** — an MCP server and a BYO-key copilot over one governed, audited tool layer
 

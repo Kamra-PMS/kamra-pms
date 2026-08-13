@@ -10,6 +10,7 @@
  "field_order": [
   "property_name",
   "legal_name",
+  "property_kind",
   "column_break_a",
   "phone",
   "email",
@@ -26,16 +27,20 @@
   "currency",
   "checkin_time",
   "checkout_time",
+  "minimum_nights",
+  "booking_mode",
+  "hold_minutes",
+  "security_deposit_amount",
+  "cleaning_fee",
+  "cleaning_fee_taxable",
+  "access_instructions",
+  "require_precheckin_for_access",
   "hourly_view_start",
   "hourly_view_end",
   "auto_send_checkin_links",
   "column_break_c",
   "gstin",
-  "id_retention",
-  "free_cancel_days",
-  "cancellation_fee",
-  "no_show_charge",
-  "deposit_pct",
+  "disabled",
   "locale",
   "sb_gst",
   "gst_mode",
@@ -44,20 +49,27 @@
   "gst_rate_high",
   "rates_include_tax",
   "sb_showcase",
+  "sb_modules",
+  "enabled_modules",
   "booking_engine_enabled",
   "booking_payment_mode",
   "advance_percent",
   "registration_fee",
   "require_cashier_pin",
-  "logo_url",
-  "brand_accent",
   "showcase_description",
-  "sell_message",
   "hero_image",
   "star_category",
   "google_reviews_url",
   "tripadvisor_url",
   "property_amenities",
+  "logo_url",
+  "brand_accent",
+  "id_retention",
+  "sell_message",
+  "free_cancel_days",
+  "cancellation_fee",
+  "no_show_charge",
+  "deposit_pct",
   "driving_directions",
   "latitude",
   "longitude",
@@ -71,7 +83,6 @@
   "meta_description",
   "og_image",
   "page_slug",
-  "disabled",
   "overbooking_pct"
  ],
  "fields": [
@@ -87,6 +98,16 @@
    "fieldname": "legal_name",
    "fieldtype": "Data",
    "label": "Legal Name"
+  },
+  {
+   "default": "Hotel",
+   "description": "Setup / presentation preset only (ADR-005). Does not fork pricing, availability, or channel sync.",
+   "fieldname": "property_kind",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Property Kind",
+   "options": "Hotel\nShort Term Rental"
   },
   {
    "fieldname": "column_break_a",
@@ -177,12 +198,67 @@
    "label": "Check-out Time"
   },
   {
-   "fieldname": "hourly_view_start",
-   "fieldtype": "Time",
-   "label": "Hourly View Start",
-   "default": "06:00:00"
+   "default": "1",
+   "fieldname": "minimum_nights",
+   "fieldtype": "Int",
+   "label": "Minimum Stay Nights"
   },
   {
+   "default": "Instant",
+   "description": "Instant: guest books into Pending Payment or Confirmed. Request to Book: guest waits for host approval (Requested). ADR-006.",
+   "fieldname": "booking_mode",
+   "fieldtype": "Select",
+   "in_standard_filter": 1,
+   "label": "Booking Mode",
+   "options": "Instant\nRequest to Book"
+  },
+  {
+   "default": "120",
+   "description": "Minutes a Held / Pending Payment reservation keeps inventory before auto-cancel.",
+   "fieldname": "hold_minutes",
+   "fieldtype": "Int",
+   "label": "Hold Window (minutes)"
+  },
+  {
+   "default": "5000",
+   "fieldname": "security_deposit_amount",
+   "fieldtype": "Currency",
+   "label": "Security Deposit Amount"
+  },
+  {
+   "default": "0",
+   "description": "One-time cleaning fee added to every quote (ADR-008). 0 = none.",
+   "fieldname": "cleaning_fee",
+   "fieldtype": "Currency",
+   "label": "Cleaning Fee"
+  },
+  {
+   "default": "1",
+   "description": "When checked, cleaning fee is taxed at the room GST rate.",
+   "fieldname": "cleaning_fee_taxable",
+   "fieldtype": "Check",
+   "label": "Cleaning Fee Taxable"
+  },
+  {
+   "description": "Released to the guest only after payment, deposit, and optional pre-check-in gates pass.",
+   "fieldname": "access_instructions",
+   "fieldtype": "Text",
+   "label": "Access Instructions"
+  },
+  {
+   "default": "0",
+   "fieldname": "require_precheckin_for_access",
+   "fieldtype": "Check",
+   "label": "Require Pre-check-in for Access"
+  },
+  {
+   "default": "06:00:00",
+   "fieldname": "hourly_view_start",
+   "fieldtype": "Time",
+   "label": "Hourly View Start"
+  },
+  {
+   "default": "23:00:00",
    "fieldname": "hourly_view_end",
    "fieldtype": "Time",
    "label": "Hourly View End",
@@ -257,6 +333,17 @@
    "fieldname": "sb_showcase",
    "fieldtype": "Section Break",
    "label": "Booking Engine"
+  },
+  {
+   "fieldname": "sb_modules",
+   "fieldtype": "Section Break",
+   "label": "Modules"
+  },
+  {
+   "fieldname": "enabled_modules",
+   "fieldtype": "Small Text",
+   "label": "Modules In Use",
+   "description": "Which parts of Kamra this property actually runs, comma separated. Empty = everything. A serviced-apartment operator has no restaurant and no banquet hall, and shouldn't be shown three empty menus on their first morning."
   },
   {
    "default": "1",
@@ -458,7 +545,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-07-04 19:37:15.698580",
+ "modified": "2026-08-01 09:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Property",

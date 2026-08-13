@@ -1,6 +1,6 @@
 /*  Command palette (⌘K / Ctrl+K).
 
-    A fast "jump to anything" surface - Opera's "I Want To…" menu, reimagined
+    A fast "jump to anything" surface - one box that reaches every screen,
     as a fuzzy typeable overlay. Nav shortcuts on a cold prompt; guest /
     reservation search once you start typing; a couple of high-value quick
     actions. Every action it triggers is recorded in the Activity Log.

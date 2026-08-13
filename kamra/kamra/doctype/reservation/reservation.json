@@ -19,6 +19,8 @@
   "source",
   "channel",
   "ota_ref",
+  "idempotency_key",
+  "hold_expires_on",
   "travel_agent",
   "commission_amount",
   "sb_booker",
@@ -29,6 +31,7 @@
   "sb_stay",
   "room_type",
   "room",
+  "sellable_unit",
   "meal_plan",
   "rate_plan",
   "column_break_b",
@@ -103,7 +106,10 @@
   "cancellation_fee",
   "cancelled_on",
   "advance_due",
-  "payment_policy"
+  "payment_policy",
+  "quote_snapshot",
+  "access_released",
+  "access_released_on"
  ],
  "fields": [
   {
@@ -140,7 +146,7 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Status",
-   "options": "Waitlist\nConfirmed\nChecked In\nChecked Out\nCancelled\nNo Show"
+   "options": "Waitlist\nInquiry\nQuoted\nRequested\nHeld\nPending Payment\nConfirmed\nChecked In\nChecked Out\nCancelled\nNo Show"
   },
   {
    "default": "Manual",
@@ -163,6 +169,19 @@
    "description": "The channel manager's booking id - modifications and cancellations match on it"
   },
   {
+   "description": "Caller-supplied key so duplicate public/OTA book requests return the same reservation (ADR-007).",
+   "fieldname": "idempotency_key",
+   "fieldtype": "Data",
+   "label": "Idempotency Key",
+   "read_only": 1
+  },
+  {
+   "description": "When set, Held / Pending Payment auto-cancels after this time.",
+   "fieldname": "hold_expires_on",
+   "fieldtype": "Datetime",
+   "label": "Hold Expires On"
+  },
+  {
    "fieldname": "sb_stay",
    "fieldtype": "Section Break",
    "label": "Stay"
@@ -179,6 +198,13 @@
    "fieldtype": "Link",
    "label": "Room",
    "options": "Room"
+  },
+  {
+   "description": "Atomic sellable inventory unit (ADR-001). Optional during migration; availability prefers this when set.",
+   "fieldname": "sellable_unit",
+   "fieldtype": "Link",
+   "label": "Sellable Unit",
+   "options": "Sellable Unit"
   },
   {
    "fieldname": "column_break_b",
@@ -564,6 +590,27 @@
    "fieldname": "payment_policy",
    "fieldtype": "Data",
    "label": "Payment Policy",
+   "read_only": 1
+  },
+  {
+   "description": "Immutable typed quote at booking (ADR-008).",
+   "fieldname": "quote_snapshot",
+   "fieldtype": "Code",
+   "label": "Quote Snapshot",
+   "options": "JSON",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "access_released",
+   "fieldtype": "Check",
+   "label": "Access Released",
+   "read_only": 1
+  },
+  {
+   "fieldname": "access_released_on",
+   "fieldtype": "Datetime",
+   "label": "Access Released On",
    "read_only": 1
   },
   {

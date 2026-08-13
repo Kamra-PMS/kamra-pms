@@ -47,15 +47,169 @@ EXPERIENCES = [
 ]
 
 # (name, capacity, base_price, amenities)
+# (name, capacity, day rental, amenities, type, min pax, hourly, sq ft, layouts)
 VENUES = [
 	("Grand Ballroom", 400, 85000,
-	 "Pillarless hall, stage, LED wall, in-house AV, green rooms."),
+	 "Pillarless hall, stage, LED wall, in-house AV, green rooms.",
+	 "Banquet Hall", 120, 14000, 6800,
+	 "Theatre, Classroom, Round Table, Cluster, Floating"),
 	("Garden Lawn", 600, 65000,
-	 "Open-air lawn with fairy lights, marquee option, generator backup."),
+	 "Open-air lawn with fairy lights, marquee option, generator backup.",
+	 "Lawn", 150, 11000, 12000, "Round Table, Floating, Custom"),
 	("Riverside Deck", 120, 40000,
-	 "Waterfront deck for cocktails and intimate ceremonies."),
+	 "Waterfront deck for cocktails and intimate ceremonies.",
+	 "Poolside", 40, 7000, 2200, "Floating, Round Table"),
 	("Boardroom", 20, 12000,
-	 "Executive meeting room, video-conferencing, whiteboard, coffee service."),
+	 "Executive meeting room, video-conferencing, whiteboard, coffee service.",
+	 "Board Room", 6, 2500, 480, "Boardroom, U-Shape"),
+]
+
+# The menu library, priced per plate the way a banquet sheet actually
+# quotes. (name, code, meal, food type, style, cuisine, rate, min pax,
+# courses[(course, dishes, pick, live)])
+BANQUET_MENUS = [
+	("Silver Veg Buffet", "SVB", "Dinner", "Veg", "Buffet", "North Indian",
+	 1250, 100, [
+		 ("Welcome drink", "Aam panna, Jal jeera", 1, 0),
+		 ("Starters", "Paneer tikka, Hara bhara kebab, Corn seekh", 3, 0),
+		 ("Main course", "Dal makhani, Paneer butter masala, Veg biryani, "
+		                 "Mix veg", 0, 0),
+		 ("Breads & rice", "Naan, Tandoori roti, Jeera rice", 0, 0),
+		 ("Live counter", "Chaat counter", 0, 1),
+		 ("Desserts", "Gulab jamun, Rasmalai, Ice cream", 2, 0),
+	 ]),
+	("Gold Non-Veg Buffet", "GNV", "Dinner", "Non-Veg", "Buffet",
+	 "North Indian", 1850, 100, [
+		 ("Starters (Veg)", "Paneer tikka, Mushroom galouti", 2, 0),
+		 ("Starters (Non-veg)", "Murgh malai tikka, Fish amritsari, "
+		                        "Mutton seekh", 3, 0),
+		 ("Main course", "Butter chicken, Rogan josh, Dal makhani, "
+		                 "Subz miloni", 0, 0),
+		 ("Live counter", "Tandoor counter, Pasta counter", 0, 1),
+		 ("Desserts", "Shahi tukda, Kesar phirni, Ice cream", 2, 0),
+	 ]),
+	("Corporate Working Lunch", "CWL", "Lunch", "Mixed", "Plated",
+	 "Continental", 950, 25, [
+		 ("Soup", "Cream of tomato, Sweetcorn", 1, 0),
+		 ("Main", "Grilled chicken with herb rice, Penne arrabbiata", 1, 0),
+		 ("Dessert", "Brownie with vanilla", 0, 0),
+	 ]),
+	("Hi-Tea Package", "HTP", "Hi-Tea", "Veg", "Buffet", "Indian", 550, 30, [
+		 ("Savoury", "Samosa, Veg sandwich, Cocktail idli", 0, 0),
+		 ("Sweet", "Mysore pak, Cookies", 0, 0),
+		 ("Beverage", "Masala chai, Filter coffee", 0, 0),
+	 ]),
+	("Sangeet Cocktail Snacks", "SCS", "Snacks", "Mixed", "Cocktail",
+	 "Global", 1450, 80, [
+		 ("Passed canapes", "Chicken satay, Paneer bruschetta, "
+		                    "Mini vada pav", 0, 0),
+		 ("Live counter", "Kebab counter, Pani puri shots", 0, 1),
+	 ]),
+]
+
+# Everything that isn't food. `chargeable=0` marks what the hotel throws
+# in as standard - it still prints on the event order and the pack list.
+# (name, category, uom, rate, gst, chargeable, alcohol, pack list, note).
+# Cost is derived below as a share of the sell price - hire and
+# sub-contract margins in this trade sit around 40-45%.
+BANQUET_SERVICES = [
+	("LED wall 12x8", "Audio Visual", "Per Event", 45000, 18, 1, 0, 1,
+	 "Indoor P3 panel with processor and operator."),
+	("Projector + 10ft screen", "Audio Visual", "Per Event", 8000, 18, 1, 0, 1,
+	 "5000 lumen, HDMI and wireless."),
+	("Extra cordless mic", "Audio Visual", "Per Unit", 1500, 18, 1, 0, 1, None),
+	("House PA & 2 cordless mics", "Audio Visual", "Per Event", 6000, 18, 0, 0,
+	 1, "Included with every hall booking."),
+	("Laptop", "Audio Visual", "Per Day", 2500, 18, 1, 0, 1, None),
+	("Podium with hotel branding", "Furniture & Setup", "Per Event", 2500, 18,
+	 0, 0, 1, "Included on request."),
+	("Stage 20x12 with carpet", "Furniture & Setup", "Per Event", 22000, 18, 1,
+	 0, 1, "Includes skirting and steps."),
+	("Dance floor 16x16", "Furniture & Setup", "Per Event", 18000, 18, 1, 0, 1,
+	 None),
+	("Registration desk & signage", "Furniture & Setup", "Per Event", 3500, 18,
+	 0, 0, 1, "Standard for conferences."),
+	("Floral stage decor", "Decor", "Per Event", 65000, 18, 1, 0, 1,
+	 "Fresh flowers, backdrop and entrance arch."),
+	("Entrance arch", "Decor", "Per Event", 15000, 18, 1, 0, 1, None),
+	("Table centrepieces", "Decor", "Per Unit", 800, 18, 1, 0, 1, None),
+	("DJ with light rig", "Entertainment", "Per Event", 35000, 18, 1, 0, 1,
+	 "Till 23:00; local noise rules apply after."),
+	("Live band (3 hrs)", "Entertainment", "Per Event", 55000, 18, 1, 0, 0,
+	 None),
+	("Butler service", "Staffing", "Per Pax", 120, 18, 1, 0, 0,
+	 "One steward per ten covers."),
+	("Valet parking", "Staffing", "Per Event", 12000, 18, 1, 0, 0, None),
+	("Bar service (IMFL, on consumption)", "Alcohol", "Per Event", 0, 18, 1, 1,
+	 0, "Billed on consumption; settles separately from a company bill."),
+	("Corkage per bottle", "Alcohol", "Per Unit", 1200, 18, 1, 1, 0, None),
+	("Unlimited soft beverages", "Beverage", "Per Pax", 250, 18, 1, 0, 0,
+	 None),
+	("Welcome drink on arrival", "Beverage", "Per Pax", 0, 5, 0, 0, 0,
+	 "Included with every menu package."),
+	("Printed menu cards", "Stationery", "Per Unit", 60, 18, 1, 0, 1, None),
+	("Notepads & pens", "Stationery", "Per Pax", 0, 18, 0, 0, 1,
+	 "Standard on every conference."),
+]
+
+
+# The banquet dish library, with real recipes against the same ingredient
+# master the restaurant uses. Without these a quote reads as 100% margin,
+# which is the most flattering possible lie.
+# (dish, course, food type, kitchen, portions/pax, [(ingredient, qty/portion)])
+BANQUET_DISHES = [
+	("Paneer Tikka", "Starters", "Veg", "Tandoor", 1,
+	 [("Paneer", 0.08), ("Onion", 0.03), ("Cooking Oil", 0.01)]),
+	("Hara Bhara Kebab", "Starters", "Veg", "Tandoor", 1,
+	 [("Mixed Vegetables", 0.07), ("Potato", 0.04), ("Cooking Oil", 0.01)]),
+	("Murgh Malai Tikka", "Starters", "Non-Veg", "Tandoor", 1,
+	 [("Chicken", 0.09), ("Cream", 0.02)]),
+	("Fish Amritsari", "Starters", "Non-Veg", "Tandoor", 1,
+	 [("Chicken", 0.08), ("Cooking Oil", 0.02)]),
+	("Cream of Tomato Soup", "Soup", "Veg", "Continental", 1,
+	 [("Tomato", 0.12), ("Cream", 0.03)]),
+	("Sweetcorn Soup", "Soup", "Veg", "Chinese", 1,
+	 [("Mixed Vegetables", 0.08), ("Milk", 0.05)]),
+	("Dal Makhani", "Main Course", "Veg", "Main Kitchen", 1,
+	 [("Butter", 0.02), ("Cream", 0.03), ("Tomato", 0.05)]),
+	("Paneer Butter Masala", "Main Course", "Veg", "Main Kitchen", 1,
+	 [("Paneer", 0.07), ("Butter", 0.02), ("Tomato", 0.06)]),
+	("Butter Chicken", "Main Course", "Non-Veg", "Main Kitchen", 1,
+	 [("Chicken", 0.11), ("Butter", 0.02), ("Tomato", 0.06), ("Cream", 0.02)]),
+	("Subz Miloni", "Main Course", "Veg", "Main Kitchen", 1,
+	 [("Mixed Vegetables", 0.11), ("Cooking Oil", 0.01)]),
+	("Veg Biryani", "Rice", "Veg", "Main Kitchen", 1,
+	 [("Basmati Rice", 0.12), ("Mixed Vegetables", 0.05), ("Cooking Oil", 0.01)]),
+	("Jeera Rice", "Rice", "Veg", "Main Kitchen", 1,
+	 [("Basmati Rice", 0.1), ("Cooking Oil", 0.01)]),
+	("Gulab Jamun", "Dessert", "Veg", "Bakery", 1,
+	 [("Gulab Jamun Mix", 0.05), ("Sugar", 0.04)]),
+	("Rasmalai", "Dessert", "Veg", "Bakery", 1,
+	 [("Milk", 0.1), ("Sugar", 0.03), ("Paneer", 0.02)]),
+	("Chaat Counter", "Live Counter", "Veg", "Live Counter", 1,
+	 [("Potato", 0.06), ("Onion", 0.03), ("Cooking Oil", 0.01)]),
+	("Welcome Drink - Aam Panna", "Welcome Drink", "Veg", "Cold Kitchen", 1,
+	 [("Lime", 0.5), ("Sugar", 0.02)]),
+]
+
+# Which dishes each menu course offers, and how many the guest may take.
+# (menu, course, choose N, [(dish, is_default, supplement/pax)])
+MENU_DISH_OPTIONS = [
+	("Silver Veg Buffet", "Starters", 2, [
+		("Paneer Tikka", 1, 0), ("Hara Bhara Kebab", 1, 0),
+		("Chaat Counter", 0, 120)]),
+	("Silver Veg Buffet", "Main course", 3, [
+		("Dal Makhani", 1, 0), ("Paneer Butter Masala", 1, 0),
+		("Subz Miloni", 1, 0), ("Veg Biryani", 0, 0)]),
+	("Silver Veg Buffet", "Desserts", 1, [
+		("Gulab Jamun", 1, 0), ("Rasmalai", 0, 60)]),
+	("Gold Non-Veg Buffet", "Starters (Non-veg)", 2, [
+		("Murgh Malai Tikka", 1, 0), ("Fish Amritsari", 1, 0)]),
+	("Gold Non-Veg Buffet", "Main course", 3, [
+		("Butter Chicken", 1, 0), ("Dal Makhani", 1, 0),
+		("Subz Miloni", 1, 0)]),
+	("Corporate Working Lunch", "Soup", 1, [
+		("Cream of Tomato Soup", 1, 0), ("Sweetcorn Soup", 0, 0)]),
 ]
 
 
@@ -169,18 +323,28 @@ def execute():
 		added_exp += 1
 
 	added_venue = 0
-	for name, cap, price, amenities in VENUES:
+	for (name, cap, price, amenities, vtype, min_cap, hourly, sqft,
+	     layouts) in VENUES:
 		if frappe.db.exists("Venue", {"property": PROPERTY, "venue_name": name}):
 			continue
 		frappe.get_doc({
 			"doctype": "Venue",
 			"property": PROPERTY,
 			"venue_name": name,
+			"venue_type": vtype,
 			"capacity": cap,
+			"min_capacity": min_cap,
+			"area_sqft": sqft,
 			"base_price": price,
+			"hourly_rate": hourly,
+			"min_hours": 4,
+			"gst_rate": 18,
+			"setup_styles": layouts,
 			"amenities": amenities,
 		}).insert(ignore_permissions=True)
 		added_venue += 1
+
+	added_bq = seed_banquets()
 
 	# area-wise table layouts ("[Area]" headers, "name:seats" lines) so the
 	# POS table map shows areas, seats and a realistic floor
@@ -390,8 +554,217 @@ def execute():
 	print(f"Showcase seed: +{added_exp} experiences, +{added_venue} venues, "
 	      f"+{added_outlet} outlets, +{added_item} menu items, "
 	      f"+{added_rate} laundry rates, +{added_ticket} tickets, "
-	      f"+{added_ho} handovers, +{added_lnd} laundry orders, {extra} "
-	      f"on '{PROPERTY}'.")
+	      f"+{added_ho} handovers, +{added_lnd} laundry orders, {added_bq} "
+	      f"{extra} on '{PROPERTY}'.")
+
+
+def seed_banquets():
+	"""The banquet catalogue and a pipeline that looks like a real month:
+	an enquiry still being chased, a tentative hold on a Saturday, a
+	confirmed wedding with an advance in and an event order to print, and
+	one that went to a competitor - so the funnel and the conversion rate
+	aren't hypothetical."""
+	from frappe.utils import add_days, nowdate
+
+	added_menu = 0
+	for name, code, meal, food, style, cuisine, rate, min_pax, courses in \
+			BANQUET_MENUS:
+		if frappe.db.exists("Banquet Menu",
+		                    {"property": PROPERTY, "menu_name": name}):
+			continue
+		frappe.get_doc({
+			"doctype": "Banquet Menu", "property": PROPERTY,
+			"menu_name": name, "menu_code": code, "meal_period": meal,
+			"food_type": food, "service_style": style, "cuisine": cuisine,
+			"rate_per_pax": rate, "min_pax": min_pax, "gst_rate": 5,
+			"inclusions": "Crockery, cutlery, service staff and "
+			              "unlimited water.",
+			"exclusions": "Alcohol, live counters beyond those listed, "
+			              "and taxes.",
+			"courses": [{"course": c, "dishes": d, "choice_of": pick,
+			             "is_live_counter": live}
+			            for c, d, pick, live in courses],
+		}).insert(ignore_permissions=True)
+		added_menu += 1
+
+	added_svc = 0
+	for (name, cat, uom, rate, gst, chargeable, alcohol, pack,
+	     note) in BANQUET_SERVICES:
+		if frappe.db.exists("Banquet Service Item",
+		                    {"property": PROPERTY, "item_name": name}):
+			continue
+		frappe.get_doc({
+			"doctype": "Banquet Service Item", "property": PROPERTY,
+			"item_name": name, "category": cat, "uom": uom, "rate": rate,
+			"gst_rate": gst, "chargeable": chargeable, "is_alcohol": alcohol,
+			"on_pack_list": pack, "description": note,
+			"cost_rate": round(rate * 0.58, 2), "cost_gst_rate": 18,
+		}).insert(ignore_permissions=True)
+		added_svc += 1
+
+	added_dish = 0
+	for name, course, food, kitchen, portions, recipe in BANQUET_DISHES:
+		if frappe.db.exists("Banquet Dish", {"property": PROPERTY,
+		                                     "dish_name": name}):
+			continue
+		rows, cost = [], 0.0
+		for ing_name, qty in recipe:
+			ing = frappe.db.get_value(
+				"Ingredient", {"property": PROPERTY, "ingredient_name": ing_name})
+			if not ing:
+				continue
+			rows.append({"ingredient": ing, "qty": qty})
+			cost += qty * float(frappe.db.get_value(
+				"Ingredient", ing, "cost_per_unit") or 0)
+		frappe.get_doc({
+			"doctype": "Banquet Dish", "property": PROPERTY, "dish_name": name,
+			"course_type": course, "food_type": food, "kitchen": kitchen,
+			"portion_per_pax": portions, "recipe": rows,
+			"cost_per_portion": round(cost, 4),
+		}).insert(ignore_permissions=True)
+		added_dish += 1
+
+	# hang the dishes off each menu's courses so a customer can choose
+	for menu_name, course, choose, options in MENU_DISH_OPTIONS:
+		menu = frappe.db.get_value(
+			"Banquet Menu", {"property": PROPERTY, "menu_name": menu_name})
+		if not menu:
+			continue
+		doc = frappe.get_doc("Banquet Menu", menu)
+		row = next((c for c in doc.courses
+		            if c.course.lower().startswith(course.lower()[:8])), None)
+		if not row:
+			continue
+		row.choice_of = choose
+		for dish_name, default, supplement in options:
+			dish = frappe.db.get_value(
+				"Banquet Dish", {"property": PROPERTY, "dish_name": dish_name})
+			if not dish or any(d.dish == dish and d.course == row.course
+			                   for d in doc.dish_options):
+				continue
+			doc.append("dish_options", {
+				"course": row.course, "dish": dish, "is_default": default,
+				"supplement_per_pax": supplement})
+		doc.save(ignore_permissions=True)
+
+	if frappe.db.exists("Venue Booking", {"property": PROPERTY,
+	                                      "event_name": "Sharma-Verma Reception"}):
+		return (f"+{added_menu} banquet menus, +{added_svc} banquet services, "
+		        f"+{added_dish} dishes")
+
+	from kamra import banquet as bq
+
+	def venue(name):
+		return frappe.db.get_value(
+			"Venue", {"property": PROPERTY, "venue_name": name})
+
+	def menu(name):
+		return frappe.db.get_value(
+			"Banquet Menu", {"property": PROPERTY, "menu_name": name})
+
+	def service(name):
+		return frappe.db.get_value(
+			"Banquet Service Item", {"property": PROPERTY, "item_name": name})
+
+	# ── the wedding that's sold: advance in, event order due ────────────
+	wedding = bq.create_enquiry(
+		PROPERTY, venue("Grand Ballroom"), add_days(nowdate(), 21),
+		"Anita Sharma", event_type="Reception", attendees=320,
+		customer_phone="+91 98450 11223", start_time="19:00",
+		end_time="23:30", source="Referral",
+		requirements="320 pax reception, gold non-veg buffet, floral stage, "
+		             "DJ till 11, green room for the bride.")["function"]
+	bq.update_function(wedding, {
+		"event_name": "Sharma-Verma Reception", "pax_guaranteed": 300,
+		"setup_style": "Round Table", "billing_name": "Anita Sharma",
+		"setup_notes": "Stage at the north end, dance floor centre, "
+		               "buffet along the east wall.",
+	})
+	bq.add_menu(wedding, menu("Gold Non-Veg Buffet"))
+	for item in ("Floral stage decor", "DJ with light rig",
+	             "Stage 20x12 with carpet", "Dance floor 16x16",
+	             "LED wall 12x8", "Valet parking"):
+		bq.add_service(wedding, service(item))
+	for freebie in ("House PA & 2 cordless mics", "Podium with hotel branding",
+	                "Welcome drink on arrival"):
+		bq.add_service(wedding, service(freebie), chargeable=0)
+	# choose the dishes, so the demo's margin is a number and not a guess
+	gold = menu("Gold Non-Veg Buffet")
+	try:
+		picks = []
+		for c in bq.menu_choices(wedding, gold)["courses"]:
+			for o in c["options"][: (c["choice_of"] or len(c["options"]))]:
+				picks.append({"course": c["course"], "dish": o["dish"],
+				              "supplement_per_pax": o["supplement_per_pax"]})
+		if picks:
+			bq.compose_menu(wedding, gold, picks)
+	except Exception:
+		pass  # a demo seed must never block on the trimmings
+
+	bq.negotiate(wedding, venue_rental=72000,
+	             note="Matched the competitor on the hall")
+	bq.negotiate(wedding, discount_amount=40000,
+	             note="Owner approved 40k off to close it")
+	bq.generate_quote(wedding, valid_days=10)
+	bq.set_status(wedding, "Confirmed")
+	bq.default_payment_terms(wedding)
+	terms = frappe.get_doc("Venue Booking", wedding).payment_terms
+	if terms:
+		bq.record_receipt(wedding, terms[0].amount, mode="Bank Transfer",
+		                  kind="Advance", reference="UTR9911002233",
+		                  settle_term=terms[0].name)
+
+	# ── the conference still being negotiated ───────────────────────────
+	conf = bq.create_enquiry(
+		PROPERTY, venue("Boardroom"), add_days(nowdate(), 9),
+		"Priya Menon", event_type="Training", attendees=18,
+		customer_phone="+91 99001 44556", customer_email="priya@acme.example",
+		start_time="09:30", end_time="17:30", source="Email",
+		requirements="Two-day leadership offsite, U-shape, working lunch, "
+		             "projector.")["function"]
+	bq.update_function(conf, {
+		"event_name": "Acme Leadership Offsite", "setup_style": "U-Shape",
+		"end_date": add_days(nowdate(), 10), "pax_guaranteed": 18,
+		"gstin": "29AABCU9603R1ZM", "place_of_supply": "Karnataka",
+	})
+	bq.add_menu(conf, menu("Corporate Working Lunch"))
+	bq.add_menu(conf, menu("Hi-Tea Package"))
+	bq.add_service(conf, service("Projector + 10ft screen"))
+	bq.add_service(conf, service("Notepads & pens"), chargeable=0)
+	bq.add_service(conf, service("Registration desk & signage"), chargeable=0)
+	bq.save_open_items(conf, [
+		{"title": "Second day's lunch - veg only or mixed?",
+		 "owner_side": "Client", "due_date": add_days(nowdate(), 3),
+		 "price_impact": 0, "status": "Open"},
+		{"title": "Airport transfers for six delegates",
+		 "detail": "They've asked; we haven't priced it yet.",
+		 "owner_side": "Hotel", "due_date": add_days(nowdate(), 2),
+		 "price_impact": 9000, "status": "Open"},
+	])
+	bq.generate_quote(conf, valid_days=7)
+	bq.set_status(conf, "Tentative",
+	              tentative_until=add_days(nowdate(), 4))
+
+	# ── the enquiry that's gone quiet ───────────────────────────────────
+	quiet = bq.create_enquiry(
+		PROPERTY, venue("Garden Lawn"), add_days(nowdate(), 45),
+		"Rakesh Iyer", event_type="Sangeet", attendees=250,
+		customer_phone="+91 98860 77889", start_time="18:00",
+		end_time="23:00", source="Website", follow_up_days=-3,
+		requirements="Sangeet on the lawn, cocktail snacks, DJ.")["function"]
+	bq.add_menu(quiet, menu("Sangeet Cocktail Snacks"))
+	bq.add_service(quiet, service("DJ with light rig"))
+
+	# ── the one that got away ───────────────────────────────────────────
+	lost = bq.create_enquiry(
+		PROPERTY, venue("Riverside Deck"), add_days(nowdate(), 30),
+		"Fatima Qureshi", event_type="Engagement", attendees=90,
+		customer_phone="+91 90080 33221", source="Walk-in")["function"]
+	bq.set_status(lost, "Lost",
+	              reason="Went to a competitor on price")
+
+	return (f"+{added_menu} banquet menus, +{added_svc} banquet services, "
+	        f"+4 functions")
 
 
 def seed_sample_content():

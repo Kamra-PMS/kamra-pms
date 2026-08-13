@@ -18,7 +18,7 @@ const AR: Record<string, string> = {
   // front desk nav
   "Today": "اليوم",
   "Dashboard": "لوحة التحكم",
-  "Copilot": "المساعد",
+  "Kamra Agent": "وكيل كامرا",
   "Reservations": "الحجوزات",
   "Central Reservations": "الحجوزات المركزية",
   "Tape Chart": "مخطط الغرف",

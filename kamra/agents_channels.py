@@ -253,7 +253,6 @@ def send_outbound(
 		)
 		ok = 200 <= res.status_code < 300
 	except Exception as exc:  # pragma: no cover — network is best-effort
-		ok = False
 		savings.log_action(
 			action_type=f"{channel.lower()}.outbound_error",
 			property=property,

@@ -46,6 +46,7 @@
   },
   {
    "default": "gpt-4o-mini",
+   "description": "Any Chat Completions slug: gpt-4o-mini, gpt-5.6-luna, gpt-5.6-terra, gpt-5.6-sol. Reasoning models pin effort to none so tools keep working.",
    "fieldname": "model",
    "fieldtype": "Data",
    "label": "Model"
@@ -75,7 +76,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-07-05 19:00:00.000000",
+ "modified": "2026-08-13 23:20:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "AI Assistant Settings",

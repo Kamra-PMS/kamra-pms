@@ -40,7 +40,7 @@ export default function Agents() {
       <header className="flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-2">
           <Sparkles className="size-5 text-brand-600" aria-hidden />
-          <h1 className="text-xl font-semibold tracking-tight">Copilot</h1>
+          <h1 className="text-xl font-semibold tracking-tight">Kamra Agent</h1>
         </div>
         <p className="text-sm text-zinc-500">
           Chat with your PMS using your own AI key - it acts as you.

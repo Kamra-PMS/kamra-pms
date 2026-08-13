@@ -16,6 +16,7 @@ import {
   Briefcase,
   Building2,
   CalendarDays,
+  CalendarRange,
   ClipboardList,
   Clock,
   Code2,
@@ -89,7 +90,7 @@ export const APPS: AppDef[] = [
     items: [
       { to: "/", label: "Today", icon: Home },
       { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-      { to: "/assistant", label: "Copilot", icon: Sparkles },
+      { to: "/assistant", label: "Kamra Agent", icon: Sparkles },
       { to: "/reservations", label: "Reservations", icon: ClipboardList },
       { to: "/crs", label: "Central Reservations", icon: Search },
       { to: "/tape", label: "Tape Chart", icon: LayoutGrid },
@@ -146,17 +147,23 @@ export const APPS: AppDef[] = [
   },
   {
     id: "events",
-    name: "Events & Groups",
+    name: "Banquets & Groups",
     icon: PartyPopper,
     tint: "bg-violet-50 text-violet-700",
-    description: "Banquets, the function diary, room blocks and pickup.",
+    description:
+      "Function prospecting, quotations and event orders - plus room blocks and pickup.",
     roles: ["Front Desk", "Revenue Manager", "Hotel Admin", "System Manager", "Administrator"],
     items: [
-      { to: "/events", label: "Event Bookings", icon: PartyPopper },
-      { to: "/venue-calendar", label: "Venue Calendar", icon: CalendarDays },
+      { to: "/banquet", label: "Banquets", icon: PartyPopper },
+      { to: "/banquet-month", label: "Month Availability", icon: CalendarRange },
+      { to: "/banquet-diary", label: "Function Diary", icon: CalendarDays },
+      { to: "/banquet-registers", label: "Registers", icon: ScrollText },
+      { to: "/banquet-catalogue", label: "Menus & Services", icon: UtensilsCrossed },
+      { to: "/events", label: "All Functions", icon: ListChecks },
       { to: "/groups", label: "Groups & Blocks", icon: Users },
-      { to: "/venues", label: "Venues", icon: Landmark },
+      { to: "/venues", label: "Halls & Venues", icon: Landmark },
     ],
+    extraPrefixes: ["/banquet"],
   },
   {
     id: "revenue",
@@ -270,6 +277,14 @@ export function appForPath(pathname: string): AppDef {
   return best?.app ?? APPS[0]
 }
 
-export function visibleApps(roles: string[]): AppDef[] {
-  return APPS.filter((a) => a.roles.some((r) => roles.includes(r)))
+/** The apps this user can reach: their roles must allow it AND the
+ *  property must actually run it. Roles alone were never enough - Front
+ *  Desk unlocks both F&B and Banquets, so a serviced-apartment operator
+ *  had no way to not see them. */
+export function visibleApps(roles: string[], modules?: string[]): AppDef[] {
+  return APPS.filter(
+    (a) =>
+      a.roles.some((r) => roles.includes(r)) &&
+      (!modules?.length || modules.includes(a.id)),
+  )
 }

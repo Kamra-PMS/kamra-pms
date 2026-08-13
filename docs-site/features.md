@@ -128,13 +128,85 @@ promised ready-by times, overdue flags, printable dockets and a revenue
 panel; **house laundry** (uniforms, hotel linen) and complimentary bags
 are tracked as volume but never billed.
 
+## Banquets
+
+The function business, from the first phone call to the final bill.
+
+**Prospecting.** An enquiry becomes a function sheet with a follow-up
+date, a source and an owner, so it can't go quiet — the morning list
+surfaces follow-ups that are due, tentative holds about to lapse,
+payments coming up, and confirmed functions still missing an event
+order or a guaranteed pax count.
+
+**Availability.** Halls carry a type, a capacity and a minimum, a day
+rental and an hourly rate, and the layouts they take. A **confirmed**
+function owns the hall; a **tentative** hold is a soft hold you can
+still sell over. Two functions can share a hall morning and evening —
+only a real overlap in hours counts as taken, including across
+midnight.
+
+**What they're buying.** Menu packages priced per plate, carrying their
+own courses (with live counters and "pick 3 of 6"), and a service
+catalogue for everything else: LED walls, projectors, laptops, podiums,
+stage and dance floor, decor, DJ, bar, staffing, stationery. Per-pax
+lines bill the **guaranteed pax** — or the actual count if more turned
+up — and honour a package's minimum. Per-hour lines bill the function's
+own hours.
+
+**Chargeable and complimentary.** Every line says which it is. A
+complimentary line is worth nothing on the quote but never disappears:
+it still prints on the event order and the pack list, because someone
+still has to carry the podium. The sheet shows what the hotel gave
+away.
+
+**Negotiation.** Rates move, and the hall's rate moves on its own. A
+headline discount spreads **pro-rata across the lines**, so a quote
+mixing food at 5% and AV at 18% still taxes each line correctly. Every
+move is snapshotted with what the quote was worth before and after, so
+the fourth revision of a wedding quote can be explained. What's still
+unsettled lives as **open items**, each with what agreeing it would do
+to the price.
+
+**Paper.** A versioned quotation, a contract with the schedule, the
+policy and signature blocks, the **banquet event order** for the
+banquet, kitchen and AV teams (with the menus expanded into courses),
+the **pack list** of what physically has to reach the hall and by when,
+and an invoice with GST grouped by rate.
+
+**Money.** A payment schedule where percentage milestones follow the
+quote as it moves and agreed amounts stay put; receipts that tick off
+the milestone they pay; and posting onto a group's master folio so the
+rooms and the function land on one bill. Alcohol never rides a company
+bill — those lines come back to be settled separately instead of
+failing the post.
+
+**The green room.** Holding a changing room for the wedding party puts
+a real room block on it, so it genuinely leaves the sellable inventory
+instead of living on a note. Complimentary by default; chargeable if
+you say so.
+
+**Tracking.** The pipeline by month and by status — confirmed, still in
+play, outstanding — with conversion, a breakdown by event type, hall
+and source, and why the business that went away went away.
+
 ## Direct bookings
 
 A public booking page with live availability and real quotes, photo
 galleries, policies and FAQs, promo codes, **experiences as add-ons**
 (spa, safari, dinner), configurable advance collection (percent / fixed /
 full / pay-at-hotel — terms are snapshotted per booking), your brand
-colour, and SEO baked in (schema.org hotel markup, OG images).
+colour, and SEO baked in (schema.org hotel markup, OG images). Guests
+pick **check-in and check-out** and tap **Check availability**.
+
+## Short-term rentals
+
+Kamra runs villas the same way it runs hotels. Set the property kind to
+**Short Term Rental** and the public site becomes a catalog of places —
+each villa at its own address, sold as private rooms or the whole house.
+Inventory is **sellable units** (room / whole-place / package) with
+competition groups, so booking the villa takes its rooms off sale.
+Quotes carry cleaning fees and refundable deposits. Instant book or
+request-to-book.
 
 ## Multi-property
 

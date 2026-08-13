@@ -1,0 +1,128 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "format:{property}-{profile_name}",
+ "creation": "2026-08-11 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "property",
+  "profile_name",
+  "is_default",
+  "column_break_a",
+  "clean_duration_minutes",
+  "inspect_duration_minutes",
+  "buffer_after_ready_minutes",
+  "sb_rules",
+  "same_day_turn_allowed",
+  "requires_inspection",
+  "ready_marked_by"
+ ],
+ "fields": [
+  {
+   "fieldname": "property",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Property",
+   "options": "Property",
+   "reqd": 1
+  },
+  {
+   "fieldname": "profile_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Profile Name",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_default",
+   "fieldtype": "Check",
+   "label": "Default for Property"
+  },
+  {
+   "fieldname": "column_break_a",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "120",
+   "fieldname": "clean_duration_minutes",
+   "fieldtype": "Int",
+   "label": "Clean Duration (minutes)"
+  },
+  {
+   "default": "30",
+   "fieldname": "inspect_duration_minutes",
+   "fieldtype": "Int",
+   "label": "Inspect Duration (minutes)"
+  },
+  {
+   "default": "0",
+   "description": "Minutes after Ready before the unit is sellable again.",
+   "fieldname": "buffer_after_ready_minutes",
+   "fieldtype": "Int",
+   "label": "Buffer After Ready (minutes)"
+  },
+  {
+   "fieldname": "sb_rules",
+   "fieldtype": "Section Break",
+   "label": "Rules"
+  },
+  {
+   "default": "0",
+   "fieldname": "same_day_turn_allowed",
+   "fieldtype": "Check",
+   "label": "Same-day Turn Allowed"
+  },
+  {
+   "default": "1",
+   "fieldname": "requires_inspection",
+   "fieldtype": "Check",
+   "label": "Requires Inspection"
+  },
+  {
+   "default": "Housekeeping",
+   "fieldname": "ready_marked_by",
+   "fieldtype": "Select",
+   "label": "Ready Marked By",
+   "options": "Housekeeping\nFront Desk\nHotel Admin"
+  }
+ ],
+ "links": [],
+ "modified": "2026-08-11 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kamra",
+ "name": "Turnover Profile",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "Hotel Admin",
+   "write": 1
+  },
+  {
+   "read": 1,
+   "role": "Housekeeping",
+   "write": 1
+  },
+  {
+   "read": 1,
+   "role": "Front Desk"
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

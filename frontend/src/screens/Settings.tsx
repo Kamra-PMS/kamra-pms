@@ -186,6 +186,12 @@ const PROPERTY_SPECS: Spec[] = [
   { field: "property_name", label: "Property name" },
   { field: "legal_name", label: "Legal name" },
   {
+    field: "property_kind",
+    label: "Property kind",
+    type: "select",
+    options: ["Hotel", "Short Term Rental"],
+  },
+  {
     field: "country",
     label: "Country",
     hint: "Selects the tax & invoicing pack. India and Indonesia today; more via the Marketplace.",
@@ -241,6 +247,48 @@ const BOOKING_SPECS: Spec[] = [
   {
     field: "booking_engine_enabled",
     label: "Public booking page (/book)",
+    type: "check",
+  },
+  {
+    field: "booking_mode",
+    label: "Booking mode",
+    type: "select",
+    options: ["Instant", "Request to Book"],
+  },
+  {
+    field: "hold_minutes",
+    label: "Hold window (minutes)",
+    type: "number",
+  },
+  {
+    field: "minimum_nights",
+    label: "Minimum stay nights",
+    type: "number",
+  },
+  {
+    field: "cleaning_fee",
+    label: "Cleaning fee",
+    type: "number",
+  },
+  {
+    field: "cleaning_fee_taxable",
+    label: "Cleaning fee taxable",
+    type: "check",
+  },
+  {
+    field: "security_deposit_amount",
+    label: "Security deposit amount",
+    type: "number",
+  },
+  {
+    field: "access_instructions",
+    label: "Access instructions",
+    type: "textarea",
+    hint: "Released to guests only after payment, deposit, and optional pre-check-in gates",
+  },
+  {
+    field: "require_precheckin_for_access",
+    label: "Require pre-check-in for access",
     type: "check",
   },
   {
@@ -307,7 +355,11 @@ const AI_SPECS: Spec[] = [
     label: "Provider base URL",
     hint: "any OpenAI-compatible endpoint: OpenAI, OpenRouter, Groq, Ollama…",
   },
-  { field: "model", label: "Model" },
+  {
+    field: "model",
+    label: "Model",
+    hint: "gpt-4o-mini, gpt-5.6-luna, gpt-5.6-terra, gpt-5.6-sol, or any OpenAI-compatible slug",
+  },
   { field: "api_key", label: "API key", type: "password" },
   {
     field: "extra_instructions",
@@ -438,7 +490,7 @@ export default function Settings() {
 
       <SettingsCard
         title="AI assistant (bring your own key)"
-        description="Optional in-app copilot for staff. Your key, your data - the model can only act through Kamra's governed tools, and every action is audit-logged."
+        description="Kamra Agent, the in-app assistant for staff. Your key, your data - the model can only act through Kamra's governed tools, and every action is audit-logged."
         specs={AI_SPECS}
         doc={ai}
         onSave={async (changes) => {

@@ -1,0 +1,216 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-07-31 10:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "property",
+  "menu_name",
+  "menu_code",
+  "meal_period",
+  "food_type",
+  "column_break_a",
+  "service_style",
+  "cuisine",
+  "rate_per_pax",
+  "min_pax",
+  "gst_rate",
+  "sb_courses",
+  "courses",
+  "dish_options",
+  "sb_notes",
+  "inclusions",
+  "exclusions",
+  "disabled"
+ ],
+ "fields": [
+  {
+   "fieldname": "property",
+   "fieldtype": "Link",
+   "label": "Property",
+   "options": "Property",
+   "reqd": 1
+  },
+  {
+   "fieldname": "menu_name",
+   "fieldtype": "Data",
+   "label": "Menu Name",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "menu_code",
+   "fieldtype": "Data",
+   "label": "Menu Code",
+   "description": "Short code used on the BEO."
+  },
+  {
+   "fieldname": "meal_period",
+   "fieldtype": "Select",
+   "label": "Meal Period",
+   "in_list_view": 1,
+   "default": "Dinner",
+   "options": "Breakfast\nBrunch\nLunch\nHi-Tea\nDinner\nAll Day\nSnacks"
+  },
+  {
+   "fieldname": "food_type",
+   "fieldtype": "Select",
+   "label": "Food Type",
+   "in_list_view": 1,
+   "default": "Veg",
+   "options": "Veg\nNon-Veg\nMixed\nJain\nVegan"
+  },
+  {
+   "fieldname": "column_break_a",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "service_style",
+   "fieldtype": "Select",
+   "label": "Service Style",
+   "default": "Buffet",
+   "options": "Buffet\nPlated\nFamily Style\nLive Counter\nBoxed\nCocktail"
+  },
+  {
+   "fieldname": "cuisine",
+   "fieldtype": "Data",
+   "label": "Cuisine",
+   "description": "North Indian, Continental, Pan-Asian…"
+  },
+  {
+   "fieldname": "rate_per_pax",
+   "fieldtype": "Currency",
+   "label": "Rate / Pax",
+   "reqd": 1,
+   "in_list_view": 1,
+   "description": "Package price per plate, before tax."
+  },
+  {
+   "fieldname": "min_pax",
+   "fieldtype": "Int",
+   "label": "Minimum Pax",
+   "description": "Below this the package price still bills for min pax."
+  },
+  {
+   "fieldname": "gst_rate",
+   "fieldtype": "Percent",
+   "label": "GST %",
+   "default": "5"
+  },
+  {
+   "fieldname": "sb_courses",
+   "fieldtype": "Section Break",
+   "label": "Courses"
+  },
+  {
+   "fieldname": "courses",
+   "fieldtype": "Table",
+   "label": "Courses",
+   "options": "Banquet Menu Course"
+  },
+  {
+   "fieldname": "dish_options",
+   "fieldtype": "Table",
+   "options": "Banquet Menu Dish",
+   "label": "Dishes Offered",
+   "description": "Which dishes each course can offer. Leave empty to just print the course text; fill it in to let the customer choose and to cost the menu from recipes."
+  },
+  {
+   "fieldname": "sb_notes",
+   "fieldtype": "Section Break",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "inclusions",
+   "fieldtype": "Small Text",
+   "label": "Inclusions",
+   "description": "What the plate price covers (crockery, service staff…)."
+  },
+  {
+   "fieldname": "exclusions",
+   "fieldtype": "Small Text",
+   "label": "Exclusions",
+   "description": "What it does not (alcohol, live counters, taxes…)."
+  },
+  {
+   "fieldname": "disabled",
+   "fieldtype": "Check",
+   "label": "Disabled"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-07-31 10:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kamra",
+ "name": "Banquet Menu",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 1,
+   "print": 1,
+   "email": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "export": 1,
+   "share": 1
+  },
+  {
+   "role": "Hotel Admin",
+   "read": 1,
+   "report": 1,
+   "print": 1,
+   "email": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "export": 1,
+   "share": 1
+  },
+  {
+   "role": "Front Desk",
+   "read": 1,
+   "report": 1,
+   "print": 1,
+   "email": 1,
+   "write": 1,
+   "create": 1
+  },
+  {
+   "role": "Revenue Manager",
+   "read": 1,
+   "report": 1,
+   "print": 1,
+   "email": 1,
+   "write": 1,
+   "create": 1
+  },
+  {
+   "role": "Finance",
+   "read": 1,
+   "report": 1,
+   "print": 1,
+   "email": 1
+  },
+  {
+   "role": "Kamra Agent",
+   "read": 1,
+   "report": 1,
+   "print": 1,
+   "email": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "format:BMENU-{#####}",
+ "naming_rule": "Expression (old style)",
+ "title_field": "menu_name",
+ "search_fields": "menu_name,meal_period,food_type"
+}

@@ -16,6 +16,7 @@ import { CalendarView } from "./components/CalendarView"
 import { ResourceScreen } from "./components/ResourceScreen"
 const Billing = lazy(() => import("./screens/Billing"))
 const PublicBooking = lazy(() => import("./screens/PublicBooking"))
+const PublicListing = lazy(() => import("./screens/PublicListing"))
 const PublicCheckin = lazy(() => import("./screens/PublicCheckin"))
 const FolioView = lazy(() => import("./screens/FolioView"))
 const GuestJourney = lazy(() => import("./screens/GuestJourney"))
@@ -27,7 +28,13 @@ const Setup = lazy(() => import("./screens/Setup"))
 const Settings = lazy(() => import("./screens/Settings"))
 const BookingEngine = lazy(() => import("./screens/BookingEngine"))
 const Developers = lazy(() => import("./screens/Developers"))
-const VenueCalendar = lazy(() => import("./screens/VenueCalendar"))
+const Banquet = lazy(() => import("./screens/Banquet"))
+const BanquetDiary = lazy(() => import("./screens/BanquetDiary"))
+const BanquetMonth = lazy(() => import("./screens/BanquetMonth"))
+const BanquetRegisters = lazy(() => import("./screens/BanquetRegisters"))
+const BanquetCatalogue = lazy(() => import("./screens/BanquetCatalogue"))
+const BanquetFunction = lazy(() => import("./screens/BanquetFunction"))
+const BanquetDocument = lazy(() => import("./screens/BanquetDocument"))
 const Agents = lazy(() => import("./screens/Agents"))
 const Activity = lazy(() => import("./screens/Activity"))
 const AppLauncher = lazy(() => import("./screens/AppLauncher"))
@@ -179,6 +186,11 @@ export default function App() {
           path="book/:checkin/:checkout?/:adults?/:children?"
           element={<PublicBooking />}
         />
+        <Route path="stay/:slug" element={<PublicListing />} />
+        <Route
+          path="stay/:slug/:checkin/:checkout?/:adults?/:children?"
+          element={<PublicListing />}
+        />
         {/* pre-arrival self check-in, tokenized per reservation */}
         <Route path="checkin/:token" element={<PublicCheckin />} />
         {/* housekeeping phone app - share the /hk URL with the HK team */}
@@ -254,7 +266,21 @@ export default function App() {
             path="venues"
             element={<ResourceScreen config={venuesConfig} />}
           />
-          <Route path="venue-calendar" element={<VenueCalendar />} />
+          {/* The old venue calendar created bare Venue Bookings with no
+              rental line, no follow-up and no owner - a function that
+              quoted zero. The diary is its superset, and the only door. */}
+          <Route
+            path="venue-calendar"
+            element={<Navigate to="/banquet-diary" replace />}
+          />
+          {/* banquets: the function business, enquiry → event order → bill */}
+          <Route path="banquet" element={<Banquet />} />
+          <Route path="banquet-diary" element={<BanquetDiary />} />
+          <Route path="banquet-month" element={<BanquetMonth />} />
+          <Route path="banquet-registers" element={<BanquetRegisters />} />
+          <Route path="banquet-catalogue" element={<BanquetCatalogue />} />
+          <Route path="banquet/:name" element={<BanquetFunction />} />
+          <Route path="banquet/:name/:kind" element={<BanquetDocument />} />
           <Route
             path="groups"
             element={<ResourceScreen config={groupsConfig} />}

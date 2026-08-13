@@ -8,29 +8,134 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "sb_enquiry",
   "property",
   "venue",
   "event_type",
+  "event_name",
   "column_break_a",
   "status",
+  "enquiry_date",
+  "source",
+  "sales_owner",
+  "follow_up_date",
+  "tentative_until",
+  "lost_reason",
+  "sb_when",
   "event_date",
+  "end_date",
   "start_time",
   "end_time",
+  "session",
+  "billable_hours",
+  "column_break_when",
+  "setup_style",
+  "setup_notes",
+  "setup_from",
+  "teardown_by",
   "sb_who",
   "customer_name",
+  "customer",
   "customer_phone",
-  "column_break_b",
+  "customer_email",
   "company",
+  "travel_agent",
+  "column_break_b",
+  "billing_name",
+  "gstin",
+  "billing_address",
+  "place_of_supply",
+  "sb_pax",
   "attendees",
+  "pax_guaranteed",
+  "column_break_pax",
+  "pax_actual",
+  "rate_basis",
+  "hall_deal",
+  "minimum_fnb_spend",
+  "fnb_spend",
+  "hall_waived",
+  "sb_green",
+  "green_room",
+  "green_room_from",
+  "green_room_to",
+  "column_break_green",
+  "green_room_complimentary",
+  "green_room_block",
+  "sb_items",
+  "items",
+  "sb_selection",
+  "selections",
   "sb_money",
-  "quoted_amount",
+  "venue_rental_list",
+  "venue_rental",
+  "subtotal",
+  "discount_amount",
+  "service_charge_percent",
+  "service_charge",
   "column_break_c",
+  "taxable_amount",
+  "tax_amount",
+  "grand_total",
+  "non_chargeable_value",
+  "sb_cost",
+  "food_cost",
+  "service_cost",
+  "total_cost",
+  "column_break_cost",
+  "input_tax_credit",
+  "itc_eligible",
+  "net_cost",
+  "gross_margin",
+  "margin_percent",
+  "column_break_c2",
+  "quoted_amount",
   "advance_received",
+  "balance_due",
+  "sb_quote",
+  "quote_version",
+  "quote_number",
+  "quote_sent_on",
+  "quote_valid_till",
+  "column_break_quote",
+  "beo_number",
+  "beo_generated_on",
+  "invoice_number",
+  "invoice_date",
+  "contract_signed_on",
+  "sb_revisions",
+  "revisions",
+  "sb_terms",
+  "payment_terms",
+  "payment_terms_note",
+  "sb_open",
+  "open_items",
+  "sb_receipts",
+  "receipts",
+  "folio",
+  "posted_to_folio",
+  "sb_deposit",
+  "refundable_deposit",
+  "deposit_held",
+  "damage_amount",
+  "damage_note",
+  "column_break_deposit",
+  "deposit_refunded",
+  "closed_out_on",
+  "closed_out_by",
   "sb_notes",
   "requirements",
+  "beo_notes",
+  "column_break_notes",
+  "internal_notes",
   "group_booking"
  ],
  "fields": [
+  {
+   "fieldname": "sb_enquiry",
+   "fieldtype": "Section Break",
+   "label": "Enquiry"
+  },
   {
    "fieldname": "property",
    "fieldtype": "Link",
@@ -41,38 +146,93 @@
   {
    "fieldname": "venue",
    "fieldtype": "Link",
-   "in_list_view": 1,
    "label": "Venue",
    "options": "Venue",
-   "reqd": 1
+   "reqd": 1,
+   "in_list_view": 1
   },
   {
    "fieldname": "event_type",
    "fieldtype": "Select",
-   "in_list_view": 1,
    "label": "Event Type",
-   "options": "Wedding\nConference\nBirthday\nCorporate Offsite\nOther"
+   "in_list_view": 1,
+   "default": "Wedding",
+   "options": "Wedding\nReception\nSangeet\nMehendi\nEngagement\nConference\nSeminar\nTraining\nProduct Launch\nBirthday\nAnniversary\nCorporate Offsite\nExhibition\nOther"
+  },
+  {
+   "fieldname": "event_name",
+   "fieldtype": "Data",
+   "label": "Event Name",
+   "description": "What the board outside the hall will say."
   },
   {
    "fieldname": "column_break_a",
-   "fieldtype": "Column Break",
-   "label": "Column Break A"
+   "fieldtype": "Column Break"
   },
   {
-   "default": "Enquiry",
    "fieldname": "status",
    "fieldtype": "Select",
+   "label": "Status",
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "label": "Status",
-   "options": "Enquiry\nConfirmed\nCompleted\nCancelled"
+   "default": "Enquiry",
+   "options": "Enquiry\nTentative\nConfirmed\nCompleted\nCancelled\nLost"
+  },
+  {
+   "fieldname": "enquiry_date",
+   "fieldtype": "Date",
+   "label": "Enquiry Date",
+   "description": "When the enquiry came in."
+  },
+  {
+   "fieldname": "source",
+   "fieldtype": "Select",
+   "label": "Source",
+   "default": "Phone",
+   "options": "Walk-in\nPhone\nEmail\nWebsite\nReferral\nTravel Agent\nRepeat Guest\nSocial\nOther"
+  },
+  {
+   "fieldname": "sales_owner",
+   "fieldtype": "Link",
+   "label": "Sales Owner",
+   "options": "User",
+   "description": "Whose pipeline this sits in."
+  },
+  {
+   "fieldname": "follow_up_date",
+   "fieldtype": "Date",
+   "label": "Follow Up Date",
+   "description": "Next chase. Overdue follow-ups surface as reminders."
+  },
+  {
+   "fieldname": "tentative_until",
+   "fieldtype": "Date",
+   "label": "Tentative Until",
+   "description": "A tentative hold releases the venue after this date."
+  },
+  {
+   "fieldname": "lost_reason",
+   "fieldtype": "Small Text",
+   "label": "Lost Reason",
+   "depends_on": "eval:['Cancelled','Lost'].includes(doc.status)"
+  },
+  {
+   "fieldname": "sb_when",
+   "fieldtype": "Section Break",
+   "label": "Date & Setup"
   },
   {
    "fieldname": "event_date",
    "fieldtype": "Date",
-   "in_list_view": 1,
    "label": "Event Date",
+   "in_list_view": 1,
    "reqd": 1
+  },
+  {
+   "fieldname": "end_date",
+   "fieldtype": "Date",
+   "label": "End Date",
+   "description": "Leave blank for a single-day function."
   },
   {
    "fieldname": "start_time",
@@ -85,6 +245,50 @@
    "label": "End Time"
   },
   {
+   "fieldname": "session",
+   "fieldtype": "Select",
+   "label": "Session",
+   "options": "\nMorning\nAfternoon\nEvening\nFull Day\nCustom Hours",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "description": "How halls are actually sold: a session, not a stopwatch. Custom Hours falls back to the start and end times."
+  },
+  {
+   "fieldname": "billable_hours",
+   "fieldtype": "Float",
+   "label": "Billable Hours",
+   "read_only": 1,
+   "description": "Derived from the start and end time - what a per-hour venue charge bills on."
+  },
+  {
+   "fieldname": "column_break_when",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "setup_style",
+   "fieldtype": "Select",
+   "label": "Setup Style",
+   "default": "Round Table",
+   "options": "Theatre\nClassroom\nU-Shape\nBoardroom\nCluster\nRound Table\nHerringbone\nFloating\nCustom"
+  },
+  {
+   "fieldname": "setup_notes",
+   "fieldtype": "Small Text",
+   "label": "Setup Notes",
+   "description": "Stage, dance floor, buffet counters, entry arch…"
+  },
+  {
+   "fieldname": "setup_from",
+   "fieldtype": "Datetime",
+   "label": "Setup Access From",
+   "description": "When the decorator can start dressing the hall."
+  },
+  {
+   "fieldname": "teardown_by",
+   "fieldtype": "Datetime",
+   "label": "Teardown By"
+  },
+  {
    "fieldname": "sb_who",
    "fieldtype": "Section Break",
    "label": "Customer"
@@ -92,9 +296,16 @@
   {
    "fieldname": "customer_name",
    "fieldtype": "Data",
-   "in_list_view": 1,
    "label": "Customer Name",
+   "in_list_view": 1,
    "reqd": 1
+  },
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "label": "Customer",
+   "options": "Guest",
+   "description": "The same guest record the front desk uses - so a repeat client's history, notes and VIP flag follow them into the banquet office."
   },
   {
    "fieldname": "customer_phone",
@@ -103,40 +314,511 @@
    "options": "Phone"
   },
   {
-   "fieldname": "column_break_b",
-   "fieldtype": "Column Break",
-   "label": "Column Break B"
+   "fieldname": "customer_email",
+   "fieldtype": "Data",
+   "label": "Customer Email",
+   "options": "Email"
   },
   {
    "fieldname": "company",
    "fieldtype": "Link",
    "label": "Company",
-   "options": "Company"
+   "options": "Company",
+   "description": "Set for corporate business - it also decides which folio the bill lands on."
+  },
+  {
+   "fieldname": "travel_agent",
+   "fieldtype": "Link",
+   "label": "Travel Agent",
+   "options": "Travel Agent"
+  },
+  {
+   "fieldname": "column_break_b",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "billing_name",
+   "fieldtype": "Data",
+   "label": "Billing Name",
+   "description": "The legal name on the invoice, if it differs."
+  },
+  {
+   "fieldname": "gstin",
+   "fieldtype": "Data",
+   "label": "GSTIN",
+   "description": "The customer's tax registration - printed on the contract and the invoice."
+  },
+  {
+   "fieldname": "billing_address",
+   "fieldtype": "Small Text",
+   "label": "Billing Address"
+  },
+  {
+   "fieldname": "place_of_supply",
+   "fieldtype": "Data",
+   "label": "Place Of Supply",
+   "description": "State of supply - decides CGST+SGST vs IGST."
+  },
+  {
+   "fieldname": "sb_pax",
+   "fieldtype": "Section Break",
+   "label": "Pax"
   },
   {
    "fieldname": "attendees",
    "fieldtype": "Int",
-   "label": "Attendees"
+   "label": "Expected Pax",
+   "description": "The working number while the enquiry is live."
+  },
+  {
+   "fieldname": "pax_guaranteed",
+   "fieldtype": "Int",
+   "label": "Guaranteed Pax",
+   "description": "The minimum the customer commits to pay for. Menus bill on this once it is set."
+  },
+  {
+   "fieldname": "column_break_pax",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "pax_actual",
+   "fieldtype": "Int",
+   "label": "Actual Pax",
+   "description": "Counted on the day - what the final bill uses if it is higher than the guarantee."
+  },
+  {
+   "fieldname": "rate_basis",
+   "fieldtype": "Select",
+   "label": "Rate Basis",
+   "default": "Per Pax",
+   "options": "Per Pax\nPer Plate\nLump Sum\nPer Hour"
+  },
+  {
+   "fieldname": "hall_deal",
+   "fieldtype": "Select",
+   "label": "Hall deal",
+   "default": "Hall & Food",
+   "options": "Hall & Food\nHall free over a minimum spend\nHall rent only\nFood only",
+   "description": "How this one was sold. 'Hall free over a minimum spend' is the common wedding deal: no rental if the food bill clears the number."
+  },
+  {
+   "fieldname": "minimum_fnb_spend",
+   "fieldtype": "Currency",
+   "label": "Minimum F&B spend",
+   "depends_on": "eval:doc.hall_deal==\"Hall free over a minimum spend\"",
+   "description": "The food bill that waives the rental."
+  },
+  {
+   "fieldname": "fnb_spend",
+   "fieldtype": "Currency",
+   "label": "F&B So Far",
+   "read_only": 1
+  },
+  {
+   "fieldname": "hall_waived",
+   "fieldtype": "Check",
+   "label": "Hall Waived",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_green",
+   "fieldtype": "Section Break",
+   "label": "Green Room / Change Room"
+  },
+  {
+   "fieldname": "green_room",
+   "fieldtype": "Link",
+   "label": "Green Room",
+   "options": "Room",
+   "description": "The changing room held for the wedding party. Assigning one puts a Room Block on it so it cannot sell."
+  },
+  {
+   "fieldname": "green_room_from",
+   "fieldtype": "Date",
+   "label": "Green Room From"
+  },
+  {
+   "fieldname": "green_room_to",
+   "fieldtype": "Date",
+   "label": "Green Room To"
+  },
+  {
+   "fieldname": "column_break_green",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "green_room_complimentary",
+   "fieldtype": "Check",
+   "label": "Green Room Complimentary",
+   "default": "1",
+   "description": "On = held as house use. Off = it bills as an Accommodation line on the quote."
+  },
+  {
+   "fieldname": "green_room_block",
+   "fieldtype": "Link",
+   "label": "Green Room Block",
+   "options": "Room Block",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_items",
+   "fieldtype": "Section Break",
+   "label": "Line Items"
+  },
+  {
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "label": "Items",
+   "options": "Banquet Function Item"
+  },
+  {
+   "fieldname": "sb_selection",
+   "fieldtype": "Section Break",
+   "label": "Menu Chosen"
+  },
+  {
+   "fieldname": "selections",
+   "fieldtype": "Table",
+   "label": "Selections",
+   "options": "Banquet Selection"
   },
   {
    "fieldname": "sb_money",
    "fieldtype": "Section Break",
-   "label": "Money"
+   "label": "Totals"
+  },
+  {
+   "fieldname": "venue_rental_list",
+   "fieldtype": "Currency",
+   "label": "Venue Rack Rate",
+   "read_only": 1
+  },
+  {
+   "fieldname": "venue_rental",
+   "fieldtype": "Currency",
+   "label": "Venue Agreed Rate",
+   "read_only": 1,
+   "description": "Mirrors the Venue Rental line - the negotiated hall price."
+  },
+  {
+   "fieldname": "subtotal",
+   "fieldtype": "Currency",
+   "label": "Subtotal",
+   "read_only": 1
+  },
+  {
+   "fieldname": "discount_amount",
+   "fieldtype": "Currency",
+   "label": "Discount Amount",
+   "description": "A negotiated reduction on the whole quote. Spread pro-rata across the chargeable lines so each keeps its own GST rate."
+  },
+  {
+   "fieldname": "service_charge_percent",
+   "fieldtype": "Percent",
+   "label": "Service Charge %",
+   "description": "Charged on the food and service lines before tax, the way a banquet bill states it."
+  },
+  {
+   "fieldname": "service_charge",
+   "fieldtype": "Currency",
+   "label": "Service Charge",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_c",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "taxable_amount",
+   "fieldtype": "Currency",
+   "label": "Taxable Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "tax_amount",
+   "fieldtype": "Currency",
+   "label": "GST",
+   "read_only": 1
+  },
+  {
+   "fieldname": "grand_total",
+   "fieldtype": "Currency",
+   "label": "Grand Total",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "non_chargeable_value",
+   "fieldtype": "Currency",
+   "label": "Complimentary",
+   "read_only": 1,
+   "description": "What the complimentary lines would have been worth."
+  },
+  {
+   "fieldname": "sb_cost",
+   "fieldtype": "Section Break",
+   "label": "Cost & Margin"
+  },
+  {
+   "fieldname": "food_cost",
+   "fieldtype": "Currency",
+   "label": "Food Cost",
+   "read_only": 1,
+   "description": "Costed from the chosen dishes' recipes at the billable pax."
+  },
+  {
+   "fieldname": "service_cost",
+   "fieldtype": "Currency",
+   "label": "Service Cost",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_cost",
+   "fieldtype": "Currency",
+   "label": "Total Cost",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_cost",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "input_tax_credit",
+   "fieldtype": "Currency",
+   "label": "Input Tax Credit",
+   "read_only": 1,
+   "description": "Tax paid on the cost side. Claimable only when the output supply allows it - a 5% F&B supply cannot."
+  },
+  {
+   "fieldname": "itc_eligible",
+   "fieldtype": "Check",
+   "label": "ITC Claimable",
+   "read_only": 1
+  },
+  {
+   "fieldname": "net_cost",
+   "fieldtype": "Currency",
+   "label": "Net Cost",
+   "read_only": 1,
+   "description": "Cost after any claimable input credit - what the function really costs the hotel."
+  },
+  {
+   "fieldname": "gross_margin",
+   "fieldtype": "Currency",
+   "label": "Gross Margin",
+   "read_only": 1
+  },
+  {
+   "fieldname": "margin_percent",
+   "fieldtype": "Percent",
+   "label": "Margin %",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_c2",
+   "fieldtype": "Column Break"
   },
   {
    "fieldname": "quoted_amount",
    "fieldtype": "Currency",
-   "label": "Quoted Amount"
-  },
-  {
-   "fieldname": "column_break_c",
-   "fieldtype": "Column Break",
-   "label": "Column Break C"
+   "label": "Quoted Amount",
+   "read_only": 1,
+   "description": "Kept in step with the grand total for the diary and the group screens."
   },
   {
    "fieldname": "advance_received",
    "fieldtype": "Currency",
-   "label": "Advance Received"
+   "label": "Advance Received",
+   "read_only": 1,
+   "description": "Sum of the receipts below."
+  },
+  {
+   "fieldname": "balance_due",
+   "fieldtype": "Currency",
+   "label": "Balance Due",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_quote",
+   "fieldtype": "Section Break",
+   "label": "Quotation"
+  },
+  {
+   "fieldname": "quote_version",
+   "fieldtype": "Int",
+   "label": "Quote Version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "quote_number",
+   "fieldtype": "Data",
+   "label": "Quote Number",
+   "read_only": 1,
+   "description": "Minted when the first quotation is issued and kept across revisions - the number the customer quotes back."
+  },
+  {
+   "fieldname": "quote_sent_on",
+   "fieldtype": "Date",
+   "label": "Quote Sent On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "quote_valid_till",
+   "fieldtype": "Date",
+   "label": "Quote Valid Till"
+  },
+  {
+   "fieldname": "column_break_quote",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "beo_number",
+   "fieldtype": "Data",
+   "label": "Event Order No.",
+   "read_only": 1
+  },
+  {
+   "fieldname": "beo_generated_on",
+   "fieldtype": "Datetime",
+   "label": "Beo Generated On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "invoice_number",
+   "fieldtype": "Data",
+   "label": "Invoice No.",
+   "read_only": 1,
+   "description": "Assigned once, when the function is invoiced."
+  },
+  {
+   "fieldname": "invoice_date",
+   "fieldtype": "Date",
+   "label": "Invoice Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "contract_signed_on",
+   "fieldtype": "Date",
+   "label": "Contract Signed On"
+  },
+  {
+   "fieldname": "sb_revisions",
+   "fieldtype": "Section Break",
+   "label": "Negotiation History"
+  },
+  {
+   "fieldname": "revisions",
+   "fieldtype": "Table",
+   "label": "Revisions",
+   "options": "Banquet Quote Revision",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_terms",
+   "fieldtype": "Section Break",
+   "label": "Payment Terms"
+  },
+  {
+   "fieldname": "payment_terms",
+   "fieldtype": "Table",
+   "label": "Payment Terms",
+   "options": "Banquet Payment Term"
+  },
+  {
+   "fieldname": "payment_terms_note",
+   "fieldtype": "Small Text",
+   "label": "Payment Terms Note",
+   "description": "Cancellation policy, retention, taxes-extra wording."
+  },
+  {
+   "fieldname": "sb_open",
+   "fieldtype": "Section Break",
+   "label": "Open Items"
+  },
+  {
+   "fieldname": "open_items",
+   "fieldtype": "Table",
+   "label": "Open Items",
+   "options": "Banquet Open Item"
+  },
+  {
+   "fieldname": "sb_receipts",
+   "fieldtype": "Section Break",
+   "label": "Receipts"
+  },
+  {
+   "fieldname": "receipts",
+   "fieldtype": "Table",
+   "label": "Receipts",
+   "options": "Banquet Receipt"
+  },
+  {
+   "fieldname": "folio",
+   "fieldtype": "Link",
+   "label": "Folio",
+   "options": "Folio",
+   "read_only": 1,
+   "description": "Set once the function has been posted to a bill."
+  },
+  {
+   "fieldname": "posted_to_folio",
+   "fieldtype": "Check",
+   "label": "Posted To Folio",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_deposit",
+   "fieldtype": "Section Break",
+   "label": "Deposit & Close-out"
+  },
+  {
+   "fieldname": "refundable_deposit",
+   "fieldtype": "Currency",
+   "label": "Refundable Deposit",
+   "description": "Held against damage, returned when the hall is handed back clean. Recorded as a Security Deposit receipt."
+  },
+  {
+   "fieldname": "deposit_held",
+   "fieldtype": "Currency",
+   "label": "Deposit Held",
+   "read_only": 1,
+   "description": "Security-deposit receipts less anything already returned. Held money, not payment - it never nets against the bill."
+  },
+  {
+   "fieldname": "damage_amount",
+   "fieldtype": "Currency",
+   "label": "Damage Amount",
+   "read_only": 1,
+   "description": "Deducted from the deposit at close-out."
+  },
+  {
+   "fieldname": "damage_note",
+   "fieldtype": "Small Text",
+   "label": "Damage Note",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_deposit",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "deposit_refunded",
+   "fieldtype": "Currency",
+   "label": "Deposit Refunded",
+   "read_only": 1
+  },
+  {
+   "fieldname": "closed_out_on",
+   "fieldtype": "Datetime",
+   "label": "Closed Out On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "closed_out_by",
+   "fieldtype": "Link",
+   "label": "Closed Out By",
+   "options": "User",
+   "read_only": 1
   },
   {
    "fieldname": "sb_notes",
@@ -144,10 +826,26 @@
    "label": "Notes"
   },
   {
-   "description": "Menu, seating, AV, decor\u2026",
    "fieldname": "requirements",
    "fieldtype": "Small Text",
-   "label": "Requirements"
+   "label": "Requirements",
+   "description": "What the customer asked for, in their words."
+  },
+  {
+   "fieldname": "beo_notes",
+   "fieldtype": "Text",
+   "label": "Event Order Notes",
+   "description": "Instructions for the banquet, kitchen and AV teams."
+  },
+  {
+   "fieldname": "column_break_notes",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "internal_notes",
+   "fieldtype": "Small Text",
+   "label": "Internal Notes",
+   "description": "Never printed on anything the customer sees."
   },
   {
    "fieldname": "group_booking",
@@ -159,7 +857,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-07-04 20:27:10.809835",
+ "modified": "2026-07-31 21:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Venue Booking",
@@ -214,5 +912,6 @@
  "sort_order": "DESC",
  "states": [],
  "title_field": "customer_name",
- "track_changes": 1
+ "track_changes": 1,
+ "search_fields": "customer_name,venue,event_date,status"
 }

@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function — the same governed layer
-the UI and the AI use. **178 endpoints**, generated from the source
+the UI and the AI use. **230 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -114,6 +114,16 @@ it (auto_price off); others are priced by the engine.
 | --- | --- | --- |
 | `property` | yes |  |
 | `bookings` | yes |  |
+
+### `kamra.api.registration_card`
+
+**GET/POST** · roles: `Front Desk`, `Kamra Agent`
+
+Everything the printed GRC (guest registration card) needs.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `reservation` | yes |  |
 
 ### `kamra.api.cash_summary`
 
@@ -559,7 +569,15 @@ Void an invoice into the register and reopen the folio for correction.
 
 **GET/POST** · roles: `Finance`, `Front Desk`, `Kamra Agent`
 
-Everything a GST invoice print needs, with the multi-rate breakup.
+Everything the bill needs to print itself.
+
+A tax invoice is a legal document, not a screenshot of a table: the
+service code belongs on each LINE (a room night, a restaurant cover
+and a laundry bag are three different supplies), the tax has to be
+named the way the country names it, the total has to appear in words,
+and the guest wants a summary by what they bought before they read
+forty lines. All of that is assembled here so every surface that
+prints a bill - the folio screen, a PDF, an email - agrees.
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -753,6 +771,18 @@ moment this lands; that guard was clearly written for this.
 | --- | --- | --- |
 | `reservation` | yes |  |
 
+### `kamra.api.checkin_context`
+
+**GET/POST** · roles: `Front Desk`, `Kamra Agent`
+
+Everything the check-in flow needs in one round trip: how complete
+the guest's registration is, the assigned room - or the allocator's
+suggestion plus every room the desk may hand over instead.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `reservation` | yes |  |
+
 ### `kamra.api.check_in`
 
 **GET/POST** · roles: `Front Desk`, `Kamra Agent`
@@ -761,6 +791,21 @@ moment this lands; that guard was clearly written for this.
 | --- | --- | --- |
 | `reservation` | yes |  |
 | `room` | no | `None` |
+
+### `kamra.api.upload_occupant_id`
+
+**POST** · roles: `Front Desk`, `Kamra Agent`
+
+ID document for one occupant on the stay register. Same security
+pipeline as every ID image: decoded, re-encoded through PIL (the
+sanitisation boundary), stored private, attached to the reservation
+so checkout retention rules find it.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `reservation` | yes |  |
+| `row` | yes |  |
+| `image` | yes |  |
 
 ### `kamra.api.upload_guest_document`
 
@@ -902,7 +947,7 @@ tape view).
 
 **GET/POST** · roles: `Front Desk`, `Finance`, `Kamra Agent`
 
-The GM / front-desk position briefing - what the copilot reads out
+The GM / front-desk position briefing - what Kamra Agent reads out
 at the morning meeting: today's occupancy against the overbooking
 ceiling, arrivals with ETAs, departures with ETDs and balances,
 back-to-back conflicts, the demand tier pricing is applying, and a
@@ -1057,6 +1102,9 @@ that are sold out or restricted; promote it later when a room frees.
 | `guest` | no | `None` |
 | `waitlist` | no | `0` |
 | `addons` | no | `None` |
+| `guest_category` | no | `None` |
+| `stay_details` | no | `None` |
+| `instructions` | no | `None` |
 
 ### `kamra.api.waitlist`
 
@@ -1806,6 +1854,685 @@ complimentary bags are counted as volume but earn nothing.
 | `days` | no | `30` |
 
 
+## Banquets (functions, quotations, event orders)
+
+### `kamra.banquet.banquet_catalogue`
+
+**GET/POST**
+
+What the property sells: the menu packages (with their courses) and
+the service list. This is the picker behind every line item.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+
+### `kamra.banquet.save_banquet_menu`
+
+**POST**
+
+Add or edit one menu package. Courses replace wholesale - the grid
+the user is looking at is the truth.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `menu_name` | yes |  |
+| `rate_per_pax` | yes |  |
+| `courses` | no | `None` |
+| `name` | no | `None` |
+
+### `kamra.banquet.delete_banquet_menu`
+
+**POST**
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `name` | yes |  |
+
+### `kamra.banquet.save_service_item`
+
+**POST**
+
+Add or edit one service - a projector, an LED wall, a DJ, a podium,
+a stage, a decor package, bar service. `chargeable = 0` marks the ones
+the hotel throws in as standard; they still appear on the event order
+and the pack list.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `item_name` | yes |  |
+| `category` | yes |  |
+| `rate` | no | `0` |
+| `uom` | no | `'Per Event'` |
+| `name` | no | `None` |
+
+### `kamra.banquet.delete_service_item`
+
+**POST**
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `name` | yes |  |
+
+### `kamra.banquet.create_enquiry`
+
+**POST**
+
+Open a function sheet from an enquiry. The hall's rack rental goes on
+as the first line (that's the number the conversation starts from), and
+a follow-up lands in the diary so the enquiry doesn't go quiet.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `venue` | yes |  |
+| `event_date` | yes |  |
+| `customer_name` | yes |  |
+| `event_type` | no | `'Wedding'` |
+| `attendees` | no | `0` |
+| `customer_phone` | no | `None` |
+| `customer_email` | no | `None` |
+| `company` | no | `None` |
+| `end_date` | no | `None` |
+| `start_time` | no | `None` |
+| `end_time` | no | `None` |
+| `source` | no | `'Phone'` |
+| `requirements` | no | `None` |
+| `follow_up_days` | no | `2` |
+| `with_venue_line` | no | `1` |
+| `sales_owner` | no | `None` |
+
+### `kamra.banquet.function_sheet`
+
+**GET/POST**
+
+One function, everything about it - the sheet the banquet screen
+renders and Kamra Agent reads.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `function` | yes |  |
+
+### `kamra.banquet.update_function`
+
+**POST**
+
+Edit the sheet's own fields (not its tables - those have their own
+calls, because each one means something different).
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `function` | yes |  |
+| `fields` | yes |  |
+
+### `kamra.banquet.set_status`
+
+**POST**
+
+Move the function along its pipeline. Confirming takes the hall -
+the controller refuses a clash with another confirmed function.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `function` | yes |  |
+| `status` | yes |  |
+| `reason` | no | `None` |
+| `tentative_until` | no | `None` |
+
+### `kamra.banquet.add_menu`
+
+**POST**
+
+Put a menu package on the function. Left alone the quantity follows
+the pax rule (guaranteed, or actual if more turned up) and the price is
+the package's own plate price - pass `rate` when it's been negotiated.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `function` | yes |  |
+| `menu` | yes |  |
+| `qty` | no | `None` |
+| `rate` | no | `None` |
+| `chargeable` | no | `1` |
+| `notes` | no | `None` |
+
+### `kamra.banquet.add_service`
+
+**POST**
+
+Put a service on the function - projector, LED wall, DJ, podium,
+stage, decor, laptop, bar. The catalogue decides whether it's chargeable
+by default; pass `chargeable` to override for this function.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `function` | yes |  |
+| `service_item` | yes |  |
+| `qty` | no | `None` |
+| `rate` | no | `None` |
+| `chargeable` | no | `None` |
+| `notes` | no | `None` |
+
+### `kamra.banquet.save_items`
+
+**POST**
+
+Replace the line grid wholesale - what the user is looking at is the
+truth. Rows keep their catalogue links so the event order can still
+print a menu's courses.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `function` | yes |  |
+| `items` | yes |  |
+
+### `kamra.banquet.remove_item`
+
+**POST**
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `function` | yes |  |
+| `row` | yes |  |
+
+### `kamra.banquet.negotiate`
+
+**POST**
+
+The price moves. `rows` is {line_row_name: new_rate} - or pass
+`venue_rental` to move just the hall - and `discount_amount` is the
+headline reduction on the whole quote.
+
+Every move is snapshotted with what the quote was worth before and
+after, so the fourth revision of a wedding quote can be explained.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `function` | yes |  |
+| `rows` | no | `None` |
+| `discount_amount` | no | `None` |
+| `note` | no | `None` |
+| `venue_rental` | no | `None` |
+
+### `kamra.banquet.save_open_items`
+
+**POST**
+
+What is still unsettled while the price is being agreed - the
+sangeet stage, whether the bar is on consumption, who pays for the
+extra generator. Each carries what agreeing it would do to the price.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `function` | yes |  |
+| `rows` | yes |  |
+
+### `kamra.banquet.set_payment_terms`
+
+**POST** · roles: `Finance`
+
+The schedule the customer signs up to. A term stated as a percentage
+follows the quote as it moves; one stated as an amount is a number both
+sides agreed and stays put.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `function` | yes |  |
+| `terms` | yes |  |
+| `note` | no | `None` |
+
+### `kamra.banquet.default_payment_terms`
+
+**POST** · roles: `Finance`
+
+The usual three-milestone schedule, dated off this function: an
+advance to hold the hall, a second call before the date, the rest on
+completion. Editable afterwards like any other term.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `function` | yes |  |
+| `advance_percent` | no | `25` |
+| `interim_percent` | no | `50` |
+| `interim_days_before` | no | `15` |
+
+### `kamra.banquet.record_receipt`
+
+**POST** · roles: `Finance`
+
+Money in against the function. Pass `settle_term` to tick off the
+payment-term row it pays, so the schedule and the ledger agree.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `function` | yes |  |
+| `amount` | yes |  |
+| `mode` | no | `'Bank Transfer'` |
+| `kind` | no | `'Advance'` |
+| `reference` | no | `None` |
+| `receipt_date` | no | `None` |
+| `settle_term` | no | `None` |
+
+### `kamra.banquet.assign_green_room`
+
+**POST**
+
+Hold a changing room for the wedding party. The controller puts a
+Room Block on it so it genuinely leaves the sellable inventory; pass
+`complimentary=0` (with a rate) to bill it as an Accommodation line.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `function` | yes |  |
+| `room` | no | `None` |
+| `from_date` | no | `None` |
+| `to_date` | no | `None` |
+| `complimentary` | no | `1` |
+| `rate` | no | `0` |
+
+### `kamra.banquet.venue_availability`
+
+**GET/POST**
+
+Which halls are free for these dates and hours. A confirmed function
+takes the hall; a tentative one is shown as a soft hold you can still
+sell over. Halls too small for the pax are flagged, not hidden.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `event_date` | yes |  |
+| `end_date` | no | `None` |
+| `start_time` | no | `None` |
+| `end_time` | no | `None` |
+| `pax` | no | `0` |
+| `exclude` | no | `None` |
+
+### `kamra.banquet.banquet_calendar`
+
+**GET/POST**
+
+The function diary - halls down the side, days across the top, every
+function in its cell with what it's worth and what's still owed.
+Multi-day functions appear on each of their days.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `start_date` | no | `None` |
+| `days` | no | `31` |
+| `status` | no | `None` |
+
+### `kamra.banquet.banquet_pipeline`
+
+**GET/POST** · roles: `Hotel Admin`
+
+The sales view: where the business is by month and by status, what
+converted, what died and why. Dated on the event, not the enquiry -
+a banquet team's month is the month the function happens.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `from_date` | no | `None` |
+| `to_date` | no | `None` |
+| `months` | no | `6` |
+
+### `kamra.banquet.banquet_reminders`
+
+**GET/POST**
+
+Everything across the property that needs chasing - the banquet
+team's morning list.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `days` | no | `30` |
+
+### `kamra.banquet.banquet_document`
+
+**GET/POST**
+
+The paper. One shape for every document so the front end can print
+them all the same way:
+
+  quote      what it costs, line by line, with the terms
+  contract   the quote plus the terms, the policy and signature blocks
+  beo        the banquet event order - the running sheet for the day
+  pack_list  what physically has to reach the hall, and by when
+  invoice    the bill, against what's already been received
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `function` | yes |  |
+| `kind` | no | `'quote'` |
+
+### `kamra.banquet.generate_quote`
+
+**POST**
+
+Stamp a quotation. Bumps the version, dates it, and snapshots what
+it was worth - so 'the price we sent on the 3rd' is answerable.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `function` | yes |  |
+| `valid_days` | no | `15` |
+| `note` | no | `None` |
+
+### `kamra.banquet.generate_beo`
+
+**POST**
+
+Issue the banquet event order - the sheet the banquet, kitchen and
+AV teams run the day from. Only a confirmed function gets one; the
+teams shouldn't be preparing for business that isn't sold.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `function` | yes |  |
+
+### `kamra.banquet.post_to_folio`
+
+**POST** · roles: `Finance`
+
+Push the chargeable lines onto a bill. A function tied to a group
+rides the group's master folio; otherwise pass one explicitly.
+
+Alcohol is reported back rather than posted when the bill is a company
+or group folio - the same rule the folio itself enforces - so it can be
+settled separately instead of failing the whole post.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `function` | yes |  |
+| `folio` | no | `None` |
+
+### `kamra.banquet.close_out`
+
+**POST** · roles: `Finance`
+
+Hand the hall back. The last ritual of a function, and the one that
+usually happens on a WhatsApp message and a scrap of paper: walk the
+room, count the actual covers, note what got broken, take that off the
+deposit and give the rest back.
+
+Doing it here means the deduction has a reason attached, the refund is
+a real ledger line, and the function closes in one motion instead of
+three people remembering to do three things.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `function` | yes |  |
+| `damage_amount` | no | `0` |
+| `damage_note` | no | `None` |
+| `refund_deposit` | no | `1` |
+| `refund_mode` | no | `'Bank Transfer'` |
+| `pax_actual` | no | `None` |
+
+### `kamra.banquet.receipt_document`
+
+**POST** · roles: `Finance`
+
+One receipt, as a document the customer can keep. Every advance a
+banquet office takes needs a piece of paper against it - this is that
+piece of paper.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `function` | yes |  |
+| `receipt` | yes |  |
+
+### `kamra.banquet.menu_card`
+
+**GET/POST**
+
+The menu the customer signs off - what will actually be served,
+course by course, with nothing about money on it. The kitchen and the
+customer read the same sheet, which is the whole point.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `function` | yes |  |
+
+### `kamra.banquet.month_availability`
+
+**GET/POST**
+
+Every hall × every session, across a whole month.
+
+The question a banquet office is actually asked - "do you have the
+14th of December?" - is about a hall and a session, not a range of
+hours. This is the grid that answers it in one look: halls down the
+side split by session, days across the top, and what's in each cell.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `month` | no | `None` |
+
+### `kamra.banquet.banquet_register`
+
+**GET/POST** · roles: `Hotel Admin`
+
+The listings a banquet office runs the week on - the same five books
+every hall has kept on paper forever, dated and totalled:
+
+  functions   every booking in the window, with pax, rate and value
+  quotations  what was quoted, and whether it converted
+  enquiries   what came in, and what happened to it
+  receipts    the cash book: every payment, by mode
+  sales       revenue by hall, event type and month
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `register` | no | `'functions'` |
+| `from_date` | no | `None` |
+| `to_date` | no | `None` |
+
+### `kamra.banquet.dish_library`
+
+**GET/POST**
+
+Every dish the banquet kitchen can produce, with what it costs to
+make. This is the picker behind menu building and the spine of margin.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `course_type` | no | `None` |
+
+### `kamra.banquet.save_dish`
+
+**POST**
+
+Add or edit a dish. The recipe is what makes it cost something -
+without one the dish is free, and so is the margin it reports.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `dish_name` | yes |  |
+| `recipe` | no | `None` |
+| `name` | no | `None` |
+
+### `kamra.banquet.delete_dish`
+
+**POST**
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `name` | yes |  |
+
+### `kamra.banquet.recost_dishes`
+
+**POST**
+
+Ingredient prices moved - re-cost every dish. Run it after a delivery
+or a price revision, so quotes stop being priced off last season's
+onions.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+
+### `kamra.banquet.menu_cost`
+
+**GET/POST**
+
+What one plate of this menu costs to make, and what it earns.
+
+Costs the DEFAULT selection - one dish per choice where the course
+offers a choice, everything where it doesn't - so a menu can be judged
+before anyone has booked it.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `menu` | yes |  |
+| `pax` | no | `0` |
+
+### `kamra.banquet.menu_choices`
+
+**GET/POST**
+
+The course-by-course picker for one menu on one function: what the
+course offers, how many the guest may take, and what's chosen so far.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `function` | yes |  |
+| `menu` | yes |  |
+
+### `kamra.banquet.compose_menu`
+
+**POST**
+
+Record what the customer actually chose - "one soup of these two, the
+paneer not the mushroom".
+
+The dish NAME is stored alongside the link on purpose: renaming a dish
+next season must not rewrite a menu card the customer already signed.
+Any supplement the choice carries goes on as its own line, because an
+upgrade is a price change and should be visible as one.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `function` | yes |  |
+| `menu` | yes |  |
+| `picks` | yes |  |
+
+### `kamra.banquet.kitchen_indent`
+
+**GET/POST** · roles: `Housekeeping`
+
+What the kitchen has to buy and pull for this function.
+
+The artifact that has always sat between the event order and the store
+room, written by hand: chosen dishes x portions x guaranteed pax,
+exploded through the recipes into ingredient quantities, checked against
+what's actually on the shelf.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `function` | yes |  |
+
+### `kamra.banquet.issue_indent`
+
+**POST** · roles: `Housekeeping`
+
+Pull the indent off the shelf. Writes real stock movements through
+the same single writer the restaurant uses, so the store room reflects
+a banquet the way it reflects a table.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `function` | yes |  |
+| `outlet` | yes |  |
+| `rows` | no | `None` |
+
+### `kamra.banquet.record_consumption`
+
+**POST**
+
+What was actually served, against what was quoted.
+
+The quote said 300 plates; 318 people ate and the bar went through
+another two cases. Until this is recorded the bill is a forecast -
+rows = {line_row_name: actual_qty}.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `function` | yes |  |
+| `rows` | no | `None` |
+| `pax_actual` | no | `None` |
+
+### `kamra.banquet.add_supplementary`
+
+**POST**
+
+Something ordered on the night that wasn't on the quote - another
+round at the bar, twenty extra plates, a second cake. It bills on top
+and is marked so the final bill can show it apart from what was
+agreed.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `function` | yes |  |
+| `item_name` | yes |  |
+| `qty` | yes |  |
+| `rate` | yes |  |
+| `item_type` | no | `'Food & Beverage'` |
+| `uom` | no | `'Unit'` |
+| `cost_rate` | no | `0` |
+| `is_alcohol` | no | `0` |
+| `notes` | no | `None` |
+
+### `kamra.banquet.function_economics`
+
+**GET/POST**
+
+The P&L of one function: what it sold, what it cost, what the input
+credit is worth, and what's left - plus where the quote and the night
+disagreed.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `function` | yes |  |
+
+### `kamra.banquet.link_customer`
+
+**POST**
+
+Tie the function to a real guest record instead of a name in a box.
+
+Without this a banquet customer is a string: no history, no notes, no
+'they complained about the AC last time'. With it, the banquet office
+sees the same person the front desk does.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `function` | yes |  |
+| `guest` | no | `None` |
+
+### `kamra.banquet.customer_profile`
+
+**GET/POST**
+
+Everything the banquet office should know before picking up the
+phone: what this client has run with us, what they spent, what they
+usually book, and what's still owed.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `guest` | no | `None` |
+| `phone` | no | `None` |
+
+
 ## Migration (CSV import)
 
 ### `kamra.migrate.preview_import`
@@ -2143,6 +2870,21 @@ property the signed-in user may access, plus a per-property table.
 
 ## Reports
 
+### `kamra.reports.void_allowance_report`
+
+**GET/POST** · roles: `Finance`, `Hotel Admin`
+
+Audit trail of every void, allowance and invoice cancellation on a
+property: who reversed what, when, and why. The compliance answer to
+"show me every write-off" - read straight from the action log, so it
+cannot drift from what actually happened.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `from_date` | no | `None` |
+| `to_date` | no | `None` |
+
 ### `kamra.reports.manager_flash`
 
 **GET/POST** · roles: `Finance`, `Front Desk`, `Kamra Agent`
@@ -2289,6 +3031,31 @@ Stay summary for the pre-arrival check-in page.
 | --- | --- | --- |
 | `token` | yes |  |
 
+### `kamra.public_api.precheckin_submit` <Badge type='tip' text='public' />
+
+**POST**
+
+Guest completes pre-arrival check-in and signs the registration card
+(PRD FR-20 - details + declaration + e-signature; the signed card becomes
+the paperless GRC the desk views at arrival). The guest can attach a
+photo of their ID - camera capture or upload - stored privately.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `token` | yes |  |
+| `id_type` | yes |  |
+| `id_number` | yes |  |
+| `email` | no | `''` |
+| `nationality` | no | `''` |
+| `address_line` | no | `''` |
+| `city` | no | `''` |
+| `eta` | no | `''` |
+| `special_requests` | no | `''` |
+| `signature` | no | `''` |
+| `consent` | no | `0` |
+| `id_image` | no | `''` |
+| `address_image` | no | `''` |
+
 ### `kamra.public_api.precheckin_upload_id` <Badge type='tip' text='public' />
 
 **POST**
@@ -2337,6 +3104,30 @@ or the folio; staff count and price the bag at the door (status
 | `token` | yes |  |
 | `notes` | no | `''` |
 | `express` | no | `0` |
+
+### `kamra.public_api.book` <Badge type='tip' text='public' />
+
+**POST**
+
+Create a Website booking. Guest identity is the phone number; staff
+verify at check-in. The advance owed is computed from the property's
+current payment policy and snapshotted onto the booking.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `room_type` | yes |  |
+| `check_in_date` | yes |  |
+| `check_out_date` | yes |  |
+| `guest_name` | yes |  |
+| `phone` | yes |  |
+| `email` | no | `''` |
+| `adults` | no | `2` |
+| `children` | no | `0` |
+| `meal_plan` | no | `''` |
+| `special_requests` | no | `''` |
+| `addons` | no | `None` |
+| `voucher_code` | no | `''` |
 
 ### `kamra.public_api.check_voucher` <Badge type='tip' text='public' />
 
@@ -2394,3 +3185,5 @@ never lost even without SMTP), then a best-effort email to the team.
 | `rooms` | no | `0` |
 | `city` | no | `''` |
 | `message` | no | `''` |
+| `country` | no | `''` |
+| `interest` | no | `''` |

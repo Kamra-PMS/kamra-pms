@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { Receipt } from "lucide-react"
+import { PartyPopper, Receipt } from "lucide-react"
 
 import { call } from "../lib/api"
 import { serverError, type Row } from "../lib/resource"
@@ -37,8 +37,16 @@ export default function EventLinks({
 
   return (
     <div className="space-y-3 border-t border-zinc-200 pt-4">
+      <Button onClick={() => navigate(`/banquet/${encodeURIComponent(name)}`)}>
+        <PartyPopper className="size-4" aria-hidden />
+        Open the function sheet
+      </Button>
+      <p className="text-xs text-zinc-500">
+        Menus, services, the negotiation, payment terms and the event order
+        all live there - this form only edits the basics.
+      </p>
       <div className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
-        Connections & billing
+        Connections &amp; billing
       </div>
       <LinkedRecords doctype="Venue Booking" name={name} exclude={["event"]} />
       {group && !hasFolio && (

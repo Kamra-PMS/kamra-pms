@@ -57,7 +57,7 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Housekeeping Status",
-   "options": "Clean\nDirty\nInspected\nOut of Order"
+   "options": "Clean\nDirty\nInspected\nReady\nOut of Order"
   },
   {
    "default": "Vacant",

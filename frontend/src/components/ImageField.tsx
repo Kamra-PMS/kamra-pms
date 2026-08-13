@@ -9,6 +9,10 @@ export default function ImageField(props: {
   hint: string
   value: string
   onChange: (url: string) => void
+  /** Fired after a successful file upload (not paste). Use to auto-save. */
+  onUploaded?: (url: string) => void
+  /** Attach the File to this document field (needed for Attach Image). */
+  attach?: { doctype: string; docname: string; fieldname: string }
   accept?: string
   placeholder?: string
 }) {
@@ -21,9 +25,15 @@ export default function ImageField(props: {
     setBusy(true)
     setErr(null)
     try {
-      props.onChange(await uploadFile(f))
-    } catch {
-      setErr("Upload failed — try a smaller file (under 2 MB).")
+      const url = await uploadFile(f, props.attach)
+      props.onChange(url)
+      props.onUploaded?.(url)
+    } catch (e) {
+      setErr(
+        e instanceof Error && e.message
+          ? e.message
+          : "Upload failed — try a smaller file (under 2 MB).",
+      )
     } finally {
       setBusy(false)
       if (fileRef.current) fileRef.current.value = ""

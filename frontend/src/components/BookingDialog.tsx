@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { Loader2, Megaphone, Plus, Star, Trash2, X } from "lucide-react"
+import { ChevronDown, Loader2, Megaphone, Plus, Star, Trash2, X } from "lucide-react"
 import {
   call,
   createBooking,
@@ -35,6 +35,7 @@ function Field(props: { label: string; children: React.ReactNode }) {
     </label>
   )
 }
+
 
 const inr = (n: number) =>
   n.toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
@@ -82,6 +83,7 @@ export function BookingDialog(props: {
     contact_preference: "Booker",
   })
   const [onBehalf, setOnBehalf] = useState(false)
+  const [moreOpen, setMoreOpen] = useState(false)
   const [moreRooms, setMoreRooms] = useState<ExtraRoom[]>([])
   const [moreQuotes, setMoreQuotes] = useState<(Quote | null)[]>([])
   const [addonQty, setAddonQty] = useState<Record<string, number>>({})
@@ -140,6 +142,13 @@ export function BookingDialog(props: {
         meal_plan: o.meal_plans.find((m) => m.is_default)?.name ?? "",
       }))
     })
+  }, [])
+
+  useEffect(() => {
+    document.body.style.overflow = "hidden"
+    return () => {
+      document.body.style.overflow = ""
+    }
   }, [])
 
   const checkOut = (() => {
@@ -398,6 +407,32 @@ export function BookingDialog(props: {
     )
   }
 
+  const grandTotal = (() => {
+    if (!quote) return 0
+    const addonsGross = Object.entries(addonQty).reduce((s, [n, q]) => {
+      const x = options?.experiences.find((e) => e.name === n)
+      return x && q > 0 ? s + q * x.price * (1 + x.gst_rate / 100) : s
+    }, 0)
+    return (
+      quote.amount_after_tax +
+      moreQuotes.reduce((s, q) => s + (q?.amount_after_tax ?? 0), 0) +
+      addonsGross
+    )
+  })()
+
+  const cancelCutoff = (() => {
+    const pol = options?.property
+    if (!pol) return ""
+    const d = new Date(form.check_in_date + "T00:00:00")
+    d.setDate(d.getDate() - (pol.free_cancel_days || 0))
+    return d.toISOString().slice(0, 10)
+  })()
+
+  const addonsGross = Object.entries(addonQty).reduce((s, [n, q]) => {
+    const x = options?.experiences.find((e) => e.name === n)
+    return x && q > 0 ? s + q * x.price * (1 + x.gst_rate / 100) : s
+  }, 0)
+
   return (
     <div
       className="fixed inset-0 z-50"
@@ -411,39 +446,43 @@ export function BookingDialog(props: {
         onClick={props.onClose}
         aria-hidden
       />
-      <div className="absolute inset-y-0 right-0 w-full max-w-[64rem] overflow-y-auto bg-white shadow-2xl animate-sheet-in sm:w-[66vw]">
-        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-zinc-100 bg-white px-7 py-5">
-          <div>
-            <h2 className="text-xl font-semibold">New booking</h2>
-            <p className="mt-0.5 text-sm text-zinc-400">
-              Kamra Demo Palace · quote updates as you type
+      <div
+        className="absolute inset-y-0 right-0 flex h-full w-full flex-col bg-white shadow-2xl animate-sheet-in"
+        style={{ width: "min(100%, 66vw)", maxWidth: "72rem" }}
+      >
+        <header className="flex shrink-0 items-center justify-between gap-4 border-b border-zinc-200 px-6 py-4 md:px-8">
+          <div className="min-w-0">
+            <h2 className="text-xl font-semibold tracking-tight text-zinc-900">
+              New booking
+            </h2>
+            <p className="mt-0.5 truncate text-sm text-zinc-500">
+              {getCurrentProperty()}
+              <span className="text-zinc-300"> · </span>
+              Live quote as you type
             </p>
           </div>
           <Button variant="ghost" onClick={props.onClose} aria-label="Close">
             <X className="size-5" />
           </Button>
-        </div>
+        </header>
 
         {done ? (
-          <div className="space-y-5 px-7 py-8">
+          <div className="space-y-5 overflow-y-auto px-6 py-8 md:px-8">
             {done.waitlist ? (
               <div className="rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 text-amber-800">
-                <p className="text-lg font-semibold">
-                  Waitlisted - {done.ref}
-                </p>
+                <p className="text-lg font-semibold">Waitlisted · {done.ref}</p>
                 <p className="mt-1 text-sm">
                   Parked with no room. Promote it from the reservation when a
-                  room frees - or let the agent watch availability and reach
-                  the guest proactively. Auto-purges 2 days after departure.
+                  room frees. Auto-purges 2 days after departure.
                 </p>
               </div>
             ) : (
               <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-emerald-800">
-                <p className="text-lg font-semibold">Booked - {done.ref}</p>
+                <p className="text-lg font-semibold">Booked · {done.ref}</p>
                 <p className="mt-1 text-sm">
                   {done.room
                     ? `Room ${done.room.split("-").pop()} assigned.`
-                    : "No room auto-assigned - pick one from Reservations."}{" "}
+                    : "No room auto-assigned — pick one from Reservations."}{" "}
                   Find it under Arrivals on the stay date.
                 </p>
               </div>
@@ -453,168 +492,172 @@ export function BookingDialog(props: {
             </Button>
           </div>
         ) : (
-          <div className="grid gap-0 md:grid-cols-5">
-            {/* form - left 3/5 */}
-            <div className="space-y-5 px-7 py-6 md:col-span-3">
-              {options?.property?.sell_message && (
-                <div className="flex items-start gap-2 rounded-xl bg-brand-50 px-4 py-3 text-sm text-brand-900">
-                  <Megaphone
-                    className="mt-0.5 size-4 shrink-0 text-brand-700"
-                    aria-hidden
-                  />
-                  <span>{options.property.sell_message}</span>
-                </div>
-              )}
-              <div className="grid grid-cols-2 gap-4">
-                <Field label="Guest name">
-                  <div className="relative">
+          <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
+            {/* Form */}
+            <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5 md:px-8 md:py-6">
+              <div className="mx-auto max-w-3xl space-y-6">
+                {options?.property?.sell_message && (
+                  <div className="flex items-start gap-2 rounded-xl bg-brand-50 px-4 py-3 text-sm text-brand-900">
+                    <Megaphone
+                      className="mt-0.5 size-4 shrink-0 text-brand-700"
+                      aria-hidden
+                    />
+                    <span>{options.property.sell_message}</span>
+                  </div>
+                )}
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Field label="Guest name">
+                    <div className="relative">
+                      <input
+                        className={inputCls}
+                        value={form.guest_name}
+                        onChange={(e) => {
+                          setProfile(null)
+                          set("guest_name", e.target.value)
+                        }}
+                        placeholder="Type to find or create"
+                        autoFocus
+                      />
+                      {hits.length > 0 && (
+                        <ul className="absolute z-10 mt-1 w-full overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-lg">
+                          {hits.map((h) => (
+                            <li key={h.name}>
+                              <button
+                                type="button"
+                                className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-zinc-50"
+                                onClick={() => {
+                                  setProfile(h)
+                                  setHits([])
+                                  setForm((f) => ({
+                                    ...f,
+                                    guest_name: h.full_name,
+                                    phone: h.phone ?? f.phone,
+                                  }))
+                                }}
+                              >
+                                <span className="font-medium">{h.full_name}</span>
+                                {Boolean(h.vip) && (
+                                  <Star
+                                    className="size-3 fill-amber-400 text-amber-400"
+                                    aria-label="VIP"
+                                  />
+                                )}
+                                <span className="ml-auto text-xs text-zinc-400">
+                                  {h.phone ? `${h.phone} · ` : ""}
+                                  {h.stays} stay{h.stays === 1 ? "" : "s"}
+                                </span>
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                    {profile && (
+                      <span className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-brand-50 px-2.5 py-1 text-xs font-medium text-brand-700">
+                        Returning guest · {profile.stays} stay
+                        {profile.stays === 1 ? "" : "s"}
+                        <button
+                          type="button"
+                          aria-label="Detach profile"
+                          onClick={() => setProfile(null)}
+                          className="text-brand-700/60 hover:text-brand-700"
+                        >
+                          <X className="size-3" aria-hidden />
+                        </button>
+                      </span>
+                    )}
+                  </Field>
+                  <Field label="Phone">
                     <input
                       className={inputCls}
-                      value={form.guest_name}
-                      onChange={(e) => {
-                        setProfile(null)
-                        set("guest_name", e.target.value)
-                      }}
-                      placeholder="Type to find or create"
-                      autoFocus
+                      value={form.phone}
+                      onChange={(e) => set("phone", e.target.value)}
+                      placeholder="+91 …"
                     />
-                    {hits.length > 0 && (
-                      <ul className="absolute z-10 mt-1 w-full overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-lg">
-                        {hits.map((h) => (
-                          <li key={h.name}>
-                            <button
-                              type="button"
-                              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-zinc-50"
-                              onClick={() => {
-                                setProfile(h)
-                                setHits([])
-                                setForm((f) => ({
-                                  ...f,
-                                  guest_name: h.full_name,
-                                  phone: h.phone ?? f.phone,
-                                }))
-                              }}
-                            >
-                              <span className="font-medium">{h.full_name}</span>
-                              {Boolean(h.vip) && (
-                                <Star
-                                  className="size-3 fill-amber-400 text-amber-400"
-                                  aria-label="VIP"
-                                />
-                              )}
-                              <span className="ml-auto text-xs text-zinc-400">
-                                {h.phone ? `${h.phone} · ` : ""}
-                                {h.stays} stay{h.stays === 1 ? "" : "s"}
-                              </span>
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
+                  </Field>
+                </div>
+
+                <Field label="Room type">
+                  <select
+                    className={inputCls}
+                    value={form.room_type}
+                    onChange={(e) => set("room_type", e.target.value)}
+                  >
+                    {options?.room_types.map((rt) => (
+                      <option key={rt.name} value={rt.name}>
+                        {rt.room_type_name} · {cur()}
+                        {inr(rt.base_price)}/night
+                      </option>
+                    ))}
+                  </select>
+                  {selectedRt &&
+                    (selectedRt.adults_capacity > 0 ||
+                      selectedRt.children_capacity > 0) &&
+                    !overCapacity && (
+                      <p className="mt-1.5 text-xs text-zinc-400">
+                        Sleeps up to {selectedRt.adults_capacity} adults
+                        {selectedRt.children_capacity > 0 &&
+                          ` · ${selectedRt.children_capacity} children`}
+                      </p>
                     )}
-                  </div>
-                  {profile && (
-                    <span className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-brand-50 px-2.5 py-1 text-xs font-medium text-brand-700">
-                      Returning guest · {profile.stays} stay
-                      {profile.stays === 1 ? "" : "s"}
-                      <button
-                        type="button"
-                        aria-label="Detach profile - create a new guest instead"
-                        onClick={() => setProfile(null)}
-                        className="text-brand-700/60 hover:text-brand-700"
-                      >
-                        <X className="size-3" aria-hidden />
-                      </button>
-                    </span>
-                  )}
                 </Field>
-                <Field label="Phone">
-                  <input
-                    className={inputCls}
-                    value={form.phone}
-                    onChange={(e) => set("phone", e.target.value)}
-                    placeholder="+91 …"
-                  />
-                </Field>
-              </div>
 
-              <Field label="Room type">
-                <select
-                  className={inputCls}
-                  value={form.room_type}
-                  onChange={(e) => set("room_type", e.target.value)}
-                >
-                  {options?.room_types.map((rt) => (
-                    <option key={rt.name} value={rt.name}>
-                      {rt.room_type_name} · {cur()}{inr(rt.base_price)}/night
-                    </option>
-                  ))}
-                </select>
-              </Field>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  <Field label="Check-in">
+                    <input
+                      type="date"
+                      className={inputCls}
+                      value={form.check_in_date}
+                      onChange={(e) => set("check_in_date", e.target.value)}
+                    />
+                  </Field>
+                  <Field label="Nights">
+                    <input
+                      type="number"
+                      min={1}
+                      className={inputCls}
+                      value={form.nights}
+                      onChange={(e) =>
+                        set("nights", Math.max(1, Number(e.target.value)))
+                      }
+                    />
+                  </Field>
+                  <Field label="Adults">
+                    <input
+                      type="number"
+                      min={1}
+                      className={inputCls}
+                      value={form.adults}
+                      onChange={(e) =>
+                        set("adults", Math.max(1, Number(e.target.value)))
+                      }
+                    />
+                  </Field>
+                  <Field label="Children">
+                    <input
+                      type="number"
+                      min={0}
+                      className={inputCls}
+                      value={form.children}
+                      onChange={(e) =>
+                        set("children", Math.max(0, Number(e.target.value)))
+                      }
+                    />
+                  </Field>
+                </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <Field label="Check-in">
-                  <input
-                    type="date"
-                    className={inputCls}
-                    value={form.check_in_date}
-                    onChange={(e) => set("check_in_date", e.target.value)}
-                  />
-                </Field>
-                <Field label="Nights">
-                  <input
-                    type="number"
-                    min={1}
-                    className={inputCls}
-                    value={form.nights}
-                    onChange={(e) =>
-                      set("nights", Math.max(1, Number(e.target.value)))
-                    }
-                  />
-                </Field>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <Field label="Adults">
-                  <input
-                    type="number"
-                    min={1}
-                    className={inputCls}
-                    value={form.adults}
-                    onChange={(e) =>
-                      set("adults", Math.max(1, Number(e.target.value)))
-                    }
-                  />
-                </Field>
-                <Field label="Children">
-                  <input
-                    type="number"
-                    min={0}
-                    className={inputCls}
-                    value={form.children}
-                    onChange={(e) =>
-                      set("children", Math.max(0, Number(e.target.value)))
-                    }
-                  />
-                </Field>
-              </div>
-
-              {selectedRt &&
-                (selectedRt.adults_capacity > 0 ||
-                  selectedRt.children_capacity > 0) &&
-                (overCapacity ? (
+                {selectedRt && overCapacity && (
                   <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-800">
                     {selectedRt.room_type_name} sleeps up to{" "}
                     <strong>{selectedRt.adults_capacity} adults</strong>
                     {selectedRt.children_capacity > 0 && (
                       <>
                         {" · "}
-                        <strong>
-                          {selectedRt.children_capacity} children
-                        </strong>
+                        <strong>{selectedRt.children_capacity} children</strong>
                       </>
                     )}{" "}
-                    per room. For a bigger party, split them across rooms —
-                    it books as one group.{" "}
+                    per room.{" "}
                     <button
                       className="font-semibold text-brand-700 hover:underline"
                       onClick={distributeParty}
@@ -622,398 +665,429 @@ export function BookingDialog(props: {
                       Split into {roomsNeeded} rooms
                     </button>
                   </div>
-                ) : (
-                  <p className="-mt-2 text-xs text-zinc-400">
-                    Sleeps up to {selectedRt.adults_capacity} adults
-                    {selectedRt.children_capacity > 0 &&
-                      ` · ${selectedRt.children_capacity} children`}
-                  </p>
+                )}
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <Field label="Meal plan">
+                    <select
+                      className={inputCls}
+                      value={form.meal_plan}
+                      onChange={(e) => set("meal_plan", e.target.value)}
+                    >
+                      <option value="">Room only</option>
+                      {options?.meal_plans.map((mp) => (
+                        <option key={mp.name} value={mp.name}>
+                          {mp.label} (+{cur()}
+                          {inr(mp.price_per_adult)}/adult)
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+                  <Field label="Voucher">
+                    <input
+                      className={inputCls}
+                      value={form.voucher_code}
+                      onChange={(e) =>
+                        set("voucher_code", e.target.value.toUpperCase())
+                      }
+                      placeholder="Optional code"
+                    />
+                  </Field>
+                </div>
+
+                {moreRooms.map((r, i) => (
+                  <div
+                    key={i}
+                    className="flex flex-wrap items-end gap-2 rounded-xl border border-zinc-200 bg-zinc-50/50 px-3 py-2.5"
+                  >
+                    <span className="w-full text-xs font-medium uppercase tracking-wider text-zinc-400">
+                      Room {i + 2}
+                    </span>
+                    <select
+                      className={`${inputCls} !w-auto flex-1`}
+                      aria-label={`Room ${i + 2} type`}
+                      value={r.room_type}
+                      onChange={(e) =>
+                        setMoreRooms((rs) =>
+                          rs.map((x, j) =>
+                            j === i ? { ...x, room_type: e.target.value } : x,
+                          ),
+                        )
+                      }
+                    >
+                      {options?.room_types.map((rt) => (
+                        <option key={rt.name} value={rt.name}>
+                          {rt.room_type_name}
+                        </option>
+                      ))}
+                    </select>
+                    <input
+                      type="number"
+                      min={1}
+                      aria-label={`Room ${i + 2} adults`}
+                      className={`${inputCls} !w-16`}
+                      value={r.adults}
+                      onChange={(e) =>
+                        setMoreRooms((rs) =>
+                          rs.map((x, j) =>
+                            j === i
+                              ? {
+                                  ...x,
+                                  adults: Math.max(1, Number(e.target.value)),
+                                }
+                              : x,
+                          ),
+                        )
+                      }
+                    />
+                    <select
+                      className={`${inputCls} !w-auto`}
+                      aria-label={`Room ${i + 2} meal plan`}
+                      value={r.meal_plan}
+                      onChange={(e) =>
+                        setMoreRooms((rs) =>
+                          rs.map((x, j) =>
+                            j === i ? { ...x, meal_plan: e.target.value } : x,
+                          ),
+                        )
+                      }
+                    >
+                      <option value="">Room only</option>
+                      {options?.meal_plans.map((mp) => (
+                        <option key={mp.name} value={mp.name}>
+                          {mp.label}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      className="rounded p-1.5 text-zinc-400 hover:text-rose-500"
+                      aria-label={`Remove room ${i + 2}`}
+                      onClick={() =>
+                        setMoreRooms((rs) => rs.filter((_, j) => j !== i))
+                      }
+                    >
+                      <Trash2 className="size-4" aria-hidden />
+                    </button>
+                  </div>
                 ))}
 
-              {/* additional rooms - books the lot as one group */}
-              {moreRooms.map((r, i) => (
-                <div
-                  key={i}
-                  className="flex flex-wrap items-end gap-2 rounded-xl border border-zinc-200 px-3 py-2.5"
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-dashed border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-600 hover:border-brand-500 hover:bg-brand-50/40 hover:text-brand-800"
+                  onClick={() =>
+                    setMoreRooms((rs) => [
+                      ...rs,
+                      {
+                        room_type: form.room_type,
+                        adults: 2,
+                        children: 0,
+                        meal_plan: form.meal_plan,
+                      },
+                    ])
+                  }
                 >
-                  <span className="w-full text-xs font-medium uppercase tracking-wider text-zinc-400">
-                    Room {i + 2}
-                  </span>
-                  <select
-                    className={`${inputCls} !w-auto flex-1`}
-                    aria-label={`Room ${i + 2} type`}
-                    value={r.room_type}
-                    onChange={(e) =>
-                      setMoreRooms((rs) =>
-                        rs.map((x, j) =>
-                          j === i ? { ...x, room_type: e.target.value } : x,
-                        ),
-                      )
-                    }
-                  >
-                    {options?.room_types.map((rt) => (
-                      <option key={rt.name} value={rt.name}>
-                        {rt.room_type_name}
-                      </option>
-                    ))}
-                  </select>
-                  <input
-                    type="number"
-                    min={1}
-                    aria-label={`Room ${i + 2} adults`}
-                    className={`${inputCls} !w-16`}
-                    value={r.adults}
-                    onChange={(e) =>
-                      setMoreRooms((rs) =>
-                        rs.map((x, j) =>
-                          j === i
-                            ? { ...x, adults: Math.max(1, Number(e.target.value)) }
-                            : x,
-                        ),
-                      )
-                    }
-                  />
-                  <select
-                    className={`${inputCls} !w-auto`}
-                    aria-label={`Room ${i + 2} meal plan`}
-                    value={r.meal_plan}
-                    onChange={(e) =>
-                      setMoreRooms((rs) =>
-                        rs.map((x, j) =>
-                          j === i ? { ...x, meal_plan: e.target.value } : x,
-                        ),
-                      )
-                    }
-                  >
-                    <option value="">Room only</option>
-                    {options?.meal_plans.map((mp) => (
-                      <option key={mp.name} value={mp.name}>
-                        {mp.label}
-                      </option>
-                    ))}
-                  </select>
+                  <Plus className="size-4" aria-hidden />
+                  Add another room
+                </button>
+
+                <div className="border-t border-zinc-100 pt-2">
                   <button
-                    className="rounded p-1.5 text-zinc-400 hover:text-rose-500"
-                    aria-label={`Remove room ${i + 2}`}
-                    onClick={() =>
-                      setMoreRooms((rs) => rs.filter((_, j) => j !== i))
-                    }
+                    type="button"
+                    className="flex w-full items-center justify-between py-2 text-left text-sm font-medium text-zinc-700"
+                    onClick={() => setMoreOpen((o) => !o)}
+                    aria-expanded={moreOpen}
                   >
-                    <Trash2 className="size-4" aria-hidden />
+                    <span>Company, add-ons & arrival details</span>
+                    <ChevronDown
+                      className={
+                        "size-4 text-zinc-400 transition-transform " +
+                        (moreOpen ? "rotate-180" : "")
+                      }
+                      aria-hidden
+                    />
                   </button>
-                </div>
-              ))}
-              <button
-                className="inline-flex items-center gap-1 text-sm font-medium text-brand-700 hover:underline"
-                onClick={() =>
-                  setMoreRooms((rs) => [
-                    ...rs,
-                    {
-                      room_type: form.room_type,
-                      adults: 2,
-                      children: 0,
-                      meal_plan: form.meal_plan,
-                    },
-                  ])
-                }
-              >
-                <Plus className="size-4" aria-hidden />
-                Add another room
-              </button>
 
-              <div className="grid grid-cols-2 gap-4">
-                <Field label="Meal plan">
-                  <select
-                    className={inputCls}
-                    value={form.meal_plan}
-                    onChange={(e) => set("meal_plan", e.target.value)}
-                  >
-                    <option value="">Room only</option>
-                    {options?.meal_plans.map((mp) => (
-                      <option key={mp.name} value={mp.name}>
-                        {mp.label} (+{cur()}{inr(mp.price_per_adult)}/adult)
-                      </option>
-                    ))}
-                  </select>
-                </Field>
-                <Field label="Voucher (optional)">
-                  <input
-                    className={inputCls}
-                    value={form.voucher_code}
-                    onChange={(e) =>
-                      set("voucher_code", e.target.value.toUpperCase())
-                    }
-                    placeholder="WELCOME10"
-                  />
-                </Field>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <Field label="Company (bill corporate)">
-                  <select
-                    className={inputCls}
-                    value={form.company}
-                    onChange={(e) => set("company", e.target.value)}
-                  >
-                    <option value="">-</option>
-                    {options?.companies.map((c) => (
-                      <option key={c.name} value={c.name}>
-                        {c.company_name}
-                      </option>
-                    ))}
-                  </select>
-                </Field>
-                <Field label="Travel agent">
-                  <select
-                    className={inputCls}
-                    value={form.travel_agent}
-                    onChange={(e) => set("travel_agent", e.target.value)}
-                  >
-                    <option value="">-</option>
-                    {options?.travel_agents.map((t) => (
-                      <option key={t.name} value={t.name}>
-                        {t.agent_name} ({t.commission_pct}%)
-                      </option>
-                    ))}
-                  </select>
-                </Field>
-              </div>
-
-              {moreRooms.length === 0 &&
-                (options?.experiences.length ?? 0) > 0 && (
-                  <div>
-                    <span className="mb-1.5 block text-sm font-medium text-zinc-600">
-                      Add-ons
-                    </span>
-                    <div className="flex flex-wrap gap-1.5">
-                      {options?.experiences.map((x) => {
-                        const on = (addonQty[x.name] ?? 0) > 0
-                        return (
-                          <button
-                            key={x.name}
-                            type="button"
-                            aria-pressed={on}
-                            className={
-                              on
-                                ? "rounded-full bg-brand-600 px-3 py-1.5 text-sm font-medium text-white"
-                                : "rounded-full border border-zinc-300 px-3 py-1.5 text-sm text-zinc-600 hover:border-brand-600"
-                            }
-                            onClick={() =>
-                              setAddonQty((q) => ({
-                                ...q,
-                                [x.name]: on ? 0 : 1,
-                              }))
+                  {moreOpen && (
+                    <div className="space-y-5 pb-2 pt-1">
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <Field label="Company (bill corporate)">
+                          <select
+                            className={inputCls}
+                            value={form.company}
+                            onChange={(e) => set("company", e.target.value)}
+                          >
+                            <option value="">-</option>
+                            {options?.companies.map((c) => (
+                              <option key={c.name} value={c.name}>
+                                {c.company_name}
+                              </option>
+                            ))}
+                          </select>
+                        </Field>
+                        <Field label="Travel agent">
+                          <select
+                            className={inputCls}
+                            value={form.travel_agent}
+                            onChange={(e) =>
+                              set("travel_agent", e.target.value)
                             }
                           >
-                            {x.experience_name} · {cur()}{inr(x.price)}
-                          </button>
-                        )
-                      })}
-                    </div>
-                  </div>
-                )}
+                            <option value="">-</option>
+                            {options?.travel_agents.map((t) => (
+                              <option key={t.name} value={t.name}>
+                                {t.agent_name} ({t.commission_pct}%)
+                              </option>
+                            ))}
+                          </select>
+                        </Field>
+                      </div>
 
-              {moreRooms.length > 0 && (
-                <p className="text-xs text-zinc-400">
-                  Multi-room bookings are created as a group - vouchers,
-                  add-ons and booker details can be added per stay afterwards.
-                </p>
-              )}
+                      {moreRooms.length === 0 &&
+                        (options?.experiences.length ?? 0) > 0 && (
+                          <div>
+                            <span className="mb-1.5 block text-sm font-medium text-zinc-600">
+                              Add-ons
+                            </span>
+                            <div className="flex flex-wrap gap-1.5">
+                              {options?.experiences.map((x) => {
+                                const on = (addonQty[x.name] ?? 0) > 0
+                                return (
+                                  <button
+                                    key={x.name}
+                                    type="button"
+                                    aria-pressed={on}
+                                    className={
+                                      on
+                                        ? "rounded-full bg-brand-600 px-3 py-1.5 text-sm font-medium text-white"
+                                        : "rounded-full border border-zinc-300 px-3 py-1.5 text-sm text-zinc-600 hover:border-brand-600"
+                                    }
+                                    onClick={() =>
+                                      setAddonQty((q) => ({
+                                        ...q,
+                                        [x.name]: on ? 0 : 1,
+                                      }))
+                                    }
+                                  >
+                                    {x.experience_name} · {cur()}
+                                    {inr(x.price)}
+                                  </button>
+                                )
+                              })}
+                            </div>
+                          </div>
+                        )}
 
-              {moreRooms.length === 0 && (
-              <div className="rounded-xl border border-zinc-200 px-4 py-3">
-                <label className="flex items-center gap-2 text-sm font-medium text-zinc-700">
-                  <input
-                    type="checkbox"
-                    className="size-4 accent-brand-600"
-                    checked={onBehalf}
-                    onChange={(e) => setOnBehalf(e.target.checked)}
-                  />
-                  Booked on someone's behalf
-                </label>
-                {onBehalf && (
-                  <div className="mt-3 space-y-3">
-                    <div className="grid grid-cols-2 gap-4">
-                      <Field label="Booker name">
-                        <input
-                          className={inputCls}
-                          value={form.booked_by_name}
-                          onChange={(e) =>
-                            set("booked_by_name", e.target.value)
-                          }
-                          placeholder="Who arranged this stay"
-                        />
-                      </Field>
-                      <Field label="Booker phone">
-                        <input
-                          className={inputCls}
-                          value={form.booked_by_phone}
-                          onChange={(e) =>
-                            set("booked_by_phone", e.target.value)
-                          }
-                          placeholder="+91 …"
-                        />
-                      </Field>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <Field label="Relation">
-                        <select
-                          className={inputCls}
-                          value={form.booker_relation}
-                          onChange={(e) =>
-                            set("booker_relation", e.target.value)
-                          }
-                        >
-                          <option value="">-</option>
-                          {[
-                            "Assistant",
-                            "Family",
-                            "Company Travel Desk",
-                            "Travel Agent",
-                          ].map((r) => (
-                            <option key={r}>{r}</option>
-                          ))}
-                        </select>
-                      </Field>
-                      <Field label="Send links & updates to">
-                        <select
-                          className={inputCls}
-                          value={form.contact_preference}
-                          onChange={(e) =>
-                            set("contact_preference", e.target.value)
-                          }
-                        >
-                          <option value="Booker">Booker</option>
-                          <option value="Guest">Guest</option>
-                          <option value="Both">Both</option>
-                        </select>
-                      </Field>
-                    </div>
-                  </div>
-                )}
+                      {moreRooms.length > 0 && (
+                        <p className="text-xs text-zinc-400">
+                          Multi-room bookings are created as a group — vouchers,
+                          add-ons and booker details can be added per stay
+                          afterwards.
+                        </p>
+                      )}
 
-              <div className="mt-2 border-t border-zinc-100 pt-4">
-                <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-zinc-500">
-                  Requests &amp; arrival
-                </h3>
-                <Field label="Special requests">
-                  <textarea
-                    className={inputCls}
-                    rows={2}
-                    placeholder="e.g. prayer mat, high floor, allergy notes"
-                    value={extra.special_requests}
-                    onChange={(e) => setX("special_requests", e.target.value)}
-                  />
-                </Field>
-                <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-sm">
-                  {(
-                    [
-                      ["pickup_required", "Airport pickup"],
-                      ["valet_parking", "Valet parking"],
-                      ["early_checkin", "Early check-in"],
-                      ["late_checkout", "Late check-out"],
-                    ] as const
-                  ).map(([k, lbl]) => (
-                    <label
-                      key={k}
-                      className="flex items-center gap-1.5 font-medium text-zinc-700"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={extra[k]}
-                        onChange={(e) => setX(k, e.target.checked)}
-                      />
-                      {lbl}
-                    </label>
-                  ))}
-                </div>
-                {extra.pickup_required && (
-                  <div className="mt-3 grid grid-cols-2 gap-3">
-                    <Field label="Arrival mode">
-                      <select
-                        className={inputCls}
-                        value={extra.arrival_mode}
-                        onChange={(e) => setX("arrival_mode", e.target.value)}
-                      >
-                        <option value="">—</option>
-                        <option>Air</option>
-                        <option>Road</option>
-                        <option>Rail</option>
-                        <option>Sea</option>
-                        <option>Own vehicle</option>
-                      </select>
-                    </Field>
-                    <Field label="Flight / train no.">
-                      <input
-                        className={inputCls}
-                        value={extra.arrival_ref}
-                        onChange={(e) => setX("arrival_ref", e.target.value)}
-                      />
-                    </Field>
-                    <Field label="Arrival time">
-                      <input
-                        type="datetime-local"
-                        className={inputCls}
-                        value={extra.arrival_datetime}
-                        onChange={(e) =>
-                          setX("arrival_datetime", e.target.value)
-                        }
-                      />
-                    </Field>
-                    <Field label="Extra beds">
-                      <input
-                        type="number"
-                        min={0}
-                        className={inputCls}
-                        value={extra.extra_beds}
-                        onChange={(e) =>
-                          setX("extra_beds", Number(e.target.value))
-                        }
-                      />
-                    </Field>
-                  </div>
-                )}
-                <div className="mt-3 grid grid-cols-2 gap-3">
-                  <Field label="Purpose of visit">
-                    <select
-                      className={inputCls}
-                      value={extra.purpose}
-                      onChange={(e) => setX("purpose", e.target.value)}
-                    >
-                      <option value="">—</option>
-                      <option>Leisure</option>
-                      <option>Business</option>
-                      <option>Event / Wedding</option>
-                      <option>Medical</option>
-                      <option>Pilgrimage</option>
-                      <option>Crew</option>
-                      <option>Other</option>
-                    </select>
-                  </Field>
-                  <Field label="Guest category">
-                    <select
-                      className={inputCls}
-                      value={extra.guest_category}
-                      onChange={(e) => setX("guest_category", e.target.value)}
-                    >
-                      <option value="">Standard</option>
-                      <option>VIP</option>
-                      <option>Corporate</option>
-                      <option>Complimentary</option>
-                      <option>Crew</option>
-                    </select>
-                  </Field>
+                      {moreRooms.length === 0 && (
+                        <>
+                          <label className="flex items-center gap-2 text-sm font-medium text-zinc-700">
+                            <input
+                              type="checkbox"
+                              className="size-4 accent-brand-600"
+                              checked={onBehalf}
+                              onChange={(e) => setOnBehalf(e.target.checked)}
+                            />
+                            Booked on someone&apos;s behalf
+                          </label>
+                          {onBehalf && (
+                            <div className="space-y-3">
+                              <div className="grid gap-3 sm:grid-cols-2">
+                                <Field label="Booker name">
+                                  <input
+                                    className={inputCls}
+                                    value={form.booked_by_name}
+                                    onChange={(e) =>
+                                      set("booked_by_name", e.target.value)
+                                    }
+                                    placeholder="Who arranged this stay"
+                                  />
+                                </Field>
+                                <Field label="Booker phone">
+                                  <input
+                                    className={inputCls}
+                                    value={form.booked_by_phone}
+                                    onChange={(e) =>
+                                      set("booked_by_phone", e.target.value)
+                                    }
+                                    placeholder="+91 …"
+                                  />
+                                </Field>
+                              </div>
+                              <div className="grid gap-3 sm:grid-cols-2">
+                                <Field label="Relation">
+                                  <select
+                                    className={inputCls}
+                                    value={form.booker_relation}
+                                    onChange={(e) =>
+                                      set("booker_relation", e.target.value)
+                                    }
+                                  >
+                                    <option value="">-</option>
+                                    {[
+                                      "Assistant",
+                                      "Family",
+                                      "Company Travel Desk",
+                                      "Travel Agent",
+                                    ].map((r) => (
+                                      <option key={r}>{r}</option>
+                                    ))}
+                                  </select>
+                                </Field>
+                                <Field label="Send links & updates to">
+                                  <select
+                                    className={inputCls}
+                                    value={form.contact_preference}
+                                    onChange={(e) =>
+                                      set("contact_preference", e.target.value)
+                                    }
+                                  >
+                                    <option value="Booker">Booker</option>
+                                    <option value="Guest">Guest</option>
+                                    <option value="Both">Both</option>
+                                  </select>
+                                </Field>
+                              </div>
+                            </div>
+                          )}
+
+                          <Field label="Special requests">
+                            <textarea
+                              className={inputCls}
+                              rows={2}
+                              placeholder="e.g. prayer mat, high floor, allergy notes"
+                              value={extra.special_requests}
+                              onChange={(e) =>
+                                setX("special_requests", e.target.value)
+                              }
+                            />
+                          </Field>
+                          <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm">
+                            {(
+                              [
+                                ["pickup_required", "Airport pickup"],
+                                ["valet_parking", "Valet parking"],
+                                ["early_checkin", "Early check-in"],
+                                ["late_checkout", "Late check-out"],
+                              ] as const
+                            ).map(([k, lbl]) => (
+                              <label
+                                key={k}
+                                className="flex items-center gap-1.5 font-medium text-zinc-700"
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={extra[k]}
+                                  onChange={(e) => setX(k, e.target.checked)}
+                                />
+                                {lbl}
+                              </label>
+                            ))}
+                          </div>
+                          {extra.pickup_required && (
+                            <div className="grid gap-3 sm:grid-cols-2">
+                              <Field label="Arrival mode">
+                                <select
+                                  className={inputCls}
+                                  value={extra.arrival_mode}
+                                  onChange={(e) =>
+                                    setX("arrival_mode", e.target.value)
+                                  }
+                                >
+                                  <option value="">—</option>
+                                  <option>Air</option>
+                                  <option>Road</option>
+                                  <option>Rail</option>
+                                  <option>Sea</option>
+                                  <option>Own vehicle</option>
+                                </select>
+                              </Field>
+                              <Field label="Flight / train no.">
+                                <input
+                                  className={inputCls}
+                                  value={extra.arrival_ref}
+                                  onChange={(e) =>
+                                    setX("arrival_ref", e.target.value)
+                                  }
+                                />
+                              </Field>
+                              <Field label="Arrival time">
+                                <input
+                                  type="datetime-local"
+                                  className={inputCls}
+                                  value={extra.arrival_datetime}
+                                  onChange={(e) =>
+                                    setX("arrival_datetime", e.target.value)
+                                  }
+                                />
+                              </Field>
+                              <Field label="Extra beds">
+                                <input
+                                  type="number"
+                                  min={0}
+                                  className={inputCls}
+                                  value={extra.extra_beds}
+                                  onChange={(e) =>
+                                    setX("extra_beds", Number(e.target.value))
+                                  }
+                                />
+                              </Field>
+                            </div>
+                          )}
+                          <div className="grid gap-3 sm:grid-cols-2">
+                            <Field label="Purpose of visit">
+                              <select
+                                className={inputCls}
+                                value={extra.purpose}
+                                onChange={(e) =>
+                                  setX("purpose", e.target.value)
+                                }
+                              >
+                                <option value="">—</option>
+                                <option>Leisure</option>
+                                <option>Business</option>
+                                <option>Event / Wedding</option>
+                                <option>Medical</option>
+                                <option>Pilgrimage</option>
+                                <option>Crew</option>
+                                <option>Other</option>
+                              </select>
+                            </Field>
+                            <Field label="Guest category">
+                              <select
+                                className={inputCls}
+                                value={extra.guest_category}
+                                onChange={(e) =>
+                                  setX("guest_category", e.target.value)
+                                }
+                              >
+                                <option value="">Standard</option>
+                                <option>VIP</option>
+                                <option>Corporate</option>
+                                <option>Complimentary</option>
+                                <option>Crew</option>
+                              </select>
+                            </Field>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
-              </div>
-              )}
             </div>
 
-            {/* quote - right 2/5 */}
-            <div className="flex flex-col justify-between border-t border-zinc-100 bg-zinc-50 px-7 py-6 md:col-span-2 md:border-l md:border-t-0">
-              <div>
+            {/* Quote rail — always visible on lg */}
+            <aside className="flex w-full shrink-0 flex-col border-t border-zinc-200 bg-zinc-50 lg:w-[22rem] lg:border-l lg:border-t-0 xl:w-96">
+              <div className="flex-1 overflow-y-auto px-6 py-5 md:px-7">
                 <div className="mb-4 flex items-center justify-between">
-                  <h3 className="text-sm font-semibold uppercase tracking-wider text-zinc-500">
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
                     Quote
                   </h3>
                   {quoting && (
@@ -1023,106 +1097,100 @@ export function BookingDialog(props: {
                     />
                   )}
                 </div>
+
                 {quote ? (
                   <div className="space-y-2.5 text-[15px]">
-                    <div className="flex justify-between text-zinc-600">
-                      <span>
+                    <div className="flex justify-between gap-3 text-zinc-600">
+                      <span className="min-w-0 truncate">
                         {roomTypeName} · {quote.nights} night
                         {quote.nights === 1 ? "" : "s"}
                       </span>
-                      <span>{cur()}{inr(quote.room_total)}</span>
+                      <span className="shrink-0 tabular-nums">
+                        {cur()}
+                        {inr(quote.room_total)}
+                      </span>
                     </div>
                     {quote.meal_total > 0 && (
                       <div className="flex justify-between text-zinc-600">
                         <span>Meals</span>
-                        <span>{cur()}{inr(quote.meal_total)}</span>
+                        <span className="tabular-nums">
+                          {cur()}
+                          {inr(quote.meal_total)}
+                        </span>
                       </div>
                     )}
                     {quote.discount > 0 && (
                       <div className="flex justify-between font-medium text-emerald-700">
                         <span>Voucher</span>
-                        <span>−{cur()}{inr(quote.discount)}</span>
+                        <span className="tabular-nums">
+                          −{cur()}
+                          {inr(quote.discount)}
+                        </span>
                       </div>
                     )}
                     <div className="flex justify-between text-zinc-600">
                       <span>GST {quote.tax_percent}%</span>
-                      <span>{cur()}{inr(quote.tax_amount)}</span>
+                      <span className="tabular-nums">
+                        {cur()}
+                        {inr(quote.tax_amount)}
+                      </span>
                     </div>
                     {moreQuotes.map((mq, i) =>
                       mq ? (
                         <div
                           key={i}
-                          className="flex justify-between text-zinc-600"
+                          className="flex justify-between gap-3 text-zinc-600"
                         >
-                          <span>
+                          <span className="min-w-0 truncate">
                             Room {i + 2} ·{" "}
                             {options?.room_types.find(
                               (rt) => rt.name === moreRooms[i]?.room_type,
                             )?.room_type_name ?? ""}
                           </span>
-                          <span>{cur()}{inr(mq.amount_after_tax)}</span>
+                          <span className="shrink-0 tabular-nums">
+                            {cur()}
+                            {inr(mq.amount_after_tax)}
+                          </span>
                         </div>
                       ) : null,
                     )}
-                    {(() => {
-                      const addonsGross = Object.entries(addonQty).reduce(
-                        (s, [n, q]) => {
-                          const x = options?.experiences.find(
-                            (e) => e.name === n,
-                          )
-                          return x && q > 0
-                            ? s + q * x.price * (1 + x.gst_rate / 100)
-                            : s
-                        },
-                        0,
-                      )
-                      const grand =
-                        quote.amount_after_tax +
-                        moreQuotes.reduce(
-                          (s, q) => s + (q?.amount_after_tax ?? 0),
-                          0,
-                        ) +
-                        addonsGross
-                      const pol = options?.property
-                      const cutoff = (() => {
-                        if (!pol) return ""
-                        const d = new Date(form.check_in_date + "T00:00:00")
-                        d.setDate(d.getDate() - (pol.free_cancel_days || 0))
-                        return d.toISOString().slice(0, 10)
-                      })()
-                      return (
-                        <>
-                          {addonsGross > 0 && (
-                            <div className="flex justify-between text-zinc-600">
-                              <span>Add-ons (incl. GST)</span>
-                              <span>{cur()}{inr(addonsGross)}</span>
-                            </div>
-                          )}
-                          <div className="mt-2 flex items-baseline justify-between border-t border-zinc-200 pt-3">
-                            <span className="text-sm font-medium text-zinc-500">
-                              Total{moreRooms.length > 0 ? " · all rooms" : ""}
-                            </span>
-                            <span className="text-2xl font-semibold">
-                              {cur()}{inr(grand)}
-                            </span>
-                          </div>
-                          <p className="text-xs text-zinc-400">
-                            {form.check_in_date} → {checkOut}
-                          </p>
-                          {pol && (
-                            <p className="mt-2 border-t border-zinc-200 pt-2 text-xs leading-relaxed text-zinc-500">
-                              {pol.cancellation_fee === "None"
-                                ? "Free cancellation."
-                                : `Free cancellation until ${cutoff}; after that the ${pol.cancellation_fee.toLowerCase()} is charged.`}
-                              {pol.no_show_charge !== "None" &&
-                                ` No-show: ${pol.no_show_charge.toLowerCase()} charged.`}
-                              {pol.deposit_pct > 0 &&
-                                ` Deposit expected now: ${cur()}${inr((grand * pol.deposit_pct) / 100)} (${pol.deposit_pct}%).`}
-                            </p>
-                          )}
-                        </>
-                      )
-                    })()}
+                    {addonsGross > 0 && (
+                      <div className="flex justify-between text-zinc-600">
+                        <span>Add-ons (incl. GST)</span>
+                        <span className="tabular-nums">
+                          {cur()}
+                          {inr(addonsGross)}
+                        </span>
+                      </div>
+                    )}
+
+                    <div className="mt-3 rounded-xl border border-zinc-200 bg-white px-4 py-3.5 shadow-sm">
+                      <div className="flex items-baseline justify-between gap-2">
+                        <span className="text-sm font-medium text-zinc-500">
+                          Total
+                          {moreRooms.length > 0 ? " · all rooms" : ""}
+                        </span>
+                        <span className="text-3xl font-semibold tabular-nums tracking-tight text-zinc-900">
+                          {cur()}
+                          {inr(grandTotal)}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-xs text-zinc-400">
+                        {form.check_in_date} → {checkOut}
+                      </p>
+                    </div>
+
+                    {options?.property && (
+                      <p className="pt-1 text-xs leading-relaxed text-zinc-500">
+                        {options.property.cancellation_fee === "None"
+                          ? "Free cancellation."
+                          : `Free cancellation until ${cancelCutoff}; after that the ${options.property.cancellation_fee.toLowerCase()} is charged.`}
+                        {options.property.no_show_charge !== "None" &&
+                          ` No-show: ${options.property.no_show_charge.toLowerCase()} charged.`}
+                        {options.property.deposit_pct > 0 &&
+                          ` Deposit expected now: ${cur()}${inr((grandTotal * options.property.deposit_pct) / 100)} (${options.property.deposit_pct}%).`}
+                      </p>
+                    )}
                   </div>
                 ) : (
                   <p className="text-sm text-zinc-400">
@@ -1137,32 +1205,34 @@ export function BookingDialog(props: {
                 )}
               </div>
 
-              <div className="mt-6 flex gap-3">
+              <div className="shrink-0 space-y-2 border-t border-zinc-200 bg-white px-6 py-4 md:px-7">
                 <Button
-                  variant="outline"
-                  className="justify-center py-2.5 text-base"
-                  onClick={props.onClose}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  variant="outline"
-                  className="justify-center py-2.5 text-base"
-                  disabled={busy || !form.guest_name}
-                  onClick={() => submit(true)}
-                  title="Park this stay with no room (sold out / restricted dates); promote it when a room frees"
-                >
-                  Add to waitlist
-                </Button>
-                <Button
-                  className="flex-1 justify-center py-2.5 text-base"
+                  className="w-full justify-center py-2.5 text-base"
                   disabled={busy || !form.guest_name || !quote}
                   onClick={() => submit()}
                 >
-                  {busy ? "Booking…" : "Confirm"}
+                  {busy ? "Booking…" : "Confirm booking"}
                 </Button>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    variant="outline"
+                    className="justify-center"
+                    onClick={props.onClose}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="justify-center"
+                    disabled={busy || !form.guest_name}
+                    onClick={() => submit(true)}
+                    title="Park this stay with no room; promote when inventory frees"
+                  >
+                    Waitlist
+                  </Button>
+                </div>
               </div>
-            </div>
+            </aside>
           </div>
         )}
       </div>

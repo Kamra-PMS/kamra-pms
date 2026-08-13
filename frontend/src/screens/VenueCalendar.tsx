@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react"
+import { Link } from "react-router-dom"
 import { ChevronLeft, ChevronRight, Plus, Search } from "lucide-react"
 
 import {
@@ -19,8 +20,10 @@ import { Sheet } from "../components/ui/sheet"
 import { cur, moneyLocale } from "../lib/money"
 
 const DAYS = 14
-const EVENT_TYPES = ["Wedding", "Conference", "Birthday", "Corporate Offsite", "Other"]
-const STATUSES = ["Enquiry", "Confirmed", "Completed", "Cancelled"]
+const EVENT_TYPES = ["Wedding", "Reception", "Sangeet", "Mehendi", "Engagement",
+  "Conference", "Seminar", "Training", "Product Launch", "Birthday",
+  "Anniversary", "Corporate Offsite", "Exhibition", "Other"]
+const STATUSES = ["Enquiry", "Tentative", "Confirmed", "Completed", "Cancelled", "Lost"]
 const inputCls =
   "w-full rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm " +
   "focus:outline-2 focus:outline-offset-1 focus:outline-brand-600"
@@ -55,10 +58,12 @@ const emptyDraft = (venue: string, date: string): Draft => ({
 })
 
 const STATUS: Record<string, string> = {
-  Enquiry: "bg-amber-100 text-amber-800 border-amber-200",
+  Enquiry: "bg-sky-100 text-sky-800 border-sky-200",
+  Tentative: "bg-amber-100 text-amber-800 border-amber-200 border-dashed",
   Confirmed: "bg-emerald-100 text-emerald-800 border-emerald-200",
   Completed: "bg-zinc-100 text-zinc-600 border-zinc-200",
   Cancelled: "bg-rose-100 text-rose-700 border-rose-200 line-through",
+  Lost: "bg-rose-100 text-rose-700 border-rose-200 line-through",
 }
 
 const inr = (n: number) =>
@@ -164,7 +169,8 @@ export default function VenueCalendar() {
         customer_name: draft.customer_name,
         customer_phone: draft.customer_phone || null,
         attendees: draft.attendees ? Number(draft.attendees) : null,
-        quoted_amount: draft.quoted_amount ? Number(draft.quoted_amount) : null,
+        // quoted_amount is no longer a number you type: it's the sum of the
+        // function's line items, priced on the function sheet
         status: draft.status,
         requirements: draft.requirements || null,
       }
@@ -327,13 +333,25 @@ export default function VenueCalendar() {
           title={draft.name ? "Edit venue booking" : "New venue booking"}
           onClose={() => setDraft(null)}
           footer={
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setDraft(null)}>
-                Cancel
-              </Button>
-              <Button disabled={busy} onClick={saveDraft}>
-                {draft.name ? "Save" : "Create booking"}
-              </Button>
+            <div className="flex items-center justify-between gap-2">
+              {draft.name ? (
+                <Link
+                  to={`/banquet/${encodeURIComponent(draft.name)}`}
+                  className="text-sm font-medium text-brand-700 hover:underline"
+                >
+                  Open the function sheet →
+                </Link>
+              ) : (
+                <span />
+              )}
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setDraft(null)}>
+                  Cancel
+                </Button>
+                <Button disabled={busy} onClick={saveDraft}>
+                  {draft.name ? "Save" : "Create booking"}
+                </Button>
+              </div>
             </div>
           }
         >
@@ -384,8 +402,10 @@ export default function VenueCalendar() {
                   onChange={(e) => setField("attendees", e.target.value)} />
               </Field>
               <Field label="Quoted amount">
-                <input type="number" className={inputCls} value={draft.quoted_amount}
-                  onChange={(e) => setField("quoted_amount", e.target.value)} />
+                <input className={inputCls + " bg-zinc-50 text-zinc-500"}
+                  value={draft.quoted_amount ? inr(Number(draft.quoted_amount)) : "-"}
+                  readOnly
+                  title="The sum of the function's line items - price it on the function sheet." />
               </Field>
             </div>
             <Field label="Status">

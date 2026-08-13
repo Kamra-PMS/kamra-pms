@@ -1,0 +1,47 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-07-31 20:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "section",
+  "area_sqft",
+  "seats"
+ ],
+ "fields": [
+  {
+   "fieldname": "section",
+   "fieldtype": "Data",
+   "label": "Section",
+   "reqd": 1,
+   "in_list_view": 1,
+   "description": "A physical piece of the room - A, B, Lawn North. Two bookable spaces that share a piece cannot both be sold."
+  },
+  {
+   "fieldname": "area_sqft",
+   "fieldtype": "Int",
+   "label": "Area Sqft",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "seats",
+   "fieldtype": "Int",
+   "label": "Seats (round table)",
+   "in_list_view": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-07-31 20:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kamra",
+ "name": "Venue Section",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

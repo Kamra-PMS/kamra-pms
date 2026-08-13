@@ -1,0 +1,75 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-07-31 14:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "course",
+  "dish",
+  "dish_name",
+  "food_type",
+  "is_default",
+  "supplement_per_pax"
+ ],
+ "fields": [
+  {
+   "fieldname": "course",
+   "fieldtype": "Data",
+   "label": "Course",
+   "reqd": 1,
+   "in_list_view": 1,
+   "description": "Must match a course name on the menu above."
+  },
+  {
+   "fieldname": "dish",
+   "fieldtype": "Link",
+   "label": "Dish",
+   "options": "Banquet Dish",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "dish_name",
+   "fieldtype": "Data",
+   "label": "Dish Name",
+   "fetch_from": "dish.dish_name",
+   "in_list_view": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "food_type",
+   "fieldtype": "Data",
+   "label": "Food Type",
+   "fetch_from": "dish.food_type",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "is_default",
+   "fieldtype": "Check",
+   "label": "Is Default",
+   "in_list_view": 1,
+   "description": "Pre-selected when the menu goes on a function."
+  },
+  {
+   "fieldname": "supplement_per_pax",
+   "fieldtype": "Currency",
+   "label": "Supplement Per Pax",
+   "description": "Costs extra per head over the package price."
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-07-31 14:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kamra",
+ "name": "Banquet Menu Dish",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "istable": 1
+}

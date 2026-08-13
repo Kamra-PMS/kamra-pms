@@ -26,6 +26,7 @@ MODULES = [
     ("api", "Core (front desk, folios, guests, rooms)", ""),
     ("pos", "Restaurant POS & kitchen", ""),
     ("laundry", "Laundry (housekeeping)", ""),
+    ("banquet", "Banquets (functions, quotations, event orders)", ""),
     ("migrate", "Migration (CSV import)", ""),
     ("inventory", "Inventory & recipes", ""),
     ("menu_import", "Menu bulk import", ""),
@@ -62,6 +63,12 @@ SAMPLE = {
     "amount": 1000,
     "adults": 2,
     "children": 0,
+    "function": "EVT-2026-0001",
+    "venue": "Your Property-Grand Ballroom",
+    "menu": "BMENU-00001",
+    "service_item": "BSVC-00001",
+    "event_date": "2026-12-12",
+    "customer_name": "A. Customer",
 }
 
 
@@ -123,7 +130,8 @@ def collect():
     modules = []
     for mod, folder, note in MODULES:
         path = os.path.join(APP, f"{mod}.py")
-        tree = ast.parse(open(path).read())  # nosemgrep: frappe-security-file-traversal -- path is derived from the app source tree, not from user input
+        with open(path) as src:  # nosemgrep: frappe-security-file-traversal -- path is derived from the app source tree, not from user input
+            tree = ast.parse(src.read())
         eps = []
         for node in tree.body:
             if not isinstance(node, ast.FunctionDef):
@@ -200,7 +208,8 @@ Content-Type: application/json
                     out.append(f"| `{n}` | {'yes' if req else 'no'} | "
                                f"{'' if d in (None,) else f'`{d}`'} |")
                 out.append("")
-    open(os.path.join(HERE, "api-reference.md"), "w").write("\n".join(out))  # nosemgrep: frappe-security-file-traversal -- path is derived from the app source tree, not from user input
+    with open(os.path.join(HERE, "api-reference.md"), "w") as md:  # nosemgrep: frappe-security-file-traversal -- path is derived from the app source tree, not from user input
+        md.write("\n".join(out))
     return total
 
 
@@ -258,7 +267,8 @@ def write_postman(modules):
         "item": items,
     }
     path = os.path.join(HERE, "public", "kamra.postman_collection.json")
-    open(path, "w").write(json.dumps(collection, indent=1))  # nosemgrep: frappe-security-file-traversal -- path is derived from the app source tree, not from user input
+    with open(path, "w") as collection_file:  # nosemgrep: frappe-security-file-traversal -- path is derived from the app source tree, not from user input
+        collection_file.write(json.dumps(collection, indent=1))
 
 
 if __name__ == "__main__":
