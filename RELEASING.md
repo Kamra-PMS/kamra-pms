@@ -75,9 +75,12 @@ The maintainer runbook. Contributors don't need this — see
       marketplace benches don't run npm)
 - [x] Root `package.json` build script for Frappe Cloud
 - [x] README compatibility table (Kamra `main` releases ↔ Frappe v16)
-- [ ] Publisher account on frappecloud.com + listing (title, description,
-      screenshots from `docs/screenshots/`, category "Hospitality"), then
-      create a marketplace release from `main` and submit for review
+- [x] Publisher account on frappecloud.com; Marketplace App `kamra` exists
+      (public page is Draft / **Not Available** until a release is approved)
+- [ ] Listing copy, Hospitality category, logo, screenshots, Support +
+      Privacy URLs — paste from [`docs/marketplace-listing.md`](docs/marketplace-listing.md)
+- [ ] Publish the `main` / v2.5.0 release for review; if Draft > 10 days,
+      ticket https://support.frappe.io/ (template in the listing doc)
 
 ## Secrets the pipelines need (repo → Settings → Secrets)
 
