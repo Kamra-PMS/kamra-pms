@@ -1,0 +1,36 @@
+# Mandatory for Frappe Cloud Marketplace review.
+# Mirrors https://github.com/frappe/semgrep-rules#how-to-use-in-my-app
+name: Linters
+
+on:
+  pull_request:
+  push:
+    branches: [main, develop]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  linter:
+    name: Semgrep Rules
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - name: Download Semgrep rules
+        run: git clone --depth 1 https://github.com/frappe/semgrep-rules.git frappe-semgrep-rules
+
+      - name: Run Semgrep rules
+        # ERROR-severity only: Frappe's own tip. WARNING rules (translations,
+        # guest whitelist, type hints) are reviewed by hand on the marketplace
+        # audit; failing CI on 200+ style warnings would hide a real ERROR.
+        run: |
+          pip install semgrep
+          semgrep --error --severity=ERROR \
+            --config ./frappe-semgrep-rules/rules \
+            --config r/python.lang.correctness
