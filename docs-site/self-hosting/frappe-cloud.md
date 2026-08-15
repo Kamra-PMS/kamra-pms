@@ -12,7 +12,6 @@ backups and updates handled for you.
 Billing for the server goes to Frappe Cloud; Kamra itself is free there
 too — same code, every feature.
 
-::: tip
-If you'd rather have the Kamra team run it (including migration from
-your current PMS), that's [Kamra Cloud](https://kamrapms.com/#cloud).
-:::
+The same AGPL code runs here; Frappe Cloud handles the bench, backups
+and updates. For a walkthrough of the product after install, use the
+[live demo](https://demo.kamrapms.com).
