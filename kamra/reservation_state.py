@@ -179,6 +179,5 @@ def expire_holds() -> dict:
 		finally:
 			frappe.flags.kamra_status_transition = False
 			frappe.flags.kamra_cancelling = False
-	if expired:
-		frappe.db.commit()
+	# Scheduler commits at end of the job; do not frappe.db.commit() here.
 	return {"expired": expired}
