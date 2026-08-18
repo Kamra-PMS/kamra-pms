@@ -199,7 +199,7 @@ def run_tests():
 	finally:
 		# Guarantee Cleanup
 		cleanup_test_data(prop_name)
-		frappe.db.commit()
+		frappe.db.commit()  # nosemgrep: frappe-manual-commit -- bench script runs outside the request cycle; persist cleanup before the process exits
 		print("--- Generic Test Cleanup Complete & All Tests Passed! ---")
 
 def cleanup_test_data(property_name):
