@@ -19,6 +19,7 @@ import {
   type AppNavItem,
 } from "./lib/apps"
 import {
+  call,
   enabledModules,
   getCurrentProperty,
   myProperties,
@@ -167,6 +168,7 @@ export default function AppShell() {
   const [refreshKey, setRefreshKey] = useState(0)
   const [properties, setProperties] = useState<PropertyRow[]>([])
   const [property, setProperty] = useState(getCurrentProperty())
+  const [demoMode, setDemoMode] = useState(false)
 
   useEffect(() => {
     myProperties().then((props) => {
@@ -176,6 +178,9 @@ export default function AppShell() {
         setProperty(props[0].name)
       }
     })
+    call<{ demo_mode: boolean }>("kamra.public_api.site_info")
+      .then((info) => setDemoMode(info.demo_mode))
+      .catch(() => setDemoMode(false))
   }, [])
 
   useEffect(() => subscribeRealtime(() => setRefreshKey((k) => k + 1)), [])
@@ -240,7 +245,20 @@ export default function AppShell() {
     )
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen flex-col">
+      {demoMode && (
+        <div className="bg-amber-500 px-4 py-1.5 text-center text-xs font-medium text-amber-950">
+          Shared playground — not your hotel. Data is wiped every night.
+          {" "}
+          <a
+            href="https://kamrapms.com"
+            className="underline underline-offset-2 hover:text-black"
+          >
+            Get your own Kamra →
+          </a>
+        </div>
+      )}
+      <div className="flex min-h-0 flex-1">
       <aside className="hidden w-52 shrink-0 border-r border-zinc-200 bg-white px-3 py-5 sm:sticky sm:top-0 sm:block sm:h-screen sm:overflow-y-auto">
         <div className="mb-5 flex items-center gap-2 px-1">
           <img src={asset("kamra-mark.svg")} alt="" className="size-7" aria-hidden />
@@ -342,6 +360,7 @@ export default function AppShell() {
       <span className="hidden">
         <IndianRupee className="size-3" aria-hidden />
       </span>
+    </div>
     </div>
   )
 }

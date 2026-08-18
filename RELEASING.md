@@ -48,8 +48,9 @@ The maintainer runbook. Contributors don't need this — see
 - `nightly.yml` refuses to ship if CI on `develop` HEAD isn't green — fix CI
   rather than forcing.
 - Force an off-schedule nightly: Actions → Nightly → *Run workflow*.
-- nightly.kamrapms.com is disposable; reseed with
-  `bench --site nightly.kamrapms.com execute kamra.scripts.seed_demo.execute`.
+- nightly.kamrapms.com is disposable; wipe + reseed with
+  `bench --site nightly.kamrapms.com execute kamra.scripts.reset_demo.execute`
+  (or `seed_demo.execute` if you only want to fill missing showcase data).
 
 ## Distribution channels checklist (kept current per release)
 

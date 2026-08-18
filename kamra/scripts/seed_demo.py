@@ -4,6 +4,8 @@ Run with:
     bench --site kamra.localhost execute kamra.scripts.seed_demo.execute
 
 Idempotent: does nothing if the demo property already exists.
+To wipe a public playground and rebuild from scratch, use
+``kamra.scripts.reset_demo.execute`` instead.
 """
 
 import random
