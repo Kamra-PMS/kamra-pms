@@ -198,9 +198,15 @@ and the support ticket.
 ## Dashboard checklist (unhalt the listing)
 
 The public page already exists at
-https://frappecloud.com/marketplace/apps/kamra and shows **Not Available**.
-Kamra is **not** in the 347 published marketplace apps. Status is Draft /
-no approved release.
+https://frappecloud.com/marketplace/apps/kamra and shows **Not Available**
+until a reviewer publishes. Automated Submission Gate
+`AUD-kamra-00003` is **22 passed / 1 minor warning** (no blocking Fail).
+
+Before publishing a new SHA:
+
+```bash
+python kamra/scripts/marketplace_install_check.py
+```
 
 In https://frappecloud.com/dashboard → **Marketplace** → **Kamra**:
 
