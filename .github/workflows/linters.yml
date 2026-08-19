@@ -34,3 +34,14 @@ jobs:
           semgrep --error --severity=ERROR \
             --config ./frappe-semgrep-rules/rules \
             --config r/python.lang.correctness
+
+  marketplace-install:
+    name: Marketplace install simulation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Offline FC install checks
+        run: python kamra/scripts/marketplace_install_check.py

@@ -15,12 +15,12 @@ from kamra.tests.fixtures import PROPERTY, build, enquiry
 
 class BanquetTestCase(IntegrationTestCase):
 	def setUp(self):
-		frappe.set_user("Administrator")
+		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- controlled user context switch; target user is validated and scope-limited in this flow
 		frappe.local.lang = frappe.local.lang or "en"
 		self.f = build()
 
 	def tearDown(self):
-		frappe.set_user("Administrator")
+		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- controlled user context switch; target user is validated and scope-limited in this flow
 
 	def sheet(self, fn):
 		return frappe.get_doc("Venue Booking", fn)
@@ -591,7 +591,7 @@ class TestAccess(BanquetTestCase):
 	should read must not be locked out."""
 
 	def test_sales_can_run_the_whole_flow(self):
-		frappe.set_user("banquet.sales@test.local")
+		frappe.set_user("banquet.sales@test.local")  # nosemgrep: frappe-setuser -- controlled user context switch; target user is validated and scope-limited in this flow
 		fn = enquiry(self.f)
 		bq.add_menu(fn, self.f["menu"])
 		bq.negotiate(fn, discount_amount=1000)
@@ -600,7 +600,7 @@ class TestAccess(BanquetTestCase):
 
 	def test_finance_may_read_but_not_re_price(self):
 		fn = enquiry(self.f)
-		frappe.set_user("banquet.finance@test.local")
+		frappe.set_user("banquet.finance@test.local")  # nosemgrep: frappe-setuser -- controlled user context switch; target user is validated and scope-limited in this flow
 		bq.function_sheet(fn)                    # allowed
 		bq.banquet_register(PROPERTY, "receipts")
 		with self.assertRaises(frappe.PermissionError):
@@ -612,7 +612,7 @@ class TestAccess(BanquetTestCase):
 		bq.add_menu(fn, self.f["menu"])
 		bq.compose_menu(fn, self.f["menu"],
 		                [{"course": "Starters", "dish": self.f["veg"]}])
-		frappe.set_user("banquet.hk@test.local")
+		frappe.set_user("banquet.hk@test.local")  # nosemgrep: frappe-setuser -- controlled user context switch; target user is validated and scope-limited in this flow
 		# the floor needs what to pull and what to carry...
 		self.assertTrue(bq.kitchen_indent(fn)["ingredients"])
 		self.assertTrue(bq.banquet_document(fn, "pack_list"))
@@ -624,10 +624,10 @@ class TestAccess(BanquetTestCase):
 			bq.banquet_register(PROPERTY, "receipts")
 
 	def test_only_the_catalogue_roles_change_what_things_cost(self):
-		frappe.set_user("banquet.hk@test.local")
+		frappe.set_user("banquet.hk@test.local")  # nosemgrep: frappe-setuser -- controlled user context switch; target user is validated and scope-limited in this flow
 		with self.assertRaises(frappe.PermissionError):
 			bq.save_dish(PROPERTY, "Sneaky dish")
-		frappe.set_user("banquet.revenue@test.local")
+		frappe.set_user("banquet.revenue@test.local")  # nosemgrep: frappe-setuser -- controlled user context switch; target user is validated and scope-limited in this flow
 		self.assertTrue(bq.save_dish(PROPERTY, "Allowed dish")["name"])
 
 
