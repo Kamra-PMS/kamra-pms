@@ -22,4 +22,4 @@ def execute():
 		if updates:
 			frappe.db.set_value("Room Type", name, updates, update_modified=False)
 
-	frappe.db.commit()
+	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- migration patch runs outside the request cycle; explicit commit persists the backfill

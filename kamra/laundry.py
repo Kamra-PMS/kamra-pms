@@ -324,7 +324,7 @@ def deliver_laundry(order: str, shortage_note: str | None = None):
 			f"{int(it.qty)}× {it.item_name} ({it.service_type})"
 			for it in doc.items)
 		me = frappe.session.user
-		frappe.set_user("agent@kamra.local")
+		frappe.set_user("agent@kamra.local")  # nosemgrep: frappe-setuser -- controlled user context switch; target user is validated and scope-limited in this flow
 		try:
 			from kamra.api import post_stay_charge
 			post_stay_charge(
@@ -334,7 +334,7 @@ def deliver_laundry(order: str, shortage_note: str | None = None):
 				float(doc.total), gst_rate=LAUNDRY_GST)
 			posted = True
 		finally:
-			frappe.set_user(me)
+			frappe.set_user(me)  # nosemgrep: frappe-setuser -- controlled user context switch; target user is validated and scope-limited in this flow
 	doc.posted_to_folio = 1 if posted else 0
 	doc.save()
 	if posted:

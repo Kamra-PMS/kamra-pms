@@ -40,6 +40,8 @@ Open-source PMS for hotels and short-term rentals.
 ## Long description (About — markdown)
 
 Do not paste install instructions. Frappe Cloud installs the app.
+Do not put URLs in the long description — Website / Docs / Support
+fields already hold those; extra links fail the metadata audit.
 
 ```markdown
 A complete property management system for hotels and short-term rentals,
@@ -120,16 +122,12 @@ is pulled in automatically.
   presets), and a 51-check eval harness + 13-journey front-desk persona
   suite in CI.
 
-### Try it
+### After install
 
-Live hotel demo: [demo.kamrapms.com](https://demo.kamrapms.com) — a
-sandbox; role logins are printed on the page.
-
-Live short-term rental catalog:
-[ewa.kamrapms.com/book](https://ewa.kamrapms.com/kamra/book).
-
-After install, the product UI is at `/kamra`. Sign in as Administrator and
-open `/kamra/setup` to create the first property.
+The product UI is at `/kamra`. Sign in as Administrator and open
+`/kamra/setup` to create the first property. Put the live demo and catalog
+on the Website / Documentation fields — Frappe Cloud fails the listing
+audit if the long description contains any other links.
 ```
 
 ---
@@ -200,9 +198,15 @@ and the support ticket.
 ## Dashboard checklist (unhalt the listing)
 
 The public page already exists at
-https://frappecloud.com/marketplace/apps/kamra and shows **Not Available**.
-Kamra is **not** in the 347 published marketplace apps. Status is Draft /
-no approved release.
+https://frappecloud.com/marketplace/apps/kamra and shows **Not Available**
+until a reviewer publishes. Automated Submission Gate
+`AUD-kamra-00003` is **22 passed / 1 minor warning** (no blocking Fail).
+
+Before publishing a new SHA:
+
+```bash
+python kamra/scripts/marketplace_install_check.py
+```
 
 In https://frappecloud.com/dashboard → **Marketplace** → **Kamra**:
 

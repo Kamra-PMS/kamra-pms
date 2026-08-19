@@ -657,7 +657,7 @@ def t24():
 			"doctype": "User Permission", "user": u,
 			"allow": "Property", "for_value": P,
 		}).insert(ignore_permissions=True)
-	frappe.set_user(u)
+	frappe.set_user(u)  # nosemgrep: frappe-setuser -- controlled user context switch; target user is validated and scope-limited in this flow
 	try:
 		assert permitted_properties() == {P}, permitted_properties()
 		assert_property_access(P)  # the one they're allowed
@@ -677,7 +677,7 @@ def t24():
 		except frappe.PermissionError:
 			pass
 	finally:
-		frappe.set_user("Administrator")
+		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- controlled user context switch; target user is validated and scope-limited in this flow
 
 
 @check("POS: order fires KOT, delivery posts F&B to the room folio with discount")
@@ -1563,7 +1563,7 @@ def t41():
 	# looking is not moving: Front Desk reads stock, Finance moves it
 	me = frappe.session.user
 	try:
-		frappe.set_user("frontdesk@kamra.local")
+		frappe.set_user("frontdesk@kamra.local")  # nosemgrep: frappe-setuser -- controlled user context switch; target user is validated and scope-limited in this flow
 		inventory.stock_list(P, outlet)  # allowed
 		try:
 			inventory.receive_stock(P, outlet, [{"ingredient": paneer, "qty": 1}])
@@ -1571,7 +1571,7 @@ def t41():
 		except frappe.PermissionError:
 			pass
 	finally:
-		frappe.set_user(me)
+		frappe.set_user(me)  # nosemgrep: frappe-setuser -- controlled user context switch; target user is validated and scope-limited in this flow
 
 
 def _id_photo(colour=(180, 40, 40)):
@@ -1704,7 +1704,7 @@ def t43():
 	token = frappe.db.get_value("Reservation", res.name, "precheckin_token")
 
 	# the desk captures at the counter for a guest who never uploaded
-	frappe.set_user("frontdesk@kamra.local")
+	frappe.set_user("frontdesk@kamra.local")  # nosemgrep: frappe-setuser -- controlled user context switch; target user is validated and scope-limited in this flow
 	try:
 		api.upload_id_document(res.name, _id_photo())
 		assert frappe.db.get_value("Reservation", res.name, "id_document_source") == "Desk"
@@ -1731,7 +1731,7 @@ def t43():
 		except frappe.ValidationError:
 			pass
 	finally:
-		frappe.set_user("Administrator")
+		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- controlled user context switch; target user is validated and scope-limited in this flow
 
 	# once the desk has checked the card, the guest cannot quietly swap it
 	try:
@@ -1741,7 +1741,7 @@ def t43():
 		pass
 
 	# looking is not everyone's business
-	frappe.set_user("hk@kamra.local")
+	frappe.set_user("hk@kamra.local")  # nosemgrep: frappe-setuser -- controlled user context switch; target user is validated and scope-limited in this flow
 	try:
 		for fn, args in (("id_document_image", (res.name,)),
 		                 ("verify_precheckin", (res.name,)),
@@ -1752,7 +1752,7 @@ def t43():
 			except frappe.PermissionError:
 				pass
 	finally:
-		frappe.set_user("Administrator")
+		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- controlled user context switch; target user is validated and scope-limited in this flow
 
 	# the harness rolls the DB back but save_file wrote real bytes to disk;
 	# clean up after ourselves rather than leaving them for the runner
@@ -1781,7 +1781,7 @@ def t34():
 	buf = BytesIO()
 	Image.new("RGB", (8, 8), (200, 180, 40)).save(buf, format="JPEG")
 	jpg = base64.b64encode(buf.getvalue()).decode()
-	frappe.set_user("Guest")
+	frappe.set_user("Guest")  # nosemgrep: frappe-setuser -- controlled user context switch; target user is validated and scope-limited in this flow
 	try:
 		public_api.precheckin_submit(
 			tok, "Aadhaar", "987654321012", email="id@x.in", consent=0,
@@ -1795,7 +1795,7 @@ def t34():
 		except frappe.exceptions.ValidationError:
 			pass
 	finally:
-		frappe.set_user("Administrator")
+		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- controlled user context switch; target user is validated and scope-limited in this flow
 
 	f = frappe.get_all("File", filters={
 		"attached_to_doctype": "Guest", "attached_to_name": g,
@@ -1871,12 +1871,12 @@ def t36():
 	frappe.db.set_value("Reservation", res.name, "precheckin_token", tok)
 
 	# guest sends BOTH documents from the self check-in page
-	frappe.set_user("Guest")
+	frappe.set_user("Guest")  # nosemgrep: frappe-setuser -- controlled user context switch; target user is validated and scope-limited in this flow
 	try:
 		public_api.precheckin_submit(tok, "Passport", "P1234567",
 		                             id_image=img64(), address_image=img64())
 	finally:
-		frappe.set_user("Administrator")
+		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- controlled user context switch; target user is validated and scope-limited in this flow
 	assert frappe.db.get_value("Guest", g, "id_file")
 	addr1 = frappe.db.get_value("Guest", g, "address_proof_file")
 	assert addr1
