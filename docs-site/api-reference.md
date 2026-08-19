@@ -16,7 +16,7 @@ Authorization: token <api_key>:<api_secret>
 Content-Type: application/json
 ```
 
-- Get keys from **Copilot → Connect** (per-user, role-scoped) or the
+- Get keys from **Kamra Agent → Connect your AI** (Claude OAuth, role-scoped) or the
   dedicated agent user for services.
 - Responses: `{"message": <return value>}`. Errors are HTTP 4xx with a
   readable reason.

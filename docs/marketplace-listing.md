@@ -57,8 +57,8 @@ is pulled in automatically.
 
 ### What makes it different
 
-- **Agent-ready, not agent-locked.** An MCP server exposes role-scoped
-  tools. Connect Claude or any MCP client — *"book Mr. Rao a deluxe for the
+- **Agent-ready, not agent-locked.** An MCP server exposes 52 role-scoped
+  tools. Click Connect Claude — *"book Mr. Rao a deluxe for the
   weekend with breakfast"* — it quotes, books, and logs every action. Bring
   your own AI; there is no bundled model markup.
 - **Deterministic money.** Prices, taxes and availability come from a

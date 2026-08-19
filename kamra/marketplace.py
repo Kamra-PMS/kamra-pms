@@ -122,8 +122,8 @@ def registry(property: str):
 			         "with your OpenAI key.",
 			"cards": [
 				_connector("Connect Claude (MCP)", "claude",
-				           "Point your Claude at this hotel over MCP - it can "
-				           "use the tools your role allows, and nothing more.",
+				           "Click Connect Claude — it acts as you, with your "
+				           "role limits, over a hosted MCP endpoint.",
 				           action="route", route="/assistant",
 				           status="connected" if has_key else "available",
 				           detail="Your connector" if has_key else None),

@@ -112,5 +112,5 @@ from in-house guests also raise a ticket on **Guest Requests**.
   double for the weekend", "cancel RES-2026-0142, guest request" — it
   quotes before booking, previews before cancelling, and every action
   it takes is logged.
-- **MCP** connects Claude or any MCP client to the same tools — see
-  [AI & API setup](/ai-and-mcp).
+- **MCP** — **Kamra Agent → Connect your AI → Connect Claude**. It acts
+  as you. See [Connect your AI](/ai-and-mcp).
