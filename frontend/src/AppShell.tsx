@@ -91,7 +91,7 @@ function ThemeToggle() {
   )
 }
 
-/** Gmail-style grid: the app switcher popover in the top bar. */
+/** App switcher in the top bar: quiet grid, one accent for the current app. */
 function AppSwitcher({ apps, current }: { apps: AppDef[]; current: AppDef }) {
   const [open, setOpen] = useState(false)
   const navigate = useNavigate()
@@ -118,40 +118,50 @@ function AppSwitcher({ apps, current }: { apps: AppDef[]; current: AppDef }) {
         onClick={() => setOpen((o) => !o)}
         aria-label="Switch app"
         title="Switch app"
-        className="flex size-9 items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700"
+        className="flex size-8 items-center justify-center rounded-md text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800"
       >
-        <LayoutGrid className="size-5" aria-hidden />
+        <LayoutGrid className="size-4" strokeWidth={1.75} aria-hidden />
       </button>
       {open && (
-        <div className="absolute left-0 top-11 z-50 w-72 rounded-2xl border border-zinc-200 bg-white p-2 shadow-2xl">
-          <div className="grid grid-cols-3 gap-1">
-            {apps.map((app) => (
-              <button
-                key={app.id}
-                onClick={() => go(app)}
-                className={cn(
-                  "flex flex-col items-center gap-1.5 rounded-xl px-2 py-3 text-center transition",
-                  app.id === current.id ? "bg-zinc-50" : "hover:bg-zinc-50",
-                )}
-              >
-                <span
+        <div className="absolute left-0 top-10 z-50 w-64 rounded-lg border border-zinc-200 bg-white p-1.5 shadow-lg ring-1 ring-black/5">
+          <div className="grid grid-cols-3 gap-0.5">
+            {apps.map((app) => {
+              const active = app.id === current.id
+              return (
+                <button
+                  key={app.id}
+                  onClick={() => go(app)}
                   className={cn(
-                    "flex size-10 items-center justify-center rounded-xl",
-                    app.tint,
+                    "flex flex-col items-center gap-1.5 rounded-md px-1.5 py-2.5 text-center transition-colors",
+                    active ? "bg-zinc-100" : "hover:bg-zinc-50",
                   )}
                 >
-                  <app.icon className="size-5" aria-hidden />
-                </span>
-                <span className="text-[11px] font-medium leading-tight text-zinc-700">
-                  {translate(app.name)}
-                </span>
-              </button>
-            ))}
+                  <span
+                    className={cn(
+                      "flex size-9 items-center justify-center rounded-md border",
+                      active
+                        ? "border-brand-200 bg-brand-50 text-brand-700"
+                        : "border-zinc-200 bg-white text-zinc-600",
+                    )}
+                  >
+                    <app.icon className="size-4" strokeWidth={1.75} aria-hidden />
+                  </span>
+                  <span
+                    className={cn(
+                      "text-[11px] font-medium leading-tight",
+                      active ? "text-zinc-900" : "text-zinc-600",
+                    )}
+                  >
+                    {translate(app.name)}
+                  </span>
+                </button>
+              )
+            })}
           </div>
           <NavLink
             to="/apps"
             onClick={() => setOpen(false)}
-            className="mt-1 block rounded-lg px-3 py-2 text-center text-xs font-medium text-zinc-500 hover:bg-zinc-50 hover:text-zinc-700"
+            className="mt-1 block rounded-md px-3 py-2 text-center text-xs font-medium text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800"
           >
             View all apps
           </NavLink>
