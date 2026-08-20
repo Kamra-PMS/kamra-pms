@@ -131,7 +131,7 @@ def preview(property=None, days=5):
 	would POST to Aiosell's /update (inventory) and /update-rates (rates)."""
 	import json
 	from kamra.channels.aiosell import build_push_bodies
-	frappe.set_user("Administrator")  # nosemgrep: frappe-set-user -- demo script runs as admin to seed and read demo data; not app runtime
+	frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- demo script runs as admin to seed and read demo data; not app runtime
 	property = _pick_property(property)
 	conn = _ensure_connection(property)
 	member_rt, villa_rt = _room_types(property)
@@ -170,7 +170,7 @@ def push_to_sandbox(password, property=None, days=14):
 	"""
 	from kamra.channel_manager import push_ari, ari_snapshot
 	from kamra.channels.aiosell import build_push_bodies
-	frappe.set_user("Administrator")  # nosemgrep: frappe-set-user -- demo script runs as admin to seed and read demo data; not app runtime
+	frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- demo script runs as admin to seed and read demo data; not app runtime
 	property = _pick_property(property)
 	member_rt, villa_rt = _room_types(property)
 
@@ -245,7 +245,7 @@ def reset(property=None):
 # ── the show ────────────────────────────────────────────────────────────────
 
 def run(property=None):
-	frappe.set_user("Administrator")  # nosemgrep: frappe-set-user -- demo script runs as admin to seed and read demo data; not app runtime
+	frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- demo script runs as admin to seed and read demo data; not app runtime
 	property = _pick_property(property)
 	member_rt, villa_rt = _room_types(property)
 	if not member_rt:
