@@ -199,7 +199,7 @@ export default function POS() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [printNote, setPrintNote] = useState<string | null>(null)
-  const kiosk = useKiosk(false)
+  const kiosk = useKiosk(true)
   const [full, setFull] = useState(false)
 
   useEffect(() => {
@@ -566,6 +566,8 @@ export default function POS() {
 
   const isNewCustomerType = !selected && (orderType === "Takeaway" || orderType === "Delivery")
   const floorOn = kiosk.on || full
+  const runningBills = open.filter((o) => !o.kot_fired)
+  const kitchenBills = open.filter((o) => o.kot_fired && o.pending > 0)
 
   return (
     <div ref={rootRef} className={floorOn ? "h-full overflow-y-auto bg-zinc-50 p-3" : ""}>
@@ -983,7 +985,7 @@ export default function POS() {
               <>
                 {!!detail.nc && (
                   <div className="mb-2 rounded-lg border border-amber-200 bg-amber-50 px-2 py-1.5 text-xs text-amber-800">
-                    <span className="font-bold">NC — COMPLIMENTARY</span>
+                    <span className="font-bold">COMPLIMENTARY</span>
                     <span className="ml-1">auth: {detail.nc_authorized_by}{detail.nc_note ? ` · ${detail.nc_note}` : ""}</span>
                   </div>
                 )}
@@ -1092,7 +1094,7 @@ export default function POS() {
 
             {ncOpen && selected && (
               <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 p-2">
-                <p className="mb-1 text-xs font-medium text-amber-800">Mark NC (no charge) — who authorized it?</p>
+                <p className="mb-1 text-xs font-medium text-amber-800">Complimentary (no charge) - who authorized?</p>
                 <div className="flex gap-1">
                   <select className={inputCls + " !w-28 !py-1 text-xs"} value={ncBy} onChange={(e) => setNcBy(e.target.value)}>
                     {["Captain", "Chef", "Manager", "GM", "Management", "Owner"].map((w) => <option key={w}>{w}</option>)}
@@ -1108,7 +1110,7 @@ export default function POS() {
 
             {cancelling && (
               <div className="mt-2 rounded-lg border border-rose-200 bg-rose-50 p-2">
-                <p className="mb-1 text-xs font-medium text-rose-700">Cancel this order — reason required</p>
+                <p className="mb-1 text-xs font-medium text-rose-700">Cancel this order - reason required</p>
                 <div className="flex gap-1">
                   <input autoFocus className={inputCls + " !py-1 text-xs"} placeholder="e.g. guest left"
                     value={cancelReason} onChange={(e) => setCancelReason(e.target.value)}
@@ -1120,50 +1122,42 @@ export default function POS() {
             )}
 
             {/* actions */}
-            <div className="mt-3 space-y-2">
-              <div className="flex gap-1.5">
-                <Button variant="outline" className="flex-1 !px-2 text-xs" disabled={busy || !!selected || cart.length === 0} onClick={hold}>
-                  <PauseCircle className="size-3.5" />Hold
+            <div className="mt-3 space-y-2 border-t border-zinc-100 pt-3">
+              <div className="grid grid-cols-2 gap-1.5">
+                <Button variant="outline" className="!px-2 text-xs" disabled={busy || !!selected || cart.length === 0} onClick={hold}>
+                  <PauseCircle className="size-3.5" />Hold bill
                 </Button>
-                <Button variant="outline" className="flex-1 !px-2 text-xs"
+                <Button variant="outline" className="!px-2 text-xs"
                   disabled={busy || !selected || !detail || detail.items.filter((i) => !i.voided).length < 2 || detail.status === "Delivered"}
                   onClick={() => { setSplitMode(true); setSplitSel(new Set()) }}>
-                  <Scissors className="size-3.5" />Split bill
+                  <Scissors className="size-3.5" />Split
                 </Button>
-                <div className="relative flex-1">
-                  <Button variant="outline" className="w-full !px-2 text-xs" disabled={busy || !selected} onClick={() => setMoreOpen((v) => !v)}>
-                    <MoreHorizontal className="size-3.5" />More
-                  </Button>
+                <Button variant="outline" className="!px-2 text-xs"
+                  disabled={busy || !selected || !detail || detail.status === "Delivered"}
+                  onClick={() => detail?.nc ? saveNc(true) : setNcOpen(true)}>
+                  <Gift className="size-3.5" />{detail?.nc ? "Undo complimentary" : "Complimentary"}
+                </Button>
+                <Button variant="outline" className="!px-2 text-xs" disabled={busy || !selected || !detail?.kot_no}
+                  onClick={reprintKot}>
+                  <Printer className="size-3.5" />Reprint KOT
+                </Button>
+              </div>
+              <div className="relative">
+                <Button variant="outline" className="w-full !px-2 text-xs" disabled={busy || !selected} onClick={() => setMoreOpen((v) => !v)}>
+                  <MoreHorizontal className="size-3.5" />More · print bill / cancel
+                </Button>
                   {moreOpen && selected && detail && (
-                    <div className="absolute bottom-full right-0 z-10 mb-1 w-40 rounded-xl border border-zinc-200 bg-white p-1 shadow-lg">
-                      <button className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-xs hover:bg-zinc-50"
-                        onClick={() => { setMoreOpen(false); reprintKot() }} disabled={!detail.kot_no}>
-                        <Printer className="size-3.5" />Reprint KOT
-                      </button>
+                    <div className="absolute bottom-full right-0 z-10 mb-1 w-44 rounded-xl border border-zinc-200 bg-white p-1 shadow-lg">
                       <button className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-xs hover:bg-zinc-50"
                         onClick={() => { setMoreOpen(false); printBill() }}>
-                        <Receipt className="size-3.5" />Print bill
+                        <Receipt className="size-3.5" />Print guest bill
                       </button>
-                      {detail.status !== "Delivered" && (
-                        detail.nc ? (
-                          <button className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-xs text-amber-700 hover:bg-amber-50"
-                            onClick={() => { setMoreOpen(false); saveNc(true) }}>
-                            <Tag className="size-3.5" />Remove NC
-                          </button>
-                        ) : (
-                          <button className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-xs text-amber-700 hover:bg-amber-50"
-                            onClick={() => { setMoreOpen(false); setNcOpen(true) }}>
-                            <Tag className="size-3.5" />Mark NC (comp)
-                          </button>
-                        )
-                      )}
                       <button className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-xs text-rose-600 hover:bg-rose-50"
                         onClick={() => { setMoreOpen(false); setCancelling(true); setCancelReason("") }}>
                         <Ban className="size-3.5" />Cancel order
                       </button>
                     </div>
                   )}
-                </div>
               </div>
               <Button variant="outline" className="w-full"
                 disabled={busy || cart.length === 0}
@@ -1182,11 +1176,12 @@ export default function POS() {
                   disabled={busy || (selected ? !detail : cart.length === 0)}
                   onClick={proceedToPay}>
                   <Wallet className="size-4" />
-                  {selected && detail?.nc ? "Close NC bill"
+                  {selected && detail?.nc ? "Close complimentary bill"
                     : selected && detail?.room ? "Deliver & post to room" : "Proceed to pay"}
                   <kbd className="rounded bg-white/20 px-1 text-[10px]">F4</kbd>
                 </Button>
               )}
+            </div>
             </div>
           </div>
         </div>
@@ -1201,6 +1196,42 @@ export default function POS() {
           ))}
         </div>
       </div>
+    </div>
+  )
+}
+
+function RunningStrip({
+  open, selected, onOpen,
+}: {
+  open: OpenOrder[]
+  selected: string | null
+  onOpen: (name: string) => void
+}) {
+  if (!open.length) return null
+  return (
+    <div className="flex gap-2 overflow-x-auto pb-1">
+      {open.map((o) => {
+        const tone = !o.kot_fired
+          ? "border-amber-400 bg-amber-50 text-amber-950"
+          : o.pending > 0
+            ? "border-sky-400 bg-sky-50 text-sky-950"
+            : "border-emerald-400 bg-emerald-50 text-emerald-950"
+        const tag = !o.kot_fired ? "Not fired" : o.pending > 0 ? "In kitchen" : "Ready / unpaid"
+        return (
+          <button key={o.name} onClick={() => onOpen(o.name)}
+            className={"flex min-w-[9.5rem] shrink-0 flex-col rounded-xl border-2 px-3 py-2 text-left " + tone +
+              (selected === o.name ? " ring-2 ring-brand-600 ring-offset-1" : "")}>
+            <span className="truncate text-sm font-bold">{o.label}</span>
+            <span className="mt-0.5 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide opacity-80">
+              <Clock className="size-3" />{tag}
+            </span>
+            <span className="mt-0.5 text-xs font-semibold tabular-nums">
+              {cur()}{inr(o.order_total)}
+              {o.kot_no ? ` · KOT ${o.kot_no}` : ""}
+            </span>
+          </button>
+        )
+      })}
     </div>
   )
 }
