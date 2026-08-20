@@ -106,7 +106,7 @@ def _webhook(connection, payload):
 	conn = frappe.get_doc("Channel Manager Connection", connection)
 	for e in provider_for("AioSell").parse_webhook(conn, payload):
 		_apply_event(conn, e)
-	frappe.db.commit()
+	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- demo script (run via bench execute); commits so seeded demo data is visible; not app runtime
 
 
 def _res(ota_ref):
@@ -131,7 +131,7 @@ def preview(property=None, days=5):
 	would POST to Aiosell's /update (inventory) and /update-rates (rates)."""
 	import json
 	from kamra.channels.aiosell import build_push_bodies
-	frappe.set_user("Administrator")
+	frappe.set_user("Administrator")  # nosemgrep: frappe-set-user -- demo script runs as admin to seed and read demo data; not app runtime
 	property = _pick_property(property)
 	conn = _ensure_connection(property)
 	member_rt, villa_rt = _room_types(property)
@@ -139,7 +139,7 @@ def preview(property=None, days=5):
 	if villa_rt:
 		_ensure_mapping(conn, villa_rt, VILLA_CODE, VILLA_RATE)
 		_ensure_villa_room(property, villa_rt)
-	frappe.db.commit()
+	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- demo script (run via bench execute); commits so seeded demo data is visible; not app runtime
 
 	snap = ari_snapshot(property, conn, days=int(days))
 	inv, rates = build_push_bodies(HOTEL_CODE, snap)
@@ -170,7 +170,7 @@ def push_to_sandbox(password, property=None, days=14):
 	"""
 	from kamra.channel_manager import push_ari, ari_snapshot
 	from kamra.channels.aiosell import build_push_bodies
-	frappe.set_user("Administrator")
+	frappe.set_user("Administrator")  # nosemgrep: frappe-set-user -- demo script runs as admin to seed and read demo data; not app runtime
 	property = _pick_property(property)
 	member_rt, villa_rt = _room_types(property)
 
@@ -194,7 +194,7 @@ def push_to_sandbox(password, property=None, days=14):
 	for rt, rc, rp in sandbox_map:
 		if rt:
 			_ensure_mapping(conn.name, rt, rc, rp)
-	frappe.db.commit()
+	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- demo script (run via bench execute); commits so seeded demo data is visible; not app runtime
 
 	snap = ari_snapshot(property, conn.name, days=int(days))
 	inv, rates = build_push_bodies("sandbox-pms", snap)
@@ -238,14 +238,14 @@ def reset(property=None):
 			frappe.delete_doc("Discount Voucher", v, force=1, ignore_permissions=True)
 		except Exception:
 			pass
-	frappe.db.commit()
+	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- demo script (run via bench execute); commits so seeded demo data is visible; not app runtime
 	print(f"Demo data cleared for {property}.")
 
 
 # ── the show ────────────────────────────────────────────────────────────────
 
 def run(property=None):
-	frappe.set_user("Administrator")
+	frappe.set_user("Administrator")  # nosemgrep: frappe-set-user -- demo script runs as admin to seed and read demo data; not app runtime
 	property = _pick_property(property)
 	member_rt, villa_rt = _room_types(property)
 	if not member_rt:
@@ -262,7 +262,7 @@ def run(property=None):
 	if villa_rt:
 		_ensure_mapping(conn, villa_rt, VILLA_CODE, VILLA_RATE)
 		_ensure_villa_room(property, villa_rt)
-	frappe.db.commit()
+	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- demo script (run via bench execute); commits so seeded demo data is visible; not app runtime
 	print(f"Setup ready · connection {conn} · member room '{member_rt}'"
 	      + (f" · villa '{villa_rt}'" if villa_rt else " · (no villa room type)"))
 
@@ -305,7 +305,7 @@ def run(property=None):
 	_line()
 	print("STEP 3 · The guest cancels")
 	frappe.db.set_value("Reservation", r.name, "advance_paid", 6800)
-	frappe.db.commit()
+	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- demo script (run via bench execute); commits so seeded demo data is visible; not app runtime
 	_webhook(conn, {"action": "cancel", "hotelCode": HOTEL_CODE,
 	                "channel": "Goibibo", "bookingId": "DEMO-501"})
 	r = _res("DEMO-501")

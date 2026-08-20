@@ -412,7 +412,7 @@ def process_webhook_events(connection: str, payload: dict) -> None:
 		if action == "modify":
 			_reconcile_booking_rooms(
 				conn, booking_id, keep={e.get("ota_ref") for e in events})
-		frappe.db.commit()
+		frappe.db.commit()  # nosemgrep: frappe-manual-commit -- background webhook worker persists the completed booking before returning; reviewed as intentional
 	except Exception:
 		frappe.db.rollback()
 		frappe.log_error(
