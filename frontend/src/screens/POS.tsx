@@ -2,12 +2,13 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import {
   Plus, Minus, Trash2, Send, UtensilsCrossed, Leaf, Search,
   Maximize2, Minimize2, Wallet, Printer, Receipt, XCircle, Ban,
-  Scissors, Users, MoreHorizontal, PauseCircle, Tag,
+  Scissors, Users, MoreHorizontal, PauseCircle, Tag, Gift, Clock,
 } from "lucide-react"
 import { call, getCurrentProperty } from "../lib/api"
 import { subscribeRealtime } from "../lib/realtime"
 import { serverError } from "../lib/resource"
-import { printThermal, kotHtml, billHtml, type BillData } from "../lib/thermal"
+import { printThermal, kotHtml, billHtml, type BillData, type KotLine } from "../lib/thermal"
+import { useKiosk } from "../lib/kiosk"
 import { Button } from "../components/ui/button"
 import { cur, moneyLocale } from "../lib/money"
 
@@ -36,6 +37,8 @@ interface OpenOrder {
   kot_no: number | null
   order_type: string | null
   table_no: string | null
+  creation: string
+  nc?: number
 }
 interface TableBill {
   order: string
@@ -89,6 +92,19 @@ interface OrderItem {
   kot_status: string
   voided: number
 }
+interface KotTicket {
+  kot_no: number | null
+  at?: string
+  round?: number
+  nc?: boolean
+  nc_by?: string | null
+  label: string
+  order_type?: string | null
+  order: string
+  customer?: string | null
+  address?: string | null
+  items: KotLine[]
+}
 interface Detail {
   name: string
   status: string
@@ -103,6 +119,7 @@ interface Detail {
   nc: number
   nc_authorized_by: string | null
   nc_note: string | null
+  kot_tickets: KotTicket[]
   paid: number
   payment_mode: string | null
   discount_amount: number
@@ -181,6 +198,8 @@ export default function POS() {
   const [customTable, setCustomTable] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [printNote, setPrintNote] = useState<string | null>(null)
+  const kiosk = useKiosk(false)
   const [full, setFull] = useState(false)
 
   useEffect(() => {
@@ -288,16 +307,31 @@ export default function POS() {
   const gstAmt = taxable * gstRate / 100
   const grand = taxable + gstAmt
 
-  function maybePrintKot(kot: { kot_no: number | null; nc?: boolean; fired_items: { item_name: string; qty: number; instructions?: string | null }[] },
-                         label: string, type: string | null,
+  function printSavedKot(t: KotTicket, reprint = false) {
+    printThermal(`KOT #${t.kot_no}`, kotHtml({
+      outlet: outletName, kot_no: t.kot_no, label: t.label,
+      order_type: t.order_type, order: t.order, reprint,
+      customer: t.customer, address: t.address,
+      nc: !!t.nc, nc_by: t.nc_by, items: t.items,
+    }))
+  }
+
+  function maybePrintKot(kot: {
+    kot_no: number | null
+    nc?: boolean
+    ticket?: KotTicket
+    fired_items: { item_name: string; qty: number; instructions?: string | null }[]
+  }, label: string, type: string | null,
                          customer?: string | null, address?: string | null,
                          ncBy?: string | null) {
-    if (!printKot || !kot.fired_items?.length) return
-    printThermal(`KOT #${kot.kot_no}`, kotHtml({
-      outlet: outletName, kot_no: kot.kot_no, label,
-      order_type: type, order: "", customer, address,
-      nc: !!kot.nc, nc_by: ncBy, items: kot.fired_items,
-    }))
+    const ticket = kot.ticket ?? {
+      kot_no: kot.kot_no, label, order_type: type, order: "",
+      customer, address, nc: !!kot.nc, nc_by: ncBy, items: kot.fired_items,
+    }
+    if (!ticket.items?.length) return
+    setPrintNote(`KOT #${ticket.kot_no ?? "—"} saved${printKot ? " and sent to printer" : ". Turn on Print KOT to send it to the kitchen printer"}.`)
+    if (!printKot) return
+    printSavedKot(ticket)
   }
 
   function newBillArgs() {
@@ -324,7 +358,7 @@ export default function POS() {
     if (disc > 0) await call("kamra.pos.apply_discount", { order: r.order, amount: disc, reason: "" })
     await call("kamra.pos.confirm_order", { order: r.order })
     if (fire) {
-      const kot = await call<{ kot_no: number | null; fired_items: { item_name: string; qty: number; instructions?: string | null }[] }>(
+      const kot = await call<{ kot_no: number | null; fired_items: { item_name: string; qty: number; instructions?: string | null }[]; ticket?: KotTicket }>(
         "kamra.pos.fire_kot", { order: r.order })
       maybePrintKot(kot, newBillLabel(), orderType,
         custName || null, orderType === "Delivery" ? custAddr || null : null)
@@ -340,7 +374,7 @@ export default function POS() {
           order: selected,
           items: cart.map((l) => ({ menu_item: l.menu_item, qty: l.qty, instructions: l.instructions })),
         })
-        const kot = await call<{ kot_no: number | null; nc?: boolean; fired_items: { item_name: string; qty: number; instructions?: string | null }[] }>(
+        const kot = await call<{ kot_no: number | null; nc?: boolean; ticket?: KotTicket; fired_items: { item_name: string; qty: number; instructions?: string | null }[] }>(
           "kamra.pos.fire_kot", { order: selected })
         if (detail) maybePrintKot(kot, orderLabel(detail), detail.order_type,
           detail.customer_name, detail.delivery_address, detail.nc_authorized_by)
@@ -384,6 +418,12 @@ export default function POS() {
   }
   function reprintKot() {
     if (!detail) return
+    const last = (detail.kot_tickets || []).at(-1)
+    if (last?.items?.length) {
+      printSavedKot(last, true)
+      setPrintNote(`Reprinting KOT #${last.kot_no}.`)
+      return
+    }
     const items = detail.items.filter((i) => !i.voided && i.kot_status !== "New")
     if (!items.length) return
     printThermal(`KOT #${detail.kot_no}`, kotHtml({
@@ -392,6 +432,16 @@ export default function POS() {
       customer: detail.customer_name, address: detail.delivery_address,
       nc: !!detail.nc, nc_by: detail.nc_authorized_by, items,
     }))
+  }
+
+  function toggleFull() {
+    if (kiosk.on || document.fullscreenElement) {
+      if (document.fullscreenElement) document.exitFullscreen()
+      kiosk.exit()
+    } else {
+      kiosk.enter()
+      rootRef.current?.requestFullscreen?.()
+    }
   }
   async function saveNc(undo = false) {
     if (!selected) return
@@ -477,11 +527,6 @@ export default function POS() {
     })
   }
 
-  function toggleFull() {
-    if (document.fullscreenElement) document.exitFullscreen()
-    else rootRef.current?.requestFullscreen?.()
-  }
-
   // F-key shortcuts (the bar at the bottom is the legend)
   const keysRef = useRef({ newOrder, traverse, proceedToPay, hold, kotAction })
   keysRef.current = { newOrder, traverse, proceedToPay, hold, kotAction }
@@ -520,11 +565,11 @@ export default function POS() {
       : [[null, visibleTables]]
 
   const isNewCustomerType = !selected && (orderType === "Takeaway" || orderType === "Delivery")
+  const floorOn = kiosk.on || full
 
   return (
-    <div ref={rootRef} className={full ? "min-h-screen overflow-y-auto bg-zinc-50 p-4" : ""}>
-      <div className="space-y-4">
-        {/* header: outlet, order-type tabs, actions */}
+    <div ref={rootRef} className={floorOn ? "h-full overflow-y-auto bg-zinc-50 p-3" : ""}>
+      <div className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h1 className="flex items-center gap-2 text-xl font-bold text-zinc-800">
             <UtensilsCrossed className="size-5 text-brand-600" />Restaurant POS
@@ -544,13 +589,15 @@ export default function POS() {
             ))}
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <label className="flex cursor-pointer items-center gap-1.5 text-xs text-zinc-500">
-              <input type="checkbox" checked={printKot} onChange={(e) => setPrintKot(e.target.checked)}
-                className="accent-brand-600" />
-              <Printer className="size-3.5" />Print KOT
-            </label>
-            <button onClick={toggleFull} className="rounded-lg border border-zinc-300 bg-white p-2 text-zinc-600 hover:bg-zinc-50" title="Full screen">
-              {full ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+            <button type="button" onClick={() => setPrintKot((v) => !v)}
+              className={"inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-semibold " +
+                (printKot ? "border-brand-600 bg-brand-50 text-brand-800" : "border-zinc-300 bg-white text-zinc-500")}>
+              <Printer className="size-3.5" />{printKot ? "KOT printer on" : "KOT printer off"}
+            </button>
+            <button onClick={toggleFull}
+              className="rounded-lg border border-zinc-300 bg-white p-2 text-zinc-600 hover:bg-zinc-50"
+              title={floorOn ? "Exit full screen" : "Full screen till"}>
+              {floorOn ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
             </button>
             <Button onClick={() => newOrder()}>
               <Plus className="size-4" />New Bill
@@ -559,13 +606,20 @@ export default function POS() {
           </div>
         </div>
         {error && <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</div>}
+        {printNote && (
+          <div className="flex items-center justify-between gap-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+            <span>{printNote}</span>
+            <button className="text-xs font-semibold" onClick={() => setPrintNote(null)}>Dismiss</button>
+          </div>
+        )}
+        <RunningStrip open={open} selected={selected} onOpen={openTab} />
 
         <div className="grid gap-4 lg:grid-cols-12">
           {/* ── left: tables + recent ── */}
-          <div className="space-y-4 lg:col-span-3">
-            <div className="rounded-2xl border border-zinc-200 bg-white p-3">
+          <div className="flex min-h-0 flex-col gap-2 overflow-y-auto lg:col-span-3">
+            <div className="shrink-0 rounded-xl border border-zinc-200 bg-white p-3">
               <div className="mb-2 flex items-center justify-between">
-                <h3 className="text-sm font-bold text-zinc-800">Tables</h3>
+                <h3 className="text-xs font-bold uppercase tracking-wide text-zinc-500">Running tables</h3>
                 {tables.length > 0 && (
                   <button onClick={() => setReserveOpen((v) => !v)}
                     className="rounded-lg border border-zinc-200 px-2 py-0.5 text-[11px] font-medium text-zinc-600 hover:border-violet-400 hover:text-violet-700">
@@ -740,8 +794,50 @@ export default function POS() {
               )}
             </div>
 
-            <div className="rounded-2xl border border-zinc-200 bg-white p-3">
-              <h3 className="mb-2 text-sm font-bold text-zinc-800">Recent orders</h3>
+            {(runningBills.length > 0 || kitchenBills.length > 0) && (
+              <div className="shrink-0 rounded-xl border border-zinc-200 bg-white p-3">
+                <h3 className="mb-2 text-xs font-bold uppercase tracking-wide text-zinc-500">Open bills</h3>
+                {runningBills.length > 0 && (
+                  <div className="mb-2">
+                    <p className="mb-1 text-[10px] font-semibold uppercase text-amber-700">Not sent to kitchen</p>
+                    <ul className="space-y-1">
+                      {runningBills.map((o) => (
+                        <li key={o.name}>
+                          <button onClick={() => openTab(o.name)}
+                            className={"flex w-full items-center justify-between rounded-lg border border-amber-200 bg-amber-50 px-2 py-1.5 text-xs " +
+                              (selected === o.name ? "ring-2 ring-brand-600" : "")}>
+                            <span className="font-semibold text-amber-900">{o.label}</span>
+                            <span className="tabular-nums text-amber-800">{cur()}{inr(o.order_total)}</span>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {kitchenBills.length > 0 && (
+                  <div>
+                    <p className="mb-1 text-[10px] font-semibold uppercase text-sky-700">In kitchen / not settled</p>
+                    <ul className="space-y-1">
+                      {kitchenBills.map((o) => (
+                        <li key={o.name}>
+                          <button onClick={() => openTab(o.name)}
+                            className={"flex w-full items-center justify-between rounded-lg border border-sky-200 bg-sky-50 px-2 py-1.5 text-xs " +
+                              (selected === o.name ? "ring-2 ring-brand-600" : "")}>
+                            <span className="font-semibold text-sky-900">
+                              {o.label}{o.kot_no ? ` · KOT ${o.kot_no}` : ""}
+                            </span>
+                            <span className="tabular-nums text-sky-800">{cur()}{inr(o.order_total)}</span>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className="shrink-0 rounded-xl border border-zinc-200 bg-white p-3">
+              <h3 className="mb-2 text-xs font-bold uppercase tracking-wide text-zinc-500">Recent</h3>
               <ul className="space-y-1">
                 {recent.map((r) => (
                   <li key={r.name}>
@@ -769,7 +865,7 @@ export default function POS() {
           </div>
 
           {/* ── centre: menu ── */}
-          <div className="lg:col-span-5">
+          <div className="min-h-0 overflow-y-auto lg:col-span-5">
             <div className="relative mb-2">
               <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-400" />
               <input className={inputCls + " pl-9"} placeholder="Search menu items…" value={query} onChange={(e) => setQuery(e.target.value)} />
@@ -801,7 +897,8 @@ export default function POS() {
           </div>
 
           {/* ── right: the bill ── */}
-          <div className="h-fit rounded-2xl border border-zinc-200 bg-white p-4 lg:sticky lg:top-4 lg:col-span-4">
+          <div className="flex min-h-0 flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white lg:col-span-4">
+            <div className="min-h-0 flex-1 overflow-y-auto p-3">
             {/* who / where */}
             {selected && detail ? (
               <div className="mb-3 flex items-center justify-between">

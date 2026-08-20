@@ -51,7 +51,8 @@ def registry(property: str):
 				_module("Copilot", "Chat with your PMS using your own AI key."),
 				_module("Events & Groups", "Banquets, blocks and pickup."),
 				_module("Revenue", "Rates, seasons, offers, partners."),
-				_module("POS", "Restaurant & outlet billing.", planned=True),
+				_module("POS",
+				        "Table map, running bills, thermal KOT, kitchen display."),
 			],
 		},
 		{

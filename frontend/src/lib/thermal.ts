@@ -11,19 +11,21 @@ import { cur, moneyLocale } from "./money"
 const CSS = `
   @page { size: 80mm auto; margin: 0 }
   * { margin: 0; padding: 0; box-sizing: border-box }
-  body { width: 72mm; margin: 0 auto; padding: 4mm 0 10mm;
-         font: 12px/1.45 "Courier New", ui-monospace, monospace; color: #000 }
+  html, body { background: #fff; color: #000 }
+  body { width: 72mm; margin: 0 auto; padding: 3mm 1mm 18mm;
+         font: 13px/1.35 "Courier New", ui-monospace, monospace; color: #000 }
   .c { text-align: center }
   .b { font-weight: 700 }
-  .xl { font-size: 17px }
-  .lg { font-size: 14px }
+  .xl { font-size: 20px; letter-spacing: 0.02em }
+  .lg { font-size: 15px }
   .sm { font-size: 11px }
-  .rule { border-top: 1px dashed #000; margin: 4px 0 }
+  .rule { border-top: 2px dashed #000; margin: 6px 0 }
   .row { display: flex; justify-content: space-between; gap: 8px }
-  table { width: 100%; border-collapse: collapse; font-size: 12px }
-  td { padding: 1px 0; vertical-align: top }
-  .num { text-align: right; white-space: nowrap }
-  .ins { font-size: 11px; padding-left: 14px }
+  table { width: 100%; border-collapse: collapse; font-size: 14px }
+  td { padding: 3px 0; vertical-align: top }
+  .num { text-align: right; white-space: nowrap; font-weight: 700; width: 28px }
+  .ins { font-size: 12px; font-weight: 700; padding-left: 28px }
+  .cut { text-align: center; font-size: 10px; margin-top: 10px; letter-spacing: 0.2em }
 `
 
 const esc = (s: unknown) =>
@@ -33,16 +35,28 @@ const esc = (s: unknown) =>
 const inr = (n: unknown) =>
   Number(n ?? 0).toLocaleString(moneyLocale(), { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
-export function printThermal(title: string, body: string) {
-  const w = window.open("", "_blank", "width=380,height=640")
-  if (!w) return
+/** Print without a popup. Popups get blocked on a till; an iframe does not. */
+export function printThermal(title: string, body: string): boolean {
+  document.querySelectorAll("iframe[data-kamra-print]").forEach((n) => n.remove())
+  const iframe = document.createElement("iframe")
+  iframe.setAttribute("data-kamra-print", "1")
+  iframe.setAttribute("title", title)
+  iframe.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0;opacity:0"
+  document.body.appendChild(iframe)
+  const w = iframe.contentWindow
+  if (!w) { iframe.remove(); return false }
+  w.document.open()
   w.document.write(
     `<!doctype html><html><head><title>${esc(title)}</title>` +
     `<style>${CSS}</style></head><body>${body}</body></html>`)
   w.document.close()
-  w.focus()
-  w.onafterprint = () => w.close()
-  setTimeout(() => w.print(), 250)
+  const cleanup = () => { try { iframe.remove() } catch { /* already gone */ } }
+  w.onafterprint = cleanup
+  setTimeout(() => {
+    try { w.focus(); w.print() } catch { cleanup() }
+  }, 200)
+  setTimeout(cleanup, 120_000)
+  return true
 }
 
 export interface KotLine { item_name: string; qty: number; instructions?: string | null }
@@ -72,7 +86,7 @@ export function kotHtml(o: {
   return `
     <div class="c b lg">${esc(o.outlet)}</div>
     <div class="c xl b">KOT #${o.kot_no ?? "—"}${o.reprint ? " (REPRINT)" : ""}</div>
-    ${o.nc ? `<div class="c b lg">*** NC — NO CHARGE ***</div>` +
+    ${o.nc ? `<div class="c b lg">*** NC - NO CHARGE ***</div>` +
       (o.nc_by ? `<div class="c sm">auth: ${esc(o.nc_by)}</div>` : "") : ""}
     <div class="rule"></div>
     <div class="row"><span class="b lg">${esc(o.label)}</span><span class="sm">${esc(o.order_type || "")}</span></div>
@@ -82,7 +96,8 @@ export function kotHtml(o: {
     <div class="rule"></div>
     <table>${rows}</table>
     <div class="rule"></div>
-    <div class="c sm">${o.items.length} item${o.items.length === 1 ? "" : "s"}</div>`
+    <div class="c sm">${o.items.length} item${o.items.length === 1 ? "" : "s"}</div>
+    <div class="cut">- cut -</div>`
 }
 
 export function laundryDocketHtml(o: {
@@ -112,7 +127,7 @@ export function laundryDocketHtml(o: {
     `<span class="sm">${esc(o.order_type || "Guest")}</span></div>
     <div class="row sm"><span>${esc(o.order)}</span><span>${when}</span></div>
     ${o.guest_name ? `<div class="sm">${esc(o.guest_name)}</div>` : ""}
-    ${o.express ? `<div class="c b">EXPRESS — SAME DAY</div>` : ""}
+    ${o.express ? `<div class="c b">EXPRESS - SAME DAY</div>` : ""}
     ${o.ready_by ? `<div class="sm">Ready by: ${esc(o.ready_by)}</div>` : ""}
     <div class="rule"></div>
     <table>${rows}</table>
@@ -182,9 +197,10 @@ export function billHtml(b: BillData) {
     ${money(`SGST @ ${b.gst_rate / 2}%`, b.sgst, "sm")}
     <div class="rule"></div>
     ${money("TOTAL", b.grand_total, "b lg")}
-    ${b.nc ? `<div class="c b" style="margin-top:4px">COMPLIMENTARY — NO CHARGE</div>` +
+    ${b.nc ? `<div class="c b" style="margin-top:4px">COMPLIMENTARY - NO CHARGE</div>` +
       `<div class="c sm">auth: ${esc(b.nc_authorized_by || "—")}${b.nc_note ? ` · ${esc(b.nc_note)}` : ""}</div>` : ""}
     ${b.paid ? `<div class="c b" style="margin-top:4px">PAID · ${esc(b.payment_mode)}</div>` : ""}
     <div class="rule"></div>
-    <div class="c sm">Thank you — see you again!</div>`
+    <div class="c sm">Thank you. See you again.</div>
+    <div class="cut">- cut -</div>`
 }

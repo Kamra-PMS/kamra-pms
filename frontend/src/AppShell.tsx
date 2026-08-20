@@ -33,6 +33,7 @@ import { getTheme, setTheme } from "./lib/theme"
 import { t as translate, useT } from "./lib/i18n"
 import { loadLocale } from "./lib/money"
 import { cn } from "./lib/utils"
+import { useKiosk } from "./lib/kiosk"
 
 export interface BookingInitial {
   room_type?: string
@@ -205,9 +206,10 @@ export default function AppShell() {
   }, [property])
 
   const apps = visibleApps(roles, modules)
-  // Which app the current route belongs to - falls back to the user's first.
   const routeApp = appForPath(location.pathname)
   const currentApp = apps.some((a) => a.id === routeApp.id) ? routeApp : apps[0]
+  const floor = location.pathname === "/pos" || location.pathname === "/kitchen"
+  const { on: kiosk } = useKiosk()
 
   const items = (currentApp?.items ?? []).filter(
     (item) => !item.roles || item.roles.some((r) => roles.includes(r)),
@@ -246,7 +248,7 @@ export default function AppShell() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      {demoMode && (
+      {demoMode && !kiosk && (
         <div className="bg-amber-500 px-4 py-1.5 text-center text-xs font-medium text-amber-950">
           Shared playground — not your hotel. Data is wiped every night.
           {" "}
@@ -259,6 +261,7 @@ export default function AppShell() {
         </div>
       )}
       <div className="flex min-h-0 flex-1">
+      {!kiosk && (
       <aside className="hidden w-52 shrink-0 border-r border-zinc-200 bg-white px-3 py-5 sm:sticky sm:top-0 sm:block sm:h-screen sm:overflow-y-auto">
         <div className="mb-5 flex items-center gap-2 px-1">
           <img src={asset("kamra-mark.svg")} alt="" className="size-7" aria-hidden />
@@ -288,8 +291,10 @@ export default function AppShell() {
 
         <nav className="space-y-0.5">{items.map(renderItem)}</nav>
       </aside>
+      )}
 
       <div className="min-w-0 flex-1">
+        {!kiosk && (
         <header className="sticky top-0 z-40 flex items-center gap-2 border-b border-zinc-200 bg-white/90 px-4 py-2.5 backdrop-blur">
           <AppSwitcher apps={apps} current={currentApp ?? apps[0]} />
           {properties.length > 1 ? (
@@ -333,8 +338,21 @@ export default function AppShell() {
             </Button>
           </div>
         </header>
+        )}
 
-        <main key={property} className="mx-auto max-w-6xl px-4 py-6">
+        <main
+          key={property}
+          className={
+            floor
+              ? cn(
+                  "max-w-none",
+                  kiosk
+                    ? "h-[100dvh] overflow-hidden p-0"
+                    : "min-h-[calc(100dvh-3.5rem)] overflow-auto p-3",
+                )
+              : "mx-auto max-w-6xl px-4 py-6"
+          }
+        >
           <Outlet
             context={
               {
