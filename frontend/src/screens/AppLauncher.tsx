@@ -2,7 +2,8 @@ import { useNavigate } from "react-router-dom"
 import { Store } from "lucide-react"
 
 import { useAuth } from "../lib/auth"
-import { visibleApps, type AppDef } from "../lib/apps"
+import { APP_TILE, visibleApps, type AppDef } from "../lib/apps"
+import { cn } from "../lib/utils"
 
 /** The suite launcher - the "all apps" home. Opens an app by routing to its
  *  first screen. Also the front door to the Marketplace. */
@@ -22,30 +23,33 @@ export default function AppLauncher() {
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="text-xl font-semibold tracking-tight">Your apps</h1>
+        <h1 className="text-xl font-semibold tracking-tight text-zinc-900">Your apps</h1>
         <p className="mt-0.5 text-sm text-zinc-500">
           Everything Kamra does, one room at a time. Pick where you want to
           work.
         </p>
       </header>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
         {apps.map((app) => (
           <button
             key={app.id}
             onClick={() => open(app)}
-            className="group flex items-start gap-3 rounded-2xl border border-zinc-200 bg-white p-4 text-left transition hover:border-brand-300 hover:shadow-sm"
+            className="group flex items-start gap-3 rounded-lg border border-zinc-200 bg-white p-3.5 text-left transition-colors hover:border-zinc-300 hover:bg-zinc-50"
           >
             <span
-              className={`flex size-11 shrink-0 items-center justify-center rounded-xl ${app.tint}`}
+              className={cn(
+                "flex size-9 shrink-0 items-center justify-center rounded-md",
+                APP_TILE,
+              )}
             >
-              <app.icon className="size-5" aria-hidden />
+              <app.icon className="size-4" strokeWidth={1.75} aria-hidden />
             </span>
             <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <span className="font-semibold text-zinc-800">{app.name}</span>
+                <span className="text-sm font-semibold text-zinc-900">{app.name}</span>
               </div>
-              <p className="mt-0.5 text-sm text-zinc-500">{app.description}</p>
+              <p className="mt-0.5 text-sm leading-snug text-zinc-500">{app.description}</p>
             </div>
           </button>
         ))}
@@ -54,13 +58,13 @@ export default function AppLauncher() {
       {canMarket && (
         <button
           onClick={() => navigate("/marketplace")}
-          className="flex w-full items-center gap-3 rounded-2xl border border-dashed border-zinc-300 bg-zinc-50 p-4 text-left hover:border-brand-300 hover:bg-white"
+          className="flex w-full items-center gap-3 rounded-lg border border-dashed border-zinc-300 bg-white p-3.5 text-left hover:border-zinc-400 hover:bg-zinc-50"
         >
-          <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-white text-brand-600">
-            <Store className="size-5" aria-hidden />
+          <span className={cn("flex size-9 shrink-0 items-center justify-center rounded-md", APP_TILE)}>
+            <Store className="size-4" strokeWidth={1.75} aria-hidden />
           </span>
           <div>
-            <div className="font-semibold text-zinc-800">Marketplace</div>
+            <div className="text-sm font-semibold text-zinc-900">Marketplace</div>
             <p className="mt-0.5 text-sm text-zinc-500">
               Add channels, payments, accounting and country packs - and see
               what's included in your plan.

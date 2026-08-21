@@ -536,40 +536,34 @@ export default function Settings() {
           <div>
             <CardTitle>Agent access (MCP)</CardTitle>
             <p className="mt-0.5 text-xs text-zinc-400">
-              Connect Claude (or any MCP client) to this property's governed
-              tool layer. Every agent action lands in the Agent Action Log.
+              Connect Claude to this property's governed tool layer. Staff
+              click Connect Claude on Kamra Agent — no API keys on a laptop.
+              Every agent action lands in the Agent Action Log.
             </p>
           </div>
         </CardHeader>
         <CardContent className="space-y-3 text-sm">
           <p className="text-zinc-600">
-            The MCP server ships with the app at{" "}
-            <code className="rounded bg-zinc-100 px-1 py-0.5 text-xs">
-              apps/kamra/mcp/kamra_mcp.py
-            </code>
-            . It authenticates as the scoped{" "}
-            <code className="rounded bg-zinc-100 px-1 py-0.5 text-xs">
-              agent@kamra.local
-            </code>{" "}
-            user (Kamra Agent role). Generate an API key &amp; secret - and see
-            the full REST reference - on the{" "}
+            Open{" "}
+            <a href="/kamra/assistant" className="font-medium text-brand-700 hover:underline">
+              Kamra Agent → Connect your AI
+            </a>{" "}
+            and click <strong>Connect Claude</strong>. Claude opens with this
+            hotel&apos;s MCP URL filled in; confirm, sign in as yourself, done.
+            Service keys for unattended agents stay on{" "}
             <a href="/kamra/developers" className="font-medium text-brand-700 hover:underline">
               Developers
-            </a>{" "}
-            page.
+            </a>
+            .
           </p>
           <pre className="overflow-x-auto rounded-lg bg-zinc-100 p-3 text-xs leading-relaxed text-zinc-700">
-            {`claude mcp add kamra \\
-  -e KAMRA_URL=${window.location.origin} \\
-  -e KAMRA_API_KEY=<api key> \\
-  -e KAMRA_API_SECRET=<api secret> \\
-  -e KAMRA_PROPERTY="${property}" \\
-  -- python apps/kamra/mcp/kamra_mcp.py`}
+            {`claude mcp add --transport http kamra ${window.location.origin}/mcp`}
           </pre>
           <p className="text-xs text-zinc-400">
             Tools include availability, quotes, bookings, check-in/out, folio
             posting (billing-rule routed), occupant register, rate changes
-            (guardrail-bound), night audit and the owner briefing.
+            (guardrail-bound), night audit, owner briefing and banquets —
+            filtered to the signed-in user's roles.
           </p>
         </CardContent>
       </Card>

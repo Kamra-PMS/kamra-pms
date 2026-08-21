@@ -1,6 +1,8 @@
 import { Fragment, useCallback, useEffect, useState } from "react"
 import {
   Bot,
+  Copy,
+  ExternalLink,
   Loader2,
   MessageSquare,
   Plug,
@@ -43,7 +45,8 @@ export default function Agents() {
           <h1 className="text-xl font-semibold tracking-tight">Kamra Agent</h1>
         </div>
         <p className="text-sm text-zinc-500">
-          Chat with your PMS using your own AI key - it acts as you.
+          Chat in the console, or connect Claude — it acts as you, with your
+          role limits, on the same governed tools.
         </p>
         <div className="ml-auto flex items-center gap-2">
           {panel !== "none" && (
@@ -59,7 +62,7 @@ export default function Agents() {
             onClick={() =>
               setPanel((p) => (p === "connect" ? "none" : "connect"))
             }
-            title="Connect your own Claude to this hotel over MCP - scoped to your role"
+            title="Open Claude and connect this hotel over MCP — scoped to your role"
             className={
               "flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm " +
               (panel === "connect"
@@ -357,115 +360,166 @@ export function ActivityTab({ property }: { property: string }) {
 }
 
 // ---------------------------------------------------------------------------
-// Connect tab - bring your own Claude: personal, role-scoped MCP credentials
+// Connect tab — one click into Claude's prefilled connector dialog + OAuth
 // ---------------------------------------------------------------------------
 
-interface ConnectorCreds {
-  api_key: string
-  api_secret: string
-  base_url: string
+interface ConnectInfo {
+  mcp_url: string
+  claude_install_url: string
+  claude_code: string
+  is_public_https: boolean
   property: string
+  property_name: string
   user: string
+  tool_count: number
+  active_grants: number
+  last_mcp: { creation: string; action_type: string } | null
 }
 
 export function ConnectTab({ property }: { property: string }) {
-  const [creds, setCreds] = useState<ConnectorCreds | null>(null)
+  const [info, setInfo] = useState<ConnectInfo | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [copied, setCopied] = useState(false)
+  const [copied, setCopied] = useState<"url" | "code" | null>(null)
 
-  const snippet = creds
-    ? JSON.stringify(
-        {
-          mcpServers: {
-            kamra: {
-              command: "python",
-              args: ["apps/kamra/mcp/kamra_mcp.py"],
-              env: {
-                KAMRA_URL: creds.base_url,
-                KAMRA_API_KEY: creds.api_key,
-                KAMRA_API_SECRET: creds.api_secret,
-                KAMRA_PROPERTY: creds.property,
-              },
-            },
-          },
-        },
-        null,
-        2,
+  const load = useCallback(async () => {
+    setError(null)
+    try {
+      setInfo(
+        await call<ConnectInfo>("kamra.mcp_oauth.connect_info", { property }),
       )
-    : ""
+    } catch (e) {
+      setError(serverError(e))
+    }
+  }, [property])
+
+  useEffect(() => {
+    void load()
+  }, [load])
+
+  function markCopied(which: "url" | "code", text: string) {
+    navigator.clipboard.writeText(text)
+    setCopied(which)
+    setTimeout(() => setCopied(null), 1500)
+  }
 
   return (
     <div className="max-w-2xl space-y-4">
       <Card>
         <CardHeader>
           <div>
-            <CardTitle>Claude Desktop</CardTitle>
+            <CardTitle>Connect Claude</CardTitle>
             <p className="mt-0.5 text-xs text-zinc-500">
-              Connect Claude to this hotel like any connector. It acts as YOU:
-              your role decides what it can see and do - a front desk
-              connection books and checks in; it cannot touch rates or
-              finance. Every action lands in Activity under your name.
+              Claude acts as you at {info?.property_name || "this hotel"}: your
+              role decides what it can see and do. A front-desk connection
+              books and checks in; it cannot touch rates or finance. Every
+              action lands in Activity under your name.
             </p>
           </div>
         </CardHeader>
         <CardContent className="space-y-3">
-          {!creds ? (
+          {info && !info.is_public_https && (
+            <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
+              Claude reaches this hotel from Anthropic&apos;s cloud, so the
+              site needs public HTTPS. This origin looks local — use Claude
+              Code over HTTP on this machine, or the stdio sidecar, until you
+              have a public URL.
+            </p>
+          )}
+          <div className="flex flex-wrap items-center gap-2">
             <Button
-              disabled={busy}
-              onClick={async () => {
-                setBusy(true)
-                setError(null)
-                try {
-                  const r = await call<ConnectorCreds>(
-                    "kamra.api.my_connector_credentials",
-                    { property },
-                  )
-                  setCreds(r)
-                } catch (e) {
-                  setError(serverError(e))
-                } finally {
-                  setBusy(false)
-                }
+              disabled={!info?.claude_install_url}
+              onClick={() => {
+                if (!info) return
+                window.open(info.claude_install_url, "_blank", "noopener")
               }}
             >
-              Generate my connection
+              <ExternalLink className="size-4" aria-hidden />
+              Connect Claude
             </Button>
-          ) : (
+            {info && info.active_grants > 0 && (
+              <Button
+                variant="outline"
+                disabled={busy}
+                onClick={async () => {
+                  if (
+                    !confirm(
+                      "Disconnect Claude? It will have to sign in again.",
+                    )
+                  )
+                    return
+                  setBusy(true)
+                  try {
+                    await call("kamra.mcp_oauth.revoke_my_grants", {
+                      property,
+                    })
+                    await load()
+                  } catch (e) {
+                    setError(serverError(e))
+                  } finally {
+                    setBusy(false)
+                  }
+                }}
+              >
+                Disconnect
+              </Button>
+            )}
+          </div>
+          {info?.last_mcp && (
+            <p className="text-xs text-zinc-500">
+              Last MCP action: {prettyAction(info.last_mcp.action_type)} ·{" "}
+              {fmtWhen(info.last_mcp.creation)}
+            </p>
+          )}
+          {info && info.active_grants > 0 && !info.last_mcp && (
+            <p className="text-xs text-green-700">
+              Claude is authorised for this property. Enable the connector in
+              a chat with the + menu, then talk in hotel language.
+            </p>
+          )}
+          <p className="text-sm text-zinc-600">
+            Claude opens with this hotel&apos;s MCP URL filled in. Confirm Add,
+            sign in here if asked, pick the property, Allow. Then in Claude
+            enable the connector on the chat + menu and say things like
+            &quot;occupancy this week&quot; or &quot;book a Deluxe for
+            Friday&quot;.
+          </p>
+          {info && (
             <>
-              <p className="text-sm text-zinc-600">
-                Paste this into your{" "}
-                <code className="rounded bg-zinc-100 px-1">
-                  claude_desktop_config.json
-                </code>{" "}
-                (Claude Desktop → Settings → Developer → Edit Config), then
-                restart Claude:
-              </p>
-              <pre className="overflow-x-auto rounded-lg bg-zinc-100 p-3 text-xs leading-relaxed text-zinc-700">
-                {snippet}
-              </pre>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    navigator.clipboard.writeText(snippet)
-                    setCopied(true)
-                    setTimeout(() => setCopied(false), 1500)
-                  }}
-                >
-                  {copied ? "Copied" : "Copy config"}
-                </Button>
-                <span className="text-xs text-amber-600">
-                  The secret is shown once - regenerating invalidates the old
-                  one.
-                </span>
+              <div>
+                <div className="mb-1 text-xs font-medium text-zinc-500">
+                  MCP URL · {info.tool_count} governed tools
+                </div>
+                <div className="flex items-stretch gap-2">
+                  <code className="flex-1 overflow-x-auto rounded-lg bg-zinc-100 px-3 py-2 font-mono text-xs text-zinc-800">
+                    {info.mcp_url}
+                  </code>
+                  <Button
+                    variant="outline"
+                    onClick={() => markCopied("url", info.mcp_url)}
+                  >
+                    <Copy className="size-3.5" aria-hidden />
+                    {copied === "url" ? "Copied" : "Copy"}
+                  </Button>
+                </div>
               </div>
-              <p className="text-xs text-zinc-500">
-                Then ask Claude things like "occupancy this week", "build me an
-                MIS report from today's numbers", or "book a Deluxe for
-                Friday" - it uses Kamra's governed tools with your
-                permissions.
-              </p>
+              <div>
+                <div className="mb-1 text-xs font-medium text-zinc-500">
+                  Claude Code
+                </div>
+                <div className="flex items-stretch gap-2">
+                  <pre className="flex-1 overflow-x-auto rounded-lg bg-zinc-100 p-3 text-xs leading-relaxed text-zinc-700">
+                    {info.claude_code}
+                  </pre>
+                  <Button
+                    variant="outline"
+                    onClick={() => markCopied("code", info.claude_code)}
+                  >
+                    <Copy className="size-3.5" aria-hidden />
+                    {copied === "code" ? "Copied" : "Copy"}
+                  </Button>
+                </div>
+              </div>
             </>
           )}
           {error && (
@@ -476,8 +530,9 @@ export function ConnectTab({ property }: { property: string }) {
         </CardContent>
       </Card>
       <p className="text-xs text-zinc-400">
-        Need a platform-wide or service key (all properties, custom scope)?
-        That is issued by your system admin under Developers.
+        Need a platform-wide or service key (HeyKoala, unattended jobs)? That
+        is issued by your system admin under Developers. Staff should use
+        Connect Claude — no API secrets on a laptop.
       </p>
     </div>
   )

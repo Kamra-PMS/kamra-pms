@@ -243,18 +243,16 @@ export default function Developers() {
         <CardHeader>
           <CardTitle>Connect an AI agent (MCP)</CardTitle>
           <p className="mt-0.5 text-xs text-zinc-400">
-            Point Claude (or any MCP client) at this property's governed tool
-            layer, authenticated with the key above.
+            Point Claude at this property over MCP. Staff should use{" "}
+            <a href="/kamra/assistant" className="font-medium text-brand-700 hover:underline">
+              Kamra Agent → Connect Claude
+            </a>
+            . The key above is for unattended / service integrations.
           </p>
         </CardHeader>
         <CardContent>
           <pre className="overflow-x-auto rounded-lg bg-zinc-100 p-3 text-xs leading-relaxed text-zinc-700">
-{`claude mcp add kamra \\
-  -e KAMRA_URL=${base} \\
-  -e KAMRA_API_KEY=${key?.api_key ?? "<api key>"} \\
-  -e KAMRA_API_SECRET=${key?.api_secret ?? "<api secret>"} \\
-  -e KAMRA_PROPERTY="${property}" \\
-  -- python apps/kamra/mcp/kamra_mcp.py`}
+{`claude mcp add --transport http kamra ${base}/mcp`}
           </pre>
         </CardContent>
       </Card>

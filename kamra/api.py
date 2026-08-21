@@ -3134,13 +3134,24 @@ def booking_options(property: str):
 			        "gst_rate"],
 			order_by="price asc",
 		),
-		"property": frappe.db.get_value(
-			"Property", property,
-			["sell_message", "free_cancel_days", "cancellation_fee",
-			 "no_show_charge", "deposit_pct"],
-			as_dict=True,
-		),
+		"property": _booking_property_policy(property),
 	}
+
+
+def _booking_property_policy(property: str) -> dict:
+	"""Property policy fields for the booking dialog — never null strings."""
+	prop = frappe.db.get_value(
+		"Property", property,
+		["sell_message", "free_cancel_days", "cancellation_fee",
+		 "no_show_charge", "deposit_pct"],
+		as_dict=True,
+	) or {}
+	prop["cancellation_fee"] = prop.get("cancellation_fee") or "None"
+	prop["no_show_charge"] = prop.get("no_show_charge") or "None"
+	prop["free_cancel_days"] = int(prop.get("free_cancel_days") or 0)
+	prop["deposit_pct"] = float(prop.get("deposit_pct") or 0)
+	prop["sell_message"] = prop.get("sell_message") or ""
+	return prop
 
 
 @frappe.whitelist()

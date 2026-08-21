@@ -17,6 +17,7 @@ import {
   Building2,
   CalendarDays,
   CalendarRange,
+  ClipboardCheck,
   ClipboardList,
   Clock,
   Code2,
@@ -27,8 +28,8 @@ import {
   Landmark,
   LayoutGrid,
   ListChecks,
+  ListTodo,
   PackageSearch,
-  PartyPopper,
   Plus,
   Receipt,
   ScrollText,
@@ -43,9 +44,7 @@ import {
   Users,
   UtensilsCrossed,
   ConciergeBell,
-  Brush,
-  Wrench,
-  TrendingUp,
+  BarChart3,
   ChartLine,
   ShieldCheck,
   Globe,
@@ -57,19 +56,24 @@ import {
   LayoutDashboard,
 } from "lucide-react"
 
+/** Shared tile treatment for switcher and launcher. One quiet system, not a rainbow. */
+export const APP_TILE =
+  "border border-zinc-200 bg-zinc-50 text-zinc-700"
+
 export interface AppNavItem {
   to?: string
   href?: string // external (Frappe Desk, HK mobile app) - opens a new tab
   label: string
-  icon: React.ComponentType<{ className?: string }>
+  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>
   roles?: string[] // per-item gate on top of the app's gate
 }
 
 export interface AppDef {
   id: string
   name: string
-  icon: React.ComponentType<{ className?: string }>
-  tint: string // tile accent classes for switcher/launcher
+  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>
+  /** @deprecated kept for callers; all apps share APP_TILE */
+  tint: string
   description: string
   roles: string[] // any of these roles can see the app
   items: AppNavItem[]
@@ -83,8 +87,8 @@ export const APPS: AppDef[] = [
   {
     id: "front-desk",
     name: "Front Desk",
-    icon: ConciergeBell,
-    tint: "bg-brand-50 text-brand-700",
+    icon: Building2,
+    tint: APP_TILE,
     description: "Arrivals, departures, bookings and guests - the day's work.",
     roles: ["Front Desk", "Hotel Admin", "System Manager", "Administrator"],
     items: [
@@ -103,8 +107,8 @@ export const APPS: AppDef[] = [
   {
     id: "housekeeping",
     name: "Housekeeping",
-    icon: Brush,
-    tint: "bg-emerald-50 text-emerald-700",
+    icon: ClipboardCheck,
+    tint: APP_TILE,
     description: "Room status board, lost & found, and the phone app.",
     roles: ["Housekeeping", "Front Desk", "Hotel Admin", "System Manager", "Administrator"],
     items: [
@@ -117,8 +121,8 @@ export const APPS: AppDef[] = [
   {
     id: "operations",
     name: "Operations",
-    icon: Wrench,
-    tint: "bg-sky-50 text-sky-700",
+    icon: ListTodo,
+    tint: APP_TILE,
     description: "Guest requests and shift handovers.",
     roles: ["Front Desk", "Hotel Admin", "System Manager", "Administrator"],
     items: [
@@ -134,7 +138,7 @@ export const APPS: AppDef[] = [
     id: "fnb",
     name: "F&B",
     icon: UtensilsCrossed,
-    tint: "bg-orange-50 text-orange-700",
+    tint: APP_TILE,
     description: "Restaurant POS, kitchen display, the menu and kitchen stock.",
     roles: ["Front Desk", "Finance", "Hotel Admin", "System Manager", "Administrator"],
     items: [
@@ -148,13 +152,13 @@ export const APPS: AppDef[] = [
   {
     id: "events",
     name: "Banquets & Groups",
-    icon: PartyPopper,
-    tint: "bg-violet-50 text-violet-700",
+    icon: CalendarRange,
+    tint: APP_TILE,
     description:
       "Function prospecting, quotations and event orders - plus room blocks and pickup.",
     roles: ["Front Desk", "Revenue Manager", "Hotel Admin", "System Manager", "Administrator"],
     items: [
-      { to: "/banquet", label: "Banquets", icon: PartyPopper },
+      { to: "/banquet", label: "Banquets", icon: CalendarRange },
       { to: "/banquet-month", label: "Month Availability", icon: CalendarRange },
       { to: "/banquet-diary", label: "Function Diary", icon: CalendarDays },
       { to: "/banquet-registers", label: "Registers", icon: ScrollText },
@@ -168,8 +172,8 @@ export const APPS: AppDef[] = [
   {
     id: "revenue",
     name: "Revenue",
-    icon: TrendingUp,
-    tint: "bg-amber-50 text-amber-700",
+    icon: BarChart3,
+    tint: APP_TILE,
     description: "Rates, seasons, offers and the partners who sell you.",
     roles: ["Revenue Manager", "Hotel Admin", "System Manager", "Administrator"],
     items: [
@@ -188,8 +192,8 @@ export const APPS: AppDef[] = [
   {
     id: "finance",
     name: "Finance",
-    icon: Receipt,
-    tint: "bg-teal-50 text-teal-700",
+    icon: Landmark,
+    tint: APP_TILE,
     description: "Folios, invoices, the night audit and reports.",
     roles: ["Finance", "Hotel Admin", "System Manager", "Administrator"],
     items: [
@@ -204,7 +208,7 @@ export const APPS: AppDef[] = [
     id: "booking-engine",
     name: "Booking Engine",
     icon: Globe,
-    tint: "bg-indigo-50 text-indigo-700",
+    tint: APP_TILE,
     description: "Manage direct booking setup, property profile, photo gallery, FAQs, and SEO rules.",
     roles: ["Revenue Manager", "Hotel Admin", "System Manager", "Administrator"],
     items: [
@@ -222,7 +226,7 @@ export const APPS: AppDef[] = [
     id: "admin",
     name: "Admin",
     icon: SettingsIcon,
-    tint: "bg-zinc-100 text-zinc-700",
+    tint: APP_TILE,
     description: "Property setup, inventory, users, audit and the Marketplace.",
     roles: ["Hotel Admin", "System Manager", "Administrator"],
     items: [

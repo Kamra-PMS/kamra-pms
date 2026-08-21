@@ -2,13 +2,22 @@
 
 **[demo.kamrapms.com](https://demo.kamrapms.com)** runs the latest stable
 release, seeded with a full sample hotel — rooms, guests, reservations,
-folios, a restaurant menu and experiences. It's shared and resets are
-routine: create bookings, post charges, break nothing.
+folios, a restaurant menu and experiences. It's shared and **resets every
+night**: create bookings, post charges, break nothing. Don't run a real
+property on it.
+
+To wipe and reseed by hand:
+
+```
+bench --site demo.kamrapms.com execute kamra.scripts.reset_demo.execute
+```
 
 ## One-tap logins
 
 The sign-in screen shows a button per role. Each opens the same hotel
-through different eyes:
+through different eyes. **This is a shared playground, not a live PMS** —
+bookings, extra properties, users and pasted API keys are wiped every
+night at 04:15 (site time). Don't put real guests or payments here.
 
 | Role | What they see |
 | --- | --- |

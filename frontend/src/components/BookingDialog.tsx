@@ -447,8 +447,7 @@ export function BookingDialog(props: {
         aria-hidden
       />
       <div
-        className="absolute inset-y-0 right-0 flex h-full w-full flex-col bg-white shadow-2xl animate-sheet-in"
-        style={{ width: "min(100%, 66vw)", maxWidth: "72rem" }}
+        className="absolute inset-y-0 right-0 flex h-full w-full flex-col bg-white shadow-2xl animate-sheet-in md:w-2/3"
       >
         <header className="flex shrink-0 items-center justify-between gap-4 border-b border-zinc-200 px-6 py-4 md:px-8">
           <div className="min-w-0">
@@ -495,7 +494,7 @@ export function BookingDialog(props: {
           <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
             {/* Form */}
             <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5 md:px-8 md:py-6">
-              <div className="mx-auto max-w-3xl space-y-6">
+              <div className="w-full max-w-none space-y-6">
                 {options?.property?.sell_message && (
                   <div className="flex items-start gap-2 rounded-xl bg-brand-50 px-4 py-3 text-sm text-brand-900">
                     <Megaphone
@@ -1084,7 +1083,7 @@ export function BookingDialog(props: {
             </div>
 
             {/* Quote rail — always visible on lg */}
-            <aside className="flex w-full shrink-0 flex-col border-t border-zinc-200 bg-zinc-50 lg:w-[22rem] lg:border-l lg:border-t-0 xl:w-96">
+            <aside className="flex w-full shrink-0 flex-col border-t border-zinc-200 bg-zinc-50 lg:w-80 lg:border-l lg:border-t-0 xl:w-[22rem]">
               <div className="flex-1 overflow-y-auto px-6 py-5 md:px-7">
                 <div className="mb-4 flex items-center justify-between">
                   <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
@@ -1182,12 +1181,12 @@ export function BookingDialog(props: {
 
                     {options?.property && (
                       <p className="pt-1 text-xs leading-relaxed text-zinc-500">
-                        {options.property.cancellation_fee === "None"
+                        {(options.property.cancellation_fee || "None") === "None"
                           ? "Free cancellation."
-                          : `Free cancellation until ${cancelCutoff}; after that the ${options.property.cancellation_fee.toLowerCase()} is charged.`}
-                        {options.property.no_show_charge !== "None" &&
-                          ` No-show: ${options.property.no_show_charge.toLowerCase()} charged.`}
-                        {options.property.deposit_pct > 0 &&
+                          : `Free cancellation until ${cancelCutoff}; after that the ${String(options.property.cancellation_fee).toLowerCase()} is charged.`}
+                        {(options.property.no_show_charge || "None") !== "None" &&
+                          ` No-show: ${String(options.property.no_show_charge).toLowerCase()} charged.`}
+                        {(options.property.deposit_pct ?? 0) > 0 &&
                           ` Deposit expected now: ${cur()}${inr((grandTotal * options.property.deposit_pct) / 100)} (${options.property.deposit_pct}%).`}
                       </p>
                     )}

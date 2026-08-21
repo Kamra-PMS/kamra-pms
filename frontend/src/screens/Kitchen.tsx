@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
   ChefHat, Check, RefreshCw, Clock, X, Undo2, TriangleAlert, Flame, Lock,
-  Martini, CookingPot, Utensils, Bell, BellOff, Play, Inbox,
+  Martini, CookingPot, Utensils, Bell, BellOff, Play, Inbox, Maximize2, Minimize2,
 } from "lucide-react"
 import { call, getCurrentProperty } from "../lib/api"
 import { subscribeRealtime } from "../lib/realtime"
 import { Button } from "../components/ui/button"
 import { cn } from "../lib/utils"
 import { cur } from "../lib/money"
+import { useKiosk } from "../lib/kiosk"
 
 type LineState = "cooking" | "held" | "cancelled" | "done"
 
@@ -482,7 +483,21 @@ export default function Kitchen() {
   const [busy, setBusy] = useState<string | null>(null)
   const [openOrder, setOpenOrder] = useState<string | null>(null)
   const [sound, setSound] = useState(() => localStorage.getItem(CHIME_KEY) !== "off")
+  const kiosk = useKiosk(true)
+  const rootRef = useRef<HTMLDivElement>(null)
+  const [browserFs, setBrowserFs] = useState(false)
   const now = useNow()
+
+  useEffect(() => {
+    const onFs = () => setBrowserFs(!!document.fullscreenElement)
+    document.addEventListener("fullscreenchange", onFs)
+    return () => document.removeEventListener("fullscreenchange", onFs)
+  }, [])
+
+  function toggleBrowserFs() {
+    if (document.fullscreenElement) document.exitFullscreen()
+    else rootRef.current?.requestFullscreen?.()
+  }
 
   useEffect(() => {
     call<{ name: string; outlet_name: string }[]>("kamra.pos.outlets", { property: getCurrentProperty() })
@@ -555,13 +570,16 @@ export default function Kitchen() {
   }, [openOrder, orders, open])
 
   return (
-    // With a ticket open the board lives in the left half, so the drawer
-    // covers empty space instead of tickets the line still needs to read.
-    <div className={cn("space-y-4 transition-[padding] duration-200",
+    <div ref={rootRef} className={cn(
+      "flex h-full min-h-0 flex-col bg-zinc-100",
+      kiosk.on && "p-0",
+    )}>
+    <div className={cn("flex min-h-0 flex-1 flex-col gap-3 overflow-hidden p-3 transition-[padding] duration-200",
       open && "sm:pr-[calc(50vw+1rem)]")}>
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-3">
         <h1 className="flex items-center gap-2 text-xl font-bold text-zinc-800">
-          <ChefHat className="size-5 text-brand-600" />Kitchen display
+          <ChefHat className="size-5 text-brand-600" />Kitchen pass
+          <span className="text-sm font-medium text-zinc-400">{orders.length} tickets</span>
         </h1>
         <div className="flex flex-wrap items-center gap-2">
           <select
@@ -586,16 +604,22 @@ export default function Kitchen() {
             {sound ? <Bell className="size-4" /> : <BellOff className="size-4" />}
             Sound {sound ? "on" : "off"}
           </button>
+          <button onClick={toggleBrowserFs}
+            className="rounded-lg border border-zinc-300 bg-white p-2 text-zinc-600 hover:bg-zinc-50"
+            title={browserFs ? "Exit browser full screen" : "Browser full screen"}>
+            {browserFs ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+          </button>
           <button onClick={load} aria-label="Refresh"><RefreshCw className="size-5 text-zinc-400" /></button>
         </div>
       </div>
 
       {orders.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-zinc-300 p-12 text-center text-zinc-400">
+        <div className="flex flex-1 items-center justify-center rounded-2xl border border-dashed border-zinc-300 p-12 text-center text-zinc-400">
           No open tickets. The kitchen is clear.
         </div>
       ) : (
-        <div className={cn("grid gap-3",
+        <div className={cn("min-h-0 flex-1 overflow-y-auto",
+          "grid content-start gap-3",
           open ? "lg:grid-cols-2" : "sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4")}>
           {sorted.map((o) => {
             const secs = firedAgeSecs(o, now)
@@ -729,6 +753,7 @@ export default function Kitchen() {
           onClose={() => setOpenOrder(null)}
           onAction={(fn, params) => act(open.name, fn, params)} />
       )}
+    </div>
     </div>
   )
 }

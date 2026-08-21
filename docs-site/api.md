@@ -17,8 +17,8 @@ Authorization: token <api_key>:<api_secret>
 Content-Type: application/json
 ```
 
-Generate keys from **Copilot → Connect** (per-user, role-scoped) or, for
-service integrations, on the dedicated agent user.
+Generate keys from **Kamra Agent → Connect your AI** (per-user, role-scoped
+OAuth for Claude) or, for service integrations, on Developers.
 
 ## Frequently used endpoints
 

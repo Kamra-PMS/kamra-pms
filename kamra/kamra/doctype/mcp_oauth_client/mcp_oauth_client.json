@@ -1,0 +1,39 @@
+{
+ "actions": [],
+ "autoname": "field:client_id",
+ "creation": "2026-08-18 00:00:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "client_id",
+  "client_name",
+  "token_endpoint_auth_method",
+  "redirect_uris",
+  "grant_types",
+  "client_id_issued_at"
+ ],
+ "fields": [
+  {"fieldname": "client_id", "fieldtype": "Data", "label": "Client ID", "reqd": 1, "unique": 1, "in_list_view": 1},
+  {"fieldname": "client_name", "fieldtype": "Data", "label": "Client Name", "in_list_view": 1},
+  {"fieldname": "token_endpoint_auth_method", "fieldtype": "Data", "label": "Token Auth Method", "default": "none"},
+  {"fieldname": "redirect_uris", "fieldtype": "Long Text", "label": "Redirect URIs"},
+  {"fieldname": "grant_types", "fieldtype": "Data", "label": "Grant Types"},
+  {"fieldname": "client_id_issued_at", "fieldtype": "Int", "label": "Issued At"}
+ ],
+ "index_web_pages_for_search": 0,
+ "issingle": 0,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-08-18 00:00:00",
+ "modified_by": "Administrator",
+ "module": "Kamra",
+ "name": "MCP OAuth Client",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {"role": "System Manager", "read": 1, "write": 1, "create": 1, "delete": 1}
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 0
+}
