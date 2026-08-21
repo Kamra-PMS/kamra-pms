@@ -6,6 +6,25 @@ All notable changes to Kamra PMS are documented here. Format follows
 existing install on upgrade (removed doctypes, removed API endpoints),
 MINOR for new features, PATCH for fixes.
 
+## [2.6.0](https://github.com/Kamra-PMS/kamra-pms/compare/v2.5.0...v2.6.0) (2026-08-21)
+
+
+### Features
+
+* **channel-manager:** Implement AioSell adapter with updated API int… ([c6d259b](https://github.com/Kamra-PMS/kamra-pms/commit/c6d259bfcc1412b86e2273759c344f14e8f6f362))
+* **channel-manager:** Implement AioSell adapter with updated API integration ([8b0dbee](https://github.com/Kamra-PMS/kamra-pms/commit/8b0dbeebc6846e26806676ab62e44380d5468fc1))
+
+
+### Bug Fixes
+
+* **booking:** null-safe cancellation/no-show fee labels ([781d638](https://github.com/Kamra-PMS/kamra-pms/commit/781d6386d8ef687a9f0845c0fd4856459a70679c))
+* **booking:** null-safe fee labels ([9b30810](https://github.com/Kamra-PMS/kamra-pms/commit/9b30810f67cf87fa859cdb50ef2f9e6b067edc62))
+* **channel-manager:** exact nosemgrep:frappe-setuser marker for marketplace check ([baa94c2](https://github.com/Kamra-PMS/kamra-pms/commit/baa94c225cb9e7b075c9d9aaeaac85bedc0601c4))
+* clear AUD-00003 Semgrep Security warning ([fedbd98](https://github.com/Kamra-PMS/kamra-pms/commit/fedbd98726f770d806a4228c44a6881c235e6e9a))
+* clear Frappe Cloud audit frappe-manual-commit ([e6be2bf](https://github.com/Kamra-PMS/kamra-pms/commit/e6be2bf8dbb2defc9ea517310d40ed68f02e8776))
+* drop scheduler manual commit that failed FC Submission Gate ([339971f](https://github.com/Kamra-PMS/kamra-pms/commit/339971f3d0311a86c0b85d3a493bea2ce57c5c0f))
+* silence FC Semgrep Security set_user warnings ([67d26b1](https://github.com/Kamra-PMS/kamra-pms/commit/67d26b18c72153f29fef862ae33163ef53abb7b2))
+
 ## [2.5.0](https://github.com/Kamra-PMS/kamra-pms/compare/v2.4.0...v2.5.0) (2026-08-13)
 
 **Short-term rentals.** Kamra is no longer hotel-only. A property can be a
