@@ -10,6 +10,7 @@ MINOR for new features, PATCH for fixes.
 
 ### Features
 
+* **pos:** full-screen till and kitchen pass, saved KOT tickets, clearer running-table strip and complimentary actions
 * **Connect Claude** — hosted MCP at `/mcp` with OAuth 2.1 (PKCE S256, DCR). Staff click Connect Claude on Kamra Agent; Claude opens with the hotel URL filled in and signs in as that user. Role-filtered tools, Activity Log channel `MCP`, revoke from the same panel.
 
 ### Bug Fixes
