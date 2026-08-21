@@ -12,9 +12,11 @@
   "column_break_a",
   "active",
   "sb_auth",
+  "api_username",
   "api_key",
   "external_property_id",
   "column_break_b",
+  "pms_slug",
   "endpoint",
   "webhook_secret",
   "sb_sync",
@@ -56,20 +58,34 @@
    "label": "Credentials"
   },
   {
+   "fieldname": "api_username",
+   "fieldtype": "Data",
+   "label": "API Username",
+   "description": "Basic-auth username (AioSell: issued at partner onboarding)"
+  },
+  {
    "fieldname": "api_key",
    "fieldtype": "Password",
-   "label": "API Key / Token"
+   "label": "API Key / Password",
+   "description": "Bearer token, or the Basic-auth password (AioSell)"
   },
   {
    "fieldname": "external_property_id",
    "fieldtype": "Data",
    "label": "Provider's Property ID",
-   "in_list_view": 1
+   "in_list_view": 1,
+   "description": "AioSell: the hotelCode"
   },
   {
    "fieldname": "column_break_b",
    "fieldtype": "Column Break",
    "label": ""
+  },
+  {
+   "fieldname": "pms_slug",
+   "fieldtype": "Data",
+   "label": "PMS Slug",
+   "description": "AioSell: the partner id / {pms} path segment (sandbox: sample-pms)"
   },
   {
    "fieldname": "endpoint",
