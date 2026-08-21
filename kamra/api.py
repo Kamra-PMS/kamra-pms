@@ -188,11 +188,6 @@ def set_room_rate(property: str, room_type: str, start_date: str,
 	           minutes_saved=6, rationale=reason or (
 	               f"Set {room_type.split('-')[-1]} rate ₹{rate:,.0f} "
 	               f"for {start_date}→{end_date}"))
-	# Pipeline 1: a rate change fans out to every OTA via the channel manager.
-	# Best-effort and after-commit so pricing never waits on (or fails from) a
-	# provider being down.
-	from kamra.channel_manager import enqueue_property_push
-	enqueue_property_push(property)
 	return {
 		"season": season.name, "rate": rate,
 		"guardrail_checked": rail.name if rail else None,
@@ -893,11 +888,11 @@ def hk_post_consumable(room: str, charge_type: str, description: str,
 	# the housekeeper is authorized above and scoped to two charge types, and
 	# GST is still resolved server-side. Attribution is stamped below.
 	me = frappe.session.user
-	frappe.set_user("agent@kamra.local")  # nosemgrep: frappe-setuser -- controlled user context switch; target user is validated and scope-limited in this flow
+	frappe.set_user("agent@kamra.local")
 	try:
 		out = post_stay_charge(res.name, charge_type, description, float(amount))
 	finally:
-		frappe.set_user(me)  # nosemgrep: frappe-setuser -- controlled user context switch; target user is validated and scope-limited in this flow
+		frappe.set_user(me)
 	from kamra.savings import log_action
 	log_action("hk_charge", "Folio", out.get("folio"), res.property,
 	           rationale=f"{charge_type} ₹{amount} to {room} ({description})")
@@ -2430,25 +2425,12 @@ def cancel_reservation(reservation: str, reason: str = "Guest request",
 
 	The cancellation is recorded in the action log.
 	"""
+	from frappe.model.naming import make_autoname
+
 	res = frappe.get_doc("Reservation", reservation)
 	if res.status != "Confirmed":
 		frappe.throw("Only confirmed bookings can be cancelled - "
 		             "checked-in stays check out.")
-	return _do_cancel(res, reason, note, waive_fee, issue_credit_note)
-
-
-def _do_cancel(res, reason: str = "Guest request", note: str | None = None,
-               waive_fee: int = 0, issue_credit_note: int = 0):
-	"""The cancellation itself, on an already-fetched (Confirmed) reservation.
-
-	Factored out of cancel_reservation so the channel-manager webhook can
-	cancel an OTA booking through the exact same policy path - fee, credit
-	note, cancellation number, action log - without needing a front-desk
-	role context. cancel_reservation keeps the role gate and status check
-	around this.
-	"""
-	from frappe.model.naming import make_autoname
-
 	if reason not in CANCEL_REASONS:
 		reason = "Other"
 	terms = _cancellation_terms(res)
@@ -2581,7 +2563,7 @@ def availability_calendar(property: str, start_date: str | None = None, days: in
 	room_types = frappe.get_all(
 		"Room Type",
 		filters={"property": property, "disabled": 0},
-		fields=["name", "room_type_name", "base_price", "room_category"],
+		fields=["name", "room_type_name", "base_price"],
 		order_by="base_price asc",
 	)
 	from frappe.utils import getdate
@@ -2634,29 +2616,6 @@ def availability_calendar(property: str, start_date: str | None = None, days: in
 			"total_rooms": total,
 			"cells": cells,
 		})
-
-	# whole-property lock: on any night the Villa is booked, its member rooms
-	# read as full; on any night a member room is booked, the Villa reads full.
-	villa_names = {rt.name for rt in room_types if rt.room_category == "Villa"}
-	member_names = {rt.name for rt in room_types if rt.room_category != "Villa"}
-	if villa_names and member_names:
-		by_rt = {row["room_type"]: row for row in rows}
-		for i in range(len(dates)):
-			villa_sold = any(
-				by_rt[v]["cells"][i]["available"] < by_rt[v]["total_rooms"]
-				for v in villa_names if v in by_rt)
-			member_sold = any(
-				by_rt[m]["cells"][i]["available"] < by_rt[m]["total_rooms"]
-				for m in member_names if m in by_rt)
-			if member_sold:
-				for v in villa_names:
-					if v in by_rt:
-						by_rt[v]["cells"][i]["available"] = 0
-			if villa_sold:
-				for m in member_names:
-					if m in by_rt:
-						by_rt[m]["cells"][i]["available"] = 0
-
 	return {"start": str(start), "days": days, "dates": [str(d) for d in dates],
 	        "room_types": rows}
 
@@ -3134,13 +3093,24 @@ def booking_options(property: str):
 			        "gst_rate"],
 			order_by="price asc",
 		),
-		"property": frappe.db.get_value(
-			"Property", property,
-			["sell_message", "free_cancel_days", "cancellation_fee",
-			 "no_show_charge", "deposit_pct"],
-			as_dict=True,
-		),
+		"property": _booking_property_policy(property),
 	}
+
+
+def _booking_property_policy(property: str) -> dict:
+	"""Property policy fields for the booking dialog — never null strings."""
+	prop = frappe.db.get_value(
+		"Property", property,
+		["sell_message", "free_cancel_days", "cancellation_fee",
+		 "no_show_charge", "deposit_pct"],
+		as_dict=True,
+	) or {}
+	prop["cancellation_fee"] = prop.get("cancellation_fee") or "None"
+	prop["no_show_charge"] = prop.get("no_show_charge") or "None"
+	prop["free_cancel_days"] = int(prop.get("free_cancel_days") or 0)
+	prop["deposit_pct"] = float(prop.get("deposit_pct") or 0)
+	prop["sell_message"] = prop.get("sell_message") or ""
+	return prop
 
 
 @frappe.whitelist()
@@ -3528,40 +3498,6 @@ def inventory_availability(property: str, check_in_date: str, check_out_date: st
 	)
 
 
-def _villa_lock_conflict(property: str, room_type: str, check_in_date: str,
-                         check_out_date: str, exclude: str | None = None):
-	"""Villa <-> Room mutual exclusion, as a read.
-
-	Returns the blocking reservation's name when `room_type` can't be sold for
-	[check_in, check_out) because the other side of the property's villa bundle
-	is already booked:
-	  - an individual room while the Entire Villa is booked, or
-	  - the Entire Villa while any individual room is booked.
-	Mirrors Reservation.validate_villa_lockout, but as a query so availability
-	shows rooms as full instead of only erroring at save. No Villa-category room
-	type in the property -> never conflicts."""
-	category = frappe.db.get_value("Room Type", room_type, "room_category")
-	other = ("(rt.room_category != 'Villa' OR rt.room_category IS NULL)"
-	         if category == "Villa" else "rt.room_category = 'Villa'")
-	row = frappe.db.sql(
-		f"""
-		SELECT r.name FROM `tabReservation` r
-		LEFT JOIN `tabRoom Type` rt ON r.room_type = rt.name
-		WHERE r.property = %(p)s
-		  AND r.name != %(x)s
-		  AND r.status IN ('Confirmed', 'Checked In')
-		  AND {other}
-		  AND r.check_in_date < GREATEST(%(co)s,
-		                                 DATE_ADD(%(ci)s, INTERVAL 1 DAY))
-		  AND GREATEST(r.check_out_date,
-		               DATE_ADD(r.check_in_date, INTERVAL 1 DAY)) > %(ci)s
-		LIMIT 1
-		""",
-		{"p": property, "x": exclude or "new",
-		 "ci": check_in_date, "co": check_out_date})
-	return row[0][0] if row else None
-
-
 @frappe.whitelist()
 @require_roles("Front Desk", "Kamra Agent")
 def available_rooms(property: str, room_type: str, check_in_date: str,
@@ -3570,10 +3506,6 @@ def available_rooms(property: str, room_type: str, check_in_date: str,
 	logic the double-booking guard enforces, exposed as a query. Confirmed
 	group blocks hold their unsold rooms out of general sale; pass the
 	group to book against its own block."""
-	# whole-property lock: if the Villa is booked, its rooms are full (and
-	# vice-versa), so there is nothing to offer for these dates.
-	if _villa_lock_conflict(property, room_type, check_in_date, check_out_date):
-		return []
 	# Prefer Sellable Unit availability when SIUs exist for this type
 	# (ADR-003). Fall back to legacy Room SQL during migration.
 	rooms = None
