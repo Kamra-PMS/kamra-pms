@@ -45,13 +45,13 @@ class TestOAuthHelpers(IntegrationTestCase):
 
 class TestRemoteMCP(IntegrationTestCase):
 	def setUp(self):
-		frappe.set_user("Administrator")
+		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- test fixture sets admin before seeding MCP OAuth data
 		ensure_roles_and_users()
 		build()
 		self.property = PROPERTY
 
 	def tearDown(self):
-		frappe.set_user("Administrator")
+		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- test fixture restores admin after MCP OAuth tests
 
 	def _register(self, redirect="https://claude.ai/api/mcp/auth_callback"):
 		status, body = mcp_oauth.handle_register({
@@ -142,12 +142,12 @@ class TestRemoteMCP(IntegrationTestCase):
 	def test_front_desk_does_not_see_set_room_rate(self):
 		from kamra.mcp_tools import allowed_tools, tool_allowed
 
-		frappe.set_user("banquet.sales@test.local")
+		frappe.set_user("banquet.sales@test.local")  # nosemgrep: frappe-setuser -- assert role-filtered MCP tool list for non-admin user
 		self.assertFalse(tool_allowed(BY_NAME["set_room_rate"]))
 		names = {t.name for t in allowed_tools()}
 		self.assertNotIn("set_room_rate", names)
 		self.assertIn("create_booking", names)
-		frappe.set_user("Administrator")
+		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- restore admin after role-filter test
 
 	def test_tools_call_logs_mcp_channel(self):
 		tokens = self._grant_tokens("Administrator")

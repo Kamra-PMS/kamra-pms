@@ -132,7 +132,7 @@ def _mcp_endpoint(method: str, request) -> Response:
 	if not grant:
 		return _unauthorized()
 
-	frappe.set_user(grant.user)
+	frappe.set_user(grant.user)  # nosemgrep: frappe-setuser -- OAuth bearer already validated; impersonate the grant owner for role-filtered MCP tools
 	body = _read_json(request)
 	if body is None:
 		return _rpc_error(None, -32700, "Parse error", 400)

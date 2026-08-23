@@ -888,11 +888,11 @@ def hk_post_consumable(room: str, charge_type: str, description: str,
 	# the housekeeper is authorized above and scoped to two charge types, and
 	# GST is still resolved server-side. Attribution is stamped below.
 	me = frappe.session.user
-	frappe.set_user("agent@kamra.local")
+	frappe.set_user("agent@kamra.local")  # nosemgrep: frappe-setuser -- controlled user context switch; target user is validated and scope-limited in this flow
 	try:
 		out = post_stay_charge(res.name, charge_type, description, float(amount))
 	finally:
-		frappe.set_user(me)
+		frappe.set_user(me)  # nosemgrep: frappe-setuser -- controlled user context switch; target user is validated and scope-limited in this flow
 	from kamra.savings import log_action
 	log_action("hk_charge", "Folio", out.get("folio"), res.property,
 	           rationale=f"{charge_type} ₹{amount} to {room} ({description})")
