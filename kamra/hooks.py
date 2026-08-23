@@ -223,6 +223,17 @@ doc_events = {
 	                "Service Ticket", "Agent Action Log")
 }
 
+# A reservation booked/modified/cancelled moves availability, so fan the new
+# numbers out to the channel manager (Pipeline 1). Runs alongside the realtime
+# notify; best-effort and after-commit so it never affects the booking itself.
+doc_events["Reservation"] = {
+	"after_insert": ["kamra.realtime.notify",
+	                 "kamra.channel_manager.on_reservation_change"],
+	"on_update": ["kamra.realtime.notify",
+	              "kamra.channel_manager.on_reservation_change"],
+	"on_trash": "kamra.realtime.notify",
+}
+
 # Scheduled Tasks
 # ---------------
 

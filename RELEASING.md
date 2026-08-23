@@ -78,10 +78,11 @@ The maintainer runbook. Contributors don't need this — see
 - [x] README compatibility table (Kamra `main` releases ↔ Frappe v16)
 - [x] Publisher account on frappecloud.com; Marketplace App `kamra` exists
       (public page is Draft / **Not Available** until a release is approved)
-- [ ] Listing copy, Hospitality category, logo, screenshots, Support +
-      Privacy URLs — paste from [`docs/marketplace-listing.md`](docs/marketplace-listing.md)
-- [ ] Publish the `main` / v2.5.0 release for review; if Draft > 10 days,
-      ticket https://support.frappe.io/ (template in the listing doc)
+- [x] Listing title, summary, logo, Support + Privacy + docs URLs
+- [ ] Human review of the latest App Release (Submission Gate is past
+      the blocking Fail; app stays In Review until Frappe publishes)
+- [x] Offline marketplace install check:
+      `python kamra/scripts/marketplace_install_check.py`
 
 ## Secrets the pipelines need (repo → Settings → Secrets)
 

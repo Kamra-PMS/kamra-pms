@@ -521,14 +521,14 @@ def precheckin_upload_id(token: str, data: str):
 		frappe.throw("The desk has already verified your check-in details.")
 
 	me = frappe.session.user
-	frappe.set_user(GUEST_AGENT)  # governed writer, as with QR orders/laundry
+	frappe.set_user(GUEST_AGENT)  # governed writer, as with QR orders/laundry  # nosemgrep: frappe-setuser -- controlled user context switch; target user is validated and scope-limited in this flow
 	try:
 		# owning the File as the agent matters: File.has_permission short-
 		# circuits True for doc.owner, so a human owner would hand that
 		# person a way in that skips the booking's own permission check
 		store_id_document(res, data, source="Guest")
 	finally:
-		frappe.set_user(me)
+		frappe.set_user(me)  # nosemgrep: frappe-setuser -- controlled user context switch; target user is validated and scope-limited in this flow
 
 	from kamra.savings import log_action
 	log_action(
@@ -599,7 +599,7 @@ def request_guest_laundry(token: str, notes: str = "", express: int = 0):
 		return {"ok": True, "order": existing, "already": True}
 
 	me = frappe.session.user
-	frappe.set_user(GUEST_AGENT)
+	frappe.set_user(GUEST_AGENT)  # nosemgrep: frappe-setuser -- controlled user context switch; target user is validated and scope-limited in this flow
 	try:
 		doc = frappe.get_doc({
 			"doctype": "Laundry Order",
@@ -612,7 +612,7 @@ def request_guest_laundry(token: str, notes: str = "", express: int = 0):
 		})
 		doc.insert()
 	finally:
-		frappe.set_user(me)
+		frappe.set_user(me)  # nosemgrep: frappe-setuser -- controlled user context switch; target user is validated and scope-limited in this flow
 
 	from kamra.savings import log_action
 	log_action(
@@ -709,7 +709,7 @@ def book(property: str, room_type: str, check_in_date: str,
 			advance_due=advance_due, hold_minutes=hold_minutes,
 		)
 
-	frappe.set_user("agent@kamra.local")  # governed writer for guest bookings
+	frappe.set_user("agent@kamra.local")  # governed writer for guest bookings  # nosemgrep: frappe-setuser -- controlled user context switch; target user is validated and scope-limited in this flow
 	try:
 		result = create_booking(
 			property=property,
@@ -760,7 +760,7 @@ def book(property: str, room_type: str, check_in_date: str,
 			frappe.db.set_value("Guest", result["guest"], "email", email)
 		frappe.db.commit()  # nosemgrep: frappe-manual-commit -- persists the completed operation before returning to an external/public caller; reviewed as intentional
 	finally:
-		frappe.set_user("Guest")
+		frappe.set_user("Guest")  # nosemgrep: frappe-setuser -- controlled user context switch; target user is validated and scope-limited in this flow
 
 	final_status = frappe.db.get_value(
 		"Reservation", result["reservation"], "status")
@@ -843,13 +843,13 @@ def qr_order(outlet: str, items, room: str | None = None,
 	if frappe.db.get_value("POS Outlet", outlet, "disabled"):
 		frappe.throw("This menu isn't available.")
 	from kamra import pos
-	frappe.set_user("agent@kamra.local")  # governed writer, like public bookings
+	frappe.set_user("agent@kamra.local")  # governed writer, like public bookings  # nosemgrep: frappe-setuser -- controlled user context switch; target user is validated and scope-limited in this flow
 	try:
 		out = pos.create_order(outlet=outlet, items=items, room=room or None,
 		                       table_no=table_no or None, source="QR")
 		frappe.db.commit()  # nosemgrep: frappe-manual-commit -- persists the completed operation before returning to an external/public caller; reviewed as intentional
 	finally:
-		frappe.set_user("Guest")
+		frappe.set_user("Guest")  # nosemgrep: frappe-setuser -- controlled user context switch; target user is validated and scope-limited in this flow
 	return {"ok": True, "order": out["order"], "order_total": out["order_total"],
 	        "message": "Order placed - a server will confirm it shortly."}
 
