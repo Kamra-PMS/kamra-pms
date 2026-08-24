@@ -17,6 +17,31 @@ MINOR for new features, PATCH for fixes.
 
 * MCP stdio sidecar now registers group and banquet tools (`mcp.run()` had been sitting mid-file). Duplicate `banquet_receipt` split into `banquet_record_receipt` and `banquet_receipt_document`. Tool list is a shared registry of 52 tools.
 
+## [2.6.0](https://github.com/Kamra-PMS/kamra-pms/compare/v2.5.0...v2.6.0) (2026-08-24)
+
+
+### Features
+
+* **channel-manager:** Implement AioSell adapter with updated API int… ([c6d259b](https://github.com/Kamra-PMS/kamra-pms/commit/c6d259bfcc1412b86e2273759c344f14e8f6f362))
+* **channel-manager:** Implement AioSell adapter with updated API integration ([8b0dbee](https://github.com/Kamra-PMS/kamra-pms/commit/8b0dbeebc6846e26806676ab62e44380d5468fc1))
+* connect Claude to the hotel over hosted MCP ([235a0b4](https://github.com/Kamra-PMS/kamra-pms/commit/235a0b4cc4ea621841cc0acfbc61d650ddbd0832))
+* **demo:** add guarded nightly reset for public playground ([47acca7](https://github.com/Kamra-PMS/kamra-pms/commit/47acca7156b7193574526995a3d766a24cc741e0))
+* playground reset and hosted Claude MCP ([4be5b92](https://github.com/Kamra-PMS/kamra-pms/commit/4be5b929d930217f45fc2bdf43dfedeb88bf7c40))
+
+
+### Bug Fixes
+
+* **booking:** null-safe cancellation/no-show fee labels ([781d638](https://github.com/Kamra-PMS/kamra-pms/commit/781d6386d8ef687a9f0845c0fd4856459a70679c))
+* **booking:** null-safe fee labels ([9b30810](https://github.com/Kamra-PMS/kamra-pms/commit/9b30810f67cf87fa859cdb50ef2f9e6b067edc62))
+* **booking:** null-safe fee labels and widen booking sheet ([e815491](https://github.com/Kamra-PMS/kamra-pms/commit/e81549197f7be15c141996b5bf503623f07be5a7))
+* **channel-manager:** add _do_cancel helper for OTA cancels ([cd9f332](https://github.com/Kamra-PMS/kamra-pms/commit/cd9f3321d2211892c15164fa5dc947d70a2abc9d))
+* **channel-manager:** exact nosemgrep:frappe-setuser marker for marketplace check ([baa94c2](https://github.com/Kamra-PMS/kamra-pms/commit/baa94c225cb9e7b075c9d9aaeaac85bedc0601c4))
+* clear AUD-00003 Semgrep Security warning ([fedbd98](https://github.com/Kamra-PMS/kamra-pms/commit/fedbd98726f770d806a4228c44a6881c235e6e9a))
+* clear Frappe Cloud audit frappe-manual-commit ([e6be2bf](https://github.com/Kamra-PMS/kamra-pms/commit/e6be2bf8dbb2defc9ea517310d40ed68f02e8776))
+* drop scheduler manual commit that failed FC Submission Gate ([339971f](https://github.com/Kamra-PMS/kamra-pms/commit/339971f3d0311a86c0b85d3a493bea2ce57c5c0f))
+* **marketplace:** annotate MCP and HK set_user for FC gate ([04f4b7b](https://github.com/Kamra-PMS/kamra-pms/commit/04f4b7bfabf44c87ea35c71822d4a2311ce8bf61))
+* silence FC Semgrep Security set_user warnings ([67d26b1](https://github.com/Kamra-PMS/kamra-pms/commit/67d26b18c72153f29fef862ae33163ef53abb7b2))
+
 ## [2.5.0](https://github.com/Kamra-PMS/kamra-pms/compare/v2.4.0...v2.5.0) (2026-08-13)
 
 **Short-term rentals.** Kamra is no longer hotel-only. A property can be a
