@@ -6,6 +6,17 @@ All notable changes to Kamra PMS are documented here. Format follows
 existing install on upgrade (removed doctypes, removed API endpoints),
 MINOR for new features, PATCH for fixes.
 
+## Unreleased
+
+### Features
+
+* **pos:** full-screen till and kitchen pass, saved KOT tickets, clearer running-table strip and complimentary actions
+* **Connect Claude** — hosted MCP at `/mcp` with OAuth 2.1 (PKCE S256, DCR). Staff click Connect Claude on Kamra Agent; Claude opens with the hotel URL filled in and signs in as that user. Role-filtered tools, Activity Log channel `MCP`, revoke from the same panel.
+
+### Bug Fixes
+
+* MCP stdio sidecar now registers group and banquet tools (`mcp.run()` had been sitting mid-file). Duplicate `banquet_receipt` split into `banquet_record_receipt` and `banquet_receipt_document`. Tool list is a shared registry of 52 tools.
+
 ## [2.5.0](https://github.com/Kamra-PMS/kamra-pms/compare/v2.4.0...v2.5.0) (2026-08-13)
 
 **Short-term rentals.** Kamra is no longer hotel-only. A property can be a

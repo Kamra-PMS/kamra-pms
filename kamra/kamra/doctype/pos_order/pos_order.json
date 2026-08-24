@@ -41,7 +41,8 @@
   "delivery_address",
   "nc",
   "nc_authorized_by",
-  "nc_note"
+  "nc_note",
+  "last_kot_ticket"
  ],
  "fields": [
   {
@@ -249,12 +250,19 @@
    "fieldname": "nc_note",
    "fieldtype": "Small Text",
    "label": "NC Reference"
+  },
+  {
+   "fieldname": "last_kot_ticket",
+   "fieldtype": "Long Text",
+   "label": "Saved KOT tickets",
+   "read_only": 1,
+   "description": "JSON of every KOT round fired on this bill, so reprints do not depend on the browser print dialog."
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-07-04 21:48:59.828338",
+ "modified": "2026-08-19 18:30:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "POS Order",

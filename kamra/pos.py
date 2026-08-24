@@ -173,6 +173,12 @@ def open_orders(outlet: str):
 	return rows
 
 
+def _kot_tickets_of(doc) -> list:
+	raw = getattr(doc, "last_kot_ticket", None)
+	data = frappe.parse_json(raw) if raw else []
+	return data if isinstance(data, list) else []
+
+
 def _label(r) -> str:
 	"""A human tag for a bill: where it is, or who it's for."""
 	if r.get("room"):
@@ -429,6 +435,7 @@ def order_detail(order: str):
 		"delivery_address": doc.delivery_address,
 		"nc": doc.nc, "nc_authorized_by": doc.nc_authorized_by,
 		"nc_note": doc.nc_note,
+		"kot_tickets": _kot_tickets_of(doc),
 		"paid": doc.paid, "payment_mode": doc.payment_mode,
 		"discount_amount": doc.discount_amount, "discount_reason": doc.discount_reason,
 		"subtotal": doc.subtotal, "order_total": doc.order_total,
@@ -531,8 +538,26 @@ def fire_kot(order: str, course: str | None = None):
 	# reports itself as stale. See kamra/inventory.py.
 	from kamra.inventory import consume_for_lines
 	alerts = consume_for_lines(doc, fired_rows)
+	ticket = {
+		"kot_no": doc.kot_no, "at": now, "round": _next_kot_round(doc),
+		"nc": bool(doc.nc), "nc_by": doc.nc_authorized_by,
+		"label": _label(doc.as_dict()), "order_type": doc.order_type,
+		"order": doc.name, "customer": doc.customer_name,
+		"address": doc.delivery_address, "items": fired,
+	}
+	history = frappe.parse_json(doc.last_kot_ticket) if doc.last_kot_ticket else []
+	if not isinstance(history, list):
+		history = []
+	history.append(ticket)
+	doc.db_set("last_kot_ticket", frappe.as_json(history), update_modified=False)
 	return {"ok": True, "status": doc.status, "kot_no": doc.kot_no,
-	        "nc": bool(doc.nc), "fired_items": fired, "stock_alerts": alerts}
+	        "nc": bool(doc.nc), "fired_items": fired, "ticket": ticket,
+	        "stock_alerts": alerts}
+
+
+def _next_kot_round(doc) -> int:
+	history = frappe.parse_json(doc.last_kot_ticket) if doc.last_kot_ticket else []
+	return (len(history) if isinstance(history, list) else 0) + 1
 
 
 @frappe.whitelist()

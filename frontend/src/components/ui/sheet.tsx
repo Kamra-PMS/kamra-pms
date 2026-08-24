@@ -36,11 +36,10 @@ export function Sheet(props: {
         aria-hidden
       />
       <div
-        className="absolute inset-y-0 right-0 flex w-full flex-col bg-white shadow-2xl animate-sheet-in"
-        style={
+        className={
           props.wide
-            ? { width: "min(100%, 66vw)", maxWidth: "72rem" }
-            : { maxWidth: "28rem" }
+            ? "absolute inset-y-0 right-0 flex w-full flex-col bg-white shadow-2xl animate-sheet-in md:w-2/3"
+            : "absolute inset-y-0 right-0 flex w-full max-w-md flex-col bg-white shadow-2xl animate-sheet-in"
         }
       >
         <div className="flex items-start justify-between border-b border-zinc-100 px-6 py-4">
