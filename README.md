@@ -34,7 +34,7 @@ Hotels deserve better than:
 
 ## What makes Kamra different
 
-- **Agent-ready, not agent-locked.** Kamra ships an [MCP server](mcp/kamra_mcp.py) with governed tools, role-scoped and permission-checked like any user. Connect Claude (or any MCP client) and say *"book Mr. Rao a deluxe for the weekend with breakfast"* — it quotes, books, and every action is logged. No bundled agent personas to trust or configure — bring your own.
+- **Agent-ready, not agent-locked.** Kamra ships an [MCP server](https://kamrapms.com/docs/ai-and-mcp) with 52 governed tools, role-scoped and permission-checked like any user. Click **Connect Claude** — it quotes, books, and every action is logged. No bundled agent personas to trust or configure — bring your own.
 - **Bring your own key.** No bundled AI markup, no model lock-in. Point your own LLM at Kamra's tool surface, or connect [HeyKoala](https://heykoala.ai) for a phone/WhatsApp AI concierge.
 - **Deterministic money.** Prices, taxes, availability come from a pricing engine — never from a language model. GST slabs, multi-rate invoices, and the no-overbooking guard are code, verified by an eval suite in CI.
 - **Full audit trail.** Every action — human or AI — is logged with who did it, what changed, and why. Accountability comes from the ledger, not from hoping the model behaves.
@@ -126,7 +126,7 @@ the AI use:
 - **[Postman collection](https://kamrapms.com/docs/kamra.postman_collection.json)**
   — import it, set `base_url` (your Kamra URL), `api_key` and `api_secret`
   collection variables, and every request is ready to try
-- [MCP tool reference](https://kamrapms.com/docs/mcp-tools) — the 32 tools
+- [MCP tool reference](https://kamrapms.com/docs/mcp-tools) — the 52 tools
   AI agents get
 
 ```bash
@@ -187,11 +187,12 @@ property, roles and users via `bench --site … execute kamra.scripts.seed_demo.
 (this also enables the demo-account buttons on the login screen). Full dev
 notes: [docs-dev.md](docs-dev.md).
 
-Connect an AI agent:
+Connect Claude (hosted MCP — no local Python):
 
 ```bash
-claude mcp add kamra -e KAMRA_URL=... -e KAMRA_API_KEY=... \
-  -e KAMRA_API_SECRET=... -- python mcp/kamra_mcp.py
+# in Kamra: Kamra Agent → Connect your AI → Connect Claude
+# or from a terminal:
+claude mcp add --transport http kamra https://pms.yourhotel.com/mcp
 ```
 
 ## For hotel owners

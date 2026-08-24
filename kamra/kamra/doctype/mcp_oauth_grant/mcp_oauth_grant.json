@@ -1,0 +1,53 @@
+{
+ "actions": [],
+ "autoname": "hash",
+ "creation": "2026-08-18 00:00:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "user",
+  "property",
+  "client",
+  "redirect_uri",
+  "scope",
+  "code_hash",
+  "code_challenge",
+  "code_expires",
+  "access_token_hash",
+  "refresh_token_hash",
+  "access_expires",
+  "refresh_expires",
+  "revoked"
+ ],
+ "fields": [
+  {"fieldname": "user", "fieldtype": "Link", "label": "User", "options": "User", "reqd": 1, "in_list_view": 1, "search_index": 1},
+  {"fieldname": "property", "fieldtype": "Link", "label": "Property", "options": "Property", "reqd": 1, "in_list_view": 1},
+  {"fieldname": "client", "fieldtype": "Link", "label": "Client", "options": "MCP OAuth Client"},
+  {"fieldname": "redirect_uri", "fieldtype": "Small Text", "label": "Redirect URI"},
+  {"fieldname": "scope", "fieldtype": "Data", "label": "Scope", "default": "kamra.mcp"},
+  {"fieldname": "code_hash", "fieldtype": "Data", "label": "Code Hash", "search_index": 1},
+  {"fieldname": "code_challenge", "fieldtype": "Data", "label": "Code Challenge"},
+  {"fieldname": "code_expires", "fieldtype": "Datetime", "label": "Code Expires"},
+  {"fieldname": "access_token_hash", "fieldtype": "Data", "label": "Access Token Hash", "search_index": 1},
+  {"fieldname": "refresh_token_hash", "fieldtype": "Data", "label": "Refresh Token Hash", "search_index": 1},
+  {"fieldname": "access_expires", "fieldtype": "Datetime", "label": "Access Expires"},
+  {"fieldname": "refresh_expires", "fieldtype": "Datetime", "label": "Refresh Expires"},
+  {"fieldname": "revoked", "fieldtype": "Check", "label": "Revoked", "default": "0"}
+ ],
+ "index_web_pages_for_search": 0,
+ "issingle": 0,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-08-18 00:00:00",
+ "modified_by": "Administrator",
+ "module": "Kamra",
+ "name": "MCP OAuth Grant",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {"role": "System Manager", "read": 1, "write": 1, "create": 1, "delete": 1}
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 0
+}

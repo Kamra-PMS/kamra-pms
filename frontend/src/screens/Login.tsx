@@ -117,6 +117,11 @@ export default function Login(props: { onSuccess: () => void }) {
 
         {demoMode && (
         <div className="mt-4 rounded-xl border border-dashed border-zinc-300 p-4">
+          <p className="mb-3 rounded-lg bg-amber-50 px-3 py-2 text-center text-xs leading-relaxed text-amber-900">
+            Shared playground — not a live hotel. Bookings, guests and
+            settings are wiped every night. Don&apos;t put real guests,
+            payments or API keys here.
+          </p>
           <p className="mb-2 text-center text-xs text-zinc-400">
             Demo accounts - one tap to try each role
           </p>

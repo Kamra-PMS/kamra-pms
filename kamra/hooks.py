@@ -43,6 +43,9 @@ scheduler_events = {
 		# 08:30 - the banquet team's morning list: follow-ups gone quiet,
 		# tentative holds about to lapse, payments due, event orders missing
 		"30 8 * * *": ["kamra.banquet.run_banquet_reminders"],
+		# 04:15 - wipe the public demo so it cannot be used as a live PMS
+		# (no-op unless kamra_demo_mode is on and the site is a playground)
+		"15 4 * * *": ["kamra.scripts.reset_demo.scheduled"],
 	},
 }
 
@@ -287,6 +290,9 @@ doc_events["Reservation"] = {
 # -----------------------------------------------------------
 
 # ignore_links_on_delete = ["Communication", "ToDo"]
+
+# Remote MCP + OAuth live at /mcp and /mcp/oauth/* (not the SPA).
+page_renderer = ["kamra.mcp_http.MCPPageRenderer"]
 
 # Request Events
 # ----------------

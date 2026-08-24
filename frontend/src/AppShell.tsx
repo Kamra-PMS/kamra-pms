@@ -19,6 +19,7 @@ import {
   type AppNavItem,
 } from "./lib/apps"
 import {
+  call,
   enabledModules,
   getCurrentProperty,
   myProperties,
@@ -32,6 +33,7 @@ import { getTheme, setTheme } from "./lib/theme"
 import { t as translate, useT } from "./lib/i18n"
 import { loadLocale } from "./lib/money"
 import { cn } from "./lib/utils"
+import { useKiosk } from "./lib/kiosk"
 
 export interface BookingInitial {
   room_type?: string
@@ -89,7 +91,7 @@ function ThemeToggle() {
   )
 }
 
-/** Gmail-style grid: the app switcher popover in the top bar. */
+/** App switcher in the top bar: quiet grid, one accent for the current app. */
 function AppSwitcher({ apps, current }: { apps: AppDef[]; current: AppDef }) {
   const [open, setOpen] = useState(false)
   const navigate = useNavigate()
@@ -116,40 +118,50 @@ function AppSwitcher({ apps, current }: { apps: AppDef[]; current: AppDef }) {
         onClick={() => setOpen((o) => !o)}
         aria-label="Switch app"
         title="Switch app"
-        className="flex size-9 items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700"
+        className="flex size-8 items-center justify-center rounded-md text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800"
       >
-        <LayoutGrid className="size-5" aria-hidden />
+        <LayoutGrid className="size-4" strokeWidth={1.75} aria-hidden />
       </button>
       {open && (
-        <div className="absolute left-0 top-11 z-50 w-72 rounded-2xl border border-zinc-200 bg-white p-2 shadow-2xl">
-          <div className="grid grid-cols-3 gap-1">
-            {apps.map((app) => (
-              <button
-                key={app.id}
-                onClick={() => go(app)}
-                className={cn(
-                  "flex flex-col items-center gap-1.5 rounded-xl px-2 py-3 text-center transition",
-                  app.id === current.id ? "bg-zinc-50" : "hover:bg-zinc-50",
-                )}
-              >
-                <span
+        <div className="absolute left-0 top-10 z-50 w-64 rounded-lg border border-zinc-200 bg-white p-1.5 shadow-lg ring-1 ring-black/5">
+          <div className="grid grid-cols-3 gap-0.5">
+            {apps.map((app) => {
+              const active = app.id === current.id
+              return (
+                <button
+                  key={app.id}
+                  onClick={() => go(app)}
                   className={cn(
-                    "flex size-10 items-center justify-center rounded-xl",
-                    app.tint,
+                    "flex flex-col items-center gap-1.5 rounded-md px-1.5 py-2.5 text-center transition-colors",
+                    active ? "bg-zinc-100" : "hover:bg-zinc-50",
                   )}
                 >
-                  <app.icon className="size-5" aria-hidden />
-                </span>
-                <span className="text-[11px] font-medium leading-tight text-zinc-700">
-                  {translate(app.name)}
-                </span>
-              </button>
-            ))}
+                  <span
+                    className={cn(
+                      "flex size-9 items-center justify-center rounded-md border",
+                      active
+                        ? "border-brand-200 bg-brand-50 text-brand-700"
+                        : "border-zinc-200 bg-white text-zinc-600",
+                    )}
+                  >
+                    <app.icon className="size-4" strokeWidth={1.75} aria-hidden />
+                  </span>
+                  <span
+                    className={cn(
+                      "text-[11px] font-medium leading-tight",
+                      active ? "text-zinc-900" : "text-zinc-600",
+                    )}
+                  >
+                    {translate(app.name)}
+                  </span>
+                </button>
+              )
+            })}
           </div>
           <NavLink
             to="/apps"
             onClick={() => setOpen(false)}
-            className="mt-1 block rounded-lg px-3 py-2 text-center text-xs font-medium text-zinc-500 hover:bg-zinc-50 hover:text-zinc-700"
+            className="mt-1 block rounded-md px-3 py-2 text-center text-xs font-medium text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800"
           >
             View all apps
           </NavLink>
@@ -167,6 +179,7 @@ export default function AppShell() {
   const [refreshKey, setRefreshKey] = useState(0)
   const [properties, setProperties] = useState<PropertyRow[]>([])
   const [property, setProperty] = useState(getCurrentProperty())
+  const [demoMode, setDemoMode] = useState(false)
 
   useEffect(() => {
     myProperties().then((props) => {
@@ -176,6 +189,9 @@ export default function AppShell() {
         setProperty(props[0].name)
       }
     })
+    call<{ demo_mode: boolean }>("kamra.public_api.site_info")
+      .then((info) => setDemoMode(info.demo_mode))
+      .catch(() => setDemoMode(false))
   }, [])
 
   useEffect(() => subscribeRealtime(() => setRefreshKey((k) => k + 1)), [])
@@ -200,9 +216,10 @@ export default function AppShell() {
   }, [property])
 
   const apps = visibleApps(roles, modules)
-  // Which app the current route belongs to - falls back to the user's first.
   const routeApp = appForPath(location.pathname)
   const currentApp = apps.some((a) => a.id === routeApp.id) ? routeApp : apps[0]
+  const floor = location.pathname === "/pos" || location.pathname === "/kitchen"
+  const { on: kiosk } = useKiosk()
 
   const items = (currentApp?.items ?? []).filter(
     (item) => !item.roles || item.roles.some((r) => roles.includes(r)),
@@ -240,7 +257,21 @@ export default function AppShell() {
     )
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen flex-col">
+      {demoMode && !kiosk && (
+        <div className="bg-amber-500 px-4 py-1.5 text-center text-xs font-medium text-amber-950">
+          Shared playground — not your hotel. Data is wiped every night.
+          {" "}
+          <a
+            href="https://kamrapms.com"
+            className="underline underline-offset-2 hover:text-black"
+          >
+            Get your own Kamra →
+          </a>
+        </div>
+      )}
+      <div className="flex min-h-0 flex-1">
+      {!kiosk && (
       <aside className="hidden w-52 shrink-0 border-r border-zinc-200 bg-white px-3 py-5 sm:sticky sm:top-0 sm:block sm:h-screen sm:overflow-y-auto">
         <div className="mb-5 flex items-center gap-2 px-1">
           <img src={asset("kamra-mark.svg")} alt="" className="size-7" aria-hidden />
@@ -270,8 +301,10 @@ export default function AppShell() {
 
         <nav className="space-y-0.5">{items.map(renderItem)}</nav>
       </aside>
+      )}
 
       <div className="min-w-0 flex-1">
+        {!kiosk && (
         <header className="sticky top-0 z-40 flex items-center gap-2 border-b border-zinc-200 bg-white/90 px-4 py-2.5 backdrop-blur">
           <AppSwitcher apps={apps} current={currentApp ?? apps[0]} />
           {properties.length > 1 ? (
@@ -315,8 +348,21 @@ export default function AppShell() {
             </Button>
           </div>
         </header>
+        )}
 
-        <main key={property} className="mx-auto max-w-6xl px-4 py-6">
+        <main
+          key={property}
+          className={
+            floor
+              ? cn(
+                  "max-w-none",
+                  kiosk
+                    ? "h-[100dvh] overflow-hidden p-0"
+                    : "min-h-[calc(100dvh-3.5rem)] overflow-auto p-3",
+                )
+              : "mx-auto max-w-6xl px-4 py-6"
+          }
+        >
           <Outlet
             context={
               {
@@ -342,6 +388,7 @@ export default function AppShell() {
       <span className="hidden">
         <IndianRupee className="size-3" aria-hidden />
       </span>
+    </div>
     </div>
   )
 }

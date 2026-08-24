@@ -51,7 +51,8 @@ def registry(property: str):
 				_module("Copilot", "Chat with your PMS using your own AI key."),
 				_module("Events & Groups", "Banquets, blocks and pickup."),
 				_module("Revenue", "Rates, seasons, offers, partners."),
-				_module("POS", "Restaurant & outlet billing.", planned=True),
+				_module("POS",
+				        "Table map, running bills, thermal KOT, kitchen display."),
 			],
 		},
 		{
@@ -122,8 +123,8 @@ def registry(property: str):
 			         "with your OpenAI key.",
 			"cards": [
 				_connector("Connect Claude (MCP)", "claude",
-				           "Point your Claude at this hotel over MCP - it can "
-				           "use the tools your role allows, and nothing more.",
+				           "Click Connect Claude — it acts as you, with your "
+				           "role limits, over a hosted MCP endpoint.",
 				           action="route", route="/assistant",
 				           status="connected" if has_key else "available",
 				           detail="Your connector" if has_key else None),

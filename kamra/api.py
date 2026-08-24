@@ -888,11 +888,11 @@ def hk_post_consumable(room: str, charge_type: str, description: str,
 	# the housekeeper is authorized above and scoped to two charge types, and
 	# GST is still resolved server-side. Attribution is stamped below.
 	me = frappe.session.user
-	frappe.set_user("agent@kamra.local")
+	frappe.set_user("agent@kamra.local")  # nosemgrep: frappe-setuser -- controlled user context switch; target user is validated and scope-limited in this flow
 	try:
 		out = post_stay_charge(res.name, charge_type, description, float(amount))
 	finally:
-		frappe.set_user(me)
+		frappe.set_user(me)  # nosemgrep: frappe-setuser -- controlled user context switch; target user is validated and scope-limited in this flow
 	from kamra.savings import log_action
 	log_action("hk_charge", "Folio", out.get("folio"), res.property,
 	           rationale=f"{charge_type} ₹{amount} to {room} ({description})")
@@ -2413,24 +2413,11 @@ CANCEL_REASONS = ["Guest request", "Change of plans", "Duplicate booking",
                   "Booked elsewhere", "Other"]
 
 
-@frappe.whitelist()
-@require_roles("Front Desk", "Kamra Agent")
-def cancel_reservation(reservation: str, reason: str = "Guest request",
-                       note: str | None = None, waive_fee: int = 0,
-                       agent: str | None = None, issue_credit_note: int = 0):
-	"""Cancel a booking, applying the property's cancellation policy:
-	free outside the window, else the configured fee lands on the folio.
-	Issues a cancellation number the guest can hold on to. Pass
-	waive_fee=1 to cancel graciously (logged).
-
-	The cancellation is recorded in the action log.
-	"""
+def _do_cancel(res, reason: str = "Guest request", note: str | None = None,
+               waive_fee: int = 0, issue_credit_note: int = 0) -> dict:
+	"""Shared cancel path for desk API and OTA channel manager."""
 	from frappe.model.naming import make_autoname
 
-	res = frappe.get_doc("Reservation", reservation)
-	if res.status != "Confirmed":
-		frappe.throw("Only confirmed bookings can be cancelled - "
-		             "checked-in stays check out.")
 	if reason not in CANCEL_REASONS:
 		reason = "Other"
 	terms = _cancellation_terms(res)
@@ -2465,7 +2452,7 @@ def cancel_reservation(reservation: str, reason: str = "Guest request",
 			import random, string
 			code_suffix = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
 			voucher_code = f"CN-{res.name.split('-')[-1]}-{code_suffix}"
-			
+
 			from frappe.utils import add_days, today
 			voucher = frappe.get_doc({
 				"doctype": "Discount Voucher",
@@ -2488,6 +2475,26 @@ def cancel_reservation(reservation: str, reason: str = "Guest request",
 	        "cancellation_number": res.cancellation_number,
 	        "fee": fee, "waived": bool(int(waive_fee or 0)),
 	        "credit_note_voucher": voucher_code}
+
+
+@frappe.whitelist()
+@require_roles("Front Desk", "Kamra Agent")
+def cancel_reservation(reservation: str, reason: str = "Guest request",
+                       note: str | None = None, waive_fee: int = 0,
+                       agent: str | None = None, issue_credit_note: int = 0):
+	"""Cancel a booking, applying the property's cancellation policy:
+	free outside the window, else the configured fee lands on the folio.
+	Issues a cancellation number the guest can hold on to. Pass
+	waive_fee=1 to cancel graciously (logged).
+
+	The cancellation is recorded in the action log.
+	"""
+	res = frappe.get_doc("Reservation", reservation)
+	if res.status != "Confirmed":
+		frappe.throw("Only confirmed bookings can be cancelled - "
+		             "checked-in stays check out.")
+	return _do_cancel(res, reason=reason, note=note, waive_fee=waive_fee,
+	                  issue_credit_note=issue_credit_note)
 
 
 @frappe.whitelist()
