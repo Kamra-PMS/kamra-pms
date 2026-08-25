@@ -238,10 +238,39 @@ def _connection_for(hotel_code: str):
 	return frappe.get_doc("Channel Manager Connection", name) if name else None
 
 
+WEBHOOK_PATH = "/api/method/kamra.channels.aiosell.reservation_webhook"
+
+
+def preserve_webhook_auth():
+	"""`before_request` hook (runs BEFORE Frappe's own auth check).
+
+	Frappe reserves the `Authorization: Basic` header for its own api-key login
+	and rejects anything that isn't a valid Frappe key - before allow_guest
+	endpoints run. AioSell authenticates its webhook with Basic auth (the
+	partner username/password we set), which is NOT a Frappe api key, so Frappe
+	would 401 the call before our webhook ever sees it.
+
+	For our webhook path only, stash the header and strip it from the request so
+	Frappe treats the call as guest; reservation_webhook then validates the
+	stashed credentials itself against the Channel Manager Connection."""
+	req = getattr(frappe.local, "request", None)
+	if not req or getattr(req, "path", None) != WEBHOOK_PATH:
+		return
+	auth = req.headers.get("Authorization")
+	if auth and auth.startswith("Basic "):
+		frappe.local.flags.aiosell_webhook_auth = auth
+		# request.headers is read-only; drop it from the WSGI environ so
+		# frappe.get_request_header("Authorization") returns None downstream.
+		req.environ.pop("HTTP_AUTHORIZATION", None)
+
+
 def _auth_ok(conn) -> bool:
 	"""Constant-time-validate the inbound Basic-auth header against the
-	connection's stored credentials."""
-	header = frappe.get_request_header("Authorization") if frappe.request else None
+	connection's stored credentials. Reads the header preserved by
+	preserve_webhook_auth (Frappe strips it during its own auth), falling back
+	to the live header for direct calls / tests."""
+	header = getattr(frappe.local.flags, "aiosell_webhook_auth", None) \
+		or (frappe.get_request_header("Authorization") if frappe.request else None)
 	if not header or not header.startswith("Basic "):
 		return False
 	try:
