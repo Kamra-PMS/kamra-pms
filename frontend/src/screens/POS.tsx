@@ -8,7 +8,7 @@ import { call, getCurrentProperty } from "../lib/api"
 import { subscribeRealtime } from "../lib/realtime"
 import { serverError } from "../lib/resource"
 import { printThermal, kotHtml, billHtml, type BillData, type KotLine } from "../lib/thermal"
-import { useKiosk } from "../lib/kiosk"
+import { useFloorFullscreen } from "../lib/kiosk"
 import { Button } from "../components/ui/button"
 import { cur, moneyLocale } from "../lib/money"
 
@@ -199,8 +199,7 @@ export default function POS() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [printNote, setPrintNote] = useState<string | null>(null)
-  const kiosk = useKiosk(true)
-  const [full, setFull] = useState(false)
+  const { floorOn, browserFs, toggleBrowserFs } = useFloorFullscreen(rootRef)
 
   useEffect(() => {
     call<Outlet[]>("kamra.pos.outlets", { property: getCurrentProperty() })
@@ -209,9 +208,6 @@ export default function POS() {
     call<{ rooms: { name: string; room_number: string }[] }>("kamra.api.hk_queue", { property: getCurrentProperty() })
       .then((d) => setRooms(d.rooms || []))
       .catch(() => {})
-    const onFs = () => setFull(!!document.fullscreenElement)
-    document.addEventListener("fullscreenchange", onFs)
-    return () => document.removeEventListener("fullscreenchange", onFs)
   }, [])
 
   useEffect(() => { localStorage.setItem("pos_print_kot", printKot ? "1" : "0") }, [printKot])
@@ -434,15 +430,6 @@ export default function POS() {
     }))
   }
 
-  function toggleFull() {
-    if (kiosk.on || document.fullscreenElement) {
-      if (document.fullscreenElement) document.exitFullscreen()
-      kiosk.exit()
-    } else {
-      kiosk.enter()
-      rootRef.current?.requestFullscreen?.()
-    }
-  }
   async function saveNc(undo = false) {
     if (!selected) return
     await act(async () => {
@@ -565,7 +552,6 @@ export default function POS() {
       : [[null, visibleTables]]
 
   const isNewCustomerType = !selected && (orderType === "Takeaway" || orderType === "Delivery")
-  const floorOn = kiosk.on || full
   const runningBills = open.filter((o) => !o.kot_fired)
   const kitchenBills = open.filter((o) => o.kot_fired && o.pending > 0)
 
@@ -596,10 +582,10 @@ export default function POS() {
                 (printKot ? "border-brand-600 bg-brand-50 text-brand-800" : "border-zinc-300 bg-white text-zinc-500")}>
               <Printer className="size-3.5" />{printKot ? "KOT printer on" : "KOT printer off"}
             </button>
-            <button onClick={toggleFull}
+            <button onClick={toggleBrowserFs}
               className="rounded-lg border border-zinc-300 bg-white p-2 text-zinc-600 hover:bg-zinc-50"
-              title={floorOn ? "Exit full screen" : "Full screen till"}>
-              {floorOn ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+              title={browserFs ? "Exit full screen (Esc)" : "Full screen till"}>
+              {browserFs ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
             </button>
             <Button onClick={() => newOrder()}>
               <Plus className="size-4" />New Bill
