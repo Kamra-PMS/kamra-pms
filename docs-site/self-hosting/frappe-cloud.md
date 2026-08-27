@@ -9,8 +9,9 @@ backups and updates handled for you.
 1. Create a Frappe Cloud account and a **site** on a v16 bench.
 2. Open the **Marketplace**, search for **Kamra**, and install it
    (`payments` is pulled in automatically via `required_apps`).
-3. Open `https://<your-site>/kamra`, sign in as Administrator, and run
-   `/kamra/setup` to create the first property.
+3. Open `https://<your-site>/kamra`, sign in as **Administrator** (or
+   **admin@example.com**) with the site password Frappe Cloud showed at
+   create-site, and run `/kamra/setup` to create the first property.
 
 Kamra itself is free on Frappe Cloud. Billing is only for the site.
 

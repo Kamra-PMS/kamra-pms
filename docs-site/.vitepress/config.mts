@@ -31,6 +31,7 @@ export default defineConfig({
           { text: "Quickstart (Docker)", link: "/quickstart" },
           { text: "Try the live demo", link: "/demo" },
           { text: "Go-live checklist", link: "/go-live" },
+          { text: "FAQ", link: "/faq" },
         ],
       },
       {

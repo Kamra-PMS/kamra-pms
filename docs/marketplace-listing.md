@@ -124,7 +124,8 @@ is pulled in automatically.
 
 ### After install
 
-The product UI is at `/kamra`. Sign in as Administrator and open
+The product UI is at `/kamra`. Sign in as Administrator (or
+admin@example.com) with the site password and open
 `/kamra/setup` to create the first property. Put the live demo and catalog
 on the Website / Documentation fields — Frappe Cloud fails the listing
 audit if the long description contains any other links.

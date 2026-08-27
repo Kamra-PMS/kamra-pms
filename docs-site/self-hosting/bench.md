@@ -21,7 +21,8 @@ sudo bench setup production $(whoami)   # nginx + supervisor + SSL
 ```
 
 Kamra ships its built front-end, so the product UI is live at `/kamra`
-immediately — no Node server in production.
+immediately — no Node server in production. Sign in as `Administrator` or
+`admin@example.com` with the `--admin-password` you just set.
 
 Continue with the
 [production checklist](/self-hosting/#after-install-production-checklist).

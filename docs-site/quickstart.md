@@ -59,10 +59,22 @@ docker compose exec backend \
 
 ## 4. Sign in and set up
 
-Open `https://pms.yourhotel.com/kamra`, sign in as Administrator, and
-create your property (rooms, room types, rates). The product UI lives at
-`/kamra`; the Frappe Desk stays available at `/app` as an admin escape
-hatch.
+Open `https://pms.yourhotel.com/kamra`. There is **no default password**.
+
+| Field | Use |
+| --- | --- |
+| Username | `Administrator` |
+| or email | `admin@example.com` (same user) |
+| Password | the `--admin-password` you set in step 3 |
+
+Then create your property (rooms, room types, rates). Product UI is `/kamra`; Frappe Desk at `/app` is an admin escape hatch.
+
+Forgot the password? On this Docker stack:
+
+```bash
+docker compose exec backend \
+  bench --site pms.yourhotel.com set-admin-password <new-password>
+```
 
 Next steps: [production checklist](/self-hosting/#after-install-production-checklist) ·
 [email setup](/self-hosting/email) · [connect your AI](/ai-and-mcp)
