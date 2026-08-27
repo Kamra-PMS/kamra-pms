@@ -77,7 +77,12 @@ export function useFloorFullscreen(
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return
-      if (blockEscapeRef.current?.()) return
+      if (blockEscapeRef.current?.()) {
+        // Overlay owns this Escape (e.g. ticket drawer). Stop the browser from
+        // also leaving fullscreen so layers unwind one at a time.
+        if (document.fullscreenElement) e.preventDefault()
+        return
+      }
       const el = e.target as HTMLElement | null
       if (el?.closest?.("input, textarea, select, [contenteditable=true]")) return
       // Clear kiosk so chrome returns in one keypress (without navigating away).

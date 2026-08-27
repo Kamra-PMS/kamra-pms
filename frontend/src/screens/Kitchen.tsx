@@ -558,7 +558,9 @@ export default function Kitchen() {
   // back to the board rather than stranding the chef on a dead ticket.
   const open = openOrder ? orders.find((o) => o.name === openOrder) : undefined
   useEffect(() => {
-    if (openOrder && orders.length && !open) setOpenOrder(null)
+    // Clear even when the queue empties — requiring orders.length left a stale
+    // openOrder that blocked Escape from exiting kiosk with no drawer visible.
+    if (openOrder && !open) setOpenOrder(null)
   }, [openOrder, orders, open])
 
   return (
