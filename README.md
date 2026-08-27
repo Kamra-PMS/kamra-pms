@@ -163,12 +163,14 @@ your property, then add staff users.
 
 | Kamra | Frappe | Channel |
 |---|---|---|
-| `main` releases (`vX.Y.Z`) | v16 | **stable** — Frappe Cloud Marketplace, `ghcr.io/kamra-pms/kamra:latest`, [demo.kamrapms.com](https://demo.kamrapms.com) |
-| `develop` | v16 | **nightly** — `ghcr.io/kamra-pms/kamra:nightly`, rebuilt every night |
+| `main` releases (`vX.Y.Z`) | v16 | **stable** — Marketplace, `ghcr.io/kamra-pms/kamra:latest`, [demo.kamrapms.com](https://demo.kamrapms.com), **customer tenants** (e.g. [ewa.kamrapms.com](https://ewa.kamrapms.com)) |
+| `develop` | v16 | **nightly** — `ghcr.io/kamra-pms/kamra:nightly`, [nightly.kamrapms.com](https://nightly.kamrapms.com) |
 
-`develop` is the repo's default branch (for contributors), so production
-installs should keep the explicit `--branch main`. Releases follow
-[SemVer](https://semver.org/); see [`RELEASING.md`](RELEASING.md).
+`develop` is the default branch for contributors. **Production and customer
+sites always track `main`** (`bench get-app … --branch main`). Releases follow
+[SemVer](https://semver.org/); see [`RELEASING.md`](RELEASING.md). Version tags
+only move when a Release PR is deliberately merged — small fixes can wait on
+`main` as a draft PATCH.
 
 ## Quickstart (development)
 

@@ -9,6 +9,7 @@ The maintainer runbook. Contributors don't need this — see
 |---|---|---|---|
 | **nightly** | `develop` | nightly.kamrapms.com, `ghcr.io/kamra-pms/kamra:nightly`, rolling `nightly` prerelease | every night at 03:00 IST, if develop moved and CI is green |
 | **stable** | `main` + tag `vX.Y.Z` | GitHub Release, `ghcr.io/kamra-pms/kamra:<tag>` + `:latest`, demo.kamrapms.com, Frappe Cloud Marketplace | when a Release PR is merged |
+| **tenants** | `main` tip (or a tag) | Customer sites (e.g. ewa.kamrapms.com) via `kamra-deploy/update-tenant.sh` | after a release train lands on `main`; do **not** point tenants at `develop` |
 
 ## The normal release train (monthly, or when a feature set is ready)
 
