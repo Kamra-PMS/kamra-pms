@@ -2441,7 +2441,10 @@ def _do_cancel(res, reason: str = "Guest request", note: str | None = None,
 	res.cancelled_on = frappe.utils.now_datetime()
 	frappe.flags.kamra_cancelling = True
 	try:
-		res.save()
+		# ignore_permissions: both callers are pre-authorized — the desk wrapper
+		# via @require_roles, the OTA webhook worker as a trusted internal caller
+		# (it runs as Guest). Validation (villa lockout etc.) still runs.
+		res.save(ignore_permissions=True)
 	finally:
 		frappe.flags.kamra_cancelling = False
 
