@@ -8,7 +8,7 @@ import { subscribeRealtime } from "../lib/realtime"
 import { Button } from "../components/ui/button"
 import { cn } from "../lib/utils"
 import { cur } from "../lib/money"
-import { useKiosk } from "../lib/kiosk"
+import { useFloorFullscreen } from "../lib/kiosk"
 
 type LineState = "cooking" | "held" | "cancelled" | "done"
 
@@ -483,21 +483,13 @@ export default function Kitchen() {
   const [busy, setBusy] = useState<string | null>(null)
   const [openOrder, setOpenOrder] = useState<string | null>(null)
   const [sound, setSound] = useState(() => localStorage.getItem(CHIME_KEY) !== "off")
-  const kiosk = useKiosk(true)
   const rootRef = useRef<HTMLDivElement>(null)
-  const [browserFs, setBrowserFs] = useState(false)
+  const openOrderRef = useRef<string | null>(null)
+  openOrderRef.current = openOrder
+  const { kioskOn, browserFs, toggleBrowserFs } = useFloorFullscreen(rootRef, {
+    blockEscape: () => !!openOrderRef.current,
+  })
   const now = useNow()
-
-  useEffect(() => {
-    const onFs = () => setBrowserFs(!!document.fullscreenElement)
-    document.addEventListener("fullscreenchange", onFs)
-    return () => document.removeEventListener("fullscreenchange", onFs)
-  }, [])
-
-  function toggleBrowserFs() {
-    if (document.fullscreenElement) document.exitFullscreen()
-    else rootRef.current?.requestFullscreen?.()
-  }
 
   useEffect(() => {
     call<{ name: string; outlet_name: string }[]>("kamra.pos.outlets", { property: getCurrentProperty() })
@@ -566,13 +558,15 @@ export default function Kitchen() {
   // back to the board rather than stranding the chef on a dead ticket.
   const open = openOrder ? orders.find((o) => o.name === openOrder) : undefined
   useEffect(() => {
-    if (openOrder && orders.length && !open) setOpenOrder(null)
+    // Clear even when the queue empties — requiring orders.length left a stale
+    // openOrder that blocked Escape from exiting kiosk with no drawer visible.
+    if (openOrder && !open) setOpenOrder(null)
   }, [openOrder, orders, open])
 
   return (
     <div ref={rootRef} className={cn(
       "flex h-full min-h-0 flex-col bg-zinc-100",
-      kiosk.on && "p-0",
+      kioskOn && "p-0",
     )}>
     <div className={cn("flex min-h-0 flex-1 flex-col gap-3 overflow-hidden p-3 transition-[padding] duration-200",
       open && "sm:pr-[calc(50vw+1rem)]")}>
@@ -606,7 +600,7 @@ export default function Kitchen() {
           </button>
           <button onClick={toggleBrowserFs}
             className="rounded-lg border border-zinc-300 bg-white p-2 text-zinc-600 hover:bg-zinc-50"
-            title={browserFs ? "Exit browser full screen" : "Browser full screen"}>
+            title={browserFs ? "Exit full screen (Esc)" : "Browser full screen"}>
             {browserFs ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
           </button>
           <button onClick={load} aria-label="Refresh"><RefreshCw className="size-5 text-zinc-400" /></button>
