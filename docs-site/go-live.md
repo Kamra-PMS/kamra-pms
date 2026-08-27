@@ -16,7 +16,8 @@ links to the deeper guide.
   [Frappe Cloud](/self-hosting/frappe-cloud)
 - [ ] Install via [Docker quickstart](/quickstart), create your site,
   point your domain, get SSL (covered in each hosting guide)
-- [ ] **Log in and change the Administrator password**
+- [ ] **Log in** at `/kamra` as `Administrator` (or `admin@example.com`)
+  with the password from `--admin-password`, then change it if needed
 - [ ] Set up **daily backups** off the server (the hosting guides show
   `bench backup` + object storage; on Kamra Cloud we do this for you)
 

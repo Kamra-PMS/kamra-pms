@@ -155,7 +155,8 @@ Kamra ships its built front-end, so after install the product UI is live at
 **`/kamra`** (the booking engine redirects in at `/book`, housekeeping at
 `/hk`) — no Node server in production. The Frappe Desk stays available at
 `/app` as an admin escape hatch. A fresh install creates its own roles and
-permissions; sign in as your Administrator and open `/kamra/setup` to create
+permissions; sign in as **Administrator** (or **admin@example.com**) with
+the password from `--admin-password` and open `/kamra/setup` to create
 your property, then add staff users.
 
 ### Compatibility & channels

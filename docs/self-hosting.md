@@ -73,8 +73,10 @@ sudo bench setup production $(whoami)   # nginx + supervisor + SSL
 
 ## After install — production checklist
 
-1. **Create your property** — log in → Admin → *New Property* (the wizard),
-   or connect an AI agent and say "onboard my hotel".
+1. **Create your property** — log in at `/kamra` as `Administrator` (or
+   `admin@example.com`) with the `--admin-password` you chose — there is
+   no default — then Admin → *New Property*, or connect an AI agent and
+   say "onboard my hotel".
 2. **Roles & users** — create staff users; see `kamra/scripts/seed_users.py`
    for the role model (Hotel Admin / Front Desk / Revenue / Finance /
    Housekeeping).

@@ -30,4 +30,6 @@ apt install -y certbot python3-certbot-nginx
 certbot --nginx -d pms.yourhotel.com
 ```
 
-Then work through the [production checklist](/self-hosting/#after-install-production-checklist).
+Then sign in at `/kamra` as `Administrator` or `admin@example.com` with
+the `--admin-password` from the Quickstart — there is no default — and
+work through the [production checklist](/self-hosting/#after-install-production-checklist).
