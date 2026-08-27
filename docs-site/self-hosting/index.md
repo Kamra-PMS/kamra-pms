@@ -39,8 +39,9 @@ time; that's the point of open source.
 
 ## After install — production checklist
 
-1. **Create your property** — sign in → Admin → New Property, then rooms,
-   room types and rates.
+1. **Create your property** — sign in at `/kamra` as `Administrator` (or
+   `admin@example.com`) with the `--admin-password` you chose — there is
+   no default — then Admin → New Property, rooms, room types and rates.
 2. **Staff users & roles** — Hotel Admin / Front Desk / Revenue / Finance /
    Housekeeping; roles decide what each person sees.
 3. **Email** — [set up SMTP](/self-hosting/email) for confirmations,

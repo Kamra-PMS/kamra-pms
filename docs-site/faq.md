@@ -15,6 +15,15 @@ Adding rooms doesn't make software cost more, so charging per room is a
 tax on your growth. Self-hosting is free at any size; Cloud pricing
 scales only with the server your property needs.
 
+## What are the default login credentials?
+
+There aren't any. After `bench new-site … --admin-password <password>`,
+open `/kamra` and sign in as **Administrator** or **admin@example.com**
+with that password. Forgot it:
+`bench --site <site> set-admin-password <new-password>` (on Docker, prefix
+with `docker compose exec backend`). Staff should then get their own email
+logins.
+
 ## What does self-hosting really require?
 
 A 2 vCPU / 4 GB / 40 GB VPS (~₹549–$24/month), a domain, and an
