@@ -12,15 +12,18 @@ The maintainer runbook. Contributors don't need this — see
 
 ## The normal release train (monthly, or when a feature set is ready)
 
+Ship stable versions deliberately. Nightly already tracks `develop` — most
+fixes do **not** need a new `vX.Y.Z` the same day.
+
 1. **Merge the train:** open a PR `develop` → `main` titled
    `chore: release train YYYY-MM`, wait for CI, merge (merge commit, not
    squash — keeps individual Conventional Commits visible to release-please).
-2. **Review the Release PR:** release-please opens/updates
-   `chore(main): release X.Y.Z` on `main` with the version bump
-   (`kamra/__init__.py`) and the CHANGELOG draft. Edit the changelog prose in
-   that PR if the auto-generated wording needs polish — hand-curated notes are
-   part of the product.
-3. **Merge the Release PR.** Automation takes it from there:
+2. **Leave the Release PR as a draft until you mean to publish.** release-please
+   opens/updates a draft `chore(main): release X.Y.Z` on `main` with the
+   version bump (`kamra/__init__.py`) and the CHANGELOG draft. You can merge
+   several trains/hotfixes into `main` and let that draft accumulate. Mark it
+   ready and edit the changelog prose only when you intend to tag.
+3. **Merge the Release PR** when you are ready to ship. Automation then:
    tag `vX.Y.Z` → GitHub Release → Docker image → demo redeploy.
 4. **Frappe Cloud Marketplace** (manual, ~2 min): dashboard →
    Apps → kamra → create a release from the new `main` state and submit for
@@ -28,11 +31,24 @@ The maintainer runbook. Contributors don't need this — see
 5. **Announce:** release thread on discuss.frappe.io; anything else
    (X/LinkedIn) as warranted.
 
+### What bumps what
+
+| Commit prefix on `main` | Next tag | When to use |
+|---|---|---|
+| `fix:` | PATCH (`2.6.0` → `2.6.1`) | Bugfixes, small corrections |
+| `feat:` | MINOR (`2.6.0` → `2.7.0`) | Real user-facing additions only |
+| `BREAKING CHANGE` / `feat!:` | MAJOR | Rare; migrate-breaking |
+
+Prefer `fix:` for polish and regressions. A month of fixes should usually be
+one PATCH (or ride along in the next MINOR), not a string of MINORs.
+
 ## Hotfix path (stable is broken, develop has moved on)
 
 1. Branch from `main`: `git checkout -b hotfix/<slug> main`.
 2. Fix with a `fix:` commit, PR into `main`, merge after CI.
-3. Merge the resulting Release PR (PATCH bump) — ships automatically.
+3. **Only merge the Release PR if production needs the tag now.** Otherwise
+   leave the draft Release PR open so the PATCH can ship with the next
+   intentional cut. Marketplace / demo rebuild when the Release PR merges.
 4. **Port back:** cherry-pick the fix onto `develop` (or merge `main` into
    `develop`) so the next train doesn't regress it.
 

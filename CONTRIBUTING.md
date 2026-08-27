@@ -19,6 +19,22 @@ and `npm run dev` in `frontend/` for the SPA.
   `develop`) and hotfixes land here; the Frappe Cloud Marketplace listing and
   demo.kamrapms.com track its releases.
 
+### Branch naming
+
+One short prefix, kebab-case slug. Prefer these over free-form names
+(`property_management`, `azzaxp/…`, `feature/…`):
+
+| Prefix | Use for | Version impact when released |
+|---|---|---|
+| `feat/<slug>` | New user-facing capability | **MINOR** (`feat:`) |
+| `fix/<slug>` | Bug fix on `develop` | **PATCH** (`fix:`) |
+| `hotfix/<slug>` | Urgent fix branched from `main` | **PATCH** (`fix:`) |
+| `chore/<slug>` | Tooling, CI, deps, housekeeping | none by itself |
+| `docs/<slug>` | Docs / listing copy only | none by itself |
+
+Delete the remote branch after the PR merges — leave `main`, `develop`, and
+any still-open work only.
+
 See [`RELEASING.md`](RELEASING.md) for the full release process.
 
 ## Before you open a PR
@@ -43,9 +59,16 @@ chore: bump frontend deps
 BREAKING CHANGE: removes the `Foo` doctype; see CHANGELOG.
 ```
 
-Commit messages aren't just style here: release automation
+Pick the prefix carefully — release automation
 ([release-please](https://github.com/googleapis/release-please)) derives the
-next version number and the changelog draft from them.
+next version and the changelog draft from them:
+
+- **`fix:`** — everyday bugfixes and small corrections (PATCH). Prefer this
+  whenever the change is not a new capability.
+- **`feat:`** — only for real, user-visible additions (MINOR). Do not mark a
+  small fix or polish pass as `feat:` just to “feel like a feature”.
+- **`chore:` / `docs:` / `ci:` / `test:`** — no version bump by themselves.
+- **`BREAKING CHANGE:`** footer (or `feat!:` / `fix!:`) — MAJOR.
 
 ## Versioning & releases
 
@@ -56,12 +79,17 @@ Kamra follows [Semantic Versioning](https://semver.org/):
 - **MINOR** — new features, additive/backward-compatible doctype changes.
 - **PATCH** — fixes with no migration impact.
 
-Releases are automated: merging a release train from `develop` into `main`
-makes release-please open (or update) a **Release PR** with the version bump
-and the [`CHANGELOG.md`](CHANGELOG.md) draft compiled from Conventional
-Commits; merging that PR tags `vX.Y.Z`, publishes the GitHub Release and the
-`ghcr.io/kamra-pms/kamra` Docker image, and redeploys demo.kamrapms.com.
-The full runbook lives in [`RELEASING.md`](RELEASING.md).
+**Cadence:** land work on `develop` (nightly). Cut a stable release only when
+you are ready to ship to the marketplace / demo — typically a monthly train,
+or when a feature set is actually ready. Bugfixes can wait on `develop` and
+ship together as one PATCH (or ride along in the next MINOR). Do **not** merge
+the Release PR for every small merge into `main`; leave it open (it stays a
+draft) until you intend to tag and build.
+
+Merging a release train from `develop` into `main` updates the draft Release
+PR with the version bump and [`CHANGELOG.md`](CHANGELOG.md) notes; merging
+that Release PR is what tags `vX.Y.Z`, publishes GitHub + Docker, and
+redeploys demo.kamrapms.com. Full runbook: [`RELEASING.md`](RELEASING.md).
 
 If your change removes or renames anything a self-hoster might depend on
 (a doctype, a whitelisted method, a config key), call it out explicitly under
