@@ -36,8 +36,7 @@
    "fieldname": "agent_name",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Agent Name",
-   "reqd": 1
+   "label": "Agent Name"
   },
   {
    "fieldname": "actor",
