@@ -2,6 +2,7 @@ import { Fragment, useCallback, useEffect, useState } from "react"
 import { ArrowLeft, ArrowRightLeft, Printer, Trash2, X } from "lucide-react"
 import { Link, useNavigate, useParams } from "react-router-dom"
 import { call, getCurrentProperty } from "../lib/api"
+import EditableNationality from "../components/EditableNationality"
 import LinkedRecords from "../components/LinkedRecords"
 import { loadLocale, taxRates } from "../lib/money"
 import { serverError } from "../lib/resource"
@@ -114,6 +115,7 @@ interface InvoiceData {
     service_code: string | null
   }[]
   guest: {
+    guest_id?: string
     name: string
     phone: string | null
     email: string | null
@@ -644,8 +646,23 @@ export default function FolioView() {
                 {(stay.departure ?? "").slice(0, 16).replace("T", " ") || "—"}
               </Fact>
             )}
-            {data.guest?.nationality && (
-              <Fact label="Nationality">{data.guest.nationality}</Fact>
+            {data.guest?.guest_id && (
+              <Fact label="Nationality">
+                <EditableNationality
+                  guestId={data.guest.guest_id}
+                  value={data.guest.nationality}
+                  onSaved={(nationality) =>
+                    setData((d) =>
+                      d
+                        ? {
+                            ...d,
+                            guest: { ...d.guest, nationality },
+                          }
+                        : d,
+                    )
+                  }
+                />
+              </Fact>
             )}
             {data.guest?.address && (
               <Fact label="Address">{data.guest.address}</Fact>

@@ -53,7 +53,9 @@ both re-priced and overlap-checked).
 **On the GRC**: record the **occupants** (everyone in the room — the
 legal register) and capture **each occupant's ID** with the camera
 button on their row; capture or replace the guest's ID and address
-proof; correct the **actual check-in/out times** when reality differs
+proof; **edit the primary guest's nationality** (click **edit** next to
+Nationality — updates the guest profile for the folio and printed
+invoice); correct the **actual check-in/out times** when reality differs
 from plan; and manage the stay's money line — advances, security
 deposits, refunds (reason required, capped at what was collected).
 Under Verify & Discard retention, every scan and full ID number is
@@ -66,6 +68,8 @@ that charges route to automatically (set per company under Corporate →
 billing rules; alcohol always bills to the guest).
 
 - **Post a charge** or **record a payment** from the folio screen.
+- **Nationality** on the folio header is editable (**edit** → Save) and
+  updates the guest profile for the printed bill.
 - **Split** any line by percent or amount (`30%` or `1500`) to another
   folio; select several lines to **move them in bulk**.
 - **Payment link** creates a gateway link for the balance and copies it.
