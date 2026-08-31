@@ -6,8 +6,9 @@
 
 - [ ] PR targets **`develop`** (not `main`)
 - [ ] Title / commits follow [Conventional Commits](https://www.conventionalcommits.org/)
-      (`feat:` / `fix:` / `docs:` / `chore:` …) — this drives the release
-      version and changelog
+      (`feat:` / `fix:` / `docs:` / `chore:` …) — this drives the changelog.
+      Releases default to **PATCH** (`2.6.x`); a `feat:` commit does **not**
+      auto-bump to the next minor. See [`RELEASING.md`](../RELEASING.md).
 - [ ] `cd frontend && npm run build` passes (if frontend touched; commit the
       regenerated `kamra/public/frontend` output)
 - [ ] Eval harness still green (if Python touched):

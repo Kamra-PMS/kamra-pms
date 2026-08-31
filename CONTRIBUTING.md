@@ -26,7 +26,7 @@ One short prefix, kebab-case slug. Prefer these over free-form names
 
 | Prefix | Use for | Version impact when released |
 |---|---|---|
-| `feat/<slug>` | New user-facing capability | **MINOR** (`feat:`) |
+| `feat/<slug>` | New user-facing capability | **PATCH** by default (`feat:`); MINOR only if a maintainer sets `Release-As:` |
 | `fix/<slug>` | Bug fix on `develop` | **PATCH** (`fix:`) |
 | `hotfix/<slug>` | Urgent fix branched from `main` | **PATCH** (`fix:`) |
 | `chore/<slug>` | Tooling, CI, deps, housekeeping | none by itself |

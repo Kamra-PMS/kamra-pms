@@ -7,8 +7,8 @@ GitHub's private reporting: **Security → Report a vulnerability** on this
 repository (or email hello@kamrapms.com if you can't use GitHub).
 
 You can expect an acknowledgement within 72 hours. Fixes ship as PATCH
-releases on the latest stable line; we'll credit you in the release notes
-unless you prefer otherwise.
+releases on the latest stable line (e.g. `2.6.1`, `2.6.2`); we'll credit you
+in the release notes unless you prefer otherwise.
 
 ## Supported versions
 

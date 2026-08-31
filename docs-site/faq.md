@@ -46,6 +46,15 @@ as permission-checked users and cannot go around them.
 Frappe **v16** (with the `payments` app). Install from the `main` branch
 for stable; `develop` is the nightly channel.
 
+## How does Kamra version its own releases?
+
+**Patch-first.** Small features and fixes ship as `2.6.1`, `2.6.2`, and so
+on. A larger `2.7.0`-style cut only happens when maintainers deliberately
+want one — not automatically on every `feat:` commit. See the
+[changelog](https://github.com/Kamra-PMS/kamra-pms/blob/main/CHANGELOG.md)
+and [releasing notes](https://github.com/Kamra-PMS/kamra-pms/blob/main/RELEASING.md)
+in the repo.
+
 ## How do I report a bug or ask for a feature?
 
 [GitHub issues](https://github.com/Kamra-PMS/kamra-pms/issues) for bugs

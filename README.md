@@ -168,7 +168,10 @@ your property, then add staff users.
 
 `develop` is the repo's default branch (for contributors), so production
 installs should keep the explicit `--branch main`. Releases follow
-[SemVer](https://semver.org/); see [`RELEASING.md`](RELEASING.md).
+[SemVer](https://semver.org/) with a **patch-first** cadence: small features
+and fixes ship as `2.6.1` / `2.6.2`; we only cut a MINOR (`2.7.0`) when we
+deliberately mean a larger train. See [`RELEASING.md`](RELEASING.md) and
+[`CHANGELOG.md`](CHANGELOG.md).
 
 ## Quickstart (development)
 
