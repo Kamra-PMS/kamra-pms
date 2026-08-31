@@ -60,29 +60,32 @@ BREAKING CHANGE: removes the `Foo` doctype; see CHANGELOG.
 ```
 
 Pick the prefix carefully — release automation
-([release-please](https://github.com/googleapis/release-please)) derives the
-next version and the changelog draft from them:
+([release-please](https://github.com/googleapis/release-please)) drafts the
+changelog from them. **Version bumps default to PATCH** (`2.6.0` → `2.6.1`),
+even for `feat:` commits. We only cut a MINOR (`2.7.0`) when a maintainer
+deliberately sets it (see [`RELEASING.md`](RELEASING.md)).
 
-- **`fix:`** — everyday bugfixes and small corrections (PATCH). Prefer this
-  whenever the change is not a new capability.
-- **`feat:`** — only for real, user-visible additions (MINOR). Do not mark a
-  small fix or polish pass as `feat:` just to “feel like a feature”.
+- **`fix:`** — bugfixes and small corrections.
+- **`feat:`** — user-visible additions (changelog “Features”); still ships as
+  a PATCH unless a maintainer forces a MINOR.
 - **`chore:` / `docs:` / `ci:` / `test:`** — no version bump by themselves.
-- **`BREAKING CHANGE:`** footer (or `feat!:` / `fix!:`) — MAJOR.
+- **`BREAKING CHANGE:`** footer (or `feat!:` / `fix!:`) — call out in the
+  changelog; bump MAJOR only via an explicit `Release-As:` when ready.
 
 ## Versioning & releases
 
-Kamra follows [Semantic Versioning](https://semver.org/):
+Kamra follows [Semantic Versioning](https://semver.org/) with a **patch-first**
+cadence on the current minor line:
 
-- **MAJOR** — breaks an existing install on `bench migrate` (a doctype is
-  removed, a whitelisted API endpoint is removed or its contract changes).
-- **MINOR** — new features, additive/backward-compatible doctype changes.
-- **PATCH** — fixes with no migration impact.
+- **PATCH** (default) — fixes and small features (`2.6.1`, `2.6.2`, …).
+- **MINOR** — deliberate larger feature sets (`2.7.0`); not automatic.
+- **MAJOR** — breaks an existing install on `bench migrate` (doctype/API
+  removed or contract changed); also not automatic.
 
 **Cadence:** land work on `develop` (nightly). Cut a stable release only when
 you are ready to ship to the marketplace / demo — typically a monthly train,
-or when a feature set is actually ready. Bugfixes can wait on `develop` and
-ship together as one PATCH (or ride along in the next MINOR). Do **not** merge
+or when a feature set is actually ready. Prefer shipping several small
+changes as `2.6.1` / `2.6.2` rather than jumping to `2.7.0`. Do **not** merge
 the Release PR for every small merge into `main`; leave it open (it stays a
 draft) until you intend to tag and build.
 

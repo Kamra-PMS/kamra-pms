@@ -33,14 +33,25 @@ fixes do **not** need a new `vX.Y.Z` the same day.
 
 ### What bumps what
 
-| Commit prefix on `main` | Next tag | When to use |
-|---|---|---|
-| `fix:` | PATCH (`2.6.0` → `2.6.1`) | Bugfixes, small corrections |
-| `feat:` | MINOR (`2.6.0` → `2.7.0`) | Real user-facing additions only |
-| `BREAKING CHANGE` / `feat!:` | MAJOR | Rare; migrate-breaking |
+Kamra defaults to **PATCH** releases (`2.6.0` → `2.6.1` → `2.6.2`). Small
+features, polish, and fixes all ship as patches. We do **not** auto-bump to
+`2.7.0` just because a commit used `feat:`.
 
-Prefer `fix:` for polish and regressions. A month of fixes should usually be
-one PATCH (or ride along in the next MINOR), not a string of MINORs.
+release-please is configured with `versioning: always-bump-patch`, so every
+Release PR stays on the current minor line until a maintainer deliberately
+forces a higher bump.
+
+| Intent | Next tag | How |
+|---|---|---|
+| Fixes + small features (default) | PATCH (`2.6.0` → `2.6.1`) | Automatic — leave the draft Release PR alone |
+| Bigger feature set / marketing cut | MINOR (`2.6.x` → `2.7.0`) | Edit the Release PR, or add a commit footer `Release-As: 2.7.0` |
+| Install-breaking change | MAJOR (`2.x` → `3.0.0`) | Same: `Release-As: 3.0.0` (and a `BREAKING CHANGE` footer) |
+
+Prefer `fix:` for polish and regressions. `feat:` is fine for changelog
+grouping, but it no longer jumps the minor version by itself.
+
+**Cadence reminder:** leave the draft Release PR open until you mean to tag.
+A month of small work should usually be one or two PATCHes, not a MINOR.
 
 ## Hotfix path (stable is broken, develop has moved on)
 

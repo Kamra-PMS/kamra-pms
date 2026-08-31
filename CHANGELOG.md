@@ -2,9 +2,10 @@
 
 All notable changes to Kamra PMS are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow
-[Semantic Versioning](https://semver.org/) — MAJOR for anything that breaks an
-existing install on upgrade (removed doctypes, removed API endpoints),
-MINOR for new features, PATCH for fixes.
+[Semantic Versioning](https://semver.org/) with a **patch-first** cadence:
+PATCH (`2.6.1`, `2.6.2`) is the default for fixes and small features; MINOR
+(`2.7.0`) only when a maintainer deliberately cuts a larger train; MAJOR for
+upgrade-breaking changes (removed doctypes / API contracts).
 
 ## Unreleased
 

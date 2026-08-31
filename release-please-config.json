@@ -4,6 +4,7 @@
   "include-component-in-tag": false,
   "include-v-in-tag": true,
   "draft-pull-request": true,
+  "versioning": "always-bump-patch",
   "packages": {
     ".": {
       "package-name": "kamra",
