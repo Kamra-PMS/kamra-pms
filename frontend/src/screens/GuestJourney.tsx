@@ -18,6 +18,7 @@ import { Link, useNavigate, useOutletContext, useParams } from "react-router-dom
 import { call, guestSearch, type GuestHit } from "../lib/api"
 import { serverError, updateResource } from "../lib/resource"
 import type { ShellContext } from "../AppShell"
+import EditableNationality from "../components/EditableNationality"
 import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
 import {
@@ -501,6 +502,20 @@ export default function GuestJourney() {
               <CardTitle>Notes & preferences</CardTitle>
             </CardHeader>
             <CardContent>
+              <label className="mb-3 block text-sm">
+                <span className="mb-1 block text-xs font-medium uppercase tracking-wider text-zinc-400">
+                  Nationality
+                </span>
+                <EditableNationality
+                  guestId={guest.name}
+                  value={guest.nationality}
+                  onSaved={(nationality) =>
+                    setData((d) =>
+                      d ? { ...d, guest: { ...d.guest, nationality } } : d,
+                    )
+                  }
+                />
+              </label>
               <textarea
                 className="min-h-24 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm focus:outline-2 focus:outline-offset-1 focus:outline-brand-600"
                 placeholder="Allergies, room preferences, how they take their chai…"
