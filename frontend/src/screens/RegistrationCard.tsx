@@ -4,6 +4,7 @@ import {
 import { Link, useParams } from "react-router-dom"
 import { call } from "../lib/api"
 import { toFullPath } from "../lib/routing"
+import EditableNationality from "../components/EditableNationality"
 import { Button } from "../components/ui/button"
 import { cur, moneyLocale } from "../lib/money"
 
@@ -362,7 +363,22 @@ export default function RegistrationCard() {
             <Row label="Name" value={d.guest.full_name} />
             <Row label="Phone" value={d.guest.phone} />
             <Row label="Email" value={d.guest.email} />
-            <Row label="Nationality" value={d.guest.nationality} />
+            {d.guest.guest_id ? (
+              <EditableNationality
+                guestId={d.guest.guest_id}
+                value={d.guest.nationality}
+                variant="row"
+                onSaved={(nationality) =>
+                  setD((prev) =>
+                    prev
+                      ? { ...prev, guest: { ...prev.guest, nationality } }
+                      : prev,
+                  )
+                }
+              />
+            ) : (
+              <Row label="Nationality" value={d.guest.nationality} />
+            )}
             <Row label="ID" value={d.guest.id_type ? `${d.guest.id_type} · ${d.guest.id_number ?? ""}` : null} />
             <div className="mt-2 grid grid-cols-2 gap-3 print:grid-cols-2">
               {([["id", "ID document", d.guest.id_file],

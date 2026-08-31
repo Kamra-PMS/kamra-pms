@@ -43,6 +43,14 @@ From the arrival row: open the **GRC**, record the **occupants**
 **Check in**. Pre-checked-in guests arrive with ID details already
 submitted.
 
+**Nationality** — the primary guest's nationality appears on the GRC,
+folio, and printed invoice (required for foreign guests and police
+registers). Click **edit** next to Nationality on the GRC or folio to
+update the guest profile; occupant nationality is edited in the
+occupant register on the same GRC screen. You can also set it from the
+guest profile under **Notes & preferences**, or from the online
+pre-check-in link.
+
 ## Money — folios
 
 Every stay has a folio; corporate stays may have Company/Group folios
@@ -50,6 +58,8 @@ that charges route to automatically (set per company under Corporate →
 billing rules; alcohol always bills to the guest).
 
 - **Post a charge** or **record a payment** from the folio screen.
+- **Nationality** on the folio header is editable (**edit** → Save) and
+  updates the guest profile for the printed bill.
 - **Split** any line by percent or amount (`30%` or `1500`) to another
   folio; select several lines to **move them in bulk**.
 - **Payment link** creates a gateway link for the balance and copies it.
