@@ -1548,6 +1548,7 @@ def _invoice_guest(res) -> dict:
 		["full_name", "phone", "email", "nationality", "address_line",
 		 "city", "id_type", "id_number"], as_dict=True) or {}
 	return {
+		"guest_id": res.guest,
 		"name": g.get("full_name") or res.guest_name,
 		"phone": g.get("phone"), "email": g.get("email"),
 		"nationality": g.get("nationality"),
