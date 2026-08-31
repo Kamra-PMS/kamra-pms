@@ -1,136 +1,153 @@
 <p align="center">
-  <img src="branding/png/kamra-mark-512.png" width="96" alt="Kamra" />
+  <img src="branding/png/kamra-mark-512.png" width="96" alt="Kamra — open-source hotel PMS" />
 </p>
 
 <h1 align="center">Kamra PMS</h1>
-<p align="center"><b>The open-source, agent-ready PMS for hotels and short-term rentals.</b><br/>
-Bring your own AI — Claude over MCP, or HeyKoala for voice/WhatsApp — on infrastructure you own.</p>
+
+<p align="center">
+  <b>Open-source hotel &amp; short-term rental PMS</b> — front desk, booking engine,<br/>
+  folios &amp; tax billing, housekeeping, POS, and an <b>MCP tool layer</b> so AI agents can run the property.
+</p>
+
+<p align="center">
+  <a href="https://demo.kamrapms.com"><img src="https://img.shields.io/badge/demo-live-0f766e?style=flat-square" alt="Live demo" /></a>
+  <a href="https://github.com/Kamra-PMS/kamra-pms/releases/latest"><img src="https://img.shields.io/github/v/release/Kamra-PMS/kamra-pms?style=flat-square&label=release" alt="Latest release" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-AGPL--3.0-blue?style=flat-square" alt="AGPL-3.0" /></a>
+  <a href="https://cloud.frappe.io/marketplace/apps/kamra"><img src="https://img.shields.io/badge/Frappe%20Cloud-Marketplace-ed8936?style=flat-square" alt="Frappe Cloud Marketplace" /></a>
+  <a href="https://kamrapms.com/docs/"><img src="https://img.shields.io/badge/docs-kamrapms.com-111827?style=flat-square" alt="Documentation" /></a>
+  <img src="https://img.shields.io/github/stars/Kamra-PMS/kamra-pms?style=flat-square" alt="GitHub stars" />
+</p>
 
 <p align="center">
   <a href="https://demo.kamrapms.com"><b>▶ Live demo</b></a> ·
   <a href="https://kamrapms.com/docs/"><b>Docs</b></a> ·
-  <a href="https://github.com/Kamra-PMS/kamra-pms"><b>Source</b></a> ·
+  <a href="#install"><b>Install</b></a> ·
+  <a href="https://kamrapms.com/docs/ai-and-mcp"><b>AI / MCP</b></a> ·
   <a href="mailto:hello@kamrapms.com"><b>Contact</b></a>
 </p>
 
-> ### 🏨 Try it now → **[demo.kamrapms.com](https://demo.kamrapms.com)**
-> A live sandbox pre-loaded with a sample hotel. **Tap any role to sign in — the demo usernames and passwords are listed right on the page.** The guest booking engine is at [/book](https://demo.kamrapms.com/book) (check-in / check-out + Check availability) and the housekeeping phone app at [/kamra/hk](https://demo.kamrapms.com/kamra/hk). For a live villa catalog, open [ewa.kamrapms.com/book](https://ewa.kamrapms.com/kamra/book).
+> **Try it in 30 seconds → [demo.kamrapms.com](https://demo.kamrapms.com)**  
+> Tap any role to sign in (credentials are on the page). Guest booking: [/book](https://demo.kamrapms.com/book) · Housekeeping app: [/kamra/hk](https://demo.kamrapms.com/kamra/hk) · Live villa catalog: [ewa.kamrapms.com/book](https://ewa.kamrapms.com/kamra/book)
+
+**Kamra** is a full **property management system (PMS)** for hotels, resorts, and **short-term rentals / villas**. It runs on **Frappe** (the framework behind ERPNext), is **AGPL-3.0**, and is built so humans *and* AI agents share the same governed APIs — booking, check-in, folios, night audit, pricing — with deterministic money (never from an LLM).
 
 ---
 
-## Why we built this
+## Contents
 
-Most hotel PMS software was built twenty years ago and has barely moved since. Dozens of options, almost no innovation: the same click-heavy screens, the same nightly rituals, the same walls around your own data.
+- [Why Kamra](#why-kamra)
+- [What makes it different](#what-makes-it-different)
+- [Screenshots](#screenshots)
+- [Short-term rentals](#short-term-rentals)
+- [Features](#features)
+- [Documentation & API](#documentation--api)
+- [Install](#install)
+- [Quickstart (development)](#quickstart-development)
+- [Who it's for](#who-its-for)
+- [License & contributors](#license--contributors)
 
-Hotels deserve better than:
+---
 
-- **Per-room, per-module rent.** Your software bill grows every time your hotel does. Night audit is an add-on. Reports are an add-on. The booking engine is an add-on.
-- **Your data held hostage.** Guest history, rate history, your books — locked in a vendor's cloud, with an export fee if you ever try to leave.
-- **Waiting for AI that never ships.** Legacy vendors bolt a chatbot onto 2005-era software and call it innovation. Real agentic operations need a system *designed* to be operated by AI, not just chatted at.
-- **Integration purgatory.** Every connection is a paid interface, a certification queue, a quarter of waiting.
-- **Trained-staff-only software.** If a new hire needs a week of training to check someone in, the software failed — not the hire.
+## Why Kamra
 
-**Kamra is the answer we wanted to exist:** a full property management system where every operation — booking, check-in, folios, night audit, pricing — is a governed action, exposed over a real tool layer, so *you* can bring the AI you trust to run it.
+Most hotel PMS software was built twenty years ago: per-room SaaS rent, locked-in data, bolt-on chatbots, and screens that need a week of training.
 
-## What makes Kamra different
+Kamra is the alternative we wanted:
 
-- **Agent-ready, not agent-locked.** Kamra ships an [MCP server](https://kamrapms.com/docs/ai-and-mcp) with 52 governed tools, role-scoped and permission-checked like any user. Click **Connect Claude** — it quotes, books, and every action is logged. No bundled agent personas to trust or configure — bring your own.
-- **Bring your own key.** No bundled AI markup, no model lock-in. Point your own LLM at Kamra's tool surface, or connect [HeyKoala](https://heykoala.ai) for a phone/WhatsApp AI concierge.
-- **Deterministic money.** Prices, taxes, availability come from a pricing engine — never from a language model. GST slabs, multi-rate invoices, and the no-overbooking guard are code, verified by an eval suite in CI.
-- **Full audit trail.** Every action — human or AI — is logged with who did it, what changed, and why. Accountability comes from the ledger, not from hoping the model behaves.
-- **Truly free.** AGPL-licensed. No per-room pricing, no per-user seats, no license audits, no "premium" tiers. Self-host on-prem or on any cloud.
-- **Built on Frappe.** The framework behind ERPNext — one of the world's largest open-source ERPs — with its mature ecosystem: RBAC, audit trails, multi-tenancy, the frappe/payments gateway app, and a huge developer community.
+| Pain with legacy PMS | With Kamra |
+|---|---|
+| Per-room / per-module pricing | **Free forever** (AGPL) — cost doesn't scale with rooms |
+| Data lock-in | **You host it** — on-prem, VPS, or Frappe Cloud |
+| AI as a marketing slide | **MCP tools** — Claude (or any agent) books and audits with RBAC |
+| Opaque pricing & tax | **Deterministic engine** — GST / SST / VAT packs in code + CI evals |
+| New-hire training hell | Front desk UI a clerk can learn the same day |
 
-## See it
+---
 
-*Screens below are from the [live demo](https://demo.kamrapms.com) — open it and click around.*
+## What makes it different
+
+- **Agent-ready, not agent-locked.** [MCP server](https://kamrapms.com/docs/ai-and-mcp) with 50+ governed tools — role-scoped, permission-checked, fully logged. Connect Claude; no bundled agent to trust.
+- **Bring your own key.** No AI markup or model lock-in. Optional [HeyKoala](https://heykoala.ai) for voice / WhatsApp concierge.
+- **Deterministic money.** Rates, tax slabs, availability, and no-overbooking guards come from code — never from a language model.
+- **Full audit trail.** Every human or AI action: who, what, why.
+- **Built on Frappe.** RBAC, multi-tenancy, Desk escape hatch, [frappe/payments](https://github.com/frappe/payments) gateways, ERPNext-adjacent ecosystem.
+
+---
+
+## Screenshots
+
+*From the [live demo](https://demo.kamrapms.com) — open it and click around.*
 
 | | |
 |---|---|
-| ![Today — the front desk's morning view](docs/screenshots/today.png) | ![Reservation 360 — dates, money and guest journey in one place](docs/screenshots/reservation-360.png) |
-| **Today** — arrivals, departures, in-house with paid/due chips, room board, hours-saved ledger | **Reservation 360** — one panel with live billing, inline date amend, guest journey, and the right check-in/out/cancel actions |
-| ![Tape chart — rooms × dates with drag-free moves](docs/screenshots/tape-chart.png) | ![Manager reports & flash](docs/screenshots/reports.png) |
-| **Tape chart** — rooms × dates, booking bars, room moves & stay amendments | **Reports** — occupancy/ADR/RevPAR, MTD, collections, 14-day trend, printable flash |
-| ![New booking with live quote](docs/screenshots/booking-dialog.png) | ![Guest profile with the stay strip](docs/screenshots/guest-profile.png) |
-| **New booking** — returning-guest typeahead, live quote, sell message, multi-room, add-ons, cancellation policy in plain words | **Guest profile** — the stay strip, lifetime stats, upcoming stays, merge & anonymize |
-| ![GST invoice](docs/screenshots/invoice.png) | ![Booking Engine console](docs/screenshots/booking-engine.png) |
-| **Folio & GST invoice** — per-line GST, splits/transfers, payment links, multi-rate breakup | **Booking Engine console** — manage your direct-booking page: hotel profile, photo gallery, policies, FAQ, map & directions, and SEO |
-| ![Restaurant POS with the table map](docs/screenshots/pos.png) | ![Property dashboard](docs/screenshots/dashboard.png) |
-| **Restaurant POS** — area-wise table map with live states (running / in kitchen / reserved / cleaning), concurrent bills, thermal KOT & bill printing, F-key shortcuts | **Dashboard** — occupancy, movement, revenue and collections with department slices, chain-wide roll-up |
-| ![Laundry console](docs/screenshots/laundry.png) | ![Self check-in with ID capture](docs/screenshots/checkin-id.png) |
-| **Laundry console** — pickup queue, ready-by tracking, printable dockets, guest self-service requests | **Self check-in** — guests fill details, photograph their ID with the phone camera and sign; stored privately, discarded per retention policy |
+| ![Today — front desk morning view](docs/screenshots/today.png) | ![Reservation 360](docs/screenshots/reservation-360.png) |
+| **Today** — arrivals, departures, in-house, paid/due chips, room board | **Reservation 360** — billing, amend dates, check-in / out / cancel |
+| ![Tape chart](docs/screenshots/tape-chart.png) | ![Reports](docs/screenshots/reports.png) |
+| **Tape chart** — rooms × dates, moves & stay amendments | **Reports** — occupancy, ADR, RevPAR, flash |
+| ![New booking](docs/screenshots/booking-dialog.png) | ![Guest profile](docs/screenshots/guest-profile.png) |
+| **New booking** — live quote, multi-room, add-ons, cancellation policy | **Guest profile** — stay strip, merge & anonymize (DPDP) |
+| ![GST invoice](docs/screenshots/invoice.png) | ![Booking Engine](docs/screenshots/booking-engine.png) |
+| **Folio & tax invoice** — per-line GST, splits, payment links | **Booking engine console** — gallery, policies, FAQ, SEO |
+| ![Restaurant POS](docs/screenshots/pos.png) | ![Dashboard](docs/screenshots/dashboard.png) |
+| **Restaurant POS** — table map, KOT / bill print, F-keys | **Dashboard** — occupancy, revenue, chain roll-up |
+| ![Laundry](docs/screenshots/laundry.png) | ![Self check-in](docs/screenshots/checkin-id.png) |
+| **Laundry** — pickup → return → folio; guest self-service | **Self check-in** — ID capture, e-sign, retention policy |
 
-**The direct booking page your guests see** — check-in / check-out, **Check availability**, live per-date rates, photo gallery, hotel policies, FAQ, map & directions, and pay-at-hotel — commission-free, and yours to brand.
+**Guest-facing booking page** — date range, **Check availability**, rates, gallery, policies, pay-at-hotel:
 
-[![Public booking page with check-in, check-out and Check availability](docs/screenshots/public-booking.png)](https://demo.kamrapms.com/book)
+[![Public booking page](docs/screenshots/public-booking.png)](https://demo.kamrapms.com/book)
 
-## Short-term rentals (2.5)
+---
 
-Kamra now runs villas and multi-site STR portfolios the same way it runs
-hotels — one property, several physical addresses, room-wise or entire-place
-selling, deposits and credit notes, and a guest-facing catalog that looks like
-a listing site rather than a hotel room grid.
+## Short-term rentals
 
-Pick **Short Term Rental** when you create the property (or later in Settings).
-The booking engine then shows a villa catalog, per-site maps, a real
-check-in / check-out date range, and a **Check availability** button.
+Same PMS for **villas and multi-site STR portfolios**: sellable units (room / whole-place / package), competition groups, cleaning fees & deposits, Instant or Request-to-book, and a catalog that feels like a listing site.
 
 | | |
 |---|---|
-| ![STR catalog — villas, date range, Check availability](docs/screenshots/str-catalog.png) | ![Two villas on one booking page](docs/screenshots/str-villas.png) |
-| **Catalog** — check-in and check-out, guest counts, and Check availability | **Places to stay** — each villa is its own card, with its own address and from-rate |
+| ![STR catalog](docs/screenshots/str-catalog.png) | ![STR villas](docs/screenshots/str-villas.png) |
+| **Catalog** — check-in / out + Check availability | **Places to stay** — per-villa cards & from-rates |
 
-[![Villa listing with rooms, dates and caretaker](docs/screenshots/str-listing.png)](https://ewa.kamrapms.com/kamra/book)
+[![Villa listing](docs/screenshots/str-listing.png)](https://ewa.kamrapms.com/kamra/book)
 
-**Villa page** — pick a room or the whole house, live stay totals, check-in / check-out, Check availability, and a caretaker number guests can tap.
+Live example: [ewa.kamrapms.com/book](https://ewa.kamrapms.com/kamra/book).
 
-Live example: [ewa.kamrapms.com/book](https://ewa.kamrapms.com/kamra/book) (Ewa Reserve — WaterFront in Mangaluru and Tatasth in Kundapur).
+---
 
-## What's inside (today)
+## Features
 
-| Area | Included |
+| Area | What you get |
 |---|---|
-| Front desk | Today dashboard with paid/due chips, a **check-in flow** (registration readiness + AI room suggestion with reasons, or pick from free rooms with HK state), tape chart with a live **house-position row**, **ETA/ETD on every stay** and changeover-conflict warnings, reservations, guest **profile hub** (stay strip, merge duplicates, anonymize/DPDP), blacklist |
-| Booking Engine | Direct booking page with a **manageable console** — hotel/villa profile, **photo gallery**, policies, **FAQ**, map & driving directions, and **SEO**; guests pick **check-in and check-out** and hit **Check availability**. Hotels get a room grid; STRs get a **villa catalog** and per-listing pages |
-| Short-term rentals | **Property kind** Hotel vs Short Term Rental, **sellable units** (room, whole-place, package) with competition groups so booking the villa blocks its rooms, **per-villa locations** on the public page, cleaning fees & refundable deposits, Instant or Request-to-book |
-| Booking | **Multi-room bookings in one flow**, group & corporate bookings, booked-on-behalf (booker vs guest), returning-guest typeahead, **add-ons at booking**, sell messages, travel agents with commissions, day-use |
-| Revenue | Occupancy-based pricing, seasons, rate plans, vouchers, meal plans, **rate guardrails**, **hurdle rates** (demand tiers apply premiums and a dynamic floor automatically), a controlled **overbooking allowance** enforced in code, cancellation/no-show/deposit **policies enforced in code**, owner & **GM position briefings** via API/copilot |
-| Billing | Folios with per-line GST (₹7,500 slab auto-switch), **corporate billing rules** (charge routing, alcohol always to guest), **group master folios**, %/₹ **charge splits** with exact conservation, bulk transfers, automated night audit that also charges no-shows, GST invoices with B2B GSTIN, GSTR-1 export, cashier reconciliation, payment links via frappe/payments |
-| F&B | Restaurant POS with an **area-wise table map** (seats, live states, **table reservations**, cleaning), concurrent & **split bills**, dine-in / room service / takeaway / **delivery**, **80mm thermal KOT and bill printing** with daily KOT numbers, **NC (complimentary) bills** with authorizer, **kitchen display v2** (accept/start, recall, sound, station & course grouping, allergy highlighting, timeline), **inventory & recipes** with stock ledger and per-dish consumption, **menu bulk import**, guest **QR ordering** with captain confirmation, cash/card/UPI settle or room posting (alcohol-aware), voids & cancellations with reasons |
-| Operations | Service tickets with SLA, housekeeping **mobile app** (`/hk`), **guest laundry end to end** (rate card → counted pickup → piece-by-piece return → folio billing, with a desk console, **guest self-service pickup requests** from the in-stay page, promised ready-by times with overdue tracking, printable laundry dockets, **house/complimentary orders** that never bill, and a revenue panel), lost & found, shift handover, venues & events |
-| Guests | Self check-in links with **ID & address-proof capture**, printable **GRC with the legal occupant register and per-occupant ID scans**, **editable guest nationality** on the GRC, folio, and guest profile, editable actual check-in/out times, stay ledger (advances / security deposits / guarded refunds), ID retention modes (store / verify-and-discard, scrubbed at checkout), experiences showcase |
-| Messaging | **WhatsApp on your own Meta Cloud API number** — automatic booking confirmations + check-in links, desk payment requests, a **conversations inbox** with 24-hour-session replies, inbound messages ticketed to the desk, housekeeping escalations |
-| Localization | Country packs resolved by property: **India GST (slabs), Indonesia PB1, Thailand VAT, Malaysia SST (8/6 split + Tourism Tax), UAE VAT (TRN)**, flat-tax generic for the rest; **currency symbols and number locales follow the pack** across the UI and thermal prints |
-| Platform | Multi-property with per-user scoping, six-role RBAC, settings hub, **dark mode**, onboarding wizard + **CSV migration importers** (eZee / Cloudbeds presets with dry-run preview), savings ledger, **51-check eval harness + 13-journey front-desk persona suite in CI** (incl. an endpoint-whitelist audit) |
+| **Front desk** | Today board, check-in flow (GRC readiness + room suggestion), tape chart, ETA/ETD, guest profiles, blacklist |
+| **Booking engine** | Direct booking + SEO console; hotels = room grid; STRs = villa catalog |
+| **Short-term rentals** | Hotel vs STR property kind, sellable units, per-villa locations, Instant / Request-to-book |
+| **Booking** | Multi-room / group / corporate, returning guests, add-ons, vouchers, travel agents, day-use |
+| **Revenue** | Seasons, rate plans, guardrails, hurdle rates, overbooking allowance, cancellation & no-show policy in code |
+| **Billing** | Folios, corporate routing, group masters, charge splits, night audit, tax invoices, GSTR-1, payment links |
+| **F&B** | POS table map, split bills, thermal KOT, kitchen display, inventory & recipes, QR ordering, room posting |
+| **Operations** | Tickets + SLA, housekeeping `/hk`, guest laundry end-to-end, lost & found, banquet / events |
+| **Guests** | Online pre-check-in, GRC + occupant register, **editable nationality**, ID retention modes |
+| **Messaging** | WhatsApp (Meta Cloud API) — confirmations, check-in links, inbox, desk tickets |
+| **Localization** | India GST, Indonesia PB1, Thailand VAT, Malaysia SST, UAE VAT — currency & locales follow the pack |
+| **Platform** | Multi-property RBAC, dark mode, CSV migration (eZee / Cloudbeds presets), eval harness in CI |
 
-## Documentation
+---
 
-**[kamrapms.com/docs](https://kamrapms.com/docs/)** is the full manual —
-quickstart, per-provider self-hosting guides, features tour, user guide,
-AI/MCP setup and FAQ.
+## Documentation & API
 
-Taking a real hotel live? Follow the
-**[go-live checklist](https://kamrapms.com/docs/go-live)** — install →
-property & taxes → staff → data migration → OTA sync → WhatsApp/email →
-a dress-rehearsal stay → cut-over day, as checkboxes with links into
-each guide.
+Full manual: **[kamrapms.com/docs](https://kamrapms.com/docs/)** — quickstart, self-hosting, features, user guide, AI/MCP, FAQ.
 
-### REST API
+Going live? Use the **[go-live checklist](https://kamrapms.com/docs/go-live)**.
 
-Kamra exposes **178 REST endpoints** — the same governed layer the UI and
-the AI use:
+### REST & agents
 
-- **[REST API reference](https://kamrapms.com/docs/api-reference)** —
-  every endpoint with method, required roles, parameters and description,
-  generated from the source so it never drifts
-- **[Postman collection](https://kamrapms.com/docs/kamra.postman_collection.json)**
-  — import it, set `base_url` (your Kamra URL), `api_key` and `api_secret`
-  collection variables, and every request is ready to try
-- [MCP tool reference](https://kamrapms.com/docs/mcp-tools) — the 52 tools
-  AI agents get
+Kamra exposes **170+ REST endpoints** — the same governed layer the UI and AI use:
+
+- [REST API reference](https://kamrapms.com/docs/api-reference)
+- [Postman collection](https://kamrapms.com/docs/kamra.postman_collection.json)
+- [MCP tool reference](https://kamrapms.com/docs/mcp-tools)
 
 ```bash
-# the calling convention
 curl -X POST https://<your-kamra>/api/method/kamra.api.get_quote \
   -H "Authorization: token <api_key>:<api_secret>" \
   -H "Content-Type: application/json" \
@@ -138,10 +155,9 @@ curl -X POST https://<your-kamra>/api/method/kamra.api.get_quote \
        "check_in_date":"2026-08-01","check_out_date":"2026-08-03"}'
 ```
 
-In-repo markdown lives in [`docs/`](docs/):
-[user guide](docs/user-guide.md) · [AI & API setup](docs/ai-and-api.md) ·
-[self-hosting](docs/self-hosting.md) · [email setup](docs/email-setup.md) ·
-[developer notes](docs-dev.md) · [brand assets](branding/README.md)
+In-repo: [`docs/`](docs/) · [user guide](docs/user-guide.md) · [AI & API](docs/ai-and-api.md) · [self-hosting](docs/self-hosting.md) · [dev notes](docs-dev.md) · [branding](branding/README.md)
+
+---
 
 ## Install
 
@@ -151,27 +167,16 @@ bench get-app kamra https://github.com/Kamra-PMS/kamra-pms --branch main
 bench --site your-site install-app kamra
 ```
 
-Kamra ships its built front-end, so after install the product UI is live at
-**`/kamra`** (the booking engine redirects in at `/book`, housekeeping at
-`/hk`) — no Node server in production. The Frappe Desk stays available at
-`/app` as an admin escape hatch. A fresh install creates its own roles and
-permissions; sign in as **Administrator** (or **admin@example.com**) with
-the password from `--admin-password` and open `/kamra/setup` to create
-your property, then add staff users.
+After install: product UI at **`/kamra`**, booking at **`/book`**, housekeeping at **`/hk`**. Desk remains at `/app`. Sign in as **Administrator**, open `/kamra/setup`, create your property, add staff.
 
-### Compatibility & channels
-
-| Kamra | Frappe | Channel |
+| Channel | Branch / tag | Use for |
 |---|---|---|
-| `main` releases (`vX.Y.Z`) | v16 | **stable** — Frappe Cloud Marketplace, `ghcr.io/kamra-pms/kamra:latest`, [demo.kamrapms.com](https://demo.kamrapms.com) |
-| `develop` | v16 | **nightly** — `ghcr.io/kamra-pms/kamra:nightly`, rebuilt every night |
+| **Stable** | `main` / `vX.Y.Z` | Production, [Frappe Cloud Marketplace](https://cloud.frappe.io/marketplace/apps/kamra), [demo](https://demo.kamrapms.com), `ghcr.io/kamra-pms/kamra:latest` |
+| **Nightly** | `develop` | Previews, `ghcr.io/kamra-pms/kamra:nightly` |
 
-`develop` is the repo's default branch (for contributors), so production
-installs should keep the explicit `--branch main`. Releases follow
-[SemVer](https://semver.org/) with a **patch-first** cadence: small features
-and fixes ship as `2.6.1` / `2.6.2`; we only cut a MINOR (`2.7.0`) when we
-deliberately mean a larger train. See [`RELEASING.md`](RELEASING.md) and
-[`CHANGELOG.md`](CHANGELOG.md).
+Production installs should use `--branch main` (`develop` is the default GitHub branch for contributors). Releases are SemVer with a **patch-first** cadence — see [`RELEASING.md`](RELEASING.md) and [`CHANGELOG.md`](CHANGELOG.md).
+
+---
 
 ## Quickstart (development)
 
@@ -185,44 +190,36 @@ bench serve --port 8000
 cd apps/kamra/frontend && npm install && npm run dev   # hot-reload UI on :5173
 ```
 
-Rebuild the production UI after front-end changes with `npm run build` at the
-app root (emits into `kamra/public/frontend`, served at `/kamra`). Seed a demo
-property, roles and users via `bench --site … execute kamra.scripts.seed_demo.execute`
-(this also enables the demo-account buttons on the login screen). Full dev
-notes: [docs-dev.md](docs-dev.md).
+Rebuild the SPA with `npm run build` at the app root (emits `kamra/public/frontend`). Seed demo data: `bench --site … execute kamra.scripts.seed_demo.execute`. Details: [docs-dev.md](docs-dev.md).
 
 Connect Claude (hosted MCP — no local Python):
 
 ```bash
-# in Kamra: Kamra Agent → Connect your AI → Connect Claude
-# or from a terminal:
+# Kamra Agent → Connect your AI → Connect Claude, or:
 claude mcp add --transport http kamra https://pms.yourhotel.com/mcp
 ```
 
-## For hotel owners
+---
 
-You own the software, the server, and every byte of your data. Costs don't scale with your room count. Connect your own AI and it works from day one — and if you ever want managed hosting or an AI concierge (voice, WhatsApp) on top, those are choices, not ransoms.
+## Who it's for
 
-## For IT teams
+- **Hotel / villa operators** — own the software and the data; costs don't grow with room count; AI is optional, not a ransom.
+- **IT & integrators** — Python (Frappe) + React, documented REST + MCP, RBAC, audit trails, CI eval suite. Fork and extend.
+- **Builders of hospitality AI** — a real PMS tool surface, not a demo chatbot API.
 
-Standard Python (Frappe) + React. Real RBAC, real audit trails, documented REST + MCP surfaces, an eval suite in CI, no black boxes. Fork it, extend it, ship your own modules — that's the point.
+---
 
-## License
+## License & contributors
 
-AGPL-3.0 — free forever. Anyone offering Kamra as a hosted service must share their modifications back, which keeps the ecosystem honest.
+**AGPL-3.0** — free forever. Anyone offering Kamra as a hosted service must share modifications back.
 
-## Contributors
+Contributions welcome — see [CONTRIBUTING.md](CONTRIBUTING.md). Thanks to [@Mohammed-Muneef](https://github.com/Mohammed-Muneef) (laundry, kitchen display v2, inventory & recipes, menu import, ID-document hardening).
 
-Kamra is built in the open — [PRs welcome](CONTRIBUTING.md). Thanks to
-[@Mohammed-Muneef](https://github.com/Mohammed-Muneef) (guest laundry
-self-service and the desk laundry console, kitchen display v2, inventory
-& recipes, menu bulk import, hardened ID-document handling).
+### Links
 
-## Links & contact
-
-- **Live demo:** [demo.kamrapms.com](https://demo.kamrapms.com) — credentials are on the page
-- **Documentation:** [`docs/`](docs/)
-- **Source & issues:** [github.com/Kamra-PMS/kamra-pms](https://github.com/Kamra-PMS/kamra-pms)
+- **Demo:** [demo.kamrapms.com](https://demo.kamrapms.com)
+- **Docs:** [kamrapms.com/docs](https://kamrapms.com/docs/)
+- **Issues:** [github.com/Kamra-PMS/kamra-pms](https://github.com/Kamra-PMS/kamra-pms)
 - **Email:** [hello@kamrapms.com](mailto:hello@kamrapms.com)
 
 Built by [HeyKoala](https://heykoala.ai).
