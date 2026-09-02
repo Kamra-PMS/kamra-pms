@@ -17,6 +17,10 @@ kamra/public/node_modules/
 # Local
 .DS_Store
 .env
+
+# Internal operator plans — keep local only, never publish
+PLAN.md
+docs/adr-str.md
 docs-site/node_modules/
 docs-site/.vitepress/dist/
 docs-site/.vitepress/cache/
