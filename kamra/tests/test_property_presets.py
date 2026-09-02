@@ -20,7 +20,7 @@ def test_normalize_blank_is_hotel():
 
 
 def test_str_defaults_overbooking_and_modules():
-	out = apply_kind_defaults({"property_name": "Ewa", "property_kind": KIND_STR})
+	out = apply_kind_defaults({"property_name": "Sunset Villas", "property_kind": KIND_STR})
 	assert out["property_kind"] == KIND_STR
 	assert out["overbooking_pct"] == 0
 	assert out["enabled_modules"] == ",".join(STR_MODULES)

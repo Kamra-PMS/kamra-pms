@@ -187,7 +187,7 @@ Frappe Cloud review / support ticket:
 1. Open https://demo.kamrapms.com and show the printed role logins.
 2. Sign in as Front Desk → Today → tape chart → new booking → folio.
 3. Open `/book` and run Check availability.
-4. Optional: https://ewa.kamrapms.com/kamra/book for the villa catalog.
+4. Optional: https://demo.kamrapms.com/book for the public booking page.
 5. Open `/kamra/setup` only if you want to show first-run (skip if it
    would mutate the shared demo).
 
@@ -267,7 +267,7 @@ Marketplace onto your site.
 - Marketplace: https://frappecloud.com/marketplace/apps/kamra
 - Release: https://github.com/Kamra-PMS/kamra-pms/releases/tag/v2.5.0
 - Live demo: https://demo.kamrapms.com
-- Villa catalog: https://ewa.kamrapms.com/kamra/book
+- Villa catalog: https://demo.kamrapms.com/book
 - Docs: https://kamrapms.com/docs/
 - Source: https://github.com/Kamra-PMS/kamra-pms
 ```

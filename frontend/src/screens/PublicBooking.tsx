@@ -84,7 +84,7 @@ interface Showcase {
     longitude: number | null
   }[]
   // One pin per distinct site - a single-property hotel gets one entry
-  // (the property's own address); a multi-villa portfolio like Ewa gets
+  // (the property's own address); a multi-villa portfolio gets
   // one per villa, each listing which room types live there.
   locations: {
     name: string

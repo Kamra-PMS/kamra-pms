@@ -34,7 +34,7 @@ features:
 ## What is Kamra?
 
 ::: tip New — short-term rentals
-Kamra 2.5 runs villa portfolios as well as hotels. [Read the announcement](https://kamrapms.com/updates/short-term-rentals/) · see a live catalog at [ewa.kamrapms.com/book](https://ewa.kamrapms.com/kamra/book).
+Kamra 2.5 runs villa portfolios as well as hotels. [Read the announcement](https://kamrapms.com/updates/short-term-rentals/) · try the [demo booking page](https://demo.kamrapms.com/book).
 :::
 
 Kamra is a complete property-management system for hotels and short-term

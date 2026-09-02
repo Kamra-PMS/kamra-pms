@@ -27,7 +27,7 @@
 </p>
 
 > **Try it in 30 seconds → [demo.kamrapms.com](https://demo.kamrapms.com)**  
-> Tap any role to sign in (credentials are on the page). Guest booking: [/book](https://demo.kamrapms.com/book) · Housekeeping app: [/kamra/hk](https://demo.kamrapms.com/kamra/hk) · Live villa catalog: [ewa.kamrapms.com/book](https://ewa.kamrapms.com/kamra/book)
+> Tap any role to sign in (credentials are on the page). Guest booking: [/book](https://demo.kamrapms.com/book) · Housekeeping app: [/kamra/hk](https://demo.kamrapms.com/kamra/hk)
 
 **Kamra** is a full **property management system (PMS)** for hotels, resorts, and **short-term rentals / villas**. It runs on **Frappe** (the framework behind ERPNext), is **AGPL-3.0**, and is built so humans *and* AI agents share the same governed APIs — booking, check-in, folios, night audit, pricing — with deterministic money (never from an LLM).
 
@@ -108,9 +108,9 @@ Same PMS for **villas and multi-site STR portfolios**: sellable units (room / wh
 | ![STR catalog](docs/screenshots/str-catalog.png) | ![STR villas](docs/screenshots/str-villas.png) |
 | **Catalog** — check-in / out + Check availability | **Places to stay** — per-villa cards & from-rates |
 
-[![Villa listing](docs/screenshots/str-listing.png)](https://ewa.kamrapms.com/kamra/book)
+[![Villa listing](docs/screenshots/str-listing.png)](https://demo.kamrapms.com/book)
 
-Live example: [ewa.kamrapms.com/book](https://ewa.kamrapms.com/kamra/book).
+Live example: [demo.kamrapms.com/book](https://demo.kamrapms.com/book).
 
 ---
 
