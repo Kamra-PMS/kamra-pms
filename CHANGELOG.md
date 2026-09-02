@@ -17,6 +17,23 @@ MINOR for new features, PATCH for fixes.
 
 * MCP stdio sidecar now registers group and banquet tools (`mcp.run()` had been sitting mid-file). Duplicate `banquet_receipt` split into `banquet_record_receipt` and `banquet_receipt_document`. Tool list is a shared registry of 52 tools.
 
+## [2.7.0](https://github.com/Kamra-PMS/kamra-pms/compare/v2.6.0...v2.7.0) (2026-09-02)
+
+
+### Features
+
+* **front-desk:** editable guest nationality on folio, GRC, and profile ([#60](https://github.com/Kamra-PMS/kamra-pms/issues/60)) ([4013778](https://github.com/Kamra-PMS/kamra-pms/commit/401377811554572cb6a5edd72db1273bee2908f6)), closes [#59](https://github.com/Kamra-PMS/kamra-pms/issues/59)
+
+
+### Bug Fixes
+
+* **channel-manager:** OTA cancel under Guest + agent_name logging ([0b50fdf](https://github.com/Kamra-PMS/kamra-pms/commit/0b50fdf80f629601e0270478714a494de6f7aef3))
+* **channel-manager:** OTA cancel under Guest + agent_name logging ([0c771be](https://github.com/Kamra-PMS/kamra-pms/commit/0c771bec8429ad2730d5ca53063f71490b13b4cb))
+* **folio:** return guest_id from folio_invoice for nationality edit ([#63](https://github.com/Kamra-PMS/kamra-pms/issues/63)) ([d3ea808](https://github.com/Kamra-PMS/kamra-pms/commit/d3ea808ead19c615f63986296874428dc9bb912b))
+* **pos:** clear stale kitchen drawer and keep Esc layered ([f59bc93](https://github.com/Kamra-PMS/kamra-pms/commit/f59bc93aa1c31b6c8fc75055f0f0f9c86d6c7367))
+* **pos:** restore Esc and Maximize on floor fullscreen ([125d00b](https://github.com/Kamra-PMS/kamra-pms/commit/125d00beca471543101b436328273ed8de35259c))
+* **pos:** restore Esc and Maximize on floor fullscreen ([cdcee0e](https://github.com/Kamra-PMS/kamra-pms/commit/cdcee0ecf7696ee4350c6d0c205c758dbcd91c8c))
+
 ## [2.6.0](https://github.com/Kamra-PMS/kamra-pms/compare/v2.5.0...v2.6.0) (2026-08-27)
 
 
