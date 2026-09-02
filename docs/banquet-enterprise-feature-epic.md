@@ -2,7 +2,8 @@
 
 **Status:** Proposed epic (gap analysis vs Kamra today + Opera Banquet / Event Management)  
 **Target:** Kamra `develop` → stable after phased delivery  
-**Related:** Venue Booking (`EVT-*`), `kamra/banquet.py`, Events app in SPA
+**Related:** Venue Booking (`EVT-*`), `kamra/banquet.py`, Events app in SPA  
+**Design decision:** No guest portal for banquet — quotes, confirmation, and payment chase stay on the sales desk (email/WhatsApp/PDF + desk actions). Matches Opera’s print/email quote workflow.
 
 ---
 
@@ -28,8 +29,8 @@ What large hotels expect from **Opera Banquet / Event Management** — and what 
 | # | Requirement | Kamra today | Gap | Epic phase |
 |---|-------------|-------------|-----|------------|
 | 1 | Build quotation | **Yes** — `generate_quote`, line items, revisions, margin advisor | — | — |
-| 2 | Send quotation to guest | **Partial** — print/PDF from `/banquet/:name/quote`; stamps `quote_sent_on` | No email/WhatsApp to customer with PDF link | **P1** |
-| 3 | Confirmation from customer | **Partial** — desk sets status Tentative → Confirmed; `contract_signed_on` field exists | No guest accept link, e-sign, or “customer confirmed” event | **P1** |
+| 2 | Send quotation to guest | **Partial** — print/PDF from `/banquet/:name/quote`; stamps `quote_sent_on` | Email/WhatsApp with PDF; no guest portal | **P1** |
+| 3 | Confirmation from customer | **Partial** — desk sets status Tentative → Confirmed; `contract_signed_on` field exists | Record guest confirm on sheet (phone/email/WhatsApp reply); no guest portal | **P1** |
 | 4 | Customisation & modification | **Yes** — menus, services, negotiate, open items, quote versions | — | — |
 | 5 | Advance payment | **Yes** — `record_receipt`, milestones, default 25/50/balance | Optional: payment link to guest | **P2** |
 | 6 | Quotation reminder (unsent / no response) | **Partial** — `follow_up` alert if `follow_up_date` passed; no “quote sent 7d ago, no reply” | Guest + sales chase templates | **P1** |
@@ -105,25 +106,27 @@ Delivery: WhatsApp → `sales_owner`, else Front Desk role notify.
 **Send quotation**
 - Action: “Send to guest” on quote document
 - Channels: email (required), WhatsApp (if property configured)
-- Attach: PDF or link to guest portal `/banquet/quote/:token`
+- Attach: **PDF quotation** (and contract when ready) — no guest portal
 - Set `quote_sent_on`, log in activity + optional `Banquet Communication Log` child table
 
 **Quotation reminders**
 - Scheduler rules: e.g. quote sent + 3 days + no status change → email guest + alert sales
 - Desk board: “Awaiting customer response” column
 
-**Customer confirmation**
-- Guest link: Accept quote / Request changes / Decline
-- On accept: set `customer_confirmed_on`, optional auto-move to `Tentative` or `Confirmed` (property setting)
-- Desk can still manually confirm; guest accept is additive evidence
-- Stamp `contract_signed_on` when guest accepts terms checkbox
+**Customer confirmation** (desk-led — Opera-aligned)
+- Guest confirms by **phone, email reply, or WhatsApp**; sales records it on the function sheet
+- Actions: “Guest confirmed” / “Guest requested changes” / “Declined” — stamps `customer_confirmed_on` and notes
+- Status move Tentative → Confirmed remains a deliberate sales action (or auto when guest confirmed + advance rule met)
+- Signed contract: upload scan or mark `contract_signed_on` when signed copy received
+- **No guest portal** — banquet stays on the sales desk and department ops side
 
 ### 2. Payment comms (P2)
 
 **Advance & balance**
-- Reuse `frappe/payments` payment links tied to `Banquet Payment Term` row
+- Optional **one-off payment link** per milestone (email/WhatsApp) — not a guest portal
 - Email/WhatsApp: “Advance due”, “Balance due before event”
 - Extend `_function_alerts` with `balance_due_guest` when milestone overdue
+- Desk still records receipts via `record_receipt()` when paid at desk or bank transfer
 
 ### 3. Food tasting (P2)
 
@@ -184,9 +187,9 @@ Fields on Venue Booking or checklist:
 
 ## Delivery phases
 
-### Phase 1 — Guest quote & confirm + department fan-out (MVP)
-- [ ] Email send quotation (+ PDF)
-- [ ] Guest confirmation link (accept/decline)
+### Phase 1 — Guest comms & department fan-out (MVP)
+- [ ] Email/WhatsApp send quotation (+ PDF attachment)
+- [ ] Record guest confirmation on function sheet (no guest portal)
 - [ ] Quotation no-response reminders (guest + sales)
 - [ ] On Confirm → checklist instantiation from templates
 - [ ] Notify Finance, HK, F&B, Sales roles
@@ -200,12 +203,12 @@ Fields on Venue Booking or checklist:
 - [ ] Engineering + HR checklist templates
 - [ ] AV/WiFi sub-checklist
 
-### Phase 3 — Opera parity extras
-- [ ] Guest portal (view quote, pay, confirm, upload PO)
+### Phase 3 — Opera parity extras (no guest portal)
 - [ ] Equipment resource calendar
 - [ ] Property-level deposit rule engine
 - [ ] Weighted pipeline forecasting
-- [ ] E-sign integration (DocuSign / native)
+- [ ] Catering packages + event templates (multi-event blocks)
+- [ ] Optional e-sign (DocuSign) — signed PDF stored on function, not a portal
 
 ---
 
@@ -216,16 +219,16 @@ Fields on Venue Booking or checklist:
 | Backend | `kamra/banquet.py`, new `kamra/banquet_checklists.py`, `venue_booking.json` |
 | Notifications | `kamra/agents_channels.py`, `kamra/housekeeping._notify_role`, email templates |
 | Scheduler | `kamra/hooks.py` — extend `run_banquet_reminders` |
-| Frontend | `BanquetFunction.tsx`, new `BanquetChecklist.tsx`, guest public page |
-| Guest-facing | `kamra/public_api.py` — tokenised quote/confirm routes |
+| Frontend | `BanquetFunction.tsx`, new `BanquetChecklist.tsx` / traces UI |
+| Guest comms | Email templates + WhatsApp outbound; PDF from `banquet_document` |
 | Tests | `kamra/tests/test_banquet.py`, new `test_banquet_enterprise.py` |
 
 ---
 
 ## Success criteria
 
-1. Sales can **send a quote by email** and see when it was sent / reminded.
-2. Guest can **confirm online**; desk sees confirmation timestamp.
+1. Sales can **send a quote by email/WhatsApp** and see when it was sent / reminded.
+2. Sales can **record guest confirmation** on the function sheet; timestamp and notes visible.
 3. On **Confirmed**, Finance, HK, and F&B receive **actionable notifications** within 1 minute.
 4. Each department has a **checklist** due before event date; banquet manager sees % complete.
 5. **Food tasting** can be scheduled with guest email and chef alert.
