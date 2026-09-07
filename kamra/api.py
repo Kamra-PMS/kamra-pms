@@ -3113,7 +3113,7 @@ def _booking_property_policy(property: str) -> dict:
 	prop = frappe.db.get_value(
 		"Property", property,
 		["sell_message", "free_cancel_days", "cancellation_fee",
-		 "no_show_charge", "deposit_pct"],
+		 "no_show_charge", "deposit_pct", "country"],
 		as_dict=True,
 	) or {}
 	prop["cancellation_fee"] = prop.get("cancellation_fee") or "None"
@@ -3121,6 +3121,8 @@ def _booking_property_policy(property: str) -> dict:
 	prop["free_cancel_days"] = int(prop.get("free_cancel_days") or 0)
 	prop["deposit_pct"] = float(prop.get("deposit_pct") or 0)
 	prop["sell_message"] = prop.get("sell_message") or ""
+	# drives the dial-code prefix on guest phone inputs
+	prop["country"] = prop.get("country") or "India"
 	return prop
 
 
