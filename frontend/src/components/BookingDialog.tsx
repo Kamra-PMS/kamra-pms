@@ -13,6 +13,13 @@ import {
 } from "../lib/api"
 import { Button } from "./ui/button"
 import { cur, moneyLocale } from "../lib/money"
+import {
+  clampLocal,
+  isPhoneComplete,
+  joinPhone,
+  phoneLengthForDial,
+  splitPhone,
+} from "../lib/phone"
 
 interface ExtraRoom {
   room_type: string
@@ -25,6 +32,62 @@ const inputCls =
   "w-full rounded-lg border border-zinc-300 bg-white px-3.5 py-2.5 text-base " +
   "focus:outline-2 focus:outline-offset-1 focus:outline-brand-600"
 
+/**
+ * Phone entry with the property's dial code shown as a fixed prefix, so staff
+ * type only the local number. `value`/`onChange` stay fully qualified
+ * (`+919148869914`) - the prefix is presentation, not a separate field.
+ */
+function PhoneInput(props: {
+  value: string
+  country?: string | null
+  onChange: (phone: string) => void
+  placeholder?: string
+}) {
+  const { dial, local } = splitPhone(props.value, props.country)
+  const { min, max } = phoneLengthForDial(dial)
+  // only nag once they have stopped short - not on every keystroke of a
+  // number they are still typing
+  const short = local.length > 0 && local.length < min
+  return (
+    <>
+      <div
+        className={
+          "flex items-center gap-1.5 rounded-lg border bg-white pl-3.5 " +
+          "focus-within:outline-2 focus-within:outline-offset-1 " +
+          (short
+            ? "border-rose-300 focus-within:outline-rose-500"
+            : "border-zinc-300 focus-within:outline-brand-600")
+        }
+      >
+        <span className="shrink-0 text-base text-zinc-500">+{dial}</span>
+        <input
+          type="tel"
+          inputMode="numeric"
+          maxLength={max}
+          className="w-full min-w-0 bg-transparent py-2.5 pr-3.5 text-base focus:outline-none"
+          value={local}
+          // clamp rather than trust maxLength: it does not apply to paste in
+          // every browser, and autofill bypasses it entirely
+          onChange={(e) =>
+            props.onChange(joinPhone(dial, clampLocal(e.target.value, dial)))
+          }
+          placeholder={props.placeholder ?? "91488 69914"}
+        />
+        <span className="shrink-0 pr-3.5 text-xs tabular-nums text-zinc-400">
+          {local.length}/{max}
+        </span>
+      </div>
+      {short && (
+        <p className="mt-1.5 text-xs text-rose-600">
+          {min === max
+            ? `+${dial} numbers are ${min} digits.`
+            : `+${dial} numbers are ${min}-${max} digits.`}
+        </p>
+      )}
+    </>
+  )
+}
+
 function Field(props: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
@@ -36,6 +99,13 @@ function Field(props: { label: string; children: React.ReactNode }) {
   )
 }
 
+
+function todayLocal() {
+  const d = new Date()
+  const m = `${d.getMonth() + 1}`.padStart(2, "0")
+  const day = `${d.getDate()}`.padStart(2, "0")
+  return `${d.getFullYear()}-${m}-${day}`
+}
 
 const inr = (n: number) =>
   n.toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
@@ -156,6 +226,16 @@ export function BookingDialog(props: {
     d.setDate(d.getDate() + Math.max(1, form.nights))
     return d.toISOString().slice(0, 10)
   })()
+
+  // a new booking cannot start in the past - the input's `min` is advisory
+  // only (typed and pasted values bypass it), so gate the submit too
+  const pastCheckIn = form.check_in_date < todayLocal()
+
+  // phone is optional, but a half-typed one is a data-entry slip, not a choice
+  const country = options?.property?.country
+  const badPhone =
+    !isPhoneComplete(form.phone, country) ||
+    (onBehalf && !isPhoneComplete(form.booked_by_phone, country))
 
   useEffect(() => {
     if (!form.room_type) return
@@ -568,11 +648,10 @@ export function BookingDialog(props: {
                     )}
                   </Field>
                   <Field label="Phone">
-                    <input
-                      className={inputCls}
+                    <PhoneInput
                       value={form.phone}
-                      onChange={(e) => set("phone", e.target.value)}
-                      placeholder="+91 …"
+                      country={options?.property?.country}
+                      onChange={(v) => set("phone", v)}
                     />
                   </Field>
                 </div>
@@ -607,9 +686,15 @@ export function BookingDialog(props: {
                     <input
                       type="date"
                       className={inputCls}
+                      min={todayLocal()}
                       value={form.check_in_date}
                       onChange={(e) => set("check_in_date", e.target.value)}
                     />
+                    {pastCheckIn && (
+                      <p className="mt-1.5 text-xs text-rose-600">
+                        That date has already passed.
+                      </p>
+                    )}
                   </Field>
                   <Field label="Nights">
                     <input
@@ -909,13 +994,12 @@ export function BookingDialog(props: {
                                   />
                                 </Field>
                                 <Field label="Booker phone">
-                                  <input
-                                    className={inputCls}
+                                  <PhoneInput
                                     value={form.booked_by_phone}
-                                    onChange={(e) =>
-                                      set("booked_by_phone", e.target.value)
+                                    country={options?.property?.country}
+                                    onChange={(v) =>
+                                      set("booked_by_phone", v)
                                     }
-                                    placeholder="+91 …"
                                   />
                                 </Field>
                               </div>
@@ -1207,7 +1291,7 @@ export function BookingDialog(props: {
               <div className="shrink-0 space-y-2 border-t border-zinc-200 bg-white px-6 py-4 md:px-7">
                 <Button
                   className="w-full justify-center py-2.5 text-base"
-                  disabled={busy || !form.guest_name || !quote}
+                  disabled={busy || !form.guest_name || !quote || pastCheckIn || badPhone}
                   onClick={() => submit()}
                 >
                   {busy ? "Booking…" : "Confirm booking"}
@@ -1223,7 +1307,7 @@ export function BookingDialog(props: {
                   <Button
                     variant="outline"
                     className="justify-center"
-                    disabled={busy || !form.guest_name}
+                    disabled={busy || !form.guest_name || pastCheckIn || badPhone}
                     onClick={() => submit(true)}
                     title="Park this stay with no room; promote when inventory frees"
                   >

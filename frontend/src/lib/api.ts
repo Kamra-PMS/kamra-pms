@@ -256,6 +256,7 @@ export interface BookingOptions {
     cancellation_fee: "None" | "First Night" | "Full Stay"
     no_show_charge: "None" | "First Night" | "Full Stay"
     deposit_pct: number
+    country: string
   }
 }
 

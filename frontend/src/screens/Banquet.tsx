@@ -751,6 +751,7 @@ function EnquirySheet({
             <input
               type="date"
               className={inputCls}
+              min={today()}
               value={form.event_date}
               onChange={(e) => set("event_date", e.target.value)}
             />
@@ -759,6 +760,7 @@ function EnquirySheet({
             <input
               type="date"
               className={inputCls}
+              min={form.event_date || today()}
               value={form.end_date}
               onChange={(e) => set("end_date", e.target.value)}
             />
@@ -816,6 +818,11 @@ function EnquirySheet({
           </p>
           {avail === null ? (
             <p className="text-sm text-zinc-400">Checking…</p>
+          ) : avail.length === 0 ? (
+            <p className="text-sm text-zinc-500">
+              No halls set up for this property yet — add one under Halls &amp;
+              Venues.
+            </p>
           ) : (
             <div className="grid gap-2 sm:grid-cols-2">
               {avail.map((v) => {
