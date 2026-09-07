@@ -32,12 +32,6 @@ const fmtWhen = (d: unknown) =>
       )
     : ""
 
-interface CashSummary {
-  date: string
-  modes: { mode: string; txns: number; total: number }[]
-  grand_total: number
-}
-
 interface AuditResult {
   audit?: string
   already_ran?: boolean
@@ -49,7 +43,6 @@ interface AuditResult {
 
 export default function Billing() {
   const [folios, setFolios] = useState<Row[]>([])
-  const [cash, setCash] = useState<CashSummary | null>(null)
   const [audit, setAudit] = useState<AuditResult | null>(null)
   const [auditErr, setAuditErr] = useState<string | null>(null)
   const [auditRuns, setAuditRuns] = useState<Row[]>([])
@@ -65,9 +58,6 @@ export default function Billing() {
       filters: [["property", "=", getCurrentProperty()]],
       orderBy: "modified desc",
     }).then(setFolios)
-    call<CashSummary>("kamra.api.cash_summary", {
-      property: getCurrentProperty(),
-    }).then(setCash)
     listResource("Night Audit Run", {
       fields: [
         "name", "business_date", "status", "room_charges_posted",
@@ -177,25 +167,16 @@ export default function Billing() {
       <Card>
         <CardHeader>
           <div>
-            <CardTitle>Today's collections</CardTitle>
+            <CardTitle>Cashier till</CardTitle>
             <p className="mt-0.5 text-xs text-zinc-400">
-              What the system says was collected - the drawer must match this
-              at shift close.
+              Open your till, reconcile cash and close the session under
+              Finance → Cashier. Collections live there now.
             </p>
           </div>
-          <span className="text-xl font-semibold">
-            {cur()}{inr(cash?.grand_total ?? 0)}
-          </span>
+          <Button variant="outline" onClick={() => navigate("/cashier")}>
+            Open My Till
+          </Button>
         </CardHeader>
-        {cash && cash.modes.length > 0 && (
-          <CardContent className="flex flex-wrap gap-2 pt-0">
-            {cash.modes.map((m) => (
-              <Badge key={m.mode} tone="zinc">
-                {m.mode}: {cur()}{inr(m.total)} · {m.txns} txn
-              </Badge>
-            ))}
-          </CardContent>
-        )}
       </Card>
 
       <Card>

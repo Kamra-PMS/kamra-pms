@@ -686,7 +686,9 @@ def run_night_audit(property: str, business_date: str | None = None) -> dict:
 	# UnboundLocalError. Default it so the audit runs everywhere.
 	if not getattr(frappe.local, "lang", None):
 		frappe.local.lang = "en"
-	business_date = business_date or nowdate()
+	from kamra.business_date import ensure_business_date, get_business_date
+	ensure_business_date(property)
+	business_date = business_date or get_business_date(property)
 	# per property AND date - a global AUDIT-<date> name would make the
 	# second property's audit silently no-op every night
 	audit_name = f"AUDIT-{business_date}-{property}"
@@ -772,6 +774,11 @@ def run_night_audit(property: str, business_date: str | None = None) -> dict:
 	})
 	audit.insert(ignore_permissions=True)
 
+	# Advance the front-office business date (Opera End of Day roll).
+	from kamra.business_date import advance_business_date, ensure_business_date
+	ensure_business_date(property)
+	new_bd = advance_business_date(property, business_date)
+
 	from kamra.savings import log_action
 	log_action(
 		action_type="night_audit",
@@ -780,7 +787,7 @@ def run_night_audit(property: str, business_date: str | None = None) -> dict:
 		property=property,
 		minutes_saved=90,
 		rationale=f"Posted {charges_posted} room nights, flagged {no_shows} "
-		          f"no-shows for {business_date}",
+		          f"no-shows for {business_date}; business date → {new_bd}",
 		agent_name="Night Audit",
 		autonomy="Full",
 		channel="API",
@@ -792,6 +799,8 @@ def run_night_audit(property: str, business_date: str | None = None) -> dict:
 		"amount_posted": float(amount_posted),
 		"no_shows_flagged": no_shows,
 		"folios_opened": folios_opened,
+		"business_date": business_date,
+		"next_business_date": new_bd,
 	}
 
 

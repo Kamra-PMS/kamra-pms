@@ -2,7 +2,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
   ChefHat, Check, RefreshCw, Clock, X, Undo2, TriangleAlert, Flame, Lock,
   Martini, CookingPot, Utensils, Bell, BellOff, Play, Inbox, Maximize2, Minimize2,
+  Focus, LogOut,
 } from "lucide-react"
+import { useNavigate } from "react-router-dom"
 import { call, getCurrentProperty } from "../lib/api"
 import { subscribeRealtime } from "../lib/realtime"
 import { Button } from "../components/ui/button"
@@ -486,9 +488,10 @@ export default function Kitchen() {
   const rootRef = useRef<HTMLDivElement>(null)
   const openOrderRef = useRef<string | null>(null)
   openOrderRef.current = openOrder
-  const { kioskOn, browserFs, toggleBrowserFs } = useFloorFullscreen(rootRef, {
+  const { kioskOn, browserFs, toggleBrowserFs, toggleFocus, exitFloor } = useFloorFullscreen(rootRef, {
     blockEscape: () => !!openOrderRef.current,
   })
+  const navigate = useNavigate()
   const now = useNow()
 
   useEffect(() => {
@@ -598,10 +601,24 @@ export default function Kitchen() {
             {sound ? <Bell className="size-4" /> : <BellOff className="size-4" />}
             Sound {sound ? "on" : "off"}
           </button>
+          <button onClick={toggleFocus}
+            className={cn("rounded-lg border p-2",
+              kioskOn
+                ? "border-brand-600 bg-brand-50 text-brand-800"
+                : "border-zinc-300 bg-white text-zinc-600 hover:bg-zinc-50")}
+            title={kioskOn ? "Show PMS menus (Esc)" : "Focus mode — hide PMS menus"}>
+            <Focus className="size-4" />
+          </button>
           <button onClick={toggleBrowserFs}
             className="rounded-lg border border-zinc-300 bg-white p-2 text-zinc-600 hover:bg-zinc-50"
             title={browserFs ? "Exit full screen (Esc)" : "Browser full screen"}>
             {browserFs ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+          </button>
+          <button onClick={() => { exitFloor(); navigate("/dashboard") }}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-2.5 py-2 text-xs font-semibold text-zinc-600 hover:bg-zinc-50"
+            title="Exit the kitchen pass — back to the PMS">
+            <LogOut className="size-4" />
+            <span className="hidden xl:inline">Exit</span>
           </button>
           <button onClick={load} aria-label="Refresh"><RefreshCw className="size-5 text-zinc-400" /></button>
         </div>

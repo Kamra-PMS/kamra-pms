@@ -239,7 +239,7 @@ const STAY_TAX_SPECS: Spec[] = [
     field: "require_cashier_pin",
     label: "Require cashier PIN on money actions",
     type: "check",
-    hint: "Payments, invoices, allowances and settlements re-confirm who is acting with a personal PIN - agents are exempt (the action log covers them)",
+    hint: "Payments, invoices, allowances and settlements re-confirm who is acting with a personal PIN - agents are exempt (the action log covers them). Admin can reset a user's PIN from the Cashier PIN Reset panel below.",
   },
 ]
 
@@ -389,6 +389,59 @@ const GATEWAY_SPECS: Spec[] = [
   { field: "webhook_secret", label: "Webhook secret", type: "password" },
 ]
 
+function CashierPinResetCard() {
+  const [user, setUser] = useState("")
+  const [msg, setMsg] = useState<string | null>(null)
+  const [err, setErr] = useState<string | null>(null)
+  const [busy, setBusy] = useState(false)
+  return (
+    <Card>
+      <CardHeader>
+        <div>
+          <CardTitle>Cashier PIN reset</CardTitle>
+          <p className="mt-0.5 text-xs text-zinc-400">
+            Hotel Admin can wipe a user&apos;s PIN so they re-enroll on the next
+            money action. Use when someone forgets their PIN.
+          </p>
+        </div>
+      </CardHeader>
+      <CardContent className="flex flex-wrap items-end gap-2">
+        <label className="block text-sm">
+          <span className="mb-1 block text-zinc-600">User (email / id)</span>
+          <input
+            className={inputCls + " w-64"}
+            value={user}
+            onChange={(e) => setUser(e.target.value)}
+            placeholder="front.desk@hotel.com"
+          />
+        </label>
+        <Button
+          variant="outline"
+          disabled={busy || !user.trim()}
+          onClick={async () => {
+            setBusy(true)
+            setErr(null)
+            setMsg(null)
+            try {
+              await call("kamra.api.reset_cashier_pin", { user: user.trim() })
+              setMsg(`PIN reset for ${user.trim()} — they must set a new one.`)
+              setUser("")
+            } catch (e) {
+              setErr(serverError(e))
+            } finally {
+              setBusy(false)
+            }
+          }}
+        >
+          Reset PIN
+        </Button>
+        {msg ? <p className="w-full text-sm text-emerald-700">{msg}</p> : null}
+        {err ? <p className="w-full text-sm text-rose-600">{err}</p> : null}
+      </CardContent>
+    </Card>
+  )
+}
+
 export default function Settings() {
   const property = getCurrentProperty()
   const [prop, setProp] = useState<Doc | null>(null)
@@ -439,6 +492,7 @@ export default function Settings() {
           load()
         }}
       />
+      <CashierPinResetCard />
       <SettingsCard
         title="Booking page"
         description="What guests see on the public booking engine."

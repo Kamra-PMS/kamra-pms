@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
+import { Link } from "react-router-dom"
 import { Printer } from "lucide-react"
 import { call, getCurrentProperty } from "../lib/api"
 import { Button } from "../components/ui/button"
@@ -107,6 +108,18 @@ export default function Reports() {
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2 print:hidden">
         <h1 className="text-lg font-semibold">Manager flash</h1>
         <div className="flex items-center gap-2">
+          <Link
+            to="/cashier/shift-report"
+            className="rounded-lg border border-zinc-200 px-3 py-1.5 text-sm text-zinc-600 hover:bg-zinc-50"
+          >
+            Cashier shift report
+          </Link>
+          <Link
+            to="/ledgers"
+            className="rounded-lg border border-zinc-200 px-3 py-1.5 text-sm text-zinc-600 hover:bg-zinc-50"
+          >
+            Ledgers
+          </Link>
           <input
             type="date"
             aria-label="Report date"

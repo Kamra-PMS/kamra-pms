@@ -1,11 +1,12 @@
 import { Fragment, useCallback, useEffect, useState } from "react"
 import { ArrowLeft, ArrowRightLeft, Printer, Trash2, X } from "lucide-react"
 import { Link, useNavigate, useParams } from "react-router-dom"
-import { call, getCurrentProperty } from "../lib/api"
+import { call } from "../lib/api"
 import EditableNationality from "../components/EditableNationality"
 import LinkedRecords from "../components/LinkedRecords"
 import { loadLocale, taxRates } from "../lib/money"
 import { serverError } from "../lib/resource"
+import { useCashierAuth } from "../lib/cashierAuth"
 import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
 import { cur, moneyLocale, taxLabel } from "../lib/money"
@@ -199,10 +200,7 @@ export default function FolioView() {
   const [showCancel, setShowCancel] = useState(false)
   const [cancelReason, setCancelReason] = useState("")
   const [allowance, setAllowance] = useState({ amount: "", reason: "", gst_rate: "0" })
-  // cashier PIN: when the property demands it, every money action carries it
-  const [pinStatus, setPinStatus] = useState<{ required: boolean; has_pin: boolean } | null>(null)
-  const [pin, setPin] = useState("")
-  const [newPin, setNewPin] = useState("")
+  const { ensureUnlocked, status: pinStatus } = useCashierAuth()
 
   const load = useCallback(() => {
     if (name)
@@ -224,23 +222,15 @@ export default function FolioView() {
   useEffect(() => {
     loadLocale().then((l) => setRates(l.tax_rates))
   }, [])
-  useEffect(() => {
-    call<{ required: boolean; has_pin: boolean }>(
-      "kamra.api.cashier_pin_status",
-      { property: getCurrentProperty() },
-    )
-      .then(setPinStatus)
-      .catch(() => setPinStatus(null))
-  }, [])
 
-  /** PIN travels with every money call when the property demands it. */
-  const withPin = (params: Record<string, unknown>) =>
-    pinStatus?.required ? { ...params, pin } : params
+  /** Params helper kept for call sites; unlock happens in act(). */
+  const withPin = (params: Record<string, unknown>) => params
 
   async function act(fn: () => Promise<unknown>) {
     setBusy(true)
     setError(null)
     try {
+      if (pinStatus?.required) await ensureUnlocked()
       await fn()
       load()
     } catch (e) {
@@ -396,7 +386,41 @@ export default function FolioView() {
                 Group folio
               </Button>
             )}
-          <Button variant="outline" onClick={() => window.print()}>
+          <Button variant="outline" disabled={busy} onClick={() =>
+              act(async () => {
+                await call("kamra.ledger.generate_proforma", { folio: folio.name })
+                window.print()
+              })
+            }>
+            Proforma
+          </Button>
+          {open && stay?.reservation ? (
+            <Button variant="outline" disabled={busy}
+              title="Post future room & tax ahead of night audit"
+              onClick={() =>
+                act(() => call("kamra.ledger.force_advance_bill",
+                  withPin({ reservation: stay.reservation, nights: "entire" })))
+              }>
+              Advance bill
+            </Button>
+          ) : null}
+          {!open && folio.invoice_number ? (
+            <Button variant="outline" disabled={busy} onClick={() => {
+              const amt = window.prompt("Credit note amount")
+              const reason = window.prompt("Reason")
+              if (!amt || !reason) return
+              act(() => call("kamra.ledger.issue_credit_note",
+                withPin({ folio: folio.name, amount: Number(amt), reason })))
+            }}>
+              Credit note
+            </Button>
+          ) : null}
+          <Button variant="outline" onClick={() => {
+            void call("kamra.ledger.record_folio_reprint", {
+              folio: folio.name,
+              document: folio.invoice_number ? "Guest Folio" : "Proforma",
+            }).finally(() => window.print())
+          }}>
             <Printer className="size-4" aria-hidden />
             Print {folio.invoice_number ? "invoice" : "folio"}
           </Button>
@@ -477,49 +501,26 @@ export default function FolioView() {
         <LinkedRecords doctype="Reservation" name={stay.reservation} />
       </div>
 
-      {pinStatus?.required && !pinStatus.has_pin && (
-        <div className="mb-4 flex flex-wrap items-center gap-2 rounded-lg border border-sky-200 bg-sky-50 px-4 py-2.5 text-sm print:hidden">
-          <span className="text-sky-800">
-            This property requires a cashier PIN on money actions - set yours
-            (4–8 digits):
+      {pinStatus?.required ? (
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-2 text-sm print:hidden">
+          <span className="text-zinc-600">
+            {pinStatus.unlocked
+              ? "Cashier unlocked — money actions are open for 15 minutes."
+              : pinStatus.must_reset || !pinStatus.has_pin
+                ? "Set your cashier PIN to post payments and settle folios."
+                : "Cashier PIN required for money actions."}
           </span>
-          <input
-            className="w-28 rounded-lg border border-sky-300 bg-white px-3 py-1.5 text-sm"
-            type="password"
-            inputMode="numeric"
-            placeholder="New PIN"
-            value={newPin}
-            onChange={(e) => setNewPin(e.target.value)}
-          />
-          <Button
-            variant="outline"
-            disabled={busy || newPin.trim().length < 4}
-            onClick={() =>
-              act(async () => {
-                await call("kamra.api.set_cashier_pin", { pin: newPin.trim() })
-                setNewPin("")
-                setPinStatus((s) => (s ? { ...s, has_pin: true } : s))
-              })
-            }
-          >
-            Set PIN
-          </Button>
+          {!pinStatus.unlocked ? (
+            <Button
+              variant="outline"
+              disabled={busy}
+              onClick={() => void ensureUnlocked().catch((e) => setError(serverError(e)))}
+            >
+              {pinStatus.must_reset || !pinStatus.has_pin ? "Set PIN" : "Unlock"}
+            </Button>
+          ) : null}
         </div>
-      )}
-      {pinStatus?.required && pinStatus.has_pin && (
-        <div className="mb-4 flex flex-wrap items-center gap-2 rounded-lg bg-zinc-50 px-4 py-2 text-sm text-zinc-600 print:hidden">
-          <span>Cashier PIN (needed for payments, settling and invoices):</span>
-          <input
-            className="w-24 rounded-lg border border-zinc-300 bg-white px-3 py-1 text-sm"
-            type="password"
-            inputMode="numeric"
-            aria-label="Cashier PIN"
-            placeholder="••••"
-            value={pin}
-            onChange={(e) => setPin(e.target.value)}
-          />
-        </div>
-      )}
+      ) : null}
       {error && (
         <div className="mb-4 rounded-lg border border-rose-200 bg-rose-50 px-4 py-2 text-sm text-rose-700 print:hidden">
           {error}

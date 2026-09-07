@@ -299,7 +299,30 @@ export default function AppShell() {
           </div>
         )}
 
-        <nav className="space-y-0.5">{items.map(renderItem)}</nav>
+        <nav className="space-y-0.5">
+          {(() => {
+            const groups: { label?: string; items: typeof items }[] = []
+            for (const item of items) {
+              const g = item.group
+              const last = groups[groups.length - 1]
+              if (!last || last.label !== g) {
+                groups.push({ label: g, items: [item] })
+              } else {
+                last.items.push(item)
+              }
+            }
+            return groups.map((g, gi) => (
+              <div key={g.label ?? `ungrouped-${gi}`} className={gi > 0 ? "mt-3" : undefined}>
+                {g.label ? (
+                  <div className="mb-1 px-2.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-400">
+                    {t(g.label)}
+                  </div>
+                ) : null}
+                <div className="space-y-0.5">{g.items.map(renderItem)}</div>
+              </div>
+            ))
+          })()}
+        </nav>
       </aside>
       )}
 
@@ -358,7 +381,7 @@ export default function AppShell() {
                   "max-w-none",
                   kiosk
                     ? "h-[100dvh] overflow-hidden p-0"
-                    : "min-h-[calc(100dvh-3.5rem)] overflow-auto p-3",
+                    : "min-h-[calc(100dvh-3.5rem)] overflow-auto p-3 lg:h-[calc(100dvh-3.5rem)] lg:overflow-hidden",
                 )
               : "mx-auto max-w-6xl px-4 py-6"
           }
@@ -374,8 +397,13 @@ export default function AppShell() {
         </main>
       </div>
 
-      <HelpPanel />
-      <CommandPalette />
+      {/* Never float over the till / kitchen pass in focus mode. */}
+      {!kiosk && (
+        <>
+          <HelpPanel />
+          <CommandPalette />
+        </>
+      )}
 
       {booking && (
         <BookingDialog

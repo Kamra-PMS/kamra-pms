@@ -1,0 +1,259 @@
+{
+ "actions": [],
+ "creation": "2026-09-07 00:00:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "property",
+  "cashier",
+  "user",
+  "column_break_a",
+  "business_date",
+  "terminal",
+  "status",
+  "sb_cash",
+  "opening_float",
+  "system_cash",
+  "system_card",
+  "system_upi",
+  "system_other",
+  "column_break_b",
+  "paid_outs",
+  "drops",
+  "petty_cash",
+  "expected_cash",
+  "counted_cash",
+  "variance",
+  "sb_meta",
+  "opened_at",
+  "closed_at",
+  "closed_by",
+  "close_notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "property",
+   "fieldtype": "Link",
+   "label": "Property",
+   "options": "Property",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "cashier",
+   "fieldtype": "Link",
+   "label": "Cashier",
+   "options": "Cashier",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "label": "User",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_a",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "business_date",
+   "fieldtype": "Date",
+   "label": "Business Date",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "terminal",
+   "fieldtype": "Data",
+   "label": "Terminal"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Open\nClosed",
+   "default": "Open",
+   "in_list_view": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "sb_cash",
+   "fieldtype": "Section Break",
+   "label": "Float & Close"
+  },
+  {
+   "fieldname": "opening_float",
+   "fieldtype": "Currency",
+   "label": "Opening Float",
+   "default": "0"
+  },
+  {
+   "fieldname": "system_cash",
+   "fieldtype": "Currency",
+   "label": "System Cash",
+   "read_only": 1,
+   "default": "0"
+  },
+  {
+   "fieldname": "system_card",
+   "fieldtype": "Currency",
+   "label": "System Card",
+   "read_only": 1,
+   "default": "0"
+  },
+  {
+   "fieldname": "system_upi",
+   "fieldtype": "Currency",
+   "label": "System UPI",
+   "read_only": 1,
+   "default": "0"
+  },
+  {
+   "fieldname": "system_other",
+   "fieldtype": "Currency",
+   "label": "System Other",
+   "read_only": 1,
+   "default": "0"
+  },
+  {
+   "fieldname": "column_break_b",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "paid_outs",
+   "fieldtype": "Currency",
+   "label": "Paid Outs",
+   "read_only": 1,
+   "default": "0"
+  },
+  {
+   "fieldname": "drops",
+   "fieldtype": "Currency",
+   "label": "Cash Drops",
+   "read_only": 1,
+   "default": "0"
+  },
+  {
+   "fieldname": "petty_cash",
+   "fieldtype": "Currency",
+   "label": "Petty Cash",
+   "read_only": 1,
+   "default": "0"
+  },
+  {
+   "fieldname": "expected_cash",
+   "fieldtype": "Currency",
+   "label": "Expected Cash",
+   "read_only": 1,
+   "default": "0"
+  },
+  {
+   "fieldname": "counted_cash",
+   "fieldtype": "Currency",
+   "label": "Counted Cash"
+  },
+  {
+   "fieldname": "variance",
+   "fieldtype": "Currency",
+   "label": "Variance",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_meta",
+   "fieldtype": "Section Break",
+   "label": "Close"
+  },
+  {
+   "fieldname": "opened_at",
+   "fieldtype": "Datetime",
+   "label": "Opened At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "closed_at",
+   "fieldtype": "Datetime",
+   "label": "Closed At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "closed_by",
+   "fieldtype": "Link",
+   "label": "Closed By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "close_notes",
+   "fieldtype": "Small Text",
+   "label": "Close Notes"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-09-07 00:00:00",
+ "modified_by": "Administrator",
+ "module": "Kamra",
+ "name": "Cashier Session",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "export": 1,
+   "print": 1,
+   "report": 1,
+   "share": 1,
+   "email": 1
+  },
+  {
+   "role": "Hotel Admin",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "export": 1,
+   "print": 1,
+   "report": 1,
+   "share": 1,
+   "email": 1
+  },
+  {
+   "role": "Finance",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "report": 1,
+   "email": 1
+  },
+  {
+   "role": "Front Desk",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "print": 1,
+   "report": 1,
+   "email": 1
+  },
+  {
+   "role": "Kamra Agent",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "print": 1,
+   "report": 1,
+   "email": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1,
+ "autoname": "hash"
+}

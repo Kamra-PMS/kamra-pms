@@ -1,15 +1,19 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import {
-  Plus, Minus, Trash2, Send, UtensilsCrossed, Leaf, Search,
+  Plus, Minus, Trash2, Send, UtensilsCrossed, Search,
   Maximize2, Minimize2, Wallet, Printer, Receipt, XCircle, Ban,
-  Scissors, Users, MoreHorizontal, PauseCircle, Tag, Gift, Clock,
+  Scissors, Users, PauseCircle, Tag, Gift, Clock, LogOut, Focus,
+  Keyboard, LayoutGrid, BedDouble,
 } from "lucide-react"
+import { useNavigate } from "react-router-dom"
 import { call, getCurrentProperty } from "../lib/api"
 import { subscribeRealtime } from "../lib/realtime"
 import { serverError } from "../lib/resource"
+import { useCashierAuth } from "../lib/cashierAuth"
 import { printThermal, kotHtml, billHtml, type BillData, type KotLine } from "../lib/thermal"
 import { useFloorFullscreen } from "../lib/kiosk"
 import { Button } from "../components/ui/button"
+import { cn } from "../lib/utils"
 import { cur, moneyLocale } from "../lib/money"
 
 const inr = (n: unknown) =>
@@ -154,6 +158,7 @@ function ago(ts?: string) {
 }
 
 export default function POS() {
+  const { ensureUnlocked } = useCashierAuth()
   const rootRef = useRef<HTMLDivElement>(null)
   const [outlets, setOutlets] = useState<Outlet[]>([])
   const [outlet, setOutlet] = useState("")
@@ -187,7 +192,7 @@ export default function POS() {
   const [discOpen, setDiscOpen] = useState(false)
   const [printKot, setPrintKot] = useState(() => localStorage.getItem("pos_print_kot") !== "0")
   const [settling, setSettling] = useState(false)
-  const [moreOpen, setMoreOpen] = useState(false)
+  const [sheetNc, setSheetNc] = useState(false) // NC tender open inside the settle sheet
   const [voiding, setVoiding] = useState<OrderItem | null>(null)
   const [voidReason, setVoidReason] = useState("")
   const [cancelling, setCancelling] = useState(false)
@@ -199,7 +204,14 @@ export default function POS() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [printNote, setPrintNote] = useState<string | null>(null)
-  const { floorOn, browserFs, toggleBrowserFs } = useFloorFullscreen(rootRef)
+  // responsive chrome: which pane a phone shows, the tablet tables drawer,
+  // and the shortcuts popover in the header
+  const [mobilePane, setMobilePane] = useState<"tables" | "menu" | "bill">("menu")
+  const [tablesOpen, setTablesOpen] = useState(false)
+  const [helpOpen, setHelpOpen] = useState(false)
+  const navigate = useNavigate()
+  const { floorOn, kioskOn, browserFs, toggleBrowserFs, toggleFocus, exitFloor } =
+    useFloorFullscreen(rootRef)
 
   useEffect(() => {
     call<Outlet[]>("kamra.pos.outlets", { property: getCurrentProperty() })
@@ -235,20 +247,22 @@ export default function POS() {
   }, [loadOpen])
 
   function resetPanel() {
-    setCart([]); setDiscount(""); setDiscOpen(false); setSettling(false); setMoreOpen(false)
+    setCart([]); setDiscount(""); setDiscOpen(false); setSettling(false); setSheetNc(false)
     setVoiding(null); setVoidReason(""); setCancelling(false); setCancelReason("")
     setSplitMode(false); setSplitSel(new Set()); setChooser(null)
     setNcOpen(false); setNcBy("Captain"); setNcNote("")
-    setResTile(null); setReserveOpen(false)
+    setResTile(null); setReserveOpen(false); setTablesOpen(false)
   }
   function newOrder(atTable?: string) {
     setSelected(null); setDetail(null); setRoom(""); resetPanel()
     setTable(atTable || ""); setCustomTable(false)
     setGuests(""); setCustName(""); setCustPhone(""); setCustAddr("")
     if (atTable) setOrderType("Dine In")
+    setMobilePane("menu") // a fresh bill starts at the menu on a phone
   }
   async function openTab(name: string) {
     setSelected(name); resetPanel()
+    setMobilePane("bill") // an existing bill opens on the bill on a phone
     const d = await call<Detail>("kamra.pos.order_detail", { order: name })
     setDetail(d)
   }
@@ -385,10 +399,10 @@ export default function POS() {
     if (selected || cart.length === 0) return
     await act(async () => { await createBill(false); newOrder() })
   }
-  async function proceedToPay() { // F4
+  async function proceedToPay() { // F4 — opens the settle sheet
     if (selected && detail) {
-      if (detail.room || detail.nc) await act(async () => { await call("kamra.pos.deliver_order", { order: selected }); newOrder() })
-      else setSettling(true)
+      setSettling(true); setSheetNc(false)
+      setMobilePane("bill")
     } else if (cart.length > 0) {
       await act(async () => {
         const order = await createBill(true)
@@ -401,9 +415,29 @@ export default function POS() {
     if (!selected) return
     const order = selected
     await act(async () => {
+      await ensureUnlocked()
       await call("kamra.pos.pay_order", { order, mode })
       const bill = await call<BillData>("kamra.pos.bill_data", { order })
       printThermal(`Bill ${order}`, billHtml(bill))
+      newOrder()
+    })
+  }
+  /** Close at zero: Deliver posts NC bills / room-service to their homes. */
+  async function settleDeliver() {
+    if (!selected) return
+    await act(async () => {
+      await call("kamra.pos.deliver_order", { order: selected })
+      newOrder()
+    })
+  }
+  /** The Complimentary tender: authorize the NC, then close the bill at zero. */
+  async function settleNc() {
+    if (!selected) return
+    await act(async () => {
+      await call("kamra.pos.mark_nc", {
+        order: selected, authorized_by: ncBy, note: ncNote, undo: 0,
+      })
+      await call("kamra.pos.deliver_order", { order: selected })
       newOrder()
     })
   }
@@ -554,57 +588,14 @@ export default function POS() {
   const isNewCustomerType = !selected && (orderType === "Takeaway" || orderType === "Delivery")
   const runningBills = open.filter((o) => !o.kot_fired)
   const kitchenBills = open.filter((o) => o.kot_fired && o.pending > 0)
+  const billItemCount = (selected && detail ? detail.items.filter((i) => !i.voided).length : 0)
+    + cart.reduce((s, l) => s + l.qty, 0)
 
-  return (
-    <div ref={rootRef} className={floorOn ? "h-full overflow-y-auto bg-zinc-50 p-3" : ""}>
-      <div className="space-y-3">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h1 className="flex items-center gap-2 text-xl font-bold text-zinc-800">
-            <UtensilsCrossed className="size-5 text-brand-600" />Restaurant POS
-            <select className={inputCls + " !w-auto font-normal"} value={outlet} onChange={(e) => { setOutlet(e.target.value); newOrder() }}>
-              {outlets.map((o) => <option key={o.name} value={o.name}>{o.outlet_name}</option>)}
-            </select>
-          </h1>
-          <div className="flex rounded-xl border border-zinc-200 bg-white p-1 shadow-sm">
-            {ORDER_TYPES.map((t) => (
-              <button key={t} onClick={() => { setOrderType(t); if (selected) newOrder(); }}
-                className={"rounded-lg px-3 py-1.5 text-sm transition " +
-                  ((selected && detail ? detail.order_type : orderType) === t
-                    ? "bg-brand-600 font-semibold text-white"
-                    : "text-zinc-600 hover:bg-zinc-50")}>
-                {t}
-              </button>
-            ))}
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <button type="button" onClick={() => setPrintKot((v) => !v)}
-              className={"inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-semibold " +
-                (printKot ? "border-brand-600 bg-brand-50 text-brand-800" : "border-zinc-300 bg-white text-zinc-500")}>
-              <Printer className="size-3.5" />{printKot ? "KOT printer on" : "KOT printer off"}
-            </button>
-            <button onClick={toggleBrowserFs}
-              className="rounded-lg border border-zinc-300 bg-white p-2 text-zinc-600 hover:bg-zinc-50"
-              title={browserFs ? "Exit full screen (Esc)" : "Full screen till"}>
-              {browserFs ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
-            </button>
-            <Button onClick={() => newOrder()}>
-              <Plus className="size-4" />New Bill
-              <kbd className="rounded bg-white/20 px-1 text-[10px]">F2</kbd>
-            </Button>
-          </div>
-        </div>
-        {error && <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</div>}
-        {printNote && (
-          <div className="flex items-center justify-between gap-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
-            <span>{printNote}</span>
-            <button className="text-xs font-semibold" onClick={() => setPrintNote(null)}>Dismiss</button>
-          </div>
-        )}
-        <RunningStrip open={open} selected={selected} onOpen={openTab} />
-
-        <div className="grid gap-4 lg:grid-cols-12">
-          {/* ── left: tables + recent ── */}
-          <div className="flex min-h-0 flex-col gap-2 overflow-y-auto lg:col-span-3">
+  /* The tables / open bills / recent stack has three homes: a fixed left
+     column on desktop, a slide-in drawer on tablets, its own pane on phones.
+     One JSX tree, three placements. */
+  const tablesPane = (
+    <>
             <div className="shrink-0 rounded-xl border border-zinc-200 bg-white p-3">
               <div className="mb-2 flex items-center justify-between">
                 <h3 className="text-xs font-bold uppercase tracking-wide text-zinc-500">Running tables</h3>
@@ -850,10 +841,125 @@ export default function POS() {
                 {recent.length === 0 && <p className="py-2 text-center text-xs text-zinc-400">No orders yet today.</p>}
               </ul>
             </div>
-          </div>
+    </>
+  )
 
-          {/* ── centre: menu ── */}
-          <div className="min-h-0 overflow-y-auto lg:col-span-5">
+  return (
+    <div ref={rootRef} className={cn("flex h-full min-h-0 flex-col gap-3", floorOn && "bg-zinc-50 p-3")}>
+      {/* header — the way out of the till is always on screen */}
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-3">
+        <h1 className="flex items-center gap-2 text-xl font-bold text-zinc-800">
+          <UtensilsCrossed className="size-5 text-brand-600" />
+          <span className="hidden sm:inline">Restaurant POS</span>
+          <select className={inputCls + " !w-auto font-normal"} value={outlet} onChange={(e) => { setOutlet(e.target.value); newOrder() }}>
+            {outlets.map((o) => <option key={o.name} value={o.name}>{o.outlet_name}</option>)}
+          </select>
+        </h1>
+        <div className="flex rounded-xl border border-zinc-200 bg-white p-1 shadow-sm">
+          {ORDER_TYPES.map((t) => (
+            <button key={t} onClick={() => { setOrderType(t); if (selected) newOrder(); }}
+              className={"rounded-lg px-3 py-1.5 text-sm transition " +
+                ((selected && detail ? detail.order_type : orderType) === t
+                  ? "bg-brand-600 font-semibold text-white"
+                  : "text-zinc-600 hover:bg-zinc-50")}>
+              {t}
+            </button>
+          ))}
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <button onClick={() => setTablesOpen(true)}
+            className="hidden items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-2.5 py-2 text-xs font-semibold text-zinc-600 hover:bg-zinc-50 md:inline-flex lg:hidden">
+            <LayoutGrid className="size-4" />Tables
+          </button>
+          <button type="button" onClick={() => setPrintKot((v) => !v)}
+            className={"inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-2 text-xs font-semibold " +
+              (printKot ? "border-brand-600 bg-brand-50 text-brand-800" : "border-zinc-300 bg-white text-zinc-500")}>
+            <Printer className="size-3.5" />
+            <span className="hidden sm:inline">{printKot ? "KOT printer on" : "KOT printer off"}</span>
+          </button>
+          <div className="relative">
+            <button onClick={() => setHelpOpen((v) => !v)}
+              className="rounded-lg border border-zinc-300 bg-white p-2 text-zinc-600 hover:bg-zinc-50"
+              title="Keyboard shortcuts" aria-label="Keyboard shortcuts">
+              <Keyboard className="size-4" />
+            </button>
+            {helpOpen && (
+              <div className="absolute right-0 top-full z-30 mt-1 w-64 rounded-xl border border-zinc-200 bg-white p-2 shadow-lg">
+                {([["F2", "New bill"], ["F3", "Cycle open bills"], ["F4", "Settle"],
+                   ["F5", "Hold bill"], ["F6", "Fire KOT"],
+                   ["Esc", "Show menus / exit full screen"]] as const).map(([k, l]) => (
+                  <div key={k} className="flex items-center justify-between gap-3 px-1 py-1 text-xs text-zinc-600">
+                    <span>{l}</span>
+                    <kbd className="rounded border border-zinc-300 bg-zinc-50 px-1.5 py-0.5 font-semibold text-zinc-600">{k}</kbd>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          <button onClick={toggleFocus}
+            className={cn("rounded-lg border p-2",
+              kioskOn
+                ? "border-brand-600 bg-brand-50 text-brand-800"
+                : "border-zinc-300 bg-white text-zinc-600 hover:bg-zinc-50")}
+            title={kioskOn ? "Show PMS menus (Esc)" : "Focus mode — hide PMS menus"}>
+            <Focus className="size-4" />
+          </button>
+          <button onClick={toggleBrowserFs}
+            className="rounded-lg border border-zinc-300 bg-white p-2 text-zinc-600 hover:bg-zinc-50"
+            title={browserFs ? "Exit full screen (Esc)" : "Full screen till"}>
+            {browserFs ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+          </button>
+          <button onClick={() => { exitFloor(); navigate("/dashboard") }}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-2.5 py-2 text-xs font-semibold text-zinc-600 hover:bg-zinc-50"
+            title="Exit POS — back to the PMS">
+            <LogOut className="size-4" />
+            <span className="hidden xl:inline">Exit</span>
+          </button>
+          <Button onClick={() => newOrder()}>
+            <Plus className="size-4" />New Bill
+            <kbd className="rounded bg-white/20 px-1 text-[10px]">F2</kbd>
+          </Button>
+        </div>
+      </div>
+
+      {/* phone: pane switcher */}
+      <div className="flex shrink-0 rounded-xl border border-zinc-200 bg-white p-1 shadow-sm md:hidden">
+        {([["tables", "Tables"], ["menu", "Menu"], ["bill", "Bill"]] as const).map(([k, l]) => (
+          <button key={k} onClick={() => setMobilePane(k)}
+            className={cn("flex-1 rounded-lg px-3 py-2 text-sm font-medium transition",
+              mobilePane === k ? "bg-brand-600 text-white" : "text-zinc-600")}>
+            {l}{k === "bill" && billItemCount > 0 ? ` · ${Math.round(billItemCount)}` : ""}
+          </button>
+        ))}
+      </div>
+
+      {error && <div className="shrink-0 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</div>}
+      {printNote && (
+        <div className="flex shrink-0 items-center justify-between gap-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+          <span>{printNote}</span>
+          <button className="text-xs font-semibold" onClick={() => setPrintNote(null)}>Dismiss</button>
+        </div>
+      )}
+      {open.length > 0 && (
+        <div className="shrink-0">
+          <RunningStrip open={open} selected={selected} onOpen={openTab} />
+        </div>
+      )}
+
+      <div className="flex min-h-0 flex-1 gap-3">
+        {/* ── left: tables + recent (desktop column) ── */}
+        <div className="hidden min-h-0 w-[19rem] shrink-0 flex-col gap-2 overflow-y-auto lg:flex xl:w-[21rem]">
+          {tablesPane}
+        </div>
+        {/* tables as their own pane on phones */}
+        <div className={cn("min-h-0 w-full flex-col gap-2 overflow-y-auto md:hidden",
+          mobilePane === "tables" ? "flex" : "hidden")}>
+          {tablesPane}
+        </div>
+
+        {/* ── centre: menu ── */}
+        <div className={cn("min-h-0 min-w-0 flex-1 md:overflow-y-auto",
+          mobilePane === "menu" ? "block" : "hidden md:block")}>
             <div className="relative mb-2">
               <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-400" />
               <input className={inputCls + " pl-9"} placeholder="Search menu items…" value={query} onChange={(e) => setQuery(e.target.value)} />
@@ -868,7 +974,7 @@ export default function POS() {
               ))}
             </div>
             {shownItems ? (
-              <div className="grid grid-cols-2 gap-3 xl:grid-cols-3">
+              <div className="grid grid-cols-2 gap-2 sm:gap-3 xl:grid-cols-3 2xl:grid-cols-4">
                 {shownItems.map((it) => <MenuCard key={it.name} it={it} onAdd={() => addToCart(it)} />)}
                 {shownItems.length === 0 && <p className="col-span-full py-6 text-center text-sm text-zinc-400">No matches.</p>}
               </div>
@@ -876,17 +982,22 @@ export default function POS() {
               cats.map((c) => (
                 <div key={c.category} className="mb-4">
                   <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-400">{c.category}</h3>
-                  <div className="grid grid-cols-2 gap-3 xl:grid-cols-3">
+                  <div className="grid grid-cols-2 gap-2 sm:gap-3 xl:grid-cols-3 2xl:grid-cols-4">
                     {c.items.map((it) => <MenuCard key={it.name} it={it} onAdd={() => addToCart(it)} />)}
                   </div>
                 </div>
               ))
             )}
-          </div>
+        </div>
 
-          {/* ── right: the bill ── */}
-          <div className="flex min-h-0 flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white lg:col-span-4">
-            <div className="min-h-0 flex-1 overflow-y-auto p-3">
+        {/* ── right: the bill ── */}
+        <div className={cn(
+          "min-h-0 w-full flex-col rounded-xl border border-zinc-200 bg-white",
+          "md:w-[21rem] md:shrink-0 md:overflow-hidden xl:w-[24rem]",
+          mobilePane === "bill" ? "flex" : "hidden md:flex",
+        )}>
+          {/* zone 1: who / where — pinned above the items */}
+          <div className="shrink-0 border-b border-zinc-100 p-3 pb-2">
             {/* who / where */}
             {selected && detail ? (
               <div className="mb-3 flex items-center justify-between">
@@ -958,7 +1069,10 @@ export default function POS() {
                 )}
               </div>
             )}
+          </div>
 
+          {/* zone 2: line items — the only scroll area in the bill */}
+          <div className="min-h-0 flex-1 p-3 md:overflow-y-auto">
             {/* items */}
             <div className="mb-1 flex items-center justify-between">
               <h3 className="text-sm font-medium text-zinc-500">{selected ? "Order items" : "Order items"}</h3>
@@ -982,7 +1096,7 @@ export default function POS() {
                 )}
                 <ul className="mb-2 space-y-1 border-b border-zinc-100 pb-2 text-sm">
                   {detail.items.map((it) => (
-                    <li key={it.row} className="group flex items-center justify-between gap-1">
+                    <li key={it.row} className="flex min-h-9 items-center justify-between gap-1">
                       <span className={"flex items-center gap-1.5 " + (it.voided ? "text-zinc-400 line-through" : "")}>
                         {splitMode && !it.voided && (
                           <input type="checkbox" className="accent-brand-600"
@@ -997,8 +1111,8 @@ export default function POS() {
                         <span className="tabular-nums">{cur()}{inr(it.amount)}</span>
                         {!splitMode && !it.voided && detail.status !== "Delivered" && (
                           <button title="Void line" onClick={() => { setVoiding(it); setVoidReason("") }}
-                            className="text-zinc-300 opacity-0 transition group-hover:opacity-100 hover:text-rose-500">
-                            <XCircle className="size-3.5" />
+                            className="-my-1 rounded-md p-1.5 text-zinc-300 transition hover:bg-rose-50 hover:text-rose-500">
+                            <XCircle className="size-4" />
                           </button>
                         )}
                       </span>
@@ -1037,13 +1151,16 @@ export default function POS() {
               <div className="space-y-2">
                 {cart.map((l) => (
                   <div key={l.menu_item} className="border-b border-zinc-100 pb-2">
-                    <div className="flex items-center gap-2">
-                      <span className="flex-1 truncate text-sm font-medium">{l.item_name}</span>
-                      <button onClick={() => setQty(l.menu_item, -1)} className="rounded border border-zinc-300 p-0.5"><Minus className="size-3.5" /></button>
-                      <span className="w-5 text-center text-sm tabular-nums">{l.qty}</span>
-                      <button onClick={() => setQty(l.menu_item, 1)} className="rounded border border-zinc-300 p-0.5"><Plus className="size-3.5" /></button>
-                      <span className="w-14 text-right text-sm font-semibold tabular-nums">{cur()}{inr(l.qty * l.price)}</span>
-                      <button onClick={() => setQty(l.menu_item, -l.qty)} className="text-zinc-300 hover:text-rose-500"><Trash2 className="size-3.5" /></button>
+                    <div className="flex min-h-11 items-center gap-1.5">
+                      <span className="min-w-0 flex-1 truncate text-sm font-medium">{l.item_name}</span>
+                      <button onClick={() => setQty(l.menu_item, -1)} aria-label="One less"
+                        className="grid size-9 shrink-0 place-items-center rounded-lg border border-zinc-300 text-zinc-600 hover:bg-zinc-50"><Minus className="size-4" /></button>
+                      <span className="w-6 shrink-0 text-center text-base font-semibold tabular-nums">{l.qty}</span>
+                      <button onClick={() => setQty(l.menu_item, 1)} aria-label="One more"
+                        className="grid size-9 shrink-0 place-items-center rounded-lg border border-zinc-300 text-zinc-600 hover:bg-zinc-50"><Plus className="size-4" /></button>
+                      <span className="w-14 shrink-0 text-right text-sm font-semibold tabular-nums">{cur()}{inr(l.qty * l.price)}</span>
+                      <button onClick={() => setQty(l.menu_item, -l.qty)} aria-label="Remove line"
+                        className="grid size-9 shrink-0 place-items-center rounded-lg text-zinc-300 hover:bg-rose-50 hover:text-rose-500"><Trash2 className="size-4" /></button>
                     </div>
                     <input className="mt-1 w-full rounded border border-zinc-200 px-2 py-1 text-xs" placeholder="Instructions"
                       value={l.instructions} onChange={(e) => setInstr(l.menu_item, e.target.value)} />
@@ -1052,8 +1169,11 @@ export default function POS() {
               </div>
             )}
 
-            {/* money */}
-            <div className="mt-3 space-y-1 border-t border-zinc-100 pt-2 text-sm">
+          </div>
+
+          {/* zone 3: totals + actions — always visible, sticky on phones */}
+          <div className="sticky bottom-0 z-20 shrink-0 space-y-2 rounded-b-xl border-t border-zinc-100 bg-white p-3 md:static">
+            <div className="space-y-1 text-sm">
               <div className="flex items-center justify-between">
                 <span className="text-zinc-500">Discount</span>
                 {discOpen ? (
@@ -1075,11 +1195,14 @@ export default function POS() {
               <div className="flex justify-between text-zinc-500"><span>Subtotal</span><span className="tabular-nums">{cur()}{inr2(taxable)}</span></div>
               <div className="flex justify-between text-xs text-zinc-400"><span>CGST ({gstRate / 2}%)</span><span className="tabular-nums">{cur()}{inr2(gstAmt / 2)}</span></div>
               <div className="flex justify-between text-xs text-zinc-400"><span>SGST ({gstRate / 2}%)</span><span className="tabular-nums">{cur()}{inr2(gstAmt / 2)}</span></div>
-              <div className="flex justify-between text-base font-bold"><span>Total</span><span className="tabular-nums">{cur()}{inr2(grand)}</span></div>
+              <div className="flex items-baseline justify-between border-t border-zinc-100 pt-1 font-bold">
+                <span>Total</span>
+                <span className="text-2xl tabular-nums">{cur()}{inr2(grand)}</span>
+              </div>
             </div>
 
             {ncOpen && selected && (
-              <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 p-2">
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-2">
                 <p className="mb-1 text-xs font-medium text-amber-800">Complimentary (no charge) - who authorized?</p>
                 <div className="flex gap-1">
                   <select className={inputCls + " !w-28 !py-1 text-xs"} value={ncBy} onChange={(e) => setNcBy(e.target.value)}>
@@ -1095,7 +1218,7 @@ export default function POS() {
             )}
 
             {cancelling && (
-              <div className="mt-2 rounded-lg border border-rose-200 bg-rose-50 p-2">
+              <div className="rounded-lg border border-rose-200 bg-rose-50 p-2">
                 <p className="mb-1 text-xs font-medium text-rose-700">Cancel this order - reason required</p>
                 <div className="flex gap-1">
                   <input autoFocus className={inputCls + " !py-1 text-xs"} placeholder="e.g. guest left"
@@ -1107,81 +1230,142 @@ export default function POS() {
               </div>
             )}
 
-            {/* actions */}
-            <div className="mt-3 space-y-2 border-t border-zinc-100 pt-3">
-              <div className="grid grid-cols-2 gap-1.5">
-                <Button variant="outline" className="!px-2 text-xs" disabled={busy || !!selected || cart.length === 0} onClick={hold}>
-                  <PauseCircle className="size-3.5" />Hold bill
-                </Button>
-                <Button variant="outline" className="!px-2 text-xs"
-                  disabled={busy || !selected || !detail || detail.items.filter((i) => !i.voided).length < 2 || detail.status === "Delivered"}
-                  onClick={() => { setSplitMode(true); setSplitSel(new Set()) }}>
-                  <Scissors className="size-3.5" />Split
-                </Button>
-                <Button variant="outline" className="!px-2 text-xs"
-                  disabled={busy || !selected || !detail || detail.status === "Delivered"}
-                  onClick={() => detail?.nc ? saveNc(true) : setNcOpen(true)}>
-                  <Gift className="size-3.5" />{detail?.nc ? "Undo complimentary" : "Complimentary"}
-                </Button>
-                <Button variant="outline" className="!px-2 text-xs" disabled={busy || !selected || !detail?.kot_no}
-                  onClick={reprintKot}>
-                  <Printer className="size-3.5" />Reprint KOT
-                </Button>
-              </div>
-              <div className="relative">
-                <Button variant="outline" className="w-full !px-2 text-xs" disabled={busy || !selected} onClick={() => setMoreOpen((v) => !v)}>
-                  <MoreHorizontal className="size-3.5" />More · print bill / cancel
-                </Button>
-                  {moreOpen && selected && detail && (
-                    <div className="absolute bottom-full right-0 z-10 mb-1 w-44 rounded-xl border border-zinc-200 bg-white p-1 shadow-lg">
-                      <button className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-xs hover:bg-zinc-50"
-                        onClick={() => { setMoreOpen(false); printBill() }}>
-                        <Receipt className="size-3.5" />Print guest bill
-                      </button>
-                      <button className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-xs text-rose-600 hover:bg-rose-50"
-                        onClick={() => { setMoreOpen(false); setCancelling(true); setCancelReason("") }}>
-                        <Ban className="size-3.5" />Cancel order
-                      </button>
-                    </div>
-                  )}
-              </div>
-              <Button variant="outline" className="w-full"
-                disabled={busy || cart.length === 0}
-                onClick={kotAction}>
-                <Send className="size-4" />{selected ? "Add round & fire KOT" : "Send to kitchen"}
-                <kbd className="rounded bg-zinc-100 px-1 text-[10px] text-zinc-500">F6</kbd>
+            {/* actions — every option visible, nothing under a popover or scroll */}
+            <div className="grid grid-cols-3 gap-1.5">
+              <Button variant="outline" className="h-11 flex-col gap-0.5 !px-1 text-[11px] font-semibold leading-none"
+                disabled={busy || !selected} onClick={printBill}>
+                <Receipt className="size-4" />Print bill
               </Button>
-              {settling ? (
-                <div className="grid grid-cols-3 gap-1.5">
-                  {(["Cash", "Card", "UPI"] as const).map((m) => (
-                    <Button key={m} disabled={busy} onClick={() => settle(m)}>{m}</Button>
-                  ))}
+              <Button variant="outline" className="h-11 flex-col gap-0.5 !px-1 text-[11px] font-semibold leading-none"
+                disabled={busy || !selected || !detail || detail.items.filter((i) => !i.voided).length < 2 || detail.status === "Delivered"}
+                onClick={() => { setSplitMode(true); setSplitSel(new Set()) }}>
+                <Scissors className="size-4" />Split
+              </Button>
+              <Button variant="outline" className="h-11 flex-col gap-0.5 !px-1 text-[11px] font-semibold leading-none text-amber-700"
+                disabled={busy || !selected || !detail || detail.status === "Delivered"}
+                onClick={() => detail?.nc ? saveNc(true) : setNcOpen(true)}>
+                <Gift className="size-4" />{detail?.nc ? "Undo NC" : "Complimentary"}
+              </Button>
+              <Button variant="outline" className="h-11 flex-col gap-0.5 !px-1 text-[11px] font-semibold leading-none"
+                disabled={busy || !!selected || cart.length === 0} onClick={hold}>
+                <PauseCircle className="size-4" />Hold bill
+              </Button>
+              <Button variant="outline" className="h-11 flex-col gap-0.5 !px-1 text-[11px] font-semibold leading-none"
+                disabled={busy || !selected || !detail?.kot_no} onClick={reprintKot}>
+                <Printer className="size-4" />Reprint KOT
+              </Button>
+              <Button variant="outline" className="h-11 flex-col gap-0.5 !px-1 text-[11px] font-semibold leading-none text-rose-600"
+                disabled={busy || !selected} onClick={() => { setCancelling(true); setCancelReason("") }}>
+                <Ban className="size-4" />Cancel
+              </Button>
+            </div>
+
+            <Button variant="outline" className="h-11 w-full"
+              disabled={busy || cart.length === 0}
+              onClick={kotAction}>
+              <Send className="size-4" />{selected ? "Add round & fire KOT" : "Send to kitchen"}
+              <kbd className="rounded bg-zinc-100 px-1 text-[10px] text-zinc-500">F6</kbd>
+            </Button>
+
+            {settling && selected && detail ? (
+              /* the settle sheet: every way a bill can close, including zero */
+              <div className="space-y-1.5 rounded-xl border border-brand-200 bg-brand-50/60 p-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold uppercase tracking-wide text-brand-800">
+                    Settle · {cur()}{inr2(grand)}
+                  </span>
+                  <button className="rounded p-1 text-zinc-400 hover:text-zinc-700" aria-label="Close"
+                    onClick={() => { setSettling(false); setSheetNc(false) }}>
+                    <XCircle className="size-4" />
+                  </button>
                 </div>
-              ) : (
-                <Button className="w-full"
-                  disabled={busy || (selected ? !detail : cart.length === 0)}
-                  onClick={proceedToPay}>
-                  <Wallet className="size-4" />
-                  {selected && detail?.nc ? "Close complimentary bill"
-                    : selected && detail?.room ? "Deliver & post to room" : "Proceed to pay"}
-                  <kbd className="rounded bg-white/20 px-1 text-[10px]">F4</kbd>
-                </Button>
-              )}
-            </div>
-            </div>
+                {detail.nc ? (
+                  <Button className="h-12 w-full" disabled={busy} onClick={settleDeliver}>
+                    <Gift className="size-4" />Close complimentary bill · {cur()}0
+                  </Button>
+                ) : sheetNc ? (
+                  <div className="space-y-1.5">
+                    <p className="text-xs font-medium text-amber-800">Complimentary (no charge) - who authorized?</p>
+                    <div className="flex gap-1.5">
+                      <select className={inputCls + " !w-28 !py-1 text-xs"} value={ncBy} onChange={(e) => setNcBy(e.target.value)}>
+                        {["Captain", "Chef", "Manager", "GM", "Management", "Owner"].map((w) => <option key={w}>{w}</option>)}
+                      </select>
+                      <input autoFocus className={inputCls + " !py-1 text-xs"} placeholder="Reference (birthday, complaint #, promo…)"
+                        value={ncNote} onChange={(e) => setNcNote(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && settleNc()} />
+                    </div>
+                    <div className="flex gap-1.5">
+                      <Button className="h-11 flex-1" disabled={busy} onClick={settleNc}>
+                        <Gift className="size-4" />Mark NC & close at {cur()}0
+                      </Button>
+                      <Button variant="ghost" className="h-11" onClick={() => setSheetNc(false)}>Back</Button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-3 gap-1.5">
+                      {(["Cash", "Card", "UPI"] as const).map((m) => (
+                        <Button key={m} className="h-12 justify-center text-base" disabled={busy} onClick={() => settle(m)}>{m}</Button>
+                      ))}
+                    </div>
+                    {detail.room && (
+                      <Button variant="outline" className="h-11 w-full" disabled={busy} onClick={settleDeliver}>
+                        <BedDouble className="size-4" />Deliver & post to Room {detail.room.split("-").pop()}
+                      </Button>
+                    )}
+                    <Button variant="outline" className="h-11 w-full text-amber-700" disabled={busy} onClick={() => setSheetNc(true)}>
+                      <Gift className="size-4" />Complimentary — close at {cur()}0
+                    </Button>
+                  </>
+                )}
+              </div>
+            ) : (
+              <Button className="h-12 w-full text-base"
+                disabled={busy || (selected ? !detail : cart.length === 0)}
+                onClick={proceedToPay}>
+                <Wallet className="size-5" />
+                {selected && detail?.nc ? "Close complimentary bill"
+                  : selected && detail?.room ? "Settle / post to room" : "Settle"}
+                <kbd className="rounded bg-white/20 px-1 text-[10px]">F4</kbd>
+              </Button>
+            )}
           </div>
         </div>
-
-        {/* shortcut legend */}
-        <div className="flex flex-wrap items-center gap-x-5 gap-y-1 rounded-xl border border-zinc-200 bg-white px-4 py-2 text-xs text-zinc-500">
-          {([["F2", "New bill"], ["F3", "Cycle open bills"], ["F4", "Proceed to pay"],
-             ["F5", "Hold bill"], ["F6", "Fire KOT"]] as const).map(([k, l]) => (
-            <span key={k} className="flex items-center gap-1.5">
-              <kbd className="rounded border border-zinc-300 bg-zinc-50 px-1.5 py-0.5 font-semibold text-zinc-600">{k}</kbd>{l}
-            </span>
-          ))}
-        </div>
       </div>
+
+      {/* phone: the bill's essentials ride along on the other panes */}
+      {mobilePane !== "bill" && (cart.length > 0 || selected) && (
+        <div className="sticky bottom-2 z-30 flex shrink-0 items-center gap-2 rounded-xl border border-zinc-200 bg-white p-2 shadow-lg md:hidden">
+          <button onClick={() => setMobilePane("bill")} className="min-w-0 flex-1 text-left">
+            <div className="truncate text-[10px] font-semibold uppercase tracking-wide text-zinc-400">
+              {Math.round(billItemCount)} item{billItemCount === 1 ? "" : "s"}
+              {selected && detail ? ` · ${orderLabel(detail)}` : ""}
+            </div>
+            <div className="text-lg font-bold tabular-nums">{cur()}{inr2(grand)}</div>
+          </button>
+          <Button variant="outline" className="h-11" onClick={() => setMobilePane("bill")}>View bill</Button>
+          <Button className="h-11" disabled={busy || (selected ? !detail : cart.length === 0)} onClick={proceedToPay}>
+            <Wallet className="size-4" />Settle
+          </Button>
+        </div>
+      )}
+
+      {/* tablet: tables drawer */}
+      {tablesOpen && (
+        <div className="fixed inset-0 z-40 hidden md:block lg:hidden">
+          <div className="absolute inset-0 bg-black/30" onClick={() => setTablesOpen(false)} />
+          <div className="absolute inset-y-0 left-0 flex w-[22rem] flex-col gap-2 overflow-y-auto bg-zinc-50 p-3 shadow-2xl">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-bold text-zinc-700">Tables & running bills</h2>
+              <button className="rounded-md p-1.5 text-zinc-400 hover:text-zinc-700" aria-label="Close"
+                onClick={() => setTablesOpen(false)}>
+                <XCircle className="size-4" />
+              </button>
+            </div>
+            {tablesPane}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -1222,18 +1406,34 @@ function RunningStrip({
   )
 }
 
+/** The Indian FSSAI mark: green dot in a square = veg, maroon triangle =
+ *  non-veg. Shape carries it, so it survives colour-blindness and sun glare. */
+function VegMark({ veg }: { veg: number }) {
+  return (
+    <span aria-label={veg ? "Veg" : "Non-veg"}
+      className={"grid size-3.5 shrink-0 place-items-center rounded-[3px] border-2 " +
+        (veg ? "border-emerald-600" : "border-rose-700")}>
+      {veg ? (
+        <span className="size-1 rounded-full bg-emerald-600" />
+      ) : (
+        <span className="size-0 border-x-[2.5px] border-b-[4px] border-x-transparent border-b-rose-700" />
+      )}
+    </span>
+  )
+}
+
 function MenuCard({ it, onAdd }: { it: MenuItem; onAdd: () => void }) {
   return (
     <button onClick={onAdd}
-      className="overflow-hidden rounded-xl border border-zinc-200 bg-white text-left transition hover:border-brand-400 hover:shadow-sm">
+      className="flex min-h-[4.25rem] flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white text-left transition hover:border-brand-400 hover:shadow-sm active:scale-[0.98]">
       {it.image && <img src={it.image} alt="" className="h-20 w-full object-cover" />}
-      <div className="p-2.5">
-        <div className="flex items-center gap-1">
-          <Leaf className={"size-3 " + (it.is_veg ? "text-emerald-600" : "text-rose-500")} />
+      <div className="flex flex-1 flex-col justify-between p-2.5">
+        <div className="flex items-center gap-1.5">
+          <VegMark veg={it.is_veg} />
           <span className="truncate text-sm font-medium">{it.item_name}</span>
         </div>
-        <div className="mt-0.5 flex items-center justify-between">
-          <span className="text-sm font-semibold text-zinc-700">{cur()}{inr(it.price)}</span>
+        <div className="mt-1 flex items-center justify-between">
+          <span className="text-sm font-bold tabular-nums text-zinc-800">{cur()}{inr(it.price)}</span>
           <Plus className="size-4 text-brand-600" />
         </div>
       </div>
