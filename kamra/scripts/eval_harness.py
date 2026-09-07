@@ -180,13 +180,18 @@ def _guest(name, phone):
 	}).insert(ignore_permissions=True).name
 
 
-def _res(guest, ci, co, room=None, day_use=0):
-	return frappe.get_doc({
+def _res(guest, ci, co, room=None, day_use=0, allow_past=0):
+	doc = frappe.get_doc({
 		"doctype": "Reservation", "property": P, "guest": guest,
 		"room_type": RT, "room": room, "check_in_date": ci,
 		"check_out_date": co, "adults": 2, "is_day_use": day_use,
 		"auto_price": 1,
-	}).insert(ignore_permissions=True)
+	})
+	# a back-dated booking (e.g. seeding a no-show) is a legitimate case the
+	# past-check-in guard exempts via this flag
+	if allow_past:
+		doc.flags.allow_past_check_in = True
+	return doc.insert(ignore_permissions=True)
 
 
 @check("double booking blocked; adjacent stay allowed")
@@ -498,7 +503,7 @@ def t18():
 
 	# yesterday's un-arrived booking → no-show flagged AND charged
 	g3 = _guest("Eval NoShow", "+91 70000 00017")
-	ns = _res(g3, add_days(nowdate(), -1), nowdate())
+	ns = _res(g3, add_days(nowdate(), -1), nowdate(), allow_past=1)
 	run_night_audit(P, nowdate())
 	assert frappe.db.get_value("Reservation", ns.name, "status") == "No Show"
 	ns_folio = frappe.db.get_value(
