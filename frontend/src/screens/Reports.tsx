@@ -5,6 +5,7 @@ import { call, getCurrentProperty } from "../lib/api"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { cur, moneyLocale } from "../lib/money"
+import { useT } from "../lib/i18n"
 
 /** The manager's flash - sign it off with the morning chai. */
 
@@ -66,6 +67,7 @@ function Stat(props: { label: string; value: string; sub?: string }) {
 }
 
 export default function Reports() {
+  const { t } = useT()
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10))
   const [sortBy, setSortBy] = useState<SortKey>("date")
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc")
@@ -87,8 +89,8 @@ export default function Reports() {
     )
   }, [d, sortBy, sortDirection])
 
-  if (!d) return <p className="py-10 text-center text-zinc-400">Loading…</p>
-  const t = d.today
+  if (!d) return <p className="py-10 text-center text-zinc-400">{t("Loading…")}</p>
+  const todayData = d.today
 
   const trendCols: {
     key: SortKey
@@ -96,71 +98,74 @@ export default function Reports() {
     align: "left" | "right"
     last?: boolean
   }[] = [
-    { key: "date", label: "Date", align: "left" },
-    { key: "occupancy", label: "Occ %", align: "right" },
-    { key: "adr", label: `ADR ${cur()}`, align: "right" },
-    { key: "revpar", label: `RevPAR ${cur()}`, align: "right" },
-    { key: "revenue", label: `Revenue ${cur()}`, align: "right", last: true },
+    { key: "date", label: t("Date"), align: "left" },
+    { key: "occupancy", label: t("Occ %"), align: "right" },
+    { key: "adr", label: t("ADR {cur}", { cur: cur() }), align: "right" },
+    { key: "revpar", label: t("RevPAR {cur}", { cur: cur() }), align: "right" },
+    { key: "revenue", label: t("Revenue {cur}", { cur: cur() }), align: "right", last: true },
   ]
 
   return (
     <div>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2 print:hidden">
-        <h1 className="text-lg font-semibold">Manager flash</h1>
+        <h1 className="text-lg font-semibold">{t("Manager flash")}</h1>
         <div className="flex items-center gap-2">
           <Link
             to="/cashier/shift-report"
             className="rounded-lg border border-zinc-200 px-3 py-1.5 text-sm text-zinc-600 hover:bg-zinc-50"
           >
-            Cashier shift report
+            {t("Cashier shift report")}
           </Link>
           <Link
             to="/ledgers"
             className="rounded-lg border border-zinc-200 px-3 py-1.5 text-sm text-zinc-600 hover:bg-zinc-50"
           >
-            Ledgers
+            {t("Ledgers")}
           </Link>
           <input
             type="date"
-            aria-label="Report date"
+            aria-label={t("Report date")}
             className="rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-sm"
             value={date}
             onChange={(e) => e.target.value && setDate(e.target.value)}
           />
           <Button variant="outline" onClick={() => window.print()}>
-            <Printer className="size-4" aria-hidden /> Print
+            <Printer className="size-4" aria-hidden /> {t("Print")}
           </Button>
         </div>
       </div>
 
       <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
         <Stat
-          label="Occupancy"
-          value={`${t?.occupancy_pct ?? 0}%`}
-          sub={`${t?.rooms_sold ?? 0} of ${d.total_rooms} rooms`}
+          label={t("Occupancy")}
+          value={`${todayData?.occupancy_pct ?? 0}%`}
+          sub={t("{sold} of {total} rooms", { sold: todayData?.rooms_sold ?? 0, total: d.total_rooms })}
         />
-        <Stat label="ADR" value={`${cur()}${inr(t?.adr ?? 0)}`} sub="room rate / room sold" />
-        <Stat label="RevPAR" value={`${cur()}${inr(t?.revpar ?? 0)}`} sub="room rev / room" />
+        <Stat label={t("ADR")} value={`${cur()}${inr(todayData?.adr ?? 0)}`} sub={t("room rate / room sold")} />
+        <Stat label={t("RevPAR")} value={`${cur()}${inr(todayData?.revpar ?? 0)}`} sub={t("room rev / room")} />
         <Stat
-          label="RevPAX"
-          value={`${cur()}${inr(t?.revpax ?? 0)}`}
-          sub={`total spend / guest · ${t?.pax ?? 0} pax`}
+          label={t("RevPAX")}
+          value={`${cur()}${inr(todayData?.revpax ?? 0)}`}
+          sub={t("total spend / guest · {pax} pax", { pax: todayData?.pax ?? 0 })}
         />
         <Stat
-          label="Revenue (day)"
-          value={`${cur()}${inr(t?.total_revenue ?? 0)}`}
-          sub={`room ${cur()}${inr(t?.room_revenue ?? 0)} · F&B ${cur()}${inr(t?.fnb_revenue ?? 0)} · other ${cur()}${inr(t?.other_revenue ?? 0)}`}
+          label={t("Revenue (day)")}
+          value={`${cur()}${inr(todayData?.total_revenue ?? 0)}`}
+          sub={t("room {room} · F&B {fnb} · other {other}", {
+            room: `${cur()}${inr(todayData?.room_revenue ?? 0)}`,
+            fnb: `${cur()}${inr(todayData?.fnb_revenue ?? 0)}`,
+            other: `${cur()}${inr(todayData?.other_revenue ?? 0)}`,
+          })}
         />
       </div>
       <p className="-mt-2 mb-4 text-xs text-zinc-400">
-        RevPAX = total guest spend (room + F&amp;B + experiences + extras) per
-        in-house guest - the ancillary revenue RevPAR can't see.
+        {t("RevPAX = total guest spend (room + F&B + experiences + extras) per in-house guest - the ancillary revenue RevPAR can't see.")}
       </p>
 
       <div className="grid gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle>Last 14 days</CardTitle>
+            <CardTitle>{t("Last 14 days")}</CardTitle>
           </CardHeader>
           <CardContent className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -216,7 +221,7 @@ export default function Reports() {
               </tbody>
               <tfoot>
                 <tr className="border-t border-zinc-300 font-medium">
-                  <td className="py-2 pr-3">Month to date</td>
+                  <td className="py-2 pr-3">{t("Month to date")}</td>
                   <td className="py-2 pr-3 text-right">{d.mtd.occupancy_pct}</td>
                   <td className="py-2 pr-3 text-right">{inr(d.mtd.adr)}</td>
                   <td className="py-2 pr-3 text-right">{inr(d.mtd.revpar)}</td>
@@ -232,22 +237,22 @@ export default function Reports() {
         <div className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Movement</CardTitle>
+              <CardTitle>{t("Movement")}</CardTitle>
             </CardHeader>
             <CardContent className="grid grid-cols-2 gap-2 text-sm">
-              <div>Arrivals <span className="float-right font-medium">{d.movement.arrivals}</span></div>
-              <div>Departures <span className="float-right font-medium">{d.movement.departures}</span></div>
-              <div>In-house <span className="float-right font-medium">{d.movement.in_house}</span></div>
-              <div>No-shows <span className="float-right font-medium">{d.movement.no_shows}</span></div>
+              <div>{t("Arrivals")} <span className="float-right font-medium">{d.movement.arrivals}</span></div>
+              <div>{t("Departures")} <span className="float-right font-medium">{d.movement.departures}</span></div>
+              <div>{t("In-house")} <span className="float-right font-medium">{d.movement.in_house}</span></div>
+              <div>{t("No-shows")} <span className="float-right font-medium">{d.movement.no_shows}</span></div>
             </CardContent>
           </Card>
           <Card>
             <CardHeader>
-              <CardTitle>Collections</CardTitle>
+              <CardTitle>{t("Collections")}</CardTitle>
             </CardHeader>
             <CardContent className="text-sm">
               {d.collections.modes.length === 0 && (
-                <p className="text-zinc-400">Nothing collected yet.</p>
+                <p className="text-zinc-400">{t("Nothing collected yet.")}</p>
               )}
               {d.collections.modes.map((m) => (
                 <div key={m.mode} className="flex justify-between py-0.5">
@@ -256,14 +261,14 @@ export default function Reports() {
                 </div>
               ))}
               <div className="mt-1 flex justify-between border-t border-zinc-200 pt-1 font-medium">
-                <span>Total</span>
+                <span>{t("Total")}</span>
                 <span>{cur()}{inr(d.collections.grand_total)}</span>
               </div>
             </CardContent>
           </Card>
           <Card>
             <CardHeader>
-              <CardTitle>Next 7 days</CardTitle>
+              <CardTitle>{t("Next 7 days")}</CardTitle>
             </CardHeader>
             <CardContent className="text-sm">
               {d.outlook.map((o) => (

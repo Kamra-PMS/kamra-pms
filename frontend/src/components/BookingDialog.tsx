@@ -20,6 +20,7 @@ import {
   phoneLengthForDial,
   splitPhone,
 } from "../lib/phone"
+import { useT } from "../lib/i18n"
 
 interface ExtraRoom {
   room_type: string
@@ -122,6 +123,7 @@ export function BookingDialog(props: {
   onClose: () => void
   onBooked: () => void
 }) {
+  const { t } = useT()
   const [options, setOptions] = useState<BookingOptions | null>(null)
   const [quote, setQuote] = useState<Quote | null>(null)
   const [quoting, setQuoting] = useState(false)
@@ -518,7 +520,7 @@ export function BookingDialog(props: {
       className="fixed inset-0 z-50"
       role="dialog"
       aria-modal="true"
-      aria-label="New booking"
+      aria-label={t("New booking")}
       onKeyDown={(e) => e.key === "Escape" && props.onClose()}
     >
       <div
@@ -532,15 +534,15 @@ export function BookingDialog(props: {
         <header className="flex shrink-0 items-center justify-between gap-4 border-b border-zinc-200 px-6 py-4 md:px-8">
           <div className="min-w-0">
             <h2 className="text-xl font-semibold tracking-tight text-zinc-900">
-              New booking
+              {t("New booking")}
             </h2>
             <p className="mt-0.5 truncate text-sm text-zinc-500">
               {getCurrentProperty()}
               <span className="text-zinc-300"> · </span>
-              Live quote as you type
+              {t("Live quote as you type")}
             </p>
           </div>
-          <Button variant="ghost" onClick={props.onClose} aria-label="Close">
+          <Button variant="ghost" onClick={props.onClose} aria-label={t("Close")}>
             <X className="size-5" />
           </Button>
         </header>
@@ -549,25 +551,24 @@ export function BookingDialog(props: {
           <div className="space-y-5 overflow-y-auto px-6 py-8 md:px-8">
             {done.waitlist ? (
               <div className="rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 text-amber-800">
-                <p className="text-lg font-semibold">Waitlisted · {done.ref}</p>
+                <p className="text-lg font-semibold">{t("Waitlisted · {ref}", { ref: done.ref })}</p>
                 <p className="mt-1 text-sm">
-                  Parked with no room. Promote it from the reservation when a
-                  room frees. Auto-purges 2 days after departure.
+                  {t("Parked with no room. Promote it from the reservation when a room frees. Auto-purges 2 days after departure.")}
                 </p>
               </div>
             ) : (
               <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-emerald-800">
-                <p className="text-lg font-semibold">Booked · {done.ref}</p>
+                <p className="text-lg font-semibold">{t("Booked · {ref}", { ref: done.ref })}</p>
                 <p className="mt-1 text-sm">
                   {done.room
-                    ? `Room ${done.room.split("-").pop()} assigned.`
-                    : "No room auto-assigned — pick one from Reservations."}{" "}
-                  Find it under Arrivals on the stay date.
+                    ? t("Room {n} assigned.", { n: done.room.split("-").pop() ?? "" })
+                    : t("No room auto-assigned — pick one from Reservations.")}{" "}
+                  {t("Find it under Arrivals on the stay date.")}
                 </p>
               </div>
             )}
             <Button className="px-5 py-2.5 text-base" onClick={props.onClose}>
-              Done
+              {t("Done")}
             </Button>
           </div>
         ) : (
@@ -586,7 +587,7 @@ export function BookingDialog(props: {
                 )}
 
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <Field label="Guest name">
+                  <Field label={t("Guest name")}>
                     <div className="relative">
                       <input
                         className={inputCls}
@@ -595,7 +596,7 @@ export function BookingDialog(props: {
                           setProfile(null)
                           set("guest_name", e.target.value)
                         }}
-                        placeholder="Type to find or create"
+                        placeholder={t("Type to find or create")}
                         autoFocus
                       />
                       {hits.length > 0 && (
@@ -619,12 +620,12 @@ export function BookingDialog(props: {
                                 {Boolean(h.vip) && (
                                   <Star
                                     className="size-3 fill-amber-400 text-amber-400"
-                                    aria-label="VIP"
+                                    aria-label={t("VIP")}
                                   />
                                 )}
                                 <span className="ml-auto text-xs text-zinc-400">
                                   {h.phone ? `${h.phone} · ` : ""}
-                                  {h.stays} stay{h.stays === 1 ? "" : "s"}
+                                  {h.stays} {t("stay{s}", { s: h.stays === 1 ? "" : "s" })}
                                 </span>
                               </button>
                             </li>
@@ -634,11 +635,13 @@ export function BookingDialog(props: {
                     </div>
                     {profile && (
                       <span className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-brand-50 px-2.5 py-1 text-xs font-medium text-brand-700">
-                        Returning guest · {profile.stays} stay
-                        {profile.stays === 1 ? "" : "s"}
+                        {t("Returning guest · {n} stay{s}", {
+                          n: profile.stays,
+                          s: profile.stays === 1 ? "" : "s",
+                        })}
                         <button
                           type="button"
-                          aria-label="Detach profile"
+                          aria-label={t("Detach profile")}
                           onClick={() => setProfile(null)}
                           className="text-brand-700/60 hover:text-brand-700"
                         >
@@ -647,7 +650,7 @@ export function BookingDialog(props: {
                       </span>
                     )}
                   </Field>
-                  <Field label="Phone">
+                  <Field label={t("Phone")}>
                     <PhoneInput
                       value={form.phone}
                       country={options?.property?.country}
@@ -656,7 +659,7 @@ export function BookingDialog(props: {
                   </Field>
                 </div>
 
-                <Field label="Room type">
+                <Field label={t("Room type")}>
                   <select
                     className={inputCls}
                     value={form.room_type}
@@ -682,7 +685,7 @@ export function BookingDialog(props: {
                 </Field>
 
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                  <Field label="Check-in">
+                  <Field label={t("Check-in")}>
                     <input
                       type="date"
                       className={inputCls}
@@ -692,11 +695,11 @@ export function BookingDialog(props: {
                     />
                     {pastCheckIn && (
                       <p className="mt-1.5 text-xs text-rose-600">
-                        That date has already passed.
+                        {t("That date has already passed.")}
                       </p>
                     )}
                   </Field>
-                  <Field label="Nights">
+                  <Field label={t("Nights")}>
                     <input
                       type="number"
                       min={1}
@@ -707,7 +710,7 @@ export function BookingDialog(props: {
                       }
                     />
                   </Field>
-                  <Field label="Adults">
+                  <Field label={t("Adults")}>
                     <input
                       type="number"
                       min={1}
@@ -718,7 +721,7 @@ export function BookingDialog(props: {
                       }
                     />
                   </Field>
-                  <Field label="Children">
+                  <Field label={t("Children")}>
                     <input
                       type="number"
                       min={0}
@@ -752,13 +755,13 @@ export function BookingDialog(props: {
                 )}
 
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <Field label="Meal plan">
+                  <Field label={t("Meal plan")}>
                     <select
                       className={inputCls}
                       value={form.meal_plan}
                       onChange={(e) => set("meal_plan", e.target.value)}
                     >
-                      <option value="">Room only</option>
+                      <option value="">{t("Room only")}</option>
                       {options?.meal_plans.map((mp) => (
                         <option key={mp.name} value={mp.name}>
                           {mp.label} (+{cur()}
@@ -767,14 +770,14 @@ export function BookingDialog(props: {
                       ))}
                     </select>
                   </Field>
-                  <Field label="Voucher">
+                  <Field label={t("Voucher")}>
                     <input
                       className={inputCls}
                       value={form.voucher_code}
                       onChange={(e) =>
                         set("voucher_code", e.target.value.toUpperCase())
                       }
-                      placeholder="Optional code"
+                      placeholder={t("Optional code")}
                     />
                   </Field>
                 </div>
@@ -871,7 +874,7 @@ export function BookingDialog(props: {
                   }
                 >
                   <Plus className="size-4" aria-hidden />
-                  Add another room
+                  {t("Add another room")}
                 </button>
 
                 <div className="border-t border-zinc-100 pt-2">
@@ -881,7 +884,7 @@ export function BookingDialog(props: {
                     onClick={() => setMoreOpen((o) => !o)}
                     aria-expanded={moreOpen}
                   >
-                    <span>Company, add-ons & arrival details</span>
+                    <span>{t("Company, add-ons & arrival details")}</span>
                     <ChevronDown
                       className={
                         "size-4 text-zinc-400 transition-transform " +
@@ -1171,12 +1174,12 @@ export function BookingDialog(props: {
               <div className="flex-1 overflow-y-auto px-6 py-5 md:px-7">
                 <div className="mb-4 flex items-center justify-between">
                   <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
-                    Quote
+                    {t("Quote")}
                   </h3>
                   {quoting && (
                     <Loader2
                       className="size-4 animate-spin text-zinc-400"
-                      aria-label="Updating quote"
+                      aria-label={t("Updating quote")}
                     />
                   )}
                 </div>
@@ -1195,7 +1198,7 @@ export function BookingDialog(props: {
                     </div>
                     {quote.meal_total > 0 && (
                       <div className="flex justify-between text-zinc-600">
-                        <span>Meals</span>
+                        <span>{t("Meals")}</span>
                         <span className="tabular-nums">
                           {cur()}
                           {inr(quote.meal_total)}
@@ -1204,7 +1207,7 @@ export function BookingDialog(props: {
                     )}
                     {quote.discount > 0 && (
                       <div className="flex justify-between font-medium text-emerald-700">
-                        <span>Voucher</span>
+                        <span>{t("Voucher")}</span>
                         <span className="tabular-nums">
                           −{cur()}
                           {inr(quote.discount)}
@@ -1249,10 +1252,7 @@ export function BookingDialog(props: {
 
                     <div className="mt-3 rounded-xl border border-zinc-200 bg-white px-4 py-3.5 shadow-sm">
                       <div className="flex items-baseline justify-between gap-2">
-                        <span className="text-sm font-medium text-zinc-500">
-                          Total
-                          {moreRooms.length > 0 ? " · all rooms" : ""}
-                        </span>
+                        <span>{t("Total")}{moreRooms.length > 0 ? t(" · all rooms") : ""}</span>
                         <span className="text-3xl font-semibold tabular-nums tracking-tight text-zinc-900">
                           {cur()}
                           {inr(grandTotal)}
@@ -1277,7 +1277,7 @@ export function BookingDialog(props: {
                   </div>
                 ) : (
                   <p className="text-sm text-zinc-400">
-                    {error ? "Fix the issue below to see a price." : "…"}
+                    {error ? t("Fix the issue below to see a price.") : "…"}
                   </p>
                 )}
 
@@ -1294,7 +1294,7 @@ export function BookingDialog(props: {
                   disabled={busy || !form.guest_name || !quote || pastCheckIn || badPhone}
                   onClick={() => submit()}
                 >
-                  {busy ? "Booking…" : "Confirm booking"}
+                  {busy ? t("Booking…") : t("Confirm booking")}
                 </Button>
                 <div className="grid grid-cols-2 gap-2">
                   <Button
@@ -1302,16 +1302,16 @@ export function BookingDialog(props: {
                     className="justify-center"
                     onClick={props.onClose}
                   >
-                    Cancel
+                    {t("Cancel")}
                   </Button>
                   <Button
                     variant="outline"
                     className="justify-center"
                     disabled={busy || !form.guest_name || pastCheckIn || badPhone}
                     onClick={() => submit(true)}
-                    title="Park this stay with no room; promote when inventory frees"
+                    title={t("Park this stay with no room; promote when inventory frees")}
                   >
-                    Waitlist
+                    {t("Waitlist")}
                   </Button>
                 </div>
               </div>

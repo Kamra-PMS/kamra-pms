@@ -5,6 +5,7 @@ import { Check, Copy, Store, Terminal } from "lucide-react"
 import { call, getCurrentProperty } from "../lib/api"
 import { serverError } from "../lib/resource"
 import { Button } from "../components/ui/button"
+import { useT } from "../lib/i18n"
 
 interface Card {
   kind: "module" | "connector" | "bench_app" | "enterprise"
@@ -53,6 +54,7 @@ const STATUS_LABEL: Record<string, string> = {
 }
 
 function Copyable({ value }: { value: string }) {
+  const { t } = useT()
   const [done, setDone] = useState(false)
   return (
     <button
@@ -62,7 +64,7 @@ function Copyable({ value }: { value: string }) {
         setTimeout(() => setDone(false), 1400)
       }}
       className="inline-flex items-center gap-1 text-zinc-400 hover:text-zinc-700"
-      aria-label="Copy"
+      aria-label={t("Copy")}
     >
       {done ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
     </button>
@@ -70,6 +72,7 @@ function Copyable({ value }: { value: string }) {
 }
 
 export default function Marketplace() {
+  const { t } = useT()
   const [cats, setCats] = useState<Category[]>([])
   const [error, setError] = useState<string | null>(null)
   const [wizard, setWizard] = useState<string | null>(null) // card name
@@ -108,10 +111,9 @@ export default function Marketplace() {
     <div className="space-y-6">
       <header className="flex items-center gap-2">
         <Store className="size-5 text-brand-600" aria-hidden />
-        <h1 className="text-xl font-semibold tracking-tight">Marketplace</h1>
+        <h1 className="text-xl font-semibold tracking-tight">{t("Marketplace")}</h1>
         <p className="ml-2 text-sm text-zinc-500">
-          Every app included, plus the AI, channels, payments, accounting and
-          country packs you can plug in.
+          {t("Every app included, plus the AI, channels, payments, accounting and country packs you can plug in.")}
         </p>
       </header>
 
@@ -149,7 +151,7 @@ export default function Marketplace() {
                     >
                       {c.detail && c.status === "included"
                         ? c.detail
-                        : STATUS_LABEL[c.status] ?? c.status}
+                        : t(STATUS_LABEL[c.status] ?? c.status)}
                     </span>
                   </div>
                   <p className="mt-1 flex-1 text-sm text-zinc-500">{c.blurb}</p>
@@ -171,7 +173,7 @@ export default function Marketplace() {
                   {c.kind === "enterprise" && (
                     enquired.has(c.name) ? (
                       <p className="mt-3 text-sm text-violet-700">
-                        Thanks - our team will reach out about {c.name}.
+                        {t("Thanks - our team will reach out about {name}.", { name: c.name })}
                       </p>
                     ) : (
                       <Button
@@ -186,7 +188,7 @@ export default function Marketplace() {
                           )
                         }
                       >
-                        Request implementation
+                        {t("Request implementation")}
                       </Button>
                     )
                   )}
@@ -198,7 +200,7 @@ export default function Marketplace() {
                         className="mt-3"
                         onClick={() => navigate(c.route!)}
                       >
-                        {c.status === "connected" ? "Manage" : "Set up"}
+                        {c.status === "connected" ? t("Manage") : t("Set up")}
                       </Button>
                     )}
                   {isKoala && c.status !== "connected" && (
@@ -225,7 +227,7 @@ export default function Marketplace() {
                         }).then(load)
                       }
                     >
-                      Disconnect
+                      {t("Disconnect")}
                     </Button>
                   )}
 
@@ -248,23 +250,23 @@ export default function Marketplace() {
                               disabled={busy || !phone.trim()}
                               onClick={() => connectHeyKoala(c.channel!)}
                             >
-                              {busy ? "Connecting..." : "Connect"}
+                              {busy ? t("Connecting...") : t("Connect")}
                             </Button>
                             <Button
                               variant="ghost"
                               onClick={() => setWizard(null)}
                             >
-                              Cancel
+                              {t("Cancel")}
                             </Button>
                           </div>
                         </>
                       ) : (
                         <div className="space-y-2 text-xs">
                           <p className="font-medium text-emerald-700">
-                            Connected. Paste these into HeyKoala:
+                            {t("Connected. Paste these into HeyKoala:")}
                           </p>
                           <div>
-                            <div className="text-zinc-500">Webhook URL</div>
+                            <div className="text-zinc-500">{t("Webhook URL")}</div>
                             <div className="flex items-center gap-1 break-all font-mono text-zinc-700">
                               {result.webhook_url}
                               <Copyable value={result.webhook_url} />
@@ -272,7 +274,7 @@ export default function Marketplace() {
                           </div>
                           <div>
                             <div className="text-zinc-500">
-                              Secret (shown once)
+                              {t("Secret (shown once)")}
                             </div>
                             <div className="flex items-center gap-1 break-all font-mono text-zinc-700">
                               {result.webhook_secret}
@@ -287,7 +289,7 @@ export default function Marketplace() {
                             variant="ghost"
                             onClick={() => setWizard(null)}
                           >
-                            Done
+                            {t("Done")}
                           </Button>
                         </div>
                       )}

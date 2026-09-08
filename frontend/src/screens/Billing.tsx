@@ -6,6 +6,7 @@ import { listResource, serverError, type Row } from "../lib/resource"
 import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
 import { cur, moneyLocale } from "../lib/money"
+import { useT } from "../lib/i18n"
 import {
   Card,
   CardContent,
@@ -42,6 +43,7 @@ interface AuditResult {
 }
 
 export default function Billing() {
+  const { t } = useT()
   const [folios, setFolios] = useState<Row[]>([])
   const [audit, setAudit] = useState<AuditResult | null>(null)
   const [auditErr, setAuditErr] = useState<string | null>(null)
@@ -95,15 +97,14 @@ export default function Billing() {
       <Card>
         <CardHeader>
           <div>
-            <CardTitle>Night audit</CardTitle>
+            <CardTitle>{t("Night audit")}</CardTitle>
             <p className="mt-0.5 text-xs text-zinc-400">
-              Posts tonight's room charges for every in-house guest and flags
-              no-shows. Runs automatically at 3 AM; run it manually anytime.
+              {t("Posts tonight's room charges for every in-house guest and flags no-shows. Runs automatically at 3 AM; run it manually anytime.")}
             </p>
           </div>
           <Button disabled={busy} onClick={runAudit}>
             <MoonStar className="size-4" aria-hidden />
-            {busy ? "Running…" : "Run night audit"}
+            {busy ? t("Running…") : t("Run night audit")}
           </Button>
         </CardHeader>
         {auditErr && (
@@ -117,17 +118,20 @@ export default function Billing() {
           <CardContent className="pt-0">
             {audit.already_ran ? (
               <p className="text-sm text-zinc-500">
-                Already ran for today ({audit.audit}).
+                {t("Already ran for today ({audit}).", { audit: audit.audit ?? "" })}
               </p>
             ) : (
               <p className="text-sm text-zinc-600">
-                <span className="font-medium">{audit.audit}</span> - posted{" "}
-                {audit.room_charges_posted} room night
-                {audit.room_charges_posted === 1 ? "" : "s"} ({cur()}
-                {inr(audit.amount_posted)}), opened {audit.folios_opened}{" "}
-                folio{audit.folios_opened === 1 ? "" : "s"}, flagged{" "}
-                {audit.no_shows_flagged} no-show
-                {audit.no_shows_flagged === 1 ? "" : "s"}.
+                <span className="font-medium">{audit.audit}</span> -{" "}
+                {t("posted {n} room night{s} ({amount}), opened {folios} folio{s2}, flagged {noShows} no-show{s3}.", {
+                  n: audit.room_charges_posted ?? 0,
+                  s: audit.room_charges_posted === 1 ? "" : "s",
+                  amount: `${cur()}${inr(audit.amount_posted)}`,
+                  folios: audit.folios_opened ?? 0,
+                  s2: audit.folios_opened === 1 ? "" : "s",
+                  noShows: audit.no_shows_flagged ?? 0,
+                  s3: audit.no_shows_flagged === 1 ? "" : "s",
+                })}
               </p>
             )}
           </CardContent>
@@ -135,7 +139,7 @@ export default function Billing() {
         {auditRuns.length > 0 && (
           <CardContent className="pt-0">
             <div className="mb-1.5 text-xs font-medium uppercase tracking-wider text-zinc-400">
-              Recent runs
+              {t("Recent runs")}
             </div>
             <ul className="divide-y divide-zinc-100 text-sm">
               {auditRuns.map((r) => (
@@ -147,15 +151,18 @@ export default function Billing() {
                     {fmtDate(r.business_date)}
                   </span>
                   <span className="flex-1 text-zinc-500">
-                    {Number(r.room_charges_posted) || 0} night
-                    {Number(r.room_charges_posted) === 1 ? "" : "s"} · {cur()}
-                    {inr(r.amount_posted)} · {Number(r.folios_opened) || 0} folio
-                    {Number(r.folios_opened) === 1 ? "" : "s"} ·{" "}
-                    {Number(r.no_shows_flagged) || 0} no-show
-                    {Number(r.no_shows_flagged) === 1 ? "" : "s"}
+                    {t("{n} night{s} · {amount} · {folios} folio{s2} · {noShows} no-show{s3}", {
+                      n: Number(r.room_charges_posted) || 0,
+                      s: Number(r.room_charges_posted) === 1 ? "" : "s",
+                      amount: `${cur()}${inr(r.amount_posted)}`,
+                      folios: Number(r.folios_opened) || 0,
+                      s2: Number(r.folios_opened) === 1 ? "" : "s",
+                      noShows: Number(r.no_shows_flagged) || 0,
+                      s3: Number(r.no_shows_flagged) === 1 ? "" : "s",
+                    })}
                   </span>
                   <span className="text-xs text-zinc-400">
-                    ran {fmtWhen(r.creation)}
+                    {t("ran {when}", { when: fmtWhen(r.creation) })}
                   </span>
                 </li>
               ))}
@@ -167,23 +174,22 @@ export default function Billing() {
       <Card>
         <CardHeader>
           <div>
-            <CardTitle>Cashier till</CardTitle>
+            <CardTitle>{t("Cashier till")}</CardTitle>
             <p className="mt-0.5 text-xs text-zinc-400">
-              Open your till, reconcile cash and close the session under
-              Finance → Cashier. Collections live there now.
+              {t("Open your till, reconcile cash and close the session under Finance → Cashier. Collections live there now.")}
             </p>
           </div>
           <Button variant="outline" onClick={() => navigate("/cashier")}>
-            Open My Till
+            {t("Open My Till")}
           </Button>
         </CardHeader>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle>Folios</CardTitle>
+          <CardTitle>{t("Folios")}</CardTitle>
           <span className="text-xs text-zinc-400">
-            Click a folio to post charges, settle and print the GST invoice
+            {t("Click a folio to post charges, settle and print the GST invoice")}
           </span>
         </CardHeader>
         <CardContent>
@@ -191,13 +197,13 @@ export default function Billing() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-zinc-200 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">
-                  <th className="py-2 pr-4">Folio</th>
-                  <th className="py-2 pr-4">Guest</th>
-                  <th className="py-2 pr-4">Status</th>
-                  <th className="py-2 pr-4">Invoice</th>
-                  <th className="py-2 pr-4">Total {cur()}</th>
-                  <th className="py-2 pr-4">Paid {cur()}</th>
-                  <th className="py-2 pr-4">Balance {cur()}</th>
+                  <th className="py-2 pr-4">{t("Folio")}</th>
+                  <th className="py-2 pr-4">{t("Guest")}</th>
+                  <th className="py-2 pr-4">{t("Status")}</th>
+                  <th className="py-2 pr-4">{t("Invoice")}</th>
+                  <th className="py-2 pr-4">{t("Total {cur}", { cur: cur() })}</th>
+                  <th className="py-2 pr-4">{t("Paid {cur}", { cur: cur() })}</th>
+                  <th className="py-2 pr-4">{t("Balance {cur}", { cur: cur() })}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-100">
@@ -211,7 +217,7 @@ export default function Billing() {
                     <td className="py-2.5 pr-4">{String(f.guest_name ?? "-")}</td>
                     <td className="py-2.5 pr-4">
                       <Badge tone={f.status === "Open" ? "amber" : "green"}>
-                        {String(f.status)}
+                        {t(String(f.status))}
                       </Badge>
                     </td>
                     <td className="py-2.5 pr-4 text-zinc-500">
@@ -231,7 +237,7 @@ export default function Billing() {
                 {folios.length === 0 && (
                   <tr>
                     <td colSpan={7} className="py-6 text-center text-zinc-400">
-                      No folios yet - they open automatically at check-in.
+                      {t("No folios yet - they open automatically at check-in.")}
                     </td>
                   </tr>
                 )}

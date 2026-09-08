@@ -18,6 +18,7 @@ import {
   CardTitle,
 } from "../components/ui/card"
 import { moneyLocale } from "../lib/money"
+import { useT } from "../lib/i18n"
 
 const inr = (n: unknown) =>
   Number(n ?? 0).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
@@ -53,6 +54,7 @@ type Session = {
 }
 
 export default function CashierTill() {
+  const { t } = useT()
   const { ensureUnlocked, withPin } = useCashierAuth()
   const [session, setSession] = useState<Session | null>(null)
   const [floatAmt, setFloatAmt] = useState("2000")
@@ -146,20 +148,20 @@ export default function CashierTill() {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-400">
-            Cashier
+            {t("Cashier")}
           </p>
           <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">
-            My Till
+            {t("My Till")}
           </h1>
           <p className="mt-1 text-sm text-zinc-500">
-            Business date{" "}
+            {t("Business date")}{" "}
             <span className="font-medium text-zinc-700">
               {session?.business_date ?? "—"}
             </span>
             {session?.cashier_id ? (
               <>
                 {" "}
-                · Cashier{" "}
+                · {t("Cashier")}{" "}
                 <span className="font-medium text-zinc-700">
                   {session.cashier_id}
                 </span>
@@ -172,13 +174,13 @@ export default function CashierTill() {
             to="/cashier/sessions"
             className="rounded-lg border border-zinc-200 px-3 py-1.5 text-sm text-zinc-600 hover:bg-zinc-50"
           >
-            All sessions
+            {t("All sessions")}
           </Link>
           <Link
             to="/cashier/shift-report"
             className="rounded-lg border border-zinc-200 px-3 py-1.5 text-sm text-zinc-600 hover:bg-zinc-50"
           >
-            Shift report
+            {t("Shift report")}
           </Link>
         </div>
       </div>
@@ -193,12 +195,12 @@ export default function CashierTill() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <Lock className="size-4" /> Open till
+              <Lock className="size-4" /> {t("Open till")}
             </CardTitle>
           </CardHeader>
           <CardContent className="flex flex-wrap items-end gap-3">
             <label className="block text-sm">
-              <span className="mb-1 block text-zinc-600">Opening float</span>
+              <span className="mb-1 block text-zinc-600">{t("Opening float")}</span>
               <input
                 className="w-36 rounded-lg border border-zinc-300 px-3 py-2 text-sm"
                 inputMode="decimal"
@@ -208,7 +210,7 @@ export default function CashierTill() {
             </label>
             <Button disabled={busy} onClick={open}>
               <Unlock className="mr-1.5 size-4" />
-              Open session
+              {t("Open session")}
             </Button>
           </CardContent>
         </Card>
@@ -216,14 +218,14 @@ export default function CashierTill() {
         <>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {[
-              ["Float", session?.opening_float],
-              ["Cash in", session?.system_cash ?? session?.totals?.cash],
-              ["Card", session?.system_card ?? session?.totals?.card],
-              ["UPI", session?.system_upi ?? session?.totals?.upi],
-              ["Paid outs", session?.paid_outs],
-              ["Drops", session?.drops],
-              ["Petty cash", session?.petty_cash],
-              ["Expected cash", session?.expected_cash],
+              [t("Float"), session?.opening_float],
+              [t("Cash in"), session?.system_cash ?? session?.totals?.cash],
+              [t("Card"), session?.system_card ?? session?.totals?.card],
+              [t("UPI"), session?.system_upi ?? session?.totals?.upi],
+              [t("Paid outs"), session?.paid_outs],
+              [t("Drops"), session?.drops],
+              [t("Petty cash"), session?.petty_cash],
+              [t("Expected cash"), session?.expected_cash],
             ].map(([label, val]) => (
               <Card key={String(label)}>
                 <CardContent className="pt-4">
@@ -242,19 +244,19 @@ export default function CashierTill() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-base">
-                  <Banknote className="size-4" /> Paid out
+                  <Banknote className="size-4" /> {t("Paid out")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="flex flex-wrap items-end gap-2">
                 <input
                   className="w-28 rounded-lg border border-zinc-300 px-3 py-2 text-sm"
-                  placeholder="Amount"
+                  placeholder={t("Amount")}
                   value={paidOutAmt}
                   onChange={(e) => setPaidOutAmt(e.target.value)}
                 />
                 <input
                   className="min-w-[12rem] flex-1 rounded-lg border border-zinc-300 px-3 py-2 text-sm"
-                  placeholder="Reason"
+                  placeholder={t("Reason")}
                   value={paidOutReason}
                   onChange={(e) => setPaidOutReason(e.target.value)}
                 />
@@ -263,7 +265,7 @@ export default function CashierTill() {
                   disabled={busy || !paidOutAmt || !paidOutReason}
                   onClick={paidOut}
                 >
-                  Post
+                  {t("Post")}
                 </Button>
               </CardContent>
             </Card>
@@ -271,13 +273,13 @@ export default function CashierTill() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-base">
-                  <ArrowDownToLine className="size-4" /> Cash drop
+                  <ArrowDownToLine className="size-4" /> {t("Cash drop")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="flex flex-wrap items-end gap-2">
                 <input
                   className="w-28 rounded-lg border border-zinc-300 px-3 py-2 text-sm"
-                  placeholder="Amount"
+                  placeholder={t("Amount")}
                   value={dropAmt}
                   onChange={(e) => setDropAmt(e.target.value)}
                 />
@@ -286,13 +288,13 @@ export default function CashierTill() {
                   disabled={busy || !dropAmt}
                   onClick={drop}
                 >
-                  Drop to safe
+                  {t("Drop to safe")}
                 </Button>
                 <Link
                   to="/cashier/petty-cash"
                   className="text-sm text-brand-700 hover:underline"
                 >
-                  Petty cash →
+                  {t("Petty cash →")}
                 </Link>
               </CardContent>
             </Card>
@@ -301,13 +303,13 @@ export default function CashierTill() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
-                <Wallet className="size-4" /> Close till
+                <Wallet className="size-4" /> {t("Close till")}
               </CardTitle>
             </CardHeader>
             <CardContent className="flex flex-wrap items-end gap-3">
               <label className="block text-sm">
                 <span className="mb-1 block text-zinc-600">
-                  Counted cash (expected {inr(session?.expected_cash)})
+                  {t("Counted cash (expected {amount})", { amount: inr(session?.expected_cash) })}
                 </span>
                 <input
                   className="w-40 rounded-lg border border-zinc-300 px-3 py-2 text-sm"
@@ -318,45 +320,45 @@ export default function CashierTill() {
               </label>
               {counted !== "" ? (
                 <p className="text-sm text-zinc-600">
-                  Variance:{" "}
+                  {t("Variance")}:{" "}
                   <span className="font-semibold tabular-nums">
                     {inr(Number(counted) - Number(session?.expected_cash || 0))}
                   </span>
                 </p>
               ) : null}
               <Button disabled={busy || counted === ""} onClick={close}>
-                Close session
+                {t("Close session")}
               </Button>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Recent transactions</CardTitle>
+              <CardTitle className="text-base">{t("Recent transactions")}</CardTitle>
             </CardHeader>
             <CardContent className="overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <thead className="text-xs uppercase tracking-wide text-zinc-400">
                   <tr>
-                    <th className="py-2 pr-3">Kind</th>
-                    <th className="py-2 pr-3">Mode</th>
-                    <th className="py-2 pr-3">Amount</th>
-                    <th className="py-2 pr-3">Ref</th>
-                    <th className="py-2">When</th>
+                    <th className="py-2 pr-3">{t("Kind")}</th>
+                    <th className="py-2 pr-3">{t("Mode")}</th>
+                    <th className="py-2 pr-3">{t("Amount")}</th>
+                    <th className="py-2 pr-3">{t("Ref")}</th>
+                    <th className="py-2">{t("When")}</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {(session?.transactions || []).map((t) => (
-                    <tr key={t.name} className="border-t border-zinc-100">
-                      <td className="py-2 pr-3">{t.kind}</td>
-                      <td className="py-2 pr-3">{t.mode}</td>
-                      <td className="py-2 pr-3 tabular-nums">{inr(t.amount)}</td>
+                  {(session?.transactions || []).map((tx) => (
+                    <tr key={tx.name} className="border-t border-zinc-100">
+                      <td className="py-2 pr-3">{tx.kind}</td>
+                      <td className="py-2 pr-3">{tx.mode}</td>
+                      <td className="py-2 pr-3 tabular-nums">{inr(tx.amount)}</td>
                       <td className="py-2 pr-3 text-zinc-500">
-                        {t.reference || t.folio || t.pos_order || "—"}
+                        {tx.reference || tx.folio || tx.pos_order || "—"}
                       </td>
                       <td className="py-2 text-zinc-500">
-                        {t.posted_at
-                          ? String(t.posted_at).replace(" ", "T").slice(11, 16)
+                        {tx.posted_at
+                          ? String(tx.posted_at).replace(" ", "T").slice(11, 16)
                           : ""}
                       </td>
                     </tr>
@@ -364,7 +366,7 @@ export default function CashierTill() {
                   {!session?.transactions?.length ? (
                     <tr>
                       <td colSpan={5} className="py-6 text-center text-zinc-400">
-                        No transactions yet this session.
+                        {t("No transactions yet this session.")}
                       </td>
                     </tr>
                   ) : null}

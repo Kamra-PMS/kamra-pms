@@ -7,7 +7,8 @@ import {
   updateResource,
 } from "../lib/resource"
 import { getTheme, setTheme, type Theme } from "../lib/theme"
-import { getLang, setLang, type Lang } from "../lib/dir"
+import { getLang, setLang, LANGS, type Lang } from "../lib/dir"
+import { useT } from "../lib/i18n"
 import { Button } from "../components/ui/button"
 import ImageField from "../components/ImageField"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
@@ -35,12 +36,13 @@ function Field(props: {
   value: unknown
   onChange: (v: unknown) => void
 }) {
+  const { t } = useT()
   const { spec, value, onChange } = props
   if (spec.type === "image")
     return (
       <ImageField
-        label={spec.label}
-        hint={spec.hint ?? ""}
+        label={t(spec.label)}
+        hint={spec.hint ? t(spec.hint) : ""}
         value={String(value ?? "")}
         onChange={onChange}
       />
@@ -54,14 +56,14 @@ function Field(props: {
           checked={Boolean(Number(value ?? 0))}
           onChange={(e) => onChange(e.target.checked ? 1 : 0)}
         />
-        {spec.label}
-        {spec.hint && <span className="text-xs text-zinc-400">{spec.hint}</span>}
+        {t(spec.label)}
+        {spec.hint && <span className="text-xs text-zinc-400">{t(spec.hint)}</span>}
       </label>
     )
   return (
     <label className="block">
       <span className="mb-1 block text-sm font-medium text-zinc-600">
-        {spec.label}
+        {t(spec.label)}
       </span>
       {spec.type === "select" ? (
         <select
@@ -71,7 +73,7 @@ function Field(props: {
         >
           {spec.options?.map((o) => (
             <option key={o} value={o}>
-              {o || "-"}
+              {o ? t(o) : "-"}
             </option>
           ))}
         </select>
@@ -85,7 +87,7 @@ function Field(props: {
         <input
           className={inputCls}
           type={spec.type ?? "text"}
-          placeholder={spec.type === "password" ? "unchanged" : undefined}
+          placeholder={spec.type === "password" ? t("unchanged") : undefined}
           value={
             spec.type === "password" ? String(value ?? "") : String(value ?? "")
           }
@@ -101,7 +103,7 @@ function Field(props: {
         />
       )}
       {spec.hint && (
-        <span className="mt-0.5 block text-xs text-zinc-400">{spec.hint}</span>
+        <span className="mt-0.5 block text-xs text-zinc-400">{t(spec.hint)}</span>
       )}
     </label>
   )
@@ -115,6 +117,7 @@ function SettingsCard(props: {
   onSave: (changes: Doc) => Promise<void>
   columns?: number
 }) {
+  const { t } = useT()
   const [draft, setDraft] = useState<Doc>({})
   const [busy, setBusy] = useState(false)
   const [state, setState] = useState<"idle" | "saved" | string>("idle")
@@ -139,9 +142,9 @@ function SettingsCard(props: {
     <Card>
       <CardHeader>
         <div>
-          <CardTitle>{props.title}</CardTitle>
+          <CardTitle>{t(props.title)}</CardTitle>
           {props.description && (
-            <p className="mt-0.5 text-xs text-zinc-400">{props.description}</p>
+            <p className="mt-0.5 text-xs text-zinc-400">{t(props.description)}</p>
           )}
         </div>
       </CardHeader>
@@ -168,10 +171,10 @@ function SettingsCard(props: {
             disabled={busy || Object.keys(draft).length === 0}
             onClick={save}
           >
-            {busy ? "Saving…" : "Save"}
+            {busy ? t("Saving…") : t("Save")}
           </Button>
           {state === "saved" && (
-            <span className="text-xs text-emerald-600">Saved</span>
+            <span className="text-xs text-emerald-600">{t("Saved")}</span>
           )}
           {state !== "idle" && state !== "saved" && (
             <span className="text-xs text-rose-600">{state}</span>
@@ -443,6 +446,7 @@ function CashierPinResetCard() {
 }
 
 export default function Settings() {
+  const { t } = useT()
   const property = getCurrentProperty()
   const [prop, setProp] = useState<Doc | null>(null)
   const [gateway, setGateway] = useState<Doc | null>(null)
@@ -468,7 +472,7 @@ export default function Settings() {
   useEffect(load, [load])
 
   if (!prop || !gateway || !ai)
-    return <p className="py-10 text-center text-zinc-400">Loading…</p>
+    return <p className="py-10 text-center text-zinc-400">{t("Loading…")}</p>
 
   return (
     <div className="space-y-4">
@@ -624,30 +628,30 @@ export default function Settings() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Appearance</CardTitle>
+          <CardTitle>{t("Appearance")}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center gap-3">
-            <span className="w-20 text-sm font-medium text-zinc-600">Theme</span>
+            <span className="w-20 text-sm font-medium text-zinc-600">{t("Theme")}</span>
             <select
               className="rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm focus:outline-2 focus:outline-offset-1 focus:outline-brand-600"
               value={theme}
               onChange={(e) => {
-                const t = e.target.value as Theme
-                setTheme(t)
-                setThemeState(t)
+                const next = e.target.value as Theme
+                setTheme(next)
+                setThemeState(next)
               }}
             >
-              <option value="light">Light</option>
-              <option value="dark">Dark</option>
-              <option value="system">System</option>
+              <option value="light">{t("Light")}</option>
+              <option value="dark">{t("Dark")}</option>
+              <option value="system">{t("System")}</option>
             </select>
             <span className="text-xs text-zinc-400">
-              applies to this browser only
+              {t("applies to this browser only")}
             </span>
           </div>
           <div className="flex items-center gap-3">
-            <span className="w-20 text-sm font-medium text-zinc-600">Language</span>
+            <span className="w-20 text-sm font-medium text-zinc-600">{t("Language")}</span>
             <select
               className="rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm focus:outline-2 focus:outline-offset-1 focus:outline-brand-600"
               value={lang}
@@ -657,11 +661,15 @@ export default function Settings() {
                 setLangState(l)
               }}
             >
-              <option value="en">English</option>
-              <option value="ar">العربية (Arabic)</option>
+              {LANGS.map((l) => (
+                <option key={l.code} value={l.code}>
+                  {l.nativeLabel}
+                  {l.code !== "en" ? ` (${l.englishLabel})` : ""}
+                </option>
+              ))}
             </select>
             <span className="text-xs text-zinc-400">
-              Arabic switches the interface to right-to-left · this browser only
+              {t("Arabic switches the interface to right-to-left · this browser only")}
             </span>
           </div>
         </CardContent>

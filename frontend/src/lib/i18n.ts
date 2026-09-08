@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { getLang, type Lang } from "./dir"
 import ar from "../i18n/locales/ar.json"
 
@@ -41,11 +41,12 @@ export function useT() {
     window.addEventListener("kamra:lang", on)
     return () => window.removeEventListener("kamra:lang", on)
   }, [])
-  return {
-    lang,
-    t: (s: string, vars?: Vars) => {
+  const t = useCallback(
+    (s: string, vars?: Vars) => {
       const dict = DICT[lang] ?? {}
       return interpolate(dict[s] ?? s, vars)
     },
-  }
+    [lang],
+  )
+  return { lang, t }
 }

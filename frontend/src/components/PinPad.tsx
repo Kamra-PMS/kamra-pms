@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react"
 import { Delete, X } from "lucide-react"
 import { cn } from "../lib/utils"
+import { useT } from "../lib/i18n"
 import { Button } from "./ui/button"
 
 type PinPadProps = {
@@ -18,8 +19,8 @@ type PinPadProps = {
 /** Touch-first numeric PIN pad for front-desk terminals. */
 export function PinPad({
   open,
-  title = "Cashier PIN",
-  subtitle = "Enter your PIN to continue",
+  title,
+  subtitle,
   mode = "unlock",
   error,
   busy,
@@ -27,6 +28,9 @@ export function PinPad({
   onClose,
   maxLength = 8,
 }: PinPadProps) {
+  const { t } = useT()
+  const resolvedTitle = title ?? t("Cashier PIN")
+  const resolvedSubtitle = subtitle ?? t("Enter your PIN to continue")
   const [pin, setPin] = useState("")
   const [shake, setShake] = useState(false)
 
@@ -76,13 +80,13 @@ export function PinPad({
       <div className="w-full max-w-sm rounded-2xl border border-zinc-200 bg-white p-5 shadow-xl">
         <div className="mb-4 flex items-start justify-between gap-3">
           <div>
-            <h2 className="text-lg font-semibold text-zinc-900">{title}</h2>
-            <p className="mt-0.5 text-sm text-zinc-500">{subtitle}</p>
+            <h2 className="text-lg font-semibold text-zinc-900">{resolvedTitle}</h2>
+            <p className="mt-0.5 text-sm text-zinc-500">{resolvedSubtitle}</p>
           </div>
           {onClose ? (
             <button
               type="button"
-              aria-label="Close"
+              aria-label={t("Close")}
               className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700"
               onClick={onClose}
             >
@@ -138,12 +142,12 @@ export function PinPad({
           onClick={() => void submit()}
         >
           {busy
-            ? "Checking…"
+            ? t("Checking…")
             : mode === "enroll"
-              ? "Set PIN"
+              ? t("Set PIN")
               : mode === "confirm"
-                ? "Confirm"
-                : "Unlock"}
+                ? t("Confirm")
+                : t("Unlock")}
         </Button>
       </div>
     </div>

@@ -5,6 +5,7 @@ import type { Row } from "../lib/resource"
 import { Button } from "./ui/button"
 import { toFullPath } from "../lib/routing"
 import { cur, moneyLocale } from "../lib/money"
+import { useT } from "../lib/i18n"
 
 /** Cancel a stay the right way: see what it costs, say why, get a
  * cancellation number the guest can keep. Lives in the reservation
@@ -32,6 +33,7 @@ const inr = (n: number) =>
   Number(n).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
 
 export default function CancelPanel({ row, reload }: { row: Row; reload: () => void }) {
+  const { t } = useT()
   const [open, setOpen] = useState(false)
   const [preview, setPreview] = useState<Preview | null>(null)
   const [reason, setReason] = useState(REASONS[0])
@@ -56,19 +58,21 @@ export default function CancelPanel({ row, reload }: { row: Row; reload: () => v
     return (
       <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
         <p className="font-semibold">
-          Cancelled - {done.cancellation_number}
+          {t("Cancelled - {n}", { n: done.cancellation_number })}
         </p>
         <p className="mt-0.5">
           {done.fee > 0
-            ? `Cancellation fee ${cur()}${inr(done.fee)} posted to the folio.`
-            : "No fee applied."}{" "}
-          Give the guest the cancellation number.
+            ? t("Cancellation fee {amount} posted to the folio.", {
+                amount: `${cur()}${inr(done.fee)}`,
+              })
+            : t("No fee applied.")}{" "}
+          {t("Give the guest the cancellation number.")}
         </p>
         <a
           href={toFullPath(`/cancelled/${encodeURIComponent(String(row.name))}`)}
           className="mt-1.5 inline-block font-medium text-emerald-900 underline"
         >
-          Print / share the confirmation letter
+          {t("Print / share the confirmation letter")}
         </a>
       </div>
     )
@@ -77,31 +81,32 @@ export default function CancelPanel({ row, reload }: { row: Row; reload: () => v
     <div className="border-t border-zinc-200 pt-4">
       {!open ? (
         <Button variant="outline" onClick={() => setOpen(true)}>
-          Cancel this stay…
+          {t("Cancel this stay…")}
         </Button>
       ) : (
         <div className="space-y-3">
           {preview && (
             <p className="rounded-lg bg-zinc-50 px-3 py-2 text-sm text-zinc-600">
-              {preview.days_before_arrival} day
-              {preview.days_before_arrival === 1 ? "" : "s"} before arrival.{" "}
+              {t("{n} day{s} before arrival.", {
+                n: preview.days_before_arrival,
+                s: preview.days_before_arrival === 1 ? "" : "s",
+              })}{" "}
               {preview.inside_window && preview.fee_basis !== "None" ? (
                 <>
-                  Inside the {preview.free_cancel_days}-day window - the{" "}
-                  <span className="font-medium">
-                    {preview.fee_basis.toLowerCase()} ({cur()}
-                    {inr(preview.estimated_fee)})
-                  </span>{" "}
-                  will be charged.
+                  {t("Inside the {days}-day window - the {basis} ({amount}) will be charged.", {
+                    days: preview.free_cancel_days,
+                    basis: preview.fee_basis.toLowerCase(),
+                    amount: `${cur()}${inr(preview.estimated_fee)}`,
+                  })}
                 </>
               ) : (
-                "Outside the fee window - cancellation is free."
+                t("Outside the fee window - cancellation is free.")
               )}
             </p>
           )}
           <label className="block">
             <span className="mb-1 block text-sm font-medium text-zinc-600">
-              Reason
+              {t("Reason")}
             </span>
             <select
               className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm focus:outline-2 focus:outline-offset-1 focus:outline-brand-600"
@@ -109,13 +114,13 @@ export default function CancelPanel({ row, reload }: { row: Row; reload: () => v
               onChange={(e) => setReason(e.target.value)}
             >
               {REASONS.map((r) => (
-                <option key={r}>{r}</option>
+                <option key={r}>{t(r)}</option>
               ))}
             </select>
           </label>
           <textarea
             className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm focus:outline-2 focus:outline-offset-1 focus:outline-brand-600"
-            placeholder="Anything worth remembering (optional)"
+            placeholder={t("Anything worth remembering (optional)")}
             value={note}
             onChange={(e) => setNote(e.target.value)}
           />
@@ -127,7 +132,7 @@ export default function CancelPanel({ row, reload }: { row: Row; reload: () => v
                 checked={waive}
                 onChange={(e) => setWaive(e.target.checked)}
               />
-              Waive the fee (logged - manager's call)
+              {t("Waive the fee (logged - manager's call)")}
             </label>
           )}
           <div className="flex items-center gap-2">
@@ -155,10 +160,10 @@ export default function CancelPanel({ row, reload }: { row: Row; reload: () => v
                 }
               }}
             >
-              {busy ? "Cancelling…" : "Confirm cancellation"}
+              {busy ? t("Cancelling…") : t("Confirm cancellation")}
             </Button>
             <Button variant="ghost" onClick={() => setOpen(false)}>
-              Keep the booking
+              {t("Keep the booking")}
             </Button>
           </div>
           {error && <p className="text-xs text-rose-600">{error}</p>}

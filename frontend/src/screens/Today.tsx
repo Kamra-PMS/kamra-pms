@@ -35,6 +35,7 @@ import CheckInDialog from "../components/CheckInDialog"
 import { serverError } from "../lib/resource"
 import { toFullPath } from "../lib/routing"
 import { cur, moneyLocale } from "../lib/money"
+import { useT } from "../lib/i18n"
 
 const HK_CYCLE: RoomRow["housekeeping_status"][] = [
   "Dirty",
@@ -55,21 +56,28 @@ const inr0 = (n: number) =>
 
 /** Paid / due / unpaid at a glance - the folio is the source of truth,
  * this chip just saves the trip to Billing. */
-function paymentChip(row: ReservationRow) {
+function PaymentChip({ row }: { row: ReservationRow }) {
+  const { t } = useT()
   const paid = Number(row.paid_total ?? 0)
   const due = Number(row.balance_due ?? 0)
-  if (due <= 0 && paid > 0) return <Badge tone="green">Paid</Badge>
+  if (due <= 0 && paid > 0) return <Badge tone="green">{t("Paid")}</Badge>
   if (paid > 0)
-    return <Badge tone="amber">{cur()}{inr0(due)} due</Badge>
-  if (due > 0) return <Badge tone="zinc">Unpaid</Badge>
+    return (
+      <Badge tone="amber">
+        {cur()}
+        {inr0(due)} {t("due")}
+      </Badge>
+    )
+  if (due > 0) return <Badge tone="zinc">{t("Unpaid")}</Badge>
   return null
 }
 
-function sourceBadge(row: ReservationRow) {
-  if (row.source === "AI Agent") return <Badge tone="brand">AI Agent</Badge>
+function SourceBadge({ row }: { row: ReservationRow }) {
+  const { t } = useT()
+  if (row.source === "AI Agent") return <Badge tone="brand">{t("AI Agent")}</Badge>
   if (row.source === "OTA")
-    return <Badge tone="indigo">{row.channel || "OTA"}</Badge>
-  return <Badge tone="zinc">{row.source}</Badge>
+    return <Badge tone="indigo">{row.channel || t("OTA")}</Badge>
+  return <Badge tone="zinc">{t(row.source)}</Badge>
 }
 
 // Illustrative micro-trend for the KPI sparklines until a history endpoint
@@ -86,6 +94,7 @@ function ReservationList(props: {
   empty: string
   action: (row: ReservationRow) => React.ReactNode
 }) {
+  const { t } = useT()
   if (props.rows.length === 0) {
     return <p className="px-1 py-3 text-sm text-zinc-400">{props.empty}</p>
   }
@@ -98,15 +107,18 @@ function ReservationList(props: {
               <span className="truncate text-sm font-medium">
                 {row.guest_name}
               </span>
-              {sourceBadge(row)}
-              {paymentChip(row)}
+              <SourceBadge row={row} />
+              <PaymentChip row={row} />
               {row.precheckin_status === "Submitted" && (
-                <Badge tone="green">Pre-checked-in</Badge>
+                <Badge tone="green">{t("Pre-checked-in")}</Badge>
               )}
             </div>
             <div className="mt-0.5 text-xs text-zinc-500">
-              {row.room ? `Room ${row.room.split("-").pop()}` : "Unassigned"} ·{" "}
-              {row.nights} night{row.nights === 1 ? "" : "s"} · {row.adults} ad
+              {row.room
+                ? t("Room {n}", { n: row.room.split("-").pop() ?? "" })
+                : t("Unassigned")}{" "}
+              · {t("{n} night{s}", { n: row.nights, s: row.nights === 1 ? "" : "s" })} ·{" "}
+              {t("{n} ad", { n: row.adults })}
               {row.children ? ` + ${row.children} ch` : ""}
               {row.eta && ` · ETA ${row.eta}`}
               {row.booked_by_name && (
@@ -115,11 +127,13 @@ function ReservationList(props: {
                     (row.booked_by_phone
                       ? `${row.booked_by_phone} · `
                       : "") +
-                    `send links & updates to: ${row.contact_preference ?? "Booker"}`
+                    t("send links & updates to: {pref}", {
+                      pref: row.contact_preference ?? "Booker",
+                    })
                   }
                 >
                   {" "}
-                  · via {row.booked_by_name}
+                  · {t("via {name}", { name: row.booked_by_name })}
                   {row.booker_relation ? ` (${row.booker_relation})` : ""}
                 </span>
               )}
@@ -129,7 +143,7 @@ function ReservationList(props: {
                   className="ml-2 font-medium text-brand-700 hover:underline"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  GRC
+                  {t("GRC")}
                 </a>
               )}
               {row.status === "Confirmed" &&
@@ -143,15 +157,20 @@ function ReservationList(props: {
                         `${window.location.origin}/checkin/${row.precheckin_token}`,
                       )
                     }}
-                    title={`Copy the self check-in link - send to the ${
+                    title={
                       row.contact_preference === "Booker" && row.booked_by_name
-                        ? `booker, ${row.booked_by_name}${row.booked_by_phone ? ` (${row.booked_by_phone})` : ""}`
+                        ? t("Copy the self check-in link - send to the booker, {name}{phone}", {
+                            name: row.booked_by_name,
+                            phone: row.booked_by_phone ? ` (${row.booked_by_phone})` : "",
+                          })
                         : row.contact_preference === "Both" && row.booked_by_name
-                          ? `guest and the booker (${row.booked_by_name})`
-                          : "guest"
-                    }`}
+                          ? t("Copy the self check-in link - send to the guest and the booker ({name})", {
+                              name: row.booked_by_name,
+                            })
+                          : t("Copy the self check-in link - send to the guest")
+                    }
                   >
-                    copy check-in link
+                    {t("copy check-in link")}
                   </button>
                 )}
             </div>
@@ -163,22 +182,26 @@ function ReservationList(props: {
   )
 }
 
-function ordinalFloor(f: string) {
+function ordinalFloor(f: string, t: (s: string, vars?: Record<string, string | number>) => string) {
   const n = Number(f)
-  if (Number.isNaN(n)) return `${f} Floor`
+  if (Number.isNaN(n)) return t("{f} Floor", { f })
   const s = ["th", "st", "nd", "rd"]
   const v = n % 100
-  return `${n}${s[(v - 20) % 10] || s[v] || s[0]} Floor`
+  return t("{n}{ord} Floor", { n, ord: s[(v - 20) % 10] || s[v] || s[0] })
 }
 
-function relDay(dateStr: string, today?: string) {
+function relDay(
+  dateStr: string,
+  t: (s: string, vars?: Record<string, string | number>) => string,
+  today?: string,
+) {
   const base = today ? new Date(today + "T00:00:00") : new Date()
   const d = Math.round(
     (new Date(dateStr + "T00:00:00").getTime() - base.getTime()) / 86_400_000,
   )
-  if (d <= 0) return "Today"
-  if (d === 1) return "Tomorrow"
-  return `In ${d} days`
+  if (d <= 0) return t("Today")
+  if (d === 1) return t("Tomorrow")
+  return t("In {n} days", { n: d })
 }
 
 function InHouseTable({
@@ -188,11 +211,12 @@ function InHouseTable({
   rows: ReservationRow[]
   today?: string
 }) {
+  const { t } = useT()
   const navigate = useNavigate()
   if (!rows.length) {
     return (
       <p className="px-1 py-3 text-sm text-zinc-400">
-        Nobody is checked in right now.
+        {t("Nobody is checked in right now.")}
       </p>
     )
   }
@@ -201,12 +225,12 @@ function InHouseTable({
       <table className="w-full min-w-[560px] text-sm">
         <thead>
           <tr className="text-left text-[11px] font-medium uppercase tracking-wider text-zinc-400">
-            <th className="pb-2 pl-1 font-medium">Guest</th>
-            <th className="pb-2 font-medium">Room</th>
-            <th className="pb-2 font-medium">Source</th>
-            <th className="pb-2 font-medium">Balance</th>
-            <th className="pb-2 font-medium">Stay</th>
-            <th className="pb-2 pr-1 text-right font-medium">Check-out</th>
+            <th className="pb-2 pl-1 font-medium">{t("Guest")}</th>
+            <th className="pb-2 font-medium">{t("Room")}</th>
+            <th className="pb-2 font-medium">{t("Source")}</th>
+            <th className="pb-2 font-medium">{t("Balance")}</th>
+            <th className="pb-2 font-medium">{t("Stay")}</th>
+            <th className="pb-2 pr-1 text-right font-medium">{t("Check-out")}</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-zinc-100">
@@ -229,28 +253,30 @@ function InHouseTable({
                 <td className="py-2.5 tabular-nums text-zinc-600">
                   {row.room ? row.room.split("-").pop() : "—"}
                 </td>
-                <td className="py-2.5">{sourceBadge(row)}</td>
+                <td className="py-2.5">
+                  <SourceBadge row={row} />
+                </td>
                 <td className="py-2.5">
                   {due > 0 ? (
                     <span className="inline-flex items-center gap-1.5 tabular-nums text-zinc-700">
                       {cur()}
                       {inr0(due)}
-                      <Badge tone="amber">Due</Badge>
+                      <Badge tone="amber">{t("Due")}</Badge>
                     </span>
                   ) : (
                     <span className="tabular-nums text-zinc-400">{cur()}0</span>
                   )}
                 </td>
                 <td className="py-2.5 text-zinc-500">
-                  {row.nights} night{row.nights === 1 ? "" : "s"} · {row.adults}{" "}
-                  adult{row.adults === 1 ? "" : "s"}
+                  {t("{n} night{s}", { n: row.nights, s: row.nights === 1 ? "" : "s" })} ·{" "}
+                  {t("{n} adult{s}", { n: row.adults, s: row.adults === 1 ? "" : "s" })}
                 </td>
                 <td className="py-2.5 pr-1 text-right">
                   <div className="tabular-nums text-zinc-600">
                     {row.check_out_date}
                   </div>
                   <div className="text-[11px] text-zinc-400">
-                    {relDay(row.check_out_date, today)}
+                    {relDay(row.check_out_date, t, today)}
                   </div>
                 </td>
               </tr>
@@ -263,6 +289,7 @@ function InHouseTable({
 }
 
 export default function Today() {
+  const { t } = useT()
   const { refreshKey } = useOutletContext<ShellContext>()
   const navigate = useNavigate()
   const [snap, setSnap] = useState<Snapshot | null>(null)
@@ -340,8 +367,11 @@ export default function Today() {
         key={room.name}
         title={
           stay
-            ? `${stay.guest_name} · open registration`
-            : `Housekeeping: ${room.housekeeping_status} → ${next} (click to advance)`
+            ? t("{guest} · open registration", { guest: stay.guest_name })
+            : t("Housekeeping: {from} → {to} (click to advance)", {
+                from: room.housekeeping_status,
+                to: next,
+              })
         }
         disabled={busy === room.name}
         onClick={() =>
@@ -362,25 +392,25 @@ export default function Today() {
           {occupied && <BedDouble className="size-3.5" aria-hidden />}
         </div>
         <div className="mt-0.5 text-[9px] font-medium uppercase tracking-wide opacity-80">
-          {occupied ? "Occupied" : room.housekeeping_status}
+          {occupied ? t("Occupied") : t(room.housekeeping_status)}
         </div>
       </button>
     )
   }
   const hkRoom = kpi?.housekeeping?.room_status ?? {}
   const hkStats = [
-    { label: "Clean", value: hkRoom.Clean ?? 0, dot: "bg-emerald-500" },
-    { label: "Dirty", value: hkRoom.Dirty ?? 0, dot: "bg-amber-500" },
-    { label: "Inspected", value: hkRoom.Inspected ?? 0, dot: "bg-sky-500" },
+    { label: t("Clean"), value: hkRoom.Clean ?? 0, dot: "bg-emerald-500" },
+    { label: t("Dirty"), value: hkRoom.Dirty ?? 0, dot: "bg-amber-500" },
+    { label: t("Inspected"), value: hkRoom.Inspected ?? 0, dot: "bg-sky-500" },
     {
-      label: "Out of Order",
+      label: t("Out of Order"),
       value: hkRoom["Out of Order"] ?? 0,
       dot: "bg-rose-500",
     },
   ]
   const hh = new Date().getHours()
   const greeting =
-    hh < 12 ? "Good morning" : hh < 17 ? "Good afternoon" : "Good evening"
+    hh < 12 ? t("Good morning") : hh < 17 ? t("Good afternoon") : t("Good evening")
   const prettyDate = snap?.date
     ? new Date(snap.date + "T00:00:00").toLocaleDateString(undefined, {
         weekday: "short",
@@ -395,10 +425,10 @@ export default function Today() {
       <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold text-zinc-900">
-            Front Desk Overview
+            {t("Front Desk Overview")}
           </h1>
           <p className="mt-0.5 text-sm text-zinc-500">
-            {greeting}. Here's what's happening today.
+            {greeting}. {t("Here's what's happening today.")}
           </p>
         </div>
         <div className="rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-sm font-medium tabular-nums text-zinc-600">
@@ -415,42 +445,45 @@ export default function Today() {
       <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
         <StatCard
           icon={<LogIn className="size-4" />}
-          label="Arrivals"
+          label={t("Arrivals")}
           value={arrivalsN}
           spark={mkTrend(arrivalsN)}
         />
         <StatCard
           icon={<LogOut className="size-4" />}
-          label="Departures"
+          label={t("Departures")}
           value={departuresN}
           spark={mkTrend(departuresN, false)}
           sparkColor="var(--color-amber-600)"
         />
         <StatCard
           icon={<Users className="size-4" />}
-          label="In-house"
+          label={t("In-house")}
           value={inhouseN}
           spark={mkTrend(inhouseN)}
         />
         <StatCard
           icon={<PieChart className="size-4" />}
-          label="Occupancy"
+          label={t("Occupancy")}
           value={`${occupancyPct}%`}
           progress={occupancyPct}
-          progressLabel={`${occupied ?? 0} of ${roomsN} rooms`}
+          progressLabel={t("{occupied} of {total} rooms", {
+            occupied: occupied ?? 0,
+            total: roomsN,
+          })}
         />
         <StatCard
           icon={<Wallet className="size-4" />}
-          label="Revenue"
+          label={t("Revenue")}
           value={`${cur()}${inr0(revenue)}`}
-          sub={`RevPAR ${cur()}${inr0(revpar)}`}
+          sub={t("RevPAR {amount}", { amount: `${cur()}${inr0(revpar)}` })}
           spark={mkTrend(revenue)}
         />
         <StatCard
           icon={<ListChecks className="size-4" />}
-          label="Open tasks"
+          label={t("Open tasks")}
           value={tasksN}
-          sub={overdueN ? `${overdueN} overdue` : undefined}
+          sub={overdueN ? t("{n} overdue", { n: overdueN }) : undefined}
         />
       </div>
 
@@ -458,19 +491,19 @@ export default function Today() {
         <div className="space-y-4 lg:col-span-2">
           <Card>
             <CardHeader>
-              <CardTitle>Arrivals</CardTitle>
+              <CardTitle>{t("Arrivals")}</CardTitle>
               <LogIn className="size-4 text-zinc-400" aria-hidden />
             </CardHeader>
             <CardContent className="pt-1">
               <ReservationList
                 rows={snap?.arrivals ?? []}
-                empty="No arrivals expected today."
+                empty={t("No arrivals expected today.")}
                 action={(row) => (
                   <Button
                     disabled={busy === row.name}
                     onClick={() => setCheckingIn(row.name)}
                   >
-                    Check in
+                    {t("Check in")}
                   </Button>
                 )}
               />
@@ -479,20 +512,20 @@ export default function Today() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Departures</CardTitle>
+              <CardTitle>{t("Departures")}</CardTitle>
               <LogOut className="size-4 text-zinc-400" aria-hidden />
             </CardHeader>
             <CardContent className="pt-1">
               <ReservationList
                 rows={snap?.departures ?? []}
-                empty="No departures due today."
+                empty={t("No departures due today.")}
                 action={(row) => (
                   <Button
                     variant="outline"
                     disabled={busy === row.name}
                     onClick={() => act(row.name, () => checkOut(row.name))}
                   >
-                    Check out
+                    {t("Check out")}
                   </Button>
                 )}
               />
@@ -503,9 +536,9 @@ export default function Today() {
         <div className="space-y-4 lg:col-span-3">
           <Card>
             <CardHeader>
-              <CardTitle>Room board</CardTitle>
+              <CardTitle>{t("Room board")}</CardTitle>
               <span className="text-xs text-zinc-400">
-                Click a room to advance its housekeeping status
+                {t("Click a room to advance its housekeeping status")}
               </span>
             </CardHeader>
             <CardContent>
@@ -521,7 +554,7 @@ export default function Today() {
                         : "text-zinc-500 hover:text-zinc-700",
                     )}
                   >
-                    {f === "All" ? "All Floors" : ordinalFloor(f)}
+                    {f === "All" ? t("All Floors") : ordinalFloor(f, t)}
                     {floor === f && (
                       <span className="absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-brand-600" />
                     )}
@@ -532,7 +565,7 @@ export default function Today() {
                 {shownFloors.map((fl) => (
                   <div key={fl} className="flex items-start gap-3">
                     <div className="w-16 shrink-0 pt-2 text-xs font-medium text-zinc-500">
-                      {ordinalFloor(fl)}
+                      {ordinalFloor(fl, t)}
                     </div>
                     <div className="grid flex-1 grid-cols-3 gap-2 sm:grid-cols-5 md:grid-cols-7">
                       {allRooms
@@ -543,12 +576,12 @@ export default function Today() {
                 ))}
               </div>
               <div className="mt-3 flex flex-wrap gap-2 text-xs text-zinc-500">
-                <Badge tone="green">Clean</Badge>
-                <Badge tone="sky">Inspected</Badge>
-                <Badge tone="amber">Dirty</Badge>
-                <Badge tone="rose">Out of Order</Badge>
+                <Badge tone="green">{t("Clean")}</Badge>
+                <Badge tone="sky">{t("Inspected")}</Badge>
+                <Badge tone="amber">{t("Dirty")}</Badge>
+                <Badge tone="rose">{t("Out of Order")}</Badge>
                 <span className="inline-flex items-center gap-1">
-                  <BedDouble className="size-3.5" aria-hidden /> occupied
+                  <BedDouble className="size-3.5" aria-hidden /> {t("occupied")}
                 </span>
               </div>
             </CardContent>
@@ -556,8 +589,10 @@ export default function Today() {
 
           <Card>
             <CardHeader>
-              <CardTitle>In-house guests</CardTitle>
-              <span className="text-xs text-zinc-400">{inhouseN} staying</span>
+              <CardTitle>{t("In-house guests")}</CardTitle>
+              <span className="text-xs text-zinc-400">
+                {t("{n} staying", { n: inhouseN })}
+              </span>
             </CardHeader>
             <CardContent className="pt-1">
               <InHouseTable rows={snap?.in_house ?? []} today={snap?.date} />
@@ -566,9 +601,13 @@ export default function Today() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Housekeeping</CardTitle>
+              <CardTitle>{t("Housekeeping")}</CardTitle>
               <span className="text-xs text-zinc-400">
-                {occupancyPct}% occupied · {occupied ?? 0} of {roomsN}
+                {t("{pct}% occupied · {occupied} of {total}", {
+                  pct: occupancyPct,
+                  occupied: occupied ?? 0,
+                  total: roomsN,
+                })}
               </span>
             </CardHeader>
             <CardContent>

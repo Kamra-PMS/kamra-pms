@@ -11,6 +11,7 @@ import {
 import AppShell, { type ShellContext } from "./AppShell"
 const Login = lazy(() => import("./screens/Login"))
 import { useAuth } from "./lib/auth"
+import { t, useT } from "./lib/i18n"
 import { toFullPath } from "./lib/routing"
 import { CalendarView } from "./components/CalendarView"
 import { ResourceScreen } from "./components/ResourceScreen"
@@ -122,7 +123,8 @@ class ErrorBoundary extends Component<
 }
 
 function Splash() {
-  return <p className="py-20 text-center text-sm text-zinc-400">Loading…</p>
+  const { t } = useT()
+  return <p className="py-20 text-center text-sm text-zinc-400">{t("Loading…")}</p>
 }
 
 /** Gate for the app shell: redirects to /login (remembering where you were)
@@ -348,7 +350,7 @@ export default function App() {
             path="*"
             element={
               <p className="py-10 text-center text-sm text-zinc-400">
-                Page not found.
+                {t("Page not found.")}
               </p>
             }
           />

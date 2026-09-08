@@ -27,6 +27,7 @@ import { useAuth } from "../lib/auth"
 import { visibleApps, type AppNavItem } from "../lib/apps"
 import { cn } from "../lib/utils"
 import { cur, moneyLocale } from "../lib/money"
+import { useT } from "../lib/i18n"
 
 interface Result {
   id: string
@@ -72,6 +73,7 @@ function navItemsForRoles(roles: string[]): {
 }
 
 export function CommandPalette() {
+  const { t } = useT()
   const { roles } = useAuth()
   const [open, setOpen] = useState(false)
   const [q, setQ] = useState("")
@@ -178,11 +180,13 @@ export function CommandPalette() {
   const navResults = useMemo<Result[]>(
     () =>
       navItems
-        .filter(({ item, app }) => fuzzy(`${item.label} ${app}`, q))
+        .filter(({ item, app }) =>
+          fuzzy(`${item.label} ${app} ${t(item.label)} ${t(app)}`, q),
+        )
         .map(({ item, app }) => ({
           id: `nav:${item.to ?? item.href ?? item.label}`,
-          label: item.label,
-          hint: app,
+          label: t(item.label),
+          hint: t(app),
           icon: item.icon,
           onSelect: () => {
             setOpen(false)
@@ -190,7 +194,7 @@ export function CommandPalette() {
             else if (item.to) navigate(item.to)
           },
         })),
-    [navItems, q, navigate],
+    [navItems, q, navigate, t],
   )
 
   const guestResults = useMemo<Result[]>(
@@ -198,14 +202,14 @@ export function CommandPalette() {
       guests.map((g) => ({
         id: `guest:${g.name}`,
         label: g.full_name || g.name,
-        hint: `Guest · ${g.phone || g.name}`,
+        hint: `${t("Guest")} · ${g.phone || g.name}`,
         icon: UserCircle2,
         onSelect: () => {
           setOpen(false)
           navigate(`/guests/${encodeURIComponent(g.name)}`)
         },
       })),
-    [guests, navigate],
+    [guests, navigate, t],
   )
 
   const reservationResults = useMemo<Result[]>(
@@ -213,7 +217,7 @@ export function CommandPalette() {
       reservations.map((r) => ({
         id: `res:${r.name}`,
         label: `${r.name} · ${r.guest_name || ""}`.trim(),
-        hint: `${r.status} · check-in ${r.check_in_date}${r.room ? ` · ${r.room}` : ""}`,
+        hint: `${t(r.status)} · ${t("check-in")} ${r.check_in_date}${r.room ? ` · ${r.room}` : ""}`,
         icon: Bed,
         onSelect: () => {
           setOpen(false)
@@ -226,7 +230,7 @@ export function CommandPalette() {
           )
         },
       })),
-    [reservations, navigate],
+    [reservations, navigate, t],
   )
 
   const invoiceResults = useMemo<Result[]>(
@@ -234,21 +238,21 @@ export function CommandPalette() {
       invoices.map((f) => ({
         id: `inv:${f.name}`,
         label: `${f.invoice_number} · ${f.guest_name || ""}`.trim(),
-        hint: `Invoice · ${cur()}${(f.grand_total || 0).toLocaleString(moneyLocale())} · ${f.status}`,
+        hint: `${t("Invoice")} · ${cur()}${(f.grand_total || 0).toLocaleString(moneyLocale())} · ${t(f.status)}`,
         icon: FileText,
         onSelect: () => {
           setOpen(false)
           navigate(`/billing/${encodeURIComponent(f.name)}`)
         },
       })),
-    [invoices, navigate],
+    [invoices, navigate, t],
   )
 
   const groups: { title: string; items: Result[] }[] = [
-    { title: "Reservations", items: reservationResults },
-    { title: "Invoices", items: invoiceResults },
-    { title: "Guests", items: guestResults },
-    { title: "Navigate", items: navResults },
+    { title: t("Reservations"), items: reservationResults },
+    { title: t("Invoices"), items: invoiceResults },
+    { title: t("Guests"), items: guestResults },
+    { title: t("Navigate"), items: navResults },
   ]
   // one flat, ordered list for arrow-key navigation across all groups
   const flat = groups.flatMap((g) => g.items)
@@ -273,7 +277,7 @@ export function CommandPalette() {
     <div
       role="dialog"
       aria-modal="true"
-      aria-label="Concierge"
+      aria-label={t("Concierge")}
       className="fixed inset-0 z-50 flex items-start justify-center bg-zinc-900/40 px-4 pt-24 backdrop-blur-sm"
       onClick={() => setOpen(false)}
     >
@@ -288,7 +292,7 @@ export function CommandPalette() {
             value={q}
             onChange={(e) => setQ(e.target.value)}
             onKeyDown={onKeyDown}
-            placeholder="Search a guest, phone, booking, invoice - or jump to any screen…"
+            placeholder={t("Search a guest, phone, booking, invoice - or jump to any screen…")}
             className="flex-1 bg-transparent text-sm outline-none placeholder:text-zinc-400"
           />
           {searching ? (
@@ -304,11 +308,11 @@ export function CommandPalette() {
           {totalCount === 0 && (
             <div className="px-3 py-8 text-center text-sm text-zinc-500">
               {q.trim().length >= 2 ? (
-                "No matches."
+                t("No matches.")
               ) : (
                 <>
-                  Search a guest, phone, booking or invoice.{" "}
-                  <span className="text-zinc-400">Or jump to any screen.</span>
+                  {t("Search a guest, phone, booking or invoice.")}{" "}
+                  <span className="text-zinc-400">{t("Or jump to any screen.")}</span>
                 </>
               )}
             </div>
@@ -363,9 +367,11 @@ export function CommandPalette() {
           <span className="inline-flex items-center gap-1.5">
             <CmdIcon className="size-3" aria-hidden />
             <kbd className="rounded bg-white px-1 font-mono">K</kbd>
-            to open · <kbd className="rounded bg-white px-1 font-mono">esc</kbd> to close
+            {t("to open")} ·{" "}
+            <kbd className="rounded bg-white px-1 font-mono">esc</kbd>{" "}
+            {t("to close")}
           </span>
-          <span>Every action is recorded in the Activity Log.</span>
+          <span>{t("Every action is recorded in the Activity Log.")}</span>
         </div>
       </div>
     </div>

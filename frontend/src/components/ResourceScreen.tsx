@@ -651,7 +651,7 @@ export function ResourceScreen({
                     }
                   >
                     <span className="mb-1.5 block text-sm font-medium text-zinc-600">
-                      {spec.label}
+                      {t(spec.label)}
                       {spec.required && <span className="text-rose-500"> *</span>}
                     </span>
                     <FieldInput
@@ -661,6 +661,7 @@ export function ResourceScreen({
                         setDraft((d) => ({ ...d, [spec.field]: v }))
                       }
                       linkOptions={linkOptions}
+                      t={t}
                     />
                   </label>
                 ))}

@@ -7,6 +7,7 @@ import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { cn } from "../lib/utils"
 import { cur } from "../lib/money"
+import { useT } from "../lib/i18n"
 
 const inputCls =
   "w-full rounded-lg border border-zinc-300 bg-white px-3.5 py-2.5 text-base " +
@@ -55,6 +56,7 @@ const STR_LISTING_DEFAULT: RoomTypeRow = {
 }
 
 export default function Setup() {
+  const { t } = useT()
   const [kind, setKind] = useState<PropertyKind>("Hotel")
   const [topology, setTopology] = useState<Topology>("rooms")
   const [step, setStep] = useState(0)
@@ -259,10 +261,9 @@ export default function Setup() {
 
   return (
     <div className="mx-auto max-w-2xl">
-      <h1 className="mb-1 text-lg font-semibold">Set up a new property</h1>
+      <h1 className="mb-1 text-lg font-semibold">{t("Set up a new property")}</h1>
       <p className="mb-4 text-sm text-zinc-500">
-        Hotel or vacation rental — same product, different defaults. Prefer talking?
-        Connect Claude to Kamra&apos;s MCP and say &quot;onboard my property&quot;.
+        {t("Hotel or vacation rental — same product, different defaults. Prefer talking? Connect Claude to Kamra's MCP and say \"onboard my property\".")}
       </p>
 
       <ol className="mb-6 flex flex-wrap gap-2">
@@ -281,14 +282,14 @@ export default function Setup() {
             {(i < step || (createdProperty && i <= reviewStep)) && (
               <Check className="size-3" aria-hidden />
             )}
-            {s}
+            {t(s)}
           </li>
         ))}
       </ol>
 
       <Card>
         <CardHeader>
-          <CardTitle>{steps[step]}</CardTitle>
+          <CardTitle>{t(steps[step])}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {step === 0 && (
@@ -297,13 +298,13 @@ export default function Setup() {
                 [
                   {
                     value: "Hotel" as const,
-                    title: "Hotel",
-                    blurb: "Multiple rooms, optional F&B and events. Classic front-desk flow.",
+                    title: t("Hotel"),
+                    blurb: t("Multiple rooms, optional F&B and events. Classic front-desk flow."),
                   },
                   {
                     value: "Short Term Rental" as const,
-                    title: "Vacation rental",
-                    blurb: "Entire place or a few units. No meal plans; overbooking off by default.",
+                    title: t("Vacation rental"),
+                    blurb: t("Entire place or a few units. No meal plans; overbooking off by default."),
                   },
                 ] as const
               ).map((opt) => (
@@ -329,17 +330,17 @@ export default function Setup() {
             <>
               {(
                 [
-                  ["property_name", "Property name *", "text", "Sunrise Residency"],
-                  ["city", "City", "text", "Bengaluru"],
-                  ["state", "State", "text", "Karnataka"],
-                  ["phone", "Phone", "text", "+91 …"],
-                  ["gstin", "GSTIN", "text", "29XXXXX…"],
-                  ["checkin_time", "Check-in Time", "time", ""],
-                  ["checkout_time", "Check-out Time", "time", ""],
-                  ["minimum_nights", "Minimum Nights", "number", "1"],
-                  ["booking_payment_mode", "Booking Payment Mode", "select", ""],
-                  ["advance_percent", "Advance Percent", "number", "100"],
-                  ["security_deposit_amount", "Security Deposit Amount", "number", "5000"],
+                  ["property_name", t("Property name *"), "text", "Sunrise Residency"],
+                  ["city", t("City"), "text", "Bengaluru"],
+                  ["state", t("State"), "text", "Karnataka"],
+                  ["phone", t("Phone"), "text", "+91 …"],
+                  ["gstin", t("GSTIN"), "text", "29XXXXX…"],
+                  ["checkin_time", t("Check-in Time"), "time", ""],
+                  ["checkout_time", t("Check-out Time"), "time", ""],
+                  ["minimum_nights", t("Minimum Nights"), "number", "1"],
+                  ["booking_payment_mode", t("Booking Payment Mode"), "select", ""],
+                  ["advance_percent", t("Advance Percent"), "number", "100"],
+                  ["security_deposit_amount", t("Security Deposit Amount"), "number", "5000"],
                 ] as const
               ).map(([k, label, type, ph]) => (
                 <label key={k} className="block">
@@ -350,9 +351,9 @@ export default function Setup() {
                       value={prop[k]}
                       onChange={(e) => setProp({ ...prop, [k]: e.target.value })}
                     >
-                      <option value="Full payment">Full payment</option>
-                      <option value="Advance percent">Advance percent</option>
-                      <option value="Pay at hotel">Pay at hotel</option>
+                      <option value="Full payment">{t("Full payment")}</option>
+                      <option value="Advance percent">{t("Advance percent")}</option>
+                      <option value="Pay at hotel">{t("Pay at hotel")}</option>
                     </select>
                   ) : type === "time" ? (
                     <select
@@ -390,7 +391,7 @@ export default function Setup() {
                   {roomTypes.length > 1 && (
                     <Button
                       variant="ghost"
-                      aria-label="Remove"
+                      aria-label={t("Remove")}
                       className="absolute top-2 right-2"
                       onClick={() => setRoomTypes((r) => r.filter((_, j) => j !== i))}
                     >
@@ -399,7 +400,7 @@ export default function Setup() {
                   )}
                   <label className="block">
                     <span className="mb-1 block text-xs font-semibold text-zinc-500">
-                      {isStr ? "Listing code" : "Room Type Code (e.g. STD)"}
+                      {isStr ? t("Listing code") : t("Room Type Code (e.g. STD)")}
                     </span>
                     <input
                       className={inputCls}
@@ -410,23 +411,23 @@ export default function Setup() {
                   </label>
                   <label className="block">
                     <span className="mb-1 block text-xs font-semibold text-zinc-500">
-                      {isStr ? "Listing name" : "Room Type Name (e.g. Standard Room)"}
+                      {isStr ? t("Listing name") : t("Room Type Name (e.g. Standard Room)")}
                     </span>
                     <input
                       className={inputCls}
-                      placeholder={isStr ? "Entire villa" : "Name (Deluxe)"}
+                      placeholder={isStr ? t("Entire villa") : t("Name (Deluxe)")}
                       value={rt.name}
                       onChange={(e) => setRT(i, "name", e.target.value)}
                     />
                   </label>
                   <label className="block">
                     <span className="mb-1 block text-xs font-semibold text-zinc-500">
-                      Nightly price
+                      {t("Nightly price")}
                     </span>
                     <input
                       className={inputCls}
                       type="number"
-                      placeholder={`${cur()}/night`}
+                      placeholder={t("{cur}/night", { cur: cur() })}
                       value={rt.base_price}
                       onChange={(e) => setRT(i, "base_price", e.target.value)}
                     />
@@ -434,12 +435,12 @@ export default function Setup() {
                   {isStr && (
                     <label className="block">
                       <span className="mb-1 block text-xs font-semibold text-zinc-500">
-                        Weekend nightly price (optional)
+                        {t("Weekend nightly price (optional)")}
                       </span>
                       <input
                         className={inputCls}
                         type="number"
-                        placeholder="Leave blank to skip"
+                        placeholder={t("Leave blank to skip")}
                         value={rt.weekend_price}
                         onChange={(e) => setRT(i, "weekend_price", e.target.value)}
                       />
@@ -447,12 +448,12 @@ export default function Setup() {
                   )}
                   <label className="block">
                     <span className="mb-1 block text-xs font-semibold text-zinc-500">
-                      Max guests (base)
+                      {t("Max guests (base)")}
                     </span>
                     <input
                       className={inputCls}
                       type="number"
-                      placeholder="Adults"
+                      placeholder={t("Adults")}
                       value={rt.adults}
                       onChange={(e) => setRT(i, "adults", e.target.value)}
                     />
@@ -460,37 +461,37 @@ export default function Setup() {
                   {!(isStr && topology === "whole_property") && (
                     <label className="block">
                       <span className="mb-1 block text-xs font-semibold text-zinc-500">
-                        Category
+                        {t("Category")}
                       </span>
                       <select
                         className={cn(inputCls, "bg-white")}
                         value={rt.room_category}
                         onChange={(e) => setRT(i, "room_category", e.target.value)}
                       >
-                        <option value="Private">Private</option>
-                        <option value="Villa">Villa</option>
-                        <option value="Shared">Shared</option>
+                        <option value="Private">{t("Private")}</option>
+                        <option value="Villa">{t("Villa")}</option>
+                        <option value="Shared">{t("Shared")}</option>
                       </select>
                     </label>
                   )}
                   {rt.room_category !== "Villa" && !(isStr && topology === "whole_property") && (
                     <label className="block">
                       <span className="mb-1 block text-xs font-semibold text-zinc-500">
-                        Air Conditioning
+                        {t("Air Conditioning")}
                       </span>
                       <select
                         className={cn(inputCls, "bg-white")}
                         value={rt.air_conditioning}
                         onChange={(e) => setRT(i, "air_conditioning", e.target.value)}
                       >
-                        <option value="AC">AC</option>
-                        <option value="Non AC">Non AC</option>
+                        <option value="AC">{t("AC")}</option>
+                        <option value="Non AC">{t("Non AC")}</option>
                       </select>
                     </label>
                   )}
                   <label className="block">
                     <span className="mb-1 block text-xs font-semibold text-zinc-500">
-                      Free Child Age Limit (Years)
+                      {t("Free Child Age Limit (Years)")}
                     </span>
                     <input
                       className={inputCls}
@@ -502,7 +503,7 @@ export default function Setup() {
                   </label>
                   <label className="block">
                     <span className="mb-1 block text-xs font-semibold text-zinc-500">
-                      Extra guest price / night
+                      {t("Extra guest price / night")}
                     </span>
                     <input
                       className={inputCls}
@@ -530,7 +531,7 @@ export default function Setup() {
                 }
               >
                 <Plus className="size-4" aria-hidden />{" "}
-                {isStr ? "Add listing" : "Add room type"}
+                {isStr ? t("Add listing") : t("Add room type")}
               </Button>
             </div>
           )}
@@ -538,21 +539,20 @@ export default function Setup() {
           {step === 3 && isStr && (
             <div className="space-y-4">
               <p className="text-sm text-zinc-500">
-                How do guests book this property? This sets Sellable Units and competition
-                groups — not a separate product fork.
+                {t("How do guests book this property? This sets Sellable Units and competition groups — not a separate product fork.")}
               </p>
               <div className="grid gap-3 sm:grid-cols-2">
                 {(
                   [
                     {
                       value: "whole_property" as const,
-                      title: "Entire place",
-                      blurb: "One listing for the whole property. No room numbers required.",
+                      title: t("Entire place"),
+                      blurb: t("One listing for the whole property. No room numbers required."),
                     },
                     {
                       value: "rooms" as const,
-                      title: "Individual units",
-                      blurb: "Each unit / room sells on its own (hotel-style inventory).",
+                      title: t("Individual units"),
+                      blurb: t("Each unit / room sells on its own (hotel-style inventory)."),
                     },
                   ] as const
                 ).map((opt) => (
@@ -575,7 +575,7 @@ export default function Setup() {
               {topology === "rooms" && (
                 <>
                   <p className="text-sm text-zinc-500">
-                    Unit / room numbers per listing, comma-separated.
+                    {t("Unit / room numbers per listing, comma-separated.")}
                   </p>
                   {roomTypes
                     .filter((r) => r.code)
@@ -586,7 +586,7 @@ export default function Setup() {
                         </span>
                         <input
                           className={inputCls}
-                          placeholder="Cottage 1, Cottage 2"
+                          placeholder={t("Cottage 1, Cottage 2")}
                           value={rt.numbers}
                           onChange={(e) => setRT(i, "numbers", e.target.value)}
                         />
@@ -596,8 +596,7 @@ export default function Setup() {
               )}
               {topology === "whole_property" && (
                 <p className="rounded-lg bg-zinc-50 px-3 py-2 text-sm text-zinc-600">
-                  Kamra will create a whole-property sellable unit for each listing. You can
-                  add physical rooms later for housekeeping if needed.
+                  {t("Kamra will create a whole-property sellable unit for each listing. You can add physical rooms later for housekeeping if needed.")}
                 </p>
               )}
             </div>
@@ -605,7 +604,7 @@ export default function Setup() {
 
           {step === 3 && !isStr && (
             <>
-              <p className="text-sm text-zinc-500">Room numbers per type, comma-separated.</p>
+              <p className="text-sm text-zinc-500">{t("Room numbers per type, comma-separated.")}</p>
               {roomTypes
                 .filter((r) => r.code)
                 .map((rt, i) => (
@@ -615,7 +614,7 @@ export default function Setup() {
                     </span>
                     <input
                       className={inputCls}
-                      placeholder="101, 102, 103"
+                      placeholder={t("101, 102, 103")}
                       value={rt.numbers}
                       onChange={(e) => setRT(i, "numbers", e.target.value)}
                     />
@@ -653,7 +652,7 @@ export default function Setup() {
                       )
                     }
                   />
-                  <span className="text-xs text-zinc-400">{cur()}/adult/night</span>
+                  <span className="text-xs text-zinc-400">{t("{cur}/adult/night", { cur: cur() })}</span>
                 </div>
               ))}
             </>
@@ -666,10 +665,10 @@ export default function Setup() {
                 {prop.city && <span className="text-zinc-500"> · {prop.city}</span>}
               </p>
               <div className="flex flex-wrap gap-1.5">
-                <Badge tone="brand">{kind}</Badge>
+                <Badge tone="brand">{t(kind)}</Badge>
                 {isStr && (
                   <Badge tone="zinc">
-                    {topology === "whole_property" ? "Entire place" : "Individual units"}
+                    {topology === "whole_property" ? t("Entire place") : t("Individual units")}
                   </Badge>
                 )}
                 {roomTypes
@@ -693,8 +692,7 @@ export default function Setup() {
                     ))}
               </div>
               <p className="text-zinc-500">
-                Creating sets this as your active property. Rates, seasons, vouchers and
-                guardrails can be added later from Revenue.
+                {t("Creating sets this as your active property. Rates, seasons, vouchers and guardrails can be added later from Revenue.")}
               </p>
             </div>
           )}
@@ -702,9 +700,7 @@ export default function Setup() {
           {step === importStep && (
             <div className="space-y-4">
               <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-                <span className="font-semibold">{createdProperty}</span> is live. Bring your
-                existing bookings over — paste a CSV, or let the AI migration assistant do
-                the mapping via MCP.
+                <span className="font-semibold">{createdProperty}</span> {t("is live. Bring your existing bookings over — paste a CSV, or let the AI migration assistant do the mapping via MCP.")}
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <select
@@ -714,14 +710,14 @@ export default function Setup() {
                     setPreset(e.target.value)
                     setPreview(null)
                   }}
-                  aria-label="Which system is this export from?"
+                  aria-label={t("Which system is this export from?")}
                 >
-                  <option value="auto">Auto-detect format</option>
-                  <option value="ezee">eZee export</option>
-                  <option value="cloudbeds">Cloudbeds export</option>
+                  <option value="auto">{t("Auto-detect format")}</option>
+                  <option value="ezee">{t("eZee export")}</option>
+                  <option value="cloudbeds">{t("Cloudbeds export")}</option>
                 </select>
                 <label className="cursor-pointer rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-700 hover:border-brand-400">
-                  Upload CSV file
+                  {t("Upload CSV file")}
                   <input
                     type="file"
                     accept=".csv,text/csv"
@@ -735,7 +731,7 @@ export default function Setup() {
                     }}
                   />
                 </label>
-                <span className="text-xs text-zinc-400">or paste it below</span>
+                <span className="text-xs text-zinc-400">{t("or paste it below")}</span>
               </div>
               <label className="block">
                 <textarea
@@ -756,15 +752,15 @@ export default function Setup() {
                 <div className="space-y-2 rounded-lg bg-zinc-50 px-4 py-3 text-sm">
                   <p>
                     <span className="font-medium text-emerald-700">
-                      {preview.ok} ready to import
+                      {t("{n} ready to import", { n: preview.ok })}
                     </span>
                     {preview.skipped > 0 && (
                       <span className="ml-2 font-medium text-rose-600">
-                        {preview.skipped} will be skipped
+                        {t("{n} will be skipped", { n: preview.skipped })}
                       </span>
                     )}
                     <span className="ml-2 text-zinc-400">
-                      dates read as {preview.date_format}
+                      {t("dates read as {format}", { format: preview.date_format })}
                     </span>
                   </p>
                   <div className="flex flex-wrap gap-1">
@@ -775,7 +771,7 @@ export default function Setup() {
                     ))}
                     {preview.unmapped.map((h) => (
                       <Badge key={h} tone="amber">
-                        {h} (ignored)
+                        {t("{header} (ignored)", { header: h })}
                       </Badge>
                     ))}
                   </div>
@@ -790,11 +786,13 @@ export default function Setup() {
               {importReport && (
                 <div className="rounded-lg bg-zinc-50 px-4 py-3 text-sm">
                   <p className="font-medium text-emerald-700">
-                    {importReport.created} booking
-                    {importReport.created === 1 ? "" : "s"} imported
-                    {importReport.history
-                      ? ` (${importReport.history} as past-stay history)`
-                      : ""}
+                    {t("{n} booking{s} imported{history}", {
+                      n: importReport.created,
+                      s: importReport.created === 1 ? "" : "s",
+                      history: importReport.history
+                        ? t(" ({n} as past-stay history)", { n: importReport.history })
+                        : "",
+                    })}
                   </p>
                   {importReport.errors.map((e) => (
                     <p key={e.row} className="text-rose-600">
@@ -815,7 +813,7 @@ export default function Setup() {
           <div className="flex justify-between pt-2">
             {step > 0 && step < importStep ? (
               <Button variant="outline" onClick={() => setStep(step - 1)}>
-                Back
+                {t("Back")}
               </Button>
             ) : (
               <span />
@@ -825,24 +823,27 @@ export default function Setup() {
                 disabled={step === 1 && !prop.property_name}
                 onClick={() => setStep(step + 1)}
               >
-                Continue
+                {t("Continue")}
               </Button>
             )}
             {step === reviewStep && (
               <Button disabled={busy} onClick={create}>
-                {busy ? "Creating…" : "Create property"}
+                {busy ? t("Creating…") : t("Create property")}
               </Button>
             )}
             {step === importStep && !preview && (
               <Button disabled={busy || !csv.trim()} onClick={previewImport}>
-                {busy ? "Checking…" : "Preview import"}
+                {busy ? t("Checking…") : t("Preview import")}
               </Button>
             )}
             {step === importStep && preview && (
               <Button disabled={busy || preview.ok === 0} onClick={runImport}>
                 {busy
-                  ? "Importing…"
-                  : `Import ${preview.ok} booking${preview.ok === 1 ? "" : "s"}`}
+                  ? t("Importing…")
+                  : t("Import {n} booking{s}", {
+                      n: preview.ok,
+                      s: preview.ok === 1 ? "" : "s",
+                    })}
               </Button>
             )}
           </div>
