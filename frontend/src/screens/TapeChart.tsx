@@ -629,7 +629,7 @@ export default function TapeChart() {
               <select className={inputCls} value={draft.room}
                 onChange={(e) => setDraft({ ...draft, room: e.target.value })}>
                 {freeRooms.map((r) => (
-                  <option key={r} value={r}>{t("Room {n}", { n: r.split("-").pop() })}</option>
+                  <option key={r} value={r}>{t("Room {n}", { n: r.split("-").pop() ?? "" })}</option>
                 ))}
               </select>
             </label>
