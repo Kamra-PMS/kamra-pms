@@ -83,3 +83,11 @@ Same UI as the [live demo](https://demo.kamrapms.com): sign-in, Today
 board, tape chart, booking engine. Product screenshots for the
 Marketplace listing live in
 [`docs/marketplace-listing.md`](https://github.com/Kamra-PMS/kamra-pms/blob/main/docs/marketplace-listing.md).
+
+## Optional: ERPNext and Frappe HR on the same site
+
+Marketplace Kamra does **not** install company books or HR. If you want
+Accounting and payroll on the **same** Frappe Cloud site, install
+**ERPNext** and optionally **Frappe HR** from Site Apps / Marketplace
+after Kamra. Full steps, ownership split, and versions:
+[ERPNext and Frappe HR with Kamra](/self-hosting/erpnext-hr).

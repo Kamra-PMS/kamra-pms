@@ -44,6 +44,7 @@ export default defineConfig({
           { text: "AWS", link: "/self-hosting/aws" },
           { text: "Install with bench", link: "/self-hosting/bench" },
           { text: "Frappe Cloud marketplace", link: "/self-hosting/frappe-cloud" },
+          { text: "ERPNext & Frappe HR", link: "/self-hosting/erpnext-hr" },
           { text: "Email (SMTP) setup", link: "/self-hosting/email" },
         ],
       },

@@ -5,6 +5,10 @@ see the [Quickstart](/quickstart))** or a classic
 [bench install](/self-hosting/bench). Every feature is included — there is
 no paid edition to upgrade to.
 
+Want company books or HR on the same Frappe site? That is optional —
+see [ERPNext and Frappe HR](/self-hosting/erpnext-hr) (Marketplace and
+own-server steps).
+
 ## Server requirements
 
 | | Minimum | Recommended (20+ rooms, POS) |

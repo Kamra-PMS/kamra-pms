@@ -47,7 +47,9 @@ amount; route lines between Guest/Company/Group folios (alcohol can never
 reach a company folio); night audit that posts room nights idempotently
 and charges no-shows per policy; GST invoices with per-property series;
 allowances, part-settlement, invoice cancellation with a register;
-**GSTR-1 export** in Tally / Zoho Books / ERPNext formats.
+**GSTR-1 export** in Tally / Zoho Books / ERPNext formats. To run full
+company books (and optional HR) on the same Frappe site as Kamra, see
+[ERPNext and Frappe HR](/self-hosting/erpnext-hr).
 
 ## Your country's taxes
 

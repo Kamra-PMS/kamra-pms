@@ -26,3 +26,10 @@ immediately — no Node server in production. Sign in as `Administrator` or
 
 Continue with the
 [production checklist](/self-hosting/#after-install-production-checklist).
+
+## Optional: ERPNext and Frappe HR
+
+To add company books (and payroll) on this bench, install ERPNext and
+Frappe HR on the **same site** — do not put them in Kamra’s default
+image unless every property needs them. Commands and roles:
+[ERPNext and Frappe HR with Kamra](/self-hosting/erpnext-hr).
