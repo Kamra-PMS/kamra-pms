@@ -257,7 +257,9 @@ export default function AppShell() {
     )
 
   return (
-    <div className="flex min-h-screen flex-col">
+    // Floor pages (POS / Kitchen) get a bounded frame at lg+ so only pane
+    // content scrolls; everything else keeps normal page flow.
+    <div className={cn("flex min-h-screen flex-col", floor && "lg:h-screen")}>
       {demoMode && !kiosk && (
         <div className="bg-amber-500 px-4 py-1.5 text-center text-xs font-medium text-amber-950">
           Shared playground — not your hotel. Data is wiped every night.
@@ -326,7 +328,7 @@ export default function AppShell() {
       </aside>
       )}
 
-      <div className="min-w-0 flex-1">
+      <div className="flex min-w-0 flex-1 flex-col">
         {!kiosk && (
         <header className="sticky top-0 z-40 flex items-center gap-2 border-b border-zinc-200 bg-white/90 px-4 py-2.5 backdrop-blur">
           <AppSwitcher apps={apps} current={currentApp ?? apps[0]} />
@@ -381,7 +383,7 @@ export default function AppShell() {
                   "max-w-none",
                   kiosk
                     ? "h-[100dvh] overflow-hidden p-0"
-                    : "min-h-[calc(100dvh-3.5rem)] overflow-auto p-3 lg:h-[calc(100dvh-3.5rem)] lg:overflow-hidden",
+                    : "min-h-[calc(100dvh-3.5rem)] overflow-auto p-3 lg:min-h-0 lg:flex-1 lg:overflow-hidden",
                 )
               : "mx-auto max-w-6xl px-4 py-6"
           }

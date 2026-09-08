@@ -724,6 +724,19 @@ export default function POS() {
                       </div>
                     )
                   })()}
+                  {/* what the tile colours mean */}
+                  <div className="mb-2 flex flex-wrap gap-x-2.5 gap-y-1 text-[10px] text-zinc-500">
+                    {([["Vacant", "border border-zinc-300 bg-white"],
+                       ["Running", "border border-amber-300 bg-amber-50"],
+                       ["In kitchen", "border border-sky-300 bg-sky-50"],
+                       ["Ready", "border border-emerald-300 bg-emerald-50"],
+                       ["Reserved", "border border-violet-300 bg-violet-50"],
+                       ["Cleaning", "border border-zinc-300 bg-zinc-100"]] as const).map(([l, c]) => (
+                      <span key={l} className="flex items-center gap-1">
+                        <span className={"size-2.5 rounded " + c} />{l}
+                      </span>
+                    ))}
+                  </div>
                   <button onClick={() => { newOrder(); setOrderType("Dine In"); setCustomTable(true) }}
                     className="w-full rounded-xl border border-dashed border-zinc-300 px-2 py-1.5 text-xs font-medium text-zinc-500 transition hover:border-brand-500 hover:text-brand-700">
                     <Plus className="mr-0.5 inline size-3.5" />Temp table
