@@ -179,22 +179,32 @@ class Reservation(Document):
 			frappe.throw(_("Check-out must be after check-in."))
 
 	def validate_past_check_in(self):
-		"""A new booking cannot start before today (property timezone).
+		"""Check-in cannot be before calendar today for sellable stays.
 
-		Only new documents are checked: existing stays must stay editable once
-		their check-in has passed, and back-dated entry (walk-in caught up
-		after the fact, historical import) sets flags.allow_past_check_in.
+		- New bookings with a past check-in are rejected.
+		- Edits that *change* check-in to a past date are rejected (so desk
+		  cannot quietly backdate Confirmed / Held / Checked In stays).
+		- Saving an in-house stay without changing dates stays allowed —
+		  arrival already happened, the nights are historical.
+		- Cancelled / No Show are exempt (not inventoriable).
+		- Walk-in catch-up, seeding, and imports set flags.allow_past_check_in
+		  (or ignore_validate on history import).
 		"""
-		if not self.is_new() or self.flags.get("allow_past_check_in"):
+		if self.flags.get("allow_past_check_in"):
 			return
-		if self.status in ("Cancelled", "No Show", "Checked In", "Checked Out"):
+		if self.status in ("Cancelled", "No Show"):
 			return
-		if date_diff(today(), self.check_in_date) > 0:
-			frappe.throw(
-				_("Check-in {0} has already passed. Pick today or a later date.")
-				.format(formatdate(self.check_in_date)),
-				title=_("Check-in date is in the past"),
-			)
+		if date_diff(today(), self.check_in_date) <= 0:
+			return
+		if not self.is_new():
+			old = self.get_doc_before_save()
+			if old and date_diff(old.check_in_date, self.check_in_date) == 0:
+				return
+		frappe.throw(
+			_("Check-in {0} has already passed. Pick today or a later date.")
+			.format(formatdate(self.check_in_date)),
+			title=_("Check-in date is in the past"),
+		)
 
 	def validate_blacklist(self):
 		if not self.guest or not self.is_new():

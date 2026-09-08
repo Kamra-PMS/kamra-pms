@@ -513,6 +513,40 @@ def t18():
 	assert any("No-show" in (c.description or "") for c in charges)
 
 
+@check("past check-in blocked on create and on date amend; allow_past still works")
+def t18b():
+	g = _guest("Eval PastCI", "+91 70000 00018")
+	yesterday = add_days(nowdate(), -1)
+	# new booking into the past must fail
+	try:
+		_res(g, yesterday, nowdate())
+		raise AssertionError("past check-in accepted on create")
+	except frappe.ValidationError:
+		pass
+	# flag still allows catch-up / seeding
+	res = _res(g, yesterday, nowdate(), allow_past=1)
+	# saving without changing dates (in-house style) must stay ok
+	res.status = "Checked In"
+	res.save(ignore_permissions=True)
+	# moving check-in further into the past must fail
+	res.check_in_date = add_days(nowdate(), -2)
+	try:
+		res.save(ignore_permissions=True)
+		raise AssertionError("past check-in amend accepted")
+	except frappe.ValidationError:
+		pass
+	# Confirmed stay: amend check-in to yesterday must fail
+	g2 = _guest("Eval PastCI2", "+91 70000 00028")
+	live = _res(g2, add_days(nowdate(), 2), add_days(nowdate(), 3))
+	live.check_in_date = yesterday
+	live.check_out_date = nowdate()
+	try:
+		live.save(ignore_permissions=True)
+		raise AssertionError("Confirmed past amend accepted")
+	except frappe.ValidationError:
+		pass
+
+
 @check("closed folio is frozen: charges immutable, payments still settle")
 def t19():
 	from kamra import api
