@@ -163,6 +163,14 @@ function IdentityCard({ d, reload }: { d: Detail; reload: () => void }) {
   )
 }
 
+function todayLocal() {
+  const d = new Date()
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, "0")
+  const day = String(d.getDate()).padStart(2, "0")
+  return `${y}-${m}-${day}`
+}
+
 export default function ReservationDetail({
   row,
   reload,
@@ -320,6 +328,13 @@ export default function ReservationDetail({
               <input
                 type="date"
                 value={ci}
+                min={
+                  // keep existing past check-in visible for in-house stays,
+                  // but do not allow amending into an earlier past date
+                  d.check_in_date && d.check_in_date < todayLocal()
+                    ? d.check_in_date
+                    : todayLocal()
+                }
                 disabled={!d.actions.can_amend}
                 onChange={(e) => setCi(e.target.value)}
                 className="mt-0.5 w-full rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-sm disabled:bg-zinc-50 disabled:text-zinc-400"

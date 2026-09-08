@@ -24,7 +24,9 @@ board, refreshed every 30 seconds.
 1. Type the guest's name — returning guests appear as you type; picking
    one attaches the stay to their profile ("Returning guest · 4 stays").
 2. Pick room type, dates, occupancy, meal plan. The **quote updates live**
-   and states the cancellation policy and any deposit expected.
+   and states the cancellation policy and any deposit expected. Check-in
+   cannot be before today (unless recording a past stay via import or an
+   explicit catch-up flag).
 3. **Add another room** turns the booking into a group — one confirm
    books every room under one group reference.
 4. Optional: company (bills corporate — see billing rules), travel
