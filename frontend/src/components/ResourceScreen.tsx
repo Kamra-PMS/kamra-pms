@@ -22,6 +22,7 @@ import { Button } from "./ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
 import ImageField from "./ImageField"
 import { moneyLocale } from "../lib/money"
+import { useT, t as translate } from "../lib/i18n"
 
 export interface FieldSpec {
   field: string
@@ -73,8 +74,10 @@ function FieldInput(props: {
   value: unknown
   onChange: (v: unknown) => void
   linkOptions: Record<string, string[]>
+  /** Translate display labels; API values stay English. */
+  t: (s: string) => string
 }) {
-  const { spec, value, onChange } = props
+  const { spec, value, onChange, t } = props
   switch (spec.type) {
     case "select":
       return (
@@ -86,7 +89,7 @@ function FieldInput(props: {
           <option value="">-</option>
           {spec.options?.map((o) => (
             <option key={o} value={o}>
-              {o}
+              {t(o)}
             </option>
           ))}
         </select>
@@ -144,7 +147,7 @@ function FieldInput(props: {
     case "image":
       return (
         <ImageField
-          hint={spec.hint || "JPG/PNG/WebP · under 1 MB"}
+          hint={t(spec.hint || "JPG/PNG/WebP · under 1 MB")}
           value={String(value ?? "")}
           onChange={(url) => onChange(url)}
         />
@@ -168,10 +171,14 @@ const BADGE_TONES: Record<string, "green" | "sky" | "amber" | "rose" | "zinc"> =
   "In Progress": "sky", Done: "green",
 }
 
-const cellValue = (v: unknown) =>
+const cellValue = (v: unknown, t: (s: string) => string = translate) =>
   typeof v === "number"
     ? v.toLocaleString(moneyLocale(), { maximumFractionDigits: 2 })
-    : String(v ?? "-")
+    : v == null || v === ""
+      ? "-"
+      : typeof v === "string"
+        ? t(v)
+        : String(v)
 
 export function ResourceScreen({
   config,
@@ -181,6 +188,7 @@ export function ResourceScreen({
   /** Extra control rendered in the header next to New (e.g. a bulk import). */
   headerAction?: ReactNode
 }) {
+  const { t } = useT()
   const [rows, setRows] = useState<Row[]>([])
   const [editing, setEditing] = useState<Row | "new" | null>(null)
   const [draft, setDraft] = useState<Record<string, unknown>>({})
@@ -378,10 +386,10 @@ export function ResourceScreen({
     <Card>
       <CardHeader>
         <div>
-          <CardTitle>{config.title}</CardTitle>
+          <CardTitle>{t(config.title)}</CardTitle>
           {config.description && (
             <p className="mt-0.5 text-xs text-zinc-400">
-              {config.description}
+              {t(config.description)}
             </p>
           )}
         </div>
@@ -390,7 +398,7 @@ export function ResourceScreen({
           {config.allowCreate !== false && (
             <Button onClick={() => openEdit("new")}>
               <Plus className="size-4" aria-hidden />
-              New
+              {t("New")}
             </Button>
           )}
         </div>
@@ -408,7 +416,7 @@ export function ResourceScreen({
                 <input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search…"
+                  placeholder={t("Search…")}
                   className="w-56 rounded-lg border border-zinc-300 bg-white py-1.5 pl-8 pr-3 text-sm focus:outline-2 focus:outline-offset-1 focus:outline-brand-600"
                 />
               </div>
@@ -422,28 +430,28 @@ export function ResourceScreen({
                 }
                 className="rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm focus:outline-2 focus:outline-offset-1 focus:outline-brand-600"
               >
-                <option value="">{f.label}: all</option>
+                <option value="">{t("{label}: all", { label: t(f.label) })}</option>
                 {f.options.map((o) => (
                   <option key={o} value={o}>
-                    {o}
+                    {t(o)}
                   </option>
                 ))}
               </select>
             ))}
             {config.dateFilter && (
               <div className="flex items-center gap-1.5 text-sm text-zinc-500">
-                <span className="text-xs">{config.dateFilter.label}</span>
+                <span className="text-xs">{t(config.dateFilter.label)}</span>
                 <input
                   type="date"
-                  aria-label={`${config.dateFilter.label} from`}
+                  aria-label={`${t(config.dateFilter.label)} ${t("from")}`}
                   className="rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-sm"
                   value={dateFrom}
                   onChange={(e) => setDateFrom(e.target.value)}
                 />
-                <span className="text-xs">to</span>
+                <span className="text-xs">{t("to")}</span>
                 <input
                   type="date"
-                  aria-label={`${config.dateFilter.label} to`}
+                  aria-label={`${t(config.dateFilter.label)} ${t("to")}`}
                   className="rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-sm"
                   value={dateTo}
                   onChange={(e) => setDateTo(e.target.value)}
@@ -456,7 +464,7 @@ export function ResourceScreen({
                       setDateTo("")
                     }}
                   >
-                    Clear
+                    {t("Clear")}
                   </button>
                 )}
               </div>
@@ -464,21 +472,21 @@ export function ResourceScreen({
             <div className="relative ml-auto flex items-center gap-2">
               <button
                 onClick={exportCsv}
-                title="Download the current view as CSV (Excel-ready)"
-                aria-label="Export as CSV"
+                title={t("Download the current view as CSV (Excel-ready)")}
+                aria-label={t("Export as CSV")}
                 className="flex items-center gap-1.5 rounded-lg border border-zinc-200 px-2.5 py-1.5 text-sm text-zinc-500 hover:bg-zinc-50 hover:text-zinc-700"
               >
                 <Download className="size-4" aria-hidden />
-                Export
+                {t("Export")}
               </button>
               <button
                 onClick={() => setColsOpen((o) => !o)}
-                title="Choose which columns this table shows"
-                aria-label="Configure table columns"
+                title={t("Choose which columns this table shows")}
+                aria-label={t("Configure table columns")}
                 className="flex items-center gap-1.5 rounded-lg border border-zinc-200 px-2.5 py-1.5 text-sm text-zinc-500 hover:bg-zinc-50 hover:text-zinc-700"
               >
                 <Columns3 className="size-4" aria-hidden />
-                Columns
+                {t("Columns")}
               </button>
               {colsOpen && (
                 <div className="absolute right-0 z-30 mt-1 w-56 rounded-xl border border-zinc-200 bg-white p-2 shadow-xl">
@@ -493,14 +501,14 @@ export function ResourceScreen({
                         checked={!hiddenCols.has(c.field)}
                         onChange={() => toggleCol(c.field)}
                       />
-                      {c.label}
+                      {t(c.label)}
                     </label>
                   ))}
                   <button
                     className="mt-1 w-full rounded-lg px-2 py-1 text-left text-xs text-zinc-400 hover:text-zinc-600"
                     onClick={() => setColsOpen(false)}
                   >
-                    Done
+                    {t("Done")}
                   </button>
                 </div>
               )}
@@ -512,7 +520,7 @@ export function ResourceScreen({
               <tr className="border-b border-zinc-200 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">
                 {visibleCols.map((c) => (
                   <th key={c.field} className="py-2 pr-4">
-                    {c.label}
+                    {t(c.label)}
                   </th>
                 ))}
               </tr>
@@ -538,10 +546,10 @@ export function ResourceScreen({
                         <Badge
                           tone={BADGE_TONES[String(row[c.field])] ?? "zinc"}
                         >
-                          {String(row[c.field])}
+                          {t(String(row[c.field]))}
                         </Badge>
                       ) : (
-                        cellValue(row[c.field])
+                        cellValue(row[c.field], t)
                       )}
                     </td>
                   ))}
@@ -553,7 +561,7 @@ export function ResourceScreen({
                     colSpan={config.columns.length}
                     className="py-6 text-center text-sm text-zinc-400"
                   >
-                    Nothing here yet.
+                    {t("Nothing here yet.")}
                   </td>
                 </tr>
               )}
@@ -562,21 +570,21 @@ export function ResourceScreen({
         </div>
         {pageSize > 0 && (page > 0 || rows.length >= pageSize) && (
           <div className="mt-3 flex items-center justify-between text-sm text-zinc-500">
-            <span>Page {page + 1}</span>
+            <span>{t("Page {n}", { n: page + 1 })}</span>
             <div className="flex gap-2">
               <Button
                 variant="outline"
                 disabled={page === 0}
                 onClick={() => setPage((p) => Math.max(0, p - 1))}
               >
-                Prev
+                {t("Prev")}
               </Button>
               <Button
                 variant="outline"
                 disabled={rows.length < pageSize}
                 onClick={() => setPage((p) => p + 1)}
               >
-                Next
+                {t("Next")}
               </Button>
             </div>
           </div>
@@ -590,10 +598,12 @@ export function ResourceScreen({
           wide
           title={
             editing === "new"
-              ? `New ${config.title.replace(/s$/, "")}`
+              ? t("New {thing}", {
+                  thing: t(config.title.replace(/s$/, "")),
+                })
               : String(editing.name)
           }
-          description={useDetail ? undefined : config.description}
+          description={useDetail ? undefined : config.description ? t(config.description) : undefined}
           onClose={() => setEditing(null)}
           footer={
             useDetail ? undefined : (
@@ -603,20 +613,20 @@ export function ResourceScreen({
                   variant="ghost"
                   disabled={busy}
                   onClick={remove}
-                  aria-label="Delete"
+                  aria-label={t("Delete")}
                 >
                   <Trash2 className="size-4 text-rose-500" aria-hidden />
-                  Delete
+                  {t("Delete")}
                 </Button>
               ) : (
                 <span />
               )}
               <div className="flex gap-2">
                 <Button variant="outline" onClick={() => setEditing(null)}>
-                  Cancel
+                  {t("Cancel")}
                 </Button>
                 <Button disabled={busy} onClick={save}>
-                  {busy ? "Saving…" : "Save"}
+                  {busy ? t("Saving…") : t("Save")}
                 </Button>
               </div>
             </div>
