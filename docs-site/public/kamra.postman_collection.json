@@ -23,6 +23,80 @@
    "name": "Core (front desk, folios, guests, rooms)",
    "item": [
     {
+     "name": "enabled_modules",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.enabled_modules",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.enabled_modules"
+       ]
+      },
+      "description": "Which parts of Kamra this property runs. Empty setting = all of\nthem, so an existing property keeps working untouched.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "set_enabled_modules",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.set_enabled_modules",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.set_enabled_modules"
+       ]
+      },
+      "description": "Turn parts of the product on or off for one property.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"modules\": \"<modules>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
      "name": "whoami",
      "request": {
       "method": "POST",
@@ -100,6 +174,34 @@
        ]
       },
       "description": "Generate (or rotate) the current user's REST API key + secret.\n\nSelf-service: acts only on the signed-in user, so any authenticated staff\nmember can mint a key scoped to their own roles. The secret is returned\nonce here and stored hashed thereafter."
+     }
+    },
+    {
+     "name": "upload_room_image",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.upload_room_image",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.upload_room_image"
+       ]
+      },
+      "description": "Uploads an image file for room types / properties to public files."
      }
     },
     {
@@ -312,7 +414,7 @@
         "kamra.api.cash_summary"
        ]
       },
-      "description": "Cashier reconciliation: what the system says was collected today,\nper payment mode - the number the drawer must match at shift close.",
+      "description": "Cashier reconciliation: what the system says was collected today,\nper payment mode - the number the drawer must match at shift close.\n\nPrefers Cashier Transaction totals (FO + POS); falls back to folio\npayments for properties that have not opened a till yet.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\",\n  \"date\": \"2026-08-01\"\n}",
@@ -349,10 +451,232 @@
         "kamra.api.record_advance"
        ]
       },
-      "description": "Advance/deposit against a Confirmed booking - opens the folio early\nso the money sits on the stay from day one (GM gap: deposits arrive at\nbooking, not at check-in).",
+      "description": "Advance/deposit against a live booking - opens the folio early\nso the money sits on the stay from day one (GM gap: deposits arrive at\nbooking, not at check-in). Pending Payment \u2192 Confirmed when paid.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"amount\": 1000,\n  \"mode\": \"UPI\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "collect_security_deposit",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.collect_security_deposit",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.collect_security_deposit"
+       ]
+      },
+      "description": "",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"amount\": 1000,\n  \"mode\": \"UPI\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "waive_security_deposit",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.waive_security_deposit",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.waive_security_deposit"
+       ]
+      },
+      "description": "",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"reason\": \"<reason>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "withhold_security_deposit",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.withhold_security_deposit",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.withhold_security_deposit"
+       ]
+      },
+      "description": "",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"amount\": 1000,\n  \"reason\": \"<reason>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "refund_security_deposit",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.refund_security_deposit",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.refund_security_deposit"
+       ]
+      },
+      "description": "",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"amount\": 1000\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "release_access_instructions",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.release_access_instructions",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.release_access_instructions"
+       ]
+      },
+      "description": "",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"force\": 0\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "confirm_pending_reservation",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.confirm_pending_reservation",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.confirm_pending_reservation"
+       ]
+      },
+      "description": "Mark Held / Pending Payment / Requested as Confirmed (host or payment).",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"reservation\": \"RES-2026-00001\"\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -1015,7 +1339,7 @@
         "kamra.api.void_folio_charge"
        ]
       },
-      "description": "Remove a wrong charge line from an open folio (the bill-correction\npath). PIN-guarded like other money actions for humans; agents are\naccountable through the action log.",
+      "description": "Remove a wrong charge line from an open folio (the bill-correction\npath). PIN-guarded like other money actions for humans; agents are\naccountable through the action log. Posts a ledger reversal.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"folio\": \"FOLIO-2026-00001\",\n  \"charge_row\": \"<charge_row>\",\n  \"reason\": \"\"\n}",
@@ -2406,7 +2730,7 @@
       "description": "Cancel a booking, applying the property's cancellation policy:\nfree outside the window, else the configured fee lands on the folio.\nIssues a cancellation number the guest can hold on to. Pass\nwaive_fee=1 to cancel graciously (logged).\n\nThe cancellation is recorded in the action log.",
       "body": {
        "mode": "raw",
-       "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"reason\": \"Guest request\",\n  \"waive_fee\": 0\n}",
+       "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"reason\": \"Guest request\",\n  \"waive_fee\": 0,\n  \"issue_credit_note\": 0\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -3106,10 +3430,10 @@
         "kamra.api.create_booking"
        ]
       },
-      "description": "One-call booking: attach to an existing guest profile when given,\nelse dedup by phone / create one. Optional auto room assignment,\nvoucher applied, price computed by the engine.\n\nwaitlist=1 parks the stay with no room and status Waitlist - for dates\nthat are sold out or restricted; promote it later when a room frees.",
+      "description": "One-call booking: attach to an existing guest profile when given,\nelse dedup by phone / create one. Optional auto room assignment,\nvoucher applied, price computed by the engine.\n\nwaitlist=1 parks the stay with no room and status Waitlist - for dates\nthat are sold out or restricted; promote it later when a room frees.\n\nstatus / idempotency_key / hold_expires_on support Instant public booking\n(ADR-006 / ADR-007). Desk callers leave them unset \u2192 Confirmed.",
       "body": {
        "mode": "raw",
-       "raw": "{\n  \"property\": \"Your Property\",\n  \"room_type\": \"Your Property-DLX\",\n  \"check_in_date\": \"2026-08-01\",\n  \"check_out_date\": \"2026-08-03\",\n  \"guest_name\": \"A. Guest\",\n  \"phone\": \"+91 90000 00000\",\n  \"adults\": 2,\n  \"children\": 0,\n  \"booking_type\": \"Individual\",\n  \"source\": \"Manual\",\n  \"assign_room\": 1,\n  \"guest\": \"G-00001\",\n  \"waitlist\": 0\n}",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"room_type\": \"Your Property-DLX\",\n  \"check_in_date\": \"2026-08-01\",\n  \"check_out_date\": \"2026-08-03\",\n  \"guest_name\": \"A. Guest\",\n  \"phone\": \"+91 90000 00000\",\n  \"adults\": 2,\n  \"children\": 0,\n  \"booking_type\": \"Individual\",\n  \"source\": \"Manual\",\n  \"assign_room\": 1,\n  \"guest\": \"G-00001\",\n  \"waitlist\": 0,\n  \"room\": \"Your Property-101\"\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -3258,6 +3582,43 @@
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\",\n  \"group_name\": \"<group_name>\",\n  \"check_in_date\": \"2026-08-01\",\n  \"check_out_date\": \"2026-08-03\",\n  \"rooms\": \"<rooms>\",\n  \"guest_name\": \"A. Guest\",\n  \"phone\": \"+91 90000 00000\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "inventory_availability",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.inventory_availability",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.inventory_availability"
+       ]
+      },
+      "description": "Sellable Unit availability (ADR-003). Prefer this over ad-hoc room SQL.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"check_in_date\": \"2026-08-01\",\n  \"check_out_date\": \"2026-08-03\",\n  \"room_type\": \"Your Property-DLX\",\n  \"include_reasons\": 0\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -3439,7 +3800,7 @@
         "kamra.api.cashier_pin_status"
        ]
       },
-      "description": "Does this property demand a PIN on money actions, and does the\nsigned-in user have one set yet?",
+      "description": "Does this property demand a PIN on money actions, and does the\nsigned-in user have one set yet? Includes unlock / lockout state.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\"\n}",
@@ -3476,10 +3837,84 @@
         "kamra.api.set_cashier_pin"
        ]
       },
-      "description": "Set or change your own cashier PIN (4-8 digits). Changing an existing\nPIN needs the current one.",
+      "description": "Set or change your own cashier PIN (4-8 digits). Changing an existing\nPIN needs the current one \u2014 unless must_reset was set by an admin.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"pin\": \"<pin>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "reset_cashier_pin",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.reset_cashier_pin",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.reset_cashier_pin"
+       ]
+      },
+      "description": "Admin reset: wipe the user's PIN and force re-enrollment.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"user\": \"<user>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "verify_cashier_pin",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.verify_cashier_pin",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.verify_cashier_pin"
+       ]
+      },
+      "description": "PinPad unlock: validate PIN and open a 15-minute sliding window.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"pin\": \"<pin>\"\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -3736,6 +4171,43 @@
        ]
       },
       "description": "Currency, number locale and tax vocabulary for this property, from its\nlocalization pack. Drives the frontend's money formatting and tax dropdowns\nso no screen hardcodes \u20b9 or GST %.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "pending_deposit_refunds",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.pending_deposit_refunds",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.pending_deposit_refunds"
+       ]
+      },
+      "description": "Returns a list of checked-out reservations with pending security deposit refunds\nfor NEFT processing (e.g. Tuesday/Saturday payout batches).",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\"\n}",
@@ -4554,7 +5026,7 @@
         "kamra.pos.pay_order"
        ]
       },
-      "description": "Settle a bill at the outlet (walk-ins, takeaway - or a guest who'd\nrather pay now than post to the room). Records the payment mode and\ncloses the order without touching any folio.",
+      "description": "Settle a bill at the outlet (walk-ins, takeaway - or a guest who'd\nrather pay now than post to the room). Records the payment mode and\ncloses the order without touching any folio. Posts into the open\ncashier session so FO + POS cash reconcile together.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"order\": \"ORD-2026-00001\",\n  \"mode\": \"<mode>\"\n}",
@@ -4706,6 +5178,43 @@
       "body": {
        "mode": "raw",
        "raw": "{\n  \"order\": \"ORD-2026-00001\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "outlet_dashboard",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.pos.outlet_dashboard",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.pos.outlet_dashboard"
+       ]
+      },
+      "description": "One shift at a glance: what the outlet sold, what's still open, the\nexceptions that need a manager's eye (NC, voids, cancellations), and how\nfast the kitchen is turning tickets. Defaults to today.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"outlet\": \"Your Property-Restaurant\",\n  \"date\": \"2026-08-01\"\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -6131,6 +6640,43 @@
      }
     },
     {
+     "name": "generate_invoice",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.banquet.generate_invoice",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.banquet.generate_invoice"
+       ]
+      },
+      "description": "Raise the tax invoice for a function.\n\nThe number is assigned once and never moves - re-printing an invoice\nmust give the same document, because the customer's books and ours\nhave to agree on what it was called.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"function\": \"EVT-2026-0001\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
      "name": "post_to_folio",
      "request": {
       "method": "POST",
@@ -6862,6 +7408,117 @@
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\",\n  \"guest\": \"G-00001\",\n  \"phone\": \"+91 90000 00000\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "quote_advisor",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.banquet.quote_advisor",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.banquet.quote_advisor"
+       ]
+      },
+      "description": "Would this function make money at the price we're about to send?\n\nMargin after the event is an autopsy. The number that changes a\ndecision is the one on screen while the discount is still being typed\n- so this answers, for the price as it stands: what's left, how much\nmore could be given away before it stops being worth doing, and where\nthe cost actually sits.\n\n`at_discount` prices a what-if without touching the quote.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"function\": \"EVT-2026-0001\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "offer_amenities",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.banquet.offer_amenities",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.banquet.offer_amenities"
+       ]
+      },
+      "description": "Put the hall's chargeable extras on the function.\n\nA hall's air-conditioning and generator come with it; its extra mics,\nits valet parking and its second generator do not. Those live on the\nvenue, and this is how they reach a quote - either priced onto it, or\nparked as open items when the customer hasn't decided yet, which is\nwhere most of them actually sit while a wedding is being agreed.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"function\": \"EVT-2026-0001\",\n  \"as_open_items\": 0\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "venue_detail",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.banquet.venue_detail",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.banquet.venue_detail"
+       ]
+      },
+      "description": "One hall in full: what it holds, what it comes with, what it costs\nto open, and which other spaces it shares its floor with.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"venue\": \"Your Property-Grand Ballroom\"\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -8053,6 +8710,63 @@
    "name": "Public (no auth - booking page, QR menu)",
    "item": [
     {
+     "name": "catalog_index",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.public_api.catalog_index",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.public_api.catalog_index"
+       ]
+      },
+      "description": "Entry point for /book \u2014 how many properties, sites, or listings to show."
+     }
+    },
+    {
+     "name": "resolve_slug",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.public_api.resolve_slug",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.public_api.resolve_slug"
+       ]
+      },
+      "description": "Resolve /stay/:slug to a listing or multi-listing site.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"slug\": \"<slug>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
      "name": "site_info",
      "request": {
       "method": "POST",
@@ -8074,6 +8788,30 @@
        ]
       },
       "description": "Public site metadata for the login/boot screen.\n\ndemo_mode is true only on the seeded demo site (seed_demo sets the\n`kamra_demo_mode` default), so a real install never advertises the\ndemo login accounts."
+     }
+    },
+    {
+     "name": "default_property",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.public_api.default_property",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.public_api.default_property"
+       ]
+      },
+      "description": "Which Property the public booking engine (``/book``) should show.\n\nEach Kamra deploy is single-tenant: one site = one hotel/villa. The\nfrontend used to hardcode the demo property name, which only worked\non the seeded demo site and broke the booking engine on every other\ntenant (``Property <name> not found`` / permission error for Guest).\n\nPicks the Property with booking_engine_enabled=1; if none are flagged\n(fresh install) or several are, falls back to the first Property so\nthe page still renders instead of hanging on a guest permission error."
      }
     },
     {
@@ -8328,10 +9066,43 @@
         "kamra.public_api.book"
        ]
       },
-      "description": "Create a Website booking. Guest identity is the phone number; staff\nverify at check-in. The advance owed is computed from the property's\ncurrent payment policy and snapshotted onto the booking.",
+      "description": "Create a Website booking. Guest identity is the phone number; staff\nverify at check-in. The advance owed is computed from the property's\ncurrent payment policy and snapshotted onto the booking.\n\nInstant mode (default): Confirmed when nothing is due now, else\nPending Payment with a hold window. Request to Book: Requested (no\ninventory) until the host approves.",
       "body": {
        "mode": "raw",
-       "raw": "{\n  \"property\": \"Your Property\",\n  \"room_type\": \"Your Property-DLX\",\n  \"check_in_date\": \"2026-08-01\",\n  \"check_out_date\": \"2026-08-03\",\n  \"guest_name\": \"A. Guest\",\n  \"phone\": \"+91 90000 00000\",\n  \"email\": \"guest@example.com\",\n  \"adults\": 2,\n  \"children\": 0,\n  \"meal_plan\": \"\",\n  \"special_requests\": \"\",\n  \"voucher_code\": \"\"\n}",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"room_type\": \"Your Property-DLX\",\n  \"check_in_date\": \"2026-08-01\",\n  \"check_out_date\": \"2026-08-03\",\n  \"guest_name\": \"A. Guest\",\n  \"phone\": \"+91 90000 00000\",\n  \"email\": \"guest@example.com\",\n  \"adults\": 2,\n  \"children\": 0,\n  \"meal_plan\": \"\",\n  \"special_requests\": \"\",\n  \"voucher_code\": \"\",\n  \"idempotency_key\": \"\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "access_info",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.public_api.access_info",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.public_api.access_info"
+       ]
+      },
+      "description": "Guest access instructions when gates pass (precheckin token).",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"token\": \"<token>\"\n}",
        "options": {
         "raw": {
          "language": "json"
