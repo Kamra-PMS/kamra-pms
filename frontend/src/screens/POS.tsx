@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import {
   Plus, Minus, Trash2, Send, UtensilsCrossed, Leaf, Search,
   Maximize2, Minimize2, Wallet, Printer, Receipt, XCircle, Ban,
-  Scissors, Users, MoreHorizontal, PauseCircle, Tag, Gift, Clock,
+  Scissors, Users, MoreHorizontal, PauseCircle, Tag, Gift, Clock, Menu,
 } from "lucide-react"
 import { call, getCurrentProperty } from "../lib/api"
 import { subscribeRealtime } from "../lib/realtime"
@@ -199,7 +199,7 @@ export default function POS() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [printNote, setPrintNote] = useState<string | null>(null)
-  const { floorOn, browserFs, toggleBrowserFs } = useFloorFullscreen(rootRef)
+  const { floorOn, browserFs, toggleBrowserFs, exitFloor } = useFloorFullscreen(rootRef)
 
   useEffect(() => {
     call<Outlet[]>("kamra.pos.outlets", { property: getCurrentProperty() })
@@ -577,6 +577,13 @@ export default function POS() {
             ))}
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            {floorOn && (
+              <button type="button" onClick={exitFloor}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-zinc-600 hover:bg-zinc-50"
+                title="Show the app menu (Esc)">
+                <Menu className="size-3.5" />Menu
+              </button>
+            )}
             <button type="button" onClick={() => setPrintKot((v) => !v)}
               className={"inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-semibold " +
                 (printKot ? "border-brand-600 bg-brand-50 text-brand-800" : "border-zinc-300 bg-white text-zinc-500")}>

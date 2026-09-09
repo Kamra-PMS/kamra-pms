@@ -29,6 +29,7 @@ import {
 } from "../components/ui/card"
 import { StatCard } from "../components/ui/stat-card"
 import { Avatar } from "../components/ui/avatar"
+import { RoomMediaButton } from "../components/HkMedia"
 import { cn } from "../lib/utils"
 import type { ShellContext } from "../AppShell"
 import CheckInDialog from "../components/CheckInDialog"
@@ -336,35 +337,39 @@ export default function Today() {
       ? (snap?.in_house ?? []).find((r) => r.room === room.name)
       : undefined
     return (
-      <button
-        key={room.name}
-        title={
-          stay
-            ? `${stay.guest_name} · open registration`
-            : `Housekeeping: ${room.housekeeping_status} → ${next} (click to advance)`
-        }
-        disabled={busy === room.name}
-        onClick={() =>
-          stay
-            ? navigate(`/grc/${stay.name}`)
-            : act(room.name, () => setHousekeepingStatus(room.name, next))
-        }
-        className={cn(
-          "cursor-pointer rounded-lg border px-2 pb-1.5 pt-2 text-left transition-transform",
-          "hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600",
-          occupied
-            ? "border-brand-700 bg-brand-700 text-white"
-            : hkTone[room.housekeeping_status],
+      <div key={room.name} className="relative">
+        <button
+          title={
+            stay
+              ? `${stay.guest_name} · open registration`
+              : `Housekeeping: ${room.housekeeping_status} → ${next} (click to advance)`
+          }
+          disabled={busy === room.name}
+          onClick={() =>
+            stay
+              ? navigate(`/grc/${stay.name}`)
+              : act(room.name, () => setHousekeepingStatus(room.name, next))
+          }
+          className={cn(
+            "w-full cursor-pointer rounded-lg border px-2 pb-1.5 pt-2 text-left transition-transform",
+            "hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600",
+            occupied
+              ? "border-brand-700 bg-brand-700 text-white"
+              : hkTone[room.housekeeping_status],
+          )}
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-semibold">{room.room_number}</span>
+            {occupied && <BedDouble className="size-3.5" aria-hidden />}
+          </div>
+          <div className="mt-0.5 text-[9px] font-medium uppercase tracking-wide opacity-80">
+            {occupied ? "Occupied" : room.housekeeping_status}
+          </div>
+        </button>
+        {(occupied || room.housekeeping_status === "Clean") && (
+          <RoomMediaButton room={room.name} />
         )}
-      >
-        <div className="flex items-center justify-between">
-          <span className="text-sm font-semibold">{room.room_number}</span>
-          {occupied && <BedDouble className="size-3.5" aria-hidden />}
-        </div>
-        <div className="mt-0.5 text-[9px] font-medium uppercase tracking-wide opacity-80">
-          {occupied ? "Occupied" : room.housekeeping_status}
-        </div>
-      </button>
+      </div>
     )
   }
   const hkRoom = kpi?.housekeeping?.room_status ?? {}

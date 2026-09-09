@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from "react"
-import { BedDouble, LogOut, Plane, RefreshCw, Star, Clock, PackageSearch } from "lucide-react"
+import { BedDouble, Camera, LogOut, Plane, RefreshCw, Star, Clock, PackageSearch, X } from "lucide-react"
 import {
   call,
   getCurrentProperty,
   isNetworkError,
   logout,
+  uploadTo,
   whoami,
 } from "../lib/api"
 import { subscribeRealtime } from "../lib/realtime"
@@ -35,7 +36,10 @@ interface HkTask {
   special_requests: string | null
   eta: string | null
   overdue: boolean
+  media: string[]
 }
+
+const isVideo = (url: string) => /\.(mp4|mov|webm|m4v|3gp|avi)$/i.test(url)
 
 interface HkRoom {
   name: string
@@ -103,6 +107,36 @@ export default function HkApp() {
     try {
       await call(method, { task, ...params })
       load()
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  // proof-of-clean: attach photos/videos to the task from the phone camera/gallery
+  async function addMedia(task: string, files: FileList | null) {
+    if (!files || !files.length) return
+    setBusy(task)
+    try {
+      for (const f of Array.from(files)) {
+        await uploadTo("kamra.api.hk_upload_media", f, { task })
+      }
+      load()
+    } catch (e) {
+      alert(serverError(e))
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  // remove a photo/video from the task
+  async function removeMedia(task: string, url: string) {
+    if (!confirm("Remove this photo/video?")) return
+    setBusy(task)
+    try {
+      await call("kamra.api.hk_delete_media", { task, file_url: url })
+      load()
+    } catch (e) {
+      alert(serverError(e))
     } finally {
       setBusy(null)
     }
@@ -210,28 +244,81 @@ export default function HkApp() {
         )
       ) : (
         // accepted/mine: work it
-        <div className="mt-3 flex gap-2">
-          {t.status === "Pending" ? (
+        <>
+          {/* proof of clean: capture photos/videos before marking Done */}
+          <div className="mt-3">
+            {(t.media ?? []).length > 0 && (
+              <div className="mb-2 flex gap-2 overflow-x-auto">
+                {(t.media ?? []).map((url) => (
+                  <div key={url} className="relative shrink-0">
+                    {isVideo(url) ? (
+                      <video
+                        src={url}
+                        muted
+                        playsInline
+                        controls
+                        className="size-16 rounded-lg bg-zinc-100 object-cover"
+                      />
+                    ) : (
+                      <img
+                        src={url}
+                        alt="Room clean"
+                        className="size-16 rounded-lg object-cover"
+                      />
+                    )}
+                    <button
+                      type="button"
+                      aria-label="Remove"
+                      disabled={busy === t.name}
+                      onClick={() => removeMedia(t.name, url)}
+                      className="absolute -right-1.5 -top-1.5 flex size-5 items-center justify-center rounded-full bg-rose-600 text-white shadow active:bg-rose-700"
+                    >
+                      <X className="size-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-zinc-300 py-2.5 text-sm font-medium text-zinc-600 active:bg-zinc-100">
+              <Camera className="size-4" aria-hidden />
+              {(t.media ?? []).length ? "Add another photo / video" : "Add photo / video"}
+              <input
+                type="file"
+                accept="image/*,video/*"
+                capture="environment"
+                multiple
+                hidden
+                disabled={busy === t.name}
+                onChange={(e) => {
+                  addMedia(t.name, e.target.files)
+                  e.target.value = ""
+                }}
+              />
+            </label>
+          </div>
+          <div className="mt-2 flex gap-2">
+            {t.status === "Pending" ? (
+              <button
+                disabled={busy === t.name}
+                onClick={() => run(t.name, "kamra.api.hk_update_task", { status: "In Progress" })}
+                className="flex-1 rounded-xl border border-zinc-300 py-3 text-base font-semibold text-zinc-700 active:bg-zinc-100"
+              >
+                Start
+              </button>
+            ) : (
+              <span className="flex flex-1 items-center justify-center rounded-xl bg-sky-50 py-3 text-base font-medium text-sky-700">
+                In progress…
+              </span>
+            )}
             <button
               disabled={busy === t.name}
-              onClick={() => run(t.name, "kamra.api.hk_update_task", { status: "In Progress" })}
-              className="flex-1 rounded-xl border border-zinc-300 py-3 text-base font-semibold text-zinc-700 active:bg-zinc-100"
+              onClick={() => run(t.name, "kamra.api.hk_update_task", { status: "Done" })}
+              className="flex-1 rounded-xl bg-brand-600 py-3 text-base font-semibold text-white active:bg-brand-700"
             >
-              Start
+              Done ✓
             </button>
-          ) : (
-            <span className="flex flex-1 items-center justify-center rounded-xl bg-sky-50 py-3 text-base font-medium text-sky-700">
-              In progress…
-            </span>
-          )}
-          <button
-            disabled={busy === t.name}
-            onClick={() => run(t.name, "kamra.api.hk_update_task", { status: "Done" })}
-            className="flex-1 rounded-xl bg-brand-600 py-3 text-base font-semibold text-white active:bg-brand-700"
-          >
-            Done ✓
-          </button>
-        </div>
+          </div>
+        </>
       )}
     </li>
   )
