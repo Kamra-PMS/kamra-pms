@@ -1,7 +1,7 @@
 # Self-hosting Kamra
 
-Own your PMS end to end. Two supported paths: **Docker (recommended,
-see the [Quickstart](/quickstart))** or a classic
+Own your PMS end to end. Two supported paths: **Docker (recommended —
+[Quickstart](/quickstart): one command, three prompts)** or a classic
 [bench install](/self-hosting/bench). Every feature is included — there is
 no paid edition to upgrade to.
 
@@ -34,8 +34,11 @@ the server; ports 80/443 open; SSL via Let's Encrypt.
 | Linode | Shared 4 GB | ~$24/mo | [Guide](/self-hosting/linode) |
 | AWS | t3.medium + EBS | ~$30/mo | [Guide](/self-hosting/aws) |
 
+Hyperscaler storefronts (free AMI + paid Kamra Cloud SaaS):
+[AWS / Azure / GCP](/self-hosting/marketplace/hyperscalers).
+
 ::: tip Rather not run a server?
-[Kamra Cloud](https://kamrapms.com/#cloud) is the same software, hosted,
+[Kamra Cloud](https://kamrapms.com/cloud/) is the same software, hosted,
 backed up and updated by the team that builds it — from ₹2,999/month
 billed annually. You can export everything and move to self-hosting any
 time; that's the point of open source.
@@ -43,23 +46,39 @@ time; that's the point of open source.
 
 ## After install — production checklist
 
-1. **Create your property** — sign in at `/kamra` as `Administrator` (or
-   `admin@example.com`) with the `--admin-password` you chose — there is
-   no default — then Admin → New Property, rooms, room types and rates.
+1. **Create your property** — sign in at `/kamra` as `Administrator` with
+   the admin password you chose at install — there is **no default** —
+   then open **`/kamra/setup`** (rooms, room types, rates).
 2. **Staff users & roles** — Hotel Admin / Front Desk / Revenue / Finance /
    Housekeeping; roles decide what each person sees.
 3. **Email** — [set up SMTP](/self-hosting/email) for confirmations,
    invoices and briefings.
 4. **Payments** — add gateway keys in the payments app (e.g. Razorpay
    Settings); turn off test mode.
-5. **Scheduler** — `bench --site <site> enable-scheduler`; the night audit
-   runs at 03:00 site time and housekeeping SLAs escalate every 15 min.
+5. **Scheduler** — `install.sh` enables it; night audit runs at 03:00 site
+   time and housekeeping SLAs escalate every 15 min.
 6. **Backups** — `bench backup --with-files` on cron to off-site storage.
 7. **Security** — `developer_mode 0`, strong admin password, HTTPS only.
-8. **AI (optional)** — [connect Claude over MCP](/ai-and-mcp) or enable
-   the in-app copilot with your own key.
+8. **AI (optional)** — [bring your own model](/ai-and-mcp) or Connect Claude
+   over MCP; then optionally Connect HeyKoala WhatsApp from Marketplace.
 
-## Updating
+## Updating (Docker install)
+
+```bash
+cd /opt/kamra/frappe_docker
+docker compose --project-name kamra --env-file /opt/kamra/kamra.env \
+  -f compose.yaml -f overrides/compose.mariadb.yaml \
+  -f overrides/compose.redis.yaml -f overrides/compose.noproxy.yaml pull
+docker compose --project-name kamra --env-file /opt/kamra/kamra.env \
+  -f compose.yaml -f overrides/compose.mariadb.yaml \
+  -f overrides/compose.redis.yaml -f overrides/compose.noproxy.yaml up -d
+docker compose --project-name kamra --env-file /opt/kamra/kamra.env \
+  -f compose.yaml -f overrides/compose.mariadb.yaml \
+  -f overrides/compose.redis.yaml -f overrides/compose.noproxy.yaml \
+  exec backend bench --site pms.yourhotel.com migrate
+```
+
+Bench self-host:
 
 ```bash
 cd frappe-bench/apps/kamra && git pull

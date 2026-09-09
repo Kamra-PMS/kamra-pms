@@ -1,0 +1,36 @@
+{
+  "description": "Example Packer template for a DigitalOcean Marketplace Kamra 1-Click image. Fill do_token; run packer build after vendor approval.",
+  "variables": {
+    "do_token": "{{env `DIGITALOCEAN_TOKEN`}}",
+    "image_name": "kamra-marketplace-{{timestamp}}"
+  },
+  "builders": [
+    {
+      "type": "digitalocean",
+      "api_token": "{{user `do_token`}}",
+      "image": "ubuntu-24-04-x64",
+      "region": "blr1",
+      "size": "s-2vcpu-4gb",
+      "ssh_username": "root",
+      "snapshot_name": "{{user `image_name`}}"
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "shell",
+      "inline": [
+        "curl -fsSL https://get.docker.com | sh",
+        "systemctl enable docker",
+        "mkdir -p /opt/kamra",
+        "curl -fsSL https://raw.githubusercontent.com/Kamra-PMS/kamra-pms/main/deploy/install.sh -o /opt/kamra/install.sh",
+        "chmod +x /opt/kamra/install.sh",
+        "echo 'Kamra 1-Click image ready — first boot runs install.sh with Marketplace UDFs.'"
+      ]
+    },
+    {
+      "type": "file",
+      "source": "cloud-init.yaml.example",
+      "destination": "/etc/kamra/cloud-init.yaml.example"
+    }
+  ]
+}

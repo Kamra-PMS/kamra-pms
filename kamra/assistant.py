@@ -126,6 +126,28 @@ EXTRA_TOOLS = {
 		 "priority": {"type": "string"}, "room": {"type": "string"},
 		 "reservation": {"type": "string"}, "description": {"type": "string"}},
 		True, True),
+	"advance_ticket": (
+		"advance_ticket",
+		"Move a service ticket: In Progress, Resolved, Closed, or Cancelled. "
+		"Pass resolution_note when resolving.",
+		{"ticket": {"type": "string"}, "status": {"type": "string"},
+		 "resolution_note": {"type": "string"}}, False, True),
+	"hk_queue": (
+		"hk_queue",
+		"Housekeeping task queue and room board for this property.",
+		{}, True, False),
+	"hk_update_task": (
+		"hk_update_task",
+		"Start or complete a housekeeping task (In Progress, Done, Verified).",
+		{"task": {"type": "string"}, "status": {"type": "string"}}, False, True),
+	"set_room_hk_status": (
+		"set_housekeeping_status",
+		"Set a room's housekeeping status: Clean, Dirty, Inspected, Ready, Out of Order.",
+		{"room": {"type": "string"}, "status": {"type": "string"}}, False, True),
+	"close_folio": (
+		"close_folio",
+		"Close / settle an open folio and issue the invoice. Balance must be zero. Confirm first.",
+		{"folio": {"type": "string"}}, False, True),
 	"set_room_rate": (
 		"set_room_rate",
 		"Set a nightly rate for a room type over dates. Owner guardrails apply - give a reason.",
@@ -398,7 +420,130 @@ def assistant_status(property: str):
 	return {
 		"enabled": bool(s and s.enabled and key),
 		"model": (s.model if s else None) or "gpt-4o-mini",
+		"base_url": (s.base_url if s else None) or "https://api.openai.com/v1",
 		"key_hint": key_hint,
+	}
+
+
+# Presets for Settings → AI assistant. All speak OpenAI Chat Completions.
+# Claude Desktop is a different path (MCP) — not an Anthropic key here.
+AI_PROVIDER_PRESETS = (
+	{
+		"id": "openai",
+		"label": "OpenAI",
+		"base_url": "https://api.openai.com/v1",
+		"model": "gpt-4o-mini",
+		"hint": "Paste an sk-… key from platform.openai.com",
+	},
+	{
+		"id": "gemini",
+		"label": "Google Gemini",
+		"base_url": "https://generativelanguage.googleapis.com/v1beta/openai",
+		"model": "gemini-2.0-flash",
+		"hint": "Paste a Google AI Studio key — uses Gemini's OpenAI-compatible URL",
+	},
+	{
+		"id": "groq",
+		"label": "Groq",
+		"base_url": "https://api.groq.com/openai/v1",
+		"model": "llama-3.3-70b-versatile",
+		"hint": "Fast open models — key from console.groq.com",
+	},
+	{
+		"id": "openrouter",
+		"label": "OpenRouter",
+		"base_url": "https://openrouter.ai/api/v1",
+		"model": "openai/gpt-4o-mini",
+		"hint": "One key for many models (including Claude-as-model). Not Claude Desktop MCP.",
+	},
+	{
+		"id": "ollama",
+		"label": "Ollama (local)",
+		"base_url": "http://host.docker.internal:11434/v1",
+		"model": "llama3.2",
+		"hint": "Local models. From Docker use host.docker.internal; on bare metal use http://127.0.0.1:11434/v1",
+	},
+	{
+		"id": "azure",
+		"label": "Azure OpenAI",
+		"base_url": "",
+		"model": "gpt-4o-mini",
+		"hint": "Paste your Azure resource Chat Completions URL ending in /v1 (or /openai/v1)",
+	},
+	{
+		"id": "custom",
+		"label": "Custom (OpenAI-compatible)",
+		"base_url": "",
+		"model": "gpt-4o-mini",
+		"hint": "Any host that implements POST /v1/chat/completions",
+	},
+)
+
+
+@frappe.whitelist()
+@require_roles("Hotel Admin", "System Manager", "Front Desk")
+def provider_presets():
+	"""Dropdown options for Settings — kill 'paste Claude key into OpenAI' tickets."""
+	return {"presets": list(AI_PROVIDER_PRESETS)}
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Hotel Admin", "System Manager")
+def test_connection(property: str, base_url: str | None = None,
+                    model: str | None = None, api_key: str | None = None):
+	"""One cheap Chat Completions call with no tools. Returns the provider
+	error text when it fails so Setup is diagnosable."""
+	import time
+
+	s = _settings(property)
+	key = (api_key or "").strip() or (
+		s.get_password("api_key", raise_exception=False) if s else None)
+	if not key:
+		frappe.throw("No API key — paste one, or save Settings first.")
+	if key.lower().startswith("sk-ant-"):
+		frappe.throw(
+			"That looks like an Anthropic / Claude API key. This chat uses "
+			"OpenAI-compatible Chat Completions only. Use Connect Claude "
+			"(MCP) on Kamra Agent, or put Claude behind OpenRouter.")
+
+	base = (base_url or (s.base_url if s else None)
+	        or "https://api.openai.com/v1").rstrip("/")
+	mdl = model or (s.model if s else None) or "gpt-4o-mini"
+	headers = {"Authorization": f"Bearer {key}",
+	           "Content-Type": "application/json"}
+	body = chat_payload(
+		mdl,
+		[{"role": "user", "content": "Reply with exactly: ok"}],
+		temperature=0,
+	)
+	# No tools — simplest possible probe.
+	t0 = time.monotonic()
+	try:
+		resp = requests.post(f"{base}/chat/completions", headers=headers,
+		                     json=body, timeout=30)
+	except requests.RequestException as e:
+		return {"ok": False, "error": f"Could not reach {base}: {e}",
+		        "base_url": base, "model": mdl}
+	ms = int((time.monotonic() - t0) * 1000)
+	if resp.status_code != 200:
+		return {
+			"ok": False,
+			"status": resp.status_code,
+			"error": (resp.text or "")[:400],
+			"base_url": base,
+			"model": mdl,
+			"latency_ms": ms,
+		}
+	try:
+		text = (resp.json()["choices"][0]["message"].get("content") or "")
+	except (KeyError, IndexError, ValueError, TypeError):
+		text = (resp.text or "")[:200]
+	return {
+		"ok": True,
+		"reply": text[:200],
+		"base_url": base,
+		"model": mdl,
+		"latency_ms": ms,
 	}
 
 

@@ -205,7 +205,7 @@ def _dispatch_method(method: str, params: dict, grant) -> dict:
 	if method == "ping":
 		return {}
 	if method == "tools/list":
-		return {"tools": mcp_tool_list(allowed_tools())}
+		return {"tools": mcp_tool_list(allowed_tools(property=grant.property))}
 	if method == "tools/call":
 		return _tools_call(params, grant)
 	raise ValueError(f"Unknown method: {method}")

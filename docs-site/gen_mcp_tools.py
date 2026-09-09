@@ -28,9 +28,10 @@ def main() -> None:
 		"",
 		f"Kamra exposes **{TOOL_COUNT} governed tools** on the hosted MCP",
 		"endpoint (`/mcp`) and the stdio sidecar (`mcp/kamra_mcp.py`). Every",
-		"call runs as the connected user — role permissions apply, prices come",
-		"from the pricing engine, and each action is recorded in the activity",
-		"ledger.",
+		"call runs as the connected user — **role** permissions apply, tools",
+		"are further filtered by the property's **enabled modules**, prices",
+		"come from the pricing engine, and each action is recorded in the",
+		"activity ledger.",
 		"",
 		"This page is generated from `kamra/mcp_tools.py`. Re-run",
 		"`python3 gen_mcp_tools.py` in `docs-site/` when the registry changes.",
@@ -39,13 +40,17 @@ def main() -> None:
 	order = [
 		"Front desk",
 		"Ops",
+		"Housekeeping",
 		"Billing",
 		"Revenue",
 		"Briefings",
 		"Night audit",
 		"Groups",
-		"Onboarding",
 		"Banquets",
+		"F&B",
+		"Laundry",
+		"Onboarding",
+		"Channels",
 	]
 	for group in order:
 		specs = groups.get(group) or []

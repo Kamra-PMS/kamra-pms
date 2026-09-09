@@ -1,0 +1,43 @@
+#cloud-config
+# DigitalOcean Marketplace 1-Click — Kamra hotel PMS
+# User-data fields from the create-droplet form (Vendor Portal UDF):
+#   site_name, admin_email, admin_password
+#
+# Build: see packer.json.example. First boot pulls GHCR and runs install.sh
+# non-interactively.
+
+package_update: true
+packages:
+  - docker.io
+  - docker-compose-v2
+  - git
+  - curl
+  - jq
+
+runcmd:
+  - systemctl enable --now docker
+  - |
+    set -euo pipefail
+    # DigitalOcean Marketplace writes UDF values into /root/.digitalocean_password
+    # and /etc/digitalocean-marketplace/ (vendor-specific). Prefer env files
+    # written by the 1-Click image build scripts:
+    ENV_UDF=/root/kamra-udf.env
+    if [ -f "$ENV_UDF" ]; then
+      # shellcheck disable=SC1090
+      . "$ENV_UDF"
+    fi
+    export SITE_NAME="${SITE_NAME:-}"
+    export ADMIN_EMAIL="${ADMIN_EMAIL:-}"
+    export ADMIN_PASSWORD="${ADMIN_PASSWORD:-}"
+    if [ -z "$SITE_NAME" ] || [ -z "$ADMIN_EMAIL" ] || [ -z "$ADMIN_PASSWORD" ]; then
+      echo "Kamra: missing SITE_NAME / ADMIN_EMAIL / ADMIN_PASSWORD — see /var/log/kamra-firstboot.log"
+      exit 0
+    fi
+    curl -fsSL https://raw.githubusercontent.com/Kamra-PMS/kamra-pms/main/deploy/install.sh \
+      -o /tmp/kamra-install.sh
+    chmod +x /tmp/kamra-install.sh
+    # Non-interactive: vars already exported
+    bash /tmp/kamra-install.sh >> /var/log/kamra-firstboot.log 2>&1
+    # Wipe UDF password file if present
+    rm -f "$ENV_UDF"
+    unset ADMIN_PASSWORD

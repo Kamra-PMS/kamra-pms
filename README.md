@@ -161,6 +161,18 @@ In-repo: [`docs/`](docs/) · [user guide](docs/user-guide.md) · [AI & API](docs
 
 ## Install
 
+**Hotels (WordPress-easy):**
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Kamra-PMS/kamra-pms/main/deploy/install.sh | bash
+```
+
+Three prompts: site domain, admin email, admin password. Pulls
+`ghcr.io/kamra-pms/kamra:latest`. Then open `/kamra/setup`. Details:
+[deploy/](deploy/) · [docs quickstart](https://kamrapms.com/docs/quickstart).
+
+**Bench / Frappe Cloud:**
+
 ```bash
 bench get-app payments
 bench get-app kamra https://github.com/Kamra-PMS/kamra-pms --branch main

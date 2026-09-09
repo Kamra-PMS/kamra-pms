@@ -1,10 +1,11 @@
 # MCP tool reference
 
-Kamra exposes **52 governed tools** on the hosted MCP
+Kamra exposes **85 governed tools** on the hosted MCP
 endpoint (`/mcp`) and the stdio sidecar (`mcp/kamra_mcp.py`). Every
-call runs as the connected user — role permissions apply, prices come
-from the pricing engine, and each action is recorded in the activity
-ledger.
+call runs as the connected user — **role** permissions apply, tools
+are further filtered by the property's **enabled modules**, prices
+come from the pricing engine, and each action is recorded in the
+activity ledger.
 
 This page is generated from `kamra/mcp_tools.py`. Re-run
 `python3 gen_mcp_tools.py` in `docs-site/` when the registry changes.
@@ -107,6 +108,39 @@ room, queues housekeeping). Confirm with the user first.
 Endpoint: `kamra.api.check_out`.
 Mutating — logged to the activity ledger.
 
+### `find_reservations(query, status, limit)`
+
+Find reservations by guest name, room number, or reference —
+optionally filtered by status (Confirmed, Checked In, Checked Out,
+Cancelled, No Show, Waitlisted). Resolve a room or name to a
+reservation before acting.
+
+Endpoint: `kamra.api.find_reservations`.
+
+### `stay_detail(reservation)`
+
+Full detail for one reservation: dates, room, guest + stay history,
+folio balance (paid/due), booker, and which actions are available.
+
+Endpoint: `kamra.api.reservation_detail`.
+
+### `amend_stay(reservation, check_in_date, check_out_date)`
+
+Change a stay's dates (extend/shorten). Re-prices when auto_price
+is on and re-checks room overlaps. Confirm the new dates with staff
+before calling.
+
+Endpoint: `kamra.api.amend_stay`.
+Mutating — logged to the activity ledger.
+
+### `move_room(reservation, new_room)`
+
+Move a stay to a different room (pre-arrival or mid-stay). Overlap
+guard re-runs; on a checked-in move the old room goes Dirty.
+
+Endpoint: `kamra.api.move_reservation`.
+Mutating — logged to the activity ledger.
+
 ### `guest_lookup(search)`
 
 Find guests by name or phone, with stay stats and lifetime value.
@@ -146,6 +180,61 @@ Open service tickets with SLA/overdue status.
 
 Endpoint: `kamra.api.tickets_list`.
 
+### `advance_ticket(ticket, status, resolution_note)`
+
+Move a service ticket along: In Progress, Resolved, Closed, or
+Cancelled. Pass a resolution_note when resolving.
+
+Endpoint: `kamra.api.advance_ticket`.
+Mutating — logged to the activity ledger.
+
+## Housekeeping
+
+### `hk_queue()`
+
+Housekeeping phone view: prioritized task queue and room board.
+Checkout cleans for rooms with an arrival today jump the queue.
+
+Endpoint: `kamra.api.hk_queue`.
+
+### `hk_update_task(task, status)`
+
+Start or complete a housekeeping task. Status: In Progress, Done,
+or Verified.
+
+Endpoint: `kamra.api.hk_update_task`.
+Mutating — logged to the activity ledger.
+
+### `hk_assign_task(task, user)`
+
+Supervisor hands a task to a specific housekeeper (awaits accept).
+
+Endpoint: `kamra.api.hk_assign_task`.
+Mutating — logged to the activity ledger.
+
+### `hk_claim_task(task)`
+
+Housekeeper takes an unassigned task from the pool for themselves.
+
+Endpoint: `kamra.api.hk_claim_task`.
+Mutating — logged to the activity ledger.
+
+### `set_room_hk_status(room, status)`
+
+Set a room's housekeeping status: Clean, Dirty, Inspected, Ready,
+or Out of Order.
+
+Endpoint: `kamra.api.set_housekeeping_status`.
+Mutating — logged to the activity ledger.
+
+### `hk_post_consumable(room, charge_type, description, amount)`
+
+Housekeeping posts Minibar or Laundry found in a room onto the
+in-house guest's folio. Other charge types are refused.
+
+Endpoint: `kamra.api.hk_post_consumable`.
+Mutating — logged to the activity ledger.
+
 ## Billing
 
 ### `get_folio(reservation)`
@@ -180,6 +269,57 @@ part that moves to to_folio). Use get_folio first to find folio and
 charge row names.
 
 Endpoint: `kamra.api.split_folio_charge`.
+Mutating — logged to the activity ledger.
+
+### `stay_folios(reservation)`
+
+All folios of a stay (guest / extra / company / group) with
+balances — plus the group master when the stay is on a block.
+
+Endpoint: `kamra.api.reservation_folios`.
+
+### `record_payment(folio, mode, amount, reference, kind)`
+
+Record money received on a folio. mode: Cash, UPI, Card, Bank,
+Link. kind: Payment (default), Advance, or Security Deposit.
+Confirm the amount with staff before calling.
+
+Endpoint: `kamra.api.add_folio_payment`.
+Mutating — logged to the activity ledger.
+
+### `void_charge(folio, charge_row, reason)`
+
+Remove a WRONG charge line from an open folio (duplicate, wrong
+amount, wrong guest). Pass the folio and the charge line's id (`name`
+from get_folio). For settled/invoiced bills use apply_allowance.
+
+Endpoint: `kamra.api.void_folio_charge`.
+Mutating — logged to the activity ledger.
+
+### `apply_allowance(folio, amount, reason, gst_rate)`
+
+Credit back part of a bill on an open folio without deleting the
+original line (service recovery, dispute, agreed discount). Needs a
+reason; it goes on the record.
+
+Endpoint: `kamra.api.post_allowance`.
+Mutating — logged to the activity ledger.
+
+### `move_charges(from_folio, charge_rows, to_folio)`
+
+Move charge lines to another folio of the same stay or group.
+charge_rows is a list of charge line names from get_folio.
+
+Endpoint: `kamra.api.transfer_folio_charges`.
+Mutating — logged to the activity ledger.
+
+### `close_folio(folio)`
+
+Close / settle an open folio and issue the invoice number. Balance
+must be zero (or use part-settle elsewhere). Confirm with staff —
+irreversible.
+
+Endpoint: `kamra.api.close_folio`.
 Mutating — logged to the activity ledger.
 
 ### `send_payment_link(folio)`
@@ -268,31 +408,6 @@ Name a guest into a group's room block — creates their reservation on
 the group's dates against the held inventory.
 
 Endpoint: `kamra.api.pickup_group_room`.
-Mutating — logged to the activity ledger.
-
-## Onboarding
-
-### `setup_property(payload)`
-
-Onboard a whole property in one call — the migration assistant's
-tool. Ask the hotel for their room list/rate card (any format), map
-it into: {property:{property_name, city, gstin?, phone?},
-room_types:[{code,name,base_price,adults?}], rooms:[{room_type_code,
-numbers:[..]}], meal_plans:[{code,price_per_adult}]}. Confirm the
-mapping with the user before calling.
-
-Endpoint: `kamra.api.setup_property`.
-Mutating — logged to the activity ledger.
-
-### `import_bookings(bookings, property)`
-
-Migrate existing reservations from another PMS/spreadsheet. Each:
-{guest_name, phone?, room_type_code, check_in, check_out, adults?,
-amount_after_tax?, channel?, status?}. Fixed amounts are preserved;
-otherwise the pricing engine quotes. Returns per-row errors — report
-them to the user rather than silently dropping rows.
-
-Endpoint: `kamra.api.import_bookings`.
 Mutating — logged to the activity ledger.
 
 ## Banquets
@@ -471,3 +586,141 @@ One receipt as a document the customer can keep, with the amount in
 words and the running balance on the function.
 
 Endpoint: `kamra.banquet.receipt_document`.
+
+## F&B
+
+### `pos_outlets()`
+
+List F&B outlets (restaurant, bar, room service) for this property.
+
+Endpoint: `kamra.pos.outlets`.
+
+### `pos_menu(outlet)`
+
+Menu items for an outlet (with courses, prices, allergens).
+
+Endpoint: `kamra.pos.pos_menu`.
+
+### `pos_table_map(outlet)`
+
+Floor plan: tables with occupancy, open checks, and reservations.
+
+Endpoint: `kamra.pos.table_map`.
+
+### `pos_open_orders(outlet)`
+
+Open POS checks at an outlet.
+
+Endpoint: `kamra.pos.open_orders`.
+
+### `pos_order_detail(order)`
+
+One POS order: items, KOTs, totals, payment state.
+
+Endpoint: `kamra.pos.order_detail`.
+
+### `pos_create_order(outlet, items, table_no, room, reservation, guests, customer_name, customer_phone, order_type, notes)`
+
+Open a POS check. items = [{item, qty, notes?}]. Optionally bind
+table_no and/or a room/reservation for room charge.
+
+Endpoint: `kamra.pos.create_order`.
+Mutating — logged to the activity ledger.
+
+### `pos_add_items(order, items)`
+
+Add items to an open POS order. items = [{item, qty, notes?}].
+
+Endpoint: `kamra.pos.add_items`.
+Mutating — logged to the activity ledger.
+
+### `pos_confirm_order(order)`
+
+Confirm a draft order so it can be fired to the kitchen.
+
+Endpoint: `kamra.pos.confirm_order`.
+Mutating — logged to the activity ledger.
+
+### `pos_fire_kot(order, course)`
+
+Fire a kitchen order ticket (whole check or one course).
+
+Endpoint: `kamra.pos.fire_kot`.
+Mutating — logged to the activity ledger.
+
+### `pos_kitchen_queue(outlet)`
+
+KDS view: tickets waiting / cooking for the property (optional outlet).
+
+Endpoint: `kamra.pos.kitchen_queue`.
+
+### `pos_pay_order(order, mode)`
+
+Settle a POS check. mode: Cash, UPI, Card, Room Charge, etc.
+Confirm the total with staff before calling.
+
+Endpoint: `kamra.pos.pay_order`.
+Mutating — logged to the activity ledger.
+
+## Laundry
+
+### `laundry_board()`
+
+Laundry ops board: pickups, in-plant, ready, deliveries outstanding.
+
+Endpoint: `kamra.laundry.laundry_board`.
+
+### `laundry_rates()`
+
+Rate card for laundry items and service types at this property.
+
+Endpoint: `kamra.laundry.laundry_rates`.
+
+### `laundry_collect(room, items, express, order, notes)`
+
+Collect guest laundry. items = [{item_name, service_type, qty}].
+Bills from the rate card; express=true for rush. Pass order to fill
+a prior pickup request.
+
+Endpoint: `kamra.laundry.collect_laundry`.
+Mutating — logged to the activity ledger.
+
+### `laundry_status(order, status)`
+
+Advance a laundry bag: Collected → In Process → Ready (one step
+at a time). Use laundry_deliver to finish.
+
+Endpoint: `kamra.laundry.laundry_status`.
+Mutating — logged to the activity ledger.
+
+### `laundry_deliver(order, shortage_note)`
+
+Mark laundry delivered to the guest/room; posts any final charges.
+
+Endpoint: `kamra.laundry.deliver_laundry`.
+Mutating — logged to the activity ledger.
+
+## Onboarding
+
+### `setup_property(payload)`
+
+Onboard a whole property in one call — the migration assistant's
+tool. Ask the hotel for their room list/rate card (any format), map
+it into: {property:{property_name, city, gstin?, phone?},
+room_types:[{code,name,base_price,adults?}], rooms:[{room_type_code,
+numbers:[..]}], meal_plans:[{code,price_per_adult}]}. Confirm the
+mapping with the user before calling.
+
+Endpoint: `kamra.api.setup_property`.
+Mutating — logged to the activity ledger.
+
+### `import_bookings(bookings, property)`
+
+Migrate existing reservations from another PMS/spreadsheet. Each:
+{guest_name, phone?, room_type_code, check_in, check_out, adults?,
+amount_after_tax?, channel?, status?}. Fixed amounts are preserved;
+otherwise the pricing engine quotes. Returns per-row errors — report
+them to the user rather than silently dropping rows.
+
+Endpoint: `kamra.api.import_bookings`.
+Mutating — logged to the activity ledger.

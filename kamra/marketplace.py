@@ -48,7 +48,9 @@ def registry(property: str):
 				_module("Housekeeping", "Room board and the phone app."),
 				_module("Operations", "Guest requests and shifts."),
 				_module("Finance", "Folios, invoices, night audit."),
-				_module("Copilot", "Chat with your PMS using your own AI key."),
+				_module("Copilot",
+				        "In-app Kamra Agent with your own AI key "
+				        "(OpenAI, Gemini, Groq, OpenRouter…)."),
 				_module("Events & Groups", "Banquets, blocks and pickup."),
 				_module("Revenue", "Rates, seasons, offers, partners."),
 				_module("POS",
@@ -118,18 +120,20 @@ def registry(property: str):
 		{
 			"category": "Bring your own AI",
 			"blurb": "Kamra ships the governed tools + MCP; you bring the "
-			         "intelligence. Connect your own Claude (it acts as you, "
-			         "scoped to your role), or power the in-app Copilot chat "
-			         "with your OpenAI key.",
+			         "intelligence. Connect Claude Desktop over MCP, or power "
+			         "the in-app Agent with any OpenAI-compatible key "
+			         "(OpenAI, Gemini, Groq, OpenRouter, Ollama…).",
 			"cards": [
 				_connector("Connect Claude (MCP)", "claude",
-				           "Click Connect Claude — it acts as you, with your "
-				           "role limits, over a hosted MCP endpoint.",
+				           "Claude the app acts as you over hosted MCP — "
+				           "not an Anthropic API key in Settings. Role limits "
+				           "and the Activity Log still apply.",
 				           action="route", route="/assistant",
 				           status="connected" if has_key else "available",
 				           detail="Your connector" if has_key else None),
-				_connector("OpenAI key", "openai",
-				           "Power the in-app Copilot chat with your own key.",
+				_connector("Bring your own model", "openai",
+				           "In-app Kamra Agent: pick OpenAI, Gemini, Groq, "
+				           "OpenRouter or Ollama, paste a key, Test connection.",
 				           action="route", route="/settings",
 				           status="connected" if ai else "configure"),
 			],

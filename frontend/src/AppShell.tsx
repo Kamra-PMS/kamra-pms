@@ -178,6 +178,7 @@ export default function AppShell() {
   const { user, roles, signOut } = useAuth()
   const { t } = useT()
   const location = useLocation()
+  const navigate = useNavigate()
   const [booking, setBooking] = useState<BookingInitial | null>(null)
   const [refreshKey, setRefreshKey] = useState(0)
   const [properties, setProperties] = useState<PropertyRow[]>([])
@@ -187,7 +188,17 @@ export default function AppShell() {
   useEffect(() => {
     myProperties().then((props) => {
       setProperties(props)
-      if (props.length && !props.some((p) => p.name === getCurrentProperty())) {
+      if (props.length === 0) {
+        // Fresh install / Frappe Cloud: force setup wizard, not empty Desk.
+        if (
+          location.pathname !== "/setup" &&
+          !location.pathname.startsWith("/setup/")
+        ) {
+          navigate("/setup", { replace: true })
+        }
+        return
+      }
+      if (!props.some((p) => p.name === getCurrentProperty())) {
         setCurrentProperty(props[0].name)
         setProperty(props[0].name)
       }
@@ -195,7 +206,7 @@ export default function AppShell() {
     call<{ demo_mode: boolean }>("kamra.public_api.site_info")
       .then((info) => setDemoMode(info.demo_mode))
       .catch(() => setDemoMode(false))
-  }, [])
+  }, [location.pathname, navigate])
 
   useEffect(() => subscribeRealtime(() => setRefreshKey((k) => k + 1)), [])
 

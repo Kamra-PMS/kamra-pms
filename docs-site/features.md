@@ -238,7 +238,7 @@ one.
 
 ## AI & audit
 
-An MCP server with 52 governed tools, one-click Connect Claude, an in-app
+An MCP server with 85 governed tools, one-click Connect Claude, an in-app
 copilot (bring your own key), rate guardrails agents cannot price outside,
 deterministic pricing verified by an automated eval suite, and an activity
 ledger recording every action — human or AI — with who, what and why.

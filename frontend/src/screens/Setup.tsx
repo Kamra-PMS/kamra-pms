@@ -702,6 +702,22 @@ export default function Setup() {
               <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
                 <span className="font-semibold">{createdProperty}</span> {t("is live. Bring your existing bookings over — paste a CSV, or let the AI migration assistant do the mapping via MCP.")}
               </div>
+              <div className="rounded-lg border border-brand-200 bg-brand-50/60 px-4 py-3 text-sm text-zinc-800">
+                <p className="font-semibold text-brand-800">
+                  {t("Optional: connect HeyKoala WhatsApp")}
+                </p>
+                <p className="mt-1 text-zinc-600">
+                  {t(
+                    "After the desk is live, put an AI concierge on your WhatsApp number — it uses Kamra's tools. Metered by HeyKoala; the PMS stays free.",
+                  )}
+                </p>
+                <a
+                  href="/kamra/marketplace"
+                  className="mt-2 inline-block text-sm font-medium text-brand-700 hover:underline"
+                >
+                  {t("Open Marketplace → HeyKoala WhatsApp")}
+                </a>
+              </div>
               <div className="flex flex-wrap items-center gap-2">
                 <select
                   className={cn(inputCls, "w-auto")}

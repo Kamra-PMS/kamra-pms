@@ -1,15 +1,33 @@
 """Shared MCP tool registry — one list for stdio, remote HTTP, and docs.
 
 Each tool wraps a governed Kamra API endpoint. Money and availability stay
-in the PMS; the model only calls these tools. Role gates on the underlying
-whitelist (`require_roles` / `_kamra_roles`) decide what a connected user
-can see and call.
+in the PMS; the model only calls these tools. Visibility is the intersection
+of (1) the signed-in user's Frappe roles via `require_roles` / `_kamra_roles`
+and (2) the property's `enabled_modules` (tool `module` must be on).
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Any
+
+# Tool group → Property.enabled_modules slug. None = always offered when
+# role-allowed (briefings / onboarding stay available).
+GROUP_MODULE: dict[str, str | None] = {
+	"Front desk": "front-desk",
+	"Ops": "operations",
+	"Billing": "finance",
+	"Revenue": "revenue",
+	"Briefings": "front-desk",
+	"Onboarding": "admin",
+	"Night audit": "finance",
+	"Groups": "front-desk",
+	"Banquets": "events",
+	"Housekeeping": "housekeeping",
+	"F&B": "fnb",
+	"Laundry": "fnb",
+	"Channels": "booking-engine",
+}
 
 
 @dataclass(frozen=True)
@@ -24,6 +42,7 @@ class ToolSpec:
 	extra: dict[str, Any] = field(default_factory=dict)
 	bool_as_int: tuple[str, ...] = ()
 	group: str = "Front desk"
+	module: str | None = None
 
 
 def _p(typ: str, **extra: Any) -> dict[str, Any]:
@@ -42,6 +61,7 @@ def _t(
 	extra: dict[str, Any] | None = None,
 	bools: tuple[str, ...] = (),
 	group: str = "Front desk",
+	module: str | None = None,
 ) -> ToolSpec:
 	return ToolSpec(
 		name=name,
@@ -56,6 +76,7 @@ def _t(
 		extra=extra or {},
 		bool_as_int=bools,
 		group=group,
+		module=module if module is not None else GROUP_MODULE.get(group),
 	)
 
 
@@ -206,6 +227,51 @@ TOOLS: tuple[ToolSpec, ...] = (
 		mutating=True,
 	),
 	_t(
+		"find_reservations",
+		"api.find_reservations",
+		"""Find reservations by guest name, room number, or reference —
+		optionally filtered by status (Confirmed, Checked In, Checked Out,
+		Cancelled, No Show, Waitlisted). Resolve a room or name to a
+		reservation before acting.""",
+		{
+			"query": _p("string"),
+			"status": _p("string"),
+			"limit": _p("integer"),
+		},
+		property=True,
+	),
+	_t(
+		"stay_detail",
+		"api.reservation_detail",
+		"""Full detail for one reservation: dates, room, guest + stay history,
+		folio balance (paid/due), booker, and which actions are available.""",
+		{"reservation": _p("string")},
+		required=("reservation",),
+	),
+	_t(
+		"amend_stay",
+		"api.amend_stay",
+		"""Change a stay's dates (extend/shorten). Re-prices when auto_price
+		is on and re-checks room overlaps. Confirm the new dates with staff
+		before calling.""",
+		{
+			"reservation": _p("string"),
+			"check_in_date": _p("string"),
+			"check_out_date": _p("string"),
+		},
+		required=("reservation", "check_in_date", "check_out_date"),
+		mutating=True,
+	),
+	_t(
+		"move_room",
+		"api.move_reservation",
+		"""Move a stay to a different room (pre-arrival or mid-stay). Overlap
+		guard re-runs; on a checked-in move the old room goes Dirty.""",
+		{"reservation": _p("string"), "new_room": _p("string")},
+		required=("reservation", "new_room"),
+		mutating=True,
+	),
+	_t(
 		"guest_lookup",
 		"api.guests_with_stats",
 		"Find guests by name or phone, with stay stats and lifetime value.",
@@ -247,6 +313,82 @@ TOOLS: tuple[ToolSpec, ...] = (
 		property=True,
 		bools=("show_closed",),
 		group="Ops",
+	),
+	_t(
+		"advance_ticket",
+		"api.advance_ticket",
+		"""Move a service ticket along: In Progress, Resolved, Closed, or
+		Cancelled. Pass a resolution_note when resolving.""",
+		{
+			"ticket": _p("string"),
+			"status": _p("string"),
+			"resolution_note": _p("string"),
+		},
+		required=("ticket", "status"),
+		mutating=True,
+		group="Ops",
+	),
+	_t(
+		"hk_queue",
+		"api.hk_queue",
+		"""Housekeeping phone view: prioritized task queue and room board.
+		Checkout cleans for rooms with an arrival today jump the queue.""",
+		{},
+		property=True,
+		group="Housekeeping",
+	),
+	_t(
+		"hk_update_task",
+		"api.hk_update_task",
+		"""Start or complete a housekeeping task. Status: In Progress, Done,
+		or Verified.""",
+		{"task": _p("string"), "status": _p("string")},
+		required=("task", "status"),
+		mutating=True,
+		group="Housekeeping",
+	),
+	_t(
+		"hk_assign_task",
+		"api.hk_assign_task",
+		"Supervisor hands a task to a specific housekeeper (awaits accept).",
+		{"task": _p("string"), "user": _p("string")},
+		required=("task", "user"),
+		mutating=True,
+		group="Housekeeping",
+	),
+	_t(
+		"hk_claim_task",
+		"api.hk_claim_task",
+		"Housekeeper takes an unassigned task from the pool for themselves.",
+		{"task": _p("string")},
+		required=("task",),
+		mutating=True,
+		group="Housekeeping",
+	),
+	_t(
+		"set_room_hk_status",
+		"api.set_housekeeping_status",
+		"""Set a room's housekeeping status: Clean, Dirty, Inspected, Ready,
+		or Out of Order.""",
+		{"room": _p("string"), "status": _p("string")},
+		required=("room", "status"),
+		mutating=True,
+		group="Housekeeping",
+	),
+	_t(
+		"hk_post_consumable",
+		"api.hk_post_consumable",
+		"""Housekeeping posts Minibar or Laundry found in a room onto the
+		in-house guest's folio. Other charge types are refused.""",
+		{
+			"room": _p("string"),
+			"charge_type": _p("string"),
+			"description": _p("string"),
+			"amount": _p("number"),
+		},
+		required=("room", "charge_type", "description", "amount"),
+		mutating=True,
+		group="Housekeeping",
 	),
 	_t(
 		"get_folio",
@@ -318,6 +460,88 @@ TOOLS: tuple[ToolSpec, ...] = (
 			"amount": _p("number"),
 		},
 		required=("from_folio", "charge_row", "to_folio"),
+		mutating=True,
+		group="Billing",
+	),
+	_t(
+		"stay_folios",
+		"api.reservation_folios",
+		"""All folios of a stay (guest / extra / company / group) with
+		balances — plus the group master when the stay is on a block.""",
+		{"reservation": _p("string")},
+		required=("reservation",),
+		group="Billing",
+	),
+	_t(
+		"record_payment",
+		"api.add_folio_payment",
+		"""Record money received on a folio. mode: Cash, UPI, Card, Bank,
+		Link. kind: Payment (default), Advance, or Security Deposit.
+		Confirm the amount with staff before calling.""",
+		{
+			"folio": _p("string"),
+			"mode": _p("string"),
+			"amount": _p("number"),
+			"reference": _p("string"),
+			"kind": _p("string"),
+		},
+		required=("folio", "mode", "amount"),
+		mutating=True,
+		group="Billing",
+	),
+	_t(
+		"void_charge",
+		"api.void_folio_charge",
+		"""Remove a WRONG charge line from an open folio (duplicate, wrong
+		amount, wrong guest). Pass the folio and the charge line's id (`name`
+		from get_folio). For settled/invoiced bills use apply_allowance.""",
+		{
+			"folio": _p("string"),
+			"charge_row": _p("string"),
+			"reason": _p("string"),
+		},
+		required=("folio", "charge_row"),
+		mutating=True,
+		group="Billing",
+	),
+	_t(
+		"apply_allowance",
+		"api.post_allowance",
+		"""Credit back part of a bill on an open folio without deleting the
+		original line (service recovery, dispute, agreed discount). Needs a
+		reason; it goes on the record.""",
+		{
+			"folio": _p("string"),
+			"amount": _p("number"),
+			"reason": _p("string"),
+			"gst_rate": _p("number"),
+		},
+		required=("folio", "amount", "reason"),
+		mutating=True,
+		group="Billing",
+	),
+	_t(
+		"move_charges",
+		"api.transfer_folio_charges",
+		"""Move charge lines to another folio of the same stay or group.
+		charge_rows is a list of charge line names from get_folio.""",
+		{
+			"from_folio": _p("string"),
+			"charge_rows": _p("array", items=_p("string")),
+			"to_folio": _p("string"),
+		},
+		required=("from_folio", "charge_rows", "to_folio"),
+		mutating=True,
+		group="Billing",
+	),
+	_t(
+		"close_folio",
+		"api.close_folio",
+		"""Close / settle an open folio and issue the invoice number. Balance
+		must be zero (or use part-settle elsewhere). Confirm with staff —
+		irreversible.""",
+		{"folio": _p("string")},
+		required=("folio",),
 		mutating=True,
 		group="Billing",
 	),
@@ -760,6 +984,172 @@ TOOLS: tuple[ToolSpec, ...] = (
 		required=("function", "receipt"),
 		group="Banquets",
 	),
+	# ── F&B / POS ────────────────────────────────────────────────────────
+	_t(
+		"pos_outlets",
+		"pos.outlets",
+		"List F&B outlets (restaurant, bar, room service) for this property.",
+		{},
+		property=True,
+		group="F&B",
+	),
+	_t(
+		"pos_menu",
+		"pos.pos_menu",
+		"Menu items for an outlet (with courses, prices, allergens).",
+		{"outlet": _p("string")},
+		required=("outlet",),
+		group="F&B",
+	),
+	_t(
+		"pos_table_map",
+		"pos.table_map",
+		"Floor plan: tables with occupancy, open checks, and reservations.",
+		{"outlet": _p("string")},
+		required=("outlet",),
+		group="F&B",
+	),
+	_t(
+		"pos_open_orders",
+		"pos.open_orders",
+		"Open POS checks at an outlet.",
+		{"outlet": _p("string")},
+		required=("outlet",),
+		group="F&B",
+	),
+	_t(
+		"pos_order_detail",
+		"pos.order_detail",
+		"One POS order: items, KOTs, totals, payment state.",
+		{"order": _p("string")},
+		required=("order",),
+		group="F&B",
+	),
+	_t(
+		"pos_create_order",
+		"pos.create_order",
+		"""Open a POS check. items = [{item, qty, notes?}]. Optionally bind
+		table_no and/or a room/reservation for room charge.""",
+		{
+			"outlet": _p("string"),
+			"items": _p("array", items=_p("object")),
+			"table_no": _p("string"),
+			"room": _p("string"),
+			"reservation": _p("string"),
+			"guests": _p("integer"),
+			"customer_name": _p("string"),
+			"customer_phone": _p("string"),
+			"order_type": _p("string"),
+			"notes": _p("string"),
+		},
+		required=("outlet", "items"),
+		property=True,
+		mutating=True,
+		group="F&B",
+	),
+	_t(
+		"pos_add_items",
+		"pos.add_items",
+		"Add items to an open POS order. items = [{item, qty, notes?}].",
+		{
+			"order": _p("string"),
+			"items": _p("array", items=_p("object")),
+		},
+		required=("order", "items"),
+		mutating=True,
+		group="F&B",
+	),
+	_t(
+		"pos_confirm_order",
+		"pos.confirm_order",
+		"Confirm a draft order so it can be fired to the kitchen.",
+		{"order": _p("string")},
+		required=("order",),
+		mutating=True,
+		group="F&B",
+	),
+	_t(
+		"pos_fire_kot",
+		"pos.fire_kot",
+		"Fire a kitchen order ticket (whole check or one course).",
+		{"order": _p("string"), "course": _p("string")},
+		required=("order",),
+		mutating=True,
+		group="F&B",
+	),
+	_t(
+		"pos_kitchen_queue",
+		"pos.kitchen_queue",
+		"KDS view: tickets waiting / cooking for the property (optional outlet).",
+		{"outlet": _p("string")},
+		property=True,
+		group="F&B",
+	),
+	_t(
+		"pos_pay_order",
+		"pos.pay_order",
+		"""Settle a POS check. mode: Cash, UPI, Card, Room Charge, etc.
+		Confirm the total with staff before calling.""",
+		{"order": _p("string"), "mode": _p("string")},
+		required=("order", "mode"),
+		mutating=True,
+		group="F&B",
+	),
+	# ── Laundry ──────────────────────────────────────────────────────────
+	_t(
+		"laundry_board",
+		"laundry.laundry_board",
+		"Laundry ops board: pickups, in-plant, ready, deliveries outstanding.",
+		{},
+		property=True,
+		group="Laundry",
+	),
+	_t(
+		"laundry_rates",
+		"laundry.laundry_rates",
+		"Rate card for laundry items and service types at this property.",
+		{},
+		property=True,
+		group="Laundry",
+	),
+	_t(
+		"laundry_collect",
+		"laundry.collect_laundry",
+		"""Collect guest laundry. items = [{item_name, service_type, qty}].
+		Bills from the rate card; express=true for rush. Pass order to fill
+		a prior pickup request.""",
+		{
+			"room": _p("string"),
+			"items": _p("array", items=_p("object")),
+			"express": _p("boolean"),
+			"order": _p("string"),
+			"notes": _p("string"),
+		},
+		required=("items",),
+		property=True,
+		mutating=True,
+		bools=("express",),
+		group="Laundry",
+	),
+	_t(
+		"laundry_status",
+		"laundry.laundry_status",
+		"""Advance a laundry bag: Collected → In Process → Ready (one step
+		at a time). Use laundry_deliver to finish.""",
+		{"order": _p("string"), "status": _p("string")},
+		required=("order", "status"),
+		mutating=True,
+		group="Laundry",
+	),
+	_t(
+		"laundry_deliver",
+		"laundry.deliver_laundry",
+		"Mark laundry delivered to the guest/room; posts any final charges.",
+		{"order": _p("string"), "shortage_note": _p("string")},
+		required=("order",),
+		mutating=True,
+		group="Laundry",
+	),
 )
 
 BY_NAME: dict[str, ToolSpec] = {t.name: t for t in TOOLS}
@@ -840,8 +1230,35 @@ def tool_allowed(spec: ToolSpec, roles: set[str] | None = None) -> bool:
 	return bool(set(roles) & set(allowed))
 
 
-def allowed_tools(roles: set[str] | None = None) -> list[ToolSpec]:
-	return [spec for spec in TOOLS if tool_allowed(spec, roles)]
+def module_allowed(spec: ToolSpec, modules: set[str] | None = None,
+                   property: str | None = None) -> bool:
+	"""Property.enabled_modules gate. Tools with module=None always pass."""
+	if not spec.module:
+		return True
+	if modules is None:
+		if not property:
+			return True
+		from kamra.api import enabled_modules
+
+		modules = set(enabled_modules(property))
+	return spec.module in modules
+
+
+def allowed_tools(
+	roles: set[str] | None = None,
+	property: str | None = None,
+	modules: set[str] | None = None,
+) -> list[ToolSpec]:
+	"""Tools visible to this identity: role ∩ property modules."""
+	if modules is None and property:
+		from kamra.api import enabled_modules
+
+		modules = set(enabled_modules(property))
+	return [
+		spec
+		for spec in TOOLS
+		if tool_allowed(spec, roles) and module_allowed(spec, modules)
+	]
 
 
 def call_tool(spec: ToolSpec, arguments: dict[str, Any], property: str) -> Any:
@@ -852,6 +1269,11 @@ def call_tool(spec: ToolSpec, arguments: dict[str, Any], property: str) -> Any:
 
 	if not tool_allowed(spec):
 		frappe.throw("Your role doesn't include this action.", frappe.PermissionError)
+	if not module_allowed(spec, property=property):
+		frappe.throw(
+			f"This property does not have the '{spec.module}' module enabled.",
+			frappe.PermissionError,
+		)
 	fn = resolve_endpoint(spec.dotted)
 	kwargs = prepare_arguments(spec, arguments or {}, property)
 	frappe.flags.kamra_agent_call = True

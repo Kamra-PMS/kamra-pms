@@ -39,14 +39,14 @@
   },
   {
    "default": "https://api.openai.com/v1",
-   "description": "Any OpenAI-compatible endpoint: OpenAI, OpenRouter, Groq, Ollama, vLLM\u2026",
+   "description": "OpenAI-compatible Chat Completions endpoint. Presets in Settings: OpenAI, Gemini, Groq, OpenRouter, Ollama, Azure, Custom. Claude Desktop uses MCP — not this URL.",
    "fieldname": "base_url",
    "fieldtype": "Data",
    "label": "Base URL"
   },
   {
    "default": "gpt-4o-mini",
-   "description": "Any Chat Completions slug: gpt-4o-mini, gpt-5.6-luna, gpt-5.6-terra, gpt-5.6-sol. Reasoning models pin effort to none so tools keep working.",
+   "description": "Any Chat Completions slug for your provider: gpt-4o-mini, gemini-2.0-flash, llama-3.3-70b-versatile, openai/gpt-4o-mini (OpenRouter), \u2026 Reasoning models pin effort to none so tools keep working.",
    "fieldname": "model",
    "fieldtype": "Data",
    "label": "Model"

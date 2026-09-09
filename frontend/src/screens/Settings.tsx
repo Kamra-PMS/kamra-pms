@@ -351,27 +351,6 @@ const POLICY_SPECS: Spec[] = [
   },
 ]
 
-const AI_SPECS: Spec[] = [
-  { field: "enabled", label: "Enabled", type: "check" },
-  {
-    field: "base_url",
-    label: "Provider base URL",
-    hint: "any OpenAI-compatible endpoint: OpenAI, OpenRouter, Groq, Ollama…",
-  },
-  {
-    field: "model",
-    label: "Model",
-    hint: "gpt-4o-mini, gpt-5.6-luna, gpt-5.6-terra, gpt-5.6-sol, or any OpenAI-compatible slug",
-  },
-  { field: "api_key", label: "API key", type: "password" },
-  {
-    field: "extra_instructions",
-    label: "Extra instructions",
-    type: "textarea",
-    hint: "property-specific guidance - upsell priorities, tone",
-  },
-]
-
 const GATEWAY_SPECS: Spec[] = [
   { field: "enabled", label: "Enabled", type: "check" },
   {
@@ -440,6 +419,276 @@ function CashierPinResetCard() {
         </Button>
         {msg ? <p className="w-full text-sm text-emerald-700">{msg}</p> : null}
         {err ? <p className="w-full text-sm text-rose-600">{err}</p> : null}
+      </CardContent>
+    </Card>
+  )
+}
+
+type AiPreset = {
+  id: string
+  label: string
+  base_url: string
+  model: string
+  hint: string
+}
+
+function AiAssistantCard({
+  property,
+  doc,
+  onSaved,
+}: {
+  property: string
+  doc: Doc
+  onSaved: () => void
+}) {
+  const { t } = useT()
+  const [presets, setPresets] = useState<AiPreset[]>([])
+  const [provider, setProvider] = useState("openai")
+  const [enabled, setEnabled] = useState(Boolean(Number(doc.enabled ?? 0)))
+  const [baseUrl, setBaseUrl] = useState(String(doc.base_url ?? "https://api.openai.com/v1"))
+  const [model, setModel] = useState(String(doc.model ?? "gpt-4o-mini"))
+  const [apiKey, setApiKey] = useState("")
+  const [extra, setExtra] = useState(String(doc.extra_instructions ?? ""))
+  const [busy, setBusy] = useState(false)
+  const [testing, setTesting] = useState(false)
+  const [state, setState] = useState<"idle" | "saved" | string>("idle")
+  const [testMsg, setTestMsg] = useState<string | null>(null)
+
+  useEffect(() => {
+    call<{ presets: AiPreset[] }>("kamra.assistant.provider_presets")
+      .then((r) => setPresets(r.presets || []))
+      .catch(() =>
+        setPresets([
+          {
+            id: "openai",
+            label: "OpenAI",
+            base_url: "https://api.openai.com/v1",
+            model: "gpt-4o-mini",
+            hint: "Paste an sk-… key",
+          },
+        ]),
+      )
+  }, [])
+
+  useEffect(() => {
+    setEnabled(Boolean(Number(doc.enabled ?? 0)))
+    setBaseUrl(String(doc.base_url ?? "https://api.openai.com/v1"))
+    setModel(String(doc.model ?? "gpt-4o-mini"))
+    setExtra(String(doc.extra_instructions ?? ""))
+    setApiKey("")
+  }, [doc])
+
+  const activeHint =
+    presets.find((p) => p.id === provider)?.hint ||
+    "Any OpenAI-compatible Chat Completions host"
+
+  function applyPreset(id: string) {
+    setProvider(id)
+    const p = presets.find((x) => x.id === id)
+    if (!p) return
+    if (p.base_url) setBaseUrl(p.base_url)
+    if (p.model) setModel(p.model)
+    setState("idle")
+    setTestMsg(null)
+  }
+
+  async function save() {
+    setBusy(true)
+    setState("idle")
+    try {
+      const payload: Doc = {
+        enabled: enabled ? 1 : 0,
+        base_url: baseUrl,
+        model,
+        extra_instructions: extra,
+      }
+      if (apiKey) payload.api_key = apiKey
+      if (doc.name) {
+        await updateResource("AI Assistant Settings", String(doc.name), payload)
+      } else {
+        await createResource("AI Assistant Settings", { ...payload, property })
+      }
+      setApiKey("")
+      setState("saved")
+      onSaved()
+    } catch (e) {
+      setState(serverError(e))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function test() {
+    setTesting(true)
+    setTestMsg(null)
+    try {
+      const r = await call<{
+        ok: boolean
+        error?: string
+        reply?: string
+        latency_ms?: number
+        status?: number
+      }>("kamra.assistant.test_connection", {
+        property,
+        base_url: baseUrl,
+        model,
+        api_key: apiKey || undefined,
+      })
+      if (r.ok) {
+        setTestMsg(
+          t("Connected ({ms} ms) — {reply}", {
+            ms: r.latency_ms ?? "?",
+            reply: (r.reply || "ok").slice(0, 80),
+          }),
+        )
+      } else {
+        setTestMsg(
+          t("Failed{status}: {err}", {
+            status: r.status ? ` (${r.status})` : "",
+            err: r.error || "unknown error",
+          }),
+        )
+      }
+    } catch (e) {
+      setTestMsg(serverError(e))
+    } finally {
+      setTesting(false)
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <div>
+          <CardTitle>{t("AI assistant (bring your own key)")}</CardTitle>
+          <p className="mt-0.5 text-xs text-zinc-400">
+            {t(
+              "Kamra Agent for staff. Pick a provider, paste the key, Test. Claude Desktop is MCP (Kamra Agent → Connect your AI) — not an Anthropic key in this form.",
+            )}
+          </p>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <label className="flex items-center gap-2 py-1 text-sm text-zinc-700">
+          <input
+            type="checkbox"
+            className="size-4 accent-brand-600"
+            checked={enabled}
+            onChange={(e) => {
+              setEnabled(e.target.checked)
+              setState("idle")
+            }}
+          />
+          {t("Enabled")}
+        </label>
+        <label className="block">
+          <span className="mb-1 block text-sm font-medium text-zinc-600">
+            {t("Provider")}
+          </span>
+          <select
+            className={inputCls}
+            value={provider}
+            onChange={(e) => applyPreset(e.target.value)}
+          >
+            {presets.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.label}
+              </option>
+            ))}
+          </select>
+          <span className="mt-0.5 block text-xs text-zinc-400">{activeHint}</span>
+        </label>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="block">
+            <span className="mb-1 block text-sm font-medium text-zinc-600">
+              {t("Base URL")}
+            </span>
+            <input
+              className={inputCls}
+              value={baseUrl}
+              onChange={(e) => {
+                setBaseUrl(e.target.value)
+                setState("idle")
+              }}
+            />
+          </label>
+          <label className="block">
+            <span className="mb-1 block text-sm font-medium text-zinc-600">
+              {t("Model")}
+            </span>
+            <input
+              className={inputCls}
+              value={model}
+              onChange={(e) => {
+                setModel(e.target.value)
+                setState("idle")
+              }}
+            />
+          </label>
+        </div>
+        <label className="block">
+          <span className="mb-1 block text-sm font-medium text-zinc-600">
+            {t("API key")}
+          </span>
+          <input
+            className={inputCls}
+            type="password"
+            placeholder={t("unchanged")}
+            value={apiKey}
+            onChange={(e) => {
+              setApiKey(e.target.value)
+              setState("idle")
+            }}
+          />
+        </label>
+        <label className="block">
+          <span className="mb-1 block text-sm font-medium text-zinc-600">
+            {t("Extra instructions")}
+          </span>
+          <textarea
+            className={`${inputCls} min-h-20`}
+            value={extra}
+            onChange={(e) => {
+              setExtra(e.target.value)
+              setState("idle")
+            }}
+          />
+          <span className="mt-0.5 block text-xs text-zinc-400">
+            {t("property-specific guidance - upsell priorities, tone")}
+          </span>
+        </label>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button disabled={busy} onClick={save}>
+            {busy ? t("Saving…") : t("Save")}
+          </Button>
+          <Button variant="outline" disabled={testing} onClick={test}>
+            {testing ? t("Testing…") : t("Test connection")}
+          </Button>
+          {state === "saved" && (
+            <span className="text-xs text-emerald-600">{t("Saved")}</span>
+          )}
+          {state !== "idle" && state !== "saved" && (
+            <span className="text-xs text-rose-600">{state}</span>
+          )}
+        </div>
+        {testMsg && (
+          <p
+            className={
+              testMsg.startsWith("Connected") || testMsg.includes("Connected")
+                ? "text-sm text-emerald-700"
+                : "text-sm text-rose-600"
+            }
+          >
+            {testMsg}
+          </p>
+        )}
+        <p className="text-xs text-zinc-400">
+          {t("Want Claude the app?")}{" "}
+          <a href="/kamra/assistant" className="font-medium text-brand-700 hover:underline">
+            {t("Kamra Agent → Connect your AI")}
+          </a>
+          . {t("Want Claude the model in this chat? Use the OpenRouter preset.")}
+        </p>
       </CardContent>
     </Card>
   )
@@ -546,28 +795,7 @@ export default function Settings() {
         }}
       />
 
-      <SettingsCard
-        title="AI assistant (bring your own key)"
-        description="Kamra Agent, the in-app assistant for staff. Your key, your data - the model can only act through Kamra's governed tools, and every action is audit-logged."
-        specs={AI_SPECS}
-        doc={ai}
-        onSave={async (changes) => {
-          const payload = Object.fromEntries(
-            Object.entries(changes).filter(
-              ([k, v]) => k !== "api_key" || v !== "",
-            ),
-          )
-          if (ai.name) {
-            await updateResource("AI Assistant Settings", String(ai.name), payload)
-          } else {
-            await createResource("AI Assistant Settings", {
-              ...payload,
-              property,
-            })
-          }
-          load()
-        }}
-      />
+      <AiAssistantCard property={property} doc={ai} onSaved={load} />
 
       <SettingsCard
         title="Revenue controls"
