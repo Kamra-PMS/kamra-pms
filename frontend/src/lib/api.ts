@@ -123,6 +123,33 @@ export async function uploadFile(
   return url
 }
 
+/** Upload a file to a custom Kamra endpoint (multipart), returning its result.
+ *  Unlike uploadFile (Frappe's built-in upload_file, which authorises against
+ *  the target doctype's own perms), this posts to a @require_roles endpoint that
+ *  handles the File itself — the pattern the rest of Kamra uses. */
+export async function uploadTo(
+  method: string,
+  file: File,
+  fields: Record<string, string> = {},
+): Promise<{ file_url: string; file_name: string }> {
+  const token = csrfToken()
+  const fd = new FormData()
+  fd.append("file", file, file.name)
+  for (const [k, v] of Object.entries(fields)) fd.append(k, v)
+  const res = await fetch(`/api/method/${method}`, {
+    method: "POST",
+    headers: token ? { "X-Frappe-CSRF-Token": token } : undefined,
+    body: fd,
+    credentials: "include",
+  })
+  if (!res.ok) throw new Error(`upload failed (${res.status})`)
+  const out = (await res.json()) as {
+    message?: { file_url?: string; file_name?: string }
+  }
+  if (!out.message?.file_url) throw new Error("upload returned no file URL")
+  return out.message as { file_url: string; file_name: string }
+}
+
 export async function frappeFetch<T = unknown>(
   path: string,
   init?: RequestInit,

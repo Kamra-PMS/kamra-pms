@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
   ChefHat, Check, RefreshCw, Clock, X, Undo2, TriangleAlert, Flame, Lock,
-  Martini, CookingPot, Utensils, Bell, BellOff, Play, Inbox, Maximize2, Minimize2,
+  Martini, CookingPot, Utensils, Bell, BellOff, Play, Inbox, Maximize2, Minimize2, Menu,
   Focus, LogOut,
 } from "lucide-react"
 import { useNavigate } from "react-router-dom"
@@ -605,6 +605,13 @@ export default function Kitchen() {
               </button>
             ))}
           </div>
+          {kioskOn && (
+            <button type="button" onClick={exitFloor}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-2.5 py-1.5 text-sm font-medium text-zinc-600 hover:bg-zinc-50"
+              title="Show the app menu (Esc)">
+              <Menu className="size-4" />Menu
+            </button>
+          )}
           <button onClick={toggleSound}
             aria-pressed={sound}
             className={cn("inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-sm font-medium",

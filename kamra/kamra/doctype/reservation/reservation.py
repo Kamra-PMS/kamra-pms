@@ -284,10 +284,25 @@ class Reservation(Document):
 			return
 		room_type = frappe.db.get_value("Room", self.room, "room_type")
 		if room_type != self.room_type:
+			# help the user by naming the rooms they CAN move to: rooms of the
+			# reservation's own type that are free for these dates
+			from kamra.api import _available_rooms_raw
+			free = [
+				r.room_number for r in _available_rooms_raw(
+					self.property, self.room_type,
+					self.check_in_date, self.check_out_date)
+				if r.name != self.room
+			]
+			if free:
+				hint = _(" Free {0} rooms for these dates: {1}.").format(
+					self.room_type, ", ".join(free))
+			else:
+				hint = _(" No {0} rooms are free for these dates.").format(
+					self.room_type)
 			frappe.throw(
 				_("Room {0} belongs to {1}, not {2}.").format(
 					self.room, room_type, self.room_type
-				)
+				) + hint
 			)
 
 	def validate_no_overlap(self):

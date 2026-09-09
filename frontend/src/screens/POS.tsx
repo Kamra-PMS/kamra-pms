@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import {
   Plus, Minus, Trash2, Send, UtensilsCrossed, Search,
   Maximize2, Minimize2, Wallet, Printer, Receipt, XCircle, Ban,
-  Scissors, Users, PauseCircle, Tag, Gift, Clock, LogOut, Focus,
+  Scissors, Users, PauseCircle, Tag, Gift, Clock, Menu, LogOut, Focus,
   Keyboard, LayoutGrid, BedDouble,
 } from "lucide-react"
 import { useNavigate } from "react-router-dom"
@@ -911,6 +911,13 @@ export default function POS() {
               </div>
             )}
           </div>
+          {floorOn && (
+            <button type="button" onClick={exitFloor}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-2.5 py-2 text-xs font-semibold text-zinc-600 hover:bg-zinc-50"
+              title={t("Show the app menu (Esc)")}>
+              <Menu className="size-4" />{t("Menu")}
+            </button>
+          )}
           <button onClick={toggleFocus}
             className={cn("rounded-lg border p-2",
               kioskOn

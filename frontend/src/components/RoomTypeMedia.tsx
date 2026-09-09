@@ -11,6 +11,9 @@ interface MediaRow {
   url: string
   caption: string | null
 }
+
+const isVideo = (u: string) =>
+  /\.(mp4|mov|webm|m4v|3gp|avi)$/i.test(u.trim())
 interface RTDoc {
   amenities?: string | null
   description?: string | null
@@ -78,7 +81,7 @@ export default function RoomTypeMedia({
         media: (next.media ?? [])
           .filter((m) => m.url.trim())
           .map((m) => ({
-            media_type: m.media_type || "Image",
+            media_type: isVideo(m.url) ? "Video" : "Image",
             url: m.url.trim(),
             caption: m.caption || null,
           })),
@@ -105,7 +108,7 @@ export default function RoomTypeMedia({
         </div>
         <p className="mb-2 text-xs text-zinc-400">
           Shown on the public listing page. Uploads save automatically —
-          1600×900px (16:9), JPG/WebP; videos as MP4/embed URLs.
+          images 1600×900px (16:9) JPG/WebP, or a walkthrough video (MP4, up to ~10 MB).
         </p>
         <div className="space-y-2">
           {media.map((m, i) => (
@@ -113,6 +116,7 @@ export default function RoomTypeMedia({
               <div className="min-w-0 flex-1">
                 <ImageField
                   hint=""
+                  accept="image/*,video/*"
                   placeholder="Upload, or paste an image/video URL"
                   value={m.url}
                   onChange={(v) => setMedia(i, "url", v)}
@@ -145,23 +149,34 @@ export default function RoomTypeMedia({
           ))}
         </div>
         <Button variant="outline" className="mt-2" onClick={addMedia}>
-          <Plus className="size-4" /> Add photo
+          <Plus className="size-4" /> Add photo / video
         </Button>
         {media.filter((m) => m.url.trim()).length > 0 && (
           <div className="mt-3 flex gap-2 overflow-x-auto">
             {media
               .filter((m) => m.url.trim())
-              .map((m, i) => (
-                <img
-                  key={i}
-                  src={m.url}
-                  alt=""
-                  className="h-16 w-24 shrink-0 rounded-lg object-cover"
-                  onError={(e) => {
-                    ;(e.target as HTMLImageElement).style.opacity = "0.2"
-                  }}
-                />
-              ))}
+              .map((m, i) =>
+                isVideo(m.url) ? (
+                  <video
+                    key={i}
+                    src={m.url}
+                    muted
+                    playsInline
+                    controls
+                    className="h-16 w-24 shrink-0 rounded-lg bg-zinc-100 object-cover"
+                  />
+                ) : (
+                  <img
+                    key={i}
+                    src={m.url}
+                    alt=""
+                    className="h-16 w-24 shrink-0 rounded-lg object-cover"
+                    onError={(e) => {
+                      ;(e.target as HTMLImageElement).style.opacity = "0.2"
+                    }}
+                  />
+                ),
+              )}
           </div>
         )}
       </div>

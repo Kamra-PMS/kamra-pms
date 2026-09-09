@@ -777,6 +777,19 @@ def hk_queue(property: str):
 		t["special_requests"] = t.get("special_requests") or c.get("special_requests")
 		t["eta"] = c.get("eta")
 
+	# completion media (proof-of-clean photos/videos) attached to each task
+	task_names = [t.name for t in tasks]
+	media = {}
+	if task_names:
+		for f in frappe.get_all(
+			"File",
+			filters={"attached_to_doctype": "Housekeeping Task",
+			         "attached_to_name": ("in", task_names)},
+			fields=["attached_to_name", "file_url"], order_by="creation asc"):
+			media.setdefault(f.attached_to_name, []).append(f.file_url)
+	for t in tasks:
+		t["media"] = media.get(t.name, [])
+
 	return {"date": today, "tasks": tasks, "rooms": rooms}
 
 
@@ -796,6 +809,91 @@ def hk_update_task(task: str, status: str):
 		           rationale=f"{doc.task_type} for {doc.room} closed from mobile",
 		           channel="API")
 	return {"ok": True, "task": doc.name, "status": doc.status}
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Housekeeping", "Front Desk", "Kamra Agent")
+def hk_upload_media(task: str):
+	"""Attach a completion photo/video (proof of clean) to a housekeeping task.
+
+	Uploaded from the housekeeper's phone while the room is being serviced. Stored
+	public and attached to the task, so it stays with the record after the task
+	closes and drops out of the live queue."""
+	if not frappe.db.exists("Housekeeping Task", task):
+		frappe.throw("Task not found.")
+	req = getattr(frappe.local, "request", None)
+	files = getattr(req, "files", {}) if req else {}
+	if "file" not in files:
+		frappe.throw("No file uploaded.")
+	f = files["file"]
+	content = f.stream.read()
+	if len(content) > 25 * 1024 * 1024:
+		frappe.throw("File is too large - keep photos/videos under 25 MB.")
+	# endpoint-gated (Kamra authorizes on the route, not the doctype), so the
+	# File is created ignore_permissions and attached to the task.
+	saved = frappe.get_doc({
+		"doctype": "File",
+		"file_name": f.filename,
+		"content": content,
+		"attached_to_doctype": "Housekeeping Task",
+		"attached_to_name": task,
+		"is_private": 0,
+	}).insert(ignore_permissions=True)
+	from kamra.savings import log_action
+	log_action("hk_media_upload", "Housekeeping Task", task,
+	           frappe.db.get_value("Housekeeping Task", task, "property"),
+	           rationale=f"Completion media added to {task}", channel="API")
+	return {"file_url": saved.file_url, "file_name": saved.file_name}
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Housekeeping", "Front Desk", "Kamra Agent")
+def hk_delete_media(task: str, file_url: str):
+	"""Remove a completion photo/video from a housekeeping task."""
+	name = frappe.db.get_value("File", {
+		"attached_to_doctype": "Housekeeping Task",
+		"attached_to_name": task,
+		"file_url": file_url,
+	})
+	if not name:
+		frappe.throw("That file is not attached to this task.")
+	frappe.delete_doc("File", name, ignore_permissions=True)
+	return {"ok": True}
+
+
+@frappe.whitelist()
+@require_roles("Housekeeping", "Front Desk", "Hotel Admin", "Kamra Agent")
+def hk_task_media(task: str):
+	"""Completion photos/videos attached to one housekeeping task (newest first)."""
+	return frappe.get_all(
+		"File",
+		filters={"attached_to_doctype": "Housekeeping Task",
+		         "attached_to_name": task},
+		fields=["file_url"], order_by="creation desc", pluck="file_url")
+
+
+@frappe.whitelist()
+@require_roles("Housekeeping", "Front Desk", "Hotel Admin", "Kamra Agent")
+def hk_room_media(room: str):
+	"""Photos/videos from the room's LATEST cleaning only - so the front desk
+	sees just the most recent clean, not older cycles. Lets reception confirm a
+	room is genuinely guest-ready."""
+	tasks = frappe.get_all("Housekeeping Task", filters={"room": room}, pluck="name")
+	if not tasks:
+		return []
+	# the newest attached file marks the most recent cleaning that has media
+	latest = frappe.get_all(
+		"File",
+		filters={"attached_to_doctype": "Housekeeping Task",
+		         "attached_to_name": ("in", tasks)},
+		fields=["attached_to_name"], order_by="creation desc", limit=1)
+	if not latest:
+		return []
+	return frappe.get_all(
+		"File",
+		filters={"attached_to_doctype": "Housekeeping Task",
+		         "attached_to_name": latest[0].attached_to_name},
+		fields=["file_url"], order_by="creation asc", pluck="file_url")
 
 
 @frappe.whitelist(methods=["POST"])
@@ -3114,12 +3212,21 @@ def venue_calendar(property: str, start_date: str | None = None, days: int = 14)
 @frappe.whitelist()
 @require_roles("Front Desk", "Kamra Agent")
 def move_reservation(reservation: str, new_room: str):
-	"""Room move - mid-stay or before arrival. Overlap guard re-runs."""
+	"""Room move / upgrade - mid-stay or before arrival. Overlap guard re-runs.
+
+	The new room may be a DIFFERENT room type (e.g. Standard -> Suite): the
+	reservation's room type follows the room it moves into, so upgrades and
+	downgrades are allowed. If the booking auto-prices, the new type's rate
+	applies; a manually-priced booking keeps its amount."""
 	doc = frappe.get_doc("Reservation", reservation)
 	if doc.status not in ("Confirmed", "Checked In"):
 		frappe.throw("Only active reservations can be moved.")
 	old_room = doc.room
+	old_type = doc.room_type
+	new_type = frappe.db.get_value("Room", new_room, "room_type")
 	doc.room = new_room
+	if new_type and new_type != doc.room_type:
+		doc.room_type = new_type  # upgrade / downgrade
 	doc.save()
 	if doc.status == "Checked In" and old_room and old_room != new_room:
 		frappe.db.set_value("Room", old_room,
@@ -3127,9 +3234,49 @@ def move_reservation(reservation: str, new_room: str):
 		                     "housekeeping_status": "Dirty"})
 		frappe.db.set_value("Room", new_room, "occupancy_status", "Occupied")
 	from kamra.savings import log_action
-	log_action("room_move", "Reservation", doc.name, doc.property,
-	           rationale=f"{old_room} → {new_room}")
-	return {"ok": True, "room": doc.room}
+	note = f"{old_room} → {new_room}"
+	if new_type and new_type != old_type:
+		note += f" · {old_type} → {new_type}"
+	log_action("room_move", "Reservation", doc.name, doc.property, rationale=note)
+	return {"ok": True, "room": doc.room, "room_type": doc.room_type}
+
+
+@frappe.whitelist()
+@require_roles("Front Desk", "Kamra Agent")
+def movable_rooms(reservation: str, check_in_date: str | None = None,
+                  check_out_date: str | None = None):
+	"""Every room the booking could move into - across ALL room types, so the
+	front desk can upgrade (Standard -> Suite) as well as swap same-type. Each
+	room is flagged free/occupied for the dates and carries its type name; the
+	booking's current type is listed first."""
+	res = frappe.get_doc("Reservation", reservation)
+	ci = check_in_date or res.check_in_date
+	co = check_out_date or res.check_out_date
+	rooms = frappe.get_all(
+		"Room", filters={"property": res.property},
+		fields=["name", "room_number", "room_type"], order_by="room_number")
+	# availability is computed per type; union the free rooms across every type
+	types = {r.room_type for r in rooms}
+	free = set()
+	for rt in types:
+		free |= {r.name for r in _available_rooms_raw(res.property, rt, ci, co)}
+	type_name = {
+		t: (frappe.db.get_value("Room Type", t, "room_type_name") or t)
+		for t in types
+	}
+	out = [
+		{"name": r.name, "room_number": r.room_number,
+		 "room_type": r.room_type,
+		 "room_type_name": type_name.get(r.room_type, r.room_type),
+		 # the guest's own current room counts as available to them
+		 "free": r.name in free or r.name == res.room,
+		 "same_type": r.room_type == res.room_type}
+		for r in rooms
+	]
+	# current type first, then the rest - so a same-type swap is the default and
+	# upgrades/downgrades follow
+	out.sort(key=lambda r: (not r["same_type"], r["room_type_name"], r["room_number"]))
+	return out
 
 
 @frappe.whitelist()

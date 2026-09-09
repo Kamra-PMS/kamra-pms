@@ -3,6 +3,7 @@ import BillingRulesEditor from "../components/BillingRulesEditor"
 import EventLinks from "../components/EventLinks"
 import GroupControl from "../components/GroupControl"
 import RoomTypeMedia from "../components/RoomTypeMedia"
+import { HkTaskMediaPanel } from "../components/HkMedia"
 import ReservationDetail from "./ReservationDetail"
 import { cur } from "../lib/money"
 
@@ -491,6 +492,7 @@ export const housekeepingConfig: ScreenConfig = {
     { field: "status", label: "Status", type: "select", options: ["Pending", "In Progress", "Done", "Verified"] },
     { field: "notes", label: "Notes", type: "data" },
   ],
+  extra: HkTaskMediaPanel,
 }
 
 export const billingConfig: ScreenConfig = {

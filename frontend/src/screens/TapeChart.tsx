@@ -3,7 +3,7 @@ import { useOutletContext } from "react-router-dom"
 import type { ShellContext } from "../AppShell"
 import { ChevronDown, ChevronLeft, ChevronRight, Lock, Sparkles, Star } from "lucide-react"
 import { call, getCurrentProperty } from "../lib/api"
-import { listResource, serverError } from "../lib/resource"
+import { serverError } from "../lib/resource"
 import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
 import { Sheet } from "../components/ui/sheet"
@@ -155,7 +155,15 @@ export default function TapeChart() {
   const [start, setStart] = useState(new Date().toISOString().slice(0, 10))
   const [data, setData] = useState<TapeData | null>(null)
   const [sel, setSel] = useState<TapeBooking | null>(null)
-  const [freeRooms, setFreeRooms] = useState<string[]>([])
+  const [freeRooms, setFreeRooms] = useState<
+    {
+      name: string
+      room_number: string
+      room_type_name: string
+      free: boolean
+      same_type: boolean
+    }[]
+  >([])
   const [draft, setDraft] = useState({
     room: "", check_in: "", check_out: "", from_time: "", to_time: "",
   })
@@ -232,12 +240,33 @@ export default function TapeChart() {
       from_time: hhmm(b.planned_check_in_time) || hb.from_hour || "",
       to_time: hhmm(b.planned_check_out_time) || hb.to_hour || "",
     })
-    listResource("Room", {
-      fields: ["name"],
-      filters: [["property", "=", getCurrentProperty()]],
-      orderBy: "room_number asc",
-    }).then((r) => setFreeRooms(r.map((x) => x.name)))
   }
+
+  // every room in the property (own type first, then upgrades/downgrades),
+  // each flagged free/occupied for the chosen dates - so the move dropdown
+  // can swap within a type or move up/down a category
+  useEffect(() => {
+    if (!sel) return
+    call<
+      {
+        name: string
+        room_number: string
+        room_type_name: string
+        free: boolean
+        same_type: boolean
+      }[]
+    >(
+      "kamra.api.movable_rooms",
+      {
+        reservation: sel.name,
+        check_in_date: draft.check_in,
+        check_out_date: draft.check_out,
+      },
+    )
+      .then(setFreeRooms)
+      .catch(() => setFreeRooms([]))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sel, draft.check_in, draft.check_out])
 
   async function act(fn: () => Promise<unknown>) {
     setBusy(true)
@@ -629,7 +658,10 @@ export default function TapeChart() {
               <select className={inputCls} value={draft.room}
                 onChange={(e) => setDraft({ ...draft, room: e.target.value })}>
                 {freeRooms.map((r) => (
-                  <option key={r} value={r}>{t("Room {n}", { n: r.split("-").pop() ?? "" })}</option>
+                  <option key={r.name} value={r.name} disabled={!r.free}>
+                    {t("Room {n}", { n: r.room_number })} · {r.room_type_name}
+                    {r.same_type ? "" : " ⇅"} · {r.free ? t("Free") : t("Occupied")}
+                  </option>
                 ))}
               </select>
             </label>
