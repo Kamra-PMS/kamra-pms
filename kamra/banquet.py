@@ -383,8 +383,13 @@ def set_status(function: str, status: str, reason: str | None = None,
 	                     + (f" ({reason})" if reason else ""),
 	           before_snapshot={"status": was},
 	           after_snapshot={"status": status})
+	confirm_fanout = None
+	if status == "Confirmed" and was != "Confirmed":
+		from kamra.banquet_ops import on_function_confirmed
+		confirm_fanout = on_function_confirmed(doc)
 	return {"ok": True, "status": doc.status, "from": was,
-	        "grand_total": doc.grand_total}
+	        "grand_total": doc.grand_total,
+	        "confirm_fanout": confirm_fanout}
 
 
 # ══ building the function ════════════════════════════════════════════════
@@ -925,6 +930,10 @@ def _function_alerts(doc):
 	event = getdate(doc.event_date)
 	days_out = (event - today).days
 	out = []
+	from kamra.banquet_ops import quote_no_response_alert
+	qnr = quote_no_response_alert(doc)
+	if qnr:
+		out.append(qnr)
 	if doc.status in ("Enquiry", "Tentative") and doc.follow_up_date \
 			and getdate(doc.follow_up_date) <= today:
 		out.append({"kind": "follow_up", "urgency": "high",
@@ -1028,6 +1037,16 @@ def run_banquet_reminders():
 				f["customer_name"], f["venue"], f["event_date"],
 				"; ".join(a["message"] for a in f["alerts"]
 				          if a["urgency"] == "high"))
+			# Guest chase when the quote went quiet
+			try:
+				doc = frappe.get_doc("Venue Booking", f["function"])
+				if any(a.get("kind") == "quote_no_response" for a in f["alerts"]):
+					from kamra.banquet_ops import maybe_email_guest_quote_chase
+					maybe_email_guest_quote_chase(
+						doc, next(a for a in f["alerts"]
+						          if a.get("kind") == "quote_no_response"))
+			except Exception:
+				pass
 			sent = False
 			if f["sales_owner"]:
 				mobile = frappe.db.get_value("User", f["sales_owner"], "mobile_no")

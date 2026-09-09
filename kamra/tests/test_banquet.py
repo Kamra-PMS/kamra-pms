@@ -510,6 +510,110 @@ class TestDocuments(BanquetTestCase):
 		self.assertIn("Twenty Five Thousand", doc["header"]["amount_in_words"])
 
 
+# ══ enterprise Phase 1 (issue #67) ═══════════════════════════════════════
+
+class TestBanquetOps(BanquetTestCase):
+	"""Send quote, desk guest response, checklists on Confirm, quote chase."""
+
+	def _quoted(self, **kw):
+		fn = enquiry(self.f, customer_email="guest@example.com", **kw)
+		bq.update_function(fn, {"pax_guaranteed": 100})
+		bq.add_menu(fn, self.f["menu"])
+		bq.generate_quote(fn)
+		return fn
+
+	def test_emailing_a_quote_stamps_quote_emailed_on(self):
+		from kamra import banquet_ops as ops
+
+		fn = self._quoted()
+		frappe.flags.mute_emails = True
+		out = ops.send_quotation(fn, channels=["email"])
+		self.assertTrue(out["ok"])
+		self.assertIn("email", out["sent"])
+		doc = self.sheet(fn)
+		self.assertTrue(doc.quote_emailed_on)
+		self.assertTrue(doc.quote_sent_on)
+
+	def test_cannot_email_before_stamping(self):
+		from kamra import banquet_ops as ops
+
+		fn = enquiry(self.f, customer_email="guest@example.com")
+		bq.add_menu(fn, self.f["menu"])
+		with self.assertRaises(frappe.ValidationError):
+			ops.send_quotation(fn, channels=["email"])
+
+	def test_desk_records_guest_confirmation(self):
+		from kamra import banquet_ops as ops
+
+		fn = self._quoted()
+		out = ops.record_guest_response(
+			fn, "Confirmed", channel="Phone", notes="Said yes on call")
+		doc = self.sheet(fn)
+		self.assertEqual(doc.customer_confirm_outcome, "Confirmed")
+		self.assertEqual(doc.customer_confirm_channel, "Phone")
+		self.assertTrue(doc.customer_confirmed_on)
+		self.assertEqual(doc.status, "Enquiry")  # confirm_status off
+		self.assertTrue(out["ok"])
+
+	def test_guest_confirm_can_move_status_and_spawn_checklists(self):
+		from kamra import banquet_ops as ops
+
+		fn = self._quoted()
+		out = ops.record_guest_response(
+			fn, "Confirmed", channel="WhatsApp", confirm_status=1)
+		doc = self.sheet(fn)
+		self.assertEqual(doc.status, "Confirmed")
+		self.assertTrue(out["status"])
+		tasks = frappe.get_all(
+			"Banquet Function Task",
+			filters={"venue_booking": fn},
+			fields=["department", "title", "status"],
+		)
+		self.assertGreaterEqual(len(tasks), 4)
+		depts = {t.department for t in tasks}
+		self.assertTrue({"Sales", "Finance", "Housekeeping", "F&B"} <= depts)
+
+	def test_confirm_via_set_status_also_spawns_checklists(self):
+		fn = self._quoted()
+		result = bq.set_status(fn, "Confirmed")
+		self.assertTrue(result.get("confirm_fanout"))
+		self.assertGreater(result["confirm_fanout"]["tasks_created"], 0)
+		from kamra import banquet_ops as ops
+
+		board = ops.function_tasks(fn)
+		self.assertGreater(board["total"], 0)
+		self.assertEqual(board["open"], board["total"])
+
+	def test_completing_a_checklist_task(self):
+		from kamra import banquet_ops as ops
+
+		fn = self._quoted()
+		bq.set_status(fn, "Confirmed")
+		board = ops.function_tasks(fn)
+		task = board["departments"][0]["tasks"][0]["name"]
+		ops.complete_function_task(task, done=1)
+		row = frappe.get_doc("Banquet Function Task", task)
+		self.assertEqual(row.status, "Done")
+		self.assertTrue(row.completed_on)
+
+	def test_quote_no_response_alert_after_three_days(self):
+		from kamra import banquet_ops as ops
+		from frappe.utils import add_days, now_datetime
+
+		fn = self._quoted()
+		frappe.flags.mute_emails = True
+		ops.send_quotation(fn, channels=["email"])
+		doc = self.sheet(fn)
+		doc.quote_emailed_on = add_days(now_datetime(), -4)
+		doc.save(ignore_permissions=True)
+		alert = ops.quote_no_response_alert(self.sheet(fn))
+		self.assertIsNotNone(alert)
+		self.assertEqual(alert["kind"], "quote_no_response")
+		# once the guest answers, the alert clears
+		ops.record_guest_response(fn, "Changes Requested", channel="Email")
+		self.assertIsNone(ops.quote_no_response_alert(self.sheet(fn)))
+
+
 # ══ the customer, and the books ══════════════════════════════════════════
 
 class TestCustomer(BanquetTestCase):

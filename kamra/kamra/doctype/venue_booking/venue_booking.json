@@ -38,6 +38,10 @@
   "customer",
   "customer_phone",
   "customer_email",
+  "customer_confirmed_on",
+  "customer_confirm_channel",
+  "customer_confirm_outcome",
+  "customer_confirm_notes",
   "company",
   "travel_agent",
   "column_break_b",
@@ -96,6 +100,7 @@
   "quote_version",
   "quote_number",
   "quote_sent_on",
+  "quote_emailed_on",
   "quote_valid_till",
   "column_break_quote",
   "beo_number",
@@ -318,6 +323,33 @@
    "fieldtype": "Data",
    "label": "Customer Email",
    "options": "Email"
+  },
+  {
+   "fieldname": "customer_confirmed_on",
+   "fieldtype": "Date",
+   "label": "Guest Confirmed On",
+   "read_only": 1,
+   "description": "When sales recorded the guest's yes / changes / decline (desk-led)."
+  },
+  {
+   "fieldname": "customer_confirm_channel",
+   "fieldtype": "Select",
+   "label": "Confirm Channel",
+   "options": "\nPhone\nEmail\nWhatsApp",
+   "read_only": 1
+  },
+  {
+   "fieldname": "customer_confirm_outcome",
+   "fieldtype": "Select",
+   "label": "Guest Response",
+   "options": "\nConfirmed\nChanges Requested\nDeclined",
+   "read_only": 1
+  },
+  {
+   "fieldname": "customer_confirm_notes",
+   "fieldtype": "Small Text",
+   "label": "Guest Response Notes",
+   "read_only": 1
   },
   {
    "fieldname": "company",
@@ -659,8 +691,16 @@
   {
    "fieldname": "quote_sent_on",
    "fieldtype": "Date",
-   "label": "Quote Sent On",
-   "read_only": 1
+   "label": "Quote Issued On",
+   "read_only": 1,
+   "description": "When the quotation was stamped (version bumped). Not the same as emailed."
+  },
+  {
+   "fieldname": "quote_emailed_on",
+   "fieldtype": "Datetime",
+   "label": "Quote Emailed On",
+   "read_only": 1,
+   "description": "When the quotation was emailed (or WhatsApped) to the guest."
   },
   {
    "fieldname": "quote_valid_till",

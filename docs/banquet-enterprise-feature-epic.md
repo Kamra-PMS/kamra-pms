@@ -1,8 +1,8 @@
 # Banquet Enterprise — Opera-class guest journey & department orchestration
 
-**Status:** Proposed epic (gap analysis vs Kamra today + Opera Banquet / Event Management)  
+**Status:** Phase 1 MVP shipping on `develop` (desk-led; guest portal out of scope)  
 **Target:** Kamra `develop` → stable after phased delivery  
-**Related:** Venue Booking (`EVT-*`), `kamra/banquet.py`, Events app in SPA  
+**Related:** Venue Booking (`EVT-*`), `kamra/banquet.py`, `kamra/banquet_ops.py`, Events app in SPA  
 **Design decision:** No guest portal for banquet — quotes, confirmation, and payment chase stay on the sales desk (email/WhatsApp/PDF + desk actions). Matches Opera’s print/email quote workflow.
 
 ---
@@ -188,13 +188,15 @@ Fields on Venue Booking or checklist:
 ## Delivery phases
 
 ### Phase 1 — Guest comms & department fan-out (MVP)
-- [ ] Email/WhatsApp send quotation (+ PDF attachment)
-- [ ] Record guest confirmation on function sheet (no guest portal)
-- [ ] Quotation no-response reminders (guest + sales)
-- [ ] On Confirm → checklist instantiation from templates
-- [ ] Notify Finance, HK, F&B, Sales roles
-- [ ] Checklist UI on function sheet + `/banquet` board
-- [ ] Tests + eval harness additions
+- [x] Email/WhatsApp send quotation (HTML body; PDF via print/Open quote)
+- [x] Record guest confirmation on function sheet (no guest portal)
+- [x] Quotation no-response reminders (guest + sales)
+- [x] On Confirm → checklist instantiation from templates
+- [x] Notify Finance, HK, F&B, Sales roles
+- [x] Checklist UI on function sheet
+- [x] Tests for send / guest response / checklists / quote chase
+- [ ] `/banquet` board column “Awaiting customer response” (nice-to-have)
+- [ ] Attach generated PDF to the send-mail (follow-up)
 
 ### Phase 2 — Tasting + payments + Engineering/HR
 - [ ] Food tasting workflow + emails + chef/sales alerts
@@ -216,12 +218,12 @@ Fields on Venue Booking or checklist:
 
 | Area | Files / modules |
 |------|-----------------|
-| Backend | `kamra/banquet.py`, new `kamra/banquet_checklists.py`, `venue_booking.json` |
-| Notifications | `kamra/agents_channels.py`, `kamra/housekeeping._notify_role`, email templates |
-| Scheduler | `kamra/hooks.py` — extend `run_banquet_reminders` |
-| Frontend | `BanquetFunction.tsx`, new `BanquetChecklist.tsx` / traces UI |
-| Guest comms | Email templates + WhatsApp outbound; PDF from `banquet_document` |
-| Tests | `kamra/tests/test_banquet.py`, new `test_banquet_enterprise.py` |
+| Backend | `kamra/banquet.py`, `kamra/banquet_ops.py`, `venue_booking.json`, Banquet Checklist Template / Function Task |
+| Notifications | `kamra/agents_channels.py`, `kamra/housekeeping._notify_role`, quotation HTML email |
+| Scheduler | `kamra/hooks.py` — `run_banquet_reminders` + `quote_no_response` guest chase |
+| Frontend | `BanquetFunction.tsx` (send quote, guest response, checklist panel), `Steps.tsx` |
+| Guest comms | Email + WhatsApp outbound; desk records confirmation |
+| Tests | `kamra/tests/test_banquet.py` (`TestBanquetOps`) |
 
 ---
 

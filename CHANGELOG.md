@@ -9,6 +9,12 @@ upgrade-breaking changes (removed doctypes / API contracts).
 
 ## Unreleased
 
+### Features
+
+* **banquet:** Phase 1 enterprise ops (issue #67) — email/WhatsApp send
+  quotation, desk-led guest response, department checklists + notify on
+  Confirm (Sales/Finance/HK/F&B), and quote no-response chase reminders
+
 ## [2.6.2](https://github.com/Kamra-PMS/kamra-pms/compare/v2.6.0...v2.6.2) (2026-09-07)
 
 ### Features

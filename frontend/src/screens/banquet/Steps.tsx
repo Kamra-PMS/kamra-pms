@@ -40,6 +40,7 @@ export interface Step {
 export function stepsFor(fn: FunctionSheet): Step[] {
   const lines = fn.items.length
   const quoted = (fn.quote_version ?? 0) > 0
+  const emailed = Boolean(fn.quote_emailed_on)
   const sold = fn.status === "Confirmed" || fn.status === "Completed"
   const costed = fn.total_cost > 0
   const collected = fn.advance_received > 0
@@ -102,10 +103,16 @@ export function stepsFor(fn: FunctionSheet): Step[] {
       n: 5,
       label: "Documents",
       state: quoted
-        ? `Quote v${fn.quote_version}${paper ? " · event order out" : ""}`
+        ? `Quote v${fn.quote_version}${emailed ? " · emailed" : ""}${
+            paper ? " · event order out" : ""
+          }`
         : "Nothing issued",
-      done: quoted,
-      blocker: !quoted ? "Stamp the quotation" : undefined,
+      done: quoted && emailed,
+      blocker: !quoted
+        ? "Stamp the quotation"
+        : !emailed
+          ? "Email the quote to the guest"
+          : undefined,
     },
     {
       id: "close",
