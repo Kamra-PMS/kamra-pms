@@ -7,9 +7,9 @@ modules they actually bought, and nothing else.
 
 Run from the infra script, or by hand:
 
-    bench --site ewa.kamrapms.com execute kamra.scripts.provision.setup \\
-      --kwargs "{'property_name': 'EWA Stays', 'city': 'Bengaluru',
-                 'owner_email': 'owner@ewa.com', 'owner_name': 'A Owner',
+    bench --site customer.example.com execute kamra.scripts.provision.setup \\
+      --kwargs "{'property_name': 'Sunset Villas', 'city': 'Bengaluru',
+                 'owner_email': 'owner@example.com', 'owner_name': 'A Owner',
                  'modules': 'front-desk,housekeeping,finance,booking-engine'}"
 """
 

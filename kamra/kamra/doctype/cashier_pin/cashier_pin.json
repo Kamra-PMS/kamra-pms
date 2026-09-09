@@ -4,10 +4,46 @@
  "creation": "2026-07-06 00:00:00",
  "doctype": "DocType",
  "engine": "InnoDB",
- "field_order": ["user", "pin"],
+ "field_order": [
+  "user",
+  "pin",
+  "pin_attempts",
+  "locked_until",
+  "must_reset"
+ ],
  "fields": [
-  {"fieldname": "user", "fieldtype": "Link", "label": "User", "options": "User", "reqd": 1, "unique": 1},
-  {"fieldname": "pin", "fieldtype": "Password", "label": "PIN", "reqd": 1}
+  {
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "label": "User",
+   "options": "User",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "pin",
+   "fieldtype": "Password",
+   "label": "PIN",
+   "reqd": 1
+  },
+  {
+   "fieldname": "pin_attempts",
+   "fieldtype": "Int",
+   "label": "Failed Attempts",
+   "default": "0"
+  },
+  {
+   "fieldname": "locked_until",
+   "fieldtype": "Datetime",
+   "label": "Locked Until"
+  },
+  {
+   "fieldname": "must_reset",
+   "fieldtype": "Check",
+   "label": "Must Reset",
+   "default": "0",
+   "description": "Set by admin reset; user must enroll a new PIN"
+  }
  ],
  "index_web_pages_for_search": 0,
  "links": [],
@@ -18,7 +54,13 @@
  "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [
-  {"role": "System Manager", "read": 1, "write": 1, "create": 1, "delete": 1}
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  }
  ],
  "sort_field": "modified",
  "sort_order": "DESC",

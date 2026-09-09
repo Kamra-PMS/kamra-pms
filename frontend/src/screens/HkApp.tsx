@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from "react"
-import { BedDouble, LogOut, Plane, RefreshCw, Star, Clock, PackageSearch } from "lucide-react"
+import { BedDouble, Camera, LogOut, Plane, RefreshCw, Star, Clock, PackageSearch, X } from "lucide-react"
 import {
   call,
   getCurrentProperty,
   isNetworkError,
   logout,
+  uploadTo,
   whoami,
 } from "../lib/api"
 import { subscribeRealtime } from "../lib/realtime"
@@ -15,6 +16,7 @@ import Login from "./Login"
 import HkLaundry from "./HkLaundry"
 import { serverError } from "../lib/resource"
 import { cur } from "../lib/money"
+import { useT } from "../lib/i18n"
 
 /** The housekeeper's phone app - big targets, one thumb, zero training. */
 
@@ -35,7 +37,10 @@ interface HkTask {
   special_requests: string | null
   eta: string | null
   overdue: boolean
+  media: string[]
 }
+
+const isVideo = (url: string) => /\.(mp4|mov|webm|m4v|3gp|avi)$/i.test(url)
 
 interface HkRoom {
   name: string
@@ -60,6 +65,7 @@ const hkTone: Record<HkRoom["housekeeping_status"], string> = {
 }
 
 export default function HkApp() {
+  const { t } = useT()
   const [auth, setAuth] = useState<"loading" | "anon" | "ok">("loading")
   const [data, setData] = useState<{ tasks: HkTask[]; rooms: HkRoom[] } | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
@@ -108,64 +114,92 @@ export default function HkApp() {
     }
   }
 
+  // proof-of-clean: attach photos/videos to the task from the phone camera/gallery
+  async function addMedia(task: string, files: FileList | null) {
+    if (!files || !files.length) return
+    setBusy(task)
+    try {
+      for (const f of Array.from(files)) {
+        await uploadTo("kamra.api.hk_upload_media", f, { task })
+      }
+      load()
+    } catch (e) {
+      alert(serverError(e))
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  // remove a photo/video from the task
+  async function removeMedia(task: string, url: string) {
+    if (!confirm("Remove this photo/video?")) return
+    setBusy(task)
+    try {
+      await call("kamra.api.hk_delete_media", { task, file_url: url })
+      load()
+    } catch (e) {
+      alert(serverError(e))
+    } finally {
+      setBusy(null)
+    }
+  }
+
   if (auth === "loading")
-    return <p className="py-20 text-center text-zinc-400">Loading…</p>
+    return <p className="py-20 text-center text-zinc-400">{t("Loading…")}</p>
   if (auth === "anon") return <Login onSuccess={checkAuth} />
 
   const mine = (data?.tasks ?? []).filter((t) => t.mine)
   const pool = (data?.tasks ?? []).filter((t) => t.claimable)
 
-  const TaskCard = ({ t }: { t: HkTask }) => (
+  const TaskCard = ({ task }: { task: HkTask }) => (
     <li className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
       <div className="flex items-center gap-3">
-        <span className="text-3xl font-bold tabular-nums">{t.room_number}</span>
+        <span className="text-3xl font-bold tabular-nums">{task.room_number}</span>
         <div className="min-w-0 flex-1">
           <p className="flex items-center gap-1.5 font-medium">
-            {t.vip ? (
-              <Star className="size-4 shrink-0 fill-amber-400 text-amber-400" aria-label="VIP" />
+            {task.vip ? (
+              <Star className="size-4 shrink-0 fill-amber-400 text-amber-400" aria-label={t("VIP")} />
             ) : null}
-            {t.task_type}
+            {task.task_type}
           </p>
           <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
-            <Badge tone={t.priority === "Urgent" ? "rose" : t.priority === "High" ? "amber" : "zinc"}>
-              {t.priority}
+            <Badge tone={task.priority === "Urgent" ? "rose" : task.priority === "High" ? "amber" : "zinc"}>
+              {t(task.priority)}
             </Badge>
-            {t.arrival_today && (
+            {task.arrival_today && (
               <Badge tone="brand">
                 <Plane className="mr-1 size-3" aria-hidden />
-                arrival{t.eta ? ` ${t.eta}` : " today"}
+                {task.eta ? t("arrival {eta}", { eta: task.eta }) : t("arrival today")}
               </Badge>
             )}
-            {t.assignment_status === "Assigned" && t.mine && (
-              <Badge tone="amber">assigned to you</Badge>
+            {task.assignment_status === "Assigned" && task.mine && (
+              <Badge tone="amber">{t("assigned to you")}</Badge>
             )}
-            {t.overdue && <Badge tone="rose">overdue</Badge>}
+            {task.overdue && <Badge tone="rose">{t("overdue")}</Badge>}
           </div>
         </div>
       </div>
-      {t.special_requests && (
+      {task.special_requests && (
         <p className="mt-2 rounded-lg bg-amber-50 px-2.5 py-1.5 text-sm text-amber-800">
-          Guest request: {t.special_requests}
+          {t("Guest request: {req}", { req: task.special_requests })}
         </p>
       )}
-      {t.notes && <p className="mt-2 text-sm text-zinc-500">{t.notes}</p>}
+      {task.notes && <p className="mt-2 text-sm text-zinc-500">{task.notes}</p>}
 
-      {/* pool tasks: claim first */}
-      {t.claimable ? (
+      {task.claimable ? (
         <button
-          disabled={busy === t.name}
-          onClick={() => run(t.name, "kamra.api.hk_claim_task")}
+          disabled={busy === task.name}
+          onClick={() => run(task.name, "kamra.api.hk_claim_task")}
           className="mt-3 w-full rounded-xl bg-brand-600 py-3 text-base font-semibold text-white active:bg-brand-700"
         >
-          Take this room
+          {t("Take this room")}
         </button>
-      ) : t.assignment_status === "Assigned" ? (
-        // assigned to me, awaiting accept/reject
-        rejecting === t.name ? (
+      ) : task.assignment_status === "Assigned" ? (
+        rejecting === task.name ? (
           <div className="mt-3 space-y-2">
             <input
               className="w-full rounded-xl border border-zinc-300 px-3 py-2.5 text-base"
-              placeholder="Reason (optional)"
+              placeholder={t("Reason (optional)")}
               value={reason}
               onChange={(e) => setReason(e.target.value)}
             />
@@ -174,64 +208,117 @@ export default function HkApp() {
                 className="flex-1 rounded-xl border border-zinc-300 py-3 text-base font-semibold text-zinc-600"
                 onClick={() => { setRejecting(null); setReason("") }}
               >
-                Keep
+                {t("Keep")}
               </button>
               <button
-                disabled={busy === t.name}
+                disabled={busy === task.name}
                 onClick={() =>
-                  run(t.name, "kamra.api.hk_reject_task", { reason }).then(() => {
+                  run(task.name, "kamra.api.hk_reject_task", { reason }).then(() => {
                     setRejecting(null)
                     setReason("")
                   })
                 }
                 className="flex-1 rounded-xl bg-rose-600 py-3 text-base font-semibold text-white"
               >
-                Send back
+                {t("Send back")}
               </button>
             </div>
           </div>
         ) : (
           <div className="mt-3 flex gap-2">
             <button
-              disabled={busy === t.name}
-              onClick={() => setRejecting(t.name)}
+              disabled={busy === task.name}
+              onClick={() => setRejecting(task.name)}
               className="flex-1 rounded-xl border border-zinc-300 py-3 text-base font-semibold text-zinc-600 active:bg-zinc-100"
             >
-              Decline
+              {t("Decline")}
             </button>
             <button
-              disabled={busy === t.name}
-              onClick={() => run(t.name, "kamra.api.hk_accept_task")}
+              disabled={busy === task.name}
+              onClick={() => run(task.name, "kamra.api.hk_accept_task")}
               className="flex-1 rounded-xl bg-brand-600 py-3 text-base font-semibold text-white active:bg-brand-700"
             >
-              Accept
+              {t("Accept")}
             </button>
           </div>
         )
       ) : (
         // accepted/mine: work it
-        <div className="mt-3 flex gap-2">
-          {t.status === "Pending" ? (
+        <>
+          {/* proof of clean: capture photos/videos before marking Done */}
+          <div className="mt-3">
+            {(task.media ?? []).length > 0 && (
+              <div className="mb-2 flex gap-2 overflow-x-auto">
+                {(task.media ?? []).map((url) => (
+                  <div key={url} className="relative shrink-0">
+                    {isVideo(url) ? (
+                      <video
+                        src={url}
+                        muted
+                        playsInline
+                        controls
+                        className="size-16 rounded-lg bg-zinc-100 object-cover"
+                      />
+                    ) : (
+                      <img
+                        src={url}
+                        alt={t("Room clean")}
+                        className="size-16 rounded-lg object-cover"
+                      />
+                    )}
+                    <button
+                      type="button"
+                      aria-label={t("Remove")}
+                      disabled={busy === task.name}
+                      onClick={() => removeMedia(task.name, url)}
+                      className="absolute -right-1.5 -top-1.5 flex size-5 items-center justify-center rounded-full bg-rose-600 text-white shadow active:bg-rose-700"
+                    >
+                      <X className="size-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-zinc-300 py-2.5 text-sm font-medium text-zinc-600 active:bg-zinc-100">
+              <Camera className="size-4" aria-hidden />
+              {(task.media ?? []).length ? t("Add another photo / video") : t("Add photo / video")}
+              <input
+                type="file"
+                accept="image/*,video/*"
+                capture="environment"
+                multiple
+                hidden
+                disabled={busy === task.name}
+                onChange={(e) => {
+                  addMedia(task.name, e.target.files)
+                  e.target.value = ""
+                }}
+              />
+            </label>
+          </div>
+          <div className="mt-2 flex gap-2">
+            {task.status === "Pending" ? (
+              <button
+                disabled={busy === task.name}
+                onClick={() => run(task.name, "kamra.api.hk_update_task", { status: "In Progress" })}
+                className="flex-1 rounded-xl border border-zinc-300 py-3 text-base font-semibold text-zinc-700 active:bg-zinc-100"
+              >
+                {t("Start")}
+              </button>
+            ) : (
+              <span className="flex flex-1 items-center justify-center rounded-xl bg-sky-50 py-3 text-base font-medium text-sky-700">
+                {t("In progress…")}
+              </span>
+            )}
             <button
-              disabled={busy === t.name}
-              onClick={() => run(t.name, "kamra.api.hk_update_task", { status: "In Progress" })}
-              className="flex-1 rounded-xl border border-zinc-300 py-3 text-base font-semibold text-zinc-700 active:bg-zinc-100"
+              disabled={busy === task.name}
+              onClick={() => run(task.name, "kamra.api.hk_update_task", { status: "Done" })}
+              className="flex-1 rounded-xl bg-brand-600 py-3 text-base font-semibold text-white active:bg-brand-700"
             >
-              Start
+              {t("Done ✓")}
             </button>
-          ) : (
-            <span className="flex flex-1 items-center justify-center rounded-xl bg-sky-50 py-3 text-base font-medium text-sky-700">
-              In progress…
-            </span>
-          )}
-          <button
-            disabled={busy === t.name}
-            onClick={() => run(t.name, "kamra.api.hk_update_task", { status: "Done" })}
-            className="flex-1 rounded-xl bg-brand-600 py-3 text-base font-semibold text-white active:bg-brand-700"
-          >
-            Done ✓
-          </button>
-        </div>
+          </div>
+        </>
       )}
     </li>
   )
@@ -240,20 +327,20 @@ export default function HkApp() {
     <div className="min-h-screen bg-zinc-50 pb-20">
       <header className="sticky top-0 z-40 flex items-center gap-2 border-b border-zinc-200 bg-white px-4 py-3">
         <img src={asset("kamra-mark.svg")} alt="" className="size-6" aria-hidden />
-        <span className="font-semibold">Housekeeping</span>
+        <span className="font-semibold">{t("Housekeeping")}</span>
         <span className="ml-auto flex items-center gap-3">
           <button
             onClick={() => { setLogItem({ desc: "", condition: "Found", room: "" }); setLogMsg(null) }}
-            aria-label="Log a lost or found item"
+            aria-label={t("Log a lost or found item")}
           >
             <PackageSearch className="size-5 text-zinc-400" />
           </button>
-          <button onClick={load} aria-label="Refresh">
+          <button onClick={load} aria-label={t("Refresh")}>
             <RefreshCw className="size-5 text-zinc-400" />
           </button>
           <button
             onClick={() => logout().then(() => setAuth("anon"))}
-            aria-label="Sign out"
+            aria-label={t("Sign out")}
           >
             <LogOut className="size-5 text-zinc-400" />
           </button>
@@ -264,17 +351,20 @@ export default function HkApp() {
         {view === "mine" && (
           <>
             <p className="mb-3 px-1 text-sm text-zinc-500">
-              {mine.length} task{mine.length === 1 ? "" : "s"} for you - arrivals first
+              {t("{n} task{s} for you - arrivals first", {
+                n: mine.length,
+                s: mine.length === 1 ? "" : "s",
+              })}
             </p>
             <ul className="space-y-3">
-              {mine.map((t) => <TaskCard key={t.name} t={t} />)}
+              {mine.map((task) => <TaskCard key={task.name} task={task} />)}
               {mine.length === 0 && (
                 <li className="rounded-2xl border border-dashed border-zinc-300 p-8 text-center text-zinc-400">
-                  Nothing assigned to you. Check{" "}
+                  {t("Nothing assigned to you. Check")}{" "}
                   <button className="font-semibold text-brand-700" onClick={() => setView("pool")}>
-                    Available
+                    {t("Available")}
                   </button>{" "}
-                  to pick up a room.
+                  {t("to pick up a room.")}
                 </li>
               )}
             </ul>
@@ -284,13 +374,13 @@ export default function HkApp() {
         {view === "pool" && (
           <>
             <p className="mb-3 px-1 text-sm text-zinc-500">
-              {pool.length} unassigned - take one to add it to your list
+              {t("{n} unassigned - take one to add it to your list", { n: pool.length })}
             </p>
             <ul className="space-y-3">
-              {pool.map((t) => <TaskCard key={t.name} t={t} />)}
+              {pool.map((task) => <TaskCard key={task.name} task={task} />)}
               {pool.length === 0 && (
                 <li className="rounded-2xl border border-dashed border-zinc-300 p-8 text-center text-zinc-400">
-                  No unassigned rooms right now.
+                  {t("No unassigned rooms right now.")}
                 </li>
               )}
             </ul>
@@ -323,7 +413,7 @@ export default function HkApp() {
                   )}
                 </div>
                 <div className="mt-0.5 text-[10px] font-medium uppercase tracking-wide opacity-70">
-                  {r.housekeeping_status}
+                  {t(r.housekeeping_status)}
                 </div>
                 <div className="mt-1 flex items-center justify-center gap-1">
                   {r.arrival_today && (
@@ -342,7 +432,7 @@ export default function HkApp() {
         )}
         {view === "rooms" && (
           <p className="mt-3 text-center text-xs text-zinc-400">
-            Tap an occupied room to post minibar or laundry.
+            {t("Tap an occupied room to post minibar or laundry.")}
           </p>
         )}
 
@@ -352,10 +442,10 @@ export default function HkApp() {
       <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t border-zinc-200 bg-white">
         {(
           [
-            ["mine", `My Tasks${mine.length ? ` (${mine.length})` : ""}`],
-            ["pool", `Available${pool.length ? ` (${pool.length})` : ""}`],
-            ["rooms", "Rooms"],
-            ["laundry", "Laundry"],
+            ["mine", t("My Tasks{n}", { n: mine.length ? ` (${mine.length})` : "" })],
+            ["pool", t("Available{n}", { n: pool.length ? ` (${pool.length})` : "" })],
+            ["rooms", t("Rooms")],
+            ["laundry", t("Laundry")],
           ] as const
         ).map(([key, label]) => (
           <button
@@ -380,7 +470,7 @@ export default function HkApp() {
             className="w-full rounded-t-2xl bg-white p-4"
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 className="mb-3 text-lg font-semibold">Log an item</h2>
+            <h2 className="mb-3 text-lg font-semibold">{t("Log an item")}</h2>
             {logMsg ? (
               <div className="space-y-3">
                 <p className="rounded-xl bg-emerald-50 px-3 py-3 text-emerald-800">
@@ -390,7 +480,7 @@ export default function HkApp() {
                   className="w-full rounded-xl bg-brand-600 py-3 text-base font-semibold text-white"
                   onClick={() => setLogItem(null)}
                 >
-                  Done
+                  {t("Done")}
                 </button>
               </div>
             ) : (
@@ -407,13 +497,13 @@ export default function HkApp() {
                           : "border-zinc-300 text-zinc-600",
                       )}
                     >
-                      {c}
+                      {t(c)}
                     </button>
                   ))}
                 </div>
                 <input
                   className="w-full rounded-xl border border-zinc-300 px-3 py-3 text-base"
-                  placeholder="What is it? (e.g. black umbrella)"
+                  placeholder={t("What is it? (e.g. black umbrella)")}
                   value={logItem.desc}
                   autoFocus
                   onChange={(e) => setLogItem({ ...logItem, desc: e.target.value })}
@@ -423,7 +513,7 @@ export default function HkApp() {
                   value={logItem.room}
                   onChange={(e) => setLogItem({ ...logItem, room: e.target.value })}
                 >
-                  <option value="">Room (optional)</option>
+                  <option value="">{t("Room (optional)")}</option>
                   {(data?.rooms ?? []).map((r) => (
                     <option key={r.name} value={r.name}>{r.room_number}</option>
                   ))}
@@ -433,7 +523,7 @@ export default function HkApp() {
                     className="flex-1 rounded-xl border border-zinc-300 py-3 text-base font-semibold text-zinc-600"
                     onClick={() => setLogItem(null)}
                   >
-                    Cancel
+                    {t("Cancel")}
                   </button>
                   <button
                     disabled={!logItem.desc.trim() || busy === "log"}
@@ -447,13 +537,16 @@ export default function HkApp() {
                           condition: logItem.condition,
                           room: logItem.room || null,
                         })
-                        setLogMsg(`Logged ${logItem.condition.toLowerCase()}: ${logItem.desc.trim()}`)
+                        setLogMsg(t("Logged {condition}: {desc}", {
+                          condition: logItem.condition.toLowerCase(),
+                          desc: logItem.desc.trim(),
+                        }))
                       } finally {
                         setBusy(null)
                       }
                     }}
                   >
-                    Log it
+                    {t("Log it")}
                   </button>
                 </div>
               </div>
@@ -472,7 +565,7 @@ export default function HkApp() {
             onClick={(e) => e.stopPropagation()}
           >
             <h2 className="mb-3 text-lg font-semibold">
-              Post to room {charge.num}
+              {t("Post to room {num}", { num: charge.num })}
             </h2>
             {chargeMsg ? (
               <div className="space-y-3">
@@ -489,31 +582,31 @@ export default function HkApp() {
             ) : (
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-2">
-                  {["Minibar", "Laundry"].map((t) => (
+                  {["Minibar", "Laundry"].map((type) => (
                     <button
-                      key={t}
-                      onClick={() => setCharge({ ...charge, type: t })}
+                      key={type}
+                      onClick={() => setCharge({ ...charge, type: type })}
                       className={cn(
                         "rounded-xl border py-2.5 text-sm font-semibold",
-                        charge.type === t
+                        charge.type === type
                           ? "border-brand-500 bg-brand-50 text-brand-700"
                           : "border-zinc-300 text-zinc-600",
                       )}
                     >
-                      {t}
+                      {t(type)}
                     </button>
                   ))}
                 </div>
                 <input
                   className="w-full rounded-xl border border-zinc-300 px-3 py-3 text-base"
-                  placeholder={charge.type === "Minibar" ? "e.g. 2 cola, 1 water" : "e.g. 3 shirts pressed"}
+                  placeholder={charge.type === "Minibar" ? t("e.g. 2 cola, 1 water") : t("e.g. 3 shirts pressed")}
                   value={charge.desc}
                   autoFocus
                   onChange={(e) => setCharge({ ...charge, desc: e.target.value })}
                 />
                 <input
                   className="w-full rounded-xl border border-zinc-300 px-3 py-3 text-base"
-                  placeholder={`Amount ${cur()}`}
+                  placeholder={t("Amount {cur}", { cur: cur() })}
                   inputMode="numeric"
                   value={charge.amount}
                   onChange={(e) => setCharge({ ...charge, amount: e.target.value })}
@@ -523,7 +616,7 @@ export default function HkApp() {
                     className="flex-1 rounded-xl border border-zinc-300 py-3 text-base font-semibold text-zinc-600"
                     onClick={() => setCharge(null)}
                   >
-                    Cancel
+                    {t("Cancel")}
                   </button>
                   <button
                     disabled={!charge.desc.trim() || !Number(charge.amount) || busy === "charge"}
@@ -537,7 +630,11 @@ export default function HkApp() {
                           description: charge.desc.trim(),
                           amount: Number(charge.amount),
                         })
-                        setChargeMsg(`Posted ${cur()}${charge.amount} ${charge.type.toLowerCase()} to room ${charge.num}.`)
+                        setChargeMsg(t("Posted {amount} {type} to room {num}.", {
+                          amount: `${cur()}${charge.amount}`,
+                          type: charge.type.toLowerCase(),
+                          num: charge.num,
+                        }))
                         load()
                       } catch (e) {
                         setChargeMsg(serverError(e))
@@ -546,7 +643,7 @@ export default function HkApp() {
                       }
                     }}
                   >
-                    Post {cur()}{charge.amount || "0"}
+                    {t("Post {amount}", { amount: `${cur()}${charge.amount || "0"}` })}
                   </button>
                 </div>
               </div>

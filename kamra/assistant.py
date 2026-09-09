@@ -62,9 +62,19 @@ EXTRA_TOOLS = {
 		 "check_out_date": {"type": "string"}}, False, True),
 	"move_room": (
 		"move_reservation",
-		"Move a stay to a different room.",
+		"Move OR upgrade a stay to a different room - a same-type swap, or a "
+		"different type (upgrade/downgrade, e.g. Standard -> Suite). The stay's "
+		"room type follows the room it moves into. Call movable_rooms first to "
+		"pick a room that is free for the dates.",
 		{"reservation": {"type": "string"}, "new_room": {"type": "string"}},
 		False, True),
+	"movable_rooms": (
+		"movable_rooms",
+		"Rooms this stay could move into - across ALL room types - each flagged "
+		"free or occupied for its dates, with the type name. Use this before "
+		"move_room to choose a valid, available room (including upgrades).",
+		{"reservation": {"type": "string"}, "check_in_date": {"type": "string"},
+		 "check_out_date": {"type": "string"}}, False, False),
 	"stay_folios": (
 		"reservation_folios",
 		"All folios of a stay (guest/extra/company/group) with balances.",

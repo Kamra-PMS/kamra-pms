@@ -40,6 +40,7 @@ import {
   Store,
   Tags,
   Ticket,
+  TrendingUp,
   UserCog,
   Users,
   UtensilsCrossed,
@@ -54,6 +55,11 @@ import {
   Lock,
   AlarmClock,
   LayoutDashboard,
+  Wallet,
+  BookOpen,
+  History,
+  Banknote,
+  Calculator,
 } from "lucide-react"
 
 /** Shared tile treatment for switcher and launcher. One quiet system, not a rainbow. */
@@ -66,6 +72,8 @@ export interface AppNavItem {
   label: string
   icon: React.ComponentType<{ className?: string; strokeWidth?: number }>
   roles?: string[] // per-item gate on top of the app's gate
+  /** Sidebar section label within an app (e.g. Cashier / Billing / Books). */
+  group?: string
 }
 
 export interface AppDef {
@@ -123,7 +131,7 @@ export const APPS: AppDef[] = [
     name: "Operations",
     icon: ListTodo,
     tint: APP_TILE,
-    description: "Guest requests and shift handovers.",
+    description: "Guest requests and ops workflows.",
     roles: ["Front Desk", "Hotel Admin", "System Manager", "Administrator"],
     items: [
       { to: "/tickets", label: "Guest Requests", icon: Ticket },
@@ -131,7 +139,6 @@ export const APPS: AppDef[] = [
       { to: "/channels", label: "Channels", icon: PhoneCall,
         roles: ["Hotel Admin", "System Manager", "Administrator"] },
       { to: "/ops-sla", label: "SLA Report", icon: AlarmClock },
-      { to: "/shifts", label: "Shifts", icon: Clock },
     ],
   },
   {
@@ -143,6 +150,7 @@ export const APPS: AppDef[] = [
     roles: ["Front Desk", "Finance", "Hotel Admin", "System Manager", "Administrator"],
     items: [
       { to: "/pos", label: "Restaurant POS", icon: UtensilsCrossed },
+      { to: "/pos-dashboard", label: "F&B Dashboard", icon: TrendingUp },
       { to: "/kitchen", label: "Kitchen Display", icon: ConciergeBell },
       { to: "/menu-items", label: "Menu", icon: ClipboardList },
       { to: "/inventory", label: "Kitchen Inventory", icon: PackageSearch },
@@ -194,15 +202,28 @@ export const APPS: AppDef[] = [
     name: "Finance",
     icon: Landmark,
     tint: APP_TILE,
-    description: "Folios, invoices, the night audit and reports.",
-    roles: ["Finance", "Hotel Admin", "System Manager", "Administrator"],
-    items: [
-      { to: "/billing", label: "Billing", icon: Receipt },
-      { to: "/reports", label: "Reports", icon: IndianRupee },
-      { to: "/accounting-export", label: "Accounting Export", icon: FileSpreadsheet },
-      { to: "/laundry", label: "Laundry", icon: Shirt },
+    description: "Cashier till, folios, ledgers, night audit and books export.",
+    roles: [
+      "Finance", "Front Desk", "Hotel Admin", "System Manager", "Administrator",
     ],
-    extraPrefixes: ["/billing/"],
+    items: [
+      // Cashier
+      { to: "/cashier", label: "My Till", icon: Wallet, group: "Cashier" },
+      { to: "/cashier/sessions", label: "Sessions", icon: Clock, group: "Cashier" },
+      { to: "/cashier/petty-cash", label: "Petty Cash", icon: Banknote, group: "Cashier" },
+      { to: "/cashier/shift-report", label: "Shift Report", icon: ScrollText, group: "Cashier" },
+      { to: "/shifts", label: "Shift Handover", icon: Clock, group: "Cashier" },
+      { to: "/cashier/fx", label: "Currency Desk", icon: Calculator, group: "Cashier" },
+      // Billing
+      { to: "/billing", label: "Billing", icon: Receipt, group: "Billing" },
+      { to: "/folio-history", label: "Folio History", icon: History, group: "Billing" },
+      { to: "/laundry", label: "Laundry", icon: Shirt, group: "Billing" },
+      // Books
+      { to: "/ledgers", label: "Ledgers", icon: BookOpen, group: "Books" },
+      { to: "/reports", label: "Reports", icon: IndianRupee, group: "Books" },
+      { to: "/accounting-export", label: "Accounting Export", icon: FileSpreadsheet, group: "Books" },
+    ],
+    extraPrefixes: ["/billing/", "/cashier/", "/ledgers", "/folio-history"],
   },
   {
     id: "booking-engine",

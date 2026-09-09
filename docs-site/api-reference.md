@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function — the same governed layer
-the UI and the AI use. **230 endpoints**, generated from the source
+the UI and the AI use. **252 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -26,6 +26,28 @@ Content-Type: application/json
 
 
 ## Core (front desk, folios, guests, rooms)
+
+### `kamra.api.enabled_modules`
+
+**GET/POST**
+
+Which parts of Kamra this property runs. Empty setting = all of
+them, so an existing property keeps working untouched.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+
+### `kamra.api.set_enabled_modules`
+
+**POST** · roles: `Hotel Admin`
+
+Turn parts of the product on or off for one property.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `modules` | yes |  |
 
 ### `kamra.api.whoami` <Badge type='tip' text='public' />
 
@@ -55,6 +77,12 @@ Self-service: acts only on the signed-in user, so any authenticated staff
 member can mint a key scoped to their own roles. The secret is returned
 once here and stored hashed thereafter.
 
+### `kamra.api.upload_room_image`
+
+**GET/POST** · roles: `Front Desk`, `Kamra Agent`, `Hotel Admin`, `System Manager`
+
+Uploads an image file for room types / properties to public files.
+
 ### `kamra.api.set_room_rate`
 
 **GET/POST** · roles: `Revenue Manager`, `Kamra Agent`
@@ -74,6 +102,7 @@ Guardrails still clamp the rate; the change is recorded in the action log.
 | `rate` | yes |  |
 | `reason` | no | `''` |
 | `agent` | no | `None` |
+| `days_of_week` | no | `None` |
 
 ### `kamra.api.owner_briefing`
 
@@ -132,6 +161,9 @@ Everything the printed GRC (guest registration card) needs.
 Cashier reconciliation: what the system says was collected today,
 per payment mode - the number the drawer must match at shift close.
 
+Prefers Cashier Transaction totals (FO + POS); falls back to folio
+payments for properties that have not opened a till yet.
+
 | Param | Required | Default |
 | --- | --- | --- |
 | `property` | yes |  |
@@ -141,9 +173,9 @@ per payment mode - the number the drawer must match at shift close.
 
 **GET/POST** · roles: `Front Desk`, `Kamra Agent`
 
-Advance/deposit against a Confirmed booking - opens the folio early
+Advance/deposit against a live booking - opens the folio early
 so the money sits on the stay from day one (GM gap: deposits arrive at
-booking, not at check-in).
+booking, not at check-in). Pending Payment → Confirmed when paid.
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -151,6 +183,66 @@ booking, not at check-in).
 | `amount` | yes |  |
 | `mode` | no | `'UPI'` |
 | `reference` | no | `None` |
+
+### `kamra.api.collect_security_deposit`
+
+**GET/POST** · roles: `Front Desk`, `Finance`, `Kamra Agent`
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `reservation` | yes |  |
+| `amount` | yes |  |
+| `mode` | no | `'UPI'` |
+| `reference` | no | `None` |
+
+### `kamra.api.waive_security_deposit`
+
+**GET/POST** · roles: `Front Desk`, `Hotel Admin`, `Kamra Agent`
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `reservation` | yes |  |
+| `reason` | yes |  |
+
+### `kamra.api.withhold_security_deposit`
+
+**GET/POST** · roles: `Front Desk`, `Hotel Admin`, `Finance`
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `reservation` | yes |  |
+| `amount` | yes |  |
+| `reason` | yes |  |
+| `evidence` | no | `None` |
+
+### `kamra.api.refund_security_deposit`
+
+**GET/POST** · roles: `Front Desk`, `Finance`, `Hotel Admin`
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `reservation` | yes |  |
+| `amount` | no | `None` |
+| `reference` | no | `None` |
+
+### `kamra.api.release_access_instructions`
+
+**GET/POST** · roles: `Front Desk`, `Hotel Admin`, `Kamra Agent`
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `reservation` | yes |  |
+| `force` | no | `0` |
+
+### `kamra.api.confirm_pending_reservation`
+
+**GET/POST** · roles: `Front Desk`, `Hotel Admin`, `Kamra Agent`
+
+Mark Held / Pending Payment / Requested as Confirmed (host or payment).
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `reservation` | yes |  |
 
 ### `kamra.api.folio_payment_link`
 
@@ -350,6 +442,8 @@ row so every balance still sums exactly; a reason is mandatory.
 | `mode` | yes |  |
 | `reason` | yes |  |
 | `pin` | no | `None` |
+| `reason_code` | no | `None` |
+| `supervisor_pin` | no | `None` |
 
 ### `kamra.api.set_actual_times`
 
@@ -371,7 +465,7 @@ the button was pressed. Early/late charges stay explicit folio lines.
 
 Remove a wrong charge line from an open folio (the bill-correction
 path). PIN-guarded like other money actions for humans; agents are
-accountable through the action log.
+accountable through the action log. Posts a ledger reversal.
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -379,6 +473,8 @@ accountable through the action log.
 | `charge_row` | yes |  |
 | `reason` | no | `''` |
 | `pin` | no | `None` |
+| `reason_code` | no | `None` |
+| `supervisor_pin` | no | `None` |
 
 ### `kamra.api.post_stay_charge`
 
@@ -849,6 +945,7 @@ The cancellation is recorded in the action log.
 | `note` | no | `None` |
 | `waive_fee` | no | `0` |
 | `agent` | no | `None` |
+| `issue_credit_note` | no | `0` |
 
 ### `kamra.api.cancellation_letter`
 
@@ -1076,6 +1173,9 @@ voucher applied, price computed by the engine.
 waitlist=1 parks the stay with no room and status Waitlist - for dates
 that are sold out or restricted; promote it later when a room frees.
 
+status / idempotency_key / hold_expires_on support Instant public booking
+(ADR-006 / ADR-007). Desk callers leave them unset → Confirmed.
+
 | Param | Required | Default |
 | --- | --- | --- |
 | `property` | yes |  |
@@ -1105,6 +1205,10 @@ that are sold out or restricted; promote it later when a room frees.
 | `guest_category` | no | `None` |
 | `stay_details` | no | `None` |
 | `instructions` | no | `None` |
+| `room` | no | `None` |
+| `status` | no | `None` |
+| `idempotency_key` | no | `None` |
+| `hold_expires_on` | no | `None` |
 
 ### `kamra.api.waitlist`
 
@@ -1158,6 +1262,21 @@ Create a Group Booking plus one reservation per requested room.
 | `company` | no | `None` |
 | `meal_plan` | no | `None` |
 | `rate_plan` | no | `None` |
+
+### `kamra.api.inventory_availability`
+
+**GET/POST** · roles: `Front Desk`, `Kamra Agent`, `Revenue Manager`, `Hotel Admin`
+
+Sellable Unit availability (ADR-003). Prefer this over ad-hoc room SQL.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `check_in_date` | yes |  |
+| `check_out_date` | yes |  |
+| `room_type` | no | `None` |
+| `siu` | no | `None` |
+| `include_reasons` | no | `0` |
 
 ### `kamra.api.available_rooms`
 
@@ -1218,7 +1337,7 @@ Free a held room before its end date (the room returns to sale).
 **GET/POST** · roles: `Finance`, `Front Desk`, `Revenue Manager`, `Housekeeping`
 
 Does this property demand a PIN on money actions, and does the
-signed-in user have one set yet?
+signed-in user have one set yet? Includes unlock / lockout state.
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -1229,12 +1348,33 @@ signed-in user have one set yet?
 **POST** · roles: `Finance`, `Front Desk`, `Revenue Manager`, `Housekeeping`
 
 Set or change your own cashier PIN (4-8 digits). Changing an existing
-PIN needs the current one.
+PIN needs the current one — unless must_reset was set by an admin.
 
 | Param | Required | Default |
 | --- | --- | --- |
 | `pin` | yes |  |
 | `current_pin` | no | `None` |
+
+### `kamra.api.reset_cashier_pin`
+
+**POST** · roles: `Hotel Admin`
+
+Admin reset: wipe the user's PIN and force re-enrollment.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `user` | yes |  |
+
+### `kamra.api.verify_cashier_pin`
+
+**POST** · roles: `Finance`, `Front Desk`, `Revenue Manager`, `Housekeeping`
+
+PinPad unlock: validate PIN and open a 15-minute sliding window.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `pin` | yes |  |
 
 ### `kamra.api.group_detail`
 
@@ -1336,6 +1476,17 @@ can offer one-tap paths to billing and editing. One endpoint, all types.
 Currency, number locale and tax vocabulary for this property, from its
 localization pack. Drives the frontend's money formatting and tax dropdowns
 so no screen hardcodes ₹ or GST %.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+
+### `kamra.api.pending_deposit_refunds`
+
+**GET/POST** · roles: `Front Desk`, `Kamra Agent`
+
+Returns a list of checked-out reservations with pending security deposit refunds
+for NEFT processing (e.g. Tuesday/Saturday payout batches).
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -1633,12 +1784,14 @@ Order served - moves to Delivered, which posts it to the room folio
 
 Settle a bill at the outlet (walk-ins, takeaway - or a guest who'd
 rather pay now than post to the room). Records the payment mode and
-closes the order without touching any folio.
+closes the order without touching any folio. Posts into the open
+cashier session so FO + POS cash reconcile together.
 
 | Param | Required | Default |
 | --- | --- | --- |
 | `order` | yes |  |
 | `mode` | yes |  |
+| `pin` | no | `None` |
 
 ### `kamra.pos.mark_nc`
 
@@ -1692,6 +1845,19 @@ live lines, the discount, and the CGST/SGST split at the outlet's rate.
 | Param | Required | Default |
 | --- | --- | --- |
 | `order` | yes |  |
+
+### `kamra.pos.outlet_dashboard`
+
+**GET/POST**
+
+One shift at a glance: what the outlet sold, what's still open, the
+exceptions that need a manager's eye (NC, voids, cancellations), and how
+fast the kitchen is turning tickets. Defaults to today.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `outlet` | yes |  |
+| `date` | no | `None` |
 
 
 ## Laundry (housekeeping)
@@ -2235,6 +2401,20 @@ teams shouldn't be preparing for business that isn't sold.
 | --- | --- | --- |
 | `function` | yes |  |
 
+### `kamra.banquet.generate_invoice`
+
+**POST** · roles: `Finance`
+
+Raise the tax invoice for a function.
+
+The number is assigned once and never moves - re-printing an invoice
+must give the same document, because the customer's books and ours
+have to agree on what it was called.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `function` | yes |  |
+
 ### `kamra.banquet.post_to_folio`
 
 **POST** · roles: `Finance`
@@ -2531,6 +2711,54 @@ usually book, and what's still owed.
 | `property` | yes |  |
 | `guest` | no | `None` |
 | `phone` | no | `None` |
+
+### `kamra.banquet.quote_advisor`
+
+**GET/POST** · roles: `Finance`
+
+Would this function make money at the price we're about to send?
+
+Margin after the event is an autopsy. The number that changes a
+decision is the one on screen while the discount is still being typed
+- so this answers, for the price as it stands: what's left, how much
+more could be given away before it stops being worth doing, and where
+the cost actually sits.
+
+`at_discount` prices a what-if without touching the quote.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `function` | yes |  |
+| `at_discount` | no | `None` |
+
+### `kamra.banquet.offer_amenities`
+
+**POST**
+
+Put the hall's chargeable extras on the function.
+
+A hall's air-conditioning and generator come with it; its extra mics,
+its valet parking and its second generator do not. Those live on the
+venue, and this is how they reach a quote - either priced onto it, or
+parked as open items when the customer hasn't decided yet, which is
+where most of them actually sit while a wedding is being agreed.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `function` | yes |  |
+| `amenities` | no | `None` |
+| `as_open_items` | no | `0` |
+
+### `kamra.banquet.venue_detail`
+
+**GET/POST**
+
+One hall in full: what it holds, what it comes with, what it costs
+to open, and which other spaces it shares its floor with.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `venue` | yes |  |
 
 
 ## Migration (CSV import)
@@ -2987,6 +3215,22 @@ snapshots that are too heavy for the feed.
 
 > These are allow_guest endpoints: no token needed, rate-limited.
 
+### `kamra.public_api.catalog_index` <Badge type='tip' text='public' />
+
+**GET/POST**
+
+Entry point for /book — how many properties, sites, or listings to show.
+
+### `kamra.public_api.resolve_slug` <Badge type='tip' text='public' />
+
+**GET/POST**
+
+Resolve /stay/:slug to a listing or multi-listing site.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `slug` | yes |  |
+
 ### `kamra.public_api.site_info` <Badge type='tip' text='public' />
 
 **GET/POST**
@@ -2997,6 +3241,21 @@ demo_mode is true only on the seeded demo site (seed_demo sets the
 `kamra_demo_mode` default), so a real install never advertises the
 demo login accounts.
 
+### `kamra.public_api.default_property` <Badge type='tip' text='public' />
+
+**GET/POST**
+
+Which Property the public booking engine (``/book``) should show.
+
+Each Kamra deploy is single-tenant: one site = one hotel/villa. The
+frontend used to hardcode the demo property name, which only worked
+on the seeded demo site and broke the booking engine on every other
+tenant (``Property &lt;name> not found`` / permission error for Guest).
+
+Picks the Property with booking_engine_enabled=1; if none are flagged
+(fresh install) or several are, falls back to the first Property so
+the page still renders instead of hanging on a guest permission error.
+
 ### `kamra.public_api.showcase` <Badge type='tip' text='public' />
 
 **GET/POST**
@@ -3006,6 +3265,8 @@ Everything the public booking page needs to render.
 | Param | Required | Default |
 | --- | --- | --- |
 | `property` | yes |  |
+| `listing_slug` | no | `None` |
+| `location_slug` | no | `None` |
 
 ### `kamra.public_api.search_stay` <Badge type='tip' text='public' />
 
@@ -3020,6 +3281,8 @@ Availability + real quoted price per room type for the stay.
 | `check_out_date` | yes |  |
 | `adults` | no | `2` |
 | `children` | no | `0` |
+| `listing_slug` | no | `None` |
+| `location_slug` | no | `None` |
 
 ### `kamra.public_api.precheckin_info` <Badge type='tip' text='public' />
 
@@ -3113,6 +3376,10 @@ Create a Website booking. Guest identity is the phone number; staff
 verify at check-in. The advance owed is computed from the property's
 current payment policy and snapshotted onto the booking.
 
+Instant mode (default): Confirmed when nothing is due now, else
+Pending Payment with a hold window. Request to Book: Requested (no
+inventory) until the host approves.
+
 | Param | Required | Default |
 | --- | --- | --- |
 | `property` | yes |  |
@@ -3128,6 +3395,17 @@ current payment policy and snapshotted onto the booking.
 | `special_requests` | no | `''` |
 | `addons` | no | `None` |
 | `voucher_code` | no | `''` |
+| `idempotency_key` | no | `''` |
+
+### `kamra.public_api.access_info` <Badge type='tip' text='public' />
+
+**GET/POST**
+
+Guest access instructions when gates pass (precheckin token).
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `token` | yes |  |
 
 ### `kamra.public_api.check_voucher` <Badge type='tip' text='public' />
 

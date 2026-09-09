@@ -193,6 +193,10 @@ def f7():
 	post_room_night(frappe.get_doc("Reservation", out["reservation"]),
 	                "2032-02-15")
 	with at_the_desk():
+		# a real cashier must have an open till before money moves
+		# (Finance → Cashier); open one for this shift
+		from kamra.cashier import open_session
+		open_session(P)
 		fd = frappe.get_doc("Folio", folio)
 		api.add_folio_payment(folio, "UPI", fd.grand_total)
 		inv = api.close_folio(folio)

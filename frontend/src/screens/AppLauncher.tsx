@@ -4,10 +4,12 @@ import { Store } from "lucide-react"
 import { useAuth } from "../lib/auth"
 import { APP_TILE, visibleApps, type AppDef } from "../lib/apps"
 import { cn } from "../lib/utils"
+import { useT } from "../lib/i18n"
 
 /** The suite launcher - the "all apps" home. Opens an app by routing to its
  *  first screen. Also the front door to the Marketplace. */
 export default function AppLauncher() {
+  const { t } = useT()
   const { roles } = useAuth()
   const navigate = useNavigate()
   const apps = visibleApps(roles)
@@ -23,10 +25,9 @@ export default function AppLauncher() {
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="text-xl font-semibold tracking-tight text-zinc-900">Your apps</h1>
+        <h1 className="text-xl font-semibold tracking-tight text-zinc-900">{t("Your apps")}</h1>
         <p className="mt-0.5 text-sm text-zinc-500">
-          Everything Kamra does, one room at a time. Pick where you want to
-          work.
+          {t("Everything Kamra does, one room at a time. Pick where you want to work.")}
         </p>
       </header>
 
@@ -47,9 +48,9 @@ export default function AppLauncher() {
             </span>
             <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <span className="text-sm font-semibold text-zinc-900">{app.name}</span>
+                <span className="text-sm font-semibold text-zinc-900">{t(app.name)}</span>
               </div>
-              <p className="mt-0.5 text-sm leading-snug text-zinc-500">{app.description}</p>
+              <p className="mt-0.5 text-sm leading-snug text-zinc-500">{t(app.description)}</p>
             </div>
           </button>
         ))}
@@ -64,10 +65,9 @@ export default function AppLauncher() {
             <Store className="size-4" strokeWidth={1.75} aria-hidden />
           </span>
           <div>
-            <div className="text-sm font-semibold text-zinc-900">Marketplace</div>
+            <div className="text-sm font-semibold text-zinc-900">{t("Marketplace")}</div>
             <p className="mt-0.5 text-sm text-zinc-500">
-              Add channels, payments, accounting and country packs - and see
-              what's included in your plan.
+              {t("Add channels, payments, accounting and country packs - and see what's included in your plan.")}
             </p>
           </div>
         </button>

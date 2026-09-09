@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom"
 import { call } from "../lib/api"
 import { Badge } from "../components/ui/badge"
 import { cur, moneyLocale } from "../lib/money"
+import { useT } from "../lib/i18n"
 import {
   Card,
   CardContent,
@@ -28,6 +29,7 @@ const inr = (n: number) =>
   Number(n).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
 
 export default function Guests() {
+  const { t } = useT()
   const [rows, setRows] = useState<GuestRow[]>([])
   const [search, setSearch] = useState("")
   const [page, setPage] = useState(0)
@@ -35,7 +37,7 @@ export default function Guests() {
   const navigate = useNavigate()
 
   useEffect(() => {
-    const t = setTimeout(() => {
+    const timer = setTimeout(() => {
       call<GuestRow[]>("kamra.api.guests_with_stats", {
         search: search || undefined,
       }).then((r) => {
@@ -43,7 +45,7 @@ export default function Guests() {
         setPage(0)
       })
     }, 250)
-    return () => clearTimeout(t)
+    return () => clearTimeout(timer)
   }, [search])
 
   const visible = rows.slice(page * PAGE, page * PAGE + PAGE)
@@ -52,10 +54,9 @@ export default function Guests() {
     <Card>
       <CardHeader>
         <div>
-          <CardTitle>Guests</CardTitle>
+          <CardTitle>{t("Guests")}</CardTitle>
           <p className="mt-0.5 text-xs text-zinc-400">
-            Every guest, their stays and lifetime value. Click for the full
-            journey.
+            {t("Every guest, their stays and lifetime value. Click for the full journey.")}
           </p>
         </div>
         <div className="relative">
@@ -65,7 +66,7 @@ export default function Guests() {
           />
           <input
             className="rounded-lg border border-zinc-300 py-1.5 pl-8 pr-3 text-sm focus:outline-2 focus:outline-brand-600"
-            placeholder="Name or phone…"
+            placeholder={t("Name or phone…")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -76,13 +77,13 @@ export default function Guests() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-zinc-200 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">
-                <th className="py-2 pr-4">Guest</th>
-                <th className="py-2 pr-4">Phone</th>
-                <th className="py-2 pr-4">Bookings</th>
-                <th className="py-2 pr-4">Stays</th>
-                <th className="py-2 pr-4">Nights</th>
-                <th className="py-2 pr-4">Lifetime {cur()}</th>
-                <th className="py-2 pr-4">Last stay</th>
+                <th className="py-2 pr-4">{t("Guest")}</th>
+                <th className="py-2 pr-4">{t("Phone")}</th>
+                <th className="py-2 pr-4">{t("Bookings")}</th>
+                <th className="py-2 pr-4">{t("Stays")}</th>
+                <th className="py-2 pr-4">{t("Nights")}</th>
+                <th className="py-2 pr-4">{t("Lifetime {cur}", { cur: cur() })}</th>
+                <th className="py-2 pr-4">{t("Last stay")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100">
@@ -97,7 +98,7 @@ export default function Guests() {
                     {Boolean(g.vip) && (
                       <Star
                         className="ml-1.5 inline size-3.5 fill-amber-400 text-amber-400"
-                        aria-label="VIP"
+                        aria-label={t("VIP")}
                       />
                     )}
                   </td>
@@ -114,7 +115,7 @@ export default function Guests() {
                     {g.last_stay ? (
                       g.last_stay
                     ) : (
-                      <Badge tone="zinc">never</Badge>
+                      <Badge tone="zinc">{t("never")}</Badge>
                     )}
                   </td>
                 </tr>
@@ -125,7 +126,7 @@ export default function Guests() {
                     colSpan={7}
                     className="py-6 text-center text-sm text-zinc-400"
                   >
-                    No guests found.
+                    {t("No guests found.")}
                   </td>
                 </tr>
               )}

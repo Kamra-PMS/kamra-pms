@@ -9,6 +9,7 @@
  "field_order": [
   "posting_date",
   "charge_type",
+  "transaction_code",
   "description",
   "qty",
   "rate",
@@ -35,6 +36,12 @@
    "label": "Charge Type",
    "options": "Room\nMeal Plan\nFood & Beverage\nMinibar\nLaundry\nSpa\nEarly Check-in\nLate Checkout\nCleaning Fee\nDiscount\nMisc\nAllowance",
    "reqd": 1
+  },
+  {
+   "fieldname": "transaction_code",
+   "fieldtype": "Link",
+   "label": "Transaction Code",
+   "options": "Transaction Code"
   },
   {
    "fieldname": "description",

@@ -2,16 +2,28 @@
 
 All notable changes to Kamra PMS are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow
-[Semantic Versioning](https://semver.org/) — MAJOR for anything that breaks an
-existing install on upgrade (removed doctypes, removed API endpoints),
-MINOR for new features, PATCH for fixes.
+[Semantic Versioning](https://semver.org/) with a **patch-first** cadence:
+PATCH (`2.6.1`, `2.6.2`) is the default for fixes and small features; MINOR
+(`2.7.0`) only when a maintainer deliberately cuts a larger train; MAJOR for
+upgrade-breaking changes (removed doctypes / API contracts).
 
 ## Unreleased
 
 ### Features
 
-* **pos:** full-screen till and kitchen pass, saved KOT tickets, clearer running-table strip and complimentary actions
-* **Connect Claude** — hosted MCP at `/mcp` with OAuth 2.1 (PKCE S256, DCR). Staff click Connect Claude on Kamra Agent; Claude opens with the hotel URL filled in and signs in as that user. Role-filtered tools, Activity Log channel `MCP`, revoke from the same panel.
+* **banquet:** Phase 1 enterprise ops (issue #67) — email/WhatsApp send
+  quotation, desk-led guest response, department checklists + notify on
+  Confirm (Sales/Finance/HK/F&B), and quote no-response chase reminders
+
+## [2.6.2](https://github.com/Kamra-PMS/kamra-pms/compare/v2.6.0...v2.6.2) (2026-09-07)
+
+### Features
+
+* **finance:** Opera-style cashier module — till open/close with float and variance, unified FO+POS cash, petty cash, shift report, and currency desk under Finance → Cashier
+* **finance:** append-only folio ledger (Guest / Deposit / AR / Package), transaction codes, reason codes, city ledger aging, advance bill, proforma folio, and credit notes
+* **finance:** cashier PIN pad with admin reset, lockout, and a 15-minute unlock window on folio and POS money actions
+* **ops:** property business date advanced by night audit; postings and cash summary use business date
+* **pos:** full-screen till and kitchen pass, F&B dashboard, clearer settle sheet and complimentary actions
 
 ### Bug Fixes
 

@@ -13,3 +13,5 @@ kamra.patches.v28.backfill_property_kind
 kamra.patches.v29.backfill_booking_mode
 kamra.patches.v30.ensure_turnover_profiles
 kamra.patches.v31.backfill_listing_slugs
+kamra.patches.v32.seed_cashier_ledger
+kamra.patches.v33.seed_banquet_checklists

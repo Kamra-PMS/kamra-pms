@@ -1,14 +1,16 @@
 import { Fragment, useCallback, useEffect, useState } from "react"
 import { ArrowLeft, ArrowRightLeft, Printer, Trash2, X } from "lucide-react"
 import { Link, useNavigate, useParams } from "react-router-dom"
-import { call, getCurrentProperty } from "../lib/api"
+import { call } from "../lib/api"
 import EditableNationality from "../components/EditableNationality"
 import LinkedRecords from "../components/LinkedRecords"
 import { loadLocale, taxRates } from "../lib/money"
 import { serverError } from "../lib/resource"
+import { useCashierAuth } from "../lib/cashierAuth"
 import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
 import { cur, moneyLocale, taxLabel } from "../lib/money"
+import { useT } from "../lib/i18n"
 import {
   Card,
   CardContent,
@@ -159,11 +161,11 @@ interface SiblingFolio {
 }
 
 /** A distinct label per folio - Extras get numbered when there's more than one. */
-function folioLabel(siblings: SiblingFolio[], s: SiblingFolio) {
-  if (s.folio_type !== "Extra") return s.folio_type
+function folioLabel(siblings: SiblingFolio[], s: SiblingFolio, tr: (s: string, v?: Record<string, string | number>) => string) {
+  if (s.folio_type !== "Extra") return tr(s.folio_type)
   const extras = siblings.filter((x) => x.folio_type === "Extra")
-  if (extras.length <= 1) return "Extra"
-  return `Extra ${extras.findIndex((x) => x.name === s.name) + 1}`
+  if (extras.length <= 1) return tr("Extra")
+  return tr("Extra {n}", { n: extras.findIndex((x) => x.name === s.name) + 1 })
 }
 const isEmptyFolio = (s: SiblingFolio) =>
   !s.grand_total && !s.payments_total
@@ -180,6 +182,7 @@ function Fact({ label, children }: { label: string; children: React.ReactNode })
 }
 
 export default function FolioView() {
+  const { t } = useT()
   const { name } = useParams()
   const navigate = useNavigate()
   const [data, setData] = useState<InvoiceData | null>(null)
@@ -199,10 +202,7 @@ export default function FolioView() {
   const [showCancel, setShowCancel] = useState(false)
   const [cancelReason, setCancelReason] = useState("")
   const [allowance, setAllowance] = useState({ amount: "", reason: "", gst_rate: "0" })
-  // cashier PIN: when the property demands it, every money action carries it
-  const [pinStatus, setPinStatus] = useState<{ required: boolean; has_pin: boolean } | null>(null)
-  const [pin, setPin] = useState("")
-  const [newPin, setNewPin] = useState("")
+  const { ensureUnlocked, status: pinStatus } = useCashierAuth()
 
   const load = useCallback(() => {
     if (name)
@@ -224,23 +224,15 @@ export default function FolioView() {
   useEffect(() => {
     loadLocale().then((l) => setRates(l.tax_rates))
   }, [])
-  useEffect(() => {
-    call<{ required: boolean; has_pin: boolean }>(
-      "kamra.api.cashier_pin_status",
-      { property: getCurrentProperty() },
-    )
-      .then(setPinStatus)
-      .catch(() => setPinStatus(null))
-  }, [])
 
-  /** PIN travels with every money call when the property demands it. */
-  const withPin = (params: Record<string, unknown>) =>
-    pinStatus?.required ? { ...params, pin } : params
+  /** Params helper kept for call sites; unlock happens in act(). */
+  const withPin = (params: Record<string, unknown>) => params
 
   async function act(fn: () => Promise<unknown>) {
     setBusy(true)
     setError(null)
     try {
+      if (pinStatus?.required) await ensureUnlocked()
       await fn()
       load()
     } catch (e) {
@@ -263,7 +255,7 @@ export default function FolioView() {
   }
 
   if (!data)
-    return <p className="py-10 text-center text-sm text-zinc-400">Loading…</p>
+    return <p className="py-10 text-center text-sm text-zinc-400">{t("Loading…")}</p>
 
   const { folio, property, stay, gst_summary } = data
   const doc = data.document
@@ -281,7 +273,7 @@ export default function FolioView() {
           className="inline-flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-800"
         >
           <ArrowLeft className="size-4" aria-hidden />
-          Billing
+          {t("Billing")}
         </Link>
         <div className="flex gap-2">
           {siblings.length > 1 && (
@@ -308,7 +300,7 @@ export default function FolioView() {
                           : "text-zinc-500 hover:text-zinc-800")
                       }
                     >
-                      {folioLabel(siblings, s)}
+                      {folioLabel(siblings, s, t)}
                       <span
                         className={
                           "tabular-nums " +
@@ -320,8 +312,8 @@ export default function FolioView() {
                     </Link>
                     {canDelete && (
                       <button
-                        aria-label={`Delete empty ${folioLabel(siblings, s)} folio`}
-                        title="Delete this empty folio"
+                        aria-label={t("Delete empty {label} folio", { label: folioLabel(siblings, s, t) })}
+                        title={t("Delete this empty folio")}
                         disabled={busy}
                         onClick={() => removeFolio(s)}
                         className="pr-1.5 text-zinc-300 hover:text-rose-500"
@@ -357,7 +349,7 @@ export default function FolioView() {
                     : "guest"
               }`}
             >
-              Payment link
+              {t("Payment link")}
             </Button>
           )}
           {open && (
@@ -375,7 +367,7 @@ export default function FolioView() {
                 )
               }
             >
-              Split folio
+              {t("Split folio")}
             </Button>
           )}
           {open &&
@@ -384,7 +376,7 @@ export default function FolioView() {
               <Button
                 variant="outline"
                 disabled={busy}
-                title="One consolidated company bill across every room of the group"
+                title={t("One consolidated company bill across every room of the group")}
                 onClick={() =>
                   act(() =>
                     call("kamra.api.group_master_folio", {
@@ -393,12 +385,46 @@ export default function FolioView() {
                   )
                 }
               >
-                Group folio
+                {t("Group folio")}
               </Button>
             )}
-          <Button variant="outline" onClick={() => window.print()}>
+          <Button variant="outline" disabled={busy} onClick={() =>
+              act(async () => {
+                await call("kamra.ledger.generate_proforma", { folio: folio.name })
+                window.print()
+              })
+            }>
+            {t("Proforma")}
+          </Button>
+          {open && stay?.reservation ? (
+            <Button variant="outline" disabled={busy}
+              title={t("Post future room & tax ahead of night audit")}
+              onClick={() =>
+                act(() => call("kamra.ledger.force_advance_bill",
+                  withPin({ reservation: stay.reservation, nights: "entire" })))
+              }>
+              {t("Advance bill")}
+            </Button>
+          ) : null}
+          {!open && folio.invoice_number ? (
+            <Button variant="outline" disabled={busy} onClick={() => {
+              const amt = window.prompt(t("Credit note amount"))
+              const reason = window.prompt(t("Reason"))
+              if (!amt || !reason) return
+              act(() => call("kamra.ledger.issue_credit_note",
+                withPin({ folio: folio.name, amount: Number(amt), reason })))
+            }}>
+              {t("Credit note")}
+            </Button>
+          ) : null}
+          <Button variant="outline" onClick={() => {
+            void call("kamra.ledger.record_folio_reprint", {
+              folio: folio.name,
+              document: folio.invoice_number ? "Guest Folio" : "Proforma",
+            }).finally(() => window.print())
+          }}>
             <Printer className="size-4" aria-hidden />
-            Print {folio.invoice_number ? "invoice" : "folio"}
+            {folio.invoice_number ? t("Print invoice") : t("Print folio")}
           </Button>
           {open &&
             folio.balance === 0 &&
@@ -417,7 +443,7 @@ export default function FolioView() {
                   })
                 }
               >
-                Settle &amp; continue stay
+                {t("Settle & continue stay")}
               </Button>
             )}
           {!open && folio.invoice_number && (
@@ -426,7 +452,7 @@ export default function FolioView() {
               disabled={busy}
               onClick={() => setShowCancel((s) => !s)}
             >
-              Cancel invoice
+              {t("Cancel invoice")}
             </Button>
           )}
           {open && (
@@ -436,7 +462,7 @@ export default function FolioView() {
                 act(() => call("kamra.api.close_folio", withPin({ folio: folio.name })))
               }
             >
-              Close & generate invoice
+              {t("Close & generate invoice")}
             </Button>
           )}
         </div>
@@ -445,12 +471,13 @@ export default function FolioView() {
       {showCancel && !open && (
         <div className="mb-4 flex flex-wrap items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm print:hidden">
           <span className="text-amber-800">
-            Cancel {folio.invoice_number}? The number goes on the cancelled
-            register and the folio reopens for correction.
+            {t("Cancel {invoice}? The number goes on the cancelled register and the folio reopens for correction.", {
+              invoice: folio.invoice_number ?? "",
+            })}
           </span>
           <input
             className="min-w-56 flex-1 rounded-lg border border-amber-300 bg-white px-3 py-1.5 text-sm"
-            placeholder="Reason (required - goes on the record)"
+            placeholder={t("Reason (required - goes on the record)")}
             value={cancelReason}
             onChange={(e) => setCancelReason(e.target.value)}
           />
@@ -468,7 +495,7 @@ export default function FolioView() {
               })
             }
           >
-            Confirm cancel
+            {t("Confirm cancel")}
           </Button>
         </div>
       )}
@@ -477,49 +504,26 @@ export default function FolioView() {
         <LinkedRecords doctype="Reservation" name={stay.reservation} />
       </div>
 
-      {pinStatus?.required && !pinStatus.has_pin && (
-        <div className="mb-4 flex flex-wrap items-center gap-2 rounded-lg border border-sky-200 bg-sky-50 px-4 py-2.5 text-sm print:hidden">
-          <span className="text-sky-800">
-            This property requires a cashier PIN on money actions - set yours
-            (4–8 digits):
+      {pinStatus?.required ? (
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-2 text-sm print:hidden">
+          <span className="text-zinc-600">
+            {pinStatus.unlocked
+              ? t("Cashier unlocked — money actions are open for 15 minutes.")
+              : pinStatus.must_reset || !pinStatus.has_pin
+                ? t("Set your cashier PIN to post payments and settle folios.")
+                : t("Cashier PIN required for money actions.")}
           </span>
-          <input
-            className="w-28 rounded-lg border border-sky-300 bg-white px-3 py-1.5 text-sm"
-            type="password"
-            inputMode="numeric"
-            placeholder="New PIN"
-            value={newPin}
-            onChange={(e) => setNewPin(e.target.value)}
-          />
-          <Button
-            variant="outline"
-            disabled={busy || newPin.trim().length < 4}
-            onClick={() =>
-              act(async () => {
-                await call("kamra.api.set_cashier_pin", { pin: newPin.trim() })
-                setNewPin("")
-                setPinStatus((s) => (s ? { ...s, has_pin: true } : s))
-              })
-            }
-          >
-            Set PIN
-          </Button>
+          {!pinStatus.unlocked ? (
+            <Button
+              variant="outline"
+              disabled={busy}
+              onClick={() => void ensureUnlocked().catch((e) => setError(serverError(e)))}
+            >
+              {pinStatus.must_reset || !pinStatus.has_pin ? t("Set PIN") : t("Unlock")}
+            </Button>
+          ) : null}
         </div>
-      )}
-      {pinStatus?.required && pinStatus.has_pin && (
-        <div className="mb-4 flex flex-wrap items-center gap-2 rounded-lg bg-zinc-50 px-4 py-2 text-sm text-zinc-600 print:hidden">
-          <span>Cashier PIN (needed for payments, settling and invoices):</span>
-          <input
-            className="w-24 rounded-lg border border-zinc-300 bg-white px-3 py-1 text-sm"
-            type="password"
-            inputMode="numeric"
-            aria-label="Cashier PIN"
-            placeholder="••••"
-            value={pin}
-            onChange={(e) => setPin(e.target.value)}
-          />
-        </div>
-      )}
+      ) : null}
       {error && (
         <div className="mb-4 rounded-lg border border-rose-200 bg-rose-50 px-4 py-2 text-sm text-rose-700 print:hidden">
           {error}
@@ -538,7 +542,7 @@ export default function FolioView() {
                   : "border border-dashed border-amber-400 bg-amber-50 text-amber-700")
               }
             >
-              {doc?.title ?? (folio.invoice_number ? "Tax Invoice" : "Provisional Bill")}
+              {doc?.title ?? (folio.invoice_number ? t("Tax Invoice") : t("Provisional Bill"))}
             </span>
           </div>
           <div className="mb-6 flex flex-wrap items-start justify-between gap-4 border-b border-zinc-200 pb-5">
@@ -582,22 +586,21 @@ export default function FolioView() {
               </p>
               {property.place_of_supply && (
                 <p className="mt-1 text-xs text-zinc-500">
-                  Place of supply: {property.place_of_supply}
+                  {t("Place of supply")}: {property.place_of_supply}
                 </p>
               )}
               {!doc?.is_final && (
                 <p className="mt-1 max-w-52 text-xs text-amber-700">
-                  Not a tax invoice yet — the number is issued when the folio
-                  is settled.
+                  {t("Not a tax invoice yet — the number is issued when the folio is settled.")}
                 </p>
               )}
-              <Badge tone={open ? "amber" : "green"}>{folio.status}</Badge>
+              <Badge tone={open ? "amber" : "green"}>{t(folio.status)}</Badge>
             </div>
           </div>
 
           {data.bill_to && (
             <div className="mb-4 rounded-lg bg-zinc-50 px-4 py-2.5 text-sm">
-              <span className="text-zinc-500">Bill to: </span>
+              <span className="text-zinc-500">{t("Bill to")}: </span>
               <span className="font-medium">{data.bill_to.name}</span>
               {data.bill_to.gstin && (
                 <span className="text-zinc-500"> · GSTIN {data.bill_to.gstin}</span>
@@ -608,7 +611,7 @@ export default function FolioView() {
               many people, on what plan, and for a foreign guest their
               nationality (the same field the police report needs). */}
           <dl className="mb-6 grid gap-x-6 gap-y-1 text-sm sm:grid-cols-2">
-            <Fact label="Guest">
+            <Fact label={t("Guest")}>
               <span className="font-medium">
                 {data.guest?.name ?? folio.guest_name}
               </span>
@@ -616,7 +619,7 @@ export default function FolioView() {
                 <span className="text-zinc-500"> · {stay.company}</span>
               )}
             </Fact>
-            <Fact label="Room">
+            <Fact label={t("Room")}>
               {stay.room ? stay.room.split("-").pop() : "—"}
               {stay.room_type && (
                 <span className="text-zinc-500">
@@ -625,11 +628,13 @@ export default function FolioView() {
                 </span>
               )}
             </Fact>
-            <Fact label="Stay">
-              {stay.check_in} → {stay.check_out} · {stay.nights} night
-              {stay.nights === 1 ? "" : "s"}
+            <Fact label={t("Stay")}>
+              {stay.check_in} → {stay.check_out} · {t("{n} night{s}", {
+                n: stay.nights,
+                s: stay.nights === 1 ? "" : "s",
+              })}
             </Fact>
-            <Fact label="Pax / plan">
+            <Fact label={t("Pax / plan")}>
               {stay.pax || stay.adults || "—"}
               {stay.children ? ` (${stay.adults}+${stay.children})` : ""}
               {stay.meal_plan && (
@@ -640,14 +645,14 @@ export default function FolioView() {
               )}
             </Fact>
             {(stay.arrival || stay.departure) && (
-              <Fact label="In / out">
+              <Fact label={t("In / out")}>
                 {(stay.arrival ?? "").slice(0, 16).replace("T", " ") || "—"}
                 {" → "}
                 {(stay.departure ?? "").slice(0, 16).replace("T", " ") || "—"}
               </Fact>
             )}
             {data.guest?.guest_id && (
-              <Fact label="Nationality">
+              <Fact label={t("Nationality")}>
                 <EditableNationality
                   guestId={data.guest.guest_id}
                   value={data.guest.nationality}
@@ -665,7 +670,7 @@ export default function FolioView() {
               </Fact>
             )}
             {data.guest?.address && (
-              <Fact label="Address">{data.guest.address}</Fact>
+              <Fact label={t("Address")}>{data.guest.address}</Fact>
             )}
           </dl>
 
@@ -742,21 +747,25 @@ export default function FolioView() {
                     <div className="mb-3 rounded-xl border border-brand-200 bg-brand-50/40 p-3 text-sm print:hidden">
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="font-medium">
-                          {sel.length} line{sel.length > 1 ? "s" : ""} · {cur()}
-                          {inr(selTotal)} selected
+                          {t("{n} line{s} · {cur}{amount} selected", {
+                            n: sel.length,
+                            s: sel.length > 1 ? "s" : "",
+                            cur: cur(),
+                            amount: inr(selTotal),
+                          })}
                         </span>
                         {one && (
                           <span className="inline-flex items-center gap-1.5 text-xs text-zinc-600">
-                            <span>· move only</span>
+                            <span>· {t("move only")}</span>
                             <input
                               className="w-24 rounded-md border border-zinc-300 bg-white px-2 py-1 text-xs"
-                              aria-label={`Part to move (percent, or ${cur()} before GST)`}
-                              placeholder="30% or 1500"
+                              aria-label={t("Part to move (percent, or {cur} before GST)", { cur: cur() })}
+                              placeholder={t("30% or 1500")}
                               value={partVal}
                               onChange={(e) => setPartVal(e.target.value)}
                             />
                             <span className="text-zinc-400">
-                              ({cur()} = before GST)
+                              ({cur()} = {t("before GST")})
                             </span>
                           </span>
                         )}
@@ -767,18 +776,20 @@ export default function FolioView() {
                             setPartVal("")
                           }}
                         >
-                          Clear
+                          {t("Clear")}
                         </button>
                       </div>
                       {partBad && (
                         <p className="mt-1.5 text-xs text-rose-600">
-                          Enter 1–99%, or a {cur()} amount under the line's {cur()}
-                          {inr(one!.amount)} (before GST).
+                          {t("Enter 1–99%, or a {cur} amount under the line's {cur}{amount} (before GST).", {
+                            cur: cur(),
+                            amount: inr(one!.amount),
+                          })}
                         </p>
                       )}
                       <div className="mt-2 flex flex-wrap items-center gap-1.5">
                         <span className="text-xs text-zinc-500">
-                          Send {cur()}{inr(movedTotal)} to
+                          {t("Send {cur}{amount} to", { cur: cur(), amount: inr(movedTotal) })}
                         </span>
                         {targets.map((s) => (
                           <button
@@ -788,7 +799,7 @@ export default function FolioView() {
                             onClick={() => moveTo(s.name)}
                           >
                             <span className="font-medium">
-                              {folioLabel(siblings, s)}
+                              {folioLabel(siblings, s, t)}
                             </span>
                             <span
                               className={
@@ -797,7 +808,7 @@ export default function FolioView() {
                                   : "ml-1.5 text-zinc-400"
                               }
                             >
-                              owes {cur()}{inr(s.balance)}
+                              {t("owes {cur}{amount}", { cur: cur(), amount: inr(s.balance) })}
                             </span>
                           </button>
                         ))}
@@ -806,14 +817,14 @@ export default function FolioView() {
                           disabled={busy || partBad}
                           onClick={() => moveToNew("Company")}
                         >
-                          + New Company folio
+                          {t("+ New Company folio")}
                         </button>
                         <button
                           className="rounded-lg border border-dashed border-zinc-300 bg-white px-2.5 py-1.5 text-xs text-zinc-600 hover:border-brand-400 disabled:opacity-50"
                           disabled={busy || partBad}
                           onClick={() => moveToNew("Extra")}
                         >
-                          + New Extra folio
+                          {t("+ New Extra folio")}
                         </button>
                       </div>
                     </div>
@@ -823,19 +834,19 @@ export default function FolioView() {
                   <thead>
                     <tr className="border-b border-zinc-200 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">
                       {open && (
-                        <th className="w-6 py-2 pr-2 print:hidden" aria-label="Select" />
+                        <th className="w-6 py-2 pr-2 print:hidden" aria-label={t("Select")} />
                       )}
-                      <th className="py-2 pr-3">Date</th>
-                      <th className="py-2 pr-3">Item</th>
+                      <th className="py-2 pr-3">{t("Date")}</th>
+                      <th className="py-2 pr-3">{t("Item")}</th>
                       <th className="hidden py-2 pr-3 print:table-cell">
-                        {doc?.service_code_label ?? "SAC"}
+                        {doc?.service_code_label ?? t("SAC")}
                       </th>
-                      <th className="py-2 pr-3 text-right">Amount {cur()}</th>
+                      <th className="py-2 pr-3 text-right">{t("Amount {cur}", { cur: cur() })}</th>
                       <th className="py-2 pr-3 text-right">{taxLabel()} %</th>
                       <th className="py-2 pr-3 text-right">{taxLabel()} {cur()}</th>
-                      <th className="py-2 text-right">Total {cur()}</th>
+                      <th className="py-2 text-right">{t("Total {cur}", { cur: cur() })}</th>
                       {editable && (
-                        <th className="py-2 pl-3 print:hidden" aria-label="Actions" />
+                        <th className="py-2 pl-3 print:hidden" aria-label={t("Actions")} />
                       )}
                     </tr>
                   </thead>
@@ -848,7 +859,7 @@ export default function FolioView() {
                               <input
                                 type="checkbox"
                                 className="size-3.5 accent-brand-600"
-                                aria-label="Select charge"
+                                aria-label={t("Select charge")}
                                 checked={selected.has(c.name)}
                                 onChange={(e) =>
                                   setSelected((prev) => {
@@ -891,35 +902,35 @@ export default function FolioView() {
                                         })
                                       }
                                     >
-                                      Confirm void
+                                      {t("Confirm void")}
                                     </button>
                                     <button
                                       className="text-xs text-zinc-400 hover:text-zinc-700"
                                       onClick={() => setVoidFor(null)}
                                     >
-                                      Cancel
+                                      {t("Cancel")}
                                     </button>
                                   </span>
                                 ) : (
                                   <button
-                                    aria-label="Void this charge"
+                                    aria-label={t("Void this charge")}
                                     className="mr-1.5 inline-flex items-center gap-1 rounded-md border border-zinc-200 px-2 py-1 text-xs text-zinc-500 hover:border-rose-400 hover:text-rose-700"
                                     onClick={() => setVoidFor(c.name)}
                                   >
                                     <Trash2 className="size-3" aria-hidden />
-                                    Void
+                                    {t("Void")}
                                   </button>
                                 ))}
                               {open && !selected.has(c.name) && (
                                 <button
-                                  aria-label="Move or split this charge"
+                                  aria-label={t("Move or split this charge")}
                                   className="inline-flex items-center gap-1 rounded-md border border-zinc-200 px-2 py-1 text-xs text-zinc-500 hover:border-brand-400 hover:text-zinc-800"
                                   onClick={() =>
                                     setSelected((prev) => new Set(prev).add(c.name))
                                   }
                                 >
                                   <ArrowRightLeft className="size-3" aria-hidden />
-                                  Move
+                                  {t("Move")}
                                 </button>
                               )}
                             </td>
@@ -937,7 +948,7 @@ export default function FolioView() {
           {(data.summary_by_head?.length ?? 0) > 1 && (
             <div className="mb-6 break-inside-avoid rounded-xl bg-zinc-50 px-4 py-3">
               <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-zinc-500">
-                Summary
+                {t("Summary")}
               </h3>
               <table className="w-full text-sm">
                 <tbody>
@@ -946,7 +957,7 @@ export default function FolioView() {
                       <td className="py-1">
                         {h.head}
                         <span className="ml-1.5 text-xs text-zinc-400">
-                          {h.lines} line{h.lines === 1 ? "" : "s"}
+                          {t("{n} line{s}", { n: h.lines, s: h.lines === 1 ? "" : "s" })}
                         </span>
                       </td>
                       <td className="py-1 text-right text-zinc-500">
@@ -968,7 +979,7 @@ export default function FolioView() {
           <div className="mb-6 grid gap-6 sm:grid-cols-2">
             <div>
               <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-zinc-500">
-                {taxLabel()} summary
+                {t("{tax} summary", { tax: taxLabel() })}
               </h3>
               <table className="w-full text-sm">
                 <tbody className="divide-y divide-zinc-100">
@@ -982,7 +993,7 @@ export default function FolioView() {
                     <tr key={r.rate}>
                       <td className="py-1.5 pr-3">{r.rate}%</td>
                       <td className="py-1.5 pr-3 text-right text-zinc-500">
-                        taxable {cur()}{inr(r.taxable)}
+                        {t("taxable {cur}{amount}", { cur: cur(), amount: inr(r.taxable) })}
                       </td>
                       <td className="py-1.5 text-right">
                         {r.parts
@@ -996,13 +1007,13 @@ export default function FolioView() {
             </div>
             <div className="space-y-1.5 text-sm sm:text-right">
               <p className="text-zinc-500">
-                Charges: <span className="text-zinc-900">{cur()}{inr(folio.charges_total)}</span>
+                {t("Charges")}: <span className="text-zinc-900">{cur()}{inr(folio.charges_total)}</span>
               </p>
               <p className="text-zinc-500">
-                GST: <span className="text-zinc-900">{cur()}{inr(folio.tax_total)}</span>
+                {taxLabel()}: <span className="text-zinc-900">{cur()}{inr(folio.tax_total)}</span>
               </p>
               <p className="text-lg font-semibold">
-                Grand total: {cur()}{inr(folio.grand_total)}
+                {t("Grand total")}: {cur()}{inr(folio.grand_total)}
               </p>
               {doc?.amount_in_words && (
                 <p className="text-xs italic text-zinc-500">
@@ -1010,7 +1021,7 @@ export default function FolioView() {
                 </p>
               )}
               <p className="text-zinc-500">
-                Paid: {cur()}{inr(folio.payments_total)} · Balance:{" "}
+                {t("Paid")}: {cur()}{inr(folio.payments_total)} · {t("Balance")}:{" "}
                 <span
                   className={
                     folio.balance > 0
@@ -1027,7 +1038,7 @@ export default function FolioView() {
           {folio.payments.length > 0 && (
             <div className="text-sm">
               <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-zinc-500">
-                Payments
+                {t("Payments")}
               </h3>
               <ul className="divide-y divide-zinc-100">
                 {folio.payments.map((p, i) => (
@@ -1039,7 +1050,7 @@ export default function FolioView() {
                           (p.payment_kind === "Refund" ? "bg-rose-50 text-rose-600"
                             : p.payment_kind === "Security Deposit" ? "bg-violet-50 text-violet-700"
                               : "bg-sky-50 text-sky-700")}>
-                          {p.payment_kind}
+                          {t(p.payment_kind)}
                         </span>
                       )}
                       {p.reference && (
@@ -1058,7 +1069,7 @@ export default function FolioView() {
                     onChange={(e) => setRefund({ ...refund, mode: e.target.value })}>
                     {PAY_MODES.map((m) => <option key={m}>{m}</option>)}
                   </select>
-                  <input className={`${inputCls} flex-1`} placeholder="Reason (required — e.g. deposit returned)"
+                  <input className={`${inputCls} flex-1`} placeholder={t("Reason (required — e.g. deposit returned)")}
                     value={refund.reason} onChange={(e) => setRefund({ ...refund, reason: e.target.value })} />
                   <Button variant="outline" className="text-rose-600" disabled={busy || !refund.amount || !refund.reason.trim()}
                     onClick={() => act(async () => {
@@ -1068,14 +1079,14 @@ export default function FolioView() {
                       }))
                       setRefund(null)
                     })}>
-                    Refund
+                    {t("Refund")}
                   </Button>
                   <Button variant="ghost" onClick={() => setRefund(null)}>✕</Button>
                 </div>
               ) : (
                 <button className="mt-1 text-xs font-medium text-rose-600 hover:underline"
                   onClick={() => setRefund({ amount: "", mode: "Cash", reason: "" })}>
-                  Refund money (deposit return / over-collection)
+                  {t("Refund money (deposit return / over-collection)")}
                 </button>
               )}
             </div>
@@ -1084,16 +1095,16 @@ export default function FolioView() {
           {folio.invoice_number && (
             <div className="mt-8 flex items-end justify-between border-t border-zinc-200 pt-4 text-xs text-zinc-500">
               <p className="max-w-md">
-                This is a computer-generated tax invoice under the GST Act.
+                {t("This is a computer-generated tax invoice under the GST Act.")}
                 {property.gstin
-                  ? " Amounts are inclusive of GST at the rates shown."
+                  ? ` ${t("Amounts are inclusive of GST at the rates shown.")}`
                   : ""}
               </p>
               <div className="text-center">
                 <div className="mb-1 h-8 w-40 border-b border-zinc-300" />
-                For {property.legal_name || property.name}
+                {t("For {name}", { name: property.legal_name || property.name })}
                 <br />
-                Authorised signatory
+                {t("Authorised signatory")}
               </div>
             </div>
           )}
@@ -1104,7 +1115,7 @@ export default function FolioView() {
         <div className="mt-4 grid gap-4 md:grid-cols-2 print:hidden">
           <Card>
             <CardHeader>
-              <CardTitle>Post a charge</CardTitle>
+              <CardTitle>{t("Post a charge")}</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-wrap items-end gap-2">
               <select
@@ -1114,13 +1125,13 @@ export default function FolioView() {
                   setCharge({ ...charge, charge_type: e.target.value })
                 }
               >
-                {CHARGE_TYPES.map((t) => (
-                  <option key={t}>{t}</option>
+                {CHARGE_TYPES.map((ct) => (
+                  <option key={ct}>{t(ct)}</option>
                 ))}
               </select>
               <input
                 className={`${inputCls} flex-1`}
-                placeholder="Description"
+                placeholder={t("Description")}
                 value={charge.description}
                 onChange={(e) =>
                   setCharge({ ...charge, description: e.target.value })
@@ -1142,7 +1153,7 @@ export default function FolioView() {
               >
                 {rates.map((n) => String(n)).map((r) => (
                   <option key={r} value={r}>
-                    GST {r}%
+                    {t("GST {rate}%", { rate: r })}
                   </option>
                 ))}
               </select>
@@ -1155,7 +1166,7 @@ export default function FolioView() {
                     setCharge({ ...charge, is_alcohol: e.target.checked })
                   }
                 />
-                Alcohol
+                {t("Alcohol")}
               </label>
               <Button
                 disabled={busy || !charge.amount}
@@ -1171,13 +1182,13 @@ export default function FolioView() {
                   )
                 }
               >
-                Post
+                {t("Post")}
               </Button>
               <div className="mt-1 w-full border-t border-zinc-100 pt-3">
                 <div className="mb-2 text-xs font-medium uppercase tracking-wider text-zinc-400">
-                  Pass an allowance
+                  {t("Pass an allowance")}
                   <span className="ml-1.5 normal-case tracking-normal">
-                    - write off part of the bill, with a reason
+                    {t("- write off part of the bill, with a reason")}
                   </span>
                 </div>
                 <div className="flex flex-wrap items-end gap-2">
@@ -1205,7 +1216,7 @@ export default function FolioView() {
                   </select>
                   <input
                     className={`${inputCls} min-w-40 flex-1`}
-                    placeholder="Reason (required)"
+                    placeholder={t("Reason (required)")}
                     value={allowance.reason}
                     onChange={(e) =>
                       setAllowance({ ...allowance, reason: e.target.value })
@@ -1226,7 +1237,7 @@ export default function FolioView() {
                       })
                     }
                   >
-                    Allow
+                    {t("Allow")}
                   </Button>
                 </div>
               </div>
@@ -1235,17 +1246,17 @@ export default function FolioView() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Record a payment</CardTitle>
+              <CardTitle>{t("Record a payment")}</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-wrap items-end gap-2">
               <select
                 className={inputCls}
                 value={payment.kind}
-                title="What this money is: against the bill, an advance, or a refundable deposit"
+                title={t("What this money is: against the bill, an advance, or a refundable deposit")}
                 onChange={(e) => setPayment({ ...payment, kind: e.target.value })}
               >
                 {["Payment", "Advance", "Security Deposit"].map((k) => (
-                  <option key={k}>{k}</option>
+                  <option key={k}>{t(k)}</option>
                 ))}
               </select>
               <select
@@ -1254,7 +1265,7 @@ export default function FolioView() {
                 onChange={(e) => setPayment({ ...payment, mode: e.target.value })}
               >
                 {PAY_MODES.map((m) => (
-                  <option key={m}>{m}</option>
+                  <option key={m}>{t(m)}</option>
                 ))}
               </select>
               <input
@@ -1268,7 +1279,7 @@ export default function FolioView() {
               />
               <input
                 className={`${inputCls} flex-1`}
-                placeholder="Reference (optional)"
+                placeholder={t("Reference (optional)")}
                 value={payment.reference}
                 onChange={(e) =>
                   setPayment({ ...payment, reference: e.target.value })
@@ -1288,7 +1299,7 @@ export default function FolioView() {
                   )
                 }
               >
-                Record
+                {t("Record")}
               </Button>
             </CardContent>
           </Card>

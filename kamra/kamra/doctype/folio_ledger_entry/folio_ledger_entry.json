@@ -1,0 +1,190 @@
+{
+ "actions": [],
+ "creation": "2026-09-07 00:00:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "property",
+  "folio",
+  "ledger",
+  "business_date",
+  "column_break_a",
+  "transaction_code",
+  "description",
+  "debit",
+  "credit",
+  "cashier",
+  "session",
+  "reversal_of",
+  "source_doctype",
+  "source_name",
+  "posted_by",
+  "posted_at"
+ ],
+ "fields": [
+  {
+   "fieldname": "property",
+   "fieldtype": "Link",
+   "label": "Property",
+   "options": "Property",
+   "reqd": 1
+  },
+  {
+   "fieldname": "folio",
+   "fieldtype": "Link",
+   "label": "Folio",
+   "options": "Folio",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "ledger",
+   "fieldtype": "Select",
+   "label": "Ledger",
+   "options": "Guest\nDeposit\nAR\nPackage",
+   "reqd": 1,
+   "default": "Guest",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "business_date",
+   "fieldtype": "Date",
+   "label": "Business Date",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "column_break_a",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "transaction_code",
+   "fieldtype": "Link",
+   "label": "Transaction Code",
+   "options": "Transaction Code"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Data",
+   "label": "Description"
+  },
+  {
+   "fieldname": "debit",
+   "fieldtype": "Currency",
+   "label": "Debit",
+   "default": "0",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "credit",
+   "fieldtype": "Currency",
+   "label": "Credit",
+   "default": "0",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "cashier",
+   "fieldtype": "Link",
+   "label": "Cashier",
+   "options": "Cashier"
+  },
+  {
+   "fieldname": "session",
+   "fieldtype": "Link",
+   "label": "Session",
+   "options": "Cashier Session"
+  },
+  {
+   "fieldname": "reversal_of",
+   "fieldtype": "Link",
+   "label": "Reversal Of",
+   "options": "Folio Ledger Entry"
+  },
+  {
+   "fieldname": "source_doctype",
+   "fieldtype": "Data",
+   "label": "Source DocType"
+  },
+  {
+   "fieldname": "source_name",
+   "fieldtype": "Data",
+   "label": "Source Name"
+  },
+  {
+   "fieldname": "posted_by",
+   "fieldtype": "Link",
+   "label": "Posted By",
+   "options": "User"
+  },
+  {
+   "fieldname": "posted_at",
+   "fieldtype": "Datetime",
+   "label": "Posted At"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-09-07 00:00:00",
+ "modified_by": "Administrator",
+ "module": "Kamra",
+ "name": "Folio Ledger Entry",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "export": 1,
+   "print": 1,
+   "report": 1,
+   "share": 1,
+   "email": 1
+  },
+  {
+   "role": "Hotel Admin",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "export": 1,
+   "print": 1,
+   "report": 1,
+   "share": 1,
+   "email": 1
+  },
+  {
+   "role": "Finance",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "report": 1,
+   "email": 1
+  },
+  {
+   "role": "Front Desk",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "print": 1,
+   "report": 1,
+   "email": 1
+  },
+  {
+   "role": "Kamra Agent",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "print": 1,
+   "report": 1,
+   "email": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1,
+ "autoname": "hash"
+}

@@ -11,6 +11,7 @@ import {
 import AppShell, { type ShellContext } from "./AppShell"
 const Login = lazy(() => import("./screens/Login"))
 import { useAuth } from "./lib/auth"
+import { t, useT } from "./lib/i18n"
 import { toFullPath } from "./lib/routing"
 import { CalendarView } from "./components/CalendarView"
 import { ResourceScreen } from "./components/ResourceScreen"
@@ -46,6 +47,7 @@ const Dashboard = lazy(() => import("./screens/Dashboard"))
 const CRS = lazy(() => import("./screens/CRS"))
 const POS = lazy(() => import("./screens/POS"))
 const Kitchen = lazy(() => import("./screens/Kitchen"))
+const PosDashboard = lazy(() => import("./screens/PosDashboard"))
 const Inventory = lazy(() => import("./screens/Inventory"))
 const QrMenu = lazy(() => import("./screens/QrMenu"))
 const AccountingExport = lazy(() => import("./screens/AccountingExport"))
@@ -55,6 +57,13 @@ const Laundry = lazy(() => import("./screens/Laundry"))
 const MenuItems = lazy(() => import("./screens/MenuItems"))
 const Today = lazy(() => import("./screens/Today"))
 const WhatsAppChat = lazy(() => import("./screens/WhatsAppChat"))
+const CashierTill = lazy(() => import("./screens/CashierTill"))
+const CashierSessions = lazy(() => import("./screens/CashierSessions"))
+const PettyCash = lazy(() => import("./screens/PettyCash"))
+const CashierShiftReport = lazy(() => import("./screens/CashierShiftReport"))
+const Ledgers = lazy(() => import("./screens/Ledgers"))
+const FolioHistory = lazy(() => import("./screens/FolioHistory"))
+const CurrencyDesk = lazy(() => import("./screens/CurrencyDesk"))
 import {
   companiesConfig,
   guardrailsConfig,
@@ -114,7 +123,8 @@ class ErrorBoundary extends Component<
 }
 
 function Splash() {
-  return <p className="py-20 text-center text-sm text-zinc-400">Loading…</p>
+  const { t } = useT()
+  return <p className="py-20 text-center text-sm text-zinc-400">{t("Loading…")}</p>
 }
 
 /** Gate for the app shell: redirects to /login (remembering where you were)
@@ -250,6 +260,13 @@ export default function App() {
           />
           <Route path="billing" element={<Billing />} />
           <Route path="billing/:name" element={<FolioView />} />
+          <Route path="cashier" element={<CashierTill />} />
+          <Route path="cashier/sessions" element={<CashierSessions />} />
+          <Route path="cashier/petty-cash" element={<PettyCash />} />
+          <Route path="cashier/shift-report" element={<CashierShiftReport />} />
+          <Route path="cashier/fx" element={<CurrencyDesk />} />
+          <Route path="ledgers" element={<Ledgers />} />
+          <Route path="folio-history" element={<FolioHistory />} />
           <Route
             path="companies"
             element={<ResourceScreen config={companiesConfig} />}
@@ -317,6 +334,7 @@ export default function App() {
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="crs" element={<CRS />} />
           <Route path="pos" element={<POS />} />
+          <Route path="pos-dashboard" element={<PosDashboard />} />
           <Route path="kitchen" element={<Kitchen />} />
           <Route path="inventory" element={<Inventory />} />
           <Route path="menu-items" element={<MenuItems />} />
@@ -332,7 +350,7 @@ export default function App() {
             path="*"
             element={
               <p className="py-10 text-center text-sm text-zinc-400">
-                Page not found.
+                {t("Page not found.")}
               </p>
             }
           />

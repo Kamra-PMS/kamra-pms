@@ -110,10 +110,10 @@
    "fieldname": "location_name",
    "fieldtype": "Data",
    "label": "Location Name",
-   "description": "e.g. \"WaterFront Villa By Ewa\". Groups room types sharing a villa/site on the booking engine."
+   "description": "e.g. \"Waterfront Villa\". Groups room types sharing a villa/site on the booking engine."
   },
   {
-   "description": "URL slug for this site when several villas share one property (e.g. waterfront-villa-by-ewa). Guests open /stay/your-site-slug.",
+   "description": "URL slug for this site when several villas share one property (e.g. waterfront-villa). Guests open /stay/your-site-slug.",
    "fieldname": "location_slug",
    "fieldtype": "Data",
    "label": "Site Slug"

@@ -30,7 +30,7 @@ import { asset } from "./lib/asset"
 import { useAuth } from "./lib/auth"
 import { subscribeRealtime } from "./lib/realtime"
 import { getTheme, setTheme } from "./lib/theme"
-import { t as translate, useT } from "./lib/i18n"
+import { useT } from "./lib/i18n"
 import { loadLocale } from "./lib/money"
 import { cn } from "./lib/utils"
 import { useKiosk } from "./lib/kiosk"
@@ -50,17 +50,18 @@ export interface ShellContext {
 }
 
 function SearchShortcut() {
+  const { t } = useT()
   const isMac = /Mac|iP(hone|ad|od)/.test(navigator.platform)
   const combo = isMac ? "⌘K" : "Ctrl+K"
   return (
     <button
       onClick={() => window.dispatchEvent(new Event("kamra:open-palette"))}
-      title={`Search: find a guest or booking, or jump anywhere - press ${isMac ? "⌘ Command" : "Ctrl"} + K`}
-      aria-label="Open search"
+      title={t("Search: find a guest or booking, or jump anywhere - press {combo}", { combo: isMac ? "⌘ Command" : "Ctrl" + " + K" })}
+      aria-label={t("Open search")}
       className="flex w-full items-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50/70 px-3 py-2 text-sm text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600"
     >
       <Search className="size-4" aria-hidden />
-      <span>Search reservations, guests, rooms…</span>
+      <span>{t("Search reservations, guests, rooms…")}</span>
       <kbd className="ml-auto hidden rounded border border-zinc-200 bg-white px-1.5 py-0.5 text-[10px] font-semibold text-zinc-500 md:inline">
         {combo}
       </kbd>
@@ -69,18 +70,19 @@ function SearchShortcut() {
 }
 
 function ThemeToggle() {
+  const { t } = useT()
   const [dark, setDark] = useState(() =>
     document.documentElement.classList.contains("dark"),
   )
   return (
     <button
-      aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
+      aria-label={dark ? t("Switch to light mode") : t("Switch to dark mode")}
       className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700"
       onClick={() => {
         setTheme(dark ? "light" : "dark")
         setDark(!dark)
       }}
-      title={getTheme() === "system" ? "Theme (system)" : "Theme"}
+      title={getTheme() === "system" ? t("Theme (system)") : t("Theme")}
     >
       {dark ? (
         <Sun className="size-4" aria-hidden />
@@ -93,6 +95,7 @@ function ThemeToggle() {
 
 /** App switcher in the top bar: quiet grid, one accent for the current app. */
 function AppSwitcher({ apps, current }: { apps: AppDef[]; current: AppDef }) {
+  const { t } = useT()
   const [open, setOpen] = useState(false)
   const navigate = useNavigate()
   const ref = useRef<HTMLDivElement>(null)
@@ -116,8 +119,8 @@ function AppSwitcher({ apps, current }: { apps: AppDef[]; current: AppDef }) {
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen((o) => !o)}
-        aria-label="Switch app"
-        title="Switch app"
+        aria-label={t("Switch app")}
+        title={t("Switch app")}
         className="flex size-8 items-center justify-center rounded-md text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800"
       >
         <LayoutGrid className="size-4" strokeWidth={1.75} aria-hidden />
@@ -152,7 +155,7 @@ function AppSwitcher({ apps, current }: { apps: AppDef[]; current: AppDef }) {
                       active ? "text-zinc-900" : "text-zinc-600",
                     )}
                   >
-                    {translate(app.name)}
+                    {t(app.name)}
                   </span>
                 </button>
               )
@@ -163,7 +166,7 @@ function AppSwitcher({ apps, current }: { apps: AppDef[]; current: AppDef }) {
             onClick={() => setOpen(false)}
             className="mt-1 block rounded-md px-3 py-2 text-center text-xs font-medium text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800"
           >
-            View all apps
+            {t("View all apps")}
           </NavLink>
         </div>
       )}
@@ -257,16 +260,18 @@ export default function AppShell() {
     )
 
   return (
-    <div className="flex min-h-screen flex-col">
+    // Floor pages (POS / Kitchen) get a bounded frame at lg+ so only pane
+    // content scrolls; everything else keeps normal page flow.
+    <div className={cn("flex min-h-screen flex-col", floor && "lg:h-screen")}>
       {demoMode && !kiosk && (
         <div className="bg-amber-500 px-4 py-1.5 text-center text-xs font-medium text-amber-950">
-          Shared playground — not your hotel. Data is wiped every night.
+          {t("Shared playground — not your hotel. Data is wiped every night.")}
           {" "}
           <a
             href="https://kamrapms.com"
             className="underline underline-offset-2 hover:text-black"
           >
-            Get your own Kamra →
+            {t("Get your own Kamra →")}
           </a>
         </div>
       )}
@@ -299,11 +304,34 @@ export default function AppShell() {
           </div>
         )}
 
-        <nav className="space-y-0.5">{items.map(renderItem)}</nav>
+        <nav className="space-y-0.5">
+          {(() => {
+            const groups: { label?: string; items: typeof items }[] = []
+            for (const item of items) {
+              const g = item.group
+              const last = groups[groups.length - 1]
+              if (!last || last.label !== g) {
+                groups.push({ label: g, items: [item] })
+              } else {
+                last.items.push(item)
+              }
+            }
+            return groups.map((g, gi) => (
+              <div key={g.label ?? `ungrouped-${gi}`} className={gi > 0 ? "mt-3" : undefined}>
+                {g.label ? (
+                  <div className="mb-1 px-2.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-400">
+                    {t(g.label)}
+                  </div>
+                ) : null}
+                <div className="space-y-0.5">{g.items.map(renderItem)}</div>
+              </div>
+            ))
+          })()}
+        </nav>
       </aside>
       )}
 
-      <div className="min-w-0 flex-1">
+      <div className="flex min-w-0 flex-1 flex-col">
         {!kiosk && (
         <header className="sticky top-0 z-40 flex items-center gap-2 border-b border-zinc-200 bg-white/90 px-4 py-2.5 backdrop-blur">
           <AppSwitcher apps={apps} current={currentApp ?? apps[0]} />
@@ -312,7 +340,7 @@ export default function AppShell() {
               className="rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-sm font-medium focus:outline-2 focus:outline-brand-600"
               value={property}
               onChange={(e) => switchProperty(e.target.value)}
-              aria-label="Property"
+              aria-label={t("Property")}
             >
               {properties.map((p) => (
                 <option key={p.name} value={p.name}>
@@ -340,11 +368,11 @@ export default function AppShell() {
               onClick={signOut}
               className="text-xs font-medium text-zinc-400 hover:text-zinc-700"
             >
-              Sign out
+              {t("Sign out")}
             </button>
             <Button onClick={() => setBooking({})}>
               <Plus className="size-4" aria-hidden />
-              New booking
+              {t("New booking")}
             </Button>
           </div>
         </header>
@@ -358,7 +386,7 @@ export default function AppShell() {
                   "max-w-none",
                   kiosk
                     ? "h-[100dvh] overflow-hidden p-0"
-                    : "min-h-[calc(100dvh-3.5rem)] overflow-auto p-3",
+                    : "min-h-[calc(100dvh-3.5rem)] overflow-auto p-3 lg:min-h-0 lg:flex-1 lg:overflow-hidden",
                 )
               : "mx-auto max-w-6xl px-4 py-6"
           }
@@ -374,8 +402,13 @@ export default function AppShell() {
         </main>
       </div>
 
-      <HelpPanel />
-      <CommandPalette />
+      {/* Never float over the till / kitchen pass in focus mode. */}
+      {!kiosk && (
+        <>
+          <HelpPanel />
+          <CommandPalette />
+        </>
+      )}
 
       {booking && (
         <BookingDialog

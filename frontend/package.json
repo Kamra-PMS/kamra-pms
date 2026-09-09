@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "i18n:extract": "node scripts/i18n-extract.mjs",
+    "i18n:import": "node scripts/i18n-import.mjs"
   },
   "dependencies": {
     "lucide-react": "^0.525.0",

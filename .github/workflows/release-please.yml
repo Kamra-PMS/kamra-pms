@@ -2,10 +2,12 @@ name: release-please
 
 # Stable-release automation. Every push to main updates (or opens) a
 # draft "Release PR" that bumps kamra/__init__.py and drafts the CHANGELOG
-# entry from Conventional Commit messages. Keep it draft until you intend to
-# ship — merging that PR tags vX.Y.Z and publishes the GitHub Release; artifact
-# publishing (Docker image, demo deploy) then runs via the reusable Release
-# workflow below.
+# entry from Conventional Commit messages. Versioning is always-bump-patch
+# (see release-please-config.json): feat and fix both open the next PATCH
+# (e.g. 2.6.1). Force a MINOR/MAJOR with a Release-As: footer when needed.
+# Keep the PR draft until you intend to ship — merging it tags vX.Y.Z and
+# publishes the GitHub Release; artifact publishing (Docker image, demo
+# deploy) then runs via the reusable Release workflow below.
 #
 # NOTE: the tag is created with GITHUB_TOKEN, and GitHub deliberately does
 # NOT fire `on: push: tags` workflows for such tags — that's why release.yml

@@ -14,9 +14,11 @@ import {
   ArrowLeft,
   BadgeIndianRupee,
   CalendarClock,
+  CheckSquare,
   FileText,
   Gift,
   Handshake,
+  Mail,
   Plus,
   Printer,
   Receipt,
@@ -216,6 +218,10 @@ export default function BanquetFunction() {
       {step === "close" && (
         <CloseOutCard fn={fn} busy={busy} act={act} onCount={() => setStep("margin")} />
       )}
+
+      {(fn.status === "Confirmed" || fn.status === "Completed") && (
+        <ChecklistPanel fn={fn.name} busy={busy} act={act} />
+      )}
     </div>
   )
 }
@@ -261,10 +267,36 @@ function StatusActions({
 }) {
   const [ask, setAsk] = useState<FunctionStatus | null>(null)
   const [reason, setReason] = useState("")
+  const [guest, setGuest] = useState(false)
+  const [outcome, setOutcome] = useState<
+    "Confirmed" | "Changes Requested" | "Declined"
+  >("Confirmed")
+  const [channel, setChannel] = useState("Phone")
+  const [notes, setNotes] = useState("")
+  const [alsoConfirm, setAlsoConfirm] = useState(true)
   const options = NEXT[fn.status]
+  const canRecordGuest =
+    fn.status === "Enquiry" || fn.status === "Tentative"
 
   return (
     <div className="flex flex-wrap items-center gap-2">
+      {canRecordGuest && (
+        <Button
+          variant="outline"
+          disabled={busy}
+          onClick={() => setGuest(true)}
+          title={
+            fn.customer_confirm_outcome
+              ? `Guest ${fn.customer_confirm_outcome} via ${fn.customer_confirm_channel} on ${fn.customer_confirmed_on}`
+              : "Record how the guest replied"
+          }
+        >
+          <Handshake className="size-4" />
+          {fn.customer_confirm_outcome
+            ? `Guest: ${fn.customer_confirm_outcome}`
+            : "Guest response"}
+        </Button>
+      )}
       {options.map((s) => (
         <Button
           key={s}
@@ -317,6 +349,82 @@ function StatusActions({
               onChange={(e) => setReason(e.target.value)}
             />
           </Field>
+        </Sheet>
+      )}
+      {guest && (
+        <Sheet
+          title="Guest response"
+          description="They confirmed by phone, email, or WhatsApp — record it here. No guest portal."
+          onClose={() => setGuest(false)}
+          footer={
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setGuest(false)}>
+                Back
+              </Button>
+              <Button
+                disabled={busy}
+                onClick={async () => {
+                  await act(() =>
+                    banquet.recordGuestResponse(fn.name, outcome, {
+                      channel,
+                      notes: notes.trim() || undefined,
+                      confirmStatus:
+                        outcome === "Confirmed" && alsoConfirm,
+                    }),
+                  )
+                  setGuest(false)
+                  setNotes("")
+                }}
+              >
+                Save response
+              </Button>
+            </div>
+          }
+        >
+          <div className="space-y-3">
+            <Field label="Outcome">
+              <Select
+                value={outcome}
+                onChange={(v) =>
+                  setOutcome(
+                    v as "Confirmed" | "Changes Requested" | "Declined",
+                  )
+                }
+                options={["Confirmed", "Changes Requested", "Declined"]}
+              />
+            </Field>
+            <Field label="Heard via">
+              <Select
+                value={channel}
+                onChange={setChannel}
+                options={["Phone", "Email", "WhatsApp"]}
+              />
+            </Field>
+            <Field label="Notes">
+              <textarea
+                rows={3}
+                className={inputCls}
+                placeholder="Optional — what they said…"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+              />
+            </Field>
+            {outcome === "Confirmed" &&
+              (fn.status === "Enquiry" || fn.status === "Tentative") && (
+                <label className="flex items-start gap-2 text-sm text-zinc-600">
+                  <input
+                    type="checkbox"
+                    className="mt-0.5"
+                    checked={alsoConfirm}
+                    onChange={(e) => setAlsoConfirm(e.target.checked)}
+                  />
+                  <span>
+                    Also move the function to Confirmed (creates department
+                    checklists and notifies Finance, HK, F&amp;B, Sales).
+                  </span>
+                </label>
+              )}
+          </div>
         </Sheet>
       )}
     </div>
@@ -2159,22 +2267,203 @@ function PaperTab({
           </Button>
           <Button
             variant="outline"
+            disabled={
+              busy ||
+              !(fn.quote_version > 0) ||
+              !(fn.customer_email || "").trim()
+            }
+            title={
+              !(fn.customer_email || "").trim()
+                ? "Add a customer email on the Enquiry step first"
+                : "Email the stamped quotation to the guest"
+            }
+            onClick={() =>
+              act(() => banquet.sendQuotation(fn.name, ["email"]))
+            }
+          >
+            <Mail className="size-4" />
+            Email to guest
+          </Button>
+          <Button
+            variant="outline"
+            disabled={
+              busy ||
+              !(fn.quote_version > 0) ||
+              !(fn.customer_phone || "").trim()
+            }
+            title={
+              !(fn.customer_phone || "").trim()
+                ? "Add a customer phone on the Enquiry step first"
+                : "WhatsApp the quotation summary to the guest"
+            }
+            onClick={() =>
+              act(() => banquet.sendQuotation(fn.name, ["whatsapp"]))
+            }
+          >
+            WhatsApp guest
+          </Button>
+          <Button
+            variant="outline"
             disabled={busy || (fn.status !== "Confirmed" && fn.status !== "Completed")}
             onClick={() => act(() => banquet.generateBeo(fn.name))}
           >
             {fn.beo_number ? "Reissue event order" : "Issue event order"}
           </Button>
-          <div className="text-xs text-zinc-400">
+          <div className="basis-full text-xs text-zinc-400">
             {fn.quote_sent_on
-              ? `Quote v${fn.quote_version} sent ${fn.quote_sent_on}${
+              ? `Quote v${fn.quote_version} issued ${fn.quote_sent_on}${
                   fn.quote_valid_till ? `, valid till ${fn.quote_valid_till}` : ""
                 }.`
               : "No quote issued yet."}
+            {fn.quote_emailed_on
+              ? ` Sent to guest ${String(fn.quote_emailed_on).slice(0, 16)}.`
+              : fn.quote_version > 0
+                ? " Not emailed yet."
+                : ""}
+            {fn.customer_confirm_outcome
+              ? ` Guest ${fn.customer_confirm_outcome.toLowerCase()} via ${fn.customer_confirm_channel} on ${fn.customer_confirmed_on}.`
+              : ""}
             {fn.beo_number && ` Event order ${fn.beo_number}.`}
           </div>
         </CardContent>
       </Card>
     </div>
+  )
+}
+
+/* ── department checklist (on Confirm) ─────────────────────────────────── */
+
+function ChecklistPanel({
+  fn,
+  busy,
+  act,
+}: {
+  fn: string
+  busy: boolean
+  act: Act
+}) {
+  const [board, setBoard] = useState<{
+    open: number
+    done: number
+    total: number
+    departments: {
+      department: string
+      tasks: {
+        name: string
+        department: string
+        title: string
+        due_date: string | null
+        status: string
+        completed_on: string | null
+        completed_by: string | null
+      }[]
+    }[]
+  } | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  const load = useCallback(() => {
+    banquet
+      .functionTasks(fn)
+      .then(setBoard)
+      .catch((e) => setError(serverError(e)))
+  }, [fn])
+
+  useEffect(load, [load])
+
+  if (error) return <ErrorNote error={error} />
+  if (!board) return null
+  if (board.total === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>
+            <span className="inline-flex items-center gap-1.5">
+              <CheckSquare className="size-4" />
+              Department checklist
+            </span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-zinc-500">
+            No checklist tasks yet. Confirming a function creates Sales,
+            Finance, Housekeeping and F&amp;B tasks from property templates.
+          </p>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>
+          <span className="inline-flex items-center gap-1.5">
+            <CheckSquare className="size-4" />
+            Department checklist
+            <span className="ml-2 font-mono text-xs font-normal text-zinc-400">
+              {board.done}/{board.total} done · {board.open} open
+            </span>
+          </span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {board.departments.map((dept) => (
+          <div key={dept.department}>
+            <p className="mb-2 text-[11px] font-medium uppercase tracking-wider text-zinc-400">
+              {dept.department}
+            </p>
+            <ul className="space-y-1.5">
+              {dept.tasks.map((t) => (
+                <li
+                  key={t.name}
+                  className="flex flex-wrap items-center gap-2 rounded-lg border border-zinc-100 px-3 py-2"
+                >
+                  <button
+                    type="button"
+                    disabled={busy}
+                    className={
+                      "flex size-5 shrink-0 items-center justify-center rounded border text-xs " +
+                      (t.status === "Done"
+                        ? "border-emerald-600 bg-emerald-600 text-white"
+                        : "border-zinc-300 bg-white text-transparent hover:border-brand-500")
+                    }
+                    aria-label={
+                      t.status === "Done" ? "Mark open" : "Mark done"
+                    }
+                    onClick={() =>
+                      act(async () => {
+                        await banquet.completeFunctionTask(
+                          t.name,
+                          t.status !== "Done",
+                        )
+                        load()
+                      })
+                    }
+                  >
+                    ✓
+                  </button>
+                  <span
+                    className={
+                      "min-w-0 flex-1 text-sm " +
+                      (t.status === "Done"
+                        ? "text-zinc-400 line-through"
+                        : "text-zinc-800")
+                    }
+                  >
+                    {t.title}
+                  </span>
+                  {t.due_date && (
+                    <span className="text-xs text-zinc-400">
+                      due {t.due_date}
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </CardContent>
+    </Card>
   )
 }
 

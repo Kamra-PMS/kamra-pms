@@ -1,132 +1,35 @@
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { getLang, type Lang } from "./dir"
+import ar from "../i18n/locales/ar.json"
 
-/** Arabic strings, keyed by the English source. Grows incrementally - any
- * key without a translation falls back to English, so the app never breaks
- * as coverage expands. Covers the app/nav labels and common actions first. */
-const AR: Record<string, string> = {
-  // apps
-  "Front Desk": "الاستقبال",
-  "Housekeeping": "التدبير المنزلي",
-  "Operations": "العمليات",
-  "F&B": "المأكولات والمشروبات",
-  "Events": "الفعاليات",
-  "Revenue": "الإيرادات",
-  "Finance": "المالية",
-  "Booking Engine": "محرك الحجز",
-  "Admin": "الإدارة",
-  // front desk nav
-  "Today": "اليوم",
-  "Dashboard": "لوحة التحكم",
-  "Kamra Agent": "وكيل كامرا",
-  "Reservations": "الحجوزات",
-  "Central Reservations": "الحجوزات المركزية",
-  "Tape Chart": "مخطط الغرف",
-  "Calendar": "التقويم",
-  "Guests": "الضيوف",
-  "Room Blocks": "حجب الغرف",
-  // housekeeping / ops
-  "Room Board": "لوحة الغرف",
-  "Lost & Found": "المفقودات",
-  "Guest Requests": "طلبات الضيوف",
-  "SLA Report": "تقرير مستوى الخدمة",
-  "Shifts": "الورديات",
-  // f&b
-  "Restaurant POS": "نقطة بيع المطعم",
-  "Kitchen Display": "شاشة المطبخ",
-  "Menu": "القائمة",
-  "Outlets": "المنافذ",
-  // finance / revenue
-  "Billing": "الفوترة",
-  "Reports": "التقارير",
-  "Rate Plans": "خطط الأسعار",
-  "Seasons": "المواسم",
-  "Vouchers": "القسائم",
-  "Companies": "الشركات",
-  // common actions
-  "Search": "بحث",
-  "Save": "حفظ",
-  "Cancel": "إلغاء",
-  "Confirm": "تأكيد",
-  "Check in": "تسجيل الوصول",
-  "Check out": "تسجيل المغادرة",
-  "Arrivals": "الوصول",
-  "Departures": "المغادرة",
-  "In house": "داخل الفندق",
-  "Occupancy": "الإشغال",
-  "Revenue today": "إيرادات اليوم",
-  "Laundry": "الغسيل",
-  "Phone App": "تطبيق الهاتف",
-  "WhatsApp": "واتساب",
-  "Channels": "القنوات",
-  "Banquets": "المآدب",
-  "Month Availability": "توفر الشهر",
-  "Function Diary": "يومية المناسبات",
-  "Registers": "السجلات",
-  "Menus & Services": "القوائم والخدمات",
-  "All Functions": "كل المناسبات",
-  "Revenue Reports": "تقارير الإيرادات",
-  "Channel Manager": "مدير القنوات",
-  "OTA Room Mappings": "ربط غرف OTA",
-  "Guardrails": "حدود الأسعار",
-  "Meal Plans": "خطط الوجبات",
-  "Travel Agents": "وكلاء السفر",
-  "Accounting Export": "تصدير المحاسبة",
-  "Hotel Profile": "ملف الفندق",
-  "Amenities": "المرافق",
-  "Photos": "الصور",
-  "Policies": "السياسات",
-  "Payments": "المدفوعات",
-  "FAQ": "الأسئلة الشائعة",
-  "SEO": "تحسين محركات البحث",
-  "Settings": "الإعدادات",
-  "Rooms": "الغرف",
-  "Room Types": "أنواع الغرف",
-  "Activity Log": "سجل النشاط",
-  "Marketplace": "السوق",
-  "Developers": "المطورون",
-  "New Property": "عقار جديد",
-  "Manage Users": "إدارة المستخدمين",
-  "Frappe Desk": "مكتب فراب",
-  "Kitchen Inventory": "مخزون المطبخ",
-  "Banquets & Groups": "المآدب والمجموعات",
-  "Group bookings": "حجوزات المجموعات",
-  "Halls & Venues": "القاعات والأماكن",
-  "Group": "مجموعة",
-  "New booking": "حجز جديد",
-  "Sign out": "تسجيل الخروج",
-  "About this install": "حول هذا التثبيت",
-  "Email": "البريد الإلكتروني",
-  "Email or username": "البريد الإلكتروني أو اسم المستخدم",
-  "Password": "كلمة المرور",
-  "Sign in": "تسجيل الدخول",
-  "Signing in...": "جارٍ تسجيل الدخول...",
-  "Wrong email or password.": "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
-  "Wrong email, username, or password.": "البريد الإلكتروني أو اسم المستخدم أو كلمة المرور غير صحيحة.",
-  "New": "جديد",
-  "Delete": "حذف",
-  "Export": "تصدير",
-  "Columns": "الأعمدة",
-  "Search…": "بحث…",
-  "Saving…": "جارٍ الحفظ…",
-  "Saved": "تم الحفظ",
-  "Clear": "مسح",
-  "Done": "تم",
-  "Property": "العقار",
-  "Front desk hours": "ساعات الاستقبال",
-  "Tax": "الضريبة",
-  "Guest privacy": "خصوصية الضيف",
-  "Booking page": "صفحة الحجز",
-  "AI assistant (bring your own key)": "مساعد الذكاء الاصطناعي (مفتاحك الخاص)",
-  "Revenue controls": "ضوابط الإيرادات",
-  "Laundry rate card": "بطاقة أسعار الغسيل",
+/** Locale dictionaries keyed by English source string. Missing keys fall back
+ * to English so the app never blanks as coverage expands. */
+const DICT: Record<string, Record<string, string>> = {
+  en: {},
+  ar: ar as Record<string, string>,
 }
 
-const DICT: Record<Lang, Record<string, string>> = { en: {}, ar: AR }
+export type Vars = Record<string, string | number>
+
+/** Replace `{name}` placeholders in a template. Arabic (and others) can
+ * reorder words by placing the same placeholders differently. */
+function interpolate(template: string, vars?: Vars): string {
+  if (!vars) return template
+  return template.replace(/\{(\w+)\}/g, (_, k: string) =>
+    vars[k] !== undefined && vars[k] !== null ? String(vars[k]) : `{${k}}`,
+  )
+}
 
 /** Translate an English string for the current language (falls back to it). */
-export function t(s: string): string {
-  return DICT[getLang()][s] ?? s
+export function t(s: string, vars?: Vars): string {
+  const dict = DICT[getLang()] ?? {}
+  return interpolate(dict[s] ?? s, vars)
+}
+
+/** Translate for a specific language (e.g. offline export). */
+export function tFor(lang: Lang, s: string, vars?: Vars): string {
+  const dict = DICT[lang] ?? {}
+  return interpolate(dict[s] ?? s, vars)
 }
 
 /** Subscribe a component to the language: re-renders on change, returns a
@@ -138,5 +41,12 @@ export function useT() {
     window.addEventListener("kamra:lang", on)
     return () => window.removeEventListener("kamra:lang", on)
   }, [])
-  return { lang, t: (s: string) => DICT[lang][s] ?? s }
+  const t = useCallback(
+    (s: string, vars?: Vars) => {
+      const dict = DICT[lang] ?? {}
+      return interpolate(dict[s] ?? s, vars)
+    },
+    [lang],
+  )
+  return { lang, t }
 }

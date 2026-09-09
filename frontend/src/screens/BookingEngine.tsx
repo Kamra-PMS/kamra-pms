@@ -16,6 +16,9 @@ const inputCls =
   "w-full rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm " +
   "focus:outline-2 focus:outline-offset-1 focus:outline-brand-600"
 
+const isVideo = (u: string) =>
+  /\.(mp4|mov|webm|m4v|3gp|avi)$/i.test((u ?? "").trim())
+
 export default function BookingEngine() {
   const property = getCurrentProperty()
   const { section = "profile" } = useParams()
@@ -475,9 +478,9 @@ export default function BookingEngine() {
                   <div className="border-t border-zinc-100 pt-4">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm font-semibold text-zinc-700">
-                        Photo Gallery
+                        Photo & Video Gallery
                         <span className="ml-2 text-xs font-normal text-zinc-400">
-                          1600×900px (16:9), JPG/WebP — same shape keeps the grid tidy
+                          Images 1600×900px (16:9) JPG/WebP, or a video (MP4, up to ~10 MB)
                         </span>
                       </span>
                       <Button
@@ -487,7 +490,7 @@ export default function BookingEngine() {
                           updateField("gallery", gallery)
                         }}
                       >
-                        <Plus className="size-4" /> Add Photo
+                        <Plus className="size-4" /> Add Photo / Video
                       </Button>
                     </div>
 
@@ -497,7 +500,8 @@ export default function BookingEngine() {
                           <div className="min-w-0 flex-1">
                             <ImageField
                               hint=""
-                              placeholder="Upload, or paste a photo URL"
+                              accept="image/*,video/*"
+                              placeholder="Upload, or paste an image/video URL"
                               value={photo.url ?? ""}
                               onChange={(v) => {
                                 const gallery = (doc.gallery || []).map((g: any, idx: number) =>
@@ -544,7 +548,11 @@ export default function BookingEngine() {
                           .filter((g: any) => g.url?.trim())
                           .map((g: any, index: number) => (
                             <div key={index} className="relative size-20 shrink-0 border border-zinc-100 rounded-lg overflow-hidden bg-zinc-50">
-                              <img src={g.url} alt="" className="size-full object-cover" />
+                              {isVideo(g.url) ? (
+                                <video src={g.url} muted playsInline controls className="size-full object-cover" />
+                              ) : (
+                                <img src={g.url} alt="" className="size-full object-cover" />
+                              )}
                             </div>
                           ))}
                       </div>

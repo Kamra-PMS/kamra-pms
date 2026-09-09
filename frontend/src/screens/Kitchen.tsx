@@ -1,14 +1,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
   ChefHat, Check, RefreshCw, Clock, X, Undo2, TriangleAlert, Flame, Lock,
-  Martini, CookingPot, Utensils, Bell, BellOff, Play, Inbox, Maximize2, Minimize2,
+  Martini, CookingPot, Utensils, Bell, BellOff, Play, Inbox, Maximize2, Minimize2, Menu,
+  Focus, LogOut,
 } from "lucide-react"
+import { useNavigate } from "react-router-dom"
 import { call, getCurrentProperty } from "../lib/api"
 import { subscribeRealtime } from "../lib/realtime"
 import { Button } from "../components/ui/button"
 import { cn } from "../lib/utils"
 import { cur } from "../lib/money"
 import { useFloorFullscreen } from "../lib/kiosk"
+import { useT } from "../lib/i18n"
 
 type LineState = "cooking" | "held" | "cancelled" | "done"
 
@@ -179,13 +182,14 @@ function chime() {
 }
 
 function VegDot({ veg }: { veg: 0 | 1 | null }) {
+  const { t } = useT()
   if (veg === null) return null
   // The Indian mark: green dot in a green square = veg, maroon triangle in a
   // maroon square = non-veg. Shape carries it, so it survives a colourblind
   // cook and a sun-washed screen.
   return (
     <span
-      aria-label={veg ? "Veg" : "Non-veg"}
+      aria-label={veg ? t("Veg") : t("Non-veg")}
       className={cn("grid size-4 shrink-0 place-items-center rounded-[3px] border-2",
         veg ? "border-emerald-600" : "border-rose-700")}>
       {veg ? (
@@ -200,32 +204,35 @@ function VegDot({ veg }: { veg: 0 | 1 | null }) {
 /* The allergen alarm. The match is a guard, not a guarantee, so the guest's
    own words always ride along with it. */
 function AllergyBadge({ hits }: { hits: string[] }) {
+  const { t } = useT()
   if (!hits.length) return null
   return (
     <span className="inline-flex items-center gap-1 rounded bg-rose-600 px-1.5 py-0.5 text-[10px] font-black uppercase tracking-wide text-white">
-      <TriangleAlert className="size-3" />{hits.join(" · ")} allergy
+      <TriangleAlert className="size-3" />{hits.join(" · ")} {t("allergy")}
     </span>
   )
 }
 
 function StationHead({ station, count }: { station: string; count: number }) {
+  const { t } = useT()
   const Icon = STATION_ICON[station] ?? Utensils
   return (
     <div className="flex items-center gap-2 pt-3">
       <Icon className="size-4 text-zinc-400" />
-      <span className="text-xs font-black uppercase tracking-wider text-zinc-500">{station}</span>
+      <span className="text-xs font-black uppercase tracking-wider text-zinc-500">{t(station)}</span>
       <span className="rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] font-bold text-zinc-500">
-        {count} item{count === 1 ? "" : "s"}
+        {t("{n} item{s}", { n: count, s: count === 1 ? "" : "s" })}
       </span>
     </div>
   )
 }
 
 function Timeline({ order, now }: { order: KotOrder; now: number }) {
-  const t = timeline(order)
+  const { t } = useT()
+  const tl = timeline(order)
   const p = progressOf(order)
   const steps: [typeof Inbox, string, number | null][] = [
-    [Inbox, "Ordered", t.ordered], [Flame, "Fired", t.fired], [Check, "Ready", t.ready],
+    [Inbox, t("Ordered"), tl.ordered], [Flame, t("Fired"), tl.fired], [Check, t("Ready"), tl.ready],
   ]
   return (
     <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 border-b border-zinc-200 bg-zinc-50/70 px-5 py-2.5">
@@ -242,7 +249,7 @@ function Timeline({ order, now }: { order: KotOrder; now: number }) {
       </div>
       {p.total > 0 && (
         <div className="flex items-center gap-2">
-          <span className="text-xs font-bold tabular-nums text-zinc-600">{p.done} / {p.total} ready</span>
+          <span className="text-xs font-bold tabular-nums text-zinc-600">{p.done} / {p.total} {t("ready")}</span>
           <div className="h-1.5 w-28 overflow-hidden rounded-full bg-zinc-200">
             <div className="h-full rounded-full bg-brand-600 transition-all"
               style={{ width: `${Math.round((p.done / p.total) * 100)}%` }} />
@@ -259,6 +266,7 @@ function Line({ it, order, busy, onAction, big }: {
   onAction: (fn: string, params: Record<string, unknown>) => void
   big?: boolean
 }) {
+  const { t } = useT()
   const done = it.state === "done"
   return (
     <li className={cn("flex items-center gap-3", big ? "py-3" : "py-2")}>
@@ -286,16 +294,16 @@ function Line({ it, order, busy, onAction, big }: {
       {done ? (
         <Button disabled={busy === order.name + it.name}
           onClick={() => onAction("recall_prepared", { item_row: it.name })}
-          title="Undo — put it back on the board"
+          title={t("Undo — put it back on the board")}
           className={cn("shrink-0", big ? "h-12 px-6 text-base" : "h-9 px-3 text-xs")}>
-          <Check className={big ? "size-5" : "size-4"} />Ready
+          <Check className={big ? "size-5" : "size-4"} />{t("Ready")}
         </Button>
       ) : (
         <Button variant="outline" disabled={busy === order.name + it.name}
           onClick={() => onAction("mark_prepared", { item_row: it.name })}
           className={cn("shrink-0 border-brand-600 text-brand-700",
             big ? "h-12 px-6 text-base" : "h-9 px-3 text-xs")}>
-          Mark ready
+          {t("Mark ready")}
         </Button>
       )}
     </li>
@@ -314,6 +322,7 @@ function TicketDetail({ order, onClose, onAction, busy, now }: {
   busy: string | null
   now: number
 }) {
+  const { t } = useT()
   const secs = firedAgeSecs(order, now)
   const tone = ageTone(secs)
   const live = order.items.filter((i) => i.state === "cooking" || i.state === "done")
@@ -330,7 +339,10 @@ function TicketDetail({ order, onClose, onAction, busy, now }: {
 
   return (
     <aside
-      aria-label={`Ticket ${order.kot_no ?? ""} ${destination(order)}`}
+      aria-label={t("Ticket {kot} {dest}", {
+        kot: order.kot_no ?? "",
+        dest: destination(order),
+      })}
       className="fixed inset-y-0 right-0 z-50 flex w-full flex-col border-l border-zinc-200 bg-white shadow-2xl sm:w-1/2">
       <div className={cn("h-1.5 w-full shrink-0", tone.bar)} />
       <header className="flex shrink-0 items-start justify-between gap-4 px-5 py-4">
@@ -358,9 +370,9 @@ function TicketDetail({ order, onClose, onAction, busy, now }: {
             <div className={cn("text-3xl font-black tabular-nums leading-none", tone.text)}>
               {secs === null ? "—" : `${Math.floor(secs / 60)}m`}
             </div>
-            <div className="mt-1 text-[10px] font-bold uppercase tracking-widest text-zinc-400">elapsed</div>
+            <div className="mt-1 text-[10px] font-bold uppercase tracking-widest text-zinc-400">{t("elapsed")}</div>
           </div>
-          <button onClick={onClose} aria-label="Back to board"
+          <button onClick={onClose} aria-label={t("Back to board")}
             className="grid size-12 place-items-center rounded-xl border border-zinc-300 text-zinc-600 hover:bg-zinc-100">
             <X className="size-6" />
           </button>
@@ -374,7 +386,7 @@ function TicketDetail({ order, onClose, onAction, busy, now }: {
           <div className="mb-3 flex items-start gap-2 rounded-xl border-2 border-rose-500 bg-rose-50 px-4 py-3">
             <TriangleAlert className="mt-0.5 size-5 shrink-0 text-rose-600" />
             <div>
-              <div className="text-xs font-black uppercase tracking-wide text-rose-700">Guest allergy</div>
+              <div className="text-xs font-black uppercase tracking-wide text-rose-700">{t("Guest allergy")}</div>
               <p className="text-base font-bold text-rose-900">{order.allergy_note}</p>
             </div>
           </div>
@@ -384,7 +396,7 @@ function TicketDetail({ order, onClose, onAction, busy, now }: {
           <div key={it.name} className="mb-3 rounded-xl border-2 border-rose-500 bg-rose-50 px-4 py-3">
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
-                <div className="text-xs font-black tracking-wide text-rose-700">CANCELLED — STOP COOKING</div>
+                <div className="text-xs font-black tracking-wide text-rose-700">{t("CANCELLED — STOP COOKING")}</div>
                 <div className="mt-0.5 truncate text-lg font-bold text-rose-900 line-through">
                   {Math.round(it.qty)}× {it.item_name}
                 </div>
@@ -393,7 +405,7 @@ function TicketDetail({ order, onClose, onAction, busy, now }: {
               <Button variant="outline" disabled={busy === order.name + it.name}
                 onClick={() => onAction("acknowledge_void", { item_row: it.name })}
                 className="h-12 shrink-0 border-rose-400 px-5 text-base text-rose-700">
-                Got it
+                {t("Got it")}
               </Button>
             </div>
           </div>
@@ -417,12 +429,12 @@ function TicketDetail({ order, onClose, onAction, busy, now }: {
             <div key={course} className="mt-4 rounded-xl border-2 border-dashed border-amber-300 bg-amber-50/40 p-3">
               <div className="mb-2 flex items-center justify-between gap-3">
                 <span className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-amber-700">
-                  <Lock className="size-3.5" />{course} · held
+                  <Lock className="size-3.5" />{course} · {t("held")}
                 </span>
                 <Button disabled={busy === order.name + course}
                   onClick={() => onAction("fire_kot", { course })}
                   className="h-11 bg-amber-600 px-5 text-base hover:bg-amber-700">
-                  <Flame className="size-4" />Fire {course.toLowerCase()}
+                  <Flame className="size-4" />{t("Fire {course}", { course: course.toLowerCase() })}
                 </Button>
               </div>
               <ul className="space-y-1.5">
@@ -445,7 +457,7 @@ function TicketDetail({ order, onClose, onAction, busy, now }: {
           <div className="mt-4 flex items-start gap-2 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3">
             <TriangleAlert className="mt-0.5 size-4 shrink-0 text-amber-600" />
             <p className="text-sm font-semibold text-amber-900">
-              <span className="font-black">Table note: </span>{order.notes}
+              <span className="font-black">{t("Table note")}: </span>{order.notes}
             </p>
           </div>
         )}
@@ -456,18 +468,18 @@ function TicketDetail({ order, onClose, onAction, busy, now }: {
           <Button variant="outline" disabled={busy === order.name}
             onClick={() => onAction("recall_prepared", {})}
             className="h-16 shrink-0 px-6 text-base">
-            <Undo2 className="size-5" />Recall
+            <Undo2 className="size-5" />{t("Recall")}
           </Button>
         )}
         {!order.accepted_at && anyCooking ? (
           <Button disabled={busy === order.name} onClick={() => onAction("accept_ticket", {})}
             className="h-16 flex-1 justify-center bg-amber-600 text-lg font-bold hover:bg-amber-700">
-            <Play className="size-6" />Start / accept
+            <Play className="size-6" />{t("Start / accept")}
           </Button>
         ) : anyCooking ? (
           <Button disabled={busy === order.name} onClick={() => onAction("mark_prepared", {})}
             className="h-16 flex-1 justify-center text-lg font-bold">
-            <Check className="size-6" />All ready — send to pass
+            <Check className="size-6" />{t("All ready — send to pass")}
           </Button>
         ) : null}
       </footer>
@@ -476,6 +488,7 @@ function TicketDetail({ order, onClose, onAction, busy, now }: {
 }
 
 export default function Kitchen() {
+  const { t } = useT()
   const [station, setStation] = useState("")
   const [outlet, setOutlet] = useState("")
   const [outlets, setOutlets] = useState<{ name: string; outlet_name: string }[]>([])
@@ -486,9 +499,10 @@ export default function Kitchen() {
   const rootRef = useRef<HTMLDivElement>(null)
   const openOrderRef = useRef<string | null>(null)
   openOrderRef.current = openOrder
-  const { kioskOn, browserFs, toggleBrowserFs } = useFloorFullscreen(rootRef, {
+  const { kioskOn, browserFs, toggleBrowserFs, toggleFocus, exitFloor } = useFloorFullscreen(rootRef, {
     blockEscape: () => !!openOrderRef.current,
   })
+  const navigate = useNavigate()
   const now = useNow()
 
   useEffect(() => {
@@ -572,14 +586,14 @@ export default function Kitchen() {
       open && "sm:pr-[calc(50vw+1rem)]")}>
       <div className="flex shrink-0 flex-wrap items-center justify-between gap-3">
         <h1 className="flex items-center gap-2 text-xl font-bold text-zinc-800">
-          <ChefHat className="size-5 text-brand-600" />Kitchen pass
-          <span className="text-sm font-medium text-zinc-400">{orders.length} tickets</span>
+          <ChefHat className="size-5 text-brand-600" />{t("Kitchen pass")}
+          <span className="text-sm font-medium text-zinc-400">{t("{n} tickets", { n: orders.length })}</span>
         </h1>
         <div className="flex flex-wrap items-center gap-2">
           <select
             className="rounded-lg border border-zinc-300 bg-white px-2.5 py-1.5 text-sm"
             value={outlet} onChange={(e) => setOutlet(e.target.value)}>
-            <option value="">All outlets</option>
+            <option value="">{t("All outlets")}</option>
             {outlets.map((o) => <option key={o.name} value={o.name}>{o.outlet_name}</option>)}
           </select>
           <div className="flex flex-wrap rounded-lg border border-zinc-200 bg-white p-0.5 text-sm">
@@ -587,29 +601,50 @@ export default function Kitchen() {
               <button key={s} onClick={() => setStation(s)}
                 className={"rounded-md px-3 py-1.5 font-medium " +
                   (station === s ? "bg-brand-600 text-white" : "text-zinc-600")}>
-                {s || "All"}
+                {s ? t(s) : t("All")}
               </button>
             ))}
           </div>
+          {kioskOn && (
+            <button type="button" onClick={exitFloor}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-2.5 py-1.5 text-sm font-medium text-zinc-600 hover:bg-zinc-50"
+              title="Show the app menu (Esc)">
+              <Menu className="size-4" />Menu
+            </button>
+          )}
           <button onClick={toggleSound}
             aria-pressed={sound}
             className={cn("inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-sm font-medium",
               sound ? "border-amber-300 bg-amber-50 text-amber-700" : "border-zinc-300 bg-white text-zinc-400")}>
             {sound ? <Bell className="size-4" /> : <BellOff className="size-4" />}
-            Sound {sound ? "on" : "off"}
+            {t("Sound {state}", { state: sound ? t("on") : t("off") })}
+          </button>
+          <button onClick={toggleFocus}
+            className={cn("rounded-lg border p-2",
+              kioskOn
+                ? "border-brand-600 bg-brand-50 text-brand-800"
+                : "border-zinc-300 bg-white text-zinc-600 hover:bg-zinc-50")}
+            title={kioskOn ? t("Show PMS menus (Esc)") : t("Focus mode — hide PMS menus")}>
+            <Focus className="size-4" />
           </button>
           <button onClick={toggleBrowserFs}
             className="rounded-lg border border-zinc-300 bg-white p-2 text-zinc-600 hover:bg-zinc-50"
-            title={browserFs ? "Exit full screen (Esc)" : "Browser full screen"}>
+            title={browserFs ? t("Exit full screen (Esc)") : t("Browser full screen")}>
             {browserFs ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
           </button>
-          <button onClick={load} aria-label="Refresh"><RefreshCw className="size-5 text-zinc-400" /></button>
+          <button onClick={() => { exitFloor(); navigate("/dashboard") }}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-2.5 py-2 text-xs font-semibold text-zinc-600 hover:bg-zinc-50"
+            title={t("Exit the kitchen pass — back to the PMS")}>
+            <LogOut className="size-4" />
+            <span className="hidden xl:inline">{t("Exit")}</span>
+          </button>
+          <button onClick={load} aria-label={t("Refresh")}><RefreshCw className="size-5 text-zinc-400" /></button>
         </div>
       </div>
 
       {orders.length === 0 ? (
         <div className="flex flex-1 items-center justify-center rounded-2xl border border-dashed border-zinc-300 p-12 text-center text-zinc-400">
-          No open tickets. The kitchen is clear.
+          {t("No open tickets. The kitchen is clear.")}
         </div>
       ) : (
         <div className={cn("min-h-0 flex-1 overflow-y-auto",
@@ -637,7 +672,7 @@ export default function Kitchen() {
                       {o.kot_no ? `KOT ${o.kot_no} · ` : ""}{o.order_type}
                     </span>
                     <span className={cn("shrink-0 text-[10px] font-black uppercase tracking-wider", tone.text)}>
-                      {statusWord(secs)}
+                      {statusWord(secs) === "HELD" ? t("HELD") : statusWord(secs) === "LATE" ? t("LATE") : statusWord(secs) === "COOKING" ? t("COOKING") : t("NEW")}
                     </span>
                   </div>
                   <div className="flex items-end justify-between gap-2">
@@ -672,7 +707,7 @@ export default function Kitchen() {
                   <button onClick={() => setOpenOrder(o.name)}
                     className="flex items-center gap-1.5 bg-rose-50 px-3 py-1.5 text-left text-xs font-black text-rose-700">
                     <TriangleAlert className="size-3.5 shrink-0" />
-                    {cancelled.length} CANCELLED — STOP
+                    {cancelled.length} {t("CANCELLED — STOP")}
                   </button>
                 )}
 
@@ -680,7 +715,7 @@ export default function Kitchen() {
                   {groupBy(live, (i) => i.course, COURSE_ORDER).map(([course, items]) => (
                     <div key={course}>
                       <div className="pt-2 text-[10px] font-black uppercase tracking-wider text-zinc-400">
-                        {course}
+                        {t(course)}
                       </div>
                       <ul className="divide-y divide-zinc-50">
                         {items.map((it) => (
@@ -694,7 +729,7 @@ export default function Kitchen() {
 
                 {p.total > 0 && (
                   <div className="px-3 py-1 text-right text-[11px] font-bold tabular-nums text-zinc-400">
-                    {p.done} of {p.total} ready
+                    {p.done} {t("of")} {p.total} {t("ready")}
                   </div>
                 )}
 
@@ -708,13 +743,15 @@ export default function Kitchen() {
                   <div key={course} className="mx-2 mb-2 rounded-lg border border-dashed border-amber-300 bg-amber-50/50 p-1.5">
                     <div className="flex items-center justify-between gap-2">
                       <span className="inline-flex items-center gap-1 truncate text-[10px] font-black uppercase tracking-wider text-amber-700">
-                        <Lock className="size-3" />{course} held ·{" "}
-                        {held.filter((i) => i.course === course).length}
+                        <Lock className="size-3" />{t("{course} held · {n}", {
+                          course,
+                          n: held.filter((i) => i.course === course).length,
+                        })}
                       </span>
                       <Button disabled={busy === o.name + course}
                         onClick={() => act(o.name, "fire_kot", { course })}
                         className="h-9 shrink-0 bg-amber-600 px-3 text-xs hover:bg-amber-700">
-                        <Flame className="size-3.5" />Fire
+                        <Flame className="size-3.5" />{t("Fire")}
                       </Button>
                     </div>
                   </div>
@@ -726,12 +763,12 @@ export default function Kitchen() {
                       <Button variant="outline" disabled={busy === o.name}
                         onClick={() => act(o.name, "accept_ticket", {})}
                         className="h-11 w-full justify-center border-amber-400 text-amber-700 hover:bg-amber-50">
-                        <Flame className="size-4" />Start / accept
+                        <Flame className="size-4" />{t("Start / accept")}
                       </Button>
                     ) : (
                       <Button className="h-11 w-full justify-center" disabled={busy === o.name}
                         onClick={() => act(o.name, "mark_prepared", {})}>
-                        <Check className="size-4" />All ready
+                        <Check className="size-4" />{t("All ready")}
                       </Button>
                     )}
                   </div>
