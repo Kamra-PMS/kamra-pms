@@ -13,6 +13,7 @@ import {
   CardTitle,
 } from "../components/ui/card"
 import { cn } from "../lib/utils"
+import { useT } from "../lib/i18n"
 
 interface Ticket {
   name: string
@@ -46,6 +47,7 @@ const inputCls =
   "focus:outline-2 focus:outline-offset-1 focus:outline-brand-600"
 
 export default function Tickets() {
+  const { t } = useT()
   const [rows, setRows] = useState<Ticket[]>([])
   const [showClosed, setShowClosed] = useState(false)
   const [creating, setCreating] = useState(false)
@@ -110,9 +112,9 @@ export default function Tickets() {
     <Card>
       <CardHeader>
         <div>
-          <CardTitle>Service Tickets</CardTitle>
+          <CardTitle>{t("Service Tickets")}</CardTitle>
           <p className="mt-0.5 text-xs text-zinc-400">
-            Guest requests with SLA - Urgent 15m · High 30m · Medium 1h · Low 4h
+            {t("Guest requests with SLA - Urgent 15m · High 30m · Medium 1h · Low 4h")}
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -123,11 +125,11 @@ export default function Tickets() {
               checked={showClosed}
               onChange={(e) => setShowClosed(e.target.checked)}
             />
-            Show closed
+            {t("Show closed")}
           </label>
           <Button onClick={() => setCreating(true)}>
             <Plus className="size-4" aria-hidden />
-            New ticket
+            {t("New ticket")}
           </Button>
         </div>
       </CardHeader>
@@ -138,71 +140,71 @@ export default function Tickets() {
           </div>
         )}
         <ul className="divide-y divide-zinc-100">
-          {rows.map((t) => (
-            <li key={t.name} className="flex flex-wrap items-center gap-3 py-3">
+          {rows.map((row) => (
+            <li key={row.name} className="flex flex-wrap items-center gap-3 py-3">
               <div
                 className={cn(
                   "min-w-0 flex-1",
-                  t.status === "Resolved" && "opacity-60",
+                  row.status === "Resolved" && "opacity-60",
                 )}
               >
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-sm font-medium">{t.subject}</span>
-                  <Badge tone={prioTone[t.priority] ?? "zinc"}>
-                    {t.priority}
+                  <span className="text-sm font-medium">{row.subject}</span>
+                  <Badge tone={prioTone[row.priority] ?? "zinc"}>
+                    {t(row.priority)}
                   </Badge>
-                  <Badge tone="zinc">{t.category}</Badge>
-                  {t.source !== "Manual" && (
-                    <Badge tone="brand">{t.source}</Badge>
+                  <Badge tone="zinc">{t(row.category)}</Badge>
+                  {row.source !== "Manual" && (
+                    <Badge tone="brand">{t(row.source)}</Badge>
                   )}
-                  {t.overdue && (
+                  {row.overdue && (
                     <span className="inline-flex items-center gap-1 text-xs font-medium text-rose-600">
                       <AlertTriangle className="size-3.5" aria-hidden />
-                      overdue
+                      {t("overdue")}
                     </span>
                   )}
-                  {Boolean(t.breached) && t.status === "Resolved" && (
-                    <span className="text-xs text-rose-400">SLA breached</span>
+                  {Boolean(row.breached) && row.status === "Resolved" && (
+                    <span className="text-xs text-rose-400">{t("SLA breached")}</span>
                   )}
                 </div>
                 <div className="mt-0.5 text-xs text-zinc-500">
-                  {t.name}
-                  {t.room && ` · Room ${t.room.split("-").pop()}`}
-                  {t.guest_name && ` · ${t.guest_name}`}
-                  {" · due "}
-                  {t.due_by?.slice(5, 16)}
+                  {row.name}
+                  {row.room && ` · ${t("Room {n}", { n: row.room.split("-").pop() ?? "" })}`}
+                  {row.guest_name && ` · ${row.guest_name}`}
+                  {" · "}{t("due")}{" "}
+                  {row.due_by?.slice(5, 16)}
                 </div>
               </div>
               <div className="flex gap-2">
-                {t.status === "Open" && (
+                {row.status === "Open" && (
                   <Button
                     variant="outline"
-                    disabled={busy === t.name}
-                    onClick={() => advance(t.name, "In Progress")}
+                    disabled={busy === row.name}
+                    onClick={() => advance(row.name, "In Progress")}
                   >
-                    Start
+                    {t("Start")}
                   </Button>
                 )}
-                {(t.status === "Open" || t.status === "In Progress") && (
+                {(row.status === "Open" || row.status === "In Progress") && (
                   <Button
-                    disabled={busy === t.name}
-                    onClick={() => advance(t.name, "Resolved")}
+                    disabled={busy === row.name}
+                    onClick={() => advance(row.name, "Resolved")}
                   >
-                    Resolve
+                    {t("Resolve")}
                   </Button>
                 )}
-                {t.status === "Resolved" && (
-                  <Badge tone="green">Resolved</Badge>
+                {row.status === "Resolved" && (
+                  <Badge tone="green">{t("Resolved")}</Badge>
                 )}
-                {(t.status === "Closed" || t.status === "Cancelled") && (
-                  <Badge tone="zinc">{t.status}</Badge>
+                {(row.status === "Closed" || row.status === "Cancelled") && (
+                  <Badge tone="zinc">{t(row.status)}</Badge>
                 )}
               </div>
             </li>
           ))}
           {rows.length === 0 && (
             <li className="py-8 text-center text-sm text-zinc-400">
-              No open tickets - a quiet day at the desk.
+              {t("No open tickets - a quiet day at the desk.")}
             </li>
           )}
         </ul>
@@ -210,19 +212,19 @@ export default function Tickets() {
 
       {creating && (
         <Sheet
-          title="New ticket"
-          description="Guest request - SLA starts from priority at creation"
+          title={t("New ticket")}
+          description={t("Guest request - SLA starts from priority at creation")}
           onClose={() => setCreating(false)}
           footer={
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setCreating(false)}>
-                Cancel
+                {t("Cancel")}
               </Button>
               <Button
                 disabled={busy === "new" || !form.subject}
                 onClick={create}
               >
-                Create ticket
+                {t("Create ticket")}
               </Button>
             </div>
           }
@@ -230,11 +232,11 @@ export default function Tickets() {
           <div className="space-y-4">
             <label className="block">
               <span className="mb-1.5 block text-sm font-medium text-zinc-600">
-                Subject
+                {t("Subject")}
               </span>
               <input
                 className={inputCls}
-                placeholder="What does the guest need?"
+                placeholder={t("What does the guest need?")}
                 value={form.subject}
                 onChange={(e) => setForm({ ...form, subject: e.target.value })}
                 autoFocus
@@ -243,7 +245,7 @@ export default function Tickets() {
             <div className="grid grid-cols-2 gap-3">
               <label className="block">
                 <span className="mb-1.5 block text-sm font-medium text-zinc-600">
-                  Category
+                  {t("Category")}
                 </span>
                 <select
                   className={inputCls}
@@ -253,13 +255,13 @@ export default function Tickets() {
                   }
                 >
                   {CATEGORIES.map((c) => (
-                    <option key={c}>{c}</option>
+                    <option key={c}>{t(c)}</option>
                   ))}
                 </select>
               </label>
               <label className="block">
                 <span className="mb-1.5 block text-sm font-medium text-zinc-600">
-                  Priority
+                  {t("Priority")}
                 </span>
                 <select
                   className={inputCls}
@@ -269,36 +271,36 @@ export default function Tickets() {
                   }
                 >
                   {["Low", "Medium", "High", "Urgent"].map((p) => (
-                    <option key={p}>{p}</option>
+                    <option key={p}>{t(p)}</option>
                   ))}
                 </select>
               </label>
             </div>
             <label className="block">
               <span className="mb-1.5 block text-sm font-medium text-zinc-600">
-                Room
+                {t("Room")}
               </span>
               <select
                 className={inputCls}
                 value={form.room}
                 onChange={(e) => setForm({ ...form, room: e.target.value })}
               >
-                <option value="">No room</option>
+                <option value="">{t("No room")}</option>
                 {rooms.map((r) => (
                   <option key={r} value={r}>
-                    Room {r.split("-").pop()}
+                    {t("Room {n}", { n: r.split("-").pop() ?? "" })}
                   </option>
                 ))}
               </select>
             </label>
             <label className="block">
               <span className="mb-1.5 block text-sm font-medium text-zinc-600">
-                Details
+                {t("Details")}
               </span>
               <textarea
                 className={inputCls}
                 rows={3}
-                placeholder="Anything the staff should know (optional)"
+                placeholder={t("Anything the staff should know (optional)")}
                 value={form.description}
                 onChange={(e) =>
                   setForm({ ...form, description: e.target.value })

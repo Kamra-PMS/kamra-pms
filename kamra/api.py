@@ -553,8 +553,17 @@ def registration_card(reservation: str):
 @require_roles("Finance", "Front Desk", "Kamra Agent")
 def cash_summary(property: str, date: str | None = None):
 	"""Cashier reconciliation: what the system says was collected today,
-	per payment mode - the number the drawer must match at shift close."""
-	date = date or nowdate()
+	per payment mode - the number the drawer must match at shift close.
+
+	Prefers Cashier Transaction totals (FO + POS); falls back to folio
+	payments for properties that have not opened a till yet."""
+	from kamra.business_date import get_business_date
+	date = date or get_business_date(property)
+	try:
+		from kamra.cashier import cash_summary_v2
+		return cash_summary_v2(property, date)
+	except Exception:
+		pass
 	rows = frappe.db.sql(
 		"""
 		SELECT fp.mode, COUNT(*) AS txns, COALESCE(SUM(fp.amount), 0) AS total
@@ -566,7 +575,8 @@ def cash_summary(property: str, date: str | None = None):
 		{"property": property, "date": date}, as_dict=True,
 	)
 	return {"date": date, "modes": rows,
-	        "grand_total": float(sum(r.total for r in rows))}
+	        "grand_total": float(sum(r.total for r in rows)),
+	        "source": "folio"}
 
 
 @frappe.whitelist()
@@ -1099,9 +1109,14 @@ def add_folio_charge(folio: str, charge_type: str, description: str,
 	# F&B/minibar charge posted without a rate lands on the bill untaxed
 	gst_rate = _resolve_charge_gst(doc.property, charge_type, description,
 	                               int(is_alcohol or 0), float(gst_rate or 0))
+	from kamra.business_date import get_business_date
+	from kamra.ledger import code_for_charge_type, record_charge_ledger
+	bd = posting_date or get_business_date(doc.property)
+	code = code_for_charge_type(charge_type)
 	doc.append("charges", {
-		"posting_date": posting_date or nowdate(),
+		"posting_date": bd,
 		"charge_type": charge_type,
+		"transaction_code": code,
 		"reservation": reservation or doc.reservation,
 		"description": description,
 		"qty": 1,
@@ -1113,6 +1128,11 @@ def add_folio_charge(folio: str, charge_type: str, description: str,
 	from kamra.folio import _recalculate
 	_recalculate(doc)
 	doc.save()
+	charge = doc.charges[-1]
+	try:
+		record_charge_ledger(doc, charge.as_dict())
+	except Exception:
+		frappe.log_error(title="ledger charge write failed")
 	from kamra.savings import log_action
 	log_action("post_charge", "Folio", doc.name, doc.property,
 	           rationale=f"{charge_type}: {description} ₹{amount}")
@@ -1140,8 +1160,18 @@ def add_folio_payment(folio: str, mode: str, amount: float,
 		frappe.throw("Amount must be positive.")
 	_pin_guard(folio, pin)
 	doc = frappe.get_doc("Folio", folio)
+	from kamra.business_date import get_business_date
+	from kamra.cashier import record_cashier_txn, require_open_session
+	bd = get_business_date(doc.property)
+	sess = None
+	try:
+		sess = require_open_session(doc.property)
+	except Exception:
+		if "Kamra Agent" not in frappe.get_roles() and \
+		   frappe.session.user != "Administrator":
+			raise
 	doc.append("payments", {
-		"posting_date": nowdate(),
+		"posting_date": bd,
 		"payment_kind": kind,
 		"mode": mode,
 		"amount": float(amount),
@@ -1150,25 +1180,40 @@ def add_folio_payment(folio: str, mode: str, amount: float,
 	from kamra.folio import _recalculate
 	_recalculate(doc)
 	doc.save()
+	pay = doc.payments[-1]
+	record_cashier_txn(
+		doc.property, "Payment", mode, float(amount),
+		folio=doc.name, reference=reference, session=sess)
+	try:
+		from kamra.ledger import record_payment_ledger
+		record_payment_ledger(doc, pay.as_dict(), session=sess)
+	except Exception:
+		frappe.log_error(title="ledger payment write failed")
 	return doc.as_dict()
 
 
 @frappe.whitelist(methods=["POST"])
 @require_roles("Finance", "Front Desk", "Kamra Agent")
 def refund_folio_payment(folio: str, amount: float, mode: str,
-                         reason: str, pin: str | None = None):
+                         reason: str, pin: str | None = None,
+                         reason_code: str | None = None,
+                         supervisor_pin: str | None = None):
 	"""Give money back on an open folio - a held security deposit at
 	checkout, or an over-collected advance. Stored as a negative ledger
 	row so every balance still sums exactly; a reason is mandatory."""
 	if float(amount) <= 0:
 		frappe.throw("Refund amount must be positive.")
-	if not (reason or "").strip():
+	if not (reason or "").strip() and not reason_code:
 		frappe.throw("A refund reason is required.")
 	_pin_guard(folio, pin)
 	doc = frappe.get_doc("Folio", folio)
 	if doc.status == "Closed":
 		frappe.throw("This folio is closed - refunds need a credit note "
 		             "via allowance on a new folio.")
+	from kamra.ledger import require_reason
+	reason_text = require_reason(
+		"Refund", reason_code, reason or "",
+		supervisor_pin=supervisor_pin, property=doc.property)
 	received = sum(float(p.amount or 0) for p in doc.payments
 	               if float(p.amount or 0) > 0)
 	refunded = -sum(float(p.amount or 0) for p in doc.payments
@@ -1176,16 +1221,35 @@ def refund_folio_payment(folio: str, amount: float, mode: str,
 	if float(amount) > received - refunded:
 		frappe.throw(f"Only ₹{received - refunded:,.2f} was collected on "
 		             "this folio - can't refund more than that.")
+	from kamra.business_date import get_business_date
+	from kamra.cashier import record_cashier_txn, require_open_session
+	bd = get_business_date(doc.property)
+	sess = None
+	try:
+		sess = require_open_session(doc.property)
+	except Exception:
+		if "Kamra Agent" not in frappe.get_roles() and \
+		   frappe.session.user != "Administrator":
+			raise
 	doc.append("payments", {
-		"posting_date": nowdate(),
+		"posting_date": bd,
 		"payment_kind": "Refund",
 		"mode": mode,
 		"amount": -float(amount),
-		"reference": reason.strip()[:140],
+		"reference": str(reason_text)[:140],
 	})
 	from kamra.folio import _recalculate
 	_recalculate(doc)
 	doc.save()
+	pay = doc.payments[-1]
+	record_cashier_txn(
+		doc.property, "Refund", mode, -float(amount),
+		folio=doc.name, reference=str(reason_text)[:140], session=sess)
+	try:
+		from kamra.ledger import record_payment_ledger
+		record_payment_ledger(doc, pay.as_dict(), session=sess)
+	except Exception:
+		frappe.log_error(title="ledger refund write failed")
 	return {"ok": True, "balance": doc.balance}
 
 
@@ -1236,13 +1300,24 @@ def _resolve_charge_gst(property: str, charge_type: str, description: str,
 @frappe.whitelist()
 @require_roles("Finance", "Front Desk", "Kamra Agent")
 def void_folio_charge(folio: str, charge_row: str, reason: str = "",
-                      pin: str | None = None):
+                      pin: str | None = None,
+                      reason_code: str | None = None,
+                      supervisor_pin: str | None = None):
 	"""Remove a wrong charge line from an open folio (the bill-correction
 	path). PIN-guarded like other money actions for humans; agents are
-	accountable through the action log."""
+	accountable through the action log. Posts a ledger reversal."""
 	_pin_guard(folio, pin)
+	prop = frappe.db.get_value("Folio", folio, "property")
+	from kamra.ledger import require_reason, reverse_ledger_for_charge
+	reason_text = require_reason(
+		"Void", reason_code, reason or "",
+		supervisor_pin=supervisor_pin, property=prop)
+	try:
+		reverse_ledger_for_charge(prop, folio, charge_row, str(reason_text))
+	except Exception:
+		frappe.log_error(title="ledger void reversal failed")
 	from kamra.folio import void_charge
-	return void_charge(folio, charge_row, reason)
+	return void_charge(folio, charge_row, str(reason_text))
 
 
 @frappe.whitelist()
@@ -1463,6 +1538,14 @@ def group_folios(group_booking: str):
 @require_roles("Finance", "Front Desk", "Kamra Agent")
 def close_folio(folio: str, pin: str | None = None):
 	_pin_guard(folio, pin)
+	prop = frappe.db.get_value("Folio", folio, "property")
+	try:
+		from kamra.cashier import require_open_session
+		require_open_session(prop)
+	except Exception:
+		if "Kamra Agent" not in frappe.get_roles() and \
+		   frappe.session.user != "Administrator":
+			raise
 	from kamra.folio import close_folio as _close
 	invoice_number = _close(folio)
 	return {"invoice_number": invoice_number}
@@ -3260,7 +3343,7 @@ def _booking_property_policy(property: str) -> dict:
 	prop = frappe.db.get_value(
 		"Property", property,
 		["sell_message", "free_cancel_days", "cancellation_fee",
-		 "no_show_charge", "deposit_pct"],
+		 "no_show_charge", "deposit_pct", "country"],
 		as_dict=True,
 	) or {}
 	prop["cancellation_fee"] = prop.get("cancellation_fee") or "None"
@@ -3268,6 +3351,8 @@ def _booking_property_policy(property: str) -> dict:
 	prop["free_cancel_days"] = int(prop.get("free_cancel_days") or 0)
 	prop["deposit_pct"] = float(prop.get("deposit_pct") or 0)
 	prop["sell_message"] = prop.get("sell_message") or ""
+	# drives the dial-code prefix on guest phone inputs
+	prop["country"] = prop.get("country") or "India"
 	return prop
 
 
@@ -3785,37 +3870,77 @@ def release_room_block(name: str):
 @require_roles("Finance", "Front Desk", "Revenue Manager", "Housekeeping")
 def cashier_pin_status(property: str):
 	"""Does this property demand a PIN on money actions, and does the
-	signed-in user have one set yet?"""
-	return {
-		"required": bool(frappe.db.get_value(
-			"Property", property, "require_cashier_pin")),
-		"has_pin": bool(frappe.db.exists("Cashier PIN", frappe.session.user)),
-	}
+	signed-in user have one set yet? Includes unlock / lockout state."""
+	from kamra.authz import cashier_unlock_status
+	return cashier_unlock_status(property)
 
 
 @frappe.whitelist(methods=["POST"])
 @require_roles("Finance", "Front Desk", "Revenue Manager", "Housekeeping")
 def set_cashier_pin(pin: str, current_pin: str | None = None):
 	"""Set or change your own cashier PIN (4-8 digits). Changing an existing
-	PIN needs the current one."""
+	PIN needs the current one — unless must_reset was set by an admin."""
 	pin = str(pin or "").strip()
 	if not pin.isdigit() or not (4 <= len(pin) <= 8):
 		frappe.throw("The PIN must be 4 to 8 digits.")
 	user = frappe.session.user
 	if frappe.db.exists("Cashier PIN", user):
-		from frappe.utils.password import get_decrypted_password
-		stored = get_decrypted_password("Cashier PIN", user, "pin",
-		                                raise_exception=False)
-		if not current_pin or str(current_pin).strip() != str(stored):
-			frappe.throw("Your current PIN is needed to change it.")
 		doc = frappe.get_doc("Cashier PIN", user)
+		if not doc.get("must_reset"):
+			from frappe.utils.password import get_decrypted_password
+			stored = get_decrypted_password("Cashier PIN", user, "pin",
+			                                raise_exception=False)
+			if not current_pin or str(current_pin).strip() != str(stored):
+				frappe.throw("Your current PIN is needed to change it.")
 		doc.pin = pin
+		doc.must_reset = 0
+		doc.pin_attempts = 0
+		doc.locked_until = None
 		doc.save(ignore_permissions=True)
 	else:
 		frappe.get_doc({"doctype": "Cashier PIN", "user": user,
-		                "pin": pin}).insert(ignore_permissions=True)
+		                "pin": pin, "must_reset": 0}).insert(
+			ignore_permissions=True)
+	frappe.cache.delete_value(f"kamra_cashier_unlock:{user}")
 	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- persists the completed operation before returning to an external/public caller; reviewed as intentional
 	return {"ok": True}
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Hotel Admin")
+def reset_cashier_pin(user: str):
+	"""Admin reset: wipe the user's PIN and force re-enrollment."""
+	if not user:
+		frappe.throw("user is required.")
+	if frappe.db.exists("Cashier PIN", user):
+		frappe.delete_doc("Cashier PIN", user, ignore_permissions=True,
+		                  force=True)
+	# Leave a must_reset stub so status can surface the flag, OR just
+	# rely on PIN_NOT_SET. Create a stub with must_reset for clarity.
+	frappe.get_doc({
+		"doctype": "Cashier PIN",
+		"user": user,
+		"pin": "0000",  # replaced on enroll; blocked by must_reset
+		"must_reset": 1,
+		"pin_attempts": 0,
+	}).insert(ignore_permissions=True)
+	frappe.cache.delete_value(f"kamra_cashier_unlock:{user}")
+	try:
+		from kamra.savings import log_action
+		log_action("reset_cashier_pin", "Cashier PIN", user, None,
+		           rationale=f"PIN reset for {user} by {frappe.session.user}")
+	except Exception:
+		pass
+	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- persists the completed operation before returning to an external/public caller; reviewed as intentional
+	return {"ok": True, "user": user, "must_reset": True}
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Finance", "Front Desk", "Revenue Manager", "Housekeeping")
+def verify_cashier_pin(property: str, pin: str):
+	"""PinPad unlock: validate PIN and open a 15-minute sliding window."""
+	from kamra.authz import unlock_cashier_session
+	return unlock_cashier_session(property, pin)
 
 
 # ---------------------------------------------------------------------------

@@ -46,6 +46,13 @@ as permission-checked users and cannot go around them.
 Frappe **v16** (with the `payments` app). Install from the `main` branch
 for stable; `develop` is the nightly channel.
 
+## Does Marketplace Kamra include ERPNext or HR?
+
+**No.** Kamra installs with `payments` only. Company books (ERPNext) and
+payroll (Frappe HR) are optional apps on the **same site** when you want
+them — on Frappe Cloud or your own server. See
+[ERPNext and Frappe HR](/self-hosting/erpnext-hr).
+
 ## How does Kamra version its own releases?
 
 **Patch-first.** Small features and fixes ship as `2.6.1`, `2.6.2`, and so

@@ -9,10 +9,15 @@ upgrade-breaking changes (removed doctypes / API contracts).
 
 ## Unreleased
 
+## [2.6.2](https://github.com/Kamra-PMS/kamra-pms/compare/v2.6.0...v2.6.2) (2026-09-07)
+
 ### Features
 
-* **pos:** full-screen till and kitchen pass, saved KOT tickets, clearer running-table strip and complimentary actions
-* **Connect Claude** — hosted MCP at `/mcp` with OAuth 2.1 (PKCE S256, DCR). Staff click Connect Claude on Kamra Agent; Claude opens with the hotel URL filled in and signs in as that user. Role-filtered tools, Activity Log channel `MCP`, revoke from the same panel.
+* **finance:** Opera-style cashier module — till open/close with float and variance, unified FO+POS cash, petty cash, shift report, and currency desk under Finance → Cashier
+* **finance:** append-only folio ledger (Guest / Deposit / AR / Package), transaction codes, reason codes, city ledger aging, advance bill, proforma folio, and credit notes
+* **finance:** cashier PIN pad with admin reset, lockout, and a 15-minute unlock window on folio and POS money actions
+* **ops:** property business date advanced by night audit; postings and cash summary use business date
+* **pos:** full-screen till and kitchen pass, F&B dashboard, clearer settle sheet and complimentary actions
 
 ### Bug Fixes
 

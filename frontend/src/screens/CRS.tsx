@@ -6,6 +6,7 @@ import { Card, CardContent } from "../components/ui/card"
 import { Button } from "../components/ui/button"
 import { Sheet } from "../components/ui/sheet"
 import { cur, moneyLocale } from "../lib/money"
+import { useT } from "../lib/i18n"
 
 const inr = (n: unknown) =>
   Number(n ?? 0).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
@@ -49,6 +50,7 @@ function plusDays(iso: string, n: number) {
 }
 
 export default function CRS() {
+  const { t } = useT()
   const [checkIn, setCheckIn] = useState(isoToday())
   const [nights, setNights] = useState(1)
   const [adults, setAdults] = useState(2)
@@ -100,7 +102,7 @@ export default function CRS() {
         children,
         source: "Manual",
       })
-      setDone(`Booked ${r.reservation} at ${booking.property_name}.`)
+      setDone(t("Booked {ref} at {property}.", { ref: r.reservation, property: booking.property_name }))
       setData(null)
     } catch (e) {
       setError(serverError(e))
@@ -112,39 +114,38 @@ export default function CRS() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-xl font-bold text-zinc-800">Central reservations</h1>
+        <h1 className="text-xl font-bold text-zinc-800">{t("Central reservations")}</h1>
         <p className="text-xs text-zinc-500">
-          Find a room across every property you manage, and book into
-          whichever has space.
+          {t("Find a room across every property you manage, and book into whichever has space.")}
         </p>
       </div>
 
       <Card>
         <CardContent className="grid grid-cols-2 gap-3 p-4 sm:grid-cols-5">
           <label className="block">
-            <span className="mb-1 block text-xs font-medium text-zinc-500">Check-in</span>
+            <span className="mb-1 block text-xs font-medium text-zinc-500">{t("Check-in")}</span>
             <input type="date" className={inputCls} value={checkIn}
               onChange={(e) => setCheckIn(e.target.value)} />
           </label>
           <label className="block">
-            <span className="mb-1 block text-xs font-medium text-zinc-500">Nights</span>
+            <span className="mb-1 block text-xs font-medium text-zinc-500">{t("Nights")}</span>
             <input type="number" min={1} className={inputCls} value={nights}
               onChange={(e) => setNights(Math.max(1, Number(e.target.value)))} />
           </label>
           <label className="block">
-            <span className="mb-1 block text-xs font-medium text-zinc-500">Adults</span>
+            <span className="mb-1 block text-xs font-medium text-zinc-500">{t("Adults")}</span>
             <input type="number" min={1} className={inputCls} value={adults}
               onChange={(e) => setAdults(Math.max(1, Number(e.target.value)))} />
           </label>
           <label className="block">
-            <span className="mb-1 block text-xs font-medium text-zinc-500">Children</span>
+            <span className="mb-1 block text-xs font-medium text-zinc-500">{t("Children")}</span>
             <input type="number" min={0} className={inputCls} value={children}
               onChange={(e) => setChildren(Math.max(0, Number(e.target.value)))} />
           </label>
           <div className="flex items-end">
             <Button className="w-full" disabled={busy} onClick={search}>
               {busy ? <Loader2 className="size-4 animate-spin" /> : <Search className="size-4" />}
-              Search
+              {t("Search")}
             </Button>
           </div>
         </CardContent>
@@ -164,15 +165,19 @@ export default function CRS() {
       {data && (
         <div className="space-y-3">
           <p className="text-sm text-zinc-500">
-            {data.properties.length} propert
-            {data.properties.length === 1 ? "y" : "ies"} with space ·{" "}
-            {data.nights} night{data.nights === 1 ? "" : "s"},{" "}
-            {data.adults} adult{data.adults === 1 ? "" : "s"}
-            {data.children ? `, ${data.children} children` : ""}
+            {t("{n} propert{ies} with space · {nights} night{s}, {adults} adult{s2}{children}", {
+              n: data.properties.length,
+              ies: data.properties.length === 1 ? "y" : "ies",
+              nights: data.nights,
+              s: data.nights === 1 ? "" : "s",
+              adults: data.adults,
+              s2: data.adults === 1 ? "" : "s",
+              children: data.children ? `, ${data.children} children` : "",
+            })}
           </p>
           {data.properties.length === 0 && (
             <Card><CardContent className="p-8 text-center text-sm text-zinc-400">
-              No rooms across the chain for these dates and party.
+              {t("No rooms across the chain for these dates and party.")}
             </CardContent></Card>
           )}
           {data.properties.map((p) => (
@@ -186,7 +191,10 @@ export default function CRS() {
                     </span>
                   </div>
                   <span className="text-xs text-zinc-500">
-                    {p.available_rooms} rooms · from {cur()}{inr(p.from_rate)}/night
+                    {t("{n} rooms · from {rate}/night", {
+                      n: p.available_rooms,
+                      rate: `${cur()}${inr(p.from_rate)}`,
+                    })}
                   </span>
                 </div>
                 <div className="divide-y divide-zinc-100">
@@ -196,16 +204,20 @@ export default function CRS() {
                       <div className="min-w-0 flex-1">
                         <div className="text-sm font-medium text-zinc-800">{rt.room_type_name}</div>
                         <div className="text-xs text-zinc-500">
-                          {rt.available} left · sleeps {rt.adults_capacity} · {cur()}{inr(rt.per_night)}/night
+                          {t("{avail} left · sleeps {cap} · {rate}/night", {
+                            avail: rt.available,
+                            cap: rt.adults_capacity,
+                            rate: `${cur()}${inr(rt.per_night)}`,
+                          })}
                         </div>
                       </div>
                       <div className="text-right">
                         <div className="text-sm font-semibold">{cur()}{inr(rt.total)}</div>
-                        <div className="text-[11px] text-zinc-400">total, taxes in</div>
+                        <div className="text-[11px] text-zinc-400">{t("total, taxes in")}</div>
                       </div>
                       <Button variant="outline"
                         onClick={() => { setBooking({ property: p.property, property_name: p.property_name, rt }); setGuest({ name: "", phone: "" }) }}>
-                        Book
+                        {t("Book")}
                       </Button>
                     </div>
                   ))}
@@ -218,26 +230,26 @@ export default function CRS() {
 
       {booking && (
         <Sheet
-          title={`Book ${booking.rt.room_type_name}`}
-          description={`${booking.property_name} · ${checkIn} → ${checkOut} · ${cur()}${inr(booking.rt.total)} total`}
+          title={t("Book {type}", { type: booking.rt.room_type_name })}
+          description={`${booking.property_name} · ${checkIn} → ${checkOut} · ${cur()}${inr(booking.rt.total)} ${t("total")}`}
           onClose={() => setBooking(null)}
           footer={
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setBooking(null)}>Cancel</Button>
+              <Button variant="outline" onClick={() => setBooking(null)}>{t("Cancel")}</Button>
               <Button disabled={busy || !guest.name.trim()} onClick={() => book().then(() => setBooking(null))}>
-                Confirm booking
+                {t("Confirm booking")}
               </Button>
             </div>
           }
         >
           <div className="space-y-3">
             <label className="block">
-              <span className="mb-1 block text-sm font-medium text-zinc-600">Guest name</span>
+              <span className="mb-1 block text-sm font-medium text-zinc-600">{t("Guest name")}</span>
               <input className={inputCls} value={guest.name} autoFocus
                 onChange={(e) => setGuest({ ...guest, name: e.target.value })} />
             </label>
             <label className="block">
-              <span className="mb-1 block text-sm font-medium text-zinc-600">Phone</span>
+              <span className="mb-1 block text-sm font-medium text-zinc-600">{t("Phone")}</span>
               <input className={inputCls} value={guest.phone} placeholder="+91 …"
                 onChange={(e) => setGuest({ ...guest, phone: e.target.value })} />
             </label>

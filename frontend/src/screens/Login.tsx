@@ -4,6 +4,7 @@ import { login } from "../lib/api"
 import { asset } from "../lib/asset"
 import { Button } from "../components/ui/button"
 import { getSiteInfo } from "../lib/siteInfo"
+import { LANGS, getLang, setLang, type Lang } from "../lib/dir"
 import { useT } from "../lib/i18n"
 
 const inputCls =
@@ -21,7 +22,7 @@ const DEMO_ACCOUNTS = [
 ]
 
 export default function Login(props: { onSuccess: () => void }) {
-  const { t } = useT()
+  const { t, lang } = useT()
   const [usr, setUsr] = useState("")
   const [pwd, setPwd] = useState("")
   const [error, setError] = useState<string | null>(null)
@@ -29,6 +30,11 @@ export default function Login(props: { onSuccess: () => void }) {
   // Demo accounts only exist on the seeded demo site; hide them elsewhere.
   const [demoMode, setDemoMode] = useState(false)
   const [version, setVersion] = useState<string | null>(null)
+  const [langState, setLangState] = useState<Lang>(lang || getLang())
+
+  useEffect(() => {
+    setLangState(lang)
+  }, [lang])
 
   useEffect(() => {
     getSiteInfo().then((info) => {
@@ -64,7 +70,7 @@ export default function Login(props: { onSuccess: () => void }) {
       <div className="w-full max-w-sm">
         {sessionEnded && (
           <p className="mb-4 rounded border border-[#fde68a] bg-[#fffbeb] px-4 py-2.5 text-center text-sm text-[#92400e]">
-            Your session ended. Sign in to pick up where you left off.
+            {t("Your session ended. Sign in to pick up where you left off.")}
           </p>
         )}
         <div className="mb-6 flex flex-col items-center gap-2">
@@ -78,6 +84,25 @@ export default function Login(props: { onSuccess: () => void }) {
               PMS
             </span>
           </span>
+          <label className="mt-1 flex items-center gap-2 text-xs text-[#6f7a71]">
+            <span>{t("Language")}</span>
+            <select
+              className="rounded border border-[#E2E8F0] bg-white px-2 py-1 text-xs text-[#3f4941]"
+              value={langState}
+              onChange={(e) => {
+                const next = e.target.value as Lang
+                setLang(next)
+                setLangState(next)
+              }}
+              aria-label={t("Language")}
+            >
+              {LANGS.map((l) => (
+                <option key={l.code} value={l.code}>
+                  {l.nativeLabel}
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
 
         <form
@@ -100,7 +125,7 @@ export default function Login(props: { onSuccess: () => void }) {
               spellCheck={false}
               value={usr}
               onChange={(e) => setUsr(e.target.value)}
-              placeholder="Administrator or you@hotel.com"
+              placeholder={t("Administrator or you@hotel.com")}
             />
           </label>
           <label className="block">
@@ -134,12 +159,10 @@ export default function Login(props: { onSuccess: () => void }) {
         {demoMode && (
         <div className="mt-4 rounded border border-dashed border-[#bec9bf] p-4">
           <p className="mb-3 rounded bg-[#fffbeb] px-3 py-2 text-center text-xs leading-relaxed text-[#92400e]">
-            Shared playground, not a live hotel. Play data is wiped every
-            night and the sample hotel is seeded again. Don&apos;t put real guests,
-            payments or API keys here.
+            {t("Shared playground, not a live hotel. Play data is wiped every night and the sample hotel is seeded again. Don't put real guests, payments or API keys here.")}
           </p>
           <p className="mb-2 text-center text-xs text-[#6f7a71]">
-            Demo accounts - one tap to try each role
+            {t("Demo accounts - one tap to try each role")}
           </p>
           <div className="grid grid-cols-2 gap-2">
             {DEMO_ACCOUNTS.map((a) => (
@@ -149,7 +172,7 @@ export default function Login(props: { onSuccess: () => void }) {
                 onClick={() => submit(a.usr, a.pwd)}
                 className="rounded border border-[#E2E8F0] bg-[#ffffff] px-2 py-1.5 text-xs font-medium text-[#3f4941] hover:border-[#1E7B4F] hover:text-[#00613a]"
               >
-                {a.label}
+                {t(a.label)}
               </button>
             ))}
           </div>

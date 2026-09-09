@@ -77,4 +77,5 @@ docker compose exec backend \
 ```
 
 Next steps: [production checklist](/self-hosting/#after-install-production-checklist) ·
-[email setup](/self-hosting/email) · [connect your AI](/ai-and-mcp)
+[email setup](/self-hosting/email) · [ERPNext & HR (optional)](/self-hosting/erpnext-hr) ·
+[connect your AI](/ai-and-mcp)

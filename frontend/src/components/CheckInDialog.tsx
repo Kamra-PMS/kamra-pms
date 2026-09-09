@@ -6,6 +6,7 @@ import { toFullPath } from "../lib/routing"
 import { Button } from "./ui/button"
 import { Sheet } from "./ui/sheet"
 import { cn } from "../lib/utils"
+import { useT } from "../lib/i18n"
 
 /* The check-in flow: registration readiness at a glance (with the GRC a
    click away), then a room - the allocator's pick or the desk's - then
@@ -73,6 +74,7 @@ export default function CheckInDialog(props: {
   onDone: () => void
   onClose: () => void
 }) {
+  const { t } = useT()
   const [ctx, setCtx] = useState<Context | null>(null)
   const [room, setRoom] = useState("")
   const [busy, setBusy] = useState(false)
@@ -111,10 +113,10 @@ export default function CheckInDialog(props: {
 
   return (
     <Sheet
-      title={r ? `Check in ${r.guest_name}` : "Check in"}
+      title={r ? t("Check in {name}", { name: r.guest_name }) : t("Check in")}
       description={
         r
-          ? `${r.room_type_name ?? ""} · ${r.check_in_date} → ${r.check_out_date} · ${r.adults} adult${r.adults === 1 ? "" : "s"}${r.children ? ` + ${r.children}` : ""}${r.planned_check_in_time ? ` · ETA ${r.planned_check_in_time.slice(0, 5)}` : ""}`
+          ? `${r.room_type_name ?? ""} · ${r.check_in_date} → ${r.check_out_date} · ${t("{n} adult{s}", { n: r.adults, s: r.adults === 1 ? "" : "s" })}${r.children ? ` + ${r.children}` : ""}${r.planned_check_in_time ? ` · ETA ${r.planned_check_in_time.slice(0, 5)}` : ""}`
           : undefined
       }
       onClose={props.onClose}
@@ -123,31 +125,31 @@ export default function CheckInDialog(props: {
           {error && <p className="text-sm text-rose-600">{error}</p>}
           <div className="ml-auto flex items-center gap-2">
             <Button variant="outline" onClick={props.onClose}>
-              Cancel
+              {t("Cancel")}
             </Button>
             <Button disabled={busy || !room || !ctx} onClick={doCheckIn}>
               {busy
-                ? "Checking in…"
+                ? t("Checking in…")
                 : chosen
-                  ? `Check in to ${chosen.room_number}`
-                  : "Check in"}
+                  ? t("Check in to {room}", { room: chosen.room_number })
+                  : t("Check in")}
             </Button>
           </div>
         </div>
       }
     >
-      {!ctx && !error && <p className="text-sm text-zinc-500">Loading…</p>}
+      {!ctx && !error && <p className="text-sm text-zinc-500">{t("Loading…")}</p>}
       {ctx && r && (
         <div className="space-y-5">
           <section>
             <div className="mb-2 flex items-center gap-2">
               <h3 className="text-sm font-semibold text-zinc-700">
-                Registration
+                {t("Registration")}
               </h3>
               {r.vip ? (
                 <span className="flex items-center gap-1 text-xs font-semibold text-amber-600">
                   <Star className="size-3.5 fill-amber-400 text-amber-400" aria-hidden />
-                  VIP
+                  {t("VIP")}
                 </span>
               ) : null}
               <a
@@ -156,7 +158,7 @@ export default function CheckInDialog(props: {
                 rel="noreferrer"
                 className="ml-auto flex items-center gap-1 text-sm font-medium text-brand-700 hover:underline"
               >
-                Open GRC <ExternalLink className="size-3.5" aria-hidden />
+                {t("Open GRC")} <ExternalLink className="size-3.5" aria-hidden />
               </a>
             </div>
             <div className="flex flex-wrap gap-1.5">
@@ -165,36 +167,33 @@ export default function CheckInDialog(props: {
                 label={
                   ctx.readiness.precheckin_status === "Not Started"
                     ? ctx.readiness.link_sent
-                      ? "Online check-in sent, not filled"
-                      : "Online check-in not sent"
-                    : `Online check-in ${ctx.readiness.precheckin_status.toLowerCase()}`
+                      ? t("Online check-in sent, not filled")
+                      : t("Online check-in not sent")
+                    : t("Online check-in {status}", {
+                        status: ctx.readiness.precheckin_status.toLowerCase(),
+                      })
                 }
               />
-              <ReadyChip ok={ctx.readiness.id_on_file} label="ID on file" />
+              <ReadyChip ok={ctx.readiness.id_on_file} label={t("ID on file")} />
               <ReadyChip
                 ok={ctx.readiness.address_on_file}
-                label="Address proof"
+                label={t("Address proof")}
               />
-              <ReadyChip ok={ctx.readiness.phone} label="Phone" />
-              <ReadyChip ok={ctx.readiness.email} label="Email" />
+              <ReadyChip ok={ctx.readiness.phone} label={t("Phone")} />
+              <ReadyChip ok={ctx.readiness.email} label={t("Email")} />
             </div>
             {!ctx.readiness.id_on_file && (
               <p className="mt-2 text-xs text-zinc-500">
-                Capture the ID on the GRC - check-in is never blocked, but the
-                register wants it before the night audit.
+                {t("Capture the ID on the GRC - check-in is never blocked, but the register wants it before the night audit.")}
               </p>
             )}
           </section>
 
           <section>
-            <h3 className="mb-2 text-sm font-semibold text-zinc-700">Room</h3>
+            <h3 className="mb-2 text-sm font-semibold text-zinc-700">{t("Room")}</h3>
             {ctx.room_assigned ? (
               <p className="text-sm text-zinc-700">
-                Room{" "}
-                <span className="font-semibold">
-                  {ctx.room_assigned.room_number}
-                </span>{" "}
-                is assigned
+                {t("Room {num} is assigned", { num: ctx.room_assigned.room_number })}
                 {ctx.room_assigned.housekeeping_status && (
                   <span
                     className={cn(
@@ -203,7 +202,7 @@ export default function CheckInDialog(props: {
                         "text-zinc-500",
                     )}
                   >
-                    {ctx.room_assigned.housekeeping_status}
+                    {t(ctx.room_assigned.housekeeping_status)}
                   </span>
                 )}
               </p>
@@ -225,7 +224,7 @@ export default function CheckInDialog(props: {
                     />
                     <span className="text-sm">
                       <span className="font-semibold">
-                        Room {ctx.suggestion.room_number}
+                        {t("Room {num}", { num: ctx.suggestion.room_number })}
                       </span>{" "}
                       <span className="text-zinc-500">— {ctx.suggestion.why}</span>
                     </span>
@@ -233,31 +232,31 @@ export default function CheckInDialog(props: {
                 )}
                 <label className="block">
                   <span className="mb-1 block text-xs font-medium text-zinc-500">
-                    {ctx.suggestion ? "Or pick another room" : "Pick a room"}
+                    {ctx.suggestion ? t("Or pick another room") : t("Pick a room")}
                   </span>
                   <select
                     className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm focus:outline-2 focus:outline-offset-1 focus:outline-brand-600"
                     value={room}
                     onChange={(e) => setRoom(e.target.value)}
                   >
-                    <option value="">Choose…</option>
+                    <option value="">{t("Choose…")}</option>
                     {ctx.rooms.map((x) => (
                       <option key={x.name} value={x.name}>
-                        {x.room_number} · {x.housekeeping_status}
+                        {x.room_number} · {t(x.housekeeping_status)}
                       </option>
                     ))}
                   </select>
                 </label>
                 {ctx.rooms.length === 0 && (
                   <p className="text-sm text-rose-600">
-                    No free room of this type for these dates - check the tape
-                    chart for a move or an upgrade.
+                    {t("No free room of this type for these dates - check the tape chart for a move or an upgrade.")}
                   </p>
                 )}
                 {chosenDirty && (
                   <p className="text-xs font-medium text-amber-700">
-                    {chosen?.room_number} hasn't been cleaned yet - housekeeping
-                    will see the room flip to occupied.
+                    {t("{room} hasn't been cleaned yet - housekeeping will see the room flip to occupied.", {
+                      room: chosen?.room_number ?? "",
+                    })}
                   </p>
                 )}
               </div>

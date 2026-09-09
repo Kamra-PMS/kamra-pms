@@ -180,13 +180,18 @@ def _guest(name, phone):
 	}).insert(ignore_permissions=True).name
 
 
-def _res(guest, ci, co, room=None, day_use=0):
-	return frappe.get_doc({
+def _res(guest, ci, co, room=None, day_use=0, allow_past=0):
+	doc = frappe.get_doc({
 		"doctype": "Reservation", "property": P, "guest": guest,
 		"room_type": RT, "room": room, "check_in_date": ci,
 		"check_out_date": co, "adults": 2, "is_day_use": day_use,
 		"auto_price": 1,
-	}).insert(ignore_permissions=True)
+	})
+	# a back-dated booking (e.g. seeding a no-show) is a legitimate case the
+	# past-check-in guard exempts via this flag
+	if allow_past:
+		doc.flags.allow_past_check_in = True
+	return doc.insert(ignore_permissions=True)
 
 
 @check("double booking blocked; adjacent stay allowed")
@@ -498,7 +503,7 @@ def t18():
 
 	# yesterday's un-arrived booking → no-show flagged AND charged
 	g3 = _guest("Eval NoShow", "+91 70000 00017")
-	ns = _res(g3, add_days(nowdate(), -1), nowdate())
+	ns = _res(g3, add_days(nowdate(), -1), nowdate(), allow_past=1)
 	run_night_audit(P, nowdate())
 	assert frappe.db.get_value("Reservation", ns.name, "status") == "No Show"
 	ns_folio = frappe.db.get_value(
@@ -506,6 +511,40 @@ def t18():
 	assert ns_folio, "no-show folio not opened"
 	charges = frappe.get_doc("Folio", ns_folio).charges
 	assert any("No-show" in (c.description or "") for c in charges)
+
+
+@check("past check-in blocked on create and on date amend; allow_past still works")
+def t18b():
+	g = _guest("Eval PastCI", "+91 70000 00018")
+	yesterday = add_days(nowdate(), -1)
+	# new booking into the past must fail
+	try:
+		_res(g, yesterday, nowdate())
+		raise AssertionError("past check-in accepted on create")
+	except frappe.ValidationError:
+		pass
+	# flag still allows catch-up / seeding
+	res = _res(g, yesterday, nowdate(), allow_past=1)
+	# saving without changing dates (in-house style) must stay ok
+	res.status = "Checked In"
+	res.save(ignore_permissions=True)
+	# moving check-in further into the past must fail
+	res.check_in_date = add_days(nowdate(), -2)
+	try:
+		res.save(ignore_permissions=True)
+		raise AssertionError("past check-in amend accepted")
+	except frappe.ValidationError:
+		pass
+	# Confirmed stay: amend check-in to yesterday must fail
+	g2 = _guest("Eval PastCI2", "+91 70000 00028")
+	live = _res(g2, add_days(nowdate(), 2), add_days(nowdate(), 3))
+	live.check_in_date = yesterday
+	live.check_out_date = nowdate()
+	try:
+		live.save(ignore_permissions=True)
+		raise AssertionError("Confirmed past amend accepted")
+	except frappe.ValidationError:
+		pass
 
 
 @check("closed folio is frozen: charges immutable, payments still settle")

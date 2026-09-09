@@ -9,6 +9,7 @@ import { Button } from "../components/ui/button"
 import { Sheet } from "../components/ui/sheet"
 import { cn } from "../lib/utils"
 import { cur, moneyLocale } from "../lib/money"
+import { useT } from "../lib/i18n"
 
 /** The tape chart: rooms × dates, bookings as bars. Click a bar to act. */
 
@@ -150,6 +151,7 @@ function shiftDate(iso: string, days: number) {
 }
 
 export default function TapeChart() {
+  const { t } = useT()
   const [start, setStart] = useState(new Date().toISOString().slice(0, 10))
   const [data, setData] = useState<TapeData | null>(null)
   const [sel, setSel] = useState<TapeBooking | null>(null)
@@ -240,8 +242,9 @@ export default function TapeChart() {
     })
   }
 
-  // rooms of this booking's own type, each flagged free/occupied for the
-  // chosen dates - so the move dropdown only offers valid, available rooms
+  // every room in the property (own type first, then upgrades/downgrades),
+  // each flagged free/occupied for the chosen dates - so the move dropdown
+  // can swap within a type or move up/down a category
   useEffect(() => {
     if (!sel) return
     call<
@@ -315,14 +318,14 @@ export default function TapeChart() {
   return (
     <div>
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        <h1 className="text-lg font-semibold">Tape chart</h1>
+        <h1 className="text-lg font-semibold">{t("Tape chart")}</h1>
         <select
           className={cn(inputCls, "w-auto py-1.5")}
           value={rtFilter}
           onChange={(e) => setRtFilter(e.target.value)}
-          aria-label="Filter by room type"
+          aria-label={t("Filter by room type")}
         >
-          <option value="">All room types</option>
+          <option value="">{t("All room types")}</option>
           {roomTypeNames.map((n) => (
             <option key={n} value={n}>
               {n}
@@ -341,22 +344,22 @@ export default function TapeChart() {
                   : "text-zinc-500 hover:text-zinc-700",
               )}
             >
-              {m === "day" ? "Days" : "Hourly"}
+              {m === "day" ? t("Days") : t("Hourly")}
             </button>
           ))}
         </div>
         <Button variant="outline" disabled={allocBusy} onClick={suggestAlloc}>
           <Sparkles className="size-4 text-brand-600" />
-          {allocBusy ? "Thinking..." : "Auto-assign arrivals"}
+          {allocBusy ? t("Thinking...") : t("Auto-assign arrivals")}
         </Button>
         <div className="ml-auto flex items-center gap-1">
-          <Button variant="outline" aria-label="Previous"
+          <Button variant="outline" aria-label={t("Previous")}
             onClick={() => setStart(shiftDate(start, mode === "day" ? -7 : -1))}>
             <ChevronLeft className="size-4" />
           </Button>
           <input type="date" className={cn(inputCls, "w-40")} value={start}
             onChange={(e) => setStart(e.target.value)} />
-          <Button variant="outline" aria-label="Next"
+          <Button variant="outline" aria-label={t("Next")}
             onClick={() => setStart(shiftDate(start, mode === "day" ? 7 : 1))}>
             <ChevronRight className="size-4" />
           </Button>
@@ -371,7 +374,10 @@ export default function TapeChart() {
       {mode === "day" && (data?.conflicts?.length ?? 0) > 0 && (
         <div className="mb-3 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
           <span className="font-semibold">
-            {data!.conflicts.length} changeover conflict{data!.conflicts.length === 1 ? "" : "s"}:
+            {t("{n} changeover conflict{s}", {
+              n: data!.conflicts.length,
+              s: data!.conflicts.length === 1 ? "" : "s",
+            })}:
           </span>{" "}
           {data!.conflicts.map((c) => (
             <span key={c.in_res} className="mr-3 whitespace-nowrap">
@@ -387,7 +393,7 @@ export default function TapeChart() {
         <div style={{ minWidth: 130 + DAYS * cellW }}>
           {/* header row */}
           <div className="flex border-b border-zinc-200 bg-zinc-50 text-xs font-medium text-zinc-500">
-            <div className="w-[130px] shrink-0 px-3 py-2">Room</div>
+            <div className="w-[130px] shrink-0 px-3 py-2">{t("Room")}</div>
             {data?.dates.map((d) => {
               const day = new Date(d)
               const weekend = day.getDay() === 0 || day.getDay() === 6
@@ -404,7 +410,7 @@ export default function TapeChart() {
           {/* house position: sold/capacity per day, demand premium, overbooking */}
           <div className="flex border-b border-zinc-200 bg-white text-[10px]">
             <div className="w-[130px] shrink-0 px-3 py-1 font-medium uppercase tracking-wide text-zinc-400">
-              Position
+              {t("Position")}
             </div>
             {data?.position?.map((p) => (
               <div key={p.date} style={{ width: cellW }}
@@ -440,7 +446,10 @@ export default function TapeChart() {
                     />
                     {g.label}
                     <span className="font-normal normal-case tracking-normal text-zinc-400">
-                      {g.rooms.length} rooms · {booked} in use
+                      {t("{rooms} rooms · {booked} in use", {
+                        rooms: g.rooms.length,
+                        booked,
+                      })}
                     </span>
                   </button>
                   {!isCollapsed &&
@@ -452,7 +461,7 @@ export default function TapeChart() {
                             room.housekeeping_status === "Dirty" ? "text-amber-600"
                               : room.housekeeping_status === "Out of Order" ? "text-rose-600"
                                 : "text-zinc-400")}>
-                            {room.housekeeping_status}
+                            {t(room.housekeeping_status)}
                           </span>
                         </div>
                         {data.dates.map((d) => (
@@ -503,8 +512,8 @@ export default function TapeChart() {
                                   : "bg-sky-500 hover:bg-sky-600",
                                 inConflict && "ring-2 ring-rose-500 ring-offset-1",
                               )}
-                              title={`${b.guest_name} · ${seg.label} · ${b.check_in_date}${eta ? ` ${eta}` : ""} → ${b.check_out_date}${etd ? ` ${etd}` : ""}` +
-                                (inConflict ? " · CHANGEOVER CONFLICT" : "")}>
+                              title={`${b.guest_name} · ${t(seg.label)} · ${b.check_in_date}${eta ? ` ${eta}` : ""} → ${b.check_out_date}${etd ? ` ${etd}` : ""}` +
+                                (inConflict ? ` · ${t("CHANGEOVER CONFLICT")}` : "")}>
                               {seg.vip ? (
                                 <Star className="size-3 shrink-0 fill-amber-300 text-amber-300" aria-hidden />
                               ) : (
@@ -530,39 +539,43 @@ export default function TapeChart() {
       )}
       <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-zinc-400">
         <span className="flex items-center gap-1.5">
-          <Badge tone="sky">Confirmed</Badge>
-          <Badge tone="brand">Checked in</Badge>
+          <Badge tone="sky">{t("Confirmed")}</Badge>
+          <Badge tone="brand">{t("Checked in")}</Badge>
         </span>
         <span className="flex items-center gap-1">
-          <Star className="size-3 fill-amber-400 text-amber-400" /> VIP
+          <Star className="size-3 fill-amber-400 text-amber-400" /> {t("VIP")}
         </span>
         <span className="flex items-center gap-1">
-          <span className="size-2 rounded-full bg-violet-400" /> Corporate
+          <span className="size-2 rounded-full bg-violet-400" /> {t("Corporate")}
         </span>
         <span className="flex items-center gap-1">
-          <span className="size-2 rounded-full bg-sky-300" /> Group
+          <span className="size-2 rounded-full bg-sky-300" /> {t("Group")}
         </span>
         <span className="flex items-center gap-1">
-          <span className="size-2 rounded-full bg-orange-400" /> OTA
+          <span className="size-2 rounded-full bg-orange-400" /> {t("OTA")}
         </span>
         <span className="flex items-center gap-1">
-          <Lock className="size-3 text-zinc-500" /> Held (house use / VIP /
-          maintenance)
+          <Lock className="size-3 text-zinc-500" /> {t("Held (house use / VIP / maintenance)")}
         </span>
-        <span>Click a bar to move rooms or change dates.</span>
+        <span>{t("Click a bar to move rooms or change dates.")}</span>
       </div>
 
       {alloc && (
         <Sheet
-          title="Auto-assign arrivals"
-          description={`Suggested room plan for ${alloc.date}`}
+          title={t("Auto-assign arrivals")}
+          description={t("Suggested room plan for {date}", { date: alloc.date })}
           onClose={() => setAlloc(null)}
           footer={
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setAlloc(null)}>Close</Button>
+              <Button variant="outline" onClick={() => setAlloc(null)}>{t("Close")}</Button>
               {alloc.proposals.length > 0 && (
                 <Button disabled={allocBusy} onClick={applyAlloc}>
-                  {allocBusy ? "Assigning..." : `Assign ${alloc.proposals.length} room${alloc.proposals.length === 1 ? "" : "s"}`}
+                  {allocBusy
+                    ? t("Assigning...")
+                    : t("Assign {n} room{s}", {
+                        n: alloc.proposals.length,
+                        s: alloc.proposals.length === 1 ? "" : "s",
+                      })}
                 </Button>
               )}
             </div>
@@ -571,7 +584,7 @@ export default function TapeChart() {
           <div className="space-y-3">
             {alloc.proposals.length === 0 && alloc.unfittable.length === 0 && (
               <p className="text-sm text-zinc-500">
-                Every arrival for this day already has a room.
+                {t("Every arrival for this day already has a room.")}
               </p>
             )}
             {alloc.proposals.map((p) => (
@@ -590,10 +603,10 @@ export default function TapeChart() {
                   <p className="mt-0.5 text-xs text-zinc-500">{p.why}</p>
                 </div>
                 <div className="text-right">
-                  <div className="text-sm font-semibold">Room {p.room_number}</div>
+                  <div className="text-sm font-semibold">{t("Room {n}", { n: p.room_number })}</div>
                   {p.needs_review === 1 && (
                     <span className="text-[10px] font-medium uppercase tracking-wide text-amber-600">
-                      Review
+                      {t("Review")}
                     </span>
                   )}
                 </div>
@@ -606,8 +619,7 @@ export default function TapeChart() {
               </div>
             ))}
             <p className="text-xs text-zinc-400">
-              Rooms are matched to each guest's type and preferences. Assigning
-              places them now; "Review" flags a choice worth a second look.
+              {t("Rooms are matched to each guest's type and preferences. Assigning places them now; \"Review\" flags a choice worth a second look.")}
             </p>
           </div>
         </Sheet>
@@ -616,16 +628,16 @@ export default function TapeChart() {
       {sel && (
         <Sheet
           title={sel.guest_name}
-          description={`${sel.name} · ${sel.status}`}
+          description={`${sel.name} · ${t(sel.status)}`}
           onClose={() => setSel(null)}
           footer={
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setSel(null)}>Close</Button>
+              <Button variant="outline" onClick={() => setSel(null)}>{t("Close")}</Button>
               {draft.room !== sel.room && (
                 <Button disabled={busy}
                   onClick={() => act(() => call("kamra.api.move_reservation",
                     { reservation: sel.name, new_room: draft.room }))}>
-                  Move room
+                  {t("Move room")}
                 </Button>
               )}
               {(draft.check_in !== sel.check_in_date ||
@@ -634,7 +646,7 @@ export default function TapeChart() {
                   onClick={() => act(() => call("kamra.api.amend_stay",
                     { reservation: sel.name, check_in_date: draft.check_in,
                       check_out_date: draft.check_out }))}>
-                  Update stay
+                  {t("Update stay")}
                 </Button>
               )}
             </div>
@@ -642,56 +654,54 @@ export default function TapeChart() {
         >
           <div className="space-y-4">
             <label className="block">
-              <span className="mb-1.5 block text-sm font-medium text-zinc-600">Room</span>
+              <span className="mb-1.5 block text-sm font-medium text-zinc-600">{t("Room")}</span>
               <select className={inputCls} value={draft.room}
                 onChange={(e) => setDraft({ ...draft, room: e.target.value })}>
                 {freeRooms.map((r) => (
                   <option key={r.name} value={r.name} disabled={!r.free}>
-                    Room {r.room_number} · {r.room_type_name}
-                    {r.same_type ? "" : " ⇅"} · {r.free ? "Free" : "Occupied"}
+                    {t("Room {n}", { n: r.room_number })} · {r.room_type_name}
+                    {r.same_type ? "" : " ⇅"} · {r.free ? t("Free") : t("Occupied")}
                   </option>
                 ))}
               </select>
             </label>
             <div className="grid grid-cols-2 gap-3">
               <label className="block">
-                <span className="mb-1.5 block text-sm font-medium text-zinc-600">Check-in</span>
+                <span className="mb-1.5 block text-sm font-medium text-zinc-600">{t("Check-in")}</span>
                 <input type="date" className={inputCls} value={draft.check_in}
                   onChange={(e) => setDraft({ ...draft, check_in: e.target.value })} />
               </label>
               <label className="block">
-                <span className="mb-1.5 block text-sm font-medium text-zinc-600">Check-out</span>
+                <span className="mb-1.5 block text-sm font-medium text-zinc-600">{t("Check-out")}</span>
                 <input type="date" className={inputCls} value={draft.check_out}
                   onChange={(e) => setDraft({ ...draft, check_out: e.target.value })} />
               </label>
             </div>
             <div className="rounded-lg border border-zinc-200 p-3">
               <span className="mb-2 block text-sm font-medium text-zinc-600">
-                {sel.is_day_use === 1 ? "Day-use hours" : "Arrival / departure times (ETA · ETD)"}
+                {sel.is_day_use === 1 ? t("Day-use hours") : t("Arrival / departure times (ETA · ETD)")}
               </span>
               <div className="flex items-end gap-2">
                 <input type="time" className={inputCls} value={draft.from_time}
                   onChange={(e) => setDraft({ ...draft, from_time: e.target.value })} />
-                <span className="pb-2 text-zinc-400">to</span>
+                <span className="pb-2 text-zinc-400">{t("to")}</span>
                 <input type="time" className={inputCls} value={draft.to_time}
                   onChange={(e) => setDraft({ ...draft, to_time: e.target.value })} />
                 <Button variant="outline" disabled={busy}
                   onClick={() => act(() => call("kamra.api.set_stay_times", {
                     reservation: sel.name, eta: draft.from_time,
                     etd: draft.to_time }))}>
-                  Set
+                  {t("Set")}
                 </Button>
               </div>
               {sel.is_day_use !== 1 && (
                 <p className="mt-1.5 text-xs text-zinc-400">
-                  Times drive the house position: back-to-back rooms flag a
-                  conflict when the arrival lands before the departure.
+                  {t("Times drive the house position: back-to-back rooms flag a conflict when the arrival lands before the departure.")}
                 </p>
               )}
             </div>
             <p className="text-xs text-zinc-400">
-              Date changes re-price automatically (unless the booking holds a
-              manual amount) and the double-booking guard re-checks the room.
+              {t("Date changes re-price automatically (unless the booking holds a manual amount) and the double-booking guard re-checks the room.")}
             </p>
             {error && (
               <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
@@ -714,6 +724,7 @@ function TapeHourly({
   data: HourlyData
   onOpen: (b: TapeBooking) => void
 }) {
+  const { t } = useT()
   const hours: number[] = []
   for (let h = data.start_hour; h <= data.end_hour; h++) hours.push(h)
   const span = data.end_hour - data.start_hour || 1
@@ -729,7 +740,7 @@ function TapeHourly({
     <div className="overflow-x-auto rounded-xl border border-zinc-200 bg-white shadow-sm">
       <div style={{ minWidth: 130 + gridW }}>
         <div className="flex border-b border-zinc-200 bg-zinc-50 text-xs font-medium text-zinc-500">
-          <div className="w-[130px] shrink-0 px-3 py-2">Room</div>
+          <div className="w-[130px] shrink-0 px-3 py-2">{t("Room")}</div>
           {hours.map((h) => (
             <div
               key={h}
@@ -760,10 +771,10 @@ function TapeHourly({
                     onClick={() => onOpen(b)}
                     style={{ left: 130, width: gridW }}
                     className="absolute top-2 flex h-9 items-center gap-1 rounded-md bg-zinc-200/70 px-2 text-left text-xs font-medium text-zinc-600 hover:bg-zinc-300/70"
-                    title={`${b.guest_name} · overnight stay`}
+                    title={`${b.guest_name} · ${t("overnight stay")}`}
                   >
                     {seg.vip && <Star className="size-3 fill-amber-400 text-amber-400" />}
-                    <span className="truncate">{b.guest_name} · staying over</span>
+                    <span className="truncate">{b.guest_name} · {t("staying over")}</span>
                   </button>
                 )
               }

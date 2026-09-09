@@ -10,6 +10,7 @@ import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { cn } from "../lib/utils"
 import { cur } from "../lib/money"
+import { useT } from "../lib/i18n"
 import {
   ExpressToggle,
   inr,
@@ -50,6 +51,7 @@ const inputCls =
 type Tab = "board" | "menu" | "billing"
 
 export default function Laundry() {
+  const { t } = useT()
   const { roles } = useAuth()
   const property = getCurrentProperty()
   const canOperate = roles.some((r) => OPERATOR_ROLES.includes(r))
@@ -186,22 +188,22 @@ export default function Laundry() {
         <div className="min-w-0 flex-1">
           <p className="truncate font-medium">{o.guest_name || o.name}</p>
           <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
-            <Badge tone={STATUS_TONE[o.status] || "zinc"}>{o.status}</Badge>
-            {o.order_type === "House" && <Badge tone="indigo">house</Badge>}
+            <Badge tone={STATUS_TONE[o.status] || "zinc"}>{t(o.status)}</Badge>
+            {o.order_type === "House" && <Badge tone="indigo">{t("house")}</Badge>}
             {!!o.complimentary && o.order_type !== "House" && (
-              <Badge tone="green">comp</Badge>
+              <Badge tone="green">{t("comp")}</Badge>
             )}
             {!!o.express && (
               <Badge tone="amber">
                 <Zap className="mr-0.5 size-3" />
-                express
+                {t("express")}
               </Badge>
             )}
-            {o.pieces > 0 && <Badge tone="zinc">{o.pieces} pc</Badge>}
+            {o.pieces > 0 && <Badge tone="zinc">{t("{n} pc", { n: o.pieces })}</Badge>}
             {o.pending > 0 && o.status !== "Requested" && (
-              <Badge tone="rose">{o.pending} pending</Badge>
+              <Badge tone="rose">{t("{n} pending", { n: o.pending })}</Badge>
             )}
-            {o.overdue && <Badge tone="rose">overdue</Badge>}
+            {o.overdue && <Badge tone="rose">{t("overdue")}</Badge>}
           </div>
         </div>
         {o.total > 0 && (
@@ -218,13 +220,13 @@ export default function Laundry() {
           )}
         >
           <Clock className="size-3" aria-hidden />
-          Ready by {o.ready_by.slice(0, 16).replace("T", " ")}
+          {t("Ready by")} {o.ready_by.slice(0, 16).replace("T", " ")}
         </p>
       )}
       {o.notes && <p className="mt-2 text-sm text-zinc-500">{o.notes}</p>}
       {o.shortage_note && (
         <p className="mt-2 rounded-lg bg-rose-50 px-2.5 py-1.5 text-sm text-rose-700">
-          Shortage: {o.shortage_note}
+          {t("Shortage")}: {o.shortage_note}
         </p>
       )}
       {canOperate && (
@@ -244,7 +246,7 @@ export default function Laundry() {
                 })
               }
             >
-              Collect &amp; count
+              {t("Collect & count")}
             </Button>
           )}
           {o.status === "Collected" && (
@@ -254,7 +256,7 @@ export default function Laundry() {
                 act(() => laundryApi.setStatus(o.name, "In Process"))
               }
             >
-              Send to laundry
+              {t("Send to laundry")}
             </Button>
           )}
           {o.status === "In Process" && (
@@ -262,7 +264,7 @@ export default function Laundry() {
               disabled={busy}
               onClick={() => act(() => laundryApi.setStatus(o.name, "Ready"))}
             >
-              Mark ready
+              {t("Mark ready")}
             </Button>
           )}
           {["Collected", "In Process", "Ready"].includes(o.status) && (
@@ -271,7 +273,7 @@ export default function Laundry() {
               disabled={busy}
               onClick={() => setReturning({ order: o, back: {}, note: "" })}
             >
-              Return &amp; deliver
+              {t("Return & deliver")}
             </Button>
           )}
           {o.status !== "Delivered" && o.status !== "Cancelled" && (
@@ -280,7 +282,7 @@ export default function Laundry() {
               disabled={busy}
               onClick={() => setCancelling({ order: o, reason: "" })}
             >
-              Cancel
+              {t("Cancel")}
             </Button>
           )}
           {o.items?.length > 0 && (
@@ -307,7 +309,7 @@ export default function Laundry() {
               }
             >
               <Printer className="mr-1 size-4" />
-              Docket
+              {t("Docket")}
             </Button>
           )}
         </div>
@@ -347,10 +349,10 @@ export default function Laundry() {
         <div>
           <h1 className="flex items-center gap-2 text-xl font-semibold">
             <Shirt className="size-5 text-brand-600" />
-            Laundry
+            {t("Laundry")}
           </h1>
           <p className="text-sm text-zinc-400">
-            Guest laundry — pickup, processing, return and billing.
+            {t("Guest laundry — pickup, processing, return and billing.")}
           </p>
         </div>
         {tab === "board" && canOperate && (
@@ -367,7 +369,7 @@ export default function Laundry() {
                 })
               }
             >
-              Log pickup request
+              {t("Log pickup request")}
             </Button>
             <Button
               onClick={() =>
@@ -383,7 +385,7 @@ export default function Laundry() {
               }
             >
               <Shirt className="mr-1 size-4" />
-              Collect now
+              {t("Collect now")}
             </Button>
           </div>
         )}
@@ -392,9 +394,9 @@ export default function Laundry() {
       <div className="flex gap-1 rounded-xl bg-zinc-100 p-1 text-sm font-medium">
         {(
           [
-            ["board", "Board"],
-            ["menu", "Price menu"],
-            ["billing", "Billing"],
+            ["board", t("Board")],
+            ["menu", t("Price menu")],
+            ["billing", t("Billing")],
           ] as [Tab, string][]
         ).map(([id, label]) => (
           <button
@@ -421,16 +423,16 @@ export default function Laundry() {
       {tab === "board" && (
         <div className="grid gap-4 lg:grid-cols-3">
           <Column
-            title="Pickup requests"
+            title={t("Pickup requests")}
             orders={requested}
-            empty="No pickups waiting."
+            empty={t("No pickups waiting.")}
           />
           <Column
-            title="In hand"
+            title={t("In hand")}
             orders={inHand}
-            empty="No laundry out right now."
+            empty={t("No laundry out right now.")}
           />
-          <Column title="Recent" orders={recent} empty="Nothing recent." />
+          <Column title={t("Recent")} orders={recent} empty={t("Nothing recent.")} />
         </div>
       )}
 
@@ -448,7 +450,7 @@ export default function Laundry() {
       {/* pickup request drawer */}
       {pickup && (
         <Sheet
-          title="Laundry pickup request"
+          title={t("Laundry pickup request")}
           onClose={() => setPickup(null)}
           footer={
             <Button
@@ -473,7 +475,7 @@ export default function Laundry() {
                 })
               }
             >
-              Add to pickup queue
+              {t("Add to pickup queue")}
             </Button>
           }
         >
@@ -491,7 +493,7 @@ export default function Laundry() {
             ) : (
               <input
                 className={inputCls}
-                placeholder="What is it? (Staff uniforms, Pool towels…)"
+                placeholder={t("What is it? (Staff uniforms, Pool towels…)")}
                 value={pickup.houseLabel}
                 onChange={(e) =>
                   setPickup({ ...pickup, houseLabel: e.target.value })
@@ -500,7 +502,7 @@ export default function Laundry() {
             )}
             <input
               className={inputCls}
-              placeholder="Notes (bag on door, after 3pm…)"
+              placeholder={t("Notes (bag on door, after 3pm…)")}
               value={pickup.notes}
               onChange={(e) => setPickup({ ...pickup, notes: e.target.value })}
             />
@@ -515,7 +517,7 @@ export default function Laundry() {
       {/* count-the-bag drawer */}
       {counting && (
         <Sheet
-          title="Count the bag"
+          title={t("Count the bag")}
           onClose={() => setCounting(null)}
           footer={
             <Button
@@ -530,8 +532,11 @@ export default function Laundry() {
               }
               onClick={submitCollect}
             >
-              Collect {countPieces} piece{countPieces === 1 ? "" : "s"} · {cur()}
-              {inr(countTotal)}
+              {t("Collect {n} piece{s} · {total}", {
+                n: countPieces,
+                s: countPieces === 1 ? "" : "s",
+                total: `${cur()}${inr(countTotal)}`,
+              })}
             </Button>
           }
         >
@@ -559,13 +564,13 @@ export default function Laundry() {
                           setCounting({ ...counting, comp: e.target.checked })
                         }
                       />
-                      Complimentary — don't bill the guest
+                      {t("Complimentary — don't bill the guest")}
                     </label>
                   </>
                 ) : (
                   <input
                     className={inputCls}
-                    placeholder="What is it? (Staff uniforms, Pool towels…)"
+                    placeholder={t("What is it? (Staff uniforms, Pool towels…)")}
                     value={counting.houseLabel}
                     onChange={(e) =>
                       setCounting({ ...counting, houseLabel: e.target.value })
@@ -623,7 +628,7 @@ export default function Laundry() {
               })}
               {rates.length === 0 && (
                 <p className="py-4 text-center text-sm text-zinc-400">
-                  No rate card yet — add laundry rates in the Price menu tab.
+                  {t("No rate card yet — add laundry rates in the Price menu tab.")}
                 </p>
               )}
             </div>
@@ -634,7 +639,7 @@ export default function Laundry() {
       {/* return & deliver drawer */}
       {returning && (
         <Sheet
-          title={`Return to room ${returning.order.room_no}`}
+          title={t("Return to room {room}", { room: returning.order.room_no })}
           onClose={() => setReturning(null)}
           footer={
             <Button
@@ -642,8 +647,10 @@ export default function Laundry() {
               disabled={busy || (returnPending > 0 && !returning.note.trim())}
               onClick={submitDeliver}
             >
-              Deliver &amp; bill {cur()}{inr(returning.order.total)}
-              {returnPending > 0 ? ` (${returnPending} short)` : ""}
+              {t("Deliver & bill {total}{short}", {
+                total: `${cur()}${inr(returning.order.total)}`,
+                short: returnPending > 0 ? t(" ({n} short)", { n: returnPending }) : "",
+              })}
             </Button>
           }
         >
@@ -660,7 +667,7 @@ export default function Laundry() {
                 })
               }
             >
-              Everything came back
+              {t("Everything came back")}
             </button>
             <div className="space-y-1">
               {returning.order.items.map((it) => {
@@ -675,7 +682,7 @@ export default function Laundry() {
                         {it.item_name}
                       </p>
                       <p className="text-xs text-zinc-400">
-                        {it.service_type} · collected {it.qty}
+                        {it.service_type} · {t("collected {n}", { n: it.qty })}
                       </p>
                     </div>
                     <Stepper
@@ -707,7 +714,7 @@ export default function Laundry() {
             {returnPending > 0 && (
               <input
                 className="w-full rounded-xl border border-rose-300 bg-rose-50 px-3 py-2.5 text-sm"
-                placeholder={`${returnPending} piece(s) short — why? (required)`}
+                placeholder={t("{n} piece(s) short — why? (required)", { n: returnPending })}
                 value={returning.note}
                 onChange={(e) =>
                   setReturning({ ...returning, note: e.target.value })
@@ -721,7 +728,7 @@ export default function Laundry() {
       {/* cancel drawer */}
       {cancelling && (
         <Sheet
-          title={`Cancel laundry — room ${cancelling.order.room_no}`}
+          title={t("Cancel laundry — room {room}", { room: cancelling.order.room_no })}
           onClose={() => setCancelling(null)}
           footer={
             <Button
@@ -730,19 +737,18 @@ export default function Laundry() {
               disabled={busy || !cancelling.reason.trim()}
               onClick={submitCancel}
             >
-              Cancel this order
+              {t("Cancel this order")}
             </Button>
           }
         >
           <div className="space-y-3">
             <p className="text-sm text-zinc-500">
-              This closes the bag without billing. Tell us why — it's recorded
-              on the order.
+              {t("This closes the bag without billing. Tell us why — it's recorded on the order.")}
             </p>
             <input
               className={inputCls}
               autoFocus
-              placeholder="Reason (guest declined, duplicate…)"
+              placeholder={t("Reason (guest declined, duplicate…)")}
               value={cancelling.reason}
               onChange={(e) =>
                 setCancelling({ ...cancelling, reason: e.target.value })
@@ -762,21 +768,22 @@ function OrderTypeToggle({
   value: OrderType
   onChange: (t: OrderType) => void
 }) {
+  const { t } = useT()
   return (
     <div className="flex gap-1 rounded-lg bg-zinc-100 p-1 text-sm font-medium">
-      {(["Guest", "House"] as OrderType[]).map((t) => (
+      {(["Guest", "House"] as OrderType[]).map((ot) => (
         <button
-          key={t}
+          key={ot}
           type="button"
           className={cn(
             "flex-1 rounded-md px-3 py-1.5",
-            value === t
+            value === ot
               ? "bg-white text-zinc-900 shadow-sm"
               : "text-zinc-500",
           )}
-          onClick={() => onChange(t)}
+          onClick={() => onChange(ot)}
         >
-          {t === "Guest" ? "Guest" : "House (uniforms / linen)"}
+          {ot === "Guest" ? t("Guest") : t("House (uniforms / linen)")}
         </button>
       ))}
     </div>
@@ -792,16 +799,17 @@ function RoomSelect({
   rooms: Room[]
   onChange: (room: string) => void
 }) {
+  const { t } = useT()
   return (
     <select
       className={inputCls}
       value={value}
       onChange={(e) => onChange(e.target.value)}
     >
-      <option value="">Room…</option>
+      <option value="">{t("Room…")}</option>
       {rooms.map((r) => (
         <option key={r.name} value={r.name}>
-          Room {r.room_number}
+          {t("Room {n}", { n: r.room_number })}
         </option>
       ))}
     </select>
@@ -821,12 +829,13 @@ function Stepper({
   onInc: () => void
   onDec: () => void
 }) {
+  const { t } = useT()
   return (
     <div className="flex items-center gap-2">
       <button
         type="button"
         className="rounded-lg border border-zinc-300 p-1.5"
-        aria-label="less"
+        aria-label={t("less")}
         onClick={onDec}
       >
         <Minus className="size-4" />
@@ -847,7 +856,7 @@ function Stepper({
       <button
         type="button"
         className="rounded-lg border border-zinc-300 p-1.5"
-        aria-label="more"
+        aria-label={t("more")}
         onClick={onInc}
       >
         <Plus className="size-4" />
@@ -869,6 +878,7 @@ function PriceMenu({
   canEdit: boolean
   onChanged: () => void
 }) {
+  const { t } = useT()
   const [form, setForm] = useState<{
     name?: string
     item: string
@@ -901,10 +911,9 @@ function PriceMenu({
     <Card>
       <CardHeader>
         <div>
-          <CardTitle>Laundry rate card</CardTitle>
+          <CardTitle>{t("Laundry rate card")}</CardTitle>
           <p className="mt-0.5 text-xs text-zinc-400">
-            Per-item prices the app quotes and bills from. Blank express = 1.5×
-            the normal rate.
+            {t("Per-item prices the app quotes and bills from. Blank express = 1.5× the normal rate.")}
           </p>
         </div>
         {canEdit && (
@@ -914,7 +923,7 @@ function PriceMenu({
               setForm({ item: "", service: "Wash & Iron", rate: "", express: "" })
             }
           >
-            Add rate
+            {t("Add rate")}
           </Button>
         )}
       </CardHeader>
@@ -928,7 +937,7 @@ function PriceMenu({
           <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl bg-zinc-50 p-2">
             <input
               className="w-36 rounded-lg border border-zinc-300 px-2 py-1.5 text-sm"
-              placeholder="Item (Shirt…)"
+              placeholder={t("Item (Shirt…)")}
               value={form.item}
               onChange={(e) => setForm({ ...form, item: e.target.value })}
               autoFocus
@@ -944,7 +953,7 @@ function PriceMenu({
             </select>
             <input
               className="w-24 rounded-lg border border-zinc-300 px-2 py-1.5 text-sm"
-              placeholder={`Rate ${cur()}`}
+              placeholder={t("Rate {cur}", { cur: cur() })}
               inputMode="numeric"
               value={form.rate}
               onChange={(e) =>
@@ -953,7 +962,7 @@ function PriceMenu({
             />
             <input
               className="w-28 rounded-lg border border-zinc-300 px-2 py-1.5 text-sm"
-              placeholder={`Express ${cur()} (opt)`}
+              placeholder={t("Express {cur} (opt)", { cur: cur() })}
               inputMode="numeric"
               value={form.express}
               onChange={(e) =>
@@ -964,25 +973,27 @@ function PriceMenu({
               }
             />
             <Button disabled={!form.item.trim() || !form.rate} onClick={save}>
-              Save
+              {t("Save")}
             </Button>
             <Button variant="ghost" onClick={() => setForm(null)}>
-              Cancel
+              {t("Cancel")}
             </Button>
           </div>
         )}
         {rates.length === 0 ? (
           <p className="py-3 text-sm text-zinc-400">
-            No rates yet{canEdit ? " — add the first item." : "."}
+            {t("No rates yet{hint}", {
+              hint: canEdit ? t(" — add the first item.") : ".",
+            })}
           </p>
         ) : (
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-xs uppercase tracking-wide text-zinc-400">
-                <th className="py-1.5">Item</th>
-                <th>Service</th>
-                <th className="text-right">Rate</th>
-                <th className="text-right">Express</th>
+                <th className="py-1.5">{t("Item")}</th>
+                <th>{t("Service")}</th>
+                <th className="text-right">{t("Rate")}</th>
+                <th className="text-right">{t("Express")}</th>
                 {canEdit && <th />}
               </tr>
             </thead>
@@ -1009,7 +1020,7 @@ function PriceMenu({
                           })
                         }
                       >
-                        Edit
+                        {t("Edit")}
                       </button>
                       <button
                         className="ml-2 text-xs text-zinc-400 hover:text-rose-600"
@@ -1020,7 +1031,7 @@ function PriceMenu({
                           onChanged()
                         }}
                       >
-                        Delete
+                        {t("Delete")}
                       </button>
                     </td>
                   )}
@@ -1054,6 +1065,7 @@ function Billing({
   recent: LaundryOrder[]
   property: string
 }) {
+  const { t } = useT()
   const delivered = recent.filter((o) => o.status === "Delivered")
   const daySum = delivered.reduce((s, o) => s + (o.total || 0), 0)
   const [rev, setRev] = useState<Revenue | null>(null)
@@ -1069,28 +1081,30 @@ function Billing({
       {rev && (
         <Card>
           <CardHeader>
-            <CardTitle>Last {rev.days} days</CardTitle>
+            <CardTitle>{t("Last {days} days", { days: rev.days })}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              <Stat label="Revenue" value={`${cur()}${inr(rev.revenue)}`} />
-              <Stat label="Billed orders" value={rev.billed_orders} />
-              <Stat label="Pieces" value={rev.pieces} />
-              <Stat label="Express" value={rev.express_orders} />
+              <Stat label={t("Revenue")} value={`${cur()}${inr(rev.revenue)}`} />
+              <Stat label={t("Billed orders")} value={rev.billed_orders} />
+              <Stat label={t("Pieces")} value={rev.pieces} />
+              <Stat label={t("Express")} value={rev.express_orders} />
             </div>
             {rev.non_billable_orders > 0 && (
               <p className="mt-2 text-xs text-zinc-400">
-                +{rev.non_billable_orders} house / complimentary order
-                {rev.non_billable_orders === 1 ? "" : "s"} (not billed)
+                {t("+{n} house / complimentary order{s} (not billed)", {
+                  n: rev.non_billable_orders,
+                  s: rev.non_billable_orders === 1 ? "" : "s",
+                })}
               </p>
             )}
             {rev.by_service.length > 0 && (
               <table className="mt-3 w-full text-sm">
                 <thead>
                   <tr className="text-left text-xs uppercase tracking-wide text-zinc-400">
-                    <th className="py-1.5">Service</th>
-                    <th className="text-right">Pieces</th>
-                    <th className="text-right">Revenue</th>
+                    <th className="py-1.5">{t("Service")}</th>
+                    <th className="text-right">{t("Pieces")}</th>
+                    <th className="text-right">{t("Revenue")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1114,21 +1128,21 @@ function Billing({
       )}
       <Card>
       <CardHeader>
-        <CardTitle>Recent laundry billing</CardTitle>
+        <CardTitle>{t("Recent laundry billing")}</CardTitle>
       </CardHeader>
       <CardContent>
         {recent.length === 0 ? (
-          <p className="py-3 text-sm text-zinc-400">Nothing delivered yet.</p>
+          <p className="py-3 text-sm text-zinc-400">{t("Nothing delivered yet.")}</p>
         ) : (
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-xs uppercase tracking-wide text-zinc-400">
-                <th className="py-1.5">Room</th>
-                <th>Guest</th>
-                <th className="text-right">Pieces</th>
-                <th className="text-right">Total</th>
-                <th>Status</th>
-                <th>Folio</th>
+                <th className="py-1.5">{t("Room")}</th>
+                <th>{t("Guest")}</th>
+                <th className="text-right">{t("Pieces")}</th>
+                <th className="text-right">{t("Total")}</th>
+                <th>{t("Status")}</th>
+                <th>{t("Folio")}</th>
               </tr>
             </thead>
             <tbody>
@@ -1152,7 +1166,7 @@ function Billing({
                   </td>
                   <td>
                     <Badge tone={STATUS_TONE[o.status] || "zinc"}>
-                      {o.status}
+                      {t(o.status)}
                     </Badge>
                   </td>
                   <td>
@@ -1160,12 +1174,12 @@ function Billing({
                       <span className="text-xs text-zinc-400">—</span>
                     ) : o.posted_to_folio ? (
                       <span className="text-xs font-medium text-emerald-700">
-                        Posted
+                        {t("Posted")}
                       </span>
                     ) : (
                       <span className="inline-flex items-center gap-0.5 text-xs font-medium text-amber-700">
                         <X className="size-3" />
-                        not posted
+                        {t("not posted")}
                       </span>
                     )}
                   </td>
@@ -1176,7 +1190,7 @@ function Billing({
         )}
         {delivered.length > 0 && (
           <p className="mt-3 text-right text-sm font-semibold">
-            Delivered today: {cur()}{inr(daySum)}
+            {t("Delivered today")}: {cur()}{inr(daySum)}
           </p>
         )}
       </CardContent>
