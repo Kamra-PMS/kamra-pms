@@ -250,6 +250,22 @@ function OccupantsEditor(props: {
 
 /** One editable "what actually happened" moment - shown on the printed
  * card, corrected inline by the desk (early check-in, late checkout). */
+function toDatetimeLocalValue(raw?: string | null): string {
+  // Frappe sends "YYYY-MM-DD HH:MM:SS"; <input type="datetime-local"> needs
+  // "YYYY-MM-DDTHH:MM". Falling back to local now (not UTC) when empty.
+  if (raw) {
+    const s = String(raw).trim().replace(" ", "T")
+    const m = s.match(/^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})/)
+    if (m) return `${m[1]}T${m[2]}`
+  }
+  const d = new Date()
+  const pad = (n: number) => String(n).padStart(2, "0")
+  return (
+    `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}` +
+    `T${pad(d.getHours())}:${pad(d.getMinutes())}`
+  )
+}
+
 function ActualTimeRow(props: {
   label: string
   reservation: string
@@ -259,37 +275,83 @@ function ActualTimeRow(props: {
 }) {
   const [editing, setEditing] = useState(false)
   const [val, setVal] = useState("")
-  const shown = props.value ? props.value.slice(0, 16).replace("T", " ") : "—"
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const shown = props.value
+    ? props.value.replace("T", " ").slice(0, 16)
+    : "—"
   return (
-    <div className="flex items-baseline justify-between gap-2 py-0.5 text-sm">
+    <div className="flex flex-wrap items-center justify-between gap-2 py-0.5 text-sm">
       <span className="shrink-0 text-zinc-500">{props.label}</span>
       {editing ? (
-        <span className="flex items-center gap-1 print:hidden">
-          <input type="datetime-local" className="rounded-lg border border-zinc-300 px-2 py-1 text-sm"
-            value={val} onChange={(e) => setVal(e.target.value)} />
-          <Button variant="outline" className="!px-2 !py-1 text-xs"
+        <span className="flex min-w-0 flex-wrap items-center justify-end gap-1 print:hidden">
+          <input
+            type="datetime-local"
+            className="min-w-0 rounded-lg border border-zinc-300 px-2 py-1 text-sm"
+            value={val}
+            onChange={(e) => {
+              setVal(e.target.value)
+              setError(null)
+            }}
+          />
+          <Button
+            variant="outline"
+            className="!px-2 !py-1 text-xs"
+            disabled={busy || !val}
             onClick={async () => {
               if (!val) return
-              await call("kamra.api.set_actual_times", {
-                reservation: props.reservation,
-                [props.field]: val.replace("T", " ") + ":00",
-              })
-              setEditing(false)
-              props.onSaved()
-            }}>
-            Save
+              setBusy(true)
+              setError(null)
+              try {
+                // datetime-local is "YYYY-MM-DDTHH:MM" (sometimes with
+                // seconds). Frappe wants "YYYY-MM-DD HH:MM:SS".
+                const local = val.replace("T", " ")
+                const payload = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(local)
+                  ? `${local}:00`
+                  : local
+                await call("kamra.api.set_actual_times", {
+                  reservation: props.reservation,
+                  [props.field]: payload,
+                })
+                setEditing(false)
+                props.onSaved()
+              } catch (e) {
+                setError(e instanceof Error ? e.message : "Could not save")
+              } finally {
+                setBusy(false)
+              }
+            }}
+          >
+            {busy ? "…" : "Save"}
           </Button>
-          <button className="text-xs text-zinc-400" onClick={() => setEditing(false)}>✕</button>
+          <button
+            type="button"
+            className="text-xs text-zinc-400"
+            onClick={() => {
+              setEditing(false)
+              setError(null)
+            }}
+          >
+            ✕
+          </button>
+          {error && (
+            <span className="basis-full text-right text-xs text-rose-600">
+              {error}
+            </span>
+          )}
         </span>
       ) : (
         <span className="text-right font-medium">
           {shown}
           <button
+            type="button"
             className="ml-2 text-xs font-medium text-brand-700 hover:underline print:hidden"
             onClick={() => {
-              setVal((props.value || new Date().toISOString()).slice(0, 16))
+              setVal(toDatetimeLocalValue(props.value))
+              setError(null)
               setEditing(true)
-            }}>
+            }}
+          >
             edit
           </button>
         </span>
@@ -430,8 +492,17 @@ export default function RegistrationCard() {
             <Row label="Advance paid" value={`${cur()}${inr(d.reservation.advance_paid)}`} />
             {d.money && (
               <>
-                <Row label="Ledger" value={`Paid ${cur()}${inr(d.money.paid_total)} · Balance ${cur()}${inr(d.money.balance)}` +
-                  (d.money.deposit_held ? ` · Deposit held ${cur()}${inr(d.money.deposit_held)}` : "")} />
+                <Row
+                  label="Ledger"
+                  value={
+                    `Charges ${cur()}${inr(d.money.grand_total)}` +
+                    ` · Paid ${cur()}${inr(d.money.paid_total)}` +
+                    ` · Balance ${cur()}${inr(d.money.balance)}` +
+                    (d.money.deposit_held
+                      ? ` · Deposit held ${cur()}${inr(d.money.deposit_held)}`
+                      : "")
+                  }
+                />
                 <div className="print:hidden">
                   <a className="text-sm font-medium text-brand-700 hover:underline"
                     href={toFullPath(`/billing/${encodeURIComponent(d.money.folio)}`)}>
