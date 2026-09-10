@@ -155,8 +155,9 @@ bench --site kamra.localhost migrate
 
 ## MCP — connect Claude to the PMS
 
-- **Hosted MCP** at `/mcp` — OAuth 2.1 + PKCE, 52 tools from
-  `kamra.mcp_tools`. Staff: Kamra Agent → Connect Claude.
+- **Hosted MCP** at `/mcp` — OAuth 2.1 + PKCE, 85 tools from
+  `kamra.mcp_tools`, filtered by user roles and the property's enabled
+  modules. Staff: Kamra Agent → Connect Claude.
 - **Stdio sidecar** at `apps/kamra/mcp/kamra_mcp.py` for localhost /
   air-gapped benches (personal API key from Developers).
 - Connect Claude Code:

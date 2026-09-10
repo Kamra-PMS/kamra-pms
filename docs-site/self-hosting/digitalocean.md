@@ -1,35 +1,44 @@
 # Self-hosting on DigitalOcean
 
-## 1. Create the server
+## Marketplace 1-Click (preferred)
 
-Create a **Droplet** → Ubuntu 24.04 → **Basic / Regular** → the **4 GB / 2 vCPU** plan (~$24/mo) → choose the region nearest your hotel → add your SSH key. The droplet's IP appears on creation.
+When the Kamra listing is live on the
+[DigitalOcean Marketplace](https://marketplace.digitalocean.com/):
 
-## 2. Point your domain
+1. Create Droplet → search **Kamra**.
+2. Enter **site domain**, **admin email**, **admin password**.
+3. Open `/kamra` → `/kamra/setup`.
 
-Add an **A record** for `pms.yourhotel.com` → the server's IP at your
-DNS provider. (If you use Cloudflare, set it to *DNS only* while issuing
-the SSL certificate.)
+Use the create link on [kamrapms.com/get-started](https://kamrapms.com/get-started/)
+so DigitalOcean credits the HeyKoala affiliate (~10% of spend for 12 months).
 
-## 3. Install Docker
+Vendor / Packer notes live in the repo at `deploy/digitalocean/`.
+
+## Manual (same result)
+
+### 1. Create the server
+
+**Droplet** → Ubuntu 24.04 → **Basic / 4 GB / 2 vCPU** (~$24/mo) → region near
+the hotel → SSH key.
+
+### 2. Point your domain
+
+**A record** for `pms.yourhotel.com` → droplet IP.
+
+### 3. Install
 
 ```bash
 ssh root@<server-ip>
-curl -fsSL https://get.docker.com | sh
+curl -fsSL https://raw.githubusercontent.com/Kamra-PMS/kamra-pms/main/deploy/install.sh | bash
 ```
 
-## 4. Install Kamra
+Three prompts: site domain, admin email, admin password. No default password.
 
-From here it's identical everywhere — follow the
-[Quickstart](/quickstart): build the image with Kamra in `apps.json`,
-bring the compose stack up, create your site, enable the scheduler.
-
-## 5. SSL
+### 4. TLS
 
 ```bash
 apt install -y certbot python3-certbot-nginx
 certbot --nginx -d pms.yourhotel.com
 ```
 
-Then sign in at `/kamra` as `Administrator` or `admin@example.com` with
-the `--admin-password` from the Quickstart — there is no default — and
-work through the [production checklist](/self-hosting/#after-install-production-checklist).
+Then `/kamra/setup`. See [Quickstart](/quickstart).

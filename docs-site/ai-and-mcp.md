@@ -67,27 +67,36 @@ tools.
 
 An optional chat assistant for staff, inside the console.
 
-**Enable it:** Settings → *AI assistant* → Enabled, paste your
-provider's API key, save.
+**Enable it:** Settings → *AI assistant* → pick a **provider** (OpenAI,
+Gemini, Groq, OpenRouter, Ollama, Azure, or Custom) → paste the key →
+**Test connection** → Save.
 
-- **Any OpenAI-compatible provider** — OpenAI, OpenRouter, Groq, or a
-  local Ollama/vLLM. Set base URL and model to taste.
-- **Your key, your data.** No markup, no proxying — requests go from
-  your server to your provider.
-- **Governed:** the model only calls Kamra's tools; it cannot invent a
-  price or skip a cancellation fee — the tools refuse.
-- **Role-scoped:** the copilot only sees the tools the signed-in user's
-  roles allow.
+- **OpenAI-compatible only** in this form. An Anthropic `sk-ant-…` key
+  will fail here on purpose — use **Connect Claude (MCP)** instead, or
+  put Claude behind the OpenRouter preset.
+- **Gemini** uses Google's OpenAI-compatible base URL
+  (`generativelanguage.googleapis.com/v1beta/openai`).
+- **Your key, your data.** No markup — requests go from your server to
+  your provider.
+- **Governed:** the model only calls Kamra's tools.
+- **Role-scoped:** tools match the signed-in user's roles.
 
 ## What work it can do
 
-Kamra currently ships **52 governed tools** (see the
-[tool reference](/mcp-tools)). Roughly, by job:
+Kamra ships **governed tools** on MCP (see the
+[tool reference](/mcp-tools)). Visibility is the intersection of the
+connected user's **roles** and the property's **enabled modules** — a
+house without F&B never sees POS tools; Front Desk still cannot change
+rates.
 
 | Job | Tools |
 | --- | --- |
-| Front desk | Today's board, availability, quote, book, waitlist, check-in / out, guest lookup and journey, occupant register |
-| Billing | Folio, post a charge (rules pick the folio), split a line, payment *link* |
+| Front desk | Today's board, find stays, stay detail, availability, quote, book, waitlist, amend / move, check-in / out, guest lookup and journey, occupants |
+| Billing | Folio(s), post / split / move charges, take payment, void, allowance, close folio, payment link |
+| Housekeeping | Queue, assign / claim / update tasks, room HK status, minibar / laundry post from the floor |
+| Ops | Create, list, and advance service tickets |
+| F&B | Outlets, menu, table map, open / create / fire / pay checks, kitchen queue |
+| Laundry | Board, rates, collect, status, deliver |
 | Revenue | Rate changes inside the owner's floor / ceiling |
 | Briefings | Owner briefing, hotel-position briefing — never change the figures |
 | Night audit | Idempotent end-of-day posting and no-shows |
@@ -128,16 +137,13 @@ Claude is the loop: you open a chat, it uses the tools.
 
 Be honest with the model, and with buyers:
 
-- **No taking a payment, amending dates, moving a room, or closing a
-  folio** on MCP yet. The copilot has some of these; MCP will catch up.
-- **No housekeeping queue, POS, laundry, or OTA / channel-manager
-  tools** on MCP.
-- **Tickets** can be created and listed, not started or resolved.
+- **Channel / OTA and deep ledger / cashier tools** are not on MCP yet
+  (AR aging, FX desk, till open/close). REST + roles still cover them.
 - **Claude must reach the site.** NAT / private bench → stdio fallback.
 - **Custom connector confirm.** Until Kamra is in Anthropic's directory,
   Claude shows "this URL came from an external link" — click through it.
 - **Front Desk cannot change rates.** Revenue Manager (or admin) can,
-  inside guardrails.
+  inside guardrails. Tools the property has disabled never appear.
 - **Irreversible actions still need a human in the Claude chat.** The
   tools will not phone the guest for you.
 
@@ -170,8 +176,10 @@ required to Connect Claude today.
 
 **Tool holes**
 
-- `find_reservations`, take a payment, amend / move a stay, close a
-  folio, run HK / POS / laundry / OTA, advance a ticket past create/list
+- Channel manager / OTA sync tools on MCP
+- Cashier till open/close, city ledger, FX desk
+- Inventory / recipes
+- WhatsApp thread → folio from MCP
 
 **Housekeeping**
 

@@ -110,15 +110,15 @@ export default function Tickets() {
 
   return (
     <Card>
-      <CardHeader>
-        <div>
+      <CardHeader className="items-start gap-4">
+        <div className="min-w-0 flex-1">
           <CardTitle>{t("Service Tickets")}</CardTitle>
-          <p className="mt-0.5 text-xs text-zinc-400">
+          <p className="mt-0.5 text-xs text-zinc-500">
             {t("Guest requests with SLA - Urgent 15m · High 30m · Medium 1h · Low 4h")}
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <label className="flex items-center gap-1.5 text-xs text-zinc-500">
+        <div className="flex shrink-0 items-center gap-3">
+          <label className="inline-flex h-8 cursor-pointer items-center gap-2 text-xs text-zinc-600">
             <input
               type="checkbox"
               className="size-3.5 accent-brand-600"
@@ -203,7 +203,7 @@ export default function Tickets() {
             </li>
           ))}
           {rows.length === 0 && (
-            <li className="py-8 text-center text-sm text-zinc-400">
+            <li className="py-10 text-center text-sm text-zinc-500">
               {t("No open tickets - a quiet day at the desk.")}
             </li>
           )}

@@ -11,6 +11,13 @@ upgrade-breaking changes (removed doctypes / API contracts).
 
 ### Features
 
+* **mcp:** expand agent surface to 85 tools — stay find/amend/move, payments,
+  void/allowance/close folio, tickets advance, housekeeping, POS, and laundry;
+  tools filtered by user roles **and** the property's enabled modules
+* **ai:** Settings presets for OpenAI, Gemini, Groq, OpenRouter, and Ollama
+  (OpenAI-compatible base URL + Test connection)
+* **deploy:** WordPress-easy self-host via `deploy/install.sh` + first_boot;
+  fresh installs land on `/kamra` instead of Desk
 * **banquet:** Phase 1 enterprise ops (issue #67) — email/WhatsApp send
   quotation, desk-led guest response, department checklists + notify on
   Confirm (Sales/Finance/HK/F&B), and quote no-response chase reminders

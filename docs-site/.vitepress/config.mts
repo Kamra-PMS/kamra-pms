@@ -42,6 +42,7 @@ export default defineConfig({
           { text: "DigitalOcean", link: "/self-hosting/digitalocean" },
           { text: "Linode (Akamai)", link: "/self-hosting/linode" },
           { text: "AWS", link: "/self-hosting/aws" },
+          { text: "AWS / Azure / GCP marketplaces", link: "/self-hosting/marketplace/hyperscalers" },
           { text: "Install with bench", link: "/self-hosting/bench" },
           { text: "Frappe Cloud marketplace", link: "/self-hosting/frappe-cloud" },
           { text: "ERPNext & Frappe HR", link: "/self-hosting/erpnext-hr" },

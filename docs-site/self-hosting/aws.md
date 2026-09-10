@@ -1,35 +1,41 @@
 # Self-hosting on AWS
 
-## 1. Create the server
+For a single hotel, prefer [Hostinger](/self-hosting/hostinger) or
+[DigitalOcean](/self-hosting/digitalocean). Use AWS when the property (or
+group) already lives in an AWS account — or when buying through
+[AWS Marketplace](/self-hosting/marketplace/hyperscalers) later.
 
-In EC2, **Launch instance** → Ubuntu Server 24.04 → **t3.medium** (2 vCPU / 4 GB, ~$30/mo with EBS) → 40 GB gp3 volume → a security group allowing ports **22, 80, 443** → attach an **Elastic IP** so the address survives restarts.
+## Manual EC2
 
-## 2. Point your domain
+### 1. Create the server
 
-Add an **A record** for `pms.yourhotel.com` → the server's IP at your
-DNS provider. (If you use Cloudflare, set it to *DNS only* while issuing
-the SSL certificate.)
+EC2 → Ubuntu 24.04 → **t3.medium** (2 vCPU / 4 GB) → 40 GB gp3 → security
+group **22, 80, 443** → Elastic IP.
 
-## 3. Install Docker
+### 2. DNS
 
-```bash
-ssh root@<server-ip>
-curl -fsSL https://get.docker.com | sh
-```
+**A record** `pms.yourhotel.com` → Elastic IP.
 
-## 4. Install Kamra
-
-From here it's identical everywhere — follow the
-[Quickstart](/quickstart): build the image with Kamra in `apps.json`,
-bring the compose stack up, create your site, enable the scheduler.
-
-## 5. SSL
+### 3. Install
 
 ```bash
-apt install -y certbot python3-certbot-nginx
-certbot --nginx -d pms.yourhotel.com
+ssh ubuntu@<server-ip>   # or root, depending on AMI
+curl -fsSL https://raw.githubusercontent.com/Kamra-PMS/kamra-pms/main/deploy/install.sh | bash
 ```
 
-Then sign in at `/kamra` as `Administrator` or `admin@example.com` with
-the `--admin-password` from the Quickstart — there is no default — and
-work through the [production checklist](/self-hosting/#after-install-production-checklist).
+Site domain, admin email, admin password — no default.
+
+### 4. TLS
+
+```bash
+sudo apt install -y certbot python3-certbot-nginx
+sudo certbot --nginx -d pms.yourhotel.com
+```
+
+Then `/kamra/setup`. See [Quickstart](/quickstart).
+
+## Marketplace (planned)
+
+Free **Kamra PMS** AMI (self-host in your VPC) and a paid **Kamra Cloud +
+HeyKoala** SaaS listing (hotel pays on the AWS invoice). Details:
+[Hyperscaler marketplaces](/self-hosting/marketplace/hyperscalers).
