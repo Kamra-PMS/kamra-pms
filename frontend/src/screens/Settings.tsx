@@ -185,6 +185,24 @@ function SettingsCard(props: {
   )
 }
 
+const TIMEZONES = [
+  "Asia/Aden",
+  "Asia/Riyadh",
+  "Asia/Dubai",
+  "Asia/Muscat",
+  "Asia/Kolkata",
+  "Asia/Jakarta",
+  "Asia/Bangkok",
+  "Asia/Singapore",
+  "Europe/London",
+  "Europe/Paris",
+  "Africa/Cairo",
+  "Africa/Nairobi",
+  "America/New_York",
+  "America/Los_Angeles",
+  "UTC",
+]
+
 const PROPERTY_SPECS: Spec[] = [
   { field: "property_name", label: "Property name" },
   { field: "legal_name", label: "Legal name" },
@@ -199,6 +217,13 @@ const PROPERTY_SPECS: Spec[] = [
     label: "Country",
     hint: "Selects the tax & invoicing pack. India and Indonesia today; more via the Marketplace.",
   },
+  {
+    field: "timezone",
+    label: "Time zone",
+    type: "select",
+    options: TIMEZONES,
+    hint: "Hotel local clock — night audit and timestamps. Updates the site time zone too.",
+  },
   { field: "phone", label: "Phone" },
   { field: "email", label: "Email" },
   { field: "website", label: "Website" },
@@ -208,6 +233,15 @@ const PROPERTY_SPECS: Spec[] = [
   { field: "state", label: "State" },
   { field: "pincode", label: "PIN code" },
 ]
+
+/** Keep an unknown existing IANA zone visible in the picker. */
+function propertySpecsFor(doc: Doc): Spec[] {
+  const tz = String(doc.timezone || "").trim()
+  if (!tz || TIMEZONES.includes(tz)) return PROPERTY_SPECS
+  return PROPERTY_SPECS.map((s) =>
+    s.field === "timezone" ? { ...s, options: [tz, ...TIMEZONES] } : s,
+  )
+}
 
 const STAY_TAX_SPECS: Spec[] = [
   { field: "checkin_time", label: "Check-in time", type: "time" },
@@ -707,7 +741,22 @@ export default function Settings() {
     call<Doc>("frappe.client.get", {
       doctype: "Property",
       name: property,
-    }).then(setProp)
+    }).then(async (p) => {
+      // Desk System Settings holds the site clock; surface it when Property
+      // timezone was never filled (common on older tenants).
+      if (!(p.timezone as string | undefined)?.trim()) {
+        try {
+          const ss = await call<Doc>("frappe.client.get", {
+            doctype: "System Settings",
+          })
+          const siteTz = String(ss.time_zone || "").trim()
+          if (siteTz) p = { ...p, timezone: siteTz }
+        } catch {
+          /* leave blank — user can pick */
+        }
+      }
+      setProp(p)
+    })
     listResource("Payment Gateway Settings", {
       fields: ["name", "gateway", "enabled", "test_mode", "key_id"],
       filters: [["property", "=", property]],
@@ -728,7 +777,7 @@ export default function Settings() {
       <SettingsCard
         title="Property"
         description="Identity and contact details - printed on invoices and the GRC."
-        specs={PROPERTY_SPECS}
+        specs={propertySpecsFor(prop)}
         doc={prop}
         onSave={async (changes) => {
           await updateResource("Property", property, changes)

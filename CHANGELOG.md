@@ -11,6 +11,10 @@ upgrade-breaking changes (removed doctypes / API contracts).
 
 ### Features
 
+* **admin:** System Health screen — GitHub version check, site diagnostics,
+  and upgrade guidance for self-host / bench / Docker (no auto-upgrade)
+* **settings:** Time zone on Admin → Settings → Property (syncs site System
+  Settings clock for single-property sites)
 * **mcp:** expand agent surface to 85 tools — stay find/amend/move, payments,
   void/allowance/close folio, tickets advance, housekeeping, POS, and laundry;
   tools filtered by user roles **and** the property's enabled modules

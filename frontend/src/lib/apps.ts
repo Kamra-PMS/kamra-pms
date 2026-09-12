@@ -23,6 +23,7 @@ import {
   Code2,
   ExternalLink,
   FileSpreadsheet,
+  HeartPulse,
   Home,
   IndianRupee,
   Landmark,
@@ -252,6 +253,7 @@ export const APPS: AppDef[] = [
     roles: ["Hotel Admin", "System Manager", "Administrator"],
     items: [
       { to: "/settings", label: "Settings", icon: SettingsIcon },
+      { to: "/health", label: "System Health", icon: HeartPulse },
       { to: "/rooms", label: "Rooms", icon: BedDouble },
       { to: "/room-types", label: "Room Types", icon: LayoutGrid },
       { to: "/activity", label: "Activity Log", icon: ScrollText },
