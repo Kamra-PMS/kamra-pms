@@ -35,6 +35,7 @@
 
 ## Contents
 
+- [What's new](#whats-new)
 - [Why Kamra](#why-kamra)
 - [What makes it different](#what-makes-it-different)
 - [Screenshots](#screenshots)
@@ -45,6 +46,23 @@
 - [Quickstart (development)](#quickstart-development)
 - [Who it's for](#who-its-for)
 - [License & contributors](#license--contributors)
+
+---
+
+## What's new
+
+On **`develop`** (nightly) the product is the **2.6.2** train plus Unreleased
+work. The `v2.6.2` GitHub tag is still pending — latest published release is
+[v2.6.0](https://github.com/Kamra-PMS/kamra-pms/releases/tag/v2.6.0).
+
+- **Unreleased** — System Health, property time zone, **85 MCP tools** (role +
+  module gated), AI provider presets, WordPress-easy `deploy/install.sh`,
+  banquet Phase 1 (send quote, guest response, Sales/Finance/HK/F&B checklists)
+- **2.6.2** (in the changelog; not tagged yet) — Opera-style cashier till,
+  folio ledger, cashier PIN, POS full-screen till
+
+Notes live in [`CHANGELOG.md`](CHANGELOG.md) — this list is a pointer, not a
+second release note. How we cut stables: [`RELEASING.md`](RELEASING.md).
 
 ---
 
@@ -66,7 +84,7 @@ Kamra is the alternative we wanted:
 
 ## What makes it different
 
-- **Agent-ready, not agent-locked.** [MCP server](https://kamrapms.com/docs/ai-and-mcp) with 50+ governed tools — role-scoped, permission-checked, fully logged. Connect Claude; no bundled agent to trust.
+- **Agent-ready, not agent-locked.** [MCP server](https://kamrapms.com/docs/ai-and-mcp) with **85** governed tools — role-scoped, module-gated, permission-checked, fully logged. Connect Claude; no bundled agent to trust.
 - **Bring your own key.** No AI markup or model lock-in. Optional [HeyKoala](https://heykoala.ai) for voice / WhatsApp concierge.
 - **Deterministic money.** Rates, tax slabs, availability, and no-overbooking guards come from code — never from a language model.
 - **Full audit trail.** Every human or AI action: who, what, why.
@@ -123,13 +141,13 @@ Live example: [demo.kamrapms.com/book](https://demo.kamrapms.com/book).
 | **Short-term rentals** | Hotel vs STR property kind, sellable units, per-villa locations, Instant / Request-to-book |
 | **Booking** | Multi-room / group / corporate, returning guests, add-ons, vouchers, travel agents, day-use |
 | **Revenue** | Seasons, rate plans, guardrails, hurdle rates, overbooking allowance, cancellation & no-show policy in code |
-| **Billing** | Folios, corporate routing, group masters, charge splits, night audit, tax invoices, GSTR-1, payment links |
-| **F&B** | POS table map, split bills, thermal KOT, kitchen display, inventory & recipes, QR ordering, room posting |
-| **Operations** | Tickets + SLA, housekeeping `/hk`, guest laundry end-to-end, lost & found, banquet / events |
+| **Billing** | Folios, corporate routing, group masters, charge splits, night audit, tax invoices, GSTR-1, payment links, cashier till (FO+POS cash, PIN pad), folio ledger |
+| **F&B** | POS table map, full-screen till and kitchen pass, split bills, thermal KOT, kitchen display, inventory & recipes, QR ordering, room posting |
+| **Operations** | Tickets + SLA, housekeeping `/hk`, guest laundry end-to-end, lost & found, banquet / events (send quote, guest response, dept checklists) |
 | **Guests** | Online pre-check-in, GRC + occupant register, **editable nationality**, ID retention modes |
 | **Messaging** | WhatsApp (Meta Cloud API) — confirmations, check-in links, inbox, desk tickets |
 | **Localization** | India GST, Indonesia PB1, Thailand VAT, Malaysia SST, UAE VAT — currency & locales follow the pack |
-| **Platform** | Multi-property RBAC, dark mode, CSV migration (eZee / Cloudbeds presets), eval harness in CI |
+| **Platform** | Multi-property RBAC, dark mode, property time zone, System Health, AI provider presets, CSV migration (eZee / Cloudbeds presets), eval harness in CI |
 
 ---
 

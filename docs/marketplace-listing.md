@@ -59,10 +59,11 @@ is pulled in automatically.
 
 ### What makes it different
 
-- **Agent-ready, not agent-locked.** An MCP server exposes 52 role-scoped
-  tools. Click Connect Claude — *"book Mr. Rao a deluxe for the
-  weekend with breakfast"* — it quotes, books, and logs every action. Bring
-  your own AI; there is no bundled model markup.
+- **Agent-ready, not agent-locked.** An MCP server exposes 85 role-scoped
+  tools, filtered by the property's enabled modules. Click Connect Claude —
+  *"book Mr. Rao a deluxe for the weekend with breakfast"* — it quotes,
+  books, and logs every action. Bring your own AI; there is no bundled
+  model markup.
 - **Deterministic money.** Prices, taxes and availability come from a
   pricing engine, never from a language model. Tax slabs, multi-rate
   invoices and the no-overbooking guard are code, verified by an eval suite
@@ -98,14 +99,15 @@ is pulled in automatically.
   enforced in code.
 - **Billing** — folios with per-line tax, corporate charge routing, group
   master folios, exact %/amount charge splits, automated night audit, tax
-  invoices with B2B fields, cashier reconciliation, payment links via
-  frappe/payments.
+  invoices with B2B fields, Opera-style cashier till (FO+POS cash, PIN
+  pad), append-only folio ledger, payment links via frappe/payments.
 - **Restaurant POS** — area-wise table map with live states, concurrent &
-  split bills, dine-in / room service / takeaway / delivery, 80mm thermal
-  KOT & bill printing, kitchen display, inventory & recipes, guest QR
-  ordering, room posting (alcohol-aware).
+  split bills, dine-in / room service / takeaway / delivery, full-screen
+  till and kitchen pass, 80mm thermal KOT & bill printing, kitchen display,
+  inventory & recipes, guest QR ordering, room posting (alcohol-aware).
 - **Operations** — service tickets with SLA, a housekeeping mobile app,
-  end-to-end guest laundry, lost & found, shift handover, venues & events.
+  end-to-end guest laundry, lost & found, shift handover, venues & events
+  (send quote, guest response, department checklists on Confirm).
 - **Guests** — self check-in with ID & address-proof capture, printable
   GRC with the legal occupant register, editable actual times, a stay
   ledger with advances/deposits/guarded refunds, retention-aware ID
@@ -118,9 +120,10 @@ is pulled in automatically.
   flat-tax generic for everywhere else; currency and number locale follow
   the pack.
 - **Platform** — multi-property with per-user scoping, six-role RBAC, dark
-  mode, onboarding wizard, CSV migration importers (eZee / Cloudbeds
-  presets), and a 51-check eval harness + 13-journey front-desk persona
-  suite in CI.
+  mode, property time zone, System Health diagnostics, AI provider presets
+  (OpenAI, Gemini, Groq, OpenRouter, Ollama), onboarding wizard, CSV
+  migration importers (eZee / Cloudbeds presets), and a 51-check eval
+  harness + 13-journey front-desk persona suite in CI.
 
 ### After install
 
