@@ -15,9 +15,9 @@ An optional chat assistant for staff, right inside the console.
 provider's API key, save. The sparkle button appears bottom-right for
 everyone at that property.
 
-- **Any OpenAI-compatible provider works** — OpenAI
-  (`https://api.openai.com/v1`), OpenRouter, Groq, a local Ollama/vLLM.
-  Set the base URL and model to taste.
+- **Any OpenAI-compatible provider works.** Settings presets cover
+  OpenAI, Gemini, Groq, OpenRouter, and Ollama (OpenAI-compatible base
+  URL + Test connection). Set the base URL and model to taste.
 - **Your key, your data.** Kamra adds no markup and proxies nothing
   through third parties — requests go from your server to your provider.
 - **Governed:** the model can only call Kamra's tools (quote, book,

@@ -33,8 +33,8 @@ features:
 
 ## What is Kamra?
 
-::: tip New — short-term rentals
-Kamra 2.5 runs villa portfolios as well as hotels. [Read the announcement](https://kamrapms.com/updates/short-term-rentals/) · try the [demo booking page](https://demo.kamrapms.com/book).
+::: tip What's new on develop
+The **2.6.2** train (GitHub tag still pending; latest published release is [v2.6.0](https://github.com/Kamra-PMS/kamra-pms/releases/tag/v2.6.0)) plus Unreleased work: cashier/finance, **85 MCP tools**, System Health, property time zone, and banquet Phase 1. Notes: [CHANGELOG](https://github.com/Kamra-PMS/kamra-pms/blob/develop/CHANGELOG.md).
 :::
 
 Kamra is a complete property-management system for hotels and short-term
