@@ -36,7 +36,7 @@ const inputCls =
 /**
  * Phone entry with the property's dial code shown as a fixed prefix, so staff
  * type only the local number. `value`/`onChange` stay fully qualified
- * (`+919148869914`) - the prefix is presentation, not a separate field.
+ * (`+919876543210`) - the prefix is presentation, not a separate field.
  */
 function PhoneInput(props: {
   value: string
