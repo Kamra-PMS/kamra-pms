@@ -3148,6 +3148,97 @@ def t76():
 	assert bq.customer_profile(P, phone="+91 90000 12121")["found"]
 
 
+@check("privacy: erasure reaches photos, signatures, occupants, messages, logs and history; export answers access")
+def t81():
+	import io
+
+	from PIL import Image
+
+	from kamra import api, privacy
+	from kamra.savings import log_action
+
+	g = _guest("Evalerase Person", "+91 70000 08101")
+	frappe.db.set_value("Guest", g, {"email": "erase@eval.test", "id_type": "Passport",
+	                                 "id_number": "Z1234567", "date_of_birth": "1990-01-31"})
+	buf = io.BytesIO()
+	Image.new("RGB", (8, 8), "white").save(buf, "JPEG")
+	f = frappe.get_doc({"doctype": "File", "file_name": "eval-passport.jpg", "is_private": 1,
+	                    "attached_to_doctype": "Guest", "attached_to_name": g,
+	                    "attached_to_field": "id_file", "content": buf.getvalue()}).insert(ignore_permissions=True)
+	frappe.db.set_value("Guest", g, "id_file", f.file_url)
+	res = _res(g, "2031-01-10", "2031-01-12", ROOM)
+	res.append("occupants", {"full_name": "Evalerase Person", "phone": "+91 70000 08101",
+	                         "id_number": "Z1234567"})
+	res.save(ignore_permissions=True)
+	frappe.db.set_value("Reservation", res.name, {"precheckin_signature": "data:image/png;base64,AAAA",
+	                                              "booked_by_phone": "+91 70000 08101"})
+	wa = frappe.get_doc({"doctype": "WhatsApp Message", "property": P, "direction": "Outbound",
+	                     "status": "Sent", "message_type": "Text", "to_number": "+917000008101",
+	                     "guest": g, "reservation": res.name,
+	                     "content": "Hi Evalerase Person, see you soon"}).insert(ignore_permissions=True)
+	log_action("eval_note", "Reservation", res.name, P, rationale="Called Evalerase Person on +91 70000 08101")
+	frappe.get_doc("Guest", g).save(ignore_permissions=True)          # leaves a Version row
+	assert frappe.db.count("Version", {"ref_doctype": "Guest", "docname": g}) >= 0
+
+	exported = privacy.export_guest_data(g)
+	assert exported["profile"]["email"] == "erase@eval.test" and exported["stays"], exported.keys()
+
+	out = api.anonymize_guest(g)                                          # the UI's path
+	alias = out["alias"]
+	row = frappe.db.get_value("Guest", g, ["full_name", "phone", "email", "id_number", "id_file",
+	                                       "date_of_birth"], as_dict=True)
+	assert row.full_name == alias and not any([row.phone, row.email, row.id_number, row.id_file,
+	                                           row.date_of_birth]), row
+	assert not frappe.db.exists("File", f.name), "ID photo survived erasure"
+	r = frappe.get_doc("Reservation", res.name)
+	assert not r.precheckin_signature and not r.booked_by_phone and r.guest_name == alias
+	occ = r.occupants[0]
+	assert occ.full_name == alias and not occ.phone and occ.id_number.endswith("4567") \
+		and "Z123" not in occ.id_number, occ.as_dict()
+	w = frappe.db.get_value("WhatsApp Message", wa.name, ["content", "to_number", "guest"], as_dict=True)
+	assert w.content == "[erased]" and not w.to_number and not w.guest, w
+	leaked = frappe.db.sql("""select count(*) from `tabAgent Action Log`
+		where rationale like %s or rationale like %s""", ("%Evalerase%", "%70000 08101%"))[0][0]
+	assert leaked == 0, "name or phone left in the agent log"
+	assert not frappe.db.count("Version", {"ref_doctype": "Guest", "docname": g}), "change history kept PII"
+	assert frappe.db.sql("""select count(*) from `tabVersion` where data like %s""", "%Evalerase%")[0][0] == 0
+
+
+@check("privacy: retention erases idle guests, keeps blacklisted, booked and retention-off ones")
+def t82():
+	from frappe.utils import add_days
+
+	from kamra import privacy
+
+	frappe.db.set_value("Property", P, "guest_retention_months", 12)
+	old = _guest("Evalold Idle", "+91 70000 08201")
+	_res(old, add_days(nowdate(), -800), add_days(nowdate(), -798), None, allow_past=1)
+	black = _guest("Evalold Banned", "+91 70000 08202")
+	_res(black, add_days(nowdate(), -800), add_days(nowdate(), -798), None, allow_past=1)
+	frappe.db.set_value("Guest", black, {"blacklisted": 1, "blacklist_reason": "eval"})
+	recent = _guest("Evalnew Recent", "+91 70000 08203")
+	_res(recent, add_days(nowdate(), -30), add_days(nowdate(), -28), None, allow_past=1)
+	for g in (old, black):
+		for r in frappe.get_all("Reservation", filters={"guest": g}, pluck="name"):
+			frappe.db.set_value("Reservation", r, "status", "Checked Out", update_modified=False)
+			frappe.db.sql("update `tabReservation` set modified=%s where name=%s",
+			              (add_days(nowdate(), -790), r))
+	frappe.db.sql("update `tabGuest` set modified=%s where name in (%s, %s)",
+	              (add_days(nowdate(), -790), old, black))
+	privacy.apply_retention()
+	assert frappe.db.get_value("Guest", old, "full_name").startswith("Guest "), "idle guest kept"
+	assert frappe.db.get_value("Guest", black, "full_name") == "Evalold Banned", "blacklisted guest erased"
+	assert frappe.db.get_value("Guest", recent, "full_name") == "Evalnew Recent", "recent guest erased"
+
+	frappe.db.set_value("Property", P, "guest_retention_months", 0)
+	idle2 = _guest("Evalold Kept", "+91 70000 08204")
+	_res(idle2, add_days(nowdate(), -800), add_days(nowdate(), -798), None, allow_past=1)
+	frappe.db.sql("update `tabReservation` set status='Checked Out', modified=%s where guest=%s",
+	              (add_days(nowdate(), -790), idle2))
+	privacy.apply_retention()
+	assert frappe.db.get_value("Guest", idle2, "full_name") == "Evalold Kept", "retention off still erased"
+
+
 def execute():
 	global RT, ROOM
 	# frappe.locale.get_locale_value crashes (UnboundLocalError) when no
@@ -3165,7 +3256,7 @@ def execute():
 		           t36, t37, t38, t39, t40, t41, t42, t43, t44, t45, t46, t47, t48, t49, t50, t51, t53,
 		           t54, t55, t56, t57, t58, t59, t60, t61, t62, t63, t64,
 		           t65, t66, t67, t68, t69, t70,
-		           t71, t72, t73, t74, t75, t76):
+		           t71, t72, t73, t74, t75, t76, t81, t82):
 			fn()
 	finally:
 		frappe.db.commit = real_commit

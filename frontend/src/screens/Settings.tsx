@@ -270,7 +270,18 @@ const STAY_TAX_SPECS: Spec[] = [
     label: "Guest ID retention",
     type: "select",
     options: ["Store", "Verify & Discard"],
-    hint: "Verify & Discard masks ID numbers to the last 4 digits at checkout",
+    hint: "Verify & Discard (recommended) masks ID numbers to the last 4 digits and deletes ID photos at checkout",
+  },
+  {
+    field: "guest_retention_months",
+    label: "Erase guest data after (months)",
+    type: "number",
+    hint: "guests with no stay for this long are erased automatically; bills stay for the books. 0 keeps them",
+  },
+  {
+    field: "privacy_contact",
+    label: "Privacy contact (Grievance Officer)",
+    hint: "email or phone guests use for access, correction or erasure requests; shown on booking and check-in pages",
   },
   {
     field: "require_cashier_pin",

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import PrivacyNotice from "../components/PrivacyNotice"
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom"
 import {
   BedDouble,
@@ -52,6 +53,8 @@ interface Showcase {
     amenities: string[]
     checkin_time: string
     checkout_time: string
+    privacy_contact?: string | null
+    guest_retention_months?: number | null
     driving_directions: string | null
     latitude: number | null
     longitude: number | null
@@ -984,13 +987,17 @@ export default function PublicBooking() {
                 Done
               </Button>
             ) : (
-              <Button
-                className="w-full justify-center py-2.5 text-base"
-                disabled={busy || !form.guest_name || !form.phone}
-                onClick={submitBooking}
-              >
-                {busy ? "Booking…" : bookCta}
-              </Button>
+              <div className="w-full space-y-2">
+                <PrivacyNotice propertyName={p.property_name} contact={p.privacy_contact}
+                  retentionMonths={p.guest_retention_months} />
+                <Button
+                  className="w-full justify-center py-2.5 text-base"
+                  disabled={busy || !form.guest_name || !form.phone}
+                  onClick={submitBooking}
+                >
+                  {busy ? "Booking…" : bookCta}
+                </Button>
+              </div>
             )
           }
         >

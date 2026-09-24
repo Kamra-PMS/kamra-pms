@@ -1885,38 +1885,11 @@ def merge_guests(source: str, target: str):
 @frappe.whitelist()
 @require_roles()
 def anonymize_guest(guest: str):
-	"""Right-to-erasure: strip everything that identifies the person while
-	keeping stays and bills intact for the books. Irreversible."""
-	doc = frappe.get_doc("Guest", guest)
-	alias = f"Guest {frappe.generate_hash(length=6).upper()}"
-	doc.update({
-		"first_name": alias, "last_name": "", "full_name": alias,
-		"phone": "", "email": "", "id_type": "", "id_number": "",
-		"nationality": "", "address_line": "", "city": "",
-		"guest_notes": "Profile anonymized on request.", "vip": 0,
-	})
-	doc.save(ignore_permissions=True)
-	for doctype in ("Reservation", "Folio"):
-		frappe.db.sql(  # nosemgrep: frappe-sql-format-injection -- values are parameterized; interpolated text is a constant or whitelisted identifier, not user input
-			f"UPDATE `tab{doctype}` SET guest_name = %s WHERE guest = %s",
-			(alias, guest))
-	# the stay register keeps masked IDs only
-	for r in frappe.get_all("Reservation", filters={"guest": guest},
-	                        pluck="name"):
-		res = frappe.get_doc("Reservation", r)
-		for o in res.get("occupants") or []:
-			if o.id_number:
-				frappe.db.set_value("Stay Occupant", o.name, "id_number",
-				                    _mask_id(o.id_number),
-				                    update_modified=False)
-		if res.get("booked_by_phone"):
-			frappe.db.set_value("Reservation", r, "booked_by_phone", "",
-			                    update_modified=False)
+	"""Right to erasure (DPDP s.12): see kamra.privacy.erase_guest. Stays
+	and bills stay for the books. Irreversible."""
+	from kamra.privacy import erase_guest
 
-	from kamra.savings import log_action
-	log_action("anonymize_guest", "Guest", guest,
-	           rationale="PII erased; financial records preserved")
-	return {"guest": guest, "alias": alias}
+	return erase_guest(guest, reason="request")
 
 
 @frappe.whitelist()
