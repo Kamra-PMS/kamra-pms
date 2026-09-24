@@ -3264,7 +3264,13 @@ def t80():
 	saved = client.TRANSPORT
 	client.TRANSPORT = fake_hub
 	try:
-		out = client.scan_guest_id(g.name, "Aadhaar")
+		try:
+			client.scan_guest_id(g.name, "Aadhaar")
+			raise AssertionError("scanned without the guest being told")
+		except frappe.ValidationError:
+			pass
+		assert "scan_id" not in seen, "image sent without consent"
+		out = client.scan_guest_id(g.name, "Aadhaar", consent=1)
 	finally:
 		client.TRANSPORT = saved
 	assert seen["scan_id"]["data"] == f.get_content(), "the image on file was not sent"
@@ -3283,7 +3289,7 @@ def t80():
 	seen.clear()
 	try:
 		try:
-			client.scan_guest_id(bare.name, "Passport")
+			client.scan_guest_id(bare.name, "Passport", consent=1)
 			raise AssertionError("scanned a guest with no ID image")
 		except frappe.ValidationError:
 			pass

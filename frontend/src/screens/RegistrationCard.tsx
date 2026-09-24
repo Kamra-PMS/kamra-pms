@@ -390,21 +390,27 @@ function ReadIdButton({ guest, idType, onDone }: {
 }) {
   const [type, setType] = useState(SCANNABLE.includes(idType ?? "") ? idType! : "Aadhaar")
   const [busy, setBusy] = useState(false)
+  const [told, setTold] = useState(false)
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)
   return (
     <div className="mt-1 flex flex-wrap items-center gap-1 text-xs print:hidden">
+      <label className="flex basis-full items-start gap-1 text-zinc-500"
+        title="DPDP: the guest must know their ID is read by Kamra's verification partner">
+        <input type="checkbox" className="mt-0.5" checked={told} onChange={(e) => setTold(e.target.checked)} />
+        Guest told their ID is read by our verification partner
+      </label>
       <select value={type} onChange={(e) => setType(e.target.value)}
         className="rounded border border-zinc-200 px-1 py-0.5 text-xs" aria-label="ID type to read">
         {SCANNABLE.map((t) => <option key={t}>{t}</option>)}
       </select>
-      <button type="button" disabled={busy}
+      <button type="button" disabled={busy || !told}
         className="font-medium text-brand-700 hover:underline disabled:opacity-50"
         title="Kamra Verify reads the ID and fills the profile. Charged per read to your Kamra Connect wallet."
         onClick={async () => {
           setBusy(true); setMsg(null)
           try {
             const r = await call<{ filled: Record<string, string>; charged: number }>(
-              "kamra.connect.client.scan_guest_id", { guest, id_type: type })
+              "kamra.connect.client.scan_guest_id", { guest, id_type: type, consent: 1 })
             const n = Object.keys(r.filled).length
             setMsg({ ok: true, text: n ? `Filled ${n} field(s) · ₹${r.charged}` : `Nothing new on the ID · ₹${r.charged}` })
             onDone()

@@ -361,9 +361,11 @@ def verify_gstin(gstin: str, business_name: str = "") -> dict:
 
 @frappe.whitelist(methods=["POST"])
 @require_roles("Finance")
-def verify_bank(account: str, ifsc: str, name: str = "") -> dict:
-	"""A bank account before money is sent to it (e.g. a partner payout)."""
-	return _call("verify_bank", json_body={"account": account, "ifsc": ifsc, "name": name})
+def verify_bank(account: str, ifsc: str, name: str = "", consent: int = 0) -> dict:
+	"""A bank account before money is sent to it (e.g. a partner payout).
+	consent: the account holder was told it is checked by Kamra's partner."""
+	return _call("verify_bank", json_body={"account": account, "ifsc": ifsc, "name": name,
+	                                       "consent": cint(consent)})
 
 
 def _file_bytes(url: str) -> tuple[bytes, str]:
@@ -389,17 +391,23 @@ def _as_date(value: str):
 
 @frappe.whitelist(methods=["POST"])
 @require_roles("Front Desk")
-def scan_guest_id(guest: str, id_type: str) -> dict:
+def scan_guest_id(guest: str, id_type: str, consent: int = 0) -> dict:
 	"""Read the guest's ID document on file and fill the profile: ID type
 	and number, date of birth, gender, nationality; name and address only
-	where the profile has none. Aadhaar numbers arrive already masked."""
+	where the profile has none. Aadhaar numbers arrive already masked.
+
+	consent: the desk confirms the guest was told their ID is read by
+	Kamra's verification partner (DPDP notice). Without it nothing is sent."""
+	if not cint(consent):
+		frappe.throw("Tell the guest their ID will be read by Kamra's verification partner, "
+		             "then tick the confirmation.")
 	if not frappe.db.exists("Guest", guest):
 		frappe.throw("Guest not found.")
 	g = frappe.get_doc("Guest", guest)
 	if not g.id_file:
 		frappe.throw("Capture the ID document first, then read it.")
 	image, filename = _file_bytes(g.id_file)
-	out = _call("scan_id", params={"id_type": id_type, "filename": filename}, data=image)
+	out = _call("scan_id", params={"id_type": id_type, "filename": filename, "consent": 1}, data=image)
 
 	filled = {}
 	def put(field, value, only_if_empty=False):
