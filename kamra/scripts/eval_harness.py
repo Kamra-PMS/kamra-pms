@@ -3232,6 +3232,67 @@ def t78():
 		shutil.rmtree(restore_dir, ignore_errors=True)
 
 
+@check("connect: Kamra Verify reads a guest's ID into the profile without overwriting what staff typed")
+def t80():
+	from kamra.connect import client
+
+	g = frappe.get_doc({"doctype": "Guest", "first_name": "Evalscan", "last_name": "Guest",
+	                    "phone": "+91 90000 80801", "nationality": "Indian"}).insert(ignore_permissions=True)
+	import io
+
+	from PIL import Image
+
+	buf = io.BytesIO()
+	Image.new("RGB", (8, 8), "white").save(buf, "JPEG")
+	f = frappe.get_doc({"doctype": "File", "file_name": "eval-aadhaar.jpg", "is_private": 1,
+	                    "attached_to_doctype": "Guest", "attached_to_name": g.name,
+	                    "content": buf.getvalue()}).insert(ignore_permissions=True)
+	g.db_set("id_file", f.file_url)
+	seen = {}
+
+	def fake_hub(name, k, json_body=None, params=None, data=None, raw=False):
+		seen[name] = {"json": json_body, "params": params, "data": data}
+		if name == "scan_id":
+			return {"id_type": params["id_type"], "id_number": "XXXX XXXX 9012",
+			        "name": "Someone Else", "date_of_birth": "31/01/1990", "gender": "M",
+			        "address": "2 Beach Road, Udupi", "nationality": "Indian", "charged": 10}
+		if name == "verify_gstin":
+			return {"valid": True, "gstin": json_body["gstin"].upper(), "legal_name": "EVAL LTD",
+			        "status": "Active", "charged": 5}
+		raise AssertionError(f"unexpected hub call {name}")
+
+	saved = client.TRANSPORT
+	client.TRANSPORT = fake_hub
+	try:
+		out = client.scan_guest_id(g.name, "Aadhaar")
+	finally:
+		client.TRANSPORT = saved
+	assert seen["scan_id"]["data"] == f.get_content(), "the image on file was not sent"
+	assert seen["scan_id"]["params"]["id_type"] == "Aadhaar"
+	g.reload()
+	assert g.id_type == "Aadhaar" and g.id_number == "XXXX XXXX 9012", (g.id_type, g.id_number)
+	assert str(g.date_of_birth) == "1990-01-31" and g.gender == "Male", (g.date_of_birth, g.gender)
+	assert g.first_name == "Evalscan", "a typed name was overwritten by the scan"
+	assert g.address_line == "2 Beach Road, Udupi"
+	assert "first_name" not in out["filled"] and out["charged"] == 10, out
+
+	# no ID on file: refused before the hub is asked (nothing charged)
+	bare = frappe.get_doc({"doctype": "Guest", "first_name": "Evalbare",
+	                       "phone": "+91 90000 80802"}).insert(ignore_permissions=True)
+	client.TRANSPORT = fake_hub
+	seen.clear()
+	try:
+		try:
+			client.scan_guest_id(bare.name, "Passport")
+			raise AssertionError("scanned a guest with no ID image")
+		except frappe.ValidationError:
+			pass
+		assert "scan_id" not in seen
+		assert client.verify_gstin("29abcde1234f1z5")["legal_name"] == "EVAL LTD"
+	finally:
+		client.TRANSPORT = saved
+
+
 def execute():
 	global RT, ROOM
 	# frappe.locale.get_locale_value crashes (UnboundLocalError) when no
@@ -3249,7 +3310,7 @@ def execute():
 		           t36, t37, t38, t39, t40, t41, t42, t43, t44, t45, t46, t47, t48, t49, t50, t51, t53,
 		           t54, t55, t56, t57, t58, t59, t60, t61, t62, t63, t64,
 		           t65, t66, t67, t68, t69, t70,
-		           t71, t72, t73, t74, t75, t76, t78):
+		           t71, t72, t73, t74, t75, t76, t78, t80):
 			fn()
 	finally:
 		frappe.db.commit = real_commit

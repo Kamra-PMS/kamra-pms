@@ -379,6 +379,48 @@ function fileToDataUrl(file: File): Promise<string> {
   })
 }
 
+const SCANNABLE = ["Aadhaar", "Passport", "Driving License", "Voter ID"]
+
+/** Kamra Verify: read the captured ID and fill the guest profile. Paid per
+ *  read from the Kamra Connect wallet; needs Connect linked. */
+function ReadIdButton({ guest, idType, onDone }: {
+  guest: string
+  idType: string | null
+  onDone: () => void
+}) {
+  const [type, setType] = useState(SCANNABLE.includes(idType ?? "") ? idType! : "Aadhaar")
+  const [busy, setBusy] = useState(false)
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)
+  return (
+    <div className="mt-1 flex flex-wrap items-center gap-1 text-xs print:hidden">
+      <select value={type} onChange={(e) => setType(e.target.value)}
+        className="rounded border border-zinc-200 px-1 py-0.5 text-xs" aria-label="ID type to read">
+        {SCANNABLE.map((t) => <option key={t}>{t}</option>)}
+      </select>
+      <button type="button" disabled={busy}
+        className="font-medium text-brand-700 hover:underline disabled:opacity-50"
+        title="Kamra Verify reads the ID and fills the profile. Charged per read to your Kamra Connect wallet."
+        onClick={async () => {
+          setBusy(true); setMsg(null)
+          try {
+            const r = await call<{ filled: Record<string, string>; charged: number }>(
+              "kamra.connect.client.scan_guest_id", { guest, id_type: type })
+            const n = Object.keys(r.filled).length
+            setMsg({ ok: true, text: n ? `Filled ${n} field(s) · ₹${r.charged}` : `Nothing new on the ID · ₹${r.charged}` })
+            onDone()
+          } catch (e) {
+            setMsg({ ok: false, text: e instanceof Error ? e.message : "Could not read the ID" })
+          } finally {
+            setBusy(false)
+          }
+        }}>
+        {busy ? "Reading…" : "Read details"}
+      </button>
+      {msg && <span className={msg.ok ? "text-emerald-700" : "text-red-700"}>{msg.text}</span>}
+    </div>
+  )
+}
+
 export default function RegistrationCard() {
   const { name } = useParams()
   const [d, setD] = useState<Grc | null>(null)
@@ -468,6 +510,9 @@ export default function RegistrationCard() {
                         load()
                       }} />
                   </label>
+                  {kind === "id" && url && d.guest.guest_id && (
+                    <ReadIdButton guest={d.guest.guest_id} idType={d.guest.id_type} onDone={load} />
+                  )}
                 </div>
               ))}
             </div>

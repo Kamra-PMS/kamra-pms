@@ -308,14 +308,16 @@ def start_trial() -> dict:
 
 @frappe.whitelist(methods=["POST"])
 @require_roles("System Manager", "Hotel Admin")
-def subscribe(plan: str) -> dict:
-	return _call("subscribe", json_body={"plan": plan})
+def subscribe(plan: str, phone: str = "") -> dict:
+	"""Opens Cashfree checkout (card, UPI AutoPay or bank mandate). Cashfree
+	needs a mobile number for payment notices."""
+	return _call("subscribe", json_body={"plan": plan, "phone": phone})
 
 
 @frappe.whitelist(methods=["POST"])
 @require_roles("System Manager", "Hotel Admin")
-def topup(amount: float) -> dict:
-	return _call("topup", json_body={"amount": flt(amount)})
+def topup(amount: float, phone: str = "") -> dict:
+	return _call("topup", json_body={"amount": flt(amount), "phone": phone})
 
 
 @frappe.whitelist(methods=["POST"])
@@ -335,6 +337,94 @@ def use_connect_ai(property: str) -> dict:
 	doc.api_key = _key(s)
 	doc.save(ignore_permissions=True)
 	return {"ok": True, "base_url": doc.base_url}
+
+
+# ---------------------------------------------------------------- Kamra Verify
+# Identity and business checks run by the hub, paid per check from the
+# Connect wallet. The hotel needs no verification account of its own.
+
+_GENDERS = {"m": "Male", "male": "Male", "f": "Female", "female": "Female",
+            "t": "Other", "transgender": "Other", "other": "Other"}
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Front Desk", "Finance")
+def verify_gstin(gstin: str, business_name: str = "") -> dict:
+	"""A corporate guest's GSTIN: is it active, and whose is it."""
+	out = _call("verify_gstin", json_body={"gstin": gstin, "business_name": business_name})
+	from kamra.savings import log_action
+	log_action("verify_gstin", "Company", None, None, minutes_saved=5,
+	           rationale=f"GSTIN {out.get('gstin')} {'valid' if out.get('valid') else 'NOT valid'}"
+	                     f" · {out.get('legal_name') or '-'}", channel="API")
+	return out
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Finance")
+def verify_bank(account: str, ifsc: str, name: str = "") -> dict:
+	"""A bank account before money is sent to it (e.g. a partner payout)."""
+	return _call("verify_bank", json_body={"account": account, "ifsc": ifsc, "name": name})
+
+
+def _file_bytes(url: str) -> tuple[bytes, str]:
+	name = frappe.db.get_value("File", {"file_url": url})
+	if not name:
+		frappe.throw("The ID image is not on file. Capture it first.")
+	f = frappe.get_doc("File", name)
+	return f.get_content(), f.file_name or "id.jpg"
+
+
+def _as_date(value: str):
+	from frappe.utils import getdate
+
+	for v in (value, (value or "").replace("/", "-")):
+		try:
+			d = getdate(v)
+			if d and 1900 < d.year <= now_datetime().year:
+				return d
+		except Exception:
+			pass
+	return None
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Front Desk")
+def scan_guest_id(guest: str, id_type: str) -> dict:
+	"""Read the guest's ID document on file and fill the profile: ID type
+	and number, date of birth, gender, nationality; name and address only
+	where the profile has none. Aadhaar numbers arrive already masked."""
+	if not frappe.db.exists("Guest", guest):
+		frappe.throw("Guest not found.")
+	g = frappe.get_doc("Guest", guest)
+	if not g.id_file:
+		frappe.throw("Capture the ID document first, then read it.")
+	image, filename = _file_bytes(g.id_file)
+	out = _call("scan_id", params={"id_type": id_type, "filename": filename}, data=image)
+
+	filled = {}
+	def put(field, value, only_if_empty=False):
+		if value and (not only_if_empty or not g.get(field)) and g.get(field) != value:
+			g.set(field, value)
+			filled[field] = value
+
+	put("id_type", id_type)
+	put("id_number", out.get("id_number"))
+	put("date_of_birth", _as_date(out.get("date_of_birth") or ""))
+	put("gender", _GENDERS.get((out.get("gender") or "").strip().lower()))
+	put("nationality", out.get("nationality"), only_if_empty=True)
+	put("address_line", (out.get("address") or "")[:140], only_if_empty=True)
+	if out.get("name") and not (g.first_name or "").strip():
+		first, _, last = out["name"].strip().partition(" ")
+		put("first_name", first)
+		put("last_name", last)
+	if filled:
+		g.save(ignore_permissions=True)
+	from kamra.savings import log_action
+	log_action("scan_guest_id", "Guest", g.name, None, minutes_saved=3,
+	           rationale=f"{id_type} read by Kamra Verify; filled {', '.join(filled) or 'nothing new'}",
+	           channel="API")
+	return {"filled": {k: str(v) for k, v in filled.items()}, "read": out,
+	        "charged": out.get("charged")}
 
 
 # ---------------------------------------------------------------- backups
