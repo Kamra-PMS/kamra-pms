@@ -3238,6 +3238,12 @@ def t82():
 	privacy.apply_retention()
 	assert frappe.db.get_value("Guest", idle2, "full_name") == "Evalold Kept", "retention off still erased"
 
+	# DPDP Rules: access to personal data stays logged for a year
+	from kamra.patches.v34 import keep_access_logs_a_year
+	keep_access_logs_a_year.execute()
+	days = {r.ref_doctype: r.days for r in frappe.get_single("Log Settings").logs_to_clear}
+	assert days.get("Access Log", 0) >= 365 and days.get("Activity Log", 0) >= 365, days
+
 
 def execute():
 	global RT, ROOM

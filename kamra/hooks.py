@@ -52,6 +52,13 @@ scheduler_events = {
 	},
 }
 
+# DPDP Rules: keep logs of access to personal data for at least one year
+# (Frappe's own defaults are 30 and 90 days).
+default_log_clearing_doctypes = {
+	"Access Log": [365],
+	"Activity Log": [365],
+}
+
 # Apps
 # ------------------
 
