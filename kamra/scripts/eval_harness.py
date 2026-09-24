@@ -3229,6 +3229,101 @@ def t77():
 	assert payments.handle_webhook(body, good)["ok"]
 
 
+@check("payments: Cashfree links carry the booking, settle once, and need the property's signature")
+def t79():
+	import base64
+	import hashlib
+	import hmac
+	import json
+
+	import requests
+
+	from kamra import payments
+	from kamra import public_api as pub
+
+	frappe.db.set_value("Property", P, {
+		"booking_payment_mode": "Advance percent", "advance_percent": 25,
+		"booking_mode": "Instant"})
+	frappe.clear_document_cache("Property", P)
+	gw = frappe.db.get_value("Payment Gateway Settings", {"property": P})
+	if not gw:
+		gw = frappe.get_doc({"doctype": "Payment Gateway Settings", "property": P,
+		                     "gateway": "Cashfree"}).insert(ignore_permissions=True).name
+	frappe.db.set_value("Payment Gateway Settings", gw,
+	                    {"gateway": "Cashfree", "enabled": 1, "test_mode": 1})
+
+	def guest_book(day, name, phone):
+		frappe.set_user("Guest")  # nosemgrep: frappe-setuser -- the public booking page runs as Guest
+		try:
+			return pub.book(P, RT, add_days(nowdate(), day),
+			                add_days(nowdate(), day + 2), name, phone, adults=1)
+		finally:
+			frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- restore the harness user
+
+	def paid(res, link, amount):
+		return json.dumps({"type": "PAYMENT_LINK_EVENT", "data": {
+			"link_id": link, "link_status": "PAID", "link_amount": amount,
+			"link_amount_paid": amount, "link_notes": {"reservation": res, "property": P}}}).encode()
+
+	out = guest_book(260, "Eval Cashfree Payer", "+91 90000 79701")
+	res = out["reservation"]
+	due = round(float(out["amount_after_tax"]) * 0.25, 2)
+	assert "cashfree" in out["pay_url"] and out["pay_amount"] == due, out
+	info = payments.gateway_info(P)
+	assert info["gateway"] == "Cashfree" and info["webhook_url"].endswith("cashfree_webhook"), info
+
+	body = paid(res, "cf-EVAL79A", due)
+	assert payments.handle_cashfree_webhook(body)["posted"]
+	assert frappe.db.get_value("Reservation", res, "status") == "Confirmed"
+	assert not payments.handle_cashfree_webhook(body)["posted"], "posted twice"
+	assert float(frappe.db.get_value("Reservation", res, "advance_paid")) == due
+	unpaid = json.loads(body)
+	unpaid["data"]["link_status"] = "ACTIVE"
+	assert payments.handle_cashfree_webhook(json.dumps(unpaid).encode()).get("ignored")
+
+	# live: the link request itself, without calling Cashfree
+	doc = frappe.get_doc("Payment Gateway Settings", gw)
+	doc.test_mode = 0
+	doc.key_id = "TESTEVALAPPID"
+	doc.key_secret = "eval-cf-secret"
+	doc.save(ignore_permissions=True)
+	sent = []
+
+	class _Resp:
+		status_code = 200
+		def json(self):
+			return {"link_url": "https://payments-test.cashfree.com/links/o/EVAL"}
+
+	real_post = requests.post
+	requests.post = lambda url, **kw: sent.append((url, kw)) or _Resp()
+	try:
+		live = guest_book(270, "Eval Cashfree Live", "+91 90000 79702")
+	finally:
+		requests.post = real_post
+	url, kw = sent[-1]
+	body_sent = kw["json"]
+	assert url == "https://sandbox.cashfree.com/pg/links", url          # TEST app id -> sandbox
+	assert kw["headers"]["x-client-id"] == "TESTEVALAPPID"
+	assert body_sent["customer_details"]["customer_phone"] == "9000079702", body_sent
+	assert body_sent["link_notes"]["reservation"] == live["reservation"], body_sent
+	assert body_sent["link_meta"]["notify_url"].endswith("/api/method/kamra.payments.cashfree_webhook")
+	assert len(body_sent["link_id"]) <= 50 and all(c.isalnum() or c in "-_" for c in body_sent["link_id"])
+	assert live["pay_url"] == "https://payments-test.cashfree.com/links/o/EVAL", live
+
+	# live webhooks: unsigned, forged, or re-timed are refused; signed passes
+	body = paid(live["reservation"], body_sent["link_id"], live["pay_amount"])
+	ts = "1790000000"
+	good = base64.b64encode(hmac.new(b"eval-cf-secret", ts.encode() + body, hashlib.sha256).digest()).decode()
+	for sig, stamp in (("", ts), ("forged", ts), (good, "1790000001")):
+		try:
+			payments.handle_cashfree_webhook(body, sig, stamp)
+			raise AssertionError(f"live Cashfree webhook accepted: {sig[:6]!r} {stamp}")
+		except frappe.PermissionError:
+			pass
+	assert payments.handle_cashfree_webhook(body, good, ts)["posted"]
+	assert frappe.db.get_value("Reservation", live["reservation"], "status") == "Confirmed"
+
+
 def execute():
 	global RT, ROOM
 	# frappe.locale.get_locale_value crashes (UnboundLocalError) when no
@@ -3246,7 +3341,7 @@ def execute():
 		           t36, t37, t38, t39, t40, t41, t42, t43, t44, t45, t46, t47, t48, t49, t50, t51, t53,
 		           t54, t55, t56, t57, t58, t59, t60, t61, t62, t63, t64,
 		           t65, t66, t67, t68, t69, t70,
-		           t71, t72, t73, t74, t75, t76, t77):
+		           t71, t72, t73, t74, t75, t76, t77, t79):
 			fn()
 	finally:
 		frappe.db.commit = real_commit

@@ -100,7 +100,7 @@ jobs:
           cd frappe-bench
           printf 'from kamra.scripts.eval_harness import execute\nexecute()\nexit\n' \
             | bench --site test.localhost console | tee eval.out
-          grep -q "77/77 passed" eval.out
+          grep -q "78/78 passed" eval.out
 
       - name: Run the banquet unit tests
         run: |
