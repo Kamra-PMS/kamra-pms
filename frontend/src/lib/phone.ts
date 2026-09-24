@@ -250,9 +250,9 @@ export function formatPhoneDisplay(
   }
   const dial = dialForCountry(country)
   let local = digitsOnly(raw)
-  // Strip an embedded country code, e.g. "919148869914" -> "9148869914".
+  // Strip an embedded country code, e.g. "919876543210" -> "9876543210".
   // Guard on length > 10: a plain 10-digit local number (India) can itself
-  // start with "91" (e.g. 9148869914) and must NOT be stripped.
+  // start with "91" (e.g. 9876543210) and must NOT be stripped.
   if (local.length > 10 && local.startsWith(dial)) {
     local = local.slice(dial.length)
   }
@@ -262,7 +262,7 @@ export function formatPhoneDisplay(
   return `+${dial} ${local}`
 }
 
-/** tel: href value, e.g. `+919148869914`. */
+/** tel: href value, e.g. `+919876543210`. */
 export function formatPhoneTel(
   phone: string | null | undefined,
   country?: string | null,
@@ -310,7 +310,7 @@ export function splitPhone(
   return { dial, local: digits }
 }
 
-/** Recombine a prefixed input back into storage form, e.g. `+919148869914`. */
+/** Recombine a prefixed input back into storage form, e.g. `+919876543210`. */
 export function joinPhone(dial: string, local: string): string {
   const digits = digitsOnly(local)
   return digits ? `+${dial}${digits}` : ""
