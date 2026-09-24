@@ -181,6 +181,39 @@ function Fact({ label, children }: { label: string; children: React.ReactNode })
   )
 }
 
+/** Kamra Verify: check the bill-to GSTIN before the tax invoice goes out.
+ *  Paid per check from the Kamra Connect wallet. */
+function VerifyGstin({ gstin, name }: { gstin: string; name: string }) {
+  const [busy, setBusy] = useState(false)
+  const [res, setRes] = useState<{ ok: boolean; text: string } | null>(null)
+  return (
+    <span className="print:hidden">
+      {" "}
+      <button type="button" disabled={busy}
+        className="text-xs font-medium text-brand-700 hover:underline disabled:opacity-50"
+        title="Kamra Verify checks this GSTIN with the GST network. Charged per check to your Kamra Connect wallet."
+        onClick={async () => {
+          setBusy(true); setRes(null)
+          try {
+            const r = await call<{ valid: boolean; legal_name: string; status: string; charged: number }>(
+              "kamra.connect.client.verify_gstin", { gstin, business_name: name })
+            setRes({
+              ok: r.valid && r.status.toLowerCase() === "active",
+              text: `${r.valid ? r.legal_name || "Valid" : "Not a valid GSTIN"}${r.status ? ` · ${r.status}` : ""} · ₹${r.charged}`,
+            })
+          } catch (e) {
+            setRes({ ok: false, text: e instanceof Error ? e.message : "Could not verify" })
+          } finally {
+            setBusy(false)
+          }
+        }}>
+        {busy ? "Checking…" : "Verify"}
+      </button>
+      {res && <span className={`ml-1 text-xs ${res.ok ? "text-emerald-700" : "text-red-700"}`}>{res.text}</span>}
+    </span>
+  )
+}
+
 export default function FolioView() {
   const { t } = useT()
   const { name } = useParams()
@@ -604,6 +637,9 @@ export default function FolioView() {
               <span className="font-medium">{data.bill_to.name}</span>
               {data.bill_to.gstin && (
                 <span className="text-zinc-500"> · GSTIN {data.bill_to.gstin}</span>
+              )}
+              {data.bill_to.gstin && (
+                <VerifyGstin gstin={data.bill_to.gstin} name={data.bill_to.name} />
               )}
             </div>
           )}
