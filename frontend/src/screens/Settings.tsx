@@ -397,44 +397,67 @@ const GATEWAY_SPECS: Spec[] = [
     field: "gateway",
     label: "Gateway",
     type: "select",
-    options: ["Razorpay"],
-    hint: "money goes straight to this property's own Razorpay account",
+    options: ["Razorpay", "Cashfree"],
+    hint: "money goes straight to this property's own gateway account",
   },
-  { field: "key_id", label: "Key ID", hint: "Razorpay Dashboard → Account & Settings → API Keys" },
-  { field: "key_secret", label: "Key secret", type: "password" },
+  {
+    field: "key_id",
+    label: "Key ID / App ID",
+    hint: "Razorpay: Account & Settings → API Keys. Cashfree: Developers → API Keys (App ID)",
+  },
+  { field: "key_secret", label: "Key secret / Secret key", type: "password" },
   {
     field: "webhook_secret",
     label: "Webhook secret",
     type: "password",
-    hint: "required for live payments; set the same secret on the Razorpay webhook",
+    hint: "Razorpay only: set the same secret on the Razorpay webhook. Cashfree signs with the secret key",
   },
 ]
 
-/** Setup help under the Payments card: where Razorpay should send payment
- *  events, and a way to open an account if the property has none yet. */
-function GatewayHelp({ property, hasKeys }: { property: string; hasKeys: boolean }) {
-  const [info, setInfo] = useState<{ webhook_url: string; signup_url: string } | null>(null)
+type GatewayInfo = {
+  gateway: string
+  webhook_url: string
+  signup_url: string
+  needs_webhook: boolean
+}
+
+/** Setup help under the Payments card: where the gateway should send
+ *  payment events, and a way to open an account if the property has none. */
+function GatewayHelp({ property, gateway, hasKeys }: {
+  property: string
+  gateway: string
+  hasKeys: boolean
+}) {
+  const [info, setInfo] = useState<GatewayInfo | null>(null)
   useEffect(() => {
-    call<{ webhook_url: string; signup_url: string }>(
-      "kamra.payments.gateway_info", { property },
-    ).then(setInfo).catch(() => setInfo(null))
-  }, [property])
+    call<GatewayInfo>("kamra.payments.gateway_info", { property, gateway })
+      .then(setInfo).catch(() => setInfo(null))
+  }, [property, gateway])
   if (!info) return null
   return (
     <div className="-mt-2 rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-600 space-y-2">
       {!hasKeys && (
         <p>
-          No Razorpay account yet?{" "}
+          No {info.gateway} account yet?{" "}
           <a className="font-medium text-brand-700 underline" href={info.signup_url}
              target="_blank" rel="noopener">Create one free</a>
           {" "}and take UPI, cards and netbanking for advances and bills. Approval usually takes a day or two.
         </p>
       )}
-      <p>
-        In Razorpay, add a webhook for the <b>payment_link.paid</b> event pointing to{" "}
-        <code className="select-all break-all rounded bg-white px-1 py-0.5 text-xs">{info.webhook_url}</code>
-        . Paid links then post to the bill and confirm website bookings on their own.
-      </p>
+      {info.needs_webhook ? (
+        <p>
+          In Razorpay, add a webhook for the <b>payment_link.paid</b> event pointing to{" "}
+          <code className="select-all break-all rounded bg-white px-1 py-0.5 text-xs">{info.webhook_url}</code>
+          . Paid links then post to the bill and confirm website bookings on their own.
+        </p>
+      ) : (
+        <p>
+          Nothing to set up in Cashfree: every link tells Cashfree to report back to{" "}
+          <code className="select-all break-all rounded bg-white px-1 py-0.5 text-xs">{info.webhook_url}</code>
+          . Paid links post to the bill and confirm website bookings on their own. Guests need a
+          mobile number on their profile to receive a Cashfree link.
+        </p>
+      )}
     </div>
   )
 }
@@ -877,7 +900,8 @@ export default function Settings() {
           load()
         }}
       />
-      <GatewayHelp property={property} hasKeys={!!gateway.key_id} />
+      <GatewayHelp property={property} gateway={String(gateway.gateway || "Razorpay")}
+                   hasKeys={!!gateway.key_id} />
 
       <AiAssistantCard property={property} doc={ai} onSaved={load} />
 
