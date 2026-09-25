@@ -15,3 +15,4 @@ kamra.patches.v30.ensure_turnover_profiles
 kamra.patches.v31.backfill_listing_slugs
 kamra.patches.v32.seed_cashier_ledger
 kamra.patches.v33.seed_banquet_checklists
+kamra.patches.v35.hosting_enquiry_system_manager_only
