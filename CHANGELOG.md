@@ -26,6 +26,13 @@ upgrade-breaking changes (removed doctypes / API contracts).
   quotation, desk-led guest response, department checklists + notify on
   Confirm (Sales/Finance/HK/F&B), and quote no-response chase reminders
 
+## [2.6.4](https://github.com/Kamra-PMS/kamra-pms/compare/v2.6.3...v2.6.4) (2026-09-26)
+
+
+### Features
+
+* **privacy:** DPDP by design - complete erasure, access export, retention, notices ([#86](https://github.com/Kamra-PMS/kamra-pms/issues/86)) ([48ec068](https://github.com/Kamra-PMS/kamra-pms/commit/48ec0685d65bc5a0dafd714ab5c11451dc67b6df))
+
 ## [2.6.3](https://github.com/Kamra-PMS/kamra-pms/compare/v2.6.2...v2.6.3) (2026-09-17)
 
 
