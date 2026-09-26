@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import PrivacyNotice from "../components/PrivacyNotice"
 import { CalendarDays, Check, Clock } from "lucide-react"
 import { useParams } from "react-router-dom"
 import { call } from "../lib/api"
@@ -97,6 +98,8 @@ interface Info {
     children_policy: string | null
     extra_bed_policy: string | null
     id_retention: string
+    privacy_contact?: string | null
+    guest_retention_months?: number | null
   }
   stay: {
     reservation: string
@@ -381,6 +384,10 @@ export default function PublicCheckin() {
                 />
                 I accept the registration declaration.
               </label>
+              <div className="mt-2">
+                <PrivacyNotice propertyName={p.property_name} contact={p.privacy_contact}
+                  retentionMonths={p.guest_retention_months} idRetention={p.id_retention} collectsId />
+              </div>
             </div>
             {error && (
               <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
