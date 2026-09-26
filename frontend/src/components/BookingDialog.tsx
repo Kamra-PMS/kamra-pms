@@ -567,6 +567,89 @@ export function BookingDialog(props: {
                 </p>
               </div>
             )}
+
+            {/* Confirmation snapshot so desk staff can read the stay back
+                without reopening the reservation (Fares). */}
+            <div className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
+              <dl className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <dt className="text-xs font-medium text-zinc-400">{t("Guest name")}</dt>
+                  <dd className="mt-1 font-semibold text-zinc-900">
+                    {form.guest_name || "—"}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs font-medium text-zinc-400">{t("Phone")}</dt>
+                  <dd className="mt-1 font-semibold text-zinc-900">
+                    {form.phone || "—"}
+                  </dd>
+                </div>
+
+                <div
+                  className={
+                    "sm:col-span-2 rounded-xl border p-4 " +
+                    (done.room
+                      ? "border-brand-200 bg-brand-50"
+                      : "border-zinc-200 bg-zinc-50")
+                  }
+                >
+                  <dt
+                    className={
+                      "text-xs font-semibold " +
+                      (done.room ? "text-brand-700" : "text-zinc-500")
+                    }
+                  >
+                    {t("Room")}
+                  </dt>
+                  <dd
+                    className={
+                      "mt-1 text-2xl font-bold " +
+                      (done.room ? "text-brand-900" : "text-zinc-700")
+                    }
+                  >
+                    {done.room
+                      ? (done.room.split("-").pop() ?? done.room)
+                      : t("Unassigned")}
+                  </dd>
+                  <dd
+                    className={
+                      "mt-1 text-sm " +
+                      (done.room ? "text-brand-700" : "text-zinc-500")
+                    }
+                  >
+                    {roomTypeName || form.room_type}
+                    {moreRooms.length > 0
+                      ? ` · ${1 + moreRooms.length} ${t("Rooms")}`
+                      : ""}
+                  </dd>
+                </div>
+
+                <div>
+                  <dt className="text-xs font-medium text-zinc-400">{t("Check-in")}</dt>
+                  <dd className="mt-1 font-semibold text-zinc-900">
+                    {form.check_in_date}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs font-medium text-zinc-400">{t("Check-out")}</dt>
+                  <dd className="mt-1 font-semibold text-zinc-900">{checkOut}</dd>
+                </div>
+                <div>
+                  <dt className="text-xs font-medium text-zinc-400">{t("Nights")}</dt>
+                  <dd className="mt-1 font-semibold text-zinc-900">{form.nights}</dd>
+                </div>
+                <div>
+                  <dt className="text-xs font-medium text-zinc-400">{t("Guests")}</dt>
+                  <dd className="mt-1 font-semibold text-zinc-900">
+                    {form.adults} {t("Adults")}
+                    {form.children > 0
+                      ? ` · ${form.children} ${t("Children")}`
+                      : ""}
+                  </dd>
+                </div>
+              </dl>
+            </div>
+
             <Button className="px-5 py-2.5 text-base" onClick={props.onClose}>
               {t("Done")}
             </Button>
