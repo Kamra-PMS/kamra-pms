@@ -66,6 +66,8 @@
   "logo_url",
   "brand_accent",
   "id_retention",
+  "guest_retention_months",
+  "privacy_contact",
   "sell_message",
   "free_cancel_days",
   "cancellation_fee",
@@ -432,12 +434,26 @@
    "label": "Booking Page Accent"
   },
   {
-   "default": "Store",
-   "description": "Verify & Discard masks occupant/guest ID numbers to the last 4 digits at checkout.",
+   "default": "Verify & Discard",
+   "description": "Verify & Discard (recommended, DPDP data minimisation) masks ID numbers to the last 4 digits and deletes ID photos at checkout. Store keeps them.",
    "fieldname": "id_retention",
    "fieldtype": "Select",
    "label": "ID Retention",
    "options": "Store\nVerify & Discard"
+  },
+  {
+   "fieldname": "guest_retention_months",
+   "fieldtype": "Int",
+   "label": "Erase guest data after (months)",
+   "default": "36",
+   "non_negative": 1,
+   "description": "Guests with no stay for this long are erased automatically (bills stay for the books). 0 keeps them indefinitely. Blacklisted guests are kept."
+  },
+  {
+   "fieldname": "privacy_contact",
+   "fieldtype": "Data",
+   "label": "Privacy contact (Grievance Officer)",
+   "description": "Email or phone that guests can use for access, correction and erasure requests. Shown on the booking and check-in pages."
   },
   {
    "description": "Shown to staff in the booking dialog and read by the AI agent as its upsell prompt.",
@@ -551,7 +567,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-08-01 09:00:00.000000",
+ "modified": "2026-09-24 18:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Property",

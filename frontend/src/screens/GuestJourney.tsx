@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react"
-import {
+import { Download,
   ArrowLeft,
   Bot,
   CalendarPlus,
@@ -595,8 +595,37 @@ export default function GuestJourney() {
                     : "Anonymize profile"}
                 </Button>
                 <p className="mt-1.5 text-xs text-zinc-400">
-                  Erases name, contact and ID everywhere; stays and bills stay
-                  on the books. For data-erasure requests.
+                  Erases name, contact, ID photos, signatures, messages and
+                  change history; stays and bills stay on the books. For
+                  data-erasure requests.
+                </p>
+              </div>
+              <div>
+                <Button
+                  variant="outline"
+                  disabled={busy}
+                  onClick={async () => {
+                    setBusy(true)
+                    try {
+                      const data = await call<Record<string, unknown>>(
+                        "kamra.privacy.export_guest_data", { guest: guest.name })
+                      const url = URL.createObjectURL(
+                        new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }))
+                      const a = document.createElement("a")
+                      a.href = url
+                      a.download = `guest-data-${guest.name}.json`
+                      a.click()
+                      URL.revokeObjectURL(url)
+                    } finally {
+                      setBusy(false)
+                    }
+                  }}
+                >
+                  <Download className="size-4" aria-hidden />
+                  Export guest data
+                </Button>
+                <p className="mt-1.5 text-xs text-zinc-400">
+                  Everything held about this guest, for a data-access request.
                 </p>
               </div>
             </CardContent>
