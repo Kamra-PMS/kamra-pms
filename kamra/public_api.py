@@ -865,7 +865,11 @@ def hosting_enquiry(full_name: str, email: str, phone: str = "",
                     message: str = "", country: str = "",
                     interest: str = ""):
 	"""Kamra Cloud hosting enquiry from kamrapms.com. Stored first (a lead is
-	never lost even without SMTP), then a best-effort email to the team."""
+	never lost even without SMTP), then a best-effort email to the team.
+
+	Leads are System Manager–only and purged after
+	``hosting_enquiry_retention_months`` (default 24) unless status is Won.
+	"""
 	if not (full_name or "").strip() or not (email or "").strip():
 		frappe.throw("Name and email are required.")
 	doc = frappe.get_doc({
