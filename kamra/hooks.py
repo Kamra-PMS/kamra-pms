@@ -46,7 +46,20 @@ scheduler_events = {
 		# 04:15 - wipe the public demo so it cannot be used as a live PMS
 		# (no-op unless kamra_demo_mode is on and the site is a playground)
 		"15 4 * * *": ["kamra.scripts.reset_demo.scheduled"],
+		# 03:30 - storage limitation (DPDP s.8(7)): erase guests idle past
+		# their property's retention period
+		"30 3 * * *": ["kamra.privacy.apply_retention"],
+		# 04:45 - drop old kamrapms.com Hosting Enquiry leads (default 24 months;
+		# Won / converted stays; site_config hosting_enquiry_retention_months)
+		"45 4 * * *": ["kamra.hosting_enquiry_retention.purge_expired_hosting_enquiries"],
 	},
+}
+
+# DPDP Rules: keep logs of access to personal data for at least one year
+# (Frappe's own defaults are 30 and 90 days).
+default_log_clearing_doctypes = {
+	"Access Log": [365],
+	"Activity Log": [365],
 }
 
 # Apps
