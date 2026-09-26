@@ -31,7 +31,9 @@ upgrade-breaking changes (removed doctypes / API contracts).
 
 ### Features
 
+* **booking:** show guest, room, and stay summary on the confirmation screen after book or waitlist ([#83](https://github.com/Kamra-PMS/kamra-pms/pull/83)) — thanks [@faresalslahi-collab](https://github.com/faresalslahi-collab)
 * **privacy:** DPDP by design - complete erasure, access export, retention, notices ([#86](https://github.com/Kamra-PMS/kamra-pms/issues/86)) ([48ec068](https://github.com/Kamra-PMS/kamra-pms/commit/48ec0685d65bc5a0dafd714ab5c11451dc67b6df))
+* **privacy:** Hosting Enquiry retention and System Manager-only access ([#94](https://github.com/Kamra-PMS/kamra-pms/pull/94))
 
 ## [2.6.3](https://github.com/Kamra-PMS/kamra-pms/compare/v2.6.2...v2.6.3) (2026-09-17)
 
