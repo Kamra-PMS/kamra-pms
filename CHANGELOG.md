@@ -26,6 +26,14 @@ upgrade-breaking changes (removed doctypes / API contracts).
   quotation, desk-led guest response, department checklists + notify on
   Confirm (Sales/Finance/HK/F&B), and quote no-response chase reminders
 
+## [2.6.3](https://github.com/Kamra-PMS/kamra-pms/compare/v2.6.2...v2.6.3) (2026-09-17)
+
+
+### Bug Fixes
+
+* **pricing:** scope seasons to the room type they name season_adjust … ([418ed1a](https://github.com/Kamra-PMS/kamra-pms/commit/418ed1a70eef4d4625cf48eec8539925b4f01e3b))
+* **pricing:** scope seasons to the room type they name season_adjust ignored the Season's room_type, so one weekend season priced every room type. Filter on room_type with most-specific-wins, thread it through the callers, and save room_type in set_room_rate. Adds an eval that fails without the fix ([eb1e532](https://github.com/Kamra-PMS/kamra-pms/commit/eb1e532ae1e0efb7fbdfcadae94b2f6a1a208d4f))
+
 ## [2.6.2](https://github.com/Kamra-PMS/kamra-pms/compare/v2.6.2...v2.6.2) (2026-09-14)
 
 
