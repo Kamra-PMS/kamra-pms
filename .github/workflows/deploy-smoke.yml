@@ -39,7 +39,7 @@ jobs:
 
       - name: Site answers
         run: |
-          for i in $(seq 1 30); do
+          for _ in $(seq 1 30); do
             code=$(curl -s -o /dev/null -w '%{http_code}' -H "Host: ${SITE_NAME}" http://127.0.0.1:8080/api/method/ping || true)
             [ "$code" = 200 ] && exit 0
             sleep 5
@@ -53,7 +53,8 @@ jobs:
         run: sudo -E /opt/kamra/install.sh update
 
       - name: Site still answers after update
-        run: curl -fsS -H "Host: ${SITE_NAME}" http://127.0.0.1:8080/api/method/ping
+        run: |
+          curl -fsS -H "Host: ${SITE_NAME}" http://127.0.0.1:8080/api/method/ping
 
       - name: Logs on failure
         if: failure()
