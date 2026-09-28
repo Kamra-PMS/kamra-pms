@@ -17,8 +17,9 @@ Plan big; ship after Hostinger / DigitalOcean / Linode 1-clicks.
 2. **Azure Marketplace** — Microsoft-centric groups.
 3. **Google Cloud Marketplace**.
 
-Reuse `ghcr.io/kamra-pms/kamra:latest`; each cloud needs a thin Packer /
-Terraform wrapper + listing copy. Legal entity, tax forms, and a security
+Bake the image into the machine image at build time with
+`deploy/install.sh build` (the GHCR package is private); each cloud needs a
+thin Packer / Terraform wrapper + listing copy. Legal entity, tax forms, and a security
 questionnaire are required before go-live (weeks to months).
 
 ## Near-term money

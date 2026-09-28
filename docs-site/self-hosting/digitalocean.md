@@ -18,7 +18,7 @@ Vendor / Packer notes live in the repo at `deploy/digitalocean/`.
 
 ### 1. Create the server
 
-**Droplet** → Ubuntu 24.04 → **Basic / 4 GB / 2 vCPU** (~$24/mo) → region near
+**Droplet** → Ubuntu 24.04 → **Basic / 4 GB / 2 vCPU** (~$24/mo; 8 GB builds faster) → region near
 the hotel → SSH key.
 
 ### 2. Point your domain

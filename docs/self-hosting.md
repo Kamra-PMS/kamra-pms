@@ -8,7 +8,8 @@ classic bench install.
 **Server**
 
 - Ubuntu 22.04/24.04 LTS (or any Docker-capable Linux)
-- 4 vCPU / 8 GB RAM for the Docker image build (2 vCPU / 4 GB may run afterward)
+- 2 vCPU / 4 GB RAM minimum, 4 vCPU / 8 GB recommended (the Docker
+  installer builds the image locally and adds swap under 8 GB)
 - 40 GB disk (build cache + database growth with folios/audit history)
 - A domain or subdomain (e.g. `pms.yourhotel.com`) pointed at the server
 - Ports 80/443 open; SSL via Let's Encrypt (frappe_docker or certbot)
@@ -38,10 +39,11 @@ Preferred: one script that **builds on your server** (no GHCR pull):
 curl -fsSL https://raw.githubusercontent.com/Kamra-PMS/kamra-pms/main/deploy/install.sh | bash
 ```
 
-See [deploy/README.md](../deploy/README.md). Prefer **8 GB RAM**; first build
-is 20–45 minutes. For a manual frappe_docker layered build, use the same
-`apps.json` shape as `.github/workflows/release.yml` and tag a local image
-with `PULL_POLICY=never`.
+See [deploy/README.md](../deploy/README.md). First build is 20–45 minutes.
+Update later with `sudo /opt/kamra/install.sh update`. For a manual
+frappe_docker layered build, use the same `apps.json` shape as
+`.github/workflows/release.yml`, pass a fresh `CACHE_BUST` build arg, and
+tag a local image with `PULL_POLICY=never`.
 
 ## Install (bare metal)
 
@@ -81,6 +83,11 @@ sudo bench setup production $(whoami)   # nginx + supervisor + SSL
    strong admin password, and HTTPS only.
 
 ## Updating
+
+Docker install: `sudo /opt/kamra/install.sh update` (rebuilds the image,
+recreates containers, migrates every site).
+
+Bench install:
 
 ```bash
 cd frappe-bench/apps/kamra && git pull

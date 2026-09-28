@@ -3,13 +3,14 @@
 # User-data fields from the create-droplet form (Vendor Portal UDF):
 #   site_name, admin_email, admin_password
 #
-# Build: see packer.json.example. First boot runs install.sh (local image
-# build — expect 20–45 minutes) non-interactively.
+# Build: see packer.json.example — the snapshot already contains the
+# kamra:local image, so first boot only creates the site (a few minutes).
 
 package_update: true
 packages:
   - docker.io
   - docker-compose-v2
+  - docker-buildx
   - git
   - curl
   - jq
@@ -33,11 +34,15 @@ runcmd:
       echo "Kamra: missing SITE_NAME / ADMIN_EMAIL / ADMIN_PASSWORD — see /var/log/kamra-firstboot.log"
       exit 0
     fi
-    curl -fsSL https://raw.githubusercontent.com/Kamra-PMS/kamra-pms/main/deploy/install.sh \
-      -o /tmp/kamra-install.sh
-    chmod +x /tmp/kamra-install.sh
+    INSTALLER=/opt/kamra/install.sh
+    if [ ! -x "$INSTALLER" ]; then
+      mkdir -p /opt/kamra
+      curl -fsSL https://raw.githubusercontent.com/Kamra-PMS/kamra-pms/main/deploy/install.sh \
+        -o "$INSTALLER"
+      chmod +x "$INSTALLER"
+    fi
     # Non-interactive: vars already exported
-    bash /tmp/kamra-install.sh >> /var/log/kamra-firstboot.log 2>&1
+    bash "$INSTALLER" >> /var/log/kamra-firstboot.log 2>&1
     # Wipe UDF password file if present
     rm -f "$ENV_UDF"
     unset ADMIN_PASSWORD

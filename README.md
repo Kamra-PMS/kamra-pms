@@ -179,16 +179,25 @@ In-repo: [`docs/`](docs/) · [user guide](docs/user-guide.md) · [AI & API](docs
 
 ## Install
 
-**Hotels (Docker self-host — builds on your server):**
+| Method | For | How |
+| --- | --- | --- |
+| **Hostinger VPS** | Cheapest self-host (India / SEA) | Buy KVM 2 via [kamrapms.com/get-started](https://kamrapms.com/get-started/), paste the Docker one-liner below · [guide](https://kamrapms.com/docs/self-hosting/hostinger) |
+| **Docker on any VPS** | DigitalOcean, Linode, AWS, your own box | One-liner below · [quickstart](https://kamrapms.com/docs/quickstart) |
+| **Bench** | Existing Frappe / ERPNext benches | Commands below · [guide](https://kamrapms.com/docs/self-hosting/bench) |
+| **Frappe Cloud Marketplace** | Managed Frappe hosting | [Install Kamra](https://cloud.frappe.io/marketplace/apps/kamra) on a private bench |
+| **Kamra Cloud** | Nothing to run | [kamrapms.com/cloud](https://kamrapms.com/cloud/) — hosted, backed up, updated |
+
+**Docker (builds on your server):**
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Kamra-PMS/kamra-pms/main/deploy/install.sh | bash
 ```
 
 Three prompts: site domain, admin email, admin password. Builds a local
-`kamra:local` image (does **not** pull from GHCR). Prefer 8 GB RAM; first
-install often takes 20–45 minutes. Then open `/kamra/setup`. Details:
-[deploy/](deploy/) · [docs quickstart](https://kamrapms.com/docs/quickstart).
+`kamra:local` image (does **not** pull from GHCR) — 20–45 minutes the first
+time; 2 vCPU / 4 GB minimum (swap is added automatically under 8 GB). Then
+open `/kamra/setup`. Update later with `sudo /opt/kamra/install.sh update`.
+Details: [deploy/](deploy/).
 
 **Bench / Frappe Cloud:**
 

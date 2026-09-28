@@ -9,7 +9,7 @@ group) already lives in an AWS account — or when buying through
 
 ### 1. Create the server
 
-EC2 → Ubuntu 24.04 → **t3.medium** (2 vCPU / 4 GB) → 40 GB gp3 → security
+EC2 → Ubuntu 24.04 → **t3.medium** (2 vCPU / 4 GB; t3.large builds faster) → 40 GB gp3 → security
 group **22, 80, 443** → Elastic IP.
 
 ### 2. DNS

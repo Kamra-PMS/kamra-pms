@@ -6,8 +6,10 @@ payments + kamra **on your VPS** — it does not pull from `ghcr.io`.
 
 ## What you need
 
-- A server or VPS: **4 vCPU · 8 GB RAM · 40 GB disk** (Ubuntu 22.04/24.04)
-  — 2 vCPU / 4 GB may work after the image exists, but the **build** wants headroom
+- A server or VPS: **2 vCPU · 4 GB RAM · 40 GB disk** minimum (Ubuntu
+  22.04/24.04); **4 vCPU · 8 GB** recommended. Under 8 GB the installer adds
+  a swap file so the image build doesn't run out of memory — it just builds
+  slower.
 - Docker Engine ≥ 24 with Compose v2 (the installer can install Docker for you)
 - A domain (e.g. `pms.yourhotel.com`) pointed at the server
 - **20–45 minutes** for the first image build
@@ -72,26 +74,16 @@ certbot --nginx -d pms.yourhotel.com
 
 ## Updating
 
-Rebuild the local image, then migrate (do **not** `docker compose pull`
-from a registry):
-
 ```bash
-cd /opt/kamra/frappe_docker
-DOCKER_BUILDKIT=1 docker build -t kamra:local \
-  -f images/layered/Containerfile \
-  --build-arg FRAPPE_BRANCH=version-16 \
-  --secret id=apps_json,src=/opt/kamra/apps.json .
-docker compose --project-name kamra --env-file /opt/kamra/kamra.env \
-  -f compose.yaml -f overrides/compose.mariadb.yaml \
-  -f overrides/compose.redis.yaml -f overrides/compose.noproxy.yaml up -d
-docker compose --project-name kamra --env-file /opt/kamra/kamra.env \
-  -f compose.yaml -f overrides/compose.mariadb.yaml \
-  -f overrides/compose.redis.yaml -f overrides/compose.noproxy.yaml \
-  exec backend bench --site pms.yourhotel.com migrate
+sudo /opt/kamra/install.sh update
 ```
 
-Pin a branch with `KAMRA_BRANCH=develop` (or a tag) when you first install;
-`/opt/kamra/apps.json` records what was baked in.
+That rebuilds the image from the branch recorded in `/opt/kamra/apps.json`
+(fetching the latest Kamra code), recreates the containers and runs
+`bench migrate` on every site. To switch channel or pin a release, pass
+the branch or tag: `sudo KAMRA_BRANCH=v2.6.4 /opt/kamra/install.sh update`.
+Expect 10–30 minutes; the running site stays up until the containers are
+recreated at the end.
 
 Next: [production checklist](/self-hosting/#after-install-production-checklist) ·
 [email setup](/self-hosting/email) · [AI assistant](/ai-and-mcp) ·

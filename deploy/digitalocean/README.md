@@ -22,9 +22,10 @@ open `https://<ip>/kamra` (or the domain after DNS).
 
 ## CI
 
-Nightly or release: rebuild the Packer image from
-`ghcr.io/kamra-pms/kamra:latest` so the 1-Click stays current. Submit the
-snapshot id via the Vendor Portal API.
+On each stable release: rerun Packer. Its provisioner runs
+`deploy/install.sh build`, baking `kamra:local` from `main` into the
+snapshot (GHCR stays private). Submit the snapshot id via the Vendor
+Portal API.
 
 ## Affiliate
 

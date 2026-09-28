@@ -14,9 +14,18 @@ You will be asked for:
 2. **Admin email**
 3. **Admin password** (min 10 characters; there is no default)
 
-First install typically takes **20–45 minutes** (image build). Prefer
-**4 vCPU · 8 GB RAM · 40 GB disk**. Then open `/kamra/setup` and create
-the property.
+First install typically takes **20–45 minutes** (image build). Minimum
+**2 vCPU · 4 GB RAM · 40 GB disk**; under 8 GB the installer adds a swap
+file (`/swapfile-kamra`) so the build doesn't run out of memory. Then open
+`/kamra/setup` and create the property.
+
+## Modes
+
+| Command | What it does |
+| --- | --- |
+| `install.sh` | Install. Safe to re-run: keeps the DB password in `kamra.env` and skips `new-site` if a site exists. |
+| `/opt/kamra/install.sh update` | Rebuild the image from `apps.json` (fresh `CACHE_BUST`, so new Kamra code is fetched), recreate containers, `bench --site all migrate`. `KAMRA_BRANCH=v2.6.4` switches branch/tag. |
+| `install.sh build` | Build the image only — used by Packer to bake 1-Click snapshots so first boot skips the build. |
 
 ## What gets built
 
@@ -35,13 +44,15 @@ Overrides:
 | `KAMRA_IMAGE` / `KAMRA_TAG` | `kamra` / `local` | Local image name |
 | `FORCE_REBUILD` | `0` | Set `1` to rebuild even if the tag exists |
 | `FRAPPE_BRANCH` | `version-16` | Frappe branch for the layered build |
+| `FRAPPE_DOCKER_REF` | pinned SHA | frappe_docker commit; bump only after `deploy-smoke` CI passes |
 
 ## Layout after install
 
 ```
 /opt/kamra/
-  kamra.env           # compose secrets (DB password, site header)
-  apps.json           # baked into the local image
+  install.sh          # copy of the installer, for `install.sh update`
+  kamra.env           # compose secrets (DB password, site header), mode 600
+  apps.json           # apps + branch baked into the local image
   frappe_docker/      # upstream compose files (MariaDB + Redis + noproxy)
 ```
 
@@ -53,7 +64,9 @@ Overrides:
 | [Linode / Akamai](linode/) | Marketplace One-Click (StackScript) |
 | [Hostinger](hostinger/) | Affiliate VPS + one paste of `install.sh` |
 
-First boot runs the same build — expect a long first boot, not a quick pull.
+The DigitalOcean Packer template bakes the image with `install.sh build`,
+so first boot only creates the site. The Linode StackScript still builds on
+first boot (20–45 minutes).
 
 ## Hyperscalers
 
