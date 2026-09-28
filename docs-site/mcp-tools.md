@@ -1,6 +1,6 @@
 # MCP tool reference
 
-Kamra exposes **85 governed tools** on the hosted MCP
+Kamra exposes **86 governed tools** on the hosted MCP
 endpoint (`/mcp`) and the stdio sidecar (`mcp/kamra_mcp.py`). Every
 call runs as the connected user — **role** permissions apply, tools
 are further filtered by the property's **enabled modules**, prices
@@ -328,6 +328,16 @@ Create a Razorpay payment link for a folio's outstanding balance
 (SMS/email to the guest when contact details exist).
 
 Endpoint: `kamra.api.folio_payment_link`.
+Mutating — logged to the activity ledger.
+
+### `send_deposit_link(reservation, amount)`
+
+Create a payment link for a booking's deposit before arrival - the
+deposit still due (the property's deposit %) unless an amount is
+given. When the guest pays, it posts to the folio as an Advance and
+confirms a held booking. Returns the link and a ready-to-send message.
+
+Endpoint: `kamra.api.deposit_payment_link`.
 Mutating — logged to the activity ledger.
 
 ## Revenue

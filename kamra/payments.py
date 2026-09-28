@@ -26,14 +26,20 @@ def _settings(property: str):
 	return frappe.get_doc("Payment Gateway Settings", name)
 
 
-def create_payment_link(folio_name: str) -> dict:
+def create_payment_link(folio_name: str, amount: float | None = None,
+                        purpose: str = "Stay bill") -> dict:
+	"""A link for the folio's balance - or, before arrival, for an explicit
+	amount (a booking deposit), when the folio has no charges yet."""
 	folio = frappe.get_doc("Folio", folio_name)
 	if folio.status == "Closed":
 		frappe.throw("Folio is closed.")
-	if (folio.balance or 0) <= 0:
+	amount = float(amount) if amount else float(folio.balance or 0)
+	if amount <= 0:
 		frappe.throw("Nothing due on this folio.")
 	settings = _settings(folio.property)
 	guest = frappe.get_doc("Guest", folio.guest)
+	currency = frappe.get_cached_value("Property", folio.property,
+	                                   "currency") or "INR"
 
 	if settings.test_mode:
 		# local demo: fake link, settle via the webhook simulator
@@ -47,9 +53,9 @@ def create_payment_link(folio_name: str) -> dict:
 
 		controller = get_payment_gateway_controller(settings.gateway)
 		url = controller.get_payment_url(**{
-			"amount": float(folio.balance),
-			"currency": "INR",
-			"title": f"Stay bill {folio.name}",
+			"amount": amount,
+			"currency": currency,
+			"title": f"{purpose} {folio.name}",
 			"description": f"{folio.guest_name} · {folio.reservation}",
 			"reference_doctype": "Folio",
 			"reference_docname": folio.name,
@@ -61,14 +67,56 @@ def create_payment_link(folio_name: str) -> dict:
 
 	folio.db_set("payment_link_id", link_id, update_modified=False)
 	folio.db_set("payment_link_url", url, update_modified=False)
+	folio.db_set("payment_link_amount", amount, update_modified=False)
 
 	from kamra.savings import log_action
 	log_action("send_payment_link", "Folio", folio.name, folio.property,
 	           minutes_saved=4,
-	           rationale=f"Payment link ₹{folio.balance:,.0f} for {guest.full_name}",
+	           rationale=f"{purpose} link {currency} {amount:,.0f} for {guest.full_name}",
 	           channel="API")
-	return {"url": url, "link_id": link_id, "amount": float(folio.balance),
-	        "test_mode": bool(settings.test_mode)}
+	return {"url": url, "link_id": link_id, "amount": amount,
+	        "currency": currency, "test_mode": bool(settings.test_mode)}
+
+
+def settle_payment_link(folio_name: str, link_id: str, amount: float) -> bool:
+	"""Post money received through a link, once per link payment. Money that
+	arrives before the guest does is an Advance on the booking: it counts
+	toward the deposit and confirms a held booking."""
+	folio = frappe.get_doc("Folio", folio_name)
+	if amount <= 0 or any(p.reference == link_id for p in folio.payments):
+		return False
+	res = frappe.get_doc("Reservation", folio.reservation) \
+		if folio.reservation else None
+	pre_arrival = bool(res and res.status in (
+		"Confirmed", "Pending Payment", "Held"))
+	folio.append("payments", {
+		"posting_date": nowdate(),
+		"payment_kind": "Advance" if pre_arrival else "Payment",
+		"mode": "Payment Link",
+		"amount": amount,
+		"reference": link_id,
+	})
+	from kamra.folio import _recalculate
+	_recalculate(folio)
+	folio.save(ignore_permissions=True)
+	try:
+		from kamra.ledger import record_payment_ledger
+		record_payment_ledger(folio, folio.payments[-1].as_dict())
+	except Exception:
+		frappe.log_error(title="ledger payment-link write failed")
+	if pre_arrival:
+		frappe.db.set_value("Reservation", res.name, "advance_paid",
+		                    float(res.advance_paid or 0) + amount)
+		if res.status in ("Pending Payment", "Held"):
+			from kamra.api import _confirm_status
+			_confirm_status(res)
+	from kamra.savings import log_action
+	log_action("payment_received", "Folio", folio.name, folio.property,
+	           minutes_saved=3,
+	           rationale=f"{amount:,.0f} {'deposit ' if pre_arrival else ''}"
+	                     f"auto-posted from payment link",
+	           agent_name="Payments", channel="API")
+	return True
 
 
 @frappe.whitelist(allow_guest=True, methods=["POST"])
@@ -102,21 +150,6 @@ def razorpay_webhook():
 	folio = frappe.get_doc("Folio", folio_name)
 
 	amount = float(entity.get("amount_paid") or entity.get("amount") or 0) / 100
-	already = any(p.reference == entity.get("id") for p in folio.payments)
-	if not already and amount > 0:
-		folio.append("payments", {
-			"posting_date": nowdate(),
-			"mode": "Payment Link",
-			"amount": amount,
-			"reference": entity.get("id"),
-		})
-		from kamra.folio import _recalculate
-		_recalculate(folio)
-		folio.save(ignore_permissions=True)
-		from kamra.savings import log_action
-		log_action("payment_received", "Folio", folio.name, folio.property,
-		           minutes_saved=3,
-		           rationale=f"₹{amount:,.0f} auto-posted from payment link",
-		           agent_name="Payments", channel="API")
+	posted = settle_payment_link(folio.name, entity.get("id"), amount)
 	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- persists the completed operation before returning to an external/public caller; reviewed as intentional
-	return {"ok": True, "folio": folio.name, "posted": not already}
+	return {"ok": True, "folio": folio.name, "posted": posted}

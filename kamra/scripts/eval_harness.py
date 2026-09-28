@@ -2193,6 +2193,35 @@ def t47b():
 	assert ">381<" in cn.xml and f"EVAL-{tag}-1" in cn.xml
 
 
+@check("deposit before arrival: advance on an early folio, link, carried to check-in")
+def t47c():
+	from kamra import api
+	from kamra.payments import settle_payment_link
+	from frappe.utils import add_days, nowdate
+
+	frappe.db.set_value("Property", P, "deposit_pct", 30)
+	frappe.clear_cache(doctype="Property")
+	b = api.create_booking(P, RT, add_days(nowdate(), 40), add_days(nowdate(), 42),
+	                       "EVAL Deposit Guest", phone="+919800011400")
+	res = frappe.get_doc("Reservation", b["reservation"])
+	dep = api._deposit_state(res)
+	assert dep["expected"] == round(res.amount_after_tax * 0.3, 2) and dep["can_take"], dep
+	r = api.record_advance(res.name, 100, mode="Cash")
+	f = frappe.get_doc("Folio", r["folio"])
+	assert [(p.payment_kind, p.amount) for p in f.payments] == [("Advance", 100)], f.payments
+	assert r["deposit"]["paid"] == 100
+	# the drawer shows the booking total, not the empty folio's
+	m = api.reservation_detail(res.name)["money"]
+	assert m["total"] == res.amount_after_tax and m["paid"] == 100, m
+	# a paid link posts once, as an Advance
+	assert settle_payment_link(f.name, "plink_EVAL", 50) is True
+	assert settle_payment_link(f.name, "plink_EVAL", 50) is False
+	res.reload()
+	assert res.advance_paid == 150, res.advance_paid
+	f.reload()
+	assert f.payments[-1].payment_kind == "Advance"
+
+
 @check("WhatsApp: native Meta send, booking flow, inbound -> ticket")
 def t48():
 	from kamra import whatsapp  # nosemgrep: frappe-monkey-patching-not-allowed -- offline eval harness stubs the outbound transport for tests; not a production code path
@@ -3428,7 +3457,7 @@ def execute():
 		for fn in (t1, t2, t3, t3b, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13,
 		           t14, t15, t16, t17, t18, t19, t20, t21, t22, t23, t24,
 		           t25, t26, t27, t28, t29, t30, t31, t32, t33, t34, t35,
-		           t36, t37, t38, t39, t40, t41, t42, t43, t44, t45, t46, t47, t47b, t48, t49, t50, t51, t53,
+		           t36, t37, t38, t39, t40, t41, t42, t43, t44, t45, t46, t47, t47b, t47c, t48, t49, t50, t51, t53,
 		           t54, t55, t56, t57, t58, t59, t60, t61, t62, t63, t64,
 		           t65, t66, t67, t68, t69, t70,
 		           t71, t72, t73, t74, t75, t76, t81, t82, t83, t84, t85):

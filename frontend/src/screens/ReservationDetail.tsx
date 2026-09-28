@@ -30,6 +30,7 @@ import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
 import CancelPanel from "../components/CancelPanel"
 import LinkedRecords from "../components/LinkedRecords"
+import DepositPanel from "../components/DepositPanel"
 import { cur, moneyLocale } from "../lib/money"
 
 const inr = (n: number) =>
@@ -311,13 +312,22 @@ export default function ReservationDetail({
           </div>
         </div>
         <p className="mt-2 text-xs text-zinc-400">
-          {money.has_folio
+          {d.status === "Checked In" || d.status === "Checked Out"
             ? "Live from the guest folio."
-            : d.advance_paid > 0
-              ? `Booking advance of ${inr(d.advance_paid)} received. The folio opens at check-in.`
-              : "No folio yet - it opens at check-in."}
+            : money.has_folio
+              ? "Booking total; deposits sit on the guest folio and count at check-in."
+              : "No payment yet - take a deposit below to secure the booking."}
         </p>
       </Card>
+
+      {d.deposit && (d.deposit.can_take || d.deposit.paid > 0) && (
+        <DepositPanel
+          reservation={d.name}
+          deposit={d.deposit}
+          guestPhone={d.guest?.phone}
+          onChanged={() => refresh()}
+        />
+      )}
 
       <div className="grid gap-4 sm:grid-cols-2">
         {/* stay + dates (editable) */}
