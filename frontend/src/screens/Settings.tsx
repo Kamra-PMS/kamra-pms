@@ -215,7 +215,7 @@ const PROPERTY_SPECS: Spec[] = [
   {
     field: "country",
     label: "Country",
-    hint: "Selects the tax & invoicing pack. India and Indonesia today; more via the Marketplace.",
+    hint: "Selects the tax & invoicing pack (India and Indonesia today; more via the Marketplace) and the default phone country code for guests.",
   },
   {
     field: "timezone",
