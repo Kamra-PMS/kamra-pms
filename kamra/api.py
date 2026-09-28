@@ -571,7 +571,6 @@ def registration_card(reservation: str):
 		"signature": res.get("precheckin_signature") or None,
 		"tax_label": _pack_tax_label(res.property),
 		"reservation": {
-			"status": res.status,
 			"room_id": res.room,
 			"room_number": frappe.db.get_value("Room", res.room, "room_number")
 			               if res.room else None,
