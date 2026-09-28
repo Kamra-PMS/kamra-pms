@@ -216,7 +216,7 @@ const PROPERTY_SPECS: Spec[] = [
     field: "country",
     label: "Country",
     type: "select",
-    hint: "Selects the tax & invoicing pack - tax labels, ID types and payment methods follow it. Other countries run on a flat-tax generic pack.",
+    hint: "Selects the tax & invoicing pack - tax labels, ID types, payment methods and the default phone country code for guests follow it. Other countries run on a flat-tax generic pack.",
   },
   {
     field: "currency",
