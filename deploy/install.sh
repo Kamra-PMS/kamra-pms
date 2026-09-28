@@ -22,6 +22,13 @@
 #   sudo /opt/kamra/install.sh update
 set -euo pipefail
 
+# Absolute path of this script (empty when piped via curl | bash); resolved
+# now because later steps cd into frappe_docker.
+SELF=""
+if [ -n "${BASH_SOURCE[0]:-}" ] && [ -f "${BASH_SOURCE[0]}" ]; then
+  SELF="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
+fi
+
 MODE="${1:-install}"
 case "$MODE" in
   install|update|build) ;;
@@ -189,9 +196,8 @@ wait_for_backend() {
 
 install_self() {
   # Keep a copy next to the stack so `install.sh update` works later.
-  local self="${BASH_SOURCE[0]:-}"
-  if [ -n "$self" ] && [ -f "$self" ] && [ "$self" != "$INSTALL_DIR/install.sh" ]; then
-    cp "$self" "$INSTALL_DIR/install.sh" && chmod +x "$INSTALL_DIR/install.sh"
+  if [ -n "$SELF" ] && [ "$SELF" != "$INSTALL_DIR/install.sh" ]; then
+    cp "$SELF" "$INSTALL_DIR/install.sh" && chmod +x "$INSTALL_DIR/install.sh"
   elif [ ! -f "$INSTALL_DIR/install.sh" ]; then
     curl -fsSL https://raw.githubusercontent.com/Kamra-PMS/kamra-pms/main/deploy/install.sh \
       -o "$INSTALL_DIR/install.sh" && chmod +x "$INSTALL_DIR/install.sh" || true
