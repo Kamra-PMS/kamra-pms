@@ -35,6 +35,10 @@ The script pulls `ghcr.io/kamra-pms/kamra:latest`, starts MariaDB + Redis +
 Kamra, creates the site, installs `payments` + `kamra`, enables the
 scheduler, and points `/` at `/kamra`.
 
+If pull fails with `unauthorized`, the GHCR package is still private — an
+org admin must set [`kamra`](https://github.com/orgs/Kamra-PMS/packages) to
+**Public**, then re-run the installer.
+
 ## Sign in and set up
 
 Open `http://<server-ip>:8080/kamra` (or `https://pms.yourhotel.com` after

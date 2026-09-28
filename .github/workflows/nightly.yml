@@ -98,6 +98,17 @@ jobs:
           secret-files: |
             apps_json=./apps.json
 
+      # install.sh / one-click need anonymous pull; GHCR defaults to private.
+      - name: Make ghcr.io/kamra-pms/kamra public
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api --method PUT \
+            -H "Accept: application/vnd.github+json" \
+            /orgs/Kamra-PMS/packages/container/kamra/visibility \
+            -f visibility=public \
+            || echo "::warning::Could not set package public. Org admin: Package settings → Change visibility → Public (https://github.com/orgs/Kamra-PMS/packages)"
+
   prerelease:
     name: Refresh rolling nightly prerelease
     needs: [gate, docker]

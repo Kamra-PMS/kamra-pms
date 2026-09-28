@@ -22,6 +22,11 @@ Then open `/kamra/setup` and create the property.
 | `ghcr.io/kamra-pms/kamra:nightly` | Nightly (`develop`) |
 | `ghcr.io/kamra-pms/kamra:vX.Y.Z` | Release pin |
 
+The package must be **Public** so `install.sh` can pull without `docker login`.
+CI sets that after each push; if you still see `unauthorized`, an org admin
+should open [org packages](https://github.com/orgs/Kamra-PMS/packages) →
+`kamra` → Package settings → Change visibility → Public.
+
 ## Layout after install
 
 ```

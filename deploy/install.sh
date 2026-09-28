@@ -100,7 +100,9 @@ COMPOSE=(docker compose --project-name kamra --env-file "$ENVFILE"
   -f overrides/compose.noproxy.yaml)
 
 echo "Pulling ${KAMRA_IMAGE}:${KAMRA_TAG} and starting the stack…"
-"${COMPOSE[@]}" pull
+if ! "${COMPOSE[@]}" pull; then
+  die "failed to pull ${KAMRA_IMAGE}:${KAMRA_TAG}. If Docker reported 'unauthorized', the GHCR package is private — an org admin must set it Public at https://github.com/orgs/Kamra-PMS/packages (Package settings → Change visibility). Then re-run this installer."
+fi
 "${COMPOSE[@]}" up -d
 
 echo "Waiting for MariaDB and backend…"
