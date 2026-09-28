@@ -108,6 +108,16 @@ def front_desk_vocabulary(pack) -> dict:
 	}
 
 
+def privacy_terms(pack) -> dict:
+	"""Who a guest complains to, and the statutory guest report (if any)
+	the hotel files - for the privacy notice where data is collected."""
+	return {
+		"privacy_authority": getattr(pack, "PRIVACY_AUTHORITY", None)
+		                     or "your local data protection authority",
+		"guest_report": getattr(pack, "GUEST_REPORT", None),
+	}
+
+
 def validate_id_type(property: str | None, id_type: str | None):
 	"""An ID type must be one this property's country recognises. Values
 	already on file are never re-checked - only new writes."""
@@ -141,3 +151,48 @@ def supported_countries() -> list[dict]:
 			"tax_id_label": ctx.get("tax_id_label"),
 		})
 	return sorted(out, key=lambda c: c["country"])
+
+
+# ── statutory e-invoicing hooks ──────────────────────────────────────────
+# A pack that must report invoices to its tax authority (Saudi ZATCA, and
+# tomorrow others) implements on_invoice_issued / on_invoice_cancelled /
+# on_pos_bill_paid. The core calls these after the bill is final; a
+# failure is logged loudly but never stops the desk closing a bill - the
+# record can be regenerated, a guest kept waiting at checkout cannot.
+
+
+def _hook(pack, name, *args):
+	fn = getattr(pack, name, None)
+	if not fn:
+		return None
+	# all-or-nothing: a half-written record would fork the invoice chain
+	sp = f"einv_{name}"
+	frappe.db.savepoint(sp)
+	try:
+		return fn(*args)
+	except Exception:
+		frappe.db.rollback(save_point=sp)
+		frappe.log_error(title=f"e-invoicing: {name} failed")
+		return None
+
+
+def on_invoice_issued(pack, folio_name: str):
+	return _hook(pack, "on_invoice_issued", folio_name)
+
+
+def on_invoice_cancelled(pack, folio_name: str, invoice_number: str,
+                         reason: str):
+	return _hook(pack, "on_invoice_cancelled", folio_name, invoice_number,
+	             reason)
+
+
+def on_pos_bill_paid(pack, order_name: str, tax_rate: float):
+	return _hook(pack, "on_pos_bill_paid", order_name, tax_rate)
+
+
+def invoice_print_block(pack, source_doctype: str, source_name: str,
+                        number: str | None = None):
+	"""Whatever the authority requires ON the printed bill (ZATCA's QR and
+	bilingual title) - None where nothing is required."""
+	return _hook(pack, "invoice_print_block", source_doctype, source_name,
+	             number)

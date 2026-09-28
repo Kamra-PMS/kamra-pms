@@ -11,6 +11,9 @@ FNB_GST = 5.0  # F&B / meal-plan GST rate
 DEFAULT_CURRENCY = "INR"
 DEFAULT_TIMEZONE = "Asia/Kolkata"
 DEFAULT_NATIONALITY = "Indian"
+# named in the guest privacy notice
+PRIVACY_AUTHORITY = "the Data Protection Board of India"
+GUEST_REPORT = "for foreign nationals, Form C to the immigration authorities"
 # Form C / the guest register accept any of these for Indian nationals
 ID_TYPES = ["Aadhaar", "Passport", "Driving License", "Voter ID", "PAN", "Other"]
 PAYMENT_MODES = ["Cash", "Card", "UPI", "Bank Transfer"]

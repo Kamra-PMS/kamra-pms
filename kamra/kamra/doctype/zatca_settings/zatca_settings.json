@@ -1,0 +1,221 @@
+{
+ "actions": [],
+ "creation": "2026-09-28 16:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "property",
+  "enabled",
+  "column_break_a",
+  "environment",
+  "sb_seller",
+  "seller_name",
+  "vat_number",
+  "cr_number",
+  "column_break_b",
+  "building_number",
+  "street_name",
+  "district",
+  "city_name",
+  "postal_code",
+  "additional_number",
+  "sb_phase2",
+  "onboarding_status",
+  "egs_serial",
+  "column_break_c",
+  "csid_certificate",
+  "csid_secret",
+  "private_key",
+  "sb_chain",
+  "last_icv",
+  "column_break_d",
+  "last_invoice_hash"
+ ],
+ "fields": [
+  {
+   "fieldname": "property",
+   "fieldtype": "Link",
+   "label": "Property",
+   "options": "Property",
+   "reqd": 1,
+   "unique": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "label": "Enabled",
+   "default": "1",
+   "description": "Generate ZATCA e-invoice data (QR, XML, hash chain) for every invoice and credit note."
+  },
+  {
+   "fieldname": "column_break_a",
+   "fieldtype": "Column Break",
+   "label": ""
+  },
+  {
+   "fieldname": "environment",
+   "fieldtype": "Select",
+   "label": "Environment",
+   "options": "Sandbox\nSimulation\nProduction",
+   "default": "Sandbox",
+   "description": "FATOORA portal environment used when the EGS unit is onboarded (Phase 2)."
+  },
+  {
+   "fieldname": "sb_seller",
+   "fieldtype": "Section Break",
+   "label": "Seller (as registered with ZATCA)"
+  },
+  {
+   "fieldname": "seller_name",
+   "fieldtype": "Data",
+   "label": "Seller name",
+   "description": "Registered name; defaults to the property's legal name."
+  },
+  {
+   "fieldname": "vat_number",
+   "fieldtype": "Data",
+   "label": "VAT registration number",
+   "description": "15 digits, starts and ends with 3. Defaults to the property's VAT No."
+  },
+  {
+   "fieldname": "cr_number",
+   "fieldtype": "Data",
+   "label": "Commercial Registration (CRN)"
+  },
+  {
+   "fieldname": "column_break_b",
+   "fieldtype": "Column Break",
+   "label": ""
+  },
+  {
+   "fieldname": "building_number",
+   "fieldtype": "Data",
+   "label": "Building number",
+   "description": "4 digits"
+  },
+  {
+   "fieldname": "street_name",
+   "fieldtype": "Data",
+   "label": "Street"
+  },
+  {
+   "fieldname": "district",
+   "fieldtype": "Data",
+   "label": "District"
+  },
+  {
+   "fieldname": "city_name",
+   "fieldtype": "Data",
+   "label": "City"
+  },
+  {
+   "fieldname": "postal_code",
+   "fieldtype": "Data",
+   "label": "Postal code",
+   "description": "5 digits"
+  },
+  {
+   "fieldname": "additional_number",
+   "fieldtype": "Data",
+   "label": "Additional number"
+  },
+  {
+   "fieldname": "sb_phase2",
+   "fieldtype": "Section Break",
+   "label": "Phase 2 (integration) - EGS unit"
+  },
+  {
+   "fieldname": "onboarding_status",
+   "fieldtype": "Select",
+   "label": "Onboarding status",
+   "options": "Not onboarded\nCompliance CSID\nProduction CSID",
+   "default": "Not onboarded",
+   "read_only": 1
+  },
+  {
+   "fieldname": "egs_serial",
+   "fieldtype": "Data",
+   "label": "EGS serial",
+   "description": "1-<solution>|2-<model>|3-<serial>, used in the CSR."
+  },
+  {
+   "fieldname": "column_break_c",
+   "fieldtype": "Column Break",
+   "label": ""
+  },
+  {
+   "fieldname": "csid_certificate",
+   "fieldtype": "Code",
+   "label": "CSID certificate (binarySecurityToken)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "csid_secret",
+   "fieldtype": "Password",
+   "label": "CSID secret"
+  },
+  {
+   "fieldname": "private_key",
+   "fieldtype": "Password",
+   "label": "EGS private key",
+   "length": 4000
+  },
+  {
+   "fieldname": "sb_chain",
+   "fieldtype": "Section Break",
+   "label": "Invoice chain"
+  },
+  {
+   "fieldname": "last_icv",
+   "fieldtype": "Int",
+   "label": "Last invoice counter (ICV)",
+   "default": "0",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_d",
+   "fieldtype": "Column Break",
+   "label": ""
+  },
+  {
+   "fieldname": "last_invoice_hash",
+   "fieldtype": "Small Text",
+   "label": "Last invoice hash (PIH for the next)",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-09-28 16:30:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kamra",
+ "name": "ZATCA Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  },
+  {
+   "role": "Hotel Admin",
+   "read": 1,
+   "write": 1,
+   "create": 1
+  },
+  {
+   "role": "Finance",
+   "read": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "format:ZATCA-{property}",
+ "naming_rule": "Expression (old style)"
+}

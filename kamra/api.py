@@ -304,6 +304,9 @@ def _apply_country_defaults(p: dict):
 		frappe.throw(f"Unknown currency {p['currency']}.")
 	if not p.get("timezone") and getattr(pack, "DEFAULT_TIMEZONE", None):
 		p["timezone"] = pack.DEFAULT_TIMEZONE
+	# the levy's name follows the country; its % is the operator's to set
+	if not p.get("room_levy_label") and getattr(pack, "ROOM_LEVY_LABEL", None):
+		p["room_levy_label"] = pack.ROOM_LEVY_LABEL
 
 
 @frappe.whitelist()
@@ -1680,14 +1683,20 @@ def folio_invoice(folio: str):
 		head["lines"] += 1
 
 	settled = bool(doc.invoice_number)
+	# what the tax authority requires ON the bill (ZATCA: QR + Arabic title)
+	statutory = loc.invoice_print_block(
+		pack, "Folio", doc.name, doc.invoice_number) if settled else None
 	return {
 		"folio": doc.as_dict(),
 		"lines": lines,
 		"bill_to": bill_to,
+		"statutory": statutory,
 		"document": {
 			# a bill before settlement is provisional and must say so - the
 			# invoice number only exists once the folio closes
-			"title": _("Tax Invoice") if settled else _("Provisional Bill"),
+			"title": (statutory or {}).get("title") or (
+				_("Tax Invoice") if settled else _("Provisional Bill")),
+			"title_local": (statutory or {}).get("title_ar"),
 			"is_final": settled,
 			"number": doc.invoice_number or doc.name,
 			"date": str(doc.closed_on or "")[:10] or nowdate(),
@@ -3552,17 +3561,23 @@ def get_quote(property: str, room_type: str, check_in_date: str,
 	             rate_plan or None, voucher_code or None)
 
 
-def _find_or_create_guest(guest_name: str, phone: str | None):
+def _find_or_create_guest(guest_name: str, phone: str | None,
+                          property: str | None = None):
 	if phone:
 		existing = frappe.db.get_value("Guest", {"phone": phone})
 		if existing:
 			return existing
 	parts = guest_name.strip().split(" ", 1)
+	# the likely nationality follows the property's country, not India's
+	from kamra.localization import pack_for
+	nationality = getattr(pack_for(property), "DEFAULT_NATIONALITY", None) \
+		if property else None
 	guest = frappe.get_doc({
 		"doctype": "Guest",
 		"first_name": parts[0],
 		"last_name": parts[1] if len(parts) > 1 else "",
 		"phone": phone,
+		"nationality": nationality or None,
 	}).insert(ignore_permissions=True)
 	return guest.name
 
@@ -3626,7 +3641,7 @@ def create_booking(property: str, room_type: str, check_in_date: str,
 		if not frappe.db.exists("Guest", guest):
 			frappe.throw(f"Guest profile {guest} not found.")
 	else:
-		guest = _find_or_create_guest(guest_name, phone)
+		guest = _find_or_create_guest(guest_name, phone, property)
 	if guest_category:
 		frappe.db.set_value("Guest", guest, "guest_category", guest_category)
 		if guest_category == "VIP":
@@ -4391,6 +4406,43 @@ def property_locale(property: str):
 	prop = frappe.get_cached_doc("Property", property)
 	pack = pack_for(property)
 	return {**pack.locale(prop), **front_desk_vocabulary(pack)}
+
+
+@frappe.whitelist()
+@require_roles("Finance")
+def zatca_settings(property: str):
+	"""The property's ZATCA (Saudi e-invoicing) settings, created from the
+	property on first use, plus what is still missing for a valid invoice
+	and where the invoice chain stands."""
+	from kamra.crs import assert_property_access
+	from kamra import zatca
+	assert_property_access(property)
+	s = zatca.settings_for(property)
+	return {
+		"name": s.name,
+		"missing": zatca.readiness(s),
+		"issued": frappe.db.count(zatca.RECORD, {"property": property}),
+		"last_icv": s.last_icv,
+		"onboarding_status": s.onboarding_status,
+		"environment": s.environment,
+	}
+
+
+@frappe.whitelist()
+@require_roles("Finance")
+def zatca_invoice_xml(invoice_number: str, property: str,
+                      document_type: str = "Invoice"):
+	"""The UBL XML behind an issued invoice or credit note - for the
+	accountant, an auditor or a ZATCA query."""
+	from kamra.crs import assert_property_access
+	assert_property_access(property)
+	rec = frappe.db.get_value(
+		"ZATCA Invoice", {"property": property, "invoice_number": invoice_number,
+		                  "document_type": document_type},
+		["xml", "uuid", "icv", "invoice_hash", "status"], as_dict=True)
+	if not rec:
+		frappe.throw(_("No ZATCA record for {0}.").format(invoice_number))
+	return rec
 
 
 @frappe.whitelist()

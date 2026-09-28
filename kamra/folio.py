@@ -315,6 +315,7 @@ def post_room_night(reservation, date, folios=None) -> bool:
 			"auto_posted": 1,
 		})
 		posted = True
+		_post_room_levy(folios, reservation, date, night_rate)
 
 	if reservation.meal_plan and not _charge_posted(
 			reservation.name, "Meal Plan", date):
@@ -339,6 +340,31 @@ def post_room_night(reservation, date, folios=None) -> bool:
 	if own_batch:
 		save_folios(folios)
 	return posted
+
+
+def _post_room_levy(folios, reservation, date, night_rate):
+	"""The property's per-night levy on the room rate (municipality fee,
+	city / tourism tax) - its own line so the invoice shows it and the
+	ledger books it apart from room revenue."""
+	prop = frappe.get_cached_doc("Property", reservation.property)
+	pct = float(prop.get("room_levy_percent") or 0)
+	if not pct or not night_rate or _charge_posted(
+			reservation.name, "Room Levy", date):
+		return
+	levy = round(float(night_rate) * pct / 100, 2)
+	_append_charge(folios, reservation, "Room Levy", {
+		"posting_date": date,
+		"charge_type": "Room Levy",
+		"reservation": reservation.name,
+		"description": f"{prop.get('room_levy_label') or 'Room levy'} {pct:g}%",
+		"qty": 1,
+		"rate": levy,
+		"amount": levy,
+		"gst_rate": _nightly_gst(reservation, date)
+		            if int(prop.get("room_levy_taxable") if prop.get("room_levy_taxable") is not None else 1)
+		            else 0,
+		"auto_posted": 1,
+	})
 
 
 def save_folios(folios: dict):
@@ -556,6 +582,9 @@ def close_folio(folio_name: str) -> str:
 	folio.invoice_number = make_autoname(f"INV-{code}-.YY.-.#####")
 	_recalculate(folio)
 	folio.save(ignore_permissions=True)
+	# statutory e-invoicing (ZATCA in Saudi Arabia) - the pack decides
+	from kamra import localization as loc
+	loc.on_invoice_issued(loc.pack_for(folio.property), folio.name)
 	return folio.invoice_number
 
 
@@ -677,6 +706,11 @@ def cancel_invoice(folio_name: str, reason: str) -> dict:
 		folio.save(ignore_permissions=True)
 	finally:
 		frappe.flags.kamra_invoice_cancel = False
+	# where the authority forbids cancelling (ZATCA), this issues the
+	# credit note that reverses the invoice
+	from kamra import localization as loc
+	loc.on_invoice_cancelled(loc.pack_for(folio.property), folio.name, old,
+	                         reason.strip())
 	return {"cancelled": old, "folio": folio.name}
 
 

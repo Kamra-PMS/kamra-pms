@@ -74,7 +74,11 @@ National ID and Iqama in Saudi Arabia, Emirates ID in the UAE, KTP in
 Indonesia…) and the **ways to pay** offered at the counter, POS and till
 (UPI only where UPI exists). The setup wizard asks for the country first
 and fills in the currency and time zone from it; change it later under
-Settings → Property. The pack seam is open source; contributing your
+Settings → Property. Saudi properties get **ZATCA e-invoicing**
+(Phase 1): a QR code, UBL 2.1 XML and an unbroken hash chain on every
+invoice, credit note and paid restaurant bill, and a per-night
+**municipality fee** line where the property charges one. See
+[Country setup & ZATCA](/country-setup). The pack seam is open source; contributing your
 country is a single Python file — declare `ID_TYPES`, `PAYMENT_MODES`,
 `DEFAULT_CURRENCY` and `DEFAULT_TIMEZONE` beside the tax functions.
 

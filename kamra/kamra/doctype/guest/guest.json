@@ -98,7 +98,6 @@
    "label": "Column Break B"
   },
   {
-   "default": "Indian",
    "fieldname": "nationality",
    "fieldtype": "Data",
    "label": "Nationality"
@@ -166,7 +165,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-09-28 08:14:45.883418",
+ "modified": "2026-09-28 18:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Guest",

@@ -4442,6 +4442,80 @@
      }
     },
     {
+     "name": "zatca_settings",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.zatca_settings",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.zatca_settings"
+       ]
+      },
+      "description": "The property's ZATCA (Saudi e-invoicing) settings, created from the\nproperty on first use, plus what is still missing for a valid invoice\nand where the invoice chain stands.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "zatca_invoice_xml",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.zatca_invoice_xml",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.zatca_invoice_xml"
+       ]
+      },
+      "description": "The UBL XML behind an issued invoice or credit note - for the\naccountant, an auditor or a ZATCA query.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"invoice_number\": \"<invoice_number>\",\n  \"property\": \"Your Property\",\n  \"document_type\": \"Invoice\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
      "name": "localization_countries",
      "request": {
       "method": "POST",

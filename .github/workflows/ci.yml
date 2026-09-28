@@ -100,7 +100,7 @@ jobs:
           cd frappe-bench
           printf 'from kamra.scripts.eval_harness import execute\nexecute()\nexit\n' \
             | bench --site test.localhost console | tee eval.out
-          grep -q "79/79 passed" eval.out
+          awk '/eval harness: [0-9]+\/[0-9]+ passed/ { split($5, n, "/"); ok = (n[1] == n[2]) } END { exit !ok }' eval.out  # all green, however many checks
 
       - name: Run the banquet unit tests
         run: |

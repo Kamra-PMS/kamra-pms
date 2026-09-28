@@ -26,6 +26,8 @@ CHARGE_TYPE_TO_CODE = {
 	"Early Check-in": ("1200", "Early Check-in", "Rooms", "Early Check-in"),
 	"Late Checkout": ("1210", "Late Checkout", "Rooms", "Late Checkout"),
 	"Cleaning Fee": ("1300", "Cleaning Fee", "Rooms", "Cleaning Fee"),
+	# collected for the municipality / city - a levy, not hotel revenue
+	"Room Levy": ("1310", "Room Levy", "Levies", "Room Levy"),
 	"Discount": ("9000", "Discount", "Adjustment", "Discount"),
 	"Misc": ("8000", "Miscellaneous", "Other", "Misc"),
 	"Allowance": ("9100", "Allowance", "Adjustment", "Allowance"),
@@ -49,7 +51,7 @@ def ensure_default_transaction_codes(property: str | None = None) -> None:
 			"description": desc,
 			"property": property,
 			"txn_type": "Adjustment" if charge_type in ("Discount", "Allowance")
-			            else "Revenue",
+			            else "Tax" if charge_type == "Room Levy" else "Revenue",
 			"revenue_group": group,
 			"subgroup": charge_type,
 			"charge_type": charge_type,

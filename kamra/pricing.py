@@ -294,6 +294,19 @@ def quote(
 	else:
 		total_base = taxable
 
+	# Room levy (municipality fee, city / tourism tax): a % of the room rate
+	# net of discount, posted per night as its own folio line
+	levy_pct = _dec(prop.get("room_levy_percent") or 0)
+	levy = levy_tax = Decimal(0)
+	if levy_pct > 0 and room_total:
+		room_net = room_total * (taxable / subtotal) if subtotal else room_total
+		levy = room_net * levy_pct / Decimal(100)
+		if cint(prop.get("room_levy_taxable") if prop.get("room_levy_taxable") is not None else 1):
+			avg_gst = room_tax / room_total * Decimal(100)
+			levy_tax = levy * avg_gst / Decimal(100)
+		tax += levy_tax
+		total_base += levy
+
 	total = total_base + tax
 	effective_pct = float(tax / total_base * 100) if total_base else 0
 
@@ -326,6 +339,14 @@ def quote(
 			"tax_amount": float(cleaning_tax),
 			"nights_applied": 0,
 		})
+	if levy:
+		line_items.append({
+			"component": "room_levy",
+			"description": prop.get("room_levy_label") or "Room levy",
+			"amount": float(levy),
+			"tax_amount": float(levy_tax),
+			"nights_applied": billable_nights,
+		})
 	if discount:
 		line_items.append({
 			"component": "promotion",
@@ -343,6 +364,7 @@ def quote(
 		"room_total": float(room_total),
 		"meal_total": float(meal_total),
 		"cleaning_fee": float(cleaning),
+		"room_levy": float(levy),
 		"discount": float(discount),
 		"voucher": voucher_name,
 		"amount_before_tax": float(total_base),
@@ -351,7 +373,7 @@ def quote(
 		"amount_after_tax": float(total),
 		"line_items": line_items,
 		"totals": {
-			"subtotal": float(subtotal + cleaning),
+			"subtotal": float(subtotal + cleaning + levy),
 			"discount": float(discount),
 			"tax": float(tax),
 			"total": float(total),
