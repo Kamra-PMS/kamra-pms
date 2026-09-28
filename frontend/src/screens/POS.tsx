@@ -1218,8 +1218,15 @@ export default function POS() {
                 )}
               </div>
               <div className="flex justify-between text-zinc-500"><span>{t("Subtotal")}</span><span className="tabular-nums">{cur()}{inr2(taxable)}</span></div>
-              <div className="flex justify-between text-xs text-zinc-400"><span>{t("CGST ({rate}%)", { rate: gstRate / 2 })}</span><span className="tabular-nums">{cur()}{inr2(gstAmt / 2)}</span></div>
-              <div className="flex justify-between text-xs text-zinc-400"><span>{t("SGST ({rate}%)", { rate: gstRate / 2 })}</span><span className="tabular-nums">{cur()}{inr2(gstAmt / 2)}</span></div>
+              {/* India splits GST into CGST + SGST; elsewhere it is one tax line */}
+              {loc.tax_label === "GST" ? (
+                <>
+                  <div className="flex justify-between text-xs text-zinc-400"><span>{t("CGST ({rate}%)", { rate: gstRate / 2 })}</span><span className="tabular-nums">{cur()}{inr2(gstAmt / 2)}</span></div>
+                  <div className="flex justify-between text-xs text-zinc-400"><span>{t("SGST ({rate}%)", { rate: gstRate / 2 })}</span><span className="tabular-nums">{cur()}{inr2(gstAmt / 2)}</span></div>
+                </>
+              ) : (
+                <div className="flex justify-between text-xs text-zinc-400"><span>{loc.tax_label} ({gstRate}%)</span><span className="tabular-nums">{cur()}{inr2(gstAmt)}</span></div>
+              )}
               <div className="flex items-baseline justify-between border-t border-zinc-100 pt-1 font-bold">
                 <span>{t("Total")}</span>
                 <span className="text-2xl tabular-nums">{cur()}{inr2(grand)}</span>

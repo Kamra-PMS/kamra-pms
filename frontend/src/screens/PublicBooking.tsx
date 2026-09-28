@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import PrivacyNotice from "../components/PrivacyNotice"
+import PrivacyNotice, { setPrivacyTerms } from "../components/PrivacyNotice"
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom"
 import {
   BedDouble,
@@ -229,6 +229,7 @@ export default function PublicBooking() {
       .then((d) => {
         if (!d) return
         adoptUiLocale((d as unknown as { ui_locale?: { currency_symbol?: string; locale?: string } }).ui_locale)
+        setPrivacyTerms((d as unknown as { ui_locale?: { privacy_authority?: string } }).ui_locale)
         setData(d)
         setForm((f) => ({ ...f, meal_plan: d.meal_plans[0]?.name ?? "" }))
       })

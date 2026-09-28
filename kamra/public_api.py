@@ -241,13 +241,15 @@ def default_property():
 
 
 def _public_locale(property: str) -> dict:
-	from kamra.localization import pack_for
+	from kamra.localization import pack_for, privacy_terms
 	prop = frappe.get_cached_doc("Property", property)
-	loc = pack_for(property).locale(prop)
+	pack = pack_for(property)
+	loc = pack.locale(prop)
 	# "" is a valid symbol (generic pack shows bare numbers) - only the
 	# missing key falls back to the rupee
 	return {"currency_symbol": loc.get("currency_symbol", "₹"),
-	        "locale": loc.get("locale") or "en-IN"}
+	        "locale": loc.get("locale") or "en-IN",
+	        **privacy_terms(pack)}
 
 
 @frappe.whitelist(allow_guest=True)

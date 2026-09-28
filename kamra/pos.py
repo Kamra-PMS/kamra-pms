@@ -768,6 +768,11 @@ def pay_order(order: str, mode: str, pin: str | None = None):
 	record_cashier_txn(
 		prop, "Payment", mode, float(doc.order_total or 0),
 		pos_order=doc.name, reference=f"POS {doc.name}", session=sess)
+	# a paid outlet bill is a (simplified) tax invoice where the pack says so
+	from kamra import localization as loc
+	loc.on_pos_bill_paid(
+		loc.pack_for(prop), doc.name,
+		float(frappe.db.get_value("POS Outlet", doc.outlet, "gst_rate") or 0))
 	return {"ok": True, "status": "Delivered", "paid": True, "mode": mode,
 	        "order_total": doc.order_total}
 
@@ -847,7 +852,21 @@ def bill_data(order: str):
 	gst_rate = 0.0 if doc.nc else float(outlet.gst_rate or 5)
 	taxable = float(doc.order_total or 0)
 	gst_amount = round(taxable * gst_rate / 100, 2)
+	# the tax is named and split the country's way (CGST+SGST in India,
+	# a single VAT line in the Gulf)
+	from kamra import localization as loc
+	pack = loc.pack_for(doc.property)
+	prop_doc = frappe.get_cached_doc("Property", doc.property)
+	tax_label = pack.locale(prop_doc).get("tax_label") or "Tax"
+	split = loc.tax_split(pack, prop_doc, None)
 	return {
+		"tax_label": tax_label,
+		"tax_parts": [
+			{"label": label.upper(), "rate": round(gst_rate * float(share), 4),
+			 "amount": round(gst_amount * float(share), 2)}
+			for label, share in split],
+		"statutory": loc.invoice_print_block(pack, "POS Order", doc.name)
+		             if doc.paid else None,
 		"order": doc.name, "kot_no": doc.kot_no, "status": doc.status,
 		"property_name": property_name, "outlet_name": outlet.outlet_name,
 		"order_type": doc.order_type, "table_no": doc.table_no,

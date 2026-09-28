@@ -1,0 +1,230 @@
+{
+ "actions": [],
+ "creation": "2026-09-28 16:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "property",
+  "document_type",
+  "invoice_kind",
+  "invoice_number",
+  "billing_reference",
+  "column_break_a",
+  "source_doctype",
+  "source_name",
+  "issued_on",
+  "status",
+  "sb_totals",
+  "currency",
+  "tax_exclusive",
+  "column_break_b",
+  "vat_total",
+  "tax_inclusive",
+  "sb_chain",
+  "uuid",
+  "icv",
+  "column_break_c",
+  "invoice_hash",
+  "previous_hash",
+  "sb_payload",
+  "qr",
+  "reason",
+  "xml",
+  "zatca_response"
+ ],
+ "fields": [
+  {
+   "fieldname": "property",
+   "fieldtype": "Link",
+   "label": "Property",
+   "options": "Property",
+   "reqd": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "document_type",
+   "fieldtype": "Select",
+   "label": "Document",
+   "options": "Invoice\nCredit Note",
+   "default": "Invoice",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "invoice_kind",
+   "fieldtype": "Select",
+   "label": "Kind",
+   "options": "Simplified\nStandard",
+   "default": "Simplified",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "invoice_number",
+   "fieldtype": "Data",
+   "label": "Invoice number",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "billing_reference",
+   "fieldtype": "Data",
+   "label": "Credits invoice",
+   "description": "Original invoice number (credit notes)."
+  },
+  {
+   "fieldname": "column_break_a",
+   "fieldtype": "Column Break",
+   "label": ""
+  },
+  {
+   "fieldname": "source_doctype",
+   "fieldtype": "Link",
+   "label": "Source type",
+   "options": "DocType"
+  },
+  {
+   "fieldname": "source_name",
+   "fieldtype": "Dynamic Link",
+   "label": "Source",
+   "options": "source_doctype"
+  },
+  {
+   "fieldname": "issued_on",
+   "fieldtype": "Datetime",
+   "label": "Issued on"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Generated\nReported\nCleared\nRejected",
+   "default": "Generated",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "sb_totals",
+   "fieldtype": "Section Break",
+   "label": "Totals"
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Data",
+   "label": "Currency"
+  },
+  {
+   "fieldname": "tax_exclusive",
+   "fieldtype": "Currency",
+   "label": "Total excl. VAT"
+  },
+  {
+   "fieldname": "column_break_b",
+   "fieldtype": "Column Break",
+   "label": ""
+  },
+  {
+   "fieldname": "vat_total",
+   "fieldtype": "Currency",
+   "label": "VAT"
+  },
+  {
+   "fieldname": "tax_inclusive",
+   "fieldtype": "Currency",
+   "label": "Total incl. VAT"
+  },
+  {
+   "fieldname": "sb_chain",
+   "fieldtype": "Section Break",
+   "label": "Chain"
+  },
+  {
+   "fieldname": "uuid",
+   "fieldtype": "Data",
+   "label": "UUID",
+   "unique": 1
+  },
+  {
+   "fieldname": "icv",
+   "fieldtype": "Int",
+   "label": "Invoice counter (ICV)"
+  },
+  {
+   "fieldname": "column_break_c",
+   "fieldtype": "Column Break",
+   "label": ""
+  },
+  {
+   "fieldname": "invoice_hash",
+   "fieldtype": "Data",
+   "label": "Invoice hash"
+  },
+  {
+   "fieldname": "previous_hash",
+   "fieldtype": "Data",
+   "label": "Previous invoice hash (PIH)"
+  },
+  {
+   "fieldname": "sb_payload",
+   "fieldtype": "Section Break",
+   "label": "Payload"
+  },
+  {
+   "fieldname": "qr",
+   "fieldtype": "Long Text",
+   "label": "QR (TLV, base64)"
+  },
+  {
+   "fieldname": "reason",
+   "fieldtype": "Small Text",
+   "label": "Reason"
+  },
+  {
+   "fieldname": "xml",
+   "fieldtype": "Code",
+   "label": "UBL XML",
+   "options": "XML"
+  },
+  {
+   "fieldname": "zatca_response",
+   "fieldtype": "Code",
+   "label": "ZATCA response",
+   "options": "JSON"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-09-28 16:30:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kamra",
+ "name": "ZATCA Invoice",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1
+  },
+  {
+   "role": "Hotel Admin",
+   "read": 1
+  },
+  {
+   "role": "Finance",
+   "read": 1,
+   "report": 1,
+   "export": 1
+  },
+  {
+   "role": "Front Desk",
+   "read": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "hash",
+ "naming_rule": "Random",
+ "in_create": 1
+}

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import PrivacyNotice from "../components/PrivacyNotice"
+import PrivacyNotice, { setPrivacyTerms } from "../components/PrivacyNotice"
 import { CalendarDays, Check, Clock } from "lucide-react"
 import { useParams } from "react-router-dom"
 import { call } from "../lib/api"
@@ -8,6 +8,8 @@ import { SignaturePad } from "../components/SignaturePad"
 import { IdDocumentField } from "../components/IdDocumentField"
 import { GuestLaundryCard } from "./laundry/GuestLaundryCard"
 import { adoptUiLocale } from "../lib/money"
+import { useT } from "../lib/i18n"
+import { LANGS, setLang } from "../lib/dir"
 
 
 /** Downscale a picked/captured photo so the upload stays small (max edge
@@ -40,14 +42,14 @@ function DocCapture(props: {
   hasExisting?: boolean
 }) {
   const { title, note, value, onChange, onFile, hasExisting } = props
+  const { t } = useT()
   return (
     <div className="rounded-xl border border-zinc-200 p-3">
       <span className="block text-sm font-medium text-zinc-600">{title}</span>
       <p className="mb-2 mt-0.5 text-xs text-zinc-400">{note}</p>
       {hasExisting && !value && (
         <p className="mb-2 rounded-lg bg-emerald-50 px-2.5 py-1.5 text-xs text-emerald-800">
-          ✓ We already have this from your last visit — we'll use it.
-          Add a photo below only to replace it with a newer one.
+          ✓ {t("We already have this from your last visit — we'll use it. Add a photo below only to replace it with a newer one.")}
         </p>
       )}
       {value ? (
@@ -55,13 +57,13 @@ function DocCapture(props: {
           <img src={value} alt={title} className="h-20 rounded-lg border border-zinc-200 object-cover" />
           <button type="button" className="text-sm font-medium text-rose-600 hover:underline"
             onClick={() => onChange("")}>
-            Remove & retake
+            {t("Remove & retake")}
           </button>
         </div>
       ) : (
         <div className="flex flex-wrap gap-2">
           <label className="cursor-pointer rounded-lg bg-brand-600 px-3 py-2 text-sm font-semibold text-white">
-            Take photo
+            {t("Take photo")}
             <input type="file" accept="image/*" capture="environment" className="hidden"
               onChange={async (e) => {
                 const f = e.target.files?.[0]
@@ -69,7 +71,7 @@ function DocCapture(props: {
               }} />
           </label>
           <label className="cursor-pointer rounded-lg border border-zinc-300 px-3 py-2 text-sm font-semibold text-zinc-700">
-            Upload image
+            {t("Upload image")}
             <input type="file" accept="image/*" className="hidden"
               onChange={async (e) => {
                 const f = e.target.files?.[0]
@@ -129,6 +131,16 @@ interface Info {
 
 export default function PublicCheckin() {
   const { token } = useParams()
+  const { t, lang } = useT()
+  // a guest's phone speaks their language: follow it until they choose
+  useEffect(() => {
+    try {
+      if (!localStorage.getItem("kamra-lang") && navigator.language?.toLowerCase().startsWith("ar"))
+        setLang("ar")
+    } catch {
+      /* private mode - stay in English */
+    }
+  }, [])
   const [info, setInfo] = useState<Info | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
@@ -147,6 +159,7 @@ export default function PublicCheckin() {
     call<Info>("kamra.public_api.precheckin_info", { token })
       .then((i) => {
         adoptUiLocale((i as unknown as { ui_locale?: { currency_symbol?: string; locale?: string } }).ui_locale)
+        setPrivacyTerms((i as unknown as { ui_locale?: { privacy_authority?: string } }).ui_locale)
         setInfo(i)
         setForm((f) => ({
           ...f,
@@ -160,7 +173,7 @@ export default function PublicCheckin() {
         setIdUploaded(i.guest.has_id_document)
         if (i.stay.status === "Submitted") setDone(true)
       })
-      .catch(() => setError("This check-in link isn't valid. Please contact the hotel."))
+      .catch(() => setError(t("This check-in link isn't valid. Please contact the hotel.")))
   }, [token])
 
   async function submit() {
@@ -173,7 +186,7 @@ export default function PublicCheckin() {
       })
       setDone(true)
     } catch {
-      setError("Couldn't save - please check the details and try again.")
+      setError(t("Couldn't save - please check the details and try again."))
     } finally {
       setBusy(false)
     }
@@ -186,7 +199,7 @@ export default function PublicCheckin() {
       </div>
     )
   if (!info)
-    return <p className="py-20 text-center text-zinc-400">Loading…</p>
+    return <p className="py-20 text-center text-zinc-400">{t("Loading…")}</p>
 
   const { property: p, stay, guest } = info
 
@@ -203,26 +216,42 @@ export default function PublicCheckin() {
               </span>
             )}
           </div>
-          <div>
+          <div className="min-w-0 flex-1">
             <h1 className="text-lg font-semibold">{p.property_name}</h1>
-            <p className="text-sm text-zinc-500">Online check-in · {p.city}</p>
+            <p className="text-sm text-zinc-500">{t("Online check-in")} · {p.city}</p>
+          </div>
+          <div className="flex shrink-0 rounded-lg border border-zinc-200 bg-white p-0.5 text-xs" role="group" aria-label={t("Language")}>
+            {LANGS.map((l) => (
+              <button
+                key={l.code}
+                type="button"
+                aria-pressed={lang === l.code}
+                onClick={() => setLang(l.code)}
+                className={
+                  "rounded-md px-2 py-1 " +
+                  (lang === l.code ? "bg-zinc-900 text-white" : "text-zinc-600")
+                }
+              >
+                {l.nativeLabel}
+              </button>
+            ))}
           </div>
         </div>
 
         <div className="mb-5 rounded-xl border border-zinc-200 bg-white p-4 text-sm shadow-sm">
           <p className="font-medium">
-            {guest.full_name} · {stay.room_type} room
+            {guest.full_name} · {t("{type} room", { type: stay.room_type })}
           </p>
           <p className="mt-1 flex items-center gap-2 text-zinc-500">
             <CalendarDays className="size-4" aria-hidden />
-            {stay.check_in_date} → {stay.check_out_date} · {stay.nights} night
-            {stay.nights === 1 ? "" : "s"} · {stay.adults} adult
-            {stay.adults === 1 ? "" : "s"}
-            {stay.children ? ` + ${stay.children} child` : ""}
+            <span dir="ltr">{stay.check_in_date} → {stay.check_out_date}</span> ·{" "}
+            {t("{n} night{s}", { n: stay.nights, s: stay.nights === 1 ? "" : "s" })} ·{" "}
+            {t("{n} adult{s}", { n: stay.adults, s: stay.adults === 1 ? "" : "s" })}
+            {stay.children ? ` + ${t("{n} child", { n: stay.children })}` : ""}
           </p>
           <p className="mt-1 flex items-center gap-2 text-zinc-500">
             <Clock className="size-4" aria-hidden />
-            Rooms ready from {p.checkin_time.slice(0, 5)}
+            {t("Rooms ready from {time}", { time: p.checkin_time.slice(0, 5) })}
           </p>
         </div>
 
@@ -234,29 +263,27 @@ export default function PublicCheckin() {
           <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-5 text-emerald-800">
             <p className="flex items-center gap-2 text-lg font-semibold">
               <Check className="size-5" aria-hidden />
-              You're checked in online
+              {t("You're checked in online")}
             </p>
             <p className="mt-1 text-sm">
-              Skip the paperwork at the desk - just show your ID on arrival
-              and pick up the key. See you soon!
+              {t("Skip the paperwork at the desk - just show your ID on arrival and pick up the key. See you soon!")}
             </p>
           </div>
         ) : (
           <div className="space-y-4 rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
             <p className="text-sm text-zinc-500">
-              Save time at the desk - fill your details now, show the ID once
-              on arrival.
+              {t("Save time at the desk - fill your details now, show the ID once on arrival.")}
             </p>
             <div className="grid grid-cols-2 gap-3">
               <label className="block">
-                <span className="mb-1.5 block text-sm font-medium text-zinc-600">ID type</span>
+                <span className="mb-1.5 block text-sm font-medium text-zinc-600">{t("ID type")}</span>
                 <select className={inputCls} value={form.id_type}
                   onChange={(e) => setForm({ ...form, id_type: e.target.value })}>
-                  {(info?.id_types ?? []).map((t) => <option key={t}>{t}</option>)}
+                  {(info?.id_types ?? []).map((x) => <option key={x} value={x}>{t(x)}</option>)}
                 </select>
               </label>
               <label className="block">
-                <span className="mb-1.5 block text-sm font-medium text-zinc-600">ID number</span>
+                <span className="mb-1.5 block text-sm font-medium text-zinc-600">{t("ID number")}</span>
                 <input className={inputCls} value={form.id_number}
                   onChange={(e) => setForm({ ...form, id_number: e.target.value })} />
               </label>
@@ -271,19 +298,19 @@ export default function PublicCheckin() {
               params={{ token }}
               uploaded={idUploaded}
               onUploaded={() => setIdUploaded(true)}
-              label="Add a photo of your ID (optional)"
-              hint="It speeds up arrival. Bring the original card either way."
+              label={t("Add a photo of your ID (optional)")}
+              hint={t("It speeds up arrival. Bring the original card either way.")}
             />
             <p className="-mt-1 text-xs text-zinc-500">
               {p.id_retention === "Verify & Discard"
-                ? "Your ID photo is used only to confirm your identity at arrival, and is permanently deleted when you check out. Only hotel staff can see it."
-                : "Your ID photo is kept with the guest register the hotel is required by law to maintain. Only hotel staff can see it."}
-              {form.id_type === "Aadhaar" && " A masked Aadhaar (last 4 digits showing) is fine."}
+                ? t("Your ID photo is used only to confirm your identity at arrival, and is permanently deleted when you check out. Only hotel staff can see it.")
+                : t("Your ID photo is kept with the guest register the hotel is required by law to maintain. Only hotel staff can see it.")}
+              {form.id_type === "Aadhaar" && " " + t("A masked Aadhaar (last 4 digits showing) is fine.")}
             </p>
 
             <DocCapture
-              title="Address proof (optional)"
-              note="Only if your address proof is a different document from your ID."
+              title={t("Address proof (optional)")}
+              note={t("Only if your address proof is a different document from your ID.")}
               value={addrImage}
               onChange={setAddrImage}
               onFile={fileToDataUrl}
@@ -292,43 +319,43 @@ export default function PublicCheckin() {
 
             <div className="grid grid-cols-2 gap-3">
               <label className="block">
-                <span className="mb-1.5 block text-sm font-medium text-zinc-600">Email</span>
+                <span className="mb-1.5 block text-sm font-medium text-zinc-600">{t("Email")}</span>
                 <input className={inputCls} type="email" value={form.email}
                   onChange={(e) => setForm({ ...form, email: e.target.value })} />
               </label>
               <label className="block">
-                <span className="mb-1.5 block text-sm font-medium text-zinc-600">Nationality</span>
+                <span className="mb-1.5 block text-sm font-medium text-zinc-600">{t("Nationality")}</span>
                 <input className={inputCls} value={form.nationality}
                   onChange={(e) => setForm({ ...form, nationality: e.target.value })} />
               </label>
             </div>
             <label className="block">
-              <span className="mb-1.5 block text-sm font-medium text-zinc-600">Address</span>
+              <span className="mb-1.5 block text-sm font-medium text-zinc-600">{t("Address")}</span>
               <input className={inputCls} value={form.address_line}
-                placeholder="Street, area"
+                placeholder={t("Street, area")}
                 onChange={(e) => setForm({ ...form, address_line: e.target.value })} />
             </label>
             <div className="grid grid-cols-2 gap-3">
               <label className="block">
-                <span className="mb-1.5 block text-sm font-medium text-zinc-600">City</span>
+                <span className="mb-1.5 block text-sm font-medium text-zinc-600">{t("City")}</span>
                 <input className={inputCls} value={form.city}
                   onChange={(e) => setForm({ ...form, city: e.target.value })} />
               </label>
               <label className="block">
-                <span className="mb-1.5 block text-sm font-medium text-zinc-600">Arriving around</span>
-                <input className={inputCls} value={form.eta} placeholder="e.g. 14:30"
+                <span className="mb-1.5 block text-sm font-medium text-zinc-600">{t("Arriving around")}</span>
+                <input className={inputCls} value={form.eta} placeholder={t("e.g. 14:30")}
                   onChange={(e) => setForm({ ...form, eta: e.target.value })} />
               </label>
             </div>
             <label className="block">
-              <span className="mb-1.5 block text-sm font-medium text-zinc-600">Anything we should know?</span>
+              <span className="mb-1.5 block text-sm font-medium text-zinc-600">{t("Anything we should know?")}</span>
               <textarea className={inputCls} rows={2} value={form.special_requests}
                 onChange={(e) => setForm({ ...form, special_requests: e.target.value })} />
             </label>
             {(p.house_rules || p.pets_policy || p.children_policy || p.extra_bed_policy) && (
               <details className="group rounded-lg border border-zinc-200 bg-zinc-50/50 p-3 text-xs">
                 <summary className="flex items-center justify-between font-medium text-zinc-700 cursor-pointer select-none [&::-webkit-details-marker]:hidden">
-                  <span>View Hotel House Rules & Policies</span>
+                  <span>{t("View Hotel House Rules & Policies")}</span>
                   <span className="transition group-open:rotate-180">
                     <svg fill="none" height="16" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" width="16" className="size-3.5 text-zinc-500"><polyline points="6 9 12 15 18 9"></polyline></svg>
                   </span>
@@ -336,25 +363,25 @@ export default function PublicCheckin() {
                 <div className="mt-2 space-y-2 border-t border-zinc-200/60 pt-2 text-zinc-600 leading-relaxed whitespace-pre-line">
                   {p.house_rules && (
                     <div>
-                      <span className="font-semibold text-zinc-700">House Rules: </span>
+                      <span className="font-semibold text-zinc-700">{t("House Rules:")} </span>
                       {p.house_rules}
                     </div>
                   )}
                   {p.pets_policy && (
                     <div>
-                      <span className="font-semibold text-zinc-700">Pets Policy: </span>
+                      <span className="font-semibold text-zinc-700">{t("Pets Policy:")} </span>
                       {p.pets_policy}
                     </div>
                   )}
                   {p.children_policy && (
                     <div>
-                      <span className="font-semibold text-zinc-700">Children Policy: </span>
+                      <span className="font-semibold text-zinc-700">{t("Children Policy:")} </span>
                       {p.children_policy}
                     </div>
                   )}
                   {p.extra_bed_policy && (
                     <div>
-                      <span className="font-semibold text-zinc-700">Extra Bed Policy: </span>
+                      <span className="font-semibold text-zinc-700">{t("Extra Bed Policy:")} </span>
                       {p.extra_bed_policy}
                     </div>
                   )}
@@ -364,16 +391,14 @@ export default function PublicCheckin() {
 
             <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3">
               <span className="mb-1.5 block text-sm font-medium text-zinc-600">
-                Registration card - your signature
+                {t("Registration card - your signature")}
               </span>
               {/* One instrument, widened - not a second checkbox. The notice
                   has to cover the ID photo before it's collected, but adding
                   another gate to the form whose completion rate is the whole
                   point would cost more than it protects. */}
               <p className="mb-2 text-xs text-zinc-500">
-                I confirm the details above are correct, agree to the hotel's
-                registration terms and house rules, and consent to the hotel
-                holding a copy of my ID for this stay.
+                {t("I confirm the details above are correct, agree to the hotel's registration terms and house rules, and consent to the hotel holding a copy of my ID for this stay.")}
               </p>
               <SignaturePad onChange={setSignature} />
               <label className="mt-2 flex items-start gap-2 text-xs text-zinc-600">
@@ -383,7 +408,7 @@ export default function PublicCheckin() {
                   checked={consent}
                   onChange={(e) => setConsent(e.target.checked)}
                 />
-                I accept the registration declaration.
+                {t("I accept the registration declaration.")}
               </label>
               <div className="mt-2">
                 <PrivacyNotice propertyName={p.property_name} contact={p.privacy_contact}
@@ -400,10 +425,10 @@ export default function PublicCheckin() {
               disabled={busy || !form.id_number || !signature || !consent}
               onClick={submit}
             >
-              {busy ? "Saving…" : "Sign & complete check-in"}
+              {busy ? t("Saving…") : t("Sign & complete check-in")}
             </Button>
             <p className="text-center text-xs text-zinc-400">
-              Your details and signature form the guest register required by law.
+              {t("Your details and signature form the guest register required by law.")}
             </p>
           </div>
         )}

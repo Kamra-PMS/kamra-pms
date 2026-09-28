@@ -23,7 +23,12 @@ DEFAULT_VAT = Decimal("15")
 
 DEFAULT_CURRENCY = "SAR"
 DEFAULT_TIMEZONE = "Asia/Riyadh"
+# charged per night on the room rate; the rate is set per property
+ROOM_LEVY_LABEL = "Municipality fee"
 DEFAULT_NATIONALITY = "Saudi"
+# named in the guest privacy notice (PDPL; hotels register guests in Shomoos)
+PRIVACY_AUTHORITY = "the Saudi Data & AI Authority (SDAIA)"
+GUEST_REPORT = "guest registration with the Shomoos security system"
 # what the front desk records at check-in: citizens carry the National ID,
 # residents the Iqama, GCC visitors their own national card
 ID_TYPES = ["National ID", "Iqama", "Passport", "GCC ID", "Other"]
@@ -75,3 +80,26 @@ def locale(prop_doc) -> dict:
 		"tax_id_label": "VAT No.",
 		"tax_rates": tax_rate_options(prop_doc.name),
 	}
+
+
+# ── ZATCA e-invoicing ────────────────────────────────────────────────────
+
+def on_invoice_issued(folio_name: str):
+	from kamra import zatca
+	return zatca.issue_for_folio(folio_name)
+
+
+def on_invoice_cancelled(folio_name: str, invoice_number: str, reason: str):
+	from kamra import zatca
+	return zatca.credit_note_for_folio(folio_name, invoice_number, reason)
+
+
+def on_pos_bill_paid(order_name: str, tax_rate: float):
+	from kamra import zatca
+	return zatca.issue_for_pos_order(order_name, tax_rate)
+
+
+def invoice_print_block(source_doctype: str, source_name: str,
+                        number: str | None = None):
+	from kamra import zatca
+	return zatca.print_block(source_doctype, source_name, number)

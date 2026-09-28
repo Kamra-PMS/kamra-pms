@@ -155,6 +155,11 @@ export interface BillData {
   gst_rate: number
   cgst: number
   sgst: number
+  /** The tax named and split the country's way (CGST+SGST, or one VAT). */
+  tax_label?: string
+  tax_parts?: { label: string; rate: number; amount: number }[]
+  /** ZATCA QR + Arabic title where the country requires them. */
+  statutory?: { title: string; title_ar: string; qr_image: string; icv: number } | null
   grand_total: number
   paid: number
   payment_mode: string | null
@@ -179,6 +184,8 @@ export function billHtml(b: BillData) {
   return `
     <div class="c b lg">${esc(b.property_name)}</div>
     <div class="c">${esc(b.outlet_name)}</div>
+    ${b.statutory ? `<div class="c b sm">${esc(b.statutory.title)}</div>` +
+      `<div class="c b sm" dir="rtl">${esc(b.statutory.title_ar)}</div>` : ""}
     <div class="rule"></div>
     <div class="row"><span class="b">${esc(label)}</span><span>${when}</span></div>
     <div class="row sm"><span>Bill: ${esc(b.order)}</span><span>KOT #${b.kot_no ?? "—"}</span></div>
@@ -193,14 +200,18 @@ export function billHtml(b: BillData) {
     <div class="rule"></div>
     ${money("Subtotal", b.subtotal)}
     ${b.discount_amount ? money("Discount", -b.discount_amount) : ""}
-    ${money(`CGST @ ${b.gst_rate / 2}%`, b.cgst, "sm")}
-    ${money(`SGST @ ${b.gst_rate / 2}%`, b.sgst, "sm")}
+    ${(b.tax_parts ?? [
+      { label: "CGST", rate: b.gst_rate / 2, amount: b.cgst },
+      { label: "SGST", rate: b.gst_rate / 2, amount: b.sgst },
+    ]).map((p) => money(`${esc(p.label)} @ ${p.rate}%`, p.amount, "sm")).join("")}
     <div class="rule"></div>
     ${money("TOTAL", b.grand_total, "b lg")}
     ${b.nc ? `<div class="c b" style="margin-top:4px">COMPLIMENTARY - NO CHARGE</div>` +
       `<div class="c sm">auth: ${esc(b.nc_authorized_by || "—")}${b.nc_note ? ` · ${esc(b.nc_note)}` : ""}</div>` : ""}
     ${b.paid ? `<div class="c b" style="margin-top:4px">PAID · ${esc(b.payment_mode)}</div>` : ""}
     <div class="rule"></div>
+    ${b.statutory ? `<div class="c"><img src="${b.statutory.qr_image}" alt="QR" style="width:120px;height:120px"/></div>` +
+      `<div class="c sm">ICV ${b.statutory.icv}</div>` : ""}
     <div class="c sm">Thank you. See you again.</div>
     <div class="cut">- cut -</div>`
 }

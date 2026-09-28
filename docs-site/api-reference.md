@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function — the same governed layer
-the UI and the AI use. **259 endpoints**, generated from the source
+the UI and the AI use. **261 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -1584,6 +1584,31 @@ so no screen hardcodes ₹ or GST %.
 | Param | Required | Default |
 | --- | --- | --- |
 | `property` | yes |  |
+
+### `kamra.api.zatca_settings`
+
+**GET/POST** · roles: `Finance`
+
+The property's ZATCA (Saudi e-invoicing) settings, created from the
+property on first use, plus what is still missing for a valid invoice
+and where the invoice chain stands.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+
+### `kamra.api.zatca_invoice_xml`
+
+**GET/POST** · roles: `Finance`
+
+The UBL XML behind an issued invoice or credit note - for the
+accountant, an auditor or a ZATCA query.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `invoice_number` | yes |  |
+| `property` | yes |  |
+| `document_type` | no | `'Invoice'` |
 
 ### `kamra.api.localization_countries`
 
