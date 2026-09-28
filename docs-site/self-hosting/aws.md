@@ -36,6 +36,5 @@ Then `/kamra/setup`. See [Quickstart](/quickstart).
 
 ## Marketplace (planned)
 
-Free **Kamra PMS** AMI (self-host in your VPC) and a paid **Kamra Cloud +
-HeyKoala** SaaS listing (hotel pays on the AWS invoice). Details:
+Free **Kamra PMS** AMI (self-host in your VPC). Details:
 [Hyperscaler marketplaces](/self-hosting/marketplace/hyperscalers).

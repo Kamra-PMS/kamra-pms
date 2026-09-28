@@ -52,5 +52,5 @@ certification.
 ## Is any of this gated?
 
 No. The integrations are open source like everything else. You pay the
-channel manager directly for their service; on Kamra Cloud we can
-bundle and manage it for you as a connected service.
+channel manager directly for their service; with an
+[implementation](https://kamrapms.com/implementation/) we can set it up for you.

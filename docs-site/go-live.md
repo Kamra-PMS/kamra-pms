@@ -19,7 +19,7 @@ links to the deeper guide.
 - [ ] **Log in** at `/kamra` as `Administrator` (or `admin@example.com`)
   with the password from `--admin-password`, then change it if needed
 - [ ] Set up **daily backups** off the server (the hosting guides show
-  `bench backup` + object storage; on Kamra Cloud we do this for you)
+  `bench backup` + object storage; Frappe Cloud does this for you)
 
 ## 2 — Property setup
 
@@ -124,6 +124,6 @@ Run one fake stay end to end and check every artifact:
 
 All of the above as a done-for-you package: fixed-fee
 [implementation with an annual support contract](https://kamrapms.com/implementation/),
-or [Kamra Cloud](https://kamrapms.com/#cloud) where the server side of
+or [Frappe Cloud](/self-hosting/frappe-cloud) where the server side of
 this list disappears entirely. The software is identical either way —
 nothing on this page is gated.
