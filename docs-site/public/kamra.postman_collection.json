@@ -9231,7 +9231,7 @@
         "kamra.public_api.hosting_enquiry"
        ]
       },
-      "description": "Kamra Cloud hosting enquiry from kamrapms.com. Stored first (a lead is\nnever lost even without SMTP), then a best-effort email to the team.",
+      "description": "Hosting / implementation enquiry from kamrapms.com. Stored first (a lead is\nnever lost even without SMTP), then a best-effort email to the team.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"full_name\": \"A. Guest\",\n  \"email\": \"guest@example.com\",\n  \"phone\": \"+91 90000 00000\",\n  \"property_name\": \"\",\n  \"rooms\": 0,\n  \"city\": \"\",\n  \"message\": \"\",\n  \"country\": \"\",\n  \"interest\": \"\"\n}",

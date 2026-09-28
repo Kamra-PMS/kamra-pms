@@ -2,8 +2,8 @@
 
 ## Is anything locked behind a paid plan?
 
-**No.** Every feature is open source and included everywhere. Kamra Cloud
-adds hosting, backups, updates and support — plus *connected services*
+**No.** Every feature is open source and included everywhere. Paid
+options add implementation and support — plus *connected services*
 that carry third-party licensing costs (live GST e-invoicing through a
 licensed provider, WhatsApp gateway, payment gateway setup). Those are
 services with real per-use costs, not feature gates. The GSTR-1 export

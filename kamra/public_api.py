@@ -864,7 +864,7 @@ def hosting_enquiry(full_name: str, email: str, phone: str = "",
                     property_name: str = "", rooms: int = 0, city: str = "",
                     message: str = "", country: str = "",
                     interest: str = ""):
-	"""Kamra Cloud hosting enquiry from kamrapms.com. Stored first (a lead is
+	"""Hosting / implementation enquiry from kamrapms.com. Stored first (a lead is
 	never lost even without SMTP), then a best-effort email to the team.
 
 	Leads are System Manager–only and purged after

@@ -70,7 +70,7 @@ first boot (20–45 minutes).
 
 ## Hyperscalers
 
-Free self-host AMI/VM listings and paid **Kamra Cloud + HeyKoala** SaaS listings are planned — see [docs](../docs-site/self-hosting/marketplace/hyperscalers.md). Do not put a price on AGPL Kamra itself.
+Free self-host AMI/VM listings are planned — see [docs](../docs-site/self-hosting/marketplace/hyperscalers.md). Do not put a price on AGPL Kamra itself.
 
 ## Kamra-operated images (not for public install)
 
