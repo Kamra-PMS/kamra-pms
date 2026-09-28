@@ -8,8 +8,8 @@ classic bench install.
 **Server**
 
 - Ubuntu 22.04/24.04 LTS (or any Docker-capable Linux)
-- 2 vCPU / 4 GB RAM minimum (8 GB recommended for 20+ rooms + POS)
-- 40 GB disk (database grows with folios/audit history)
+- 4 vCPU / 8 GB RAM for the Docker image build (2 vCPU / 4 GB may run afterward)
+- 40 GB disk (build cache + database growth with folios/audit history)
 - A domain or subdomain (e.g. `pms.yourhotel.com`) pointed at the server
 - Ports 80/443 open; SSL via Let's Encrypt (frappe_docker or certbot)
 
