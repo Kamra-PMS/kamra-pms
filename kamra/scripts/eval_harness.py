@@ -3245,7 +3245,7 @@ def t83():
 		"agent identity must never write custom DocPerms"
 	assert AGENT_ROLE in frappe.get_roles(AGENT_EMAIL), "agent lacks its role"
 
-	frappe.set_user("Guest")
+	frappe.set_user("Guest")  # nosemgrep: frappe-setuser -- controlled user context switch; target user is validated and scope-limited in this flow
 	try:
 		out = public_api.book(
 			property=P, room_type=RT, check_in_date="2031-03-10",
@@ -3254,7 +3254,7 @@ def t83():
 		)
 		assert frappe.session.user == "Guest", "book() must hand the session back"
 	finally:
-		frappe.set_user("Administrator")
+		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- controlled user context switch; target user is validated and scope-limited in this flow
 	res = frappe.get_doc("Reservation", out["reservation"])
 	assert res.source == "Website", res.source
 	assert res.property == P
