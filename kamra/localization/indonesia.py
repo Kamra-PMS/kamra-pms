@@ -26,6 +26,13 @@ import frappe
 
 DEFAULT_PBJT = Decimal("10")
 
+DEFAULT_CURRENCY = "IDR"
+DEFAULT_TIMEZONE = "Asia/Jakarta"
+DEFAULT_NATIONALITY = "Indonesian"
+ID_TYPES = ["KTP", "Passport", "KITAS", "Driving License", "Other"]
+# QRIS settles like a card through the acquirer - book it as Card
+PAYMENT_MODES = ["Cash", "Card", "Bank Transfer"]
+
 
 def calculate_room_tax(property, room_type_doc, nightly_rate) -> Decimal:
 	"""PBJT is flat - no slabs, no per-tariff switching. The room type's

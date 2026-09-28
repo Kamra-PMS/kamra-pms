@@ -42,6 +42,7 @@ export interface BookingInitial {
   guest_name?: string
   phone?: string
   stays?: number
+  walkIn?: boolean
 }
 
 export interface ShellContext {
@@ -381,6 +382,13 @@ export default function AppShell() {
             >
               {t("Sign out")}
             </button>
+            <Button
+              variant="outline"
+              className="hidden sm:inline-flex"
+              onClick={() => setBooking({ walkIn: true })}
+            >
+              {t("Walk-in")}
+            </Button>
             <Button onClick={() => setBooking({})}>
               <Plus className="size-4" aria-hidden />
               {t("New booking")}

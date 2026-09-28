@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Check, Plus, Trash2 } from "lucide-react"
 import { call, setCurrentProperty } from "../lib/api"
 import { serverError } from "../lib/resource"
@@ -6,7 +6,7 @@ import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { cn } from "../lib/utils"
-import { cur } from "../lib/money"
+import { cur, loadLocale } from "../lib/money"
 import { useT } from "../lib/i18n"
 
 const inputCls =
@@ -55,6 +55,14 @@ const STR_LISTING_DEFAULT: RoomTypeRow = {
   weekend_price: "",
 }
 
+interface CountryPack {
+  country: string
+  currency: string | null
+  timezone: string | null
+  tax_label: string | null
+  tax_id_label: string | null
+}
+
 export default function Setup() {
   const { t } = useT()
   const [kind, setKind] = useState<PropertyKind>("Hotel")
@@ -79,6 +87,9 @@ export default function Setup() {
   } | null>(null)
 
   const [prop, setProp] = useState({
+    country: "",
+    currency: "",
+    timezone: "",
     property_name: "",
     city: "",
     state: "",
@@ -91,6 +102,32 @@ export default function Setup() {
     advance_percent: "100",
     security_deposit_amount: "5000",
   })
+  // The country picks the tax & invoicing pack - and with it the currency,
+  // clock, ID documents and ways to pay. Asked first so nothing defaults
+  // to India by accident.
+  const [countries, setCountries] = useState<CountryPack[]>([])
+  const [otherCountry, setOtherCountry] = useState(false)
+  function pickCountry(c: CountryPack | null) {
+    setOtherCountry(!c)
+    setProp((p) => ({
+      ...p,
+      country: c?.country ?? "",
+      currency: c?.currency ?? "",
+      timezone: c?.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
+    }))
+  }
+  useEffect(() => {
+    call<CountryPack[]>("kamra.api.localization_countries")
+      .then((cs) => {
+        setCountries(cs)
+        // preselect from the browser clock; the operator can still change it
+        const tz = Intl.DateTimeFormat().resolvedOptions().timeZone
+        const guess = cs.find((c) => c.timezone === tz)
+        if (guess) pickCountry(guess)
+      })
+      .catch(() => setCountries([]))
+  }, [])
+  const pack = countries.find((c) => c.country === prop.country)
   const [roomTypes, setRoomTypes] = useState<RoomTypeRow[]>([{ ...HOTEL_ROOM_DEFAULT }])
   const [mealPlans, setMealPlans] = useState([
     { code: "EP", label: "Room Only", price_per_adult: "0", on: true },
@@ -184,6 +221,8 @@ export default function Setup() {
       const res = await call<{ property: string }>("kamra.api.setup_property", { payload })
       setCreatedProperty(res.property)
       setCurrentProperty(res.property)
+      // currency symbol and tax words now come from the chosen pack
+      await loadLocale()
       setStep(importStep)
     } catch (e) {
       setError(serverError(e))
@@ -328,13 +367,75 @@ export default function Setup() {
 
           {step === 1 && (
             <>
+              <label className="block">
+                <span className="mb-1.5 block text-sm font-medium text-zinc-600">
+                  {t("Country *")}
+                </span>
+                <select
+                  className={cn(inputCls, "bg-white")}
+                  value={otherCountry ? "__other" : prop.country}
+                  onChange={(e) =>
+                    pickCountry(
+                      e.target.value === "__other"
+                        ? null
+                        : (countries.find((c) => c.country === e.target.value) ?? null),
+                    )
+                  }
+                >
+                  <option value="" disabled>
+                    {t("Select")}
+                  </option>
+                  {countries.map((c) => (
+                    <option key={c.country} value={c.country}>
+                      {c.country}
+                    </option>
+                  ))}
+                  <option value="__other">{t("Other country")}</option>
+                </select>
+                <span className="mt-1.5 block text-xs text-zinc-500">
+                  {pack
+                    ? t("Sets {currency}, {tax} invoices, local ID types and payment methods.", {
+                        currency: pack.currency ?? "",
+                        tax: pack.tax_label ?? "",
+                      })
+                    : t("Other countries run on a simple flat-tax setup - enter the currency code below.")}
+                </span>
+              </label>
+              {otherCountry && (
+                <div className="grid grid-cols-2 gap-3">
+                  <label className="block">
+                    <span className="mb-1.5 block text-sm font-medium text-zinc-600">
+                      {t("Country name *")}
+                    </span>
+                    <input
+                      className={inputCls}
+                      value={prop.country}
+                      onChange={(e) => setProp({ ...prop, country: e.target.value })}
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="mb-1.5 block text-sm font-medium text-zinc-600">
+                      {t("Currency code *")}
+                    </span>
+                    <input
+                      className={inputCls}
+                      placeholder="USD"
+                      maxLength={3}
+                      value={prop.currency}
+                      onChange={(e) =>
+                        setProp({ ...prop, currency: e.target.value.toUpperCase() })
+                      }
+                    />
+                  </label>
+                </div>
+              )}
               {(
                 [
                   ["property_name", t("Property name *"), "text", "Sunrise Residency"],
-                  ["city", t("City"), "text", "Bengaluru"],
-                  ["state", t("State"), "text", "Karnataka"],
-                  ["phone", t("Phone"), "text", "+91 …"],
-                  ["gstin", t("GSTIN"), "text", "29XXXXX…"],
+                  ["city", t("City"), "text", ""],
+                  ["state", t("State / region"), "text", ""],
+                  ["phone", t("Phone"), "text", "+…"],
+                  ["gstin", pack?.tax_id_label ?? t("Tax ID"), "text", ""],
                   ["checkin_time", t("Check-in Time"), "time", ""],
                   ["checkout_time", t("Check-out Time"), "time", ""],
                   ["minimum_nights", t("Minimum Nights"), "number", "1"],
@@ -836,7 +937,12 @@ export default function Setup() {
             )}
             {step < reviewStep && (
               <Button
-                disabled={step === 1 && !prop.property_name}
+                disabled={
+                  step === 1 &&
+                  (!prop.property_name ||
+                    !prop.country.trim() ||
+                    (otherCountry && prop.currency.length !== 3))
+                }
                 onClick={() => setStep(step + 1)}
               >
                 {t("Continue")}

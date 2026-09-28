@@ -46,10 +46,10 @@
   },
   {
    "fieldname": "id_type",
-   "fieldtype": "Select",
+   "fieldtype": "Data",
    "in_list_view": 1,
    "label": "ID Type",
-   "options": "\nAadhaar\nPAN\nPassport\nDriving License\nVoter ID\nOther"
+   "description": "One of the ID types the property's country pack accepts"
   },
   {
    "fieldname": "id_number",
@@ -74,7 +74,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-07-05 10:00:00.000000",
+ "modified": "2026-09-28 08:14:45.883418",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Stay Occupant",
