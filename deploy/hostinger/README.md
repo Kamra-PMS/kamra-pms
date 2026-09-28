@@ -4,8 +4,8 @@ Hostinger has the **strongest affiliate %** for India / SEA hotels and the
 weakest official ISV 1-click. Until they accept a VPS template, the path is:
 
 1. Create **KVM 2** (2 vCPU / 8 GB) · **Ubuntu 24.04 with Docker** via the
-   Kamra Hostinger referral button on [kamrapms.com/get-started](https://kamrapms.com/get-started/)
-   (link lives in the website's `src/data/affiliates.ts`).
+   Kamra referral link <https://www.hostinger.com/in?REFERRALCODE=kamrapms>
+   (buyer saves 20%; same link as the website's `src/data/affiliates.ts`).
 2. Point `pms.yourhotel.com` A-record at the VPS IP.
 3. hPanel → VPS → **Browser terminal** (or SSH) and paste:
 

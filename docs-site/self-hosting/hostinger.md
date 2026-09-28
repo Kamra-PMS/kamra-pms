@@ -1,12 +1,13 @@
 # Self-hosting on Hostinger
 
-Best path for India / Southeast Asia on a cheap VPS. Create the server with
-our affiliate link when you can — software stays free; Hostinger bills the VPS.
+Best path for India / Southeast Asia on a cheap VPS. Software stays free;
+Hostinger bills the VPS — 20% off with the Kamra referral link below.
 
 ## 1. Create the server
 
-Use the **Hostinger** button on [kamrapms.com/get-started](https://kamrapms.com/get-started/)
-(it credits the Kamra referral at no cost to you), then pick **KVM 2**
+Open Hostinger with the Kamra referral link —
+**[hostinger.com/in?REFERRALCODE=kamrapms](https://www.hostinger.com/in?REFERRALCODE=kamrapms)** —
+you save **20%** and it helps fund Kamra. Go to **VPS** and pick **KVM 2**
 (2 vCPU / 8 GB / ~₹549/mo). For the operating system choose
 **Ubuntu 24.04 with Docker** (plain Ubuntu 24.04 also works — the installer
 adds Docker). Set a root password or SSH key and note the IP.

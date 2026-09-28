@@ -181,7 +181,7 @@ In-repo: [`docs/`](docs/) · [user guide](docs/user-guide.md) · [AI & API](docs
 
 | Method | For | How |
 | --- | --- | --- |
-| **Hostinger VPS** | Cheapest self-host (India / SEA) | Buy KVM 2 via [kamrapms.com/get-started](https://kamrapms.com/get-started/), paste the Docker one-liner below · [guide](https://kamrapms.com/docs/self-hosting/hostinger) |
+| **Hostinger VPS** | Cheapest self-host (India / SEA) | Buy KVM 2 via the [Kamra referral link](https://www.hostinger.com/in?REFERRALCODE=kamrapms) (20% off), paste the Docker one-liner below · [guide](https://kamrapms.com/docs/self-hosting/hostinger) |
 | **Docker on any VPS** | DigitalOcean, Linode, AWS, your own box | One-liner below · [quickstart](https://kamrapms.com/docs/quickstart) |
 | **Bench** | Existing Frappe / ERPNext benches | Commands below · [guide](https://kamrapms.com/docs/self-hosting/bench) |
 | **Frappe Cloud Marketplace** | Managed Frappe hosting | [Install Kamra](https://cloud.frappe.io/marketplace/apps/kamra) on a private bench |
