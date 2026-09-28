@@ -3,6 +3,7 @@ inputs. Run BEFORE the seam refactor to write a baseline, AFTER to assert
 byte-identical. Usage: capture(<tag>) then compare()."""
 
 import json
+
 import frappe
 
 BASELINE = "/tmp/loc_parity_baseline.json"

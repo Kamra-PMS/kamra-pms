@@ -15,7 +15,6 @@ from frappe.utils import now_datetime, nowdate
 from kamra.authz import require_roles
 from kamra.business_date import get_business_date
 
-
 CHARGE_TYPE_TO_CODE = {
 	"Room": ("1000", "Room Charge", "Rooms", "Room"),
 	"Meal Plan": ("1100", "Meal Plan", "F&B", "Meal Plan"),
@@ -444,10 +443,10 @@ def force_advance_bill(reservation: str, nights: str = "entire",
 
 	nights: 'tonight' | 'entire' | integer string of nights.
 	"""
-	from kamra.folio import (open_folio, post_room_night, _nightly_room_rate,
-	                         _recalculate)
+	from frappe.utils import add_days, date_diff, getdate
+
 	from kamra.authz import require_cashier_pin
-	from frappe.utils import add_days, getdate, date_diff
+	from kamra.folio import _recalculate, open_folio, post_room_night
 
 	res = frappe.get_doc("Reservation", reservation)
 	require_cashier_pin(res.property, pin)
@@ -718,8 +717,7 @@ def batch_print_folios(folios: str | list):
 def quick_checkout(reservation: str, pin: str | None = None):
 	"""Settle + close folio + check out in one step when balance is zero
 	or fully covered by company credit."""
-	from kamra.api import close_folio, check_out
-	res = frappe.get_doc("Reservation", reservation)
+	from kamra.api import check_out, close_folio
 	folio_name = frappe.db.get_value(
 		"Folio", {"reservation": reservation, "folio_type": "Guest",
 		          "status": "Open"}, "name")
@@ -763,7 +761,6 @@ def group_checkout(group: str, pin: str | None = None):
 @frappe.whitelist()
 @require_roles("Front Desk", "Finance", "Kamra Agent")
 def list_exchange_rates(property: str):
-	from frappe.utils import getdate
 	today = get_business_date(property)
 	rows = frappe.get_all(
 		"Exchange Rate",
@@ -851,7 +848,7 @@ def post_exchange(property: str, currency: str, fx_amount: float,
                   direction: str = "Buy", folio: str | None = None,
                   guest: str | None = None, pin: str | None = None):
 	from kamra.authz import require_cashier_pin
-	from kamra.cashier import require_open_session, record_cashier_txn
+	from kamra.cashier import record_cashier_txn, require_open_session
 	require_cashier_pin(property, pin)
 	calc = currency_calculator(property, currency, fx_amount, direction)
 	if calc.get("max_exchange") and float(fx_amount) > float(calc["max_exchange"]):

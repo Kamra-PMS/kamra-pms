@@ -45,7 +45,7 @@ def save_laundry_rate(property: str, item_name: str, service_type: str,
                       disabled: int = 0):
 	"""Add or edit one line of the rate card."""
 	if service_type not in SERVICES:
-		frappe.throw(_("Service must be one of: ") + ", ".join(SERVICES))
+		frappe.throw(_("Service must be one of: {0}").format(", ".join(SERVICES)))
 	if float(rate) <= 0:
 		frappe.throw(_("Rate must be positive."))
 	if not (item_name or "").strip():
@@ -118,7 +118,7 @@ def import_laundry_rates(property: str, csv_text: str):
 	created = updated = 0
 	issues = []
 	for i, r in enumerate(rows[1:], start=1):
-		get = lambda c: (r[c].strip() if c is not None and c < len(r) else "")  # noqa: E731
+		get = lambda c: (r[c].strip() if c is not None and c < len(r) else "")
 		item = get(c_item)
 		service = SERVICE_ALIASES.get(norm(get(c_service)), get(c_service))
 		rate = re.sub(r"[^0-9.]", "", get(c_rate))

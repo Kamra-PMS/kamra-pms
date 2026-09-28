@@ -16,7 +16,7 @@ import frappe
 from frappe.utils import add_days, date_diff, getdate
 
 # Single source: kamra.reservation_state (ADR-006).
-from kamra.reservation_state import LIVE_STATUSES  # noqa: F401
+from kamra.reservation_state import LIVE_STATUSES
 
 
 def availability(
@@ -351,11 +351,15 @@ def _competition_state(
 			continue
 		category = frappe.db.get_value("Room Type", rt, "room_category")
 		if category == "Villa":
-			for g, lst in units_by_group.items():
-				for u in lst:
-					if u["unit_kind"] == "whole_property" and u["room_type"] == rt:
-						bookings_by_siu[u["name"]].append(b)
-						break
+			# the FIRST matching whole-property unit, across all groups - a
+			# bare `break` only left the inner loop, so one stay was counted
+			# against a unit in every group
+			unit = next(
+				(u for lst in units_by_group.values() for u in lst
+				 if u["unit_kind"] == "whole_property" and u["room_type"] == rt),
+				None)
+			if unit:
+				bookings_by_siu[unit["name"]].append(b)
 
 	state: dict[str, dict[str, dict[str, int]]] = {}
 	for g, lst in units_by_group.items():

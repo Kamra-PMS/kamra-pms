@@ -13,6 +13,7 @@ import frappe
 def run_prearrival_outreach(horizon_days: int = 2):
 	"""Daily pass across every active property that opted in."""
 	from frappe.utils import add_days, nowdate
+
 	from kamra.api import send_precheckin_link
 
 	today = nowdate()

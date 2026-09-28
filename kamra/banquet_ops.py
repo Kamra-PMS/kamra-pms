@@ -135,7 +135,7 @@ def notify_departments_on_confirm(doc) -> None:
 		total=frappe.format_value(float(doc.grand_total or 0), "Currency"),
 	)
 	roles_notified = set()
-	for department, role in DEPT_ROLE.items():
+	for role in DEPT_ROLE.values():
 		if role in roles_notified:
 			continue
 		_notify_role(doc.property, role, body)
@@ -216,7 +216,8 @@ def send_quotation(function: str, channels: str | list | None = None):
 
 	Does not open a guest portal — desk stays in the loop for confirmation.
 	"""
-	from kamra.banquet import banquet_document, _fn as fn_load
+	from kamra.banquet import _fn as fn_load
+	from kamra.banquet import banquet_document
 	from kamra.savings import log_action
 
 	doc = fn_load(function)
@@ -312,7 +313,8 @@ def record_guest_response(
 	outcome: Confirmed | Changes Requested | Declined
 	If confirm_status and outcome is Confirmed, also moves Tentative/Enquiry → Confirmed.
 	"""
-	from kamra.banquet import set_status, _fn as fn_load
+	from kamra.banquet import _fn as fn_load
+	from kamra.banquet import set_status
 	from kamra.savings import log_action
 
 	outcome = (outcome or "").strip()

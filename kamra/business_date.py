@@ -6,9 +6,8 @@ revenue posting should use get_business_date(property), not nowdate()."""
 
 from __future__ import annotations
 
-from frappe.utils import add_days, nowdate
-
 import frappe
+from frappe.utils import add_days, nowdate
 
 
 def get_business_date(property: str) -> str:

@@ -8,7 +8,7 @@ import json
 from functools import wraps
 
 import frappe
-from frappe.utils import now_datetime, add_to_date
+from frappe.utils import add_to_date, now_datetime
 
 ADMIN = ("System Manager", "Administrator", "Hotel Admin")
 
@@ -62,8 +62,7 @@ SCOPED_ARGS = {
 def restricted_properties() -> set[str] | None:
 	"""The properties the current user is limited to by Frappe User
 	Permissions, or None when they aren't restricted (they see them all)."""
-	from frappe.core.doctype.user_permission.user_permission import (
-		get_user_permissions)
+	from frappe.core.doctype.user_permission.user_permission import get_user_permissions
 	perms = get_user_permissions(frappe.session.user).get("Property")
 	return {p.get("doc") for p in perms} if perms else None
 

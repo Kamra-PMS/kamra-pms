@@ -418,7 +418,7 @@ class VenueBooking(Document):
 					other.venue, other.customer_name, other.event_date,
 					f" {other.start_time}-{other.end_time}"
 					if other.start_time else "",
-					_(" It shares part of {0}.").format(self.venue)
+					" " + _("It shares part of {0}.").format(self.venue)
 					if shared else ""))
 
 	def on_update(self):

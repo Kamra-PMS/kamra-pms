@@ -309,7 +309,6 @@ def _sync_shift_handover(sess) -> None:
 	# Map time-of-day roughly: Morning / Evening / Night by hour
 	hour = (sess.closed_at or now_datetime()).hour
 	slot = "Morning" if hour < 14 else ("Evening" if hour < 22 else "Night")
-	name = f"SHIFT-{shift_date}-{slot}"
 	# Prefer property-scoped uniqueness via filters if autoname collides
 	existing = frappe.db.get_value(
 		"Shift Handover",

@@ -1,6 +1,5 @@
 import frappe
 
-
 AGENT_EMAIL = "agent@kamra.local"
 AGENT_ROLE = "Kamra Agent"
 

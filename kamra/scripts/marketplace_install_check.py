@@ -16,8 +16,9 @@ from __future__ import annotations
 import ast
 import re
 import sys
-import tomllib
 from pathlib import Path
+
+import tomllib
 
 ROOT = Path(__file__).resolve().parents[2]
 APP = ROOT / "kamra"

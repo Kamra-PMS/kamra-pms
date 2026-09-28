@@ -286,7 +286,7 @@ def table_map(outlet: str):
 			"since": str(min(o["creation"] for o in orders)),
 			"orders": [{"order": o["name"], "label": o["label"],
 			            "order_total": o["order_total"], "state": s}
-			           for o, s in zip(orders, states)],
+			           for o, s in zip(orders, states, strict=True)],
 		}
 
 	out = [tile(t, seats, a) for t, seats, a in tables]

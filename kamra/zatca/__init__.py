@@ -108,7 +108,7 @@ def issue(property: str, number: str, lines: list[dict], *,
 	if not s.enabled:
 		return None
 	# serialise the chain: ICV and PIH must be strictly sequential
-	frappe.db.sql(f"SELECT name FROM `tab{SETTINGS}` WHERE name=%s FOR UPDATE",
+	frappe.db.sql("SELECT name FROM `tabZATCA Settings` WHERE name=%s FOR UPDATE",
 	              s.name)
 	last_icv, last_hash = frappe.db.get_value(
 		SETTINGS, s.name, ["last_icv", "last_invoice_hash"])

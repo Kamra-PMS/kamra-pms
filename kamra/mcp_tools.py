@@ -1207,7 +1207,7 @@ def mcp_tool_list(allowed: list[ToolSpec] | None = None) -> list[dict[str, Any]]
 def prepare_arguments(spec: ToolSpec, arguments: dict[str, Any], property: str) -> dict[str, Any]:
 	"""Map MCP arguments onto the Kamra API kwargs."""
 	clean: dict[str, Any] = dict(spec.extra)
-	for key, schema in spec.parameters.items():
+	for key in spec.parameters:
 		if key not in arguments:
 			continue
 		value = arguments[key]
