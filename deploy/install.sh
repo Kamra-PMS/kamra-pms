@@ -288,10 +288,9 @@ echo "Starting the stack with local image ${KAMRA_IMAGE}:${KAMRA_TAG}…"
 compose up -d
 wait_for_backend
 
-# Idempotent: skip new-site if sites already exist
-SITE_EXISTS=$(compose exec -T backend bash -lc \
-  "ls sites 2>/dev/null | grep -v ^apps\\.txt | grep -v ^assets | grep -v ^common_site_config | head -1" || true)
-if [ -z "${SITE_EXISTS//[$'\t\r\n ']/}" ]; then
+# Idempotent: skip new-site only if this site already has a site_config.json
+# (sites/ also holds apps.txt, apps.json, assets, common_site_config.json).
+if ! compose exec -T backend test -f "sites/${SITE_NAME}/site_config.json"; then
   echo "Creating site ${SITE_NAME} (this takes a few minutes)…"
   compose exec -T backend bench new-site "$SITE_NAME" \
     --mariadb-user-host-login-scope='%' \
@@ -299,7 +298,7 @@ if [ -z "${SITE_EXISTS//[$'\t\r\n ']/}" ]; then
     --admin-password "$ADMIN_PASSWORD" \
     --install-app payments --install-app kamra --no-mariadb-socket
 else
-  echo "Site already present (${SITE_EXISTS}) — skipping new-site."
+  echo "Site ${SITE_NAME} already present — skipping new-site."
 fi
 
 echo "First-boot wiring (home → /kamra, admin email, scheduler)…"
