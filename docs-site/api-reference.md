@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function — the same governed layer
-the UI and the AI use. **252 endpoints**, generated from the source
+the UI and the AI use. **262 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -273,6 +273,53 @@ Start or complete a housekeeping task from the phone.
 | --- | --- | --- |
 | `task` | yes |  |
 | `status` | yes |  |
+
+### `kamra.api.hk_upload_media`
+
+**POST** · roles: `Housekeeping`, `Front Desk`, `Kamra Agent`
+
+Attach a completion photo/video (proof of clean) to a housekeeping task.
+
+Uploaded from the housekeeper's phone while the room is being serviced. Stored
+public and attached to the task, so it stays with the record after the task
+closes and drops out of the live queue.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `task` | yes |  |
+
+### `kamra.api.hk_delete_media`
+
+**POST** · roles: `Housekeeping`, `Front Desk`, `Kamra Agent`
+
+Remove a completion photo/video from a housekeeping task.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `task` | yes |  |
+| `file_url` | yes |  |
+
+### `kamra.api.hk_task_media`
+
+**GET/POST** · roles: `Housekeeping`, `Front Desk`, `Hotel Admin`, `Kamra Agent`
+
+Completion photos/videos attached to one housekeeping task (newest first).
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `task` | yes |  |
+
+### `kamra.api.hk_room_media`
+
+**GET/POST** · roles: `Housekeeping`, `Front Desk`, `Hotel Admin`, `Kamra Agent`
+
+Photos/videos from the room's LATEST cleaning only - so the front desk
+sees just the most recent clean, not older cycles. Lets reception confirm a
+room is genuinely guest-ready.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `room` | yes |  |
 
 ### `kamra.api.hk_assign_task`
 
@@ -739,8 +786,8 @@ lines and totals.
 
 **GET/POST**
 
-Right-to-erasure: strip everything that identifies the person while
-keeping stays and bills intact for the books. Irreversible.
+Right to erasure (DPDP s.12): see kamra.privacy.erase_guest. Stays
+and bills stay for the books. Irreversible.
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -888,6 +935,43 @@ suggestion plus every room the desk may hand over instead.
 | `reservation` | yes |  |
 | `room` | no | `None` |
 
+### `kamra.api.walk_in`
+
+**POST** · roles: `Front Desk`, `Kamra Agent`
+
+Walk-in in one step: book, register the ID, check into the chosen
+room and take the money - the counter flow that used to be four screens.
+
+It is the same writers chained (create_booking → check_in →
+add_folio_payment), inside one request, so it is all-or-nothing: a
+refused PIN or a room that just sold rolls the booking back too.
+Arrival is always today (calendar, like every new booking - a lagging
+night audit must not turn walk-ins away); a future stay is a normal
+booking, not a walk-in.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `room_type` | yes |  |
+| `room` | yes |  |
+| `check_out_date` | yes |  |
+| `guest_name` | yes |  |
+| `phone` | no | `None` |
+| `guest` | no | `None` |
+| `adults` | no | `2` |
+| `children` | no | `0` |
+| `meal_plan` | no | `None` |
+| `voucher_code` | no | `None` |
+| `company` | no | `None` |
+| `id_type` | no | `None` |
+| `id_number` | no | `None` |
+| `nationality` | no | `None` |
+| `payment_mode` | no | `None` |
+| `payment_amount` | no | `0` |
+| `payment_reference` | no | `None` |
+| `pin` | no | `None` |
+| `idempotency_key` | no | `None` |
+
 ### `kamra.api.upload_occupant_id`
 
 **POST** · roles: `Front Desk`, `Kamra Agent`
@@ -967,12 +1051,30 @@ Everything the printable cancellation confirmation needs.
 
 ### `kamra.api.set_housekeeping_status`
 
-**GET/POST** · roles: `Housekeeping`, `Front Desk`, `Kamra Agent`
+**POST** · roles: `Housekeeping`, `Front Desk`, `Kamra Agent`
+
+Change a room's housekeeping status - role, property and DocPerm
+checked (#99): an attendant can mark Clean / Dirty, only a supervisor
+can pass a room or take it out of order, nobody can touch a room of a
+property they aren't assigned to, and removing Write on Room in the
+role permissions actually removes the ability.
 
 | Param | Required | Default |
 | --- | --- | --- |
 | `room` | yes |  |
 | `status` | yes |  |
+
+### `kamra.api.room_board`
+
+**GET/POST** · roles: `Front Desk`, `Kamra Agent`
+
+Every room at a glance for the housekeeping supervisor: status,
+occupancy, who is in it, and its open task - the board the desk has,
+inside the Housekeeping module (#99).
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
 
 ### `kamra.api.availability_calendar`
 
@@ -1116,12 +1218,32 @@ each venue's schedule so you can see availability and spot conflicts.
 
 **GET/POST** · roles: `Front Desk`, `Kamra Agent`
 
-Room move - mid-stay or before arrival. Overlap guard re-runs.
+Room move / upgrade - mid-stay or before arrival. Overlap guard re-runs.
+
+The new room may be a DIFFERENT room type (e.g. Standard -> Suite): the
+reservation's room type follows the room it moves into, so upgrades and
+downgrades are allowed. If the booking auto-prices, the new type's rate
+applies; a manually-priced booking keeps its amount.
 
 | Param | Required | Default |
 | --- | --- | --- |
 | `reservation` | yes |  |
 | `new_room` | yes |  |
+
+### `kamra.api.movable_rooms`
+
+**GET/POST** · roles: `Front Desk`, `Kamra Agent`
+
+Every room the booking could move into - across ALL room types, so the
+front desk can upgrade (Standard -> Suite) as well as swap same-type. Each
+room is flagged free/occupied for the dates and carries its type name; the
+booking's current type is listed first.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `reservation` | yes |  |
+| `check_in_date` | no | `None` |
+| `check_out_date` | no | `None` |
 
 ### `kamra.api.amend_stay`
 
@@ -1480,6 +1602,39 @@ so no screen hardcodes ₹ or GST %.
 | Param | Required | Default |
 | --- | --- | --- |
 | `property` | yes |  |
+
+### `kamra.api.zatca_settings`
+
+**GET/POST** · roles: `Finance`
+
+The property's ZATCA (Saudi e-invoicing) settings, created from the
+property on first use, plus what is still missing for a valid invoice
+and where the invoice chain stands.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+
+### `kamra.api.zatca_invoice_xml`
+
+**GET/POST** · roles: `Finance`
+
+The UBL XML behind an issued invoice or credit note - for the
+accountant, an auditor or a ZATCA query.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `invoice_number` | yes |  |
+| `property` | yes |  |
+| `document_type` | no | `'Invoice'` |
+
+### `kamra.api.localization_countries`
+
+**GET/POST**
+
+Countries with a dedicated tax & invoicing pack, with the currency,
+time zone and tax vocabulary picking one sets up. Read-only reference
+data for the setup wizard and Settings.
 
 ### `kamra.api.pending_deposit_refunds`
 
@@ -3453,6 +3608,9 @@ the guest can never post directly to a folio.
 
 Hosting / implementation enquiry from kamrapms.com. Stored first (a lead is
 never lost even without SMTP), then a best-effort email to the team.
+
+Leads are System Manager–only and purged after
+``hosting_enquiry_retention_months`` (default 24) unless status is Won.
 
 | Param | Required | Default |
 | --- | --- | --- |

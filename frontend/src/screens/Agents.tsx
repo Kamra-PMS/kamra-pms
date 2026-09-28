@@ -364,6 +364,7 @@ export function ActivityTab({ property }: { property: string }) {
 // ---------------------------------------------------------------------------
 
 interface ConnectInfo {
+  disabled?: boolean
   mcp_url: string
   claude_install_url: string
   claude_code: string
@@ -401,6 +402,24 @@ export function ConnectTab({ property }: { property: string }) {
     navigator.clipboard.writeText(text)
     setCopied(which)
     setTimeout(() => setCopied(null), 1500)
+  }
+
+  if (info?.disabled) {
+    return (
+      <div className="max-w-2xl space-y-4">
+        <Card>
+          <CardHeader>
+            <CardTitle>Connect Claude</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-zinc-600">
+              Connect Claude is turned off on this site. On your own Kamra,
+              every staff member can connect Claude and act within their role.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
   return (

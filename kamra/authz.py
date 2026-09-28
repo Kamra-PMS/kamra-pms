@@ -40,6 +40,9 @@ def require_roles(*roles):
 	    def check_in(...): ...
 	"""
 	allowed = set(roles) | set(ADMIN)
+	# a housekeeping supervisor can do everything an attendant can
+	if "Housekeeping" in allowed:
+		allowed.add("Housekeeping Supervisor")
 
 	def deco(fn):
 		@wraps(fn)

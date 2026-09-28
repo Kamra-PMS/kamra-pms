@@ -33,6 +33,9 @@
   "security_deposit_amount",
   "cleaning_fee",
   "cleaning_fee_taxable",
+  "room_levy_label",
+  "room_levy_percent",
+  "room_levy_taxable",
   "access_instructions",
   "require_precheckin_for_access",
   "hourly_view_start",
@@ -241,6 +244,24 @@
    "fieldname": "cleaning_fee_taxable",
    "fieldtype": "Check",
    "label": "Cleaning Fee Taxable"
+  },
+  {
+   "fieldname": "room_levy_label",
+   "fieldtype": "Data",
+   "label": "Room levy name",
+   "description": "A per-night levy charged on the room rate - municipality fee (Saudi Arabia, UAE), tourism or city tax. Leave the % at 0 when none applies."
+  },
+  {
+   "fieldname": "room_levy_percent",
+   "fieldtype": "Percent",
+   "label": "Room levy %",
+   "default": "0"
+  },
+  {
+   "fieldname": "room_levy_taxable",
+   "fieldtype": "Check",
+   "label": "VAT / tax applies to the levy",
+   "default": "1"
   },
   {
    "description": "Released to the guest only after payment, deposit, and optional pre-check-in gates pass.",
@@ -567,7 +588,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-09-24 18:00:00.000000",
+ "modified": "2026-09-28 17:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Property",
@@ -631,6 +652,13 @@
    "read": 1,
    "report": 1,
    "role": "Kamra Agent"
+  },
+  {
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Housekeeping Supervisor"
   }
  ],
  "row_format": "Dynamic",

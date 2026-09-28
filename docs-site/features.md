@@ -62,11 +62,34 @@ tariff, GSTIN, GSTR-1), **Indonesia** (PB1/PBJT regional hotel tax,
 NPWP, Rupiah — community-contributed), **Thailand** (7% VAT, Thai tax
 invoice labels, Baht), **Malaysia** (SST with the real 8% rooms / 6%
 F&B split, Tourism Tax as a folio line, SST registration number),
-**UAE** (5% VAT, TRN tax invoices, Dirham), and a clean flat-tax pack
+**UAE** (5% VAT, TRN tax invoices, Dirham), **Saudi Arabia** (15% VAT,
+VAT-number simplified tax invoices, Riyal), and a clean flat-tax pack
 for everywhere else. **Currency symbols and number formats follow the
 pack** across every screen, report and thermal ticket — an Indonesian
-property reads Rp 3.300.000, an Indian one ₹ and lakhs. The pack seam
-is open source; contributing your country is a single Python file.
+property reads Rp 3.300.000, an Indian one ₹ and lakhs.
+
+The pack also sets the front desk's vocabulary: the **ID documents** the
+desk and the guest self check-in accept (Aadhaar and PAN in India,
+National ID and Iqama in Saudi Arabia, Emirates ID in the UAE, KTP in
+Indonesia…) and the **ways to pay** offered at the counter, POS and till
+(UPI only where UPI exists). The setup wizard asks for the country first
+and fills in the currency and time zone from it; change it later under
+Settings → Property. Saudi properties get **ZATCA e-invoicing**
+(Phase 1): a QR code, UBL 2.1 XML and an unbroken hash chain on every
+invoice, credit note and paid restaurant bill, and a per-night
+**municipality fee** line where the property charges one. See
+[Country setup & ZATCA](/country-setup). The pack seam is open source; contributing your
+country is a single Python file — declare `ID_TYPES`, `PAYMENT_MODES`,
+`DEFAULT_CURRENCY` and `DEFAULT_TIMEZONE` beside the tax functions.
+
+## One-screen walk-in
+
+**Walk-in** (top bar, or the switch in New booking) takes a guest from
+the counter to a key in one screen: name, phone and ID; room type and
+the actual room (clean rooms first); nights; and payment — cash, card or
+transfer, in full or in part. One button books, checks in and records
+the advance, all-or-nothing: a locked till or a room that just sold
+leaves nothing half-done.
 
 ## WhatsApp on your own number
 
@@ -120,6 +143,15 @@ accept/decline with reasons, VIP and arrival context on every card,
 minibar/laundry posting from the room grid, lost & found logging, and
 SLA escalation (overdue → supervisor → manager, with WhatsApp alerts
 when a channel is connected).
+
+**Room Board for supervisors**: Housekeeping → Room Board shows every
+room at a glance — status, who is in it, who is due out, and each open
+task with its assignee — filterable by status and floor. Give staff the
+**Housekeeping Supervisor** role (it includes everything Housekeeping
+can do). Attendants can mark rooms Clean or Dirty; passing a room
+(Inspected) or taking it Out of Order is the supervisor's (or the
+desk's) call. Room status changes also respect property assignment and
+the Room role permissions, and every change is logged.
 
 **Guest laundry, end to end**: a per-item **rate card** (wash & iron /
 dry clean / iron only, with express pricing) managed in Settings; pickup

@@ -4,7 +4,7 @@
 
 import type { ReactNode } from "react"
 import type { FunctionStatus } from "../../lib/api"
-import { cur, moneyLocale } from "../../lib/money"
+import { cur, locale, moneyLocale } from "../../lib/money"
 
 export const inr = (n: unknown) =>
   cur() +
@@ -157,6 +157,10 @@ export const SERVICE_STYLES = [
   "Boxed",
   "Cocktail",
 ]
+/** Banquet receipt modes, minus UPI where the country pack has no UPI. */
+export const payModes = () =>
+  PAY_MODES.filter((m) => m !== "UPI" || locale().payment_modes.includes("UPI"))
+
 export const PAY_MODES = [
   "Cash",
   "Card",

@@ -6,7 +6,7 @@ import { call } from "../lib/api"
 import { toFullPath } from "../lib/routing"
 import EditableNationality from "../components/EditableNationality"
 import { Button } from "../components/ui/button"
-import { cur, moneyLocale } from "../lib/money"
+import { cur, locale, moneyLocale, useLocale } from "../lib/money"
 
 /** Printable Guest Registration Card (GRC) - sign at check-in. */
 
@@ -87,7 +87,7 @@ function Row(props: { label: string; value?: string | null }) {
 }
 
 const emptyOccupant = (): Occupant => ({
-  full_name: "", age: null, gender: "", nationality: "Indian",
+  full_name: "", age: null, gender: "", nationality: locale().default_nationality,
   id_type: "", id_number: "", phone: "",
 })
 
@@ -100,6 +100,7 @@ function OccupantsEditor(props: {
   occupants: Occupant[]
   onSaved: () => void
 }) {
+  const idTypes = useLocale().id_types
   const [rows, setRows] = useState<Occupant[]>(
     props.occupants.length ? props.occupants : [emptyOccupant()],
   )
@@ -173,11 +174,13 @@ function OccupantsEditor(props: {
               onChange={(e) => set(i, { id_type: e.target.value })}
             >
               <option value="">ID type</option>
-              {["Aadhaar", "PAN", "Passport", "Driving License", "Voter ID", "Other"].map(
-                (t) => (
-                  <option key={t}>{t}</option>
-                ),
-              )}
+              {/* a value recorded under another list stays visible */}
+              {[
+                ...idTypes,
+                ...(o.id_type && !idTypes.includes(o.id_type) ? [o.id_type] : []),
+              ].map((t) => (
+                <option key={t}>{t}</option>
+              ))}
             </select>
             <input
               className={`${editInputCls} w-36`}

@@ -144,7 +144,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-08-11 00:00:00.000000",
+ "modified": "2026-09-28 12:51:22.820746",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Sellable Unit",
@@ -204,6 +204,13 @@
    "read": 1,
    "report": 1,
    "role": "Housekeeping"
+  },
+  {
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Housekeeping Supervisor"
   }
  ],
  "sort_field": "modified",

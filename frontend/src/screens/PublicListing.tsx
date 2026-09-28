@@ -9,7 +9,7 @@ import {
   Search,
   Users,
 } from "lucide-react"
-import { call } from "../lib/api"
+import { callGuest } from "../lib/api"
 import { serverError } from "../lib/resource"
 import { accentVars } from "../lib/accents"
 import { Badge } from "../components/ui/badge"
@@ -254,13 +254,13 @@ export default function PublicListing() {
 
   useEffect(() => {
     if (!slug) return
-    call<Resolved>("kamra.public_api.resolve_slug", { slug })
+    callGuest<Resolved>("kamra.public_api.resolve_slug", { slug })
       .then((r) => {
         setResolved(r)
         const args: Record<string, string> = { property: r.property }
         if (r.listing_slug) args.listing_slug = r.listing_slug
         if (r.location_slug) args.location_slug = r.location_slug
-        return call<Showcase>("kamra.public_api.showcase", args).then((d) => ({
+        return callGuest<Showcase>("kamra.public_api.showcase", args).then((d) => ({
           d,
           r,
         }))
@@ -293,7 +293,7 @@ export default function PublicListing() {
 
   function fetchResults() {
     if (!resolved) return
-    call<StayResult[]>("kamra.public_api.search_stay", {
+    callGuest<StayResult[]>("kamra.public_api.search_stay", {
       property: resolved.property,
       check_in_date: search.check_in_date,
       check_out_date: checkOut,
@@ -321,8 +321,7 @@ export default function PublicListing() {
     setBusy(true)
     setError(null)
     try {
-      const res = await call<{ reservation: string; amount_after_tax: number }>(
-        "kamra.public_api.book",
+      const res = await callGuest<{ reservation: string; amount_after_tax: number }>("kamra.public_api.book",
         {
           property: resolved.property,
           room_type: booking,

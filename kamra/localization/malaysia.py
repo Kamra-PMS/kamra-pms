@@ -25,6 +25,12 @@ from decimal import Decimal
 DEFAULT_SST = Decimal("8")   # accommodation, since 2024-03-01
 FNB_SST = Decimal("6")       # food & beverage kept the old rate
 
+DEFAULT_CURRENCY = "MYR"
+DEFAULT_TIMEZONE = "Asia/Kuala_Lumpur"
+DEFAULT_NATIONALITY = "Malaysian"
+ID_TYPES = ["MyKad", "Passport", "Driving License", "Other"]
+PAYMENT_MODES = ["Cash", "Card", "Bank Transfer"]
+
 
 def calculate_room_tax(property, room_type_doc, nightly_rate) -> Decimal:
 	"""Flat service tax - unset means the statutory 8%."""

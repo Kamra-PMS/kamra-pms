@@ -63,6 +63,18 @@ deposits, refunds (reason required, capped at what was collected).
 Under Verify & Discard retention, every scan and full ID number is
 masked and deleted at checkout.
 
+### Walk-ins — one screen
+
+For a guest standing at the counter, use **Walk-in** (top bar, or the
+**Reservation / Walk-in** switch in New booking). On one screen enter the
+guest's name, phone and **ID** (the ID types your country accepts), pick
+the **room type and the actual room** (free tonight, clean rooms first),
+the nights, and the **payment** — cash, card or transfer, the full
+amount or part of it. **Check in & collect** books the stay, checks the
+guest into the room and records the advance in one go. It is
+all-or-nothing: if the till is closed or the room was just taken,
+nothing is saved and the screen tells you why.
+
 ## Money — folios
 
 Every stay has a folio; corporate stays may have Company/Group folios
@@ -95,11 +107,24 @@ generate invoice** assigns the GST invoice number and produces the
 printable multi-rate invoice (B2B GSTIN included when a company pays).
 GSTR-1 export lives in the billing APIs for your accountant.
 
+**Saudi Arabia:** settled bills print as a *Simplified Tax Invoice*
+(*فاتورة ضريبية مبسطة*) with the ZATCA QR code; cancelling an invoice
+issues a credit note. Set up the seller details once under *Settings →
+ZATCA e-invoicing* — see [Country setup & ZATCA](/country-setup).
+
 ## Housekeeping
 
 `/hk` on any phone: prioritized clean queue (rooms with arrivals jump
 the line), tap Start/Done — Done marks the room clean on everyone's
 board.
+
+**Supervisors** (the *Housekeeping Supervisor* role, or the front desk)
+get **Housekeeping → Room Board**: every room with its status, the guest
+in it, who is due out, and each open task with its assignee — filter by
+status or floor, tap a room to set its status. Attendants can mark
+rooms Clean or Dirty; only a supervisor or the desk can pass a room
+(Inspected) or take it Out of Order. The task list is under
+**Housekeeping → Tasks**.
 
 ## WhatsApp
 

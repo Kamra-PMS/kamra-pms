@@ -53,6 +53,7 @@ export default defineConfig({
         text: "Using Kamra",
         items: [
           { text: "Features tour", link: "/features" },
+          { text: "Country setup & ZATCA", link: "/country-setup" },
           { text: "WhatsApp on your number", link: "/whatsapp" },
           { text: "Channel manager (OTA sync)", link: "/channel-manager" },
           { text: "User guide", link: "/user-guide" },

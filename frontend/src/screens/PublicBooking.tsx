@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import PrivacyNotice from "../components/PrivacyNotice"
+import PrivacyNotice, { setPrivacyTerms } from "../components/PrivacyNotice"
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom"
 import {
   BedDouble,
@@ -11,7 +11,7 @@ import {
   Star,
   Users,
 } from "lucide-react"
-import { call, getDefaultProperty } from "../lib/api"
+import { callGuest, getDefaultProperty } from "../lib/api"
 import { serverError } from "../lib/resource"
 import { accentVars } from "../lib/accents"
 import { Badge } from "../components/ui/badge"
@@ -201,7 +201,7 @@ export default function PublicBooking() {
   const checkOut = search.check_out_date
 
   useEffect(() => {
-    call<{
+    callGuest<{
       mode: string
       property?: string
       sites?: typeof sites
@@ -224,11 +224,12 @@ export default function PublicBooking() {
         if (!ctx) return
         const p = typeof ctx === "object" && "p" in ctx ? ctx.p : ctx
         setProperty(p)
-        return call<Showcase>("kamra.public_api.showcase", { property: p })
+        return callGuest<Showcase>("kamra.public_api.showcase", { property: p })
       })
       .then((d) => {
         if (!d) return
         adoptUiLocale((d as unknown as { ui_locale?: { currency_symbol?: string; locale?: string } }).ui_locale)
+        setPrivacyTerms((d as unknown as { ui_locale?: { privacy_authority?: string } }).ui_locale)
         setData(d)
         setForm((f) => ({ ...f, meal_plan: d.meal_plans[0]?.name ?? "" }))
       })
@@ -325,7 +326,7 @@ export default function PublicBooking() {
 
   function fetchResults() {
     if (!property) return
-    call<StayResult[]>("kamra.public_api.search_stay", {
+    callGuest<StayResult[]>("kamra.public_api.search_stay", {
       property,
       check_in_date: search.check_in_date,
       check_out_date: checkOut,
@@ -343,8 +344,7 @@ export default function PublicBooking() {
     setBusy(true)
     setError(null)
     try {
-      const res = await call<{ reservation: string; amount_after_tax: number }>(
-        "kamra.public_api.book",
+      const res = await callGuest<{ reservation: string; amount_after_tax: number }>("kamra.public_api.book",
         {
           property,
           room_type: booking,
@@ -1164,8 +1164,7 @@ export default function PublicBooking() {
                         ),
                       )
                       try {
-                        const r = await call<{ ok: boolean; message: string }>(
-                          "kamra.public_api.check_voucher",
+                        const r = await callGuest<{ ok: boolean; message: string }>("kamra.public_api.check_voucher",
                           { property, code: voucher.trim(), nights },
                         )
                         setVoucherMsg({ ok: r.ok, text: r.message })

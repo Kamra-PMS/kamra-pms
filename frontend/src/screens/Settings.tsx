@@ -12,7 +12,7 @@ import { useT } from "../lib/i18n"
 import { Button } from "../components/ui/button"
 import ImageField from "../components/ImageField"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
-import { cur, moneyLocale } from "../lib/money"
+import { cur, loadLocale, moneyLocale, useLocale } from "../lib/money"
 
 /** Settings hub - everything an owner/GM configures once and forgets:
  * property identity, GST, privacy, booking page, payments, agent access. */
@@ -215,7 +215,13 @@ const PROPERTY_SPECS: Spec[] = [
   {
     field: "country",
     label: "Country",
-    hint: "Selects the tax & invoicing pack. India and Indonesia today; more via the Marketplace.",
+    type: "select",
+    hint: "Selects the tax & invoicing pack - tax labels, ID types, payment methods and the default phone country code for guests follow it. Other countries run on a flat-tax generic pack.",
+  },
+  {
+    field: "currency",
+    label: "Currency",
+    hint: "ISO code, e.g. SAR, AED, USD. Set it when you change country.",
   },
   {
     field: "timezone",
@@ -234,13 +240,102 @@ const PROPERTY_SPECS: Spec[] = [
   { field: "pincode", label: "PIN code" },
 ]
 
-/** Keep an unknown existing IANA zone visible in the picker. */
-function propertySpecsFor(doc: Doc): Spec[] {
-  const tz = String(doc.timezone || "").trim()
-  if (!tz || TIMEZONES.includes(tz)) return PROPERTY_SPECS
-  return PROPERTY_SPECS.map((s) =>
-    s.field === "timezone" ? { ...s, options: [tz, ...TIMEZONES] } : s,
+const ZATCA_SPECS: Spec[] = [
+  { field: "enabled", label: "Generate e-invoices", type: "check",
+    hint: "QR code, UBL XML and hash chain on every invoice, credit note and paid outlet bill." },
+  { field: "seller_name", label: "Seller name (as registered)" },
+  { field: "vat_number", label: "VAT registration number", hint: "15 digits, starts and ends with 3." },
+  { field: "cr_number", label: "Commercial Registration (CRN)" },
+  { field: "building_number", label: "Building number", hint: "4 digits" },
+  { field: "street_name", label: "Street" },
+  { field: "district", label: "District" },
+  { field: "city_name", label: "City" },
+  { field: "postal_code", label: "Postal code", hint: "5 digits" },
+  { field: "additional_number", label: "Additional number" },
+  { field: "environment", label: "Environment (Phase 2)", type: "select",
+    options: ["Sandbox", "Simulation", "Production"] },
+  { field: "egs_serial", label: "EGS serial (Phase 2)", hint: "1-Kamra|2-PMS|3-<unit serial>" },
+]
+
+/** Saudi e-invoicing (ZATCA / FATOORA): seller details the XML needs, what
+ *  is still missing, and how far the invoice chain has run. */
+function ZatcaCard({ property }: { property: string }) {
+  const { t } = useT()
+  const [info, setInfo] = useState<{
+    name: string
+    missing: string[]
+    issued: number
+    last_icv: number
+    onboarding_status: string
+  } | null>(null)
+  const [doc, setDoc] = useState<Doc | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const load = useCallback(() => {
+    call<NonNullable<typeof info>>("kamra.api.zatca_settings", { property })
+      .then(async (i) => {
+        setInfo(i)
+        const rows = await listResource("ZATCA Settings", {
+          fields: ["name", ...ZATCA_SPECS.map((s) => s.field)],
+          filters: [["name", "=", i.name]],
+        })
+        setDoc(rows[0] ?? {})
+      })
+      .catch((e) => setError(serverError(e)))
+  }, [property])
+  useEffect(load, [load])
+  if (error) return <p className="text-sm text-rose-600">{error}</p>
+  if (!info || !doc) return null
+  return (
+    <div className="space-y-2">
+      <div
+        className={
+          "rounded-lg border px-4 py-3 text-sm " +
+          (info.missing.length
+            ? "border-amber-200 bg-amber-50 text-amber-800"
+            : "border-emerald-200 bg-emerald-50 text-emerald-800")
+        }
+      >
+        {info.missing.length
+          ? t("ZATCA: still needed for valid e-invoices - {fields}.", {
+              fields: info.missing.join(", "),
+            })
+          : t("ZATCA Phase 1 ready - QR and XML on every invoice.")}{" "}
+        {t("{n} documents issued · last ICV {icv} · Phase 2: {status}.", {
+          n: info.issued,
+          icv: info.last_icv,
+          status: info.onboarding_status,
+        })}
+      </div>
+      <SettingsCard
+        title="ZATCA e-invoicing"
+        description="Saudi Arabia (FATOORA). Seller details printed in every invoice XML."
+        specs={ZATCA_SPECS}
+        doc={doc}
+        onSave={async (changes) => {
+          await updateResource("ZATCA Settings", info.name, changes)
+          load()
+        }}
+      />
+    </div>
   )
+}
+
+/** Keep an unknown existing IANA zone - or a country with no dedicated
+ *  pack - visible in its picker; label the tax id the country's way. */
+function propertySpecsFor(doc: Doc, countries: string[], taxIdLabel: string): Spec[] {
+  const tz = String(doc.timezone || "").trim()
+  const country = String(doc.country || "").trim()
+  return PROPERTY_SPECS.map((s) => {
+    if (s.field === "timezone" && tz && !TIMEZONES.includes(tz))
+      return { ...s, options: [tz, ...TIMEZONES] }
+    if (s.field === "country")
+      return {
+        ...s,
+        options: country && !countries.includes(country) ? [country, ...countries] : countries,
+      }
+    if (s.field === "gstin") return { ...s, label: taxIdLabel }
+    return s
+  })
 }
 
 const STAY_TAX_SPECS: Spec[] = [
@@ -323,6 +418,13 @@ const BOOKING_SPECS: Spec[] = [
     label: "Cleaning fee taxable",
     type: "check",
   },
+  {
+    field: "room_levy_label",
+    label: "Room levy name",
+    hint: "Per-night levy on the room rate - municipality fee, city or tourism tax.",
+  },
+  { field: "room_levy_percent", label: "Room levy %", type: "number" },
+  { field: "room_levy_taxable", label: "Tax applies to the levy", type: "check" },
   {
     field: "security_deposit_amount",
     label: "Security deposit amount",
@@ -743,6 +845,13 @@ export default function Settings() {
   const { t } = useT()
   const property = getCurrentProperty()
   const [prop, setProp] = useState<Doc | null>(null)
+  const loc = useLocale()
+  const [countries, setCountries] = useState<string[]>([])
+  useEffect(() => {
+    call<{ country: string }[]>("kamra.api.localization_countries")
+      .then((cs) => setCountries(cs.map((c) => c.country)))
+      .catch(() => setCountries([]))
+  }, [])
   const [gateway, setGateway] = useState<Doc | null>(null)
   const [ai, setAi] = useState<Doc | null>(null)
   const [theme, setThemeState] = useState<Theme>(getTheme())
@@ -788,16 +897,19 @@ export default function Settings() {
       <SettingsCard
         title="Property"
         description="Identity and contact details - printed on invoices and the GRC."
-        specs={propertySpecsFor(prop)}
+        specs={propertySpecsFor(prop, countries, loc.tax_id_label)}
         doc={prop}
         onSave={async (changes) => {
           await updateResource("Property", property, changes)
+          // a new country swaps the pack: currency, tax words, IDs, payments
+          if ("country" in changes || "currency" in changes) await loadLocale()
           load()
         }}
       />
+      {prop.country === "Saudi Arabia" && <ZatcaCard property={property} />}
       <SettingsCard
         title="Stay, tax & privacy"
-        description="Check-in/out times, GST slabs and how long guest IDs are kept."
+        description="Check-in/out times, tax slabs and how long guest IDs are kept."
         specs={STAY_TAX_SPECS}
         doc={prop}
         onSave={async (changes) => {
