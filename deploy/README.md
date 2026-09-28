@@ -18,6 +18,9 @@ First install typically takes **20–45 minutes** (image build). Prefer
 **4 vCPU · 8 GB RAM · 40 GB disk**. Then open `/kamra/setup` and create
 the property.
 
+Hit `unauthorized` on GHCR? See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) and
+the copy-paste reply for GitHub reports.
+
 ## What gets built
 
 | Piece | Source |
