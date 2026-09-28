@@ -27,7 +27,7 @@ features:
     details: 85 governed tools. Click Connect Claude — it quotes, books and posts charges as a permission-checked user, fully audited.
     link: /ai-and-mcp
   - title: Everything included, always
-    details: No feature gates, no editions, no per-room pricing. The same complete system whether you self-host or use Kamra Cloud.
+    details: No feature gates, no editions, no per-room pricing. The same complete system whether you self-host or use Frappe Cloud.
     link: /faq
 ---
 

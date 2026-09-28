@@ -8,8 +8,8 @@ Own your PMS end to end. Ways to install:
 | [Docker quickstart](/quickstart) on any VPS | One command, three prompts | DigitalOcean, Linode, AWS, your own box |
 | [Bench install](/self-hosting/bench) | Classic Frappe bench | Teams already running Frappe / ERPNext |
 | [Frappe Cloud Marketplace](/self-hosting/frappe-cloud) | Point and click | Managed Frappe hosting, no server |
-| [Kamra Cloud](https://kamrapms.com/cloud/) | Nothing to run | We host, back up and update it | Every feature is included — there is
-no paid edition to upgrade to.
+
+Every feature is included — there is no paid edition to upgrade to.
 
 Want company books or HR on the same Frappe site? That is optional —
 see [ERPNext and Frappe HR](/self-hosting/erpnext-hr) (Marketplace and
@@ -42,14 +42,15 @@ the server; ports 80/443 open; SSL via Let's Encrypt.
 | Linode | Shared 4 GB | ~$24/mo | [Guide](/self-hosting/linode) |
 | AWS | t3.medium + EBS | ~$30/mo | [Guide](/self-hosting/aws) |
 
-Hyperscaler storefronts (free AMI + paid Kamra Cloud SaaS):
+Hyperscaler storefronts (free self-host AMI, planned):
 [AWS / Azure / GCP](/self-hosting/marketplace/hyperscalers).
 
 ::: tip Rather not run a server?
-[Kamra Cloud](https://kamrapms.com/cloud/) is the same software, hosted,
-backed up and updated by the team that builds it — from ₹2,999/month
-billed annually. You can export everything and move to self-hosting any
-time; that's the point of open source.
+Install from the [Frappe Cloud Marketplace](/self-hosting/frappe-cloud) —
+Frappe hosts, backs up and updates it — and add our
+[implementation](https://kamrapms.com/implementation/) if you want
+migration and training done for you. You can export everything and move
+to self-hosting any time; that's the point of open source.
 :::
 
 ## After install — production checklist

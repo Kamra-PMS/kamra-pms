@@ -17,8 +17,7 @@ payments + kamra **on your VPS** — it does not pull from `ghcr.io`.
 ::: tip Where to get a server
 One-click / affiliate paths: [Hostinger](/self-hosting/hostinger),
 [DigitalOcean](/self-hosting/digitalocean), [Linode](/self-hosting/linode).
-Or [AWS](/self-hosting/aws). Prefer managed? [Frappe Cloud](/self-hosting/frappe-cloud)
-or [Kamra Cloud](https://kamrapms.com/cloud/).
+Or [AWS](/self-hosting/aws). Prefer managed? [Frappe Cloud](/self-hosting/frappe-cloud).
 :::
 
 ## One command

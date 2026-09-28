@@ -3451,7 +3451,7 @@ the guest can never post directly to a folio.
 
 **POST**
 
-Kamra Cloud hosting enquiry from kamrapms.com. Stored first (a lead is
+Hosting / implementation enquiry from kamrapms.com. Stored first (a lead is
 never lost even without SMTP), then a best-effort email to the team.
 
 | Param | Required | Default |

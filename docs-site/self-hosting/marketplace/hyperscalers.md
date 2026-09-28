@@ -2,12 +2,14 @@
 
 Plan big; ship after Hostinger / DigitalOcean / Linode 1-clicks.
 
-## Two products — never one
+## Listing
 
 | Listing | Type | Who pays | HeyKoala gets |
 | --- | --- | --- | --- |
 | **Kamra PMS (self-host)** | Free AMI / VM / container 1-click in *their* VPC | EC2 / VM only | Distribution (+ optional affiliate). Same first-boot: site, admin email, password. |
-| **Kamra Cloud + HeyKoala** | Paid SaaS (private offers) | Hotel’s AWS / Azure / GCP bill | Hosting + WhatsApp / voice concierge minutes, minus ~3% marketplace fee. |
+
+Paid work (implementation, support, HeyKoala concierge minutes) is sold
+separately, not as a hosted SaaS listing.
 
 **Do not** put a paid price on AGPL Kamra software itself.
 
@@ -26,4 +28,4 @@ questionnaire are required before go-live (weeks to months).
 
 For independents, earn on **VPS affiliates** instead — see
 [get-started](https://kamrapms.com/get-started/) (Hostinger %, DigitalOcean
-recurring, Linode CPA). Hyperscaler SaaS is the enterprise procurement path.
+recurring, Linode CPA). Hyperscaler listings are a distribution channel, not a hosted product.
