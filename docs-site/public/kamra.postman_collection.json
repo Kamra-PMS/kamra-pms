@@ -797,6 +797,154 @@
      }
     },
     {
+     "name": "hk_upload_media",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.hk_upload_media",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.hk_upload_media"
+       ]
+      },
+      "description": "Attach a completion photo/video (proof of clean) to a housekeeping task.\n\nUploaded from the housekeeper's phone while the room is being serviced. Stored\npublic and attached to the task, so it stays with the record after the task\ncloses and drops out of the live queue.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"task\": \"<task>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "hk_delete_media",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.hk_delete_media",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.hk_delete_media"
+       ]
+      },
+      "description": "Remove a completion photo/video from a housekeeping task.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"task\": \"<task>\",\n  \"file_url\": \"<file_url>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "hk_task_media",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.hk_task_media",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.hk_task_media"
+       ]
+      },
+      "description": "Completion photos/videos attached to one housekeeping task (newest first).",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"task\": \"<task>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "hk_room_media",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.hk_room_media",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.hk_room_media"
+       ]
+      },
+      "description": "Photos/videos from the room's LATEST cleaning only - so the front desk\nsees just the most recent clean, not older cycles. Lets reception confirm a\nroom is genuinely guest-ready.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"room\": \"Your Property-101\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
      "name": "hk_assign_task",
      "request": {
       "method": "POST",
@@ -2181,7 +2329,7 @@
         "kamra.api.anonymize_guest"
        ]
       },
-      "description": "Right-to-erasure: strip everything that identifies the person while\nkeeping stays and bills intact for the books. Irreversible.",
+      "description": "Right to erasure (DPDP s.12): see kamra.privacy.erase_guest. Stays\nand bills stay for the books. Irreversible.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"guest\": \"G-00001\"\n}",
@@ -2583,6 +2731,43 @@
       "body": {
        "mode": "raw",
        "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"room\": \"Your Property-101\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "walk_in",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.walk_in",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.walk_in"
+       ]
+      },
+      "description": "Walk-in in one step: book, register the ID, check into the chosen\nroom and take the money - the counter flow that used to be four screens.\n\nIt is the same writers chained (create_booking \u2192 check_in \u2192\nadd_folio_payment), inside one request, so it is all-or-nothing: a\nrefused PIN or a room that just sold rolls the booking back too.\nArrival is always today (calendar, like every new booking - a lagging\nnight audit must not turn walk-ins away); a future stay is a normal\nbooking, not a walk-in.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"room_type\": \"Your Property-DLX\",\n  \"room\": \"Your Property-101\",\n  \"check_out_date\": \"2026-08-03\",\n  \"guest_name\": \"A. Guest\",\n  \"phone\": \"+91 90000 00000\",\n  \"guest\": \"G-00001\",\n  \"adults\": 2,\n  \"children\": 0,\n  \"payment_amount\": 0\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -3282,10 +3467,47 @@
         "kamra.api.move_reservation"
        ]
       },
-      "description": "Room move - mid-stay or before arrival. Overlap guard re-runs.",
+      "description": "Room move / upgrade - mid-stay or before arrival. Overlap guard re-runs.\n\nThe new room may be a DIFFERENT room type (e.g. Standard -> Suite): the\nreservation's room type follows the room it moves into, so upgrades and\ndowngrades are allowed. If the booking auto-prices, the new type's rate\napplies; a manually-priced booking keeps its amount.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"new_room\": \"<new_room>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "movable_rooms",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.movable_rooms",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.movable_rooms"
+       ]
+      },
+      "description": "Every room the booking could move into - across ALL room types, so the\nfront desk can upgrade (Standard -> Suite) as well as swap same-type. Each\nroom is flagged free/occupied for the dates and carries its type name; the\nbooking's current type is listed first.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"check_in_date\": \"2026-08-01\",\n  \"check_out_date\": \"2026-08-03\"\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -9231,7 +9453,7 @@
         "kamra.public_api.hosting_enquiry"
        ]
       },
-      "description": "Hosting / implementation enquiry from kamrapms.com. Stored first (a lead is\nnever lost even without SMTP), then a best-effort email to the team.",
+      "description": "Hosting / implementation enquiry from kamrapms.com. Stored first (a lead is\nnever lost even without SMTP), then a best-effort email to the team.\n\nLeads are System Manager\u2013only and purged after\n``hosting_enquiry_retention_months`` (default 24) unless status is Won.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"full_name\": \"A. Guest\",\n  \"email\": \"guest@example.com\",\n  \"phone\": \"+91 90000 00000\",\n  \"property_name\": \"\",\n  \"rooms\": 0,\n  \"city\": \"\",\n  \"message\": \"\",\n  \"country\": \"\",\n  \"interest\": \"\"\n}",

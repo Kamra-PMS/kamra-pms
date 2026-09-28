@@ -2437,6 +2437,109 @@ def check_in(reservation: str, room: str | None = None):
 	return {"ok": True, "reservation": doc.name, "room": doc.room}
 
 
+_WALK_IN_PAY_MODES = ("Cash", "Card", "UPI", "Bank Transfer")
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Front Desk", "Kamra Agent")
+def walk_in(property: str, room_type: str, room: str, check_out_date: str,
+            guest_name: str, phone: str | None = None,
+            guest: str | None = None, adults: int = 2, children: int = 0,
+            meal_plan: str | None = None, voucher_code: str | None = None,
+            company: str | None = None, id_type: str | None = None,
+            id_number: str | None = None, nationality: str | None = None,
+            payment_mode: str | None = None, payment_amount: float = 0,
+            payment_reference: str | None = None, pin: str | None = None,
+            idempotency_key: str | None = None):
+	"""Walk-in in one step: book, register the ID, check into the chosen
+	room and take the money - the counter flow that used to be four screens.
+
+	It is the same writers chained (create_booking → check_in →
+	add_folio_payment), inside one request, so it is all-or-nothing: a
+	refused PIN or a room that just sold rolls the booking back too.
+	Arrival is always today (calendar, like every new booking - a lagging
+	night audit must not turn walk-ins away); a future stay is a normal
+	booking, not a walk-in."""
+	from kamra.crs import assert_property_access
+	assert_property_access(property)
+
+	amount = float(payment_amount or 0)
+	if amount < 0:
+		frappe.throw(_("Payment amount cannot be negative."))
+	if amount and payment_mode not in _WALK_IN_PAY_MODES:
+		frappe.throw(_("Pick a payment mode: {0}.").format(
+			", ".join(_WALK_IN_PAY_MODES)))
+	if id_type:
+		options = (frappe.get_meta("Guest").get_field("id_type").options
+		           or "").split("\n")
+		if id_type not in options:
+			frappe.throw(_("Unknown ID type {0}.").format(id_type))
+
+	check_in_date = nowdate()
+	if str(check_out_date) <= check_in_date:
+		frappe.throw(_("Check-out must be after today ({0}).").format(
+			check_in_date))
+
+	r = frappe.db.get_value("Room", room, ["property", "room_type"],
+	                        as_dict=True)
+	if not r or r.property != property or r.room_type != room_type:
+		frappe.throw(_("Room {0} is not a {1} room here.").format(
+			room, room_type))
+
+	# Money guards first, so a locked till refuses before anything is booked
+	# rather than after the guest already holds a key.
+	if amount:
+		from kamra.authz import require_cashier_pin
+		from kamra.cashier import require_open_session
+		require_cashier_pin(property, pin)
+		require_open_session(property)
+
+	booked = create_booking(
+		property=property, room_type=room_type,
+		check_in_date=check_in_date, check_out_date=check_out_date,
+		guest_name=guest_name, phone=phone, guest=guest,
+		adults=adults, children=children, meal_plan=meal_plan,
+		voucher_code=voucher_code, company=company,
+		booking_type="Corporate" if company else "Individual",
+		source="Walk-in", room=room, assign_room=0,
+		idempotency_key=idempotency_key)
+	reservation = booked["reservation"]
+	folio_filter = {"reservation": reservation, "folio_type": "Guest"}
+
+	if booked.get("idempotent_replay"):
+		# a double-tap on the button: report what the first tap did
+		return {
+			"reservation": reservation, "room": booked["room"],
+			"room_number": frappe.db.get_value(
+				"Room", booked["room"], "room_number"),
+			"folio": frappe.db.get_value("Folio", folio_filter),
+			"idempotent_replay": 1,
+		}
+
+	id_fields = {k: v for k, v in (("id_type", id_type),
+	                               ("id_number", (id_number or "").strip()),
+	                               ("nationality", nationality)) if v}
+	if id_fields:
+		frappe.db.set_value("Guest", booked["guest"], id_fields)
+
+	check_in(reservation, room)
+	folio = frappe.db.get_value("Folio", folio_filter)
+
+	if amount:
+		add_folio_payment(folio, payment_mode, amount,
+		                  reference=payment_reference, pin=pin,
+		                  kind="Advance")
+
+	return {
+		"reservation": reservation,
+		"room": room,
+		"room_number": frappe.db.get_value("Room", room, "room_number"),
+		"folio": folio,
+		"amount_after_tax": booked.get("amount_after_tax"),
+		"paid": amount,
+	}
+
+
 @frappe.whitelist(methods=["POST"])
 @require_roles("Front Desk", "Kamra Agent")
 def upload_occupant_id(reservation: str, row: str, image: str):
