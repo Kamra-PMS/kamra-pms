@@ -118,10 +118,18 @@ export const APPS: AppDef[] = [
     name: "Housekeeping",
     icon: ClipboardCheck,
     tint: APP_TILE,
-    description: "Room status board, lost & found, and the phone app.",
-    roles: ["Housekeeping", "Front Desk", "Hotel Admin", "System Manager", "Administrator"],
+    description: "Room status board, tasks, lost & found, and the phone app.",
+    roles: [
+      "Housekeeping", "Housekeeping Supervisor", "Front Desk", "Hotel Admin",
+      "System Manager", "Administrator",
+    ],
     items: [
-      { to: "/housekeeping", label: "Room Board", icon: ListChecks },
+      // the board is oversight - supervisors and the desk; attendants work
+      // from their task list and the phone app
+      { to: "/housekeeping-board", label: "Room Board", icon: LayoutGrid,
+        roles: ["Housekeeping Supervisor", "Front Desk", "Hotel Admin",
+                "System Manager", "Administrator"] },
+      { to: "/housekeeping", label: "Tasks", icon: ListChecks },
       { to: "/laundry", label: "Laundry", icon: Shirt },
       { to: "/lost-found", label: "Lost & Found", icon: PackageSearch },
       { href: "/kamra/hk", label: "Phone App", icon: Smartphone },

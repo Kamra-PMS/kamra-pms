@@ -171,7 +171,7 @@
   }
  ],
  "links": [],
- "modified": "2026-07-14 12:00:00.000000",
+ "modified": "2026-09-28 12:51:22.820746",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Laundry Order",
@@ -232,6 +232,16 @@
    "read": 1,
    "report": 1,
    "role": "Housekeeping",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Housekeeping Supervisor",
    "share": 1,
    "write": 1
   }

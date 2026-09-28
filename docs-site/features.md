@@ -140,6 +140,15 @@ minibar/laundry posting from the room grid, lost & found logging, and
 SLA escalation (overdue → supervisor → manager, with WhatsApp alerts
 when a channel is connected).
 
+**Room Board for supervisors**: Housekeeping → Room Board shows every
+room at a glance — status, who is in it, who is due out, and each open
+task with its assignee — filterable by status and floor. Give staff the
+**Housekeeping Supervisor** role (it includes everything Housekeeping
+can do). Attendants can mark rooms Clean or Dirty; passing a room
+(Inspected) or taking it Out of Order is the supervisor's (or the
+desk's) call. Room status changes also respect property assignment and
+the Room role permissions, and every change is logged.
+
 **Guest laundry, end to end**: a per-item **rate card** (wash & iron /
 dry clean / iron only, with express pricing) managed in Settings; pickup
 requests queue to the floor; the attendant **counts the bag with the
