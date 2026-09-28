@@ -413,6 +413,8 @@ def _settings(property: str):
 
 @frappe.whitelist()
 def assistant_status(property: str):
+	from kamra.authz import assert_property_access
+	assert_property_access(property)
 	s = _settings(property)
 	key = s.get_password("api_key", raise_exception=False) if s else None
 	# Never return the key - only a masked tail so admins can confirm one is set.

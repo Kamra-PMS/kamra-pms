@@ -13,6 +13,7 @@ and cancellations match on the OTA's own reference (Reservation.ota_ref).
 
 from __future__ import annotations
 
+import hmac
 import json
 
 import frappe
@@ -231,8 +232,9 @@ def webhook(connection: str, **kwargs):
 		return {"ok": False, "reason": "connection_inactive"}
 	secret = conn.get_password("webhook_secret", raise_exception=False)
 	sent = (frappe.get_request_header("X-Webhook-Secret")
-	        if frappe.request else None) or kwargs.get("secret")
-	if secret and sent != secret:
+	        if frappe.request else None) or kwargs.get("secret") or ""
+	# no secret configured = nothing to authenticate against: refuse
+	if not secret or not hmac.compare_digest(str(sent), secret):
 		frappe.throw("Webhook secret mismatch.", frappe.PermissionError)
 
 	try:

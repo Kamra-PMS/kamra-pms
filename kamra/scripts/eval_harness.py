@@ -68,6 +68,16 @@ def setup():
 			"gst_mode": "Slab", "gst_slab_threshold": 7500,
 			"gst_rate_low": 5, "gst_rate_high": 18,
 		}).insert(ignore_permissions=True)
+	# a demo-seeded site pins these personas to its demo hotel; property
+	# scope is enforced now, so give them the eval property too (rolled
+	# back with everything else)
+	for email in ("frontdesk@kamra.local", "hk@kamra.local"):
+		if frappe.db.exists("User Permission", {"user": email, "allow": "Property"}) \
+				and not frappe.db.exists("User Permission", {
+					"user": email, "allow": "Property", "for_value": P}):
+			frappe.get_doc({"doctype": "User Permission", "user": email,
+			                "allow": "Property", "for_value": P,
+			                }).insert(ignore_permissions=True)
 	# many tests intentionally stack same-day stays on this tiny property;
 	# a generous allowance keeps them off the type-capacity guard (t32
 	# asserts that guard on its own isolated property)
@@ -3302,6 +3312,108 @@ def t83():
 	assert res.property == P
 
 
+@check("property scope: restricted staff can't read another property's stays")
+def t84():
+	"""A Front Desk user pinned to one hotel must not reach another hotel's
+	registration card, folio or front-desk list by passing its ids."""
+	from kamra import api
+	from kamra.agents_api import activity_feed
+
+	other = "EVAL Scope Hotel"
+	if not frappe.db.exists("Property", other):
+		frappe.get_doc({
+			"doctype": "Property", "property_name": other, "city": "Elsewhere",
+			"gst_mode": "Slab", "gst_slab_threshold": 7500,
+			"gst_rate_low": 5, "gst_rate_high": 18,
+		}).insert(ignore_permissions=True)
+	g = _guest("Scope Guest", "+91 70000 08484")
+	res = _res(g, nowdate(), add_days(nowdate(), 1))  # at P, not `other`
+
+	from kamra.savings import log_action
+	log_action("eval.scope", "Reservation", res.name, property=P)
+	at_p = set(frappe.get_all("Agent Action Log", {"property": P}, pluck="name"))
+	assert at_p, "no activity at P to test the feed against"
+
+	u = "eval.scoped@kamra.local"
+	if not frappe.db.exists("User", u):
+		frappe.get_doc({
+			"doctype": "User", "email": u, "first_name": "Scoped",
+			"send_welcome_email": 0, "roles": [{"role": "Front Desk"},
+			                                    {"role": "Finance"}],
+		}).insert(ignore_permissions=True)
+	frappe.get_doc({"doctype": "User Permission", "user": u,
+	                "allow": "Property", "for_value": other,
+	                }).insert(ignore_permissions=True)
+
+	def refused(fn, **kw):
+		try:
+			fn(**kw)
+		except frappe.PermissionError:
+			return
+		raise AssertionError(f"{fn.__name__} let a scoped user reach {P}")
+
+	frappe.set_user(u)  # nosemgrep: frappe-setuser -- controlled user context switch; target user is validated and scope-limited in this flow
+	try:
+		refused(api.registration_card, reservation=res.name)
+		refused(api.get_folio, reservation=res.name)
+		refused(api.front_desk_snapshot, property=P)
+		refused(api.linked_records, doctype="Reservation", name=res.name)
+		refused(api.id_document_image, reservation=res.name)
+		refused(api.reservation_detail, reservation=res.name)
+		# guest profiles are chain-wide; one who only stayed at P is hidden
+		refused(api.guest_journey, guest=g)
+		assert g not in {r["name"] for r in api.guest_search("Scope Guest")}, \
+			"guest search leaked"
+		assert g not in {r["name"] for r in api.guests_with_stats("Scope Guest")}, \
+			"guest list leaked"
+		# leaving property out must not widen the view to the whole chain
+		snap = api.front_desk_snapshot()
+		rows = snap["arrivals"] + snap["departures"] + snap["in_house"]
+		assert res.name not in {r["name"] for r in rows}, "snapshot leaked"
+		feed = {r["name"] for r in activity_feed(limit=200)}
+		assert not feed & at_p, "activity feed leaked"
+	finally:
+		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- controlled user context switch; target user is validated and scope-limited in this flow
+	# an unrestricted user is unaffected
+	assert api.registration_card(res.name)["reservation"]["name"] == res.name
+
+
+@check("webhooks refuse calls when no secret is configured")
+def t85():
+	import base64
+
+	from kamra import channel_manager as cm
+	from kamra.agents_channels import _authenticate
+	from kamra.channels import aiosell
+
+	conn = frappe.get_doc({
+		"doctype": "Channel Manager Connection", "property": P,
+		"provider": "Custom", "active": 1,
+	}).insert(ignore_permissions=True)
+	try:
+		cm.webhook(connection=conn.name, event="cancel")
+		raise AssertionError("channel webhook accepted with no secret set")
+	except frappe.PermissionError:
+		pass
+
+	blank = frappe._dict(api_username="",
+	                     get_password=lambda *a, **k: "")
+	frappe.local.flags.aiosell_webhook_auth = \
+		"Basic " + base64.b64encode(b":").decode()
+	try:
+		assert not aiosell._auth_ok(blank), "empty AioSell creds accepted"
+	finally:
+		frappe.local.flags.aiosell_webhook_auth = None
+
+	frappe.get_doc({
+		"doctype": "Channel Provider Connection", "property": P,
+		"channel": "Voice", "provider": "Custom", "active": 1,
+		"phone_number": "+91 80000 08585",
+	}).insert(ignore_permissions=True)
+	assert _authenticate("Voice", {"phone_number": "+91 80000 08585"}) is None, \
+		"voice webhook accepted with no secret set"
+
+
 def execute():
 	global RT, ROOM
 	# frappe.locale.get_locale_value crashes (UnboundLocalError) when no
@@ -3319,7 +3431,7 @@ def execute():
 		           t36, t37, t38, t39, t40, t41, t42, t43, t44, t45, t46, t47, t47b, t48, t49, t50, t51, t53,
 		           t54, t55, t56, t57, t58, t59, t60, t61, t62, t63, t64,
 		           t65, t66, t67, t68, t69, t70,
-		           t71, t72, t73, t74, t75, t76, t81, t82, t83):
+		           t71, t72, t73, t74, t75, t76, t81, t82, t83, t84, t85):
 			fn()
 	finally:
 		frappe.db.commit = real_commit

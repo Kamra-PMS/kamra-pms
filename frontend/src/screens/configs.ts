@@ -673,6 +673,7 @@ export const channelConnectionsConfig: ScreenConfig = {
     { field: "external_account_id", label: "Meta phone number ID", type: "data", hint: "From Meta Business Manager > WhatsApp > API setup" },
     { field: "credentials", label: "Access token", type: "data", hint: "Permanent Cloud API token - stored encrypted" },
     { field: "webhook_secret", label: "Webhook verify token", type: "data", hint: "Any string; use the same one in Meta's webhook setup" },
+    { field: "app_secret", label: "Meta App Secret", type: "data", hint: "App settings > Basic. Required: inbound messages are signature-checked with it - stored encrypted" },
     { field: "meta_language", label: "Template language code", type: "data" },
     { field: "tpl_booking_confirmation", label: "Template: booking confirmation", type: "data", hint: "Args: guest, property, check-in, check-out" },
     { field: "tpl_precheckin", label: "Template: self check-in link", type: "data", hint: "Args: guest, link" },
