@@ -1,0 +1,61 @@
+name: Deploy smoke
+
+# Runs deploy/install.sh end to end (build → site → first boot → update)
+# on a fresh runner whenever the self-host path changes.
+on:
+  pull_request:
+    paths:
+      - "deploy/**"
+      - ".github/workflows/deploy-smoke.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-smoke-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  install:
+    name: install.sh end to end
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      SITE_NAME: smoke.kamra.test
+      ADMIN_EMAIL: ci@kamra.test
+      ADMIN_PASSWORD: ci-smoke-password-1
+      INSTALL_DIR: /opt/kamra
+      # Bake the PR's own kamra code into the image
+      KAMRA_GIT_URL: https://github.com/${{ github.event.pull_request.head.repo.full_name || github.repository }}
+      KAMRA_BRANCH: ${{ github.head_ref || github.ref_name }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          df -h /
+
+      - name: Install
+        run: sudo -E bash deploy/install.sh
+
+      - name: Site answers
+        run: |
+          for _ in $(seq 1 30); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' -H "Host: ${SITE_NAME}" http://127.0.0.1:8080/api/method/ping || true)
+            [ "$code" = 200 ] && exit 0
+            sleep 5
+          done
+          echo "ping never returned 200 (last: $code)"; exit 1
+
+      - name: Re-run install is idempotent (keeps DB password)
+        run: sudo -E bash deploy/install.sh
+
+      - name: Update rebuilds and migrates
+        run: sudo -E /opt/kamra/install.sh update
+
+      - name: Site still answers after update
+        run: |
+          curl -fsS -H "Host: ${SITE_NAME}" http://127.0.0.1:8080/api/method/ping
+
+      - name: Logs on failure
+        if: failure()
+        run: sudo docker compose -p kamra logs --tail 200 || true

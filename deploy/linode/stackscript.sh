@@ -23,6 +23,7 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y curl git ca-certificates
 curl -fsSL https://get.docker.com | sh
 systemctl enable --now docker
 
+# Builds the image on first boot (20–45 min); adds swap on 4 GB plans.
 curl -fsSL https://raw.githubusercontent.com/Kamra-PMS/kamra-pms/main/deploy/install.sh \
   -o /tmp/kamra-install.sh
 chmod +x /tmp/kamra-install.sh

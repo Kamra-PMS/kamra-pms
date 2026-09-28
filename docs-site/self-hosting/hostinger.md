@@ -1,15 +1,16 @@
 # Self-hosting on Hostinger
 
-Best path for India / Southeast Asia on a cheap VPS. Create the server with
-our affiliate link when you can — software stays free; Hostinger bills the VPS.
+Best path for India / Southeast Asia on a cheap VPS. Software stays free;
+Hostinger bills the VPS — 20% off with the Kamra referral link below.
 
 ## 1. Create the server
 
-In [hPanel](https://hpanel.hostinger.com) → VPS → **KVM 2** (2 vCPU / 8 GB /
-~₹549/mo) → **Ubuntu 24.04** → set a root password or SSH key. Note the IP.
-
-Prefer the button on [kamrapms.com/get-started](https://kamrapms.com/get-started/)
-so Hostinger credits the Kamra / HeyKoala referral.
+Open Hostinger with the Kamra referral link —
+**[hostinger.com/in?REFERRALCODE=kamrapms](https://www.hostinger.com/in?REFERRALCODE=kamrapms)** —
+you save **20%** and it helps fund Kamra. Go to **VPS** and pick **KVM 2**
+(2 vCPU / 8 GB / ~₹549/mo). For the operating system choose
+**Ubuntu 24.04 with Docker** (plain Ubuntu 24.04 also works — the installer
+adds Docker). Set a root password or SSH key and note the IP.
 
 ## 2. Point your domain
 
@@ -18,13 +19,16 @@ while issuing SSL.)
 
 ## 3. Install Kamra (one paste)
 
+In hPanel open the VPS → **Browser terminal** (or `ssh root@<server-ip>`)
+and paste:
+
 ```bash
-ssh root@<server-ip>
 curl -fsSL https://raw.githubusercontent.com/Kamra-PMS/kamra-pms/main/deploy/install.sh | bash
 ```
 
 Answer three prompts: **site domain**, **admin email**, **admin password**.
-There is no default password.
+There is no default password. The installer builds Kamra on the VPS —
+allow 20–45 minutes the first time.
 
 ## 4. TLS + sign in
 
@@ -37,5 +41,7 @@ certbot --nginx -d pms.yourhotel.com
 
 Open `https://pms.yourhotel.com/kamra`, sign in as **Administrator** with the
 password you set, then **`/kamra/setup`**.
+
+Updating later: `sudo /opt/kamra/install.sh update`.
 
 Full detail: [Quickstart](/quickstart) · [production checklist](/self-hosting/#after-install-production-checklist).

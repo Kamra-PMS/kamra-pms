@@ -56,7 +56,7 @@ work. The `v2.6.2` GitHub tag is still pending — latest published release is
 [v2.6.0](https://github.com/Kamra-PMS/kamra-pms/releases/tag/v2.6.0).
 
 - **Unreleased** — System Health, property time zone, **85 MCP tools** (role +
-  module gated), AI provider presets, WordPress-easy `deploy/install.sh`,
+  module gated), AI provider presets, local-build `deploy/install.sh`,
   banquet Phase 1 (send quote, guest response, Sales/Finance/HK/F&B checklists)
 - **2.6.2** (in the changelog; not tagged yet) — Opera-style cashier till,
   folio ledger, cashier PIN, POS full-screen till
@@ -179,15 +179,25 @@ In-repo: [`docs/`](docs/) · [user guide](docs/user-guide.md) · [AI & API](docs
 
 ## Install
 
-**Hotels (WordPress-easy):**
+| Method | For | How |
+| --- | --- | --- |
+| **Hostinger VPS** | Cheapest self-host (India / SEA) | Buy KVM 2 via the [Kamra referral link](https://www.hostinger.com/in?REFERRALCODE=kamrapms) (20% off), paste the Docker one-liner below · [guide](https://kamrapms.com/docs/self-hosting/hostinger) |
+| **Docker on any VPS** | DigitalOcean, Linode, AWS, your own box | One-liner below · [quickstart](https://kamrapms.com/docs/quickstart) |
+| **Bench** | Existing Frappe / ERPNext benches | Commands below · [guide](https://kamrapms.com/docs/self-hosting/bench) |
+| **Frappe Cloud Marketplace** | Managed Frappe hosting | [Install Kamra](https://cloud.frappe.io/marketplace/apps/kamra) on a private bench |
+| **Kamra Cloud** | Nothing to run | [kamrapms.com/cloud](https://kamrapms.com/cloud/) — hosted, backed up, updated |
+
+**Docker (builds on your server):**
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Kamra-PMS/kamra-pms/main/deploy/install.sh | bash
 ```
 
-Three prompts: site domain, admin email, admin password. Pulls
-`ghcr.io/kamra-pms/kamra:latest`. Then open `/kamra/setup`. Details:
-[deploy/](deploy/) · [docs quickstart](https://kamrapms.com/docs/quickstart).
+Three prompts: site domain, admin email, admin password. Builds a local
+`kamra:local` image (does **not** pull from GHCR) — 20–45 minutes the first
+time; 2 vCPU / 4 GB minimum (swap is added automatically under 8 GB). Then
+open `/kamra/setup`. Update later with `sudo /opt/kamra/install.sh update`.
+Details: [deploy/](deploy/).
 
 **Bench / Frappe Cloud:**
 
@@ -201,8 +211,8 @@ After install: product UI at **`/kamra`**, booking at **`/book`**, housekeeping 
 
 | Channel | Branch / tag | Use for |
 |---|---|---|
-| **Stable** | `main` / `vX.Y.Z` | Production, [Frappe Cloud Marketplace](https://cloud.frappe.io/marketplace/apps/kamra), [demo](https://demo.kamrapms.com), `ghcr.io/kamra-pms/kamra:latest` |
-| **Nightly** | `develop` | Previews, `ghcr.io/kamra-pms/kamra:nightly` |
+| **Stable** | `main` / `vX.Y.Z` | Production, [Frappe Cloud Marketplace](https://cloud.frappe.io/marketplace/apps/kamra), [demo](https://demo.kamrapms.com) |
+| **Nightly** | `develop` | Previews (nightly.kamrapms.com) |
 
 Production installs should use `--branch main` (`develop` is the default GitHub branch for contributors). Releases are SemVer with a **patch-first** cadence — see [`RELEASING.md`](RELEASING.md) and [`CHANGELOG.md`](CHANGELOG.md).
 

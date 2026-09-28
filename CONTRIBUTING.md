@@ -14,7 +14,8 @@ and `npm run dev` in `frontend/` for the SPA.
 
 - **`develop`** — the integration branch and the *nightly* channel. All PRs
   target `develop` (it's the default branch). nightly.kamrapms.com and the
-  `ghcr.io/kamra-pms/kamra:nightly` image are rebuilt from it every night.
+  private `ghcr.io/kamra-pms/kamra:nightly` image (Kamra-operated hosts only)
+  are rebuilt from it every night.
 - **`main`** — the stable branch. Only release trains (maintainer merges of
   `develop`) and hotfixes land here; the Frappe Cloud Marketplace listing and
   demo.kamrapms.com track its releases.

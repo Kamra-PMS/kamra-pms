@@ -18,7 +18,7 @@ StackScript notes: `deploy/linode/` in the Kamra repo.
 
 ### 1. Create the server
 
-**Linode** → Ubuntu 24.04 → **Shared CPU / 4 GB** (~$24/mo) → region + SSH key.
+**Linode** → Ubuntu 24.04 → **Shared CPU / 4 GB** (~$24/mo; 8 GB builds faster) → region + SSH key.
 
 ### 2. DNS
 

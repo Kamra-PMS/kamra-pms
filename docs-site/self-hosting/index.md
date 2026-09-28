@@ -1,8 +1,14 @@
 # Self-hosting Kamra
 
-Own your PMS end to end. Two supported paths: **Docker (recommended —
-[Quickstart](/quickstart): one command, three prompts)** or a classic
-[bench install](/self-hosting/bench). Every feature is included — there is
+Own your PMS end to end. Ways to install:
+
+| Method | Effort | Best for |
+| --- | --- | --- |
+| [Hostinger VPS + one command](/self-hosting/hostinger) | Buy a VPS, paste one line | Cheapest path, India / SEA |
+| [Docker quickstart](/quickstart) on any VPS | One command, three prompts | DigitalOcean, Linode, AWS, your own box |
+| [Bench install](/self-hosting/bench) | Classic Frappe bench | Teams already running Frappe / ERPNext |
+| [Frappe Cloud Marketplace](/self-hosting/frappe-cloud) | Point and click | Managed Frappe hosting, no server |
+| [Kamra Cloud](https://kamrapms.com/cloud/) | Nothing to run | We host, back up and update it | Every feature is included — there is
 no paid edition to upgrade to.
 
 Want company books or HR on the same Frappe site? That is optional —
@@ -20,7 +26,9 @@ own-server steps).
 
 Measured on our own servers: a full single-property stack (database,
 cache, workers, web) idles around 600 MB of RAM — 4 GB leaves comfortable
-headroom for busy days and updates.
+headroom for busy days. The Docker installer **builds the image on your
+server** (20–45 minutes the first time); on boxes under 8 GB it adds a swap
+file for the build automatically.
 
 **Also needed:** a domain or subdomain (`pms.yourhotel.com`) pointed at
 the server; ports 80/443 open; SSL via Let's Encrypt.
@@ -65,18 +73,15 @@ time; that's the point of open source.
 ## Updating (Docker install)
 
 ```bash
-cd /opt/kamra/frappe_docker
-docker compose --project-name kamra --env-file /opt/kamra/kamra.env \
-  -f compose.yaml -f overrides/compose.mariadb.yaml \
-  -f overrides/compose.redis.yaml -f overrides/compose.noproxy.yaml pull
-docker compose --project-name kamra --env-file /opt/kamra/kamra.env \
-  -f compose.yaml -f overrides/compose.mariadb.yaml \
-  -f overrides/compose.redis.yaml -f overrides/compose.noproxy.yaml up -d
-docker compose --project-name kamra --env-file /opt/kamra/kamra.env \
-  -f compose.yaml -f overrides/compose.mariadb.yaml \
-  -f overrides/compose.redis.yaml -f overrides/compose.noproxy.yaml \
-  exec backend bench --site pms.yourhotel.com migrate
+sudo /opt/kamra/install.sh update
 ```
+
+That rebuilds the image from the branch recorded in `/opt/kamra/apps.json`
+(fetching the latest Kamra code), recreates the containers and runs
+`bench migrate` on every site. To switch channel or pin a release, pass
+the branch or tag: `sudo KAMRA_BRANCH=v2.6.4 /opt/kamra/install.sh update`.
+Expect 10–30 minutes; the running site stays up until the containers are
+recreated at the end.
 
 Bench self-host:
 

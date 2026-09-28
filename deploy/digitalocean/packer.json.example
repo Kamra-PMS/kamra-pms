@@ -10,7 +10,7 @@
       "api_token": "{{user `do_token`}}",
       "image": "ubuntu-24-04-x64",
       "region": "blr1",
-      "size": "s-2vcpu-4gb",
+      "size": "s-4vcpu-8gb",
       "ssh_username": "root",
       "snapshot_name": "{{user `image_name`}}"
     }
@@ -24,7 +24,10 @@
         "mkdir -p /opt/kamra",
         "curl -fsSL https://raw.githubusercontent.com/Kamra-PMS/kamra-pms/main/deploy/install.sh -o /opt/kamra/install.sh",
         "chmod +x /opt/kamra/install.sh",
-        "echo 'Kamra 1-Click image ready — first boot runs install.sh with Marketplace UDFs.'"
+        "/opt/kamra/install.sh build",
+        "swapoff /swapfile-kamra 2>/dev/null || true; rm -f /swapfile-kamra; sed -i '/swapfile-kamra/d' /etc/fstab",
+        "docker builder prune -af",
+        "echo 'Kamra 1-Click image ready (kamra:local baked) — first boot runs install.sh with Marketplace UDFs.'"
       ]
     },
     {
