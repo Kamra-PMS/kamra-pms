@@ -23,6 +23,12 @@ import frappe
 
 DEFAULT_VAT = Decimal("5")
 
+DEFAULT_CURRENCY = "AED"
+DEFAULT_TIMEZONE = "Asia/Dubai"
+DEFAULT_NATIONALITY = "Emirati"
+ID_TYPES = ["Emirates ID", "Passport", "GCC ID", "Driving License", "Other"]
+PAYMENT_MODES = ["Cash", "Card", "Bank Transfer"]
+
 
 def calculate_room_tax(property, room_type_doc, nightly_rate) -> Decimal:
 	"""Flat VAT - unset means the standard 5%."""

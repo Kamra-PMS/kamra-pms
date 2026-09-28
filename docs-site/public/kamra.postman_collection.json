@@ -4405,6 +4405,34 @@
      }
     },
     {
+     "name": "localization_countries",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.localization_countries",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.localization_countries"
+       ]
+      },
+      "description": "Countries with a dedicated tax & invoicing pack, with the currency,\ntime zone and tax vocabulary picking one sets up. Read-only reference\ndata for the setup wizard and Settings."
+     }
+    },
+    {
      "name": "pending_deposit_refunds",
      "request": {
       "method": "POST",

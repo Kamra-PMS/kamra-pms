@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function — the same governed layer
-the UI and the AI use. **258 endpoints**, generated from the source
+the UI and the AI use. **259 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -1584,6 +1584,14 @@ so no screen hardcodes ₹ or GST %.
 | Param | Required | Default |
 | --- | --- | --- |
 | `property` | yes |  |
+
+### `kamra.api.localization_countries`
+
+**GET/POST**
+
+Countries with a dedicated tax & invoicing pack, with the currency,
+time zone and tax vocabulary picking one sets up. Read-only reference
+data for the setup wizard and Settings.
 
 ### `kamra.api.pending_deposit_refunds`
 

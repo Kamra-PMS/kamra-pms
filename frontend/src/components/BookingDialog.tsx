@@ -13,7 +13,7 @@ import {
   type Quote,
 } from "../lib/api"
 import { Button } from "./ui/button"
-import { cur, moneyLocale } from "../lib/money"
+import { cur, moneyLocale, useLocale } from "../lib/money"
 import {
   clampLocal,
   isPhoneComplete,
@@ -102,10 +102,6 @@ function Field(props: { label: string; children: React.ReactNode }) {
   )
 }
 
-
-// mirrors the Guest.id_type options and walk_in's accepted payment modes
-const ID_TYPES = ["Passport", "Aadhaar", "Driving License", "Voter ID", "Other"]
-const WALK_IN_PAY_MODES = ["Cash", "Card", "UPI", "Bank Transfer"]
 
 interface FreeRoom {
   name: string
@@ -218,6 +214,8 @@ export function BookingDialog(props: {
   // Walk-in: book + ID + room + payment + check-in on this one screen
   // (issue #97). Arrival is always today, one room, no waitlist.
   const navigate = useNavigate()
+  // ID documents and ways to pay come from the property's country pack
+  const loc = useLocale()
   const { ensureUnlocked, status: pinStatus } = useCashierAuth()
   const [walkIn, setWalkIn] = useState(!!props.initial.walkIn)
   const [freeRooms, setFreeRooms] = useState<FreeRoom[] | null>(null)
@@ -232,6 +230,15 @@ export function BookingDialog(props: {
   })
   const setW = (k: keyof typeof walk, v: string) =>
     setWalk((w) => ({ ...w, [k]: v }))
+  useEffect(() => {
+    setWalk((w) => ({
+      ...w,
+      pay_mode: loc.payment_modes.includes(w.pay_mode)
+        ? w.pay_mode
+        : (loc.payment_modes[0] ?? "Cash"),
+      nationality: w.nationality || loc.default_nationality,
+    }))
+  }, [loc])
   // until the desk edits the amount, it tracks the live total
   const [amountTouched, setAmountTouched] = useState(false)
 
@@ -964,7 +971,7 @@ export function BookingDialog(props: {
                         onChange={(e) => setW("id_type", e.target.value)}
                       >
                         <option value="">{t("Select")}</option>
-                        {ID_TYPES.map((x) => (
+                        {loc.id_types.map((x) => (
                           <option key={x} value={x}>
                             {t(x)}
                           </option>
@@ -1172,7 +1179,7 @@ export function BookingDialog(props: {
                       aria-label={t("Payment mode")}
                       className="flex flex-wrap gap-2"
                     >
-                      {WALK_IN_PAY_MODES.map((m) => (
+                      {loc.payment_modes.map((m) => (
                         <button
                           key={m}
                           type="button"
@@ -1220,7 +1227,7 @@ export function BookingDialog(props: {
                             className={inputCls}
                             value={walk.pay_reference}
                             onChange={(e) => setW("pay_reference", e.target.value)}
-                            placeholder={t("Card slip / UTR (optional)")}
+                            placeholder={t("Card slip / transfer ref (optional)")}
                           />
                         </Field>
                       )}
@@ -1663,7 +1670,9 @@ export function BookingDialog(props: {
                       </div>
                     )}
                     <div className="flex justify-between text-zinc-600">
-                      <span>GST {quote.tax_percent}%</span>
+                      <span>
+                        {loc.tax_label} {quote.tax_percent}%
+                      </span>
                       <span className="tabular-nums">
                         {cur()}
                         {inr(quote.tax_amount)}
@@ -1690,7 +1699,9 @@ export function BookingDialog(props: {
                     )}
                     {addonsGross > 0 && (
                       <div className="flex justify-between text-zinc-600">
-                        <span>Add-ons (incl. GST)</span>
+                        <span>
+                          {t("Add-ons (incl. {tax})", { tax: loc.tax_label })}
+                        </span>
                         <span className="tabular-nums">
                           {cur()}
                           {inr(addonsGross)}

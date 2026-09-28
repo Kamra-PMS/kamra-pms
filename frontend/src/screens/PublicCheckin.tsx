@@ -87,6 +87,9 @@ const inputCls =
   "focus:outline-2 focus:outline-offset-1 focus:outline-brand-600"
 
 interface Info {
+  /** ID documents the property's country accepts (its localization pack). */
+  id_types: string[]
+  default_nationality?: string
   property: {
     property_name: string
     logo_url: string | null
@@ -124,8 +127,6 @@ interface Info {
   }
 }
 
-const ID_TYPES = ["Aadhaar", "Passport", "Driving License", "Voter ID", "Other"]
-
 export default function PublicCheckin() {
   const { token } = useParams()
   const [info, setInfo] = useState<Info | null>(null)
@@ -133,7 +134,7 @@ export default function PublicCheckin() {
   const [busy, setBusy] = useState(false)
   const [done, setDone] = useState(false)
   const [form, setForm] = useState({
-    id_type: "Aadhaar", id_number: "", email: "", nationality: "Indian",
+    id_type: "", id_number: "", email: "", nationality: "",
     address_line: "", city: "", eta: "", special_requests: "",
   })
   const [signature, setSignature] = useState("")
@@ -150,8 +151,8 @@ export default function PublicCheckin() {
         setForm((f) => ({
           ...f,
           email: i.guest.email ?? "",
-          id_type: i.guest.id_type || "Aadhaar",
-          nationality: i.guest.nationality ?? "Indian",
+          id_type: i.guest.id_type || i.id_types[0] || "",
+          nationality: i.guest.nationality ?? i.default_nationality ?? "",
         }))
         // a boolean, never a URL - the guest can't be shown their own photo
         // back (Frappe refuses a Guest session any private file), so after a
@@ -251,7 +252,7 @@ export default function PublicCheckin() {
                 <span className="mb-1.5 block text-sm font-medium text-zinc-600">ID type</span>
                 <select className={inputCls} value={form.id_type}
                   onChange={(e) => setForm({ ...form, id_type: e.target.value })}>
-                  {ID_TYPES.map((t) => <option key={t}>{t}</option>)}
+                  {(info?.id_types ?? []).map((t) => <option key={t}>{t}</option>)}
                 </select>
               </label>
               <label className="block">
