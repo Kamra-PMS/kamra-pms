@@ -23,6 +23,7 @@
   "outbound_send_url",
   "column_break_auth",
   "credentials",
+  "app_secret",
   "sb_notes",
   "notes",
   "sb_meta",
@@ -129,6 +130,13 @@
    "label": "Provider Credentials"
   },
   {
+   "depends_on": "eval:doc.provider==\"Meta Business\"",
+   "description": "Meta App Secret (App settings > Basic). Kamra checks the X-Hub-Signature-256 on every inbound WhatsApp webhook with it; without it inbound messages are rejected.",
+   "fieldname": "app_secret",
+   "fieldtype": "Password",
+   "label": "App Secret"
+  },
+  {
    "collapsible": 1,
    "fieldname": "sb_notes",
    "fieldtype": "Section Break",
@@ -179,7 +187,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-07-06 12:00:00.000000",
+ "modified": "2026-09-28 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Channel Provider Connection",

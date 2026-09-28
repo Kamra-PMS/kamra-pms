@@ -319,7 +319,7 @@ def _authenticate(channel: str, body: dict):
 	conn = frappe.get_doc("Channel Provider Connection", conn_rows[0])
 
 	secret = conn.get_password("webhook_secret", raise_exception=False)
-	if secret and not _verify_signature(secret, body):
+	if not secret or not _verify_signature(secret, body):
 		frappe.log_error(
 			title="Channel webhook signature mismatch",
 			message=f"channel={channel} phone={phone} conn={conn.name}",

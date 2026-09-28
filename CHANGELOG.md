@@ -9,6 +9,23 @@ upgrade-breaking changes (removed doctypes / API contracts).
 
 ## Unreleased
 
+### Security
+
+* **authz:** property-restricted staff can no longer read or change another
+  property's reservations, guest registration cards, folios or other records.
+  `require_roles` now enforces property scope on every record argument,
+  calls that omit `property` are limited to the user's own properties, and
+  chain-wide guest profiles show a restricted user only the guests and stays
+  of their properties
+  ([GHSA-6cr2-jm8f-6jrx](https://github.com/Kamra-PMS/kamra-pms/security/advisories/GHSA-6cr2-jm8f-6jrx)).
+  Reported by **@archnexus707**, and independently by **kta1kri**.
+* **webhooks:** inbound payment, channel-manager, AioSell, voice/messaging and
+  WhatsApp webhooks now refuse calls when no secret or credential is
+  configured (they used to skip verification), compare secrets in constant
+  time, verify Razorpay signatures in test mode too, and check Meta's
+  `X-Hub-Signature-256` (new **Meta App Secret** field on WhatsApp
+  connections). Reported by **kta1kri**.
+
 ### Features
 
 * **admin:** System Health screen — GitHub version check, site diagnostics,

@@ -26,6 +26,8 @@ through _post_graph so the eval harness can intercept them.
 
 from __future__ import annotations
 
+import hashlib
+import hmac
 import json
 
 import frappe
@@ -187,10 +189,11 @@ def send_payment_request(reservation: str, amount, note: str = "") -> dict:
 
 	Template args: {{1}} guest name  {{2}} amount  {{3}} note/link.
 	"""
-	from kamra.authz import require_roles  # noqa: F401  (role gate below)
+	from kamra.authz import assert_record_access
 
 	frappe.only_for(("Front Desk", "Finance", "Hotel Admin",
 	                 "System Manager", "Administrator"))
+	assert_record_access("Reservation", reservation)
 	res = frappe.get_doc("Reservation", reservation)
 	conn = _conn(res.property)
 	if not conn or not conn.get("tpl_payment_request"):
@@ -233,19 +236,45 @@ def webhook(**kwargs):
 				secret = frappe.get_doc(
 					"Channel Provider Connection", name
 				).get_password("webhook_secret", raise_exception=False)
-				if secret and secret == token:
+				if secret and hmac.compare_digest(secret, token):
 					return Response(challenge, status=200)
 		return Response("verify token mismatch", status=403)
 
+	raw = frappe.request.data or b"{}"
 	body = {}
 	try:
-		body = json.loads(frappe.request.data or b"{}")
+		body = json.loads(raw)
 	except Exception:
 		pass  # malformed webhook JSON: acknowledge and skip handling
+	signature = frappe.get_request_header("X-Hub-Signature-256") or ""
 	for entry in body.get("entry") or []:
 		for change in entry.get("changes") or []:
-			_handle_inbound((change.get("value") or {}))
+			value = change.get("value") or {}
+			if _signed_by_meta(value, raw, signature):
+				_handle_inbound(value)
 	return {"ok": True}
+
+
+def _signed_by_meta(value: dict, raw: bytes, signature: str) -> bool:
+	"""Meta signs the raw body with the app secret (X-Hub-Signature-256:
+	sha256=<hex>). Checked against the connection the message is addressed
+	to; a connection without an app secret accepts nothing."""
+	phone_id = ((value.get("metadata") or {}).get("phone_number_id") or "")
+	conn_name = phone_id and frappe.db.get_value(
+		"Channel Provider Connection",
+		{"external_account_id": phone_id, "channel": "WhatsApp",
+		 "provider": "Meta Business", "active": 1})
+	if not conn_name:
+		return False
+	secret = frappe.get_doc("Channel Provider Connection", conn_name) \
+		.get_password("app_secret", raise_exception=False)
+	expected = "sha256=" + hmac.new((secret or "").encode(), raw,
+	                                hashlib.sha256).hexdigest()
+	if not secret or not hmac.compare_digest(signature, expected):
+		frappe.log_error(title="WhatsApp webhook signature rejected",
+		                 message=f"connection={conn_name}")
+		return False
+	return True
 
 
 def _handle_inbound(value: dict) -> None:

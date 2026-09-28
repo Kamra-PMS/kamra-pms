@@ -279,6 +279,8 @@ def _auth_ok(conn) -> bool:
 		return False
 	exp_user = conn.api_username or ""
 	exp_pwd = conn.get_password("api_key", raise_exception=False) or ""
+	if not exp_user or not exp_pwd:
+		return False  # unconfigured connection: never accept empty creds
 	return (hmac.compare_digest(user, exp_user)
 	        and hmac.compare_digest(pwd, exp_pwd))
 

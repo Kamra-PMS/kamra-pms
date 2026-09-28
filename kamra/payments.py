@@ -84,16 +84,22 @@ def razorpay_webhook():
 	if event.get("event") != "payment_link.paid" or not folio_name:
 		return {"ignored": True}
 
-	folio = frappe.get_doc("Folio", folio_name)
-	settings = _settings(folio.property)
+	property = frappe.db.get_value("Folio", folio_name, "property")
+	if not property:
+		return {"ignored": True}
+	settings = _settings(property)
 
-	# verify signature when a webhook secret is configured (skip in test mode)
+	# Always verify - test mode too (Razorpay signs test webhooks). With no
+	# webhook secret configured there is nothing to verify against, so the
+	# call is refused rather than trusted.
 	secret = settings.get_password("webhook_secret", raise_exception=False)
-	if secret and not settings.test_mode:
-		given = frappe.get_request_header("X-Razorpay-Signature") or ""
-		expected = hmac.new(secret.encode(), payload, hashlib.sha256).hexdigest()
-		if not hmac.compare_digest(given, expected):
-			frappe.throw("Invalid webhook signature", frappe.PermissionError)
+	given = frappe.get_request_header("X-Razorpay-Signature") or ""
+	expected = hmac.new((secret or "").encode(), payload,
+	                    hashlib.sha256).hexdigest()
+	if not secret or not hmac.compare_digest(given, expected):
+		frappe.throw("Invalid webhook signature", frappe.PermissionError)
+
+	folio = frappe.get_doc("Folio", folio_name)
 
 	amount = float(entity.get("amount_paid") or entity.get("amount") or 0) / 100
 	already = any(p.reference == entity.get("id") for p in folio.payments)

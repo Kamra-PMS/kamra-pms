@@ -1,7 +1,10 @@
 """Endpoint authorization - Frappe checks doctype permissions on ORM
 paths, but raw-SQL reads and db.set_value writes sail past them. Every
-whitelisted Kamra endpoint therefore declares who may call it."""
+whitelisted Kamra endpoint therefore declares who may call it - and,
+for staff restricted to some properties, which properties it may touch."""
 
+import inspect
+import json
 from functools import wraps
 
 import frappe
@@ -31,15 +34,147 @@ def require_it_admin(fn):
 	return guarded
 
 
-def require_roles(*roles):
+# Endpoint argument name -> the doctype(s) it names. Each carries a
+# `property` link, so the guard can tell which hotel a call reaches into.
+# Several candidates are tried in order (their naming series don't collide).
+SCOPED_ARGS = {
+	"reservation": ("Reservation", "POS Table Reservation"),
+	"folio": ("Folio",), "from_folio": ("Folio",), "to_folio": ("Folio",),
+	"folios": ("Folio",),
+	"group_booking": ("Group Booking",), "group": ("Group Booking",),
+	"order": ("POS Order", "Laundry Order"),
+	"outlet": ("POS Outlet",),
+	"room": ("Room",), "new_room": ("Room",),
+	"task": ("Housekeeping Task", "Banquet Function Task"),
+	"function": ("Venue Booking",),
+	"venue": ("Venue",),
+	"menu": ("Banquet Menu",),
+	"menu_item": ("Menu Item",),
+	"service_item": ("Banquet Service Item",),
+	"ingredient": ("Ingredient",),
+	"session": ("Cashier Session",),
+	"ticket": ("Service Ticket",),
+	"account": ("City Ledger Account",),
+	"connection": ("Channel Manager Connection", "Channel Provider Connection"),
+}
+
+
+def restricted_properties() -> set[str] | None:
+	"""The properties the current user is limited to by Frappe User
+	Permissions, or None when they aren't restricted (they see them all)."""
+	from frappe.core.doctype.user_permission.user_permission import (
+		get_user_permissions)
+	perms = get_user_permissions(frappe.session.user).get("Property")
+	return {p.get("doc") for p in perms} if perms else None
+
+
+def assert_property_access(property: str | None):
+	"""Refuse a call aimed at a property the user isn't permitted for."""
+	allowed = restricted_properties()
+	if property and allowed is not None and property not in allowed:
+		frappe.throw(f"You don't have access to {property}.",
+		             frappe.PermissionError)
+
+
+def assert_record_access(doctype: str, name: str | None):
+	"""Same guard for a record: refuse it when it belongs to a property
+	the user can't access."""
+	if not name or restricted_properties() is None:
+		return
+	if frappe.get_meta(doctype).has_field("property"):
+		assert_property_access(
+			frappe.db.get_value(doctype, name, "property"))
+
+
+def assert_guest_access(guest: str | None):
+	"""Guest profiles are shared across the chain, so a guest has no single
+	property. A restricted user may open one only if the guest has stayed
+	(or is booked) at one of their properties, or has no stays yet."""
+	allowed = restricted_properties()
+	if not guest or allowed is None:
+		return
+	props = set(frappe.get_all("Reservation", filters={"guest": guest},
+	                           pluck="property", distinct=True))
+	if props and not props & allowed:
+		frappe.throw("You don't have access to this guest.",
+		             frappe.PermissionError)
+
+
+def guest_scope_sql(alias: str = "g") -> tuple[str, dict]:
+	"""SQL condition + params limiting a Guest query to the guests a
+	restricted user may see (see assert_guest_access); ("1=1", {}) when
+	the user isn't restricted."""
+	allowed = restricted_properties()
+	if allowed is None:
+		return "1=1", {}
+	return (
+		f"(EXISTS (SELECT 1 FROM `tabReservation` gs WHERE gs.guest = {alias}.name"
+		f" AND gs.property IN %(scope_properties)s)"
+		f" OR NOT EXISTS (SELECT 1 FROM `tabReservation` gn"
+		f" WHERE gn.guest = {alias}.name))",
+		{"scope_properties": tuple(sorted(allowed)) or ("",)},
+	)
+
+
+def _values(value) -> list[str]:
+	if isinstance(value, str) and value.startswith("["):
+		try:
+			value = json.loads(value)
+		except ValueError:
+			return [value]
+	if isinstance(value, (list, tuple)):
+		return [v for v in value if isinstance(v, str)]
+	return [value] if isinstance(value, str) else []
+
+
+def _enforce_property_scope(fn, args, kwargs, scope: dict):
+	"""Check every argument that names a property-scoped record. A no-op
+	for unrestricted users; unknown names are left for the endpoint's own
+	not-found handling."""
+	allowed = restricted_properties()
+	if allowed is None:
+		return
+	try:
+		bound = inspect.signature(fn).bind_partial(*args, **kwargs).arguments
+	except TypeError:
+		bound = kwargs
+	for arg, value in bound.items():
+		if arg == "property":
+			assert_property_access(value if isinstance(value, str) else None)
+			continue
+		doctypes = scope.get(arg) or SCOPED_ARGS.get(arg)
+		if not doctypes:
+			continue
+		if isinstance(doctypes, str):
+			doctypes = (doctypes,)
+		if doctypes == ("Guest",):
+			for name in _values(value):
+				assert_guest_access(name)
+			continue
+		for name in _values(value):
+			for dt in doctypes:
+				prop = frappe.db.get_value(dt, name, "property")
+				if prop:
+					assert_property_access(prop)
+					break
+
+
+def require_roles(*roles, scope: dict | None = None):
 	"""Allow the listed roles (plus admins). Usage - below the
 	whitelist decorator so the registered function is the guarded one:
 
 	    @frappe.whitelist()
 	    @require_roles("Front Desk", "Kamra Agent")
 	    def check_in(...): ...
+
+	It also enforces property scope: a user restricted to some properties
+	can't pass a `property`, or a record id (see SCOPED_ARGS), that belongs
+	to another one. `scope` adds endpoint-specific arguments, e.g.
+	scope={"name": "Hurdle Rate"}. A "Guest" scope checks guest visibility
+	(assert_guest_access) instead, since guests belong to the whole chain.
 	"""
 	allowed = set(roles) | set(ADMIN)
+	scope = scope or {}
 
 	def deco(fn):
 		@wraps(fn)
@@ -48,6 +183,7 @@ def require_roles(*roles):
 				frappe.throw(
 					f"Not permitted - needs one of: {', '.join(sorted(roles))}.",
 					frappe.PermissionError)
+			_enforce_property_scope(fn, args, kwargs, scope)
 			return fn(*args, **kwargs)
 		# introspectable RBAC: Kamra Agent filters its tool list by this
 		guarded._kamra_roles = allowed

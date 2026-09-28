@@ -183,7 +183,7 @@ def save_banquet_menu(property: str, menu_name: str, rate_per_pax: float,
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*CATALOGUE_ROLES)
+@require_roles(*CATALOGUE_ROLES, scope={"name": "Banquet Menu"})
 def delete_banquet_menu(name: str):
 	frappe.delete_doc("Banquet Menu", name)
 	return {"ok": True}
@@ -217,7 +217,7 @@ def save_service_item(property: str, item_name: str, category: str,
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*CATALOGUE_ROLES)
+@require_roles(*CATALOGUE_ROLES, scope={"name": "Banquet Service Item"})
 def delete_service_item(name: str):
 	frappe.delete_doc("Banquet Service Item", name)
 	return {"ok": True}
@@ -1917,7 +1917,7 @@ def save_dish(property: str, dish_name: str, recipe=None,
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*CATALOGUE_ROLES)
+@require_roles(*CATALOGUE_ROLES, scope={"name": "Banquet Dish"})
 def delete_dish(name: str):
 	frappe.delete_doc("Banquet Dish", name)
 	return {"ok": True}
