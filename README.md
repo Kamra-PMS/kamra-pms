@@ -56,7 +56,7 @@ work. The `v2.6.2` GitHub tag is still pending — latest published release is
 [v2.6.0](https://github.com/Kamra-PMS/kamra-pms/releases/tag/v2.6.0).
 
 - **Unreleased** — System Health, property time zone, **85 MCP tools** (role +
-  module gated), AI provider presets, WordPress-easy `deploy/install.sh`,
+  module gated), AI provider presets, local-build `deploy/install.sh`,
   banquet Phase 1 (send quote, guest response, Sales/Finance/HK/F&B checklists)
 - **2.6.2** (in the changelog; not tagged yet) — Opera-style cashier till,
   folio ledger, cashier PIN, POS full-screen till
@@ -179,14 +179,15 @@ In-repo: [`docs/`](docs/) · [user guide](docs/user-guide.md) · [AI & API](docs
 
 ## Install
 
-**Hotels (WordPress-easy):**
+**Hotels (Docker self-host — builds on your server):**
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Kamra-PMS/kamra-pms/main/deploy/install.sh | bash
 ```
 
-Three prompts: site domain, admin email, admin password. Pulls
-`ghcr.io/kamra-pms/kamra:latest`. Then open `/kamra/setup`. Details:
+Three prompts: site domain, admin email, admin password. Builds a local
+`kamra:local` image (does **not** pull from GHCR). Prefer 8 GB RAM; first
+install often takes 20–45 minutes. Then open `/kamra/setup`. Details:
 [deploy/](deploy/) · [docs quickstart](https://kamrapms.com/docs/quickstart).
 
 **Bench / Frappe Cloud:**
@@ -201,8 +202,8 @@ After install: product UI at **`/kamra`**, booking at **`/book`**, housekeeping 
 
 | Channel | Branch / tag | Use for |
 |---|---|---|
-| **Stable** | `main` / `vX.Y.Z` | Production, [Frappe Cloud Marketplace](https://cloud.frappe.io/marketplace/apps/kamra), [demo](https://demo.kamrapms.com), `ghcr.io/kamra-pms/kamra:latest` |
-| **Nightly** | `develop` | Previews, `ghcr.io/kamra-pms/kamra:nightly` |
+| **Stable** | `main` / `vX.Y.Z` | Production, [Frappe Cloud Marketplace](https://cloud.frappe.io/marketplace/apps/kamra), [demo](https://demo.kamrapms.com) |
+| **Nightly** | `develop` | Previews (nightly.kamrapms.com) |
 
 Production installs should use `--branch main` (`develop` is the default GitHub branch for contributors). Releases are SemVer with a **patch-first** cadence — see [`RELEASING.md`](RELEASING.md) and [`CHANGELOG.md`](CHANGELOG.md).
 
