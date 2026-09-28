@@ -26,3 +26,4 @@ docs-site/.vitepress/dist/
 docs-site/.vitepress/cache/
 
 graphify-out/
+node_modules
