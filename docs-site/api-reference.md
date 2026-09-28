@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function — the same governed layer
-the UI and the AI use. **264 endpoints**, generated from the source
+the UI and the AI use. **265 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -1246,11 +1246,26 @@ each venue's schedule so you can see availability and spot conflicts.
 **GET/POST** · roles: `Front Desk`, `Kamra Agent`
 
 Room move / upgrade - mid-stay or before arrival. Overlap guard re-runs.
+One writer for the tape chart, the reservation drawer and the GRC (#113).
 
 The new room may be a DIFFERENT room type (e.g. Standard -> Suite): the
 reservation's room type follows the room it moves into, so upgrades and
 downgrades are allowed. If the booking auto-prices, the new type's rate
 applies; a manually-priced booking keeps its amount.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `reservation` | yes |  |
+| `new_room` | yes |  |
+| `reason` | no | `None` |
+
+### `kamra.api.room_move_preview`
+
+**GET/POST** · roles: `Front Desk`, `Kamra Agent`
+
+What a move would do to the bill before the desk confirms it: a
+same-type swap keeps the price; an upgrade / downgrade on an auto-priced
+booking is re-quoted at the new type's rate by the pricing engine.
 
 | Param | Required | Default |
 | --- | --- | --- |

@@ -1537,6 +1537,7 @@ export interface ReservationDetail {
   advance_paid: number
   company: string | null
   travel_agent: string | null
+  room_number: string | null
   folio_name: string | null
   money: { total: number; paid: number; due: number; has_folio: boolean }
   /** Deposit before arrival (#114): expected by policy, received, still due. */

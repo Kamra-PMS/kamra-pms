@@ -505,6 +505,17 @@ def import_bookings(property: str, bookings):
 	        "errors": errors}
 
 
+def _pack_tax_id_label(prop) -> str:
+	from kamra.localization import pack_for
+	return pack_for(prop.name).locale(prop).get("tax_id_label") or "Tax ID"
+
+
+def _pack_tax_label(property: str) -> str:
+	from kamra.localization import pack_for
+	prop = frappe.get_cached_doc("Property", property)
+	return pack_for(property).locale(prop).get("tax_label") or "Tax"
+
+
 def _stay_money(res):
 	"""The GRC's money line: what the stay owes and what's been taken -
 	advances and held deposits called out separately."""
@@ -544,11 +555,29 @@ def registration_card(reservation: str):
 			"address": ", ".join(filter(None, [  # nosemgrep: frappe-no-functional-code -- filter(None, ...) drops empty address parts; equivalent to a comprehension
 				prop.address_line, prop.city, prop.state, prop.pincode])),
 			"gstin": prop.gstin, "phone": prop.phone, "email": prop.email,
+			"tax_id_label": _pack_tax_id_label(prop),
 			"checkin_time": str(prop.checkin_time or ""),
 			"checkout_time": str(prop.checkout_time or ""),
 		},
 		"money": _stay_money(res),
+		"readiness": {
+			"id_on_file": bool(guest.get("id_file") or guest.get("id_number")),
+			"address_on_file": bool(guest.get("address_proof_file")),
+			"occupants": len(res.get("occupants") or []),
+			"pax": int(res.adults or 0) + int(res.children or 0),
+			"precheckin_status": res.get("precheckin_status") or "Not sent",
+			"signed": bool(res.get("precheckin_signature")),
+		},
+		"signature": res.get("precheckin_signature") or None,
+		"tax_label": _pack_tax_label(res.property),
 		"reservation": {
+			"status": res.status,
+			"room_id": res.room,
+			"room_number": frappe.db.get_value("Room", res.room, "room_number")
+			               if res.room else None,
+			"room_type_name": frappe.db.get_value(
+				"Room Type", res.room_type, "room_type_name")
+			                  if res.room_type else None,
 			"actual_check_in": str(res.actual_check_in) if res.get("actual_check_in") else None,
 			"actual_check_out": str(res.actual_check_out) if res.get("actual_check_out") else None,
 			"name": res.name, "status": res.status,
@@ -3538,16 +3567,22 @@ def venue_calendar(property: str, start_date: str | None = None, days: int = 14)
 
 @frappe.whitelist()
 @require_roles("Front Desk", "Kamra Agent")
-def move_reservation(reservation: str, new_room: str):
+def move_reservation(reservation: str, new_room: str,
+                     reason: str | None = None):
 	"""Room move / upgrade - mid-stay or before arrival. Overlap guard re-runs.
+	One writer for the tape chart, the reservation drawer and the GRC (#113).
 
 	The new room may be a DIFFERENT room type (e.g. Standard -> Suite): the
 	reservation's room type follows the room it moves into, so upgrades and
 	downgrades are allowed. If the booking auto-prices, the new type's rate
 	applies; a manually-priced booking keeps its amount."""
 	doc = frappe.get_doc("Reservation", reservation)
+	from kamra.crs import assert_property_access
+	assert_property_access(doc.property)
 	if doc.status not in ("Confirmed", "Checked In"):
 		frappe.throw("Only active reservations can be moved.")
+	if frappe.db.get_value("Room", new_room, "property") != doc.property:
+		frappe.throw(_("Room {0} is not in this property.").format(new_room))
 	old_room = doc.room
 	old_type = doc.room_type
 	new_type = frappe.db.get_value("Room", new_room, "room_type")
@@ -3564,8 +3599,44 @@ def move_reservation(reservation: str, new_room: str):
 	note = f"{old_room} → {new_room}"
 	if new_type and new_type != old_type:
 		note += f" · {old_type} → {new_type}"
+	if (reason or "").strip():
+		note += f" · {reason.strip()[:140]}"
 	log_action("room_move", "Reservation", doc.name, doc.property, rationale=note)
-	return {"ok": True, "room": doc.room, "room_type": doc.room_type}
+	return {"ok": True, "room": doc.room, "room_type": doc.room_type,
+	        "amount_after_tax": float(doc.amount_after_tax or 0)}
+
+
+@frappe.whitelist()
+@require_roles("Front Desk", "Kamra Agent")
+def room_move_preview(reservation: str, new_room: str):
+	"""What a move would do to the bill before the desk confirms it: a
+	same-type swap keeps the price; an upgrade / downgrade on an auto-priced
+	booking is re-quoted at the new type's rate by the pricing engine."""
+	res = frappe.get_doc("Reservation", reservation)
+	from kamra.crs import assert_property_access
+	assert_property_access(res.property)
+	new_type = frappe.db.get_value("Room", new_room, "room_type")
+	current = float(res.amount_after_tax or 0)
+	new_amount = current
+	if new_type and new_type != res.room_type and res.get("auto_price"):
+		from kamra.pricing import quote
+		voucher = frappe.db.get_value("Discount Voucher", res.voucher,
+		                              "voucher_code") if res.get("voucher") else None
+		new_amount = float(quote(
+			res.property, new_type, str(res.check_in_date),
+			str(res.check_out_date), int(res.adults or 1),
+			int(res.children or 0), res.meal_plan or None,
+			res.rate_plan or None, voucher)["amount_after_tax"])
+	return {
+		"same_type": new_type == res.room_type,
+		"new_room_type": new_type,
+		"new_room_type_name": frappe.db.get_value(
+			"Room Type", new_type, "room_type_name") if new_type else None,
+		"current_amount": current, "new_amount": round(new_amount, 2),
+		"difference": round(new_amount - current, 2),
+		"auto_price": bool(res.get("auto_price")),
+		"in_house": res.status == "Checked In",
+	}
 
 
 @frappe.whitelist()
@@ -3579,9 +3650,12 @@ def movable_rooms(reservation: str, check_in_date: str | None = None,
 	res = frappe.get_doc("Reservation", reservation)
 	ci = check_in_date or res.check_in_date
 	co = check_out_date or res.check_out_date
+	from kamra.crs import assert_property_access
+	assert_property_access(res.property)
 	rooms = frappe.get_all(
 		"Room", filters={"property": res.property},
-		fields=["name", "room_number", "room_type"], order_by="room_number")
+		fields=["name", "room_number", "room_type", "floor",
+		        "housekeeping_status"], order_by="room_number")
 	# availability is computed per type; union the free rooms across every type
 	types = {r.room_type for r in rooms}
 	free = set()
@@ -3593,7 +3667,9 @@ def movable_rooms(reservation: str, check_in_date: str | None = None,
 	}
 	out = [
 		{"name": r.name, "room_number": r.room_number,
-		 "room_type": r.room_type,
+		 "room_type": r.room_type, "floor": r.floor,
+		 "housekeeping_status": r.housekeeping_status,
+		 "current": r.name == res.room,
 		 "room_type_name": type_name.get(r.room_type, r.room_type),
 		 # the guest's own current room counts as available to them
 		 "free": r.name in free or r.name == res.room,

@@ -254,6 +254,12 @@ claude mcp add --transport http kamra https://pms.yourhotel.com/mcp
 
 Contributions welcome — see [CONTRIBUTING.md](CONTRIBUTING.md). Thanks to [@Mohammed-Muneef](https://github.com/Mohammed-Muneef) (laundry, kitchen display v2, inventory & recipes, menu import, ID-document hardening).
 
+Hotels shape Kamra through their issues. Thank you to:
+
+- [@faresalslahi-collab](https://github.com/faresalslahi-collab) (Sarawat Park Hotel & Resort): the one-screen walk-in ([#97](https://github.com/Kamra-PMS/kamra-pms/issues/97)) and the Saudi Arabia / ZATCA work it led to
+- [@atomic-glitch](https://github.com/atomic-glitch): the housekeeping Room Board and role checks ([#99](https://github.com/Kamra-PMS/kamra-pms/issues/99)), room change from the reservation and GRC ([#113](https://github.com/Kamra-PMS/kamra-pms/issues/113)), and deposits before arrival ([#114](https://github.com/Kamra-PMS/kamra-pms/issues/114))
+- [@archnexus707](https://github.com/archnexus707) and [@kta1kri](https://github.com/kta1kri): responsibly disclosed security issues ([GHSA-6cr2](https://github.com/Kamra-PMS/kamra-pms/security/advisories/GHSA-6cr2-jm8f-6jrx), [GHSA-5hcx](https://github.com/Kamra-PMS/kamra-pms/security/advisories/GHSA-5hcx-h257-qr5j))
+
 ### Links
 
 - **Demo:** [demo.kamrapms.com](https://demo.kamrapms.com)

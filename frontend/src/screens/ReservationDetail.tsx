@@ -31,6 +31,7 @@ import { Button } from "../components/ui/button"
 import CancelPanel from "../components/CancelPanel"
 import LinkedRecords from "../components/LinkedRecords"
 import DepositPanel from "../components/DepositPanel"
+import RoomChangeDialog from "../components/RoomChangeDialog"
 import { cur, moneyLocale } from "../lib/money"
 
 const inr = (n: number) =>
@@ -185,6 +186,7 @@ export default function ReservationDetail({
   const [d, setD] = useState<Detail | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [changingRoom, setChangingRoom] = useState(false)
 
   const refresh = useCallback(() => {
     reservationDetail(name)
@@ -388,16 +390,30 @@ export default function ReservationDetail({
         <IdentityCard d={d} reload={refresh} />
 
         {/* room */}
-        <Card icon={<BedDouble className="size-4" />} title="Room">
+        <Card
+          icon={<BedDouble className="size-4" />}
+          title="Room"
+          action={
+            d.status === "Confirmed" || d.status === "Checked In" ? (
+              <button
+                type="button"
+                onClick={() => setChangingRoom(true)}
+                className="text-xs font-medium text-brand-700 hover:underline"
+              >
+                {d.room ? "Change room" : "Assign room"}
+              </button>
+            ) : undefined
+          }
+        >
           <dl className="grid grid-cols-2 gap-3">
             <Field label="Room type" value={d.room_type_name ?? d.room_type} />
-            <Field label="Room" value={d.room ?? "Unassigned"} />
+            <Field label="Room" value={d.room_number ?? d.room ?? "Unassigned"} />
             {d.meal_plan && <Field label="Meal plan" value={d.meal_plan} />}
             {d.rate_plan && <Field label="Rate plan" value={d.rate_plan} />}
           </dl>
           {!d.room && d.status === "Confirmed" && (
             <p className="mt-2 text-xs text-amber-600">
-              No room assigned yet - assign from the Tape Chart before check-in.
+              No room assigned yet - use Assign room above before check-in.
             </p>
           )}
         </Card>
@@ -568,6 +584,17 @@ export default function ReservationDetail({
         <CancelPanel
           row={row}
           reload={() => {
+            refresh()
+            reload()
+          }}
+        />
+      )}
+      {changingRoom && (
+        <RoomChangeDialog
+          reservation={d.name}
+          currentRoomNumber={d.room_number}
+          onClose={() => setChangingRoom(false)}
+          onMoved={() => {
             refresh()
             reload()
           }}

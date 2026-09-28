@@ -52,7 +52,15 @@ both re-priced and overlap-checked).
    each, with a warning before handing over an uncleaned room.
 3. Confirm — the room is assigned and the guest is in.
 
-**On the GRC**: record the **occupants** (everyone in the room — the
+**Changing rooms**: use **Change room** in the reservation drawer's Room
+card or on the GRC (or drag on the tape chart). Pick from rooms free for
+the stay's dates (clean rooms first; switch to *All types* to upgrade),
+see the price effect, give a reason, and confirm. Moving an in-house
+guest marks the old room Dirty for housekeeping.
+
+**On the GRC**: a checklist on the right shows what the registration
+still needs (ID, address proof, occupants, signature), with one-tap
+document capture and the stay's money. Then: record the **occupants** (everyone in the room — the
 legal register) and capture **each occupant's ID** with the camera
 button on their row; capture or replace the guest's ID and address
 proof; **edit the primary guest's nationality** (click **edit** next to
