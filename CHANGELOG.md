@@ -43,6 +43,36 @@ upgrade-breaking changes (removed doctypes / API contracts).
   quotation, desk-led guest response, department checklists + notify on
   Confirm (Sales/Finance/HK/F&B), and quote no-response chase reminders
 
+## [2.6.5](https://github.com/Kamra-PMS/kamra-pms/compare/v2.6.4...v2.6.5) (2026-09-28)
+
+
+### Features
+
+* **front-desk:** one-screen walk-in — book, ID, room, payment, check-in ([d450af3](https://github.com/Kamra-PMS/kamra-pms/commit/d450af3083b5eb949ddfd2465e59d94719c79857)), closes [#97](https://github.com/Kamra-PMS/kamra-pms/issues/97)
+* **localization:** country packs set ID types, payment modes and setup defaults ([5375447](https://github.com/Kamra-PMS/kamra-pms/commit/5375447f88559b54c7da9af84c292ebc9867dfa4)), closes [#97](https://github.com/Kamra-PMS/kamra-pms/issues/97)
+* one-screen walk-in + country-aware front desk (IDs, payments, setup) ([3dfffa7](https://github.com/Kamra-PMS/kamra-pms/commit/3dfffa74190e35724720ca960f157a29dce6e616))
+* **saudi:** ZATCA e-invoicing (Phase 1), room levy, Arabic guest check-in ([550290c](https://github.com/Kamra-PMS/kamra-pms/commit/550290c73a82132008641d9ac02e31ee3b145e29))
+* **saudi:** ZATCA e-invoicing, room levy, Arabic guest check-in ([80693b7](https://github.com/Kamra-PMS/kamra-pms/commit/80693b72dd9e67f29fbd977f8daa71422d604363))
+
+
+### Bug Fixes
+
+* **deploy:** build Kamra image locally instead of pulling GHCR ([0449b56](https://github.com/Kamra-PMS/kamra-pms/commit/0449b56c6fa4749ebe721c3d43f3262d785d5eab))
+* **deploy:** detect existing site by site_config.json, not any entry in sites/ ([4ed89ae](https://github.com/Kamra-PMS/kamra-pms/commit/4ed89aec31d634e1708190f80c78bfd76124633a))
+* **deploy:** make GHCR kamra image anonymously pullable ([1862c63](https://github.com/Kamra-PMS/kamra-pms/commit/1862c63b829a5db9c5cb2c957512f709984c41ef))
+* **deploy:** resolve installer path before cd so update keeps the same script ([77790cf](https://github.com/Kamra-PMS/kamra-pms/commit/77790cf8985e1fad99b5b6bbfc31416010ca5ac9))
+* **deploy:** self-host builds locally; keep GHCR private ([d6e9acc](https://github.com/Kamra-PMS/kamra-pms/commit/d6e9acc124188246fd60ad4222293b80aaa44cf7))
+* **deploy:** self-host local build — working updates, safe re-runs, install-method docs ([fd0c4f9](https://github.com/Kamra-PMS/kamra-pms/commit/fd0c4f91f81d6027f2c440a829fbfc324ee61bdf))
+* **deploy:** working updates, safe re-runs and install-method docs for local-build self-host ([5c1008e](https://github.com/Kamra-PMS/kamra-pms/commit/5c1008ecfe5ebbfc295f41aafe60e38ec2d30995))
+* **housekeeping:** role-checked room status + supervisor Room Board ([6b489f2](https://github.com/Kamra-PMS/kamra-pms/commit/6b489f2caf88bab192bdcb623bdf2a859cd358e5))
+* **housekeeping:** role-checked room status + supervisor Room Board ([5335cf2](https://github.com/Kamra-PMS/kamra-pms/commit/5335cf2e2d21db78dc5e7fc8a30ba48e83cd1896)), closes [#99](https://github.com/Kamra-PMS/kamra-pms/issues/99)
+* **invoice:** pack-worded footer, Arabic title spacing, no India defaults ([4056584](https://github.com/Kamra-PMS/kamra-pms/commit/4056584adb7d37028a26ea9b02aeac2b9f9786f3))
+* **phone:** default dial code for Yemen + Arab world; keep foreign guests' codes ([a90ebff](https://github.com/Kamra-PMS/kamra-pms/commit/a90ebff6bc840dd0ce10beb60231405011ed7d57))
+* **phone:** default guest dial code for Yemen and the rest of the Arab world; keep foreign guests' codes ([21e3508](https://github.com/Kamra-PMS/kamra-pms/commit/21e3508c2821661dae5de6614116a47e6815c05f)), closes [#98](https://github.com/Kamra-PMS/kamra-pms/issues/98)
+* **phone:** neutral placeholder outside India ([5a124bb](https://github.com/Kamra-PMS/kamra-pms/commit/5a124bb11c40e6802d0671ba9135b16493ee8a2f))
+* **security:** enforce property scope and fail closed on webhooks ([371aadd](https://github.com/Kamra-PMS/kamra-pms/commit/371aaddf5049bd4b6abc11ccbf81d3df1e654181))
+* **security:** enforce property scope and fail closed on webhooks ([d987fc7](https://github.com/Kamra-PMS/kamra-pms/commit/d987fc74ab2713a0434fbd74d6efae86e0bfa10c))
+
 ## [2.6.4](https://github.com/Kamra-PMS/kamra-pms/compare/v2.6.3...v2.6.4) (2026-09-26)
 
 
