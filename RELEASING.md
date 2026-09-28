@@ -82,10 +82,10 @@ A month of small work should usually be one or two PATCHes, not a MINOR.
 ## Distribution channels checklist (kept current per release)
 
 - **Frappe Cloud Marketplace** — listing tracks `main`; release step 4 above.
-- **Docker self-host** — `ghcr.io/kamra-pms/kamra:latest` (and `:nightly`);
-  hotels use `deploy/install.sh` (pull, don’t build). Packer / StackScript
+- **Docker self-host** — hotels use `deploy/install.sh`, which **builds**
+  the image on their VPS (no public GHCR pull). Packer / StackScript
   stubs for DigitalOcean and Linode Marketplace live under `deploy/`.
-  frappe_docker compose files run the image.
+  `ghcr.io/kamra-pms/kamra` stays private for Kamra-operated demo/nightly.
 - **bench self-host** — `bench get-app https://github.com/Kamra-PMS/kamra-pms`
   (main) then `bench install-app kamra`; guarded by the fresh-install CI job.
 - **Demo** — demo.kamrapms.com redeploys automatically on each stable release.

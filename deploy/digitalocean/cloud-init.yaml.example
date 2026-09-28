@@ -3,8 +3,8 @@
 # User-data fields from the create-droplet form (Vendor Portal UDF):
 #   site_name, admin_email, admin_password
 #
-# Build: see packer.json.example. First boot pulls GHCR and runs install.sh
-# non-interactively.
+# Build: see packer.json.example. First boot runs install.sh (local image
+# build — expect 20–45 minutes) non-interactively.
 
 package_update: true
 packages:

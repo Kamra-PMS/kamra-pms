@@ -8,8 +8,8 @@ classic bench install.
 **Server**
 
 - Ubuntu 22.04/24.04 LTS (or any Docker-capable Linux)
-- 2 vCPU / 4 GB RAM minimum (8 GB recommended for 20+ rooms + POS)
-- 40 GB disk (database grows with folios/audit history)
+- 4 vCPU / 8 GB RAM for the Docker image build (2 vCPU / 4 GB may run afterward)
+- 40 GB disk (build cache + database growth with folios/audit history)
 - A domain or subdomain (e.g. `pms.yourhotel.com`) pointed at the server
 - Ports 80/443 open; SSL via Let's Encrypt (frappe_docker or certbot)
 
@@ -32,32 +32,16 @@ classic bench install.
 
 ## Install (Docker, recommended)
 
-Use [frappe_docker](https://github.com/frappe/frappe_docker) and add Kamra
-to your apps list:
+Preferred: one script that **builds on your server** (no GHCR pull):
 
 ```bash
-git clone https://github.com/frappe/frappe_docker && cd frappe_docker
-# build a custom image containing kamra + payments
-export APPS_JSON_BASE64=$(base64 -w0 <<'EOF'
-[
-  {"url": "https://github.com/frappe/payments", "branch": "develop"},
-  {"url": "https://github.com/Kamra-PMS/kamra-pms", "branch": "main"}
-]
-EOF
-)
-docker build -t yourorg/kamra:latest \
-  --build-arg FRAPPE_BRANCH=v16.25.0 \
-  --build-arg APPS_JSON_BASE64=$APPS_JSON_BASE64 \
-  -f images/layered/Containerfile .
-# then follow frappe_docker's compose guide (pwd.yml / docs) with your image
+curl -fsSL https://raw.githubusercontent.com/Kamra-PMS/kamra-pms/main/deploy/install.sh | bash
 ```
 
-Create the site and install:
-
-```bash
-bench new-site pms.yourhotel.com --admin-password <strong-password>
-bench --site pms.yourhotel.com install-app payments kamra
-```
+See [deploy/README.md](../deploy/README.md). Prefer **8 GB RAM**; first build
+is 20–45 minutes. For a manual frappe_docker layered build, use the same
+`apps.json` shape as `.github/workflows/release.yml` and tag a local image
+with `PULL_POLICY=never`.
 
 ## Install (bare metal)
 
