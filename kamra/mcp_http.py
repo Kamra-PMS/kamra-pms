@@ -57,7 +57,15 @@ class MCPPageRenderer:
 		return dispatch(self.path, frappe.request)
 
 
+def mcp_disabled() -> bool:
+	"""Site config `kamra_mcp_disabled` turns remote MCP off (demo sites)."""
+	return bool(frappe.conf.get("kamra_mcp_disabled"))
+
+
 def dispatch(path: str, request) -> Response:
+	if mcp_disabled():
+		return _json({"error": "mcp_disabled",
+		              "error_description": "MCP is turned off on this site."}, 404)
 	method = (request.method or "GET").upper()
 	if method == "OPTIONS":
 		return _response("", 204)

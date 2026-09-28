@@ -168,6 +168,32 @@ export async function call<T = unknown>(
   return data.message
 }
 
+/** Call an allow_guest endpoint as a guest, whoever is logged in.
+ *  Public pages (booking, listings) must not ride the staff session: a CSRF
+ *  token captured at page load goes stale the moment someone logs in or out
+ *  in another tab, and Frappe then rejects every POST with a 400. Without
+ *  the cookie there is no session, so no CSRF check and no auth redirect. */
+export async function callGuest<T = unknown>(
+  method: string,
+  params: Record<string, unknown> = {},
+): Promise<T> {
+  const path = `/api/method/${method}`
+  const res = await fetch(path, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(params),
+    credentials: "omit",
+  })
+  if (!res.ok) {
+    const body = await res.text()
+    throw Object.assign(new Error(`${path} failed (${res.status})`), {
+      status: res.status,
+      body,
+    })
+  }
+  return ((await res.json()) as { message: T }).message
+}
+
 export interface WhoAmI {
   user: string
   full_name: string
@@ -305,7 +331,7 @@ export const DEMO_PROPERTY = "Kamra Demo Palace"
 // (/book) has no logged-in session to read a chosen property from, so it
 // asks the site which one to show instead of assuming the demo property.
 export const getDefaultProperty = () =>
-  call<string>("kamra.public_api.default_property")
+  callGuest<string>("kamra.public_api.default_property")
 
 // Active property - set by the header switcher, read at call time.
 let currentProperty =
