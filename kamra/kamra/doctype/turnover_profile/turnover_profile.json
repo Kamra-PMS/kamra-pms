@@ -90,7 +90,7 @@
   }
  ],
  "links": [],
- "modified": "2026-08-11 00:00:00.000000",
+ "modified": "2026-09-28 12:51:22.820746",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Turnover Profile",
@@ -119,6 +119,11 @@
   {
    "read": 1,
    "role": "Front Desk"
+  },
+  {
+   "read": 1,
+   "role": "Housekeeping Supervisor",
+   "write": 1
   }
  ],
  "sort_field": "modified",

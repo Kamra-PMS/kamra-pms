@@ -241,13 +241,15 @@ def default_property():
 
 
 def _public_locale(property: str) -> dict:
-	from kamra.localization import pack_for
+	from kamra.localization import pack_for, privacy_terms
 	prop = frappe.get_cached_doc("Property", property)
-	loc = pack_for(property).locale(prop)
+	pack = pack_for(property)
+	loc = pack.locale(prop)
 	# "" is a valid symbol (generic pack shows bare numbers) - only the
 	# missing key falls back to the rupee
 	return {"currency_symbol": loc.get("currency_symbol", "₹"),
-	        "locale": loc.get("locale") or "en-IN"}
+	        "locale": loc.get("locale") or "en-IN",
+	        **privacy_terms(pack)}
 
 
 @frappe.whitelist(allow_guest=True)
@@ -361,8 +363,13 @@ def precheckin_info(token: str):
 		frappe.throw("This booking is no longer active.")
 	prop = frappe.get_doc("Property", res.property)
 	guest = frappe.get_doc("Guest", res.guest)
+	from kamra.localization import front_desk_vocabulary, pack_for
+	vocab = front_desk_vocabulary(pack_for(res.property))
 	return {
 		"ui_locale": _public_locale(res.property),
+		# which IDs this country accepts, and the likely nationality
+		"id_types": vocab["id_types"],
+		"default_nationality": vocab["default_nationality"],
 		"property": {
 			"property_name": prop.property_name,
 			"logo_url": prop.get("logo_url"),
@@ -457,6 +464,9 @@ def precheckin_submit(token: str, id_type: str, id_number: str,
 	res = _res_by_token(token)
 	if res.precheckin_status == "Verified":
 		frappe.throw("Check-in details were already verified by the desk.")
+	if id_type != frappe.db.get_value("Guest", res.guest, "id_type"):
+		from kamra.localization import validate_id_type
+		validate_id_type(res.property, id_type)
 
 	# a signed card requires the declaration to be accepted
 	signed = bool(signature and str(signature).startswith("data:image"))

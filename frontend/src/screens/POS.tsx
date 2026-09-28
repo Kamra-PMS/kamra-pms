@@ -14,7 +14,7 @@ import { printThermal, kotHtml, billHtml, type BillData, type KotLine } from "..
 import { useFloorFullscreen } from "../lib/kiosk"
 import { Button } from "../components/ui/button"
 import { cn } from "../lib/utils"
-import { cur, moneyLocale } from "../lib/money"
+import { cur, moneyLocale, useLocale } from "../lib/money"
 import { useT } from "../lib/i18n"
 
 const inr = (n: unknown) =>
@@ -161,6 +161,9 @@ function ago(ts?: string) {
 export default function POS() {
   const { t } = useT()
   const { ensureUnlocked } = useCashierAuth()
+  // pay_order settles Cash / Card / UPI; offer the ones this country uses
+  const loc = useLocale()
+  const posModes = ["Cash", "Card", "UPI"].filter((m) => loc.payment_modes.includes(m))
   const rootRef = useRef<HTMLDivElement>(null)
   const [outlets, setOutlets] = useState<Outlet[]>([])
   const [outlet, setOutlet] = useState("")
@@ -413,7 +416,7 @@ export default function POS() {
       })
     }
   }
-  async function settle(mode: "Cash" | "Card" | "UPI") {
+  async function settle(mode: string) {
     if (!selected) return
     const order = selected
     await act(async () => {
@@ -1215,8 +1218,15 @@ export default function POS() {
                 )}
               </div>
               <div className="flex justify-between text-zinc-500"><span>{t("Subtotal")}</span><span className="tabular-nums">{cur()}{inr2(taxable)}</span></div>
-              <div className="flex justify-between text-xs text-zinc-400"><span>{t("CGST ({rate}%)", { rate: gstRate / 2 })}</span><span className="tabular-nums">{cur()}{inr2(gstAmt / 2)}</span></div>
-              <div className="flex justify-between text-xs text-zinc-400"><span>{t("SGST ({rate}%)", { rate: gstRate / 2 })}</span><span className="tabular-nums">{cur()}{inr2(gstAmt / 2)}</span></div>
+              {/* India splits GST into CGST + SGST; elsewhere it is one tax line */}
+              {loc.tax_label === "GST" ? (
+                <>
+                  <div className="flex justify-between text-xs text-zinc-400"><span>{t("CGST ({rate}%)", { rate: gstRate / 2 })}</span><span className="tabular-nums">{cur()}{inr2(gstAmt / 2)}</span></div>
+                  <div className="flex justify-between text-xs text-zinc-400"><span>{t("SGST ({rate}%)", { rate: gstRate / 2 })}</span><span className="tabular-nums">{cur()}{inr2(gstAmt / 2)}</span></div>
+                </>
+              ) : (
+                <div className="flex justify-between text-xs text-zinc-400"><span>{loc.tax_label} ({gstRate}%)</span><span className="tabular-nums">{cur()}{inr2(gstAmt)}</span></div>
+              )}
               <div className="flex items-baseline justify-between border-t border-zinc-100 pt-1 font-bold">
                 <span>{t("Total")}</span>
                 <span className="text-2xl tabular-nums">{cur()}{inr2(grand)}</span>
@@ -1325,8 +1335,8 @@ export default function POS() {
                   </div>
                 ) : (
                   <>
-                    <div className="grid grid-cols-3 gap-1.5">
-                      {(["Cash", "Card", "UPI"] as const).map((m) => (
+                    <div className={cn("grid gap-1.5", posModes.length > 2 ? "grid-cols-3" : "grid-cols-2")}>
+                      {posModes.map((m) => (
                         <Button key={m} className="h-12 justify-center text-base" disabled={busy} onClick={() => settle(m)}>{m}</Button>
                       ))}
                     </div>

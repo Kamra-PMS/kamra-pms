@@ -2081,7 +2081,9 @@ def t45():
 
 	# the dict showcase / qr_menu / precheckin_info embed as ui_locale
 	pub = _public_locale("EVAL Bali Hotel")
-	assert pub == {"currency_symbol": "Rp", "locale": "id-ID"}, pub
+	assert (pub["currency_symbol"], pub["locale"]) == ("Rp", "id-ID"), pub
+	# the privacy notice's regulator rides along; never India's for Bali
+	assert "India" not in (pub.get("privacy_authority") or ""), pub
 	assert _public_locale(P)["currency_symbol"] == "₹"
 
 
@@ -2149,6 +2151,46 @@ def t47():
 	# the master's symbol when it has one, the code itself when it doesn't -
 	# never again a bare unlabelled amount
 	assert sym and ("£" in sym or sym.strip() == "GBP"), loc
+
+
+@check("Saudi pack + ZATCA: vocabulary, QR, hash chain, credit note")
+def t47b():
+	from kamra import zatca
+	from kamra.localization import front_desk_vocabulary, pack_for
+	from kamra.zatca import tlv, ubl
+
+	P6 = "EVAL Riyadh Hotel"
+	if not frappe.db.exists("Property", P6):
+		frappe.get_doc({"doctype": "Property", "property_name": P6,
+		                "city": "Riyadh", "country": "Saudi Arabia",
+		                "currency": "SAR", "gstin": "310122393500003"}).insert(
+			ignore_permissions=True)
+	pack = pack_for(P6)
+	assert pack.__name__.endswith("saudi"), pack.__name__
+	v = front_desk_vocabulary(pack)
+	assert "Iqama" in v["id_types"] and "Aadhaar" not in v["id_types"], v
+	assert "UPI" not in v["payment_modes"], v
+
+	lines = [{"name": "Room night", "qty": 1, "net": 400, "rate": 15},
+	         {"name": "Loyalty", "qty": 1, "net": -40, "rate": 15}]
+	tag = frappe.generate_hash(length=6)
+	a = zatca.issue(P6, f"EVAL-{tag}-1", lines, source_doctype="Property",
+	                source_name=P6)
+	b = zatca.issue(P6, f"EVAL-{tag}-2", lines, source_doctype="Property",
+	                source_name=P6)
+	# negative lines become an allowance: 360 net, 54 VAT, 414 with VAT
+	assert (a.tax_exclusive, a.vat_total, a.tax_inclusive) == (360, 54, 414), a
+	q = tlv.decode(a.qr)
+	assert q[2] == "310122393500003" and q[4] == "414.00" and q[5] == "54.00", q
+	assert ubl.invoice_hash(a.xml) == a.invoice_hash
+	assert b.icv == a.icv + 1 and b.previous_hash == a.invoice_hash
+	# idempotent: the same number never forks the chain
+	assert zatca.issue(P6, f"EVAL-{tag}-1", lines, source_doctype="Property",
+	                   source_name=P6).name == a.name
+	cn = zatca.issue(P6, f"CN-EVAL-{tag}-1", lines, source_doctype="Property",
+	                 source_name=P6, doc_type="Credit Note",
+	                 billing_reference=f"EVAL-{tag}-1", reason="eval")
+	assert ">381<" in cn.xml and f"EVAL-{tag}-1" in cn.xml
 
 
 @check("WhatsApp: native Meta send, booking flow, inbound -> ticket")
@@ -3386,7 +3428,7 @@ def execute():
 		for fn in (t1, t2, t3, t3b, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13,
 		           t14, t15, t16, t17, t18, t19, t20, t21, t22, t23, t24,
 		           t25, t26, t27, t28, t29, t30, t31, t32, t33, t34, t35,
-		           t36, t37, t38, t39, t40, t41, t42, t43, t44, t45, t46, t47, t48, t49, t50, t51, t53,
+		           t36, t37, t38, t39, t40, t41, t42, t43, t44, t45, t46, t47, t47b, t48, t49, t50, t51, t53,
 		           t54, t55, t56, t57, t58, t59, t60, t61, t62, t63, t64,
 		           t65, t66, t67, t68, t69, t70,
 		           t71, t72, t73, t74, t75, t76, t81, t82, t83, t84, t85):

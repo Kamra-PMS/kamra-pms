@@ -26,6 +26,7 @@ const Guests = lazy(() => import("./screens/Guests"))
 const RegistrationCard = lazy(() => import("./screens/RegistrationCard"))
 const CancellationLetter = lazy(() => import("./screens/CancellationLetter"))
 const Setup = lazy(() => import("./screens/Setup"))
+const HousekeepingBoard = lazy(() => import("./screens/HousekeepingBoard"))
 const Settings = lazy(() => import("./screens/Settings"))
 const SystemHealth = lazy(() => import("./screens/SystemHealth"))
 const BookingEngine = lazy(() => import("./screens/BookingEngine"))
@@ -344,6 +345,7 @@ export default function App() {
           <Route path="accounting-export" element={<AccountingExport />} />
           <Route path="tickets" element={<Tickets />} />
           <Route path="laundry" element={<Laundry />} />
+          <Route path="housekeeping-board" element={<HousekeepingBoard />} />
           <Route
             path="housekeeping"
             element={<ResourceScreen config={housekeepingConfig} />}

@@ -52,7 +52,7 @@ import {
   inr,
   ITEM_TYPES,
   NEXT,
-  PAY_MODES,
+  payModes,
   Select,
   SESSIONS,
   SETUP_STYLES,
@@ -1933,11 +1933,11 @@ function MoneyTab({
                 <Select
                   value={receipt.mode}
                   onChange={(v) => setReceipt({ ...receipt, mode: v })}
-                  options={PAY_MODES}
+                  options={payModes()}
                 />
               </Field>
             </div>
-            <Field label="Reference" hint="UTR, cheque number, card slip">
+            <Field label="Reference" hint="Transfer ref, cheque number, card slip">
               <input
                 className={inputCls}
                 value={receipt.reference}
@@ -2107,7 +2107,7 @@ function CloseOutCard({
                   />
                 </Field>
                 <Field label="Return the rest by">
-                  <Select value={mode} onChange={setMode} options={PAY_MODES} />
+                  <Select value={mode} onChange={setMode} options={payModes()} />
                 </Field>
               </div>
               {!!Number(damage) && (

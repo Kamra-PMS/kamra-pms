@@ -18,7 +18,6 @@ const arPath = path.join(root, "src/i18n/locales/ar.json")
 const SKIP = new Set([
   "PublicBooking.tsx",
   "PublicListing.tsx",
-  "PublicCheckin.tsx",
   "QrMenu.tsx",
 ])
 

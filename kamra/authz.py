@@ -175,6 +175,9 @@ def require_roles(*roles, scope: dict | None = None):
 	"""
 	allowed = set(roles) | set(ADMIN)
 	scope = scope or {}
+	# a housekeeping supervisor can do everything an attendant can
+	if "Housekeeping" in allowed:
+		allowed.add("Housekeeping Supervisor")
 
 	def deco(fn):
 		@wraps(fn)

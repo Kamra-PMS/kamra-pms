@@ -9,7 +9,7 @@ import { serverError } from "../lib/resource"
 import { useCashierAuth } from "../lib/cashierAuth"
 import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
-import { cur, moneyLocale, taxLabel } from "../lib/money"
+import { cur, locale, moneyLocale, taxLabel, useLocale } from "../lib/money"
 import { useT } from "../lib/i18n"
 import {
   Card,
@@ -61,6 +61,7 @@ interface InvoiceData {
     email: string | null
     sac: string | null
     place_of_supply: string | null
+    tax_id_label?: string
   }
   stay: {
     reservation: string
@@ -91,8 +92,18 @@ interface InvoiceData {
   bill_to: { name: string; gstin: string | null } | null
   /** The document's own identity: a bill before settlement is provisional
    *  and says so; only a closed folio carries an invoice number. */
+  /** What the tax authority requires on the bill - ZATCA's QR code and
+   *  bilingual title in Saudi Arabia; null elsewhere. */
+  statutory?: {
+    title_ar: string
+    qr_image: string
+    uuid: string
+    icv: number
+    status: string
+  } | null
   document: {
     title: string
+    title_local?: string | null
     is_final: boolean
     number: string
     date: string
@@ -145,7 +156,6 @@ const CHARGE_TYPES = [
   "Food & Beverage", "Minibar", "Laundry", "Spa",
   "Early Check-in", "Late Checkout", "Discount", "Misc",
 ]
-const PAY_MODES = ["Cash", "Card", "UPI", "Bank Transfer", "Payment Link"]
 
 const inputCls =
   "rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm " +
@@ -197,7 +207,15 @@ export default function FolioView() {
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [voidFor, setVoidFor] = useState<string | null>(null)
   const [partVal, setPartVal] = useState("")
-  const [payment, setPayment] = useState({ mode: "UPI", amount: "", reference: "", kind: "Payment" })
+  // ways to pay follow the country pack; Payment Link is the gateway, anywhere
+  const loc = useLocale()
+  const PAY_MODES = [...loc.payment_modes, "Payment Link"]
+  const [payment, setPayment] = useState({
+    mode: locale().payment_modes[0] ?? "Cash",
+    amount: "",
+    reference: "",
+    kind: "Payment",
+  })
   const [refund, setRefund] = useState<{ amount: string; mode: string; reason: string } | null>(null)
   const [showCancel, setShowCancel] = useState(false)
   const [cancelReason, setCancelReason] = useState("")
@@ -543,6 +561,14 @@ export default function FolioView() {
               }
             >
               {doc?.title ?? (folio.invoice_number ? t("Tax Invoice") : t("Provisional Bill"))}
+              {doc?.title_local && (
+                <>
+                  <span aria-hidden className="mx-2 opacity-50">·</span>
+                  <span dir="rtl" lang="ar" className="normal-case tracking-normal">
+                    {doc.title_local}
+                  </span>
+                </>
+              )}
             </span>
           </div>
           <div className="mb-6 flex flex-wrap items-start justify-between gap-4 border-b border-zinc-200 pb-5">
@@ -569,7 +595,8 @@ export default function FolioView() {
                 <p className="text-sm text-zinc-500">
                   {property.gstin && (
                     <>
-                      GSTIN: <span className="font-medium">{property.gstin}</span>{" "}
+                      {property.tax_id_label ?? "GSTIN"}:{" "}
+                      <span className="font-medium">{property.gstin}</span>{" "}
                       ·{" "}
                     </>
                   )}
@@ -1020,6 +1047,19 @@ export default function FolioView() {
                   {doc.amount_in_words}
                 </p>
               )}
+              {data.statutory && (
+                <div className="flex items-center justify-end gap-3 pt-2">
+                  <div className="text-right text-[10px] leading-tight text-zinc-400">
+                    <p>ZATCA · ICV {data.statutory.icv}</p>
+                    <p className="font-mono">{data.statutory.uuid}</p>
+                  </div>
+                  <img
+                    src={data.statutory.qr_image}
+                    alt={t("E-invoice QR code")}
+                    className="size-28 shrink-0"
+                  />
+                </div>
+              )}
               <p className="text-zinc-500">
                 {t("Paid")}: {cur()}{inr(folio.payments_total)} · {t("Balance")}:{" "}
                 <span
@@ -1095,8 +1135,12 @@ export default function FolioView() {
           {folio.invoice_number && (
             <div className="mt-8 flex items-end justify-between border-t border-zinc-200 pt-4 text-xs text-zinc-500">
               <p className="max-w-md">
-                {t("This is a computer-generated tax invoice under the GST Act.")}
-                {property.gstin
+                {/* the pack words the footer for its country (GST Act in
+                    India, ZATCA simplified invoice in Saudi Arabia…) */}
+                {doc?.footer
+                  ? t(doc.footer)
+                  : t("This is a computer-generated invoice.")}
+                {property.gstin && property.tax_id_label === "GSTIN"
                   ? ` ${t("Amounts are inclusive of GST at the rates shown.")}`
                   : ""}
               </p>

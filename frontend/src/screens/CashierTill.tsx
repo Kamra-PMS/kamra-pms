@@ -17,7 +17,7 @@ import {
   CardHeader,
   CardTitle,
 } from "../components/ui/card"
-import { moneyLocale } from "../lib/money"
+import { moneyLocale, useLocale } from "../lib/money"
 import { useT } from "../lib/i18n"
 
 const inr = (n: unknown) =>
@@ -56,6 +56,7 @@ type Session = {
 export default function CashierTill() {
   const { t } = useT()
   const { ensureUnlocked, withPin } = useCashierAuth()
+  const hasUpi = useLocale().payment_modes.includes("UPI")
   const [session, setSession] = useState<Session | null>(null)
   const [floatAmt, setFloatAmt] = useState("2000")
   const [counted, setCounted] = useState("")
@@ -221,7 +222,9 @@ export default function CashierTill() {
               [t("Float"), session?.opening_float],
               [t("Cash in"), session?.system_cash ?? session?.totals?.cash],
               [t("Card"), session?.system_card ?? session?.totals?.card],
-              [t("UPI"), session?.system_upi ?? session?.totals?.upi],
+              ...(hasUpi || Number(session?.system_upi ?? session?.totals?.upi)
+                ? [[t("UPI"), session?.system_upi ?? session?.totals?.upi]]
+                : []),
               [t("Paid outs"), session?.paid_outs],
               [t("Drops"), session?.drops],
               [t("Petty cash"), session?.petty_cash],
