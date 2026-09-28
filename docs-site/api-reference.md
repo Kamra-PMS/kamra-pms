@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function — the same governed layer
-the UI and the AI use. **252 endpoints**, generated from the source
+the UI and the AI use. **258 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -273,6 +273,53 @@ Start or complete a housekeeping task from the phone.
 | --- | --- | --- |
 | `task` | yes |  |
 | `status` | yes |  |
+
+### `kamra.api.hk_upload_media`
+
+**POST** · roles: `Housekeeping`, `Front Desk`, `Kamra Agent`
+
+Attach a completion photo/video (proof of clean) to a housekeeping task.
+
+Uploaded from the housekeeper's phone while the room is being serviced. Stored
+public and attached to the task, so it stays with the record after the task
+closes and drops out of the live queue.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `task` | yes |  |
+
+### `kamra.api.hk_delete_media`
+
+**POST** · roles: `Housekeeping`, `Front Desk`, `Kamra Agent`
+
+Remove a completion photo/video from a housekeeping task.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `task` | yes |  |
+| `file_url` | yes |  |
+
+### `kamra.api.hk_task_media`
+
+**GET/POST** · roles: `Housekeeping`, `Front Desk`, `Hotel Admin`, `Kamra Agent`
+
+Completion photos/videos attached to one housekeeping task (newest first).
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `task` | yes |  |
+
+### `kamra.api.hk_room_media`
+
+**GET/POST** · roles: `Housekeeping`, `Front Desk`, `Hotel Admin`, `Kamra Agent`
+
+Photos/videos from the room's LATEST cleaning only - so the front desk
+sees just the most recent clean, not older cycles. Lets reception confirm a
+room is genuinely guest-ready.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `room` | yes |  |
 
 ### `kamra.api.hk_assign_task`
 
@@ -739,8 +786,8 @@ lines and totals.
 
 **GET/POST**
 
-Right-to-erasure: strip everything that identifies the person while
-keeping stays and bills intact for the books. Irreversible.
+Right to erasure (DPDP s.12): see kamra.privacy.erase_guest. Stays
+and bills stay for the books. Irreversible.
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -967,12 +1014,30 @@ Everything the printable cancellation confirmation needs.
 
 ### `kamra.api.set_housekeeping_status`
 
-**GET/POST** · roles: `Housekeeping`, `Front Desk`, `Kamra Agent`
+**POST** · roles: `Housekeeping`, `Front Desk`, `Kamra Agent`
+
+Change a room's housekeeping status - role, property and DocPerm
+checked (#99): an attendant can mark Clean / Dirty, only a supervisor
+can pass a room or take it out of order, nobody can touch a room of a
+property they aren't assigned to, and removing Write on Room in the
+role permissions actually removes the ability.
 
 | Param | Required | Default |
 | --- | --- | --- |
 | `room` | yes |  |
 | `status` | yes |  |
+
+### `kamra.api.room_board`
+
+**GET/POST** · roles: `Front Desk`, `Kamra Agent`
+
+Every room at a glance for the housekeeping supervisor: status,
+occupancy, who is in it, and its open task - the board the desk has,
+inside the Housekeeping module (#99).
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
 
 ### `kamra.api.availability_calendar`
 
@@ -1116,12 +1181,32 @@ each venue's schedule so you can see availability and spot conflicts.
 
 **GET/POST** · roles: `Front Desk`, `Kamra Agent`
 
-Room move - mid-stay or before arrival. Overlap guard re-runs.
+Room move / upgrade - mid-stay or before arrival. Overlap guard re-runs.
+
+The new room may be a DIFFERENT room type (e.g. Standard -> Suite): the
+reservation's room type follows the room it moves into, so upgrades and
+downgrades are allowed. If the booking auto-prices, the new type's rate
+applies; a manually-priced booking keeps its amount.
 
 | Param | Required | Default |
 | --- | --- | --- |
 | `reservation` | yes |  |
 | `new_room` | yes |  |
+
+### `kamra.api.movable_rooms`
+
+**GET/POST** · roles: `Front Desk`, `Kamra Agent`
+
+Every room the booking could move into - across ALL room types, so the
+front desk can upgrade (Standard -> Suite) as well as swap same-type. Each
+room is flagged free/occupied for the dates and carries its type name; the
+booking's current type is listed first.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `reservation` | yes |  |
+| `check_in_date` | no | `None` |
+| `check_out_date` | no | `None` |
 
 ### `kamra.api.amend_stay`
 
@@ -3453,6 +3538,9 @@ the guest can never post directly to a folio.
 
 Hosting / implementation enquiry from kamrapms.com. Stored first (a lead is
 never lost even without SMTP), then a best-effort email to the team.
+
+Leads are System Manager–only and purged after
+``hosting_enquiry_retention_months`` (default 24) unless status is Won.
 
 | Param | Required | Default |
 | --- | --- | --- |

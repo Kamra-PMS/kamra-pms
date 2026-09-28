@@ -5,14 +5,53 @@ AGENT_EMAIL = "agent@kamra.local"
 AGENT_ROLE = "Kamra Agent"
 
 
+# business roles a hotel assigns to staff that no doctype perm creates
+STAFF_ROLES = ("Housekeeping Supervisor",)
+
+
 def after_install():
 	set_site_home_and_favicon()
 	ensure_agent_identity()
+	ensure_staff_roles()
 
 
 def after_migrate():
 	# heals sites that were installed before the agent identity existed here
 	ensure_agent_identity()
+	ensure_staff_roles()
+
+
+def ensure_staff_roles():
+	"""Roles only - their grants live on the endpoints (@require_roles)
+	and in the doctype JSON, never in custom DocPerms (see below)."""
+	for role in STAFF_ROLES:
+		if not frappe.db.exists("Role", role):
+			frappe.get_doc({
+				"doctype": "Role", "role_name": role, "desk_access": 0,
+			}).insert(ignore_permissions=True)
+	_mirror_custom_perms("Housekeeping", "Housekeeping Supervisor")
+
+
+def _mirror_custom_perms(from_role: str, to_role: str):
+	"""Where a site already carries Custom DocPerms for a doctype, those
+	replace the standard perms from the JSON - so a role added to the JSON
+	stays locked out there. Give the new role the same custom grants the
+	role it extends has, once; an admin's later edits are left alone."""
+	flags = ("read", "write", "create", "delete", "submit", "cancel",
+	         "amend", "report", "export", "print", "email", "share",
+	         "if_owner", "permlevel")
+	for cp in frappe.get_all("Custom DocPerm", filters={"role": from_role},
+	                         fields=["parent", *flags]):
+		if frappe.db.exists("Custom DocPerm", {"parent": cp.parent,
+		                                       "role": to_role,
+		                                       "permlevel": cp.permlevel}):
+			continue
+		frappe.get_doc({"doctype": "Custom DocPerm", "parent": cp.parent,
+		                "parenttype": "DocType", "parentfield": "permissions",
+		                "role": to_role,
+		                **{f: cp.get(f) for f in flags}}).insert(
+			ignore_permissions=True)
+		frappe.clear_cache(doctype=cp.parent)
 
 
 def ensure_agent_identity():

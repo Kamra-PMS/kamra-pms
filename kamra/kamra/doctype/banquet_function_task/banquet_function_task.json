@@ -89,7 +89,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-09-08 12:00:00.000000",
+ "modified": "2026-09-28 12:51:22.820746",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Banquet Function Task",
@@ -134,6 +134,11 @@
   {
    "read": 1,
    "role": "Revenue Manager",
+   "write": 1
+  },
+  {
+   "read": 1,
+   "role": "Housekeeping Supervisor",
    "write": 1
   }
  ],
