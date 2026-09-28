@@ -72,7 +72,7 @@ function PhoneInput(props: {
           onChange={(e) =>
             props.onChange(joinPhone(dial, clampLocal(e.target.value, dial)))
           }
-          placeholder={props.placeholder ?? "91488 69914"}
+          placeholder={props.placeholder ?? (dial === "91" ? "91488 69914" : "Mobile number")}
         />
         <span className="shrink-0 pr-3.5 text-xs tabular-nums text-zinc-400">
           {local.length}/{max}
