@@ -24,6 +24,12 @@ import frappe
 
 DEFAULT_VAT = Decimal("7")
 
+DEFAULT_CURRENCY = "THB"
+DEFAULT_TIMEZONE = "Asia/Bangkok"
+DEFAULT_NATIONALITY = "Thai"
+ID_TYPES = ["Thai ID Card", "Passport", "Driving License", "Other"]
+PAYMENT_MODES = ["Cash", "Card", "Bank Transfer"]
+
 
 def calculate_room_tax(property, room_type_doc, nightly_rate) -> Decimal:
 	"""Flat VAT - no slabs, no per-tariff switching. Unset means the

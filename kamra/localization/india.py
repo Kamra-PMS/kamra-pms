@@ -8,6 +8,13 @@ import frappe
 
 FNB_GST = 5.0  # F&B / meal-plan GST rate
 
+DEFAULT_CURRENCY = "INR"
+DEFAULT_TIMEZONE = "Asia/Kolkata"
+DEFAULT_NATIONALITY = "Indian"
+# Form C / the guest register accept any of these for Indian nationals
+ID_TYPES = ["Aadhaar", "Passport", "Driving License", "Voter ID", "PAN", "Other"]
+PAYMENT_MODES = ["Cash", "Card", "UPI", "Bank Transfer"]
+
 
 def _dec(v):
 	return Decimal(str(v or 0))

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import { useNavigate } from "react-router-dom"
 import { ChevronDown, Loader2, Megaphone, Plus, Star, Trash2, X } from "lucide-react"
 import {
   call,
@@ -12,7 +13,7 @@ import {
   type Quote,
 } from "../lib/api"
 import { Button } from "./ui/button"
-import { cur, moneyLocale } from "../lib/money"
+import { cur, moneyLocale, useLocale } from "../lib/money"
 import {
   clampLocal,
   isPhoneComplete,
@@ -21,6 +22,7 @@ import {
   splitPhone,
 } from "../lib/phone"
 import { useT } from "../lib/i18n"
+import { useCashierAuth } from "../lib/cashierAuth"
 
 interface ExtraRoom {
   room_type: string
@@ -101,6 +103,21 @@ function Field(props: { label: string; children: React.ReactNode }) {
 }
 
 
+interface FreeRoom {
+  name: string
+  room_number: string
+  housekeeping_status?: string
+}
+
+interface WalkInResult {
+  reservation: string
+  room: string
+  room_number: string
+  folio: string | null
+  paid?: number
+  amount_after_tax?: number
+}
+
 function todayLocal() {
   const d = new Date()
   const m = `${d.getMonth() + 1}`.padStart(2, "0")
@@ -119,6 +136,7 @@ export function BookingDialog(props: {
     guest_name?: string
     phone?: string
     stays?: number
+    walkIn?: boolean
   }
   onClose: () => void
   onBooked: () => void
@@ -133,6 +151,7 @@ export function BookingDialog(props: {
     ref: string
     room: string | null
     waitlist?: boolean
+    walkIn?: WalkInResult
   } | null>(
     null,
   )
@@ -191,6 +210,48 @@ export function BookingDialog(props: {
       : null,
   )
   const [hits, setHits] = useState<GuestHit[]>([])
+
+  // Walk-in: book + ID + room + payment + check-in on this one screen
+  // (issue #97). Arrival is always today, one room, no waitlist.
+  const navigate = useNavigate()
+  // ID documents and ways to pay come from the property's country pack
+  const loc = useLocale()
+  const { ensureUnlocked, status: pinStatus } = useCashierAuth()
+  const [walkIn, setWalkIn] = useState(!!props.initial.walkIn)
+  const [freeRooms, setFreeRooms] = useState<FreeRoom[] | null>(null)
+  const [walk, setWalk] = useState({
+    room: "",
+    id_type: "",
+    id_number: "",
+    nationality: "",
+    pay_mode: "Cash",
+    pay_amount: "",
+    pay_reference: "",
+  })
+  const setW = (k: keyof typeof walk, v: string) =>
+    setWalk((w) => ({ ...w, [k]: v }))
+  useEffect(() => {
+    setWalk((w) => ({
+      ...w,
+      pay_mode: loc.payment_modes.includes(w.pay_mode)
+        ? w.pay_mode
+        : (loc.payment_modes[0] ?? "Cash"),
+      nationality: w.nationality || loc.default_nationality,
+    }))
+  }, [loc])
+  // until the desk edits the amount, it tracks the live total
+  const [amountTouched, setAmountTouched] = useState(false)
+
+  function toggleWalkIn(on: boolean) {
+    setWalkIn(on)
+    setError(null)
+    if (on) {
+      setForm((f) => ({ ...f, check_in_date: todayLocal() }))
+      setMoreRooms([])
+      setAddonQty({})
+      setMoreOpen(false)
+    }
+  }
 
   // profile typeahead - find the returning guest before creating a dupe
   useEffect(() => {
@@ -298,6 +359,45 @@ export function BookingDialog(props: {
     }, 300)
     return () => clearTimeout(t)
   }, [moreRooms, form.check_in_date, checkOut])
+
+  // walk-in: the actual rooms free tonight, clean ones first
+  useEffect(() => {
+    if (!walkIn || !form.room_type) return
+    setFreeRooms(null)
+    let live = true
+    call<FreeRoom[]>("kamra.api.available_rooms", {
+      property: getCurrentProperty(),
+      room_type: form.room_type,
+      check_in_date: form.check_in_date,
+      check_out_date: checkOut,
+    })
+      .then((rs) => {
+        if (!live) return
+        const rank = (r: FreeRoom) =>
+          r.housekeeping_status === "Clean" ||
+          r.housekeeping_status === "Inspected"
+            ? 0
+            : 1
+        const sorted = [...rs].sort(
+          (a, b) =>
+            rank(a) - rank(b) ||
+            a.room_number.localeCompare(b.room_number, undefined, {
+              numeric: true,
+            }),
+        )
+        setFreeRooms(sorted)
+        setWalk((w) => ({
+          ...w,
+          room: sorted.some((r) => r.name === w.room)
+            ? w.room
+            : (sorted[0]?.name ?? ""),
+        }))
+      })
+      .catch(() => live && setFreeRooms([]))
+    return () => {
+      live = false
+    }
+  }, [walkIn, form.room_type, form.check_in_date, checkOut])
 
   function shortErr(e: unknown): string {
     const body = (e as { body?: string }).body
@@ -435,6 +535,48 @@ export function BookingDialog(props: {
     }
   }
 
+  // one key per open dialog: a double-tap replays instead of double-booking
+  const [walkInKey] = useState(() =>
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `walkin-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+  )
+
+  async function submitWalkIn() {
+    setBusy(true)
+    setError(null)
+    try {
+      const amount = Number(walk.pay_amount) || 0
+      if (amount > 0 && pinStatus?.required) await ensureUnlocked()
+      const res = await call<WalkInResult>("kamra.api.walk_in", {
+        property: getCurrentProperty(),
+        room_type: form.room_type,
+        room: walk.room,
+        check_out_date: checkOut,
+        guest_name: form.guest_name,
+        phone: form.phone || undefined,
+        guest: profile?.name,
+        adults: form.adults,
+        children: form.children,
+        meal_plan: form.meal_plan || undefined,
+        voucher_code: form.voucher_code || undefined,
+        id_type: walk.id_type || undefined,
+        id_number: walk.id_number.trim() || undefined,
+        nationality: walk.nationality.trim() || undefined,
+        payment_mode: amount > 0 ? walk.pay_mode : undefined,
+        payment_amount: amount,
+        payment_reference: walk.pay_reference.trim() || undefined,
+        idempotency_key: walkInKey,
+      })
+      setDone({ ref: res.reservation, room: res.room, walkIn: res })
+      props.onBooked()
+    } catch (e) {
+      setError(shortErr(e))
+    } finally {
+      setBusy(false)
+    }
+  }
+
   const set = (k: string, v: string | number) =>
     setForm((f) => ({ ...f, [k]: v }))
 
@@ -502,6 +644,24 @@ export function BookingDialog(props: {
     )
   })()
 
+  useEffect(() => {
+    if (walkIn && !amountTouched)
+      setWalk((w) => ({
+        ...w,
+        pay_amount: grandTotal > 0 ? String(Math.round(grandTotal * 100) / 100) : "",
+      }))
+  }, [walkIn, amountTouched, grandTotal])
+
+  const payAmount = Number(walk.pay_amount) || 0
+  const walkInBlocked =
+    busy ||
+    !form.guest_name ||
+    !quote ||
+    badPhone ||
+    !walk.room ||
+    payAmount < 0 ||
+    (!!walk.id_number.trim() && !walk.id_type)
+
   const cancelCutoff = (() => {
     const pol = options?.property
     if (!pol) return ""
@@ -520,7 +680,7 @@ export function BookingDialog(props: {
       className="fixed inset-0 z-50"
       role="dialog"
       aria-modal="true"
-      aria-label={t("New booking")}
+      aria-label={walkIn ? t("Walk-in") : t("New booking")}
       onKeyDown={(e) => e.key === "Escape" && props.onClose()}
     >
       <div
@@ -534,14 +694,44 @@ export function BookingDialog(props: {
         <header className="flex shrink-0 items-center justify-between gap-4 border-b border-zinc-200 px-6 py-4 md:px-8">
           <div className="min-w-0">
             <h2 className="text-xl font-semibold tracking-tight text-zinc-900">
-              {t("New booking")}
+              {walkIn ? t("Walk-in") : t("New booking")}
             </h2>
             <p className="mt-0.5 truncate text-sm text-zinc-500">
               {getCurrentProperty()}
               <span className="text-zinc-300"> · </span>
-              {t("Live quote as you type")}
+              {walkIn
+                ? t("Book, check in and collect in one step")
+                : t("Live quote as you type")}
             </p>
           </div>
+          {!done && (
+            <div
+              role="radiogroup"
+              aria-label={t("Booking mode")}
+              className="ml-auto inline-flex shrink-0 rounded-lg bg-zinc-100 p-0.5 text-sm font-medium"
+            >
+              {[
+                { on: false, label: t("Reservation") },
+                { on: true, label: t("Walk-in") },
+              ].map((m) => (
+                <button
+                  key={m.label}
+                  type="button"
+                  role="radio"
+                  aria-checked={walkIn === m.on}
+                  onClick={() => toggleWalkIn(m.on)}
+                  className={
+                    "rounded-md px-3 py-1.5 transition-colors " +
+                    (walkIn === m.on
+                      ? "bg-white text-zinc-900 shadow-sm"
+                      : "text-zinc-500 hover:text-zinc-800")
+                  }
+                >
+                  {m.label}
+                </button>
+              ))}
+            </div>
+          )}
           <Button variant="ghost" onClick={props.onClose} aria-label={t("Close")}>
             <X className="size-5" />
           </Button>
@@ -549,7 +739,23 @@ export function BookingDialog(props: {
 
         {done ? (
           <div className="space-y-5 overflow-y-auto px-6 py-8 md:px-8">
-            {done.waitlist ? (
+            {done.walkIn ? (
+              <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-emerald-800">
+                <p className="text-lg font-semibold">
+                  {t("Checked in · Room {n}", { n: done.walkIn.room_number })}
+                </p>
+                <p className="mt-1 text-sm">
+                  {done.ref}
+                  {" · "}
+                  {(done.walkIn.paid ?? 0) > 0
+                    ? t("{amt} of {total} collected", {
+                        amt: `${cur()}${inr(done.walkIn.paid ?? 0)}`,
+                        total: `${cur()}${inr(done.walkIn.amount_after_tax ?? 0)}`,
+                      })
+                    : t("Nothing collected yet - it's all on the bill.")}
+                </p>
+              </div>
+            ) : done.waitlist ? (
               <div className="rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 text-amber-800">
                 <p className="text-lg font-semibold">{t("Waitlisted · {ref}", { ref: done.ref })}</p>
                 <p className="mt-1 text-sm">
@@ -650,9 +856,23 @@ export function BookingDialog(props: {
               </dl>
             </div>
 
-            <Button className="px-5 py-2.5 text-base" onClick={props.onClose}>
-              {t("Done")}
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button className="px-5 py-2.5 text-base" onClick={props.onClose}>
+                {t("Done")}
+              </Button>
+              {done.walkIn?.folio && (
+                <Button
+                  variant="outline"
+                  className="px-5 py-2.5 text-base"
+                  onClick={() => {
+                    navigate(`/billing/${done.walkIn!.folio}`)
+                    props.onClose()
+                  }}
+                >
+                  {t("Open bill")}
+                </Button>
+              )}
+            </div>
           </div>
         ) : (
           <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
@@ -742,6 +962,46 @@ export function BookingDialog(props: {
                   </Field>
                 </div>
 
+                {walkIn && (
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    <Field label={t("ID type")}>
+                      <select
+                        className={inputCls}
+                        value={walk.id_type}
+                        onChange={(e) => setW("id_type", e.target.value)}
+                      >
+                        <option value="">{t("Select")}</option>
+                        {loc.id_types.map((x) => (
+                          <option key={x} value={x}>
+                            {t(x)}
+                          </option>
+                        ))}
+                      </select>
+                    </Field>
+                    <Field label={t("ID number")}>
+                      <input
+                        className={inputCls}
+                        value={walk.id_number}
+                        onChange={(e) => setW("id_number", e.target.value)}
+                        autoComplete="off"
+                      />
+                      {!!walk.id_number.trim() && !walk.id_type && (
+                        <p className="mt-1.5 text-xs text-rose-600">
+                          {t("Pick the ID type too.")}
+                        </p>
+                      )}
+                    </Field>
+                    <Field label={t("Nationality")}>
+                      <input
+                        className={inputCls}
+                        value={walk.nationality}
+                        onChange={(e) => setW("nationality", e.target.value)}
+                      />
+                    </Field>
+                  </div>
+                )}
+
+                <div className={walkIn ? "grid gap-3 sm:grid-cols-2" : ""}>
                 <Field label={t("Room type")}>
                   <select
                     className={inputCls}
@@ -766,14 +1026,58 @@ export function BookingDialog(props: {
                       </p>
                     )}
                 </Field>
+                {walkIn && (
+                  <Field label={t("Room")}>
+                    <select
+                      className={inputCls}
+                      value={walk.room}
+                      disabled={!freeRooms?.length}
+                      onChange={(e) => setW("room", e.target.value)}
+                    >
+                      {freeRooms === null ? (
+                        <option value="">{t("Loading…")}</option>
+                      ) : freeRooms.length === 0 ? (
+                        <option value="">{t("No free room tonight")}</option>
+                      ) : (
+                        freeRooms.map((r) => (
+                          <option key={r.name} value={r.name}>
+                            {r.room_number}
+                            {r.housekeeping_status
+                              ? ` · ${t(r.housekeeping_status)}`
+                              : ""}
+                          </option>
+                        ))
+                      )}
+                    </select>
+                    {freeRooms?.length === 0 && (
+                      <p className="mt-1.5 text-xs text-rose-600">
+                        {t("This type is full tonight - try another room type.")}
+                      </p>
+                    )}
+                    {(() => {
+                      const r = freeRooms?.find((x) => x.name === walk.room)
+                      return r?.housekeeping_status &&
+                        !["Clean", "Inspected"].includes(r.housekeeping_status) ? (
+                        <p className="mt-1.5 text-xs text-amber-700">
+                          {t("{room} hasn't been cleaned yet - housekeeping will see the room flip to occupied.", {
+                            room: r.room_number,
+                          })}
+                        </p>
+                      ) : null
+                    })()}
+                  </Field>
+                )}
+                </div>
 
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                   <Field label={t("Check-in")}>
                     <input
                       type="date"
-                      className={inputCls}
+                      className={inputCls + (walkIn ? " bg-zinc-50 text-zinc-500" : "")}
                       min={todayLocal()}
                       value={form.check_in_date}
+                      readOnly={walkIn}
+                      title={walkIn ? t("A walk-in arrives today") : undefined}
                       onChange={(e) => set("check_in_date", e.target.value)}
                     />
                     {pastCheckIn && (
@@ -865,6 +1169,73 @@ export function BookingDialog(props: {
                   </Field>
                 </div>
 
+                {walkIn && (
+                  <div className="space-y-3 rounded-xl border border-zinc-200 p-4">
+                    <h3 className="text-sm font-semibold text-zinc-800">
+                      {t("Payment")}
+                    </h3>
+                    <div
+                      role="radiogroup"
+                      aria-label={t("Payment mode")}
+                      className="flex flex-wrap gap-2"
+                    >
+                      {loc.payment_modes.map((m) => (
+                        <button
+                          key={m}
+                          type="button"
+                          role="radio"
+                          aria-checked={walk.pay_mode === m}
+                          onClick={() => setW("pay_mode", m)}
+                          className={
+                            "rounded-lg border px-3.5 py-2 text-sm font-medium transition-colors " +
+                            (walk.pay_mode === m
+                              ? "border-brand-600 bg-brand-50 text-brand-800"
+                              : "border-zinc-200 text-zinc-600 hover:border-zinc-300")
+                          }
+                        >
+                          {t(m)}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <Field label={t("Amount collected")}>
+                        <input
+                          type="number"
+                          min={0}
+                          step="0.01"
+                          inputMode="decimal"
+                          className={inputCls}
+                          value={walk.pay_amount}
+                          onChange={(e) => {
+                            setAmountTouched(true)
+                            setW("pay_amount", e.target.value)
+                          }}
+                        />
+                        <p className="mt-1.5 text-xs text-zinc-400">
+                          {payAmount <= 0
+                            ? t("Nothing collected now - the full amount stays on the bill.")
+                            : payAmount < grandTotal
+                              ? t("{amt} left on the bill.", {
+                                  amt: `${cur()}${inr(grandTotal - payAmount)}`,
+                                })
+                              : t("Paid in full.")}
+                        </p>
+                      </Field>
+                      {walk.pay_mode !== "Cash" && (
+                        <Field label={t("Reference")}>
+                          <input
+                            className={inputCls}
+                            value={walk.pay_reference}
+                            onChange={(e) => setW("pay_reference", e.target.value)}
+                            placeholder={t("Card slip / transfer ref (optional)")}
+                          />
+                        </Field>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {!walkIn && (<>
                 {moreRooms.map((r, i) => (
                   <div
                     key={i}
@@ -1249,6 +1620,7 @@ export function BookingDialog(props: {
                     </div>
                   )}
                 </div>
+                </>)}
               </div>
             </div>
 
@@ -1298,7 +1670,9 @@ export function BookingDialog(props: {
                       </div>
                     )}
                     <div className="flex justify-between text-zinc-600">
-                      <span>GST {quote.tax_percent}%</span>
+                      <span>
+                        {loc.tax_label} {quote.tax_percent}%
+                      </span>
                       <span className="tabular-nums">
                         {cur()}
                         {inr(quote.tax_amount)}
@@ -1325,7 +1699,9 @@ export function BookingDialog(props: {
                     )}
                     {addonsGross > 0 && (
                       <div className="flex justify-between text-zinc-600">
-                        <span>Add-ons (incl. GST)</span>
+                        <span>
+                          {t("Add-ons (incl. {tax})", { tax: loc.tax_label })}
+                        </span>
                         <span className="tabular-nums">
                           {cur()}
                           {inr(addonsGross)}
@@ -1372,6 +1748,31 @@ export function BookingDialog(props: {
               </div>
 
               <div className="shrink-0 space-y-2 border-t border-zinc-200 bg-white px-6 py-4 md:px-7">
+                {walkIn ? (
+                  <>
+                    <Button
+                      className="w-full justify-center py-2.5 text-base"
+                      disabled={walkInBlocked}
+                      onClick={() => submitWalkIn()}
+                    >
+                      {busy
+                        ? t("Checking in…")
+                        : payAmount > 0
+                          ? t("Check in & collect {amt}", {
+                              amt: `${cur()}${inr(payAmount)}`,
+                            })
+                          : t("Check in")}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-center"
+                      onClick={props.onClose}
+                    >
+                      {t("Cancel")}
+                    </Button>
+                  </>
+                ) : (
+                <>
                 <Button
                   className="w-full justify-center py-2.5 text-base"
                   disabled={busy || !form.guest_name || !quote || pastCheckIn || badPhone}
@@ -1397,6 +1798,8 @@ export function BookingDialog(props: {
                     {t("Waitlist")}
                   </Button>
                 </div>
+                </>
+                )}
               </div>
             </aside>
           </div>

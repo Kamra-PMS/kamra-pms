@@ -83,9 +83,9 @@
   },
   {
    "fieldname": "id_type",
-   "fieldtype": "Select",
+   "fieldtype": "Data",
    "label": "Id Type",
-   "options": "\nAadhaar\nPassport\nDriving License\nVoter ID\nOther"
+   "description": "One of the ID types the property's country pack accepts"
   },
   {
    "fieldname": "id_number",
@@ -166,7 +166,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-07-04 20:02:58.739313",
+ "modified": "2026-09-28 08:14:45.883418",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Guest",

@@ -9,7 +9,7 @@ import { serverError } from "../lib/resource"
 import { useCashierAuth } from "../lib/cashierAuth"
 import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
-import { cur, moneyLocale, taxLabel } from "../lib/money"
+import { cur, locale, moneyLocale, taxLabel, useLocale } from "../lib/money"
 import { useT } from "../lib/i18n"
 import {
   Card,
@@ -145,7 +145,6 @@ const CHARGE_TYPES = [
   "Food & Beverage", "Minibar", "Laundry", "Spa",
   "Early Check-in", "Late Checkout", "Discount", "Misc",
 ]
-const PAY_MODES = ["Cash", "Card", "UPI", "Bank Transfer", "Payment Link"]
 
 const inputCls =
   "rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm " +
@@ -197,7 +196,15 @@ export default function FolioView() {
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [voidFor, setVoidFor] = useState<string | null>(null)
   const [partVal, setPartVal] = useState("")
-  const [payment, setPayment] = useState({ mode: "UPI", amount: "", reference: "", kind: "Payment" })
+  // ways to pay follow the country pack; Payment Link is the gateway, anywhere
+  const loc = useLocale()
+  const PAY_MODES = [...loc.payment_modes, "Payment Link"]
+  const [payment, setPayment] = useState({
+    mode: locale().payment_modes[0] ?? "Cash",
+    amount: "",
+    reference: "",
+    kind: "Payment",
+  })
   const [refund, setRefund] = useState<{ amount: string; mode: string; reason: string } | null>(null)
   const [showCancel, setShowCancel] = useState(false)
   const [cancelReason, setCancelReason] = useState("")

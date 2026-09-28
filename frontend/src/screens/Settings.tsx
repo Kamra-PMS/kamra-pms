@@ -12,7 +12,7 @@ import { useT } from "../lib/i18n"
 import { Button } from "../components/ui/button"
 import ImageField from "../components/ImageField"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
-import { cur, moneyLocale } from "../lib/money"
+import { cur, loadLocale, moneyLocale, useLocale } from "../lib/money"
 
 /** Settings hub - everything an owner/GM configures once and forgets:
  * property identity, GST, privacy, booking page, payments, agent access. */
@@ -215,7 +215,13 @@ const PROPERTY_SPECS: Spec[] = [
   {
     field: "country",
     label: "Country",
-    hint: "Selects the tax & invoicing pack (India and Indonesia today; more via the Marketplace) and the default phone country code for guests.",
+    type: "select",
+    hint: "Selects the tax & invoicing pack - tax labels, ID types, payment methods and the default phone country code for guests follow it. Other countries run on a flat-tax generic pack.",
+  },
+  {
+    field: "currency",
+    label: "Currency",
+    hint: "ISO code, e.g. SAR, AED, USD. Set it when you change country.",
   },
   {
     field: "timezone",
@@ -234,13 +240,22 @@ const PROPERTY_SPECS: Spec[] = [
   { field: "pincode", label: "PIN code" },
 ]
 
-/** Keep an unknown existing IANA zone visible in the picker. */
-function propertySpecsFor(doc: Doc): Spec[] {
+/** Keep an unknown existing IANA zone - or a country with no dedicated
+ *  pack - visible in its picker; label the tax id the country's way. */
+function propertySpecsFor(doc: Doc, countries: string[], taxIdLabel: string): Spec[] {
   const tz = String(doc.timezone || "").trim()
-  if (!tz || TIMEZONES.includes(tz)) return PROPERTY_SPECS
-  return PROPERTY_SPECS.map((s) =>
-    s.field === "timezone" ? { ...s, options: [tz, ...TIMEZONES] } : s,
-  )
+  const country = String(doc.country || "").trim()
+  return PROPERTY_SPECS.map((s) => {
+    if (s.field === "timezone" && tz && !TIMEZONES.includes(tz))
+      return { ...s, options: [tz, ...TIMEZONES] }
+    if (s.field === "country")
+      return {
+        ...s,
+        options: country && !countries.includes(country) ? [country, ...countries] : countries,
+      }
+    if (s.field === "gstin") return { ...s, label: taxIdLabel }
+    return s
+  })
 }
 
 const STAY_TAX_SPECS: Spec[] = [
@@ -743,6 +758,13 @@ export default function Settings() {
   const { t } = useT()
   const property = getCurrentProperty()
   const [prop, setProp] = useState<Doc | null>(null)
+  const loc = useLocale()
+  const [countries, setCountries] = useState<string[]>([])
+  useEffect(() => {
+    call<{ country: string }[]>("kamra.api.localization_countries")
+      .then((cs) => setCountries(cs.map((c) => c.country)))
+      .catch(() => setCountries([]))
+  }, [])
   const [gateway, setGateway] = useState<Doc | null>(null)
   const [ai, setAi] = useState<Doc | null>(null)
   const [theme, setThemeState] = useState<Theme>(getTheme())
@@ -788,16 +810,18 @@ export default function Settings() {
       <SettingsCard
         title="Property"
         description="Identity and contact details - printed on invoices and the GRC."
-        specs={propertySpecsFor(prop)}
+        specs={propertySpecsFor(prop, countries, loc.tax_id_label)}
         doc={prop}
         onSave={async (changes) => {
           await updateResource("Property", property, changes)
+          // a new country swaps the pack: currency, tax words, IDs, payments
+          if ("country" in changes || "currency" in changes) await loadLocale()
           load()
         }}
       />
       <SettingsCard
         title="Stay, tax & privacy"
-        description="Check-in/out times, GST slabs and how long guest IDs are kept."
+        description="Check-in/out times, tax slabs and how long guest IDs are kept."
         specs={STAY_TAX_SPECS}
         doc={prop}
         onSave={async (changes) => {

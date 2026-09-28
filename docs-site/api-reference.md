@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function — the same governed layer
-the UI and the AI use. **258 endpoints**, generated from the source
+the UI and the AI use. **260 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -935,6 +935,43 @@ suggestion plus every room the desk may hand over instead.
 | `reservation` | yes |  |
 | `room` | no | `None` |
 
+### `kamra.api.walk_in`
+
+**POST** · roles: `Front Desk`, `Kamra Agent`
+
+Walk-in in one step: book, register the ID, check into the chosen
+room and take the money - the counter flow that used to be four screens.
+
+It is the same writers chained (create_booking → check_in →
+add_folio_payment), inside one request, so it is all-or-nothing: a
+refused PIN or a room that just sold rolls the booking back too.
+Arrival is always today (calendar, like every new booking - a lagging
+night audit must not turn walk-ins away); a future stay is a normal
+booking, not a walk-in.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `room_type` | yes |  |
+| `room` | yes |  |
+| `check_out_date` | yes |  |
+| `guest_name` | yes |  |
+| `phone` | no | `None` |
+| `guest` | no | `None` |
+| `adults` | no | `2` |
+| `children` | no | `0` |
+| `meal_plan` | no | `None` |
+| `voucher_code` | no | `None` |
+| `company` | no | `None` |
+| `id_type` | no | `None` |
+| `id_number` | no | `None` |
+| `nationality` | no | `None` |
+| `payment_mode` | no | `None` |
+| `payment_amount` | no | `0` |
+| `payment_reference` | no | `None` |
+| `pin` | no | `None` |
+| `idempotency_key` | no | `None` |
+
 ### `kamra.api.upload_occupant_id`
 
 **POST** · roles: `Front Desk`, `Kamra Agent`
@@ -1565,6 +1602,14 @@ so no screen hardcodes ₹ or GST %.
 | Param | Required | Default |
 | --- | --- | --- |
 | `property` | yes |  |
+
+### `kamra.api.localization_countries`
+
+**GET/POST**
+
+Countries with a dedicated tax & invoicing pack, with the currency,
+time zone and tax vocabulary picking one sets up. Read-only reference
+data for the setup wizard and Settings.
 
 ### `kamra.api.pending_deposit_refunds`
 

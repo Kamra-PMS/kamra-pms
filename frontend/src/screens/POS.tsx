@@ -14,7 +14,7 @@ import { printThermal, kotHtml, billHtml, type BillData, type KotLine } from "..
 import { useFloorFullscreen } from "../lib/kiosk"
 import { Button } from "../components/ui/button"
 import { cn } from "../lib/utils"
-import { cur, moneyLocale } from "../lib/money"
+import { cur, moneyLocale, useLocale } from "../lib/money"
 import { useT } from "../lib/i18n"
 
 const inr = (n: unknown) =>
@@ -161,6 +161,9 @@ function ago(ts?: string) {
 export default function POS() {
   const { t } = useT()
   const { ensureUnlocked } = useCashierAuth()
+  // pay_order settles Cash / Card / UPI; offer the ones this country uses
+  const loc = useLocale()
+  const posModes = ["Cash", "Card", "UPI"].filter((m) => loc.payment_modes.includes(m))
   const rootRef = useRef<HTMLDivElement>(null)
   const [outlets, setOutlets] = useState<Outlet[]>([])
   const [outlet, setOutlet] = useState("")
@@ -413,7 +416,7 @@ export default function POS() {
       })
     }
   }
-  async function settle(mode: "Cash" | "Card" | "UPI") {
+  async function settle(mode: string) {
     if (!selected) return
     const order = selected
     await act(async () => {
@@ -1325,8 +1328,8 @@ export default function POS() {
                   </div>
                 ) : (
                   <>
-                    <div className="grid grid-cols-3 gap-1.5">
-                      {(["Cash", "Card", "UPI"] as const).map((m) => (
+                    <div className={cn("grid gap-1.5", posModes.length > 2 ? "grid-cols-3" : "grid-cols-2")}>
+                      {posModes.map((m) => (
                         <Button key={m} className="h-12 justify-center text-base" disabled={busy} onClick={() => settle(m)}>{m}</Button>
                       ))}
                     </div>
