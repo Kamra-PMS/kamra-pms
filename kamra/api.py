@@ -2838,14 +2838,96 @@ def check_out(reservation: str):
 	return {"ok": True, "reservation": doc.name}
 
 
-@frappe.whitelist()
-@require_roles("Housekeeping", "Front Desk", "Kamra Agent")
+HK_SUPERVISOR = "Housekeeping Supervisor"
+# who oversees rooms: the supervisor, the desk, and the property's admins
+_ROOM_SUPERVISORS = {HK_SUPERVISOR, "Front Desk", "Hotel Admin",
+                     "System Manager", "Kamra Agent"}
+# what an attendant may set by hand; passing a room (Inspected / Ready) or
+# taking it out of order is a supervisor's call
+_ATTENDANT_STATUSES = {"Clean", "Dirty"}
+
+
+def _is_room_supervisor() -> bool:
+	return frappe.session.user == "Administrator" or \
+		bool(_ROOM_SUPERVISORS & set(frappe.get_roles()))
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Housekeeping", HK_SUPERVISOR, "Front Desk", "Kamra Agent")
 def set_housekeeping_status(room: str, status: str):
+	"""Change a room's housekeeping status - role, property and DocPerm
+	checked (#99): an attendant can mark Clean / Dirty, only a supervisor
+	can pass a room or take it out of order, nobody can touch a room of a
+	property they aren't assigned to, and removing Write on Room in the
+	role permissions actually removes the ability."""
 	allowed = {"Clean", "Dirty", "Inspected", "Ready", "Out of Order"}
 	if status not in allowed:
 		frappe.throw(f"Invalid status. Use one of {sorted(allowed)}")
+	r = frappe.db.get_value("Room", room, ["property", "housekeeping_status"],
+	                        as_dict=True)
+	if not r:
+		frappe.throw(_("Room {0} not found.").format(room), frappe.DoesNotExistError)
+	from kamra.crs import assert_property_access
+	assert_property_access(r.property)
+	frappe.has_permission("Room", "write", doc=room, throw=True)
+	if status not in _ATTENDANT_STATUSES and not _is_room_supervisor():
+		frappe.throw(
+			_("Only a housekeeping supervisor can set a room to {0}.").format(status),
+			frappe.PermissionError)
+	if status == r.housekeeping_status:
+		return {"ok": True, "room": room, "status": status}
 	frappe.db.set_value("Room", room, "housekeeping_status", status)
+	from kamra.savings import log_action
+	log_action("room_status", "Room", room, r.property,
+	           rationale=f"{r.housekeeping_status or '-'} → {status}")
 	return {"ok": True, "room": room, "status": status}
+
+
+@frappe.whitelist()
+@require_roles(HK_SUPERVISOR, "Front Desk", "Kamra Agent")
+def room_board(property: str):
+	"""Every room at a glance for the housekeeping supervisor: status,
+	occupancy, who is in it, and its open task - the board the desk has,
+	inside the Housekeeping module (#99)."""
+	from kamra.crs import assert_property_access
+	assert_property_access(property)
+	rooms = frappe.get_all(
+		"Room", filters={"property": property},
+		fields=["name", "room_number", "room_type", "floor",
+		        "housekeeping_status", "occupancy_status"],
+		order_by="room_number asc",
+	)
+	in_house = {
+		r.room: r for r in frappe.get_all(
+			"Reservation",
+			filters={"property": property, "status": "Checked In",
+			         "room": ("is", "set")},
+			fields=["room", "guest_name", "check_out_date"])}
+	due_out = str(nowdate())
+	tasks = {}
+	for t in frappe.get_all(
+			"Housekeeping Task",
+			filters={"property": property,
+			         "status": ("in", ["Pending", "In Progress"])},
+			fields=["name", "room", "task_type", "status", "priority",
+			        "assigned_to_user", "due_by"],
+			order_by="creation asc"):
+		tasks.setdefault(t.room, t)
+	names = {u.name: u.full_name for u in frappe.get_all(
+		"User", filters={"name": ("in", list({t.assigned_to_user for t in
+		                                      tasks.values() if t.assigned_to_user}))},
+		fields=["name", "full_name"])} if tasks else {}
+	for r in rooms:
+		stay = in_house.get(r.name)
+		r["guest_name"] = stay.guest_name if stay else None
+		r["due_out"] = bool(stay and str(stay.check_out_date) <= due_out)
+		t = tasks.get(r.name)
+		r["task"] = {
+			"name": t.name, "type": t.task_type, "status": t.status,
+			"priority": t.priority,
+			"assignee": names.get(t.assigned_to_user) or t.assigned_to_user,
+		} if t else None
+	return {"rooms": rooms, "can_supervise": _is_room_supervisor()}
 
 
 @frappe.whitelist()

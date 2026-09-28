@@ -3023,10 +3023,47 @@
         "kamra.api.set_housekeeping_status"
        ]
       },
-      "description": "",
+      "description": "Change a room's housekeeping status - role, property and DocPerm\nchecked (#99): an attendant can mark Clean / Dirty, only a supervisor\ncan pass a room or take it out of order, nobody can touch a room of a\nproperty they aren't assigned to, and removing Write on Room in the\nrole permissions actually removes the ability.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"room\": \"Your Property-101\",\n  \"status\": \"<status>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "room_board",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.room_board",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.room_board"
+       ]
+      },
+      "description": "Every room at a glance for the housekeeping supervisor: status,\noccupancy, who is in it, and its open task - the board the desk has,\ninside the Housekeeping module (#99).",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\"\n}",
        "options": {
         "raw": {
          "language": "json"

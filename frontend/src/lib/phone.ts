@@ -133,6 +133,67 @@ const DIAL_BY_COUNTRY: Record<string, string> = {
   mu: "230",
   israel: "972",
   il: "972",
+  nigeria: "234",
+  ng: "234",
+  ethiopia: "251",
+  et: "251",
+  tanzania: "255",
+  tz: "255",
+
+  // Rest of the Arab world, with Arabic names (the desk UI ships in Arabic)
+  yemen: "967",
+  ye: "967",
+  "اليمن": "967",
+  jordan: "962",
+  jo: "962",
+  "الأردن": "962",
+  iraq: "964",
+  iq: "964",
+  "العراق": "964",
+  syria: "963",
+  sy: "963",
+  "سوريا": "963",
+  lebanon: "961",
+  lb: "961",
+  "لبنان": "961",
+  palestine: "970",
+  ps: "970",
+  "فلسطين": "970",
+  morocco: "212",
+  ma: "212",
+  "المغرب": "212",
+  algeria: "213",
+  dz: "213",
+  "الجزائر": "213",
+  tunisia: "216",
+  tn: "216",
+  "تونس": "216",
+  libya: "218",
+  ly: "218",
+  "ليبيا": "218",
+  sudan: "249",
+  sd: "249",
+  "السودان": "249",
+  "مصر": "20",
+  "السعودية": "966",
+  "الإمارات": "971",
+  "قطر": "974",
+  "الكويت": "965",
+  "عمان": "968",
+  "عُمان": "968",
+  "البحرين": "973",
+
+  // Rest of Asia
+  iran: "98",
+  ir: "98",
+  afghanistan: "93",
+  af: "93",
+  cambodia: "855",
+  kh: "855",
+  myanmar: "95",
+  mm: "95",
+  laos: "856",
+  la: "856",
 }
 
 /**
@@ -204,6 +265,29 @@ const LENGTH_BY_DIAL: Record<string, { min: number; max: number }> = {
   "20": { min: 10, max: 10 }, // Egypt
   "230": { min: 7, max: 8 }, // Mauritius
   "972": { min: 9, max: 9 }, // Israel
+  "234": { min: 8, max: 10 }, // Nigeria
+  "251": { min: 9, max: 9 }, // Ethiopia
+  "255": { min: 9, max: 9 }, // Tanzania
+
+  // Rest of the Arab world
+  "967": { min: 7, max: 9 }, // Yemen - 7-8 landline, 9 mobile
+  "962": { min: 8, max: 9 }, // Jordan
+  "964": { min: 8, max: 10 }, // Iraq
+  "963": { min: 8, max: 9 }, // Syria
+  "961": { min: 7, max: 8 }, // Lebanon
+  "970": { min: 8, max: 9 }, // Palestine
+  "212": { min: 9, max: 9 }, // Morocco
+  "213": { min: 8, max: 9 }, // Algeria
+  "216": { min: 8, max: 8 }, // Tunisia
+  "218": { min: 8, max: 9 }, // Libya
+  "249": { min: 9, max: 9 }, // Sudan
+
+  // Rest of Asia
+  "98": { min: 10, max: 10 }, // Iran
+  "93": { min: 9, max: 9 }, // Afghanistan
+  "855": { min: 8, max: 9 }, // Cambodia
+  "95": { min: 7, max: 10 }, // Myanmar
+  "856": { min: 8, max: 10 }, // Laos
 }
 
 /** E.164 caps a full number at 15 digits, so an unlisted code gets the slack. */
@@ -285,6 +369,14 @@ export function formatPhoneTel(
  * render the code as a fixed prefix. Falls back to the property's country when
  * the stored value carries no code of its own.
  */
+const KNOWN_DIALS = [...new Set(Object.values(DIAL_BY_COUNTRY))].sort(
+  (x, y) => y.length - x.length,
+)
+
+function knownDialPrefix(digits: string): string | undefined {
+  return KNOWN_DIALS.find((d) => digits.startsWith(d) && digits.length > d.length)
+}
+
 export function splitPhone(
   phone: string | null | undefined,
   country?: string | null,
@@ -296,10 +388,12 @@ export function splitPhone(
     // joinPhone always writes a leading "+", so the code here is unambiguous
     // even mid-typing: "+919" is a 1-digit local number, not "919".
     const digits = digitsOnly(raw.slice(1))
-    return {
-      dial,
-      local: digits.startsWith(dial) ? digits.slice(dial.length) : digits,
-    }
+    if (digits.startsWith(dial)) return { dial, local: digits.slice(dial.length) }
+    // A foreign guest's number (+967... at an Indian property) keeps its own
+    // code; dial codes are prefix-free, so the first known match is the one.
+    const own = knownDialPrefix(digits)
+    if (own) return { dial: own, local: digits.slice(own.length) }
+    return { dial, local: digits }
   }
   // stored without a code: only strip one that sits in front of a full local
   // number, since a 10-digit Indian number can itself start with "91"

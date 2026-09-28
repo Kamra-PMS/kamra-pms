@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function — the same governed layer
-the UI and the AI use. **261 endpoints**, generated from the source
+the UI and the AI use. **262 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -1051,12 +1051,30 @@ Everything the printable cancellation confirmation needs.
 
 ### `kamra.api.set_housekeeping_status`
 
-**GET/POST** · roles: `Housekeeping`, `Front Desk`, `Kamra Agent`
+**POST** · roles: `Housekeeping`, `Front Desk`, `Kamra Agent`
+
+Change a room's housekeeping status - role, property and DocPerm
+checked (#99): an attendant can mark Clean / Dirty, only a supervisor
+can pass a room or take it out of order, nobody can touch a room of a
+property they aren't assigned to, and removing Write on Room in the
+role permissions actually removes the ability.
 
 | Param | Required | Default |
 | --- | --- | --- |
 | `room` | yes |  |
 | `status` | yes |  |
+
+### `kamra.api.room_board`
+
+**GET/POST** · roles: `Front Desk`, `Kamra Agent`
+
+Every room at a glance for the housekeeping supervisor: status,
+occupancy, who is in it, and its open task - the board the desk has,
+inside the Housekeeping module (#99).
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
 
 ### `kamra.api.availability_calendar`
 

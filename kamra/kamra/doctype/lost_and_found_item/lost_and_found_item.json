@@ -109,7 +109,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-07-04 20:27:10.912240",
+ "modified": "2026-09-28 12:51:22.820746",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Lost And Found Item",
@@ -165,6 +165,15 @@
    "read": 1,
    "report": 1,
    "role": "Kamra Agent",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Housekeeping Supervisor",
    "write": 1
   }
  ],
