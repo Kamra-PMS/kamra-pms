@@ -1159,5 +1159,8 @@
   "Room levy name": "اسم الرسم على الغرفة",
   "Room levy %": "نسبة الرسم على الغرفة",
   "Tax applies to the levy": "تُطبّق الضريبة على الرسم",
-  "Municipality fee": "رسوم البلدية"
+  "Municipality fee": "رسوم البلدية",
+  "This is a computer-generated invoice.": "هذه فاتورة صادرة إلكترونيًا.",
+  "Simplified Tax Invoice - municipality fees appear as a separate line where applicable. This is a computer-generated invoice.": "فاتورة ضريبية مبسطة - تظهر رسوم البلدية في بند مستقل عند انطباقها. هذه فاتورة صادرة إلكترونيًا.",
+  "Room Levy": "رسم الغرفة"
 }

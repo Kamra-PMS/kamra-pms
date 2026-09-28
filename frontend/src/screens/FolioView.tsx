@@ -562,9 +562,12 @@ export default function FolioView() {
             >
               {doc?.title ?? (folio.invoice_number ? t("Tax Invoice") : t("Provisional Bill"))}
               {doc?.title_local && (
-                <span dir="rtl" lang="ar" className="ms-2 normal-case tracking-normal">
-                  {doc.title_local}
-                </span>
+                <>
+                  <span aria-hidden className="mx-2 opacity-50">·</span>
+                  <span dir="rtl" lang="ar" className="normal-case tracking-normal">
+                    {doc.title_local}
+                  </span>
+                </>
               )}
             </span>
           </div>
@@ -1132,8 +1135,12 @@ export default function FolioView() {
           {folio.invoice_number && (
             <div className="mt-8 flex items-end justify-between border-t border-zinc-200 pt-4 text-xs text-zinc-500">
               <p className="max-w-md">
-                {t("This is a computer-generated tax invoice under the GST Act.")}
-                {property.gstin
+                {/* the pack words the footer for its country (GST Act in
+                    India, ZATCA simplified invoice in Saudi Arabia…) */}
+                {doc?.footer
+                  ? t(doc.footer)
+                  : t("This is a computer-generated invoice.")}
+                {property.gstin && property.tax_id_label === "GSTIN"
                   ? ` ${t("Amounts are inclusive of GST at the rates shown.")}`
                   : ""}
               </p>

@@ -3561,17 +3561,23 @@ def get_quote(property: str, room_type: str, check_in_date: str,
 	             rate_plan or None, voucher_code or None)
 
 
-def _find_or_create_guest(guest_name: str, phone: str | None):
+def _find_or_create_guest(guest_name: str, phone: str | None,
+                          property: str | None = None):
 	if phone:
 		existing = frappe.db.get_value("Guest", {"phone": phone})
 		if existing:
 			return existing
 	parts = guest_name.strip().split(" ", 1)
+	# the likely nationality follows the property's country, not India's
+	from kamra.localization import pack_for
+	nationality = getattr(pack_for(property), "DEFAULT_NATIONALITY", None) \
+		if property else None
 	guest = frappe.get_doc({
 		"doctype": "Guest",
 		"first_name": parts[0],
 		"last_name": parts[1] if len(parts) > 1 else "",
 		"phone": phone,
+		"nationality": nationality or None,
 	}).insert(ignore_permissions=True)
 	return guest.name
 
@@ -3635,7 +3641,7 @@ def create_booking(property: str, room_type: str, check_in_date: str,
 		if not frappe.db.exists("Guest", guest):
 			frappe.throw(f"Guest profile {guest} not found.")
 	else:
-		guest = _find_or_create_guest(guest_name, phone)
+		guest = _find_or_create_guest(guest_name, phone, property)
 	if guest_category:
 		frappe.db.set_value("Guest", guest, "guest_category", guest_category)
 		if guest_category == "VIP":
