@@ -107,6 +107,14 @@ Localization lives behind the `kamra_localization` hook
 pack implements the same interface (tax calculation, invoice context, locale)
 without touching the core. See `kamra/localization/india.py` for the shape.
 
+## Credit
+
+Every merged PR is credited in the release notes and on the
+[Contributors](https://kamrapms.com/docs/contributors) page, and an
+issue that shapes a feature earns its reporter a line there too. Security
+reporters are credited in the advisory, `SECURITY.md` and the release
+that fixes it.
+
 ## Code of conduct
 
 Be respectful, assume good faith, keep discussion technical. Report abuse to
