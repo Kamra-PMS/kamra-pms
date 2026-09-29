@@ -43,6 +43,24 @@ upgrade-breaking changes (removed doctypes / API contracts).
   quotation, desk-led guest response, department checklists + notify on
   Confirm (Sales/Finance/HK/F&B), and quote no-response chase reminders
 
+## [2.6.6](https://github.com/Kamra-PMS/kamra-pms/compare/v2.6.5...v2.6.6) (2026-09-29)
+
+
+### Features
+
+* **deposits:** take a deposit on a booking before arrival ([427879a](https://github.com/Kamra-PMS/kamra-pms/commit/427879a9a6fe81b3be57fbe7e823db6724aa84b0))
+* **deposits:** take a deposit on a booking before arrival ([feecc49](https://github.com/Kamra-PMS/kamra-pms/commit/feecc498dc719045c6f3cfa751d3a61808701fb4))
+* **front-desk:** change room from the reservation and the GRC; GRC redesign ([261b96c](https://github.com/Kamra-PMS/kamra-pms/commit/261b96cc5eae0bf131a9d820cf68c5b503361bc3))
+* **front-desk:** change room from the reservation and the GRC; GRC redesign ([944df2b](https://github.com/Kamra-PMS/kamra-pms/commit/944df2bdf79c4a0007ae7ca8e899a446f5715dbe))
+
+
+### Bug Fixes
+
+* **grc:** drop duplicated status key (semgrep same-key-assigned-twice) ([9195f02](https://github.com/Kamra-PMS/kamra-pms/commit/9195f02ab7a9d8f34b45801ee1c9b5dd8382526d))
+* **security:** resolve all CodeQL security and code-quality findings ([bc99fd3](https://github.com/Kamra-PMS/kamra-pms/commit/bc99fd36f1a533019387a7adc83e381e64879b87))
+* **security:** resolve all CodeQL security and code-quality findings (30 → 0) ([5b163ce](https://github.com/Kamra-PMS/kamra-pms/commit/5b163cee05154f64c5ae817122f3529906874df9))
+* **ui:** hide Walk-in / New booking for roles that can't book ([#122](https://github.com/Kamra-PMS/kamra-pms/issues/122)) ([6d47fa9](https://github.com/Kamra-PMS/kamra-pms/commit/6d47fa9e7949e060b432d4cbd9bb2f1a5535d86b)), closes [#120](https://github.com/Kamra-PMS/kamra-pms/issues/120)
+
 ## [2.6.5](https://github.com/Kamra-PMS/kamra-pms/compare/v2.6.4...v2.6.5) (2026-09-28)
 
 
