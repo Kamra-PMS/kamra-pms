@@ -90,6 +90,24 @@ billing rules; alcohol always bills to the guest).
 - Night audit posts room nights at 3 AM, flags **and charges** no-shows
   per your policy. It's idempotent — safe to run manually too.
 
+### Deposits before arrival
+
+Secure a booking with a deposit at booking time or any time before
+check-in: the **Deposit** panel appears on the booking-confirmed screen
+and in the reservation drawer. It shows what the property's deposit %
+expects, what has come in, and what is still due.
+
+- **Record payment**: cash, card at the desk or a transfer (the methods
+  your country pack offers). It goes through the till like any other
+  payment, so the shift report and ledger include it.
+- **Send payment link**: creates a gateway link for the amount due (or
+  any amount you type) with a ready-made message to copy or send on
+  WhatsApp. When the guest pays, the deposit posts itself.
+
+Either way the money sits on the guest folio as an **Advance**, and at
+check-in it counts against the bill, so the balance due is right. A
+*Held* or *Pending Payment* booking is confirmed by its deposit.
+
 ## Cancelling
 
 Open the reservation → **Cancel this stay…** You'll see what it costs

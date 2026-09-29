@@ -1539,6 +1539,8 @@ export interface ReservationDetail {
   travel_agent: string | null
   folio_name: string | null
   money: { total: number; paid: number; due: number; has_folio: boolean }
+  /** Deposit before arrival (#114): expected by policy, received, still due. */
+  deposit: import("../components/DepositPanel").DepositState
   guest: {
     name: string
     full_name: string

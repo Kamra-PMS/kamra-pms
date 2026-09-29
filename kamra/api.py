@@ -616,45 +616,141 @@ def cash_summary(property: str, date: str | None = None):
 	        "source": "folio"}
 
 
-@frappe.whitelist()
-@require_roles("Front Desk", "Kamra Agent")
-def record_advance(reservation: str, amount: float, mode: str = "UPI",
-                   reference: str | None = None):
-	"""Advance/deposit against a live booking - opens the folio early
-	so the money sits on the stay from day one (GM gap: deposits arrive at
-	booking, not at check-in). Pending Payment → Confirmed when paid."""
+_DEPOSIT_STATUSES = ("Confirmed", "Pending Payment", "Held")
+
+
+def _confirm_status(res):
+	"""Held / Pending Payment → Confirmed: money has secured the booking."""
+	if res.status not in ("Pending Payment", "Held"):
+		return
+	frappe.flags.kamra_status_transition = True
+	try:
+		res.status = "Confirmed"
+		res.hold_expires_on = None
+		res.save(ignore_permissions=True)
+	finally:
+		frappe.flags.kamra_status_transition = False
+	res.reload()
+
+
+def _deposit_state(res) -> dict:
+	"""What the booking should have secured it with (the property's
+	deposit %, the figure the quote promised), what has come in before
+	arrival, and any link already out with the guest."""
+	total = float(res.amount_after_tax or 0)
+	pct = float(frappe.get_cached_value("Property", res.property,
+	                                    "deposit_pct") or 0)
+	expected = round(total * pct / 100, 2)
+	paid = float(res.advance_paid or 0)
+	link = frappe.db.get_value(
+		"Folio", {"reservation": res.name, "folio_type": "Guest"},
+		["payment_link_url", "payment_link_amount"], as_dict=True) or {}
+	return {
+		"pct": pct, "expected": expected, "paid": paid,
+		"due": max(0.0, round(expected - paid, 2)),
+		"link_url": link.get("payment_link_url"),
+		"link_amount": float(link.get("payment_link_amount") or 0) or None,
+		"can_take": res.status in _DEPOSIT_STATUSES,
+	}
+
+
+def _deposit_reservation(reservation: str):
 	res = frappe.get_doc("Reservation", reservation)
-	if res.status not in ("Confirmed", "Checked In", "Pending Payment", "Held"):
-		frappe.throw("Advances only apply to active or held reservations.")
-	from kamra.folio import _recalculate, open_folio
+	from kamra.crs import assert_property_access
+	assert_property_access(res.property)
+	if res.status not in _DEPOSIT_STATUSES:
+		frappe.throw(_("A deposit is taken before arrival - this booking is "
+		               "{0}. Take in-house payments on the folio.").format(
+			res.status))
+	return res
 
-	# Promote Pending Payment / Held → Confirmed before opening folio.
-	if res.status in ("Pending Payment", "Held"):
-		frappe.flags.kamra_status_transition = True
-		try:
-			res.status = "Confirmed"
-			res.hold_expires_on = None
-			res.save(ignore_permissions=True)
-		finally:
-			frappe.flags.kamra_status_transition = False
-		res.reload()
 
-	folio = frappe.get_doc("Folio", open_folio(res))
-	folio.append("payments", {
-		"posting_date": nowdate(),
-		"mode": mode,
-		"amount": float(amount),
-		"reference": reference or f"advance:{reservation}",
-	})
-	_recalculate(folio)
-	folio.save(ignore_permissions=True)
-	frappe.db.set_value("Reservation", reservation, "advance_paid",
-	                    float(res.advance_paid or 0) + float(amount))
+@frappe.whitelist(methods=["POST"])
+@require_roles("Front Desk", "Finance", "Kamra Agent")
+def record_advance(reservation: str, amount: float, mode: str = "Cash",
+                   reference: str | None = None, pin: str | None = None):
+	"""Take a deposit / advance on a booking before arrival (#114). Opens
+	the guest folio early so the money sits on the stay from day one and
+	the balance at check-in is right; recorded through add_folio_payment,
+	so the till, cashier PIN and ledger see it like any other payment.
+	A Held / Pending Payment booking is confirmed by it."""
+	res = _deposit_reservation(reservation)
+	amount = float(amount or 0)
+	if amount <= 0:
+		frappe.throw(_("Enter the deposit amount."))
+	from kamra.localization import pack_for, payment_modes
+	modes = payment_modes(pack_for(res.property))
+	if mode not in modes:
+		frappe.throw(_("Pick a payment mode: {0}.").format(", ".join(modes)))
+	# money guards before any write: a locked till refuses cleanly
+	from kamra.authz import require_cashier_pin
+	from kamra.cashier import require_open_session
+	require_cashier_pin(res.property, pin)
+	require_open_session(res.property)
+
+	_confirm_status(res)
+	from kamra.folio import open_folio
+	folio = open_folio(res)
+	add_folio_payment(folio, mode, amount,
+	                  reference=reference or f"deposit:{res.name}", pin=pin,
+	                  kind="Advance")
+	frappe.db.set_value("Reservation", res.name, "advance_paid",
+	                    float(res.advance_paid or 0) + amount)
+	res.reload()
 	from kamra.savings import log_action
-	log_action("record_advance", "Folio", folio.name, res.property,
-	           rationale=f"₹{float(amount):,.0f} advance on {reservation}")
-	return {"folio": folio.name, "balance": folio.balance,
-	        "status": res.status}
+	log_action("record_advance", "Folio", folio, res.property,
+	           rationale=f"{mode} deposit {amount:,.0f} on {res.name}")
+	return {"folio": folio, "status": res.status,
+	        "deposit": _deposit_state(res)}
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Front Desk", "Finance", "Kamra Agent")
+def deposit_payment_link(reservation: str, amount: float | None = None):
+	"""A payment link for the booking deposit - the deposit still due by
+	default, or any amount the desk agrees with the guest. Paid through the
+	gateway, it posts to the folio as an Advance (settle_payment_link)."""
+	res = _deposit_reservation(reservation)
+	amount = float(amount or 0) or _deposit_state(res)["due"]
+	if amount <= 0:
+		frappe.throw(_("No deposit is due - enter the amount to request."))
+	from kamra.folio import open_folio
+	from kamra.payments import create_payment_link
+	link = create_payment_link(open_folio(res), amount=amount,
+	                           purpose="Booking deposit")
+	prop = frappe.get_cached_value("Property", res.property, "property_name")
+	link["message"] = _(
+		"Hello {guest}, please pay the deposit of {cur} {amount} to secure "
+		"your booking {ref} at {property} ({checkin} → {checkout}): {url}"
+	).format(guest=res.guest_name, cur=link["currency"],
+	         amount=f"{amount:,.2f}", ref=res.name, property=prop,
+	         checkin=res.check_in_date, checkout=res.check_out_date,
+	         url=link["url"])
+	link["deposit"] = _deposit_state(res)
+	return link
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Front Desk", "Finance", "Hotel Admin")
+def simulate_payment_link(reservation: str):
+	"""Test mode only: act as the gateway and mark the outstanding link
+	paid - for demos and training, never on a live gateway."""
+	res = frappe.get_doc("Reservation", reservation)
+	from kamra.crs import assert_property_access
+	assert_property_access(res.property)
+	from kamra.payments import _settings, settle_payment_link
+	if not _settings(res.property).test_mode:
+		frappe.throw(_("Only available while the payment gateway is in test mode."))
+	f = frappe.db.get_value(
+		"Folio", {"reservation": res.name, "folio_type": "Guest"},
+		["name", "payment_link_id", "payment_link_amount"], as_dict=True)
+	if not f or not f.payment_link_id:
+		frappe.throw(_("No payment link has been sent for this booking."))
+	posted = settle_payment_link(f.name, f.payment_link_id,
+	                             float(f.payment_link_amount or 0))
+	res.reload()
+	return {"posted": posted, "status": res.status,
+	        "deposit": _deposit_state(res)}
 
 
 @frappe.whitelist()
@@ -2254,13 +2350,20 @@ def reservation_detail(reservation: str):
 		["name", "status", "grand_total", "payments_total", "balance"],
 		as_dict=True,
 	)
-	if folio:
+	if folio and res.status in ("Checked In", "Checked Out"):
 		money = {
 			"total": float(folio.grand_total or 0),
 			"paid": float(folio.payments_total or 0),
 			"due": float(folio.balance or 0),
 			"has_folio": True,
 		}
+	elif folio:
+		# opened early for a deposit: room nights post from check-in, so
+		# the booking total is the bill; the folio holds what was paid
+		total = float(res.amount_after_tax or 0)
+		paid = float(folio.payments_total or 0)
+		money = {"total": total, "paid": paid,
+		         "due": max(0.0, round(total - paid, 2)), "has_folio": True}
 	else:
 		# no folio yet (still Confirmed) - the booking-time advance is all we know
 		adv = float(res.advance_paid or 0)
@@ -2324,6 +2427,7 @@ def reservation_detail(reservation: str):
 		"travel_agent": res.travel_agent,
 		"folio_name": folio.name if folio else None,
 		"money": money,
+		"deposit": _deposit_state(res),
 		"guest": guest,
 		"booker": booker,
 		"cancellation": cancellation,
