@@ -47,8 +47,18 @@ export interface BookingInitial {
 
 export interface ShellContext {
   refreshKey: number
+  canBook: boolean
   openBooking: (initial: BookingInitial) => void
 }
+
+// mirrors @require_roles on kamra.api.create_booking / walk_in (admins always pass)
+const BOOKING_ROLES = [
+  "Front Desk",
+  "Kamra Agent",
+  "Hotel Admin",
+  "System Manager",
+  "Administrator",
+]
 
 function SearchShortcut() {
   const { t } = useT()
@@ -235,6 +245,7 @@ export default function AppShell() {
   const currentApp = apps.some((a) => a.id === routeApp.id) ? routeApp : apps[0]
   const floor = location.pathname === "/pos" || location.pathname === "/kitchen"
   const { on: kiosk } = useKiosk()
+  const canBook = BOOKING_ROLES.some((r) => roles.includes(r))
 
   const items = (currentApp?.items ?? []).filter(
     (item) => !item.roles || item.roles.some((r) => roles.includes(r)),
@@ -382,17 +393,21 @@ export default function AppShell() {
             >
               {t("Sign out")}
             </button>
-            <Button
-              variant="outline"
-              className="hidden sm:inline-flex"
-              onClick={() => setBooking({ walkIn: true })}
-            >
-              {t("Walk-in")}
-            </Button>
-            <Button onClick={() => setBooking({})}>
-              <Plus className="size-4" aria-hidden />
-              {t("New booking")}
-            </Button>
+            {canBook && (
+              <>
+                <Button
+                  variant="outline"
+                  className="hidden sm:inline-flex"
+                  onClick={() => setBooking({ walkIn: true })}
+                >
+                  {t("Walk-in")}
+                </Button>
+                <Button onClick={() => setBooking({})}>
+                  <Plus className="size-4" aria-hidden />
+                  {t("New booking")}
+                </Button>
+              </>
+            )}
           </div>
         </header>
         )}
@@ -414,7 +429,10 @@ export default function AppShell() {
             context={
               {
                 refreshKey,
-                openBooking: (initial) => setBooking(initial),
+                canBook,
+                openBooking: (initial) => {
+                  if (canBook) setBooking(initial)
+                },
               } satisfies ShellContext
             }
           />
@@ -429,7 +447,7 @@ export default function AppShell() {
         </>
       )}
 
-      {booking && (
+      {booking && canBook && (
         <BookingDialog
           initial={booking}
           onClose={() => setBooking(null)}

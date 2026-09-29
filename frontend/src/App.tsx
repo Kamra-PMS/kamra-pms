@@ -171,11 +171,13 @@ function LoginPage() {
 }
 
 function CalendarScreen() {
-  const { refreshKey, openBooking } = useOutletContext<ShellContext>()
+  const { refreshKey, canBook, openBooking } = useOutletContext<ShellContext>()
   return (
     <CalendarView
       refreshKey={refreshKey}
-      onPick={(room_type, date) => openBooking({ room_type, date })}
+      onPick={
+        canBook ? (room_type, date) => openBooking({ room_type, date }) : undefined
+      }
     />
   )
 }

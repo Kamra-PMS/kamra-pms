@@ -40,7 +40,7 @@ function rangeLabel(dates: string[]) {
 }
 
 export function CalendarView(props: {
-  onPick: (roomType: string, date: string) => void
+  onPick?: (roomType: string, date: string) => void
   refreshKey: number
 }) {
   const [data, setData] = useState<CalendarData | null>(null)
@@ -146,12 +146,13 @@ export function CalendarView(props: {
                   {rt.cells.map((c) => (
                     <td key={c.date} className="p-0.5">
                       <button
-                        onClick={() => props.onPick(rt.room_type, c.date)}
-                        disabled={c.available === 0}
+                        onClick={() => props.onPick?.(rt.room_type, c.date)}
+                        disabled={c.available === 0 || !props.onPick}
                         title={`${rt.room_type_name} · ${c.date} · ${c.available} left · ${cur()}${inr(c.rate)}`}
                         className={cn(
                           "w-full rounded-md border border-zinc-200 px-1 py-1.5 text-center transition-colors",
-                          "hover:border-brand-600 focus-visible:outline-2 focus-visible:outline-brand-600",
+                          props.onPick && "hover:border-brand-600",
+                          "focus-visible:outline-2 focus-visible:outline-brand-600",
                           "disabled:cursor-not-allowed",
                           cellTone(c.available, rt.total_rooms),
                         )}
