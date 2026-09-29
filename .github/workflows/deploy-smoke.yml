@@ -13,6 +13,10 @@ concurrency:
   group: deploy-smoke-${{ github.ref }}
   cancel-in-progress: true
 
+# least privilege: these jobs only read the repo
+permissions:
+  contents: read
+
 jobs:
   install:
     name: install.sh end to end

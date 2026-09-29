@@ -571,7 +571,7 @@ class TestBanquetOps(BanquetTestCase):
 		)
 		self.assertGreaterEqual(len(tasks), 4)
 		depts = {t.department for t in tasks}
-		self.assertTrue({"Sales", "Finance", "Housekeeping", "F&B"} <= depts)
+		self.assertLessEqual({"Sales", "Finance", "Housekeeping", "F&B"}, depts)
 
 	def test_confirm_via_set_status_also_spawns_checklists(self):
 		fn = self._quoted()

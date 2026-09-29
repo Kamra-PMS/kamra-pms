@@ -4343,7 +4343,8 @@ def reset_cashier_pin(user: str):
 		log_action("reset_cashier_pin", "Cashier PIN", user, None,
 		           rationale=f"PIN reset for {user} by {frappe.session.user}")
 	except Exception:
-		pass
+		# the reset itself succeeded; losing its audit line must be visible
+		frappe.log_error(title="Cashier PIN reset: action log write failed")
 	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- persists the completed operation before returning to an external/public caller; reviewed as intentional
 	return {"ok": True, "user": user, "must_reset": True}
 

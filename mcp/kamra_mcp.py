@@ -32,11 +32,20 @@ if _APP not in sys.path:
 	sys.path.insert(0, os.path.dirname(_APP))
 
 from kamra.mcp_tools import (
-	_JSON_TYPES,
 	INSTRUCTIONS,
 	TOOLS,
 	prepare_arguments,
 )
+
+# JSON-schema type -> Python annotation for the tool signatures below
+_JSON_TYPES = {
+	"string": str,
+	"integer": int,
+	"number": float,
+	"boolean": bool,
+	"array": list,
+	"object": dict,
+}
 
 KAMRA_URL = os.environ.get("KAMRA_URL", "http://kamra.localhost:8000")
 API_KEY = os.environ["KAMRA_API_KEY"]
@@ -60,6 +69,7 @@ def call(dotted: str, **params):
 			if msgs:
 				raise RuntimeError(json.loads(msgs[0]).get("message", res.text))
 		except (ValueError, KeyError):
+			# not a Frappe message envelope - fall through to the raw HTTP error
 			pass
 		res.raise_for_status()
 	return res.json()["message"]

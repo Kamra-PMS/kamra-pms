@@ -1174,16 +1174,6 @@ INSTRUCTIONS = (
 	"user first."
 )
 
-_JSON_TYPES = {
-	"string": str,
-	"integer": int,
-	"number": float,
-	"boolean": bool,
-	"array": list,
-	"object": dict,
-}
-
-
 def input_schema(spec: ToolSpec) -> dict[str, Any]:
 	schema: dict[str, Any] = {"type": "object", "properties": spec.parameters}
 	if spec.required:

@@ -127,6 +127,7 @@ def _wipe_kamra_doctypes() -> int:
 	try:
 		frappe.db.sql("SET FOREIGN_KEY_CHECKS=0")
 	except Exception:
+		# not every backend supports the switch; deletes still run in order
 		pass
 	try:
 		for row in rows:
@@ -135,6 +136,7 @@ def _wipe_kamra_doctypes() -> int:
 		try:
 			frappe.db.sql("SET FOREIGN_KEY_CHECKS=1")
 		except Exception:
+			# nothing to restore if the switch was never supported
 			pass
 	return total
 

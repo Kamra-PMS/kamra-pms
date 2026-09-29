@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import { htmlToText } from "../lib/utils"
 import { useNavigate } from "react-router-dom"
 import { ChevronDown, Loader2, Megaphone, Plus, Star, Trash2, X } from "lucide-react"
 import {
@@ -408,7 +409,7 @@ export function BookingDialog(props: {
       try {
         const msgs = JSON.parse(JSON.parse(body)._server_messages ?? "[]")
         if (msgs.length)
-          return String(JSON.parse(msgs[0]).message).replace(/<[^>]+>/g, "")
+          return htmlToText(String(JSON.parse(msgs[0]).message))
       } catch {
         /* fall through */
       }
