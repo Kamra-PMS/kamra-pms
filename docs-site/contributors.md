@@ -25,8 +25,8 @@ desk, or disclosed a security problem responsibly.
 
 | Reporter | Advisory |
 | --- | --- |
-| [@archnexus707](https://github.com/archnexus707) | [GHSA-6cr2](https://github.com/Kamra-PMS/kamra-pms/security/advisories/GHSA-6cr2-jm8f-6jrx): cross-property access, fixed in 2.6.5 |
-| [@kta1kri](https://github.com/kta1kri) | [GHSA-5hcx](https://github.com/Kamra-PMS/kamra-pms/security/advisories/GHSA-5hcx-h257-qr5j): unauthenticated webhooks, fixed in 2.6.5 |
+| **[@archnexus707](https://github.com/archnexus707)** (first reporter) | [GHSA-6cr2](https://github.com/Kamra-PMS/kamra-pms/security/advisories/GHSA-6cr2-jm8f-6jrx): cross-property access, fixed in 2.6.5 |
+| [@kta1kri](https://github.com/kta1kri) | [GHSA-5hcx](https://github.com/Kamra-PMS/kamra-pms/security/advisories/GHSA-5hcx-h257-qr5j): unauthenticated webhooks; independent report of GHSA-6cr2. Both fixed in 2.6.5 |
 
 ## Join in
 
