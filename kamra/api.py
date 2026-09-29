@@ -8,9 +8,9 @@ import json
 
 import frappe
 from frappe import _
-from kamra.authz import require_it_admin, require_roles
 from frappe.utils import add_days, get_datetime, now_datetime, nowdate
 
+from kamra.authz import require_it_admin, require_roles
 
 # The apps a property actually runs. The launcher and the sidebar read
 # this so a serviced-apartment operator never sees an empty restaurant.
@@ -152,7 +152,7 @@ def set_room_rate(property: str, room_type: str, start_date: str,
 
 	# the hurdle is the DYNAMIC floor: when demand tiers are active for any
 	# date in range, a manual rate can't undercut the minimum sell rate
-	from frappe.utils import getdate, add_days, date_diff
+	from frappe.utils import add_days, date_diff
 
 	# Validate hurdle rates for each day in range
 	from kamra.pricing import demand_tier
@@ -166,7 +166,7 @@ def set_room_rate(property: str, room_type: str, start_date: str,
 				f"₹{tier['min_rate']:,.0f} - ₹{rate:,.0f} undercuts it."
 			)
 
-	from frappe.utils import getdate, date_diff
+	from frappe.utils import date_diff
 
 	season_name_suffix = f" {days_of_week}" if days_of_week else ""
 	days_str = ",".join(days_of_week) if isinstance(days_of_week, list) else days_of_week
@@ -344,8 +344,8 @@ def setup_property(payload):
 			"apply_to_all_doctypes": 1,
 		}).insert(ignore_permissions=True)
 	try:
-		from kamra.turnover import ensure_default_profile
 		from kamra.property_presets import KIND_STR, normalize_kind
+		from kamra.turnover import ensure_default_profile
 		ensure_default_profile(
 			prop.name,
 			str_defaults=normalize_kind(prop.property_kind) == KIND_STR,
@@ -505,6 +505,17 @@ def import_bookings(property: str, bookings):
 	        "errors": errors}
 
 
+def _pack_tax_id_label(prop) -> str:
+	from kamra.localization import pack_for
+	return pack_for(prop.name).locale(prop).get("tax_id_label") or "Tax ID"
+
+
+def _pack_tax_label(property: str) -> str:
+	from kamra.localization import pack_for
+	prop = frappe.get_cached_doc("Property", property)
+	return pack_for(property).locale(prop).get("tax_label") or "Tax"
+
+
 def _stay_money(res):
 	"""The GRC's money line: what the stay owes and what's been taken -
 	advances and held deposits called out separately."""
@@ -544,11 +555,28 @@ def registration_card(reservation: str):
 			"address": ", ".join(filter(None, [  # nosemgrep: frappe-no-functional-code -- filter(None, ...) drops empty address parts; equivalent to a comprehension
 				prop.address_line, prop.city, prop.state, prop.pincode])),
 			"gstin": prop.gstin, "phone": prop.phone, "email": prop.email,
+			"tax_id_label": _pack_tax_id_label(prop),
 			"checkin_time": str(prop.checkin_time or ""),
 			"checkout_time": str(prop.checkout_time or ""),
 		},
 		"money": _stay_money(res),
+		"readiness": {
+			"id_on_file": bool(guest.get("id_file") or guest.get("id_number")),
+			"address_on_file": bool(guest.get("address_proof_file")),
+			"occupants": len(res.get("occupants") or []),
+			"pax": int(res.adults or 0) + int(res.children or 0),
+			"precheckin_status": res.get("precheckin_status") or "Not sent",
+			"signed": bool(res.get("precheckin_signature")),
+		},
+		"signature": res.get("precheckin_signature") or None,
+		"tax_label": _pack_tax_label(res.property),
 		"reservation": {
+			"room_id": res.room,
+			"room_number": frappe.db.get_value("Room", res.room, "room_number")
+			               if res.room else None,
+			"room_type_name": frappe.db.get_value(
+				"Room Type", res.room_type, "room_type_name")
+			                  if res.room_type else None,
 			"actual_check_in": str(res.actual_check_in) if res.get("actual_check_in") else None,
 			"actual_check_out": str(res.actual_check_out) if res.get("actual_check_out") else None,
 			"name": res.name, "status": res.status,
@@ -616,45 +644,141 @@ def cash_summary(property: str, date: str | None = None):
 	        "source": "folio"}
 
 
-@frappe.whitelist()
-@require_roles("Front Desk", "Kamra Agent")
-def record_advance(reservation: str, amount: float, mode: str = "UPI",
-                   reference: str | None = None):
-	"""Advance/deposit against a live booking - opens the folio early
-	so the money sits on the stay from day one (GM gap: deposits arrive at
-	booking, not at check-in). Pending Payment → Confirmed when paid."""
+_DEPOSIT_STATUSES = ("Confirmed", "Pending Payment", "Held")
+
+
+def _confirm_status(res):
+	"""Held / Pending Payment → Confirmed: money has secured the booking."""
+	if res.status not in ("Pending Payment", "Held"):
+		return
+	frappe.flags.kamra_status_transition = True
+	try:
+		res.status = "Confirmed"
+		res.hold_expires_on = None
+		res.save(ignore_permissions=True)
+	finally:
+		frappe.flags.kamra_status_transition = False
+	res.reload()
+
+
+def _deposit_state(res) -> dict:
+	"""What the booking should have secured it with (the property's
+	deposit %, the figure the quote promised), what has come in before
+	arrival, and any link already out with the guest."""
+	total = float(res.amount_after_tax or 0)
+	pct = float(frappe.get_cached_value("Property", res.property,
+	                                    "deposit_pct") or 0)
+	expected = round(total * pct / 100, 2)
+	paid = float(res.advance_paid or 0)
+	link = frappe.db.get_value(
+		"Folio", {"reservation": res.name, "folio_type": "Guest"},
+		["payment_link_url", "payment_link_amount"], as_dict=True) or {}
+	return {
+		"pct": pct, "expected": expected, "paid": paid,
+		"due": max(0.0, round(expected - paid, 2)),
+		"link_url": link.get("payment_link_url"),
+		"link_amount": float(link.get("payment_link_amount") or 0) or None,
+		"can_take": res.status in _DEPOSIT_STATUSES,
+	}
+
+
+def _deposit_reservation(reservation: str):
 	res = frappe.get_doc("Reservation", reservation)
-	if res.status not in ("Confirmed", "Checked In", "Pending Payment", "Held"):
-		frappe.throw("Advances only apply to active or held reservations.")
-	from kamra.folio import _recalculate, open_folio
+	from kamra.crs import assert_property_access
+	assert_property_access(res.property)
+	if res.status not in _DEPOSIT_STATUSES:
+		frappe.throw(_("A deposit is taken before arrival - this booking is "
+		               "{0}. Take in-house payments on the folio.").format(
+			res.status))
+	return res
 
-	# Promote Pending Payment / Held → Confirmed before opening folio.
-	if res.status in ("Pending Payment", "Held"):
-		frappe.flags.kamra_status_transition = True
-		try:
-			res.status = "Confirmed"
-			res.hold_expires_on = None
-			res.save(ignore_permissions=True)
-		finally:
-			frappe.flags.kamra_status_transition = False
-		res.reload()
 
-	folio = frappe.get_doc("Folio", open_folio(res))
-	folio.append("payments", {
-		"posting_date": nowdate(),
-		"mode": mode,
-		"amount": float(amount),
-		"reference": reference or f"advance:{reservation}",
-	})
-	_recalculate(folio)
-	folio.save(ignore_permissions=True)
-	frappe.db.set_value("Reservation", reservation, "advance_paid",
-	                    float(res.advance_paid or 0) + float(amount))
+@frappe.whitelist(methods=["POST"])
+@require_roles("Front Desk", "Finance", "Kamra Agent")
+def record_advance(reservation: str, amount: float, mode: str = "Cash",
+                   reference: str | None = None, pin: str | None = None):
+	"""Take a deposit / advance on a booking before arrival (#114). Opens
+	the guest folio early so the money sits on the stay from day one and
+	the balance at check-in is right; recorded through add_folio_payment,
+	so the till, cashier PIN and ledger see it like any other payment.
+	A Held / Pending Payment booking is confirmed by it."""
+	res = _deposit_reservation(reservation)
+	amount = float(amount or 0)
+	if amount <= 0:
+		frappe.throw(_("Enter the deposit amount."))
+	from kamra.localization import pack_for, payment_modes
+	modes = payment_modes(pack_for(res.property))
+	if mode not in modes:
+		frappe.throw(_("Pick a payment mode: {0}.").format(", ".join(modes)))
+	# money guards before any write: a locked till refuses cleanly
+	from kamra.authz import require_cashier_pin
+	from kamra.cashier import require_open_session
+	require_cashier_pin(res.property, pin)
+	require_open_session(res.property)
+
+	_confirm_status(res)
+	from kamra.folio import open_folio
+	folio = open_folio(res)
+	add_folio_payment(folio, mode, amount,
+	                  reference=reference or f"deposit:{res.name}", pin=pin,
+	                  kind="Advance")
+	frappe.db.set_value("Reservation", res.name, "advance_paid",
+	                    float(res.advance_paid or 0) + amount)
+	res.reload()
 	from kamra.savings import log_action
-	log_action("record_advance", "Folio", folio.name, res.property,
-	           rationale=f"₹{float(amount):,.0f} advance on {reservation}")
-	return {"folio": folio.name, "balance": folio.balance,
-	        "status": res.status}
+	log_action("record_advance", "Folio", folio, res.property,
+	           rationale=f"{mode} deposit {amount:,.0f} on {res.name}")
+	return {"folio": folio, "status": res.status,
+	        "deposit": _deposit_state(res)}
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Front Desk", "Finance", "Kamra Agent")
+def deposit_payment_link(reservation: str, amount: float | None = None):
+	"""A payment link for the booking deposit - the deposit still due by
+	default, or any amount the desk agrees with the guest. Paid through the
+	gateway, it posts to the folio as an Advance (settle_payment_link)."""
+	res = _deposit_reservation(reservation)
+	amount = float(amount or 0) or _deposit_state(res)["due"]
+	if amount <= 0:
+		frappe.throw(_("No deposit is due - enter the amount to request."))
+	from kamra.folio import open_folio
+	from kamra.payments import create_payment_link
+	link = create_payment_link(open_folio(res), amount=amount,
+	                           purpose="Booking deposit")
+	prop = frappe.get_cached_value("Property", res.property, "property_name")
+	link["message"] = _(
+		"Hello {guest}, please pay the deposit of {cur} {amount} to secure "
+		"your booking {ref} at {property} ({checkin} → {checkout}): {url}"
+	).format(guest=res.guest_name, cur=link["currency"],
+	         amount=f"{amount:,.2f}", ref=res.name, property=prop,
+	         checkin=res.check_in_date, checkout=res.check_out_date,
+	         url=link["url"])
+	link["deposit"] = _deposit_state(res)
+	return link
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Front Desk", "Finance", "Hotel Admin")
+def simulate_payment_link(reservation: str):
+	"""Test mode only: act as the gateway and mark the outstanding link
+	paid - for demos and training, never on a live gateway."""
+	res = frappe.get_doc("Reservation", reservation)
+	from kamra.crs import assert_property_access
+	assert_property_access(res.property)
+	from kamra.payments import _settings, settle_payment_link
+	if not _settings(res.property).test_mode:
+		frappe.throw(_("Only available while the payment gateway is in test mode."))
+	f = frappe.db.get_value(
+		"Folio", {"reservation": res.name, "folio_type": "Guest"},
+		["name", "payment_link_id", "payment_link_amount"], as_dict=True)
+	if not f or not f.payment_link_id:
+		frappe.throw(_("No payment link has been sent for this booking."))
+	posted = settle_payment_link(f.name, f.payment_link_id,
+	                             float(f.payment_link_amount or 0))
+	res.reload()
+	return {"posted": posted, "status": res.status,
+	        "deposit": _deposit_state(res)}
 
 
 @frappe.whitelist()
@@ -2254,13 +2378,20 @@ def reservation_detail(reservation: str):
 		["name", "status", "grand_total", "payments_total", "balance"],
 		as_dict=True,
 	)
-	if folio:
+	if folio and res.status in ("Checked In", "Checked Out"):
 		money = {
 			"total": float(folio.grand_total or 0),
 			"paid": float(folio.payments_total or 0),
 			"due": float(folio.balance or 0),
 			"has_folio": True,
 		}
+	elif folio:
+		# opened early for a deposit: room nights post from check-in, so
+		# the booking total is the bill; the folio holds what was paid
+		total = float(res.amount_after_tax or 0)
+		paid = float(folio.payments_total or 0)
+		money = {"total": total, "paid": paid,
+		         "due": max(0.0, round(total - paid, 2)), "has_folio": True}
 	else:
 		# no folio yet (still Confirmed) - the booking-time advance is all we know
 		adv = float(res.advance_paid or 0)
@@ -2324,6 +2455,7 @@ def reservation_detail(reservation: str):
 		"travel_agent": res.travel_agent,
 		"folio_name": folio.name if folio else None,
 		"money": money,
+		"deposit": _deposit_state(res),
 		"guest": guest,
 		"booker": booker,
 		"cancellation": cancellation,
@@ -2703,6 +2835,7 @@ def _scrub_stay_ids(res):
 def _cancellation_terms(res):
 	"""Policy + fee estimate for a reservation, before anyone commits."""
 	from frappe.utils import date_diff
+
 	from kamra.folio import policy_fee
 
 	policy = frappe.db.get_value(
@@ -2773,7 +2906,8 @@ def _do_cancel(res, reason: str = "Guest request", note: str | None = None,
 	if int(issue_credit_note or 0) == 1:
 		credit_amount = max(0.0, float(res.advance_paid or 0) - fee)
 		if credit_amount > 0:
-			import random, string
+			import random
+			import string
 			code_suffix = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
 			voucher_code = f"CN-{res.name.split('-')[-1]}-{code_suffix}"
 
@@ -3220,6 +3354,7 @@ def position_briefing(property: str, date: str | None = None):
 	back-to-back conflicts, the demand tier pricing is applying, and a
 	7-day outlook."""
 	from frappe.utils import getdate
+
 	from kamra.pricing import demand_tier, forecast_occupancy
 
 	d = str(getdate(date or nowdate()))
@@ -3434,16 +3569,22 @@ def venue_calendar(property: str, start_date: str | None = None, days: int = 14)
 
 @frappe.whitelist()
 @require_roles("Front Desk", "Kamra Agent")
-def move_reservation(reservation: str, new_room: str):
+def move_reservation(reservation: str, new_room: str,
+                     reason: str | None = None):
 	"""Room move / upgrade - mid-stay or before arrival. Overlap guard re-runs.
+	One writer for the tape chart, the reservation drawer and the GRC (#113).
 
 	The new room may be a DIFFERENT room type (e.g. Standard -> Suite): the
 	reservation's room type follows the room it moves into, so upgrades and
 	downgrades are allowed. If the booking auto-prices, the new type's rate
 	applies; a manually-priced booking keeps its amount."""
 	doc = frappe.get_doc("Reservation", reservation)
+	from kamra.crs import assert_property_access
+	assert_property_access(doc.property)
 	if doc.status not in ("Confirmed", "Checked In"):
 		frappe.throw("Only active reservations can be moved.")
+	if frappe.db.get_value("Room", new_room, "property") != doc.property:
+		frappe.throw(_("Room {0} is not in this property.").format(new_room))
 	old_room = doc.room
 	old_type = doc.room_type
 	new_type = frappe.db.get_value("Room", new_room, "room_type")
@@ -3460,8 +3601,44 @@ def move_reservation(reservation: str, new_room: str):
 	note = f"{old_room} → {new_room}"
 	if new_type and new_type != old_type:
 		note += f" · {old_type} → {new_type}"
+	if (reason or "").strip():
+		note += f" · {reason.strip()[:140]}"
 	log_action("room_move", "Reservation", doc.name, doc.property, rationale=note)
-	return {"ok": True, "room": doc.room, "room_type": doc.room_type}
+	return {"ok": True, "room": doc.room, "room_type": doc.room_type,
+	        "amount_after_tax": float(doc.amount_after_tax or 0)}
+
+
+@frappe.whitelist()
+@require_roles("Front Desk", "Kamra Agent")
+def room_move_preview(reservation: str, new_room: str):
+	"""What a move would do to the bill before the desk confirms it: a
+	same-type swap keeps the price; an upgrade / downgrade on an auto-priced
+	booking is re-quoted at the new type's rate by the pricing engine."""
+	res = frappe.get_doc("Reservation", reservation)
+	from kamra.crs import assert_property_access
+	assert_property_access(res.property)
+	new_type = frappe.db.get_value("Room", new_room, "room_type")
+	current = float(res.amount_after_tax or 0)
+	new_amount = current
+	if new_type and new_type != res.room_type and res.get("auto_price"):
+		from kamra.pricing import quote
+		voucher = frappe.db.get_value("Discount Voucher", res.voucher,
+		                              "voucher_code") if res.get("voucher") else None
+		new_amount = float(quote(
+			res.property, new_type, str(res.check_in_date),
+			str(res.check_out_date), int(res.adults or 1),
+			int(res.children or 0), res.meal_plan or None,
+			res.rate_plan or None, voucher)["amount_after_tax"])
+	return {
+		"same_type": new_type == res.room_type,
+		"new_room_type": new_type,
+		"new_room_type_name": frappe.db.get_value(
+			"Room Type", new_type, "room_type_name") if new_type else None,
+		"current_amount": current, "new_amount": round(new_amount, 2),
+		"difference": round(new_amount - current, 2),
+		"auto_price": bool(res.get("auto_price")),
+		"in_house": res.status == "Checked In",
+	}
 
 
 @frappe.whitelist()
@@ -3475,9 +3652,12 @@ def movable_rooms(reservation: str, check_in_date: str | None = None,
 	res = frappe.get_doc("Reservation", reservation)
 	ci = check_in_date or res.check_in_date
 	co = check_out_date or res.check_out_date
+	from kamra.crs import assert_property_access
+	assert_property_access(res.property)
 	rooms = frappe.get_all(
 		"Room", filters={"property": res.property},
-		fields=["name", "room_number", "room_type"], order_by="room_number")
+		fields=["name", "room_number", "room_type", "floor",
+		        "housekeeping_status"], order_by="room_number")
 	# availability is computed per type; union the free rooms across every type
 	types = {r.room_type for r in rooms}
 	free = set()
@@ -3489,7 +3669,9 @@ def movable_rooms(reservation: str, check_in_date: str | None = None,
 	}
 	out = [
 		{"name": r.name, "room_number": r.room_number,
-		 "room_type": r.room_type,
+		 "room_type": r.room_type, "floor": r.floor,
+		 "housekeeping_status": r.housekeeping_status,
+		 "current": r.name == res.room,
 		 "room_type_name": type_name.get(r.room_type, r.room_type),
 		 # the guest's own current room counts as available to them
 		 "free": r.name in free or r.name == res.room,
@@ -3680,8 +3862,9 @@ def create_booking(property: str, room_type: str, check_in_date: str,
 
 	voucher = None
 	if voucher_code:
-		from kamra.pricing import validate_voucher
 		from frappe.utils import date_diff
+
+		from kamra.pricing import validate_voucher
 		voucher = validate_voucher(
 			property, voucher_code,
 			date_diff(check_out_date, check_in_date),
@@ -3895,7 +4078,8 @@ def create_group_booking(property: str, group_name: str, check_in_date: str,
 
 	created, skipped = [], []
 	for spec in rooms:
-		for _ in range(int(spec.get("count", 1))):
+		# not `_`: that name is the translation function in this module
+		for _n in range(int(spec.get("count", 1))):
 			try:
 				res = create_booking(
 					property=property,
@@ -4159,7 +4343,8 @@ def reset_cashier_pin(user: str):
 		log_action("reset_cashier_pin", "Cashier PIN", user, None,
 		           rationale=f"PIN reset for {user} by {frappe.session.user}")
 	except Exception:
-		pass
+		# the reset itself succeeded; losing its audit line must be visible
+		frappe.log_error(title="Cashier PIN reset: action log write failed")
 	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- persists the completed operation before returning to an external/public caller; reviewed as intentional
 	return {"ok": True, "user": user, "must_reset": True}
 
@@ -4448,8 +4633,8 @@ def zatca_settings(property: str):
 	"""The property's ZATCA (Saudi e-invoicing) settings, created from the
 	property on first use, plus what is still missing for a valid invoice
 	and where the invoice chain stands."""
-	from kamra.crs import assert_property_access
 	from kamra import zatca
+	from kamra.crs import assert_property_access
 	assert_property_access(property)
 	s = zatca.settings_for(property)
 	return {
@@ -4499,22 +4684,22 @@ def pending_deposit_refunds(property: str):
 		filters={"property": property, "status": "Checked Out"},
 		fields=["name", "guest_name", "check_in_date", "check_out_date"]
 	)
-	
+
 	pending = []
 	for res in reservations:
 		folio_name = frappe.db.get_value("Folio", {"reservation": res.name}, "name")
 		if not folio_name:
 			continue
-			
+
 		payments = frappe.get_all(
 			"Folio Payment",
 			filters={"parent": folio_name, "parenttype": "Folio"},
 			fields=["payment_kind", "amount"]
 		)
-		
+
 		deposits_sum = sum(p.amount for p in payments if p.payment_kind == "Security Deposit")
 		refunds_sum = sum(p.amount for p in payments if p.payment_kind == "Refund")
-		
+
 		if deposits_sum > refunds_sum:
 			pending.append({
 				"reservation": res.name,
@@ -4524,5 +4709,5 @@ def pending_deposit_refunds(property: str):
 				"refunded_amount": float(refunds_sum),
 				"pending_refund": float(deposits_sum - refunds_sum)
 			})
-			
+
 	return pending

@@ -5,9 +5,9 @@ import frappe
 
 def execute():
 	from kamra.ledger import (
+		CHARGE_TYPE_TO_CODE,
 		ensure_default_reason_codes,
 		ensure_default_transaction_codes,
-		CHARGE_TYPE_TO_CODE,
 	)
 	ensure_default_transaction_codes()
 	ensure_default_reason_codes()

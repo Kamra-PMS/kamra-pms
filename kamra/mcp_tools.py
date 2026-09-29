@@ -642,6 +642,18 @@ TOOLS: tuple[ToolSpec, ...] = (
 		group="Billing",
 	),
 	_t(
+		"send_deposit_link",
+		"api.deposit_payment_link",
+		"""Create a payment link for a booking's deposit before arrival - the
+		deposit still due (the property's deposit %) unless an amount is
+		given. When the guest pays, it posts to the folio as an Advance and
+		confirms a held booking. Returns the link and a ready-to-send message.""",
+		{"reservation": _p("string"), "amount": _p("number")},
+		required=("reservation",),
+		mutating=True,
+		group="Billing",
+	),
+	_t(
 		"run_night_audit",
 		"api.run_night_audit",
 		"""Run the end-of-day: post the night's room charges for in-house
@@ -1162,16 +1174,6 @@ INSTRUCTIONS = (
 	"user first."
 )
 
-_JSON_TYPES = {
-	"string": str,
-	"integer": int,
-	"number": float,
-	"boolean": bool,
-	"array": list,
-	"object": dict,
-}
-
-
 def input_schema(spec: ToolSpec) -> dict[str, Any]:
 	schema: dict[str, Any] = {"type": "object", "properties": spec.parameters}
 	if spec.required:
@@ -1195,7 +1197,7 @@ def mcp_tool_list(allowed: list[ToolSpec] | None = None) -> list[dict[str, Any]]
 def prepare_arguments(spec: ToolSpec, arguments: dict[str, Any], property: str) -> dict[str, Any]:
 	"""Map MCP arguments onto the Kamra API kwargs."""
 	clean: dict[str, Any] = dict(spec.extra)
-	for key, schema in spec.parameters.items():
+	for key in spec.parameters:
 		if key not in arguments:
 			continue
 		value = arguments[key]

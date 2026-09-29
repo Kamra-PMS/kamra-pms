@@ -91,6 +91,29 @@ transfer, in full or in part. One button books, checks in and records
 the advance, all-or-nothing: a locked till or a room that just sold
 leaves nothing half-done.
 
+## Deposits before arrival
+
+Secure a booking with a **deposit** at booking time or any time before
+check-in, from the booking-confirmed screen or the reservation drawer:
+record it at the desk (cash, card, transfer) or send the guest a
+**payment link** with a ready-to-send message. The money sits on the
+guest folio as an Advance, confirms a held booking, and counts against
+the bill at check-in.
+
+## Change rooms from anywhere
+
+Move a guest (same type, or an upgrade/downgrade) from the **reservation
+drawer** or the **GRC**, not only the tape chart. The same availability
+rules apply, clean rooms are listed first, and the price change is shown
+before you confirm. Every move is logged with its reason.
+
+## Guest registration card
+
+The GRC shows a **registration checklist** (ID, address proof, occupants
+vs party size, signature), captures documents in one tap, summarises the
+money on the stay, and prints a clean card with the room number, the
+country's tax labels and the guest's online e-signature.
+
 ## WhatsApp on your own number
 
 Connect your own Meta Cloud API number (no gateway, no markup — Meta

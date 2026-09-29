@@ -571,7 +571,7 @@ class TestBanquetOps(BanquetTestCase):
 		)
 		self.assertGreaterEqual(len(tasks), 4)
 		depts = {t.department for t in tasks}
-		self.assertTrue({"Sales", "Finance", "Housekeeping", "F&B"} <= depts)
+		self.assertLessEqual({"Sales", "Finance", "Housekeeping", "F&B"}, depts)
 
 	def test_confirm_via_set_status_also_spawns_checklists(self):
 		fn = self._quoted()
@@ -597,8 +597,9 @@ class TestBanquetOps(BanquetTestCase):
 		self.assertTrue(row.completed_on)
 
 	def test_quote_no_response_alert_after_three_days(self):
-		from kamra import banquet_ops as ops
 		from frappe.utils import add_days, now_datetime
+
+		from kamra import banquet_ops as ops
 
 		fn = self._quoted()
 		frappe.flags.mute_emails = True

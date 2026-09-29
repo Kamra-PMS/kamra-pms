@@ -52,7 +52,15 @@ both re-priced and overlap-checked).
    each, with a warning before handing over an uncleaned room.
 3. Confirm — the room is assigned and the guest is in.
 
-**On the GRC**: record the **occupants** (everyone in the room — the
+**Changing rooms**: use **Change room** in the reservation drawer's Room
+card or on the GRC (or drag on the tape chart). Pick from rooms free for
+the stay's dates (clean rooms first; switch to *All types* to upgrade),
+see the price effect, give a reason, and confirm. Moving an in-house
+guest marks the old room Dirty for housekeeping.
+
+**On the GRC**: a checklist on the right shows what the registration
+still needs (ID, address proof, occupants, signature), with one-tap
+document capture and the stay's money. Then: record the **occupants** (everyone in the room — the
 legal register) and capture **each occupant's ID** with the camera
 button on their row; capture or replace the guest's ID and address
 proof; **edit the primary guest's nationality** (click **edit** next to
@@ -89,6 +97,24 @@ billing rules; alcohol always bills to the guest).
 - **Payment link** creates a gateway link for the balance and copies it.
 - Night audit posts room nights at 3 AM, flags **and charges** no-shows
   per your policy. It's idempotent — safe to run manually too.
+
+### Deposits before arrival
+
+Secure a booking with a deposit at booking time or any time before
+check-in: the **Deposit** panel appears on the booking-confirmed screen
+and in the reservation drawer. It shows what the property's deposit %
+expects, what has come in, and what is still due.
+
+- **Record payment**: cash, card at the desk or a transfer (the methods
+  your country pack offers). It goes through the till like any other
+  payment, so the shift report and ledger include it.
+- **Send payment link**: creates a gateway link for the amount due (or
+  any amount you type) with a ready-made message to copy or send on
+  WhatsApp. When the guest pays, the deposit posts itself.
+
+Either way the money sits on the guest folio as an **Advance**, and at
+check-in it counts against the bill, so the balance due is right. A
+*Held* or *Pending Payment* booking is confirmed by its deposit.
 
 ## Cancelling
 

@@ -193,7 +193,7 @@ def _normalize(property: str, csv_text: str, preset: str):
 		}], dayfirst
 
 	for i, r in enumerate(raw, start=1):
-		get = lambda f: r.get(mapping.get(f, ""), "")  # noqa: E731
+		get = lambda f: r.get(mapping.get(f, ""), "")
 		guest = get("guest_name")
 		problems = []
 		if not guest.strip():

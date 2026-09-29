@@ -139,6 +139,7 @@ def _json_list(value) -> list[str]:
 		if isinstance(parsed, list):
 			return [str(v) for v in parsed]
 	except (TypeError, ValueError):
+		# not JSON - treat it as a space/comma separated list below
 		pass
 	return [part.strip() for part in str(value).split(",") if part.strip()]
 

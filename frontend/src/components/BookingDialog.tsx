@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import { htmlToText } from "../lib/utils"
 import { useNavigate } from "react-router-dom"
 import { ChevronDown, Loader2, Megaphone, Plus, Star, Trash2, X } from "lucide-react"
 import {
@@ -23,6 +24,7 @@ import {
 } from "../lib/phone"
 import { useT } from "../lib/i18n"
 import { useCashierAuth } from "../lib/cashierAuth"
+import DepositPanel, { type DepositState } from "./DepositPanel"
 
 interface ExtraRoom {
   room_type: string
@@ -152,6 +154,8 @@ export function BookingDialog(props: {
     room: string | null
     waitlist?: boolean
     walkIn?: WalkInResult
+    /** a single booking: take the deposit right here (#114) */
+    deposit?: DepositState
   } | null>(
     null,
   )
@@ -405,7 +409,7 @@ export function BookingDialog(props: {
       try {
         const msgs = JSON.parse(JSON.parse(body)._server_messages ?? "[]")
         if (msgs.length)
-          return String(JSON.parse(msgs[0]).message).replace(/<[^>]+>/g, "")
+          return htmlToText(String(JSON.parse(msgs[0]).message))
       } catch {
         /* fall through */
       }
@@ -528,6 +532,13 @@ export function BookingDialog(props: {
       })
       setDone({ ref: res.reservation, room: res.room })
       props.onBooked()
+      call<{ deposit: DepositState }>("kamra.api.reservation_detail", {
+        reservation: res.reservation,
+      })
+        .then((d) =>
+          setDone((cur) => (cur && cur.ref === res.reservation ? { ...cur, deposit: d.deposit } : cur)),
+        )
+        .catch(() => {})
     } catch (e) {
       setError(shortErr(e))
     } finally {
@@ -855,6 +866,18 @@ export function BookingDialog(props: {
                 </div>
               </dl>
             </div>
+
+            {done.deposit && !done.walkIn && !done.waitlist && (
+              <DepositPanel
+                reservation={done.ref}
+                deposit={done.deposit}
+                guestPhone={form.phone}
+                onChanged={(dep) => {
+                  setDone((cur) => (cur ? { ...cur, deposit: dep } : cur))
+                  props.onBooked()
+                }}
+              />
+            )}
 
             <div className="flex flex-wrap gap-2">
               <Button className="px-5 py-2.5 text-base" onClick={props.onClose}>

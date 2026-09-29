@@ -7,6 +7,10 @@ name: VPS Doctor
 on:
   workflow_dispatch:
 
+# least privilege: these jobs only read the repo
+permissions:
+  contents: read
+
 jobs:
   doctor:
     name: Inspect the VPS

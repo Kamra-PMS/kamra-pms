@@ -17,7 +17,6 @@ numbers (GST law needs them), an ID masked to its last 4 digits in the stay
 register, and one audit line saying the erasure happened (without the name).
 """
 
-import json
 
 import frappe
 from frappe.utils import add_months, cint, getdate, nowdate

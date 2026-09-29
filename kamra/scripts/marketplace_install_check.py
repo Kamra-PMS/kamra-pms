@@ -16,8 +16,9 @@ from __future__ import annotations
 import ast
 import re
 import sys
-import tomllib
 from pathlib import Path
+
+import tomllib
 
 ROOT = Path(__file__).resolve().parents[2]
 APP = ROOT / "kamra"
@@ -128,7 +129,7 @@ def check_listing_copy() -> None:
 	ok("listing long description has no extra URLs")
 
 
-def main() -> None:
+def main() -> int:
 	print("Kamra marketplace install simulation (offline)\n")
 	check_pyproject()
 	check_hooks()
@@ -139,6 +140,7 @@ def main() -> None:
 	print("\nMARKETPLACE-INSTALL CHECKS PASSED")
 	print("Full bench path: GitHub Actions → Backend eval harness")
 	print("  bench get-app payments && bench get-app kamra && install-app")
+	return 0
 
 
 if __name__ == "__main__":

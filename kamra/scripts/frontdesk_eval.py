@@ -284,7 +284,6 @@ def f11():
 
 @check("day-use: same-day stay books, occupies, and checks out today")
 def f12():
-	from kamra import api
 	with at_the_desk():
 		out = _book("FD Dayuse", "+91 71000 00017", "2032-06-01", "2032-06-01")
 		res = frappe.get_doc("Reservation", out["reservation"])

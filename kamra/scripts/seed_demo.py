@@ -233,7 +233,7 @@ def seed_generic_properties():
 			"advance_percent": 100,
 			"security_deposit_amount": 5000,
 		}).insert(ignore_permissions=True)
-		
+
 		rt_std = frappe.get_doc({
 			"doctype": "Room Type",
 			"property": prop.name,
@@ -249,7 +249,7 @@ def seed_generic_properties():
 			"children_capacity": 1,
 			"max_total_occupants": 3,
 		}).insert(ignore_permissions=True)
-		
+
 		rt_villa = frappe.get_doc({
 			"doctype": "Room Type",
 			"property": prop.name,
@@ -265,7 +265,7 @@ def seed_generic_properties():
 			"children_capacity": 5,
 			"max_total_occupants": 15,
 		}).insert(ignore_permissions=True)
-		
+
 		# Tatasth physical rooms (Ground Floor & First Floor)
 		for i in range(1, 6):
 			floor = "Ground Floor" if i <= 3 else "First Floor"
@@ -276,7 +276,7 @@ def seed_generic_properties():
 				"room_type": rt_std.name,
 				"floor": floor
 			}).insert(ignore_permissions=True)
-			
+
 		from kamra.api import set_room_rate
 		set_room_rate(prop.name, rt_std.name, "2026-08-01", "2027-08-01", 8600, reason="Weekend Rate", days_of_week=["Fri", "Sat"])
 		set_room_rate(prop.name, rt_villa.name, "2026-08-01", "2027-08-01", 36800, reason="Weekend Rate", days_of_week=["Fri", "Sat"])
@@ -298,35 +298,35 @@ def seed_generic_properties():
 			"advance_percent": 100,
 			"security_deposit_amount": 5000,
 		}).insert(ignore_permissions=True)
-		
+
 		rt_tfac = frappe.get_doc({
 			"doctype": "Room Type", "property": prop.name,
 			"room_type_code": "TFAC", "room_type_name": "Top Floor AC",
 			"room_category": "Private", "base_price": 4000, "base_occupancy": 2,
 			"adults_capacity": 2, "children_capacity": 1, "max_total_occupants": 3
 		}).insert(ignore_permissions=True)
-		
+
 		rt_uf2r = frappe.get_doc({
 			"doctype": "Room Type", "property": prop.name,
 			"room_type_code": "UF2R", "room_type_name": "Upper Floor (2-room)",
 			"room_category": "Private", "base_price": 6000, "base_occupancy": 4,
 			"adults_capacity": 4, "children_capacity": 2, "max_total_occupants": 6
 		}).insert(ignore_permissions=True)
-		
+
 		rt_gfna = frappe.get_doc({
 			"doctype": "Room Type", "property": prop.name,
 			"room_type_code": "GFNA", "room_type_name": "Ground Floor Non-AC – Room A",
 			"room_category": "Private", "base_price": 2700, "base_occupancy": 2,
 			"adults_capacity": 2, "children_capacity": 1, "max_total_occupants": 3
 		}).insert(ignore_permissions=True)
-		
+
 		rt_gfnb = frappe.get_doc({
 			"doctype": "Room Type", "property": prop.name,
 			"room_type_code": "GFNB", "room_type_name": "Ground Floor Non-AC – Room B",
 			"room_category": "Private", "base_price": 3100, "base_occupancy": 2,
 			"adults_capacity": 2, "children_capacity": 1, "max_total_occupants": 3
 		}).insert(ignore_permissions=True)
-		
+
 		# Physical Rooms (Top Floor, Upper Floor, Ground Floor)
 		frappe.get_doc({"doctype": "Room", "property": prop.name, "room_number": "Room 1", "room_type": rt_tfac.name, "floor": "Top Floor"}).insert(ignore_permissions=True)
 		frappe.get_doc({"doctype": "Room", "property": prop.name, "room_number": "Room 2", "room_type": rt_uf2r.name, "floor": "Upper Floor"}).insert(ignore_permissions=True)

@@ -18,8 +18,8 @@ running the show:  ...execute kamra.scripts.demo_aiosell.reset
 import frappe
 from frappe.utils import add_days, nowdate
 
-from kamra.channels import provider_for
 from kamra.channel_manager import _apply_event, ari_snapshot
+from kamra.channels import provider_for
 
 DEMO_PROPERTY = "Kamra Lakeside Villa"   # has a real Villa + a member STD
 HOTEL_CODE = "sandbox-pms"
@@ -130,6 +130,7 @@ def preview(property=None, days=5):
 	"""Show the OUT direction without live credentials: the exact JSON Kamra
 	would POST to Aiosell's /update (inventory) and /update-rates (rates)."""
 	import json
+
 	from kamra.channels.aiosell import build_push_bodies
 	frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- demo script runs as admin to seed and read demo data; not app runtime
 	property = _pick_property(property)
@@ -168,7 +169,7 @@ def push_to_sandbox(password, property=None, days=14):
 	then fires Kamra's real push. Run with the sandbox password:
 	    ...execute kamra.scripts.demo_aiosell.push_to_sandbox --kwargs '{"password":"THE_SANDBOX_PW"}'
 	"""
-	from kamra.channel_manager import push_ari, ari_snapshot
+	from kamra.channel_manager import ari_snapshot, push_ari
 	from kamra.channels.aiosell import build_push_bodies
 	frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- demo script runs as admin to seed and read demo data; not app runtime
 	property = _pick_property(property)
@@ -230,6 +231,7 @@ def reset(property=None):
 		try:
 			frappe.delete_doc("Reservation", r, force=1, ignore_permissions=True)
 		except Exception:
+			# demo cleanup: a row that is already gone or linked is left as is
 			pass
 	for v in frappe.get_all("Discount Voucher",
 	                        filters={"voucher_code": ("like", "CN-DEMO-%")},
@@ -237,6 +239,7 @@ def reset(property=None):
 		try:
 			frappe.delete_doc("Discount Voucher", v, force=1, ignore_permissions=True)
 		except Exception:
+			# demo cleanup: a voucher that is already gone is fine
 			pass
 	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- demo script (run via bench execute); commits so seeded demo data is visible; not app runtime
 	print(f"Demo data cleared for {property}.")
@@ -250,7 +253,7 @@ def run(property=None):
 	member_rt, villa_rt = _room_types(property)
 	if not member_rt:
 		print(f"'{property}' has no room type to book - add one first.")
-		return
+		return None
 
 	_line("═")
 	print(f"  AIOSELL SYNC DEMO   ·   property: {property}")

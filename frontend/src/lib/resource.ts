@@ -1,6 +1,7 @@
 // Generic Frappe REST resource helpers (list/create/update/delete).
 
 import { frappeFetch } from "./api"
+import { htmlToText } from "./utils"
 
 export type Row = Record<string, unknown> & { name: string }
 
@@ -66,7 +67,7 @@ export function serverError(e: unknown): string {
       const msgs = JSON.parse(parsed._server_messages ?? "[]")
       if (msgs.length) {
         const first = JSON.parse(msgs[0])
-        return String(first.message).replace(/<[^>]+>/g, "")
+        return htmlToText(String(first.message))
       }
       if (parsed.exception) return String(parsed.exception).split(":").pop()!
     } catch {

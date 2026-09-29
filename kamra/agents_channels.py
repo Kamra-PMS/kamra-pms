@@ -32,7 +32,6 @@ import frappe
 from kamra import savings
 from kamra.authz import require_roles
 
-
 # ---------------------------------------------------------------------------
 # Inbound webhooks
 # ---------------------------------------------------------------------------

@@ -15,7 +15,6 @@ exports), otherwise from the outlet picked in the UI.
 import re
 
 import frappe
-from frappe import _
 
 from kamra.authz import require_roles
 from kamra.migrate import _norm, _parse_csv

@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function — the same governed layer
-the UI and the AI use. **262 endpoints**, generated from the source
+the UI and the AI use. **265 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -171,18 +171,45 @@ payments for properties that have not opened a till yet.
 
 ### `kamra.api.record_advance`
 
-**GET/POST** · roles: `Front Desk`, `Kamra Agent`
+**POST** · roles: `Front Desk`, `Finance`, `Kamra Agent`
 
-Advance/deposit against a live booking - opens the folio early
-so the money sits on the stay from day one (GM gap: deposits arrive at
-booking, not at check-in). Pending Payment → Confirmed when paid.
+Take a deposit / advance on a booking before arrival (#114). Opens
+the guest folio early so the money sits on the stay from day one and
+the balance at check-in is right; recorded through add_folio_payment,
+so the till, cashier PIN and ledger see it like any other payment.
+A Held / Pending Payment booking is confirmed by it.
 
 | Param | Required | Default |
 | --- | --- | --- |
 | `reservation` | yes |  |
 | `amount` | yes |  |
-| `mode` | no | `'UPI'` |
+| `mode` | no | `'Cash'` |
 | `reference` | no | `None` |
+| `pin` | no | `None` |
+
+### `kamra.api.deposit_payment_link`
+
+**POST** · roles: `Front Desk`, `Finance`, `Kamra Agent`
+
+A payment link for the booking deposit - the deposit still due by
+default, or any amount the desk agrees with the guest. Paid through the
+gateway, it posts to the folio as an Advance (settle_payment_link).
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `reservation` | yes |  |
+| `amount` | no | `None` |
+
+### `kamra.api.simulate_payment_link`
+
+**POST** · roles: `Front Desk`, `Finance`, `Hotel Admin`
+
+Test mode only: act as the gateway and mark the outstanding link
+paid - for demos and training, never on a live gateway.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `reservation` | yes |  |
 
 ### `kamra.api.collect_security_deposit`
 
@@ -1219,11 +1246,26 @@ each venue's schedule so you can see availability and spot conflicts.
 **GET/POST** · roles: `Front Desk`, `Kamra Agent`
 
 Room move / upgrade - mid-stay or before arrival. Overlap guard re-runs.
+One writer for the tape chart, the reservation drawer and the GRC (#113).
 
 The new room may be a DIFFERENT room type (e.g. Standard -> Suite): the
 reservation's room type follows the room it moves into, so upgrades and
 downgrades are allowed. If the booking auto-prices, the new type's rate
 applies; a manually-priced booking keeps its amount.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `reservation` | yes |  |
+| `new_room` | yes |  |
+| `reason` | no | `None` |
+
+### `kamra.api.room_move_preview`
+
+**GET/POST** · roles: `Front Desk`, `Kamra Agent`
+
+What a move would do to the bill before the desk confirms it: a
+same-type swap keeps the price; an upgrade / downgrade on an auto-priced
+booking is re-quoted at the new type's rate by the pricing engine.
 
 | Param | Required | Default |
 | --- | --- | --- |

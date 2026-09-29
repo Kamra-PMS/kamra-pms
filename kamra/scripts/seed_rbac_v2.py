@@ -77,9 +77,15 @@ def ensure_agent_user():
 	user.save(ignore_permissions=True)
 	from frappe.utils.password import set_encrypted_password
 	set_encrypted_password("User", AGENT_EMAIL, api_secret, "api_secret")
-	print("AGENT CREDENTIALS (save these for the MCP server):")
-	print(f"  KAMRA_API_KEY={api_key}")
-	print(f"  KAMRA_API_SECRET={api_secret}")
+	# never print the secret: terminal scrollback and CI logs outlive it.
+	# Write it to a private, owner-only file in the site instead.
+	import os
+	path = frappe.get_site_path("private", "kamra_agent_credentials.env")
+	fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+	with os.fdopen(fd, "w") as fh:
+		fh.write(f"KAMRA_API_KEY={api_key}\nKAMRA_API_SECRET={api_secret}\n")
+	print(f"Agent credentials (API key + secret) written to "
+	      f"{os.path.abspath(path)} (mode 600).")
 
 
 def execute():

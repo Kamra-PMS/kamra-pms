@@ -5,6 +5,8 @@
 // The served boot page injects the session's CSRF token as window.csrf_token
 // (see kamra/www/kamra.py). Frappe enforces it on POSTs from a logged-in
 // session; guests and the dev server (ignore_csrf) don't need it.
+import { htmlToText } from "./utils"
+
 function csrfToken(): string | undefined {
   const t = (window as unknown as { csrf_token?: string }).csrf_token
   return t && t !== "None" ? t : undefined
@@ -110,7 +112,7 @@ export async function uploadFile(
       const body = await res.json()
       const msgs = JSON.parse(body._server_messages ?? "[]")
       if (msgs.length) {
-        detail = String(JSON.parse(msgs[0]).message).replace(/<[^>]+>/g, "")
+        detail = htmlToText(String(JSON.parse(msgs[0]).message))
       }
     } catch {
       /* keep status text */
@@ -1537,8 +1539,11 @@ export interface ReservationDetail {
   advance_paid: number
   company: string | null
   travel_agent: string | null
+  room_number: string | null
   folio_name: string | null
   money: { total: number; paid: number; due: number; has_folio: boolean }
+  /** Deposit before arrival (#114): expected by policy, received, still due. */
+  deposit: import("../components/DepositPanel").DepositState
   guest: {
     name: string
     full_name: string
