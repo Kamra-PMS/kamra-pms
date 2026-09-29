@@ -264,7 +264,7 @@ function StatCell(props: { label: string; value: string }) {
 export default function GuestJourney() {
   const { name } = useParams()
   const navigate = useNavigate()
-  const { openBooking } = useOutletContext<ShellContext>()
+  const { canBook, openBooking } = useOutletContext<ShellContext>()
   const [data, setData] = useState<Journey | null>(null)
   const [merging, setMerging] = useState(false)
   const [confirmAnon, setConfirmAnon] = useState(false)
@@ -363,21 +363,23 @@ export default function GuestJourney() {
               </div>
             </div>
             <div className="flex flex-col items-end gap-3">
-              <div className="flex gap-2">
-                <Button
-                  onClick={() =>
-                    openBooking({
-                      guest: guest.name,
-                      guest_name: guest.full_name,
-                      phone: guest.phone ?? undefined,
-                      stays: stats.stays,
-                    })
-                  }
-                >
-                  <CalendarPlus className="size-4" aria-hidden />
-                  Book a stay
-                </Button>
-              </div>
+              {canBook && (
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() =>
+                      openBooking({
+                        guest: guest.name,
+                        guest_name: guest.full_name,
+                        phone: guest.phone ?? undefined,
+                        stays: stats.stays,
+                      })
+                    }
+                  >
+                    <CalendarPlus className="size-4" aria-hidden />
+                    Book a stay
+                  </Button>
+                </div>
+              )}
               <div className="flex gap-6 text-right">
                 <StatCell label="Stays" value={String(stats.stays)} />
                 <StatCell label="Nights" value={String(stats.nights)} />
