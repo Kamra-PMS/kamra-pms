@@ -1,12 +1,15 @@
 import { useCallback, useEffect, useState } from "react"
 import {
-  Camera, ArrowLeft, Plus, Printer, Trash2 } from "lucide-react"
+  Camera, ArrowLeft, BedDouble, Plus, Printer, Receipt, Trash2 } from "lucide-react"
 import { Link, useParams } from "react-router-dom"
 import { call } from "../lib/api"
-import { toFullPath } from "../lib/routing"
 import EditableNationality from "../components/EditableNationality"
 import { Button } from "../components/ui/button"
-import { cur, locale, moneyLocale, useLocale } from "../lib/money"
+import { cur, locale, moneyLocale, taxLabel, useLocale } from "../lib/money"
+import { serverError } from "../lib/resource"
+import { useT } from "../lib/i18n"
+import { cn } from "../lib/utils"
+import RoomChangeDialog from "../components/RoomChangeDialog"
 
 /** Printable Guest Registration Card (GRC) - sign at check-in. */
 
@@ -28,12 +31,26 @@ interface Grc {
     logo_url: string | null
     address: string
     gstin: string | null
+    tax_id_label?: string
     phone: string | null
     checkin_time: string
     checkout_time: string
   }
+  readiness?: {
+    id_on_file: boolean
+    address_on_file: boolean
+    occupants: number
+    pax: number
+    precheckin_status: string
+    signed: boolean
+  }
+  signature?: string | null
+  tax_label?: string
   reservation: {
     name: string
+    status?: string
+    room_number?: string | null
+    room_type_name?: string | null
     room: string
     room_type: string
     check_in_date: string
@@ -81,9 +98,19 @@ function Row(props: { label: string; value?: string | null }) {
   return (
     <div className="flex border-b border-zinc-200 py-1.5 text-sm">
       <span className="w-40 shrink-0 text-zinc-500">{props.label}</span>
-      <span className="font-medium">{props.value || "-"}</span>
+      <span className="min-w-0 break-words font-medium">{props.value || "-"}</span>
     </div>
   )
+}
+
+const sectionCls = "mb-1 text-xs font-semibold uppercase tracking-wider text-zinc-400"
+
+const STATUS_TONE: Record<string, string> = {
+  Confirmed: "bg-sky-50 text-sky-700",
+  "Checked In": "bg-emerald-50 text-emerald-700",
+  "Checked Out": "bg-zinc-100 text-zinc-600",
+  Cancelled: "bg-rose-50 text-rose-700",
+  "No Show": "bg-amber-50 text-amber-700",
 }
 
 const emptyOccupant = (): Occupant => ({
@@ -284,8 +311,8 @@ function ActualTimeRow(props: {
     ? props.value.replace("T", " ").slice(0, 16)
     : "—"
   return (
-    <div className="flex flex-wrap items-center justify-between gap-2 py-0.5 text-sm">
-      <span className="shrink-0 text-zinc-500">{props.label}</span>
+    <div className="flex flex-wrap items-center gap-2 border-b border-zinc-200 py-1.5 text-sm">
+      <span className="w-40 shrink-0 text-zinc-500">{props.label}</span>
       {editing ? (
         <span className="flex min-w-0 flex-wrap items-center justify-end gap-1 print:hidden">
           <input
@@ -344,11 +371,11 @@ function ActualTimeRow(props: {
           )}
         </span>
       ) : (
-        <span className="text-right font-medium">
+        <span className="flex flex-1 items-center font-medium">
           {shown}
           <button
             type="button"
-            className="ml-2 text-xs font-medium text-brand-700 hover:underline print:hidden"
+            className="ms-auto text-xs font-medium text-brand-700 hover:underline print:hidden"
             onClick={() => {
               setVal(toDatetimeLocalValue(props.value))
               setError(null)
@@ -384,202 +411,396 @@ function fileToDataUrl(file: File): Promise<string> {
 
 export default function RegistrationCard() {
   const { name } = useParams()
+  const { t } = useT()
   const [d, setD] = useState<Grc | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [changingRoom, setChangingRoom] = useState(false)
+  const [uploading, setUploading] = useState<string | null>(null)
 
   const load = useCallback(() => {
     if (name)
-      call<Grc>("kamra.api.registration_card", { reservation: name }).then(setD)
+      call<Grc>("kamra.api.registration_card", { reservation: name })
+        .then((g) => {
+          setD(g)
+          setError(null)
+        })
+        .catch((e) => setError(serverError(e)))
   }, [name])
 
   useEffect(load, [load])
 
-  if (!d) return <p className="py-10 text-center text-zinc-400">Loading…</p>
+  if (error && !d)
+    return (
+      <div className="mx-auto max-w-2xl rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+        {error}
+      </div>
+    )
+  if (!d) return <p className="py-10 text-center text-zinc-400">{t("Loading…")}</p>
+
+  const r = d.reservation
+  const roomLabel = r.room_number
+    ? `${r.room_number} · ${r.room_type_name ?? r.room_type}`
+    : t("Unassigned")
+  const canMove = r.status === "Confirmed" || r.status === "Checked In"
+  const rd = d.readiness
+  const checks: { ok: boolean; label: string; hint?: string }[] = rd
+    ? [
+        { ok: rd.id_on_file, label: t("Guest ID on file") },
+        { ok: rd.address_on_file, label: t("Address proof"), hint: t("optional") },
+        {
+          ok: rd.occupants >= rd.pax,
+          label: t("Occupants registered ({n} of {pax})", { n: rd.occupants, pax: rd.pax }),
+        },
+        {
+          ok: rd.signed || rd.precheckin_status === "Verified",
+          label: rd.signed ? t("Signed online") : t("Signature"),
+          hint: rd.signed ? undefined : t("sign the printed card"),
+        },
+      ]
+    : []
+
+  async function upload(kind: "id" | "address", f: File) {
+    if (!d?.guest.guest_id) return
+    setUploading(kind)
+    try {
+      await call("kamra.api.upload_guest_document", {
+        guest: d.guest.guest_id,
+        kind,
+        image: await fileToDataUrl(f),
+      })
+      load()
+    } catch (e) {
+      setError(serverError(e))
+    } finally {
+      setUploading(null)
+    }
+  }
 
   return (
-    <div className="mx-auto max-w-2xl">
-      <div className="mb-4 flex items-center justify-between print:hidden">
-        <Link to="/" className="inline-flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-800">
-          <ArrowLeft className="size-4" aria-hidden /> Today
+    <div className="mx-auto max-w-5xl">
+      {/* action bar - never printed */}
+      <div className="mb-4 flex flex-wrap items-center gap-3 print:hidden">
+        <Link to="/reservations" className="inline-flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-800">
+          <ArrowLeft className="size-4" aria-hidden /> {t("Reservations")}
         </Link>
-        <Button onClick={() => window.print()}>
-          <Printer className="size-4" aria-hidden /> Print GRC
-        </Button>
+        <div className="flex min-w-0 items-center gap-2">
+          <h1 className="truncate text-lg font-semibold text-zinc-900">{t("Registration card")}</h1>
+          <span className="font-mono text-sm text-zinc-500">{r.name}</span>
+          {r.status && (
+            <span className={cn("rounded-full px-2 py-0.5 text-xs font-semibold", STATUS_TONE[r.status] ?? "bg-zinc-100 text-zinc-700")}>
+              {t(r.status)}
+            </span>
+          )}
+        </div>
+        <div className="ms-auto flex flex-wrap gap-2">
+          {canMove && (
+            <Button variant="outline" onClick={() => setChangingRoom(true)}>
+              <BedDouble className="size-4" aria-hidden />
+              {r.room_number ? t("Change room") : t("Assign room")}
+            </Button>
+          )}
+          {d.money && (
+            <Link
+              to={`/billing/${encodeURIComponent(d.money.folio)}`}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
+            >
+              <Receipt className="size-4" aria-hidden /> {t("Open bill")}
+            </Link>
+          )}
+          <Button onClick={() => window.print()}>
+            <Printer className="size-4" aria-hidden /> {t("Print GRC")}
+          </Button>
+        </div>
       </div>
 
-      <div className="rounded-xl border border-zinc-200 bg-white p-6 print:border-0">
-        <div className="mb-5 flex items-start justify-between border-b border-zinc-300 pb-4">
-          <div>
-            <h1 className="text-lg font-bold">{d.property.property_name}</h1>
-            <p className="text-xs text-zinc-500">{d.property.address}</p>
-            <p className="text-xs text-zinc-500">
-              {d.property.gstin && <>GSTIN {d.property.gstin} · </>}
-              {d.property.phone}
-            </p>
-          </div>
-          <div className="text-right">
-            <p className="text-sm font-semibold">GUEST REGISTRATION CARD</p>
-            <p className="text-xs text-zinc-500">{d.reservation.name}</p>
-          </div>
+      {error && (
+        <div className="mb-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700 print:hidden">
+          {error}
         </div>
+      )}
 
-        <div className="grid gap-x-8 sm:grid-cols-2">
-          <div>
-            <h2 className="mb-1 text-xs font-semibold uppercase tracking-wider text-zinc-400">Guest</h2>
-            <Row label="Name" value={d.guest.full_name} />
-            <Row label="Phone" value={d.guest.phone} />
-            <Row label="Email" value={d.guest.email} />
-            {d.guest.guest_id ? (
-              <EditableNationality
-                guestId={d.guest.guest_id}
-                value={d.guest.nationality}
-                variant="row"
-                onSaved={(nationality) =>
-                  setD((prev) =>
-                    prev
-                      ? { ...prev, guest: { ...prev.guest, nationality } }
-                      : prev,
-                  )
-                }
-              />
-            ) : (
-              <Row label="Nationality" value={d.guest.nationality} />
-            )}
-            <Row label="ID" value={d.guest.id_type ? `${d.guest.id_type} · ${d.guest.id_number ?? ""}` : null} />
-            <div className="mt-2 grid grid-cols-2 gap-3 print:grid-cols-2">
-              {([["id", "ID document", d.guest.id_file],
-                 ["address", "Address proof", d.guest.address_proof_file]] as const).map(([kind, label, url]) => (
-                <div key={kind}>
-                  <span className="text-xs font-medium uppercase tracking-wide text-zinc-400">{label}</span>
-                  {url ? (
-                    <a href={url} target="_blank" rel="noreferrer">
-                      <img src={url} alt={label}
-                        className="mt-1 max-h-28 rounded-lg border border-zinc-200 object-contain" />
-                    </a>
-                  ) : (
-                    <p className="mt-1 text-xs text-zinc-400 print:hidden">Not on file</p>
+      <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_17rem]">
+        {/* ── the printable card ─────────────────────────────── */}
+        <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm print:border-0 print:p-0 print:shadow-none">
+          <div className="mb-5 flex items-start justify-between gap-4 border-b border-zinc-300 pb-4">
+            <div className="flex items-start gap-3">
+              {d.property.logo_url && (
+                <img src={d.property.logo_url} alt="" className="size-12 shrink-0 rounded object-contain" />
+              )}
+              <div>
+                <p className="text-lg font-bold">{d.property.property_name}</p>
+                <p className="text-xs text-zinc-500">{d.property.address}</p>
+                <p className="text-xs text-zinc-500">
+                  {d.property.gstin && (
+                    <>
+                      {d.property.tax_id_label ?? "GSTIN"} {d.property.gstin} ·{" "}
+                    </>
                   )}
-                  <label className="mt-1 inline-block cursor-pointer text-xs font-medium text-brand-700 hover:underline print:hidden">
-                    {url ? "Replace with newer" : "Capture / upload"}
-                    <input type="file" accept="image/*" capture="environment" className="hidden"
-                      onChange={async (e) => {
-                        const f = e.target.files?.[0]
-                        if (!f || !d.guest.guest_id) return
-                        await call("kamra.api.upload_guest_document", {
-                          guest: d.guest.guest_id, kind,
-                          image: await fileToDataUrl(f),
-                        })
-                        load()
-                      }} />
-                  </label>
-                </div>
-              ))}
+                  {d.property.phone}
+                </p>
+              </div>
             </div>
-            <Row label="Address" value={d.guest.address} />
-            {d.reservation.company && <Row label="Company" value={d.reservation.company} />}
-            {d.reservation.booked_by_name && (
-              <Row label="Booked by" value={d.reservation.booked_by_name} />
-            )}
+            <div className="text-right">
+              <p className="text-sm font-semibold tracking-wide">{t("GUEST REGISTRATION CARD")}</p>
+              <p className="font-mono text-xs text-zinc-500">{r.name}</p>
+            </div>
           </div>
-          <div>
-            <h2 className="mb-1 text-xs font-semibold uppercase tracking-wider text-zinc-400">Stay</h2>
-            <Row label="Room" value={`${d.reservation.room} · ${d.reservation.room_type}`} />
-            <Row label="Check-in" value={`${d.reservation.check_in_date} (${d.property.checkin_time.slice(0, 5)})`} />
-            <Row label="Check-out" value={`${d.reservation.check_out_date} (${d.property.checkout_time.slice(0, 5)})`} />
-            <ActualTimeRow label="Actual check-in" reservation={d.reservation.name}
-              field="actual_check_in" value={d.reservation.actual_check_in} onSaved={load} />
-            <ActualTimeRow label="Actual check-out" reservation={d.reservation.name}
-              field="actual_check_out" value={d.reservation.actual_check_out} onSaved={load} />
-            <Row label="Nights" value={String(d.reservation.nights)} />
-            <Row label="Guests" value={`${d.reservation.adults} adult(s)${d.reservation.children ? ` + ${d.reservation.children} child` : ""}`} />
-            <Row label="Stay total" value={`${cur()}${inr(d.reservation.rate_total)} (incl. GST)`} />
-            <Row label="Advance paid" value={`${cur()}${inr(d.reservation.advance_paid)}`} />
-            {d.money && (
-              <>
-                <Row
-                  label="Ledger"
-                  value={
-                    `Charges ${cur()}${inr(d.money.grand_total)}` +
-                    ` · Paid ${cur()}${inr(d.money.paid_total)}` +
-                    ` · Balance ${cur()}${inr(d.money.balance)}` +
-                    (d.money.deposit_held
-                      ? ` · Deposit held ${cur()}${inr(d.money.deposit_held)}`
-                      : "")
+
+          <div className="grid gap-x-8 gap-y-5 sm:grid-cols-2">
+            <section>
+              <h2 className={sectionCls}>{t("Guest")}</h2>
+              <Row label={t("Name")} value={d.guest.full_name} />
+              <Row label={t("Phone")} value={d.guest.phone} />
+              <Row label={t("Email")} value={d.guest.email} />
+              {d.guest.guest_id ? (
+                <EditableNationality
+                  guestId={d.guest.guest_id}
+                  value={d.guest.nationality}
+                  variant="row"
+                  onSaved={(nationality) =>
+                    setD((prev) => (prev ? { ...prev, guest: { ...prev.guest, nationality } } : prev))
                   }
                 />
-                <div className="print:hidden">
-                  <a className="text-sm font-medium text-brand-700 hover:underline"
-                    href={toFullPath(`/billing/${encodeURIComponent(d.money.folio)}`)}>
-                    Open folio — collect advance / deposit, settle & generate the invoice →
-                  </a>
-                </div>
-              </>
-            )}
-            <Row label="Source" value={d.reservation.source} />
+              ) : (
+                <Row label={t("Nationality")} value={d.guest.nationality} />
+              )}
+              <Row
+                label={t("ID")}
+                value={d.guest.id_type ? `${t(d.guest.id_type)} · ${d.guest.id_number ?? ""}` : null}
+              />
+              <Row label={t("Address")} value={d.guest.address} />
+              {r.company && <Row label={t("Company")} value={r.company} />}
+              {r.booked_by_name && <Row label={t("Booked by")} value={r.booked_by_name} />}
+            </section>
+
+            <section>
+              <h2 className={sectionCls}>{t("Stay")}</h2>
+              <div className="flex items-center border-b border-zinc-200 py-1.5 text-sm">
+                <span className="w-40 shrink-0 text-zinc-500">{t("Room")}</span>
+                <span className="font-semibold">{roomLabel}</span>
+                {canMove && (
+                  <button
+                    type="button"
+                    onClick={() => setChangingRoom(true)}
+                    className="ms-auto text-xs font-medium text-brand-700 hover:underline print:hidden"
+                  >
+                    {t("Change")}
+                  </button>
+                )}
+              </div>
+              <Row label={t("Check-in")} value={`${r.check_in_date} (${d.property.checkin_time.slice(0, 5)})`} />
+              <Row label={t("Check-out")} value={`${r.check_out_date} (${d.property.checkout_time.slice(0, 5)})`} />
+              <ActualTimeRow label={t("Actual check-in")} reservation={r.name}
+                field="actual_check_in" value={r.actual_check_in} onSaved={load} />
+              <ActualTimeRow label={t("Actual check-out")} reservation={r.name}
+                field="actual_check_out" value={r.actual_check_out} onSaved={load} />
+              <Row label={t("Nights")} value={String(r.nights)} />
+              <Row
+                label={t("Guests")}
+                value={
+                  t("{n} adult{s}", { n: r.adults, s: r.adults === 1 ? "" : "s" }) +
+                  (r.children ? ` + ${t("{n} child", { n: r.children })}` : "")
+                }
+              />
+              <Row
+                label={t("Stay total")}
+                value={`${cur()}${inr(r.rate_total)} (${t("incl. {tax}", { tax: d.tax_label ?? taxLabel() })})`}
+              />
+              <Row label={t("Advance paid")} value={`${cur()}${inr(r.advance_paid)}`} />
+              <Row label={t("Source")} value={r.source} />
+            </section>
           </div>
-        </div>
 
-        {d.reservation.special_requests && (
-          <p className="mt-3 text-sm"><span className="text-zinc-500">Requests: </span>{d.reservation.special_requests}</p>
-        )}
+          {r.special_requests && (
+            <p className="mt-4 rounded-lg bg-zinc-50 px-3 py-2 text-sm print:bg-transparent print:px-0">
+              <span className="text-zinc-500">{t("Requests")}: </span>
+              {r.special_requests}
+            </p>
+          )}
 
-        <div className="mt-5">
-          <h2 className="mb-1 text-xs font-semibold uppercase tracking-wider text-zinc-400">
-            Occupants
-          </h2>
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-zinc-300 text-left text-[11px] uppercase tracking-wider text-zinc-400">
-                <th className="py-1 pr-3 font-medium">Name</th>
-                <th className="py-1 pr-3 font-medium">Age</th>
-                <th className="py-1 pr-3 font-medium">Gender</th>
-                <th className="py-1 pr-3 font-medium">Nationality</th>
-                <th className="py-1 font-medium">ID</th>
-              </tr>
-            </thead>
-            <tbody>
-              {d.occupants.map((o, i) => (
-                <tr key={i} className="border-b border-zinc-200">
-                  <td className="py-1.5 pr-3 font-medium">{o.full_name}</td>
-                  <td className="py-1.5 pr-3">{o.age ?? "-"}</td>
-                  <td className="py-1.5 pr-3">{o.gender || "-"}</td>
-                  <td className="py-1.5 pr-3">{o.nationality || "-"}</td>
-                  <td className="py-1.5">
-                    {o.id_type ? `${o.id_type} · ${o.id_number ?? ""}` : "-"}
-                  </td>
+          {/* documents on file - printed with the card */}
+          {(d.guest.id_file || d.guest.address_proof_file) && (
+            <div className="mt-5 grid grid-cols-2 gap-4">
+              {(
+                [
+                  ["id", t("ID document"), d.guest.id_file],
+                  ["address", t("Address proof"), d.guest.address_proof_file],
+                ] as const
+              ).map(([kind, label, url]) =>
+                url ? (
+                  <figure key={kind}>
+                    <figcaption className={sectionCls}>{label}</figcaption>
+                    <a href={url} target="_blank" rel="noreferrer">
+                      <img src={url} alt={label} className="max-h-32 rounded-lg border border-zinc-200 object-contain" />
+                    </a>
+                  </figure>
+                ) : null,
+              )}
+            </div>
+          )}
+
+          <section className="mt-5">
+            <h2 className={sectionCls}>{t("Occupants")}</h2>
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-zinc-300 text-left text-[11px] uppercase tracking-wider text-zinc-400">
+                  <th className="py-1 pe-3 font-medium">{t("Name")}</th>
+                  <th className="py-1 pe-3 font-medium">{t("Age")}</th>
+                  <th className="py-1 pe-3 font-medium">{t("Gender")}</th>
+                  <th className="py-1 pe-3 font-medium">{t("Nationality")}</th>
+                  <th className="py-1 font-medium">{t("ID")}</th>
                 </tr>
-              ))}
-              {d.occupants.length === 0 &&
-                [0, 1, 2].map((i) => (
+              </thead>
+              <tbody>
+                {d.occupants.map((o, i) => (
                   <tr key={i} className="border-b border-zinc-200">
-                    <td className="py-4" colSpan={5} />
+                    <td className="py-1.5 pe-3 font-medium">{o.full_name}</td>
+                    <td className="py-1.5 pe-3">{o.age ?? "-"}</td>
+                    <td className="py-1.5 pe-3">{o.gender ? t(o.gender) : "-"}</td>
+                    <td className="py-1.5 pe-3">{o.nationality || "-"}</td>
+                    <td className="py-1.5">{o.id_type ? `${t(o.id_type)} · ${o.id_number ?? ""}` : "-"}</td>
                   </tr>
                 ))}
-            </tbody>
-          </table>
+                {d.occupants.length === 0 &&
+                  [0, 1, 2].map((i) => (
+                    <tr key={i} className="border-b border-zinc-200">
+                      <td className="py-4" colSpan={5} />
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </section>
+
+          <p className="mt-6 text-[11px] leading-relaxed text-zinc-500">
+            {t("I certify the above details are correct. I agree to the hotel's policies on check-out time, damage to property and applicable taxes, and consent to my details being kept in the guest register as required by law.")}
+          </p>
+
+          <div className="mt-8 grid grid-cols-2 gap-8">
+            <div className="text-center text-xs text-zinc-500">
+              <div className="flex h-16 items-end justify-center">
+                {d.signature && (
+                  <img src={d.signature} alt={t("Guest signature")} className="max-h-16 object-contain" />
+                )}
+              </div>
+              <div className="border-t border-zinc-400 pt-1">
+                {t("Guest signature")}
+                {d.signature && <span className="block text-[10px] text-zinc-400">{t("signed online at pre-check-in")}</span>}
+              </div>
+            </div>
+            <div className="text-center text-xs text-zinc-500">
+              <div className="h-16" />
+              <div className="border-t border-zinc-400 pt-1">{t("Front desk (name & sign)")}</div>
+            </div>
+          </div>
         </div>
 
-        <p className="mt-6 text-[11px] leading-relaxed text-zinc-500">
-          I certify the above details are correct. I agree to the hotel's
-          policies on check-out time, damage to property and applicable
-          taxes, and consent to my details being kept in the guest register
-          as required by law.
-        </p>
+        {/* ── the desk's rail - never printed ────────────────── */}
+        <aside className="space-y-4 print:hidden lg:sticky lg:top-4">
+          <div className="rounded-xl border border-zinc-200 bg-white p-4">
+            <h2 className="mb-2 text-sm font-semibold text-zinc-800">{t("Registration checklist")}</h2>
+            <ul className="space-y-1.5 text-sm">
+              {checks.map((c) => (
+                <li key={c.label} className="flex items-start gap-2">
+                  <span
+                    className={cn(
+                      "mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full text-[10px] font-bold",
+                      c.ok ? "bg-emerald-100 text-emerald-700" : "bg-zinc-100 text-zinc-400",
+                    )}
+                    aria-hidden
+                  >
+                    {c.ok ? "✓" : "·"}
+                  </span>
+                  <span className={c.ok ? "text-zinc-800" : "text-zinc-500"}>
+                    {c.label}
+                    {!c.ok && c.hint && <span className="text-xs text-zinc-400"> · {c.hint}</span>}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            {rd && (
+              <p className="mt-2 text-xs text-zinc-400">
+                {t("Online check-in {status}", { status: t(rd.precheckin_status) })}
+              </p>
+            )}
+          </div>
 
-        <div className="mt-10 grid grid-cols-2 gap-8">
-          <div className="border-t border-zinc-400 pt-1 text-center text-xs text-zinc-500">
-            Guest signature
+          <div className="rounded-xl border border-zinc-200 bg-white p-4">
+            <h2 className="mb-2 text-sm font-semibold text-zinc-800">{t("Documents")}</h2>
+            <div className="space-y-2">
+              {(
+                [
+                  ["id", t("Guest ID"), d.guest.id_file],
+                  ["address", t("Address proof"), d.guest.address_proof_file],
+                ] as const
+              ).map(([kind, label, url]) => (
+                <label
+                  key={kind}
+                  className="flex cursor-pointer items-center justify-between gap-2 rounded-lg border border-zinc-200 px-3 py-2 text-sm hover:bg-zinc-50"
+                >
+                  <span className="flex items-center gap-2">
+                    <Camera className="size-4 text-zinc-400" aria-hidden />
+                    {label}
+                  </span>
+                  <span className="text-xs font-medium text-brand-700">
+                    {uploading === kind ? t("Saving…") : url ? t("Replace") : t("Capture")}
+                  </span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0]
+                      if (f) upload(kind, f)
+                    }}
+                  />
+                </label>
+              ))}
+            </div>
           </div>
-          <div className="border-t border-zinc-400 pt-1 text-center text-xs text-zinc-500">
-            Front desk (name & sign)
-          </div>
-        </div>
+
+          {d.money && (
+            <div className="rounded-xl border border-zinc-200 bg-white p-4">
+              <h2 className="mb-2 text-sm font-semibold text-zinc-800">{t("Money")}</h2>
+              <dl className="space-y-1 text-sm">
+                {(
+                  [
+                    [t("Charges"), d.money.grand_total, ""],
+                    [t("Paid"), d.money.paid_total, "text-emerald-700"],
+                    ...(d.money.advance ? [[t("of which advance"), d.money.advance, "text-zinc-500"]] : []),
+                    ...(d.money.deposit_held ? [[t("Deposit held"), d.money.deposit_held, "text-zinc-500"]] : []),
+                    [t("Balance"), d.money.balance, d.money.balance > 0 ? "font-semibold text-rose-600" : "font-semibold text-zinc-400"],
+                  ] as [string, number, string][]
+                ).map(([k, v, cls]) => (
+                  <div key={k} className="flex justify-between">
+                    <dt className="text-zinc-500">{k}</dt>
+                    <dd className={cn("tabular-nums", cls)}>{cur()}{inr(v)}</dd>
+                  </div>
+                ))}
+              </dl>
+              <Link
+                to={`/billing/${encodeURIComponent(d.money.folio)}`}
+                className="mt-3 block text-sm font-medium text-brand-700 hover:underline"
+              >
+                {t("Open bill - take payment, settle, invoice →")}
+              </Link>
+            </div>
+          )}
+        </aside>
       </div>
 
       {name && (
-        <OccupantsEditor
-          reservation={name}
-          occupants={d.occupants}
-          onSaved={load}
+        <div className="print:hidden">
+          <OccupantsEditor reservation={name} occupants={d.occupants} onSaved={load} />
+        </div>
+      )}
+
+      {changingRoom && (
+        <RoomChangeDialog
+          reservation={r.name}
+          currentRoomNumber={r.room_number}
+          onClose={() => setChangingRoom(false)}
+          onMoved={load}
         />
       )}
     </div>

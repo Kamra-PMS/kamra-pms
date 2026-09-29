@@ -3578,7 +3578,44 @@
         "kamra.api.move_reservation"
        ]
       },
-      "description": "Room move / upgrade - mid-stay or before arrival. Overlap guard re-runs.\n\nThe new room may be a DIFFERENT room type (e.g. Standard -> Suite): the\nreservation's room type follows the room it moves into, so upgrades and\ndowngrades are allowed. If the booking auto-prices, the new type's rate\napplies; a manually-priced booking keeps its amount.",
+      "description": "Room move / upgrade - mid-stay or before arrival. Overlap guard re-runs.\nOne writer for the tape chart, the reservation drawer and the GRC (#113).\n\nThe new room may be a DIFFERENT room type (e.g. Standard -> Suite): the\nreservation's room type follows the room it moves into, so upgrades and\ndowngrades are allowed. If the booking auto-prices, the new type's rate\napplies; a manually-priced booking keeps its amount.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"new_room\": \"<new_room>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "room_move_preview",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.room_move_preview",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.room_move_preview"
+       ]
+      },
+      "description": "What a move would do to the bill before the desk confirms it: a\nsame-type swap keeps the price; an upgrade / downgrade on an auto-priced\nbooking is re-quoted at the new type's rate by the pricing engine.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"new_room\": \"<new_room>\"\n}",
