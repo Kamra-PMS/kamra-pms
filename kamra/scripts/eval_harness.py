@@ -703,6 +703,7 @@ def t22():
 @check("housekeeping SLA: due_by set, overdue task escalates & breaches")
 def t23():
 	from frappe.utils import add_to_date, now_datetime
+
 	from kamra.housekeeping import escalate_overdue_tasks
 	# a task born already overdue (due_by in the past)
 	task = frappe.get_doc({
@@ -760,7 +761,6 @@ def t24():
 @check("POS: order fires KOT, delivery posts F&B to the room folio with discount")
 def t25():
 	from kamra import pos
-	from kamra.folio import post_room_night
 	outlet = frappe.get_doc({
 		"doctype": "POS Outlet", "property": P, "outlet_name": "Eval Cafe",
 		"outlet_type": "Restaurant", "gst_rate": 5,
@@ -1012,6 +1012,7 @@ def t29():
 @check("POS: table reservation lifecycle and cleaning state")
 def t30():
 	from frappe.utils import add_to_date, now_datetime
+
 	from kamra import pos
 	outlet = frappe.get_doc({
 		"doctype": "POS Outlet", "property": P, "outlet_name": "Eval Garden",
@@ -1063,7 +1064,6 @@ def t30():
 @check("laundry: rate card pricing, shortage guard, folio bill at 18% GST")
 def t31():
 	from kamra import laundry
-	from kamra.folio import post_room_night
 
 	# rate card: upsert enforces service names and positive rates
 	laundry.save_laundry_rate(P, "Shirt", "Wash & Iron", 60)
@@ -1343,8 +1343,9 @@ def t38():
 
 @check("kitchen display: coursing holds & fires, cook's clock starts at fire, allergen alarm")
 def t39():
-	from kamra import pos
 	from frappe.utils import add_to_date, now_datetime
+
+	from kamra import pos
 	outlet = frappe.get_doc({
 		"doctype": "POS Outlet", "property": P, "outlet_name": "Eval Pass",
 		"outlet_type": "Restaurant", "gst_rate": 5,
@@ -1672,7 +1673,8 @@ def _id_files(reservation):
 def t42():
 	import base64
 
-	from kamra import api, public_api as pub
+	from kamra import api
+	from kamra import public_api as pub
 	g = _guest("ID Doc Guest", "+91 70000 00038")
 	res = _res(g, "2035-02-01", "2035-02-03", ROOM)
 	token = frappe.db.get_value("Reservation", res.name, "precheckin_token")
@@ -1722,8 +1724,9 @@ def t42():
 		pass
 
 	# what we store is a JPEG we wrote, with the guest's home GPS stripped out
-	from PIL import Image as _Image
 	import io as _io
+
+	from PIL import Image as _Image
 	stored = _Image.open(_io.BytesIO(frappe.get_doc("File", _id_files(res.name)[0]).get_content()))
 	assert stored.format == "JPEG", stored.format
 	assert not (stored.getexif() or {}), "EXIF survived - GPS may ride on the scan"
@@ -1775,7 +1778,8 @@ def t42():
 
 @check("ID document: desk captures and verifies, roles gate the look")
 def t43():
-	from kamra import api, id_documents, public_api as pub
+	from kamra import api, id_documents
+	from kamra import public_api as pub
 	g = _guest("ID Verify Guest", "+91 70000 00040")
 	res = _res(g, "2035-04-01", "2035-04-03", ROOM)
 	token = frappe.db.get_value("Reservation", res.name, "precheckin_token")
@@ -1837,6 +1841,7 @@ def t43():
 @check("pre-checkin: ID photo stored privately, discarded at checkout per policy")
 def t34():
 	import base64
+
 	from kamra import api, public_api
 
 	idroom = frappe.db.exists("Room", {"property": P, "room_number": "E103"})
@@ -1854,6 +1859,7 @@ def t34():
 
 	# a real (tiny) JPEG - frappe's File doctype runs PIL over uploads
 	from io import BytesIO
+
 	from PIL import Image
 	buf = BytesIO()
 	Image.new("RGB", (8, 8), (200, 180, 40)).save(buf, format="JPEG")
@@ -1926,7 +1932,9 @@ def t35():
 def t36():
 	import base64
 	from io import BytesIO
+
 	from PIL import Image
+
 	from kamra import api, public_api
 
 	def img64():
@@ -1982,7 +1990,6 @@ def t36():
 @check("stay ledger: advance/deposit kinds, guarded refunds, actual times on GRC")
 def t37():
 	from kamra import api
-	from kamra.folio import post_room_night
 
 	lroom2 = frappe.db.exists("Room", {"property": P, "room_number": "E105"})
 	if not lroom2:
@@ -2195,9 +2202,10 @@ def t47b():
 
 @check("deposit before arrival: advance on an early folio, link, carried to check-in")
 def t47c():
+	from frappe.utils import add_days, nowdate
+
 	from kamra import api
 	from kamra.payments import settle_payment_link
-	from frappe.utils import add_days, nowdate
 
 	frappe.db.set_value("Property", P, "deposit_pct", 30)
 	frappe.clear_cache(doctype="Property")
@@ -2224,7 +2232,8 @@ def t47c():
 
 @check("WhatsApp: native Meta send, booking flow, inbound -> ticket")
 def t48():
-	from kamra import whatsapp  # nosemgrep: frappe-monkey-patching-not-allowed -- offline eval harness stubs the outbound transport for tests; not a production code path
+	# nosemgrep: frappe-monkey-patching-not-allowed -- offline eval harness stubs the outbound transport for tests; not a production code path
+	from kamra import whatsapp
 	from kamra.agents_channels import send_outbound
 
 	# a connection with our own number - fake creds, intercepted transport
@@ -2391,12 +2400,10 @@ def t51():
 	import base64
 	import io as _io
 
+	from frappe.utils import add_days, nowdate
 	from PIL import Image
 
-	from kamra.api import (_scrub_stay_ids, check_in, update_occupants,
-	                       upload_occupant_id)
-
-	from frappe.utils import add_days, nowdate
+	from kamra.api import _scrub_stay_ids, update_occupants, upload_occupant_id
 
 	guest = frappe.get_doc({
 		"doctype": "Guest", "first_name": "Occ", "last_name": "Primary",
@@ -2451,7 +2458,9 @@ def t53():
 	from frappe.utils import add_days, nowdate
 
 	from kamra import channel_manager as cm
-	from kamra.channels import channex  # nosemgrep: frappe-monkey-patching-not-allowed -- offline eval harness stubs the outbound transport for tests; not a production code path
+
+	# nosemgrep: frappe-monkey-patching-not-allowed -- offline eval harness stubs the outbound transport for tests; not a production code path
+	from kamra.channels import channex
 
 	conn = frappe.get_doc({
 		"doctype": "Channel Manager Connection", "property": P,

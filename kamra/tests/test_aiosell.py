@@ -12,8 +12,8 @@ import unittest
 
 import frappe
 
-from kamra.channels import aiosell
 from kamra.channel_manager import _apply_villa_lockout
+from kamra.channels import aiosell
 
 
 def _book_payload(rooms, action="book"):

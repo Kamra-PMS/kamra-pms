@@ -92,6 +92,7 @@ def _score(prefs: str, vip: bool, room: dict, max_floor, min_floor):
 def suggest_allocation(property: str, date: str | None = None):
 	"""Propose a room for every unassigned arrival on `date`. No mutation."""
 	from frappe.utils import nowdate
+
 	from kamra.api import available_rooms
 
 	d = date or nowdate()
@@ -110,7 +111,7 @@ def suggest_allocation(property: str, date: str | None = None):
 		"Guest", filters={"name": ("in", gnames or [""])},
 		fields=["name", "vip", "guest_notes"])} if gnames else {}
 
-	pool, max_floor, min_floor = _room_pool(property)
+	pool, _max_floor, _min_floor = _room_pool(property)
 	by_name = {r.name: r for r in pool}
 
 	# rooms already handed out in this pass, so two arrivals never collide

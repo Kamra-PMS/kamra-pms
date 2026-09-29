@@ -167,7 +167,7 @@ class Reservation(Document):
 				"{0} can't sleep {1}. Reduce the party, pick a bigger room "
 				"type, or book additional rooms — use a Group Booking for "
 				"large parties."
-			).format(cap.room_type_name or self.room_type, _(" and ").join(over)),
+			).format(cap.room_type_name or self.room_type, " {} ".format(_("and")).join(over)),
 				title=_("Over room capacity"))
 
 	def validate_dates(self):
@@ -294,10 +294,10 @@ class Reservation(Document):
 				if r.name != self.room
 			]
 			if free:
-				hint = _(" Free {0} rooms for these dates: {1}.").format(
+				hint = " " + _("Free {0} rooms for these dates: {1}.").format(
 					self.room_type, ", ".join(free))
 			else:
-				hint = _(" No {0} rooms are free for these dates.").format(
+				hint = " " + _("No {0} rooms are free for these dates.").format(
 					self.room_type)
 			frappe.throw(
 				_("Room {0} belongs to {1}, not {2}.").format(
@@ -358,10 +358,10 @@ class Reservation(Document):
 			"Inquiry", "Quoted", "Requested",
 		) or not self.room_type:
 			return
-		
+
 		# Get Room Category of the requested Room Type
 		category = frappe.db.get_value("Room Type", self.room_type, "room_category")
-		
+
 		if category == "Villa":
 			# A Villa is being booked. Check if ANY individual/shared room booking is confirmed/checked-in
 			overlap = frappe.db.sql(

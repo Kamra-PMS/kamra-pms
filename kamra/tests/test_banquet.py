@@ -597,8 +597,9 @@ class TestBanquetOps(BanquetTestCase):
 		self.assertTrue(row.completed_on)
 
 	def test_quote_no_response_alert_after_three_days(self):
-		from kamra import banquet_ops as ops
 		from frappe.utils import add_days, now_datetime
+
+		from kamra import banquet_ops as ops
 
 		fn = self._quoted()
 		frappe.flags.mute_emails = True

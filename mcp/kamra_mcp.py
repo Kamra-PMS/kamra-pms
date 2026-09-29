@@ -31,10 +31,10 @@ _APP = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "kamra"))
 if _APP not in sys.path:
 	sys.path.insert(0, os.path.dirname(_APP))
 
-from kamra.mcp_tools import (  # noqa: E402
+from kamra.mcp_tools import (
+	_JSON_TYPES,
 	INSTRUCTIONS,
 	TOOLS,
-	_JSON_TYPES,
 	prepare_arguments,
 )
 

@@ -8,9 +8,9 @@ import json
 
 import frappe
 from frappe import _
-from kamra.authz import require_it_admin, require_roles
 from frappe.utils import add_days, get_datetime, now_datetime, nowdate
 
+from kamra.authz import require_it_admin, require_roles
 
 # The apps a property actually runs. The launcher and the sidebar read
 # this so a serviced-apartment operator never sees an empty restaurant.
@@ -152,7 +152,7 @@ def set_room_rate(property: str, room_type: str, start_date: str,
 
 	# the hurdle is the DYNAMIC floor: when demand tiers are active for any
 	# date in range, a manual rate can't undercut the minimum sell rate
-	from frappe.utils import getdate, add_days, date_diff
+	from frappe.utils import add_days, date_diff
 
 	# Validate hurdle rates for each day in range
 	from kamra.pricing import demand_tier
@@ -166,7 +166,7 @@ def set_room_rate(property: str, room_type: str, start_date: str,
 				f"₹{tier['min_rate']:,.0f} - ₹{rate:,.0f} undercuts it."
 			)
 
-	from frappe.utils import getdate, date_diff
+	from frappe.utils import date_diff
 
 	season_name_suffix = f" {days_of_week}" if days_of_week else ""
 	days_str = ",".join(days_of_week) if isinstance(days_of_week, list) else days_of_week
@@ -344,8 +344,8 @@ def setup_property(payload):
 			"apply_to_all_doctypes": 1,
 		}).insert(ignore_permissions=True)
 	try:
-		from kamra.turnover import ensure_default_profile
 		from kamra.property_presets import KIND_STR, normalize_kind
+		from kamra.turnover import ensure_default_profile
 		ensure_default_profile(
 			prop.name,
 			str_defaults=normalize_kind(prop.property_kind) == KIND_STR,
@@ -2835,6 +2835,7 @@ def _scrub_stay_ids(res):
 def _cancellation_terms(res):
 	"""Policy + fee estimate for a reservation, before anyone commits."""
 	from frappe.utils import date_diff
+
 	from kamra.folio import policy_fee
 
 	policy = frappe.db.get_value(
@@ -2905,7 +2906,8 @@ def _do_cancel(res, reason: str = "Guest request", note: str | None = None,
 	if int(issue_credit_note or 0) == 1:
 		credit_amount = max(0.0, float(res.advance_paid or 0) - fee)
 		if credit_amount > 0:
-			import random, string
+			import random
+			import string
 			code_suffix = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
 			voucher_code = f"CN-{res.name.split('-')[-1]}-{code_suffix}"
 
@@ -3352,6 +3354,7 @@ def position_briefing(property: str, date: str | None = None):
 	back-to-back conflicts, the demand tier pricing is applying, and a
 	7-day outlook."""
 	from frappe.utils import getdate
+
 	from kamra.pricing import demand_tier, forecast_occupancy
 
 	d = str(getdate(date or nowdate()))
@@ -3859,8 +3862,9 @@ def create_booking(property: str, room_type: str, check_in_date: str,
 
 	voucher = None
 	if voucher_code:
-		from kamra.pricing import validate_voucher
 		from frappe.utils import date_diff
+
+		from kamra.pricing import validate_voucher
 		voucher = validate_voucher(
 			property, voucher_code,
 			date_diff(check_out_date, check_in_date),
@@ -4074,7 +4078,8 @@ def create_group_booking(property: str, group_name: str, check_in_date: str,
 
 	created, skipped = [], []
 	for spec in rooms:
-		for _ in range(int(spec.get("count", 1))):
+		# not `_`: that name is the translation function in this module
+		for _n in range(int(spec.get("count", 1))):
 			try:
 				res = create_booking(
 					property=property,
@@ -4627,8 +4632,8 @@ def zatca_settings(property: str):
 	"""The property's ZATCA (Saudi e-invoicing) settings, created from the
 	property on first use, plus what is still missing for a valid invoice
 	and where the invoice chain stands."""
-	from kamra.crs import assert_property_access
 	from kamra import zatca
+	from kamra.crs import assert_property_access
 	assert_property_access(property)
 	s = zatca.settings_for(property)
 	return {
@@ -4678,22 +4683,22 @@ def pending_deposit_refunds(property: str):
 		filters={"property": property, "status": "Checked Out"},
 		fields=["name", "guest_name", "check_in_date", "check_out_date"]
 	)
-	
+
 	pending = []
 	for res in reservations:
 		folio_name = frappe.db.get_value("Folio", {"reservation": res.name}, "name")
 		if not folio_name:
 			continue
-			
+
 		payments = frappe.get_all(
 			"Folio Payment",
 			filters={"parent": folio_name, "parenttype": "Folio"},
 			fields=["payment_kind", "amount"]
 		)
-		
+
 		deposits_sum = sum(p.amount for p in payments if p.payment_kind == "Security Deposit")
 		refunds_sum = sum(p.amount for p in payments if p.payment_kind == "Refund")
-		
+
 		if deposits_sum > refunds_sum:
 			pending.append({
 				"reservation": res.name,
@@ -4703,5 +4708,5 @@ def pending_deposit_refunds(property: str):
 				"refunded_amount": float(refunds_sum),
 				"pending_refund": float(deposits_sum - refunds_sum)
 			})
-			
+
 	return pending

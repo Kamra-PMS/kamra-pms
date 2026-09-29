@@ -187,8 +187,9 @@ def next_day_offset() -> int:
 def enquiry(f: dict, **kw) -> str:
 	"""A function on the test hall, evening, 19:00-23:00, on a day no other
 	test is using."""
-	from kamra import banquet as bq
 	from frappe.utils import add_days, nowdate
+
+	from kamra import banquet as bq
 
 	args = {
 		"property": PROPERTY, "venue": f["hall"],

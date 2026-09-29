@@ -2551,7 +2551,7 @@ def _verdict(pct: float, uncosted: bool, cost) -> tuple:
 	if pct < 0:
 		return "loss", _(
 			"This loses money at the current price.") + (
-			_(" And some lines still cost nothing, so it loses more.")
+			" " + _("And some lines still cost nothing, so it loses more.")
 			if uncosted else "")
 	if uncosted:
 		return "partial", _(

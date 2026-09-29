@@ -256,8 +256,7 @@ def _room_gst(reservation) -> float:
 def _nightly_room_rate(reservation, date) -> float:
 	"""Taxable nightly rate: seasons applied, tax backed out when the
 	property configures tax-inclusive pricing."""
-	from kamra.pricing import (occupancy_rate, rates_include_tax,
-	                           room_gst_rate, season_adjust)
+	from kamra.pricing import occupancy_rate, rates_include_tax, room_gst_rate, season_adjust
 
 	rt = frappe.get_doc("Room Type", reservation.room_type)
 	base = occupancy_rate(rt, reservation.adults, reservation.children)
@@ -270,7 +269,7 @@ def _nightly_room_rate(reservation, date) -> float:
 
 
 def _nightly_gst(reservation, date) -> float:
-	from kamra.pricing import (occupancy_rate, room_gst_rate, season_adjust)
+	from kamra.pricing import occupancy_rate, room_gst_rate, season_adjust
 
 	rt = frappe.get_doc("Room Type", reservation.room_type)
 	base = occupancy_rate(rt, reservation.adults, reservation.children)

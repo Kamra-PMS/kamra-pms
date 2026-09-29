@@ -11,7 +11,6 @@ at a hotel the user isn't allowed to touch.
 """
 
 import frappe
-from frappe import _
 from frappe.utils import date_diff
 
 from kamra.authz import require_roles
