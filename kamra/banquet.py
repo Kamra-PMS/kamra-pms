@@ -1046,7 +1046,8 @@ def run_banquet_reminders():
 						doc, next(a for a in f["alerts"]
 						          if a.get("kind") == "quote_no_response"))
 			except Exception:
-				pass
+				# a chase email must never break the diary - record it instead
+				frappe.log_error(title="Banquet: quote chase email failed")
 			sent = False
 			if f["sales_owner"]:
 				mobile = frappe.db.get_value("User", f["sales_owner"], "mobile_no")

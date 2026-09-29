@@ -231,6 +231,7 @@ def reset(property=None):
 		try:
 			frappe.delete_doc("Reservation", r, force=1, ignore_permissions=True)
 		except Exception:
+			# demo cleanup: a row that is already gone or linked is left as is
 			pass
 	for v in frappe.get_all("Discount Voucher",
 	                        filters={"voucher_code": ("like", "CN-DEMO-%")},
@@ -238,6 +239,7 @@ def reset(property=None):
 		try:
 			frappe.delete_doc("Discount Voucher", v, force=1, ignore_permissions=True)
 		except Exception:
+			# demo cleanup: a voucher that is already gone is fine
 			pass
 	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- demo script (run via bench execute); commits so seeded demo data is visible; not app runtime
 	print(f"Demo data cleared for {property}.")
@@ -251,7 +253,7 @@ def run(property=None):
 	member_rt, villa_rt = _room_types(property)
 	if not member_rt:
 		print(f"'{property}' has no room type to book - add one first.")
-		return
+		return None
 
 	_line("═")
 	print(f"  AIOSELL SYNC DEMO   ·   property: {property}")

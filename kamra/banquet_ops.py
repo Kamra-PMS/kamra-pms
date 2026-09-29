@@ -147,7 +147,9 @@ def notify_departments_on_confirm(doc) -> None:
 				from kamra.agents_channels import send_outbound
 				send_outbound(doc.property, "WhatsApp", mobile, body)
 			except Exception:
-				pass
+				# the notification is best-effort - but a silent failure means
+				# nobody knows the team was never told
+				frappe.log_error(title="Banquet: WhatsApp alert to staff failed")
 	log_action(
 		"banquet_confirm_notify",
 		"Venue Booking",
