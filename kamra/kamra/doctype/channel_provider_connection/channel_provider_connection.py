@@ -23,3 +23,9 @@ class ChannelProviderConnection(Document):
 					f"Another active {self.channel} connection already exists "
 					f"for {self.property}: {existing[0]}. Deactivate it first."
 				)
+			if (self.channel == "WhatsApp" and self.provider == "Meta Business"
+					and not self.get("app_secret")):
+				frappe.msgprint(
+					"Set the Meta App Secret: inbound WhatsApp messages are "
+					"rejected until it is configured.",
+					indicator="orange", alert=True)

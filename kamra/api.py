@@ -334,6 +334,15 @@ def setup_property(payload):
 
 	prop = frappe.get_doc({"doctype": "Property", **p})
 	prop.insert()
+	# property scope is enforced: a creator pinned to their first property
+	# must not lose sight of the one they just added
+	from kamra.authz import restricted_properties
+	if restricted_properties() is not None:
+		frappe.get_doc({
+			"doctype": "User Permission", "user": frappe.session.user,
+			"allow": "Property", "for_value": prop.name,
+			"apply_to_all_doctypes": 1,
+		}).insert(ignore_permissions=True)
 	try:
 		from kamra.turnover import ensure_default_profile
 		from kamra.property_presets import KIND_STR, normalize_kind
@@ -447,6 +456,8 @@ def import_bookings(property: str, bookings):
 	if isinstance(bookings, str):
 		bookings = json.loads(bookings)
 	frappe.only_for(("System Manager", "Hotel Admin"))
+	from kamra.authz import assert_property_access
+	assert_property_access(property)
 
 	created, errors = [], []
 	for i, row in enumerate(bookings):
@@ -1793,8 +1804,9 @@ def gstr1_rows(from_date: str, to_date: str, property: str | None = None):
 		"status": "Closed",
 		"closed_on": ("between", [from_date, to_date]),
 	}
-	if property:
-		filters["property"] = property
+	scope = property or _property_scope()
+	if scope:
+		filters["property"] = scope
 	folios = frappe.get_all(
 		"Folio",
 		filters=filters,
@@ -1809,10 +1821,13 @@ def gstr1_rows(from_date: str, to_date: str, property: str | None = None):
 @require_roles("Front Desk", "Kamra Agent")
 def guests_with_stats(search: str | None = None):
 	"""Guest list with stay stats - the CRM index."""
-	where = ""
-	params: dict = {}
+	from kamra.authz import guest_scope_sql
+	scope_sql, params = guest_scope_sql("g")
+	where = f"WHERE {scope_sql}"
+	join_scope = (" AND r.property IN %(scope_properties)s"
+	              if "scope_properties" in params else "")
 	if search:
-		where = "WHERE g.full_name LIKE %(q)s OR g.phone LIKE %(q)s"
+		where += " AND (g.full_name LIKE %(q)s OR g.phone LIKE %(q)s)"
 		params["q"] = f"%{search}%"
 	return frappe.db.sql(  # nosemgrep: frappe-sql-format-injection -- values are parameterized; interpolated text is a constant or whitelisted identifier, not user input
 		f"""
@@ -1824,7 +1839,7 @@ def guests_with_stats(search: str | None = None):
 			COALESCE(SUM(CASE WHEN r.status != 'Cancelled' THEN r.amount_after_tax ELSE 0 END), 0) AS lifetime_value,
 			MAX(r.check_in_date) AS last_stay
 		FROM `tabGuest` g
-		LEFT JOIN `tabReservation` r ON r.guest = g.name
+		LEFT JOIN `tabReservation` r ON r.guest = g.name{join_scope}
 		{where}
 		GROUP BY g.name
 		ORDER BY lifetime_value DESC, g.modified DESC
@@ -1842,19 +1857,22 @@ def guest_search(q: str):
 	q = (q or "").strip()
 	if len(q) < 2:
 		return []
-	return frappe.db.sql(
-		"""
+	from kamra.authz import guest_scope_sql
+	scope_sql, params = guest_scope_sql("g")
+	params["q"] = f"%{q}%"
+	return frappe.db.sql(  # nosemgrep: frappe-sql-format-injection -- values are parameterized; the interpolated scope clause is a constant from authz
+		f"""
 		SELECT g.name, g.full_name, g.phone, g.email, g.vip, g.blacklisted,
 		       COUNT(r.name) AS stays, MAX(r.check_in_date) AS last_stay
 		FROM `tabGuest` g
 		LEFT JOIN `tabReservation` r
 		       ON r.guest = g.name AND r.status IN ('Checked In', 'Checked Out')
-		WHERE g.full_name LIKE %(q)s OR g.phone LIKE %(q)s
+		WHERE (g.full_name LIKE %(q)s OR g.phone LIKE %(q)s) AND {scope_sql}
 		GROUP BY g.name
 		ORDER BY stays DESC, g.modified DESC
 		LIMIT 8
 		""",
-		{"q": f"%{q}%"}, as_dict=True,
+		params, as_dict=True,
 	)
 
 
@@ -1868,7 +1886,7 @@ _GUEST_LINKS = [  # every doctype that points at a Guest
 
 
 @frappe.whitelist()
-@require_roles()
+@require_roles(scope={"source": "Guest", "target": "Guest"})
 def merge_guests(source: str, target: str):
 	"""Merge a duplicate profile into the surviving one: every linked
 	document is repointed, missing contact fields are copied over, and
@@ -1918,7 +1936,7 @@ def merge_guests(source: str, target: str):
 
 
 @frappe.whitelist()
-@require_roles()
+@require_roles(scope={"guest": "Guest"})
 def anonymize_guest(guest: str):
 	"""Right to erasure (DPDP s.12): see kamra.privacy.erase_guest. Stays
 	and bills stay for the books. Irreversible."""
@@ -1928,16 +1946,20 @@ def anonymize_guest(guest: str):
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Kamra Agent")
+@require_roles("Front Desk", "Kamra Agent", scope={"guest": "Guest"})
 def guest_journey(guest: str):
 	"""One guest's full story: profile, stats, chronological timeline.
 	This is the CRM detail view - and the context an AI concierge loads
 	before speaking to a returning guest."""
 	doc = frappe.get_doc("Guest", guest)
 
+	filters = {"guest": guest}
+	scope = _property_scope()
+	if scope:  # a restricted user sees only the stays at their properties
+		filters["property"] = scope
 	reservations = frappe.get_all(
 		"Reservation",
-		filters={"guest": guest},
+		filters=filters,
 		fields=[
 			"name", "status", "source", "channel", "room", "room_type",
 			"check_in_date", "check_out_date", "nights", "adults", "children",
@@ -2032,6 +2054,14 @@ def guest_journey(guest: str):
 	}
 
 
+def _property_scope():
+	"""Filter value for a call that left `property` out: the user's own
+	properties when they're restricted, else None (no filter)."""
+	from kamra.authz import restricted_properties
+	allowed = restricted_properties()
+	return ("in", sorted(allowed)) if allowed is not None else None
+
+
 @frappe.whitelist()
 def my_properties():
 	"""Properties the current user may work with. frappe.get_list applies
@@ -2054,9 +2084,10 @@ def front_desk_snapshot(property: str | None = None, date: str | None = None):
 	dep_filters = {"check_out_date": date, "status": "Checked In"}
 	inh_filters = {"status": "Checked In"}
 	room_filters = {}
-	if property:
+	scope = property or _property_scope()
+	if scope:
 		for flt in (res_filters, dep_filters, inh_filters, room_filters):
-			flt["property"] = property
+			flt["property"] = scope
 
 	res_fields = [
 		"name", "guest_name", "room_type", "room", "status", "source",
@@ -2601,7 +2632,7 @@ def upload_occupant_id(reservation: str, row: str, image: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Kamra Agent")
+@require_roles("Front Desk", "Kamra Agent", scope={"guest": "Guest"})
 def upload_guest_document(guest: str, kind: str, image: str):
 	"""The desk captures or replaces a guest's document while preparing
 	the GRC - walk-ins, or a newer copy over last visit's. kind is 'id'
@@ -3294,7 +3325,7 @@ def save_hurdle_rate(property: str, occupancy_from: float,
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Finance", "Kamra Agent")
+@require_roles("Front Desk", "Finance", "Kamra Agent", scope={"name": "Hurdle Rate"})
 def delete_hurdle_rate(name: str):
 	frappe.delete_doc("Hurdle Rate", name)
 	return {"ok": True}
@@ -4050,7 +4081,7 @@ def create_room_block(property: str, room: str, from_date: str,
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Kamra Agent")
+@require_roles("Front Desk", "Kamra Agent", scope={"name": "Room Block"})
 def release_room_block(name: str):
 	"""Free a held room before its end date (the room returns to sale)."""
 	doc = frappe.get_doc("Room Block", name)
@@ -4341,6 +4372,9 @@ def linked_records(doctype: str, name: str):
 	"""The connective tissue: for any record, everything it's attached to -
 	guest, reservation(s), folio(s), company, group, event - so every screen
 	can offer one-tap paths to billing and editing. One endpoint, all types."""
+	from kamra.authz import assert_record_access
+	if frappe.db.exists("DocType", doctype):
+		assert_record_access(doctype, name)
 	out = {"guest": None, "guest_name": None, "reservations": [],
 	       "folios": [], "company": None, "group_booking": None,
 	       "group_name": None, "event": None, "event_type": None}

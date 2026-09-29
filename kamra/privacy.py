@@ -125,7 +125,7 @@ def erase_guest(guest: str, reason: str = "request") -> dict:
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles()
+@require_roles(scope={"guest": "Guest"})
 def export_guest_data(guest: str) -> dict:
 	"""Right to access: everything Kamra holds about one guest, readable."""
 	g = frappe.get_doc("Guest", guest)

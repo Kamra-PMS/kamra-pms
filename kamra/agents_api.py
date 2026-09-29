@@ -18,9 +18,14 @@ def activity_feed(property: str | None = None, actor_kind: str | None = None,
 	"""The one ledger: every action anyone took - human or AI - newest first.
 	actor_kind filters to "human" or "agent"."""
 	conds, params = [], {"limit": min(int(limit), 200), "start": int(start)}
+	from kamra.authz import restricted_properties
+	allowed = restricted_properties()
 	if property:
 		conds.append("property = %(property)s")
 		params["property"] = property
+	elif allowed is not None:
+		conds.append("property IN %(allowed)s")
+		params["allowed"] = tuple(sorted(allowed)) or ("",)
 	if actor_kind == "agent":
 		conds.append("COALESCE(agent_name, '') != ''")
 	elif actor_kind == "human":
@@ -41,7 +46,7 @@ def activity_feed(property: str | None = None, actor_kind: str | None = None,
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Finance", "Revenue Manager", "Kamra Agent")
+@require_roles("Front Desk", "Finance", "Revenue Manager", "Kamra Agent", scope={"name": "Agent Action Log"})
 def activity_detail(name: str) -> dict:
 	"""Everything one ledger row knows — including the before/after
 	snapshots that are too heavy for the feed."""

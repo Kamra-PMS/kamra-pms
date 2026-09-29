@@ -27,10 +27,8 @@ def permitted_properties() -> set[str]:
 def assert_property_access(property: str):
 	"""Guard: refuse an action aimed at a property the user isn't permitted
 	for. A no-op for users with no property restriction (they see all)."""
-	if property and property not in permitted_properties():
-		frappe.throw(
-			_("You don't have access to {0}.").format(property),
-			frappe.PermissionError)
+	from kamra.authz import assert_property_access as _guard
+	_guard(property)
 
 
 @frappe.whitelist()

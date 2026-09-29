@@ -347,7 +347,7 @@ def save_ingredient(property: str, ingredient_name: str, uom: str,
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*INVENTORY_WRITE)
+@require_roles(*INVENTORY_WRITE, scope={"name": "Ingredient"})
 def delete_ingredient(name: str):
 	"""Refuse if it is on a recipe or has history - deleting it would orphan a
 	recipe or punch a hole in the ledger. Deactivate instead."""

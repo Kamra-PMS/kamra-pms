@@ -69,7 +69,7 @@ def save_laundry_rate(property: str, item_name: str, service_type: str,
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*RATE_ROLES)
+@require_roles(*RATE_ROLES, scope={"name": "Laundry Rate"})
 def delete_laundry_rate(name: str):
 	frappe.delete_doc("Laundry Rate", name)
 	return {"ok": True}
