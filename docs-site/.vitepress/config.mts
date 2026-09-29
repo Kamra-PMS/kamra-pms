@@ -68,6 +68,7 @@ export default defineConfig({
           { text: "REST API reference", link: "/api-reference" },
         ],
       },
+      { text: "Community", items: [{ text: "Contributors", link: "/contributors" }] },
       { text: "FAQ", items: [{ text: "FAQ", link: "/faq" }] },
     ],
   },
