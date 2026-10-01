@@ -3491,7 +3491,7 @@ def t86():
 	api.check_out(res.name)
 	assert frappe.db.get_value("Reservation", res.name, "status") == "Checked Out"
 
-	comp = frappe.get_doc({"doctype": "Company", "company_name": "EVAL Credit Corp",
+	comp = frappe.get_doc({"doctype": "Corporate Account", "company_name": "EVAL Credit Corp",
 	                       "credit_allowed": 1}).insert(ignore_permissions=True)
 	g2 = _guest("Eval Corporate Checkout", "+91 70000 00087")
 	res2 = _res(g2, "2036-02-05", "2036-02-06", ROOM)

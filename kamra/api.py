@@ -3007,7 +3007,7 @@ def _assert_settled(doc):
 	post_remaining_nights(doc)
 	symbol = pack_for(doc.property).locale(
 		frappe.get_cached_doc("Property", doc.property)).get("currency_symbol", "")
-	credit = bool(doc.company and frappe.db.get_value("Company", doc.company, "credit_allowed"))
+	credit = bool(doc.company and frappe.db.get_value("Corporate Account", doc.company, "credit_allowed"))
 	owed = refund = 0.0
 	for f in frappe.get_all("Folio", filters={"reservation": doc.name, "status": "Open"},
 	                        fields=["name", "balance"]):
