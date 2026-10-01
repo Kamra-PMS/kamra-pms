@@ -352,7 +352,7 @@ export const venueBookingsConfig: ScreenConfig = {
     { field: "customer_name", label: "Customer name", type: "data", required: true },
     { field: "customer_phone", label: "Customer phone", type: "data" },
     { field: "customer_email", label: "Customer email", type: "data" },
-    { field: "company", label: "Company", type: "link", linkDoctype: "Company" },
+    { field: "company", label: "Company", type: "link", linkDoctype: "Corporate Account" },
     { field: "attendees", label: "Expected pax", type: "int" },
     { field: "pax_guaranteed", label: "Guaranteed pax", type: "int" },
     { field: "status", label: "Status", type: "select", options: FUNCTION_STATUSES },
@@ -444,7 +444,7 @@ export const guardrailsConfig: ScreenConfig = {
 }
 
 export const companiesConfig: ScreenConfig = {
-  doctype: "Company",
+  doctype: "Corporate Account",
   title: "Corporate Accounts",
   description: "Companies with negotiated rates and credit terms.",
   searchFields: ["company_name", "gstin"],
@@ -589,7 +589,7 @@ export const groupsConfig: ScreenConfig = {
   ],
   form: [
     { field: "group_name", label: "Group name", type: "data", required: true },
-    { field: "company", label: "Company", type: "link", linkDoctype: "Company" },
+    { field: "company", label: "Company", type: "link", linkDoctype: "Corporate Account" },
     { field: "check_in_date", label: "Arrival", type: "date", required: true },
     { field: "check_out_date", label: "Departure", type: "date", required: true },
     { field: "cutoff_date", label: "Block cutoff", type: "date" },

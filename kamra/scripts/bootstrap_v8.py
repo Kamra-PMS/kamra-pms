@@ -113,7 +113,7 @@ def execute():
 		f("customer_name", "Data", reqd=1, in_list_view=1),
 		f("customer_phone", "Data", options="Phone"),
 		f("column_break_b", "Column Break"),
-		f("company", "Link", options="Company"),
+		f("company", "Link", options="Corporate Account"),
 		f("attendees", "Int"),
 		f("sb_money", "Section Break", label="Money"),
 		f("quoted_amount", "Currency"),

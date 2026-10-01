@@ -72,7 +72,7 @@ def execute():
 	   title_field="voucher_code")
 
 	# ── Company (corporate account) ──────────────────────────────────────
-	_dt("Company", [
+	_dt("Corporate Account", [
 		f("company_name", "Data", reqd=1, unique=1, in_list_view=1),
 		f("gstin", "Data", label="GSTIN"),
 		f("column_break_a", "Column Break"),
@@ -92,7 +92,7 @@ def execute():
 	_dt("Group Booking", [
 		f("property", "Link", options="Property", reqd=1),
 		f("group_name", "Data", reqd=1, in_list_view=1),
-		f("company", "Link", options="Company",
+		f("company", "Link", options="Corporate Account",
 		  description="Set for corporate groups"),
 		f("column_break_a", "Column Break"),
 		f("check_in_date", "Date", reqd=1, in_list_view=1),
@@ -118,7 +118,7 @@ def add_reservation_fields():
 		dict(fieldname="booking_type", fieldtype="Select",
 		     options="Individual\nGroup\nCorporate", default="Individual",
 		     label="Booking Type", insert_after="status"),
-		dict(fieldname="company", fieldtype="Link", options="Company",
+		dict(fieldname="company", fieldtype="Link", options="Corporate Account",
 		     label="Company", depends_on="eval:doc.booking_type=='Corporate'",
 		     insert_after="booking_type"),
 		dict(fieldname="group_booking", fieldtype="Link",

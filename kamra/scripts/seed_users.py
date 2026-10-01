@@ -14,7 +14,7 @@ import frappe
 ALL_KAMRA_DOCTYPES = [
 	"Property", "Room Type", "Room", "Rate Plan", "Guest", "Reservation",
 	"Housekeeping Task", "Agent Action Log", "Meal Plan", "Season",
-	"Discount Voucher", "Company", "Group Booking",
+	"Discount Voucher", "Corporate Account", "Group Booking",
 ]
 
 # role -> {doctype: (read, write, create)}
@@ -31,7 +31,7 @@ ROLE_GRANTS = {
 		"Reservation": (1, 1, 1),
 		"Housekeeping Task": (1, 1, 1),
 		"Group Booking": (1, 1, 1),
-		"Company": (1, 0, 0),
+		"Corporate Account": (1, 0, 0),
 		"Agent Action Log": (1, 0, 1),
 	},
 	"Revenue Manager": {
@@ -42,7 +42,7 @@ ROLE_GRANTS = {
 		"Season": (1, 1, 1),
 		"Discount Voucher": (1, 1, 1),
 		"Reservation": (1, 0, 0),
-		"Company": (1, 1, 1),
+		"Corporate Account": (1, 1, 1),
 		"Agent Action Log": (1, 0, 0),
 	},
 	"Housekeeping": {
@@ -58,7 +58,7 @@ ROLE_GRANTS = {
 		"Property": (1, 0, 0),
 		"Reservation": (1, 0, 0),
 		"Guest": (1, 0, 0),
-		"Company": (1, 1, 1),
+		"Corporate Account": (1, 1, 1),
 		"Discount Voucher": (1, 0, 0),
 		"Agent Action Log": (1, 0, 0),
 	},

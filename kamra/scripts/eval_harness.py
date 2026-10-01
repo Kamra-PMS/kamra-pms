@@ -308,7 +308,7 @@ def t13():
 	from kamra import api
 	from kamra.folio import post_room_night
 	comp = frappe.get_doc({
-		"doctype": "Company", "company_name": "EVAL Corp",
+		"doctype": "Corporate Account", "company_name": "EVAL Corp",
 		"billing_rules": [{"charge_type": "Room", "pay_by": "Company"}],
 	}).insert(ignore_permissions=True)
 	g = _guest("Eval G", "+91 70000 00007")
@@ -378,7 +378,7 @@ def t15():
 	from kamra import api
 	from kamra.folio import post_room_night
 	comp = frappe.get_doc({
-		"doctype": "Company", "company_name": "EVAL Group Corp",
+		"doctype": "Corporate Account", "company_name": "EVAL Group Corp",
 		"billing_rules": [{"charge_type": "Room", "pay_by": "Company"}],
 	}).insert(ignore_permissions=True)
 	room2 = frappe.get_doc({
