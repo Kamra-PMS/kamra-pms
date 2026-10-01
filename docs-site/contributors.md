@@ -16,7 +16,7 @@ desk, or disclosed a security problem responsibly.
 
 | Reporter | What it led to |
 | --- | --- |
-| [@faresalslahi-collab](https://github.com/faresalslahi-collab) (Sarawat Park Hotel & Resort) | One-screen walk-in (#97), the Saudi Arabia pack and ZATCA e-invoicing; Arab-world dial codes (#98) |
+| [@faresalslahi-collab](https://github.com/faresalslahi-collab) (Sarawat Park Hotel & Resort) | One-screen walk-in (#97), the Saudi Arabia pack and ZATCA e-invoicing; Arab-world dial codes (#98); ERPNext Purchase Invoices working alongside Kamra's kitchen ledger (#131) |
 | [@atomic-glitch](https://github.com/atomic-glitch) | Housekeeping Room Board and role checks (#99), room change from the reservation and GRC (#113), deposits before arrival (#114) |
 | [@ali-qa-sudo](https://github.com/ali-qa-sudo) | Role-aware Walk-in / New booking buttons (#120) |
 | [@Syzygy2048](https://github.com/Syzygy2048) | Current OpenAI models in the assistant (#23) |
@@ -25,8 +25,8 @@ desk, or disclosed a security problem responsibly.
 
 | Reporter | Advisory |
 | --- | --- |
-| [@archnexus707](https://github.com/archnexus707) | [GHSA-6cr2](https://github.com/Kamra-PMS/kamra-pms/security/advisories/GHSA-6cr2-jm8f-6jrx): cross-property access, fixed in 2.6.5 |
-| [@kta1kri](https://github.com/kta1kri) | [GHSA-5hcx](https://github.com/Kamra-PMS/kamra-pms/security/advisories/GHSA-5hcx-h257-qr5j): unauthenticated webhooks, fixed in 2.6.5 |
+| **[@archnexus707](https://github.com/archnexus707)** (first reporter) | [GHSA-6cr2](https://github.com/Kamra-PMS/kamra-pms/security/advisories/GHSA-6cr2-jm8f-6jrx): cross-property access, fixed in 2.6.5 |
+| [@kta1kri](https://github.com/kta1kri) | [GHSA-5hcx](https://github.com/Kamra-PMS/kamra-pms/security/advisories/GHSA-5hcx-h257-qr5j): unauthenticated webhooks; independent report of GHSA-6cr2. Both fixed in 2.6.5 |
 
 ## Join in
 
