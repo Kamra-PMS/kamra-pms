@@ -92,11 +92,14 @@ def _repoint_references(names):
 
 def _move_custom_perms(erpnext):
 	"""Custom DocPerms replace a DocType's standard perms wholesale, so they
-	travel with the data. On an ERPNext site only Kamra's roles leave Company;
-	ERPNext's own customisations stay put."""
+	travel with the data. On an ERPNext site only Kamra's roles leave Company,
+	and only they (plus System Manager) are granted on Corporate Account - an
+	ERPNext/HR role like Employee Self Service must not gain corporate clients."""
 	for perm in frappe.get_all("Custom DocPerm", filters={"parent": OLD}, pluck="name"):
 		doc = frappe.get_doc("Custom DocPerm", perm)
-		if not frappe.db.exists("Custom DocPerm", {"parent": NEW, "role": doc.role, "permlevel": doc.permlevel}):
+		ours = doc.role in KAMRA_ROLES or doc.role == "System Manager"
+		if (not erpnext or ours) and not frappe.db.exists(
+				"Custom DocPerm", {"parent": NEW, "role": doc.role, "permlevel": doc.permlevel}):
 			new = frappe.copy_doc(doc)
 			new.parent = NEW
 			new.insert(ignore_permissions=True)
