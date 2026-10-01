@@ -128,7 +128,10 @@ can't be skipped by accident.
 ## Checkout & invoicing
 
 Check out from the departure row (the chip warns you if money is owed).
-Checkout back-fills any unposted nights. On the folio, **Close &
+Checkout back-fills any unposted nights, then refuses while any folio has
+a balance: collect what is owed, or refund an overpayment, first. On a
+corporate stay whose company has credit, the balance moves to the city
+ledger automatically. On the folio, **Close &
 generate invoice** assigns the GST invoice number and produces the
 printable multi-rate invoice (B2B GSTIN included when a company pays).
 GSTR-1 export lives in the billing APIs for your accountant.

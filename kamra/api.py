@@ -2990,10 +2990,48 @@ def cancellation_letter(reservation: str):
 	}
 
 
+def _assert_settled(doc):
+	"""A guest never departs owing money, or owed it (issue #132).
+
+	Every night is posted first, because night audit may not have run for the
+	last one. A balance on a corporate stay whose company has credit moves to
+	the city ledger, as quick_checkout does; anything else is collected or
+	refunded before departure. frappe.flags.allow_unsettled_checkout is for
+	seed and test scripts only - no endpoint sets it.
+	"""
+	if frappe.flags.allow_unsettled_checkout:
+		return
+	from kamra.folio import post_remaining_nights
+	from kamra.localization import pack_for
+
+	post_remaining_nights(doc)
+	symbol = pack_for(doc.property).locale(
+		frappe.get_cached_doc("Property", doc.property)).get("currency_symbol", "")
+	credit = bool(doc.company and frappe.db.get_value("Company", doc.company, "credit_allowed"))
+	owed = refund = 0.0
+	for f in frappe.get_all("Folio", filters={"reservation": doc.name, "status": "Open"},
+	                        fields=["name", "balance"]):
+		balance = float(f.balance or 0)
+		if balance > 0.009 and credit:
+			from kamra.ledger import transfer_to_city_ledger
+			transfer_to_city_ledger(f.name, doc.company)
+		elif balance > 0.009:
+			owed += balance
+		elif balance < -0.009:
+			refund -= balance
+	if owed:
+		frappe.throw(_("Cannot check out: {0}{1:,.2f} is still owed. Collect payment "
+		               "or transfer it to the city ledger before departure.").format(symbol, owed))
+	if refund:
+		frappe.throw(_("Cannot check out: the guest is owed {0}{1:,.2f}. Issue the "
+		               "refund before departure.").format(symbol, refund))
+
+
 @frappe.whitelist()
 @require_roles("Front Desk", "Kamra Agent")
 def check_out(reservation: str):
 	doc = frappe.get_doc("Reservation", reservation)
+	_assert_settled(doc)
 	doc.status = "Checked Out"
 	doc.save()
 	_scrub_stay_ids(doc)
