@@ -1473,7 +1473,7 @@ def t40():
 	inventory.receive_stock(P, kitchen, [{"ingredient": paneer, "qty": 1.0}],
 	                        supplier="Eval Farm")
 	assert _bal(kitchen, paneer) == 1.0, _bal(kitchen, paneer)
-	assert frappe.db.exists("Stock Ledger Entry",
+	assert frappe.db.exists("Ingredient Ledger Entry",
 	                        {"ingredient": paneer, "reason": "Received",
 	                         "balance_after": 1.0}), "receipt left no ledger row"
 
@@ -1513,22 +1513,22 @@ def t40():
 	assert abs(_bal(kitchen, chicken) - 4.75) < 1e-9, _bal(kitchen, chicken)
 	# and the starter is not deducted a second time by the main's fire
 	starter_moves = frappe.db.count(
-		"Stock Ledger Entry",
+		"Ingredient Ledger Entry",
 		{"ingredient": paneer, "reference_name": o3["order"], "reason": "Consumed"})
 	assert starter_moves == 1, f"starter deducted {starter_moves} times"
 
 	# the optional in "optional recipe": no recipe, no ledger, no noise
-	rows_before = frappe.db.count("Stock Ledger Entry")
+	rows_before = frappe.db.count("Ingredient Ledger Entry")
 	o4 = pos.create_order(kitchen, [{"menu_item": water, "qty": 3}], table_no="S4")
 	r4 = pos.fire_kot(o4["order"])
-	assert frappe.db.count("Stock Ledger Entry") == rows_before, "a recipe-less dish moved stock"
+	assert frappe.db.count("Ingredient Ledger Entry") == rows_before, "a recipe-less dish moved stock"
 	assert r4["stock_alerts"] == [], r4["stock_alerts"]
 
 	# the cache must never drift from the ledger - the one invariant that
 	# cannot bend, because every other number here is derived from it
 	for outlet, ing in ((kitchen, paneer), (kitchen, chicken)):
 		total = frappe.db.sql(
-			"""select sum(qty_change) from `tabStock Ledger Entry`
+			"""select sum(qty_change) from `tabIngredient Ledger Entry`
 			   where outlet=%s and ingredient=%s""", (outlet, ing))[0][0] or 0
 		assert abs(_bal(outlet, ing) - float(total)) < 1e-9, \
 			f"{ing} balance {_bal(outlet, ing)} != ledger {total}"
@@ -1581,7 +1581,7 @@ def t41():
 	before = _bal()
 	inventory.record_wastage(P, outlet, paneer, 0.5, "crate spoiled")
 	assert abs(_bal() - (before - 0.5)) < 1e-9, _bal()
-	assert frappe.db.exists("Stock Ledger Entry",
+	assert frappe.db.exists("Ingredient Ledger Entry",
 	                        {"ingredient": paneer, "reason": "Wastage"})
 
 	# a cancelled order does not un-cook what was already fired
@@ -1617,7 +1617,7 @@ def t41():
 	                             note="recount after delivery")
 	assert _bal() == 3.0, _bal()
 	assert res["adjusted"][0]["variance"], res
-	assert frappe.db.exists("Stock Ledger Entry",
+	assert frappe.db.exists("Ingredient Ledger Entry",
 	                        {"ingredient": paneer, "reason": "Count"})
 	assert frappe.db.get_value("Ingredient Stock", f"{outlet}::{paneer}",
 	                           "last_counted_at"), "a count left no counted-at stamp"

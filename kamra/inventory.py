@@ -21,7 +21,7 @@ why it is there, so each is spelled out where it lives:
    have; go count and tell me what you DO."
 
 Permissions: consume_for_lines() runs under a captain's session, which cannot
-write Ingredient Stock or Stock Ledger Entry by design - only Finance can move
+write Ingredient Stock or Ingredient Ledger Entry by design - only Finance can move
 stock deliberately. The writes in _apply_move() therefore use
 ignore_permissions / db.set_value. That is intentional, not an oversight: the
 authorization for consumption is the POS_ROLES gate on fire_kot, not doctype
@@ -126,7 +126,7 @@ def _apply_move(property: str, outlet: str, ingredient: str,
 		}, update_modified=False)
 
 	frappe.get_doc({
-		"doctype": "Stock Ledger Entry", "property": property, "outlet": outlet,
+		"doctype": "Ingredient Ledger Entry", "property": property, "outlet": outlet,
 		"ingredient": ingredient, "qty_change": float(qty_change),
 		"balance_after": after, "reason": reason,
 		"reference_doctype": ref_dt, "reference_name": ref_dn, "note": note,
@@ -355,7 +355,7 @@ def delete_ingredient(name: str):
 	if used:
 		frappe.throw(_("{0} dish(es) use this ingredient. Deactivate it instead.")
 		             .format(used))
-	if frappe.db.count("Stock Ledger Entry", {"ingredient": name}):
+	if frappe.db.count("Ingredient Ledger Entry", {"ingredient": name}):
 		frappe.throw(_("This ingredient has stock history. Deactivate it instead."))
 	frappe.delete_doc("Ingredient", name)
 	return {"ok": True}
@@ -508,7 +508,7 @@ def ingredient_ledger(property: str, outlet: str, ingredient: str,
 	"""Where did my paneer go? Newest first, each row carrying the balance it
 	produced, so the history explains the number on the shelf."""
 	rows = frappe.get_all(
-		"Stock Ledger Entry",
+		"Ingredient Ledger Entry",
 		filters={"property": property, "outlet": outlet, "ingredient": ingredient},
 		fields=["name", "creation", "qty_change", "balance_after", "reason",
 		        "reference_doctype", "reference_name", "note", "supplier",

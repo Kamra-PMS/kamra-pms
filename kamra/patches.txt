@@ -18,3 +18,4 @@ kamra.patches.v33.seed_banquet_checklists
 kamra.patches.v34.keep_existing_privacy_settings
 kamra.patches.v34.keep_access_logs_a_year
 kamra.patches.v35.hosting_enquiry_system_manager_only
+kamra.patches.v36.move_kitchen_ledger_off_stock_ledger_entry
