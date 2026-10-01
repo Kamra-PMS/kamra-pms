@@ -1511,7 +1511,7 @@ def set_billing_rules(company: str, rules):
 	"""Replace a company's billing rules. rules = [{charge_type, pay_by}]."""
 	if isinstance(rules, str):
 		rules = frappe.parse_json(rules)
-	doc = frappe.get_doc("Company", company)
+	doc = frappe.get_doc("Corporate Account", company)
 	doc.set("billing_rules", [])
 	for r in rules or []:
 		doc.append("billing_rules", {
@@ -1525,7 +1525,7 @@ def set_billing_rules(company: str, rules):
 @frappe.whitelist()
 @require_roles("Finance", "Front Desk", "Kamra Agent")
 def get_billing_rules(company: str):
-	doc = frappe.get_doc("Company", company)
+	doc = frappe.get_doc("Corporate Account", company)
 	return [{"charge_type": r.charge_type, "pay_by": r.pay_by}
 	        for r in (doc.get("billing_rules") or [])]
 
@@ -1784,7 +1784,7 @@ def folio_invoice(folio: str):
 			"Group Booking", doc.group_booking, "company") or bill_company
 	if bill_company:
 		company = frappe.db.get_value(
-			"Company", bill_company, ["company_name", "gstin"], as_dict=True)
+			"Corporate Account", bill_company, ["company_name", "gstin"], as_dict=True)
 		if company:
 			bill_to = {"name": company.company_name, "gstin": company.gstin}
 
@@ -3007,7 +3007,7 @@ def _assert_settled(doc):
 	post_remaining_nights(doc)
 	symbol = pack_for(doc.property).locale(
 		frappe.get_cached_doc("Property", doc.property)).get("currency_symbol", "")
-	credit = bool(doc.company and frappe.db.get_value("Company", doc.company, "credit_allowed"))
+	credit = bool(doc.company and frappe.db.get_value("Corporate Account", doc.company, "credit_allowed"))
 	owed = refund = 0.0
 	for f in frappe.get_all("Folio", filters={"reservation": doc.name, "status": "Open"},
 	                        fields=["name", "balance"]):
@@ -3763,7 +3763,7 @@ def booking_options(property: str):
 			fields=["name", "rate_plan_name", "code", "is_default"],
 		),
 		"companies": frappe.get_all(
-			"Company", filters={"disabled": 0},
+			"Corporate Account", filters={"disabled": 0},
 			fields=["name", "company_name", "negotiated_rate_plan"],
 		),
 		"travel_agents": frappe.get_all(

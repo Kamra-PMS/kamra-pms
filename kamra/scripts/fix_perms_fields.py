@@ -37,7 +37,7 @@ PERM_FLAGS = [
 ALL_DOCTYPES = [
 	"Property", "Room Type", "Room", "Rate Plan", "Guest", "Reservation",
 	"Housekeeping Task", "Agent Action Log", "Meal Plan", "Season",
-	"Discount Voucher", "Company", "Group Booking", "Folio",
+	"Discount Voucher", "Corporate Account", "Group Booking", "Folio",
 	"Night Audit Run", "Service Ticket",
 ]
 
@@ -59,7 +59,7 @@ RESERVATION_FIELDS = [
 	dict(fieldname="booking_type", fieldtype="Select",
 	     options="Individual\nGroup\nCorporate", default="Individual",
 	     label="Booking Type", insert_after="status"),
-	dict(fieldname="company", fieldtype="Link", options="Company",
+	dict(fieldname="company", fieldtype="Link", options="Corporate Account",
 	     label="Company", insert_after="booking_type"),
 	dict(fieldname="group_booking", fieldtype="Link", options="Group Booking",
 	     label="Group Booking", insert_after="company"),

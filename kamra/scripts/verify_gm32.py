@@ -33,7 +33,7 @@ def _run():
 	mp = mp[0].name if mp else None
 
 	company = frappe.get_doc({
-		"doctype": "Company", "company_name": "GM32 Test Corp",
+		"doctype": "Corporate Account", "company_name": "GM32 Test Corp",
 		"gstin": "29AAACG0527D1Z8",
 		"billing_rules": [
 			{"charge_type": "Room", "pay_by": "Company"},

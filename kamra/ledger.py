@@ -303,7 +303,7 @@ def transfer_to_city_ledger(folio: str, company: str | None = None) -> dict:
 			"Group Booking", doc.group_booking, "company")
 	if not company:
 		frappe.throw("A company is required for city ledger transfer.")
-	if not frappe.db.get_value("Company", company, "credit_allowed"):
+	if not frappe.db.get_value("Corporate Account", company, "credit_allowed"):
 		frappe.throw(f"{company} is not allowed on city ledger (credit).")
 	account = _ar_account(doc.property, company)
 	bd = get_business_date(doc.property)
@@ -728,7 +728,7 @@ def quick_checkout(reservation: str, pin: str | None = None):
 		company = frappe.db.get_value(
 			"Reservation", reservation, "company")
 		if company and frappe.db.get_value(
-				"Company", company, "credit_allowed"):
+				"Corporate Account", company, "credit_allowed"):
 			transfer_to_city_ledger(folio_name, company)
 		else:
 			frappe.throw(

@@ -174,7 +174,7 @@ def _folio_buyer(folio) -> tuple[str, dict]:
 		company = frappe.db.get_value(
 			"Group Booking", folio.group_booking, "company") or company
 	if company:
-		c = frappe.db.get_value("Company", company,
+		c = frappe.db.get_value("Corporate Account", company,
 		                        ["company_name", "gstin"], as_dict=True) or {}
 		if c.get("gstin"):
 			# a VAT-registered buyer gets a standard (B2B) tax invoice
