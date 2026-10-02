@@ -617,7 +617,7 @@ function EnquirySheet({
     : (SESSION_HOURS[form.session] ?? ["", ""])
 
   useEffect(() => {
-    listResource("Company", { fields: ["name", "company_name"], limit: 200 })
+    listResource("Corporate Account", { fields: ["name", "company_name"], limit: 200 })
       .then(setCompanies)
       .catch(() => {})
   }, [])

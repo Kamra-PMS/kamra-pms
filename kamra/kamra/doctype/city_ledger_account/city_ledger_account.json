@@ -25,7 +25,7 @@
    "fieldname": "company",
    "fieldtype": "Link",
    "label": "Company",
-   "options": "Company",
+   "options": "Corporate Account",
    "reqd": 1,
    "in_list_view": 1
   },
@@ -62,7 +62,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-09-07 00:00:00",
+ "modified": "2026-10-01 18:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "City Ledger Account",

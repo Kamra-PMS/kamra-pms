@@ -33,7 +33,7 @@ def _run():
 	mp = mp[0].name if mp else None
 
 	company = frappe.get_doc({
-		"doctype": "Company", "company_name": "GM32 Test Corp",
+		"doctype": "Corporate Account", "company_name": "GM32 Test Corp",
 		"gstin": "29AAACG0527D1Z8",
 		"billing_rules": [
 			{"charge_type": "Room", "pay_by": "Company"},
@@ -90,7 +90,11 @@ def _run():
 
 	# 5. Verify & Discard masks IDs at checkout
 	frappe.db.set_value("Property", prop, "id_retention", "Verify & Discard")
-	api.check_out(res_name)
+	frappe.flags.allow_unsettled_checkout = True  # this checks ID masking, not the bill
+	try:
+		api.check_out(res_name)
+	finally:
+		frappe.flags.allow_unsettled_checkout = False
 	occ = frappe.get_doc("Reservation", res_name).occupants
 	_check("occupant Aadhaar masked",
 	       any(o.id_number == "••••••••7777" for o in occ))

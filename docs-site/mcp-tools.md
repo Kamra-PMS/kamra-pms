@@ -103,7 +103,9 @@ Mutating — logged to the activity ledger.
 ### `check_out(reservation)`
 
 Check a guest out (posts remaining nights to the folio, frees the
-room, queues housekeeping). Confirm with the user first.
+room, queues housekeeping). Refused while any folio has a balance:
+collect payment or refund first. A corporate stay with credit moves
+to the city ledger automatically. Confirm with the user first.
 
 Endpoint: `kamra.api.check_out`.
 Mutating — logged to the activity ledger.

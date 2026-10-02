@@ -49,7 +49,7 @@ def ensure_agent_user():
 		"Rate Plan": (1, 0, 0), "Meal Plan": (1, 0, 0), "Season": (1, 0, 0),
 		"Discount Voucher": (1, 0, 0), "Guest": (1, 1, 1),
 		"Reservation": (1, 1, 1), "Housekeeping Task": (1, 1, 1),
-		"Group Booking": (1, 1, 1), "Company": (1, 0, 0),
+		"Group Booking": (1, 1, 1), "Corporate Account": (1, 0, 0),
 		"Agent Action Log": (1, 0, 1), "Folio": (1, 1, 1),
 		"Night Audit Run": (1, 0, 1), "Service Ticket": (1, 1, 1),
 	}

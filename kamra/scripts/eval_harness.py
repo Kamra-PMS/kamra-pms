@@ -308,7 +308,7 @@ def t13():
 	from kamra import api
 	from kamra.folio import post_room_night
 	comp = frappe.get_doc({
-		"doctype": "Company", "company_name": "EVAL Corp",
+		"doctype": "Corporate Account", "company_name": "EVAL Corp",
 		"billing_rules": [{"charge_type": "Room", "pay_by": "Company"}],
 	}).insert(ignore_permissions=True)
 	g = _guest("Eval G", "+91 70000 00007")
@@ -378,7 +378,7 @@ def t15():
 	from kamra import api
 	from kamra.folio import post_room_night
 	comp = frappe.get_doc({
-		"doctype": "Company", "company_name": "EVAL Group Corp",
+		"doctype": "Corporate Account", "company_name": "EVAL Group Corp",
 		"billing_rules": [{"charge_type": "Room", "pay_by": "Company"}],
 	}).insert(ignore_permissions=True)
 	room2 = frappe.get_doc({
@@ -1753,7 +1753,7 @@ def t42():
 	# while a photo of the same card sat on disk would make the setting a lie.
 	frappe.db.set_value("Property", P, "id_retention", "Verify & Discard")
 	try:
-		api.check_out(res.name)
+		_checkout_unsettled(res.name)
 	finally:
 		frappe.db.set_value("Property", P, "id_retention", "Store")
 	assert _id_files(res.name) == [], "the ID scan survived a Verify & Discard checkout"
@@ -1770,7 +1770,7 @@ def t42():
 	tok2 = frappe.db.get_value("Reservation", res2.name, "precheckin_token")
 	pub.precheckin_upload_id(tok2, _id_photo())
 	api.check_in(res2.name, ROOM)
-	api.check_out(res2.name)
+	_checkout_unsettled(res2.name)
 	assert len(_id_files(res2.name)) == 1, "Store mode discarded the scan anyway"
 	for n in _id_files(res2.name):  # this one has no retention to clean it up
 		frappe.delete_doc("File", n, ignore_permissions=True, delete_permanently=True)
@@ -1896,7 +1896,7 @@ def t34():
 	res.reload()
 	res.status = "Checked In"
 	res.save(ignore_permissions=True)
-	api.check_out(res.name)  # the desk path - runs the retention scrub
+	_checkout_unsettled(res.name)  # the desk path - runs the retention scrub
 	assert frappe.db.get_value("Guest", g, "id_number").startswith("•"), \
 		frappe.db.get_value("Guest", g, "id_number")
 	assert not frappe.db.get_value("Guest", g, "id_file")
@@ -1981,7 +1981,7 @@ def t36():
 	res.reload()
 	res.status = "Checked In"
 	res.save(ignore_permissions=True)
-	api.check_out(res.name)
+	_checkout_unsettled(res.name)
 	assert not frappe.db.get_value("Guest", g, "id_file")
 	assert not frappe.db.get_value("Guest", g, "address_proof_file")
 	frappe.db.set_value("Property", P, "id_retention", "Store")
@@ -3452,6 +3452,59 @@ def t85():
 		"voice webhook accepted with no secret set"
 
 
+def _checkout_unsettled(reservation):
+	"""For checks about something other than the bill (ID retention, HK)."""
+	from kamra import api
+	frappe.flags.allow_unsettled_checkout = True
+	try:
+		return api.check_out(reservation)
+	finally:
+		frappe.flags.allow_unsettled_checkout = False
+
+
+@check("checkout: refused while owed or owing; a credit company goes to city ledger (#132)")
+def t86():
+	from kamra import api
+	g = _guest("Eval Checkout", "+91 70000 00086")
+	res = _res(g, "2036-02-01", "2036-02-03", ROOM)
+	res.status = "Checked In"
+	res.save(ignore_permissions=True)
+	folio = frappe.db.get_value("Folio", {"reservation": res.name, "folio_type": "Guest"})
+
+	try:
+		api.check_out(res.name)
+		raise AssertionError("checked out with an unpaid bill")
+	except frappe.ValidationError as e:
+		assert "still owed" in str(e), e
+	assert frappe.db.get_value("Reservation", res.name, "status") == "Checked In"
+	owed = float(frappe.db.get_value("Folio", folio, "balance") or 0)
+	assert owed > 0, "the guard did not post the stay's nights before judging the balance"
+
+	api.add_folio_payment(folio, "Cash", owed + 500)
+	try:
+		api.check_out(res.name)
+		raise AssertionError("checked out while the guest was owed a refund")
+	except frappe.ValidationError as e:
+		assert "owed" in str(e) and "refund" in str(e), e
+
+	api.refund_folio_payment(folio, 500, "Cash", "over-collected at the desk")
+	api.check_out(res.name)
+	assert frappe.db.get_value("Reservation", res.name, "status") == "Checked Out"
+
+	comp = frappe.get_doc({"doctype": "Corporate Account", "company_name": "EVAL Credit Corp",
+	                       "credit_allowed": 1}).insert(ignore_permissions=True)
+	g2 = _guest("Eval Corporate Checkout", "+91 70000 00087")
+	res2 = _res(g2, "2036-02-05", "2036-02-06", ROOM)
+	res2.booking_type = "Corporate"
+	res2.company = comp.name
+	res2.status = "Checked In"
+	res2.save(ignore_permissions=True)
+	api.check_out(res2.name)
+	folio2 = frappe.db.get_value("Folio", {"reservation": res2.name, "folio_type": "Guest"})
+	assert abs(float(frappe.db.get_value("Folio", folio2, "balance") or 0)) < 0.01
+	assert frappe.db.exists("City Ledger Entry", {"folio": folio2}), "credit stay never reached AR"
+
+
 def execute():
 	global RT, ROOM
 	# frappe.locale.get_locale_value crashes (UnboundLocalError) when no
@@ -3469,7 +3522,7 @@ def execute():
 		           t36, t37, t38, t39, t40, t41, t42, t43, t44, t45, t46, t47, t47b, t47c, t48, t49, t50, t51, t53,
 		           t54, t55, t56, t57, t58, t59, t60, t61, t62, t63, t64,
 		           t65, t66, t67, t68, t69, t70,
-		           t71, t72, t73, t74, t75, t76, t81, t82, t83, t84, t85):
+		           t71, t72, t73, t74, t75, t76, t81, t82, t83, t84, t85, t86):
 			fn()
 	finally:
 		frappe.db.commit = real_commit
