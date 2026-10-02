@@ -43,6 +43,20 @@ upgrade-breaking changes (removed doctypes / API contracts).
   quotation, desk-led guest response, department checklists + notify on
   Confirm (Sales/Finance/HK/F&B), and quote no-response chase reminders
 
+## [2.6.7](https://github.com/Kamra-PMS/kamra-pms/compare/v2.6.6...v2.6.7) (2026-10-02)
+
+
+### Bug Fixes
+
+* checkout guard reads credit from Corporate Account ([6480334](https://github.com/Kamra-PMS/kamra-pms/commit/64803349202f57ce77de9bb8c479118e629776eb))
+* **patch:** don't grant ERPNext/HR roles on Corporate Account when moving perms ([ccc0671](https://github.com/Kamra-PMS/kamra-pms/commit/ccc0671e55afc1150bfc258238f6ef02e63a7f7b))
+* refuse checkout until every folio is settled ([#132](https://github.com/Kamra-PMS/kamra-pms/issues/132)) ([052197d](https://github.com/Kamra-PMS/kamra-pms/commit/052197d0cb5939f07330d37387d275e2237fd7a6))
+* refuse checkout until every folio is settled ([#132](https://github.com/Kamra-PMS/kamra-pms/issues/132)) ([de77f9a](https://github.com/Kamra-PMS/kamra-pms/commit/de77f9a711f7174af46220eecda0f1e973a0d2b0))
+* rename Kamra Company DocType to Corporate Account so ERPNext Company works ([c7c1ab5](https://github.com/Kamra-PMS/kamra-pms/commit/c7c1ab56d990c8971d6e091ab39dcbfef3d2041e))
+* rename Kamra Company DocType to Corporate Account so ERPNext Company works ([2f56f8c](https://github.com/Kamra-PMS/kamra-pms/commit/2f56f8c4300a26fefd2b4cb5d3c99dba4fc7a1fa)), closes [#131](https://github.com/Kamra-PMS/kamra-pms/issues/131)
+* rename kitchen ledger to Ingredient Ledger Entry so ERPNext stock works ([#131](https://github.com/Kamra-PMS/kamra-pms/issues/131)) ([2f14897](https://github.com/Kamra-PMS/kamra-pms/commit/2f1489722c93f1e9afb7e1ce3cb2704c29e1c3c9))
+* rename kitchen ledger to Ingredient Ledger Entry so ERPNext stock works ([#131](https://github.com/Kamra-PMS/kamra-pms/issues/131)) ([ff166c6](https://github.com/Kamra-PMS/kamra-pms/commit/ff166c6f66e4ac09b29765b99586bd44e740c49e))
+
 ## [2.6.6](https://github.com/Kamra-PMS/kamra-pms/compare/v2.6.5...v2.6.6) (2026-09-29)
 
 
