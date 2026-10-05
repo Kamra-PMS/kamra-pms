@@ -215,13 +215,16 @@ after_migrate = ["kamra.install.after_migrate"]
 # -----------
 # Permissions evaluated in scripted ways
 
-# permission_query_conditions = {
-# 	"Event": "frappe.desk.doctype.event.event.get_permission_query_conditions",
-# }
-#
-# has_permission = {
-# 	"Event": "frappe.desk.doctype.event.event.has_permission",
-# }
+# Guest has no property link, so Property User Permissions can't limit it;
+# these apply Kamra's stay-history rule to Frappe's own REST, Desk and
+# private file downloads too (see kamra.authz.guest_query_conditions).
+permission_query_conditions = {
+	"Guest": "kamra.authz.guest_query_conditions",
+}
+
+has_permission = {
+	"Guest": "kamra.authz.guest_has_permission",
+}
 
 # Document Events
 # ---------------

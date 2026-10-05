@@ -261,6 +261,10 @@ def handle_authorize_post(form: dict[str, str]) -> tuple[int, str, str]:
 	property_name = form.get("property") or ""
 	if not property_name or not frappe.db.exists("Property", property_name):
 		return 400, "text/html", _error_page("Pick a property.")
+	from kamra.authz import restricted_properties
+	allowed = restricted_properties(user)
+	if allowed is not None and property_name not in allowed:
+		return 403, "text/html", _error_page("You don't have access to that property.")
 
 	code = new_token()
 	frappe.get_doc(

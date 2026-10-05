@@ -3477,7 +3477,7 @@ def hurdle_rates(property: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Finance", "Kamra Agent")
+@require_roles("Front Desk", "Finance", "Kamra Agent", scope={"name": "Hurdle Rate"})
 def save_hurdle_rate(property: str, occupancy_from: float,
                      premium_pct: float = 0, min_rate: float = 0,
                      room_type: str | None = None, name: str | None = None):
