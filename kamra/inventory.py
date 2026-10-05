@@ -329,7 +329,7 @@ def save_recipe(menu_item: str, rows):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*INVENTORY_WRITE)
+@require_roles(*INVENTORY_WRITE, scope={"name": "Ingredient"})
 def save_ingredient(property: str, ingredient_name: str, uom: str,
                     category: str | None = None, cost_per_unit: float = 0,
                     is_active: int = 1, name: str | None = None):
