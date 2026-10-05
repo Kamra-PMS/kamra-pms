@@ -39,7 +39,7 @@ def laundry_rates(property: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*RATE_ROLES)
+@require_roles(*RATE_ROLES, scope={"name": "Laundry Rate"})
 def save_laundry_rate(property: str, item_name: str, service_type: str,
                       rate: float, express_rate=None, name: str | None = None,
                       disabled: int = 0):

@@ -56,14 +56,16 @@ SCOPED_ARGS = {
 	"ticket": ("Service Ticket",),
 	"account": ("City Ledger Account",),
 	"connection": ("Channel Manager Connection", "Channel Provider Connection"),
+	# chain-wide: checked by stay history (assert_guest_access), not a link
+	"guest": ("Guest",),
 }
 
 
-def restricted_properties() -> set[str] | None:
-	"""The properties the current user is limited to by Frappe User
-	Permissions, or None when they aren't restricted (they see them all)."""
+def restricted_properties(user: str | None = None) -> set[str] | None:
+	"""The properties the user (default: current) is limited to by Frappe
+	User Permissions, or None when they aren't restricted (they see them all)."""
 	from frappe.core.doctype.user_permission.user_permission import get_user_permissions
-	perms = get_user_permissions(frappe.session.user).get("Property")
+	perms = get_user_permissions(user or frappe.session.user).get("Property")
 	return {p.get("doc") for p in perms} if perms else None
 
 
@@ -113,6 +115,37 @@ def guest_scope_sql(alias: str = "g") -> tuple[str, dict]:
 		f" WHERE gn.guest = {alias}.name))",
 		{"scope_properties": tuple(sorted(allowed)) or ("",)},
 	)
+
+
+def guest_query_conditions(user: str | None = None, doctype: str | None = None) -> str:
+	"""permission_query_conditions hook for Guest. Guest has no property
+	link, so User Permissions alone don't limit it: without this, Frappe's
+	own REST (/api/resource/Guest, frappe.client.get_list) and Desk list
+	every guest in the chain to a property-restricted user. Same rule as
+	guest_scope_sql."""
+	allowed = restricted_properties(user)
+	if allowed is None:
+		return ""
+	props = ", ".join(frappe.db.escape(p) for p in sorted(allowed)) or "''"
+	return (
+		f"(EXISTS (SELECT 1 FROM `tabReservation` gs WHERE gs.guest = `tabGuest`.name"
+		f" AND gs.property IN ({props}))"
+		" OR NOT EXISTS (SELECT 1 FROM `tabReservation` gn"
+		" WHERE gn.guest = `tabGuest`.name))"
+	)
+
+
+def guest_has_permission(doc, ptype: str | None = None, user: str | None = None,
+                         debug: bool = False) -> bool:
+	"""has_permission hook for Guest (single-document reads, writes and
+	private ID-file downloads). Frappe treats any falsy return as a deny,
+	so this must return True explicitly to allow."""
+	allowed = restricted_properties(user)
+	if allowed is None or not doc.name or doc.is_new():
+		return True
+	props = set(frappe.get_all("Reservation", filters={"guest": doc.name},
+	                           pluck="property", distinct=True))
+	return not props or bool(props & allowed)
 
 
 def _values(value) -> list[str]:

@@ -11,20 +11,15 @@ upgrade-breaking changes (removed doctypes / API contracts).
 
 ### Security
 
-* **authz:** property-restricted staff can no longer read or change another
-  property's reservations, guest registration cards, folios or other records.
-  `require_roles` now enforces property scope on every record argument,
-  calls that omit `property` are limited to the user's own properties, and
-  chain-wide guest profiles show a restricted user only the guests and stays
-  of their properties
-  ([GHSA-6cr2-jm8f-6jrx](https://github.com/Kamra-PMS/kamra-pms/security/advisories/GHSA-6cr2-jm8f-6jrx)).
-  Reported by **@archnexus707**, and independently by **kta1kri**.
-* **webhooks:** inbound payment, channel-manager, AioSell, voice/messaging and
-  WhatsApp webhooks now refuse calls when no secret or credential is
-  configured (they used to skip verification), compare secrets in constant
-  time, verify Razorpay signatures in test mode too, and check Meta's
-  `X-Hub-Signature-256` (new **Meta App Secret** field on WhatsApp
-  connections). Reported by **kta1kri**.
+* **authz:** follow-up to GHSA-6cr2. Property-restricted staff could still
+  list and open every guest in the chain (ID numbers, ID files, date of
+  birth, address) through Frappe's own `/api/resource/Guest` and Desk,
+  because Guest has no property link. Guest now has permission hooks that
+  apply the same stay-history rule. The `save_*` catalogue endpoints
+  (hurdle rate, banquet menu, service item, dish, ingredient, laundry rate)
+  no longer let a restricted user overwrite another property's record by
+  `name`, and `guest` arguments are scope-checked by default
+  ([GHSA-hw2r-w68w-6qp5](https://github.com/Kamra-PMS/kamra-pms/security/advisories/GHSA-hw2r-w68w-6qp5)).
 
 ### Features
 
@@ -76,6 +71,26 @@ upgrade-breaking changes (removed doctypes / API contracts).
 * **ui:** hide Walk-in / New booking for roles that can't book ([#122](https://github.com/Kamra-PMS/kamra-pms/issues/122)) ([6d47fa9](https://github.com/Kamra-PMS/kamra-pms/commit/6d47fa9e7949e060b432d4cbd9bb2f1a5535d86b)), closes [#120](https://github.com/Kamra-PMS/kamra-pms/issues/120)
 
 ## [2.6.5](https://github.com/Kamra-PMS/kamra-pms/compare/v2.6.4...v2.6.5) (2026-09-28)
+
+
+### Security
+
+* **authz:** property-restricted staff can no longer read or change another
+  property's reservations, guest registration cards, folios or other records.
+  `require_roles` now enforces property scope on every record argument,
+  calls that omit `property` are limited to the user's own properties, and
+  chain-wide guest profiles show a restricted user only the guests and stays
+  of their properties
+  ([GHSA-6cr2-jm8f-6jrx](https://github.com/Kamra-PMS/kamra-pms/security/advisories/GHSA-6cr2-jm8f-6jrx)).
+  Reported by **@archnexus707**, and independently by **kta1kri**.
+* **webhooks:** inbound payment, channel-manager, AioSell, voice/messaging and
+  WhatsApp webhooks now refuse calls when no secret or credential is
+  configured (they used to skip verification), compare secrets in constant
+  time, verify Razorpay signatures in test mode too, and check Meta's
+  `X-Hub-Signature-256` (new **Meta App Secret** field on WhatsApp
+  connections)
+  ([GHSA-5hcx-h257-qr5j](https://github.com/Kamra-PMS/kamra-pms/security/advisories/GHSA-5hcx-h257-qr5j)).
+  Reported by **kta1kri**.
 
 
 ### Features

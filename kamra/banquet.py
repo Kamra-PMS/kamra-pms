@@ -146,7 +146,7 @@ def banquet_catalogue(property: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*CATALOGUE_ROLES)
+@require_roles(*CATALOGUE_ROLES, scope={"name": "Banquet Menu"})
 def save_banquet_menu(property: str, menu_name: str, rate_per_pax: float,
                       courses=None, name: str | None = None, **kw):
 	"""Add or edit one menu package. Courses replace wholesale - the grid
@@ -190,7 +190,7 @@ def delete_banquet_menu(name: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*CATALOGUE_ROLES)
+@require_roles(*CATALOGUE_ROLES, scope={"name": "Banquet Service Item"})
 def save_service_item(property: str, item_name: str, category: str,
                       rate: float = 0, uom: str = "Per Event",
                       name: str | None = None, **kw):
@@ -1889,7 +1889,7 @@ def dish_library(property: str, course_type: str | None = None):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*CATALOGUE_ROLES)
+@require_roles(*CATALOGUE_ROLES, scope={"name": "Banquet Dish"})
 def save_dish(property: str, dish_name: str, recipe=None,
               name: str | None = None, **kw):
 	"""Add or edit a dish. The recipe is what makes it cost something -
@@ -2416,6 +2416,9 @@ def customer_profile(property: str, guest: str | None = None,
 		guest = frappe.db.get_value("Guest", {"phone": phone.strip()})
 	if not guest:
 		return {"found": False}
+	# a phone lookup resolves to a guest the decorator never saw
+	from kamra.authz import assert_guest_access
+	assert_guest_access(guest)
 	g = frappe.db.get_value(
 		"Guest", guest,
 		["name", "full_name", "phone", "email", "vip", "guest_notes",
