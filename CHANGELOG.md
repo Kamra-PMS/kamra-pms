@@ -38,6 +38,14 @@ upgrade-breaking changes (removed doctypes / API contracts).
   quotation, desk-led guest response, department checklists + notify on
   Confirm (Sales/Finance/HK/F&B), and quote no-response chase reminders
 
+## [2.6.8](https://github.com/Kamra-PMS/kamra-pms/compare/v2.6.7...v2.6.8) (2026-10-05)
+
+
+### Bug Fixes
+
+* **security:** scope Guest on Frappe REST/Desk and close upsert takeover ([35dd831](https://github.com/Kamra-PMS/kamra-pms/commit/35dd8314e6789c909e07ac2e9a3af1a715b9c75c))
+* **security:** scope Guest on Frappe REST/Desk and close upsert takeover (GHSA-hw2r-w68w-6qp5) ([416f794](https://github.com/Kamra-PMS/kamra-pms/commit/416f79494c9ae0a09e657388cd932a05a724d28f))
+
 ## [2.6.7](https://github.com/Kamra-PMS/kamra-pms/compare/v2.6.6...v2.6.7) (2026-10-02)
 
 
