@@ -577,6 +577,7 @@ type AiPreset = {
   base_url: string
   model: string
   hint: string
+  processor_note?: string
 }
 
 function AiAssistantCard({
@@ -596,6 +597,11 @@ function AiAssistantCard({
   const [model, setModel] = useState(String(doc.model ?? "gpt-4o-mini"))
   const [apiKey, setApiKey] = useState("")
   const [extra, setExtra] = useState(String(doc.extra_instructions ?? ""))
+  const [redactContact, setRedactContact] = useState(
+    doc.redact_guest_contact_details == null
+      ? true
+      : Boolean(Number(doc.redact_guest_contact_details)),
+  )
   const [busy, setBusy] = useState(false)
   const [testing, setTesting] = useState(false)
   const [state, setState] = useState<"idle" | "saved" | string>("idle")
@@ -622,12 +628,21 @@ function AiAssistantCard({
     setBaseUrl(String(doc.base_url ?? "https://api.openai.com/v1"))
     setModel(String(doc.model ?? "gpt-4o-mini"))
     setExtra(String(doc.extra_instructions ?? ""))
+    setRedactContact(
+      doc.redact_guest_contact_details == null
+        ? true
+        : Boolean(Number(doc.redact_guest_contact_details)),
+    )
     setApiKey("")
   }, [doc])
 
-  const activeHint =
-    presets.find((p) => p.id === provider)?.hint ||
-    "Any OpenAI-compatible Chat Completions host"
+  const activePreset = presets.find((p) => p.id === provider)
+  const activeHint = activePreset?.hint || "Any OpenAI-compatible Chat Completions host"
+  const processorNote =
+    activePreset?.processor_note ||
+    (baseUrl.includes("11434") || baseUrl.includes("127.0.0.1")
+      ? "Local endpoint: chat may stay on your infrastructure when Ollama runs on this server or LAN."
+      : "Your configured endpoint processes chat messages and tool results under that provider's terms and region.")
 
   function applyPreset(id: string) {
     setProvider(id)
@@ -648,6 +663,7 @@ function AiAssistantCard({
         base_url: baseUrl,
         model,
         extra_instructions: extra,
+        redact_guest_contact_details: redactContact ? 1 : 0,
       }
       if (apiKey) payload.api_key = apiKey
       if (doc.name) {
@@ -744,6 +760,9 @@ function AiAssistantCard({
             ))}
           </select>
           <span className="mt-0.5 block text-xs text-zinc-400">{activeHint}</span>
+          <span className="mt-2 block rounded-lg border border-amber-100 bg-amber-50/80 px-3 py-2 text-xs text-amber-950">
+            {processorNote}
+          </span>
         </label>
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="block">
@@ -802,6 +821,25 @@ function AiAssistantCard({
           />
           <span className="mt-0.5 block text-xs text-zinc-400">
             {t("property-specific guidance - upsell priorities, tone")}
+          </span>
+        </label>
+        <label className="flex items-start gap-2 py-1 text-sm text-zinc-700">
+          <input
+            type="checkbox"
+            className="mt-0.5 size-4 accent-brand-600"
+            checked={redactContact}
+            onChange={(e) => {
+              setRedactContact(e.target.checked)
+              setState("idle")
+            }}
+          />
+          <span>
+            {t("Never send guest contact details to the AI provider")}
+            <span className="mt-0.5 block text-xs font-normal text-zinc-400">
+              {t(
+                "When off, phone and ID numbers in tool results are shortened to the last four digits before they leave Kamra.",
+              )}
+            </span>
           </span>
         </label>
         <div className="flex flex-wrap items-center gap-2">
