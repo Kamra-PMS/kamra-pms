@@ -11,8 +11,9 @@ import json
 
 import frappe
 import requests
-from frappe.utils import nowdate
+from frappe.utils import cint, nowdate
 
+from kamra.assistant_privacy import processor_disclosure, scrub_for_llm
 from kamra.authz import require_roles
 from kamra.llm_compat import chat_payload, retry_chat_payload
 
@@ -420,11 +421,15 @@ def assistant_status(property: str):
 	key = s.get_password("api_key", raise_exception=False) if s else None
 	# Never return the key - only a masked tail so admins can confirm one is set.
 	key_hint = ("••••" + key[-4:]) if key and len(key) >= 4 else None
+	base = (s.base_url if s else None) or "https://api.openai.com/v1"
 	return {
 		"enabled": bool(s and s.enabled and key),
 		"model": (s.model if s else None) or "gpt-4o-mini",
-		"base_url": (s.base_url if s else None) or "https://api.openai.com/v1",
+		"base_url": base,
 		"key_hint": key_hint,
+		"processor_disclosure": processor_disclosure(base),
+		"redact_guest_contact_details": bool(
+			cint(s.redact_guest_contact_details) if s else 1),
 	}
 
 
@@ -487,7 +492,12 @@ AI_PROVIDER_PRESETS = (
 @require_roles("Hotel Admin", "System Manager", "Front Desk")
 def provider_presets():
 	"""Dropdown options for Settings — kill 'paste Claude key into OpenAI' tickets."""
-	return {"presets": list(AI_PROVIDER_PRESETS)}
+	out = []
+	for row in AI_PROVIDER_PRESETS:
+		p = dict(row)
+		p["processor_note"] = processor_disclosure(p.get("base_url"))
+		out.append(p)
+	return {"presets": out}
 
 
 @frappe.whitelist(methods=["POST"])
@@ -637,6 +647,14 @@ def _run_tool(name: str, args: dict, property: str):
 	return json.loads(frappe.as_json(result))
 
 
+def _tool_json_for_provider(result, settings):
+	"""Mask guest phone / ID in tool payloads before they leave for the LLM."""
+	if isinstance(result, dict) and set(result.keys()) == {"error"}:
+		return frappe.as_json(result)
+	strict = bool(cint(getattr(settings, "redact_guest_contact_details", 1)))
+	return frappe.as_json(scrub_for_llm(result, strict=strict))
+
+
 @frappe.whitelist()
 @require_roles("Front Desk", "Finance", "Revenue Manager")
 def ask(property: str, messages):
@@ -692,7 +710,7 @@ def ask(property: str, messages):
 				actions.append({"tool": name, "ok": False, "error": str(e)})
 			convo.append({"role": "tool",
 			              "tool_call_id": call["id"],
-			              "content": frappe.as_json(result)})
+			              "content": _tool_json_for_provider(result, s)})
 
 	return {"reply": "I hit my tool-call limit for one question - "
 	                 "try breaking it into smaller steps.",
@@ -755,7 +773,7 @@ def ask_stream(property: str, messages):
 				result = {"error": str(e)}
 				actions.append({"tool": call["function"]["name"], "ok": False})
 			convo.append({"role": "tool", "tool_call_id": call["id"],
-			              "content": frappe.as_json(result)})
+			              "content": _tool_json_for_provider(result, s)})
 
 	def sse(event, data):
 		return f"event: {event}\ndata: {json.dumps(data)}\n\n"

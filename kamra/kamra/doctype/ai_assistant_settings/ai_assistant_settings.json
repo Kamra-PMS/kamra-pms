@@ -14,7 +14,9 @@
   "sb_auth",
   "api_key",
   "sb_prompt",
-  "extra_instructions"
+  "extra_instructions",
+  "sb_privacy",
+  "redact_guest_contact_details"
  ],
  "fields": [
   {
@@ -71,6 +73,18 @@
    "fieldname": "extra_instructions",
    "fieldtype": "Small Text",
    "label": "Extra Instructions"
+  },
+  {
+   "fieldname": "sb_privacy",
+   "fieldtype": "Section Break",
+   "label": "Privacy"
+  },
+  {
+   "default": "1",
+   "description": "Tool results sent to your AI provider will not include guest phone numbers, email, or ID numbers (DPDP / cross-border transfer). Phone and ID values are always shortened to last 4 digits when this is off.",
+   "fieldname": "redact_guest_contact_details",
+   "fieldtype": "Check",
+   "label": "Never send guest contact details to the AI provider"
   }
  ],
  "grid_page_length": 50,
