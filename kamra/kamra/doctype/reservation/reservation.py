@@ -261,6 +261,10 @@ class Reservation(Document):
 			meal_plan=self.meal_plan,
 			rate_plan=self.rate_plan,
 			voucher_code=voucher_code,
+			# the voucher's dates and use limit apply when it is first
+			# attached; a saved booking keeps its discount on later edits
+			check_voucher_limits=bool(
+				self.is_new() or self.has_value_changed("voucher")),
 		)
 		self.amount_before_tax = q["amount_before_tax"]
 		self.tax_amount = q["tax_amount"]
