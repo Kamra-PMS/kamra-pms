@@ -160,8 +160,14 @@ def rates_include_tax(property: str) -> bool:
 	return bool(frappe.get_cached_doc("Property", property).get("rates_include_tax"))
 
 
-def validate_voucher(property: str, voucher_code: str, nights: int):
-	"""Return the voucher doc if valid, else throw with a guest-readable reason."""
+def validate_voucher(property: str, voucher_code: str, nights: int,
+                     check_limits: bool = True):
+	"""Return the voucher doc if valid, else throw with a guest-readable reason.
+
+	check_limits=False skips the active flag, validity dates and use limit.
+	Re-pricing a booking that already holds the voucher passes it: the
+	booking was accepted when it was made, and its own use would otherwise
+	count against the limit (or the voucher would have expired since)."""
 	name = frappe.db.get_value(
 		"Discount Voucher",
 		{"property": property, "voucher_code": voucher_code.strip().upper()},
@@ -169,15 +175,16 @@ def validate_voucher(property: str, voucher_code: str, nights: int):
 	if not name:
 		frappe.throw(f"Voucher '{voucher_code}' does not exist.")
 	v = frappe.get_doc("Discount Voucher", name)
-	today = getdate(nowdate())
-	if v.disabled:
-		frappe.throw(f"Voucher {v.voucher_code} is no longer active.")
-	if v.valid_from and getdate(v.valid_from) > today:
-		frappe.throw(f"Voucher {v.voucher_code} starts on {v.valid_from}.")
-	if v.valid_to and getdate(v.valid_to) < today:
-		frappe.throw(f"Voucher {v.voucher_code} expired on {v.valid_to}.")
-	if v.max_uses and (v.times_used or 0) >= v.max_uses:
-		frappe.throw(f"Voucher {v.voucher_code} has been fully redeemed.")
+	if check_limits:
+		today = getdate(nowdate())
+		if v.disabled:
+			frappe.throw(f"Voucher {v.voucher_code} is no longer active.")
+		if v.valid_from and getdate(v.valid_from) > today:
+			frappe.throw(f"Voucher {v.voucher_code} starts on {v.valid_from}.")
+		if v.valid_to and getdate(v.valid_to) < today:
+			frappe.throw(f"Voucher {v.voucher_code} expired on {v.valid_to}.")
+		if v.max_uses and (v.times_used or 0) >= v.max_uses:
+			frappe.throw(f"Voucher {v.voucher_code} has been fully redeemed.")
 	if nights < (v.min_nights or 1):
 		frappe.throw(
 			f"Voucher {v.voucher_code} needs a stay of at least "
@@ -196,6 +203,7 @@ def quote(
 	meal_plan: str | None = None,
 	rate_plan: str | None = None,
 	voucher_code: str | None = None,
+	check_voucher_limits: bool = True,
 ) -> dict:
 	nights = date_diff(check_out_date, check_in_date)
 	day_use = nights == 0
@@ -266,7 +274,8 @@ def quote(
 	discount = Decimal(0)
 	voucher_name = None
 	if voucher_code:
-		v = validate_voucher(property, voucher_code, max(nights, 1))
+		v = validate_voucher(property, voucher_code, max(nights, 1),
+		                     check_limits=check_voucher_limits)
 		voucher_name = v.name
 		if v.discount_type == "Percent":
 			discount = subtotal * _dec(v.value) / Decimal(100)
