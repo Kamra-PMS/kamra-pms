@@ -320,6 +320,8 @@
   "Enter 1–99%, or a {cur} amount under the line's {cur}{amount} (before GST).": "أدخل 1–99٪، أو مبلغاً بـ {cur} أقل من {cur}{amount} للبند (قبل GST).",
   "Enter your PIN to continue": "أدخل رمزك للمتابعة",
   "Entire place": "المكان بالكامل",
+  "Entire place - checks in as one unit": "المكان بالكامل - يُسجَّل الوصول كوحدة واحدة",
+  "Entire place - checks in as one unit ({rooms})": "المكان بالكامل - يُسجَّل الوصول كوحدة واحدة ({rooms})",
   "Entire place or a few units. No meal plans; overbooking off by default.": "المكان بالكامل أو بضع وحدات. بدون خطط وجبات؛ الحجز الزائد معطّل افتراضياً.",
   "Entire villa": "الفيلا بالكامل",
   "Error": "خطأ",

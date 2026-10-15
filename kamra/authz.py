@@ -5,6 +5,7 @@ for staff restricted to some properties, which properties it may touch."""
 
 import inspect
 import json
+from contextlib import contextmanager
 from functools import wraps
 
 import frappe
@@ -26,6 +27,31 @@ def _pin_policy(property: str | None) -> tuple[int, int]:
 	from kamra.settings import get_setting
 	return (int(get_setting(property, "pin_max_attempts", PIN_MAX_ATTEMPTS)),
 	        int(get_setting(property, "pin_lock_minutes", PIN_LOCK_MINUTES)))
+
+
+@contextmanager
+def act_as(user: str):
+	"""Run a block as another user (e.g. the governed agent@kamra.local) and
+	hand the caller's own session back untouched afterwards.
+
+	frappe.set_user() rewrites the live session in place - sid becomes the
+	user name and session.data (csrf_token, expiry, ...) is wiped. A plain
+	set_user(me) afterwards keeps the user but not the rest, and Frappe's
+	after-request Session.update() then caches that wiped record under the
+	real sid: the staff member's next call resolves to "User None" and the
+	SPA drops to the login screen. Snapshot and restore the session instead."""
+	session = frappe.local.session
+	saved = dict(session)
+	form_dict = frappe.local.form_dict
+	frappe.set_user(user)  # nosemgrep: frappe-setuser -- callers authorize first and scope what runs as this user
+	try:
+		yield
+	finally:
+		frappe.set_user(saved.get("user"))  # nosemgrep: frappe-setuser -- restoring the caller's own user
+		session.clear()
+		session.update(saved)
+		frappe.local.session = session
+		frappe.local.form_dict = form_dict
 
 
 def require_it_admin(fn):

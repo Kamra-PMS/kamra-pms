@@ -4074,6 +4074,53 @@ def t86():
 	assert frappe.db.exists("City Ledger Entry", {"folio": folio2}), "credit stay never reached AR"
 
 
+@check("city ledger transfer posts balanced legs: guest ledger credited, AR debited")
+def t93():
+	from kamra import api
+	from kamra.ledger import ledger_balances, transfer_to_city_ledger
+	comp = frappe.get_doc({"doctype": "Corporate Account", "company_name": "EVAL CL Balance Corp",
+	                       "credit_allowed": 1}).insert(ignore_permissions=True)
+	g = _guest("Eval City Ledger", "+91 70000 00092")
+	res = _res(g, "2036-03-01", "2036-03-02", ROOM)
+	res.booking_type = "Corporate"
+	res.company = comp.name
+	res.status = "Checked In"
+	res.save(ignore_permissions=True)
+	folio = frappe.db.get_value("Folio", {"reservation": res.name, "folio_type": "Guest"})
+	api.add_folio_charge(folio, "Misc", "eval city ledger charge", 2500)
+
+	def side(f=None):
+		rows = frappe.get_all("Folio Ledger Entry",
+		                      filters={"property": P, **({"folio": f} if f else {})},
+		                      fields=["ledger", "debit", "credit"])
+		out = {}
+		for r in rows:
+			d, c = out.get(r.ledger, (0.0, 0.0))
+			out[r.ledger] = (d + float(r.debit or 0), c + float(r.credit or 0))
+		return out
+
+	tb0 = ledger_balances(P)
+	before = side(folio)
+	amount = transfer_to_city_ledger(folio, comp.name)["amount"]
+	tb1 = ledger_balances(P)
+	after = side(folio)
+
+	moved_dr = (tb1["total_debit"] - tb0["total_debit"])
+	moved_cr = (tb1["total_credit"] - tb0["total_credit"])
+	assert abs(moved_dr - moved_cr) < 0.01, \
+		f"transfer unbalanced the trial balance: Dr {moved_dr} vs Cr {moved_cr}"
+	assert abs(moved_dr - amount) < 0.01, f"AR debit {moved_dr} != transferred {amount}"
+	guest_cr = after.get("Guest", (0, 0))[1] - before.get("Guest", (0, 0))[1]
+	assert abs(guest_cr - amount) < 0.01, f"guest ledger not credited ({guest_cr} of {amount})"
+	ar_dr = after.get("AR", (0, 0))[0] - before.get("AR", (0, 0))[0]
+	assert abs(ar_dr - amount) < 0.01, f"AR not debited ({ar_dr} of {amount})"
+	assert abs(float(frappe.db.get_value("Folio", folio, "balance") or 0)) < 0.01
+	# the folio's own entries: what was charged and moved nets to zero across ledgers
+	fd = sum(v[0] for v in after.values()) - sum(v[0] for v in before.values())
+	fc = sum(v[1] for v in after.values()) - sum(v[1] for v in before.values())
+	assert abs(fd - fc) < 0.01, f"folio postings Dr {fd} vs Cr {fc}"
+
+
 @check("night audit refuses a future or non-current date; a no-show's due comes from its folio")
 def t87():
 	from kamra import api
@@ -4179,7 +4226,7 @@ def t91():
 
 
 @check("folio void from the bill screen: reason required, PIN-gated, ledger reversed, logged")
-def t92():
+def t98():
 	"""The bill screen voids a line with call("kamra.api.void_folio_charge",
 	{folio, charge_row, reason}) as Front Desk, after the PinPad unlock.
 	Issue #160: the screen sent no reason, so every void was refused."""
@@ -4236,6 +4283,142 @@ def t92():
 		"action_type": "void_charge", "reference_name": folio}), "void not logged"
 
 
+@check("whole-villa booking: checks in with no room, audits, checks out (rooms occupied then dirty)")
+def t94():
+	from kamra import api
+	from kamra.folio import run_night_audit
+	VP = "EVAL Villa Estate"
+	frappe.get_doc({
+		"doctype": "Property", "property_name": VP, "city": "Testville",
+		"gst_mode": "Slab", "gst_slab_threshold": 7500,
+		"gst_rate_low": 5, "gst_rate_high": 18,
+	}).insert(ignore_permissions=True)
+	villa = frappe.get_doc({
+		"doctype": "Room Type", "property": VP, "room_type_code": "EVV",
+		"room_type_name": "Eval Whole Villa", "base_price": 20000,
+		"base_occupancy": 4, "adults_capacity": 6, "children_capacity": 2,
+		"room_category": "Villa", "tax_percent": 18,
+	}).insert(ignore_permissions=True)
+	bed = frappe.get_doc({
+		"doctype": "Room Type", "property": VP, "room_type_code": "EVB",
+		"room_type_name": "Eval Villa Bedroom", "base_price": 6000,
+		"base_occupancy": 2, "adults_capacity": 2, "tax_percent": 5,
+	}).insert(ignore_permissions=True)
+	rooms = [frappe.get_doc({
+		"doctype": "Room", "property": VP, "room_number": n,
+		"room_type": bed.name,
+	}).insert(ignore_permissions=True).name for n in ("V1", "V2")]
+
+	today = nowdate()
+	g = _guest("Eval Villa Guest", "+91 70000 00092")
+	res = frappe.get_doc({
+		"doctype": "Reservation", "property": VP, "guest": g,
+		"room_type": villa.name, "check_in_date": today,
+		"check_out_date": add_days(today, 2), "adults": 4, "auto_price": 1,
+	}).insert(ignore_permissions=True)
+	assert not res.room
+
+	assert api.reservation_detail(res.name)["actions"]["can_check_in"], \
+		"whole-villa stay offered no check-in"
+	ctx = api.checkin_context(res.name)
+	assert ctx["entire_place"] == {"rooms": ["V1", "V2"]}, ctx["entire_place"]
+
+	api.check_in(res.name)
+	assert frappe.db.get_value("Reservation", res.name, "status") == "Checked In"
+	for r in rooms:
+		assert frappe.db.get_value("Room", r, "occupancy_status") == "Occupied", r
+	folio = frappe.db.get_value("Folio", {"reservation": res.name, "folio_type": "Guest"})
+	assert folio, "no folio opened at check-in"
+
+	frappe.db.set_value("Property", VP, "business_date", today)
+	out = run_night_audit(VP)
+	assert out.get("room_charges_posted") == 1, out
+	assert frappe.db.exists("Folio Charge", {
+		"parent": folio, "posting_date": today, "charge_type": "Room"}), \
+		"room night never reached the folio"
+
+	try:
+		api.check_out(res.name)
+		raise AssertionError("checked out with an unpaid bill")
+	except frappe.ValidationError as e:
+		assert "still owed" in str(e), e
+	owed = float(frappe.db.get_value("Folio", folio, "balance") or 0)
+	assert owed > 0
+	api.add_folio_payment(folio, "Cash", owed)
+	api.check_out(res.name)
+	assert frappe.db.get_value("Reservation", res.name, "status") == "Checked Out"
+	for r in rooms:
+		st = frappe.db.get_value("Room", r, ["occupancy_status", "housekeeping_status"])
+		assert tuple(st) == ("Vacant", "Dirty"), (r, st)
+		assert frappe.db.exists("Housekeeping Task", {
+			"room": r, "reservation": res.name, "task_type": "Checkout Clean"}), r
+
+	# a roomless stay that is NOT an entire place still needs a room
+	g2 = _guest("Eval Bedroom Guest", "+91 70000 00093")
+	r2 = frappe.get_doc({
+		"doctype": "Reservation", "property": VP, "guest": g2,
+		"room_type": bed.name, "check_in_date": add_days(today, 5),
+		"check_out_date": add_days(today, 6), "adults": 2, "auto_price": 1,
+	}).insert(ignore_permissions=True)
+	assert not api.reservation_detail(r2.name)["actions"]["can_check_in"]
+	try:
+		api.check_in(r2.name)
+		raise AssertionError("room-type stay checked in with no room")
+	except frappe.ValidationError as e:
+		assert "Assign a room" in str(e), e
+
+
+@check("HK phone: posting a charge or delivering laundry keeps the staff session")
+def t92():
+	# hk_post_consumable / deliver_laundry post as agent@kamra.local. A bare
+	# frappe.set_user() swap wiped the caller's sid + session data (csrf token,
+	# expiry), Frappe cached that after the request and the housekeeper's
+	# next call came back 403 "User None" - logged out mid-shift.
+	from kamra import api, laundry
+	room = frappe.db.exists("Room", {"property": P, "room_number": "E109"})
+	if not room:
+		room = frappe.get_doc({
+			"doctype": "Room", "property": P, "room_number": "E109",
+			"room_type": RT,
+		}).insert(ignore_permissions=True).name
+	else:
+		frappe.db.set_value("Room", room, "room_type", RT)
+	# far-dated: today's EVAL inventory is already sold out by earlier checks,
+	# and both endpoints only look for a Checked In stay on the room
+	res = _res(_guest("Eval HK Session", "+91 70000 00092"),
+	           "2031-02-10", "2031-02-12", room)
+	res.status = "Checked In"
+	res.save(ignore_permissions=True)
+	laundry.save_laundry_rate(P, "Shirt", "Wash & Iron", 60)
+
+	real = frappe.local.session
+	frappe.local.session = frappe._dict(
+		user="Administrator", sid="eval-hk-sid",
+		data=frappe._dict(csrf_token="eval-csrf", session_expiry="06:00:00"))
+	try:
+		def intact(step):
+			s = frappe.local.session
+			assert (s.user, s.sid) == ("Administrator", "eval-hk-sid"), (step, s)
+			assert s.data.get("csrf_token") == "eval-csrf", (step, s.data)
+
+		api.hk_post_consumable(room, "Minibar", "eval 1 water", 40)
+		intact("hk_post_consumable")
+
+		r = laundry.request_pickup(P, room)
+		laundry.collect_laundry(P, room, [
+			{"item_name": "Shirt", "service_type": "Wash & Iron", "qty": 1}],
+			order=r["order"])
+		laundry.laundry_status(r["order"], "In Process")
+		laundry.laundry_status(r["order"], "Ready")
+		doc = frappe.get_doc("Laundry Order", r["order"])
+		laundry.return_items(r["order"], {doc.items[0].name: 1})
+		out = laundry.deliver_laundry(r["order"])
+		assert out["posted_to_folio"], out
+		intact("deliver_laundry")
+	finally:
+		frappe.local.session = real
+
+
 def execute():
 	global RT, ROOM
 	# frappe.locale.get_locale_value crashes (UnboundLocalError) when no
@@ -4253,7 +4436,8 @@ def execute():
 		           t36, t37, t38, t39, t39b, t40, t41, t42, t43, t44, t45, t46, t47, t47b, t47c, t47d, t48, t49, t50, t51, t53,
 		           t54, t55, t56, t57, t58, t59, t60, t61, t62, t63, t64,
 		           t65, t66, t67, t68, t69, t70,
-		           t71, t72, t73, t74, t75, t76, t81, t82, t82b, t82c, t83, t84, t85, t86, t87, t90, t91, t92):
+		           t71, t72, t73, t74, t75, t76, t81, t82, t82b, t82c, t83, t84, t85, t86, t87, t90, t91, t92, t93, t94,
+		           t98):
 			fn()
 	finally:
 		frappe.db.commit = real_commit

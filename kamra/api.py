@@ -11,7 +11,7 @@ import frappe
 from frappe import _
 from frappe.utils import add_days, get_datetime, getdate, now_datetime, nowdate
 
-from kamra.authz import require_it_admin, require_roles
+from kamra.authz import act_as, require_it_admin, require_roles
 
 # The apps a property actually runs. The launcher and the sidebar read
 # this so a serviced-apartment operator never sees an empty restaurant.
@@ -1200,12 +1200,8 @@ def hk_post_consumable(room: str, charge_type: str, description: str,
 	# post through the governed agent user (same pattern as public bookings):
 	# the housekeeper is authorized above and scoped to two charge types, and
 	# GST is still resolved server-side. Attribution is stamped below.
-	me = frappe.session.user
-	frappe.set_user("agent@kamra.local")  # nosemgrep: frappe-setuser -- controlled user context switch; target user is validated and scope-limited in this flow
-	try:
+	with act_as("agent@kamra.local"):
 		out = post_stay_charge(res.name, charge_type, description, float(amount))
-	finally:
-		frappe.set_user(me)  # nosemgrep: frappe-setuser -- controlled user context switch; target user is validated and scope-limited in this flow
 	from kamra.savings import log_action
 	log_action("hk_charge", "Folio", out.get("folio"), res.property,
 	           rationale=f"{charge_type} ₹{amount} to {room} ({description})")
@@ -2451,6 +2447,7 @@ def find_invoices(property: str, query: str | None = None, limit: int = 8):
 def reservation_detail(reservation: str):
 	"""Everything about one booking in a single call - stay, money, guest,
 	booker and the actions currently available. Powers the reservation drawer."""
+	from kamra.kamra.doctype.reservation.reservation import is_entire_place
 	res = frappe.get_doc("Reservation", reservation)
 
 	# guest identity + stay history
@@ -2571,7 +2568,8 @@ def reservation_detail(reservation: str):
 		"booker": booker,
 		"cancellation": cancellation,
 		"actions": {
-			"can_check_in": res.status == "Confirmed" and bool(res.room),
+			"can_check_in": res.status == "Confirmed" and (
+				bool(res.room) or is_entire_place(res.room_type)),
 			"can_check_out": res.status == "Checked In",
 			"can_cancel": res.status in ("Confirmed", "Checked In"),
 			"can_amend": res.status in ("Confirmed", "Checked In"),
@@ -2682,9 +2680,19 @@ def checkin_context(reservation: str):
 			"Room", res.room,
 			["name", "room_number", "housekeeping_status"], as_dict=True)
 
+	# a whole-villa stay has no single room to pick - it takes every room
+	# of the villa at check-in, so the desk checks it in as one unit
+	from kamra.kamra.doctype.reservation.reservation import (
+		entire_place_rooms, is_entire_place)
+	entire_place = None
+	if not res.room and is_entire_place(res.room_type):
+		entire_place = {"rooms": sorted(
+			frappe.db.get_value("Room", r, "room_number") or r
+			for r in entire_place_rooms(res.property, res.room_type))}
+
 	suggestion = None
 	rooms = []
-	if not res.room and res.status == "Confirmed":
+	if not res.room and not entire_place and res.status == "Confirmed":
 		rooms = [
 			{"name": r["name"], "room_number": r["room_number"],
 			 "housekeeping_status": r["housekeeping_status"]}
@@ -2726,6 +2734,7 @@ def checkin_context(reservation: str):
 			"link_sent": bool(res.get("precheckin_link_sent")),
 		},
 		"room_assigned": room_assigned,
+		"entire_place": entire_place,
 		"suggestion": suggestion,
 		"rooms": rooms,
 	}

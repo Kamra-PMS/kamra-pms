@@ -39,6 +39,8 @@ interface Context {
     room_number: string
     housekeeping_status: string
   } | null
+  /* whole-villa stay: no single room - every room of the villa is taken */
+  entire_place: { rooms: string[] } | null
   suggestion: {
     room: string
     room_number: string
@@ -95,7 +97,7 @@ export default function CheckInDialog(props: {
     try {
       await call("kamra.api.check_in", {
         reservation: props.reservation,
-        room: ctx?.room_assigned ? undefined : room,
+        room: ctx?.room_assigned || ctx?.entire_place ? undefined : room,
       })
       props.onDone()
     } catch (e) {
@@ -127,7 +129,10 @@ export default function CheckInDialog(props: {
             <Button variant="outline" onClick={props.onClose}>
               {t("Cancel")}
             </Button>
-            <Button disabled={busy || !room || !ctx} onClick={doCheckIn}>
+            <Button
+              disabled={busy || !ctx || (!room && !ctx.entire_place)}
+              onClick={doCheckIn}
+            >
               {busy
                 ? t("Checking in…")
                 : chosen
@@ -191,7 +196,15 @@ export default function CheckInDialog(props: {
 
           <section>
             <h3 className="mb-2 text-sm font-semibold text-zinc-700">{t("Room")}</h3>
-            {ctx.room_assigned ? (
+            {ctx.entire_place && !ctx.room_assigned ? (
+              <p className="text-sm text-zinc-700">
+                {ctx.entire_place.rooms.length
+                  ? t("Entire place - checks in as one unit ({rooms})", {
+                      rooms: ctx.entire_place.rooms.join(", "),
+                    })
+                  : t("Entire place - checks in as one unit")}
+              </p>
+            ) : ctx.room_assigned ? (
               <p className="text-sm text-zinc-700">
                 {t("Room {num} is assigned", { num: ctx.room_assigned.room_number })}
                 {ctx.room_assigned.housekeeping_status && (

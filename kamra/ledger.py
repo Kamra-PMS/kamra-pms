@@ -319,6 +319,10 @@ def transfer_to_city_ledger(folio: str, company: str | None = None) -> dict:
 	_recalculate(doc)
 	doc.save(ignore_permissions=True)
 
+	# Two legs, like any transfer: the Company Credit payment credits the
+	# guest ledger (the folio is settled) and the same amount debits AR.
+	# Without the guest credit the debt sat in both ledgers at once.
+	record_payment_ledger(doc, doc.payments[-1].as_dict())
 	write_ledger_entry(
 		property=doc.property,
 		folio=doc.name,

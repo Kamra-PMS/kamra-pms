@@ -11,6 +11,33 @@ class InventoryRefused(frappe.ValidationError):
 	"""No room left to sell: category sold out, room or villa already taken."""
 
 
+def is_entire_place(room_type: str | None) -> bool:
+	"""An entire-place (whole villa) stay: its room type is Villa-category,
+	sold as one unit - the same test validate_villa_lockout uses."""
+	return bool(room_type) and frappe.db.get_value(
+		"Room Type", room_type, "room_category") == "Villa"
+
+
+def entire_place_rooms(property: str, room_type: str) -> list[str]:
+	"""The physical rooms a whole-villa stay occupies without a room of its
+	own: the rooms under the villa's type, or - when the villa listing sits
+	over member rooms (hybrid estate) - every non-villa room on the
+	property, mirroring the villa <-> room lockout. Empty for an entire
+	place set up with no rooms at all."""
+	rooms = frappe.get_all(
+		"Room", filters={"property": property, "room_type": room_type},
+		pluck="name")
+	if rooms:
+		return rooms
+	return [r[0] for r in frappe.db.sql(
+		"""
+		SELECT r.name FROM `tabRoom` r
+		LEFT JOIN `tabRoom Type` rt ON rt.name = r.room_type
+		WHERE r.property = %s
+		  AND (rt.room_category != 'Villa' OR rt.room_category IS NULL)
+		""", property)]
+
+
 class Reservation(Document):
 	def after_insert(self):
 		# every booking gets a pre-arrival check-in link
@@ -486,11 +513,22 @@ class Reservation(Document):
 				reservation=self.name, queue="short",
 				enqueue_after_commit=True,
 			)
-	def handle_check_in(self):
-		if not self.room:
+	def _occupied_rooms(self, checking_in=True) -> list[str]:
+		"""The rooms this stay holds: its assigned room, or for a whole-villa
+		booking (no single room to assign) every room of the villa."""
+		if self.room:
+			return [self.room]
+		if is_entire_place(self.room_type):
+			return entire_place_rooms(self.property, self.room_type)
+		if checking_in:
 			frappe.throw(_("Assign a room before check-in."))
+		return []
+
+	def handle_check_in(self):
+		rooms = self._occupied_rooms()
 		self.db_set("actual_check_in", now_datetime(), update_modified=False)
-		frappe.db.set_value("Room", self.room, "occupancy_status", "Occupied")
+		for room in rooms:
+			frappe.db.set_value("Room", room, "occupancy_status", "Occupied")
 		from kamra.folio import open_folio
 
 		open_folio(self)
@@ -501,17 +539,17 @@ class Reservation(Document):
 		from kamra.folio import post_remaining_nights
 
 		post_remaining_nights(self)
-		if self.room:
+		for room in self._occupied_rooms(checking_in=False):
 			frappe.db.set_value(
 				"Room",
-				self.room,
+				room,
 				{"occupancy_status": "Vacant", "housekeeping_status": "Dirty"},
 			)
 			task = frappe.get_doc(
 				{
 					"doctype": "Housekeeping Task",
 					"property": self.property,
-					"room": self.room,
+					"room": room,
 					"task_type": "Checkout Clean",
 					"priority": "High",
 					"status": "Pending",

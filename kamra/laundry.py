@@ -13,7 +13,7 @@ import frappe
 from frappe import _
 from frappe.utils import add_to_date, get_datetime, now_datetime
 
-from kamra.authz import require_roles
+from kamra.authz import act_as, require_roles
 
 LAUNDRY_ROLES = ("Housekeeping", "Front Desk", "Kamra Agent")
 RATE_ROLES = ("Front Desk", "Finance", "Kamra Agent")
@@ -331,9 +331,7 @@ def deliver_laundry(order: str, shortage_note: str | None = None):
 		detail = ", ".join(
 			f"{int(it.qty)}× {it.item_name} ({it.service_type})"
 			for it in doc.items)
-		me = frappe.session.user
-		frappe.set_user("agent@kamra.local")  # nosemgrep: frappe-setuser -- controlled user context switch; target user is validated and scope-limited in this flow
-		try:
+		with act_as("agent@kamra.local"):
 			from kamra.api import post_stay_charge
 			post_stay_charge(
 				doc.reservation, "Laundry",
@@ -341,8 +339,6 @@ def deliver_laundry(order: str, shortage_note: str | None = None):
 				f"{detail} ({doc.name})",
 				float(doc.total), gst_rate=LAUNDRY_GST)
 			posted = True
-		finally:
-			frappe.set_user(me)  # nosemgrep: frappe-setuser -- controlled user context switch; target user is validated and scope-limited in this flow
 	doc.posted_to_folio = 1 if posted else 0
 	doc.save()
 	if posted:
