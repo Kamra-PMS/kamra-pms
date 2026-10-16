@@ -4799,7 +4799,7 @@
         "kamra.api.verify_tax_id"
        ]
       },
-      "description": "Check a buyer's tax ID before the invoice goes out, where the\nproperty's country pack offers it (India: GSTIN via Kamra Verify).",
+      "description": "Check a buyer's tax ID before the invoice goes out, where the\nproperty's country pack offers it.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\",\n  \"tax_id\": \"<tax_id>\",\n  \"business_name\": \"\"\n}",
@@ -4836,7 +4836,7 @@
         "kamra.api.verify_guest_id"
        ]
       },
-      "description": "Read the guest's ID document on file into the profile, where the\nproperty's country pack offers it (India: Aadhaar and others via Kamra\nVerify). consent: the desk confirms the guest was told.",
+      "description": "Read the guest's ID document on file into the profile, where the\nproperty's country pack offers it. consent: the desk confirms the guest\nwas told.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\",\n  \"guest\": \"G-00001\",\n  \"id_type\": \"<id_type>\",\n  \"consent\": 0\n}",

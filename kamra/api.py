@@ -5473,7 +5473,7 @@ def property_locale(property: str):
 @require_roles("Front Desk", "Finance")
 def verify_tax_id(property: str, tax_id: str, business_name: str = ""):
 	"""Check a buyer's tax ID before the invoice goes out, where the
-	property's country pack offers it (India: GSTIN via Kamra Verify)."""
+	property's country pack offers it."""
 	from kamra import localization as loc
 	return loc.verify_tax_id(loc.pack_for(property), property, tax_id,
 	                         business_name)
@@ -5483,8 +5483,8 @@ def verify_tax_id(property: str, tax_id: str, business_name: str = ""):
 @require_roles("Front Desk", scope={"guest": "Guest"})
 def verify_guest_id(property: str, guest: str, id_type: str, consent: int = 0):
 	"""Read the guest's ID document on file into the profile, where the
-	property's country pack offers it (India: Aadhaar and others via Kamra
-	Verify). consent: the desk confirms the guest was told."""
+	property's country pack offers it. consent: the desk confirms the guest
+	was told."""
 	from kamra import localization as loc
 	return loc.verify_guest_id(loc.pack_for(property), property, guest,
 	                           id_type, consent)

@@ -1791,7 +1791,7 @@ integrations (gateways, tax return, ID checks) this property has.
 **POST** · roles: `Front Desk`, `Finance`
 
 Check a buyer's tax ID before the invoice goes out, where the
-property's country pack offers it (India: GSTIN via Kamra Verify).
+property's country pack offers it.
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -1804,8 +1804,8 @@ property's country pack offers it (India: GSTIN via Kamra Verify).
 **POST** · roles: `Front Desk`
 
 Read the guest's ID document on file into the profile, where the
-property's country pack offers it (India: Aadhaar and others via Kamra
-Verify). consent: the desk confirms the guest was told.
+property's country pack offers it. consent: the desk confirms the guest
+was told.
 
 | Param | Required | Default |
 | --- | --- | --- |

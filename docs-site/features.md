@@ -302,7 +302,7 @@ one.
 
 ## AI & audit
 
-An MCP server with 85 governed tools (filtered by user roles **and** the
+An MCP server with 95 governed tools (filtered by user roles **and** the
 property's enabled modules), one-click Connect Claude, an in-app copilot
 with Settings presets (OpenAI, Gemini, Groq, OpenRouter, Ollama), rate
 guardrails agents cannot price outside, deterministic pricing verified by

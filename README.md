@@ -66,7 +66,7 @@ Latest release: **[v2.6.13](https://github.com/Kamra-PMS/kamra-pms/releases/late
   weekend / weekday rate guardrails, the bill screen's Void button asks for a
   reason, and admins see a banner when a newer Kamra release is out
 - **2.6.9 – 2.6.10** — India-only integrations live in the India pack (Razorpay and
-  Cashfree payment links, GSTR-1, **Kamra Verify** GSTIN and guest ID checks);
+  Cashfree payment links, GSTR-1);
   privacy: guest contact details hidden from the AI provider, nightly clearing
   of old WhatsApp text and AI chats, children recorded by name and age only,
   and the guest privacy notice in **Hindi, Kannada, Tamil, Telugu, Malayalam,
@@ -164,7 +164,7 @@ Live example: [demo.kamrapms.com/book](https://demo.kamrapms.com/book).
 | **Billing** | Folios, corporate routing, group masters, charge splits, deposits, night audit, city-ledger payments (oldest bills first), tax invoices, cashier till (FO+POS cash, PIN pad), folio ledger; India: Razorpay / Cashfree payment links and GSTR-1 |
 | **F&B** | POS table map, full-screen till and kitchen pass, split bills, thermal KOT, kitchen display, inventory & recipes, QR ordering with printable table and room QR codes, room posting |
 | **Operations** | Tickets + SLA, housekeeping `/hk`, guest laundry end-to-end, lost & found, banquet / events (send quote, guest response, dept checklists) |
-| **Guests** | Online pre-check-in, GRC + occupant register, **editable nationality**, ID retention modes, Kamra Verify (India: GSTIN and guest ID checks — coming soon) |
+| **Guests** | Online pre-check-in, GRC + occupant register, **editable nationality**, ID retention modes |
 | **Privacy** | Erasure, access export, guest and message retention, children's data minimised, AI-prompt redaction, privacy notice in English, Arabic and seven Indian languages |
 | **Messaging** | WhatsApp (Meta Cloud API) — confirmations, check-in links, inbox, desk tickets |
 | **Localization** | Six country packs plus a flat-tax fallback (see [Countries](#countries)); English / العربية UI |
@@ -181,7 +181,7 @@ integrations are never offered in another.
 
 | Country | Tax on rooms and F&B | Invoices and filings | Front desk and integrations |
 |---|---|---|---|
-| 🇮🇳 India | GST slab by nightly tariff (5% / 18% around ₹7,500) or fixed; F&B 5% | CGST + SGST or IGST from the GSTIN, SAC per line, amount in lakh / crore, GSTR-1 export | Aadhaar, PAN, Voter ID; UPI; Razorpay and Cashfree payment links; Kamra Verify (coming soon); Form C for foreign guests; notice in 7 Indian languages |
+| 🇮🇳 India | GST slab by nightly tariff (5% / 18% around ₹7,500) or fixed; F&B 5% | CGST + SGST or IGST from the GSTIN, SAC per line, amount in lakh / crore, GSTR-1 export | Aadhaar, PAN, Voter ID; UPI; Razorpay and Cashfree payment links; Form C for foreign guests; notice in 7 Indian languages |
 | 🇸🇦 Saudi Arabia | VAT 15%; municipality fee as a room levy | ZATCA Phase 1: UUID, hash chain, UBL 2.1 XML and QR on every invoice and POS bill; Phase 2 groundwork | National ID, Iqama, GCC ID; Shomoos register (children's IDs kept too); Arabic UI |
 | 🇦🇪 UAE | VAT 5%; municipality fee as a room levy | TRN on "Tax Invoice" | Emirates ID, GCC ID |
 | 🇲🇾 Malaysia | SST 8% on rooms, 6% on F&B | Tourism Tax note for foreign guests | MyKad |
@@ -202,7 +202,7 @@ flowchart LR
   desk["Front desk SPA<br/>React + Vite"] --> api
   book["Booking engine<br/>/book"] --> api
   hk["Housekeeping<br/>/hk"] --> api
-  agent["Claude / any MCP client"] --> mcp["MCP server<br/>89 tools"] --> api
+  agent["Claude / any MCP client"] --> mcp["MCP server<br/>95 tools"] --> api
   api["Governed API<br/>RBAC · property scope · audit log"] --> core["PMS core<br/>pricing · folios · night audit"]
   core --> pack["Country pack<br/>tax · invoices · integrations"]
   core --> db[("Frappe v16<br/>MariaDB")]
