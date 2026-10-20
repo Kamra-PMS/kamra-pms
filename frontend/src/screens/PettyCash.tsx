@@ -125,7 +125,7 @@ export default function PettyCash() {
             <span className="font-medium text-zinc-800">
               {report?.property_name || property}
             </span>
-            <span>· {t("This property only — switch hotel in the header to see another.")}</span>
+            <span>· {t("This property only - switch hotel in the header to see another.")}</span>
           </p>
         </div>
         <Link
@@ -155,7 +155,7 @@ export default function PettyCash() {
               {label}
             </p>
             <p className="mt-0.5 text-lg font-semibold tabular-nums text-zinc-900">
-              {val == null ? "—" : kind === "count" ? String(val) : inr(val)}
+              {val == null ? "-" : kind === "count" ? String(val) : inr(val)}
             </p>
           </div>
         ))}
@@ -270,7 +270,7 @@ export default function PettyCash() {
               <tr>
                 <td colSpan={5} className="px-3 py-10 text-center text-zinc-400">
                   {t(
-                    "No petty cash vouchers for this property yet. Post one above — other hotels keep their own lists.",
+                    "No petty cash vouchers for this property yet. Post one above - other hotels keep their own lists.",
                   )}
                 </td>
               </tr>

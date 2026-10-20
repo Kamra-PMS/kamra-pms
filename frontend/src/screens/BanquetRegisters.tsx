@@ -1,6 +1,6 @@
 /*  The books a banquet office keeps.
 
-    Five listings that every hall has kept on paper forever — what's
+    Five listings that every hall has kept on paper forever - what's
     booked, what was quoted, what came in, what was collected, what it all
     added up to. The old software made you pick a radio button and hit
     Print; here you pick a period once and the whole set is a tab away,
@@ -33,7 +33,7 @@ const REGISTERS = [
 ] as const
 type Reg = (typeof REGISTERS)[number][0]
 
-/** First and last day of the month a date falls in — the period a banquet
+/** First and last day of the month a date falls in - the period a banquet
  *  office almost always wants, so it's the default. */
 function monthBounds(iso: string) {
   const d = new Date(iso + "T00:00:00")
@@ -98,7 +98,7 @@ export default function BanquetRegisters() {
             </span>
           </CardTitle>
           <p className="mt-0.5 text-xs text-zinc-400">
-            Pick the period once — every book is a tab away.
+            Pick the period once - every book is a tab away.
           </p>
         </div>
         <div className="flex flex-wrap items-end gap-2">
@@ -271,7 +271,7 @@ function FunctionList({
                   (r.balance_due > 0 ? "text-rose-700" : "text-zinc-300")
                 }
               >
-                {r.balance_due > 0 ? inr(r.balance_due) : "—"}
+                {r.balance_due > 0 ? inr(r.balance_due) : "-"}
               </td>
               <td className="py-1.5">
                 <StatusPill status={r.status} />

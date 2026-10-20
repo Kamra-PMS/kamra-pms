@@ -32,7 +32,7 @@ export default function ImageField(props: {
       setErr(
         e instanceof Error && e.message
           ? e.message
-          : "Upload failed — try a smaller file (under 2 MB).",
+          : "Upload failed - try a smaller file (under 2 MB).",
       )
     } finally {
       setBusy(false)

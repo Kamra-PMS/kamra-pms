@@ -1,4 +1,4 @@
-/* Housekeeping proof media — shared viewers.
+/* Housekeeping proof media - shared viewers.
  *
  *  Photos/videos a housekeeper attaches to a task (proof of clean) are stored on
  *  the Housekeeping Task. These viewers surface them for the people who review
@@ -88,7 +88,7 @@ export function HkMediaView({
   )
 }
 
-/** Desktop Housekeeping screen — `extra` panel shown when a supervisor opens a
+/** Desktop Housekeeping screen - `extra` panel shown when a supervisor opens a
  *  task. Lists that task's proof photos/videos, with delete. */
 export function HkTaskMediaPanel({ row }: { row: Row; reload: () => void }) {
   const [urls, setUrls] = useState<string[] | null>(null)
@@ -127,7 +127,7 @@ export function HkTaskMediaPanel({ row }: { row: Row; reload: () => void }) {
   )
 }
 
-/** Front desk — a small camera button for a room. On click it fetches that
+/** Front desk - a small camera button for a room. On click it fetches that
  *  room's recent cleaning media and opens the viewer, so reception can confirm
  *  the room is genuinely guest-ready. */
 export function RoomMediaButton({ room }: { room: string }) {
@@ -170,7 +170,7 @@ export function RoomMediaButton({ room }: { room: string }) {
           >
             <div className="mb-2 flex items-center justify-between">
               <h3 className="text-sm font-semibold text-zinc-700">
-                Cleaning proof — room {room.split("-").pop()}
+                Cleaning proof - room {room.split("-").pop()}
               </h3>
               <button
                 type="button"

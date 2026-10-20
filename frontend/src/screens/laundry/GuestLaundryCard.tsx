@@ -7,7 +7,7 @@ import { cur } from "../../lib/money"
 
 /** In-stay guest self-service: request a laundry pickup from the check-in page.
  * Read-only price list + a request button. The guest never sees a folio or a
- * total — staff count and price the bag at the door. Written on the guest's
+ * total - staff count and price the bag at the door. Written on the guest's
  * behalf by the governed agent (kamra.public_api.request_guest_laundry). */
 
 interface LaundryInfo {
@@ -63,12 +63,12 @@ export function GuestLaundryCard({ token }: Readonly<{ token: string }>) {
       {alreadyOpen ? (
         <p className="mt-2 flex items-center gap-2 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
           <Check className="size-4" aria-hidden />
-          Housekeeping has your laundry pickup — they'll be by shortly.
+          Housekeeping has your laundry pickup - they'll be by shortly.
         </p>
       ) : (
         <>
           <p className="mt-1 text-sm text-zinc-500">
-            Need clothes washed? Ask housekeeping to pick them up — they'll
+            Need clothes washed? Ask housekeeping to pick them up - they'll
             count and price the bag with you at the door.
           </p>
 
@@ -102,7 +102,7 @@ export function GuestLaundryCard({ token }: Readonly<{ token: string }>) {
               >
                 <Zap className="size-4" aria-hidden />
                 {express
-                  ? "Express — same day (higher rate)"
+                  ? "Express - same day (higher rate)"
                   : "Standard service"}
               </button>
               <div className="flex gap-2">

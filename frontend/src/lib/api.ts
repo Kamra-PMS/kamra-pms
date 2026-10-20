@@ -43,7 +43,7 @@ async function doFetch(path: string, init?: RequestInit) {
       console.warn(`[kamra] network failure calling ${path}`, err)
       window.dispatchEvent(new Event("kamra:offline"))
       throw Object.assign(
-        new Error("Can't reach Kamra right now. Check your connection — we'll reconnect automatically."),
+        new Error("Can't reach Kamra right now. Check your connection - we'll reconnect automatically."),
         { network: true },
       )
     }
@@ -82,7 +82,7 @@ export async function logout() {
 
 /** Upload an image to Frappe's public files; resolves to its served URL.
  *  Pass doctype/docname/fieldname so Attach Image fields keep a real File
- *  link — otherwise the URL shows in the form but is easy to lose on save. */
+ *  link - otherwise the URL shows in the form but is easy to lose on save. */
 export async function uploadFile(
   file: File,
   opts?: { doctype?: string; docname?: string; fieldname?: string },
@@ -123,7 +123,7 @@ export async function uploadFile(
 /** Upload a file to a custom Kamra endpoint (multipart), returning its result.
  *  Unlike uploadFile (Frappe's built-in upload_file, which authorises against
  *  the target doctype's own perms), this posts to a @require_roles endpoint that
- *  handles the File itself — the pattern the rest of Kamra uses. */
+ *  handles the File itself - the pattern the rest of Kamra uses. */
 export async function uploadTo(
   method: string,
   file: File,

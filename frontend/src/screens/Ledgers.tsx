@@ -131,7 +131,7 @@ export default function Ledgers() {
         {inBalance === null ? (
           `Ledgers as of ${date}. Debits ${inr(totals.debit)} · credits ${inr(totals.credit)}. The check against folio balances runs for the current business date.`
         ) : inBalance ? (
-          `Ledgers agree with folios — Guest + Deposit net ${inr(recon?.ledger_net)} equals the ${inr(recon?.folios_net)} folios carry. Debits exceed credits by what guests owe (${inr(totals.debit - totals.credit)}); that is not an imbalance.`
+          `Ledgers agree with folios - Guest + Deposit net ${inr(recon?.ledger_net)} equals the ${inr(recon?.folios_net)} folios carry. Debits exceed credits by what guests owe (${inr(totals.debit - totals.credit)}); that is not an imbalance.`
         ) : (
           <div>
             <p className="font-medium">
@@ -223,9 +223,9 @@ export default function Ledgers() {
                 <th className="py-2 pr-3">Terms</th>
                 <th className="py-2 pr-3">Balance</th>
                 <th className="py-2 pr-3">Not due</th>
-                <th className="py-2 pr-3">1–30</th>
-                <th className="py-2 pr-3">31–60</th>
-                <th className="py-2 pr-3">61–90</th>
+                <th className="py-2 pr-3">1 to 30</th>
+                <th className="py-2 pr-3">31 to 60</th>
+                <th className="py-2 pr-3">61 to 90</th>
                 <th className="py-2 pr-3">90+</th>
                 <th className="py-2 pr-3">Overdue</th>
                 <th className="py-2 pr-3">Credit</th>
@@ -259,10 +259,10 @@ export default function Ledgers() {
                     <td
                       className={`py-2 pr-3 tabular-nums ${overdue ? "font-medium text-rose-700" : ""}`}
                     >
-                      {overdue ? inr(overdue) : "—"}
+                      {overdue ? inr(overdue) : "-"}
                     </td>
                     <td className="py-2 pr-3 tabular-nums">
-                      {Number(a.unapplied_credit || 0) ? inr(a.unapplied_credit) : "—"}
+                      {Number(a.unapplied_credit || 0) ? inr(a.unapplied_credit) : "-"}
                     </td>
                     {canSettle ? (
                       <td className="py-2 text-right">

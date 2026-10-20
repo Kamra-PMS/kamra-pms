@@ -67,6 +67,8 @@ import {
   MoonStar,
   FileUp,
   DoorOpen,
+  Hash,
+  ListOrdered,
 } from "lucide-react"
 
 /** "Night audit" is what most hotels call End of Day; EOD is what they type. */
@@ -123,7 +125,7 @@ export const APPS: AppDef[] = [
       { to: "/calendar", label: "Calendar", icon: CalendarDays },
       { to: "/guests", label: "Guests", icon: Users },
       { to: "/room-blocks", label: "Room Blocks", icon: Lock },
-      { to: "/end-of-day", label: "End of Day", icon: MoonStar,
+      { to: "/end-of-day", label: "End of Day / Night Audit", icon: MoonStar,
         keywords: EOD_KEYWORDS },
       { to: "/settings/front-desk", label: "Settings", icon: SettingsIcon,
         roles: ["Hotel Admin", "System Manager", "Administrator"] },
@@ -166,7 +168,7 @@ export const APPS: AppDef[] = [
     description: "Guest requests and ops workflows.",
     roles: ["Front Desk", "Hotel Admin", "System Manager", "Administrator"],
     items: [
-      { to: "/tickets", label: "Guest Requests", icon: Ticket },
+      { to: "/tickets", label: "Guest Requests (Tickets)", icon: Ticket, keywords: ["tickets", "service ticket", "complaint", "sla", "request"] },
       { to: "/whatsapp", label: "WhatsApp", icon: MessageCircle },
       { to: "/channels", label: "Channels", icon: PhoneCall,
         roles: ["Hotel Admin", "System Manager", "Administrator"] },
@@ -230,6 +232,8 @@ export const APPS: AppDef[] = [
       { to: "/revenue-reports", label: "Revenue Reports", icon: ChartLine },
       { to: "/channel-manager", label: "Channel Manager", icon: Share2 },
       { to: "/ota-mappings", label: "OTA Room Mappings", icon: Network },
+      { to: "/rate-calendar", label: "Rate Calendar", icon: CalendarDays,
+        keywords: ["bar", "best available rate", "base rate", "rack rate", "tariff", "pricing", "price by date"] },
       { to: "/rate-plans", label: "Rate Plans", icon: Tags },
       { to: "/seasons", label: "Seasons", icon: CalendarDays },
       { to: "/guardrails", label: "Guardrails", icon: ShieldCheck },
@@ -264,13 +268,19 @@ export const APPS: AppDef[] = [
       { to: "/shifts", label: "Shift Handover", icon: Clock, group: "Cashier" },
       { to: "/cashier/fx", label: "Currency Desk", icon: Calculator, group: "Cashier" },
       // Billing
-      { to: "/end-of-day", label: "End of Day", icon: MoonStar, group: "Billing",
+      { to: "/end-of-day", label: "End of Day / Night Audit", icon: MoonStar, group: "Billing",
         keywords: EOD_KEYWORDS },
       { to: "/billing", label: "Billing", icon: Receipt, group: "Billing" },
       { to: "/folio-history", label: "Folio History", icon: History, group: "Billing" },
       { to: "/laundry", label: "Laundry", icon: Shirt, group: "Billing" },
       // Books
       { to: "/ledgers", label: "Ledgers", icon: BookOpen, group: "Books" },
+      { to: "/transaction-codes", label: "Transaction Codes", icon: Hash, group: "Books",
+        keywords: ["Txn codes", "Revenue group", "Chart of accounts"],
+        roles: ["Finance", "Hotel Admin", "System Manager", "Administrator"] },
+      { to: "/reason-codes", label: "Reason Codes", icon: ListOrdered, group: "Books",
+        keywords: ["Void reason", "Refund reason", "Allowance"],
+        roles: ["Finance", "Hotel Admin", "System Manager", "Administrator"] },
       { to: "/reports", label: "Reports", icon: ChartLine, group: "Books" },
       { to: "/voids-allowances", label: "Voids & Allowances", icon: FileX2, group: "Books",
         roles: ["Finance", "Hotel Admin", "System Manager", "Administrator"] },
@@ -278,7 +288,10 @@ export const APPS: AppDef[] = [
       { to: "/settings/finance", label: "Settings", icon: SettingsIcon, group: "Books",
         roles: ["Finance", "Hotel Admin", "System Manager", "Administrator"] },
     ],
-    extraPrefixes: ["/billing/", "/cashier/", "/ledgers", "/folio-history", "/end-of-day", "/night-audit"],
+    extraPrefixes: [
+      "/billing/", "/cashier/", "/ledgers", "/folio-history",
+      "/end-of-day", "/night-audit", "/reason-codes", "/transaction-codes",
+    ],
   },
   {
     id: "booking-engine",
@@ -334,6 +347,7 @@ export const APPS: AppDef[] = [
         roles: ["System Manager", "Administrator"],
       },
       { to: "/settings/staff", label: "Staff & Access", icon: UserCog },
+      { to: "/finish-setup", label: "Finish setup", icon: ListChecks, keywords: ["onboarding", "checklist", "getting started", "setup wizard"] },
       {
         href: `${DESK}/app/build`,
         label: "Frappe Desk",

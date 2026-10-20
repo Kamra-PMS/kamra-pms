@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react"
-import { Link } from "react-router-dom"
+import { Link, useLocation } from "react-router-dom"
 import {
   ArrowRight,
   KeyRound,
@@ -120,6 +120,12 @@ export default function Assistant() {
   const [error, setError] = useState<string | null>(null)
   const endRef = useRef<HTMLDivElement>(null)
   const [aiEnabled, setAiEnabled] = useState<boolean | null>(null)
+  // a screen can hand the agent a ready question (End of Day blockers);
+  // it is put in the box for the user to read and send, not sent for them
+  const handoff = (useLocation().state as { prompt?: string } | null)?.prompt
+  useEffect(() => {
+    if (handoff) setInput(handoff)
+  }, [handoff])
 
   useEffect(() => {
     call<{ enabled: boolean }>("kamra.assistant.assistant_status", {

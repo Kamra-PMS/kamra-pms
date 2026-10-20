@@ -51,9 +51,9 @@ interface KotOrder {
   items: KotItem[]
 }
 
-// Mirrors pos.py: the order food is served in, and the stations a KOT prints to.
-const COURSE_ORDER = ["Starter", "Main", "Dessert", "Drink"]
-const STATIONS = ["Kitchen", "Tandoor", "Grill", "Fryer", "Bar"]
+// Defaults; Settings → F&B → Menu master lists overrides per property.
+const DEFAULT_COURSES = ["Starter", "Main", "Dessert", "Drink"]
+const DEFAULT_STATIONS = ["Kitchen", "Tandoor", "Grill", "Fryer", "Bar"]
 // The kitchen's own thresholds, in minutes: fresh, working, needs eyes.
 const AMBER_AT = 5
 const LATE_AT = 10
@@ -243,7 +243,7 @@ function Timeline({ order, now }: { order: KotOrder; now: number }) {
             <Icon className={cn("size-4", at ? "text-brand-600" : "text-zinc-300")} />
             <span className={cn("text-xs font-bold", at ? "text-zinc-700" : "text-zinc-400")}>{label}</span>
             <span className={cn("text-xs tabular-nums", at ? "text-zinc-600" : "text-zinc-300")}>
-              {at ? clockOf(at) : "—"}
+              {at ? clockOf(at) : "-"}
             </span>
           </div>
         ))}
@@ -295,7 +295,7 @@ function Line({ it, order, busy, onAction, big }: {
       {done ? (
         <Button disabled={busy === order.name + it.name}
           onClick={() => onAction("recall_prepared", { item_row: it.name })}
-          title={t("Undo — put it back on the board")}
+          title={t("Undo - put it back on the board")}
           className={cn("shrink-0", big ? "h-12 px-6 text-base" : "h-9 px-3 text-xs")}>
           <Check className={big ? "size-5" : "size-4"} />{t("Ready")}
         </Button>
@@ -316,12 +316,13 @@ function Line({ it, order, busy, onAction, big }: {
    tapping another card swaps this panel rather than needing a close first.
    The board reflows into the free half (see the grid below) so no card ends
    up hidden underneath. Targets stay large - gloved, wet, greasy hands. */
-function TicketDetail({ order, onClose, onAction, busy, now }: {
+function TicketDetail({ order, onClose, onAction, busy, now, stations }: {
   order: KotOrder
   onClose: () => void
   onAction: (fn: string, params: Record<string, unknown>) => void
   busy: string | null
   now: number
+  stations: string[]
 }) {
   const { t } = useT()
   const secs = firedAgeSecs(order, now)
@@ -350,7 +351,7 @@ function TicketDetail({ order, onClose, onAction, busy, now }: {
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
             <span className="text-2xl font-black tabular-nums">
-              {order.kot_no ? `KOT ${order.kot_no}` : "KOT —"} · {destination(order)}
+              {order.kot_no ? `KOT ${order.kot_no}` : "KOT - "} · {destination(order)}
             </span>
             {order.order_type && (
               <span className="rounded bg-brand-50 px-2 py-0.5 text-xs font-bold uppercase tracking-wide text-brand-700">
@@ -369,7 +370,7 @@ function TicketDetail({ order, onClose, onAction, busy, now }: {
         <div className="flex shrink-0 items-center gap-3">
           <div className="text-right">
             <div className={cn("text-3xl font-black tabular-nums leading-none", tone.text)}>
-              {secs === null ? "—" : `${Math.floor(secs / 60)}m`}
+              {secs === null ? "-" : `${Math.floor(secs / 60)}m`}
             </div>
             <div className="mt-1 text-[10px] font-bold uppercase tracking-widest text-zinc-400">{t("elapsed")}</div>
           </div>
@@ -397,7 +398,7 @@ function TicketDetail({ order, onClose, onAction, busy, now }: {
           <div key={it.name} className="mb-3 rounded-xl border-2 border-rose-500 bg-rose-50 px-4 py-3">
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
-                <div className="text-xs font-black tracking-wide text-rose-700">{t("CANCELLED — STOP COOKING")}</div>
+                <div className="text-xs font-black tracking-wide text-rose-700">{t("CANCELLED - STOP COOKING")}</div>
                 <div className="mt-0.5 truncate text-lg font-bold text-rose-900 line-through">
                   {Math.round(it.qty)}× {it.item_name}
                 </div>
@@ -412,7 +413,7 @@ function TicketDetail({ order, onClose, onAction, busy, now }: {
           </div>
         ))}
 
-        {groupBy(live, (i) => i.prep_station ?? "Kitchen", STATIONS).map(([station, items]) => (
+        {groupBy(live, (i) => i.prep_station ?? "Kitchen", stations).map(([station, items]) => (
           <div key={station}>
             <StationHead station={station} count={items.length} />
             <ul className="divide-y divide-zinc-100">
@@ -480,7 +481,7 @@ function TicketDetail({ order, onClose, onAction, busy, now }: {
         ) : anyCooking ? (
           <Button disabled={busy === order.name} onClick={() => onAction("mark_prepared", {})}
             className="h-16 flex-1 justify-center text-lg font-bold">
-            <Check className="size-6" />{t("All ready — send to pass")}
+            <Check className="size-6" />{t("All ready - send to pass")}
           </Button>
         ) : null}
       </footer>
@@ -493,6 +494,8 @@ export default function Kitchen() {
   const [station, setStation] = useState("")
   const [outlet, setOutlet] = useState("")
   const [outlets, setOutlets] = useState<{ name: string; outlet_name: string }[]>([])
+  const [stations, setStations] = useState<string[]>(DEFAULT_STATIONS)
+  const [courses, setCourses] = useState<string[]>(DEFAULT_COURSES)
   const [orders, setOrders] = useState<KotOrder[]>([])
   const [busy, setBusy] = useState<string | null>(null)
   const [openOrder, setOpenOrder] = useState<string | null>(null)
@@ -509,6 +512,12 @@ export default function Kitchen() {
   useEffect(() => {
     call<{ name: string; outlet_name: string }[]>("kamra.pos.outlets", { property: getCurrentProperty() })
       .then(setOutlets).catch(() => {})
+    call<{ prep_stations: string[]; courses: string[] }>("kamra.settings.menu_masters", {
+      property: getCurrentProperty(),
+    }).then((m) => {
+      if (m.prep_stations?.length) setStations(m.prep_stations)
+      if (m.courses?.length) setCourses(m.courses)
+    }).catch(() => {})
   }, [])
 
   // Print station: this screen prints a kitchen printer's tickets on the
@@ -586,7 +595,7 @@ export default function Kitchen() {
   // back to the board rather than stranding the chef on a dead ticket.
   const open = openOrder ? orders.find((o) => o.name === openOrder) : undefined
   useEffect(() => {
-    // Clear even when the queue empties — requiring orders.length left a stale
+    // Clear even when the queue empties - requiring orders.length left a stale
     // openOrder that blocked Escape from exiting kiosk with no drawer visible.
     if (openOrder && !open) setOpenOrder(null)
   }, [openOrder, orders, open])
@@ -633,7 +642,7 @@ export default function Kitchen() {
             </label>
           )}
           <div className="flex flex-wrap rounded-lg border border-zinc-200 bg-white p-0.5 text-sm">
-            {["", ...STATIONS].map((s) => (
+            {["", ...stations].map((s) => (
               <button key={s} onClick={() => setStation(s)}
                 className={"rounded-md px-3 py-1.5 font-medium " +
                   (station === s ? "bg-brand-600 text-white" : "text-zinc-600")}>
@@ -660,7 +669,7 @@ export default function Kitchen() {
               kioskOn
                 ? "border-brand-600 bg-brand-50 text-brand-800"
                 : "border-zinc-300 bg-white text-zinc-600 hover:bg-zinc-50")}
-            title={kioskOn ? t("Show PMS menus (Esc)") : t("Focus mode — hide PMS menus")}>
+            title={kioskOn ? t("Show PMS menus (Esc)") : t("Focus mode - hide PMS menus")}>
             <Focus className="size-4" />
           </button>
           <button onClick={toggleBrowserFs}
@@ -670,7 +679,7 @@ export default function Kitchen() {
           </button>
           <button onClick={() => { exitFloor(); navigate("/dashboard") }}
             className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-2.5 py-2 text-xs font-semibold text-zinc-600 hover:bg-zinc-50"
-            title={t("Exit the kitchen pass — back to the PMS")}>
+            title={t("Exit the kitchen pass - back to the PMS")}>
             <LogOut className="size-4" />
             <span className="hidden xl:inline">{t("Exit")}</span>
           </button>
@@ -721,7 +730,7 @@ export default function Kitchen() {
                   <div className="flex items-end justify-between gap-2">
                     <span className="min-w-0 truncate text-lg font-bold text-zinc-900">{destination(o)}</span>
                     <span className={cn("inline-flex shrink-0 items-center gap-1 text-lg font-black tabular-nums", tone.text)}>
-                      <Clock className="size-4" />{secs === null ? "—" : `${Math.floor(secs / 60)}m`}
+                      <Clock className="size-4" />{secs === null ? "-" : `${Math.floor(secs / 60)}m`}
                     </span>
                   </div>
                   <div className="truncate text-xs text-zinc-400">
@@ -750,12 +759,12 @@ export default function Kitchen() {
                   <button onClick={() => setOpenOrder(o.name)}
                     className="flex items-center gap-1.5 bg-rose-50 px-3 py-1.5 text-left text-xs font-black text-rose-700">
                     <TriangleAlert className="size-3.5 shrink-0" />
-                    {cancelled.length} {t("CANCELLED — STOP")}
+                    {cancelled.length} {t("CANCELLED - STOP")}
                   </button>
                 )}
 
                 <div className="flex-1 border-t border-zinc-100 px-3">
-                  {groupBy(live, (i) => i.course, COURSE_ORDER).map(([course, items]) => (
+                  {groupBy(live, (i) => i.course, courses).map(([course, items]) => (
                     <div key={course}>
                       <div className="pt-2 text-[10px] font-black uppercase tracking-wider text-zinc-400">
                         {t(course)}
@@ -823,7 +832,7 @@ export default function Kitchen() {
       )}
 
       {open && (
-        <TicketDetail order={open} busy={busy} now={now}
+        <TicketDetail order={open} busy={busy} now={now} stations={stations}
           onClose={() => setOpenOrder(null)}
           onAction={(fn, params) => act(open.name, fn, params)} />
       )}

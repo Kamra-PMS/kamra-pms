@@ -172,7 +172,7 @@ export default function PosDashboard() {
             <Kpi icon={Gift} label="Complimentary" value={String(data.nc.count)} tone="amber"
               sub={`${cur()}${inr(data.nc.value)} given away`} />
             <Kpi icon={ChefHat} label="Fire → ready"
-              value={data.avg_fire_to_ready_mins === null ? "—" : `${data.avg_fire_to_ready_mins}m`}
+              value={data.avg_fire_to_ready_mins === null ? "-" : `${data.avg_fire_to_ready_mins}m`}
               sub="kitchen average" />
           </div>
 
