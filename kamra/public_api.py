@@ -337,19 +337,29 @@ def showcase(property: str, listing_slug: str | None = None,
 def search_stay(property: str, check_in_date: str, check_out_date: str,
                 adults: int = 2, children: int = 0,
                 listing_slug: str | None = None,
-                location_slug: str | None = None, pets: int = 0):
-	"""Availability + real quoted price per room type for the stay."""
+                location_slug: str | None = None, pets: int = 0,
+                child_ages=None):
+	"""Availability + real quoted price per room type for the stay.
+
+	`child_ages` (e.g. [3, 8, 13]) lets each room type's age bands decide who
+	is free, a child or an adult; without it `children` are all children.
+	Each row says whether the room type can take the party: `available`, a
+	`reason` when it cannot, and `needs_confirmation` when the party is above
+	what it sleeps but within the extra guests it allows by arrangement."""
 	# available_rooms is staff-only (@require_roles) since it's also an
 	# MCP / Kamra Agent tool; guests need the same availability math without
 	# role gate, so this calls the same underlying helpers directly.
 	from kamra.api import _available_rooms_raw, _block_hold
-	from kamra.pricing import quote
+	from kamra.pricing import capacity_overflow, quote
 	from kamra.siu.availability import has_active_sius, sellable_count
 
-	if date_diff(check_out_date, check_in_date) < 1:
+	nights = date_diff(check_out_date, check_in_date)
+	if nights < 1:
 		frappe.throw("Check-out must be after check-in.")
-	if date_diff(check_out_date, check_in_date) > 30:
+	if nights > 30:
 		frappe.throw("Stays longer than 30 nights: please contact the hotel.")
+	ages = _child_ages(child_ages)
+	_party(None, adults, children, None)  # at least one adult, before any work
 
 	prop = frappe.get_cached_doc("Property", property)
 	results = []
@@ -368,15 +378,33 @@ def search_stay(property: str, check_in_date: str, check_out_date: str,
 			if hold:
 				free = free[:max(0, len(free) - hold)]
 			left = len(free)
-		row = {"room_type": rt, "rooms_left": left, "quote": None}
+		rtd = frappe.get_cached_doc("Room Type", rt)
+		a, c, infants = _party(rtd, adults, children, ages)
+		above, beds = capacity_overflow(rtd, a, c)
+		row = {"room_type": rt, "rooms_left": left, "quote": None,
+		       "available": bool(left), "adults": a, "children": c,
+		       "infants": infants}
+		if above > beds:
+			row.update(available=False, reason=TOO_MANY_GUESTS)
+			results.append(row)
+			continue
+		if above:
+			row.update(needs_confirmation=True,
+			           confirmation_reason=_over_capacity_note(above))
 		if left:
 			try:
-				row["quote"] = quote(
-					property, rt, check_in_date, check_out_date,
-					int(adults), int(children), pets=int(pets or 0),
-				)
-				row["quote"].update(_payment_split(
-					prop, row["quote"].get("amount_after_tax")))
+				q = quote(property, rt, check_in_date, check_out_date,
+				          a, c, pets=int(pets or 0))
+				rules = q.get("stay_rules") or {}
+				q.update(_payment_split(prop, q.get("amount_after_tax"),
+				                        rules.get("full_payment")))
+				row["quote"] = q
+				need = max(int(rules.get("minimum_nights") or 0),
+				           int(prop.get("minimum_nights") or 1))
+				if nights < need:
+					row.update(available=False, reason=(
+						f"These dates need a stay of at least {need} nights"
+						+ (f" ({rules['season']})." if rules.get("season") else ".")))
 			except Exception:
 				pass  # still list the room type even if this date range cannot be quoted
 		results.append(row)
@@ -673,13 +701,57 @@ def request_guest_laundry(token: str, notes: str = "", express: int = 0):
 	return {"ok": True, "order": doc.name}
 
 
-def _advance_terms(prop, total: float) -> tuple[float, str]:
+TOO_MANY_GUESTS = "The property cannot accommodate the number of people requested."
+
+
+def _child_ages(child_ages) -> list[int] | None:
+	"""Ages from the request - a list, a JSON list or "3,8,13". None when the
+	caller sent only a children count."""
+	if child_ages in (None, "", []):
+		return None
+	if isinstance(child_ages, str):
+		raw = child_ages.strip()
+		child_ages = frappe.parse_json(raw) if raw.startswith("[") else raw.split(",")
+	ages = []
+	for a in child_ages:
+		if str(a).strip() == "":
+			continue
+		age = cint(a)
+		if age < 0 or age > 17:
+			frappe.throw("Child ages must be between 0 and 17.")
+		ages.append(age)
+	return ages
+
+
+def _party(rt_doc, adults, children, ages) -> tuple[int, int, int]:
+	"""(adults, children, infants) for this room type: with ages, its own age
+	bands decide; with only a count, every child is a child."""
+	from kamra.pricing import party_by_age
+
+	if cint(adults) < 1:
+		frappe.throw("At least one adult is required.")
+	if ages is None:
+		return cint(adults), cint(children), 0
+	return party_by_age(rt_doc, cint(adults), ages)
+
+
+def _over_capacity_note(above: int) -> str:
+	return (f"{above} guest{'s' if above != 1 else ''} above what it sleeps: "
+	        "possible only if the group is happy to share beds. The property "
+	        "confirms the arrangement and the price for them.")
+
+
+def _advance_terms(prop, total: float, full_payment: bool = False) -> tuple[float, str]:
 	"""What the guest pays online now, and a human label - computed from the
 	property's CURRENT booking-payment policy. Snapshotted onto the booking so
-	a later policy change never re-bills an existing guest."""
+	a later policy change never re-bills an existing guest. A season marked
+	full payment (holidays, December) takes the whole amount whatever the
+	usual advance."""
 	mode = prop.get("booking_payment_mode") or "Pay at hotel"
 	total = float(total or 0)
 	sym = _public_locale(prop.name).get("currency_symbol", "") if prop.get("name") else ""
+	if full_payment and mode != "Pay at hotel":
+		return total, f"Full payment ({sym}{total:,.0f}) on booking for these dates"
 	if mode == "Advance percent":
 		pct = float(prop.get("advance_percent") or 0)
 		due = round(total * pct / 100, 2)
@@ -692,11 +764,11 @@ def _advance_terms(prop, total: float) -> tuple[float, str]:
 	return 0.0, "Pay at the hotel"
 
 
-def _payment_split(prop, total: float) -> dict:
+def _payment_split(prop, total: float, full_payment: bool = False) -> dict:
 	"""Server-computed split the booking page shows: what is due now and
 	what is left to pay at the hotel. The browser never derives these."""
 	total = float(total or 0)
-	due, policy = _advance_terms(prop, total)
+	due, policy = _advance_terms(prop, total, full_payment)
 	return {
 		"advance_due": due,
 		"balance_at_hotel": round(max(0.0, total - due), 2),
@@ -710,19 +782,29 @@ def book(property: str, room_type: str, check_in_date: str,
          check_out_date: str, guest_name: str, phone: str,
          email: str = "", adults: int = 2, children: int = 0,
          meal_plan: str = "", special_requests: str = "", addons=None,
-         voucher_code: str = "", idempotency_key: str = "", pets: int = 0):
+         voucher_code: str = "", idempotency_key: str = "", pets: int = 0,
+         child_ages=None):
 	"""Create a Website booking. Guest identity is the phone number; staff
 	verify at check-in. The advance owed is computed from the property's
 	current payment policy and snapshotted onto the booking.
 
 	Instant mode (default): Confirmed when nothing is due now, else
 	Pending Payment with a hold window. Request to Book: Requested (no
-	inventory) until the host approves.
+	inventory) until the host approves. A party above what the room sleeps,
+	within the extra guests it allows, is also Requested: the host confirms
+	the sleeping arrangement and agrees the price for them.
 	"""
 	if not guest_name.strip() or not phone.strip():
 		frappe.throw("Name and phone are required.")
 
+	from kamra.pricing import capacity_overflow
+
 	prop = frappe.get_cached_doc("Property", property)
+	rtd = frappe.get_cached_doc("Room Type", room_type)
+	adults, children, infants = _party(rtd, adults, children, _child_ages(child_ages))
+	above, beds = capacity_overflow(rtd, adults, children)
+	if above > beds:
+		frappe.throw(TOO_MANY_GUESTS)
 
 	# a guest may only add experiences the hotel actually publishes for this
 	# property - never a private, disabled or another property's experience,
@@ -754,12 +836,14 @@ def book(property: str, room_type: str, check_in_date: str,
 		int(adults), int(children), meal_plan or None,
 		voucher_code=voucher_code or None, pets=int(pets or 0),
 	)
-	advance_due, policy = _advance_terms(prop, float(q["amount_after_tax"] or 0))
+	full_payment = bool((q.get("stay_rules") or {}).get("full_payment"))
+	advance_due, policy = _advance_terms(
+		prop, float(q["amount_after_tax"] or 0), full_payment)
 
 	status = None
 	hold_expires_on = None
 	assign_room = 1
-	if mode == "Request to Book":
+	if mode == "Request to Book" or above:
 		status = "Requested"
 		assign_room = 0
 	else:
@@ -775,8 +859,14 @@ def book(property: str, room_type: str, check_in_date: str,
 			check_out_date=check_out_date,
 			guest_name=guest_name,
 			phone=phone,
-			adults=int(adults),
-			children=int(children),
+			adults=adults,
+			# infants are on the booking but free and take no bed
+			children=children + infants,
+			stay_details={"infants": infants} if infants else None,
+			over_capacity_guests=above,
+			over_capacity_reason=(
+				f"Booked online for {above} above capacity - the property "
+				"confirms the sleeping arrangement and price") if above else None,
 			pets=int(pets or 0),
 			meal_plan=meal_plan or None,
 			voucher_code=voucher_code or None,
@@ -791,7 +881,7 @@ def book(property: str, room_type: str, check_in_date: str,
 		# later change to the property's payment config never re-bills this guest
 		total = float(result["amount_after_tax"] or 0)
 		# Recompute against the saved total (voucher / engine may differ).
-		advance_due, policy = _advance_terms(prop, total)
+		advance_due, policy = _advance_terms(prop, total, full_payment)
 		updates = {
 			"advance_due": advance_due,
 			"payment_policy": policy,
@@ -829,6 +919,9 @@ def book(property: str, room_type: str, check_in_date: str,
 		"payment_policy": policy,
 		"pay_at_hotel": advance_due <= 0,
 		"status": final_status,
+		"needs_confirmation": bool(above),
+		"confirmation_reason": _over_capacity_note(above) if above else None,
+		"is_holiday": bool(q.get("is_holiday")),
 		"idempotent_replay": int(result.get("idempotent_replay") or 0),
 		"cleaning_fee": float(
 			frappe.db.get_value("Property", property, "cleaning_fee") or 0
