@@ -125,7 +125,7 @@ export const APPS: AppDef[] = [
       { to: "/calendar", label: "Calendar", icon: CalendarDays },
       { to: "/guests", label: "Guests", icon: Users },
       { to: "/room-blocks", label: "Room Blocks", icon: Lock },
-      { to: "/end-of-day", label: "End of Day", icon: MoonStar,
+      { to: "/end-of-day", label: "End of Day / Night Audit", icon: MoonStar,
         keywords: EOD_KEYWORDS },
       { to: "/settings/front-desk", label: "Settings", icon: SettingsIcon,
         roles: ["Hotel Admin", "System Manager", "Administrator"] },
@@ -268,7 +268,7 @@ export const APPS: AppDef[] = [
       { to: "/shifts", label: "Shift Handover", icon: Clock, group: "Cashier" },
       { to: "/cashier/fx", label: "Currency Desk", icon: Calculator, group: "Cashier" },
       // Billing
-      { to: "/end-of-day", label: "End of Day", icon: MoonStar, group: "Billing",
+      { to: "/end-of-day", label: "End of Day / Night Audit", icon: MoonStar, group: "Billing",
         keywords: EOD_KEYWORDS },
       { to: "/billing", label: "Billing", icon: Receipt, group: "Billing" },
       { to: "/folio-history", label: "Folio History", icon: History, group: "Billing" },

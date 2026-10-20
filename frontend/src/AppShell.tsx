@@ -86,7 +86,7 @@ function SearchShortcut() {
       className="flex w-full items-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50/70 px-3 py-2 text-sm text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600"
     >
       <Search className="size-4 shrink-0" aria-hidden />
-      <span className="truncate whitespace-nowrap">{t("Search reservations, guests, rooms…")}</span>
+      <span className="truncate whitespace-nowrap">{t("Search guests, bookings, screens, settings…")}</span>
       <kbd className="ml-auto hidden rounded border border-zinc-200 bg-white px-1.5 py-0.5 text-[10px] font-semibold text-zinc-500 md:inline">
         {combo}
       </kbd>
