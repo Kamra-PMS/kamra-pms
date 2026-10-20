@@ -92,7 +92,6 @@ links to the deeper guide.
 - [ ] **WhatsApp on your own number** - [guide](/whatsapp): Meta app,
   webhook, the three templates; send yourself a test confirmation and
   reply to it to see the conversations inbox work
-- [ ] Print a **QR menu** card if guests order F&B by phone
 
 ## 7 - Operations
 
