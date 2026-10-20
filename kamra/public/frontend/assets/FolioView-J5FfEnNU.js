@@ -1,8 +1,12 @@
 <<<<<<<< HEAD:kamra/public/frontend/assets/FolioView-J5FfEnNU.js
+<<<<<<<< HEAD:kamra/public/frontend/assets/FolioView-J5FfEnNU.js
 import{f as Ie,u as Ae,r as m,j as e,L as ye}from"./vendor-D6bHyl-8.js";import{a as Le,u as ve,p as Fe,q as Be,b as Ge,e as d,s as J,t as De,r as Ve,c,X as qe,B as f,P as Me,v as T,m as Oe,g as Ue}from"./index-R6mcF6pn.js";import{E as He}from"./EditableNationality-BhMb1hgT.js";import{L as We}from"./LinkedRecords-Cfjl_sFT.js";import{B as Ke}from"./badge-DtT2T_zD.js";import{C as re,c as ie,a as _e,b as Ne}from"./card-R6QYA6ML.js";import{A as Ye}from"./arrow-left-CYGcbaVO.js";import{T as Qe}from"./trash-2-FswLCtdU.js";import"./circle-user-round-DFXF2phL.js";import"./party-popper-B11SueSn.js";/**
 ========
 import{f as Ie,u as Ae,r as m,j as e,L as ye}from"./vendor-D6bHyl-8.js";import{a as Le,u as ve,p as Fe,q as Be,b as Ge,e as d,s as J,t as De,r as Ve,c,X as qe,B as f,P as Me,v as T,m as Oe,g as Ue}from"./index-BWel0udR.js";import{E as He}from"./EditableNationality-Bqyr0-Ss.js";import{L as We}from"./LinkedRecords-BFYKSU8U.js";import{B as Ke}from"./badge-IV7nGWld.js";import{C as re,c as ie,a as _e,b as Ne}from"./card-CUr7B_BL.js";import{A as Ye}from"./arrow-left-Du7EV-ca.js";import{T as Qe}from"./trash-2-OH54IM66.js";import"./circle-user-round-C_wV0PPm.js";import"./party-popper-DIIE6lhB.js";/**
 >>>>>>>> origin/fix/kpi-card-overlap:kamra/public/frontend/assets/FolioView-CjXPMhKA.js
+========
+import{f as Ie,u as Ae,r as m,j as e,L as ye}from"./vendor-D6bHyl-8.js";import{a as Le,u as ve,p as Fe,q as Be,b as Ge,e as d,s as J,t as De,r as Ve,c,X as qe,B as f,P as Me,v as T,m as Oe,g as Ue}from"./index-CS1BcujD.js";import{E as He}from"./EditableNationality-Du9F87-S.js";import{L as We}from"./LinkedRecords-C5u2FP6P.js";import{B as Ke}from"./badge-B9AaUE4o.js";import{C as re,c as ie,a as _e,b as Ne}from"./card-CU6Rtwoh.js";import{A as Ye}from"./arrow-left-BgrTqa0-.js";import{T as Qe}from"./trash-2-DlP6mm_Z.js";import"./circle-user-round-ffTT4zcP.js";import"./party-popper-BdDR6lvY.js";/**
+>>>>>>>> origin/fix/pos-settle-orders:kamra/public/frontend/assets/FolioView-ClbkB9rp.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.

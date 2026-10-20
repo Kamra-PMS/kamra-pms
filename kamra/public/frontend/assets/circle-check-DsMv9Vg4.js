@@ -1,8 +1,12 @@
 <<<<<<<< HEAD:kamra/public/frontend/assets/circle-check-DsMv9Vg4.js
+<<<<<<<< HEAD:kamra/public/frontend/assets/circle-check-DsMv9Vg4.js
 import{a as c}from"./index-R6mcF6pn.js";/**
 ========
 import{a as c}from"./index-BWel0udR.js";/**
 >>>>>>>> origin/fix/kpi-card-overlap:kamra/public/frontend/assets/circle-check-CdbJaXpB.js
+========
+import{a as c}from"./index-CS1BcujD.js";/**
+>>>>>>>> origin/fix/pos-settle-orders:kamra/public/frontend/assets/circle-check-BJWRlupw.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.

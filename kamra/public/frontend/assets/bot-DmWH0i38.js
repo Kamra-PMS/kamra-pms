@@ -1,8 +1,12 @@
 <<<<<<<< HEAD:kamra/public/frontend/assets/bot-DmWH0i38.js
+<<<<<<<< HEAD:kamra/public/frontend/assets/bot-DmWH0i38.js
 import{a as t}from"./index-R6mcF6pn.js";/**
 ========
 import{a as t}from"./index-BWel0udR.js";/**
 >>>>>>>> origin/fix/kpi-card-overlap:kamra/public/frontend/assets/bot-DN0jEco3.js
+========
+import{a as t}from"./index-CS1BcujD.js";/**
+>>>>>>>> origin/fix/pos-settle-orders:kamra/public/frontend/assets/bot-4yb8TXSQ.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.

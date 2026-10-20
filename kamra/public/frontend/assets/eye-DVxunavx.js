@@ -1,8 +1,12 @@
 <<<<<<<< HEAD:kamra/public/frontend/assets/eye-DVxunavx.js
+<<<<<<<< HEAD:kamra/public/frontend/assets/eye-DVxunavx.js
 import{a as c}from"./index-R6mcF6pn.js";/**
 ========
 import{a as c}from"./index-BWel0udR.js";/**
 >>>>>>>> origin/fix/kpi-card-overlap:kamra/public/frontend/assets/eye-C7ueH6P-.js
+========
+import{a as c}from"./index-CS1BcujD.js";/**
+>>>>>>>> origin/fix/pos-settle-orders:kamra/public/frontend/assets/eye-DAPku3m_.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.

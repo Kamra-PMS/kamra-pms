@@ -1,8 +1,12 @@
 <<<<<<<< HEAD:kamra/public/frontend/assets/ImageField-afxAlFTV.js
+<<<<<<<< HEAD:kamra/public/frontend/assets/ImageField-afxAlFTV.js
 import{r as i,j as a}from"./vendor-D6bHyl-8.js";import{a as m,av as x}from"./index-R6mcF6pn.js";/**
 ========
 import{r as i,j as a}from"./vendor-D6bHyl-8.js";import{a as m,at as x}from"./index-BWel0udR.js";/**
 >>>>>>>> origin/fix/kpi-card-overlap:kamra/public/frontend/assets/ImageField-CGUWoWvd.js
+========
+import{r as i,j as a}from"./vendor-D6bHyl-8.js";import{a as m,at as x}from"./index-CS1BcujD.js";/**
+>>>>>>>> origin/fix/pos-settle-orders:kamra/public/frontend/assets/ImageField-Bi71ZkRk.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.

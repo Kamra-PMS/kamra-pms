@@ -1,8 +1,12 @@
 <<<<<<<< HEAD:kamra/public/frontend/assets/gift-B6zAIpHP.js
+<<<<<<<< HEAD:kamra/public/frontend/assets/gift-B6zAIpHP.js
 import{a as t}from"./index-R6mcF6pn.js";/**
 ========
 import{a as t}from"./index-BWel0udR.js";/**
 >>>>>>>> origin/fix/kpi-card-overlap:kamra/public/frontend/assets/gift-UxEtrgO2.js
+========
+import{a as t}from"./index-CS1BcujD.js";/**
+>>>>>>>> origin/fix/pos-settle-orders:kamra/public/frontend/assets/gift-CM1IHIfP.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.

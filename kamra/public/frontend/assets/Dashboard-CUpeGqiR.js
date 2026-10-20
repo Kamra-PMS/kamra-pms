@@ -1,8 +1,12 @@
 <<<<<<<< HEAD:kamra/public/frontend/assets/Dashboard-CUpeGqiR.js
+<<<<<<<< HEAD:kamra/public/frontend/assets/Dashboard-CUpeGqiR.js
 import{r as d,j as e}from"./vendor-D6bHyl-8.js";import{a as S,u as O,e as v,g as w,s as N,aB as D,ap as A,c as l,a2 as P,aG as _,a1 as $,Y as k,ah as T,j as B,U as E,m as I}from"./index-R6mcF6pn.js";import{C as u,a as m,b as h,c as j}from"./card-R6QYA6ML.js";import{S as L}from"./stat-card-C_vCfZob.js";import{C as F}from"./chart-pie-BWS9quxX.js";import{L as M}from"./log-in-BIcQm_hs.js";import"./arrow-up-right-6OSlItAb.js";/**
 ========
 import{r as d,j as e}from"./vendor-D6bHyl-8.js";import{a as S,u as O,e as v,g as w,s as N,az as D,an as A,c as l,a0 as P,aE as _,$,V as k,af as E,j as T,U as I,m as L}from"./index-BWel0udR.js";import{C as p,a as m,b as h,c as j}from"./card-CUr7B_BL.js";import{S as B}from"./stat-card-CY1spqaB.js";import{C as F}from"./chart-pie-Dai8z9Td.js";import{L as M}from"./log-in-TC8bKsQ-.js";import"./arrow-up-right-C8sA3lQX.js";/**
 >>>>>>>> origin/fix/kpi-card-overlap:kamra/public/frontend/assets/Dashboard-BJVx6Q1t.js
+========
+import{r as d,j as e}from"./vendor-D6bHyl-8.js";import{a as S,u as O,e as v,g as w,s as N,az as D,an as A,c as l,a0 as P,aE as _,$,V as k,af as E,j as T,U as I,m as L}from"./index-CS1BcujD.js";import{C as p,a as m,b as h,c as j}from"./card-CU6Rtwoh.js";import{S as B}from"./stat-card-DgBlejjL.js";import{C as F}from"./chart-pie-CSnIrF0c.js";import{L as M}from"./log-in-Cx1l5bHY.js";import"./arrow-up-right-Bfp2VYdn.js";/**
+>>>>>>>> origin/fix/pos-settle-orders:kamra/public/frontend/assets/Dashboard-DhoY5UpF.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.

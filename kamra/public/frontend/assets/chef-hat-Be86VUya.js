@@ -1,8 +1,12 @@
 <<<<<<<< HEAD:kamra/public/frontend/assets/chef-hat-Be86VUya.js
+<<<<<<<< HEAD:kamra/public/frontend/assets/chef-hat-Be86VUya.js
 import{a}from"./index-R6mcF6pn.js";/**
 ========
 import{a}from"./index-BWel0udR.js";/**
 >>>>>>>> origin/fix/kpi-card-overlap:kamra/public/frontend/assets/chef-hat-8UBho5C5.js
+========
+import{a}from"./index-CS1BcujD.js";/**
+>>>>>>>> origin/fix/pos-settle-orders:kamra/public/frontend/assets/chef-hat-1sASoX5c.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.

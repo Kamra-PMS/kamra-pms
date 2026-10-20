@@ -214,6 +214,7 @@ export default function POS() {
   const [detail, setDetail] = useState<Detail | null>(null)
   const [orderType, setOrderType] = useState<OrderType>("Dine In")
   const [room, setRoom] = useState("")
+  const [pendingMode, setPendingMode] = useState<string | null>(null) // tender picked, not yet confirmed
   const [postRoom, setPostRoom] = useState("") // settle sheet: charge a running bill to a room
   const [table, setTable] = useState("")
   const [guests, setGuests] = useState("")
@@ -320,7 +321,7 @@ export default function POS() {
     setResTile(null); setReserveOpen(false); setTablesOpen(false)
   }
   function newOrder(atTable?: string) {
-    setSelected(null); setDetail(null); setRoom(""); setPostRoom(""); resetPanel()
+    setSelected(null); setDetail(null); setRoom(""); setPostRoom(""); setPendingMode(null); resetPanel()
     setTable(atTable || ""); setCustomTable(false)
     setGuests(""); setCustName(""); setCustPhone(""); setCustAddr("")
     setDraftGuest(null)
@@ -1291,7 +1292,7 @@ export default function POS() {
           </div>
 
           {/* zone 2: line items — the only scroll area in the bill */}
-          <div className="min-h-0 flex-1 p-3 md:overflow-y-auto">
+          <div className="min-h-0 flex-1 p-3 md:min-h-[7rem] md:overflow-y-auto">
             {/* items */}
             <div className="mb-1 flex items-center justify-between">
               <h3 className="text-sm font-medium text-zinc-500">{t("Order items")}</h3>
@@ -1401,7 +1402,7 @@ export default function POS() {
           </div>
 
           {/* zone 3: totals + actions — always visible, sticky on phones */}
-          <div className="sticky bottom-0 z-20 shrink-0 space-y-2 rounded-b-xl border-t border-zinc-100 bg-white p-3 md:static">
+          <div className="sticky bottom-0 z-20 shrink-0 space-y-2 rounded-b-xl border-t border-zinc-100 bg-white p-3 md:static md:max-h-[68%] md:overflow-y-auto">
             <div className="space-y-1 text-sm">
               <div className="flex items-center justify-between">
                 <span className="text-zinc-500">{t("Discount")}</span>
@@ -1513,7 +1514,7 @@ export default function POS() {
                     Settle · {cur()}{inr2(grand)}
                   </span>
                   <button className="rounded p-1 text-zinc-400 hover:text-zinc-700" aria-label="Close"
-                    onClick={() => { setSettling(false); setSheetNc(false) }}>
+                    onClick={() => { setSettling(false); setSheetNc(false); setPendingMode(null) }}>
                     <XCircle className="size-4" />
                   </button>
                 </div>
@@ -1543,9 +1544,16 @@ export default function POS() {
                   <>
                     <div className={cn("grid gap-1.5", posModes.length > 2 ? "grid-cols-3" : "grid-cols-2")}>
                       {posModes.map((m) => (
-                        <Button key={m} className="h-12 justify-center text-base" disabled={busy} onClick={() => settle(m)}>{m}</Button>
+                        <Button key={m} variant={pendingMode === m ? "primary" : "outline"}
+                          className="h-12 justify-center text-base" disabled={busy}
+                          onClick={() => setPendingMode(pendingMode === m ? null : m)}>{m}</Button>
                       ))}
                     </div>
+                    {pendingMode && (
+                      <Button className="h-12 w-full text-base" disabled={busy} onClick={() => settle(pendingMode)}>
+                        {t("Confirm {mode} · {amount}", { mode: pendingMode, amount: `${cur()}${inr2(grand)}` })}
+                      </Button>
+                    )}
                     {detail.room ? (
                       Number(rooms.find((r) => r.room === detail.room)?.room_charges_allowed ?? 1) === 0 ? (
                         <p className="rounded-lg bg-rose-50 px-2 py-1.5 text-xs text-rose-800">
@@ -1556,13 +1564,26 @@ export default function POS() {
                           <BedDouble className="size-4" />{t("Deliver and post to Room {n}", { n: detail.room.split("-").pop() || "" })}
                         </Button>
                       )
-                    ) : detail.order_type === "Dine In" && rooms.length > 0 && (
-                      <div className="flex gap-1.5">
-                        <RoomPicker rooms={rooms} value={postRoom} onChange={setPostRoom} onOpen={loadRooms}
-                          placeholder="Charge to a guest's room…" />
-                        <Button variant="outline" className="h-10 shrink-0" disabled={busy || !postRoom} onClick={chargeToRoom}>
-                          <BedDouble className="size-4" />Post
-                        </Button>
+                    ) : (
+                      /* a guest who wants it on the room: its own way to settle,
+                         for any bill (dine in, takeaway, delivery), not hidden */
+                      <div className="space-y-1 rounded-lg border border-brand-200 bg-white p-2">
+                        <div className="flex items-center gap-1.5 text-xs font-semibold text-brand-800">
+                          <BedDouble className="size-3.5" />{t("Charge to the guest's room")}
+                        </div>
+                        {rooms.length > 0 ? (
+                          <div className="flex gap-1.5">
+                            <RoomPicker rooms={rooms} value={postRoom} onChange={setPostRoom} onOpen={loadRooms}
+                              placeholder={t("Pick the room…")} />
+                            <Button className="h-10 shrink-0" disabled={busy || !postRoom} onClick={chargeToRoom}>
+                              {t("Post to room")}
+                            </Button>
+                          </div>
+                        ) : (
+                          <p className="text-xs text-zinc-500">
+                            {t("No guest is checked in right now. Check the guest in first, or take payment above.")}
+                          </p>
+                        )}
                       </div>
                     )}
                     <Button variant="outline" className="h-11 w-full text-amber-700" disabled={busy} onClick={() => setSheetNc(true)}>

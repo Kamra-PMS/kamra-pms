@@ -1,8 +1,12 @@
 <<<<<<<< HEAD:kamra/public/frontend/assets/user-plus-KvrTV_js.js
+<<<<<<<< HEAD:kamra/public/frontend/assets/user-plus-KvrTV_js.js
 import{a as e}from"./index-R6mcF6pn.js";/**
 ========
 import{a as e}from"./index-BWel0udR.js";/**
 >>>>>>>> origin/fix/kpi-card-overlap:kamra/public/frontend/assets/user-plus-BCEMFt0u.js
+========
+import{a as e}from"./index-CS1BcujD.js";/**
+>>>>>>>> origin/fix/pos-settle-orders:kamra/public/frontend/assets/user-plus-BHaqunzx.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.

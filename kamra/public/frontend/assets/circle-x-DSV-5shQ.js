@@ -1,8 +1,12 @@
 <<<<<<<< HEAD:kamra/public/frontend/assets/circle-x-DSV-5shQ.js
+<<<<<<<< HEAD:kamra/public/frontend/assets/circle-x-DSV-5shQ.js
 import{a as c}from"./index-R6mcF6pn.js";/**
 ========
 import{a as c}from"./index-BWel0udR.js";/**
 >>>>>>>> origin/fix/kpi-card-overlap:kamra/public/frontend/assets/circle-x-D2oAQ18f.js
+========
+import{a as c}from"./index-CS1BcujD.js";/**
+>>>>>>>> origin/fix/pos-settle-orders:kamra/public/frontend/assets/circle-x-BGO_imZt.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.

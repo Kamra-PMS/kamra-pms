@@ -1,8 +1,12 @@
 <<<<<<<< HEAD:kamra/public/frontend/assets/wrench-cJ5tDJyr.js
+<<<<<<<< HEAD:kamra/public/frontend/assets/wrench-cJ5tDJyr.js
 import{a}from"./index-R6mcF6pn.js";/**
 ========
 import{a}from"./index-BWel0udR.js";/**
 >>>>>>>> origin/fix/kpi-card-overlap:kamra/public/frontend/assets/wrench-wxjIRanO.js
+========
+import{a}from"./index-CS1BcujD.js";/**
+>>>>>>>> origin/fix/pos-settle-orders:kamra/public/frontend/assets/wrench-ayR9CLL_.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.

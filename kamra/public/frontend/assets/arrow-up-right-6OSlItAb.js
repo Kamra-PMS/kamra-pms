@@ -1,8 +1,12 @@
 <<<<<<<< HEAD:kamra/public/frontend/assets/arrow-up-right-6OSlItAb.js
+<<<<<<<< HEAD:kamra/public/frontend/assets/arrow-up-right-6OSlItAb.js
 import{a as o}from"./index-R6mcF6pn.js";/**
 ========
 import{a as o}from"./index-BWel0udR.js";/**
 >>>>>>>> origin/fix/kpi-card-overlap:kamra/public/frontend/assets/arrow-up-right-C8sA3lQX.js
+========
+import{a as o}from"./index-CS1BcujD.js";/**
+>>>>>>>> origin/fix/pos-settle-orders:kamra/public/frontend/assets/arrow-up-right-Bfp2VYdn.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.

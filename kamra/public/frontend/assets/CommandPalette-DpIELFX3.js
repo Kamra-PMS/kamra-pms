@@ -1,8 +1,12 @@
 <<<<<<<< HEAD:kamra/public/frontend/assets/CommandPalette-DpIELFX3.js
+<<<<<<<< HEAD:kamra/public/frontend/assets/CommandPalette-DpIELFX3.js
 import{r as i,u as P,j as s}from"./vendor-D6bHyl-8.js";import{a as M,u as G,w as Q,e as j,g as E,x as L,c as V,m as B,S as H,d as J,aC as W}from"./index-R6mcF6pn.js";import{C as X}from"./circle-user-round-DFXF2phL.js";import{F as Y}from"./file-text-DZaGNN_K.js";import{L as Z}from"./loader-circle-ZU-p8LDK.js";import{A as ee}from"./arrow-right-DpgAkJFG.js";/**
 ========
 import{r as i,u as P,j as s}from"./vendor-D6bHyl-8.js";import{a as M,u as G,w as Q,e as j,g as E,x as L,c as V,m as B,S as H,d as J,aA as W}from"./index-BWel0udR.js";import{C as X}from"./circle-user-round-C_wV0PPm.js";import{F as Y}from"./file-text-ekgk0Cb3.js";import{L as Z}from"./loader-circle-CxpozDji.js";import{A as ee}from"./arrow-right-CGsBvn3x.js";/**
 >>>>>>>> origin/fix/kpi-card-overlap:kamra/public/frontend/assets/CommandPalette-jkS9sp6S.js
+========
+import{r as i,u as P,j as s}from"./vendor-D6bHyl-8.js";import{a as M,u as G,w as Q,e as j,g as E,x as L,c as V,m as B,S as H,d as J,aA as W}from"./index-CS1BcujD.js";import{C as X}from"./circle-user-round-ffTT4zcP.js";import{F as Y}from"./file-text-DEpXPtFy.js";import{L as Z}from"./loader-circle-N6FQPgAt.js";import{A as ee}from"./arrow-right-BA9VnNwm.js";/**
+>>>>>>>> origin/fix/pos-settle-orders:kamra/public/frontend/assets/CommandPalette-DfIY1WVz.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.

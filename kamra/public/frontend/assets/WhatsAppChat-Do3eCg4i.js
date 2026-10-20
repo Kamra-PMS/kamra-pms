@@ -1,8 +1,12 @@
 <<<<<<<< HEAD:kamra/public/frontend/assets/WhatsAppChat-Do3eCg4i.js
+<<<<<<<< HEAD:kamra/public/frontend/assets/WhatsAppChat-Do3eCg4i.js
 import{r as s,j as t,L as I}from"./vendor-D6bHyl-8.js";import{a as L,u as R,e as m,s as h,as as w,d,ar as B,B as M,g as W}from"./index-R6mcF6pn.js";import{S as D}from"./send-Cfn5YUoM.js";/**
 ========
 import{r as s,j as t,L as I}from"./vendor-D6bHyl-8.js";import{a as L,u as R,e as m,s as h,aq as w,d,ap as B,B as M,g as W}from"./index-BWel0udR.js";import{S as D}from"./send-8ZhaYSLr.js";/**
 >>>>>>>> origin/fix/kpi-card-overlap:kamra/public/frontend/assets/WhatsAppChat-u83us3uS.js
+========
+import{r as s,j as t,L as I}from"./vendor-D6bHyl-8.js";import{a as L,u as R,e as m,s as h,aq as w,d,ap as B,B as M,g as W}from"./index-CS1BcujD.js";import{S as D}from"./send-losvcHs1.js";/**
+>>>>>>>> origin/fix/pos-settle-orders:kamra/public/frontend/assets/WhatsAppChat-C-gz8xnr.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.

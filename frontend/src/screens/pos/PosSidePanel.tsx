@@ -9,7 +9,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react"
 import {
-  ArrowLeft, BedDouble, ListOrdered, Phone, Receipt, Search, Star, UserPlus,
+  ArrowLeft, BedDouble, Download, ListOrdered, Phone, Receipt, Search, Star, UserPlus,
   UserRound, XCircle,
 } from "lucide-react"
 import { call } from "../../lib/api"
@@ -231,6 +231,8 @@ function OrdersTab({ outlet, refreshKey, onOpenBill }: {
   const { t } = useT()
   const label = useStateLabel()
   const [day, setDay] = useState(localDay())
+  const [toDay, setToDay] = useState("") // empty: just `day`; else a range
+  const [exporting, setExporting] = useState(false)
   const [q, setQ] = useState("")
   const [qLive, setQLive] = useState("")
   const [only, setOnly] = useState<ListState | null>(null)
@@ -245,11 +247,27 @@ function OrdersTab({ outlet, refreshKey, onOpenBill }: {
 
   const load = useCallback(() => {
     if (!outlet) return
-    call<ListOut>("kamra.pos.orders_list", { outlet, date: day, q: qLive || null })
+    call<ListOut>("kamra.pos.orders_list", { outlet, date: day, to_date: toDay || null, q: qLive || null })
       .then((d) => { setData(d); setErr(null) })
       .catch((e) => setErr(serverError(e)))
-  }, [outlet, day, qLive])
+  }, [outlet, day, toDay, qLive])
   useEffect(load, [load, refreshKey])
+
+  /** Download the history (this day or range, this search and state) as CSV. */
+  async function exportCsv() {
+    setExporting(true)
+    try {
+      const out = await call<{ filename: string; csv: string }>("kamra.pos.orders_export", {
+        outlet, date: day, to_date: toDay || null, q: qLive || null, state: only,
+      })
+      const url = URL.createObjectURL(new Blob([out.csv], { type: "text/csv;charset=utf-8" }))
+      const a = document.createElement("a")
+      a.href = url; a.download = out.filename
+      document.body.appendChild(a); a.click(); a.remove()
+      URL.revokeObjectURL(url)
+      setErr(null)
+    } catch (e) { setErr(serverError(e)) } finally { setExporting(false) }
+  }
 
   if (viewing) {
     return <OrderView name={viewing} onBack={() => setViewing(null)}
@@ -257,6 +275,12 @@ function OrdersTab({ outlet, refreshKey, onOpenBill }: {
   }
   const rows = (data?.rows ?? []).filter((r) => !only || r.state === only)
   const today = day === localDay()
+  // what was taken, by way of payment, over the bills on screen
+  const byMode: Record<string, number> = {}
+  for (const r of rows) {
+    if (r.state === "paid" && r.payment_mode) byMode[r.payment_mode] = (byMode[r.payment_mode] ?? 0) + r.amount
+    else if (r.state === "room") byMode["Room"] = (byMode["Room"] ?? 0) + r.amount
+  }
   return (
     <div className="space-y-2">
       <div className="flex gap-2">
@@ -266,10 +290,24 @@ function OrdersTab({ outlet, refreshKey, onOpenBill }: {
             placeholder={t("Bill, KOT, table, room, name or phone")}
             className="w-full rounded-lg border border-zinc-300 bg-white py-2 ps-8 pe-2 text-sm focus:outline-2 focus:outline-brand-600" />
         </label>
-        <input type="date" value={day} max={localDay()} aria-label={t("Day")}
+        <input type="date" value={day} max={localDay()} aria-label={t("From")}
           onChange={(e) => setDay(e.target.value || localDay())}
           className="w-[9.5rem] rounded-lg border border-zinc-300 bg-white px-2 py-2 text-sm" />
+        <input type="date" value={toDay} min={day} max={localDay()} aria-label={t("To")}
+          onChange={(e) => setToDay(e.target.value)}
+          className="w-[9.5rem] rounded-lg border border-zinc-300 bg-white px-2 py-2 text-sm" />
+        <Button variant="outline" className="h-10 shrink-0" disabled={exporting} onClick={exportCsv}
+          title={t("Download these bills as a spreadsheet (CSV)")}>
+          <Download className="size-4" />{t("Export")}
+        </Button>
       </div>
+      {Object.keys(byMode).length > 0 && (
+        <div className="flex flex-wrap gap-x-3 gap-y-0.5 rounded-lg bg-zinc-50 px-3 py-1.5 text-xs text-zinc-600">
+          {Object.entries(byMode).map(([m, v]) => (
+            <span key={m}>{m} <b className="tabular-nums text-zinc-800">{cur()}{money(v)}</b></span>
+          ))}
+        </div>
+      )}
       <div className="flex flex-wrap gap-1">
         <button onClick={() => setOnly(null)}
           className={cn("rounded-full px-2.5 py-1 text-xs font-medium",
@@ -344,6 +382,16 @@ function OrderView({ name, onBack, onOpenBill }: {
     call<ViewDetail>("kamra.pos.order_detail", { order: name })
       .then(setD).catch((e) => setErr(serverError(e)))
   }, [name])
+  const [changing, setChanging] = useState(false)
+  const [busy, setBusy] = useState(false)
+  async function changeMode(mode: string) {
+    setBusy(true)
+    try {
+      await call("kamra.pos.change_payment_mode", { order: name, mode, reason: "" })
+      setD(await call<ViewDetail>("kamra.pos.order_detail", { order: name }))
+      setChanging(false); setErr(null)
+    } catch (e) { setErr(serverError(e)) } finally { setBusy(false) }
+  }
   async function printBill() {
     try {
       const bill = await call<BillData>("kamra.pos.bill_data", { order: name })
@@ -394,7 +442,24 @@ function OrderView({ name, onBack, onOpenBill }: {
               <div className="flex justify-between text-zinc-500"><span>{t("Discount")}</span><span className="tabular-nums">-{cur()}{money(d.discount_amount)}</span></div>
             )}
             <div className="flex justify-between font-semibold"><span>{t("Total before tax")}</span><span className="tabular-nums">{cur()}{money(d.order_total)}</span></div>
-            {d.state === "paid" && <p className="text-xs text-emerald-700">{t("Paid by {mode}", { mode: d.payment_mode || "" })}</p>}
+            {d.state === "paid" && (
+              <div className="space-y-1.5">
+                <p className="text-xs text-emerald-700">{t("Paid by {mode}", { mode: d.payment_mode || "" })}</p>
+                {changing ? (
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="text-xs text-zinc-500">{t("It was paid by")}</span>
+                    {["Cash", "Card", "UPI"].filter((m) => m !== d.payment_mode).map((m) => (
+                      <Button key={m} variant="outline" className="h-9" disabled={busy} onClick={() => changeMode(m)}>{m}</Button>
+                    ))}
+                    <Button variant="ghost" className="h-9" onClick={() => setChanging(false)}>{t("Back")}</Button>
+                  </div>
+                ) : (
+                  <button className="text-xs font-semibold text-brand-700 hover:underline" onClick={() => setChanging(true)}>
+                    {t("Wrong payment mode? Change it")}
+                  </button>
+                )}
+              </div>
+            )}
             {d.state === "room" && <p className="text-xs text-violet-700">{t("Posted to the room folio")}</p>}
             {d.state === "nc" && <p className="text-xs text-amber-700">{t("Complimentary, authorized by {who}", { who: d.nc_authorized_by || "" })}</p>}
           </div>

@@ -1,8 +1,12 @@
 <<<<<<<< HEAD:kamra/public/frontend/assets/thermal-8l2rQotx.js
+<<<<<<<< HEAD:kamra/public/frontend/assets/thermal-8l2rQotx.js
 import{m as l,c as o}from"./index-R6mcF6pn.js";const p=`
 ========
 import{m as l,c as o}from"./index-BWel0udR.js";const p=`
 >>>>>>>> origin/fix/kpi-card-overlap:kamra/public/frontend/assets/thermal-BzUjBZe_.js
+========
+import{m as l,c as o}from"./index-CS1BcujD.js";const p=`
+>>>>>>>> origin/fix/pos-settle-orders:kamra/public/frontend/assets/thermal-Bs1_PwH2.js
   @page { size: 80mm auto; margin: 0 }
   * { margin: 0; padding: 0; box-sizing: border-box }
   html, body { background: #fff; color: #000 }

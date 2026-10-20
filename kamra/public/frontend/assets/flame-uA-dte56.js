@@ -1,8 +1,12 @@
 <<<<<<<< HEAD:kamra/public/frontend/assets/flame-uA-dte56.js
+<<<<<<<< HEAD:kamra/public/frontend/assets/flame-uA-dte56.js
 import{a}from"./index-R6mcF6pn.js";/**
 ========
 import{a}from"./index-BWel0udR.js";/**
 >>>>>>>> origin/fix/kpi-card-overlap:kamra/public/frontend/assets/flame-aKH4NuIB.js
+========
+import{a}from"./index-CS1BcujD.js";/**
+>>>>>>>> origin/fix/pos-settle-orders:kamra/public/frontend/assets/flame-C7VjRhzY.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.
