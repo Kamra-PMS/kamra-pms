@@ -253,17 +253,21 @@ print waiting on a dialog.
 - Set the thermal printer as the system's default printer, with 80 mm (or
   58 mm) paper and no margins.
 
+## Ingredients
+
+**F&B → Ingredients** is the store cupboard master: name, unit (kg, g, L…),
+category, cost per unit and whether it is active. Add ingredients here
+before you stock them or put them on a recipe.
+
 ## Kitchen inventory
 
-**F&B → Kitchen Inventory** keeps ingredients, a recipe for each dish and a
-stock ledger.
+**F&B → Kitchen Inventory** is stock at each outlet: on hand, par level,
+**Receive**, **Stock take**, **Wastage** and the **Ledger**.
 
 ![Kitchen inventory: each ingredient's stock on hand, par level and status, with Receive, Stock take and Wastage](/img/fnb/inventory.png)
 
-Use **Receive** for deliveries, **Stock take** for counts and **Wastage**
-for spoilage. Each ingredient shows its status (OK, low, out or negative)
-against its par level, and **Ledger** shows every movement. Recipes are
-set on the **Menu** screen (**Recipes**).
+Each row shows status (OK, low, out or negative) against its par level.
+Recipes are set on the **Menu** screen (**Recipes**).
 
 - Ingredients leave stock when the KOT is sent - when cooking starts - not
   when the bill is paid.
