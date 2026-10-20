@@ -138,6 +138,7 @@ jobs:
             echo "Deploy secrets missing - skipping rsync (build still succeeded)."
             exit 0
           fi
+          install -d -m 700 "$HOME/.ssh"
           install -m 600 /dev/null "$HOME/.ssh/docs_key"
           printf '%s\n' "$DEPLOY_SSH_KEY" > "$HOME/.ssh/docs_key"
           eval "$(ssh-agent -s)"

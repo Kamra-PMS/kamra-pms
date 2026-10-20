@@ -3687,6 +3687,7 @@ Create or update one ingredient.
 | `uom` | yes |  |
 | `category` | no | `None` |
 | `cost_per_unit` | no | `0` |
+| `gst_rate` | no | `None` |
 | `is_active` | no | `1` |
 | `name` | no | `None` |
 
