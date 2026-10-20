@@ -238,7 +238,7 @@ export default function Inventory() {
       {shown.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-zinc-300 p-12 text-center text-zinc-400">
           {rows.length === 0
-            ? "No ingredients stocked at this outlet yet. Receive some to start."
+            ? "No ingredients stocked at this outlet yet. Add them under Ingredients, then Receive here."
             : "Nothing in this state."}
         </div>
       ) : (

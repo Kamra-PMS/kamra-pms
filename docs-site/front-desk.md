@@ -33,14 +33,37 @@ seconds.
   **₹… due** or **Unpaid**) and **Pre-checked-in** when the guest has filled
   in the online form. "via Priya (Assistant)" means someone booked on the
   guest's behalf; hover it for the booker's phone.
-- **Room board** shows every room by floor. An occupied room is dark green;
-  click it to open that guest's registration card. Click any other room to
-  move its housekeeping status on one step: Dirty → Clean → Inspected → Out
-  of Order → Dirty.
+- **Room board** shows every room by floor. Click an occupied room (dark
+  green) for a menu: **Check out**, **Folio and billing**, **Guest
+  requests**, **Registration card** or **Room details**. A room whose guest
+  arrives today shows **Arriving**; click it for **Check in**. Click any
+  other room to move its housekeeping status on one step: Dirty → Clean →
+  Inspected → Out of Order → Dirty. **Open full view** opens the
+  [Rooms](/rooms) screen.
 - **In-house guests** lists everyone staying, their balance and when they
   leave. Click a row for the registration card.
 
 ![The arrivals list: each guest with source and payment chips, the room, nights and party size, the GRC and copy check-in link shortcuts, and a Check in button](/img/front-desk/arrivals.png)
+
+## Choose what Today shows
+
+Each person can pick which panels Today shows and in what order. Click
+**Customize** (next to the date).
+
+1. Tap a panel to show or hide it: **Key numbers**, **Booking requests**,
+   **Arrivals**, **Departures**, **Room board**, **In-house guests**,
+   **Housekeeping** and **Open tasks** (rooms with housekeeping work still
+   open, and who has it).
+2. Use the up and down arrows to change the order, and the two-way arrow to
+   move a panel between the narrow and the wide column.
+3. Click **Save for me**. Your layout is saved on the server, so it follows
+   you to any computer or tablet you sign in on.
+
+**Use the hotel default** drops your own layout. A Hotel Admin also sees
+**Hotel default**: **Make this the hotel default** sets what everyone at the
+hotel sees until they customise their own Today, and **Reset the hotel
+default** goes back to the standard layout. If nobody customises anything,
+Today looks the way it always has (Open tasks starts hidden).
 
 ## Check a guest in
 
@@ -213,8 +236,20 @@ The sheet shows only the steps this stay needs, in this order:
 1. **Bill.** Every folio of the stay with its lines, as it will stand at
    check-out: nights the night audit has not posted yet are counted in.
    Restaurant or room-service orders and laundry that are not on the folio
-   yet are listed here. **Post to room** adds one to the bill; **Settle
-   separately** takes payment for a restaurant bill at the outlet instead.
+   yet are listed here, each with a line on what to do:
+   - a restaurant bill: **Post to room** adds it to the bill; **Settle
+     separately** takes payment for it at the outlet instead.
+   - laundry still at the laundry (Collected or In Process) can't be billed
+     yet. When the bag is back at the desk, press **Bag is back: mark
+     ready**, then **Hand back and post to room**.
+   - laundry that is Ready: **Hand back and post to room** marks every
+     piece returned and adds it to the bill.
+
+   Open bills never stop the check-out. If one is still open at the
+   **Check out** step, the sheet lists it under **Still not on the bill**:
+   posted later, it lands on the departed stay's folio and has to be
+   collected separately. Moving laundry along is for Front Desk and
+   Housekeeping; a role that can't do it is told who can.
 2. **Late check-out.** Only when the guest leaves after your check-out
    time. Enter the fee your hotel charges and press **Add late check-out
    fee**, or **Skip** to waive it. Kamra never suggests an amount.
@@ -234,15 +269,23 @@ The sheet shows only the steps this stay needs, in this order:
    - Damage to the room? **Withhold for damage** keeps part of the
      deposit first.
 
-   Your till must be open, and the cashier PIN is asked when your hotel
-   requires it.
+   Money goes through your till. If it is closed, the sheet shows **Your
+   till is closed**: count the cash in the drawer, enter it as the
+   **Opening float** (0 if it is empty) and press **Open my till**. You
+   stay in the sheet. Front Desk, Finance and Hotel Admins can open their
+   own till; you close it at the end of your shift under **Finance →
+   Cashier**. The cashier PIN is asked when your hotel requires it.
 5. **Guest moment.** Your hotel's check-out routine (ask for feedback, say
    goodbye). Tick each one, or **Skip**.
-6. **Check out.** Press **Check out**.
+6. **Check out.** Press **Check out**. Front Desk and Hotel Admins can
+   check a guest out. Finance can settle the bill in this sheet, but the
+   **Check out** button stays off for them and says who can press it.
 7. **Invoice.** Press **Close and generate invoice** for each folio (or
    **Generate all invoices**), then **View or print**. The invoice comes
    after check-out on purpose: check-out may still post the last night and
    move the company's share, and a folio invoiced before that is frozen.
+   Issuing an invoice also needs your till open; the same **Open my till**
+   card shows here when it is closed.
 
 If anything stops a step, the reason shows inside the sheet next to that
 step, with what to do about it (open the till, open the folio). A failed
@@ -331,9 +374,29 @@ room** on the booking or the GRC, or check in from **Today**, where you pick
 the room in the same step.
 
 **"NO_OPEN_SESSION: open your till under Finance → Cashier first."** You
-tried to take money (a walk-in payment or a deposit) without an open till.
-Open it under **Finance → Cashier → My Till**, or set the walk-in's
-**Amount collected** to 0.
+tried to take money without an open till. The check-in, walk-in and
+check-out sheets show **Your till is closed** with an **Open my till**
+button in place: enter the opening float and press it. You can also open
+it under **Finance → Cashier → My Till**, or set a walk-in's **Amount
+collected** to 0. A small place with no cash drawer can turn tills off:
+**Settings → Finance → Cashier controls → Take money through cashier
+tills**. Payments and refunds are then recorded without a till; paid-outs,
+cash drops, petty cash and currency exchange still need one.
+
+**The Collect, Refund or Continue button is greyed out.** The reason is
+written next to it: open your till, tick the company confirmation, write
+an override reason, or take (or waive) the deposit.
+
+**"Your role can't open a till."** Your role (for example Housekeeping or
+Revenue) does not take money. Ask Front Desk, Finance or a Hotel Admin.
+
+**"Checking a guest in is for Front Desk or a Hotel Admin."** Finance and
+other roles can see an arrival but not check it in.
+
+**A laundry bag shows "Still at the laundry".** It can't be billed until it
+is back. Press **Bag is back: mark ready** when it is at the desk, then
+**Hand back and post to room**. If the guest leaves first, check out
+anyway: post the bag later from **Laundry** and collect it separately.
 
 **"Room … is still occupied by … Check them out first, or choose another
 room."** The guest before is still checked in to that room. Check them out
@@ -355,7 +418,9 @@ which are required live in the property's check-in SOP (`kamra.sop`). The
 walk-in is `kamra.api.walk_in` (`defer_check_in=1` books and hands over to
 the steps); check-out is `kamra.api.check_out`; room
 moves use `kamra.api.movable_rooms`, `kamra.api.room_move_preview` and
-`kamra.api.move_reservation`. AI agents use the `front_desk_today`,
+`kamra.api.move_reservation`. The Today layout is
+`kamra.today_layout.get_today_layout`, `save_today_layout`,
+`reset_today_layout` and `save_today_layout_default` (Hotel Admin). AI agents use the `front_desk_today`,
 `check_in_readiness`, `check_in`, `check_out`, `move_room`, `guest_lookup`, `guest_journey` and
 `update_occupants` tools. See [MCP tools](/mcp-tools) and the
 [API reference](/api-reference).

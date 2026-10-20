@@ -29,6 +29,7 @@ const CancellationLetter = lazy(() => import("./screens/CancellationLetter"))
 const Setup = lazy(() => import("./screens/Setup"))
 const GoLiveImport = lazy(() => import("./screens/GoLiveImport"))
 const HousekeepingBoard = lazy(() => import("./screens/HousekeepingBoard"))
+const Rooms = lazy(() => import("./screens/Rooms"))
 const Settings = lazy(() => import("./screens/settings/SettingsHub"))
 const FinishSetup = lazy(() => import("./screens/FinishSetup"))
 const SystemHealth = lazy(() => import("./screens/SystemHealth"))
@@ -341,12 +342,14 @@ export default function App() {
           <Route path="kitchen" element={<Kitchen />} />
           <Route path="inventory" element={<Inventory />} />
           <Route path="menu-items" element={<MenuItems />} />
+          <Route path="ingredients" element={<ConfiguredScreen config="ingredientsConfig" />} />
           <Route path="printers" element={<KitchenPrinters />} />
           <Route path="outlets" element={<ConfiguredScreen config="outletsConfig" />} />
           <Route path="accounting-export" element={<AccountingExport />} />
           <Route path="tickets" element={<Tickets />} />
           <Route path="laundry" element={<Laundry />} />
           <Route path="housekeeping-board" element={<HousekeepingBoard />} />
+          <Route path="room-board" element={<Rooms />} />
           <Route
             path="housekeeping"
             element={<ConfiguredScreen config="housekeepingConfig" />}

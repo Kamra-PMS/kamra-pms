@@ -72,18 +72,25 @@ export default function KitchenPrinters() {
   const [busy, setBusy] = useState(false)
 
   const load = useCallback(() => {
-    if (!property) return
+    if (!property) {
+      setErr(t("Pick a property first."))
+      setPrinters([])
+      return
+    }
     call<KitchenPrinter[]>("kamra.printing.printers", { property })
-      .then(setPrinters)
-      .catch(() => {})
-  }, [property])
+      .then((rows) => {
+        setPrinters(rows)
+        setErr(null)
+      })
+      .catch((e) => setErr(serverError(e)))
+  }, [property, t])
 
   useEffect(() => {
     load()
     if (!property) return
     call<{ name: string; outlet_name: string }[]>("kamra.pos.outlets", { property })
       .then(setOutlets)
-      .catch(() => {})
+      .catch((e) => setErr(serverError(e)))
     const tm = setInterval(load, 15_000)
     return () => clearInterval(tm)
   }, [load, property])
@@ -216,8 +223,29 @@ export default function KitchenPrinters() {
           {err && <p className="text-sm text-rose-700">{err}</p>}
           {note && <p className="text-sm text-emerald-700">{note}</p>}
 
-          {!form && printers.length === 0 && (
-            <p className="text-sm text-zinc-500">{t("No kitchen printers yet.")}</p>
+          {!form && !err && printers.length === 0 && (
+            <div className="rounded-lg border border-dashed border-zinc-300 bg-zinc-50 px-4 py-6 text-center">
+              <p className="text-sm font-medium text-zinc-800">
+                {t("No kitchen printers yet.")}
+              </p>
+              <p className="mt-1 text-xs text-zinc-500">
+                {t(
+                  "Add a printer to route KOTs by outlet and station. Status (online, waiting, failed) shows here once a kitchen screen is set to Print for it.",
+                )}
+              </p>
+              {canEdit && (
+                <Button
+                  className="mt-3"
+                  variant="outline"
+                  onClick={() => {
+                    setForm(blankPrinter())
+                    setNote(null)
+                  }}
+                >
+                  {t("Add printer")}
+                </Button>
+              )}
+            </div>
           )}
 
           {!form &&

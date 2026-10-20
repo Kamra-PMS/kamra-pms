@@ -5008,7 +5008,7 @@ def _recent_agent_duplicate(property: str, room_type: str, check_in_date: str,
 		values["gname"] = _collapse(guest_name)
 	else:
 		return None
-	rows = frappe.db.sql(
+	rows = frappe.db.sql(  # nosemgrep: frappe-sql-format-injection -- conds holds only fixed SQL fragments written above; every value is bound through `values`
 		f"""SELECT r.name FROM `tabReservation` r
 		JOIN `tabGuest` g ON g.name = r.guest
 		WHERE {' AND '.join(conds)}

@@ -1410,7 +1410,7 @@ def post_exchange(property: str, currency: str, fx_amount: float,
 	calc = currency_calculator(property, currency, fx_amount, direction)
 	if calc.get("max_exchange") and float(fx_amount) > float(calc["max_exchange"]):
 		frappe.throw("Exceeds per-transaction FX limit.")
-	sess = require_open_session(property)
+	sess = require_open_session(property, till_only=True)
 	bd = get_business_date(property)
 	txn = frappe.get_doc({
 		"doctype": "Exchange Transaction",

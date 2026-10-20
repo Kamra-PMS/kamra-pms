@@ -55,7 +55,7 @@ def entire_place_rooms(property: str, room_type: str,
 			title=_("Villa has no rooms"))
 	ooo = "" if include_out_of_order else \
 		"AND COALESCE(r.housekeeping_status, '') != 'Out of Order'"
-	return frappe.db.sql(
+	return frappe.db.sql(  # nosemgrep: frappe-sql-format-injection -- interpolated text is the module constant NON_VILLA_SQL and a fixed clause; the property is bound
 		f"""
 		SELECT r.name, r.room_number FROM `tabRoom` r
 		LEFT JOIN `tabRoom Type` rt ON rt.name = r.room_type
@@ -85,7 +85,7 @@ def villa_lockout_bookings(property: str, room_type: str | None, check_in,
 		return []
 	side = NON_VILLA_SQL if is_entire_place(room_type) \
 		else "rt.room_category = 'Villa'"
-	return frappe.db.sql(
+	return frappe.db.sql(  # nosemgrep: frappe-sql-format-injection -- interpolated text is module constants (_LIVE_SQL, NON_VILLA_SQL) or a fixed clause; every value is bound
 		f"""
 		SELECT r.name, r.check_in_date, r.check_out_date FROM `tabReservation` r
 		LEFT JOIN `tabRoom Type` rt ON r.room_type = rt.name
@@ -342,10 +342,16 @@ class Reservation(Document):
 			return
 		old = None if self.is_new() else self.get_doc_before_save()
 		if old and (
-			cint(old.adults), cint(old.children), old.room_type
-		) == (cint(self.adults), cint(self.children), self.room_type):
+			cint(old.adults), cint(old.children), cint(old.get("over_capacity_guests")),
+			cint(old.get("infants")), old.room_type,
+		) == (cint(self.adults), cint(self.children),
+		      cint(self.get("over_capacity_guests")), cint(self.get("infants")),
+		      self.room_type):
 			return
-		adults, children = cint(self.adults), cint(self.children)
+		adults = cint(self.adults)
+		# infants stay free and sleep with their parents - they take no bed
+		children = max(0, cint(self.children) - cint(self.get("infants")))
+		extra = max(0, cint(self.get("over_capacity_guests")))
 		if adults < 1:
 			frappe.throw(_("A stay needs at least one adult."),
 				title=_("Room capacity"))
@@ -355,29 +361,40 @@ class Reservation(Document):
 			 "max_extra_beds"],
 			as_dict=True,
 		) or frappe._dict()
+		cap_a, cap_c = cint(cap.adults_capacity), cint(cap.children_capacity)
 
 		# A room can take a few more than it sleeps comfortably, by
 		# arrangement - a family with one more child, a group happy to share.
-		# That is a decision someone makes and signs their name to, so it
-		# needs a reason and stops at the extra beds the room type allows.
-		beds = cint(cap.max_extra_beds)
+		# The desk books them as extra guests on top of a full room; older
+		# bookings and API callers may still count them inside adults or
+		# children (with over_capacity_guests then naming those same people,
+		# so the two are never added). Either way it is a decision someone
+		# signs their name to, so it needs a reason and stops at the extra
+		# beds the room type allows.
+		from kamra.pricing import capacity_overflow
+		above, beds = capacity_overflow(cap, adults, children, extra)
 		stated = (self.get("over_capacity_reason") or "").strip()
 		allowance = beds if stated else 0
-		if beds and adults > cint(cap.adults_capacity) and not stated:
+		if beds and above and not stated:
 			frappe.throw(_(
 				"{0} sleeps {1}. Up to {2} more can be booked by arrangement "
 				"- give a reason on the booking to record who agreed it."
-			).format(cap.room_type_name or self.room_type,
-			         cint(cap.adults_capacity), beds),
+			).format(cap.room_type_name or self.room_type, cap_a, beds),
 				title=_("Over room capacity"))
 
 		over = []
-		if cint(cap.adults_capacity) and adults > cint(cap.adults_capacity) + allowance:
-			over.append(_("{0} adults (max {1})").format(
-				adults, cint(cap.adults_capacity) + allowance))
-		if cint(cap.children_capacity) and children > cint(cap.children_capacity) + allowance:
-			over.append(_("{0} children (max {1})").format(
-				children, cint(cap.children_capacity) + allowance))
+		if above > allowance:
+			if extra:
+				over.append(_("{0} extra guests (max {1})").format(above, allowance))
+			if cap_a and adults > cap_a + allowance:
+				over.append(_("{0} adults (max {1})").format(
+					adults, cap_a + allowance))
+			if cap_c and children > cap_c + allowance:
+				over.append(_("{0} children (max {1})").format(
+					children, cap_c + allowance))
+			if not over:
+				over.append(_("{0} guests above what it sleeps (max {1})").format(
+					above, allowance))
 		if over:
 			frappe.throw(_(
 				"{0} can't sleep {1}. Reduce the party, pick a bigger room "

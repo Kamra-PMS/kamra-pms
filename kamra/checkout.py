@@ -93,7 +93,16 @@ class _NoTrace:
 
 	def __exit__(self, *exc):
 		db = frappe.db
-		db.rollback(save_point=self.name)
+		lost = False
+		try:
+			db.rollback(save_point=self.name)
+		except Exception:
+			# the savepoint is gone: the database already rolled the whole
+			# transaction back (a deadlock with another request). Nothing of
+			# ours is left to undo, but what was read since is not the
+			# snapshot we meant to show: start clean and say so.
+			db.rollback()
+			lost = True
 		db.after_commit._functions.clear()
 		db.after_commit._functions.extend(self._after)
 		db.before_commit._functions.clear()
@@ -105,7 +114,13 @@ class _NoTrace:
 		log = getattr(frappe.local, "message_log", None)
 		if log is not None:
 			del log[self._msgs:]
+		if lost:
+			raise SnapshotLost(self.name)
 		return False
+
+
+class SnapshotLost(Exception):
+	"""The database dropped the transaction under a _NoTrace block."""
 
 
 def _modes(property: str) -> list[str]:
@@ -128,13 +143,21 @@ def _fallback_mode(modes: list[str]) -> str:
 	return "Cash" if "Cash" in modes else (modes[0] if modes else "Cash")
 
 
-def _till_open(property: str) -> bool:
-	from kamra.cashier import _agent_bypass
-	if _agent_bypass():
-		return True
-	return bool(frappe.db.exists(
-		"Cashier Session", {"property": property, "user": frappe.session.user,
-		                    "status": "Open"}))
+def _till(property: str) -> dict:
+	"""The caller's till (kamra.cashier.till_state): open, or not needed at
+	this property, or closed with whether this user may open it here."""
+	from kamra.cashier import till_state
+	return till_state(property)
+
+
+# who check_out lets through (kamra.api.check_out), admins aside
+CHECKOUT_ROLES = ("Front Desk", "Night Auditor", "Kamra Agent")
+
+
+def _can_check_out() -> bool:
+	from kamra.authz import ADMIN
+	return frappe.session.user == "Administrator" or bool(
+		(set(CHECKOUT_ROLES) | set(ADMIN)) & set(frappe.get_roles()))
 
 
 def _companions(res) -> list[dict]:
@@ -155,13 +178,31 @@ def _companions(res) -> list[dict]:
 	return out
 
 
+def _has_role(roles) -> bool:
+	from kamra.authz import ADMIN
+	return frappe.session.user == "Administrator" or bool(
+		(set(roles) | set(ADMIN)) & set(frappe.get_roles()))
+
+
 def _pending_bills(res, modes: list[str]) -> list[dict]:
 	"""Bills for this stay that are not on its folio yet: restaurant and
-	room-service orders still open, laundry not delivered. Each can be
-	posted to the room through its own endpoint (POS deliver_order, laundry
-	deliver_laundry) or, for a POS bill, paid at the outlet (pay_order)."""
+	room-service orders still open, laundry not delivered. Each says what
+	the desk can do about it, through the bill's own endpoints:
+
+	  POS order   post to the room (pos.deliver_order) or pay at the outlet
+	              (pos.pay_order)
+	  laundry     a bag still at the laundry moves on to Ready
+	              (laundry.laundry_status), then is handed back and billed
+	              (laundry.return_items + deliver_laundry); a pickup that
+	              was only requested has nothing to bill yet
+
+	None of them stops the check-out: a bill left open is billed to the
+	departed stay when it is posted later, which the sheet says plainly."""
+	from kamra.laundry import LAUNDRY_ROLES
+	from kamra.pos import POS_ROLES
 	out = []
 	if frappe.db.exists("DocType", "POS Order"):
+		can_pos = _has_role(POS_ROLES)
 		for o in frappe.get_all(
 				"POS Order",
 				filters={"reservation": res.name,
@@ -175,22 +216,55 @@ def _pending_bills(res, modes: list[str]) -> list[dict]:
 				          if o.outlet else None) or _("Restaurant"),
 				"status": o.status, "amount": round(flt(o.order_total), 2),
 				"complimentary": bool(o.nc),
-				"can_post_to_room": True,
-				"pay_modes": [] if o.nc else [m for m in modes if m in POS_PAY_MODES]})
+				"can_act": can_pos,
+				"can_post_to_room": can_pos,
+				"can_mark_ready": False,
+				"billable": not o.nc,
+				"pay_modes": [] if (o.nc or not can_pos)
+				else [m for m in modes if m in POS_PAY_MODES],
+				"hint": _("Not on the bill yet. Post it to the room, or the guest pays "
+				          "for it at the outlet."),
+				"act_roles": list(POS_ROLES[:2])})
 	if frappe.db.exists("DocType", "Laundry Order"):
+		can_laundry = _has_role(LAUNDRY_ROLES)
 		for o in frappe.get_all(
 				"Laundry Order",
 				filters={"reservation": res.name, "order_type": "Guest",
 				         "status": ("in", OPEN_LAUNDRY_STATUSES)},
 				fields=["name", "status", "total", "complimentary"],
 				order_by="creation asc"):
+			items = frappe.get_all(
+				"Laundry Order Item", filters={"parent": o.name},
+				fields=["name", "item_name", "qty", "returned_qty"],
+				order_by="idx asc") if o.status != "Requested" else []
+			missing = sum(max(int(flt(i.qty)) - int(flt(i.returned_qty)), 0)
+			              for i in items)
+			if o.status == "Requested":
+				hint = _("Pickup requested, nothing collected yet: there is nothing "
+				         "to bill.")
+			elif o.status == "Ready":
+				hint = _("Back from the laundry. Hand it to the guest and post it "
+				         "to the room.")
+			else:
+				hint = _("Still at the laundry ({0}). It can be billed once it is "
+				         "back: when the bag is at the desk, mark it ready, then "
+				         "post it to the room.").format(_(o.status))
 			out.append({
 				"kind": "laundry", "name": o.name, "label": _("Laundry"),
 				"status": o.status, "amount": round(flt(o.total), 2),
 				"complimentary": bool(o.complimentary),
+				"can_act": can_laundry,
 				# delivery bills the stay; a bag still being washed can't go
-				"can_post_to_room": o.status == "Ready",
-				"pay_modes": []})
+				"can_post_to_room": can_laundry and o.status == "Ready",
+				"can_mark_ready": can_laundry and o.status in ("Collected", "In Process"),
+				"billable": o.status != "Requested" and not o.complimentary
+				and flt(o.total) > 0,
+				"pieces_missing": missing,
+				"items": [{"row": i.name, "item_name": i.item_name,
+				           "qty": int(flt(i.qty))} for i in items],
+				"pay_modes": [],
+				"hint": hint,
+				"act_roles": ["Front Desk", "Housekeeping"]})
 	return out
 
 
@@ -228,6 +302,20 @@ def _late_checkout(res, prop, folio_rows) -> dict | None:
 
 
 def checkout_context(reservation: str) -> dict:
+	"""checkout_context below, tried a second time when another request
+	deadlocked it (the database then drops the whole transaction, savepoint
+	included); the desk sees the bill, not a server error."""
+	for attempt in (1, 2):
+		try:
+			return _checkout_context(reservation)
+		except (SnapshotLost, frappe.QueryDeadlockError):
+			frappe.db.rollback()
+			if attempt == 2:
+				raise
+	return {}
+
+
+def _checkout_context(reservation: str) -> dict:
 	"""Everything the guided check-out needs, computed without changing
 	anything (see the module docstring): folios with their lines and
 	invoices, pending bills, a late check-out, the money plan (collect /
@@ -255,6 +343,8 @@ def checkout_context(reservation: str) -> dict:
 			frappe.db.savepoint("kamra_checkout_nights")
 			try:
 				post_remaining_nights(res)
+			except frappe.QueryDeadlockError:
+				raise  # not the folio's fault: try the whole context again
 			except Exception as e:
 				frappe.db.rollback(save_point="kamra_checkout_nights")
 				nights_error = _plain(e) or _("The remaining nights could not be posted.")
@@ -412,13 +502,23 @@ def checkout_context(reservation: str) -> dict:
 			.format(len(companions))})
 
 	needs_pin = bool(prop.get("require_cashier_pin"))
-	till_open = _till_open(res.property)
+	till = _till(res.property)
+	till_open = till["open"]
 	money_due = bool(collect or refunds)
 	if money_due and not till_open:
 		blockers.append({
 			"code": "till_closed", "step": "settle",
-			"message": _("Open your till (Finance, Cashier) to take or give "
-			             "back money, then come back to check out.")})
+			"message": _("Your till is closed. Open it here to take or give back "
+			             "money.") if till["can_open"] else
+			_("Taking or giving back money needs an open till, and your role can't "
+			  "open one. Ask {0} to settle the bill.").format(
+				", ".join(_(r) for r in till["who_can_open"]))})
+	can_check_out = _can_check_out()
+	if in_house and not can_check_out:
+		blockers.append({
+			"code": "role_cannot_check_out", "step": "confirm",
+			"message": _("Your role can settle the bill but not check the guest out. "
+			             "Ask Front Desk or a Hotel Admin to press Check out.")})
 	if credit and credit["blocked"]:
 		blockers.append({
 			"code": "credit_blocked", "step": "company",
@@ -426,12 +526,14 @@ def checkout_context(reservation: str) -> dict:
 				"; ".join(r for c in credit["checks"] if c["blocked"]
 				          for r in c["reasons"])),
 			"can_override": credit["can_override"]})
-	if pending:
+	open_bills = [b for b in pending if b["billable"]]
+	if open_bills:
 		notices.append({
 			"code": "pending_bills",
-			"message": _("{0} bill(s) for this stay are not on the folio yet. "
-			             "Post them to the room or settle them before check-out."
-			             ).format(len(pending))})
+			"message": _("{0} bill(s) for this stay are not on the folio yet. Post "
+			             "them to the room or settle them below. They do not stop "
+			             "the check-out, but anything still open is not on the "
+			             "guest's bill.").format(len(open_bills))})
 
 	owed, refund_due = pos["owed"], pos["refund_due"]
 	settled = owed <= EPS and refund_due <= EPS
@@ -480,6 +582,7 @@ def checkout_context(reservation: str) -> dict:
 		"payment_modes": modes,
 		"pin_required": needs_pin,
 		"till_open": till_open,
+		"till": till,
 		"folios": folio_rows,
 		"groups": groups,
 		"totals": {
@@ -516,6 +619,7 @@ def checkout_context(reservation: str) -> dict:
 		"settled": settled,
 		"actions": {
 			"can_checkout": in_house and settled and not hard and not credit_stuck,
+			"can_check_out_role": can_check_out,
 			"can_collect": bool(collect),
 			"can_refund": bool(refunds),
 			"can_city_ledger": bool(pos["to_city_ledger"]),

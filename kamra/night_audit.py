@@ -200,7 +200,7 @@ def check_open_pos_bills(property: str, bd: str) -> dict:
 		"POS Order",
 		filters={"property": property, "status": ("in", OPEN_POS)},
 		fields=["name", "outlet", "status", "table_no", "room", "reservation",
-		        "customer_name", "order_total", "kot_no", "creation"],
+		        "customer_name", "order_total", "kot_no", "kot_fired", "creation"],
 		order_by="creation asc", limit_page_length=0)
 	# served bills that were neither paid at the outlet, posted to a room nor
 	# made complimentary - money nobody is holding
@@ -215,7 +215,10 @@ def check_open_pos_bills(property: str, bd: str) -> dict:
 		ORDER BY creation
 		""", {"p": property, "d": bd}, as_dict=True)
 	items = []
-	for r, state in [(r, "open") for r in open_rows] + \
+	# an open bill nobody sent to the kitchen is named as such: it is cancelled
+	# at the till with a reason, nothing to void
+	for r, state in [(r, "open" if r.kot_fired else "open, not sent to kitchen")
+	                 for r in open_rows] + \
 			[(r, "served, not settled") for r in served]:
 		items.append({
 			"order": r.name,

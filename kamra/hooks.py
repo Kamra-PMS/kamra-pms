@@ -253,7 +253,7 @@ _PROPERTY_SCOPED = (
 	"Proforma Folio", "Property Setting", "Rate Guardrail", "Rate Plan",
 	"Reservation",
 	"Revenue Budget", "Room", "Room Block", "Room Type", "Season",
-	"Security Deposit", "Sellable Unit", "Service Ticket", "Shift Handover",
+	"Security Deposit", "Sellable Unit", "Service Ticket", "Shift Handover", "SOP Template",
 	"Transaction Code", "Turnover Profile", "Venue", "Venue Booking",
 	"WhatsApp Message", "ZATCA Invoice", "ZATCA Settings",
 )

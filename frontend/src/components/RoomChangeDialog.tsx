@@ -49,6 +49,9 @@ const money = (n: number) =>
 export default function RoomChangeDialog(props: {
   reservation: string
   currentRoomNumber?: string | null
+  /** Pre-pick this room (a bar dropped on its row on the tape chart). The
+   *  price preview and the reason still come before the move. */
+  initialRoom?: string | null
   onClose: () => void
   onMoved: (r: { room: string; room_type: string }) => void
 }) {
@@ -65,9 +68,17 @@ export default function RoomChangeDialog(props: {
 
   useEffect(() => {
     call<MovableRoom[]>("kamra.api.movable_rooms", { reservation: props.reservation })
-      .then(setRooms)
+      .then((list) => {
+        setRooms(list)
+        const want = props.initialRoom && list.find((r) => r.name === props.initialRoom)
+        if (!want || want.current) return
+        if (!want.same_type) setScope("all")
+        if (want.free) setPick(want)
+        else setError(t("Room {room} is booked for these dates.", { room: want.room_number }))
+      })
       .catch((e) => setError(serverError(e)))
-  }, [props.reservation])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [props.reservation, props.initialRoom])
 
   useEffect(() => {
     setPreview(null)
@@ -216,7 +227,7 @@ export default function RoomChangeDialog(props: {
                       type="button"
                       disabled={!r.free}
                       aria-pressed={pick?.name === r.name}
-                      onClick={() => setPick(r)}
+                      onClick={() => { setPick(r); setError(null) }}
                       title={r.free ? undefined : t("Booked for these dates")}
                       className={cn(
                         "rounded-lg border px-2.5 py-2 text-left transition-colors",

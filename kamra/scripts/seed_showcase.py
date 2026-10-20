@@ -398,6 +398,52 @@ def execute():
 			}).insert(ignore_permissions=True)
 			added_item += 1
 
+	# kitchen printers: main kitchen takes every Terrace station; the bar
+	# prints its own drinks. Idempotent by printer_name.
+	from kamra import printing
+	terrace = frappe.db.get_value(
+		"POS Outlet", {"property": PROPERTY, "outlet_name": "The Terrace Restaurant"})
+	bar_outlet = frappe.db.get_value(
+		"POS Outlet", {"property": PROPERTY, "outlet_name": "Poolside Bar"})
+	added_printer = 0
+	if terrace or bar_outlet:
+		existing = {p.printer_name: p.name
+		            for p in printing.printers(PROPERTY)}
+		specs = []
+		if terrace:
+			specs.append(("Main kitchen",
+			              [{"outlet": terrace, "prep_station": ""}]))
+		if bar_outlet:
+			specs.append(("Bar",
+			              [{"outlet": bar_outlet, "prep_station": "Bar"}]))
+		bar_name = existing.get("Bar")
+		for pname, routes in specs:
+			if pname in existing:
+				continue
+			out = printing.save_printer(PROPERTY, {
+				"printer_name": pname,
+				"connection": "Print station",
+				"paper_width": "80 mm",
+				"copies": 1,
+				"routes": routes,
+				"fallback_printer": bar_name if pname == "Main kitchen" and bar_name else None,
+			})
+			existing[pname] = out["name"]
+			if pname == "Bar":
+				bar_name = out["name"]
+			added_printer += 1
+		# point Main kitchen at the Bar once both exist
+		main = existing.get("Main kitchen")
+		if main and bar_name and main != bar_name:
+			printing.save_printer(PROPERTY, {
+				"printer_name": "Main kitchen",
+				"connection": "Print station",
+				"paper_width": "80 mm",
+				"copies": 1,
+				"fallback_printer": bar_name,
+				"routes": [{"outlet": terrace, "prep_station": ""}] if terrace else [],
+			}, name=main)
+
 	# kitchen stock: the ingredient master, then a recipe per dish, then what
 	# each outlet opens with
 	from kamra import inventory
@@ -572,6 +618,7 @@ def execute():
 	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- batch/seed/migration script runs outside the request cycle; explicit commit persists the staged writes
 	print(f"Showcase seed: +{added_exp} experiences, +{added_venue} venues, "
 	      f"+{added_outlet} outlets, +{added_item} menu items, "
+	      f"+{added_printer} printers, "
 	      f"+{added_rate} laundry rates, +{added_ticket} tickets, "
 	      f"+{added_ho} handovers, +{added_lnd} laundry orders, {added_bq} "
 	      f"{extra} on '{PROPERTY}'.")

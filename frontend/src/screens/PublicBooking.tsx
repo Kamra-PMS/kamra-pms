@@ -21,6 +21,10 @@ import { Sheet } from "../components/ui/sheet"
 import { cur, moneyLocale, adoptUiLocale } from "../lib/money"
 import { formatPhoneDisplay, formatPhoneTel } from "../lib/phone"
 import { petChargeBasis } from "../lib/pets"
+import ChildAges, {
+  agesToSend, canReserve, sizeAges, StayNotice,
+  type ChildAge, type StayFit,
+} from "../components/ChildAges"
 
 const inr = (n: number) =>
   n.toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
@@ -117,7 +121,7 @@ interface Showcase {
   }[]
 }
 
-interface StayResult {
+interface StayResult extends StayFit {
   room_type: string
   rooms_left: number
   quote: {
@@ -337,6 +341,9 @@ export default function PublicBooking() {
     }
   })
   const [results, setResults] = useState<Record<string, StayResult>>({})
+  const [childAgesState, setChildAges] = useState<ChildAge[]>([])
+  const childAges = sizeAges(childAgesState, search.children)
+  const agesMissing = search.children > 0 && !agesToSend(childAges)
   const [booking, setBooking] = useState<string | null>(null) // room type name
   const [form, setForm] = useState({ guest_name: "", phone: "", email: "", meal_plan: "", special_requests: "" })
   // experience add-ons the guest picked: docname -> quantity
@@ -489,7 +496,7 @@ export default function PublicBooking() {
     if (!property || catalogMode === "sites") return
     const t = setTimeout(fetchResults, 300)
     return () => clearTimeout(t)
-  }, [property, search, checkOut, catalogMode])
+  }, [property, search, checkOut, catalogMode, childAgesState])
 
   function fetchResults() {
     if (!property) return
@@ -499,6 +506,7 @@ export default function PublicBooking() {
       check_out_date: checkOut,
       adults: search.adults,
       children: search.children,
+      child_ages: agesToSend(childAges),
       pets: search.pets,
     }).then((rows) => {
       const map: Record<string, StayResult> = {}
@@ -526,6 +534,7 @@ export default function PublicBooking() {
           check_out_date: checkOut,
           adults: search.adults,
           children: search.children,
+          child_ages: agesToSend(childAges),
           pets: search.pets,
           ...form,
           voucher_code: voucherMsg?.ok ? voucher.trim() : "",
@@ -788,6 +797,9 @@ export default function PublicBooking() {
               </label>
             )}
           </div>
+          <div className="mt-3">
+            <ChildAges ages={childAges} onChange={setChildAges} selectCls={inputCls} />
+          </div>
           <p className="mt-1.5 text-xs text-zinc-400">
             {nightsBetween(search.check_in_date, search.check_out_date)} night
             {nightsBetween(search.check_in_date, search.check_out_date) === 1 ? "" : "s"}
@@ -986,6 +998,7 @@ export default function PublicBooking() {
                                   {r.quote.nights === 1 ? "" : "s"}, taxes in
                                 </span>
                               </p>
+                              <StayNotice row={r} />
                               {(r.quote.cleaning_fee || 0) > 0 && (
                                 <p className="text-xs text-zinc-500">
                                   Includes {cur()}
@@ -1043,7 +1056,7 @@ export default function PublicBooking() {
                           )}
                           <Button
                             className="px-5 py-2.5 text-base"
-                            disabled={!r?.quote}
+                            disabled={!canReserve(r) || agesMissing}
                             onClick={() => setBooking(rt.name)}
                           >
                             {bookCta}
@@ -1225,7 +1238,7 @@ export default function PublicBooking() {
       {booking && (
         <Sheet
           wide
-          title={done ? "Booking confirmed" : "Complete your booking"}
+          title={done ? (done.status === "Requested" ? "Request sent" : "Booking confirmed") : "Complete your booking"}
           description={
             done
               ? undefined
