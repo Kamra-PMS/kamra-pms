@@ -1,4 +1,5 @@
 import type { ReactNode } from "react"
+import { Link } from "react-router-dom"
 import { ArrowUpRight, ArrowDownRight } from "lucide-react"
 import { cn } from "../../lib/utils"
 import { Sparkline } from "./sparkline"
@@ -19,6 +20,7 @@ export function StatCard({
   delta,
   sub,
   accent,
+  to,
   className,
 }: {
   icon: ReactNode
@@ -31,16 +33,13 @@ export function StatCard({
   delta?: { value: string; dir?: "up" | "down" } // e.g. { value: "20% vs yesterday", dir: "up" }
   sub?: ReactNode
   accent?: boolean
+  /** When set, the whole card navigates here (e.g. Open tasks → HK). */
+  to?: string
   className?: string
 }) {
   const down = delta?.dir === "down"
-  return (
-    <div
-      className={cn(
-        "flex min-w-0 flex-col rounded-xl border border-zinc-200 bg-white p-4",
-        className,
-      )}
-    >
+  const inner = (
+    <>
       <div className="flex items-center gap-2">
         <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-brand-50 text-brand-700">
           {icon}
@@ -99,6 +98,21 @@ export function StatCard({
           <span className="text-zinc-500">{delta.value}</span>
         </div>
       ) : null}
-    </div>
+    </>
   )
+
+  const shell = cn(
+    "flex min-w-0 flex-col rounded-xl border border-zinc-200 bg-white p-4",
+    to && "transition-colors hover:border-brand-300 hover:bg-brand-50/30",
+    className,
+  )
+
+  if (to) {
+    return (
+      <Link to={to} className={shell}>
+        {inner}
+      </Link>
+    )
+  }
+  return <div className={shell}>{inner}</div>
 }
