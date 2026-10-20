@@ -194,25 +194,25 @@ export default function PosSidePanel({
   }, [onClose])
   return (
     <div className="fixed inset-0 z-50">
-      <div className="absolute inset-0 bg-black/30" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/40 animate-fade-in" onClick={onClose} />
       <aside role="dialog" aria-label={tab === "orders" ? t("Orders") : t("Guest")}
-        className="absolute inset-y-0 end-0 flex w-full flex-col bg-zinc-50 shadow-2xl sm:w-[28rem]">
-        <div className="flex shrink-0 items-center gap-2 border-b border-zinc-200 bg-white px-3 py-2">
+        className="absolute inset-y-0 end-0 flex w-full flex-col border-s border-zinc-200 bg-zinc-50 shadow-2xl animate-sheet-in sm:w-[28rem]">
+        <div className="flex shrink-0 items-center gap-2 border-b border-zinc-100 bg-white px-4 py-3">
           <div className="flex flex-1 rounded-xl border border-zinc-200 bg-zinc-50 p-1">
             {([["orders", t("Orders"), ListOrdered], ["guest", t("Guest"), UserRound]] as const).map(([k, l, Icon]) => (
               <button key={k} onClick={() => onTab(k)}
-                className={cn("flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium",
-                  tab === k ? "bg-brand-600 text-white" : "text-zinc-600 hover:bg-white")}>
+                className={cn("flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2.5 text-sm font-semibold transition",
+                  tab === k ? "bg-brand-600 text-white shadow-sm" : "text-zinc-600 hover:bg-white")}>
                 <Icon className="size-4" />{l}
               </button>
             ))}
           </div>
           <button onClick={onClose} aria-label={t("Close")}
-            className="rounded-lg p-2 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700">
+            className="rounded-xl p-2.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700">
             <XCircle className="size-5" />
           </button>
         </div>
-        <div className="min-h-0 flex-1 overflow-y-auto p-3">
+        <div className="min-h-0 flex-1 overflow-y-auto p-4">
           {tab === "orders"
             ? <OrdersTab outlet={outlet} refreshKey={refreshKey} onOpenBill={onOpenBill} />
             : <GuestTab outlet={outlet} order={order} draft={draft} refreshKey={refreshKey}
@@ -297,10 +297,10 @@ function OrdersTab({ outlet, refreshKey, onOpenBill }: {
             <li key={r.name}>
               <button
                 onClick={() => (r.state === "open" || r.state === "sent") ? onOpenBill(r.name) : setViewing(r.name)}
-                className={cn("w-full rounded-xl border bg-white px-3 py-2 text-start transition hover:border-brand-400",
+                className={cn("w-full rounded-2xl border bg-white px-3.5 py-2.5 text-start shadow-sm transition hover:border-brand-400 hover:shadow-md",
                   r.stale ? "border-rose-300" : "border-zinc-200")}>
                 <div className="flex items-center justify-between gap-2">
-                  <span className="min-w-0 truncate text-sm font-semibold text-zinc-800">
+                  <span className="min-w-0 truncate text-[15px] font-semibold text-zinc-800">
                     {r.label}
                     {r.who && r.who !== r.label && <span className="ms-1 font-normal text-zinc-500">· {r.who}</span>}
                   </span>

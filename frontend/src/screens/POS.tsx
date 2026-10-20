@@ -3,9 +3,10 @@ import {
   Plus, Minus, Trash2, Send, UtensilsCrossed, Search,
   Maximize2, Minimize2, Wallet, Printer, Receipt, XCircle, Ban,
   Scissors, Users, PauseCircle, Tag, Gift, Clock, Menu, LogOut, Focus,
-  Keyboard, LayoutGrid, BedDouble, ListOrdered, UserRound,
+  Keyboard, LayoutGrid, BedDouble, ListOrdered, UserRound, MoreVertical,
 } from "lucide-react"
 import PosSidePanel from "./pos/PosSidePanel"
+import SettleSheet from "./pos/SettleSheet"
 import VoidApproval, { type VoidArgs } from "./pos/VoidApproval"
 import { useNavigate } from "react-router-dom"
 import { call, getCurrentProperty } from "../lib/api"
@@ -253,10 +254,11 @@ export default function POS() {
     return () => window.removeEventListener(PRINT_DIALOG_EVENT, onDialog)
   }, [])
   // responsive chrome: which pane a phone shows, the tablet tables drawer,
-  // and the shortcuts popover in the header
+  // header overflow, and bill-actions menu
   const [mobilePane, setMobilePane] = useState<"tables" | "menu" | "bill">("menu")
   const [tablesOpen, setTablesOpen] = useState(false)
-  const [helpOpen, setHelpOpen] = useState(false)
+  const [moreOpen, setMoreOpen] = useState(false)
+  const [billMenuOpen, setBillMenuOpen] = useState(false)
   const navigate = useNavigate()
   const { floorOn, kioskOn, browserFs, toggleBrowserFs, toggleFocus, exitFloor } =
     useFloorFullscreen(rootRef)
@@ -495,7 +497,9 @@ export default function POS() {
     if (selected || cart.length === 0) return
     await act(async () => { await createBill(false); newOrder() })
   }
-  async function proceedToPay() { // F4 — opens the settle sheet
+  async function proceedToPay() { // F4 — opens the settle overlay
+    setBillMenuOpen(false)
+    setMoreOpen(false)
     if (selected && detail) {
       setSettling(true); setSheetNc(false)
       setMobilePane("bill")
@@ -697,7 +701,9 @@ export default function POS() {
   const allItems = cats.flatMap((c) => c.items)
   const shownItems = query.trim()
     ? allItems.filter((it) => it.item_name.toLowerCase().includes(query.toLowerCase()))
-    : cat === "All" ? null : (cats.find((c) => c.category === cat)?.items || [])
+    : cat === "All"
+      ? allItems
+      : (cats.find((c) => c.category === cat)?.items || [])
 
   const tableNames = new Set(tables.map((t) => t.table))
   const looseBills = open.filter((o) =>
@@ -1006,7 +1012,7 @@ export default function POS() {
 
   return (
     <div ref={rootRef} className={cn("flex h-full min-h-0 flex-col gap-3", floorOn && "bg-zinc-50 p-3")}>
-      {/* header — the way out of the till is always on screen */}
+      {/* header — outlet, order type, New Bill; secondary tools in overflow */}
       <div className="flex shrink-0 flex-wrap items-center justify-between gap-3">
         <h1 className="flex items-center gap-2 text-xl font-bold text-zinc-800">
           <UtensilsCrossed className="size-5 text-brand-600" />
@@ -1030,49 +1036,10 @@ export default function POS() {
           ))}
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <button onClick={() => setPanel("orders")}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-2.5 py-2 text-xs font-semibold text-zinc-600 hover:bg-zinc-50"
-            title={t("Today's and past orders")}>
-            <ListOrdered className="size-4" />
-            <span className="hidden sm:inline">{t("Orders")}</span>
-            {open.some((o) => o.stale) && <span className="size-2 rounded-full bg-rose-600" aria-label={t("A bill was never sent")} />}
-          </button>
           <button onClick={() => setTablesOpen(true)}
             className="hidden items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-2.5 py-2 text-xs font-semibold text-zinc-600 hover:bg-zinc-50 md:inline-flex lg:hidden">
             <LayoutGrid className="size-4" />{t("Tables")}
           </button>
-          {autoKot ? (
-            <span className="inline-flex items-center gap-1.5 rounded-lg border border-brand-200 bg-brand-50 px-2.5 py-2 text-xs font-semibold text-brand-800">
-              <Printer className="size-3.5" aria-hidden />
-              <span className="hidden sm:inline">{t("KOT prints on send")}</span>
-            </span>
-          ) : (
-            <button type="button" onClick={() => setPrintKot((v) => !v)}
-              className={"inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-2 text-xs font-semibold " +
-                (printKot ? "border-brand-600 bg-brand-50 text-brand-800" : "border-zinc-300 bg-white text-zinc-500")}>
-              <Printer className="size-3.5" />
-              <span className="hidden sm:inline">{printKot ? t("KOT printer on") : t("KOT printer off")}</span>
-            </button>
-          )}
-          <div className="relative">
-            <button onClick={() => setHelpOpen((v) => !v)}
-              className="rounded-lg border border-zinc-300 bg-white p-2 text-zinc-600 hover:bg-zinc-50"
-              title={t("Keyboard shortcuts")} aria-label={t("Keyboard shortcuts")}>
-              <Keyboard className="size-4" />
-            </button>
-            {helpOpen && (
-              <div className="absolute right-0 top-full z-30 mt-1 w-64 rounded-xl border border-zinc-200 bg-white p-2 shadow-lg">
-                {([["F2", t("New bill")], ["F3", t("Cycle open bills")], ["F4", t("Settle")],
-                   ["F5", t("Hold bill")], ["F6", t("Fire KOT")],
-                   ["Esc", t("Show menus / exit full screen")]] as const).map(([k, l]) => (
-                  <div key={k} className="flex items-center justify-between gap-3 px-1 py-1 text-xs text-zinc-600">
-                    <span>{l}</span>
-                    <kbd className="rounded border border-zinc-300 bg-zinc-50 px-1.5 py-0.5 font-semibold text-zinc-600">{k}</kbd>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
           {floorOn && (
             <button type="button" onClick={exitFloor}
               className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-2.5 py-2 text-xs font-semibold text-zinc-600 hover:bg-zinc-50"
@@ -1080,29 +1047,73 @@ export default function POS() {
               <Menu className="size-4" />{t("Menu")}
             </button>
           )}
-          <button onClick={toggleFocus}
-            className={cn("rounded-lg border p-2",
-              kioskOn
-                ? "border-brand-600 bg-brand-50 text-brand-800"
-                : "border-zinc-300 bg-white text-zinc-600 hover:bg-zinc-50")}
-            title={kioskOn ? t("Show PMS menus (Esc)") : t("Focus mode — hide PMS menus")}>
-            <Focus className="size-4" />
-          </button>
-          <button onClick={toggleBrowserFs}
-            className="rounded-lg border border-zinc-300 bg-white p-2 text-zinc-600 hover:bg-zinc-50"
-            title={browserFs ? t("Exit full screen (Esc)") : t("Full screen till")}>
-            {browserFs ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
-          </button>
-          <button onClick={() => { exitFloor(); navigate("/dashboard") }}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-2.5 py-2 text-xs font-semibold text-zinc-600 hover:bg-zinc-50"
-            title={t("Exit POS — back to the PMS")}>
-            <LogOut className="size-4" />
-            <span className="hidden xl:inline">{t("Exit")}</span>
-          </button>
           <Button onClick={() => newOrder()}>
             <Plus className="size-4" />{t("New Bill")}
             <kbd className="rounded bg-white/20 px-1 text-[10px]">F2</kbd>
           </Button>
+          <div className="relative">
+            <button type="button" onClick={() => setMoreOpen((v) => !v)}
+              className="rounded-lg border border-zinc-300 bg-white p-2 text-zinc-600 hover:bg-zinc-50"
+              title={t("More")} aria-label={t("More")} aria-expanded={moreOpen}>
+              <MoreVertical className="size-4" />
+              {open.some((o) => o.stale) && (
+                <span className="absolute right-1 top-1 size-2 rounded-full bg-rose-600" aria-label={t("A bill was never sent")} />
+              )}
+            </button>
+            {moreOpen && (
+              <>
+                <div className="fixed inset-0 z-20" onClick={() => setMoreOpen(false)} aria-hidden />
+                <div className="absolute right-0 top-full z-30 mt-1 w-64 overflow-hidden rounded-xl border border-zinc-200 bg-white py-1 shadow-lg">
+                  <button type="button" onClick={() => { setPanel("orders"); setMoreOpen(false) }}
+                    className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm text-zinc-700 hover:bg-zinc-50">
+                    <ListOrdered className="size-4 text-zinc-500" />
+                    <span className="flex-1">{t("Orders")}</span>
+                    {open.some((o) => o.stale) && <span className="size-2 rounded-full bg-rose-600" />}
+                  </button>
+                  {autoKot ? (
+                    <div className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-brand-800">
+                      <Printer className="size-4" />
+                      {t("KOT prints on send")}
+                    </div>
+                  ) : (
+                    <button type="button" onClick={() => setPrintKot((v) => !v)}
+                      className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm text-zinc-700 hover:bg-zinc-50">
+                      <Printer className="size-4 text-zinc-500" />
+                      {printKot ? t("KOT printer on") : t("KOT printer off")}
+                    </button>
+                  )}
+                  <div className="my-1 border-t border-zinc-100" />
+                  <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-400">
+                    <span className="inline-flex items-center gap-1"><Keyboard className="size-3" />{t("Shortcuts")}</span>
+                  </div>
+                  {([["F2", t("New bill")], ["F3", t("Cycle open bills")], ["F4", t("Settle")],
+                     ["F5", t("Hold bill")], ["F6", t("Fire KOT")],
+                     ["Esc", t("Show menus / exit full screen")]] as const).map(([k, l]) => (
+                    <div key={k} className="flex items-center justify-between gap-3 px-3 py-1 text-xs text-zinc-600">
+                      <span>{l}</span>
+                      <kbd className="rounded border border-zinc-300 bg-zinc-50 px-1.5 py-0.5 font-semibold text-zinc-600">{k}</kbd>
+                    </div>
+                  ))}
+                  <div className="my-1 border-t border-zinc-100" />
+                  <button type="button" onClick={() => { toggleFocus(); setMoreOpen(false) }}
+                    className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm text-zinc-700 hover:bg-zinc-50">
+                    <Focus className="size-4 text-zinc-500" />
+                    {kioskOn ? t("Show PMS menus (Esc)") : t("Focus mode — hide PMS menus")}
+                  </button>
+                  <button type="button" onClick={() => { toggleBrowserFs(); setMoreOpen(false) }}
+                    className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm text-zinc-700 hover:bg-zinc-50">
+                    {browserFs ? <Minimize2 className="size-4 text-zinc-500" /> : <Maximize2 className="size-4 text-zinc-500" />}
+                    {browserFs ? t("Exit full screen (Esc)") : t("Full screen till")}
+                  </button>
+                  <button type="button" onClick={() => { exitFloor(); navigate("/dashboard") }}
+                    className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm text-zinc-700 hover:bg-zinc-50">
+                    <LogOut className="size-4 text-zinc-500" />
+                    {t("Exit POS — back to the PMS")}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
@@ -1167,21 +1178,12 @@ export default function POS() {
                 </button>
               ))}
             </div>
-            {shownItems ? (
-              <div className="grid grid-cols-2 gap-2 sm:gap-3 xl:grid-cols-3 2xl:grid-cols-4">
-                {shownItems.map((it) => <MenuCard key={it.name} it={it} onAdd={() => addToCart(it)} />)}
-                {shownItems.length === 0 && <p className="col-span-full py-6 text-center text-sm text-zinc-400">{t("No matches.")}</p>}
-              </div>
-            ) : (
-              cats.map((c) => (
-                <div key={c.category} className="mb-4">
-                  <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-400">{c.category}</h3>
-                  <div className="grid grid-cols-2 gap-2 sm:gap-3 xl:grid-cols-3 2xl:grid-cols-4">
-                    {c.items.map((it) => <MenuCard key={it.name} it={it} onAdd={() => addToCart(it)} />)}
-                  </div>
-                </div>
-              ))
-            )}
+            <div className="grid grid-cols-2 gap-2.5 sm:gap-3 xl:grid-cols-3 2xl:grid-cols-4">
+              {shownItems.map((it) => <MenuCard key={it.name} it={it} onAdd={() => addToCart(it)} />)}
+              {shownItems.length === 0 && (
+                <p className="col-span-full py-10 text-center text-sm text-zinc-400">{t("No matches.")}</p>
+              )}
+            </div>
         </div>
 
         {/* ── right: the bill ── */}
@@ -1462,38 +1464,56 @@ export default function POS() {
                 onConfirm={confirmCancel} onClose={() => setCancelling(false)} />
             )}
 
-            {/* actions — every option visible, nothing under a popover or scroll */}
-            <div className="grid grid-cols-3 gap-1.5">
-              <Button variant="outline" className="h-11 flex-col gap-0.5 !px-1 text-[11px] font-semibold leading-none"
-                disabled={busy || !selected} onClick={printBill}>
-                <Receipt className="size-4" />{t("Print bill")}
+            {/* secondary bill tools — one overflow so KOT + Settle stay primary */}
+            <div className="relative">
+              <Button variant="outline" className="h-10 w-full justify-between text-sm font-medium"
+                onClick={() => setBillMenuOpen((v) => !v)} aria-expanded={billMenuOpen}>
+                <span>{t("Bill actions")}</span>
+                <MoreVertical className="size-4 text-zinc-400" />
               </Button>
-              <Button variant="outline" className="h-11 flex-col gap-0.5 !px-1 text-[11px] font-semibold leading-none"
-                disabled={busy || !selected || !detail || detail.items.filter((i) => !i.voided).length < 2 || detail.status === "Delivered"}
-                onClick={() => { setSplitMode(true); setSplitSel(new Set()) }}>
-                <Scissors className="size-4" />{t("Split")}
-              </Button>
-              <Button variant="outline" className="h-11 flex-col gap-0.5 !px-1 text-[11px] font-semibold leading-none text-amber-700"
-                disabled={busy || !selected || !detail || detail.status === "Delivered"}
-                onClick={() => detail?.nc ? saveNc(true) : setNcOpen(true)}>
-                <Gift className="size-4" />{detail?.nc ? t("Undo NC") : t("Complimentary")}
-              </Button>
-              <Button variant="outline" className="h-11 flex-col gap-0.5 !px-1 text-[11px] font-semibold leading-none"
-                disabled={busy || !!selected || cart.length === 0} onClick={hold}>
-                <PauseCircle className="size-4" />{t("Hold bill")}
-              </Button>
-              <Button variant="outline" className="h-11 flex-col gap-0.5 !px-1 text-[11px] font-semibold leading-none"
-                disabled={busy || !selected || !detail?.kot_no} onClick={reprintKot}>
-                <Printer className="size-4" />{t("Reprint KOT")}
-              </Button>
-              <Button variant="outline" className="h-11 flex-col gap-0.5 !px-1 text-[11px] font-semibold leading-none text-rose-600"
-                disabled={busy || !selected || !detail || detail.status === "Delivered" || detail.status === "Cancelled"}
-                onClick={() => { setCancelling(true); setVoiding(null); setSettling(false) }}>
-                <Ban className="size-4" />{t("Cancel")}
-              </Button>
+              {billMenuOpen && (
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setBillMenuOpen(false)} aria-hidden />
+                  <div className="absolute bottom-full left-0 right-0 z-20 mb-1 overflow-hidden rounded-xl border border-zinc-200 bg-white py-1 shadow-lg">
+                    <button type="button" disabled={busy || !selected}
+                      onClick={() => { setBillMenuOpen(false); printBill() }}
+                      className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm text-zinc-700 hover:bg-zinc-50 disabled:opacity-40">
+                      <Receipt className="size-4 text-zinc-500" />{t("Print bill")}
+                    </button>
+                    <button type="button"
+                      disabled={busy || !selected || !detail || detail.items.filter((i) => !i.voided).length < 2 || detail.status === "Delivered"}
+                      onClick={() => { setBillMenuOpen(false); setSplitMode(true); setSplitSel(new Set()) }}
+                      className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm text-zinc-700 hover:bg-zinc-50 disabled:opacity-40">
+                      <Scissors className="size-4 text-zinc-500" />{t("Split")}
+                    </button>
+                    <button type="button"
+                      disabled={busy || !selected || !detail || detail.status === "Delivered"}
+                      onClick={() => { setBillMenuOpen(false); detail?.nc ? saveNc(true) : setNcOpen(true) }}
+                      className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm text-amber-800 hover:bg-amber-50 disabled:opacity-40">
+                      <Gift className="size-4" />{detail?.nc ? t("Undo NC") : t("Complimentary")}
+                    </button>
+                    <button type="button" disabled={busy || !!selected || cart.length === 0}
+                      onClick={() => { setBillMenuOpen(false); hold() }}
+                      className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm text-zinc-700 hover:bg-zinc-50 disabled:opacity-40">
+                      <PauseCircle className="size-4 text-zinc-500" />{t("Hold bill")}
+                    </button>
+                    <button type="button" disabled={busy || !selected || !detail?.kot_no}
+                      onClick={() => { setBillMenuOpen(false); reprintKot() }}
+                      className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm text-zinc-700 hover:bg-zinc-50 disabled:opacity-40">
+                      <Printer className="size-4 text-zinc-500" />{t("Reprint KOT")}
+                    </button>
+                    <button type="button"
+                      disabled={busy || !selected || !detail || detail.status === "Delivered" || detail.status === "Cancelled"}
+                      onClick={() => { setBillMenuOpen(false); setCancelling(true); setVoiding(null); setSettling(false) }}
+                      className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm text-rose-600 hover:bg-rose-50 disabled:opacity-40">
+                      <Ban className="size-4" />{t("Cancel")}
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
 
-            <Button variant="outline" className="h-11 w-full"
+            <Button variant="outline" className="h-12 w-full border-brand-200 bg-brand-50/50 text-base font-semibold text-brand-800 hover:bg-brand-50"
               disabled={busy || cart.length === 0}
               onClick={kotAction}>
               <Send className="size-4" />
@@ -1502,88 +1522,49 @@ export default function POS() {
                 : autoKot
                   ? t("Send and print")
                   : t("Send to kitchen")}
-              <kbd className="rounded bg-zinc-100 px-1 text-[10px] text-zinc-500">F6</kbd>
+              <kbd className="rounded bg-white/60 px-1 text-[10px] text-brand-700">F6</kbd>
             </Button>
 
-            {settling && selected && detail ? (
-              /* the settle sheet: every way a bill can close, including zero */
-              <div className="space-y-1.5 rounded-xl border border-brand-200 bg-brand-50/60 p-2.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold uppercase tracking-wide text-brand-800">
-                    Settle · {cur()}{inr2(grand)}
-                  </span>
-                  <button className="rounded p-1 text-zinc-400 hover:text-zinc-700" aria-label="Close"
-                    onClick={() => { setSettling(false); setSheetNc(false) }}>
-                    <XCircle className="size-4" />
-                  </button>
-                </div>
-                {detail.nc ? (
-                  <Button className="h-12 w-full" disabled={busy} onClick={settleDeliver}>
-                    <Gift className="size-4" />Close complimentary bill · {cur()}0
-                  </Button>
-                ) : sheetNc ? (
-                  <div className="space-y-1.5">
-                    <p className="text-xs font-medium text-amber-800">Complimentary (no charge) - who authorized?</p>
-                    <div className="flex gap-1.5">
-                      <select className={inputCls + " !w-28 !py-1 text-xs"} value={ncBy} onChange={(e) => setNcBy(e.target.value)}>
-                        {["Captain", "Chef", "Manager", "GM", "Management", "Owner"].map((w) => <option key={w}>{w}</option>)}
-                      </select>
-                      <input autoFocus className={inputCls + " !py-1 text-xs"} placeholder="Reference (birthday, complaint #, promo…)"
-                        value={ncNote} onChange={(e) => setNcNote(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && settleNc()} />
-                    </div>
-                    <div className="flex gap-1.5">
-                      <Button className="h-11 flex-1" disabled={busy} onClick={settleNc}>
-                        <Gift className="size-4" />Mark NC & close at {cur()}0
-                      </Button>
-                      <Button variant="ghost" className="h-11" onClick={() => setSheetNc(false)}>Back</Button>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <div className={cn("grid gap-1.5", posModes.length > 2 ? "grid-cols-3" : "grid-cols-2")}>
-                      {posModes.map((m) => (
-                        <Button key={m} className="h-12 justify-center text-base" disabled={busy} onClick={() => settle(m)}>{m}</Button>
-                      ))}
-                    </div>
-                    {detail.room ? (
-                      Number(rooms.find((r) => r.room === detail.room)?.room_charges_allowed ?? 1) === 0 ? (
-                        <p className="rounded-lg bg-rose-50 px-2 py-1.5 text-xs text-rose-800">
-                          {t("Room {n} cannot take room charges (set at check-in). Take payment here.", { n: detail.room.split("-").pop() || "" })}
-                        </p>
-                      ) : (
-                        <Button variant="outline" className="h-11 w-full" disabled={busy} onClick={settleDeliver}>
-                          <BedDouble className="size-4" />{t("Deliver and post to Room {n}", { n: detail.room.split("-").pop() || "" })}
-                        </Button>
-                      )
-                    ) : detail.order_type === "Dine In" && rooms.length > 0 && (
-                      <div className="flex gap-1.5">
-                        <RoomPicker rooms={rooms} value={postRoom} onChange={setPostRoom} onOpen={loadRooms}
-                          placeholder="Charge to a guest's room…" />
-                        <Button variant="outline" className="h-10 shrink-0" disabled={busy || !postRoom} onClick={chargeToRoom}>
-                          <BedDouble className="size-4" />Post
-                        </Button>
-                      </div>
-                    )}
-                    <Button variant="outline" className="h-11 w-full text-amber-700" disabled={busy} onClick={() => setSheetNc(true)}>
-                      <Gift className="size-4" />Complimentary — close at {cur()}0
-                    </Button>
-                  </>
-                )}
-              </div>
-            ) : (
-              <Button className="h-12 w-full text-base"
-                disabled={busy || (selected ? !detail : cart.length === 0)}
-                onClick={proceedToPay}>
-                <Wallet className="size-5" />
-                {selected && detail?.nc ? t("Close complimentary bill")
-                  : selected && detail?.room ? t("Settle / post to room") : t("Settle")}
-                <kbd className="rounded bg-white/20 px-1 text-[10px]">F4</kbd>
-              </Button>
-            )}
+            <Button className="h-14 w-full text-base font-semibold"
+              disabled={busy || (selected ? !detail : cart.length === 0)}
+              onClick={proceedToPay}>
+              <Wallet className="size-5" />
+              {selected && detail?.nc ? t("Close complimentary bill")
+                : selected && detail?.room ? t("Settle / post to room") : t("Settle")}
+              <span className="ms-auto tabular-nums opacity-90">{cur()}{inr2(grand)}</span>
+              <kbd className="rounded bg-white/20 px-1 text-[10px]">F4</kbd>
+            </Button>
           </div>
         </div>
       </div>
+
+      {settling && selected && detail && (
+        <SettleSheet
+          subtitle={orderLabel(detail)}
+          grandLabel={`${cur()}${inr2(grand)}`}
+          zeroLabel={`${cur()}0`}
+          modes={posModes}
+          busy={busy}
+          nc={!!detail.nc}
+          room={detail.room}
+          orderType={detail.order_type}
+          rooms={rooms}
+          postRoom={postRoom}
+          onPostRoom={setPostRoom}
+          onLoadRooms={loadRooms}
+          sheetNc={sheetNc}
+          ncBy={ncBy}
+          ncNote={ncNote}
+          onNcBy={setNcBy}
+          onNcNote={setNcNote}
+          onSheetNc={setSheetNc}
+          onSettle={settle}
+          onSettleDeliver={settleDeliver}
+          onChargeToRoom={chargeToRoom}
+          onSettleNc={settleNc}
+          onClose={() => { setSettling(false); setSheetNc(false) }}
+        />
+      )}
 
       {/* phone: the bill's essentials ride along on the other panes */}
       {mobilePane !== "bill" && (cart.length > 0 || selected) && (
@@ -1718,16 +1699,18 @@ function VegMark({ veg }: { veg: number }) {
 function MenuCard({ it, onAdd }: { it: MenuItem; onAdd: () => void }) {
   return (
     <button onClick={onAdd}
-      className="flex min-h-[4.25rem] flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white text-left transition hover:border-brand-400 hover:shadow-sm active:scale-[0.98]">
-      {it.image && <img src={it.image} alt="" className="h-20 w-full object-cover" />}
-      <div className="flex flex-1 flex-col justify-between p-2.5">
-        <div className="flex items-center gap-1.5">
+      className="flex min-h-[5.75rem] flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white text-left shadow-sm transition hover:border-brand-400 hover:shadow-md active:scale-[0.98]">
+      {it.image && <img src={it.image} alt="" className="h-24 w-full object-cover" />}
+      <div className="flex flex-1 flex-col justify-between gap-2 p-3">
+        <div className="flex items-start gap-2">
           <VegMark veg={it.is_veg} />
-          <span className="truncate text-sm font-medium">{it.item_name}</span>
+          <span className="line-clamp-2 text-[15px] font-semibold leading-snug text-zinc-900">{it.item_name}</span>
         </div>
-        <div className="mt-1 flex items-center justify-between">
-          <span className="text-sm font-bold tabular-nums text-zinc-800">{cur()}{inr(it.price)}</span>
-          <Plus className="size-4 text-brand-600" />
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-base font-bold tabular-nums text-zinc-800">{cur()}{inr(it.price)}</span>
+          <span className="grid size-8 place-items-center rounded-full bg-brand-50 text-brand-700">
+            <Plus className="size-4" />
+          </span>
         </div>
       </div>
     </button>
