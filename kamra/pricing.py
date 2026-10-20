@@ -108,7 +108,14 @@ def occupancy_rate(rt, adults: int, children: int, date=None,
 	adults = max(1, int(adults or 1))
 	children = int(children or 0)
 
-	small = _small_group_rate(rt, adults, date) if allow_small_group else None
+	# Where children fill the base occupancy alongside adults, they also
+	# decide whether the party is a small group: four adults and two children
+	# are six guests, not a party of four with two extras.
+	counts_children = bool(rt.get("children_within_base_occupancy"))
+	guests = adults + children if counts_children else adults
+	small = _small_group_rate(rt, guests, date) if allow_small_group else None
+	if small is not None and counts_children:
+		return small  # every guest, child or adult, is in the per-head price
 	if small is not None:
 		rate = small
 	elif adults == 1 and rt.single_occupancy_price:
@@ -147,6 +154,38 @@ def _child_charge(rt, adults: int, children: int,
 	# adults take the base occupancy first; children fill what is left
 	free_seats = max(0, base - adults)
 	return max(0, children - free_seats) * per_child
+
+
+def party_by_age(rt, adults: int, child_ages) -> tuple[int, int, int]:
+	"""Split a party's children by the room type's age bands.
+
+	Returns (adults, children, infants). A child at or under `free_child_age`
+	is an infant: free, and not counted toward the price tier or the room's
+	capacity. Above `child_age_limit` a child is charged as an adult.
+	"""
+	free_age = rt.get("free_child_age")
+	free_age = 5 if free_age is None else int(free_age)
+	limit = rt.get("child_age_limit")
+	limit = 11 if limit is None else int(limit)
+	ages = [int(a) for a in (child_ages or []) if str(a).strip() != ""]
+	infants = sum(1 for a in ages if a <= free_age)
+	older = sum(1 for a in ages if a > limit)
+	return (int(adults or 0) + older, len(ages) - infants - older, infants)
+
+
+def capacity_overflow(cap, adults: int, children: int,
+                      extra_guests: int = 0) -> tuple[int, int]:
+	"""(guests above what the room sleeps, extra guests it may take).
+
+	Guests above capacity arrive either as extra guests on top of a full room
+	or, from older bookings and API callers, counted inside adults or
+	children - never both, so the two are not added.
+	"""
+	cap_a = int(cap.get("adults_capacity") or 0)
+	cap_c = int(cap.get("children_capacity") or 0)
+	overflow = ((max(0, int(adults or 0) - cap_a) if cap_a else 0)
+	            + (max(0, int(children or 0) - cap_c) if cap_c else 0))
+	return max(int(extra_guests or 0), overflow), int(cap.get("max_extra_beds") or 0)
 
 
 def forecast_occupancy(property: str, date,
@@ -306,8 +345,9 @@ def stay_season_rules(property: str, check_in, check_out,
 	the date, so one record covers the whole rule rather than a separate
 	calendar nobody remembers to update.
 
-	Returns the longest minimum stay any covered night asks for, and whether
-	any of them is non-refundable.
+	Returns the longest minimum stay any covered night asks for, whether any
+	of them is non-refundable or wants full payment on booking, whether one
+	switches the small-group rate off, and the holiday the stay touches.
 	"""
 	nights = max(1, int(date_diff(check_out, check_in) or 0))
 	seasons = frappe.get_all(
@@ -317,8 +357,11 @@ def stay_season_rules(property: str, check_in, check_out,
 		         "end_date": (">=", check_in),
 		         "room_type": ("in", [room_type, "", None])},
 		fields=["season_name", "start_date", "end_date", "days_of_week",
-		        "minimum_nights", "non_refundable"])
+		        "minimum_nights", "non_refundable", "full_payment",
+		        "no_small_group", "is_holiday"])
 	min_nights, non_refundable, named = 0, False, None
+	full_payment = no_small_group = False
+	holiday = None
 	for i in range(nights):
 		date = add_days(check_in, i)
 		day_abbr = getdate(date).strftime("%a").lower()
@@ -331,8 +374,14 @@ def stay_season_rules(property: str, check_in, check_out,
 				min_nights, named = int(s.minimum_nights), s.season_name
 			if s.non_refundable:
 				non_refundable = True
+			full_payment = full_payment or bool(s.full_payment)
+			no_small_group = no_small_group or bool(s.no_small_group)
+			if s.is_holiday and not holiday:
+				holiday = s.season_name
 	return {"minimum_nights": min_nights, "non_refundable": non_refundable,
-	        "season": named, "nights": nights}
+	        "season": named, "nights": nights, "full_payment": full_payment,
+	        "no_small_group": no_small_group, "is_holiday": bool(holiday),
+	        "holiday": holiday}
 
 
 def validate_voucher(property: str, voucher_code: str, nights: int,
@@ -459,6 +508,11 @@ def quote(
 	rt = frappe.get_doc("Room Type", room_type)
 	inclusive = rates_include_tax(property)
 	small_ok = small_group_allows_stay(rt, check_in_date, check_out_date)
+	# holiday dates can charge a small party the house rate, as a weekend does
+	stay_rules = stay_season_rules(property, check_in_date, check_out_date,
+	                               room_type)
+	if stay_rules["no_small_group"]:
+		small_ok = False
 
 	nightly = []
 	room_total = Decimal(0)
@@ -692,5 +746,11 @@ def quote(
 		},
 		"currency": prop.get("currency") or "INR",
 		"quote_version": 1,
+		# the date rules this stay runs into, so a booking page or an agent
+		# can say why a stay needs two nights or full payment
+		"stay_rules": {k: stay_rules[k] for k in (
+			"minimum_nights", "season", "non_refundable", "full_payment",
+			"is_holiday", "holiday")},
+		"is_holiday": stay_rules["is_holiday"],
 		"quoted_at": str(now_datetime()),
 	}

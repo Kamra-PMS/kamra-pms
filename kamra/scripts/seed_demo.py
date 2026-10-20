@@ -503,8 +503,8 @@ def heal_seed_defaults(properties=DEMO_PROPERTIES) -> int:
 			else:
 				blank = f"ifnull({col}, '') = ''"
 			for prop in targets:
-				frappe.db.sql(
-					f"update `tab{dt}` set {col} = %s where `{key}` = %s and {blank}",  # nosemgrep: frappe-sql-format-injection -- doctype / fieldnames come from DocType meta, not user input
+				frappe.db.sql(  # nosemgrep: frappe-sql-format-injection -- doctype and fieldnames come from DocType meta, not user input; values are bound
+					f"update `tab{dt}` set {col} = %s where `{key}` = %s and {blank}",
 					(val, prop))
 				healed += frappe.db._cursor.rowcount if getattr(frappe.db, "_cursor", None) else 0
 	frappe.clear_cache()

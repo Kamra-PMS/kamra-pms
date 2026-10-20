@@ -277,6 +277,10 @@ MODULES: tuple[Module, ...] = (
 				S("pos_print_void_slips", "Print void slips in the kitchen", "check", 1,
 				  hint="A line voided or an order cancelled after its KOT was sent prints a VOID "
 				       "slip on the kitchen printer that had it, so the cook stops."),
+				S("pos_unfired_alert_min", "Flag a bill not sent to the kitchen after", "number", 15,
+				  min=1, max=240, unit="min",
+				  hint="A bill with items that nobody sent to the kitchen turns red on the till "
+				       "after this long, so a forgotten order gets sent or cancelled."),
 			)),
 			Section("tables", "Table reservations", "Which bookings show against a table on the POS floor.", (
 				S("pos_reservation_before_min", "Show a reservation from", "number", 60, min=0, max=480, unit="min before"),
@@ -433,6 +437,25 @@ def _kv_values(property: str) -> dict:
 			out[r.setting_key] = r.value
 	frappe.cache().hset(CACHE_KEY, property, out)
 	return out
+
+
+def read_kv(property: str, key: str, default=None):
+	"""A Property Setting value that is not a registry field (a structured
+	value like the Today layout). Cached with the registry values."""
+	val = _kv_values(property).get(key)
+	return default if val is None else val
+
+
+def write_kv(property: str, key: str, val):
+	"""The one writer of a Property Setting row. Callers check roles and
+	log the change; this stores the JSON value and nothing else. The
+	caller clears the cache (clear_cache) once it is done writing."""
+	name = frappe.db.get_value("Property Setting", {"property": property, "setting_key": key})
+	if name:
+		frappe.db.set_value("Property Setting", name, "value", json.dumps(val))
+	else:
+		frappe.get_doc({"doctype": "Property Setting", "property": property,
+		                "setting_key": key, "value": json.dumps(val)}).insert(ignore_permissions=True)
 
 
 def _turnover_name(property: str) -> str | None:
@@ -628,12 +651,7 @@ def save_settings(property: str, module: str, changes) -> dict:
 			tp.update(by_store["turnover"])
 			tp.save(ignore_permissions=True)
 	for key, val in (by_store.get("kv") or {}).items():
-		name = frappe.db.get_value("Property Setting", {"property": property, "setting_key": key})
-		if name:
-			frappe.db.set_value("Property Setting", name, "value", json.dumps(val))
-		else:
-			frappe.get_doc({"doctype": "Property Setting", "property": property,
-			                "setting_key": key, "value": json.dumps(val)}).insert(ignore_permissions=True)
+		write_kv(property, key, val)
 	clear_cache(property)
 
 	after_all = _values(property, mod)

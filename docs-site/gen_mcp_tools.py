@@ -82,7 +82,7 @@ def main() -> None:
 				lines.append("Mutating - logged to the activity ledger.")
 			lines.append("")
 	text = _ascii_dashes("\n".join(lines).rstrip() + "\n")
-	with open(OUT, "w", encoding="utf-8") as f:
+	with open(OUT, "w", encoding="utf-8") as f:  # nosemgrep: frappe-security-file-traversal -- OUT is a fixed path in the docs folder; docs build script, not a request handler
 		f.write(text)
 	print(f"wrote {OUT} ({TOOL_COUNT} tools)")
 
