@@ -218,7 +218,7 @@ function InHouseTable({
   today?: string
 }) {
   const { t } = useT()
-  const navigate = useNavigate, useLocation()
+  const navigate = useNavigate()
   if (!rows.length) {
     return (
       <p className="px-1 py-3 text-sm text-zinc-400">
@@ -297,7 +297,7 @@ function InHouseTable({
 export default function Today() {
   const { t } = useT()
   const { refreshKey } = useOutletContext<ShellContext>()
-  const navigate = useNavigate, useLocation()
+  const navigate = useNavigate()
   const [snap, setSnap] = useState<Snapshot | null>(null)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [kpi, setKpi] = useState<any>(null)
