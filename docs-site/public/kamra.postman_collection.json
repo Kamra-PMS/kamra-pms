@@ -5836,7 +5836,7 @@
         "kamra.pos.confirm_order"
        ]
       },
-      "description": "Captain confirmation - a guest's QR order isn't fired to the kitchen\nuntil a captain has vetted it.",
+      "description": "Captain confirmation for a Placed order that has no captain yet\n(legacy guest QR). Sets the captain and moves Placed -> Confirmed.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"order\": \"ORD-2026-00001\"\n}",
@@ -6469,6 +6469,85 @@
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\",\n  \"outlet\": \"Your Property-Restaurant\",\n  \"echo\": 0\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "name": "Rates (rate calendar, what moves a rate)",
+   "item": [
+    {
+     "name": "rate_calendar",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.rates.rate_calendar",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.rates.rate_calendar"
+       ]
+      },
+      "description": "Every room type's rate for each of the next `days` dates, with what\nmoved it. A room type's own days are read with the same functions the\nquote uses; nothing here sets a price.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"from_date\": \"2026-08-01\",\n  \"days\": 14,\n  \"adults\": 2,\n  \"children\": 0\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "rate_options",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.rates.rate_options",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.rates.rate_options"
+       ]
+      },
+      "description": "For the booking dialog: this stay night by night (BAR, season,\ndemand), the whole stay under each active rate plan against the plain\nrate, and what the voucher would do. Each total is a real quote.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"room_type\": \"Your Property-DLX\",\n  \"check_in_date\": \"2026-08-01\",\n  \"check_out_date\": \"2026-08-03\",\n  \"adults\": 2,\n  \"children\": 0\n}",
        "options": {
         "raw": {
          "language": "json"

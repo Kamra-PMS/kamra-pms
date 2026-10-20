@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function - the same governed layer
-the UI and the AI use. **370 endpoints**, generated from the source
+the UI and the AI use. **372 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -2218,8 +2218,8 @@ start as New (a later fire_kot sends them to the kitchen).
 
 **POST**
 
-Captain confirmation - a guest's QR order isn't fired to the kitchen
-until a captain has vetted it.
+Captain confirmation for a Placed order that has no captain yet
+(legacy guest QR). Sets the captain and moves Placed -> Confirmed.
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -2481,6 +2481,46 @@ times how long it takes to arrive, which proves live updates work.
 | `property` | yes |  |
 | `outlet` | no | `None` |
 | `echo` | no | `0` |
+
+
+## Rates (rate calendar, what moves a rate)
+
+> These explain a price; they never set one. The quote is the only source of a charge.
+
+### `kamra.rates.rate_calendar`
+
+**GET/POST**
+
+Every room type's rate for each of the next `days` dates, with what
+moved it. A room type's own days are read with the same functions the
+quote uses; nothing here sets a price.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `from_date` | no | `None` |
+| `days` | no | `14` |
+| `adults` | no | `2` |
+| `children` | no | `0` |
+
+### `kamra.rates.rate_options`
+
+**GET/POST**
+
+For the booking dialog: this stay night by night (BAR, season,
+demand), the whole stay under each active rate plan against the plain
+rate, and what the voucher would do. Each total is a real quote.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `room_type` | yes |  |
+| `check_in_date` | yes |  |
+| `check_out_date` | yes |  |
+| `adults` | no | `2` |
+| `children` | no | `0` |
+| `meal_plan` | no | `None` |
+| `voucher_code` | no | `None` |
 
 
 ## Kitchen printers (routing, print stations, print queue)
@@ -3687,6 +3727,7 @@ Create or update one ingredient.
 | `uom` | yes |  |
 | `category` | no | `None` |
 | `cost_per_unit` | no | `0` |
+| `gst_rate` | no | `None` |
 | `is_active` | no | `1` |
 | `name` | no | `None` |
 

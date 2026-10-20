@@ -40,6 +40,7 @@ MODULES = [
     ("api", "Core (front desk, folios, guests, rooms)", ""),
     ("booking_requests", "Request to Book (accept / decline)", ""),
     ("pos", "Restaurant POS & kitchen", ""),
+    ("rates", "Rates (rate calendar, what moves a rate)", "These explain a price; they never set one. The quote is the only source of a charge."),
     ("printing", "Kitchen printers (routing, print stations, print queue)", ""),
     ("laundry", "Laundry (housekeeping)", ""),
     ("banquet", "Banquets (functions, quotations, event orders)", ""),
