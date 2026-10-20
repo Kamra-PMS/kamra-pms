@@ -1775,5 +1775,20 @@
   "Shared playground, not your hotel. Data is wiped every night.": "ملعب مشترك، ليس فندقك. تُمسح البيانات كل ليلة.",
   "Room {room}": "غرفة {room}",
   "No room yet": "لا غرفة بعد",
-  "Leaves {when}": "يغادر {when}"
+  "Leaves {when}": "يغادر {when}",
+  "Room {room} on {date}: out {etd} ({out}) / in {eta} ({in})": "الغرفة {room} في {date}: مغادرة {etd} ({out}) / وصول {eta} ({in})",
+  "Click a bar to move the room, change dates, check in or check out. With a mouse, drag a bar to another room or drag its ends to change dates.": "انقر شريطاً لنقل الغرفة أو تغيير التواريخ أو تسجيل الوصول أو المغادرة. بالفأرة، اسحب الشريط إلى غرفة أخرى أو اسحب طرفيه لتغيير التواريخ.",
+  "Click a bar to move the room, change dates, check in or check out.": "انقر شريطاً لنقل الغرفة أو تغيير التواريخ أو تسجيل الوصول أو المغادرة.",
+  "Open reservation": "فتح الحجز",
+  "Stay actions": "إجراءات الإقامة",
+  "Change dates": "تغيير التواريخ",
+  "Check-in opens on the arrival date ({date}).": "يتاح تسجيل الوصول في تاريخ الوصول ({date}).",
+  "Pick the new dates.": "اختر التواريخ الجديدة.",
+  "Check-out must be after check-in.": "يجب أن يكون تاريخ المغادرة بعد تاريخ الوصول.",
+  "{n} nights. No change to the price.": "{n} ليالٍ. لا تغيير في السعر.",
+  "{n} nights. Stay total {from} to {to} (+{amt}).": "{n} ليالٍ. إجمالي الإقامة من {from} إلى {to} (+{amt}).",
+  "{n} nights. Stay total {from} to {to} (-{amt}).": "{n} ليالٍ. إجمالي الإقامة من {from} إلى {to} (-{amt}).",
+  "Confirm new dates": "تأكيد التواريخ الجديدة",
+  "Confirm new dates and price": "تأكيد التواريخ والسعر الجديد",
+  "Room {room} is booked for these dates.": "الغرفة {room} محجوزة في هذه التواريخ."
 }

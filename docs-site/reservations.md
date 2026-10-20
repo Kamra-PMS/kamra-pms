@@ -150,16 +150,36 @@ move stays around.
 
 ![The tape chart for two weeks: rooms grouped by type, guest bars, and the position row with rooms sold per day](/img/reservations/tape-chart.png)
 
-1. Click a guest's bar.
-2. To move rooms, pick the new **Room**. The list shows every room, free
-   or occupied for the stay's dates; ⇅ marks another room type. Click
-   **Move room**.
-3. To change dates, edit **Check-in** or **Check-out** and click **Update
-   stay**. If the price changes, Kamra asks you to confirm it.
-4. To record when the guest arrives and leaves, set the times under
+1. Click (or tap) a guest's bar. A panel opens with the room, the dates
+   and the actions for that stay.
+2. **Move room** opens the room picker: choose a room, check the price
+   line, pick a reason and click **Move to** the room. See
+   [Move a guest to another room](/front-desk#move-a-guest-to-another-room).
+3. **Change dates** shows the check-in and check-out dates. Change them
+   and Kamra shows the new number of nights and the new stay total. Click
+   **Confirm new dates** (or **Confirm new dates and price** when the
+   total changes). Once the guest is checked in, only the check-out date
+   can change.
+4. **Check in** shows on the arrival day and opens the guided check-in.
+   **Check out** shows for a checked-in guest and opens the guided
+   check-out.
+5. To record when the guest arrives and leaves, set the times under
    **Arrival / departure times (ETA · ETD)** and click **Set**.
+6. **Open reservation** opens the booking in the reservations list.
 
-![The panel that opens from a tape chart bar: room, check-in and check-out dates, and arrival and departure times](/img/reservations/tape-bar.png)
+With a mouse you can also drag:
+
+- Drag a bar onto another room's row. The room picker opens with that
+  room chosen, so you see the price and pick a reason before the move.
+- Drag a bar sideways, or drag its start or end edge, to change the
+  dates. The panel opens with the new dates filled in and the new price;
+  nothing changes until you confirm.
+
+Drag does not work with touch. On a tablet, tap the bar and use the
+buttons. Kamra checks every change on the server: a room that is taken,
+or a date change that overlaps another booking, is refused.
+
+![The panel that opens from a tape chart bar: the stay's room and dates, the Move room, Change dates and Check out buttons, and arrival and departure times](/img/reservations/tape-bar.png)
 
 What else is on the tape chart:
 
