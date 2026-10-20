@@ -322,7 +322,8 @@ MODULES: tuple[Module, ...] = (
 	Module(
 		"finance", "Finance", "Room tax, fees, company credit and cashier controls.",
 		editors=("Hotel Admin", "Finance"), toggle=True,
-		related=(("Currency desk", "/cashier/fx"), ("Ledgers", "/ledgers")),
+		related=(("Currency desk", "/cashier/fx"), ("Ledgers", "/ledgers"),
+		         ("Transaction codes", "/transaction-codes"), ("Reason codes", "/reason-codes")),
 		sections=(
 			Section("tax", "Room tax", "Tax on the room rate. Outlet and service rates come from the country pack.", (
 				S("gst_mode", "Tax mode", "select", "Slab", P, options=("Slab", "Fixed"),

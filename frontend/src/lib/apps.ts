@@ -67,6 +67,8 @@ import {
   MoonStar,
   FileUp,
   DoorOpen,
+  Hash,
+  ListOrdered,
 } from "lucide-react"
 
 /** "Night audit" is what most hotels call End of Day; EOD is what they type. */
@@ -270,6 +272,12 @@ export const APPS: AppDef[] = [
       { to: "/laundry", label: "Laundry", icon: Shirt, group: "Billing" },
       // Books
       { to: "/ledgers", label: "Ledgers", icon: BookOpen, group: "Books" },
+      { to: "/transaction-codes", label: "Transaction Codes", icon: Hash, group: "Books",
+        keywords: ["Txn codes", "Revenue group", "Chart of accounts"],
+        roles: ["Finance", "Hotel Admin", "System Manager", "Administrator"] },
+      { to: "/reason-codes", label: "Reason Codes", icon: ListOrdered, group: "Books",
+        keywords: ["Void reason", "Refund reason", "Allowance"],
+        roles: ["Finance", "Hotel Admin", "System Manager", "Administrator"] },
       { to: "/reports", label: "Reports", icon: ChartLine, group: "Books" },
       { to: "/voids-allowances", label: "Voids & Allowances", icon: FileX2, group: "Books",
         roles: ["Finance", "Hotel Admin", "System Manager", "Administrator"] },
@@ -277,7 +285,10 @@ export const APPS: AppDef[] = [
       { to: "/settings/finance", label: "Settings", icon: SettingsIcon, group: "Books",
         roles: ["Finance", "Hotel Admin", "System Manager", "Administrator"] },
     ],
-    extraPrefixes: ["/billing/", "/cashier/", "/ledgers", "/folio-history", "/end-of-day", "/night-audit"],
+    extraPrefixes: [
+      "/billing/", "/cashier/", "/ledgers", "/folio-history",
+      "/end-of-day", "/night-audit", "/reason-codes", "/transaction-codes",
+    ],
   },
   {
     id: "booking-engine",

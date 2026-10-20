@@ -312,6 +312,20 @@ only.
 Every charge, payment, void, transfer and allowance writes a ledger entry.
 A void or a move does not delete history: it posts a reversal.
 
+## Transaction codes and reason codes
+
+**Finance → Transaction Codes** is the chart of folio charge and payment
+codes (revenue group, default tax, alcohol flag). Blank property means every
+property. Kamra seeds defaults; add a code only when your books need it.
+Disable instead of deleting when the journal already used it.
+
+**Finance → Reason Codes** holds coded reasons for voids, refunds,
+allowances, rate changes and paid-outs. Defaults ship with Kamra; add
+property-specific codes here. A code marked **Requires supervisor** needs
+Finance or Hotel Admin when used.
+
+Both screens are also linked from **Settings → Finance**.
+
 ## Review voids and allowances
 
 **Finance → Voids & Allowances** (also linked from **Finance → Reports**)
