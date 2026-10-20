@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function - the same governed layer
-the UI and the AI use. **370 endpoints**, generated from the source
+the UI and the AI use. **379 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -2218,8 +2218,8 @@ start as New (a later fire_kot sends them to the kitchen).
 
 **POST**
 
-Captain confirmation - a guest's QR order isn't fired to the kitchen
-until a captain has vetted it.
+Captain confirmation for a Placed order that has no captain yet
+(legacy guest QR). Sets the captain and moves Placed -> Confirmed.
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -3687,6 +3687,7 @@ Create or update one ingredient.
 | `uom` | yes |  |
 | `category` | no | `None` |
 | `cost_per_unit` | no | `0` |
+| `gst_rate` | no | `None` |
 | `is_active` | no | `1` |
 | `name` | no | `None` |
 
@@ -4533,6 +4534,125 @@ Switch one module on or off for the property.
 | `property` | yes |  |
 | `module` | yes |  |
 | `enabled` | yes |  |
+
+
+## Rooms (room board, room detail and history, insights)
+
+> Read-only. Room changes go through set_housekeeping_status, the room block endpoints, check_in / check_out and move_reservation.
+
+### `kamra.rooms.rooms_board`
+
+**GET/POST**
+
+Every room of the property as a tile: housekeeping status, who is in
+it, who arrives or leaves today, whether it is out of service, and its
+open housekeeping task. One call, a fixed number of queries.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+
+### `kamra.rooms.room_detail`
+
+**GET/POST**
+
+Everything about one room right now: what it is, its status, who is
+in it (with the balance), who arrives next, whether it is held out of
+service, and its open housekeeping work.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `room` | yes |  |
+
+### `kamra.rooms.room_availability`
+
+**GET/POST**
+
+This room, night by night: booked (by whom), held out of service, or
+free. Same overlap rules as the tape chart and the block guard (the
+check-out night is free; a day-use stay holds its own date).
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `room` | yes |  |
+| `start_date` | no | `None` |
+| `days` | no | `14` |
+
+### `kamra.rooms.room_history`
+
+**GET/POST**
+
+Who stayed in this room lately (nights, room revenue), who cleaned
+and checked it and when, its service tickets, and the guests moved in
+or out of it.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `room` | yes |  |
+| `limit` | no | `15` |
+
+### `kamra.rooms.room_insights`
+
+**GET/POST**
+
+Per-room numbers for the last `days` nights (7, 30, 90, 180 or 365,
+up to yesterday): room nights sold and occupancy, room revenue posted to
+folios, out-of-service nights, and how long cleans take. Cached for a
+few minutes (refresh=1 recomputes); one query per measure, never one
+per room.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `days` | no | `30` |
+| `refresh` | no | `0` |
+
+
+## Today layout (per-user widgets, hotel default)
+
+### `kamra.today_layout.get_today_layout`
+
+**GET/POST**
+
+The layout this person sees on Today, and where it came from
+("user", "property" or "default").
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | no | `None` |
+
+### `kamra.today_layout.save_today_layout`
+
+**POST**
+
+Save this person's own Today layout.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `layout` | yes |  |
+| `property` | no | `None` |
+
+### `kamra.today_layout.reset_today_layout`
+
+**POST**
+
+Drop this person's own layout: back to the hotel default.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | no | `None` |
+
+### `kamra.today_layout.save_today_layout_default`
+
+**POST** · roles: `Hotel Admin`
+
+Hotel Admin: the layout everyone at this property sees until they
+customise their own. Pass no layout to go back to the built-in one.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `layout` | no | `None` |
 
 
 ## Desk procedures (check-out, check-in and other SOPs)
