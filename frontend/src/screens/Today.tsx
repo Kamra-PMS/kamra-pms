@@ -646,14 +646,18 @@ export default function Today() {
           label={t("Revenue")}
           value={`${cur()}${inr0(revenue)}`}
           sub={
-            roomRevenueToday > 0 || revpar > 0
-              ? t("RevPAR {amount} · room {room}", {
-                  amount: `${cur()}${inr0(revpar)}`,
-                  room: `${cur()}${inr0(roomRevenueToday)}`,
-                })
-              : t("RevPAR {amount} · no room charges posted today", {
-                  amount: `${cur()}${inr0(revpar)}`,
-                })
+            roomRevenueToday > 0 || revpar > 0 ? (
+              <>
+                <div>{t("RevPAR {amount}", { amount: `${cur()}${inr0(revpar)}` })}</div>
+                {roomRevenueToday > 0 ? (
+                  <div>{t("Room {amount}", { amount: `${cur()}${inr0(roomRevenueToday)}` })}</div>
+                ) : null}
+              </>
+            ) : (
+              t("RevPAR {amount} · no room charges posted today", {
+                amount: `${cur()}${inr0(revpar)}`,
+              })
+            )
           }
           spark={mkTrend(revenue)}
         />
