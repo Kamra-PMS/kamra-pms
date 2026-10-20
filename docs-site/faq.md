@@ -46,6 +46,14 @@ as permission-checked users and cannot go around them.
 Frappe **v16** (with the `payments` app). Install from the `main` branch
 for stable; `develop` is the nightly channel.
 
+## How do I install from the Frappe Cloud Marketplace?
+
+Create a **private** Frappe v16 bench (not a shared trial site), add
+[Kamra from the marketplace](https://frappecloud.com/marketplace/apps/kamra),
+deploy, install it on the site, then open `/kamra/setup`. Step-by-step:
+[Install via Frappe Cloud](/self-hosting/frappe-cloud). Prefer your own
+VPS? Use the [self-hosting guides](/self-hosting/) — same software.
+
 ## Does Marketplace Kamra include ERPNext or HR?
 
 **No.** Kamra installs with `payments` only. Company books (ERPNext) and

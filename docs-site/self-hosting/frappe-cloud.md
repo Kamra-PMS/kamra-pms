@@ -4,6 +4,13 @@
 framework's makers — Marketplace installs, backups and updates handled for
 you.
 
+Kamra is **live** on the marketplace:
+[frappecloud.com/marketplace/apps/kamra](https://frappecloud.com/marketplace/apps/kamra).
+Stable builds track the GitHub `main` branch (current release
+[v2.6.16](https://github.com/Kamra-PMS/kamra-pms/releases/tag/v2.6.16)).
+A shorter get-started page also lives on the product site:
+[kamrapms.com/frappe-cloud](https://kamrapms.com/frappe-cloud/).
+
 ::: danger Shared trial sites cannot install Kamra
 You need a **private bench** (payment method on file; Frappe’s USD 25+
 site plans). Shared / trial sites only install featured apps — Kamra will
@@ -59,6 +66,19 @@ Locally (from a clone of `main`):
 
 ```bash
 python kamra/scripts/marketplace_install_check.py
+```
+
+## Bench / registry installs
+
+Outside Frappe Cloud, `bench get-app` and Pilot read the
+[frappe/marketplace](https://github.com/frappe/marketplace) registry
+(`apps/kamra.json`). That entry should match the same stable tag as the
+Cloud listing. Self-host from git without the registry:
+
+```bash
+bench get-app https://github.com/Kamra-PMS/kamra-pms --branch main
+bench --site <site> install-app payments
+bench --site <site> install-app kamra
 ```
 
 ## Optional: ERPNext and Frappe HR on the same site

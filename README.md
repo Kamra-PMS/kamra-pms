@@ -54,9 +54,12 @@
 
 ## What's new
 
-Latest release: **[v2.6.15](https://github.com/Kamra-PMS/kamra-pms/releases/latest)**
-(`develop` ships nightly).
+Latest release: **[v2.6.16](https://github.com/Kamra-PMS/kamra-pms/releases/latest)**
+(`develop` ships nightly). Also on the
+[Frappe Cloud Marketplace](https://frappecloud.com/marketplace/apps/kamra).
 
+- **2.6.16** — pet charge on booking pages, desk and folio; extra guests
+  above capacity billed as their own folio line
 - **2.6.15** — End of Day night-audit checklist with a saved report pack and a
   Night Auditor role; corporate guests settle their own extras; POS bills
   can't close unpaid; advance deposits clear at check-in

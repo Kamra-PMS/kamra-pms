@@ -84,7 +84,7 @@ Gemini, Groq, OpenRouter, Ollama, Azure, or Custom) → paste the key →
 
 ## What work it can do
 
-Kamra ships **governed tools** on MCP (see the
+Kamra ships **101 governed tools** on MCP (see the
 [tool reference](/mcp-tools)). Visibility is the intersection of the
 connected user's **roles** and the property's **enabled modules** — a
 house without F&B never sees POS tools; Front Desk still cannot change

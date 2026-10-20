@@ -58,8 +58,10 @@ and no per-room fees.
   try the [live demo](/demo). It's a sample hotel with a sign-in button for
   each role.
 - **You're installing it:** the [Quickstart](/quickstart) runs Kamra in
-  Docker on your laptop; [Self-hosting](/self-hosting/) covers servers, and
-  the [Go-live checklist](/go-live) covers the first day with real guests.
+  Docker on your laptop; [Self-hosting](/self-hosting/) covers servers;
+  [Frappe Cloud](/self-hosting/frappe-cloud) is the managed marketplace
+  path. The [Go-live checklist](/go-live) covers the first day with real
+  guests.
 - **You're connecting software:** see [Connect your AI](/ai-and-mcp), the
   [MCP tools](/mcp-tools) and the [REST API](/api).
 
