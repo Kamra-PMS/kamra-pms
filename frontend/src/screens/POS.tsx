@@ -329,10 +329,12 @@ export default function POS() {
     setGuests(""); setCustName(""); setCustPhone(""); setCustAddr("")
     setDraftGuest(null)
     if (atTable) setOrderType("Dine In")
+    setTablesOpen(false)
     setMobilePane("menu") // a fresh bill starts at the menu on a phone
   }
   async function openTab(name: string, opts?: { popup?: boolean }) {
     setSelected(name); resetPanel()
+    setTablesOpen(false)
     setMobilePane("bill") // an existing bill opens on the bill on a phone
     if (opts?.popup) setBillsPopupOpen(true)
     const d = await call<Detail>("kamra.pos.order_detail", { order: name })
@@ -730,9 +732,8 @@ export default function POS() {
   const billItemCount = (selected && detail ? detail.items.filter((i) => !i.voided).length : 0)
     + cart.reduce((s, l) => s + l.qty, 0)
 
-  /* The tables / open bills / recent stack has three homes: a fixed left
-     column on desktop, a slide-in drawer on tablets, its own pane on phones.
-     One JSX tree, three placements. */
+  /* Tables / open bills / recent: drawer on tablet+desktop, own pane on phones.
+     Menu + bill own the main row so items stay visible (POSNext-style). */
   const tablesPane = (
     <>
             <div className="shrink-0 rounded-xl border border-zinc-200 bg-white p-3">
@@ -1039,9 +1040,14 @@ export default function POS() {
           ))}
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <button onClick={() => setTablesOpen(true)}
-            className="hidden items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-2.5 py-2 text-xs font-semibold text-zinc-600 hover:bg-zinc-50 md:inline-flex lg:hidden">
+          <button type="button" onClick={() => setTablesOpen(true)}
+            className="hidden items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-2.5 py-2 text-xs font-semibold text-zinc-600 hover:bg-zinc-50 md:inline-flex">
             <LayoutGrid className="size-4" />{t("Tables")}
+            {tables.filter((x) => x.state !== "vacant" && x.state !== "cleaning").length > 0 && (
+              <span className="rounded-full bg-brand-600 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                {tables.filter((x) => x.state !== "vacant" && x.state !== "cleaning").length}
+              </span>
+            )}
           </button>
           {floorOn && (
             <button type="button" onClick={exitFloor}
@@ -1160,44 +1166,77 @@ export default function POS() {
       )}
 
       <div className="flex min-h-0 flex-1 gap-3">
-        {/* ── left: tables + recent (desktop column) ── */}
-        <div className="hidden min-h-0 w-[19rem] shrink-0 flex-col gap-2 overflow-y-auto lg:flex xl:w-[21rem]">
-          {tablesPane}
-        </div>
-        {/* tables as their own pane on phones */}
+        {/* tables: phone pane only — desktop uses the header drawer */}
         <div className={cn("min-h-0 w-full flex-col gap-2 overflow-y-auto md:hidden",
           mobilePane === "tables" ? "flex" : "hidden")}>
           {tablesPane}
         </div>
 
-        {/* ── centre: menu ── */}
-        <div className={cn("min-h-0 min-w-0 flex-1 md:overflow-y-auto",
-          mobilePane === "menu" ? "block" : "hidden md:block")}>
-            <div className="relative mb-2">
-              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-400" />
-              <input className={inputCls + " pl-9"} placeholder={t("Search menu items…")} value={query} onChange={(e) => setQuery(e.target.value)} />
-            </div>
-            <div className="mb-3 flex gap-1.5 overflow-x-auto pb-1">
-              {["All", ...cats.map((c) => c.category)].map((c) => (
-                <button key={c} onClick={() => { setCat(c); setQuery("") }}
-                  className={"shrink-0 rounded-full px-3 py-1 text-sm font-medium transition " +
-                    (cat === c && !query.trim() ? "bg-brand-600 text-white" : "bg-white text-zinc-600 ring-1 ring-zinc-200 hover:ring-brand-400")}>
-                  {c === "All" ? t("All") : c}
+        {/* ── menu: category rail + item grid (the long add-items surface) ── */}
+        <div className={cn(
+          "flex min-h-0 min-w-0 flex-1 overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm",
+          mobilePane === "menu" ? "flex" : "hidden md:flex",
+        )}>
+          {/* long side categories */}
+          <nav className="hidden w-[9.5rem] shrink-0 flex-col overflow-y-auto border-e border-zinc-100 bg-zinc-50/80 sm:flex lg:w-44" aria-label={t("Categories")}>
+            <p className="sticky top-0 z-10 border-b border-zinc-100 bg-zinc-50/95 px-3 py-2.5 text-[10px] font-bold uppercase tracking-wide text-zinc-400">
+              {t("Menu")}
+            </p>
+            {(["All", ...cats.map((c) => c.category)] as string[]).map((c) => {
+              const active = cat === c && !query.trim()
+              const count = c === "All" ? allItems.length : (cats.find((x) => x.category === c)?.items.length ?? 0)
+              return (
+                <button key={c} type="button" onClick={() => { setCat(c); setQuery("") }}
+                  className={cn(
+                    "flex items-center justify-between gap-2 border-b border-zinc-100/80 px-3 py-3 text-left text-sm transition",
+                    active
+                      ? "bg-brand-600 font-semibold text-white"
+                      : "font-medium text-zinc-700 hover:bg-white hover:text-brand-800",
+                  )}>
+                  <span className="min-w-0 truncate">{c === "All" ? t("All") : c}</span>
+                  <span className={cn("shrink-0 tabular-nums text-[11px]", active ? "text-white/80" : "text-zinc-400")}>
+                    {count}
+                  </span>
                 </button>
-              ))}
+              )
+            })}
+          </nav>
+
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+            <div className="shrink-0 space-y-2 border-b border-zinc-100 p-3">
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-400" />
+                <input className={inputCls + " h-11 pl-9 text-base"} placeholder={t("Search menu items…")}
+                  value={query} onChange={(e) => setQuery(e.target.value)} />
+              </div>
+              {/* phone: horizontal chips when the side rail is hidden */}
+              <div className="flex gap-1.5 overflow-x-auto pb-0.5 sm:hidden">
+                {["All", ...cats.map((c) => c.category)].map((c) => (
+                  <button key={c} type="button" onClick={() => { setCat(c); setQuery("") }}
+                    className={cn("shrink-0 rounded-full px-3 py-1.5 text-sm font-medium transition",
+                      cat === c && !query.trim()
+                        ? "bg-brand-600 text-white"
+                        : "bg-zinc-100 text-zinc-600")}>
+                    {c === "All" ? t("All") : c}
+                  </button>
+                ))}
+              </div>
             </div>
-            <div className="grid grid-cols-2 gap-2.5 sm:gap-3 xl:grid-cols-3 2xl:grid-cols-4">
-              {shownItems.map((it) => <MenuCard key={it.name} it={it} onAdd={() => addToCart(it)} />)}
-              {shownItems.length === 0 && (
-                <p className="col-span-full py-10 text-center text-sm text-zinc-400">{t("No matches.")}</p>
-              )}
+            <div className="min-h-0 flex-1 overflow-y-auto p-3">
+              <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3 xl:grid-cols-4 2xl:grid-cols-5">
+                {shownItems.map((it) => <MenuCard key={it.name} it={it} onAdd={() => addToCart(it)} />)}
+                {shownItems.length === 0 && (
+                  <p className="col-span-full py-16 text-center text-sm text-zinc-400">{t("No matches.")}</p>
+                )}
+              </div>
             </div>
+          </div>
         </div>
 
         {/* ── right: the bill ── */}
         <div className={cn(
-          "min-h-0 w-full flex-col rounded-xl border border-zinc-200 bg-white",
-          "md:w-[21rem] md:shrink-0 md:overflow-hidden xl:w-[24rem]",
+          "min-h-0 w-full flex-col rounded-2xl border border-zinc-200 bg-white shadow-sm",
+          "md:w-[20rem] md:shrink-0 md:overflow-hidden xl:w-[22rem]",
           mobilePane === "bill" ? "flex" : "hidden md:flex",
         )}>
           {/* zone 1: who / where — pinned above the items */}
@@ -1620,11 +1659,11 @@ export default function POS() {
         </div>
       )}
 
-      {/* tablet: tables drawer */}
+      {/* tables drawer — desktop/tablet; phones use the Tables pane */}
       {tablesOpen && (
-        <div className="fixed inset-0 z-40 hidden md:block lg:hidden">
-          <div className="absolute inset-0 bg-black/30" onClick={() => setTablesOpen(false)} />
-          <div className="absolute inset-y-0 left-0 flex w-[22rem] flex-col gap-2 overflow-y-auto bg-zinc-50 p-3 shadow-2xl">
+        <div className="fixed inset-0 z-40 hidden md:block">
+          <div className="absolute inset-0 bg-black/40 animate-fade-in" onClick={() => setTablesOpen(false)} />
+          <div className="absolute inset-y-0 left-0 flex w-[22rem] flex-col gap-2 overflow-y-auto border-e border-zinc-200 bg-zinc-50 p-3 shadow-2xl animate-sheet-in xl:w-[24rem]">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-bold text-zinc-700">{t("Tables & running bills")}</h2>
               <button className="rounded-md p-1.5 text-zinc-400 hover:text-zinc-700" aria-label={t("Close")}
@@ -1742,9 +1781,9 @@ function VegMark({ veg }: { veg: number }) {
 
 function MenuCard({ it, onAdd }: { it: MenuItem; onAdd: () => void }) {
   return (
-    <button onClick={onAdd}
-      className="flex min-h-[5.75rem] flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white text-left shadow-sm transition hover:border-brand-400 hover:shadow-md active:scale-[0.98]">
-      {it.image && <img src={it.image} alt="" className="h-24 w-full object-cover" />}
+    <button type="button" onClick={onAdd}
+      className="group flex min-h-[6.25rem] flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white text-left shadow-sm transition hover:border-brand-500 hover:shadow-md active:scale-[0.98]">
+      {it.image && <img src={it.image} alt="" className="h-28 w-full object-cover" />}
       <div className="flex flex-1 flex-col justify-between gap-2 p-3">
         <div className="flex items-start gap-2">
           <VegMark veg={it.is_veg} />
@@ -1752,7 +1791,7 @@ function MenuCard({ it, onAdd }: { it: MenuItem; onAdd: () => void }) {
         </div>
         <div className="flex items-center justify-between gap-2">
           <span className="text-base font-bold tabular-nums text-zinc-800">{cur()}{inr(it.price)}</span>
-          <span className="grid size-8 place-items-center rounded-full bg-brand-50 text-brand-700">
+          <span className="grid size-9 place-items-center rounded-full bg-brand-50 text-brand-700 transition group-hover:bg-brand-600 group-hover:text-white">
             <Plus className="size-4" />
           </span>
         </div>
