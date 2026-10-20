@@ -9801,20 +9801,18 @@ def t383():
 	assert api.checkout_context(res.name)["actions"]["can_check_out_role"]
 	# a deadlock drops the whole transaction, savepoint and all: the
 	# context is computed again instead of answering with a server error
-	real, real_rb, calls = checkout._checkout_context, frappe.db.rollback, []
+	from unittest.mock import patch
+	real, calls = checkout._checkout_context, []
 
 	def flaky(name):
 		calls.append(name)
 		if len(calls) == 1:
 			raise checkout.SnapshotLost("kamra_checkout_ctx")
 		return real(name)
-	checkout._checkout_context = flaky
-	frappe.db.rollback = lambda *a, **k: None  # keep the harness savepoint
-	try:
+	# the retry's full rollback is stubbed so the harness savepoint survives
+	with patch.object(checkout, "_checkout_context", side_effect=flaky), \
+			patch.object(frappe.db, "rollback"):
 		s = checkout.checkout_context(res.name)
-	finally:
-		checkout._checkout_context = real
-		frappe.db.rollback = real_rb
 	assert len(calls) == 2 and s["reservation"]["name"] == res.name, calls
 
 
