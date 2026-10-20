@@ -1,6 +1,7 @@
 <<<<<<<< HEAD:kamra/public/frontend/assets/minimize-2-BuU4fVRM.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/minimize-2-BuU4fVRM.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/minimize-2-BuU4fVRM.js
+<<<<<<<< HEAD:kamra/public/frontend/assets/minimize-2-BuU4fVRM.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/minimize-2-BnwbxxUD.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/minimize-2-BnwbxxUD.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/minimize-2-BnwbxxUD.js
@@ -23,6 +24,9 @@ import{a}from"./index-Dh78V-Nh.js";/**
 ========
 import{a}from"./index-Bk_djxcP.js";/**
 >>>>>>>> origin/feat/eod-fix-paths:kamra/public/frontend/assets/minimize-2-tLVkoDw9.js
+========
+import{a}from"./index-Bs4_frcf.js";/**
+>>>>>>>> origin/feat/ticket-tracking:kamra/public/frontend/assets/minimize-2-MBeqA0Mg.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.

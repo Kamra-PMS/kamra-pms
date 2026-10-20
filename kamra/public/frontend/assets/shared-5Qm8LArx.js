@@ -4,6 +4,7 @@
 <<<<<<<< HEAD:kamra/public/frontend/assets/shared-5Qm8LArx.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/shared-5Qm8LArx.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/shared-5Qm8LArx.js
+<<<<<<<< HEAD:kamra/public/frontend/assets/shared-5Qm8LArx.js
 import{r as t,j as b}from"./vendor-D6bHyl-8.js";import{a as _,e as r,s as p,G as k,m as f,d as h}from"./index-R6mcF6pn.js";/**
 ========
 import{r as t,j as b}from"./vendor-D6bHyl-8.js";import{a as _,e as r,s as p,G as k,m as f,d as h}from"./index-BWel0udR.js";/**
@@ -23,6 +24,9 @@ import{r as t,j as b}from"./vendor-D6bHyl-8.js";import{a as _,e as r,s as p,G as
 ========
 import{r as t,j as b}from"./vendor-D6bHyl-8.js";import{a as _,e as r,s as p,H as k,m as f,d as h}from"./index-Bk_djxcP.js";/**
 >>>>>>>> origin/feat/eod-fix-paths:kamra/public/frontend/assets/shared-a3EoBtWR.js
+========
+import{r as t,j as b}from"./vendor-D6bHyl-8.js";import{a as _,e as r,s as p,G as k,m as f,d as h}from"./index-Bs4_frcf.js";/**
+>>>>>>>> origin/feat/ticket-tracking:kamra/public/frontend/assets/shared-CvgepLaI.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.

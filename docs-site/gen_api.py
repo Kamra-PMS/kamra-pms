@@ -42,6 +42,7 @@ MODULES = [
     ("pos", "Restaurant POS & kitchen", ""),
     ("onboarding", "Setup checklist (finish setting up a property)", ""),
     ("rates", "Rates (rate calendar, what moves a rate)", "These explain a price; they never set one. The quote is the only source of a charge."),
+    ("tickets", "Service tickets (assign, resolve, timeline)", ""),
     ("printing", "Kitchen printers (routing, print stations, print queue)", ""),
     ("laundry", "Laundry (housekeeping)", ""),
     ("banquet", "Banquets (functions, quotations, event orders)", ""),
