@@ -12,7 +12,12 @@ export default defineConfig({
   ignoreDeadLinks: [/^https?:\/\/localhost/, /^https?:\/\/127\.0\.0\.1/, /^https?:\/\/kamra\.localhost/],
   head: [["link", { rel: "icon", type: "image/svg+xml", href: "/docs/kamra-mark.svg" }]],
   themeConfig: {
-    logo: { src: "/kamra-horizontal.svg", height: 28 },
+    logo: {
+      light: "/kamra-horizontal.svg",
+      dark: "/kamra-horizontal-white.svg",
+      alt: "Kamra PMS",
+      height: 28,
+    },
     siteTitle: false,
     nav: [
       { text: "Website", link: "https://kamrapms.com" },
