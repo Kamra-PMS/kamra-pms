@@ -1,4 +1,8 @@
+<<<<<<<< HEAD:kamra/public/frontend/assets/Inventory-DDps1d9H.js
 import{r as n,j as e}from"./vendor-D6bHyl-8.js";import{a as W,w as $,e as z,g as k,I as V,B as j,af as B,d as v,au as G,X as H}from"./index-R6mcF6pn.js";import{T as P}from"./trash-2-FswLCtdU.js";import{R as D}from"./refresh-cw-DxkolY1G.js";import{T as R}from"./triangle-alert-AvYu9kS5.js";import{B as F}from"./ban-AwGUll0Q.js";/**
+========
+import{r as n,j as e}from"./vendor-D6bHyl-8.js";import{a as W,w as $,e as z,g as k,I as V,B as j,ad as B,d as v,as as G,X as H}from"./index-BWel0udR.js";import{T as P}from"./trash-2-OH54IM66.js";import{R as D}from"./refresh-cw-DtygESU8.js";import{T as R}from"./triangle-alert-CRLBTOhL.js";import{B as F}from"./ban-CNqYAv1h.js";/**
+>>>>>>>> origin/fix/kpi-card-overlap:kamra/public/frontend/assets/Inventory-DLxwKxae.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.

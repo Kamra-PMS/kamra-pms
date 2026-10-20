@@ -1,4 +1,8 @@
+<<<<<<<< HEAD:kamra/public/frontend/assets/MenuItems-BOLQ3Ccp.js
 import{r as a,j as e}from"./vendor-D6bHyl-8.js";import{R as D,m as U}from"./configs-6hDJ5F81.js";import{a as M,l as A,c as K,d as S,B as h,g as B,e as k,s as $,X as H,S as V,F as Q,w as W}from"./index-R6mcF6pn.js";import{S as X}from"./sheet-s_-zla-g.js";import{B as C}from"./badge-DtT2T_zD.js";import{C as G}from"./check-DJydIDAO.js";import{D as J}from"./download-NAxEW8WA.js";import{U as O}from"./ImageField-afxAlFTV.js";import{T as Y}from"./trash-2-FswLCtdU.js";import{C as Z}from"./cooking-pot-BGYNRtGT.js";import"./card-R6QYA6ML.js";/**
+========
+import{r as a,j as e}from"./vendor-D6bHyl-8.js";import{R as D,m as U}from"./configs-CElBdP7Z.js";import{a as M,l as A,c as K,d as S,B as h,g as B,e as k,s as $,X as H,S as V,F as Q,w as W}from"./index-BWel0udR.js";import{S as X}from"./sheet-B1PAJDlX.js";import{B as C}from"./badge-IV7nGWld.js";import{C as G}from"./check-DmZ2mNVL.js";import{D as J}from"./download-BpK-CGes.js";import{U as O}from"./ImageField-CGUWoWvd.js";import{T as Y}from"./trash-2-OH54IM66.js";import{C as Z}from"./cooking-pot-CfQvejSL.js";import"./card-CUr7B_BL.js";/**
+>>>>>>>> origin/fix/kpi-card-overlap:kamra/public/frontend/assets/MenuItems-BlJ9c3eg.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.

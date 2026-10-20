@@ -1,4 +1,8 @@
+<<<<<<<< HEAD:kamra/public/frontend/assets/RevenueReports-DEECcSDr.js
 import{j as e,r as n}from"./vendor-D6bHyl-8.js";import{a as A,e as N,s as k,B as b,c as w,g as z,m as $}from"./index-R6mcF6pn.js";import{C,a as B,b as D,c as T}from"./card-R6QYA6ML.js";import{C as I}from"./chevron-left-CocEFJcb.js";import{C as M}from"./chevron-right-CdoITQfU.js";/**
+========
+import{j as e,r as n}from"./vendor-D6bHyl-8.js";import{a as A,e as N,s as k,B as b,c as w,g as z,m as $}from"./index-BWel0udR.js";import{C,a as B,b as D,c as T}from"./card-CUr7B_BL.js";import{C as I}from"./chevron-left-C74U-bOv.js";import{C as M}from"./chevron-right-BQPoqiJD.js";/**
+>>>>>>>> origin/fix/kpi-card-overlap:kamra/public/frontend/assets/RevenueReports-DzGfa98s.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.

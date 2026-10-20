@@ -1,4 +1,8 @@
+<<<<<<<< HEAD:kamra/public/frontend/assets/party-popper-B11SueSn.js
 import{a as p}from"./index-R6mcF6pn.js";/**
+========
+import{a as p}from"./index-BWel0udR.js";/**
+>>>>>>>> origin/fix/kpi-card-overlap:kamra/public/frontend/assets/party-popper-DIIE6lhB.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.

@@ -1,4 +1,8 @@
+<<<<<<<< HEAD:kamra/public/frontend/assets/rotate-ccw-ECHjrIhM.js
 import{a as e}from"./index-R6mcF6pn.js";/**
+========
+import{a as e}from"./index-BWel0udR.js";/**
+>>>>>>>> origin/fix/kpi-card-overlap:kamra/public/frontend/assets/rotate-ccw-0iOyunWM.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.

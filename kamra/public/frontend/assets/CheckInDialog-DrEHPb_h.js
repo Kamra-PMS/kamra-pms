@@ -1,4 +1,8 @@
+<<<<<<<< HEAD:kamra/public/frontend/assets/CheckInDialog-DrEHPb_h.js
 import{r as o,j as e}from"./vendor-D6bHyl-8.js";import{a as Te,u as G,p as Re,b as he,B as g,as as Me,e as W,s as B,c as $e,m as Fe,w as Qe,z as Ve,a1 as Je,g as Xe,d as D,P as ue,ar as de,E as Ze,$ as ae,j as et}from"./index-R6mcF6pn.js";import{S as ve}from"./sheet-s_-zla-g.js";import{I as tt,S as st}from"./SignaturePad-CYJ5mkDc.js";import{C as Z}from"./check-DJydIDAO.js";import{C as at}from"./copy-z8JDuSCg.js";import{R as nt}from"./RoomChangeDialog--FUlQTs2.js";import{L as Ee}from"./loader-circle-ZU-p8LDK.js";import{M as it}from"./minus-B3_A1Ji2.js";import{T as rt}from"./triangle-alert-AvYu9kS5.js";import{C as lt}from"./circle-check-DsMv9Vg4.js";import{K as we}from"./key-round-JpFvnZc_.js";import{S as ot}from"./star-JaukbRuy.js";/**
+========
+import{r as o,j as e}from"./vendor-D6bHyl-8.js";import{a as Te,u as G,p as Re,b as he,B as g,aq as Me,e as W,s as B,c as $e,m as Fe,w as Qe,z as Ve,$ as Ze,g as Je,d as D,P as ue,ap as de,E as Xe,Z as ae,j as et}from"./index-BWel0udR.js";import{S as ve}from"./sheet-B1PAJDlX.js";import{I as tt,S as st}from"./SignaturePad-t5jGqbAf.js";import{C as X}from"./check-DmZ2mNVL.js";import{C as at}from"./copy-uq6laVgU.js";import{R as nt}from"./RoomChangeDialog-DEnNowVs.js";import{L as qe}from"./loader-circle-CxpozDji.js";import{M as it}from"./minus-CAqaYEiF.js";import{T as rt}from"./triangle-alert-CRLBTOhL.js";import{C as lt}from"./circle-check-CdbJaXpB.js";import{K as we}from"./key-round-ot8w899o.js";import{S as ot}from"./star-CGQfKUYD.js";/**
+>>>>>>>> origin/fix/kpi-card-overlap:kamra/public/frontend/assets/CheckInDialog-BKK-fejx.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.

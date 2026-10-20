@@ -650,7 +650,8 @@ export default function Today() {
               ? t("RevPAR {amount} · room {room}", {
                   amount: `${cur()}${inr0(revpar)}`,
                   room: `${cur()}${inr0(roomRevenueToday)}`,
-                })
+                  // keep "room ₹18,480" together if the line has to wrap
+                }).replace(/ (\S+)$/, "\u00a0$1")
               : t("RevPAR {amount} · no room charges posted today", {
                   amount: `${cur()}${inr0(revpar)}`,
                 })

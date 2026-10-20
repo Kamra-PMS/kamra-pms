@@ -1,4 +1,8 @@
+<<<<<<<< HEAD:kamra/public/frontend/assets/HkApp-mspqERFY.js
 import{r as i,j as e}from"./vendor-D6bHyl-8.js";import{a as te,k as ae,c as w,e as u,F as K,d as _,g as B,u as ne,G as re,H as le,I as oe,x as ie,J as ce,X as U,j as de,o as me,s as E,K as xe,N as ue,O as be,Q as pe}from"./index-R6mcF6pn.js";import{B as k}from"./badge-DtT2T_zD.js";import he from"./Login-BJSn5Xpd.js";import{u as ge,S as Z,i as O,E as J,Z as je}from"./shared-5Qm8LArx.js";import{M as Q}from"./minus-B3_A1Ji2.js";import{C as ye}from"./chevron-right-CdoITQfU.js";import{R as fe}from"./refresh-cw-DxkolY1G.js";import{S as W}from"./star-JaukbRuy.js";/**
+========
+import{r as i,j as e}from"./vendor-D6bHyl-8.js";import{a as te,k as ae,c as w,e as u,F as K,d as _,g as B,u as ne,G as re,H as le,I as oe,x as ie,J as ce,X as U,j as de,o as me,s as E,K as xe,N as ue,O as be,Q as pe}from"./index-BWel0udR.js";import{B as k}from"./badge-IV7nGWld.js";import he from"./Login-HWhNjHFM.js";import{u as ge,S as Z,i as O,E as J,Z as je}from"./shared-DuzpBISD.js";import{M as Q}from"./minus-CAqaYEiF.js";import{C as ye}from"./chevron-right-BQPoqiJD.js";import{R as fe}from"./refresh-cw-DtygESU8.js";import{S as W}from"./star-CGQfKUYD.js";/**
+>>>>>>>> origin/fix/kpi-card-overlap:kamra/public/frontend/assets/HkApp-Cv_Te_G-.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.
