@@ -65,6 +65,7 @@ import {
   Calculator,
   MoonStar,
   FileUp,
+  DoorOpen,
 } from "lucide-react"
 
 /** "Night audit" is what most hotels call End of Day; EOD is what they type. */
@@ -116,6 +117,8 @@ export const APPS: AppDef[] = [
       { to: "/reservations", label: "Reservations", icon: ClipboardList },
       { to: "/crs", label: "Central Reservations", icon: Search },
       { to: "/tape", label: "Tape Chart", icon: LayoutGrid },
+      { to: "/room-board", label: "Rooms", icon: DoorOpen,
+        keywords: ["Room board", "Room status", "Out of order", "Room history"] },
       { to: "/calendar", label: "Calendar", icon: CalendarDays },
       { to: "/guests", label: "Guests", icon: Users },
       { to: "/room-blocks", label: "Room Blocks", icon: Lock },
@@ -142,6 +145,10 @@ export const APPS: AppDef[] = [
       { to: "/housekeeping-board", label: "Room Board", icon: LayoutGrid,
         roles: ["Housekeeping Supervisor", "Front Desk", "Hotel Admin",
                 "System Manager", "Administrator"] },
+      { to: "/room-board", label: "Rooms", icon: DoorOpen,
+        roles: ["Housekeeping Supervisor", "Front Desk", "Hotel Admin",
+                "System Manager", "Administrator"],
+        keywords: ["Room history", "Who cleaned", "Room insights"] },
       { to: "/housekeeping", label: "Tasks", icon: ListChecks },
       { to: "/laundry", label: "Laundry", icon: Shirt },
       { to: "/lost-found", label: "Lost & Found", icon: PackageSearch },

@@ -107,6 +107,7 @@ export default defineConfig({
           { text: "Billing & cashier", link: "/billing" },
           { text: "Night audit", link: "/night-audit" },
           { text: "Reports & dashboards", link: "/reports" },
+          { text: "Rooms", link: "/rooms" },
           { text: "Housekeeping", link: "/housekeeping" },
           { text: "Guest requests", link: "/operations" },
           { text: "F&B: POS & kitchen", link: "/fnb" },

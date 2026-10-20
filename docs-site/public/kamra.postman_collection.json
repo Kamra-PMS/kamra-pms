@@ -5836,7 +5836,7 @@
         "kamra.pos.confirm_order"
        ]
       },
-      "description": "Captain confirmation - a guest's QR order isn't fired to the kitchen\nuntil a captain has vetted it.",
+      "description": "Captain confirmation for a Placed order that has no captain yet\n(legacy guest QR). Sets the captain and moves Placed -> Confirmed.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"order\": \"ORD-2026-00001\"\n}",
@@ -11997,6 +11997,349 @@
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\",\n  \"module\": \"<module>\",\n  \"enabled\": \"<enabled>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "name": "Rooms (room board, room detail and history, insights)",
+   "item": [
+    {
+     "name": "rooms_board",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.rooms.rooms_board",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.rooms.rooms_board"
+       ]
+      },
+      "description": "Every room of the property as a tile: housekeeping status, who is in\nit, who arrives or leaves today, whether it is out of service, and its\nopen housekeeping task. One call, a fixed number of queries.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "room_detail",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.rooms.room_detail",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.rooms.room_detail"
+       ]
+      },
+      "description": "Everything about one room right now: what it is, its status, who is\nin it (with the balance), who arrives next, whether it is held out of\nservice, and its open housekeeping work.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"room\": \"Your Property-101\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "room_availability",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.rooms.room_availability",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.rooms.room_availability"
+       ]
+      },
+      "description": "This room, night by night: booked (by whom), held out of service, or\nfree. Same overlap rules as the tape chart and the block guard (the\ncheck-out night is free; a day-use stay holds its own date).",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"room\": \"Your Property-101\",\n  \"start_date\": \"2026-08-01\",\n  \"days\": 14\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "room_history",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.rooms.room_history",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.rooms.room_history"
+       ]
+      },
+      "description": "Who stayed in this room lately (nights, room revenue), who cleaned\nand checked it and when, its service tickets, and the guests moved in\nor out of it.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"room\": \"Your Property-101\",\n  \"limit\": 15\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "room_insights",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.rooms.room_insights",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.rooms.room_insights"
+       ]
+      },
+      "description": "Per-room numbers for the last `days` nights (7, 30, 90, 180 or 365,\nup to yesterday): room nights sold and occupancy, room revenue posted to\nfolios, out-of-service nights, and how long cleans take. Cached for a\nfew minutes (refresh=1 recomputes); one query per measure, never one\nper room.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"days\": 30,\n  \"refresh\": 0\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "name": "Today layout (per-user widgets, hotel default)",
+   "item": [
+    {
+     "name": "get_today_layout",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.today_layout.get_today_layout",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.today_layout.get_today_layout"
+       ]
+      },
+      "description": "The layout this person sees on Today, and where it came from\n(\"user\", \"property\" or \"default\").",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "save_today_layout",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.today_layout.save_today_layout",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.today_layout.save_today_layout"
+       ]
+      },
+      "description": "Save this person's own Today layout.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"layout\": \"<layout>\",\n  \"property\": \"Your Property\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "reset_today_layout",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.today_layout.reset_today_layout",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.today_layout.reset_today_layout"
+       ]
+      },
+      "description": "Drop this person's own layout: back to the hotel default.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "save_today_layout_default",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.today_layout.save_today_layout_default",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.today_layout.save_today_layout_default"
+       ]
+      },
+      "description": "Hotel Admin: the layout everyone at this property sees until they\ncustomise their own. Pass no layout to go back to the built-in one.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\"\n}",
        "options": {
         "raw": {
          "language": "json"
