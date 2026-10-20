@@ -14,7 +14,8 @@ from __future__ import annotations
 
 import frappe
 from frappe import _
-from frappe.utils import get_datetime, now_datetime, time_diff_in_seconds
+from frappe.query_builder import Case, Order
+from frappe.utils import add_to_date, get_datetime, now_datetime, time_diff_in_seconds
 
 from kamra.authz import assert_property_access, require_roles
 
@@ -66,42 +67,46 @@ def tickets_search(property: str, view: str = "open", category: str | None = Non
 	assert_property_access(property)
 	me = frappe.session.user
 	now = str(now_datetime())
-	where = ["t.property = %(p)s"]
-	args: dict = {"p": property, "me": me, "now": now, "lim": min(int(limit or 200), 500)}
+	t = frappe.qb.DocType("Service Ticket")
+	is_open = t.status.isin(["Open", "In Progress"])
+	unassigned_q = t.assigned_to_user.isnull() | (t.assigned_to_user == "")
+	query = (
+		frappe.qb.from_(t)
+		.select(t.name, t.subject, t.category, t.priority, t.status, t.source, t.room,
+		        t.guest_name, t.due_by, t.resolved_on, t.breached, t.assigned_to_user,
+		        t.resolved_by, t.first_response_at, t.reopened_count, t.creation)
+		.where(t.property == property)
+	)
 	if view == "open":
-		where.append("t.status IN ('Open','In Progress')")
+		query = query.where(is_open)
 	elif view == "mine":
-		where.append("t.status IN ('Open','In Progress') AND t.assigned_to_user = %(me)s")
+		query = query.where(is_open & (t.assigned_to_user == me))
 	elif view == "unassigned":
-		where.append("t.status IN ('Open','In Progress') AND (t.assigned_to_user IS NULL OR t.assigned_to_user = '')")
+		query = query.where(is_open & unassigned_q)
 	elif view == "overdue":
-		where.append("t.status IN ('Open','In Progress') AND t.due_by < %(now)s")
+		query = query.where(is_open & (t.due_by < now))
 	elif view == "resolved":
-		where.append("t.status IN ('Resolved','Closed')")
+		query = query.where(t.status.isin(["Resolved", "Closed"]))
 	if category:
-		where.append("t.category = %(cat)s")
-		args["cat"] = category
+		query = query.where(t.category == category)
 	if priority:
-		where.append("t.priority = %(pri)s")
-		args["pri"] = priority
+		query = query.where(t.priority == priority)
 	if assignee:
-		where.append("t.assigned_to_user = %(asg)s")
-		args["asg"] = assignee
+		query = query.where(t.assigned_to_user == assignee)
 	if int(older_than_days or 0) > 0:
-		where.append("t.status IN ('Open','In Progress') AND t.creation < DATE_SUB(%(now)s, INTERVAL %(days)s DAY)")
-		args["days"] = int(older_than_days)
+		cutoff = add_to_date(now_datetime(), days=-int(older_than_days))
+		query = query.where(is_open & (t.creation < cutoff))
 	if q and q.strip():
-		where.append("(t.subject LIKE %(q)s OR t.name LIKE %(q)s OR t.room LIKE %(q)s "
-		             "OR t.guest_name LIKE %(q)s OR t.description LIKE %(q)s)")
-		args["q"] = f"%{q.strip()}%"
-	rows = frappe.db.sql(
-		f"""  # nosemgrep: frappe-sql-format-injection -- fixed clauses joined with AND; every value is bound through args
-		    SELECT t.name, t.subject, t.category, t.priority, t.status, t.source, t.room,
-		           t.guest_name, t.due_by, t.resolved_on, t.breached, t.assigned_to_user,
-		           t.resolved_by, t.first_response_at, t.reopened_count, t.creation
-		    FROM `tabService Ticket` t WHERE {' AND '.join(where)}
-		    ORDER BY (t.status IN ('Open','In Progress')) DESC, t.due_by ASC, t.creation DESC
-		    LIMIT %(lim)s""", args, as_dict=True)
+		like = f"%{q.strip()}%"
+		query = query.where(t.subject.like(like) | t.name.like(like) | t.room.like(like)
+		                    | t.guest_name.like(like) | t.description.like(like))
+	rows = (
+		query.orderby(Case().when(is_open, 1).else_(0), order=Order.desc)
+		.orderby(t.due_by, order=Order.asc)
+		.orderby(t.creation, order=Order.desc)
+		.limit(min(int(limit or 200), 500))
+		.run(as_dict=True)
+	)
 	names = _names([r.assigned_to_user for r in rows] + [r.resolved_by for r in rows])
 	for r in rows:
 		is_open = r.status in OPEN_STATES
@@ -118,7 +123,8 @@ def tickets_search(property: str, view: str = "open", category: str | None = Non
 		     SUM(status IN ('Open','In Progress') AND due_by < %(now)s) AS overdue,
 		     SUM(status IN ('Resolved','Closed')) AS resolved,
 		     COUNT(*) AS total
-		   FROM `tabService Ticket` WHERE property = %(p)s""", args, as_dict=True)[0]
+		   FROM `tabService Ticket` WHERE property = %(p)s""",
+		{"p": property, "me": me, "now": now}, as_dict=True)[0]
 	return {"tickets": rows,
 	        "counts": {"open": int(cnt.open_n or 0), "mine": int(cnt.mine or 0),
 	                   "unassigned": int(cnt.unassigned or 0), "overdue": int(cnt.overdue or 0),
