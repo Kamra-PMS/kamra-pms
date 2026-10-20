@@ -579,8 +579,8 @@ def add_items(order: str, items):
 @frappe.whitelist(methods=["POST"])
 @require_roles(*POS_ROLES)
 def confirm_order(order: str):
-	"""Captain confirmation - a guest's QR order isn't fired to the kitchen
-	until a captain has vetted it."""
+	"""Captain confirmation for a Placed order that has no captain yet
+	(legacy guest QR). Sets the captain and moves Placed -> Confirmed."""
 	doc = frappe.get_doc("POS Order", order)
 	doc.status = "Confirmed"
 	if not doc.captain:

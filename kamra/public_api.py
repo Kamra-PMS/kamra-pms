@@ -593,7 +593,7 @@ def precheckin_upload_id(token: str, data: str):
 
 
 # The governed writer: guest-initiated actions are always written as this user
-# so a guest can never post directly (same pattern as the QR order flow).
+# so a guest can never post directly.
 GUEST_AGENT = AGENT_EMAIL
 
 
