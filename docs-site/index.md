@@ -3,8 +3,8 @@ layout: home
 
 hero:
   name: Kamra
-  text: The open-source PMS for hotels and villas
-  tagline: The manual for running a property on Kamra, and for installing and connecting it.
+  text: The world's first open-source, agentic AI-ready PMS
+  tagline: Built for modern hospitality. Privacy first. AI ready. Free.
   image:
     src: /kamra-mark.svg
     alt: Kamra
@@ -26,7 +26,7 @@ features:
   - title: Billing, cashier & night audit
     details: Folios, payments, invoices, the cashier till, company accounts and the End of Day.
     link: /billing
-  - title: F&B — POS & kitchen
+  - title: "F&B: POS & kitchen"
     details: Restaurant POS, kitchen display, kitchen printers, QR ordering and kitchen stock.
     link: /fnb
   - title: Housekeeping & guest requests
@@ -45,7 +45,8 @@ features:
 Kamra is a complete property-management system for hotels and short-term
 rentals, built on [Frappe](https://frappeframework.com) and released under
 AGPL-3.0. Every feature is in the open-source app: there are no editions
-and no per-room fees.
+and no per-room fees. Read [Why Kamra](/why-kamra) for what makes it
+different and the promises we keep.
 
 ![Kamra's Today screen: arrivals, departures, the room board and in-house guests](/img/front-desk/today.png)
 

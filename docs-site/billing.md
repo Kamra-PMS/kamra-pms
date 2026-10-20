@@ -1,4 +1,4 @@
-# Billing — folios, payments and the cashier
+# Billing: folios, payments and the cashier
 
 Every stay has a folio: the running bill where room nights, restaurant
 bills and extras land, and where payments are recorded against them. This
@@ -171,7 +171,7 @@ and hands it to staff.
 **Record a company's payment** (Finance and Hotel Admin):
 
 1. Open **Finance → Ledgers**. **City ledger aging** ages each company's
-   bills by due date: **Not due**, then **1–30 / 31–60 / 61–90 / 90+ days
+   bills by due date: **Not due**, then **1 to 30**, **31 to 60**, **61 to 90** and **90+ days
    overdue**, with the overdue total and any unapplied credit. A 45-day
    company's bill is "Not due" on day 35.
 2. Press **Record payment** on the company's row.

@@ -5,7 +5,7 @@ it". Worked through top to bottom, a small property goes live in a
 day; with data migration and OTA sync, plan two to three. Each step
 links to the deeper guide.
 
-## 1 — Get a server and install
+## 1. Get a server and install
 
 - [ ] **Pick where it runs**: a 2 vCPU / 4 GB RAM / 40 GB SSD VPS is
   enough for a full property ([requirements](/self-hosting/)). Guides:
@@ -21,63 +21,63 @@ links to the deeper guide.
 - [ ] Set up **daily backups** off the server (the hosting guides show
   `bench backup` + object storage; Frappe Cloud does this for you)
 
-## 2 — Property setup
+## 2. Property setup
 
 - [ ] Run the **onboarding wizard**: property name, **country** (this
-  selects your [tax pack](/features#your-countrys-taxes) — GST slabs,
-  PB1, VAT, SST — and your currency/number format), address, contacts
+  selects your [tax pack](/features#your-countrys-taxes), such as GST
+  slabs, PB1, VAT or SST, and your currency/number format), address, contacts
 - [ ] **Room types** with base prices, occupancy/capacity limits, bed
-  types, photos — then **rooms** with numbers and floors
+  types and photos, then **rooms** with numbers and floors
 - [ ] **Rate card**: seasons, rate plans, meal plans; optional
   guardrails, hurdle rates and an overbooking allowance (Revenue menu)
 - [ ] **Taxes**: verify a test quote shows the right tax for your
   country; set your tax registration number (GSTIN / NPWP / TRN / SST
   no.) on the property
 - [ ] **Policies**: check-in/out times, free-cancellation window,
-  cancellation fee, no-show charge, deposit expectations — these are
+  cancellation fee, no-show charge, deposit expectations. These are
   enforced in code, not just printed
 - [ ] **Invoice series**: per-property invoice numbering starts clean;
   do a test invoice and check the format before real money
 - [ ] **ID retention mode**: Store, or Verify & Discard (scans and ID
-  numbers auto-scrubbed at checkout — the DPDP-friendly setting)
+  numbers auto-scrubbed at checkout: the DPDP-friendly setting)
 - [ ] **Clear message text after (days)**: WhatsApp message text and AI
   assistant chats older than this are cleared nightly (new properties: 90;
   properties that existed before this setting start at 0 = keep)
 
-## 3 — Staff
+## 3. Staff
 
-- [ ] Create a **user per staff member** — never shared logins; the
+- [ ] Create a **user per staff member**. Never share logins; the
   audit trail is only as good as this
 - [ ] Assign roles: Front Desk, Housekeeping, Finance, Revenue
   Manager, Hotel Admin (menus follow the role)
 - [ ] Multi-property? Scope users to their property (User Permissions)
 - [ ] Bookmark the phone screens on staff devices: `/hk`
   (housekeeping), POS for captains
-- [ ] Walk the desk through the [front-desk guide](/user-guide) — one
+- [ ] Walk the desk through the [front-desk guide](/user-guide). One
   hour covers a shift's work
 
-## 4 — Bring your data over
+## 4. Bring your data over
 
 - [ ] Export bookings/guests from the old system (eZee, Cloudbeds, or
-  any CSV) and run the **[migration importer](/features#switching-from-another-pms)** —
+  any CSV) and run the **[migration importer](/features#switching-from-another-pms)**:
   preview first, then import; past stays land as history so returning
   guests are recognised
 - [ ] Bring **companies** (credit terms) and **opening balances**
   (in-house folios, city ledger, advance deposits) over from Kamra's CSV
-  templates, and reconcile to the old system's last close — the
+  templates, and reconcile to the old system's last close. The
   [go-live runbook](/go-live-runbook) walks the night step by step
 - [ ] Spot-check 10 imported bookings against the old system: dates,
   rates, statuses
 - [ ] Import the **laundry rate card** (CSV) and the **menu**
   (bulk import with preview) if you run F&B
 
-## 5 — Distribution
+## 5. Distribution
 
 - [ ] **Booking engine**: photos, description, policies, FAQs, brand
   colour; enable the public page and make a test booking on it;
   configure advance collection and the payment gateway if collecting
   online
-- [ ] **Channel manager** for OTA sync —
+- [ ] **Channel manager** for OTA sync:
   [setup guide](/channel-manager): Channex self-serve today, STAAH /
   AioSell with their partner credentials. Map room types, push ARI,
   send a **test booking from the OTA extranet** and watch it land as a
@@ -85,16 +85,16 @@ links to the deeper guide.
 - [ ] Until the channel manager is live, set OTA inventories manually
   and treat Kamra as the source of truth
 
-## 6 — Guest communication
+## 6. Guest communication
 
 - [ ] **Email (SMTP)**: [set up an Email Account](/self-hosting/email)
   so confirmations and links can send
-- [ ] **WhatsApp on your own number** — [guide](/whatsapp): Meta app,
+- [ ] **WhatsApp on your own number**: [guide](/whatsapp): Meta app,
   webhook, the three templates; send yourself a test confirmation and
   reply to it to see the conversations inbox work
 - [ ] Print a **QR menu** card if guests order F&B by phone
 
-## 7 — Operations
+## 7. Operations
 
 - [ ] POS: outlets, tables with areas (`[Main Hall] T1:4`), menu with
   photos, KOT printer or kitchen display at the pass
@@ -106,7 +106,7 @@ links to the deeper guide.
 - [ ] Service-ticket SLAs and the escalation contact (WhatsApp alerts
   once connected)
 
-## 8 — Dress rehearsal (do this before cut-over)
+## 8. Dress rehearsal (do this before cut-over)
 
 Run one fake stay end to end and check every artifact:
 
@@ -118,15 +118,15 @@ Run one fake stay end to end and check every artifact:
   the right taxes and series
 - [ ] Run the **night audit** manually once and read what it did
 - [ ] Verify the backup from step 1 actually restored on a scratch
-  site — an unrestored backup is a rumour
+  site. An unrestored backup is a rumour
 
-## 9 — Cut-over day
+## 9. Cut-over day
 
 - [ ] Pick a quiet day; freeze changes in the old system at a fixed
   hour
 - [ ] Re-import the delta (bookings created since the export); a re-run
   skips what is already in
-- [ ] Import opening balances and press **Reconcile** — go live only on
+- [ ] Import opening balances and press **Reconcile**. Go live only on
   **Ready for go-live** ([runbook](/go-live-runbook))
 - [ ] Point the channel manager live; retire the old system's OTA
   connections the same hour (two masters means double bookings)
@@ -138,5 +138,5 @@ Run one fake stay end to end and check every artifact:
 All of the above as a done-for-you package: fixed-fee
 [implementation with an annual support contract](https://kamrapms.com/implementation/),
 or [Frappe Cloud](/self-hosting/frappe-cloud) where the server side of
-this list disappears entirely. The software is identical either way —
-nothing on this page is gated.
+this list disappears entirely. The software is identical either way.
+Nothing on this page is gated.
