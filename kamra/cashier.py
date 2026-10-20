@@ -66,8 +66,49 @@ def ensure_cashier(property: str, user: str | None = None) -> str:
 	return doc.name
 
 
-def require_open_session(property: str) -> str | None:
-	"""Return open session name, or None when agents bypass. Throws otherwise."""
+# who may open their own till (open_session); admins always may
+TILL_OPENERS = ("Front Desk", "Finance", "Kamra Agent")
+
+
+def tills_required(property: str | None) -> bool:
+	"""Does this property take money through cashier tills? On by default.
+	A small place with no cash drawer turns it off (Settings > Finance):
+	payments are then recorded without a till, and the till screens
+	(paid-outs, drops, petty cash, exchange) still need one."""
+	return bool(get_setting(property, "use_cashier_tills"))
+
+
+def can_open_till() -> bool:
+	from kamra.authz import ADMIN
+	return bool((set(TILL_OPENERS) | set(ADMIN)) & set(frappe.get_roles()))
+
+
+def till_state(property: str) -> dict[str, Any]:
+	"""What a money screen needs to know about the caller's till: is one
+	needed, is it open, and can this user open it here (open_session)."""
+	required = tills_required(property)
+	session = None if _agent_bypass() else frappe.db.get_value(
+		"Cashier Session",
+		{"property": property, "user": frappe.session.user, "status": "Open"},
+		"name")
+	return {
+		"property": property,
+		"required": required,
+		"open": bool(session) or _agent_bypass() or not required,
+		"session": session,
+		"can_open": can_open_till(),
+		"who_can_open": ["Front Desk", "Finance", "Hotel Admin"],
+		"business_date": str(get_business_date(property) or ""),
+	}
+
+
+def require_open_session(property: str, till_only: bool = False) -> str | None:
+	"""Return open session name, or None when agents bypass. Throws otherwise.
+
+	A property that does not use tills (use_cashier_tills off) records
+	payments without one: None comes back instead of a refusal, unless
+	`till_only` (a paid-out, drop, petty cash or exchange, which only make
+	sense against a till)."""
 	if _agent_bypass():
 		# Prefer an open session if one exists; else None (txn still recorded
 		# without session when agents act).
@@ -85,6 +126,8 @@ def require_open_session(property: str) -> str | None:
 		"name",
 	)
 	if not sess:
+		if not till_only and not tills_required(property):
+			return None
 		frappe.throw(
 			"NO_OPEN_SESSION: open your till under Finance → Cashier first.",
 		)
@@ -288,6 +331,15 @@ def current_session(property: str):
 	return {"open": True, **_session_view(name)}
 
 
+@frappe.whitelist()
+@require_roles("Front Desk", "Finance", "Night Auditor", "Kamra Agent")
+def my_till(property: str):
+	"""Read-only: does taking money here need a till, is the caller's open,
+	and may the caller open one (open_session). The check-in, walk-in and
+	check-out sheets read it to offer "Open my till" in place."""
+	return till_state(property)
+
+
 @frappe.whitelist(methods=["POST"])
 @require_roles("Front Desk", "Finance", "Night Auditor", "Kamra Agent")
 def close_session(session: str, counted_cash: float,
@@ -372,7 +424,7 @@ def post_paid_out(property: str, amount: float, reason: str,
 		frappe.throw("A reason is required.")
 	from kamra.authz import require_cashier_pin
 	require_cashier_pin(property, pin)
-	sess = require_open_session(property)
+	sess = require_open_session(property, till_only=True)
 	record_cashier_txn(
 		property, "Paid Out", "Cash", -abs(float(amount)),
 		reference=(payee or "")[:80] or None,
@@ -391,7 +443,7 @@ def cash_drop(property: str, amount: float, location: str | None = None,
 		frappe.throw("Amount must be positive.")
 	from kamra.authz import require_cashier_pin
 	require_cashier_pin(property, pin)
-	sess = require_open_session(property)
+	sess = require_open_session(property, till_only=True)
 	record_cashier_txn(
 		property, "Drop", "Cash", -abs(float(amount)),
 		reference=(location or "safe")[:80],
@@ -412,7 +464,7 @@ def post_petty_cash(property: str, amount: float, payee: str, category: str,
 	from kamra.authz import assert_property_access, require_cashier_pin
 	assert_property_access(property)
 	require_cashier_pin(property, pin)
-	sess = require_open_session(property)
+	sess = require_open_session(property, till_only=True)
 	bd = get_business_date(property)
 	voucher = frappe.get_doc({
 		"doctype": "Petty Cash Voucher",

@@ -11,6 +11,7 @@ import { cn } from "../lib/utils"
 import { Button } from "./ui/button"
 import { Sheet } from "./ui/sheet"
 import { StepFlowFooter, StepFlowHeader, useStepFlow, type FlowStep } from "./StepFlow"
+import TillCard, { type TillState } from "./TillCard"
 
 /* Guided check-out, one stay at a time:
      Bill (folios, lines, bills not on the folio yet)
@@ -84,8 +85,19 @@ interface PendingBill {
   status: string
   amount: number
   complimentary: boolean
+  /** the operator's role may act on it (POS or laundry endpoints) */
+  can_act: boolean
   can_post_to_room: boolean
+  /** laundry still at the laundry: can be moved on to Ready */
+  can_mark_ready: boolean
+  /** money that is not on the guest's bill while it stays open */
+  billable: boolean
   pay_modes: string[]
+  /** what the desk can do about it, in plain words */
+  hint: string
+  act_roles: string[]
+  pieces_missing?: number
+  items?: { row: string; item_name: string; qty: number }[]
 }
 
 interface Blocker {
@@ -124,6 +136,7 @@ export interface CheckoutContext {
   payment_modes: string[]
   pin_required: boolean
   till_open: boolean
+  till: TillState
   folios: FolioRow[]
   groups: Record<string, { group: string; amount: number; count: number; lines: ChargeLine[] }>
   totals: {
@@ -158,7 +171,7 @@ export interface CheckoutContext {
   blockers: Blocker[]
   notices: { code: string; message: string }[]
   settled: boolean
-  actions: { can_checkout: boolean; can_withhold_deposit: boolean }
+  actions: { can_checkout: boolean; can_withhold_deposit: boolean; can_check_out_role: boolean }
   sop: { steps: SopStep[]; next_tip: string | null }
 }
 
@@ -204,15 +217,6 @@ function Problems(props: { items: Blocker[]; folioLink?: (f: string) => string }
                 <a href={props.folioLink(b.folio)} target="_blank" rel="noreferrer"
                   className="font-medium underline">
                   {t("Open folio")}
-                </a>
-              </>
-            ) : null}
-            {b.code === "till_closed" ? (
-              <>
-                {" "}
-                <a href={toFullPath("/cashier")} target="_blank" rel="noreferrer"
-                  className="font-medium underline">
-                  {t("Open the till")}
                 </a>
               </>
             ) : null}
@@ -429,8 +433,25 @@ export default function CheckOutDialog(props: {
 
   function postToRoom(b: PendingBill) {
     return run(async () => {
-      if (b.kind === "pos") await call("kamra.pos.deliver_order", { order: b.name })
-      else await call("kamra.laundry.deliver_laundry", { order: b.name })
+      if (b.kind === "pos") {
+        await call("kamra.pos.deliver_order", { order: b.name })
+        return
+      }
+      // handing the bag back: every piece is back, then it bills the stay
+      if ((b.pieces_missing ?? 0) > 0 && b.items?.length)
+        await call("kamra.laundry.return_items", {
+          order: b.name,
+          rows: Object.fromEntries(b.items.map((i) => [i.row, i.qty])),
+        })
+      await call("kamra.laundry.deliver_laundry", { order: b.name })
+    }, false)
+  }
+
+  function markReady(b: PendingBill) {
+    return run(async () => {
+      if (b.status === "Collected")
+        await call("kamra.laundry.laundry_status", { order: b.name, status: "In Process" })
+      await call("kamra.laundry.laundry_status", { order: b.name, status: "Ready" })
     }, false)
   }
 
@@ -476,19 +497,30 @@ export default function CheckOutDialog(props: {
   // ---- footer: what Continue means on each step ----------------------
   let continueLabel: string | undefined
   let continueDisabled = false
+  let disabledReason: string | undefined
   let onContinue: (() => void) | undefined = flow.next
   if (current === "review") continueDisabled = reviewProblems.length > 0
-  if (current === "company")
+  if (current === "company") {
     continueDisabled = !companyOk || (creditBlocked && (!credit?.can_override || !override.trim()))
+    if (!companyOk) disabledReason = t("Tick the confirmation above to continue.")
+    else if (creditBlocked && credit?.can_override && !override.trim())
+      disabledReason = t("Write the reason for the override to continue.")
+  }
   if (current === "settle") {
     continueDisabled = !settleDone
     if (!settleDone) continueLabel = t("Settle to continue")
+    if (!settleDone && ctx && !ctx.till.open)
+      disabledReason = t("Open your till above, then collect or refund.")
   }
   if (current === "confirm") {
     continueLabel = busy ? t("Checking out…") : t("Check out")
     continueDisabled = checkedOut || !ctx?.actions.can_checkout &&
       !(creditBlocked && credit?.can_override && override.trim() && ctx?.settled)
     onContinue = () => void doCheckOut()
+    if (ctx && !ctx.actions.can_check_out_role) {
+      continueDisabled = true
+      disabledReason = t("Only Front Desk or a Hotel Admin can check the guest out.")
+    }
   }
   if (current === "invoice") {
     continueLabel = t("Finish")
@@ -509,6 +541,7 @@ export default function CheckOutDialog(props: {
       onContinue={onContinue}
       continueLabel={continueLabel}
       continueDisabled={continueDisabled}
+      disabledReason={disabledReason}
     />
   )
 
@@ -583,42 +616,63 @@ export default function CheckOutDialog(props: {
                 <Section title={t("Bills not on the folio yet")} tone="warn">
                   <ul className="space-y-3 text-sm">
                     {ctx.pending_bills.map((b) => (
-                      <li key={b.name} className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                        <span>
-                          <span className="font-medium">{b.label}</span>{" "}
-                          <span className="text-zinc-500">· {b.name} · {t(b.status)}</span>
-                          {b.complimentary ? (
-                            <span className="ms-1 text-xs text-zinc-500">({t("complimentary")})</span>
-                          ) : null}
-                          <span className="ms-2 font-medium tabular-nums">{fmt(b.amount)}</span>
-                        </span>
-                        <span className="flex flex-wrap items-center gap-2">
-                          {b.can_post_to_room ? (
-                            <Button variant="outline" disabled={busy} onClick={() => void postToRoom(b)}>
-                              {t("Post to room")}
-                            </Button>
-                          ) : (
-                            <span className="text-xs text-zinc-500">{t("Not ready to deliver yet")}</span>
-                          )}
-                          {b.pay_modes.length > 0 && (
-                            <>
-                              <select
-                                aria-label={t("Payment mode")}
-                                className="rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-sm"
-                                value={outletModes[b.name] || b.pay_modes[0]}
-                                onChange={(e) => setOutletModes((m) => ({ ...m, [b.name]: e.target.value }))}
-                              >
-                                {b.pay_modes.map((m) => <option key={m} value={m}>{t(m)}</option>)}
-                              </select>
-                              <Button variant="ghost" disabled={busy} onClick={() => void payAtOutlet(b)}>
-                                {t("Settle separately")}
+                      <li key={b.name} className="space-y-2" data-testid="pending-bill">
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                          <span>
+                            <span className="font-medium">{b.label}</span>{" "}
+                            <span className="text-zinc-500">· {b.name} · {t(b.status)}</span>
+                            {b.complimentary ? (
+                              <span className="ms-1 text-xs text-zinc-500">({t("complimentary")})</span>
+                            ) : null}
+                            <span className="ms-2 font-medium tabular-nums">{fmt(b.amount)}</span>
+                          </span>
+                          <span className="flex flex-wrap items-center gap-2">
+                            {b.can_mark_ready && (
+                              <Button variant="outline" disabled={busy} onClick={() => void markReady(b)}>
+                                {t("Bag is back: mark ready")}
                               </Button>
+                            )}
+                            {b.can_post_to_room && (
+                              <Button variant="outline" disabled={busy} onClick={() => void postToRoom(b)}>
+                                {b.kind === "laundry" ? t("Hand back and post to room") : t("Post to room")}
+                              </Button>
+                            )}
+                            {b.pay_modes.length > 0 && (
+                              <>
+                                <select
+                                  aria-label={t("Payment mode")}
+                                  className="rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-sm"
+                                  value={outletModes[b.name] || b.pay_modes[0]}
+                                  onChange={(e) => setOutletModes((m) => ({ ...m, [b.name]: e.target.value }))}
+                                >
+                                  {b.pay_modes.map((m) => <option key={m} value={m}>{t(m)}</option>)}
+                                </select>
+                                <Button variant="ghost" disabled={busy || !ctx.till.open} onClick={() => void payAtOutlet(b)}>
+                                  {t("Settle separately")}
+                                </Button>
+                              </>
+                            )}
+                          </span>
+                        </div>
+                        <p className="text-xs text-zinc-600">
+                          {t(b.hint)}
+                          {!b.can_act && (
+                            <>
+                              {" "}
+                              {t("Your role can't change this bill. Ask {who}.", {
+                                who: b.act_roles.map((r) => t(r)).join(", "),
+                              })}
                             </>
                           )}
-                        </span>
+                        </p>
                       </li>
                     ))}
                   </ul>
+                  {!ctx.till.open && ctx.pending_bills.some((b) => b.pay_modes.length > 0) && (
+                    <p className="mt-2 text-xs text-zinc-500">
+                      {t("Settling a bill separately takes money: open your till on the Payment step first.")}
+                    </p>
+                  )}
                 </Section>
               )}
 
@@ -769,7 +823,13 @@ export default function CheckOutDialog(props: {
 
           {current === "settle" && (
             <div className="space-y-4">
-              <Problems items={settleProblems} folioLink={folioLink} />
+              <Problems items={settleProblems.filter((b) => !(b.code === "till_closed" && ctx.till.can_open))}
+                folioLink={folioLink} />
+              {(ctx.collect.length > 0 || ctx.refunds.length > 0) && (
+                <TillCard till={ctx.till} onOpened={() => void load()}
+                  purpose={ctx.refunds.length && !ctx.collect.length
+                    ? t("to give the money back") : t("to take the payment")} />
+              )}
               {settleDone && (
                 <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
                   <Check className="me-1 inline size-4" aria-hidden />
@@ -925,6 +985,21 @@ export default function CheckOutDialog(props: {
               {!ctx.settled && (
                 <p className="text-sm text-rose-700">{t("Settle the guest's bill first (Payment step).")}</p>
               )}
+              {ctx.pending_bills.some((b) => b.billable) && (
+                <Section title={t("Still not on the bill")} tone="warn">
+                  <ul className="space-y-1 text-sm text-zinc-700">
+                    {ctx.pending_bills.filter((b) => b.billable).map((b) => (
+                      <li key={b.name} className="flex justify-between gap-2">
+                        <span>{b.label} · {b.name} · {t(b.status)}</span>
+                        <span className="font-medium tabular-nums">{fmt(b.amount)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="mt-2 text-xs text-amber-800">
+                    {t("You can still check out. These are not on the guest's bill: when they are posted later they land on the departed stay's folio and have to be collected separately. To add them now, go back to the Bill step.")}
+                  </p>
+                </Section>
+              )}
               {ctx.companions.length > 0 && (
                 <Section title={t("Others from this group still in house")} tone="warn">
                   <p className="mb-2 text-xs text-amber-800">
@@ -973,6 +1048,11 @@ export default function CheckOutDialog(props: {
                 const own = ctx.folios.filter((f) => f.side !== "group")
                 const ready = own.filter((f) => f.status === "Open" && f.has_charges && Math.abs(f.balance) <= EPS)
                 return (
+                  <>
+                  {ready.length > 0 && (
+                    <TillCard till={ctx.till} onOpened={() => void load()}
+                      purpose={t("to issue the invoice")} />
+                  )}
                   <Section title={t("Invoices")}>
                     <ul className="divide-y divide-zinc-100 text-sm">
                       {own.map((f) => (
@@ -997,7 +1077,7 @@ export default function CheckOutDialog(props: {
                               {t("Has a balance of {amount}: open the folio", { amount: fmt(f.balance) })}
                             </a>
                           ) : (
-                            <Button variant="outline" disabled={busy} onClick={() => void invoice([f.folio])}>
+                            <Button variant="outline" disabled={busy || !ctx.till.open} onClick={() => void invoice([f.folio])}>
                               {t("Close and generate invoice")}
                             </Button>
                           )}
@@ -1005,11 +1085,12 @@ export default function CheckOutDialog(props: {
                       ))}
                     </ul>
                     {ready.length > 1 && (
-                      <Button className="mt-3" disabled={busy} onClick={() => void invoice(ready.map((f) => f.folio))}>
+                      <Button className="mt-3" disabled={busy || !ctx.till.open} onClick={() => void invoice(ready.map((f) => f.folio))}>
                         {t("Generate all invoices")}
                       </Button>
                     )}
                   </Section>
+                  </>
                 )
               })()}
             </div>

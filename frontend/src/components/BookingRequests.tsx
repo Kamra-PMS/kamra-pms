@@ -12,6 +12,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
 import { serverError } from "../lib/resource"
 import { cur, moneyLocale } from "../lib/money"
 import { useT } from "../lib/i18n"
+import { useAuth } from "../lib/auth"
+
+// kamra.booking_requests.booking_requests: Front Desk, plus the admins
+const INBOX_ROLES = ["Front Desk", "Hotel Admin", "System Manager", "Administrator", "Kamra Agent"]
 
 type BookingRequest = {
   name: string
@@ -48,6 +52,9 @@ export default function BookingRequests({
   onChanged?: () => void
 }) {
   const { t } = useT()
+  const { roles } = useAuth()
+  // a role without the inbox does not ask for it (the server says 403)
+  const canSee = roles.some((r) => INBOX_ROLES.includes(r))
   const [data, setData] = useState<InboxData | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
   const [declining, setDeclining] = useState<string | null>(null)
@@ -68,10 +75,11 @@ export default function BookingRequests({
   }, [])
 
   useEffect(() => {
+    if (!canSee) return
     load()
     const id = setInterval(load, 60_000)
     return () => clearInterval(id)
-  }, [load, refreshKey])
+  }, [load, refreshKey, canSee])
 
   async function run(key: string, fn: () => Promise<{ notified?: string[] }>, done: string) {
     setBusy(key)

@@ -5251,6 +5251,12 @@ Everything the public booking page needs to render.
 
 Availability + real quoted price per room type for the stay.
 
+`child_ages` (e.g. [3, 8, 13]) lets each room type's age bands decide who
+is free, a child or an adult; without it `children` are all children.
+Each row says whether the room type can take the party: `available`, a
+`reason` when it cannot, and `needs_confirmation` when the party is above
+what it sleeps but within the extra guests it allows by arrangement.
+
 | Param | Required | Default |
 | --- | --- | --- |
 | `property` | yes |  |
@@ -5261,6 +5267,7 @@ Availability + real quoted price per room type for the stay.
 | `listing_slug` | no | `None` |
 | `location_slug` | no | `None` |
 | `pets` | no | `0` |
+| `child_ages` | no | `None` |
 
 ### `kamra.public_api.precheckin_info` <Badge type='tip' text='public' />
 
@@ -5356,7 +5363,9 @@ current payment policy and snapshotted onto the booking.
 
 Instant mode (default): Confirmed when nothing is due now, else
 Pending Payment with a hold window. Request to Book: Requested (no
-inventory) until the host approves.
+inventory) until the host approves. A party above what the room sleeps,
+within the extra guests it allows, is also Requested: the host confirms
+the sleeping arrangement and agrees the price for them.
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -5375,6 +5384,7 @@ inventory) until the host approves.
 | `voucher_code` | no | `''` |
 | `idempotency_key` | no | `''` |
 | `pets` | no | `0` |
+| `child_ages` | no | `None` |
 
 ### `kamra.public_api.access_info` <Badge type='tip' text='public' />
 

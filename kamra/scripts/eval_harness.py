@@ -9847,6 +9847,151 @@ def t264():
 	assert q["is_holiday"] and q["stay_rules"]["holiday"] == "EVAL Holiday", q["stay_rules"]
 	assert abs(q["advance_due"] - q["amount_after_tax"]) < 0.01, (q["advance_due"], q["amount_after_tax"])
 
+# ── check-in / check-out on the desk: tills, open bills, roles (t380-t383) ──
+
+EVAL_FIN = "eval.fin@kamra.local"
+
+
+def _fin_user():
+	if not frappe.db.exists("User", EVAL_FIN):
+		frappe.get_doc({
+			"doctype": "User", "email": EVAL_FIN, "first_name": "Farah",
+			"enabled": 1, "user_type": "System User",
+			"send_welcome_email": 0, "roles": [{"role": "Finance"}],
+		}).insert(ignore_permissions=True)
+	return EVAL_FIN
+
+
+def _close_my_till():
+	from kamra.cashier import close_session
+	for s in frappe.get_all("Cashier Session", filters={
+			"property": P, "user": frappe.session.user, "status": "Open"}, pluck="name"):
+		close_session(s, 0)
+
+
+@check("till: check-out shows a closed till, the desk opens it in place, then collects (no dead end)")
+def t380():
+	from kamra import api
+	from kamra.cashier import open_session
+	res, folio = _settle_stay("E370", "+91 70000 03700")
+	with _as_user("frontdesk@kamra.local"):
+		_close_my_till()
+		s = api.checkout_context(res.name)
+		t = s["till"]
+		assert (t["required"], t["open"], t["can_open"]) == (True, False, True), t
+		assert not s["till_open"] and t["property"] == P, s["till_open"]
+		b = next(b for b in s["blockers"] if b["code"] == "till_closed")
+		assert b["step"] == "settle" and "Open it here" in b["message"], b
+		# the money call itself still refuses without a till: the server agrees
+		_refused(api.add_folio_payment, folio, "Cash", 100, contains="NO_OPEN_SESSION")
+		# the same open_session the Cashier screen uses, from the sheet
+		open_session(P, 500)
+		s = api.checkout_context(res.name)
+		assert s["till"]["open"] and s["till_open"], s["till"]
+		assert not any(b["code"] == "till_closed" for b in s["blockers"]), s["blockers"]
+		for c in s["collect"]:
+			api.add_folio_payment(c["folio"], "Cash", c["amount"])
+		s = api.checkout_context(res.name)
+		assert s["settled"] and s["actions"]["can_checkout"], s["blockers"]
+		assert s["actions"]["can_check_out_role"], s["actions"]
+		# the check-in sheet carries the same till state for its deposit step
+		assert api_checkin_till(res.name)["open"]
+		_close_my_till()
+
+
+def api_checkin_till(reservation):
+	from kamra.checkin import _till
+	return _till(frappe.db.get_value("Reservation", reservation, "property"))
+
+
+@check("till: a property that runs without tills takes payments with none; till-only moves still need one")
+def t381():
+	from kamra import api, cashier
+	from kamra import settings as st
+	res, folio = _settle_stay("E371", "+91 70000 03710")
+	st.save_settings(P, "finance", {"use_cashier_tills": 0})
+	try:
+		with _as_user("frontdesk@kamra.local"):
+			_close_my_till()
+			assert cashier.require_open_session(P) is None
+			s = api.checkout_context(res.name)
+			assert s["till"]["open"] and not s["till"]["required"], s["till"]
+			assert not any(b["code"] == "till_closed" for b in s["blockers"]), s["blockers"]
+			for c in s["collect"]:
+				api.add_folio_payment(c["folio"], "Card", c["amount"])
+			assert api.checkout_context(res.name)["settled"]
+			# a paid-out is a drawer movement: it still needs a till
+			_refused(cashier.post_paid_out, P, 50, "Eval courier", contains="NO_OPEN_SESSION")
+	finally:
+		st.save_settings(P, "finance", {"use_cashier_tills": 1})
+	with _as_user("frontdesk@kamra.local"):
+		_refused(cashier.require_open_session, P, contains="NO_OPEN_SESSION")
+
+
+@check("open bills at check-out: laundry still at the laundry says why, moves to Ready, hands back and bills")
+def t382():
+	from kamra import api, laundry
+	res, folio = _settle_stay("E372", "+91 70000 03720")
+	if not frappe.db.exists("Laundry Rate", {"property": P, "item_name": "Eval Shirt"}):
+		frappe.get_doc({"doctype": "Laundry Rate", "property": P, "item_name": "Eval Shirt",
+		                "service_type": "Wash & Iron", "rate": 100}).insert(ignore_permissions=True)
+	o = laundry.collect_laundry(P, room=res.room, items=[
+		{"item_name": "Eval Shirt", "service_type": "Wash & Iron", "qty": 2}])["order"]
+	laundry.laundry_status(o, "In Process")
+	s = api.checkout_context(res.name)
+	b = next(x for x in s["pending_bills"] if x["name"] == o)
+	assert b["kind"] == "laundry" and b["billable"] and b["amount"] == 200, b
+	assert b["can_mark_ready"] and not b["can_post_to_room"], b
+	assert "Still at the laundry" in b["hint"] and b["pieces_missing"] == 2, b
+	n = next(n for n in s["notices"] if n["code"] == "pending_bills")
+	assert "do not stop the check-out" in n["message"], n
+	# open bills never block: they are a warning on the sheet
+	assert not any(x["code"] == "pending_bills" for x in s["blockers"]), s["blockers"]
+	# Finance may see the bill but not move the bag
+	with _as_user(_fin_user()):
+		fb = next(x for x in api.checkout_context(res.name)["pending_bills"] if x["name"] == o)
+		assert not fb["can_act"] and not fb["can_mark_ready"], fb
+		assert "Front Desk" in fb["act_roles"], fb
+	owed = s["totals"]["owed"]
+	laundry.laundry_status(o, "Ready")
+	b = next(x for x in api.checkout_context(res.name)["pending_bills"] if x["name"] == o)
+	assert b["can_post_to_room"] and not b["can_mark_ready"], b
+	# what the sheet does on "Hand back and post to room"
+	laundry.return_items(o, {i["row"]: i["qty"] for i in b["items"]})
+	laundry.deliver_laundry(o)
+	s = api.checkout_context(res.name)
+	assert not [x for x in s["pending_bills"] if x["name"] == o], s["pending_bills"]
+	assert s["totals"]["owed"] > owed + 199, (owed, s["totals"])
+
+
+@check("check-out roles and retries: Finance settles but is told it can't check out; a lost snapshot is retried")
+def t383():
+	from kamra import api, checkout
+	res, folio = _settle_stay("E373", "+91 70000 03730")
+	with _as_user(_fin_user()):
+		s = api.checkout_context(res.name)
+		assert not s["actions"]["can_check_out_role"], s["actions"]
+		b = next(b for b in s["blockers"] if b["code"] == "role_cannot_check_out")
+		assert b["step"] == "confirm" and "Front Desk" in b["message"], b
+		assert not s["actions"]["can_checkout"]
+		_refused(api.check_out, res.name, exc=frappe.PermissionError)
+	assert api.checkout_context(res.name)["actions"]["can_check_out_role"]
+	# a deadlock drops the whole transaction, savepoint and all: the
+	# context is computed again instead of answering with a server error
+	from unittest.mock import patch
+	real, calls = checkout._checkout_context, []
+
+	def flaky(name):
+		calls.append(name)
+		if len(calls) == 1:
+			raise checkout.SnapshotLost("kamra_checkout_ctx")
+		return real(name)
+	# the retry's full rollback is stubbed so the harness savepoint survives
+	with patch.object(checkout, "_checkout_context", side_effect=flaky), \
+			patch.object(frappe.db, "rollback"):
+		s = checkout.checkout_context(res.name)
+	assert len(calls) == 2 and s["reservation"]["name"] == res.name, calls
+
 
 def execute():
 	global RT, ROOM
@@ -9886,7 +10031,8 @@ def execute():
 		           t350, t351, t352, t353, t354, t355, t356,
 		           t360, t361, t362, t363, t364, t365,
 		           t370, t371, t372, t373, t374, t375, t376,
-		           t217, t260, t261, t262, t263, t264):
+		           t217, t260, t261, t262, t263, t264,
+		           t380, t381, t382, t383):
 			fn()
 	finally:
 		frappe.flags.kamra_checkin_steps_off = False
