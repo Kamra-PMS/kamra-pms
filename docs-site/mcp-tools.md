@@ -149,7 +149,7 @@ Mutating - logged to the activity ledger.
 
 ### `find_reservations(query, status, limit)`
 
-Find reservations by guest name, room number, or reference  - 
+Find reservations by guest name, room number, or reference  -
 optionally filtered by status (Confirmed, Checked In, Checked Out,
 Cancelled, No Show, Waitlisted). Resolve a room or name to a
 reservation before acting.
@@ -385,7 +385,7 @@ Mutating - logged to the activity ledger.
 ### `close_folio(folio)`
 
 Close / settle an open folio and issue the invoice number. Balance
-must be zero (or use part-settle elsewhere). Confirm with staff  - 
+must be zero (or use part-settle elsewhere). Confirm with staff  -
 irreversible.
 
 Endpoint: `kamra.api.close_folio`.
@@ -729,7 +729,7 @@ Endpoint: `kamra.banquet.banquet_register`.
 ### `banquet_menu_card(function)`
 
 What will actually be served, course by course, with no prices on it
- -  the sheet the customer signs off and the kitchen cooks from.
+-  the sheet the customer signs off and the kitchen cooks from.
 
 Endpoint: `kamra.banquet.menu_card`.
 
