@@ -1,15 +1,15 @@
 # Self-hosting on Hostinger
 
 Best path for India / Southeast Asia on a cheap VPS. Software stays free;
-Hostinger bills the VPS — 20% off with the Kamra referral link below.
+Hostinger bills the VPS, with 20% off with the Kamra referral link below.
 
 ## 1. Create the server
 
-Open Hostinger with the Kamra referral link —
-**[hostinger.com/in?REFERRALCODE=kamrapms](https://www.hostinger.com/in?REFERRALCODE=kamrapms)** —
+Open Hostinger with the Kamra referral link,
+**[hostinger.com/in?REFERRALCODE=kamrapms](https://www.hostinger.com/in?REFERRALCODE=kamrapms)**:
 you save **20%** and it helps fund Kamra. Go to **VPS** and pick **KVM 2**
 (2 vCPU / 8 GB / ~₹549/mo). For the operating system choose
-**Ubuntu 24.04 with Docker** (plain Ubuntu 24.04 also works — the installer
+**Ubuntu 24.04 with Docker** (plain Ubuntu 24.04 also works; the installer
 adds Docker). Set a root password or SSH key and note the IP.
 
 ## 2. Point your domain
@@ -27,8 +27,8 @@ curl -fsSL https://raw.githubusercontent.com/Kamra-PMS/kamra-pms/main/deploy/ins
 ```
 
 Answer three prompts: **site domain**, **admin email**, **admin password**.
-There is no default password. The installer builds Kamra on the VPS —
-allow 20–45 minutes the first time.
+There is no default password. The installer builds Kamra on the VPS.
+Allow 20 to 45 minutes the first time.
 
 ## 4. TLS + sign in
 

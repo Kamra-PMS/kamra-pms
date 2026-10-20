@@ -3,7 +3,7 @@ import { defineConfig } from "vitepress"
 export default defineConfig({
   title: "Kamra Docs",
   description:
-    "Documentation for Kamra, the open-source AI-native hotel PMS - install, self-host, connect your AI over MCP, and run your property.",
+    "Kamra is the world's first open-source, agentic AI-ready PMS: open source, free, and MCP-driven since Kamra 1.0 (5 July 2026). Built for modern hospitality. Privacy first. AI ready. Free.",
   base: "/docs/",
   cleanUrls: true,
   // the writing guide for contributors is not a published page
@@ -35,6 +35,7 @@ export default defineConfig({
         text: "Getting started",
         items: [
           { text: "Introduction", link: "/" },
+          { text: "Why Kamra", link: "/why-kamra" },
           { text: "Features at a glance", link: "/features" },
           { text: "Try the live demo", link: "/demo" },
           { text: "Quickstart (Docker)", link: "/quickstart" },
@@ -53,7 +54,7 @@ export default defineConfig({
           { text: "Reports & dashboards", link: "/reports" },
           { text: "Housekeeping", link: "/housekeeping" },
           { text: "Guest requests", link: "/operations" },
-          { text: "F&B — POS & kitchen", link: "/fnb" },
+          { text: "F&B: POS & kitchen", link: "/fnb" },
           { text: "Banquets & groups", link: "/banquets" },
           { text: "Revenue & rates", link: "/revenue" },
           { text: "Booking engine", link: "/booking-engine" },

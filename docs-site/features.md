@@ -84,7 +84,7 @@ the SLA report. A maintenance request can become a housekeeping task.
 
 [Guest requests guide →](/operations)
 
-## F&B — POS and kitchen
+## F&B: POS and kitchen
 
 A restaurant POS with a table map, several bills per table, room service,
 takeaway and delivery; a kitchen display by station; kitchen printers that

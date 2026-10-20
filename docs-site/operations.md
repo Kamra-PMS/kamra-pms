@@ -1,4 +1,4 @@
-# Operations — guest requests and deadlines
+# Operations: guest requests and deadlines
 
 The Operations module is the desk's to-do list for guests: towels, a cab,
 a broken AC, a complaint. Each request is a ticket with a category, a
@@ -197,5 +197,5 @@ Tickets run on `kamra.api.create_ticket`, `tickets_list` and
 instructions use `kamra.api.stay_instructions`, `add_stay_instruction`
 and `set_stay_instruction_status`. AI agents use
 the same calls as the MCP tools `create_ticket`, `list_tickets` and
-`advance_ticket` — see the [MCP tools](/mcp-tools#ops) and the
+`advance_ticket`. See the [MCP tools](/mcp-tools#ops) and the
 [API reference](/api-reference).

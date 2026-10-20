@@ -28,7 +28,7 @@ a call arrives:
 | [Payment links](#payments) | both | Gateway API out, gateway webhook in | Settings → Payments |
 | [Door locks](#door-locks) | out | Adapter interface (bring a connector) | Settings → Front Desk |
 | [Accounting export](#accounting-export) | out | Closed invoices with tax columns | Finance → Accounting Export |
-| [ERPNext / Frappe HR](/self-hosting/erpnext-hr) | both | Same site, same database | — |
+| [ERPNext / Frappe HR](/self-hosting/erpnext-hr) | both | Same site, same database | Apps screen on the same site |
 
 ## REST API
 

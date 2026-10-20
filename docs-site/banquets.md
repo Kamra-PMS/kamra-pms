@@ -1,4 +1,4 @@
-# Banquets & Groups — functions from enquiry to close-out
+# Banquets & Groups: functions from enquiry to close-out
 
 The Banquets & Groups app runs the function business: weddings,
 conferences, launches, parties. One **function sheet** carries a function
@@ -19,8 +19,8 @@ work on functions; Finance and Housekeeping can read them.
 
 2. **Build the catalogue.** **Banquets & Groups → Menus & Services**. A
    **menu** has a **Rate per pax**, a **Minimum pax** and its courses. A
-   **service** is everything else — LED wall, podium, DJ, decor, bar,
-   staffing — with a rate and whether it's **Chargeable by default**.
+   **service** is everything else (LED wall, podium, DJ, decor, bar,
+   staffing), with a rate and whether it's **Chargeable by default**.
    **Dishes** hold recipes, so the margin can count food cost.
 
    ![The banquet catalogue: five menu packages with plate price, minimum pax and courses](/img/banquets/catalogue.png)
@@ -74,7 +74,7 @@ date is set (2 days by default).
 The sheet has six steps across the top. Each one shows a tick when it's
 done, or the one thing still missing. You can open any step at any time.
 
-![The function sheet header: quote, received, balance and margin, and the six steps — Enquiry, Quote, Margin, Money, Documents, The night](/img/banquets/function.png)
+![The function sheet header: quote, received, balance and margin, and the six steps: Enquiry, Quote, Margin, Money, Documents, The night](/img/banquets/function.png)
 
 | Step | What you do there |
 | --- | --- |
@@ -143,8 +143,8 @@ function, **Close out** opens **The night** step (see
 [Close out the night](#close-out-the-night)).
 
 When a function is confirmed, Kamra creates the **Department checklist**
-— Sales, Finance, Housekeeping and F&B tasks with due dates counted back
-from the event — and tells those teams.
+(Sales, Finance, Housekeeping and F&B tasks with due dates counted back
+from the event) and tells those teams.
 
 ## Take payments
 
@@ -309,7 +309,7 @@ to the service in the catalogue.
 ## For developers
 
 Functions live in `kamra/banquet.py` and `kamra/banquet_ops.py` (the
-`Venue Booking` doctype). AI agents use the `banquet_*` tools —
+`Venue Booking` doctype). AI agents use the `banquet_*` tools:
 `banquet_availability`, `banquet_enquiry`, `banquet_add_menu`,
 `banquet_quote`, `banquet_status`, `banquet_record_receipt`,
 `banquet_link_group`, `banquet_close_out` and more. Reopening a closed

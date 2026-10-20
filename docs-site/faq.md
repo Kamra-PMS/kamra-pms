@@ -1,9 +1,26 @@
 # FAQ
 
+## Why is Kamra open source?
+
+Because a hotel should own the system it runs on. With Kamra your data
+sits on your server, in your country, and you can read and change every
+line of code. Open source also makes the AI side safe to trust: anyone
+can check that prices and taxes come from code and that every agent
+action is logged. Read [Why Kamra](/why-kamra) and the
+[Kamra Open Pledge](https://kamrapms.com/open-pledge/).
+
+## How does Kamra make money?
+
+The software is free. HeyKoala, the company behind Kamra, earns from
+sponsorships, partner listing fees, custom implementation and AI
+automation for hotels through [heykoala.ai](https://heykoala.ai). The
+full answer is at
+[kamrapms.com/how-kamra-makes-money](https://kamrapms.com/how-kamra-makes-money/).
+
 ## Is anything locked behind a paid plan?
 
 **No.** Every feature is open source and included everywhere. Paid
-options add implementation and support — plus *connected services*
+options add implementation and support, plus *connected services*
 that carry third-party licensing costs (live GST e-invoicing through a
 licensed provider, WhatsApp gateway, payment gateway setup). Those are
 services with real per-use costs, not feature gates. The GSTR-1 export
@@ -26,13 +43,13 @@ logins.
 
 ## What does self-hosting really require?
 
-A 2 vCPU / 4 GB / 40 GB VPS (~₹549–$24/month), a domain, and an
+A 2 vCPU / 4 GB / 40 GB VPS (about ₹549 to $24 a month), a domain, and an
 afternoon. See the [guides](/self-hosting/). You manage updates and
 backups; both are one command.
 
 ## Can I move between Cloud and self-hosting?
 
-Yes, both directions. It's standard Frappe — `bench backup` produces a
+Yes, both directions. It's standard Frappe. `bench backup` produces a
 full database + files archive that restores anywhere.
 
 ## Does the AI ever set prices or taxes?
@@ -50,14 +67,14 @@ for stable; `develop` is the nightly channel.
 
 **No.** Kamra installs with `payments` only. Company books (ERPNext) and
 payroll (Frappe HR) are optional apps on the **same site** when you want
-them — on Frappe Cloud or your own server. See
+them, on Frappe Cloud or your own server. See
 [ERPNext and Frappe HR](/self-hosting/erpnext-hr).
 
 ## How does Kamra version its own releases?
 
 **Patch-first.** Small features and fixes ship as `2.6.1`, `2.6.2`, and so
 on. A larger `2.7.0`-style cut only happens when maintainers deliberately
-want one — not automatically on every `feat:` commit. See the
+want one, not automatically on every `feat:` commit. See the
 [changelog](https://github.com/Kamra-PMS/kamra-pms/blob/main/CHANGELOG.md)
 and [releasing notes](https://github.com/Kamra-PMS/kamra-pms/blob/main/RELEASING.md)
 in the repo.
@@ -66,10 +83,10 @@ in the repo.
 
 [GitHub issues](https://github.com/Kamra-PMS/kamra-pms/issues) for bugs
 and requests, discussions for questions. Security reports: see
-`SECURITY.md` — please don't open public issues for those.
+`SECURITY.md`. Please don't open public issues for those.
 
 ## Who builds Kamra?
 
 [HeyKoala](https://heykoala.ai). The PMS is our open-source foundation;
-we make money hosting it and building AI hotel staff on top — not by
-gating features.
+we earn from implementation, sponsorships and AI automation on top, not
+by gating features. See [How does Kamra make money?](#how-does-kamra-make-money)
