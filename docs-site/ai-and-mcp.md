@@ -1,7 +1,7 @@
 # Connect your AI (MCP)
 
 Kamra is agent-native: everything staff can do through a governed tool,
-an agent can do — through the same layer. Prices come from the pricing
+an agent can do - through the same layer. Prices come from the pricing
 engine, guardrails and policies apply, and every action lands in the
 activity ledger with who / what / why.
 
@@ -25,7 +25,7 @@ check in; it cannot change rates or run finance. Unattended jobs
 
 ## 1. Connect Claude (the usual path)
 
-Your Kamra site must be **public HTTPS** — Claude talks to it from
+Your Kamra site must be **public HTTPS** - Claude talks to it from
 Anthropic's cloud, not from the laptop.
 
 1. In Kamra open **Kamra Agent → Connect your AI**.
@@ -35,8 +35,8 @@ Anthropic's cloud, not from the laptop.
    **Allow**.
 4. In a Claude chat, open the **+** menu → Connectors and enable Kamra.
 
-Then talk in hotel language: *"Book Mr. Rao a deluxe Fri–Sun with
-breakfast, company Acme pays the stay"* — it quotes, books, routes
+Then talk in hotel language: *"Book Mr. Rao a deluxe Fri-Sun with
+breakfast, company Acme pays the stay"* - it quotes, books, routes
 billing by the company's rules, and logs everything.
 
 **Claude Code** (same OAuth, from a terminal):
@@ -47,7 +47,7 @@ claude mcp add --transport http kamra https://pms.yourhotel.com/mcp
 
 Then `/mcp` in the session and complete the browser sign-in.
 
-Disconnect from the same Connect panel — that revokes the grant. Claude
+Disconnect from the same Connect panel - that revokes the grant. Claude
 must sign in again.
 
 ### Localhost and air-gapped sites
@@ -73,11 +73,11 @@ Gemini, Groq, OpenRouter, Ollama, Azure, or Custom) → paste the key →
 **Test connection** → Save.
 
 - **OpenAI-compatible only** in this form. An Anthropic `sk-ant-…` key
-  will fail here on purpose — use **Connect Claude (MCP)** instead, or
+  will fail here on purpose - use **Connect Claude (MCP)** instead, or
   put Claude behind the OpenRouter preset.
 - **Gemini** uses Google's OpenAI-compatible base URL
   (`generativelanguage.googleapis.com/v1beta/openai`).
-- **Your key, your data.** No markup — requests go from your server to
+- **Your key, your data.** No markup - requests go from your server to
   your provider.
 - **Governed:** the model only calls Kamra's tools.
 - **Role-scoped:** tools match the signed-in user's roles.
@@ -86,7 +86,7 @@ Gemini, Groq, OpenRouter, Ollama, Azure, or Custom) → paste the key →
 
 Kamra ships **101 governed tools** on MCP (see the
 [tool reference](/mcp-tools)). Visibility is the intersection of the
-connected user's **roles** and the property's **enabled modules** — a
+connected user's **roles** and the property's **enabled modules** - a
 house without F&B never sees POS tools; Front Desk still cannot change
 rates.
 
@@ -99,11 +99,11 @@ rates.
 | F&B | Outlets, menu, table map, open / create / fire / pay checks, kitchen queue |
 | Laundry | Board, rates, collect, status, deliver |
 | Revenue | Rate changes inside the owner's floor / ceiling |
-| Briefings | Owner briefing, hotel-position briefing — never change the figures |
+| Briefings | Owner briefing, hotel-position briefing - never change the figures |
 | Night audit | Idempotent end-of-day posting and no-shows |
 | Groups | Draft a block, pickup status, name a guest into the block, group billing |
 | Banquets | Availability, catalogue, enquiry → quote → event order → close-out |
-| Onboarding | `setup_property`, `import_bookings` — only if the user's role allows |
+| Onboarding | `setup_property`, `import_bookings` - only if the user's role allows |
 
 ### How to talk to it
 
@@ -112,7 +112,7 @@ Say the hotel work, not the API:
 - "Who's arriving today, and who still owes?"
 - "Quote a deluxe Friday to Sunday, two adults, breakfast."
 - "Book that for Priya Sharma, 98765 43210."
-- "The Rao booking wants to cancel — what's the fee?"
+- "The Rao booking wants to cancel - what's the fee?"
 - "Post ₹450 minibar to 214, not alcohol."
 - "Do we have the hall on 14 December for 180 pax?"
 - "Morning briefing for the owner."
@@ -124,7 +124,7 @@ the window, closing a folio) in the chat before the tool runs.
 
 - Enable the connector **per conversation** in Claude's + menu. It does
   not stay sticky across every chat unless you pin it.
-- Check **Activity** in Kamra — every MCP call is a row with your name.
+- Check **Activity** in Kamra - every MCP call is a row with your name.
 - Rotate access with **Disconnect** on the Connect panel, not by
   rotating a Frappe API key.
 - **Kamra Agent** is still there for a desk terminal that should not
@@ -142,7 +142,7 @@ Be honest with the model, and with buyers:
   (AR aging, FX desk, till open/close). REST + roles still cover them.
 - **Claude must reach the site.** NAT / private bench → stdio fallback.
 - **Custom connector confirm.** Until Kamra is in Anthropic's directory,
-  Claude shows "this URL came from an external link" — click through it.
+  Claude shows "this URL came from an external link" - click through it.
 - **Front Desk cannot change rates.** Revenue Manager (or admin) can,
   inside guardrails. Tools the property has disabled never appear.
 - **Irreversible actions still need a human in the Claude chat.** The
@@ -150,13 +150,13 @@ Be honest with the model, and with buyers:
 
 ## The autonomy rails
 
-- **Rate guardrails** — floors / ceilings per room type; agents
+- **Rate guardrails** - floors / ceilings per room type; agents
   literally cannot price outside them.
-- **Deterministic money** — pricing, GST, availability and policy fees
+- **Deterministic money** - pricing, GST, availability and policy fees
   are code, verified by the eval suite in CI on every change.
-- **Hard rules** — alcohol never bills to a company folio; cancellations
+- **Hard rules** - alcohol never bills to a company folio; cancellations
   cannot skip the policy; night posting is idempotent.
-- **Audit** — every action is in the Activity Log; click a row for the
+- **Audit** - every action is in the Activity Log; click a row for the
   full before / after story.
 
 ## Backlog (not in this release)
@@ -166,11 +166,11 @@ required to Connect Claude today.
 
 **Named jobs**
 
-- Night Auditor — scheduled close + morning WhatsApp, every line a tool call
+- Night Auditor - scheduled close + morning WhatsApp, every line a tool call
 - Public quote-and-book number (voice)
-- Owner Brief — daily occupancy / arrivals / cash
-- Villa turnover agent — checkout → housekeeping → availability
-- Waitlist chase — poll `waitlist_ready` and reach out
+- Owner Brief - daily occupancy / arrivals / cash
+- Villa turnover agent - checkout → housekeeping → availability
+- Waitlist chase - poll `waitlist_ready` and reach out
 - Guest WhatsApp thread that posts to the folio
 - Public `/try-the-agent` playground with a tool trace
 - Submit Kamra to Anthropic's Connectors Directory

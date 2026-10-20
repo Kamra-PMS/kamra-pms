@@ -1,4 +1,4 @@
-# Billing — folios, payments and the cashier
+# Billing - folios, payments and the cashier
 
 Every stay has a folio: the running bill where room nights, restaurant
 bills and extras land, and where payments are recorded against them. This
@@ -150,7 +150,7 @@ allowed credit.
 **Record a company's payment** (Finance and Hotel Admin):
 
 1. Open **Finance → Ledgers**. **City ledger aging** lists each company's
-   balance by age (0–30, 31–60, 61–90, 90+ days) and any unapplied credit.
+   balance by age (0-30, 31-60, 61-90, 90+ days) and any unapplied credit.
 2. Press **Record payment** on the company's row.
 3. Enter **Amount received**, the **Mode** and the **Reference (UTR /
    cheque no.)**. By default the payment clears the oldest bills first;

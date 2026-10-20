@@ -8,6 +8,8 @@ export default defineConfig({
   cleanUrls: true,
   // the writing guide for contributors is not a published page
   srcExclude: ["STYLE.md", "README.md"],
+  // local bench URLs in install guides are examples, not site pages
+  ignoreDeadLinks: [/^https?:\/\/localhost/, /^https?:\/\/127\.0\.0\.1/, /^https?:\/\/kamra\.localhost/],
   head: [["link", { rel: "icon", type: "image/svg+xml", href: "/docs/kamra-mark.svg" }]],
   themeConfig: {
     logo: { src: "/kamra-horizontal.svg", height: 28 },
@@ -35,7 +37,9 @@ export default defineConfig({
         text: "Getting started",
         items: [
           { text: "Introduction", link: "/" },
+          { text: "How Kamra works", link: "/how-it-works" },
           { text: "Features at a glance", link: "/features" },
+          { text: "What's new", link: "/releases" },
           { text: "Try the live demo", link: "/demo" },
           { text: "Quickstart (Docker)", link: "/quickstart" },
           { text: "Go-live checklist", link: "/go-live" },
@@ -53,7 +57,7 @@ export default defineConfig({
           { text: "Reports & dashboards", link: "/reports" },
           { text: "Housekeeping", link: "/housekeeping" },
           { text: "Guest requests", link: "/operations" },
-          { text: "F&B — POS & kitchen", link: "/fnb" },
+          { text: "F&B: POS & kitchen", link: "/fnb" },
           { text: "Banquets & groups", link: "/banquets" },
           { text: "Revenue & rates", link: "/revenue" },
           { text: "Booking engine", link: "/booking-engine" },

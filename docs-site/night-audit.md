@@ -1,4 +1,4 @@
-# Night audit — End of Day
+# Night audit - End of Day
 
 The night audit closes the hotel's business date. It posts the night's
 room charges for every in-house guest, applies the no-show policy, saves

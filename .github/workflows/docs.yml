@@ -1,0 +1,96 @@
+name: Docs
+
+# Build and publish kamrapms.com/docs whenever docs-site (or the generators)
+# change on develop, and whenever a stable Release is published. Also
+# regenerates MCP + API reference pages from code so the live manual stays
+# aligned with the branch it ships from.
+
+on:
+  push:
+    branches: [develop]
+    paths:
+      - "docs-site/**"
+      - "kamra/mcp_tools.py"
+      - "kamra/api.py"
+      - "kamra/**/*.py"
+      - ".github/workflows/docs.yml"
+  release:
+    types: [published]
+  workflow_dispatch:
+
+concurrency:
+  group: docs-publish
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: Build and publish docs
+    runs-on: ubuntu-latest
+    # Nightly / PR noise: only publish from develop pushes, releases, or manual runs
+    if: github.event_name != 'push' || github.ref == 'refs/heads/develop'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'release' && github.event.release.target_commitish || github.sha }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: docs-site/package-lock.json
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install docs deps
+        working-directory: docs-site
+        run: npm ci
+
+      - name: Regenerate MCP + API reference from code
+        working-directory: docs-site
+        run: |
+          python3 gen_mcp_tools.py
+          python3 gen_api.py
+
+      - name: Reject em dashes in published markdown
+        run: |
+          if grep -RIn --include='*.md' -e '—' -e '–' docs-site \
+            --exclude-dir=node_modules --exclude-dir=.vitepress; then
+            echo "Unicode em/en dashes found in docs-site. Use ASCII ' - ' or a colon."
+            exit 1
+          fi
+          echo "No em/en dashes."
+
+      - name: Build VitePress
+        working-directory: docs-site
+        run: npm run build
+
+      - name: Publish to kamrapms.com/docs
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          if [ -z "${DEPLOY_HOST:-}" ] || [ -z "${DEPLOY_USER:-}" ] || [ -z "${DEPLOY_SSH_KEY:-}" ]; then
+            echo "Deploy secrets missing - skipping rsync (build still succeeded)."
+            exit 0
+          fi
+          install -m 600 /dev/null "$HOME/.ssh/docs_key"
+          printf '%s\n' "$DEPLOY_SSH_KEY" > "$HOME/.ssh/docs_key"
+          eval "$(ssh-agent -s)"
+          ssh-add "$HOME/.ssh/docs_key"
+          mkdir -p ~/.ssh
+          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+          # Only /docs - never --delete on the marketing root
+          rsync -az --delete \
+            -e "ssh -i $HOME/.ssh/docs_key -o IdentitiesOnly=yes" \
+            docs-site/.vitepress/dist/ \
+            "${DEPLOY_USER}@${DEPLOY_HOST}:/var/www/kamrapms.com/docs/"
+          curl -sS -o /dev/null -w "kamrapms.com/docs/ -> %{http_code}\n" \
+            https://kamrapms.com/docs/
+          curl -sS -o /dev/null -w "kamrapms.com/docs/how-it-works -> %{http_code}\n" \
+            https://kamrapms.com/docs/how-it-works

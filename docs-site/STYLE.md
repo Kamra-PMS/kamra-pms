@@ -33,11 +33,14 @@ changing a page. (This file is not published; VitePress skips it via
    ([Country setup](/country-setup)).
 7. **Short.** If a section needs more than one screen of text, it's two
    tasks.
+8. **No em dashes.** Do not use Unicode em dashes (—) or en dashes (–).
+   Use a spaced hyphen (` - `), a colon, or a new sentence. CI rejects
+   them on docs publish.
 
 ## Page shape (module guides)
 
 ```md
-# F&B — POS and kitchen
+# F&B - POS and kitchen
 
 One or two sentences: what this part of Kamra is for and who uses it
 (the roles that see it).
@@ -76,6 +79,6 @@ to [MCP tools](/mcp-tools) and the [API reference](/api-reference).
   `/img/<page>/<name>.png` (VitePress adds the `/docs/` base).
 - 1440×900 viewport. Crop to the part that matters (a card, a dialog) with
   `shot(page, name, { locator })` rather than showing the whole app.
-- GIFs: 5–15 s, 960 px wide, 8 fps, under ~2 MB. One flow per GIF.
+- GIFs: 5-15 s, 960 px wide, 8 fps, under ~2 MB. One flow per GIF.
 - Alt text describes what the image shows, in a sentence.
 - No real guest data, no API keys, no passwords in any image.
