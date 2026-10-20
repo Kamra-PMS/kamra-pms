@@ -13,7 +13,7 @@ hero:
       text: Run your hotel
       link: /user-guide
     - theme: alt
-      text: API & Postman
+      text: API · MCP · Postman
       link: /developers
     - theme: alt
       text: Install Kamra
@@ -27,7 +27,7 @@ features:
     details: Architecture, stay lifecycle, money rules, MCP and the one write path - with diagrams.
     link: /how-it-works
   - title: API, MCP & Postman
-    details: REST basics, full method reference, MCP tools, and a downloadable Postman collection.
+    details: Connect Claude over MCP, browse every tool, call REST, or import the Postman collection.
     link: /developers
   - title: Features & latest release
     details: Every module at a glance, plus what's new in v2.6.16 and recent stables.
@@ -76,8 +76,8 @@ and no per-room fees.
   for REST, MCP and the [Postman collection](/kamra.postman_collection.json),
   or jump straight to the [API reference](/api-reference).
 
-**Quick links:** [API basics](/api) · [API reference](/api-reference) ·
-[MCP tools](/mcp-tools) ·
+**Quick links:** [Connect MCP](/ai-and-mcp) · [MCP tools](/mcp-tools) ·
+[API basics](/api) · [API reference](/api-reference) ·
 [Postman ↓](/kamra.postman_collection.json) ·
 [What's new](/releases) ·
 [changelog](https://github.com/Kamra-PMS/kamra-pms/blob/main/CHANGELOG.md)

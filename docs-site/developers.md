@@ -1,4 +1,4 @@
-# API & developer shortcuts
+# API, MCP & developer shortcuts
 
 Everything that talks to Kamra - desk UI, REST clients, Claude MCP and the
 in-app agent - hits the same whitelist. Use these links to get unblocked
@@ -6,12 +6,24 @@ fast.
 
 | Shortcut | What you get |
 | --- | --- |
+| [Connect your AI (MCP)](/ai-and-mcp) | Hosted `/mcp` OAuth setup for Claude |
+| [MCP tool reference](/mcp-tools) | All governed tools (name, args, endpoint) |
 | [REST API basics](/api) | Auth, URL shape, frequently used endpoints |
 | [REST API reference](/api-reference) | Full generated list of methods and parameters |
-| [MCP tool reference](/mcp-tools) | Governed tools for Claude / any MCP client |
 | [Postman collection](/kamra.postman_collection.json) | Import into Postman or Insomnia (download JSON) |
 | [How Kamra works](/how-it-works) | Architecture, one write path, stay lifecycle |
-| [Connect your AI](/ai-and-mcp) | OAuth MCP setup for Claude |
+
+## MCP in 2 minutes
+
+1. Site must be **public HTTPS** (Claude talks from Anthropic's cloud).
+2. In Kamra: **Kamra Agent → Connect your AI → Connect Claude**.
+3. Allow the OAuth grant for a property. Enable Kamra under Claude's
+   Connectors.
+4. Ask in hotel language: *"Book Mr. Rao a deluxe Fri-Sun with breakfast."*
+
+Full setup and guardrails: [Connect your AI](/ai-and-mcp). Every tool:
+[MCP tool reference](/mcp-tools). Stdio sidecar for air-gapped benches:
+`mcp/kamra_mcp.py` in the repo.
 
 ## Postman in 2 minutes
 

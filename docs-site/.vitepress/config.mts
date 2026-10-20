@@ -52,12 +52,13 @@ export default defineConfig({
     siteTitle: false,
     nav: [
       {
-        text: "API",
+        text: "API & MCP",
         items: [
           { text: "Developer shortcuts", link: "/developers" },
+          { text: "Connect your AI (MCP)", link: "/ai-and-mcp" },
+          { text: "MCP tool reference", link: "/mcp-tools" },
           { text: "REST API basics", link: "/api" },
           { text: "REST API reference", link: "/api-reference" },
-          { text: "MCP tool reference", link: "/mcp-tools" },
           {
             text: "Postman collection ↓",
             link: "/kamra.postman_collection.json",
@@ -141,12 +142,13 @@ export default defineConfig({
         ],
       },
       {
-        text: "API & developers",
+        text: "API & MCP",
         items: [
           { text: "Shortcuts hub", link: "/developers" },
+          { text: "Connect your AI (MCP)", link: "/ai-and-mcp" },
+          { text: "MCP tool reference", link: "/mcp-tools" },
           { text: "REST API basics", link: "/api" },
           { text: "REST API reference", link: "/api-reference" },
-          { text: "MCP tool reference", link: "/mcp-tools" },
           {
             text: "Postman collection ↓",
             link: "/kamra.postman_collection.json",
