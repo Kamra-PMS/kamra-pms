@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function - the same governed layer
-the UI and the AI use. **385 endpoints**, generated from the source
+the UI and the AI use. **387 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -2409,6 +2409,24 @@ cashier session so FO + POS cash reconcile together.
 | `mode` | yes |  |
 | `pin` | no | `None` |
 
+### `kamra.pos.change_payment_mode`
+
+**POST**
+
+Correct the tender on a bill that was settled with the wrong mode (Card
+pressed for Cash). The till keeps its history: a reversing entry for the
+old mode and a new entry for the right one, same till session, with a
+comment on the bill. Only while that till is still open - once it is
+counted and closed, the day's cash is final and a manager must correct it
+from the till screens.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `order` | yes |  |
+| `mode` | yes |  |
+| `reason` | no | `''` |
+| `pin` | no | `None` |
+
 ### `kamra.pos.mark_nc`
 
 **POST**
@@ -2510,6 +2528,25 @@ Looking at today also brings in bills still open from earlier days
 | `q` | no | `None` |
 | `state` | no | `None` |
 | `limit` | no | `200` |
+
+### `kamra.pos.orders_export`
+
+**GET/POST**
+
+The outlet's bill history as CSV for a day or up to a year: every
+bill with its state, payment mode, amount, discount, who it was for and
+who cancelled it. Same search and state filters as the orders list;
+`mode` keeps one payment mode (Cash, Card, UPI). A phone number is masked
+except to a supervisor, as on the till. Returns {filename, csv, rows}.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `outlet` | yes |  |
+| `date` | no | `None` |
+| `to_date` | no | `None` |
+| `q` | no | `None` |
+| `state` | no | `None` |
+| `mode` | no | `None` |
 
 ### `kamra.pos.find_customer`
 

@@ -6256,6 +6256,43 @@
      }
     },
     {
+     "name": "change_payment_mode",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.pos.change_payment_mode",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.pos.change_payment_mode"
+       ]
+      },
+      "description": "Correct the tender on a bill that was settled with the wrong mode (Card\npressed for Cash). The till keeps its history: a reversing entry for the\nold mode and a new entry for the right one, same till session, with a\ncomment on the bill. Only while that till is still open - once it is\ncounted and closed, the day's cash is final and a manager must correct it\nfrom the till screens.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"order\": \"ORD-2026-00001\",\n  \"mode\": \"<mode>\",\n  \"reason\": \"\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
      "name": "mark_nc",
      "request": {
       "method": "POST",
@@ -6469,6 +6506,43 @@
       "body": {
        "mode": "raw",
        "raw": "{\n  \"outlet\": \"Your Property-Restaurant\",\n  \"date\": \"2026-08-01\",\n  \"to_date\": \"2026-08-31\",\n  \"limit\": 200\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "orders_export",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.pos.orders_export",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.pos.orders_export"
+       ]
+      },
+      "description": "The outlet's bill history as CSV for a day or up to a year: every\nbill with its state, payment mode, amount, discount, who it was for and\nwho cancelled it. Same search and state filters as the orders list;\n`mode` keeps one payment mode (Cash, Card, UPI). A phone number is masked\nexcept to a supervisor, as on the till. Returns {filename, csv, rows}.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"outlet\": \"Your Property-Restaurant\",\n  \"date\": \"2026-08-01\",\n  \"to_date\": \"2026-08-31\"\n}",
        "options": {
         "raw": {
          "language": "json"
