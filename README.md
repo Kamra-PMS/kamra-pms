@@ -29,7 +29,7 @@
 > **Try it in 30 seconds → [demo.kamrapms.com](https://demo.kamrapms.com)**  
 > Tap any role to sign in (credentials are on the page). Guest booking: [/book](https://demo.kamrapms.com/book) · Housekeeping app: [/kamra/hk](https://demo.kamrapms.com/kamra/hk)
 
-**Kamra** is a full **property management system (PMS)** for hotels, resorts, and **short-term rentals / villas**. It runs on **Frappe** (the framework behind ERPNext), is **AGPL-3.0**, and is built so humans *and* AI agents share the same governed APIs, booking, check-in, folios, night audit, pricing, with deterministic money (never from an LLM).
+**Kamra** is a full **property management system (PMS)** for hotels, resorts, and **short-term rentals / villas**. It runs on **Frappe** (the framework behind ERPNext), is **AGPL-3.0**, and is built so humans *and* AI agents share the same governed APIs (booking, check-in, folios, night audit, pricing), with deterministic money (never from an LLM).
 
 ---
 
