@@ -45,7 +45,7 @@ def _as_date(value: str):
 			if d and 1900 < d.year <= now_datetime().year:
 				return d
 		except Exception:
-			pass
+			pass  # not a date in this spelling; try the next one
 	return None
 
 

@@ -206,7 +206,7 @@ class PropertyScopeTestCase(IntegrationTestCase):
 			and not frappe.get_meta(row.parent).istable
 			and not frappe.get_meta(row.parent).issingle
 		}
-		self.assertTrue({"Reservation", "Folio", "Room", "Housekeeping Task"} <= linked)
+		self.assertLessEqual({"Reservation", "Folio", "Room", "Housekeeping Task"}, linked)
 		queries = frappe.get_hooks("permission_query_conditions")
 		checks = frappe.get_hooks("has_permission")
 		for doctype in sorted(linked):
@@ -244,7 +244,7 @@ class PropertyScopeTestCase(IntegrationTestCase):
 	def test_unrestricted_staff_still_see_every_guest(self):
 		self.assertEqual(authz.guest_query_conditions("Administrator"), "")
 		names = set(frappe.get_list("Guest", pluck="name", limit_page_length=0))
-		self.assertTrue({self.mine, self.theirs, self.fresh} <= names)
+		self.assertLessEqual({self.mine, self.theirs, self.fresh}, names)
 
 	# ── Kamra endpoints ────────────────────────────────────────────────
 

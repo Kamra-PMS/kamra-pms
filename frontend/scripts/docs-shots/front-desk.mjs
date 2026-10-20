@@ -206,7 +206,6 @@ if (want("checkout-owed")) {
   await page.waitForTimeout(500)
   const err = page.locator("div.rounded-lg.border-rose-200").filter({ hasText: "Cannot check out" }).first()
   await err.scrollIntoViewIfNeeded()
-  const panel = page.locator("[role=dialog] > div").last()
   await shot(page, "front-desk/checkout-owed", { locator: err })
 }
 

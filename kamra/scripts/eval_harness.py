@@ -2803,7 +2803,6 @@ def t47c():
 def t47d():
 	import hashlib
 	import hmac
-	import json
 
 	from frappe.utils import add_days, nowdate
 
@@ -4392,7 +4391,6 @@ def t87():
 
 @check("settings: module pages validate, save and drive the code that reads them")
 def t90():
-	import json
 	from kamra import settings as st
 	from kamra.kamra.doctype.housekeeping_task.housekeeping_task import sla_minutes
 
@@ -4417,7 +4415,6 @@ def t90():
 
 @check("settings: a role edits only its own pages; staff access stays inside the admin's reach")
 def t91():
-	import json
 	from kamra import settings as st, staff
 
 	u = "eval.revenue.settings@kamra.local"
@@ -6454,7 +6451,7 @@ def t183():
 		                  lambda: run_night_audit(P))
 		assert frappe.db.get_value("Reservation", late.name, "status") == "Confirmed"
 		assert [h["reservation"] for h in out["held_late_arrivals"]] == [late.name], out
-		out = _audit_eval(nowdate(), f"{nowdate()} 23:30",
+		_audit_eval(nowdate(), f"{nowdate()} 23:30",
 		                  lambda: run_night_audit(P))
 		assert frappe.db.get_value("Reservation", late.name, "status") == "No Show"
 	finally:
