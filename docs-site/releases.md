@@ -1,7 +1,7 @@
 # What's new
 
 Stable releases ship from the `main` branch as `vX.Y.Z`. Kamra versions
-**patch-first** (2.6.15 → 2.6.16): small features and fixes share one
+**patch-first** (2.6.16 → 2.6.17): small features and fixes share one
 minor line until maintainers deliberately cut a higher bump. Full notes:
 [CHANGELOG.md](https://github.com/Kamra-PMS/kamra-pms/blob/main/CHANGELOG.md).
 
@@ -9,18 +9,27 @@ Install or upgrade: [Frappe Cloud Marketplace](/self-hosting/frappe-cloud)
 or [self-hosting](/self-hosting/). After upgrade, open
 **Admin → System Health** to confirm the site version.
 
-## Current stable: v2.6.16
+## Current stable: v2.6.17
 
-Released 19 Oct 2026.
-[GitHub release](https://github.com/Kamra-PMS/kamra-pms/releases/tag/v2.6.16).
+Released 20 Oct 2026.
+[GitHub release](https://github.com/Kamra-PMS/kamra-pms/releases/tag/v2.6.17).
 
-- **Pet charge** on public booking pages, the desk booking form and the
-  folio (posted once per stay at the quoted amount).
-- **Extra guests above capacity** billed as their own folio line (not
-  folded into the room rate).
-- Ledger: Transaction Code can store the Extra Guests charge type.
+- **Company credit control** - payment terms, due-date aging, warn or
+  block at booking and check-out (Finance override logged).
+- **Kitchen printers** - route KOTs by outlet and station; auto-accept
+  and print as an F&B setting.
+- **Go-live import** - CSV for companies and opening balances, preview,
+  then reconcile.
+- **Integrations** - outbound webhooks, external POS room-charge API,
+  door-lock adapter interface.
+- **Self-host** - prebuilt image pull, `:stable` tag, quickstart compose.
 
 ## Recent stables
+
+### v2.6.16
+
+Pet charge on booking pages, desk form and folio; extra guests above
+capacity as their own folio line.
 
 ### v2.6.15
 
@@ -79,12 +88,12 @@ export, retention, notices).
 
 ## Docs versioning
 
-The manual is versioned from **v2.6.16** onward:
+The manual is versioned from **v2.6.17** onward:
 
 | URL | What it is |
 | --- | --- |
 | [/docs/](https://kamrapms.com/docs/) | Latest docs (tracks `develop`, labelled with the current stable) |
-| [/docs/vX.Y.Z/](https://kamrapms.com/docs/v2.6.16/) | Frozen snapshot taken when that GitHub Release was published |
+| [/docs/vX.Y.Z/](https://kamrapms.com/docs/v2.6.17/) | Frozen snapshot taken when that GitHub Release was published |
 
 Use the **version** control in the top nav to switch. Older snapshots show a
 banner linking back to latest. Each new GitHub Release freezes a copy
