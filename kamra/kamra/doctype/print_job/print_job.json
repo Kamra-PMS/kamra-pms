@@ -40,7 +40,7 @@
    "fieldname": "kind",
    "fieldtype": "Select",
    "label": "Kind",
-   "options": "KOT\nVoid\nReprint\nTest",
+   "options": "KOT\nVoid\nReprint\nTest\nBill",
    "default": "KOT",
    "in_list_view": 1
   },
@@ -98,7 +98,7 @@
   }
  ],
  "links": [],
- "modified": "2026-10-19 13:00:00.000000",
+ "modified": "2026-10-20 13:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Print Job",

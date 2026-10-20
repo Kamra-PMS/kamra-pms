@@ -66,8 +66,28 @@ def ensure_cashier(property: str, user: str | None = None) -> str:
 	return doc.name
 
 
-def require_open_session(property: str) -> str | None:
-	"""Return open session name, or None when agents bypass. Throws otherwise."""
+def _open_session_names(property: str, user: str) -> list[str]:
+	"""The user's open tills here, newest first. Usually one; a person
+	covering two stations holds one per terminal."""
+	return frappe.get_all(
+		"Cashier Session",
+		filters={"property": property, "user": user, "status": "Open"},
+		pluck="name", order_by="opened_at desc, creation desc")
+
+
+def _pick_session(names: list[str], outlet: str | None = None) -> str | None:
+	"""Of several open tills, the one serving `outlet` (a POS bill goes to the
+	till of its outlet), else the one opened last."""
+	if outlet and len(names) > 1:
+		for n in names:
+			if frappe.db.get_value("Cashier Session", n, "outlet") == outlet:
+				return n
+	return names[0] if names else None
+
+
+def require_open_session(property: str, outlet: str | None = None) -> str | None:
+	"""Return open session name, or None when agents bypass. Throws otherwise.
+	`outlet`: which till to take when the user holds several."""
 	if _agent_bypass():
 		# Prefer an open session if one exists; else None (txn still recorded
 		# without session when agents act).
@@ -78,12 +98,7 @@ def require_open_session(property: str) -> str | None:
 			order_by="opened_at desc",
 		)
 		return sess
-	user = frappe.session.user
-	sess = frappe.db.get_value(
-		"Cashier Session",
-		{"property": property, "user": user, "status": "Open"},
-		"name",
-	)
+	sess = _pick_session(_open_session_names(property, frappe.session.user), outlet)
 	if not sess:
 		frappe.throw(
 			"NO_OPEN_SESSION: open your till under Finance → Cashier first.",
@@ -167,12 +182,15 @@ def record_cashier_txn(
 	reference: str | None = None,
 	notes: str | None = None,
 	session: str | None = None,
+	outlet: str | None = None,
 ) -> str | None:
 	"""Append a Cashier Transaction. Returns session name (or None)."""
 	sess = session
+	if not outlet and pos_order:
+		outlet = frappe.db.get_value("POS Order", pos_order, "outlet")
 	if not sess:
 		try:
-			sess = require_open_session(property)
+			sess = require_open_session(property, outlet)
 		except Exception:
 			if _agent_bypass():
 				sess = None
@@ -191,6 +209,7 @@ def record_cashier_txn(
 		"business_date": bd,
 		"folio": folio,
 		"pos_order": pos_order,
+		"outlet": outlet or frappe.db.get_value("Cashier Session", sess, "outlet"),
 		"reference": (reference or "")[:140] or None,
 		"notes": notes,
 		"posted_by": frappe.session.user,
@@ -232,31 +251,60 @@ def _session_view(name: str) -> dict[str, Any]:
 
 @frappe.whitelist()
 @require_roles("Front Desk", "Finance", "Kamra Agent")
-def open_session(property: str, opening_float: float = 0,
-                 terminal: str | None = None):
-	"""Open the caller's till for the current business date."""
+def open_session(property: str, opening_float: float | None = None,
+                 terminal: str | None = None, cashier_terminal: str | None = None):
+	"""Open the caller's till for the current business date.
+
+	`cashier_terminal` picks a configured till. Without it the session is the
+	property's Default till, one per user, exactly as before terminals existed.
+	A configured terminal has one open session at a time; one user may hold
+	several, one per terminal."""
 	ensure_business_date(property)
 	user = frappe.session.user
-	existing = frappe.db.get_value(
-		"Cashier Session",
-		{"property": property, "user": user, "status": "Open"},
-		"name",
-	)
-	if existing:
-		return session_as_dict(existing)
+	term = None
+	if cashier_terminal:
+		term = frappe.db.get_value(
+			"Cashier Terminal", cashier_terminal,
+			["name", "property", "disabled", "outlet", "default_float", "terminal_name"],
+			as_dict=True)
+		if not term or term.property != property:
+			frappe.throw("That terminal is not at this property.")
+		if term.disabled:
+			frappe.throw("That terminal is switched off.")
+		taken = frappe.db.get_value(
+			"Cashier Session", {"cashier_terminal": term.name, "status": "Open"},
+			["name", "user"], as_dict=True)
+		if taken:
+			if taken.user == user:
+				return session_as_dict(taken.name)
+			frappe.throw(f"{term.terminal_name} is already open under {taken.user}. "
+			             "Ask them (or a manager) to close it first.")
+	else:
+		existing = frappe.db.get_value(
+			"Cashier Session",
+			{"property": property, "user": user, "status": "Open",
+			 "cashier_terminal": ["is", "not set"]},
+			"name",
+		)
+		if existing:
+			return session_as_dict(existing)
 	cashier = ensure_cashier(property, user)
 	bd = get_business_date(property)
+	opening = float(opening_float) if opening_float not in (None, "") else \
+		float(term.default_float or 0) if term else 0.0
 	doc = frappe.get_doc({
 		"doctype": "Cashier Session",
 		"property": property,
 		"cashier": cashier,
 		"user": user,
 		"business_date": bd,
-		"terminal": terminal or "",
+		"terminal": (term.terminal_name if term else terminal) or "",
+		"cashier_terminal": term.name if term else None,
+		"outlet": term.outlet if term else None,
 		"status": "Open",
-		"opening_float": float(opening_float or 0),
+		"opening_float": opening,
 		"opened_at": now_datetime(),
-		"expected_cash": float(opening_float or 0),
+		"expected_cash": opening,
 	})
 	doc.insert(ignore_permissions=True)
 	return session_as_dict(doc.name)
@@ -264,14 +312,15 @@ def open_session(property: str, opening_float: float = 0,
 
 @frappe.whitelist()
 @require_roles("Front Desk", "Finance", "Night Auditor", "Kamra Agent")
-def current_session(property: str):
-	"""Caller's open session, or null."""
+def current_session(property: str, cashier_terminal: str | None = None):
+	"""Caller's open session, or null. With several open, the newest unless
+	`cashier_terminal` names one."""
 	user = frappe.session.user
-	name = frappe.db.get_value(
-		"Cashier Session",
-		{"property": property, "user": user, "status": "Open"},
-		"name",
-	)
+	names = _open_session_names(property, user)
+	if cashier_terminal:
+		names = [n for n in names
+		         if frappe.db.get_value("Cashier Session", n, "cashier_terminal") == cashier_terminal]
+	name = names[0] if names else None
 	if not name and _agent_bypass():
 		name = frappe.db.get_value(
 			"Cashier Session",
@@ -285,7 +334,14 @@ def current_session(property: str):
 			"business_date": get_business_date(property),
 			"cashier": _cashier_for_user(property),
 		}
-	return {"open": True, **_session_view(name)}
+	mine = _open_session_names(property, user)
+	return {"open": True, "open_sessions": mine,
+	        "open_tills": [{"name": n, "cashier_terminal": t, "terminal": lbl or "Default"}
+	                       for n, t, lbl in (
+	                           (n, *frappe.db.get_value("Cashier Session", n,
+	                                                    ["cashier_terminal", "terminal"]))
+	                           for n in mine)],
+	        **_session_view(name)}
 
 
 @frappe.whitelist(methods=["POST"])
@@ -311,6 +367,10 @@ def close_session(session: str, counted_cash: float,
 	doc.closed_at = now_datetime()
 	doc.closed_by = frappe.session.user
 	doc.close_notes = (notes or "").strip()[:500] or None
+	tol = float(get_setting(doc.property, "till_variance_tolerance") or 0)
+	if tol > 0 and abs(doc.variance) > tol:
+		# never block a cash count; flag it for a manager instead
+		doc.variance_status = "Needs Review"
 	doc.save(ignore_permissions=True)
 
 	# Derive a Shift Handover row so ops history stays consistent.
@@ -385,19 +445,43 @@ def post_paid_out(property: str, amount: float, reason: str,
 @frappe.whitelist(methods=["POST"])
 @require_roles("Front Desk", "Finance", "Kamra Agent")
 def cash_drop(property: str, amount: float, location: str | None = None,
-              pin: str | None = None):
-	"""Move cash from the till to a drop safe / general cashier."""
+              pin: str | None = None, to_terminal: str | None = None):
+	"""Move cash from the till to a drop safe / general cashier.
+
+	`to_terminal` names a Cash Office terminal: the drop is then a pending
+	transfer the cash office confirms when the money arrives. Without it the
+	drop is just recorded against `location`, as before."""
 	if float(amount) <= 0:
 		frappe.throw("Amount must be positive.")
 	from kamra.authz import require_cashier_pin
 	require_cashier_pin(property, pin)
+	office = None
+	if to_terminal:
+		office = frappe.db.get_value("Cashier Terminal", to_terminal,
+		                             ["name", "property", "kind", "terminal_name", "disabled"],
+		                             as_dict=True)
+		if not office or office.property != property or office.disabled:
+			frappe.throw("That cash office is not available at this property.")
+		if office.kind != "Cash Office":
+			frappe.throw(f"{office.terminal_name} is not a cash office.")
 	sess = require_open_session(property)
+	where = office.terminal_name if office else (location or "safe")
 	record_cashier_txn(
 		property, "Drop", "Cash", -abs(float(amount)),
-		reference=(location or "safe")[:80],
-		notes=f"Cash drop to {location or 'safe'}",
+		reference=where[:80],
+		notes=f"Cash drop to {where}",
 		session=sess,
 	)
+	if office:
+		frappe.get_doc({
+			"doctype": "Cash Transfer", "property": property, "kind": "Drop",
+			"status": "Pending", "amount": abs(float(amount)),
+			"business_date": get_business_date(property),
+			"from_session": sess,
+			"from_terminal": frappe.db.get_value("Cashier Session", sess, "cashier_terminal") if sess else None,
+			"to_terminal": office.name, "requested_by": frappe.session.user,
+			"requested_at": now_datetime(),
+		}).insert(ignore_permissions=True)
 	return session_as_dict(sess) if sess else {"ok": True}
 
 
@@ -604,3 +688,205 @@ def shift_report(property: str, business_date: str | None = None):
 		{"property": property, "date": date}, as_dict=True,
 	)
 	return {"business_date": date, "sessions": sessions, "journal": journal}
+
+
+# --- terminals: many tills, one place to see them ------------------------------
+
+TERMINAL_EDITORS = ("Finance", "Hotel Admin")
+TERMINAL_KINDS = ("Front Desk", "Restaurant", "Bar", "Spa", "Cash Office", "Other")
+
+
+def _terminal_row(t: dict) -> dict:
+	sess = frappe.db.get_value(
+		"Cashier Session", {"cashier_terminal": t["name"], "status": "Open"},
+		["name", "user", "opened_at", "expected_cash", "opening_float"], as_dict=True)
+	t["open_session"] = sess
+	return t
+
+
+@frappe.whitelist()
+@require_roles("Front Desk", "Finance", "Hotel Admin", "Night Auditor", "Kamra Agent")
+def terminals(property: str, include_disabled: int = 0):
+	"""A property's configured tills. Sessions opened without a terminal are
+	the Default till and are not listed here."""
+	filters: dict[str, Any] = {"property": property}
+	if not int(include_disabled or 0):
+		filters["disabled"] = 0
+	rows = frappe.get_all(
+		"Cashier Terminal", filters=filters,
+		fields=["name", "terminal_name", "kind", "outlet", "bill_printer",
+		        "default_float", "disabled"],
+		order_by="terminal_name")
+	return [_terminal_row(r) for r in rows]
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles(*TERMINAL_EDITORS)
+def save_terminal(property: str, terminal_name: str, kind: str = "Front Desk",
+                  outlet: str | None = None, bill_printer: str | None = None,
+                  default_float: float = 0, disabled: int = 0,
+                  name: str | None = None):
+	"""Add or change a till."""
+	from kamra.authz import assert_property_access
+	assert_property_access(property)
+	terminal_name = (terminal_name or "").strip()
+	if not terminal_name:
+		frappe.throw("Give the till a name.")
+	if kind not in TERMINAL_KINDS:
+		frappe.throw("Unknown kind of till.")
+	if outlet and frappe.db.get_value("POS Outlet", outlet, "property") != property:
+		frappe.throw("That outlet is not at this property.")
+	if bill_printer:
+		bp = frappe.db.get_value("Kitchen Printer", bill_printer,
+		                         ["property", "prints_bills"], as_dict=True)
+		if not bp or bp.property != property:
+			frappe.throw("That printer is not at this property.")
+		if not bp.prints_bills:
+			frappe.throw("That printer is set to print KOTs only. Turn on "
+			             "'Prints Bills' on it first.")
+	taken = frappe.db.get_value("Cashier Terminal",
+	                            {"property": property, "terminal_name": terminal_name})
+	if taken and taken != name:
+		frappe.throw(f"There's already a till called {terminal_name}.")
+	fields = {"terminal_name": terminal_name, "kind": kind, "outlet": outlet or None,
+	          "bill_printer": bill_printer or None,
+	          "default_float": float(default_float or 0), "disabled": 1 if int(disabled or 0) else 0}
+	if name:
+		doc = frappe.get_doc("Cashier Terminal", name)
+		if doc.property != property:
+			frappe.throw("That till is not at this property.")
+		if fields["disabled"] and frappe.db.exists(
+				"Cashier Session", {"cashier_terminal": name, "status": "Open"}):
+			frappe.throw("Close the open session on this till before switching it off.")
+		doc.update(fields)
+		doc.save(ignore_permissions=True)
+	else:
+		doc = frappe.get_doc(dict(fields, doctype="Cashier Terminal",
+		                          property=property)).insert(ignore_permissions=True)
+	return {"ok": True, "name": doc.name}
+
+
+def _safe_balance(terminal: str) -> dict[str, float]:
+	got = frappe.db.sql(
+		"""SELECT COALESCE(SUM(amount), 0) FROM `tabCash Transfer`
+		   WHERE to_terminal = %s AND kind = 'Drop' AND status = 'Received'""",
+		terminal)[0][0]
+	banked = frappe.db.sql(
+		"""SELECT COALESCE(SUM(amount), 0) FROM `tabCash Transfer`
+		   WHERE from_terminal = %s AND kind = 'Bank Deposit' AND status = 'Received'""",
+		terminal)[0][0]
+	pending = frappe.db.sql(
+		"""SELECT COALESCE(SUM(amount), 0) FROM `tabCash Transfer`
+		   WHERE to_terminal = %s AND kind = 'Drop' AND status = 'Pending'""",
+		terminal)[0][0]
+	return {"received": float(got), "banked": float(banked),
+	        "in_transit": float(pending), "balance": float(got) - float(banked)}
+
+
+@frappe.whitelist()
+@require_roles("Front Desk", "Finance", "Hotel Admin", "Night Auditor", "Kamra Agent")
+def tills_board(property: str):
+	"""Every till right now: who holds it, what should be in it, what is on
+	its way to the cash office. The Default till (sessions opened without a
+	terminal, i.e. everything from before terminals) is its own row."""
+	bd = get_business_date(property)
+	open_rows = frappe.get_all(
+		"Cashier Session",
+		filters={"property": property, "status": "Open"},
+		fields=["name", "user", "cashier", "cashier_terminal", "terminal", "outlet",
+		        "opened_at", "opening_float", "expected_cash", "business_date"],
+		order_by="opened_at asc")
+	by_term: dict[str | None, list] = {}
+	for r in open_rows:
+		r["cashier_id"] = frappe.db.get_value("Cashier", r.cashier, "cashier_id")
+		by_term.setdefault(r.cashier_terminal or None, []).append(r)
+	board = []
+	for t in frappe.get_all("Cashier Terminal", filters={"property": property, "disabled": 0},
+	                        fields=["name", "terminal_name", "kind", "outlet", "bill_printer"],
+	                        order_by="terminal_name"):
+		row = dict(t, sessions=by_term.get(t.name, []), is_default=False)
+		if t.kind == "Cash Office":
+			row["safe"] = _safe_balance(t.name)
+		board.append(row)
+	board.insert(0, {"name": None, "terminal_name": "Default", "kind": "Front Desk",
+	                 "outlet": None, "bill_printer": None, "is_default": True,
+	                 "sessions": by_term.get(None, [])})
+	pending = frappe.get_all(
+		"Cash Transfer", filters={"property": property, "status": "Pending"},
+		fields=["name", "kind", "amount", "from_session", "from_terminal", "to_terminal",
+		        "requested_by", "requested_at"], order_by="requested_at asc")
+	review = frappe.get_all(
+		"Cashier Session",
+		filters={"property": property, "variance_status": "Needs Review"},
+		fields=["name", "user", "cashier_terminal", "business_date", "variance", "closed_at"],
+		order_by="closed_at desc", limit_page_length=20)
+	return {"business_date": str(bd), "tills": board, "pending_transfers": pending,
+	        "variance_review": review}
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Front Desk", "Finance", "Hotel Admin", "Kamra Agent")
+def receive_transfer(transfer: str, pin: str | None = None):
+	"""The cash office confirms a drop arrived."""
+	t = frappe.get_doc("Cash Transfer", transfer)
+	from kamra.authz import assert_property_access, require_cashier_pin
+	assert_property_access(t.property)
+	if t.kind != "Drop" or t.status != "Pending":
+		frappe.throw("This transfer is not waiting to be received.")
+	require_cashier_pin(t.property, pin)
+	if t.requested_by == frappe.session.user and not (
+			set(frappe.get_roles()) & {"Hotel Admin", "System Manager", "Finance"}):
+		frappe.throw("Someone other than the person who dropped the cash must receive it.")
+	t.status = "Received"
+	t.received_by = frappe.session.user
+	t.received_at = now_datetime()
+	t.save(ignore_permissions=True)
+	return {"ok": True, "safe": _safe_balance(t.to_terminal)}
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Finance", "Hotel Admin")
+def bank_deposit(cash_office: str, amount: float, notes: str | None = None,
+                 pin: str | None = None):
+	"""Cash leaves the safe for the bank."""
+	office = frappe.db.get_value("Cashier Terminal", cash_office,
+	                             ["name", "property", "kind"], as_dict=True)
+	if not office or office.kind != "Cash Office":
+		frappe.throw("That is not a cash office.")
+	from kamra.authz import assert_property_access, require_cashier_pin
+	assert_property_access(office.property)
+	require_cashier_pin(office.property, pin)
+	amt = float(amount)
+	if amt <= 0:
+		frappe.throw("Amount must be positive.")
+	if amt > _safe_balance(office.name)["balance"] + 0.004:
+		frappe.throw("That is more than the safe holds.")
+	now = now_datetime()
+	doc = frappe.get_doc({
+		"doctype": "Cash Transfer", "property": office.property, "kind": "Bank Deposit",
+		"status": "Received", "amount": amt, "business_date": get_business_date(office.property),
+		"from_terminal": office.name, "requested_by": frappe.session.user, "requested_at": now,
+		"received_by": frappe.session.user, "received_at": now,
+		"notes": (notes or "")[:500] or None,
+	}).insert(ignore_permissions=True)
+	return {"ok": True, "transfer": doc.name, "safe": _safe_balance(office.name)}
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Finance", "Hotel Admin")
+def approve_variance(session: str, note: str | None = None):
+	"""A manager signs off a till that closed over or short."""
+	doc = frappe.get_doc("Cashier Session", session)
+	from kamra.authz import assert_property_access
+	assert_property_access(doc.property)
+	if doc.variance_status != "Needs Review":
+		frappe.throw("This till has nothing waiting for review.")
+	if doc.user == frappe.session.user and "Hotel Admin" not in frappe.get_roles() \
+	   and frappe.session.user != "Administrator":
+		frappe.throw("Someone other than the cashier has to approve the variance.")
+	doc.variance_status = "Approved"
+	doc.variance_approved_by = frappe.session.user
+	if note:
+		doc.close_notes = ((doc.close_notes or "") + f" | Review: {note.strip()}")[:500]
+	doc.save(ignore_permissions=True)
+	return {"ok": True}

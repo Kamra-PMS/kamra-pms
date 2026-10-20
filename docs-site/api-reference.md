@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function - the same governed layer
-the UI and the AI use. **370 endpoints**, generated from the source
+the UI and the AI use. **371 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -2484,6 +2484,19 @@ times how long it takes to arrive, which proves live updates work.
 
 
 ## Kitchen printers (routing, print stations, print queue)
+
+### `kamra.printing.print_bill`
+
+**POST**
+
+Send a bill to the station set up to print bills. No bill printer
+configured: nothing is queued and the till prints from its own device,
+exactly as before.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `order` | yes |  |
+| `terminal` | no | `None` |
 
 ### `kamra.printing.claim_jobs`
 

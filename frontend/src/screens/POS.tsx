@@ -488,8 +488,7 @@ export default function POS() {
     await act(async () => {
       await ensureUnlocked()
       await call("kamra.pos.pay_order", { order, mode })
-      const bill = await call<BillData>("kamra.pos.bill_data", { order })
-      printThermal(`Bill ${order}`, billHtml(bill))
+      await sendBill(order)
       newOrder()
     })
   }
@@ -524,10 +523,17 @@ export default function POS() {
       newOrder()
     })
   }
+  /** Bills and KOTs print on different stations. A bill printer set up for
+   *  this till or outlet takes the bill; with none, this device prints it. */
+  async function sendBill(order: string) {
+    const routed = await call<{ unrouted: boolean }>("kamra.printing.print_bill", { order })
+    if (!routed.unrouted) return
+    const bill = await call<BillData>("kamra.pos.bill_data", { order })
+    printThermal(`Bill ${order}`, billHtml(bill))
+  }
   async function printBill() {
     if (!selected) return
-    const bill = await call<BillData>("kamra.pos.bill_data", { order: selected })
-    printThermal(`Bill ${selected}`, billHtml(bill))
+    await sendBill(selected)
   }
   function reprintKot() {
     if (!detail) return

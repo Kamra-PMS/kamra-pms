@@ -135,6 +135,7 @@ Add printer,Add printer,,screens/KitchenPrinters.tsx,,needs_translation
 Add rate,Add rate,إضافة سعر,screens/Laundry.tsx,,translated
 Add room type,Add room type,إضافة نوع غرفة,screens/Setup.tsx,,translated
 Add staff,Add staff,,screens/settings/AccessPages.tsx,,needs_translation
+Add terminal,Add terminal,,screens/CashierBoard.tsx,,needs_translation
 "Add the late check-out fee your property charges, or skip to waive it.","Add the late check-out fee your property charges, or skip to waive it.",أضف رسوم المغادرة المتأخرة التي يفرضها الفندق، أو تخطَّ هذه الخطوة للإعفاء منها.,components/CheckOutDialog.tsx,,translated
 Add to pickup queue,Add to pickup queue,إضافة إلى قائمة الاستلام,screens/Laundry.tsx,,translated
 Add webhook,Add webhook,,screens/settings/WebhooksPage.tsx,,needs_translation
@@ -177,6 +178,7 @@ All sessions,All sessions,كل الجلسات,screens/CashierTill.tsx,,translate
 all stations,all stations,,screens/KitchenPrinters.tsx,,needs_translation
 All stations,All stations,,screens/KitchenPrinters.tsx,,needs_translation
 All statuses,All statuses,كل الحالات,screens/Banquet.tsx,,translated
+All tills,All tills,,screens/CashierBoard.tsx; screens/CashierTill.tsx,,needs_translation
 All types (upgrade),All types (upgrade),كل الأنواع (ترقية),components/RoomChangeDialog.tsx,,translated
 allergy,allergy,حساسية,screens/Kitchen.tsx,,translated
 Allow,Allow,السماح,screens/FolioView.tsx,,translated
@@ -188,6 +190,7 @@ Amount,Amount,المبلغ,components/CheckOutDialog.tsx; components/DepositPane
 Amount (held {amt}),Amount (held {amt}),المبلغ (المحتجز {amt}),components/SecurityDepositPanel.tsx,amt,translated
 Amount {cur},Amount {cur},المبلغ {cur},screens/FolioView.tsx; screens/HkApp.tsx,cur,translated
 Amount collected,Amount collected,المبلغ المحصّل,components/BookingDialog.tsx,,translated
+Amount to bank,Amount to bank,,screens/CashierBoard.tsx,,needs_translation
 Amounts are inclusive of GST at the rates shown.,Amounts are inclusive of GST at the rates shown.,المبالغ شاملة ضريبة GST بالأسعار المعروضة.,screens/FolioView.tsx,,translated
 and choose Print for this printer.,and choose Print for this printer.,,screens/KitchenPrinters.tsx,,needs_translation
 "and take UPI, cards and netbanking for advances and bills.","and take UPI, cards and netbanking for advances and bills.",,screens/settings/cards.tsx,,needs_translation
@@ -202,6 +205,7 @@ Anything worth remembering (optional),Anything worth remembering (optional),أي
 API key,API key,,screens/settings/cards.tsx,,needs_translation
 Appearance,Appearance,المظهر,screens/settings/cards.tsx,,translated
 applies to this browser only,applies to this browser only,ينطبق على هذا المتصفح فقط,screens/settings/cards.tsx,,translated
+Approve,Approve,,screens/CashierBoard.tsx,,needs_translation
 Arabic switches the interface to right-to-left,Arabic switches the interface to right-to-left,,screens/settings/cards.tsx,,needs_translation
 Arr,Arr,وصول,screens/Dashboard.tsx,,translated
 arrival {eta},arrival {eta},وصول {eta},screens/HkApp.tsx,eta,translated
@@ -233,15 +237,18 @@ Back,Back,رجوع,components/StepFlow.tsx; screens/EndOfDayWizard.tsx; screens/
 Back to board,Back to board,العودة إلى اللوحة,screens/Kitchen.tsx,,translated
 Balance,Balance,الرصيد,components/CheckOutDialog.tsx; screens/FolioView.tsx; screens/RegistrationCard.tsx; screens/Today.tsx,,translated
 Balance {cur},Balance {cur},الرصيد {cur},screens/Billing.tsx,cur,translated
+Bank it,Bank it,,screens/CashierBoard.tsx,,needs_translation
 Banquets,Banquets,المآدب,screens/Banquet.tsx,,translated
 Base URL,Base URL,,screens/settings/cards.tsx,,needs_translation
 before {tax},before {tax},قبل {tax},screens/FolioView.tsx,tax,translated
 "Before check-out: withhold anything for damage, then refund the rest.","Before check-out: withhold anything for damage, then refund the rest.",قبل المغادرة: احتجز ما يلزم مقابل الأضرار، ثم أعد الباقي.,components/SecurityDepositPanel.tsx,,translated
 Bench,Bench,Bench,screens/SystemHealth.tsx,,translated
 Bill,Bill,فاتورة,components/CheckOutDialog.tsx; screens/POS.tsx,,translated
+Bill printer,Bill printer,,screens/CashierBoard.tsx,,needs_translation
 Bill to,Bill to,فوترة إلى,screens/FolioView.tsx,,translated
 Billed orders,Billed orders,الطلبات المفوترة,screens/Laundry.tsx,,translated
 Billing,Billing,الفوترة,screens/FolioView.tsx; screens/Laundry.tsx,,translated
+Bills and receipts,Bills and receipts,,screens/KitchenPrinters.tsx,,needs_translation
 Bills are due the credit days after the invoice date. Credit control ({policy}) checks the limit and overdue bills at booking and check-out.,Bills are due the credit days after the invoice date. Credit control ({policy}) checks the limit and overdue bills at booking and check-out.,,components/CreditTermsEditor.tsx,policy,needs_translation
 Bills not on the folio yet,Bills not on the folio yet,فواتير لم تُضف إلى الفاتورة بعد,components/CheckOutDialog.tsx,,translated
 Blacklisted,Blacklisted,في القائمة السوداء,components/BookingDialog.tsx,,translated
@@ -267,7 +274,7 @@ Bookings,Bookings,الحجوزات,screens/Guests.tsx,,translated
 Breakfast,Breakfast,الإفطار,components/CheckInDialog.tsx,,translated
 "Bring bookings, companies and opening balances over from your old system, then reconcile before you switch.","Bring bookings, companies and opening balances over from your old system, then reconcile before you switch.",,screens/GoLiveImport.tsx,,needs_translation
 Browser full screen,Browser full screen,ملء شاشة المتصفح,screens/Kitchen.tsx,,translated
-Business date,Business date,تاريخ العمل,screens/CashierShiftReport.tsx; screens/CashierTill.tsx; screens/EndOfDay.tsx; screens/EndOfDayWizard.tsx,,translated
+Business date,Business date,تاريخ العمل,screens/CashierBoard.tsx; screens/CashierShiftReport.tsx; screens/CashierTill.tsx; screens/EndOfDay.tsx; screens/EndOfDayWizard.tsx,,translated
 Business date {bd} · property time {now},Business date {bd} · property time {now},تاريخ العمل {bd} · وقت المنشأة {now},screens/EndOfDay.tsx,bd now,translated
 Business date {d},Business date {d},تاريخ العمل {d},screens/AuditPack.tsx,d,translated
 By,By,بواسطة,screens/VoidAllowanceReport.tsx,,translated
@@ -278,7 +285,7 @@ By hall,By hall,حسب القاعة,screens/Banquet.tsx,,translated
 By property,By property,حسب العقار,screens/Dashboard.tsx,,translated
 By status,By status,حسب الحالة,screens/Banquet.tsx,,translated
 Came from,Came from,جاء من,screens/Banquet.tsx,,translated
-Cancel,Cancel,إلغاء,components/BookingDialog.tsx; components/CheckOutDialog.tsx; components/DepositPanel.tsx; components/ResourceScreen.tsx; components/SecurityDepositPanel.tsx; screens/Banquet.tsx; screens/CRS.tsx; screens/FolioView.tsx; screens/HkApp.tsx; screens/KitchenPrinters.tsx; screens/Laundry.tsx; screens/Marketplace.tsx; screens/POS.tsx; screens/Tickets.tsx; screens/settings/AccessPages.tsx; screens/settings/WebhooksPage.tsx,,translated
+Cancel,Cancel,إلغاء,components/BookingDialog.tsx; components/CheckOutDialog.tsx; components/DepositPanel.tsx; components/ResourceScreen.tsx; components/SecurityDepositPanel.tsx; screens/Banquet.tsx; screens/CRS.tsx; screens/CashierBoard.tsx; screens/FolioView.tsx; screens/HkApp.tsx; screens/KitchenPrinters.tsx; screens/Laundry.tsx; screens/Marketplace.tsx; screens/POS.tsx; screens/Tickets.tsx; screens/settings/AccessPages.tsx; screens/settings/WebhooksPage.tsx,,translated
 Cancel {invoice}? The number goes on the cancelled register and the folio reopens for correction.,Cancel {invoice}? The number goes on the cancelled register and the folio reopens for correction.,إلغاء {invoice}؟ يُسجَّل الرقم في سجل الملغى وتُفتح الفاتورة للتصحيح.,screens/FolioView.tsx,invoice,translated
 Cancel invoice,Cancel invoice,إلغاء الفاتورة,screens/FolioView.tsx,,translated
 Cancel laundry — room {room},Cancel laundry — room {room},إلغاء الغسيل — غرفة {room},screens/Laundry.tsx,room,translated
@@ -298,7 +305,8 @@ Carried to the guest folio - at check-in it counts against the bill.,Carried to 
 Cash,Cash,نقداً,screens/CashierShiftReport.tsx,,translated
 Cash drop,Cash drop,إيداع نقدي,screens/CashierTill.tsx,,translated
 Cash in,Cash in,نقد داخل,screens/CashierTill.tsx,,translated
-Cashier,Cashier,أمين الصندوق,screens/CashierShiftReport.tsx; screens/CashierTill.tsx; screens/PettyCash.tsx,,translated
+Cash on its way to the cash office,Cash on its way to the cash office,,screens/CashierBoard.tsx,,needs_translation
+Cashier,Cashier,أمين الصندوق,screens/CashierBoard.tsx; screens/CashierShiftReport.tsx; screens/CashierTill.tsx; screens/PettyCash.tsx,,translated
 Cashier {c},Cashier {c},الصراف {c},screens/AuditPack.tsx,c,translated
 Cashier PIN,Cashier PIN,رمز أمين الصندوق,components/PinPad.tsx,,translated
 Cashier PIN required for money actions.,Cashier PIN required for money actions.,رمز أمين الصندوق مطلوب لإجراءات المال.,screens/FolioView.tsx,,translated
@@ -368,7 +376,8 @@ Close complimentary bill,Close complimentary bill,إغلاق الفاتورة ا
 "Close each property's business date: work through the checklist, post room and tax, roll the date and print the audit pack. The 3 AM job runs the same steps on its own.","Close each property's business date: work through the checklist, post room and tax, roll the date and print the audit pack. The 3 AM job runs the same steps on its own.",أغلق تاريخ العمل لكل منشأة: راجع قائمة الفحص، رحّل الغرفة والضريبة، انقل التاريخ واطبع حزمة التدقيق. مهمة الساعة 3 صباحًا تنفّذ الخطوات نفسها تلقائيًا.,screens/EndOfDay.tsx,,translated
 Close session,Close session,إغلاق الجلسة,screens/CashierTill.tsx; screens/EndOfDayWizard.tsx,,translated
 Close till,Close till,إغلاق الصندوق,screens/CashierTill.tsx,,translated
-Closed,Closed,مغلق,screens/EndOfDayWizard.tsx,,translated
+Closed,Closed,مغلق,screens/CashierBoard.tsx; screens/EndOfDayWizard.tsx,,translated
+Closed over or short by more than the allowed variance.,Closed over or short by more than the allowed variance.,,screens/CashierBoard.tsx,,needs_translation
 Cloudbeds export,Cloudbeds export,تصدير Cloudbeds,screens/GoLiveImport.tsx,,translated
 Collect {amount},Collect {amount},تحصيل {amount},components/CheckOutDialog.tsx,amount,translated
 Collect {amt},Collect {amt},تحصيل {amt},components/SecurityDepositPanel.tsx,amt,translated
@@ -478,6 +487,8 @@ Deactivated staff can't sign in. Their history stays.,Deactivated staff can't si
 Decline,Decline,رفض,components/BookingRequests.tsx; screens/HkApp.tsx,,translated
 Decline request,Decline request,رفض الطلب,components/BookingRequests.tsx,,translated
 Declined {name}.,Declined {name}.,تم رفض {name}.,components/BookingRequests.tsx,name,translated
+Default,Default,افتراضي,screens/CashierBoard.tsx; screens/CashierTill.tsx,,translated
+Default opening float,Default opening float,,screens/CashierBoard.tsx,,needs_translation
 Delete,Delete,حذف,components/ResourceScreen.tsx; screens/Laundry.tsx; screens/settings/WebhooksPage.tsx,,translated
 Delete empty {label} folio,Delete empty {label} folio,حذف فاتورة {label} الفارغة,screens/FolioView.tsx,label,translated
 Delete this empty folio,Delete this empty folio,حذف هذه الفاتورة الفارغة,screens/FolioView.tsx,,translated
@@ -503,7 +514,7 @@ Differs,Differs,,screens/GoLiveImport.tsx,,needs_translation
 Differs from folios by {amount},Differs from folios by {amount},يختلف عن الفواتير بمقدار {amount},screens/AuditPack.tsx,amount,translated
 Direct IP (Kamra on the hotel network),Direct IP (Kamra on the hotel network),,screens/KitchenPrinters.tsx,,needs_translation
 Dirty,Dirty,متسخة,screens/Dashboard.tsx; screens/Today.tsx,,translated
-Disabled,Disabled,معطّل,screens/KitchenPrinters.tsx,,translated
+Disabled,Disabled,معطّل,screens/CashierBoard.tsx; screens/KitchenPrinters.tsx,,translated
 Discard,Discard,,screens/settings/ModulePage.tsx,,needs_translation
 Disconnect,Disconnect,قطع الاتصال,screens/Marketplace.tsx,,translated
 Discount,Discount,خصم,screens/POS.tsx,,translated
@@ -537,7 +548,7 @@ Each hotel / branch keeps its own float and voucher list. Changing property in t
 Each request becomes a task for the right team.,Each request becomes a task for the right team.,يصبح كل طلب مهمة للفريق المختص.,components/CheckInDialog.tsx,,translated
 "Each request carries X-Kamra-Event, X-Kamra-Event-Id, X-Kamra-Timestamp and X-Kamra-Signature. Recompute the signature over the raw body and reject old timestamps:","Each request carries X-Kamra-Event, X-Kamra-Event-Id, X-Kamra-Timestamp and X-Kamra-Signature. Recompute the signature over the raw body and reject old timestamps:",,screens/settings/WebhooksPage.tsx,,needs_translation
 Each unit / room sells on its own (hotel-style inventory).,Each unit / room sells on its own (hotel-style inventory).,كل وحدة / غرفة تُباع بمفردها (مخزون بأسلوب الفندق).,screens/Setup.tsx,,translated
-Edit,Edit,تعديل,screens/KitchenPrinters.tsx; screens/Laundry.tsx; screens/settings/WebhooksPage.tsx,,translated
+Edit,Edit,تعديل,screens/CashierBoard.tsx; screens/KitchenPrinters.tsx; screens/Laundry.tsx; screens/settings/WebhooksPage.tsx,,translated
 elapsed,elapsed,منقضي,screens/Kitchen.tsx,,translated
 Email,Email,البريد الإلكتروني,components/CheckInDialog.tsx; screens/Banquet.tsx; screens/PublicCheckin.tsx; screens/RegistrationCard.tsx; screens/settings/AccessPages.tsx,,translated
 Email or username,Email or username,البريد الإلكتروني أو اسم المستخدم,screens/Login.tsx,,translated
@@ -738,6 +749,7 @@ in play,in play,قيد التنفيذ,screens/Banquet.tsx,,translated
 in progress at step {n},in progress at step {n},قيد التنفيذ عند الخطوة {n},screens/EndOfDay.tsx,n,translated
 In progress…,In progress…,قيد التنفيذ…,screens/HkApp.tsx,,translated
 "In Razorpay, add a webhook for the payment_link.paid event pointing to","In Razorpay, add a webhook for the payment_link.paid event pointing to",,screens/settings/cards.tsx,,needs_translation
+In the safe,In the safe,,screens/CashierBoard.tsx,,needs_translation
 In-house,In-house,داخل الفندق,screens/Dashboard.tsx; screens/Reports.tsx; screens/Today.tsx,,translated
 In-house guests,In-house guests,الضيوف داخل الفندق,screens/Today.tsx,,translated
 incl. {tax},incl. {tax},شامل {tax},screens/RegistrationCard.tsx,tax,translated
@@ -772,7 +784,7 @@ Keep the booking,Keep the booking,إبقاء الحجز,components/CancelPanel.t
 Key card numbers (optional),Key card numbers (optional),أرقام بطاقات المفاتيح (اختياري),components/CheckInDialog.tsx,,translated
 Keyboard shortcuts,Keyboard shortcuts,اختصارات لوحة المفاتيح,screens/POS.tsx,,translated
 Keys,Keys,المفاتيح,components/CheckInDialog.tsx; screens/settings/cards.tsx,,translated
-Kind,Kind,النوع,screens/CashierShiftReport.tsx; screens/CashierTill.tsx,,translated
+Kind,Kind,النوع,screens/CashierBoard.tsx; screens/CashierShiftReport.tsx; screens/CashierTill.tsx,,translated
 Kitchen Display,Kitchen Display,شاشة المطبخ,screens/KitchenPrinters.tsx,,translated
 Kitchen pass,Kitchen pass,ممر المطبخ,screens/Kitchen.tsx,,translated
 Kitchen printers,Kitchen printers,,screens/KitchenPrinters.tsx; screens/settings/cards.tsx,,needs_translation
@@ -782,6 +794,8 @@ KOT {kot} sent to {printers}.,KOT {kot} sent to {printers}.,,screens/POS.tsx,kot
 KOT printer off,KOT printer off,طابعة أمر المطبخ متوقفة,screens/POS.tsx,,translated
 KOT printer on,KOT printer on,طابعة أمر المطبخ شغّالة,screens/POS.tsx,,translated
 KOT prints on send,KOT prints on send,تُطبع تذكرة المطبخ عند الإرسال,screens/POS.tsx,,translated
+KOTs (kitchen and bar tickets),KOTs (kitchen and bar tickets),,screens/KitchenPrinters.tsx,,needs_translation
+"KOTs follow the outlet and station routes below. A bill goes to the printer chosen on the till, else to a bill printer routed to the bill's outlet.","KOTs follow the outlet and station routes below. A bill goes to the printer chosen on the till, else to a bill printer routed to the bill's outlet.",,screens/KitchenPrinters.tsx,,needs_translation
 Label,Label,,screens/settings/WebhooksPage.tsx,,needs_translation
 Language,Language,اللغة,screens/Login.tsx; screens/PublicCheckin.tsx; screens/settings/cards.tsx,,translated
 Last {days} days,Last {days} days,آخر {days} أيام,screens/Laundry.tsx,days,translated
@@ -859,9 +873,11 @@ Movement,Movement,الحركة,screens/AuditPack.tsx; screens/Reports.tsx,,trans
 Moving…,Moving…,جارٍ النقل…,components/RoomChangeDialog.tsx,,translated
 "Multiple rooms, optional F&B and events. Classic front-desk flow.","Multiple rooms, optional F&B and events. Classic front-desk flow.",غرف متعددة، مأكولات ومشروبات وفعاليات اختيارية. سير عمل الاستقبال الكلاسيكي.,screens/Setup.tsx,,translated
 My Tasks{n},My Tasks{n},مهامي{n},screens/HkApp.tsx,n,translated
+My till,My till,,screens/CashierBoard.tsx,,needs_translation
 My Till,My Till,صندوقي,screens/CashierShiftReport.tsx; screens/CashierTill.tsx; screens/PettyCash.tsx,,translated
-Name,Name,الاسم,components/CheckInDialog.tsx; screens/RegistrationCard.tsx,,translated
+Name,Name,الاسم,components/CheckInDialog.tsx; screens/CashierBoard.tsx; screens/RegistrationCard.tsx,,translated
 Name (Deluxe),Name (Deluxe),الاسم (ديلوكس),screens/Setup.tsx,,translated
+"Name each till, tie it to an outlet, and choose the printer that prints its bills. Without terminals everyone uses the Default till.","Name each till, tie it to an outlet, and choose the printer that prints its bills. Without terminals everyone uses the Default till.",,screens/CashierBoard.tsx,,needs_translation
 Name or phone…,Name or phone…,الاسم أو الهاتف…,screens/Guests.tsx,,translated
 Nationality,Nationality,الجنسية,components/BookingDialog.tsx; components/CheckInDialog.tsx; screens/FolioView.tsx; screens/PublicCheckin.tsx; screens/RegistrationCard.tsx,,translated
 Navigate,Navigate,التنقل,components/CommandPalette.tsx,,translated
@@ -937,6 +953,7 @@ No sessions on this date. Open a till on My Till to start a shift.,No sessions o
 No setting matches.,No setting matches.,,screens/settings/SettingsHub.tsx,,needs_translation
 No sign-ins recorded yet.,No sign-ins recorded yet.,لا توجد عمليات دخول مسجلة بعد.,screens/Agents.tsx,,translated
 No tables match.,No tables match.,لا طاولات مطابقة.,screens/POS.tsx,,translated
+"No terminals yet. Everyone works from the Default till, as before.","No terminals yet. Everyone works from the Default till, as before.",,screens/CashierBoard.tsx,,needs_translation
 No till transactions yet.,No till transactions yet.,,screens/CashierTill.tsx,,needs_translation
 No unassigned rooms right now.,No unassigned rooms right now.,لا غرف غير مخصصة الآن.,screens/HkApp.tsx,,translated
 "No voids, allowances or cancelled invoices in this window.","No voids, allowances or cancelled invoices in this window.",لا توجد إلغاءات أو خصومات أو فواتير ملغاة في هذه الفترة.,screens/VoidAllowanceReport.tsx,,translated
@@ -947,7 +964,7 @@ Non AC,Non AC,بدون مكيف,screens/Setup.tsx,,translated
 Non-refundable dates ({season}): the full stay is charged on cancellation.,Non-refundable dates ({season}): the full stay is charged on cancellation.,,components/BookingDialog.tsx,season,needs_translation
 Non-refundable from now: {fee} is charged on cancellation.,Non-refundable from now: {fee} is charged on cancellation.,,components/BookingDialog.tsx,fee,needs_translation
 Non-veg,Non-veg,غير نباتي,screens/Kitchen.tsx; screens/POS.tsx,,translated
-None,None,لا شيء,screens/KitchenPrinters.tsx,,translated
+None,None,لا شيء,screens/CashierBoard.tsx; screens/KitchenPrinters.tsx,,translated
 None taken,None taken,لم يُحصّل,components/SecurityDepositPanel.tsx,,translated
 Not a corporate booking,Not a corporate booking,ليس حجز شركات,screens/Banquet.tsx,,translated
 Not a tax invoice yet — the number is issued when the folio is settled.,Not a tax invoice yet — the number is issued when the folio is settled.,ليست فاتورة ضريبية بعد — يُصدر الرقم عند تسوية الفاتورة.,screens/FolioView.tsx,,translated
@@ -995,6 +1012,7 @@ Off,Off,,screens/settings/ModulePage.tsx; screens/settings/SettingsHub.tsx,,need
 on,on,تشغيل,screens/Kitchen.tsx,,translated
 On,On,,screens/settings/ModulePage.tsx,,needs_translation
 "On a kitchen device, open","On a kitchen device, open",,screens/KitchenPrinters.tsx,,needs_translation
+On its way,On its way,,screens/CashierBoard.tsx,,needs_translation
 One consolidated company bill across every room of the group,One consolidated company bill across every room of the group,فاتورة شركة موحّدة عبر كل غرف المجموعة,screens/FolioView.tsx,,translated
 One listing for the whole property. No room numbers required.,One listing for the whole property. No room numbers required.,قائمة واحدة للعقار بالكامل. لا حاجة لأرقام غرف.,screens/Setup.tsx,,translated
 "One open session per cashier per business date. Set the float in the drawer, then open.","One open session per cashier per business date. Set the float in the drawer, then open.",,screens/CashierTill.tsx,,needs_translation
@@ -1007,7 +1025,9 @@ Only Finance or a Hotel Admin can override it.,Only Finance or a Hotel Admin can
 Only Hotel Admin can switch modules.,Only Hotel Admin can switch modules.,,screens/settings/AccessPages.tsx,,needs_translation
 Only if your address proof is a different document from your ID.,Only if your address proof is a different document from your ID.,فقط إذا كان إثبات العنوان مستندًا مختلفًا عن الهوية.,screens/PublicCheckin.tsx,,translated
 Only IT can change this person,Only IT can change this person,,screens/settings/AccessPages.tsx,,needs_translation
+"Only printers set to print bills are listed. KOTs are set on each printer's routes, not here.","Only printers set to print bills are listed. KOTs are set on each printer's routes, not here.",,screens/CashierBoard.tsx,,needs_translation
 Only these properties,Only these properties,,screens/settings/AccessPages.tsx,,needs_translation
+Open,Open,مفتوح,screens/CashierBoard.tsx,,translated
 "Open a session for your shift (that is the till). Guest payments and POS bills post here automatically while the till is open - take them on Front Desk or Restaurant, not on this page. Use Paid out and Cash drop for cash leaving the drawer, then count and close.","Open a session for your shift (that is the till). Guest payments and POS bills post here automatically while the till is open - take them on Front Desk or Restaurant, not on this page. Use Paid out and Cash drop for cash leaving the drawer, then count and close.",,screens/CashierTill.tsx,,needs_translation
 Open bill,Open bill,فتح الفاتورة,components/BookingDialog.tsx; screens/RegistrationCard.tsx,,translated
 "Open bill - take payment, settle, invoice →","Open bill - take payment, settle, invoice →",فتح الفاتورة - تحصيل وتسوية وإصدار ←,screens/RegistrationCard.tsx,,translated
@@ -1045,7 +1065,7 @@ Other country,Other country,دولة أخرى,screens/Setup.tsx,,translated
 Others from this group still in house,Others from this group still in house,آخرون من هذه المجموعة ما زالوا مقيمين,components/CheckOutDialog.tsx,,translated
 Out of order,Out of order,خارج الخدمة,screens/Dashboard.tsx,,translated
 Out of Order,Out of Order,خارج الخدمة,screens/Today.tsx,,translated
-Outlet,Outlet,المنفذ,screens/KitchenPrinters.tsx,,translated
+Outlet,Outlet,المنفذ,screens/CashierBoard.tsx; screens/KitchenPrinters.tsx,,translated
 Outlets,Outlets,المنافذ,screens/KitchenPrinters.tsx,,translated
 Outside the fee window - cancellation is free.,Outside the fee window - cancellation is free.,خارج نافذة الرسوم - الإلغاء مجاني.,components/CancelPanel.tsx,,translated
 Outstanding,Outstanding,مستحق,screens/Banquet.tsx; screens/Dashboard.tsx,,translated
@@ -1146,9 +1166,9 @@ Printed from the audit pack of {when},Printed from the audit pack of {when},مط
 Printer name,Printer name,,screens/KitchenPrinters.tsx,,needs_translation
 Printer removed.,Printer removed.,,screens/KitchenPrinters.tsx,,needs_translation
 Printer saved.,Printer saved.,,screens/KitchenPrinters.tsx,,needs_translation
+Printers,Printers,,screens/CashierBoard.tsx,,needs_translation
 Printers at this property,Printers at this property,,screens/KitchenPrinters.tsx,,needs_translation
 Printing waited on the print dialog. Start Chrome with --kiosk-printing on this till to print KOTs instantly.,Printing waited on the print dialog. Start Chrome with --kiosk-printing on this till to print KOTs instantly.,,screens/POS.tsx,,needs_translation
-Prints KOTs for,Prints KOTs for,,screens/KitchenPrinters.tsx,,needs_translation
 Prints nothing yet - choose outlets and stations.,Prints nothing yet - choose outlets and stations.,,screens/KitchenPrinters.tsx,,needs_translation
 Priority,Priority,الأولوية,screens/Tickets.tsx,,translated
 Privacy notice,Privacy notice,إشعار الخصوصية,components/PrivacyNotice.tsx,,translated
@@ -1191,7 +1211,7 @@ Reason for the credit override (logged),Reason for the credit override (logged),
 Reason for the override (logged with your name),Reason for the override (logged with your name),سبب التجاوز (يُسجَّل باسمك),components/CheckOutDialog.tsx,,translated
 Recall,Recall,استدعاء,screens/Kitchen.tsx,,translated
 receivable,receivable,مستحقات,screens/Dashboard.tsx,,translated
-Received,Received,المستلم,components/DepositPanel.tsx,,translated
+Received,Received,المستلم,components/DepositPanel.tsx; screens/CashierBoard.tsx,,translated
 Recent,Recent,حديث,screens/Laundry.tsx,,translated
 Recent laundry billing,Recent laundry billing,فوترة غسيل حديثة,screens/Laundry.tsx,,translated
 Recent runs,Recent runs,تشغيلات حديثة,screens/Billing.tsx,,translated
@@ -1285,12 +1305,14 @@ Rooms ready from {time},Rooms ready from {time},الغرف جاهزة من {time
 Rooms sold,Rooms sold,غرف مباعة,screens/Dashboard.tsx,,translated
 Rotate secret,Rotate secret,,screens/settings/WebhooksPage.tsx,,needs_translation
 Rotate the signing secret? The receiver must switch to the new one.,Rotate the signing secret? The receiver must switch to the new one.,,screens/settings/WebhooksPage.tsx,,needs_translation
+Routes: outlets and stations this printer serves,Routes: outlets and stations this printer serves,,screens/KitchenPrinters.tsx,,needs_translation
 Rows,Rows,,screens/GoLiveImport.tsx,,needs_translation
 "Run this on a till when service feels slow. It tells you whether the network, the server or live updates are the cause.","Run this on a till when service feels slow. It tells you whether the network, the server or live updates are the cause.",,screens/settings/cards.tsx,,needs_translation
 Running tables,Running tables,طاولات شغّالة,screens/POS.tsx,,translated
 SAC,SAC,SAC,screens/FolioView.tsx,,translated
+Safe (no receipt),Safe (no receipt),,screens/CashierTill.tsx,,needs_translation
 Same type,Same type,نفس النوع,components/RoomChangeDialog.tsx,,translated
-Save,Save,حفظ,components/ResourceScreen.tsx; screens/Laundry.tsx; screens/settings/AccessPages.tsx; screens/settings/WebhooksPage.tsx; screens/settings/cards.tsx,,translated
+Save,Save,حفظ,components/ResourceScreen.tsx; screens/CashierBoard.tsx; screens/Laundry.tsx; screens/settings/AccessPages.tsx; screens/settings/WebhooksPage.tsx; screens/settings/cards.tsx,,translated
 Save changes,Save changes,,screens/settings/ModulePage.tsx,,needs_translation
 Save imprest,Save imprest,,screens/PettyCash.tsx,,needs_translation
 Save notes,Save notes,حفظ الملاحظات,screens/EndOfDayWizard.tsx,,translated
@@ -1333,6 +1355,7 @@ Send on WhatsApp,Send on WhatsApp,أرسل عبر واتساب,components/CheckI
 Send payment link,Send payment link,إرسال رابط الدفع,components/DepositPanel.tsx,,translated
 Send round,Send round,إرسال الجولة,screens/POS.tsx,,translated
 Send test,Send test,,screens/settings/WebhooksPage.tsx,,needs_translation
+Send to cash office,Send to cash office,,screens/CashierTill.tsx,,needs_translation
 Send to kitchen,Send to kitchen,إرسال للمطبخ,screens/POS.tsx,,translated
 Send to laundry,Send to laundry,إرسال للغسيل,screens/Laundry.tsx,,translated
 Server date,Server date,تاريخ الخادم,screens/EndOfDayWizard.tsx,,translated
@@ -1341,6 +1364,7 @@ Server work {ms} ms - slow. The server is busy or under-sized.,Server work {ms} 
 Service,Service,الخدمة,screens/Laundry.tsx,,translated
 Service Tickets,Service Tickets,تذاكر الخدمة,screens/Tickets.tsx,,translated
 Session,Session,الجلسة,screens/Banquet.tsx,,translated
+Sessions opened without choosing a till.,Sessions opened without choosing a till.,,screens/CashierBoard.tsx,,needs_translation
 Set,Set,تعيين,screens/TapeChart.tsx,,translated
 Set for corporate business - it also decides which folio the bill lands on.,Set for corporate business - it also decides which folio the bill lands on.,للأعمال الشركاتية - يحدد أيضاً أي فاتورة تستلم الفاتورة.,screens/Banquet.tsx,,translated
 Set PIN,Set PIN,تعيين الرمز,components/PinPad.tsx; screens/FolioView.tsx,,translated
@@ -1447,6 +1471,7 @@ Tax Invoice,Tax Invoice,فاتورة ضريبية,screens/FolioView.tsx,,transla
 Tax rate,Tax rate,نسبة الضريبة,components/CheckOutDialog.tsx,,translated
 taxable {cur}{amount},taxable {cur}{amount},خاضع للضريبة {cur}{amount},screens/FolioView.tsx,cur amount,translated
 "Tell the guest the Wi-Fi, breakfast and check-out times. Print it or send it on WhatsApp.","Tell the guest the Wi-Fi, breakfast and check-out times. Print it or send it on WhatsApp.",أخبر الضيف بالواي فاي ومواعيد الإفطار وتسجيل المغادرة. اطبعها أو أرسلها عبر واتساب.,components/CheckInDialog.tsx,,translated
+Terminals,Terminals,,screens/CashierBoard.tsx,,needs_translation
 Test connection,Test connection,,screens/settings/cards.tsx,,needs_translation
 Test event delivered.,Test event delivered.,,screens/settings/WebhooksPage.tsx,,needs_translation
 Test failed,Test failed,,screens/settings/WebhooksPage.tsx,,needs_translation
@@ -1488,10 +1513,13 @@ This change re-prices the stay from {from} to {to}. Confirm the new price?,This 
 This check-in link isn't valid. Please contact the hotel.,This check-in link isn't valid. Please contact the hotel.,رابط تسجيل الوصول هذا غير صالح. يرجى التواصل مع الفندق.,screens/PublicCheckin.tsx,,translated
 This checks out {name} only. Check out the others one at a time when they leave.,This checks out {name} only. Check out the others one at a time when they leave.,هذا يسجل مغادرة {name} فقط. سجّل مغادرة الآخرين واحداً تلو الآخر عند مغادرتهم.,components/CheckOutDialog.tsx,name,translated
 This closes the bag without billing. Tell us why — it's recorded on the order.,This closes the bag without billing. Tell us why — it's recorded on the order.,يغلق هذا الحقيبة دون فوترة. أخبرنا لماذا — يُسجَّل على الطلب.,screens/Laundry.tsx,,translated
+This device,This device,,screens/CashierBoard.tsx,,needs_translation
+This device prints it,This device prints it,,screens/CashierBoard.tsx,,needs_translation
 This guest is blacklisted,This guest is blacklisted,هذا النزيل في القائمة السوداء,components/BookingDialog.tsx,,translated
 This is a computer-generated invoice.,This is a computer-generated invoice.,هذه فاتورة صادرة إلكترونيًا.,screens/FolioView.tsx,,translated
 "This module is off, so its apps are hidden for everyone. Settings are kept for when you switch it back on.","This module is off, so its apps are hidden for everyone. Settings are kept for when you switch it back on.",,screens/settings/SettingsHub.tsx,,needs_translation
 "This posts tonight's room and tax for every in-house guest, applies the no-show policy, saves the audit pack and rolls the business date from {bd}. It cannot be undone.","This posts tonight's room and tax for every in-house guest, applies the no-show policy, saves the audit pack and rolls the business date from {bd}. It cannot be undone.",يرحّل هذا غرفة وضريبة الليلة لكل نزيل مقيم، ويطبّق سياسة عدم الحضور، ويحفظ حزمة التدقيق وينقل تاريخ العمل من {bd}. لا يمكن التراجع عنه.,screens/EndOfDayWizard.tsx,bd,translated
+This printer prints,This printer prints,,screens/KitchenPrinters.tsx,,needs_translation
 This property,This property,هذا العقار,screens/Dashboard.tsx,,translated
 This property only — switch hotel in the header to see another.,This property only — switch hotel in the header to see another.,,screens/PettyCash.tsx,,needs_translation
 "This room is not cleaned yet. Pick a clean room, or ask housekeeping first.","This room is not cleaned yet. Pick a clean room, or ask housekeeping first.",هذه الغرفة لم تنظف بعد. اختر غرفة نظيفة، أو اسأل التدبير المنزلي أولا.,components/CheckInDialog.tsx,,translated
@@ -1501,7 +1529,9 @@ Tick Credit allowed and save to bill this company on the city ledger.,Tick Credi
 Tick the lines moving to the new bill.,Tick the lines moving to the new bill.,حدد البنود المنقولة إلى الفاتورة الجديدة.,screens/POS.tsx,,translated
 Ticket {kot} {dest},Ticket {kot} {dest},تذكرة {kot} {dest},screens/Kitchen.tsx,kot dest,translated
 Tickets for this printer print on this device's default printer.,Tickets for this printer print on this device's default printer.,,screens/Kitchen.tsx,,needs_translation
+Till,Till,,screens/CashierTill.tsx,,needs_translation
 Till detail,Till detail,,screens/CashierShiftReport.tsx,,needs_translation
+Tills to review,Tills to review,,screens/CashierBoard.tsx,,needs_translation
 Time slot,Time slot,الفترة الزمنية,components/BookingDialog.tsx,,translated
 Times drive the house position: back-to-back rooms flag a conflict when the arrival lands before the departure.,Times drive the house position: back-to-back rooms flag a conflict when the arrival lands before the departure.,الأوقات تحدد موقع الفندق: الغرف المتتالية تعلّم تعارضاً عندما يصل الضيف قبل مغادرة السابق.,screens/TapeChart.tsx,,translated
 to,to,إلى,components/ResourceScreen.tsx; screens/TapeChart.tsx; screens/VoidAllowanceReport.tsx,,translated
@@ -1626,6 +1656,7 @@ Your details and signature form the guest register required by law.,Your details
 Your ID photo is kept with the guest register the hotel is required by law to maintain. Only hotel staff can see it.,Your ID photo is kept with the guest register the hotel is required by law to maintain. Only hotel staff can see it.,تُحفظ صورة هويتك مع سجل النزلاء الذي يلتزم الفندق نظامًا بالاحتفاظ به. لا يطّلع عليها إلا موظفو الفندق.,screens/PublicCheckin.tsx,,translated
 "Your ID photo is used only to confirm your identity at arrival, and is permanently deleted when you check out. Only hotel staff can see it.","Your ID photo is used only to confirm your identity at arrival, and is permanently deleted when you check out. Only hotel staff can see it.",تُستخدم صورة هويتك فقط للتحقق من هويتك عند الوصول، وتُحذف نهائيًا عند المغادرة. لا يطّلع عليها إلا موظفو الفندق.,screens/PublicCheckin.tsx,,translated
 your name and contact details to make and manage this booking and reach you about it,your name and contact details to make and manage this booking and reach you about it,اسمك وبيانات التواصل لإجراء هذا الحجز وإدارته والتواصل معك بشأنه,components/PrivacyNotice.tsx,,translated
+Your open tills,Your open tills,,screens/CashierTill.tsx,,needs_translation
 Your profile is erased {months} months after your last stay. Bills are kept as tax law requires.,Your profile is erased {months} months after your last stay. Bills are kept as tax law requires.,يُحذف ملفك بعد {months} شهرًا من آخر إقامة. وتُحفظ الفواتير وفق ما يتطلبه النظام الضريبي.,components/PrivacyNotice.tsx,months,translated
 Your profile is kept for future stays until you ask for it to be erased. Bills are kept as tax law requires.,Your profile is kept for future stays until you ask for it to be erased. Bills are kept as tax law requires.,يُحفظ ملفك لإقاماتك القادمة حتى تطلب حذفه. وتُحفظ الفواتير وفق ما يتطلبه النظام الضريبي.,components/PrivacyNotice.tsx,,translated
 Your property's check-out routine. Tick each one as you go.,Your property's check-out routine. Tick each one as you go.,إجراءات المغادرة في فندقك. ضع علامة على كل خطوة عند إنجازها.,components/CheckOutDialog.tsx,,translated

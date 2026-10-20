@@ -86,6 +86,8 @@ SCOPED_ARGS = {
 	"service_item": ("Banquet Service Item",),
 	"ingredient": ("Ingredient",),
 	"session": ("Cashier Session",),
+	"cashier_terminal": ("Cashier Terminal",), "to_terminal": ("Cashier Terminal",),
+	"cash_office": ("Cashier Terminal",), "transfer": ("Cash Transfer",),
 	"ticket": ("Service Ticket",),
 	"account": ("City Ledger Account",),
 	"connection": ("Channel Manager Connection", "Channel Provider Connection"),

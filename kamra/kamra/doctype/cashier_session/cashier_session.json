@@ -10,6 +10,8 @@
   "column_break_a",
   "business_date",
   "terminal",
+  "cashier_terminal",
+  "outlet",
   "status",
   "sb_cash",
   "opening_float",
@@ -24,6 +26,8 @@
   "expected_cash",
   "counted_cash",
   "variance",
+  "variance_status",
+  "variance_approved_by",
   "sb_meta",
   "opened_at",
   "closed_at",
@@ -189,11 +193,40 @@
    "fieldname": "close_notes",
    "fieldtype": "Small Text",
    "label": "Close Notes"
+  },
+  {
+   "fieldname": "cashier_terminal",
+   "fieldtype": "Link",
+   "label": "Cashier Terminal",
+   "options": "Cashier Terminal",
+   "in_list_view": 0,
+   "description": "Empty means the property's Default till (every session opened before terminals existed)."
+  },
+  {
+   "fieldname": "outlet",
+   "fieldtype": "Link",
+   "label": "POS Outlet",
+   "options": "POS Outlet",
+   "read_only": 1
+  },
+  {
+   "fieldname": "variance_status",
+   "fieldtype": "Select",
+   "label": "Variance Review",
+   "options": "\nNeeds Review\nApproved",
+   "read_only": 1
+  },
+  {
+   "fieldname": "variance_approved_by",
+   "fieldtype": "Link",
+   "label": "Variance Approved By",
+   "options": "User",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-09-07 00:00:00",
+ "modified": "2026-10-20 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Cashier Session",
