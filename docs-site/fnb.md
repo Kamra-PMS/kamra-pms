@@ -292,7 +292,7 @@ All under **Settings → F&B** (Hotel Admin and Finance can change them):
 | Print void slips in the kitchen | On | A line voided, or a bill cancelled, after its KOT was sent prints a VOID slip on the printer that had it. |
 | Show a reservation from | 60 min before | When a table reservation starts showing on the table map. |
 | Keep showing it until | 240 min after | When it stops showing. |
-| Kitchen printers | — | Managed under **F&B → Printers** (not a toggle here). |
+| Kitchen printers | Not a toggle | Managed under **F&B → Printers**. |
 
 ## Troubleshooting
 
