@@ -1,3 +1,4 @@
+<<<<<<<< HEAD:kamra/public/frontend/assets/MenuItems-R7PLSBuu.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/MenuItems-BOLQ3Ccp.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/MenuItems-BOLQ3Ccp.js
 import{r as a,j as e}from"./vendor-D6bHyl-8.js";import{R as D,m as U}from"./configs-6hDJ5F81.js";import{a as M,l as A,c as K,d as S,B as h,g as B,e as k,s as $,X as H,S as V,F as Q,w as W}from"./index-R6mcF6pn.js";import{S as X}from"./sheet-s_-zla-g.js";import{B as C}from"./badge-DtT2T_zD.js";import{C as G}from"./check-DJydIDAO.js";import{D as J}from"./download-NAxEW8WA.js";import{U as O}from"./ImageField-afxAlFTV.js";import{T as Y}from"./trash-2-FswLCtdU.js";import{C as Z}from"./cooking-pot-BGYNRtGT.js";import"./card-R6QYA6ML.js";/**
@@ -7,6 +8,9 @@ import{r as a,j as e}from"./vendor-D6bHyl-8.js";import{R as D,m as U}from"./conf
 ========
 import{r as a,j as e}from"./vendor-D6bHyl-8.js";import{R as D,m as U}from"./configs-CoTWHndL.js";import{a as M,l as A,c as K,d as S,B as h,g as B,e as k,s as $,X as H,S as V,F as Q,w as W}from"./index-CS1BcujD.js";import{S as X}from"./sheet-BxAego1y.js";import{B as C}from"./badge-B9AaUE4o.js";import{C as G}from"./check-CZ_mna4a.js";import{D as J}from"./download-z_VwRHu6.js";import{U as O}from"./ImageField-Bi71ZkRk.js";import{T as Y}from"./trash-2-DlP6mm_Z.js";import{C as Z}from"./cooking-pot-CDzSyw_l.js";import"./card-CU6Rtwoh.js";/**
 >>>>>>>> origin/fix/pos-settle-orders:kamra/public/frontend/assets/MenuItems-jYNgpexm.js
+========
+import{r as a,j as e}from"./vendor-D6bHyl-8.js";import{R as D,m as U}from"./configs-DQXQOejo.js";import{a as M,l as A,c as K,d as S,B as h,g as B,e as k,s as $,X as H,S as V,F as Q,w as W}from"./index-DWhLuhvH.js";import{S as X}from"./sheet-DDF2VAVq.js";import{B as C}from"./badge-BvW0BZyn.js";import{C as G}from"./check-C36Ng3mP.js";import{D as J}from"./download-kzewKWhE.js";import{U as O}from"./ImageField-BUH7yvhW.js";import{T as Y}from"./trash-2-ByIJJsaJ.js";import{C as Z}from"./cooking-pot-CCXSaKcS.js";import"./card-Cwv_xdgD.js";/**
+>>>>>>>> origin/feat/finance-master-configs:kamra/public/frontend/assets/MenuItems-BNI6B3mu.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.

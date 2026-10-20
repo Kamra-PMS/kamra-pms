@@ -1,3 +1,4 @@
+<<<<<<<< HEAD:kamra/public/frontend/assets/fingerprint-CZ_UXgBc.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/fingerprint-IH0hw09y.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/fingerprint-IH0hw09y.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/fingerprint-IH0hw09y.js
@@ -11,6 +12,9 @@ import{a}from"./index-CS1BcujD.js";/**
 ========
 import{a}from"./index-yQkXbOpd.js";/**
 >>>>>>>> origin/fix/code-quality-and-dashes:kamra/public/frontend/assets/fingerprint-CYz6ze5k.js
+========
+import{a}from"./index-DWhLuhvH.js";/**
+>>>>>>>> origin/feat/finance-master-configs:kamra/public/frontend/assets/fingerprint-VQpaLfnY.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.

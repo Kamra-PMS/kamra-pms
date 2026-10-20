@@ -1,3 +1,4 @@
+<<<<<<<< HEAD:kamra/public/frontend/assets/party-popper-2PlCZrlv.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/party-popper-B11SueSn.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/party-popper-B11SueSn.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/party-popper-B11SueSn.js
@@ -11,6 +12,9 @@ import{a as p}from"./index-CS1BcujD.js";/**
 ========
 import{a as p}from"./index-yQkXbOpd.js";/**
 >>>>>>>> origin/fix/code-quality-and-dashes:kamra/public/frontend/assets/party-popper-BbmgwutX.js
+========
+import{a as p}from"./index-DWhLuhvH.js";/**
+>>>>>>>> origin/feat/finance-master-configs:kamra/public/frontend/assets/party-popper-CkVv32sz.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.

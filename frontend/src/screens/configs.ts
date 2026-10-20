@@ -809,3 +809,83 @@ export const channelRoomMappingsConfig: ScreenConfig = {
     { field: "external_rate_id", label: "Provider rate plan ID", type: "data" },
   ],
 }
+
+export const reasonCodesConfig: ScreenConfig = {
+  doctype: "Reason Code",
+  title: "Reason Codes",
+  description:
+    "Coded reasons for voids, adjustments, refunds and paid-outs. Prefer these over free text so Voids & Allowances and audits stay consistent. Defaults are seeded; disable instead of deleting codes already on the books.",
+  searchFields: ["code", "description"],
+  filters: [
+    { field: "category", label: "Category",
+      options: ["Void", "Adjust", "Rate Change", "Refund", "Paid Out", "NC"] },
+    { field: "disabled", label: "Disabled", options: ["0", "1"] },
+  ],
+  pageSize: 50,
+  orderBy: "category, code",
+  columns: [
+    { field: "code", label: "Code" },
+    { field: "description", label: "Description" },
+    { field: "category", label: "Category", badge: true },
+    { field: "requires_supervisor", label: "Supervisor", badge: true },
+    { field: "disabled", label: "Status", statusCheck: true },
+  ],
+  form: [
+    { field: "code", label: "Code", type: "data", required: true,
+      hint: "Short stable id (e.g. VOID-GUEST). Becomes the document name - do not rename after use." },
+    { field: "description", label: "Description", type: "data", required: true },
+    { field: "category", label: "Category", type: "select", required: true,
+      options: ["Void", "Adjust", "Rate Change", "Refund", "Paid Out", "NC"] },
+    { field: "requires_supervisor", label: "Requires supervisor", type: "check",
+      hint: "Only Finance / Hotel Admin may use this code when ticked." },
+    { field: "disabled", label: "Disabled", type: "check",
+      hint: "Turn off instead of deleting when a void or refund already used it." },
+  ],
+}
+
+export const transactionCodesConfig: ScreenConfig = {
+  doctype: "Transaction Code",
+  title: "Transaction Codes",
+  description:
+    "Chart of posting codes for the folio journal - revenue, payment, tax, package and adjustment. Ledgers and night audit group by these. Leave Property blank for every property; set it to override for one hotel only.",
+  searchFields: ["code", "description", "revenue_group"],
+  filters: [
+    { field: "txn_type", label: "Type",
+      options: ["Revenue", "Payment", "Tax", "Package", "Adjustment"] },
+    { field: "disabled", label: "Disabled", options: ["0", "1"] },
+  ],
+  pageSize: 50,
+  orderBy: "txn_type, code",
+  columns: [
+    { field: "code", label: "Code" },
+    { field: "description", label: "Description" },
+    { field: "txn_type", label: "Type", badge: true },
+    { field: "revenue_group", label: "Group" },
+    { field: "default_tax_rate", label: "Tax %" },
+    { field: "disabled", label: "Status", statusCheck: true },
+  ],
+  form: [
+    { field: "code", label: "Code", type: "data", required: true,
+      hint: "Short stable id (e.g. 1000). Becomes the document name - do not rename after use." },
+    { field: "description", label: "Description", type: "data", required: true },
+    { field: "property", label: "Property", type: "link", linkDoctype: "Property",
+      hint: "Blank = all properties. Set only for a property-specific override." },
+    { field: "txn_type", label: "Type", type: "select", required: true,
+      options: ["Revenue", "Payment", "Tax", "Package", "Adjustment"] },
+    { field: "revenue_group", label: "Revenue group", type: "data",
+      hint: "e.g. Rooms, F&B, Other - used on ledgers and exports." },
+    { field: "subgroup", label: "Subgroup", type: "data" },
+    { field: "default_tax_rate", label: "Default tax %", type: "float" },
+    { field: "is_alcohol", label: "Alcohol", type: "check",
+      hint: "Alcohol never bills a Company folio." },
+    { field: "charge_type", label: "Legacy charge type", type: "select",
+      options: [
+        "Room", "Meal Plan", "Food & Beverage", "Minibar", "Laundry", "Spa",
+        "Early Check-in", "Late Checkout", "Cleaning Fee", "Extra Guests",
+        "Pet Charge", "Room Levy", "Discount", "Misc", "Allowance", "Opening Balance",
+      ],
+      hint: "Maps to Folio Charge.charge_type for display on older lines." },
+    { field: "disabled", label: "Disabled", type: "check",
+      hint: "Turn off instead of deleting when the journal already posted it." },
+  ],
+}

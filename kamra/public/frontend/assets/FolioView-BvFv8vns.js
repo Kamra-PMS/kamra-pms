@@ -1,3 +1,4 @@
+<<<<<<<< HEAD:kamra/public/frontend/assets/FolioView-BvFv8vns.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/FolioView-J5FfEnNU.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/FolioView-J5FfEnNU.js
 import{f as Ie,u as Ae,r as m,j as e,L as ye}from"./vendor-D6bHyl-8.js";import{a as Le,u as ve,p as Fe,q as Be,b as Ge,e as d,s as J,t as De,r as Ve,c,X as qe,B as f,P as Me,v as T,m as Oe,g as Ue}from"./index-R6mcF6pn.js";import{E as He}from"./EditableNationality-BhMb1hgT.js";import{L as We}from"./LinkedRecords-Cfjl_sFT.js";import{B as Ke}from"./badge-DtT2T_zD.js";import{C as re,c as ie,a as _e,b as Ne}from"./card-R6QYA6ML.js";import{A as Ye}from"./arrow-left-CYGcbaVO.js";import{T as Qe}from"./trash-2-FswLCtdU.js";import"./circle-user-round-DFXF2phL.js";import"./party-popper-B11SueSn.js";/**
@@ -7,6 +8,9 @@ import{f as Ie,u as Ae,r as m,j as e,L as ye}from"./vendor-D6bHyl-8.js";import{a
 ========
 import{f as Ie,u as Ae,r as m,j as e,L as ye}from"./vendor-D6bHyl-8.js";import{a as Le,u as ve,p as Fe,q as Be,b as Ge,e as d,s as J,t as De,r as Ve,c,X as qe,B as f,P as Me,v as T,m as Oe,g as Ue}from"./index-CS1BcujD.js";import{E as He}from"./EditableNationality-Du9F87-S.js";import{L as We}from"./LinkedRecords-C5u2FP6P.js";import{B as Ke}from"./badge-B9AaUE4o.js";import{C as re,c as ie,a as _e,b as Ne}from"./card-CU6Rtwoh.js";import{A as Ye}from"./arrow-left-BgrTqa0-.js";import{T as Qe}from"./trash-2-DlP6mm_Z.js";import"./circle-user-round-ffTT4zcP.js";import"./party-popper-BdDR6lvY.js";/**
 >>>>>>>> origin/fix/pos-settle-orders:kamra/public/frontend/assets/FolioView-ClbkB9rp.js
+========
+import{f as Ie,u as Ae,r as m,j as e,L as ye}from"./vendor-D6bHyl-8.js";import{a as Le,u as ve,p as Fe,q as Be,b as Ge,e as d,s as J,t as De,r as Ve,c,X as qe,B as f,P as Me,v as T,m as Oe,g as Ue}from"./index-DWhLuhvH.js";import{E as He}from"./EditableNationality-Xde6kSVJ.js";import{L as We}from"./LinkedRecords-DrHOD09N.js";import{B as Ke}from"./badge-BvW0BZyn.js";import{C as re,c as ie,a as _e,b as Ne}from"./card-Cwv_xdgD.js";import{A as Ye}from"./arrow-left-D0HCtdsm.js";import{T as Qe}from"./trash-2-ByIJJsaJ.js";import"./circle-user-round-mdc7CR-6.js";import"./party-popper-CkVv32sz.js";/**
+>>>>>>>> origin/feat/finance-master-configs:kamra/public/frontend/assets/FolioView-Bg_zZl2Y.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.

@@ -346,6 +346,14 @@ export default function App() {
           <Route path="printers" element={<KitchenPrinters />} />
           <Route path="outlets" element={<ConfiguredScreen config="outletsConfig" />} />
           <Route path="accounting-export" element={<AccountingExport />} />
+          <Route
+            path="reason-codes"
+            element={<ConfiguredScreen config="reasonCodesConfig" />}
+          />
+          <Route
+            path="transaction-codes"
+            element={<ConfiguredScreen config="transactionCodesConfig" />}
+          />
           <Route path="tickets" element={<Tickets />} />
           <Route path="laundry" element={<Laundry />} />
           <Route path="housekeeping-board" element={<HousekeepingBoard />} />

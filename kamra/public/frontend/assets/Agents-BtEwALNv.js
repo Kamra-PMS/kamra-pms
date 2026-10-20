@@ -1,3 +1,4 @@
+<<<<<<<< HEAD:kamra/public/frontend/assets/Agents-BtEwALNv.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/Agents-D0WTgbMl.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/Agents-D0WTgbMl.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/Agents-D0WTgbMl.js
@@ -11,6 +12,9 @@ import{r as a,j as e,L as xe}from"./vendor-D6bHyl-8.js";import{a as se,e as E,g 
 ========
 import{r as a,j as e,L as xe}from"./vendor-D6bHyl-8.js";import{a as se,e as E,g as D,au as me,F as he,d as M,ao as V,av as ue,aw as pe,ax as fe,ay as ge,w as je,u as te,s as K,az as be,B as z,E as ye,m as Ne}from"./index-yQkXbOpd.js";import{M as ve}from"./markdown-BzpA8mdC.js";import{T as we}from"./trash-2-BuVTpFvU.js";import{W as ze}from"./wrench-DF-GbQzw.js";import{L as ae}from"./loader-circle-DpHPdaC6.js";import{S as ke}from"./send-Du9TA4cI.js";import{K as Ce}from"./key-round-DBkPPNw8.js";import{A as _e}from"./arrow-right-r5Gjv8XR.js";import{B as ne}from"./badge-BqxPHDEa.js";import{C as Y,a as Q,b as X,c as Z}from"./card-4yA-6jzt.js";import{B as Se}from"./bot-BMiF_4Ge.js";import{C as ee}from"./copy--zHHsObX.js";/**
 >>>>>>>> origin/fix/code-quality-and-dashes:kamra/public/frontend/assets/Agents-BLi7baws.js
+========
+import{r as a,j as e,L as xe}from"./vendor-D6bHyl-8.js";import{a as se,e as E,g as D,au as me,F as he,d as M,ao as V,av as ue,aw as pe,ax as fe,ay as ge,w as je,u as te,s as K,az as be,B as z,E as ye,m as Ne}from"./index-DWhLuhvH.js";import{M as ve}from"./markdown-BzpA8mdC.js";import{T as we}from"./trash-2-ByIJJsaJ.js";import{W as ze}from"./wrench-CyV-r8eE.js";import{L as ae}from"./loader-circle-D6kpvShs.js";import{S as ke}from"./send-CeYFdM5_.js";import{K as Ce}from"./key-round-HB-5YR9T.js";import{A as _e}from"./arrow-right-zl8F8ySy.js";import{B as ne}from"./badge-BvW0BZyn.js";import{C as Y,a as Q,b as X,c as Z}from"./card-Cwv_xdgD.js";import{B as Se}from"./bot-CY5B4DMB.js";import{C as ee}from"./copy-BkdVkmoU.js";/**
+>>>>>>>> origin/feat/finance-master-configs:kamra/public/frontend/assets/Agents-rLtNgjDT.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.

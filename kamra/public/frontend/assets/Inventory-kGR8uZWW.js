@@ -1,3 +1,4 @@
+<<<<<<<< HEAD:kamra/public/frontend/assets/Inventory-kGR8uZWW.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/Inventory-DDps1d9H.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/Inventory-DDps1d9H.js
 import{r as n,j as e}from"./vendor-D6bHyl-8.js";import{a as W,w as $,e as z,g as k,I as V,B as j,af as B,d as v,au as G,X as H}from"./index-R6mcF6pn.js";import{T as P}from"./trash-2-FswLCtdU.js";import{R as D}from"./refresh-cw-DxkolY1G.js";import{T as R}from"./triangle-alert-AvYu9kS5.js";import{B as F}from"./ban-AwGUll0Q.js";/**
@@ -7,6 +8,9 @@ import{r as n,j as e}from"./vendor-D6bHyl-8.js";import{a as W,w as $,e as z,g as
 ========
 import{r as n,j as e}from"./vendor-D6bHyl-8.js";import{a as W,w as $,e as z,g as k,I as V,B as j,ad as B,d as v,as as G,X as H}from"./index-CS1BcujD.js";import{T as P}from"./trash-2-DlP6mm_Z.js";import{R as D}from"./refresh-cw-BIU0qS2x.js";import{T as R}from"./triangle-alert-CE9L4TEQ.js";import{B as F}from"./ban-CxWV4r0s.js";/**
 >>>>>>>> origin/fix/pos-settle-orders:kamra/public/frontend/assets/Inventory-DvMy1rE2.js
+========
+import{r as n,j as e}from"./vendor-D6bHyl-8.js";import{a as W,w as $,e as z,g as k,I as V,B as j,ad as B,d as v,as as G,X as H}from"./index-DWhLuhvH.js";import{T as P}from"./trash-2-ByIJJsaJ.js";import{R as D}from"./refresh-cw-3TCc4zHY.js";import{T as R}from"./triangle-alert-BozppDS2.js";import{B as F}from"./ban-BgjgzKRd.js";/**
+>>>>>>>> origin/feat/finance-master-configs:kamra/public/frontend/assets/Inventory-BDJLYXUn.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.

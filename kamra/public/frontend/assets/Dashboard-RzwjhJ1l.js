@@ -1,3 +1,4 @@
+<<<<<<<< HEAD:kamra/public/frontend/assets/Dashboard-RzwjhJ1l.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/Dashboard-CUpeGqiR.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/Dashboard-CUpeGqiR.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/Dashboard-CUpeGqiR.js
@@ -11,6 +12,9 @@ import{r as d,j as e}from"./vendor-D6bHyl-8.js";import{a as S,u as O,e as v,g as
 ========
 import{r as d,j as e}from"./vendor-D6bHyl-8.js";import{a as S,u as O,e as v,g as w,s as N,az as D,an as A,c as l,a0 as P,aE as _,$,V as k,af as E,j as T,U as I,m as L}from"./index-yQkXbOpd.js";import{C as p,a as m,b as h,c as j}from"./card-4yA-6jzt.js";import{S as B}from"./stat-card-DldOlsPr.js";import{C as F}from"./chart-pie-MhJ3jyUF.js";import{L as M}from"./log-in-BdKe73Nm.js";import"./arrow-up-right-N1U4Z3Mt.js";/**
 >>>>>>>> origin/fix/code-quality-and-dashes:kamra/public/frontend/assets/Dashboard-DW-AHALs.js
+========
+import{r as d,j as e}from"./vendor-D6bHyl-8.js";import{a as S,u as O,e as v,g as w,s as N,az as D,an as A,c as l,a0 as P,aE as _,$,V as k,af as E,j as T,U as I,m as L}from"./index-DWhLuhvH.js";import{C as p,a as m,b as h,c as j}from"./card-Cwv_xdgD.js";import{S as B}from"./stat-card-CDlQ3JaN.js";import{C as F}from"./chart-pie-DEdps68I.js";import{L as M}from"./log-in-DAxrTP-2.js";import"./arrow-up-right-DHnETlj6.js";/**
+>>>>>>>> origin/feat/finance-master-configs:kamra/public/frontend/assets/Dashboard-CGGjDLHk.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.

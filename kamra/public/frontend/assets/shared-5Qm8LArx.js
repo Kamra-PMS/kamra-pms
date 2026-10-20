@@ -1,6 +1,7 @@
 <<<<<<<< HEAD:kamra/public/frontend/assets/shared-5Qm8LArx.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/shared-5Qm8LArx.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/shared-5Qm8LArx.js
+<<<<<<<< HEAD:kamra/public/frontend/assets/shared-5Qm8LArx.js
 import{r as t,j as b}from"./vendor-D6bHyl-8.js";import{a as _,e as r,s as p,G as k,m as f,d as h}from"./index-R6mcF6pn.js";/**
 ========
 import{r as t,j as b}from"./vendor-D6bHyl-8.js";import{a as _,e as r,s as p,G as k,m as f,d as h}from"./index-BWel0udR.js";/**
@@ -11,6 +12,9 @@ import{r as t,j as b}from"./vendor-D6bHyl-8.js";import{a as _,e as r,s as p,G as
 ========
 import{r as t,j as b}from"./vendor-D6bHyl-8.js";import{a as _,e as r,s as p,G as k,m as f,d as h}from"./index-yQkXbOpd.js";/**
 >>>>>>>> origin/fix/code-quality-and-dashes:kamra/public/frontend/assets/shared-DsZ68HrT.js
+========
+import{r as t,j as b}from"./vendor-D6bHyl-8.js";import{a as _,e as r,s as p,G as k,m as f,d as h}from"./index-DWhLuhvH.js";/**
+>>>>>>>> origin/feat/finance-master-configs:kamra/public/frontend/assets/shared-CXbe3q_r.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.

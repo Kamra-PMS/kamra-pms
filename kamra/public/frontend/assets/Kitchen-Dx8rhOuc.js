@@ -1,3 +1,4 @@
+<<<<<<<< HEAD:kamra/public/frontend/assets/Kitchen-Dx8rhOuc.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/Kitchen-B73olENs.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/Kitchen-B73olENs.js
 import{r as o,u as _e,j as e}from"./vendor-D6bHyl-8.js";import{a as A,G as ae,e as M,u as C,aH as Se,g as q,d as u,x as Ce,o as Te,a3 as re,B as y,c as Ee,X as Me}from"./index-R6mcF6pn.js";import{k as Oe,p as Ae,j as Le}from"./thermal-8l2rQotx.js";import{C as ie}from"./chef-hat-Be86VUya.js";import{M as Ie,F as Re,a as $e,b as De}from"./minimize-2-BnwbxxUD.js";import{R as Pe}from"./refresh-cw-DxkolY1G.js";import{T as O}from"./triangle-alert-AvYu9kS5.js";import{F as R}from"./flame-uA-dte56.js";import{C as B}from"./check-DJydIDAO.js";import{I as Ke}from"./inbox-qhk2TGD8.js";import{C as Be}from"./cooking-pot-BGYNRtGT.js";/**
@@ -7,6 +8,9 @@ import{r as o,u as _e,j as e}from"./vendor-D6bHyl-8.js";import{a as A,G as ae,e 
 ========
 import{r as o,u as _e,j as e}from"./vendor-D6bHyl-8.js";import{a as A,G as ae,e as M,u as C,aF as Se,g as q,d as u,x as Ce,o as Te,a1 as re,B as y,c as Ee,X as Me}from"./index-CS1BcujD.js";import{k as Oe,p as Ae,j as Le}from"./thermal-Bs1_PwH2.js";import{C as ie}from"./chef-hat-1sASoX5c.js";import{M as Ie,F as Re,a as $e,b as De}from"./minimize-2-DKanRKSh.js";import{R as Pe}from"./refresh-cw-BIU0qS2x.js";import{T as O}from"./triangle-alert-CE9L4TEQ.js";import{F as R}from"./flame-C7VjRhzY.js";import{C as K}from"./check-CZ_mna4a.js";import{I as Fe}from"./inbox-BqVBSXg_.js";import{C as Ke}from"./cooking-pot-CDzSyw_l.js";/**
 >>>>>>>> origin/fix/pos-settle-orders:kamra/public/frontend/assets/Kitchen-mnl2hfkq.js
+========
+import{r as o,u as _e,j as e}from"./vendor-D6bHyl-8.js";import{a as A,G as ae,e as M,u as C,aF as Se,g as q,d as u,x as Ce,o as Te,a1 as re,B as y,c as Ee,X as Me}from"./index-DWhLuhvH.js";import{k as Oe,p as Ae,j as Le}from"./thermal-Cco5i3jf.js";import{C as ie}from"./chef-hat-DCqL6qw0.js";import{M as Ie,F as Re,a as $e,b as De}from"./minimize-2-C2zUpdUd.js";import{R as Pe}from"./refresh-cw-3TCc4zHY.js";import{T as O}from"./triangle-alert-BozppDS2.js";import{F as R}from"./flame-Cv61RQ2e.js";import{C as K}from"./check-C36Ng3mP.js";import{I as Fe}from"./inbox-B1sSsXZV.js";import{C as Ke}from"./cooking-pot-CCXSaKcS.js";/**
+>>>>>>>> origin/feat/finance-master-configs:kamra/public/frontend/assets/Kitchen-iTnP9ENv.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.

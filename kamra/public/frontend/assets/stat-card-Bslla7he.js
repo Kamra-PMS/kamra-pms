@@ -1,8 +1,12 @@
+<<<<<<<< HEAD:kamra/public/frontend/assets/stat-card-Bslla7he.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/stat-card-C_vCfZob.js
 import{j as s,L as y}from"./vendor-D6bHyl-8.js";import{a as $,d as v}from"./index-R6mcF6pn.js";import{A as k}from"./arrow-up-right-6OSlItAb.js";/**
 ========
 import{j as s,L as y}from"./vendor-D6bHyl-8.js";import{a as $,d as v}from"./index-yQkXbOpd.js";import{A as k}from"./arrow-up-right-N1U4Z3Mt.js";/**
 >>>>>>>> origin/fix/code-quality-and-dashes:kamra/public/frontend/assets/stat-card-DldOlsPr.js
+========
+import{j as s,L as y}from"./vendor-D6bHyl-8.js";import{a as $,d as v}from"./index-DWhLuhvH.js";import{A as k}from"./arrow-up-right-DHnETlj6.js";/**
+>>>>>>>> origin/feat/finance-master-configs:kamra/public/frontend/assets/stat-card-CDlQ3JaN.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.

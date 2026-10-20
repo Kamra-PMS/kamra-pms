@@ -1,3 +1,4 @@
+<<<<<<<< HEAD:kamra/public/frontend/assets/WhatsAppChat-D27fnQs2.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/WhatsAppChat-Do3eCg4i.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/WhatsAppChat-Do3eCg4i.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/WhatsAppChat-Do3eCg4i.js
@@ -11,6 +12,9 @@ import{r as s,j as t,L as I}from"./vendor-D6bHyl-8.js";import{a as L,u as R,e as
 ========
 import{r as s,j as t,L as I}from"./vendor-D6bHyl-8.js";import{a as L,u as R,e as m,s as h,aq as w,d,ap as B,B as M,g as W}from"./index-yQkXbOpd.js";import{S as D}from"./send-Du9TA4cI.js";/**
 >>>>>>>> origin/fix/code-quality-and-dashes:kamra/public/frontend/assets/WhatsAppChat-xcP0tVlA.js
+========
+import{r as s,j as t,L as I}from"./vendor-D6bHyl-8.js";import{a as L,u as R,e as m,s as h,aq as w,d,ap as B,B as M,g as W}from"./index-DWhLuhvH.js";import{S as D}from"./send-CeYFdM5_.js";/**
+>>>>>>>> origin/feat/finance-master-configs:kamra/public/frontend/assets/WhatsAppChat-CPGpUtUH.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.
