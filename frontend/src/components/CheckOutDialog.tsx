@@ -73,9 +73,16 @@ export interface CheckoutContext {
     adults: number
     children: number
     vip: 0 | 1
+    group_booking?: string | null
   }
   currency_symbol: string
   folios: FolioRow[]
+  companions?: {
+    name: string
+    guest_name: string
+    room_number?: string | null
+    check_out_date?: string
+  }[]
   groups: Record<
     string,
     { group: string; amount: number; count: number; lines: ChargeLine[] }
