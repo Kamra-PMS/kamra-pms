@@ -175,7 +175,7 @@ Advance percent,Advance percent,نسبة المقدمة,screens/Setup.tsx,,trans
 Advance Percent,Advance Percent,نسبة الدفعة المقدمة,screens/Setup.tsx,,translated
 "After the desk is live, put an AI concierge on your WhatsApp number — it uses Kamra's tools. Metered by HeyKoala; the PMS stays free.","After the desk is live, put an AI concierge on your WhatsApp number — it uses Kamra's tools. Metered by HeyKoala; the PMS stays free.",,screens/Setup.tsx,,needs_translation
 Age,Age,العمر,screens/RegistrationCard.tsx,,translated
-Agreed charge / night,Agreed charge / night,,components/BookingDialog.tsx,,needs_translation
+"Agreed charge / night, all of them","Agreed charge / night, all of them",,components/BookingDialog.tsx,,needs_translation
 Agrees with folios,Agrees with folios,مطابق للفواتير,screens/AuditPack.tsx,,translated
 AI Agent,AI Agent,وكيل الذكاء الاصطناعي,screens/Today.tsx,,translated
 AI assistant (bring your own key),AI assistant (bring your own key),مساعد الذكاء الاصطناعي (مفتاحك الخاص),screens/settings/cards.tsx,,translated
@@ -671,6 +671,7 @@ Extra Bed Policy:,Extra Bed Policy:,سياسة السرير الإضافي:,scre
 Extra beds,Extra beds,أسرّة إضافية,components/RoomDrawer.tsx,,translated
 Extra guest price / night,Extra guest price / night,سعر الضيف الإضافي / ليلة,screens/Setup.tsx,,translated
 Extra guests,Extra guests,,components/BookingDialog.tsx,,needs_translation
+"Extra guests by arrangement — up to {beds} above the {cap} it sleeps, at a price you agree","Extra guests by arrangement — up to {beds} above the {cap} it sleeps, at a price you agree",,components/BookingDialog.tsx,beds cap,needs_translation
 Extra instructions,Extra instructions,,screens/settings/cards.tsx,,needs_translation
 "Extra towels, AC not cooling…","Extra towels, AC not cooling…",مناشف إضافية، التكييف لا يبرد…,components/RoomStayPanels.tsx,,translated
 eZee export,eZee export,تصدير eZee,screens/GoLiveImport.tsx,,translated
@@ -1201,7 +1202,6 @@ Optional,Optional,اختياري,components/CheckInDialog.tsx,,translated
 Optional code,Optional code,رمز اختياري,components/BookingDialog.tsx,,translated
 Optional: connect HeyKoala WhatsApp,Optional: connect HeyKoala WhatsApp,,screens/Setup.tsx,,needs_translation
 Or jump to any screen.,Or jump to any screen.,أو انتقل لأي شاشة.,components/CommandPalette.tsx,,translated
-"Or keep them in one room — up to {beds} more by arrangement, at a price you agree:","Or keep them in one room — up to {beds} more by arrangement, at a price you agree:",,components/BookingDialog.tsx,beds,needs_translation
 or paste it below,or paste it below,أو الصقه أدناه,screens/GoLiveImport.tsx,,translated
 Or set the amount to 0: the stay goes on the bill and the guest pays at check-out.,Or set the amount to 0: the stay goes on the bill and the guest pays at check-out.,أو اجعل المبلغ 0: تُضاف الإقامة إلى الفاتورة ويدفع النزيل عند المغادرة.,components/BookingDialog.tsx,,translated
 Order items,Order items,عناصر الطلب,screens/POS.tsx,,translated
@@ -1860,7 +1860,7 @@ Which hall - free for these dates and hours,Which hall - free for these dates an
 "Which printer gets which KOTs. Two restaurants can share a kitchen printer, and the bar's drinks can print at the bar. With no printers here, each till prints its own KOTs.","Which printer gets which KOTs. Two restaurants can share a kitchen printer, and the bar's drinks can print at the bar. With no printers here, each till prints its own KOTs.",,screens/KitchenPrinters.tsx,,needs_translation
 Which system is this export from?,Which system is this export from?,من أي نظام هذا التصدير؟,screens/GoLiveImport.tsx,,translated
 Who,Who,من,screens/Agents.tsx,,translated
-"Who agreed it, and why","Who agreed it, and why",,components/BookingDialog.tsx,,needs_translation
+"Who agreed it, and why (required)","Who agreed it, and why (required)",,components/BookingDialog.tsx,,needs_translation
 Who cleaned it,Who cleaned it,من نظّفها,components/RoomDrawer.tsx,,translated
 Who is this bill for?,Who is this bill for?,لمن هذه الفاتورة؟,screens/pos/PosSidePanel.tsx,,translated
 Who pays,Who pays,من يدفع,components/CheckInDialog.tsx; screens/settings/cards.tsx,,translated
