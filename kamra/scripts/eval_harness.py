@@ -4750,7 +4750,7 @@ def t97():
 	# the doctype ships the channels the agent layers write
 	path = os.path.join(os.path.dirname(frappe.get_module_path("kamra")),
 	                    "kamra", "doctype", "agent_action_log", "agent_action_log.json")
-	with open(path) as f:
+	with open(path) as f:  # nosemgrep: frappe-security-file-traversal -- path is built from the installed app's own module directory and fixed names; eval script, no user input
 		field = next(x for x in _json.load(f)["fields"] if x["fieldname"] == "action_channel")
 	assert {"Chat", "MCP"} <= set(field["options"].split("\n")), field["options"]
 
@@ -9288,7 +9288,7 @@ def t356():
 	            "frontend/src/components/RoomChangeDialog.tsx"):
 		path = os.path.join(root, rel)
 		if os.path.exists(path):
-			with open(path, encoding="utf-8") as f:
+			with open(path, encoding="utf-8") as f:  # nosemgrep: frappe-security-file-traversal -- path is root plus a fixed list of source files; eval script, no user input
 				endpoints |= set(re.findall(r"[\"'](kamra\.[a-z_]+\.[a-z_]+)[\"']", f.read()))
 	fns = {ep: frappe.get_attr(ep) for ep in sorted(endpoints)}  # imports = registers
 	whitelisted = {f"{w.__module__}.{w.__name__}" for w in frappe.whitelisted}

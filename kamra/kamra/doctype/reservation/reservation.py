@@ -55,7 +55,7 @@ def entire_place_rooms(property: str, room_type: str,
 			title=_("Villa has no rooms"))
 	ooo = "" if include_out_of_order else \
 		"AND COALESCE(r.housekeeping_status, '') != 'Out of Order'"
-	return frappe.db.sql(
+	return frappe.db.sql(  # nosemgrep: frappe-sql-format-injection -- interpolated text is the module constant NON_VILLA_SQL and a fixed clause; the property is bound
 		f"""
 		SELECT r.name, r.room_number FROM `tabRoom` r
 		LEFT JOIN `tabRoom Type` rt ON rt.name = r.room_type
@@ -85,7 +85,7 @@ def villa_lockout_bookings(property: str, room_type: str | None, check_in,
 		return []
 	side = NON_VILLA_SQL if is_entire_place(room_type) \
 		else "rt.room_category = 'Villa'"
-	return frappe.db.sql(
+	return frappe.db.sql(  # nosemgrep: frappe-sql-format-injection -- interpolated text is module constants (_LIVE_SQL, NON_VILLA_SQL) or a fixed clause; every value is bound
 		f"""
 		SELECT r.name, r.check_in_date, r.check_out_date FROM `tabReservation` r
 		LEFT JOIN `tabRoom Type` rt ON r.room_type = rt.name
