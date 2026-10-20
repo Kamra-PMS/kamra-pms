@@ -39,7 +39,7 @@ its own price).
 | `kamra/cashier.py` `ledger.py` `folio.py` `pricing.py` | Money |
 | `kamra/mcp_tools.py` `mcp_http.py` `mcp_oauth.py` | MCP registry + `/mcp` |
 | `kamra/assistant.py` | In-app copilot (BYO OpenAI-compatible key) |
-| `kamra/public_api.py` | Guest `/book`, `/checkin`, QR menu (`allow_guest`) |
+| `kamra/public_api.py` | Guest `/book`, `/checkin` (`allow_guest`) |
 | `kamra/authz.py` | `@require_roles`, cashier PIN |
 | `kamra/localization/` | Country packs (tax, invoice words, locale) |
 | `frontend/src/` | React SPA. Prod basename `/kamra` |

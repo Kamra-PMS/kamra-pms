@@ -49,6 +49,6 @@ Authorization: token <api_key>:<api_secret>
 Content-Type: application/json
 ```
 
-Guest surfaces (`/book`, self check-in, QR menu) use `kamra.public_api`
+Guest surfaces (`/book`, self check-in) use `kamra.public_api`
 and do not take a staff token - they are rate-limited and never trust a
 price from the browser.

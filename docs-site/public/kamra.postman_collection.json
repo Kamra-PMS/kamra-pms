@@ -5516,43 +5516,6 @@
      }
     },
     {
-     "name": "qr_targets",
-     "request": {
-      "method": "POST",
-      "header": [
-       {
-        "key": "Content-Type",
-        "value": "application/json"
-       },
-       {
-        "key": "Authorization",
-        "value": "token {{api_key}}:{{api_secret}}"
-       }
-      ],
-      "url": {
-       "raw": "{{base_url}}/api/method/kamra.pos.qr_targets",
-       "host": [
-        "{{base_url}}"
-       ],
-       "path": [
-        "api",
-        "method",
-        "kamra.pos.qr_targets"
-       ]
-      },
-      "description": "Everything a printable QR sheet needs: each restaurant outlet's tables\nwith their QR-ordering link, and each room with the in-room dining link\n(the Room Service outlet's menu, tagged with the room). The codes are\ndrawn in the browser - no QR web service sees these links.",
-      "body": {
-       "mode": "raw",
-       "raw": "{\n  \"property\": \"Your Property\"\n}",
-       "options": {
-        "raw": {
-         "language": "json"
-        }
-       }
-      }
-     }
-    },
-    {
      "name": "table_map",
      "request": {
       "method": "POST",
@@ -6618,7 +6581,7 @@
         "kamra.printing.printers"
        ]
       },
-      "description": "Every printer with its routes and whether it's online - for the\nsettings card and for a kitchen screen choosing what to print for.",
+      "description": "Every printer with its routes and whether it's online - for the\nF&B Printers screen and for a kitchen screen choosing what to print for.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\"\n}",
@@ -12741,7 +12704,7 @@
    ]
   },
   {
-   "name": "Public (no auth - booking page, QR menu)",
+   "name": "Public (no auth - booking page, check-in)",
    "item": [
     {
      "name": "catalog_index",
@@ -13170,72 +13133,6 @@
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\",\n  \"code\": \"<code>\",\n  \"nights\": 1\n}",
-       "options": {
-        "raw": {
-         "language": "json"
-        }
-       }
-      }
-     }
-    },
-    {
-     "name": "qr_menu",
-     "request": {
-      "method": "POST",
-      "header": [
-       {
-        "key": "Content-Type",
-        "value": "application/json"
-       }
-      ],
-      "url": {
-       "raw": "{{base_url}}/api/method/kamra.public_api.qr_menu",
-       "host": [
-        "{{base_url}}"
-       ],
-       "path": [
-        "api",
-        "method",
-        "kamra.public_api.qr_menu"
-       ]
-      },
-      "description": "The guest-facing digital menu behind a table/room QR code. Only shows\noutlets a hotel has published items for; no prices are trusted from the\nguest - they're read here.",
-      "body": {
-       "mode": "raw",
-       "raw": "{\n  \"outlet\": \"Your Property-Restaurant\"\n}",
-       "options": {
-        "raw": {
-         "language": "json"
-        }
-       }
-      }
-     }
-    },
-    {
-     "name": "qr_order",
-     "request": {
-      "method": "POST",
-      "header": [
-       {
-        "key": "Content-Type",
-        "value": "application/json"
-       }
-      ],
-      "url": {
-       "raw": "{{base_url}}/api/method/kamra.public_api.qr_order",
-       "host": [
-        "{{base_url}}"
-       ],
-       "path": [
-        "api",
-        "method",
-        "kamra.public_api.qr_order"
-       ]
-      },
-      "description": "A guest places an order from the QR menu. It lands as a QR order that\na captain must confirm before it fires to the kitchen or touches a bill -\nthe guest can never post directly to a folio.",
-      "body": {
-       "mode": "raw",
-       "raw": "{\n  \"outlet\": \"Your Property-Restaurant\",\n  \"items\": \"<items>\",\n  \"room\": \"Your Property-101\"\n}",
        "options": {
         "raw": {
          "language": "json"

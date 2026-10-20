@@ -1354,7 +1354,7 @@ def create_ticket(property: str, subject: str, category: str,
 		           rationale=f"Captured request without staff: {subject}",
 		           agent_name="Concierge",
 		           # the ticket source names who raised it; the log channel
-		           # names how it reached Kamra (a QR menu or an AI agent is API)
+		           # names how it reached Kamra (an AI agent is API)
 		           channel=({"AI Agent": agent_channel() or "API", "QR": "API"}
 		                    .get(source, source)))
 	return {"ticket": doc.name, "due_by": str(doc.due_by)}

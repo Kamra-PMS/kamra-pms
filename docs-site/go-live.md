@@ -98,7 +98,7 @@ links to the deeper guide.
 
 - [ ] POS: outlets, tables with areas (`[Main Hall] T1:4`), menu with
   photos, KOT printer or kitchen display at the pass
-- [ ] Kitchen printers (Settings → F&B): each printer's outlets and stations,
+- [ ] Kitchen printers (F&B → Printers): each printer's outlets and stations,
   a print-station screen picked on each kitchen device, a test page from
   each, Chrome started with `--kiosk-printing` on tills and kitchen screens
 - [ ] Housekeeping: confirm every room shows on `/hk`, brief the team

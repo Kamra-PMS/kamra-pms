@@ -300,7 +300,7 @@ def _check_property(property: str):
 @require_roles(*STATION_ROLES)
 def printers(property: str) -> list:
 	"""Every printer with its routes and whether it's online - for the
-	settings card and for a kitchen screen choosing what to print for."""
+	F&B Printers screen and for a kitchen screen choosing what to print for."""
 	_check_property(property)
 	rows = frappe.get_all(
 		"Kitchen Printer", filters={"property": property},
