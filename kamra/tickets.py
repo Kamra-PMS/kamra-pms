@@ -95,12 +95,13 @@ def tickets_search(property: str, view: str = "open", category: str | None = Non
 		             "OR t.guest_name LIKE %(q)s OR t.description LIKE %(q)s)")
 		args["q"] = f"%{q.strip()}%"
 	rows = frappe.db.sql(
-		f"""SELECT t.name, t.subject, t.category, t.priority, t.status, t.source, t.room,
+		f"""  # nosemgrep: frappe-sql-format-injection -- fixed clauses joined with AND; every value is bound through args
+		    SELECT t.name, t.subject, t.category, t.priority, t.status, t.source, t.room,
 		           t.guest_name, t.due_by, t.resolved_on, t.breached, t.assigned_to_user,
 		           t.resolved_by, t.first_response_at, t.reopened_count, t.creation
 		    FROM `tabService Ticket` t WHERE {' AND '.join(where)}
 		    ORDER BY (t.status IN ('Open','In Progress')) DESC, t.due_by ASC, t.creation DESC
-		    LIMIT %(lim)s""", args, as_dict=True)  # nosemgrep: frappe-sql-format-injection -- fixed clauses, values bound
+		    LIMIT %(lim)s""", args, as_dict=True)
 	names = _names([r.assigned_to_user for r in rows] + [r.resolved_by for r in rows])
 	for r in rows:
 		is_open = r.status in OPEN_STATES
