@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function - the same governed layer
-the UI and the AI use. **387 endpoints**, generated from the source
+the UI and the AI use. **401 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -2409,6 +2409,24 @@ cashier session so FO + POS cash reconcile together.
 | `mode` | yes |  |
 | `pin` | no | `None` |
 
+### `kamra.pos.change_payment_mode`
+
+**POST**
+
+Correct the tender on a bill that was settled with the wrong mode (Card
+pressed for Cash). The till keeps its history: a reversing entry for the
+old mode and a new entry for the right one, same till session, with a
+comment on the bill. Only while that till is still open - once it is
+counted and closed, the day's cash is final and a manager must correct it
+from the till screens.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `order` | yes |  |
+| `mode` | yes |  |
+| `reason` | no | `''` |
+| `pin` | no | `None` |
+
 ### `kamra.pos.mark_nc`
 
 **POST**
@@ -2510,6 +2528,25 @@ Looking at today also brings in bills still open from earlier days
 | `q` | no | `None` |
 | `state` | no | `None` |
 | `limit` | no | `200` |
+
+### `kamra.pos.orders_export`
+
+**GET/POST**
+
+The outlet's bill history as CSV for a day or up to a year: every
+bill with its state, payment mode, amount, discount, who it was for and
+who cancelled it. Same search and state filters as the orders list;
+`mode` keeps one payment mode (Cash, Card, UPI). A phone number is masked
+except to a supervisor, as on the till. Returns {filename, csv, rows}.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `outlet` | yes |  |
+| `date` | no | `None` |
+| `to_date` | no | `None` |
+| `q` | no | `None` |
+| `state` | no | `None` |
+| `mode` | no | `None` |
 
 ### `kamra.pos.find_customer`
 
@@ -2618,6 +2655,156 @@ Only items that matter for the modules this property runs.
 | Param | Required | Default |
 | --- | --- | --- |
 | `property` | yes |  |
+
+
+## Rates (rate calendar, what moves a rate)
+
+> These explain a price; they never set one. The quote is the only source of a charge.
+
+### `kamra.rates.rate_calendar`
+
+**GET/POST**
+
+Every room type's rate for each of the next `days` dates, with what
+moved it. A room type's own days are read with the same functions the
+quote uses; nothing here sets a price.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `from_date` | no | `None` |
+| `days` | no | `14` |
+| `adults` | no | `2` |
+| `children` | no | `0` |
+
+### `kamra.rates.rate_options`
+
+**GET/POST**
+
+For the booking dialog: this stay night by night (BAR, season,
+demand), the whole stay under each active rate plan against the plain
+rate, and what the voucher would do. Each total is a real quote.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `room_type` | yes |  |
+| `check_in_date` | yes |  |
+| `check_out_date` | yes |  |
+| `adults` | no | `2` |
+| `children` | no | `0` |
+| `meal_plan` | no | `None` |
+| `voucher_code` | no | `None` |
+
+
+## Service tickets (assign, resolve, timeline)
+
+### `kamra.tickets.tickets_search`
+
+**GET/POST**
+
+Tickets for a property with the filters a supervisor needs.
+
+view: open (default), mine, unassigned, overdue, resolved, all. Old
+tickets are never hidden: 'all' and 'resolved' go back as far as the
+data does, and older_than_days narrows to the ones still open past that.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `view` | no | `'open'` |
+| `category` | no | `None` |
+| `priority` | no | `None` |
+| `q` | no | `None` |
+| `assignee` | no | `None` |
+| `older_than_days` | no | `0` |
+| `limit` | no | `200` |
+
+### `kamra.tickets.ticket_detail`
+
+**GET/POST**
+
+One ticket in full: its fields, SLA, and the timeline.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `ticket` | yes |  |
+
+### `kamra.tickets.ticket_assignees`
+
+**GET/POST**
+
+Staff a ticket can be handed to.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+
+### `kamra.tickets.assign_ticket`
+
+**POST**
+
+Hand a ticket to someone, or clear the assignee (user empty).
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `ticket` | yes |  |
+| `user` | no | `None` |
+| `note` | no | `None` |
+
+### `kamra.tickets.claim_ticket`
+
+**POST**
+
+Take a ticket yourself.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `ticket` | yes |  |
+
+### `kamra.tickets.start_ticket`
+
+**POST**
+
+Begin work: moves it to In Progress and, if nobody has it, gives it to you.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `ticket` | yes |  |
+
+### `kamra.tickets.add_ticket_note`
+
+**POST**
+
+A comment on the timeline (what was tried, who was called).
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `ticket` | yes |  |
+| `note` | yes |  |
+
+### `kamra.tickets.resolve_ticket`
+
+**POST**
+
+Mark a ticket solved, recording who did it and what was done.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `ticket` | yes |  |
+| `resolution_note` | no | `None` |
+| `close` | no | `0` |
+
+### `kamra.tickets.reopen_ticket`
+
+**POST**
+
+A solved ticket that came back. Needs a reason; it is kept in the timeline.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `ticket` | yes |  |
+| `reason` | yes |  |
 
 
 ## Kitchen printers (routing, print stations, print queue)
@@ -4647,6 +4834,18 @@ the attempt worked. IP addresses are left out.
 
 
 ## Settings hub (module settings)
+
+### `kamra.settings.menu_masters`
+
+**GET/POST** · roles: `Finance`, `Front Desk`, `Night Auditor`, `Kamra Agent`
+
+Allergen tags, prep stations, courses and category suggestions for
+the Menu form and kitchen display. Edited under Settings → F&B → Menu
+master lists.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
 
 ### `kamra.settings.settings_schema`
 
