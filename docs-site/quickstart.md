@@ -18,9 +18,13 @@ VPS**; if you have access to the prebuilt image on `ghcr.io` it can
   [pulling the prebuilt image](#faster-pull-the-prebuilt-image))
 
 ::: tip Where to get a server
-One-click / affiliate paths: [Hostinger](/self-hosting/hostinger),
-[DigitalOcean](/self-hosting/digitalocean), [Linode](/self-hosting/linode).
-Or [AWS](/self-hosting/aws). Prefer managed? [Frappe Cloud](/self-hosting/frappe-cloud).
+Cheapest path for India / SEA: buy Hostinger with
+**[our referral link](https://www.hostinger.com/in?REFERRALCODE=kamrapms)**
+(or coupon **`KAMRAPMS`**) — you save **20%**, and it helps keep Kamra afloat.
+Full walkthrough: [Hostinger](/self-hosting/hostinger).
+
+Also: [DigitalOcean](/self-hosting/digitalocean), [Linode](/self-hosting/linode),
+[AWS](/self-hosting/aws). Prefer managed? [Frappe Cloud](/self-hosting/frappe-cloud).
 :::
 
 ## One command

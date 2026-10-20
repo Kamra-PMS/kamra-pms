@@ -15,8 +15,8 @@ separately, not as a hosted SaaS listing.
 
 ## Order
 
-1. **AWS Marketplace** - broadest buyers + ISV Accelerate co-sell.
-2. **Azure Marketplace** - Microsoft-centric groups.
+1. **AWS Marketplace** — broadest buyers + ISV Accelerate co-sell.
+2. **Azure Marketplace** — Microsoft-centric groups.
 3. **Google Cloud Marketplace**.
 
 Bake the image into the machine image at build time with
@@ -26,6 +26,9 @@ questionnaire are required before go-live (weeks to months).
 
 ## Near-term money
 
-For independents, earn on **VPS affiliates** instead - see
-[get-started](https://kamrapms.com/get-started/) (Hostinger %, DigitalOcean
-recurring, Linode CPA). Hyperscaler listings are a distribution channel, not a hosted product.
+For independents, earn on **VPS affiliates** instead — see
+[get-started](https://kamrapms.com/get-started/). Prefer Hostinger with the
+[Kamra referral link](https://www.hostinger.com/in?REFERRALCODE=kamrapms)
+(**20% off** for the buyer, or coupon `KAMRAPMS`; it helps keep Kamra afloat),
+plus DigitalOcean recurring and Linode CPA. Hyperscaler listings are a
+distribution channel, not a hosted product.
