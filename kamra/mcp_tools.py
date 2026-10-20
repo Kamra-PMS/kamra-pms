@@ -1,4 +1,4 @@
-"""Shared MCP tool registry — one list for stdio, remote HTTP, and docs.
+"""Shared MCP tool registry - one list for stdio, remote HTTP, and docs.
 
 Each tool wraps a governed Kamra API endpoint. Money and availability stay
 in the PMS; the model only calls these tools. Visibility is the intersection
@@ -170,7 +170,7 @@ TOOLS: tuple[ToolSpec, ...] = (
 		free room, applies the voucher, prices via the engine. Room type,
 		meal plan and rate plan accept the id, code or exact name. Safe to
 		retry: a repeated call returns the existing booking (see
-		idempotency_key) — check idempotent_replay in the result.""",
+		idempotency_key) - check idempotent_replay in the result.""",
 		{
 			"guest_name": _p("string"),
 			"room_type": ROOM_TYPE_PARAM,
@@ -193,7 +193,7 @@ TOOLS: tuple[ToolSpec, ...] = (
 	_t(
 		"add_to_waitlist",
 		"api.create_booking",
-		"""Park a stay on the waitlist (no room) — for dates that are sold out or
+		"""Park a stay on the waitlist (no room) - for dates that are sold out or
 		restricted. Promote it later with promote_waitlist when a room frees.""",
 		{
 			"guest_name": _p("string"),
@@ -213,9 +213,9 @@ TOOLS: tuple[ToolSpec, ...] = (
 	_t(
 		"waitlist_ready",
 		"api.waitlist_ready",
-		"""Waitlisted stays that can NOW be booked — a room has freed up for their
+		"""Waitlisted stays that can NOW be booked - a room has freed up for their
 		dates. Each item includes the guest name and phone, so you can proactively
-		reach out. Poll this to catch openings the moment they appear — the wedge
+		reach out. Poll this to catch openings the moment they appear - the wedge
 		for turning a sold-out 'no' into a booking.""",
 		{},
 		property=True,
@@ -241,8 +241,8 @@ TOOLS: tuple[ToolSpec, ...] = (
 		"cancel_booking",
 		"api.cancel_reservation",
 		"""Cancel a confirmed booking. The property's cancellation policy
-		applies automatically — free outside the window, else the configured
-		fee posts to the folio. Returns a cancellation number — always give
+		applies automatically - free outside the window, else the configured
+		fee posts to the folio. Returns a cancellation number - always give
 		it to the guest. Reasons: Guest request, Change of plans, Duplicate
 		booking, Payment failed, Weather / travel disruption, Booked
 		elsewhere, Other. Only waive the fee when a manager authorizes it;
@@ -328,7 +328,7 @@ TOOLS: tuple[ToolSpec, ...] = (
 	_t(
 		"find_reservations",
 		"api.find_reservations",
-		"""Find reservations by guest name, room number, or reference —
+		"""Find reservations by guest name, room number, or reference  - 
 		optionally filtered by status (Confirmed, Checked In, Checked Out,
 		Cancelled, No Show, Waitlisted). Resolve a room or name to a
 		reservation before acting.""",
@@ -558,7 +558,7 @@ TOOLS: tuple[ToolSpec, ...] = (
 		"post_stay_charge",
 		"api.post_stay_charge",
 		"""Post a charge to a stay and let the company billing rules pick the
-		folio — corporate room/meals go to the Company folio, alcohol and
+		folio - corporate room/meals go to the Company folio, alcohol and
 		unruled charges to the guest. Prefer this over add_folio_charge when
 		you don't know which folio should carry the line.""",
 		{
@@ -580,7 +580,7 @@ TOOLS: tuple[ToolSpec, ...] = (
 		"""A group's whole billing picture: the consolidated company (master)
 		folio plus each member reservation's own folios with balances. Use
 		split_folio_charge to move value between a member's bill and the
-		master — company pays the stay, guests pay their extras.""",
+		master - company pays the stay, guests pay their extras.""",
 		{"group_booking": _p("string")},
 		required=("group_booking",),
 		group="Groups",
@@ -588,7 +588,7 @@ TOOLS: tuple[ToolSpec, ...] = (
 	_t(
 		"split_folio_charge",
 		"api.split_folio_charge",
-		"""Split one charge line between two folios of the same stay — e.g.
+		"""Split one charge line between two folios of the same stay - e.g.
 		a 70/30 corporate deal or a shared room. Give percent OR amount (the
 		part that moves to to_folio). Use get_folio first to find folio and
 		charge row names.""",
@@ -607,7 +607,7 @@ TOOLS: tuple[ToolSpec, ...] = (
 		"stay_folios",
 		"api.reservation_folios",
 		"""All folios of a stay (guest / extra / company / group) with
-		balances — plus the group master when the stay is on a block.""",
+		balances - plus the group master when the stay is on a block.""",
 		{"reservation": _p("string")},
 		required=("reservation",),
 		group="Billing",
@@ -678,7 +678,7 @@ TOOLS: tuple[ToolSpec, ...] = (
 		"close_folio",
 		"api.close_folio",
 		"""Close / settle an open folio and issue the invoice number. Balance
-		must be zero (or use part-settle elsewhere). Confirm with staff —
+		must be zero (or use part-settle elsewhere). Confirm with staff  - 
 		irreversible.""",
 		{"folio": _p("string")},
 		required=("folio",),
@@ -690,7 +690,7 @@ TOOLS: tuple[ToolSpec, ...] = (
 		"api.update_occupants",
 		"""Record everyone staying in the room (the legal hotel register,
 		printed on the GRC). occupants = [{full_name, age, gender,
-		nationality, id_type, id_number, phone}] — replaces the list.""",
+		nationality, id_type, id_number, phone}] - replaces the list.""",
 		{
 			"reservation": _p("string"),
 			"occupants": _p("array", items=_p("object")),
@@ -702,7 +702,7 @@ TOOLS: tuple[ToolSpec, ...] = (
 		"set_room_rate",
 		"api.set_room_rate",
 		"""Set the nightly rate for a room type over a date range. Bounded by
-		the owner's rate guardrails — the PMS rejects rates outside the
+		the owner's rate guardrails - the PMS rejects rates outside the
 		floor/ceiling. Always give a reason (it goes in the audit trail).""",
 		{
 			"room_type": ROOM_TYPE_PARAM,
@@ -721,7 +721,7 @@ TOOLS: tuple[ToolSpec, ...] = (
 		"api.owner_briefing",
 		"""The owner's morning numbers: occupancy, yesterday's revenue/ADR/
 		RevPAR, arrivals/departures, open tickets, next-7-day availability,
-		agent hours saved. Turn this into a short, warm briefing — never
+		agent hours saved. Turn this into a short, warm briefing - never
 		change the figures.""",
 		{"date": _p("string")},
 		property=True,
@@ -735,7 +735,7 @@ TOOLS: tuple[ToolSpec, ...] = (
 		departures with ETDs and balances due, back-to-back room conflicts
 		(incoming guest lands before the outgoing one leaves), the demand
 		tier pricing is applying, and a 7-day occupancy outlook. Read it out
-		as a crisp shift briefing — never change the figures.""",
+		as a crisp shift briefing - never change the figures.""",
 		{"date": _p("string")},
 		property=True,
 		group="Briefings",
@@ -743,7 +743,7 @@ TOOLS: tuple[ToolSpec, ...] = (
 	_t(
 		"setup_property",
 		"api.setup_property",
-		"""Onboard a whole property in one call — the migration assistant's
+		"""Onboard a whole property in one call - the migration assistant's
 		tool. Ask the hotel for their room list/rate card (any format), map
 		it into: {property:{property_name, city, gstin?, phone?},
 		room_types:[{code,name,base_price,adults?}], rooms:[{room_type_code,
@@ -760,7 +760,7 @@ TOOLS: tuple[ToolSpec, ...] = (
 		"""Migrate existing reservations from another PMS/spreadsheet. Each:
 		{guest_name, phone?, room_type_code, check_in, check_out, adults?,
 		amount_after_tax?, channel?, status?}. Fixed amounts are preserved;
-		otherwise the pricing engine quotes. Returns per-row errors — report
+		otherwise the pricing engine quotes. Returns per-row errors - report
 		them to the user rather than silently dropping rows.""",
 		{
 			"bookings": _p("array", items=_p("object")),
@@ -924,7 +924,7 @@ TOOLS: tuple[ToolSpec, ...] = (
 	_t(
 		"pickup_group_room",
 		"api.pickup_group_room",
-		"""Name a guest into a group's room block — creates their reservation on
+		"""Name a guest into a group's room block - creates their reservation on
 		the group's dates against the held inventory.""",
 		{
 			"group_booking": _p("string"),
@@ -950,7 +950,7 @@ TOOLS: tuple[ToolSpec, ...] = (
 		"banquet.venue_availability",
 		"""Which halls are free for a date, hours and pax. A confirmed function
 		takes the hall; a tentative hold is shown as a soft hold you can still
-		sell over. Two functions can share a hall morning and evening — only a
+		sell over. Two functions can share a hall morning and evening - only a
 		real overlap in hours counts as taken. Run this before every enquiry.""",
 		{
 			"event_date": _p("string"),
@@ -967,7 +967,7 @@ TOOLS: tuple[ToolSpec, ...] = (
 		"banquet_catalogue",
 		"banquet.banquet_catalogue",
 		"""What the property sells at a function: menu packages priced per plate
-		(with their courses), and the service list — LED wall, projector, DJ,
+		(with their courses), and the service list - LED wall, projector, DJ,
 		podium, stage, decor, laptop, bar. Read this before quoting anything;
 		never invent a price.""",
 		{},
@@ -1018,7 +1018,7 @@ TOOLS: tuple[ToolSpec, ...] = (
 		"banquet.add_menu",
 		"""Put a menu package on a function. Left alone the quantity follows the
 		pax rule (guaranteed, or actual if more turned up) and the price is the
-		package's own plate price. chargeable=0 gives it away — it still prints
+		package's own plate price. chargeable=0 gives it away - it still prints
 		on the event order, it just leaves the quote.""",
 		{
 			"function": _p("string"),
@@ -1034,7 +1034,7 @@ TOOLS: tuple[ToolSpec, ...] = (
 	_t(
 		"banquet_add_service",
 		"banquet.add_service",
-		"""Put a service on a function — projector, LED wall, DJ, podium, stage,
+		"""Put a service on a function - projector, LED wall, DJ, podium, stage,
 		decor, laptop, bar. The catalogue decides chargeable by default; pass
 		chargeable=0 to throw it in for this function.""",
 		{
@@ -1129,7 +1129,7 @@ TOOLS: tuple[ToolSpec, ...] = (
 	_t(
 		"banquet_quote",
 		"banquet.generate_quote",
-		"""Stamp a quotation — bumps the version, dates it, and returns the whole
+		"""Stamp a quotation - bumps the version, dates it, and returns the whole
 		document so it can be read back or emailed.""",
 		{"function": _p("string"), "valid_days": _p("integer")},
 		required=("function",),
@@ -1139,7 +1139,7 @@ TOOLS: tuple[ToolSpec, ...] = (
 	_t(
 		"banquet_event_order",
 		"banquet.generate_beo",
-		"""Issue the banquet event order — the running sheet the banquet, kitchen
+		"""Issue the banquet event order - the running sheet the banquet, kitchen
 		and AV teams work the day from, with the menus expanded into courses.
 		Only a confirmed function gets one.""",
 		{"function": _p("string")},
@@ -1184,7 +1184,7 @@ TOOLS: tuple[ToolSpec, ...] = (
 	_t(
 		"banquet_month",
 		"banquet.month_availability",
-		"""Every hall and every session across a whole month — the grid that
+		"""Every hall and every session across a whole month - the grid that
 		answers "do you have the 14th of December?" in one look. Halls are sold
 		by session (Morning / Afternoon / Evening), not by the hour, so a hall
 		can take a morning conference and an evening wedding on the same day.
@@ -1197,8 +1197,8 @@ TOOLS: tuple[ToolSpec, ...] = (
 		"banquet_close_out",
 		"banquet.close_out",
 		"""Hand the hall back after the function. Records the covers actually
-		served, deducts any damage from the refundable deposit — a reason is
-		required, and you can't deduct more than is held — and returns the rest
+		served, deducts any damage from the refundable deposit - a reason is
+		required, and you can't deduct more than is held - and returns the rest
 		as a real refund line. Closes the function.""",
 		{
 			"function": _p("string"),
@@ -1231,7 +1231,7 @@ TOOLS: tuple[ToolSpec, ...] = (
 		"banquet_menu_card",
 		"banquet.menu_card",
 		"""What will actually be served, course by course, with no prices on it
-		— the sheet the customer signs off and the kitchen cooks from.""",
+		 -  the sheet the customer signs off and the kitchen cooks from.""",
 		{"function": _p("string")},
 		required=("function",),
 		group="Banquets",
@@ -1487,7 +1487,7 @@ TOOL_COUNT = len(TOOLS)
 INSTRUCTIONS = (
 	"You are operating a hotel through Kamra PMS. Money and "
 	"availability are computed by the PMS, never estimate them "
-	"yourself — always quote before booking. Confirm irreversible "
+	"yourself - always quote before booking. Confirm irreversible "
 	"actions (checkout, cancelling a stay, closing a folio) with the "
 	"user first."
 )

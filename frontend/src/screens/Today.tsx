@@ -551,7 +551,7 @@ export default function Today() {
               ? t("{n} overdue · Housekeeping", { n: overdueN })
               : t("Housekeeping")
           }
-          to="/housekeeping"
+          to={"/housekeeping"}
         />
       </div>
 

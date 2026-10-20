@@ -33,7 +33,7 @@ changing a page. (This file is not published; VitePress skips it via
    ([Country setup](/country-setup)).
 7. **Short.** If a section needs more than one screen of text, it's two
    tasks.
-8. **No em dashes.** Do not use Unicode em dashes (—) or en dashes (–).
+8. **No em dashes.** Do not use Unicode em dashes (U+2014) or en dashes (U+2013).
    Use a spaced hyphen (` - `), a colon, or a new sentence. CI rejects
    them on docs publish.
 9. **Versioning.** `versions.json` lists every published docs version.

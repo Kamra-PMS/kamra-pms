@@ -13,6 +13,20 @@ Keep this in sync by re-running it whenever endpoints change; CI-friendly
 (deterministic output).
 """
 
+from __future__ import annotations
+
+
+def _ascii_dashes(text: str) -> str:
+	"""Docs CI rejects Unicode em/en dashes in published markdown."""
+	return (
+		text.replace("\u2014", " - ")
+		.replace("\u2013", "-")
+		.replace(" — ", " - ")
+		.replace("—", " - ")
+		.replace(" – ", " - ")
+		.replace("–", "-")
+	)
+
 import ast
 import json
 import os
@@ -182,7 +196,7 @@ outline: 2
 
 # REST API reference
 
-Every endpoint below is a whitelisted function — the same governed layer
+Every endpoint below is a whitelisted function - the same governed layer
 the UI and the AI use. **{total} endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
@@ -223,7 +237,7 @@ Content-Type: application/json
                                f"{'' if d in (None,) else f'`{d}`'} |")
                 out.append("")
     with open(os.path.join(HERE, "api-reference.md"), "w") as md:  # nosemgrep: frappe-security-file-traversal -- path is derived from the app source tree, not from user input
-        md.write("\n".join(out))
+        md.write(_ascii_dashes("\n".join(out)))
     return total
 
 

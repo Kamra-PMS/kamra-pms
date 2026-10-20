@@ -4,7 +4,7 @@ outline: 2
 
 # REST API reference
 
-Every endpoint below is a whitelisted function — the same governed layer
+Every endpoint below is a whitelisted function - the same governed layer
 the UI and the AI use. **361 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
@@ -1755,7 +1755,7 @@ signed-in user have one set yet? Includes unlock / lockout state.
 **POST** · roles: `Finance`, `Front Desk`, `Revenue Manager`, `Housekeeping`
 
 Set or change your own cashier PIN (4-8 digits). Changing an existing
-PIN needs the current one — unless must_reset was set by an admin.
+PIN needs the current one  -  unless must_reset was set by an admin.
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -4467,7 +4467,7 @@ actor_kind filters to "human" or "agent".
 
 **GET/POST** · roles: `Front Desk`, `Finance`, `Revenue Manager`, `Kamra Agent`
 
-Everything one ledger row knows — including the before/after
+Everything one ledger row knows  -  including the before/after
 snapshots that are too heavy for the feed.
 
 | Param | Required | Default |
@@ -4773,7 +4773,7 @@ company's. Tax is the hotel's rule for the charge type, not the POS's.
 
 **GET/POST**
 
-Entry point for /book — how many properties, sites, or listings to show.
+Entry point for /book  -  how many properties, sites, or listings to show.
 
 Several properties live: mode "properties" lists them, and the guest
 picks one - /book?property=&lt;slug> (or /stay/&lt;slug>) calls back with
@@ -4910,7 +4910,7 @@ pre-register, so the submit gate never mentions this.
 **GET/POST**
 
 Laundry price list + stay context for the in-stay guest page.
-Read-only — the guest sees what things cost, never a folio.
+Read-only  -  the guest sees what things cost, never a folio.
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -4921,7 +4921,7 @@ Read-only — the guest sees what things cost, never a folio.
 **POST**
 
 In-house guest asks housekeeping to pick their laundry up. Written on
-the guest's behalf by the governed agent — the guest never touches pricing
+the guest's behalf by the governed agent  -  the guest never touches pricing
 or the folio; staff count and price the bag at the door (status
 'Requested', exactly where a staff-logged pickup lands).
 
@@ -5018,7 +5018,7 @@ the guest can never post directly to a folio.
 Hosting / implementation enquiry from kamrapms.com. Stored first (a lead is
 never lost even without SMTP), then a best-effort email to the team.
 
-Leads are System Manager–only and purged after
+Leads are System Manager-only and purged after
 ``hosting_enquiry_retention_months`` (default 24) unless status is Won.
 
 | Param | Required | Default |
