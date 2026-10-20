@@ -7698,7 +7698,7 @@ def t316():
 		assert rate in [float(x) for x in pack.tax_rate_options(None)], (country, rate)
 	assert services_tax_rate(pack_for_country("Saudi Arabia"), None) == 15.0
 	assert services_tax_rate(pack_for_country("Malaysia"), None) == 8.0
-	import kamra.laundry as laundry
+	from kamra import laundry
 	assert not hasattr(laundry, "LAUNDRY_GST"), "laundry still hardcodes a GST rate"
 	# activity-log money follows the property's currency, not a fixed rupee
 	cur = frappe.db.get_value("Property", P, "currency")
