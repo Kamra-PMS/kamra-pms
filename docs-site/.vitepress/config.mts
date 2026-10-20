@@ -51,6 +51,20 @@ export default defineConfig({
     },
     siteTitle: false,
     nav: [
+      {
+        text: "API",
+        items: [
+          { text: "Developer shortcuts", link: "/developers" },
+          { text: "REST API basics", link: "/api" },
+          { text: "REST API reference", link: "/api-reference" },
+          { text: "MCP tool reference", link: "/mcp-tools" },
+          {
+            text: "Postman collection ↓",
+            link: "/kamra.postman_collection.json",
+            target: "_blank",
+          },
+        ],
+      },
       { text: "Website", link: "https://kamrapms.com" },
       { text: "Live demo", link: "https://demo.kamrapms.com" },
       { text: "GitHub", link: "https://github.com/Kamra-PMS/kamra-pms" },
@@ -127,12 +141,22 @@ export default defineConfig({
         ],
       },
       {
+        text: "API & developers",
+        items: [
+          { text: "Shortcuts hub", link: "/developers" },
+          { text: "REST API basics", link: "/api" },
+          { text: "REST API reference", link: "/api-reference" },
+          { text: "MCP tool reference", link: "/mcp-tools" },
+          {
+            text: "Postman collection ↓",
+            link: "/kamra.postman_collection.json",
+          },
+        ],
+      },
+      {
         text: "Reference",
         collapsed: true,
         items: [
-          { text: "MCP tool reference", link: "/mcp-tools" },
-          { text: "REST API basics", link: "/api" },
-          { text: "REST API reference", link: "/api-reference" },
           { text: "FAQ", link: "/faq" },
           { text: "Contributors", link: "/contributors" },
         ],

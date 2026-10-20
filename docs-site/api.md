@@ -5,10 +5,11 @@ the UI and the AI use.
 
 ::: tip Try it in 2 minutes
 Download the **[Postman collection](/kamra.postman_collection.json)**
-(all 120 endpoints, organised by domain), set three collection variables  - 
-`base_url` (your Kamra URL), `api_key`, `api_secret` - and every request
-is ready to send. The complete endpoint list with parameters is in the
-**[REST API reference](/api-reference)**.
+(generated with every docs build, organised by domain), set three
+collection variables - `base_url` (your Kamra URL), `api_key`,
+`api_secret` - and every request is ready to send. Full method list:
+**[REST API reference](/api-reference)**. All developer shortcuts:
+**[API & developers](/developers)**.
 :::
 
 ```

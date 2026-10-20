@@ -13,16 +13,22 @@ hero:
       text: Run your hotel
       link: /user-guide
     - theme: alt
+      text: API & Postman
+      link: /developers
+    - theme: alt
       text: Install Kamra
       link: /quickstart
     - theme: alt
-      text: Try the live demo
+      text: Live demo
       link: /demo
 
 features:
   - title: How Kamra works
     details: Architecture, stay lifecycle, money rules, MCP and the one write path - with diagrams.
     link: /how-it-works
+  - title: API, MCP & Postman
+    details: REST basics, full method reference, MCP tools, and a downloadable Postman collection.
+    link: /developers
   - title: Features & latest release
     details: Every module at a glance, plus what's new in v2.6.16 and recent stables.
     link: /features
@@ -32,9 +38,6 @@ features:
   - title: Billing, cashier & night audit
     details: Folios, payments, invoices, the cashier till, company accounts and the End of Day.
     link: /billing
-  - title: "F&B: POS & kitchen"
-    details: Restaurant POS, kitchen display, kitchen printers, QR ordering and kitchen stock.
-    link: /fnb
   - title: Install & connect
     details: Self-host on a small VPS or Frappe Cloud, set up your country's taxes, WhatsApp, OTAs and your AI.
     link: /self-hosting/
@@ -69,8 +72,12 @@ and no per-room fees.
   [Frappe Cloud](/self-hosting/frappe-cloud) is the managed marketplace
   path. The [Go-live checklist](/go-live) covers the first day with real
   guests.
-- **You're connecting software:** see [Connect your AI](/ai-and-mcp), the
-  [MCP tools](/mcp-tools) and the [REST API](/api).
+- **You're connecting software:** open [API & developer shortcuts](/developers)
+  for REST, MCP and the [Postman collection](/kamra.postman_collection.json),
+  or jump straight to the [API reference](/api-reference).
 
-Release history: [What's new](/releases) · full
-[changelog on GitHub](https://github.com/Kamra-PMS/kamra-pms/blob/main/CHANGELOG.md).
+**Quick links:** [API basics](/api) · [API reference](/api-reference) ·
+[MCP tools](/mcp-tools) ·
+[Postman ↓](/kamra.postman_collection.json) ·
+[What's new](/releases) ·
+[changelog](https://github.com/Kamra-PMS/kamra-pms/blob/main/CHANGELOG.md)
