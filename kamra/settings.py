@@ -265,7 +265,8 @@ MODULES: tuple[Module, ...] = (
 	Module(
 		"fnb", "F&B", "Restaurant outlets, the menu and table reservations.",
 		editors=("Hotel Admin", "Finance"), toggle=True,
-		related=(("Outlets", "/outlets"), ("Menu", "/menu-items"), ("Kitchen inventory", "/inventory"),
+		related=(("Outlets", "/outlets"), ("Menu", "/menu-items"), ("Ingredients", "/ingredients"),
+		         ("Kitchen inventory", "/inventory"),
 		         ("Kitchen display", "/kitchen"), ("Printers", "/printers")),
 		sections=(
 			Section("kot", "Kitchen orders (KOT)", "What happens when a captain sends an order to the kitchen.", (
