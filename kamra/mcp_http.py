@@ -1,12 +1,15 @@
 """Remote MCP over Streamable HTTP, served in-process on the Frappe site.
 
 Claude (and any MCP client) POSTs JSON-RPC to /mcp with a Bearer token
-from mcp_oauth. Unauthenticated calls return 401 plus protected-resource
-metadata so the client can start OAuth.
+from mcp_oauth. Unattended agents that cannot do the browser sign-in send a
+Frappe API key instead (`Authorization: token <api_key>:<api_secret>`).
+Unauthenticated calls return 401 plus protected-resource metadata so the
+client can start OAuth.
 """
 
 from __future__ import annotations
 
+import hmac
 import json
 
 import frappe
@@ -37,7 +40,8 @@ CORS_HEADERS = {
 	"Access-Control-Allow-Origin": "*",
 	"Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
 	"Access-Control-Allow-Headers": (
-		"Authorization, Content-Type, Accept, MCP-Protocol-Version, Mcp-Session-Id"
+		"Authorization, Content-Type, Accept, MCP-Protocol-Version, Mcp-Session-Id, "
+		"X-Kamra-Property"
 	),
 	"Access-Control-Expose-Headers": "Mcp-Session-Id, WWW-Authenticate",
 }
@@ -125,7 +129,9 @@ def _authorize(method: str, request) -> Response:
 
 
 def _mcp_endpoint(method: str, request) -> Response:
-	grant = _bearer(request)
+	grant, refused = _identity(request)
+	if refused is not None:
+		return refused
 	if method == "DELETE":
 		if not grant:
 			return _unauthorized()
@@ -140,7 +146,7 @@ def _mcp_endpoint(method: str, request) -> Response:
 	if not grant:
 		return _unauthorized()
 
-	frappe.set_user(grant.user)  # nosemgrep: frappe-setuser -- OAuth bearer already validated; impersonate the grant owner for role-filtered MCP tools
+	frappe.set_user(grant.user)  # nosemgrep: frappe-setuser -- OAuth bearer or API key already validated; impersonate its owner for role-filtered MCP tools
 	body = _read_json(request)
 	if body is None:
 		return _rpc_error(None, -32700, "Parse error", 400)
@@ -154,6 +160,16 @@ def _mcp_endpoint(method: str, request) -> Response:
 	return _json(reply)
 
 
+def _identity(request):
+	"""(grant, refusal) for this request. The grant carries who is acting and
+	for which property: an OAuth bearer, or else a Frappe API key. A refusal
+	is a ready response for a valid key that cannot be pinned to a property."""
+	grant = _bearer(request)
+	if grant:
+		return grant, None
+	return _api_key(request)
+
+
 def _bearer(request):
 	header = request.headers.get("Authorization") or ""
 	if not header.lower().startswith("bearer "):
@@ -161,11 +177,63 @@ def _bearer(request):
 	return lookup_access_token(header.split(" ", 1)[1].strip())
 
 
+def _api_key(request):
+	"""A Frappe API key for agents that run unattended - a voice agent on a
+	live call has nobody to click Allow, and OAuth access tokens last an
+	hour. The agent acts as the key's user, with that user's roles, for one
+	property: the one their User Permissions limit them to, or the one named
+	in X-Kamra-Property. It is the same reach the key already has on
+	Frappe's REST API, so it opens nothing new; regenerating the key under
+	Developers revokes it."""
+	header = request.headers.get("Authorization") or ""
+	if not header.lower().startswith("token "):
+		return None, None
+	key, _, secret = header.split(" ", 1)[1].strip().partition(":")
+	user = _key_user(key, secret)
+	if not user:
+		return None, None
+
+	from kamra.authz import restricted_properties
+	allowed = restricted_properties(user)
+	wanted = (request.headers.get("X-Kamra-Property") or "").strip()
+	if wanted:
+		if (allowed is not None and wanted not in allowed) or \
+				not frappe.db.exists("Property", wanted):
+			return None, _forbidden(f"This key cannot act for {wanted}.")
+		prop = wanted
+	elif allowed and len(allowed) == 1:
+		prop = next(iter(allowed))
+	else:
+		return None, _forbidden(
+			"Name the property in the X-Kamra-Property header: this key's "
+			"user is not limited to a single property.")
+	return frappe._dict(user=user, property=prop, via="api_key"), None
+
+
+def _key_user(key: str, secret: str) -> str | None:
+	"""The enabled user this key and secret belong to, or None."""
+	if not key or not secret:
+		return None
+	user = frappe.db.get_value("User", {"api_key": key, "enabled": 1}, "name")
+	if not user:
+		return None
+	from frappe.utils.password import get_decrypted_password
+	stored = get_decrypted_password("User", user, "api_secret",
+	                                raise_exception=False)
+	return user if stored and hmac.compare_digest(stored, secret) else None
+
+
+def _forbidden(message: str) -> Response:
+	return _json({"error": "forbidden", "error_description": message}, 403)
+
+
 def _unauthorized() -> Response:
 	resp = _json(
 		{
 			"error": "invalid_token",
-			"error_description": "Sign in with OAuth to use Kamra MCP.",
+			"error_description": (
+				"Sign in with OAuth, or send a Kamra API key "
+				"(Authorization: token <api_key>:<api_secret>), to use Kamra MCP."),
 		},
 		401,
 	)
