@@ -6,7 +6,7 @@ import {
   Loader2,
   Sparkles,
 } from "lucide-react"
-import { call, getCurrentProperty } from "../lib/api"
+import { call } from "../lib/api"
 import { checkOutWithCredit } from "./CreditCheckout"
 import { useCashierAuth } from "../lib/cashierAuth"
 import { serverError } from "../lib/resource"
@@ -236,29 +236,7 @@ export default function CheckOutDialog(props: {
             : "",
       )
       if (c.deposit?.balance) setWithholdAmt(String(c.deposit.balance))
-      // Deterministic SOP tip is enough. Only ask the LLM to polish when
-      // the property already has AI configured — never required to proceed.
       setAiTip(null)
-      const tip = c.sop.next_tip
-      if (tip && c.ai_tips_available) {
-        call<{ tip: string; ai: boolean }>("kamra.assistant.rephrase_sop_tip", {
-          property: getCurrentProperty(),
-          tip,
-          step_title: c.sop.steps.find((s) => s.state !== "done")?.title,
-          context_summary: {
-            guest: c.reservation.guest_name,
-            owed: c.totals.owed,
-            refund_due: c.totals.refund_due,
-            can_city_ledger: c.actions.can_city_ledger,
-          },
-        })
-          .then((r) => {
-            if (r?.ai && r.tip && r.tip !== tip) setAiTip(r.tip)
-          })
-          .catch(() => {
-            /* ignore — desk keeps the server tip */
-          })
-      }
     } catch (e) {
       setError(serverError(e))
     }
