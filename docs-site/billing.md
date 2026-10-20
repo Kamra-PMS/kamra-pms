@@ -1,4 +1,4 @@
-# Billing: folios, payments and the cashier
+# Billing - folios, payments and the cashier
 
 Every stay has a folio: the running bill where room nights, restaurant
 bills and extras land, and where payments are recorded against them. This
@@ -145,35 +145,12 @@ folio as it is posted:
 
 At checkout, the guest settles their own folio. Whatever the company
 owes moves to its **city ledger** account by itself, if the company is
-allowed credit and passes the [credit check](#company-credit-terms-and-credit-control).
-
-## Company credit: terms and credit control
-
-Each company on credit has, per property, a **credit limit** (0 = no
-limit) and **payment terms**. Set both on the company: **Corporate
-accounts → the company → Credit terms at this property** (Finance or Hotel
-Admin). **Use property default** (on for every company to start with)
-follows the property's default payment terms; untick it to give the
-company its own **credit days**. 0 means due on the invoice date (a
-company that pays on receipt). A bill moved to the city ledger is **due**
-on its invoice date + the credit days.
-
-The check runs at **check-out** (before the company's bill moves to the
-city ledger) and when a stay is **booked on company billing**. It looks at
-the credit limit (what the company owes on the city ledger + its in-house
-stays + the new bill) and at bills overdue past the grace period. Under
-**Warn** the desk sees why and can go ahead. Under **Block** it is
-refused unless **Finance or a Hotel Admin** overrides it with a reason;
-the override is logged in the Activity log with who, why and the amount.
-Front Desk can't override, and an AI agent never can: it gets the reason
-and hands it to staff.
+allowed credit.
 
 **Record a company's payment** (Finance and Hotel Admin):
 
-1. Open **Finance → Ledgers**. **City ledger aging** ages each company's
-   bills by due date: **Not due**, then **1 to 30**, **31 to 60**, **61 to 90** and **90+ days
-   overdue**, with the overdue total and any unapplied credit. A 45-day
-   company's bill is "Not due" on day 35.
+1. Open **Finance → Ledgers**. **City ledger aging** lists each company's
+   balance by age (0-30, 31-60, 61-90, 90+ days) and any unapplied credit.
 2. Press **Record payment** on the company's row.
 3. Enter **Amount received**, the **Mode** and the **Reference (UTR /
    cheque no.)**. By default the payment clears the oldest bills first;
@@ -354,9 +331,6 @@ it.
 | Lock a PIN after | Settings → Finance → Cashier controls | 5 wrong tries | Locks the PIN after this many wrong entries. |
 | Lock for / stay unlocked for | Settings → Finance → Cashier controls | 15 min | How long a locked PIN stays locked, and how long money actions stay unlocked after a correct PIN. |
 | When a credit company has no billing rules | Settings → Finance → Corporate billing | Room and F&B (liquor to guest) | Which charges a credit company pays when it has no rules of its own. |
-| Default payment terms | Settings → Finance → Company credit | 30 days | Credit days for every company set to **Use property default**. |
-| Credit control | Settings → Finance → Company credit | Warn | **Off**, **Warn** or **Block** when a company is over its limit or has overdue bills. |
-| Overdue grace period | Settings → Finance → Company credit | 0 days | A bill counts as overdue for credit control only this many days after its due date. |
 | Payment gateway | Settings → Payments | None | The gateway and keys used for payment links. |
 
 ## Good to know

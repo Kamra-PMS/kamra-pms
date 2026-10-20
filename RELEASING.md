@@ -28,7 +28,11 @@ fixes do **not** need a new `vX.Y.Z` the same day.
 4. **Frappe Cloud Marketplace** (manual, ~2 min): dashboard →
    Apps → kamra → create a release from the new `main` state and submit for
    approval.
-5. **Announce:** release thread on discuss.frappe.io; anything else
+5. **Docs freeze:** the Docs GitHub Action (on `release: published`) rebuilds
+   `kamrapms.com/docs/`, freezes a snapshot at `/docs/vX.Y.Z/`, and updates
+   `docs-site/versions.json` for the version switcher. Confirm the new URL
+   returns 200 after the workflow finishes.
+6. **Announce:** release thread on discuss.frappe.io; anything else
    (X/LinkedIn) as warranted.
 
 ### What bumps what
@@ -105,10 +109,12 @@ A month of small work should usually be one or two PATCHes, not a MINOR.
 - [x] Root `package.json` build script for Frappe Cloud
 - [x] README compatibility table (Kamra `main` releases ↔ Frappe v16)
 - [x] Publisher account on frappecloud.com; Marketplace App `kamra` exists
-      (public page is Draft / **Not Available** until a release is approved)
+      (public listing is live at frappecloud.com/marketplace/apps/kamra)
 - [x] Listing title, summary, logo, Support + Privacy + docs URLs
-- [ ] Human review of the latest App Release (Submission Gate is past
-      the blocking Fail; app stays In Review until Frappe publishes)
+- [x] Initial App Release published (Submission Gate past blocking Fail)
+- [ ] Each stable tag: publish a new FC App Release from `main`, and bump
+      `frappe/marketplace` `apps/kamra.json` (see `docs/marketplace-listing.md`)
+- [ ] FC listing category still **E-Commerce** — switch to Hospitality/Other
 - [x] Offline marketplace install check:
       `python kamra/scripts/marketplace_install_check.py`
 

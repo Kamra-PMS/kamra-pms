@@ -1,7 +1,7 @@
 # Channel manager (OTA sync)
 
-Kamra syncs availability and rates to the OTAs, and receives their
-bookings, through a channel manager. The integration is a provider
+Kamra syncs availability and rates to the OTAs - and receives their
+bookings - through a channel manager. The integration is a provider
 seam: adapters ship for **Channex.io** (usable today, self-serve),
 **STAAH** and **AioSell** (ready; they activate with the credentials
 those companies issue to connectivity partners).
@@ -9,7 +9,7 @@ those companies issue to connectivity partners).
 ## Recommended: Channex.io, bring your own account
 
 [Channex.io](https://channex.io) is API-first channel-manager
-infrastructure: self-serve signup, per-property pricing paid directly
+infrastructure - self-serve signup, per-property pricing paid directly
 to them, certified with Booking.com, Agoda, Expedia, Airbnb and more.
 
 1. Create a Channex account, add your property and rooms, connect your
@@ -20,7 +20,7 @@ to them, certified with Booking.com, Agoda, Expedia, Airbnb and more.
 
    ![The New Channel Manager form with provider Channex, the API key, the Channex property ID, a webhook secret and 90 days to push](/img/channel-manager/new-connection.png)
 
-3. *Revenue → OTA Room Mappings*: one row per room type, with your room
+3. *Revenue → OTA Room Mappings*: one row per room type - your room
    type against the Channex `room_type_id` and `rate_plan_id`. The
    **Connection** and **Room type** lists only show the property you are
    working in. Kamra refuses a mapping whose room type belongs to another
@@ -36,11 +36,11 @@ to them, certified with Booking.com, Agoda, Expedia, Airbnb and more.
 
 That's the whole setup. From then on:
 
-- **Availability and rates push automatically**: every hour, and again
+- **Availability and rates push automatically** - every hour, and again
   right after any booking lands (from any source), so an OTA can't
   oversell a room the front desk just gave away. Rates come from the
   pricing engine with demand premiums and hurdle floors applied.
-- **OTA bookings arrive as reservations**: source OTA, the channel's
+- **OTA bookings arrive as reservations** - source OTA, the channel's
   name and booking reference kept, the guest matched by phone/email or
   created, the OTA's sell price preserved (never re-priced), and the
   same capacity and double-booking rules a front-desk booking obeys.

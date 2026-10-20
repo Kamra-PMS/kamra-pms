@@ -43,8 +43,8 @@ buttons are hidden and the API refuses the call.
 | Country | Online payment links | Tax return export | Statutory reporting |
 | --- | --- | --- | --- |
 | India | Razorpay, Cashfree | GSTR-1 (`gstr1_rows`) | Form C for foreign nationals (named in the privacy notice) |
-| Saudi Arabia | None | None | ZATCA e-invoicing (below); Shomoos guest registration (named in the privacy notice) |
-| Indonesia, Malaysia, Thailand, UAE, Other | None | None | None |
+| Saudi Arabia | - | - | ZATCA e-invoicing (below); Shomoos guest registration (named in the privacy notice) |
+| Indonesia, Malaysia, Thailand, UAE, Other | - | - | - |
 
 ### India: payment links
 
@@ -74,15 +74,15 @@ municipality charges.
 
 ## Saudi Arabia: ZATCA e-invoicing
 
-### What Kamra does (Phase 1: generation)
+### What Kamra does (Phase 1 - generation)
 
 For every **invoice** (a settled folio), **credit note** (a cancelled
-invoice, since ZATCA does not allow deleting one) and **paid restaurant bill**,
+invoice - ZATCA does not allow deleting one) and **paid restaurant bill**,
 Kamra creates a *ZATCA Invoice* record with:
 
 - a UUID and the property's invoice counter (**ICV**), and the previous
   invoice's hash (**PIH**), so every document is chained to the one before;
-- the **UBL 2.1 XML**: *simplified* for guests, *standard* (B2B) when the
+- the **UBL 2.1 XML** - *simplified* for guests, *standard* (B2B) when the
   bill goes to a company with a VAT number;
 - the **ZATCA invoice hash**;
 - the **QR code** (seller name, VAT number, time, total, VAT), printed on
@@ -100,14 +100,14 @@ API (`zatca_invoice_xml`).
    creates it from the property on first use. Fill in the details exactly
    as registered: seller name, Commercial Registration (CRN), building
    number (4 digits), street, district, city, postal code (5 digits).
-3. The banner at the top turns green (*ZATCA Phase 1 ready*) when
+3. The banner at the top turns green - *ZATCA Phase 1 ready* - when
    nothing is missing. It also shows how many documents have been issued
    and the last ICV.
 
 Closing a bill never waits on ZATCA: if a record cannot be generated the
 error is logged and the desk carries on.
 
-### Phase 2 (integration): what is still to come
+### Phase 2 (integration) - what is still to come
 
 The XML, hash chain and settings (environment, EGS serial, CSID, private
 key) are in place. Still to build before a property in a Phase 2 wave can

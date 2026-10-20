@@ -3,6 +3,9 @@
 What Kamra does, module by module, with a link to the full guide for each.
 Everything here is in the open-source app; there are no editions.
 
+**Latest stable:** [v2.6.16](/releases). System map and architecture:
+[How Kamra works](/how-it-works).
+
 ## Front desk
 
 The **Today** screen shows arrivals, departures, in-house guests and every
@@ -90,7 +93,8 @@ A restaurant POS with a table map, several bills per table, room service,
 takeaway and delivery; a kitchen display by station; kitchen printers that
 route each dish to the printer that cooks it; QR ordering for guests;
 room charges that post to the folio; and kitchen stock that moves when the
-order is sent.
+order is sent. Optional **auto-KOT**: send the order and the kitchen ticket
+prints without a separate accept step.
 
 ![The restaurant POS](/img/fnb/pos-bill.png)
 
@@ -160,6 +164,28 @@ skipped before it writes anything. Past stays come in as guest history, so
 returning guests are recognised from the first day. See the
 [Go-live checklist](/go-live).
 
+## WhatsApp
+
+Connect **your own** Meta Cloud API number. Booking confirmations,
+check-in links, payment requests and a conversations inbox run from
+Kamra. Templates and privacy scrubbing follow property settings.
+
+[WhatsApp guide →](/whatsapp)
+
+## Channel manager (OTAs)
+
+Push availability and rates, receive bookings and modifications through
+the channel manager connector. Secrets are required; unsigned webhooks
+are refused.
+
+[Channel manager guide →](/channel-manager)
+
+## Privacy (DPDP and retention)
+
+Guest erasure and access export, retention schedules for ID files and
+chat text, and a guest privacy notice in several Indian languages.
+Contact details are not sent to the AI provider.
+
 ## AI, done safely
 
 Kamra is built so an AI can work in it without being trusted blindly:
@@ -172,10 +198,21 @@ Kamra is built so an AI can work in it without being trusted blindly:
 - Every action is in the **Activity Log**: who, what, why, and the record
   before and after.
 
-See [Connect your AI](/ai-and-mcp) and the [MCP tools](/mcp-tools).
+See [Connect your AI](/ai-and-mcp), the [MCP tools](/mcp-tools) and
+[How Kamra works](/how-it-works).
 
 ## Admin
 
 **Admin → System Health** checks your version against the latest release,
 runs site diagnostics and points to the upgrade steps for your kind of
 install. It never upgrades on its own.
+
+## Install paths
+
+| Path | Guide |
+| --- | --- |
+| Docker on your VPS | [Quickstart](/quickstart) |
+| Provider guides | [Self-hosting](/self-hosting/) |
+| Frappe Cloud Marketplace | [Frappe Cloud](/self-hosting/frappe-cloud) |
+| Classic bench | [Install with bench](/self-hosting/bench) |
+| Same site as ERPNext / HR | [ERPNext & Frappe HR](/self-hosting/erpnext-hr) |

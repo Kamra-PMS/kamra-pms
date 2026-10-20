@@ -1,4 +1,4 @@
-# Revenue: rates, seasons and offers
+# Revenue - rates, seasons and offers
 
 The Revenue app holds everything that decides what a room costs: room type
 prices, rate plans, seasons, meal plans, vouchers, experiences, the
@@ -10,8 +10,8 @@ agents who sell your rooms. Revenue Managers and Hotel Admins see it.
 
 ## How Kamra works out a price
 
-Every quote, whether on the desk booking form, on the [booking page](/booking-engine),
-from the AI assistant or over the API, comes from the same code. No AI
+Every quote - on the desk booking form, on the [booking page](/booking-engine),
+from the AI assistant or over the API - comes from the same code. No AI
 model ever calculates money. For each night of a stay:
 
 1. **Room type price.** The base price covers the adults included in it;
@@ -68,10 +68,10 @@ A season moves the nightly price between two dates.
 3. Pick a **Room type (blank = all)**, or leave it blank for the whole
    house.
 4. Pick an **Adjustment**:
-   - **Percent**: `20` adds 20%, `-10` takes 10% off.
-   - **Amount**: adds (or, if negative, takes off) a fixed amount per
+   - **Percent** - `20` adds 20%, `-10` takes 10% off.
+   - **Amount** - adds (or, if negative, takes off) a fixed amount per
      night.
-   - **Absolute**: sets the nightly price to this value.
+   - **Absolute** - sets the nightly price to this value.
 5. Optional: **Days of week (e.g. fri, sat)** to apply it only on those
    days. `weekend` means Saturday and Sunday; `weekday` means Monday to
    Friday.
@@ -129,7 +129,7 @@ The booking page lists every meal plan, plus **Room only**.
 1. Open **Revenue → Vouchers → New**.
 2. Enter a **Code**. Guests type it in any case; Kamra stores it in
    capitals.
-3. Pick a **Type** (**Percent** or **Amount**) and a **Value**.
+3. Pick a **Type** - **Percent** or **Amount** - and a **Value**.
 4. Optional: **Valid from**, **Valid to**, **Minimum nights** and
    **Max uses (0 = unlimited)**.
 5. Click **Save**.
@@ -217,7 +217,7 @@ unassigned bookings may sell. `0` never oversells.
 4. Tick **Credit allowed (city ledger)** if the company settles on
    account.
 5. Click **Save**, then open the company again to set its **Billing
-   rules**: which charge types go on the company folio. See
+   rules** - which charge types go on the company folio. See
    [Billing](/billing).
 
 ![A company record with contact, negotiated rate plan, credit allowed and billing rules](/img/revenue/company-form.png)
@@ -271,5 +271,5 @@ guardrail on **Revenue → Guardrails**.
 
 Quotes come from `kamra/pricing.py` (`quote`). Rate changes go through
 `kamra.api.set_room_rate`, which checks guardrails and hurdles. AI agents
-use the `quote`, `booking_options` and `set_room_rate` tools. See
+use the `quote`, `booking_options` and `set_room_rate` tools - see
 [MCP tools](/mcp-tools) and the [API reference](/api-reference).

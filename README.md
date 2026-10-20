@@ -123,7 +123,7 @@ We never charge for rooms, users, features, data export or API access. An **ente
 
 ## What makes it different
 
-- **Agent-ready, not agent-locked.** [MCP server](https://kamrapms.com/docs/ai-and-mcp) with **86** governed tools: role-scoped, module-gated, permission-checked, fully logged. Connect Claude; no bundled agent to trust.
+- **Agent-ready, not agent-locked.** [MCP server](https://kamrapms.com/docs/ai-and-mcp) with **101** governed tools: role-scoped, module-gated, permission-checked, fully logged. Connect Claude; no bundled agent to trust.
 - **Bring your own key.** No AI markup or model lock-in. Optional [HeyKoala](https://heykoala.ai) for voice / WhatsApp concierge.
 - **Deterministic money.** Rates, tax slabs, availability, and no-overbooking guards come from code, never from a language model.
 - **Full audit trail.** Every human or AI action: who, what, why.

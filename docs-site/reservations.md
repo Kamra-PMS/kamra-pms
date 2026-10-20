@@ -1,4 +1,4 @@
-# Reservations: bookings, tape chart and cancellations
+# Reservations - bookings, tape chart and cancellations
 
 This page covers taking a booking, finding and changing it, taking a
 deposit, and cancelling it. Front Desk and Hotel Admin users can book;
@@ -304,7 +304,7 @@ lock on the tape chart. Set **Status** to Released to put it back on sale.
 | No-show charge | Settings → Stay policies | First Night | Posted by the night audit when a guest doesn't come. |
 | Deposit expected at booking | Settings → Stay policies | 0% | Quoted in the booking window and shown in the Deposit box. |
 | Hold unconfirmed bookings for | Settings → Front Desk → Holds & selling | 120 min | How long a Held or Pending Payment booking keeps its room before it is released. |
-| Sell message | Settings → Front Desk → Holds & selling | Blank | Shown at the top of the booking window as a reminder of what to offer. |
+| Sell message | Settings → Front Desk → Holds & selling | - | Shown at the top of the booking window as a reminder of what to offer. |
 | Release non-guaranteed arrivals at | Settings → Front Desk → Night audit & no-shows | Blank (never) | At this time, today's arrivals with no payment or deposit (not OTA or company bookings, not flagged late) are cancelled with no fee. |
 
 ## Good to know

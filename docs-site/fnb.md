@@ -1,4 +1,4 @@
-# F&B: restaurant POS and kitchen
+# F&B - restaurant POS and kitchen
 
 The F&B module runs your restaurants, bars and room service: captains take
 orders on the **Restaurant POS**, the kitchen works from the **Kitchen
@@ -95,7 +95,7 @@ Hall, Patio…) or search a table.
    your country uses.
 
 - **Room charges** need a guest who is checked in to that room. A room
-  with nobody in house is refused. Take it as a walk-in bill instead.
+  with nobody in house is refused - take it as a walk-in bill instead.
   The bill posts to the guest's folio when it's delivered; alcohol always
   goes to the guest's own folio, never to a company paying for the room.
 - **Split** moves chosen items onto a new bill, with their kitchen status
@@ -178,7 +178,7 @@ bar's drinks can print at the bar, and the tandoor can have its own.
 
 1. **Settings → F&B → Kitchen printers → Add printer.**
 2. Name it ("Main kitchen") and choose the **Connection** (see below),
-   **Paper width** (80 mm or 58 mm) and **Copies** (1 to 3).
+   **Paper width** (80 mm or 58 mm) and **Copies** (1-3).
 3. Optionally pick a **Fallback printer**: where its tickets go if it
    fails.
 4. Under **Prints KOTs for**, tick what it prints: **All stations** for an
@@ -197,7 +197,7 @@ before.
 
 ### Connect the printer: print station
 
-Works with any printer (USB, network over LAN/Wi-Fi, or Bluetooth) and with
+Works with any printer - USB, network (LAN/Wi-Fi) or Bluetooth - and with
 Kamra in the cloud.
 
 1. Put a device next to the printer (a tablet, mini-PC or old laptop) and
@@ -217,7 +217,7 @@ green dot means it's printing; **Settings → F&B → Kitchen printers** shows
 One device prints for one printer. Three printers need three devices, or
 three Chrome profiles on one computer, each with its own default printer.
 Because the kitchen screen connects out to Kamra, the printer can be
-anywhere with internet. A central kitchen in another building works the
+anywhere with internet - a central kitchen in another building works the
 same as one next door.
 
 ### Connect the printer: direct IP
@@ -277,7 +277,7 @@ for spoilage. Each ingredient shows its status (OK, low, out or negative)
 against its par level, and **Ledger** shows every movement. Recipes are
 set on the **Menu** screen (**Recipes**).
 
-- Ingredients leave stock when the KOT is sent (when cooking starts), not
+- Ingredients leave stock when the KOT is sent - when cooking starts - not
   when the bill is paid.
 - A line voided after it was sent counts as **wastage**, not a reversal:
   the food was made.

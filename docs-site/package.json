@@ -4,7 +4,9 @@
   "type": "module",
   "scripts": {
     "dev": "vitepress dev",
-    "build": "vitepress build",
+    "build": "node scripts/build.mjs",
+    "build:archive": "node scripts/build.mjs --archive",
+    "prepare-versions": "node scripts/prepare-versions.mjs",
     "preview": "vitepress preview"
   },
   "devDependencies": {

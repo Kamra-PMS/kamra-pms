@@ -3,66 +3,89 @@ layout: home
 
 hero:
   name: Kamra
-  text: The world's first open-source, agentic AI-ready PMS
-  tagline: Built for modern hospitality. Privacy first. AI ready. Free.
+  text: The hotel PMS agents can actually run
+  tagline: Open-source PMS with a governed MCP layer - Claude (or any agent) quotes, books and posts charges as a permission-checked user. Prices stay in code. Every action is audited.
   image:
     src: /kamra-mark.svg
     alt: Kamra
   actions:
     - theme: brand
-      text: Run your hotel
-      link: /user-guide
+      text: Connect Claude (MCP)
+      link: /ai-and-mcp
     - theme: alt
-      text: Install Kamra
-      link: /quickstart
+      text: MCP tool reference
+      link: /mcp-tools
     - theme: alt
-      text: Try the live demo
+      text: API · Postman
+      link: /developers
+    - theme: alt
+      text: Live demo
       link: /demo
 
 features:
-  - title: Front desk & reservations
-    details: Today's arrivals and departures, check-in with the registration card, the tape chart, groups and cancellations.
-    link: /front-desk
-  - title: Billing, cashier & night audit
-    details: Folios, payments, invoices, the cashier till, company accounts and the End of Day.
-    link: /billing
-  - title: "F&B: POS & kitchen"
-    details: Restaurant POS, kitchen display, kitchen printers, QR ordering and kitchen stock.
-    link: /fnb
-  - title: Housekeeping & guest requests
-    details: The room board, the phone app for floor staff, laundry, lost & found and request deadlines.
-    link: /housekeeping
-  - title: Banquets, revenue & direct bookings
-    details: Enquiry to event order, rate plans and guardrails, and the public booking page.
-    link: /banquets
-  - title: Install & connect
-    details: Self-host on a small VPS or Frappe Cloud, set up your country's taxes, WhatsApp, OTAs and your AI.
+  - title: MCP is the product edge
+    details: 100+ governed tools on /mcp. Same whitelist as the desk. Role-scoped, module-gated, fully logged. The model never invents a rate.
+    link: /ai-and-mcp
+  - title: Every MCP tool
+    details: Name, arguments and endpoint for the full tool registry - regenerated from code on every docs build.
+    link: /mcp-tools
+  - title: How Kamra works
+    details: One write path for UI, REST and agents. Architecture diagrams, stay lifecycle and money rules.
+    link: /how-it-works
+  - title: REST API & Postman
+    details: Call the same methods from your stack. Download the Postman collection and go.
+    link: /developers
+  - title: Features & latest release
+    details: Front desk through banquets, F&B, WhatsApp and country tax packs - plus what's new in v2.6.17.
+    link: /features
+  - title: Install
+    details: Docker on a VPS, classic bench, or the Frappe Cloud Marketplace. Same complete AGPL app.
     link: /self-hosting/
 ---
 
-## What is Kamra?
+## What makes Kamra different
 
-Kamra is a complete property-management system for hotels and short-term
-rentals, built on [Frappe](https://frappeframework.com) and released under
-AGPL-3.0. Every feature is in the open-source app: there are no editions
-and no per-room fees. Read [Why Kamra](/why-kamra) for what makes it
-different and the promises we keep.
+Most hotel software bolts a chatbot onto a closed SaaS. **Kamra is built
+so an agent and a receptionist share one governed write path.**
+
+1. **MCP first.** Connect Claude (or any MCP client) to `/mcp`. Tools are
+   filtered by the signed-in user's roles and the property's enabled
+   modules.
+2. **Deterministic money.** Quotes, taxes, availability and cancellation
+   fees come from `pricing.py` and the folio ledger - never from the
+   model. Guardrails refuse out-of-range rates.
+3. **Full audit.** Every mutating tool call lands in the Activity Log
+   with who / what / why.
+4. **Same APIs for everyone.** Desk UI, REST, MCP and the in-app Kamra
+   Agent call the same `@frappe.whitelist` functions. No second writer.
+
+Start here: **[Connect your AI (MCP)](/ai-and-mcp)** ·
+**[MCP tool reference](/mcp-tools)** ·
+**[How Kamra works](/how-it-works)** ·
+**[Developer shortcuts](/developers)**
+
+**Current stable:** [v2.6.17](/releases) ·
+[Live demo](https://demo.kamrapms.com) ·
+[Frappe Cloud Marketplace](https://frappecloud.com/marketplace/apps/kamra)
 
 ![Kamra's Today screen: arrivals, departures, the room board and in-house guests](/img/front-desk/today.png)
 
 ## Where to start
 
-- **You run or work at a property:** start with [Guides by role](/user-guide)
-  to find the pages for your job, or open the guide for a module from the
-  side bar.
-- **You're evaluating Kamra:** read [Features at a glance](/features), then
-  try the [live demo](/demo). It's a sample hotel with a sign-in button for
-  each role.
-- **You're installing it:** the [Quickstart](/quickstart) runs Kamra in
-  Docker on your laptop; [Self-hosting](/self-hosting/) covers servers, and
-  the [Go-live checklist](/go-live) covers the first day with real guests.
-- **You're connecting software:** see [Connect your AI](/ai-and-mcp), the
-  [MCP tools](/mcp-tools) and the [REST API](/api).
+- **You want the AI story:** [Connect your AI](/ai-and-mcp), then the
+  [MCP tool reference](/mcp-tools). Architecture and the one write path:
+  [How Kamra works](/how-it-works).
+- **You're integrating:** [API, MCP & Postman](/developers) - REST basics,
+  full [API reference](/api-reference),
+  [Postman collection ↓](/kamra.postman_collection.json).
+- **You run the hotel:** [Guides by role](/user-guide) and the module
+  guides in the side bar.
+- **You're installing:** [Quickstart](/quickstart),
+  [Self-hosting](/self-hosting/), or
+  [Frappe Cloud](/self-hosting/frappe-cloud).
 
-What changed in each release is in the
-[changelog](https://github.com/Kamra-PMS/kamra-pms/blob/develop/CHANGELOG.md).
+**Quick links:** [Connect MCP](/ai-and-mcp) · [MCP tools](/mcp-tools) ·
+[API basics](/api) · [API reference](/api-reference) ·
+[Postman ↓](/kamra.postman_collection.json) ·
+[What's new](/releases) ·
+[changelog](https://github.com/Kamra-PMS/kamra-pms/blob/main/CHANGELOG.md)

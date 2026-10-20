@@ -1,4 +1,4 @@
-# Booking engine: your direct booking page
+# Booking engine - your direct booking page
 
 The booking engine is your hotel's own booking page. Guests open
 `/book`, pick dates, see live prices and book without an account. Each
@@ -41,12 +41,12 @@ Click **Preview Page** to open `/book` in a new tab.
 
 **Booking Engine → Settings → Booking mode**:
 
-- **Instant**: the booking is made at once. With nothing to pay now it
+- **Instant** - the booking is made at once. With nothing to pay now it
   is **Confirmed**. If an advance is due, it is **Pending Payment** and
   the room is held for 2 hours (**Settings → Front Desk → Hold
   unconfirmed bookings for**). A hold that isn't paid in time is
   released.
-- **Request to Book**: the guest sends a request. It holds no room until
+- **Request to Book** - the guest sends a request. It holds no room until
   you accept it. Open the booking and click **Accept** (Kamra checks
   availability again and gives it a room) or **Decline** with a reason
   (cancelled, no fee). See [Reservations](/reservations).

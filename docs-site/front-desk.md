@@ -1,4 +1,4 @@
-# Front desk: arrivals, check-in and check-out
+# Front desk - arrivals, check-in and check-out
 
 The Front Desk app is where the desk runs the day: who is arriving, who is
 leaving, who is in which room, and the paperwork in between. Front Desk,
