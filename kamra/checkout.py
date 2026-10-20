@@ -336,6 +336,22 @@ def _checkout_context(reservation: str) -> dict:
 	notices: list[dict] = []
 	groups: dict[str, dict] = {}
 
+	# What is already on the folio today (before the remaining-nights
+	# preview). Front desk often sees ~4k on Folio View vs ~7k here — the
+	# gap is usually an unposted room night that check-out will add.
+	posted_charge_names: set[str] = set()
+	posted_charges = 0.0
+	for f0 in frappe.get_all(
+			"Folio", filters={"reservation": res.name},
+			fields=["name", "grand_total"]):
+		posted_charges += flt(f0.grand_total)
+		for n in frappe.get_all(
+				"Folio Charge", filters={"parent": f0.name}, pluck="name"):
+			posted_charge_names.add(n)
+	posted_charges = round(posted_charges, 2)
+	folio_rows: list[dict] = []
+	will_post_lines: list[dict] = []
+
 	with _NoTrace("kamra_checkout_ctx"):
 		nights_error = None
 		if in_house:
@@ -350,6 +366,7 @@ def _checkout_context(reservation: str) -> dict:
 				nights_error = _plain(e) or _("The remaining nights could not be posted.")
 		pos = settlement_position(res.name)
 		folio_rows = []
+		will_post_lines = []
 		display = list(pos["folios"])
 		if res.get("group_booking"):
 			# the group's master bill, shown for reference: it belongs to the
@@ -371,14 +388,18 @@ def _checkout_context(reservation: str) -> dict:
 			lines = []
 			for c in doc.charges or []:
 				grp = group_for_charge(c.charge_type, c.description or "")
+				posts_at = c.name not in posted_charge_names
 				line = {"name": c.name, "charge_type": c.charge_type,
 				        "description": c.description,
 				        "posting_date": str(c.posting_date or ""),
 				        "amount": flt(c.amount), "gst_amount": flt(c.gst_amount),
 				        "is_alcohol": 1 if c.get("is_alcohol") else 0,
 				        "group": grp, "folio": doc.name,
-				        "folio_type": doc.folio_type or "Guest"}
+				        "folio_type": doc.folio_type or "Guest",
+				        "posts_at_checkout": posts_at}
 				lines.append(line)
+				if posts_at and not f.get("_group_only"):
+					will_post_lines.append(line)
 				if not f.get("_group_only"):
 					g = groups.setdefault(grp, {"group": grp, "amount": 0.0,
 					                            "count": 0, "lines": []})
@@ -396,6 +417,9 @@ def _checkout_context(reservation: str) -> dict:
 				"paid_total": round(flt(doc.payments_total), 2),
 				"refundable": round(max(received - refunded, 0.0), 2),
 				"city_ledger_company": company,
+				"city_ledger_company_name": (
+					frappe.db.get_value("Corporate Account", company, "company_name")
+					if company else None),
 				"can_city_ledger": bool(company),
 				"side": "group" if f.get("_group_only")
 				else ("company" if company else "guest"),
@@ -562,6 +586,35 @@ def _checkout_context(reservation: str) -> dict:
 		                 "message": _("Refund {0}{1:,.2f} before departure.")
 		                 .format(symbol, refund_due)})
 
+	checkout_charges = round(sum(f["grand_total"] for f in own), 2)
+	will_post = round(sum(
+		flt(l["amount"]) + flt(l["gst_amount"]) for l in will_post_lines), 2)
+	pending_not_on_folio = round(sum(
+		flt(b["amount"]) for b in pending if b.get("billable")), 2)
+	# Plain split for the desk: Folio View shows on_folio_now; this sheet
+	# shows at_checkout (after remaining nights). Pending restaurant /
+	# laundry is separate until posted or settled at the outlet.
+	bill_split = {
+		"on_folio_now": posted_charges,
+		"at_checkout": checkout_charges,
+		"will_post": will_post,
+		"will_post_lines": [
+			{"charge_type": l["charge_type"], "description": l["description"],
+			 "posting_date": l["posting_date"], "amount": l["amount"],
+			 "gst_amount": l["gst_amount"], "folio": l["folio"],
+			 "folio_type": l["folio_type"], "group": l["group"]}
+			for l in will_post_lines
+		],
+		"pending_not_on_folio": pending_not_on_folio,
+		"guest_pays": owed,
+		"company_pays": city_total,
+		"company": res.company,
+		"company_name": company_name,
+		"rules": billing_rules,
+		"explained": will_post > EPS or pending_not_on_folio > EPS
+		             or bool(res.company) or city_total > EPS,
+	}
+
 	return {
 		"reservation": {
 			"name": res.name, "status": res.status, "guest": res.guest,
@@ -585,8 +638,9 @@ def _checkout_context(reservation: str) -> dict:
 		"till": till,
 		"folios": folio_rows,
 		"groups": groups,
+		"bill_split": bill_split,
 		"totals": {
-			"charges": round(sum(f["grand_total"] for f in own), 2),
+			"charges": checkout_charges,
 			"paid": round(sum(f["paid_total"] for f in own), 2),
 			"balance": round(sum(f["balance"] for f in own), 2),
 			"owed": owed, "refund_due": refund_due,

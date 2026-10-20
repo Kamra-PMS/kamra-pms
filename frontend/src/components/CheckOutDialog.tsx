@@ -42,6 +42,8 @@ interface ChargeLine {
   group: string
   folio: string
   folio_type: string
+  /** True when this line is not on the folio yet — check-out will post it. */
+  posts_at_checkout?: boolean
 }
 
 interface FolioRow {
@@ -55,9 +57,33 @@ interface FolioRow {
   paid_total: number
   refundable: number
   city_ledger_company: string | null
+  city_ledger_company_name?: string | null
   side: "guest" | "company" | "group"
   has_charges: boolean
   charges: ChargeLine[]
+}
+
+interface BillSplit {
+  on_folio_now: number
+  at_checkout: number
+  will_post: number
+  will_post_lines: {
+    charge_type: string
+    description: string
+    posting_date: string
+    amount: number
+    gst_amount: number
+    folio: string
+    folio_type: string
+    group: string
+  }[]
+  pending_not_on_folio: number
+  guest_pays: number
+  company_pays: number
+  company: string | null
+  company_name: string | null
+  rules: { charge_type: string; pay_by: string }[]
+  explained: boolean
 }
 
 interface SopStep {
@@ -141,6 +167,7 @@ export interface CheckoutContext {
   till: TillState
   folios: FolioRow[]
   groups: Record<string, { group: string; amount: number; count: number; lines: ChargeLine[] }>
+  bill_split?: BillSplit
   totals: {
     charges: number
     paid: number
@@ -675,6 +702,120 @@ export default function CheckOutDialog(props: {
                   {ctx.notices.map((n) => <li key={n.code}>{n.message}</li>)}
                 </ul>
               )}
+
+              {ctx.bill_split && (
+                <Section title={t("Who pays")} tone={ctx.bill_split.company ? "info" : undefined}>
+                  {ctx.bill_split.company ? (
+                    <div className="space-y-2 text-sm">
+                      <p className="font-medium text-sky-950">
+                        {t("Corporate billing: {name}", {
+                          name: ctx.bill_split.company_name || ctx.bill_split.company,
+                        })}
+                      </p>
+                      <dl className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                        <div>
+                          <dt className="text-xs text-zinc-500">{t("Company pays at check-out")}</dt>
+                          <dd className="font-medium tabular-nums text-sky-900">
+                            {fmt(ctx.bill_split.company_pays)}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt className="text-xs text-zinc-500">{t("Guest pays")}</dt>
+                          <dd className="font-medium tabular-nums">{fmt(ctx.bill_split.guest_pays)}</dd>
+                        </div>
+                      </dl>
+                      {ctx.bill_split.rules.length > 0 ? (
+                        <ul className="space-y-0.5 text-xs text-zinc-600">
+                          {ctx.bill_split.rules.map((rule) => (
+                            <li key={rule.charge_type}>
+                              {t(rule.charge_type)} →{" "}
+                              {rule.pay_by === "Company"
+                                ? t("Company")
+                                : t("Guest")}
+                            </li>
+                          ))}
+                          <li className="text-zinc-500">
+                            {t("Alcohol always stays with the guest.")}
+                          </li>
+                        </ul>
+                      ) : (
+                        <p className="text-xs text-zinc-500">
+                          {t("No charge-type rules on this company — check the Company folio before collecting.")}
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-zinc-700">
+                      {t("No corporate account on this stay — the guest pays the full bill.")}
+                    </p>
+                  )}
+                </Section>
+              )}
+
+              {ctx.bill_split && (ctx.bill_split.will_post > EPS
+                || ctx.bill_split.pending_not_on_folio > EPS
+                || Math.abs(ctx.bill_split.at_checkout - ctx.bill_split.on_folio_now) > EPS) && (
+                <Section title={t("Why this total")} tone="warn">
+                  <p className="mb-2 text-sm text-zinc-700">
+                    {t("Folio View shows what is posted today. Check-out uses the full stay once remaining nights are posted.")}
+                  </p>
+                  <dl className="space-y-1.5 text-sm">
+                    <div className="flex justify-between gap-3">
+                      <dt className="text-zinc-600">{t("Already on the folio")}</dt>
+                      <dd className="font-medium tabular-nums">{fmt(ctx.bill_split.on_folio_now)}</dd>
+                    </div>
+                    {ctx.bill_split.will_post > EPS && (
+                      <div className="flex justify-between gap-3">
+                        <dt className="text-zinc-600">
+                          {t("Posts at check-out")}
+                          <span className="ms-1 text-xs text-amber-800">
+                            ({ctx.bill_split.will_post_lines.length === 1
+                              ? t("1 night / charge")
+                              : t("{n} nights / charges", { n: ctx.bill_split.will_post_lines.length })})
+                          </span>
+                        </dt>
+                        <dd className="font-medium tabular-nums text-amber-900">
+                          +{fmt(ctx.bill_split.will_post)}
+                        </dd>
+                      </div>
+                    )}
+                    <div className="flex justify-between gap-3 border-t border-amber-200/80 pt-1.5">
+                      <dt className="font-medium text-zinc-800">{t("Check-out total")}</dt>
+                      <dd className="font-semibold tabular-nums">{fmt(ctx.bill_split.at_checkout)}</dd>
+                    </div>
+                    {ctx.bill_split.pending_not_on_folio > EPS && (
+                      <div className="flex justify-between gap-3 text-rose-800">
+                        <dt>
+                          {t("Restaurant / laundry not on folio yet")}
+                          <span className="ms-1 text-xs font-normal">
+                            ({t("post to room or settle separately")})
+                          </span>
+                        </dt>
+                        <dd className="font-medium tabular-nums">
+                          {fmt(ctx.bill_split.pending_not_on_folio)}
+                        </dd>
+                      </div>
+                    )}
+                  </dl>
+                  {ctx.bill_split.will_post_lines.length > 0 && (
+                    <ul className="mt-2 space-y-1 border-t border-amber-200/80 pt-2 text-xs text-zinc-600">
+                      {ctx.bill_split.will_post_lines.map((l, i) => (
+                        <li key={`${l.folio}-${l.posting_date}-${i}`} className="flex justify-between gap-2">
+                          <span>
+                            {t(l.charge_type)}
+                            {l.description ? `: ${l.description}` : ""}
+                            {l.posting_date ? ` · ${l.posting_date}` : ""}
+                          </span>
+                          <span className="shrink-0 tabular-nums">
+                            {fmt(l.amount + l.gst_amount)}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </Section>
+              )}
+
               <Section title={t("Stay summary")}>
                 <dl className="grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
                   {[
@@ -697,7 +838,7 @@ export default function CheckOutDialog(props: {
               </Section>
 
               {ctx.pending_bills.length > 0 && (
-                <Section title={t("Bills not on the folio yet")} tone="warn">
+                <Section title={t("Restaurant & other bills to check")} tone="warn">
                   <ul className="space-y-3 text-sm">
                     {ctx.pending_bills.map((b) => (
                       <li key={b.name} className="space-y-2" data-testid="pending-bill">
@@ -773,6 +914,11 @@ export default function CheckOutDialog(props: {
                             {line.is_alcohol ? (
                               <span className="ms-1 text-[10px] font-semibold uppercase text-rose-600">{t("Guest only")}</span>
                             ) : null}
+                            {line.posts_at_checkout ? (
+                              <span className="ms-1 text-[10px] font-semibold uppercase text-amber-700">
+                                {t("At check-out")}
+                              </span>
+                            ) : null}
                             <span className="ms-1 text-xs text-zinc-400">({t(line.folio_type)})</span>
                           </span>
                           <span className="shrink-0 tabular-nums text-zinc-800">
@@ -790,7 +936,16 @@ export default function CheckOutDialog(props: {
                   <li key={f.folio} className="flex flex-wrap items-center justify-between gap-2">
                     <span>
                       {t("{type} folio", { type: t(f.folio_type) })} · {f.folio}
-                      {f.invoice_number ? ` · ${f.invoice_number}` : ""} · {t("Balance")} {fmt(f.balance)}
+                      {f.invoice_number ? ` · ${f.invoice_number}` : ""}
+                      {" · "}
+                      {f.side === "company"
+                        ? t("Billed to {name}", {
+                            name: f.city_ledger_company_name || f.city_ledger_company || t("Company"),
+                          })
+                        : f.side === "group"
+                          ? t("Group bill")
+                          : t("Billed to guest")}
+                      {" · "}{t("Balance")} {fmt(f.balance)}
                     </span>
                     <a href={folioLink(f.folio)} target="_blank" rel="noreferrer"
                       className="inline-flex items-center gap-1 font-medium text-brand-700 hover:underline">
