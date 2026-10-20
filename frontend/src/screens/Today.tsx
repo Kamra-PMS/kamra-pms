@@ -328,12 +328,19 @@ export default function Today() {
     return () => clearInterval(t)
   }, [refresh, refreshKey])
 
+  // other screens (tape chart, command palette, a group companion) open
+  // the check-out sheet here with navigate("/", { state: { checkout } })
   const location = useLocation()
   const [checkingOut, setCheckingOut] = useState<string | null>(null)
+  const [roomMenu, setRoomMenu] = useState<string | null>(null)
   useEffect(() => {
     const res = (location.state as { checkout?: string } | null)?.checkout
-    if (res) setCheckingOut(res)
-  }, [location.state])
+    if (res) {
+      setCheckingOut(res)
+      // a reload must not reopen it
+      navigate(".", { replace: true, state: null })
+    }
+  }, [location.state, navigate])
 
   async function act(key: string, fn: () => Promise<unknown>) {
     setBusy(key)
@@ -383,16 +390,18 @@ export default function Today() {
         <button
           title={
             stay
-              ? t("{guest} · open registration", { guest: stay.guest_name })
+              ? t("{guest} · check out or open registration", { guest: stay.guest_name })
               : t("Housekeeping: {from} → {to} (click to advance)", {
                   from: room.housekeeping_status,
                   to: next,
                 })
           }
           disabled={busy === room.name}
+          aria-haspopup={stay ? "menu" : undefined}
+          aria-expanded={stay ? roomMenu === room.name : undefined}
           onClick={() =>
             stay
-              ? navigate(`/grc/${stay.name}`)
+              ? setRoomMenu((m) => (m === room.name ? null : room.name))
               : act(room.name, () => setHousekeepingStatus(room.name, next))
           }
           className={cn(
@@ -413,6 +422,31 @@ export default function Today() {
         </button>
         {(occupied || room.housekeeping_status === "Clean") && (
           <RoomMediaButton room={room.name} />
+        )}
+        {stay && roomMenu === room.name && (
+          <div
+            role="menu"
+            className="absolute start-0 top-full z-20 mt-1 w-44 overflow-hidden rounded-lg border border-zinc-200 bg-white py-1 text-sm shadow-lg"
+          >
+            <p className="truncate px-3 py-1 text-xs text-zinc-500">{stay.guest_name}</p>
+            <button
+              role="menuitem"
+              className="block w-full px-3 py-2 text-start font-medium text-zinc-800 hover:bg-zinc-50"
+              onClick={() => {
+                setRoomMenu(null)
+                setCheckingOut(stay.name)
+              }}
+            >
+              {t("Check out")}
+            </button>
+            <button
+              role="menuitem"
+              className="block w-full px-3 py-2 text-start text-zinc-700 hover:bg-zinc-50"
+              onClick={() => navigate(`/grc/${stay.name}`)}
+            >
+              {t("Registration card")}
+            </button>
+          </div>
         )}
       </div>
     )

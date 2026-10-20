@@ -84,10 +84,14 @@ for the balance and copies it, ready to paste to the guest (or the booker,
 if the booking says to contact the booker). When the guest pays, the
 payment posts to the folio by itself.
 
-**Refund money.** Under the payments list, **Refund money (deposit return
-/ over-collection)** opens a refund row: amount, mode and a reason, then
-**Refund**. You can't refund more than was collected on the folio, and a
-closed folio can't be refunded.
+**Refund money.** At check-out you don't need this: the check-out sheet's
+**Payment** step works out the refund, suggests the mode the money came in
+by, and sends a held security deposit back through the deposit's own
+refund (see [Front desk](/front-desk)). For any other refund, under the
+payments list, **Refund money (deposit return / over-collection)** opens a
+refund row: amount, mode and a reason, then **Refund**. You can't refund
+more than was collected on the folio, and a closed folio can't be
+refunded. Every refund is written to the activity log with your name.
 
 ## Correct a charge
 

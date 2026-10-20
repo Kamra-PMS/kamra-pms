@@ -312,8 +312,8 @@ TOOLS: tuple[ToolSpec, ...] = (
 		mutating=True,
 	),
 	_t(
-		"checkout_settlement",
-		"api.checkout_settlement",
+		"checkout_context",
+		"api.checkout_context",
 		"""Read-only: what stands between a stay and check-out, without
 		changing anything. Balances per folio after the nights check-out would
 		still post, totals owed by the guest and owed back to the guest, a

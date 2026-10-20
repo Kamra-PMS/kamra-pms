@@ -1,25 +1,33 @@
-import { useCallback, useEffect, useMemo, useState } from "react"
-import {
-  Check,
-  ExternalLink,
-  Lightbulb,
-  Loader2,
-  Sparkles,
-} from "lucide-react"
-import { call, getCurrentProperty } from "../lib/api"
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react"
+import { Check, ExternalLink, Lightbulb, Loader2, Printer, TriangleAlert } from "lucide-react"
+import { call } from "../lib/api"
 import { checkOutWithCredit } from "./CreditCheckout"
 import { useCashierAuth } from "../lib/cashierAuth"
 import { serverError } from "../lib/resource"
 import { toFullPath } from "../lib/routing"
-import { cur, moneyLocale, useLocale } from "../lib/money"
+import { moneyLocale, useLocale } from "../lib/money"
 import { useT } from "../lib/i18n"
 import { cn } from "../lib/utils"
 import { Button } from "./ui/button"
 import { Sheet } from "./ui/sheet"
+import { StepFlowFooter, StepFlowHeader, useStepFlow, type FlowStep } from "./StepFlow"
 
-/* Guided check-out: review bills → settle → guest-moment SOP → confirm.
-   Amounts and blockers come from kamra.api.checkout_context; check_out
-   remains the single write that flips status. */
+/* Guided check-out, one stay at a time:
+     Bill (folios, lines, bills not on the folio yet)
+     -> Late check-out (only when the guest leaves after check-out time)
+     -> Company bill (only when a company pays: what goes to its account,
+        and the credit check)
+     -> Payment (collect what is owed or refund what is due; a held
+        security deposit goes back through its own refund)
+     -> Guest moment (the property's SOP, optional)
+     -> Check out
+     -> Invoice (close each folio and issue its invoice, print links).
+   Every number and refusal comes from kamra.api.checkout_context, which
+   writes nothing; each button calls the one existing endpoint for that
+   action, and check_out stays the only write that departs the guest.
+   The invoice comes after check-out on purpose: check-out may still post
+   the last night and move the company's share to the city ledger, and a
+   folio invoiced before that is frozen and stops the check-out. */
 
 interface ChargeLine {
   name: string
@@ -34,15 +42,19 @@ interface ChargeLine {
 }
 
 interface FolioRow {
+  folio: string
   name: string
   folio_type: string
   status: string
+  invoice_number: string | null
   balance: number
   grand_total: number
   paid_total: number
-  invoice_number: string | null
+  refundable: number
+  city_ledger_company: string | null
+  side: "guest" | "company" | "group"
+  has_charges: boolean
   charges: ChargeLine[]
-  can_city_ledger: boolean
 }
 
 interface SopStep {
@@ -57,6 +69,42 @@ interface SopStep {
   tip: string
 }
 
+interface CreditCheck {
+  ok: boolean
+  blocked: boolean
+  company: string
+  amount: number
+  reasons: string[]
+}
+
+interface PendingBill {
+  kind: "pos" | "laundry"
+  name: string
+  label: string
+  status: string
+  amount: number
+  complimentary: boolean
+  can_post_to_room: boolean
+  pay_modes: string[]
+}
+
+interface Blocker {
+  code: string
+  step: string
+  message: string
+  folio?: string | null
+  can_override?: boolean
+}
+
+interface RefundAction {
+  kind: "deposit" | "folio"
+  folio: string
+  folio_type: string
+  amount: number
+  source: "security_deposit" | "overpayment"
+  mode: string
+}
+
 export interface CheckoutContext {
   reservation: {
     name: string
@@ -65,125 +113,119 @@ export interface CheckoutContext {
     guest_name: string
     company: string | null
     company_name: string | null
+    group_booking: string | null
     room: string | null
     room_number: string | null
     room_type_name: string | null
     check_in_date: string
     check_out_date: string
-    adults: number
-    children: number
-    vip: 0 | 1
   }
   currency_symbol: string
+  payment_modes: string[]
+  pin_required: boolean
+  till_open: boolean
   folios: FolioRow[]
-  groups: Record<
-    string,
-    { group: string; amount: number; count: number; lines: ChargeLine[] }
-  >
+  groups: Record<string, { group: string; amount: number; count: number; lines: ChargeLine[] }>
   totals: {
     charges: number
     paid: number
     balance: number
     owed: number
     refund_due: number
-    city_ledger_eligible: number
+    to_city_ledger: number
   }
   billing: {
     company: string | null
     company_name: string | null
-    credit_allowed: boolean
     rules: { charge_type: string; pay_by: string }[]
   }
-  deposit: {
-    name: string
-    status: string
-    required_amount: number
-    collected_amount: number
-    withheld_amount: number
-    refunded_amount: number
-    balance: number
-    reason: string
+  city_ledger: { folio: string; company: string; company_name: string; amount: number }[]
+  credit: { checks: CreditCheck[]; ok: boolean; blocked: boolean; can_override: boolean } | null
+  deposit: { name: string; status: string; held: number; folio: string | null } | null
+  collect: { folio: string; folio_type: string; amount: number; invoiced: boolean }[]
+  refunds: RefundAction[]
+  pending_bills: PendingBill[]
+  late_checkout: {
+    checkout_time: string
+    now: string
+    late: boolean
+    requested: boolean
+    already_charged: boolean
+    folio: string | null
+    tax_rate: number
   } | null
-  blockers: { code: string; message: string; amount: number }[]
-  actions: {
-    can_checkout: boolean
-    can_collect: boolean
-    can_city_ledger: boolean
-    can_refund_deposit: boolean
-    can_withhold_deposit: boolean
-  }
-  sop: {
-    name: string | null
-    key: string
-    title: string
-    steps: SopStep[]
-    next_tip: string | null
-  }
-  /** True only when the property has AI enabled + a key. Tips work without it. */
-  ai_tips_available?: boolean
+  companions: { name: string; guest_name: string; room_number: string | null }[]
+  blockers: Blocker[]
+  notices: { code: string; message: string }[]
+  settled: boolean
+  actions: { can_checkout: boolean; can_withhold_deposit: boolean }
+  sop: { steps: SopStep[]; next_tip: string | null }
 }
 
-const STEPS = ["review", "settle", "guest", "confirm"] as const
-type WizardStep = (typeof STEPS)[number]
+type StepKey = "review" | "late" | "company" | "settle" | "guest" | "confirm" | "invoice"
 
-const fmt = (n: number, symbol?: string) =>
-  `${symbol ?? cur()}${Number(n || 0).toLocaleString(moneyLocale(), {
-    maximumFractionDigits: 2,
-  })}`
+const GROUP_ORDER = ["Room", "Restaurant", "Laundry", "Spa", "Damages", "Discounts", "Extras"]
+const EPS = 0.009
 
 const inputCls =
   "w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm " +
   "focus:outline-2 focus:outline-offset-1 focus:outline-brand-600"
 
-const GROUP_ORDER = [
-  "Room",
-  "Restaurant",
-  "Laundry",
-  "Spa",
-  "Damages",
-  "Discounts",
-  "Extras",
-]
-
-function TipBanner({ tip, ai }: { tip: string | null; ai?: boolean }) {
-  const { t } = useT()
-  if (!tip) return null
+function Section(props: { title: string; tone?: "warn" | "info" | "ok"; children: ReactNode }) {
   return (
-    <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-900">
-      {ai ? (
-        <Sparkles className="mt-0.5 size-4 shrink-0 text-amber-600" aria-hidden />
-      ) : (
-        <Lightbulb className="mt-0.5 size-4 shrink-0 text-amber-600" aria-hidden />
+    <section
+      className={cn(
+        "rounded-xl border p-3 sm:p-4",
+        props.tone === "warn" && "border-amber-200 bg-amber-50/60",
+        props.tone === "info" && "border-sky-200 bg-sky-50/50",
+        props.tone === "ok" && "border-emerald-200 bg-emerald-50/60",
+        !props.tone && "border-zinc-200",
       )}
-      <div>
-        <p className="text-xs font-semibold uppercase tracking-wide text-amber-700">
-          {t("Next")}
-        </p>
-        <p>{tip}</p>
-      </div>
-    </div>
+    >
+      <h3 className="mb-2 text-sm font-semibold text-zinc-800">{props.title}</h3>
+      {props.children}
+    </section>
   )
 }
 
-function StateChip({ state }: { state: SopStep["state"] }) {
+function Problems(props: { items: Blocker[]; folioLink?: (f: string) => string }) {
   const { t } = useT()
-  const tone =
-    state === "done"
-      ? "border-emerald-200 bg-emerald-50 text-emerald-800"
-      : state === "blocked"
-        ? "border-rose-200 bg-rose-50 text-rose-800"
-        : "border-zinc-200 bg-zinc-50 text-zinc-600"
-  const label =
-    state === "done" ? t("Done") : state === "blocked" ? t("Blocked") : t("To do")
+  if (!props.items.length) return null
   return (
-    <span className={cn("rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase", tone)}>
-      {label}
-    </span>
+    <ul role="alert" className="space-y-2 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">
+      {props.items.map((b) => (
+        <li key={b.code + (b.folio ?? "")} className="flex items-start gap-2">
+          <TriangleAlert className="mt-0.5 size-4 shrink-0" aria-hidden />
+          <span>
+            {b.message}
+            {b.folio && props.folioLink ? (
+              <>
+                {" "}
+                <a href={props.folioLink(b.folio)} target="_blank" rel="noreferrer"
+                  className="font-medium underline">
+                  {t("Open folio")}
+                </a>
+              </>
+            ) : null}
+            {b.code === "till_closed" ? (
+              <>
+                {" "}
+                <a href={toFullPath("/cashier")} target="_blank" rel="noreferrer"
+                  className="font-medium underline">
+                  {t("Open the till")}
+                </a>
+              </>
+            ) : null}
+          </span>
+        </li>
+      ))}
+    </ul>
   )
 }
 
 export default function CheckOutDialog(props: {
   reservation: string
+  /** After a check-out: the desk is done (also called on close once checked out). */
   onDone: () => void
   onClose: () => void
   /** Open another stay's check-out (group companions). */
@@ -191,696 +233,662 @@ export default function CheckOutDialog(props: {
 }) {
   const { t } = useT()
   const loc = useLocale()
-  const { ensureUnlocked, status: pinStatus } = useCashierAuth()
+  const { ensureUnlocked } = useCashierAuth()
   const [ctx, setCtx] = useState<CheckoutContext | null>(null)
-  const [step, setStep] = useState<WizardStep>("review")
-  const [busy, setBusy] = useState(false)
+  const [loadError, setLoadError] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [creditOverride, setCreditOverride] = useState("")
-  const [needsCreditOverride, setNeedsCreditOverride] = useState(false)
-  const [aiTip, setAiTip] = useState<string | null>(null)
-  const [confirmedSteps, setConfirmedSteps] = useState<Record<string, boolean>>({})
-  const [payAmount, setPayAmount] = useState("")
-  const [payMode, setPayMode] = useState(loc.payment_modes[0] ?? "Cash")
+  const [busy, setBusy] = useState(false)
+  const [checkedOut, setCheckedOut] = useState(false)
+  const [creditWarnings, setCreditWarnings] = useState<string[]>([])
+  // per-step desk input
+  const [payMode, setPayMode] = useState("")
   const [payRef, setPayRef] = useState("")
-  const [payFolio, setPayFolio] = useState("")
+  const [refundModes, setRefundModes] = useState<Record<string, string>>({})
+  const [refundReason, setRefundReason] = useState("")
   const [withholdAmt, setWithholdAmt] = useState("")
   const [withholdReason, setWithholdReason] = useState("")
+  const [lateAmt, setLateAmt] = useState("")
+  const [lateDesc, setLateDesc] = useState("")
+  const [lateRate, setLateRate] = useState("")
+  const [outletModes, setOutletModes] = useState<Record<string, string>>({})
+  const [companyOk, setCompanyOk] = useState(false)
+  const [override, setOverride] = useState("")
+  const [skipped, setSkipped] = useState<Record<string, boolean>>({})
+  const [ticked, setTicked] = useState<Record<string, boolean>>({})
+  const shown = useRef(new Set<StepKey>())
 
   const load = useCallback(async () => {
-    setError(null)
     try {
       const c = await call<CheckoutContext>("kamra.api.checkout_context", {
         reservation: props.reservation,
       })
       setCtx(c)
-      setNeedsCreditOverride(false)
-      setCreditOverride("")
-      const guestFolio =
-        c.folios.find((f) => f.folio_type === "Guest" && f.balance > 0.009) ||
-        c.folios.find((f) => f.balance > 0.009) ||
-        c.folios[0]
-      setPayFolio(guestFolio?.name || "")
-      setPayAmount(
-        c.totals.owed > 0.009
-          ? String(c.totals.owed)
-          : c.totals.balance > 0.009
-            ? String(c.totals.balance)
-            : "",
-      )
-      if (c.deposit?.balance) setWithholdAmt(String(c.deposit.balance))
-      // Deterministic SOP tip is enough. Only ask the LLM to polish when
-      // the property already has AI configured — never required to proceed.
-      setAiTip(null)
-      const tip = c.sop.next_tip
-      if (tip && c.ai_tips_available) {
-        call<{ tip: string; ai: boolean }>("kamra.assistant.rephrase_sop_tip", {
-          property: getCurrentProperty(),
-          tip,
-          step_title: c.sop.steps.find((s) => s.state !== "done")?.title,
-          context_summary: {
-            guest: c.reservation.guest_name,
-            owed: c.totals.owed,
-            refund_due: c.totals.refund_due,
-            can_city_ledger: c.actions.can_city_ledger,
-          },
-        })
-          .then((r) => {
-            if (r?.ai && r.tip && r.tip !== tip) setAiTip(r.tip)
-          })
-          .catch(() => {
-            /* ignore — desk keeps the server tip */
-          })
-      }
+      setLoadError(null)
+      if (c.reservation.status !== "Checked In") setCheckedOut(true)
+      return c
     } catch (e) {
-      setError(serverError(e))
+      setLoadError(serverError(e))
+      return null
     }
   }, [props.reservation])
 
   useEffect(() => {
-    load()
+    void load()
   }, [load])
 
-  const tip = aiTip || ctx?.sop.next_tip || null
-  const stepIndex = STEPS.indexOf(step)
+  // sensible defaults once the context arrives
+  useEffect(() => {
+    if (!ctx) return
+    setPayMode((m) => m || ctx.payment_modes[0] || "Cash")
+    setRefundModes((prev) => {
+      const next = { ...prev }
+      for (const r of ctx.refunds) next[r.kind + r.folio] ??= r.mode
+      return next
+    })
+    setRefundReason((r) => r || t("Refund of overpayment at check-out"))
+    setLateDesc((d) => d || t("Late check-out"))
+    if (ctx.late_checkout) setLateRate((r) => r || String(ctx.late_checkout?.tax_rate ?? 0))
+  }, [ctx, t])
 
-  const guestSteps = useMemo(
-    () =>
-      (ctx?.sop.steps || []).filter((s) =>
-        ["ask_guest", "confirm"].includes(s.step_type),
-      ),
-    [ctx],
-  )
+  const sym = ctx?.currency_symbol ?? ""
+  const fmt = (n: number) =>
+    `${sym}${Number(n || 0).toLocaleString(moneyLocale(), { maximumFractionDigits: 2 })}`
+  const folioLink = (f: string) => toFullPath(`/billing/${encodeURIComponent(f)}`)
+  const blockersFor = (step: StepKey) => (ctx?.blockers ?? []).filter((b) => b.step === step &&
+    !["owed", "refund"].includes(b.code))
 
-  const blockingUnresolved = useMemo(() => {
-    if (!ctx) return true
-    if (!ctx.actions.can_checkout) return true
-    return (ctx.sop.steps || []).some(
-      (s) => s.is_blocking && s.state === "blocked",
-    )
-  }, [ctx])
+  const settleProblems = blockersFor("settle")
+  const reviewProblems = blockersFor("review")
+  const credit = ctx?.credit
+  const creditBlocked = Boolean(credit?.blocked)
+  const guestSteps = (ctx?.sop.steps ?? []).filter((s) => ["ask_guest", "confirm"].includes(s.step_type))
+  const inHouse = ctx?.reservation.status === "Checked In"
 
-  async function collectPayment() {
-    if (!payFolio || !payAmount) return
+  const need: Record<StepKey, boolean> = {
+    review: true,
+    late: Boolean(inHouse && ctx?.late_checkout),
+    company: Boolean(inHouse && ((ctx?.city_ledger.length ?? 0) > 0 || credit)),
+    settle: Boolean(inHouse && ctx && (ctx.collect.length || ctx.refunds.length ||
+      settleProblems.length || !ctx.settled)),
+    guest: Boolean(inHouse && guestSteps.length),
+    confirm: true,
+    invoice: true,
+  }
+  for (const k of Object.keys(need) as StepKey[]) if (need[k]) shown.current.add(k)
+
+  const settleDone = Boolean(ctx?.settled && !settleProblems.length)
+  const steps: FlowStep[] = useMemo(() => {
+    const done = (k: StepKey) => checkedOut && k !== "invoice"
+    const allInvoiced = Boolean(ctx && ctx.folios.filter((f) => f.side !== "group" && f.has_charges)
+      .every((f) => f.status === "Closed"))
+    const list: (FlowStep & { key: StepKey })[] = [
+      { key: "review", label: t("Bill"),
+        status: done("review") ? "done" : reviewProblems.length ? "blocked" : undefined },
+      { key: "late", label: t("Late check-out"), optional: true,
+        status: done("late") || ctx?.late_checkout?.already_charged ? "done"
+          : skipped.late ? "skipped" : undefined },
+      { key: "company", label: t("Company bill"),
+        status: done("company") || companyOk ? "done"
+          : creditBlocked && !credit?.can_override ? "blocked" : undefined },
+      { key: "settle", label: t("Payment"),
+        status: done("settle") || settleDone ? "done" : settleProblems.length ? "blocked" : undefined },
+      { key: "guest", label: t("Guest moment"), optional: true,
+        status: done("guest") ? "done" : skipped.guest ? "skipped" : undefined },
+      { key: "confirm", label: t("Check out"), status: checkedOut ? "done" : undefined },
+      { key: "invoice", label: t("Invoice"), status: allInvoiced && checkedOut ? "done" : undefined },
+    ]
+    return list.map((s) => ({ ...s, hidden: !shown.current.has(s.key) }))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ctx, checkedOut, skipped, companyOk, settleDone, creditBlocked, t])
+
+  const flow = useStepFlow(steps)
+  const current = flow.current as StepKey
+  // a stay that is already checked out opens on its invoices
+  useEffect(() => {
+    if (checkedOut) flow.goTo("invoice")
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [checkedOut])
+
+  async function run(fn: () => Promise<unknown>, money = true) {
     setBusy(true)
     setError(null)
     try {
-      if (pinStatus?.required) await ensureUnlocked()
-      await call("kamra.api.add_folio_payment", {
-        folio: payFolio,
-        mode: payMode,
-        amount: Number(payAmount),
-        reference: payRef.trim() || undefined,
-        kind: "Payment",
-      })
+      if (money && ctx?.pin_required) await ensureUnlocked()
+      await fn()
+    } catch (e) {
+      setError(serverError(e))
+    } finally {
+      await load()
+      setBusy(false)
+    }
+  }
+
+  const collectTotal = (ctx?.collect ?? []).reduce((s, c) => s + c.amount, 0)
+  const refundTotal = (ctx?.refunds ?? []).reduce((s, r) => s + r.amount, 0)
+
+  function collect() {
+    return run(async () => {
+      for (const c of ctx?.collect ?? []) {
+        await call("kamra.api.add_folio_payment", {
+          folio: c.folio, mode: payMode, amount: c.amount, kind: "Payment",
+          reference: payRef.trim() || undefined,
+        })
+      }
       setPayRef("")
-      await load()
-    } catch (e) {
-      setError(serverError(e))
-    } finally {
-      setBusy(false)
-    }
+    })
   }
 
-  async function sendCityLedger(folio: string) {
-    setBusy(true)
-    setError(null)
-    try {
-      await call("kamra.ledger.city_ledger_transfer", {
-        folio,
-        company: ctx?.billing.company || undefined,
-      })
-      await load()
-    } catch (e) {
-      setError(serverError(e))
-    } finally {
-      setBusy(false)
-    }
+  function refund() {
+    const reason = refundReason.trim()
+    return run(async () => {
+      for (const r of ctx?.refunds ?? []) {
+        const mode = refundModes[r.kind + r.folio] || r.mode
+        if (r.kind === "deposit") {
+          await call("kamra.api.refund_security_deposit", {
+            reservation: props.reservation, amount: r.amount, mode, note: reason,
+          })
+        } else {
+          await call("kamra.api.refund_folio_payment", {
+            folio: r.folio, amount: r.amount, mode, reason,
+          })
+        }
+      }
+    })
   }
 
-  async function refundDeposit() {
-    setBusy(true)
-    setError(null)
-    try {
-      await call("kamra.api.refund_security_deposit", {
-        reservation: props.reservation,
-      })
-      await load()
-    } catch (e) {
-      setError(serverError(e))
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  async function withholdDeposit() {
-    if (!withholdAmt || !withholdReason.trim()) return
-    setBusy(true)
-    setError(null)
-    try {
+  function withhold() {
+    return run(async () => {
       await call("kamra.api.withhold_security_deposit", {
-        reservation: props.reservation,
-        amount: Number(withholdAmt),
-        reason: withholdReason.trim(),
+        reservation: props.reservation, amount: Number(withholdAmt), reason: withholdReason.trim(),
       })
+      setWithholdAmt("")
       setWithholdReason("")
-      await load()
-    } catch (e) {
-      setError(serverError(e))
-    } finally {
-      setBusy(false)
-    }
+    })
+  }
+
+  function addLateFee() {
+    const lc = ctx?.late_checkout
+    if (!lc?.folio) return
+    return run(async () => {
+      await call("kamra.api.add_folio_charge", {
+        folio: lc.folio, charge_type: "Late Checkout",
+        description: lateDesc.trim() || t("Late check-out"),
+        amount: Number(lateAmt), gst_rate: Number(lateRate || 0),
+      })
+      setLateAmt("")
+    }, false)
+  }
+
+  function postToRoom(b: PendingBill) {
+    return run(async () => {
+      if (b.kind === "pos") await call("kamra.pos.deliver_order", { order: b.name })
+      else await call("kamra.laundry.deliver_laundry", { order: b.name })
+    }, false)
+  }
+
+  function payAtOutlet(b: PendingBill) {
+    return run(async () => {
+      await call("kamra.pos.pay_order", { order: b.name, mode: outletModes[b.name] || b.pay_modes[0] })
+    })
   }
 
   async function doCheckOut() {
-    if (blockingUnresolved) return
     setBusy(true)
     setError(null)
     try {
-      await checkOutWithCredit(
+      const out = await checkOutWithCredit(
         props.reservation,
-        needsCreditOverride ? creditOverride.trim() || undefined : undefined,
+        creditBlocked && override.trim() ? override.trim() : undefined,
       )
-      props.onDone()
+      setCreditWarnings(
+        (out.credit_warnings ?? []).filter((w) => !w.overridden)
+          .flatMap((w) => w.reasons.map((r) => `${w.company}: ${r}`)),
+      )
+      setCheckedOut(true)
+      await load()
     } catch (e) {
       const msg = serverError(e)
-      if (msg.includes("CREDIT_BLOCKED")) {
-        setNeedsCreditOverride(true)
-        setError(
-          msg.replace(/^CREDIT_BLOCKED:\s*/, "") ||
-            "Company credit is blocked — enter an override reason to continue.",
-        )
-      } else {
-        setError(msg)
-      }
-      setBusy(false)
+      setError(msg.replace(/^CREDIT_BLOCKED:\s*/, ""))
       await load()
+      if (msg.includes("CREDIT_BLOCKED")) flow.goTo("company")
+    } finally {
+      setBusy(false)
     }
   }
 
-  const r = ctx?.reservation
-  const symbol = ctx?.currency_symbol
-
-  function footer() {
-    return (
-      <div className="flex w-full flex-col gap-2">
-        {error && <p className="text-sm text-rose-600">{error}</p>}
-        <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={props.onClose}>
-            {t("Cancel")}
-          </Button>
-          <div className="ml-auto flex items-center gap-2">
-            {stepIndex > 0 && (
-              <Button
-                variant="outline"
-                disabled={busy}
-                onClick={() => setStep(STEPS[stepIndex - 1])}
-              >
-                {t("Back")}
-              </Button>
-            )}
-            {step !== "confirm" ? (
-              <Button
-                disabled={busy || !ctx || (step === "settle" && blockingUnresolved)}
-                onClick={() => setStep(STEPS[stepIndex + 1])}
-              >
-                {step === "settle" && blockingUnresolved
-                  ? t("Settle to continue")
-                  : t("Continue")}
-              </Button>
-            ) : (
-              <Button
-                disabled={
-                  busy ||
-                  !ctx ||
-                  blockingUnresolved ||
-                  (needsCreditOverride && !creditOverride.trim())
-                }
-                onClick={doCheckOut}
-              >
-                {busy ? t("Checking out…") : t("Confirm check-out")}
-              </Button>
-            )}
-          </div>
-        </div>
-      </div>
-    )
+  function invoice(folios: string[]) {
+    return run(async () => {
+      for (const f of folios) await call("kamra.api.close_folio", { folio: f })
+    })
   }
+
+  const close = checkedOut ? props.onDone : props.onClose
+  const r = ctx?.reservation
+
+  // ---- footer: what Continue means on each step ----------------------
+  let continueLabel: string | undefined
+  let continueDisabled = false
+  let onContinue: (() => void) | undefined = flow.next
+  if (current === "review") continueDisabled = reviewProblems.length > 0
+  if (current === "company")
+    continueDisabled = !companyOk || (creditBlocked && (!credit?.can_override || !override.trim()))
+  if (current === "settle") {
+    continueDisabled = !settleDone
+    if (!settleDone) continueLabel = t("Settle to continue")
+  }
+  if (current === "confirm") {
+    continueLabel = busy ? t("Checking out…") : t("Check out")
+    continueDisabled = checkedOut || !ctx?.actions.can_checkout &&
+      !(creditBlocked && credit?.can_override && override.trim() && ctx?.settled)
+    onContinue = () => void doCheckOut()
+  }
+  if (current === "invoice") {
+    continueLabel = t("Finish")
+    continueDisabled = !checkedOut
+    onContinue = props.onDone
+  }
+
+  const footer = (
+    <StepFlowFooter
+      start={<Button variant="outline" onClick={close}>{checkedOut ? t("Close") : t("Cancel")}</Button>}
+      error={error}
+      busy={busy || !ctx}
+      onBack={!flow.isFirst && !(checkedOut && current === "invoice") ? flow.back : undefined}
+      onSkip={flow.step?.optional && !checkedOut ? () => {
+        setSkipped((s) => ({ ...s, [current]: true }))
+        flow.next()
+      } : undefined}
+      onContinue={onContinue}
+      continueLabel={continueLabel}
+      continueDisabled={continueDisabled}
+    />
+  )
 
   return (
     <Sheet
       wide
-      title={
-        r
-          ? t("Check out {name}", { name: r.guest_name })
-          : t("Check out")
-      }
-      description={
-        r
-          ? `${r.room_number ? t("Room {n}", { n: r.room_number }) + " · " : ""}${r.room_type_name ?? ""} · ${r.check_in_date} → ${r.check_out_date}`
-          : undefined
-      }
-      onClose={props.onClose}
-      footer={footer()}
+      title={r ? t("Check out {name}", { name: r.guest_name }) : t("Check out")}
+      description={r ? [
+        r.room_number ? t("Room {n}", { n: r.room_number }) : null,
+        r.room_type_name,
+        `${r.check_in_date} → ${r.check_out_date}`,
+      ].filter(Boolean).join(" · ") : undefined}
+      onClose={close}
+      footer={footer}
     >
-      {!ctx && !error && (
+      {!ctx && !loadError && (
         <p className="flex items-center gap-2 text-sm text-zinc-500">
           <Loader2 className="size-4 animate-spin" aria-hidden />
           {t("Loading bill…")}
         </p>
       )}
+      {loadError && !ctx && <p role="alert" className="text-sm text-rose-700">{loadError}</p>}
       {ctx && r && (
-        <div className="space-y-5">
-          <div className="flex flex-wrap gap-1.5">
-            {STEPS.map((s, i) => (
-              <button
-                key={s}
-                type="button"
-                onClick={() => {
-                  if (i <= stepIndex || (s !== "confirm" && s !== "guest") || !blockingUnresolved)
-                    setStep(s)
-                }}
-                className={cn(
-                  "rounded-full border px-3 py-1 text-xs font-medium",
-                  step === s
-                    ? "border-brand-400 bg-brand-50 text-brand-800"
-                    : "border-zinc-200 text-zinc-500",
-                )}
-              >
-                {i + 1}.{" "}
-                {s === "review"
-                  ? t("Review")
-                  : s === "settle"
-                    ? t("Settle")
-                    : s === "guest"
-                      ? t("Guest moment")
-                      : t("Confirm")}
-              </button>
-            ))}
-          </div>
+        <div className="space-y-4">
+          <StepFlowHeader
+            steps={steps}
+            current={current}
+            onSelect={(k) => {
+              if (checkedOut) return
+              if (k === "invoice") return
+              flow.goTo(k)
+            }}
+          />
 
-          <TipBanner tip={tip} ai={Boolean(aiTip)} />
+          {ctx.sop.next_tip && !checkedOut && (
+            <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-900">
+              <Lightbulb className="mt-0.5 size-4 shrink-0 text-amber-600" aria-hidden />
+              <p>{ctx.sop.next_tip}</p>
+            </div>
+          )}
 
-          {step === "review" && (
+          {current === "review" && (
             <div className="space-y-4">
-              <section className="rounded-xl border border-zinc-200 p-4">
-                <div className="flex flex-wrap items-baseline justify-between gap-2">
-                  <h3 className="text-sm font-semibold text-zinc-800">
-                    {t("Stay summary")}
-                  </h3>
-                  <p className="text-sm tabular-nums text-zinc-600">
-                    {t("Balance {amount}", {
-                      amount: fmt(ctx.totals.balance, symbol),
-                    })}
-                  </p>
-                </div>
-                <dl className="mt-2 grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
-                  <div>
-                    <dt className="text-xs text-zinc-400">{t("Charges")}</dt>
-                    <dd className="font-medium tabular-nums">
-                      {fmt(ctx.totals.charges, symbol)}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-xs text-zinc-400">{t("Paid")}</dt>
-                    <dd className="font-medium tabular-nums">
-                      {fmt(ctx.totals.paid, symbol)}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-xs text-zinc-400">{t("Owed")}</dt>
-                    <dd className="font-medium tabular-nums text-rose-700">
-                      {fmt(ctx.totals.owed, symbol)}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-xs text-zinc-400">{t("Refund due")}</dt>
-                    <dd className="font-medium tabular-nums text-amber-700">
-                      {fmt(ctx.totals.refund_due, symbol)}
-                    </dd>
-                  </div>
+              <Problems items={reviewProblems} folioLink={folioLink} />
+              {ctx.notices.length > 0 && (
+                <ul className="space-y-1 rounded-xl border border-sky-200 bg-sky-50 p-3 text-sm text-sky-900">
+                  {ctx.notices.map((n) => <li key={n.code}>{n.message}</li>)}
+                </ul>
+              )}
+              <Section title={t("Stay summary")}>
+                <dl className="grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
+                  {[
+                    [t("Charges"), ctx.totals.charges, ""],
+                    [t("Paid"), ctx.totals.paid, ""],
+                    [t("Guest owes"), ctx.totals.owed, "text-rose-700"],
+                    [t("Owed to guest"), ctx.totals.refund_due, "text-amber-700"],
+                  ].map(([label, n, tone]) => (
+                    <div key={String(label)}>
+                      <dt className="text-xs text-zinc-500">{label}</dt>
+                      <dd className={cn("font-medium tabular-nums", String(tone))}>{fmt(Number(n))}</dd>
+                    </div>
+                  ))}
                 </dl>
-              </section>
-
-              <section className="rounded-xl border border-zinc-200 p-4">
-                <h3 className="mb-2 text-sm font-semibold text-zinc-800">
-                  {t("Billing instructions")}
-                </h3>
-                {ctx.billing.company ? (
-                  <div className="space-y-1 text-sm text-zinc-700">
-                    <p>
-                      {t("Company")}:{" "}
-                      <span className="font-medium">
-                        {ctx.billing.company_name || ctx.billing.company}
-                      </span>
-                      {ctx.billing.credit_allowed ? (
-                        <span className="ml-2 rounded-full bg-sky-50 px-2 py-0.5 text-xs font-medium text-sky-800">
-                          {t("Credit allowed")}
-                        </span>
-                      ) : null}
-                    </p>
-                    {ctx.billing.rules.length ? (
-                      <ul className="mt-1 space-y-0.5 text-xs text-zinc-600">
-                        {ctx.billing.rules.map((rule) => (
-                          <li key={rule.charge_type}>
-                            {t(rule.charge_type)} → {t(rule.pay_by)}
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p className="text-xs text-zinc-500">
-                        {t("No charge-type rules — confirm bill-to with the guest.")}
-                      </p>
-                    )}
-                    <p className="text-xs text-zinc-500">
-                      {t("Alcohol always bills the guest.")}
-                    </p>
-                  </div>
-                ) : (
-                  <p className="text-sm text-zinc-600">
-                    {t("Guest pays the bill (no company on this stay).")}
+                {ctx.totals.to_city_ledger > EPS && (
+                  <p className="mt-2 text-xs text-sky-800">
+                    {t("{amount} is billed to the company.", { amount: fmt(ctx.totals.to_city_ledger) })}
                   </p>
                 )}
-              </section>
+              </Section>
+
+              {ctx.pending_bills.length > 0 && (
+                <Section title={t("Bills not on the folio yet")} tone="warn">
+                  <ul className="space-y-3 text-sm">
+                    {ctx.pending_bills.map((b) => (
+                      <li key={b.name} className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        <span>
+                          <span className="font-medium">{b.label}</span>{" "}
+                          <span className="text-zinc-500">· {b.name} · {t(b.status)}</span>
+                          {b.complimentary ? (
+                            <span className="ms-1 text-xs text-zinc-500">({t("complimentary")})</span>
+                          ) : null}
+                          <span className="ms-2 font-medium tabular-nums">{fmt(b.amount)}</span>
+                        </span>
+                        <span className="flex flex-wrap items-center gap-2">
+                          {b.can_post_to_room ? (
+                            <Button variant="outline" disabled={busy} onClick={() => void postToRoom(b)}>
+                              {t("Post to room")}
+                            </Button>
+                          ) : (
+                            <span className="text-xs text-zinc-500">{t("Not ready to deliver yet")}</span>
+                          )}
+                          {b.pay_modes.length > 0 && (
+                            <>
+                              <select
+                                aria-label={t("Payment mode")}
+                                className="rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-sm"
+                                value={outletModes[b.name] || b.pay_modes[0]}
+                                onChange={(e) => setOutletModes((m) => ({ ...m, [b.name]: e.target.value }))}
+                              >
+                                {b.pay_modes.map((m) => <option key={m} value={m}>{t(m)}</option>)}
+                              </select>
+                              <Button variant="ghost" disabled={busy} onClick={() => void payAtOutlet(b)}>
+                                {t("Settle separately")}
+                              </Button>
+                            </>
+                          )}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </Section>
+              )}
 
               {GROUP_ORDER.filter((g) => ctx.groups[g]).map((g) => {
                 const grp = ctx.groups[g]
                 return (
-                  <section
-                    key={g}
-                    className="rounded-xl border border-zinc-200 p-4"
-                  >
-                    <div className="mb-2 flex items-center justify-between">
-                      <h3 className="text-sm font-semibold text-zinc-800">
-                        {t(g)}
-                      </h3>
-                      <span className="text-sm font-medium tabular-nums">
-                        {fmt(grp.amount, symbol)}
-                      </span>
-                    </div>
+                  <Section key={g} title={`${t(g)} · ${fmt(grp.amount)}`}>
                     <ul className="divide-y divide-zinc-100 text-sm">
                       {grp.lines.map((line) => (
-                        <li
-                          key={line.name}
-                          className="flex items-start justify-between gap-3 py-1.5"
-                        >
-                          <span className="text-zinc-700">
-                            <span className="font-medium">
-                              {t(line.charge_type)}
-                            </span>
-                            {line.description ? (
-                              <span className="text-zinc-500">
-                                {" "}
-                                — {line.description}
-                              </span>
-                            ) : null}
+                        <li key={line.name} className="flex items-start justify-between gap-3 py-1.5">
+                          <span className="min-w-0 text-zinc-700">
+                            <span className="font-medium">{t(line.charge_type)}</span>
+                            {line.description ? <span className="text-zinc-500">: {line.description}</span> : null}
                             {line.is_alcohol ? (
-                              <span className="ml-1 text-[10px] font-semibold uppercase text-rose-600">
-                                {t("Guest only")}
-                              </span>
+                              <span className="ms-1 text-[10px] font-semibold uppercase text-rose-600">{t("Guest only")}</span>
                             ) : null}
-                            <span className="ml-1 text-xs text-zinc-400">
-                              ({line.folio_type})
-                            </span>
+                            <span className="ms-1 text-xs text-zinc-400">({t(line.folio_type)})</span>
                           </span>
                           <span className="shrink-0 tabular-nums text-zinc-800">
-                            {fmt(line.amount + line.gst_amount, symbol)}
+                            {fmt(line.amount + line.gst_amount)}
                           </span>
                         </li>
                       ))}
                     </ul>
-                  </section>
+                  </Section>
                 )
               })}
 
-              {ctx.folios.map((f) => (
-                <div
-                  key={f.name}
-                  className="flex items-center justify-between text-xs text-zinc-500"
-                >
-                  <span>
-                    {t("{type} folio", { type: t(f.folio_type) })} · {f.name}
-                  </span>
-                  <a
-                    href={toFullPath(`/billing/${encodeURIComponent(f.name)}`)}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1 font-medium text-brand-700 hover:underline"
-                  >
-                    {t("Open folio")}
-                    <ExternalLink className="size-3" aria-hidden />
-                  </a>
-                </div>
-              ))}
+              <ul className="space-y-1 text-xs text-zinc-500">
+                {ctx.folios.map((f) => (
+                  <li key={f.folio} className="flex flex-wrap items-center justify-between gap-2">
+                    <span>
+                      {t("{type} folio", { type: t(f.folio_type) })} · {f.folio}
+                      {f.invoice_number ? ` · ${f.invoice_number}` : ""} · {t("Balance")} {fmt(f.balance)}
+                    </span>
+                    <a href={folioLink(f.folio)} target="_blank" rel="noreferrer"
+                      className="inline-flex items-center gap-1 font-medium text-brand-700 hover:underline">
+                      {t("Open folio")}
+                      <ExternalLink className="size-3" aria-hidden />
+                    </a>
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
 
-          {step === "settle" && (
+          {current === "late" && ctx.late_checkout && (
             <div className="space-y-4">
-              {ctx.blockers.length > 0 && (
-                <ul className="space-y-1 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">
-                  {ctx.blockers.map((b) => (
-                    <li key={b.code}>{b.message}</li>
-                  ))}
-                </ul>
+              <Section title={t("Late check-out")} tone="warn">
+                <p className="text-sm text-zinc-700">
+                  {t("Check-out time is {time}; it is now {now}.", {
+                    time: ctx.late_checkout.checkout_time, now: ctx.late_checkout.now,
+                  })}{" "}
+                  {ctx.late_checkout.already_charged
+                    ? t("A late check-out charge is already on the bill.")
+                    : t("Add the late check-out fee your property charges, or skip to waive it.")}
+                </p>
+                {!ctx.late_checkout.already_charged && (ctx.late_checkout.folio ? (
+                  <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                    <label className="block text-xs">
+                      <span className="mb-1 block text-zinc-500">{t("Amount")}</span>
+                      <input className={inputCls} type="number" min="0" inputMode="decimal"
+                        value={lateAmt} onChange={(e) => setLateAmt(e.target.value)} />
+                    </label>
+                    <label className="block text-xs">
+                      <span className="mb-1 block text-zinc-500">{t("Tax rate")}</span>
+                      <select className={inputCls} value={lateRate} onChange={(e) => setLateRate(e.target.value)}>
+                        {Array.from(new Set([...(loc.tax_rates ?? []), ctx.late_checkout.tax_rate])).map((n) => (
+                          <option key={n} value={String(n)}>{n}%</option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="block text-xs">
+                      <span className="mb-1 block text-zinc-500">{t("Description")}</span>
+                      <input className={inputCls} value={lateDesc} onChange={(e) => setLateDesc(e.target.value)} />
+                    </label>
+                    <div className="sm:col-span-3">
+                      <Button disabled={busy || !(Number(lateAmt) > 0)} onClick={() => void addLateFee()}>
+                        {t("Add late check-out fee")}
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="mt-2 text-sm text-rose-700">
+                    {t("The guest folio is closed, so a charge can't be added here. Open the folio.")}
+                  </p>
+                ))}
+              </Section>
+            </div>
+          )}
+
+          {current === "company" && (
+            <div className="space-y-4">
+              <Problems items={blockersFor("company")} />
+              <Section title={t("What the company pays")} tone="info">
+                {ctx.city_ledger.length ? (
+                  <ul className="space-y-1 text-sm text-sky-900">
+                    {ctx.city_ledger.map((c) => (
+                      <li key={c.folio} className="flex flex-wrap justify-between gap-2">
+                        <span>{t("{type} folio", { type: t("Company") })} · {c.folio} → {c.company_name}</span>
+                        <span className="font-medium tabular-nums">{fmt(c.amount)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-zinc-600">{t("Nothing moves to the company's account.")}</p>
+                )}
+                {ctx.billing.rules.length > 0 && (
+                  <ul className="mt-2 space-y-0.5 text-xs text-zinc-600">
+                    {ctx.billing.rules.map((rule) => (
+                      <li key={rule.charge_type}>{t(rule.charge_type)}: {t(rule.pay_by)}</li>
+                    ))}
+                  </ul>
+                )}
+                <p className="mt-2 text-xs text-zinc-500">
+                  {t("At check-out this moves to the company's account (city ledger). Alcohol always stays with the guest.")}
+                </p>
+              </Section>
+              {credit && !credit.ok && (
+                <Section title={creditBlocked ? t("Company credit is blocked") : t("Company credit warning")} tone="warn">
+                  <ul className="list-disc space-y-1 ps-5 text-sm text-zinc-700">
+                    {credit.checks.filter((c) => !c.ok).flatMap((c) =>
+                      c.reasons.map((reason) => <li key={c.company + reason}>{reason}</li>))}
+                  </ul>
+                  {creditBlocked && credit.can_override && (
+                    <label className="mt-3 block">
+                      <span className="mb-1 block text-sm text-zinc-600">
+                        {t("Reason for the override (logged with your name)")}
+                      </span>
+                      <textarea className={inputCls} rows={3} maxLength={500} value={override}
+                        onChange={(e) => setOverride(e.target.value)} />
+                    </label>
+                  )}
+                  {creditBlocked && !credit.can_override && (
+                    <p className="mt-2 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-800">
+                      {t("Ask Finance or a Hotel Admin to override it, take payment from the guest, or have the company settle its account first.")}
+                    </p>
+                  )}
+                </Section>
               )}
-              {!ctx.blockers.length && (
+              <label className="flex items-start gap-2 text-sm text-zinc-800">
+                <input type="checkbox" className="mt-0.5 size-4 accent-brand-600" checked={companyOk}
+                  onChange={(e) => setCompanyOk(e.target.checked)} />
+                {t("I confirmed with the guest that the company pays this part of the bill.")}
+              </label>
+            </div>
+          )}
+
+          {current === "settle" && (
+            <div className="space-y-4">
+              <Problems items={settleProblems} folioLink={folioLink} />
+              {settleDone && (
                 <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
-                  <Check className="mr-1 inline size-4" aria-hidden />
-                  {t("Balances are clear — you can continue.")}
+                  <Check className="me-1 inline size-4" aria-hidden />
+                  {t("The guest's bill is settled.")}
                 </p>
               )}
 
-              {(ctx.actions.can_collect || ctx.totals.owed > 0.009) && (
-                <section className="rounded-xl border border-zinc-200 p-4">
-                  <h3 className="mb-2 text-sm font-semibold text-zinc-800">
-                    {t("Collect payment")}
-                  </h3>
+              {ctx.collect.length > 0 && (
+                <Section title={t("The guest owes {amount}", { amount: fmt(collectTotal) })}>
+                  <ul className="mb-3 space-y-1 text-sm text-zinc-700">
+                    {ctx.collect.map((c) => (
+                      <li key={c.folio} className="flex justify-between gap-2">
+                        <span>{t("{type} folio", { type: t(c.folio_type) })} · {c.folio}</span>
+                        <span className="font-medium tabular-nums">{fmt(c.amount)}</span>
+                      </li>
+                    ))}
+                  </ul>
                   <div className="grid gap-2 sm:grid-cols-2">
                     <label className="block text-xs">
-                      <span className="mb-1 block text-zinc-500">{t("Folio")}</span>
-                      <select
-                        className={inputCls}
-                        value={payFolio}
-                        onChange={(e) => setPayFolio(e.target.value)}
-                      >
-                        {ctx.folios.map((f) => (
-                          <option key={f.name} value={f.name}>
-                            {f.folio_type} · {fmt(f.balance, symbol)}
-                          </option>
-                        ))}
+                      <span className="mb-1 block text-zinc-500">{t("Payment mode")}</span>
+                      <select className={inputCls} value={payMode} onChange={(e) => setPayMode(e.target.value)}>
+                        {ctx.payment_modes.map((m) => <option key={m} value={m}>{t(m)}</option>)}
                       </select>
                     </label>
                     <label className="block text-xs">
-                      <span className="mb-1 block text-zinc-500">{t("Mode")}</span>
-                      <select
-                        className={inputCls}
-                        value={payMode}
-                        onChange={(e) => setPayMode(e.target.value)}
-                      >
-                        {loc.payment_modes.map((m) => (
-                          <option key={m} value={m}>
-                            {t(m)}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    <label className="block text-xs">
-                      <span className="mb-1 block text-zinc-500">{t("Amount")}</span>
-                      <input
-                        className={inputCls}
-                        type="number"
-                        value={payAmount}
-                        onChange={(e) => setPayAmount(e.target.value)}
-                      />
-                    </label>
-                    <label className="block text-xs">
-                      <span className="mb-1 block text-zinc-500">
-                        {t("Reference (optional)")}
-                      </span>
-                      <input
-                        className={inputCls}
-                        value={payRef}
-                        onChange={(e) => setPayRef(e.target.value)}
-                      />
+                      <span className="mb-1 block text-zinc-500">{t("Reference (optional)")}</span>
+                      <input className={inputCls} value={payRef} onChange={(e) => setPayRef(e.target.value)} />
                     </label>
                   </div>
-                  <Button
-                    className="mt-3"
-                    disabled={busy || !payAmount || !payFolio}
-                    onClick={collectPayment}
-                  >
-                    {t("Record payment")}
+                  <Button className="mt-3 w-full sm:w-auto" disabled={busy || !ctx.till_open} onClick={() => void collect()}>
+                    {t("Collect {amount}", { amount: fmt(collectTotal) })}
                   </Button>
-                </section>
+                </Section>
               )}
 
-              {ctx.actions.can_city_ledger && (
-                <section className="rounded-xl border border-sky-200 bg-sky-50/50 p-4">
-                  <h3 className="mb-1 text-sm font-semibold text-sky-900">
-                    {t("City ledger")}
-                  </h3>
-                  <p className="mb-3 text-sm text-sky-800">
-                    {t(
-                      "{amount} can move to {company}'s city ledger (credit allowed).",
-                      {
-                        amount: fmt(ctx.totals.city_ledger_eligible, symbol),
-                        company:
-                          ctx.billing.company_name || ctx.billing.company || "",
-                      },
-                    )}
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {ctx.folios
-                      .filter((f) => f.can_city_ledger)
-                      .map((f) => (
-                        <Button
-                          key={f.name}
-                          variant="outline"
-                          disabled={busy}
-                          onClick={() => sendCityLedger(f.name)}
+              {ctx.refunds.length > 0 && (
+                <Section title={t("The guest is owed {amount}", { amount: fmt(refundTotal) })}>
+                  <ul className="mb-3 space-y-2 text-sm text-zinc-700">
+                    {ctx.refunds.map((rf) => (
+                      <li key={rf.kind + rf.folio} className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        <span>
+                          {rf.source === "security_deposit"
+                            ? t("Security deposit held")
+                            : t("Paid more than the bill")}
+                          <span className="ms-2 font-medium tabular-nums">{fmt(rf.amount)}</span>
+                        </span>
+                        <select
+                          aria-label={t("Refund by")}
+                          className="rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-sm"
+                          value={refundModes[rf.kind + rf.folio] || rf.mode}
+                          onChange={(e) => setRefundModes((m) => ({ ...m, [rf.kind + rf.folio]: e.target.value }))}
                         >
-                          {t("Transfer {type}", { type: t(f.folio_type) })}
-                        </Button>
-                      ))}
-                  </div>
-                </section>
+                          {ctx.payment_modes.map((m) => <option key={m} value={m}>{t(m)}</option>)}
+                        </select>
+                      </li>
+                    ))}
+                  </ul>
+                  <label className="block text-xs">
+                    <span className="mb-1 block text-zinc-500">{t("Reason (required, goes on the record)")}</span>
+                    <input className={inputCls} value={refundReason} onChange={(e) => setRefundReason(e.target.value)} />
+                  </label>
+                  <Button className="mt-3 w-full sm:w-auto" disabled={busy || !ctx.till_open || !refundReason.trim()}
+                    onClick={() => void refund()}>
+                    {t("Refund {amount}", { amount: fmt(refundTotal) })}
+                  </Button>
+                </Section>
               )}
 
-              {ctx.deposit && (
-                <section className="rounded-xl border border-zinc-200 p-4">
-                  <h3 className="mb-1 text-sm font-semibold text-zinc-800">
-                    {t("Security deposit")}
-                  </h3>
-                  <p className="text-sm text-zinc-600">
-                    {t("Status")}: {t(ctx.deposit.status)} ·{" "}
-                    {t("Held {held}, refundable {bal}", {
-                      held: fmt(ctx.deposit.collected_amount, symbol),
-                      bal: fmt(ctx.deposit.balance, symbol),
+              {ctx.deposit && ctx.deposit.held > EPS && ctx.actions.can_withhold_deposit && (
+                <Section title={t("Damage to the room?")}>
+                  <p className="mb-2 text-xs text-zinc-500">
+                    {t("Keep part of the security deposit ({held} held) against damage before refunding the rest.", {
+                      held: fmt(ctx.deposit.held),
                     })}
                   </p>
-                  {ctx.actions.can_withhold_deposit && (
-                    <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                      <input
-                        className={inputCls}
-                        type="number"
-                        placeholder={t("Withhold amount")}
-                        value={withholdAmt}
-                        onChange={(e) => setWithholdAmt(e.target.value)}
-                      />
-                      <input
-                        className={inputCls}
-                        placeholder={t("Damage reason")}
-                        value={withholdReason}
-                        onChange={(e) => setWithholdReason(e.target.value)}
-                      />
-                      <Button
-                        variant="outline"
-                        disabled={busy || !withholdAmt || !withholdReason.trim()}
-                        onClick={withholdDeposit}
-                      >
-                        {t("Withhold for damage")}
-                      </Button>
-                    </div>
-                  )}
-                  {ctx.actions.can_refund_deposit && (
-                    <Button
-                      className="mt-3"
-                      variant="outline"
-                      disabled={busy}
-                      onClick={refundDeposit}
-                    >
-                      {t("Refund deposit {amount}", {
-                        amount: fmt(ctx.deposit.balance, symbol),
-                      })}
-                    </Button>
-                  )}
-                </section>
+                  <div className="grid gap-2 sm:grid-cols-3">
+                    <input className={inputCls} type="number" min="0" inputMode="decimal"
+                      placeholder={t("Amount")} value={withholdAmt}
+                      onChange={(e) => setWithholdAmt(e.target.value)} />
+                    <input className={cn(inputCls, "sm:col-span-2")} placeholder={t("What was damaged")}
+                      value={withholdReason} onChange={(e) => setWithholdReason(e.target.value)} />
+                  </div>
+                  <Button className="mt-2" variant="outline"
+                    disabled={busy || !(Number(withholdAmt) > 0) || !withholdReason.trim()}
+                    onClick={() => void withhold()}>
+                    {t("Withhold for damage")}
+                  </Button>
+                </Section>
               )}
 
               <p className="text-xs text-zinc-500">
-                {t(
-                  "For splits, allowances, or complex adjustments, open the folio — then come back here.",
-                )}{" "}
+                {t("Anything unusual (a split, an allowance, a correction)? Open the folio, then come back here.")}{" "}
                 {ctx.folios[0] && (
-                  <a
-                    href={toFullPath(
-                      `/billing/${encodeURIComponent(ctx.folios[0].name)}`,
-                    )}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="font-medium text-brand-700 hover:underline"
-                  >
+                  <a href={folioLink(ctx.folios[0].folio)} target="_blank" rel="noreferrer"
+                    className="font-medium text-brand-700 hover:underline">
                     {t("Open folio")}
                   </a>
                 )}
               </p>
-
-              <Button variant="outline" disabled={busy} onClick={load}>
-                {t("Refresh balances")}
-              </Button>
             </div>
           )}
 
-          {step === "guest" && (
+          {current === "guest" && (
             <div className="space-y-3">
               <p className="text-sm text-zinc-600">
-                {t(
-                  "Walk these guest-facing steps. Tick each one as you go — they are your property's checkout SOP.",
-                )}
+                {t("Your property's check-out routine. Tick each one as you go.")}
               </p>
-              {(guestSteps.length
-                ? guestSteps
-                : ctx.sop.steps.filter((s) =>
-                    ["ask_feedback", "farewell", "verify_restaurant", "confirm_discounts", "confirm_bill_to"].includes(
-                      s.step_key,
-                    ),
-                  )
-              ).map((s) => {
-                const done = confirmedSteps[s.step_key] || s.state === "done"
+              {guestSteps.map((s) => {
+                const done = ticked[s.step_key] || s.state === "done"
                 return (
-                  <button
-                    key={s.step_key || s.title}
-                    type="button"
-                    onClick={() =>
-                      setConfirmedSteps((prev) => ({
-                        ...prev,
-                        [s.step_key]: !prev[s.step_key],
-                      }))
-                    }
+                  <button key={s.step_key || s.title} type="button"
+                    onClick={() => setTicked((p) => ({ ...p, [s.step_key]: !p[s.step_key] }))}
                     className={cn(
-                      "flex w-full items-start gap-3 rounded-xl border p-3 text-left transition",
-                      done
-                        ? "border-emerald-200 bg-emerald-50/60"
-                        : "border-zinc-200 hover:border-brand-300",
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        "mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full border",
-                        done
-                          ? "border-emerald-500 bg-emerald-500 text-white"
-                          : "border-zinc-300",
-                      )}
-                    >
+                      "flex w-full items-start gap-3 rounded-xl border p-3 text-start",
+                      done ? "border-emerald-200 bg-emerald-50/60" : "border-zinc-200 hover:border-brand-300",
+                    )}>
+                    <span className={cn(
+                      "mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full border",
+                      done ? "border-emerald-500 bg-emerald-500 text-white" : "border-zinc-300",
+                    )}>
                       {done ? <Check className="size-3" aria-hidden /> : null}
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className="flex flex-wrap items-center gap-2">
-                        <span className="text-sm font-semibold text-zinc-800">
-                          {t(s.title)}
-                        </span>
-                        <StateChip state={s.state} />
+                      <span className="block text-sm font-semibold text-zinc-800">{t(s.title)}</span>
+                      <span className="mt-1 block text-sm text-zinc-600">
+                        {s.prompt_to_guest ? `"${t(s.prompt_to_guest)}"` : s.tip || t(s.instruction)}
                       </span>
-                      {s.prompt_to_guest ? (
-                        <span className="mt-1 block text-sm italic text-zinc-600">
-                          “{s.prompt_to_guest}”
-                        </span>
-                      ) : (
-                        <span className="mt-1 block text-sm text-zinc-600">
-                          {s.tip || s.instruction}
-                        </span>
-                      )}
                     </span>
                   </button>
                 )
@@ -888,103 +896,114 @@ export default function CheckOutDialog(props: {
             </div>
           )}
 
-          {step === "confirm" && (
+          {current === "confirm" && (
             <div className="space-y-4">
-              <section className="rounded-xl border border-zinc-200 p-4">
-                <h3 className="mb-2 text-sm font-semibold text-zinc-800">
-                  {t("Ready to check out")}
-                </h3>
+              <Problems items={ctx.blockers.filter((b) => !["owed", "refund", "credit_blocked"].includes(b.code))}
+                folioLink={folioLink} />
+              <Section title={t("Ready to check out")}>
                 <ul className="space-y-1 text-sm text-zinc-700">
                   <li>
                     {r.guest_name}
-                    {r.room_number
-                      ? ` · ${t("Room {n}", { n: r.room_number })}`
-                      : ""}
+                    {r.room_number ? ` · ${t("Room {n}", { n: r.room_number })}` : ""}
                   </li>
-                  <li>
-                    {t("Balance")}: {fmt(ctx.totals.balance, symbol)}
-                  </li>
-                  {ctx.actions.can_city_ledger && (
+                  <li>{t("Guest's balance")}: {fmt(ctx.totals.owed - ctx.totals.refund_due)}</li>
+                  {ctx.totals.to_city_ledger > EPS && (
                     <li className="text-sky-800">
-                      {t(
-                        "Remaining {amount} will move to the city ledger on confirm.",
-                        {
-                          amount: fmt(ctx.totals.city_ledger_eligible, symbol),
-                        },
-                      )}
-                    </li>
-                  )}
-                  {ctx.deposit && ctx.deposit.balance > 0.009 && (
-                    <li className="text-amber-800">
-                      {t("Deposit still refundable: {amount}", {
-                        amount: fmt(ctx.deposit.balance, symbol),
-                      })}
+                      {t("{amount} moves to the company's account.", { amount: fmt(ctx.totals.to_city_ledger) })}
                     </li>
                   )}
                 </ul>
-              </section>
-              {(ctx.companions?.length ?? 0) > 0 && (
-                <section className="rounded-xl border border-amber-200 bg-amber-50/60 p-4">
-                  <h3 className="mb-2 text-sm font-semibold text-amber-900">
-                    {t("Other guests still in-house on this group")}
-                  </h3>
+              </Section>
+              {!ctx.settled && (
+                <p className="text-sm text-rose-700">{t("Settle the guest's bill first (Payment step).")}</p>
+              )}
+              {ctx.companions.length > 0 && (
+                <Section title={t("Others from this group still in house")} tone="warn">
                   <p className="mb-2 text-xs text-amber-800">
-                    {t(
-                      "This checks out only {name}. Open each guest below when they are ready.",
-                      { name: r.guest_name },
-                    )}
+                    {t("This checks out {name} only. Check out the others one at a time when they leave.", { name: r.guest_name })}
                   </p>
-                  <ul className="space-y-1.5 text-sm text-amber-950">
-                    {ctx.companions!.map((c) => (
+                  <ul className="space-y-1.5 text-sm">
+                    {ctx.companions.map((c) => (
                       <li key={c.name} className="flex items-center justify-between gap-2">
                         <span>
                           {c.guest_name}
-                          {c.room_number
-                            ? ` · ${t("Room {n}", { n: c.room_number })}`
-                            : ""}
+                          {c.room_number ? ` · ${t("Room {n}", { n: c.room_number })}` : ""}
                         </span>
-                        <button
-                          type="button"
-                          className="shrink-0 text-sm font-medium text-brand-700 hover:underline"
-                          onClick={() => {
-                            if (props.onOpenReservation) {
-                              props.onOpenReservation(c.name)
-                            }
-                          }}
-                        >
-                          {t("Check out")}
-                        </button>
+                        {props.onOpenReservation && (
+                          <button type="button" className="text-sm font-medium text-brand-700 hover:underline"
+                            onClick={() => props.onOpenReservation?.(c.name)}>
+                            {t("Check out")}
+                          </button>
+                        )}
                       </li>
                     ))}
                   </ul>
-                </section>
+                </Section>
               )}
-              {needsCreditOverride && (
-                <label className="block">
-                  <span className="mb-1 block text-sm text-zinc-600">
-                    {t("Reason for company credit override (logged with your name)")}
-                  </span>
-                  <textarea
-                    className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm"
-                    rows={3}
-                    maxLength={500}
-                    value={creditOverride}
-                    onChange={(e) => setCreditOverride(e.target.value)}
-                    autoFocus
-                  />
-                </label>
-              )}
-              {blockingUnresolved ? (
-                <p className="text-sm text-rose-700">
-                  {t("Resolve outstanding balances before confirming check-out.")}
+              <p className="text-xs text-zinc-500">
+                {t("Checking out frees the room for housekeeping and records who checked the guest out.")}
+              </p>
+            </div>
+          )}
+
+          {current === "invoice" && (
+            <div className="space-y-4">
+              {checkedOut ? (
+                <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+                  <Check className="me-1 inline size-4" aria-hidden />
+                  {t("{name} is checked out.", { name: r.guest_name })}
                 </p>
               ) : (
-                <p className="text-sm text-emerald-700">
-                  {t(
-                    "Confirming marks the stay Checked Out, dirties the room, and queues a checkout clean.",
-                  )}
-                </p>
+                <p className="text-sm text-zinc-600">{t("Invoices are issued once the guest is checked out.")}</p>
               )}
+              {creditWarnings.length > 0 && (
+                <Section title={t("Checked out with a company credit warning")} tone="warn">
+                  <ul className="list-disc ps-5 text-sm">{creditWarnings.map((w) => <li key={w}>{w}</li>)}</ul>
+                </Section>
+              )}
+              {checkedOut && (() => {
+                const own = ctx.folios.filter((f) => f.side !== "group")
+                const ready = own.filter((f) => f.status === "Open" && f.has_charges && Math.abs(f.balance) <= EPS)
+                return (
+                  <Section title={t("Invoices")}>
+                    <ul className="divide-y divide-zinc-100 text-sm">
+                      {own.map((f) => (
+                        <li key={f.folio} className="flex flex-col gap-2 py-2 sm:flex-row sm:items-center sm:justify-between">
+                          <span>
+                            {t("{type} folio", { type: t(f.folio_type) })} · {f.folio}
+                            {f.invoice_number ? (
+                              <span className="ms-2 font-medium text-emerald-700">{f.invoice_number}</span>
+                            ) : null}
+                          </span>
+                          {f.status === "Closed" ? (
+                            <a href={folioLink(f.folio)} target="_blank" rel="noreferrer"
+                              className="inline-flex items-center gap-1 font-medium text-brand-700 hover:underline">
+                              <Printer className="size-4" aria-hidden />
+                              {t("View or print")}
+                            </a>
+                          ) : !f.has_charges ? (
+                            <span className="text-xs text-zinc-500">{t("Nothing to invoice")}</span>
+                          ) : Math.abs(f.balance) > EPS ? (
+                            <a href={folioLink(f.folio)} target="_blank" rel="noreferrer"
+                              className="text-xs font-medium text-rose-700 underline">
+                              {t("Has a balance of {amount}: open the folio", { amount: fmt(f.balance) })}
+                            </a>
+                          ) : (
+                            <Button variant="outline" disabled={busy} onClick={() => void invoice([f.folio])}>
+                              {t("Close and generate invoice")}
+                            </Button>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                    {ready.length > 1 && (
+                      <Button className="mt-3" disabled={busy} onClick={() => void invoice(ready.map((f) => f.folio))}>
+                        {t("Generate all invoices")}
+                      </Button>
+                    )}
+                  </Section>
+                )
+              })()}
             </div>
           )}
         </div>

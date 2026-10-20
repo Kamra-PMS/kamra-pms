@@ -4,8 +4,8 @@ outline: 2
 
 # REST API reference
 
-Every endpoint below is a whitelisted function - the same governed layer
-the UI and the AI use. **351 endpoints**, generated from the source
+Every endpoint below is a whitelisted function — the same governed layer
+the UI and the AI use. **361 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -20,7 +20,7 @@ Content-Type: application/json
   dedicated agent user for services.
 - Responses: `{"message": <return value>}`. Errors are HTTP 4xx with a
   readable reason.
-- **Try it in Postman:** [download the collection](https://kamrapms.com/docs/kamra.postman_collection.json),
+- **Try it in Postman:** [download the collection](/kamra.postman_collection.json),
   set `base_url`, `api_key` and `api_secret` collection variables, go.
 - Endpoints marked **public** are `allow_guest` (no token; rate-limited).
 
@@ -1138,6 +1138,7 @@ booking, not a walk-in.
 | `check_in_time` | no | `None` |
 | `check_out_time` | no | `None` |
 | `blacklist_override_reason` | no | `None` |
+| `credit_override_reason` | no | `None` |
 
 ### `kamra.api.upload_occupant_id`
 
@@ -1208,13 +1209,41 @@ Everything the printable cancellation confirmation needs.
 | --- | --- | --- |
 | `reservation` | yes |  |
 
-### `kamra.api.check_out`
+### `kamra.api.checkout_context`
 
-**GET/POST** · roles: `Front Desk`, `Night Auditor`, `Kamra Agent`
+**GET/POST** · roles: `Front Desk`, `Finance`, `Night Auditor`, `Kamra Agent`
+
+Everything the guided check-out needs in one round trip, without
+changing anything: each folio with its lines and invoice, as it will
+stand once check-out posts the remaining nights (worked out inside a
+savepoint that is always rolled back), bills not on the folio yet (open
+restaurant orders, laundry), a late check-out, what the guest owes
+(`collect`) or is owed (`refunds`: a held security deposit first, through
+its own refund path), what moves to the city ledger and its credit
+check, whether a cashier PIN and an open till are needed, every refusal
+check-out would give (`blockers`, each tied to its step) and the
+property's check-out SOP. check_out judges the balances with the same
+helper (kamra.checkout.settlement_position), so the two never disagree.
+Safe to call again and again: opening the sheet writes nothing.
 
 | Param | Required | Default |
 | --- | --- | --- |
 | `reservation` | yes |  |
+
+### `kamra.api.check_out`
+
+**GET/POST** · roles: `Front Desk`, `Night Auditor`, `Kamra Agent`
+
+Check a guest out. What the company pays moves to the city ledger,
+after the property's credit control: a warning comes back in
+`credit_warnings`; a block refuses (CREDIT_BLOCKED) unless Finance or a
+Hotel Admin passes `credit_override_reason` (logged). Agents can't
+override.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `reservation` | yes |  |
+| `credit_override_reason` | no | `None` |
 
 ### `kamra.api.set_housekeeping_status`
 
@@ -1534,6 +1563,11 @@ by the quote engine (one billable date). check_in_time / check_out_time
 housekeeping when the room turns; on an overnight stay they are the
 ETA / ETD.
 
+A stay billed to a company on credit runs the property's credit control
+(kamra.credit) for its amount: a warning comes back as `credit_warning`;
+a block refuses (CREDIT_BLOCKED) unless Finance or a Hotel Admin passes
+`credit_override_reason`, which is logged. Agents can't override.
+
 | Param | Required | Default |
 | --- | --- | --- |
 | `property` | yes |  |
@@ -1574,6 +1608,7 @@ ETA / ETD.
 | `check_out_time` | no | `None` |
 | `blacklist_override_reason` | no | `None` |
 | `pets` | no | `0` |
+| `credit_override_reason` | no | `None` |
 
 ### `kamra.api.waitlist`
 
@@ -1720,7 +1755,7 @@ signed-in user have one set yet? Includes unlock / lockout state.
 **POST** · roles: `Finance`, `Front Desk`, `Revenue Manager`, `Housekeeping`
 
 Set or change your own cashier PIN (4-8 digits). Changing an existing
-PIN needs the current one - unless must_reset was set by an admin.
+PIN needs the current one — unless must_reset was set by an admin.
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -4022,11 +4057,17 @@ Four-ledger trial balance for a property (optionally as-of a date).
 
 **POST** · roles: `Finance`, `Front Desk`, `Kamra Agent`
 
+Move a folio's unpaid balance to the company's city ledger. Runs the
+property's credit control: over the credit limit or with overdue bills
+it warns, or refuses (CREDIT_BLOCKED) unless Finance or a Hotel Admin
+passes `credit_override_reason`. Agents can't override.
+
 | Param | Required | Default |
 | --- | --- | --- |
 | `folio` | yes |  |
 | `company` | no | `None` |
 | `pin` | no | `None` |
+| `credit_override_reason` | no | `None` |
 
 ### `kamra.ledger.city_ledger_settle`
 
@@ -4049,6 +4090,10 @@ bill.
 ### `kamra.ledger.city_ledger_aging`
 
 **GET/POST** · roles: `Finance`, `Hotel Admin`, `Front Desk`, `Night Auditor`, `Kamra Agent`
+
+Every company's AR at the property, aged by due date (not_due,
+d1_30, d31_60, d61_90, d90p and their sum `overdue`). The invoice-age
+keys (current, b30, b60, b90, b90p) are kept for older callers.
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -4231,6 +4276,71 @@ Quick-checkout every Checked In reservation on a group.
 | `category` | no | `None` |
 
 
+## Company credit (payment terms, credit limit, overdue check)
+
+> Credit control is enforced inside check_out, create_booking and city_ledger_transfer; these endpoints explain and configure it.
+
+### `kamra.credit.company_credit_status`
+
+**GET/POST** · roles: `Front Desk`, `Finance`, `Hotel Admin`, `Night Auditor`, `Revenue Manager`, `Kamra Agent`
+
+The credit check for billing `amount` more to a company, without
+doing anything: what the booking dialog shows before a company stay is
+booked. `applies` is False for a company not on credit.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `company` | yes |  |
+| `property` | yes |  |
+| `amount` | no | `0` |
+
+### `kamra.credit.checkout_credit_preview`
+
+**GET/POST** · roles: `Front Desk`, `Finance`, `Hotel Admin`, `Night Auditor`, `Kamra Agent`
+
+Before check-out: the credit check for each company the stay's bills
+would move to, so the desk can warn, or ask Finance / a Hotel Admin to
+override a block. Check-out re-runs the same check itself.
+
+Check-out first posts any night not yet on the folio, so the preview
+does the same inside a savepoint it rolls back - the amounts match
+what check-out will move, and nothing is written.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `reservation` | yes |  |
+
+### `kamra.credit.company_credit_terms`
+
+**GET/POST** · roles: `Front Desk`, `Finance`, `Hotel Admin`, `Revenue Manager`
+
+A company's credit terms at one property: limit, credit days and
+what it owes (for the corporate account editor).
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `company` | yes |  |
+| `property` | yes |  |
+
+### `kamra.credit.set_company_credit_terms`
+
+**POST** · roles: `Finance`, `Hotel Admin`
+
+Set a company's credit limit (0 = no limit) and payment terms at one
+property: `use_default_credit_days` 1 follows the property's default
+payment terms; 0 uses `credit_days` as given (0 = due on the invoice
+date). Creates its city ledger account if it has none. Logged with
+before / after.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `company` | yes |  |
+| `property` | yes |  |
+| `credit_limit` | no | `None` |
+| `credit_days` | no | `None` |
+| `use_default_credit_days` | no | `None` |
+
+
 ## Night audit (End of Day checklist, audit pack)
 
 ### `kamra.night_audit.night_audit_precheck`
@@ -4357,7 +4467,7 @@ actor_kind filters to "human" or "agent".
 
 **GET/POST** · roles: `Front Desk`, `Finance`, `Revenue Manager`, `Kamra Agent`
 
-Everything one ledger row knows - including the before/after
+Everything one ledger row knows — including the before/after
 snapshots that are too heavy for the feed.
 
 | Param | Required | Default |
@@ -4403,6 +4513,65 @@ Switch one module on or off for the property.
 | `property` | yes |  |
 | `module` | yes |  |
 | `enabled` | yes |  |
+
+
+## Desk procedures (check-out, check-in and other SOPs)
+
+### `kamra.sop.get_sop`
+
+**GET/POST** · roles: `Front Desk`, `Kamra Agent`, `Hotel Admin`
+
+Return evaluated SOP steps for a procedure.
+
+context is optional JSON (checkout_context shape for key=checkout). When
+omitted, steps return as todo with template tips only.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `key` | yes |  |
+| `context` | no | `None` |
+
+### `kamra.sop.list_sops`
+
+**GET/POST** · roles: `Hotel Admin`, `System Manager`, `Front Desk`, `Kamra Agent`
+
+List SOP templates for the settings editor.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+
+### `kamra.sop.get_sop_template`
+
+**GET/POST** · roles: `Hotel Admin`, `System Manager`
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `name` | yes |  |
+
+### `kamra.sop.save_sop_template`
+
+**POST** · roles: `Hotel Admin`, `System Manager`
+
+Create or update an SOP template and its steps.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `name` | no | `None` |
+| `property` | no | `None` |
+| `key` | no | `None` |
+| `title` | no | `None` |
+| `active` | no | `1` |
+| `steps` | no | `None` |
+
+### `kamra.sop.seed_sop_templates`
+
+**POST** · roles: `Hotel Admin`, `System Manager`
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
 
 
 ## Staff & access
@@ -4604,7 +4773,7 @@ company's. Tax is the hotel's rule for the charge type, not the POS's.
 
 **GET/POST**
 
-Entry point for /book - how many properties, sites, or listings to show.
+Entry point for /book — how many properties, sites, or listings to show.
 
 Several properties live: mode "properties" lists them, and the guest
 picks one - /book?property=&lt;slug> (or /stay/&lt;slug>) calls back with
@@ -4741,7 +4910,7 @@ pre-register, so the submit gate never mentions this.
 **GET/POST**
 
 Laundry price list + stay context for the in-stay guest page.
-Read-only - the guest sees what things cost, never a folio.
+Read-only — the guest sees what things cost, never a folio.
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -4752,7 +4921,7 @@ Read-only - the guest sees what things cost, never a folio.
 **POST**
 
 In-house guest asks housekeeping to pick their laundry up. Written on
-the guest's behalf by the governed agent - the guest never touches pricing
+the guest's behalf by the governed agent — the guest never touches pricing
 or the folio; staff count and price the bag at the door (status
 'Requested', exactly where a staff-logged pickup lands).
 
@@ -4849,7 +5018,7 @@ the guest can never post directly to a folio.
 Hosting / implementation enquiry from kamrapms.com. Stored first (a lead is
 never lost even without SMTP), then a best-effort email to the team.
 
-Leads are System Manager-only and purged after
+Leads are System Manager–only and purged after
 ``hosting_enquiry_retention_months`` (default 24) unless status is Won.
 
 | Param | Required | Default |
