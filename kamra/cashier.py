@@ -409,7 +409,8 @@ def post_petty_cash(property: str, amount: float, payee: str, category: str,
 		frappe.throw("Amount must be positive.")
 	if not (payee or "").strip() or not (reason or "").strip():
 		frappe.throw("Payee and reason are required.")
-	from kamra.authz import require_cashier_pin
+	from kamra.authz import assert_property_access, require_cashier_pin
+	assert_property_access(property)
 	require_cashier_pin(property, pin)
 	sess = require_open_session(property)
 	bd = get_business_date(property)
@@ -433,6 +434,66 @@ def post_petty_cash(property: str, amount: float, payee: str, category: str,
 		session=sess,
 	)
 	return {"voucher": voucher.name, "session": session_as_dict(sess) if sess else None}
+
+
+@frappe.whitelist()
+@require_roles("Front Desk", "Finance", "Hotel Admin", "Night Auditor", "Kamra Agent")
+def petty_cash_report(property: str, limit: int = 50):
+	"""Vouchers and totals for one property only — never mixed across hotels."""
+	from kamra.authz import assert_property_access
+	assert_property_access(property)
+	from frappe.utils import getdate, get_first_day
+	bd = get_business_date(property)
+	today = getdate(bd)
+	month_start = get_first_day(today)
+	prop_name = frappe.db.get_value("Property", property, "property_name") or property
+	imprest = float(frappe.db.get_value("Property", property, "petty_cash_float") or 0)
+	vouchers = frappe.get_all(
+		"Petty Cash Voucher",
+		filters={"property": property, "status": "Posted"},
+		fields=["name", "voucher_date", "payee", "category", "amount",
+		        "reason", "status", "session"],
+		order_by="voucher_date desc, creation desc",
+		limit_page_length=int(limit or 50),
+	)
+	agg = frappe.db.sql(
+		"""
+		SELECT
+			COALESCE(SUM(CASE WHEN voucher_date = %(today)s THEN amount ELSE 0 END), 0) AS today,
+			COALESCE(SUM(CASE WHEN voucher_date >= %(month_start)s THEN amount ELSE 0 END), 0) AS month,
+			COALESCE(SUM(amount), 0) AS all_time,
+			COUNT(*) AS voucher_count
+		FROM `tabPetty Cash Voucher`
+		WHERE property = %(property)s AND status = 'Posted'
+		""",
+		{"property": property, "today": today, "month_start": month_start},
+		as_dict=True,
+	)[0]
+	return {
+		"property": property,
+		"property_name": prop_name,
+		"imprest": imprest,
+		"business_date": str(bd),
+		"spent_today": float(agg.today or 0),
+		"spent_month": float(agg.month or 0),
+		"spent_all_time": float(agg.all_time or 0),
+		"voucher_count": int(agg.voucher_count or 0),
+		"vouchers": vouchers,
+	}
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Finance", "Hotel Admin", "Kamra Agent")
+def set_petty_cash_float(property: str, amount: float):
+	"""Set this property's standing petty-cash imprest (per hotel, not shared)."""
+	from kamra.authz import assert_property_access
+	assert_property_access(property)
+	if float(amount) < 0:
+		frappe.throw("Imprest cannot be negative.")
+	if not frappe.db.exists("Property", property):
+		frappe.throw(f"Unknown property: {property}")
+	frappe.db.set_value("Property", property, "petty_cash_float", float(amount))
+	return {"property": property, "imprest": float(amount)}
 
 
 @frappe.whitelist()
