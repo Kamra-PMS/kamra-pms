@@ -106,6 +106,19 @@ Kamra is the alternative we wanted:
 | Opaque pricing & tax | **Deterministic engine** — GST / SST / VAT / PB1 country packs in code + CI evals |
 | New-hire training hell | Front desk UI a clerk can learn the same day |
 
+**Why open source, and why now?** Most hotels can't change their PMS, connect a new tool, or let AI in, because the system is closed. AI coding agents now let a hotel's own team or a local agency build what they need, but only on an open system. Kamra gives hotels freedom to choose, ownership of their data and where it lives, privacy you can inspect, extensibility, readiness for AI agents over MCP, and no licence cost. We have nothing against other PMS; we want the next 100,000 hotels, resorts, boutiques, short-term rental companies and hosts to have an open option. Full story: [kamrapms.com/why-kamra](https://kamrapms.com/why-kamra/).
+
+### How Kamra makes money
+
+The software is free, and we would rather be open about the business than ask for trust. [HeyKoala](https://heykoala.ai) (Koala AI Solutions Pvt Ltd), which builds Kamra, earns from:
+
+- **Sponsorship** by companies that rely on Kamra. It funds maintainers, releases and security work, never control of the roadmap.
+- **Partner listing fees** from implementers listed for their market on [kamrapms.com/partners](https://kamrapms.com/partners/).
+- **Custom implementation**: go-live, migration, customisation and annual support, on a fixed quote.
+- **AI automation** for hotels with [HeyKoala](https://heykoala.ai): guest calls, WhatsApp, booking and in-stay requests.
+
+We never charge for rooms, users, features, data export or API access. An **enterprise edition** (deeper customisation, AI built into the PMS) is on the roadmap; open-source Kamra stays open and complete. Need more customisation, or want to sponsor? [hello@kamrapms.com](mailto:hello@kamrapms.com). Details: [kamrapms.com/how-kamra-makes-money](https://kamrapms.com/how-kamra-makes-money/).
+
 ---
 
 ## What makes it different
