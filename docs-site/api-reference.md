@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function - the same governed layer
-the UI and the AI use. **386 endpoints**, generated from the source
+the UI and the AI use. **387 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -2604,6 +2604,20 @@ times how long it takes to arrive, which proves live updates work.
 | `property` | yes |  |
 | `outlet` | no | `None` |
 | `echo` | no | `0` |
+
+
+## Setup checklist (finish setting up a property)
+
+### `kamra.onboarding.setup_checklist`
+
+**GET/POST** · roles: `Front Desk`, `Finance`, `Hotel Admin`, `Kamra Agent`
+
+What is set up and what is still to do, for the Finish setup screen.
+Only items that matter for the modules this property runs.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
 
 
 ## Kitchen printers (routing, print stations, print queue)

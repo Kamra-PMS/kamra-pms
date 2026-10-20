@@ -40,6 +40,7 @@ MODULES = [
     ("api", "Core (front desk, folios, guests, rooms)", ""),
     ("booking_requests", "Request to Book (accept / decline)", ""),
     ("pos", "Restaurant POS & kitchen", ""),
+    ("onboarding", "Setup checklist (finish setting up a property)", ""),
     ("printing", "Kitchen printers (routing, print stations, print queue)", ""),
     ("laundry", "Laundry (housekeeping)", ""),
     ("banquet", "Banquets (functions, quotations, event orders)", ""),
