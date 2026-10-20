@@ -376,6 +376,10 @@ MODULES: tuple[Module, ...] = (
 				  hint="A bill counts against the company only once it is this many days past its due date."),
 			)),
 			Section("cashier", "Cashier controls", "", (
+				S("use_cashier_tills", "Take money through cashier tills", "check", 1,
+				  hint="On: staff open their till (with an opening float) before taking or giving back "
+				       "money, and close it with a cash count. Off, for a small place with no cash drawer: "
+				       "payments and refunds are recorded without a till."),
 				S("require_cashier_pin", "Require cashier PIN on money actions", "check", 0, P,
 				  hint="Payments, invoices, allowances and settlements re-confirm who is acting. Agents are exempt."),
 				S("pin_max_attempts", "Lock a PIN after", "number", 5, min=3, max=10, unit="wrong tries"),

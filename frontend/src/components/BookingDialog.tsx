@@ -30,6 +30,7 @@ import { petChargeBasis } from "../lib/pets"
 import { useCashierAuth } from "../lib/cashierAuth"
 import DepositPanel, { type DepositState } from "./DepositPanel"
 import CheckInDialog from "./CheckInDialog"
+import TillCard, { useTill } from "./TillCard"
 
 interface CompanyCredit {
   applies: boolean
@@ -432,7 +433,7 @@ export function BookingDialog(props: {
         rate_plan: form.rate_plan || undefined,
         company: form.company || undefined,
         voucher_code: form.voucher_code || undefined,
-        over_capacity_charge: form.over_capacity_charge || undefined,
+        over_capacity_charge: extraCharge || undefined,
         pets: form.pets || undefined,
       })
         .then((q) => {
@@ -460,6 +461,7 @@ export function BookingDialog(props: {
     // change to it has to re-quote - without this the panel kept showing the
     // rate card total while the desk typed the price they had agreed
     form.over_capacity_charge,
+    form.over_capacity_guests,
     form.pets,
     checkOut,
   ])
@@ -555,7 +557,7 @@ export function BookingDialog(props: {
         const res = await createBooking({
           over_capacity_reason: form.over_capacity_reason || undefined,
           over_capacity_guests: form.over_capacity_guests || undefined,
-          over_capacity_charge: form.over_capacity_charge || undefined,
+          over_capacity_charge: extraCharge || undefined,
           guest_name: form.guest_name,
           phone: form.phone || undefined,
           guest: profile?.name,
@@ -624,7 +626,7 @@ export function BookingDialog(props: {
       const res = await createBooking({
         over_capacity_reason: form.over_capacity_reason || undefined,
           over_capacity_guests: form.over_capacity_guests || undefined,
-          over_capacity_charge: form.over_capacity_charge || undefined,
+          over_capacity_charge: extraCharge || undefined,
         guest_name: form.guest_name,
         phone: form.phone || undefined,
         guest: profile?.name,
@@ -749,70 +751,17 @@ export function BookingDialog(props: {
     (rt) => rt.name === form.room_type,
   )
   const roomTypeName = selectedRt?.room_type_name ?? ""
+  // Adults and Children stop at what the room sleeps; anyone above that is an
+  // extra guest by arrangement, counted on its own up to the room type's
+  // extra beds, at a price the desk agrees and a reason that records who did
   const adultsCap = sleeps(selectedRt, "adults")
   const childrenCap = sleeps(selectedRt, "children")
-  // how many of the party are above the stated occupancy - the desk types the
-  // number of extra beds by hand, and it cannot be more than this
-  const guestsOverCapacity =
-    Math.max(0, form.adults - Number(selectedRt?.adults_capacity || 0)) +
-    (Number(selectedRt?.children_capacity || 0) > 0
-      ? Math.max(0, form.children - Number(selectedRt?.children_capacity))
-      : 0)
-  const bedsAllowed = Math.min(
-    Number(selectedRt?.max_extra_beds || 0),
-    guestsOverCapacity,
-  )
-  const overCapacity =
-    !!selectedRt &&
-    ((selectedRt.adults_capacity > 0 &&
-      form.adults > selectedRt.adults_capacity) ||
-      (selectedRt.children_capacity > 0 &&
-        form.children > selectedRt.children_capacity))
-
-  // rooms needed to sleep the whole party in this room type, keeping at
-  // least one adult in every room
-  // Over capacity but still inside the extra beds the room type allows:
-  // bookable by arrangement, and the reason is what records who agreed it.
-  const withinExtraBeds =
-    !!selectedRt && overCapacity && Number(form.adults) <= adultsCap
-
-  const roomsNeeded = (() => {
-    if (!selectedRt) return 1
-    const capA = selectedRt.adults_capacity || form.adults || 1
-    const capC = selectedRt.children_capacity
-    const n = Math.max(
-      Math.ceil(form.adults / Math.max(1, capA)),
-      capC > 0 ? Math.ceil(form.children / capC) : 1,
-      1,
-    )
-    return Math.min(n, Math.max(1, form.adults))
-  })()
-
-  const distributeParty = () => {
-    // spread the party as evenly as possible; the lot books as one group
-    const n = roomsNeeded
-    const baseA = Math.floor(form.adults / n)
-    const remA = form.adults % n
-    const baseC = Math.floor(form.children / n)
-    const remC = form.children % n
-    const alloc = Array.from({ length: n }, (_, i) => ({
-      adults: baseA + (i < remA ? 1 : 0),
-      children: baseC + (i < remC ? 1 : 0),
-    }))
-    setForm((f) => ({
-      ...f,
-      adults: alloc[0].adults,
-      children: alloc[0].children,
-    }))
-    setMoreRooms(
-      alloc.slice(1).map((a) => ({
-        room_type: form.room_type,
-        adults: a.adults,
-        children: a.children,
-        meal_plan: form.meal_plan,
-      })),
-    )
-  }
+  const extraBeds = Number(selectedRt?.max_extra_beds || 0)
+  // a charge left behind after the count goes back to 0 must not bill
+  const extraCharge =
+    form.over_capacity_guests > 0 ? form.over_capacity_charge : 0
+  const extraNeedsReason =
+    form.over_capacity_guests > 0 && !form.over_capacity_reason.trim()
 
   const grandTotal = (() => {
     if (!quote) return 0
@@ -836,6 +785,9 @@ export function BookingDialog(props: {
   }, [walkIn, amountTouched, grandTotal])
 
   const payAmount = Number(walk.pay_amount) || 0
+  // taking the walk-in's money needs the operator's till open
+  const { till, refresh: refreshTill } = useTill(undefined, walkIn)
+  const tillClosed = walkIn && payAmount > 0 && !!till && !till.open
   const walkInBlocked =
     blacklistBlocked ||
     busy ||
@@ -1338,6 +1290,10 @@ export function BookingDialog(props: {
                           0,
                           sleeps(rt, "children"),
                         ),
+                        over_capacity_guests: Math.min(
+                          f.over_capacity_guests,
+                          Number(rt?.max_extra_beds || 0),
+                        ),
                       }))
                     }}
                   >
@@ -1350,8 +1306,7 @@ export function BookingDialog(props: {
                   </select>
                   {selectedRt &&
                     (selectedRt.adults_capacity > 0 ||
-                      selectedRt.children_capacity > 0) &&
-                    !overCapacity && (
+                      selectedRt.children_capacity > 0) && (
                       <p className="mt-1.5 text-xs text-zinc-400">
                         {t("Sleeps up to {guests}", {
                           guests: [
@@ -1552,75 +1507,67 @@ export function BookingDialog(props: {
                   </div>
                 ) : null}
 
-                {selectedRt && overCapacity && (
-                  <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-800">
-                    {selectedRt.room_type_name} sleeps up to{" "}
-                    <strong>{selectedRt.adults_capacity} adults</strong>
-                    {selectedRt.children_capacity > 0 && (
-                      <>
-                        {" · "}
-                        <strong>{selectedRt.children_capacity} children</strong>
-                      </>
-                    )}{" "}
-                    per room.{" "}
-                    <button
-                      className="font-semibold text-brand-700 hover:underline"
-                      onClick={distributeParty}
-                    >
-                      Split into {roomsNeeded} rooms
-                    </button>
-                    {withinExtraBeds && (
-                      <div className="mt-2 space-y-2 border-t border-amber-200 pt-2">
-                        <div>
-                          {t("Or keep them in one room — up to {beds} more by arrangement, at a price you agree:", {
-                            beds: selectedRt.max_extra_beds ?? 0,
-                          })}
-                        </div>
-                        <div className="grid gap-2 sm:grid-cols-2">
-                          <label className="block">
-                            <span className="mb-1 block text-xs font-medium">
-                              {t("Extra guests")}
-                            </span>
-                            <input
-                              type="number"
-                              min={0}
-                              max={bedsAllowed}
-                              className={inputCls}
-                              value={form.over_capacity_guests}
-                              onChange={(e) =>
-                                set(
-                                  "over_capacity_guests",
-                                  clampGuests(Number(e.target.value), 0,
-                                              bedsAllowed),
-                                )
-                              }
-                            />
-                          </label>
-                          <label className="block">
-                            <span className="mb-1 block text-xs font-medium">
-                              {t("Agreed charge / night")}
-                            </span>
-                            <input
-                              type="number"
-                              min={0}
-                              className={inputCls}
-                              value={form.over_capacity_charge}
-                              onChange={(e) =>
-                                set("over_capacity_charge", Math.max(0, Number(e.target.value)))
-                              }
-                              placeholder={t("What you agreed for them")}
-                            />
-                          </label>
-                        </div>
+                {selectedRt && extraBeds > 0 && (
+                  <div
+                    className={
+                      "space-y-2 rounded-xl border px-3 py-2.5 text-sm " +
+                      (form.over_capacity_guests > 0
+                        ? "border-amber-200 bg-amber-50 text-amber-800"
+                        : "border-zinc-200 text-zinc-600")
+                    }
+                  >
+                    <div>
+                      {t("Extra guests by arrangement — up to {beds} above the {cap} it sleeps, at a price you agree", {
+                        beds: extraBeds,
+                        cap: selectedRt.adults_capacity,
+                      })}
+                    </div>
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      <label className="block">
+                        <span className="mb-1 block text-xs font-medium">
+                          {t("Extra guests")}
+                        </span>
                         <input
+                          type="number"
+                          min={0}
+                          max={extraBeds}
                           className={inputCls}
-                          value={form.over_capacity_reason}
+                          value={form.over_capacity_guests}
                           onChange={(e) =>
-                            set("over_capacity_reason", e.target.value)
+                            set(
+                              "over_capacity_guests",
+                              clampGuests(Number(e.target.value), 0, extraBeds),
+                            )
                           }
-                          placeholder={t("Who agreed it, and why")}
                         />
-                      </div>
+                      </label>
+                      {form.over_capacity_guests > 0 && (
+                        <label className="block">
+                          <span className="mb-1 block text-xs font-medium">
+                            {t("Agreed charge / night, all of them")}
+                          </span>
+                          <input
+                            type="number"
+                            min={0}
+                            className={inputCls}
+                            value={form.over_capacity_charge}
+                            onChange={(e) =>
+                              set("over_capacity_charge", Math.max(0, Number(e.target.value)))
+                            }
+                            placeholder={t("What you agreed for them")}
+                          />
+                        </label>
+                      )}
+                    </div>
+                    {form.over_capacity_guests > 0 && (
+                      <input
+                        className={inputCls}
+                        value={form.over_capacity_reason}
+                        onChange={(e) =>
+                          set("over_capacity_reason", e.target.value)
+                        }
+                        placeholder={t("Who agreed it, and why (required)")}
+                      />
                     )}
                   </div>
                 )}
@@ -2286,9 +2233,18 @@ export function BookingDialog(props: {
               <div className="shrink-0 space-y-2 border-t border-zinc-200 bg-white px-6 py-4 md:px-7">
                 {walkIn ? (
                   <>
+                    {tillClosed && (
+                      <>
+                        <TillCard till={till} onOpened={() => void refreshTill()}
+                          purpose={t("to take the walk-in's payment")} />
+                        <p className="text-xs text-zinc-500">
+                          {t("Or set the amount to 0: the stay goes on the bill and the guest pays at check-out.")}
+                        </p>
+                      </>
+                    )}
                     <Button
                       className="w-full justify-center py-2.5 text-base"
-                      disabled={walkInBlocked}
+                      disabled={walkInBlocked || tillClosed}
                       onClick={() => submitWalkIn()}
                     >
                       {busy
@@ -2311,7 +2267,7 @@ export function BookingDialog(props: {
                 <>
                 <Button
                   className="w-full justify-center py-2.5 text-base"
-                  disabled={busy || !form.guest_name || !quote || pastCheckIn || badPhone || badSlot || blacklistBlocked || creditBlocked}
+                  disabled={busy || !form.guest_name || !quote || pastCheckIn || badPhone || badSlot || blacklistBlocked || creditBlocked || extraNeedsReason}
                   onClick={() => submit()}
                 >
                   {busy ? t("Booking…") : t("Confirm booking")}
@@ -2327,7 +2283,7 @@ export function BookingDialog(props: {
                   <Button
                     variant="outline"
                     className="justify-center"
-                    disabled={busy || !form.guest_name || pastCheckIn || badPhone || badSlot || blacklistBlocked}
+                    disabled={busy || !form.guest_name || pastCheckIn || badPhone || badSlot || blacklistBlocked || extraNeedsReason}
                     onClick={() => submit(true)}
                     title={t("Park this stay with no room; promote when inventory frees")}
                   >

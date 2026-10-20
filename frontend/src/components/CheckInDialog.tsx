@@ -24,6 +24,7 @@ import { SignaturePad } from "./SignaturePad"
 import DepositPanel, { type DepositState } from "./DepositPanel"
 import SecurityDepositPanel, { type SecurityDepositState } from "./SecurityDepositPanel"
 import RoomChangeDialog from "./RoomChangeDialog"
+import TillCard, { type TillState } from "./TillCard"
 import {
   StepFlowFooter,
   StepFlowHeader,
@@ -156,6 +157,8 @@ interface Flow {
     configured: boolean
   }
   room_charges: { allowed: boolean; recommend_block: boolean }
+  /** the operator's till: the deposit step takes money */
+  till: TillState
   records: Record<string, { state: string; by: string; at: string; note?: string }>
   key_result?: { ok: boolean; manual: boolean; message: string } | null
 }
@@ -339,9 +342,13 @@ export default function CheckInDialog(props: {
       setKeyCards(f.keys.cards || "")
       setAllowCharges(f.records.room_charges ? f.room_charges.allowed : !f.room_charges.recommend_block)
     } catch (e) {
-      setError(serverError(e))
+      setError(
+        (e as { status?: number }).status === 403
+          ? t("Checking a guest in is for Front Desk or a Hotel Admin. Your role can see the booking but not check the guest in.")
+          : serverError(e),
+      )
     }
-  }, [props.reservation, adopt])
+  }, [props.reservation, adopt, t])
 
   useEffect(() => {
     load()
@@ -357,15 +364,19 @@ export default function CheckInDialog(props: {
       optional: !s.is_blocking,
       hidden: !s.relevant,
     }))
-    out.push({
-      key: "confirm",
-      label: t("Check in"),
-      status: flow && flow.missing_required.length ? "blocked" : undefined,
-    })
+    out.push({ key: "confirm", label: t("Check in") })
     return out
   }, [flow, t])
 
   const nav = useStepFlow(flowSteps)
+  // the last step reads "needs attention" only once the desk gets there
+  // with required steps still open, not from the first screen
+  const headerSteps = useMemo(
+    () => flowSteps.map((s) =>
+      s.key === "confirm" && nav.current === "confirm" && flow?.missing_required.length
+        ? { ...s, status: "blocked" as const } : s),
+    [flowSteps, nav, flow],
+  )
   const step = flow?.steps.find((s) => s.step_key === nav.current) ?? null
 
   // open on the first step still to do (a pre-assigned room is already done)
@@ -565,7 +576,11 @@ export default function CheckInDialog(props: {
           onBack={nav.isFirst ? undefined : nav.back}
           onSkip={optional ? onSkip : undefined}
           onContinue={onContinue}
-          continueDisabled={isConfirm && !!flow?.missing_required.length}
+          continueDisabled={(isConfirm && !!flow?.missing_required.length) ||
+            (nav.current === "security_deposit" && !!flow && !flow.deposit.satisfied && step?.state !== "done")}
+          disabledReason={isConfirm
+            ? t("Finish the required steps first.")
+            : t("Take the deposit (or waive it with a reason) to continue.")}
           continueLabel={
             busy
               ? t("Saving…")
@@ -588,7 +603,7 @@ export default function CheckInDialog(props: {
       )}
       {flow && r && (
         <div className="space-y-5">
-          <StepFlowHeader steps={flowSteps} current={nav.current} onSelect={nav.goTo} />
+          <StepFlowHeader steps={headerSteps} current={nav.current} onSelect={nav.goTo} />
 
           {r.vip ? (
             <p className="flex items-center gap-1.5 text-sm font-semibold text-amber-700">
@@ -888,6 +903,9 @@ export default function CheckInDialog(props: {
 
           {nav.current === "security_deposit" && (
             <div className="space-y-4">
+              {!flow.deposit.satisfied && (
+                <TillCard till={flow.till} onOpened={load} purpose={t("to take the deposit")} />
+              )}
               {flow.deposit.security.status !== "None" && (
                 <SecurityDepositPanel
                   reservation={r.name}

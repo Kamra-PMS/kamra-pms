@@ -13916,7 +13916,7 @@
         "kamra.public_api.search_stay"
        ]
       },
-      "description": "Availability + real quoted price per room type for the stay.",
+      "description": "Availability + real quoted price per room type for the stay.\n\n`child_ages` (e.g. [3, 8, 13]) lets each room type's age bands decide who\nis free, a child or an adult; without it `children` are all children.\nEach row says whether the room type can take the party: `available`, a\n`reason` when it cannot, and `needs_confirmation` when the party is above\nwhat it sleeps but within the extra guests it allows by arrangement.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\",\n  \"check_in_date\": \"2026-08-01\",\n  \"check_out_date\": \"2026-08-03\",\n  \"adults\": 2,\n  \"children\": 0,\n  \"pets\": 0\n}",
@@ -14114,7 +14114,7 @@
         "kamra.public_api.book"
        ]
       },
-      "description": "Create a Website booking. Guest identity is the phone number; staff\nverify at check-in. The advance owed is computed from the property's\ncurrent payment policy and snapshotted onto the booking.\n\nInstant mode (default): Confirmed when nothing is due now, else\nPending Payment with a hold window. Request to Book: Requested (no\ninventory) until the host approves.",
+      "description": "Create a Website booking. Guest identity is the phone number; staff\nverify at check-in. The advance owed is computed from the property's\ncurrent payment policy and snapshotted onto the booking.\n\nInstant mode (default): Confirmed when nothing is due now, else\nPending Payment with a hold window. Request to Book: Requested (no\ninventory) until the host approves. A party above what the room sleeps,\nwithin the extra guests it allows, is also Requested: the host confirms\nthe sleeping arrangement and agrees the price for them.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\",\n  \"room_type\": \"Your Property-DLX\",\n  \"check_in_date\": \"2026-08-01\",\n  \"check_out_date\": \"2026-08-03\",\n  \"guest_name\": \"A. Guest\",\n  \"phone\": \"+91 90000 00000\",\n  \"email\": \"guest@example.com\",\n  \"adults\": 2,\n  \"children\": 0,\n  \"meal_plan\": \"\",\n  \"special_requests\": \"\",\n  \"voucher_code\": \"\",\n  \"idempotency_key\": \"\",\n  \"pets\": 0\n}",

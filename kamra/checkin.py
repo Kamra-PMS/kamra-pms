@@ -442,6 +442,11 @@ def checkin_flow(reservation: str):
 	return _flow_payload(res, steps, ctx, guest)
 
 
+def _till(property: str) -> dict:
+	from kamra.cashier import till_state
+	return till_state(property)
+
+
 def _flow_payload(res, steps, ctx, guest) -> dict:
 	from kamra.localization import front_desk_vocabulary, pack_for
 	return {
@@ -475,6 +480,9 @@ def _flow_payload(res, steps, ctx, guest) -> dict:
 		"missing_required": [s["step_key"] for s in missing_required(steps)],
 		"rooms": _free_rooms(res) if not res.room else [],
 		"request_presets": [{"key": k, "label": v[0]} for k, v in REQUEST_PRESETS.items()],
+		# the deposit step takes money: is the operator's till open, or can
+		# they open it here (kamra.cashier.open_session)
+		"till": _till(res.property),
 		**{k: v for k, v in ctx.items() if k != "records"},
 		"records": ctx["records"],
 	}

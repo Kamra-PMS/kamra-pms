@@ -176,7 +176,7 @@ Advance percent,Advance percent,نسبة المقدمة,screens/Setup.tsx,,trans
 Advance Percent,Advance Percent,نسبة الدفعة المقدمة,screens/Setup.tsx,,translated
 "After the desk is live, put an AI concierge on your WhatsApp number — it uses Kamra's tools. Metered by HeyKoala; the PMS stays free.","After the desk is live, put an AI concierge on your WhatsApp number — it uses Kamra's tools. Metered by HeyKoala; the PMS stays free.",,screens/Setup.tsx,,needs_translation
 Age,Age,العمر,screens/RegistrationCard.tsx,,translated
-Agreed charge / night,Agreed charge / night,,components/BookingDialog.tsx,,needs_translation
+"Agreed charge / night, all of them","Agreed charge / night, all of them",,components/BookingDialog.tsx,,needs_translation
 Agrees with folios,Agrees with folios,مطابق للفواتير,screens/AuditPack.tsx,,translated
 AI Agent,AI Agent,وكيل الذكاء الاصطناعي,screens/Today.tsx,,translated
 AI assistant (bring your own key),AI assistant (bring your own key),مساعد الذكاء الاصطناعي (مفتاحك الخاص),screens/settings/cards.tsx,,translated
@@ -279,6 +279,7 @@ Back in service,Back in service,إعادة إلى الخدمة,components/RoomDr
 Back on (first night it can be sold),Back on (first night it can be sold),تعود في (أول ليلة يمكن بيعها),components/RoomDrawer.tsx,,translated
 Back to board,Back to board,العودة إلى اللوحة,screens/Kitchen.tsx,,translated
 Back to the hotel default.,Back to the hotel default.,عدت إلى الإعداد الافتراضي للفندق.,components/CustomizeToday.tsx,,translated
+Bag is back: mark ready,Bag is back: mark ready,عادت الحقيبة: اجعلها جاهزة,components/CheckOutDialog.tsx,,translated
 Balance,Balance,الرصيد,components/CheckOutDialog.tsx; components/RoomDrawer.tsx; screens/FolioView.tsx; screens/RegistrationCard.tsx; screens/Today.tsx,,translated
 Balance {cur},Balance {cur},الرصيد {cur},screens/Billing.tsx,cur,translated
 Bank it,Bank it,,screens/CashierBoard.tsx,,needs_translation
@@ -409,6 +410,7 @@ Check-out time is {time}; it is now {now}.,Check-out time is {time}; it is now {
 Checked in,Checked in,تم تسجيل الوصول,screens/TapeChart.tsx,,translated
 Checked in · Room {n},Checked in · Room {n},تم تسجيل الوصول · غرفة {n},components/BookingDialog.tsx,n,translated
 Checked out with a company credit warning,Checked out with a company credit warning,تمت المغادرة مع تحذير بشأن ائتمان الشركة,components/CheckOutDialog.tsx,,translated
+Checking a guest in is for Front Desk or a Hotel Admin. Your role can see the booking but not check the guest in.,Checking a guest in is for Front Desk or a Hotel Admin. Your role can see the booking but not check the guest in.,تسجيل وصول النزيل من مهام موظف الاستقبال أو مدير الفندق. يمكن لدورك رؤية الحجز لكن لا يمكنه تسجيل وصول النزيل.,components/CheckInDialog.tsx,,translated
 Checking out frees the room for housekeeping and records who checked the guest out.,Checking out frees the room for housekeeping and records who checked the guest out.,تسجيل المغادرة يحرر الغرفة للتدبير المنزلي ويسجل اسم من أنهى مغادرة الضيف.,components/CheckOutDialog.tsx,,translated
 Checking out…,Checking out…,جارٍ تسجيل المغادرة…,components/CheckOutDialog.tsx,,translated
 Checking price,Checking price,جارٍ التحقق من السعر,components/RoomChangeDialog.tsx; screens/TapeChart.tsx,,translated
@@ -680,6 +682,7 @@ Extra Bed Policy:,Extra Bed Policy:,سياسة السرير الإضافي:,scre
 Extra beds,Extra beds,أسرّة إضافية,components/RoomDrawer.tsx,,translated
 Extra guest price / night,Extra guest price / night,سعر الضيف الإضافي / ليلة,screens/Setup.tsx,,translated
 Extra guests,Extra guests,,components/BookingDialog.tsx,,needs_translation
+"Extra guests by arrangement — up to {beds} above the {cap} it sleeps, at a price you agree","Extra guests by arrangement — up to {beds} above the {cap} it sleeps, at a price you agree",,components/BookingDialog.tsx,beds cap,needs_translation
 Extra instructions,Extra instructions,,screens/settings/cards.tsx,,needs_translation
 "Extra towels, AC not cooling…","Extra towels, AC not cooling…",مناشف إضافية، التكييف لا يبرد…,components/RoomStayPanels.tsx,,translated
 eZee export,eZee export,تصدير eZee,screens/GoLiveImport.tsx,,translated
@@ -779,6 +782,7 @@ Guest's balance,Guest's balance,رصيد الضيف,components/CheckOutDialog.ts
 Guests,Guests,الضيوف,components/BookingDialog.tsx; components/CommandPalette.tsx; screens/Guests.tsx; screens/RegistrationCard.tsx,,translated
 Guests need a mobile number on their profile to receive a Cashfree link.,Guests need a mobile number on their profile to receive a Cashfree link.,,screens/settings/cards.tsx,,needs_translation
 Hall,Hall,القاعة,screens/Banquet.tsx,,translated
+Hand back and post to room,Hand back and post to room,سلّمها وأضفها إلى الغرفة,components/CheckOutDialog.tsx,,translated
 Has a balance of {amount}: open the folio,Has a balance of {amount}: open the folio,عليها رصيد {amount}: افتح الفاتورة,components/CheckOutDialog.tsx,amount,translated
 "Have the guest sign on screen, or tick that they signed the printed card.","Have the guest sign on screen, or tick that they signed the printed card.",اطلب من الضيف التوقيع على الشاشة، أو ضع علامة أنه وقع على البطاقة المطبوعة.,components/CheckInDialog.tsx,,translated
 held,held,معلّق,screens/Kitchen.tsx,,translated
@@ -1119,7 +1123,6 @@ not done,not done,لم تنجز,components/CheckInDialog.tsx,,translated
 Not paid,Not paid,غير مدفوع,components/DepositPanel.tsx,,translated
 not posted,not posted,غير مُرحَّل,screens/Laundry.tsx,,translated
 Not ready for go-live yet,Not ready for go-live yet,,screens/GoLiveImport.tsx,,needs_translation
-Not ready to deliver yet,Not ready to deliver yet,غير جاهز للتسليم بعد,components/CheckOutDialog.tsx,,translated
 not sent,not sent,لم يُرسل,screens/POS.tsx,,translated
 Not sent,Not sent,لم يُرسل,screens/POS.tsx; screens/pos/PosSidePanel.tsx,,translated
 Not sent for {mins} min,Not sent for {mins} min,لم يُرسل منذ {mins} دقيقة,screens/pos/PosSidePanel.tsx,mins,translated
@@ -1177,6 +1180,7 @@ Online payment links are not available for this country yet. Take payments at th
 Only a Hotel Admin can book a blacklisted guest.,Only a Hotel Admin can book a blacklisted guest.,يمكن لمدير الفندق فقط حجز نزيل في القائمة السوداء.,components/BookingDialog.tsx,,translated
 Only a name and phone are kept. A phone already on file reuses that guest.,Only a name and phone are kept. A phone already on file reuses that guest.,يُحفظ الاسم والهاتف فقط. الهاتف المسجل مسبقًا يعيد استخدام ملف النزيل نفسه.,screens/pos/PosSidePanel.tsx,,translated
 Only Finance or a Hotel Admin can override it.,Only Finance or a Hotel Admin can override it.,,components/BookingDialog.tsx,,needs_translation
+Only Front Desk or a Hotel Admin can check the guest out.,Only Front Desk or a Hotel Admin can check the guest out.,فقط موظف الاستقبال أو مدير الفندق يمكنه تسجيل مغادرة النزيل.,components/CheckOutDialog.tsx,,translated
 Only Hotel Admin can switch modules.,Only Hotel Admin can switch modules.,,screens/settings/AccessPages.tsx,,needs_translation
 Only if your address proof is a different document from your ID.,Only if your address proof is a different document from your ID.,فقط إذا كان إثبات العنوان مستندًا مختلفًا عن الهوية.,screens/PublicCheckin.tsx,,translated
 Only IT can change this person,Only IT can change this person,,screens/settings/AccessPages.tsx,,needs_translation
@@ -1194,6 +1198,7 @@ Open folios,Open folios,الفواتير المفتوحة,screens/Dashboard.tsx,
 Open full folio,Open full folio,فتح الفاتورة كاملة,components/RoomStayPanels.tsx,,translated
 Open full view,Open full view,فتح العرض الكامل,screens/Today.tsx,,translated
 Open Marketplace → HeyKoala WhatsApp,Open Marketplace → HeyKoala WhatsApp,,screens/Setup.tsx,,needs_translation
+Open my till,Open my till,افتح درجي النقدي,components/TillCard.tsx,,translated
 Open My Till,Open My Till,فتح صندوقي,screens/Billing.tsx,,translated
 Open on the till,Open on the till,فتح على نقطة البيع,screens/pos/PosSidePanel.tsx,,translated
 Open requests,Open requests,الطلبات المفتوحة,components/RoomStayPanels.tsx,,translated
@@ -1205,18 +1210,21 @@ Open task,Open task,مهمة مفتوحة,screens/Rooms.tsx,,translated
 Open tasks,Open tasks,المهام المفتوحة,components/OpenTasksCard.tsx; screens/Dashboard.tsx; screens/Today.tsx,,translated
 Open the card to show or print,Open the card to show or print,افتح البطاقة لعرضها أو طباعتها,components/CheckInDialog.tsx,,translated
 Open the enquiry,Open the enquiry,فتح الاستفسار,screens/Banquet.tsx,,translated
-Open the till,Open the till,فتح الصندوق,components/CheckOutDialog.tsx; components/RoomStayPanels.tsx,,translated
+Open the till,Open the till,فتح الصندوق,components/RoomStayPanels.tsx,,translated
 Open till,Open till,فتح الصندوق,screens/CashierTill.tsx,,translated
+Open your till {purpose}. Count the cash in the drawer and enter it as the opening float (0 if it is empty).,Open your till {purpose}. Count the cash in the drawer and enter it as the opening float (0 if it is empty).,افتح درجك النقدي {purpose}. عُدّ النقد في الدرج وأدخله كرصيد افتتاحي (0 إذا كان فارغًا).,components/TillCard.tsx,purpose,translated
+"Open your till above, then collect or refund.","Open your till above, then collect or refund.",افتح درجك النقدي أعلاه، ثم استلم أو رد المبلغ.,components/CheckOutDialog.tsx,,translated
+Open your till to take or give back money. Count the cash in the drawer and enter it as the opening float (0 if it is empty).,Open your till to take or give back money. Count the cash in the drawer and enter it as the opening float (0 if it is empty).,افتح درجك النقدي لاستلام المال أو رده. عُدّ النقد في الدرج وأدخله كرصيد افتتاحي (0 إذا كان فارغًا).,components/TillCard.tsx,,translated
 "Open your till, reconcile cash and close the session under Finance → Cashier. Collections live there now.","Open your till, reconcile cash and close the session under Finance → Cashier. Collections live there now.",افتح صندوقك، طابق النقد وأغلق الجلسة تحت المالية ← أمين الصندوق. التحصيلات هناك الآن.,screens/Billing.tsx,,translated
 "Open, not sent to kitchen","Open, not sent to kitchen",مفتوحة، لم تُرسل إلى المطبخ,screens/POS.tsx,,translated
-Opening float,Opening float,الرصيد الافتتاحي,screens/CashierTill.tsx,,translated
+Opening float,Opening float,الرصيد الافتتاحي,components/TillCard.tsx; screens/CashierTill.tsx,,translated
 optional,optional,اختياري,screens/RegistrationCard.tsx,,translated
 Optional,Optional,اختياري,components/CheckInDialog.tsx,,translated
 Optional code,Optional code,رمز اختياري,components/BookingDialog.tsx,,translated
 Optional: connect HeyKoala WhatsApp,Optional: connect HeyKoala WhatsApp,,screens/Setup.tsx,,needs_translation
 Or jump to any screen.,Or jump to any screen.,أو انتقل لأي شاشة.,components/CommandPalette.tsx,,translated
-"Or keep them in one room — up to {beds} more by arrangement, at a price you agree:","Or keep them in one room — up to {beds} more by arrangement, at a price you agree:",,components/BookingDialog.tsx,beds,needs_translation
 or paste it below,or paste it below,أو الصقه أدناه,screens/GoLiveImport.tsx,,translated
+Or set the amount to 0: the stay goes on the bill and the guest pays at check-out.,Or set the amount to 0: the stay goes on the bill and the guest pays at check-out.,أو اجعل المبلغ 0: تُضاف الإقامة إلى الفاتورة ويدفع النزيل عند المغادرة.,components/BookingDialog.tsx,,translated
 Order items,Order items,عناصر الطلب,screens/POS.tsx,,translated
 Ordered,Ordered,طُلب,screens/Kitchen.tsx,,translated
 Orders,Orders,الطلبات,screens/POS.tsx; screens/pos/PosSidePanel.tsx,,translated
@@ -1584,6 +1592,7 @@ Settle & continue stay,Settle & continue stay,تسوية ومتابعة الإق
 Settle separately,Settle separately,تسوية منفصلة,components/CheckOutDialog.tsx,,translated
 Settle the guest's bill first (Payment step).,Settle the guest's bill first (Payment step).,سوِّ فاتورة الضيف أولاً (خطوة الدفع).,components/CheckOutDialog.tsx,,translated
 Settle to continue,Settle to continue,سوِّ الحساب للمتابعة,components/CheckOutDialog.tsx,,translated
+Settling a bill separately takes money: open your till on the Payment step first.,Settling a bill separately takes money: open your till on the Payment step first.,تسوية فاتورة بشكل منفصل تتطلب استلام مال: افتح درجك النقدي في خطوة الدفع أولًا.,components/CheckOutDialog.tsx,,translated
 SGST ({rate}%),SGST ({rate}%),SGST ({rate}%),screens/POS.tsx,rate,translated
 Shared,Shared,مشترك,screens/Setup.tsx,,translated
 "Shared playground, not a live hotel. Play data is wiped every night and the sample hotel is seeded again. Don't put real guests, payments or API keys here.","Shared playground, not a live hotel. Play data is wiped every night and the sample hotel is seeded again. Don't put real guests, payments or API keys here.",ملعب مشترك، ليس فندقاً حياً. تُمسح بيانات التجربة كل ليلة ويُعاد تهيئة الفندق النموذجي. لا تضع ضيوفًا أو مدفوعات أو مفاتيح API حقيقية هنا.,screens/Login.tsx,,translated
@@ -1653,6 +1662,7 @@ Stays,Stays,الإقامات,screens/Guests.tsx,,translated
 Steps,Steps,الخطوات,components/StepFlow.tsx,,translated
 Still due,Still due,المتبقي,components/DepositPanel.tsx,,translated
 Still in play,Still in play,لا يزال قيد التنفيذ,screens/Banquet.tsx,,translated
+Still not on the bill,Still not on the bill,ما زالت غير مضافة إلى الفاتورة,components/CheckOutDialog.tsx,,translated
 "Street, area","Street, area",الشارع، الحي,screens/PublicCheckin.tsx,,translated
 Subject,Subject,الموضوع,screens/Tickets.tsx,,translated
 Subtotal,Subtotal,المجموع الفرعي,screens/POS.tsx,,translated
@@ -1677,6 +1687,7 @@ Tables & running bills,Tables & running bills,الطاولات والفواتي�
 Take a payment,Take a payment,استلام دفعة,components/RoomStayPanels.tsx,,translated
 Take out of service,Take out of service,إخراج من الخدمة,components/RoomDrawer.tsx,,translated
 Take photo,Take photo,التقاط صورة,screens/PublicCheckin.tsx,,translated
+Take the deposit (or waive it with a reason) to continue.,Take the deposit (or waive it with a reason) to continue.,استلم التأمين (أو أعفِ منه مع ذكر السبب) للمتابعة.,components/CheckInDialog.tsx,,translated
 Take the security deposit (or waive it with a reason) and any advance the booking still owes.,Take the security deposit (or waive it with a reason) and any advance the booking still owes.,خذ مبلغ التأمين (أو اعف منه مع ذكر السبب) وأي دفعة مقدمة لا يزال الحجز مدينا بها.,components/CheckInDialog.tsx,,translated
 Take the security deposit or waive it with a reason to continue.,Take the security deposit or waive it with a reason to continue.,خذ مبلغ التأمين أو اعف منه مع ذكر السبب للمتابعة.,components/CheckInDialog.tsx,,translated
 Take this room,Take this room,خذ هذه الغرفة,screens/HkApp.tsx,,translated
@@ -1755,6 +1766,7 @@ This room is in service.,This room is in service.,هذه الغرفة في ال�
 This type is full tonight - try another room type.,This type is full tonight - try another room type.,هذا النوع ممتلئ الليلة - جرّب نوع غرفة آخر.,components/BookingDialog.tsx,,translated
 Threshold {cur}{n},Threshold {cur}{n},الحد {cur}{n},screens/EndOfDayWizard.tsx,cur n,translated
 Tick Credit allowed and save to bill this company on the city ledger.,Tick Credit allowed and save to bill this company on the city ledger.,,components/CreditTermsEditor.tsx,,needs_translation
+Tick the confirmation above to continue.,Tick the confirmation above to continue.,ضع علامة على التأكيد أعلاه للمتابعة.,components/CheckOutDialog.tsx,,translated
 Tick the lines moving to the new bill.,Tick the lines moving to the new bill.,حدد البنود المنقولة إلى الفاتورة الجديدة.,screens/POS.tsx,,translated
 Ticket {kot} {dest},Ticket {kot} {dest},تذكرة {kot} {dest},screens/Kitchen.tsx,kot dest,translated
 Tickets for this printer print on this device's default printer.,Tickets for this printer print on this device's default printer.,,screens/Kitchen.tsx,,needs_translation
@@ -1767,8 +1779,13 @@ to,to,إلى,components/ResourceScreen.tsx; screens/TapeChart.tsx; screens/VoidA
 To,To,إلى,components/BookingDialog.tsx; screens/Banquet.tsx; screens/VoidAllowanceReport.tsx,,translated
 to close,to close,للإغلاق,components/CommandPalette.tsx,,translated
 To fix before go-live,To fix before go-live,,screens/GoLiveImport.tsx,,needs_translation
+to give the money back,to give the money back,لرد المال,components/CheckOutDialog.tsx,,translated
+to issue the invoice,to issue the invoice,لإصدار الفاتورة,components/CheckOutDialog.tsx,,translated
 to open,to open,للفتح,components/CommandPalette.tsx,,translated
 to pick up a room.,to pick up a room.,لاستلام غرفة.,screens/HkApp.tsx,,translated
+to take the deposit,to take the deposit,لاستلام التأمين,components/CheckInDialog.tsx,,translated
+to take the payment,to take the payment,لاستلام الدفعة,components/CheckOutDialog.tsx,,translated
+to take the walk-in's payment,to take the walk-in's payment,لاستلام دفعة النزيل بدون حجز,components/BookingDialog.tsx,,translated
 today,today,اليوم,screens/Dashboard.tsx,,translated
 Today,Today,اليوم,screens/Today.tsx,,translated
 "Today at this property, by department.","Today at this property, by department.",اليوم في هذا العقار، حسب القسم.,screens/Dashboard.tsx,,translated
@@ -1875,7 +1892,7 @@ Which hall - free for these dates and hours,Which hall - free for these dates an
 "Which printer gets which KOTs. Two restaurants can share a kitchen printer, and the bar's drinks can print at the bar. With no printers here, each till prints its own KOTs.","Which printer gets which KOTs. Two restaurants can share a kitchen printer, and the bar's drinks can print at the bar. With no printers here, each till prints its own KOTs.",,screens/KitchenPrinters.tsx,,needs_translation
 Which system is this export from?,Which system is this export from?,من أي نظام هذا التصدير؟,screens/GoLiveImport.tsx,,translated
 Who,Who,من,screens/Agents.tsx,,translated
-"Who agreed it, and why","Who agreed it, and why",,components/BookingDialog.tsx,,needs_translation
+"Who agreed it, and why (required)","Who agreed it, and why (required)",,components/BookingDialog.tsx,,needs_translation
 Who cleaned it,Who cleaned it,من نظّفها,components/RoomDrawer.tsx,,translated
 Who is this bill for?,Who is this bill for?,لمن هذه الفاتورة؟,screens/pos/PosSidePanel.tsx,,translated
 Who pays,Who pays,من يدفع,components/CheckInDialog.tsx; screens/settings/cards.tsx,,translated
@@ -1893,6 +1910,7 @@ Wide column,Wide column,العمود العريض,components/CustomizeToday.tsx,
 Withheld,Withheld,محتجز للأضرار,components/SecurityDepositPanel.tsx,,translated
 Withhold {amt},Withhold {amt},احتجاز {amt},components/SecurityDepositPanel.tsx,amt,translated
 Withhold for damage,Withhold for damage,احتجاز مقابل الأضرار,components/CheckOutDialog.tsx; components/SecurityDepositPanel.tsx,,translated
+Write the reason for the override to continue.,Write the reason for the override to continue.,اكتب سبب التجاوز للمتابعة.,components/CheckOutDialog.tsx,,translated
 "Wrong email, username, or password.","Wrong email, username, or password.",البريد الإلكتروني أو اسم المستخدم أو كلمة المرور غير صحيحة.,screens/Login.tsx,,translated
 Wrong room?,Wrong room?,غرفة خاطئة؟,screens/EndOfDayWizard.tsx,,translated
 Yes,Yes,نعم,components/RoomDrawer.tsx; screens/AuditPack.tsx; screens/EndOfDayWizard.tsx,,translated
@@ -1901,7 +1919,9 @@ You approve this as a supervisor.,You approve this as a supervisor.,أنت تو�
 You are using the hotel's default layout.,You are using the hotel's default layout.,أنت تستخدم التخطيط الافتراضي للفندق.,components/CustomizeToday.tsx,,translated
 You are using the standard layout.,You are using the standard layout.,أنت تستخدم التخطيط القياسي.,components/CustomizeToday.tsx,,translated
 You are using your own layout.,You are using your own layout.,أنت تستخدم تخطيطك الخاص.,components/CustomizeToday.tsx,,translated
+"You can still check out. These are not on the guest's bill: when they are posted later they land on the departed stay's folio and have to be collected separately. To add them now, go back to the Bill step.","You can still check out. These are not on the guest's bill: when they are posted later they land on the departed stay's folio and have to be collected separately. To add them now, go back to the Bill step.",يمكنك تسجيل المغادرة. هذه غير مضافة إلى فاتورة النزيل: إذا أُضيفت لاحقًا فستذهب إلى حساب الإقامة المنتهية ويجب تحصيلها بشكل منفصل. لإضافتها الآن، ارجع إلى خطوة الفاتورة.,components/CheckOutDialog.tsx,,translated
 You can't change your own access,You can't change your own access,,screens/settings/AccessPages.tsx,,needs_translation
+"You close it at the end of your shift with a cash count (Finance, Cashier).","You close it at the end of your shift with a cash count (Finance, Cashier).",تغلقه في نهاية نوبتك بعد عدّ النقد (المالية، أمين الصندوق).,components/TillCard.tsx,,translated
 You're checked in online,You're checked in online,تم تسجيل وصولك عبر الإنترنت,screens/PublicCheckin.tsx,,translated
 Your apps,Your apps,تطبيقاتك,screens/AppLauncher.tsx,,translated
 Your details and signature form the guest register required by law.,Your details and signature form the guest register required by law.,تشكّل بياناتك وتوقيعك سجل النزلاء المطلوب نظامًا.,screens/PublicCheckin.tsx,,translated
@@ -1914,8 +1934,11 @@ Your profile is kept for future stays until you ask for it to be erased. Bills a
 Your property's check-out routine. Tick each one as you go.,Your property's check-out routine. Tick each one as you go.,إجراءات المغادرة في فندقك. ضع علامة على كل خطوة عند إنجازها.,components/CheckOutDialog.tsx,,translated
 Your rights:,Your rights:,حقوقك:,components/PrivacyNotice.tsx,,translated
 Your role can see the status but not change it.,Your role can see the status but not change it.,دورك يتيح رؤية الحالة دون تغييرها.,components/RoomDrawer.tsx,,translated
+Your role can't change this bill. Ask {who}.,Your role can't change this bill. Ask {who}.,لا يمكن لدورك تعديل هذه الفاتورة. اطلب من {who}.,components/CheckOutDialog.tsx,who,translated
+Your role can't open a till. Ask {who} to take the money.,Your role can't open a till. Ask {who} to take the money.,لا يمكن لدورك فتح درج نقدي. اطلب من {who} استلام المال.,components/TillCard.tsx,who,translated
 Your role has no settings to manage.,Your role has no settings to manage.,,screens/settings/SettingsHub.tsx,,needs_translation
 Your session ended. Sign in to pick up where you left off.,Your session ended. Sign in to pick up where you left off.,انتهت جلستك. سجّل الدخول للمتابعة من حيث توقفت.,screens/Login.tsx,,translated
+Your till is closed,Your till is closed,درجك النقدي مغلق,components/TillCard.tsx,,translated
 ZATCA Phase 1 ready - QR and XML on every invoice.,ZATCA Phase 1 ready - QR and XML on every invoice.,جاهز للمرحلة الأولى من زاتكا - رمز QR وملف XML على كل فاتورة.,screens/settings/cards.tsx,,translated
 ZATCA: still needed for valid e-invoices - {fields}.,ZATCA: still needed for valid e-invoices - {fields}.,زاتكا: مطلوب لإصدار فواتير إلكترونية صحيحة - {fields}.,screens/settings/cards.tsx,fields,translated
 Zero-rate and complimentary rooms,Zero-rate and complimentary rooms,غرف بسعر صفر ومجانية,screens/AuditPack.tsx,,translated

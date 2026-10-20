@@ -320,9 +320,15 @@ def t3g():
 		assert occupancy_rate(villa, 10, 0) == 25700, "two extra adults"
 		assert occupancy_rate(villa, 10, 1) == 26900, "plus one child"
 
-		# a small-group rate is per head already, so children are charged there
+		# with children inside the base occupancy they are guests like any
+		# other in the small-group count too: 3 adults + 1 child are four
+		# guests at the per-head rate, and 4 + 2 are six, the house rate
 		villa.small_group_max_adults = 6
 		villa.small_group_price_per_adult = 4000
+		assert occupancy_rate(villa, 3, 1) == 16000, "four guests per head"
+		assert occupancy_rate(villa, 4, 2) == 22500, "six guests pay the house"
+		# flag off: the per-head rate counts adults, and each child is extra
+		villa.children_within_base_occupancy = 0
 		assert occupancy_rate(villa, 3, 1) == 13200, "per-head plus one child"
 	finally:
 		frappe.delete_doc("Room Type", villa.name, force=True,
@@ -9669,6 +9675,322 @@ def t376():
 	assert frappe.db.get_value("POS Order", fired["order"], "status") == "Preparing"
 	listed = call_tool(spec["pos_orders"], {"outlet": outlet, "state": "open"}, P)
 	assert [r["name"] for r in listed["rows"]] == [fresh["order"]], listed["rows"]
+@check("extra guests: booked on top of a full room, capped at the extra beds")
+def t217():
+	"""The desk fills Adults up to what the room sleeps and books anyone
+	above it as extra guests - not by typing more adults."""
+	villa = frappe.get_doc({
+		"doctype": "Room Type", "property": P, "room_type_code": "EXG",
+		"room_type_name": "Eval Extra Guests", "base_price": 22500,
+		"base_occupancy": 8, "extra_adult_price": 1600,
+		"adults_capacity": 14, "children_capacity": 6,
+		"max_extra_beds": 3, "tax_percent": 0,
+	}).insert(ignore_permissions=True)
+	g = _guest("Eval Extra Count", "+91 70000 00217")
+	base = {
+		"doctype": "Reservation", "property": P, "guest": g,
+		"room_type": villa.name, "check_in_date": "2031-05-01",
+		"check_out_date": "2031-05-02", "auto_price": 1, "adults": 14,
+	}
+
+	# 14 adults + 2 extra guests, with a reason and the agreed price
+	r = frappe.get_doc({
+		**base, "over_capacity_guests": 2, "over_capacity_charge": 3200,
+		"over_capacity_reason": "Group of 16, sharing the king beds",
+	}).insert(ignore_permissions=True)
+	full = 22500 + 6 * 1600
+	assert abs(float(r.amount_before_tax) - (full + 3200)) < 0.01, r.amount_before_tax
+
+	# extra guests with no reason: refused
+	try:
+		frappe.get_doc({**base, "over_capacity_guests": 1}).insert(ignore_permissions=True)
+		raise AssertionError("an extra guest went in with no reason given")
+	except frappe.ValidationError as e:
+		assert "arrangement" in str(e), str(e)
+
+	# more than the extra beds: refused even with a reason
+	try:
+		frappe.get_doc({
+			**base, "over_capacity_guests": 4,
+			"over_capacity_reason": "Tried it on",
+		}).insert(ignore_permissions=True)
+		raise AssertionError("4 extra guests went in past 3 extra beds")
+	except frappe.ValidationError as e:
+		assert "max 3" in str(e), str(e)
+
+
+
+
+def _villa_like_treepie(code):
+	"""A whole-villa room type priced the way Naadi's Songs of the Treepie
+	is: per head below six on weekdays, the house rate for 6-8, children
+	inside the base occupancy, 14 + 3 by arrangement."""
+	rt = frappe.get_doc({
+		"doctype": "Room Type", "property": P, "room_type_code": code,
+		"room_type_name": f"Eval Villa {code}", "room_category": "Villa",
+		"base_price": 22500, "base_occupancy": 8, "extra_adult_price": 1600,
+		"small_group_max_adults": 6, "small_group_price_per_adult": 4000,
+		"small_group_days": "sun, mon, tue, wed, thu", "small_group_whole_stay": 1,
+		"children_within_base_occupancy": 1, "child_price": 1200,
+		"free_child_age": 4, "child_age_limit": 11,
+		"adults_capacity": 14, "children_capacity": 6, "max_extra_beds": 3,
+		"tax_percent": 0,
+	}).insert(ignore_permissions=True)
+	frappe.get_doc({
+		"doctype": "Room", "property": P, "room_number": code,
+		"room_type": rt.name, "housekeeping_status": "Clean",
+	}).insert(ignore_permissions=True)
+	return rt.name
+
+
+TUE, WED, THU = "2031-04-08", "2031-04-09", "2031-04-10"
+
+
+def _row(rows, rt):
+	return next(r for r in rows if r["room_type"] == rt)
+
+
+@check("villa: children count toward the small-group tier and fill the base occupancy")
+def t260():
+	from kamra.pricing import quote
+	villa = _villa_like_treepie("EVT1")
+	expect = {(4, 2): 22500, (5, 1): 22500, (3, 2): 20000,
+	          (8, 2): 24900, (9, 1): 25300, (3, 0): 12000}
+	for (a, c), want in expect.items():
+		got = quote(P, villa, TUE, WED, a, c)["room_total"]
+		assert got == want, f"{a} adults + {c} children: {got} != {want}"
+	# a room sold per person keeps charging every child (the flag is off)
+	assert quote(P, RT, "2030-02-01", "2030-02-02", 3, 1)["room_total"] == 5500
+
+
+@check("child ages: under the free age is free and uncounted, over the limit is an adult")
+def t261():
+	from kamra import public_api
+	from kamra.pricing import party_by_age
+	villa = _villa_like_treepie("EVT2")
+	rt = frappe.get_doc("Room Type", villa)
+	assert party_by_age(rt, 2, [3, 8, 13]) == (3, 1, 1)
+	row = _row(public_api.search_stay(P, TUE, WED, adults=2, child_ages=[3, 8, 13]), villa)
+	assert (row["adults"], row["children"], row["infants"]) == (3, 1, 1), row
+	# four paying guests (the 3-year-old is free): 4 x 4,000
+	assert row["quote"]["room_total"] == 16000, row["quote"]["room_total"]
+	# a JSON string, as a form post sends it, reads the same
+	row = _row(public_api.search_stay(P, TUE, WED, adults=2, child_ages="[3, 8, 13]"), villa)
+	assert row["infants"] == 1, row
+
+
+@check("group size: 15-17 needs the host to confirm, 18 or more is refused")
+def t262():
+	from kamra import public_api
+	villa = _villa_like_treepie("EVT3")
+	ok = _row(public_api.search_stay(P, TUE, WED, adults=14), villa)
+	assert ok["available"] and not ok.get("needs_confirmation"), ok
+	ask = _row(public_api.search_stay(P, TUE, WED, adults=15), villa)
+	assert ask["available"] and ask["needs_confirmation"], ask
+	no = _row(public_api.search_stay(P, TUE, WED, adults=18), villa)
+	assert no["available"] is False and no["reason"] == public_api.TOO_MANY_GUESTS, no
+	assert no["quote"] is None
+
+	frappe.set_user("Guest")  # nosemgrep: frappe-setuser -- controlled user context switch; target user is validated and scope-limited in this flow
+	try:
+		out = public_api.book(
+			property=P, room_type=villa, check_in_date=TUE, check_out_date=WED,
+			guest_name="Eval Big Group", phone="+919812300262", adults=15)
+		try:
+			public_api.book(
+				property=P, room_type=villa, check_in_date=TUE, check_out_date=WED,
+				guest_name="Eval Too Big", phone="+919812300263", adults=18)
+			raise AssertionError("18 guests were booked")
+		except frappe.ValidationError as e:
+			assert "cannot accommodate" in str(e), e
+	finally:
+		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- controlled user context switch; target user is validated and scope-limited in this flow
+	assert out["status"] == "Requested" and out["needs_confirmation"], out
+	res = frappe.get_doc("Reservation", out["reservation"])
+	assert res.over_capacity_guests == 1 and res.over_capacity_reason, res.as_dict()
+
+
+@check("a stay needs at least one adult")
+def t263():
+	from kamra import public_api
+	try:
+		public_api.search_stay(P, TUE, WED, adults=0, children=2)
+		raise AssertionError("a party of two children was quoted")
+	except frappe.ValidationError as e:
+		assert "at least one adult" in str(e).lower(), e
+
+
+@check("holiday season: house rate for small parties, minimum stay, full payment, flagged")
+def t264():
+	from kamra import public_api
+	villa = _villa_like_treepie("EVT4")
+	frappe.db.set_value("Property", P, {"booking_payment_mode": "Advance percent",
+	                                    "advance_percent": 50})
+	frappe.clear_document_cache("Property", P)
+	normal = _row(public_api.search_stay(P, TUE, THU, adults=4), villa)["quote"]
+	assert normal["room_total"] == 2 * 16000, normal["room_total"]
+	assert abs(normal["advance_due"] - normal["amount_after_tax"] / 2) < 0.01, normal
+
+	frappe.get_doc({
+		"doctype": "Season", "property": P, "season_name": "EVAL Holiday",
+		"room_type": villa, "start_date": TUE, "end_date": TUE,
+		"adjustment_type": "Amount", "adjustment_value": 0, "priority": 60,
+		"minimum_nights": 2, "non_refundable": 1, "full_payment": 1,
+		"no_small_group": 1, "is_holiday": 1,
+	}).insert(ignore_permissions=True)
+	one = _row(public_api.search_stay(P, TUE, WED, adults=4), villa)
+	assert one["available"] is False and "at least 2 nights" in one["reason"], one
+	two = _row(public_api.search_stay(P, TUE, THU, adults=4), villa)
+	q = two["quote"]
+	# a holiday stay is a house-rate stay throughout, like a weekend
+	assert q["room_total"] == 2 * 22500, q["room_total"]
+	assert q["is_holiday"] and q["stay_rules"]["holiday"] == "EVAL Holiday", q["stay_rules"]
+	assert abs(q["advance_due"] - q["amount_after_tax"]) < 0.01, (q["advance_due"], q["amount_after_tax"])
+
+# ── check-in / check-out on the desk: tills, open bills, roles (t380-t383) ──
+
+EVAL_FIN = "eval.fin@kamra.local"
+
+
+def _fin_user():
+	if not frappe.db.exists("User", EVAL_FIN):
+		frappe.get_doc({
+			"doctype": "User", "email": EVAL_FIN, "first_name": "Farah",
+			"enabled": 1, "user_type": "System User",
+			"send_welcome_email": 0, "roles": [{"role": "Finance"}],
+		}).insert(ignore_permissions=True)
+	return EVAL_FIN
+
+
+def _close_my_till():
+	from kamra.cashier import close_session
+	for s in frappe.get_all("Cashier Session", filters={
+			"property": P, "user": frappe.session.user, "status": "Open"}, pluck="name"):
+		close_session(s, 0)
+
+
+@check("till: check-out shows a closed till, the desk opens it in place, then collects (no dead end)")
+def t380():
+	from kamra import api
+	from kamra.cashier import open_session
+	res, folio = _settle_stay("E370", "+91 70000 03700")
+	with _as_user("frontdesk@kamra.local"):
+		_close_my_till()
+		s = api.checkout_context(res.name)
+		t = s["till"]
+		assert (t["required"], t["open"], t["can_open"]) == (True, False, True), t
+		assert not s["till_open"] and t["property"] == P, s["till_open"]
+		b = next(b for b in s["blockers"] if b["code"] == "till_closed")
+		assert b["step"] == "settle" and "Open it here" in b["message"], b
+		# the money call itself still refuses without a till: the server agrees
+		_refused(api.add_folio_payment, folio, "Cash", 100, contains="NO_OPEN_SESSION")
+		# the same open_session the Cashier screen uses, from the sheet
+		open_session(P, 500)
+		s = api.checkout_context(res.name)
+		assert s["till"]["open"] and s["till_open"], s["till"]
+		assert not any(b["code"] == "till_closed" for b in s["blockers"]), s["blockers"]
+		for c in s["collect"]:
+			api.add_folio_payment(c["folio"], "Cash", c["amount"])
+		s = api.checkout_context(res.name)
+		assert s["settled"] and s["actions"]["can_checkout"], s["blockers"]
+		assert s["actions"]["can_check_out_role"], s["actions"]
+		# the check-in sheet carries the same till state for its deposit step
+		assert api_checkin_till(res.name)["open"]
+		_close_my_till()
+
+
+def api_checkin_till(reservation):
+	from kamra.checkin import _till
+	return _till(frappe.db.get_value("Reservation", reservation, "property"))
+
+
+@check("till: a property that runs without tills takes payments with none; till-only moves still need one")
+def t381():
+	from kamra import api, cashier
+	from kamra import settings as st
+	res, folio = _settle_stay("E371", "+91 70000 03710")
+	st.save_settings(P, "finance", {"use_cashier_tills": 0})
+	try:
+		with _as_user("frontdesk@kamra.local"):
+			_close_my_till()
+			assert cashier.require_open_session(P) is None
+			s = api.checkout_context(res.name)
+			assert s["till"]["open"] and not s["till"]["required"], s["till"]
+			assert not any(b["code"] == "till_closed" for b in s["blockers"]), s["blockers"]
+			for c in s["collect"]:
+				api.add_folio_payment(c["folio"], "Card", c["amount"])
+			assert api.checkout_context(res.name)["settled"]
+			# a paid-out is a drawer movement: it still needs a till
+			_refused(cashier.post_paid_out, P, 50, "Eval courier", contains="NO_OPEN_SESSION")
+	finally:
+		st.save_settings(P, "finance", {"use_cashier_tills": 1})
+	with _as_user("frontdesk@kamra.local"):
+		_refused(cashier.require_open_session, P, contains="NO_OPEN_SESSION")
+
+
+@check("open bills at check-out: laundry still at the laundry says why, moves to Ready, hands back and bills")
+def t382():
+	from kamra import api, laundry
+	res, folio = _settle_stay("E372", "+91 70000 03720")
+	if not frappe.db.exists("Laundry Rate", {"property": P, "item_name": "Eval Shirt"}):
+		frappe.get_doc({"doctype": "Laundry Rate", "property": P, "item_name": "Eval Shirt",
+		                "service_type": "Wash & Iron", "rate": 100}).insert(ignore_permissions=True)
+	o = laundry.collect_laundry(P, room=res.room, items=[
+		{"item_name": "Eval Shirt", "service_type": "Wash & Iron", "qty": 2}])["order"]
+	laundry.laundry_status(o, "In Process")
+	s = api.checkout_context(res.name)
+	b = next(x for x in s["pending_bills"] if x["name"] == o)
+	assert b["kind"] == "laundry" and b["billable"] and b["amount"] == 200, b
+	assert b["can_mark_ready"] and not b["can_post_to_room"], b
+	assert "Still at the laundry" in b["hint"] and b["pieces_missing"] == 2, b
+	n = next(n for n in s["notices"] if n["code"] == "pending_bills")
+	assert "do not stop the check-out" in n["message"], n
+	# open bills never block: they are a warning on the sheet
+	assert not any(x["code"] == "pending_bills" for x in s["blockers"]), s["blockers"]
+	# Finance may see the bill but not move the bag
+	with _as_user(_fin_user()):
+		fb = next(x for x in api.checkout_context(res.name)["pending_bills"] if x["name"] == o)
+		assert not fb["can_act"] and not fb["can_mark_ready"], fb
+		assert "Front Desk" in fb["act_roles"], fb
+	owed = s["totals"]["owed"]
+	laundry.laundry_status(o, "Ready")
+	b = next(x for x in api.checkout_context(res.name)["pending_bills"] if x["name"] == o)
+	assert b["can_post_to_room"] and not b["can_mark_ready"], b
+	# what the sheet does on "Hand back and post to room"
+	laundry.return_items(o, {i["row"]: i["qty"] for i in b["items"]})
+	laundry.deliver_laundry(o)
+	s = api.checkout_context(res.name)
+	assert not [x for x in s["pending_bills"] if x["name"] == o], s["pending_bills"]
+	assert s["totals"]["owed"] > owed + 199, (owed, s["totals"])
+
+
+@check("check-out roles and retries: Finance settles but is told it can't check out; a lost snapshot is retried")
+def t383():
+	from kamra import api, checkout
+	res, folio = _settle_stay("E373", "+91 70000 03730")
+	with _as_user(_fin_user()):
+		s = api.checkout_context(res.name)
+		assert not s["actions"]["can_check_out_role"], s["actions"]
+		b = next(b for b in s["blockers"] if b["code"] == "role_cannot_check_out")
+		assert b["step"] == "confirm" and "Front Desk" in b["message"], b
+		assert not s["actions"]["can_checkout"]
+		_refused(api.check_out, res.name, exc=frappe.PermissionError)
+	assert api.checkout_context(res.name)["actions"]["can_check_out_role"]
+	# a deadlock drops the whole transaction, savepoint and all: the
+	# context is computed again instead of answering with a server error
+	from unittest.mock import patch
+	real, calls = checkout._checkout_context, []
+
+	def flaky(name):
+		calls.append(name)
+		if len(calls) == 1:
+			raise checkout.SnapshotLost("kamra_checkout_ctx")
+		return real(name)
+	# the retry's full rollback is stubbed so the harness savepoint survives
+	with patch.object(checkout, "_checkout_context", side_effect=flaky), \
+			patch.object(frappe.db, "rollback"):
+		s = checkout.checkout_context(res.name)
+	assert len(calls) == 2 and s["reservation"]["name"] == res.name, calls
 
 
 def execute():
@@ -9708,7 +10030,9 @@ def execute():
 		           t225, t226, t227, t228, t229, t230, t340, t341, t342, t343, t344,
 		           t350, t351, t352, t353, t354, t355, t356,
 		           t360, t361, t362, t363, t364, t365,
-		           t370, t371, t372, t373, t374, t375, t376):
+		           t370, t371, t372, t373, t374, t375, t376,
+		           t217, t260, t261, t262, t263, t264,
+		           t380, t381, t382, t383):
 			fn()
 	finally:
 		frappe.flags.kamra_checkin_steps_off = False
