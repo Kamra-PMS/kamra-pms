@@ -49,33 +49,48 @@ export default function CashierSessions() {
   }, [load])
 
   return (
-    <div className="w-full space-y-4">
+    <div className="w-full max-w-none space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-400">
             Cashier
           </p>
           <h1 className="text-2xl font-semibold">Sessions</h1>
+          <p className="mt-1 max-w-2xl text-sm text-zinc-500">
+            Open and close tills on{" "}
+            <Link to="/cashier" className="font-medium text-brand-700 hover:underline">
+              My Till
+            </Link>
+            . There is no separate “create till” form - opening a session starts the shift.
+          </p>
         </div>
-        <label className="text-sm">
-          <span className="mr-2 text-zinc-500">Business date</span>
-          <input
-            type="date"
-            className="rounded-lg border border-zinc-300 px-2 py-1.5"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-          />
-        </label>
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            to="/cashier"
+            className="rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-700"
+          >
+            Open / close till
+          </Link>
+          <label className="text-sm">
+            <span className="mr-2 text-zinc-500">Business date</span>
+            <input
+              type="date"
+              className="rounded-lg border border-zinc-300 px-2 py-1.5"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+            />
+          </label>
+        </div>
       </div>
       {err ? (
         <p className="text-sm text-rose-600">{err}</p>
       ) : null}
       <div className="overflow-x-auto rounded-xl border border-zinc-200 bg-white">
-        <table className="w-full text-left text-sm">
+        <table className="w-full table-fixed text-left text-sm">
           <thead className="border-b border-zinc-100 text-xs uppercase tracking-wide text-zinc-400">
             <tr>
-              <th className="px-3 py-2">Cashier</th>
-              <th className="px-3 py-2">Status</th>
+              <th className="w-[28%] px-3 py-2">Cashier</th>
+              <th className="w-[12%] px-3 py-2">Status</th>
               <th className="px-3 py-2">Float</th>
               <th className="px-3 py-2">Cash</th>
               <th className="px-3 py-2">Expected</th>
@@ -109,8 +124,12 @@ export default function CashierSessions() {
             ))}
             {!rows.length ? (
               <tr>
-                <td colSpan={7} className="px-3 py-8 text-center text-zinc-400">
-                  No sessions for this date.
+                <td colSpan={7} className="px-3 py-10 text-center text-zinc-400">
+                  No sessions for this date.{" "}
+                  <Link to="/cashier" className="text-brand-700 hover:underline">
+                    Open a till
+                  </Link>{" "}
+                  to start.
                 </td>
               </tr>
             ) : null}

@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useState } from "react"
 import { Link } from "react-router-dom"
 import {
+  ArrowDownToLine,
   Banknote,
+  BookOpen,
+  History,
   Lock,
   Unlock,
-  ArrowDownToLine,
   Wallet,
 } from "lucide-react"
 import { call, getCurrentProperty } from "../lib/api"
@@ -143,9 +145,10 @@ export default function CashierTill() {
     })
 
   const openTill = session?.open || session?.status === "Open"
+  const txns = session?.transactions || []
 
   return (
-    <div className="w-full space-y-5">
+    <div className="w-full max-w-none space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-400">
@@ -170,7 +173,7 @@ export default function CashierTill() {
             ) : null}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Link
             to="/cashier/sessions"
             className="rounded-lg border border-zinc-200 px-3 py-1.5 text-sm text-zinc-600 hover:bg-zinc-50"
@@ -183,7 +186,30 @@ export default function CashierTill() {
           >
             {t("Shift report")}
           </Link>
+          <Link
+            to="/folio-history"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 px-3 py-1.5 text-sm text-zinc-600 hover:bg-zinc-50"
+          >
+            <History className="size-3.5" aria-hidden />
+            {t("Folios")}
+          </Link>
+          <Link
+            to="/ledgers"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 px-3 py-1.5 text-sm text-zinc-600 hover:bg-zinc-50"
+          >
+            <BookOpen className="size-3.5" aria-hidden />
+            {t("Ledgers")}
+          </Link>
         </div>
+      </div>
+
+      <div className="rounded-xl border border-zinc-200 bg-zinc-50/80 px-4 py-3 text-sm text-zinc-600">
+        <p className="font-medium text-zinc-800">{t("How the till works")}</p>
+        <p className="mt-1 leading-relaxed">
+          {t(
+            "Open a session for your shift (that is the till). Guest payments and POS bills post here automatically while the till is open - take them on Front Desk or Restaurant, not on this page. Use Paid out and Cash drop for cash leaving the drawer, then count and close.",
+          )}
+        </p>
       </div>
 
       {err ? (
@@ -194,10 +220,15 @@ export default function CashierTill() {
 
       {!openTill ? (
         <Card>
-          <CardHeader>
+          <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-base">
               <Lock className="size-4" /> {t("Open till")}
             </CardTitle>
+            <p className="text-sm font-normal text-zinc-500">
+              {t(
+                "One open session per cashier per business date. Set the float in the drawer, then open.",
+              )}
+            </p>
           </CardHeader>
           <CardContent className="flex flex-wrap items-end gap-3">
             <label className="block text-sm">
@@ -217,7 +248,7 @@ export default function CashierTill() {
         </Card>
       ) : (
         <>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-2 grid-cols-2 sm:grid-cols-4 xl:grid-cols-8">
             {[
               [t("Float"), session?.opening_float],
               [t("Cash in"), session?.system_cash ?? session?.totals?.cash],
@@ -230,40 +261,42 @@ export default function CashierTill() {
               [t("Petty cash"), session?.petty_cash],
               [t("Expected cash"), session?.expected_cash],
             ].map(([label, val]) => (
-              <Card key={String(label)}>
-                <CardContent className="pt-4">
-                  <p className="text-xs font-medium uppercase tracking-wide text-zinc-400">
-                    {label}
-                  </p>
-                  <p className="mt-1 text-xl font-semibold tabular-nums">
-                    {inr(val)}
-                  </p>
-                </CardContent>
-              </Card>
+              <div
+                key={String(label)}
+                className="rounded-xl border border-zinc-200 bg-white px-3 py-2.5"
+              >
+                <p className="text-[10px] font-medium uppercase tracking-wide text-zinc-400">
+                  {label}
+                </p>
+                <p className="mt-0.5 text-lg font-semibold tabular-nums text-zinc-900">
+                  {inr(val)}
+                </p>
+              </div>
             ))}
           </div>
 
-          <div className="grid gap-4 lg:grid-cols-2">
+          <div className="grid gap-3 lg:grid-cols-3">
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-base">
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center gap-2 text-sm">
                   <Banknote className="size-4" /> {t("Paid out")}
                 </CardTitle>
               </CardHeader>
-              <CardContent className="flex flex-wrap items-end gap-2">
+              <CardContent className="space-y-2">
                 <input
-                  className="w-28 rounded-lg border border-zinc-300 px-3 py-2 text-sm"
+                  className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm"
                   placeholder={t("Amount")}
                   value={paidOutAmt}
                   onChange={(e) => setPaidOutAmt(e.target.value)}
                 />
                 <input
-                  className="min-w-[12rem] flex-1 rounded-lg border border-zinc-300 px-3 py-2 text-sm"
+                  className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm"
                   placeholder={t("Reason")}
                   value={paidOutReason}
                   onChange={(e) => setPaidOutReason(e.target.value)}
                 />
                 <Button
+                  className="w-full"
                   variant="outline"
                   disabled={busy || !paidOutAmt || !paidOutReason}
                   onClick={paidOut}
@@ -274,19 +307,20 @@ export default function CashierTill() {
             </Card>
 
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-base">
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center gap-2 text-sm">
                   <ArrowDownToLine className="size-4" /> {t("Cash drop")}
                 </CardTitle>
               </CardHeader>
-              <CardContent className="flex flex-wrap items-end gap-2">
+              <CardContent className="space-y-2">
                 <input
-                  className="w-28 rounded-lg border border-zinc-300 px-3 py-2 text-sm"
+                  className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm"
                   placeholder={t("Amount")}
                   value={dropAmt}
                   onChange={(e) => setDropAmt(e.target.value)}
                 />
                 <Button
+                  className="w-full"
                   variant="outline"
                   disabled={busy || !dropAmt}
                   onClick={drop}
@@ -295,86 +329,115 @@ export default function CashierTill() {
                 </Button>
                 <Link
                   to="/cashier/petty-cash"
-                  className="text-sm text-brand-700 hover:underline"
+                  className="block text-center text-sm text-brand-700 hover:underline"
                 >
                   {t("Petty cash →")}
                 </Link>
               </CardContent>
             </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center gap-2 text-sm">
+                  <Wallet className="size-4" /> {t("Close till")}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <label className="block text-sm">
+                  <span className="mb-1 block text-zinc-600">
+                    {t("Counted cash (expected {amount})", {
+                      amount: inr(session?.expected_cash),
+                    })}
+                  </span>
+                  <input
+                    className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm"
+                    inputMode="decimal"
+                    value={counted}
+                    onChange={(e) => setCounted(e.target.value)}
+                  />
+                </label>
+                {counted !== "" ? (
+                  <p className="text-sm text-zinc-600">
+                    {t("Variance")}:{" "}
+                    <span className="font-semibold tabular-nums">
+                      {inr(Number(counted) - Number(session?.expected_cash || 0))}
+                    </span>
+                  </p>
+                ) : null}
+                <Button
+                  className="w-full"
+                  disabled={busy || counted === ""}
+                  onClick={close}
+                >
+                  {t("Close session")}
+                </Button>
+              </CardContent>
+            </Card>
           </div>
 
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Wallet className="size-4" /> {t("Close till")}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-wrap items-end gap-3">
-              <label className="block text-sm">
-                <span className="mb-1 block text-zinc-600">
-                  {t("Counted cash (expected {amount})", { amount: inr(session?.expected_cash) })}
-                </span>
-                <input
-                  className="w-40 rounded-lg border border-zinc-300 px-3 py-2 text-sm"
-                  inputMode="decimal"
-                  value={counted}
-                  onChange={(e) => setCounted(e.target.value)}
-                />
-              </label>
-              {counted !== "" ? (
-                <p className="text-sm text-zinc-600">
-                  {t("Variance")}:{" "}
-                  <span className="font-semibold tabular-nums">
-                    {inr(Number(counted) - Number(session?.expected_cash || 0))}
-                  </span>
-                </p>
-              ) : null}
-              <Button disabled={busy || counted === ""} onClick={close}>
-                {t("Close session")}
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between gap-3 pb-2">
               <CardTitle className="text-base">{t("Recent transactions")}</CardTitle>
+              <p className="text-xs font-normal text-zinc-400">
+                {t("{n} this session", { n: txns.length })}
+              </p>
             </CardHeader>
-            <CardContent className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead className="text-xs uppercase tracking-wide text-zinc-400">
-                  <tr>
-                    <th className="py-2 pr-3">{t("Kind")}</th>
-                    <th className="py-2 pr-3">{t("Mode")}</th>
-                    <th className="py-2 pr-3">{t("Amount")}</th>
-                    <th className="py-2 pr-3">{t("Ref")}</th>
-                    <th className="py-2">{t("When")}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(session?.transactions || []).map((tx) => (
-                    <tr key={tx.name} className="border-t border-zinc-100">
-                      <td className="py-2 pr-3">{tx.kind}</td>
-                      <td className="py-2 pr-3">{tx.mode}</td>
-                      <td className="py-2 pr-3 tabular-nums">{inr(tx.amount)}</td>
-                      <td className="py-2 pr-3 text-zinc-500">
-                        {tx.reference || tx.folio || tx.pos_order || "—"}
-                      </td>
-                      <td className="py-2 text-zinc-500">
-                        {tx.posted_at
-                          ? String(tx.posted_at).replace(" ", "T").slice(11, 16)
-                          : ""}
-                      </td>
-                    </tr>
-                  ))}
-                  {!session?.transactions?.length ? (
+            <CardContent className="overflow-x-auto pt-0">
+              {txns.length ? (
+                <table className="w-full table-fixed text-left text-sm">
+                  <thead className="text-xs uppercase tracking-wide text-zinc-400">
                     <tr>
-                      <td colSpan={5} className="py-6 text-center text-zinc-400">
-                        {t("No transactions yet this session.")}
-                      </td>
+                      <th className="w-[18%] py-2 pr-3">{t("Kind")}</th>
+                      <th className="w-[14%] py-2 pr-3">{t("Mode")}</th>
+                      <th className="w-[16%] py-2 pr-3">{t("Amount")}</th>
+                      <th className="py-2 pr-3">{t("Ref")}</th>
+                      <th className="w-[12%] py-2">{t("When")}</th>
                     </tr>
-                  ) : null}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {txns.map((tx) => (
+                      <tr key={tx.name} className="border-t border-zinc-100">
+                        <td className="py-2 pr-3">{tx.kind}</td>
+                        <td className="py-2 pr-3">{tx.mode}</td>
+                        <td className="py-2 pr-3 tabular-nums">{inr(tx.amount)}</td>
+                        <td className="truncate py-2 pr-3 text-zinc-500">
+                          {tx.reference || tx.folio || tx.pos_order || "—"}
+                        </td>
+                        <td className="py-2 text-zinc-500">
+                          {tx.posted_at
+                            ? String(tx.posted_at).replace(" ", "T").slice(11, 16)
+                            : ""}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <div className="rounded-lg border border-dashed border-zinc-200 bg-zinc-50/50 px-4 py-8 text-center">
+                  <p className="text-sm text-zinc-600">
+                    {t("No till transactions yet.")}
+                  </p>
+                  <p className="mt-1 text-xs text-zinc-400">
+                    {t(
+                      "Collect a payment on Front Desk (Today / reservation) or close a restaurant bill - they appear here while the till is open.",
+                    )}
+                  </p>
+                  <div className="mt-3 flex flex-wrap justify-center gap-2">
+                    <Link
+                      to="/"
+                      className="rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-700"
+                    >
+                      {t("Front Desk")}
+                    </Link>
+                    <Link
+                      to="/pos"
+                      className="rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-sm text-zinc-700 hover:bg-zinc-50"
+                    >
+                      {t("Restaurant POS")}
+                    </Link>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </>

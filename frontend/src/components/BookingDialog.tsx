@@ -1433,30 +1433,36 @@ export function BookingDialog(props: {
                     )}
                   </Field>
                   {dayUse ? (
-                    <Field label={t("Time slot")}>
-                      <div className="flex items-center gap-1">
-                        <input
-                          type="time"
-                          aria-label={t("From")}
-                          className={inputCls + " px-2"}
-                          value={slot.from}
-                          onChange={(e) => setSlot((x) => ({ ...x, from: e.target.value }))}
-                        />
-                        <span className="text-zinc-400" aria-hidden>–</span>
-                        <input
-                          type="time"
-                          aria-label={t("To")}
-                          className={inputCls + " px-2"}
-                          value={slot.to}
-                          onChange={(e) => setSlot((x) => ({ ...x, to: e.target.value }))}
-                        />
-                      </div>
-                      {badSlot && (
-                        <p className="mt-1.5 text-xs text-rose-600">
-                          {t("The slot must end after it starts.")}
-                        </p>
-                      )}
-                    </Field>
+                    /* Two time inputs need two columns — a single cell overflows
+                       into Adults and looks like a double text box. */
+                    <div className="col-span-2 min-w-0 sm:col-span-3">
+                      <Field label={t("Time slot")}>
+                        <div className="flex min-w-0 items-center gap-1">
+                          <input
+                            type="time"
+                            aria-label={t("From")}
+                            className={inputCls + " min-w-0 flex-1 px-2"}
+                            value={slot.from}
+                            onChange={(e) => setSlot((x) => ({ ...x, from: e.target.value }))}
+                          />
+                          <span className="shrink-0 text-zinc-400" aria-hidden>
+                            –
+                          </span>
+                          <input
+                            type="time"
+                            aria-label={t("To")}
+                            className={inputCls + " min-w-0 flex-1 px-2"}
+                            value={slot.to}
+                            onChange={(e) => setSlot((x) => ({ ...x, to: e.target.value }))}
+                          />
+                        </div>
+                        {badSlot && (
+                          <p className="mt-1.5 text-xs text-rose-600">
+                            {t("The slot must end after it starts.")}
+                          </p>
+                        )}
+                      </Field>
+                    </div>
                   ) : (
                     <Field label={t("Nights")}>
                       <input

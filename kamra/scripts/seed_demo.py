@@ -61,6 +61,7 @@ def _execute():
 		seed_showcase()
 		seed_v1()
 		seed_generic_properties()
+		ensure_petty_cash_floats()
 		frappe.db.commit()  # nosemgrep: frappe-manual-commit -- batch/seed/migration script runs outside the request cycle; explicit commit persists the staged writes
 		print("Demo property already exists — ensured demo users + showcase + revenue samples."
 		      + (f" Healed {healed} blank default(s)." if healed else ""))
@@ -77,6 +78,7 @@ def _execute():
 			"phone": "+91 80 4000 8000",
 			"email": "demo@kamra.local",
 			"gstin": "29ABCDE1234F1Z5",
+			"petty_cash_float": 10000,
 		}
 	).insert(ignore_permissions=True)
 
@@ -236,6 +238,7 @@ def _execute():
 
 	# Seed generic demo properties (lakeside villa with whole-property lock, and beach homestay with AC/non-AC rooms)
 	seed_generic_properties()
+	ensure_petty_cash_floats()
 
 	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- batch/seed/migration script runs outside the request cycle; explicit commit persists the staged writes
 	print(f"Seeded demo property '{PROPERTY}' with rooms, guests, reservations and login users.")
@@ -281,6 +284,24 @@ def _ensure_rental_kind():
 			dirty = True
 		if dirty:
 			doc.save(ignore_permissions=True)
+
+
+
+def ensure_petty_cash_floats():
+	"""Each property keeps its own petty-cash imprest — never one shared box."""
+	defaults = {
+		"Kamra Demo Palace": 10000,
+		"Kamra Beach House": 3000,
+		"Kamra Lakeside Villa": 5000,
+		"Kamra Beach Homestay": 2500,
+	}
+	for name, amount in defaults.items():
+		if not frappe.db.exists("Property", name):
+			continue
+		cur = frappe.db.get_value("Property", name, "petty_cash_float")
+		if cur in (None, "", 0, 0.0):
+			frappe.db.set_value("Property", name, "petty_cash_float", amount,
+			                    update_modified=False)
 
 
 def seed_generic_properties():
