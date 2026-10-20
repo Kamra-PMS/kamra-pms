@@ -332,6 +332,33 @@ export default function POS() {
     setTablesOpen(false)
     setMobilePane("menu") // a fresh bill starts at the menu on a phone
   }
+  /** Cart / draft table pick — same rules as the Tables drawer. */
+  function pickCartTable(value: string) {
+    if (value === "__custom__") {
+      setCustomTable(true)
+      setTable("")
+      setChooser(null)
+      return
+    }
+    if (!value) {
+      setTable("")
+      setChooser(null)
+      return
+    }
+    const tile = tables.find((x) => x.table === value)
+    if (!tile || tile.bills === 0) {
+      setTable(value)
+      setChooser(null)
+      return
+    }
+    if (tile.bills === 1) {
+      setChooser(null)
+      void openTab(tile.orders[0].order)
+      return
+    }
+    setTable(value)
+    setChooser(value)
+  }
   async function openTab(name: string, opts?: { popup?: boolean }) {
     setSelected(name); resetPanel()
     setTablesOpen(false)
@@ -1081,15 +1108,41 @@ export default function POS() {
             {moreOpen && (
               <>
                 <div className="fixed inset-0 z-20" onClick={() => setMoreOpen(false)} aria-hidden />
-                <div className="absolute right-0 top-full z-30 mt-1 w-64 overflow-hidden rounded-xl border border-zinc-200 bg-white py-1 shadow-lg">
+                <div className="absolute right-0 top-full z-30 mt-1 w-72 max-h-[min(70vh,28rem)] overflow-y-auto rounded-xl border border-zinc-200 bg-white py-1 shadow-lg">
+                  <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-400">
+                    {t("Open bills")}{open.length > 0 ? ` · ${open.length}` : ""}
+                  </div>
+                  {open.length === 0 ? (
+                    <p className="px-3 py-2 text-xs text-zinc-400">{t("No open bills")}</p>
+                  ) : (
+                    open.map((o) => {
+                      const hint = !o.kot_fired
+                        ? (o.stale ? t("Not sent") : t("Draft"))
+                        : o.pending > 0 ? t("In kitchen") : t("Ready / unpaid")
+                      return (
+                        <button key={o.name} type="button"
+                          onClick={() => { setMoreOpen(false); void openTab(o.name) }}
+                          className={cn(
+                            "flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-zinc-50",
+                            selected === o.name && "bg-brand-50",
+                            !!o.stale && "text-rose-800",
+                          )}>
+                          <span className="min-w-0 flex-1 truncate font-medium">{o.label}</span>
+                          <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-zinc-400">{hint}</span>
+                          <span className="shrink-0 tabular-nums text-xs font-semibold text-zinc-700">{cur()}{inr(o.order_total)}</span>
+                        </button>
+                      )
+                    })
+                  )}
                   <button type="button" onClick={() => { setPanel("orders"); setMoreOpen(false) }}
-                    className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm text-zinc-700 hover:bg-zinc-50">
-                    <ListOrdered className="size-4 text-zinc-500" />
-                    <span className="flex-1">{t("Orders")}</span>
-                    {open.some((o) => o.stale) && <span className="size-2 rounded-full bg-rose-600" />}
+                    className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm font-medium text-brand-700 hover:bg-brand-50">
+                    <ListOrdered className="size-4" />
+                    {t("See all / history")}
                   </button>
+
+                  <div className="my-1 border-t border-zinc-100" />
                   {autoKot ? (
-                    <div className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-brand-800">
+                    <div className="flex items-center gap-2.5 px-3 py-2 text-sm text-brand-800">
                       <Printer className="size-4" />
                       {t("KOT prints on send")}
                     </div>
@@ -1100,34 +1153,27 @@ export default function POS() {
                       {printKot ? t("KOT printer on") : t("KOT printer off")}
                     </button>
                   )}
-                  <div className="my-1 border-t border-zinc-100" />
-                  <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-400">
-                    <span className="inline-flex items-center gap-1"><Keyboard className="size-3" />{t("Shortcuts")}</span>
-                  </div>
-                  {([["F2", t("New bill")], ["F3", t("Cycle open bills")], ["F4", t("Settle")],
-                     ["F5", t("Hold bill")], ["F6", t("Fire KOT")],
-                     ["Esc", t("Show menus / exit full screen")]] as const).map(([k, l]) => (
-                    <div key={k} className="flex items-center justify-between gap-3 px-3 py-1 text-xs text-zinc-600">
-                      <span>{l}</span>
-                      <kbd className="rounded border border-zinc-300 bg-zinc-50 px-1.5 py-0.5 font-semibold text-zinc-600">{k}</kbd>
-                    </div>
-                  ))}
+
                   <div className="my-1 border-t border-zinc-100" />
                   <button type="button" onClick={() => { toggleFocus(); setMoreOpen(false) }}
                     className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm text-zinc-700 hover:bg-zinc-50">
                     <Focus className="size-4 text-zinc-500" />
-                    {kioskOn ? t("Show PMS menus (Esc)") : t("Focus mode — hide PMS menus")}
+                    {kioskOn ? t("Show PMS menus") : t("Focus mode — hide PMS menus")}
                   </button>
                   <button type="button" onClick={() => { toggleBrowserFs(); setMoreOpen(false) }}
                     className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm text-zinc-700 hover:bg-zinc-50">
                     {browserFs ? <Minimize2 className="size-4 text-zinc-500" /> : <Maximize2 className="size-4 text-zinc-500" />}
-                    {browserFs ? t("Exit full screen (Esc)") : t("Full screen till")}
+                    {browserFs ? t("Exit full screen") : t("Full screen till")}
                   </button>
-                  <button type="button" onClick={() => { exitFloor(); navigate("/dashboard") }}
+                  <button type="button" onClick={() => { setMoreOpen(false); exitFloor(); navigate("/dashboard") }}
                     className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm text-zinc-700 hover:bg-zinc-50">
                     <LogOut className="size-4 text-zinc-500" />
-                    {t("Exit POS — back to the PMS")}
+                    {t("Leave POS")}
                   </button>
+                  <p className="border-t border-zinc-100 px-3 py-2 text-[10px] leading-snug text-zinc-400">
+                    <Keyboard className="me-1 inline size-3 align-text-bottom" />
+                    F2 New · F3 Bills · F4 Settle · Esc menus
+                  </p>
                 </div>
               </>
             )}
@@ -1251,13 +1297,15 @@ export default function POS() {
           {/* row 1 — thin who/where chrome */}
           <div className="space-y-1.5 border-b border-zinc-100 px-3 py-2">
             {selected && detail ? (
-              <div className="flex items-center justify-between gap-2">
-                <div className="min-w-0">
-                  <h2 className="truncate text-sm font-bold text-zinc-900">{orderLabel(detail)}</h2>
-                  <p className="truncate text-[11px] text-zinc-500">
-                    {detail.kot_no ? `KOT #${detail.kot_no} · ` : ""}{detail.status}
-                    {detail.guests ? ` · ${detail.guests}` : ""}
-                  </p>
+              <div className="flex items-center gap-2">
+                <div className="min-w-0 flex-1">
+                  <div className="flex min-w-0 items-baseline gap-1.5">
+                    <h2 className="truncate text-sm font-bold text-zinc-900">{orderLabel(detail)}</h2>
+                    <span className="shrink-0 truncate text-[11px] text-zinc-500">
+                      {detail.kot_no ? `KOT #${detail.kot_no} · ` : ""}{detail.status}
+                      {detail.guests ? ` · ${detail.guests}` : ""}
+                    </span>
+                  </div>
                 </div>
                 <div className="flex shrink-0 items-center gap-1">
                   {detail.table_no && detail.status !== "Delivered" && (
@@ -1277,36 +1325,66 @@ export default function POS() {
             ) : (
               <div className="space-y-1.5">
                 {orderType === "Dine In" && (
-                  <div className="grid grid-cols-2 gap-1.5">
-                    {tables.length > 0 && !customTable ? (
-                      <select className={inputCls + " !py-1.5 text-sm"} value={table}
-                        onChange={(e) => {
-                          if (e.target.value === "__custom__") { setCustomTable(true); setTable("") }
-                          else setTable(e.target.value)
-                        }}>
-                        <option value="">{t("Table…")}</option>
-                        {tables.map((t) => (
-                          <option key={t.table} value={t.table}>
-                            {t.table}{t.seats ? ` (${t.seats})` : ""}{t.bills > 0 ? ` · ${t.bills}` : ""}
-                          </option>
-                        ))}
-                        <option value="__custom__">{t("Temp / custom table…")}</option>
-                      </select>
-                    ) : (
-                      <div className="flex gap-1">
-                        <input autoFocus={customTable} className={inputCls + " !py-1.5"} placeholder={t("Table name")}
-                          value={table} onChange={(e) => setTable(e.target.value)} />
-                        {customTable && (
-                          <Button variant="ghost" className="!px-2" onClick={() => { setCustomTable(false); setTable("") }}>✕</Button>
-                        )}
+                  <>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      {tables.length > 0 && !customTable ? (
+                        <select className={inputCls + " !py-1.5 text-sm"} value={chooser || table}
+                          onChange={(e) => pickCartTable(e.target.value)}>
+                          <option value="">{t("Table…")}</option>
+                          {tables.map((t) => (
+                            <option key={t.table} value={t.table}>
+                              {t.table}{t.seats ? ` (${t.seats})` : ""}{t.bills > 0 ? ` · ${t.bills}` : ""}
+                            </option>
+                          ))}
+                          <option value="__custom__">{t("Temp / custom table…")}</option>
+                        </select>
+                      ) : (
+                        <div className="flex gap-1">
+                          <input autoFocus={customTable} className={inputCls + " !py-1.5"} placeholder={t("Table name")}
+                            value={table} onChange={(e) => setTable(e.target.value)} />
+                          {customTable && (
+                            <Button variant="ghost" className="!px-2" onClick={() => { setCustomTable(false); setTable(""); setChooser(null) }}>✕</Button>
+                          )}
+                        </div>
+                      )}
+                      <div className="flex items-center gap-1 rounded-lg border border-zinc-300 px-2">
+                        <Users className="size-3.5 text-zinc-400" />
+                        <input className="w-full bg-transparent py-1.5 text-sm focus:outline-none" placeholder={t("Guests")}
+                          inputMode="numeric" value={guests} onChange={(e) => setGuests(e.target.value.replace(/\D/g, ""))} />
                       </div>
-                    )}
-                    <div className="flex items-center gap-1 rounded-lg border border-zinc-300 px-2">
-                      <Users className="size-3.5 text-zinc-400" />
-                      <input className="w-full bg-transparent py-1.5 text-sm focus:outline-none" placeholder={t("Guests")}
-                        inputMode="numeric" value={guests} onChange={(e) => setGuests(e.target.value.replace(/\D/g, ""))} />
                     </div>
-                  </div>
+                    {tables.some((x) => x.bills > 0) && (
+                      <p className="text-[10px] leading-snug text-zinc-400">
+                        {t("Pick a table with an open bill to add items to it.")}
+                      </p>
+                    )}
+                    {chooser && (() => {
+                      const tile = tables.find((x) => x.table === chooser)
+                      if (!tile || tile.bills < 2) return null
+                      return (
+                        <div className="space-y-1 rounded-lg border border-brand-200 bg-brand-50/50 p-2">
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="text-[11px] font-semibold text-brand-800">
+                              {t("Table {n} has {count} bills", { n: tile.table, count: tile.bills })}
+                            </p>
+                            <button type="button" className="text-zinc-400 hover:text-zinc-600"
+                              onClick={() => setChooser(null)} aria-label={t("Close")}>✕</button>
+                          </div>
+                          {tile.orders.map((b) => (
+                            <button key={b.order} type="button" onClick={() => { setChooser(null); void openTab(b.order) }}
+                              className={"flex w-full items-center justify-between rounded-md border px-2 py-1.5 text-xs transition " + TILE[b.state]}>
+                              <span className="font-medium">{b.label}</span>
+                              <span className="tabular-nums">{cur()}{inr(b.order_total)}</span>
+                            </button>
+                          ))}
+                          <button type="button" onClick={() => { setChooser(null); newOrder(tile.table) }}
+                            className="w-full rounded-md border border-dashed border-zinc-400 px-2 py-1.5 text-xs text-zinc-600 hover:border-brand-500 hover:text-brand-700">
+                            <Plus className="me-0.5 inline size-3" />{t("New bill on this table")}
+                          </button>
+                        </div>
+                      )
+                    })()}
+                  </>
                 )}
                 {orderType === "Room Service" && (
                   <RoomPicker rooms={rooms} value={room} onChange={setRoom} onOpen={loadRooms}
@@ -1801,17 +1879,17 @@ function VegMark({ veg }: { veg: number }) {
 function MenuCard({ it, onAdd }: { it: MenuItem; onAdd: () => void }) {
   return (
     <button type="button" onClick={onAdd}
-      className="group flex min-h-[6.25rem] flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white text-left shadow-sm transition hover:border-brand-500 hover:shadow-md active:scale-[0.98]">
-      {it.image && <img src={it.image} alt="" className="h-28 w-full object-cover" />}
-      <div className="flex flex-1 flex-col justify-between gap-2 p-3">
-        <div className="flex items-start gap-2">
+      className="group flex min-h-[5rem] flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white text-left shadow-sm transition hover:border-brand-500 hover:shadow-md active:scale-[0.98]">
+      {it.image && <img src={it.image} alt="" className="h-20 w-full object-cover" />}
+      <div className="flex flex-1 flex-col justify-between gap-1.5 p-2.5">
+        <div className="flex items-start gap-1.5">
           <VegMark veg={it.is_veg} />
-          <span className="line-clamp-2 text-[15px] font-semibold leading-snug text-zinc-900">{it.item_name}</span>
+          <span className="line-clamp-2 text-sm font-semibold leading-snug text-zinc-900">{it.item_name}</span>
         </div>
         <div className="flex items-center justify-between gap-2">
-          <span className="text-base font-bold tabular-nums text-zinc-800">{cur()}{inr(it.price)}</span>
-          <span className="grid size-9 place-items-center rounded-full bg-brand-50 text-brand-700 transition group-hover:bg-brand-600 group-hover:text-white">
-            <Plus className="size-4" />
+          <span className="text-sm font-bold tabular-nums text-zinc-800">{cur()}{inr(it.price)}</span>
+          <span className="grid size-8 place-items-center rounded-full bg-brand-50 text-brand-700 transition group-hover:bg-brand-600 group-hover:text-white">
+            <Plus className="size-3.5" />
           </span>
         </div>
       </div>
