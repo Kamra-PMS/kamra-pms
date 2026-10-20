@@ -24,7 +24,6 @@ if (archive && !version) {
   process.exit(1)
 }
 
-const configPath = join(root, ".vitepress/config.mts")
 const versionsPath = join(root, "versions.json")
 const versions = JSON.parse(readFileSync(versionsPath, "utf8"))
 
