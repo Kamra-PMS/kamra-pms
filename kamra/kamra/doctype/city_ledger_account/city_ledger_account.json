@@ -9,6 +9,8 @@
   "account_number",
   "column_break_a",
   "credit_limit",
+  "use_default_credit_days",
+  "credit_days",
   "balance",
   "disabled"
  ],
@@ -46,6 +48,21 @@
    "default": "0"
   },
   {
+   "fieldname": "use_default_credit_days",
+   "fieldtype": "Check",
+   "label": "Use Property Default Credit Days",
+   "default": "1",
+   "description": "On: bills are due after the property's default payment terms (Settings, Finance). Off: Credit Days below applies as entered - 0 means due on the invoice date."
+  },
+  {
+   "fieldname": "credit_days",
+   "fieldtype": "Int",
+   "label": "Credit Days",
+   "default": "0",
+   "description": "Payment terms when 'Use property default' is off: days after the invoice date a bill is due (0 = due on the invoice date).",
+   "depends_on": "eval:!doc.use_default_credit_days"
+  },
+  {
    "fieldname": "balance",
    "fieldtype": "Currency",
    "label": "Balance",
@@ -62,7 +79,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-10-01 18:00:00.000000",
+ "modified": "2026-10-19 18:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "City Ledger Account",

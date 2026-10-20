@@ -306,19 +306,36 @@ function GuestLedger({ p }: { p: Pack }) {
 
 function CityLedger({ p }: { p: Pack }) {
   const rows = p.city_ledger?.accounts || []
+  // packs saved before due-date aging only carry the invoice-age buckets
+  const byDue = rows.length === 0 || "not_due" in rows[0]
   return (
     <DataTable
-      cols={[
-        { key: "company", label: "Company" },
-        { key: "account_number", label: "Account" },
-        { key: "credit_limit", label: "Credit limit", kind: "money" },
-        { key: "current", label: "0-30", kind: "money" },
-        { key: "b30", label: "31-60", kind: "money" },
-        { key: "b60", label: "61-90", kind: "money" },
-        { key: "b90", label: "91-120", kind: "money" },
-        { key: "b90p", label: "120+", kind: "money" },
-        { key: "open_balance", label: "Open balance", kind: "money" },
-      ]}
+      cols={
+        byDue
+          ? [
+              { key: "company", label: "Company" },
+              { key: "account_number", label: "Account" },
+              { key: "credit_limit", label: "Credit limit", kind: "money" },
+              { key: "credit_days", label: "Terms (days)" },
+              { key: "not_due", label: "Not due", kind: "money" },
+              { key: "d1_30", label: "1-30 overdue", kind: "money" },
+              { key: "d31_60", label: "31-60", kind: "money" },
+              { key: "d61_90", label: "61-90", kind: "money" },
+              { key: "d90p", label: "90+", kind: "money" },
+              { key: "open_balance", label: "Open balance", kind: "money" },
+            ]
+          : [
+              { key: "company", label: "Company" },
+              { key: "account_number", label: "Account" },
+              { key: "credit_limit", label: "Credit limit", kind: "money" },
+              { key: "current", label: "0-30", kind: "money" },
+              { key: "b30", label: "31-60", kind: "money" },
+              { key: "b60", label: "61-90", kind: "money" },
+              { key: "b90", label: "91-120", kind: "money" },
+              { key: "b90p", label: "120+", kind: "money" },
+              { key: "open_balance", label: "Open balance", kind: "money" },
+            ]
+      }
       rows={rows}
       empty="No city ledger accounts."
       total={{ company: "Total", open_balance: money(sum(rows, "open_balance")) }}

@@ -9,6 +9,8 @@ Run via bench console:
     from kamra.scripts.eval_harness import execute; execute()
 """
 
+import json
+
 import frappe
 from frappe.utils import add_days, getdate, nowdate
 
@@ -6017,6 +6019,9 @@ def _assert_company_ar(account):
 	assert abs(float(row["balance"]) - (row["open_balance"] - row["unapplied_credit"])) < 0.01, row
 	buckets = sum(row[k] for k in ("current", "b30", "b60", "b90", "b90p"))
 	assert abs(buckets - max(float(row["balance"]), 0)) < 0.01, row
+	# the due-date buckets (#238) add up to the same balance
+	due = sum(row[k] for k in ("not_due", "d1_30", "d31_60", "d61_90", "d90p"))
+	assert abs(due - max(float(row["balance"]), 0)) < 0.01, row
 	return row
 
 def _ledger_room(code):
@@ -8107,10 +8112,10 @@ def _golive_files():
 		f"OLD-3,Golive Future,+91 70000 22803,Golive Deluxe,,{d(10)},"
 		f"{d(12)},2,8400,Confirmed\n")
 	companies = (
-		"Company Name,Tax ID,Contact Name,Credit Allowed,Credit Limit\n"
-		"EVAL Golive Corp,29ABCDE1234F1Z5,Asha,Yes,\"50,000\"\n"
-		"EVAL Golive Prepaid,,Ravi,Yes,10000\n"
-		"EVAL Golive Cash Co,,,No,\n")
+		"Company Name,Tax ID,Contact Name,Credit Allowed,Credit Limit,Credit Days\n"
+		"EVAL Golive Corp,29ABCDE1234F1Z5,Asha,Yes,\"50,000\",45\n"
+		"EVAL Golive Prepaid,,Ravi,Yes,10000,\n"
+		"EVAL Golive Cash Co,,,No,,\n")
 	opening = (
 		"Type,Reservation No,Guest Name,Room,Check In,Company,Invoice No,"
 		"Invoice Date,Amount,Mode\n"
@@ -8141,8 +8146,13 @@ def t220():
 	assert frappe.db.get_value("Corporate Account", "EVAL Golive Cash Co",
 	                           "credit_allowed") == 0
 	acc = frappe.db.get_value("City Ledger Account", {
-		"property": GL, "company": "EVAL Golive Corp"}, "credit_limit")
-	assert float(acc) == 50000, acc
+		"property": GL, "company": "EVAL Golive Corp"},
+		["credit_limit", "credit_days", "use_default_credit_days"])
+	assert float(acc[0]) == 50000 and acc[1] == 45 and acc[2] == 0, acc
+	# no Credit Days on the row: the company follows the property default
+	assert frappe.db.get_value("City Ledger Account", {
+		"property": GL, "company": "EVAL Golive Prepaid"},
+		"use_default_credit_days") == 1
 	n = frappe.db.count("Corporate Account", {"company_name": ("like", "EVAL Golive%")})
 	again = golive.run_companies(GL, companies)
 	assert again["created"] == 0 and again["updated"] == 3, again
@@ -8222,9 +8232,11 @@ def t222():
 	bal = frappe.db.sql("""SELECT SUM(debit - credit) FROM `tabCity Ledger Entry`
 	                       WHERE account = %s""", corp)[0][0]
 	assert abs(float(bal) - 22500.5) < 0.01, bal
-	old = frappe.db.get_value("City Ledger Entry", {
-		"account": corp, "invoice_number": "INV-881"}, "posting_date")
+	old, due = frappe.db.get_value("City Ledger Entry", {
+		"account": corp, "invoice_number": "INV-881"}, ["posting_date", "due_date"])
 	assert str(old) == str(add_days(getdate(nowdate()), -40)), old
+	# due on the original invoice date + the company's 45 credit days
+	assert str(due) == str(add_days(old, 45)), due
 	ar = frappe.db.sql("""SELECT SUM(debit - credit) FROM `tabFolio Ledger Entry`
 	                      WHERE property = %s AND ledger = 'AR'""", GL)[0][0]
 	assert abs(float(ar) - 22500.5) < 0.01, ar
@@ -8320,6 +8332,195 @@ def t224():
 		pass
 
 
+# ── company credit control (#238) ───────────────────────────────────────────
+
+def _credit_setting(key, value):
+	from kamra.settings import clear_cache
+	name = frappe.db.get_value("Property Setting", {"property": P, "setting_key": key})
+	if name:
+		frappe.db.set_value("Property Setting", name, "value", json.dumps(value))
+	else:
+		frappe.get_doc({"doctype": "Property Setting", "property": P,
+		                "setting_key": key, "value": json.dumps(value)}
+		               ).insert(ignore_permissions=True)
+	clear_cache(P)
+
+
+def _credit_reset():
+	from kamra.settings import clear_cache
+	frappe.db.delete("Property Setting", {
+		"property": P, "setting_key": ("in", ("credit_control", "default_credit_days",
+		                                      "credit_overdue_grace_days"))})
+	clear_cache(P)
+
+
+def _credit_bill(corp, name, phone, room_code, amount, limit=0, days=0):
+	"""A guest folio of `amount` billed to `corp` on the city ledger, with
+	the account's terms set first. Returns (account, folio)."""
+	from kamra import api
+	from kamra.ledger import _ar_account, transfer_to_city_ledger
+	acct = _ar_account(P, corp)
+	frappe.db.set_value("City Ledger Account", acct,
+	                    {"credit_limit": limit, "credit_days": days,
+	                     "use_default_credit_days": 0 if days else 1})
+	_, f = _in_house(name, phone, "2036-07-01", "2036-07-03", _ledger_room(room_code))
+	api.add_folio_charge(f, "Misc", "eval credit bill", amount, gst_rate=0)
+	transfer_to_city_ledger(f, corp, credit_check=False)
+	return acct, f
+
+
+def _credit_folio(name, phone, room_code, amount):
+	from kamra import api
+	_, f = _in_house(name, phone, "2036-07-01", "2036-07-03", _ledger_room(room_code))
+	api.add_folio_charge(f, "Misc", "eval credit bill", amount, gst_rate=0)
+	return f
+
+
+@check("credit: a 45-day company's bill is Not due at day 35, overdue at day 50")
+def t225():
+	from unittest.mock import patch
+
+	from frappe.utils import add_days
+
+	from kamra.ledger import city_ledger_aging
+	corp = _credit_corp("EVAL Credit 45 Corp")
+	acct, f = _credit_bill(corp, "Eval Credit 45", "+91 70009 22501", "C2501", 1000, days=45)
+	inv = frappe.db.get_value("City Ledger Entry", {"folio": f, "kind": "Invoice"},
+	                          ["posting_date", "due_date"], as_dict=True)
+	assert str(inv.due_date) == str(add_days(inv.posting_date, 45)), inv
+	def row(day):
+		with patch("kamra.ledger.nowdate", return_value=str(add_days(inv.posting_date, day))):
+			return next(a for a in city_ledger_aging(P)["accounts"] if a["name"] == acct)
+	r = row(35)
+	assert r["not_due"] == 1000 and r["overdue"] == 0, r
+	r = row(50)
+	assert r["d1_30"] == 1000 and r["overdue"] == 1000, r
+	_assert_company_ar(acct)
+
+
+@check("credit: over-limit transfer warns under Warn, is refused under Block")
+def t226():
+	from kamra import credit
+	from kamra.ledger import city_ledger_transfer
+	try:
+		corp = _credit_corp("EVAL Credit Limit Corp")
+		_credit_bill(corp, "Eval Credit L0", "+91 70009 22601", "C2601", 800, limit=1000)
+		f = _credit_folio("Eval Credit L1", "+91 70009 22602", "C2602", 500)
+		_credit_setting("credit_control", "Warn")
+		out = city_ledger_transfer(f, corp)
+		assert out["credit"]["over_limit_by"] == 300 and out["credit"]["warning"], out
+		f2 = _credit_folio("Eval Credit L2", "+91 70009 22603", "C2603", 200)
+		_credit_setting("credit_control", "Block")
+		try:
+			city_ledger_transfer(f2, corp)
+			raise AssertionError("over-limit transfer was not blocked")
+		except credit.CreditBlocked as e:
+			assert "CREDIT_BLOCKED" in str(e) and "credit limit" in str(e), e
+		assert not frappe.db.exists("City Ledger Entry", {"folio": f2}), "blocked bill moved"
+	finally:
+		_credit_reset()
+
+
+@check("credit: a Finance override is logged with who and why; Front Desk and agents can't override")
+def t227():
+	from kamra import credit
+	from kamra.ledger import city_ledger_transfer
+	fin = "finance.credit@kamra.local"
+	if not frappe.db.exists("User", fin):
+		frappe.get_doc({"doctype": "User", "email": fin, "first_name": "Fin",
+		                "enabled": 1, "user_type": "System User",
+		                "send_welcome_email": 0,
+		                "roles": [{"role": "Finance"}, {"role": "Front Desk"}]}
+		               ).insert(ignore_permissions=True)
+	try:
+		corp = _credit_corp("EVAL Credit Override Corp")
+		_credit_bill(corp, "Eval Credit O0", "+91 70009 22701", "C2701", 900, limit=1000)
+		f = _credit_folio("Eval Credit O1", "+91 70009 22702", "C2702", 400)
+		_credit_setting("credit_control", "Block")
+		frappe.set_user("frontdesk@kamra.local")  # nosemgrep: frappe-setuser -- eval role-gate check as Front Desk
+		try:
+			city_ledger_transfer(f, corp, credit_override_reason="desk thinks it's fine")
+			raise AssertionError("Front Desk overrode a credit block")
+		except frappe.PermissionError:
+			pass
+		finally:
+			frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- restore eval admin context
+		frappe.flags.kamra_agent_call = "MCP"
+		try:
+			city_ledger_transfer(f, corp, credit_override_reason="agent approves")
+			raise AssertionError("an agent overrode a credit block")
+		except frappe.PermissionError as e:
+			assert "agent" in str(e), e
+		finally:
+			frappe.flags.kamra_agent_call = None
+		frappe.set_user(fin)  # nosemgrep: frappe-setuser -- eval Finance persona overrides the block
+		try:
+			out = city_ledger_transfer(f, corp, credit_override_reason="CFO approved, PO 77")
+		finally:
+			frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- restore eval admin context
+		assert out["credit"]["overridden"], out
+		logs = frappe.get_all("Agent Action Log",
+		                      filters={"action_type": "credit_override", "reference_name": f},
+		                      fields=["approver", "rationale", "after_snapshot"])
+		assert len(logs) == 1 and logs[0].approver == fin, logs
+		assert "CFO approved, PO 77" in logs[0].rationale, logs
+		assert json.loads(logs[0].after_snapshot)["amount"] == 400, logs
+		assert credit.can_override() is True  # Administrator again
+	finally:
+		_credit_reset()
+
+
+@check("credit: overdue counts only past the grace period")
+def t228():
+	from unittest.mock import patch
+
+	from frappe.utils import add_days
+
+	from kamra.credit import check_company_credit
+	try:
+		corp = _credit_corp("EVAL Credit Grace Corp")
+		acct, f = _credit_bill(corp, "Eval Credit G", "+91 70009 22801", "C2801", 700, days=30)
+		due = frappe.db.get_value("City Ledger Entry", {"folio": f, "kind": "Invoice"}, "due_date")
+		_credit_setting("credit_overdue_grace_days", 7)
+		with patch("kamra.ledger.nowdate", return_value=str(add_days(due, 5))):
+			r = check_company_credit(corp, P)
+		assert r["ok"] and r["overdue_amount"] == 0, r
+		with patch("kamra.ledger.nowdate", return_value=str(add_days(due, 8))):
+			r = check_company_credit(acct, P)
+		assert not r["ok"] and r["overdue_amount"] == 700, r
+	finally:
+		_credit_reset()
+
+
+@check("credit: due-date backfill patch fills missing due dates and is idempotent")
+def t229():
+	from frappe.utils import add_days
+
+	from kamra.patches.v42 import backfill_city_ledger_due_dates as patch_mod
+	corp = _credit_corp("EVAL Credit Backfill Corp")
+	acct, f = _credit_bill(corp, "Eval Credit B", "+91 70009 22901", "C2901", 300, days=15)
+	entry = frappe.db.get_value("City Ledger Entry", {"folio": f, "kind": "Invoice"})
+	frappe.db.set_value("City Ledger Entry", entry, {"due_date": None,
+	                                                 "posting_date": "2036-01-10"})
+	patch_mod.execute()
+	want = str(add_days("2036-01-10", 15))
+	assert str(frappe.db.get_value("City Ledger Entry", entry, "due_date")) == want
+	frappe.db.set_value("City Ledger Account", acct, "credit_days", 60)
+	patch_mod.execute()
+	assert str(frappe.db.get_value("City Ledger Entry", entry, "due_date")) == want
+
+
+@check("credit: due-date aging buckets add up to the balance with unapplied credit")
+def t230():
+	from kamra.ledger import city_ledger_settle
+	corp = _credit_corp("EVAL Credit Buckets Corp")
+	acct, f1 = _credit_bill(corp, "Eval Credit K0", "+91 70009 23001", "C3001", 500, days=30)
+	_, f2 = _credit_bill(corp, "Eval Credit K1", "+91 70009 23002", "C3002", 400, days=30)
+	city_ledger_settle(acct, 600, allocations=[{"folio": f1, "amount": 500}])
+	row = _assert_company_ar(acct)
+	assert row["unapplied_credit"] == 100 and float(row["balance"]) == 300, row
+
+
 @check("budget vs actual: occupancy over nights elapsed; unposted in-house nights are counted and explained")
 def t336():
 	from frappe.utils import date_diff
@@ -8382,7 +8583,8 @@ def execute():
 		           t205, t206, t207, t208, t209, t210, t211, t212, t213, t214,
 		           t215, t216, t300, t301, t302, t303, t304, t305, t220, t221, t223, t222, t224,
 		           t320, t321, t322, t323, t324, t325, t326, t327, t328, t310, t311, t312, t313,
-		           t314, t315, t316, t317, t318, t330, t331, t332, t333, t334, t335, t336):
+		           t314, t315, t316, t317, t318, t330, t331, t332, t333, t334, t335, t336,
+		           t225, t226, t227, t228, t229, t230):
 			fn()
 	finally:
 		frappe.db.commit = real_commit

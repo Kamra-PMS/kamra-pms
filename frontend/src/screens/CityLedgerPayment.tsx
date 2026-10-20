@@ -13,6 +13,8 @@ type OpenItem = {
   folio: string
   invoice_number?: string | null
   invoice_date: string
+  due_date?: string
+  days_overdue?: number
   guest_name?: string | null
   reservation?: string | null
   billed: number
@@ -27,11 +29,14 @@ type Account = {
   balance: number
   open_balance: number
   unapplied_credit: number
-  current: number
-  b30: number
-  b60: number
-  b90: number
-  b90p: number
+  credit_limit?: number
+  credit_days?: number
+  not_due: number
+  d1_30: number
+  d31_60: number
+  d61_90: number
+  d90p: number
+  overdue: number
   open_items: OpenItem[]
   payments: { name: string; posting_date: string; credit: number; reference?: string }[]
 }
@@ -237,14 +242,21 @@ export default function CityLedgerPayment(props: {
             <Stat label="Balance" value={acc.balance} />
             <Stat label="Open bills" value={acc.open_balance} />
             <Stat label="Unapplied credit" value={acc.unapplied_credit} />
-            <Stat label="Over 60 days" value={acc.b60 + acc.b90 + acc.b90p} />
+            <Stat label="Overdue" value={acc.overdue} />
           </div>
-          <div className="grid grid-cols-4 overflow-hidden rounded-lg border border-zinc-200 text-center text-xs">
+          <p className="-mt-2 text-xs text-zinc-500">
+            Terms: {acc.credit_days ?? 0} days from the invoice date
+            {Number(acc.credit_limit || 0) > 0
+              ? ` · Credit limit ${fmtMoney(Number(acc.credit_limit))}`
+              : " · No credit limit"}
+          </p>
+          <div className="grid grid-cols-5 overflow-hidden rounded-lg border border-zinc-200 text-center text-xs">
             {([
-              ["0–30", acc.current],
-              ["31–60", acc.b30],
-              ["61–90", acc.b60],
-              ["90+", acc.b90 + acc.b90p],
+              ["Not due", acc.not_due],
+              ["1–30 overdue", acc.d1_30],
+              ["31–60", acc.d31_60],
+              ["61–90", acc.d61_90],
+              ["90+", acc.d90p],
             ] as const).map(([k, v]) => (
               <div key={k} className="border-r border-zinc-100 px-2 py-2 last:border-r-0">
                 <div className="text-zinc-400">{k}</div>
@@ -307,6 +319,7 @@ export default function CityLedgerPayment(props: {
                   <th className="py-2 pr-3">Bill</th>
                   <th className="py-2 pr-3">Guest</th>
                   <th className="py-2 pr-3">Billed on</th>
+                  <th className="py-2 pr-3">Due</th>
                   <th className="py-2 pr-3 text-right">Owed</th>
                   <th className="py-2 text-right">This payment</th>
                 </tr>
@@ -326,6 +339,12 @@ export default function CityLedgerPayment(props: {
                       <td className="py-2 pr-3 font-mono text-xs">{it.invoice_number || it.folio}</td>
                       <td className="py-2 pr-3">{it.guest_name || "—"}</td>
                       <td className="py-2 pr-3">{it.invoice_date}</td>
+                      <td className={`py-2 pr-3 ${it.days_overdue ? "text-rose-700" : ""}`}>
+                        {it.due_date || "—"}
+                        {it.days_overdue ? (
+                          <span className="ml-1 text-xs">({it.days_overdue}d late)</span>
+                        ) : null}
+                      </td>
                       <td className="py-2 pr-3 text-right tabular-nums">{fmtMoney(it.outstanding)}</td>
                       <td className="py-2 text-right tabular-nums">
                         {manual && picked ? (
@@ -345,7 +364,7 @@ export default function CityLedgerPayment(props: {
                 })}
                 {!items.length ? (
                   <tr>
-                    <td colSpan={manual ? 6 : 5} className="py-6 text-center text-zinc-400">
+                    <td colSpan={manual ? 7 : 6} className="py-6 text-center text-zinc-400">
                       No open bills. A payment now is kept as credit.
                     </td>
                   </tr>

@@ -2,7 +2,7 @@ import type { ScreenConfig } from "../components/ResourceScreen"
 import { lazy } from "react"
 
 // Drawer panels load when a row is opened, not with the app shell
-const BillingRulesEditor = lazy(() => import("../components/BillingRulesEditor"))
+const CompanyExtras = lazy(() => import("../components/CompanyExtras"))
 const EventLinks = lazy(() => import("../components/EventLinks"))
 const GroupControl = lazy(() => import("../components/GroupControl"))
 const RoomTypeMedia = lazy(() => import("../components/RoomTypeMedia"))
@@ -513,7 +513,7 @@ export const companiesConfig: ScreenConfig = {
     { field: "credit_allowed", label: "Credit allowed (city ledger)", type: "check" },
     { field: "disabled", label: "Disabled", type: "check" },
   ],
-  extra: BillingRulesEditor,
+  extra: CompanyExtras,
 }
 
 export const housekeepingConfig: ScreenConfig = {

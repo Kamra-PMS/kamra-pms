@@ -27,3 +27,5 @@ kamra.patches.v40.apply_city_ledger_payments
 kamra.patches.v40.lock_confirmed_night_rates
 kamra.patches.v41.move_advances_to_guest_ledger
 kamra.patches.v42.outlet_kot_mode
+kamra.patches.v42.credit_days_use_property_default
+kamra.patches.v42.backfill_city_ledger_due_dates

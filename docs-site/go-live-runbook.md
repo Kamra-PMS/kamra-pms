@@ -26,7 +26,7 @@ switch.
 | File | One row per | Columns |
 | --- | --- | --- |
 | Bookings | reservation (future, in-house and past) | Reservation No, Guest Name, Phone, Email, Room Type, Room, Check In, Check Out, Adults, Children, Total Amount, Status, Source |
-| Companies | corporate account | Company Name, Tax ID, Contact Name, Contact Phone, Contact Email, Credit Allowed, Credit Limit, Account No |
+| Companies | corporate account | Company Name, Tax ID, Contact Name, Contact Phone, Contact Email, Credit Allowed, Credit Limit, Credit Days, Account No |
 | Opening balances | open balance | Type, Reservation No, Guest Name, Room, Check In, Check Out, Room Type, Company, Invoice No, Invoice Date, Amount, Mode |
 
 Column names are matched loosely ("Arrival" or "Check-in Date" both
@@ -61,7 +61,11 @@ From the old system, fill in the templates:
      `Checked In`.
 2. **Companies.** Take every corporate account that is billed on
    credit or has a balance. `Credit Allowed` is Yes or No. A credit
-   limit on its own means Yes.
+   limit on its own means Yes. `Credit Days` is the company's payment
+   terms (`30`, `30 days`, `Net 30`, or `0` / `On receipt` for due on
+   the invoice date); a value turns off **Use property default** for that
+   company. Leave it blank to follow the property default. Each city ledger bill is then due on its invoice
+   date + the credit days, so the aging matches the old system's.
 3. **Opening balances.** Take the closing balances of the last night
    audit. Use one row per balance. The `Type` column is one of:
 
@@ -134,7 +138,7 @@ loaded in steps 1 to 3 with what is now in Kamra:
 | Category | Compared |
 | --- | --- |
 | Bookings | rows in the file and reservations in Kamra |
-| Companies | companies, credit allowed and credit limit |
+| Companies | companies, credit allowed, credit limit and credit days |
 | In-house guest balances | stays and total, guest by guest |
 | Advance deposits | bookings and total, booking by booking |
 | City ledger (AR) | invoices and total, plus a per-company table with each account's balance |

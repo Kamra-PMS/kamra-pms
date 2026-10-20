@@ -11,6 +11,7 @@
   "column_break_a",
   "folio",
   "invoice_number",
+  "due_date",
   "debit",
   "credit",
   "reference",
@@ -63,6 +64,12 @@
    "label": "Invoice Number"
   },
   {
+   "fieldname": "due_date",
+   "fieldtype": "Date",
+   "label": "Due Date",
+   "description": "Invoice date + the account's credit days when the bill was raised."
+  },
+  {
    "fieldname": "debit",
    "fieldtype": "Currency",
    "label": "Debit",
@@ -89,7 +96,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-09-07 00:00:00",
+ "modified": "2026-10-19 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "City Ledger Entry",

@@ -311,7 +311,7 @@ MODULES: tuple[Module, ...] = (
 		),
 	),
 	Module(
-		"finance", "Finance", "Room tax, fees and cashier controls.",
+		"finance", "Finance", "Room tax, fees, company credit and cashier controls.",
 		editors=("Hotel Admin", "Finance"), toggle=True,
 		related=(("Currency desk", "/cashier/fx"), ("Ledgers", "/ledgers")),
 		sections=(
@@ -346,6 +346,21 @@ MODULES: tuple[Module, ...] = (
 				  hint="Room covers the room night, its meal plan, levies, early check-in / late checkout and the "
 				       "cleaning fee. Laundry, minibar, spa and misc extras stay with the guest unless "
 				       "'Everything except liquor' is chosen."),
+			)),
+			Section("credit", "Company credit",
+			        "Payment terms and credit control for companies billed on the city ledger. "
+			        "The check runs when a stay is booked on company billing and when a bill moves to the "
+			        "city ledger at check-out. Set each company's credit limit and credit days on its "
+			        "corporate account.", (
+				S("default_credit_days", "Default payment terms", "number", 30, min=0, max=365, unit="days",
+				  hint="Days after the invoice date a company bill is due, for companies set to use the property "
+				       "default (the default for every company). 0 means due on the invoice date."),
+				S("credit_control", "Credit control", "select", "Warn", options=("Off", "Warn", "Block"),
+				  hint="Checks the credit limit and overdue bills. Warn: the desk sees a warning and can go "
+				       "ahead. Block: refused unless Finance or a Hotel Admin overrides it with a reason, "
+				       "which is logged. AI agents can never override."),
+				S("credit_overdue_grace_days", "Overdue grace period", "number", 0, min=0, max=365, unit="days",
+				  hint="A bill counts against the company only once it is this many days past its due date."),
 			)),
 			Section("cashier", "Cashier controls", "", (
 				S("require_cashier_pin", "Require cashier PIN on money actions", "check", 0, P,

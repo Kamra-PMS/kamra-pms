@@ -487,12 +487,42 @@ def company_payer_of(folio) -> str | None:
 	return None
 
 
+def effective_credit_days(account: str | None, property: str | None = None) -> int:
+	"""The payment terms of a city ledger account. With "use property
+	default" on (the default), the property's `default_credit_days`;
+	otherwise its own credit_days as entered - 0 is due on the invoice date."""
+	if account:
+		row = frappe.db.get_value(
+			"City Ledger Account", account,
+			["credit_days", "use_default_credit_days", "property"], as_dict=True) or {}
+		property = property or row.get("property")
+		if row and not int(row.get("use_default_credit_days") or 0):
+			return max(int(row.get("credit_days") or 0), 0)
+	from kamra.settings import get_setting
+	return max(int(get_setting(property, "default_credit_days") or 0), 0)
+
+
+def due_date_for(account: str | None, invoice_date, property: str | None = None) -> str:
+	"""Invoice date + the account's effective credit days."""
+	from frappe.utils import add_days
+	return str(add_days(invoice_date, effective_credit_days(account, property)))
+
+
 def transfer_to_city_ledger(folio: str, company: str | None = None,
-                            invoice_date: str | None = None) -> dict:
+                            invoice_date: str | None = None,
+                            credit_check: bool = True,
+                            credit_override_reason: str | None = None) -> dict:
 	"""Move an unpaid folio balance to company AR at checkout.
 	`invoice_date` dates the AR invoice when it is older than today - an
 	unpaid bill carried over from the old system at go-live, so aging
-	counts from when the company was really billed."""
+	counts from when the company was really billed. The bill is due
+	`invoice date + credit days` (the account's, else the property's).
+
+	`credit_check` runs the property's credit control (kamra.credit) first:
+	warn lets it through with a warning, block refuses unless Finance or a
+	Hotel Admin overrides with a reason. Go-live passes False - those bills
+	were already on credit in the old system - and checkout passes False
+	because it has checked every company of the stay at once."""
 	doc = frappe.get_doc("Folio", folio)
 	balance = float(doc.balance or 0)
 	if balance <= 0:
@@ -506,8 +536,18 @@ def transfer_to_city_ledger(folio: str, company: str | None = None,
 		frappe.throw("A company is required for city ledger transfer.")
 	if not frappe.db.get_value("Corporate Account", company, "credit_allowed"):
 		frappe.throw(f"{company} is not allowed on city ledger (credit).")
+	credit = None
+	if credit_check:
+		from kamra.credit import enforce_company_credit
+		credit = enforce_company_credit(
+			company, doc.property, balance,
+			override_reason=credit_override_reason,
+			context="city ledger transfer",
+			reference_doctype="Folio", reference_name=doc.name,
+			exclude_folios=[doc.name])
 	account = _ar_account(doc.property, company)
 	bd = get_business_date(doc.property)
+	inv_date = invoice_date or bd
 	# Zero the guest folio with a Company Credit payment
 	row = doc.append("payments", {
 		"posting_date": bd,
@@ -541,10 +581,11 @@ def transfer_to_city_ledger(folio: str, company: str | None = None,
 		"doctype": "City Ledger Entry",
 		"account": account,
 		"property": doc.property,
-		"posting_date": invoice_date or bd,
+		"posting_date": inv_date,
 		"kind": "Invoice",
 		"folio": doc.name,
 		"invoice_number": doc.invoice_number,
+		"due_date": due_date_for(account, inv_date, doc.property),
 		"debit": balance,
 		"credit": 0,
 		"reference": doc.name,
@@ -555,18 +596,27 @@ def transfer_to_city_ledger(folio: str, company: str | None = None,
 	# money the company already paid ahead (an unapplied credit) settles
 	# this new bill straight away
 	applied = apply_unapplied_credit(account, only_folio=doc.name)
-	return {"account": account, "amount": balance, "balance": acc.balance,
-	        "applied_from_credit": sum(r["amount"] for r in applied)}
+	out = {"account": account, "amount": balance, "balance": acc.balance,
+	       "applied_from_credit": sum(r["amount"] for r in applied)}
+	if credit and not credit.get("ok"):
+		out["credit"] = credit
+	return out
 
 
 @frappe.whitelist(methods=["POST"])
 @require_roles("Finance", "Front Desk", "Kamra Agent")
 def city_ledger_transfer(folio: str, company: str | None = None,
-                         pin: str | None = None):
+                         pin: str | None = None,
+                         credit_override_reason: str | None = None):
+	"""Move a folio's unpaid balance to the company's city ledger. Runs the
+	property's credit control: over the credit limit or with overdue bills
+	it warns, or refuses (CREDIT_BLOCKED) unless Finance or a Hotel Admin
+	passes `credit_override_reason`. Agents can't override."""
 	from kamra.authz import require_cashier_pin
 	prop = frappe.db.get_value("Folio", folio, "property")
 	require_cashier_pin(prop, pin)
-	return transfer_to_city_ledger(folio, company)
+	return transfer_to_city_ledger(
+		folio, company, credit_override_reason=credit_override_reason)
 
 
 # A company payment is one City Ledger Entry (kind Payment, no folio) that
@@ -590,6 +640,7 @@ def city_ledger_open_folios(account: str) -> list[dict]:
 		"""
 		SELECT folio,
 		       MIN(CASE WHEN kind = 'Invoice' THEN posting_date END) AS invoice_date,
+		       MIN(CASE WHEN kind = 'Invoice' THEN due_date END) AS due_date,
 		       MIN(posting_date) AS first_date,
 		       MAX(invoice_number) AS invoice_number,
 		       COALESCE(SUM(debit - credit), 0) AS billed
@@ -610,12 +661,23 @@ def city_ledger_open_folios(account: str) -> list[dict]:
 		account,
 	))
 	out = []
+	days = None
 	for r in billed:
 		p = float(paid.get(r.folio) or 0)
+		inv = str(r.invoice_date or r.first_date)
+		due = r.due_date
+		if not due:
+			# a bill raised before due dates were recorded: invoice date +
+			# the account's terms today (the backfill patch stores it)
+			if days is None:
+				days = effective_credit_days(account)
+			from frappe.utils import add_days
+			due = add_days(inv, days)
 		out.append({
 			"folio": r.folio,
 			"invoice_number": r.invoice_number,
-			"invoice_date": str(r.invoice_date or r.first_date),
+			"invoice_date": inv,
+			"due_date": str(due),
 			"billed": round(float(r.billed), 2),
 			"paid": round(p, 2),
 			"outstanding": round(float(r.billed) - p, 2),
@@ -784,28 +846,76 @@ def city_ledger_settle(account: str, amount: float, mode: str = "Bank Transfer",
 	}
 
 
-def _age_buckets(open_items: list[dict], unapplied: float) -> dict:
-	from frappe.utils import date_diff, getdate
-	buckets = {"current": 0.0, "b30": 0.0, "b60": 0.0, "b90": 0.0, "b90p": 0.0}
-	today = getdate(nowdate())
+# Aging is by DUE date: a bill is "not due" until invoice date + the
+# company's credit days, then 1-30 / 31-60 / 61-90 / 90+ days overdue.
+# The older invoice-age keys (current / b30 / b60 / b90 / b90p, 30-day steps
+# from the invoice date) are still returned for callers that read them.
+DUE_BUCKETS = ("not_due", "d1_30", "d31_60", "d61_90", "d90p")
+INVOICE_AGE_BUCKETS = ("current", "b30", "b60", "b90", "b90p")
+
+
+def _netted(open_items: list[dict], unapplied: float) -> list[tuple[dict, float]]:
+	"""(bill, what it still counts for) oldest first, with money the company
+	paid ahead (unapplied credit) netted off the oldest bills - so the
+	buckets add up to the account balance."""
 	credit = max(float(unapplied), 0.0)
+	out = []
 	for r in open_items:
 		amt = float(r["outstanding"])
 		if amt <= 0:
 			continue
-		# unapplied credit nets off the oldest bills, so the buckets add up
-		# to the account balance
 		if credit > 0:
 			take = min(credit, amt)
 			amt -= take
 			credit -= take
 		if amt <= 0.005:
 			continue
+		out.append((r, amt))
+	return out
+
+
+def days_overdue(item: dict, today=None) -> int:
+	from frappe.utils import date_diff, getdate
+	return date_diff(getdate(today or nowdate()), item["due_date"])
+
+
+def _due_bucket(overdue: int) -> str:
+	return ("not_due" if overdue <= 0 else "d1_30" if overdue <= 30 else
+	        "d31_60" if overdue <= 60 else "d61_90" if overdue <= 90 else "d90p")
+
+
+def _age_buckets(open_items: list[dict], unapplied: float) -> dict:
+	from frappe.utils import date_diff, getdate
+	buckets = dict.fromkeys(DUE_BUCKETS + INVOICE_AGE_BUCKETS, 0.0)
+	today = getdate(nowdate())
+	oldest_due = None
+	for r, amt in _netted(open_items, unapplied):
+		late = days_overdue(r, today)
+		buckets[_due_bucket(late)] += amt
+		if late > 0 and (oldest_due is None or r["due_date"] < oldest_due):
+			oldest_due = r["due_date"]
 		age = date_diff(today, r["invoice_date"])
 		key = ("current" if age <= 30 else "b30" if age <= 60 else
 		       "b60" if age <= 90 else "b90" if age <= 120 else "b90p")
 		buckets[key] += amt
-	return {k: round(v, 2) for k, v in buckets.items()}
+	out = {k: round(v, 2) for k, v in buckets.items()}
+	out["overdue"] = round(sum(out[k] for k in DUE_BUCKETS[1:]), 2)
+	out["oldest_overdue_due_date"] = oldest_due
+	return out
+
+
+def overdue_past_grace(open_items: list[dict], unapplied: float,
+                       grace_days: int = 0) -> tuple[float, str | None]:
+	"""What the company owes on bills more than `grace_days` past their due
+	date, and the oldest such due date."""
+	total, oldest = 0.0, None
+	today = nowdate()
+	for r, amt in _netted(open_items, unapplied):
+		if days_overdue(r, today) > int(grace_days or 0):
+			total += amt
+			if oldest is None or r["due_date"] < oldest:
+				oldest = r["due_date"]
+	return round(total, 2), oldest
 
 
 def _account_position(account: str) -> dict:
@@ -819,6 +929,7 @@ def _account_position(account: str) -> dict:
 		"open_items": open_items,
 		"open_balance": outstanding,
 		"unapplied_credit": unapplied,
+		"credit_days": effective_credit_days(account),
 		**_age_buckets(open_items, unapplied),
 	}
 
@@ -826,6 +937,9 @@ def _account_position(account: str) -> dict:
 @frappe.whitelist()
 @require_roles("Finance", "Hotel Admin", "Front Desk", "Night Auditor", "Kamra Agent")
 def city_ledger_aging(property: str):
+	"""Every company's AR at the property, aged by due date (not_due,
+	d1_30, d31_60, d61_90, d90p and their sum `overdue`). The invoice-age
+	keys (current, b30, b60, b90, b90p) are kept for older callers."""
 	accounts = frappe.get_all(
 		"City Ledger Account",
 		filters={"property": property, "disabled": 0},
@@ -836,7 +950,9 @@ def city_ledger_aging(property: str):
 		pos = _account_position(a.name)
 		pos.pop("open_items")
 		out.append({**a, **pos})
-	return {"accounts": out}
+	totals = {k: round(sum(a[k] for a in out), 2)
+	          for k in DUE_BUCKETS + ("overdue",)}
+	return {"accounts": out, "totals": totals}
 
 
 @frappe.whitelist()
@@ -861,11 +977,16 @@ def city_ledger_account(account: str):
 		order_by="posting_date desc, creation desc",
 		limit_page_length=10,
 	)
+	today = nowdate()
+	for r in open_items:
+		r["days_overdue"] = max(days_overdue(r, today), 0)
 	return {
 		"account": acc.name,
 		"company": acc.company,
 		"account_number": acc.account_number,
 		"credit_limit": acc.credit_limit,
+		"account_credit_days": int(acc.get("credit_days") or 0),
+		"use_default_credit_days": bool(acc.get("use_default_credit_days")),
 		"balance": float(acc.balance or 0),
 		**pos,
 		"open_items": open_items,

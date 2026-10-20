@@ -57,7 +57,8 @@ BLOCKABLE = {
 
 ORDER = ("open_tills", "open_pos_bills", "departures_due", "arrivals_pending",
          "rate_variance", "zero_rate", "pos_room_postings", "high_balance",
-         "departed_balances", "credit_limit", "room_status", "vacant_rooms")
+         "departed_balances", "credit_limit", "overdue_ar", "room_status",
+         "vacant_rooms")
 
 # The End of Day wizard, in Opera's order: (key, title, the checks it shows)
 STEPS = (
@@ -65,7 +66,7 @@ STEPS = (
 	("arrivals", "Arrivals not checked in", ("arrivals_pending",)),
 	("departures", "Departures not checked out", ("departures_due",)),
 	("folios", "Open folios and high balances",
-	 ("high_balance", "departed_balances", "credit_limit")),
+	 ("high_balance", "departed_balances", "credit_limit", "overdue_ar")),
 	("outlets", "Outlets and room postings", ("open_pos_bills", "pos_room_postings")),
 	("rates", "Rate check", ("rate_variance", "zero_rate")),
 	("rooms", "Room status", ("room_status", "vacant_rooms")),
@@ -474,6 +475,37 @@ def check_credit_limit(property: str) -> dict:
 		"before more is billed to them.", "/ledgers")
 
 
+def check_overdue_ar(property: str) -> dict:
+	"""Companies with city ledger bills past their due date (invoice date +
+	credit days), by company - what to chase before billing them more."""
+	from kamra.ledger import _account_position
+	items = []
+	for a in frappe.get_all(
+			"City Ledger Account",
+			filters={"property": property, "disabled": 0},
+			fields=["name", "company", "account_number", "credit_limit"],
+			limit_page_length=0):
+		pos = _account_position(a.name)
+		if pos["overdue"] <= 0.005:
+			continue
+		items.append({
+			"account": a.name, "company": a.company,
+			"account_number": a.account_number,
+			"credit_days": pos["credit_days"],
+			"overdue": pos["overdue"], "d1_30": pos["d1_30"],
+			"d31_60": pos["d31_60"], "d61_90": pos["d61_90"],
+			"d90p": pos["d90p"],
+			"oldest_due_date": pos["oldest_overdue_due_date"],
+			"balance": round(pos["open_balance"] - pos["unapplied_credit"], 2),
+		})
+	items.sort(key=lambda r: -r["overdue"])
+	return _check(
+		"overdue_ar", "Companies with overdue bills", "warn", items,
+		"Chase the company for payment. Credit control (Settings, Finance) can "
+		"warn or block more billing to a company with overdue bills.", "/ledgers",
+		total=round(sum(r["overdue"] for r in items), 2))
+
+
 def check_room_status(property: str) -> dict:
 	rooms = frappe.get_all(
 		"Room", filters={"property": property},
@@ -597,6 +629,7 @@ def run_checks(property: str, business_date: str | None = None,
 		check_high_balance(property),
 		check_departed_balances(property),
 		check_credit_limit(property),
+		check_overdue_ar(property),
 		check_room_status(property),
 		check_vacant_rooms(property),
 	]
@@ -951,6 +984,7 @@ def build_pack(property: str, bd: str, *, checks: list[dict],
 	_section(pack, "arrivals", lambda: _movement(property, "check_in_date", bd))
 	_section(pack, "high_balance", lambda: check_high_balance(property))
 	_section(pack, "credit_limit", lambda: check_credit_limit(property))
+	_section(pack, "overdue_ar", lambda: check_overdue_ar(property))
 	_section(pack, "pos_room_postings", lambda: check_pos_room_postings(property, bd))
 	_section(pack, "rate_variance", lambda: check_rate_variance(property, bd))
 	_section(pack, "cashier_sessions", lambda: _cashier_sessions(property, bd))

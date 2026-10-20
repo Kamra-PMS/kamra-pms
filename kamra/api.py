@@ -3201,7 +3201,8 @@ def walk_in(property: str, room_type: str, room: str, check_out_date: str,
             idempotency_key: str | None = None,
             check_in_time: str | None = None,
             check_out_time: str | None = None,
-            blacklist_override_reason: str | None = None):
+            blacklist_override_reason: str | None = None,
+            credit_override_reason: str | None = None):
 	"""Walk-in in one step: book, register the ID, check into the chosen
 	room and take the money - the counter flow that used to be four screens.
 
@@ -3254,7 +3255,8 @@ def walk_in(property: str, room_type: str, room: str, check_out_date: str,
 		source="Walk-in", room=room, assign_room=0,
 		idempotency_key=idempotency_key,
 		check_in_time=check_in_time, check_out_time=check_out_time,
-		blacklist_override_reason=blacklist_override_reason)
+		blacklist_override_reason=blacklist_override_reason,
+		credit_override_reason=credit_override_reason)
 	reservation = booked["reservation"]
 	folio_filter = {"reservation": reservation, "folio_type": "Guest"}
 
@@ -3289,6 +3291,8 @@ def walk_in(property: str, room_type: str, room: str, check_out_date: str,
 		"folio": folio,
 		"amount_after_tax": booked.get("amount_after_tax"),
 		"paid": amount,
+		**({"credit_warning": booked["credit_warning"]}
+		   if booked.get("credit_warning") else {}),
 	}
 
 
@@ -3621,7 +3625,7 @@ def cancellation_letter(reservation: str):
 	}
 
 
-def _assert_settled(doc):
+def _assert_settled(doc, credit_override_reason: str | None = None) -> list[dict]:
 	"""A guest never departs owing money, or owed it (issue #132).
 
 	Every night is posted first, because night audit may not have run for the
@@ -3632,9 +3636,13 @@ def _assert_settled(doc):
 	there refuses the check-out. Closed folios count too: a bill closed with
 	money still on it is still owed. frappe.flags.allow_unsettled_checkout is
 	for seed and test scripts only - no endpoint sets it.
+
+	Before anything moves, the property's credit control (kamra.credit)
+	checks each company once for everything the stay bills to it. Returns
+	the checks that warned or were overridden, for the desk to show.
 	"""
 	if frappe.flags.allow_unsettled_checkout:
-		return
+		return []
 	from kamra.folio import post_remaining_nights
 	from kamra.ledger import company_payer_of
 	from kamra.localization import pack_for
@@ -3662,17 +3670,39 @@ def _assert_settled(doc):
 	if refund:
 		frappe.throw(_("Cannot check out: the guest is owed {0}{1:,.2f}. Issue the "
 		               "refund before departure.").format(symbol, refund))
-	# nothing moves until the guest's side is settled
+	# nothing moves until the guest's side is settled - and the company's
+	# credit is checked once for everything the stay bills to it
+	from kamra.credit import enforce_company_credit
+	by_company: dict[str, list[str]] = {}
+	for folio, company in to_city_ledger:
+		by_company.setdefault(company, []).append(folio)
+	credit = []
+	for company, folios in by_company.items():
+		amount = sum(float(frappe.db.get_value("Folio", f, "balance") or 0)
+		             for f in folios)
+		res = enforce_company_credit(
+			company, doc.property, amount,
+			override_reason=credit_override_reason,
+			context="check-out", reference_doctype="Reservation",
+			reference_name=doc.name, exclude_folios=folios)
+		if not res["ok"]:
+			credit.append(res)
 	from kamra.ledger import transfer_to_city_ledger
 	for folio, company in to_city_ledger:
-		transfer_to_city_ledger(folio, company)
+		transfer_to_city_ledger(folio, company, credit_check=False)
+	return credit
 
 
 @frappe.whitelist()
 @require_roles("Front Desk", "Night Auditor", "Kamra Agent")
-def check_out(reservation: str):
+def check_out(reservation: str, credit_override_reason: str | None = None):
+	"""Check a guest out. What the company pays moves to the city ledger,
+	after the property's credit control: a warning comes back in
+	`credit_warnings`; a block refuses (CREDIT_BLOCKED) unless Finance or a
+	Hotel Admin passes `credit_override_reason` (logged). Agents can't
+	override."""
 	doc = frappe.get_doc("Reservation", reservation)
-	_assert_settled(doc)
+	credit = _assert_settled(doc, credit_override_reason)
 	# a held security deposit that the settled bill used up is recorded as
 	# applied, so the Deposit ledger doesn't keep a departed guest's money
 	from kamra.deposit import apply_held_to_bill
@@ -3683,7 +3713,12 @@ def check_out(reservation: str):
 	from kamra.savings import log_action
 	log_action("check_out", "Reservation", doc.name, doc.property,
 	           rationale=f"{doc.guest_name} departed")
-	return {"ok": True, "reservation": doc.name}
+	out = {"ok": True, "reservation": doc.name}
+	if credit:
+		out["credit_warnings"] = [
+			{"company": c["company"], "reasons": c["reasons"],
+			 "overridden": bool(c.get("overridden"))} for c in credit]
+	return out
 
 
 HK_SUPERVISOR = "Housekeeping Supervisor"
@@ -4926,7 +4961,8 @@ def create_booking(property: str, room_type: str, check_in_date: str,
                    check_in_time: str | None = None,
                    check_out_time: str | None = None,
                    blacklist_override_reason: str | None = None,
-                   pets: int = 0):
+                   pets: int = 0,
+                   credit_override_reason: str | None = None):
 	"""One-call booking: attach to an existing guest profile when given,
 	else dedup by phone / create one. Optional auto room assignment,
 	voucher applied, price computed by the engine.
@@ -4941,7 +4977,12 @@ def create_booking(property: str, room_type: str, check_in_date: str,
 	by the quote engine (one billable date). check_in_time / check_out_time
 	(HH:MM) are its slot - they place it on the hourly tape and tell
 	housekeeping when the room turns; on an overnight stay they are the
-	ETA / ETD."""
+	ETA / ETD.
+
+	A stay billed to a company on credit runs the property's credit control
+	(kamra.credit) for its amount: a warning comes back as `credit_warning`;
+	a block refuses (CREDIT_BLOCKED) unless Finance or a Hotel Admin passes
+	`credit_override_reason`, which is logged. Agents can't override."""
 	from kamra.crs import assert_property_access
 	from kamra.reservation_state import find_by_idempotency, lock_sius_for_booking
 	assert_property_access(property)
@@ -5146,7 +5187,28 @@ def create_booking(property: str, room_type: str, check_in_date: str,
 				"department": dept, "instruction": note, "status": "Open",
 			})
 
+	# A company on credit: check its credit for this stay. The booking is
+	# priced on insert, so it is checked straight after, inside a savepoint
+	# that a refusal rolls back (a group loop that catches the error must
+	# not keep the room).
+	from kamra.credit import credit_applies, credit_policy
+	gate_credit = (credit_applies(company) and doc.status != "Waitlist"
+	               and credit_policy(property) != "off")
+	if gate_credit:
+		frappe.db.savepoint("kamra_credit_gate")
 	doc.insert(ignore_permissions=False)
+	credit = None
+	if gate_credit:
+		from kamra.credit import enforce_company_credit
+		try:
+			credit = enforce_company_credit(
+				company, property, float(doc.amount_after_tax or 0),
+				override_reason=credit_override_reason,
+				context="booking", reference_doctype="Reservation",
+				reference_name=doc.name)
+		except Exception:
+			frappe.db.rollback(save_point="kamra_credit_gate")
+			raise
 
 	from kamra.savings import log_action
 	log_action(
@@ -5158,7 +5220,12 @@ def create_booking(property: str, room_type: str, check_in_date: str,
 		rationale=f"Booked {room_type} {check_in_date}→{check_out_date} for {guest_name}",
 		channel=channel or ("API" if source == "AI Agent" else "Desk"),
 	)
-	return _booking_result(doc)
+	out = _booking_result(doc)
+	if credit and not credit["ok"]:
+		out["credit_warning"] = {
+			"company": company, "reasons": credit["reasons"],
+			"overridden": bool(credit.get("overridden"))}
+	return out
 
 
 @frappe.whitelist()

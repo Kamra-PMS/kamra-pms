@@ -117,7 +117,7 @@ jobs:
       - name: Run the night audit, ledger and scheduled-audit unit tests
         run: |
           cd frappe-bench
-          for m in test_night_audit test_ledger_audit test_folio_leaks test_bill_settlement test_health test_scheduled_jobs test_golive test_webhooks test_pos_interface; do
+          for m in test_night_audit test_ledger_audit test_folio_leaks test_bill_settlement test_health test_scheduled_jobs test_golive test_credit_control test_webhooks test_pos_interface; do
             bench --site test.localhost run-tests --module kamra.tests.$m \
               2>&1 | tee "$m.out"
             # known bugs are pinned as expected failures, so OK may carry a count

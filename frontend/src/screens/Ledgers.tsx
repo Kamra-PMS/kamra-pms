@@ -211,47 +211,72 @@ export default function Ledgers() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base">City ledger aging</CardTitle>
+          <span className="text-xs text-zinc-400">
+            By due date - invoice date + the company's credit days
+          </span>
         </CardHeader>
         <CardContent className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead className="text-xs uppercase text-zinc-400">
               <tr>
                 <th className="py-2 pr-3">Company</th>
+                <th className="py-2 pr-3">Terms</th>
                 <th className="py-2 pr-3">Balance</th>
-                <th className="py-2 pr-3">0–30</th>
+                <th className="py-2 pr-3">Not due</th>
+                <th className="py-2 pr-3">1–30</th>
                 <th className="py-2 pr-3">31–60</th>
                 <th className="py-2 pr-3">61–90</th>
                 <th className="py-2 pr-3">90+</th>
+                <th className="py-2 pr-3">Overdue</th>
                 <th className="py-2 pr-3">Credit</th>
                 {canSettle ? <th className="py-2" /> : null}
               </tr>
             </thead>
             <tbody>
-              {aging.map((a) => (
-                <tr key={String(a.name)} className="border-t border-zinc-100">
-                  <td className="py-2 pr-3">{String(a.company)}</td>
-                  <td className="py-2 pr-3 tabular-nums">{inr(a.balance)}</td>
-                  <td className="py-2 pr-3 tabular-nums">{inr(a.current)}</td>
-                  <td className="py-2 pr-3 tabular-nums">{inr(a.b30)}</td>
-                  <td className="py-2 pr-3 tabular-nums">{inr(a.b60)}</td>
-                  <td className="py-2 pr-3 tabular-nums">
-                    {inr(Number(a.b90 || 0) + Number(a.b90p || 0))}
-                  </td>
-                  <td className="py-2 pr-3 tabular-nums">
-                    {Number(a.unapplied_credit || 0) ? inr(a.unapplied_credit) : "—"}
-                  </td>
-                  {canSettle ? (
-                    <td className="py-2 text-right">
-                      <Button variant="outline" onClick={() => setPaying(String(a.name))}>
-                        Record payment
-                      </Button>
+              {aging.map((a) => {
+                const overdue = Number(a.overdue || 0)
+                const limit = Number(a.credit_limit || 0)
+                const over = limit > 0 && Number(a.balance || 0) > limit
+                return (
+                  <tr key={String(a.name)} className="border-t border-zinc-100">
+                    <td className="py-2 pr-3">
+                      {String(a.company)}
+                      {over ? (
+                        <span className="ml-2 rounded bg-rose-50 px-1.5 py-0.5 text-[10px] font-medium text-rose-700">
+                          Over limit
+                        </span>
+                      ) : null}
                     </td>
-                  ) : null}
-                </tr>
-              ))}
+                    <td className="py-2 pr-3 text-xs text-zinc-500">
+                      {Number(a.credit_days ?? 0)} days
+                    </td>
+                    <td className="py-2 pr-3 tabular-nums">{inr(a.balance)}</td>
+                    <td className="py-2 pr-3 tabular-nums">{inr(a.not_due)}</td>
+                    <td className="py-2 pr-3 tabular-nums">{inr(a.d1_30)}</td>
+                    <td className="py-2 pr-3 tabular-nums">{inr(a.d31_60)}</td>
+                    <td className="py-2 pr-3 tabular-nums">{inr(a.d61_90)}</td>
+                    <td className="py-2 pr-3 tabular-nums">{inr(a.d90p)}</td>
+                    <td
+                      className={`py-2 pr-3 tabular-nums ${overdue ? "font-medium text-rose-700" : ""}`}
+                    >
+                      {overdue ? inr(overdue) : "—"}
+                    </td>
+                    <td className="py-2 pr-3 tabular-nums">
+                      {Number(a.unapplied_credit || 0) ? inr(a.unapplied_credit) : "—"}
+                    </td>
+                    {canSettle ? (
+                      <td className="py-2 text-right">
+                        <Button variant="outline" onClick={() => setPaying(String(a.name))}>
+                          Record payment
+                        </Button>
+                      </td>
+                    ) : null}
+                  </tr>
+                )
+              })}
               {!aging.length ? (
                 <tr>
-                  <td colSpan={canSettle ? 8 : 7} className="py-6 text-center text-zinc-400">
+                  <td colSpan={canSettle ? 11 : 10} className="py-6 text-center text-zinc-400">
                     No city ledger accounts yet.
                   </td>
                 </tr>

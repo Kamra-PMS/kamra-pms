@@ -99,7 +99,7 @@ class LedgerAuditTestCase(AuditTestCase):
 	def test_empty_journals(self):
 		self.assertEqual(ledger.journal_by_transaction_code(PROP_A)["rows"], [])
 		self.assertEqual(ledger.financial_activity(PROP_A)["entries"], [])
-		self.assertEqual(ledger.city_ledger_aging(PROP_A), {"accounts": []})
+		self.assertEqual(ledger.city_ledger_aging(PROP_A)["accounts"], [])
 
 	# postings and the invariant -------------------------------------------
 

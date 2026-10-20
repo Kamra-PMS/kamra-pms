@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function — the same governed layer
-the UI and the AI use. **351 endpoints**, generated from the source
+the UI and the AI use. **355 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -1138,6 +1138,7 @@ booking, not a walk-in.
 | `check_in_time` | no | `None` |
 | `check_out_time` | no | `None` |
 | `blacklist_override_reason` | no | `None` |
+| `credit_override_reason` | no | `None` |
 
 ### `kamra.api.upload_occupant_id`
 
@@ -1212,9 +1213,16 @@ Everything the printable cancellation confirmation needs.
 
 **GET/POST** · roles: `Front Desk`, `Night Auditor`, `Kamra Agent`
 
+Check a guest out. What the company pays moves to the city ledger,
+after the property's credit control: a warning comes back in
+`credit_warnings`; a block refuses (CREDIT_BLOCKED) unless Finance or a
+Hotel Admin passes `credit_override_reason` (logged). Agents can't
+override.
+
 | Param | Required | Default |
 | --- | --- | --- |
 | `reservation` | yes |  |
+| `credit_override_reason` | no | `None` |
 
 ### `kamra.api.set_housekeeping_status`
 
@@ -1534,6 +1542,11 @@ by the quote engine (one billable date). check_in_time / check_out_time
 housekeeping when the room turns; on an overnight stay they are the
 ETA / ETD.
 
+A stay billed to a company on credit runs the property's credit control
+(kamra.credit) for its amount: a warning comes back as `credit_warning`;
+a block refuses (CREDIT_BLOCKED) unless Finance or a Hotel Admin passes
+`credit_override_reason`, which is logged. Agents can't override.
+
 | Param | Required | Default |
 | --- | --- | --- |
 | `property` | yes |  |
@@ -1574,6 +1587,7 @@ ETA / ETD.
 | `check_out_time` | no | `None` |
 | `blacklist_override_reason` | no | `None` |
 | `pets` | no | `0` |
+| `credit_override_reason` | no | `None` |
 
 ### `kamra.api.waitlist`
 
@@ -4022,11 +4036,17 @@ Four-ledger trial balance for a property (optionally as-of a date).
 
 **POST** · roles: `Finance`, `Front Desk`, `Kamra Agent`
 
+Move a folio's unpaid balance to the company's city ledger. Runs the
+property's credit control: over the credit limit or with overdue bills
+it warns, or refuses (CREDIT_BLOCKED) unless Finance or a Hotel Admin
+passes `credit_override_reason`. Agents can't override.
+
 | Param | Required | Default |
 | --- | --- | --- |
 | `folio` | yes |  |
 | `company` | no | `None` |
 | `pin` | no | `None` |
+| `credit_override_reason` | no | `None` |
 
 ### `kamra.ledger.city_ledger_settle`
 
@@ -4049,6 +4069,10 @@ bill.
 ### `kamra.ledger.city_ledger_aging`
 
 **GET/POST** · roles: `Finance`, `Hotel Admin`, `Front Desk`, `Night Auditor`, `Kamra Agent`
+
+Every company's AR at the property, aged by due date (not_due,
+d1_30, d31_60, d61_90, d90p and their sum `overdue`). The invoice-age
+keys (current, b30, b60, b90, b90p) are kept for older callers.
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -4229,6 +4253,71 @@ Quick-checkout every Checked In reservation on a group.
 | Param | Required | Default |
 | --- | --- | --- |
 | `category` | no | `None` |
+
+
+## Company credit (payment terms, credit limit, overdue check)
+
+> Credit control is enforced inside check_out, create_booking and city_ledger_transfer; these endpoints explain and configure it.
+
+### `kamra.credit.company_credit_status`
+
+**GET/POST** · roles: `Front Desk`, `Finance`, `Hotel Admin`, `Night Auditor`, `Revenue Manager`, `Kamra Agent`
+
+The credit check for billing `amount` more to a company, without
+doing anything: what the booking dialog shows before a company stay is
+booked. `applies` is False for a company not on credit.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `company` | yes |  |
+| `property` | yes |  |
+| `amount` | no | `0` |
+
+### `kamra.credit.checkout_credit_preview`
+
+**GET/POST** · roles: `Front Desk`, `Finance`, `Hotel Admin`, `Night Auditor`, `Kamra Agent`
+
+Before check-out: the credit check for each company the stay's bills
+would move to, so the desk can warn, or ask Finance / a Hotel Admin to
+override a block. Check-out re-runs the same check itself.
+
+Check-out first posts any night not yet on the folio, so the preview
+does the same inside a savepoint it rolls back - the amounts match
+what check-out will move, and nothing is written.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `reservation` | yes |  |
+
+### `kamra.credit.company_credit_terms`
+
+**GET/POST** · roles: `Front Desk`, `Finance`, `Hotel Admin`, `Revenue Manager`
+
+A company's credit terms at one property: limit, credit days and
+what it owes (for the corporate account editor).
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `company` | yes |  |
+| `property` | yes |  |
+
+### `kamra.credit.set_company_credit_terms`
+
+**POST** · roles: `Finance`, `Hotel Admin`
+
+Set a company's credit limit (0 = no limit) and payment terms at one
+property: `use_default_credit_days` 1 follows the property's default
+payment terms; 0 uses `credit_days` as given (0 = due on the invoice
+date). Creates its city ledger account if it has none. Logged with
+before / after.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `company` | yes |  |
+| `property` | yes |  |
+| `credit_limit` | no | `None` |
+| `credit_days` | no | `None` |
+| `use_default_credit_days` | no | `None` |
 
 
 ## Night audit (End of Day checklist, audit pack)
