@@ -28,7 +28,11 @@ fixes do **not** need a new `vX.Y.Z` the same day.
 4. **Frappe Cloud Marketplace** (manual, ~2 min): dashboard →
    Apps → kamra → create a release from the new `main` state and submit for
    approval.
-5. **Announce:** release thread on discuss.frappe.io; anything else
+5. **Docs freeze:** the Docs GitHub Action (on `release: published`) rebuilds
+   `kamrapms.com/docs/`, freezes a snapshot at `/docs/vX.Y.Z/`, and updates
+   `docs-site/versions.json` for the version switcher. Confirm the new URL
+   returns 200 after the workflow finishes.
+6. **Announce:** release thread on discuss.frappe.io; anything else
    (X/LinkedIn) as warranted.
 
 ### What bumps what

@@ -1,0 +1,5 @@
+/* Keep the nav logo readable; version switcher sits before social icons. */
+.VPNavBarTitle .logo {
+  height: 28px;
+  width: auto;
+}

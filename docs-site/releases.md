@@ -77,5 +77,18 @@ export, retention, notices).
 | Stable | `main` + tag `vX.Y.Z` | Production, Marketplace, demo.kamrapms.com |
 | Nightly | `develop` | nightly.kamrapms.com, testing only |
 
+## Docs versioning
+
+The manual is versioned from **v2.6.16** onward:
+
+| URL | What it is |
+| --- | --- |
+| [/docs/](https://kamrapms.com/docs/) | Latest docs (tracks `develop`, labelled with the current stable) |
+| [/docs/vX.Y.Z/](https://kamrapms.com/docs/v2.6.16/) | Frozen snapshot taken when that GitHub Release was published |
+
+Use the **version** control in the top nav to switch. Older snapshots show a
+banner linking back to latest. Each new GitHub Release freezes a copy
+automatically (see `.github/workflows/docs.yml`).
+
 How maintainers cut releases: [`RELEASING.md`](https://github.com/Kamra-PMS/kamra-pms/blob/main/RELEASING.md)
 in the repo. How the pieces fit together: [How Kamra works](/how-it-works).

@@ -36,6 +36,10 @@ changing a page. (This file is not published; VitePress skips it via
 8. **No em dashes.** Do not use Unicode em dashes (—) or en dashes (–).
    Use a spaced hyphen (` - `), a colon, or a new sentence. CI rejects
    them on docs publish.
+9. **Versioning.** `versions.json` lists every published docs version.
+   `/docs/` is latest; `/docs/vX.Y.Z/` is a frozen Release snapshot. Do
+   not hand-edit archived trees on the server - republish with
+   `DOCS_VERSION=X.Y.Z npm run build:archive` (or the Docs workflow).
 
 ## Page shape (module guides)
 

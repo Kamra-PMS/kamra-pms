@@ -1,16 +1,47 @@
+import { readFileSync, existsSync } from "node:fs"
+import { fileURLToPath } from "node:url"
+import { dirname, join } from "node:path"
 import { defineConfig } from "vitepress"
+
+const here = dirname(fileURLToPath(import.meta.url))
+const docsRoot = join(here, "..")
+
+type DocVersion = { version: string; label: string; path: string }
+
+const versionsFile = JSON.parse(
+  readFileSync(join(docsRoot, "versions.json"), "utf8"),
+) as { latest: string; versions: DocVersion[] }
+
+const overridePath = join(here, "version.override.json")
+const override = existsSync(overridePath)
+  ? (JSON.parse(readFileSync(overridePath, "utf8")) as {
+      base?: string
+      current?: string
+      outDir?: string
+    })
+  : {}
+
+const base = process.env.DOCS_BASE || override.base || "/docs/"
+const docCurrent =
+  process.env.DOCS_CURRENT || override.current || versionsFile.latest
+const outDir = process.env.DOCS_OUT_DIR || override.outDir || ".vitepress/dist"
 
 export default defineConfig({
   title: "Kamra Docs",
   description:
     "Documentation for Kamra, the open-source AI-native hotel PMS - install, self-host, connect your AI over MCP, and run your property.",
-  base: "/docs/",
+  base,
+  outDir,
   cleanUrls: true,
   // the writing guide for contributors is not a published page
-  srcExclude: ["STYLE.md", "README.md"],
+  srcExclude: ["STYLE.md", "README.md", "archives/**"],
   // local bench URLs in install guides are examples, not site pages
-  ignoreDeadLinks: [/^https?:\/\/localhost/, /^https?:\/\/127\.0\.0\.1/, /^https?:\/\/kamra\.localhost/],
-  head: [["link", { rel: "icon", type: "image/svg+xml", href: "/docs/kamra-mark.svg" }]],
+  ignoreDeadLinks: [
+    /^https?:\/\/localhost/,
+    /^https?:\/\/127\.0\.0\.1/,
+    /^https?:\/\/kamra\.localhost/,
+  ],
+  head: [["link", { rel: "icon", type: "image/svg+xml", href: `${base}kamra-mark.svg` }]],
   themeConfig: {
     logo: {
       light: "/kamra-horizontal.svg",
@@ -34,7 +65,7 @@ export default defineConfig({
       { icon: "github", link: "https://github.com/Kamra-PMS/kamra-pms" },
     ],
     footer: {
-      message: "Open source (AGPL-3.0) · every feature included, always.",
+      message: `Open source (AGPL-3.0) · docs for Kamra v${docCurrent} · every feature included, always.`,
       copyright: "Kamra PMS · hello@kamrapms.com",
     },
     sidebar: [
@@ -107,5 +138,11 @@ export default defineConfig({
         ],
       },
     ],
+    // consumed by the version switcher / outdated banner (custom theme fields)
+    ...({
+      docVersions: versionsFile.versions,
+      docLatest: versionsFile.latest,
+      docCurrent,
+    } as Record<string, unknown>),
   },
 })
