@@ -918,7 +918,7 @@ export default function EndOfDayWizard() {
             {t("Manage End of Day")}
           </Link>
           <h1 className="text-lg font-semibold text-zinc-900">
-            {t("End of Day")} — {state.property_name} — {fmtDay(state.business_date)}
+            {t("End of Day")} - {state.property_name} - {fmtDay(state.business_date)}
           </h1>
         </div>
         <Badge tone={state.ran ? "green" : blockedSteps.length ? "rose" : "brand"}>

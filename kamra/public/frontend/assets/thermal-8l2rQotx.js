@@ -1,5 +1,6 @@
 <<<<<<<< HEAD:kamra/public/frontend/assets/thermal-8l2rQotx.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/thermal-8l2rQotx.js
+<<<<<<<< HEAD:kamra/public/frontend/assets/thermal-8l2rQotx.js
 import{m as l,c as o}from"./index-R6mcF6pn.js";const p=`
 ========
 import{m as l,c as o}from"./index-BWel0udR.js";const p=`
@@ -7,6 +8,9 @@ import{m as l,c as o}from"./index-BWel0udR.js";const p=`
 ========
 import{m as l,c as o}from"./index-CS1BcujD.js";const p=`
 >>>>>>>> origin/fix/pos-settle-orders:kamra/public/frontend/assets/thermal-Bs1_PwH2.js
+========
+import{m as l,c as o}from"./index-yQkXbOpd.js";const p=`
+>>>>>>>> origin/fix/code-quality-and-dashes:kamra/public/frontend/assets/thermal-Cxx9LhU5.js
   @page { size: 80mm auto; margin: 0 }
   * { margin: 0; padding: 0; box-sizing: border-box }
   html, body { background: #fff; color: #000 }
@@ -26,7 +30,7 @@ import{m as l,c as o}from"./index-CS1BcujD.js";const p=`
   .cut { text-align: center; font-size: 10px; margin-top: 10px; letter-spacing: 0.2em }
 `,s=t=>String(t??"").replace(/[&<>"]/g,n=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[n]),r=t=>Number(t??0).toLocaleString(l(),{minimumFractionDigits:2,maximumFractionDigits:2});function $(t,n){document.querySelectorAll("iframe[data-kamra-print]").forEach(e=>e.remove());const i=document.createElement("iframe");i.setAttribute("data-kamra-print","1"),i.setAttribute("title",t),i.style.cssText="position:fixed;right:0;bottom:0;width:0;height:0;border:0;opacity:0",document.body.appendChild(i);const a=i.contentWindow;if(!a)return i.remove(),!1;a.document.open(),a.document.write(`<!doctype html><html><head><title>${s(t)}</title><style>${p}</style></head><body>${n}</body></html>`),a.document.close();const d=()=>{try{i.remove()}catch{}};return a.onafterprint=d,setTimeout(()=>{try{a.focus();const e=performance.now();a.print(),performance.now()-e>1500&&window.dispatchEvent(new CustomEvent(u))}catch{d()}},0),setTimeout(d,12e4),!0}const u="kamra:print-dialog";function g(t){const n=new Date().toLocaleString(l(),{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"}),i=t.items.map(a=>`<tr><td class="num b" style="width:24px">${Math.round(a.qty)}×</td><td class="b">${s(a.item_name)}</td></tr>`+(a.instructions?`<tr><td></td><td class="ins">» ${s(a.instructions)}</td></tr>`:"")).join("");return`
     <div class="c b lg">${s(t.outlet)}</div>
-    <div class="c xl b">${t.kind==="Void"?`*** VOID *** KOT #${t.kot_no??"—"}`:t.kind==="Test"?"TEST PAGE":`KOT #${t.kot_no??"—"}`}${t.reprint?" (REPRINT)":""}</div>
+    <div class="c xl b">${t.kind==="Void"?`*** VOID *** KOT #${t.kot_no??"-"}`:t.kind==="Test"?"TEST PAGE":`KOT #${t.kot_no??"-"}`}${t.reprint?" (REPRINT)":""}</div>
     ${t.station?`<div class="c b">${s(t.station)}</div>`:""}
     ${t.fallback_from?`<div class="c sm">for ${s(t.fallback_from)}</div>`:""}
     ${t.nc?'<div class="c b lg">*** NC - NO CHARGE ***</div>'+(t.nc_by?`<div class="c sm">auth: ${s(t.nc_by)}</div>`:""):""}
@@ -58,7 +62,7 @@ import{m as l,c as o}from"./index-CS1BcujD.js";const p=`
     ${t.statutory?`<div class="c b sm">${s(t.statutory.title)}</div><div class="c b sm" dir="rtl">${s(t.statutory.title_ar)}</div>`:""}
     <div class="rule"></div>
     <div class="row"><span class="b">${s(i)}</span><span>${n}</span></div>
-    <div class="row sm"><span>Bill: ${s(t.order)}</span><span>KOT #${t.kot_no??"—"}</span></div>
+    <div class="row sm"><span>Bill: ${s(t.order)}</span><span>KOT #${t.kot_no??"-"}</span></div>
     ${t.customer_name||t.customer_phone?`<div class="sm">${s([t.customer_name,t.customer_phone].filter(Boolean).join(" · "))}</div>`:""}
     ${t.delivery_address?`<div class="sm">→ ${s(t.delivery_address)}</div>`:""}
     <div class="rule"></div>
@@ -72,7 +76,7 @@ import{m as l,c as o}from"./index-CS1BcujD.js";const p=`
     ${(t.tax_parts??[{label:"CGST",rate:t.gst_rate/2,amount:t.cgst},{label:"SGST",rate:t.gst_rate/2,amount:t.sgst}]).map(e=>d(`${s(e.label)} @ ${e.rate}%`,e.amount,"sm")).join("")}
     <div class="rule"></div>
     ${d("TOTAL",t.grand_total,"b lg")}
-    ${t.nc?`<div class="c b" style="margin-top:4px">COMPLIMENTARY - NO CHARGE</div><div class="c sm">auth: ${s(t.nc_authorized_by||"—")}${t.nc_note?` · ${s(t.nc_note)}`:""}</div>`:""}
+    ${t.nc?`<div class="c b" style="margin-top:4px">COMPLIMENTARY - NO CHARGE</div><div class="c sm">auth: ${s(t.nc_authorized_by||"-")}${t.nc_note?` · ${s(t.nc_note)}`:""}</div>`:""}
     ${t.paid?`<div class="c b" style="margin-top:4px">PAID · ${s(t.payment_mode)}</div>`:""}
     <div class="rule"></div>
     ${t.statutory?`<div class="c"><img src="${t.statutory.qr_image}" alt="QR" style="width:120px;height:120px"/></div><div class="c sm">ICV ${t.statutory.icv}</div>`:""}

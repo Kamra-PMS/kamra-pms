@@ -4,7 +4,7 @@
     was to write the choices on the back of the quote and hope the kitchen
     read the same sheet. Here the customer picks, the picks are recorded,
     the menu line re-costs itself from the chosen dishes' recipes, and any
-    upgrade lands on the quote as its own visible line — because an
+    upgrade lands on the quote as its own visible line - because an
     upgrade is a price change and shouldn't hide inside a package rate.
 
     The card that prints afterwards is what they chose, not what the
@@ -27,7 +27,7 @@ type Pick = {
   note?: string
 }
 
-/** Veg / non-veg reads at a glance — the first thing anyone checks. */
+/** Veg / non-veg reads at a glance - the first thing anyone checks. */
 const DOT: Record<string, string> = {
   Veg: "bg-emerald-500",
   Vegan: "bg-emerald-600",
@@ -90,7 +90,7 @@ export default function MenuComposer({
       const here = prev.filter((p) => p.course === course)
       if (here.some((p) => p.dish === o.dish))
         return prev.filter((p) => !(p.course === course && p.dish === o.dish))
-      // a course that allows exactly one swaps rather than stacking —
+      // a course that allows exactly one swaps rather than stacking - 
       // clicking the second soup should replace the first, not error
       const next =
         limit === 1
@@ -192,7 +192,7 @@ export default function MenuComposer({
         <Empty>Loading…</Empty>
       ) : data.courses.every((c) => c.options.length === 0) ? (
         <Empty>
-          This package has no dishes attached yet — add them to its courses
+          This package has no dishes attached yet - add them to its courses
           under Menus &amp; Services, and the customer can start choosing.
         </Empty>
       ) : (

@@ -49,7 +49,7 @@ function DocCapture(props: {
       <p className="mb-2 mt-0.5 text-xs text-zinc-400">{note}</p>
       {hasExisting && !value && (
         <p className="mb-2 rounded-lg bg-emerald-50 px-2.5 py-1.5 text-xs text-emerald-800">
-          ✓ {t("We already have this from your last visit — we'll use it. Add a photo below only to replace it with a newer one.")}
+          ✓ {t("We already have this from your last visit - we'll use it. Add a photo below only to replace it with a newer one.")}
         </p>
       )}
       {value ? (
@@ -255,7 +255,7 @@ export default function PublicCheckin() {
           </p>
         </div>
 
-        {/* self-hides unless the reservation is actually Checked In —
+        {/* self-hides unless the reservation is actually Checked In - 
             stay.status here is the pre-check-in status, not the stay status */}
         {token && <GuestLaundryCard token={token} />}
 

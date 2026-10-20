@@ -1,5 +1,6 @@
 <<<<<<<< HEAD:kamra/public/frontend/assets/bot-DmWH0i38.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/bot-DmWH0i38.js
+<<<<<<<< HEAD:kamra/public/frontend/assets/bot-DmWH0i38.js
 import{a as t}from"./index-R6mcF6pn.js";/**
 ========
 import{a as t}from"./index-BWel0udR.js";/**
@@ -7,6 +8,9 @@ import{a as t}from"./index-BWel0udR.js";/**
 ========
 import{a as t}from"./index-CS1BcujD.js";/**
 >>>>>>>> origin/fix/pos-settle-orders:kamra/public/frontend/assets/bot-4yb8TXSQ.js
+========
+import{a as t}from"./index-yQkXbOpd.js";/**
+>>>>>>>> origin/fix/code-quality-and-dashes:kamra/public/frontend/assets/bot-BMiF_4Ge.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.

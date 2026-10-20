@@ -25,7 +25,7 @@ import re
 
 import frappe
 from frappe import _
-from frappe.utils import flt, getdate, nowdate
+from frappe.utils import flt, getdate
 
 EPS = 0.009
 OPEN_POS_STATUSES = ("Placed", "Confirmed", "Preparing")

@@ -1,5 +1,6 @@
 <<<<<<<< HEAD:kamra/public/frontend/assets/fingerprint-IH0hw09y.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/fingerprint-IH0hw09y.js
+<<<<<<<< HEAD:kamra/public/frontend/assets/fingerprint-IH0hw09y.js
 import{a}from"./index-R6mcF6pn.js";/**
 ========
 import{a}from"./index-BWel0udR.js";/**
@@ -7,6 +8,9 @@ import{a}from"./index-BWel0udR.js";/**
 ========
 import{a}from"./index-CS1BcujD.js";/**
 >>>>>>>> origin/fix/pos-settle-orders:kamra/public/frontend/assets/fingerprint-sooEp0yD.js
+========
+import{a}from"./index-yQkXbOpd.js";/**
+>>>>>>>> origin/fix/code-quality-and-dashes:kamra/public/frontend/assets/fingerprint-CYz6ze5k.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.

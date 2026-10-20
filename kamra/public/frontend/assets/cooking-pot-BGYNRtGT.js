@@ -1,5 +1,6 @@
 <<<<<<<< HEAD:kamra/public/frontend/assets/cooking-pot-BGYNRtGT.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/cooking-pot-BGYNRtGT.js
+<<<<<<<< HEAD:kamra/public/frontend/assets/cooking-pot-BGYNRtGT.js
 import{a as o}from"./index-R6mcF6pn.js";/**
 ========
 import{a as o}from"./index-BWel0udR.js";/**
@@ -7,6 +8,9 @@ import{a as o}from"./index-BWel0udR.js";/**
 ========
 import{a as o}from"./index-CS1BcujD.js";/**
 >>>>>>>> origin/fix/pos-settle-orders:kamra/public/frontend/assets/cooking-pot-CDzSyw_l.js
+========
+import{a as o}from"./index-yQkXbOpd.js";/**
+>>>>>>>> origin/fix/code-quality-and-dashes:kamra/public/frontend/assets/cooking-pot-DAJOq-YB.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.

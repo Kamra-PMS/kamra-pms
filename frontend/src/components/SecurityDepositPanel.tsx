@@ -170,7 +170,7 @@ export default function SecurityDepositPanel(props: {
           <div>
             <dt className="text-xs text-zinc-400">{t("Required")}</dt>
             <dd className="font-semibold tabular-nums text-zinc-900">
-              {d.required > 0 ? fmt(d.required) : "—"}
+              {d.required > 0 ? fmt(d.required) : "-"}
             </dd>
           </div>
           <div>

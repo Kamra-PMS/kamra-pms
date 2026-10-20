@@ -1,5 +1,6 @@
 <<<<<<<< HEAD:kamra/public/frontend/assets/shield-alert-DZBCMmUO.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/shield-alert-DZBCMmUO.js
+<<<<<<<< HEAD:kamra/public/frontend/assets/shield-alert-DZBCMmUO.js
 import{a as e}from"./index-R6mcF6pn.js";/**
 ========
 import{a as e}from"./index-BWel0udR.js";/**
@@ -7,6 +8,9 @@ import{a as e}from"./index-BWel0udR.js";/**
 ========
 import{a as e}from"./index-CS1BcujD.js";/**
 >>>>>>>> origin/fix/pos-settle-orders:kamra/public/frontend/assets/shield-alert-BUIrvfjn.js
+========
+import{a as e}from"./index-yQkXbOpd.js";/**
+>>>>>>>> origin/fix/code-quality-and-dashes:kamra/public/frontend/assets/shield-alert-CbXhZ2WJ.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.

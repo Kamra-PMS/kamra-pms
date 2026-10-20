@@ -569,7 +569,7 @@ function AiAssistantCard({
       })
       if (r.ok) {
         setTestMsg(
-          t("Connected ({ms} ms) — {reply}", {
+          t("Connected ({ms} ms) - {reply}", {
             ms: r.latency_ms ?? "?",
             reply: (r.reply || "ok").slice(0, 80),
           }),
@@ -596,7 +596,7 @@ function AiAssistantCard({
           <CardTitle>{t("AI assistant (bring your own key)")}</CardTitle>
           <p className="mt-0.5 text-xs text-zinc-400">
             {t(
-              "Kamra Agent for staff. Pick a provider, paste the key, Test. Claude Desktop is MCP (Kamra Agent → Connect your AI) — not an Anthropic key in this form.",
+              "Kamra Agent for staff. Pick a provider, paste the key, Test. Claude Desktop is MCP (Kamra Agent → Connect your AI) - not an Anthropic key in this form.",
             )}
           </p>
         </div>
@@ -960,7 +960,7 @@ export function LaundryRatesCard({ property }: { property: string }) {
       )
       setImportMsg(
         `${res.created} added, ${res.updated} updated` +
-        (res.issues.length ? ` — ${res.issues.length} row(s) skipped: ` +
+        (res.issues.length ? ` - ${res.issues.length} row(s) skipped: ` +
           res.issues.slice(0, 3).map((i) => `row ${i.row} (${i.error})`).join("; ") : ""))
       load()
     } catch (e) {
@@ -1032,7 +1032,7 @@ export function LaundryRatesCard({ property }: { property: string }) {
           </div>
         )}
         {rates.length === 0 ? (
-          <p className="py-3 text-sm text-zinc-400">No rates yet — add the first item.</p>
+          <p className="py-3 text-sm text-zinc-400">No rates yet - add the first item.</p>
         ) : (
           <table className="w-full text-sm">
             <thead>
@@ -1188,7 +1188,7 @@ export function HurdleRatesCard({ property }: { property: string }) {
         )}
         {tiers.length === 0 ? (
           <p className="py-3 text-sm text-zinc-400">
-            No tiers yet — e.g. `at 80% occupancy, +15% premium, minimum ${cur()}6,000`.
+            No tiers yet - e.g. `at 80% occupancy, +15% premium, minimum ${cur()}6,000`.
           </p>
         ) : (
           <table className="w-full text-sm">
@@ -1205,8 +1205,8 @@ export function HurdleRatesCard({ property }: { property: string }) {
                 <tr key={t.name} className="border-t border-zinc-100">
                   <td className="py-1.5 font-medium">{t.occupancy_from}%</td>
                   <td className="text-zinc-600">{t.room_type ? (t.room_type_name || t.room_type) : <span className="text-zinc-400">All</span>}</td>
-                  <td className="text-right tabular-nums">{t.premium_pct ? `+${t.premium_pct}%` : "—"}</td>
-                  <td className="text-right tabular-nums">{t.min_rate ? `${cur()}${t.min_rate.toLocaleString(moneyLocale())}` : "—"}</td>
+                  <td className="text-right tabular-nums">{t.premium_pct ? `+${t.premium_pct}%` : "-"}</td>
+                  <td className="text-right tabular-nums">{t.min_rate ? `${cur()}${t.min_rate.toLocaleString(moneyLocale())}` : "-"}</td>
                   <td className="text-right">
                     <button className="text-xs font-medium text-brand-700 hover:underline"
                       onClick={() => setForm({ name: t.name, from: String(t.occupancy_from), premium: String(t.premium_pct || ""), min: String(t.min_rate || ""), room_type: t.room_type || "" })}>

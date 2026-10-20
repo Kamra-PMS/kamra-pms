@@ -39,7 +39,7 @@ const inputCls =
   "focus:outline-2 focus:outline-offset-1 focus:outline-brand-600"
 
 function humanMins(m: number | null): string {
-  if (m == null) return "—"
+  if (m == null) return "-"
   if (m < 60) return `${m} min`
   const h = m / 60
   return h < 24 ? `${h.toFixed(1)} h` : `${(h / 24).toFixed(1)} d`
@@ -190,7 +190,7 @@ export default function OpsSLA() {
             <CardContent>
               {data.overdue.length === 0 ? (
                 <p className="py-6 text-center text-sm text-zinc-400">
-                  Nothing overdue — every open request is inside its window.
+                  Nothing overdue - every open request is inside its window.
                 </p>
               ) : (
                 <div className="overflow-x-auto">

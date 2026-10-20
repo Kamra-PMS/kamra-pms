@@ -428,6 +428,7 @@ def _step(res, key: str) -> dict:
 		if s.get("step_key") == key:
 			return s
 	frappe.throw(_("{0} is not a check-in step at this property.").format(key))
+	return {}  # unreachable: frappe.throw always raises
 
 
 @frappe.whitelist()

@@ -21,7 +21,7 @@ const ADMIN_ROLES = ["Hotel Admin", "System Manager", "Administrator"]
 const SNOOZE_DAYS = 7
 
 /** WordPress-style banner when this site is behind the latest GitHub release.
- * Admins only; guided upgrade via System Health — never auto-applies. */
+ * Admins only; guided upgrade via System Health - never auto-applies. */
 export default function UpdateNag() {
   const { t } = useT()
   const { roles, status } = useAuth()
@@ -62,7 +62,7 @@ export default function UpdateNag() {
       })
       setNag(null)
     } catch {
-      // Keep the banner if dismiss fails — better noisy than silent.
+      // Keep the banner if dismiss fails - better noisy than silent.
     } finally {
       setBusy(false)
     }
@@ -76,9 +76,9 @@ export default function UpdateNag() {
       <div className="flex min-w-0 items-center gap-2">
         <ArrowUpCircle className="size-4 shrink-0 text-sky-700" aria-hidden />
         <p className="min-w-0">
-          {t("Kamra {latest} is available — you are on {installed}.", {
+          {t("Kamra {latest} is available - you are on {installed}.", {
             latest: latestLabel,
-            installed: nag.installed ?? "—",
+            installed: nag.installed ?? "-",
           })}
         </p>
       </div>
