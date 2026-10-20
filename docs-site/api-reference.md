@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function - the same governed layer
-the UI and the AI use. **361 endpoints**, generated from the source
+the UI and the AI use. **373 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -1093,6 +1093,15 @@ suggestion plus every room the desk may hand over instead.
 
 **GET/POST** · roles: `Front Desk`, `Night Auditor`, `Kamra Agent`
 
+Check the guest in: the last step of the guided check-in.
+
+Refused while a check-in step the property marks required (Settings >
+Front desk > Check-in steps) is not done for this stay - the ID, who
+pays, the deposit, the registration card... - so neither the desk, the
+API nor an AI agent can skip them. kamra.checkin.check_in_readiness says
+what is missing. Records who checked the guest in and when; a connected
+door-lock system then makes the keys recorded in the Keys step.
+
 | Param | Required | Default |
 | --- | --- | --- |
 | `reservation` | yes |  |
@@ -1104,6 +1113,13 @@ suggestion plus every room the desk may hand over instead.
 
 Walk-in in one step: book, register the ID, check into the chosen
 room and take the money - the counter flow that used to be four screens.
+
+defer_check_in=1 books, assigns the room and takes the money (as an
+advance) but leaves the stay Confirmed, so the desk finishes it in the
+guided check-in, where the property's required steps apply. Without it
+the required steps are enforced here as well: the walk-in records the
+steps it does itself (room, who pays, the ID when given) and refuses,
+rolling the booking back, if another required step is still open.
 
 It is the same writers chained (create_booking → check_in →
 add_folio_payment), inside one request, so it is all-or-nothing: a
@@ -1139,6 +1155,7 @@ booking, not a walk-in.
 | `check_out_time` | no | `None` |
 | `blacklist_override_reason` | no | `None` |
 | `credit_override_reason` | no | `None` |
+| `defer_check_in` | no | `0` |
 
 ### `kamra.api.upload_occupant_id`
 
@@ -4474,6 +4491,22 @@ snapshots that are too heavy for the feed.
 | --- | --- | --- |
 | `name` | yes |  |
 
+### `kamra.agents_api.staff_sign_ins`
+
+**GET/POST** · roles: `Hotel Admin`, `Finance`, `System Manager`
+
+Who signed in to and out of Kamra, newest first: Frappe's own Login /
+Logout records (Activity Log), limited to this property's staff. Only
+what Frappe already stores is shown - who, when, in or out, and whether
+the attempt worked. IP addresses are left out.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `limit` | no | `50` |
+| `start` | no | `0` |
+| `user` | no | `None` |
+
 
 ## Settings hub (module settings)
 
@@ -4572,6 +4605,158 @@ Create or update an SOP template and its steps.
 | Param | Required | Default |
 | --- | --- | --- |
 | `property` | yes |  |
+
+
+## Guided check-in (steps, who did each, room-charges permission)
+
+> kamra.api.check_in refuses until every check-in step the property marks required is done. check_in_readiness says what is missing.
+
+### `kamra.checkin.checkin_flow`
+
+**GET/POST**
+
+Everything the guided check-in shows, in one round trip: the steps
+(required or optional, done, skipped or to do, and who did them), plus
+what each step screen needs.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `reservation` | yes |  |
+
+### `kamra.checkin.check_in_readiness`
+
+**GET/POST** · roles: `Front Desk`, `Night Auditor`, `Finance`, `Hotel Admin`, `Kamra Agent`
+
+Read-only: which check-in steps are done, which are still required,
+and whether check_in would go through now. Agents read this; they
+cannot do the desk's steps for it.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `reservation` | yes |  |
+
+### `kamra.checkin.complete_checkin_step`
+
+**POST**
+
+The desk marks a step done (a confirm-only step, or the review of
+what the guest sent online). Refused while what the step stands for is
+not true yet - an ID still missing, a deposit not taken.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `reservation` | yes |  |
+| `step` | yes |  |
+| `note` | no | `None` |
+
+### `kamra.checkin.skip_checkin_step`
+
+**POST**
+
+Skip an optional step. A required one cannot be skipped.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `reservation` | yes |  |
+| `step` | yes |  |
+| `reason` | no | `None` |
+
+### `kamra.checkin.save_guest_details`
+
+**POST**
+
+Correct the primary guest's contact and ID details at the desk. Only
+what is passed changes; an ID type must be one the country recognises.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `reservation` | yes |  |
+| `phone` | no | `None` |
+| `email` | no | `None` |
+| `id_type` | no | `None` |
+| `id_number` | no | `None` |
+| `nationality` | no | `None` |
+
+### `kamra.checkin.confirm_billing`
+
+**POST**
+
+The desk confirms who pays (OTA, guest, company, group).
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `reservation` | yes |  |
+| `payer` | yes |  |
+| `note` | no | `None` |
+
+### `kamra.checkin.assign_checkin_room`
+
+**POST**
+
+Keep the assigned room, or put the guest in another free room of
+the booked type. Upgrades and downgrades (a different type, maybe a
+new price) go through the room move screen (room_move_preview +
+move_reservation), which also records who assigned the room.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `reservation` | yes |  |
+| `room` | no | `None` |
+
+### `kamra.checkin.sign_registration_card`
+
+**POST**
+
+The guest signs the registration card on screen (stored like the
+online signature) or on the printed card (on_paper=1).
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `reservation` | yes |  |
+| `signature` | no | `None` |
+| `on_paper` | no | `0` |
+
+### `kamra.checkin.issue_keys`
+
+**POST**
+
+Record the keys handed to the guest, and who handed them. With a
+connected lock system the keys are made by it as soon as the guest is
+checked in (now, if already in house); with no lock system the desk
+encodes the cards at the encoder and notes the card numbers here.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `reservation` | yes |  |
+| `key_count` | no | `1` |
+| `key_cards` | no | `None` |
+
+### `kamra.checkin.log_checkin_requests`
+
+**POST**
+
+Quick requests at check-in become service tickets (one each); a free
+note is kept on the step and, if given alone, raised as one ticket.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `reservation` | yes |  |
+| `requests` | no | `None` |
+| `note` | no | `None` |
+
+### `kamra.checkin.set_room_charges`
+
+**POST** · roles: `Front Desk`, `Night Auditor`, `Finance`, `Hotel Admin`
+
+May the guest charge outlets, laundry and minibar to the room? POS,
+laundry and minibar postings check this flag. Changeable later in the
+stay by the desk or finance (logged).
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `reservation` | yes |  |
+| `allowed` | no | `1` |
+| `reason` | no | `None` |
 
 
 ## Staff & access

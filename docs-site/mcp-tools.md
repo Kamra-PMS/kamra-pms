@@ -1,6 +1,6 @@
 # MCP tool reference
 
-Kamra exposes **103 governed tools** on the hosted MCP
+Kamra exposes **104 governed tools** on the hosted MCP
 endpoint (`/mcp`) and the stdio sidecar (`mcp/kamra_mcp.py`). Every
 call runs as the connected user - **role** permissions apply, tools
 are further filtered by the property's **enabled modules**, prices
@@ -125,9 +125,21 @@ No cancellation fee - the stay was never confirmed.
 Endpoint: `kamra.booking_requests.decline_booking_request`.
 Mutating - logged to the activity ledger.
 
+### `check_in_readiness(reservation)`
+
+Read-only: the property's check-in steps for a stay (ID, who
+pays, room, deposit, registration card, keys...), which are done
+and by whom, and which REQUIRED steps are still open. check_in is
+refused until those are done by the front desk in the guided
+check-in; an agent cannot do or skip them.
+
+Endpoint: `kamra.checkin.check_in_readiness`.
+
 ### `check_in(reservation, room)`
 
 Check a guest in (opens their folio, marks the room occupied).
+Refused while a required check-in step is open; call
+check_in_readiness first and tell the desk what is missing.
 
 Endpoint: `kamra.api.check_in`.
 Mutating - logged to the activity ledger.

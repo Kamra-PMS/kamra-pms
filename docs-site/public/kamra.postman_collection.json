@@ -3097,7 +3097,7 @@
         "kamra.api.check_in"
        ]
       },
-      "description": "",
+      "description": "Check the guest in: the last step of the guided check-in.\n\nRefused while a check-in step the property marks required (Settings >\nFront desk > Check-in steps) is not done for this stay - the ID, who\npays, the deposit, the registration card... - so neither the desk, the\nAPI nor an AI agent can skip them. kamra.checkin.check_in_readiness says\nwhat is missing. Records who checked the guest in and when; a connected\ndoor-lock system then makes the keys recorded in the Keys step.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"room\": \"Your Property-101\"\n}",
@@ -3134,10 +3134,10 @@
         "kamra.api.walk_in"
        ]
       },
-      "description": "Walk-in in one step: book, register the ID, check into the chosen\nroom and take the money - the counter flow that used to be four screens.\n\nIt is the same writers chained (create_booking \u2192 check_in \u2192\nadd_folio_payment), inside one request, so it is all-or-nothing: a\nrefused PIN or a room that just sold rolls the booking back too.\nArrival is always today (calendar, like every new booking - a lagging\nnight audit must not turn walk-ins away); a future stay is a normal\nbooking, not a walk-in.",
+      "description": "Walk-in in one step: book, register the ID, check into the chosen\nroom and take the money - the counter flow that used to be four screens.\n\ndefer_check_in=1 books, assigns the room and takes the money (as an\nadvance) but leaves the stay Confirmed, so the desk finishes it in the\nguided check-in, where the property's required steps apply. Without it\nthe required steps are enforced here as well: the walk-in records the\nsteps it does itself (room, who pays, the ID when given) and refuses,\nrolling the booking back, if another required step is still open.\n\nIt is the same writers chained (create_booking \u2192 check_in \u2192\nadd_folio_payment), inside one request, so it is all-or-nothing: a\nrefused PIN or a room that just sold rolls the booking back too.\nArrival is always today (calendar, like every new booking - a lagging\nnight audit must not turn walk-ins away); a future stay is a normal\nbooking, not a walk-in.",
       "body": {
        "mode": "raw",
-       "raw": "{\n  \"property\": \"Your Property\",\n  \"room_type\": \"Your Property-DLX\",\n  \"room\": \"Your Property-101\",\n  \"check_out_date\": \"2026-08-03\",\n  \"guest_name\": \"A. Guest\",\n  \"phone\": \"+91 90000 00000\",\n  \"guest\": \"G-00001\",\n  \"adults\": 2,\n  \"children\": 0,\n  \"payment_amount\": 0\n}",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"room_type\": \"Your Property-DLX\",\n  \"room\": \"Your Property-101\",\n  \"check_out_date\": \"2026-08-03\",\n  \"guest_name\": \"A. Guest\",\n  \"phone\": \"+91 90000 00000\",\n  \"guest\": \"G-00001\",\n  \"adults\": 2,\n  \"children\": 0,\n  \"payment_amount\": 0,\n  \"defer_check_in\": 0\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -11888,6 +11888,43 @@
        }
       }
      }
+    },
+    {
+     "name": "staff_sign_ins",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.agents_api.staff_sign_ins",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.agents_api.staff_sign_ins"
+       ]
+      },
+      "description": "Who signed in to and out of Kamra, newest first: Frappe's own Login /\nLogout records (Activity Log), limited to this property's staff. Only\nwhat Frappe already stores is shown - who, when, in or out, and whether\nthe attempt worked. IP addresses are left out.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"limit\": 50,\n  \"start\": 0\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
     }
    ]
   },
@@ -12187,6 +12224,418 @@
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "name": "Guided check-in (steps, who did each, room-charges permission)",
+   "item": [
+    {
+     "name": "checkin_flow",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.checkin.checkin_flow",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.checkin.checkin_flow"
+       ]
+      },
+      "description": "Everything the guided check-in shows, in one round trip: the steps\n(required or optional, done, skipped or to do, and who did them), plus\nwhat each step screen needs.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"reservation\": \"RES-2026-00001\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "check_in_readiness",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.checkin.check_in_readiness",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.checkin.check_in_readiness"
+       ]
+      },
+      "description": "Read-only: which check-in steps are done, which are still required,\nand whether check_in would go through now. Agents read this; they\ncannot do the desk's steps for it.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"reservation\": \"RES-2026-00001\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "complete_checkin_step",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.checkin.complete_checkin_step",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.checkin.complete_checkin_step"
+       ]
+      },
+      "description": "The desk marks a step done (a confirm-only step, or the review of\nwhat the guest sent online). Refused while what the step stands for is\nnot true yet - an ID still missing, a deposit not taken.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"step\": \"<step>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "skip_checkin_step",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.checkin.skip_checkin_step",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.checkin.skip_checkin_step"
+       ]
+      },
+      "description": "Skip an optional step. A required one cannot be skipped.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"step\": \"<step>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "save_guest_details",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.checkin.save_guest_details",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.checkin.save_guest_details"
+       ]
+      },
+      "description": "Correct the primary guest's contact and ID details at the desk. Only\nwhat is passed changes; an ID type must be one the country recognises.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"phone\": \"+91 90000 00000\",\n  \"email\": \"guest@example.com\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "confirm_billing",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.checkin.confirm_billing",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.checkin.confirm_billing"
+       ]
+      },
+      "description": "The desk confirms who pays (OTA, guest, company, group).",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"payer\": \"<payer>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "assign_checkin_room",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.checkin.assign_checkin_room",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.checkin.assign_checkin_room"
+       ]
+      },
+      "description": "Keep the assigned room, or put the guest in another free room of\nthe booked type. Upgrades and downgrades (a different type, maybe a\nnew price) go through the room move screen (room_move_preview +\nmove_reservation), which also records who assigned the room.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"room\": \"Your Property-101\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "sign_registration_card",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.checkin.sign_registration_card",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.checkin.sign_registration_card"
+       ]
+      },
+      "description": "The guest signs the registration card on screen (stored like the\nonline signature) or on the printed card (on_paper=1).",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"on_paper\": 0\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "issue_keys",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.checkin.issue_keys",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.checkin.issue_keys"
+       ]
+      },
+      "description": "Record the keys handed to the guest, and who handed them. With a\nconnected lock system the keys are made by it as soon as the guest is\nchecked in (now, if already in house); with no lock system the desk\nencodes the cards at the encoder and notes the card numbers here.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"key_count\": 1\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "log_checkin_requests",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.checkin.log_checkin_requests",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.checkin.log_checkin_requests"
+       ]
+      },
+      "description": "Quick requests at check-in become service tickets (one each); a free\nnote is kept on the step and, if given alone, raised as one ticket.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"reservation\": \"RES-2026-00001\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "set_room_charges",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.checkin.set_room_charges",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.checkin.set_room_charges"
+       ]
+      },
+      "description": "May the guest charge outlets, laundry and minibar to the room? POS,\nlaundry and minibar postings check this flag. Changeable later in the\nstay by the desk or finance (logged).",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"allowed\": 1\n}",
        "options": {
         "raw": {
          "language": "json"
