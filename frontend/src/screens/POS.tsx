@@ -7,6 +7,7 @@ import {
 } from "lucide-react"
 import PosSidePanel from "./pos/PosSidePanel"
 import SettleSheet from "./pos/SettleSheet"
+import OpenBillsPopup from "./pos/OpenBillsPopup"
 import VoidApproval, { type VoidArgs } from "./pos/VoidApproval"
 import { useNavigate } from "react-router-dom"
 import { call, getCurrentProperty } from "../lib/api"
@@ -259,6 +260,7 @@ export default function POS() {
   const [tablesOpen, setTablesOpen] = useState(false)
   const [moreOpen, setMoreOpen] = useState(false)
   const [billMenuOpen, setBillMenuOpen] = useState(false)
+  const [billsPopupOpen, setBillsPopupOpen] = useState(false)
   const navigate = useNavigate()
   const { floorOn, kioskOn, browserFs, toggleBrowserFs, toggleFocus, exitFloor } =
     useFloorFullscreen(rootRef)
@@ -329,9 +331,10 @@ export default function POS() {
     if (atTable) setOrderType("Dine In")
     setMobilePane("menu") // a fresh bill starts at the menu on a phone
   }
-  async function openTab(name: string) {
+  async function openTab(name: string, opts?: { popup?: boolean }) {
     setSelected(name); resetPanel()
     setMobilePane("bill") // an existing bill opens on the bill on a phone
+    if (opts?.popup) setBillsPopupOpen(true)
     const d = await call<Detail>("kamra.pos.order_detail", { order: name })
     setDetail(d)
   }
@@ -1147,7 +1150,12 @@ export default function POS() {
       )}
       {open.length > 0 && (
         <div className="shrink-0">
-          <RunningStrip open={open} selected={selected} onOpen={openTab} />
+          <RunningStrip
+            open={open}
+            selected={selected}
+            onOpen={(name) => void openTab(name, { popup: true })}
+            onSeeAll={() => setBillsPopupOpen(true)}
+          />
         </div>
       )}
 
@@ -1196,9 +1204,9 @@ export default function POS() {
           <div className="shrink-0 border-b border-zinc-100 p-3 pb-2">
             {/* who / where */}
             {selected && detail ? (
-              <div className="mb-3 flex items-center justify-between">
-                <h2 className="flex items-center gap-1.5 font-semibold">
-                  {orderLabel(detail)}
+              <div className="mb-3 flex items-center justify-between gap-2">
+                <h2 className="flex min-w-0 items-center gap-1.5 font-semibold">
+                  <span className="truncate">{orderLabel(detail)}</span>
                   {detail.guests ? <span className="flex items-center gap-0.5 text-xs font-normal text-zinc-400"><Users className="size-3" />{detail.guests}</span> : null}
                   {detail.table_no && detail.status !== "Delivered" && (
                     <button title="New bill on this table (another party)"
@@ -1208,9 +1216,16 @@ export default function POS() {
                     </button>
                   )}
                 </h2>
-                <span className="text-xs text-zinc-400">
-                  {detail.kot_no ? `KOT #${detail.kot_no} · ` : ""}{detail.status}
-                </span>
+                <div className="flex shrink-0 items-center gap-1">
+                  <span className="hidden text-xs text-zinc-400 sm:inline">
+                    {detail.kot_no ? `KOT #${detail.kot_no} · ` : ""}{detail.status}
+                  </span>
+                  <button type="button" onClick={() => setBillsPopupOpen(true)}
+                    className="rounded-lg border border-zinc-200 p-1.5 text-zinc-500 hover:border-brand-400 hover:bg-brand-50 hover:text-brand-800"
+                    title={t("Open full bill")} aria-label={t("Open full bill")}>
+                    <Maximize2 className="size-4" />
+                  </button>
+                </div>
               </div>
             ) : (
               <div className="mb-3 space-y-2">
@@ -1538,6 +1553,28 @@ export default function POS() {
         </div>
       </div>
 
+      {billsPopupOpen && (
+        <OpenBillsPopup
+          open={open}
+          selected={selected}
+          detailLabel={detail ? orderLabel(detail) : selected || ""}
+          detailStatus={detail?.status || ""}
+          detailKot={detail?.kot_no ?? null}
+          detailNc={!!detail?.nc}
+          lines={detail?.items || []}
+          grand={grand}
+          busy={busy}
+          onSelect={(name) => void openTab(name, { popup: true })}
+          onSettle={() => { setBillsPopupOpen(false); void proceedToPay() }}
+          onClose={() => setBillsPopupOpen(false)}
+          onRemove={(row) => void removeLine(row)}
+          onVoid={(row) => {
+            const it = detail?.items.find((i) => i.row === row)
+            if (it) { setVoiding(it); setCancelling(false); setBillsPopupOpen(false) }
+          }}
+        />
+      )}
+
       {settling && selected && detail && (
         <SettleSheet
           subtitle={orderLabel(detail)}
@@ -1641,16 +1678,23 @@ function RoomPicker({ rooms, value, onChange, onOpen, placeholder }: {
 }
 
 function RunningStrip({
-  open, selected, onOpen,
+  open, selected, onOpen, onSeeAll,
 }: {
   open: OpenOrder[]
   selected: string | null
   onOpen: (name: string) => void
+  onSeeAll: () => void
 }) {
   const { t } = useT()
   if (!open.length) return null
   return (
     <div className="flex gap-2 overflow-x-auto pb-1">
+      <button type="button" onClick={onSeeAll}
+        className="flex min-w-[5.5rem] shrink-0 flex-col items-center justify-center rounded-xl border-2 border-dashed border-brand-300 bg-brand-50/60 px-3 py-2 text-brand-800 hover:border-brand-500 hover:bg-brand-50"
+        title={t("See all open bills")}>
+        <Maximize2 className="size-4" />
+        <span className="mt-1 text-[11px] font-bold uppercase tracking-wide">{t("All")} · {open.length}</span>
+      </button>
       {open.map((o) => {
         const tone = !o.kot_fired
           ? (o.stale ? "border-rose-500 bg-rose-50 text-rose-950" : "border-amber-400 bg-amber-50 text-amber-950")
