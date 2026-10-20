@@ -64,11 +64,18 @@ export function DataTable({
   const right = (c: Col) => (c.kind === "money" || c.kind === "num" ? "text-end tabular-nums" : "")
   return (
     <div className="overflow-x-auto print:overflow-visible">
-      <table className={cn("w-full text-sm", dense && "text-xs")}>
+      <table className={cn("w-full table-fixed text-sm", dense && "text-xs")}>
         <thead>
           <tr className="border-b border-zinc-200 text-start text-[11px] font-medium uppercase tracking-wider text-zinc-500">
-            {cols.map((c) => (
-              <th key={c.key} className={cn("px-2 py-1.5 text-start", right(c))}>
+            {cols.map((c, i) => (
+              <th
+                key={c.key}
+                className={cn(
+                  "px-2 py-1.5 text-start",
+                  right(c),
+                  i === 0 && "w-[24%]",
+                )}
+              >
                 {t(c.label)}
               </th>
             ))}

@@ -521,11 +521,16 @@ export function ResourceScreen({
             </div>
           </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full table-fixed text-sm">
             <thead>
               <tr className="border-b border-zinc-200 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">
-                {visibleCols.map((c) => (
-                  <th key={c.field} className="py-2 pr-4">
+                {visibleCols.map((c, i) => (
+                  <th
+                    key={c.field}
+                    className={
+                      "py-2 pr-4" + (i === 0 ? " w-[22%]" : "")
+                    }
+                  >
                     {t(c.label)}
                   </th>
                 ))}
@@ -542,7 +547,7 @@ export function ResourceScreen({
                     <td
                       key={c.field}
                       className={
-                        "py-2.5 pr-4" +
+                        "truncate py-2.5 pr-4" +
                         (typeof row[c.field] === "number"
                           ? " text-right tabular-nums"
                           : "")

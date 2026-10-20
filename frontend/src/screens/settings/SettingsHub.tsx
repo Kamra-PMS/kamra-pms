@@ -253,9 +253,8 @@ export default function SettingsHub() {
   const focus = search.get("focus")
 
   return (
-    // fixed width: the shell centres its page with auto margins, which would
-    // otherwise shrink a short settings page to its content
-    <div className="w-[72rem] max-w-full lg:grid lg:grid-cols-[15rem_minmax(0,1fr)] lg:gap-8">
+    // Full width of the shell — list and settings pages should use the desk.
+    <div className="w-full lg:grid lg:grid-cols-[15rem_minmax(0,1fr)] lg:gap-8">
       {/* rail */}
       <aside className="mb-6 lg:mb-0">
         <div className="lg:sticky lg:top-20">
