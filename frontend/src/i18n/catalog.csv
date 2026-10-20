@@ -188,6 +188,7 @@ Add-ons (incl. {tax}),Add-ons (incl. {tax}),الإضافات (شامل {tax}),co
 Address,Address,العنوان,screens/FolioView.tsx; screens/PublicCheckin.tsx; screens/RegistrationCard.tsx,,translated
 Address proof,Address proof,إثبات العنوان,screens/RegistrationCard.tsx,,translated
 Address proof (optional),Address proof (optional),إثبات العنوان (اختياري),screens/PublicCheckin.tsx,,translated
+Address proof on file,Address proof on file,إثبات العنوان محفوظ,components/GuestDocuments.tsx,,translated
 Administrator or you@hotel.com,Administrator or you@hotel.com,Administrator أو you@hotel.com,screens/Login.tsx,,translated
 ADR,ADR,متوسط سعر الغرفة,screens/Dashboard.tsx; screens/Reports.tsx,,translated
 ADR {cur},ADR {cur},متوسط سعر الغرفة {cur},screens/Reports.tsx,cur,translated
@@ -590,6 +591,8 @@ Dark,Dark,داكن,screens/settings/cards.tsx,,translated
 Dashboard,Dashboard,لوحة التحكم,screens/Dashboard.tsx,,translated
 Date,Date,التاريخ,screens/Banquet.tsx; screens/FolioView.tsx; screens/PettyCash.tsx; screens/Reports.tsx; screens/pos/OrderHistory.tsx,,translated
 Date changes re-price automatically (unless the booking holds a manual amount) and the double-booking guard re-checks the room.,Date changes re-price automatically (unless the booking holds a manual amount) and the double-booking guard re-checks the room.,تغييرات التاريخ تعيد التسعير تلقائياً (ما لم يكن للحجز مبلغ يدوي) ويعيد حارس الحجز المزدوج فحص الغرفة.,screens/TapeChart.tsx,,translated
+Date of expiry,Date of expiry,تاريخ الانتهاء,components/GuestDocuments.tsx,,translated
+Date of issue,Date of issue,تاريخ الإصدار,components/GuestDocuments.tsx,,translated
 dates read as {format},dates read as {format},تُقرأ التواريخ كـ {format},screens/GoLiveImport.tsx,format,translated
 Day,Day,اليوم,screens/AuditPack.tsx,,translated
 Day and month to date,Day and month to date,اليوم ومنذ بداية الشهر,screens/AuditPack.tsx,,translated
@@ -647,7 +650,8 @@ Do it,Do it,,screens/FinishSetup.tsx,,needs_translation
 Do not take money for the room. Extras are paid by the guest.,Do not take money for the room. Extras are paid by the guest.,لا تأخذ مالا مقابل الغرفة. الإضافات يدفعها الضيف.,components/CheckInDialog.tsx,,translated
 Docker (self-host),Docker (self-host),Docker (استضافة ذاتية),screens/SystemHealth.tsx,,translated
 Docket,Docket,إيصال,screens/Laundry.tsx,,translated
-Documents,Documents,المستندات,screens/RegistrationCard.tsx,,translated
+Document type,Document type,نوع الوثيقة,components/GuestDocuments.tsx,,translated
+Documents,Documents,المستندات,components/GuestDocuments.tsx; screens/RegistrationCard.tsx,,translated
 Don't print here,Don't print here,,screens/Kitchen.tsx,,needs_translation
 done,done,تم,components/StepFlow.tsx,,translated
 Done,Done,تم,components/BookingDialog.tsx; components/CheckInDialog.tsx; components/ResourceScreen.tsx; components/RoomStayPanels.tsx; screens/EndOfDayWizard.tsx; screens/HkApp.tsx; screens/Marketplace.tsx,,translated
@@ -727,6 +731,8 @@ Expected ({pct}%),Expected ({pct}%),المتوقع ({pct}%),components/DepositPa
 Expected cash,Expected cash,النقد المتوقع,screens/CashierTill.tsx,,translated
 Expected pax,Expected pax,عدد الضيوف المتوقع,screens/Banquet.tsx,,translated
 Expected vs counted,Expected vs counted,المتوقع مقابل المعدود,screens/EndOfDayWizard.tsx,,translated
+Expired {date},Expired {date},منتهية في {date},components/CheckInDialog.tsx; components/GuestDocuments.tsx,date,translated
+Expires {date},Expires {date},تنتهي في {date},components/CheckInDialog.tsx; components/GuestDocuments.tsx,date,translated
 Export,Export,تصدير,components/ResourceScreen.tsx; screens/pos/PosSidePanel.tsx,,translated
 Export as CSV,Export as CSV,تصدير كـ CSV,components/ResourceScreen.tsx,,translated
 Export CSV,Export CSV,تصدير CSV,screens/pos/OrderHistory.tsx,,translated
@@ -893,9 +899,10 @@ I've stored it,I've stored it,,screens/settings/WebhooksPage.tsx,,needs_translat
 ID,ID,الهوية,components/CheckInDialog.tsx; screens/RegistrationCard.tsx,,translated
 ID document,ID document,مستند الهوية,screens/RegistrationCard.tsx,,translated
 ID missing,ID missing,الهوية ناقصة,components/CheckInDialog.tsx,,translated
-ID number,ID number,رقم الهوية,components/BookingDialog.tsx; components/CheckInDialog.tsx; screens/PublicCheckin.tsx,,translated
-ID on file,ID on file,هوية محفوظة,components/CheckInDialog.tsx,,translated
+ID number,ID number,رقم الهوية,components/BookingDialog.tsx; components/CheckInDialog.tsx; components/GuestDocuments.tsx; screens/PublicCheckin.tsx,,translated
+ID on file,ID on file,هوية محفوظة,components/CheckInDialog.tsx; components/GuestDocuments.tsx,,translated
 ID photos are deleted and ID numbers cut to the last 4 digits at checkout.,ID photos are deleted and ID numbers cut to the last 4 digits at checkout.,تُحذف صور الهوية ويُقتصر رقمها على آخر 4 أرقام عند المغادرة.,components/PrivacyNotice.tsx,,translated
+ID scan,ID scan,صورة الهوية,components/GuestDocuments.tsx,,translated
 ID still needed for: {names}.,ID still needed for: {names}.,لا تزال الهوية مطلوبة لـ: {names}.,components/CheckInDialog.tsx,names,translated
 ID type,ID type,نوع الهوية,components/BookingDialog.tsx; components/CheckInDialog.tsx; screens/PublicCheckin.tsx,,translated
 ID type to read,ID type to read,,screens/RegistrationCard.tsx,,needs_translation
@@ -978,6 +985,7 @@ KOTs (kitchen and bar tickets),KOTs (kitchen and bar tickets),,screens/KitchenPr
 "KOTs follow the outlet and station routes below. A bill goes to the printer chosen on the till, else to a bill printer routed to the bill's outlet.","KOTs follow the outlet and station routes below. A bill goes to the printer chosen on the till, else to a bill printer routed to the bill's outlet.",,screens/KitchenPrinters.tsx,,needs_translation
 Label,Label,,screens/settings/WebhooksPage.tsx,,needs_translation
 Language,Language,اللغة,screens/Login.tsx; screens/PublicCheckin.tsx; screens/settings/cards.tsx,,translated
+last {date},last {date},آخر مرة {date},components/GuestDocuments.tsx,date,translated
 Last {days} days,Last {days} days,آخر {days} أيام,screens/Laundry.tsx,days,translated
 Last {n} days,Last {n} days,آخر {n} يومًا,components/RoomInsights.tsx,n,translated
 Last 14 days,Last 14 days,آخر 14 يوماً,screens/Reports.tsx,,translated
@@ -1114,6 +1122,7 @@ Nights out of service,Nights out of service,ليالٍ خارج الخدمة,com
 Nights sold,Nights sold,الليالي المباعة,components/RoomInsights.tsx,,translated
 No,No,لا,components/RoomDrawer.tsx; screens/AuditPack.tsx; screens/EndOfDayWizard.tsx,,translated
 No {gateway} account yet?,No {gateway} account yet?,,screens/settings/cards.tsx,gateway,needs_translation
+No address proof,No address proof,لا يوجد إثبات عنوان,components/GuestDocuments.tsx,,translated
 No arrival is booked into this room yet.,No arrival is booked into this room yet.,لا يوجد وصول محجوز في هذه الغرفة بعد.,components/RoomDrawer.tsx,,translated
 No arrivals expected today.,No arrivals expected today.,لا وصول متوقع اليوم.,screens/Today.tsx,,translated
 No audit pack was saved for this run - it ran before audit packs were introduced.,No audit pack was saved for this run - it ran before audit packs were introduced.,لم تُحفظ حزمة تدقيق لهذا التشغيل - جرى قبل إضافة حزم التدقيق.,screens/AuditPack.tsx,,translated
@@ -1147,6 +1156,8 @@ No halls set up for this property yet - add one under Halls & Venues.,No halls s
 No housekeeping staff,No housekeeping staff,,screens/HousekeepingBoard.tsx,,needs_translation
 No housekeeping work recorded yet.,No housekeeping work recorded yet.,لا يوجد عمل تدبير فندقي مسجّل بعد.,components/RoomDrawer.tsx,,translated
 No ID needed (child),No ID needed (child),لا حاجة لهوية (طفل),components/CheckInDialog.tsx,,translated
+No ID on file,No ID on file,لا توجد هوية محفوظة,components/GuestDocuments.tsx,,translated
+No ID proof,No ID proof,لا يوجد إثبات هوية,components/GuestDocuments.tsx,,translated
 No journal lines for this date.,No journal lines for this date.,,screens/CashierShiftReport.tsx,,needs_translation
 No keys recorded.,No keys recorded.,لم تسجل مفاتيح.,components/CheckInDialog.tsx,,translated
 No kitchen printers yet.,No kitchen printers yet.,,screens/KitchenPrinters.tsx; screens/settings/cards.tsx,,needs_translation
@@ -1320,6 +1331,7 @@ Open your till to take or give back money. Count the cash in the drawer and ente
 "Open your till, reconcile cash and close the session under Finance → Cashier. Collections live there now.","Open your till, reconcile cash and close the session under Finance → Cashier. Collections live there now.",افتح صندوقك، طابق النقد وأغلق الجلسة تحت المالية ← أمين الصندوق. التحصيلات هناك الآن.,screens/Billing.tsx,,translated
 "Open, not sent to kitchen","Open, not sent to kitchen",مفتوحة، لم تُرسل إلى المطبخ,screens/POS.tsx,,translated
 Opening float,Opening float,الرصيد الافتتاحي,components/TillCard.tsx; screens/CashierTill.tsx,,translated
+Opening…,Opening…,جارٍ الفتح…,components/GuestDocuments.tsx,,translated
 optional,optional,اختياري,screens/RegistrationCard.tsx,,translated
 Optional,Optional,اختياري,components/CheckInDialog.tsx,,translated
 Optional code,Optional code,رمز اختياري,components/BookingDialog.tsx,,translated
@@ -1413,6 +1425,7 @@ Pickup requests,Pickup requests,طلبات الاستلام,screens/Laundry.tsx,
 Pieces,Pieces,قطع,screens/Laundry.tsx,,translated
 PIN reset,PIN reset,,screens/settings/AccessPages.tsx,,needs_translation
 PIN reset for {name}.,PIN reset for {name}.,,screens/settings/AccessPages.tsx,name,needs_translation
+Place of issue,Place of issue,مكان الإصدار,components/GuestDocuments.tsx,,translated
 Place of supply,Place of supply,مكان التوريد,screens/FolioView.tsx,,translated
 Port,Port,,screens/KitchenPrinters.tsx,,needs_translation
 POS bill cancelled,POS bill cancelled,فاتورة مطعم ملغاة,screens/VoidAllowanceReport.tsx,,translated
@@ -1646,6 +1659,7 @@ Same type,Same type,نفس النوع,components/RoomChangeDialog.tsx,,translate
 Save,Save,حفظ,components/ResourceScreen.tsx; screens/CashierBoard.tsx; screens/Laundry.tsx; screens/settings/AccessPages.tsx; screens/settings/WebhooksPage.tsx; screens/settings/cards.tsx,,translated
 Save and attach,Save and attach,حفظ وربط,screens/pos/PosSidePanel.tsx,,translated
 Save changes,Save changes,,screens/settings/ModulePage.tsx,,needs_translation
+Save documents,Save documents,حفظ الوثائق,components/GuestDocuments.tsx,,translated
 Save for me,Save for me,حفظ لي,components/CustomizeToday.tsx,,translated
 Save imprest,Save imprest,,screens/PettyCash.tsx,,needs_translation
 Save notes,Save notes,حفظ الملاحظات,screens/EndOfDayWizard.tsx,,translated
@@ -1656,7 +1670,7 @@ Saved,Saved,تم الحفظ,components/CreditTermsEditor.tsx; screens/settings/M
 Saved access for {name}.,Saved access for {name}.,,screens/settings/AccessPages.tsx,name,needs_translation
 Saved as the hotel default.,Saved as the hotel default.,تم الحفظ كإعداد افتراضي للفندق.,components/CustomizeToday.tsx,,translated
 Saved.,Saved.,تم الحفظ.,components/CustomizeToday.tsx,,translated
-Saving…,Saving…,جارٍ الحفظ…,components/BookingDialog.tsx; components/CheckInDialog.tsx; components/CreditTermsEditor.tsx; components/DepositPanel.tsx; components/ResourceScreen.tsx; components/SecurityDepositPanel.tsx; screens/KitchenPrinters.tsx; screens/PublicCheckin.tsx; screens/RegistrationCard.tsx; screens/settings/AccessPages.tsx; screens/settings/ModulePage.tsx; screens/settings/WebhooksPage.tsx; screens/settings/cards.tsx,,translated
+Saving…,Saving…,جارٍ الحفظ…,components/BookingDialog.tsx; components/CheckInDialog.tsx; components/CreditTermsEditor.tsx; components/DepositPanel.tsx; components/GuestDocuments.tsx; components/ResourceScreen.tsx; components/SecurityDepositPanel.tsx; screens/KitchenPrinters.tsx; screens/PublicCheckin.tsx; screens/RegistrationCard.tsx; screens/settings/AccessPages.tsx; screens/settings/ModulePage.tsx; screens/settings/WebhooksPage.tsx; screens/settings/cards.tsx,,translated
 Scheduled 3 AM audit when checks block: {mode},Scheduled 3 AM audit when checks block: {mode},تدقيق الساعة 3 صباحًا المجدول عند وجود عوائق: {mode},screens/EndOfDayWizard.tsx,mode,translated
 Screens,Screens,,components/CommandPalette.tsx,,needs_translation
 Search,Search,بحث,screens/CRS.tsx; screens/EndOfDayWizard.tsx,,translated
@@ -1904,6 +1918,7 @@ This month,This month,هذا الشهر,screens/pos/OrderHistory.tsx,,translated
 "This posts tonight's room and tax for every in-house guest, applies the no-show policy, saves the audit pack and rolls the business date from {bd}. It cannot be undone.","This posts tonight's room and tax for every in-house guest, applies the no-show policy, saves the audit pack and rolls the business date from {bd}. It cannot be undone.",يرحّل هذا غرفة وضريبة الليلة لكل نزيل مقيم، ويطبّق سياسة عدم الحضور، ويحفظ حزمة التدقيق وينقل تاريخ العمل من {bd}. لا يمكن التراجع عنه.,screens/EndOfDayWizard.tsx,bd,translated
 This printer prints,This printer prints,,screens/KitchenPrinters.tsx,,needs_translation
 This property,This property,هذا العقار,screens/Dashboard.tsx,,translated
+"This property deletes ID scans at checkout and keeps only the last 4 digits. The profile keeps the type, dates and that the ID was verified. Ask for the ID again on a new stay.","This property deletes ID scans at checkout and keeps only the last 4 digits. The profile keeps the type, dates and that the ID was verified. Ask for the ID again on a new stay.",يحذف هذا العقار صور الهوية عند المغادرة ويحتفظ بآخر 4 أرقام فقط. يحتفظ الملف بالنوع والتواريخ وبأن الهوية جرى التحقق منها. اطلب الهوية مجددًا عند إقامة جديدة.,components/GuestDocuments.tsx,,translated
 This property only - switch hotel in the header to see another.,This property only - switch hotel in the header to see another.,,screens/PettyCash.tsx,,needs_translation
 This room is in service.,This room is in service.,هذه الغرفة في الخدمة.,components/RoomDrawer.tsx,,translated
 "This room is not cleaned yet. Pick a clean room, or ask housekeeping first.","This room is not cleaned yet. Pick a clean room, or ask housekeeping first.",هذه الغرفة لم تنظف بعد. اختر غرفة نظيفة، أو اسأل التدبير المنزلي أولا.,components/CheckInDialog.tsx,,translated
@@ -1973,6 +1988,8 @@ Upload CSV file,Upload CSV file,رفع ملف CSV,screens/GoLiveImport.tsx,,tran
 Upload image,Upload image,رفع صورة,screens/PublicCheckin.tsx,,translated
 Use property default ({n} days),Use property default ({n} days),,components/CreditTermsEditor.tsx,n,needs_translation
 Use the hotel default,Use the hotel default,استخدام الإعداد الافتراضي للفندق,components/CustomizeToday.tsx,,translated
+Used on {n} earlier stays,Used on {n} earlier stays,استُخدمت في {n} إقامات سابقة,components/CheckInDialog.tsx; components/GuestDocuments.tsx,n,translated
+Used on 1 earlier stay,Used on 1 earlier stay,استُخدمت في إقامة سابقة واحدة,components/CheckInDialog.tsx; components/GuestDocuments.tsx,,translated
 Vacant,Vacant,شاغرة,components/RoomDrawer.tsx,,translated
 Vacation rental,Vacation rental,إيجار عطلات,screens/Setup.tsx,,translated
 Valid,Valid,,screens/FolioView.tsx,,needs_translation
@@ -1987,6 +2004,7 @@ View all apps,View all apps,عرض كل التطبيقات,AppShell.tsx,,transla
 View audit pack,View audit pack,عرض حزمة التدقيق,screens/Billing.tsx,,translated
 View bill,View bill,عرض الفاتورة,screens/POS.tsx; screens/pos/OrderHistory.tsx,,translated
 View Hotel House Rules & Policies,View Hotel House Rules & Policies,عرض قواعد وسياسات الفندق,screens/PublicCheckin.tsx,,translated
+View ID scan,View ID scan,عرض صورة الهوية,components/GuestDocuments.tsx,,translated
 View only. {roles} can change these.,View only. {roles} can change these.,,screens/settings/ModulePage.tsx,roles,needs_translation
 View or print,View or print,عرض أو طباعة,components/CheckOutDialog.tsx,,translated
 View update,View update,عرض التحديث,components/UpdateNag.tsx,,translated

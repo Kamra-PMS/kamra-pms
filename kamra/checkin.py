@@ -28,6 +28,7 @@ from frappe import _
 from frappe.utils import cint, flt, now_datetime
 
 from kamra.authz import require_roles
+from kamra.guest_documents import id_status, used_stays_count
 
 DESK = ("Front Desk", "Night Auditor", "Kamra Agent")
 # confirmations only a person at the desk can give
@@ -473,6 +474,13 @@ def _flow_payload(res, steps, ctx, guest) -> dict:
 			"id_number": _mask(guest.get("id_number")) if guest else None,
 			"id_on_file": bool(guest and (guest.get("id_number") or guest.get("id_file"))
 			                   or res.get("id_document")),
+			# what the profile already holds, so the desk can reuse it instead
+			# of asking again; warnings only, never a reason to stop a check-in
+			"id_expiry_date": str(guest.get("id_expiry_date") or "") or None if guest else None,
+			"id_status": id_status(guest.get("id_expiry_date"), bool(
+				guest.get("id_number") or guest.get("id_file") or res.get("id_document")))
+			if guest else "none",
+			"id_used_count": used_stays_count(guest.name) if guest else 0,
 			"address": ", ".join(x for x in [guest.get("address_line"), guest.get("city")]
 			                     if x) if guest else "",
 		},

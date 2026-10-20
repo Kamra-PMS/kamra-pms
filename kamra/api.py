@@ -2467,6 +2467,8 @@ def guest_journey(guest: str):
 	"""One guest's full story: profile, stats, chronological timeline.
 	This is the CRM detail view - and the context an AI concierge loads
 	before speaking to a returning guest."""
+	from kamra.guest_documents import guest_documents
+
 	doc = frappe.get_doc("Guest", guest)
 
 	filters = {"guest": guest}
@@ -2564,6 +2566,9 @@ def guest_journey(guest: str):
 			"email": doc.email, "vip": doc.vip,
 			"nationality": doc.nationality, "id_type": doc.id_type,
 			"id_number": doc.id_number,
+			"id_place_of_issue": doc.get("id_place_of_issue"),
+			"id_issue_date": str(doc.get("id_issue_date") or "") or None,
+			"id_expiry_date": str(doc.get("id_expiry_date") or "") or None,
 			"blacklisted": doc.get("blacklisted"),
 			"blacklist_reason": doc.get("blacklist_reason"),
 			"address": ", ".join(filter(None, [  # nosemgrep: frappe-no-functional-code -- filter(None, ...) drops empty address parts; equivalent to a comprehension
@@ -2571,6 +2576,7 @@ def guest_journey(guest: str):
 			"notes": doc.guest_notes,
 		},
 		"stats": stats,
+		"documents": guest_documents(guest, scope),
 		"reservations": reservations,
 		"timeline": timeline,
 	}
