@@ -4,7 +4,7 @@ Every whitelisted function is a REST endpoint - the same governed layer
 the UI and the AI use.
 
 ::: tip Try it in 2 minutes
-Download the **[Postman collection](/kamra.postman_collection.json)**
+Download the **[Postman collection](https://kamrapms.com/docs/kamra.postman_collection.json)**
 (generated with every docs build, organised by domain), set three
 collection variables - `base_url` (your Kamra URL), `api_key`,
 `api_secret` - and every request is ready to send. Full method list:

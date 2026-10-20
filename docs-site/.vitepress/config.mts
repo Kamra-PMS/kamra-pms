@@ -61,7 +61,7 @@ export default defineConfig({
           { text: "REST API reference", link: "/api-reference" },
           {
             text: "Postman collection ↓",
-            link: "/kamra.postman_collection.json",
+            link: "https://kamrapms.com/docs/kamra.postman_collection.json",
             target: "_blank",
           },
         ],
@@ -152,7 +152,7 @@ export default defineConfig({
           { text: "REST API reference", link: "/api-reference" },
           {
             text: "Postman collection ↓",
-            link: "/kamra.postman_collection.json",
+            link: "https://kamrapms.com/docs/kamra.postman_collection.json",
           },
         ],
       },

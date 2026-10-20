@@ -14,7 +14,7 @@ Start with MCP if you are evaluating why Kamra is different:
 | [MCP tool reference](/mcp-tools) | All governed tools (name, args, endpoint) |
 | [REST API basics](/api) | Auth, URL shape, frequently used endpoints |
 | [REST API reference](/api-reference) | Full generated list of methods and parameters |
-| [Postman collection](/kamra.postman_collection.json) | Import into Postman or Insomnia (download JSON) |
+| [Postman collection](https://kamrapms.com/docs/kamra.postman_collection.json) | Import into Postman or Insomnia (download JSON) |
 | [How Kamra works](/how-it-works) | Architecture, one write path, stay lifecycle |
 
 ## MCP in 2 minutes
@@ -31,7 +31,7 @@ Full setup and guardrails: [Connect your AI](/ai-and-mcp). Every tool:
 
 ## Postman in 2 minutes
 
-1. Download [`kamra.postman_collection.json`](/kamra.postman_collection.json).
+1. Download [`kamra.postman_collection.json`](https://kamrapms.com/docs/kamra.postman_collection.json).
 2. Import → Collection in Postman (or Insomnia / Bruno).
 3. Set collection variables:
    - `base_url` - your site, e.g. `https://demo.kamrapms.com`
