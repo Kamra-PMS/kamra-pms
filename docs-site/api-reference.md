@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function - the same governed layer
-the UI and the AI use. **353 endpoints**, generated from the source
+the UI and the AI use. **358 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -1211,14 +1211,20 @@ Everything the printable cancellation confirmation needs.
 
 ### `kamra.api.checkout_context`
 
-**GET/POST** · roles: `Front Desk`, `Night Auditor`, `Kamra Agent`
+**GET/POST** · roles: `Front Desk`, `Finance`, `Night Auditor`, `Kamra Agent`
 
-Everything the guided check-out wizard needs in one round trip.
-
-Posts remaining nights (idempotent, same as check_out) so the desk sees
-the true bill, then returns grouped folio lines, billing instructions,
-deposit state, blockers, and the evaluated Checkout SOP. Amounts come
-from folio helpers  -  never invented here.
+Everything the guided check-out needs in one round trip, without
+changing anything: each folio with its lines and invoice, as it will
+stand once check-out posts the remaining nights (worked out inside a
+savepoint that is always rolled back), bills not on the folio yet (open
+restaurant orders, laundry), a late check-out, what the guest owes
+(`collect`) or is owed (`refunds`: a held security deposit first, through
+its own refund path), what moves to the city ledger and its credit
+check, whether a cashier PIN and an open till are needed, every refusal
+check-out would give (`blockers`, each tied to its step) and the
+property's check-out SOP. check_out judges the balances with the same
+helper (kamra.checkout.settlement_position), so the two never disagree.
+Safe to call again and again: opening the sheet writes nothing.
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -2493,7 +2499,7 @@ printer's fallback, or stay Failed for a reprint.
 **GET/POST**
 
 Every printer with its routes and whether it's online - for the
-settings card and for a kitchen screen choosing what to print for.
+F&B Printers screen and for a kitchen screen choosing what to print for.
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -4494,6 +4500,65 @@ Switch one module on or off for the property.
 | `property` | yes |  |
 | `module` | yes |  |
 | `enabled` | yes |  |
+
+
+## Desk procedures (check-out, check-in and other SOPs)
+
+### `kamra.sop.get_sop`
+
+**GET/POST** · roles: `Front Desk`, `Kamra Agent`, `Hotel Admin`
+
+Return evaluated SOP steps for a procedure.
+
+context is optional JSON (checkout_context shape for key=checkout). When
+omitted, steps return as todo with template tips only.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `key` | yes |  |
+| `context` | no | `None` |
+
+### `kamra.sop.list_sops`
+
+**GET/POST** · roles: `Hotel Admin`, `System Manager`, `Front Desk`, `Kamra Agent`
+
+List SOP templates for the settings editor.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+
+### `kamra.sop.get_sop_template`
+
+**GET/POST** · roles: `Hotel Admin`, `System Manager`
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `name` | yes |  |
+
+### `kamra.sop.save_sop_template`
+
+**POST** · roles: `Hotel Admin`, `System Manager`
+
+Create or update an SOP template and its steps.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `name` | no | `None` |
+| `property` | no | `None` |
+| `key` | no | `None` |
+| `title` | no | `None` |
+| `active` | no | `1` |
+| `steps` | no | `None` |
+
+### `kamra.sop.seed_sop_templates`
+
+**POST** · roles: `Hotel Admin`, `System Manager`
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
 
 
 ## Staff & access

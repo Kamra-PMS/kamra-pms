@@ -24,7 +24,6 @@ import {
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom"
 import { call } from "../lib/api"
 import CheckOutDialog from "../components/CheckOutDialog"
-import { useCreditCheckout } from "../components/CreditCheckout"
 import {
   eodAcknowledge,
   eodMarkNoShow,
@@ -418,9 +417,7 @@ export default function EndOfDayWizard() {
 
   const step: Step | undefined = state?.steps.find((s) => s.index === active)
 
-  // check-out from the departures step runs company credit control the
-  // same way the Today screen does (warning / override dialog)
-  const credit = useCreditCheckout(() => void load(active))
+  // check-out opens the guided check-out sheet (settle, credit, invoice)
   const [checkingOut, setCheckingOut] = useState<string | null>(null)
 
   async function act(label: string, fn: () => Promise<unknown>, reload = true) {
@@ -891,7 +888,6 @@ export default function EndOfDayWizard() {
 
   return (
     <div className="space-y-4">
-      {credit.dialog}
       {checkingOut && (
         <CheckOutDialog
           reservation={checkingOut}

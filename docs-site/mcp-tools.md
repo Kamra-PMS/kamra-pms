@@ -1,6 +1,6 @@
 # MCP tool reference
 
-Kamra exposes **102 governed tools** on the hosted MCP
+Kamra exposes **103 governed tools** on the hosted MCP
 endpoint (`/mcp`) and the stdio sidecar (`mcp/kamra_mcp.py`). Every
 call runs as the connected user - **role** permissions apply, tools
 are further filtered by the property's **enabled modules**, prices
@@ -146,6 +146,19 @@ with the user first.
 
 Endpoint: `kamra.api.check_out`.
 Mutating - logged to the activity ledger.
+
+### `checkout_context(reservation)`
+
+Read-only: what stands between a stay and check-out, without
+changing anything. Balances per folio after the nights check-out would
+still post, totals owed by the guest and owed back to the guest, a
+held security deposit, what moves to the city ledger and its credit
+check, open restaurant orders, each folio's invoice, and `blockers`
+(every reason check_out would refuse). Use it before check_out to tell
+the user what to settle; collecting or refunding money is done at the
+desk.
+
+Endpoint: `kamra.api.checkout_context`.
 
 ### `find_reservations(query, status, limit)`
 

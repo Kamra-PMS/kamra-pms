@@ -227,16 +227,50 @@ function InHouseTable({
     )
   }
   return (
-    <div className="overflow-x-auto">
+    <>
+    {/* phones: one card per guest, nothing to scroll sideways */}
+    <ul className="divide-y divide-zinc-100 sm:hidden">
+      {rows.map((row) => {
+        const due = Number(row.balance_due ?? 0)
+        return (
+          <li key={row.name}>
+            <button
+              type="button"
+              onClick={() => navigate(`/grc/${row.name}`)}
+              className="flex w-full items-center gap-3 py-3 text-start"
+            >
+              <Avatar name={row.guest_name} />
+              <span className="min-w-0 flex-1">
+                <span className="block truncate font-medium text-zinc-800">{row.guest_name}</span>
+                <span className="block text-xs text-zinc-500">
+                  {row.room ? t("Room {room}", { room: row.room.split("-").pop() ?? "" }) : t("No room yet")}
+                  {" · "}
+                  {t("Leaves {when}", { when: relDay(row.check_out_date, t, today) })}
+                </span>
+              </span>
+              {due > 0 ? (
+                <span className="shrink-0 tabular-nums text-sm text-amber-700">
+                  {cur()}
+                  {inr0(due)} {t("Due")}
+                </span>
+              ) : (
+                <span className="shrink-0 tabular-nums text-sm text-zinc-400">{cur()}0</span>
+              )}
+            </button>
+          </li>
+        )
+      })}
+    </ul>
+    <div className="hidden overflow-x-auto sm:block">
       <table className="w-full min-w-[560px] text-sm">
         <thead>
-          <tr className="text-left text-[11px] font-medium uppercase tracking-wider text-zinc-400">
-            <th className="pb-2 pl-1 font-medium">{t("Guest")}</th>
+          <tr className="text-start text-[11px] font-medium uppercase tracking-wider text-zinc-400">
+            <th className="pb-2 ps-1 font-medium">{t("Guest")}</th>
             <th className="pb-2 font-medium">{t("Room")}</th>
             <th className="pb-2 font-medium">{t("Source")}</th>
             <th className="pb-2 font-medium">{t("Balance")}</th>
             <th className="pb-2 font-medium">{t("Stay")}</th>
-            <th className="pb-2 pr-1 text-right font-medium">{t("Check-out")}</th>
+            <th className="pb-2 pe-1 text-end font-medium">{t("Check-out")}</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-zinc-100">
@@ -248,7 +282,7 @@ function InHouseTable({
                 onClick={() => navigate(`/grc/${row.name}`)}
                 className="cursor-pointer hover:bg-zinc-50/70"
               >
-                <td className="py-2.5 pl-1">
+                <td className="py-2.5 ps-1">
                   <div className="flex items-center gap-2.5">
                     <Avatar name={row.guest_name} />
                     <span className="font-medium text-zinc-800">
@@ -257,7 +291,7 @@ function InHouseTable({
                   </div>
                 </td>
                 <td className="py-2.5 tabular-nums text-zinc-600">
-                  {row.room ? row.room.split("-").pop() : "—"}
+                  {row.room ? row.room.split("-").pop() : t("No room yet")}
                 </td>
                 <td className="py-2.5">
                   <SourceBadge row={row} />
@@ -277,7 +311,7 @@ function InHouseTable({
                   {t("{n} night{s}", { n: row.nights, s: row.nights === 1 ? "" : "s" })} ·{" "}
                   {t("{n} adult{s}", { n: row.adults, s: row.adults === 1 ? "" : "s" })}
                 </td>
-                <td className="py-2.5 pr-1 text-right">
+                <td className="py-2.5 pe-1 text-end">
                   <div className="tabular-nums text-zinc-600">
                     {row.check_out_date}
                   </div>
@@ -291,6 +325,7 @@ function InHouseTable({
         </tbody>
       </table>
     </div>
+    </>
   )
 }
 
@@ -328,12 +363,19 @@ export default function Today() {
     return () => clearInterval(t)
   }, [refresh, refreshKey])
 
+  // other screens (tape chart, command palette, a group companion) open
+  // the check-out sheet here with navigate("/", { state: { checkout } })
   const location = useLocation()
   const [checkingOut, setCheckingOut] = useState<string | null>(null)
+  const [roomMenu, setRoomMenu] = useState<string | null>(null)
   useEffect(() => {
     const res = (location.state as { checkout?: string } | null)?.checkout
-    if (res) setCheckingOut(res)
-  }, [location.state])
+    if (res) {
+      setCheckingOut(res)
+      // a reload must not reopen it
+      navigate(".", { replace: true, state: null })
+    }
+  }, [location.state, navigate])
 
   async function act(key: string, fn: () => Promise<unknown>) {
     setBusy(key)
@@ -383,20 +425,22 @@ export default function Today() {
         <button
           title={
             stay
-              ? t("{guest} · open registration", { guest: stay.guest_name })
+              ? t("{guest} · check out or open registration", { guest: stay.guest_name })
               : t("Housekeeping: {from} → {to} (click to advance)", {
                   from: room.housekeeping_status,
                   to: next,
                 })
           }
           disabled={busy === room.name}
+          aria-haspopup={stay ? "menu" : undefined}
+          aria-expanded={stay ? roomMenu === room.name : undefined}
           onClick={() =>
             stay
-              ? navigate(`/grc/${stay.name}`)
+              ? setRoomMenu((m) => (m === room.name ? null : room.name))
               : act(room.name, () => setHousekeepingStatus(room.name, next))
           }
           className={cn(
-            "w-full cursor-pointer rounded-lg border px-2 pb-1.5 pt-2 text-left transition-transform",
+            "w-full cursor-pointer rounded-lg border px-2 pb-1.5 pt-2 text-start transition-transform",
             "hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600",
             occupied
               ? "border-brand-700 bg-brand-700 text-white"
@@ -407,12 +451,38 @@ export default function Today() {
             <span className="text-sm font-semibold">{room.room_number}</span>
             {occupied && <BedDouble className="size-3.5" aria-hidden />}
           </div>
-          <div className="mt-0.5 text-[9px] font-medium uppercase tracking-wide opacity-80">
+          {/* room on the end side for the photo button, so it never covers the label */}
+          <div className="mt-0.5 truncate pe-6 text-[9px] font-medium uppercase tracking-wide opacity-80">
             {occupied ? t("Occupied") : t(room.housekeeping_status)}
           </div>
         </button>
         {(occupied || room.housekeeping_status === "Clean") && (
           <RoomMediaButton room={room.name} />
+        )}
+        {stay && roomMenu === room.name && (
+          <div
+            role="menu"
+            className="absolute start-0 top-full z-20 mt-1 w-44 overflow-hidden rounded-lg border border-zinc-200 bg-white py-1 text-sm shadow-lg"
+          >
+            <p className="truncate px-3 py-1 text-xs text-zinc-500">{stay.guest_name}</p>
+            <button
+              role="menuitem"
+              className="block w-full px-3 py-2 text-start font-medium text-zinc-800 hover:bg-zinc-50"
+              onClick={() => {
+                setRoomMenu(null)
+                setCheckingOut(stay.name)
+              }}
+            >
+              {t("Check out")}
+            </button>
+            <button
+              role="menuitem"
+              className="block w-full px-3 py-2 text-start text-zinc-700 hover:bg-zinc-50"
+              onClick={() => navigate(`/grc/${stay.name}`)}
+            >
+              {t("Registration card")}
+            </button>
+          </div>
         )}
       </div>
     )
@@ -521,8 +591,8 @@ export default function Today() {
         />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-5">
-        <div className="space-y-4 lg:col-span-2">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
+        <div className="min-w-0 space-y-4 lg:col-span-2">
           <BookingRequests refreshKey={refreshKey} onChanged={refresh} />
           <Card>
             <CardHeader>
@@ -568,7 +638,7 @@ export default function Today() {
           </Card>
         </div>
 
-        <div className="space-y-4 lg:col-span-3">
+        <div className="min-w-0 space-y-4 lg:col-span-3">
           <Card>
             <CardHeader>
               <CardTitle>{t("Room board")}</CardTitle>
@@ -602,7 +672,7 @@ export default function Today() {
                     <div className="w-16 shrink-0 pt-2 text-xs font-medium text-zinc-500">
                       {ordinalFloor(fl, t)}
                     </div>
-                    <div className="grid flex-1 grid-cols-3 gap-2 sm:grid-cols-5 md:grid-cols-7">
+                    <div className="grid flex-1 grid-cols-[repeat(auto-fill,minmax(6.25rem,1fr))] gap-2">
                       {allRooms
                         .filter((r) => floorOf(r) === fl)
                         .map((room) => renderRoom(room))}

@@ -8524,6 +8524,175 @@ def t336():
 	assert past["days_elapsed"] == past["total_days"] == 29, past
 
 
+def _settle_stay(number, phone, ci="2037-03-01", co="2037-03-03"):
+	"""An in-house stay in its own room whose nights are NOT posted yet:
+	check-out (and the settlement preview) has to post them first."""
+	g = _guest(f"Eval Settle {number}", phone)
+	res = _res(g, ci, co, _dep_room(number))
+	res.status = "Checked In"
+	res.save(ignore_permissions=True)
+	folio = frappe.db.get_value(
+		"Folio", {"reservation": res.name, "folio_type": "Guest"})
+	if not folio:
+		from kamra.folio import open_folio
+		folio = open_folio(res)
+	return res, folio
+
+
+@check("checkout context: reports owed and refund due exactly as check_out refuses, writes nothing")
+def t340():
+	from kamra import api
+	res, folio = _settle_stay("E340", "+91 70000 03400")
+	before = float(frappe.db.get_value("Folio", folio, "balance") or 0)
+	charges = frappe.db.count("Folio Charge", {"parent": folio})
+	s = api.checkout_context(res.name)
+	# read-only: the nights it posted to judge the balance are rolled back
+	assert float(frappe.db.get_value("Folio", folio, "balance") or 0) == before
+	assert frappe.db.count("Folio Charge", {"parent": folio}) == charges
+	owed = s["totals"]["owed"]
+	assert owed > before + 0.01, ("preview did not count the unposted nights", s["totals"], before)
+	assert s["totals"]["refund_due"] == 0 and not s["actions"]["can_checkout"], s
+	assert [c["folio"] for c in s["collect"]] == [folio], s["collect"]
+	assert abs(s["collect"][0]["amount"] - owed) < 0.01, s["collect"]
+	assert s["payment_modes"] and any(b["code"] == "owed" for b in s["blockers"]), s
+	try:
+		api.check_out(res.name)
+		raise AssertionError("checked out with an unpaid bill")
+	except frappe.ValidationError as e:
+		assert "still owed" in str(e), e
+	# check_out posted the nights: the folio now owes what the preview said
+	assert abs(float(frappe.db.get_value("Folio", folio, "balance")) - owed) < 0.01
+
+	# overpaid by 750: a refund due, back by the mode it came in
+	api.add_folio_payment(folio, "Card", owed + 750)
+	s = api.checkout_context(res.name)
+	assert (s["totals"]["owed"], s["totals"]["refund_due"],
+	        s["totals"]["to_city_ledger"]) == (0, 750.0, 0), s["totals"]
+	assert s["collect"] == [] and len(s["refunds"]) == 1, s
+	r = s["refunds"][0]
+	assert (r["kind"], r["folio"], r["amount"], r["source"], r["mode"]) == \
+		("folio", folio, 750.0, "overpayment", "Card"), r
+	try:
+		api.check_out(res.name)
+		raise AssertionError("checked out while the guest was owed a refund")
+	except frappe.ValidationError as e:
+		assert "is owed" in str(e), e
+
+
+@check("checkout context: refunding the reported amount lets check_out through")
+def t341():
+	from kamra import api
+	res, folio = _settle_stay("E341", "+91 70000 03410")
+	owed = api.checkout_context(res.name)["totals"]["owed"]
+	api.add_folio_payment(folio, "Cash", owed + 1200)
+	s = api.checkout_context(res.name)
+	assert s["totals"]["refund_due"] == 1200.0, s["totals"]
+	for r in s["refunds"]:
+		api.refund_folio_payment(r["folio"], r["amount"], r["mode"],
+		                         "Refund of overpayment at check-out")
+	s = api.checkout_context(res.name)
+	assert s["settled"] and s["actions"]["can_checkout"] and not s["blockers"], s
+	assert not s["collect"] and not s["refunds"], s
+	api.check_out(res.name)
+	assert frappe.db.get_value("Reservation", res.name, "status") == "Checked Out"
+	# after check-out the same call shows the folio ready for its invoice
+	s = api.checkout_context(res.name)
+	f = next(x for x in s["folios"] if x["folio"] == folio)
+	assert f["status"] == "Open" and abs(f["balance"]) < 0.01 and f["has_charges"], f
+	assert any(b["code"] == "not_in_house" for b in s["blockers"]), s["blockers"]
+	inv = api.close_folio(folio)["invoice_number"]
+	assert inv and frappe.db.get_value("Folio", folio, "status") == "Closed"
+
+
+@check("checkout context: a held security deposit is refunded through the deposit path")
+def t342():
+	from kamra import api
+	res, folio = _dep_stay("E342", "+91 70000 03420")
+	api.collect_security_deposit(res.name, 5000, "UPI")
+	api.add_folio_payment(folio, "Cash", 400)  # and a little over-collected
+	s = api.checkout_context(res.name)
+	assert s["deposit"]["held"] == 5000 and s["deposit"]["folio"] == folio, s["deposit"]
+	assert s["totals"]["refund_due"] == 5400.0, s["totals"]
+	kinds = [(r["kind"], r["amount"], r["source"], r["mode"]) for r in s["refunds"]]
+	assert kinds == [("deposit", 5000.0, "security_deposit", "UPI"),
+	                 ("folio", 400.0, "overpayment", "Cash")], kinds
+	for r in s["refunds"]:
+		if r["kind"] == "deposit":
+			api.refund_security_deposit(res.name, r["amount"], r["mode"],
+			                            "Refund at check-out")
+		else:
+			api.refund_folio_payment(r["folio"], r["amount"], r["mode"],
+			                         "Refund of overpayment at check-out")
+	dep = frappe.db.get_value("Security Deposit", {"reservation": res.name},
+	                          ["status", "balance", "refunded_amount"], as_dict=True)
+	assert dep.status == "Refunded" and float(dep.balance) == 0 \
+		and float(dep.refunded_amount) == 5000, dep
+	d, c = _ledger(folio, "Deposit")
+	assert abs(d - c) < 0.01, (d, c)  # the liability is released
+	assert api.checkout_context(res.name)["actions"]["can_checkout"]
+	api.check_out(res.name)
+	assert frappe.db.get_value("Reservation", res.name, "status") == "Checked Out"
+
+
+@check("checkout context: a folio invoiced before its nights were posted is a blocker, not a toast")
+def t343():
+	from kamra import api
+	res, folio = _settle_stay("E343", "+91 70000 03430")
+	# nothing posted yet, so the empty bill is settled and closes
+	assert abs(float(frappe.db.get_value("Folio", folio, "balance") or 0)) < 0.01
+	api.close_folio(folio)
+	s = api.checkout_context(res.name)
+	codes = [b["code"] for b in s["blockers"]]
+	assert "nights_not_posted" in codes and not s["actions"]["can_checkout"], s["blockers"]
+	b = next(b for b in s["blockers"] if b["code"] == "nights_not_posted")
+	assert b["folio"] == folio and "invoice" in b["message"], b
+	# and the preview left no message behind for the browser to toast
+	assert not [m for m in (frappe.local.message_log or [])
+	            if "frozen" in str(m)], frappe.local.message_log
+	try:
+		api.check_out(res.name)
+		raise AssertionError("checked out onto an invoiced folio")
+	except frappe.ValidationError:
+		pass
+	frappe.local.message_log = []
+
+
+@check("checkout context: open restaurant bills show as pending and post to the room; each step is audited")
+def t344():
+	from kamra import api, pos
+	res, folio = _settle_stay("E344", "+91 70000 03440")
+	outlet = frappe.get_doc({
+		"doctype": "POS Outlet", "property": P, "outlet_name": "Eval Checkout Cafe",
+		"outlet_type": "Restaurant", "gst_rate": 5,
+	}).insert(ignore_permissions=True).name
+	mi = frappe.get_doc({
+		"doctype": "Menu Item", "property": P, "outlet": outlet,
+		"item_name": "Eval Checkout Tea", "category": "Food", "price": 100,
+		"is_veg": 1, "available": 1, "prep_station": "Kitchen",
+	}).insert(ignore_permissions=True).name
+	o = pos.create_order(outlet, [{"menu_item": mi, "qty": 2}], room=res.room)
+	s = api.checkout_context(res.name)
+	bills = [b for b in s["pending_bills"] if b["kind"] == "pos"]
+	assert [b["name"] for b in bills] == [o["order"]], s["pending_bills"]
+	assert bills[0]["amount"] == 200 and bills[0]["can_post_to_room"], bills
+	assert any(n["code"] == "pending_bills" for n in s["notices"]), s["notices"]
+	owed_before = s["totals"]["owed"]
+	pos.deliver_order(o["order"])
+	s = api.checkout_context(res.name)
+	assert not s["pending_bills"], s["pending_bills"]
+	assert round(s["totals"]["owed"] - owed_before, 2) == 210.0, (owed_before, s["totals"])
+	# settle, check out, invoice: every step names who did it
+	for c in s["collect"]:
+		api.add_folio_payment(c["folio"], "Cash", c["amount"])
+	api.check_out(res.name)
+	api.close_folio(folio)
+	user = frappe.session.user
+	for action, ref in (("folio_payment", folio), ("check_out", res.name),
+	                    ("close_folio", folio)):
+		assert frappe.db.exists("Agent Action Log", {
+			"action_type": action, "reference_name": ref, "actor": user}), action
+
+
 def execute():
 	global RT, ROOM
 	# frappe.locale.get_locale_value crashes (UnboundLocalError) when no
@@ -8554,7 +8723,7 @@ def execute():
 		           t215, t216, t300, t301, t302, t303, t304, t305, t220, t221, t223, t222, t224,
 		           t320, t321, t322, t323, t324, t325, t326, t327, t328, t310, t311, t312, t313,
 		           t314, t315, t316, t317, t318, t330, t331, t332, t333, t334, t335, t336,
-		           t225, t226, t227, t228, t229, t230):
+		           t225, t226, t227, t228, t229, t230, t340, t341, t342, t343, t344):
 			fn()
 	finally:
 		frappe.db.commit = real_commit

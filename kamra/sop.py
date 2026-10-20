@@ -5,7 +5,7 @@
 
 Covers checkout, check-in, cancel, walk-in and deposit. Tips are
 deterministic from a context dict the caller builds from folio /
-registration / policy state. The AI layer may only rephrase those tips —
+registration / policy state. The AI layer may only rephrase those tips , 
 it never invents amounts. Flows work with no LLM configured.
 """
 
@@ -93,7 +93,7 @@ CHECKOUT_DEFAULT_STEPS = [
 		"step_key": "ask_feedback",
 		"step_type": "ask_guest",
 		"title": "Ask for feedback",
-		"instruction": "Invite a short review of the stay — keeps the farewell warm and useful.",
+		"instruction": "Invite a short review of the stay. It keeps the farewell warm and useful.",
 		"prompt_to_guest": "How was your stay with us? Is there anything we could have done better?",
 		"is_blocking": 0,
 		"sequence": 70,
@@ -103,7 +103,7 @@ CHECKOUT_DEFAULT_STEPS = [
 		"step_type": "ask_guest",
 		"title": "Wish farewell",
 		"instruction": "Thank the guest, hand over any deposit refund, and wish them a safe journey.",
-		"prompt_to_guest": "Thank you for staying with us — safe travels, and we hope to welcome you again.",
+		"prompt_to_guest": "Thank you for staying with us, safe travels, and we hope to welcome you again.",
 		"is_blocking": 0,
 		"sequence": 80,
 	},
@@ -132,7 +132,7 @@ CHECKIN_DEFAULT_STEPS = [
 		"step_key": "confirm_room",
 		"step_type": "action",
 		"title": "Confirm room is ready",
-		"instruction": "Prefer a Clean or Inspected room. If Dirty, warn the guest — HK will see the flip to occupied.",
+		"instruction": "Prefer a Clean or Inspected room. If Dirty, warn the guest: HK will see the flip to occupied.",
 		"prompt_to_guest": "",
 		"is_blocking": 0,
 		"sequence": 30,
@@ -160,7 +160,7 @@ CHECKIN_DEFAULT_STEPS = [
 		"step_type": "ask_guest",
 		"title": "Welcome & keys",
 		"instruction": "Hand over keys / access, Wi‑Fi, breakfast times, and wish them a pleasant stay.",
-		"prompt_to_guest": "Welcome — here are your keys. Breakfast is served as noted; please let us know if you need anything.",
+		"prompt_to_guest": "Welcome, here are your keys. Breakfast is served as noted; please let us know if you need anything.",
 		"is_blocking": 0,
 		"sequence": 60,
 	},
@@ -198,7 +198,7 @@ CANCEL_DEFAULT_STEPS = [
 		"step_key": "record_reason",
 		"step_type": "confirm",
 		"title": "Record the reason",
-		"instruction": "Pick a cancellation reason (and a short note if useful) — it is logged on the stay.",
+		"instruction": "Pick a cancellation reason (and a short note if useful): it is logged on the stay.",
 		"prompt_to_guest": "",
 		"is_blocking": 1,
 		"sequence": 40,
@@ -228,7 +228,7 @@ WALKIN_DEFAULT_STEPS = [
 		"step_key": "verify_identity",
 		"step_type": "confirm",
 		"title": "Verify identity",
-		"instruction": "Ask for a government ID — capture it on the GRC after check-in if needed.",
+		"instruction": "Ask for a government ID, capture it on the GRC after check-in if needed.",
 		"prompt_to_guest": "May I see a government ID for registration?",
 		"is_blocking": 0,
 		"sequence": 10,
@@ -265,7 +265,7 @@ WALKIN_DEFAULT_STEPS = [
 		"step_type": "ask_guest",
 		"title": "Welcome & keys",
 		"instruction": "Hand over keys / access, Wi‑Fi, breakfast times, and wish them a pleasant stay.",
-		"prompt_to_guest": "Welcome — here are your keys. Please let us know if you need anything.",
+		"prompt_to_guest": "Welcome, here are your keys. Please let us know if you need anything.",
 		"is_blocking": 0,
 		"sequence": 50,
 	},
@@ -342,7 +342,7 @@ EARLY_CHECKIN_DEFAULT_STEPS = [
 		"step_key": "post_fee",
 		"step_type": "action",
 		"title": "Post the fee (or record waive)",
-		"instruction": "Post Early Check-in on the folio, or waive at zero — both are logged.",
+		"instruction": "Post Early Check-in on the folio, or waive at zero: both are logged.",
 		"prompt_to_guest": "",
 		"is_blocking": 1,
 		"sequence": 40,
@@ -381,7 +381,7 @@ LATE_CHECKOUT_DEFAULT_STEPS = [
 		"step_key": "post_fee",
 		"step_type": "action",
 		"title": "Post the fee (or record waive)",
-		"instruction": "Post Late Checkout on the folio, or waive at zero — both are logged. ETD updates on the stay.",
+		"instruction": "Post Late Checkout on the folio, or waive at zero: both are logged. ETD updates on the stay.",
 		"prompt_to_guest": "",
 		"is_blocking": 1,
 		"sequence": 40,
@@ -415,7 +415,7 @@ def evaluate_checkout_step(step: dict, context: dict) -> dict:
 	"""Evaluate one checkout SOP step against a checkout_context dict.
 
 	Returns state (done / blocked / todo) and a plain-language tip. Amounts
-	are taken only from context — never recomputed here.
+	are taken only from context, never recomputed here.
 	"""
 	key = (step.get("step_key") or "").strip()
 	symbol = context.get("currency_symbol") or ""
@@ -459,7 +459,7 @@ def evaluate_checkout_step(step: dict, context: dict) -> dict:
 
 	elif key == "check_damages":
 		if damages:
-			tip = _("Damage / withhold of {0} is already on the bill — confirm with the guest.").format(
+			tip = _("Damage / withhold of {0} is already on the bill: confirm with the guest.").format(
 				format_money(symbol, damages))
 			state = "done"
 		elif dep_held > 0.009 and dep_bal > 0.009:
@@ -467,7 +467,7 @@ def evaluate_checkout_step(step: dict, context: dict) -> dict:
 				format_money(symbol, dep_held), format_money(symbol, dep_bal))
 			state = "todo"
 		elif dep_held > 0.009 and dep_bal <= 0.009:
-			tip = _("Deposit is fully applied or refunded — nothing left to withhold.")
+			tip = _("Deposit is fully applied or refunded: nothing left to withhold.")
 			state = "done"
 		else:
 			tip = _("No security deposit on this stay. Note any damage as a Misc charge before settling.")
@@ -491,7 +491,7 @@ def evaluate_checkout_step(step: dict, context: dict) -> dict:
 			tip = _("Bill-to for {0}: {1}. Alcohol always bills the guest.").format(
 				company, "; ".join(parts))
 		elif company:
-			tip = _("Corporate stay for {0} — confirm which charges the company pays.").format(company)
+			tip = _("Corporate stay for {0}, confirm which charges the company pays.").format(company)
 		else:
 			tip = _("Guest pays the bill (no company on this stay).")
 			state = "done"
@@ -512,7 +512,7 @@ def evaluate_checkout_step(step: dict, context: dict) -> dict:
 				format_money(symbol, city_amt))
 			state = "todo"
 		elif can_checkout:
-			tip = _("Balances are clear — ready to check out.")
+			tip = _("Balances are clear: ready to check out.")
 			state = "done"
 		elif blockers:
 			tip = blockers[0].get("message") or tip
@@ -554,10 +554,10 @@ def evaluate_checkin_step(step: dict, context: dict) -> dict:
 
 	if key == "verify_identity":
 		if ready.get("id_on_file"):
-			tip = _("ID is on file — confirm it matches the guest at the desk.")
+			tip = _("ID is on file: confirm it matches the guest at the desk.")
 			state = "done"
 		else:
-			tip = _("No ID on file yet — capture it on the GRC (check-in still allowed).")
+			tip = _("No ID on file yet: capture it on the GRC (check-in still allowed).")
 			state = "todo"
 
 	elif key == "confirm_registration":
@@ -579,10 +579,10 @@ def evaluate_checkin_step(step: dict, context: dict) -> dict:
 			tip = _("Pick a room before check-in.")
 			state = "todo"
 		elif hk == "Dirty":
-			tip = _("Room {0} is Dirty — warn the guest; HK will see it flip to occupied.").format(num)
+			tip = _("Room {0} is Dirty: warn the guest; HK will see it flip to occupied.").format(num)
 			state = "todo"
 		elif hk in ("Clean", "Inspected"):
-			tip = _("Room {0} is {1} — ready to hand over.").format(num, _(hk))
+			tip = _("Room {0} is {1}: ready to hand over.").format(num, _(hk))
 			state = "done"
 		else:
 			tip = _("Room {0} · {1}.").format(num, _(hk) if hk else _("unassigned"))
@@ -646,13 +646,13 @@ def evaluate_cancel_step(step: dict, context: dict) -> dict:
 	elif key == "check_policy":
 		if inside and basis != "None" and fee > 0.009:
 			tip = _(
-				"{0} day(s) before arrival — inside the fee window. "
+				"{0} day(s) before arrival: inside the fee window. "
 				"Estimated fee {1} ({2})."
 			).format(days, format_money(symbol, fee), _(basis))
 			state = "todo"
 		else:
 			tip = _(
-				"{0} day(s) before arrival — outside the fee window (or no fee). "
+				"{0} day(s) before arrival: outside the fee window (or no fee). "
 				"Cancellation is free."
 			).format(days)
 			state = "done"
@@ -660,7 +660,7 @@ def evaluate_cancel_step(step: dict, context: dict) -> dict:
 	elif key == "explain_fee":
 		if waive and fee > 0.009:
 			tip = _(
-				"Fee of {0} will be WAIVED — manager call, logged on the stay. "
+				"Fee of {0} will be WAIVED: manager call, logged on the stay. "
 				"Tell the guest cancellation is free."
 			).format(format_money(symbol, fee))
 			state = "todo"
@@ -712,7 +712,7 @@ def evaluate_walkin_step(step: dict, context: dict) -> dict:
 
 	if key == "verify_identity":
 		if guest:
-			tip = _("Verify ID for {0} — capture on the GRC after check-in if needed.").format(
+			tip = _("Verify ID for {0}, capture on the GRC after check-in if needed.").format(
 				guest)
 			state = "todo"
 		else:
@@ -724,11 +724,11 @@ def evaluate_walkin_step(step: dict, context: dict) -> dict:
 			tip = _("Pick a free room for tonight before collecting.")
 			state = "todo"
 		elif hk == "Dirty":
-			tip = _("Room {0} is Dirty — warn the guest before handing keys.").format(
+			tip = _("Room {0} is Dirty: warn the guest before handing keys.").format(
 				room_number)
 			state = "todo"
 		elif hk in ("Clean", "Inspected"):
-			tip = _("Room {0} is {1} — ready for walk-in.").format(room_number, _(hk))
+			tip = _("Room {0} is {1}: ready for walk-in.").format(room_number, _(hk))
 			state = "done"
 		else:
 			tip = _("Room {0} selected.").format(room_number)
@@ -749,7 +749,7 @@ def evaluate_walkin_step(step: dict, context: dict) -> dict:
 
 	elif key == "collect_payment":
 		if paid > 0.009:
-			tip = _("Collecting {0} now — then check in and hand keys.").format(
+			tip = _("Collecting {0} now, then check in and hand keys.").format(
 				format_money(symbol, paid))
 			state = "todo"
 		elif total > 0.009:
@@ -764,7 +764,7 @@ def evaluate_walkin_step(step: dict, context: dict) -> dict:
 		if room_number:
 			tip = _("Hand over keys for room {0}. {1}").format(
 				room_number,
-				step.get("prompt_to_guest") or _("Welcome — please let us know if you need anything."),
+				step.get("prompt_to_guest") or _("Welcome, please let us know if you need anything."),
 			)
 		else:
 			tip = step.get("prompt_to_guest") or tip
@@ -803,7 +803,7 @@ def evaluate_deposit_step(step: dict, context: dict) -> dict:
 				)
 			state = "done" if due <= 0.009 else "todo"
 		else:
-			tip = _("No fixed deposit % — take an advance amount the guest agrees.")
+			tip = _("No fixed deposit %: take an advance amount the guest agrees.")
 			state = "todo" if can_take else "done"
 
 	elif key == "collect_or_link":
@@ -811,7 +811,7 @@ def evaluate_deposit_step(step: dict, context: dict) -> dict:
 			tip = _("Deposit secured ({0} received).").format(format_money(symbol, paid))
 			state = "done"
 		elif link_url and due > 0.009:
-			tip = _("Payment link already sent — follow up or record a desk payment of {0}.").format(
+			tip = _("Payment link already sent: follow up or record a desk payment of {0}.").format(
 				format_money(symbol, due))
 			state = "todo"
 		elif can_take and due > 0.009:
@@ -831,7 +831,7 @@ def evaluate_deposit_step(step: dict, context: dict) -> dict:
 			tip = _("Confirm the payment link reached the guest.")
 			state = "todo"
 		elif paid > 0.009:
-			tip = _("Part paid {0} — give a receipt for what was taken.").format(
+			tip = _("Part paid {0}: give a receipt for what was taken.").format(
 				format_money(symbol, paid))
 			state = "todo"
 		else:
@@ -846,7 +846,7 @@ def evaluate_deposit_step(step: dict, context: dict) -> dict:
 			state = "todo"
 		else:
 			tip = step.get("prompt_to_guest") or _(
-				"Deposit is secured — remaining stay balance settles at check-in / check-out."
+				"Deposit is secured: remaining stay balance settles at check-in / check-out."
 			)
 			state = "done"
 
@@ -910,7 +910,7 @@ def evaluate_early_late_step(step: dict, context: dict) -> dict:
 	elif key == "post_fee":
 		if existing_n:
 			tip = _(
-				"{0} existing {1} line(s) totaling {2} — avoid a duplicate unless intentional."
+				"{0} existing {1} line(s) totaling {2}: avoid a duplicate unless intentional."
 			).format(
 				existing_n,
 				context.get("charge_type") or label,
@@ -918,7 +918,7 @@ def evaluate_early_late_step(step: dict, context: dict) -> dict:
 			)
 			state = "todo"
 		elif amount_f is not None and amount_f <= 0.009:
-			tip = _("Save as waived — no folio charge, stay time still updates.")
+			tip = _("Save as waived: no folio charge, stay time still updates.")
 			state = "todo"
 		elif amount_f is not None:
 			tip = _("Post {0} as {1} on the folio.").format(
@@ -1005,12 +1005,16 @@ def ensure_default_sops_all_properties() -> int:
 
 
 def _template_steps(property: str, key: str) -> tuple[dict | None, list[dict]]:
-	ensure_default_sops(property)
+	# the SOP Template doctype is optional: without it (or before migrate)
+	# the in-code defaults drive the wizards
+	has_templates = bool(frappe.db.exists("DocType", "SOP Template"))
+	if has_templates:
+		ensure_default_sops(property)
 	name = frappe.db.get_value(
 		"SOP Template",
 		{"property": property, "key": key, "active": 1},
 		"name",
-	)
+	) if has_templates else None
 	if not name:
 		# fall back to in-code defaults so wizards always work pre-migrate
 		seed = DEFAULT_SOP_SEEDS.get(key)

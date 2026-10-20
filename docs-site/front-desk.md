@@ -175,25 +175,65 @@ housekeeping. Every move is written to the activity log with its reason.
 
 ## Check a guest out
 
-1. On **Today**, find the guest under **Departures**.
-2. Click **Check out**.
+Check-out is a short guided sheet. Open it from any of these:
+
+- **Today → Departures**: **Check out** on the guest's row.
+- **Today → Rooms**: tap an occupied room, then **Check out**.
+- **Tape chart**: click the stay, then **Check out**.
+- The booking's detail panel: **Check out**.
+- The command palette (Ctrl+K or Cmd+K): type **check out** and the room
+  number or the guest's name.
 
 ![The departures list with a Check out button on each row](/img/front-desk/departures.png)
 
-Before it checks the guest out, Kamra posts any nights the night audit
-has not posted yet, then looks at the bill:
+The sheet shows only the steps this stay needs, in this order:
 
-- If the guest still owes money, check-out stops and says how much.
-  Collect it on the folio first ([Billing](/billing)).
-- If the guest has paid too much, check-out stops until you refund it.
-- If a company with credit pays for the stay, the company's share moves to
-  the city ledger and the check-out goes ahead.
+1. **Bill.** Every folio of the stay with its lines, as it will stand at
+   check-out: nights the night audit has not posted yet are counted in.
+   Restaurant or room-service orders and laundry that are not on the folio
+   yet are listed here. **Post to room** adds one to the bill; **Settle
+   separately** takes payment for a restaurant bill at the outlet instead.
+2. **Late check-out.** Only when the guest leaves after your check-out
+   time. Enter the fee your hotel charges and press **Add late check-out
+   fee**, or **Skip** to waive it. Kamra never suggests an amount.
+3. **Company bill.** Only when a company with credit pays part of the
+   stay. It shows which folio moves to the company's account (the city
+   ledger) and the company's credit check. Tick the box once the guest
+   agrees. If the company's credit is blocked, Finance or a Hotel Admin
+   can type a reason to override it; the reason is logged with their name.
+4. **Payment.** Only when money is still owed either way.
+   - The guest owes money: pick the payment mode, add a reference if you
+     like, and press **Collect**.
+   - The guest paid too much: Kamra shows where the money comes from (a
+     held security deposit, or a payment above the bill) and the mode it
+     goes back by (the mode it came in by). Keep or change the reason and
+     press **Refund**. A security deposit goes back through the deposit's
+     own refund, so the deposit record and its ledger are released.
+   - Damage to the room? **Withhold for damage** keeps part of the
+     deposit first.
 
-![The message shown when a guest still owes money at check-out](/img/front-desk/checkout-owed.png)
+   Your till must be open, and the cashier PIN is asked when your hotel
+   requires it.
+5. **Guest moment.** Your hotel's check-out routine (ask for feedback, say
+   goodbye). Tick each one, or **Skip**.
+6. **Check out.** Press **Check out**.
+7. **Invoice.** Press **Close and generate invoice** for each folio (or
+   **Generate all invoices**), then **View or print**. The invoice comes
+   after check-out on purpose: check-out may still post the last night and
+   move the company's share, and a folio invoiced before that is frozen.
+
+If anything stops a step, the reason shows inside the sheet next to that
+step, with what to do about it (open the till, open the folio). A failed
+step changes nothing, and the sheet reloads the bill after every action.
+
+For a group, the sheet checks out one room at a time and lists the other
+guests of the group who are still in house, each with its own **Check
+out**.
 
 After check-out the room is marked Vacant and Dirty, and housekeeping gets
-a high-priority checkout clean. The same **Check out** button is on the
-booking's detail panel.
+a high-priority checkout clean. Every step (payment, refund, check-out,
+invoice) is written to the activity log with the name of the person who
+did it.
 
 ## Look up a guest
 
@@ -241,10 +281,14 @@ The journey shows every stay and event, with:
 
 ## Troubleshooting
 
-**"Cannot check out: ₹… is still owed."** Open the bill (**Open bill** on
-the GRC, or **Open folio** on the booking), take the payment, then check
-out again. For a company that pays later, transfer the balance to the city
-ledger on the folio.
+**"Cannot check out: … is still owed."** Use the **Check out** button:
+its **Payment** step collects the amount. For a company that pays later,
+transfer the balance to the city ledger on the folio.
+
+**"Invoice … is issued, its charges are frozen"** at check-out. The folio
+was invoiced before every night was posted. The check-out sheet says so on
+its first step: open the folio, cancel the invoice, then check out. The
+sheet issues the invoice for you afterwards.
 
 **"Assign a room before check-in."** The booking has no room. Use **Assign
 room** on the booking or the GRC, or check in from **Today**, where you pick

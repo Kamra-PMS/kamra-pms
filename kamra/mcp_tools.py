@@ -312,6 +312,20 @@ TOOLS: tuple[ToolSpec, ...] = (
 		mutating=True,
 	),
 	_t(
+		"checkout_context",
+		"api.checkout_context",
+		"""Read-only: what stands between a stay and check-out, without
+		changing anything. Balances per folio after the nights check-out would
+		still post, totals owed by the guest and owed back to the guest, a
+		held security deposit, what moves to the city ledger and its credit
+		check, open restaurant orders, each folio's invoice, and `blockers`
+		(every reason check_out would refuse). Use it before check_out to tell
+		the user what to settle; collecting or refunding money is done at the
+		desk.""",
+		{"reservation": _p("string")},
+		required=("reservation",),
+	),
+	_t(
 		"find_reservations",
 		"api.find_reservations",
 		"""Find reservations by guest name, room number, or reference  - 

@@ -19,6 +19,7 @@ import {
   Command as CmdIcon,
   FileText,
   Loader2,
+  LogOut,
   Search,
   UserCircle2,
 } from "lucide-react"
@@ -121,8 +122,10 @@ export function CommandPalette() {
   useEffect(() => setCursor(0), [q])
 
   // Debounced remote search once the user has typed at least 2 chars.
+  // "check out 204" searches for "204"
+  const searchQ = q.replace(/check\s*-?\s*out/i, "").trim()
   useEffect(() => {
-    if (!open || q.trim().length < 2) {
+    if (!open || searchQ.length < 2) {
       setGuests([])
       setReservations([])
       setInvoices([])
@@ -135,7 +138,7 @@ export function CommandPalette() {
         const [g, r, inv] = await Promise.all([
           call<{ name: string; full_name: string; phone?: string }[]>(
             "kamra.api.guest_search",
-            { q: q.trim() },
+            { q: searchQ },
           ).catch(() => []),
           call<{
             name: string
@@ -146,7 +149,7 @@ export function CommandPalette() {
             room?: string | null
           }[]>("kamra.api.find_reservations", {
             property: getCurrentProperty(),
-            query: q.trim(),
+            query: searchQ,
           }).catch(() => []),
           call<{
             name: string
@@ -158,7 +161,7 @@ export function CommandPalette() {
             status: string
           }[]>("kamra.api.find_invoices", {
             property: getCurrentProperty(),
-            query: q.trim(),
+            query: searchQ,
           }).catch(() => []),
         ])
         if (cancelled) return
@@ -173,7 +176,7 @@ export function CommandPalette() {
       cancelled = true
       clearTimeout(handle)
     }
-  }, [q, open])
+  }, [searchQ, open])
 
   const navItems = useMemo(() => navItemsForRoles(roles), [roles])
 
@@ -234,6 +237,32 @@ export function CommandPalette() {
     [reservations, navigate, t],
   )
 
+  // check-out shortcut: "check out" (or a room / guest) finds the in-house
+  // stay and opens the guided check-out sheet on Today
+  const wantsCheckout = /check\s*-?\s*out/i.test(q)
+  const checkoutResults = useMemo<Result[]>(() => {
+    const stays = reservations.filter((r) => r.status === "Checked In")
+    const out: Result[] = stays.map((r) => ({
+      id: `checkout:${r.name}`,
+      label: t("Check out {guest}", { guest: r.guest_name || r.name }),
+      hint: `${r.name}${r.room ? ` · ${r.room}` : ""}`,
+      icon: LogOut,
+      onSelect: () => {
+        setOpen(false)
+        navigate("/", { state: { checkout: r.name } })
+      },
+    }))
+    if (!out.length && wantsCheckout)
+      out.push({
+        id: "checkout:help",
+        label: t("Check out a guest"),
+        hint: t("Type the room number or the guest's name"),
+        icon: LogOut,
+        onSelect: () => setQ(""),
+      })
+    return out
+  }, [reservations, wantsCheckout, navigate, t])
+
   const invoiceResults = useMemo<Result[]>(
     () =>
       invoices.map((f) => ({
@@ -250,6 +279,7 @@ export function CommandPalette() {
   )
 
   const groups: { title: string; items: Result[] }[] = [
+    { title: t("Check out"), items: checkoutResults },
     { title: t("Reservations"), items: reservationResults },
     { title: t("Invoices"), items: invoiceResults },
     { title: t("Guests"), items: guestResults },

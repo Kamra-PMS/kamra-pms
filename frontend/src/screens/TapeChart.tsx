@@ -10,6 +10,7 @@ import { Sheet } from "../components/ui/sheet"
 import { cn } from "../lib/utils"
 import { cur, moneyLocale } from "../lib/money"
 import { useT } from "../lib/i18n"
+import CheckOutDialog from "../components/CheckOutDialog"
 
 /** The tape chart: rooms × dates, bookings as bars. Click a bar to act. */
 
@@ -155,6 +156,7 @@ export default function TapeChart() {
   const [start, setStart] = useState(new Date().toISOString().slice(0, 10))
   const [data, setData] = useState<TapeData | null>(null)
   const [sel, setSel] = useState<TapeBooking | null>(null)
+  const [checkingOut, setCheckingOut] = useState<string | null>(null)
   const [freeRooms, setFreeRooms] = useState<
     {
       name: string
@@ -633,14 +635,33 @@ export default function TapeChart() {
         </Sheet>
       )}
 
+      {checkingOut && (
+        <CheckOutDialog
+          reservation={checkingOut}
+          onClose={() => setCheckingOut(null)}
+          onDone={() => {
+            setCheckingOut(null)
+            load()
+          }}
+          onOpenReservation={(name) => setCheckingOut(name)}
+        />
+      )}
       {sel && (
         <Sheet
           title={sel.guest_name}
           description={`${sel.name} · ${t(sel.status)}`}
           onClose={() => setSel(null)}
           footer={
-            <div className="flex justify-end gap-2">
+            <div className="flex flex-wrap justify-end gap-2">
               <Button variant="outline" onClick={() => setSel(null)}>{t("Close")}</Button>
+              {sel.status === "Checked In" && (
+                <Button variant="outline" onClick={() => {
+                  setCheckingOut(sel.name)
+                  setSel(null)
+                }}>
+                  {t("Check out")}
+                </Button>
+              )}
               {draft.room !== sel.room && (
                 <Button disabled={busy}
                   onClick={() => act(() => moveRoomConfirmed(sel.name, draft.room, askPrice))}>
