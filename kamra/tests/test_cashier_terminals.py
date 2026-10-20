@@ -249,3 +249,20 @@ class PrinterRolesTestCase(TillTestCase):
 		self.assertIn(b"BILL", data)
 		self.assertIn(b"TOTAL", data)
 		self.assertIn(b"420.00", data)
+
+
+class SiteInfoVersionTestCase(TillTestCase):
+	"""The login screen and the nav footer quote what site_info says."""
+
+	def test_site_info_carries_the_running_version(self):
+		from kamra import __version__
+		from kamra.public_api import site_info
+		info = site_info()
+		self.assertEqual(info["version"], __version__)
+		self.assertIsNone(info["channel"])
+
+	def test_channel_and_build_come_from_site_config(self):
+		from kamra.public_api import site_info
+		with patch.dict(frappe.conf, {"kamra_channel": "nightly", "kamra_build": "8f32098abcdef0"}):
+			info = site_info()
+		self.assertEqual((info["channel"], info["build"]), ("nightly", "8f32098abcde"))

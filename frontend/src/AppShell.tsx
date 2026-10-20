@@ -33,6 +33,7 @@ import { useT } from "./lib/i18n"
 import { loadLocale } from "./lib/money"
 import { cn } from "./lib/utils"
 import { useKiosk } from "./lib/kiosk"
+import { getSiteInfo, versionLabel } from "./lib/siteInfo"
 
 // On-demand UI kept out of the entry chunk: the booking dialog opens on
 // request; the palette and help panel load right after the shell paints.
@@ -207,6 +208,11 @@ export default function AppShell() {
   const [properties, setProperties] = useState<PropertyRow[]>([])
   const [property, setProperty] = useState(getCurrentProperty())
   const [demoMode, setDemoMode] = useState(false)
+  const [build, setBuild] = useState<string | null>(null)
+
+  useEffect(() => {
+    getSiteInfo().then((info) => setBuild(versionLabel(info)))
+  }, [])
 
   useEffect(() => {
     myProperties().then((props) => {
@@ -318,16 +324,21 @@ export default function AppShell() {
       {!kiosk && !demoMode && <UpdateNag />}
       <div className="flex min-h-0 flex-1">
       {!kiosk && (
-      <aside className="hidden w-56 shrink-0 border-r border-zinc-200 bg-white px-3 py-5 sm:sticky sm:top-0 sm:block sm:h-screen sm:overflow-y-auto">
-        <div className="mb-5 flex items-center gap-2 px-1">
+      <aside className="hidden w-56 shrink-0 flex-col border-r border-zinc-200 bg-white px-3 py-5 sm:sticky sm:top-0 sm:flex sm:h-screen sm:overflow-y-auto">
+        <NavLink
+          to="/"
+          end
+          aria-label={t("Home")}
+          className="mb-5 flex items-center gap-2 rounded-lg px-1 outline-none focus-visible:ring-2 focus-visible:ring-brand-600"
+        >
           <img src={asset("kamra-mark.svg")} alt="" className="size-7" aria-hidden />
-          <span className="text-lg font-semibold tracking-tight">
+          <span className="text-lg font-semibold tracking-tight text-zinc-900">
             kamra
             <span className="ml-1 align-middle text-[10px] font-semibold tracking-[0.2em] text-brand-600">
               PMS
             </span>
           </span>
-        </div>
+        </NavLink>
 
         {currentApp && (
           <div className="mb-2 flex items-center gap-2 rounded-lg px-2 py-1.5">
@@ -369,6 +380,14 @@ export default function AppShell() {
             ))
           })()}
         </nav>
+        {build ? (
+          <p
+            className="mt-auto px-2.5 pt-6 text-[11px] text-zinc-400"
+            title={t("The Kamra version this site is running")}
+          >
+            Kamra v{build}
+          </p>
+        ) : null}
       </aside>
       )}
 

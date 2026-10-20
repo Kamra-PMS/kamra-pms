@@ -244,9 +244,20 @@ def site_info():
 
 	demo_mode is true only on the seeded demo site (seed_demo sets the
 	`kamra_demo_mode` default), so a real install never advertises the
-	demo login accounts.
+	demo login accounts. The running version is public on purpose: it is
+	what a bug report and the login screen quote.
 	"""
-	return {"demo_mode": frappe.db.get_default("kamra_demo_mode") == "1"}
+	from kamra import __version__
+	return {
+		"demo_mode": frappe.db.get_default("kamra_demo_mode") == "1",
+		"app": "kamra",
+		"version": __version__,
+		# `bench --site <site> set-config kamra_channel nightly` labels a
+		# channel build so it isn't mistaken for the last stable release;
+		# kamra_build (a short commit id) is optional.
+		"channel": (frappe.conf.get("kamra_channel") or "")[:20] or None,
+		"build": (frappe.conf.get("kamra_build") or "")[:12] or None,
+	}
 
 
 @frappe.whitelist(allow_guest=True)

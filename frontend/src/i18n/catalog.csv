@@ -706,6 +706,7 @@ Here's what's happening today.,Here's what's happening today.,إليك ما يح
 Hide deactivated staff,Hide deactivated staff,,screens/settings/AccessPages.tsx,,needs_translation
 Hide payload,Hide payload,,screens/settings/WebhooksPage.tsx,,needs_translation
 Hold bill,Hold bill,تعليق الفاتورة,screens/POS.tsx,,translated
+Home,Home,,AppShell.tsx,,needs_translation
 Hotel,Hotel,فندق,screens/Setup.tsx,,translated
 "Hotel or vacation rental — same product, different defaults. Prefer talking? Connect Claude to Kamra's MCP and say ""onboard my property"".","Hotel or vacation rental — same product, different defaults. Prefer talking? Connect Claude to Kamra's MCP and say ""onboard my property"".","فندق أو إيجار عطلات — نفس المنتج بإعدادات افتراضية مختلفة. تفضّل الحديث؟ اربط Claude بـ MCP في كامرا وقل ""onboard my property"".",screens/Setup.tsx,,translated
 Hourly,Hourly,بالساعة,screens/TapeChart.tsx,,translated
@@ -1498,6 +1499,7 @@ The guest's bill is settled.,The guest's bill is settled.,تمت تسوية فا
 The hall's rack rental goes on as the first line - the number the conversation starts from.,The hall's rack rental goes on as the first line - the number the conversation starts from.,إيجار القاعة الأساسي يُضاف كأول بند - الرقم الذي تبدأ منه المحادثة.,screens/Banquet.tsx,,translated
 The high-balance check is off (threshold 0).,The high-balance check is off (threshold 0).,فحص الرصيد المرتفع متوقف (الحد 0).,screens/EndOfDayWizard.tsx,,translated
 The hotel keeps a copy of your ID with its registration records.,The hotel keeps a copy of your ID with its registration records.,يحتفظ الفندق بنسخة من هويتك مع سجلات التسجيل.,components/PrivacyNotice.tsx,,translated
+The Kamra version this site is running,The Kamra version this site is running,,AppShell.tsx,,needs_translation
 The OTA paid the room and nothing is held for extras. Blocking charges to the room is safer.,The OTA paid the room and nothing is held for extras. Blocking charges to the room is safer.,دفعت وكالة الحجز ثمن الغرفة ولا يوجد مبلغ محجوز للإضافات. منع الرسوم على الغرفة أكثر أمانا.,components/CheckInDialog.tsx,,translated
 "The pre-checks are loaded. Work through the steps, then post room and tax to close the business date.","The pre-checks are loaded. Work through the steps, then post room and tax to close the business date.",تم تحميل الفحوص المسبقة. راجع الخطوات ثم رحّل الغرفة والضريبة لإغلاق تاريخ العمل.,screens/EndOfDayWizard.tsx,,translated
 The rest printed here.,The rest printed here.,,screens/POS.tsx,,needs_translation
