@@ -273,17 +273,29 @@ In-repo: [`docs/`](docs/) · [user guide](docs/user-guide.md) · [AI & API](docs
 | **Bench** | Existing Frappe / ERPNext benches | Commands below · [guide](https://kamrapms.com/docs/self-hosting/bench) |
 | **Frappe Cloud Marketplace** | Managed Frappe hosting | [Install Kamra](https://cloud.frappe.io/marketplace/apps/kamra) on a private bench |
 
-**Docker (builds on your server):**
+**Docker:**
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Kamra-PMS/kamra-pms/main/deploy/install.sh | bash
 ```
 
-Three prompts: site domain, admin email, admin password. Builds a local
-`kamra:local` image (does **not** pull from GHCR) — 20–45 minutes the first
-time; 2 vCPU / 4 GB minimum (swap is added automatically under 8 GB). Then
-open `/kamra/setup`. Update later with `sudo /opt/kamra/install.sh update`.
+Three prompts: site domain, admin email, admin password. By default it
+builds a local `kamra:local` image — 20–45 minutes the first time; 2 vCPU /
+4 GB minimum (swap is added automatically under 8 GB). Then open
+`/kamra/setup`. Update later with `sudo /opt/kamra/install.sh update`
+(takes a `bench backup --with-files` first and stops if that fails).
 Details: [deploy/](deploy/).
+
+**Prebuilt image:** releases are also published as
+`ghcr.io/kamra-pms/kamra` — tags `stable` (newest release), `vX.Y.Z` (pin
+these in production) and `nightly` (testing). With registry access (the
+package is not public yet: `docker login ghcr.io` with a `read:packages`
+token), `KAMRA_PULL=1` makes the installer pull and pin it instead of
+building — a few minutes — and
+[`deploy/compose/quickstart.yaml`](deploy/compose/quickstart.yaml) runs it
+on a laptop for evaluation. The image holds only public code (Frappe,
+payments, Kamra); site data and secrets stay in volumes and env on your
+server.
 
 **Bench / Frappe Cloud:**
 

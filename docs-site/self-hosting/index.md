@@ -26,12 +26,41 @@ own-server steps).
 
 Measured on our own servers: a full single-property stack (database,
 cache, workers, web) idles around 600 MB of RAM — 4 GB leaves comfortable
-headroom for busy days. The Docker installer **builds the image on your
-server** (20–45 minutes the first time); on boxes under 8 GB it adds a swap
-file for the build automatically.
+headroom for busy days. By default the Docker installer **builds the
+image on your server** (20–45 minutes the first time; on boxes under 8 GB
+it adds a swap file for the build). With access to the
+[prebuilt image](#docker-images) it pulls instead — a few minutes, no
+build memory needed.
 
 **Also needed:** a domain or subdomain (`pms.yourhotel.com`) pointed at
 the server; ports 80/443 open; SSL via Let's Encrypt.
+
+## Docker images
+
+Each release is published to `ghcr.io/kamra-pms/kamra`
+(linux/amd64). The [installer](/quickstart#faster-pull-the-prebuilt-image)
+uses it with `KAMRA_PULL=1`; the package is not public yet, so the server
+needs `docker login ghcr.io` with a `read:packages` token until it is.
+
+| Tag | What it is | Use for |
+| --- | --- | --- |
+| `stable` | The newest release (moves on every release) | What the installer follows; it pins the `vX.Y.Z` it resolves to |
+| `vX.Y.Z` | One release, never changes | **Pin this in production** |
+| `nightly` | Latest green `develop` | Testing only |
+
+`latest` is an alias of `stable` kept for older scripts. The three newest
+releases plus `stable` and `nightly` are kept; older tags are pruned
+weekly, so pin a recent release and update regularly.
+
+### What's in the image
+
+Only public, open-source code: **Frappe**, **payments** and **Kamra**
+(built from their public GitHub repositories at the release tag, on
+GitHub Actions — see `.github/workflows/release.yml`). The image holds **no
+site data and no secrets**: your database, uploaded files, site config,
+passwords and API keys live in Docker volumes and `kamra.env` on **your**
+server, never in the image. Anyone can rebuild the same image from source
+with `KAMRA_BUILD=1`.
 
 ## Typical monthly cost
 
@@ -77,12 +106,13 @@ to self-hosting any time; that's the point of open source.
 sudo /opt/kamra/install.sh update
 ```
 
-That rebuilds the image from the branch recorded in `/opt/kamra/apps.json`
-(fetching the latest Kamra code), recreates the containers and runs
-`bench migrate` on every site. To switch channel or pin a release, pass
-the branch or tag: `sudo KAMRA_BRANCH=v2.6.4 /opt/kamra/install.sh update`.
-Expect 10–30 minutes; the running site stays up until the containers are
-recreated at the end.
+It first takes a full backup (`bench backup --with-files`) and **aborts if
+the backup fails**. Build installs then rebuild the image from the branch
+recorded in `/opt/kamra/apps.json` (pin a release with
+`KAMRA_BRANCH=v2.6.4`; 10–30 minutes); pull installs pull the newest
+`:stable` and pin it (or `KAMRA_TAG=vX.Y.Z`; a few minutes). Both recreate
+the containers and run `bench migrate` on every site. Details:
+[quickstart → Updating](/quickstart#updating).
 
 Bench self-host:
 

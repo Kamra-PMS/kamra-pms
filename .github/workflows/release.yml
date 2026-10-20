@@ -3,8 +3,11 @@ name: Release
 # Publishes release artifacts for a tag:
 #   1. GitHub Release        (only when a tag is pushed by hand — the
 #                             release-please flow creates the Release itself)
-#   2. Docker image          ghcr.io/kamra-pms/kamra:<tag> + :latest
-#                            (the self-host one-click channel)
+#   2. Docker image          ghcr.io/kamra-pms/kamra:<tag> + :stable + :latest
+#                            (public; deploy/install.sh pulls :stable and
+#                            pins the vX.Y.Z it resolves to. :latest is kept
+#                            as an alias for older scripts. Pruned weekly by
+#                            ghcr-retention.yml)
 #   3. Demo deploy           demo.kamrapms.com via SSH -> redeploy.sh
 #
 # Invoked three ways: manual tag push, workflow_call from release-please.yml
@@ -63,6 +66,29 @@ jobs:
         id: tag
         run: echo "tag=${{ inputs.tag || github.ref_name }}" >> "$GITHUB_OUTPUT"
 
+      - name: Image tags
+        # :stable / :latest move only when this is the newest vX.Y.Z, so a
+        # re-run or backport of an older tag never rolls self-hosters back.
+        id: tags
+        env:
+          TAG: ${{ steps.tag.outputs.tag }}
+          REPO: ${{ github.repository }}
+        run: |
+          newest=$(git ls-remote --tags --refs "https://github.com/${REPO}" 'v*' \
+            | sed 's|.*refs/tags/||' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1)
+          {
+            echo "list<<EOF"
+            echo "ghcr.io/kamra-pms/kamra:${TAG}"
+            if [ "$TAG" = "$newest" ]; then
+              echo "ghcr.io/kamra-pms/kamra:stable"
+              echo "ghcr.io/kamra-pms/kamra:latest"
+            fi
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+          if [ "$TAG" != "$newest" ]; then
+            echo "::warning::${TAG} is not the newest release (${newest}); not moving :stable/:latest"
+          fi
+
       - name: Checkout frappe_docker
         uses: actions/checkout@v4
         with:
@@ -94,9 +120,7 @@ jobs:
           context: .
           file: images/layered/Containerfile
           push: true
-          tags: |
-            ghcr.io/kamra-pms/kamra:${{ steps.tag.outputs.tag }}
-            ghcr.io/kamra-pms/kamra:latest
+          tags: ${{ steps.tags.outputs.list }}
           build-args: |
             FRAPPE_PATH=https://github.com/frappe/frappe
             FRAPPE_BRANCH=version-16

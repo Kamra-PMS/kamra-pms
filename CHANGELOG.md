@@ -34,6 +34,18 @@ upgrade-breaking changes (removed doctypes / API contracts).
   it posts to the guest folio once at check-in. Bookings with pets are
   refused at a property that doesn't allow them ([#222](https://github.com/Kamra-PMS/kamra-pms/pull/222))
 
+* **deploy:** prebuilt-image install path — `install.sh` can pull
+  `ghcr.io/kamra-pms/kamra` (`KAMRA_PULL=1` / `KAMRA_TAG=…`), resolve
+  `:stable` to the concrete `vX.Y.Z` and pin it; building on the server
+  stays the default while the package is private (a refused pull falls
+  back to building). `install.sh update` now always takes
+  `bench backup --with-files` first and aborts if it fails. Releases also
+  publish `:stable` (moved only by the newest release);
+  `deploy/compose/quickstart.yaml` runs the image locally for evaluation;
+  a weekly `ghcr-retention` workflow prunes old image versions while
+  keeping every manifest the kept tags reference (part of
+  [#228](https://github.com/Kamra-PMS/kamra-pms/issues/228))
+
 ### Bug Fixes (next release)
 
 * **pricing:** guests above a room's capacity are billed as their own

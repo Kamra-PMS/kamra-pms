@@ -1,0 +1,187 @@
+# Kamra — run it in 5 minutes (local evaluation, prebuilt image).
+#
+# Needs pull access to ghcr.io/kamra-pms/kamra. The package is private for
+# now: log in first with a GitHub token that has read:packages —
+#   echo "$GITHUB_TOKEN" | docker login ghcr.io -u <github-user> --password-stdin
+# (once the image is public, no login is needed). Without access, use
+# deploy/install.sh, which builds the image on your machine.
+#
+#   export KAMRA_ADMIN_PASSWORD='pick-a-password'      # Administrator login
+#   export KAMRA_DB_PASSWORD="$(openssl rand -hex 16)"  # MariaDB root
+#   docker compose -f quickstart.yaml up -d
+#   # pull (~4 GB) + one-shot site creator (~1–3 min):
+#   docker compose -f quickstart.yaml logs -f create-site
+#   open http://localhost:8080/kamra   (user: Administrator)
+#
+# Pulls ghcr.io/kamra-pms/kamra (Frappe + payments + kamra) with MariaDB and
+# Redis, then a one-shot `configurator` writes the bench config and
+# `create-site` creates the site, installs the apps and runs Kamra's first
+# boot (home → /kamra, scheduler on). Same pattern as frappe_docker's
+# pwd.yml. Nothing secret is committed here: both passwords come from your
+# shell (or a .env file next to this one) and compose refuses to start
+# without them.
+#
+# Knobs (env or .env):
+#   KAMRA_TAG        stable (default) | vX.Y.Z | nightly
+#   KAMRA_HTTP_PORT  host port, default 8080
+#   KAMRA_BIND       host address, default 127.0.0.1 (this machine only)
+#   KAMRA_SITE       site name, default kamra.localhost
+#
+# Stop: docker compose -f quickstart.yaml down      (keeps data)
+# Wipe: docker compose -f quickstart.yaml down -v   (deletes the site + DB)
+#
+# This is for trying Kamra. For a real server use deploy/install.sh (TLS
+# notes, backups before every update, a pinned vX.Y.Z tag).
+name: kamra-quickstart
+
+x-kamra-image: &kamra_image
+  image: ghcr.io/kamra-pms/kamra:${KAMRA_TAG:-stable}
+  # The published image is linux/amd64; Docker Desktop on Apple silicon
+  # runs it under emulation.
+  platform: linux/amd64
+  pull_policy: missing
+
+x-bench: &bench
+  <<: *kamra_image
+  restart: unless-stopped
+  volumes:
+    - sites:/home/frappe/frappe-bench/sites
+    - logs:/home/frappe/frappe-bench/logs
+  depends_on:
+    configurator:
+      condition: service_completed_successfully
+
+services:
+  configurator:
+    <<: *kamra_image
+    restart: "no"
+    entrypoint: ["bash", "-c"]
+    command:
+      - >
+        ls -1 apps > sites/apps.txt;
+        bench set-config -g db_host $$DB_HOST;
+        bench set-config -gp db_port $$DB_PORT;
+        bench set-config -g redis_cache "redis://$$REDIS_CACHE";
+        bench set-config -g redis_queue "redis://$$REDIS_QUEUE";
+        bench set-config -g redis_socketio "redis://$$REDIS_QUEUE";
+        bench set-config -gp socketio_port $$SOCKETIO_PORT;
+    environment:
+      DB_HOST: db
+      DB_PORT: "3306"
+      REDIS_CACHE: redis-cache:6379
+      REDIS_QUEUE: redis-queue:6379
+      SOCKETIO_PORT: "9000"
+    volumes:
+      - sites:/home/frappe/frappe-bench/sites
+      - logs:/home/frappe/frappe-bench/logs
+    depends_on:
+      db:
+        condition: service_healthy
+      redis-cache:
+        condition: service_started
+      redis-queue:
+        condition: service_started
+
+  create-site:
+    <<: *bench
+    restart: "no"
+    entrypoint: ["bash", "-c"]
+    command:
+      - >
+        set -e;
+        wait-for-it -t 120 db:3306;
+        wait-for-it -t 120 redis-cache:6379;
+        wait-for-it -t 120 redis-queue:6379;
+        if [ -f "sites/$$SITE/site_config.json" ]; then
+        echo "Site $$SITE already exists, skipping creation";
+        else
+        bench new-site "$$SITE"
+        --mariadb-user-host-login-scope='%'
+        --db-root-username=root
+        --db-root-password="$$DB_ROOT_PASSWORD"
+        --admin-password="$$ADMIN_PASSWORD"
+        --install-app payments --install-app kamra
+        --set-default;
+        fi;
+        bench --site "$$SITE" execute kamra.scripts.first_boot.execute;
+        echo "Kamra is ready: open /kamra and sign in as Administrator";
+    environment:
+      SITE: ${KAMRA_SITE:-kamra.localhost}
+      ADMIN_PASSWORD: ${KAMRA_ADMIN_PASSWORD:?set KAMRA_ADMIN_PASSWORD (the Administrator password)}
+      DB_ROOT_PASSWORD: ${KAMRA_DB_PASSWORD:?set KAMRA_DB_PASSWORD (e.g. export KAMRA_DB_PASSWORD=$(openssl rand -hex 16))}
+
+  backend:
+    <<: *bench
+
+  websocket:
+    <<: *bench
+    command: ["node", "/home/frappe/frappe-bench/apps/frappe/socketio.js"]
+
+  queue-short:
+    <<: *bench
+    command: ["bench", "worker", "--queue", "short,default"]
+
+  queue-long:
+    <<: *bench
+    command: ["bench", "worker", "--queue", "long,default,short"]
+
+  scheduler:
+    <<: *bench
+    command: ["bench", "schedule"]
+
+  frontend:
+    <<: *kamra_image
+    restart: unless-stopped
+    command: ["nginx-entrypoint.sh"]
+    environment:
+      BACKEND: backend:8000
+      SOCKETIO: websocket:9000
+      FRAPPE_SITE_NAME_HEADER: ${KAMRA_SITE:-kamra.localhost}
+      UPSTREAM_REAL_IP_ADDRESS: 127.0.0.1
+      UPSTREAM_REAL_IP_HEADER: X-Forwarded-For
+      UPSTREAM_REAL_IP_RECURSIVE: "off"
+      PROXY_READ_TIMEOUT: "120"
+      CLIENT_MAX_BODY_SIZE: 50m
+    volumes:
+      - sites:/home/frappe/frappe-bench/sites
+      - logs:/home/frappe/frappe-bench/logs
+    ports:
+      - "${KAMRA_BIND:-127.0.0.1}:${KAMRA_HTTP_PORT:-8080}:8080"
+    depends_on:
+      - backend
+      - websocket
+
+  db:
+    image: mariadb:11.8
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      start_period: 5s
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --skip-character-set-client-handshake
+    environment:
+      MARIADB_ROOT_PASSWORD: ${KAMRA_DB_PASSWORD:?set KAMRA_DB_PASSWORD (e.g. export KAMRA_DB_PASSWORD=$(openssl rand -hex 16))}
+      MARIADB_AUTO_UPGRADE: "1"
+    volumes:
+      - db-data:/var/lib/mysql
+
+  redis-cache:
+    image: redis:8.6-alpine
+    restart: unless-stopped
+
+  redis-queue:
+    image: redis:8.6-alpine
+    restart: unless-stopped
+    volumes:
+      - redis-queue-data:/data
+
+volumes:
+  db-data:
+  redis-queue-data:
+  sites:
+  logs:
