@@ -305,7 +305,10 @@ export default function CheckOutDialog(props: {
   const reviewProblems = blockersFor("review")
   const credit = ctx?.credit
   const creditBlocked = Boolean(credit?.blocked)
-  const guestSteps = (ctx?.sop.steps ?? []).filter((s) => ["ask_guest", "confirm"].includes(s.step_type))
+  const guestSteps = useMemo(
+    () => (ctx?.sop.steps ?? []).filter((s) => ["ask_guest", "confirm"].includes(s.step_type)),
+    [ctx?.sop.steps],
+  )
   const inHouse = ctx?.reservation.status === "Checked In"
 
   const need: Record<StepKey, boolean> = {
@@ -347,6 +350,36 @@ export default function CheckOutDialog(props: {
 
   const flow = useStepFlow(steps)
   const current = flow.current as StepKey
+
+  // Guest moment: 1–9 toggles each routine item; A ticks all (desk keypad / till).
+  useEffect(() => {
+    if (current !== "guest" || guestSteps.length === 0) return
+    const onKey = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement | null)?.tagName
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || (e.target as HTMLElement)?.isContentEditable)
+        return
+      if (e.metaKey || e.ctrlKey || e.altKey) return
+      const k = e.key.toLowerCase()
+      if (k === "a") {
+        e.preventDefault()
+        setTicked((p) => {
+          const next = { ...p }
+          for (const s of guestSteps) if (s.step_key) next[s.step_key] = true
+          return next
+        })
+        return
+      }
+      const n = Number(e.key)
+      if (n >= 1 && n <= guestSteps.length) {
+        e.preventDefault()
+        const key = guestSteps[n - 1]?.step_key
+        if (!key) return
+        setTicked((p) => ({ ...p, [key]: !p[key] }))
+      }
+    }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [current, guestSteps])
   // a step the desk has moved past counts as done unless it says otherwise
   const headerSteps = useMemo(() => {
     const order = flow.visible.map((s) => s.key)
@@ -934,11 +967,29 @@ export default function CheckOutDialog(props: {
 
           {current === "guest" && (
             <div className="space-y-3">
-              <p className="text-sm text-zinc-600">
-                {t("Your property's check-out routine. Tick each one as you go.")}
-              </p>
-              {guestSteps.map((s) => {
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-sm text-zinc-600">
+                  {t("Your property's check-out routine. Tick each one as you go.")}
+                  <span className="ms-1 text-zinc-400">
+                    {t("Keys {range} · {all} all", {
+                      range: `1–${Math.min(guestSteps.length, 9)}`,
+                      all: "A",
+                    })}
+                  </span>
+                </p>
+                <Button type="button" variant="outline" className="h-8 shrink-0 text-xs"
+                  onClick={() => setTicked((p) => {
+                    const next = { ...p }
+                    for (const s of guestSteps) if (s.step_key) next[s.step_key] = true
+                    return next
+                  })}>
+                  {t("Tick all")}
+                  <kbd className="ms-1.5 rounded border border-zinc-300 bg-zinc-50 px-1 py-0.5 text-[10px] font-semibold text-zinc-500">A</kbd>
+                </Button>
+              </div>
+              {guestSteps.map((s, i) => {
                 const done = ticked[s.step_key] || s.state === "done"
+                const hotkey = i < 9 ? String(i + 1) : null
                 return (
                   <button key={s.step_key || s.title} type="button"
                     onClick={() => setTicked((p) => ({ ...p, [s.step_key]: !p[s.step_key] }))}
@@ -953,7 +1004,15 @@ export default function CheckOutDialog(props: {
                       {done ? <Check className="size-3" aria-hidden /> : null}
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className="block text-sm font-semibold text-zinc-800">{t(s.title)}</span>
+                      <span className="flex items-center gap-2">
+                        <span className="block text-sm font-semibold text-zinc-800">{t(s.title)}</span>
+                        {hotkey && (
+                          <kbd className="rounded border border-zinc-300 bg-white px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-zinc-500"
+                            title={t("Press {key} to tick", { key: hotkey })}>
+                            {hotkey}
+                          </kbd>
+                        )}
+                      </span>
                       <span className="mt-1 block text-sm text-zinc-600">
                         {s.prompt_to_guest ? `"${t(s.prompt_to_guest)}"` : s.tip || t(s.instruction)}
                       </span>
