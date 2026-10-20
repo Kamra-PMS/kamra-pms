@@ -1137,7 +1137,7 @@ export default function POS() {
                   <button type="button" onClick={() => { setPanel("orders"); setMoreOpen(false) }}
                     className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm font-medium text-brand-700 hover:bg-brand-50">
                     <ListOrdered className="size-4" />
-                    {t("See all / history")}
+                    {t("See all orders / history")}
                   </button>
 
                   <div className="my-1 border-t border-zinc-100" />
