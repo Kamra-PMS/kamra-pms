@@ -1227,7 +1227,8 @@ class NightAuditChecklistTestCase(AuditTestCase):
 		row = c["items"][0]
 		self.assertEqual((row["bill_no"], row["outlet"], row["amount"]),
 		                 (order.name, "UT Bar", 300))
-		self.assertEqual(row["state"], "open")
+		# nothing was sent to the kitchen: the captain can cancel it alone
+		self.assertEqual(row["state"], "open, not sent to kitchen")
 		with self.assertRaises(frappe.ValidationError):
 			self.run_manual()
 

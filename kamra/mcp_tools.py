@@ -1407,6 +1407,49 @@ TOOLS: tuple[ToolSpec, ...] = (
 		mutating=True,
 		group="F&B",
 	),
+	_t(
+		"pos_orders",
+		"pos.orders_list",
+		"""Bills at an outlet for a day (default today) or a date range of up
+		to 31 days, newest first, each with its state: open (not sent to the
+		kitchen), sent, paid, room (posted to a room folio), nc, closed or
+		cancelled. Viewing today also lists bills still open from earlier
+		days. q searches bill/KOT number, table, room and customer.""",
+		{
+			"outlet": _p("string"),
+			"date": _p("string", description="YYYY-MM-DD; default today"),
+			"to_date": _p("string", description="YYYY-MM-DD, end of a range"),
+			"q": _p("string"),
+			"state": _p("string", enum=["open", "sent", "paid", "room", "nc",
+			                            "closed", "cancelled"]),
+		},
+		required=("outlet",),
+		group="F&B",
+	),
+	_t(
+		"pos_cancel_order",
+		"pos.cancel_order",
+		"""Cancel an open POS bill that has nothing sent to the kitchen yet,
+		with a reason (kept on the bill and in the activity log; the table is
+		freed). Refused once any item was fired: food the kitchen started is
+		voided by a supervisor at the till, never by an agent. Check with
+		pos_order_detail first (kitchen_lines must be 0).""",
+		{"order": _p("string"), "reason": _p("string")},
+		required=("order", "reason"),
+		mutating=True,
+		group="F&B",
+	),
+	_t(
+		"pos_remove_item",
+		"pos.remove_item",
+		"""Remove one line that has not been sent to the kitchen from an open
+		POS bill (row id from pos_order_detail). Lines the kitchen already has
+		are refused, and so is the last line (cancel the bill instead).""",
+		{"order": _p("string"), "item_row": _p("string")},
+		required=("order", "item_row"),
+		mutating=True,
+		group="F&B",
+	),
 	# ── External POS (third-party till posting to a room) ────────────────
 	_t(
 		"pos_room_lookup",

@@ -19,7 +19,9 @@
   "stock_posted",
   "voided",
   "void_reason",
-  "void_seen"
+  "void_seen",
+  "voided_by",
+  "void_approved_by"
  ],
  "fields": [
   {
@@ -106,13 +108,28 @@
    "fieldtype": "Check",
    "label": "Void Seen",
    "description": "The kitchen has acknowledged a line voided after the KOT fired."
+  },
+  {
+   "fieldname": "voided_by",
+   "fieldtype": "Link",
+   "label": "Voided By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "void_approved_by",
+   "fieldtype": "Link",
+   "label": "Void Approved By",
+   "options": "User",
+   "read_only": 1,
+   "description": "The supervisor who approved voiding a line the kitchen had already started."
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-07-04 21:48:59.793969",
+ "modified": "2026-10-20 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "POS Order Item",

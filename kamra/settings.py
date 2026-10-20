@@ -277,6 +277,10 @@ MODULES: tuple[Module, ...] = (
 				S("pos_print_void_slips", "Print void slips in the kitchen", "check", 1,
 				  hint="A line voided or an order cancelled after its KOT was sent prints a VOID "
 				       "slip on the kitchen printer that had it, so the cook stops."),
+				S("pos_unfired_alert_min", "Flag a bill not sent to the kitchen after", "number", 15,
+				  min=1, max=240, unit="min",
+				  hint="A bill with items that nobody sent to the kitchen turns red on the till "
+				       "after this long, so a forgotten order gets sent or cancelled."),
 			)),
 			Section("tables", "Table reservations", "Which bookings show against a table on the POS floor.", (
 				S("pos_reservation_before_min", "Show a reservation from", "number", 60, min=0, max=480, unit="min before"),
