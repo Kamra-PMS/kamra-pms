@@ -1,7 +1,11 @@
 name: Deploy smoke
 
-# Runs deploy/install.sh end to end (build → site → first boot → update)
-# on a fresh runner whenever the self-host path changes.
+# Runs deploy/install.sh end to end on a fresh runner whenever the
+# self-host path changes, in both modes:
+#   build  — the default; KAMRA_BUILD=1 with the PR's own kamra code baked in
+#   pull   — KAMRA_PULL=1: prebuilt ghcr.io/kamra-pms/kamra, pinned, update
+#            (logs in with GITHUB_TOKEN while the package is private, so
+#            fork PRs can't pull it and this job fails for them)
 on:
   pull_request:
     paths:
@@ -13,13 +17,69 @@ concurrency:
   group: deploy-smoke-${{ github.ref }}
   cancel-in-progress: true
 
-# least privilege: these jobs only read the repo
+# least privilege: read the repo, and pull the image while the package is
+# still private (a no-op once it is public)
 permissions:
   contents: read
+  packages: read
 
 jobs:
+  pull:
+    name: install.sh (pull mode) end to end
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      SITE_NAME: smoke.kamra.test
+      ADMIN_EMAIL: ci@kamra.test
+      ADMIN_PASSWORD: ci-smoke-password-1
+      INSTALL_DIR: /opt/kamra
+      # `latest` exercises the floating-tag -> vX.Y.Z pin (`stable` exists
+      # from the first release after this workflow landed)
+      KAMRA_TAG: latest
+      KAMRA_PULL: "1"
+      # prove the pull path; never silently fall back to a 45-min build
+      KAMRA_PULL_FALLBACK: "0"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to ghcr.io (only matters while the package is private)
+        if: github.event.pull_request.head.repo.full_name == github.repository || github.event_name != 'pull_request'
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | sudo -E docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Install
+        run: sudo -E bash deploy/install.sh
+
+      - name: Pinned to a release
+        run: |
+          cat /opt/kamra/image.env
+          grep -qx 'KAMRA_MODE=pull' /opt/kamra/image.env
+          grep -qE '^KAMRA_PINNED=v[0-9]+\.[0-9]+\.[0-9]+$' /opt/kamra/image.env
+          sudo grep -qE '^CUSTOM_TAG=v[0-9]' /opt/kamra/kamra.env
+
+      - name: Site answers /kamra
+        run: |
+          for _ in $(seq 1 30); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' -H "Host: ${SITE_NAME}" http://127.0.0.1:8080/kamra || true)
+            [ "$code" = 200 ] && exit 0
+            sleep 5
+          done
+          echo "/kamra never returned 200 (last: $code)"; exit 1
+
+      - name: Update (backup, pull, recreate, migrate)
+        run: |
+          sudo -E env -u KAMRA_TAG /opt/kamra/install.sh update
+          sudo docker compose -p kamra exec -T backend bash -c 'ls sites/*/private/backups/ | grep -q files'
+
+      - name: Site still answers after update
+        run: |
+          curl -fsS -o /dev/null -H "Host: ${SITE_NAME}" http://127.0.0.1:8080/kamra
+
+      - name: Logs on failure
+        if: failure()
+        run: sudo docker compose -p kamra logs --tail 200 || true
+
   install:
-    name: install.sh end to end
+    name: install.sh (build mode) end to end
     runs-on: ubuntu-latest
     timeout-minutes: 90
     env:
@@ -27,6 +87,7 @@ jobs:
       ADMIN_EMAIL: ci@kamra.test
       ADMIN_PASSWORD: ci-smoke-password-1
       INSTALL_DIR: /opt/kamra
+      KAMRA_BUILD: "1"
       # Bake the PR's own kamra code into the image
       KAMRA_GIT_URL: https://github.com/${{ github.event.pull_request.head.repo.full_name || github.repository }}
       KAMRA_BRANCH: ${{ github.head_ref || github.ref_name }}
@@ -53,7 +114,7 @@ jobs:
       - name: Re-run install is idempotent (keeps DB password)
         run: sudo -E bash deploy/install.sh
 
-      - name: Update rebuilds and migrates
+      - name: Update backs up, rebuilds and migrates
         run: sudo -E /opt/kamra/install.sh update
 
       - name: Site still answers after update

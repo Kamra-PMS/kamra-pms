@@ -57,6 +57,9 @@ scheduler_events = {
 		# 03:40 - the same for conversations: WhatsApp message text and AI
 		# assistant chats past the property's message retention period
 		"40 3 * * *": ["kamra.privacy.apply_message_retention"],
+		# 03:50 - finished kitchen print jobs (guest names on the ticket)
+		# are kept a week for reprints, then dropped
+		"50 3 * * *": ["kamra.printing.purge_old_jobs"],
 		# 04:45 - drop old kamrapms.com Hosting Enquiry leads (default 24 months;
 		# Won / converted stays; site_config hosting_enquiry_retention_months)
 		"45 4 * * *": ["kamra.hosting_enquiry_retention.purge_expired_hosting_enquiries"],
@@ -241,11 +244,12 @@ _PROPERTY_SCOPED = (
 	"Copilot Conversation", "Credit Note", "Discount Voucher", "Exchange Rate",
 	"Exchange Transaction", "Experience", "External POS Charge", "Folio", "Folio Ledger Entry",
 	"Folio Reprint", "Group Booking", "Housekeeping Task", "Hurdle Rate",
-	"Ingredient", "Ingredient Ledger Entry", "Ingredient Stock",
+	"Ingredient", "Ingredient Ledger Entry", "Ingredient Stock", "Kitchen Printer",
 	"Laundry Order", "Laundry Rate", "Lost And Found Item", "MCP OAuth Grant",
 	"Meal Plan", "Menu Item", "Night Audit Run", "Outbound Webhook",
 	"Outbound Webhook Delivery", "Payment Gateway Settings",
 	"Petty Cash Voucher", "POS Order", "POS Outlet", "POS Table Reservation",
+	"Print Job",
 	"Proforma Folio", "Property Setting", "Rate Guardrail", "Rate Plan",
 	"Reservation",
 	"Revenue Budget", "Room", "Room Block", "Room Type", "Season",

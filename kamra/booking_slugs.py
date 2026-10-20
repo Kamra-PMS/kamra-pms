@@ -109,5 +109,29 @@ def resolve_public_slug(slug: str) -> dict:
 			"location_name": site[0].location_name,
 		}
 
+	# a whole property on a multi-property site: /stay/<property-slug>
+	prop_name = property_for_slug(slug)
+	if prop_name:
+		return {"kind": "property", "property": prop_name,
+		        "property_slug": slug}
+
 	frappe.throw("Listing not found.", frappe.DoesNotExistError)
 	raise  # frappe.throw always raises; CodeQL does not treat it as noreturn
+
+
+def property_for_slug(slug: str) -> str | None:
+	"""The bookable Property whose public slug is *slug* - its page_slug, or
+	the slug of its name when none is set (what catalog_index advertises).
+	Only properties live on the booking engine resolve."""
+	slug = (slug or "").strip().lower()
+	if not slug:
+		return None
+	for p in frappe.get_all(
+		"Property",
+		filters={"booking_engine_enabled": 1, "disabled": 0},
+		fields=["name", "property_name", "page_slug"],
+		order_by="property_name asc",
+	):
+		if (p.page_slug or slugify(p.property_name)).lower() == slug:
+			return p.name
+	return None

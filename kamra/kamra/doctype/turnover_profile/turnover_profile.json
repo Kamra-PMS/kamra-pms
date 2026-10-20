@@ -49,7 +49,8 @@
    "default": "120",
    "fieldname": "clean_duration_minutes",
    "fieldtype": "Int",
-   "label": "Clean Duration (minutes)"
+   "label": "Clean Duration (minutes)",
+   "description": "Recorded on the profile; not used by Kamra yet."
   },
   {
    "default": "30",
@@ -59,7 +60,7 @@
   },
   {
    "default": "0",
-   "description": "Minutes after Ready before the unit is sellable again.",
+   "description": "Recorded on the profile; not used by Kamra yet.",
    "fieldname": "buffer_after_ready_minutes",
    "fieldtype": "Int",
    "label": "Buffer After Ready (minutes)"
@@ -70,13 +71,14 @@
    "label": "Rules"
   },
   {
-   "default": "0",
+   "default": "1",
    "fieldname": "same_day_turn_allowed",
    "fieldtype": "Check",
-   "label": "Same-day Turn Allowed"
+   "label": "Same-day Turn Allowed",
+   "description": "Recorded on the profile; not used by Kamra yet."
   },
   {
-   "default": "1",
+   "default": "0",
    "fieldname": "requires_inspection",
    "fieldtype": "Check",
    "label": "Requires Inspection"
@@ -90,7 +92,7 @@
   }
  ],
  "links": [],
- "modified": "2026-09-28 12:51:22.820746",
+ "modified": "2026-10-19 18:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Turnover Profile",

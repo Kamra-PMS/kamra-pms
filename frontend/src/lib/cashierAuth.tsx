@@ -17,6 +17,8 @@ type PinStatus = {
   must_reset: boolean
   locked: boolean
   unlocked: boolean
+  /** How long an unlock lasts at this property (Settings → Finance). */
+  unlock_minutes?: number
 }
 
 type CashierAuth = {
@@ -140,7 +142,7 @@ export function CashierAuthProvider({ children }: { children: ReactNode }) {
         subtitle={
           padMode === "enroll"
             ? "4–8 digits. Required for money actions at this property."
-            : "Unlocks your till for 15 minutes."
+            : `Unlocks your till for ${status?.unlock_minutes ?? 15} minutes.`
         }
         error={padError}
         busy={busy}

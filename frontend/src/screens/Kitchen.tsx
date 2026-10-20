@@ -12,6 +12,7 @@ import { cn } from "../lib/utils"
 import { cur } from "../lib/money"
 import { useFloorFullscreen } from "../lib/kiosk"
 import { useT } from "../lib/i18n"
+import { usePrintStation, type StationPrinter } from "../lib/printStation"
 
 type LineState = "cooking" | "held" | "cancelled" | "done"
 
@@ -510,6 +511,16 @@ export default function Kitchen() {
       .then(setOutlets).catch(() => {})
   }, [])
 
+  // Print station: this screen prints a kitchen printer's tickets on the
+  // printer attached to this device.
+  const [stationPrinters, setStationPrinters] = useState<StationPrinter[]>([])
+  const printStation = usePrintStation()
+  useEffect(() => {
+    call<StationPrinter[]>("kamra.printing.printers", { property: getCurrentProperty() })
+      .then((ps) => setStationPrinters(ps.filter((p) => p.connection === "Print station" && !p.disabled)))
+      .catch(() => {})
+  }, [])
+
   const load = useCallback(() => {
     call<KotOrder[]>("kamra.pos.kitchen_queue", {
       property: getCurrentProperty(),
@@ -599,6 +610,28 @@ export default function Kitchen() {
             <option value="">{t("All outlets")}</option>
             {outlets.map((o) => <option key={o.name} value={o.name}>{o.outlet_name}</option>)}
           </select>
+          {(stationPrinters.length > 0 || printStation.printer) && (
+            <label className="inline-flex items-center gap-1.5 text-sm"
+              title={printStation.error
+                ? printStation.error
+                : printStation.last
+                  ? t("Last printed {n} ticket(s) at {time}", {
+                    n: printStation.last.count,
+                    time: printStation.last.at.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+                  })
+                  : t("Tickets for this printer print on this device's default printer.")}>
+              <span className={cn("size-2 rounded-full",
+                !printStation.printer ? "bg-zinc-300" : printStation.error ? "bg-rose-500" : "bg-emerald-500")} />
+              <select
+                className="rounded-lg border border-zinc-300 bg-white px-2.5 py-1.5 text-sm"
+                value={printStation.printer} onChange={(e) => printStation.choose(e.target.value)}>
+                <option value="">{t("Don't print here")}</option>
+                {stationPrinters.map((p) => (
+                  <option key={p.name} value={p.name}>{t("Print for {printer}", { printer: p.printer_name })}</option>
+                ))}
+              </select>
+            </label>
+          )}
           <div className="flex flex-wrap rounded-lg border border-zinc-200 bg-white p-0.5 text-sm">
             {["", ...STATIONS].map((s) => (
               <button key={s} onClick={() => setStation(s)}

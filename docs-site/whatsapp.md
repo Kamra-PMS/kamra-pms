@@ -13,8 +13,9 @@ What you get once connected:
   every confirmed booking
 - **Payment requests** from the desk
 - **Guest replies** land in *Operations → WhatsApp* as chat threads,
-  and messages from in-house guests also raise a Service Ticket
-- Housekeeping SLA escalations to managers on WhatsApp
+  and messages from in-house guests also raise a Service Ticket with the
+  **WhatsApp** source badge
+- Housekeeping SLA escalations on WhatsApp: first to Front Desk staff, then to Hotel Admins
 
 ## Step 1 — get a WhatsApp Business number from Meta
 
@@ -53,6 +54,12 @@ minutes, free:
 | Template language code | `en` (or the language your templates are approved in) |
 | Active | ✓ |
 
+![The New Channel form filled in for WhatsApp on Meta Business, with the template names from Step 4](/img/whatsapp/channel-form.png)
+
+The form also asks for the **Meta App Secret** (Meta app → **App
+settings → Basic**). Kamra checks the signature of every incoming
+message with it, so inbound messages need it.
+
 ## Step 3 — point Meta's webhook at Kamra
 
 This is what makes **incoming** guest messages appear.
@@ -66,7 +73,8 @@ This is what makes **incoming** guest messages appear.
 
 From now on, anything a guest writes to your number shows up in
 *Operations → WhatsApp* as a conversation thread, and — if the sender
-matches an in-house guest — raises a Service Ticket on the desk queue.
+matches an in-house guest — raises a Service Ticket on the desk queue,
+marked with the **WhatsApp** badge ([Operations](/operations#where-tickets-come-from)).
 
 ## Step 4 — register your message templates
 
@@ -109,10 +117,15 @@ useful for prototyping template copy before you register it with Meta.
 Nothing else to configure:
 
 - **Automatic**: every new confirmed booking sends the confirmation
-  and, if the template is set, the self check-in link. Housekeeping
-  escalations go to the manager's number.
+  and, if the template is set, the self check-in link. An overdue
+  housekeeping task is sent first to every Front Desk user (the message
+  ends *escalated to the front desk*), then, if it's still open, to every
+  Hotel Admin (*escalated to the hotel admin*).
 - **Conversations**: *Operations → WhatsApp* is the inbox — threads on
-  the left, chat on the right, reply box at the bottom. Replies
+  the left, chat on the right, reply box at the bottom.
+
+  ![The WhatsApp inbox: one guest thread with the booking confirmation and check-in link templates, the guest's question and the desk's reply](/img/whatsapp/inbox.png)
+ Replies
   deliver free-form while the guest's 24-hour session window is open
   (any guest message reopens it); outside the window, WhatsApp only
   accepts templates, and the screen tells you so.

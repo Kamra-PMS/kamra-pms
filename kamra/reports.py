@@ -199,26 +199,71 @@ def _month_bounds(period: str):
 @require_roles("Finance", "Revenue Manager", "Kamra Agent")
 def budget_vs_actual(property: str, period: str | None = None):
 	"""Monthly target vs actual: room revenue, occupancy %, ADR, RevPAR - with
-	variance. period is 'YYYY-MM' (defaults to the current month)."""
-	from frappe.utils import nowdate
+	variance. period is 'YYYY-MM' (defaults to the current month).
+
+	"Actual" is posted money: Room charges on folios, dated inside the month.
+	A room night reaches a folio when End of Day (night audit) posts it, so a
+	stay in-house tonight counts once its night is audited - not before.
+	Occupancy and RevPAR divide by the room nights elapsed so far (to the
+	business date), not the whole month, so a month-to-date figure compares
+	with a monthly occupancy target. `on_books_nights` / `unposted_nights`
+	say how many sold nights in the same window are still waiting for End
+	of Day, so a zero is explained rather than mysterious."""
+	from frappe.utils import date_diff, nowdate
 
 	period = period or nowdate()[:7]
 	start, nxt, days = _month_bounds(period)
 	total_rooms = frappe.db.count("Room", {"property": property}) or 0
-	room_nights = total_rooms * days
+
+	# the nights that have happened: up to the business date (the night
+	# being audited next), else through today
+	business = frappe.db.get_value("Property", property, "business_date") \
+		if frappe.db.has_column("Property", "business_date") else None
+	upto = str(getdate(business)) if business else str(add_days(nowdate(), 1))
+	window_end = min(max(upto, start), nxt)
+	elapsed = date_diff(window_end, start)
+	room_nights = total_rooms * elapsed
 
 	agg = frappe.db.sql(
 		"""
 		SELECT
 		  COUNT(DISTINCT CASE WHEN fc.charge_type='Room'
 		        THEN CONCAT(COALESCE(fc.reservation,f.reservation),'|',fc.posting_date) END) AS rooms_sold,
-		  COALESCE(SUM(CASE WHEN fc.charge_type='Room' THEN fc.amount ELSE 0 END),0) AS room_revenue
+		  COALESCE(SUM(CASE WHEN fc.charge_type='Room' THEN fc.amount ELSE 0 END),0) AS room_revenue,
+		  MAX(CASE WHEN fc.charge_type='Room' THEN fc.posting_date END) AS posted_through
 		FROM `tabFolio Charge` fc JOIN `tabFolio` f ON fc.parent=f.name
 		WHERE f.property=%(p)s AND fc.posting_date>=%(s)s AND fc.posting_date<%(n)s
 		""",
 		{"p": property, "s": start, "n": nxt}, as_dict=True)[0]
 	sold = int(agg.rooms_sold or 0)
 	room_rev = float(agg.room_revenue or 0)
+	# sold nights in the same elapsed window, whether posted yet or not -
+	# and, stay by stay, how many of them End of Day hasn't posted. Per stay,
+	# not house totals: a no-show or cancellation fee posts a Room charge for
+	# a stay that isn't on the books, and must not hide another stay's gap.
+	stays = frappe.db.sql(
+		"""
+		SELECT name, DATEDIFF(LEAST(check_out_date, %(e)s),
+		                      GREATEST(check_in_date, %(s)s)) AS nights
+		FROM `tabReservation`
+		WHERE property=%(p)s
+		  AND status IN ('Confirmed', 'Checked In', 'Checked Out')
+		  AND check_in_date < %(e)s AND check_out_date > %(s)s
+		""",
+		{"p": property, "s": start, "e": window_end}, as_dict=True)
+	on_books = sum(int(r.nights or 0) for r in stays)
+	posted_by_stay = dict(frappe.db.sql(
+		"""
+		SELECT COALESCE(fc.reservation, f.reservation) AS res,
+		       COUNT(DISTINCT fc.posting_date)
+		FROM `tabFolio Charge` fc JOIN `tabFolio` f ON fc.parent=f.name
+		WHERE f.property=%(p)s AND fc.charge_type='Room'
+		  AND fc.posting_date>=%(s)s AND fc.posting_date<%(e)s
+		GROUP BY res
+		""",
+		{"p": property, "s": start, "e": window_end})) if stays else {}
+	unposted = sum(max(0, int(r.nights or 0) - int(posted_by_stay.get(r.name) or 0))
+	               for r in stays)
 
 	actual = {
 		"room_revenue": round(room_rev, 0),
@@ -246,9 +291,14 @@ def budget_vs_actual(property: str, period: str | None = None):
 			"variance": round(a - t, 1),
 			"attainment": round(100 * a / t, 0) if t else None,
 		})
-	return {"period": period, "days_elapsed": min(
-		days, max(0, __import__("frappe").utils.date_diff(nowdate(), start) + 1)),
-		"total_days": days, "rows": rows, "has_budget": bool(b)}
+	return {"period": period, "days_elapsed": elapsed,
+	        "total_days": days, "rows": rows, "has_budget": bool(b),
+	        "basis": "posted",
+	        "posted_nights": sold,
+	        "posted_through": str(agg.posted_through) if agg.posted_through else None,
+	        "on_books_nights": on_books,
+	        "unposted_nights": unposted,
+	        "elapsed_room_nights": room_nights}
 
 
 @frappe.whitelist(methods=["POST"])
@@ -335,8 +385,13 @@ def sla_report(property: str, from_date: str, to_date: str):
 		end = get_datetime(tk.resolved_on) if tk.resolved_on else now
 		return end > get_datetime(tk.due_by)
 
+	# a ticket is resolved when it is Resolved or Closed - one rule for the
+	# headline and every breakdown. A ticket closed without passing through
+	# Resolved has no resolved_on, so it counts as resolved but adds no
+	# time to the averages.
+	done = ("Resolved", "Closed")
 	total = len(tickets)
-	resolved = [t for t in tickets if t.status in ("Resolved", "Closed")]
+	resolved = [t for t in tickets if t.status in done]
 	breached = [t for t in tickets if is_breached(t)]
 	res_mins = [m for m in (resolve_mins(t) for t in resolved) if m is not None]
 
@@ -349,10 +404,11 @@ def sla_report(property: str, from_date: str, to_date: str):
 			row["count"] += 1
 			if is_breached(t):
 				row["breached"] += 1
-			m = resolve_mins(t)
-			if m is not None:
+			if t.status in done:
 				row["resolved"] += 1
-				row["mins"].append(m)
+				m = resolve_mins(t)
+				if m is not None:
+					row["mins"].append(m)
 		out = []
 		for row in g.values():
 			mins = row.pop("mins")

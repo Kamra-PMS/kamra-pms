@@ -69,6 +69,11 @@ RATE_PLAN_PARAM = _p(
 	description="Optional rate plan: id, code ('BAR') or exact name. "
 	"See booking_options.",
 )
+COMPANY_PARAM = _p(
+	"string",
+	description="Optional Corporate Account id (see booking_options). With no "
+	"rate_plan, the company's negotiated rate plan prices the stay.",
+)
 IDEMPOTENCY_KEY_PARAM = _p(
 	"string",
 	description="Optional unique key for this booking (e.g. a UUID). Retrying "
@@ -145,6 +150,7 @@ TOOLS: tuple[ToolSpec, ...] = (
 			"meal_plan": MEAL_PLAN_PARAM,
 			"rate_plan": RATE_PLAN_PARAM,
 			"voucher_code": _p("string"),
+			"company": COMPANY_PARAM,
 		},
 		required=("room_type", "check_in_date", "check_out_date"),
 		property=True,
@@ -176,6 +182,7 @@ TOOLS: tuple[ToolSpec, ...] = (
 			"meal_plan": MEAL_PLAN_PARAM,
 			"rate_plan": RATE_PLAN_PARAM,
 			"voucher_code": _p("string"),
+			"company": COMPANY_PARAM,
 			"idempotency_key": IDEMPOTENCY_KEY_PARAM,
 		},
 		required=("guest_name", "room_type", "check_in_date", "check_out_date"),
@@ -958,7 +965,9 @@ TOOLS: tuple[ToolSpec, ...] = (
 		"banquet.create_enquiry",
 		"""Open a function sheet from an enquiry. The hall's rack rental goes on
 		as the first line and a follow-up is diarised, so the enquiry can't go
-		quiet. Check banquet_availability first.""",
+		quiet. Halls sell by session: pass session (Morning / Afternoon /
+		Evening / Full Day) and the hours follow it, or session "Custom Hours"
+		with start_time and end_time. Check banquet_availability first.""",
 		{
 			"venue": _p("string"),
 			"event_date": _p("string"),
@@ -969,6 +978,7 @@ TOOLS: tuple[ToolSpec, ...] = (
 			"customer_email": _p("string"),
 			"company": _p("string"),
 			"end_date": _p("string"),
+			"session": _p("string"),
 			"start_time": _p("string"),
 			"end_time": _p("string"),
 			"source": _p("string"),
@@ -1075,15 +1085,30 @@ TOOLS: tuple[ToolSpec, ...] = (
 	_t(
 		"banquet_status",
 		"banquet.set_status",
-		"""Move a function along: Enquiry → Tentative → Confirmed → Completed, or
-		out as Cancelled / Lost. Cancelling or losing needs a reason. Confirming
-		takes the hall and will refuse a clash with another confirmed function.""",
+		"""Move a function along: Enquiry → Tentative → Confirmed, or out as
+		Cancelled / Lost. Cancelling or losing needs a reason. Confirming takes
+		the hall and will refuse a clash with another confirmed function. A
+		confirmed function is completed with banquet_close_out, not here.""",
 		{
 			"function": _p("string"),
 			"status": _p("string"),
 			"reason": _p("string"),
 		},
 		required=("function", "status"),
+		mutating=True,
+		group="Banquets",
+	),
+	_t(
+		"banquet_link_group",
+		"banquet.link_group",
+		"""Tie a function to a group booking at the same property so its bill
+		rides the group's master folio when it is posted to the bill, or untie
+		it by leaving group_booking empty. Refused once the function is billed.""",
+		{
+			"function": _p("string"),
+			"group_booking": _p("string"),
+		},
+		required=("function",),
 		mutating=True,
 		group="Banquets",
 	),

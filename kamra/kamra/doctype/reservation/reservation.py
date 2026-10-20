@@ -253,10 +253,24 @@ class Reservation(Document):
 		self.validate_occupancy()
 		self.validate_room_belongs_to_type()
 		self.validate_no_overlap()
+		self.validate_room_vacant()
 		self.validate_villa_lockout()
 		self.validate_type_capacity()
 		self.validate_cancellation_path()
+		self.apply_negotiated_rate_plan()
 		self.apply_pricing()
+
+	def apply_negotiated_rate_plan(self):
+		"""A new booking for a company with no rate plan of its own takes
+		the plan the company negotiated. Stored on the booking, so the quote,
+		the locked night rates and every folio night agree on it. Only new
+		bookings: a confirmed stay is never re-priced by a contract change."""
+		if not self.is_new() or self.rate_plan or not self.get("company"):
+			return
+		from kamra.pricing import negotiated_rate_plan
+		plan = negotiated_rate_plan(self.property, self.company)
+		if plan:
+			self.rate_plan = plan
 
 	def validate_minimum_nights(self):
 		"""Property.minimum_nights is a hard floor for overnight stays."""
@@ -626,6 +640,49 @@ class Reservation(Document):
 					self.room, conflict[0][0]
 				),
 				title=_("Double booking blocked"),
+				exc=InventoryRefused,
+			)
+
+	def validate_room_vacant(self):
+		"""One guest in a room at a time. The night-based overlap guard lets a
+		new stay start on another stay's departure date - right for bookings,
+		since the departing guest will be gone by then - but a guest still
+		Checked In has not gone. Checking in (or moving in-house) to a room
+		whose occupant has not checked out yet is refused until they do."""
+		if self.status != "Checked In" or not self.room:
+			return
+		before = self.get_doc_before_save()
+		if before and before.status == "Checked In" and before.room == self.room:
+			return  # already in this room; an unrelated edit
+		# the occupant holds the room until they check out: their stay runs
+		# to their departure date or, while they are still in, to tomorrow
+		occupant = frappe.db.sql(
+			"""
+			SELECT name, guest_name FROM `tabReservation`
+			WHERE room = %(room)s AND name != %(name)s
+			  AND status = 'Checked In'
+			  AND check_in_date < GREATEST(%(check_out)s,
+			                               DATE_ADD(%(check_in)s, INTERVAL 1 DAY))
+			  AND GREATEST(check_out_date,
+			               DATE_ADD(check_in_date, INTERVAL 1 DAY),
+			               DATE_ADD(%(today)s, INTERVAL 1 DAY)) > %(check_in)s
+			LIMIT 1
+			FOR UPDATE
+			""",
+			{"room": self.room, "name": self.name or "new",
+			 "check_in": self.check_in_date, "check_out": self.check_out_date,
+			 "today": today()},
+			as_dict=True,
+		)
+		if occupant:
+			room_no = frappe.db.get_value("Room", self.room, "room_number") \
+				or self.room
+			frappe.throw(
+				_("Room {0} is still occupied by {1} ({2}). Check them out "
+				  "first, or choose another room.").format(
+					room_no, occupant[0].guest_name or occupant[0].name,
+					occupant[0].name),
+				title=_("Room still occupied"),
 				exc=InventoryRefused,
 			)
 

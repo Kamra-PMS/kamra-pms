@@ -15,8 +15,9 @@ Claude  →  HTTPS /mcp (OAuth as you)  →  Kamra tools  →  pricing engine,
 ```
 
 The model never invents a rate or skips a cancellation fee. It calls a
-tool; the tool refuses if the number is wrong or the role is short. The
-in-app copilot (bring-your-own key) uses the same APIs.
+tool; the tool refuses if the number is wrong or the role is short.
+**Kamra Agent**, the in-app assistant (bring-your-own key), uses the same
+APIs.
 
 Staff connect **as themselves**. A front-desk session can quote, book and
 check in; it cannot change rates or run finance. Unattended jobs
@@ -63,7 +64,7 @@ Remote MCP requests come from Anthropic's egress range
 on the MCP host or Claude will OAuth successfully and then fail to call
 tools.
 
-## 2. The in-app copilot (bring your own key)
+## 2. Kamra Agent, the in-app assistant (bring your own key)
 
 An optional chat assistant for staff, inside the console.
 
@@ -126,7 +127,7 @@ the window, closing a folio) in the chat before the tool runs.
 - Check **Activity** in Kamra — every MCP call is a row with your name.
 - Rotate access with **Disconnect** on the Connect panel, not by
   rotating a Frappe API key.
-- The in-app copilot is still there for a desk terminal that should not
+- **Kamra Agent** is still there for a desk terminal that should not
   leave the browser.
 
 Named always-on jobs (a night auditor that runs at 3am, an owner brief

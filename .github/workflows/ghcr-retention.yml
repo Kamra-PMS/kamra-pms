@@ -1,0 +1,81 @@
+name: GHCR retention
+
+# Weekly prune of ghcr.io/kamra-pms/kamra. Keeps `latest`, `stable`,
+# `nightly`, the 3 newest vX.Y.Z release tags AND every child manifest they
+# reference (each tag is an OCI index -> amd64 image + attestation, which
+# GitHub lists as separate untagged versions). Deletes everything else.
+# Logic + safety checks: .github/scripts/ghcr_retention.py.
+#
+#   schedule           -> real run (deletes)
+#   workflow_dispatch  -> dry run unless `dry_run` is unticked
+#   pull_request       -> unit tests only, never touches the registry
+#
+# Token: GITHUB_TOKEN with `packages: write` can delete versions of this
+# org-owned package because it is linked to this repo and the repo holds the
+# Admin role in the package's "Manage Actions access" (the publishing repo
+# gets it). If deletes come back 403, grant that role there, or add a
+# GHCR_RETENTION_TOKEN secret (classic PAT: read:packages + delete:packages)
+# — it is used in preference to GITHUB_TOKEN when present.
+
+on:
+  schedule:
+    - cron: "17 4 * * 1" # Mondays 04:17 UTC
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run (print the plan, delete nothing)"
+        type: boolean
+        default: true
+      keep_releases:
+        description: "How many vX.Y.Z release tags to keep"
+        type: string
+        default: "3"
+  pull_request:
+    paths:
+      - ".github/scripts/ghcr_retention.py"
+      - ".github/scripts/test_ghcr_retention.py"
+      - ".github/workflows/ghcr-retention.yml"
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: ghcr-retention
+  cancel-in-progress: false
+
+jobs:
+  test:
+    name: Retention planner tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m unittest discover -s .github/scripts -p 'test_*.py' -v
+
+  prune:
+    name: Prune ghcr.io/kamra-pms/kamra
+    needs: test
+    if: github.event_name != 'pull_request' && github.repository == 'Kamra-PMS/kamra-pms'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Plan (and apply on schedule / unticked dry run)
+        env:
+          GH_TOKEN: ${{ secrets.GHCR_RETENTION_TOKEN || github.token }}
+          REGISTRY_USER: ${{ github.actor }}
+          APPLY: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.dry_run == false) }}
+          KEEP_RELEASES: ${{ inputs.keep_releases || '3' }}
+        run: |
+          args=(--org Kamra-PMS --package kamra --keep-releases "$KEEP_RELEASES")
+          if [ "$APPLY" = "true" ]; then
+            args+=(--apply)
+          fi
+          python .github/scripts/ghcr_retention.py "${args[@]}"

@@ -380,7 +380,14 @@ function TrialBalance({ p }: { p: Pack }) {
           ledger: t("Total"),
           debit: money(tb.total_debit),
           credit: money(tb.total_credit),
-          balance: tb.in_balance ? t("In balance") : t("Out of balance"),
+          // a pack carries the folio reconciliation from this release on;
+          // an older pack's in_balance compared debits with credits, which
+          // never match while guests owe money - show the net instead
+          balance: tb.reconciliation
+            ? tb.in_balance
+              ? t("Agrees with folios")
+              : t("Differs from folios by {amount}", { amount: money(tb.reconciliation.difference) })
+            : money(Number(tb.total_debit ?? 0) - Number(tb.total_credit ?? 0)),
         }}
       />
       <Sub>{t("Revenue by transaction code")}</Sub>

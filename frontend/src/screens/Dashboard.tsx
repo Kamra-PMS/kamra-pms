@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react"
 import { useRealtime } from "../lib/realtime"
 import {
-  BedDouble, LogIn, Users, IndianRupee, Wallet, Building2, Brush, Receipt,
+  BedDouble, LogIn, Users, Banknote, Wallet, Building2, Brush, Receipt,
   PieChart, TrendingUp, BarChart3,
 } from "lucide-react"
 import { call, getCurrentProperty } from "../lib/api"
@@ -163,7 +163,7 @@ export default function Dashboard() {
               sub={t("month to date")} />
             <Tile icon={BarChart3} label={t("RevPAR")} value={`${cur()}${inr(prop.statistics.revpar)}`}
               sub={t("month to date")} />
-            <Tile icon={IndianRupee} label={t("Revenue")} value={`${cur()}${inr(prop.revenue_today)}`}
+            <Tile icon={Banknote} label={t("Revenue")} value={`${cur()}${inr(prop.revenue_today)}`}
               sub={t("today")} />
             <Tile icon={Wallet} label={t("Collections")} value={`${cur()}${inr(prop.collections_today)}`}
               sub={t("today")} />
@@ -223,7 +223,7 @@ export default function Dashboard() {
             <Tile icon={BedDouble} label={t("Occupancy")} value={`${port.totals.occupancy_pct}%`} tone="text-brand-600" />
             <Tile icon={LogIn} label={t("Arrivals")} value={String(port.totals.arrivals)} />
             <Tile icon={Users} label={t("In house")} value={String(port.totals.in_house)} />
-            <Tile icon={IndianRupee} label={t("Revenue")} value={`${cur()}${inr(port.totals.revenue_today)}`} sub={t("today")} />
+            <Tile icon={Banknote} label={t("Revenue")} value={`${cur()}${inr(port.totals.revenue_today)}`} sub={t("today")} />
             <Tile icon={Wallet} label={t("Collections")} value={`${cur()}${inr(port.totals.collections_today)}`} sub={t("today")} />
           </div>
 

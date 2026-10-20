@@ -91,7 +91,15 @@ def require_open_session(property: str) -> str | None:
 	return sess
 
 
-def _recompute_session_totals(session: str) -> dict[str, float]:
+_TOTAL_FIELDS = ("system_cash", "system_card", "system_upi", "system_other",
+                 "paid_outs", "drops", "petty_cash", "expected_cash")
+
+
+def _recompute_session_totals(session: str, persist: bool = True) -> dict[str, float]:
+	"""Re-add the session's transactions into its stored totals. The row is
+	written only when a total actually moved: a screen that merely reads the
+	till (current_session, on every load) must not write, or two loads at
+	once race on the same row (MariaDB 1020 "Record has changed")."""
 	rows = frappe.db.sql(
 		"""
 		SELECT kind, mode, COALESCE(SUM(amount), 0) AS total
@@ -135,15 +143,12 @@ def _recompute_session_totals(session: str) -> dict[str, float]:
 	sess = frappe.get_doc("Cashier Session", session)
 	opening = float(sess.opening_float or 0)
 	expected = opening + cash - paid_outs - drops - petty
-	sess.system_cash = cash
-	sess.system_card = card
-	sess.system_upi = upi
-	sess.system_other = other
-	sess.paid_outs = paid_outs
-	sess.drops = drops
-	sess.petty_cash = petty
-	sess.expected_cash = expected
-	sess.save(ignore_permissions=True)
+	fresh = dict(zip(_TOTAL_FIELDS, (cash, card, upi, other, paid_outs, drops,
+	                                 petty, expected)))
+	if persist and any(abs(float(sess.get(k) or 0) - v) > 0.004
+	                   for k, v in fresh.items()):
+		sess.update(fresh)
+		sess.save(ignore_permissions=True)
 	return {
 		"cash": cash, "card": card, "upi": upi, "other": other,
 		"paid_outs": paid_outs, "drops": drops, "petty_cash": petty,
@@ -195,9 +200,9 @@ def record_cashier_txn(
 	return sess
 
 
-def session_as_dict(name: str) -> dict[str, Any]:
+def session_as_dict(name: str, persist: bool = True) -> dict[str, Any]:
+	totals = _recompute_session_totals(name, persist=persist)
 	doc = frappe.get_doc("Cashier Session", name)
-	totals = _recompute_session_totals(name)
 	txns = frappe.get_all(
 		"Cashier Transaction",
 		filters={"session": name},
@@ -211,6 +216,18 @@ def session_as_dict(name: str) -> dict[str, Any]:
 	d["transactions"] = txns
 	d["cashier_id"] = frappe.db.get_value("Cashier", doc.cashier, "cashier_id")
 	return d
+
+
+def _session_view(name: str) -> dict[str, Any]:
+	"""session_as_dict for a read-only endpoint. Should a concurrent request
+	refresh the same session's totals first (MariaDB snapshot isolation
+	raises 1020 on the second write), nothing of ours was written yet: start
+	a fresh transaction and answer from it without writing."""
+	try:
+		return session_as_dict(name)
+	except frappe.QueryDeadlockError:
+		frappe.db.rollback()
+		return session_as_dict(name, persist=False)
 
 
 @frappe.whitelist()
@@ -268,7 +285,7 @@ def current_session(property: str):
 			"business_date": get_business_date(property),
 			"cashier": _cashier_for_user(property),
 		}
-	return {"open": True, **session_as_dict(name)}
+	return {"open": True, **_session_view(name)}
 
 
 @frappe.whitelist(methods=["POST"])
@@ -444,7 +461,7 @@ def list_sessions(property: str, business_date: str | None = None,
 @frappe.whitelist()
 @require_roles("Front Desk", "Finance", "Hotel Admin", "Night Auditor", "Kamra Agent")
 def session_report(session: str):
-	return session_as_dict(session)
+	return _session_view(session)
 
 
 @frappe.whitelist()

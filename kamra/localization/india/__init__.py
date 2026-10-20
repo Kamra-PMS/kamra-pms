@@ -12,6 +12,7 @@ from decimal import Decimal
 import frappe
 
 FNB_GST = 5.0  # F&B / meal-plan GST rate
+SERVICES_GST = 18.0  # laundry and other guest services
 
 DEFAULT_CURRENCY = "INR"
 DEFAULT_TIMEZONE = "Asia/Kolkata"
@@ -45,6 +46,10 @@ def calculate_room_tax(property, room_type_doc, nightly_rate) -> Decimal:
 
 def fnb_tax_rate(property) -> float:
 	return FNB_GST
+
+
+def services_tax_rate(property) -> float:
+	return SERVICES_GST
 
 
 def tax_rate_options(property) -> list:

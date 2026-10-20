@@ -1,8 +1,9 @@
 """Housekeeping SLA escalation and completion alerts.
 
 Every open task carries a due_by (set from its priority). This module runs
-on a schedule: once a task is past due it escalates - first to the shift
-supervisor, then, if it stays open, to the manager - and notifies over the
+on a schedule: once a task is past due it escalates - first to the front
+desk (the duty desk that is staffed around the clock), then, once it is a
+full SLA late, to the property's Hotel Admins - and notifies over the
 property's connected WhatsApp channel (falling back to the activity log when
 no channel is wired). Completing a checkout clean for a room with an arrival
 today pings the front desk that the room is ready.
@@ -13,8 +14,10 @@ from frappe.utils import get_datetime, now_datetime, time_diff_in_seconds
 
 from kamra.kamra.doctype.housekeeping_task.housekeeping_task import sla_minutes
 
-# escalation_level -> the role we notify at that level
+# escalation_level -> the role we notify at that level, and how the alert
+# names them (the text must say who was actually told)
 _ESCALATION_ROLE = {1: "Front Desk", 2: "Hotel Admin"}
+_ESCALATION_WHO = {1: "the front desk", 2: "the hotel admin"}
 
 
 def escalate_overdue_tasks():
@@ -41,10 +44,10 @@ def _escalate(task, level, overdue_min):
 		"Housekeeping Task", task.name,
 		{"escalation_level": level, "breached": 1}, update_modified=False)
 	room = (task.room or "").split("-")[-1]
-	who = "supervisor" if level == 1 else "manager"
+	who = _ESCALATION_WHO.get(level, "the hotel admin")
 	body = (f"Housekeeping overdue: {task.task_type} in room {room} "
 	        f"({task.priority}) is {int(overdue_min)} min past due - "
-	        f"escalated to the {who}.")
+	        f"escalated to {who}.")
 	_notify_role(task.property, _ESCALATION_ROLE.get(level, "Hotel Admin"), body)
 	from kamra.savings import log_action
 	log_action("hk_escalation", "Housekeeping Task", task.name, task.property,

@@ -315,6 +315,7 @@ def _handle_inbound(value: dict) -> None:
 				"category": "Front Desk",
 				"priority": "Medium",
 				"reservation": reservation,
+				"source": "WhatsApp",
 			}).insert(ignore_permissions=True)
 
 

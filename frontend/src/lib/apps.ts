@@ -33,6 +33,7 @@ import {
   Plus,
   Receipt,
   ScrollText,
+  FileX2,
   Settings as SettingsIcon,
   Shirt,
   Smartphone,
@@ -40,6 +41,7 @@ import {
   Store,
   Tags,
   Ticket,
+  Compass,
   TrendingUp,
   UserCog,
   Users,
@@ -222,6 +224,9 @@ export const APPS: AppDef[] = [
       { to: "/guardrails", label: "Guardrails", icon: ShieldCheck },
       { to: "/vouchers", label: "Vouchers", icon: BadgePercent },
       { to: "/meal-plans", label: "Meal Plans", icon: UtensilsCrossed },
+      { to: "/experiences", label: "Experiences", icon: Compass },
+      // also in Admin: Room Types hold the base rates revenue works from
+      { to: "/room-types", label: "Room Types", icon: LayoutGrid },
       { to: "/travel-agents", label: "Travel Agents", icon: Briefcase },
       { to: "/companies", label: "Companies", icon: Building2 },
       { to: "/settings/revenue", label: "Settings", icon: SettingsIcon,
@@ -255,6 +260,8 @@ export const APPS: AppDef[] = [
       // Books
       { to: "/ledgers", label: "Ledgers", icon: BookOpen, group: "Books" },
       { to: "/reports", label: "Reports", icon: ChartLine, group: "Books" },
+      { to: "/voids-allowances", label: "Voids & Allowances", icon: FileX2, group: "Books",
+        roles: ["Finance", "Hotel Admin", "System Manager", "Administrator"] },
       { to: "/accounting-export", label: "Accounting Export", icon: FileSpreadsheet, group: "Books" },
       { to: "/settings/finance", label: "Settings", icon: SettingsIcon, group: "Books",
         roles: ["Finance", "Hotel Admin", "System Manager", "Administrator"] },
@@ -325,10 +332,13 @@ export const APPS: AppDef[] = [
   },
 ]
 
-/** Which app owns a path? Longest matching item route wins; "/" only exact. */
-export function appForPath(pathname: string): AppDef {
+/** Which app owns a path? Longest matching item route wins; "/" only exact.
+ *  A page listed in two apps (End of Day, Laundry, Room Types) belongs to
+ *  the first one *among* the apps given - pass the user's visible apps so
+ *  the page opens inside an app they can actually see. */
+export function appForPath(pathname: string, among: AppDef[] = APPS): AppDef {
   let best: { app: AppDef; len: number } | null = null
-  for (const app of APPS) {
+  for (const app of among.length ? among : APPS) {
     const prefixes = [
       ...app.items.filter((i) => i.to).map((i) => i.to!),
       ...(app.extraPrefixes ?? []),

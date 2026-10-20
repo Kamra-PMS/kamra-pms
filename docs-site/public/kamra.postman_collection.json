@@ -895,7 +895,7 @@
         "kamra.api.hk_update_task"
        ]
       },
-      "description": "Start or complete a housekeeping task from the phone.",
+      "description": "Start or complete a housekeeping task from the phone.\n\nAn Inspection is completed by passing it: Done on an inspection is taken\nas Verified, which moves the room to Ready (inspection required by the\nturnover profile) or Inspected - never back to plain Clean. Verifying -\nan inspection or anyone's clean - is a supervisor's call, the same rule\nset_housekeeping_status applies to Inspected / Ready.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"task\": \"<task>\",\n  \"status\": \"<status>\"\n}",
@@ -1056,6 +1056,43 @@
      }
     },
     {
+     "name": "hk_staff",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.hk_staff",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.hk_staff"
+       ]
+      },
+      "description": "Who a supervisor can hand a housekeeping task to at this property.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
      "name": "hk_assign_task",
      "request": {
       "method": "POST",
@@ -1080,7 +1117,7 @@
         "kamra.api.hk_assign_task"
        ]
       },
-      "description": "A supervisor hands a task to a specific housekeeper (awaits accept).",
+      "description": "A supervisor hands a task to a specific housekeeper (awaits accept).\nAttendants take work from the pool with hk_claim_task; handing a task to\nsomeone else is the supervisor's (or desk's) call, and only to a\nhousekeeper who can work this property.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"task\": \"<task>\",\n  \"user\": \"<user>\"\n}",
@@ -2740,6 +2777,117 @@
      }
     },
     {
+     "name": "stay_instructions",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.stay_instructions",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.stay_instructions"
+       ]
+      },
+      "description": "The special instructions on a stay (a VIP amenity, a 6am wake-up, a\nno-feather pillow) - each for one department, Open until someone marks\nit Done.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"reservation\": \"RES-2026-00001\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "add_stay_instruction",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.add_stay_instruction",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.add_stay_instruction"
+       ]
+      },
+      "description": "Add an instruction to a stay for one department. Written as its own\nchild row so it never re-saves (and re-validates) the whole booking.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"department\": \"<department>\",\n  \"instruction\": \"<instruction>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "set_stay_instruction_status",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.set_stay_instruction_status",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.set_stay_instruction_status"
+       ]
+      },
+      "description": "Mark one instruction Done (stamping who and when), or reopen it.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"row\": \"<row>\",\n  \"status\": \"<status>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
      "name": "reservation_detail",
      "request": {
       "method": "POST",
@@ -3541,7 +3689,7 @@
         "kamra.api.hurdle_rates"
        ]
       },
-      "description": "The demand tiers: at each occupancy threshold, the premium applied\nand the minimum sell rate enforced.",
+      "description": "The demand tiers: at each occupancy threshold, the premium applied\nand the minimum sell rate enforced. A row with a room type applies to\nthat type only and beats the property-wide row at the same threshold.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\"\n}",
@@ -3985,7 +4133,7 @@
         "kamra.api.get_quote"
        ]
       },
-      "description": "",
+      "description": "Price a stay. With a company and no rate plan, the company's\nnegotiated plan applies - the same plan create_booking stores.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\",\n  \"room_type\": \"Your Property-DLX\",\n  \"check_in_date\": \"2026-08-01\",\n  \"check_out_date\": \"2026-08-03\",\n  \"adults\": 2,\n  \"children\": 0,\n  \"over_capacity_charge\": 0,\n  \"pets\": 0\n}",
@@ -4244,10 +4392,10 @@
         "kamra.api.available_rooms"
        ]
       },
-      "description": "Rooms of a type with no overlapping live reservation - the same\nlogic the double-booking guard enforces, exposed as a query. Confirmed\ngroup blocks hold their unsold rooms out of general sale; pass the\ngroup to book against its own block.",
+      "description": "Rooms of a type with no overlapping live reservation - the same\nlogic the double-booking guard enforces, exposed as a query. Confirmed\ngroup blocks hold their unsold rooms out of general sale; pass the\ngroup to book against its own block.\n\nA stay may start on another's departure date, so a room whose guest\ndeparts today is \"free\" for a booking. Pass ready_now=1 when the guest\nis being put in the room now (check-in, walk-in, allocation for today):\na room whose occupant is still Checked In is then left out until they\ncheck out - the same rule Reservation.validate_room_vacant enforces.",
       "body": {
        "mode": "raw",
-       "raw": "{\n  \"property\": \"Your Property\",\n  \"room_type\": \"Your Property-DLX\",\n  \"check_in_date\": \"2026-08-01\",\n  \"check_out_date\": \"2026-08-03\"\n}",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"room_type\": \"Your Property-DLX\",\n  \"check_in_date\": \"2026-08-01\",\n  \"check_out_date\": \"2026-08-03\",\n  \"ready_now\": 0\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -6332,6 +6480,307 @@
    ]
   },
   {
+   "name": "Kitchen printers (routing, print stations, print queue)",
+   "item": [
+    {
+     "name": "claim_jobs",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.printing.claim_jobs",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.printing.claim_jobs"
+       ]
+      },
+      "description": "A print station asks for its printer's work. Hands over every queued\njob (and any claimed one nobody confirmed within a minute) and marks\nthem Printing. The station prints them and calls ack_jobs.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"printer\": \"<printer>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "ack_jobs",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.printing.ack_jobs",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.printing.ack_jobs"
+       ]
+      },
+      "description": "The station's answer. Printed jobs are done; failed ones move to the\nprinter's fallback, or stay Failed for a reprint.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"printer\": \"<printer>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "printers",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.printing.printers",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.printing.printers"
+       ]
+      },
+      "description": "Every printer with its routes and whether it's online - for the\nsettings card and for a kitchen screen choosing what to print for.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "save_printer",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.printing.save_printer",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.printing.save_printer"
+       ]
+      },
+      "description": "Add or change a printer and its routes. Logged to the Activity log.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"printer\": \"<printer>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "delete_printer",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.printing.delete_printer",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.printing.delete_printer"
+       ]
+      },
+      "description": "",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"name\": \"<name>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "test_print",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.printing.test_print",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.printing.test_print"
+       ]
+      },
+      "description": "Queue a test page on one printer.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"name\": \"<name>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "reprint",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.printing.reprint",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.printing.reprint"
+       ]
+      },
+      "description": "Print a job again - on its own printer or another one.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"job\": \"<job>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "order_print_status",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.printing.order_print_status",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.printing.order_print_status"
+       ]
+      },
+      "description": "Where an order's tickets went and whether they printed - for the till.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"order\": \"ORD-2026-00001\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
    "name": "Laundry (housekeeping)",
    "item": [
     {
@@ -6993,7 +7442,7 @@
         "kamra.banquet.create_enquiry"
        ]
       },
-      "description": "Open a function sheet from an enquiry. The hall's rack rental goes on\nas the first line (that's the number the conversation starts from), and\na follow-up lands in the diary so the enquiry doesn't go quiet.",
+      "description": "Open a function sheet from an enquiry. The hall's rack rental goes on\nas the first line (that's the number the conversation starts from), and\na follow-up lands in the diary so the enquiry doesn't go quiet.\n\nsession is how the hall is sold (Morning / Afternoon / Evening / Full\nDay): a named session sets the clock itself, so times sent alongside it\nare ignored. Custom Hours, or no session with times, keeps the times.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\",\n  \"venue\": \"Your Property-Grand Ballroom\",\n  \"event_date\": \"2026-12-12\",\n  \"customer_name\": \"A. Customer\",\n  \"event_type\": \"Wedding\",\n  \"attendees\": 0,\n  \"end_date\": \"2026-08-31\",\n  \"source\": \"Phone\",\n  \"with_venue_line\": 1\n}",
@@ -7071,6 +7520,80 @@
       "body": {
        "mode": "raw",
        "raw": "{\n  \"function\": \"EVT-2026-0001\",\n  \"fields\": \"<fields>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "linkable_groups",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.banquet.linkable_groups",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.banquet.linkable_groups"
+       ]
+      },
+      "description": "Group bookings this function could ride: same property, not\ncancelled, staying within a month either side of the event.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"function\": \"EVT-2026-0001\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "link_group",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.banquet.link_group",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.banquet.link_group"
+       ]
+      },
+      "description": "Tie a function to a group booking so its bill can ride the group's\nmaster folio (post_to_folio), or untie it (group_booking empty).",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"function\": \"EVT-2026-0001\"\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -7848,6 +8371,43 @@
       "body": {
        "mode": "raw",
        "raw": "{\n  \"function\": \"EVT-2026-0001\",\n  \"damage_amount\": 0,\n  \"refund_deposit\": 1,\n  \"refund_mode\": \"Bank Transfer\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "reopen_function",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.banquet.reopen_function",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.banquet.reopen_function"
+       ]
+      },
+      "description": "Reopen a closed (Completed) function so its sheet can be corrected.\nIt goes back to Confirmed; receipts, refunds and the damage line stay\nas they were, and closing it again re-counts covers only. Needs a\nreason, and lands on the activity log.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"function\": \"EVT-2026-0001\",\n  \"reason\": \"<reason>\"\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -9835,7 +10395,7 @@
         "kamra.reports.budget_vs_actual"
        ]
       },
-      "description": "Monthly target vs actual: room revenue, occupancy %, ADR, RevPAR - with\nvariance. period is 'YYYY-MM' (defaults to the current month).",
+      "description": "Monthly target vs actual: room revenue, occupancy %, ADR, RevPAR - with\nvariance. period is 'YYYY-MM' (defaults to the current month).\n\n\"Actual\" is posted money: Room charges on folios, dated inside the month.\nA room night reaches a folio when End of Day (night audit) posts it, so a\nstay in-house tonight counts once its night is audited - not before.\nOccupancy and RevPAR divide by the room nights elapsed so far (to the\nbusiness date), not the whole month, so a month-to-date figure compares\nwith a monthly occupancy target. `on_books_nights` / `unposted_nights`\nsay how many sold nights in the same window are still waiting for End\nof Day, so a zero is explained rather than mysterious.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\"\n}",
@@ -11977,7 +12537,7 @@
         "kamra.public_api.catalog_index"
        ]
       },
-      "description": "Entry point for /book \u2014 how many properties, sites, or listings to show."
+      "description": "Entry point for /book \u2014 how many properties, sites, or listings to show.\n\nSeveral properties live: mode \"properties\" lists them, and the guest\npicks one - /book?property=<slug> (or /stay/<slug>) calls back with\nthat property's slug and gets its own sites / listings / catalog."
      }
     },
     {

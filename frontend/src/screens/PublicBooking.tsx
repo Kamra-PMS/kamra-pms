@@ -164,6 +164,119 @@ function setMetaTag(name: string, content: string) {
   el.content = content
 }
 
+interface PropertyCard {
+  name: string
+  property_name: string
+  property_slug: string
+  city: string | null
+  state: string | null
+  hero_image: string | null
+  logo_url: string | null
+  property_kind: string | null
+  description: string | null
+  from_rate: number
+}
+
+/** /book on a site with several properties: pick one, then book it. Each
+ *  card opens that property's own page with the stay already filled in. */
+function PropertyChooser({
+  properties,
+  stayPath,
+  query,
+}: {
+  properties: PropertyCard[]
+  stayPath: string
+  query: string
+}) {
+  useEffect(() => {
+    document.title = "Places to stay - book direct"
+  }, [])
+  const linkFor = (slug: string) => {
+    const qs = new URLSearchParams(query)
+    qs.set("property", slug)
+    return `/book${stayPath}?${qs}`
+  }
+  return (
+    <div className="min-h-screen bg-zinc-50">
+      <div className="mx-auto max-w-5xl px-5 py-10 sm:py-14">
+        <h1 className="text-3xl font-semibold tracking-tight text-zinc-900">
+          Places to stay
+        </h1>
+        <p className="mt-1.5 text-sm text-zinc-500">
+          Pick a property to see its rooms, prices and availability.
+        </p>
+        <div className="mt-8 grid gap-6 sm:grid-cols-2">
+          {properties.map((p) => (
+            <Link
+              key={p.name}
+              to={linkFor(p.property_slug)}
+              className="group overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-brand-300 hover:shadow-md"
+            >
+              <div className="relative aspect-[16/10] bg-zinc-100">
+                {p.hero_image ? (
+                  <img
+                    src={p.hero_image}
+                    alt=""
+                    className="size-full object-cover transition duration-500 group-hover:scale-[1.02]"
+                  />
+                ) : (
+                  <div className="flex size-full items-center justify-center bg-gradient-to-br from-brand-700 to-brand-900 text-white">
+                    <span className="text-4xl font-semibold tracking-tight">
+                      {p.property_name
+                        .split(" ")
+                        .map((w) => w[0])
+                        .slice(0, 2)
+                        .join("")}
+                    </span>
+                  </div>
+                )}
+              </div>
+              <div className="p-5">
+                <div className="flex items-start justify-between gap-3">
+                  <h2 className="text-xl font-semibold text-zinc-900 group-hover:text-brand-800">
+                    {p.property_name}
+                  </h2>
+                  {p.property_kind && (
+                    <Badge tone="zinc">
+                      {p.property_kind === "Short Term Rental" ? "Villa / home" : p.property_kind}
+                    </Badge>
+                  )}
+                </div>
+                {(p.city || p.state) && (
+                  <p className="mt-1.5 inline-flex items-center gap-1.5 text-sm text-zinc-500">
+                    <MapPin className="size-3.5 shrink-0" aria-hidden />
+                    {[p.city, p.state].filter(Boolean).join(", ")}
+                  </p>
+                )}
+                {p.description && (
+                  <p className="mt-2 line-clamp-2 text-sm text-zinc-600">{p.description}</p>
+                )}
+                <div className="mt-4 flex flex-wrap items-end justify-between gap-2 border-t border-zinc-100 pt-4">
+                  <p className="text-sm text-zinc-600">
+                    {p.from_rate > 0 ? (
+                      <>
+                        <span className="text-zinc-500">from </span>
+                        <span className="text-lg font-semibold text-zinc-900">
+                          {cur()}
+                          {inr(p.from_rate)}
+                        </span>
+                        <span className="text-zinc-500"> / night</span>
+                      </>
+                    ) : (
+                      <span className="text-zinc-500">See rooms and prices</span>
+                    )}
+                  </p>
+                  <p className="text-sm font-medium text-brand-700">View & book →</p>
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function PublicBooking() {
   const params = useParams()
   const navigate = useNavigate()
@@ -188,6 +301,9 @@ export default function PublicBooking() {
     }[]
   >([])
   const [data, setData] = useState<Showcase | null>(null)
+  // several properties live on one site: the guest picks one first
+  const [properties, setProperties] = useState<PropertyCard[]>([])
+  const propertySlug = new URLSearchParams(location.search).get("property")
 
   // What this property can actually sleep. A property page lists several room
   // types and the guest has not picked one yet, so the roomiest bounds the
@@ -240,16 +356,28 @@ export default function PublicBooking() {
   const checkOut = search.check_out_date
 
   useEffect(() => {
+    setData(null)
+    setProperty(null)
+    setResults({})
+    setError(null)
     callGuest<{
       mode: string
       property?: string
       sites?: typeof sites
       listing_slug?: string
-    }>("kamra.public_api.catalog_index")
+      properties?: PropertyCard[]
+      ui_locale?: { currency_symbol?: string; locale?: string }
+    }>("kamra.public_api.catalog_index", propertySlug ? { property_slug: propertySlug } : {})
       .then((idx) => {
         setCatalogMode(idx.mode)
         if (idx.mode === "single_listing" && idx.listing_slug) {
           navigate(`/stay/${idx.listing_slug}`, { replace: true })
+          return null
+        }
+        if (idx.mode === "properties") {
+          // nothing to show until the guest picks a property
+          adoptUiLocale(idx.ui_locale)
+          setProperties(idx.properties ?? [])
           return null
         }
         if (idx.mode === "sites" && idx.sites) {
@@ -273,7 +401,7 @@ export default function PublicBooking() {
         setForm((f) => ({ ...f, meal_plan: d.meal_plans[0]?.name ?? "" }))
       })
       .catch((e) => setError(serverError(e)))
-  }, [navigate])
+  }, [navigate, propertySlug])
 
   // stay state lives in the URL - shareable, crawlable, UTM params kept
   useEffect(() => {
@@ -305,7 +433,7 @@ export default function PublicBooking() {
       canonical.rel = "canonical"
       document.head.appendChild(canonical)
     }
-    canonical.href = `${window.location.origin}/book`
+    canonical.href = `${window.location.origin}/book${propertySlug ? `?property=${encodeURIComponent(propertySlug)}` : ""}`
 
     const isStr = p.property_kind === "Short Term Rental"
     const schemaType = isStr ? "VacationRental" : "Hotel"
@@ -419,6 +547,15 @@ export default function PublicBooking() {
       setBusy(false)
     }
   }
+
+  if (!data && catalogMode === "properties")
+    return (
+      <PropertyChooser
+        properties={properties}
+        stayPath={`/${search.check_in_date}/${checkOut}/${search.adults}/${search.children}`}
+        query={location.search}
+      />
+    )
 
   if (!data)
     return (

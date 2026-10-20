@@ -398,6 +398,33 @@ def rate_plan_factor(rate_plan: str | None, room_total: Decimal) -> Decimal:
 	return apply_rate_plan(rate_plan, room_total) / room_total
 
 
+def negotiated_rate_plan(property: str, company: str | None) -> str | None:
+	"""The rate plan a company negotiated, as it applies at *property*.
+
+	Corporate Accounts are chain-wide but rate plans belong to a property:
+	the company's plan applies when it is this property's (and enabled);
+	at a sister property the plan with the same code stands in for it.
+	None when the company has no plan, or none fits here."""
+	if not company:
+		return None
+	plan = frappe.db.get_value("Corporate Account", company,
+	                           "negotiated_rate_plan")
+	if not plan:
+		return None
+	rp = frappe.db.get_value("Rate Plan", plan,
+	                         ["name", "property", "code", "disabled"],
+	                         as_dict=True)
+	if not rp:
+		return None
+	if rp.property == property:
+		return None if rp.disabled else rp.name
+	if rp.code:
+		return frappe.db.get_value(
+			"Rate Plan", {"property": property, "code": rp.code, "disabled": 0},
+			"name")
+	return None
+
+
 def quote(
 	property: str,
 	room_type: str,
@@ -412,7 +439,12 @@ def quote(
 	over_capacity_charge: float = 0,
 	exclude_reservation: str | None = None,
 	pets: int = 0,
+	company: str | None = None,
 ) -> dict:
+	# a stay for a company is priced on the plan the company negotiated,
+	# unless the caller named a plan of its own
+	if not rate_plan and company:
+		rate_plan = negotiated_rate_plan(property, company)
 	nights = date_diff(check_out_date, check_in_date)
 	day_use = nights == 0
 	if nights < 0:
@@ -639,6 +671,7 @@ def quote(
 		"room_levy": float(levy),
 		"discount": float(discount),
 		"voucher": voucher_name,
+		"rate_plan": rate_plan or None,
 		"amount_before_tax": float(total_base),
 		"tax_percent": round(effective_pct, 2),
 		"tax_amount": float(tax),

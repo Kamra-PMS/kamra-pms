@@ -158,18 +158,47 @@ def _build_locations(prop, room_types: list[dict]) -> list[dict]:
 
 
 @frappe.whitelist(allow_guest=True)
-def catalog_index():
-	"""Entry point for /book — how many properties, sites, or listings to show."""
-	properties = frappe.get_all(
-		"Property",
-		filters={"booking_engine_enabled": 1, "disabled": 0},
-		fields=["name", "property_name", "page_slug", "city", "hero_image", "property_kind"],
-		order_by="property_name asc",
-	)
+def catalog_index(property_slug: str | None = None):
+	"""Entry point for /book — how many properties, sites, or listings to show.
+
+	Several properties live: mode "properties" lists them, and the guest
+	picks one - /book?property=<slug> (or /stay/<slug>) calls back with
+	that property's slug and gets its own sites / listings / catalog."""
+	from kamra.booking_slugs import property_for_slug
+
+	if property_slug:
+		chosen = property_for_slug(property_slug)
+		if not chosen:
+			frappe.throw("Property not found.", frappe.DoesNotExistError)
+		properties = [frappe._dict(name=chosen)]
+	else:
+		properties = frappe.get_all(
+			"Property",
+			filters={"booking_engine_enabled": 1, "disabled": 0},
+			fields=["name", "property_name", "page_slug", "city", "state",
+			        "hero_image", "logo_url", "property_kind",
+			        "showcase_description"],
+			order_by="property_name asc",
+		)
 	if len(properties) > 1:
 		for p in properties:
 			p["property_slug"] = p.get("page_slug") or slugify(p["property_name"])
-		return {"mode": "properties", "properties": properties}
+			p["description"] = p.pop("showcase_description", None)
+			# a card needs a "from" price and a photo even when the
+			# property never set a hero image
+			p["from_rate"] = float(frappe.db.sql(
+				"""SELECT MIN(base_price) FROM `tabRoom Type`
+				WHERE property = %s AND disabled = 0""", p.name)[0][0] or 0)
+			if not p.get("hero_image"):
+				cover = frappe.db.sql(
+					"""SELECT m.url FROM `tabRoom Type Media` m
+					JOIN `tabRoom Type` rt ON rt.name = m.parent
+					WHERE m.parenttype = 'Room Type' AND rt.property = %s
+					  AND rt.disabled = 0 AND IFNULL(m.url, '') != ''
+					ORDER BY rt.base_price, m.idx LIMIT 1""", p.name)
+				p["hero_image"] = cover[0][0] if cover else None
+		return {"mode": "properties", "properties": properties,
+		        "ui_locale": _public_locale(properties[0].name)}
 
 	property_name = properties[0].name if properties else default_property()
 	prop = frappe.get_doc("Property", property_name)

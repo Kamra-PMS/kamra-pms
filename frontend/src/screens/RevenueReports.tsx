@@ -24,6 +24,13 @@ interface Bva {
   total_days: number
   rows: BvaRow[]
   has_budget: boolean
+  /** "posted": actual = Room charges on folios (End of Day posts them) */
+  basis?: string
+  posted_nights?: number
+  posted_through?: string | null
+  /** sold room nights in the elapsed window, posted or not */
+  on_books_nights?: number
+  unposted_nights?: number
 }
 interface Contrib {
   by: string
@@ -190,6 +197,27 @@ function BudgetVsActual() {
               ))}
             </tbody>
           </table>
+        )}
+        {data && (
+          <div className="mt-3 space-y-1 text-xs text-zinc-500">
+            <p>
+              Actual counts room nights posted to folios - End of Day posts
+              each night, so tonight counts after tonight's audit.{" "}
+              {data.posted_nights ?? 0} room night
+              {(data.posted_nights ?? 0) === 1 ? "" : "s"} posted
+              {data.posted_through ? ` through ${data.posted_through}` : ""};
+              occupancy and RevPAR are over the {data.days_elapsed} of{" "}
+              {data.total_days} days elapsed.
+            </p>
+            {(data.unposted_nights ?? 0) > 0 && (
+              <p className="text-amber-700">
+                {data.unposted_nights} sold room night
+                {data.unposted_nights === 1 ? " isn't" : "s aren't"} posted
+                yet ({data.on_books_nights} on the books this month so far).
+                They count once End of Day runs for those dates.
+              </p>
+            )}
+          </div>
         )}
         {edit && (
           <div className="mt-3 flex justify-end">

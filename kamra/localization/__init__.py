@@ -52,9 +52,41 @@ def pack_for_country(country: str):
 
 
 # ── optional pack behaviour, with defaults ───────────────────────────────
+#
+#   services_tax_rate(property) -> float   (laundry & other guest services)
 # A pack that predates these keeps working: each accessor falls back to
 # something correct-but-plain, so adding a country never means editing the
 # invoice printer.
+
+
+def services_tax_rate(pack, property: str | None) -> float:
+	"""The tax rate on a guest service such as laundry. A pack can say so
+	(India: 18% GST on services); otherwise the pack's standard rate - the
+	one its F&B rate already resolves to in every flat-VAT country."""
+	fn = getattr(pack, "services_tax_rate", None)
+	if fn:
+		return float(fn(property))
+	return float(pack.fnb_tax_rate(property))
+
+
+def money_text(property: str | None, amount) -> str:
+	"""An amount in the property's currency for server-written text (the
+	activity log, alerts) - never a hardcoded rupee sign."""
+	symbol = ""
+	try:
+		if property:
+			prop = frappe.get_cached_doc("Property", property)
+			symbol = pack_for(property).locale(prop).get("currency_symbol") or ""
+	except Exception:
+		symbol = ""
+	try:
+		value = float(amount or 0)
+	except (TypeError, ValueError):
+		return f"{symbol}{amount}"
+	text = f"{value:,.2f}"
+	if text.endswith(".00"):
+		text = text[:-3]
+	return f"{symbol}{text}"
 
 
 def service_code_for(pack, prop_doc, charge_type: str | None = None):

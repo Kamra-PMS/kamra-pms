@@ -340,12 +340,67 @@ def ledger_balances(property: str, business_date: str | None = None):
 		})
 	total_debit = sum(v["debit"] for v in ledgers.values())
 	total_credit = sum(v["credit"] for v in ledgers.values())
+	# These four are subsidiary (control) ledgers, not a full double-entry
+	# book: a charge debits Guest and its revenue side lives in the GL the
+	# accounting export feeds, a payment credits Guest and the cash side is
+	# the cashier's. So total debits exceed total credits by exactly what
+	# guests owe - comparing the two flagged every hotel with an open bill.
+	# The real test of these ledgers is that they agree with the bills they
+	# summarise: each folio's Guest + Deposit postings net to its balance.
+	recon = folio_reconciliation(property) if str(date) >= str(
+		get_business_date(property)) else None
 	return {
 		"business_date": date,
 		"ledgers": [ledgers[k] for k in ("Guest", "Deposit", "AR", "Package")],
 		"total_debit": total_debit,
 		"total_credit": total_credit,
-		"in_balance": abs(total_debit - total_credit) < 0.02,
+		# true / false from the folio check; null for a past date, where
+		# today's folio balances cannot be compared with the old ledger
+		"in_balance": recon["in_balance"] if recon else None,
+		"reconciliation": recon,
+	}
+
+
+def folio_reconciliation(property: str, limit: int = 20) -> dict:
+	"""Guest + Deposit ledger postings per folio against the folio's own
+	balance (charges less payments). A folio whose ledger nets to something
+	else - a posting that never reached the ledger, or one the folio lost -
+	is a genuine break; the rest is money guests owe, not an imbalance."""
+	rows = frappe.db.sql(
+		"""
+		SELECT f.name AS folio, f.folio_type, f.status,
+		       COALESCE(f.balance, 0) AS balance,
+		       COALESCE(e.net, 0) AS ledger
+		FROM `tabFolio` f
+		LEFT JOIN (
+			SELECT folio, SUM(debit - credit) AS net
+			FROM `tabFolio Ledger Entry`
+			WHERE property = %(p)s AND ledger IN ('Guest', 'Deposit')
+			GROUP BY folio
+		) e ON e.folio = f.name
+		WHERE f.property = %(p)s
+		  AND ABS(COALESCE(f.balance, 0) - COALESCE(e.net, 0)) >= 0.02
+		ORDER BY f.creation DESC
+		""", {"p": property}, as_dict=True)
+	ledger_net = float(frappe.db.sql(
+		"""SELECT COALESCE(SUM(debit - credit), 0) FROM `tabFolio Ledger Entry`
+		   WHERE property = %s AND ledger IN ('Guest', 'Deposit')""",
+		property)[0][0] or 0)
+	folios_net = float(frappe.db.sql(
+		"""SELECT COALESCE(SUM(balance), 0) FROM `tabFolio`
+		   WHERE property = %s""", property)[0][0] or 0)
+	return {
+		"in_balance": not rows,
+		"ledger_net": round(ledger_net, 2),
+		"folios_net": round(folios_net, 2),
+		"difference": round(sum(float(r.balance) - float(r.ledger)
+		                        for r in rows), 2),
+		"folios_out": len(rows),
+		"folios": [{"folio": r.folio, "folio_type": r.folio_type,
+		            "status": r.status, "balance": round(float(r.balance), 2),
+		            "ledger": round(float(r.ledger), 2),
+		            "difference": round(float(r.balance) - float(r.ledger), 2)}
+		           for r in rows[:limit]],
 	}
 
 

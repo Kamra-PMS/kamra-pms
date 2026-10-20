@@ -86,6 +86,12 @@ export function kotHtml(o: {
   nc?: boolean
   nc_by?: string | null
   items: KotLine[]
+  /** a kitchen printer's slice of the round: which station(s) it covers */
+  station?: string | null
+  /** Void: lines to stop cooking. Test: a printer test page. */
+  kind?: string | null
+  /** printed on the fallback because this printer failed */
+  fallback_from?: string | null
 }) {
   const when = new Date().toLocaleString(moneyLocale(), {
     day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit",
@@ -98,7 +104,11 @@ export function kotHtml(o: {
       : "")).join("")
   return `
     <div class="c b lg">${esc(o.outlet)}</div>
-    <div class="c xl b">KOT #${o.kot_no ?? "—"}${o.reprint ? " (REPRINT)" : ""}</div>
+    <div class="c xl b">${o.kind === "Void" ? `*** VOID *** KOT #${o.kot_no ?? "—"}`
+      : o.kind === "Test" ? "TEST PAGE"
+        : `KOT #${o.kot_no ?? "—"}`}${o.reprint ? " (REPRINT)" : ""}</div>
+    ${o.station ? `<div class="c b">${esc(o.station)}</div>` : ""}
+    ${o.fallback_from ? `<div class="c sm">for ${esc(o.fallback_from)}</div>` : ""}
     ${o.nc ? `<div class="c b lg">*** NC - NO CHARGE ***</div>` +
       (o.nc_by ? `<div class="c sm">auth: ${esc(o.nc_by)}</div>` : "") : ""}
     <div class="rule"></div>
@@ -111,6 +121,11 @@ export function kotHtml(o: {
     <div class="rule"></div>
     <div class="c sm">${o.items.length} item${o.items.length === 1 ? "" : "s"}</div>
     <div class="cut">- cut -</div>`
+}
+
+/** Several tickets in one print: one paper cut between each. */
+export function joinTickets(bodies: string[]): string {
+  return bodies.join('<div style="break-after:page;page-break-after:always"></div>')
 }
 
 export function laundryDocketHtml(o: {

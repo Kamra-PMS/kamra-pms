@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react"
+import { Link } from "react-router-dom"
 import { call, getCurrentProperty } from "../lib/api"
 import { serverError } from "../lib/resource"
 import { Button } from "../components/ui/button"
@@ -22,10 +23,22 @@ type Ledger = {
   balance: number
 }
 
+/** Guest + Deposit ledger postings per folio against each folio's balance
+ *  (kamra.ledger.folio_reconciliation). */
+type Recon = {
+  in_balance: boolean
+  ledger_net: number
+  folios_net: number
+  difference: number
+  folios_out: number
+  folios: { folio: string; folio_type: string; status: string; balance: number; ledger: number; difference: number }[]
+}
+
 export default function Ledgers() {
   const [date, setDate] = useState("")
   const [ledgers, setLedgers] = useState<Ledger[]>([])
-  const [inBalance, setInBalance] = useState(true)
+  const [inBalance, setInBalance] = useState<boolean | null>(true)
+  const [recon, setRecon] = useState<Recon | null>(null)
   const [totals, setTotals] = useState({ debit: 0, credit: 0 })
   const [journal, setJournal] = useState<
     { transaction_code: string; description: string; debit: number; credit: number; entries: number }[]
@@ -43,13 +56,15 @@ export default function Ledgers() {
         ledgers: Ledger[]
         total_debit: number
         total_credit: number
-        in_balance: boolean
+        in_balance: boolean | null
+        reconciliation: Recon | null
       }>("kamra.ledger.ledger_balances", {
         property: getCurrentProperty(),
         business_date: date || undefined,
       })
       setLedgers(bal.ledgers)
       setInBalance(bal.in_balance)
+      setRecon(bal.reconciliation)
       setTotals({ debit: bal.total_debit, credit: bal.total_credit })
       if (!date) setDate(bal.business_date)
       const j = await call<{ rows: typeof journal }>(
@@ -100,16 +115,43 @@ export default function Ledgers() {
       </div>
       {err ? <p className="text-sm text-rose-600">{err}</p> : null}
 
+      {/* These are subsidiary ledgers: a charge's revenue side and a
+          payment's cash side live in the books the accounting export feeds,
+          so debits exceed credits by what guests owe. The real check is that
+          the Guest + Deposit ledgers agree with every folio's balance. */}
       <div
         className={`rounded-lg border px-4 py-2 text-sm ${
-          inBalance
-            ? "border-emerald-200 bg-emerald-50 text-emerald-800"
-            : "border-amber-200 bg-amber-50 text-amber-900"
+          inBalance === null
+            ? "border-zinc-200 bg-zinc-50 text-zinc-700"
+            : inBalance
+              ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+              : "border-amber-200 bg-amber-50 text-amber-900"
         }`}
       >
-        {inBalance
-          ? "Trial balance is in balance."
-          : `Out of balance — debit ${inr(totals.debit)} vs credit ${inr(totals.credit)}.`}
+        {inBalance === null ? (
+          `Ledgers as of ${date}. Debits ${inr(totals.debit)} · credits ${inr(totals.credit)}. The check against folio balances runs for the current business date.`
+        ) : inBalance ? (
+          `Ledgers agree with folios — Guest + Deposit net ${inr(recon?.ledger_net)} equals the ${inr(recon?.folios_net)} folios carry. Debits exceed credits by what guests owe (${inr(totals.debit - totals.credit)}); that is not an imbalance.`
+        ) : (
+          <div>
+            <p className="font-medium">
+              {`Ledger differs from folios on ${recon?.folios_out ?? 0} folio(s) by ${inr(recon?.difference)}.`}
+            </p>
+            <p className="mt-0.5 text-xs">
+              A posting reached the folio but not the ledger, or the other way round.
+            </p>
+            <ul className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-xs">
+              {(recon?.folios ?? []).map((f) => (
+                <li key={f.folio}>
+                  <Link className="underline" to={`/billing/${encodeURIComponent(f.folio)}`}>
+                    {f.folio}
+                  </Link>{" "}
+                  folio {inr(f.balance)} · ledger {inr(f.ledger)}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">

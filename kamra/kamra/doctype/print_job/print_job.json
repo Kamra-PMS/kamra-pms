@@ -1,0 +1,146 @@
+{
+ "actions": [],
+ "creation": "2026-10-19 13:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "editable_grid": 1,
+ "field_order": [
+  "property",
+  "printer",
+  "kind",
+  "status",
+  "pos_order",
+  "outlet",
+  "kot_no",
+  "attempts",
+  "claimed_at",
+  "printed_at",
+  "error",
+  "payload"
+ ],
+ "fields": [
+  {
+   "fieldname": "property",
+   "fieldtype": "Link",
+   "options": "Property",
+   "label": "Property",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "printer",
+   "fieldtype": "Link",
+   "options": "Kitchen Printer",
+   "label": "Printer",
+   "reqd": 1,
+   "search_index": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "kind",
+   "fieldtype": "Select",
+   "label": "Kind",
+   "options": "KOT\nVoid\nReprint\nTest",
+   "default": "KOT",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Queued\nPrinting\nPrinted\nFailed",
+   "default": "Queued",
+   "search_index": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "pos_order",
+   "fieldtype": "Link",
+   "options": "POS Order",
+   "label": "POS order"
+  },
+  {
+   "fieldname": "outlet",
+   "fieldtype": "Link",
+   "options": "POS Outlet",
+   "label": "Outlet"
+  },
+  {
+   "fieldname": "kot_no",
+   "fieldtype": "Int",
+   "label": "KOT no"
+  },
+  {
+   "fieldname": "attempts",
+   "fieldtype": "Int",
+   "label": "Attempts",
+   "default": "0"
+  },
+  {
+   "fieldname": "claimed_at",
+   "fieldtype": "Datetime",
+   "label": "Claimed at"
+  },
+  {
+   "fieldname": "printed_at",
+   "fieldtype": "Datetime",
+   "label": "Printed at"
+  },
+  {
+   "fieldname": "error",
+   "fieldtype": "Small Text",
+   "label": "Error"
+  },
+  {
+   "fieldname": "payload",
+   "fieldtype": "Long Text",
+   "label": "Ticket"
+  }
+ ],
+ "links": [],
+ "modified": "2026-10-19 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kamra",
+ "name": "Print Job",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 1,
+   "print": 1,
+   "create": 1,
+   "write": 1,
+   "delete": 1,
+   "share": 1,
+   "export": 1,
+   "email": 1
+  },
+  {
+   "role": "Hotel Admin",
+   "read": 1,
+   "report": 1,
+   "print": 1,
+   "delete": 1
+  },
+  {
+   "role": "Finance",
+   "read": 1,
+   "report": 1,
+   "print": 1
+  },
+  {
+   "role": "Front Desk",
+   "read": 1,
+   "report": 1,
+   "print": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "autoname": "hash",
+ "naming_rule": "Random"
+}

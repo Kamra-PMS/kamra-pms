@@ -56,6 +56,7 @@ const PosDashboard = lazy(() => import("./screens/PosDashboard"))
 const Inventory = lazy(() => import("./screens/Inventory"))
 const QrMenu = lazy(() => import("./screens/QrMenu"))
 const AccountingExport = lazy(() => import("./screens/AccountingExport"))
+const VoidAllowanceReport = lazy(() => import("./screens/VoidAllowanceReport"))
 const TapeChart = lazy(() => import("./screens/TapeChart"))
 const Tickets = lazy(() => import("./screens/Tickets"))
 const Laundry = lazy(() => import("./screens/Laundry"))
@@ -246,6 +247,10 @@ export default function App() {
             path="meal-plans"
             element={<ConfiguredScreen config="mealPlansConfig" />}
           />
+          <Route
+            path="experiences"
+            element={<ConfiguredScreen config="experiencesConfig" />}
+          />
           <Route path="billing" element={<Billing />} />
           <Route path="end-of-day" element={<EndOfDay />} />
           <Route path="end-of-day/pack/:audit" element={<AuditPack />} />
@@ -311,6 +316,7 @@ export default function App() {
           <Route path="booking-settings/:section" element={<BookingEngine />} />
           <Route path="developers" element={<Developers />} />
           <Route path="reports" element={<Reports />} />
+          <Route path="voids-allowances" element={<VoidAllowanceReport />} />
           <Route path="revenue-reports" element={<RevenueReports />} />
           <Route path="ops-sla" element={<OpsSLA />} />
           <Route path="whatsapp" element={<WhatsAppChat />} />

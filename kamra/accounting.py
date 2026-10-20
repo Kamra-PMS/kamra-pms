@@ -38,16 +38,21 @@ def export_invoices(property: str, from_date: str, to_date: str):
 		bt = inv.get("bill_to")
 		taxable = round(sum(float(s["taxable"]) for s in inv["gst_summary"]), 2)
 		total_tax = round(sum(float(s["total_tax"]) for s in inv["gst_summary"]), 2)
+		lines = _lines_by_code(inv, components, ratios)
+		codes = [ln["service_code"] for ln in lines if ln["service_code"]]
 		row = {
 			"invoice_number": f.get("invoice_number"),
 			"date": str(f.get("closed_on"))[:10],
 			"party": (bt["name"] if bt else f.get("guest_name")) or "Guest",
 			"party_tax_id": (bt.get("gstin") if bt else "") or "",
 			"place_of_supply": inv["property"].get("place_of_supply") or "",
-			"service_code": inv["property"].get("sac") or "",
+			# every code the invoice carries (a stay with a dinner and a
+			# laundry bag has three); `lines` splits the amounts by code
+			"service_code": "; ".join(codes),
 			"taxable": taxable,
 			"total_tax": total_tax,
 			"grand_total": round(float(f.get("grand_total") or 0), 2),
+			"lines": lines,
 		}
 		for c in components:
 			row[c] = round(total_tax * ratios[c], 2)
@@ -67,3 +72,34 @@ def export_invoices(property: str, from_date: str, to_date: str):
 		"currency": prop.get("currency") or "INR",
 		"totals": totals,
 	}
+
+
+def _lines_by_code(inv: dict, components: list, ratios: dict) -> list[dict]:
+	"""The invoice's charges grouped by the service code (SAC/HSN) and tax
+	rate each line carries, as the country pack codes each line
+	(localization.service_code_for). A ledger import wants one item line per
+	code and rate, not the accommodation code on everything. A line the pack
+	leaves uncoded (India: a discount or allowance is not a supply) keeps an
+	empty code."""
+	groups: dict[tuple, dict] = {}
+	for ln in inv.get("lines") or []:
+		code = ln.get("service_code") or ""
+		rate = float(ln.get("gst_rate") or 0)
+		g = groups.setdefault((code, rate), {
+			"service_code": code, "rate": rate, "taxable": 0.0,
+			"total_tax": 0.0, "heads": []})
+		g["taxable"] += float(ln.get("amount") or 0)
+		g["total_tax"] += float(ln.get("gst_amount") or 0)
+		head = ln.get("charge_type") or "Other"
+		if head not in g["heads"]:
+			g["heads"].append(head)
+	out = []
+	for g in groups.values():
+		g["taxable"] = round(g["taxable"], 2)
+		g["total_tax"] = round(g["total_tax"], 2)
+		for c in components:
+			g[c] = round(g["total_tax"] * ratios[c], 2)
+		g["total"] = round(g["taxable"] + g["total_tax"], 2)
+		g["description"] = ", ".join(g.pop("heads"))
+		out.append(g)
+	return out

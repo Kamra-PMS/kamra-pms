@@ -189,7 +189,7 @@
    "fieldtype": "Long Text",
    "label": "Report Pack (JSON)",
    "read_only": 1,
-   "description": "The saved audit pack - open it from Billing → Night audit → View audit pack."
+   "description": "The saved audit pack - open it from Finance → End of Day → Audit history."
   }
  ],
  "grid_page_length": 50,

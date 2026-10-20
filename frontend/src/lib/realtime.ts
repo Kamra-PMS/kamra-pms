@@ -8,6 +8,7 @@ import { useEffect } from "react"
 
 export interface ChangeEvent {
   doctype?: string
+  printer?: string
   property?: string | null
   outlet?: string | null
   name?: string
@@ -19,6 +20,8 @@ export interface RealtimeOptions {
   /** Polling interval when the socket is down. Live screens (POS, kitchen)
    *  want seconds; dashboards are fine at the default. */
   fallbackMs?: number
+  /** Socket event to listen for (default kamra_changed). */
+  event?: string
 }
 
 // Bursts collapse to at most one re-fetch per window, and the LAST event of a
@@ -73,7 +76,7 @@ export function subscribeRealtime(onChange: () => void, opts: RealtimeOptions = 
         reconnectionAttempts: 2,
         timeout: 4000,
       })
-      s.on("kamra_changed", onEvent)
+      s.on(opts.event || "kamra_changed", onEvent)
       s.on("connect_error", startPolling)
       s.on("disconnect", startPolling)
       s.on("connect", () => {

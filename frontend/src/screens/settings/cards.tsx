@@ -1071,6 +1071,7 @@ export function LaundryRatesCard({ property }: { property: string }) {
 interface HurdleTier {
   name: string
   room_type: string | null
+  room_type_name?: string | null
   occupancy_from: number
   premium_pct: number
   min_rate: number
@@ -1080,13 +1081,34 @@ interface HurdleTier {
  * manual rates can't undercut the hurdle (the minimum sell rate). */
 export function HurdleRatesCard({ property }: { property: string }) {
   const [tiers, setTiers] = useState<HurdleTier[]>([])
-  const [form, setForm] = useState<{ name?: string; from: string; premium: string; min: string } | null>(null)
+  const [form, setForm] = useState<{
+    name?: string
+    from: string
+    premium: string
+    min: string
+    room_type: string
+  } | null>(null)
   const [err, setErr] = useState<string | null>(null)
+  // a tier can target one room type; blank = every room type
+  const [roomTypes, setRoomTypes] = useState<{ name: string; room_type_name: string }[]>([])
 
   const load = useCallback(() => {
     call<HurdleTier[]>("kamra.api.hurdle_rates", { property }).then(setTiers).catch(() => {})
   }, [property])
   useEffect(load, [load])
+  useEffect(() => {
+    listResource("Room Type", {
+      fields: ["name", "room_type_name"],
+      filters: [
+        ["property", "=", property],
+        ["disabled", "=", 0],
+      ],
+      orderBy: "base_price asc",
+      limit: 200,
+    })
+      .then((rows) => setRoomTypes(rows as { name: string; room_type_name: string }[]))
+      .catch(() => setRoomTypes([]))
+  }, [property])
 
   async function save() {
     if (!form) return
@@ -1095,6 +1117,7 @@ export function HurdleRatesCard({ property }: { property: string }) {
       await call("kamra.api.save_hurdle_rate", {
         property, name: form.name || null, occupancy_from: form.from,
         premium_pct: form.premium || 0, min_rate: form.min || 0,
+        room_type: form.room_type || null,
       })
       setForm(null)
       load()
@@ -1111,10 +1134,13 @@ export function HurdleRatesCard({ property }: { property: string }) {
           <p className="mt-0.5 text-xs text-zinc-400">
             When forecast occupancy for a date crosses a threshold, quotes
             carry the premium automatically and no rate may sell below the
-            hurdle. Guardrails still cap the extremes.
+            hurdle. A room-type tier beats the all-types tier. Guardrails
+            (floor and ceiling) only bound rates set through set_room_rate -
+            Kamra Agent, MCP or the API - not these premiums, staff seasons
+            or quotes.
           </p>
         </div>
-        <Button variant="outline" onClick={() => setForm({ from: "", premium: "", min: "" })}>
+        <Button variant="outline" className="shrink-0" onClick={() => setForm({ from: "", premium: "", min: "", room_type: "" })}>
           Add tier
         </Button>
       </CardHeader>
@@ -1139,6 +1165,23 @@ export function HurdleRatesCard({ property }: { property: string }) {
               <input className="w-24 rounded-lg border border-zinc-300 px-2 py-1.5 text-sm" placeholder="min rate" inputMode="numeric"
                 value={form.min} onChange={(e) => setForm({ ...form, min: e.target.value.replace(/[^\d.]/g, "") })} />
             </label>
+            <label className="flex items-center gap-1 text-sm text-zinc-600">
+              For
+              <select
+                aria-label="Room type"
+                className="rounded-lg border border-zinc-300 px-2 py-1.5 text-sm"
+                value={form.room_type}
+                onChange={(e) => setForm({ ...form, room_type: e.target.value })}
+              >
+                <option value="">All room types</option>
+                {roomTypes.map((rt) => (
+                  <option key={rt.name} value={rt.name}>{rt.room_type_name}</option>
+                ))}
+                {form.room_type && !roomTypes.some((rt) => rt.name === form.room_type) && (
+                  <option value={form.room_type}>{form.room_type}</option>
+                )}
+              </select>
+            </label>
             <Button disabled={!form.from} onClick={save}>Save</Button>
             <Button variant="ghost" onClick={() => setForm(null)}>Cancel</Button>
           </div>
@@ -1152,6 +1195,7 @@ export function HurdleRatesCard({ property }: { property: string }) {
             <thead>
               <tr className="text-left text-xs uppercase tracking-wide text-zinc-400">
                 <th className="py-1.5">When occupancy ≥</th>
+                <th>Room type</th>
                 <th className="text-right">Premium</th>
                 <th className="text-right">Hurdle (min rate)</th><th />
               </tr>
@@ -1160,11 +1204,12 @@ export function HurdleRatesCard({ property }: { property: string }) {
               {tiers.map((t) => (
                 <tr key={t.name} className="border-t border-zinc-100">
                   <td className="py-1.5 font-medium">{t.occupancy_from}%</td>
+                  <td className="text-zinc-600">{t.room_type ? (t.room_type_name || t.room_type) : <span className="text-zinc-400">All</span>}</td>
                   <td className="text-right tabular-nums">{t.premium_pct ? `+${t.premium_pct}%` : "—"}</td>
                   <td className="text-right tabular-nums">{t.min_rate ? `${cur()}${t.min_rate.toLocaleString(moneyLocale())}` : "—"}</td>
                   <td className="text-right">
                     <button className="text-xs font-medium text-brand-700 hover:underline"
-                      onClick={() => setForm({ name: t.name, from: String(t.occupancy_from), premium: String(t.premium_pct || ""), min: String(t.min_rate || "") })}>
+                      onClick={() => setForm({ name: t.name, from: String(t.occupancy_from), premium: String(t.premium_pct || ""), min: String(t.min_rate || ""), room_type: t.room_type || "" })}>
                       Edit
                     </button>
                     <button className="ml-2 text-xs text-zinc-400 hover:text-rose-600"
@@ -1265,6 +1310,294 @@ export function SpeedCheckCard({ property }: { property: string }) {
           </ul>
         </CardContent>
       )}
+    </Card>
+  )
+}
+
+const STATIONS = ["Kitchen", "Tandoor", "Grill", "Fryer", "Bar"]
+
+interface KitchenPrinter {
+  name: string
+  printer_name: string
+  connection: "Print station" | "Direct IP"
+  paper_width: string
+  copies: number
+  ip_address: string | null
+  port: number | null
+  fallback_printer: string | null
+  disabled: 0 | 1
+  last_seen: string | null
+  last_printed: string | null
+  last_error: string | null
+  queued: number
+  failed_today: number
+  online: boolean | null
+  routes: { outlet: string; prep_station: string }[]
+}
+
+type PrinterDraft = Omit<KitchenPrinter, "name" | "last_seen" | "last_printed" | "last_error" | "queued" | "failed_today" | "online"> & { name?: string }
+
+const blankPrinter = (): PrinterDraft => ({
+  printer_name: "", connection: "Print station", paper_width: "80 mm", copies: 1,
+  ip_address: "", port: 9100, fallback_printer: null, disabled: 0, routes: [],
+})
+
+/** Kitchen printers and what each one prints - Settings > F&B. */
+export function KitchenPrintersCard({ property }: { property: string }) {
+  const { t } = useT()
+  const [printers, setPrinters] = useState<KitchenPrinter[]>([])
+  const [outlets, setOutlets] = useState<{ name: string; outlet_name: string }[]>([])
+  const [form, setForm] = useState<PrinterDraft | null>(null)
+  const [err, setErr] = useState<string | null>(null)
+  const [note, setNote] = useState<string | null>(null)
+  const [busy, setBusy] = useState(false)
+
+  const load = useCallback(() => {
+    call<KitchenPrinter[]>("kamra.printing.printers", { property }).then(setPrinters).catch(() => {})
+  }, [property])
+  useEffect(() => {
+    load()
+    call<{ name: string; outlet_name: string }[]>("kamra.pos.outlets", { property }).then(setOutlets).catch(() => {})
+    const tm = setInterval(load, 15_000) // status dots stay current
+    return () => clearInterval(tm)
+  }, [load, property])
+
+  const outletName = (o: string) => outlets.find((x) => x.name === o)?.outlet_name || o
+  const has = (o: string, st: string) => !!form?.routes.some((r) => r.outlet === o && r.prep_station === st)
+  function toggle(o: string, st: string) {
+    if (!form) return
+    let routes = form.routes
+    if (st === "") {
+      // "All stations" replaces the outlet's single-station rows
+      routes = has(o, "") ? routes.filter((r) => r.outlet !== o)
+        : [...routes.filter((r) => r.outlet !== o), { outlet: o, prep_station: "" }]
+    } else {
+      routes = routes.filter((r) => !(r.outlet === o && r.prep_station === ""))
+      routes = has(o, st) ? routes.filter((r) => !(r.outlet === o && r.prep_station === st))
+        : [...routes, { outlet: o, prep_station: st }]
+    }
+    setForm({ ...form, routes })
+  }
+
+  async function save() {
+    if (!form) return
+    setBusy(true); setErr(null)
+    try {
+      const { name, ...printer } = form
+      await call("kamra.printing.save_printer", { property, name: name || null, printer: JSON.stringify(printer) })
+      setForm(null); setNote(t("Printer saved.")); load()
+    } catch (e) { setErr(serverError(e)) } finally { setBusy(false) }
+  }
+  async function remove(p: KitchenPrinter) {
+    setErr(null)
+    try { await call("kamra.printing.delete_printer", { name: p.name }); setNote(t("Printer removed.")); load() }
+    catch (e) { setErr(serverError(e)) }
+  }
+  async function test(p: KitchenPrinter) {
+    setErr(null)
+    try {
+      await call("kamra.printing.test_print", { name: p.name })
+      setNote(p.connection === "Print station"
+        ? t("Test page sent. It prints on the kitchen screen set to print for {printer}.", { printer: p.printer_name })
+        : t("Test page sent to {ip}.", { ip: p.ip_address || "" }))
+      setTimeout(load, 4000)
+    } catch (e) { setErr(serverError(e)) }
+  }
+
+  const status = (p: KitchenPrinter) => {
+    if (p.disabled) return { tone: "bg-zinc-300", text: t("Disabled") }
+    if (p.last_error && p.failed_today) return { tone: "bg-rose-500", text: p.last_error }
+    if (p.connection === "Print station") {
+      return p.online
+        ? { tone: "bg-emerald-500", text: t("A kitchen screen is printing for it") }
+        : { tone: "bg-amber-500", text: t("No kitchen screen is printing for it right now") }
+    }
+    return p.last_printed
+      ? { tone: "bg-emerald-500", text: t("Last printed {at}", { at: p.last_printed.slice(0, 16) }) }
+      : { tone: "bg-zinc-300", text: t("Not used yet") }
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <CardTitle>{t("Kitchen printers")}</CardTitle>
+            <p className="mt-0.5 text-xs text-zinc-400">
+              {t("Which printer gets which KOTs. Two restaurants can share a kitchen printer, and the bar's drinks can print at the bar. With no printers here, each till prints its own KOTs.")}
+            </p>
+          </div>
+          {!form && (
+            <Button variant="outline" className="shrink-0 whitespace-nowrap"
+              onClick={() => { setForm(blankPrinter()); setNote(null) }}>
+              {t("Add printer")}
+            </Button>
+          )}
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {err && <p className="text-sm text-rose-700">{err}</p>}
+        {note && <p className="text-sm text-emerald-700">{note}</p>}
+
+        {!form && printers.length === 0 && (
+          <p className="text-sm text-zinc-500">{t("No kitchen printers yet.")}</p>
+        )}
+
+        {!form && printers.map((p) => {
+          const st = status(p)
+          return (
+            <div key={p.name} className="flex flex-wrap items-start justify-between gap-3 rounded-lg border border-zinc-200 px-3 py-2.5">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 text-sm font-semibold text-zinc-900">
+                  <span className={`size-2 shrink-0 rounded-full ${st.tone}`} title={st.text} />
+                  {p.printer_name}
+                  <span className="text-xs font-normal text-zinc-400">
+                    {p.connection === "Direct IP" ? `${p.ip_address}:${p.port || 9100}` : t("Print station")} · {p.paper_width}
+                  </span>
+                </div>
+                <p className="mt-0.5 text-xs text-zinc-500">
+                  {p.routes.length
+                    ? p.routes.map((r) => `${outletName(r.outlet)} · ${r.prep_station || t("all stations")}`).join(", ")
+                    : t("Prints nothing yet - choose outlets and stations.")}
+                </p>
+                <p className="mt-0.5 text-xs text-zinc-400">
+                  {st.text}
+                  {p.queued ? ` · ${t("{n} waiting", { n: p.queued })}` : ""}
+                  {p.failed_today ? ` · ${t("{n} failed today", { n: p.failed_today })}` : ""}
+                </p>
+              </div>
+              <div className="flex shrink-0 gap-1.5">
+                <Button variant="ghost" onClick={() => test(p)}>{t("Test print")}</Button>
+                <Button variant="ghost" onClick={() => {
+                  setNote(null)
+                  setForm({
+                    name: p.name, printer_name: p.printer_name, connection: p.connection,
+                    paper_width: p.paper_width, copies: p.copies, ip_address: p.ip_address || "",
+                    port: p.port || 9100, fallback_printer: p.fallback_printer, disabled: p.disabled,
+                    routes: p.routes,
+                  })
+                }}>{t("Edit")}</Button>
+                <Button variant="ghost" onClick={() => remove(p)}>{t("Remove")}</Button>
+              </div>
+            </div>
+          )
+        })}
+
+        {form && (
+          <div className="space-y-4 rounded-lg border border-zinc-200 p-3">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="block text-sm">
+                <span className="mb-1 block font-medium text-zinc-700">{t("Printer name")}</span>
+                <input className={inputCls} value={form.printer_name} placeholder={t("Main kitchen")}
+                  onChange={(e) => setForm({ ...form, printer_name: e.target.value })} />
+              </label>
+              <label className="block text-sm">
+                <span className="mb-1 block font-medium text-zinc-700">{t("Connection")}</span>
+                <select className={inputCls} value={form.connection}
+                  onChange={(e) => setForm({ ...form, connection: e.target.value as PrinterDraft["connection"] })}>
+                  <option value="Print station">{t("Print station (a kitchen screen prints it)")}</option>
+                  <option value="Direct IP">{t("Direct IP (Kamra on the hotel network)")}</option>
+                </select>
+                <span className="mt-1 block text-xs text-zinc-400">
+                  {form.connection === "Print station"
+                    ? t("Any printer - USB, network or Bluetooth - attached to a device in the kitchen. On that device, open the kitchen display and pick this printer under Print for.")
+                    : t("Kamra sends the ticket straight to the printer's network address. Only works when the Kamra server is on the same network as the printer, not on a cloud server.")}
+                </span>
+              </label>
+              {form.connection === "Direct IP" && (
+                <>
+                  <label className="block text-sm">
+                    <span className="mb-1 block font-medium text-zinc-700">{t("IP address")}</span>
+                    <input className={inputCls} value={form.ip_address || ""} placeholder="192.168.1.50"
+                      onChange={(e) => setForm({ ...form, ip_address: e.target.value })} />
+                  </label>
+                  <label className="block text-sm">
+                    <span className="mb-1 block font-medium text-zinc-700">{t("Port")}</span>
+                    <input className={inputCls} type="number" value={form.port ?? 9100}
+                      onChange={(e) => setForm({ ...form, port: Number(e.target.value) || 9100 })} />
+                  </label>
+                </>
+              )}
+              <label className="block text-sm">
+                <span className="mb-1 block font-medium text-zinc-700">{t("Paper width")}</span>
+                <select className={inputCls} value={form.paper_width}
+                  onChange={(e) => setForm({ ...form, paper_width: e.target.value })}>
+                  <option>80 mm</option>
+                  <option>58 mm</option>
+                </select>
+              </label>
+              <label className="block text-sm">
+                <span className="mb-1 block font-medium text-zinc-700">{t("Copies")}</span>
+                <select className={inputCls} value={form.copies}
+                  onChange={(e) => setForm({ ...form, copies: Number(e.target.value) })}>
+                  {[1, 2, 3].map((n) => <option key={n} value={n}>{n}</option>)}
+                </select>
+              </label>
+              <label className="block text-sm">
+                <span className="mb-1 block font-medium text-zinc-700">{t("Fallback printer")}</span>
+                <select className={inputCls} value={form.fallback_printer || ""}
+                  onChange={(e) => setForm({ ...form, fallback_printer: e.target.value || null })}>
+                  <option value="">{t("None")}</option>
+                  {printers.filter((p) => p.name !== form.name).map((p) => (
+                    <option key={p.name} value={p.name}>{p.printer_name}</option>
+                  ))}
+                </select>
+                <span className="mt-1 block text-xs text-zinc-400">{t("Where a ticket goes if this printer fails.")}</span>
+              </label>
+              <label className="flex items-center gap-2 self-end pb-2 text-sm">
+                <input type="checkbox" checked={!!form.disabled}
+                  onChange={(e) => setForm({ ...form, disabled: e.target.checked ? 1 : 0 })} />
+                {t("Disabled")}
+              </label>
+            </div>
+
+            <div>
+              <p className="mb-1.5 text-sm font-medium text-zinc-700">{t("Prints KOTs for")}</p>
+              {outlets.length === 0 ? (
+                <p className="text-sm text-zinc-500">{t("Add an outlet first.")}</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[28rem] text-sm">
+                    <thead>
+                      <tr className="text-xs text-zinc-500">
+                        <th className="py-1 text-start font-medium">{t("Outlet")}</th>
+                        <th className="px-2 py-1 font-medium">{t("All stations")}</th>
+                        {STATIONS.map((st) => <th key={st} className="px-2 py-1 font-medium">{t(st)}</th>)}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {outlets.map((o) => (
+                        <tr key={o.name} className="border-t border-zinc-100">
+                          <td className="py-1.5 pe-2">{o.outlet_name}</td>
+                          <td className="px-2 text-center">
+                            <input type="checkbox" checked={has(o.name, "")} onChange={() => toggle(o.name, "")}
+                              aria-label={`${o.outlet_name} - ${t("All stations")}`} />
+                          </td>
+                          {STATIONS.map((st) => (
+                            <td key={st} className="px-2 text-center">
+                              <input type="checkbox" checked={has(o.name, "") || has(o.name, st)}
+                                disabled={has(o.name, "")} onChange={() => toggle(o.name, st)}
+                                aria-label={`${o.outlet_name} - ${st}`} />
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+              <p className="mt-1.5 text-xs text-zinc-400">
+                {t("A station comes from each menu item. Tick the same outlet on several printers to print a copy on each.")}
+              </p>
+            </div>
+
+            <div className="flex gap-2">
+              <Button disabled={busy} onClick={save}>{busy ? t("Saving…") : t("Save printer")}</Button>
+              <Button variant="ghost" onClick={() => { setForm(null); setErr(null) }}>{t("Cancel")}</Button>
+            </div>
+          </div>
+        )}
+      </CardContent>
     </Card>
   )
 }

@@ -7,6 +7,8 @@ metrics rolled up across every property the signed-in user can access, with
 a per-property table - the chain's central view.
 """
 
+from decimal import ROUND_HALF_UP, Decimal
+
 import frappe
 from frappe.utils import nowdate
 
@@ -113,6 +115,15 @@ def property_dashboard(property: str, date: str | None = None):
 	}
 
 
+def _whole(amount) -> float:
+	"""Round money to whole units, half up - the way the portfolio shows it.
+	Python's round() is half-to-even (11792.5 -> 11792) while the browser
+	rounds half up (11,793), so a total rounded by one and a row by the other
+	disagreed by a unit. Rows are rounded here once; totals add the rounded
+	rows, so the tile is always the sum of the table."""
+	return float(Decimal(str(amount or 0)).quantize(Decimal("1"), ROUND_HALF_UP))
+
+
 def _property_summary(property: str, date: str):
 	"""Compact headline numbers for one property in the portfolio table."""
 	total_rooms = frappe.db.count("Room", {"property": property}) or 0
@@ -133,10 +144,10 @@ def _property_summary(property: str, date: str):
 			"status": ("in", ["Checked In", "Checked Out"])}),
 		"in_house": frappe.db.count("Reservation", {
 			"property": property, "status": "Checked In"}),
-		"revenue_today": round(s.get("room_revenue", 0) + s.get("fnb_revenue", 0)
-		                       + s.get("other_revenue", 0), 0),
-		"collections_today": finance["collections_today"],
-		"outstanding": finance["outstanding"],
+		"revenue_today": _whole(s.get("room_revenue", 0) + s.get("fnb_revenue", 0)
+		                        + s.get("other_revenue", 0)),
+		"collections_today": _whole(finance["collections_today"]),
+		"outstanding": _whole(finance["outstanding"]),
 	}
 
 
@@ -159,9 +170,10 @@ def portfolio_dashboard(date: str | None = None):
 		"arrivals": sum(r["arrivals"] for r in rows),
 		"departures": sum(r["departures"] for r in rows),
 		"in_house": sum(r["in_house"] for r in rows),
-		"revenue_today": round(sum(r["revenue_today"] for r in rows), 0),
-		"collections_today": round(sum(r["collections_today"] for r in rows), 0),
-		"outstanding": round(sum(r["outstanding"] for r in rows), 0),
+		# sums of the already-rounded rows: the tile equals the table
+		"revenue_today": sum(r["revenue_today"] for r in rows),
+		"collections_today": sum(r["collections_today"] for r in rows),
+		"outstanding": sum(r["outstanding"] for r in rows),
 	}
 	rows.sort(key=lambda r: r["revenue_today"], reverse=True)
 	return {"date": date, "totals": totals, "properties": rows}

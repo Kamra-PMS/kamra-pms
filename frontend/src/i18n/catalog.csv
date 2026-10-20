@@ -6,6 +6,7 @@
 "- write off part of the bill, with a reason","- write off part of the bill, with a reason",- شطب جزء من الفاتورة مع سبب,screens/FolioView.tsx,,translated
 ; your ID and address because hotels must register guests under the law,; your ID and address because hotels must register guests under the law,؛ وهويتك وعنوانك لأن الفنادق ملزمة نظامًا بتسجيل النزلاء,components/PrivacyNotice.tsx,,translated
 ; your ID and address because hotels must register guests under the law ({report}),; your ID and address because hotels must register guests under the law ({report}),؛ وهويتك وعنوانك لأن الفنادق ملزمة نظامًا بتسجيل النزلاء ({report}),components/PrivacyNotice.tsx,report,translated
+(F&B rate),(F&B rate),(نسبة الأطعمة والمشروبات),screens/FolioView.tsx,,translated
 {amount} still to collect,{amount} still to collect,{amount} لا يزال للتحصيل,screens/Banquet.tsx,amount,translated
 {amt} left on the bill.,{amt} left on the bill.,يتبقى {amt} على الفاتورة.,components/BookingDialog.tsx,amt,translated
 {amt} of {total} collected,{amt} of {total} collected,تم تحصيل {amt} من {total},components/BookingDialog.tsx,amt total,translated
@@ -19,12 +20,15 @@
 {label}: all,{label}: all,{label}: الكل,components/ResourceScreen.tsx,label,translated
 {n} A4 pages,{n} A4 pages,{n} صفحات A4,screens/QrCodes.tsx,n,translated
 {n} ad,{n} ad,{n} بالغ,components/BookingRequests.tsx; screens/Today.tsx,n,translated
+{n} adult,{n} adult,,components/BookingDialog.tsx,n,needs_translation
 {n} adult{s},{n} adult{s},{n} بالغ{s},components/CheckInDialog.tsx; screens/PublicCheckin.tsx; screens/RegistrationCard.tsx; screens/Today.tsx,n s,translated
+{n} adults,{n} adults,,components/BookingDialog.tsx,n,needs_translation
 {n} bill(s) were taken for a different room than the folio they posted to.,{n} bill(s) were taken for a different room than the folio they posted to.,{n} فاتورة أُخذت لغرفة غير التي رُحّلت إلى فاتورتها.,screens/EndOfDayWizard.tsx,n,translated
 {n} blocker(s),{n} blocker(s),{n} عائق,screens/EndOfDay.tsx; screens/EndOfDayWizard.tsx,n,translated
 {n} booking{s} imported{history},{n} booking{s} imported{history},تم استيراد {n} حجز{s}{history},screens/Setup.tsx,n s history,translated
 {n} changeover conflict{s},{n} changeover conflict{s},{n} تعارض تبديل{s},screens/TapeChart.tsx,n s,translated
-{n} child,{n} child,{n} طفل,screens/PublicCheckin.tsx; screens/RegistrationCard.tsx,n,translated
+{n} child,{n} child,{n} طفل,components/BookingDialog.tsx; screens/PublicCheckin.tsx; screens/RegistrationCard.tsx,n,translated
+{n} children,{n} children,,components/BookingDialog.tsx,n,needs_translation
 {n} codes,{n} codes,{n} رمز,screens/QrCodes.tsx,n,translated
 {n} day{s} before arrival.,{n} day{s} before arrival.,{n} يوم{s} قبل الوصول.,components/CancelPanel.tsx,n s,translated
 {n} documents issued · last ICV {icv} · Phase 2: {status}.,{n} documents issued · last ICV {icv} · Phase 2: {status}.,صدر {n} مستند · آخر عداد {icv} · المرحلة الثانية: {status}.,screens/settings/cards.tsx,n icv status,translated
@@ -67,6 +71,8 @@
 {room} hasn't been cleaned yet.,{room} hasn't been cleaned yet.,{room} لم تُنظَّف بعد.,components/RoomChangeDialog.tsx,room,translated
 {rooms} rooms · {booked} in use,{rooms} rooms · {booked} in use,{rooms} غرف · {booked} قيد الاستخدام,screens/TapeChart.tsx,rooms booked,translated
 {sold} of {total} rooms,{sold} of {total} rooms,{sold} من {total} غرف,screens/Reports.tsx,sold total,translated
+{tax} {rate}%,{tax} {rate}%,{tax} {rate}%,screens/FolioView.tsx,tax rate,translated
+{tax} rate,{tax} rate,نسبة {tax},screens/FolioView.tsx,tax,translated
 {tax} summary,{tax} summary,ملخص {tax},screens/FolioView.tsx,tax,translated
 {type} room,{type} room,غرفة {type},screens/PublicCheckin.tsx,type,translated
 {type}: stay total -{amt} (now {total}),{type}: stay total -{amt} (now {total}),{type}: إجمالي الإقامة -{amt} (الآن {total}),components/RoomChangeDialog.tsx,type amt total,translated
@@ -80,12 +86,14 @@
 "300 pax sangeet, veg buffet, DJ till 1am, green room for the bride…","300 pax sangeet, veg buffet, DJ till 1am, green room for the bride…",300 ضيف سانجيت، بوفيه نباتي، دي جي حتى الساعة 1 صباحاً، غرفة للعروس…,screens/Banquet.tsx,,translated
 A masked Aadhaar (last 4 digits showing) is fine.,A masked Aadhaar (last 4 digits showing) is fine.,يكفي آدهار مخفي تظهر فيه آخر 4 أرقام.,screens/PublicCheckin.tsx,,translated
 "A multi-room booking can't override a blacklist. Book one room, or remove the flag on the guest profile.","A multi-room booking can't override a blacklist. Book one room, or remove the flag on the guest profile.",لا يمكن لحجز متعدد الغرف تجاوز القائمة السوداء. احجز غرفة واحدة، أو أزل العلامة من ملف النزيل.,components/BookingDialog.tsx,,translated
+A supervisor passes the inspection,A supervisor passes the inspection,,screens/HkApp.tsx,,needs_translation
 A walk-in arrives today,A walk-in arrives today,الحجز المباشر يصل اليوم,components/BookingDialog.tsx,,translated
 AC,AC,مكيف,screens/Setup.tsx,,translated
 Accept,Accept,قبول,components/BookingRequests.tsx; screens/HkApp.tsx,,translated
 Accepted {name}.,Accepted {name}.,تم قبول {name}.,components/BookingRequests.tsx,name,translated
 Acknowledge,Acknowledge,إقرار,screens/EndOfDayWizard.tsx,,translated
 Acknowledged by {who} at {when}: {why},Acknowledged by {who} at {when}: {why},أقرّه {who} في {when}: {why},screens/EndOfDayWizard.tsx,who when why,translated
+Action,Action,,screens/VoidAllowanceReport.tsx,,needs_translation
 Actions,Actions,إجراءات,screens/FolioView.tsx,,translated
 Active,Active,نشط,screens/settings/AccessPages.tsx,,translated
 Actual check-in,Actual check-in,الوصول الفعلي,screens/RegistrationCard.tsx,,translated
@@ -117,11 +125,12 @@ Advance Percent,Advance Percent,نسبة الدفعة المقدمة,screens/Set
 "After the desk is live, put an AI concierge on your WhatsApp number — it uses Kamra's tools. Metered by HeyKoala; the PMS stays free.","After the desk is live, put an AI concierge on your WhatsApp number — it uses Kamra's tools. Metered by HeyKoala; the PMS stays free.",,screens/Setup.tsx,,needs_translation
 Age,Age,العمر,screens/RegistrationCard.tsx,,translated
 Agreed charge / night,Agreed charge / night,,components/BookingDialog.tsx,,needs_translation
+Agrees with folios,Agrees with folios,مطابق للفواتير,screens/AuditPack.tsx,,translated
 AI Agent,AI Agent,وكيل الذكاء الاصطناعي,screens/Today.tsx,,translated
 AI assistant (bring your own key),AI assistant (bring your own key),مساعد الذكاء الاصطناعي (مفتاحك الخاص),screens/settings/cards.tsx,,translated
 Air Conditioning,Air Conditioning,تكييف الهواء,screens/Setup.tsx,,translated
 Alcohol,Alcohol,كحول,screens/FolioView.tsx,,translated
-All,All,الكل,screens/Kitchen.tsx; screens/POS.tsx,,translated
+All,All,الكل,screens/Kitchen.tsx; screens/POS.tsx; screens/VoidAllowanceReport.tsx,,translated
 All ({n}),All ({n}),الكل ({n}),screens/POS.tsx,n,translated
 All audits,All audits,كل عمليات التدقيق,screens/Billing.tsx,,translated
 All Floors,All Floors,كل الطوابق,screens/HousekeepingBoard.tsx; screens/QrCodes.tsx; screens/Today.tsx,,translated
@@ -161,6 +170,7 @@ Arriving around,Arriving around,موعد الوصول التقريبي,screens/P
 "ask to see, correct or erase your data, or withdraw consent, by contacting {contact}.","ask to see, correct or erase your data, or withdraw consent, by contacting {contact}.",اطلب الاطلاع على بياناتك أو تصحيحها أو حذفها، أو اسحب موافقتك، بالتواصل مع {contact}.,components/PrivacyNotice.tsx,contact,translated
 "ask to see, correct or erase your data, or withdraw consent, by contacting the hotel.","ask to see, correct or erase your data, or withdraw consent, by contacting the hotel.",اطلب الاطلاع على بياناتك أو تصحيحها أو حذفها، أو اسحب موافقتك، بالتواصل مع الفندق.,components/PrivacyNotice.tsx,,translated
 Assign {n} room{s},Assign {n} room{s},تعيين {n} غرفة{s},screens/TapeChart.tsx,n s,translated
+Assign {task} to,Assign {task} to,,screens/HousekeepingBoard.tsx,task,needs_translation
 Assign room,Assign room,تخصيص غرفة,screens/RegistrationCard.tsx,,translated
 assigned to you,assigned to you,مخصص لك,screens/HkApp.tsx,,translated
 Assigning...,Assigning...,جارٍ التعيين...,screens/TapeChart.tsx,,translated
@@ -179,8 +189,8 @@ Balance,Balance,الرصيد,screens/FolioView.tsx; screens/RegistrationCard.tsx
 Balance {cur},Balance {cur},الرصيد {cur},screens/Billing.tsx,cur,translated
 Banquets,Banquets,المآدب,screens/Banquet.tsx,,translated
 Base URL,Base URL,,screens/settings/cards.tsx,,needs_translation
+before {tax},before {tax},قبل {tax},screens/FolioView.tsx,tax,translated
 "Before check-out: withhold anything for damage, then refund the rest.","Before check-out: withhold anything for damage, then refund the rest.",قبل المغادرة: احتجز ما يلزم مقابل الأضرار، ثم أعد الباقي.,components/SecurityDepositPanel.tsx,,translated
-before GST,before GST,قبل GST,screens/FolioView.tsx,,translated
 Bench,Bench,Bench,screens/SystemHealth.tsx,,translated
 Bill,Bill,فاتورة,screens/POS.tsx,,translated
 Bill to,Bill to,فوترة إلى,screens/FolioView.tsx,,translated
@@ -207,6 +217,7 @@ Browser full screen,Browser full screen,ملء شاشة المتصفح,screens/K
 Business date,Business date,تاريخ العمل,screens/CashierTill.tsx; screens/EndOfDay.tsx; screens/EndOfDayWizard.tsx,,translated
 Business date {bd} · property time {now},Business date {bd} · property time {now},تاريخ العمل {bd} · وقت المنشأة {now},screens/EndOfDay.tsx,bd now,translated
 Business date {d},Business date {d},تاريخ العمل {d},screens/AuditPack.tsx,d,translated
+By,By,بواسطة,screens/VoidAllowanceReport.tsx,,translated
 by event date,by event date,حسب تاريخ المناسبة,screens/Banquet.tsx,,translated
 By event type,By event type,حسب نوع المناسبة,screens/Banquet.tsx,,translated
 By hall,By hall,حسب القاعة,screens/Banquet.tsx,,translated
@@ -239,7 +250,7 @@ Cashier PIN required for money actions.,Cashier PIN required for money actions.,
 Cashier shift report,Cashier shift report,تقرير وردية أمين الصندوق,screens/Reports.tsx,,translated
 Cashier till,Cashier till,صندوق أمين الصندوق,screens/Billing.tsx,,translated
 Cashier total,Cashier total,إجمالي الصراف,screens/AuditPack.tsx,,translated
-Cashier unlocked — money actions are open for 15 minutes.,Cashier unlocked — money actions are open for 15 minutes.,تم فتح أمين الصندوق — إجراءات المال مفتوحة لمدة 15 دقيقة.,screens/FolioView.tsx,,translated
+Cashier unlocked — money actions are open for {n} minutes.,Cashier unlocked — money actions are open for {n} minutes.,تم فتح أمين الصندوق — إجراءات المال مفتوحة لمدة {n} دقيقة.,screens/FolioView.tsx,n,translated
 Category,Category,الفئة,screens/Setup.tsx; screens/Tickets.tsx,,translated
 Central reservations,Central reservations,الحجوزات المركزية,screens/CRS.tsx,,translated
 CGST ({rate}%),CGST ({rate}%),CGST ({rate}%),screens/POS.tsx,rate,translated
@@ -269,6 +280,7 @@ Checks,Checks,الفحوصات,screens/SystemHealth.tsx,,translated
 Children,Children,الأطفال,components/BookingDialog.tsx; screens/CRS.tsx,,translated
 Children Policy:,Children Policy:,سياسة الأطفال:,screens/PublicCheckin.tsx,,translated
 Children:,Children:,الأطفال:,components/PrivacyNotice.tsx,,translated
+Choose a housekeeper…,Choose a housekeeper…,,screens/HousekeepingBoard.tsx,,needs_translation
 Choose Save as PDF in the print dialog,Choose Save as PDF in the print dialog,اختر الحفظ بصيغة PDF في نافذة الطباعة,screens/AuditPack.tsx,,translated
 Choose which columns this table shows,Choose which columns this table shows,اختر الأعمدة المعروضة في هذا الجدول,components/ResourceScreen.tsx,,translated
 Choose…,Choose…,اختر…,components/CheckInDialog.tsx,,translated
@@ -386,14 +398,16 @@ Deposit,Deposit,عربون,components/DepositPanel.tsx,,translated
 Deposit held,Deposit held,التأمين المحتجز,screens/RegistrationCard.tsx,,translated
 Description,Description,الوصف,screens/FolioView.tsx,,translated
 Detach profile,Detach profile,فصل الملف,components/BookingDialog.tsx,,translated
+Detail,Detail,,screens/VoidAllowanceReport.tsx,,needs_translation
 Details,Details,التفاصيل,screens/Tickets.tsx,,translated
 Developers & API keys,Developers & API keys,,screens/settings/SettingsHub.tsx,,needs_translation
 Diary,Diary,اليومية,screens/Banquet.tsx,,translated
+Differs from folios by {amount},Differs from folios by {amount},يختلف عن الفواتير بمقدار {amount},screens/AuditPack.tsx,amount,translated
 Dirty,Dirty,متسخة,screens/Dashboard.tsx; screens/Today.tsx,,translated
 Discard,Discard,,screens/settings/ModulePage.tsx,,needs_translation
 Disconnect,Disconnect,قطع الاتصال,screens/Marketplace.tsx,,translated
 Discount,Discount,خصم,screens/POS.tsx,,translated
-Dismiss,Dismiss,إغلاق,components/UpdateNag.tsx; screens/POS.tsx; screens/settings/ModulePage.tsx,,translated
+Dismiss,Dismiss,إغلاق,components/UpdateNag.tsx; screens/HkApp.tsx; screens/POS.tsx; screens/settings/ModulePage.tsx,,translated
 Docker (self-host),Docker (self-host),Docker (استضافة ذاتية),screens/SystemHealth.tsx,,translated
 Docket,Docket,إيصال,screens/Laundry.tsx,,translated
 Documents,Documents,المستندات,screens/RegistrationCard.tsx,,translated
@@ -423,7 +437,7 @@ End of Day for {bd} is complete.,End of Day for {bd} is complete.,اكتملت �
 "End of Day walks the night audit checklist, posts room and tax, rolls the business date and prints the audit pack. Runs automatically at 3 AM.","End of Day walks the night audit checklist, posts room and tax, rolls the business date and prints the audit pack. Runs automatically at 3 AM.",نهاية اليوم تمر على قائمة فحص التدقيق الليلي، وترحّل الغرفة والضريبة، وتنقل تاريخ العمل وتطبع حزمة التدقيق. تعمل تلقائيًا الساعة 3 صباحًا.,screens/Billing.tsx,,translated
 Ends,Ends,ينتهي,screens/Banquet.tsx,,translated
 Enquiries and tentative holds,Enquiries and tentative holds,الاستفسارات والحجوزات المؤقتة,screens/Banquet.tsx,,translated
-"Enter 1–99%, or a {cur} amount under the line's {cur}{amount} (before GST).","Enter 1–99%, or a {cur} amount under the line's {cur}{amount} (before GST).",أدخل 1–99٪، أو مبلغاً بـ {cur} أقل من {cur}{amount} للبند (قبل GST).,screens/FolioView.tsx,cur amount,translated
+"Enter 1–99%, or a {cur} amount under the line's {cur}{amount} (before {tax}).","Enter 1–99%, or a {cur} amount under the line's {cur}{amount} (before {tax}).",أدخل 1–99٪، أو مبلغاً بـ {cur} أقل من {cur}{amount} للبند (قبل {tax}).,screens/FolioView.tsx,cur amount tax,translated
 Enter your PIN to continue,Enter your PIN to continue,أدخل رمزك للمتابعة,components/PinPad.tsx,,translated
 Entire place,Entire place,المكان بالكامل,screens/Setup.tsx,,translated
 Entire place - checks in as one unit,Entire place - checks in as one unit,المكان بالكامل - يُسجَّل الوصول كوحدة واحدة,components/CheckInDialog.tsx,,translated
@@ -437,6 +451,7 @@ Every arrival for this day already has a room.,Every arrival for this day alread
 "Every guest, their stays and lifetime value. Click for the full journey.","Every guest, their stays and lifetime value. Click for the full journey.",كل ضيف وإقاماته وقيمته مدى الحياة. انقر للرحلة الكاملة.,screens/Guests.tsx,,translated
 Every room at a glance. Tap a room to set its status.,Every room at a glance. Tap a room to set its status.,كل الغرف في لمحة. اضغط على غرفة لتغيير حالتها.,screens/HousekeepingBoard.tsx,,translated
 Every room at a glance. You can mark rooms Clean or Dirty.,Every room at a glance. You can mark rooms Clean or Dirty.,كل الغرف في لمحة. يمكنك تعليم الغرف نظيفة أو متسخة.,screens/HousekeepingBoard.tsx,,translated
+"Every void, allowance and cancelled invoice: who, when and why.","Every void, allowance and cancelled invoice: who, when and why.",كل إلغاء وخصم وفاتورة ملغاة: من ومتى ولماذا.,screens/VoidAllowanceReport.tsx,,translated
 Everything came back,Everything came back,عاد كل شيء,screens/Laundry.tsx,,translated
 "Everything Kamra does, one room at a time. Pick where you want to work.","Everything Kamra does, one room at a time. Pick where you want to work.",كل ما تفعله كامرا، غرفة بغرفة. اختر أين تريد العمل.,screens/AppLauncher.tsx,,translated
 Exceptions,Exceptions,الاستثناءات,screens/EndOfDay.tsx,,translated
@@ -479,14 +494,17 @@ Float,Float,الرصيد الابتدائي,screens/CashierTill.tsx,,translated
 Floor,Floor,الطابق,screens/QrCodes.tsx,,translated
 Floor {f},Floor {f},الطابق {f},screens/HousekeepingBoard.tsx; screens/QrCodes.tsx,f,translated
 Focus mode — hide PMS menus,Focus mode — hide PMS menus,وضع التركيز — إخفاء قوائم النظام,screens/Kitchen.tsx; screens/POS.tsx,,translated
-Folio,Folio,الفاتورة,screens/Billing.tsx; screens/Laundry.tsx,,translated
+Folio,Folio,الفاتورة,screens/Billing.tsx; screens/Laundry.tsx; screens/VoidAllowanceReport.tsx,,translated
 Folios,Folios,الفواتير,screens/Billing.tsx,,translated
+Food & beverage is taxed at the property's F&B rate.,Food & beverage is taxed at the property's F&B rate.,تخضع الأطعمة والمشروبات لنسبة ضريبة الأطعمة والمشروبات في المنشأة.,screens/FolioView.tsx,,translated
 For {name},For {name},لـ {name},screens/FolioView.tsx,name,translated
 "for guests under {age} the hotel records only what registration law requires, usually name and age, and never uses it for marketing.","for guests under {age} the hotel records only what registration law requires, usually name and age, and never uses it for marketing.",للنزلاء دون {age} عامًا يسجّل الفندق فقط ما يتطلبه نظام التسجيل، وعادةً الاسم والعمر، ولا يستخدمه أبدًا للتسويق.,components/PrivacyNotice.tsx,age,translated
 Free,Free,,screens/TapeChart.tsx,,needs_translation
+Free cancellation until {date}; after that {fee} is charged.,Free cancellation until {date}; after that {fee} is charged.,,components/BookingDialog.tsx,date fee,needs_translation
+Free cancellation.,Free cancellation.,,components/BookingDialog.tsx,,needs_translation
 Free Child Age Limit (Years),Free Child Age Limit (Years),حد عمر الطفل المجاني (سنوات),screens/Setup.tsx,,translated
 from,from,من,components/ResourceScreen.tsx,,translated
-From,From,من,components/BookingDialog.tsx; screens/Banquet.tsx,,translated
+From,From,من,components/BookingDialog.tsx; screens/Banquet.tsx; screens/VoidAllowanceReport.tsx,,translated
 Front desk (name & sign),Front desk (name & sign),الاستقبال (الاسم والتوقيع),screens/RegistrationCard.tsx,,translated
 Front Desk Overview,Front Desk Overview,نظرة عامة على الاستقبال,screens/Today.tsx,,translated
 Full name,Full name,,screens/settings/AccessPages.tsx,,needs_translation
@@ -505,7 +523,6 @@ Grand total,Grand total,الإجمالي الكلي,screens/FolioView.tsx,,trans
 GRC,GRC,بطاقة التسجيل,screens/Today.tsx,,translated
 Group,Group,مجموعة,screens/TapeChart.tsx,,translated
 Group folio,Group folio,فاتورة المجموعة,screens/FolioView.tsx,,translated
-GST {rate}%,GST {rate}%,GST {rate}%,screens/FolioView.tsx,rate,translated
 Guest,Guest,ضيف,components/CommandPalette.tsx; screens/Billing.tsx; screens/FolioView.tsx; screens/Guests.tsx; screens/Laundry.tsx; screens/RegistrationCard.tsx; screens/Today.tsx,,translated
 Guest allergy,Guest allergy,حساسية الضيف,screens/Kitchen.tsx,,translated
 "Guest conversations on your own number - confirmations go out automatically, replies land here and on the desk queue.","Guest conversations on your own number - confirmations go out automatically, replies land here and on the desk queue.",محادثات الضيوف على رقمك - التأكيدات تُرسل تلقائياً، والردود تصل هنا وإلى قائمة الاستقبال.,screens/WhatsAppChat.tsx,,translated
@@ -559,7 +576,6 @@ Import {n} booking{s},Import {n} booking{s},استيراد {n} حجز{s},screens
 Importing…,Importing…,جارٍ الاستيراد…,screens/Setup.tsx,,translated
 In {n} days,In {n} days,خلال {n} أيام,screens/Today.tsx,n,translated
 In / out,In / out,دخول / خروج,screens/FolioView.tsx,,translated
-In balance,In balance,متوازن,screens/AuditPack.tsx,,translated
 In hand,In hand,في اليد,screens/Laundry.tsx,,translated
 In house,In house,داخل الفندق,screens/Dashboard.tsx,,translated
 In kitchen,In kitchen,في المطبخ,screens/POS.tsx,,translated
@@ -622,7 +638,7 @@ Listing code,Listing code,رمز القائمة,screens/Setup.tsx,,translated
 Listing name,Listing name,اسم القائمة,screens/Setup.tsx,,translated
 Live quote as you type,Live quote as you type,عرض سعر مباشر أثناء الكتابة,components/BookingDialog.tsx,,translated
 Loading the audit pack…,Loading the audit pack…,جارٍ تحميل حزمة التدقيق…,screens/AuditPack.tsx,,translated
-Loading…,Loading…,جارٍ التحميل…,App.tsx; components/BookingDialog.tsx; components/CheckInDialog.tsx; components/ResourceScreen.tsx; components/RoomChangeDialog.tsx; screens/Banquet.tsx; screens/EndOfDay.tsx; screens/FolioView.tsx; screens/HkApp.tsx; screens/HousekeepingBoard.tsx; screens/PublicCheckin.tsx; screens/QrCodes.tsx; screens/RegistrationCard.tsx; screens/Reports.tsx; screens/SystemHealth.tsx; screens/settings/AccessPages.tsx; screens/settings/SettingsHub.tsx,,translated
+Loading…,Loading…,جارٍ التحميل…,App.tsx; components/BookingDialog.tsx; components/CheckInDialog.tsx; components/ResourceScreen.tsx; components/RoomChangeDialog.tsx; screens/Banquet.tsx; screens/EndOfDay.tsx; screens/FolioView.tsx; screens/HkApp.tsx; screens/HousekeepingBoard.tsx; screens/PublicCheckin.tsx; screens/QrCodes.tsx; screens/RegistrationCard.tsx; screens/Reports.tsx; screens/SystemHealth.tsx; screens/VoidAllowanceReport.tsx; screens/settings/AccessPages.tsx; screens/settings/SettingsHub.tsx,,translated
 Log a lost or found item,Log a lost or found item,تسجيل مفقود أو موجود,screens/HkApp.tsx,,translated
 Log an item,Log an item,تسجيل عنصر,screens/HkApp.tsx,,translated
 Log it,Log it,سجّله,screens/HkApp.tsx,,translated
@@ -700,6 +716,7 @@ No functions in this window.,No functions in this window.,لا مناسبات ف
 No guest message in the last 24 hours - WhatsApp only delivers templates outside the session window. A guest writing to you reopens it.,No guest message in the last 24 hours - WhatsApp only delivers templates outside the session window. A guest writing to you reopens it.,لا رسالة من الضيف خلال 24 ساعة - واتساب يرسل القوالب فقط خارج نافذة الجلسة. رسالة من الضيف تعيد فتحها.,screens/WhatsAppChat.tsx,,translated
 No guests found.,No guests found.,لم يُعثر على ضيوف.,screens/Guests.tsx,,translated
 No halls set up for this property yet — add one under Halls & Venues.,No halls set up for this property yet — add one under Halls & Venues.,لا قاعات مُعدّة لهذا العقار بعد — أضف واحدة تحت القاعات والأماكن.,screens/Banquet.tsx,,translated
+No housekeeping staff,No housekeeping staff,,screens/HousekeepingBoard.tsx,,needs_translation
 No laundry out right now.,No laundry out right now.,لا غسيل خارج الآن.,screens/Laundry.tsx,,translated
 No matches.,No matches.,لا توجد نتائج.,components/CommandPalette.tsx; screens/POS.tsx,,translated
 No one matches.,No one matches.,,screens/settings/AccessPages.tsx,,needs_translation
@@ -721,9 +738,12 @@ No setting matches.,No setting matches.,,screens/settings/SettingsHub.tsx,,needs
 No tables match.,No tables match.,لا طاولات مطابقة.,screens/POS.tsx,,translated
 No transactions yet this session.,No transactions yet this session.,لا معاملات بعد في هذه الجلسة.,screens/CashierTill.tsx,,translated
 No unassigned rooms right now.,No unassigned rooms right now.,لا غرف غير مخصصة الآن.,screens/HkApp.tsx,,translated
+"No voids, allowances or cancelled invoices in this window.","No voids, allowances or cancelled invoices in this window.",لا توجد إلغاءات أو خصومات أو فواتير ملغاة في هذه الفترة.,screens/VoidAllowanceReport.tsx,,translated
 No-shows,No-shows,لم يحضروا,screens/AuditPack.tsx; screens/EndOfDay.tsx; screens/Reports.tsx,,translated
 Nobody is checked in right now.,Nobody is checked in right now.,لا أحد مسجّل وصوله الآن.,screens/Today.tsx,,translated
 Non AC,Non AC,بدون مكيف,screens/Setup.tsx,,translated
+Non-refundable dates ({season}): the full stay is charged on cancellation.,Non-refundable dates ({season}): the full stay is charged on cancellation.,,components/BookingDialog.tsx,season,needs_translation
+Non-refundable from now: {fee} is charged on cancellation.,Non-refundable from now: {fee} is charged on cancellation.,,components/BookingDialog.tsx,fee,needs_translation
 Non-veg,Non-veg,غير نباتي,screens/Kitchen.tsx; screens/POS.tsx,,translated
 None taken,None taken,لم يُحصّل,components/SecurityDepositPanel.tsx,,translated
 Not a corporate booking,Not a corporate booking,ليس حجز شركات,screens/Banquet.tsx,,translated
@@ -804,7 +824,6 @@ Ordered,Ordered,طُلب,screens/Kitchen.tsx,,translated
 OTA,OTA,OTA,components/BookingRequests.tsx; screens/TapeChart.tsx; screens/Today.tsx,,translated
 Other countries run on a simple flat-tax setup - enter the currency code below.,Other countries run on a simple flat-tax setup - enter the currency code below.,الدول الأخرى تعمل بإعداد ضريبة ثابتة بسيط - أدخل رمز العملة أدناه.,screens/Setup.tsx,,translated
 Other country,Other country,دولة أخرى,screens/Setup.tsx,,translated
-Out of balance,Out of balance,غير متوازن,screens/AuditPack.tsx,,translated
 Out of order,Out of order,خارج الخدمة,screens/Dashboard.tsx,,translated
 Out of Order,Out of Order,خارج الخدمة,screens/Today.tsx,,translated
 Outlet,Outlet,المنفذ,screens/QrCodes.tsx,,translated
@@ -827,9 +846,10 @@ Paid outs,Paid outs,مدفوعات للخارج,screens/CashierTill.tsx,,transla
 Park this stay with no room; promote when inventory frees,Park this stay with no room; promote when inventory frees,علّق هذه الإقامة بلا غرفة؛ رقِّها عند توفر المخزون,components/BookingDialog.tsx,,translated
 Parked with no room. Promote it from the reservation when a room frees. Auto-purges 2 days after departure.,Parked with no room. Promote it from the reservation when a room frees. Auto-purges 2 days after departure.,معلّقة بلا غرفة. رقِّها من الحجز عند توفر غرفة. تُحذف تلقائياً بعد يومين من المغادرة.,components/BookingDialog.tsx,,translated
 Part paid,Part paid,مدفوع جزئيًا,components/DepositPanel.tsx,,translated
-"Part to move (percent, or {cur} before GST)","Part to move (percent, or {cur} before GST)",الجزء للنقل (نسبة، أو {cur} قبل GST),screens/FolioView.tsx,cur,translated
+"Part to move (percent, or {cur} before {tax})","Part to move (percent, or {cur} before {tax})",الجزء للنقل (نسبة، أو {cur} قبل {tax}),screens/FolioView.tsx,cur tax,translated
 Party,Party,العدد,screens/POS.tsx,,translated
 Pass an allowance,Pass an allowance,تمرير بدل,screens/FolioView.tsx,,translated
+Pass inspection ✓,Pass inspection ✓,,screens/HkApp.tsx,,needs_translation
 Password,Password,كلمة المرور,screens/Login.tsx,,translated
 Pax,Pax,عدد الضيوف,screens/Banquet.tsx,,translated
 Pax / plan,Pax / plan,الضيوف / الخطة,screens/FolioView.tsx,,translated
@@ -840,6 +860,7 @@ Payment mode,Payment mode,طريقة الدفع,components/BookingDialog.tsx; co
 Payments,Payments,المدفوعات,screens/FolioView.tsx; screens/settings/cards.tsx,,translated
 Payments are handled by the hotel's payment gateway; the hotel does not see your card.,Payments are handled by the hotel's payment gateway; the hotel does not see your card.,تتم المدفوعات عبر بوابة الدفع الخاصة بالفندق؛ ولا يطّلع الفندق على بطاقتك.,components/PrivacyNotice.tsx,,translated
 Per-item prices the app quotes and bills from. A blank express price uses the multiplier in Settings → Housekeeping.,Per-item prices the app quotes and bills from. A blank express price uses the multiplier in Settings → Housekeeping.,,screens/Laundry.tsx,,needs_translation
+Pets,Pets,,components/BookingDialog.tsx,,needs_translation
 Pets Policy:,Pets Policy:,سياسة الحيوانات الأليفة:,screens/PublicCheckin.tsx,,translated
 Petty cash,Petty cash,النثرية,screens/CashierTill.tsx,,translated
 Petty cash →,Petty cash →,النثرية ←,screens/CashierTill.tsx,,translated
@@ -871,7 +892,7 @@ Prev,Prev,السابق,components/ResourceScreen.tsx,,translated
 Preview import,Preview import,معاينة الاستيراد,screens/Setup.tsx,,translated
 Previous,Previous,السابق,screens/TapeChart.tsx,,translated
 Price menu,Price menu,قائمة الأسعار,screens/Laundry.tsx,,translated
-Print,Print,طباعة,screens/AuditPack.tsx; screens/Reports.tsx,,translated
+Print,Print,طباعة,screens/AuditPack.tsx; screens/Reports.tsx; screens/VoidAllowanceReport.tsx,,translated
 Print / share the confirmation letter,Print / share the confirmation letter,طباعة / مشاركة رسالة التأكيد,components/CancelPanel.tsx,,translated
 Print all,Print all,طباعة الكل,screens/AuditPack.tsx,,translated
 Print bill,Print bill,طباعة الفاتورة,screens/POS.tsx,,translated
@@ -945,6 +966,7 @@ Remove & retake,Remove & retake,إزالة وإعادة التصوير,screens/P
 Replace,Replace,استبدال,screens/RegistrationCard.tsx,,translated
 Reply to the guest…,Reply to the guest…,الرد على الضيف…,screens/WhatsAppChat.tsx,,translated
 Report date,Report date,تاريخ التقرير,screens/Reports.tsx,,translated
+Reports,Reports,التقارير,screens/VoidAllowanceReport.tsx,,translated
 Reprint KOT,Reprint KOT,إعادة طباعة أمر المطبخ,screens/POS.tsx,,translated
 Request implementation,Request implementation,طلب التنفيذ,screens/Marketplace.tsx,,translated
 Requests,Requests,الطلبات,screens/RegistrationCard.tsx,,translated
@@ -1019,6 +1041,7 @@ Search,Search,بحث,screens/CRS.tsx; screens/EndOfDayWizard.tsx,,translated
 "Search a guest, phone, booking or invoice.","Search a guest, phone, booking or invoice.",ابحث عن ضيف أو هاتف أو حجز أو فاتورة.,components/CommandPalette.tsx,,translated
 "Search a guest, phone, booking, invoice - or jump to any screen…","Search a guest, phone, booking, invoice - or jump to any screen…",ابحث عن ضيف أو هاتف أو حجز أو فاتورة - أو انتقل لأي شاشة…,components/CommandPalette.tsx,,translated
 Search by date,Search by date,بحث بالتاريخ,screens/EndOfDay.tsx,,translated
+"Search folio, staff or reason","Search folio, staff or reason",ابحث عن فاتورة أو موظف أو سبب,screens/VoidAllowanceReport.tsx,,translated
 Search menu items…,Search menu items…,بحث في عناصر القائمة…,screens/POS.tsx,,translated
 Search name or email,Search name or email,,screens/settings/AccessPages.tsx,,needs_translation
 "Search reservations, guests, rooms…","Search reservations, guests, rooms…",ابحث عن الحجوزات والضيوف والغرف…,AppShell.tsx,,translated
@@ -1084,6 +1107,7 @@ Simulate payment (test mode),Simulate payment (test mode),محاكاة الدف�
 Site,Site,الموقع,screens/SystemHealth.tsx,,translated
 Skip the paperwork at the desk - just show your ID on arrival and pick up the key. See you soon!,Skip the paperwork at the desk - just show your ID on arrival and pick up the key. See you soon!,لا حاجة للأوراق عند الاستقبال - فقط أظهر هويتك عند الوصول واستلم المفتاح. نراك قريبًا!,screens/PublicCheckin.tsx,,translated
 SLA breached,SLA breached,خُرق مستوى الخدمة,screens/Tickets.tsx,,translated
+Sleeps up to {guests},Sleeps up to {guests},,components/BookingDialog.tsx,guests,needs_translation
 Smaller than the pax count,Smaller than the pax count,أصغر من عدد الضيوف,screens/Banquet.tsx,,translated
 Soft hold you can sell over,Soft hold you can sell over,حجز مرن يمكن البيع فوقه,screens/Banquet.tsx,,translated
 Sold out,Sold out,نفدت,components/BookingRequests.tsx,,translated
@@ -1109,6 +1133,7 @@ Subtotal,Subtotal,المجموع الفرعي,screens/POS.tsx,,translated
 Subtotals by cashier and transaction code,Subtotals by cashier and transaction code,المجاميع الفرعية حسب الصراف ورمز المعاملة,screens/AuditPack.tsx,,translated
 Suggested room plan for {date},Suggested room plan for {date},خطة غرف مقترحة لـ {date},screens/TapeChart.tsx,date,translated
 Summary,Summary,الملخص,screens/FolioView.tsx,,translated
+Supervisor passes,Supervisor passes,,screens/HkApp.tsx,,needs_translation
 Switch app,Switch app,تبديل التطبيق,AppShell.tsx,,translated
 Switch off {name} for this property?,Switch off {name} for this property?,,screens/settings/AccessPages.tsx; screens/settings/SettingsHub.tsx,name,needs_translation
 "Switch off what this property doesn't run. Its apps leave the launcher, search and the AI agent's tools for everyone. Data is kept and comes back when you switch it on.","Switch off what this property doesn't run. Its apps leave the launcher, search and the AI agent's tools for everyone. Data is kept and comes back when you switch it on.",,screens/settings/AccessPages.tsx,,needs_translation
@@ -1165,8 +1190,8 @@ Tick the lines moving to the new bill.,Tick the lines moving to the new bill.,ح
 Ticket {kot} {dest},Ticket {kot} {dest},تذكرة {kot} {dest},screens/Kitchen.tsx,kot dest,translated
 Time slot,Time slot,الفترة الزمنية,components/BookingDialog.tsx,,translated
 Times drive the house position: back-to-back rooms flag a conflict when the arrival lands before the departure.,Times drive the house position: back-to-back rooms flag a conflict when the arrival lands before the departure.,الأوقات تحدد موقع الفندق: الغرف المتتالية تعلّم تعارضاً عندما يصل الضيف قبل مغادرة السابق.,screens/TapeChart.tsx,,translated
-to,to,إلى,components/ResourceScreen.tsx; screens/TapeChart.tsx,,translated
-To,To,إلى,components/BookingDialog.tsx; screens/Banquet.tsx,,translated
+to,to,إلى,components/ResourceScreen.tsx; screens/TapeChart.tsx; screens/VoidAllowanceReport.tsx,,translated
+To,To,إلى,components/BookingDialog.tsx; screens/Banquet.tsx; screens/VoidAllowanceReport.tsx,,translated
 to close,to close,للإغلاق,components/CommandPalette.tsx,,translated
 to open,to open,للفتح,components/CommandPalette.tsx,,translated
 to pick up a room.,to pick up a room.,لاستلام غرفة.,screens/HkApp.tsx,,translated
@@ -1216,6 +1241,7 @@ Villa,Villa,فيلا,screens/Setup.tsx,,translated
 VIP,VIP,VIP,components/BookingDialog.tsx; components/CheckInDialog.tsx; screens/Guests.tsx; screens/HkApp.tsx; screens/TapeChart.tsx,,translated
 Void,Void,إبطال,screens/FolioView.tsx,,translated
 Void this charge,Void this charge,إبطال هذه الرسوم,screens/FolioView.tsx,,translated
+Voids & Allowances,Voids & Allowances,الإلغاءات والخصومات,screens/Reports.tsx; screens/VoidAllowanceReport.tsx,,translated
 Voucher,Voucher,قسيمة,components/BookingDialog.tsx,,translated
 WAITING,WAITING,بانتظار البدء,screens/Kitchen.tsx,,translated
 Waitlist,Waitlist,قائمة الانتظار,components/BookingDialog.tsx,,translated
@@ -1239,7 +1265,7 @@ What they asked for,What they asked for,ما طلبوه,screens/Banquet.tsx,,tra
 "What this money is: against the bill, an advance, or a refundable deposit","What this money is: against the bill, an advance, or a refundable deposit",ما هذا المال: مقابل الفاتورة، أو مقدمة، أو تأمين قابل للاسترداد,screens/FolioView.tsx,,translated
 What you agreed for them,What you agreed for them,,components/BookingDialog.tsx,,needs_translation
 WhatsApp,WhatsApp,واتساب,screens/WhatsAppChat.tsx,,translated
-When,When,متى,screens/CashierTill.tsx,,translated
+When,When,متى,screens/CashierTill.tsx; screens/VoidAllowanceReport.tsx,,translated
 "When off, phone and ID numbers in tool results are shortened to the last four digits before they leave Kamra.","When off, phone and ID numbers in tool results are shortened to the last four digits before they leave Kamra.",,screens/settings/cards.tsx,,needs_translation
 "When the guest pays, the deposit posts here automatically.","When the guest pays, the deposit posts here automatically.",عند دفع النزيل، يُسجَّل العربون هنا تلقائيًا.,components/DepositPanel.tsx,,translated
 Where the months are landing,Where the months are landing,أين تهبط الأشهر,screens/Banquet.tsx,,translated

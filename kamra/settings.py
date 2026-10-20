@@ -181,7 +181,7 @@ MODULES: tuple[Module, ...] = (
 				       "bookings made after this time are kept."),
 			)),
 			Section("auditchecks", "Night audit checklist",
-			        "Checks run before the night audit closes the day (Finance → Billing → Night audit). "
+			        "Checks run before the night audit closes the day (Finance → End of Day). "
 			        "A blocking check stops a manual run until it is resolved or a supervisor "
 			        "acknowledges it with a reason; a warning is listed in the audit pack only.", (
 				S("na_block_open_tills", "Open tills block the audit", "check", 1,
@@ -223,14 +223,16 @@ MODULES: tuple[Module, ...] = (
 				S("hk_sla_medium", "Medium", "number", 90, min=1, max=1440, unit="min"),
 				S("hk_sla_low", "Low", "number", 180, min=1, max=2880, unit="min"),
 			)),
-			Section("turnover", "Room turnover", "The default turnover profile for checkout cleans.", (
-				S("clean_duration_minutes", "Checkout clean takes", "number", 120, "turnover", min=5, max=1440, unit="min"),
+			# Only knobs that code acts on live here. Clean duration, the
+			# sellable buffer and same-day turns are fields on the Turnover
+			# Profile, but nothing reads them yet - showing them would promise
+			# behaviour that doesn't exist.
+			Section("turnover", "Room turnover", "Inspection after checkout cleans.", (
 				S("requires_inspection", "Inspect after every checkout clean", "check", 0, "turnover",
-				  hint="A supervisor inspection task is created when the clean is done."),
-				S("inspect_duration_minutes", "Inspection takes", "number", 30, "turnover", min=5, max=480, unit="min"),
-				S("buffer_after_ready_minutes", "Buffer before the room is sellable", "number", 0, "turnover", min=0, max=1440, unit="min"),
-				S("same_day_turn_allowed", "Allow same-day turns", "check", 1, "turnover",
-				  hint="A room may take a new arrival on the day the last guest leaves."),
+				  hint="When a checkout clean is done, a supervisor inspection task is created. "
+				       "Passing it marks the room Ready."),
+				S("inspect_duration_minutes", "Inspection takes", "number", 30, "turnover", min=5, max=480, unit="min",
+				  hint="The inspection task is due this long after the clean is done."),
 			)),
 			Section("laundry", "Laundry", "", (
 				S("laundry_express_multiplier", "Express price", "number", 1.5, min=1, max=5, unit="x regular",
@@ -255,6 +257,7 @@ MODULES: tuple[Module, ...] = (
 		"fnb", "F&B", "Restaurant outlets, the menu and table reservations.",
 		editors=("Hotel Admin", "Finance"), toggle=True,
 		related=(("Outlets", "/outlets"), ("Menu", "/menu-items"), ("Kitchen inventory", "/inventory"),
+		         ("Kitchen display", "/kitchen"),
 		         ("QR codes", "/qr-codes")),
 		sections=(
 			Section("kot", "Kitchen orders (KOT)", "What happens when a captain sends an order to the kitchen.", (
@@ -262,6 +265,9 @@ MODULES: tuple[Module, ...] = (
 				  hint="On: sending an order prints the KOT and shows it on the kitchen display as "
 				       "started, so nobody presses Start. Off: the kitchen presses Start and each till "
 				       "chooses whether to print. An outlet can override this on its own record."),
+				S("pos_print_void_slips", "Print void slips in the kitchen", "check", 1,
+				  hint="A line voided or an order cancelled after its KOT was sent prints a VOID "
+				       "slip on the kitchen printer that had it, so the cook stops."),
 			)),
 			Section("tables", "Table reservations", "Which bookings show against a table on the POS floor.", (
 				S("pos_reservation_before_min", "Show a reservation from", "number", 60, min=0, max=480, unit="min before"),

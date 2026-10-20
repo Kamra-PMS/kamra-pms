@@ -190,6 +190,51 @@ const STAY_COLS: Column[] = [
   { key: "source", label: "Source" },
 ]
 
+/* Arrivals carry two more columns (ETA, no-show policy) and two buttons,
+   so the stay's detail folds into fewer columns - the full twelve overflowed
+   the card at laptop widths and cut off the policy the step is about. */
+const ARRIVAL_COLS: Column[] = [
+  { key: "reservation", label: "Confirmation", render: resLink },
+  {
+    key: "guest_name",
+    label: "Guest",
+    render: (r) => (
+      <div className="min-w-32">
+        <div>{String(r.guest_name ?? "-")}</div>
+        <div className="text-xs text-zinc-500">
+          {[r.room_type, r.room, `${r.adults ?? 0}/${r.children ?? 0}`, r.source]
+            .filter((v) => v !== null && v !== undefined && v !== "")
+            .join(" · ")}
+        </div>
+      </div>
+    ),
+  },
+  {
+    key: "check_in_date",
+    label: "Arrival",
+    kind: "date",
+    render: (r) => (
+      <div className="whitespace-nowrap">
+        <div>{r.check_in_date ? fmtDay(r.check_in_date) : "-"}</div>
+        <div className="text-xs text-zinc-500">
+          {Number(r.nights) === 1 ? "1 night" : `${r.nights ?? 0} nights`}
+        </div>
+      </div>
+    ),
+  },
+  {
+    key: "rate",
+    label: "Rate",
+    kind: "money",
+    render: (r) => (
+      <div>
+        <div>{r.rate === null || r.rate === undefined || r.rate === "" ? "-" : money(r.rate)}</div>
+        {r.rate_plan ? <div className="text-xs text-zinc-500">{String(r.rate_plan)}</div> : null}
+      </div>
+    ),
+  },
+]
+
 const FOLIO_COLS: Column[] = [
   { key: "folio", label: "Folio", render: folioLink },
   { key: "folio_type", label: "Type" },
@@ -489,7 +534,7 @@ export default function EndOfDayWizard() {
       <CheckBlock check={c} state={state} onAck={ack}>
         <StepTable
           cols={[
-            ...STAY_COLS.filter((x) => x.key !== "balance"),
+            ...ARRIVAL_COLS,
             { key: "eta", label: "ETA" },
             {
               key: "policy",
@@ -506,7 +551,7 @@ export default function EndOfDayWizard() {
           empty="Every arrival is checked in."
           actions={(r) =>
             state.ran ? null : (
-              <div className="flex justify-end gap-1">
+              <div className="flex flex-col items-stretch gap-1">
                 <Button variant="outline" className="h-7 px-2 text-xs"
                   onClick={() => navigate(`/reservations?q=${encodeURIComponent(String(r.reservation))}`)}>
                   {t("Check in")}

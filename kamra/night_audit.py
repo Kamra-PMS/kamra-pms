@@ -1114,6 +1114,15 @@ def _cancellations(property: str, bd: str) -> list[dict]:
 
 # --- End of Day wizard ---------------------------------------------------------
 
+def _lost_create_race(e: Exception) -> bool:
+	"""True when an insert failed because a concurrent request created the
+	same row first: a duplicate key, or MariaDB's snapshot-isolation error
+	1020 (raised by Frappe as QueryDeadlockError)."""
+	return isinstance(e, (frappe.DuplicateEntryError, frappe.QueryDeadlockError)) \
+		or bool(getattr(frappe.db, "is_duplicate_entry", None)
+		        and frappe.db.is_duplicate_entry(e))
+
+
 def _draft(property: str, bd: str, create: bool = False) -> str | None:
 	name = frappe.db.get_value(
 		"Night Audit Run",
@@ -1126,7 +1135,26 @@ def _draft(property: str, bd: str, create: bool = False) -> str | None:
 		"run_trigger": "Manual", "run_by": frappe.session.user,
 		"log": "End of Day started.",
 	})
-	doc.insert(ignore_permissions=True)
+	try:
+		doc.insert(ignore_permissions=True)
+	except Exception as e:
+		# The run's name is AUDIT-<date>-<property>: two first loads of the
+		# wizard at once (a double render, two tabs) both try to create it.
+		# The loser fails on the key - MariaDB's snapshot isolation reports
+		# that as 1020 "Record has changed since last read" - and the draft
+		# it wanted now exists. Nothing was written before this point, so
+		# drop the transaction (a fresh one sees the winner's row) and use
+		# the row the other request made.
+		if not _lost_create_race(e):
+			raise
+		frappe.db.rollback()
+		name = frappe.db.get_value(
+			"Night Audit Run",
+			{"property": property, "business_date": bd, "status": "Draft"},
+			"name")
+		if not name:
+			raise
+		return name
 	return doc.name
 
 

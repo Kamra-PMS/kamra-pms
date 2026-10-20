@@ -37,6 +37,7 @@ import DepositPanel from "../components/DepositPanel"
 import SecurityDepositPanel from "../components/SecurityDepositPanel"
 import RoomChangeDialog from "../components/RoomChangeDialog"
 import { useCreditCheckout } from "../components/CreditCheckout"
+import StayInstructions from "../components/StayInstructions"
 import { cur, moneyLocale } from "../lib/money"
 
 const inr = (n: number) =>
@@ -611,6 +612,12 @@ export default function ReservationDetail({
           </Button>
         )}
       </Card>
+
+      {/* per-department instructions (Stay Instruction rows) */}
+      <StayInstructions
+        reservation={name}
+        canAdd={!["Cancelled", "Checked Out", "No Show"].includes(d.status)}
+      />
 
       {/* cancellation record, if any */}
       {d.cancellation && (

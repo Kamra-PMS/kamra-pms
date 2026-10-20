@@ -17,7 +17,7 @@ export const roomsConfig: ScreenConfig = {
   title: "Rooms",
   description: "Physical rooms - number, type, floor and live status.",
   searchFields: ["room_number", "name"],
-  filters: [{ field: "housekeeping_status", label: "Status", options: ["Clean", "Dirty", "Inspected", "Out of Order"] }],
+  filters: [{ field: "housekeeping_status", label: "Status", options: ["Clean", "Dirty", "Inspected", "Ready", "Out of Order"] }],
   pageSize: 25,
   propertyScoped: true,
   orderBy: "room_number asc",
@@ -187,6 +187,38 @@ export const mealPlansConfig: ScreenConfig = {
     { field: "price_per_adult", label: "Price per adult / night", type: "currency" },
     { field: "price_per_child", label: "Price per child / night", type: "currency" },
     { field: "is_default", label: "Default", type: "check" },
+    { field: "disabled", label: "Disabled", type: "check" },
+  ],
+}
+
+export const experiencesConfig: ScreenConfig = {
+  doctype: "Experience",
+  title: "Experiences",
+  description:
+    "Add-ons sold with a stay - spa, tours, dinners, transfers. Ticked ones show on /book.",
+  searchFields: ["experience_name"],
+  filters: [
+    { field: "category", label: "Category", options: ["Spa", "Tour", "Dining", "Activity", "Transport", "Other"] },
+  ],
+  pageSize: 25,
+  propertyScoped: true,
+  orderBy: "experience_name asc",
+  columns: [
+    { field: "experience_name", label: "Experience" },
+    { field: "category", label: "Category", badge: true },
+    { field: "price", label: `Price ${cur()}` },
+    { field: "duration", label: "Duration" },
+    { field: "show_on_booking_page", label: "On booking page" },
+  ],
+  form: [
+    { field: "experience_name", label: "Name", type: "data", required: true },
+    { field: "category", label: "Category", type: "select", options: ["Spa", "Tour", "Dining", "Activity", "Transport", "Other"] },
+    { field: "price", label: "Price", type: "currency" },
+    { field: "gst_rate", label: "Tax %", type: "float" },
+    { field: "duration", label: "Duration (e.g. 90 min, half day)", type: "data" },
+    { field: "description", label: "Description (shown to guests)", type: "data" },
+    { field: "image_url", label: "Photo", type: "image" },
+    { field: "show_on_booking_page", label: "Show on the public booking page", type: "check" },
     { field: "disabled", label: "Disabled", type: "check" },
   ],
 }
@@ -489,7 +521,7 @@ export const housekeepingConfig: ScreenConfig = {
   title: "Housekeeping Tasks",
   description: "Cleans and inspections. Completing a task updates the room's live status.",
   searchFields: ["room"],
-  filters: [{ field: "status", label: "Status", options: ["Open", "In Progress", "Done"] }],
+  filters: [{ field: "status", label: "Status", options: ["Pending", "In Progress", "Done", "Verified"] }],
   pageSize: 25,
   propertyScoped: true,
   orderBy: "creation desc",
@@ -501,7 +533,7 @@ export const housekeepingConfig: ScreenConfig = {
     { field: "status", label: "Status", badge: true },
   ],
   form: [
-    { field: "room", label: "Room", type: "link", linkDoctype: "Room", required: true },
+    { field: "room", label: "Room", type: "link", linkDoctype: "Room", linkPropertyScoped: true, required: true },
     { field: "task_type", label: "Type", type: "select", options: ["Checkout Clean", "Stayover Clean", "Deep Clean", "Inspection", "Maintenance"] },
     { field: "priority", label: "Priority", type: "select", options: ["Low", "Medium", "High", "Urgent"] },
     { field: "status", label: "Status", type: "select", options: ["Pending", "In Progress", "Done", "Verified"] },
@@ -725,8 +757,8 @@ export const channelRoomMappingsConfig: ScreenConfig = {
     { field: "external_rate_id", label: "Provider rate ID" },
   ],
   form: [
-    { field: "connection", label: "Connection", type: "link", linkDoctype: "Channel Manager Connection", required: true },
-    { field: "room_type", label: "Room type", type: "link", linkDoctype: "Room Type", required: true },
+    { field: "connection", label: "Connection", type: "link", linkDoctype: "Channel Manager Connection", linkPropertyScoped: true, required: true },
+    { field: "room_type", label: "Room type", type: "link", linkDoctype: "Room Type", linkPropertyScoped: true, required: true },
     { field: "external_room_id", label: "Provider room ID", type: "data", required: true },
     { field: "external_rate_id", label: "Provider rate plan ID", type: "data" },
   ],

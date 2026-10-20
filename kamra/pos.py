@@ -734,9 +734,15 @@ def _fire(doc, course: str | None = None) -> dict:
 		history = []
 	history.append(ticket)
 	doc.db_set("last_kot_ticket", frappe.as_json(history), update_modified=False)
+	# Kitchen printers take the lines they serve; the till prints the rest
+	# (all of them when the property has no printers set up).
+	from kamra.printing import route_kot
+	routed = route_kot(doc, fired_rows, ticket) if fired_rows else {"jobs": [], "unrouted": []}
 	return {"ok": True, "status": doc.status, "kot_no": doc.kot_no,
 	        "nc": bool(doc.nc), "fired_items": fired, "ticket": ticket,
-	        "auto_print": bool(auto and fired),
+	        "print_jobs": routed["jobs"],
+	        "till_ticket": dict(ticket, items=routed["unrouted"]),
+	        "auto_print": bool(auto and routed["unrouted"]),
 	        "accepted_at": doc.accepted_at,
 	        "stock_alerts": alerts}
 
@@ -1044,9 +1050,14 @@ def cancel_order(order: str, reason: str):
 	doc = frappe.get_doc("POS Order", order)
 	if doc.status in ("Delivered", "Cancelled"):
 		frappe.throw(_("This order is already closed."))
+	cooking = [it for it in doc.items
+	           if not it.voided and it.kot_status not in ("New", None, "")]
 	doc.status = "Cancelled"
 	doc.notes = (f"{doc.notes}\n" if doc.notes else "") + f"Cancelled: {reason}"
 	doc.save()
+	if cooking:
+		from kamra.printing import void_slip
+		void_slip(doc, cooking)
 	_flag_cleaning_if_freed(doc)
 	return {"ok": True, "status": "Cancelled"}
 
@@ -1064,9 +1075,13 @@ def void_item(order: str, item_row: str, reason: str):
 	target = next((it for it in doc.items if it.name == item_row), None)
 	if not target:
 		frappe.throw(_("Order line not found."))
+	was_fired = target.kot_status not in ("New", None, "") and not target.voided
 	target.voided = 1
 	target.void_reason = reason.strip()[:140]
 	doc.save()
+	if was_fired:
+		from kamra.printing import void_slip
+		void_slip(doc, [target])
 	return {"ok": True, "order_total": doc.order_total,
 	        "subtotal": doc.subtotal}
 

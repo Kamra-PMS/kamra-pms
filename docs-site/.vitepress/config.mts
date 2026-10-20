@@ -6,6 +6,8 @@ export default defineConfig({
     "Documentation for Kamra, the open-source AI-native hotel PMS - install, self-host, connect your AI over MCP, and run your property.",
   base: "/docs/",
   cleanUrls: true,
+  // the writing guide for contributors is not a published page
+  srcExclude: ["STYLE.md", "README.md"],
   head: [["link", { rel: "icon", type: "image/svg+xml", href: "/docs/kamra-mark.svg" }]],
   themeConfig: {
     logo: { src: "/kamra-horizontal.svg", height: 28 },
@@ -16,6 +18,11 @@ export default defineConfig({
       { text: "GitHub", link: "https://github.com/Kamra-PMS/kamra-pms" },
     ],
     search: { provider: "local" },
+    outline: { level: [2, 3], label: "On this page" },
+    editLink: {
+      pattern: "https://github.com/Kamra-PMS/kamra-pms/edit/develop/docs-site/:path",
+      text: "Suggest a change to this page",
+    },
     socialLinks: [
       { icon: "github", link: "https://github.com/Kamra-PMS/kamra-pms" },
     ],
@@ -28,15 +35,44 @@ export default defineConfig({
         text: "Getting started",
         items: [
           { text: "Introduction", link: "/" },
-          { text: "Quickstart (Docker)", link: "/quickstart" },
+          { text: "Features at a glance", link: "/features" },
           { text: "Try the live demo", link: "/demo" },
+          { text: "Quickstart (Docker)", link: "/quickstart" },
           { text: "Go-live checklist", link: "/go-live" },
           { text: "Go-live runbook (one night)", link: "/go-live-runbook" },
-          { text: "FAQ", link: "/faq" },
+        ],
+      },
+      {
+        text: "Run your hotel",
+        items: [
+          { text: "Guides by role", link: "/user-guide" },
+          { text: "Front desk", link: "/front-desk" },
+          { text: "Reservations", link: "/reservations" },
+          { text: "Billing & cashier", link: "/billing" },
+          { text: "Night audit", link: "/night-audit" },
+          { text: "Reports & dashboards", link: "/reports" },
+          { text: "Housekeeping", link: "/housekeeping" },
+          { text: "Guest requests", link: "/operations" },
+          { text: "F&B — POS & kitchen", link: "/fnb" },
+          { text: "Banquets & groups", link: "/banquets" },
+          { text: "Revenue & rates", link: "/revenue" },
+          { text: "Booking engine", link: "/booking-engine" },
+          { text: "Settings & staff", link: "/settings" },
+        ],
+      },
+      {
+        text: "Connect",
+        items: [
+          { text: "All integrations", link: "/integrations" },
+          { text: "Country setup & e-invoicing", link: "/country-setup" },
+          { text: "WhatsApp on your number", link: "/whatsapp" },
+          { text: "Channel manager (OTA sync)", link: "/channel-manager" },
+          { text: "Connect your AI (MCP)", link: "/ai-and-mcp" },
         ],
       },
       {
         text: "Self-hosting",
+        collapsed: true,
         items: [
           { text: "Overview & requirements", link: "/self-hosting/" },
           { text: "Hostinger", link: "/self-hosting/hostinger" },
@@ -51,27 +87,16 @@ export default defineConfig({
         ],
       },
       {
-        text: "Using Kamra",
+        text: "Reference",
+        collapsed: true,
         items: [
-          { text: "Features tour", link: "/features" },
-          { text: "Country setup & ZATCA", link: "/country-setup" },
-          { text: "WhatsApp on your number", link: "/whatsapp" },
-          { text: "Channel manager (OTA sync)", link: "/channel-manager" },
-          { text: "User guide", link: "/user-guide" },
-        ],
-      },
-      {
-        text: "AI & integrations",
-        items: [
-          { text: "All integrations", link: "/integrations" },
-          { text: "Connect your AI (MCP)", link: "/ai-and-mcp" },
           { text: "MCP tool reference", link: "/mcp-tools" },
           { text: "REST API basics", link: "/api" },
           { text: "REST API reference", link: "/api-reference" },
+          { text: "FAQ", link: "/faq" },
+          { text: "Contributors", link: "/contributors" },
         ],
       },
-      { text: "Community", items: [{ text: "Contributors", link: "/contributors" }] },
-      { text: "FAQ", items: [{ text: "FAQ", link: "/faq" }] },
     ],
   },
 })
