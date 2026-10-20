@@ -8,7 +8,7 @@ import {
   ListChecks,
   PieChart,
 } from "lucide-react"
-import { Link, useNavigate, useOutletContext } from "react-router-dom"
+import { Link, useNavigate, useLocation, useOutletContext } from "react-router-dom"
 import {
   call,
   getCurrentProperty,
@@ -36,7 +36,7 @@ import BookingRequests from "../components/BookingRequests"
 import { serverError } from "../lib/resource"
 import { cur, moneyLocale } from "../lib/money"
 import { useT } from "../lib/i18n"
-import { useCreditCheckout } from "../components/CreditCheckout"
+import CheckOutDialog from "../components/CheckOutDialog"
 
 const HK_CYCLE: RoomRow["housekeeping_status"][] = [
   "Dirty",
@@ -218,7 +218,7 @@ function InHouseTable({
   today?: string
 }) {
   const { t } = useT()
-  const navigate = useNavigate()
+  const navigate = useNavigate, useLocation()
   if (!rows.length) {
     return (
       <p className="px-1 py-3 text-sm text-zinc-400">
@@ -297,7 +297,7 @@ function InHouseTable({
 export default function Today() {
   const { t } = useT()
   const { refreshKey } = useOutletContext<ShellContext>()
-  const navigate = useNavigate()
+  const navigate = useNavigate, useLocation()
   const [snap, setSnap] = useState<Snapshot | null>(null)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [kpi, setKpi] = useState<any>(null)
@@ -328,7 +328,12 @@ export default function Today() {
     return () => clearInterval(t)
   }, [refresh, refreshKey])
 
-  const credit = useCreditCheckout(() => void refresh())
+  const location = useLocation()
+  const [checkingOut, setCheckingOut] = useState<string | null>(null)
+  useEffect(() => {
+    const res = (location.state as { checkout?: string } | null)?.checkout
+    if (res) setCheckingOut(res)
+  }, [location.state])
 
   async function act(key: string, fn: () => Promise<unknown>) {
     setBusy(key)
@@ -435,7 +440,6 @@ export default function Today() {
 
   return (
     <div>
-      {credit.dialog}
       <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold text-zinc-900">
@@ -538,7 +542,7 @@ export default function Today() {
                   <Button
                     variant="outline"
                     disabled={busy === row.name}
-                    onClick={() => act(row.name, () => credit.start(row.name))}
+                    onClick={() => setCheckingOut(row.name)}
                   >
                     {t("Check out")}
                   </Button>
@@ -644,6 +648,17 @@ export default function Today() {
           </Card>
         </div>
       </div>
+      {checkingOut && (
+        <CheckOutDialog
+          reservation={checkingOut}
+          onClose={() => setCheckingOut(null)}
+          onDone={() => {
+            setCheckingOut(null)
+            void refresh()
+          }}
+          onOpenReservation={(name) => setCheckingOut(name)}
+        />
+      )}
       {checkingIn && (
         <CheckInDialog
           reservation={checkingIn}

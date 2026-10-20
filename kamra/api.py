@@ -3693,6 +3693,278 @@ def _assert_settled(doc, credit_override_reason: str | None = None) -> list[dict
 	return credit
 
 
+
+@frappe.whitelist()
+@require_roles("Front Desk", "Night Auditor", "Kamra Agent")
+def checkout_context(reservation: str):
+	"""Everything the guided check-out wizard needs in one round trip.
+
+	Posts remaining nights (idempotent, same as check_out) so the desk sees
+	the true bill, then returns grouped folio lines, billing instructions,
+	deposit state, blockers, and the evaluated Checkout SOP. Amounts come
+	from folio helpers — never invented here.
+	"""
+	from kamra.folio import post_remaining_nights
+	from kamra.ledger import company_payer_of
+	from kamra.localization import pack_for
+	from kamra.sop import (
+		evaluate_sop_steps,
+		group_for_charge,
+		next_tip,
+		_template_steps,
+	)
+
+	res = frappe.get_doc("Reservation", reservation)
+	if res.status != "Checked In":
+		frappe.throw(_("Only a checked-in stay can start check-out."))
+
+	post_remaining_nights(res)
+	symbol = pack_for(res.property).locale(
+		frappe.get_cached_doc("Property", res.property)
+	).get("currency_symbol", "")
+
+	company_name = (
+		frappe.db.get_value("Corporate Account", res.company, "company_name")
+		if res.company else None
+	)
+	billing_rules = []
+	if res.company:
+		billing_rules = [
+			{"charge_type": r.charge_type, "pay_by": r.pay_by}
+			for r in (
+				frappe.get_doc("Corporate Account", res.company).get("billing_rules")
+				or []
+			)
+		]
+
+	room_row = None
+	if res.room:
+		room_row = frappe.db.get_value(
+			"Room", res.room,
+			["name", "room_number", "housekeeping_status"], as_dict=True,
+		)
+
+	folios_out = []
+	groups: dict[str, dict] = {}
+	total_charges = total_paid = total_balance = 0.0
+	owed = refund_due = city_eligible = 0.0
+
+	folio_rows = frappe.get_all(
+		"Folio",
+		filters={"reservation": res.name},
+		fields=["name", "folio_type", "status", "balance", "grand_total",
+		        "payments_total", "invoice_number", "group_booking",
+		        "reservation"],
+		order_by="folio_type asc",
+	)
+	# Include group master when this stay is on a group
+	if res.group_booking:
+		seen = {r.name for r in folio_rows}
+		folio_rows += [
+			m for m in frappe.get_all(
+				"Folio",
+				filters={"group_booking": res.group_booking, "folio_type": "Group"},
+				fields=["name", "folio_type", "status", "balance", "grand_total",
+				        "payments_total", "invoice_number", "group_booking",
+				        "reservation"],
+			) if m.name not in seen
+		]
+
+	for fr in folio_rows:
+		if fr.status not in ("Open", "Closed"):
+			continue
+		doc = frappe.get_doc("Folio", fr.name)
+		balance = float(doc.balance or 0)
+		charges_total = float(doc.grand_total or 0)
+		paid_total = float(doc.payments_total or 0)
+		total_charges += charges_total
+		total_paid += paid_total
+		total_balance += balance
+		# Match _assert_settled: Closed folios with a balance still block departure
+		payer = company_payer_of(fr) if fr.status in ("Open", "Closed") else None
+		if balance > 0.009:
+			if payer:
+				city_eligible += balance
+			else:
+				owed += balance
+		elif balance < -0.009:
+			refund_due += -balance
+
+		lines = []
+		for c in (doc.charges or []):
+			grp = group_for_charge(c.charge_type, c.description or "")
+			amt = float(c.amount or 0) + float(c.gst_amount or 0)
+			g = groups.setdefault(grp, {"group": grp, "amount": 0.0, "count": 0, "lines": []})
+			g["amount"] += amt
+			g["count"] += 1
+			line = {
+				"name": c.name,
+				"charge_type": c.charge_type,
+				"description": c.description,
+				"amount": float(c.amount or 0),
+				"gst_amount": float(c.gst_amount or 0),
+				"is_alcohol": 1 if c.get("is_alcohol") else 0,
+				"group": grp,
+				"folio": doc.name,
+				"folio_type": doc.folio_type,
+			}
+			g["lines"].append(line)
+			lines.append(line)
+
+		folios_out.append({
+			"name": doc.name,
+			"folio_type": doc.folio_type,
+			"status": doc.status,
+			"balance": balance,
+			"grand_total": charges_total,
+			"paid_total": paid_total,
+			"invoice_number": doc.invoice_number,
+			"charges": lines,
+			"can_city_ledger": bool(payer and balance > 0.009),
+		})
+
+	deposit = None
+	if frappe.db.exists("DocType", "Security Deposit"):
+		dep = frappe.db.get_value(
+			"Security Deposit",
+			{"reservation": res.name},
+			["name", "status", "required_amount", "collected_amount",
+			 "withheld_amount", "refunded_amount", "balance", "reason"],
+			as_dict=True,
+		)
+		if dep:
+			deposit = {
+				"name": dep.name,
+				"status": dep.status,
+				"required_amount": float(dep.required_amount or 0),
+				"collected_amount": float(dep.collected_amount or 0),
+				"withheld_amount": float(dep.withheld_amount or 0),
+				"refunded_amount": float(dep.refunded_amount or 0),
+				"balance": float(dep.balance or 0),
+				"reason": dep.reason or "",
+			}
+
+	blockers = []
+	if owed > 0.009:
+		blockers.append({
+			"code": "owed",
+			"message": _("Collect {0}{1:,.2f} before departure.").format(symbol, owed),
+			"amount": owed,
+		})
+	if refund_due > 0.009:
+		blockers.append({
+			"code": "refund",
+			"message": _("Refund {0}{1:,.2f} before departure.").format(symbol, refund_due),
+			"amount": refund_due,
+		})
+
+	credit_allowed = bool(city_eligible > 0.009)
+	can_city_ledger = credit_allowed
+	can_collect = owed > 0.009
+	can_checkout = not blockers
+
+	# Group companions still in-house — check out each guest separately
+	companions = []
+	if res.group_booking:
+		for m in frappe.get_all(
+			"Reservation",
+			filters={"group_booking": res.group_booking, "status": "Checked In",
+			         "name": ("!=", res.name)},
+			fields=["name", "guest_name", "room", "check_out_date"],
+			order_by="room asc",
+		):
+			room_no = frappe.db.get_value("Room", m.room, "room_number") if m.room else None
+			companions.append({
+				"name": m.name,
+				"guest_name": m.guest_name,
+				"room_number": room_no,
+				"check_out_date": str(m.check_out_date),
+			})
+
+	ctx = {
+		"reservation": {
+			"name": res.name,
+			"status": res.status,
+			"guest": res.guest,
+			"guest_name": res.guest_name,
+			"company": res.company,
+			"company_name": company_name,
+			"group_booking": res.group_booking,
+			"room": res.room,
+			"room_number": room_row.room_number if room_row else None,
+			"room_type": res.room_type,
+			"room_type_name": frappe.db.get_value(
+				"Room Type", res.room_type, "room_type_name"),
+			"check_in_date": str(res.check_in_date),
+			"check_out_date": str(res.check_out_date),
+			"adults": res.adults,
+			"children": res.children,
+			"vip": frappe.db.get_value("Guest", res.guest, "vip") if res.guest else 0,
+		},
+		"room": room_row,
+		"currency_symbol": symbol,
+		"folios": folios_out,
+		"companions": companions,
+		"groups": {
+			k: {
+				"group": v["group"],
+				"amount": v["amount"],
+				"count": v["count"],
+				"lines": v["lines"],
+			}
+			for k, v in groups.items()
+		},
+		"totals": {
+			"charges": total_charges,
+			"paid": total_paid,
+			"balance": total_balance,
+			"owed": owed,
+			"refund_due": refund_due,
+			"city_ledger_eligible": city_eligible,
+		},
+		"billing": {
+			"company": res.company,
+			"company_name": company_name,
+			"credit_allowed": credit_allowed,
+			"rules": billing_rules,
+		},
+		"deposit": deposit,
+		"blockers": blockers,
+		"actions": {
+			"can_checkout": can_checkout,
+			"can_collect": can_collect,
+			"can_city_ledger": can_city_ledger,
+			"can_refund_deposit": bool(deposit and float(deposit.get("balance") or 0) > 0.009),
+			"can_withhold_deposit": bool(
+				deposit
+				and float(deposit.get("collected_amount") or 0)
+				- float(deposit.get("withheld_amount") or 0)
+				- float(deposit.get("refunded_amount") or 0) > 0.009
+			),
+		},
+	}
+
+	meta, steps = _template_steps(res.property, "checkout")
+	evaluated = evaluate_sop_steps("checkout", steps, ctx) if meta else []
+	ctx["sop"] = {
+		"name": meta.get("name") if meta else None,
+		"key": "checkout",
+		"title": (meta or {}).get("title") or "Checkout",
+		"steps": evaluated,
+		"next_tip": next_tip(evaluated),
+	}
+	ai_available = False
+	try:
+		from kamra.assistant import _settings
+		s = _settings(res.property)
+		if s and s.enabled and s.get_password("api_key", raise_exception=False):
+			ai_available = True
+	except Exception:
+		ai_available = False
+	ctx["ai_tips_available"] = ai_available
+	return ctx
+
+
 @frappe.whitelist()
 @require_roles("Front Desk", "Night Auditor", "Kamra Agent")
 def check_out(reservation: str, credit_override_reason: str | None = None):
