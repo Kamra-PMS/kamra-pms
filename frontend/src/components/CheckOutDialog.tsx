@@ -343,6 +343,14 @@ export default function CheckOutDialog(props: {
 
   const flow = useStepFlow(steps)
   const current = flow.current as StepKey
+  // a step the desk has moved past counts as done unless it says otherwise
+  const headerSteps = useMemo(() => {
+    const order = flow.visible.map((s) => s.key)
+    const at = order.indexOf(current)
+    return steps.map((s) =>
+      !s.status && order.indexOf(s.key) > -1 && order.indexOf(s.key) < at
+        ? { ...s, status: "done" as const } : s)
+  }, [steps, flow.visible, current])
   // a stay that is already checked out opens on its invoices
   useEffect(() => {
     if (checkedOut) flow.goTo("invoice")
@@ -526,7 +534,7 @@ export default function CheckOutDialog(props: {
       {ctx && r && (
         <div className="space-y-4">
           <StepFlowHeader
-            steps={steps}
+            steps={headerSteps}
             current={current}
             onSelect={(k) => {
               if (checkedOut) return
@@ -538,7 +546,7 @@ export default function CheckOutDialog(props: {
           {ctx.sop.next_tip && !checkedOut && (
             <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-900">
               <Lightbulb className="mt-0.5 size-4 shrink-0 text-amber-600" aria-hidden />
-              <p>{ctx.sop.next_tip}</p>
+              <p>{t(ctx.sop.next_tip)}</p>
             </div>
           )}
 
