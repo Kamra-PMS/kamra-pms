@@ -439,6 +439,25 @@ def _kv_values(property: str) -> dict:
 	return out
 
 
+def read_kv(property: str, key: str, default=None):
+	"""A Property Setting value that is not a registry field (a structured
+	value like the Today layout). Cached with the registry values."""
+	val = _kv_values(property).get(key)
+	return default if val is None else val
+
+
+def write_kv(property: str, key: str, val):
+	"""The one writer of a Property Setting row. Callers check roles and
+	log the change; this stores the JSON value and nothing else. The
+	caller clears the cache (clear_cache) once it is done writing."""
+	name = frappe.db.get_value("Property Setting", {"property": property, "setting_key": key})
+	if name:
+		frappe.db.set_value("Property Setting", name, "value", json.dumps(val))
+	else:
+		frappe.get_doc({"doctype": "Property Setting", "property": property,
+		                "setting_key": key, "value": json.dumps(val)}).insert(ignore_permissions=True)
+
+
 def _turnover_name(property: str) -> str | None:
 	if not frappe.db.exists("DocType", "Turnover Profile"):
 		return None
@@ -632,12 +651,7 @@ def save_settings(property: str, module: str, changes) -> dict:
 			tp.update(by_store["turnover"])
 			tp.save(ignore_permissions=True)
 	for key, val in (by_store.get("kv") or {}).items():
-		name = frappe.db.get_value("Property Setting", {"property": property, "setting_key": key})
-		if name:
-			frappe.db.set_value("Property Setting", name, "value", json.dumps(val))
-		else:
-			frappe.get_doc({"doctype": "Property Setting", "property": property,
-			                "setting_key": key, "value": json.dumps(val)}).insert(ignore_permissions=True)
+		write_kv(property, key, val)
 	clear_cache(property)
 
 	after_all = _values(property, mod)

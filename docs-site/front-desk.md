@@ -33,14 +33,37 @@ seconds.
   **₹… due** or **Unpaid**) and **Pre-checked-in** when the guest has filled
   in the online form. "via Priya (Assistant)" means someone booked on the
   guest's behalf; hover it for the booker's phone.
-- **Room board** shows every room by floor. An occupied room is dark green;
-  click it to open that guest's registration card. Click any other room to
-  move its housekeeping status on one step: Dirty → Clean → Inspected → Out
-  of Order → Dirty.
+- **Room board** shows every room by floor. Click an occupied room (dark
+  green) for a menu: **Check out**, **Folio and billing**, **Guest
+  requests**, **Registration card** or **Room details**. A room whose guest
+  arrives today shows **Arriving**; click it for **Check in**. Click any
+  other room to move its housekeeping status on one step: Dirty → Clean →
+  Inspected → Out of Order → Dirty. **Open full view** opens the
+  [Rooms](/rooms) screen.
 - **In-house guests** lists everyone staying, their balance and when they
   leave. Click a row for the registration card.
 
 ![The arrivals list: each guest with source and payment chips, the room, nights and party size, the GRC and copy check-in link shortcuts, and a Check in button](/img/front-desk/arrivals.png)
+
+## Choose what Today shows
+
+Each person can pick which panels Today shows and in what order. Click
+**Customize** (next to the date).
+
+1. Tap a panel to show or hide it: **Key numbers**, **Booking requests**,
+   **Arrivals**, **Departures**, **Room board**, **In-house guests**,
+   **Housekeeping** and **Open tasks** (rooms with housekeeping work still
+   open, and who has it).
+2. Use the up and down arrows to change the order, and the two-way arrow to
+   move a panel between the narrow and the wide column.
+3. Click **Save for me**. Your layout is saved on the server, so it follows
+   you to any computer or tablet you sign in on.
+
+**Use the hotel default** drops your own layout. A Hotel Admin also sees
+**Hotel default**: **Make this the hotel default** sets what everyone at the
+hotel sees until they customise their own Today, and **Reset the hotel
+default** goes back to the standard layout. If nobody customises anything,
+Today looks the way it always has (Open tasks starts hidden).
 
 ## Check a guest in
 
@@ -355,7 +378,9 @@ which are required live in the property's check-in SOP (`kamra.sop`). The
 walk-in is `kamra.api.walk_in` (`defer_check_in=1` books and hands over to
 the steps); check-out is `kamra.api.check_out`; room
 moves use `kamra.api.movable_rooms`, `kamra.api.room_move_preview` and
-`kamra.api.move_reservation`. AI agents use the `front_desk_today`,
+`kamra.api.move_reservation`. The Today layout is
+`kamra.today_layout.get_today_layout`, `save_today_layout`,
+`reset_today_layout` and `save_today_layout_default` (Hotel Admin). AI agents use the `front_desk_today`,
 `check_in_readiness`, `check_in`, `check_out`, `move_room`, `guest_lookup`, `guest_journey` and
 `update_occupants` tools. See [MCP tools](/mcp-tools) and the
 [API reference](/api-reference).
