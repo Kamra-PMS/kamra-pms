@@ -1340,3 +1340,140 @@ export function KitchenPrintersCard({ property: _property }: { property: string 
     </Card>
   )
 }
+
+
+interface SopStepRow {
+  step_key: string
+  step_type: string
+  title: string
+  instruction: string
+  prompt_to_guest: string
+  is_blocking: 0 | 1
+  sequence: number
+}
+
+/* Same built-in check-in step names as the guided check-in, translated. */
+/** Marks a string for the i18n catalog; shown through t(). */
+const translate = (s: string) => s
+
+const CHECKIN_STEP_TITLES: Record<string, string> = {
+  guest_ids: translate("Guest and IDs"),
+  billing_check: translate("Who pays"),
+  assign_room: translate("Room"),
+  security_deposit: translate("Deposit and advance"),
+  registration_card: translate("Registration card"),
+  keys: translate("Keys"),
+  stay_info: translate("Wi-Fi and stay info"),
+  guest_requests: translate("Anything needed?"),
+  room_charges: translate("Charges to the room"),
+}
+
+/** Which check-in steps are required at this property. A required step has
+ *  no Skip button and the server refuses check-in until it is done. */
+export function CheckInStepsCard({ property }: { property: string }) {
+  const { t } = useT()
+  const [name, setName] = useState<string | null>(null)
+  const [steps, setSteps] = useState<SopStepRow[] | null>(null)
+  const [saved, setSaved] = useState<SopStepRow[] | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)
+  const [hidden, setHidden] = useState(false)
+
+  const load = useCallback(async () => {
+    try {
+      const rows = await call<{ name: string; key: string }[]>("kamra.sop.list_sops", { property })
+      const row = rows.find((r) => r.key === "checkin")
+      if (!row) {
+        setHidden(true)
+        return
+      }
+      const doc = await call<{ name: string; steps: SopStepRow[] }>("kamra.sop.get_sop_template", {
+        name: row.name,
+      })
+      const sorted = [...doc.steps].sort((a, b) => a.sequence - b.sequence)
+      setName(doc.name)
+      setSteps(sorted)
+      setSaved(sorted)
+    } catch {
+      // only Hotel Admin / IT may edit SOPs: everyone else does not see this card
+      setHidden(true)
+    }
+  }, [property])
+
+  useEffect(() => {
+    load()
+  }, [load])
+
+  if (hidden || !steps) return null
+  const dirty = JSON.stringify(steps) !== JSON.stringify(saved)
+
+  async function save() {
+    if (!name || !steps) return
+    setBusy(true)
+    setMsg(null)
+    try {
+      const out = await call<{ steps: SopStepRow[] }>("kamra.sop.save_sop_template", { name, steps })
+      const sorted = [...out.steps].sort((a, b) => a.sequence - b.sequence)
+      setSteps(sorted)
+      setSaved(sorted)
+      setMsg({ ok: true, text: t("Saved") })
+    } catch (e) {
+      setMsg({ ok: false, text: serverError(e) })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <div>
+          <CardTitle>{t("Check-in steps")}</CardTitle>
+          <p className="mt-0.5 text-xs text-zinc-400">
+            {t("The guided check-in follows these steps in order. Required steps cannot be skipped, and the guest cannot be checked in until they are done.")}
+          </p>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <ul className="divide-y divide-zinc-100">
+          {steps.map((s, i) => {
+            const locked = s.step_key === "assign_room"
+            const label = CHECKIN_STEP_TITLES[s.step_key] && s.title === CHECKIN_STEP_TITLES[s.step_key]
+              ? t(s.title)
+              : s.title
+            return (
+              <li key={s.step_key} className="flex items-center gap-3 py-2.5">
+                <span className="w-5 text-xs tabular-nums text-zinc-400">{i + 1}</span>
+                <span className="flex-1 text-sm font-medium text-zinc-800">{label}</span>
+                <label className="flex items-center gap-2 text-sm text-zinc-600">
+                  <input
+                    type="checkbox"
+                    className="size-4"
+                    checked={!!s.is_blocking}
+                    disabled={locked || busy}
+                    onChange={(e) =>
+                      setSteps((xs) =>
+                        (xs ?? []).map((x) =>
+                          x.step_key === s.step_key ? { ...x, is_blocking: e.target.checked ? 1 : 0 } : x,
+                        ),
+                      )
+                    }
+                  />
+                  {locked ? t("Always required") : t("Required")}
+                </label>
+              </li>
+            )
+          })}
+        </ul>
+        <div className="mt-4 flex items-center gap-2">
+          <Button disabled={busy || !dirty} onClick={save}>
+            {busy ? t("Saving…") : t("Save")}
+          </Button>
+          {msg && (
+            <span className={msg.ok ? "text-xs text-emerald-600" : "text-xs text-rose-600"}>{msg.text}</span>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  )
+}

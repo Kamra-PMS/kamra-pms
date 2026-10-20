@@ -154,6 +154,16 @@ MODULES: tuple[Module, ...] = (
 				  hint="Manual: staff encode key cards at the lock's own encoder. Lock vendor "
 				       "connectors plug in here (see the integrations docs)."),
 			)),
+			Section("guest_info", "Guest info at check-in",
+			        "Shown to the desk in the check-in steps, to tell the guest, print or send on WhatsApp.", (
+				S("guest_wifi_name", "Wi-Fi name"),
+				S("guest_wifi_password", "Wi-Fi password",
+				  hint="Shown to the desk and given to guests. Never written to the activity log."),
+				S("breakfast_hours", "Breakfast times", hint="For example: 7:00 to 10:30, ground floor restaurant."),
+				S("emergency_number", "Emergency number", hint="Reception or duty manager, day and night."),
+				S("guest_info_note", "Anything else for guests", "textarea",
+				  hint="Pool hours, parking, quiet hours. Keep it short."),
+			)),
 			Section("holds", "Holds & selling", "", (
 				S("hold_minutes", "Hold unconfirmed bookings for", "number", 120, P, min=5, max=10080, unit="min"),
 				S("sell_message", "Sell message", "textarea", store=P,

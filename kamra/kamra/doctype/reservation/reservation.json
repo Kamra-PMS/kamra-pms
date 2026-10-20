@@ -48,6 +48,18 @@
   "actual_check_in",
   "column_break_d",
   "actual_check_out",
+  "sb_checkin_record",
+  "checked_in_by",
+  "checked_in_at",
+  "room_assigned_by",
+  "room_assigned_at",
+  "cb_checkin_record",
+  "keys_issued_by",
+  "keys_issued_at",
+  "key_count",
+  "key_cards",
+  "room_charges_allowed",
+  "checkin_steps",
   "sb_money",
   "amount_before_tax",
   "tax_amount",
@@ -277,6 +289,82 @@
    "fieldtype": "Datetime",
    "label": "Actual Check Out",
    "read_only": 1
+  },
+  {
+   "fieldname": "sb_checkin_record",
+   "fieldtype": "Section Break",
+   "label": "Check-in record",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "checked_in_by",
+   "fieldtype": "Link",
+   "label": "Checked In By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "checked_in_at",
+   "fieldtype": "Datetime",
+   "label": "Checked In At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "room_assigned_by",
+   "fieldtype": "Link",
+   "label": "Room Assigned By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "room_assigned_at",
+   "fieldtype": "Datetime",
+   "label": "Room Assigned At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_checkin_record",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "keys_issued_by",
+   "fieldtype": "Link",
+   "label": "Keys Issued By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "keys_issued_at",
+   "fieldtype": "Datetime",
+   "label": "Keys Issued At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "key_count",
+   "fieldtype": "Int",
+   "label": "Keys Issued",
+   "read_only": 1
+  },
+  {
+   "fieldname": "key_cards",
+   "fieldtype": "Small Text",
+   "label": "Key Card Numbers",
+   "read_only": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "room_charges_allowed",
+   "fieldtype": "Check",
+   "label": "Room Charges Allowed",
+   "description": "Off: outlets, laundry and minibar cannot post to this room; the guest settles at the outlet."
+  },
+  {
+   "fieldname": "checkin_steps",
+   "fieldtype": "Long Text",
+   "label": "Check-in Steps",
+   "hidden": 1,
+   "read_only": 1,
+   "description": "Who did each guided check-in step and when (JSON)."
   },
   {
    "fieldname": "sb_money",
@@ -788,7 +876,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-19 12:00:00.000000",
+ "modified": "2026-10-20 10:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Reservation",

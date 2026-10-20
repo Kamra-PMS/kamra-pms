@@ -288,9 +288,22 @@ TOOLS: tuple[ToolSpec, ...] = (
 		mutating=True,
 	),
 	_t(
+		"check_in_readiness",
+		"checkin.check_in_readiness",
+		"""Read-only: the property's check-in steps for a stay (ID, who
+		pays, room, deposit, registration card, keys...), which are done
+		and by whom, and which REQUIRED steps are still open. check_in is
+		refused until those are done by the front desk in the guided
+		check-in; an agent cannot do or skip them.""",
+		{"reservation": _p("string")},
+		required=("reservation",),
+	),
+	_t(
 		"check_in",
 		"api.check_in",
-		"Check a guest in (opens their folio, marks the room occupied).",
+		"""Check a guest in (opens their folio, marks the room occupied).
+		Refused while a required check-in step is open; call
+		check_in_readiness first and tell the desk what is missing.""",
 		{"reservation": _p("string"), "room": _p("string")},
 		required=("reservation",),
 		mutating=True,

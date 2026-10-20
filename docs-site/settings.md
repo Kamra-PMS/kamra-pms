@@ -138,6 +138,9 @@ left.
   POS all read the same settings, so a change takes effect at once.
 - The Activity Log (**Admin → Activity Log**) shows who changed which
   setting, when, from what to what.
+- To see who signed in to Kamra and when, pick **Staff sign-ins** in the
+  Activity Log's filter. It lists sign-ins, sign-outs and failed sign-ins
+  for this property's staff. Hotel Admin, Finance and IT only.
 
 ## For developers
 

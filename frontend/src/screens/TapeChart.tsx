@@ -11,6 +11,7 @@ import { cn } from "../lib/utils"
 import { cur, moneyLocale } from "../lib/money"
 import { useT } from "../lib/i18n"
 import CheckOutDialog from "../components/CheckOutDialog"
+import CheckInDialog from "../components/CheckInDialog"
 
 /** The tape chart: rooms × dates, bookings as bars. Click a bar to act. */
 
@@ -145,6 +146,12 @@ const inputCls =
   "w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm " +
   "focus:outline-2 focus:outline-offset-1 focus:outline-brand-600"
 
+/** Today on this device's calendar (YYYY-MM-DD). */
+function todayIso() {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
+}
+
 function shiftDate(iso: string, days: number) {
   const d = new Date(iso)
   d.setDate(d.getDate() + days)
@@ -157,6 +164,7 @@ export default function TapeChart() {
   const [data, setData] = useState<TapeData | null>(null)
   const [sel, setSel] = useState<TapeBooking | null>(null)
   const [checkingOut, setCheckingOut] = useState<string | null>(null)
+  const [checkingIn, setCheckingIn] = useState<string | null>(null)
   const [freeRooms, setFreeRooms] = useState<
     {
       name: string
@@ -635,6 +643,16 @@ export default function TapeChart() {
         </Sheet>
       )}
 
+      {checkingIn && (
+        <CheckInDialog
+          reservation={checkingIn}
+          onClose={() => setCheckingIn(null)}
+          onDone={() => {
+            setCheckingIn(null)
+            load()
+          }}
+        />
+      )}
       {checkingOut && (
         <CheckOutDialog
           reservation={checkingOut}
@@ -654,6 +672,14 @@ export default function TapeChart() {
           footer={
             <div className="flex flex-wrap justify-end gap-2">
               <Button variant="outline" onClick={() => setSel(null)}>{t("Close")}</Button>
+              {sel.status === "Confirmed" && sel.check_in_date <= todayIso() && (
+                <Button variant="outline" onClick={() => {
+                  setCheckingIn(sel.name)
+                  setSel(null)
+                }}>
+                  {t("Check in")}
+                </Button>
+              )}
               {sel.status === "Checked In" && (
                 <Button variant="outline" onClick={() => {
                   setCheckingOut(sel.name)

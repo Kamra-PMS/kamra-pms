@@ -24,6 +24,7 @@ import {
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom"
 import { call } from "../lib/api"
 import CheckOutDialog from "../components/CheckOutDialog"
+import CheckInDialog from "../components/CheckInDialog"
 import {
   eodAcknowledge,
   eodMarkNoShow,
@@ -419,6 +420,7 @@ export default function EndOfDayWizard() {
 
   // check-out opens the guided check-out sheet (settle, credit, invoice)
   const [checkingOut, setCheckingOut] = useState<string | null>(null)
+  const [checkingIn, setCheckingIn] = useState<string | null>(null)
 
   async function act(label: string, fn: () => Promise<unknown>, reload = true) {
     setBusy(label)
@@ -552,7 +554,7 @@ export default function EndOfDayWizard() {
             state.ran ? null : (
               <div className="flex flex-col items-stretch gap-1">
                 <Button variant="outline" className="h-7 px-2 text-xs"
-                  onClick={() => navigate(`/reservations?q=${encodeURIComponent(String(r.reservation))}`)}>
+                  onClick={() => setCheckingIn(String(r.reservation))}>
                   {t("Check in")}
                 </Button>
                 <Button variant="ghost" className="h-7 px-2 text-xs text-rose-700" disabled={!!busy}
@@ -888,6 +890,16 @@ export default function EndOfDayWizard() {
 
   return (
     <div className="space-y-4">
+      {checkingIn && (
+        <CheckInDialog
+          reservation={checkingIn}
+          onClose={() => setCheckingIn(null)}
+          onDone={() => {
+            setCheckingIn(null)
+            void load(active)
+          }}
+        />
+      )}
       {checkingOut && (
         <CheckOutDialog
           reservation={checkingOut}

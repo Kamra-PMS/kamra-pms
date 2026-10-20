@@ -29,6 +29,7 @@ import { useT } from "../lib/i18n"
 import { petChargeBasis } from "../lib/pets"
 import { useCashierAuth } from "../lib/cashierAuth"
 import DepositPanel, { type DepositState } from "./DepositPanel"
+import CheckInDialog from "./CheckInDialog"
 
 interface CompanyCredit {
   applies: boolean
@@ -132,6 +133,8 @@ interface WalkInResult {
   folio: string | null
   paid?: number
   amount_after_tax?: number
+  /** 0: booked and room assigned, check-in still to finish (defer_check_in) */
+  checked_in?: 0 | 1
 }
 
 function todayLocal() {
@@ -173,6 +176,9 @@ export function BookingDialog(props: {
   } | null>(
     null,
   )
+  /** a deferred walk-in: the guided check-in is open for it */
+  const [guidedCheckIn, setGuidedCheckIn] = useState<string | null>(null)
+  const [walkInCheckedIn, setWalkInCheckedIn] = useState(false)
 
   const [form, setForm] = useState({
     guest_name: props.initial.guest_name ?? "",
@@ -722,8 +728,12 @@ export function BookingDialog(props: {
         idempotency_key: walkInKey,
         ...slotArgs,
         blacklist_override_reason: blacklistOverride,
+        // book, assign and take the money now; the guided check-in
+        // (property's required steps) finishes it right after
+        defer_check_in: 1,
       })
       setDone({ ref: res.reservation, room: res.room, walkIn: res })
+      setGuidedCheckIn(res.checked_in === 0 ? res.reservation : null)
       props.onBooked()
     } catch (e) {
       setError(shortErr(e))
@@ -931,7 +941,9 @@ export function BookingDialog(props: {
             {done.walkIn ? (
               <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-emerald-800">
                 <p className="text-lg font-semibold">
-                  {t("Checked in · Room {n}", { n: done.walkIn.room_number })}
+                  {done.walkIn.checked_in === 0 && !walkInCheckedIn
+                    ? t("Booked · Room {n}. Check-in not finished yet.", { n: done.walkIn.room_number })
+                    : t("Checked in · Room {n}", { n: done.walkIn.room_number })}
                 </p>
                 <p className="mt-1 text-sm">
                   {done.ref}
@@ -1062,7 +1074,16 @@ export function BookingDialog(props: {
             )}
 
             <div className="flex flex-wrap gap-2">
-              <Button className="px-5 py-2.5 text-base" onClick={props.onClose}>
+              {done.walkIn?.checked_in === 0 && !walkInCheckedIn && (
+                <Button className="px-5 py-2.5 text-base" onClick={() => setGuidedCheckIn(done.ref)}>
+                  {t("Finish check-in")}
+                </Button>
+              )}
+              <Button
+                variant={done.walkIn?.checked_in === 0 && !walkInCheckedIn ? "outline" : undefined}
+                className="px-5 py-2.5 text-base"
+                onClick={props.onClose}
+              >
                 {t("Done")}
               </Button>
               {done.walkIn?.folio && (
@@ -2271,12 +2292,12 @@ export function BookingDialog(props: {
                       onClick={() => submitWalkIn()}
                     >
                       {busy
-                        ? t("Checking in…")
+                        ? t("Saving…")
                         : payAmount > 0
-                          ? t("Check in & collect {amt}", {
+                          ? t("Collect {amt} and continue to check-in", {
                               amt: `${cur()}${inr(payAmount)}`,
                             })
-                          : t("Check in")}
+                          : t("Continue to check-in")}
                     </Button>
                     <Button
                       variant="outline"
@@ -2320,6 +2341,17 @@ export function BookingDialog(props: {
           </div>
         )}
       </div>
+      {guidedCheckIn && (
+        <CheckInDialog
+          reservation={guidedCheckIn}
+          onClose={() => setGuidedCheckIn(null)}
+          onDone={() => {
+            setGuidedCheckIn(null)
+            setWalkInCheckedIn(true)
+            props.onBooked()
+          }}
+        />
+      )}
     </div>
   )
 }

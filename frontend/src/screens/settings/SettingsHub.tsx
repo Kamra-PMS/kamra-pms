@@ -38,6 +38,7 @@ import {
   AgentAccessCard,
   AiSection,
   AppearanceCard,
+  CheckInStepsCard,
   HurdleRatesCard,
   KamraVerifyCard,
   LaundryRatesCard,
@@ -416,6 +417,7 @@ export default function SettingsHub() {
               )
             }
           >
+            {mod.id === "front-desk" && <CheckInStepsCard property={property} />}
             {mod.id === "housekeeping" && <LaundryRatesCard property={property} />}
             {mod.id === "revenue" && <HurdleRatesCard property={property} />}
             {mod.id === "fnb" && <KitchenPrintersCard property={property} />}
