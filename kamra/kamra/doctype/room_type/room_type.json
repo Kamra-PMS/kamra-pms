@@ -160,7 +160,7 @@
    "fieldname": "base_price",
    "fieldtype": "Currency",
    "in_list_view": 1,
-   "label": "Base Price",
+   "label": "Base Price (BAR)",
    "reqd": 1
   },
   {

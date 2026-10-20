@@ -1,4 +1,5 @@
 <<<<<<<< HEAD:kamra/public/frontend/assets/minimize-2-BuU4fVRM.js
+<<<<<<<< HEAD:kamra/public/frontend/assets/minimize-2-BuU4fVRM.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/minimize-2-BnwbxxUD.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/minimize-2-BnwbxxUD.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/minimize-2-BnwbxxUD.js
@@ -15,6 +16,9 @@ import{a}from"./index-yQkXbOpd.js";/**
 ========
 import{a}from"./index-DWhLuhvH.js";/**
 >>>>>>>> origin/feat/finance-master-configs:kamra/public/frontend/assets/minimize-2-C2zUpdUd.js
+========
+import{a}from"./index-Dh78V-Nh.js";/**
+>>>>>>>> origin/feat/rates-visibility:kamra/public/frontend/assets/minimize-2-D3nMuu49.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.

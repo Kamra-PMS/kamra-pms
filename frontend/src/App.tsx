@@ -47,6 +47,7 @@ const Activity = lazy(() => import("./screens/Activity"))
 const AppLauncher = lazy(() => import("./screens/AppLauncher"))
 const Marketplace = lazy(() => import("./screens/Marketplace"))
 const Reports = lazy(() => import("./screens/Reports"))
+const RateCalendar = lazy(() => import("./screens/RateCalendar"))
 const RevenueReports = lazy(() => import("./screens/RevenueReports"))
 const OpsSLA = lazy(() => import("./screens/OpsSLA"))
 const Dashboard = lazy(() => import("./screens/Dashboard"))
@@ -320,6 +321,7 @@ export default function App() {
           <Route path="developers" element={<Developers />} />
           <Route path="reports" element={<Reports />} />
           <Route path="voids-allowances" element={<VoidAllowanceReport />} />
+          <Route path="rate-calendar" element={<RateCalendar />} />
           <Route path="revenue-reports" element={<RevenueReports />} />
           <Route path="ops-sla" element={<OpsSLA />} />
           <Route path="whatsapp" element={<WhatsAppChat />} />

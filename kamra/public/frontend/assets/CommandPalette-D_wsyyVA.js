@@ -1,4 +1,5 @@
 <<<<<<<< HEAD:kamra/public/frontend/assets/CommandPalette-D_wsyyVA.js
+<<<<<<<< HEAD:kamra/public/frontend/assets/CommandPalette-D_wsyyVA.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/CommandPalette-DpIELFX3.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/CommandPalette-DpIELFX3.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/CommandPalette-DpIELFX3.js
@@ -15,6 +16,9 @@ import{r as i,u as P,j as s}from"./vendor-D6bHyl-8.js";import{a as M,u as G,w as
 ========
 import{r as i,u as P,j as s}from"./vendor-D6bHyl-8.js";import{a as M,u as G,w as Q,e as j,g as E,x as L,c as V,m as B,S as H,d as J,aA as W}from"./index-DWhLuhvH.js";import{C as X}from"./circle-user-round-mdc7CR-6.js";import{F as Y}from"./file-text-DWn4cOJ1.js";import{L as Z}from"./loader-circle-D6kpvShs.js";import{A as ee}from"./arrow-right-zl8F8ySy.js";/**
 >>>>>>>> origin/feat/finance-master-configs:kamra/public/frontend/assets/CommandPalette-LYZXv21U.js
+========
+import{r as i,u as P,j as s}from"./vendor-D6bHyl-8.js";import{a as M,u as G,w as Q,e as j,g as E,x as L,c as V,m as B,S as H,d as J,aA as W}from"./index-Dh78V-Nh.js";import{C as X}from"./circle-user-round-CuXwdmAf.js";import{F as Y}from"./file-text-VubOnOcm.js";import{L as Z}from"./loader-circle-DbQYnXQG.js";import{A as ee}from"./arrow-right-IXLaQgSV.js";/**
+>>>>>>>> origin/feat/rates-visibility:kamra/public/frontend/assets/CommandPalette-BnP8VBA5.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.

@@ -1,3 +1,4 @@
+import { RateOptions } from "./RateOptions"
 import { useEffect, useState } from "react"
 import { htmlToText } from "../lib/utils"
 import { useNavigate } from "react-router-dom"
@@ -1299,8 +1300,8 @@ export function BookingDialog(props: {
                   >
                     {options?.room_types.map((rt) => (
                       <option key={rt.name} value={rt.name}>
-                        {rt.room_type_name} · {cur()}
-                        {inr(rt.base_price)}/night
+                        {rt.room_type_name} · {t("BAR")} {cur()}
+                        {inr(rt.base_price)}/{t("night")}
                       </option>
                     ))}
                   </select>
@@ -1620,6 +1621,20 @@ export function BookingDialog(props: {
                     />
                   </Field>
                 </div>
+
+                {form.room_type && (
+                  <RateOptions
+                    roomType={form.room_type}
+                    checkIn={form.check_in_date}
+                    checkOut={checkOut}
+                    adults={form.adults}
+                    children={form.children}
+                    mealPlan={form.meal_plan || undefined}
+                    voucher={form.voucher_code || undefined}
+                    ratePlan={form.rate_plan}
+                    onPickPlan={(p) => set("rate_plan", p)}
+                  />
+                )}
 
                 {walkIn && (
                   <div className="space-y-3 rounded-xl border border-zinc-200 p-4">

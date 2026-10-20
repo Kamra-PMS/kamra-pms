@@ -1,4 +1,5 @@
 <<<<<<<< HEAD:kamra/public/frontend/assets/SettingsHub-CKEKvDrr.js
+<<<<<<<< HEAD:kamra/public/frontend/assets/SettingsHub-CKEKvDrr.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/SettingsHub-Axr_I_cu.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/SettingsHub-Axr_I_cu.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/SettingsHub-Axr_I_cu.js
@@ -15,6 +16,9 @@ import{r as l,j as e,L as se,f as ze,g as Ce,u as Ae,c as fe}from"./vendor-D6bHy
 ========
 import{r as l,j as e,L as se,f as ze,g as Ce,u as Ae,c as fe}from"./vendor-D6bHyl-8.js";import{B as Z}from"./badge-BvW0BZyn.js";import{a as ce,e as _,g as Q,u as R,a1 as Ee,d as H,s as I,c as Y,a2 as Te,S as be,B as T,a3 as Pe,m as le,l as ae,a4 as Le,a5 as Re,R as Ie,a6 as Me,L as $e,n as De,y as oe,p as ye,a7 as je,F as Oe,a8 as Be,a9 as Ke,a0 as Fe,aa as Ue,ab as He,ac as qe,ad as We,j as Ge,z as Ve,ae as Xe,af as Ze,ag as ve,U as Ye,ah as Je,E as Qe}from"./index-DWhLuhvH.js";import{C as O,a as K,b as F,c as U}from"./card-Cwv_xdgD.js";import{S as et}from"./sheet-DDF2VAVq.js";import{I as Ne}from"./ImageField-BUH7yvhW.js";import{A as tt}from"./arrow-up-right-DHnETlj6.js";import{R as ke,C as st}from"./rotate-ccw-B_bXc80V.js";import{U as at}from"./user-plus-_frpYMyD.js";import{K as nt}from"./key-round-HB-5YR9T.js";import{S as it}from"./send-CeYFdM5_.js";import{R as lt}from"./refresh-cw-3TCc4zHY.js";import{T as rt}from"./trash-2-ByIJJsaJ.js";import{C as ct}from"./check-C36Ng3mP.js";import{C as ot}from"./copy-BkdVkmoU.js";import{B as dt}from"./bot-CY5B4DMB.js";import{W as mt}from"./webhook-De8C1JZ3.js";/**
 >>>>>>>> origin/feat/finance-master-configs:kamra/public/frontend/assets/SettingsHub-BVNLCnYD.js
+========
+import{r as l,j as e,L as se,f as ze,g as Ce,u as Ae,c as fe}from"./vendor-D6bHyl-8.js";import{B as Z}from"./badge-DDXOcSfG.js";import{a as ce,e as _,g as Q,u as R,a1 as Ee,d as H,s as I,c as Y,a2 as Te,S as be,B as T,a3 as Pe,m as le,l as ae,a4 as Le,a5 as Re,R as Ie,a6 as Me,L as $e,n as De,y as oe,p as ye,a7 as je,F as Oe,a8 as Be,a9 as Ke,a0 as Fe,aa as Ue,ab as He,ac as qe,ad as We,j as Ge,z as Ve,ae as Xe,af as Ze,ag as ve,U as Ye,ah as Je,E as Qe}from"./index-Dh78V-Nh.js";import{C as O,a as K,b as F,c as U}from"./card-C7gs9V9e.js";import{S as et}from"./sheet-rVbKMEKs.js";import{I as Ne}from"./ImageField-DC3Wjseg.js";import{A as tt}from"./arrow-up-right-Du9H310r.js";import{R as ke,C as st}from"./rotate-ccw-B2l5LmCK.js";import{U as at}from"./user-plus-BsdqfQay.js";import{K as nt}from"./key-round-DmXAt_88.js";import{S as it}from"./send-C0bcqodl.js";import{R as lt}from"./refresh-cw-Bff9MpiG.js";import{T as rt}from"./trash-2-DF-xVBSe.js";import{C as ct}from"./check-DUt6ddnp.js";import{C as ot}from"./copy-B5vD4ZO1.js";import{B as dt}from"./bot-CKrbFfXr.js";import{W as mt}from"./webhook-CUgJSdpH.js";/**
+>>>>>>>> origin/feat/rates-visibility:kamra/public/frontend/assets/SettingsHub-CpljPRFX.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.
