@@ -9041,6 +9041,352 @@ def t356():
 	assert str(frappe.db.get_value("Reservation", res.name, "check_out_date")) == str(new_co)
 
 
+# --- POS: cancel / void / remove, orders list, guest panel (t360-t366) ---
+
+SUP = "evalsup@kamra.local"
+SUP_PIN = "4826"
+
+
+def _pos_outlet(name, tables="T1\nT2\nT3", prop=None):
+	from kamra import pos
+	outlet = frappe.get_doc({
+		"doctype": "POS Outlet", "property": prop or P, "outlet_name": name,
+		"outlet_type": "Restaurant", "gst_rate": 5, "tables": tables,
+	}).insert(ignore_permissions=True).name
+	dishes = []
+	for n, price in (("Dosa", 120), ("Coffee", 60)):
+		dishes.append(frappe.get_doc({
+			"doctype": "Menu Item", "property": prop or P, "outlet": outlet,
+			"item_name": f"{name} {n}", "category": "Food", "price": price,
+			"is_veg": 1, "available": 1, "prep_station": "Kitchen",
+		}).insert(ignore_permissions=True).name)
+	for t in (tables or "").split():
+		pos.mark_table_clean(outlet, t)  # redis survives the rollback
+	return outlet, dishes
+
+
+def _supervisor():
+	"""A Hotel Admin with a cashier PIN, who approves voids at a captain's till."""
+	if not frappe.db.exists("User", SUP):
+		frappe.get_doc({
+			"doctype": "User", "email": SUP, "first_name": "Sunita",
+			"enabled": 1, "user_type": "System User", "send_welcome_email": 0,
+			"roles": [{"role": "Hotel Admin"}],
+		}).insert(ignore_permissions=True)
+	if not frappe.db.exists("Cashier PIN", SUP):
+		frappe.get_doc({"doctype": "Cashier PIN", "user": SUP,
+		                "pin": SUP_PIN}).insert(ignore_permissions=True)
+	frappe.cache.delete_value(f"kamra_supervisor_pin_fails:{SUP}")
+	return SUP
+
+
+def _tile(outlet, table):
+	from kamra import pos
+	return next(t for t in pos.table_map(outlet)["tables"] if t["table"] == table)
+
+
+@check("POS: a captain cancels a bill nothing was sent to the kitchen for; reason kept, logged, table freed")
+def t360():
+	from kamra import pos
+	outlet, (dosa, coffee) = _pos_outlet("Eval Cancel Unfired")
+	with _as_user(FD):
+		o = pos.create_order(outlet, [{"menu_item": dosa, "qty": 2},
+		                              {"menu_item": coffee, "qty": 1}],
+		                     table_no="T1", order_type="Dine In")
+		assert _tile(outlet, "T1")["state"] == "running"
+		assert pos.order_detail(o["order"])["kitchen_lines"] == 0
+		_refused(pos.cancel_order, o["order"], "  ", contains="reason")
+		out = pos.cancel_order(o["order"], "guest left before ordering")
+	assert out["status"] == "Cancelled" and out["kitchen_lines"] == 0, out
+	assert out["voided_value"] == 300, out
+	doc = frappe.get_doc("POS Order", o["order"])
+	assert doc.cancel_reason == "guest left before ordering", doc.cancel_reason
+	assert doc.cancelled_by == FD and doc.cancelled_at and not doc.cancel_approved_by
+	assert all(it.voided for it in doc.items) and doc.order_total == 0
+	log = frappe.get_all("Agent Action Log", filters={
+		"action_type": "pos_cancel_order", "reference_name": o["order"]},
+		fields=["actor", "rationale"])
+	assert log and log[0].actor == FD and "guest left" in log[0].rationale, log
+	# freed: nothing was served, so the table is vacant, not waiting on a clean
+	t1 = _tile(outlet, "T1")
+	assert t1["state"] == "vacant" and t1["bills"] == 0, t1
+	# a closed bill cannot be cancelled again
+	with _as_user(FD):
+		_refused(pos.cancel_order, o["order"], "again", contains="closed")
+	# the voids report lists it, with who did it
+	from kamra.reports import void_allowance_report
+	rows = void_allowance_report(P, nowdate(), nowdate())
+	assert any(r["action"] == "POS bill cancelled" and r["pos_order"] == o["order"]
+	           and r["actor"] == FD for r in rows), rows[:3]
+
+
+@check("POS: once the kitchen has items, cancelling needs a supervisor's PIN; never an agent; the kitchen sees it cancelled")
+def t361():
+	from kamra import pos
+	outlet, (dosa, coffee) = _pos_outlet("Eval Cancel Fired")
+	sup = _supervisor()
+	with _as_user(FD):
+		o = pos.send_order(outlet, [{"menu_item": dosa, "qty": 1},
+		                            {"menu_item": coffee, "qty": 1}],
+		                   table_no="T2", order_type="Dine In")
+		assert pos.order_detail(o["order"])["kitchen_lines"] == 2
+		_refused(pos.cancel_order, o["order"], "walked out",
+		         exc=pos.SupervisorRequired)
+		_refused(pos.cancel_order, o["order"], "walked out",
+		         supervisor=sup, supervisor_pin="0000", contains="Wrong")
+		# a captain cannot approve for themselves
+		_refused(pos.cancel_order, o["order"], "walked out",
+		         supervisor=FD, supervisor_pin="0000", exc=frappe.PermissionError)
+	frappe.cache.delete_value(f"kamra_supervisor_pin_fails:{sup}")
+	# an agent never voids fired food, PIN or not
+	frappe.flags.kamra_agent_call = "MCP"
+	try:
+		_refused(pos.cancel_order, o["order"], "agent tries",
+		         supervisor=sup, supervisor_pin=SUP_PIN, exc=pos.SupervisorRequired)
+	finally:
+		frappe.flags.kamra_agent_call = None
+	assert frappe.db.get_value("POS Order", o["order"], "status") == "Preparing"
+	with _as_user(FD):
+		out = pos.cancel_order(o["order"], "walked out", reason_code="VOID-GUEST",
+		                       supervisor=sup, supervisor_pin=SUP_PIN)
+	assert out["approved_by"] == sup and out["kitchen_lines"] == 2, out
+	doc = frappe.get_doc("POS Order", o["order"])
+	assert doc.status == "Cancelled" and doc.cancel_approved_by == sup
+	assert doc.cancel_reason.startswith("VOID-GUEST"), doc.cancel_reason
+	# the food is voided, never deleted: both lines remain, struck, approved
+	assert len(doc.items) == 2 and all(it.voided and it.void_approved_by == sup
+	                                   and it.voided_by == FD for it in doc.items)
+	# the kitchen keeps the ticket, every line cancelled, until it acknowledges
+	q = [t for t in pos.kitchen_queue(P, outlet=outlet) if t["name"] == o["order"]]
+	assert q and {i["state"] for i in q[0]["items"]} == {"cancelled"}, q
+	for it in doc.items:
+		pos.acknowledge_void(o["order"], it.name)
+	assert not [t for t in pos.kitchen_queue(P, outlet=outlet) if t["name"] == o["order"]]
+	log = frappe.get_all("Agent Action Log", filters={
+		"action_type": "pos_cancel_order", "reference_name": o["order"]},
+		fields=["actor", "approver"])
+	assert log and log[0].actor == FD and log[0].approver == sup, log
+	# a paid bill is closed: no cancel
+	p = pos.send_order(outlet, [{"menu_item": coffee, "qty": 1}], order_type="Takeaway")
+	pos.pay_order(p["order"], "Cash")
+	_refused(pos.cancel_order, p["order"], "too late", contains="closed")
+
+
+@check("POS: lines not sent to the kitchen come off freely; sent lines need a supervisor to void")
+def t362():
+	from kamra import pos
+	outlet, (dosa, coffee) = _pos_outlet("Eval Remove Line")
+	sup = _supervisor()
+	with _as_user(FD):
+		o = pos.create_order(outlet, [{"menu_item": dosa, "qty": 1},
+		                              {"menu_item": coffee, "qty": 2}], table_no="T3")
+		rows = {i["item_name"]: i["row"] for i in pos.order_detail(o["order"])["items"]}
+		out = pos.remove_item(o["order"], rows["Eval Remove Line Coffee"])
+		assert out["order_total"] == 120, out
+		d = pos.order_detail(o["order"])
+		assert [i["item_name"] for i in d["items"]] == ["Eval Remove Line Dosa"], d["items"]
+		# the last line cannot come off: cancel the bill instead
+		_refused(pos.remove_item, o["order"], rows["Eval Remove Line Dosa"],
+		         contains="last item")
+		# send it; a sent line cannot be removed, and voiding it needs approval
+		pos.send_round(o["order"], [{"menu_item": coffee, "qty": 1}])
+		sent = next(i for i in pos.order_detail(o["order"])["items"]
+		            if i["kot_status"] == "Fired")
+		_refused(pos.remove_item, o["order"], sent["row"], contains="Void it")
+		_refused(pos.void_item, o["order"], sent["row"], "spilled",
+		         exc=pos.SupervisorRequired)
+		v = pos.void_item(o["order"], sent["row"], "spilled",
+		                  supervisor=sup, supervisor_pin=SUP_PIN)
+		assert v["approved_by"] == sup, v
+	line = frappe.db.get_value("POS Order Item", sent["row"],
+	                           ["voided", "voided_by", "void_approved_by"], as_dict=True)
+	assert line.voided and line.voided_by == FD and line.void_approved_by == sup, line
+	assert frappe.get_all("Agent Action Log", filters={
+		"action_type": "pos_void_item", "reference_name": o["order"], "approver": sup})
+	# a line never sent can still be voided with a reason, no approval
+	with _as_user(FD):
+		o2 = pos.create_order(outlet, [{"menu_item": dosa, "qty": 1},
+		                               {"menu_item": coffee, "qty": 1}], table_no="T1")
+		r2 = pos.order_detail(o2["order"])["items"][1]["row"]
+		assert pos.void_item(o2["order"], r2, "wrong item")["approved_by"] is None
+	# an agent removes unsent lines but never voids sent ones
+	frappe.flags.kamra_agent_call = "MCP"
+	try:
+		o3 = pos.send_order(outlet, [{"menu_item": dosa, "qty": 1}], table_no="T2")
+		r3 = pos.order_detail(o3["order"])["items"][0]["row"]
+		_refused(pos.void_item, o3["order"], r3, "agent", exc=pos.SupervisorRequired)
+	finally:
+		frappe.flags.kamra_agent_call = None
+
+
+@check("POS orders list: one outlet's bills with their state, search, carried-over open bills; scoped to the property")
+def t363():
+	from kamra import pos
+	outlet, (dosa, coffee) = _pos_outlet("Eval Orders List")
+	a = pos.create_order(outlet, [{"menu_item": dosa, "qty": 1}], table_no="T1")
+	b = pos.send_order(outlet, [{"menu_item": coffee, "qty": 1}], table_no="T2")
+	c = pos.send_order(outlet, [{"menu_item": coffee, "qty": 2}], order_type="Takeaway",
+	                   customer_name="Meera Orders", customer_phone="+91 70036 30001")
+	pos.pay_order(c["order"], "Card")
+	d = pos.create_order(outlet, [{"menu_item": dosa, "qty": 1}], table_no="T3")
+	pos.cancel_order(d["order"], "changed mind")
+	# an open bill from yesterday is carried into today's list
+	e = pos.create_order(outlet, [{"menu_item": dosa, "qty": 1}], order_type="Takeaway")
+	frappe.db.set_value("POS Order", e["order"], "creation",
+	                    frappe.utils.add_days(frappe.utils.now_datetime(), -1),
+	                    update_modified=False)
+	other_outlet, (od, _oc) = _pos_outlet("Eval Orders Elsewhere", tables="")
+	pos.create_order(other_outlet, [{"menu_item": od, "qty": 1}], order_type="Takeaway")
+
+	lst = pos.orders_list(outlet)
+	by = {r["name"]: r for r in lst["rows"]}
+	assert set(by) == {a["order"], b["order"], c["order"], d["order"], e["order"]}, set(by)
+	assert by[a["order"]]["state"] == "open" and by[b["order"]]["state"] == "sent"
+	assert by[c["order"]]["state"] == "paid" and by[c["order"]]["payment_mode"] == "Card"
+	assert by[d["order"]]["state"] == "cancelled" and by[d["order"]]["amount"] == 120
+	assert by[d["order"]]["cancel_reason"] == "changed mind"
+	assert by[e["order"]]["carried"] == 1 and by[e["order"]]["state"] == "open"
+	assert lst["counts"]["open"] == 2 and lst["counts"]["cancelled"] == 1, lst["counts"]
+	assert [r["name"] for r in pos.orders_list(outlet, q="Meera")["rows"]] == [c["order"]]
+	assert [r["name"] for r in pos.orders_list(outlet, state="sent")["rows"]] == [b["order"]]
+	# yesterday alone: just the carried bill's day
+	y = pos.orders_list(outlet, date=str(frappe.utils.add_days(nowdate(), -1)))
+	assert [r["name"] for r in y["rows"]] == [e["order"]], y["rows"]
+	_refused(pos.orders_list, outlet, date="2037-01-01", to_date="2037-03-01",
+	         contains="31 days")
+
+	# property scope: a captain limited to this hotel cannot list another's
+	p2 = "Eval POS Other Hotel"
+	if not frappe.db.exists("Property", p2):
+		frappe.get_doc({"doctype": "Property", "property_name": p2,
+		                "city": "Elsewhere"}).insert(ignore_permissions=True)
+	far, (fd_dish, _x) = _pos_outlet("Eval Far Outlet", tables="", prop=p2)
+	pos.create_order(far, [{"menu_item": fd_dish, "qty": 1}], order_type="Takeaway")
+	added = []
+	for prop in (P,):
+		if not frappe.db.exists("User Permission", {"user": FD, "allow": "Property",
+		                                            "for_value": prop}):
+			added.append(frappe.get_doc({
+				"doctype": "User Permission", "user": FD, "allow": "Property",
+				"for_value": prop}).insert(ignore_permissions=True).name)
+	try:
+		with _as_user(FD):
+			assert {r["name"] for r in pos.orders_list(outlet)["rows"]} == set(by)
+			_refused(pos.orders_list, far, exc=frappe.PermissionError)
+	finally:
+		for n in added:
+			frappe.delete_doc("User Permission", n, ignore_permissions=True, force=True)
+
+
+@check("POS guest panel: attach a walk-in by phone or name, reuse the profile, see past bills at this outlet; phone masked, no ID data")
+def t364():
+	from kamra import pos
+	outlet, (dosa, coffee) = _pos_outlet("Eval Walk-in")
+	phone = "+91 70036 40001"
+	with _as_user(FD):
+		assert pos.find_customer(outlet, "70036 40001") == []
+		o1 = pos.create_order(outlet, [{"menu_item": dosa, "qty": 1}], table_no="T1")
+		_refused(pos.attach_customer, outlet, o1["order"], phone=phone,
+		         contains="name")
+		a1 = pos.attach_customer(outlet, o1["order"], customer_name="Kiran Visitor",
+		                         phone=phone)
+		assert a1["created"] and a1["full_name"] == "Kiran Visitor", a1
+	guest = a1["guest"]
+	assert frappe.db.get_value("POS Order", o1["order"], "guest") == guest
+	pos.pay_order(o1["order"], "Cash")  # settled by the cashier
+	with _as_user(FD):
+		# same phone typed another way finds the same profile
+		new = pos.attach_customer(outlet, phone="7003640001")
+		assert new["guest"] == guest and not new["created"], new
+		o2 = pos.create_order(outlet, [{"menu_item": coffee, "qty": 1}],
+		                      table_no="T2", guest=guest)
+		assert frappe.db.get_value("POS Order", o2["order"], "customer_name") == "Kiran Visitor"
+		found = pos.find_customer(outlet, "Kiran Vis")
+		row = next(r for r in found if r["guest"] == guest)
+		assert row["visits"] == 2 and row["phone"] == "•••• 0001", row
+		panel = pos.guest_panel(outlet, order=o2["order"])
+	assert panel["kind"] == "customer" and panel["guest"]["full_name"] == "Kiran Visitor"
+	assert panel["guest"]["phone"] == "•••• 0001", panel["guest"]
+	h = panel["history"]
+	assert h["bills"] == 1 and h["orders"][0]["name"] == o1["order"], h
+	assert h["orders"][0]["state"] == "paid" and "Dosa" in h["orders"][0]["items"], h
+	# only what service needs: no ID, email, address or birth date
+	for k in ("id_number", "id_type", "email", "address_line", "date_of_birth",
+	          "id_file", "nationality"):
+		assert k not in panel["guest"], k
+	# a supervisor sees the full number
+	assert pos.guest_panel(outlet, order=o2["order"])["guest"]["phone"] == phone
+	# take the customer off the bill
+	with _as_user(FD):
+		pos.attach_customer(outlet, o2["order"], clear=1)
+	assert not frappe.db.get_value("POS Order", o2["order"], "guest")
+
+
+@check("POS guest panel: an in-house guest's stay and the room-charge block; a blocked room cannot be charged")
+def t365():
+	from kamra import pos
+	from kamra.pos import RoomChargesBlocked
+	outlet, (dosa, _c) = _pos_outlet("Eval In House")
+	res, _folio = _in_house("Eval Diner Guest", "+91 70036 50001", nowdate(),
+	                        frappe.utils.add_days(nowdate(), 2), _ledger_room("P365"))
+	frappe.db.set_value("Guest", res.guest, "guest_notes", "No peanuts")
+	frappe.db.set_value("Reservation", res.name, "room_charges_allowed", 0)
+	with _as_user(FD):
+		rooms = {r["room"]: r for r in pos.in_house_rooms(P)}
+		assert rooms[res.room]["room_charges_allowed"] == 0, rooms[res.room]
+		panel = pos.guest_panel(outlet, room=res.room)
+		assert panel["kind"] == "in_house", panel
+		assert panel["stay"]["room_charges_allowed"] == 0 and panel["stay"]["room_number"] == "P365"
+		assert panel["guest"]["notes"] == "No peanuts", panel["guest"]
+		_refused(pos.create_order, outlet, [{"menu_item": dosa, "qty": 1}],
+		         room=res.room, exc=RoomChargesBlocked)
+		walk = pos.create_order(outlet, [{"menu_item": dosa, "qty": 1}], table_no="T1")
+		_refused(pos.charge_to_room, walk["order"], res.room, exc=RoomChargesBlocked)
+	frappe.db.set_value("Reservation", res.name, "room_charges_allowed", 1)
+	with _as_user(FD):
+		o = pos.create_order(outlet, [{"menu_item": dosa, "qty": 1}], room=res.room,
+		                     order_type="Room Service")
+		assert frappe.db.get_value("POS Order", o["order"], "guest") == res.guest
+		p = pos.guest_panel(outlet, order=o["order"])
+		assert p["kind"] == "in_house" and p["stay"]["room_charges_allowed"] == 1, p
+		assert p["stay"]["reservation"] == res.name
+		# a room bill is for its guest: no walk-in can be attached to it
+		_refused(pos.attach_customer, outlet, o["order"], customer_name="Someone",
+		         contains="in-house")
+
+
+@check("POS: a bill nobody sent is flagged with its age; End of Day names it; the agent tool cancels only unsent bills")
+def t366():
+	from kamra import night_audit, pos
+	from kamra.business_date import get_business_date
+	from kamra.mcp_tools import TOOLS, call_tool
+	outlet, (dosa, _c) = _pos_outlet("Eval Stale Bill")
+	old = pos.create_order(outlet, [{"menu_item": dosa, "qty": 1}], table_no="T1")
+	frappe.db.set_value("POS Order", old["order"], "creation",
+	                    frappe.utils.add_to_date(frappe.utils.now_datetime(), minutes=-40),
+	                    update_modified=False)
+	fresh = pos.create_order(outlet, [{"menu_item": dosa, "qty": 1}], table_no="T2")
+	rows = {r["name"]: r for r in pos.open_orders(outlet)}
+	assert rows[old["order"]]["stale"] == 1 and rows[old["order"]]["age_min"] >= 39
+	assert rows[fresh["order"]]["stale"] == 0
+	chk = night_audit.check_open_pos_bills(P, get_business_date(P))
+	item = next(i for i in chk["items"] if i["order"] == old["order"])
+	assert item["state"] == "open, not sent to kitchen", item
+	spec = {s.name: s for s in TOOLS}
+	out = call_tool(spec["pos_cancel_order"], {"order": old["order"],
+	                                           "reason": "forgotten bill"}, P)
+	assert out["status"] == "Cancelled"
+	assert frappe.get_all("Agent Action Log", filters={
+		"action_type": "pos_cancel_order", "reference_name": old["order"],
+		"action_channel": "MCP"})
+	fired = pos.send_order(outlet, [{"menu_item": dosa, "qty": 1}], table_no="T3")
+	_refused(call_tool, spec["pos_cancel_order"],
+	         {"order": fired["order"], "reason": "agent"}, P, exc=pos.SupervisorRequired)
+	assert frappe.db.get_value("POS Order", fired["order"], "status") == "Preparing"
+	listed = call_tool(spec["pos_orders"], {"outlet": outlet, "state": "open"}, P)
+	assert [r["name"] for r in listed["rows"]] == [fresh["order"]], listed["rows"]
+
+
 def execute():
 	global RT, ROOM
 	# frappe.locale.get_locale_value crashes (UnboundLocalError) when no
@@ -9076,7 +9422,8 @@ def execute():
 		           t320, t321, t322, t323, t324, t325, t326, t327, t328, t310, t311, t312, t313,
 		           t314, t315, t316, t317, t318, t330, t331, t332, t333, t334, t335, t336,
 		           t225, t226, t227, t228, t229, t230, t340, t341, t342, t343, t344,
-		           t350, t351, t352, t353, t354, t355, t356):
+		           t350, t351, t352, t353, t354, t355, t356,
+		           t360, t361, t362, t363, t364, t365, t366):
 			fn()
 	finally:
 		frappe.flags.kamra_checkin_steps_off = False
