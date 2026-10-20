@@ -3,9 +3,10 @@ import {
   Plus, Minus, Trash2, Send, UtensilsCrossed, Search,
   Maximize2, Minimize2, Wallet, Printer, Receipt, XCircle, Ban,
   Scissors, Users, PauseCircle, Tag, Gift, Clock, Menu, LogOut, Focus,
-  Keyboard, LayoutGrid, BedDouble, ListOrdered, UserRound,
+  Keyboard, LayoutGrid, BedDouble, ListOrdered, UserRound, History,
 } from "lucide-react"
 import PosSidePanel from "./pos/PosSidePanel"
+import OrderHistory from "./pos/OrderHistory"
 import VoidApproval, { type VoidArgs } from "./pos/VoidApproval"
 import { useNavigate } from "react-router-dom"
 import { call, getCurrentProperty } from "../lib/api"
@@ -232,6 +233,7 @@ export default function POS() {
   // the side panel (orders list / who the bill is for) and its live refresh
   const [panel, setPanel] = useState<"orders" | "guest" | null>(null)
   const [panelKey, setPanelKey] = useState(0)
+  const [historyOpen, setHistoryOpen] = useState(false)
   // a customer chosen for a bill not created yet
   const [draftGuest, setDraftGuest] = useState<{ guest: string; full_name: string } | null>(null)
   const [chooser, setChooser] = useState<string | null>(null) // table with several bills
@@ -1032,11 +1034,17 @@ export default function POS() {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <button onClick={() => setPanel("orders")}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-2.5 py-2 text-xs font-semibold text-zinc-600 hover:bg-zinc-50"
-            title={t("Today's and past orders")}>
+            className="inline-flex items-center gap-1.5 rounded-lg border border-brand-600 bg-white px-3 py-2 text-sm font-semibold text-brand-700 hover:bg-brand-50"
+            title={t("Today's orders, and the bills still open")}>
             <ListOrdered className="size-4" />
-            <span className="hidden sm:inline">{t("Orders")}</span>
+            {t("Orders")}
             {open.some((o) => o.stale) && <span className="size-2 rounded-full bg-rose-600" aria-label={t("A bill was never sent")} />}
+          </button>
+          <button onClick={() => setHistoryOpen(true)}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-400 bg-white px-3 py-2 text-sm font-semibold text-zinc-800 hover:bg-zinc-50"
+            title={t("Every past bill: search, filter by date, type and payment, and export")}>
+            <History className="size-4" />
+            {t("Order history")}
           </button>
           <button onClick={() => setTablesOpen(true)}
             className="hidden items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-2.5 py-2 text-xs font-semibold text-zinc-600 hover:bg-zinc-50 md:inline-flex lg:hidden">
@@ -1640,6 +1648,12 @@ export default function POS() {
         </div>
       )}
 
+      {/* every past bill, on a wide screen of its own */}
+      {historyOpen && outlet && (
+        <OrderHistory outlet={outlet} onClose={() => setHistoryOpen(false)}
+          onOpenBill={(n) => { setHistoryOpen(false); void openTab(n) }} />
+      )}
+
       {/* orders list and who the bill is for, over the till */}
       {panel && outlet && (
         <PosSidePanel outlet={outlet} tab={panel} onTab={setPanel}
@@ -1651,6 +1665,7 @@ export default function POS() {
           }}
           onDraftGuest={(g) => setDraftGuest(g)}
           onOpenBill={(n) => { setPanel(null); void openTab(n) }}
+          onHistory={() => { setPanel(null); setHistoryOpen(true) }}
           onGuestChanged={() => { void reloadDetail().catch(() => {}); loadOpen() }} />
       )}
     </div>

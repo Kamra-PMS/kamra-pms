@@ -120,7 +120,7 @@ interface CustomerHit {
   in_house_room: string | null
 }
 
-const money = (n: unknown) =>
+export const money = (n: unknown) =>
   Number(n ?? 0).toLocaleString(moneyLocale(), { maximumFractionDigits: 2 })
 
 const BADGE: Record<ListState, string> = {
@@ -132,16 +132,16 @@ const BADGE: Record<ListState, string> = {
   closed: "bg-zinc-100 text-zinc-600",
   cancelled: "bg-rose-100 text-rose-700",
 }
-const STATES: ListState[] = ["open", "sent", "paid", "room", "nc", "cancelled", "closed"]
+export const STATES: ListState[] = ["open", "sent", "paid", "room", "nc", "cancelled", "closed"]
 
 /** yyyy-mm-dd for the device's own day */
-function localDay(d = new Date()) {
+export function localDay(d = new Date()) {
   const p = (n: number) => String(n).padStart(2, "0")
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
 }
-const hhmm = (ts?: string | null) => (ts ? ts.slice(11, 16) : "")
+export const hhmm = (ts?: string | null) => (ts ? ts.slice(11, 16) : "")
 const dayOf = (ts?: string | null) => (ts ? ts.slice(0, 10) : "")
-function shortDay(d: string) {
+export function shortDay(d: string) {
   if (!d) return ""
   const dt = new Date(`${d}T00:00:00`)
   return isNaN(dt.getTime()) ? d : dt.toLocaleDateString(moneyLocale(), { day: "numeric", month: "short" })
@@ -170,7 +170,7 @@ export function StateBadge({ state, className }: { state: ListState; className?:
 }
 
 export default function PosSidePanel({
-  outlet, tab, onTab, onClose, refreshKey, order, draft, onDraftGuest, onOpenBill, onGuestChanged,
+  outlet, tab, onTab, onClose, refreshKey, order, draft, onDraftGuest, onOpenBill, onGuestChanged, onHistory,
 }: {
   outlet: string
   tab: "orders" | "guest"
@@ -185,6 +185,8 @@ export default function PosSidePanel({
   onDraftGuest: (g: { guest: string; full_name: string } | null) => void
   onOpenBill: (name: string) => void
   onGuestChanged: () => void
+  /** open the full-screen order history */
+  onHistory?: () => void
 }) {
   const { t } = useT()
   useEffect(() => {
@@ -214,7 +216,7 @@ export default function PosSidePanel({
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto p-3">
           {tab === "orders"
-            ? <OrdersTab outlet={outlet} refreshKey={refreshKey} onOpenBill={onOpenBill} />
+            ? <OrdersTab outlet={outlet} refreshKey={refreshKey} onOpenBill={onOpenBill} onHistory={onHistory} />
             : <GuestTab outlet={outlet} order={order} draft={draft} refreshKey={refreshKey}
                 onDraftGuest={onDraftGuest} onChanged={onGuestChanged} />}
         </div>
@@ -225,8 +227,8 @@ export default function PosSidePanel({
 
 /* ── orders ─────────────────────────────────────────────────────────── */
 
-function OrdersTab({ outlet, refreshKey, onOpenBill }: {
-  outlet: string; refreshKey: number; onOpenBill: (name: string) => void
+function OrdersTab({ outlet, refreshKey, onOpenBill, onHistory }: {
+  outlet: string; refreshKey: number; onOpenBill: (name: string) => void; onHistory?: () => void
 }) {
   const { t } = useT()
   const label = useStateLabel()
@@ -283,6 +285,11 @@ function OrdersTab({ outlet, refreshKey, onOpenBill }: {
   }
   return (
     <div className="space-y-2">
+      {onHistory && (
+        <Button variant="outline" className="w-full" onClick={onHistory}>
+          <ListOrdered className="size-4" />{t("Full order history: any date, filters, export")}
+        </Button>
+      )}
       <div className="flex gap-2">
         <label className="relative flex-1">
           <Search className="pointer-events-none absolute start-2.5 top-1/2 size-4 -translate-y-1/2 text-zinc-400" aria-hidden />
@@ -372,7 +379,7 @@ function OrdersTab({ outlet, refreshKey, onOpenBill }: {
   )
 }
 
-function OrderView({ name, onBack, onOpenBill }: {
+export function OrderView({ name, onBack, onOpenBill }: {
   name: string; onBack: () => void; onOpenBill: (n: string) => void
 }) {
   const { t } = useT()
