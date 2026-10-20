@@ -10,6 +10,7 @@ import {
 } from "lucide-react"
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom"
 import UpdateNag from "./components/UpdateNag"
+import SetupNag from "./components/SetupNag"
 import { Button } from "./components/ui/button"
 import {
   appForPath,
@@ -322,6 +323,7 @@ export default function AppShell() {
         </div>
       )}
       {!kiosk && !demoMode && <UpdateNag />}
+      {!kiosk && !demoMode && <SetupNag />}
       <div className="flex min-h-0 flex-1">
       {!kiosk && (
       <aside className="hidden w-56 shrink-0 flex-col border-r border-zinc-200 bg-white px-3 py-5 sm:sticky sm:top-0 sm:flex sm:h-screen sm:overflow-y-auto">

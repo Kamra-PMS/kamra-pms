@@ -6480,6 +6480,48 @@
    ]
   },
   {
+   "name": "Setup checklist (finish setting up a property)",
+   "item": [
+    {
+     "name": "setup_checklist",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.onboarding.setup_checklist",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.onboarding.setup_checklist"
+       ]
+      },
+      "description": "What is set up and what is still to do, for the Finish setup screen.\nOnly items that matter for the modules this property runs.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
    "name": "Kitchen printers (routing, print stations, print queue)",
    "item": [
     {
@@ -13270,7 +13312,7 @@
         "kamra.public_api.site_info"
        ]
       },
-      "description": "Public site metadata for the login/boot screen.\n\ndemo_mode is true only on the seeded demo site (seed_demo sets the\n`kamra_demo_mode` default), so a real install never advertises the\ndemo login accounts."
+      "description": "Public site metadata for the login/boot screen.\n\ndemo_mode is true only on the seeded demo site (seed_demo sets the\n`kamra_demo_mode` default), so a real install never advertises the\ndemo login accounts. The running version is public on purpose: it is\nwhat a bug report and the login screen quote."
      }
     },
     {

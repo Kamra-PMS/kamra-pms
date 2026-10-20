@@ -324,6 +324,7 @@ export const APPS: AppDef[] = [
         roles: ["System Manager", "Administrator"],
       },
       { to: "/settings/staff", label: "Staff & Access", icon: UserCog },
+      { to: "/finish-setup", label: "Finish setup", icon: ListChecks, keywords: ["onboarding", "checklist", "getting started", "setup wizard"] },
       {
         href: `${DESK}/app/build`,
         label: "Frappe Desk",

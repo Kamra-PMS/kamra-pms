@@ -414,6 +414,23 @@ def setup_property(payload):
 	except Exception:
 		frappe.log_error(title="Turnover Profile ensure after setup_property")
 
+	# What the owner switched on (guided setup). Empty keeps the default:
+	# every module, exactly as before.
+	picked_modules = payload.get("modules")
+	if picked_modules:
+		unknown = [m for m in picked_modules if m not in ALL_MODULES]
+		if unknown:
+			frappe.throw(_("Unknown module(s): {0}").format(", ".join(unknown)))
+		prop.db_set("enabled_modules", ",".join(
+			sorted(set(picked_modules) | {"front-desk", "admin"})))
+	wants = [w for w in (payload.get("wants") or []) if w in ("channel-manager", "whatsapp")]
+	if wants:
+		prop.db_set("setup_wants", ",".join(wants))
+	pos_made = {}
+	if payload.get("pos"):
+		from kamra.onboarding import create_pos_setup
+		pos_made = create_pos_setup(prop.name, payload["pos"])
+
 	rt_by_code = {}
 	weekends_created = 0
 	for rt in payload.get("room_types", []):
@@ -507,6 +524,7 @@ def setup_property(payload):
 	        "meal_plans": meal_plans_created,
 	        "property_kind": prop.property_kind,
 	        "inventory_topology": topology,
+	        "pos": pos_made,
 	        "sellable_units": siu_stats}
 
 

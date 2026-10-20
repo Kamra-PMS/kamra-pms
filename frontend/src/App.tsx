@@ -30,6 +30,7 @@ const Setup = lazy(() => import("./screens/Setup"))
 const GoLiveImport = lazy(() => import("./screens/GoLiveImport"))
 const HousekeepingBoard = lazy(() => import("./screens/HousekeepingBoard"))
 const Settings = lazy(() => import("./screens/settings/SettingsHub"))
+const FinishSetup = lazy(() => import("./screens/FinishSetup"))
 const SystemHealth = lazy(() => import("./screens/SystemHealth"))
 const BookingEngine = lazy(() => import("./screens/BookingEngine"))
 const Developers = lazy(() => import("./screens/Developers"))
@@ -258,6 +259,7 @@ export default function App() {
           <Route path="billing/:name" element={<FolioView />} />
           <Route path="cashier" element={<CashierTill />} />
           <Route path="cashier/sessions" element={<CashierSessions />} />
+          <Route path="finish-setup" element={<FinishSetup />} />
           <Route path="cashier/board" element={<CashierBoard />} />
           <Route path="cashier/petty-cash" element={<PettyCash />} />
           <Route path="cashier/shift-report" element={<CashierShiftReport />} />
