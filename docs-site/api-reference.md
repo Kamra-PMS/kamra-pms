@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function - the same governed layer
-the UI and the AI use. **370 endpoints**, generated from the source
+the UI and the AI use. **379 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -2218,8 +2218,8 @@ start as New (a later fire_kot sends them to the kitchen).
 
 **POST**
 
-Captain confirmation - a guest's QR order isn't fired to the kitchen
-until a captain has vetted it.
+Captain confirmation for a Placed order that has no captain yet
+(legacy guest QR). Sets the captain and moves Placed -> Confirmed.
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -2481,6 +2481,116 @@ times how long it takes to arrive, which proves live updates work.
 | `property` | yes |  |
 | `outlet` | no | `None` |
 | `echo` | no | `0` |
+
+
+## Service tickets (assign, resolve, timeline)
+
+### `kamra.tickets.tickets_search`
+
+**GET/POST**
+
+Tickets for a property with the filters a supervisor needs.
+
+view: open (default), mine, unassigned, overdue, resolved, all. Old
+tickets are never hidden: 'all' and 'resolved' go back as far as the
+data does, and older_than_days narrows to the ones still open past that.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `view` | no | `'open'` |
+| `category` | no | `None` |
+| `priority` | no | `None` |
+| `q` | no | `None` |
+| `assignee` | no | `None` |
+| `older_than_days` | no | `0` |
+| `limit` | no | `200` |
+
+### `kamra.tickets.ticket_detail`
+
+**GET/POST**
+
+One ticket in full: its fields, SLA, and the timeline.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `ticket` | yes |  |
+
+### `kamra.tickets.ticket_assignees`
+
+**GET/POST**
+
+Staff a ticket can be handed to.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+
+### `kamra.tickets.assign_ticket`
+
+**POST**
+
+Hand a ticket to someone, or clear the assignee (user empty).
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `ticket` | yes |  |
+| `user` | no | `None` |
+| `note` | no | `None` |
+
+### `kamra.tickets.claim_ticket`
+
+**POST**
+
+Take a ticket yourself.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `ticket` | yes |  |
+
+### `kamra.tickets.start_ticket`
+
+**POST**
+
+Begin work: moves it to In Progress and, if nobody has it, gives it to you.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `ticket` | yes |  |
+
+### `kamra.tickets.add_ticket_note`
+
+**POST**
+
+A comment on the timeline (what was tried, who was called).
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `ticket` | yes |  |
+| `note` | yes |  |
+
+### `kamra.tickets.resolve_ticket`
+
+**POST**
+
+Mark a ticket solved, recording who did it and what was done.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `ticket` | yes |  |
+| `resolution_note` | no | `None` |
+| `close` | no | `0` |
+
+### `kamra.tickets.reopen_ticket`
+
+**POST**
+
+A solved ticket that came back. Needs a reason; it is kept in the timeline.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `ticket` | yes |  |
+| `reason` | yes |  |
 
 
 ## Kitchen printers (routing, print stations, print queue)

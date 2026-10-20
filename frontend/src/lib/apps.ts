@@ -158,7 +158,7 @@ export const APPS: AppDef[] = [
     description: "Guest requests and ops workflows.",
     roles: ["Front Desk", "Hotel Admin", "System Manager", "Administrator"],
     items: [
-      { to: "/tickets", label: "Guest Requests", icon: Ticket },
+      { to: "/tickets", label: "Guest Requests (Tickets)", icon: Ticket, keywords: ["tickets", "service ticket", "complaint", "sla", "request"] },
       { to: "/whatsapp", label: "WhatsApp", icon: MessageCircle },
       { to: "/channels", label: "Channels", icon: PhoneCall,
         roles: ["Hotel Admin", "System Manager", "Administrator"] },

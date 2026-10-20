@@ -5836,7 +5836,7 @@
         "kamra.pos.confirm_order"
        ]
       },
-      "description": "Captain confirmation - a guest's QR order isn't fired to the kitchen\nuntil a captain has vetted it.",
+      "description": "Captain confirmation for a Placed order that has no captain yet\n(legacy guest QR). Sets the captain and moves Placed -> Confirmed.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"order\": \"ORD-2026-00001\"\n}",
@@ -6469,6 +6469,344 @@
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\",\n  \"outlet\": \"Your Property-Restaurant\",\n  \"echo\": 0\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "name": "Service tickets (assign, resolve, timeline)",
+   "item": [
+    {
+     "name": "tickets_search",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.tickets.tickets_search",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.tickets.tickets_search"
+       ]
+      },
+      "description": "Tickets for a property with the filters a supervisor needs.\n\nview: open (default), mine, unassigned, overdue, resolved, all. Old\ntickets are never hidden: 'all' and 'resolved' go back as far as the\ndata does, and older_than_days narrows to the ones still open past that.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"view\": \"open\",\n  \"older_than_days\": 0,\n  \"limit\": 200\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "ticket_detail",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.tickets.ticket_detail",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.tickets.ticket_detail"
+       ]
+      },
+      "description": "One ticket in full: its fields, SLA, and the timeline.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"ticket\": \"<ticket>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "ticket_assignees",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.tickets.ticket_assignees",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.tickets.ticket_assignees"
+       ]
+      },
+      "description": "Staff a ticket can be handed to.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "assign_ticket",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.tickets.assign_ticket",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.tickets.assign_ticket"
+       ]
+      },
+      "description": "Hand a ticket to someone, or clear the assignee (user empty).",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"ticket\": \"<ticket>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "claim_ticket",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.tickets.claim_ticket",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.tickets.claim_ticket"
+       ]
+      },
+      "description": "Take a ticket yourself.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"ticket\": \"<ticket>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "start_ticket",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.tickets.start_ticket",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.tickets.start_ticket"
+       ]
+      },
+      "description": "Begin work: moves it to In Progress and, if nobody has it, gives it to you.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"ticket\": \"<ticket>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "add_ticket_note",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.tickets.add_ticket_note",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.tickets.add_ticket_note"
+       ]
+      },
+      "description": "A comment on the timeline (what was tried, who was called).",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"ticket\": \"<ticket>\",\n  \"note\": \"<note>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "resolve_ticket",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.tickets.resolve_ticket",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.tickets.resolve_ticket"
+       ]
+      },
+      "description": "Mark a ticket solved, recording who did it and what was done.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"ticket\": \"<ticket>\",\n  \"close\": 0\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "reopen_ticket",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.tickets.reopen_ticket",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.tickets.reopen_ticket"
+       ]
+      },
+      "description": "A solved ticket that came back. Needs a reason; it is kept in the timeline.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"ticket\": \"<ticket>\",\n  \"reason\": \"<reason>\"\n}",
        "options": {
         "raw": {
          "language": "json"

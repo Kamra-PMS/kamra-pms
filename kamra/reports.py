@@ -361,8 +361,8 @@ def sla_report(property: str, from_date: str, to_date: str):
 	breached if it was resolved after due_by, or is still open past due_by."""
 	tickets = frappe.db.sql(
 		"""
-		SELECT name, category, priority, status, breached,
-		       creation, due_by, resolved_on
+		SELECT name, subject, category, priority, status, breached,
+		       creation, due_by, resolved_on, resolved_by, assigned_to_user
 		FROM `tabService Ticket`
 		WHERE property=%(p)s AND DATE(creation)>=%(f)s AND DATE(creation)<=%(t)s
 		""",
@@ -428,9 +428,50 @@ def sla_report(property: str, from_date: str, to_date: str):
 			continue
 		overdue.append({
 			"name": t.name, "category": t.category, "priority": t.priority,
+			"subject": t.subject, "assigned_to_user": t.assigned_to_user,
 			"overdue_hours": round(over_min / 60, 1),
 		})
 	overdue.sort(key=lambda r: r["overdue_hours"], reverse=True)
+
+	# who solved them, and the whole open backlog - not only this window's
+	solver: dict[str, dict] = {}
+	for t in resolved:
+		who = t.resolved_by or ""
+		row = solver.setdefault(who, {"user": who or None, "resolved": 0, "breached": 0, "mins": []})
+		row["resolved"] += 1
+		if is_breached(t):
+			row["breached"] += 1
+		m = resolve_mins(t)
+		if m is not None:
+			row["mins"].append(m)
+	people = {u.name: u.full_name for u in frappe.get_all(
+		"User", filters={"name": ["in", [k for k in solver if k]]}, fields=["name", "full_name"])} if solver else {}
+	by_resolver = []
+	for row in solver.values():
+		mins = row.pop("mins")
+		row["name"] = people.get(row["user"]) or row["user"] or "Not recorded"
+		row["avg_resolve_mins"] = round(sum(mins) / len(mins)) if mins else None
+		by_resolver.append(row)
+	by_resolver.sort(key=lambda x: x["resolved"], reverse=True)
+
+	open_all = frappe.db.sql(
+		"""SELECT name, subject, category, priority, status, creation, due_by, assigned_to_user
+		   FROM `tabService Ticket` WHERE property=%s AND status IN ('Open','In Progress')
+		   ORDER BY creation ASC""", property, as_dict=True)
+	buckets = [("Under 1 day", 0, 1), ("1 to 3 days", 1, 3), ("3 to 7 days", 3, 7), ("Over 7 days", 7, 10**6)]
+	aging = []
+	for label, lo, hi in buckets:
+		n = sum(1 for t in open_all
+		        if lo <= time_diff_in_seconds(now, get_datetime(t.creation)) / 86400 < hi)
+		aging.append({"label": label, "count": n})
+	asg = {u.name: u.full_name for u in frappe.get_all(
+		"User", filters={"name": ["in", [t.assigned_to_user for t in open_all if t.assigned_to_user] or [""]]},
+		fields=["name", "full_name"])}
+	oldest_open = [{
+		"name": t.name, "subject": t.subject, "category": t.category, "priority": t.priority,
+		"status": t.status, "age_days": round(time_diff_in_seconds(now, get_datetime(t.creation)) / 86400, 1),
+		"assigned_to_user": t.assigned_to_user, "assigned_to_name": asg.get(t.assigned_to_user),
+	} for t in open_all[:15]]
 
 	return {
 		"from": from_date, "to": to_date,
@@ -443,4 +484,9 @@ def sla_report(property: str, from_date: str, to_date: str):
 		"by_category": group_by("category"),
 		"by_priority": group_by("priority"),
 		"overdue": overdue,
+		"by_resolver": by_resolver,
+		"aging": aging,
+		"oldest_open": oldest_open,
+		"open_total": len(open_all),
+		"unassigned_open": sum(1 for t in open_all if not t.assigned_to_user),
 	}
