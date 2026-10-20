@@ -1,6 +1,6 @@
 # MCP tool reference
 
-Kamra exposes **104 governed tools** on the hosted MCP
+Kamra exposes **107 governed tools** on the hosted MCP
 endpoint (`/mcp`) and the stdio sidecar (`mcp/kamra_mcp.py`). Every
 call runs as the connected user - **role** permissions apply, tools
 are further filtered by the property's **enabled modules**, prices
@@ -855,6 +855,36 @@ Settle a POS check. mode: Cash, UPI, Card, Room Charge, etc.
 Confirm the total with staff before calling.
 
 Endpoint: `kamra.pos.pay_order`.
+Mutating - logged to the activity ledger.
+
+### `pos_orders(outlet, date, to_date, q, state)`
+
+Bills at an outlet for a day (default today) or a date range of up
+to 31 days, newest first, each with its state: open (not sent to the
+kitchen), sent, paid, room (posted to a room folio), nc, closed or
+cancelled. Viewing today also lists bills still open from earlier
+days. q searches bill/KOT number, table, room and customer.
+
+Endpoint: `kamra.pos.orders_list`.
+
+### `pos_cancel_order(order, reason)`
+
+Cancel an open POS bill that has nothing sent to the kitchen yet,
+with a reason (kept on the bill and in the activity log; the table is
+freed). Refused once any item was fired: food the kitchen started is
+voided by a supervisor at the till, never by an agent. Check with
+pos_order_detail first (kitchen_lines must be 0).
+
+Endpoint: `kamra.pos.cancel_order`.
+Mutating - logged to the activity ledger.
+
+### `pos_remove_item(order, item_row)`
+
+Remove one line that has not been sent to the kitchen from an open
+POS bill (row id from pos_order_detail). Lines the kitchen already has
+are refused, and so is the last line (cancel the bill instead).
+
+Endpoint: `kamra.pos.remove_item`.
 Mutating - logged to the activity ledger.
 
 ### `pos_room_lookup(room, last_name)`

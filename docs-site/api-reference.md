@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function - the same governed layer
-the UI and the AI use. **370 endpoints**, generated from the source
+the UI and the AI use. **376 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -2055,7 +2055,8 @@ The digital menu for an outlet: available items grouped by category.
 **GET/POST**
 
 Rooms with a checked-in guest, for the till's room picker: only these
-can take a room charge. "101 · Guest Name".
+can take a room charge. "101 · Guest Name". `room_charges_allowed` is the
+check-in's decision; a blocked room is shown but cannot be charged.
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -2082,7 +2083,9 @@ Captain takes an order. A room (room service, or a dine-in guest
 charging to their room) must have a checked-in stay: it is resolved now
 so the bill posts to that folio on delivery. A room with nobody in house
 is refused - take it as a walk-in bill instead. Takeaway and delivery
-carry the customer's details instead of a table/room.
+carry the customer's details instead of a table/room. `guest` ties the
+bill to a guest profile (a walk-in found or added with find_customer or
+attach_customer); a room bill takes the in-house guest by itself.
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -2100,13 +2103,16 @@ carry the customer's details instead of a table/room.
 | `customer_phone` | no | `None` |
 | `delivery_address` | no | `None` |
 | `allergy_note` | no | `None` |
+| `guest` | no | `None` |
 
 ### `kamra.pos.open_orders`
 
 **GET/POST**
 
 Every running tab at an outlet - the tables/rooms being served right
-now, so a captain can juggle several at once.
+now, so a captain can juggle several at once. A bill nobody has sent to
+the kitchen carries its age in minutes and turns `stale` after the F&B
+setting's limit, so a forgotten order is sent or cancelled.
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -2196,7 +2202,10 @@ the two bills conserve the original total.
 
 **GET/POST**
 
-One order's full contents - to load a running tab back into the till.
+One order's full contents - to load a running tab back into the till,
+or to look at a closed one from the orders list. `kitchen_lines` counts
+the live lines the kitchen already has: while it is zero the captain can
+cancel the bill alone; after that a supervisor approves.
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -2218,8 +2227,8 @@ start as New (a later fire_kot sends them to the kitchen).
 
 **POST**
 
-Captain confirmation - a guest's QR order isn't fired to the kitchen
-until a captain has vetted it.
+Captain confirmation for a Placed order that has no captain yet
+(legacy guest QR). Sets the captain and moves Placed -> Confirmed.
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -2285,6 +2294,7 @@ round trip instead of four, and the kitchen gets a single update.
 | `allergy_note` | no | `None` |
 | `discount` | no | `0` |
 | `discount_reason` | no | `''` |
+| `guest` | no | `None` |
 
 ### `kamra.pos.send_round`
 
@@ -2420,26 +2430,139 @@ never touches a folio. `undo=1` lifts it.
 
 **POST**
 
-Cancel a running order - needs a reason (it's kept on the order for
-the audit trail). Closed orders can't be cancelled.
+Cancel an open bill with a reason. Nothing sent to the kitchen yet: the
+captain (or an agent) cancels alone. Items already sent: every live line
+is voided rather than deleted, the kitchen gets a VOID slip and sees the
+ticket as cancelled, and a supervisor approves (`supervisor` +
+`supervisor_pin`, or a supervisor's own session). Paid, posted or
+already cancelled bills are refused. Who, why and who approved are kept
+on the bill and in the activity log; the table is freed.
 
 | Param | Required | Default |
 | --- | --- | --- |
 | `order` | yes |  |
-| `reason` | yes |  |
+| `reason` | no | `''` |
+| `reason_code` | no | `None` |
+| `supervisor` | no | `None` |
+| `supervisor_pin` | no | `None` |
 
 ### `kamra.pos.void_item`
 
 **POST**
 
-Void one line with a reason - the line stays on the order (struck
-through, amount zero) so the KOT-vs-bill audit holds up.
+Void one line with a reason. The line stays on the order (struck
+through, amount zero) so the KOT-vs-bill audit holds up. A line the
+kitchen already has needs a supervisor's approval (see cancel_order) and
+prints a VOID slip; a line never sent is simpler to remove_item.
 
 | Param | Required | Default |
 | --- | --- | --- |
 | `order` | yes |  |
 | `item_row` | yes |  |
-| `reason` | yes |  |
+| `reason` | no | `''` |
+| `reason_code` | no | `None` |
+| `supervisor` | no | `None` |
+| `supervisor_pin` | no | `None` |
+
+### `kamra.pos.remove_item`
+
+**POST**
+
+Take a line off a bill before it goes to the kitchen: a mis-tap or a
+change of mind. No reason and no approval, because nothing was cooked.
+A line the kitchen has is refused (void it instead), and so is the last
+line (cancel the bill instead).
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `order` | yes |  |
+| `item_row` | yes |  |
+
+### `kamra.pos.void_approvers`
+
+**GET/POST**
+
+Who can approve a void at this outlet's till: enabled Hotel Admin and
+Finance users with access to the property and a cashier PIN set. Names
+only.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `outlet` | yes |  |
+
+### `kamra.pos.orders_list`
+
+**GET/POST**
+
+The outlet's bills for a day, or a range of up to 31 days, newest
+first: open (not sent to the kitchen), sent, paid, posted to a room, NC,
+closed or cancelled, with the table, who it was for, the amount and the
+time. `q` searches the bill and KOT number, table, room, customer name
+and phone, and the in-house guest's name. `state` keeps one state.
+Looking at today also brings in bills still open from earlier days
+(`carried`), so a forgotten order cannot hide. Only this outlet's bills.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `outlet` | yes |  |
+| `date` | no | `None` |
+| `to_date` | no | `None` |
+| `q` | no | `None` |
+| `state` | no | `None` |
+| `limit` | no | `200` |
+
+### `kamra.pos.find_customer`
+
+**GET/POST**
+
+Find a guest profile for a bill by phone (4+ digits) or name (3+
+letters): the same guest records the front desk uses. Each match says
+how often they ate at this outlet and whether they are in house now.
+Phones show their last digits only.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `outlet` | yes |  |
+| `q` | yes |  |
+
+### `kamra.pos.attach_customer`
+
+**POST**
+
+Say who a walk-in bill is for: an existing guest profile (`guest`),
+or a name and phone. A phone that matches a profile reuses it; otherwise
+a lightweight guest profile is added (name and phone only), the same
+record the front desk uses. Without `order` it only finds or adds the
+profile, for a bill the till is about to create. `clear=1` takes the
+customer off the bill. A room bill is always for its in-house guest.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `outlet` | yes |  |
+| `order` | no | `None` |
+| `guest` | no | `None` |
+| `customer_name` | no | `None` |
+| `phone` | no | `None` |
+| `clear` | no | `0` |
+
+### `kamra.pos.guest_panel`
+
+**GET/POST**
+
+Who a bill is for, without leaving the till. For a room bill: the
+in-house guest, room, stay dates and whether the stay can take room
+charges (the check-in's decision, which posting also enforces). For a
+walk-in: the attached guest profile. Either way: VIP, the guest's notes
+(preferences, allergies), the bill's allergy note, and their past bills
+at this outlet. Pass `order`, or `guest` / `room` for a bill not created
+yet.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `outlet` | yes |  |
+| `order` | no | `None` |
+| `guest` | no | `None` |
+| `room` | no | `None` |
 
 ### `kamra.pos.bill_data`
 
