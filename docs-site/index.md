@@ -77,7 +77,7 @@ Start here: **[Connect your AI (MCP)](/ai-and-mcp)** ·
   [How Kamra works](/how-it-works).
 - **You're integrating:** [API, MCP & Postman](/developers) - REST basics,
   full [API reference](/api-reference),
-  [Postman collection ↓](/kamra.postman_collection.json).
+  [Postman collection ↓](https://kamrapms.com/docs/kamra.postman_collection.json).
 - **You run the hotel:** [Guides by role](/user-guide) and the module
   guides in the side bar.
 - **You're installing:** [Quickstart](/quickstart),
@@ -86,6 +86,6 @@ Start here: **[Connect your AI (MCP)](/ai-and-mcp)** ·
 
 **Quick links:** [Connect MCP](/ai-and-mcp) · [MCP tools](/mcp-tools) ·
 [API basics](/api) · [API reference](/api-reference) ·
-[Postman ↓](/kamra.postman_collection.json) ·
+[Postman ↓](https://kamrapms.com/docs/kamra.postman_collection.json) ·
 [What's new](/releases) ·
 [changelog](https://github.com/Kamra-PMS/kamra-pms/blob/main/CHANGELOG.md)

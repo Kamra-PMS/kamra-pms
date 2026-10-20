@@ -20,7 +20,7 @@ Content-Type: application/json
   dedicated agent user for services.
 - Responses: `{"message": <return value>}`. Errors are HTTP 4xx with a
   readable reason.
-- **Try it in Postman:** [download the collection](/kamra.postman_collection.json),
+- **Try it in Postman:** [download the collection](https://kamrapms.com/docs/kamra.postman_collection.json),
   set `base_url`, `api_key` and `api_secret` collection variables, go.
 - Endpoints marked **public** are `allow_guest` (no token; rate-limited).
 
