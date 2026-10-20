@@ -107,7 +107,7 @@ is pulled in automatically.
 - **Restaurant POS** — area-wise table map with live states, concurrent &
   split bills, dine-in / room service / takeaway / delivery, full-screen
   till and kitchen pass, 80mm thermal KOT & bill printing, kitchen display,
-  inventory & recipes, guest QR ordering, room posting (alcohol-aware).
+  inventory & recipes, room posting (alcohol-aware).
 - **Operations** — service tickets with SLA, a housekeeping mobile app with
   a supervisor room board, end-to-end guest laundry, lost & found, shift
   handover.

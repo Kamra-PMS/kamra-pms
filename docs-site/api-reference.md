@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function - the same governed layer
-the UI and the AI use. **355 endpoints**, generated from the source
+the UI and the AI use. **353 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -1209,6 +1209,21 @@ Everything the printable cancellation confirmation needs.
 | --- | --- | --- |
 | `reservation` | yes |  |
 
+### `kamra.api.checkout_context`
+
+**GET/POST** · roles: `Front Desk`, `Night Auditor`, `Kamra Agent`
+
+Everything the guided check-out wizard needs in one round trip.
+
+Posts remaining nights (idempotent, same as check_out) so the desk sees
+the true bill, then returns grouped folio lines, billing instructions,
+deposit state, blockers, and the evaluated Checkout SOP. Amounts come
+from folio helpers  -  never invented here.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `reservation` | yes |  |
+
 ### `kamra.api.check_out`
 
 **GET/POST** · roles: `Front Desk`, `Night Auditor`, `Kamra Agent`
@@ -2073,19 +2088,6 @@ now, so a captain can juggle several at once.
 | Param | Required | Default |
 | --- | --- | --- |
 | `outlet` | yes |  |
-
-### `kamra.pos.qr_targets`
-
-**GET/POST** · roles: `Front Desk`, `Finance`, `Hotel Admin`, `Kamra Agent`
-
-Everything a printable QR sheet needs: each restaurant outlet's tables
-with their QR-ordering link, and each room with the in-room dining link
-(the Room Service outlet's menu, tagged with the room). The codes are
-drawn in the browser - no QR web service sees these links.
-
-| Param | Required | Default |
-| --- | --- | --- |
-| `property` | yes |  |
 
 ### `kamra.pos.table_map`
 
@@ -4685,7 +4687,7 @@ company's. Tax is the hotel's rule for the charge type, not the POS's.
 | `outlet_name` | no | `None` |
 
 
-## Public (no auth - booking page, QR menu)
+## Public (no auth - booking page, check-in)
 
 > These are allow_guest endpoints: no token needed, rate-limited.
 
@@ -4903,33 +4905,6 @@ Live promo-code feedback on the booking page. Never throws - returns
 | `property` | yes |  |
 | `code` | yes |  |
 | `nights` | no | `1` |
-
-### `kamra.public_api.qr_menu` <Badge type='tip' text='public' />
-
-**GET/POST**
-
-The guest-facing digital menu behind a table/room QR code. Only shows
-outlets a hotel has published items for; no prices are trusted from the
-guest - they're read here.
-
-| Param | Required | Default |
-| --- | --- | --- |
-| `outlet` | yes |  |
-
-### `kamra.public_api.qr_order` <Badge type='tip' text='public' />
-
-**POST**
-
-A guest places an order from the QR menu. It lands as a QR order that
-a captain must confirm before it fires to the kitchen or touches a bill -
-the guest can never post directly to a folio.
-
-| Param | Required | Default |
-| --- | --- | --- |
-| `outlet` | yes |  |
-| `items` | yes |  |
-| `room` | no | `None` |
-| `table_no` | no | `None` |
 
 ### `kamra.public_api.hosting_enquiry` <Badge type='tip' text='public' />
 
