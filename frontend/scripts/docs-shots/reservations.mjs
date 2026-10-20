@@ -166,18 +166,17 @@ if (want("crs")) {
 
 // ------------------------------------------------------ groups & blocks
 if (want("group")) {
-  let g = (await api(ctx, "frappe.client.get_list", {
+  const g = (await api(ctx, "frappe.client.get_list", {
     doctype: "Group Booking", filters: { property: PROPERTY, group_name: "Infosys offsite" },
     fields: ["name"], limit_page_length: 1,
   }))[0]
   if (!g) {
-    const out = await api(ctx, "kamra.api.create_group_booking", {
+    await api(ctx, "kamra.api.create_group_booking", {
       property: PROPERTY, group_name: "Infosys offsite",
       check_in_date: addDays(today, 15), check_out_date: addDays(today, 17),
       rooms: [{ room_type: `${PROPERTY}-DLX`, count: 2 }],
       guest_name: "Sanjay Kulkarni", phone: "+919810011081",
     })
-    g = { name: out.group_booking }
   }
   await open(page, "/groups", 2500)
   await page.locator("tr").filter({ hasText: "Infosys offsite" }).first().click()

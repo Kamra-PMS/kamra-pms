@@ -301,7 +301,12 @@ TOOLS: tuple[ToolSpec, ...] = (
 		"""Check a guest out (posts remaining nights to the folio, frees the
 		room, queues housekeeping). Refused while any folio has a balance:
 		collect payment or refund first. A corporate stay with credit moves
-		to the city ledger automatically. Confirm with the user first.""",
+		to the city ledger automatically, after the property's credit
+		control: over the credit limit or with overdue bills it either warns
+		(credit_warnings in the result) or is refused with CREDIT_BLOCKED and
+		the reason. An agent can never override a credit block - tell the
+		user; Finance or a Hotel Admin can override it at the desk. Confirm
+		with the user first.""",
 		{"reservation": _p("string")},
 		required=("reservation",),
 		mutating=True,
@@ -772,6 +777,20 @@ TOOLS: tuple[ToolSpec, ...] = (
 		{"reservation": _p("string"), "amount": _p("number")},
 		required=("reservation",),
 		mutating=True,
+		group="Billing",
+	),
+	_t(
+		"company_credit_status",
+		"credit.company_credit_status",
+		"""A company's credit position before billing it more: its credit
+		limit (0 = none), what it owes on the city ledger and on stays in
+		house, bills overdue past the grace period, and whether billing
+		`amount` more would be warned or blocked by the property's credit
+		control. Read-only. Bookings on company billing and check-outs run
+		the same check; an agent can't override a block.""",
+		{"company": _p("string"), "amount": _p("number")},
+		required=("company",),
+		property=True,
 		group="Billing",
 	),
 	_t(

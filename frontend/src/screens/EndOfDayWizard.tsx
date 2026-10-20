@@ -22,7 +22,8 @@ import {
   TriangleAlert,
 } from "lucide-react"
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom"
-import { call, checkOut } from "../lib/api"
+import { call } from "../lib/api"
+import { useCreditCheckout } from "../components/CreditCheckout"
 import {
   eodAcknowledge,
   eodMarkNoShow,
@@ -416,6 +417,10 @@ export default function EndOfDayWizard() {
 
   const step: Step | undefined = state?.steps.find((s) => s.index === active)
 
+  // check-out from the departures step runs company credit control the
+  // same way the Today screen does (warning / override dialog)
+  const credit = useCreditCheckout(() => void load(active))
+
   async function act(label: string, fn: () => Promise<unknown>, reload = true) {
     setBusy(label)
     setErr(null)
@@ -589,7 +594,7 @@ export default function EndOfDayWizard() {
             state.ran ? null : (
               <div className="flex justify-end gap-1">
                 <Button variant="outline" className="h-7 px-2 text-xs" disabled={!!busy}
-                  onClick={() => act("checkout", () => checkOut(String(r.reservation)))}>
+                  onClick={() => act("checkout", () => credit.start(String(r.reservation)))}>
                   {t("Check out")}
                 </Button>
                 <Button variant="ghost" className="h-7 px-2 text-xs"
@@ -630,6 +635,22 @@ export default function EndOfDayWizard() {
             ]}
             rows={checks.credit_limit?.items ?? []}
             empty="No company is over its credit limit."
+          />
+        </CheckBlock>
+        <CheckBlock check={checks.overdue_ar} state={state} onAck={ack}>
+          <StepTable
+            cols={[
+              { key: "company", label: "Company" },
+              { key: "credit_days", label: "Terms (days)" },
+              { key: "oldest_due_date", label: "Oldest due", kind: "date" },
+              { key: "d1_30", label: "1-30 days", kind: "money" },
+              { key: "d31_60", label: "31-60", kind: "money" },
+              { key: "d61_90", label: "61-90", kind: "money" },
+              { key: "d90p", label: "90+", kind: "money" },
+              { key: "overdue", label: "Overdue", kind: "money" },
+            ]}
+            rows={checks.overdue_ar?.items ?? []}
+            empty="No company has an overdue bill."
           />
         </CheckBlock>
       </div>
@@ -868,6 +889,7 @@ export default function EndOfDayWizard() {
 
   return (
     <div className="space-y-4">
+      {credit.dialog}
       <div className="flex flex-wrap items-center justify-between gap-2 print:hidden">
         <div>
           <Link to="/end-of-day" className="inline-flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-800">

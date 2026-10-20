@@ -30,6 +30,16 @@ import { petChargeBasis } from "../lib/pets"
 import { useCashierAuth } from "../lib/cashierAuth"
 import DepositPanel, { type DepositState } from "./DepositPanel"
 
+interface CompanyCredit {
+  applies: boolean
+  ok: boolean
+  blocked?: boolean
+  policy: string
+  company?: string
+  reasons: string[]
+  can_override?: boolean
+}
+
 interface ExtraRoom {
   room_type: string
   adults: number
@@ -237,6 +247,31 @@ export function BookingDialog(props: {
   const [alert, setAlert] = useState<GuestAlert | null>(null)
   const [blAck, setBlAck] = useState(false)
   const [blReason, setBlReason] = useState("")
+  // company credit control (#238): the same check create_booking runs,
+  // asked up front so the desk sees a warning or a block before booking
+  const [credit, setCredit] = useState<CompanyCredit | null>(null)
+  const [creditReason, setCreditReason] = useState("")
+  const creditAmount = quote?.amount_after_tax ?? 0
+  useEffect(() => {
+    if (!form.company) {
+      setCredit(null)
+      return
+    }
+    let live = true
+    const timer = setTimeout(() => {
+      call<CompanyCredit>("kamra.credit.company_credit_status", {
+        company: form.company,
+        property: getCurrentProperty(),
+        amount: creditAmount,
+      })
+        .then((c) => live && setCredit(c))
+        .catch(() => live && setCredit(null))
+    }, 300)
+    return () => {
+      live = false
+      clearTimeout(timer)
+    }
+  }, [form.company, creditAmount])
 
   // Walk-in: book + ID + room + payment + check-in on this one screen
   // (issue #97). Arrival is always today, one room, no waitlist.
@@ -363,6 +398,13 @@ export function BookingDialog(props: {
   const blacklistBlocked =
     blacklisted && (moreRooms.length > 0 || !blAck || !blReason.trim() || !alert?.can_override)
   const blacklistOverride = blacklisted && blAck ? blReason.trim() || undefined : undefined
+
+  const creditFails = !!credit?.applies && !credit.ok
+  const creditBlocked =
+    creditFails && !!credit?.blocked &&
+    (moreRooms.length > 0 || !credit.can_override || !creditReason.trim())
+  const creditOverride =
+    creditFails && credit?.blocked && creditReason.trim() ? creditReason.trim() : undefined
 
   // phone is optional, but a half-typed one is a data-entry slip, not a choice
   const country = options?.property?.country
@@ -626,6 +668,7 @@ export function BookingDialog(props: {
           .map(([experience, qty]) => ({ experience, qty })),
         ...slotArgs,
         blacklist_override_reason: blacklistOverride,
+        credit_override_reason: creditOverride,
       })
       setDone({ ref: res.reservation, room: res.room })
       props.onBooked()
@@ -1172,6 +1215,47 @@ export function BookingDialog(props: {
                     ) : (
                       <p>{t("Only a Hotel Admin can book a blacklisted guest.")}</p>
                     )}
+                  </div>
+                )}
+
+                {creditFails && credit && (
+                  <div
+                    role="alert"
+                    className={
+                      credit.blocked
+                        ? "space-y-2 rounded-xl border-2 border-rose-300 bg-rose-50 px-4 py-3 text-sm text-rose-800"
+                        : "space-y-2 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+                    }
+                  >
+                    <div className="flex items-start gap-2">
+                      <ShieldAlert className="mt-0.5 size-5 shrink-0" aria-hidden />
+                      <div>
+                        <p className="font-semibold">
+                          {credit.blocked
+                            ? t("{company}: company credit is blocked", { company: credit.company ?? "" })
+                            : t("{company}: company credit warning", { company: credit.company ?? "" })}
+                        </p>
+                        <ul className="mt-1 list-disc space-y-0.5 pl-4">
+                          {credit.reasons.map((r) => (
+                            <li key={r}>{r}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                    {credit.blocked &&
+                      (moreRooms.length > 0 ? (
+                        <p>{t("A multi-room booking can't override a credit block. Book one room, or have Finance raise the limit.")}</p>
+                      ) : credit.can_override ? (
+                        <input
+                          className={inputCls}
+                          value={creditReason}
+                          maxLength={500}
+                          onChange={(e) => setCreditReason(e.target.value)}
+                          placeholder={t("Reason for the credit override (logged)")}
+                        />
+                      ) : (
+                        <p>{t("Only Finance or a Hotel Admin can override it.")}</p>
+                      ))}
                   </div>
                 )}
 
@@ -2200,7 +2284,7 @@ export function BookingDialog(props: {
                 <>
                 <Button
                   className="w-full justify-center py-2.5 text-base"
-                  disabled={busy || !form.guest_name || !quote || pastCheckIn || badPhone || badSlot || blacklistBlocked}
+                  disabled={busy || !form.guest_name || !quote || pastCheckIn || badPhone || badSlot || blacklistBlocked || creditBlocked}
                   onClick={() => submit()}
                 >
                   {busy ? t("Booking…") : t("Confirm booking")}

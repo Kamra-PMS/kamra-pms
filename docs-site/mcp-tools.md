@@ -1,6 +1,6 @@
 # MCP tool reference
 
-Kamra exposes **101 governed tools** on the hosted MCP
+Kamra exposes **102 governed tools** on the hosted MCP
 endpoint (`/mcp`) and the stdio sidecar (`mcp/kamra_mcp.py`). Every
 call runs as the connected user - **role** permissions apply, tools
 are further filtered by the property's **enabled modules**, prices
@@ -137,7 +137,12 @@ Mutating - logged to the activity ledger.
 Check a guest out (posts remaining nights to the folio, frees the
 room, queues housekeeping). Refused while any folio has a balance:
 collect payment or refund first. A corporate stay with credit moves
-to the city ledger automatically. Confirm with the user first.
+to the city ledger automatically, after the property's credit
+control: over the credit limit or with overdue bills it either warns
+(credit_warnings in the result) or is refused with CREDIT_BLOCKED and
+the reason. An agent can never override a credit block - tell the
+user; Finance or a Hotel Admin can override it at the desk. Confirm
+with the user first.
 
 Endpoint: `kamra.api.check_out`.
 Mutating - logged to the activity ledger.
@@ -403,6 +408,17 @@ confirms a held booking. Returns the link and a ready-to-send message.
 
 Endpoint: `kamra.api.deposit_payment_link`.
 Mutating - logged to the activity ledger.
+
+### `company_credit_status(company, amount)`
+
+A company's credit position before billing it more: its credit
+limit (0 = none), what it owes on the city ledger and on stays in
+house, bills overdue past the grace period, and whether billing
+`amount` more would be warned or blocked by the property's credit
+control. Read-only. Bookings on company billing and check-outs run
+the same check; an agent can't override a block.
+
+Endpoint: `kamra.credit.company_credit_status`.
 
 ### `security_deposit_status(reservation)`
 

@@ -107,8 +107,8 @@ const PLACEHOLDER: Record<FileKind, string> = {
     "Reservation No,Guest Name,Phone,Room Type,Room,Check In,Check Out,Adults,Total Amount,Status\n" +
     "R-1042,Asha Rao,+91 98xxxx,Deluxe,204,17/10/2026,21/10/2026,2,24000,In House",
   companies:
-    "Company Name,Tax ID,Contact Name,Contact Phone,Contact Email,Credit Allowed,Credit Limit\n" +
-    "Acme Travels,,Ravi,+91 98xxxx,accounts@acme.example,Yes,50000",
+    "Company Name,Tax ID,Contact Name,Contact Phone,Contact Email,Credit Allowed,Credit Limit,Credit Days\n" +
+    "Acme Travels,,Ravi,+91 98xxxx,accounts@acme.example,Yes,50000,30",
   opening:
     "Type,Reservation No,Guest Name,Company,Invoice No,Invoice Date,Amount,Mode\n" +
     "In-house,R-1042,,,,,12600,\n" +

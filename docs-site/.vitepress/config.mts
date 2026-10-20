@@ -88,6 +88,7 @@ export default defineConfig({
         text: "Getting started",
         items: [
           { text: "Introduction", link: "/" },
+          { text: "Why Kamra", link: "/why-kamra" },
           { text: "How Kamra works", link: "/how-it-works" },
           { text: "Features at a glance", link: "/features" },
           { text: "What's new", link: "/releases" },

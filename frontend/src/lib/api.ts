@@ -474,6 +474,8 @@ export const createBooking = (
     check_in_time?: string
     check_out_time?: string
     blacklist_override_reason?: string
+    /** Finance / Hotel Admin only: book past a company credit block (logged) */
+    credit_override_reason?: string
   },
 ) =>
   call<{
@@ -481,6 +483,7 @@ export const createBooking = (
     room: string | null
     amount_after_tax: number
     status?: string
+    credit_warning?: { company: string; reasons: string[]; overridden: boolean }
   }>("kamra.api.create_booking", { property: getCurrentProperty(), ...params })
 
 /** Request to Book: confirm the stay and take a room (refused, with the

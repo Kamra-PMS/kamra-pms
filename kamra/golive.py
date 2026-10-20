@@ -4,7 +4,8 @@ night it switches to Kamra, from Kamra's own CSV templates (vendor-neutral).
 Three files, each previewed before anything is written:
 
 - bookings  - kamra.migrate (future, in-house and history reservations)
-- companies - corporate accounts with credit terms (credit allowed, limit)
+- companies - corporate accounts with credit terms (credit allowed, limit,
+              credit days)
 - opening balances - one sheet, a `Type` column per row:
     In-house  what an in-house guest owed on the old folio (negative = in
               credit). One "Opening Balance" line on the guest folio.
@@ -59,7 +60,8 @@ TEMPLATES = {
 	"companies": (
 		"kamra-companies.csv",
 		["Company Name", "Tax ID", "Contact Name", "Contact Phone",
-		 "Contact Email", "Credit Allowed", "Credit Limit", "Account No"]),
+		 "Contact Email", "Credit Allowed", "Credit Limit", "Credit Days",
+		 "Account No"]),
 	"opening": (
 		"kamra-opening-balances.csv",
 		["Type", "Reservation No", "Guest Name", "Room", "Check In",
@@ -133,6 +135,8 @@ COMPANY_SYNONYMS = {
 	"credit_allowed": ["credit allowed", "credit", "on credit", "bill to company",
 	                   "city ledger"],
 	"credit_limit": ["credit limit", "limit"],
+	"credit_days": ["credit days", "payment terms", "credit period", "terms",
+	                "payment days", "credit terms", "due days"],
 	"account_number": ["account no", "account number", "ar account",
 	                   "ledger account"],
 }
@@ -163,6 +167,18 @@ def _normalize_companies(csv_text: str):
 			limit = None
 		if limit is not None and limit < 0:
 			problems.append("credit limit can't be negative")
+		days = None
+		raw_days = get("credit_days")
+		if raw_days and _norm(raw_days) in ("immediate", "onreceipt",
+		                                    "dueonreceipt", "cod"):
+			days = 0
+		elif raw_days:
+			# "30", "30 days", "Net 30"; 0 = due on the invoice date
+			digits = re.sub(r"[^0-9]", "", raw_days)
+			if not digits or int(digits) > 365:
+				problems.append(f"unreadable credit days '{raw_days}'")
+			else:
+				days = int(digits)
 		if problems:
 			issues.append({"row": i, "name": name, "error": "; ".join(problems)})
 			continue
@@ -176,6 +192,8 @@ def _normalize_companies(csv_text: str):
 			# a credit limit implies the company is on credit
 			"credit_allowed": _yes(get("credit_allowed"), bool(limit)),
 			"credit_limit": _money(limit or 0),
+			# blank = the property's default payment terms
+			"credit_days": days,
 			"account_number": get("account_number") or None,
 		})
 	return headers, mapping, rows, issues
@@ -254,6 +272,11 @@ def run_companies(property: str, csv_text: str):
 				acc = frappe.get_doc("City Ledger Account",
 				                     _ar_account(property, doc.name))
 				acc.credit_limit = row["credit_limit"]
+				if row["credit_days"] is not None:
+					# an explicit value is the company's own terms (0 = due
+					# on the invoice date); blank keeps the property default
+					acc.credit_days = row["credit_days"]
+					acc.use_default_credit_days = 0
 				if row["account_number"]:
 					acc.account_number = row["account_number"]
 				acc.save(ignore_permissions=True)
@@ -641,7 +664,8 @@ def _post_ar_invoice(property: str, item: dict, bd: str):
 	})
 	_recalculate(folio)
 	save_folio(folio)
-	transfer_to_city_ledger(folio.name, company, invoice_date=inv_date)
+	transfer_to_city_ledger(folio.name, company, invoice_date=inv_date,
+	                        credit_check=False)
 	# billed in full to the company: the folio is done
 	frappe.db.set_value("Folio", folio.name, {
 		"status": "Closed", "closed_on": now_datetime()})
@@ -839,6 +863,15 @@ def reconcile(property: str, opening_csv: str | None = None,
 				if acc is None or not _same(limit, r["credit_limit"]):
 					problems.append(f"{name}: credit limit "
 					                f"{r['credit_limit']:,.2f} not set")
+				terms = frappe.db.get_value(
+					"City Ledger Account", acc,
+					["credit_days", "use_default_credit_days"],
+					as_dict=True) if acc else None
+				if r["credit_days"] is not None and (
+						terms is None or terms.use_default_credit_days
+						or int(terms.credit_days or 0) != r["credit_days"]):
+					problems.append(f"{name}: credit days "
+					                f"{r['credit_days']} not set")
 		problems += [f"Row {i['row']} ({i['name']}): {i['error']}"
 		             for i in issues]
 		categories.append({
