@@ -36,7 +36,7 @@
 {n} day{s} before arrival.,{n} day{s} before arrival.,{n} يوم{s} قبل الوصول.,components/CancelPanel.tsx,n s,translated
 {n} documents issued · last ICV {icv} · Phase 2: {status}.,{n} documents issued · last ICV {icv} · Phase 2: {status}.,صدر {n} مستند · آخر عداد {icv} · المرحلة الثانية: {status}.,screens/settings/cards.tsx,n icv status,translated
 {n} exception(s),{n} exception(s),{n} استثناء,screens/Billing.tsx,n,translated
-{n} failed today,{n} failed today,,screens/settings/cards.tsx,n,needs_translation
+{n} failed today,{n} failed today,,screens/KitchenPrinters.tsx,n,needs_translation
 {n} failures in a row,{n} failures in a row,,screens/settings/WebhooksPage.tsx,n,needs_translation
 {n} free now,{n} free now,{n} متاحة الآن,components/BookingRequests.tsx,n,translated
 {n} function{s} · {pax} pax,{n} function{s} · {pax} pax,{n} مناسبة{s} · {pax} ضيف,screens/Banquet.tsx,n s pax,translated
@@ -67,7 +67,7 @@
 {n} tickets,{n} tickets,{n} تذاكر,screens/Kitchen.tsx,n,translated
 {n} unassigned - take one to add it to your list,{n} unassigned - take one to add it to your list,{n} غير مخصص - خذ واحداً لإضافته لقائمتك,screens/HkApp.tsx,n,translated
 {n} unsaved changes,{n} unsaved changes,,screens/settings/ModulePage.tsx,n,needs_translation
-{n} waiting,{n} waiting,,screens/settings/cards.tsx,n,needs_translation
+{n} waiting,{n} waiting,,screens/KitchenPrinters.tsx,n,needs_translation
 {n} will be skipped,{n} will be skipped,سيتم تخطي {n},screens/GoLiveImport.tsx,n,translated
 {n}{ord} Floor,{n}{ord} Floor,الطابق {n}{ord},screens/Today.tsx,n ord,translated
 {name} is blacklisted,{name} is blacklisted,{name} في القائمة السوداء,components/BookingDialog.tsx,name,translated
@@ -95,11 +95,11 @@
 1 unsaved change,1 unsaved change,,screens/settings/ModulePage.tsx,,needs_translation
 30% or 1500,30% or 1500,30٪ أو 1500,screens/FolioView.tsx,,translated
 "300 pax sangeet, veg buffet, DJ till 1am, green room for the bride…","300 pax sangeet, veg buffet, DJ till 1am, green room for the bride…",300 ضيف سانجيت، بوفيه نباتي، دي جي حتى الساعة 1 صباحاً، غرفة للعروس…,screens/Banquet.tsx,,translated
-A kitchen screen is printing for it,A kitchen screen is printing for it,,screens/settings/cards.tsx,,needs_translation
+A kitchen screen is printing for it,A kitchen screen is printing for it,,screens/KitchenPrinters.tsx,,needs_translation
 A masked Aadhaar (last 4 digits showing) is fine.,A masked Aadhaar (last 4 digits showing) is fine.,يكفي آدهار مخفي تظهر فيه آخر 4 أرقام.,screens/PublicCheckin.tsx,,translated
 "A multi-room booking can't override a blacklist. Book one room, or remove the flag on the guest profile.","A multi-room booking can't override a blacklist. Book one room, or remove the flag on the guest profile.",لا يمكن لحجز متعدد الغرف تجاوز القائمة السوداء. احجز غرفة واحدة، أو أزل العلامة من ملف النزيل.,components/BookingDialog.tsx,,translated
 "A multi-room booking can't override a credit block. Book one room, or have Finance raise the limit.","A multi-room booking can't override a credit block. Book one room, or have Finance raise the limit.",,components/BookingDialog.tsx,,needs_translation
-A station comes from each menu item. Tick the same outlet on several printers to print a copy on each.,A station comes from each menu item. Tick the same outlet on several printers to print a copy on each.,,screens/settings/cards.tsx,,needs_translation
+A station comes from each menu item. Tick the same outlet on several printers to print a copy on each.,A station comes from each menu item. Tick the same outlet on several printers to print a copy on each.,,screens/KitchenPrinters.tsx,,needs_translation
 A supervisor passes the inspection,A supervisor passes the inspection,,screens/HkApp.tsx,,needs_translation
 A walk-in arrives today,A walk-in arrives today,الحجز المباشر يصل اليوم,components/BookingDialog.tsx,,translated
 AC,AC,مكيف,screens/Setup.tsx,,translated
@@ -114,14 +114,15 @@ Active,Active,نشط,screens/settings/AccessPages.tsx; screens/settings/Webhooks
 Actual check-in,Actual check-in,الوصول الفعلي,screens/RegistrationCard.tsx,,translated
 Actual check-out,Actual check-out,المغادرة الفعلية,screens/RegistrationCard.tsx,,translated
 Add a photo of your ID (optional),Add a photo of your ID (optional),أضف صورة لهويتك (اختياري),screens/PublicCheckin.tsx,,translated
-Add an outlet first.,Add an outlet first.,,screens/settings/cards.tsx,,needs_translation
+Add an outlet first.,Add an outlet first.,,screens/KitchenPrinters.tsx,,needs_translation
 Add another photo / video,Add another photo / video,,screens/HkApp.tsx,,needs_translation
 Add another room,Add another room,إضافة غرفة أخرى,components/BookingDialog.tsx,,translated
 "Add channels, payments, accounting and country packs - and see what's included in your plan.","Add channels, payments, accounting and country packs - and see what's included in your plan.",أضف القنوات والمدفوعات والمحاسبة وحزم الدول - واطلع على ما يشمله اشتراكك.,screens/AppLauncher.tsx,,translated
 Add discount,Add discount,إضافة خصم,screens/POS.tsx,,translated
 Add listing,Add listing,إضافة قائمة,screens/Setup.tsx,,translated
 Add photo / video,Add photo / video,,screens/HkApp.tsx,,needs_translation
-Add printer,Add printer,,screens/settings/cards.tsx,,needs_translation
+Add printer,Add printer,,screens/KitchenPrinters.tsx,,needs_translation
+"Add printers, connection type, paper and which outlets and stations each one prints. Managed under F&B → Printers.","Add printers, connection type, paper and which outlets and stations each one prints. Managed under F&B → Printers.",,screens/settings/cards.tsx,,needs_translation
 Add rate,Add rate,إضافة سعر,screens/Laundry.tsx,,translated
 Add room type,Add room type,إضافة نوع غرفة,screens/Setup.tsx,,translated
 Add staff,Add staff,,screens/settings/AccessPages.tsx,,needs_translation
@@ -161,8 +162,8 @@ All ready — send to pass,All ready — send to pass,الكل جاهز — أر
 All roles,All roles,,screens/settings/AccessPages.tsx,,needs_translation
 All room types,All room types,كل أنواع الغرف,screens/TapeChart.tsx,,translated
 All sessions,All sessions,كل الجلسات,screens/CashierTill.tsx,,translated
-all stations,all stations,,screens/settings/cards.tsx,,needs_translation
-All stations,All stations,,screens/settings/cards.tsx,,needs_translation
+all stations,all stations,,screens/KitchenPrinters.tsx,,needs_translation
+All stations,All stations,,screens/KitchenPrinters.tsx,,needs_translation
 All statuses,All statuses,كل الحالات,screens/Banquet.tsx,,translated
 All types (upgrade),All types (upgrade),كل الأنواع (ترقية),components/RoomChangeDialog.tsx,,translated
 allergy,allergy,حساسية,screens/Kitchen.tsx,,translated
@@ -174,9 +175,10 @@ Amount (held {amt}),Amount (held {amt}),المبلغ (المحتجز {amt}),comp
 Amount {cur},Amount {cur},المبلغ {cur},screens/FolioView.tsx; screens/HkApp.tsx,cur,translated
 Amount collected,Amount collected,المبلغ المحصّل,components/BookingDialog.tsx,,translated
 Amounts are inclusive of GST at the rates shown.,Amounts are inclusive of GST at the rates shown.,المبالغ شاملة ضريبة GST بالأسعار المعروضة.,screens/FolioView.tsx,,translated
+and choose Print for this printer.,and choose Print for this printer.,,screens/KitchenPrinters.tsx,,needs_translation
 "and take UPI, cards and netbanking for advances and bills.","and take UPI, cards and netbanking for advances and bills.",,screens/settings/cards.tsx,,needs_translation
 "Answer 2xx within 10 seconds. Retries keep the same event id, so ignore ids you've already processed.","Answer 2xx within 10 seconds. Retries keep the same event id, so ignore ids you've already processed.",,screens/settings/WebhooksPage.tsx,,needs_translation
-"Any printer - USB, network or Bluetooth - attached to a device in the kitchen. On that device, open the kitchen display and pick this printer under Print for.","Any printer - USB, network or Bluetooth - attached to a device in the kitchen. On that device, open the kitchen display and pick this printer under Print for.",,screens/settings/cards.tsx,,needs_translation
+"Any printer - USB, network or Bluetooth - attached to a device in the kitchen. On that device, open the kitchen display and pick this printer under Print for.","Any printer - USB, network or Bluetooth - attached to a device in the kitchen. On that device, open the kitchen display and pick this printer under Print for.",,screens/KitchenPrinters.tsx,,needs_translation
 Anything the staff should know (optional),Anything the staff should know (optional),أي شيء يجب أن يعرفه الموظفون (اختياري),screens/Tickets.tsx,,translated
 Anything we should know?,Anything we should know?,هل هناك ما يجب أن نعرفه؟,screens/PublicCheckin.tsx,,translated
 Anything worth remembering (optional),Anything worth remembering (optional),أي شيء يستحق التذكر (اختياري),components/CancelPanel.tsx,,translated
@@ -254,7 +256,7 @@ By hall,By hall,حسب القاعة,screens/Banquet.tsx,,translated
 By property,By property,حسب العقار,screens/Dashboard.tsx,,translated
 By status,By status,حسب الحالة,screens/Banquet.tsx,,translated
 Came from,Came from,جاء من,screens/Banquet.tsx,,translated
-Cancel,Cancel,إلغاء,components/BookingDialog.tsx; components/CheckInDialog.tsx; components/CheckOutDialog.tsx; components/CreditCheckout.tsx; components/DepositPanel.tsx; components/ResourceScreen.tsx; components/SecurityDepositPanel.tsx; screens/Banquet.tsx; screens/CRS.tsx; screens/FolioView.tsx; screens/HkApp.tsx; screens/Laundry.tsx; screens/Marketplace.tsx; screens/POS.tsx; screens/Tickets.tsx; screens/settings/AccessPages.tsx; screens/settings/WebhooksPage.tsx; screens/settings/cards.tsx,,translated
+Cancel,Cancel,إلغاء,components/BookingDialog.tsx; components/CheckInDialog.tsx; components/CheckOutDialog.tsx; components/CreditCheckout.tsx; components/DepositPanel.tsx; components/ResourceScreen.tsx; components/SecurityDepositPanel.tsx; screens/Banquet.tsx; screens/CRS.tsx; screens/FolioView.tsx; screens/HkApp.tsx; screens/KitchenPrinters.tsx; screens/Laundry.tsx; screens/Marketplace.tsx; screens/POS.tsx; screens/Tickets.tsx; screens/settings/AccessPages.tsx; screens/settings/WebhooksPage.tsx,,translated
 Cancel {invoice}? The number goes on the cancelled register and the folio reopens for correction.,Cancel {invoice}? The number goes on the cancelled register and the folio reopens for correction.,إلغاء {invoice}؟ يُسجَّل الرقم في سجل الملغى وتُفتح الفاتورة للتصحيح.,screens/FolioView.tsx,invoice,translated
 Cancel invoice,Cancel invoice,إلغاء الفاتورة,screens/FolioView.tsx,,translated
 Cancel laundry — room {room},Cancel laundry — room {room},إلغاء الغسيل — غرفة {room},screens/Laundry.tsx,room,translated
@@ -384,13 +386,13 @@ Connect key,Connect key,,screens/settings/cards.tsx,,needs_translation
 Connected ({ms} ms) — {reply},Connected ({ms} ms) — {reply},,screens/settings/cards.tsx,ms reply,needs_translation
 Connected. Paste these into HeyKoala:,Connected. Paste these into HeyKoala:,متصل. الصق هذه في HeyKoala:,screens/Marketplace.tsx,,translated
 Connecting...,Connecting...,جارٍ الاتصال...,screens/Marketplace.tsx,,translated
-Connection,Connection,,screens/settings/cards.tsx,,needs_translation
+Connection,Connection,,screens/KitchenPrinters.tsx,,needs_translation
 Connection lost — reconnecting…,Connection lost — reconnecting…,فُقد الاتصال — جارٍ إعادة الاتصال…,components/ConnectionBanner.tsx,,translated
 Continue,Continue,متابعة,components/CheckOutDialog.tsx; screens/EndOfDay.tsx; screens/EndOfDayWizard.tsx; screens/Setup.tsx,,translated
 Conversion,Conversion,التحويل,screens/Banquet.tsx,,translated
 COOKING,COOKING,قيد الطبخ,screens/Kitchen.tsx,,translated
 Copied,Copied,تم النسخ,components/DepositPanel.tsx; screens/settings/WebhooksPage.tsx,,translated
-Copies,Copies,,screens/settings/cards.tsx,,needs_translation
+Copies,Copies,,screens/KitchenPrinters.tsx,,needs_translation
 Copy,Copy,نسخ,screens/Marketplace.tsx; screens/settings/WebhooksPage.tsx,,translated
 copy check-in link,copy check-in link,نسخ رابط تسجيل الوصول,screens/Today.tsx,,translated
 Copy message,Copy message,نسخ الرسالة,components/DepositPanel.tsx,,translated
@@ -466,9 +468,9 @@ Developers & API keys,Developers & API keys,,screens/settings/SettingsHub.tsx,,n
 Diary,Diary,اليومية,screens/Banquet.tsx,,translated
 Differs,Differs,,screens/GoLiveImport.tsx,,needs_translation
 Differs from folios by {amount},Differs from folios by {amount},يختلف عن الفواتير بمقدار {amount},screens/AuditPack.tsx,amount,translated
-Direct IP (Kamra on the hotel network),Direct IP (Kamra on the hotel network),,screens/settings/cards.tsx,,needs_translation
+Direct IP (Kamra on the hotel network),Direct IP (Kamra on the hotel network),,screens/KitchenPrinters.tsx,,needs_translation
 Dirty,Dirty,متسخة,screens/Dashboard.tsx; screens/Today.tsx,,translated
-Disabled,Disabled,معطّل,screens/settings/cards.tsx,,translated
+Disabled,Disabled,معطّل,screens/KitchenPrinters.tsx,,translated
 Discard,Discard,,screens/settings/ModulePage.tsx,,needs_translation
 Disconnect,Disconnect,قطع الاتصال,screens/Marketplace.tsx,,translated
 Discount,Discount,خصم,screens/POS.tsx,,translated
@@ -496,7 +498,7 @@ e.g. Door lock middleware,e.g. Door lock middleware,,screens/settings/WebhooksPa
 Each hotel / branch keeps its own float and voucher list. Changing property in the header switches the box.,Each hotel / branch keeps its own float and voucher list. Changing property in the header switches the box.,,screens/PettyCash.tsx,,needs_translation
 "Each request carries X-Kamra-Event, X-Kamra-Event-Id, X-Kamra-Timestamp and X-Kamra-Signature. Recompute the signature over the raw body and reject old timestamps:","Each request carries X-Kamra-Event, X-Kamra-Event-Id, X-Kamra-Timestamp and X-Kamra-Signature. Recompute the signature over the raw body and reject old timestamps:",,screens/settings/WebhooksPage.tsx,,needs_translation
 Each unit / room sells on its own (hotel-style inventory).,Each unit / room sells on its own (hotel-style inventory).,كل وحدة / غرفة تُباع بمفردها (مخزون بأسلوب الفندق).,screens/Setup.tsx,,translated
-Edit,Edit,تعديل,screens/Laundry.tsx; screens/settings/WebhooksPage.tsx; screens/settings/cards.tsx,,translated
+Edit,Edit,تعديل,screens/KitchenPrinters.tsx; screens/Laundry.tsx; screens/settings/WebhooksPage.tsx,,translated
 elapsed,elapsed,منقضي,screens/Kitchen.tsx,,translated
 Email,Email,البريد الإلكتروني,components/CheckInDialog.tsx; screens/Banquet.tsx; screens/PublicCheckin.tsx; screens/RegistrationCard.tsx; screens/settings/AccessPages.tsx,,translated
 Email or username,Email or username,البريد الإلكتروني أو اسم المستخدم,screens/Login.tsx,,translated
@@ -550,7 +552,7 @@ Extra guests,Extra guests,,components/BookingDialog.tsx,,needs_translation
 Extra instructions,Extra instructions,,screens/settings/cards.tsx,,needs_translation
 eZee export,eZee export,تصدير eZee,screens/GoLiveImport.tsx,,translated
 Failed{status}: {err},Failed{status}: {err},,screens/settings/cards.tsx,status err,needs_translation
-Fallback printer,Fallback printer,,screens/settings/cards.tsx,,needs_translation
+Fallback printer,Fallback printer,,screens/KitchenPrinters.tsx,,needs_translation
 File,File,,screens/GoLiveImport.tsx,,needs_translation
 File rows,File rows,,screens/GoLiveImport.tsx,,needs_translation
 File total,File total,,screens/GoLiveImport.tsx,,needs_translation
@@ -687,7 +689,7 @@ Installed,Installed,المثبّت,screens/SystemHealth.tsx,,translated
 Integrations guide,Integrations guide,,screens/settings/WebhooksPage.tsx,,needs_translation
 Invoice,Invoice,فاتورة,components/CommandPalette.tsx; screens/Billing.tsx,,translated
 Invoices,Invoices,الفواتير,components/CommandPalette.tsx,,translated
-IP address,IP address,,screens/settings/cards.tsx,,needs_translation
+IP address,IP address,,screens/KitchenPrinters.tsx,,needs_translation
 "is live. Bring your bookings, companies and opening balances over from Kamra's CSV templates, then reconcile before you switch — or let the AI migration assistant do the mapping via MCP.","is live. Bring your bookings, companies and opening balances over from Kamra's CSV templates, then reconcile before you switch — or let the AI migration assistant do the mapping via MCP.",,screens/Setup.tsx,,needs_translation
 IT,IT,,screens/settings/SettingsHub.tsx,,needs_translation
 It speeds up arrival. Bring the original card either way.,It speeds up arrival. Bring the original card either way.,تُسرّع الوصول. أحضر البطاقة الأصلية في كل الأحوال.,screens/PublicCheckin.tsx,,translated
@@ -698,7 +700,7 @@ Kamra {latest} is available — you are on {installed}.,Kamra {latest} is availa
 Kamra Agent → Connect your AI,Kamra Agent → Connect your AI,,screens/settings/cards.tsx,,needs_translation
 "Kamra Agent for staff. Pick a provider, paste the key, Test. Claude Desktop is MCP (Kamra Agent → Connect your AI) — not an Anthropic key in this form.","Kamra Agent for staff. Pick a provider, paste the key, Test. Claude Desktop is MCP (Kamra Agent → Connect your AI) — not an Anthropic key in this form.",,screens/settings/cards.tsx,,needs_translation
 Kamra POSTs a signed JSON event to each endpoint. Failed deliveries are retried for about 8 hours.,Kamra POSTs a signed JSON event to each endpoint. Failed deliveries are retried for about 8 hours.,,screens/settings/WebhooksPage.tsx,,needs_translation
-"Kamra sends the ticket straight to the printer's network address. Only works when the Kamra server is on the same network as the printer, not on a cloud server.","Kamra sends the ticket straight to the printer's network address. Only works when the Kamra server is on the same network as the printer, not on a cloud server.",,screens/settings/cards.tsx,,needs_translation
+"Kamra sends the ticket straight to the printer's network address. Only works when the Kamra server is on the same network as the printer, not on a cloud server.","Kamra sends the ticket straight to the printer's network address. Only works when the Kamra server is on the same network as the printer, not on a cloud server.",,screens/KitchenPrinters.tsx,,needs_translation
 Kamra total,Kamra total,,screens/GoLiveImport.tsx,,needs_translation
 Kamra Verify,Kamra Verify,,screens/settings/cards.tsx,,needs_translation
 Kamra Verify checks this tax ID with the tax network. Charged per check to your Kamra Connect wallet.,Kamra Verify checks this tax ID with the tax network. Charged per check to your Kamra Connect wallet.,,screens/FolioView.tsx,,needs_translation
@@ -708,8 +710,9 @@ Keep,Keep,إبقاء,screens/HkApp.tsx,,translated
 Keep the booking,Keep the booking,إبقاء الحجز,components/CancelPanel.tsx,,translated
 Keyboard shortcuts,Keyboard shortcuts,اختصارات لوحة المفاتيح,screens/POS.tsx,,translated
 Kind,Kind,النوع,screens/CashierShiftReport.tsx; screens/CashierTill.tsx,,translated
+Kitchen Display,Kitchen Display,شاشة المطبخ,screens/KitchenPrinters.tsx,,translated
 Kitchen pass,Kitchen pass,ممر المطبخ,screens/Kitchen.tsx,,translated
-Kitchen printers,Kitchen printers,,screens/settings/cards.tsx,,needs_translation
+Kitchen printers,Kitchen printers,,screens/KitchenPrinters.tsx; screens/settings/cards.tsx,,needs_translation
 KOT {kot} is on the kitchen display. Turn on Print KOT to send it to the printer.,KOT {kot} is on the kitchen display. Turn on Print KOT to send it to the printer.,أمر المطبخ {kot} على شاشة المطبخ. فعّل طباعة أمر المطبخ لإرساله إلى الطابعة.,screens/POS.tsx,kot,translated
 KOT {kot} printed and on the kitchen display.,KOT {kot} printed and on the kitchen display.,طُبع أمر المطبخ {kot} وهو على شاشة المطبخ.,screens/POS.tsx,kot,translated
 KOT {kot} sent to {printers}.,KOT {kot} sent to {printers}.,,screens/POS.tsx,kot printers,needs_translation
@@ -722,7 +725,7 @@ Last {days} days,Last {days} days,آخر {days} أيام,screens/Laundry.tsx,day
 Last 14 days,Last 14 days,آخر 14 يوماً,screens/Reports.tsx,,translated
 Last closed {d},Last closed {d},آخر إغلاق {d},screens/EndOfDay.tsx,d,translated
 Last delivery: {status},Last delivery: {status},,screens/settings/WebhooksPage.tsx,status,needs_translation
-Last printed {at},Last printed {at},,screens/settings/cards.tsx,at,needs_translation
+Last printed {at},Last printed {at},,screens/KitchenPrinters.tsx,at,needs_translation
 Last printed {n} ticket(s) at {time},Last printed {n} ticket(s) at {time},,screens/Kitchen.tsx,n time,needs_translation
 Last stay,Last stay,آخر إقامة,screens/Guests.tsx,,translated
 LATE,LATE,متأخر,screens/Kitchen.tsx,,translated
@@ -753,7 +756,7 @@ Log an item,Log an item,تسجيل عنصر,screens/HkApp.tsx,,translated
 Log it,Log it,سجّله,screens/HkApp.tsx,,translated
 Log pickup request,Log pickup request,تسجيل طلب استلام,screens/Laundry.tsx,,translated
 Logged {condition}: {desc},Logged {condition}: {desc},سُجّل {condition}: {desc},screens/HkApp.tsx,condition desc,translated
-Main kitchen,Main kitchen,,screens/settings/cards.tsx,,needs_translation
+Main kitchen,Main kitchen,,screens/KitchenPrinters.tsx,,needs_translation
 Manage,Manage,إدارة,screens/EndOfDay.tsx; screens/Marketplace.tsx; screens/settings/AccessPages.tsx,,translated
 Manage access,Manage access,,screens/settings/AccessPages.tsx,,needs_translation
 Manage End of Day,Manage End of Day,إدارة نهاية اليوم,screens/EndOfDay.tsx; screens/EndOfDayWizard.tsx,,translated
@@ -837,8 +840,8 @@ No guests found.,No guests found.,لم يُعثر على ضيوف.,screens/Guest
 No halls set up for this property yet — add one under Halls & Venues.,No halls set up for this property yet — add one under Halls & Venues.,لا قاعات مُعدّة لهذا العقار بعد — أضف واحدة تحت القاعات والأماكن.,screens/Banquet.tsx,,translated
 No housekeeping staff,No housekeeping staff,,screens/HousekeepingBoard.tsx,,needs_translation
 No journal lines for this date.,No journal lines for this date.,,screens/CashierShiftReport.tsx,,needs_translation
-No kitchen printers yet.,No kitchen printers yet.,,screens/settings/cards.tsx,,needs_translation
-No kitchen screen is printing for it right now,No kitchen screen is printing for it right now,,screens/settings/cards.tsx,,needs_translation
+No kitchen printers yet.,No kitchen printers yet.,,screens/KitchenPrinters.tsx,,needs_translation
+No kitchen screen is printing for it right now,No kitchen screen is printing for it right now,,screens/KitchenPrinters.tsx,,needs_translation
 No laundry out right now.,No laundry out right now.,لا غسيل خارج الآن.,screens/Laundry.tsx,,translated
 No matches.,No matches.,لا توجد نتائج.,components/CommandPalette.tsx; screens/POS.tsx,,translated
 No one matches.,No one matches.,,screens/settings/AccessPages.tsx,,needs_translation
@@ -869,7 +872,7 @@ Non AC,Non AC,بدون مكيف,screens/Setup.tsx,,translated
 Non-refundable dates ({season}): the full stay is charged on cancellation.,Non-refundable dates ({season}): the full stay is charged on cancellation.,,components/BookingDialog.tsx,season,needs_translation
 Non-refundable from now: {fee} is charged on cancellation.,Non-refundable from now: {fee} is charged on cancellation.,,components/BookingDialog.tsx,fee,needs_translation
 Non-veg,Non-veg,غير نباتي,screens/Kitchen.tsx; screens/POS.tsx,,translated
-None,None,لا شيء,screens/settings/cards.tsx,,translated
+None,None,لا شيء,screens/KitchenPrinters.tsx,,translated
 None taken,None taken,لم يُحصّل,components/SecurityDepositPanel.tsx,,translated
 Not a corporate booking,Not a corporate booking,ليس حجز شركات,screens/Banquet.tsx,,translated
 Not a tax invoice yet — the number is issued when the folio is settled.,Not a tax invoice yet — the number is issued when the folio is settled.,ليست فاتورة ضريبية بعد — يُصدر الرقم عند تسوية الفاتورة.,screens/FolioView.tsx,,translated
@@ -879,7 +882,7 @@ Not fired,Not fired,لم يُرسل,screens/POS.tsx,,translated
 Not paid,Not paid,غير مدفوع,components/DepositPanel.tsx,,translated
 not posted,not posted,غير مُرحَّل,screens/Laundry.tsx,,translated
 Not ready for go-live yet,Not ready for go-live yet,,screens/GoLiveImport.tsx,,needs_translation
-Not used yet,Not used yet,,screens/settings/cards.tsx,,needs_translation
+Not used yet,Not used yet,,screens/KitchenPrinters.tsx,,needs_translation
 Note (optional),Note (optional),ملاحظة (اختياري),components/RoomChangeDialog.tsx; components/SecurityDepositPanel.tsx,,translated
 "Notes (bag on door, after 3pm…)","Notes (bag on door, after 3pm…)",ملاحظات (حقيبة على الباب، بعد الساعة 3 مساءً…),screens/Laundry.tsx,,translated
 Notes for the manager,Notes for the manager,ملاحظات للمدير,screens/AuditPack.tsx,,translated
@@ -912,6 +915,7 @@ off,off,إيقاف,screens/Kitchen.tsx,,translated
 Off,Off,,screens/settings/ModulePage.tsx; screens/settings/SettingsHub.tsx,,needs_translation
 on,on,تشغيل,screens/Kitchen.tsx,,translated
 On,On,,screens/settings/ModulePage.tsx,,needs_translation
+"On a kitchen device, open","On a kitchen device, open",,screens/KitchenPrinters.tsx,,needs_translation
 One consolidated company bill across every room of the group,One consolidated company bill across every room of the group,فاتورة شركة موحّدة عبر كل غرف المجموعة,screens/FolioView.tsx,,translated
 One listing for the whole property. No room numbers required.,One listing for the whole property. No room numbers required.,قائمة واحدة للعقار بالكامل. لا حاجة لأرقام غرف.,screens/Setup.tsx,,translated
 "One open session per cashier per business date. Set the float in the drawer, then open.","One open session per cashier per business date. Set the float in the drawer, then open.",,screens/CashierTill.tsx,,needs_translation
@@ -937,6 +941,7 @@ Open folios,Open folios,الفواتير المفتوحة,screens/Dashboard.tsx,
 Open GRC,Open GRC,فتح بطاقة التسجيل,components/CheckInDialog.tsx,,translated
 Open Marketplace → HeyKoala WhatsApp,Open Marketplace → HeyKoala WhatsApp,,screens/Setup.tsx,,needs_translation
 Open My Till,Open My Till,فتح صندوقي,screens/Billing.tsx,,translated
+Open printers,Open printers,,screens/settings/cards.tsx,,needs_translation
 Open search,Open search,فتح البحث,AppShell.tsx,,translated
 Open session,Open session,فتح جلسة,screens/CashierTill.tsx,,translated
 Open stay →,Open stay →,فتح الإقامة ←,screens/WhatsAppChat.tsx,,translated
@@ -960,7 +965,8 @@ Other country,Other country,دولة أخرى,screens/Setup.tsx,,translated
 Other guests still in-house on this group,Other guests still in-house on this group,,components/CheckOutDialog.tsx,,needs_translation
 Out of order,Out of order,خارج الخدمة,screens/Dashboard.tsx,,translated
 Out of Order,Out of Order,خارج الخدمة,screens/Today.tsx,,translated
-Outlet,Outlet,المنفذ,screens/settings/cards.tsx,,translated
+Outlet,Outlet,المنفذ,screens/KitchenPrinters.tsx,,translated
+Outlets,Outlets,المنافذ,screens/KitchenPrinters.tsx,,translated
 Outside the fee window - cancellation is free.,Outside the fee window - cancellation is free.,خارج نافذة الرسوم - الإلغاء مجاني.,components/CancelPanel.tsx,,translated
 Outstanding,Outstanding,مستحق,screens/Banquet.tsx; screens/Dashboard.tsx,,translated
 overdue,overdue,متأخر,screens/HkApp.tsx; screens/Laundry.tsx; screens/Tickets.tsx,,translated
@@ -979,7 +985,7 @@ Paid {cur},Paid {cur},مدفوع {cur},screens/Billing.tsx,cur,translated
 Paid in full.,Paid in full.,مدفوع بالكامل.,components/BookingDialog.tsx,,translated
 Paid out,Paid out,مدفوع للخارج,screens/CashierTill.tsx,,translated
 Paid outs,Paid outs,مدفوعات للخارج,screens/CashierShiftReport.tsx; screens/CashierTill.tsx,,translated
-Paper width,Paper width,,screens/settings/cards.tsx,,needs_translation
+Paper width,Paper width,,screens/KitchenPrinters.tsx,,needs_translation
 Park this stay with no room; promote when inventory frees,Park this stay with no room; promote when inventory frees,علّق هذه الإقامة بلا غرفة؛ رقِّها عند توفر المخزون,components/BookingDialog.tsx,,translated
 Parked with no room. Promote it from the reservation when a room frees. Auto-purges 2 days after departure.,Parked with no room. Promote it from the reservation when a room frees. Auto-purges 2 days after departure.,معلّقة بلا غرفة. رقِّها من الحجز عند توفر غرفة. تُحذف تلقائياً بعد يومين من المغادرة.,components/BookingDialog.tsx,,translated
 Part paid,Part paid,مدفوع جزئيًا,components/DepositPanel.tsx,,translated
@@ -1015,7 +1021,7 @@ Pieces,Pieces,قطع,screens/Laundry.tsx,,translated
 PIN reset,PIN reset,,screens/settings/AccessPages.tsx,,needs_translation
 PIN reset for {name}.,PIN reset for {name}.,,screens/settings/AccessPages.tsx,name,needs_translation
 Place of supply,Place of supply,مكان التوريد,screens/FolioView.tsx,,translated
-Port,Port,,screens/settings/cards.tsx,,needs_translation
+Port,Port,,screens/KitchenPrinters.tsx,,needs_translation
 POS speed check,POS speed check,,screens/settings/cards.tsx,,needs_translation
 Position,Position,الموقع,screens/TapeChart.tsx,,translated
 Post,Post,ترحيل,screens/CashierTill.tsx; screens/FolioView.tsx,,translated
@@ -1048,15 +1054,16 @@ Print folio,Print folio,طباعة الفاتورة,screens/FolioView.tsx,,trans
 Print for {printer},Print for {printer},,screens/Kitchen.tsx,printer,needs_translation
 Print GRC,Print GRC,طباعة بطاقة التسجيل,screens/RegistrationCard.tsx,,translated
 Print invoice,Print invoice,طباعة الفاتورة,screens/FolioView.tsx,,translated
-Print station,Print station,,screens/settings/cards.tsx,,needs_translation
-Print station (a kitchen screen prints it),Print station (a kitchen screen prints it),,screens/settings/cards.tsx,,needs_translation
+Print station,Print station,,screens/KitchenPrinters.tsx,,needs_translation
+Print station (a kitchen screen prints it),Print station (a kitchen screen prints it),,screens/KitchenPrinters.tsx,,needs_translation
 Printed from the audit pack of {when},Printed from the audit pack of {when},مطبوع من حزمة التدقيق بتاريخ {when},screens/AuditPack.tsx,when,translated
-Printer name,Printer name,,screens/settings/cards.tsx,,needs_translation
-Printer removed.,Printer removed.,,screens/settings/cards.tsx,,needs_translation
-Printer saved.,Printer saved.,,screens/settings/cards.tsx,,needs_translation
+Printer name,Printer name,,screens/KitchenPrinters.tsx,,needs_translation
+Printer removed.,Printer removed.,,screens/KitchenPrinters.tsx,,needs_translation
+Printer saved.,Printer saved.,,screens/KitchenPrinters.tsx,,needs_translation
+Printers at this property,Printers at this property,,screens/KitchenPrinters.tsx,,needs_translation
 Printing waited on the print dialog. Start Chrome with --kiosk-printing on this till to print KOTs instantly.,Printing waited on the print dialog. Start Chrome with --kiosk-printing on this till to print KOTs instantly.,,screens/POS.tsx,,needs_translation
-Prints KOTs for,Prints KOTs for,,screens/settings/cards.tsx,,needs_translation
-Prints nothing yet - choose outlets and stations.,Prints nothing yet - choose outlets and stations.,,screens/settings/cards.tsx,,needs_translation
+Prints KOTs for,Prints KOTs for,,screens/KitchenPrinters.tsx,,needs_translation
+Prints nothing yet - choose outlets and stations.,Prints nothing yet - choose outlets and stations.,,screens/KitchenPrinters.tsx,,needs_translation
 Priority,Priority,الأولوية,screens/Tickets.tsx,,translated
 Privacy notice,Privacy notice,إشعار الخصوصية,components/PrivacyNotice.tsx,,translated
 Private,Private,خاص,screens/Setup.tsx,,translated
@@ -1128,7 +1135,7 @@ Registration checklist,Registration checklist,قائمة التسجيل,screens/
 Release notes,Release notes,ملاحظات الإصدار,screens/SystemHealth.tsx,,translated
 Remaining {amount} will move to the city ledger on confirm.,Remaining {amount} will move to the city ledger on confirm.,,components/CheckOutDialog.tsx,amount,needs_translation
 Remind me later,Remind me later,ذكّرني لاحقاً,components/UpdateNag.tsx,,translated
-Remove,Remove,إزالة,screens/HkApp.tsx; screens/Setup.tsx; screens/settings/cards.tsx,,translated
+Remove,Remove,إزالة,screens/HkApp.tsx; screens/KitchenPrinters.tsx; screens/Setup.tsx,,translated
 Remove & retake,Remove & retake,إزالة وإعادة التصوير,screens/PublicCheckin.tsx,,translated
 Replace,Replace,استبدال,screens/RegistrationCard.tsx,,translated
 Reply to the guest…,Reply to the guest…,الرد على الضيف…,screens/WhatsAppChat.tsx,,translated
@@ -1203,12 +1210,12 @@ Save,Save,حفظ,components/ResourceScreen.tsx; screens/Laundry.tsx; screens/set
 Save changes,Save changes,,screens/settings/ModulePage.tsx,,needs_translation
 Save imprest,Save imprest,,screens/PettyCash.tsx,,needs_translation
 Save notes,Save notes,حفظ الملاحظات,screens/EndOfDayWizard.tsx,,translated
-Save printer,Save printer,,screens/settings/cards.tsx,,needs_translation
+Save printer,Save printer,,screens/KitchenPrinters.tsx,,needs_translation
 Save terms,Save terms,,components/CreditTermsEditor.tsx,,needs_translation
 "Save time at the desk - fill your details now, show the ID once on arrival.","Save time at the desk - fill your details now, show the ID once on arrival.",وفّر وقتك عند الاستقبال - أدخل بياناتك الآن، وأظهر هويتك مرة واحدة عند الوصول.,screens/PublicCheckin.tsx,,translated
 Saved,Saved,تم الحفظ,components/CreditTermsEditor.tsx; screens/settings/ModulePage.tsx; screens/settings/cards.tsx,,translated
 Saved access for {name}.,Saved access for {name}.,,screens/settings/AccessPages.tsx,name,needs_translation
-Saving…,Saving…,جارٍ الحفظ…,components/CreditTermsEditor.tsx; components/DepositPanel.tsx; components/ResourceScreen.tsx; components/SecurityDepositPanel.tsx; screens/PublicCheckin.tsx; screens/RegistrationCard.tsx; screens/settings/AccessPages.tsx; screens/settings/ModulePage.tsx; screens/settings/WebhooksPage.tsx; screens/settings/cards.tsx,,translated
+Saving…,Saving…,جارٍ الحفظ…,components/CreditTermsEditor.tsx; components/DepositPanel.tsx; components/ResourceScreen.tsx; components/SecurityDepositPanel.tsx; screens/KitchenPrinters.tsx; screens/PublicCheckin.tsx; screens/RegistrationCard.tsx; screens/settings/AccessPages.tsx; screens/settings/ModulePage.tsx; screens/settings/WebhooksPage.tsx; screens/settings/cards.tsx,,translated
 Scheduled 3 AM audit when checks block: {mode},Scheduled 3 AM audit when checks block: {mode},تدقيق الساعة 3 صباحًا المجدول عند وجود عوائق: {mode},screens/EndOfDayWizard.tsx,mode,translated
 Search,Search,بحث,screens/CRS.tsx; screens/EndOfDayWizard.tsx,,translated
 "Search a guest, phone, booking or invoice.","Search a guest, phone, booking or invoice.",ابحث عن ضيف أو هاتف أو حجز أو فاتورة.,components/CommandPalette.tsx,,translated
@@ -1340,9 +1347,9 @@ taxable {cur}{amount},taxable {cur}{amount},خاضع للضريبة {cur}{amount
 Test connection,Test connection,,screens/settings/cards.tsx,,needs_translation
 Test event delivered.,Test event delivered.,,screens/settings/WebhooksPage.tsx,,needs_translation
 Test failed,Test failed,,screens/settings/WebhooksPage.tsx,,needs_translation
-Test page sent to {ip}.,Test page sent to {ip}.,,screens/settings/cards.tsx,ip,needs_translation
-Test page sent. It prints on the kitchen screen set to print for {printer}.,Test page sent. It prints on the kitchen screen set to print for {printer}.,,screens/settings/cards.tsx,printer,needs_translation
-Test print,Test print,,screens/settings/cards.tsx,,needs_translation
+Test page sent to {ip}.,Test page sent to {ip}.,,screens/KitchenPrinters.tsx,ip,needs_translation
+Test page sent. It prints on the kitchen screen set to print for {printer}.,Test page sent. It prints on the kitchen screen set to print for {printer}.,,screens/KitchenPrinters.tsx,printer,needs_translation
+Test print,Test print,,screens/KitchenPrinters.tsx,,needs_translation
 Testing…,Testing…,,screens/settings/cards.tsx,,needs_translation
 Thanks - our team will reach out about {name}.,Thanks - our team will reach out about {name}.,شكراً - سيتواصل فريقنا بشأن {name}.,screens/Marketplace.tsx,name,translated
 That date has already passed.,That date has already passed.,هذا التاريخ قد مضى بالفعل.,components/BookingDialog.tsx,,translated
@@ -1473,10 +1480,10 @@ WhatsApp,WhatsApp,واتساب,screens/WhatsAppChat.tsx,,translated
 When,When,متى,screens/CashierTill.tsx; screens/VoidAllowanceReport.tsx,,translated
 "When off, phone and ID numbers in tool results are shortened to the last four digits before they leave Kamra.","When off, phone and ID numbers in tool results are shortened to the last four digits before they leave Kamra.",,screens/settings/cards.tsx,,needs_translation
 "When the guest pays, the deposit posts here automatically.","When the guest pays, the deposit posts here automatically.",عند دفع النزيل، يُسجَّل العربون هنا تلقائيًا.,components/DepositPanel.tsx,,translated
-Where a ticket goes if this printer fails.,Where a ticket goes if this printer fails.,,screens/settings/cards.tsx,,needs_translation
+Where a ticket goes if this printer fails.,Where a ticket goes if this printer fails.,,screens/KitchenPrinters.tsx,,needs_translation
 Where the months are landing,Where the months are landing,أين تهبط الأشهر,screens/Banquet.tsx,,translated
 Which hall - free for these dates and hours,Which hall - free for these dates and hours,أي قاعة - متاحة لهذه التواريخ والساعات,screens/Banquet.tsx,,translated
-"Which printer gets which KOTs. Two restaurants can share a kitchen printer, and the bar's drinks can print at the bar. With no printers here, each till prints its own KOTs.","Which printer gets which KOTs. Two restaurants can share a kitchen printer, and the bar's drinks can print at the bar. With no printers here, each till prints its own KOTs.",,screens/settings/cards.tsx,,needs_translation
+"Which printer gets which KOTs. Two restaurants can share a kitchen printer, and the bar's drinks can print at the bar. With no printers here, each till prints its own KOTs.","Which printer gets which KOTs. Two restaurants can share a kitchen printer, and the bar's drinks can print at the bar. With no printers here, each till prints its own KOTs.",,screens/KitchenPrinters.tsx,,needs_translation
 Which system is this export from?,Which system is this export from?,من أي نظام هذا التصدير؟,screens/GoLiveImport.tsx,,translated
 "Who agreed it, and why","Who agreed it, and why",,components/BookingDialog.tsx,,needs_translation
 Whose function is this?,Whose function is this?,لمن هذه المناسبة؟,screens/Banquet.tsx,,translated

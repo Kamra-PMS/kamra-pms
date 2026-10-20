@@ -172,11 +172,11 @@ kitchen printers to send each KOT to the printer that cooks it, whichever
 till sent the order: two restaurants can share one kitchen printer, the
 bar's drinks can print at the bar, and the tandoor can have its own.
 
-![Settings → F&B → Kitchen printers, with a main kitchen printer and a bar printer, both printing](/img/fnb/kitchen-printers.png)
+![F&B → Printers, with a main kitchen printer and a bar printer, both printing](/img/fnb/kitchen-printers.png)
 
 ### Add a printer
 
-1. **Settings → F&B → Kitchen printers → Add printer.**
+1. **F&B → Printers → Add printer.**
 2. Name it ("Main kitchen") and choose the **Connection** (see below),
    **Paper width** (80 mm or 58 mm) and **Copies** (1-3).
 3. Optionally pick a **Fallback printer**: where its tickets go if it
@@ -211,7 +211,7 @@ Kamra in the cloud.
 
 That screen now prints the printer's tickets as soon as they're sent, and
 still works as a kitchen display. The choice is saved on the device. A
-green dot means it's printing; **Settings → F&B → Kitchen printers** shows
+green dot means it's printing; **F&B → Printers** shows
 "A kitchen screen is printing for it".
 
 One device prints for one printer. Three printers need three devices, or
@@ -253,6 +253,18 @@ print waiting on a dialog.
 - Set the thermal printer as the system's default printer, with 80 mm (or
   58 mm) paper and no margins.
 
+## Guest QR ordering
+
+**F&B → QR Codes** makes a code for every restaurant table, and for every
+room (in-room dining from the Room Service outlet's menu). Download each as
+PNG or SVG, or **Print sheet** for A4 cards. The codes are drawn on your
+device; no outside QR service is used.
+Guests scan it, see the menu on their phone and place an order. The order
+waits on the POS until a captain confirms it; nothing goes to the kitchen
+on a guest's word alone.
+
+![QR codes for each table of the Poolside Bar, with PNG and SVG downloads](/img/fnb/qr-codes.png)
+
 ## Kitchen inventory
 
 **F&B → Kitchen Inventory** keeps ingredients, a recipe for each dish and a
@@ -292,7 +304,7 @@ All under **Settings → F&B** (Hotel Admin and Finance can change them):
 | Print void slips in the kitchen | On | A line voided, or a bill cancelled, after its KOT was sent prints a VOID slip on the printer that had it. |
 | Show a reservation from | 60 min before | When a table reservation starts showing on the table map. |
 | Keep showing it until | 240 min after | When it stops showing. |
-| Kitchen printers | None | Which printer prints which outlets and stations. |
+| Kitchen printers | — | Managed under **F&B → Printers** (not a toggle here). |
 
 ## Troubleshooting
 
@@ -300,7 +312,7 @@ All under **Settings → F&B** (Hotel Admin and Finance can change them):
 1. Is a kitchen printer set up for that outlet and the dish's station?
    The bar under the menu says where the KOT went.
 2. Print station: is the kitchen screen open, set to **Print for** that
-   printer, with a green dot? **Settings → F&B → Kitchen printers** shows
+   printer, with a green dot? **F&B → Printers** shows
    whether a screen is printing for it.
 3. Is the printer that device's default printer, with paper?
 4. No kitchen printers: is the till's **KOT printer** switch on, or

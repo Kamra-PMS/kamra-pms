@@ -59,6 +59,7 @@ const TapeChart = lazy(() => import("./screens/TapeChart"))
 const Tickets = lazy(() => import("./screens/Tickets"))
 const Laundry = lazy(() => import("./screens/Laundry"))
 const MenuItems = lazy(() => import("./screens/MenuItems"))
+const KitchenPrinters = lazy(() => import("./screens/KitchenPrinters"))
 const Today = lazy(() => import("./screens/Today"))
 const ConfiguredScreen = lazy(() => import("./screens/ConfiguredScreen"))
 const CalendarView = lazy(() =>
@@ -336,6 +337,7 @@ export default function App() {
           <Route path="kitchen" element={<Kitchen />} />
           <Route path="inventory" element={<Inventory />} />
           <Route path="menu-items" element={<MenuItems />} />
+          <Route path="printers" element={<KitchenPrinters />} />
           <Route path="outlets" element={<ConfiguredScreen config="outletsConfig" />} />
           <Route path="accounting-export" element={<AccountingExport />} />
           <Route path="tickets" element={<Tickets />} />
