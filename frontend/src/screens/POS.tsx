@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import {
   Plus, Minus, Trash2, Send, UtensilsCrossed, Search,
   Maximize2, Minimize2, Wallet, Printer, Receipt, XCircle, Ban,
-  Scissors, Users, PauseCircle, Tag, Gift, Clock, Menu, LogOut, Focus,
+  Scissors, Users, PauseCircle, Tag, Gift, Menu, LogOut, Focus,
   Keyboard, LayoutGrid, BedDouble, ListOrdered, UserRound, MoreVertical,
 } from "lucide-react"
 import PosSidePanel from "./pos/PosSidePanel"
@@ -1174,7 +1174,7 @@ export default function POS() {
         </div>
       )}
 
-      <div className="flex min-h-0 flex-1 gap-3">
+      <div className="flex min-h-0 flex-1 items-stretch gap-3">
         {/* tables: phone pane only — desktop uses the header drawer */}
         <div className={cn("min-h-0 w-full flex-col gap-2 overflow-y-auto md:hidden",
           mobilePane === "tables" ? "flex" : "hidden")}>
@@ -1242,60 +1242,59 @@ export default function POS() {
           </div>
         </div>
 
-        {/* ── right: the bill ── */}
+        {/* ── right cart: header | tall item scroll | pay footer (Restro-style) ── */}
         <div className={cn(
-          "min-h-0 w-full flex-col rounded-2xl border border-zinc-200 bg-white shadow-sm",
-          "md:w-[20rem] md:shrink-0 md:overflow-hidden xl:w-[22rem]",
-          mobilePane === "bill" ? "flex" : "hidden md:flex",
+          "grid h-full min-h-0 w-full grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm",
+          "md:w-[min(42vw,36rem)] md:shrink-0 md:basis-[min(42vw,36rem)]",
+          mobilePane === "bill" ? "grid" : "hidden md:grid",
         )}>
-          {/* zone 1: who / where — pinned above the items */}
-          <div className="shrink-0 border-b border-zinc-100 p-3 pb-2">
-            {/* who / where */}
+          {/* row 1 — thin who/where chrome */}
+          <div className="space-y-1.5 border-b border-zinc-100 px-3 py-2">
             {selected && detail ? (
-              <div className="mb-3 flex items-center justify-between gap-2">
-                <h2 className="flex min-w-0 items-center gap-1.5 font-semibold">
-                  <span className="truncate">{orderLabel(detail)}</span>
-                  {detail.guests ? <span className="flex items-center gap-0.5 text-xs font-normal text-zinc-400"><Users className="size-3" />{detail.guests}</span> : null}
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <h2 className="truncate text-sm font-bold text-zinc-900">{orderLabel(detail)}</h2>
+                  <p className="truncate text-[11px] text-zinc-500">
+                    {detail.kot_no ? `KOT #${detail.kot_no} · ` : ""}{detail.status}
+                    {detail.guests ? ` · ${detail.guests}` : ""}
+                  </p>
+                </div>
+                <div className="flex shrink-0 items-center gap-1">
                   {detail.table_no && detail.status !== "Delivered" && (
-                    <button title="New bill on this table (another party)"
+                    <button type="button" title={t("New bill on this table")}
                       onClick={() => newOrder(detail.table_no!)}
-                      className="rounded-md border border-dashed border-zinc-300 px-1.5 py-0.5 text-[11px] font-medium text-zinc-500 hover:border-brand-500 hover:text-brand-700">
-                      + bill
+                      className="rounded-md border border-dashed border-zinc-300 px-1.5 py-0.5 text-[10px] font-medium text-zinc-500 hover:border-brand-500 hover:text-brand-700">
+                      + {t("bill")}
                     </button>
                   )}
-                </h2>
-                <div className="flex shrink-0 items-center gap-1">
-                  <span className="hidden text-xs text-zinc-400 sm:inline">
-                    {detail.kot_no ? `KOT #${detail.kot_no} · ` : ""}{detail.status}
-                  </span>
                   <button type="button" onClick={() => setBillsPopupOpen(true)}
-                    className="rounded-lg border border-zinc-200 p-1.5 text-zinc-500 hover:border-brand-400 hover:bg-brand-50 hover:text-brand-800"
+                    className="rounded-md border border-zinc-200 p-1 text-zinc-500 hover:border-brand-400 hover:bg-brand-50"
                     title={t("Open full bill")} aria-label={t("Open full bill")}>
-                    <Maximize2 className="size-4" />
+                    <Maximize2 className="size-3.5" />
                   </button>
                 </div>
               </div>
             ) : (
-              <div className="mb-3 space-y-2">
+              <div className="space-y-1.5">
                 {orderType === "Dine In" && (
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 gap-1.5">
                     {tables.length > 0 && !customTable ? (
-                      <select className={inputCls} value={table}
+                      <select className={inputCls + " !py-1.5 text-sm"} value={table}
                         onChange={(e) => {
                           if (e.target.value === "__custom__") { setCustomTable(true); setTable("") }
                           else setTable(e.target.value)
                         }}>
-                        <option value="">Table…</option>
+                        <option value="">{t("Table…")}</option>
                         {tables.map((t) => (
                           <option key={t.table} value={t.table}>
-                            {t.table}{t.seats ? ` (${t.seats})` : ""}{t.bills > 0 ? ` · ${t.bills} bill${t.bills > 1 ? "s" : ""}` : ""}
+                            {t.table}{t.seats ? ` (${t.seats})` : ""}{t.bills > 0 ? ` · ${t.bills}` : ""}
                           </option>
                         ))}
-                        <option value="__custom__">Temp / custom table…</option>
+                        <option value="__custom__">{t("Temp / custom table…")}</option>
                       </select>
                     ) : (
                       <div className="flex gap-1">
-                        <input autoFocus={customTable} className={inputCls} placeholder="Table name"
+                        <input autoFocus={customTable} className={inputCls + " !py-1.5"} placeholder={t("Table name")}
                           value={table} onChange={(e) => setTable(e.target.value)} />
                         {customTable && (
                           <Button variant="ghost" className="!px-2" onClick={() => { setCustomTable(false); setTable("") }}>✕</Button>
@@ -1304,33 +1303,32 @@ export default function POS() {
                     )}
                     <div className="flex items-center gap-1 rounded-lg border border-zinc-300 px-2">
                       <Users className="size-3.5 text-zinc-400" />
-                      <input className="w-full bg-transparent py-1.5 text-sm focus:outline-none" placeholder="Guests"
+                      <input className="w-full bg-transparent py-1.5 text-sm focus:outline-none" placeholder={t("Guests")}
                         inputMode="numeric" value={guests} onChange={(e) => setGuests(e.target.value.replace(/\D/g, ""))} />
                     </div>
                   </div>
                 )}
                 {orderType === "Room Service" && (
                   <RoomPicker rooms={rooms} value={room} onChange={setRoom} onOpen={loadRooms}
-                    placeholder={rooms.length ? "Room…" : "No guests in house"} />
+                    placeholder={rooms.length ? t("Room…") : t("No guests in house")} />
                 )}
                 {orderType === "Dine In" && rooms.length > 0 && (
                   <RoomPicker rooms={rooms} value={room} onChange={setRoom} onOpen={loadRooms}
-                    placeholder="Charge to room (optional)…" />
+                    placeholder={t("Charge to room (optional)…")} />
                 )}
                 {isNewCustomerType && (
                   <>
-                    <div className="grid grid-cols-2 gap-2">
-                      <input className={inputCls} placeholder="Customer name" value={custName} onChange={(e) => setCustName(e.target.value)} />
-                      <input className={inputCls} placeholder="Phone" value={custPhone} onChange={(e) => setCustPhone(e.target.value)} />
+                    <div className="grid grid-cols-2 gap-1.5">
+                      <input className={inputCls + " !py-1.5"} placeholder={t("Customer name")} value={custName} onChange={(e) => setCustName(e.target.value)} />
+                      <input className={inputCls + " !py-1.5"} placeholder={t("Phone")} value={custPhone} onChange={(e) => setCustPhone(e.target.value)} />
                     </div>
                     {orderType === "Delivery" && (
-                      <input className={inputCls} placeholder="Delivery address" value={custAddr} onChange={(e) => setCustAddr(e.target.value)} />
+                      <input className={inputCls + " !py-1.5"} placeholder={t("Delivery address")} value={custAddr} onChange={(e) => setCustAddr(e.target.value)} />
                     )}
                   </>
                 )}
               </div>
             )}
-            {/* who the bill is for: opens the guest panel without leaving the till */}
             {(() => {
               const roomId = selected && detail ? detail.room : (orderType === "Room Service" || orderType === "Dine In") ? room || null : null
               const stay = roomId ? rooms.find((r) => r.room === roomId) : undefined
@@ -1339,184 +1337,200 @@ export default function POS() {
                 : roomId ? stay?.guest_name ?? null : draftGuest?.full_name ?? null
               const blocked = stay && Number(stay.room_charges_allowed ?? 1) === 0
               return (
-                <button onClick={() => setPanel("guest")}
-                  className={cn("mb-1 flex w-full items-center gap-2 rounded-lg border px-2.5 py-1.5 text-start text-xs transition",
+                <button type="button" onClick={() => setPanel("guest")}
+                  className={cn("flex w-full items-center gap-1.5 rounded-md border px-2 py-1 text-start text-[11px] transition",
                     name ? "border-zinc-200 bg-zinc-50 hover:border-brand-400" : "border-dashed border-zinc-300 text-zinc-500 hover:border-brand-500 hover:text-brand-700")}>
-                  {roomId ? <BedDouble className="size-3.5 shrink-0 text-violet-600" /> : <UserRound className="size-3.5 shrink-0" />}
+                  {roomId ? <BedDouble className="size-3 shrink-0 text-violet-600" /> : <UserRound className="size-3 shrink-0" />}
                   <span className="min-w-0 flex-1 truncate">
                     {name
                       ? <><span className="font-semibold text-zinc-800">{name}</span>{stay ? <span className="text-zinc-500"> · {t("Room {n}", { n: stay.room_number })}</span> : null}</>
                       : roomId ? t("In-house guest") : t("Add customer (phone or name)")}
                   </span>
                   {blocked && <span className="shrink-0 rounded-full bg-rose-100 px-1.5 py-0.5 text-[10px] font-semibold text-rose-700">{t("No room charges")}</span>}
-                  {name && !blocked && <span className="shrink-0 text-[10px] font-semibold text-brand-700">{t("Details")}</span>}
                 </button>
               )
             })()}
           </div>
 
-          {/* zone 2: already-sent lines scroll; new cart pins above the footer */}
-          <div className="min-h-0 flex-1 overflow-y-auto p-3">
-            {selected && detail ? (
-              <>
-                {!!detail.nc && (
-                  <div className="mb-2 rounded-lg border border-amber-200 bg-amber-50 px-2 py-1.5 text-xs text-amber-800">
-                    <span className="font-bold">{t("COMPLIMENTARY")}</span>
-                    <span className="ml-1">{t("auth")}: {detail.nc_authorized_by}{detail.nc_note ? ` · ${detail.nc_note}` : ""}</span>
-                  </div>
-                )}
-                {splitMode && (
-                  <p className="mb-1 rounded-lg bg-brand-50 px-2 py-1 text-xs text-brand-700">
-                    {t("Tick the lines moving to the new bill.")}
-                  </p>
-                )}
-                <h3 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-zinc-400">
-                  {t("On the bill")} · {detail.items.filter((i) => !i.voided).length}
-                </h3>
-                <ul className="mb-2 space-y-1 text-sm">
-                  {detail.items.map((it) => (
-                    <li key={it.row} className="flex min-h-9 items-center justify-between gap-1">
-                      <span className={"flex items-center gap-1.5 " + (it.voided ? "text-zinc-400 line-through" : "")}>
-                        {splitMode && !it.voided && (
-                          <input type="checkbox" className="accent-brand-600"
-                            checked={splitSel.has(it.row)} onChange={() => toggleSplitSel(it.row)} />
-                        )}
-                        <span>
-                          {Math.round(it.qty)}× {it.item_name}
-                          {!it.voided && (it.kot_status === "New"
-                            ? <span className="ms-1 rounded bg-amber-100 px-1 text-[10px] font-medium text-amber-800 no-underline">{t("not sent")}</span>
-                            : <span className="ms-1 text-[10px] text-zinc-400">{it.kot_status === "Prepared" ? t("Prepared") : t("In kitchen")}</span>)}
-                        </span>
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <span className="tabular-nums">{cur()}{inr(it.amount)}</span>
-                        {!splitMode && !it.voided && detail.status !== "Delivered" && detail.status !== "Cancelled" && (
-                          it.kot_status === "New" ? (
-                            <button title={t("Remove (not sent to the kitchen)")} aria-label={t("Remove (not sent to the kitchen)")}
-                              disabled={busy} onClick={() => removeLine(it.row)}
-                              className="-my-1 grid size-9 place-items-center rounded-md text-zinc-400 transition hover:bg-rose-50 hover:text-rose-500">
-                              <Trash2 className="size-4" />
-                            </button>
-                          ) : (
-                            <button title={t("Void (the kitchen has it)")} aria-label={t("Void (the kitchen has it)")}
-                              onClick={() => { setVoiding(it); setCancelling(false) }}
-                              className="-my-1 grid size-9 place-items-center rounded-md text-zinc-300 transition hover:bg-rose-50 hover:text-rose-500">
-                              <XCircle className="size-4" />
-                            </button>
-                          )
-                        )}
-                      </span>
+          {/* row 2 — THIS is the cart: tall scroll, large readable lines */}
+          <div className="flex min-h-0 flex-col overflow-hidden bg-zinc-50/60">
+            <div className="flex shrink-0 items-center justify-between gap-2 border-b border-zinc-200/80 bg-white px-3 py-1.5">
+              <span className="text-[11px] font-bold uppercase tracking-wide text-zinc-600">
+                {t("Items")} · {cart.reduce((s, l) => s + l.qty, 0) + (detail?.items.filter((i) => !i.voided).length ?? 0)}
+              </span>
+              {cart.length > 0 && (
+                <button type="button" onClick={() => setCart([])}
+                  className="text-[11px] font-semibold text-zinc-500 hover:text-rose-600">
+                  {t("Clear new")}
+                </button>
+              )}
+            </div>
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-2.5 py-2">
+              {cart.length === 0 && !(selected && detail?.items.length) ? (
+                <div className="flex h-full min-h-[18rem] flex-col items-center justify-center gap-2 px-4 text-center">
+                  <UtensilsCrossed className="size-12 text-zinc-300" />
+                  <p className="text-base font-semibold text-zinc-600">{t("No items yet")}</p>
+                  <p className="max-w-[14rem] text-xs text-zinc-400">{t("Select items from the menu")}</p>
+                </div>
+              ) : (
+                <ul className="space-y-2 pb-3">
+                  {cart.map((l) => (
+                    <li key={l.menu_item}
+                      className="rounded-xl border border-zinc-200 bg-white p-3 shadow-sm">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <div className="text-base font-bold leading-snug text-zinc-900">{l.item_name}</div>
+                          <div className="mt-1 text-sm font-semibold tabular-nums text-brand-700">
+                            {cur()}{inr(l.price)} × {l.qty} = {cur()}{inr(l.qty * l.price)}
+                          </div>
+                        </div>
+                        <button type="button" onClick={() => setQty(l.menu_item, -l.qty)} aria-label={t("Remove")}
+                          className="grid size-9 shrink-0 place-items-center rounded-lg text-rose-500 hover:bg-rose-50">
+                          <Trash2 className="size-4" />
+                        </button>
+                      </div>
+                      <div className="mt-2.5 flex items-center gap-2">
+                        <button type="button" onClick={() => setQty(l.menu_item, -1)} aria-label="One less"
+                          className="grid size-11 place-items-center rounded-lg border-2 border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-50">
+                          <Minus className="size-4" />
+                        </button>
+                        <span className="min-w-[2.25rem] text-center text-xl font-bold tabular-nums text-zinc-900">{l.qty}</span>
+                        <button type="button" onClick={() => setQty(l.menu_item, 1)} aria-label="One more"
+                          className="grid size-11 place-items-center rounded-lg bg-brand-600 text-white hover:bg-brand-700">
+                          <Plus className="size-4" />
+                        </button>
+                        <input className="ms-auto min-w-0 flex-1 rounded-lg border border-zinc-200 bg-zinc-50 px-2.5 py-2.5 text-xs text-zinc-800 placeholder:text-zinc-400"
+                          placeholder={t("Notes")}
+                          value={l.instructions} onChange={(e) => setInstr(l.menu_item, e.target.value)} />
+                      </div>
                     </li>
                   ))}
+
+                  {selected && detail && detail.items.length > 0 && (
+                    <>
+                      {cart.length > 0 && (
+                        <li className="list-none pt-1 text-[10px] font-bold uppercase tracking-wide text-zinc-400">
+                          {t("Already on bill")}
+                        </li>
+                      )}
+                      {!!detail.nc && (
+                        <li className="list-none rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-xs text-amber-800">
+                          <span className="font-bold">{t("COMPLIMENTARY")}</span>
+                          <span className="ms-1">{t("auth")}: {detail.nc_authorized_by}{detail.nc_note ? ` · ${detail.nc_note}` : ""}</span>
+                        </li>
+                      )}
+                      {splitMode && (
+                        <li className="list-none rounded-lg bg-brand-50 px-2.5 py-1.5 text-xs text-brand-700">
+                          {t("Tick the lines moving to the new bill.")}
+                        </li>
+                      )}
+                      {detail.items.map((it) => (
+                        <li key={it.row}
+                          className={cn(
+                            "flex items-center justify-between gap-2 rounded-xl border border-zinc-200 bg-white px-3 py-3",
+                            !!it.voided && "opacity-45",
+                          )}>
+                          <div className="flex min-w-0 items-start gap-2">
+                            {splitMode && !it.voided && (
+                              <input type="checkbox" className="mt-1 accent-brand-600"
+                                checked={splitSel.has(it.row)} onChange={() => toggleSplitSel(it.row)} />
+                            )}
+                            <div className="min-w-0">
+                              <div className={cn("text-[15px] font-bold text-zinc-900", !!it.voided && "line-through")}>
+                                {Math.round(it.qty)}× {it.item_name}
+                              </div>
+                              {!it.voided && (
+                                <div className="mt-0.5 text-xs text-zinc-500">
+                                  {it.kot_status === "New" ? t("not sent")
+                                    : it.kot_status === "Prepared" ? t("Prepared") : t("In kitchen")}
+                                  {it.instructions ? ` · ${it.instructions}` : ""}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex shrink-0 items-center gap-1">
+                            <span className="text-base font-bold tabular-nums text-zinc-900">{cur()}{inr(it.amount)}</span>
+                            {!splitMode && !it.voided && detail.status !== "Delivered" && detail.status !== "Cancelled" && (
+                              it.kot_status === "New" ? (
+                                <button type="button" title={t("Remove (not sent to the kitchen)")}
+                                  disabled={busy} onClick={() => removeLine(it.row)}
+                                  className="grid size-10 place-items-center rounded-lg text-zinc-400 hover:bg-rose-50 hover:text-rose-500">
+                                  <Trash2 className="size-4" />
+                                </button>
+                              ) : (
+                                <button type="button" title={t("Void (the kitchen has it)")}
+                                  onClick={() => { setVoiding(it); setCancelling(false) }}
+                                  className="grid size-10 place-items-center rounded-lg text-zinc-300 hover:bg-rose-50 hover:text-rose-500">
+                                  <XCircle className="size-4" />
+                                </button>
+                              )
+                            )}
+                          </div>
+                        </li>
+                      ))}
+                      {voiding && (
+                        <li className="list-none">
+                          <VoidApproval outlet={outlet} busy={busy}
+                            title={t("Void {item}", { item: voiding.item_name })}
+                            kitchenCount={voiding.kot_status !== "New" ? 1 : 0}
+                            canApprove={!!detail.can_approve}
+                            confirmLabel={t("Void item")}
+                            onConfirm={confirmVoid} onClose={() => setVoiding(null)} />
+                        </li>
+                      )}
+                      {splitMode && (
+                        <li className="flex list-none gap-1.5">
+                          <Button className="flex-1" disabled={busy || splitSel.size === 0 ||
+                            splitSel.size >= detail.items.filter((i) => !i.voided).length}
+                            onClick={confirmSplit}>
+                            <Scissors className="size-4" />{t("Move {n} to new bill", { n: splitSel.size || "" })}
+                          </Button>
+                          <Button variant="ghost" onClick={() => { setSplitMode(false); setSplitSel(new Set()) }}>✕</Button>
+                        </li>
+                      )}
+                    </>
+                  )}
                 </ul>
-                {voiding && (
-                  <div className="mb-2">
-                    <VoidApproval outlet={outlet} busy={busy}
-                      title={t("Void {item}", { item: voiding.item_name })}
-                      kitchenCount={voiding.kot_status !== "New" ? 1 : 0}
-                      canApprove={!!detail.can_approve}
-                      confirmLabel={t("Void item")}
-                      onConfirm={confirmVoid} onClose={() => setVoiding(null)} />
-                  </div>
-                )}
-                {splitMode && (
-                  <div className="mb-2 flex gap-1.5">
-                    <Button className="flex-1" disabled={busy || splitSel.size === 0 ||
-                      splitSel.size >= detail.items.filter((i) => !i.voided).length}
-                      onClick={confirmSplit}>
-                      <Scissors className="size-4" />Move {splitSel.size || ""} to new bill
-                    </Button>
-                    <Button variant="ghost" onClick={() => { setSplitMode(false); setSplitSel(new Set()) }}>✕</Button>
-                  </div>
-                )}
-                {cart.length === 0 && (
-                  <p className="py-2 text-center text-xs text-zinc-400">{t("Tap the menu to add a new round.")}</p>
-                )}
-              </>
-            ) : cart.length === 0 ? (
-              <p className="py-8 text-center text-sm text-zinc-400">{t("Tap menu items to add.")}</p>
-            ) : null}
+              )}
+            </div>
           </div>
 
-          {/* pinned cart — new lines never hide under kitchen items or the footer */}
-          {cart.length > 0 && (
-            <div className="shrink-0 border-t border-brand-200 bg-brand-50/70 px-3 py-2.5">
-              <div className="mb-1.5 flex items-center justify-between gap-2">
-                <h3 className="text-xs font-bold uppercase tracking-wide text-brand-800">
-                  {selected ? t("Adding now") : t("Order items")} · {cart.reduce((s, l) => s + l.qty, 0)}
-                </h3>
-                <button type="button" onClick={() => setCart([])}
-                  className="text-[11px] font-semibold text-brand-700 hover:text-rose-600">
-                  {t("Clear all")}
-                </button>
-              </div>
-              <div className="max-h-[11rem] space-y-2 overflow-y-auto">
-                {cart.map((l) => (
-                  <div key={l.menu_item} className="rounded-xl border border-brand-100 bg-white px-2 py-1.5 shadow-sm">
-                    <div className="flex min-h-10 items-center gap-1.5">
-                      <span className="min-w-0 flex-1 truncate text-sm font-semibold text-zinc-900">{l.item_name}</span>
-                      <button type="button" onClick={() => setQty(l.menu_item, -1)} aria-label="One less"
-                        className="grid size-9 shrink-0 place-items-center rounded-lg border border-zinc-300 text-zinc-600 hover:bg-zinc-50"><Minus className="size-4" /></button>
-                      <span className="w-6 shrink-0 text-center text-base font-semibold tabular-nums">{l.qty}</span>
-                      <button type="button" onClick={() => setQty(l.menu_item, 1)} aria-label="One more"
-                        className="grid size-9 shrink-0 place-items-center rounded-lg border border-zinc-300 text-zinc-600 hover:bg-zinc-50"><Plus className="size-4" /></button>
-                      <span className="w-14 shrink-0 text-right text-sm font-semibold tabular-nums">{cur()}{inr(l.qty * l.price)}</span>
-                      <button type="button" onClick={() => setQty(l.menu_item, -l.qty)} aria-label="Remove line"
-                        className="grid size-9 shrink-0 place-items-center rounded-lg text-zinc-300 hover:bg-rose-50 hover:text-rose-500"><Trash2 className="size-4" /></button>
-                    </div>
-                    <input className="mt-1 w-full rounded border border-zinc-200 px-2 py-1 text-xs" placeholder={t("Instructions")}
-                      value={l.instructions} onChange={(e) => setInstr(l.menu_item, e.target.value)} />
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* zone 3: totals + actions — always visible */}
-          <div className="shrink-0 space-y-2 rounded-b-2xl border-t border-zinc-100 bg-white p-3">
-            <div className="space-y-1 text-sm">
-              <div className="flex items-center justify-between">
-                <span className="text-zinc-500">{t("Discount")}</span>
+          {/* row 3 — compact totals + actions only */}
+          <div className="border-t border-zinc-200 bg-white px-3 py-2">
+            <div className="mb-2 flex items-end justify-between gap-2">
+              <div className="min-w-0 text-[11px] leading-snug text-zinc-500">
+                <div>{t("Subtotal")} {cur()}{inr2(taxable)} · {loc.tax_label} {cur()}{inr2(gstAmt)}</div>
                 {discOpen ? (
-                  <span className="flex items-center gap-1">
+                  <span className="mt-1 flex items-center gap-1">
                     <input autoFocus className={inputCls + " !w-24 !py-0.5 text-xs"} placeholder={`${cur()}`} inputMode="numeric"
                       value={discount} onChange={(e) => setDiscount(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && applyDiscount()} />
                     <Button variant="outline" className="!px-2 !py-0.5 text-xs" disabled={busy} onClick={applyDiscount}>OK</Button>
                   </span>
                 ) : (
-                  <button onClick={() => setDiscOpen(true)} className="flex items-center gap-1 text-xs font-medium text-brand-700 hover:underline">
+                  <button type="button" onClick={() => setDiscOpen(true)}
+                    className="mt-0.5 inline-flex items-center gap-1 font-medium text-brand-700 hover:underline">
                     <Tag className="size-3" />
                     {(selected && detail ? detail.discount_amount : disc) > 0
                       ? `−${cur()}${inr(selected && detail ? detail.discount_amount : disc)}`
-                      : t("Add discount")}
+                      : t("Discount")}
                   </button>
                 )}
               </div>
-              <div className="flex justify-between text-zinc-500"><span>{t("Subtotal")}</span><span className="tabular-nums">{cur()}{inr2(taxable)}</span></div>
-              {/* India splits GST into CGST + SGST; elsewhere it is one tax line */}
-              {loc.tax_label === "GST" ? (
-                <>
-                  <div className="flex justify-between text-xs text-zinc-400"><span>{t("CGST ({rate}%)", { rate: gstRate / 2 })}</span><span className="tabular-nums">{cur()}{inr2(gstAmt / 2)}</span></div>
-                  <div className="flex justify-between text-xs text-zinc-400"><span>{t("SGST ({rate}%)", { rate: gstRate / 2 })}</span><span className="tabular-nums">{cur()}{inr2(gstAmt / 2)}</span></div>
-                </>
-              ) : (
-                <div className="flex justify-between text-xs text-zinc-400"><span>{loc.tax_label} ({gstRate}%)</span><span className="tabular-nums">{cur()}{inr2(gstAmt)}</span></div>
-              )}
-              <div className="flex items-baseline justify-between border-t border-zinc-100 pt-1 font-bold">
-                <span>{t("Total")}</span>
-                <span className="text-2xl tabular-nums">{cur()}{inr2(grand)}</span>
+              <div className="text-right">
+                <div className="text-[10px] font-semibold uppercase tracking-wide text-zinc-400">{t("Total")}</div>
+                <div className="text-[1.65rem] font-bold tabular-nums leading-none text-zinc-900">{cur()}{inr2(grand)}</div>
               </div>
             </div>
 
             {ncOpen && selected && (
-              <div className="rounded-lg border border-amber-200 bg-amber-50 p-2">
-                <p className="mb-1 text-xs font-medium text-amber-800">Complimentary (no charge) - who authorized?</p>
+              <div className="mb-2 rounded-lg border border-amber-200 bg-amber-50 p-2">
+                <p className="mb-1 text-xs font-medium text-amber-800">{t("Complimentary (no charge) - who authorized?")}</p>
                 <div className="flex gap-1">
                   <select className={inputCls + " !w-28 !py-1 text-xs"} value={ncBy} onChange={(e) => setNcBy(e.target.value)}>
                     {["Captain", "Chef", "Manager", "GM", "Management", "Owner"].map((w) => <option key={w}>{w}</option>)}
                   </select>
-                  <input autoFocus className={inputCls + " !py-1 text-xs"} placeholder="Reference (birthday, complaint #, promo…)"
+                  <input autoFocus className={inputCls + " !py-1 text-xs"} placeholder={t("Reference (birthday, complaint #, promo…)")}
                     value={ncNote} onChange={(e) => setNcNote(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && saveNc()} />
                   <Button variant="outline" className="!px-2 !py-1 text-xs font-semibold text-amber-700" disabled={busy} onClick={() => saveNc()}>NC</Button>
@@ -1526,25 +1540,26 @@ export default function POS() {
             )}
 
             {cancelling && selected && detail && (
-              <VoidApproval outlet={outlet} busy={busy}
-                title={t("Cancel this bill")}
-                kitchenCount={detail.kitchen_lines ?? 0}
-                canApprove={!!detail.can_approve}
-                confirmLabel={t("Cancel bill")}
-                onConfirm={confirmCancel} onClose={() => setCancelling(false)} />
+              <div className="mb-2">
+                <VoidApproval outlet={outlet} busy={busy}
+                  title={t("Cancel this bill")}
+                  kitchenCount={detail.kitchen_lines ?? 0}
+                  canApprove={!!detail.can_approve}
+                  confirmLabel={t("Cancel bill")}
+                  onConfirm={confirmCancel} onClose={() => setCancelling(false)} />
+              </div>
             )}
 
-            {/* secondary bill tools — one overflow so KOT + Settle stay primary */}
-            <div className="relative">
-              <Button variant="outline" className="h-10 w-full justify-between text-sm font-medium"
-                onClick={() => setBillMenuOpen((v) => !v)} aria-expanded={billMenuOpen}>
-                <span>{t("Bill actions")}</span>
-                <MoreVertical className="size-4 text-zinc-400" />
-              </Button>
+            <div className="relative flex gap-1.5">
+              <button type="button" onClick={() => setBillMenuOpen((v) => !v)}
+                className="grid size-11 shrink-0 place-items-center rounded-xl border border-zinc-300 text-zinc-600 hover:bg-zinc-50"
+                aria-label={t("Bill actions")} aria-expanded={billMenuOpen}>
+                <MoreVertical className="size-5" />
+              </button>
               {billMenuOpen && (
                 <>
                   <div className="fixed inset-0 z-10" onClick={() => setBillMenuOpen(false)} aria-hidden />
-                  <div className="absolute bottom-full left-0 right-0 z-20 mb-1 overflow-hidden rounded-xl border border-zinc-200 bg-white py-1 shadow-lg">
+                  <div className="absolute bottom-full left-0 z-20 mb-1 w-56 overflow-hidden rounded-xl border border-zinc-200 bg-white py-1 shadow-lg">
                     <button type="button" disabled={busy || !selected}
                       onClick={() => { setBillMenuOpen(false); printBill() }}
                       className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm text-zinc-700 hover:bg-zinc-50 disabled:opacity-40">
@@ -1581,29 +1596,20 @@ export default function POS() {
                   </div>
                 </>
               )}
+              <Button variant="outline"
+                className="h-11 flex-1 border-brand-300 bg-brand-50 text-sm font-semibold text-brand-800 hover:bg-brand-100"
+                disabled={busy || cart.length === 0}
+                onClick={kotAction}>
+                <Send className="size-4" />
+                {selected ? t("KOT") : autoKot ? t("Send & print") : t("KOT")}
+              </Button>
+              <Button className="h-11 flex-[1.35] text-sm font-semibold"
+                disabled={busy || (selected ? !detail : cart.length === 0)}
+                onClick={proceedToPay}>
+                <Wallet className="size-4" />
+                {t("Settle")}
+              </Button>
             </div>
-
-            <Button variant="outline" className="h-12 w-full border-brand-200 bg-brand-50/50 text-base font-semibold text-brand-800 hover:bg-brand-50"
-              disabled={busy || cart.length === 0}
-              onClick={kotAction}>
-              <Send className="size-4" />
-              {selected
-                ? t("Send round")
-                : autoKot
-                  ? t("Send and print")
-                  : t("Send to kitchen")}
-              <kbd className="rounded bg-white/60 px-1 text-[10px] text-brand-700">F6</kbd>
-            </Button>
-
-            <Button className="h-14 w-full text-base font-semibold"
-              disabled={busy || (selected ? !detail : cart.length === 0)}
-              onClick={proceedToPay}>
-              <Wallet className="size-5" />
-              {selected && detail?.nc ? t("Close complimentary bill")
-                : selected && detail?.room ? t("Settle / post to room") : t("Settle")}
-              <span className="ms-auto tabular-nums opacity-90">{cur()}{inr2(grand)}</span>
-              <kbd className="rounded bg-white/20 px-1 text-[10px]">F4</kbd>
-            </Button>
           </div>
         </div>
       </div>
@@ -1744,34 +1750,30 @@ function RunningStrip({
   const { t } = useT()
   if (!open.length) return null
   return (
-    <div className="flex gap-2 overflow-x-auto pb-1">
+    <div className="flex gap-1.5 overflow-x-auto pb-0.5">
       <button type="button" onClick={onSeeAll}
-        className="flex min-w-[5.5rem] shrink-0 flex-col items-center justify-center rounded-xl border-2 border-dashed border-brand-300 bg-brand-50/60 px-3 py-2 text-brand-800 hover:border-brand-500 hover:bg-brand-50"
+        className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg border border-dashed border-brand-400 bg-brand-50 px-2.5 text-xs font-bold text-brand-800 hover:border-brand-500"
         title={t("See all open bills")}>
-        <Maximize2 className="size-4" />
-        <span className="mt-1 text-[11px] font-bold uppercase tracking-wide">{t("All")} · {open.length}</span>
+        <Maximize2 className="size-3.5" />
+        {t("All")} · {open.length}
       </button>
       {open.map((o) => {
         const tone = !o.kot_fired
-          ? (o.stale ? "border-rose-500 bg-rose-50 text-rose-950" : "border-amber-400 bg-amber-50 text-amber-950")
+          ? (o.stale ? "border-rose-400 bg-rose-50 text-rose-950" : "border-amber-400 bg-amber-50 text-amber-950")
           : o.pending > 0
             ? "border-sky-400 bg-sky-50 text-sky-950"
             : "border-emerald-400 bg-emerald-50 text-emerald-950"
-        // an unsent bill shows how long it has waited, so it is not forgotten
-        const tag = !o.kot_fired ? `${t("Not sent")} · ${ago(o.creation)}`
+        const tag = !o.kot_fired ? ago(o.creation)
           : o.pending > 0 ? t("In kitchen") : t("Ready / unpaid")
         return (
-          <button key={o.name} onClick={() => onOpen(o.name)}
-            className={"flex min-w-[9.5rem] shrink-0 flex-col rounded-xl border-2 px-3 py-2 text-left " + tone +
+          <button key={o.name} type="button" onClick={() => onOpen(o.name)}
+            className={"inline-flex h-9 max-w-[11rem] shrink-0 items-center gap-2 rounded-lg border px-2.5 text-left " + tone +
               (selected === o.name ? " ring-2 ring-brand-600 ring-offset-1" : "")}>
-            <span className="truncate text-sm font-bold">{o.label}</span>
-            <span className="mt-0.5 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide opacity-80">
-              <Clock className="size-3" />{tag}
-            </span>
-            <span className="mt-0.5 text-xs font-semibold tabular-nums">
+            <span className="min-w-0 truncate text-xs font-bold">{o.label}</span>
+            <span className="shrink-0 text-[10px] font-semibold tabular-nums opacity-80">
               {cur()}{inr(o.order_total)}
-              {o.kot_no ? ` · KOT ${o.kot_no}` : ""}
             </span>
+            <span className="hidden shrink-0 text-[10px] font-bold uppercase tracking-wide opacity-70 sm:inline">{tag}</span>
           </button>
         )
       })}
