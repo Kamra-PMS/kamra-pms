@@ -794,7 +794,7 @@ function Toggle({
 /* ── the dish library ─────────────────────────────────────────────────── */
 
 /** The buy side. A dish with no recipe is free, and so is the margin it
- *  reports — which is exactly how a banquet ends up losing money on paper
+ *  reports - which is exactly how a banquet ends up losing money on paper
  *  it thought it made. Recipes here cost from the same ingredient master
  *  the restaurant uses, so one price change moves both kitchens. */
 function DishLibrary({
@@ -974,7 +974,7 @@ function DishLibrary({
 /* ── the dish editor ──────────────────────────────────────────────────── */
 
 /** A dish is only worth what its recipe says. This is where that recipe
- *  gets written, and the cost adds up line by line as you type — so the
+ *  gets written, and the cost adds up line by line as you type - so the
  *  person entering it can see immediately whether the number looks right,
  *  rather than discovering at month end that the paneer was priced per
  *  gram. */
@@ -1027,7 +1027,7 @@ function DishSheet({
           <span className="text-sm text-zinc-500">
             {recipe.length
               ? `Costs ${inr(cost)} a portion`
-              : "No recipe yet — this dish will cost nothing"}
+              : "No recipe yet - this dish will cost nothing"}
           </span>
           <div className="flex gap-2">
             <Button variant="outline" onClick={onClose}>
@@ -1118,7 +1118,7 @@ function DishSheet({
           <div className="mb-2 flex items-center justify-between">
             <div>
               <p className="text-xs font-medium text-zinc-500">
-                Recipe — one portion
+                Recipe - one portion
               </p>
               <p className="text-[11px] text-zinc-400">
                 Quantities are per portion, in each ingredient&apos;s own unit.
@@ -1139,7 +1139,7 @@ function DishSheet({
           {ingredients.length === 0 ? (
             <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
               No ingredients on this property yet. Add them under Kitchen
-              Inventory first — a dish can only cost what its ingredients
+              Inventory first - a dish can only cost what its ingredients
               cost.
             </p>
           ) : recipe.length === 0 ? (
@@ -1201,7 +1201,7 @@ function DishSheet({
                     <td className="py-1.5 pr-2 text-right text-xs tabular-nums text-zinc-400">
                       {r.ingredient
                         ? `${inr(priceOf(r.ingredient))}/${uomOf(r.ingredient)}`
-                        : "—"}
+                        : "-"}
                     </td>
                     <td className="py-1.5 pr-2 text-right tabular-nums">
                       {inr(Number(r.qty || 0) * priceOf(r.ingredient))}

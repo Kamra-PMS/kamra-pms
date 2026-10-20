@@ -921,7 +921,7 @@ export function BookingDialog(props: {
                 <p className="mt-1 text-sm">
                   {done.room
                     ? t("Room {n} assigned.", { n: done.room.split("-").pop() ?? "" })
-                    : t("No room auto-assigned — pick one from Reservations.")}{" "}
+                    : t("No room auto-assigned - pick one from Reservations.")}{" "}
                   {t("Find it under Arrivals on the stay date.")}
                 </p>
               </div>
@@ -934,13 +934,13 @@ export function BookingDialog(props: {
                 <div>
                   <dt className="text-xs font-medium text-zinc-400">{t("Guest name")}</dt>
                   <dd className="mt-1 font-semibold text-zinc-900">
-                    {form.guest_name || "—"}
+                    {form.guest_name || "-"}
                   </dd>
                 </div>
                 <div>
                   <dt className="text-xs font-medium text-zinc-400">{t("Phone")}</dt>
                   <dd className="mt-1 font-semibold text-zinc-900">
-                    {form.phone || "—"}
+                    {form.phone || "-"}
                   </dd>
                 </div>
 
@@ -998,7 +998,7 @@ export function BookingDialog(props: {
                     {dayUse ? t("Day use") : t("Nights")}
                   </dt>
                   <dd className="mt-1 font-semibold text-zinc-900">
-                    {dayUse ? `${slot.from}–${slot.to}` : form.nights}
+                    {dayUse ? `${slot.from}-${slot.to}` : form.nights}
                   </dd>
                 </div>
                 <div>
@@ -1409,7 +1409,7 @@ export function BookingDialog(props: {
                     )}
                   </Field>
                   {dayUse ? (
-                    /* Two time inputs need two columns — a single cell overflows
+                    /* Two time inputs need two columns - a single cell overflows
                        into Adults and looks like a double text box. */
                     <div className="col-span-2 min-w-0 sm:col-span-3">
                       <Field label={t("Time slot")}>
@@ -1422,7 +1422,7 @@ export function BookingDialog(props: {
                             onChange={(e) => setSlot((x) => ({ ...x, from: e.target.value }))}
                           />
                           <span className="shrink-0 text-zinc-400" aria-hidden>
-                            –
+                            -
                           </span>
                           <input
                             type="time"
@@ -1517,7 +1517,7 @@ export function BookingDialog(props: {
                     }
                   >
                     <div>
-                      {t("Extra guests by arrangement — up to {beds} above the {cap} it sleeps, at a price you agree", {
+                      {t("Extra guests by arrangement - up to {beds} above the {cap} it sleeps, at a price you agree", {
                         beds: extraBeds,
                         cap: selectedRt.adults_capacity,
                       })}
@@ -1881,7 +1881,7 @@ export function BookingDialog(props: {
 
                       {moreRooms.length > 0 && (
                         <p className="text-xs text-zinc-400">
-                          Multi-room bookings are created as a group — vouchers,
+                          Multi-room bookings are created as a group - vouchers,
                           add-ons and booker details can be added per stay
                           afterwards.
                         </p>
@@ -2001,7 +2001,7 @@ export function BookingDialog(props: {
                                     setX("arrival_mode", e.target.value)
                                   }
                                 >
-                                  <option value="">—</option>
+                                  <option value=""> - </option>
                                   <option>Air</option>
                                   <option>Road</option>
                                   <option>Rail</option>
@@ -2050,7 +2050,7 @@ export function BookingDialog(props: {
                                   setX("purpose", e.target.value)
                                 }
                               >
-                                <option value="">—</option>
+                                <option value=""> - </option>
                                 <option>Leisure</option>
                                 <option>Business</option>
                                 <option>Event / Wedding</option>
@@ -2085,7 +2085,7 @@ export function BookingDialog(props: {
               </div>
             </div>
 
-            {/* Quote rail — always visible on lg */}
+            {/* Quote rail - always visible on lg */}
             <aside className="flex w-full shrink-0 flex-col border-t border-zinc-200 bg-zinc-50 lg:w-80 lg:border-l lg:border-t-0 xl:w-[22rem]">
               <div className="flex-1 overflow-y-auto px-6 py-5 md:px-7">
                 <div className="mb-4 flex items-center justify-between">
@@ -2106,7 +2106,7 @@ export function BookingDialog(props: {
                       <span className="min-w-0 truncate">
                         {roomTypeName} ·{" "}
                         {quote.day_use
-                          ? t("Day use {from}–{to}", { from: slot.from, to: slot.to })
+                          ? t("Day use {from}-{to}", { from: slot.from, to: slot.to })
                           : `${quote.nights} night${quote.nights === 1 ? "" : "s"}`}
                       </span>
                       <span className="shrink-0 tabular-nums">
@@ -2202,7 +2202,7 @@ export function BookingDialog(props: {
                       </div>
                       <p className="mt-1 text-xs text-zinc-400">
                         {dayUse
-                          ? `${form.check_in_date} · ${slot.from}–${slot.to}`
+                          ? `${form.check_in_date} · ${slot.from}-${slot.to}`
                           : `${form.check_in_date} → ${checkOut}`}
                       </p>
                     </div>

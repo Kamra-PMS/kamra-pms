@@ -246,7 +246,7 @@ export default function RoomChangeDialog(props: {
                           r.free ? hkTone[r.housekeeping_status ?? ""] ?? "bg-zinc-100 text-zinc-600" : "bg-zinc-100 text-zinc-500",
                         )}
                       >
-                        {r.free ? t(r.housekeeping_status || "—") : t("Booked")}
+                        {r.free ? t(r.housekeeping_status || "-") : t("Booked")}
                       </span>
                     </button>
                   ))}
@@ -260,7 +260,7 @@ export default function RoomChangeDialog(props: {
           {pick && (
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
               <span className="font-medium text-zinc-900">
-                {props.currentRoomNumber ?? "—"} <ArrowRight className="inline size-3.5" aria-hidden /> {pick.room_number}
+                {props.currentRoomNumber ?? "-"} <ArrowRight className="inline size-3.5" aria-hidden /> {pick.room_number}
               </span>
               {preview ? (
                 preview.difference === 0 ? (

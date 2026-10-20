@@ -36,7 +36,7 @@ function rangeLabel(dates: string[]) {
       month: "short",
       ...(withYear ? { year: "numeric" } : {}),
     })
-  return `${fmt(f, f.getFullYear() !== l.getFullYear())} – ${fmt(l, true)}`
+  return `${fmt(f, f.getFullYear() !== l.getFullYear())} - ${fmt(l, true)}`
 }
 
 export function CalendarView(props: {

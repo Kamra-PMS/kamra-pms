@@ -346,7 +346,7 @@ export function ResourceScreen({
       setDraft({})
       return
     }
-    // List rows only carry column fields — fetch the full document so
+    // List rows only carry column fields - fetch the full document so
     // form extras (location, slugs, etc.) aren't blank and can't wipe DB values.
     setDraft({ ...row })
     frappeFetch<{ data: Row }>(
@@ -359,7 +359,7 @@ export function ResourceScreen({
   async function save() {
     setBusy(true)
     try {
-      // Only persist form fields — never the raw list-row or full-doc dump.
+      // Only persist form fields - never the raw list-row or full-doc dump.
       const payload: Record<string, unknown> = {}
       for (const f of config.form) {
         if (f.type === "readonly") continue

@@ -713,7 +713,7 @@ export const menuItemsConfig: ScreenConfig = {
     { field: "category", label: "Category", type: "data" },
     { field: "price", label: "Price", type: "currency", required: true },
     { field: "image", label: "Photo", type: "image",
-      hint: "800×600px landscape JPG/WebP, under 500 KB — shows on the POS card" },
+      hint: "800×600px landscape JPG/WebP, under 500 KB - shows on the POS card" },
     { field: "description", label: "Description", type: "data" },
     { field: "prep_station", label: "Prep station", type: "select", options: ["Kitchen", "Bar"] },
     { field: "is_veg", label: "Vegetarian", type: "check" },

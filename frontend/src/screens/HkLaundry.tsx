@@ -264,7 +264,7 @@ export default function HkLaundry({ rooms }: { rooms: Room[] }) {
             })}
             {rates.length === 0 && (
               <p className="py-4 text-center text-sm text-zinc-400">
-                No rate card yet — add laundry rates in Settings.
+                No rate card yet - add laundry rates in Settings.
               </p>
             )}
           </div>
@@ -316,7 +316,7 @@ export default function HkLaundry({ rooms }: { rooms: Room[] }) {
           {returnPending > 0 && (
             <input
               className="w-full rounded-xl border border-rose-300 bg-rose-50 px-3 py-3 text-base"
-              placeholder={`${returnPending} piece(s) short — why? (required)`}
+              placeholder={`${returnPending} piece(s) short - why? (required)`}
               value={returning.note}
               onChange={(e) => setReturning({ ...returning, note: e.target.value })} />
           )}

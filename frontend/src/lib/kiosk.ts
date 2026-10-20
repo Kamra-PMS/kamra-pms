@@ -39,11 +39,11 @@ export function useKiosk(auto = false) {
 
 /**
  * Floor screens (POS / Kitchen): focus mode (PMS chrome hidden) is opt-in and
- * remembered per device — the screen never traps staff. Browser fullscreen is
+ * remembered per device - the screen never traps staff. Browser fullscreen is
  * a separate, also optional, layer. Escape unwinds: browser FS + focus off in
  * one keypress, without navigating away.
  *
- * Maximize toggles browser fullscreen only — it must not flip focus mode off,
+ * Maximize toggles browser fullscreen only - it must not flip focus mode off,
  * which previously brought the sidebar/header back while still "on" the floor.
  */
 export function useFloorFullscreen(
@@ -104,7 +104,7 @@ export function useFloorFullscreen(
       const el = e.target as HTMLElement | null
       if (el?.closest?.("input, textarea, select, [contenteditable=true]")) return
       // Clear focus mode so chrome returns in one keypress (without navigating
-      // away). Also exit browser FS ourselves — preventDefault can stop the
+      // away). Also exit browser FS ourselves - preventDefault can stop the
       // native exit.
       if (!document.fullscreenElement && !kiosk.on) return
       e.preventDefault()
@@ -117,7 +117,7 @@ export function useFloorFullscreen(
   return {
     kioskOn: kiosk.on,
     browserFs,
-    /** Chrome hidden or browser fullscreen — layout fills the viewport. */
+    /** Chrome hidden or browser fullscreen - layout fills the viewport. */
     floorOn: kiosk.on || browserFs,
     toggleBrowserFs,
     toggleFocus,

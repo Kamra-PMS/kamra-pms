@@ -151,7 +151,7 @@ export default function Agents() {
             onClick={() =>
               setPanel((p) => (p === "connect" ? "none" : "connect"))
             }
-            title="Open Claude and connect this hotel over MCP — scoped to your role"
+            title="Open Claude and connect this hotel over MCP - scoped to your role"
             className={
               "flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm " +
               (panel === "connect"
@@ -461,7 +461,7 @@ export function ActivityTab({ property }: { property: string }) {
 }
 
 // ---------------------------------------------------------------------------
-// Connect tab — one click into Claude's prefilled connector dialog + OAuth
+// Connect tab - one click into Claude's prefilled connector dialog + OAuth
 // ---------------------------------------------------------------------------
 
 interface ConnectInfo {
@@ -541,7 +541,7 @@ export function ConnectTab({ property }: { property: string }) {
           {info && !info.is_public_https && (
             <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
               Claude reaches this hotel from Anthropic&apos;s cloud, so the
-              site needs public HTTPS. This origin looks local — use Claude
+              site needs public HTTPS. This origin looks local - use Claude
               Code over HTTP on this machine, or the stdio sidecar, until you
               have a public URL.
             </p>
@@ -652,7 +652,7 @@ export function ConnectTab({ property }: { property: string }) {
       <p className="text-xs text-zinc-400">
         Need a platform-wide or service key (HeyKoala, unattended jobs)? That
         is issued by your system admin under Developers. Staff should use
-        Connect Claude — no API secrets on a laptop.
+        Connect Claude - no API secrets on a laptop.
       </p>
     </div>
   )

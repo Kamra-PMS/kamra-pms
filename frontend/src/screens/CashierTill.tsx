@@ -160,7 +160,7 @@ export default function CashierTill() {
           <p className="mt-1 text-sm text-zinc-500">
             {t("Business date")}{" "}
             <span className="font-medium text-zinc-700">
-              {session?.business_date ?? "—"}
+              {session?.business_date ?? "-"}
             </span>
             {session?.cashier_id ? (
               <>
@@ -401,7 +401,7 @@ export default function CashierTill() {
                         <td className="py-2 pr-3">{tx.mode}</td>
                         <td className="py-2 pr-3 tabular-nums">{inr(tx.amount)}</td>
                         <td className="truncate py-2 pr-3 text-zinc-500">
-                          {tx.reference || tx.folio || tx.pos_order || "—"}
+                          {tx.reference || tx.folio || tx.pos_order || "-"}
                         </td>
                         <td className="py-2 text-zinc-500">
                           {tx.posted_at

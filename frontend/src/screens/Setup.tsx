@@ -247,7 +247,7 @@ export default function Setup() {
     <div className="mx-auto max-w-2xl">
       <h1 className="mb-1 text-lg font-semibold">{t("Set up a new property")}</h1>
       <p className="mb-4 text-sm text-zinc-500">
-        {t("Hotel or vacation rental — same product, different defaults. Prefer talking? Connect Claude to Kamra's MCP and say \"onboard my property\".")}
+        {t("Hotel or vacation rental - same product, different defaults. Prefer talking? Connect Claude to Kamra's MCP and say \"onboard my property\".")}
       </p>
 
       <ol className="mb-6 flex flex-wrap gap-2">
@@ -585,7 +585,7 @@ export default function Setup() {
           {step === 3 && isStr && (
             <div className="space-y-4">
               <p className="text-sm text-zinc-500">
-                {t("How do guests book this property? This sets Sellable Units and competition groups — not a separate product fork.")}
+                {t("How do guests book this property? This sets Sellable Units and competition groups - not a separate product fork.")}
               </p>
               <div className="grid gap-3 sm:grid-cols-2">
                 {(
@@ -746,7 +746,7 @@ export default function Setup() {
           {step === importStep && (
             <div className="space-y-4">
               <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-                <span className="font-semibold">{createdProperty}</span> {t("is live. Bring your bookings, companies and opening balances over from Kamra's CSV templates, then reconcile before you switch — or let the AI migration assistant do the mapping via MCP.")}
+                <span className="font-semibold">{createdProperty}</span> {t("is live. Bring your bookings, companies and opening balances over from Kamra's CSV templates, then reconcile before you switch - or let the AI migration assistant do the mapping via MCP.")}
               </div>
               <div className="rounded-lg border border-brand-200 bg-brand-50/60 px-4 py-3 text-sm text-zinc-800">
                 <p className="font-semibold text-brand-800">
@@ -754,7 +754,7 @@ export default function Setup() {
                 </p>
                 <p className="mt-1 text-zinc-600">
                   {t(
-                    "After the desk is live, put an AI concierge on your WhatsApp number — it uses Kamra's tools. Metered by HeyKoala; the PMS stays free.",
+                    "After the desk is live, put an AI concierge on your WhatsApp number - it uses Kamra's tools. Metered by HeyKoala; the PMS stays free.",
                   )}
                 </p>
                 <a
