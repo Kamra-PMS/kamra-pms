@@ -1407,6 +1407,49 @@ TOOLS: tuple[ToolSpec, ...] = (
 		mutating=True,
 		group="F&B",
 	),
+	_t(
+		"pos_orders",
+		"pos.orders_list",
+		"""Bills at an outlet for a day (default today) or a date range of up
+		to 31 days, newest first, each with its state: open (not sent to the
+		kitchen), sent, paid, room (posted to a room folio), nc, closed or
+		cancelled. Viewing today also lists bills still open from earlier
+		days. q searches bill/KOT number, table, room and customer.""",
+		{
+			"outlet": _p("string"),
+			"date": _p("string", description="YYYY-MM-DD; default today"),
+			"to_date": _p("string", description="YYYY-MM-DD, end of a range"),
+			"q": _p("string"),
+			"state": _p("string", enum=["open", "sent", "paid", "room", "nc",
+			                            "closed", "cancelled"]),
+		},
+		required=("outlet",),
+		group="F&B",
+	),
+	_t(
+		"pos_cancel_order",
+		"pos.cancel_order",
+		"""Cancel an open POS bill that has nothing sent to the kitchen yet,
+		with a reason (kept on the bill and in the activity log; the table is
+		freed). Refused once any item was fired: food the kitchen started is
+		voided by a supervisor at the till, never by an agent. Check with
+		pos_order_detail first (kitchen_lines must be 0).""",
+		{"order": _p("string"), "reason": _p("string")},
+		required=("order", "reason"),
+		mutating=True,
+		group="F&B",
+	),
+	_t(
+		"pos_remove_item",
+		"pos.remove_item",
+		"""Remove one line that has not been sent to the kitchen from an open
+		POS bill (row id from pos_order_detail). Lines the kitchen already has
+		are refused, and so is the last line (cancel the bill instead).""",
+		{"order": _p("string"), "item_row": _p("string")},
+		required=("order", "item_row"),
+		mutating=True,
+		group="F&B",
+	),
 	# ── External POS (third-party till posting to a room) ────────────────
 	_t(
 		"pos_room_lookup",
@@ -1492,6 +1535,52 @@ TOOLS: tuple[ToolSpec, ...] = (
 		required=("order",),
 		mutating=True,
 		group="Laundry",
+	),
+	_t(
+		"rooms_board",
+		"rooms.rooms_board",
+		"""Every room today: housekeeping status, occupancy, the in-house
+		guest, who arrives or leaves today, whether the room is held out of
+		service, and its open housekeeping task. Read-only.""",
+		{},
+		property=True,
+	),
+	_t(
+		"room_detail",
+		"rooms.room_detail",
+		"""One room right now: its type and features, housekeeping status,
+		the guest in it (with balance), the next arrival, active out-of-service
+		holds and open housekeeping tasks. room is the room id (see
+		rooms_board). Read-only.""",
+		{"room": _p("string")},
+		required=("room",),
+	),
+	_t(
+		"room_availability",
+		"rooms.room_availability",
+		"""One room night by night (up to 31 days): booked (by whom), held out
+		of service, or free. Read-only.""",
+		{"room": _p("string"), "start_date": _p("string", format="date"),
+		 "days": _p("integer")},
+		required=("room",),
+	),
+	_t(
+		"room_history",
+		"rooms.room_history",
+		"""Who stayed in a room lately (nights, room revenue), who cleaned and
+		inspected it and when, its service tickets, and guests moved in or out
+		of it. Read-only.""",
+		{"room": _p("string"), "limit": _p("integer")},
+		required=("room",),
+	),
+	_t(
+		"room_insights",
+		"rooms.room_insights",
+		"""Per-room numbers for the last 7, 30, 90, 180 or 365 nights: room
+		nights and occupancy, posted room revenue, out-of-service nights and
+		average cleaning time, with the most and least used rooms. Read-only.""",
+		{"days": _p("integer")},
+		property=True,
 	),
 )
 

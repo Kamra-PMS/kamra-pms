@@ -332,7 +332,8 @@ def save_recipe(menu_item: str, rows):
 @require_roles(*INVENTORY_WRITE, scope={"name": "Ingredient"})
 def save_ingredient(property: str, ingredient_name: str, uom: str,
                     category: str | None = None, cost_per_unit: float = 0,
-                    is_active: int = 1, name: str | None = None):
+                    gst_rate: float | None = None, is_active: int = 1,
+                    name: str | None = None):
 	"""Create or update one ingredient."""
 	if not (ingredient_name or "").strip():
 		frappe.throw(_("An ingredient needs a name."))
@@ -342,6 +343,8 @@ def save_ingredient(property: str, ingredient_name: str, uom: str,
 		"uom": uom, "category": (category or "").strip() or None,
 		"cost_per_unit": float(cost_per_unit or 0), "is_active": int(is_active or 0),
 	})
+	if gst_rate is not None:
+		doc.gst_rate = float(gst_rate)
 	doc.save()
 	return {"ok": True, "name": doc.name}
 

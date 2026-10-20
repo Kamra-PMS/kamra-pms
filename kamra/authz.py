@@ -332,7 +332,66 @@ def require_cashier_pin(property: str, pin=None):
 		# refresh sliding window
 		frappe.cache.set_value(cache_key, 1, expires_in_sec=lock_minutes * 60)
 		return
+	_check_user_pin(user, pin, property)
+	frappe.cache.set_value(cache_key, 1, expires_in_sec=lock_minutes * 60)
 
+
+# Who may approve what a captain cannot do alone (voiding food the kitchen
+# has already started, say). The same roles the reason-code supervisor
+# rule accepts (kamra.ledger.require_reason).
+SUPERVISOR_ROLES = ("Hotel Admin", "Finance", "System Manager", "Administrator")
+
+
+def is_supervisor(user: str | None = None) -> bool:
+	user = user or frappe.session.user
+	return user == "Administrator" or bool(
+		set(SUPERVISOR_ROLES) & set(frappe.get_roles(user)))
+
+
+def verify_supervisor(property: str, supervisor: str | None, pin) -> str:
+	"""A supervisor approves at someone else's till with their user id and
+	their own cashier PIN. The PIN is always required here, whatever the
+	property's PIN setting, because it is the only proof the supervisor was
+	there. Wrong PINs count against the supervisor's lock like any other
+	entry. Returns the approving user."""
+	supervisor = (supervisor or "").strip()
+	if not supervisor or not frappe.db.exists("User", supervisor):
+		frappe.throw("SUPERVISOR_REQUIRED: pick the supervisor who approves this.",
+		             frappe.PermissionError)
+	if not frappe.db.get_value("User", supervisor, "enabled") or \
+			not is_supervisor(supervisor):
+		frappe.throw(f"{supervisor} cannot approve this. It needs a Hotel "
+		             "Admin or Finance user.", frappe.PermissionError)
+	allowed = restricted_properties(supervisor)
+	if property and allowed is not None and property not in allowed:
+		frappe.throw(f"{supervisor} has no access to {property}.",
+		             frappe.PermissionError)
+	if not frappe.db.exists("Cashier PIN", supervisor):
+		frappe.throw(f"PIN_NOT_SET: {supervisor} has no cashier PIN yet. They "
+		             "set one the first time a money action asks for it.")
+	if not pin:
+		frappe.throw("SUPERVISOR_PIN_REQUIRED: the supervisor enters their PIN.")
+	# The PIN record's own attempt counter is rolled back with a refused
+	# request, so guesses at someone else's PIN are also counted in the
+	# cache, which a rollback does not touch.
+	max_attempts, lock_minutes = _pin_policy(property)
+	fails_key = f"kamra_supervisor_pin_fails:{supervisor}"
+	if cint(frappe.cache.get_value(fails_key)) >= max_attempts:
+		frappe.throw("PIN_LOCKED: too many wrong supervisor PIN attempts - "
+		             f"try again in {lock_minutes} minutes.")
+	try:
+		_check_user_pin(supervisor, pin, property)
+	except frappe.ValidationError:
+		frappe.cache.set_value(fails_key, cint(frappe.cache.get_value(fails_key)) + 1,
+		                       expires_in_sec=lock_minutes * 60)
+		raise
+	frappe.cache.delete_value(fails_key)
+	return supervisor
+
+
+def _check_user_pin(user: str, pin, property: str | None):
+	"""Check `user`'s cashier PIN; wrong tries count towards the lock."""
+	max_attempts, lock_minutes = _pin_policy(property)
 	if not frappe.db.exists("Cashier PIN", user):
 		frappe.throw("PIN_NOT_SET: set your cashier PIN first (ask for it on "
 		             "this screen), then retry.")
@@ -364,7 +423,6 @@ def require_cashier_pin(property: str, pin=None):
 		doc.pin_attempts = 0
 		doc.locked_until = None
 		doc.save(ignore_permissions=True)
-	frappe.cache.set_value(cache_key, 1, expires_in_sec=lock_minutes * 60)
 
 
 def unlock_cashier_session(property: str, pin: str) -> dict:

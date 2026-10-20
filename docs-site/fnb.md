@@ -66,7 +66,11 @@ to cycle through open bills), add the dishes and press **Send round**.
 Only the new lines go to the kitchen.
 
 **Hold a bill** without sending it (**F5**) when the guests are still
-deciding. It stays in **Open bills → Not sent to kitchen**.
+deciding. It stays in **Open bills → Open, not sent to kitchen**, with how
+long it has waited. After 15 minutes (change it in **Settings → F&B**) the
+bill turns red on the till and a red dot shows on **Orders**, so a
+forgotten order gets sent or cancelled. End of Day lists it as *open, not
+sent to kitchen*.
 
 ## The table map
 
@@ -98,18 +102,105 @@ Hall, Patio…) or search a table.
   with nobody in house is refused - take it as a walk-in bill instead.
   The bill posts to the guest's folio when it's delivered; alcohol always
   goes to the guest's own folio, never to a company paying for the room.
+- **Room charges blocked at check-in.** If the desk turned off room
+  charges for a stay, the room shows *(no room charges)* in every room
+  list and cannot be picked, and the guest panel says so. Take payment at
+  the outlet. The server refuses the posting too, so no till can get round
+  it.
 - **Split** moves chosen items onto a new bill, with their kitchen status
   kept. The totals always add up to the original.
 - **Discounts**: **Add discount** takes an amount off the bill.
 - **Complimentary** (NC, no charge) needs the name of whoever authorised
   it, and takes an optional reference (the occasion, a complaint). The KOT and bill print "NC - NO CHARGE", and the bill
   closes at zero without touching a folio.
-- **Void a line** or **Cancel** a bill only with a reason. The line stays on
-  the bill, struck through, so the KOT-to-bill audit still adds up. If the
-  KOT was already sent, a **VOID** slip prints in the kitchen (see
-  [Settings](#settings)).
 - A dine-in or takeaway bill can't be closed unpaid, and serving it
-  doesn't settle it.
+  doesn't settle it. To close a bill nobody will pay, cancel it (below).
+
+## Cancel a bill, remove or void an item
+
+What you can undo depends on what the kitchen already has. Each line on
+the bill says **not sent**, **In kitchen** or **Prepared**.
+
+| The bill | What you do | Who |
+| --- | --- | --- |
+| Nothing sent to the kitchen | **Cancel** with a reason. The table is free at once. | The captain |
+| A line not sent yet | The bin icon on the line takes it off. No reason needed: nothing was cooked. | The captain |
+| Lines the kitchen has | **Void** the line, or **Cancel** the bill, with a void reason and a supervisor's approval. | A supervisor |
+| Paid, posted to a room or NC | Closed. Correct it on the folio, or refund. | Finance |
+
+**Nothing sent yet.** Open the bill, press **Cancel**, type why ("guests
+left before ordering") and press **Cancel bill**. The bill closes as
+cancelled, the reason and your name stay on it, and the table goes back to
+vacant.
+
+**The kitchen already has items.** Food the kitchen has started is never
+deleted. When you cancel the bill, or void a line with the cross icon:
+
+1. Pick a void reason (the same list the front desk uses for folio voids)
+   and add details if you like.
+2. A supervisor approves. A Hotel Admin or Finance user picks their name
+   and types their own cashier PIN on your till. A supervisor signed in on
+   the till approves with their PIN pad.
+3. The lines stay on the bill, struck through, with who voided them and
+   who approved. A **VOID** slip prints where the KOT printed (see
+   [Settings](#settings)), and the kitchen display keeps the ticket, marked
+   cancelled, until the cook acknowledges each line. Cooked food that is
+   voided counts as wastage in kitchen inventory.
+
+A wrong supervisor PIN is refused and counts towards that supervisor's PIN
+lock. Supervisors set their PIN the first time a money action asks for it.
+
+Every cancel and every void is in **Reports → Voids & Allowances** as
+*POS bill cancelled* or *POS void*, with who did it, who approved it and
+why, and on the F&B dashboard.
+
+## Orders list
+
+Press **Orders** at the top of the till. A panel slides over the till, so
+you never leave the POS.
+
+- **Today by default**, newest first, with each bill's table or room, who
+  it was for, amount, time, KOT number and state: **Not sent**, **In
+  kitchen**, **Paid**, **Posted to room**, **Complimentary**, **Closed** or
+  **Cancelled** (with its reason).
+- **Bills still open from earlier days** show at the top of today's list,
+  marked with the day they were opened.
+- **Search** by bill number, KOT number, table, room, customer name or
+  phone, or the in-house guest's name. Tap a state to show only those.
+- **Pick another day** with the date box.
+- **Tap a bill.** An open bill opens on the till. A closed one opens
+  read-only, with its lines, voids and who approved them, and **Reprint
+  bill**.
+
+The list only shows this outlet's bills.
+
+## Who the bill is for: the guest panel
+
+The line under the table name on the bill says who the bill is for. Tap it
+to open the **Guest** panel.
+
+**In-house guest** (room service, or a dine-in bill charged to a room):
+
+- name and VIP star, room number and stay dates
+- whether the stay can take room charges, as decided at check-in
+- the guest's notes (preferences, allergies) and the bill's allergy note
+- what they had at this outlet before, with dates and amounts
+
+**Walk-in or outside visitor:** type a phone number or a name.
+
+- Matches come from the same guest records the front desk uses. Each shows
+  the last digits of the phone, how many bills they have here, and whether
+  they are in house now. Tap one to attach it to the bill.
+- **Add a new customer** keeps only a name and a phone. A phone that is
+  already on file (typed with or without the country code or spaces)
+  reuses that guest instead of making a second one.
+- Once attached, the panel shows their notes and their past visits and
+  bills here. **Remove from bill** takes the customer off.
+
+What the till shows is only what service needs. Phone numbers show their
+last four digits (supervisors see the full number). ID documents, email,
+address, date of birth and nationality never show on the POS. A guest is
+visible only where the hotel's property access allows it.
 
 ## Run the kitchen display
 
@@ -253,17 +344,21 @@ print waiting on a dialog.
 - Set the thermal printer as the system's default printer, with 80 mm (or
   58 mm) paper and no margins.
 
+## Ingredients
+
+**F&B → Ingredients** is the store cupboard master: name, unit (kg, g, L…),
+category, cost per unit and whether it is active. Add ingredients here
+before you stock them or put them on a recipe.
+
 ## Kitchen inventory
 
-**F&B → Kitchen Inventory** keeps ingredients, a recipe for each dish and a
-stock ledger.
+**F&B → Kitchen Inventory** is stock at each outlet: on hand, par level,
+**Receive**, **Stock take**, **Wastage** and the **Ledger**.
 
 ![Kitchen inventory: each ingredient's stock on hand, par level and status, with Receive, Stock take and Wastage](/img/fnb/inventory.png)
 
-Use **Receive** for deliveries, **Stock take** for counts and **Wastage**
-for spoilage. Each ingredient shows its status (OK, low, out or negative)
-against its par level, and **Ledger** shows every movement. Recipes are
-set on the **Menu** screen (**Recipes**).
+Each row shows status (OK, low, out or negative) against its par level.
+Recipes are set on the **Menu** screen (**Recipes**).
 
 - Ingredients leave stock when the KOT is sent - when cooking starts - not
   when the bill is paid.
@@ -290,6 +385,7 @@ All under **Settings → F&B** (Hotel Admin and Finance can change them):
 | --- | --- | --- |
 | Auto-accept and print KOT | Off | Sending an order prints the KOT and starts the ticket. Outlets can override it. |
 | Print void slips in the kitchen | On | A line voided, or a bill cancelled, after its KOT was sent prints a VOID slip on the printer that had it. |
+| Flag a bill not sent to the kitchen after | 15 min | An open bill nobody sent turns red on the till and in the orders list. |
 | Show a reservation from | 60 min before | When a table reservation starts showing on the table map. |
 | Keep showing it until | 240 min after | When it stops showing. |
 | Kitchen printers | Not a toggle | Managed under **F&B → Printers**. |
@@ -330,5 +426,15 @@ the menu, or it belongs to another outlet.
 The POS and kitchen run on whitelisted endpoints in `kamra/pos.py` and
 `kamra/printing.py`; AI agents use the same calls as MCP tools
 (`pos_send_order`, `pos_send_round`, `pos_fire_kot`, `pos_kitchen_queue`,
-`pos_pay_order` and more). See the [MCP tool reference](/mcp-tools) and the
+`pos_pay_order`, `pos_orders`, `pos_cancel_order`, `pos_remove_item` and
+more). See the [MCP tool reference](/mcp-tools) and the
 [API reference](/api-reference#restaurant-pos-kitchen).
+
+The cancel and void rules live on the server, not in the till:
+`kamra.pos.cancel_order` and `void_item` refuse lines the kitchen has
+unless a supervisor approves (`supervisor` + `supervisor_pin`, checked
+against that user's cashier PIN), and always refuse an agent. An agent can
+cancel a bill with nothing sent (`pos_cancel_order`, logged) and remove an
+unsent line, but never voids food the kitchen has started. The orders list
+(`orders_list`) and guest panel (`guest_panel`, `find_customer`,
+`attach_customer`) are scoped to the outlet's property.

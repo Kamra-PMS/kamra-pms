@@ -167,6 +167,63 @@ class TestRemoteMCP(IntegrationTestCase):
 		self.assertIn("quote", names)
 		self.assertEqual(len(names), len(set(names)))
 
+	def _key_user(self, email, *, restrict=True, enabled=1):
+		"""A Front Desk user with an API key, limited to the test property."""
+		if not frappe.db.exists("User", email):
+			frappe.get_doc({
+				"doctype": "User", "email": email, "first_name": "MCP Agent",
+				"send_welcome_email": 0, "roles": [{"role": "Front Desk"}],
+			}).insert(ignore_permissions=True)
+		user = frappe.get_doc("User", email)
+		user.enabled = enabled
+		user.api_key = frappe.generate_hash(length=15)
+		secret = frappe.generate_hash(length=15)
+		user.api_secret = secret
+		user.save(ignore_permissions=True)
+		if restrict and not frappe.db.exists(
+				"User Permission", {"user": email, "allow": "Property"}):
+			frappe.get_doc({
+				"doctype": "User Permission", "user": email, "allow": "Property",
+				"for_value": self.property, "apply_to_all_doctypes": 1,
+			}).insert(ignore_permissions=True)
+		return f"token {user.api_key}:{secret}"
+
+	def _call(self, auth, method="tools/list", **headers):
+		return mcp_http.dispatch("mcp", FakeRequest(
+			"POST",
+			data=json.dumps({"jsonrpc": "2.0", "id": 1, "method": method}),
+			headers={"Authorization": auth, **headers},
+		))
+
+	def test_api_key_acts_as_its_user_for_its_one_property(self):
+		auth = self._key_user("mcp.agent@test.local")
+		resp = self._call(auth)
+		self.assertEqual(resp.status_code, 200)
+		names = {t["name"] for t in json.loads(resp.get_data(as_text=True))["result"]["tools"]}
+		# the key carries the user's role, nothing more
+		self.assertIn("create_booking", names)
+		self.assertNotIn("set_room_rate", names)
+		grant, refused = mcp_http._identity(FakeRequest(headers={"Authorization": auth}))
+		self.assertIsNone(refused)
+		self.assertEqual((grant.user, grant.property), ("mcp.agent@test.local", self.property))
+
+	def test_api_key_wrong_secret_or_disabled_user_is_401(self):
+		auth = self._key_user("mcp.agent2@test.local")
+		self.assertEqual(self._call(auth[:-1] + "x").status_code, 401)
+		auth = self._key_user("mcp.agent2@test.local", enabled=0)
+		self.assertEqual(self._call(auth).status_code, 401)
+
+	def test_api_key_cannot_reach_another_property(self):
+		auth = self._key_user("mcp.agent3@test.local")
+		resp = self._call(auth, **{"X-Kamra-Property": "Some Other Hotel"})
+		self.assertEqual(resp.status_code, 403)
+
+	def test_unrestricted_api_key_must_name_its_property(self):
+		auth = self._key_user("mcp.agent4@test.local", restrict=False)
+		self.assertEqual(self._call(auth).status_code, 403)
+		resp = self._call(auth, **{"X-Kamra-Property": self.property})
+		self.assertEqual(resp.status_code, 200)
+
 	def test_revoke_kills_access(self):
 		tokens = self._grant_tokens("Administrator")
 		n = mcp_oauth.revoke_grants("Administrator", self.property)
