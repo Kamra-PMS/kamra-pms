@@ -331,6 +331,7 @@ it.
 
 | Setting | Where | Default | What it does |
 | --- | --- | --- | --- |
+| Take money through cashier tills | Settings → Finance → Cashier controls | On | Staff open their till (with an opening float) before taking or giving back money, and close it with a cash count. The check-in, walk-in and check-out sheets offer **Open my till** in place. Off, for a small place with no cash drawer: payments and refunds are recorded without a till; paid-outs, drops, petty cash and exchange still need one. |
 | Require cashier PIN on money actions | Settings → Finance → Cashier controls | Off | Payments, invoices, allowances, voids, refunds and till actions ask for the cashier's PIN. AI agents are exempt; their actions are logged instead. |
 | Lock a PIN after | Settings → Finance → Cashier controls | 5 wrong tries | Locks the PIN after this many wrong entries. |
 | Lock for / stay unlocked for | Settings → Finance → Cashier controls | 15 min | How long a locked PIN stays locked, and how long money actions stay unlocked after a correct PIN. |

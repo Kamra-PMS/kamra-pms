@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from "react"
 import { call, getCurrentProperty } from "./api"
+import { useAuth } from "./auth"
 import { serverError } from "./resource"
 import { PinPad } from "../components/PinPad"
 
@@ -33,6 +34,9 @@ type CashierAuth = {
 const Ctx = createContext<CashierAuth | null>(null)
 
 export function CashierAuthProvider({ children }: { children: ReactNode }) {
+  // the PIN status belongs to a signed-in user: asking before login only
+  // earns a 403 from the server
+  const { status: authStatus } = useAuth()
   const [status, setStatus] = useState<PinStatus | null>(null)
   const [padOpen, setPadOpen] = useState(false)
   const [padMode, setPadMode] = useState<"unlock" | "enroll">("unlock")
@@ -55,8 +59,9 @@ export function CashierAuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   useEffect(() => {
-    void refresh()
-  }, [refresh])
+    if (authStatus === "authed") void refresh()
+    else setStatus(null)
+  }, [refresh, authStatus])
 
   const finishOk = useCallback(() => {
     setPadOpen(false)

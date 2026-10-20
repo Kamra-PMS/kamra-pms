@@ -30,6 +30,7 @@ import { petChargeBasis } from "../lib/pets"
 import { useCashierAuth } from "../lib/cashierAuth"
 import DepositPanel, { type DepositState } from "./DepositPanel"
 import CheckInDialog from "./CheckInDialog"
+import TillCard, { useTill } from "./TillCard"
 
 interface CompanyCredit {
   applies: boolean
@@ -836,6 +837,9 @@ export function BookingDialog(props: {
   }, [walkIn, amountTouched, grandTotal])
 
   const payAmount = Number(walk.pay_amount) || 0
+  // taking the walk-in's money needs the operator's till open
+  const { till, refresh: refreshTill } = useTill(undefined, walkIn)
+  const tillClosed = walkIn && payAmount > 0 && !!till && !till.open
   const walkInBlocked =
     blacklistBlocked ||
     busy ||
@@ -2286,9 +2290,18 @@ export function BookingDialog(props: {
               <div className="shrink-0 space-y-2 border-t border-zinc-200 bg-white px-6 py-4 md:px-7">
                 {walkIn ? (
                   <>
+                    {tillClosed && (
+                      <>
+                        <TillCard till={till} onOpened={() => void refreshTill()}
+                          purpose={t("to take the walk-in's payment")} />
+                        <p className="text-xs text-zinc-500">
+                          {t("Or set the amount to 0: the stay goes on the bill and the guest pays at check-out.")}
+                        </p>
+                      </>
+                    )}
                     <Button
                       className="w-full justify-center py-2.5 text-base"
-                      disabled={walkInBlocked}
+                      disabled={walkInBlocked || tillClosed}
                       onClick={() => submitWalkIn()}
                     >
                       {busy

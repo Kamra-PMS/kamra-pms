@@ -155,6 +155,9 @@ export function StepFlowFooter(props: {
   onContinue?: () => void
   continueLabel?: string
   continueDisabled?: boolean
+  /** Why Continue is disabled, shown next to it, so a greyed-out button
+   *  never leaves the desk guessing. */
+  disabledReason?: string
   busy?: boolean
 }) {
   const { t } = useT()
@@ -163,6 +166,11 @@ export function StepFlowFooter(props: {
       {props.error ? (
         <p role="alert" className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">
           {props.error}
+        </p>
+      ) : null}
+      {props.continueDisabled && props.disabledReason && !props.busy ? (
+        <p className="text-end text-xs text-zinc-500" data-testid="disabled-reason">
+          {props.disabledReason}
         </p>
       ) : null}
       <div className="flex flex-wrap items-center gap-2">
