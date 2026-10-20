@@ -33,7 +33,6 @@ night at 04:15 (site time). Don't put real guests or payments here.
 - The **guest booking page**: [demo.kamrapms.com/book](https://demo.kamrapms.com/book) - no login
 - The **housekeeping phone app**: `/hk` on a phone
 - The **restaurant POS + kitchen display** under the F&B app
-- A **QR menu**: F&B → Outlets, then `/menu/<outlet>` as a guest would
 
 There's also **nightly.kamrapms.com** running the develop branch - newest
 features, occasionally rough.

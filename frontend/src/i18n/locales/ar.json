@@ -1771,5 +1771,9 @@
   "AI only": "الذكاء الاصطناعي فقط",
   "Every action on the property, newest first - who did it and what changed.": "كل إجراء في المنشأة، الأحدث أولا - من قام به وما الذي تغير.",
   "Who": "من",
-  "What": "ماذا"
+  "What": "ماذا",
+  "Shared playground, not your hotel. Data is wiped every night.": "ملعب مشترك، ليس فندقك. تُمسح البيانات كل ليلة.",
+  "Room {room}": "غرفة {room}",
+  "No room yet": "لا غرفة بعد",
+  "Leaves {when}": "يغادر {when}"
 }

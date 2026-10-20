@@ -6,6 +6,7 @@ import {
   Plus,
   Search,
   Sun,
+  LogOut,
 } from "lucide-react"
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom"
 import UpdateNag from "./components/UpdateNag"
@@ -82,8 +83,8 @@ function SearchShortcut() {
       aria-label={t("Open search")}
       className="flex w-full items-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50/70 px-3 py-2 text-sm text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600"
     >
-      <Search className="size-4" aria-hidden />
-      <span>{t("Search reservations, guests, rooms…")}</span>
+      <Search className="size-4 shrink-0" aria-hidden />
+      <span className="truncate whitespace-nowrap">{t("Search reservations, guests, rooms…")}</span>
       <kbd className="ml-auto hidden rounded border border-zinc-200 bg-white px-1.5 py-0.5 text-[10px] font-semibold text-zinc-500 md:inline">
         {combo}
       </kbd>
@@ -304,7 +305,7 @@ export default function AppShell() {
     <div className={cn("flex min-h-screen flex-col", floor && "lg:h-screen")}>
       {demoMode && !kiosk && (
         <div className="bg-amber-500 px-4 py-1.5 text-center text-xs font-medium text-amber-950">
-          {t("Shared playground — not your hotel. Data is wiped every night.")}
+          {t("Shared playground, not your hotel. Data is wiped every night.")}
           {" "}
           <a
             href="https://kamrapms.com"
@@ -373,11 +374,11 @@ export default function AppShell() {
 
       <div className="flex min-w-0 flex-1 flex-col">
         {!kiosk && (
-        <header className="sticky top-0 z-40 flex items-center gap-2 border-b border-zinc-200 bg-white/90 px-4 py-2.5 backdrop-blur">
+        <header className="sticky top-0 z-40 flex min-w-0 items-center gap-2 border-b border-zinc-200 bg-white/90 px-4 py-2.5 backdrop-blur">
           <AppSwitcher apps={apps} current={currentApp ?? apps[0]} />
           {properties.length > 1 ? (
             <select
-              className="rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-sm font-medium focus:outline-2 focus:outline-brand-600"
+              className="min-w-0 max-w-[40vw] truncate rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-sm font-medium focus:outline-2 focus:outline-brand-600 lg:max-w-xs"
               value={property}
               onChange={(e) => switchProperty(e.target.value)}
               aria-label={t("Property")}
@@ -390,38 +391,50 @@ export default function AppShell() {
               ))}
             </select>
           ) : (
-            <span className="text-sm font-medium text-zinc-600">
+            <span className="min-w-0 truncate text-sm font-medium text-zinc-600">
               {properties[0]?.property_name ?? ""}
             </span>
           )}
-          <div className="flex flex-1 justify-center px-2">
-            <div className="hidden w-full max-w-md md:block">
+          <div className="flex min-w-0 flex-1 justify-center px-2">
+            <div className="hidden w-full max-w-md lg:block">
               <SearchShortcut />
             </div>
+            <button
+              type="button"
+              onClick={() => window.dispatchEvent(new Event("kamra:open-palette"))}
+              aria-label={t("Open search")}
+              title={t("Open search")}
+              className="ms-auto grid size-9 place-items-center rounded-lg text-zinc-500 hover:bg-zinc-100 lg:hidden"
+            >
+              <Search className="size-4" aria-hidden />
+            </button>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex shrink-0 items-center gap-2 sm:gap-3">
             <ThemeToggle />
-            <span className="hidden text-xs text-zinc-500 md:inline">
+            <span className="hidden text-xs text-zinc-500 xl:inline">
               {user}
             </span>
             <button
               onClick={signOut}
-              className="text-xs font-medium text-zinc-400 hover:text-zinc-700"
+              className="inline-flex items-center gap-1 text-xs font-medium text-zinc-400 hover:text-zinc-700"
+              aria-label={t("Sign out")}
+              title={t("Sign out")}
             >
-              {t("Sign out")}
+              <LogOut className="size-4 lg:hidden" aria-hidden />
+              <span className="hidden lg:inline">{t("Sign out")}</span>
             </button>
             {canBook && (
               <>
                 <Button
                   variant="outline"
-                  className="hidden sm:inline-flex"
+                  className="hidden md:inline-flex"
                   onClick={() => setBooking({ walkIn: true })}
                 >
                   {t("Walk-in")}
                 </Button>
-                <Button onClick={() => setBooking({})}>
+                <Button onClick={() => setBooking({})} aria-label={t("New booking")}>
                   <Plus className="size-4" aria-hidden />
-                  {t("New booking")}
+                  <span className="hidden sm:inline">{t("New booking")}</span>
                 </Button>
               </>
             )}

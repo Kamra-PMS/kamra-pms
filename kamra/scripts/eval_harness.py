@@ -2655,7 +2655,7 @@ def t45():
 	loc4 = property_locale("EVAL Bali Hotel")  # created by t44
 	assert loc4["currency_symbol"] == "Rp" and loc4["locale"] == "id-ID", loc4
 
-	# the dict showcase / qr_menu / precheckin_info embed as ui_locale
+	# the dict showcase / precheckin_info embed as ui_locale
 	pub = _public_locale("EVAL Bali Hotel")
 	assert (pub["currency_symbol"], pub["locale"]) == ("Rp", "id-ID"), pub
 	# the privacy notice's regulator rides along; never India's for Bali
@@ -5390,7 +5390,7 @@ def t153():
 
 
 
-# --- security deposits, day use, printable QR (t170-t179) -----------------
+# --- security deposits, day use (t170-t179) -------------------------------
 
 def _dep_room(number):
 	name = frappe.db.exists("Room", {"property": P, "room_number": number})
@@ -5657,35 +5657,8 @@ def t178():
 	assert tile["day_use"] and tile["due_out"] and tile["etd"] == "13:00", tile
 
 
-@check("QR sheet: table and in-room dining links match the guest QR menu routes")
+@check("Security deposit MCP tools are exposed; withhold stays desk-only")
 def t179():
-	from kamra import pos
-	o1 = frappe.get_doc({"doctype": "POS Outlet", "property": P,
-	                     "outlet_name": "Eval QR Cafe", "outlet_type": "Restaurant",
-	                     "tables": "[Terrace]\nT1:4\nT2"}).insert(ignore_permissions=True)
-	o2 = frappe.get_doc({"doctype": "POS Outlet", "property": P,
-	                     "outlet_name": "Eval QR IRD", "outlet_type": "Room Service",
-	                     }).insert(ignore_permissions=True)
-	room = _dep_room("E179")
-	out = pos.qr_targets(P)
-	cafe = next(o for o in out["outlets"] if o["outlet"] == o1.name)
-	assert [t["table"] for t in cafe["tables"]] == ["T1", "T2"], cafe
-	assert cafe["tables"][0]["area"] == "Terrace" and cafe["tables"][0]["seats"] == 4
-	from urllib.parse import quote as q
-	assert cafe["tables"][0]["url"].endswith(
-		f"/kamra/menu/{q(o1.name, safe='')}?table=T1"), cafe
-	assert out["room_service"] and out["room_service"]["outlet"] == o2.name, out["room_service"]
-	r = next(x for x in out["rooms"] if x["room"] == room)
-	assert r["url"].endswith(f"/kamra/menu/{q(o2.name, safe='')}?room={q(room, safe='')}"), r
-	assert all(o["outlet"] != o2.name for o in out["outlets"])  # IRD isn't a table outlet
-	frappe.set_user("hk@kamra.local")  # nosemgrep: frappe-setuser -- controlled user context switch for an RBAC check
-	try:
-		pos.qr_targets(P)
-		raise AssertionError("housekeeping read the QR sheet")
-	except frappe.PermissionError:
-		pass
-	finally:
-		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- controlled user context switch for an RBAC check
 	from kamra.mcp_tools import BY_NAME
 	for n in ("security_deposit_status", "collect_security_deposit",
 	          "waive_security_deposit"):

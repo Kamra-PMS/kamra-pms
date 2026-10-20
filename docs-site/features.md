@@ -91,7 +91,7 @@ the SLA report. A maintenance request can become a housekeeping task.
 
 A restaurant POS with a table map, several bills per table, room service,
 takeaway and delivery; a kitchen display by station; kitchen printers that
-route each dish to the printer that cooks it; QR ordering for guests;
+route each dish to the printer that cooks it;
 room charges that post to the folio; and kitchen stock that moves when the
 order is sent. Optional **auto-KOT**: send the order and the kitchen ticket
 prints without a separate accept step.

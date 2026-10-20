@@ -65,7 +65,7 @@ MODULES = [
      "Hotel Admin / System Manager. Events are signed with HMAC-SHA256 - see the Integrations page."),
     ("pos_interface", "External POS (room charges from a third-party POS)",
      "For a POS Integrator service user. ticket_id makes every posting idempotent."),
-    ("public_api", "Public (no auth - booking page, QR menu)",
+    ("public_api", "Public (no auth - booking page, check-in)",
      "These are allow_guest endpoints: no token needed, rate-limited."),
 ]
 

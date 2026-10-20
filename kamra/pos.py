@@ -1,10 +1,10 @@
 """Restaurant POS - digital menu, captain ordering, KOT to the kitchen,
 and room posting.
 
-Flow: a captain (or a guest via QR) places an order -> the captain confirms
-it -> firing the KOT sends it to the kitchen display -> the kitchen marks
-items prepared -> delivering the order posts it to the guest's room folio
-(handled by the POS Order controller) or it's settled at the outlet.
+Flow: a captain places an order -> confirm / fire KOT sends it to the
+kitchen display -> the kitchen marks items prepared -> delivering the
+order posts it to the guest's room folio (handled by the POS Order
+controller) or it's settled at the outlet.
 
 Auto KOT is an F&B setting (`pos_auto_kot`) that an outlet can override
 with its `kot_mode`. When it's on, firing also accepts the ticket, so the
@@ -374,60 +374,6 @@ def _parse_tables(raw: str) -> list[tuple[str, int | None, str | None]]:
 		tables.append((name.strip(),
 		               int(seats) if seats.strip().isdigit() else None, area))
 	return tables
-
-
-def menu_url(outlet: str, table: str | None = None,
-             room: str | None = None) -> str:
-	"""The guest QR-menu address (the SPA's /menu/:outlet, which reads
-	?table= / ?room= and posts through public_api.qr_order)."""
-	from urllib.parse import quote, urlencode
-	q = {"table": table} if table else {"room": room} if room else {}
-	url = f"{frappe.utils.get_url()}/kamra/menu/{quote(outlet, safe='')}"
-	return f"{url}?{urlencode(q, quote_via=quote)}" if q else url
-
-
-@frappe.whitelist()
-@require_roles("Front Desk", "Finance", "Hotel Admin", "Kamra Agent")
-def qr_targets(property: str):
-	"""Everything a printable QR sheet needs: each restaurant outlet's tables
-	with their QR-ordering link, and each room with the in-room dining link
-	(the Room Service outlet's menu, tagged with the room). The codes are
-	drawn in the browser - no QR web service sees these links."""
-	from kamra.crs import assert_property_access
-	assert_property_access(property)
-	prop_name = frappe.db.get_value("Property", property, "property_name")
-	outlets = frappe.get_all(
-		"POS Outlet", filters={"property": property, "disabled": 0},
-		fields=["name", "outlet_name", "outlet_type", "tables"],
-		order_by="outlet_name")
-	out_tables = []
-	for o in outlets:
-		if o.outlet_type == "Room Service":
-			continue
-		out_tables.append({
-			"outlet": o.name, "outlet_name": o.outlet_name,
-			"outlet_type": o.outlet_type, "menu_url": menu_url(o.name),
-			"tables": [{"table": t, "seats": seats, "area": area,
-			            "url": menu_url(o.name, table=t)}
-			           for t, seats, area in _parse_tables(o.tables)],
-		})
-	room_service = next((o for o in outlets if o.outlet_type == "Room Service"),
-	                    None)
-	rooms = frappe.get_all(
-		"Room", filters={"property": property},
-		fields=["name", "room_number", "room_type", "floor"],
-		order_by="room_number asc")
-	return {
-		"property_name": prop_name or property,
-		"outlets": out_tables,
-		"room_service": {"outlet": room_service.name,
-		                 "outlet_name": room_service.outlet_name}
-		if room_service else None,
-		"rooms": [{"room": r.name, "room_number": r.room_number,
-		           "room_type": r.room_type, "floor": r.floor,
-		           "url": menu_url(room_service.name, room=r.name)
-		           if room_service else None} for r in rooms],
-	}
 
 
 @frappe.whitelist()
