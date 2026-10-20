@@ -63,6 +63,9 @@ from **Task deadlines**.
 
 The board reloads every 30 seconds. Press **Refresh** to reload now.
 
+For one room's whole story (who stayed, who cleaned it and when, tickets,
+the next weeks) and per-room numbers, open [Rooms](/rooms).
+
 ## Change a room's status
 
 1. On the Room Board, click the room.

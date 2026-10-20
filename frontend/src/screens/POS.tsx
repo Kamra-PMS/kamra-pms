@@ -3,8 +3,10 @@ import {
   Plus, Minus, Trash2, Send, UtensilsCrossed, Search,
   Maximize2, Minimize2, Wallet, Printer, Receipt, XCircle, Ban,
   Scissors, Users, PauseCircle, Tag, Gift, Clock, Menu, LogOut, Focus,
-  Keyboard, LayoutGrid, BedDouble,
+  Keyboard, LayoutGrid, BedDouble, ListOrdered, UserRound,
 } from "lucide-react"
+import PosSidePanel from "./pos/PosSidePanel"
+import VoidApproval, { type VoidArgs } from "./pos/VoidApproval"
 import { useNavigate } from "react-router-dom"
 import { call, getCurrentProperty } from "../lib/api"
 import { subscribeRealtime } from "../lib/realtime"
@@ -49,6 +51,10 @@ interface OpenOrder {
   table_no: string | null
   creation: string
   nc?: number
+  /** minutes since the bill was opened */
+  age_min?: number
+  /** nothing sent to the kitchen for longer than the F&B setting allows */
+  stale?: 0 | 1
 }
 interface TableBill {
   order: string
@@ -136,12 +142,24 @@ interface Detail {
   subtotal: number
   order_total: number
   items: OrderItem[]
+  guest?: string | null
+  reservation?: string | null
+  allergy_note?: string | null
+  /** live lines the kitchen already has: 0 = the captain cancels alone */
+  kitchen_lines?: number
+  /** the signed-in user may approve voids of food the kitchen has */
+  can_approve?: 0 | 1
 }
 
 type OrderType = "Dine In" | "Room Service" | "Takeaway" | "Delivery"
 const ORDER_TYPES: OrderType[] = ["Dine In", "Room Service", "Takeaway", "Delivery"]
 /** A room with a checked-in guest - the only kind that can take a room charge. */
-interface InHouseRoom { room: string; room_number: string; guest_name: string | null; reservation: string }
+interface InHouseRoom {
+  room: string; room_number: string; guest_name: string | null; reservation: string
+  /** the check-in's decision; a blocked room cannot take a room charge */
+  room_charges_allowed?: 0 | 1
+  check_out_date?: string
+}
 
 const TILE: Record<TableTile["state"], string> = {
   vacant: "border-zinc-200 bg-white text-zinc-600 hover:border-brand-400 hover:text-brand-700",
@@ -209,9 +227,12 @@ export default function POS() {
   const [settling, setSettling] = useState(false)
   const [sheetNc, setSheetNc] = useState(false) // NC tender open inside the settle sheet
   const [voiding, setVoiding] = useState<OrderItem | null>(null)
-  const [voidReason, setVoidReason] = useState("")
   const [cancelling, setCancelling] = useState(false)
-  const [cancelReason, setCancelReason] = useState("")
+  // the side panel (orders list / who the bill is for) and its live refresh
+  const [panel, setPanel] = useState<"orders" | "guest" | null>(null)
+  const [panelKey, setPanelKey] = useState(0)
+  // a customer chosen for a bill not created yet
+  const [draftGuest, setDraftGuest] = useState<{ guest: string; full_name: string } | null>(null)
   const [chooser, setChooser] = useState<string | null>(null) // table with several bills
   const [splitMode, setSplitMode] = useState(false)
   const [splitSel, setSplitSel] = useState<Set<string>>(new Set())
@@ -278,6 +299,7 @@ export default function POS() {
     call<{ tables: TableTile[] }>("kamra.pos.table_map", { outlet })
       .then((d) => setTables(d.tables)).catch(() => {})
     call<RecentOrder[]>("kamra.pos.recent_orders", { outlet }).then(setRecent).catch(() => {})
+    setPanelKey((k) => k + 1)
   }, [outlet])
   useEffect(() => {
     loadOpen()
@@ -292,7 +314,7 @@ export default function POS() {
 
   function resetPanel() {
     setCart([]); setDiscount(""); setDiscOpen(false); setSettling(false); setSheetNc(false)
-    setVoiding(null); setVoidReason(""); setCancelling(false); setCancelReason("")
+    setVoiding(null); setCancelling(false)
     setSplitMode(false); setSplitSel(new Set()); setChooser(null)
     setNcOpen(false); setNcBy("Captain"); setNcNote("")
     setResTile(null); setReserveOpen(false); setTablesOpen(false)
@@ -301,6 +323,7 @@ export default function POS() {
     setSelected(null); setDetail(null); setRoom(""); setPostRoom(""); resetPanel()
     setTable(atTable || ""); setCustomTable(false)
     setGuests(""); setCustName(""); setCustPhone(""); setCustAddr("")
+    setDraftGuest(null)
     if (atTable) setOrderType("Dine In")
     setMobilePane("menu") // a fresh bill starts at the menu on a phone
   }
@@ -421,6 +444,8 @@ export default function POS() {
       customer_name: orderType === "Takeaway" || orderType === "Delivery" ? custName || null : null,
       customer_phone: orderType === "Takeaway" || orderType === "Delivery" ? custPhone || null : null,
       delivery_address: orderType === "Delivery" ? custAddr || null : null,
+      // a walk-in customer picked in the guest panel (a room bill is its guest's)
+      guest: draftGuest && !(orderType === "Room Service" || (orderType === "Dine In" && room)) ? draftGuest.guest : null,
       items: cart.map((l) => ({ menu_item: l.menu_item, qty: l.qty, instructions: l.instructions })),
     }
   }
@@ -565,18 +590,34 @@ export default function POS() {
       await reloadDetail()
     })
   }
-  async function confirmVoid() {
-    if (!selected || !voiding || !voidReason.trim()) return
+  /** A supervisor approving food the kitchen has: re-confirm who they are
+   *  with their own PIN pad (skipped where the property has no PINs). */
+  async function selfApproval(kitchen: number) {
+    if (kitchen > 0 && detail?.can_approve) await ensureUnlocked()
+  }
+  async function confirmVoid(a: VoidArgs) {
+    if (!selected || !voiding) return
+    const sent = voiding.kot_status !== "New" ? 1 : 0
     await act(async () => {
-      await call("kamra.pos.void_item", { order: selected, item_row: voiding.row, reason: voidReason })
-      setVoiding(null); setVoidReason("")
+      await selfApproval(sent)
+      await call("kamra.pos.void_item", { order: selected, item_row: voiding.row, ...a })
+      setVoiding(null)
       await reloadDetail()
     })
   }
-  async function confirmCancel() {
-    if (!selected || !cancelReason.trim()) return
+  /** A line nobody sent to the kitchen comes off: no reason, nothing cooked. */
+  async function removeLine(row: string) {
+    if (!selected) return
     await act(async () => {
-      await call("kamra.pos.cancel_order", { order: selected, reason: cancelReason })
+      await call("kamra.pos.remove_item", { order: selected, item_row: row })
+      await reloadDetail()
+    })
+  }
+  async function confirmCancel(a: VoidArgs) {
+    if (!selected) return
+    await act(async () => {
+      await selfApproval(detail?.kitchen_lines ?? 0)
+      await call("kamra.pos.cancel_order", { order: selected, ...a })
       newOrder()
     })
   }
@@ -871,27 +912,38 @@ export default function POS() {
 
             {(runningBills.length > 0 || kitchenBills.length > 0) && (
               <div className="shrink-0 rounded-xl border border-zinc-200 bg-white p-3">
-                <h3 className="mb-2 text-xs font-bold uppercase tracking-wide text-zinc-500">Open bills</h3>
+                <h3 className="mb-2 text-xs font-bold uppercase tracking-wide text-zinc-500">{t("Open bills")}</h3>
                 {runningBills.length > 0 && (
                   <div className="mb-2">
-                    <p className="mb-1 text-[10px] font-semibold uppercase text-amber-700">Not sent to kitchen</p>
+                    <p className="mb-1 text-[10px] font-semibold uppercase text-amber-700">{t("Open, not sent to kitchen")}</p>
                     <ul className="space-y-1">
                       {runningBills.map((o) => (
                         <li key={o.name}>
                           <button onClick={() => openTab(o.name)}
-                            className={"flex w-full items-center justify-between rounded-lg border border-amber-200 bg-amber-50 px-2 py-1.5 text-xs " +
-                              (selected === o.name ? "ring-2 ring-brand-600" : "")}>
-                            <span className="font-semibold text-amber-900">{o.label}</span>
-                            <span className="tabular-nums text-amber-800">{cur()}{inr(o.order_total)}</span>
+                            className={cn("flex w-full items-center justify-between gap-2 rounded-lg border px-2 py-1.5 text-xs",
+                              o.stale ? "border-rose-300 bg-rose-50" : "border-amber-200 bg-amber-50",
+                              selected === o.name && "ring-2 ring-brand-600")}>
+                            <span className={cn("min-w-0 truncate font-semibold", o.stale ? "text-rose-900" : "text-amber-900")}>{o.label}</span>
+                            <span className="flex shrink-0 items-center gap-1.5">
+                              <span className={cn("rounded-full px-1.5 py-0.5 text-[10px] font-semibold",
+                                o.stale ? "bg-rose-600 text-white" : "bg-amber-200 text-amber-900")}
+                                title={t("Not sent to the kitchen for {mins} min", { mins: o.age_min ?? 0 })}>
+                                {ago(o.creation)}
+                              </span>
+                              <span className="tabular-nums text-amber-800">{cur()}{inr(o.order_total)}</span>
+                            </span>
                           </button>
                         </li>
                       ))}
                     </ul>
+                    {runningBills.some((o) => o.stale) && (
+                      <p className="mt-1 text-[11px] text-rose-700">{t("Red bills were never sent. Send them, or cancel with a reason.")}</p>
+                    )}
                   </div>
                 )}
                 {kitchenBills.length > 0 && (
                   <div>
-                    <p className="mb-1 text-[10px] font-semibold uppercase text-sky-700">In kitchen / not settled</p>
+                    <p className="mb-1 text-[10px] font-semibold uppercase text-sky-700">{t("In kitchen / not settled")}</p>
                     <ul className="space-y-1">
                       {kitchenBills.map((o) => (
                         <li key={o.name}>
@@ -912,13 +964,19 @@ export default function POS() {
             )}
 
             <div className="shrink-0 rounded-xl border border-zinc-200 bg-white p-3">
-              <h3 className="mb-2 text-xs font-bold uppercase tracking-wide text-zinc-500">Recent</h3>
+              <div className="mb-2 flex items-center justify-between">
+                <h3 className="text-xs font-bold uppercase tracking-wide text-zinc-500">{t("Recent")}</h3>
+                <button onClick={() => { setTablesOpen(false); setPanel("orders") }}
+                  className="text-[11px] font-semibold text-brand-700 hover:underline">
+                  {t("All orders")}
+                </button>
+              </div>
               <ul className="space-y-1">
                 {recent.map((r) => (
                   <li key={r.name}>
-                    <button disabled={!r.open} onClick={() => openTab(r.name)}
+                    <button onClick={() => r.open ? openTab(r.name) : (setTablesOpen(false), setPanel("orders"))}
                       className={"flex w-full items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-left text-xs " +
-                        (r.open ? "hover:bg-brand-50" : "cursor-default opacity-60")}>
+                        (r.open ? "hover:bg-brand-50" : "opacity-60 hover:bg-zinc-50")}>
                       <span className="min-w-0">
                         <span className="font-medium text-zinc-700">{r.label}</span>
                         <span className="ml-1 text-zinc-400">· {r.order_type}</span>
@@ -934,7 +992,7 @@ export default function POS() {
                     </button>
                   </li>
                 ))}
-                {recent.length === 0 && <p className="py-2 text-center text-xs text-zinc-400">No orders yet today.</p>}
+                {recent.length === 0 && <p className="py-2 text-center text-xs text-zinc-400">{t("No orders yet today.")}</p>}
               </ul>
             </div>
     </>
@@ -966,6 +1024,13 @@ export default function POS() {
           ))}
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <button onClick={() => setPanel("orders")}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-2.5 py-2 text-xs font-semibold text-zinc-600 hover:bg-zinc-50"
+            title={t("Today's and past orders")}>
+            <ListOrdered className="size-4" />
+            <span className="hidden sm:inline">{t("Orders")}</span>
+            {open.some((o) => o.stale) && <span className="size-2 rounded-full bg-rose-600" aria-label={t("A bill was never sent")} />}
+          </button>
           <button onClick={() => setTablesOpen(true)}
             className="hidden items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-2.5 py-2 text-xs font-semibold text-zinc-600 hover:bg-zinc-50 md:inline-flex lg:hidden">
             <LayoutGrid className="size-4" />{t("Tables")}
@@ -1194,6 +1259,29 @@ export default function POS() {
                 )}
               </div>
             )}
+            {/* who the bill is for: opens the guest panel without leaving the till */}
+            {(() => {
+              const roomId = selected && detail ? detail.room : (orderType === "Room Service" || orderType === "Dine In") ? room || null : null
+              const stay = roomId ? rooms.find((r) => r.room === roomId) : undefined
+              const name = selected && detail
+                ? (detail.room ? stay?.guest_name ?? null : detail.guest ? detail.customer_name : null)
+                : roomId ? stay?.guest_name ?? null : draftGuest?.full_name ?? null
+              const blocked = stay && Number(stay.room_charges_allowed ?? 1) === 0
+              return (
+                <button onClick={() => setPanel("guest")}
+                  className={cn("mb-1 flex w-full items-center gap-2 rounded-lg border px-2.5 py-1.5 text-start text-xs transition",
+                    name ? "border-zinc-200 bg-zinc-50 hover:border-brand-400" : "border-dashed border-zinc-300 text-zinc-500 hover:border-brand-500 hover:text-brand-700")}>
+                  {roomId ? <BedDouble className="size-3.5 shrink-0 text-violet-600" /> : <UserRound className="size-3.5 shrink-0" />}
+                  <span className="min-w-0 flex-1 truncate">
+                    {name
+                      ? <><span className="font-semibold text-zinc-800">{name}</span>{stay ? <span className="text-zinc-500"> · {t("Room {n}", { n: stay.room_number })}</span> : null}</>
+                      : roomId ? t("In-house guest") : t("Add customer (phone or name)")}
+                  </span>
+                  {blocked && <span className="shrink-0 rounded-full bg-rose-100 px-1.5 py-0.5 text-[10px] font-semibold text-rose-700">{t("No room charges")}</span>}
+                  {name && !blocked && <span className="shrink-0 text-[10px] font-semibold text-brand-700">{t("Details")}</span>}
+                </button>
+              )
+            })()}
           </div>
 
           {/* zone 2: line items — the only scroll area in the bill */}
@@ -1229,31 +1317,41 @@ export default function POS() {
                         )}
                         <span>
                           {Math.round(it.qty)}× {it.item_name}
-                          {!it.voided && it.kot_status !== "New" && <span className="ml-1 text-[10px] text-zinc-400">{it.kot_status}</span>}
+                          {!it.voided && (it.kot_status === "New"
+                            ? <span className="ms-1 rounded bg-amber-100 px-1 text-[10px] font-medium text-amber-800 no-underline">{t("not sent")}</span>
+                            : <span className="ms-1 text-[10px] text-zinc-400">{it.kot_status === "Prepared" ? t("Prepared") : t("In kitchen")}</span>)}
                         </span>
                       </span>
                       <span className="flex items-center gap-1">
                         <span className="tabular-nums">{cur()}{inr(it.amount)}</span>
-                        {!splitMode && !it.voided && detail.status !== "Delivered" && (
-                          <button title="Void line" onClick={() => { setVoiding(it); setVoidReason("") }}
-                            className="-my-1 rounded-md p-1.5 text-zinc-300 transition hover:bg-rose-50 hover:text-rose-500">
-                            <XCircle className="size-4" />
-                          </button>
+                        {!splitMode && !it.voided && detail.status !== "Delivered" && detail.status !== "Cancelled" && (
+                          it.kot_status === "New" ? (
+                            /* never sent: comes off freely, nothing was cooked */
+                            <button title={t("Remove (not sent to the kitchen)")} aria-label={t("Remove (not sent to the kitchen)")}
+                              disabled={busy} onClick={() => removeLine(it.row)}
+                              className="-my-1 grid size-9 place-items-center rounded-md text-zinc-400 transition hover:bg-rose-50 hover:text-rose-500">
+                              <Trash2 className="size-4" />
+                            </button>
+                          ) : (
+                            <button title={t("Void (the kitchen has it)")} aria-label={t("Void (the kitchen has it)")}
+                              onClick={() => { setVoiding(it); setCancelling(false) }}
+                              className="-my-1 grid size-9 place-items-center rounded-md text-zinc-300 transition hover:bg-rose-50 hover:text-rose-500">
+                              <XCircle className="size-4" />
+                            </button>
+                          )
                         )}
                       </span>
                     </li>
                   ))}
                 </ul>
                 {voiding && (
-                  <div className="mb-2 rounded-lg border border-rose-200 bg-rose-50 p-2">
-                    <p className="mb-1 text-xs font-medium text-rose-700">Void {voiding.item_name} — reason required</p>
-                    <div className="flex gap-1">
-                      <input autoFocus className={inputCls + " !py-1 text-xs"} placeholder="e.g. spilled, wrong item"
-                        value={voidReason} onChange={(e) => setVoidReason(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && confirmVoid()} />
-                      <Button variant="outline" className="!px-2 !py-1 text-xs font-semibold text-rose-600" disabled={busy || !voidReason.trim()} onClick={confirmVoid}>Void</Button>
-                      <Button variant="ghost" className="!px-2 !py-1 text-xs" onClick={() => setVoiding(null)}>✕</Button>
-                    </div>
+                  <div className="mb-2">
+                    <VoidApproval outlet={outlet} busy={busy}
+                      title={t("Void {item}", { item: voiding.item_name })}
+                      kitchenCount={voiding.kot_status !== "New" ? 1 : 0}
+                      canApprove={!!detail.can_approve}
+                      confirmLabel={t("Void item")}
+                      onConfirm={confirmVoid} onClose={() => setVoiding(null)} />
                   </div>
                 )}
                 {splitMode && (
@@ -1349,17 +1447,13 @@ export default function POS() {
               </div>
             )}
 
-            {cancelling && (
-              <div className="rounded-lg border border-rose-200 bg-rose-50 p-2">
-                <p className="mb-1 text-xs font-medium text-rose-700">Cancel this order - reason required</p>
-                <div className="flex gap-1">
-                  <input autoFocus className={inputCls + " !py-1 text-xs"} placeholder="e.g. guest left"
-                    value={cancelReason} onChange={(e) => setCancelReason(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && confirmCancel()} />
-                  <Button variant="outline" className="!px-2 !py-1 text-xs font-semibold text-rose-600" disabled={busy || !cancelReason.trim()} onClick={confirmCancel}>Cancel order</Button>
-                  <Button variant="ghost" className="!px-2 !py-1 text-xs" onClick={() => setCancelling(false)}>✕</Button>
-                </div>
-              </div>
+            {cancelling && selected && detail && (
+              <VoidApproval outlet={outlet} busy={busy}
+                title={t("Cancel this bill")}
+                kitchenCount={detail.kitchen_lines ?? 0}
+                canApprove={!!detail.can_approve}
+                confirmLabel={t("Cancel bill")}
+                onConfirm={confirmCancel} onClose={() => setCancelling(false)} />
             )}
 
             {/* actions — every option visible, nothing under a popover or scroll */}
@@ -1387,7 +1481,8 @@ export default function POS() {
                 <Printer className="size-4" />{t("Reprint KOT")}
               </Button>
               <Button variant="outline" className="h-11 flex-col gap-0.5 !px-1 text-[11px] font-semibold leading-none text-rose-600"
-                disabled={busy || !selected} onClick={() => { setCancelling(true); setCancelReason("") }}>
+                disabled={busy || !selected || !detail || detail.status === "Delivered" || detail.status === "Cancelled"}
+                onClick={() => { setCancelling(true); setVoiding(null); setSettling(false) }}>
                 <Ban className="size-4" />{t("Cancel")}
               </Button>
             </div>
@@ -1446,9 +1541,15 @@ export default function POS() {
                       ))}
                     </div>
                     {detail.room ? (
-                      <Button variant="outline" className="h-11 w-full" disabled={busy} onClick={settleDeliver}>
-                        <BedDouble className="size-4" />Deliver & post to Room {detail.room.split("-").pop()}
-                      </Button>
+                      Number(rooms.find((r) => r.room === detail.room)?.room_charges_allowed ?? 1) === 0 ? (
+                        <p className="rounded-lg bg-rose-50 px-2 py-1.5 text-xs text-rose-800">
+                          {t("Room {n} cannot take room charges (set at check-in). Take payment here.", { n: detail.room.split("-").pop() || "" })}
+                        </p>
+                      ) : (
+                        <Button variant="outline" className="h-11 w-full" disabled={busy} onClick={settleDeliver}>
+                          <BedDouble className="size-4" />{t("Deliver and post to Room {n}", { n: detail.room.split("-").pop() || "" })}
+                        </Button>
+                      )
                     ) : detail.order_type === "Dine In" && rooms.length > 0 && (
                       <div className="flex gap-1.5">
                         <RoomPicker rooms={rooms} value={postRoom} onChange={setPostRoom} onOpen={loadRooms}
@@ -1511,6 +1612,20 @@ export default function POS() {
           </div>
         </div>
       )}
+
+      {/* orders list and who the bill is for, over the till */}
+      {panel && outlet && (
+        <PosSidePanel outlet={outlet} tab={panel} onTab={setPanel}
+          onClose={() => setPanel(null)} refreshKey={panelKey}
+          order={selected}
+          draft={{
+            room: !selected && (orderType === "Room Service" || orderType === "Dine In") ? room || null : null,
+            guest: !selected ? draftGuest?.guest ?? null : null,
+          }}
+          onDraftGuest={(g) => setDraftGuest(g)}
+          onOpenBill={(n) => { setPanel(null); void openTab(n) }}
+          onGuestChanged={() => { void reloadDetail().catch(() => {}); loadOpen() }} />
+      )}
     </div>
   )
 }
@@ -1520,15 +1635,20 @@ function RoomPicker({ rooms, value, onChange, onOpen, placeholder }: {
   rooms: InHouseRoom[]; value: string; onChange: (room: string) => void
   onOpen: () => void; placeholder: string
 }) {
+  const { t } = useT()
   return (
     <select className={inputCls} value={value} onFocus={onOpen}
       onChange={(e) => onChange(e.target.value)}>
       <option value="">{placeholder}</option>
-      {rooms.map((r) => (
-        <option key={r.room} value={r.room}>
-          {r.room_number}{r.guest_name ? ` · ${r.guest_name}` : ""}
-        </option>
-      ))}
+      {rooms.map((r) => {
+        // the check-in blocked charges to this room: shown, not chargeable
+        const blocked = Number(r.room_charges_allowed ?? 1) === 0
+        return (
+          <option key={r.room} value={r.room} disabled={blocked}>
+            {r.room_number}{r.guest_name ? ` · ${r.guest_name}` : ""}{blocked ? ` (${t("no room charges")})` : ""}
+          </option>
+        )
+      })}
     </select>
   )
 }
@@ -1546,11 +1666,13 @@ function RunningStrip({
     <div className="flex gap-2 overflow-x-auto pb-1">
       {open.map((o) => {
         const tone = !o.kot_fired
-          ? "border-amber-400 bg-amber-50 text-amber-950"
+          ? (o.stale ? "border-rose-500 bg-rose-50 text-rose-950" : "border-amber-400 bg-amber-50 text-amber-950")
           : o.pending > 0
             ? "border-sky-400 bg-sky-50 text-sky-950"
             : "border-emerald-400 bg-emerald-50 text-emerald-950"
-        const tag = !o.kot_fired ? t("Not fired") : o.pending > 0 ? t("In kitchen") : t("Ready / unpaid")
+        // an unsent bill shows how long it has waited, so it is not forgotten
+        const tag = !o.kot_fired ? `${t("Not sent")} · ${ago(o.creation)}`
+          : o.pending > 0 ? t("In kitchen") : t("Ready / unpaid")
         return (
           <button key={o.name} onClick={() => onOpen(o.name)}
             className={"flex min-w-[9.5rem] shrink-0 flex-col rounded-xl border-2 px-3 py-2 text-left " + tone +
