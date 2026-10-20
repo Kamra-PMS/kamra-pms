@@ -24,6 +24,13 @@ POS_ROLES = ("Front Desk", "Finance", "Kamra Agent")
 # Menus written before coursing existed have no course; they behave as mains.
 DEFAULT_COURSE = "Main"
 COURSE_ORDER = ("Starter", "Main", "Dessert", "Drink")
+
+
+def _course_order(property: str | None = None) -> list[str]:
+	"""Serving order for held courses - property list when set, else default."""
+	from kamra.settings import list_setting
+	custom = list_setting(property, "menu_courses") if property else []
+	return custom or list(COURSE_ORDER)
 # a bill still being served: not paid, posted, made NC or cancelled
 OPEN_STATUSES = ("Placed", "Confirmed", "Preparing")
 
@@ -924,7 +931,9 @@ def kitchen_queue(property: str, outlet: str | None = None,
 		o["items"] = items
 		# courses still held back, in the order they would be served
 		held = {i["course"] for i in items if i["state"] == "held"}
-		o["held_courses"] = [c for c in COURSE_ORDER if c in held]
+		serve = _course_order(property)
+		o["held_courses"] = [c for c in serve if c in held] + \
+			sorted(c for c in held if c not in serve)
 		out.append(o)
 	return out
 

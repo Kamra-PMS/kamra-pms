@@ -51,9 +51,9 @@ interface KotOrder {
   items: KotItem[]
 }
 
-// Mirrors pos.py: the order food is served in, and the stations a KOT prints to.
-const COURSE_ORDER = ["Starter", "Main", "Dessert", "Drink"]
-const STATIONS = ["Kitchen", "Tandoor", "Grill", "Fryer", "Bar"]
+// Defaults; Settings → F&B → Menu master lists overrides per property.
+const DEFAULT_COURSES = ["Starter", "Main", "Dessert", "Drink"]
+const DEFAULT_STATIONS = ["Kitchen", "Tandoor", "Grill", "Fryer", "Bar"]
 // The kitchen's own thresholds, in minutes: fresh, working, needs eyes.
 const AMBER_AT = 5
 const LATE_AT = 10
@@ -316,12 +316,13 @@ function Line({ it, order, busy, onAction, big }: {
    tapping another card swaps this panel rather than needing a close first.
    The board reflows into the free half (see the grid below) so no card ends
    up hidden underneath. Targets stay large - gloved, wet, greasy hands. */
-function TicketDetail({ order, onClose, onAction, busy, now }: {
+function TicketDetail({ order, onClose, onAction, busy, now, stations }: {
   order: KotOrder
   onClose: () => void
   onAction: (fn: string, params: Record<string, unknown>) => void
   busy: string | null
   now: number
+  stations: string[]
 }) {
   const { t } = useT()
   const secs = firedAgeSecs(order, now)
@@ -412,7 +413,7 @@ function TicketDetail({ order, onClose, onAction, busy, now }: {
           </div>
         ))}
 
-        {groupBy(live, (i) => i.prep_station ?? "Kitchen", STATIONS).map(([station, items]) => (
+        {groupBy(live, (i) => i.prep_station ?? "Kitchen", stations).map(([station, items]) => (
           <div key={station}>
             <StationHead station={station} count={items.length} />
             <ul className="divide-y divide-zinc-100">
@@ -493,6 +494,8 @@ export default function Kitchen() {
   const [station, setStation] = useState("")
   const [outlet, setOutlet] = useState("")
   const [outlets, setOutlets] = useState<{ name: string; outlet_name: string }[]>([])
+  const [stations, setStations] = useState<string[]>(DEFAULT_STATIONS)
+  const [courses, setCourses] = useState<string[]>(DEFAULT_COURSES)
   const [orders, setOrders] = useState<KotOrder[]>([])
   const [busy, setBusy] = useState<string | null>(null)
   const [openOrder, setOpenOrder] = useState<string | null>(null)
@@ -509,6 +512,12 @@ export default function Kitchen() {
   useEffect(() => {
     call<{ name: string; outlet_name: string }[]>("kamra.pos.outlets", { property: getCurrentProperty() })
       .then(setOutlets).catch(() => {})
+    call<{ prep_stations: string[]; courses: string[] }>("kamra.settings.menu_masters", {
+      property: getCurrentProperty(),
+    }).then((m) => {
+      if (m.prep_stations?.length) setStations(m.prep_stations)
+      if (m.courses?.length) setCourses(m.courses)
+    }).catch(() => {})
   }, [])
 
   // Print station: this screen prints a kitchen printer's tickets on the
@@ -633,7 +642,7 @@ export default function Kitchen() {
             </label>
           )}
           <div className="flex flex-wrap rounded-lg border border-zinc-200 bg-white p-0.5 text-sm">
-            {["", ...STATIONS].map((s) => (
+            {["", ...stations].map((s) => (
               <button key={s} onClick={() => setStation(s)}
                 className={"rounded-md px-3 py-1.5 font-medium " +
                   (station === s ? "bg-brand-600 text-white" : "text-zinc-600")}>
@@ -755,7 +764,7 @@ export default function Kitchen() {
                 )}
 
                 <div className="flex-1 border-t border-zinc-100 px-3">
-                  {groupBy(live, (i) => i.course, COURSE_ORDER).map(([course, items]) => (
+                  {groupBy(live, (i) => i.course, courses).map(([course, items]) => (
                     <div key={course}>
                       <div className="pt-2 text-[10px] font-black uppercase tracking-wider text-zinc-400">
                         {t(course)}
@@ -823,7 +832,7 @@ export default function Kitchen() {
       )}
 
       {open && (
-        <TicketDetail order={open} busy={busy} now={now}
+        <TicketDetail order={open} busy={busy} now={now} stations={stations}
           onClose={() => setOpenOrder(null)}
           onAction={(fn, params) => act(open.name, fn, params)} />
       )}

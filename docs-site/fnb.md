@@ -27,17 +27,22 @@ Hotel Admin and Finance set it up.
 
    ![An outlet record with its type, tax rate, tables and the KOT on send setting](/img/fnb/outlet-form.png)
 
-3. **Build the menu.** **F&B → Menu**. Each dish has a price, an outlet, a
-   category, veg or non-veg, a photo, a **course** (Starter, Main, Dessert,
-   Drink) and a **prep station** (Kitchen, Tandoor, Grill, Fryer, Bar). The
-   station decides which kitchen printer gets the dish and which station
-   filter shows it on the kitchen display. To load a whole menu at once,
-   use **Bulk upload** on the Menu screen: upload a spreadsheet, check the
-   preview, then run it.
+3. **Set the menu master lists (once).** **Settings → F&B → Menu master
+   lists**: allergens and dietary tags (Egg, Dairy, Nuts…), prep stations,
+   courses and category suggestions. Edit the lists here; every **New Menu**
+   form and the kitchen display use them. Add Egg, Jain, Gluten-free or
+   whatever your kitchen needs - no code change.
+
+4. **Build the menu.** **F&B → Menu**. Each dish has a price, an outlet, a
+   category, veg or non-veg, a photo, a **course**, a **prep station**, and
+   **allergen chips** from the master list. The station decides which kitchen
+   printer gets the dish and which station filter shows it on the kitchen
+   display. To load a whole menu at once, use **Bulk upload** on the Menu
+   screen: upload a spreadsheet, check the preview, then run it.
 
    ![The menu list with photos, prices, outlets and stations](/img/fnb/menu.png)
 
-4. **Decide how KOTs reach the kitchen.** See
+5. **Decide how KOTs reach the kitchen.** See
    [Kitchen printers](#kitchen-printers) and
    [Auto-accept and print](#auto-accept-and-print-kot) below. With nothing
    set up, the kitchen works from the kitchen display and each till can
