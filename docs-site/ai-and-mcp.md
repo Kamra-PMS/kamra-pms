@@ -1,9 +1,10 @@
 # Connect your AI (MCP)
 
-Kamra is agent-native: everything staff can do through a governed tool,
-an agent can do - through the same layer. Prices come from the pricing
-engine, guardrails and policies apply, and every action lands in the
-activity ledger with who / what / why.
+This is Kamra's highlight. Everything staff can do through a governed
+tool, an agent can do - through the same layer. Prices come from the
+pricing engine, guardrails and policies apply, and every action lands in
+the activity ledger with who / what / why. Other PMS products market AI;
+Kamra ships a real MCP server over the hotel's own APIs.
 
 There are two ways to put an AI to work, and they can run side by side.
 

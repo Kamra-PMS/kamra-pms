@@ -1,8 +1,12 @@
 # API, MCP & developer shortcuts
 
-Everything that talks to Kamra - desk UI, REST clients, Claude MCP and the
-in-app agent - hits the same whitelist. Use these links to get unblocked
-fast.
+**Kamra's uniqueness is the governed MCP layer:** an agent and a
+receptionist share one write path, deterministic prices, and a full audit
+trail. Everything else on this page - REST and Postman - talks to that
+same whitelist.
+
+Start with MCP if you are evaluating why Kamra is different:
+[Connect your AI](/ai-and-mcp) · [MCP tool reference](/mcp-tools).
 
 | Shortcut | What you get |
 | --- | --- |

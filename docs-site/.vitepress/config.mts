@@ -29,7 +29,7 @@ const outDir = process.env.DOCS_OUT_DIR || override.outDir || ".vitepress/dist"
 export default defineConfig({
   title: "Kamra Docs",
   description:
-    "Documentation for Kamra, the open-source AI-native hotel PMS - install, self-host, connect your AI over MCP, and run your property.",
+    "Kamra docs - the open-source hotel PMS agents can run. Governed MCP tools, deterministic pricing, REST and Postman. Install, self-host, connect Claude.",
   base,
   outDir,
   cleanUrls: true,
@@ -52,11 +52,11 @@ export default defineConfig({
     siteTitle: false,
     nav: [
       {
-        text: "API & MCP",
+        text: "MCP & API",
         items: [
-          { text: "Developer shortcuts", link: "/developers" },
           { text: "Connect your AI (MCP)", link: "/ai-and-mcp" },
           { text: "MCP tool reference", link: "/mcp-tools" },
+          { text: "Developer shortcuts", link: "/developers" },
           { text: "REST API basics", link: "/api" },
           { text: "REST API reference", link: "/api-reference" },
           {
@@ -142,11 +142,11 @@ export default defineConfig({
         ],
       },
       {
-        text: "API & MCP",
+        text: "MCP & API",
         items: [
-          { text: "Shortcuts hub", link: "/developers" },
           { text: "Connect your AI (MCP)", link: "/ai-and-mcp" },
           { text: "MCP tool reference", link: "/mcp-tools" },
+          { text: "Shortcuts hub", link: "/developers" },
           { text: "REST API basics", link: "/api" },
           { text: "REST API reference", link: "/api-reference" },
           {

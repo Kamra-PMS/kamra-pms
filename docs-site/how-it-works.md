@@ -2,8 +2,12 @@
 
 This page is the system map: what the pieces are, how a stay moves through
 them, where money is decided, and how humans, REST clients and AI agents
-share one write path. Module guides cover day-to-day tasks; this page is
-for owners, IT and integrators who need the whole picture.
+share one write path.
+
+**What is unique:** Kamra is agent-native. Claude (or any MCP client)
+calls the same role-scoped tools as the desk. Prices never come from the
+model. That is the product edge - the rest of this page shows how the
+stack makes it safe. Module guides cover day-to-day hotel tasks.
 
 **Current stable release:**
 [v2.6.16](https://github.com/Kamra-PMS/kamra-pms/releases/tag/v2.6.16)
