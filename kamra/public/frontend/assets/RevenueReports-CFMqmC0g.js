@@ -2,6 +2,7 @@
 <<<<<<<< HEAD:kamra/public/frontend/assets/RevenueReports-CFMqmC0g.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/RevenueReports-CFMqmC0g.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/RevenueReports-CFMqmC0g.js
+<<<<<<<< HEAD:kamra/public/frontend/assets/RevenueReports-CFMqmC0g.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/RevenueReports-DEECcSDr.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/RevenueReports-DEECcSDr.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/RevenueReports-DEECcSDr.js
@@ -27,6 +28,9 @@ import{j as e,r as n}from"./vendor-D6bHyl-8.js";import{a as A,e as N,s as k,B as
 ========
 import{j as e,r as n}from"./vendor-D6bHyl-8.js";import{a as A,e as N,s as k,B as b,c as w,g as z,m as $}from"./index-Bs4_frcf.js";import{C,a as B,b as D,c as T}from"./card-D8Bd-NCQ.js";import{C as I}from"./chevron-left-CvCIVyJP.js";import{C as M}from"./chevron-right-BoCu419P.js";/**
 >>>>>>>> origin/feat/ticket-tracking:kamra/public/frontend/assets/RevenueReports-BA7HhgL_.js
+========
+import{j as e,r as n}from"./vendor-D6bHyl-8.js";import{a as A,e as N,s as k,B as b,c as w,g as z,m as $}from"./index-DGF1C1w1.js";import{C,a as B,b as D,c as T}from"./card-COAHHgIL.js";import{C as I}from"./chevron-left-C4dXfa21.js";import{C as M}from"./chevron-right-BucafnVT.js";/**
+>>>>>>>> origin/feat/menu-dietary-tags:kamra/public/frontend/assets/RevenueReports-tPNcOM50.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.

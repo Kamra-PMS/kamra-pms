@@ -2,6 +2,7 @@
 <<<<<<<< HEAD:kamra/public/frontend/assets/MenuItems-R7PLSBuu.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/MenuItems-R7PLSBuu.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/MenuItems-R7PLSBuu.js
+<<<<<<<< HEAD:kamra/public/frontend/assets/MenuItems-R7PLSBuu.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/MenuItems-BOLQ3Ccp.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/MenuItems-BOLQ3Ccp.js
 import{r as a,j as e}from"./vendor-D6bHyl-8.js";import{R as D,m as U}from"./configs-6hDJ5F81.js";import{a as M,l as A,c as K,d as S,B as h,g as B,e as k,s as $,X as H,S as V,F as Q,w as W}from"./index-R6mcF6pn.js";import{S as X}from"./sheet-s_-zla-g.js";import{B as C}from"./badge-DtT2T_zD.js";import{C as G}from"./check-DJydIDAO.js";import{D as J}from"./download-NAxEW8WA.js";import{U as O}from"./ImageField-afxAlFTV.js";import{T as Y}from"./trash-2-FswLCtdU.js";import{C as Z}from"./cooking-pot-BGYNRtGT.js";import"./card-R6QYA6ML.js";/**
@@ -23,6 +24,9 @@ import{r as a,j as e}from"./vendor-D6bHyl-8.js";import{R as D,m as U}from"./conf
 ========
 import{r as a,j as e}from"./vendor-D6bHyl-8.js";import{R as D,m as U}from"./configs-Bi1Mo3H5.js";import{a as M,l as A,c as K,d as S,B as h,g as B,e as k,s as $,X as H,S as V,F as Q,w as W}from"./index-Bs4_frcf.js";import{S as X}from"./sheet-CSCy2InW.js";import{B as C}from"./badge-KDVvx6xN.js";import{C as G}from"./check-CV1p2U8R.js";import{D as J}from"./download-vlRcleWY.js";import{U as O}from"./ImageField-BF3SXjv2.js";import{T as Y}from"./trash-2-B2lUgyBF.js";import{C as Z}from"./cooking-pot-B21wLlB0.js";import"./card-D8Bd-NCQ.js";/**
 >>>>>>>> origin/feat/ticket-tracking:kamra/public/frontend/assets/MenuItems-B2Fc12Ai.js
+========
+import{r as a,j as e}from"./vendor-D6bHyl-8.js";import{R as D,m as U}from"./configs-DCAWC7LW.js";import{a as M,l as A,c as K,d as S,B as h,g as B,e as k,s as $,X as H,S as V,F as Q,w as W}from"./index-DGF1C1w1.js";import{S as X}from"./sheet-EbIoG2Mb.js";import{B as C}from"./badge-B8fsyWzp.js";import{C as G}from"./check-B8TKI4Nx.js";import{D as J}from"./download-CKnFegCi.js";import{U as O}from"./ImageField-Dcyiddc2.js";import{T as Y}from"./trash-2-Cpr4rrED.js";import{C as Z}from"./cooking-pot-C7q54j-n.js";import"./card-COAHHgIL.js";/**
+>>>>>>>> origin/feat/menu-dietary-tags:kamra/public/frontend/assets/MenuItems-rOGJ_59j.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.

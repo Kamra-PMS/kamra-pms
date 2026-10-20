@@ -2,6 +2,7 @@
 <<<<<<<< HEAD:kamra/public/frontend/assets/Dashboard-RzwjhJ1l.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/Dashboard-RzwjhJ1l.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/Dashboard-RzwjhJ1l.js
+<<<<<<<< HEAD:kamra/public/frontend/assets/Dashboard-RzwjhJ1l.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/Dashboard-CUpeGqiR.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/Dashboard-CUpeGqiR.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/Dashboard-CUpeGqiR.js
@@ -27,6 +28,9 @@ import{r as d,j as e}from"./vendor-D6bHyl-8.js";import{a as S,u as O,e as v,g as
 ========
 import{r as d,j as e}from"./vendor-D6bHyl-8.js";import{a as S,u as O,e as v,g as w,s as N,az as D,an as A,c as l,a0 as P,aE as _,$,V as k,af as E,j as T,U as I,m as L}from"./index-Bs4_frcf.js";import{C as p,a as m,b as h,c as j}from"./card-D8Bd-NCQ.js";import{S as B}from"./stat-card-ItH2iZHx.js";import{C as F}from"./chart-pie-CByo9mzl.js";import{L as M}from"./log-in-CqPDgNyp.js";import"./arrow-up-right-Bxa_uDba.js";/**
 >>>>>>>> origin/feat/ticket-tracking:kamra/public/frontend/assets/Dashboard-BgzCTPwN.js
+========
+import{r as d,j as e}from"./vendor-D6bHyl-8.js";import{a as S,u as O,e as v,g as w,s as N,az as D,an as A,c as l,a0 as P,aE as _,$,V as k,af as E,j as T,U as I,m as L}from"./index-DGF1C1w1.js";import{C as p,a as m,b as h,c as j}from"./card-COAHHgIL.js";import{S as B}from"./stat-card-CN2wJ6lu.js";import{C as F}from"./chart-pie-DhNxdN-0.js";import{L as M}from"./log-in-DsUEJH12.js";import"./arrow-up-right-D9OCql-O.js";/**
+>>>>>>>> origin/feat/menu-dietary-tags:kamra/public/frontend/assets/Dashboard-CO4yrVtS.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.

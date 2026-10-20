@@ -1,3 +1,4 @@
+<<<<<<<< HEAD:kamra/public/frontend/assets/CheckOutDialog-D2uGhx8R.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/CheckOutDialog-DoArFMKp.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/CheckOutDialog-DoArFMKp.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/CheckOutDialog-DoArFMKp.js
@@ -11,6 +12,9 @@ import{r as o,j as t}from"./vendor-D6bHyl-8.js";import{a as Ke,e as x,u as Ne,p 
 ========
 import{r as o,j as t}from"./vendor-D6bHyl-8.js";import{a as Ke,e as x,u as Ne,p as Ue,b as Ye,s as V,B as y,d as T,E as Ve,P as Je,m as Qe,ap as Xe}from"./index-yQkXbOpd.js";import{S as Ze}from"./sheet-DkNPgVlm.js";import{u as et,S as tt,a as st,T as _e}from"./CheckInDialog-BtCUFgUb.js";import{L as at}from"./loader-circle-DpHPdaC6.js";import{C as J}from"./check-0CnWIsbC.js";import{T as nt}from"./triangle-alert-CsMudP_s.js";/**
 >>>>>>>> origin/fix/code-quality-and-dashes:kamra/public/frontend/assets/CheckOutDialog-K8XiZEA0.js
+========
+import{r as o,j as t}from"./vendor-D6bHyl-8.js";import{a as Ke,e as x,u as Ne,p as Ue,b as Ye,s as V,B as y,d as T,E as Ve,P as Je,m as Qe,ap as Xe}from"./index-DGF1C1w1.js";import{S as Ze}from"./sheet-EbIoG2Mb.js";import{u as et,S as tt,a as st,T as _e}from"./CheckInDialog-BbXcIicA.js";import{L as at}from"./loader-circle-6b3heZX7.js";import{C as J}from"./check-B8TKI4Nx.js";import{T as nt}from"./triangle-alert-CVIJbgdb.js";/**
+>>>>>>>> origin/feat/menu-dietary-tags:kamra/public/frontend/assets/CheckOutDialog-CVVMZNFU.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.

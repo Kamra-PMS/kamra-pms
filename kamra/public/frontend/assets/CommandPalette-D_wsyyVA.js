@@ -1,6 +1,7 @@
 <<<<<<<< HEAD:kamra/public/frontend/assets/CommandPalette-D_wsyyVA.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/CommandPalette-D_wsyyVA.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/CommandPalette-D_wsyyVA.js
+<<<<<<<< HEAD:kamra/public/frontend/assets/CommandPalette-D_wsyyVA.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/CommandPalette-DpIELFX3.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/CommandPalette-DpIELFX3.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/CommandPalette-DpIELFX3.js
@@ -23,6 +24,9 @@ import{r as i,u as P,j as s}from"./vendor-D6bHyl-8.js";import{a as M,u as G,w as
 ========
 import{r as i,u as P,j as s}from"./vendor-D6bHyl-8.js";import{a as M,u as G,w as Q,e as j,g as E,x as L,c as V,m as B,S as H,d as J,aA as W}from"./index-Bs4_frcf.js";import{C as X}from"./circle-user-round-C-KkMKEB.js";import{F as Y}from"./file-text-C62VpcnP.js";import{L as Z}from"./loader-circle-BGHidTJQ.js";import{A as ee}from"./arrow-right-C5FZ9eMX.js";/**
 >>>>>>>> origin/feat/ticket-tracking:kamra/public/frontend/assets/CommandPalette-BEBMFMLE.js
+========
+import{r as i,u as P,j as s}from"./vendor-D6bHyl-8.js";import{a as M,u as G,w as Q,e as j,g as E,x as L,c as V,m as B,S as H,d as J,aA as W}from"./index-DGF1C1w1.js";import{C as X}from"./circle-user-round-CnbgOhku.js";import{F as Y}from"./file-text-BJt3IuMK.js";import{L as Z}from"./loader-circle-6b3heZX7.js";import{A as ee}from"./arrow-right-ByvJ5yFT.js";/**
+>>>>>>>> origin/feat/menu-dietary-tags:kamra/public/frontend/assets/CommandPalette-DNp1pCSe.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.

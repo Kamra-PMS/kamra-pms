@@ -2,6 +2,7 @@
 <<<<<<<< HEAD:kamra/public/frontend/assets/thermal-MduIZmUx.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/thermal-MduIZmUx.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/thermal-MduIZmUx.js
+<<<<<<<< HEAD:kamra/public/frontend/assets/thermal-MduIZmUx.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/thermal-8l2rQotx.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/thermal-8l2rQotx.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/thermal-8l2rQotx.js
@@ -27,6 +28,9 @@ import{m as l,c as o}from"./index-Bk_djxcP.js";const p=`
 ========
 import{m as l,c as o}from"./index-Bs4_frcf.js";const p=`
 >>>>>>>> origin/feat/ticket-tracking:kamra/public/frontend/assets/thermal-CBulvdG0.js
+========
+import{m as l,c as o}from"./index-DGF1C1w1.js";const p=`
+>>>>>>>> origin/feat/menu-dietary-tags:kamra/public/frontend/assets/thermal-C2GmYEgP.js
   @page { size: 80mm auto; margin: 0 }
   * { margin: 0; padding: 0; box-sizing: border-box }
   html, body { background: #fff; color: #000 }

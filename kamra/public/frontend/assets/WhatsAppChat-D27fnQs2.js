@@ -1,6 +1,7 @@
 <<<<<<<< HEAD:kamra/public/frontend/assets/WhatsAppChat-D27fnQs2.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/WhatsAppChat-D27fnQs2.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/WhatsAppChat-D27fnQs2.js
+<<<<<<<< HEAD:kamra/public/frontend/assets/WhatsAppChat-D27fnQs2.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/WhatsAppChat-Do3eCg4i.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/WhatsAppChat-Do3eCg4i.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/WhatsAppChat-Do3eCg4i.js
@@ -23,6 +24,9 @@ import{r as s,j as t,L as I}from"./vendor-D6bHyl-8.js";import{a as L,u as R,e as
 ========
 import{r as s,j as t,L as I}from"./vendor-D6bHyl-8.js";import{a as L,u as R,e as m,s as h,aq as w,d,ap as B,B as M,g as W}from"./index-Bs4_frcf.js";import{S as D}from"./send-BYzyDSxV.js";/**
 >>>>>>>> origin/feat/ticket-tracking:kamra/public/frontend/assets/WhatsAppChat-RiiyOQHe.js
+========
+import{r as s,j as t,L as I}from"./vendor-D6bHyl-8.js";import{a as L,u as R,e as m,s as h,aq as w,d,ap as B,B as M,g as W}from"./index-DGF1C1w1.js";import{S as D}from"./send-YPPj9FwD.js";/**
+>>>>>>>> origin/feat/menu-dietary-tags:kamra/public/frontend/assets/WhatsAppChat-BrC76snp.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.

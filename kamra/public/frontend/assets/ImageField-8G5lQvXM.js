@@ -2,6 +2,7 @@
 <<<<<<<< HEAD:kamra/public/frontend/assets/ImageField-8G5lQvXM.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/ImageField-8G5lQvXM.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/ImageField-8G5lQvXM.js
+<<<<<<<< HEAD:kamra/public/frontend/assets/ImageField-8G5lQvXM.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/ImageField-afxAlFTV.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/ImageField-afxAlFTV.js
 import{r as i,j as a}from"./vendor-D6bHyl-8.js";import{a as m,av as x}from"./index-R6mcF6pn.js";/**
@@ -23,6 +24,9 @@ import{r as i,j as a}from"./vendor-D6bHyl-8.js";import{a as m,at as x}from"./ind
 ========
 import{r as i,j as a}from"./vendor-D6bHyl-8.js";import{a as m,at as x}from"./index-Bs4_frcf.js";/**
 >>>>>>>> origin/feat/ticket-tracking:kamra/public/frontend/assets/ImageField-BF3SXjv2.js
+========
+import{r as i,j as a}from"./vendor-D6bHyl-8.js";import{a as m,at as x}from"./index-DGF1C1w1.js";/**
+>>>>>>>> origin/feat/menu-dietary-tags:kamra/public/frontend/assets/ImageField-Dcyiddc2.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.

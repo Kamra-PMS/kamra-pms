@@ -1,3 +1,4 @@
+<<<<<<<< HEAD:kamra/public/frontend/assets/CheckInDialog-YO2tuWEt.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/CheckInDialog-DrEHPb_h.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/CheckInDialog-DrEHPb_h.js
 import{r as o,j as e}from"./vendor-D6bHyl-8.js";import{a as Te,u as G,p as Re,b as he,B as g,as as Me,e as W,s as B,c as $e,m as Fe,w as Qe,z as Ve,a1 as Je,g as Xe,d as D,P as ue,ar as de,E as Ze,$ as ae,j as et}from"./index-R6mcF6pn.js";import{S as ve}from"./sheet-s_-zla-g.js";import{I as tt,S as st}from"./SignaturePad-CYJ5mkDc.js";import{C as Z}from"./check-DJydIDAO.js";import{C as at}from"./copy-z8JDuSCg.js";import{R as nt}from"./RoomChangeDialog--FUlQTs2.js";import{L as Ee}from"./loader-circle-ZU-p8LDK.js";import{M as it}from"./minus-B3_A1Ji2.js";import{T as rt}from"./triangle-alert-AvYu9kS5.js";import{C as lt}from"./circle-check-DsMv9Vg4.js";import{K as we}from"./key-round-JpFvnZc_.js";import{S as ot}from"./star-JaukbRuy.js";/**
@@ -7,6 +8,9 @@ import{r as o,j as e}from"./vendor-D6bHyl-8.js";import{a as Te,u as G,p as Re,b 
 ========
 import{r as o,j as e}from"./vendor-D6bHyl-8.js";import{a as Te,u as G,p as Re,b as he,B as g,aq as Me,e as W,s as B,c as $e,m as Fe,w as Qe,z as Ve,$ as Ze,g as Je,d as D,P as ue,ap as de,E as Xe,Z as ae,j as et}from"./index-CS1BcujD.js";import{S as ve}from"./sheet-BxAego1y.js";import{I as tt,S as st}from"./SignaturePad-BoPunkEN.js";import{C as X}from"./check-CZ_mna4a.js";import{C as at}from"./copy-B_JYiylP.js";import{R as nt}from"./RoomChangeDialog-Bg4CrVZ8.js";import{L as qe}from"./loader-circle-N6FQPgAt.js";import{M as it}from"./minus-ZgFaBoYC.js";import{T as rt}from"./triangle-alert-CE9L4TEQ.js";import{C as lt}from"./circle-check-BJWRlupw.js";import{K as we}from"./key-round-DZKmXhdt.js";import{S as ot}from"./star-CNfjggSB.js";/**
 >>>>>>>> origin/fix/pos-settle-orders:kamra/public/frontend/assets/CheckInDialog-4rdVgdZE.js
+========
+import{r as o,j as e}from"./vendor-D6bHyl-8.js";import{a as Te,u as G,p as Re,b as he,B as g,aq as Me,e as W,s as B,c as $e,m as Fe,w as Qe,z as Ve,$ as Ze,g as Je,d as D,P as ue,ap as de,E as Xe,Z as ae,j as et}from"./index-DGF1C1w1.js";import{S as ve}from"./sheet-EbIoG2Mb.js";import{I as tt,S as st}from"./SignaturePad-CwV-mRn_.js";import{C as X}from"./check-B8TKI4Nx.js";import{C as at}from"./copy-CulTkmEN.js";import{R as nt}from"./RoomChangeDialog-jgXUazDi.js";import{L as qe}from"./loader-circle-6b3heZX7.js";import{M as it}from"./minus-BXrf7Bpe.js";import{T as rt}from"./triangle-alert-CVIJbgdb.js";import{C as lt}from"./circle-check-DOWzq0Ei.js";import{K as we}from"./key-round-BP2ztY3u.js";import{S as ot}from"./star-BOxNZlbN.js";/**
+>>>>>>>> origin/feat/menu-dietary-tags:kamra/public/frontend/assets/CheckInDialog-BbXcIicA.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.
