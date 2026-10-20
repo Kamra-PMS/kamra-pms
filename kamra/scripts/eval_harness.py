@@ -8720,11 +8720,300 @@ def t344():
 			"action_type": action, "reference_name": ref, "actor": user}), action
 
 
+# ── guided check-in (t350-t355) ──────────────────────────────────────────
+
+class _steps_enforced:
+	"""The harness turns the check-in step gate off for the checks that
+	only need an in-house stay; these checks test the gate itself."""
+
+	def __enter__(self):
+		frappe.flags.kamra_checkin_steps_off = False
+
+	def __exit__(self, *exc):
+		frappe.flags.kamra_checkin_steps_off = True
+
+
+class _as_user:
+	def __init__(self, user):
+		self.user = user
+
+	def __enter__(self):
+		self.me = frappe.session.user
+		frappe.set_user(self.user)  # nosemgrep: frappe-setuser -- controlled user context switch; persona user created in setup()
+
+	def __exit__(self, *exc):
+		frappe.set_user(self.me)  # nosemgrep: frappe-setuser -- controlled user context switch; restores the previous user
+
+
+class _no_deposit_policy:
+	"""Property defaults ask a security deposit (5000) and earlier checks
+	set a booking deposit %; checks that are not about deposits clear both
+	so the deposit step does not apply."""
+
+	def __enter__(self):
+		self.was = frappe.db.get_value("Property", P, ["security_deposit_amount", "deposit_pct"])
+		frappe.db.set_value("Property", P, {"security_deposit_amount": 0, "deposit_pct": 0})
+		frappe.clear_document_cache("Property", P)
+
+	def __exit__(self, *exc):
+		frappe.db.set_value("Property", P, {"security_deposit_amount": self.was[0],
+		                                    "deposit_pct": self.was[1]})
+		frappe.clear_document_cache("Property", P)
+
+
+def _ci_room(number):
+	return frappe.get_doc({
+		"doctype": "Room", "property": P, "room_number": number,
+		"room_type": RT, "housekeeping_status": "Clean",
+	}).insert(ignore_permissions=True).name
+
+
+def _ci_stay(name, phone, room=None):
+	g = _guest(name, phone)
+	return _res(g, nowdate(), add_days(nowdate(), 2), room=room)
+
+
+def _refused(fn, *args, exc=None, contains=None, **kwargs):
+	try:
+		fn(*args, **kwargs)
+	except Exception as e:  # noqa: BLE001 - the check inspects it
+		if exc is not None:
+			assert isinstance(e, exc), f"{type(e).__name__}: {e}"
+		if contains:
+			for c in contains if isinstance(contains, (list, tuple)) else [contains]:
+				assert c in str(e), f"{c!r} not in {e}"
+		frappe.clear_messages()
+		return str(e)
+	raise AssertionError(f"{getattr(fn, '__name__', fn)} was not refused")
+
+
+FD = "frontdesk@kamra.local"
+
+
+@check("guided check-in: check_in refuses until required steps are done; required steps cannot be skipped")
+def t350():
+	from kamra import checkin as ci
+	from kamra.api import check_in
+
+	room = _ci_room("G340")
+	res = _ci_stay("Eval Guided", "+91 70034 00001", room=room)
+	with _steps_enforced(), _no_deposit_policy():
+		msg = _refused(check_in, res.name, exc=ci.CheckInStepsMissing,
+		               contains=["Guest and IDs", "Who pays", "Charges to the room"])
+		assert "Room," not in msg and not msg.rstrip(".").endswith("Room"), msg
+		r = ci.check_in_readiness(res.name)
+		assert r["ready"] is False
+		missing = {m["step"] for m in r["missing_required"]}
+		# the eval property is in India: the signed registration card is
+		# required by the pack's default
+		assert missing == {"guest_ids", "billing_check", "room_charges",
+		                   "registration_card"}, missing
+		# the security deposit step does not apply with no deposit policy
+		dep = next(s for s in r["steps"] if s["step"] == "security_deposit")
+		assert dep["applies"] == 0, dep
+
+		with _as_user(FD):
+			# a required step cannot be skipped; an optional one can
+			_refused(ci.skip_checkin_step, res.name, "guest_ids",
+			         contains="cannot be skipped")
+			ci.skip_checkin_step(res.name, "keys", reason="Code lock")
+			# no ID yet: the ID step cannot be marked done
+			_refused(ci.complete_checkin_step, res.name, "guest_ids",
+			         contains="ID still needed")
+			ci.save_guest_details(res.name, id_type="Passport", id_number="Z1234567")
+			ci.complete_checkin_step(res.name, "guest_ids")
+			ci.confirm_billing(res.name, "Guest")
+			ci.set_room_charges(res.name, 1)
+			ci.sign_registration_card(res.name, signature="data:image/png;base64,iVBORw0KGgo=")
+			assert ci.check_in_readiness(res.name)["ready"] is True
+			out = check_in(res.name)
+		assert out["checked_in_by"] == FD, out
+	res.reload()
+	assert res.status == "Checked In"
+	assert res.checked_in_by == FD and res.checked_in_at, (res.checked_in_by, res.checked_in_at)
+	# the ID number is masked when read back for the desk
+	flow = ci.checkin_flow(res.name)
+	assert flow["guest"]["id_number"].endswith("4567") and "Z123" not in flow["guest"]["id_number"]
+
+
+@check("guided check-in: who assigned the room, issued keys and did each step is recorded (and a later move too)")
+def t351():
+	from kamra import checkin as ci
+	from kamra.api import move_reservation
+
+	room = _ci_room("G341")
+	room2 = _ci_room("G341B")
+	res = _ci_stay("Eval Audit", "+91 70034 10001")
+	assert not res.room
+	with _as_user(FD):
+		flow = ci.checkin_flow(res.name)
+		offered = [r["name"] for r in flow["rooms"]]
+		assert room in offered, offered
+		ci.assign_checkin_room(res.name, room)
+		out = ci.issue_keys(res.name, 2, "C-11, C-12")
+		assert out["key_result"]["manual"] is True, out["key_result"]
+		ci.confirm_billing(res.name, "Guest", note="Card at desk")
+	res.reload()
+	assert res.room == room
+	assert res.room_assigned_by == FD and res.room_assigned_at, res.room_assigned_by
+	assert res.keys_issued_by == FD and res.key_count == 2 and res.keys_issued_at
+	recs = json.loads(res.checkin_steps)
+	assert recs["assign_room"]["by"] == FD and recs["keys"]["by"] == FD, recs
+	assert recs["billing_check"]["payer"] == "Guest"
+	logged = set(frappe.get_all("Agent Action Log", filters={
+		"reference_name": res.name, "actor": FD}, pluck="action_type"))
+	assert {"checkin_assign_room", "checkin_keys", "checkin_billing_check",
+	        "room_move"} <= logged, logged
+	# a later room change records whoever made it
+	move_reservation(res.name, room2, reason="Guest asked")
+	res.reload()
+	assert res.room == room2 and res.room_assigned_by == "Administrator", res.room_assigned_by
+
+
+@check("guided check-in: 'no charges to the room' is enforced by POS, the POS interface, laundry and minibar")
+def t352():
+	from kamra import checkin as ci
+	from kamra.api import check_in, hk_post_consumable
+	from kamra.laundry import request_pickup
+	from kamra.pos import RoomChargesBlocked, _in_house_stay
+	from kamra.pos_interface import pos_post_room_charge
+
+	room = _ci_room("G342")
+	res = _ci_stay("Eval NoPost", "+91 70034 20001", room=room)
+	check_in(res.name)  # gate off: only the flag is under test here
+	assert _in_house_stay(P, room, None)[1] == res.name
+	with _as_user(FD):
+		ci.set_room_charges(res.name, 0, reason="OTA prepaid, no card")
+	assert frappe.db.get_value("Reservation", res.name, "room_charges_allowed") == 0
+	_refused(_in_house_stay, P, room, None, exc=RoomChargesBlocked)
+	_refused(_in_house_stay, P, None, res.name, exc=RoomChargesBlocked)
+	_refused(pos_post_room_charge, P, "EVAL-T342-1", 120, "Bar check 1",
+	         room="G342", exc=RoomChargesBlocked)
+	assert not frappe.db.exists("External POS Charge", {"ticket_id": "EVAL-T342-1"})
+	_refused(hk_post_consumable, room, "Minibar", "Water", 50, exc=RoomChargesBlocked)
+	_refused(request_pickup, P, room, exc=RoomChargesBlocked)
+	with _as_user(FD):
+		ci.set_room_charges(res.name, 1)
+	assert _in_house_stay(P, room, None)[1] == res.name
+
+
+@check("guided check-in: property SOP sets what is required; GRC default follows the pack; deposit step when a policy is set")
+def t353():
+	from kamra import checkin as ci
+	from kamra.api import check_in
+	from kamra.deposit import waive_deposit
+	from kamra.localization import pack_for_country, registration_card_required
+	from kamra.sop import _template_steps, save_sop_template
+
+	assert registration_card_required(pack_for_country("India")) is True
+	assert registration_card_required(pack_for_country("United Arab Emirates")) is False
+
+	# the property makes the registration card required
+	meta, original = _template_steps(P, "checkin")
+	steps = original
+	assert any(s["step_key"] == "registration_card" and s["is_blocking"] for s in original), \
+		"India property: registration card should be required by default"
+	assert meta.get("name"), "check-in SOP template was not seeded"
+	steps = [{**s, "is_blocking": 1 if s["step_key"] == "registration_card" else s["is_blocking"]}
+	         for s in steps]
+	# making the room optional is ignored: no room, no check-in
+	steps = [{**s, "is_blocking": 0} if s["step_key"] == "assign_room" else s for s in steps]
+	save_sop_template(name=meta["name"], steps=steps)
+	required = {s["step_key"] for s in ci.checkin_steps(P) if s["is_blocking"]}
+	assert {"registration_card", "assign_room"} <= required, required
+
+	was_deposit = frappe.db.get_value("Property", P, "security_deposit_amount")
+	frappe.db.set_value("Property", P, {"security_deposit_amount": 500, "deposit_pct": 0})
+	frappe.clear_document_cache("Property", P)
+	try:
+		room = _ci_room("G343")
+		res = _ci_stay("Eval Grc", "+91 70034 30001", room=room)
+		frappe.db.set_value("Guest", res.guest, "id_number", "P7654321")
+		with _steps_enforced(), _as_user(FD):
+			ci.complete_checkin_step(res.name, "guest_ids")
+			ci.confirm_billing(res.name, "Guest")
+			ci.set_room_charges(res.name, 1)
+			_refused(check_in, res.name, exc=ci.CheckInStepsMissing,
+			         contains=["Deposit and advance", "Registration card"])
+			_refused(ci.complete_checkin_step, res.name, "security_deposit",
+			         contains="security deposit")
+			waive_deposit(res.name, "Regular guest")
+			ci.complete_checkin_step(res.name, "security_deposit")
+			_refused(ci.sign_registration_card, res.name, contains="sign")
+			ci.sign_registration_card(res.name, on_paper=1)
+			check_in(res.name)
+		assert frappe.db.get_value("Reservation", res.name, "status") == "Checked In"
+	finally:
+		# later checks run on the same property
+		frappe.db.set_value("Property", P, "security_deposit_amount", was_deposit)
+		frappe.clear_document_cache("Property", P)
+		save_sop_template(name=meta["name"], steps=original)
+
+
+@check("staff sign-ins: Frappe login records, only for this property's staff, Hotel Admin / Finance only")
+def t354():
+	from kamra.agents_api import staff_sign_ins
+
+	outsider = "eval-outsider@example.com"
+	if not frappe.db.exists("User", outsider):
+		frappe.get_doc({"doctype": "User", "email": outsider, "first_name": "Out",
+		                "send_welcome_email": 0, "user_type": "Website User",
+		                }).insert(ignore_permissions=True)
+	for user, op in ((FD, "Login"), (FD, "Logout"), (outsider, "Login")):
+		frappe.get_doc({"doctype": "Activity Log", "subject": f"{user} {op}",
+		                "operation": op, "status": "Success", "user": user,
+		                "full_name": user}).insert(ignore_permissions=True)
+	rows = staff_sign_ins(P, limit=200)
+	users = {r["user"] for r in rows}
+	assert FD in users and outsider not in users, users
+	assert {r["operation"] for r in rows if r["user"] == FD} >= {"Login", "Logout"}
+	assert all("ip_address" not in r for r in rows)
+	with _as_user(FD):
+		_refused(staff_sign_ins, P, exc=frappe.PermissionError)
+
+
+@check("walk-in: defer_check_in books and assigns, records what the counter did, then the guided check-in finishes it")
+def t355():
+	from kamra import checkin as ci
+	from kamra.api import check_in, walk_in
+	from kamra.patches.v43 import backfill_checkin_record
+
+	room = _ci_room("G345")
+	with _steps_enforced(), _no_deposit_policy(), _as_user(FD):
+		out = walk_in(P, RT, room, add_days(nowdate(), 1), "Eval Walk Guided",
+		              phone="+91 70034 50001", id_type="Passport",
+		              id_number="W1234567", defer_check_in=1)
+		assert out["checked_in"] == 0, out
+		res = frappe.get_doc("Reservation", out["reservation"])
+		assert res.status == "Confirmed" and res.room == room
+		assert res.room_assigned_by == FD
+		missing = {m["step"] for m in ci.check_in_readiness(res.name)["missing_required"]}
+		assert missing == {"room_charges", "registration_card"}, missing
+		# the plain walk-in (no defer) refuses while a required step is open
+		# (over HTTP the request rolls the booking back with it)
+		_refused(walk_in, P, RT, _ci_room("G345B"), add_days(nowdate(), 1),
+		         "Eval Walk Plain", phone="+91 70034 50002",
+		         exc=ci.CheckInStepsMissing)
+		ci.set_room_charges(res.name, 1)
+		ci.sign_registration_card(res.name, on_paper=1)
+		check_in(res.name)
+	assert frappe.db.get_value("Reservation", res.name, "checked_in_by") == FD
+	# the backfill patch is idempotent and leaves recorded values alone
+	backfill_checkin_record.execute()
+	backfill_checkin_record.execute()
+	assert frappe.db.get_value("Reservation", res.name, "checked_in_by") == FD
+	assert frappe.db.get_value("Reservation", res.name, "room_charges_allowed") == 1
+
+
 def execute():
 	global RT, ROOM
 	# frappe.locale.get_locale_value crashes (UnboundLocalError) when no
 	# language is set on the session — true in bare CI consoles.
 	frappe.local.lang = frappe.local.lang or "en"
+	# most checks call api.check_in directly to set up an in-house stay; the
+	# guided check-in's required steps are switched back on by the checks
+	# that test them (t350-t355, _steps_enforced)
+	frappe.flags.kamra_checkin_steps_off = True
 	# night audit (and friends) commit mid-run in production; under the
 	# harness a commit would release the savepoint and leak test data
 	real_commit, frappe.db.commit = frappe.db.commit, lambda *a, **k: None
@@ -8750,9 +9039,12 @@ def execute():
 		           t215, t216, t300, t301, t302, t303, t304, t305, t220, t221, t223, t222, t224,
 		           t320, t321, t322, t323, t324, t325, t326, t327, t328, t310, t311, t312, t313,
 		           t314, t315, t316, t317, t318, t330, t331, t332, t333, t334, t335, t336,
-		           t225, t226, t227, t228, t229, t230, t340, t341, t342, t343, t344):
+		           t225, t226, t227, t228, t229, t230, t340, t341, t342, t343, t344,
+		           t350, t351, t352, t353, t354, t355):
 			fn()
 	finally:
+		frappe.flags.kamra_checkin_steps_off = False
+		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- controlled user context switch; restores the console user after the checks
 		frappe.db.commit = real_commit
 		frappe.db.rollback(save_point="eval_start")
 

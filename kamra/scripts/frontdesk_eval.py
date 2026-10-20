@@ -315,6 +315,9 @@ def f13():
 def execute():
 	global RT, ROOM, ROOM2
 	frappe.local.lang = frappe.local.lang or "en"
+	# these journeys check in through api.check_in directly; the guided
+	# check-in's required steps are covered by the eval harness (t340+)
+	frappe.flags.kamra_checkin_steps_off = True
 	real_commit, frappe.db.commit = frappe.db.commit, lambda *a, **k: None
 	frappe.db.savepoint("fd_eval_start")
 	try:

@@ -14,6 +14,7 @@ a separate Start or a per-browser printer switch.
 
 import frappe
 from frappe import _
+from frappe.utils import cint
 
 from kamra.authz import require_roles
 
@@ -134,6 +135,7 @@ def _in_house_stay(property: str, room: str | None,
 			              "only be charged to an in-house guest."))
 		if room and res.room and room != res.room:
 			frappe.throw(_("That guest is not staying in this room."))
+		assert_room_charges_allowed(reservation)
 		return room or res.room, reservation
 	reservation = frappe.db.get_value(
 		"Reservation", {"room": room, "status": "Checked In",
@@ -143,7 +145,27 @@ def _in_house_stay(property: str, room: str | None,
 		frappe.throw(_("Room {0} has no checked-in guest. Room charges need "
 		              "an in-house stay - take this as a walk-in bill "
 		              "instead.").format(number))
+	assert_room_charges_allowed(reservation)
 	return room, reservation
+
+
+class RoomChargesBlocked(frappe.ValidationError):
+	"""The desk blocked charges to this room at check-in."""
+
+
+def assert_room_charges_allowed(reservation: str) -> None:
+	"""The check-in's room-charges decision, enforced wherever an outlet,
+	laundry or the minibar would post to the room (internal POS, the
+	external POS interface, laundry, housekeeping consumables)."""
+	allowed, room = frappe.db.get_value(
+		"Reservation", reservation, ["room_charges_allowed", "room"]) or (1, None)
+	if allowed is None or cint(allowed):
+		return
+	number = (frappe.db.get_value("Room", room, "room_number") if room else None) or room or ""
+	frappe.throw(
+		_("Room {0} cannot take charges to the room (set at check-in). "
+		  "Take payment at the outlet, or ask the front desk.").format(number),
+		exc=RoomChargesBlocked, title=_("Room charges blocked"))
 
 
 @frappe.whitelist()

@@ -1305,6 +1305,8 @@ def hk_post_consumable(room: str, charge_type: str, description: str,
 		["name", "property"], as_dict=True)
 	if not res:
 		frappe.throw("No checked-in guest in that room to bill.")
+	from kamra.pos import assert_room_charges_allowed
+	assert_room_charges_allowed(res.name)
 	# post through the governed agent user (same pattern as public bookings):
 	# the housekeeper is authorized above and scoped to two charge types, and
 	# GST is still resolved server-side. Attribution is stamped below.
@@ -3190,7 +3192,18 @@ def checkin_context(reservation: str):
 @frappe.whitelist()
 @require_roles("Front Desk", "Night Auditor", "Kamra Agent")
 def check_in(reservation: str, room: str | None = None):
+	"""Check the guest in: the last step of the guided check-in.
+
+	Refused while a check-in step the property marks required (Settings >
+	Front desk > Check-in steps) is not done for this stay - the ID, who
+	pays, the deposit, the registration card... - so neither the desk, the
+	API nor an AI agent can skip them. kamra.checkin.check_in_readiness says
+	what is missing. Records who checked the guest in and when; a connected
+	door-lock system then makes the keys recorded in the Keys step."""
 	doc = frappe.get_doc("Reservation", reservation)
+	from kamra.checkin import after_check_in, assert_ready
+	if doc.status == "Confirmed":
+		assert_ready(doc, room=room)
 	if room:
 		doc.room = room
 	doc.status = "Checked In"
@@ -3202,7 +3215,12 @@ def check_in(reservation: str, room: str | None = None):
 		where = "the whole villa"
 	log_action("check_in", "Reservation", doc.name, doc.property,
 	           rationale=f"{doc.guest_name} into {where}")
-	return {"ok": True, "reservation": doc.name, "room": doc.room}
+	out = {"ok": True, "reservation": doc.name, "room": doc.room,
+	       "checked_in_by": frappe.session.user}
+	keys = after_check_in(doc)
+	if keys:
+		out["keys"] = keys
+	return out
 
 
 @frappe.whitelist(methods=["POST"])
@@ -3220,9 +3238,17 @@ def walk_in(property: str, room_type: str, room: str, check_out_date: str,
             check_in_time: str | None = None,
             check_out_time: str | None = None,
             blacklist_override_reason: str | None = None,
-            credit_override_reason: str | None = None):
+            credit_override_reason: str | None = None,
+            defer_check_in: int = 0):
 	"""Walk-in in one step: book, register the ID, check into the chosen
 	room and take the money - the counter flow that used to be four screens.
+
+	defer_check_in=1 books, assigns the room and takes the money (as an
+	advance) but leaves the stay Confirmed, so the desk finishes it in the
+	guided check-in, where the property's required steps apply. Without it
+	the required steps are enforced here as well: the walk-in records the
+	steps it does itself (room, who pays, the ID when given) and refuses,
+	rolling the booking back, if another required step is still open.
 
 	It is the same writers chained (create_booking → check_in →
 	add_folio_payment), inside one request, so it is all-or-nothing: a
@@ -3293,6 +3319,30 @@ def walk_in(property: str, room_type: str, room: str, check_out_date: str,
 	                               ("nationality", nationality)) if v}
 	if id_fields:
 		frappe.db.set_value("Guest", booked["guest"], id_fields)
+
+	# what the walk-in counter did itself, recorded under this operator
+	from kamra.checkin import record_step
+	res_doc = frappe.get_doc("Reservation", reservation)
+	record_step(res_doc, "billing_check", "done", note="Walk-in",
+	            payer="Company" if company else "Guest")
+	if id_fields.get("id_number"):
+		record_step(res_doc, "guest_ids", "done", note="Walk-in ID")
+
+	if cint(defer_check_in):
+		folio = None
+		if amount:
+			folio = record_advance(reservation, amount, mode=payment_mode,
+			                       reference=payment_reference, pin=pin)["folio"]
+		return {
+			"reservation": reservation, "room": room,
+			"room_number": frappe.db.get_value("Room", room, "room_number"),
+			"folio": folio or frappe.db.get_value("Folio", folio_filter),
+			"checked_in": 0,
+			"amount_after_tax": booked.get("amount_after_tax"),
+			"paid": amount,
+			**({"credit_warning": booked["credit_warning"]}
+			   if booked.get("credit_warning") else {}),
+		}
 
 	check_in(reservation, room)
 	folio = frappe.db.get_value("Folio", folio_filter)

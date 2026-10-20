@@ -44,38 +44,59 @@ seconds.
 
 ## Check a guest in
 
+Check-in is a short list of steps, one screen each, in the order your
+property set. The same steps open from every **Check in** button: the
+arrival on **Today**, the booking under **Reservations**, an arrival in
+**End of Day**, and a walk-in.
+
 1. On **Today**, find the guest under **Arrivals** and click **Check in**.
-2. Read the **Registration** chips: online check-in, **ID on file**,
-   **Address proof**, **Phone** and **Email**. A green tick means it is
-   there. Nothing here stops the check-in; it shows you what to collect.
-   **Open GRC** opens the registration card in a new tab if you want to
-   capture the ID first.
-3. Pick the room. If the booking has a room, it shows as **Room 203 is
-   assigned**. If not, Kamra suggests one with its reason (for example
-   "First free room of the type"). Click the suggestion, or choose another
-   free room of the same type under **Or pick another room**. Each room
-   shows its housekeeping status.
-4. Click **Check in to 205** (the button names the room).
+2. Work through the steps at the top of the panel. Each step says what to
+   do. A **Required** step has no **Skip** button. An **Optional** step
+   does.
+3. Click **Done, continue** when a step is finished. Kamra checks it: for
+   example, it will not move on from **Guest and IDs** while an ID is
+   still missing.
+4. On the last screen, read the summary and click **Check in to room 205**
+   (the button names the room). A red step in the summary is required and
+   not done yet: click **Go to step** to finish it.
 
 ![The check-in panel for Nikhil Rao: registration chips, the suggested room 202 and a list of other free rooms](/img/front-desk/checkin-sheet.png)
 
-![Checking in an arrival from the Today screen: open the panel, pick room 205, check in, and the guest moves to the in-house list](/img/front-desk/checkin.gif)
-
 The room turns occupied, the guest folio opens, and any deposit taken
-before arrival moves onto the stay's bill.
+before arrival moves onto the stay's bill. The last screen links to the
+registration card to print.
 
-If you pick a room that is still **Dirty**, Kamra warns you and lets you
-go ahead; housekeeping sees the room flip to occupied.
+### The steps
 
-You can also check in from the reservation itself: **Reservations** → click
-the booking → **Check in**. That button only appears once the booking has
-a room.
+| Step | What you do | Required by default |
+| --- | --- | --- |
+| **Guest and IDs** | Check the name and phone, then the ID for the guest and everyone staying. If the guest checked in online you see **Done online**: check what they sent against the person. Add other guests and their IDs on the registration card (**Add guests and their IDs**). Children only need their ID where your country's register asks for it. | Yes |
+| **Who pays** | Pick who pays: the OTA (already paid, or guest pays here), the guest, the company, or the group. You see the stay total, what is paid and what is left. | Yes |
+| **Room** | Keep the assigned room, or pick a free room of the booked type. Clean rooms come first. **Upgrade or another type** shows the new price before you confirm. | Always |
+| **Deposit and advance** | Take the security deposit, or waive it with a reason, and any advance still owed. Shown only when your property asks for a deposit or the booking owes an advance. | Yes |
+| **Registration card** | Open the card to show or print. The guest signs on the screen, or on the printed card. | Yes in India, optional elsewhere |
+| **Keys** | Note how many keys you gave and, if you like, the card numbers. | No |
+| **Wi-Fi and stay info** | Tell the guest the Wi-Fi, breakfast and check-out times. **Print** it or **Send on WhatsApp**. Shown once you fill in **Settings → Front Desk → Guest info at check-in**. | No |
+| **Anything needed?** | Tap what the guest asks for: extra bed, wake-up call, airport drop, dietary needs, special occasion. Each one becomes a task for the right team. | No |
+| **Charges to the room** | Allow or block charges to the room. Blocked: the restaurant, laundry and minibar cannot put anything on this room, and the guest pays at the outlet. For an OTA prepaid stay with nothing held for extras, Kamra suggests blocking. | Yes |
+
+Kamra records who did each step and when. The booking shows who assigned
+the room, who gave the keys and who checked the guest in, and every step
+is in the **Activity Log**.
+
+### Choose which steps are required
+
+**Settings → Front Desk → Check-in steps** (Hotel Admin). Tick
+**Required** for each step your staff must never skip. **Room** is always
+required. A required step cannot be skipped at the desk, and Kamra will not
+check the guest in until it is done, whoever asks: the desk, the API or an
+AI agent.
 
 ## Check in a walk-in
 
 For a guest standing at the counter with no booking, use **Walk-in** in
-the top bar. One screen books the stay, records the ID, checks the guest
-into a room and takes the payment.
+the top bar. One screen books the stay, records the ID, assigns the room
+and takes the payment. The check-in steps open right after.
 
 1. Click **Walk-in** (or switch **New booking** to **Walk-in**).
 2. Type the **Guest name**. If the guest has stayed before, pick them from
@@ -89,16 +110,17 @@ into a room and takes the payment.
 6. Under **Payment**, pick how the guest pays and the **Amount collected**.
    It starts at the full total; lower it for a part payment, or set it to 0
    to put everything on the bill.
-7. Click **Check in & collect ₹2,940** (or **Check in** when nothing is
-   collected).
+7. Click **Collect ₹2,940 and continue to check-in** (or **Continue to
+   check-in** when nothing is collected).
+8. The check-in steps open. **Who pays**, the **Room** and the ID you typed
+   are already done; finish the rest and click **Check in to room 105**.
 
 ![The walk-in screen filled in: guest, phone, Aadhaar ID, Standard room 105, one night, cash payment, and the live quote on the right](/img/front-desk/walkin.png)
 
-![A walk-in from start to finish: the desk types the guest's name, phone and ID, picks the room, and checks the guest into room 105](/img/front-desk/walkin.gif)
-
-It is all or nothing. If the room was just taken, or your till is closed,
-nothing is saved and the screen tells you why. After it succeeds, **Open
-bill** takes you to the guest's folio.
+If the room was just taken, or your till is closed, nothing is saved and
+the screen tells you why. If you close the check-in steps before the end,
+the booking stays booked with its room: click **Finish check-in**, or check
+the guest in from **Today**.
 
 ## Send the self check-in link
 
@@ -262,12 +284,14 @@ The journey shows every stay and event, with:
 | Send links this far ahead | Settings → Front Desk → Arrivals | 2 days | How far ahead of arrival the automatic link goes out. |
 | Require pre-check-in before access details | Settings → Front Desk → Arrivals | Off | Holds back the **Access instructions** (door codes, Wi-Fi) until the guest has checked in online. |
 | Guest ID retention | Settings → Privacy & data | Verify & Discard | Verify & Discard masks ID numbers to the last 4 digits and deletes ID photos at check-out. Store keeps them. |
-| Security deposit | Settings → Stay policies → Deposits | 0 | A refundable amount to hold during the stay. While it is held, the booking warns you before check-out. |
+| Security deposit | Settings → Stay policies → Deposits | 0 | A refundable amount to hold during the stay. When set, check-in has a **Deposit and advance** step. While it is held, the booking warns you before check-out. |
+| Check-in steps | Settings → Front Desk → Check-in steps | See [The steps](#the-steps) | Which check-in steps are required. Required steps cannot be skipped and block the check-in until done. |
+| Wi-Fi name, Wi-Fi password, Breakfast times, Emergency number, Anything else for guests | Settings → Front Desk → Guest info at check-in | Empty | Shown in the **Wi-Fi and stay info** step, to tell, print or send on WhatsApp. The password is never written to the activity log. |
 
 ## Good to know
 
-- Check-in never waits for an ID. The ID chips and warnings tell you what
-  is missing; the register wants it before the night audit.
+- Check-in waits for the steps your property marks **Required**. With the
+  defaults, that includes the ID for the guest and everyone staying.
 - A walk-in always arrives today. For a future date, make a normal
   booking.
 - A booking needs a room before check-in. Whole-villa stays check in as
@@ -290,6 +314,18 @@ was invoiced before every night was posted. The check-out sheet says so on
 its first step: open the folio, cancel the invoice, then check out. The
 sheet issues the invoice for you afterwards.
 
+**"Finish these check-in steps first: …"** A required step is not done.
+Open the check-in from **Today** and finish the steps the message names.
+To change which steps are required, see
+[Choose which steps are required](#choose-which-steps-are-required).
+
+**"… is required at this property and cannot be skipped."** Only optional
+steps have **Skip**. Do the step, or ask a Hotel Admin to make it optional.
+
+**"Room 204 cannot take charges to the room (set at check-in)."** The desk
+blocked charges to the room. Take payment at the outlet, or open the
+booking's check-in steps and allow charges in **Charges to the room**.
+
 **"Assign a room before check-in."** The booking has no room. Use **Assign
 room** on the booking or the GRC, or check in from **Today**, where you pick
 the room in the same step.
@@ -309,10 +345,17 @@ to move another stay or upgrade this one.
 
 ## For developers
 
-The check-in panel is `kamra.api.checkin_context` and `kamra.api.check_in`;
-the walk-in is `kamra.api.walk_in`; check-out is `kamra.api.check_out`; room
+The check-in steps are `kamra.checkin.checkin_flow` and one endpoint per
+step (`save_guest_details`, `confirm_billing`, `assign_checkin_room`,
+`sign_registration_card`, `issue_keys`, `log_checkin_requests`,
+`set_room_charges`, `complete_checkin_step`, `skip_checkin_step`), then
+`kamra.api.check_in`, which refuses while a required step is open
+(`kamra.checkin.check_in_readiness` lists what is missing). The steps and
+which are required live in the property's check-in SOP (`kamra.sop`). The
+walk-in is `kamra.api.walk_in` (`defer_check_in=1` books and hands over to
+the steps); check-out is `kamra.api.check_out`; room
 moves use `kamra.api.movable_rooms`, `kamra.api.room_move_preview` and
 `kamra.api.move_reservation`. AI agents use the `front_desk_today`,
-`check_in`, `check_out`, `move_room`, `guest_lookup`, `guest_journey` and
+`check_in_readiness`, `check_in`, `check_out`, `move_room`, `guest_lookup`, `guest_journey` and
 `update_occupants` tools. See [MCP tools](/mcp-tools) and the
 [API reference](/api-reference).

@@ -18,7 +18,6 @@ import {
 import {
   acceptBookingRequest,
   amendStayConfirmed,
-  checkIn,
   declineBookingRequest,
   idDocumentImage,
   promoteWaitlist,
@@ -37,6 +36,7 @@ import DepositPanel from "../components/DepositPanel"
 import SecurityDepositPanel from "../components/SecurityDepositPanel"
 import RoomChangeDialog from "../components/RoomChangeDialog"
 import CheckOutDialog from "../components/CheckOutDialog"
+import CheckInDialog from "../components/CheckInDialog"
 import StayInstructions from "../components/StayInstructions"
 import { cur, moneyLocale } from "../lib/money"
 
@@ -250,6 +250,7 @@ export default function ReservationDetail({
   }, [savedReq])
   const navigate = useNavigate()
   const [checkingOut, setCheckingOut] = useState(false)
+  const [checkingIn, setCheckingIn] = useState(false)
 
   async function act(fn: () => Promise<unknown>) {
     setBusy(true)
@@ -693,7 +694,7 @@ export default function ReservationDetail({
           </span>
         )}
         {d.actions.can_check_in && (
-          <Button disabled={busy} onClick={() => act(() => checkIn(name))}>
+          <Button disabled={busy} onClick={() => setCheckingIn(true)}>
             <LogIn className="size-4" /> Check in
           </Button>
         )}
@@ -721,6 +722,20 @@ export default function ReservationDetail({
         <CancelPanel
           row={row}
           reload={() => {
+            refresh()
+            reload()
+          }}
+        />
+      )}
+      {checkingIn && (
+        <CheckInDialog
+          reservation={name}
+          onClose={() => {
+            setCheckingIn(false)
+            refresh()
+          }}
+          onDone={() => {
+            setCheckingIn(false)
             refresh()
             reload()
           }}

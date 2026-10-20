@@ -259,6 +259,17 @@ class Reservation(Document):
 		self.validate_cancellation_path()
 		self.apply_negotiated_rate_plan()
 		self.apply_pricing()
+		self.stamp_room_assignment()
+
+	def stamp_room_assignment(self):
+		"""Who put the guest in this room, and when. Every writer that
+		changes the room (booking, allocator, check-in, room move, upgrade)
+		goes through this save, so the record follows the room: a later move
+		is stamped with whoever made it."""
+		old = None if self.is_new() else self.get_doc_before_save()
+		if self.room and self.room != (old.room if old else None):
+			self.room_assigned_by = frappe.session.user
+			self.room_assigned_at = now_datetime()
 
 	def apply_negotiated_rate_plan(self):
 		"""A new booking for a company with no rate plan of its own takes
@@ -752,7 +763,10 @@ class Reservation(Document):
 
 	def handle_check_in(self):
 		rooms = self._occupied_rooms()
-		self.db_set("actual_check_in", now_datetime(), update_modified=False)
+		at = now_datetime()
+		self.db_set({"actual_check_in": at, "checked_in_at": at,
+		             "checked_in_by": frappe.session.user},
+		            update_modified=False)
 		for room in rooms:
 			frappe.db.set_value("Room", room, "occupancy_status", "Occupied")
 		from kamra.folio import open_folio

@@ -179,6 +179,12 @@ def minor_id_kept(pack, nationality: str | None) -> bool:
 	return bool(nat) and nat != home
 
 
+def registration_card_required(pack) -> bool:
+	"""Does registration law here expect a signed registration card (GRC)
+	for every stay? The default for the guided check-in's GRC step."""
+	return bool(getattr(pack, "REGISTRATION_CARD_REQUIRED", False))
+
+
 def privacy_terms(pack) -> dict:
 	"""Who a guest complains to, and the statutory guest report (if any)
 	the hotel files - for the privacy notice where data is collected."""

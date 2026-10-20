@@ -109,62 +109,116 @@ CHECKOUT_DEFAULT_STEPS = [
 	},
 ]
 
+# The guided check-in, one screen per step. A Required step (is_blocking)
+# cannot be skipped at the desk AND check_in refuses until it is done; the
+# property changes which are required in Settings > Front desk > Check-in
+# steps. assign_room is always required (no room, no check-in). The
+# registration card's default follows the country pack (required in India).
+CHECKIN_STEP_KEYS = (
+	"guest_ids", "billing_check", "assign_room", "security_deposit",
+	"registration_card", "keys", "stay_info", "guest_requests", "room_charges",
+)
+CHECKIN_ALWAYS_REQUIRED = ("assign_room",)
+
 CHECKIN_DEFAULT_STEPS = [
 	{
-		"step_key": "verify_identity",
-		"step_type": "auto_check",
-		"title": "Verify identity",
-		"instruction": "Confirm ID is on file (or capture it on the GRC). Check-in is never blocked for a missing ID.",
-		"prompt_to_guest": "May I see a government ID for the registration card?",
-		"is_blocking": 0,
+		"step_key": "guest_ids",
+		"step_type": "action",
+		"title": "Guest and IDs",
+		"instruction": "Check the guest's name and phone, then the ID for the guest and everyone staying. If they checked in online, review what they sent.",
+		"prompt_to_guest": "May I see an ID for each guest staying in the room?",
+		"is_blocking": 1,
 		"sequence": 10,
 	},
 	{
-		"step_key": "confirm_registration",
+		"step_key": "billing_check",
 		"step_type": "confirm",
-		"title": "Confirm registration details",
-		"instruction": "Phone, address, and occupants should be on the GRC before the night audit.",
+		"title": "Who pays",
+		"instruction": "Confirm who pays for the room and the extras: the OTA, the guest, the company or the group.",
 		"prompt_to_guest": "",
-		"is_blocking": 0,
+		"is_blocking": 1,
 		"sequence": 20,
 	},
 	{
-		"step_key": "confirm_room",
+		"step_key": "assign_room",
 		"step_type": "action",
-		"title": "Confirm room is ready",
-		"instruction": "Prefer a Clean or Inspected room. If Dirty, warn the guest: HK will see the flip to occupied.",
+		"title": "Room",
+		"instruction": "Give a clean, empty room of the booked type, or keep the room already assigned.",
 		"prompt_to_guest": "",
-		"is_blocking": 0,
+		"is_blocking": 1,
 		"sequence": 30,
 	},
 	{
-		"step_key": "collect_deposit",
+		"step_key": "security_deposit",
 		"step_type": "action",
-		"title": "Collect advance / deposit",
-		"instruction": "Take any outstanding advance or security deposit before handing keys.",
+		"title": "Deposit and advance",
+		"instruction": "Take the security deposit (or waive it with a reason) and any advance the booking still owes.",
 		"prompt_to_guest": "",
-		"is_blocking": 0,
+		"is_blocking": 1,
 		"sequence": 40,
 	},
 	{
-		"step_key": "note_requests",
-		"step_type": "confirm",
-		"title": "Note special requests",
-		"instruction": "Read special requests aloud and confirm with the guest.",
-		"prompt_to_guest": "",
+		"step_key": "registration_card",
+		"step_type": "action",
+		"title": "Registration card",
+		"instruction": "Show or print the registration card and have the guest sign it.",
+		"prompt_to_guest": "Please check your details and sign here.",
 		"is_blocking": 0,
 		"sequence": 50,
 	},
 	{
-		"step_key": "welcome",
-		"step_type": "ask_guest",
-		"title": "Welcome & keys",
-		"instruction": "Hand over keys / access, Wi‑Fi, breakfast times, and wish them a pleasant stay.",
-		"prompt_to_guest": "Welcome, here are your keys. Breakfast is served as noted; please let us know if you need anything.",
+		"step_key": "keys",
+		"step_type": "action",
+		"title": "Keys",
+		"instruction": "Make the room keys and note how many you gave.",
+		"prompt_to_guest": "",
 		"is_blocking": 0,
 		"sequence": 60,
 	},
+	{
+		"step_key": "stay_info",
+		"step_type": "ask_guest",
+		"title": "Wi-Fi and stay info",
+		"instruction": "Tell the guest the Wi-Fi, breakfast and check-out times. Print it or send it on WhatsApp.",
+		"prompt_to_guest": "Here is our Wi-Fi and the times for breakfast and check-out.",
+		"is_blocking": 0,
+		"sequence": 70,
+	},
+	{
+		"step_key": "guest_requests",
+		"step_type": "ask_guest",
+		"title": "Anything needed?",
+		"instruction": "Ask if they need anything: an extra bed, a wake-up call, an airport drop.",
+		"prompt_to_guest": "Is there anything we can arrange for your stay?",
+		"is_blocking": 0,
+		"sequence": 80,
+	},
+	{
+		"step_key": "room_charges",
+		"step_type": "confirm",
+		"title": "Charges to the room",
+		"instruction": "Decide if the guest can charge the restaurant, laundry and minibar to the room.",
+		"prompt_to_guest": "",
+		"is_blocking": 1,
+		"sequence": 90,
+	},
 ]
+
+
+def checkin_default_steps(property: str | None = None) -> list[dict]:
+	"""The default check-in steps for a property: the registration card is
+	required where the country pack says registration law expects one."""
+	from kamra.localization import pack_for, registration_card_required
+	try:
+		grc = registration_card_required(pack_for(property))
+	except Exception:
+		grc = False
+	return [
+		{**s, "is_blocking": 1 if grc else 0} if s["step_key"] == "registration_card"
+		else dict(s)
+		for s in CHECKIN_DEFAULT_STEPS
+	]
+
 
 CANCEL_DEFAULT_STEPS = [
 	{
@@ -540,79 +594,122 @@ def evaluate_checkout_step(step: dict, context: dict) -> dict:
 
 
 def evaluate_checkin_step(step: dict, context: dict) -> dict:
-	"""Evaluate one check-in SOP step. Never hard-blocks departure of check-in."""
-	key = (step.get("step_key") or "").strip()
-	ready = context.get("readiness") or {}
-	room = context.get("room_assigned") or context.get("chosen_room") or {}
-	suggestion = context.get("suggestion") or {}
-	deposit = context.get("deposit") or {}
-	requests = (context.get("special_requests") or "").strip()
-	hk = room.get("housekeeping_status") or ""
+	"""Evaluate one guided check-in step against kamra.checkin's context.
 
-	state = "todo"
+	A step is done when the desk recorded it (who, when) and what it stands
+	for is still true: an ID is on file, the deposit is held or waived, the
+	room is set. A step that does not apply to this stay (no deposit policy
+	and nothing owed, no guest info set up) comes back relevant=0 and done,
+	so the flow skips it. Required steps never come back skipped: the
+	server refuses to skip them (kamra.checkin) and check_in refuses until
+	they are done. Amounts come from the context only."""
+	key = (step.get("step_key") or "").strip()
+	symbol = context.get("currency_symbol") or ""
+	records = context.get("records") or {}
+	rec = records.get(key) or {}
+	blocking = bool(step.get("is_blocking"))
+	relevant = True
+	facts = True
 	tip = (step.get("instruction") or "").strip()
 
-	if key == "verify_identity":
-		if ready.get("id_on_file"):
-			tip = _("ID is on file: confirm it matches the guest at the desk.")
-			state = "done"
+	if key == "guest_ids":
+		ids = context.get("ids") or {}
+		facts = bool(ids.get("ok"))
+		missing = ids.get("missing") or []
+		if ids.get("online"):
+			tip = _("The guest checked in online. Review what they sent, then confirm.")
+		elif missing:
+			tip = _("ID still needed for: {0}.").format(", ".join(missing))
 		else:
-			tip = _("No ID on file yet: capture it on the GRC (check-in still allowed).")
-			state = "todo"
+			tip = _("IDs are on file. Check them against the guest at the desk.")
 
-	elif key == "confirm_registration":
-		missing = []
-		if not ready.get("phone"):
-			missing.append(_("phone"))
-		if not ready.get("address_on_file"):
-			missing.append(_("address"))
-		if missing:
-			tip = _("Still missing on the GRC: {0}.").format(", ".join(missing))
-			state = "todo"
-		else:
-			tip = _("Registration details look complete.")
-			state = "done"
+	elif key == "billing_check":
+		billing = context.get("billing") or {}
+		label = billing.get("payer_label") or ""
+		due = flt(billing.get("balance_due") or 0)
+		if label and due > 0.009:
+			tip = _("{0}. Still to pay: {1}.").format(label, format_money(symbol, due))
+		elif label:
+			tip = _("{0}. Nothing to pay now.").format(label)
 
-	elif key == "confirm_room":
-		num = room.get("room_number") or suggestion.get("room_number")
-		if not num:
-			tip = _("Pick a room before check-in.")
-			state = "todo"
+	elif key == "assign_room":
+		room = context.get("room") or {}
+		facts = bool(room.get("room_number") or room.get("entire_place"))
+		num = room.get("room_number")
+		hk = room.get("housekeeping_status") or ""
+		if room.get("entire_place"):
+			tip = _("Whole place: the guest gets every room as one unit.")
+		elif not num:
+			tip = _("Pick a clean, empty room of the booked type.")
 		elif hk == "Dirty":
-			tip = _("Room {0} is Dirty: warn the guest; HK will see it flip to occupied.").format(num)
-			state = "todo"
-		elif hk in ("Clean", "Inspected"):
-			tip = _("Room {0} is {1}: ready to hand over.").format(num, _(hk))
-			state = "done"
+			tip = _("Room {0} is not cleaned yet. Pick a clean room or ask housekeeping first.").format(num)
 		else:
-			tip = _("Room {0} · {1}.").format(num, _(hk) if hk else _("unassigned"))
-			state = "todo"
+			tip = _("Room {0} is ready.").format(num)
 
-	elif key == "collect_deposit":
-		due = flt(deposit.get("due") or 0)
-		can_take = bool(deposit.get("can_take"))
-		if can_take and due > 0.009:
-			symbol = context.get("currency_symbol") or ""
-			tip = _("Collect advance / deposit of {0} before handing keys.").format(
-				format_money(symbol, due))
-			state = "todo"
+	elif key == "security_deposit":
+		dep = context.get("deposit") or {}
+		relevant = bool(dep.get("applies"))
+		facts = bool(dep.get("satisfied"))
+		sec_due = flt(dep.get("security_due") or 0)
+		adv_due = flt(dep.get("advance_due") or 0)
+		parts = []
+		if sec_due > 0.009:
+			parts.append(_("security deposit {0}").format(format_money(symbol, sec_due)))
+		if adv_due > 0.009:
+			parts.append(_("advance {0}").format(format_money(symbol, adv_due)))
+		if parts:
+			tip = _("Still to take: {0}.").format(", ".join(parts))
 		else:
-			tip = _("No deposit due at check-in.")
-			state = "done"
+			tip = _("Deposit is taken or waived.")
 
-	elif key == "note_requests":
+	elif key == "registration_card":
+		grc = context.get("grc") or {}
+		if grc.get("signed"):
+			tip = _("The card is signed.")
+		else:
+			tip = _("Show the card to the guest and have them sign it.")
+
+	elif key == "keys":
+		keys = context.get("keys") or {}
+		if keys.get("count"):
+			tip = _("{0} key(s) issued.").format(keys.get("count"))
+
+	elif key == "stay_info":
+		relevant = bool((context.get("stay_info") or {}).get("configured"))
+
+	elif key == "guest_requests":
+		requests = (context.get("special_requests") or "").strip()
 		if requests:
-			tip = _("Special requests: {0}").format(requests)
-			state = "todo"
-		else:
-			tip = _("No special requests on this booking.")
-			state = "done"
+			tip = _("Booking notes: {0}").format(requests)
 
-	elif key == "welcome":
-		tip = step.get("prompt_to_guest") or tip
+	elif key == "room_charges":
+		rc = context.get("room_charges") or {}
+		if rc.get("recommend_block"):
+			tip = _("OTA prepaid stay with nothing held for extras. Blocking charges to the room is safer.")
+		else:
+			tip = _("Charges to the room are allowed unless you block them.")
+
+	if not relevant:
+		state = "done"
+	elif key == "assign_room" and facts:
+		# the room itself is the record (room_assigned_by / _at)
+		state = "done"
+	elif rec.get("state") == "done" and facts:
+		state = "done"
+	elif rec.get("state") == "skipped" and not blocking:
+		state = "skipped"
+	else:
 		state = "todo"
 
-	return {**step, "state": state, "tip": tip}
+	return {
+		**step,
+		"state": state,
+		"tip": tip,
+		"relevant": 1 if relevant else 0,
+		"facts_ok": 1 if facts else 0,
+		"done_by": rec.get("by"),
+		"done_at": rec.get("at"),
+	}
 
 
 def evaluate_cancel_step(step: dict, context: dict) -> dict:
@@ -984,6 +1081,8 @@ def ensure_default_sops(property: str) -> int:
 	for key, (title, steps) in DEFAULT_SOP_SEEDS.items():
 		if frappe.db.exists("SOP Template", {"property": property, "key": key}):
 			continue
+		if key == "checkin":
+			steps = checkin_default_steps(property)
 		doc = frappe.get_doc({
 			"doctype": "SOP Template",
 			"property": property,
@@ -1020,6 +1119,8 @@ def _template_steps(property: str, key: str) -> tuple[dict | None, list[dict]]:
 		seed = DEFAULT_SOP_SEEDS.get(key)
 		if seed:
 			title, steps = seed
+			if key == "checkin":
+				steps = checkin_default_steps(property)
 			return (
 				{"name": None, "key": key, "title": title, "active": 1},
 				list(steps),
