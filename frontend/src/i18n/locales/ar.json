@@ -813,7 +813,7 @@
   "Settle / post to room": "تسوية / ترحيل للغرفة",
   "Settle bill": "تسوية الفاتورة",
   "Shared": "مشترك",
-  "Shared playground — not your hotel. Data is wiped every night.": "ملعب مشترك — ليس فندقك. تُمسح البيانات كل ليلة.",
+  "Shared playground, not your hotel. Data is wiped every night.": "ملعب مشترك، ليس فندقك. تُمسح البيانات كل ليلة.",
   "Shared playground, not a live hotel. Play data is wiped every night and the sample hotel is seeded again. Don't put real guests, payments or API keys here.": "ملعب مشترك، ليس فندقاً حياً. تُمسح بيانات التجربة كل ليلة ويُعاد تهيئة الفندق النموذجي. لا تضع ضيوفًا أو مدفوعات أو مفاتيح API حقيقية هنا.",
   "Shift Handover": "تسليم الوردية",
   "Shift Report": "تقرير الوردية",
@@ -1661,5 +1661,8 @@
   "How was your stay with us? Is there anything we could have done better?": "كيف كانت إقامتك معنا؟ هل هناك ما كان بإمكاننا فعله بشكل أفضل؟",
   "Wish farewell": "ودّع الضيف",
   "Thank the guest, hand over any deposit refund, and wish them a safe journey.": "اشكر الضيف، وسلّمه أي مبلغ تأمين مسترد، وتمنَّ له رحلة آمنة.",
-  "Thank you for staying with us, safe travels, and we hope to welcome you again.": "شكراً لإقامتك معنا، نتمنى لك رحلة آمنة ونأمل أن نستقبلك مجدداً."
+  "Thank you for staying with us, safe travels, and we hope to welcome you again.": "شكراً لإقامتك معنا، نتمنى لك رحلة آمنة ونأمل أن نستقبلك مجدداً.",
+  "Room {room}": "غرفة {room}",
+  "No room yet": "لا غرفة بعد",
+  "Leaves {when}": "يغادر {when}"
 }

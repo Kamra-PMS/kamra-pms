@@ -1292,7 +1292,7 @@ Settle the guest's bill first (Payment step).,Settle the guest's bill first (Pay
 Settle to continue,Settle to continue,سوِّ الحساب للمتابعة,components/CheckOutDialog.tsx,,translated
 SGST ({rate}%),SGST ({rate}%),SGST ({rate}%),screens/POS.tsx,rate,translated
 Shared,Shared,مشترك,screens/Setup.tsx,,translated
-Shared playground — not your hotel. Data is wiped every night.,Shared playground — not your hotel. Data is wiped every night.,ملعب مشترك — ليس فندقك. تُمسح البيانات كل ليلة.,AppShell.tsx,,translated
+Shared playground, not your hotel. Data is wiped every night.,Shared playground, not your hotel. Data is wiped every night.,ملعب مشترك — ليس فندقك. تُمسح البيانات كل ليلة.,AppShell.tsx,,translated
 "Shared playground, not a live hotel. Play data is wiped every night and the sample hotel is seeded again. Don't put real guests, payments or API keys here.","Shared playground, not a live hotel. Play data is wiped every night and the sample hotel is seeded again. Don't put real guests, payments or API keys here.",ملعب مشترك، ليس فندقاً حياً. تُمسح بيانات التجربة كل ليلة ويُعاد تهيئة الفندق النموذجي. لا تضع ضيوفًا أو مدفوعات أو مفاتيح API حقيقية هنا.,screens/Login.tsx,,translated
 Shift report,Shift report,تقرير الوردية,screens/CashierTill.tsx,,translated
 Shift Report,Shift Report,تقرير الوردية,screens/CashierShiftReport.tsx,,translated

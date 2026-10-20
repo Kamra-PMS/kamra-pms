@@ -58,9 +58,6 @@ export function StatCard({
           >
             {value}
           </div>
-          {sub ? (
-            <div className="mt-0.5 text-xs text-zinc-400">{sub}</div>
-          ) : null}
         </div>
         {spark ? (
           <div className="shrink-0">
@@ -68,6 +65,8 @@ export function StatCard({
           </div>
         ) : null}
       </div>
+      {/* full card width, so it never wraps into a thin column beside the chart */}
+      {sub ? <div className="mt-1 text-xs text-zinc-400">{sub}</div> : null}
 
       {progress !== undefined ? (
         <div className="mt-3">
