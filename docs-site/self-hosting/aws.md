@@ -2,7 +2,7 @@
 
 For a single hotel, prefer [Hostinger](/self-hosting/hostinger) or
 [DigitalOcean](/self-hosting/digitalocean). Use AWS when the property (or
-group) already lives in an AWS account — or when buying through
+group) already lives in an AWS account - or when buying through
 [AWS Marketplace](/self-hosting/marketplace/hyperscalers) later.
 
 ## Manual EC2
@@ -23,7 +23,7 @@ ssh ubuntu@<server-ip>   # or root, depending on AMI
 curl -fsSL https://raw.githubusercontent.com/Kamra-PMS/kamra-pms/main/deploy/install.sh | bash
 ```
 
-Site domain, admin email, admin password — no default.
+Site domain, admin email, admin password - no default.
 
 ### 4. TLS
 

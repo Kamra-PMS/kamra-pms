@@ -1,6 +1,6 @@
 ---
 title: ERPNext and Frappe HR with Kamra
-description: Optional same-site accounting and HR — Marketplace, own server, and what each system owns.
+description: Optional same-site accounting and HR - Marketplace, own server, and what each system owns.
 ---
 
 # ERPNext and Frappe HR with Kamra
@@ -10,7 +10,7 @@ Kamra is the **hotel** system (rooms, folios, cashier, night audit, POS).
 accounts, invoicing, bank, tax reports). [Frappe HR](https://frappe.io/hr)
 (`hrms`) is the optional **people** system (employees, leave, payroll).
 
-You can run all three on **one Frappe site** — same login, same Apps
+You can run all three on **one Frappe site** - same login, same Apps
 grid (`/apps`), different tiles for different jobs. Kamra’s Marketplace
 install does **not** force ERPNext or HR: most hotels already use Tally,
 Zoho, Xero, or a local accountant.
@@ -29,14 +29,14 @@ does not replace it.
 
 ## Packaging (one Marketplace app, three practical setups)
 
-1. **PMS only** — install Kamra (+ `payments`). Use Finance → Accounting
+1. **PMS only** - install Kamra (+ `payments`). Use Finance → Accounting
    Export for your existing ledger.
-2. **PMS + books** — same site, also install **ERPNext**.
-3. **PMS + books + HR** — same site, also install **Frappe HR** (after
+2. **PMS + books** - same site, also install **ERPNext**.
+3. **PMS + books + HR** - same site, also install **Frappe HR** (after
    ERPNext).
 
 Country or compliance apps (for example India Compliance) install on the
-same site when you need them — they are not part of the Kamra package.
+same site when you need them - they are not part of the Kamra package.
 
 ## Where to find the apps after install
 
@@ -58,7 +58,7 @@ To add books and HR on **that same site**:
    [Frappe Cloud marketplace](/self-hosting/frappe-cloud)).
 2. Marketplace → install **Kamra**. Complete `/kamra/setup`.
 3. On the **same site**, install **ERPNext** from Marketplace / Site Apps
-   (use a v16-compatible release — same major as your bench).
+   (use a v16-compatible release - same major as your bench).
 4. Optionally install **Frappe HR** (`hrms`) the same way (it depends on
    ERPNext).
 5. Run ERPNext’s company / chart-of-accounts setup, then open `/apps` and
@@ -100,7 +100,7 @@ For **Docker** images built with only `payments` + `kamra`, either:
 Plan **more RAM** when ERPNext + HR share the box (8 GB is a safer
 floor for a busy property than the Kamra-only 4 GB minimum).
 
-## Own server — without ERPNext
+## Own server - without ERPNext
 
 If your accountant stays on Tally, Zoho, or another ledger:
 
@@ -133,4 +133,4 @@ HR is installed.
 - [Frappe Cloud marketplace](/self-hosting/frappe-cloud)
 - [Install with bench](/self-hosting/bench)
 - [Quickstart (Docker)](/quickstart)
-- [Features — billing & export](/features)
+- [Features - billing & export](/features)

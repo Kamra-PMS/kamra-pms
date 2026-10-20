@@ -19,6 +19,9 @@
   "priority",
   "minimum_nights",
   "non_refundable",
+  "full_payment",
+  "no_small_group",
+  "is_holiday",
   "disabled",
   "days_of_week"
  ],
@@ -100,6 +103,27 @@
   },
   {
    "default": "0",
+   "fieldname": "full_payment",
+   "fieldtype": "Check",
+   "label": "Full Payment On Booking",
+   "description": "A stay touching these dates pays the whole amount when booking online, instead of the property's usual advance."
+  },
+  {
+   "default": "0",
+   "fieldname": "no_small_group",
+   "fieldtype": "Check",
+   "label": "No Small-group Rate",
+   "description": "On these dates a small party pays the house rate, not the per-person small-group rate - for holidays priced like a weekend."
+  },
+  {
+   "default": "0",
+   "fieldname": "is_holiday",
+   "fieldtype": "Check",
+   "label": "Holiday / Long Weekend",
+   "description": "Marks these dates as a holiday in quotes, so the booking page and agents can say why the rules differ."
+  },
+  {
+   "default": "0",
    "fieldname": "disabled",
    "fieldtype": "Check",
    "label": "Disabled"
@@ -114,7 +138,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-07-04 16:01:36.680133",
+ "modified": "2026-10-20 15:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Season",

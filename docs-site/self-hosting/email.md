@@ -1,6 +1,6 @@
 # Email (SMTP) setup
 
-Kamra uses Frappe's built-in email stack — no custom mailer. You need one
+Kamra uses Frappe's built-in email stack - no custom mailer. You need one
 **outgoing** account (confirmations, invoices, briefings) and optionally
 an **incoming** one (replies → Frappe inbox).
 
@@ -23,7 +23,7 @@ Send a test from **Email Account → Send Test Email**.
 
 ## 3. Deliverability (do not skip)
 
-Add **SPF, DKIM and DMARC** DNS records for the sending domain — without
+Add **SPF, DKIM and DMARC** DNS records for the sending domain - without
 them, booking confirmations land in spam. Your SMTP provider documents
 the exact records.
 

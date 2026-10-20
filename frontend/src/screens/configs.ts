@@ -89,8 +89,9 @@ export const roomTypesConfig: ScreenConfig = {
 export const ratePlansConfig: ScreenConfig = {
   doctype: "Rate Plan",
   title: "Rate Plans",
-  description: "Sellable plans (BAR, non-refundable, corporate) that adjust the room total.",
-  searchFields: ["plan_name"],
+  description:
+    "Sellable plans (BAR, non-refundable, corporate). Clear Disabled to publish a plan at booking; tick it to unpublish.",
+  searchFields: ["rate_plan_name", "code"],
   pageSize: 25,
   propertyScoped: true,
   columns: [
@@ -99,6 +100,7 @@ export const ratePlansConfig: ScreenConfig = {
     { field: "modifier_type", label: "Modifier" },
     { field: "modifier_value", label: "Value" },
     { field: "is_default", label: "Default" },
+    { field: "disabled", label: "Status", statusCheck: true },
   ],
   form: [
     { field: "rate_plan_name", label: "Name", type: "data", required: true },
@@ -107,14 +109,15 @@ export const ratePlansConfig: ScreenConfig = {
     { field: "modifier_value", label: "Modifier value (-10 = 10% off)", type: "float" },
     { field: "cancellation_policy", label: "Cancellation policy", type: "data" },
     { field: "is_default", label: "Default plan", type: "check" },
-    { field: "disabled", label: "Disabled", type: "check" },
+    { field: "disabled", label: "Disabled (unpublished)", type: "check", hint: "Tick to unpublish; clear to activate at booking" },
   ],
 }
 
 export const seasonsConfig: ScreenConfig = {
   doctype: "Season",
   title: "Seasons",
-  description: "Date ranges that lift or set nightly rates. Highest priority wins.",
+  description:
+    "Date ranges that lift or set nightly rates. Highest priority wins. Toggle Disabled to activate or pause a season.",
   propertyScoped: true,
   orderBy: "start_date asc",
   columns: [
@@ -125,6 +128,7 @@ export const seasonsConfig: ScreenConfig = {
     { field: "adjustment_value", label: "Value" },
     { field: "days_of_week", label: "Days" },
     { field: "priority", label: "Priority" },
+    { field: "disabled", label: "Status", statusCheck: true },
   ],
   form: [
     { field: "season_name", label: "Name", type: "data", required: true },
@@ -137,15 +141,19 @@ export const seasonsConfig: ScreenConfig = {
     { field: "priority", label: "Priority", type: "int" },
     { field: "minimum_nights", label: "Minimum nights", type: "int", hint: "Shortest stay allowed on these dates. 0 = no minimum" },
     { field: "non_refundable", label: "Non-refundable", type: "check", hint: "A stay touching these dates cannot be cancelled free of charge" },
-    { field: "disabled", label: "Disabled", type: "check" },
+    { field: "full_payment", label: "Full payment on booking", type: "check", hint: "Online bookings on these dates pay the whole amount, not the usual advance" },
+    { field: "no_small_group", label: "No small-group rate", type: "check", hint: "Small parties pay the house rate on these dates, as on a weekend" },
+    { field: "is_holiday", label: "Holiday / long weekend", type: "check", hint: "Quotes say these are holiday dates" },
+    { field: "disabled", label: "Disabled", type: "check", hint: "Tick to deactivate; clear to activate" },
   ],
 }
 
 export const vouchersConfig: ScreenConfig = {
   doctype: "Discount Voucher",
   title: "Vouchers",
-  description: "Discount codes guests or agents can apply at booking.",
-  searchFields: ["code"],
+  description:
+    "Discount codes guests or agents can apply at booking. Toggle Disabled to activate or deactivate a code.",
+  searchFields: ["voucher_code"],
   pageSize: 25,
   propertyScoped: true,
   columns: [
@@ -155,6 +163,8 @@ export const vouchersConfig: ScreenConfig = {
     { field: "valid_to", label: "Valid until" },
     { field: "min_nights", label: "Min nights" },
     { field: "times_used", label: "Used" },
+    { field: "max_uses", label: "Max uses" },
+    { field: "disabled", label: "Status", statusCheck: true },
   ],
   form: [
     { field: "voucher_code", label: "Code", type: "data", required: true },
@@ -165,7 +175,7 @@ export const vouchersConfig: ScreenConfig = {
     { field: "min_nights", label: "Minimum nights", type: "int" },
     { field: "max_uses", label: "Max uses (0 = unlimited)", type: "int" },
     { field: "times_used", label: "Times used", type: "readonly" },
-    { field: "disabled", label: "Disabled", type: "check" },
+    { field: "disabled", label: "Disabled", type: "check", hint: "Tick to deactivate; clear to activate" },
   ],
 }
 
@@ -472,7 +482,7 @@ export const guardrailsConfig: ScreenConfig = {
   doctype: "Rate Guardrail",
   title: "Rate Guardrails",
   description:
-    "Owner-set floor and ceiling. No rate move - human or AI agent - can price outside these rails.",
+    "Owner-set floor and ceiling. No rate move - human or AI agent - can price outside these rails. Toggle Disabled to activate or pause a rail.",
   propertyScoped: true,
   columns: [
     { field: "name", label: "Rail" },
@@ -480,13 +490,14 @@ export const guardrailsConfig: ScreenConfig = {
     { field: "floor_price", label: `Floor ${cur()}` },
     { field: "ceiling_price", label: `Ceiling ${cur()}` },
     { field: "days_of_week", label: "Days" },
+    { field: "disabled", label: "Status", statusCheck: true },
   ],
   form: [
     { field: "room_type", label: "Room type (blank = all)", type: "link", linkDoctype: "Room Type" },
     { field: "floor_price", label: "Floor price / night", type: "currency", required: true },
     { field: "ceiling_price", label: "Ceiling price / night", type: "currency", required: true },
     { field: "days_of_week", label: "Days of week (e.g. fri, sat)", type: "data", hint: "Blank = every day. Lets a weekend floor sit above the midweek one" },
-    { field: "disabled", label: "Disabled", type: "check" },
+    { field: "disabled", label: "Disabled", type: "check", hint: "Tick to deactivate; clear to activate" },
   ],
 }
 
@@ -646,6 +657,41 @@ export const outletsConfig: ScreenConfig = {
   ],
 }
 
+export const ingredientsConfig: ScreenConfig = {
+  doctype: "Ingredient",
+  title: "Ingredients",
+  description:
+    "The kitchen store cupboard - name, unit, category and cost. Stock movements live under Kitchen Inventory; recipes under Menu → Recipes.",
+  searchFields: ["ingredient_name", "category"],
+  filters: [
+    { field: "is_active", label: "Active", options: ["1", "0"] },
+  ],
+  pageSize: 50,
+  propertyScoped: true,
+  orderBy: "category, ingredient_name",
+  columns: [
+    { field: "ingredient_name", label: "Ingredient" },
+    { field: "category", label: "Category" },
+    { field: "uom", label: "Unit", badge: true },
+    { field: "cost_per_unit", label: `Cost / unit` },
+    { field: "is_active", label: "Active", badge: true },
+  ],
+  form: [
+    { field: "ingredient_name", label: "Ingredient", type: "data", required: true },
+    { field: "category", label: "Category", type: "data",
+      hint: "Produce, Dairy, Dry Goods, Bar - free text" },
+    { field: "uom", label: "Unit", type: "select", required: true,
+      options: ["kg", "g", "L", "ml", "pc", "bottle", "packet"],
+      hint: "One unit only. Recipes and purchases both use it - buy and cook in the same unit (e.g. define in g if you cook in g)." },
+    { field: "cost_per_unit", label: "Cost / unit", type: "currency",
+      hint: "Last known cost, used to value wastage. Indicative only - not FIFO and not on the books." },
+    { field: "gst_rate", label: "Input GST %", type: "float",
+      hint: "Tax paid when buying this." },
+    { field: "is_active", label: "Active", type: "check",
+      hint: "Turn off instead of deleting when a recipe or stock history uses it." },
+  ],
+}
+
 export const menuItemsConfig: ScreenConfig = {
   doctype: "Menu Item",
   title: "Menu",
@@ -667,7 +713,7 @@ export const menuItemsConfig: ScreenConfig = {
     { field: "category", label: "Category", type: "data" },
     { field: "price", label: "Price", type: "currency", required: true },
     { field: "image", label: "Photo", type: "image",
-      hint: "800×600px landscape JPG/WebP, under 500 KB — shows on the POS card and the guest QR menu" },
+      hint: "800×600px landscape JPG/WebP, under 500 KB — shows on the POS card" },
     { field: "description", label: "Description", type: "data" },
     { field: "prep_station", label: "Prep station", type: "select", options: ["Kitchen", "Bar"] },
     { field: "is_veg", label: "Vegetarian", type: "check" },

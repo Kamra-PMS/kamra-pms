@@ -12,7 +12,6 @@ import {
   ExternalLink,
   FileCheck2,
   Globe,
-  KeyRound,
   Landmark,
   LayoutGrid,
   ListTodo,
@@ -33,12 +32,13 @@ import { useT } from "../../lib/i18n"
 import { useLocale } from "../../lib/money"
 import { serverError } from "../../lib/resource"
 import { cn } from "../../lib/utils"
-import { ModulesPage, RolesPage, StaffPage } from "./AccessPages"
+import { ModulesPage, StaffPage } from "./AccessPages"
 import { settingsSchema, setModuleEnabled, type SettingsSchema, type SettingsModule } from "./api"
 import {
   AgentAccessCard,
   AiSection,
   AppearanceCard,
+  CheckInStepsCard,
   HurdleRatesCard,
   KamraVerifyCard,
   LaundryRatesCard,
@@ -81,10 +81,7 @@ interface CustomPage {
 const CUSTOM_PAGES: CustomPage[] = [
   { id: "staff", title: "Staff & access", group: "access", icon: Users,
     description: "Who can sign in, what each person can do and which properties they reach.",
-    keywords: "users people invite roles permissions deactivate cashier pin reset team employees" },
-  { id: "roles", title: "Roles & permissions", group: "access", icon: KeyRound,
-    description: "What each role opens and which settings it may change.",
-    keywords: "role matrix permission rights who can" },
+    keywords: "users people invite roles permissions deactivate cashier pin reset team employees matrix rights" },
   { id: "modules", title: "Modules", group: "access", icon: ToggleRight,
     description: "Switch off the parts of Kamra this property doesn't run.",
     keywords: "apps enable disable switch off restaurant banquets events housekeeping" },
@@ -253,9 +250,8 @@ export default function SettingsHub() {
   const focus = search.get("focus")
 
   return (
-    // fixed width: the shell centres its page with auto margins, which would
-    // otherwise shrink a short settings page to its content
-    <div className="w-[72rem] max-w-full lg:grid lg:grid-cols-[15rem_minmax(0,1fr)] lg:gap-8">
+    // Full width of the shell — list and settings pages should use the desk.
+    <div className="w-full lg:grid lg:grid-cols-[15rem_minmax(0,1fr)] lg:gap-8">
       {/* rail */}
       <aside className="mb-6 lg:mb-0">
         <div className="lg:sticky lg:top-20">
@@ -421,6 +417,7 @@ export default function SettingsHub() {
               )
             }
           >
+            {mod.id === "front-desk" && <CheckInStepsCard property={property} />}
             {mod.id === "housekeeping" && <LaundryRatesCard property={property} />}
             {mod.id === "revenue" && <HurdleRatesCard property={property} />}
             {mod.id === "fnb" && <KitchenPrintersCard property={property} />}
@@ -502,7 +499,8 @@ function CustomPageBody({
     case "staff":
       return <StaffPage />
     case "roles":
-      return <RolesPage modules={schema.modules} />
+      // Roles are fixed in code; assignment lives on Staff & access.
+      return <Navigate to="/settings/staff" replace />
     case "modules":
       return <ModulesPage modules={schema.modules} canToggle={schema.is_admin} onChanged={onModulesChanged} />
     case "payments":

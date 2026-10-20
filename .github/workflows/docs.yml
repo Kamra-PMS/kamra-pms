@@ -1,0 +1,172 @@
+name: Docs
+
+# Build and publish kamrapms.com/docs whenever docs-site (or the generators)
+# change on develop, and whenever a stable Release is published.
+#
+# Versioning:
+#   /docs/           → latest (from develop, or release tip)
+#   /docs/vX.Y.Z/    → frozen snapshot created on each GitHub Release
+#   versions.json    → drives the nav version switcher
+
+on:
+  push:
+    branches: [develop]
+    paths:
+      - "docs-site/**"
+      - "kamra/mcp_tools.py"
+      - "kamra/**/*.py"
+      - ".github/workflows/docs.yml"
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      archive_version:
+        description: "Also freeze this version under /docs/vX.Y.Z/ (optional, e.g. 2.6.16)"
+        required: false
+        default: ""
+
+concurrency:
+  group: docs-publish
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    name: Build and publish docs
+    runs-on: ubuntu-latest
+    if: github.event_name != 'push' || github.ref == 'refs/heads/develop'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'release' && github.event.release.target_commitish || github.sha }}
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: docs-site/package-lock.json
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install docs deps
+        working-directory: docs-site
+        run: npm ci
+
+      - name: Regenerate MCP + API reference from code
+        working-directory: docs-site
+        run: |
+          python3 gen_mcp_tools.py
+          python3 gen_api.py
+
+      - name: Reject em dashes in published markdown
+        run: |
+          if grep -RIn --include='*.md' -e '—' -e '–' docs-site \
+            --exclude-dir=node_modules --exclude-dir=.vitepress --exclude-dir=archives; then
+            echo "Unicode em/en dashes found in docs-site. Use ASCII ' - ' or a colon."
+            exit 1
+          fi
+          echo "No em/en dashes."
+
+      - name: Resolve docs version
+        id: ver
+        run: |
+          if [ "${{ github.event_name }}" = "release" ]; then
+            V="${{ github.event.release.tag_name }}"
+            V="${V#v}"
+            echo "version=$V" >> "$GITHUB_OUTPUT"
+            echo "freeze=true" >> "$GITHUB_OUTPUT"
+          elif [ -n "${{ github.event.inputs.archive_version }}" ]; then
+            V="${{ github.event.inputs.archive_version }}"
+            V="${V#v}"
+            echo "version=$V" >> "$GITHUB_OUTPUT"
+            echo "freeze=true" >> "$GITHUB_OUTPUT"
+          else
+            V=$(python3 -c "import json; print(json.load(open('docs-site/versions.json'))['latest'])")
+            echo "version=$V" >> "$GITHUB_OUTPUT"
+            echo "freeze=false" >> "$GITHUB_OUTPUT"
+          fi
+          echo "Docs version: $(cat "$GITHUB_OUTPUT")"
+
+      - name: Bump versions.json for a new release
+        if: steps.ver.outputs.freeze == 'true'
+        working-directory: docs-site
+        env:
+          DOCS_VERSION: ${{ steps.ver.outputs.version }}
+          DOCS_MAKE_LATEST: "1"
+        run: node scripts/prepare-versions.mjs
+
+      - name: Build latest docs
+        working-directory: docs-site
+        run: node scripts/build.mjs
+
+      - name: Build frozen archive
+        if: steps.ver.outputs.freeze == 'true'
+        working-directory: docs-site
+        env:
+          DOCS_VERSION: ${{ steps.ver.outputs.version }}
+        run: node scripts/build.mjs --archive
+
+      - name: Commit versions.json when it changed
+        if: steps.ver.outputs.freeze == 'true'
+        run: |
+          if git diff --quiet -- docs-site/versions.json; then
+            echo "versions.json unchanged"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs-site/versions.json
+          git commit -m "docs: register v${{ steps.ver.outputs.version }} in the version switcher"
+          # Push to the ref we built from (usually main on release)
+          BRANCH="${{ github.event_name == 'release' && github.event.release.target_commitish || github.ref_name }}"
+          git push origin "HEAD:refs/heads/${BRANCH}"
+
+      - name: Publish to kamrapms.com/docs
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          FREEZE: ${{ steps.ver.outputs.freeze }}
+          VER: ${{ steps.ver.outputs.version }}
+        run: |
+          if [ -z "${DEPLOY_HOST:-}" ] || [ -z "${DEPLOY_USER:-}" ] || [ -z "${DEPLOY_SSH_KEY:-}" ]; then
+            echo "Deploy secrets missing - skipping rsync (build still succeeded)."
+            exit 0
+          fi
+          install -d -m 700 "$HOME/.ssh"
+          install -m 600 /dev/null "$HOME/.ssh/docs_key"
+          printf '%s\n' "$DEPLOY_SSH_KEY" > "$HOME/.ssh/docs_key"
+          eval "$(ssh-agent -s)"
+          ssh-add "$HOME/.ssh/docs_key"
+          mkdir -p ~/.ssh
+          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+          RSYNC_SSH="ssh -i $HOME/.ssh/docs_key -o IdentitiesOnly=yes"
+          DEST="${DEPLOY_USER}@${DEPLOY_HOST}:/var/www/kamrapms.com/docs/"
+
+          # Latest at /docs/, but never wipe archived /docs/v*/ trees
+          rsync -az --delete \
+            --exclude='/v*/' \
+            --exclude='/archives/' \
+            -e "$RSYNC_SSH" \
+            docs-site/.vitepress/dist/ \
+            "$DEST"
+
+          if [ "$FREEZE" = "true" ]; then
+            rsync -az --delete \
+              -e "$RSYNC_SSH" \
+              docs-site/.vitepress/dist-archive/ \
+              "${DEPLOY_USER}@${DEPLOY_HOST}:/var/www/kamrapms.com/docs/v${VER}/"
+            echo "Frozen /docs/v${VER}/"
+          fi
+
+          curl -sS -o /dev/null -w "kamrapms.com/docs/ -> %{http_code}\n" \
+            https://kamrapms.com/docs/
+          if [ "$FREEZE" = "true" ]; then
+            curl -sS -o /dev/null -w "kamrapms.com/docs/v${VER}/ -> %{http_code}\n" \
+              "https://kamrapms.com/docs/v${VER}/"
+          fi

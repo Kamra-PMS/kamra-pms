@@ -85,7 +85,7 @@ class PlanRetention(unittest.TestCase):
 		self.assertEqual(deleted, {5, 50, 51, 6, 60, 61, 999})
 		kept = {v.id for v in plan.keep}
 		for i in (1, 2, 3, 4):
-			self.assertTrue({i, i * 10, i * 10 + 1} <= kept)
+			self.assertLessEqual({i, i * 10, i * 10 + 1}, kept)
 
 	def test_shared_child_digest_is_kept(self):
 		versions, reg = build((1, ["v1.0.1"]), (2, ["v0.9.0"]))

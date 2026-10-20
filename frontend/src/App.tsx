@@ -23,13 +23,13 @@ const PublicCheckin = lazy(() => import("./screens/PublicCheckin"))
 const FolioView = lazy(() => import("./screens/FolioView"))
 const GuestJourney = lazy(() => import("./screens/GuestJourney"))
 const HkApp = lazy(() => import("./screens/HkApp"))
-const QrCodes = lazy(() => import("./screens/QrCodes"))
 const Guests = lazy(() => import("./screens/Guests"))
 const RegistrationCard = lazy(() => import("./screens/RegistrationCard"))
 const CancellationLetter = lazy(() => import("./screens/CancellationLetter"))
 const Setup = lazy(() => import("./screens/Setup"))
 const GoLiveImport = lazy(() => import("./screens/GoLiveImport"))
 const HousekeepingBoard = lazy(() => import("./screens/HousekeepingBoard"))
+const Rooms = lazy(() => import("./screens/Rooms"))
 const Settings = lazy(() => import("./screens/settings/SettingsHub"))
 const SystemHealth = lazy(() => import("./screens/SystemHealth"))
 const BookingEngine = lazy(() => import("./screens/BookingEngine"))
@@ -54,13 +54,13 @@ const POS = lazy(() => import("./screens/POS"))
 const Kitchen = lazy(() => import("./screens/Kitchen"))
 const PosDashboard = lazy(() => import("./screens/PosDashboard"))
 const Inventory = lazy(() => import("./screens/Inventory"))
-const QrMenu = lazy(() => import("./screens/QrMenu"))
 const AccountingExport = lazy(() => import("./screens/AccountingExport"))
 const VoidAllowanceReport = lazy(() => import("./screens/VoidAllowanceReport"))
 const TapeChart = lazy(() => import("./screens/TapeChart"))
 const Tickets = lazy(() => import("./screens/Tickets"))
 const Laundry = lazy(() => import("./screens/Laundry"))
 const MenuItems = lazy(() => import("./screens/MenuItems"))
+const KitchenPrinters = lazy(() => import("./screens/KitchenPrinters"))
 const Today = lazy(() => import("./screens/Today"))
 const ConfiguredScreen = lazy(() => import("./screens/ConfiguredScreen"))
 const CalendarView = lazy(() =>
@@ -194,7 +194,6 @@ export default function App() {
         <Route path="checkin/:token" element={<PublicCheckin />} />
         {/* housekeeping phone app - share the /hk URL with the HK team */}
         <Route path="hk" element={<HkApp />} />
-        <Route path="menu/:outlet" element={<QrMenu />} />
         {/* dedicated login route so signing out changes the URL */}
         <Route path="login" element={<LoginPage />} />
         <Route element={<RequireAuth />}>
@@ -335,16 +334,18 @@ export default function App() {
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="crs" element={<CRS />} />
           <Route path="pos" element={<POS />} />
-          <Route path="qr-codes" element={<QrCodes />} />
           <Route path="pos-dashboard" element={<PosDashboard />} />
           <Route path="kitchen" element={<Kitchen />} />
           <Route path="inventory" element={<Inventory />} />
           <Route path="menu-items" element={<MenuItems />} />
+          <Route path="ingredients" element={<ConfiguredScreen config="ingredientsConfig" />} />
+          <Route path="printers" element={<KitchenPrinters />} />
           <Route path="outlets" element={<ConfiguredScreen config="outletsConfig" />} />
           <Route path="accounting-export" element={<AccountingExport />} />
           <Route path="tickets" element={<Tickets />} />
           <Route path="laundry" element={<Laundry />} />
           <Route path="housekeeping-board" element={<HousekeepingBoard />} />
+          <Route path="room-board" element={<Rooms />} />
           <Route
             path="housekeeping"
             element={<ConfiguredScreen config="housekeepingConfig" />}

@@ -21,7 +21,7 @@ sudo bench setup production $(whoami)   # nginx + supervisor + SSL
 ```
 
 Kamra ships its built front-end, so the product UI is live at `/kamra`
-immediately — no Node server in production. Sign in as `Administrator` or
+immediately - no Node server in production. Sign in as `Administrator` or
 `admin@example.com` with the `--admin-password` you just set.
 
 Continue with the
@@ -30,6 +30,6 @@ Continue with the
 ## Optional: ERPNext and Frappe HR
 
 To add company books (and payroll) on this bench, install ERPNext and
-Frappe HR on the **same site** — do not put them in Kamra’s default
+Frappe HR on the **same site** - do not put them in Kamra’s default
 image unless every property needs them. Commands and roles:
 [ERPNext and Frappe HR with Kamra](/self-hosting/erpnext-hr).

@@ -23,7 +23,7 @@ role-permission, and data-exposure reports as highest priority.
   the calling Frappe user; a bypass of `require_roles` / `_tool_allowed`
   gating is in scope and high severity.
 - Guest-reachable (`allow_guest`) surfaces are `public_api.py` (booking
-  engine, pre-check-in, QR menu) and the inbound webhooks: `payments.razorpay_webhook`,
+  engine, pre-check-in) and the inbound webhooks: `payments.razorpay_webhook`,
   `payments.cashfree_webhook`, `channel_manager.webhook`, `channels.aiosell.reservation_webhook`,
   `agents_channels.voice_webhook` / `messaging_webhook` and `whatsapp.webhook`.
   Every webhook must authenticate against a configured secret and refuse the

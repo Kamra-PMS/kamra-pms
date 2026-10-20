@@ -3097,7 +3097,7 @@
         "kamra.api.check_in"
        ]
       },
-      "description": "",
+      "description": "Check the guest in: the last step of the guided check-in.\n\nRefused while a check-in step the property marks required (Settings >\nFront desk > Check-in steps) is not done for this stay - the ID, who\npays, the deposit, the registration card... - so neither the desk, the\nAPI nor an AI agent can skip them. kamra.checkin.check_in_readiness says\nwhat is missing. Records who checked the guest in and when; a connected\ndoor-lock system then makes the keys recorded in the Keys step.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"room\": \"Your Property-101\"\n}",
@@ -3134,10 +3134,10 @@
         "kamra.api.walk_in"
        ]
       },
-      "description": "Walk-in in one step: book, register the ID, check into the chosen\nroom and take the money - the counter flow that used to be four screens.\n\nIt is the same writers chained (create_booking \u2192 check_in \u2192\nadd_folio_payment), inside one request, so it is all-or-nothing: a\nrefused PIN or a room that just sold rolls the booking back too.\nArrival is always today (calendar, like every new booking - a lagging\nnight audit must not turn walk-ins away); a future stay is a normal\nbooking, not a walk-in.",
+      "description": "Walk-in in one step: book, register the ID, check into the chosen\nroom and take the money - the counter flow that used to be four screens.\n\ndefer_check_in=1 books, assigns the room and takes the money (as an\nadvance) but leaves the stay Confirmed, so the desk finishes it in the\nguided check-in, where the property's required steps apply. Without it\nthe required steps are enforced here as well: the walk-in records the\nsteps it does itself (room, who pays, the ID when given) and refuses,\nrolling the booking back, if another required step is still open.\n\nIt is the same writers chained (create_booking \u2192 check_in \u2192\nadd_folio_payment), inside one request, so it is all-or-nothing: a\nrefused PIN or a room that just sold rolls the booking back too.\nArrival is always today (calendar, like every new booking - a lagging\nnight audit must not turn walk-ins away); a future stay is a normal\nbooking, not a walk-in.",
       "body": {
        "mode": "raw",
-       "raw": "{\n  \"property\": \"Your Property\",\n  \"room_type\": \"Your Property-DLX\",\n  \"room\": \"Your Property-101\",\n  \"check_out_date\": \"2026-08-03\",\n  \"guest_name\": \"A. Guest\",\n  \"phone\": \"+91 90000 00000\",\n  \"guest\": \"G-00001\",\n  \"adults\": 2,\n  \"children\": 0,\n  \"payment_amount\": 0\n}",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"room_type\": \"Your Property-DLX\",\n  \"room\": \"Your Property-101\",\n  \"check_out_date\": \"2026-08-03\",\n  \"guest_name\": \"A. Guest\",\n  \"phone\": \"+91 90000 00000\",\n  \"guest\": \"G-00001\",\n  \"adults\": 2,\n  \"children\": 0,\n  \"payment_amount\": 0,\n  \"defer_check_in\": 0\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -3320,6 +3320,43 @@
        ]
       },
       "description": "Everything the printable cancellation confirmation needs.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"reservation\": \"RES-2026-00001\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "checkout_context",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.checkout_context",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.checkout_context"
+       ]
+      },
+      "description": "Everything the guided check-out needs in one round trip, without\nchanging anything: each folio with its lines and invoice, as it will\nstand once check-out posts the remaining nights (worked out inside a\nsavepoint that is always rolled back), bills not on the folio yet (open\nrestaurant orders, laundry), a late check-out, what the guest owes\n(`collect`) or is owed (`refunds`: a held security deposit first, through\nits own refund path), what moves to the city ledger and its credit\ncheck, whether a cashier PIN and an open till are needed, every refusal\ncheck-out would give (`blockers`, each tied to its step) and the\nproperty's check-out SOP. check_out judges the balances with the same\nhelper (kamra.checkout.settlement_position), so the two never disagree.\nSafe to call again and again: opening the sheet writes nothing.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"reservation\": \"RES-2026-00001\"\n}",
@@ -5355,7 +5392,7 @@
         "kamra.pos.in_house_rooms"
        ]
       },
-      "description": "Rooms with a checked-in guest, for the till's room picker: only these\ncan take a room charge. \"101 \u00b7 Guest Name\".",
+      "description": "Rooms with a checked-in guest, for the till's room picker: only these\ncan take a room charge. \"101 \u00b7 Guest Name\". `room_charges_allowed` is the\ncheck-in's decision; a blocked room is shown but cannot be charged.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\"\n}",
@@ -5429,10 +5466,10 @@
         "kamra.pos.create_order"
        ]
       },
-      "description": "Captain takes an order. A room (room service, or a dine-in guest\ncharging to their room) must have a checked-in stay: it is resolved now\nso the bill posts to that folio on delivery. A room with nobody in house\nis refused - take it as a walk-in bill instead. Takeaway and delivery\ncarry the customer's details instead of a table/room.",
+      "description": "Captain takes an order. A room (room service, or a dine-in guest\ncharging to their room) must have a checked-in stay: it is resolved now\nso the bill posts to that folio on delivery. A room with nobody in house\nis refused - take it as a walk-in bill instead. Takeaway and delivery\ncarry the customer's details instead of a table/room. `guest` ties the\nbill to a guest profile (a walk-in found or added with find_customer or\nattach_customer); a room bill takes the in-house guest by itself.",
       "body": {
        "mode": "raw",
-       "raw": "{\n  \"outlet\": \"Your Property-Restaurant\",\n  \"items\": \"<items>\",\n  \"property\": \"Your Property\",\n  \"room\": \"Your Property-101\",\n  \"reservation\": \"RES-2026-00001\",\n  \"source\": \"Manual\",\n  \"customer_name\": \"A. Customer\"\n}",
+       "raw": "{\n  \"outlet\": \"Your Property-Restaurant\",\n  \"items\": \"<items>\",\n  \"property\": \"Your Property\",\n  \"room\": \"Your Property-101\",\n  \"reservation\": \"RES-2026-00001\",\n  \"source\": \"Manual\",\n  \"customer_name\": \"A. Customer\",\n  \"guest\": \"G-00001\"\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -5466,47 +5503,10 @@
         "kamra.pos.open_orders"
        ]
       },
-      "description": "Every running tab at an outlet - the tables/rooms being served right\nnow, so a captain can juggle several at once.",
+      "description": "Every running tab at an outlet - the tables/rooms being served right\nnow, so a captain can juggle several at once. A bill nobody has sent to\nthe kitchen carries its age in minutes and turns `stale` after the F&B\nsetting's limit, so a forgotten order is sent or cancelled.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"outlet\": \"Your Property-Restaurant\"\n}",
-       "options": {
-        "raw": {
-         "language": "json"
-        }
-       }
-      }
-     }
-    },
-    {
-     "name": "qr_targets",
-     "request": {
-      "method": "POST",
-      "header": [
-       {
-        "key": "Content-Type",
-        "value": "application/json"
-       },
-       {
-        "key": "Authorization",
-        "value": "token {{api_key}}:{{api_secret}}"
-       }
-      ],
-      "url": {
-       "raw": "{{base_url}}/api/method/kamra.pos.qr_targets",
-       "host": [
-        "{{base_url}}"
-       ],
-       "path": [
-        "api",
-        "method",
-        "kamra.pos.qr_targets"
-       ]
-      },
-      "description": "Everything a printable QR sheet needs: each restaurant outlet's tables\nwith their QR-ordering link, and each room with the in-room dining link\n(the Room Service outlet's menu, tagged with the room). The codes are\ndrawn in the browser - no QR web service sees these links.",
-      "body": {
-       "mode": "raw",
-       "raw": "{\n  \"property\": \"Your Property\"\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -5762,7 +5762,7 @@
         "kamra.pos.order_detail"
        ]
       },
-      "description": "One order's full contents - to load a running tab back into the till.",
+      "description": "One order's full contents - to load a running tab back into the till,\nor to look at a closed one from the orders list. `kitchen_lines` counts\nthe live lines the kitchen already has: while it is zero the captain can\ncancel the bill alone; after that a supervisor approves.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"order\": \"ORD-2026-00001\"\n}",
@@ -5836,7 +5836,7 @@
         "kamra.pos.confirm_order"
        ]
       },
-      "description": "Captain confirmation - a guest's QR order isn't fired to the kitchen\nuntil a captain has vetted it.",
+      "description": "Captain confirmation for a Placed order that has no captain yet\n(legacy guest QR). Sets the captain and moves Placed -> Confirmed.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"order\": \"ORD-2026-00001\"\n}",
@@ -5950,7 +5950,7 @@
       "description": "A captain's new bill straight to the kitchen, in one call: what\ncreate_order, apply_discount, confirm_order and fire_kot do one after\nanother, in one request and one transaction. The till waits for one\nround trip instead of four, and the kitchen gets a single update.",
       "body": {
        "mode": "raw",
-       "raw": "{\n  \"outlet\": \"Your Property-Restaurant\",\n  \"items\": \"<items>\",\n  \"property\": \"Your Property\",\n  \"room\": \"Your Property-101\",\n  \"reservation\": \"RES-2026-00001\",\n  \"customer_name\": \"A. Customer\",\n  \"discount\": 0,\n  \"discount_reason\": \"\"\n}",
+       "raw": "{\n  \"outlet\": \"Your Property-Restaurant\",\n  \"items\": \"<items>\",\n  \"property\": \"Your Property\",\n  \"room\": \"Your Property-101\",\n  \"reservation\": \"RES-2026-00001\",\n  \"customer_name\": \"A. Customer\",\n  \"discount\": 0,\n  \"discount_reason\": \"\",\n  \"guest\": \"G-00001\"\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -6317,10 +6317,10 @@
         "kamra.pos.cancel_order"
        ]
       },
-      "description": "Cancel a running order - needs a reason (it's kept on the order for\nthe audit trail). Closed orders can't be cancelled.",
+      "description": "Cancel an open bill with a reason. Nothing sent to the kitchen yet: the\ncaptain (or an agent) cancels alone. Items already sent: every live line\nis voided rather than deleted, the kitchen gets a VOID slip and sees the\nticket as cancelled, and a supervisor approves (`supervisor` +\n`supervisor_pin`, or a supervisor's own session). Paid, posted or\nalready cancelled bills are refused. Who, why and who approved are kept\non the bill and in the activity log; the table is freed.",
       "body": {
        "mode": "raw",
-       "raw": "{\n  \"order\": \"ORD-2026-00001\",\n  \"reason\": \"<reason>\"\n}",
+       "raw": "{\n  \"order\": \"ORD-2026-00001\",\n  \"reason\": \"\"\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -6354,10 +6354,232 @@
         "kamra.pos.void_item"
        ]
       },
-      "description": "Void one line with a reason - the line stays on the order (struck\nthrough, amount zero) so the KOT-vs-bill audit holds up.",
+      "description": "Void one line with a reason. The line stays on the order (struck\nthrough, amount zero) so the KOT-vs-bill audit holds up. A line the\nkitchen already has needs a supervisor's approval (see cancel_order) and\nprints a VOID slip; a line never sent is simpler to remove_item.",
       "body": {
        "mode": "raw",
-       "raw": "{\n  \"order\": \"ORD-2026-00001\",\n  \"item_row\": \"<item_row>\",\n  \"reason\": \"<reason>\"\n}",
+       "raw": "{\n  \"order\": \"ORD-2026-00001\",\n  \"item_row\": \"<item_row>\",\n  \"reason\": \"\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "remove_item",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.pos.remove_item",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.pos.remove_item"
+       ]
+      },
+      "description": "Take a line off a bill before it goes to the kitchen: a mis-tap or a\nchange of mind. No reason and no approval, because nothing was cooked.\nA line the kitchen has is refused (void it instead), and so is the last\nline (cancel the bill instead).",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"order\": \"ORD-2026-00001\",\n  \"item_row\": \"<item_row>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "void_approvers",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.pos.void_approvers",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.pos.void_approvers"
+       ]
+      },
+      "description": "Who can approve a void at this outlet's till: enabled Hotel Admin and\nFinance users with access to the property and a cashier PIN set. Names\nonly.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"outlet\": \"Your Property-Restaurant\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "orders_list",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.pos.orders_list",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.pos.orders_list"
+       ]
+      },
+      "description": "The outlet's bills for a day, or a range of up to 31 days, newest\nfirst: open (not sent to the kitchen), sent, paid, posted to a room, NC,\nclosed or cancelled, with the table, who it was for, the amount and the\ntime. `q` searches the bill and KOT number, table, room, customer name\nand phone, and the in-house guest's name. `state` keeps one state.\nLooking at today also brings in bills still open from earlier days\n(`carried`), so a forgotten order cannot hide. Only this outlet's bills.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"outlet\": \"Your Property-Restaurant\",\n  \"date\": \"2026-08-01\",\n  \"to_date\": \"2026-08-31\",\n  \"limit\": 200\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "find_customer",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.pos.find_customer",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.pos.find_customer"
+       ]
+      },
+      "description": "Find a guest profile for a bill by phone (4+ digits) or name (3+\nletters): the same guest records the front desk uses. Each match says\nhow often they ate at this outlet and whether they are in house now.\nPhones show their last digits only.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"outlet\": \"Your Property-Restaurant\",\n  \"q\": \"<q>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "attach_customer",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.pos.attach_customer",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.pos.attach_customer"
+       ]
+      },
+      "description": "Say who a walk-in bill is for: an existing guest profile (`guest`),\nor a name and phone. A phone that matches a profile reuses it; otherwise\na lightweight guest profile is added (name and phone only), the same\nrecord the front desk uses. Without `order` it only finds or adds the\nprofile, for a bill the till is about to create. `clear=1` takes the\ncustomer off the bill. A room bill is always for its in-house guest.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"outlet\": \"Your Property-Restaurant\",\n  \"order\": \"ORD-2026-00001\",\n  \"guest\": \"G-00001\",\n  \"customer_name\": \"A. Customer\",\n  \"phone\": \"+91 90000 00000\",\n  \"clear\": 0\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "guest_panel",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.pos.guest_panel",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.pos.guest_panel"
+       ]
+      },
+      "description": "Who a bill is for, without leaving the till. For a room bill: the\nin-house guest, room, stay dates and whether the stay can take room\ncharges (the check-in's decision, which posting also enforces). For a\nwalk-in: the attached guest profile. Either way: VIP, the guest's notes\n(preferences, allergies), the bill's allergy note, and their past bills\nat this outlet. Pass `order`, or `guest` / `room` for a bill not created\nyet.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"outlet\": \"Your Property-Restaurant\",\n  \"order\": \"ORD-2026-00001\",\n  \"guest\": \"G-00001\",\n  \"room\": \"Your Property-101\"\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -6581,7 +6803,7 @@
         "kamra.printing.printers"
        ]
       },
-      "description": "Every printer with its routes and whether it's online - for the\nsettings card and for a kitchen screen choosing what to print for.",
+      "description": "Every printer with its routes and whether it's online - for the\nF&B Printers screen and for a kitchen screen choosing what to print for.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\"\n}",
@@ -11851,6 +12073,43 @@
        }
       }
      }
+    },
+    {
+     "name": "staff_sign_ins",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.agents_api.staff_sign_ins",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.agents_api.staff_sign_ins"
+       ]
+      },
+      "description": "Who signed in to and out of Kamra, newest first: Frappe's own Login /\nLogout records (Activity Log), limited to this property's staff. Only\nwhat Frappe already stores is shown - who, when, in or out, and whether\nthe attempt worked. IP addresses are left out.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"limit\": 50,\n  \"start\": 0\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
     }
    ]
   },
@@ -11960,6 +12219,951 @@
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\",\n  \"module\": \"<module>\",\n  \"enabled\": \"<enabled>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "name": "Rooms (room board, room detail and history, insights)",
+   "item": [
+    {
+     "name": "rooms_board",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.rooms.rooms_board",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.rooms.rooms_board"
+       ]
+      },
+      "description": "Every room of the property as a tile: housekeeping status, who is in\nit, who arrives or leaves today, whether it is out of service, and its\nopen housekeeping task. One call, a fixed number of queries.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "room_detail",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.rooms.room_detail",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.rooms.room_detail"
+       ]
+      },
+      "description": "Everything about one room right now: what it is, its status, who is\nin it (with the balance), who arrives next, whether it is held out of\nservice, and its open housekeeping work.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"room\": \"Your Property-101\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "room_availability",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.rooms.room_availability",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.rooms.room_availability"
+       ]
+      },
+      "description": "This room, night by night: booked (by whom), held out of service, or\nfree. Same overlap rules as the tape chart and the block guard (the\ncheck-out night is free; a day-use stay holds its own date).",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"room\": \"Your Property-101\",\n  \"start_date\": \"2026-08-01\",\n  \"days\": 14\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "room_history",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.rooms.room_history",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.rooms.room_history"
+       ]
+      },
+      "description": "Who stayed in this room lately (nights, room revenue), who cleaned\nand checked it and when, its service tickets, and the guests moved in\nor out of it.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"room\": \"Your Property-101\",\n  \"limit\": 15\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "room_insights",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.rooms.room_insights",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.rooms.room_insights"
+       ]
+      },
+      "description": "Per-room numbers for the last `days` nights (7, 30, 90, 180 or 365,\nup to yesterday): room nights sold and occupancy, room revenue posted to\nfolios, out-of-service nights, and how long cleans take. Cached for a\nfew minutes (refresh=1 recomputes); one query per measure, never one\nper room.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"days\": 30,\n  \"refresh\": 0\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "name": "Today layout (per-user widgets, hotel default)",
+   "item": [
+    {
+     "name": "get_today_layout",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.today_layout.get_today_layout",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.today_layout.get_today_layout"
+       ]
+      },
+      "description": "The layout this person sees on Today, and where it came from\n(\"user\", \"property\" or \"default\").",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "save_today_layout",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.today_layout.save_today_layout",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.today_layout.save_today_layout"
+       ]
+      },
+      "description": "Save this person's own Today layout.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"layout\": \"<layout>\",\n  \"property\": \"Your Property\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "reset_today_layout",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.today_layout.reset_today_layout",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.today_layout.reset_today_layout"
+       ]
+      },
+      "description": "Drop this person's own layout: back to the hotel default.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "save_today_layout_default",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.today_layout.save_today_layout_default",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.today_layout.save_today_layout_default"
+       ]
+      },
+      "description": "Hotel Admin: the layout everyone at this property sees until they\ncustomise their own. Pass no layout to go back to the built-in one.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "name": "Desk procedures (check-out, check-in and other SOPs)",
+   "item": [
+    {
+     "name": "get_sop",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.sop.get_sop",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.sop.get_sop"
+       ]
+      },
+      "description": "Return evaluated SOP steps for a procedure.\n\ncontext is optional JSON (checkout_context shape for key=checkout). When\nomitted, steps return as todo with template tips only.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"key\": \"<key>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "list_sops",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.sop.list_sops",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.sop.list_sops"
+       ]
+      },
+      "description": "List SOP templates for the settings editor.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "get_sop_template",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.sop.get_sop_template",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.sop.get_sop_template"
+       ]
+      },
+      "description": "",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"name\": \"<name>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "save_sop_template",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.sop.save_sop_template",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.sop.save_sop_template"
+       ]
+      },
+      "description": "Create or update an SOP template and its steps.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"active\": 1\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "seed_sop_templates",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.sop.seed_sop_templates",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.sop.seed_sop_templates"
+       ]
+      },
+      "description": "",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "name": "Guided check-in (steps, who did each, room-charges permission)",
+   "item": [
+    {
+     "name": "checkin_flow",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.checkin.checkin_flow",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.checkin.checkin_flow"
+       ]
+      },
+      "description": "Everything the guided check-in shows, in one round trip: the steps\n(required or optional, done, skipped or to do, and who did them), plus\nwhat each step screen needs.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"reservation\": \"RES-2026-00001\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "check_in_readiness",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.checkin.check_in_readiness",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.checkin.check_in_readiness"
+       ]
+      },
+      "description": "Read-only: which check-in steps are done, which are still required,\nand whether check_in would go through now. Agents read this; they\ncannot do the desk's steps for it.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"reservation\": \"RES-2026-00001\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "complete_checkin_step",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.checkin.complete_checkin_step",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.checkin.complete_checkin_step"
+       ]
+      },
+      "description": "The desk marks a step done (a confirm-only step, or the review of\nwhat the guest sent online). Refused while what the step stands for is\nnot true yet - an ID still missing, a deposit not taken.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"step\": \"<step>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "skip_checkin_step",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.checkin.skip_checkin_step",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.checkin.skip_checkin_step"
+       ]
+      },
+      "description": "Skip an optional step. A required one cannot be skipped.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"step\": \"<step>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "save_guest_details",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.checkin.save_guest_details",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.checkin.save_guest_details"
+       ]
+      },
+      "description": "Correct the primary guest's contact and ID details at the desk. Only\nwhat is passed changes; an ID type must be one the country recognises.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"phone\": \"+91 90000 00000\",\n  \"email\": \"guest@example.com\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "confirm_billing",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.checkin.confirm_billing",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.checkin.confirm_billing"
+       ]
+      },
+      "description": "The desk confirms who pays (OTA, guest, company, group).",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"payer\": \"<payer>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "assign_checkin_room",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.checkin.assign_checkin_room",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.checkin.assign_checkin_room"
+       ]
+      },
+      "description": "Keep the assigned room, or put the guest in another free room of\nthe booked type. Upgrades and downgrades (a different type, maybe a\nnew price) go through the room move screen (room_move_preview +\nmove_reservation), which also records who assigned the room.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"room\": \"Your Property-101\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "sign_registration_card",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.checkin.sign_registration_card",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.checkin.sign_registration_card"
+       ]
+      },
+      "description": "The guest signs the registration card on screen (stored like the\nonline signature) or on the printed card (on_paper=1).",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"on_paper\": 0\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "issue_keys",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.checkin.issue_keys",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.checkin.issue_keys"
+       ]
+      },
+      "description": "Record the keys handed to the guest, and who handed them. With a\nconnected lock system the keys are made by it as soon as the guest is\nchecked in (now, if already in house); with no lock system the desk\nencodes the cards at the encoder and notes the card numbers here.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"key_count\": 1\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "log_checkin_requests",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.checkin.log_checkin_requests",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.checkin.log_checkin_requests"
+       ]
+      },
+      "description": "Quick requests at check-in become service tickets (one each); a free\nnote is kept on the step and, if given alone, raised as one ticket.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"reservation\": \"RES-2026-00001\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "set_room_charges",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.checkin.set_room_charges",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.checkin.set_room_charges"
+       ]
+      },
+      "description": "May the guest charge outlets, laundry and minibar to the room? POS,\nlaundry and minibar postings check this flag. Changeable later in the\nstay by the desk or finance (logged).",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"allowed\": 1\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -12514,7 +13718,7 @@
    ]
   },
   {
-   "name": "Public (no auth - booking page, QR menu)",
+   "name": "Public (no auth - booking page, check-in)",
    "item": [
     {
      "name": "catalog_index",
@@ -12675,7 +13879,7 @@
         "kamra.public_api.search_stay"
        ]
       },
-      "description": "Availability + real quoted price per room type for the stay.",
+      "description": "Availability + real quoted price per room type for the stay.\n\n`child_ages` (e.g. [3, 8, 13]) lets each room type's age bands decide who\nis free, a child or an adult; without it `children` are all children.\nEach row says whether the room type can take the party: `available`, a\n`reason` when it cannot, and `needs_confirmation` when the party is above\nwhat it sleeps but within the extra guests it allows by arrangement.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\",\n  \"check_in_date\": \"2026-08-01\",\n  \"check_out_date\": \"2026-08-03\",\n  \"adults\": 2,\n  \"children\": 0,\n  \"pets\": 0\n}",
@@ -12873,7 +14077,7 @@
         "kamra.public_api.book"
        ]
       },
-      "description": "Create a Website booking. Guest identity is the phone number; staff\nverify at check-in. The advance owed is computed from the property's\ncurrent payment policy and snapshotted onto the booking.\n\nInstant mode (default): Confirmed when nothing is due now, else\nPending Payment with a hold window. Request to Book: Requested (no\ninventory) until the host approves.",
+      "description": "Create a Website booking. Guest identity is the phone number; staff\nverify at check-in. The advance owed is computed from the property's\ncurrent payment policy and snapshotted onto the booking.\n\nInstant mode (default): Confirmed when nothing is due now, else\nPending Payment with a hold window. Request to Book: Requested (no\ninventory) until the host approves. A party above what the room sleeps,\nwithin the extra guests it allows, is also Requested: the host confirms\nthe sleeping arrangement and agrees the price for them.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\",\n  \"room_type\": \"Your Property-DLX\",\n  \"check_in_date\": \"2026-08-01\",\n  \"check_out_date\": \"2026-08-03\",\n  \"guest_name\": \"A. Guest\",\n  \"phone\": \"+91 90000 00000\",\n  \"email\": \"guest@example.com\",\n  \"adults\": 2,\n  \"children\": 0,\n  \"meal_plan\": \"\",\n  \"special_requests\": \"\",\n  \"voucher_code\": \"\",\n  \"idempotency_key\": \"\",\n  \"pets\": 0\n}",
@@ -12943,72 +14147,6 @@
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\",\n  \"code\": \"<code>\",\n  \"nights\": 1\n}",
-       "options": {
-        "raw": {
-         "language": "json"
-        }
-       }
-      }
-     }
-    },
-    {
-     "name": "qr_menu",
-     "request": {
-      "method": "POST",
-      "header": [
-       {
-        "key": "Content-Type",
-        "value": "application/json"
-       }
-      ],
-      "url": {
-       "raw": "{{base_url}}/api/method/kamra.public_api.qr_menu",
-       "host": [
-        "{{base_url}}"
-       ],
-       "path": [
-        "api",
-        "method",
-        "kamra.public_api.qr_menu"
-       ]
-      },
-      "description": "The guest-facing digital menu behind a table/room QR code. Only shows\noutlets a hotel has published items for; no prices are trusted from the\nguest - they're read here.",
-      "body": {
-       "mode": "raw",
-       "raw": "{\n  \"outlet\": \"Your Property-Restaurant\"\n}",
-       "options": {
-        "raw": {
-         "language": "json"
-        }
-       }
-      }
-     }
-    },
-    {
-     "name": "qr_order",
-     "request": {
-      "method": "POST",
-      "header": [
-       {
-        "key": "Content-Type",
-        "value": "application/json"
-       }
-      ],
-      "url": {
-       "raw": "{{base_url}}/api/method/kamra.public_api.qr_order",
-       "host": [
-        "{{base_url}}"
-       ],
-       "path": [
-        "api",
-        "method",
-        "kamra.public_api.qr_order"
-       ]
-      },
-      "description": "A guest places an order from the QR menu. It lands as a QR order that\na captain must confirm before it fires to the kitchen or touches a bill -\nthe guest can never post directly to a folio.",
-      "body": {
-       "mode": "raw",
-       "raw": "{\n  \"outlet\": \"Your Property-Restaurant\",\n  \"items\": \"<items>\",\n  \"room\": \"Your Property-101\"\n}",
        "options": {
         "raw": {
          "language": "json"

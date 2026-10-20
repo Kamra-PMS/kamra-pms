@@ -208,6 +208,8 @@ def request_pickup(property: str, room: str | None = None,
 			"Reservation", {"room": room, "status": "Checked In"}, "name")
 		if not reservation:
 			frappe.throw(_("No checked-in guest in that room."))
+		from kamra.pos import assert_room_charges_allowed
+		assert_room_charges_allowed(reservation)
 	doc = frappe.get_doc({
 		"doctype": "Laundry Order", "property": property,
 		"order_type": order_type, "room": room or None,
@@ -244,6 +246,9 @@ def collect_laundry(property: str, room: str | None = None, items=None,
 				"Reservation", {"room": room, "status": "Checked In"}, "name")
 			if not reservation:
 				frappe.throw(_("No checked-in guest in that room."))
+			if not int(complimentary or 0):
+				from kamra.pos import assert_room_charges_allowed
+				assert_room_charges_allowed(reservation)
 		doc = frappe.get_doc({
 			"doctype": "Laundry Order", "property": property,
 			"order_type": order_type, "room": room or None,

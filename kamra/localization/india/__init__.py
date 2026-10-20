@@ -26,6 +26,10 @@ NOTICE_LANGUAGES = ["hi", "kn", "ta", "te", "ml", "mr", "bn"]
 # Form C / the guest register accept any of these for Indian nationals
 ID_TYPES = ["Aadhaar", "Passport", "Driving License", "Voter ID", "PAN", "Other"]
 PAYMENT_MODES = ["Cash", "Card", "UPI", "Bank Transfer"]
+# Indian hotels keep a signed registration card (the hotel register the
+# police may inspect), so the guided check-in makes the GRC a required step
+# by default. A property can still change it in its check-in steps.
+REGISTRATION_CARD_REQUIRED = True
 
 
 def _dec(v):

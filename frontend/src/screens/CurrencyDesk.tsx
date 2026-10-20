@@ -106,7 +106,7 @@ export default function CurrencyDesk() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl space-y-4 p-4 sm:p-6">
+    <div className="w-full space-y-4">
       <div>
         <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-400">
           Cashier

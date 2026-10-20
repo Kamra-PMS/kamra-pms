@@ -23,7 +23,8 @@ import {
 } from "lucide-react"
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom"
 import { call } from "../lib/api"
-import { useCreditCheckout } from "../components/CreditCheckout"
+import CheckOutDialog from "../components/CheckOutDialog"
+import CheckInDialog from "../components/CheckInDialog"
 import {
   eodAcknowledge,
   eodMarkNoShow,
@@ -417,9 +418,9 @@ export default function EndOfDayWizard() {
 
   const step: Step | undefined = state?.steps.find((s) => s.index === active)
 
-  // check-out from the departures step runs company credit control the
-  // same way the Today screen does (warning / override dialog)
-  const credit = useCreditCheckout(() => void load(active))
+  // check-out opens the guided check-out sheet (settle, credit, invoice)
+  const [checkingOut, setCheckingOut] = useState<string | null>(null)
+  const [checkingIn, setCheckingIn] = useState<string | null>(null)
 
   async function act(label: string, fn: () => Promise<unknown>, reload = true) {
     setBusy(label)
@@ -553,7 +554,7 @@ export default function EndOfDayWizard() {
             state.ran ? null : (
               <div className="flex flex-col items-stretch gap-1">
                 <Button variant="outline" className="h-7 px-2 text-xs"
-                  onClick={() => navigate(`/reservations?q=${encodeURIComponent(String(r.reservation))}`)}>
+                  onClick={() => setCheckingIn(String(r.reservation))}>
                   {t("Check in")}
                 </Button>
                 <Button variant="ghost" className="h-7 px-2 text-xs text-rose-700" disabled={!!busy}
@@ -594,7 +595,7 @@ export default function EndOfDayWizard() {
             state.ran ? null : (
               <div className="flex justify-end gap-1">
                 <Button variant="outline" className="h-7 px-2 text-xs" disabled={!!busy}
-                  onClick={() => act("checkout", () => credit.start(String(r.reservation)))}>
+                  onClick={() => setCheckingOut(String(r.reservation))}>
                   {t("Check out")}
                 </Button>
                 <Button variant="ghost" className="h-7 px-2 text-xs"
@@ -889,7 +890,27 @@ export default function EndOfDayWizard() {
 
   return (
     <div className="space-y-4">
-      {credit.dialog}
+      {checkingIn && (
+        <CheckInDialog
+          reservation={checkingIn}
+          onClose={() => setCheckingIn(null)}
+          onDone={() => {
+            setCheckingIn(null)
+            void load(active)
+          }}
+        />
+      )}
+      {checkingOut && (
+        <CheckOutDialog
+          reservation={checkingOut}
+          onClose={() => setCheckingOut(null)}
+          onDone={() => {
+            setCheckingOut(null)
+            void load(active)
+          }}
+          onOpenReservation={(name) => setCheckingOut(name)}
+        />
+      )}
       <div className="flex flex-wrap items-center justify-between gap-2 print:hidden">
         <div>
           <Link to="/end-of-day" className="inline-flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-800">

@@ -1,0 +1,82 @@
+{
+ "actions": [],
+ "creation": "2026-10-20 10:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "step_key",
+  "step_type",
+  "title",
+  "instruction",
+  "prompt_to_guest",
+  "is_blocking",
+  "sequence"
+ ],
+ "fields": [
+  {
+   "columns": 2,
+   "fieldname": "step_key",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Step Key",
+   "reqd": 1
+  },
+  {
+   "columns": 1,
+   "default": "confirm",
+   "fieldname": "step_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Type",
+   "options": "auto_check\nconfirm\naction\nask_guest"
+  },
+  {
+   "columns": 3,
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Title",
+   "reqd": 1
+  },
+  {
+   "fieldname": "instruction",
+   "fieldtype": "Small Text",
+   "label": "Instruction"
+  },
+  {
+   "fieldname": "prompt_to_guest",
+   "fieldtype": "Small Text",
+   "label": "What to say to the guest"
+  },
+  {
+   "columns": 1,
+   "default": "0",
+   "description": "Required: the desk cannot skip it, and the server refuses the action until it is done.",
+   "fieldname": "is_blocking",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Required"
+  },
+  {
+   "columns": 1,
+   "default": "0",
+   "fieldname": "sequence",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Order"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-10-20 10:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kamra",
+ "name": "SOP Step",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

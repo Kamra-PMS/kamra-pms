@@ -29,3 +29,5 @@ kamra.patches.v41.move_advances_to_guest_ledger
 kamra.patches.v42.outlet_kot_mode
 kamra.patches.v42.credit_days_use_property_default
 kamra.patches.v42.backfill_city_ledger_due_dates
+kamra.patches.v43.seed_petty_cash_floats
+kamra.patches.v43.backfill_checkin_record

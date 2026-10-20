@@ -1305,6 +1305,8 @@ def hk_post_consumable(room: str, charge_type: str, description: str,
 		["name", "property"], as_dict=True)
 	if not res:
 		frappe.throw("No checked-in guest in that room to bill.")
+	from kamra.pos import assert_room_charges_allowed
+	assert_room_charges_allowed(res.name)
 	# post through the governed agent user (same pattern as public bookings):
 	# the housekeeper is authorized above and scoped to two charge types, and
 	# GST is still resolved server-side. Attribution is stamped below.
@@ -1354,7 +1356,7 @@ def create_ticket(property: str, subject: str, category: str,
 		           rationale=f"Captured request without staff: {subject}",
 		           agent_name="Concierge",
 		           # the ticket source names who raised it; the log channel
-		           # names how it reached Kamra (a QR menu or an AI agent is API)
+		           # names how it reached Kamra (an AI agent is API)
 		           channel=({"AI Agent": agent_channel() or "API", "QR": "API"}
 		                    .get(source, source)))
 	return {"ticket": doc.name, "due_by": str(doc.due_by)}
@@ -1551,6 +1553,13 @@ def add_folio_payment(folio: str, mode: str, amount: float,
 		# took the money (the deposit panel or the folio's own payment form)
 		from kamra.deposit import record_collected
 		record_collected(doc.reservation, float(amount), mode)
+	elif kind != "Security Deposit":
+		# who took which money, for the activity log (a deposit logs its own)
+		from kamra.localization import money_text
+		from kamra.savings import log_action
+		log_action("folio_payment", "Folio", doc.name, doc.property,
+		           rationale=f"{kind} {money_text(doc.property, amount)} by {mode}"
+		                     + (f" ({reference})" if reference else ""))
 	return doc.as_dict()
 
 
@@ -1625,6 +1634,12 @@ def _refund_folio_payment(folio: str, amount: float, mode: str, reason: str,
 		record_payment_ledger(doc, pay.as_dict(), session=sess, ledger=ledger)
 	except Exception:
 		frappe.log_error(title="ledger refund write failed")
+	if ledger != "Deposit":  # a deposit refund logs itself (kamra.deposit)
+		from kamra.localization import money_text
+		from kamra.savings import log_action
+		log_action("folio_refund", "Folio", doc.name, doc.property,
+		           rationale=f"Refund {money_text(doc.property, amount)} by {mode}: "
+		                     f"{str(reason_text)[:100]}")
 	return {"ok": True, "balance": doc.balance}
 
 
@@ -1995,7 +2010,12 @@ def close_folio(folio: str, pin: str | None = None):
 		   frappe.session.user != "Administrator":
 			raise
 	from kamra.folio import close_folio as _close
+	was_open = frappe.db.get_value("Folio", folio, "status") != "Closed"
 	invoice_number = _close(folio)
+	if was_open:
+		from kamra.savings import log_action
+		log_action("close_folio", "Folio", folio, prop,
+		           rationale=f"Folio closed, invoice {invoice_number}")
 	return {"invoice_number": invoice_number}
 
 
@@ -3172,7 +3192,18 @@ def checkin_context(reservation: str):
 @frappe.whitelist()
 @require_roles("Front Desk", "Night Auditor", "Kamra Agent")
 def check_in(reservation: str, room: str | None = None):
+	"""Check the guest in: the last step of the guided check-in.
+
+	Refused while a check-in step the property marks required (Settings >
+	Front desk > Check-in steps) is not done for this stay - the ID, who
+	pays, the deposit, the registration card... - so neither the desk, the
+	API nor an AI agent can skip them. kamra.checkin.check_in_readiness says
+	what is missing. Records who checked the guest in and when; a connected
+	door-lock system then makes the keys recorded in the Keys step."""
 	doc = frappe.get_doc("Reservation", reservation)
+	from kamra.checkin import after_check_in, assert_ready
+	if doc.status == "Confirmed":
+		assert_ready(doc, room=room)
 	if room:
 		doc.room = room
 	doc.status = "Checked In"
@@ -3184,7 +3215,12 @@ def check_in(reservation: str, room: str | None = None):
 		where = "the whole villa"
 	log_action("check_in", "Reservation", doc.name, doc.property,
 	           rationale=f"{doc.guest_name} into {where}")
-	return {"ok": True, "reservation": doc.name, "room": doc.room}
+	out = {"ok": True, "reservation": doc.name, "room": doc.room,
+	       "checked_in_by": frappe.session.user}
+	keys = after_check_in(doc)
+	if keys:
+		out["keys"] = keys
+	return out
 
 
 @frappe.whitelist(methods=["POST"])
@@ -3202,9 +3238,17 @@ def walk_in(property: str, room_type: str, room: str, check_out_date: str,
             check_in_time: str | None = None,
             check_out_time: str | None = None,
             blacklist_override_reason: str | None = None,
-            credit_override_reason: str | None = None):
+            credit_override_reason: str | None = None,
+            defer_check_in: int = 0):
 	"""Walk-in in one step: book, register the ID, check into the chosen
 	room and take the money - the counter flow that used to be four screens.
+
+	defer_check_in=1 books, assigns the room and takes the money (as an
+	advance) but leaves the stay Confirmed, so the desk finishes it in the
+	guided check-in, where the property's required steps apply. Without it
+	the required steps are enforced here as well: the walk-in records the
+	steps it does itself (room, who pays, the ID when given) and refuses,
+	rolling the booking back, if another required step is still open.
 
 	It is the same writers chained (create_booking → check_in →
 	add_folio_payment), inside one request, so it is all-or-nothing: a
@@ -3275,6 +3319,30 @@ def walk_in(property: str, room_type: str, room: str, check_out_date: str,
 	                               ("nationality", nationality)) if v}
 	if id_fields:
 		frappe.db.set_value("Guest", booked["guest"], id_fields)
+
+	# what the walk-in counter did itself, recorded under this operator
+	from kamra.checkin import record_step
+	res_doc = frappe.get_doc("Reservation", reservation)
+	record_step(res_doc, "billing_check", "done", note="Walk-in",
+	            payer="Company" if company else "Guest")
+	if id_fields.get("id_number"):
+		record_step(res_doc, "guest_ids", "done", note="Walk-in ID")
+
+	if cint(defer_check_in):
+		folio = None
+		if amount:
+			folio = record_advance(reservation, amount, mode=payment_mode,
+			                       reference=payment_reference, pin=pin)["folio"]
+		return {
+			"reservation": reservation, "room": room,
+			"room_number": frappe.db.get_value("Room", room, "room_number"),
+			"folio": folio or frappe.db.get_value("Folio", folio_filter),
+			"checked_in": 0,
+			"amount_after_tax": booked.get("amount_after_tax"),
+			"paid": amount,
+			**({"credit_warning": booked["credit_warning"]}
+			   if booked.get("credit_warning") else {}),
+		}
 
 	check_in(reservation, room)
 	folio = frappe.db.get_value("Folio", folio_filter)
@@ -3643,33 +3711,26 @@ def _assert_settled(doc, credit_override_reason: str | None = None) -> list[dict
 	"""
 	if frappe.flags.allow_unsettled_checkout:
 		return []
+	from kamra.checkout import settlement_position
 	from kamra.folio import post_remaining_nights
-	from kamra.ledger import company_payer_of
 	from kamra.localization import pack_for
 
 	post_remaining_nights(doc)
 	symbol = pack_for(doc.property).locale(
 		frappe.get_cached_doc("Property", doc.property)).get("currency_symbol", "")
-	owed = refund = 0.0
-	to_city_ledger = []
-	for f in frappe.get_all("Folio", filters={"reservation": doc.name},
-	                        fields=["name", "balance", "folio_type",
-	                                "group_booking", "reservation"]):
-		balance = float(f.balance or 0)
-		if balance > 0.009:
-			payer = company_payer_of(f)
-			if payer:
-				to_city_ledger.append((f.name, payer))
-			else:
-				owed += balance
-		elif balance < -0.009:
-			refund -= balance
+	# the one judgement of what is owed either way, shared with the desk's
+	# check-out sheet (checkout_context)
+	position = settlement_position(doc.name)
+	owed, refund = position["owed"], position["refund_due"]
+	to_city_ledger = [(f, c) for f, c, _b in position["to_city_ledger"]]
 	if owed:
 		frappe.throw(_("Cannot check out: {0}{1:,.2f} is still owed. Collect payment "
-		               "or transfer it to the city ledger before departure.").format(symbol, owed))
+		               "or transfer it to the city ledger before departure.").format(symbol, owed),
+		             title=_("Settle before check-out"))
 	if refund:
 		frappe.throw(_("Cannot check out: the guest is owed {0}{1:,.2f}. Issue the "
-		               "refund before departure.").format(symbol, refund))
+		               "refund before departure.").format(symbol, refund),
+		             title=_("Settle before check-out"))
 	# nothing moves until the guest's side is settled - and the company's
 	# credit is checked once for everything the stay bills to it
 	from kamra.credit import enforce_company_credit
@@ -3691,6 +3752,39 @@ def _assert_settled(doc, credit_override_reason: str | None = None) -> list[dict
 	for folio, company in to_city_ledger:
 		transfer_to_city_ledger(folio, company, credit_check=False)
 	return credit
+
+
+
+@frappe.whitelist()
+@require_roles("Front Desk", "Finance", "Night Auditor", "Kamra Agent")
+def checkout_context(reservation: str):
+	"""Everything the guided check-out needs in one round trip, without
+	changing anything: each folio with its lines and invoice, as it will
+	stand once check-out posts the remaining nights (worked out inside a
+	savepoint that is always rolled back), bills not on the folio yet (open
+	restaurant orders, laundry), a late check-out, what the guest owes
+	(`collect`) or is owed (`refunds`: a held security deposit first, through
+	its own refund path), what moves to the city ledger and its credit
+	check, whether a cashier PIN and an open till are needed, every refusal
+	check-out would give (`blockers`, each tied to its step) and the
+	property's check-out SOP. check_out judges the balances with the same
+	helper (kamra.checkout.settlement_position), so the two never disagree.
+	Safe to call again and again: opening the sheet writes nothing."""
+	from kamra.checkout import checkout_context as _context
+	from kamra.sop import _template_steps, evaluate_sop_steps, next_tip
+
+	ctx = _context(reservation)
+	prop = frappe.db.get_value("Reservation", reservation, "property")
+	meta, steps = _template_steps(prop, "checkout")
+	evaluated = evaluate_sop_steps("checkout", steps, ctx) if meta else []
+	ctx["sop"] = {
+		"name": meta.get("name") if meta else None,
+		"key": "checkout",
+		"title": (meta or {}).get("title") or "Checkout",
+		"steps": evaluated,
+		"next_tip": next_tip(evaluated),
+	}
+	return ctx
 
 
 @frappe.whitelist()
@@ -4896,7 +4990,7 @@ def _recent_agent_duplicate(property: str, room_type: str, check_in_date: str,
 		values["gname"] = _collapse(guest_name)
 	else:
 		return None
-	rows = frappe.db.sql(
+	rows = frappe.db.sql(  # nosemgrep: frappe-sql-format-injection -- conds holds only fixed SQL fragments written above; every value is bound through `values`
 		f"""SELECT r.name FROM `tabReservation` r
 		JOIN `tabGuest` g ON g.name = r.guest
 		WHERE {' AND '.join(conds)}

@@ -19,6 +19,10 @@ import { Sheet } from "../components/ui/sheet"
 import { cur, moneyLocale, adoptUiLocale } from "../lib/money"
 import { formatPhoneDisplay, formatPhoneTel } from "../lib/phone"
 import { petChargeBasis } from "../lib/pets"
+import ChildAges, {
+  agesToSend, canReserve, sizeAges, StayNotice,
+  type ChildAge, type StayFit,
+} from "../components/ChildAges"
 
 const inr = (n: number) =>
   n.toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
@@ -96,7 +100,7 @@ interface Showcase {
   meal_plans: { name: string; code: string; label: string; price_per_adult: number }[]
 }
 
-interface StayResult {
+interface StayResult extends StayFit {
   room_type: string
   rooms_left: number
   quote: {
@@ -232,6 +236,9 @@ export default function PublicListing() {
     }
   })
   const [results, setResults] = useState<Record<string, StayResult>>({})
+  const [childAgesState, setChildAges] = useState<ChildAge[]>([])
+  const childAges = sizeAges(childAgesState, search.children)
+  const agesMissing = search.children > 0 && !agesToSend(childAges)
   const [booking, setBooking] = useState<string | null>(null)
   const [form, setForm] = useState({
     guest_name: "",
@@ -240,7 +247,7 @@ export default function PublicListing() {
     meal_plan: "",
     special_requests: "",
   })
-  const [done, setDone] = useState<{ reservation: string; amount: number } | null>(null)
+  const [done, setDone] = useState<{ reservation: string; amount: number; status?: string } | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
@@ -339,7 +346,7 @@ export default function PublicListing() {
     if (!resolved) return
     const t = setTimeout(fetchResults, 300)
     return () => clearTimeout(t)
-  }, [resolved, search, checkOut, listingSlug, locationSlug])
+  }, [resolved, search, checkOut, listingSlug, locationSlug, childAgesState])
 
   function fetchResults() {
     if (!resolved) return
@@ -349,6 +356,7 @@ export default function PublicListing() {
       check_out_date: checkOut,
       adults: search.adults,
       children: search.children,
+      child_ages: agesToSend(childAges),
       pets: search.pets,
       listing_slug: listingSlug,
       location_slug: locationSlug,
@@ -372,7 +380,7 @@ export default function PublicListing() {
     setBusy(true)
     setError(null)
     try {
-      const res = await callGuest<{ reservation: string; amount_after_tax: number }>("kamra.public_api.book",
+      const res = await callGuest<{ reservation: string; amount_after_tax: number; status?: string }>("kamra.public_api.book",
         {
           property: resolved.property,
           room_type: booking,
@@ -380,11 +388,12 @@ export default function PublicListing() {
           check_out_date: checkOut,
           adults: search.adults,
           children: search.children,
+          child_ages: agesToSend(childAges),
           pets: search.pets,
           ...form,
         },
       )
-      setDone({ reservation: res.reservation, amount: res.amount_after_tax })
+      setDone({ reservation: res.reservation, amount: res.amount_after_tax, status: res.status })
     } catch (e) {
       setError(serverError(e))
     } finally {
@@ -590,6 +599,7 @@ export default function PublicListing() {
                               ) : (
                                 <p className="text-zinc-400">Checking…</p>
                               )}
+                              <StayNotice row={r} />
                             </div>
                             <div className="flex gap-2">
                               {rt.listing_slug && (
@@ -603,7 +613,7 @@ export default function PublicListing() {
                                 </Button>
                               )}
                               <Button
-                                disabled={!r?.quote}
+                                disabled={!canReserve(r) || agesMissing}
                                 onClick={() => setBooking(rt.name)}
                               >
                                 Reserve
@@ -798,6 +808,7 @@ export default function PublicListing() {
                   </label>
                 )}
               </div>
+              <ChildAges ages={childAges} onChange={setChildAges} selectCls={inputCls} />
               <p className="text-center text-xs text-zinc-400">
                 {nightsBetween(search.check_in_date, search.check_out_date)} night
                 {nightsBetween(search.check_in_date, search.check_out_date) === 1 ? "" : "s"}
@@ -821,12 +832,13 @@ export default function PublicListing() {
                 <Button
                   id="sticky-book"
                   className="w-full justify-center py-2.5 text-base"
-                  disabled={!results[primary.name]?.quote}
+                  disabled={!canReserve(results[primary.name]) || agesMissing}
                   onClick={() => setBooking(primary.name)}
                 >
                   {confirmLabel}
                 </Button>
               )}
+              {!isSite && primary && <StayNotice row={results[primary.name]} />}
 
               {isSite && (
                 <p className="text-center text-sm text-zinc-500">
@@ -857,7 +869,7 @@ export default function PublicListing() {
       {booking && (
         <Sheet
           wide
-          title={done ? "Booking confirmed" : "Complete your booking"}
+          title={done ? (done.status === "Requested" ? "Request sent" : "Booking confirmed") : "Complete your booking"}
           description={
             done
               ? undefined

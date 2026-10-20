@@ -18,7 +18,9 @@ and `npm run dev` in `frontend/` for the SPA.
   are rebuilt from it every night.
 - **`main`** — the stable branch. Only release trains (maintainer merges of
   `develop`) and hotfixes land here; the Frappe Cloud Marketplace listing and
-  demo.kamrapms.com track its releases.
+  demo.kamrapms.com track its releases. Paste-ready listing copy and the
+  publisher checklist live in [`docs/marketplace-listing.md`](docs/marketplace-listing.md);
+  the install guide for hotels is [`docs-site/self-hosting/frappe-cloud.md`](docs-site/self-hosting/frappe-cloud.md).
 
 ### Branch naming
 

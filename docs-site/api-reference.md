@@ -4,8 +4,8 @@ outline: 2
 
 # REST API reference
 
-Every endpoint below is a whitelisted function — the same governed layer
-the UI and the AI use. **355 endpoints**, generated from the source
+Every endpoint below is a whitelisted function - the same governed layer
+the UI and the AI use. **385 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -1093,6 +1093,15 @@ suggestion plus every room the desk may hand over instead.
 
 **GET/POST** · roles: `Front Desk`, `Night Auditor`, `Kamra Agent`
 
+Check the guest in: the last step of the guided check-in.
+
+Refused while a check-in step the property marks required (Settings >
+Front desk > Check-in steps) is not done for this stay - the ID, who
+pays, the deposit, the registration card... - so neither the desk, the
+API nor an AI agent can skip them. kamra.checkin.check_in_readiness says
+what is missing. Records who checked the guest in and when; a connected
+door-lock system then makes the keys recorded in the Keys step.
+
 | Param | Required | Default |
 | --- | --- | --- |
 | `reservation` | yes |  |
@@ -1104,6 +1113,13 @@ suggestion plus every room the desk may hand over instead.
 
 Walk-in in one step: book, register the ID, check into the chosen
 room and take the money - the counter flow that used to be four screens.
+
+defer_check_in=1 books, assigns the room and takes the money (as an
+advance) but leaves the stay Confirmed, so the desk finishes it in the
+guided check-in, where the property's required steps apply. Without it
+the required steps are enforced here as well: the walk-in records the
+steps it does itself (room, who pays, the ID when given) and refuses,
+rolling the booking back, if another required step is still open.
 
 It is the same writers chained (create_booking → check_in →
 add_folio_payment), inside one request, so it is all-or-nothing: a
@@ -1139,6 +1155,7 @@ booking, not a walk-in.
 | `check_out_time` | no | `None` |
 | `blacklist_override_reason` | no | `None` |
 | `credit_override_reason` | no | `None` |
+| `defer_check_in` | no | `0` |
 
 ### `kamra.api.upload_occupant_id`
 
@@ -1204,6 +1221,27 @@ The cancellation is recorded in the action log.
 **GET/POST** · roles: `Front Desk`, `Kamra Agent`
 
 Everything the printable cancellation confirmation needs.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `reservation` | yes |  |
+
+### `kamra.api.checkout_context`
+
+**GET/POST** · roles: `Front Desk`, `Finance`, `Night Auditor`, `Kamra Agent`
+
+Everything the guided check-out needs in one round trip, without
+changing anything: each folio with its lines and invoice, as it will
+stand once check-out posts the remaining nights (worked out inside a
+savepoint that is always rolled back), bills not on the folio yet (open
+restaurant orders, laundry), a late check-out, what the guest owes
+(`collect`) or is owed (`refunds`: a held security deposit first, through
+its own refund path), what moves to the city ledger and its credit
+check, whether a cashier PIN and an open till are needed, every refusal
+check-out would give (`blockers`, each tied to its step) and the
+property's check-out SOP. check_out judges the balances with the same
+helper (kamra.checkout.settlement_position), so the two never disagree.
+Safe to call again and again: opening the sheet writes nothing.
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -1734,7 +1772,7 @@ signed-in user have one set yet? Includes unlock / lockout state.
 **POST** · roles: `Finance`, `Front Desk`, `Revenue Manager`, `Housekeeping`
 
 Set or change your own cashier PIN (4-8 digits). Changing an existing
-PIN needs the current one — unless must_reset was set by an admin.
+PIN needs the current one  -  unless must_reset was set by an admin.
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -2017,7 +2055,8 @@ The digital menu for an outlet: available items grouped by category.
 **GET/POST**
 
 Rooms with a checked-in guest, for the till's room picker: only these
-can take a room charge. "101 · Guest Name".
+can take a room charge. "101 · Guest Name". `room_charges_allowed` is the
+check-in's decision; a blocked room is shown but cannot be charged.
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -2044,7 +2083,9 @@ Captain takes an order. A room (room service, or a dine-in guest
 charging to their room) must have a checked-in stay: it is resolved now
 so the bill posts to that folio on delivery. A room with nobody in house
 is refused - take it as a walk-in bill instead. Takeaway and delivery
-carry the customer's details instead of a table/room.
+carry the customer's details instead of a table/room. `guest` ties the
+bill to a guest profile (a walk-in found or added with find_customer or
+attach_customer); a room bill takes the in-house guest by itself.
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -2062,30 +2103,20 @@ carry the customer's details instead of a table/room.
 | `customer_phone` | no | `None` |
 | `delivery_address` | no | `None` |
 | `allergy_note` | no | `None` |
+| `guest` | no | `None` |
 
 ### `kamra.pos.open_orders`
 
 **GET/POST**
 
 Every running tab at an outlet - the tables/rooms being served right
-now, so a captain can juggle several at once.
+now, so a captain can juggle several at once. A bill nobody has sent to
+the kitchen carries its age in minutes and turns `stale` after the F&B
+setting's limit, so a forgotten order is sent or cancelled.
 
 | Param | Required | Default |
 | --- | --- | --- |
 | `outlet` | yes |  |
-
-### `kamra.pos.qr_targets`
-
-**GET/POST** · roles: `Front Desk`, `Finance`, `Hotel Admin`, `Kamra Agent`
-
-Everything a printable QR sheet needs: each restaurant outlet's tables
-with their QR-ordering link, and each room with the in-room dining link
-(the Room Service outlet's menu, tagged with the room). The codes are
-drawn in the browser - no QR web service sees these links.
-
-| Param | Required | Default |
-| --- | --- | --- |
-| `property` | yes |  |
 
 ### `kamra.pos.table_map`
 
@@ -2171,7 +2202,10 @@ the two bills conserve the original total.
 
 **GET/POST**
 
-One order's full contents - to load a running tab back into the till.
+One order's full contents - to load a running tab back into the till,
+or to look at a closed one from the orders list. `kitchen_lines` counts
+the live lines the kitchen already has: while it is zero the captain can
+cancel the bill alone; after that a supervisor approves.
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -2193,8 +2227,8 @@ start as New (a later fire_kot sends them to the kitchen).
 
 **POST**
 
-Captain confirmation - a guest's QR order isn't fired to the kitchen
-until a captain has vetted it.
+Captain confirmation for a Placed order that has no captain yet
+(legacy guest QR). Sets the captain and moves Placed -> Confirmed.
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -2260,6 +2294,7 @@ round trip instead of four, and the kitchen gets a single update.
 | `allergy_note` | no | `None` |
 | `discount` | no | `0` |
 | `discount_reason` | no | `''` |
+| `guest` | no | `None` |
 
 ### `kamra.pos.send_round`
 
@@ -2395,26 +2430,139 @@ never touches a folio. `undo=1` lifts it.
 
 **POST**
 
-Cancel a running order - needs a reason (it's kept on the order for
-the audit trail). Closed orders can't be cancelled.
+Cancel an open bill with a reason. Nothing sent to the kitchen yet: the
+captain (or an agent) cancels alone. Items already sent: every live line
+is voided rather than deleted, the kitchen gets a VOID slip and sees the
+ticket as cancelled, and a supervisor approves (`supervisor` +
+`supervisor_pin`, or a supervisor's own session). Paid, posted or
+already cancelled bills are refused. Who, why and who approved are kept
+on the bill and in the activity log; the table is freed.
 
 | Param | Required | Default |
 | --- | --- | --- |
 | `order` | yes |  |
-| `reason` | yes |  |
+| `reason` | no | `''` |
+| `reason_code` | no | `None` |
+| `supervisor` | no | `None` |
+| `supervisor_pin` | no | `None` |
 
 ### `kamra.pos.void_item`
 
 **POST**
 
-Void one line with a reason - the line stays on the order (struck
-through, amount zero) so the KOT-vs-bill audit holds up.
+Void one line with a reason. The line stays on the order (struck
+through, amount zero) so the KOT-vs-bill audit holds up. A line the
+kitchen already has needs a supervisor's approval (see cancel_order) and
+prints a VOID slip; a line never sent is simpler to remove_item.
 
 | Param | Required | Default |
 | --- | --- | --- |
 | `order` | yes |  |
 | `item_row` | yes |  |
-| `reason` | yes |  |
+| `reason` | no | `''` |
+| `reason_code` | no | `None` |
+| `supervisor` | no | `None` |
+| `supervisor_pin` | no | `None` |
+
+### `kamra.pos.remove_item`
+
+**POST**
+
+Take a line off a bill before it goes to the kitchen: a mis-tap or a
+change of mind. No reason and no approval, because nothing was cooked.
+A line the kitchen has is refused (void it instead), and so is the last
+line (cancel the bill instead).
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `order` | yes |  |
+| `item_row` | yes |  |
+
+### `kamra.pos.void_approvers`
+
+**GET/POST**
+
+Who can approve a void at this outlet's till: enabled Hotel Admin and
+Finance users with access to the property and a cashier PIN set. Names
+only.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `outlet` | yes |  |
+
+### `kamra.pos.orders_list`
+
+**GET/POST**
+
+The outlet's bills for a day, or a range of up to 31 days, newest
+first: open (not sent to the kitchen), sent, paid, posted to a room, NC,
+closed or cancelled, with the table, who it was for, the amount and the
+time. `q` searches the bill and KOT number, table, room, customer name
+and phone, and the in-house guest's name. `state` keeps one state.
+Looking at today also brings in bills still open from earlier days
+(`carried`), so a forgotten order cannot hide. Only this outlet's bills.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `outlet` | yes |  |
+| `date` | no | `None` |
+| `to_date` | no | `None` |
+| `q` | no | `None` |
+| `state` | no | `None` |
+| `limit` | no | `200` |
+
+### `kamra.pos.find_customer`
+
+**GET/POST**
+
+Find a guest profile for a bill by phone (4+ digits) or name (3+
+letters): the same guest records the front desk uses. Each match says
+how often they ate at this outlet and whether they are in house now.
+Phones show their last digits only.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `outlet` | yes |  |
+| `q` | yes |  |
+
+### `kamra.pos.attach_customer`
+
+**POST**
+
+Say who a walk-in bill is for: an existing guest profile (`guest`),
+or a name and phone. A phone that matches a profile reuses it; otherwise
+a lightweight guest profile is added (name and phone only), the same
+record the front desk uses. Without `order` it only finds or adds the
+profile, for a bill the till is about to create. `clear=1` takes the
+customer off the bill. A room bill is always for its in-house guest.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `outlet` | yes |  |
+| `order` | no | `None` |
+| `guest` | no | `None` |
+| `customer_name` | no | `None` |
+| `phone` | no | `None` |
+| `clear` | no | `0` |
+
+### `kamra.pos.guest_panel`
+
+**GET/POST**
+
+Who a bill is for, without leaving the till. For a room bill: the
+in-house guest, room, stay dates and whether the stay can take room
+charges (the check-in's decision, which posting also enforces). For a
+walk-in: the attached guest profile. Either way: VIP, the guest's notes
+(preferences, allergies), the bill's allergy note, and their past bills
+at this outlet. Pass `order`, or `guest` / `room` for a bill not created
+yet.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `outlet` | yes |  |
+| `order` | no | `None` |
+| `guest` | no | `None` |
+| `room` | no | `None` |
 
 ### `kamra.pos.bill_data`
 
@@ -2491,7 +2639,7 @@ printer's fallback, or stay Failed for a reprint.
 **GET/POST**
 
 Every printer with its routes and whether it's online - for the
-settings card and for a kitchen screen choosing what to print for.
+F&B Printers screen and for a kitchen screen choosing what to print for.
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -3662,6 +3810,7 @@ Create or update one ingredient.
 | `uom` | yes |  |
 | `category` | no | `None` |
 | `cost_per_unit` | no | `0` |
+| `gst_rate` | no | `None` |
 | `is_active` | no | `1` |
 | `name` | no | `None` |
 
@@ -4446,12 +4595,28 @@ actor_kind filters to "human" or "agent".
 
 **GET/POST** · roles: `Front Desk`, `Finance`, `Revenue Manager`, `Kamra Agent`
 
-Everything one ledger row knows — including the before/after
+Everything one ledger row knows  -  including the before/after
 snapshots that are too heavy for the feed.
 
 | Param | Required | Default |
 | --- | --- | --- |
 | `name` | yes |  |
+
+### `kamra.agents_api.staff_sign_ins`
+
+**GET/POST** · roles: `Hotel Admin`, `Finance`, `System Manager`
+
+Who signed in to and out of Kamra, newest first: Frappe's own Login /
+Logout records (Activity Log), limited to this property's staff. Only
+what Frappe already stores is shown - who, when, in or out, and whether
+the attempt worked. IP addresses are left out.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `limit` | no | `50` |
+| `start` | no | `0` |
+| `user` | no | `None` |
 
 
 ## Settings hub (module settings)
@@ -4492,6 +4657,336 @@ Switch one module on or off for the property.
 | `property` | yes |  |
 | `module` | yes |  |
 | `enabled` | yes |  |
+
+
+## Rooms (room board, room detail and history, insights)
+
+> Read-only. Room changes go through set_housekeeping_status, the room block endpoints, check_in / check_out and move_reservation.
+
+### `kamra.rooms.rooms_board`
+
+**GET/POST**
+
+Every room of the property as a tile: housekeeping status, who is in
+it, who arrives or leaves today, whether it is out of service, and its
+open housekeeping task. One call, a fixed number of queries.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+
+### `kamra.rooms.room_detail`
+
+**GET/POST**
+
+Everything about one room right now: what it is, its status, who is
+in it (with the balance), who arrives next, whether it is held out of
+service, and its open housekeeping work.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `room` | yes |  |
+
+### `kamra.rooms.room_availability`
+
+**GET/POST**
+
+This room, night by night: booked (by whom), held out of service, or
+free. Same overlap rules as the tape chart and the block guard (the
+check-out night is free; a day-use stay holds its own date).
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `room` | yes |  |
+| `start_date` | no | `None` |
+| `days` | no | `14` |
+
+### `kamra.rooms.room_history`
+
+**GET/POST**
+
+Who stayed in this room lately (nights, room revenue), who cleaned
+and checked it and when, its service tickets, and the guests moved in
+or out of it.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `room` | yes |  |
+| `limit` | no | `15` |
+
+### `kamra.rooms.room_insights`
+
+**GET/POST**
+
+Per-room numbers for the last `days` nights (7, 30, 90, 180 or 365,
+up to yesterday): room nights sold and occupancy, room revenue posted to
+folios, out-of-service nights, and how long cleans take. Cached for a
+few minutes (refresh=1 recomputes); one query per measure, never one
+per room.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `days` | no | `30` |
+| `refresh` | no | `0` |
+
+
+## Today layout (per-user widgets, hotel default)
+
+### `kamra.today_layout.get_today_layout`
+
+**GET/POST**
+
+The layout this person sees on Today, and where it came from
+("user", "property" or "default").
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | no | `None` |
+
+### `kamra.today_layout.save_today_layout`
+
+**POST**
+
+Save this person's own Today layout.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `layout` | yes |  |
+| `property` | no | `None` |
+
+### `kamra.today_layout.reset_today_layout`
+
+**POST**
+
+Drop this person's own layout: back to the hotel default.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | no | `None` |
+
+### `kamra.today_layout.save_today_layout_default`
+
+**POST** · roles: `Hotel Admin`
+
+Hotel Admin: the layout everyone at this property sees until they
+customise their own. Pass no layout to go back to the built-in one.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `layout` | no | `None` |
+
+
+## Desk procedures (check-out, check-in and other SOPs)
+
+### `kamra.sop.get_sop`
+
+**GET/POST** · roles: `Front Desk`, `Kamra Agent`, `Hotel Admin`
+
+Return evaluated SOP steps for a procedure.
+
+context is optional JSON (checkout_context shape for key=checkout). When
+omitted, steps return as todo with template tips only.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `key` | yes |  |
+| `context` | no | `None` |
+
+### `kamra.sop.list_sops`
+
+**GET/POST** · roles: `Hotel Admin`, `System Manager`, `Front Desk`, `Kamra Agent`
+
+List SOP templates for the settings editor.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+
+### `kamra.sop.get_sop_template`
+
+**GET/POST** · roles: `Hotel Admin`, `System Manager`
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `name` | yes |  |
+
+### `kamra.sop.save_sop_template`
+
+**POST** · roles: `Hotel Admin`, `System Manager`
+
+Create or update an SOP template and its steps.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `name` | no | `None` |
+| `property` | no | `None` |
+| `key` | no | `None` |
+| `title` | no | `None` |
+| `active` | no | `1` |
+| `steps` | no | `None` |
+
+### `kamra.sop.seed_sop_templates`
+
+**POST** · roles: `Hotel Admin`, `System Manager`
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+
+
+## Guided check-in (steps, who did each, room-charges permission)
+
+> kamra.api.check_in refuses until every check-in step the property marks required is done. check_in_readiness says what is missing.
+
+### `kamra.checkin.checkin_flow`
+
+**GET/POST**
+
+Everything the guided check-in shows, in one round trip: the steps
+(required or optional, done, skipped or to do, and who did them), plus
+what each step screen needs.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `reservation` | yes |  |
+
+### `kamra.checkin.check_in_readiness`
+
+**GET/POST** · roles: `Front Desk`, `Night Auditor`, `Finance`, `Hotel Admin`, `Kamra Agent`
+
+Read-only: which check-in steps are done, which are still required,
+and whether check_in would go through now. Agents read this; they
+cannot do the desk's steps for it.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `reservation` | yes |  |
+
+### `kamra.checkin.complete_checkin_step`
+
+**POST**
+
+The desk marks a step done (a confirm-only step, or the review of
+what the guest sent online). Refused while what the step stands for is
+not true yet - an ID still missing, a deposit not taken.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `reservation` | yes |  |
+| `step` | yes |  |
+| `note` | no | `None` |
+
+### `kamra.checkin.skip_checkin_step`
+
+**POST**
+
+Skip an optional step. A required one cannot be skipped.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `reservation` | yes |  |
+| `step` | yes |  |
+| `reason` | no | `None` |
+
+### `kamra.checkin.save_guest_details`
+
+**POST**
+
+Correct the primary guest's contact and ID details at the desk. Only
+what is passed changes; an ID type must be one the country recognises.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `reservation` | yes |  |
+| `phone` | no | `None` |
+| `email` | no | `None` |
+| `id_type` | no | `None` |
+| `id_number` | no | `None` |
+| `nationality` | no | `None` |
+
+### `kamra.checkin.confirm_billing`
+
+**POST**
+
+The desk confirms who pays (OTA, guest, company, group).
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `reservation` | yes |  |
+| `payer` | yes |  |
+| `note` | no | `None` |
+
+### `kamra.checkin.assign_checkin_room`
+
+**POST**
+
+Keep the assigned room, or put the guest in another free room of
+the booked type. Upgrades and downgrades (a different type, maybe a
+new price) go through the room move screen (room_move_preview +
+move_reservation), which also records who assigned the room.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `reservation` | yes |  |
+| `room` | no | `None` |
+
+### `kamra.checkin.sign_registration_card`
+
+**POST**
+
+The guest signs the registration card on screen (stored like the
+online signature) or on the printed card (on_paper=1).
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `reservation` | yes |  |
+| `signature` | no | `None` |
+| `on_paper` | no | `0` |
+
+### `kamra.checkin.issue_keys`
+
+**POST**
+
+Record the keys handed to the guest, and who handed them. With a
+connected lock system the keys are made by it as soon as the guest is
+checked in (now, if already in house); with no lock system the desk
+encodes the cards at the encoder and notes the card numbers here.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `reservation` | yes |  |
+| `key_count` | no | `1` |
+| `key_cards` | no | `None` |
+
+### `kamra.checkin.log_checkin_requests`
+
+**POST**
+
+Quick requests at check-in become service tickets (one each); a free
+note is kept on the step and, if given alone, raised as one ticket.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `reservation` | yes |  |
+| `requests` | no | `None` |
+| `note` | no | `None` |
+
+### `kamra.checkin.set_room_charges`
+
+**POST** · roles: `Front Desk`, `Night Auditor`, `Finance`, `Hotel Admin`
+
+May the guest charge outlets, laundry and minibar to the room? POS,
+laundry and minibar postings check this flag. Changeable later in the
+stay by the desk or finance (logged).
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `reservation` | yes |  |
+| `allowed` | no | `1` |
+| `reason` | no | `None` |
 
 
 ## Staff & access
@@ -4685,7 +5180,7 @@ company's. Tax is the hotel's rule for the charge type, not the POS's.
 | `outlet_name` | no | `None` |
 
 
-## Public (no auth - booking page, QR menu)
+## Public (no auth - booking page, check-in)
 
 > These are allow_guest endpoints: no token needed, rate-limited.
 
@@ -4693,7 +5188,7 @@ company's. Tax is the hotel's rule for the charge type, not the POS's.
 
 **GET/POST**
 
-Entry point for /book — how many properties, sites, or listings to show.
+Entry point for /book  -  how many properties, sites, or listings to show.
 
 Several properties live: mode "properties" lists them, and the guest
 picks one - /book?property=&lt;slug> (or /stay/&lt;slug>) calls back with
@@ -4756,6 +5251,12 @@ Everything the public booking page needs to render.
 
 Availability + real quoted price per room type for the stay.
 
+`child_ages` (e.g. [3, 8, 13]) lets each room type's age bands decide who
+is free, a child or an adult; without it `children` are all children.
+Each row says whether the room type can take the party: `available`, a
+`reason` when it cannot, and `needs_confirmation` when the party is above
+what it sleeps but within the extra guests it allows by arrangement.
+
 | Param | Required | Default |
 | --- | --- | --- |
 | `property` | yes |  |
@@ -4766,6 +5267,7 @@ Availability + real quoted price per room type for the stay.
 | `listing_slug` | no | `None` |
 | `location_slug` | no | `None` |
 | `pets` | no | `0` |
+| `child_ages` | no | `None` |
 
 ### `kamra.public_api.precheckin_info` <Badge type='tip' text='public' />
 
@@ -4830,7 +5332,7 @@ pre-register, so the submit gate never mentions this.
 **GET/POST**
 
 Laundry price list + stay context for the in-stay guest page.
-Read-only — the guest sees what things cost, never a folio.
+Read-only  -  the guest sees what things cost, never a folio.
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -4841,7 +5343,7 @@ Read-only — the guest sees what things cost, never a folio.
 **POST**
 
 In-house guest asks housekeeping to pick their laundry up. Written on
-the guest's behalf by the governed agent — the guest never touches pricing
+the guest's behalf by the governed agent  -  the guest never touches pricing
 or the folio; staff count and price the bag at the door (status
 'Requested', exactly where a staff-logged pickup lands).
 
@@ -4861,7 +5363,9 @@ current payment policy and snapshotted onto the booking.
 
 Instant mode (default): Confirmed when nothing is due now, else
 Pending Payment with a hold window. Request to Book: Requested (no
-inventory) until the host approves.
+inventory) until the host approves. A party above what the room sleeps,
+within the extra guests it allows, is also Requested: the host confirms
+the sleeping arrangement and agrees the price for them.
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -4880,6 +5384,7 @@ inventory) until the host approves.
 | `voucher_code` | no | `''` |
 | `idempotency_key` | no | `''` |
 | `pets` | no | `0` |
+| `child_ages` | no | `None` |
 
 ### `kamra.public_api.access_info` <Badge type='tip' text='public' />
 
@@ -4904,33 +5409,6 @@ Live promo-code feedback on the booking page. Never throws - returns
 | `code` | yes |  |
 | `nights` | no | `1` |
 
-### `kamra.public_api.qr_menu` <Badge type='tip' text='public' />
-
-**GET/POST**
-
-The guest-facing digital menu behind a table/room QR code. Only shows
-outlets a hotel has published items for; no prices are trusted from the
-guest - they're read here.
-
-| Param | Required | Default |
-| --- | --- | --- |
-| `outlet` | yes |  |
-
-### `kamra.public_api.qr_order` <Badge type='tip' text='public' />
-
-**POST**
-
-A guest places an order from the QR menu. It lands as a QR order that
-a captain must confirm before it fires to the kitchen or touches a bill -
-the guest can never post directly to a folio.
-
-| Param | Required | Default |
-| --- | --- | --- |
-| `outlet` | yes |  |
-| `items` | yes |  |
-| `room` | no | `None` |
-| `table_no` | no | `None` |
-
 ### `kamra.public_api.hosting_enquiry` <Badge type='tip' text='public' />
 
 **POST**
@@ -4938,7 +5416,7 @@ the guest can never post directly to a folio.
 Hosting / implementation enquiry from kamrapms.com. Stored first (a lead is
 never lost even without SMTP), then a best-effort email to the team.
 
-Leads are System Manager–only and purged after
+Leads are System Manager-only and purged after
 ``hosting_enquiry_retention_months`` (default 24) unless status is Won.
 
 | Param | Required | Default |

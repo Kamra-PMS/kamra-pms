@@ -110,7 +110,6 @@ def _post_stay_fee(reservation, folio_name: str, component: str,
 	"""Post a one-time stay fee at the amount and tax in the booking's quote
 	snapshot, so a later price change never re-bills the guest. Without a
 	snapshot line it posts `fallback` untaxed. Idempotent per folio."""
-	import json
 	amount = 0.0
 	tax_rate = 0.0
 	snap = getattr(reservation, "quote_snapshot", None)
@@ -1058,10 +1057,9 @@ def run_night_audit(property: str, business_date: str | None = None,
 	ensure_business_date(property)
 	current = get_business_date(property)
 	business_date = str(getdate(business_date or current))
-	# per property AND date - a global AUDIT-<date> name would make the
-	# second property's audit silently no-op every night. Checked before
-	# the date guards so a retry after success answers already_ran.
-	audit_name = f"AUDIT-{business_date}-{property}"
+	# look the run up per property AND date - a global per-date lookup would
+	# make the second property's audit silently no-op every night. Checked
+	# before the date guards so a retry after success answers already_ran.
 	# an End of Day draft (status Draft) is the wizard's progress for the
 	# date, not a closed day
 	done = frappe.db.get_value(

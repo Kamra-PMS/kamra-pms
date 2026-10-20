@@ -36,19 +36,18 @@ export function maxCapacity(
   return caps.length && caps.every((c) => c > 0) ? Math.max(...caps) : 0
 }
 
-/** The most guests of one kind a room of this type may be told to sleep:
- * its stated occupancy plus the beds the house adds by arrangement.
+/** The most guests of one kind a room of this type sleeps: its stated
+ * occupancy. Guests above it are not more adults - they are extra guests by
+ * arrangement, counted and priced on their own (over_capacity_guests, up to
+ * the room type's max_extra_beds).
  *
  * A bigger party is still bookable - it splits across rooms and each one
- * carries its own count - but no single room accepts more guests than it has
- * beds for, because the booking would only be refused on save
- * (Reservation.validate_occupancy). A stated capacity of 0 means "unset", so
- * it caps nothing.
+ * carries its own count. A stated capacity of 0 means "unset", so it caps
+ * nothing.
  */
 export function sleeps(
   rt: RoomCapacity | undefined,
   kind: "adults" | "children",
 ) {
-  const base = Number(rt?.[`${kind}_capacity`] || 0)
-  return base > 0 ? base + Number(rt?.max_extra_beds || 0) : 0
+  return Number(rt?.[`${kind}_capacity`] || 0)
 }

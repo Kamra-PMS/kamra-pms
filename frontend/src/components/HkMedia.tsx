@@ -152,7 +152,7 @@ export function RoomMediaButton({ room }: { room: string }) {
         type="button"
         aria-label="Cleaning photos"
         onClick={show}
-        className="absolute bottom-1 right-1 rounded-full bg-white/80 p-1 text-zinc-600 shadow-sm hover:text-brand-700"
+        className="absolute bottom-1 end-1 rounded-full bg-white/80 p-1 text-zinc-600 shadow-sm hover:text-brand-700"
       >
         <Camera className="size-3.5" />
       </button>

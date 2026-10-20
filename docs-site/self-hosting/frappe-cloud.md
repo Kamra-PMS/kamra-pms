@@ -1,12 +1,19 @@
 # Install via Frappe Cloud
 
 [Frappe Cloud](https://frappecloud.com) is managed Frappe hosting by the
-framework's makers — Marketplace installs, backups and updates handled for
+framework's makers - Marketplace installs, backups and updates handled for
 you.
+
+Kamra is **live** on the marketplace:
+[frappecloud.com/marketplace/apps/kamra](https://frappecloud.com/marketplace/apps/kamra).
+Stable builds track the GitHub `main` branch (current release
+[v2.6.16](https://github.com/Kamra-PMS/kamra-pms/releases/tag/v2.6.16)).
+A shorter get-started page also lives on the product site:
+[kamrapms.com/frappe-cloud](https://kamrapms.com/frappe-cloud/).
 
 ::: danger Shared trial sites cannot install Kamra
 You need a **private bench** (payment method on file; Frappe’s USD 25+
-site plans). Shared / trial sites only install featured apps — Kamra will
+site plans). Shared / trial sites only install featured apps - Kamra will
 not appear there. Do not start on a trial site and expect to “upgrade into”
 Marketplace installs.
 :::
@@ -18,12 +25,12 @@ Marketplace installs.
 3. Create a **new site** on that bench (not a shared trial site).
 4. On the bench: **Marketplace → search Kamra → Add** → deploy.
 5. On the site: **Install app** Kamra (`payments` comes with it).
-6. Open **`https://<your-site>/kamra`** — **not** `/app`.
+6. Open **`https://<your-site>/kamra`** - **not** `/app`.
 7. Sign in as **Administrator** with the site password from create-site
    (there is no Kamra default password).
 8. You are sent to **`/kamra/setup`** until the first property exists.
    Desk tiles (Accounting, Stock, …) appear only if you later install
-   ERPNext — they are not Kamra.
+   ERPNext - they are not Kamra.
 
 Kamra itself is free on Frappe Cloud. Billing is only for the site.
 
@@ -49,8 +56,8 @@ That is why every release must keep:
 Two layers, both in GitHub Actions:
 
 1. **Offline pack check** (`python kamra/scripts/marketplace_install_check.py`)
-   — the same gates FC's auditor cares about, without MariaDB.
-2. **Full bench path** (CI job *Backend eval harness*) —
+   - the same gates FC's auditor cares about, without MariaDB.
+2. **Full bench path** (CI job *Backend eval harness*)  - 
    `bench init` → `get-app payments` → `get-app kamra` → `new-site` →
    `install-app kamra` → eval harness + front-desk journey +
    fresh-install role/SPA asserts.
@@ -61,10 +68,23 @@ Locally (from a clone of `main`):
 python kamra/scripts/marketplace_install_check.py
 ```
 
+## Bench / registry installs
+
+Outside Frappe Cloud, `bench get-app` and Pilot read the
+[frappe/marketplace](https://github.com/frappe/marketplace) registry
+(`apps/kamra.json`). That entry should match the same stable tag as the
+Cloud listing. Self-host from git without the registry:
+
+```bash
+bench get-app https://github.com/Kamra-PMS/kamra-pms --branch main
+bench --site <site> install-app payments
+bench --site <site> install-app kamra
+```
+
 ## Optional: ERPNext and Frappe HR on the same site
 
 Marketplace Kamra does **not** install company books or HR. If you want
 Accounting and payroll on the **same** Frappe Cloud site, install
 **ERPNext** and optionally **Frappe HR** from Site Apps / Marketplace
-after Kamra. Those apps add Desk workspaces — the hotel still runs at
+after Kamra. Those apps add Desk workspaces - the hotel still runs at
 `/kamra`. Full steps: [ERPNext and Frappe HR with Kamra](/self-hosting/erpnext-hr).

@@ -145,7 +145,7 @@ def _report_failure(action_type, row, exc, *, fallback=False) -> None:
 			reference_name=row.get("reference_name") or None,
 		)
 	except Exception:
-		pass
+		pass  # logging the failure must never break the caller
 
 
 def mark_approved(log_name: str, approver: str) -> None:

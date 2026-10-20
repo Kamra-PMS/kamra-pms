@@ -1,4 +1,4 @@
-# Housekeeping — rooms, cleans and laundry
+# Housekeeping - rooms, cleans and laundry
 
 The Housekeeping module keeps every room's status current and gets rooms
 cleaned in the right order. Supervisors and the front desk watch the
@@ -62,6 +62,9 @@ from **Task deadlines**.
 4. Use **All Floors** / **Floor 1** … to show one floor.
 
 The board reloads every 30 seconds. Press **Refresh** to reload now.
+
+For one room's whole story (who stayed, who cleaned it and when, tickets,
+the next weeks) and per-room numbers, open [Rooms](/rooms).
 
 ## Change a room's status
 
@@ -267,7 +270,7 @@ for standard. A bag past that time shows **overdue**. **Docket** prints
 a slip for the bag on the thermal printer.
 
 **House laundry and free bags.** In **Collect now**, choose **House
-(uniforms / linen)** for hotel items, or tick **Complimentary — don't
+(uniforms / linen)** for hotel items, or tick **Complimentary - don't
 bill the guest**. Kamra counts these bags but never bills them.
 
 **Cancel** a bag that won't be done. You must give a reason; it is saved
@@ -394,6 +397,6 @@ The phone app, Room Board and tasks run on `kamra.api` endpoints
 `hk_reject_task`, `hk_assign_task`, `hk_staff`, `hk_post_consumable`, `hk_log_item`,
 `room_board`, `set_housekeeping_status`); laundry runs on `kamra.laundry`.
 Escalation is the scheduled job `kamra.housekeeping.escalate_overdue_tasks`
-(every 15 minutes). AI agents use the same calls as MCP tools — see the
+(every 15 minutes). AI agents use the same calls as MCP tools - see the
 [MCP tools](/mcp-tools#housekeeping) ([laundry](/mcp-tools#laundry)) and
 the [API reference](/api-reference#laundry-housekeeping).

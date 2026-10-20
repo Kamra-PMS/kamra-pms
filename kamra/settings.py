@@ -138,8 +138,7 @@ MODULES: tuple[Module, ...] = (
 	Module(
 		"front-desk", "Front Desk", "Arrivals, holds, no-shows and the day view.",
 		editors=("Hotel Admin",),
-		related=(("Rooms", "/rooms"), ("Room types", "/room-types"),
-		         ("Room QR codes", "/qr-codes?tab=rooms")),
+		related=(("Rooms", "/rooms"), ("Room types", "/room-types")),
 		sections=(
 			Section("arrivals", "Arrivals", "Getting guests checked in before they reach the desk.", (
 				S("auto_send_checkin_links", "Send pre-check-in links automatically", "check", 0, P,
@@ -154,6 +153,16 @@ MODULES: tuple[Module, ...] = (
 				  options=("manual",),
 				  hint="Manual: staff encode key cards at the lock's own encoder. Lock vendor "
 				       "connectors plug in here (see the integrations docs)."),
+			)),
+			Section("guest_info", "Guest info at check-in",
+			        "Shown to the desk in the check-in steps, to tell the guest, print or send on WhatsApp.", (
+				S("guest_wifi_name", "Wi-Fi name"),
+				S("guest_wifi_password", "Wi-Fi password",
+				  hint="Shown to the desk and given to guests. Never written to the activity log."),
+				S("breakfast_hours", "Breakfast times", hint="For example: 7:00 to 10:30, ground floor restaurant."),
+				S("emergency_number", "Emergency number", hint="Reception or duty manager, day and night."),
+				S("guest_info_note", "Anything else for guests", "textarea",
+				  hint="Pool hours, parking, quiet hours. Keep it short."),
 			)),
 			Section("holds", "Holds & selling", "", (
 				S("hold_minutes", "Hold unconfirmed bookings for", "number", 120, P, min=5, max=10080, unit="min"),
@@ -256,9 +265,9 @@ MODULES: tuple[Module, ...] = (
 	Module(
 		"fnb", "F&B", "Restaurant outlets, the menu and table reservations.",
 		editors=("Hotel Admin", "Finance"), toggle=True,
-		related=(("Outlets", "/outlets"), ("Menu", "/menu-items"), ("Kitchen inventory", "/inventory"),
-		         ("Kitchen display", "/kitchen"),
-		         ("QR codes", "/qr-codes")),
+		related=(("Outlets", "/outlets"), ("Menu", "/menu-items"), ("Ingredients", "/ingredients"),
+		         ("Kitchen inventory", "/inventory"),
+		         ("Kitchen display", "/kitchen"), ("Printers", "/printers")),
 		sections=(
 			Section("kot", "Kitchen orders (KOT)", "What happens when a captain sends an order to the kitchen.", (
 				S("pos_auto_kot", "Auto-accept and print KOT", "check", 0,
@@ -268,6 +277,10 @@ MODULES: tuple[Module, ...] = (
 				S("pos_print_void_slips", "Print void slips in the kitchen", "check", 1,
 				  hint="A line voided or an order cancelled after its KOT was sent prints a VOID "
 				       "slip on the kitchen printer that had it, so the cook stops."),
+				S("pos_unfired_alert_min", "Flag a bill not sent to the kitchen after", "number", 15,
+				  min=1, max=240, unit="min",
+				  hint="A bill with items that nobody sent to the kitchen turns red on the till "
+				       "after this long, so a forgotten order gets sent or cancelled."),
 			)),
 			Section("tables", "Table reservations", "Which bookings show against a table on the POS floor.", (
 				S("pos_reservation_before_min", "Show a reservation from", "number", 60, min=0, max=480, unit="min before"),
@@ -363,6 +376,10 @@ MODULES: tuple[Module, ...] = (
 				  hint="A bill counts against the company only once it is this many days past its due date."),
 			)),
 			Section("cashier", "Cashier controls", "", (
+				S("use_cashier_tills", "Take money through cashier tills", "check", 1,
+				  hint="On: staff open their till (with an opening float) before taking or giving back "
+				       "money, and close it with a cash count. Off, for a small place with no cash drawer: "
+				       "payments and refunds are recorded without a till."),
 				S("require_cashier_pin", "Require cashier PIN on money actions", "check", 0, P,
 				  hint="Payments, invoices, allowances and settlements re-confirm who is acting. Agents are exempt."),
 				S("pin_max_attempts", "Lock a PIN after", "number", 5, min=3, max=10, unit="wrong tries"),
@@ -424,6 +441,25 @@ def _kv_values(property: str) -> dict:
 			out[r.setting_key] = r.value
 	frappe.cache().hset(CACHE_KEY, property, out)
 	return out
+
+
+def read_kv(property: str, key: str, default=None):
+	"""A Property Setting value that is not a registry field (a structured
+	value like the Today layout). Cached with the registry values."""
+	val = _kv_values(property).get(key)
+	return default if val is None else val
+
+
+def write_kv(property: str, key: str, val):
+	"""The one writer of a Property Setting row. Callers check roles and
+	log the change; this stores the JSON value and nothing else. The
+	caller clears the cache (clear_cache) once it is done writing."""
+	name = frappe.db.get_value("Property Setting", {"property": property, "setting_key": key})
+	if name:
+		frappe.db.set_value("Property Setting", name, "value", json.dumps(val))
+	else:
+		frappe.get_doc({"doctype": "Property Setting", "property": property,
+		                "setting_key": key, "value": json.dumps(val)}).insert(ignore_permissions=True)
 
 
 def _turnover_name(property: str) -> str | None:
@@ -619,12 +655,7 @@ def save_settings(property: str, module: str, changes) -> dict:
 			tp.update(by_store["turnover"])
 			tp.save(ignore_permissions=True)
 	for key, val in (by_store.get("kv") or {}).items():
-		name = frappe.db.get_value("Property Setting", {"property": property, "setting_key": key})
-		if name:
-			frappe.db.set_value("Property Setting", name, "value", json.dumps(val))
-		else:
-			frappe.get_doc({"doctype": "Property Setting", "property": property,
-			                "setting_key": key, "value": json.dumps(val)}).insert(ignore_permissions=True)
+		write_kv(property, key, val)
 	clear_cache(property)
 
 	after_all = _values(property, mod)

@@ -57,10 +57,13 @@ def _execute():
 		healed = heal_seed_defaults()
 		ensure_users()
 		from kamra.scripts.seed_showcase import execute as seed_showcase
+		from kamra.scripts.seed_v1 import execute as seed_v1
 		seed_showcase()
+		seed_v1()
 		seed_generic_properties()
+		ensure_petty_cash_floats()
 		frappe.db.commit()  # nosemgrep: frappe-manual-commit -- batch/seed/migration script runs outside the request cycle; explicit commit persists the staged writes
-		print("Demo property already exists — ensured demo users + showcase."
+		print("Demo property already exists — ensured demo users + showcase + revenue samples."
 		      + (f" Healed {healed} blank default(s)." if healed else ""))
 		return
 
@@ -75,6 +78,7 @@ def _execute():
 			"phone": "+91 80 4000 8000",
 			"email": "demo@kamra.local",
 			"gstin": "29ABCDE1234F1Z5",
+			"petty_cash_float": 10000,
 		}
 	).insert(ignore_permissions=True)
 
@@ -228,8 +232,13 @@ def _execute():
 	from kamra.scripts.seed_showcase import execute as seed_showcase
 	seed_showcase()
 
+	# seasons, guardrails, vouchers, meal plans, extra rate plans
+	from kamra.scripts.seed_v1 import execute as seed_v1
+	seed_v1()
+
 	# Seed generic demo properties (lakeside villa with whole-property lock, and beach homestay with AC/non-AC rooms)
 	seed_generic_properties()
+	ensure_petty_cash_floats()
 
 	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- batch/seed/migration script runs outside the request cycle; explicit commit persists the staged writes
 	print(f"Seeded demo property '{PROPERTY}' with rooms, guests, reservations and login users.")
@@ -275,6 +284,24 @@ def _ensure_rental_kind():
 			dirty = True
 		if dirty:
 			doc.save(ignore_permissions=True)
+
+
+
+def ensure_petty_cash_floats():
+	"""Each property keeps its own petty-cash imprest — never one shared box."""
+	defaults = {
+		"Kamra Demo Palace": 10000,
+		"Kamra Beach House": 3000,
+		"Kamra Lakeside Villa": 5000,
+		"Kamra Beach Homestay": 2500,
+	}
+	for name, amount in defaults.items():
+		if not frappe.db.exists("Property", name):
+			continue
+		cur = frappe.db.get_value("Property", name, "petty_cash_float")
+		if cur in (None, "", 0, 0.0):
+			frappe.db.set_value("Property", name, "petty_cash_float", amount,
+			                    update_modified=False)
 
 
 def seed_generic_properties():
@@ -476,8 +503,8 @@ def heal_seed_defaults(properties=DEMO_PROPERTIES) -> int:
 			else:
 				blank = f"ifnull({col}, '') = ''"
 			for prop in targets:
-				frappe.db.sql(
-					f"update `tab{dt}` set {col} = %s where `{key}` = %s and {blank}",  # nosemgrep: frappe-sql-format-injection -- doctype / fieldnames come from DocType meta, not user input
+				frappe.db.sql(  # nosemgrep: frappe-sql-format-injection -- doctype and fieldnames come from DocType meta, not user input; values are bound
+					f"update `tab{dt}` set {col} = %s where `{key}` = %s and {blank}",
 					(val, prop))
 				healed += frappe.db._cursor.rowcount if getattr(frappe.db, "_cursor", None) else 0
 	frappe.clear_cache()

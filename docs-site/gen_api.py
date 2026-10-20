@@ -13,6 +13,20 @@ Keep this in sync by re-running it whenever endpoints change; CI-friendly
 (deterministic output).
 """
 
+from __future__ import annotations
+
+
+def _ascii_dashes(text: str) -> str:
+	"""Docs CI rejects Unicode em/en dashes in published markdown."""
+	return (
+		text.replace("\u2014", " - ")
+		.replace("\u2013", "-")
+		.replace(" — ", " - ")
+		.replace("—", " - ")
+		.replace(" – ", " - ")
+		.replace("–", "-")
+	)
+
 import ast
 import json
 import os
@@ -43,12 +57,18 @@ MODULES = [
     ("night_audit", "Night audit (End of Day checklist, audit pack)", ""),
     ("agents_api", "Activity ledger", ""),
     ("settings", "Settings hub (module settings)", ""),
+    ("rooms", "Rooms (room board, room detail and history, insights)",
+     "Read-only. Room changes go through set_housekeeping_status, the room block endpoints, check_in / check_out and move_reservation."),
+    ("today_layout", "Today layout (per-user widgets, hotel default)", ""),
+    ("sop", "Desk procedures (check-out, check-in and other SOPs)", ""),
+    ("checkin", "Guided check-in (steps, who did each, room-charges permission)",
+     "kamra.api.check_in refuses until every check-in step the property marks required is done. check_in_readiness says what is missing."),
     ("staff", "Staff & access", ""),
     ("webhooks", "Outbound webhooks (subscriptions, delivery log)",
      "Hotel Admin / System Manager. Events are signed with HMAC-SHA256 - see the Integrations page."),
     ("pos_interface", "External POS (room charges from a third-party POS)",
      "For a POS Integrator service user. ticket_id makes every posting idempotent."),
-    ("public_api", "Public (no auth - booking page, QR menu)",
+    ("public_api", "Public (no auth - booking page, check-in)",
      "These are allow_guest endpoints: no token needed, rate-limited."),
 ]
 
@@ -181,7 +201,7 @@ outline: 2
 
 # REST API reference
 
-Every endpoint below is a whitelisted function — the same governed layer
+Every endpoint below is a whitelisted function - the same governed layer
 the UI and the AI use. **{total} endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
@@ -222,7 +242,7 @@ Content-Type: application/json
                                f"{'' if d in (None,) else f'`{d}`'} |")
                 out.append("")
     with open(os.path.join(HERE, "api-reference.md"), "w") as md:  # nosemgrep: frappe-security-file-traversal -- path is derived from the app source tree, not from user input
-        md.write("\n".join(out))
+        md.write(_ascii_dashes("\n".join(out)))
     return total
 
 

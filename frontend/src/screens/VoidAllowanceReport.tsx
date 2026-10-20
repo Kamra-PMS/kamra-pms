@@ -16,15 +16,24 @@ interface Row {
   actor: string
   action: string
   folio: string | null
+  /** restaurant rows name the POS bill instead of a folio */
+  pos_order?: string | null
+  /** the supervisor who approved it, when one had to */
+  approver?: string | null
   detail: string | null
 }
 
-const ACTIONS = ["Void", "Allowance", "Invoice cancelled"] as const
+const ACTIONS = ["Void", "Allowance", "Invoice cancelled", "POS void", "POS bill cancelled"] as const
 
 const iso = (d: Date) => d.toISOString().slice(0, 10)
 
 export default function VoidAllowanceReport() {
   const { t } = useT()
+  // literal keys so the catalog picks them up
+  const actionLabel: Record<string, string> = {
+    "Void": t("Void"), "Allowance": t("Allowance"), "Invoice cancelled": t("Invoice cancelled"),
+    "POS void": t("POS void"), "POS bill cancelled": t("POS bill cancelled"),
+  }
   const [from, setFrom] = useState(iso(new Date(Date.now() - 30 * 864e5)))
   const [to, setTo] = useState(iso(new Date()))
   const [rows, setRows] = useState<Row[] | null>(null)
@@ -62,12 +71,12 @@ export default function VoidAllowanceReport() {
     return (rows ?? []).filter(
       (r) =>
         (!only || r.action === only) &&
-        (!s || `${r.actor} ${r.folio ?? ""} ${r.detail ?? ""}`.toLowerCase().includes(s)),
+        (!s || `${r.actor} ${r.folio ?? ""} ${r.pos_order ?? ""} ${r.approver ?? ""} ${r.detail ?? ""}`.toLowerCase().includes(s)),
     )
   }, [rows, only, q])
 
   return (
-    <div className="mx-auto max-w-5xl space-y-4 p-4 sm:p-6">
+    <div className="w-full space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-400">
@@ -120,7 +129,7 @@ export default function VoidAllowanceReport() {
               only === a ? "border-brand-600 bg-brand-50 text-brand-800" : "border-zinc-200 text-zinc-600 hover:bg-zinc-50"
             }`}
           >
-            {t(a)} · {counts[a] ?? 0}
+            {actionLabel[a]} · {counts[a] ?? 0}
           </button>
         ))}
         <label className="relative ms-auto">
@@ -163,14 +172,14 @@ export default function VoidAllowanceReport() {
                   <td className="whitespace-nowrap px-3 py-2">
                     <span
                       className={`rounded-full px-2 py-0.5 text-xs ${
-                        r.action === "Void"
+                        r.action === "Void" || r.action === "POS void"
                           ? "bg-rose-50 text-rose-700"
                           : r.action === "Allowance"
                             ? "bg-amber-50 text-amber-800"
                             : "bg-zinc-100 text-zinc-700"
                       }`}
                     >
-                      {t(r.action)}
+                      {actionLabel[r.action] ?? t(r.action)}
                     </span>
                   </td>
                   <td className="whitespace-nowrap px-3 py-2">
@@ -178,11 +187,18 @@ export default function VoidAllowanceReport() {
                       <Link className="text-brand-700 hover:underline" to={`/billing/${encodeURIComponent(r.folio)}`}>
                         {r.folio}
                       </Link>
+                    ) : r.pos_order ? (
+                      <span className="text-zinc-700">{r.pos_order}</span>
                     ) : (
                       "-"
                     )}
                   </td>
-                  <td className="whitespace-nowrap px-3 py-2 text-zinc-600">{r.actor}</td>
+                  <td className="whitespace-nowrap px-3 py-2 text-zinc-600">
+                    {r.actor}
+                    {r.approver && r.approver !== r.actor ? (
+                      <span className="block text-xs text-zinc-400">{t("approved by {name}", { name: r.approver })}</span>
+                    ) : null}
+                  </td>
                   <td className="px-3 py-2 text-zinc-700">{r.detail ?? "-"}</td>
                 </tr>
               ))

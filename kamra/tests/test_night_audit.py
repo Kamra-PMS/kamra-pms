@@ -674,8 +674,8 @@ class NightAuditPermissionTestCase(AuditTestCase):
 
 	def test_gate_is_introspectable(self):
 		from kamra import api
-		self.assertTrue({"Front Desk", "Finance", "Kamra Agent"}
-		                <= set(api.run_night_audit._kamra_roles))
+		self.assertLessEqual({"Front Desk", "Finance", "Kamra Agent"},
+		                     set(api.run_night_audit._kamra_roles))
 		self.assertNotIn("Housekeeping", api.run_night_audit._kamra_roles)
 
 
@@ -1227,7 +1227,8 @@ class NightAuditChecklistTestCase(AuditTestCase):
 		row = c["items"][0]
 		self.assertEqual((row["bill_no"], row["outlet"], row["amount"]),
 		                 (order.name, "UT Bar", 300))
-		self.assertEqual(row["state"], "open")
+		# nothing was sent to the kitchen: the captain can cancel it alone
+		self.assertEqual(row["state"], "open, not sent to kitchen")
 		with self.assertRaises(frappe.ValidationError):
 			self.run_manual()
 
@@ -1295,7 +1296,7 @@ class NightAuditChecklistTestCase(AuditTestCase):
 		                  row["guest_name"]),
 		                 (order.name, "UT Bar", "101", res.guest_name))
 		self.assertFalse(row["room_mismatch"])
-		self.assertTrue(self.checks()["open_pos_bills"]["count"] == 0)
+		self.assertEqual(self.checks()["open_pos_bills"]["count"], 0)
 
 	def test_high_balance_threshold_and_off(self):
 		from kamra.folio import post_room_night

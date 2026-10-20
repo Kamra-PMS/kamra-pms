@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { useRealtime } from "../lib/realtime"
 import {
   BedDouble,
@@ -18,7 +18,6 @@ import {
 import {
   acceptBookingRequest,
   amendStayConfirmed,
-  checkIn,
   declineBookingRequest,
   idDocumentImage,
   promoteWaitlist,
@@ -36,7 +35,8 @@ import LinkedRecords from "../components/LinkedRecords"
 import DepositPanel from "../components/DepositPanel"
 import SecurityDepositPanel from "../components/SecurityDepositPanel"
 import RoomChangeDialog from "../components/RoomChangeDialog"
-import { useCreditCheckout } from "../components/CreditCheckout"
+import CheckOutDialog from "../components/CheckOutDialog"
+import CheckInDialog from "../components/CheckInDialog"
 import StayInstructions from "../components/StayInstructions"
 import { cur, moneyLocale } from "../lib/money"
 
@@ -248,11 +248,9 @@ export default function ReservationDetail({
       setReqDirty(false)
     }
   }, [savedReq])
-
-  const credit = useCreditCheckout(() => {
-    refresh()
-    reload()
-  })
+  const navigate = useNavigate()
+  const [checkingOut, setCheckingOut] = useState(false)
+  const [checkingIn, setCheckingIn] = useState(false)
 
   async function act(fn: () => Promise<unknown>) {
     setBusy(true)
@@ -280,8 +278,7 @@ export default function ReservationDetail({
 
   return (
     <div className="space-y-4">
-      {credit.dialog}
-      <LinkedRecords doctype="Reservation" name={String(row.name)} />
+            <LinkedRecords doctype="Reservation" name={String(row.name)} />
       {/* status + provenance */}
       <div className="flex flex-wrap items-center gap-2">
         <span
@@ -697,7 +694,7 @@ export default function ReservationDetail({
           </span>
         )}
         {d.actions.can_check_in && (
-          <Button disabled={busy} onClick={() => act(() => checkIn(name))}>
+          <Button disabled={busy} onClick={() => setCheckingIn(true)}>
             <LogIn className="size-4" /> Check in
           </Button>
         )}
@@ -707,7 +704,7 @@ export default function ReservationDetail({
           </span>
         )}
         {d.actions.can_check_out && (
-          <Button disabled={busy} onClick={() => act(() => credit.start(name))}>
+          <Button disabled={busy} onClick={() => setCheckingOut(true)}>
             <LogOut className="size-4" /> Check out
           </Button>
         )}
@@ -727,6 +724,36 @@ export default function ReservationDetail({
           reload={() => {
             refresh()
             reload()
+          }}
+        />
+      )}
+      {checkingIn && (
+        <CheckInDialog
+          reservation={name}
+          onClose={() => {
+            setCheckingIn(false)
+            refresh()
+          }}
+          onDone={() => {
+            setCheckingIn(false)
+            refresh()
+            reload()
+          }}
+        />
+      )}
+      {checkingOut && (
+        <CheckOutDialog
+          reservation={name}
+          onClose={() => setCheckingOut(false)}
+          onDone={() => {
+            setCheckingOut(false)
+            refresh()
+            reload()
+          }}
+          onOpenReservation={(resName) => {
+            setCheckingOut(false)
+            onClose()
+            navigate("/", { state: { checkout: resName } })
           }}
         />
       )}
