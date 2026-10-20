@@ -42,7 +42,13 @@ export interface ScreenConfig {
   doctype: string
   title: string
   description?: string
-  columns: { field: string; label: string; badge?: boolean }[]
+  columns: {
+    field: string
+    label: string
+    badge?: boolean
+    /** Map a Check field (0/1) to Active / Disabled badges. */
+    statusCheck?: boolean
+  }[]
   form: FieldSpec[]
   propertyScoped?: boolean
   allowCreate?: boolean
@@ -553,7 +559,11 @@ export function ResourceScreen({
                           : "")
                       }
                     >
-                      {c.badge && row[c.field] ? (
+                      {c.statusCheck ? (
+                        <Badge tone={row[c.field] ? "zinc" : "green"}>
+                          {t(row[c.field] ? "Disabled" : "Active")}
+                        </Badge>
+                      ) : c.badge && row[c.field] ? (
                         <Badge
                           tone={BADGE_TONES[String(row[c.field])] ?? "zinc"}
                         >

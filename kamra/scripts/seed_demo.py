@@ -57,10 +57,12 @@ def _execute():
 		healed = heal_seed_defaults()
 		ensure_users()
 		from kamra.scripts.seed_showcase import execute as seed_showcase
+		from kamra.scripts.seed_v1 import execute as seed_v1
 		seed_showcase()
+		seed_v1()
 		seed_generic_properties()
 		frappe.db.commit()  # nosemgrep: frappe-manual-commit -- batch/seed/migration script runs outside the request cycle; explicit commit persists the staged writes
-		print("Demo property already exists — ensured demo users + showcase."
+		print("Demo property already exists — ensured demo users + showcase + revenue samples."
 		      + (f" Healed {healed} blank default(s)." if healed else ""))
 		return
 
@@ -227,6 +229,10 @@ def _execute():
 	# showcase experiences + venues (safari, spa, romantic dinner, ballrooms)
 	from kamra.scripts.seed_showcase import execute as seed_showcase
 	seed_showcase()
+
+	# seasons, guardrails, vouchers, meal plans, extra rate plans
+	from kamra.scripts.seed_v1 import execute as seed_v1
+	seed_v1()
 
 	# Seed generic demo properties (lakeside villa with whole-property lock, and beach homestay with AC/non-AC rooms)
 	seed_generic_properties()
