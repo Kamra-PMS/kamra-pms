@@ -12,6 +12,7 @@ overbooking guard.
 """
 
 import csv as csvmod
+import hashlib
 import io
 import re
 
@@ -46,6 +47,14 @@ SYNONYMS = {
 	           "res status"],
 	"channel": ["channel", "source", "business source", "booking source",
 	            "ota", "market source", "market segment"],
+	# the old system's own number: makes a re-run skip what's already in,
+	# and lets the opening-balance file point at the stay
+	"reservation_no": ["reservation no", "reservation number", "res no",
+	                   "reservation id", "booking id", "booking no",
+	                   "booking number", "confirmation no",
+	                   "confirmation number"],
+	# in-house guests need their room to check in
+	"room": ["room", "room no", "room number"],
 }
 REQUIRED = ("guest_name", "room_type", "check_in", "check_out")
 
@@ -70,9 +79,9 @@ def _norm(s: str) -> str:
 	return re.sub(r"[^a-z0-9]", "", (s or "").lower())
 
 
-def _map_headers(headers):
+def _map_headers(headers, synonyms=None):
 	mapping, used = {}, set()
-	for canon, alts in SYNONYMS.items():
+	for canon, alts in (synonyms or SYNONYMS).items():
 		keys = {_norm(a) for a in alts}
 		for h in headers:
 			if h not in used and _norm(h) in keys:
@@ -173,6 +182,24 @@ def _room_type_resolver(property: str):
 	return resolve, [rt.room_type_name for rt in rts]
 
 
+def _room_resolver(property: str):
+	rooms = {_norm(r.room_number): r for r in frappe.get_all(
+		"Room", filters={"property": property},
+		fields=["name", "room_number", "room_type"])}
+	return lambda val: rooms.get(_norm(val))
+
+
+def import_key(row: dict) -> str:
+	"""The idempotency key an imported booking carries: the old system's
+	reservation number when the file has one, else a fingerprint of the
+	stay. Re-running the same file finds it and skips the row."""
+	if row.get("reservation_no"):
+		return f"import:{row['reservation_no']}"[:140]
+	fp = "|".join(str(row.get(k) or "") for k in (
+		"guest_name", "room_type", "check_in", "check_out"))
+	return "import:auto:" + hashlib.sha1(fp.encode()).hexdigest()[:16]
+
+
 def _normalize(property: str, csv_text: str, preset: str):
 	headers, raw = _parse_csv(csv_text)
 	mapping = _map_headers(headers)
@@ -182,6 +209,7 @@ def _normalize(property: str, csv_text: str, preset: str):
 	            else _detect_dayfirst(
 		[r.get(mapping.get("check_in", ""), "") for r in raw]))
 	resolve, available = _room_type_resolver(property)
+	room_of = _room_resolver(property)
 
 	rows, issues = [], []
 	if missing:
@@ -211,6 +239,16 @@ def _normalize(property: str, csv_text: str, preset: str):
 			problems.append("check-out before check-in")
 		status_raw = _norm(get("status"))
 		status = STATUS_MAP.get(status_raw, "Confirmed") if status_raw else "Confirmed"
+		room = None
+		if get("room").strip():
+			found_room = room_of(get("room"))
+			if not found_room:
+				problems.append(f"unknown room '{get('room')}'")
+			elif rt and found_room.room_type != rt:
+				problems.append(f"room {found_room.room_number} is not a "
+				                f"{get('room_type')} room")
+			else:
+				room = found_room.name
 		if problems:
 			issues.append({"row": i, "guest": guest,
 			               "error": "; ".join(problems)})
@@ -227,6 +265,8 @@ def _normalize(property: str, csv_text: str, preset: str):
 			"amount_after_tax": float(amount) if amount else None,
 			"status": status,
 			"channel": get("channel").strip() or None,
+			"reservation_no": get("reservation_no").strip() or None,
+			"room": room,
 		})
 	return headers, mapping, rows, issues, dayfirst
 
@@ -245,6 +285,11 @@ def preview_import(property: str, csv_text: str, preset: str = "auto"):
 		"date_format": "day-first (DD/MM)" if dayfirst else "month-first (MM/DD)",
 		"ok": len(rows),
 		"skipped": len(issues),
+		# a re-run: these are in Kamra already and will be left alone
+		"already_imported": sum(
+			1 for r in rows if frappe.db.exists(
+				"Reservation", {"property": property,
+				                "idempotency_key": import_key(r)})),
 		"issues": issues[:25],
 		"sample": rows[:10],
 	}
@@ -253,16 +298,41 @@ def preview_import(property: str, csv_text: str, preset: str = "auto"):
 @frappe.whitelist(methods=["POST"])
 @require_roles()
 def run_import(property: str, csv_text: str, preset: str = "auto"):
+	"""Import the file (see _run_import). Migrated stays are not new
+	business, so they never reach outbound webhook subscribers."""
+	was_muted = frappe.flags.kamra_mute_webhooks
+	frappe.flags.kamra_mute_webhooks = True
+	try:
+		return _run_import(property, csv_text, preset)
+	finally:
+		frappe.flags.kamra_mute_webhooks = was_muted
+
+
+def _run_import(property: str, csv_text: str, preset: str = "auto"):
 	"""Import the file. Live rows (confirmed / in-house) go through the
 	full booking validation; history rows (checked-out / cancelled /
 	no-show) are stored as records with their status stamped directly, so
-	guest history survives the migration."""
+	guest history survives the migration.
+
+	Re-running the same file is safe: every row carries an import key
+	(the old reservation number, or a fingerprint of the stay) and a row
+	already in Kamra is skipped. In-house rows need their room; they are
+	checked in as carried forward - the nights before go-live were billed
+	by the old system and arrive as an opening balance (kamra.golive), so
+	check-in posts no one-time fees and checkout bills only Kamra's nights."""
 	from kamra.api import _find_or_create_guest
 	_headers, _mapping, rows, issues, _dayfirst = _normalize(
 		property, csv_text, preset)
 
-	created, history, errors = [], 0, list(issues)
+	created, history, skipped, errors = [], 0, 0, list(issues)
 	for i, row in enumerate(rows, start=1):
+		key = import_key(row)
+		if frappe.db.exists("Reservation", {"property": property,
+		                                    "idempotency_key": key}):
+			skipped += 1
+			continue
+		sp = f"imp_{i}"
+		frappe.db.savepoint(sp)
 		try:
 			guest = _find_or_create_guest(row["guest_name"], row["phone"])
 			if row["email"] and not frappe.db.get_value("Guest", guest, "email"):
@@ -273,12 +343,14 @@ def run_import(property: str, csv_text: str, preset: str = "auto"):
 				"property": property,
 				"guest": guest,
 				"room_type": row["room_type"],
+				"room": row.get("room"),
 				"check_in_date": row["check_in"],
 				"check_out_date": row["check_out"],
 				"adults": row["adults"],
 				"children": row["children"],
 				"source": "PMS",
 				"channel": row["channel"],
+				"idempotency_key": key,
 				"auto_price": 0 if row["amount_after_tax"] else 1,
 			})
 			if row["amount_after_tax"]:
@@ -292,12 +364,16 @@ def run_import(property: str, csv_text: str, preset: str = "auto"):
 				doc.db_set("status", row["status"], update_modified=False)
 				history += 1
 			else:
+				# an in-house guest arrived before go-live
+				doc.flags.allow_past_check_in = True
 				doc.insert()
 				if row["status"] == "Checked In":
 					doc.status = "Checked In"
+					doc.flags.carried_forward = True
 					doc.save()
 			created.append(doc.name)
 		except Exception as e:
+			frappe.db.rollback(save_point=sp)
 			errors.append({"row": i, "guest": row["guest_name"],
 			               "error": str(e)[:160]})
 
@@ -305,7 +381,9 @@ def run_import(property: str, csv_text: str, preset: str = "auto"):
 	log_action("import_bookings", "Property", property, property,
 	           minutes_saved=2 * len(created),
 	           rationale=f"Imported {len(created)} bookings "
-	                     f"({history} history, {len(errors)} skipped)",
+	                     f"({history} history, {skipped} already in, "
+	                     f"{len(errors)} skipped)",
 	           channel="API")
 	return {"created": len(created), "history": history,
+	        "already_imported": skipped,
 	        "reservations": created[:50], "errors": errors}

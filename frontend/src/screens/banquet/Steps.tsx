@@ -45,7 +45,8 @@ export function stepsFor(fn: FunctionSheet): Step[] {
   const costed = fn.total_cost > 0
   const collected = fn.advance_received > 0
   const paper = Boolean(fn.beo_generated_on)
-  const closed = Boolean(fn.closed_out_on)
+  // a reopened function (Confirmed again) still has its old stamp
+  const closed = Boolean(fn.closed_out_on) && fn.status === "Completed"
 
   return [
     {

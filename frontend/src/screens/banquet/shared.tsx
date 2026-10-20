@@ -32,7 +32,8 @@ export const STATUSES: FunctionStatus[] = [
 export const NEXT: Record<FunctionStatus, FunctionStatus[]> = {
   Enquiry: ["Tentative", "Confirmed", "Cancelled", "Lost"],
   Tentative: ["Confirmed", "Enquiry", "Cancelled", "Lost"],
-  Confirmed: ["Completed", "Tentative", "Cancelled"],
+  // Completed is reached through Close out (covers + deposit), not a jump
+  Confirmed: ["Tentative", "Cancelled"],
   Completed: [],
   Cancelled: ["Enquiry"],
   Lost: ["Enquiry"],

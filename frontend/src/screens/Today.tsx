@@ -11,7 +11,6 @@ import {
 import { Link, useNavigate, useOutletContext } from "react-router-dom"
 import {
   call,
-  checkOut,
   getCurrentProperty,
   getSnapshot,
   setHousekeepingStatus,
@@ -37,6 +36,7 @@ import BookingRequests from "../components/BookingRequests"
 import { serverError } from "../lib/resource"
 import { cur, moneyLocale } from "../lib/money"
 import { useT } from "../lib/i18n"
+import { useCreditCheckout } from "../components/CreditCheckout"
 
 const HK_CYCLE: RoomRow["housekeeping_status"][] = [
   "Dirty",
@@ -328,6 +328,8 @@ export default function Today() {
     return () => clearInterval(t)
   }, [refresh, refreshKey])
 
+  const credit = useCreditCheckout(() => void refresh())
+
   async function act(key: string, fn: () => Promise<unknown>) {
     setBusy(key)
     try {
@@ -433,6 +435,7 @@ export default function Today() {
 
   return (
     <div>
+      {credit.dialog}
       <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold text-zinc-900">
@@ -535,7 +538,7 @@ export default function Today() {
                   <Button
                     variant="outline"
                     disabled={busy === row.name}
-                    onClick={() => act(row.name, () => checkOut(row.name))}
+                    onClick={() => act(row.name, () => credit.start(row.name))}
                   >
                     {t("Check out")}
                   </Button>

@@ -62,6 +62,10 @@ links to the deeper guide.
   any CSV) and run the **[migration importer](/features#switching-from-another-pms)** —
   preview first, then import; past stays land as history so returning
   guests are recognised
+- [ ] Bring **companies** (credit terms) and **opening balances**
+  (in-house folios, city ledger, advance deposits) over from Kamra's CSV
+  templates, and reconcile to the old system's last close — the
+  [go-live runbook](/go-live-runbook) walks the night step by step
 - [ ] Spot-check 10 imported bookings against the old system: dates,
   rates, statuses
 - [ ] Import the **laundry rate card** (CSV) and the **menu**
@@ -94,6 +98,9 @@ links to the deeper guide.
 
 - [ ] POS: outlets, tables with areas (`[Main Hall] T1:4`), menu with
   photos, KOT printer or kitchen display at the pass
+- [ ] Kitchen printers (Settings → F&B): each printer's outlets and stations,
+  a print-station screen picked on each kitchen device, a test page from
+  each, Chrome started with `--kiosk-printing` on tills and kitchen screens
 - [ ] Housekeeping: confirm every room shows on `/hk`, brief the team
   on claim/accept/done and minibar/laundry posting
 - [ ] Service-ticket SLAs and the escalation contact (WhatsApp alerts
@@ -117,7 +124,10 @@ Run one fake stay end to end and check every artifact:
 
 - [ ] Pick a quiet day; freeze changes in the old system at a fixed
   hour
-- [ ] Re-import the delta (bookings created since the export)
+- [ ] Re-import the delta (bookings created since the export); a re-run
+  skips what is already in
+- [ ] Import opening balances and press **Reconcile** — go live only on
+  **Ready for go-live** ([runbook](/go-live-runbook))
 - [ ] Point the channel manager live; retire the old system's OTA
   connections the same hour (two masters means double bookings)
 - [ ] Keep the old system read-only for reference; first **night

@@ -22,7 +22,8 @@ import {
   TriangleAlert,
 } from "lucide-react"
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom"
-import { call, checkOut } from "../lib/api"
+import { call } from "../lib/api"
+import { useCreditCheckout } from "../components/CreditCheckout"
 import {
   eodAcknowledge,
   eodMarkNoShow,
@@ -187,6 +188,51 @@ const STAY_COLS: Column[] = [
   { key: "balance", label: "Balance", kind: "money" },
   { key: "adults", label: "Ad/Ch", render: (r) => `${r.adults ?? 0}/${r.children ?? 0}` },
   { key: "source", label: "Source" },
+]
+
+/* Arrivals carry two more columns (ETA, no-show policy) and two buttons,
+   so the stay's detail folds into fewer columns - the full twelve overflowed
+   the card at laptop widths and cut off the policy the step is about. */
+const ARRIVAL_COLS: Column[] = [
+  { key: "reservation", label: "Confirmation", render: resLink },
+  {
+    key: "guest_name",
+    label: "Guest",
+    render: (r) => (
+      <div className="min-w-32">
+        <div>{String(r.guest_name ?? "-")}</div>
+        <div className="text-xs text-zinc-500">
+          {[r.room_type, r.room, `${r.adults ?? 0}/${r.children ?? 0}`, r.source]
+            .filter((v) => v !== null && v !== undefined && v !== "")
+            .join(" · ")}
+        </div>
+      </div>
+    ),
+  },
+  {
+    key: "check_in_date",
+    label: "Arrival",
+    kind: "date",
+    render: (r) => (
+      <div className="whitespace-nowrap">
+        <div>{r.check_in_date ? fmtDay(r.check_in_date) : "-"}</div>
+        <div className="text-xs text-zinc-500">
+          {Number(r.nights) === 1 ? "1 night" : `${r.nights ?? 0} nights`}
+        </div>
+      </div>
+    ),
+  },
+  {
+    key: "rate",
+    label: "Rate",
+    kind: "money",
+    render: (r) => (
+      <div>
+        <div>{r.rate === null || r.rate === undefined || r.rate === "" ? "-" : money(r.rate)}</div>
+        {r.rate_plan ? <div className="text-xs text-zinc-500">{String(r.rate_plan)}</div> : null}
+      </div>
+    ),
+  },
 ]
 
 const FOLIO_COLS: Column[] = [
@@ -371,6 +417,10 @@ export default function EndOfDayWizard() {
 
   const step: Step | undefined = state?.steps.find((s) => s.index === active)
 
+  // check-out from the departures step runs company credit control the
+  // same way the Today screen does (warning / override dialog)
+  const credit = useCreditCheckout(() => void load(active))
+
   async function act(label: string, fn: () => Promise<unknown>, reload = true) {
     setBusy(label)
     setErr(null)
@@ -484,7 +534,7 @@ export default function EndOfDayWizard() {
       <CheckBlock check={c} state={state} onAck={ack}>
         <StepTable
           cols={[
-            ...STAY_COLS.filter((x) => x.key !== "balance"),
+            ...ARRIVAL_COLS,
             { key: "eta", label: "ETA" },
             {
               key: "policy",
@@ -501,7 +551,7 @@ export default function EndOfDayWizard() {
           empty="Every arrival is checked in."
           actions={(r) =>
             state.ran ? null : (
-              <div className="flex justify-end gap-1">
+              <div className="flex flex-col items-stretch gap-1">
                 <Button variant="outline" className="h-7 px-2 text-xs"
                   onClick={() => navigate(`/reservations?q=${encodeURIComponent(String(r.reservation))}`)}>
                   {t("Check in")}
@@ -544,7 +594,7 @@ export default function EndOfDayWizard() {
             state.ran ? null : (
               <div className="flex justify-end gap-1">
                 <Button variant="outline" className="h-7 px-2 text-xs" disabled={!!busy}
-                  onClick={() => act("checkout", () => checkOut(String(r.reservation)))}>
+                  onClick={() => act("checkout", () => credit.start(String(r.reservation)))}>
                   {t("Check out")}
                 </Button>
                 <Button variant="ghost" className="h-7 px-2 text-xs"
@@ -585,6 +635,22 @@ export default function EndOfDayWizard() {
             ]}
             rows={checks.credit_limit?.items ?? []}
             empty="No company is over its credit limit."
+          />
+        </CheckBlock>
+        <CheckBlock check={checks.overdue_ar} state={state} onAck={ack}>
+          <StepTable
+            cols={[
+              { key: "company", label: "Company" },
+              { key: "credit_days", label: "Terms (days)" },
+              { key: "oldest_due_date", label: "Oldest due", kind: "date" },
+              { key: "d1_30", label: "1-30 days", kind: "money" },
+              { key: "d31_60", label: "31-60", kind: "money" },
+              { key: "d61_90", label: "61-90", kind: "money" },
+              { key: "d90p", label: "90+", kind: "money" },
+              { key: "overdue", label: "Overdue", kind: "money" },
+            ]}
+            rows={checks.overdue_ar?.items ?? []}
+            empty="No company has an overdue bill."
           />
         </CheckBlock>
       </div>
@@ -823,6 +889,7 @@ export default function EndOfDayWizard() {
 
   return (
     <div className="space-y-4">
+      {credit.dialog}
       <div className="flex flex-wrap items-center justify-between gap-2 print:hidden">
         <div>
           <Link to="/end-of-day" className="inline-flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-800">

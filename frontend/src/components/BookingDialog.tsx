@@ -30,6 +30,16 @@ import { petChargeBasis } from "../lib/pets"
 import { useCashierAuth } from "../lib/cashierAuth"
 import DepositPanel, { type DepositState } from "./DepositPanel"
 
+interface CompanyCredit {
+  applies: boolean
+  ok: boolean
+  blocked?: boolean
+  policy: string
+  company?: string
+  reasons: string[]
+  can_override?: boolean
+}
+
 interface ExtraRoom {
   room_type: string
   adults: number
@@ -147,7 +157,7 @@ export function BookingDialog(props: {
   onClose: () => void
   onBooked: () => void
 }) {
-  const { t } = useT()
+  const { t, tn } = useT()
   const [options, setOptions] = useState<BookingOptions | null>(null)
   const [quote, setQuote] = useState<Quote | null>(null)
   const [quoting, setQuoting] = useState(false)
@@ -173,6 +183,8 @@ export function BookingDialog(props: {
     adults: 2,
     children: 0,
     meal_plan: "",
+    // "" = no plan picked: the company's negotiated plan applies, if any
+    rate_plan: "",
     voucher_code: "",
     over_capacity_reason: "",
     over_capacity_guests: 0,
@@ -235,6 +247,31 @@ export function BookingDialog(props: {
   const [alert, setAlert] = useState<GuestAlert | null>(null)
   const [blAck, setBlAck] = useState(false)
   const [blReason, setBlReason] = useState("")
+  // company credit control (#238): the same check create_booking runs,
+  // asked up front so the desk sees a warning or a block before booking
+  const [credit, setCredit] = useState<CompanyCredit | null>(null)
+  const [creditReason, setCreditReason] = useState("")
+  const creditAmount = quote?.amount_after_tax ?? 0
+  useEffect(() => {
+    if (!form.company) {
+      setCredit(null)
+      return
+    }
+    let live = true
+    const timer = setTimeout(() => {
+      call<CompanyCredit>("kamra.credit.company_credit_status", {
+        company: form.company,
+        property: getCurrentProperty(),
+        amount: creditAmount,
+      })
+        .then((c) => live && setCredit(c))
+        .catch(() => live && setCredit(null))
+    }, 300)
+    return () => {
+      live = false
+      clearTimeout(timer)
+    }
+  }, [form.company, creditAmount])
 
   // Walk-in: book + ID + room + payment + check-in on this one screen
   // (issue #97). Arrival is always today, one room, no waitlist.
@@ -337,6 +374,13 @@ export function BookingDialog(props: {
     }
   }, [])
 
+  // With no plan picked, a company's negotiated plan prices the stay - the
+  // server decides (pricing.negotiated_rate_plan); the quote says which.
+  const companyPlan =
+    form.company && !form.rate_plan && quote?.rate_plan
+      ? options?.rate_plans.find((rp) => rp.name === quote.rate_plan) ?? null
+      : null
+
   const checkOut = (() => {
     if (dayUse) return form.check_in_date
     const d = new Date(form.check_in_date)
@@ -355,6 +399,13 @@ export function BookingDialog(props: {
     blacklisted && (moreRooms.length > 0 || !blAck || !blReason.trim() || !alert?.can_override)
   const blacklistOverride = blacklisted && blAck ? blReason.trim() || undefined : undefined
 
+  const creditFails = !!credit?.applies && !credit.ok
+  const creditBlocked =
+    creditFails && !!credit?.blocked &&
+    (moreRooms.length > 0 || !credit.can_override || !creditReason.trim())
+  const creditOverride =
+    creditFails && credit?.blocked && creditReason.trim() ? creditReason.trim() : undefined
+
   // phone is optional, but a half-typed one is a data-entry slip, not a choice
   const country = options?.property?.country
   const badPhone =
@@ -372,6 +423,8 @@ export function BookingDialog(props: {
         adults: form.adults,
         children: form.children,
         meal_plan: form.meal_plan || undefined,
+        rate_plan: form.rate_plan || undefined,
+        company: form.company || undefined,
         voucher_code: form.voucher_code || undefined,
         over_capacity_charge: form.over_capacity_charge || undefined,
         pets: form.pets || undefined,
@@ -394,6 +447,8 @@ export function BookingDialog(props: {
     form.adults,
     form.children,
     form.meal_plan,
+    form.rate_plan,
+    form.company,
     form.voucher_code,
     // the agreed amount for guests above capacity rides the room night, so a
     // change to it has to re-quote - without this the panel kept showing the
@@ -420,13 +475,15 @@ export function BookingDialog(props: {
                 adults: r.adults,
                 children: r.children,
                 meal_plan: r.meal_plan || undefined,
+                rate_plan: form.rate_plan || undefined,
+                company: form.company || undefined,
               }).catch(() => null)
             : Promise.resolve(null),
         ),
       ).then(setMoreQuotes)
     }, 300)
     return () => clearTimeout(t)
-  }, [moreRooms, form.check_in_date, checkOut])
+  }, [moreRooms, form.check_in_date, checkOut, form.rate_plan, form.company])
 
   // walk-in: the actual rooms free tonight, clean ones first
   useEffect(() => {
@@ -438,6 +495,9 @@ export function BookingDialog(props: {
       room_type: form.room_type,
       check_in_date: form.check_in_date,
       check_out_date: checkOut,
+      // the guest takes the key now: a room whose guest has not checked
+      // out yet is not free, even on their departure day
+      ready_now: 1,
     })
       .then((rs) => {
         if (!live) return
@@ -499,6 +559,7 @@ export function BookingDialog(props: {
           adults: form.adults,
           children: form.children,
           meal_plan: form.meal_plan || undefined,
+          rate_plan: form.rate_plan || undefined,
           voucher_code: form.voucher_code || undefined,
           pets: form.pets || undefined,
           company: form.company || undefined,
@@ -541,6 +602,7 @@ export function BookingDialog(props: {
           guest_name: form.guest_name,
           phone: form.phone || undefined,
           company: form.company || undefined,
+          rate_plan: form.rate_plan || undefined,
         })
         if (out.skipped.length > 0) {
           setError(
@@ -566,6 +628,7 @@ export function BookingDialog(props: {
         adults: form.adults,
         children: form.children,
         meal_plan: form.meal_plan || undefined,
+        rate_plan: form.rate_plan || undefined,
         voucher_code: form.voucher_code || undefined,
         pets: form.pets || undefined,
         company: form.company || undefined,
@@ -605,6 +668,7 @@ export function BookingDialog(props: {
           .map(([experience, qty]) => ({ experience, qty })),
         ...slotArgs,
         blacklist_override_reason: blacklistOverride,
+        credit_override_reason: creditOverride,
       })
       setDone({ ref: res.reservation, room: res.room })
       props.onBooked()
@@ -646,6 +710,8 @@ export function BookingDialog(props: {
         adults: form.adults,
         children: form.children,
         meal_plan: form.meal_plan || undefined,
+        rate_plan: form.rate_plan || undefined,
+        company: form.company || undefined,
         voucher_code: form.voucher_code || undefined,
         id_type: walk.id_type || undefined,
         id_number: walk.id_number.trim() || undefined,
@@ -771,12 +837,26 @@ export function BookingDialog(props: {
     payAmount < 0 ||
     (!!walk.id_number.trim() && !walk.id_type)
 
-  const cancelCutoff = (() => {
-    const pol = options?.property
-    if (!pol) return ""
-    const d = new Date(form.check_in_date + "T00:00:00")
-    d.setDate(d.getDate() - (pol.free_cancel_days || 0))
-    return d.toISOString().slice(0, 10)
+  // the server judges the terms from today (season, tiers, free window);
+  // a window that has already closed reads as non-refundable, never as a
+  // "free until" date in the past
+  const cancelText = (() => {
+    const c = quote?.cancellation
+    if (!c) return ""
+    if (c.non_refundable_season)
+      return t("Non-refundable dates ({season}): the full stay is charged on cancellation.", {
+        season: c.non_refundable_season,
+      })
+    if (!c.free_now)
+      return t("Non-refundable from now: {fee} is charged on cancellation.", {
+        fee: c.fee_label,
+      })
+    if (c.free_until)
+      return t("Free cancellation until {date}; after that {fee} is charged.", {
+        date: c.free_until,
+        fee: c.fee_label,
+      })
+    return t("Free cancellation.")
   })()
 
   const addonsGross = Object.entries(addonQty).reduce((s, [n, q]) => {
@@ -1138,6 +1218,47 @@ export function BookingDialog(props: {
                   </div>
                 )}
 
+                {creditFails && credit && (
+                  <div
+                    role="alert"
+                    className={
+                      credit.blocked
+                        ? "space-y-2 rounded-xl border-2 border-rose-300 bg-rose-50 px-4 py-3 text-sm text-rose-800"
+                        : "space-y-2 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+                    }
+                  >
+                    <div className="flex items-start gap-2">
+                      <ShieldAlert className="mt-0.5 size-5 shrink-0" aria-hidden />
+                      <div>
+                        <p className="font-semibold">
+                          {credit.blocked
+                            ? t("{company}: company credit is blocked", { company: credit.company ?? "" })
+                            : t("{company}: company credit warning", { company: credit.company ?? "" })}
+                        </p>
+                        <ul className="mt-1 list-disc space-y-0.5 pl-4">
+                          {credit.reasons.map((r) => (
+                            <li key={r}>{r}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                    {credit.blocked &&
+                      (moreRooms.length > 0 ? (
+                        <p>{t("A multi-room booking can't override a credit block. Book one room, or have Finance raise the limit.")}</p>
+                      ) : credit.can_override ? (
+                        <input
+                          className={inputCls}
+                          value={creditReason}
+                          maxLength={500}
+                          onChange={(e) => setCreditReason(e.target.value)}
+                          placeholder={t("Reason for the credit override (logged)")}
+                        />
+                      ) : (
+                        <p>{t("Only Finance or a Hotel Admin can override it.")}</p>
+                      ))}
+                  </div>
+                )}
+
                 {walkIn && (
                   <div className="grid gap-3 sm:grid-cols-3">
                     <Field label={t("ID type")}>
@@ -1211,9 +1332,16 @@ export function BookingDialog(props: {
                       selectedRt.children_capacity > 0) &&
                     !overCapacity && (
                       <p className="mt-1.5 text-xs text-zinc-400">
-                        Sleeps up to {selectedRt.adults_capacity} adults
-                        {selectedRt.children_capacity > 0 &&
-                          ` · ${selectedRt.children_capacity} children`}
+                        {t("Sleeps up to {guests}", {
+                          guests: [
+                            selectedRt.adults_capacity > 0 &&
+                              tn(selectedRt.adults_capacity, "{n} adult", "{n} adults"),
+                            selectedRt.children_capacity > 0 &&
+                              tn(selectedRt.children_capacity, "{n} child", "{n} children"),
+                          ]
+                            .filter(Boolean)
+                            .join(" · "),
+                        })}
                       </p>
                     )}
                 </Field>
@@ -1486,6 +1614,27 @@ export function BookingDialog(props: {
                       ))}
                     </select>
                   </Field>
+                  {(options?.rate_plans.length ?? 0) > 0 && (
+                    <Field label={t("Rate plan")}>
+                      <select
+                        className={inputCls}
+                        value={form.rate_plan}
+                        onChange={(e) => set("rate_plan", e.target.value)}
+                      >
+                        <option value="">
+                          {companyPlan
+                            ? `${t("Company rate")}: ${companyPlan.rate_plan_name}`
+                            : t("Standard rate (no plan)")}
+                        </option>
+                        {options?.rate_plans.map((rp) => (
+                          <option key={rp.name} value={rp.name}>
+                            {rp.rate_plan_name}
+                            {rp.code ? ` (${rp.code})` : ""}
+                          </option>
+                        ))}
+                      </select>
+                    </Field>
+                  )}
                   <Field label={t("Voucher")}>
                     <input
                       className={inputCls}
@@ -2086,9 +2235,7 @@ export function BookingDialog(props: {
 
                     {options?.property && (
                       <p className="pt-1 text-xs leading-relaxed text-zinc-500">
-                        {(options.property.cancellation_fee || "None") === "None"
-                          ? "Free cancellation."
-                          : `Free cancellation until ${cancelCutoff}; after that the ${String(options.property.cancellation_fee).toLowerCase()} is charged.`}
+                        {cancelText}
                         {(options.property.no_show_charge || "None") !== "None" &&
                           ` No-show: ${String(options.property.no_show_charge).toLowerCase()} charged.`}
                         {(options.property.deposit_pct ?? 0) > 0 &&
@@ -2137,7 +2284,7 @@ export function BookingDialog(props: {
                 <>
                 <Button
                   className="w-full justify-center py-2.5 text-base"
-                  disabled={busy || !form.guest_name || !quote || pastCheckIn || badPhone || badSlot || blacklistBlocked}
+                  disabled={busy || !form.guest_name || !quote || pastCheckIn || badPhone || badSlot || blacklistBlocked || creditBlocked}
                   onClick={() => submit()}
                 >
                   {busy ? t("Booking…") : t("Confirm booking")}

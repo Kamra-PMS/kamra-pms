@@ -149,6 +149,12 @@ MODULES: tuple[Module, ...] = (
 				S("access_instructions", "Access instructions", "textarea", store=P,
 				  hint="Door codes, parking, Wi-Fi. Released only after payment, deposit and (if set) pre-check-in."),
 			)),
+			Section("door_locks", "Door locks", "How room keys are issued at check-in and cancelled at check-out.", (
+				S("door_lock_adapter", "Door lock system", "select", "manual",
+				  options=("manual",),
+				  hint="Manual: staff encode key cards at the lock's own encoder. Lock vendor "
+				       "connectors plug in here (see the integrations docs)."),
+			)),
 			Section("holds", "Holds & selling", "", (
 				S("hold_minutes", "Hold unconfirmed bookings for", "number", 120, P, min=5, max=10080, unit="min"),
 				S("sell_message", "Sell message", "textarea", store=P,
@@ -175,7 +181,7 @@ MODULES: tuple[Module, ...] = (
 				       "bookings made after this time are kept."),
 			)),
 			Section("auditchecks", "Night audit checklist",
-			        "Checks run before the night audit closes the day (Finance → Billing → Night audit). "
+			        "Checks run before the night audit closes the day (Finance → End of Day). "
 			        "A blocking check stops a manual run until it is resolved or a supervisor "
 			        "acknowledges it with a reason; a warning is listed in the audit pack only.", (
 				S("na_block_open_tills", "Open tills block the audit", "check", 1,
@@ -217,14 +223,16 @@ MODULES: tuple[Module, ...] = (
 				S("hk_sla_medium", "Medium", "number", 90, min=1, max=1440, unit="min"),
 				S("hk_sla_low", "Low", "number", 180, min=1, max=2880, unit="min"),
 			)),
-			Section("turnover", "Room turnover", "The default turnover profile for checkout cleans.", (
-				S("clean_duration_minutes", "Checkout clean takes", "number", 120, "turnover", min=5, max=1440, unit="min"),
+			# Only knobs that code acts on live here. Clean duration, the
+			# sellable buffer and same-day turns are fields on the Turnover
+			# Profile, but nothing reads them yet - showing them would promise
+			# behaviour that doesn't exist.
+			Section("turnover", "Room turnover", "Inspection after checkout cleans.", (
 				S("requires_inspection", "Inspect after every checkout clean", "check", 0, "turnover",
-				  hint="A supervisor inspection task is created when the clean is done."),
-				S("inspect_duration_minutes", "Inspection takes", "number", 30, "turnover", min=5, max=480, unit="min"),
-				S("buffer_after_ready_minutes", "Buffer before the room is sellable", "number", 0, "turnover", min=0, max=1440, unit="min"),
-				S("same_day_turn_allowed", "Allow same-day turns", "check", 1, "turnover",
-				  hint="A room may take a new arrival on the day the last guest leaves."),
+				  hint="When a checkout clean is done, a supervisor inspection task is created. "
+				       "Passing it marks the room Ready."),
+				S("inspect_duration_minutes", "Inspection takes", "number", 30, "turnover", min=5, max=480, unit="min",
+				  hint="The inspection task is due this long after the clean is done."),
 			)),
 			Section("laundry", "Laundry", "", (
 				S("laundry_express_multiplier", "Express price", "number", 1.5, min=1, max=5, unit="x regular",
@@ -249,11 +257,25 @@ MODULES: tuple[Module, ...] = (
 		"fnb", "F&B", "Restaurant outlets, the menu and table reservations.",
 		editors=("Hotel Admin", "Finance"), toggle=True,
 		related=(("Outlets", "/outlets"), ("Menu", "/menu-items"), ("Kitchen inventory", "/inventory"),
+		         ("Kitchen display", "/kitchen"),
 		         ("QR codes", "/qr-codes")),
 		sections=(
+			Section("kot", "Kitchen orders (KOT)", "What happens when a captain sends an order to the kitchen.", (
+				S("pos_auto_kot", "Auto-accept and print KOT", "check", 0,
+				  hint="On: sending an order prints the KOT and shows it on the kitchen display as "
+				       "started, so nobody presses Start. Off: the kitchen presses Start and each till "
+				       "chooses whether to print. An outlet can override this on its own record."),
+				S("pos_print_void_slips", "Print void slips in the kitchen", "check", 1,
+				  hint="A line voided or an order cancelled after its KOT was sent prints a VOID "
+				       "slip on the kitchen printer that had it, so the cook stops."),
+			)),
 			Section("tables", "Table reservations", "Which bookings show against a table on the POS floor.", (
 				S("pos_reservation_before_min", "Show a reservation from", "number", 60, min=0, max=480, unit="min before"),
 				S("pos_reservation_after_min", "Keep showing it until", "number", 240, min=0, max=720, unit="min after"),
+			)),
+			Section("external_pos", "External POS", "A third-party POS posting room charges through the POS interface.", (
+				S("pos_room_charge_limit", "Largest room charge from an external POS", "number", 0, min=0,
+				  hint="One ticket above this is refused - settle it at the outlet. 0 means no limit."),
 			)),
 		),
 	),
@@ -289,7 +311,7 @@ MODULES: tuple[Module, ...] = (
 		),
 	),
 	Module(
-		"finance", "Finance", "Room tax, fees and cashier controls.",
+		"finance", "Finance", "Room tax, fees, company credit and cashier controls.",
 		editors=("Hotel Admin", "Finance"), toggle=True,
 		related=(("Currency desk", "/cashier/fx"), ("Ledgers", "/ledgers")),
 		sections=(
@@ -324,6 +346,21 @@ MODULES: tuple[Module, ...] = (
 				  hint="Room covers the room night, its meal plan, levies, early check-in / late checkout and the "
 				       "cleaning fee. Laundry, minibar, spa and misc extras stay with the guest unless "
 				       "'Everything except liquor' is chosen."),
+			)),
+			Section("credit", "Company credit",
+			        "Payment terms and credit control for companies billed on the city ledger. "
+			        "The check runs when a stay is booked on company billing and when a bill moves to the "
+			        "city ledger at check-out. Set each company's credit limit and credit days on its "
+			        "corporate account.", (
+				S("default_credit_days", "Default payment terms", "number", 30, min=0, max=365, unit="days",
+				  hint="Days after the invoice date a company bill is due, for companies set to use the property "
+				       "default (the default for every company). 0 means due on the invoice date."),
+				S("credit_control", "Credit control", "select", "Warn", options=("Off", "Warn", "Block"),
+				  hint="Checks the credit limit and overdue bills. Warn: the desk sees a warning and can go "
+				       "ahead. Block: refused unless Finance or a Hotel Admin overrides it with a reason, "
+				       "which is logged. AI agents can never override."),
+				S("credit_overdue_grace_days", "Overdue grace period", "number", 0, min=0, max=365, unit="days",
+				  hint="A bill counts against the company only once it is this many days past its due date."),
 			)),
 			Section("cashier", "Cashier controls", "", (
 				S("require_cashier_pin", "Require cashier PIN on money actions", "check", 0, P,

@@ -1,0 +1,41 @@
+{
+ "actions": [],
+ "creation": "2026-10-19 13:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "editable_grid": 1,
+ "field_order": [
+  "outlet",
+  "prep_station"
+ ],
+ "fields": [
+  {
+   "fieldname": "outlet",
+   "fieldtype": "Link",
+   "options": "POS Outlet",
+   "label": "Outlet",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "prep_station",
+   "fieldtype": "Select",
+   "options": "\nKitchen\nTandoor\nGrill\nFryer\nBar",
+   "label": "Station",
+   "in_list_view": 1,
+   "description": "Blank: every station at this outlet."
+  }
+ ],
+ "links": [],
+ "modified": "2026-10-19 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kamra",
+ "name": "Kitchen Printer Route",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "istable": 1
+}

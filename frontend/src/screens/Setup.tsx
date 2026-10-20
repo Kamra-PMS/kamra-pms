@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { cn } from "../lib/utils"
 import { cur, loadLocale } from "../lib/money"
 import { useT } from "../lib/i18n"
+import GoLiveImport from "./GoLiveImport"
 
 const inputCls =
   "w-full rounded-lg border border-zinc-300 bg-white px-3.5 py-2.5 text-base " +
@@ -71,21 +72,6 @@ export default function Setup() {
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [createdProperty, setCreatedProperty] = useState<string | null>(null)
-  const [importReport, setImportReport] = useState<{
-    created: number
-    history?: number
-    errors: { row: number; guest: string; error: string }[]
-  } | null>(null)
-  const [preset, setPreset] = useState("auto")
-  const [preview, setPreview] = useState<{
-    mapping: Record<string, string>
-    unmapped: string[]
-    date_format: string
-    ok: number
-    skipped: number
-    issues: { row: number; guest: string; error: string }[]
-  } | null>(null)
-
   const [prop, setProp] = useState({
     country: "",
     currency: "",
@@ -134,7 +120,6 @@ export default function Setup() {
     { code: "CP", label: "Breakfast Included", price_per_adult: "300", on: true },
     { code: "MAP", label: "Breakfast + Dinner", price_per_adult: "700", on: false },
   ])
-  const [csv, setCsv] = useState("")
 
   const isStr = kind === "Short Term Rental"
   const steps = useMemo(() => {
@@ -224,46 +209,6 @@ export default function Setup() {
       // currency symbol and tax words now come from the chosen pack
       await loadLocale()
       setStep(importStep)
-    } catch (e) {
-      setError(serverError(e))
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  async function previewImport() {
-    setBusy(true)
-    setError(null)
-    setImportReport(null)
-    try {
-      const res = await call<NonNullable<typeof preview>>("kamra.migrate.preview_import", {
-        property: createdProperty,
-        csv_text: csv,
-        preset,
-      })
-      setPreview(res)
-    } catch (e) {
-      setError(serverError(e))
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  async function runImport() {
-    setBusy(true)
-    setError(null)
-    try {
-      const res = await call<{
-        created: number
-        history: number
-        errors: { row: number; guest: string; error: string }[]
-      }>("kamra.migrate.run_import", {
-        property: createdProperty,
-        csv_text: csv,
-        preset,
-      })
-      setImportReport(res)
-      setPreview(null)
     } catch (e) {
       setError(serverError(e))
     } finally {
@@ -801,7 +746,7 @@ export default function Setup() {
           {step === importStep && (
             <div className="space-y-4">
               <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-                <span className="font-semibold">{createdProperty}</span> {t("is live. Bring your existing bookings over — paste a CSV, or let the AI migration assistant do the mapping via MCP.")}
+                <span className="font-semibold">{createdProperty}</span> {t("is live. Bring your bookings, companies and opening balances over from Kamra's CSV templates, then reconcile before you switch — or let the AI migration assistant do the mapping via MCP.")}
               </div>
               <div className="rounded-lg border border-brand-200 bg-brand-50/60 px-4 py-3 text-sm text-zinc-800">
                 <p className="font-semibold text-brand-800">
@@ -819,105 +764,7 @@ export default function Setup() {
                   {t("Open Marketplace → HeyKoala WhatsApp")}
                 </a>
               </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <select
-                  className={cn(inputCls, "w-auto")}
-                  value={preset}
-                  onChange={(e) => {
-                    setPreset(e.target.value)
-                    setPreview(null)
-                  }}
-                  aria-label={t("Which system is this export from?")}
-                >
-                  <option value="auto">{t("Auto-detect format")}</option>
-                  <option value="ezee">{t("eZee export")}</option>
-                  <option value="cloudbeds">{t("Cloudbeds export")}</option>
-                </select>
-                <label className="cursor-pointer rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-700 hover:border-brand-400">
-                  {t("Upload CSV file")}
-                  <input
-                    type="file"
-                    accept=".csv,text/csv"
-                    className="hidden"
-                    onChange={async (e) => {
-                      const f = e.target.files?.[0]
-                      if (f) {
-                        setCsv(await f.text())
-                        setPreview(null)
-                      }
-                    }}
-                  />
-                </label>
-                <span className="text-xs text-zinc-400">{t("or paste it below")}</span>
-              </div>
-              <label className="block">
-                <textarea
-                  className={cn(inputCls, "font-mono text-xs")}
-                  rows={7}
-                  placeholder={
-                    "Guest Name,Mobile,Room Type,Arrival Date,Departure Date,Adults,Status\n" +
-                    '"Rao, Asha",+91 98xxxx,Deluxe,25/12/2025,28/12/2025,2,Checked Out'
-                  }
-                  value={csv}
-                  onChange={(e) => {
-                    setCsv(e.target.value)
-                    setPreview(null)
-                  }}
-                />
-              </label>
-              {preview && (
-                <div className="space-y-2 rounded-lg bg-zinc-50 px-4 py-3 text-sm">
-                  <p>
-                    <span className="font-medium text-emerald-700">
-                      {t("{n} ready to import", { n: preview.ok })}
-                    </span>
-                    {preview.skipped > 0 && (
-                      <span className="ml-2 font-medium text-rose-600">
-                        {t("{n} will be skipped", { n: preview.skipped })}
-                      </span>
-                    )}
-                    <span className="ml-2 text-zinc-400">
-                      {t("dates read as {format}", { format: preview.date_format })}
-                    </span>
-                  </p>
-                  <div className="flex flex-wrap gap-1">
-                    {Object.entries(preview.mapping).map(([k, v]) => (
-                      <Badge key={k} tone="zinc">
-                        {v} → {k.replace(/_/g, " ")}
-                      </Badge>
-                    ))}
-                    {preview.unmapped.map((h) => (
-                      <Badge key={h} tone="amber">
-                        {t("{header} (ignored)", { header: h })}
-                      </Badge>
-                    ))}
-                  </div>
-                  {preview.issues.map((iss) => (
-                    <p key={iss.row} className="text-rose-600">
-                      Row {iss.row}
-                      {iss.guest ? ` (${iss.guest})` : ""}: {iss.error}
-                    </p>
-                  ))}
-                </div>
-              )}
-              {importReport && (
-                <div className="rounded-lg bg-zinc-50 px-4 py-3 text-sm">
-                  <p className="font-medium text-emerald-700">
-                    {t("{n} booking{s} imported{history}", {
-                      n: importReport.created,
-                      s: importReport.created === 1 ? "" : "s",
-                      history: importReport.history
-                        ? t(" ({n} as past-stay history)", { n: importReport.history })
-                        : "",
-                    })}
-                  </p>
-                  {importReport.errors.map((e) => (
-                    <p key={e.row} className="text-rose-600">
-                      Row {e.row} ({e.guest}): {e.error}
-                    </p>
-                  ))}
-                </div>
-              )}
+              <GoLiveImport property={createdProperty} embedded />
             </div>
           )}
 
@@ -951,21 +798,6 @@ export default function Setup() {
             {step === reviewStep && (
               <Button disabled={busy} onClick={create}>
                 {busy ? t("Creating…") : t("Create property")}
-              </Button>
-            )}
-            {step === importStep && !preview && (
-              <Button disabled={busy || !csv.trim()} onClick={previewImport}>
-                {busy ? t("Checking…") : t("Preview import")}
-              </Button>
-            )}
-            {step === importStep && preview && (
-              <Button disabled={busy || preview.ok === 0} onClick={runImport}>
-                {busy
-                  ? t("Importing…")
-                  : t("Import {n} booking{s}", {
-                      n: preview.ok,
-                      s: preview.ok === 1 ? "" : "s",
-                    })}
               </Button>
             )}
           </div>

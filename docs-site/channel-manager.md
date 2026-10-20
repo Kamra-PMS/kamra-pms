@@ -17,12 +17,22 @@ to them, certified with Booking.com, Agoda, Expedia, Airbnb and more.
 2. In Kamra: *Revenue → Channel Manager → New*: provider **Channex**,
    your Channex **user API key**, the Channex **property id**, and a
    **webhook secret** you invent. Tick Active.
+
+   ![The New Channel Manager form with provider Channex, the API key, the Channex property ID, a webhook secret and 90 days to push](/img/channel-manager/new-connection.png)
+
 3. *Revenue → OTA Room Mappings*: one row per room type — your room
-   type against the Channex `room_type_id` and `rate_plan_id`.
+   type against the Channex `room_type_id` and `rate_plan_id`. The
+   **Connection** and **Room type** lists only show the property you are
+   working in. Kamra refuses a mapping whose room type belongs to another
+   property than the connection.
+
+   ![The New OTA Room Mapping form: the connection, a room type and the Channex room and rate plan IDs](/img/channel-manager/room-mapping.png)
+
 4. In Channex, register a **booking webhook** pointing at
    `https://YOUR-SITE/api/method/kamra.channel_manager.webhook?connection=CMC-XXXXX`
-   (the exact URL shows on the connection row), sending your secret in
-   the `X-Webhook-Secret` header.
+   sending your secret in the `X-Webhook-Secret` header. `CMC-XXXXX` is
+   the connection's ID: it's the value you picked in the **Connection**
+   field of the room mapping in step 3 (for example `CMC-00001`).
 
 That's the whole setup. From then on:
 

@@ -99,7 +99,7 @@ class LedgerAuditTestCase(AuditTestCase):
 	def test_empty_journals(self):
 		self.assertEqual(ledger.journal_by_transaction_code(PROP_A)["rows"], [])
 		self.assertEqual(ledger.financial_activity(PROP_A)["entries"], [])
-		self.assertEqual(ledger.city_ledger_aging(PROP_A), {"accounts": []})
+		self.assertEqual(ledger.city_ledger_aging(PROP_A)["accounts"], [])
 
 	# postings and the invariant -------------------------------------------
 
@@ -108,7 +108,10 @@ class LedgerAuditTestCase(AuditTestCase):
 		out, by = self.balances()
 		self.assertAlmostEqual(by["Guest"]["debit"], 590, places=2)
 		self.assertAlmostEqual(by["Guest"]["balance"], 590, places=2)
-		self.assertFalse(out["in_balance"])  # the guest owes 590
+		# the guest owes 590: debits exceed credits, which is not an error -
+		# the ledgers agree with the folio, so the trial balance is in balance
+		self.assertGreater(out["total_debit"], out["total_credit"])
+		self.assertTrue(out["in_balance"])
 		self.assert_ledger_matches_folio()
 
 	def test_charge_then_full_payment_is_level(self):

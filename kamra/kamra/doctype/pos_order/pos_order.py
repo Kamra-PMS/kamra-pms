@@ -137,6 +137,8 @@ class POSOrder(Document):
 		from kamra.ledger import save_folio
 		save_folio(folio)
 		self.db_set("posted_to_folio", 1, update_modified=False)
+		from kamra.webhooks import emit_folio_posted
+		emit_folio_posted(folio, folio.charges[-1])
 
 		from kamra.savings import log_action
 		log_action("post_pos_order", "POS Order", self.name, self.property,

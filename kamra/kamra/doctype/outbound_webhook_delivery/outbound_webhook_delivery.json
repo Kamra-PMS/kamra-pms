@@ -1,0 +1,167 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-10-19 12:00:00.000000",
+ "description": "One event sent (or being retried) to one outbound webhook - the delivery log.",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "property",
+  "webhook",
+  "event",
+  "event_id",
+  "cb_a",
+  "status",
+  "attempts",
+  "response_code",
+  "duration_ms",
+  "sb_timing",
+  "next_retry_at",
+  "cb_t",
+  "delivered_at",
+  "sb_body",
+  "last_error",
+  "payload"
+ ],
+ "fields": [
+  {
+   "fieldname": "property",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Property",
+   "options": "Property",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "webhook",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Webhook",
+   "options": "Outbound Webhook",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "event",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Event",
+   "read_only": 1
+  },
+  {
+   "description": "Stable across retries and resends - receivers dedupe on it.",
+   "fieldname": "event_id",
+   "fieldtype": "Data",
+   "label": "Event ID",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_a",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Pending",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Pending\nDelivered\nRetrying\nFailed",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "attempts",
+   "fieldtype": "Int",
+   "label": "Attempts",
+   "read_only": 1
+  },
+  {
+   "fieldname": "response_code",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Response code",
+   "read_only": 1
+  },
+  {
+   "fieldname": "duration_ms",
+   "fieldtype": "Int",
+   "label": "Duration (ms)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_timing",
+   "fieldtype": "Section Break",
+   "label": "Timing"
+  },
+  {
+   "fieldname": "next_retry_at",
+   "fieldtype": "Datetime",
+   "label": "Next retry at",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "cb_t",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "delivered_at",
+   "fieldtype": "Datetime",
+   "label": "Delivered at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_body",
+   "fieldtype": "Section Break",
+   "label": "Payload"
+  },
+  {
+   "fieldname": "last_error",
+   "fieldtype": "Small Text",
+   "label": "Last error",
+   "read_only": 1
+  },
+  {
+   "fieldname": "payload",
+   "fieldtype": "Code",
+   "label": "Payload",
+   "options": "JSON",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "links": [],
+ "modified": "2026-10-19 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kamra",
+ "name": "Outbound Webhook Delivery",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "delete": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager"
+  },
+  {
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Hotel Admin"
+  }
+ ],
+ "row_format": "Dynamic",
+ "search_fields": "event,event_id,status",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

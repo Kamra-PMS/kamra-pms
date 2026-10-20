@@ -43,6 +43,11 @@ def fnb_tax_rate(property) -> float:
 	return float(FNB_SST)
 
 
+def services_tax_rate(property) -> float:
+	"""Laundry and other taxable services moved to 8% with accommodation."""
+	return float(DEFAULT_SST)
+
+
 def tax_rate_options(property) -> list:
 	return [0, 6, 8]
 

@@ -10,7 +10,7 @@ import { call, getCurrentProperty } from "../lib/api"
 import { subscribeRealtime } from "../lib/realtime"
 import { serverError } from "../lib/resource"
 import { useCashierAuth } from "../lib/cashierAuth"
-import { printThermal, kotHtml, billHtml, type BillData, type KotLine } from "../lib/thermal"
+import { printThermal, kotHtml, billHtml, PRINT_DIALOG_EVENT, type BillData, type KotLine } from "../lib/thermal"
 import { useFloorFullscreen } from "../lib/kiosk"
 import { Button } from "../components/ui/button"
 import { cn } from "../lib/utils"
@@ -165,6 +165,8 @@ function ago(ts?: string) {
   return `${Math.round(mins / 60)}h` // keep long-running tags compact
 }
 
+const OUTLET_KEY = "kamra_pos_outlet"
+
 export default function POS() {
   const { t } = useT()
   const { ensureUnlocked } = useCashierAuth()
@@ -217,6 +219,18 @@ export default function POS() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [printNote, setPrintNote] = useState<string | null>(null)
+  // A KOT that waited on the browser's print dialog: tell this till, once,
+  // how to print silently.
+  const [printTip, setPrintTip] = useState(false)
+  useEffect(() => {
+    const KEY = "kamra_print_tip_seen"
+    const onDialog = () => {
+      try { if (localStorage.getItem(KEY)) return; localStorage.setItem(KEY, "1") } catch { /* private mode */ }
+      setPrintTip(true)
+    }
+    window.addEventListener(PRINT_DIALOG_EVENT, onDialog)
+    return () => window.removeEventListener(PRINT_DIALOG_EVENT, onDialog)
+  }, [])
   // responsive chrome: which pane a phone shows, the tablet tables drawer,
   // and the shortcuts popover in the header
   const [mobilePane, setMobilePane] = useState<"tables" | "menu" | "bill">("menu")
@@ -228,7 +242,15 @@ export default function POS() {
 
   useEffect(() => {
     call<Outlet[]>("kamra.pos.outlets", { property: getCurrentProperty() })
-      .then((o) => { setOutlets(o); if (o[0]) setOutlet(o[0].name) })
+      .then((o) => {
+        setOutlets(o)
+        // a till belongs to one outlet: reopen on the one it used last, and
+        // never override a choice made while the list was loading
+        let saved = ""
+        try { saved = localStorage.getItem(OUTLET_KEY) || "" } catch { /* private mode */ }
+        setOutlet((cur) => o.some((x) => x.name === cur) ? cur
+          : o.some((x) => x.name === saved) ? saved : (o[0]?.name ?? ""))
+      })
       .catch((e) => setError(serverError(e)))
     loadRooms()
   }, [])
@@ -259,10 +281,14 @@ export default function POS() {
   }, [outlet])
   useEffect(() => {
     loadOpen()
-    const unsub = subscribeRealtime(loadOpen) // live tables + bills across captains
+    // live tables + bills across captains; the front desk's traffic is ignored
+    const unsub = subscribeRealtime(loadOpen, {
+      filter: (e) => e.doctype === "POS Order" && (!e.outlet || e.outlet === outlet),
+      fallbackMs: 5000,
+    })
     const t = setInterval(loadOpen, 20_000)
     return () => { unsub(); clearInterval(t) }
-  }, [loadOpen])
+  }, [loadOpen, outlet])
 
   function resetPanel() {
     setCart([]); setDiscount(""); setDiscOpen(false); setSettling(false); setSheetNc(false)
@@ -351,23 +377,37 @@ export default function POS() {
     kot_no: number | null
     nc?: boolean
     ticket?: KotTicket
+    till_ticket?: KotTicket
+    print_jobs?: { printer_name: string }[]
     fired_items: { item_name: string; qty: number; instructions?: string | null }[]
   }, label: string, type: string | null,
                          customer?: string | null, address?: string | null,
                          ncBy?: string | null) {
-    const ticket = kot.ticket ?? {
+    const full = kot.ticket ?? {
       kot_no: kot.kot_no, label, order_type: type, order: "",
       customer, address, nc: !!kot.nc, nc_by: ncBy, items: kot.fired_items,
     }
-    if (!ticket.items?.length) return
-    const kotNo = ticket.kot_no ?? "—"
-    setPrintNote(
-      willPrintKot
-        ? t("KOT {kot} printed and on the kitchen display.", { kot: kotNo })
-        : t("KOT {kot} is on the kitchen display. Turn on Print KOT to send it to the printer.", { kot: kotNo }),
-    )
-    if (!willPrintKot) return
-    printSavedKot(ticket)
+    if (!full.items?.length) return
+    const kotNo = full.kot_no ?? "—"
+    // Kitchen printers took the lines they serve; this till prints the rest.
+    const sentTo = [...new Set((kot.print_jobs ?? []).map((j) => j.printer_name))]
+    const mine = kot.till_ticket ?? full
+    const notes: string[] = []
+    if (sentTo.length) {
+      notes.push(t("KOT {kot} sent to {printers}.", { kot: kotNo, printers: sentTo.join(", ") }))
+    }
+    if (mine.items.length) {
+      notes.push(willPrintKot
+        ? (sentTo.length
+          ? t("The rest printed here.")
+          : t("KOT {kot} printed and on the kitchen display.", { kot: kotNo }))
+        : (sentTo.length
+          ? t("Some items have no kitchen printer; turn on Print KOT to print them here.")
+          : t("KOT {kot} is on the kitchen display. Turn on Print KOT to send it to the printer.", { kot: kotNo })))
+    }
+    setPrintNote(notes.join(" "))
+    if (!willPrintKot || !mine.items.length) return
+    printSavedKot(mine)
   }
 
   function newBillArgs() {
@@ -391,15 +431,17 @@ export default function POS() {
 
   /** Create the bill (optionally firing the KOT). Returns the order id. */
   async function createBill(fire: boolean) {
+    if (fire) {
+      // one round trip: create, discount, confirm and fire on the server
+      const kot = await call<{ order: string; kot_no: number | null; fired_items: { item_name: string; qty: number; instructions?: string | null }[]; ticket?: KotTicket }>(
+        "kamra.pos.send_order", { ...newBillArgs(), discount: disc > 0 ? disc : 0 })
+      maybePrintKot(kot, newBillLabel(), orderType,
+        custName || null, orderType === "Delivery" ? custAddr || null : null)
+      return kot.order
+    }
     const r = await call<{ order: string }>("kamra.pos.create_order", newBillArgs())
     if (disc > 0) await call("kamra.pos.apply_discount", { order: r.order, amount: disc, reason: "" })
     await call("kamra.pos.confirm_order", { order: r.order })
-    if (fire) {
-      const kot = await call<{ kot_no: number | null; fired_items: { item_name: string; qty: number; instructions?: string | null }[]; ticket?: KotTicket }>(
-        "kamra.pos.fire_kot", { order: r.order })
-      maybePrintKot(kot, newBillLabel(), orderType,
-        custName || null, orderType === "Delivery" ? custAddr || null : null)
-    }
     return r.order
   }
 
@@ -407,15 +449,17 @@ export default function POS() {
     if (selected) {
       if (cart.length === 0) return
       await act(async () => {
-        await call("kamra.pos.add_items", {
-          order: selected,
-          items: cart.map((l) => ({ menu_item: l.menu_item, qty: l.qty, instructions: l.instructions })),
-        })
+        // one round trip: add the round and fire it on the server
         const kot = await call<{ kot_no: number | null; nc?: boolean; ticket?: KotTicket; fired_items: { item_name: string; qty: number; instructions?: string | null }[] }>(
-          "kamra.pos.fire_kot", { order: selected })
+          "kamra.pos.send_round", {
+            order: selected,
+            items: cart.map((l) => ({ menu_item: l.menu_item, qty: l.qty, instructions: l.instructions })),
+          })
         if (detail) maybePrintKot(kot, orderLabel(detail), detail.order_type,
           detail.customer_name, detail.delivery_address, detail.nc_authorized_by)
-        await reloadDetail(); setCart([])
+        setCart([])
+        // the till is free now; the bill panel catches up in the background
+        void reloadDetail().catch(() => {})
       })
     } else {
       if (cart.length === 0) return
@@ -903,7 +947,10 @@ export default function POS() {
         <h1 className="flex items-center gap-2 text-xl font-bold text-zinc-800">
           <UtensilsCrossed className="size-5 text-brand-600" />
           <span className="hidden sm:inline">{t("Restaurant POS")}</span>
-          <select className={inputCls + " !w-auto font-normal"} value={outlet} onChange={(e) => { setOutlet(e.target.value); newOrder() }}>
+          <select className={inputCls + " !w-auto font-normal"} value={outlet} onChange={(e) => {
+            setOutlet(e.target.value); newOrder()
+            try { localStorage.setItem(OUTLET_KEY, e.target.value) } catch { /* private mode */ }
+          }}>
             {outlets.map((o) => <option key={o.name} value={o.name}>{o.outlet_name}</option>)}
           </select>
         </h1>
@@ -1000,6 +1047,16 @@ export default function POS() {
       </div>
 
       {error && <div className="shrink-0 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</div>}
+      {printTip && (
+        <div className="flex shrink-0 items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+          <span>
+            {t("Printing waited on the print dialog. Start Chrome with --kiosk-printing on this till to print KOTs instantly.")}{" "}
+            <a className="font-semibold underline" href="https://kamrapms.com/docs/features#fast-silent-printing"
+              target="_blank" rel="noreferrer">{t("How")}</a>
+          </span>
+          <button className="text-xs font-semibold" onClick={() => setPrintTip(false)}>{t("Dismiss")}</button>
+        </div>
+      )}
       {printNote && (
         <div className="flex shrink-0 items-center justify-between gap-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
           <span>{printNote}</span>

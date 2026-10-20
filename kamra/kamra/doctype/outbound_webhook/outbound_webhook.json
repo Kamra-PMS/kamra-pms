@@ -1,0 +1,145 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-10-19 12:00:00.000000",
+ "description": "An integrator's endpoint that receives signed event notifications for one property.",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "property",
+  "label",
+  "url",
+  "cb_main",
+  "active",
+  "events",
+  "sb_secret",
+  "secret",
+  "sb_status",
+  "last_status",
+  "last_delivery_on",
+  "cb_status",
+  "consecutive_failures"
+ ],
+ "fields": [
+  {
+   "fieldname": "property",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Property",
+   "options": "Property",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "description": "What this endpoint is, e.g. 'Door lock middleware' or 'Data warehouse'.",
+   "fieldname": "label",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Label"
+  },
+  {
+   "description": "HTTPS only. Private, loopback and internal addresses are refused.",
+   "fieldname": "url",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Endpoint URL",
+   "length": 500,
+   "reqd": 1
+  },
+  {
+   "fieldname": "cb_main",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "fieldname": "active",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Active"
+  },
+  {
+   "description": "One event per line, e.g. reservation.created. See the integrations docs for the list.",
+   "fieldname": "events",
+   "fieldtype": "Small Text",
+   "label": "Events",
+   "reqd": 1
+  },
+  {
+   "fieldname": "sb_secret",
+   "fieldtype": "Section Break",
+   "label": "Signing secret"
+  },
+  {
+   "description": "Signs every delivery (HMAC-SHA256). Shown once when created or rotated.",
+   "fieldname": "secret",
+   "fieldtype": "Password",
+   "label": "Signing secret",
+   "length": 200,
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_status",
+   "fieldtype": "Section Break",
+   "label": "Status"
+  },
+  {
+   "fieldname": "last_status",
+   "fieldtype": "Data",
+   "label": "Last delivery",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_delivery_on",
+   "fieldtype": "Datetime",
+   "label": "Last delivery on",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_status",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "consecutive_failures",
+   "fieldtype": "Int",
+   "label": "Consecutive failures",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "links": [],
+ "modified": "2026-10-19 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kamra",
+ "name": "Outbound Webhook",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Hotel Admin",
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "search_fields": "property,label,url",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "label",
+ "track_changes": 1
+}

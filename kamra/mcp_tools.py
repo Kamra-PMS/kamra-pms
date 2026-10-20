@@ -69,6 +69,11 @@ RATE_PLAN_PARAM = _p(
 	description="Optional rate plan: id, code ('BAR') or exact name. "
 	"See booking_options.",
 )
+COMPANY_PARAM = _p(
+	"string",
+	description="Optional Corporate Account id (see booking_options). With no "
+	"rate_plan, the company's negotiated rate plan prices the stay.",
+)
 IDEMPOTENCY_KEY_PARAM = _p(
 	"string",
 	description="Optional unique key for this booking (e.g. a UUID). Retrying "
@@ -145,6 +150,7 @@ TOOLS: tuple[ToolSpec, ...] = (
 			"meal_plan": MEAL_PLAN_PARAM,
 			"rate_plan": RATE_PLAN_PARAM,
 			"voucher_code": _p("string"),
+			"company": COMPANY_PARAM,
 		},
 		required=("room_type", "check_in_date", "check_out_date"),
 		property=True,
@@ -176,6 +182,7 @@ TOOLS: tuple[ToolSpec, ...] = (
 			"meal_plan": MEAL_PLAN_PARAM,
 			"rate_plan": RATE_PLAN_PARAM,
 			"voucher_code": _p("string"),
+			"company": COMPANY_PARAM,
 			"idempotency_key": IDEMPOTENCY_KEY_PARAM,
 		},
 		required=("guest_name", "room_type", "check_in_date", "check_out_date"),
@@ -294,7 +301,12 @@ TOOLS: tuple[ToolSpec, ...] = (
 		"""Check a guest out (posts remaining nights to the folio, frees the
 		room, queues housekeeping). Refused while any folio has a balance:
 		collect payment or refund first. A corporate stay with credit moves
-		to the city ledger automatically. Confirm with the user first.""",
+		to the city ledger automatically, after the property's credit
+		control: over the credit limit or with overdue bills it either warns
+		(credit_warnings in the result) or is refused with CREDIT_BLOCKED and
+		the reason. An agent can never override a credit block - tell the
+		user; Finance or a Hotel Admin can override it at the desk. Confirm
+		with the user first.""",
 		{"reservation": _p("string")},
 		required=("reservation",),
 		mutating=True,
@@ -768,6 +780,20 @@ TOOLS: tuple[ToolSpec, ...] = (
 		group="Billing",
 	),
 	_t(
+		"company_credit_status",
+		"credit.company_credit_status",
+		"""A company's credit position before billing it more: its credit
+		limit (0 = none), what it owes on the city ledger and on stays in
+		house, bills overdue past the grace period, and whether billing
+		`amount` more would be warned or blocked by the property's credit
+		control. Read-only. Bookings on company billing and check-outs run
+		the same check; an agent can't override a block.""",
+		{"company": _p("string"), "amount": _p("number")},
+		required=("company",),
+		property=True,
+		group="Billing",
+	),
+	_t(
 		"security_deposit_status",
 		"api.security_deposit",
 		"""The stay's refundable security (damage) deposit: the property's
@@ -939,7 +965,9 @@ TOOLS: tuple[ToolSpec, ...] = (
 		"banquet.create_enquiry",
 		"""Open a function sheet from an enquiry. The hall's rack rental goes on
 		as the first line and a follow-up is diarised, so the enquiry can't go
-		quiet. Check banquet_availability first.""",
+		quiet. Halls sell by session: pass session (Morning / Afternoon /
+		Evening / Full Day) and the hours follow it, or session "Custom Hours"
+		with start_time and end_time. Check banquet_availability first.""",
 		{
 			"venue": _p("string"),
 			"event_date": _p("string"),
@@ -950,6 +978,7 @@ TOOLS: tuple[ToolSpec, ...] = (
 			"customer_email": _p("string"),
 			"company": _p("string"),
 			"end_date": _p("string"),
+			"session": _p("string"),
 			"start_time": _p("string"),
 			"end_time": _p("string"),
 			"source": _p("string"),
@@ -1056,15 +1085,30 @@ TOOLS: tuple[ToolSpec, ...] = (
 	_t(
 		"banquet_status",
 		"banquet.set_status",
-		"""Move a function along: Enquiry → Tentative → Confirmed → Completed, or
-		out as Cancelled / Lost. Cancelling or losing needs a reason. Confirming
-		takes the hall and will refuse a clash with another confirmed function.""",
+		"""Move a function along: Enquiry → Tentative → Confirmed, or out as
+		Cancelled / Lost. Cancelling or losing needs a reason. Confirming takes
+		the hall and will refuse a clash with another confirmed function. A
+		confirmed function is completed with banquet_close_out, not here.""",
 		{
 			"function": _p("string"),
 			"status": _p("string"),
 			"reason": _p("string"),
 		},
 		required=("function", "status"),
+		mutating=True,
+		group="Banquets",
+	),
+	_t(
+		"banquet_link_group",
+		"banquet.link_group",
+		"""Tie a function to a group booking at the same property so its bill
+		rides the group's master folio when it is posted to the bill, or untie
+		it by leaving group_booking empty. Refused once the function is billed.""",
+		{
+			"function": _p("string"),
+			"group_booking": _p("string"),
+		},
+		required=("function",),
 		mutating=True,
 		group="Banquets",
 	),
@@ -1281,6 +1325,44 @@ TOOLS: tuple[ToolSpec, ...] = (
 		group="F&B",
 	),
 	_t(
+		"pos_send_order",
+		"pos.send_order",
+		"""Open a new POS check and send it straight to the kitchen in one
+		step (create, confirm and fire the KOT). Use this for a normal order;
+		pos_create_order is for a check you will fire later. items = [{item,
+		qty, notes?}]. Optionally bind table_no and/or a room/reservation.""",
+		{
+			"outlet": _p("string"),
+			"items": _p("array", items=_p("object")),
+			"table_no": _p("string"),
+			"room": _p("string"),
+			"reservation": _p("string"),
+			"guests": _p("integer"),
+			"order_type": _p("string"),
+			"customer_name": _p("string"),
+			"customer_phone": _p("string"),
+			"delivery_address": _p("string"),
+			"allergy_note": _p("string"),
+			"notes": _p("string"),
+		},
+		required=("outlet", "items"),
+		property=True,
+		mutating=True,
+		group="F&B",
+	),
+	_t(
+		"pos_send_round",
+		"pos.send_round",
+		"Add another round to an open POS check and fire it to the kitchen in one step. items = [{item, qty, notes?}].",
+		{
+			"order": _p("string"),
+			"items": _p("array", items=_p("object")),
+		},
+		required=("order", "items"),
+		mutating=True,
+		group="F&B",
+	),
+	_t(
 		"pos_kitchen_queue",
 		"pos.kitchen_queue",
 		"KDS view: tickets waiting / cooking for the property (optional outlet).",
@@ -1296,6 +1378,37 @@ TOOLS: tuple[ToolSpec, ...] = (
 		{"order": _p("string"), "mode": _p("string")},
 		required=("order", "mode"),
 		mutating=True,
+		group="F&B",
+	),
+	# ── External POS (third-party till posting to a room) ────────────────
+	_t(
+		"pos_room_lookup",
+		"pos_interface.pos_room_lookup",
+		"""Find an in-house guest to charge: by room number and/or last name
+		(2+ letters). Only checked-in stays at this property; returns room,
+		guest name, reservation and departure date.""",
+		{"room": _p("string"), "last_name": _p("string")},
+		property=True,
+		group="F&B",
+	),
+	_t(
+		"pos_post_room_charge",
+		"pos_interface.pos_post_room_charge",
+		"""Post an outlet ticket (bar, spa, restaurant on another POS) to an
+		in-house guest's bill. ticket_id is the POS check number and makes the
+		call safe to retry: the same ticket is never posted twice. The billing
+		rules pick the folio; alcohol (is_alcohol=true) always goes to the
+		guest's own folio. Confirm the amount with staff before calling.""",
+		{"ticket_id": _p("string"), "amount": _p("number"),
+		 "description": _p("string"), "room": _p("string"),
+		 "reservation": _p("string"),
+		 "charge_type": _p("string", enum=["Food & Beverage", "Minibar",
+		                                   "Laundry", "Spa", "Misc"]),
+		 "is_alcohol": _p("boolean"), "outlet_name": _p("string")},
+		required=("ticket_id", "amount", "description"),
+		property=True,
+		mutating=True,
+		bools=("is_alcohol",),
 		group="F&B",
 	),
 	# ── Laundry ──────────────────────────────────────────────────────────

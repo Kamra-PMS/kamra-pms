@@ -286,8 +286,17 @@ export interface BookingOptions {
     price_per_adult: number
     is_default: 0 | 1
   }[]
-  rate_plans: { name: string; rate_plan_name: string; code: string }[]
-  companies: { name: string; company_name: string }[]
+  rate_plans: {
+    name: string
+    rate_plan_name: string
+    code: string
+    is_default?: 0 | 1
+  }[]
+  companies: {
+    name: string
+    company_name: string
+    negotiated_rate_plan?: string | null
+  }[]
   travel_agents: { name: string; agent_name: string; commission_pct: number }[]
   experiences: {
     name: string
@@ -316,6 +325,8 @@ export interface Quote {
   nightly: { date: string; rate: number }[]
   room_total: number
   meal_total: number
+  /** the rate plan the price is on - picked, or the company's negotiated one */
+  rate_plan?: string | null
   /** guests above the room's capacity, at the price agreed on the booking */
   over_capacity_total?: number
   pet_charge?: number
@@ -324,6 +335,19 @@ export interface Quote {
   tax_percent: number
   tax_amount: number
   amount_after_tax: number
+  /** what cancelling would cost, judged from today by the same rules as
+   * cancellation_preview - free_until is never in the past */
+  cancellation?: CancellationOutlook
+}
+
+export interface CancellationOutlook {
+  free_now: boolean
+  /** last free date; null while free_now means free up to arrival */
+  free_until: string | null
+  fee_basis: string
+  /** "the first night", "50% of the stay" */
+  fee_label: string
+  non_refundable_season: string | null
 }
 
 export const DEMO_PROPERTY = "Kamra Demo Palace"
@@ -380,6 +404,10 @@ export interface QuoteParams {
   adults: number
   children: number
   meal_plan?: string
+  /** blank: the company's negotiated plan applies (server-side) */
+  rate_plan?: string
+  /** the Corporate Account the stay is for - prices on its negotiated plan */
+  company?: string
   voucher_code?: string
   over_capacity_charge?: number
   pets?: number
@@ -446,6 +474,8 @@ export const createBooking = (
     check_in_time?: string
     check_out_time?: string
     blacklist_override_reason?: string
+    /** Finance / Hotel Admin only: book past a company credit block (logged) */
+    credit_override_reason?: string
   },
 ) =>
   call<{
@@ -453,6 +483,7 @@ export const createBooking = (
     room: string | null
     amount_after_tax: number
     status?: string
+    credit_warning?: { company: string; reasons: string[]; overridden: boolean }
   }>("kamra.api.create_booking", { property: getCurrentProperty(), ...params })
 
 /** Request to Book: confirm the stay and take a room (refused, with the
@@ -711,7 +742,13 @@ export interface FunctionSheet {
   revisions: QuoteRevision[]
   receipts: BanquetReceipt[]
   venue_detail: Partial<BanquetVenue>
-  group_detail: { name: string; group_name: string } | null
+  group_detail: {
+    name: string
+    group_name: string
+    check_in_date?: string
+    check_out_date?: string
+    status?: string
+  } | null
   scheduled_total: number
   open_item_impact: number
   next_actions: FunctionAlert[]
@@ -1214,6 +1251,17 @@ export interface CustomerProfile {
   }
 }
 
+export interface LinkableGroup {
+  name: string
+  group_name: string
+  company: string | null
+  check_in_date: string
+  check_out_date: string
+  status: string
+  /** already tied to another function */
+  taken: boolean
+}
+
 const banquetCall = <T,>(method: string, params: Record<string, unknown> = {}) =>
   call<T>(`kamra.banquet.${method}`, {
     property: getCurrentProperty(),
@@ -1247,6 +1295,20 @@ export const banquet = {
     call<{ ok: boolean; status: FunctionStatus; from: string }>(
       "kamra.banquet.set_status",
       { function: fn, status, reason: reason ?? null },
+    ),
+  /** Completed -> Confirmed, with a reason (Revenue Manager / Finance /
+   *  Hotel Admin only; logged). */
+  reopen: (fn: string, reason: string) =>
+    call<{ ok: boolean; status: FunctionStatus }>(
+      "kamra.banquet.reopen_function",
+      { function: fn, reason },
+    ),
+  linkableGroups: (fn: string) =>
+    call<LinkableGroup[]>("kamra.banquet.linkable_groups", { function: fn }),
+  linkGroup: (fn: string, group: string | null) =>
+    call<{ ok: boolean; group_booking: string | null }>(
+      "kamra.banquet.link_group",
+      { function: fn, group_booking: group },
     ),
 
   addMenu: (fn: string, menu: string, opts: Record<string, unknown> = {}) =>

@@ -257,7 +257,7 @@ export default function AppShell() {
   }, [property])
 
   const apps = visibleApps(roles, modules)
-  const routeApp = appForPath(location.pathname)
+  const routeApp = appForPath(location.pathname, apps)
   const currentApp = apps.some((a) => a.id === routeApp.id) ? routeApp : apps[0]
   const floor = location.pathname === "/pos" || location.pathname === "/kitchen"
   const { on: kiosk } = useKiosk()

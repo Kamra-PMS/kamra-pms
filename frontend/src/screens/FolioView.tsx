@@ -165,17 +165,29 @@ interface SiblingFolio {
   name: string
   folio_type: string
   status: string
+  invoice_number?: string | null
   balance: number
   grand_total: number
   payments_total: number
 }
 
-/** A distinct label per folio - Extras get numbered when there's more than one. */
+/** A distinct label per folio. Extras get numbered when there's more than
+ *  one. Any other type that repeats (Settle & continue stay closes the Guest
+ *  folio and opens a fresh one) names the settled one by its invoice number,
+ *  and numbers open ones that still share a type. */
 function folioLabel(siblings: SiblingFolio[], s: SiblingFolio, tr: (s: string, v?: Record<string, string | number>) => string) {
-  if (s.folio_type !== "Extra") return tr(s.folio_type)
-  const extras = siblings.filter((x) => x.folio_type === "Extra")
-  if (extras.length <= 1) return tr("Extra")
-  return tr("Extra {n}", { n: extras.findIndex((x) => x.name === s.name) + 1 })
+  const same = siblings.filter((x) => x.folio_type === s.folio_type)
+  if (s.folio_type === "Extra") {
+    if (same.length <= 1) return tr("Extra")
+    return tr("Extra {n}", { n: same.findIndex((x) => x.name === s.name) + 1 })
+  }
+  const type = tr(s.folio_type)
+  if (same.length <= 1) return type
+  if (s.status === "Closed")
+    return s.invoice_number ? `${type} · ${s.invoice_number}` : tr("{type} · settled", { type })
+  const open = same.filter((x) => x.status !== "Closed")
+  if (open.length <= 1) return type
+  return `${type} ${open.findIndex((x) => x.name === s.name) + 1}`
 }
 const isEmptyFolio = (s: SiblingFolio) =>
   !s.grand_total && !s.payments_total
@@ -279,6 +291,15 @@ export default function FolioView() {
   useEffect(() => {
     loadLocale().then((l) => setRates(l.tax_rates))
   }, [])
+  // the rate the server will put on this charge when it is food & beverage
+  // (same words and rate as kamra.api._resolve_charge_gst); null = the
+  // picked rate applies
+  const fnbWords = loc.fnb_charge_words ?? []
+  const chargeText = `${charge.charge_type} ${charge.description}`.toLowerCase()
+  const fixedRate: number | null =
+    !charge.is_alcohol && loc.fnb_tax_rate != null && fnbWords.some((w) => chargeText.includes(w))
+      ? Number(loc.fnb_tax_rate)
+      : null
 
   /** Params helper kept for call sites; unlock happens in act(). */
   const withPin = (params: Record<string, unknown>) => params
@@ -563,7 +584,7 @@ export default function FolioView() {
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-2 text-sm print:hidden">
           <span className="text-zinc-600">
             {pinStatus.unlocked
-              ? t("Cashier unlocked — money actions are open for 15 minutes.")
+              ? t("Cashier unlocked — money actions are open for {n} minutes.", { n: pinStatus.unlock_minutes ?? 15 })
               : pinStatus.must_reset || !pinStatus.has_pin
                 ? t("Set your cashier PIN to post payments and settle folios.")
                 : t("Cashier PIN required for money actions.")}
@@ -826,13 +847,13 @@ export default function FolioView() {
                             <span>· {t("move only")}</span>
                             <input
                               className="w-24 rounded-md border border-zinc-300 bg-white px-2 py-1 text-xs"
-                              aria-label={t("Part to move (percent, or {cur} before GST)", { cur: cur() })}
+                              aria-label={t("Part to move (percent, or {cur} before {tax})", { cur: cur(), tax: taxLabel() })}
                               placeholder={t("30% or 1500")}
                               value={partVal}
                               onChange={(e) => setPartVal(e.target.value)}
                             />
                             <span className="text-zinc-400">
-                              ({cur()} = {t("before GST")})
+                              ({cur()} = {t("before {tax}", { tax: taxLabel() })})
                             </span>
                           </span>
                         )}
@@ -848,9 +869,10 @@ export default function FolioView() {
                       </div>
                       {partBad && (
                         <p className="mt-1.5 text-xs text-rose-600">
-                          {t("Enter 1–99%, or a {cur} amount under the line's {cur}{amount} (before GST).", {
+                          {t("Enter 1–99%, or a {cur} amount under the line's {cur}{amount} (before {tax}).", {
                             cur: cur(),
                             amount: inr(one!.amount),
+                            tax: taxLabel(),
                           })}
                         </p>
                       )}
@@ -1245,19 +1267,33 @@ export default function FolioView() {
                 value={charge.amount}
                 onChange={(e) => setCharge({ ...charge, amount: e.target.value })}
               />
-              <select
-                className={inputCls}
-                value={charge.gst_rate}
-                onChange={(e) =>
-                  setCharge({ ...charge, gst_rate: e.target.value })
-                }
-              >
-                {rates.map((n) => String(n)).map((r) => (
-                  <option key={r} value={r}>
-                    {t("GST {rate}%", { rate: r })}
-                  </option>
-                ))}
-              </select>
+              {fixedRate !== null ? (
+                /* the server taxes food & beverage at the pack's F&B rate
+                   whatever is picked (_resolve_charge_gst) - show that rate
+                   rather than offer a choice that would be ignored */
+                <span
+                  className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-sm text-zinc-600"
+                  title={t("Food & beverage is taxed at the property's F&B rate.")}
+                >
+                  {t("{tax} {rate}%", { tax: taxLabel(), rate: fixedRate })}
+                  <span className="ml-1 text-xs text-zinc-400">{t("(F&B rate)")}</span>
+                </span>
+              ) : (
+                <select
+                  className={inputCls}
+                  aria-label={t("{tax} rate", { tax: taxLabel() })}
+                  value={charge.gst_rate}
+                  onChange={(e) =>
+                    setCharge({ ...charge, gst_rate: e.target.value })
+                  }
+                >
+                  {rates.map((n) => String(n)).map((r) => (
+                    <option key={r} value={r}>
+                      {t("{tax} {rate}%", { tax: taxLabel(), rate: r })}
+                    </option>
+                  ))}
+                </select>
+              )}
               <label className="flex items-center gap-1.5 text-sm text-zinc-600">
                 <input
                   type="checkbox"
@@ -1277,7 +1313,9 @@ export default function FolioView() {
                       folio: folio.name,
                       ...charge,
                       amount: Number(charge.amount),
-                      gst_rate: Number(charge.gst_rate),
+                      gst_rate: fixedRate !== null && rates.includes(fixedRate)
+                        ? fixedRate
+                        : Number(charge.gst_rate),
                       is_alcohol: charge.is_alcohol ? 1 : 0,
                     }),
                   )
@@ -1311,7 +1349,7 @@ export default function FolioView() {
                   >
                     {rates.map((n) => String(n)).map((r) => (
                       <option key={r} value={r}>
-                        GST {r}%
+                        {t("{tax} {rate}%", { tax: taxLabel(), rate: r })}
                       </option>
                     ))}
                   </select>

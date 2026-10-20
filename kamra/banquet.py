@@ -64,11 +64,13 @@ DEAD = ("Cancelled", "Lost")
 
 # enquiry -> tentative -> confirmed -> completed, and out at any point.
 # Reopening a dead function is deliberate, not a slip, so it's allowed
-# back to Enquiry only.
+# back to Enquiry only. Completed is reached only through close_out (the
+# covers, the damage and the deposit settle in the same motion) and left
+# only through reopen_function (a reason, a narrower set of roles, a log).
 TRANSITIONS = {
 	"Enquiry": ("Tentative", "Confirmed", "Cancelled", "Lost"),
 	"Tentative": ("Confirmed", "Enquiry", "Cancelled", "Lost"),
-	"Confirmed": ("Completed", "Tentative", "Cancelled"),
+	"Confirmed": ("Tentative", "Cancelled"),
 	"Completed": (),
 	"Cancelled": ("Enquiry",),
 	"Lost": ("Enquiry",),
@@ -236,12 +238,26 @@ def create_enquiry(property: str, venue: str, event_date: str,
                    start_time: str | None = None, end_time: str | None = None,
                    source: str = "Phone", requirements: str | None = None,
                    follow_up_days: int | None = None, with_venue_line: int = 1,
-                   sales_owner: str | None = None):
+                   sales_owner: str | None = None, session: str | None = None):
 	"""Open a function sheet from an enquiry. The hall's rack rental goes on
 	as the first line (that's the number the conversation starts from), and
-	a follow-up lands in the diary so the enquiry doesn't go quiet."""
+	a follow-up lands in the diary so the enquiry doesn't go quiet.
+
+	session is how the hall is sold (Morning / Afternoon / Evening / Full
+	Day): a named session sets the clock itself, so times sent alongside it
+	are ignored. Custom Hours, or no session with times, keeps the times."""
+	from kamra.kamra.doctype.venue_booking.venue_booking import (
+		SESSION_HOURS, SESSIONS)
+
 	if not (customer_name or "").strip():
 		frappe.throw(_("Whose function is this? A customer name is required."))
+	session = (session or "").strip() or None
+	if session and session not in SESSIONS:
+		frappe.throw(_("Unknown session {0}. Pick one of: {1}.").format(
+			session, ", ".join(SESSIONS)))
+	if session in SESSION_HOURS:
+		# the session decides the hours - and the hourly-rental test below
+		start_time, end_time = (t[:5] for t in SESSION_HOURS[session])
 	doc = frappe.get_doc({
 		"doctype": "Venue Booking",
 		"property": property, "venue": venue,
@@ -254,6 +270,7 @@ def create_enquiry(property: str, venue: str, event_date: str,
 		"source": source or "Phone",
 		"sales_owner": sales_owner or frappe.session.user,
 		"event_date": event_date, "end_date": end_date or None,
+		"session": session,
 		"start_time": start_time or None, "end_time": end_time or None,
 		"customer_name": customer_name.strip()[:140],
 		"customer_phone": customer_phone, "customer_email": customer_email,
@@ -341,6 +358,11 @@ def update_function(function: str, fields):
 		frappe.throw(_("Not editable here: {0}").format(", ".join(sorted(unknown))))
 	doc = _fn(function)
 	_guard_closed(doc)
+	if "group_booking" in fields and (fields["group_booking"] or None) != doc.group_booking:
+		# the bill-routing link has its own checks (same property, not yet
+		# billed, the group's back-link) - one path, whichever caller
+		group = fields.pop("group_booking") or None
+		_set_group_link(doc, group)
 	for k, v in fields.items():
 		doc.set(k, v)
 	doc.save()
@@ -353,6 +375,88 @@ def _guard_closed(doc):
 		frappe.throw(_("This function is closed. Reopen it before editing."))
 
 
+# ══ the group it rides with ══════════════════════════════════════════════
+
+def _set_group_link(doc, group: str | None):
+	"""Tie (or untie) a function to a group booking. Sets the field and the
+	group's own `event` back-link; the caller saves the function."""
+	was = doc.group_booking
+	if group:
+		g = frappe.db.get_value(
+			"Group Booking", group, ["name", "property", "status", "event"],
+			as_dict=True)
+		if not g:
+			frappe.throw(_("Group booking {0} not found.").format(group))
+		if g.property != doc.property:
+			frappe.throw(_("Group {0} belongs to another property - a "
+			              "function can only ride a group at its own hotel.")
+			             .format(group))
+		if g.status == "Cancelled":
+			frappe.throw(_("Group {0} is cancelled.").format(group))
+		if g.event and g.event != doc.name:
+			frappe.throw(_("Group {0} is already tied to function {1}. "
+			              "Untie it there first.").format(group, g.event))
+	if doc.posted_to_folio and group != was:
+		frappe.throw(_("This function is already billed to {0} - its group "
+		              "can't change now.").format(doc.folio))
+	if was and was != group and frappe.db.get_value(
+			"Group Booking", was, "event") == doc.name:
+		frappe.db.set_value("Group Booking", was, "event", None)
+	if group:
+		frappe.db.set_value("Group Booking", group, "event", doc.name)
+	doc.group_booking = group
+
+
+@frappe.whitelist()
+@require_roles(*READ_ROLES)
+def linkable_groups(function: str):
+	"""Group bookings this function could ride: same property, not
+	cancelled, staying within a month either side of the event."""
+	doc = _fn(function)
+	day = getdate(doc.event_date)
+	rows = frappe.get_all(
+		"Group Booking",
+		filters={"property": doc.property, "status": ("!=", "Cancelled"),
+		         "check_out_date": (">=", add_days(day, -30)),
+		         "check_in_date": ("<=", add_days(day, 30))},
+		fields=["name", "group_name", "company", "check_in_date",
+		        "check_out_date", "status", "event"],
+		order_by="check_in_date asc", limit=100)
+	if doc.group_booking and not any(r.name == doc.group_booking for r in rows):
+		cur = frappe.db.get_value(
+			"Group Booking", doc.group_booking,
+			["name", "group_name", "company", "check_in_date",
+			 "check_out_date", "status", "event"], as_dict=True)
+		if cur:
+			rows.insert(0, cur)
+	return [{**r, "check_in_date": str(r.check_in_date),
+	         "check_out_date": str(r.check_out_date),
+	         "taken": bool(r.event and r.event != doc.name)} for r in rows]
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles(*BANQUET_ROLES)
+def link_group(function: str, group_booking: str | None = None):
+	"""Tie a function to a group booking so its bill can ride the group's
+	master folio (post_to_folio), or untie it (group_booking empty)."""
+	doc = _fn(function)
+	_guard_closed(doc)
+	was = doc.group_booking
+	group = (group_booking or "").strip() or None
+	if group == was:
+		return {"ok": True, "group_booking": was, "unchanged": True}
+	_set_group_link(doc, group)
+	doc.save()
+	from kamra.savings import log_action
+	log_action("banquet_group_link", "Venue Booking", doc.name, doc.property,
+	           rationale=(f"{doc.customer_name}: tied to group {group}"
+	                      if group else
+	                      f"{doc.customer_name}: untied from group {was}"),
+	           before_snapshot={"group_booking": was},
+	           after_snapshot={"group_booking": group})
+	return {"ok": True, "group_booking": group}
+
+
 @frappe.whitelist(methods=["POST"])
 @require_roles(*BANQUET_ROLES)
 def set_status(function: str, status: str, reason: str | None = None,
@@ -362,6 +466,13 @@ def set_status(function: str, status: str, reason: str | None = None,
 	doc = _fn(function)
 	if status == doc.status:
 		return {"ok": True, "status": status, "unchanged": True}
+	if status == "Completed" and doc.status == "Confirmed":
+		frappe.throw(_("Close the function out instead - close-out counts the "
+		              "covers, settles the deposit and then marks it "
+		              "Completed."))
+	if doc.status == "Completed":
+		frappe.throw(_("This function is closed. Reopen it (with a reason) "
+		              "before moving it."))
 	allowed = TRANSITIONS.get(doc.status, ())
 	if status not in allowed:
 		frappe.throw(_("A {0} function can't go straight to {1}. From here: "
@@ -1516,9 +1627,13 @@ def close_out(function: str, damage_amount: float = 0,
 	if doc.status not in ("Confirmed", "Completed"):
 		frappe.throw(_("Only a confirmed function can be closed out - this "
 		              "one is {0}.").format(doc.status))
-	if doc.closed_out_on:
+	if doc.closed_out_on and doc.status == "Completed":
 		frappe.throw(_("This function was already closed out on {0}.")
 		             .format(doc.closed_out_on))
+	if doc.closed_out_on:
+		# reopened after a close-out: the deposit and the damage were settled
+		# the first time, so this close only re-counts covers and re-closes
+		return _reclose(doc, damage_amount, refund_deposit, pax_actual)
 	damage = float(damage_amount or 0)
 	if damage < 0:
 		frappe.throw(_("Damages can't be negative."))
@@ -1569,6 +1684,71 @@ def close_out(function: str, damage_amount: float = 0,
 	return {"ok": True, "status": doc.status, "damage": damage,
 	        "refunded": refund, "deposit_held": doc.deposit_held,
 	        "balance_due": doc.balance_due, "grand_total": doc.grand_total}
+
+
+def _reclose(doc, damage_amount, refund_deposit, pax_actual):
+	"""Close a reopened function again. The money side of the first
+	close-out stands - a second deduction or refund would double it - so
+	only the covers can be re-counted here."""
+	if float(damage_amount or 0):
+		frappe.throw(_("Damages were settled at the first close-out ({0}). "
+		              "Bill anything further as a charge on the function.")
+		             .format(doc.closed_out_on))
+	held = float(doc.deposit_held or 0)
+	if int(refund_deposit or 0) and held > 0:
+		frappe.throw(_("{0} of deposit is still held. Record the refund as a "
+		              "receipt before closing again.")
+		             .format(frappe.format_value(held, "Currency")))
+	if pax_actual is not None:
+		doc.pax_actual = int(pax_actual)
+	doc.closed_out_on = now_datetime()
+	doc.closed_out_by = frappe.session.user
+	doc.status = "Completed"
+	doc.save()
+	from kamra.savings import log_action
+	log_action("banquet_close_out", "Venue Booking", doc.name, doc.property,
+	           rationale=f"{doc.customer_name} closed out again after a "
+	                     f"reopen - {doc.billable_pax} actual pax")
+	return {"ok": True, "status": doc.status, "damage": 0.0, "refunded": 0.0,
+	        "reclosed": True, "deposit_held": doc.deposit_held,
+	        "balance_due": doc.balance_due, "grand_total": doc.grand_total}
+
+
+# who may undo a close-out: the people who answer for the numbers, not
+# whoever is on the desk
+REOPEN_ROLES = ("Revenue Manager", "Finance", "Hotel Admin")
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles(*REOPEN_ROLES)
+def reopen_function(function: str, reason: str):
+	"""Reopen a closed (Completed) function so its sheet can be corrected.
+	It goes back to Confirmed; receipts, refunds and the damage line stay
+	as they were, and closing it again re-counts covers only. Needs a
+	reason, and lands on the activity log."""
+	doc = _fn(function)
+	if doc.status != "Completed":
+		frappe.throw(_("Only a closed (Completed) function can be reopened - "
+		              "this one is {0}.").format(doc.status))
+	if not (reason or "").strip():
+		frappe.throw(_("Say why - reopening a closed function needs a reason."))
+	if doc.posted_to_folio:
+		frappe.throw(_("This function is already billed to {0}. Correct the "
+		              "bill there (void / reverse) rather than reopening.")
+		             .format(doc.folio))
+	reason = reason.strip()[:500]
+	doc.status = "Confirmed"
+	note = _("Reopened by {0}: {1}").format(frappe.session.user, reason)
+	doc.internal_notes = ((doc.internal_notes + "\n")
+	                      if doc.internal_notes else "") + note
+	doc.save()
+	from kamra.savings import log_action
+	log_action("banquet_reopen", "Venue Booking", doc.name, doc.property,
+	           rationale=f"{doc.customer_name}: Completed → Confirmed ({reason})",
+	           before_snapshot={"status": "Completed",
+	                            "closed_out_on": str(doc.closed_out_on or "")},
+	           after_snapshot={"status": "Confirmed"})
+	return {"ok": True, "status": doc.status, "from": "Completed"}
 
 
 @frappe.whitelist(methods=["POST"])

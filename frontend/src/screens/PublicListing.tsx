@@ -24,8 +24,9 @@ const inr = (n: number) =>
   n.toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
 
 interface Resolved {
-  kind: "listing" | "site"
+  kind: "listing" | "site" | "property"
   property: string
+  property_slug?: string
   listing_slug?: string
   location_slug?: string
   location_name?: string
@@ -292,6 +293,17 @@ export default function PublicListing() {
     if (!slug) return
     callGuest<Resolved>("kamra.public_api.resolve_slug", { slug })
       .then((r) => {
+        if (r.kind === "property") {
+          // a whole property: its own /book page (sites, listings or rooms),
+          // keeping the stay the guest already typed into the URL
+          const stay = checkin
+            ? `/${search.check_in_date}/${search.check_out_date}/${search.adults}/${search.children}`
+            : ""
+          const qs = new URLSearchParams(searchParams)
+          qs.set("property", r.property_slug || slug)
+          navigate(`/book${stay}?${qs}`, { replace: true })
+          return null
+        }
         setResolved(r)
         const args: Record<string, string> = { property: r.property }
         if (r.listing_slug) args.listing_slug = r.listing_slug
@@ -301,7 +313,9 @@ export default function PublicListing() {
           r,
         }))
       })
-      .then(({ d }) => {
+      .then((out) => {
+        if (!out) return
+        const { d } = out
         adoptUiLocale(
           (d as unknown as { ui_locale?: { currency_symbol?: string; locale?: string } })
             .ui_locale,

@@ -1,6 +1,6 @@
 # MCP tool reference
 
-Kamra exposes **96 governed tools** on the hosted MCP
+Kamra exposes **102 governed tools** on the hosted MCP
 endpoint (`/mcp`) and the stdio sidecar (`mcp/kamra_mcp.py`). Every
 call runs as the connected user — **role** permissions apply, tools
 are further filtered by the property's **enabled modules**, prices
@@ -26,7 +26,7 @@ days. start_date YYYY-MM-DD (default today).
 
 Endpoint: `kamra.api.availability_calendar`.
 
-### `quote(room_type, check_in_date, check_out_date, adults, children, meal_plan, rate_plan, voucher_code)`
+### `quote(room_type, check_in_date, check_out_date, adults, children, meal_plan, rate_plan, voucher_code, company)`
 
 Price a stay (deterministic: occupancy pricing, seasons, meal plan,
 voucher, GST). Use before every booking. Room type, meal plan and rate
@@ -42,7 +42,7 @@ for booking at this property.
 
 Endpoint: `kamra.api.booking_options`.
 
-### `create_booking(guest_name, room_type, check_in_date, check_out_date, phone, adults, children, meal_plan, rate_plan, voucher_code, idempotency_key)`
+### `create_booking(guest_name, room_type, check_in_date, check_out_date, phone, adults, children, meal_plan, rate_plan, voucher_code, company, idempotency_key)`
 
 Create a reservation. Dedupes the guest by phone, auto-assigns a
 free room, applies the voucher, prices via the engine. Room type,
@@ -137,7 +137,12 @@ Mutating — logged to the activity ledger.
 Check a guest out (posts remaining nights to the folio, frees the
 room, queues housekeeping). Refused while any folio has a balance:
 collect payment or refund first. A corporate stay with credit moves
-to the city ledger automatically. Confirm with the user first.
+to the city ledger automatically, after the property's credit
+control: over the credit limit or with overdue bills it either warns
+(credit_warnings in the result) or is refused with CREDIT_BLOCKED and
+the reason. An agent can never override a credit block - tell the
+user; Finance or a Hotel Admin can override it at the desk. Confirm
+with the user first.
 
 Endpoint: `kamra.api.check_out`.
 Mutating — logged to the activity ledger.
@@ -404,6 +409,17 @@ confirms a held booking. Returns the link and a ready-to-send message.
 Endpoint: `kamra.api.deposit_payment_link`.
 Mutating — logged to the activity ledger.
 
+### `company_credit_status(company, amount)`
+
+A company's credit position before billing it more: its credit
+limit (0 = none), what it owes on the city ledger and on stays in
+house, bills overdue past the grace period, and whether billing
+`amount` more would be warned or blocked by the property's credit
+control. Read-only. Bookings on company billing and check-outs run
+the same check; an agent can't override a block.
+
+Endpoint: `kamra.credit.company_credit_status`.
+
 ### `security_deposit_status(reservation)`
 
 The stay's refundable security (damage) deposit: the property's
@@ -555,11 +571,13 @@ never invent a price.
 
 Endpoint: `kamra.banquet.banquet_catalogue`.
 
-### `banquet_enquiry(venue, event_date, customer_name, event_type, attendees, customer_phone, customer_email, company, end_date, start_time, end_time, source, requirements)`
+### `banquet_enquiry(venue, event_date, customer_name, event_type, attendees, customer_phone, customer_email, company, end_date, session, start_time, end_time, source, requirements)`
 
 Open a function sheet from an enquiry. The hall's rack rental goes on
 as the first line and a follow-up is diarised, so the enquiry can't go
-quiet. Check banquet_availability first.
+quiet. Halls sell by session: pass session (Morning / Afternoon /
+Evening / Full Day) and the hours follow it, or session "Custom Hours"
+with start_time and end_time. Check banquet_availability first.
 
 Endpoint: `kamra.banquet.create_enquiry`.
 Mutating — logged to the activity ledger.
@@ -620,11 +638,21 @@ Mutating — logged to the activity ledger.
 
 ### `banquet_status(function, status, reason)`
 
-Move a function along: Enquiry → Tentative → Confirmed → Completed, or
-out as Cancelled / Lost. Cancelling or losing needs a reason. Confirming
-takes the hall and will refuse a clash with another confirmed function.
+Move a function along: Enquiry → Tentative → Confirmed, or out as
+Cancelled / Lost. Cancelling or losing needs a reason. Confirming takes
+the hall and will refuse a clash with another confirmed function. A
+confirmed function is completed with banquet_close_out, not here.
 
 Endpoint: `kamra.banquet.set_status`.
+Mutating — logged to the activity ledger.
+
+### `banquet_link_group(function, group_booking)`
+
+Tie a function to a group booking at the same property so its bill
+rides the group's master folio when it is posted to the bill, or untie
+it by leaving group_booking empty. Refused once the function is billed.
+
+Endpoint: `kamra.banquet.link_group`.
 Mutating — logged to the activity ledger.
 
 ### `banquet_quote(function, valid_days)`
@@ -773,6 +801,23 @@ Fire a kitchen order ticket (whole check or one course).
 Endpoint: `kamra.pos.fire_kot`.
 Mutating — logged to the activity ledger.
 
+### `pos_send_order(outlet, items, table_no, room, reservation, guests, order_type, customer_name, customer_phone, delivery_address, allergy_note, notes)`
+
+Open a new POS check and send it straight to the kitchen in one
+step (create, confirm and fire the KOT). Use this for a normal order;
+pos_create_order is for a check you will fire later. items = [{item,
+qty, notes?}]. Optionally bind table_no and/or a room/reservation.
+
+Endpoint: `kamra.pos.send_order`.
+Mutating — logged to the activity ledger.
+
+### `pos_send_round(order, items)`
+
+Add another round to an open POS check and fire it to the kitchen in one step. items = [{item, qty, notes?}].
+
+Endpoint: `kamra.pos.send_round`.
+Mutating — logged to the activity ledger.
+
 ### `pos_kitchen_queue(outlet)`
 
 KDS view: tickets waiting / cooking for the property (optional outlet).
@@ -785,6 +830,25 @@ Settle a POS check. mode: Cash, UPI, Card, Room Charge, etc.
 Confirm the total with staff before calling.
 
 Endpoint: `kamra.pos.pay_order`.
+Mutating — logged to the activity ledger.
+
+### `pos_room_lookup(room, last_name)`
+
+Find an in-house guest to charge: by room number and/or last name
+(2+ letters). Only checked-in stays at this property; returns room,
+guest name, reservation and departure date.
+
+Endpoint: `kamra.pos_interface.pos_room_lookup`.
+
+### `pos_post_room_charge(ticket_id, amount, description, room, reservation, charge_type, is_alcohol, outlet_name)`
+
+Post an outlet ticket (bar, spa, restaurant on another POS) to an
+in-house guest's bill. ticket_id is the POS check number and makes the
+call safe to retry: the same ticket is never posted twice. The billing
+rules pick the folio; alcohol (is_alcohol=true) always goes to the
+guest's own folio. Confirm the amount with staff before calling.
+
+Endpoint: `kamra.pos_interface.pos_post_room_charge`.
 Mutating — logged to the activity ledger.
 
 ## Laundry

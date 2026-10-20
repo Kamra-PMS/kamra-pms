@@ -1,3 +1,4 @@
+import json
 import os
 
 import frappe
@@ -29,7 +30,10 @@ def get_context(context):
 		html = f.read()
 
 	csrf = frappe.sessions.get_csrf_token()
-	boot = f'<script>window.csrf_token = "{csrf}";</script>'
+	# The socket.io namespace is the site name, which is not the hostname on
+	# a custom domain - without it live updates silently never arrive.
+	site = json.dumps(frappe.local.site).replace("<", "\\u003c")
+	boot = f'<script>window.csrf_token = "{csrf}"; window.kamra_site = {site};</script>'
 	# Inject before the module script so the token is set before the app boots.
 	html = html.replace("</head>", boot + "</head>", 1)
 

@@ -675,6 +675,11 @@ def _post_chat(base: str, headers: dict, body: dict, *, stream: bool = False):
 	                     timeout=TIMEOUT, stream=stream)
 
 
+# a ticket the copilot raises is an agent's ticket - the same source the MCP
+# create_ticket tool stamps, so reports tell it apart from staff-typed ones
+_FIXED_ARGS = {"raise_ticket": {"source": "AI Agent"}}
+
+
 def _run_tool(name: str, args: dict, property: str):
 	if not _tool_allowed(name):
 		frappe.throw("Your role doesn't include this action.",
@@ -685,6 +690,8 @@ def _run_tool(name: str, args: dict, property: str):
 	         if k in params and v not in (None, "")}
 	if inject:
 		clean["property"] = property
+	# arguments the tool always carries, whatever the model sent
+	clean.update(_FIXED_ARGS.get(name, {}))
 	# Kamra Agent tool calls are agent actions: accountability comes from
 	# action log, not the cashier PIN (which guards humans at a terminal)
 	# the channel doubles as the "agent call" flag the cashier PIN and the

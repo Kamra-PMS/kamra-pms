@@ -31,7 +31,12 @@ class HousekeepingTask(Document):
 			return
 		# Completed cleans flow back into the room's live status so the
 		# front desk (and any agent checking availability) sees readiness.
-		if self.status == "Done":
+		if self.status == "Done" and self.task_type == "Inspection":
+			# an inspection never sets a room back to plain Clean: it is
+			# passed by Verified (below); a Done here just closes the task
+			if self.due_by and now_datetime() > get_datetime(self.due_by):
+				self.db_set("breached", 1, update_modified=False)
+		elif self.status == "Done":
 			frappe.db.set_value("Room", self.room, "housekeeping_status", "Clean")
 			if self.due_by and now_datetime() > get_datetime(self.due_by):
 				self.db_set("breached", 1, update_modified=False)

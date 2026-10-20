@@ -20,7 +20,6 @@ import {
   amendStayConfirmed,
   checkIn,
   declineBookingRequest,
-  checkOut,
   idDocumentImage,
   promoteWaitlist,
   reservationDetail,
@@ -37,6 +36,8 @@ import LinkedRecords from "../components/LinkedRecords"
 import DepositPanel from "../components/DepositPanel"
 import SecurityDepositPanel from "../components/SecurityDepositPanel"
 import RoomChangeDialog from "../components/RoomChangeDialog"
+import { useCreditCheckout } from "../components/CreditCheckout"
+import StayInstructions from "../components/StayInstructions"
 import { cur, moneyLocale } from "../lib/money"
 
 const inr = (n: number) =>
@@ -248,6 +249,11 @@ export default function ReservationDetail({
     }
   }, [savedReq])
 
+  const credit = useCreditCheckout(() => {
+    refresh()
+    reload()
+  })
+
   async function act(fn: () => Promise<unknown>) {
     setBusy(true)
     setError(null)
@@ -274,6 +280,7 @@ export default function ReservationDetail({
 
   return (
     <div className="space-y-4">
+      {credit.dialog}
       <LinkedRecords doctype="Reservation" name={String(row.name)} />
       {/* status + provenance */}
       <div className="flex flex-wrap items-center gap-2">
@@ -606,6 +613,12 @@ export default function ReservationDetail({
         )}
       </Card>
 
+      {/* per-department instructions (Stay Instruction rows) */}
+      <StayInstructions
+        reservation={name}
+        canAdd={!["Cancelled", "Checked Out", "No Show"].includes(d.status)}
+      />
+
       {/* cancellation record, if any */}
       {d.cancellation && (
         <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
@@ -694,7 +707,7 @@ export default function ReservationDetail({
           </span>
         )}
         {d.actions.can_check_out && (
-          <Button disabled={busy} onClick={() => act(() => checkOut(name))}>
+          <Button disabled={busy} onClick={() => act(() => credit.start(name))}>
             <LogOut className="size-4" /> Check out
           </Button>
         )}

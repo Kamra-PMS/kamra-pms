@@ -119,8 +119,11 @@ def suggest_allocation(property: str, date: str | None = None):
 	proposals, unfittable = [], []
 
 	for a in arrivals:
+		# the room is wanted today: one whose guest has not checked out yet
+		# is not on offer (ready_now), even on that guest's departure date
 		free = available_rooms(property, a.room_type, a.check_in_date,
-		                       a.check_out_date, group_booking=a.group_booking)
+		                       a.check_out_date, group_booking=a.group_booking,
+		                       ready_now=1)
 		cands = [by_name[r["name"]] for r in free
 		         if r["name"] in by_name and r["name"] not in taken]
 		if not cands:

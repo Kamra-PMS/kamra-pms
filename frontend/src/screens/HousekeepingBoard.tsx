@@ -4,7 +4,7 @@
     set_housekeeping_status, which checks role, property and DocPerm. */
 
 import { useCallback, useEffect, useState } from "react"
-import { BedDouble, LogOut, RefreshCw, User } from "lucide-react"
+import { BedDouble, LogOut, RefreshCw, User, UserPlus } from "lucide-react"
 import { call, getCurrentProperty, setHousekeepingStatus } from "../lib/api"
 import { serverError } from "../lib/resource"
 import { Button } from "../components/ui/button"
@@ -12,7 +12,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { cn } from "../lib/utils"
 import { useT } from "../lib/i18n"
 
-type HkStatus = "Clean" | "Dirty" | "Inspected" | "Out of Order"
+// Ready: passed its inspection when the turnover profile requires one
+type HkStatus = "Clean" | "Dirty" | "Inspected" | "Ready" | "Out of Order"
 
 interface BoardRoom {
   name: string
@@ -35,7 +36,7 @@ interface BoardRoom {
   } | null
 }
 
-const STATUSES: HkStatus[] = ["Dirty", "Clean", "Inspected", "Out of Order"]
+const STATUSES: HkStatus[] = ["Dirty", "Clean", "Inspected", "Ready", "Out of Order"]
 // an attendant marks rooms Clean / Dirty; passing or blocking a room is the
 // supervisor's call - the server enforces the same rule
 const ATTENDANT: HkStatus[] = ["Dirty", "Clean"]
@@ -43,12 +44,14 @@ const ATTENDANT: HkStatus[] = ["Dirty", "Clean"]
 const tone: Record<HkStatus, string> = {
   Clean: "border-emerald-300 bg-emerald-50 text-emerald-900",
   Inspected: "border-sky-300 bg-sky-50 text-sky-900",
+  Ready: "border-teal-400 bg-teal-50 text-teal-900",
   Dirty: "border-amber-300 bg-amber-50 text-amber-900",
   "Out of Order": "border-rose-300 bg-rose-50 text-rose-900",
 }
 const dot: Record<HkStatus, string> = {
   Clean: "bg-emerald-500",
   Inspected: "bg-sky-500",
+  Ready: "bg-teal-500",
   Dirty: "bg-amber-500",
   "Out of Order": "bg-rose-500",
 }
@@ -64,6 +67,8 @@ export default function HousekeepingBoard() {
   const [open, setOpen] = useState<string | null>(null)
   const [floor, setFloor] = useState("All")
   const [filter, setFilter] = useState<Filter>("All")
+  // housekeepers a supervisor can hand a task to (hk_assign_task)
+  const [staff, setStaff] = useState<{ user: string; full_name: string }[]>([])
 
   const load = useCallback(() => {
     call<{ rooms: BoardRoom[]; can_supervise: boolean }>("kamra.api.room_board", {
@@ -82,6 +87,28 @@ export default function HousekeepingBoard() {
     const id = setInterval(load, 30_000)
     return () => clearInterval(id)
   }, [load])
+
+  useEffect(() => {
+    if (!canSupervise) return
+    call<{ user: string; full_name: string }[]>("kamra.api.hk_staff", {
+      property: getCurrentProperty(),
+    })
+      .then(setStaff)
+      .catch(() => setStaff([]))
+  }, [canSupervise])
+
+  async function assign(room: string, task: string, user: string) {
+    setBusy(room)
+    setOpen(null)
+    try {
+      await call("kamra.api.hk_assign_task", { task, user })
+      load()
+    } catch (e) {
+      setError(serverError(e))
+    } finally {
+      setBusy(null)
+    }
+  }
 
   async function setStatus(room: string, status: HkStatus) {
     setBusy(room)
@@ -146,7 +173,10 @@ export default function HousekeepingBoard() {
         {(
           [
             ["All", rooms.length, "bg-zinc-400"],
-            ...STATUSES.map((s) => [s, counts[s], dot[s]]),
+            // Ready only exists where inspections are on - no empty chip otherwise
+            ...STATUSES.filter((s) => s !== "Ready" || counts.Ready > 0 || filter === "Ready").map(
+              (s) => [s, counts[s], dot[s]],
+            ),
             ["Due out", dueOut, "bg-violet-500"],
             ["Has task", withTask, "bg-zinc-700"],
           ] as [Filter, number, string][]
@@ -270,6 +300,28 @@ export default function HousekeepingBoard() {
                                 {t("Mark {status}", { status: t(s) })}
                               </button>
                             ))}
+                          {canSupervise && r.task && (
+                            <div className="border-t border-zinc-100 px-3 py-2">
+                              <label className="flex items-center gap-1.5 text-xs font-medium text-zinc-500">
+                                <UserPlus className="size-3.5" aria-hidden />
+                                {t("Assign {task} to", { task: t(r.task.type) })}
+                              </label>
+                              <select
+                                className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-sm"
+                                value=""
+                                onChange={(e) => e.target.value && assign(r.name, r.task!.name, e.target.value)}
+                              >
+                                <option value="">
+                                  {staff.length ? t("Choose a housekeeper…") : t("No housekeeping staff")}
+                                </option>
+                                {staff.map((u) => (
+                                  <option key={u.user} value={u.user}>
+                                    {u.full_name}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>

@@ -24,6 +24,8 @@ curl -fsSL https://get.docker.com | sh
 systemctl enable --now docker
 
 # Builds the image on first boot (20–45 min); adds swap on 4 GB plans.
+# Once ghcr.io/kamra-pms/kamra is public: export KAMRA_PULL=1 here to pull
+# the prebuilt image instead (a few minutes).
 curl -fsSL https://raw.githubusercontent.com/Kamra-PMS/kamra-pms/main/deploy/install.sh \
   -o /tmp/kamra-install.sh
 chmod +x /tmp/kamra-install.sh

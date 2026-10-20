@@ -31,6 +31,8 @@ export interface FieldSpec {
   type: "data" | "int" | "float" | "currency" | "select" | "check" | "date" | "link" | "readonly" | "image"
   options?: string[] // for select
   linkDoctype?: string // for link
+  /** link options only from the current property (the target has a `property` field) */
+  linkPropertyScoped?: boolean
   required?: boolean
   hint?: string // for image: recommended size/format
   dependsOn?: (draft: Record<string, unknown>) => boolean
@@ -316,7 +318,9 @@ export function ResourceScreen({
     links.forEach((f) => {
       listResource(f.linkDoctype!, {
         fields: ["name"],
-        filters: undefined,
+        filters: f.linkPropertyScoped
+          ? [["property", "=", getCurrentProperty()]]
+          : undefined,
         limit: 100,
         orderBy: "name asc",
       }).then((r) =>

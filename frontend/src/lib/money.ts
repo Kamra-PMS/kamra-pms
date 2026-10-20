@@ -26,6 +26,10 @@ interface Locale {
   /** Country integrations this property has - India: Razorpay/Cashfree,
    *  GSTR-1, Kamra Verify. Off until the pack resolves. */
   integrations: Integrations
+  /** The rate the server puts on any food & beverage charge, whatever the
+   *  caller picked, and the words that make a charge F&B. */
+  fnb_tax_rate?: number
+  fnb_charge_words?: string[]
 }
 
 export interface Integrations {

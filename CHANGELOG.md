@@ -25,6 +25,17 @@ upgrade-breaking changes (removed doctypes / API contracts).
 * **banquet:** Phase 1 enterprise ops (issue #67) — email/WhatsApp send
   quotation, desk-led guest response, department checklists + notify on
   Confirm (Sales/Finance/HK/F&B), and quote no-response chase reminders
+* **deploy:** prebuilt-image install path — `install.sh` can pull
+  `ghcr.io/kamra-pms/kamra` (`KAMRA_PULL=1` / `KAMRA_TAG=…`), resolve
+  `:stable` to the concrete `vX.Y.Z` and pin it; building on the server
+  stays the default while the package is private (a refused pull falls
+  back to building). `install.sh update` now always takes
+  `bench backup --with-files` first and aborts if it fails. Releases also
+  publish `:stable` (moved only by the newest release);
+  `deploy/compose/quickstart.yaml` runs the image locally for evaluation;
+  a weekly `ghcr-retention` workflow prunes old image versions while
+  keeping every manifest the kept tags reference (part of
+  [#228](https://github.com/Kamra-PMS/kamra-pms/issues/228))
 
 ## [2.6.16](https://github.com/Kamra-PMS/kamra-pms/compare/v2.6.15...v2.6.16) (2026-10-19)
 

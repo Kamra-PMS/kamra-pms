@@ -4,52 +4,64 @@ layout: home
 hero:
   name: Kamra
   text: The open-source PMS for hotels and villas
-  tagline: Front desk, billing & GST, POS, housekeeping, direct bookings and short-term rentals — 100% open source, AI-ready, no per-room fees. This is the manual.
+  tagline: The manual for running a property on Kamra, and for installing and connecting it.
   image:
     src: /kamra-mark.svg
     alt: Kamra
   actions:
     - theme: brand
-      text: Quickstart (Docker)
+      text: Run your hotel
+      link: /user-guide
+    - theme: alt
+      text: Install Kamra
       link: /quickstart
     - theme: alt
       text: Try the live demo
-      link: https://demo.kamrapms.com
-    - theme: alt
-      text: GitHub
-      link: https://github.com/Kamra-PMS/kamra-pms
+      link: /demo
 
 features:
-  - title: Self-host in an afternoon
-    details: Runs on a ₹549/month VPS (2 vCPU · 4 GB). Step-by-step guides for Hostinger, DigitalOcean, Linode and AWS.
+  - title: Front desk & reservations
+    details: Today's arrivals and departures, check-in with the registration card, the tape chart, groups and cancellations.
+    link: /front-desk
+  - title: Billing, cashier & night audit
+    details: Folios, payments, invoices, the cashier till, company accounts and the End of Day.
+    link: /billing
+  - title: F&B — POS & kitchen
+    details: Restaurant POS, kitchen display, kitchen printers, QR ordering and kitchen stock.
+    link: /fnb
+  - title: Housekeeping & guest requests
+    details: The room board, the phone app for floor staff, laundry, lost & found and request deadlines.
+    link: /housekeeping
+  - title: Banquets, revenue & direct bookings
+    details: Enquiry to event order, rate plans and guardrails, and the public booking page.
+    link: /banquets
+  - title: Install & connect
+    details: Self-host on a small VPS or Frappe Cloud, set up your country's taxes, WhatsApp, OTAs and your AI.
     link: /self-hosting/
-  - title: Connect your AI over MCP
-    details: 85 governed tools. Click Connect Claude — it quotes, books and posts charges as a permission-checked user, fully audited.
-    link: /ai-and-mcp
-  - title: Everything included, always
-    details: No feature gates, no editions, no per-room pricing. The same complete system whether you self-host or use Frappe Cloud.
-    link: /faq
 ---
 
 ## What is Kamra?
 
-::: tip What's new on develop
-The **2.6.2** train (GitHub tag still pending; latest published release is [v2.6.0](https://github.com/Kamra-PMS/kamra-pms/releases/tag/v2.6.0)) plus Unreleased work: cashier/finance, **85 MCP tools**, System Health, property time zone, and banquet Phase 1. Notes: [CHANGELOG](https://github.com/Kamra-PMS/kamra-pms/blob/develop/CHANGELOG.md).
-:::
-
 Kamra is a complete property-management system for hotels and short-term
-rentals, built on
-[Frappe](https://frappeframework.com) and released under AGPL-3.0:
+rentals, built on [Frappe](https://frappeframework.com) and released under
+AGPL-3.0. Every feature is in the open-source app: there are no editions
+and no per-room fees.
 
-- **Front desk** — tape chart, arrivals, group bookings, room blocks, waitlists, self check-in
-- **Money** — folios with per-line GST, split/route billing, night audit, GST invoices, GSTR-1 export
-- **F&B** — restaurant POS, live kitchen display, guest QR ordering, room posting
-- **Housekeeping** — a phone app for floor staff with task assignment, SLA escalation, lost & found
-- **Direct bookings** — a public booking page with live rates, check-in / check-out, and Check availability
-- **Short-term rentals** — villa catalogs, per-site maps, room-wise or entire-place selling, deposits
-- **Multi-property** — one login, shared guest profiles, central reservations, portfolio dashboard
-- **AI-native** — an MCP server and a BYO-key copilot over one governed, audited tool layer
+![Kamra's Today screen: arrivals, departures, the room board and in-house guests](/img/front-desk/today.png)
 
-New here? Start with the [Quickstart](/quickstart), or poke around the
-[live demo](https://demo.kamrapms.com) first — it's seeded with a full
-sample hotel and one-tap role logins.
+## Where to start
+
+- **You run or work at a property:** start with [Guides by role](/user-guide)
+  to find the pages for your job, or open the guide for a module from the
+  side bar.
+- **You're evaluating Kamra:** read [Features at a glance](/features), then
+  try the [live demo](/demo). It's a sample hotel with a sign-in button for
+  each role.
+- **You're installing it:** the [Quickstart](/quickstart) runs Kamra in
+  Docker on your laptop; [Self-hosting](/self-hosting/) covers servers, and
+  the [Go-live checklist](/go-live) covers the first day with real guests.
+- **You're connecting software:** see [Connect your AI](/ai-and-mcp), the
+  [MCP tools](/mcp-tools) and the [REST API](/api).
+
+What changed in each release is in the
+[changelog](https://github.com/Kamra-PMS/kamra-pms/blob/develop/CHANGELOG.md).

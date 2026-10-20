@@ -52,12 +52,25 @@ export function printThermal(title: string, body: string): boolean {
   w.document.close()
   const cleanup = () => { try { iframe.remove() } catch { /* already gone */ } }
   w.onafterprint = cleanup
+  // The ticket is inline HTML + CSS with nothing to load, so print on the
+  // next tick rather than after a fixed delay.
   setTimeout(() => {
-    try { w.focus(); w.print() } catch { cleanup() }
-  }, 200)
+    try {
+      w.focus()
+      const t0 = performance.now()
+      w.print() // blocks while a print dialog is open; returns at once with --kiosk-printing
+      if (performance.now() - t0 > 1500) {
+        window.dispatchEvent(new CustomEvent(PRINT_DIALOG_EVENT))
+      }
+    } catch { cleanup() }
+  }, 0)
   setTimeout(cleanup, 120_000)
   return true
 }
+
+/** Fired when a print looked like it waited on a dialog: the till can tell
+ *  staff how to print silently (Chrome --kiosk-printing). */
+export const PRINT_DIALOG_EVENT = "kamra:print-dialog"
 
 export interface KotLine { item_name: string; qty: number; instructions?: string | null }
 
@@ -73,6 +86,12 @@ export function kotHtml(o: {
   nc?: boolean
   nc_by?: string | null
   items: KotLine[]
+  /** a kitchen printer's slice of the round: which station(s) it covers */
+  station?: string | null
+  /** Void: lines to stop cooking. Test: a printer test page. */
+  kind?: string | null
+  /** printed on the fallback because this printer failed */
+  fallback_from?: string | null
 }) {
   const when = new Date().toLocaleString(moneyLocale(), {
     day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit",
@@ -85,7 +104,11 @@ export function kotHtml(o: {
       : "")).join("")
   return `
     <div class="c b lg">${esc(o.outlet)}</div>
-    <div class="c xl b">KOT #${o.kot_no ?? "—"}${o.reprint ? " (REPRINT)" : ""}</div>
+    <div class="c xl b">${o.kind === "Void" ? `*** VOID *** KOT #${o.kot_no ?? "—"}`
+      : o.kind === "Test" ? "TEST PAGE"
+        : `KOT #${o.kot_no ?? "—"}`}${o.reprint ? " (REPRINT)" : ""}</div>
+    ${o.station ? `<div class="c b">${esc(o.station)}</div>` : ""}
+    ${o.fallback_from ? `<div class="c sm">for ${esc(o.fallback_from)}</div>` : ""}
     ${o.nc ? `<div class="c b lg">*** NC - NO CHARGE ***</div>` +
       (o.nc_by ? `<div class="c sm">auth: ${esc(o.nc_by)}</div>` : "") : ""}
     <div class="rule"></div>
@@ -98,6 +121,11 @@ export function kotHtml(o: {
     <div class="rule"></div>
     <div class="c sm">${o.items.length} item${o.items.length === 1 ? "" : "s"}</div>
     <div class="cut">- cut -</div>`
+}
+
+/** Several tickets in one print: one paper cut between each. */
+export function joinTickets(bodies: string[]): string {
+  return bodies.join('<div style="break-after:page;page-break-after:always"></div>')
 }
 
 export function laundryDocketHtml(o: {

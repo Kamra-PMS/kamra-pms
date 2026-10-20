@@ -10,14 +10,17 @@ Head "https://ghcr.io/v2/kamra-pms/kamra/manifests/latest": unauthorized
 
 **Cause**
 
-Older installers tried to pull a **private** GHCR image. Kamra does not
-publish a public registry image for random self-hosters (GHCR is for
-Kamra-operated demo/nightly only).
+The prebuilt image package is **private** for now, and this server is not
+logged in to `ghcr.io` (or its token lacks `read:packages`). Pull mode
+(`KAMRA_PULL=1` / `KAMRA_TAG=…`) and `deploy/compose/quickstart.yaml` need
+registry access; the current installer then falls back to building.
 
 **Fix**
 
-Use a current [`install.sh`](install.sh) from `main` — it **builds**
-`kamra:local` on the server (`PULL_POLICY=never`).
+Either log in (`echo "$TOKEN" | docker login ghcr.io -u <user>
+--password-stdin`) and re-run, or use the default [`install.sh`](install.sh)
+from `main` without `KAMRA_PULL` — it **builds** `kamra:local` on the
+server (`PULL_POLICY=never`).
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Kamra-PMS/kamra-pms/main/deploy/install.sh | bash

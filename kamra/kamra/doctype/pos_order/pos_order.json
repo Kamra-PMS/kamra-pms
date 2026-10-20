@@ -58,7 +58,8 @@
    "in_list_view": 1,
    "label": "Outlet",
    "options": "POS Outlet",
-   "reqd": 1
+   "reqd": 1,
+   "search_index": 1
   },
   {
    "fieldname": "column_break_a",
@@ -262,7 +263,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-08-19 18:30:00.000000",
+ "modified": "2026-10-19 12:30:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "POS Order",

@@ -67,6 +67,10 @@ def open_folio(reservation) -> str:
 	_recalculate(folio)
 	from kamra.ledger import save_folio
 	save_folio(folio)
+	if reservation.flags.get("carried_forward"):
+		# an in-house guest moved over at go-live: the old system billed
+		# the one-time fees, and they arrive inside the opening balance
+		return folio.name
 	_post_addons(reservation, folio.name)
 	_post_cleaning_fee(reservation, folio.name)
 	_post_pet_charge(reservation, folio.name)
@@ -554,12 +558,31 @@ def save_folios(folios: dict):
 		save_folio(doc)
 
 
+def carried_forward_until(reservation_name: str):
+	"""For a stay that was in house at go-live: the business date its
+	opening balance was posted. Nights before it were billed by the old
+	system and are inside that balance. None for every other stay."""
+	cutoff = frappe.db.sql(
+		"""
+		SELECT MAX(fc.posting_date) FROM `tabFolio Charge` fc
+		JOIN `tabFolio` f ON fc.parent = f.name
+		WHERE fc.charge_type = 'Opening Balance' AND f.folio_type = 'Guest'
+		  AND (fc.reservation = %(res)s
+		       OR (IFNULL(fc.reservation, '') = '' AND f.reservation = %(res)s))
+		""", {"res": reservation_name})[0][0]
+	return getdate(cutoff) if cutoff else None
+
+
 def post_remaining_nights(reservation) -> int:
-	"""At checkout: make sure every night of the stay is on its folio(s)."""
+	"""At checkout: make sure every night of the stay is on its folio(s) -
+	from go-live on, for a stay carried forward from the old system."""
 	open_folio(reservation)  # guest folio always exists after checkout
 	folios: dict = {}
 	posted = 0
 	date = getdate(reservation.check_in_date)
+	cutoff = carried_forward_until(reservation.name)
+	if cutoff and cutoff > date:
+		date = cutoff
 	end = getdate(reservation.check_out_date)
 	if getattr(reservation, "is_day_use", 0) and end == date:
 		end = getdate(add_days(date, 1))  # day-use bills its one date
@@ -973,7 +996,14 @@ def apply_no_show(res, pol, decision, business_date) -> dict:
 	the business date being closed, or waived for an OTA booking. Used by
 	the night audit and by the End of Day "Mark no-show" action, so both
 	charge the same way. Returns the audit pack's no-show row."""
+	before = res.status
 	frappe.db.set_value("Reservation", res.name, "status", "No Show")
+	# a direct status write skips the Reservation doc events, so tell the
+	# webhook subscribers here
+	from kamra.webhooks import emit, reservation_payload
+	emit("reservation.modified", res.property,
+	     {**reservation_payload(res), "status": "No Show",
+	      "changes": {"status": [before, "No Show"]}})
 	ns = {"reservation": res.name, "guest_name": res.guest_name,
 	      "room_type": (res.room_type or "").split("-")[-1],
 	      "check_in_date": str(res.check_in_date),
@@ -1266,6 +1296,13 @@ def run_night_audit(property: str, business_date: str | None = None,
 			channel="MCP" if frappe.flags.get("kamra_agent_call") else "Desk",
 			after_snapshot=acks,
 		)
+	from kamra.webhooks import emit_night_audit_closed
+	emit_night_audit_closed(property, {
+		"audit": audit.name, "status": audit.status,
+		"business_date": business_date, "next_business_date": new_bd,
+		"room_charges_posted": charges_posted,
+		"amount_posted": float(amount_posted), "no_shows_flagged": no_shows,
+		"exceptions": len(blockers)})
 	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- persists the completed operation before returning to an external/public caller; reviewed as intentional
 	return {
 		"audit": audit.name,

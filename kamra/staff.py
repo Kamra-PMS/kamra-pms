@@ -39,6 +39,8 @@ ROLES = (
 	 "The room board, inspections, task deadlines and laundry pricing."),
 	("Housekeeping", "Housekeeping",
 	 "Their own tasks, room status and lost & found - usually on the phone app."),
+	("POS Integrator", "POS integration",
+	 "A service account for a third-party POS: finds in-house rooms and posts room charges, nothing else."),
 	("System Manager", "IT administrator",
 	 "Site administration: developer keys, new properties, every setting."),
 )

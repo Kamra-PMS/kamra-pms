@@ -1054,10 +1054,21 @@ def hk_queue(property: str):
 @frappe.whitelist()
 @require_roles("Housekeeping", "Front Desk", "Kamra Agent")
 def hk_update_task(task: str, status: str):
-	"""Start or complete a housekeeping task from the phone."""
+	"""Start or complete a housekeeping task from the phone.
+
+	An Inspection is completed by passing it: Done on an inspection is taken
+	as Verified, which moves the room to Ready (inspection required by the
+	turnover profile) or Inspected - never back to plain Clean. Verifying -
+	an inspection or anyone's clean - is a supervisor's call, the same rule
+	set_housekeeping_status applies to Inspected / Ready."""
 	if status not in ("In Progress", "Done", "Verified"):
 		frappe.throw("Status must be In Progress, Done or Verified.")
 	doc = frappe.get_doc("Housekeeping Task", task)
+	if doc.task_type == "Inspection" and status == "Done":
+		status = "Verified"
+	if status == "Verified" and not _is_room_supervisor():
+		frappe.throw(_("Only a housekeeping supervisor can pass an inspection "
+		               "or verify a clean."), frappe.PermissionError)
 	doc.status = status
 	doc.save()
 	if status in ("Done", "Verified"):
@@ -1154,11 +1165,55 @@ def hk_room_media(room: str):
 		fields=["file_url"], order_by="creation asc", pluck="file_url")
 
 
+def _hk_staff(property: str) -> list[dict]:
+	"""Enabled staff who can work housekeeping tasks at this property: a
+	Housekeeping or Housekeeping Supervisor role, and no property
+	restriction that leaves this one out."""
+	holders = set(frappe.get_all(
+		"Has Role",
+		filters={"role": ("in", ["Housekeeping", "Housekeeping Supervisor"]),
+		         "parenttype": "User",
+		         "parent": ("not in", ["Administrator", "Guest"])},
+		pluck="parent"))
+	if not holders:
+		return []
+	restricted: dict[str, set] = {}
+	for p in frappe.get_all("User Permission",
+	                        filters={"user": ("in", list(holders)), "allow": "Property"},
+	                        fields=["user", "for_value"]):
+		restricted.setdefault(p.user, set()).add(p.for_value)
+	users = frappe.get_all(
+		"User", filters={"name": ("in", list(holders)), "enabled": 1},
+		fields=["name", "full_name"], order_by="full_name asc")
+	return [{"user": u.name, "full_name": u.full_name or u.name}
+	        for u in users
+	        if u.name not in restricted or property in restricted[u.name]]
+
+
+@frappe.whitelist()
+@require_roles("Housekeeping Supervisor", "Front Desk", "Kamra Agent")
+def hk_staff(property: str):
+	"""Who a supervisor can hand a housekeeping task to at this property."""
+	from kamra.crs import assert_property_access
+	assert_property_access(property)
+	return _hk_staff(property)
+
+
 @frappe.whitelist(methods=["POST"])
 @require_roles("Front Desk", "Housekeeping", "Kamra Agent")
 def hk_assign_task(task: str, user: str):
-	"""A supervisor hands a task to a specific housekeeper (awaits accept)."""
+	"""A supervisor hands a task to a specific housekeeper (awaits accept).
+	Attendants take work from the pool with hk_claim_task; handing a task to
+	someone else is the supervisor's (or desk's) call, and only to a
+	housekeeper who can work this property."""
+	if not _is_room_supervisor():
+		frappe.throw(_("Only a housekeeping supervisor can assign tasks."),
+		             frappe.PermissionError)
 	doc = frappe.get_doc("Housekeeping Task", task)
+	if doc.status not in ("Pending", "In Progress"):
+		frappe.throw(_("Task {0} is already {1}.").format(doc.name, doc.status))
+	if user not in {s["user"] for s in _hk_staff(doc.property)}:
+		frappe.throw(_("{0} is not housekeeping staff at this property.").format(user))
 	doc.assigned_to_user = user
 	doc.assignment_status = "Assigned"
 	doc.save()
@@ -1253,11 +1308,21 @@ def hk_post_consumable(room: str, charge_type: str, description: str,
 	# post through the governed agent user (same pattern as public bookings):
 	# the housekeeper is authorized above and scoped to two charge types, and
 	# GST is still resolved server-side. Attribution is stamped below.
+	# laundry is a taxable service at the country pack's services rate (the
+	# same rate a Laundry Order bills at); minibar resolves to the F&B rate
+	# inside post_stay_charge
+	gst_rate = 0
+	if charge_type == "Laundry":
+		from kamra.localization import pack_for, services_tax_rate
+		gst_rate = services_tax_rate(pack_for(res.property), res.property)
 	with act_as(AGENT_EMAIL):
-		out = post_stay_charge(res.name, charge_type, description, float(amount))
+		out = post_stay_charge(res.name, charge_type, description, float(amount),
+		                       gst_rate=gst_rate)
 	from kamra.savings import log_action
+	from kamra.localization import money_text
 	log_action("hk_charge", "Folio", out.get("folio"), res.property,
-	           rationale=f"{charge_type} ₹{amount} to {room} ({description})")
+	           rationale=f"{charge_type} {money_text(res.property, amount)} "
+	                     f"to {room} ({description})")
 	return {"ok": True, "folio": out.get("folio"), "balance": out.get("balance")}
 
 
@@ -1357,11 +1422,20 @@ def add_folio_charge(folio: str, charge_type: str, description: str,
                      amount: float, gst_rate: float = 0,
                      posting_date: str | None = None, is_alcohol: int = 0,
                      reservation: str | None = None):
+	_refuse_opening_balance(charge_type)
 	# check what the caller sent, before the hotel's own rules pick a rate
 	_check_charge_amount_and_tax(
 		frappe.db.get_value("Folio", folio, "property"), amount, gst_rate)
 	return _post_folio_charge(folio, charge_type, description, amount,
 	                          gst_rate, posting_date, is_alcohol, reservation)
+
+
+def _refuse_opening_balance(charge_type: str):
+	"""An opening balance is carried over by the go-live import only - a
+	hand-posted one would look like an old-system balance to the audit."""
+	if charge_type == "Opening Balance":
+		frappe.throw("Opening balances are posted by the go-live import "
+		             "only (Go-live import screen).")
 
 
 def _post_folio_charge(folio: str, charge_type: str, description: str,
@@ -1373,6 +1447,7 @@ def _post_folio_charge(folio: str, charge_type: str, description: str,
 	_check_charge_amount_and_tax on it first. Code that posts rates the
 	hotel itself decided (the agent's post_stay_charge, banquet billing)
 	calls this directly."""
+	_refuse_opening_balance(charge_type)
 	doc = frappe.get_doc("Folio", folio)
 	if doc.status == "Closed":
 		frappe.throw("Folio is closed.")
@@ -1410,6 +1485,8 @@ def _post_folio_charge(folio: str, charge_type: str, description: str,
 	from kamra.savings import log_action
 	log_action("post_charge", "Folio", doc.name, doc.property,
 	           rationale=f"{charge_type}: {description} ₹{amount}")
+	from kamra.webhooks import emit_folio_posted
+	emit_folio_posted(doc, charge)
 	return doc.as_dict()
 
 
@@ -2366,7 +2443,7 @@ def guest_journey(guest: str):
 			"check_in_date", "check_out_date", "nights", "adults", "children",
 			"amount_after_tax", "discount_amount", "special_requests",
 			"booking_type", "company", "creation",
-			"actual_check_in", "actual_check_out",
+			"actual_check_in", "actual_check_out", "property",
 		],
 		order_by="check_in_date desc",
 	)
@@ -2403,7 +2480,8 @@ def guest_journey(guest: str):
 			timeline.append({
 				"ts": str(r.actual_check_out), "type": "check_out",
 				"title": "Checked out",
-				"detail": f"Folio ₹{float(r.amount_after_tax or 0):,.0f}",
+				"detail": f"Folio {_currency_symbol(r.property)}"
+				          f"{float(r.amount_after_tax or 0):,.0f}",
 				"reference": r.name,
 			})
 		if r.status == "Cancelled":
@@ -2422,14 +2500,19 @@ def guest_journey(guest: str):
 				"reference_doctype": "Reservation",
 				"reference_name": ("in", res_names),
 			},
-			fields=["creation", "agent_name", "action_type", "rationale",
-			        "minutes_saved", "action_channel"],
+			fields=["creation", "agent_name", "actor", "action_type",
+			        "rationale", "minutes_saved", "action_channel"],
 			order_by="creation desc",
 			limit=50,
 		):
+			# a person at the desk is the actor and leaves agent_name empty
+			who = log.agent_name or (
+				frappe.utils.get_fullname(log.actor) if log.actor else "") \
+				or "Staff"
+			what = (log.action_type or "").replace("_", " ")
 			timeline.append({
 				"ts": str(log.creation), "type": "agent",
-				"title": f"{log.agent_name} · {log.action_type.replace('_', ' ')}",
+				"title": f"{who} · {what[:1].upper()}{what[1:]}",
 				"detail": log.rationale or "",
 				"channel": log.action_channel,
 			})
@@ -2453,6 +2536,15 @@ def guest_journey(guest: str):
 		"reservations": reservations,
 		"timeline": timeline,
 	}
+
+
+def _currency_symbol(property: str | None) -> str:
+	"""The property's currency symbol from its country pack."""
+	if not property:
+		return ""
+	from kamra.localization import pack_for
+	return pack_for(property).locale(
+		frappe.get_cached_doc("Property", property)).get("currency_symbol", "")
 
 
 def _property_scope():
@@ -2495,21 +2587,18 @@ def _stay_balances(names: list) -> dict:
 		return {}
 	resv = {r.name: r for r in frappe.get_all(
 		"Reservation", filters={"name": ("in", names)},
-		fields=["name", "status", "amount_after_tax", "advance_paid"])}
-	folios = {}
-	for row in frappe.db.sql(
-		"""
-		SELECT reservation,
-		       COALESCE(SUM(grand_total), 0) AS total,
-		       COALESCE(SUM(payments_total), 0) AS paid,
-		       COALESCE(SUM(balance), 0) AS due
-		FROM `tabFolio`
-		WHERE reservation IN %(names)s AND folio_type = 'Guest'
-		GROUP BY reservation
-		""",
-		{"names": names}, as_dict=True,
-	):
-		folios[row.reservation] = row
+		fields=["name", "status", "amount_after_tax", "advance_paid",
+		        "check_out_date"])}
+	folios = _guest_folio_sums(names)
+	# A guest due out has nights the night audit has not posted yet;
+	# check-out posts them before it counts what is owed, so the board does
+	# the same (and throws the postings away) rather than show a balance
+	# that check-out then refuses.
+	today = getdate(nowdate())
+	due_out = [n for n, r in resv.items() if r.status == "Checked In"
+	           and r.check_out_date and getdate(r.check_out_date) <= today]
+	if due_out:
+		folios.update(_checkout_projection(due_out))
 	out = {}
 	for name, res in resv.items():
 		folio = folios.get(name)
@@ -2535,6 +2624,57 @@ def _stay_balances(names: list) -> dict:
 			     "has_folio": False, "source": "booking"}
 		out[name] = m
 	return out
+
+
+def _guest_folio_sums(names: list) -> dict:
+	"""Guest-folio total / paid / balance per reservation."""
+	if not names:
+		return {}
+	return {row.reservation: row for row in frappe.db.sql(
+		"""
+		SELECT reservation,
+		       COALESCE(SUM(grand_total), 0) AS total,
+		       COALESCE(SUM(payments_total), 0) AS paid,
+		       COALESCE(SUM(balance), 0) AS due
+		FROM `tabFolio`
+		WHERE reservation IN %(names)s AND folio_type = 'Guest'
+		GROUP BY reservation
+		""",
+		{"names": list(names)}, as_dict=True,
+	)}
+
+
+def _checkout_projection(names: list) -> dict:
+	"""Guest-folio sums as they will stand at check-out: every remaining
+	night posted by the same writer check-out uses (post_remaining_nights),
+	inside a savepoint that is rolled back. Nothing is kept - not the
+	charges, the ledger lines, nor the realtime pings their saves queue -
+	so this is a read. Falls back to the posted figures on any error."""
+	from kamra.folio import post_remaining_nights
+
+	db = frappe.db
+	queues = (db.before_commit, db.after_commit, db.after_rollback)
+	saved = [list(q._functions) for q in queues]
+	had_log = hasattr(frappe.local, "_realtime_log")
+	saved_log = list(getattr(frappe.local, "_realtime_log", None) or [])
+	sp = "kamra_checkout_projection"
+	db.savepoint(sp)
+	try:
+		for name in names:
+			post_remaining_nights(frappe.get_doc("Reservation", name))
+		return _guest_folio_sums(names)
+	except Exception:
+		frappe.log_error(title="Kamra: check-out balance projection")
+		return {}
+	finally:
+		db.rollback(save_point=sp)
+		for q, fns in zip(queues, saved):
+			q._functions.clear()
+			q._functions.extend(fns)
+		if had_log:
+			frappe.local._realtime_log = saved_log
+		elif hasattr(frappe.local, "_realtime_log"):
+			del frappe.local._realtime_log
 
 
 def _stay_balance(reservation: str) -> dict:
@@ -2665,6 +2805,90 @@ def find_invoices(property: str, query: str | None = None, limit: int = 8):
 		limit=int(limit or 8),
 	)
 	return rows
+
+
+STAY_INSTRUCTION_FOR = ("Front Desk", "Housekeeping", "F&B", "Concierge",
+                         "Transport", "Maintenance", "Security")
+
+
+def _stay_instruction_rows(reservation: str) -> list:
+	return frappe.get_all(
+		"Stay Instruction",
+		filters={"parent": reservation, "parenttype": "Reservation",
+		         "parentfield": "instructions"},
+		fields=["name", "department", "instruction", "status", "done_by",
+		        "done_on", "owner", "creation"],
+		order_by="idx asc")
+
+
+@frappe.whitelist()
+@require_roles("Front Desk", "Housekeeping", "Kamra Agent")
+def stay_instructions(reservation: str):
+	"""The special instructions on a stay (a VIP amenity, a 6am wake-up, a
+	no-feather pillow) - each for one department, Open until someone marks
+	it Done."""
+	if not frappe.db.exists("Reservation", reservation):
+		frappe.throw(_("Reservation {0} not found.").format(reservation),
+		             frappe.DoesNotExistError)
+	return _stay_instruction_rows(reservation)
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Front Desk", "Kamra Agent")
+def add_stay_instruction(reservation: str, department: str, instruction: str):
+	"""Add an instruction to a stay for one department. Written as its own
+	child row so it never re-saves (and re-validates) the whole booking."""
+	instruction = (instruction or "").strip()
+	if not instruction:
+		frappe.throw(_("Write the instruction."))
+	if department not in STAY_INSTRUCTION_FOR:
+		frappe.throw(_("Instruction must be for one of: {0}.").format(
+			", ".join(STAY_INSTRUCTION_FOR)))
+	res = frappe.db.get_value("Reservation", reservation,
+	                          ["name", "property", "status"], as_dict=True)
+	if not res:
+		frappe.throw(_("Reservation {0} not found.").format(reservation),
+		             frappe.DoesNotExistError)
+	if res.status in ("Cancelled", "Checked Out", "No Show"):
+		frappe.throw(_("This stay is {0} - no new instructions.").format(res.status))
+	idx = (frappe.db.sql(
+		"""SELECT MAX(idx) FROM `tabStay Instruction`
+		WHERE parent=%s AND parenttype='Reservation' AND parentfield='instructions'""",
+		reservation)[0][0] or 0) + 1
+	row = frappe.get_doc({
+		"doctype": "Stay Instruction", "parent": reservation,
+		"parenttype": "Reservation", "parentfield": "instructions",
+		"idx": idx, "department": department,
+		"instruction": instruction[:1000], "status": "Open",
+	})
+	row.db_insert()
+	from kamra.savings import log_action
+	log_action("stay_instruction", "Reservation", reservation, res.property,
+	           rationale=f"{department}: {instruction[:120]}")
+	return _stay_instruction_rows(reservation)
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Front Desk", "Housekeeping", "Kamra Agent")
+def set_stay_instruction_status(reservation: str, row: str, status: str):
+	"""Mark one instruction Done (stamping who and when), or reopen it."""
+	if status not in ("Open", "Done"):
+		frappe.throw(_("Status must be Open or Done."))
+	if not frappe.db.exists("Stay Instruction", {
+			"name": row, "parent": reservation, "parenttype": "Reservation"}):
+		frappe.throw(_("That instruction is not on this stay."))
+	done = status == "Done"
+	text = frappe.db.get_value("Stay Instruction", row, "instruction") or ""
+	frappe.db.set_value("Stay Instruction", row, {
+		"status": status,
+		"done_by": frappe.session.user if done else None,
+		"done_on": now_datetime() if done else None,
+	})
+	from kamra.savings import log_action
+	log_action("stay_instruction", "Reservation", reservation,
+	           frappe.db.get_value("Reservation", reservation, "property"),
+	           rationale=f"{status}: {text[:120]}")
+	return _stay_instruction_rows(reservation)
 
 
 @frappe.whitelist()
@@ -2902,7 +3126,8 @@ def checkin_context(reservation: str):
 			 "housekeeping_status": r["housekeeping_status"]}
 			for r in available_rooms(res.property, res.room_type,
 			                         res.check_in_date, res.check_out_date,
-			                         group_booking=res.group_booking)]
+			                         group_booking=res.group_booking,
+			                         ready_now=1)]
 		from kamra.allocation import suggest_allocation
 		for p_ in suggest_allocation(
 				res.property, str(res.check_in_date))["proposals"]:
@@ -2969,13 +3194,15 @@ def walk_in(property: str, room_type: str, room: str, check_out_date: str,
             guest: str | None = None, adults: int = 2, children: int = 0,
             meal_plan: str | None = None, voucher_code: str | None = None,
             company: str | None = None, id_type: str | None = None,
+            rate_plan: str | None = None,
             id_number: str | None = None, nationality: str | None = None,
             payment_mode: str | None = None, payment_amount: float = 0,
             payment_reference: str | None = None, pin: str | None = None,
             idempotency_key: str | None = None,
             check_in_time: str | None = None,
             check_out_time: str | None = None,
-            blacklist_override_reason: str | None = None):
+            blacklist_override_reason: str | None = None,
+            credit_override_reason: str | None = None):
 	"""Walk-in in one step: book, register the ID, check into the chosen
 	room and take the money - the counter flow that used to be four screens.
 
@@ -3022,12 +3249,14 @@ def walk_in(property: str, room_type: str, room: str, check_out_date: str,
 		check_in_date=check_in_date, check_out_date=check_out_date,
 		guest_name=guest_name, phone=phone, guest=guest,
 		adults=adults, children=children, meal_plan=meal_plan,
+		rate_plan=rate_plan,
 		voucher_code=voucher_code, company=company,
 		booking_type="Corporate" if company else "Individual",
 		source="Walk-in", room=room, assign_room=0,
 		idempotency_key=idempotency_key,
 		check_in_time=check_in_time, check_out_time=check_out_time,
-		blacklist_override_reason=blacklist_override_reason)
+		blacklist_override_reason=blacklist_override_reason,
+		credit_override_reason=credit_override_reason)
 	reservation = booked["reservation"]
 	folio_filter = {"reservation": reservation, "folio_type": "Guest"}
 
@@ -3062,6 +3291,8 @@ def walk_in(property: str, room_type: str, room: str, check_out_date: str,
 		"folio": folio,
 		"amount_after_tax": booked.get("amount_after_tax"),
 		"paid": amount,
+		**({"credit_warning": booked["credit_warning"]}
+		   if booked.get("credit_warning") else {}),
 	}
 
 
@@ -3394,7 +3625,7 @@ def cancellation_letter(reservation: str):
 	}
 
 
-def _assert_settled(doc):
+def _assert_settled(doc, credit_override_reason: str | None = None) -> list[dict]:
 	"""A guest never departs owing money, or owed it (issue #132).
 
 	Every night is posted first, because night audit may not have run for the
@@ -3405,9 +3636,13 @@ def _assert_settled(doc):
 	there refuses the check-out. Closed folios count too: a bill closed with
 	money still on it is still owed. frappe.flags.allow_unsettled_checkout is
 	for seed and test scripts only - no endpoint sets it.
+
+	Before anything moves, the property's credit control (kamra.credit)
+	checks each company once for everything the stay bills to it. Returns
+	the checks that warned or were overridden, for the desk to show.
 	"""
 	if frappe.flags.allow_unsettled_checkout:
-		return
+		return []
 	from kamra.folio import post_remaining_nights
 	from kamra.ledger import company_payer_of
 	from kamra.localization import pack_for
@@ -3435,17 +3670,39 @@ def _assert_settled(doc):
 	if refund:
 		frappe.throw(_("Cannot check out: the guest is owed {0}{1:,.2f}. Issue the "
 		               "refund before departure.").format(symbol, refund))
-	# nothing moves until the guest's side is settled
+	# nothing moves until the guest's side is settled - and the company's
+	# credit is checked once for everything the stay bills to it
+	from kamra.credit import enforce_company_credit
+	by_company: dict[str, list[str]] = {}
+	for folio, company in to_city_ledger:
+		by_company.setdefault(company, []).append(folio)
+	credit = []
+	for company, folios in by_company.items():
+		amount = sum(float(frappe.db.get_value("Folio", f, "balance") or 0)
+		             for f in folios)
+		res = enforce_company_credit(
+			company, doc.property, amount,
+			override_reason=credit_override_reason,
+			context="check-out", reference_doctype="Reservation",
+			reference_name=doc.name, exclude_folios=folios)
+		if not res["ok"]:
+			credit.append(res)
 	from kamra.ledger import transfer_to_city_ledger
 	for folio, company in to_city_ledger:
-		transfer_to_city_ledger(folio, company)
+		transfer_to_city_ledger(folio, company, credit_check=False)
+	return credit
 
 
 @frappe.whitelist()
 @require_roles("Front Desk", "Night Auditor", "Kamra Agent")
-def check_out(reservation: str):
+def check_out(reservation: str, credit_override_reason: str | None = None):
+	"""Check a guest out. What the company pays moves to the city ledger,
+	after the property's credit control: a warning comes back in
+	`credit_warnings`; a block refuses (CREDIT_BLOCKED) unless Finance or a
+	Hotel Admin passes `credit_override_reason` (logged). Agents can't
+	override."""
 	doc = frappe.get_doc("Reservation", reservation)
-	_assert_settled(doc)
+	credit = _assert_settled(doc, credit_override_reason)
 	# a held security deposit that the settled bill used up is recorded as
 	# applied, so the Deposit ledger doesn't keep a departed guest's money
 	from kamra.deposit import apply_held_to_bill
@@ -3456,7 +3713,12 @@ def check_out(reservation: str):
 	from kamra.savings import log_action
 	log_action("check_out", "Reservation", doc.name, doc.property,
 	           rationale=f"{doc.guest_name} departed")
-	return {"ok": True, "reservation": doc.name}
+	out = {"ok": True, "reservation": doc.name}
+	if credit:
+		out["credit_warnings"] = [
+			{"company": c["company"], "reasons": c["reasons"],
+			 "overridden": bool(c.get("overridden"))} for c in credit]
+	return out
 
 
 HK_SUPERVISOR = "Housekeeping Supervisor"
@@ -3857,10 +4119,10 @@ def position_briefing(property: str, date: str | None = None):
 	for dep in departures:
 		dep["etd"] = str(dep.planned_check_out_time)[:5] if dep.planned_check_out_time else None
 		dep["room_no"] = (dep.room or "").split("-")[-1]
-		folio = frappe.db.get_value(
-			"Folio", {"reservation": dep.name, "folio_type": "Guest"},
-			["balance"], as_dict=True)
-		dep["balance_due"] = float(folio.balance) if folio else 0
+	# what check-out will ask for, unposted nights included
+	dep_money = _stay_balances([dep.name for dep in departures])
+	for dep in departures:
+		dep["balance_due"] = (dep_money.get(dep.name) or {}).get("due", 0.0)
 
 	# back-to-back: departure and arrival share a room today and the times cross
 	conflicts = []
@@ -3900,20 +4162,33 @@ def position_briefing(property: str, date: str | None = None):
 	}
 
 
+# Demand tiers are a revenue control: the revenue manager sets them (the
+# Settings -> Revenue card), the desk and finance keep the access they had.
+HURDLE_ROLES = ("Front Desk", "Finance", "Revenue Manager", "Kamra Agent")
+
+
 @frappe.whitelist()
-@require_roles("Front Desk", "Finance", "Kamra Agent")
+@require_roles(*HURDLE_ROLES)
 def hurdle_rates(property: str):
 	"""The demand tiers: at each occupancy threshold, the premium applied
-	and the minimum sell rate enforced."""
-	return frappe.get_all(
+	and the minimum sell rate enforced. A row with a room type applies to
+	that type only and beats the property-wide row at the same threshold."""
+	rows = frappe.get_all(
 		"Hurdle Rate", filters={"property": property, "disabled": 0},
 		fields=["name", "room_type", "occupancy_from", "premium_pct",
 		        "min_rate"],
 		order_by="occupancy_from asc")
+	names = {r.room_type for r in rows if r.room_type}
+	labels = dict(frappe.get_all(
+		"Room Type", filters={"name": ("in", list(names))},
+		fields=["name", "room_type_name"], as_list=True)) if names else {}
+	for r in rows:
+		r["room_type_name"] = labels.get(r.room_type) if r.room_type else None
+	return rows
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Finance", "Kamra Agent", scope={"name": "Hurdle Rate"})
+@require_roles(*HURDLE_ROLES, scope={"name": "Hurdle Rate"})
 def save_hurdle_rate(property: str, occupancy_from: float,
                      premium_pct: float = 0, min_rate: float = 0,
                      room_type: str | None = None, name: str | None = None):
@@ -3921,6 +4196,9 @@ def save_hurdle_rate(property: str, occupancy_from: float,
 		frappe.throw("Occupancy threshold must be between 0 and 100.")
 	if float(premium_pct or 0) < 0 or float(min_rate or 0) < 0:
 		frappe.throw("Premium and hurdle must not be negative.")
+	if room_type:
+		from kamra.booking_refs import resolve_room_type
+		room_type = resolve_room_type(property, room_type)
 	doc = (frappe.get_doc("Hurdle Rate", name) if name
 	       else frappe.new_doc("Hurdle Rate"))
 	doc.update({
@@ -3929,14 +4207,15 @@ def save_hurdle_rate(property: str, occupancy_from: float,
 		"premium_pct": float(premium_pct or 0),
 		"min_rate": float(min_rate or 0),
 	})
-	doc.save()
+	# the role gate above is the permission; Revenue Manager has no DocPerm
+	doc.save(ignore_permissions=True)
 	return {"ok": True, "name": doc.name}
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Finance", "Kamra Agent", scope={"name": "Hurdle Rate"})
+@require_roles(*HURDLE_ROLES, scope={"name": "Hurdle Rate"})
 def delete_hurdle_rate(name: str):
-	frappe.delete_doc("Hurdle Rate", name)
+	frappe.delete_doc("Hurdle Rate", name, ignore_permissions=True)
 	return {"ok": True}
 
 
@@ -4354,7 +4633,10 @@ def get_quote(property: str, room_type: str, check_in_date: str,
               check_out_date: str, adults: int = 2, children: int = 0,
               meal_plan: str | None = None, rate_plan: str | None = None,
               voucher_code: str | None = None,
-              over_capacity_charge: float = 0, pets: int = 0):
+              over_capacity_charge: float = 0, pets: int = 0,
+              company: str | None = None):
+	"""Price a stay. With a company and no rate plan, the company's
+	negotiated plan applies - the same plan create_booking stores."""
 	from kamra.booking_refs import (resolve_meal_plan, resolve_rate_plan,
 	                                resolve_room_type)
 	from kamra.pricing import quote
@@ -4364,11 +4646,86 @@ def get_quote(property: str, room_type: str, check_in_date: str,
 	room_type = resolve_room_type(property, room_type)
 	meal_plan = resolve_meal_plan(property, meal_plan)
 	rate_plan = resolve_rate_plan(property, rate_plan)
-	return quote(property, room_type, check_in_date, check_out_date,
-	             int(adults), int(children), meal_plan or None,
-	             rate_plan or None, voucher_code or None,
-	             over_capacity_charge=float(over_capacity_charge or 0),
-	             pets=int(pets or 0))
+	q = quote(property, room_type, check_in_date, check_out_date,
+	          int(adults), int(children), meal_plan or None,
+	          rate_plan or None, voucher_code or None,
+	          over_capacity_charge=float(over_capacity_charge or 0),
+	          pets=int(pets or 0), company=company or None)
+	if isinstance(q, dict):
+		q["cancellation"] = cancellation_outlook(
+			property, room_type, check_in_date, check_out_date)
+	return q
+
+
+def _fee_label(basis: str) -> str:
+	"""'First Night' -> 'the first night'; '50% of stay' -> '50% of the stay'."""
+	if "%" in basis:
+		return basis.replace("of stay", "of the stay")
+	return f"the {basis.lower()}"
+
+
+def cancellation_outlook(property: str, room_type: str, check_in_date: str,
+                         check_out_date: str) -> dict:
+	"""The cancellation terms a quote can promise, decided by the same rules
+	cancellation_preview applies when someone actually cancels (season,
+	tiers, then the single free window) - evaluated from today, so a window
+	that has already closed is never offered as a future date.
+
+	free_now: cancelling today costs nothing. free_until: the last date that
+	is still free (None while free_now means free right up to arrival)."""
+	from frappe.utils import add_days, date_diff
+
+	from kamra.pricing import stay_season_rules
+
+	days_now = date_diff(check_in_date, nowdate())
+	rules = stay_season_rules(property, check_in_date, check_out_date,
+	                          room_type)
+	if rules["non_refundable"]:
+		return {"free_now": False, "free_until": None,
+		        "fee_basis": "100% of stay",
+		        "fee_label": _fee_label("100% of stay"),
+		        "non_refundable_season": rules["season"]
+		        or "Non-refundable dates"}
+
+	def charge(d: int) -> tuple[bool, str]:
+		"""(charged?, basis) for a cancellation d days before arrival -
+		the branch _cancellation_terms takes."""
+		tier = cancellation_tier_for(property, d)
+		if tier:
+			return tier["charge_pct"] > 0, f"{tier['charge_pct']:g}% of stay"
+		policy = frappe.db.get_value(
+			"Property", property, ["free_cancel_days", "cancellation_fee"],
+			as_dict=True)
+		basis = policy.cancellation_fee or "None"
+		inside = d < int(policy.free_cancel_days or 0)
+		return inside and basis != "None", basis
+
+	charged_now, basis_now = charge(days_now)
+	if charged_now:
+		return {"free_now": False, "free_until": None,
+		        "fee_basis": basis_now, "fee_label": _fee_label(basis_now),
+		        "non_refundable_season": None}
+
+	# free today: walk towards arrival to the first day that costs. Charges
+	# only change where a tier band starts or where the free window ends,
+	# so those are the only days worth asking about.
+	free_days = int(frappe.db.get_value(
+		"Property", property, "free_cancel_days") or 0)
+	tiers = frappe.get_all(
+		"Cancellation Tier",
+		filters={"parenttype": "Property", "parentfield": "cancellation_tiers",
+		         "parent": property},
+		pluck="days_before")
+	edges = {int(t or 0) - 1 for t in tiers} | {free_days - 1, -1}
+	for d in sorted((e for e in edges if e < days_now), reverse=True):
+		charged, basis = charge(d)
+		if charged:
+			last_free = add_days(check_in_date, -(d + 1))
+			return {"free_now": True, "free_until": str(last_free),
+			        "fee_basis": basis, "fee_label": _fee_label(basis),
+			        "non_refundable_season": None}
+	return {"free_now": True, "free_until": None, "fee_basis": "None",
+	        "fee_label": "", "non_refundable_season": None}
 
 
 def _find_or_create_guest(guest_name: str, phone: str | None,
@@ -4604,7 +4961,8 @@ def create_booking(property: str, room_type: str, check_in_date: str,
                    check_in_time: str | None = None,
                    check_out_time: str | None = None,
                    blacklist_override_reason: str | None = None,
-                   pets: int = 0):
+                   pets: int = 0,
+                   credit_override_reason: str | None = None):
 	"""One-call booking: attach to an existing guest profile when given,
 	else dedup by phone / create one. Optional auto room assignment,
 	voucher applied, price computed by the engine.
@@ -4619,7 +4977,12 @@ def create_booking(property: str, room_type: str, check_in_date: str,
 	by the quote engine (one billable date). check_in_time / check_out_time
 	(HH:MM) are its slot - they place it on the hourly tape and tell
 	housekeeping when the room turns; on an overnight stay they are the
-	ETA / ETD."""
+	ETA / ETD.
+
+	A stay billed to a company on credit runs the property's credit control
+	(kamra.credit) for its amount: a warning comes back as `credit_warning`;
+	a block refuses (CREDIT_BLOCKED) unless Finance or a Hotel Admin passes
+	`credit_override_reason`, which is logged. Agents can't override."""
 	from kamra.crs import assert_property_access
 	from kamra.reservation_state import find_by_idempotency, lock_sius_for_booking
 	assert_property_access(property)
@@ -4708,6 +5071,11 @@ def create_booking(property: str, room_type: str, check_in_date: str,
 		# a group pickup books against its own block, not general inventory
 		free = available_rooms(property, room_type, check_in_date,
 		                       check_out_date, group_booking=group_booking)
+		if free and getdate(check_in_date) <= getdate(nowdate()):
+			# arriving today: hand out a room nobody is still checked in to
+			# before one whose guest departs today but has not left yet
+			occupied = in_house_rooms(property)
+			free = sorted(free, key=lambda r: r["name"] in occupied)
 		# SIU path returns plain dicts; legacy SQL returns frappe._dict.
 		room = free[0]["name"] if free else None
 	elif not int(waitlist or 0):
@@ -4819,7 +5187,28 @@ def create_booking(property: str, room_type: str, check_in_date: str,
 				"department": dept, "instruction": note, "status": "Open",
 			})
 
+	# A company on credit: check its credit for this stay. The booking is
+	# priced on insert, so it is checked straight after, inside a savepoint
+	# that a refusal rolls back (a group loop that catches the error must
+	# not keep the room).
+	from kamra.credit import credit_applies, credit_policy
+	gate_credit = (credit_applies(company) and doc.status != "Waitlist"
+	               and credit_policy(property) != "off")
+	if gate_credit:
+		frappe.db.savepoint("kamra_credit_gate")
 	doc.insert(ignore_permissions=False)
+	credit = None
+	if gate_credit:
+		from kamra.credit import enforce_company_credit
+		try:
+			credit = enforce_company_credit(
+				company, property, float(doc.amount_after_tax or 0),
+				override_reason=credit_override_reason,
+				context="booking", reference_doctype="Reservation",
+				reference_name=doc.name)
+		except Exception:
+			frappe.db.rollback(save_point="kamra_credit_gate")
+			raise
 
 	from kamra.savings import log_action
 	log_action(
@@ -4831,7 +5220,12 @@ def create_booking(property: str, room_type: str, check_in_date: str,
 		rationale=f"Booked {room_type} {check_in_date}→{check_out_date} for {guest_name}",
 		channel=channel or ("API" if source == "AI Agent" else "Desk"),
 	)
-	return _booking_result(doc)
+	out = _booking_result(doc)
+	if credit and not credit["ok"]:
+		out["credit_warning"] = {
+			"company": company, "reasons": credit["reasons"],
+			"overridden": bool(credit.get("overridden"))}
+	return out
 
 
 @frappe.whitelist()
@@ -4973,11 +5367,18 @@ def inventory_availability(property: str, check_in_date: str, check_out_date: st
 @frappe.whitelist()
 @require_roles("Front Desk", "Kamra Agent")
 def available_rooms(property: str, room_type: str, check_in_date: str,
-                    check_out_date: str, group_booking: str | None = None):
+                    check_out_date: str, group_booking: str | None = None,
+                    ready_now: int = 0):
 	"""Rooms of a type with no overlapping live reservation - the same
 	logic the double-booking guard enforces, exposed as a query. Confirmed
 	group blocks hold their unsold rooms out of general sale; pass the
-	group to book against its own block."""
+	group to book against its own block.
+
+	A stay may start on another's departure date, so a room whose guest
+	departs today is "free" for a booking. Pass ready_now=1 when the guest
+	is being put in the room now (check-in, walk-in, allocation for today):
+	a room whose occupant is still Checked In is then left out until they
+	check out - the same rule Reservation.validate_room_vacant enforces."""
 	# Prefer Sellable Unit availability when SIUs exist for this type
 	# (ADR-003). Fall back to legacy Room SQL during migration.
 	rooms = None
@@ -4990,12 +5391,26 @@ def available_rooms(property: str, room_type: str, check_in_date: str,
 	if rooms is None:
 		rooms = _available_rooms_raw(property, room_type, check_in_date,
 		                             check_out_date)
+	if int(ready_now or 0) and getdate(check_in_date) <= getdate(nowdate()):
+		occupied = in_house_rooms(property)
+		rooms = [r for r in (rooms or []) if r["name"] not in occupied]
 	hold = _block_hold(property, room_type, check_in_date, check_out_date,
 	                   for_group=group_booking)
 	if hold:
 		rooms = rooms[:max(0, len(rooms) - hold)]
 	# Always frappe._dict so callers can use row["name"] or row.name.
 	return [frappe._dict(r) for r in (rooms or [])]
+
+
+def in_house_rooms(property: str) -> set[str]:
+	"""Rooms a guest is checked in to right now, whatever their departure
+	date says - they stay occupied until the guest checks out."""
+	return set(frappe.get_all(
+		"Reservation",
+		filters={"property": property, "status": "Checked In",
+		         "room": ("is", "set"),
+		         "check_in_date": ("<=", nowdate())},
+		pluck="room"))
 
 
 def _available_rooms_raw(property: str, room_type: str, check_in_date: str,
@@ -5473,7 +5888,13 @@ def property_locale(property: str):
 	prop = frappe.get_cached_doc("Property", property)
 	pack = pack_for(property)
 	return {**pack.locale(prop), **front_desk_vocabulary(pack),
-	        "integrations": integrations(pack)}
+	        "integrations": integrations(pack),
+	        # the rate the server puts on any food & beverage charge, whatever
+	        # rate the caller picked (_resolve_charge_gst) - so the folio's
+	        # charge form shows the rate that will apply instead of a choice
+	        # that is ignored
+	        "fnb_tax_rate": float(pack.fnb_tax_rate(property)),
+	        "fnb_charge_words": list(_FNB_WORDS)}
 
 
 @frappe.whitelist(methods=["POST"])

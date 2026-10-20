@@ -841,7 +841,7 @@ export default function BookingEngine() {
                         onChange={(e) => updateField("page_slug", e.target.value)}
                       />
                       <p className="mt-1 text-xs text-zinc-400">
-                        Used when several properties share one site: /book/your-slug. Single-property tenants use /book and /stay/listing-slug on room types.
+                        Used when several properties share one site: guests reach this property at /book?property=your-slug or /stay/your-slug. Room types have their own /stay/listing-slug.
                       </p>
                     </label>
                   </div>

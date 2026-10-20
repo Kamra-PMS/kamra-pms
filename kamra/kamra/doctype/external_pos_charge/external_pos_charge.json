@@ -1,0 +1,161 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "prompt",
+ "creation": "2026-10-19 12:00:00.000000",
+ "description": "A room charge a third-party POS posted through the POS interface. One row per POS ticket.",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "property",
+  "ticket_id",
+  "outlet_name",
+  "posted_by",
+  "cb_a",
+  "reservation",
+  "room",
+  "folio",
+  "sb_charge",
+  "charge_type",
+  "description",
+  "cb_b",
+  "amount",
+  "is_alcohol",
+  "balance_after"
+ ],
+ "fields": [
+  {
+   "fieldname": "property",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Property",
+   "options": "Property",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "description": "The POS's own ticket / check number - the idempotency key for this property.",
+   "fieldname": "ticket_id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "POS ticket",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "outlet_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Outlet",
+   "read_only": 1
+  },
+  {
+   "fieldname": "posted_by",
+   "fieldtype": "Link",
+   "label": "Posted by",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_a",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "reservation",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Reservation",
+   "options": "Reservation",
+   "read_only": 1
+  },
+  {
+   "fieldname": "room",
+   "fieldtype": "Link",
+   "label": "Room",
+   "options": "Room",
+   "read_only": 1
+  },
+  {
+   "fieldname": "folio",
+   "fieldtype": "Link",
+   "label": "Folio",
+   "options": "Folio",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_charge",
+   "fieldtype": "Section Break",
+   "label": "Charge"
+  },
+  {
+   "fieldname": "charge_type",
+   "fieldtype": "Data",
+   "label": "Charge type",
+   "read_only": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Data",
+   "label": "Description",
+   "length": 200,
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_b",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "is_alcohol",
+   "fieldtype": "Check",
+   "label": "Alcohol",
+   "read_only": 1
+  },
+  {
+   "fieldname": "balance_after",
+   "fieldtype": "Currency",
+   "label": "Folio balance after",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "links": [],
+ "modified": "2026-10-19 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kamra",
+ "name": "External POS Charge",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager"
+  },
+  {
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Hotel Admin"
+  },
+  {
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Finance"
+  }
+ ],
+ "row_format": "Dynamic",
+ "search_fields": "ticket_id,reservation,outlet_name",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

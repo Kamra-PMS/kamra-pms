@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function — the same governed layer
-the UI and the AI use. **316 endpoints**, generated from the source
+the UI and the AI use. **355 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -326,6 +326,12 @@ Checkout cleans for rooms with an arrival today jump the queue.
 
 Start or complete a housekeeping task from the phone.
 
+An Inspection is completed by passing it: Done on an inspection is taken
+as Verified, which moves the room to Ready (inspection required by the
+turnover profile) or Inspected - never back to plain Clean. Verifying -
+an inspection or anyone's clean - is a supervisor's call, the same rule
+set_housekeeping_status applies to Inspected / Ready.
+
 | Param | Required | Default |
 | --- | --- | --- |
 | `task` | yes |  |
@@ -378,11 +384,24 @@ room is genuinely guest-ready.
 | --- | --- | --- |
 | `room` | yes |  |
 
+### `kamra.api.hk_staff`
+
+**GET/POST** · roles: `Housekeeping Supervisor`, `Front Desk`, `Kamra Agent`
+
+Who a supervisor can hand a housekeeping task to at this property.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+
 ### `kamra.api.hk_assign_task`
 
 **POST** · roles: `Front Desk`, `Housekeeping`, `Kamra Agent`
 
 A supervisor hands a task to a specific housekeeper (awaits accept).
+Attendants take work from the pool with hk_claim_task; handing a task to
+someone else is the supervisor's (or desk's) call, and only to a
+housekeeper who can work this property.
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -958,6 +977,43 @@ command palette can jump straight from 'INV-KDP-26-00042' to the bill.
 | `query` | no | `None` |
 | `limit` | no | `8` |
 
+### `kamra.api.stay_instructions`
+
+**GET/POST** · roles: `Front Desk`, `Housekeeping`, `Kamra Agent`
+
+The special instructions on a stay (a VIP amenity, a 6am wake-up, a
+no-feather pillow) - each for one department, Open until someone marks
+it Done.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `reservation` | yes |  |
+
+### `kamra.api.add_stay_instruction`
+
+**POST** · roles: `Front Desk`, `Kamra Agent`
+
+Add an instruction to a stay for one department. Written as its own
+child row so it never re-saves (and re-validates) the whole booking.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `reservation` | yes |  |
+| `department` | yes |  |
+| `instruction` | yes |  |
+
+### `kamra.api.set_stay_instruction_status`
+
+**POST** · roles: `Front Desk`, `Housekeeping`, `Kamra Agent`
+
+Mark one instruction Done (stamping who and when), or reopen it.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `reservation` | yes |  |
+| `row` | yes |  |
+| `status` | yes |  |
+
 ### `kamra.api.reservation_detail`
 
 **GET/POST** · roles: `Front Desk`, `Kamra Agent`, `Finance`, `Revenue Manager`
@@ -1071,6 +1127,7 @@ booking, not a walk-in.
 | `voucher_code` | no | `None` |
 | `company` | no | `None` |
 | `id_type` | no | `None` |
+| `rate_plan` | no | `None` |
 | `id_number` | no | `None` |
 | `nationality` | no | `None` |
 | `payment_mode` | no | `None` |
@@ -1081,6 +1138,7 @@ booking, not a walk-in.
 | `check_in_time` | no | `None` |
 | `check_out_time` | no | `None` |
 | `blacklist_override_reason` | no | `None` |
+| `credit_override_reason` | no | `None` |
 
 ### `kamra.api.upload_occupant_id`
 
@@ -1155,9 +1213,16 @@ Everything the printable cancellation confirmation needs.
 
 **GET/POST** · roles: `Front Desk`, `Night Auditor`, `Kamra Agent`
 
+Check a guest out. What the company pays moves to the city ledger,
+after the property's credit control: a warning comes back in
+`credit_warnings`; a block refuses (CREDIT_BLOCKED) unless Finance or a
+Hotel Admin passes `credit_override_reason` (logged). Agents can't
+override.
+
 | Param | Required | Default |
 | --- | --- | --- |
 | `reservation` | yes |  |
+| `credit_override_reason` | no | `None` |
 
 ### `kamra.api.set_housekeeping_status`
 
@@ -1269,10 +1334,11 @@ back-to-back conflicts, the demand tier pricing is applying, and a
 
 ### `kamra.api.hurdle_rates`
 
-**GET/POST** · roles: `Front Desk`, `Finance`, `Kamra Agent`
+**GET/POST**
 
 The demand tiers: at each occupancy threshold, the premium applied
-and the minimum sell rate enforced.
+and the minimum sell rate enforced. A row with a room type applies to
+that type only and beats the property-wide row at the same threshold.
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -1280,7 +1346,7 @@ and the minimum sell rate enforced.
 
 ### `kamra.api.save_hurdle_rate`
 
-**POST** · roles: `Front Desk`, `Finance`, `Kamra Agent`
+**POST**
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -1293,7 +1359,7 @@ and the minimum sell rate enforced.
 
 ### `kamra.api.delete_hurdle_rate`
 
-**POST** · roles: `Front Desk`, `Finance`, `Kamra Agent`
+**POST**
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -1438,6 +1504,9 @@ Everything the booking form needs to render its dropdowns.
 
 **GET/POST** · roles: `Front Desk`, `Kamra Agent`
 
+Price a stay. With a company and no rate plan, the company's
+negotiated plan applies - the same plan create_booking stores.
+
 | Param | Required | Default |
 | --- | --- | --- |
 | `property` | yes |  |
@@ -1450,6 +1519,8 @@ Everything the booking form needs to render its dropdowns.
 | `rate_plan` | no | `None` |
 | `voucher_code` | no | `None` |
 | `over_capacity_charge` | no | `0` |
+| `pets` | no | `0` |
+| `company` | no | `None` |
 
 ### `kamra.api.create_booking`
 
@@ -1470,6 +1541,11 @@ by the quote engine (one billable date). check_in_time / check_out_time
 (HH:MM) are its slot - they place it on the hourly tape and tell
 housekeeping when the room turns; on an overnight stay they are the
 ETA / ETD.
+
+A stay billed to a company on credit runs the property's credit control
+(kamra.credit) for its amount: a warning comes back as `credit_warning`;
+a block refuses (CREDIT_BLOCKED) unless Finance or a Hotel Admin passes
+`credit_override_reason`, which is logged. Agents can't override.
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -1510,6 +1586,8 @@ ETA / ETD.
 | `check_in_time` | no | `None` |
 | `check_out_time` | no | `None` |
 | `blacklist_override_reason` | no | `None` |
+| `pets` | no | `0` |
+| `credit_override_reason` | no | `None` |
 
 ### `kamra.api.waitlist`
 
@@ -1588,6 +1666,12 @@ logic the double-booking guard enforces, exposed as a query. Confirmed
 group blocks hold their unsold rooms out of general sale; pass the
 group to book against its own block.
 
+A stay may start on another's departure date, so a room whose guest
+departs today is "free" for a booking. Pass ready_now=1 when the guest
+is being put in the room now (check-in, walk-in, allocation for today):
+a room whose occupant is still Checked In is then left out until they
+check out - the same rule Reservation.validate_room_vacant enforces.
+
 | Param | Required | Default |
 | --- | --- | --- |
 | `property` | yes |  |
@@ -1595,6 +1679,7 @@ group to book against its own block.
 | `check_in_date` | yes |  |
 | `check_out_date` | yes |  |
 | `group_booking` | no | `None` |
+| `ready_now` | no | `0` |
 
 ### `kamra.api.room_blocks`
 
@@ -1910,6 +1995,9 @@ An OTA request must also be declined on the OTA's side.
 
 **GET/POST**
 
+Open outlets, each with `auto_kot` already resolved against the F&B
+setting, so the till never has to know where the answer came from.
+
 | Param | Required | Default |
 | --- | --- | --- |
 | `property` | yes |  |
@@ -2137,13 +2225,53 @@ orders once, the kitchen cooks the mains when the starters are cleared.
 Each line is stamped with the moment it was fired: that, not when the
 captain opened the tab, is when the cook's clock starts.
 
-Outlets with auto KOT on also accept the ticket here, so the kitchen
-does not press Start, and the response tells the till to print.
+With auto KOT on (the F&B setting, or the outlet's override) this also
+accepts the ticket, so the kitchen does not press Start, and the
+response tells the till to print.
 
 | Param | Required | Default |
 | --- | --- | --- |
 | `order` | yes |  |
 | `course` | no | `None` |
+
+### `kamra.pos.send_order`
+
+**POST**
+
+A captain's new bill straight to the kitchen, in one call: what
+create_order, apply_discount, confirm_order and fire_kot do one after
+another, in one request and one transaction. The till waits for one
+round trip instead of four, and the kitchen gets a single update.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `outlet` | yes |  |
+| `items` | yes |  |
+| `property` | no | `None` |
+| `room` | no | `None` |
+| `reservation` | no | `None` |
+| `table_no` | no | `None` |
+| `notes` | no | `None` |
+| `order_type` | no | `None` |
+| `guests` | no | `None` |
+| `customer_name` | no | `None` |
+| `customer_phone` | no | `None` |
+| `delivery_address` | no | `None` |
+| `allergy_note` | no | `None` |
+| `discount` | no | `0` |
+| `discount_reason` | no | `''` |
+
+### `kamra.pos.send_round`
+
+**POST**
+
+Another round on a running bill, straight to the kitchen: add_items
+and fire_kot in one call and one save.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `order` | yes |  |
+| `items` | yes |  |
 
 ### `kamra.pos.kitchen_queue`
 
@@ -2311,6 +2439,114 @@ fast the kitchen is turning tickets. Defaults to today.
 | --- | --- | --- |
 | `outlet` | yes |  |
 | `date` | no | `None` |
+
+### `kamra.pos.speed_check`
+
+**GET/POST** · roles: `Hotel Admin`, `Finance`
+
+Why does the POS feel slow here? Times what a till and a kitchen
+display ask for on every refresh and reports the server's set-up, so
+support can tell our code from the hosting in a minute. Read-only.
+
+With echo=1 it also sends a realtime ping to the caller; the browser
+times how long it takes to arrive, which proves live updates work.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `outlet` | no | `None` |
+| `echo` | no | `0` |
+
+
+## Kitchen printers (routing, print stations, print queue)
+
+### `kamra.printing.claim_jobs`
+
+**POST**
+
+A print station asks for its printer's work. Hands over every queued
+job (and any claimed one nobody confirmed within a minute) and marks
+them Printing. The station prints them and calls ack_jobs.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `printer` | yes |  |
+
+### `kamra.printing.ack_jobs`
+
+**POST**
+
+The station's answer. Printed jobs are done; failed ones move to the
+printer's fallback, or stay Failed for a reprint.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `printer` | yes |  |
+| `printed` | no | `None` |
+| `failed` | no | `None` |
+| `error` | no | `None` |
+
+### `kamra.printing.printers`
+
+**GET/POST**
+
+Every printer with its routes and whether it's online - for the
+settings card and for a kitchen screen choosing what to print for.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+
+### `kamra.printing.save_printer`
+
+**POST**
+
+Add or change a printer and its routes. Logged to the Activity log.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `printer` | yes |  |
+| `name` | no | `None` |
+
+### `kamra.printing.delete_printer`
+
+**POST**
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `name` | yes |  |
+
+### `kamra.printing.test_print`
+
+**POST**
+
+Queue a test page on one printer.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `name` | yes |  |
+
+### `kamra.printing.reprint`
+
+**POST**
+
+Print a job again - on its own printer or another one.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `job` | yes |  |
+| `printer` | no | `None` |
+
+### `kamra.printing.order_print_status`
+
+**GET/POST**
+
+Where an order's tickets went and whether they printed - for the till.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `order` | yes |  |
 
 
 ## Laundry (housekeeping)
@@ -2543,6 +2779,10 @@ Open a function sheet from an enquiry. The hall's rack rental goes on
 as the first line (that's the number the conversation starts from), and
 a follow-up lands in the diary so the enquiry doesn't go quiet.
 
+session is how the hall is sold (Morning / Afternoon / Evening / Full
+Day): a named session sets the clock itself, so times sent alongside it
+are ignored. Custom Hours, or no session with times, keeps the times.
+
 | Param | Required | Default |
 | --- | --- | --- |
 | `property` | yes |  |
@@ -2562,6 +2802,7 @@ a follow-up lands in the diary so the enquiry doesn't go quiet.
 | `follow_up_days` | no | `None` |
 | `with_venue_line` | no | `1` |
 | `sales_owner` | no | `None` |
+| `session` | no | `None` |
 
 ### `kamra.banquet.function_sheet`
 
@@ -2585,6 +2826,29 @@ calls, because each one means something different).
 | --- | --- | --- |
 | `function` | yes |  |
 | `fields` | yes |  |
+
+### `kamra.banquet.linkable_groups`
+
+**GET/POST**
+
+Group bookings this function could ride: same property, not
+cancelled, staying within a month either side of the event.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `function` | yes |  |
+
+### `kamra.banquet.link_group`
+
+**POST**
+
+Tie a function to a group booking so its bill can ride the group's
+master folio (post_to_folio), or untie it (group_booking empty).
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `function` | yes |  |
+| `group_booking` | no | `None` |
 
 ### `kamra.banquet.set_status`
 
@@ -2906,6 +3170,20 @@ three people remembering to do three things.
 | `refund_deposit` | no | `1` |
 | `refund_mode` | no | `'Bank Transfer'` |
 | `pax_actual` | no | `None` |
+
+### `kamra.banquet.reopen_function`
+
+**POST**
+
+Reopen a closed (Completed) function so its sheet can be corrected.
+It goes back to Confirmed; receipts, refunds and the damage line stay
+as they were, and closing it again re-counts covers only. Needs a
+reason, and lands on the activity log.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `function` | yes |  |
+| `reason` | yes |  |
 
 ### `kamra.banquet.receipt_document`
 
@@ -3234,16 +3512,93 @@ detected, and every row that would be skipped - nothing is written.
 
 **POST**
 
-Import the file. Live rows (confirmed / in-house) go through the
-full booking validation; history rows (checked-out / cancelled /
-no-show) are stored as records with their status stamped directly, so
-guest history survives the migration.
+Import the file (see _run_import). Migrated stays are not new
+business, so they never reach outbound webhook subscribers.
 
 | Param | Required | Default |
 | --- | --- | --- |
 | `property` | yes |  |
 | `csv_text` | yes |  |
 | `preset` | no | `'auto'` |
+
+
+## Go-live data (companies, opening balances, reconciliation)
+
+### `kamra.golive.csv_template`
+
+**GET/POST** · roles: `Finance`
+
+The header row of one of Kamra's go-live CSV templates.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `kind` | yes |  |
+
+### `kamra.golive.preview_companies`
+
+**POST** · roles: `Finance`
+
+Dry run of the companies file: column mapping, which companies are
+new and which already exist (they are updated, never duplicated).
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `csv_text` | yes |  |
+
+### `kamra.golive.run_companies`
+
+**POST** · roles: `Finance`
+
+Create or update each company (an upsert, so a re-run changes
+nothing) and, for a company on credit, its city ledger account at this
+property with the credit limit.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `csv_text` | yes |  |
+
+### `kamra.golive.preview_opening`
+
+**POST** · roles: `Finance`
+
+Dry run of the opening-balance file: what each row matched, totals
+per category, what is already posted (a re-run skips it) and every row
+that can't be posted. Nothing is written.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `csv_text` | yes |  |
+
+### `kamra.golive.run_opening`
+
+**POST** · roles: `Finance`
+
+Post the opening balances. Each item is posted once: a re-run of the
+same file finds it in Kamra and skips it (and says so). Company bills
+go in before company credits, so a credit settles the oldest bill.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `csv_text` | yes |  |
+
+### `kamra.golive.reconcile`
+
+**POST** · roles: `Finance`
+
+Counts and totals in each go-live file against what is now in Kamra,
+per category. `ready` is true only when every category matches and no
+row of any file was left out - the gate before the hotel goes live.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `opening_csv` | no | `None` |
+| `companies_csv` | no | `None` |
+| `bookings_csv` | no | `None` |
 
 
 ## Inventory & recipes
@@ -3586,6 +3941,15 @@ movement, collections by mode, and the 7-day outlook.
 Monthly target vs actual: room revenue, occupancy %, ADR, RevPAR - with
 variance. period is 'YYYY-MM' (defaults to the current month).
 
+"Actual" is posted money: Room charges on folios, dated inside the month.
+A room night reaches a folio when End of Day (night audit) posts it, so a
+stay in-house tonight counts once its night is audited - not before.
+Occupancy and RevPAR divide by the room nights elapsed so far (to the
+business date), not the whole month, so a month-to-date figure compares
+with a monthly occupancy target. `on_books_nights` / `unposted_nights`
+say how many sold nights in the same window are still waiting for End
+of Day, so a zero is explained rather than mysterious.
+
 | Param | Required | Default |
 | --- | --- | --- |
 | `property` | yes |  |
@@ -3672,11 +4036,17 @@ Four-ledger trial balance for a property (optionally as-of a date).
 
 **POST** · roles: `Finance`, `Front Desk`, `Kamra Agent`
 
+Move a folio's unpaid balance to the company's city ledger. Runs the
+property's credit control: over the credit limit or with overdue bills
+it warns, or refuses (CREDIT_BLOCKED) unless Finance or a Hotel Admin
+passes `credit_override_reason`. Agents can't override.
+
 | Param | Required | Default |
 | --- | --- | --- |
 | `folio` | yes |  |
 | `company` | no | `None` |
 | `pin` | no | `None` |
+| `credit_override_reason` | no | `None` |
 
 ### `kamra.ledger.city_ledger_settle`
 
@@ -3699,6 +4069,10 @@ bill.
 ### `kamra.ledger.city_ledger_aging`
 
 **GET/POST** · roles: `Finance`, `Hotel Admin`, `Front Desk`, `Night Auditor`, `Kamra Agent`
+
+Every company's AR at the property, aged by due date (not_due,
+d1_30, d31_60, d61_90, d90p and their sum `overdue`). The invoice-age
+keys (current, b30, b60, b90, b90p) are kept for older callers.
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -3879,6 +4253,71 @@ Quick-checkout every Checked In reservation on a group.
 | Param | Required | Default |
 | --- | --- | --- |
 | `category` | no | `None` |
+
+
+## Company credit (payment terms, credit limit, overdue check)
+
+> Credit control is enforced inside check_out, create_booking and city_ledger_transfer; these endpoints explain and configure it.
+
+### `kamra.credit.company_credit_status`
+
+**GET/POST** · roles: `Front Desk`, `Finance`, `Hotel Admin`, `Night Auditor`, `Revenue Manager`, `Kamra Agent`
+
+The credit check for billing `amount` more to a company, without
+doing anything: what the booking dialog shows before a company stay is
+booked. `applies` is False for a company not on credit.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `company` | yes |  |
+| `property` | yes |  |
+| `amount` | no | `0` |
+
+### `kamra.credit.checkout_credit_preview`
+
+**GET/POST** · roles: `Front Desk`, `Finance`, `Hotel Admin`, `Night Auditor`, `Kamra Agent`
+
+Before check-out: the credit check for each company the stay's bills
+would move to, so the desk can warn, or ask Finance / a Hotel Admin to
+override a block. Check-out re-runs the same check itself.
+
+Check-out first posts any night not yet on the folio, so the preview
+does the same inside a savepoint it rolls back - the amounts match
+what check-out will move, and nothing is written.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `reservation` | yes |  |
+
+### `kamra.credit.company_credit_terms`
+
+**GET/POST** · roles: `Front Desk`, `Finance`, `Hotel Admin`, `Revenue Manager`
+
+A company's credit terms at one property: limit, credit days and
+what it owes (for the corporate account editor).
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `company` | yes |  |
+| `property` | yes |  |
+
+### `kamra.credit.set_company_credit_terms`
+
+**POST** · roles: `Finance`, `Hotel Admin`
+
+Set a company's credit limit (0 = no limit) and payment terms at one
+property: `use_default_credit_days` 1 follows the property's default
+payment terms; 0 uses `credit_days` as given (0 = due on the invoice
+date). Creates its city ledger account if it has none. Logged with
+before / after.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `company` | yes |  |
+| `property` | yes |  |
+| `credit_limit` | no | `None` |
+| `credit_days` | no | `None` |
+| `use_default_credit_days` | no | `None` |
 
 
 ## Night audit (End of Day checklist, audit pack)
@@ -4097,6 +4536,155 @@ and whether they can sign in.
 Per role, the settings pages it may change (admins: all of them).
 
 
+## Outbound webhooks (subscriptions, delivery log)
+
+> Hotel Admin / System Manager. Events are signed with HMAC-SHA256 - see the Integrations page.
+
+### `kamra.webhooks.webhook_events`
+
+**GET/POST** · roles: `Hotel Admin`
+
+The events a webhook can subscribe to.
+
+### `kamra.webhooks.list_webhooks`
+
+**GET/POST** · roles: `Hotel Admin`
+
+This property's webhook subscriptions (never the secrets).
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+
+### `kamra.webhooks.save_webhook`
+
+**POST** · roles: `Hotel Admin`
+
+Create or update a subscription. A new one gets a signing secret,
+returned once in `secret` - store it on the receiving side now.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `url` | yes |  |
+| `events` | yes |  |
+| `label` | no | `None` |
+| `active` | no | `1` |
+| `name` | no | `None` |
+
+### `kamra.webhooks.rotate_webhook_secret`
+
+**POST** · roles: `Hotel Admin`
+
+Issue a new signing secret (returned once); the old one stops working.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `name` | yes |  |
+| `property` | no | `None` |
+
+### `kamra.webhooks.delete_webhook`
+
+**POST** · roles: `Hotel Admin`
+
+Remove a subscription and its delivery log.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `name` | yes |  |
+| `property` | no | `None` |
+
+### `kamra.webhooks.webhook_deliveries`
+
+**GET/POST** · roles: `Hotel Admin`
+
+The delivery log, newest first.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `webhook` | no | `None` |
+| `status` | no | `None` |
+| `limit` | no | `50` |
+
+### `kamra.webhooks.delivery_detail`
+
+**GET/POST** · roles: `Hotel Admin`
+
+One delivery with the exact payload that was (or will be) sent.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `delivery` | yes |  |
+
+### `kamra.webhooks.resend_delivery`
+
+**POST** · roles: `Hotel Admin`
+
+Send a delivery again now - same event id, so the receiver can tell
+it is the same event.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `delivery` | yes |  |
+
+### `kamra.webhooks.send_test_event`
+
+**POST** · roles: `Hotel Admin`
+
+Send a signed `ping` to one endpoint right now and report the result.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `name` | yes |  |
+| `property` | no | `None` |
+
+
+## External POS (room charges from a third-party POS)
+
+> For a POS Integrator service user. ticket_id makes every posting idempotent.
+
+### `kamra.pos_interface.pos_room_lookup`
+
+**GET/POST**
+
+In-house stays matching a room number and/or the guest's last name.
+Only checked-in guests, only this property, only what a cashier needs to
+confirm the charge: room, guest name, reservation and departure date.
+Ask with a room or a last name (2+ letters) - never the whole list.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `room` | no | `None` |
+| `last_name` | no | `None` |
+
+### `kamra.pos_interface.pos_post_room_charge`
+
+**POST**
+
+Post one POS ticket to an in-house guest's bill.
+
+`ticket_id` is the idempotency key: the same ticket again returns the
+first posting with duplicate=true. Name the stay by room (number or id)
+and/or reservation. The billing rules choose the folio; anything with
+alcohol (is_alcohol=1) always goes to the guest's own folio, never the
+company's. Tax is the hotel's rule for the charge type, not the POS's.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `ticket_id` | yes |  |
+| `amount` | yes |  |
+| `description` | yes |  |
+| `room` | no | `None` |
+| `reservation` | no | `None` |
+| `charge_type` | no | `'Food & Beverage'` |
+| `is_alcohol` | no | `0` |
+| `tax_rate` | no | `0` |
+| `outlet_name` | no | `None` |
+
+
 ## Public (no auth - booking page, QR menu)
 
 > These are allow_guest endpoints: no token needed, rate-limited.
@@ -4106,6 +4694,14 @@ Per role, the settings pages it may change (admins: all of them).
 **GET/POST**
 
 Entry point for /book — how many properties, sites, or listings to show.
+
+Several properties live: mode "properties" lists them, and the guest
+picks one - /book?property=&lt;slug> (or /stay/&lt;slug>) calls back with
+that property's slug and gets its own sites / listings / catalog.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property_slug` | no | `None` |
 
 ### `kamra.public_api.resolve_slug` <Badge type='tip' text='public' />
 
@@ -4169,6 +4765,7 @@ Availability + real quoted price per room type for the stay.
 | `children` | no | `0` |
 | `listing_slug` | no | `None` |
 | `location_slug` | no | `None` |
+| `pets` | no | `0` |
 
 ### `kamra.public_api.precheckin_info` <Badge type='tip' text='public' />
 
@@ -4282,6 +4879,7 @@ inventory) until the host approves.
 | `addons` | no | `None` |
 | `voucher_code` | no | `''` |
 | `idempotency_key` | no | `''` |
+| `pets` | no | `0` |
 
 ### `kamra.public_api.access_info` <Badge type='tip' text='public' />
 

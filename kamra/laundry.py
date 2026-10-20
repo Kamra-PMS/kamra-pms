@@ -4,7 +4,7 @@ Flow: the desk (or the floor) logs a pickup request -> an attendant
 collects and counts the items with the guest (priced from the property's
 rate card, never by the caller) -> the bag moves In Process -> Ready ->
 items are returned piece by piece -> delivery posts the bill to the
-guest's folio at the services GST rate. Shortages block delivery unless
+guest's folio at the country pack's services tax rate. Shortages block delivery unless
 they're explicitly noted, so a missing shirt is a decision, not an
 accident.
 """
@@ -19,7 +19,6 @@ from kamra.install import AGENT_EMAIL
 LAUNDRY_ROLES = ("Housekeeping", "Front Desk", "Kamra Agent")
 RATE_ROLES = ("Front Desk", "Finance", "Kamra Agent")
 SERVICES = ("Wash & Iron", "Dry Clean", "Iron Only")
-LAUNDRY_GST = 18.0  # services rate; resolved server-side on posting
 
 
 # ── the rate card ────────────────────────────────────────────────────────
@@ -332,20 +331,26 @@ def deliver_laundry(order: str, shortage_note: str | None = None):
 		detail = ", ".join(
 			f"{int(it.qty)}× {it.item_name} ({it.service_type})"
 			for it in doc.items)
+		# the services tax rate comes from the property's country pack
+		# (18% GST in India, the standard VAT elsewhere), resolved here on
+		# the server - never from the caller
+		from kamra.localization import pack_for, services_tax_rate
+		rate = services_tax_rate(pack_for(doc.property), doc.property)
 		with act_as(AGENT_EMAIL):
 			from kamra.api import post_stay_charge
 			post_stay_charge(
 				doc.reservation, "Laundry",
 				f"Laundry{' (express)' if doc.express else ''}: "
 				f"{detail} ({doc.name})",
-				float(doc.total), gst_rate=LAUNDRY_GST)
+				float(doc.total), gst_rate=rate)
 			posted = True
 	doc.posted_to_folio = 1 if posted else 0
 	doc.save()
 	if posted:
 		from kamra.savings import log_action
+		from kamra.localization import money_text
 		log_action("laundry_bill", "Laundry Order", doc.name, doc.property,
-		           rationale=f"₹{doc.total:,.0f} laundry → {doc.room} "
+		           rationale=f"{money_text(doc.property, doc.total)} laundry → {doc.room} "
 		                     f"({doc.reservation})", channel="API")
 	return {"ok": True, "status": "Delivered", "posted_to_folio": posted,
 	        "total": doc.total}

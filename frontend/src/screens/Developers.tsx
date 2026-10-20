@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
-import { Check, Copy, KeyRound, RefreshCw, Terminal } from "lucide-react"
+import { Link } from "react-router-dom"
+import { Check, Copy, KeyRound, RefreshCw, Terminal, Webhook } from "lucide-react"
 
 import {
   developerInfo,
@@ -235,6 +236,45 @@ export default function Developers() {
               </div>
             </div>
           ))}
+        </CardContent>
+      </Card>
+
+      {/* outbound integrations */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Webhook className="size-4 text-zinc-400" /> Webhooks & POS room charges
+          </CardTitle>
+          <p className="mt-0.5 text-xs text-zinc-400">
+            Push events out instead of polling, and let a third-party POS post
+            to guest folios.
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-2 text-sm text-zinc-600">
+          <p>
+            Subscribe endpoints to <code className="text-xs">reservation.*</code>,{" "}
+            <code className="text-xs">guest.checked_in/out</code>,{" "}
+            <code className="text-xs">folio.posted</code> and{" "}
+            <code className="text-xs">night_audit.closed</code> under{" "}
+            <Link to="/settings/webhooks" className="font-medium text-brand-700 hover:underline">
+              Settings → Webhooks
+            </Link>
+            .
+          </p>
+          <p>
+            A POS service user (role <code className="text-xs">POS Integrator</code>, limited to
+            this property) calls{" "}
+            <code className="text-xs">kamra.pos_interface.pos_room_lookup</code> and{" "}
+            <code className="text-xs">pos_post_room_charge</code> with its API key.{" "}
+            <a
+              href="https://kamrapms.com/docs/integrations"
+              target="_blank"
+              rel="noreferrer"
+              className="font-medium text-brand-700 hover:underline"
+            >
+              Integrations guide →
+            </a>
+          </p>
         </CardContent>
       </Card>
 

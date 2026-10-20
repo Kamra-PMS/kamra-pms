@@ -49,6 +49,10 @@ const keys = new Map()
 const tCall =
   /\b(?:t|translate)\(\s*(["'`])((?:\\.|(?!\1)[^\\])*)\1/g
 
+// tn(count, "{n} child", "{n} children"): both forms are keys
+const tnCall =
+  /\btn\([^,()]*(?:\([^()]*\))?[^,()]*,\s*(["'`])((?:\\.|(?!\1)[^\\])*)\1\s*,\s*(["'`])((?:\\.|(?!\3)[^\\])*)\3/g
+
 function add(key, source) {
   if (!key || !/[A-Za-z]/.test(key)) return
   if (key.includes("${")) return
@@ -65,6 +69,11 @@ for (const file of walk(src)) {
       m[2].replace(/\\n/g, "\n").replace(/\\'/g, "'").replace(/\\"/g, '"'),
       file,
     )
+  }
+  tnCall.lastIndex = 0
+  while ((m = tnCall.exec(text))) {
+    for (const k of [m[2], m[4]])
+      add(k.replace(/\\'/g, "'").replace(/\\"/g, '"'), file)
   }
 }
 

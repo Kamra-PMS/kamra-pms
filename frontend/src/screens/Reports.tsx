@@ -6,6 +6,10 @@ import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { cur, moneyLocale } from "../lib/money"
 import { useT } from "../lib/i18n"
+import { useAuth } from "../lib/auth"
+
+// kamra.reports.void_allowance_report is Finance / Hotel Admin
+const VOID_REPORT_ROLES = ["Finance", "Hotel Admin", "System Manager", "Administrator"]
 
 /** The manager's flash - sign it off with the morning chai. */
 
@@ -68,6 +72,8 @@ function Stat(props: { label: string; value: string; sub?: string }) {
 
 export default function Reports() {
   const { t } = useT()
+  const { roles } = useAuth()
+  const canSeeVoids = roles.some((r) => VOID_REPORT_ROLES.includes(r))
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10))
   const [sortBy, setSortBy] = useState<SortKey>("date")
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc")
@@ -122,6 +128,14 @@ export default function Reports() {
           >
             {t("Ledgers")}
           </Link>
+          {canSeeVoids && (
+            <Link
+              to="/voids-allowances"
+              className="rounded-lg border border-zinc-200 px-3 py-1.5 text-sm text-zinc-600 hover:bg-zinc-50"
+            >
+              {t("Voids & Allowances")}
+            </Link>
+          )}
           <input
             type="date"
             aria-label={t("Report date")}

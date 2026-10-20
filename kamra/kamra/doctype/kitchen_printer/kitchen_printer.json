@@ -1,0 +1,194 @@
+{
+ "actions": [],
+ "creation": "2026-10-19 13:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "editable_grid": 1,
+ "field_order": [
+  "property",
+  "printer_name",
+  "connection",
+  "paper_width",
+  "copies",
+  "column_break_a",
+  "ip_address",
+  "port",
+  "fallback_printer",
+  "disabled",
+  "section_routes",
+  "routes",
+  "section_status",
+  "last_seen",
+  "last_printed",
+  "last_error"
+ ],
+ "fields": [
+  {
+   "fieldname": "property",
+   "fieldtype": "Link",
+   "options": "Property",
+   "label": "Property",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "printer_name",
+   "fieldtype": "Data",
+   "label": "Printer name",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "connection",
+   "fieldtype": "Select",
+   "label": "Connection",
+   "options": "Print station\nDirect IP",
+   "default": "Print station",
+   "in_list_view": 1,
+   "description": "Print station: a kitchen display screen prints to the printer attached to its device. Direct IP: the Kamra server sends the ticket to the printer's network address - only when Kamra runs on the hotel's own network."
+  },
+  {
+   "fieldname": "paper_width",
+   "fieldtype": "Select",
+   "label": "Paper width",
+   "options": "80 mm\n58 mm",
+   "default": "80 mm"
+  },
+  {
+   "fieldname": "copies",
+   "fieldtype": "Int",
+   "label": "Copies",
+   "default": "1"
+  },
+  {
+   "fieldname": "column_break_a",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "ip_address",
+   "fieldtype": "Data",
+   "label": "IP address",
+   "depends_on": "eval:doc.connection=='Direct IP'"
+  },
+  {
+   "fieldname": "port",
+   "fieldtype": "Int",
+   "label": "Port",
+   "default": "9100",
+   "depends_on": "eval:doc.connection=='Direct IP'"
+  },
+  {
+   "fieldname": "fallback_printer",
+   "fieldtype": "Link",
+   "options": "Kitchen Printer",
+   "label": "Fallback printer",
+   "description": "Where a ticket goes when this printer fails."
+  },
+  {
+   "fieldname": "disabled",
+   "fieldtype": "Check",
+   "label": "Disabled",
+   "default": "0"
+  },
+  {
+   "fieldname": "section_routes",
+   "fieldtype": "Section Break",
+   "label": "Prints KOTs for"
+  },
+  {
+   "fieldname": "routes",
+   "fieldtype": "Table",
+   "options": "Kitchen Printer Route",
+   "label": "Routes"
+  },
+  {
+   "fieldname": "section_status",
+   "fieldtype": "Section Break",
+   "label": "Status"
+  },
+  {
+   "fieldname": "last_seen",
+   "fieldtype": "Datetime",
+   "label": "Last seen",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_printed",
+   "fieldtype": "Datetime",
+   "label": "Last printed",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_error",
+   "fieldtype": "Small Text",
+   "label": "Last error",
+   "read_only": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-10-19 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kamra",
+ "name": "Kitchen Printer",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 1,
+   "print": 1,
+   "create": 1,
+   "write": 1,
+   "delete": 1,
+   "share": 1,
+   "export": 1,
+   "email": 1
+  },
+  {
+   "role": "Hotel Admin",
+   "read": 1,
+   "report": 1,
+   "print": 1,
+   "create": 1,
+   "write": 1,
+   "delete": 1,
+   "share": 1,
+   "export": 1,
+   "email": 1
+  },
+  {
+   "role": "Finance",
+   "read": 1,
+   "report": 1,
+   "print": 1,
+   "create": 1,
+   "write": 1
+  },
+  {
+   "role": "Front Desk",
+   "read": 1,
+   "report": 1,
+   "print": 1
+  },
+  {
+   "role": "Kamra Agent",
+   "read": 1,
+   "report": 1,
+   "print": 1
+  },
+  {
+   "role": "Night Auditor",
+   "read": 1,
+   "report": 1,
+   "print": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "format:{property}-{printer_name}",
+ "naming_rule": "Expression (old style)",
+ "title_field": "printer_name"
+}

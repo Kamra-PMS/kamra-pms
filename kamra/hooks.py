@@ -57,11 +57,16 @@ scheduler_events = {
 		# 03:40 - the same for conversations: WhatsApp message text and AI
 		# assistant chats past the property's message retention period
 		"40 3 * * *": ["kamra.privacy.apply_message_retention"],
+		# 03:50 - finished kitchen print jobs (guest names on the ticket)
+		# are kept a week for reprints, then dropped
+		"50 3 * * *": ["kamra.printing.purge_old_jobs"],
 		# 04:45 - drop old kamrapms.com Hosting Enquiry leads (default 24 months;
 		# Won / converted stays; site_config hosting_enquiry_retention_months)
 		"45 4 * * *": ["kamra.hosting_enquiry_retention.purge_expired_hosting_enquiries"],
 		# 06:00 and 18:00 - warm the GitHub latest-release cache for the update nag
 		"0 6,18 * * *": ["kamra.health.poll_github_releases"],
+		# every minute - outbound webhook retries that are due (backoff)
+		"* * * * *": ["kamra.webhooks.retry_due"],
 	},
 }
 
@@ -237,13 +242,16 @@ _PROPERTY_SCOPED = (
 	"Cashier Transaction", "Channel Manager Connection",
 	"Channel Provider Connection", "City Ledger Account", "City Ledger Entry",
 	"Copilot Conversation", "Credit Note", "Discount Voucher", "Exchange Rate",
-	"Exchange Transaction", "Experience", "Folio", "Folio Ledger Entry",
+	"Exchange Transaction", "Experience", "External POS Charge", "Folio", "Folio Ledger Entry",
 	"Folio Reprint", "Group Booking", "Housekeeping Task", "Hurdle Rate",
-	"Ingredient", "Ingredient Ledger Entry", "Ingredient Stock",
+	"Ingredient", "Ingredient Ledger Entry", "Ingredient Stock", "Kitchen Printer",
 	"Laundry Order", "Laundry Rate", "Lost And Found Item", "MCP OAuth Grant",
-	"Meal Plan", "Menu Item", "Night Audit Run", "Payment Gateway Settings",
+	"Meal Plan", "Menu Item", "Night Audit Run", "Outbound Webhook",
+	"Outbound Webhook Delivery", "Payment Gateway Settings",
 	"Petty Cash Voucher", "POS Order", "POS Outlet", "POS Table Reservation",
-	"Proforma Folio", "Rate Guardrail", "Rate Plan", "Reservation",
+	"Print Job",
+	"Proforma Folio", "Property Setting", "Rate Guardrail", "Rate Plan",
+	"Reservation",
 	"Revenue Budget", "Room", "Room Block", "Room Type", "Season",
 	"Security Deposit", "Sellable Unit", "Service Ticket", "Shift Handover",
 	"Transaction Code", "Turnover Profile", "Venue", "Venue Booking",
@@ -278,11 +286,16 @@ doc_events = {
 # A reservation booked/modified/cancelled moves availability, so fan the new
 # numbers out to the channel manager (Pipeline 1). Runs alongside the realtime
 # notify; best-effort and after-commit so it never affects the booking itself.
+# The same changes are offered to integrators as outbound webhooks
+# (reservation.*, guest.checked_in/out): queued in the transaction, sent
+# after commit (kamra.webhooks).
 doc_events["Reservation"] = {
 	"after_insert": ["kamra.realtime.notify",
-	                 "kamra.channel_manager.on_reservation_change"],
+	                 "kamra.channel_manager.on_reservation_change",
+	                 "kamra.webhooks.on_reservation_insert"],
 	"on_update": ["kamra.realtime.notify",
-	              "kamra.channel_manager.on_reservation_change"],
+	              "kamra.channel_manager.on_reservation_change",
+	              "kamra.webhooks.on_reservation_update"],
 	"on_trash": "kamra.realtime.notify",
 }
 
@@ -342,6 +355,10 @@ doc_events["Reservation"] = {
 # -----------------------------------------------------------
 
 # ignore_links_on_delete = ["Communication", "ToDo"]
+
+# Door lock connectors (kamra.door_lock). A vendor app adds its own:
+# kamra_door_lock_adapters = {"acme": "acme_kamra.locks.AcmeAdapter"}
+kamra_door_lock_adapters = {"manual": "kamra.door_lock.ManualAdapter"}
 
 # Remote MCP + OAuth live at /mcp and /mcp/oauth/* (not the SPA).
 page_renderer = ["kamra.mcp_http.MCPPageRenderer"]

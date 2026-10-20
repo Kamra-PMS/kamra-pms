@@ -14,7 +14,7 @@
   "column_break_a",
   "gst_rate",
   "disabled",
-  "auto_kot",
+  "kot_mode",
   "tables"
  ],
  "fields": [
@@ -58,11 +58,12 @@
    "label": "Disabled"
   },
   {
-   "default": "0",
-   "fieldname": "auto_kot",
-   "fieldtype": "Check",
-   "label": "Auto-accept and print KOT",
-   "description": "When a captain sends an order, print the kitchen ticket immediately and show it on the kitchen display as started. Off: the kitchen presses Start, and each till chooses whether to print."
+   "default": "Use F&B setting",
+   "fieldname": "kot_mode",
+   "fieldtype": "Select",
+   "label": "KOT on send",
+   "options": "Use F&B setting\nAuto-accept and print\nKitchen presses Start",
+   "description": "Auto-accept and print: sending an order prints the KOT and shows it on the kitchen display as started. Kitchen presses Start: the pass accepts each ticket and each till chooses whether to print. Use F&B setting follows Settings > F&B."
   },
   {
    "fieldname": "tables",
@@ -74,7 +75,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-07-04 21:48:59.457487",
+ "modified": "2026-10-19 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "POS Outlet",

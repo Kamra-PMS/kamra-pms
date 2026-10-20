@@ -12,6 +12,7 @@ from decimal import Decimal
 import frappe
 
 FNB_GST = 5.0  # F&B / meal-plan GST rate
+SERVICES_GST = 18.0  # laundry and other guest services
 
 DEFAULT_CURRENCY = "INR"
 DEFAULT_TIMEZONE = "Asia/Kolkata"
@@ -45,6 +46,10 @@ def calculate_room_tax(property, room_type_doc, nightly_rate) -> Decimal:
 
 def fnb_tax_rate(property) -> float:
 	return FNB_GST
+
+
+def services_tax_rate(property) -> float:
+	return SERVICES_GST
 
 
 def tax_rate_options(property) -> list:
@@ -96,9 +101,9 @@ DEFAULT_SAC = "999799"
 
 
 def service_code_for(prop_doc, charge_type: str | None = None) -> dict | None:
-	"""The SAC for one line. Discounts and allowances aren't a supply, so
-	they carry no code at all."""
-	if charge_type in ("Discount", "Allowance"):
+	"""The SAC for one line. Discounts, allowances and a go-live opening
+	balance aren't a supply, so they carry no code at all."""
+	if charge_type in ("Discount", "Allowance", "Opening Balance"):
 		return None
 	return {"label": "SAC",
 	        "value": SAC_CODES.get(charge_type or "", DEFAULT_SAC)}
