@@ -87,7 +87,7 @@ export default function Economics({
         <Tile
           label="Margin"
           value={`${m.percent}%`}
-          sub={healthy ? "healthy" : "thin — check the discount"}
+          sub={healthy ? "healthy" : "thin - check the discount"}
           tone={healthy ? "text-emerald-700" : "text-amber-700"}
         />
       </div>
@@ -100,7 +100,7 @@ export default function Economics({
               {data.uncosted_lines.length} line
               {data.uncosted_lines.length === 1 ? "" : "s"} cost nothing yet
             </span>{" "}
-            — {data.uncosted_lines.slice(0, 4).join(", ")}
+           - {data.uncosted_lines.slice(0, 4).join(", ")}
             {data.uncosted_lines.length > 4 ? "…" : ""}. The margin above is
             optimistic until they carry a cost: choose the menu's dishes, or
             put a cost rate on the service in the catalogue.
@@ -169,7 +169,7 @@ export default function Economics({
             </dl>
             <p className="pt-1 text-xs text-zinc-400">
               {data.cost.itc_eligible
-                ? `Billed at 12% or more, so the ${inr(data.cost.input_tax)} paid on the cost side is claimable as input credit — the margin above nets it off.`
+                ? `Billed at 12% or more, so the ${inr(data.cost.input_tax)} paid on the cost side is claimable as input credit - the margin above nets it off.`
                 : `Billed under the 5% food scheme, so the ${inr(data.cost.input_tax)} paid on purchases is NOT claimable. It stays in the cost.`}
             </p>
           </CardContent>
@@ -196,7 +196,7 @@ export default function Economics({
           <CardContent>
             <p className="text-sm text-zinc-500">
               The chosen dishes, exploded through their recipes at{" "}
-              {fn.billable_pax} pax, checked against what's on the shelf — the
+              {fn.billable_pax} pax, checked against what's on the shelf - the
               sheet that has always been written by hand between the event
               order and the store room.
             </p>
@@ -207,7 +207,7 @@ export default function Economics({
               </p>
             ) : (
               <p className="mt-2 text-xs text-amber-700">
-                Nothing chosen yet — compose the menu first.
+                Nothing chosen yet - compose the menu first.
               </p>
             )}
           </CardContent>
@@ -265,7 +265,7 @@ export default function Economics({
                     </td>
                     <td className="py-1.5 pr-3 text-right tabular-nums">
                       {l.actual_qty === null ? (
-                        <span className="text-zinc-300">—</span>
+                        <span className="text-zinc-300"> - </span>
                       ) : (
                         <>
                           {l.actual_qty}
@@ -288,7 +288,7 @@ export default function Economics({
                       {inr(l.net_amount)}
                     </td>
                     <td className="py-1.5 pr-3 text-right tabular-nums text-zinc-500">
-                      {l.cost_amount ? inr(l.cost_amount) : "—"}
+                      {l.cost_amount ? inr(l.cost_amount) : "-"}
                     </td>
                     <td
                       className={
@@ -296,7 +296,7 @@ export default function Economics({
                         (l.margin < 0 ? "text-rose-700" : "")
                       }
                     >
-                      {l.cost_amount ? inr(l.margin) : "—"}
+                      {l.cost_amount ? inr(l.margin) : "-"}
                     </td>
                   </tr>
                 ))}
@@ -498,7 +498,7 @@ function IndentSheet({
     >
       {indent.uncosted.length > 0 && (
         <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-          No recipe for {indent.uncosted.join(", ")} — those dishes aren't on
+          No recipe for {indent.uncosted.join(", ")} - those dishes aren't on
           this list and won't be pulled from stock.
         </div>
       )}
@@ -534,7 +534,7 @@ function IndentSheet({
                   (r.short_by > 0 ? "font-medium text-rose-700" : "text-zinc-300")
                 }
               >
-                {r.short_by > 0 ? r.short_by : "—"}
+                {r.short_by > 0 ? r.short_by : "-"}
               </td>
               <td className="py-1.5 text-right tabular-nums">{inr(r.cost)}</td>
             </tr>
@@ -691,7 +691,7 @@ function SupplementarySheet({
   return (
     <Sheet
       title="Ordered on the night"
-      description="Another round at the bar, twenty extra plates, a second cake — it bills on top of the agreed quote."
+      description="Another round at the bar, twenty extra plates, a second cake - it bills on top of the agreed quote."
       onClose={onClose}
       footer={
         <div className="flex justify-end gap-2">
@@ -785,7 +785,7 @@ function SupplementarySheet({
               Alcohol
             </span>
             <span className="block text-xs text-zinc-400">
-              Never rides a company bill — it settles separately.
+              Never rides a company bill - it settles separately.
             </span>
           </span>
         </label>

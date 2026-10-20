@@ -369,7 +369,7 @@ function AvailabilitySheet({ onClose }: { onClose: () => void }) {
                           (c) =>
                             `${c.customer_name} on ${c.event_date}` +
                             (c.start_time
-                              ? ` ${String(c.start_time).slice(0, 5)}–${String(
+                              ? ` ${String(c.start_time).slice(0, 5)}-${String(
                                   c.end_time ?? "",
                                 ).slice(0, 5)}`
                               : ""),

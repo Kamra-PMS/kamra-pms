@@ -782,7 +782,7 @@ function EnquirySheet({
           </Field>
           <Field
             label={t("Session")}
-            hint={custom ? undefined : `${from}–${to}`}
+            hint={custom ? undefined : `${from}-${to}`}
           >
             <Select
               value={form.session}
@@ -827,7 +827,7 @@ function EnquirySheet({
             <p className="text-sm text-zinc-400">{t("Checking…")}</p>
           ) : avail.length === 0 ? (
             <p className="text-sm text-zinc-500">
-              {t("No halls set up for this property yet — add one under Halls & Venues.")}
+              {t("No halls set up for this property yet - add one under Halls & Venues.")}
             </p>
           ) : (
             <div className="grid gap-2 sm:grid-cols-2">

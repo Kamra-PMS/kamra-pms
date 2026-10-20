@@ -584,7 +584,7 @@ export default function FolioView() {
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-2 text-sm print:hidden">
           <span className="text-zinc-600">
             {pinStatus.unlocked
-              ? t("Cashier unlocked — money actions are open for {n} minutes.", { n: pinStatus.unlock_minutes ?? 15 })
+              ? t("Cashier unlocked - money actions are open for {n} minutes.", { n: pinStatus.unlock_minutes ?? 15 })
               : pinStatus.must_reset || !pinStatus.has_pin
                 ? t("Set your cashier PIN to post payments and settle folios.")
                 : t("Cashier PIN required for money actions.")}
@@ -676,7 +676,7 @@ export default function FolioView() {
               )}
               {!doc?.is_final && (
                 <p className="mt-1 max-w-52 text-xs text-amber-700">
-                  {t("Not a tax invoice yet — the number is issued when the folio is settled.")}
+                  {t("Not a tax invoice yet - the number is issued when the folio is settled.")}
                 </p>
               )}
               <Badge tone={open ? "amber" : "green"}>{t(folio.status)}</Badge>
@@ -708,7 +708,7 @@ export default function FolioView() {
               )}
             </Fact>
             <Fact label={t("Room")}>
-              {stay.room ? stay.room.split("-").pop() : "—"}
+              {stay.room ? stay.room.split("-").pop() : "-"}
               {stay.room_type && (
                 <span className="text-zinc-500">
                   {" "}
@@ -723,7 +723,7 @@ export default function FolioView() {
               })}
             </Fact>
             <Fact label={t("Pax / plan")}>
-              {stay.pax || stay.adults || "—"}
+              {stay.pax || stay.adults || "-"}
               {stay.children ? ` (${stay.adults}+${stay.children})` : ""}
               {stay.meal_plan && (
                 <span className="text-zinc-500">
@@ -734,9 +734,9 @@ export default function FolioView() {
             </Fact>
             {(stay.arrival || stay.departure) && (
               <Fact label={t("In / out")}>
-                {(stay.arrival ?? "").slice(0, 16).replace("T", " ") || "—"}
+                {(stay.arrival ?? "").slice(0, 16).replace("T", " ") || "-"}
                 {" → "}
-                {(stay.departure ?? "").slice(0, 16).replace("T", " ") || "—"}
+                {(stay.departure ?? "").slice(0, 16).replace("T", " ") || "-"}
               </Fact>
             )}
             {data.guest?.guest_id && (
@@ -869,7 +869,7 @@ export default function FolioView() {
                       </div>
                       {partBad && (
                         <p className="mt-1.5 text-xs text-rose-600">
-                          {t("Enter 1–99%, or a {cur} amount under the line's {cur}{amount} (before {tax}).", {
+                          {t("Enter 1-99%, or a {cur} amount under the line's {cur}{amount} (before {tax}).", {
                             cur: cur(),
                             amount: inr(one!.amount),
                             tax: taxLabel(),
@@ -1188,7 +1188,7 @@ export default function FolioView() {
                     onChange={(e) => setRefund({ ...refund, mode: e.target.value })}>
                     {PAY_MODES.map((m) => <option key={m}>{m}</option>)}
                   </select>
-                  <input className={`${inputCls} flex-1`} placeholder={t("Reason (required — e.g. deposit returned)")}
+                  <input className={`${inputCls} flex-1`} placeholder={t("Reason (required - e.g. deposit returned)")}
                     value={refund.reason} onChange={(e) => setRefund({ ...refund, reason: e.target.value })} />
                   <Button variant="outline" className="text-rose-600" disabled={busy || !refund.amount || !refund.reason.trim()}
                     onClick={() => act(async () => {

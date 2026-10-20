@@ -9,7 +9,9 @@ links to the deeper guide.
 
 - [ ] **Pick where it runs**: a 2 vCPU / 4 GB RAM / 40 GB SSD VPS is
   enough for a full property ([requirements](/self-hosting/)). Guides:
-  [Hostinger](/self-hosting/hostinger) ·
+  [Hostinger](/self-hosting/hostinger)
+  ([referral · 20% off](https://www.hostinger.com/in?REFERRALCODE=kamrapms)
+  / coupon `KAMRAPMS`) ·
   [DigitalOcean](/self-hosting/digitalocean) ·
   [Linode](/self-hosting/linode) · [AWS](/self-hosting/aws) ·
   [bench install](/self-hosting/bench) ·

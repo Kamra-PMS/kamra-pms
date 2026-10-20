@@ -107,7 +107,7 @@ export default function RoomTypeMedia({
           Photos
         </div>
         <p className="mb-2 text-xs text-zinc-400">
-          Shown on the public listing page. Uploads save automatically —
+          Shown on the public listing page. Uploads save automatically - 
           images 1600×900px (16:9) JPG/WebP, or a walkthrough video (MP4, up to ~10 MB).
         </p>
         <div className="space-y-2">

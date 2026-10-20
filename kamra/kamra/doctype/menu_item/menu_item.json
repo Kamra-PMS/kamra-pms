@@ -99,25 +99,23 @@
   },
   {
    "fieldname": "course",
-   "fieldtype": "Select",
+   "fieldtype": "Data",
    "label": "Course",
-   "options": "Starter\nMain\nDessert\nDrink",
    "default": "Main",
-   "description": "When it is served. The kitchen holds later courses until the table is ready for them."
+   "description": "When it is served (Starter, Main, …). The list is Settings → F&B → Courses. The kitchen holds later courses until the table is ready for them."
   },
   {
    "fieldname": "allergens",
    "fieldtype": "Data",
    "label": "Allergens",
-   "description": "What this dish contains, comma separated (e.g. Nuts, Dairy). Matched against the guest's declared allergy to alarm the line."
+   "description": "What this dish contains, comma separated (e.g. Egg, Nuts, Dairy). Tags come from Settings → F&B → Allergens & dietary tags. Matched against the guest's declared allergy to alarm the line."
   },
   {
    "fieldname": "prep_station",
-   "fieldtype": "Select",
+   "fieldtype": "Data",
    "label": "Prep Station",
-   "options": "Kitchen\nTandoor\nGrill\nFryer\nBar",
    "default": "Kitchen",
-   "description": "Which KOT this item prints to."
+   "description": "Which KOT this item prints to. The list is Settings → F&B → Prep stations."
   },
   {
    "fieldname": "section_recipe",

@@ -17,19 +17,57 @@ def sla_minutes(property: str | None, priority: str | None) -> int:
 
 
 class ServiceTicket(Document):
+	def _track_changes(self, previous):
+		"""Who did what, and when: the ticket's timeline."""
+		from kamra.tickets import log_event
+		now = now_datetime()
+		user = frappe.session.user
+		if (self.assigned_to_user or None) != (previous.assigned_to_user or None):
+			log_event(self, "Assigned", previous.assigned_to_user, self.assigned_to_user)
+			self.db_set({"assigned_by": user if self.assigned_to_user else None,
+			             "assigned_at": now if self.assigned_to_user else None},
+			            update_modified=False)
+		if self.priority != previous.priority:
+			log_event(self, "Priority", previous.priority, self.priority)
+		if self.status != previous.status:
+			reopened = previous.status in ("Resolved", "Closed", "Cancelled") \
+				and self.status in ("Open", "In Progress")
+			log_event(self, "Reopened" if reopened else "Status",
+			          previous.status, self.status,
+			          note=self.resolution_note if self.status in ("Resolved", "Closed") else None)
+			if reopened:
+				self.db_set({"reopened_count": int(self.reopened_count or 0) + 1,
+				             "resolved_on": None, "resolved_by": None},
+				            update_modified=False)
+		if not self.first_response_at and (
+				self.status != "Open" or self.assigned_to_user) and (
+				self.status != previous.status or
+				(self.assigned_to_user or None) != (previous.assigned_to_user or None)):
+			self.db_set("first_response_at", now, update_modified=False)
+
 	def before_insert(self):
 		self.due_by = add_to_date(
 			now_datetime(), minutes=sla_minutes(self.property, self.priority)
 		)
 
+	def after_insert(self):
+		from kamra.tickets import log_event
+		log_event(self, "Created", to_value=self.source or "Manual", note=self.subject)
+		if self.assigned_to_user:
+			log_event(self, "Assigned", to_value=self.assigned_to_user)
+
 	def on_update(self):
 		previous = self.get_doc_before_save()
-		old_status = previous.status if previous else None
+		if not previous:
+			return
+		self._track_changes(previous)
+		old_status = previous.status
 		if self.status == old_status:
 			return
 
 		if self.status == "Resolved":
-			self.db_set("resolved_on", now_datetime(), update_modified=False)
+			self.db_set({"resolved_on": now_datetime(), "resolved_by": frappe.session.user},
+			            update_modified=False)
 			if self.due_by and now_datetime() > get_datetime(self.due_by):
 				self.db_set("breached", 1, update_modified=False)
 			from kamra.savings import log_action

@@ -1,0 +1,121 @@
+{
+ "actions": [],
+ "autoname": "hash",
+ "creation": "2026-10-20 15:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "ticket",
+  "property",
+  "kind",
+  "by",
+  "at",
+  "from_value",
+  "to_value",
+  "note"
+ ],
+ "fields": [
+  {
+   "fieldname": "ticket",
+   "fieldtype": "Link",
+   "label": "Ticket",
+   "options": "Service Ticket",
+   "reqd": 1,
+   "in_list_view": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "property",
+   "fieldtype": "Link",
+   "label": "Property",
+   "options": "Property",
+   "reqd": 1
+  },
+  {
+   "fieldname": "kind",
+   "fieldtype": "Select",
+   "label": "Kind",
+   "options": "Created\nAssigned\nStatus\nPriority\nNote\nReopened",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "by",
+   "fieldtype": "Link",
+   "label": "By",
+   "options": "User",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "at",
+   "fieldtype": "Datetime",
+   "label": "At",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "from_value",
+   "fieldtype": "Data",
+   "label": "From"
+  },
+  {
+   "fieldname": "to_value",
+   "fieldtype": "Data",
+   "label": "To"
+  },
+  {
+   "fieldname": "note",
+   "fieldtype": "Small Text",
+   "label": "Note"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-10-20 15:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kamra",
+ "name": "Ticket Event",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "read": 1,
+   "report": 1,
+   "print": 1,
+   "role": "Hotel Admin"
+  },
+  {
+   "read": 1,
+   "report": 1,
+   "role": "Front Desk"
+  },
+  {
+   "read": 1,
+   "role": "Housekeeping"
+  },
+  {
+   "read": 1,
+   "role": "Housekeeping Supervisor"
+  },
+  {
+   "read": 1,
+   "role": "Kamra Agent"
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "at",
+ "sort_order": "ASC",
+ "states": [],
+ "track_changes": 0
+}

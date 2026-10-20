@@ -100,7 +100,8 @@
   "meta_description",
   "og_image",
   "page_slug",
-  "overbooking_pct"
+  "overbooking_pct",
+  "setup_wants"
  ],
  "fields": [
   {
@@ -675,12 +676,19 @@
    "fieldtype": "Percent",
    "label": "Overbooking Allowance %",
    "description": "Sell unassigned bookings above physical capacity by this much (0 = never overbook). Room types can override."
+  },
+  {
+   "fieldname": "setup_wants",
+   "fieldtype": "Small Text",
+   "label": "Setup Wishlist",
+   "hidden": 1,
+   "description": "What was asked for during setup (e.g. channel-manager), so the Finish setup list can remind."
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-19 12:00:00.000000",
+ "modified": "2026-10-20 17:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Property",

@@ -214,6 +214,7 @@ export default function POS() {
   const [detail, setDetail] = useState<Detail | null>(null)
   const [orderType, setOrderType] = useState<OrderType>("Dine In")
   const [room, setRoom] = useState("")
+  const [pendingMode, setPendingMode] = useState<string | null>(null) // tender picked, not yet confirmed
   const [postRoom, setPostRoom] = useState("") // settle sheet: charge a running bill to a room
   const [table, setTable] = useState("")
   const [guests, setGuests] = useState("")
@@ -320,7 +321,7 @@ export default function POS() {
     setResTile(null); setReserveOpen(false); setTablesOpen(false)
   }
   function newOrder(atTable?: string) {
-    setSelected(null); setDetail(null); setRoom(""); setPostRoom(""); resetPanel()
+    setSelected(null); setDetail(null); setRoom(""); setPostRoom(""); setPendingMode(null); resetPanel()
     setTable(atTable || ""); setCustomTable(false)
     setGuests(""); setCustName(""); setCustPhone(""); setCustAddr("")
     setDraftGuest(null)
@@ -411,7 +412,7 @@ export default function POS() {
       customer, address, nc: !!kot.nc, nc_by: ncBy, items: kot.fired_items,
     }
     if (!full.items?.length) return
-    const kotNo = full.kot_no ?? "—"
+    const kotNo = full.kot_no ?? "-"
     // Kitchen printers took the lines they serve; this till prints the rest.
     const sentTo = [...new Set((kot.print_jobs ?? []).map((j) => j.printer_name))]
     const mine = kot.till_ticket ?? full
@@ -495,7 +496,7 @@ export default function POS() {
     if (selected || cart.length === 0) return
     await act(async () => { await createBill(false); newOrder() })
   }
-  async function proceedToPay() { // F4 — opens the settle sheet
+  async function proceedToPay() { // F4 - opens the settle sheet
     if (selected && detail) {
       setSettling(true); setSheetNc(false)
       setMobilePane("bill")
@@ -877,7 +878,7 @@ export default function POS() {
                     return (
                       <div className="mt-2 space-y-1 rounded-xl bg-zinc-50 p-2">
                         <div className="flex items-center justify-between">
-                          <span className="text-xs font-semibold text-zinc-500">{t.table} — {t.bills} bills</span>
+                          <span className="text-xs font-semibold text-zinc-500">{t.table} - {t.bills} bills</span>
                           <button onClick={() => setChooser(null)} className="text-zinc-400 hover:text-zinc-600">✕</button>
                         </div>
                         {t.orders.map((b) => (
@@ -896,7 +897,7 @@ export default function POS() {
                 </>
               ) : (
                 <p className="py-2 text-xs text-zinc-400">
-                  No table layout for this outlet yet — add tables (one per line,
+                  No table layout for this outlet yet - add tables (one per line,
                   <code className="mx-1 rounded bg-zinc-100 px-1">T1:4</code> = 4 seats) on the POS Outlet.
                 </p>
               )}
@@ -1006,7 +1007,7 @@ export default function POS() {
 
   return (
     <div ref={rootRef} className={cn("flex h-full min-h-0 flex-col gap-3", floorOn && "bg-zinc-50 p-3")}>
-      {/* header — the way out of the till is always on screen */}
+      {/* header - the way out of the till is always on screen */}
       <div className="flex shrink-0 flex-wrap items-center justify-between gap-3">
         <h1 className="flex items-center gap-2 text-xl font-bold text-zinc-800">
           <UtensilsCrossed className="size-5 text-brand-600" />
@@ -1085,7 +1086,7 @@ export default function POS() {
               kioskOn
                 ? "border-brand-600 bg-brand-50 text-brand-800"
                 : "border-zinc-300 bg-white text-zinc-600 hover:bg-zinc-50")}
-            title={kioskOn ? t("Show PMS menus (Esc)") : t("Focus mode — hide PMS menus")}>
+            title={kioskOn ? t("Show PMS menus (Esc)") : t("Focus mode - hide PMS menus")}>
             <Focus className="size-4" />
           </button>
           <button onClick={toggleBrowserFs}
@@ -1095,7 +1096,7 @@ export default function POS() {
           </button>
           <button onClick={() => { exitFloor(); navigate("/dashboard") }}
             className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-2.5 py-2 text-xs font-semibold text-zinc-600 hover:bg-zinc-50"
-            title={t("Exit POS — back to the PMS")}>
+            title={t("Exit POS - back to the PMS")}>
             <LogOut className="size-4" />
             <span className="hidden xl:inline">{t("Exit")}</span>
           </button>
@@ -1190,7 +1191,7 @@ export default function POS() {
           "md:w-[21rem] md:shrink-0 md:overflow-hidden xl:w-[24rem]",
           mobilePane === "bill" ? "flex" : "hidden md:flex",
         )}>
-          {/* zone 1: who / where — pinned above the items */}
+          {/* zone 1: who / where - pinned above the items */}
           <div className="shrink-0 border-b border-zinc-100 p-3 pb-2">
             {/* who / where */}
             {selected && detail ? (
@@ -1290,8 +1291,8 @@ export default function POS() {
             })()}
           </div>
 
-          {/* zone 2: line items — the only scroll area in the bill */}
-          <div className="min-h-0 flex-1 p-3 md:overflow-y-auto">
+          {/* zone 2: line items - the only scroll area in the bill */}
+          <div className="min-h-0 flex-1 p-3 md:min-h-[7rem] md:overflow-y-auto">
             {/* items */}
             <div className="mb-1 flex items-center justify-between">
               <h3 className="text-sm font-medium text-zinc-500">{t("Order items")}</h3>
@@ -1400,8 +1401,8 @@ export default function POS() {
 
           </div>
 
-          {/* zone 3: totals + actions — always visible, sticky on phones */}
-          <div className="sticky bottom-0 z-20 shrink-0 space-y-2 rounded-b-xl border-t border-zinc-100 bg-white p-3 md:static">
+          {/* zone 3: totals + actions - always visible, sticky on phones */}
+          <div className="sticky bottom-0 z-20 shrink-0 space-y-2 rounded-b-xl border-t border-zinc-100 bg-white p-3 md:static md:max-h-[68%] md:overflow-y-auto">
             <div className="space-y-1 text-sm">
               <div className="flex items-center justify-between">
                 <span className="text-zinc-500">{t("Discount")}</span>
@@ -1462,7 +1463,7 @@ export default function POS() {
                 onConfirm={confirmCancel} onClose={() => setCancelling(false)} />
             )}
 
-            {/* actions — every option visible, nothing under a popover or scroll */}
+            {/* actions - every option visible, nothing under a popover or scroll */}
             <div className="grid grid-cols-3 gap-1.5">
               <Button variant="outline" className="h-11 flex-col gap-0.5 !px-1 text-[11px] font-semibold leading-none"
                 disabled={busy || !selected} onClick={printBill}>
@@ -1513,7 +1514,7 @@ export default function POS() {
                     Settle · {cur()}{inr2(grand)}
                   </span>
                   <button className="rounded p-1 text-zinc-400 hover:text-zinc-700" aria-label="Close"
-                    onClick={() => { setSettling(false); setSheetNc(false) }}>
+                    onClick={() => { setSettling(false); setSheetNc(false); setPendingMode(null) }}>
                     <XCircle className="size-4" />
                   </button>
                 </div>
@@ -1543,9 +1544,16 @@ export default function POS() {
                   <>
                     <div className={cn("grid gap-1.5", posModes.length > 2 ? "grid-cols-3" : "grid-cols-2")}>
                       {posModes.map((m) => (
-                        <Button key={m} className="h-12 justify-center text-base" disabled={busy} onClick={() => settle(m)}>{m}</Button>
+                        <Button key={m} variant={pendingMode === m ? "primary" : "outline"}
+                          className="h-12 justify-center text-base" disabled={busy}
+                          onClick={() => setPendingMode(pendingMode === m ? null : m)}>{m}</Button>
                       ))}
                     </div>
+                    {pendingMode && (
+                      <Button className="h-12 w-full text-base" disabled={busy} onClick={() => settle(pendingMode)}>
+                        {t("Confirm {mode} · {amount}", { mode: pendingMode, amount: `${cur()}${inr2(grand)}` })}
+                      </Button>
+                    )}
                     {detail.room ? (
                       Number(rooms.find((r) => r.room === detail.room)?.room_charges_allowed ?? 1) === 0 ? (
                         <p className="rounded-lg bg-rose-50 px-2 py-1.5 text-xs text-rose-800">
@@ -1556,17 +1564,30 @@ export default function POS() {
                           <BedDouble className="size-4" />{t("Deliver and post to Room {n}", { n: detail.room.split("-").pop() || "" })}
                         </Button>
                       )
-                    ) : detail.order_type === "Dine In" && rooms.length > 0 && (
-                      <div className="flex gap-1.5">
-                        <RoomPicker rooms={rooms} value={postRoom} onChange={setPostRoom} onOpen={loadRooms}
-                          placeholder="Charge to a guest's room…" />
-                        <Button variant="outline" className="h-10 shrink-0" disabled={busy || !postRoom} onClick={chargeToRoom}>
-                          <BedDouble className="size-4" />Post
-                        </Button>
+                    ) : (
+                      /* a guest who wants it on the room: its own way to settle,
+                         for any bill (dine in, takeaway, delivery), not hidden */
+                      <div className="space-y-1 rounded-lg border border-brand-200 bg-white p-2">
+                        <div className="flex items-center gap-1.5 text-xs font-semibold text-brand-800">
+                          <BedDouble className="size-3.5" />{t("Charge to the guest's room")}
+                        </div>
+                        {rooms.length > 0 ? (
+                          <div className="flex gap-1.5">
+                            <RoomPicker rooms={rooms} value={postRoom} onChange={setPostRoom} onOpen={loadRooms}
+                              placeholder={t("Pick the room…")} />
+                            <Button className="h-10 shrink-0" disabled={busy || !postRoom} onClick={chargeToRoom}>
+                              {t("Post to room")}
+                            </Button>
+                          </div>
+                        ) : (
+                          <p className="text-xs text-zinc-500">
+                            {t("No guest is checked in right now. Check the guest in first, or take payment above.")}
+                          </p>
+                        )}
                       </div>
                     )}
                     <Button variant="outline" className="h-11 w-full text-amber-700" disabled={busy} onClick={() => setSheetNc(true)}>
-                      <Gift className="size-4" />Complimentary — close at {cur()}0
+                      <Gift className="size-4" />Complimentary - close at {cur()}0
                     </Button>
                   </>
                 )}

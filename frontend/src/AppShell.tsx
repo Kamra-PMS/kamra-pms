@@ -10,6 +10,7 @@ import {
 } from "lucide-react"
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom"
 import UpdateNag from "./components/UpdateNag"
+import SetupNag from "./components/SetupNag"
 import { Button } from "./components/ui/button"
 import {
   appForPath,
@@ -85,7 +86,7 @@ function SearchShortcut() {
       className="flex w-full items-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50/70 px-3 py-2 text-sm text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600"
     >
       <Search className="size-4 shrink-0" aria-hidden />
-      <span className="truncate whitespace-nowrap">{t("Search reservations, guests, rooms…")}</span>
+      <span className="truncate whitespace-nowrap">{t("Search guests, bookings, screens, settings…")}</span>
       <kbd className="ml-auto hidden rounded border border-zinc-200 bg-white px-1.5 py-0.5 text-[10px] font-semibold text-zinc-500 md:inline">
         {combo}
       </kbd>
@@ -322,6 +323,7 @@ export default function AppShell() {
         </div>
       )}
       {!kiosk && !demoMode && <UpdateNag />}
+      {!kiosk && !demoMode && <SetupNag />}
       <div className="flex min-h-0 flex-1">
       {!kiosk && (
       <aside className="hidden w-56 shrink-0 flex-col border-r border-zinc-200 bg-white px-3 py-5 sm:sticky sm:top-0 sm:flex sm:h-screen sm:overflow-y-auto">

@@ -150,7 +150,7 @@ function IdentityCard({ d, reload }: { d: Detail; reload: () => void }) {
               physical card; check-in works with or without this. */}
           <div className="flex items-start gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800">
             <TriangleAlert className="mt-px size-3.5 shrink-0" />
-            No ID document on file — capture it at the counter.
+            No ID document on file - capture it at the counter.
           </div>
           <IdDocumentField
             method="kamra.api.upload_id_document"
@@ -352,7 +352,7 @@ export default function ReservationDetail({
         {Number(money.refund_due ?? 0) > 0 && (
           <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
             Refund due: <span className="font-semibold">{inr(money.refund_due ?? 0)}</span>{" "}
-            - the advance taken at booking, with no folio or fee against it.
+           - the advance taken at booking, with no folio or fee against it.
           </div>
         )}
         <p className="mt-2 text-xs text-zinc-400">
@@ -472,7 +472,7 @@ export default function ReservationDetail({
                 value={
                   new Set(d.night_rates.map((n) => n.rate)).size === 1
                     ? inr(d.night_rates[0].rate)
-                    : `${inr(Math.min(...d.night_rates.map((n) => n.rate)))}–${inr(
+                    : `${inr(Math.min(...d.night_rates.map((n) => n.rate)))}-${inr(
                         Math.max(...d.night_rates.map((n) => n.rate)),
                       )}`
                 }
