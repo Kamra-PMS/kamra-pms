@@ -35,6 +35,24 @@ jobs:
             --config ./frappe-semgrep-rules/rules \
             --config r/python.lang.correctness
 
+      - name: Run the rules the marketplace audit also counts
+        # The audit reports these two at WARNING severity too, so the step
+        # above (ERROR only) never saw them. A real finding needs a
+        # same-line `# nosemgrep: <rule> -- reason` on the flagged line.
+        run: |
+          semgrep --metrics=off --quiet --json \
+            --exclude frappe-semgrep-rules \
+            --config ./frappe-semgrep-rules/rules/security . > audit.json
+          python3 - <<'PY'
+          import json
+          rules = ("frappe-sql-format-injection", "frappe-security-file-traversal")
+          hits = [r for r in json.load(open("audit.json"))["results"]
+                  if r["check_id"].rsplit(".", 1)[-1] in rules]
+          for r in hits:
+              print(f"{r['path']}:{r['start']['line']} {r['check_id'].rsplit('.', 1)[-1]}")
+          raise SystemExit(1 if hits else 0)
+          PY
+
   marketplace-install:
     name: Marketplace install simulation
     runs-on: ubuntu-latest

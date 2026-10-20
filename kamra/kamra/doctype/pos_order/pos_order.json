@@ -39,10 +39,15 @@
   "customer_name",
   "customer_phone",
   "delivery_address",
+  "guest",
   "nc",
   "nc_authorized_by",
   "nc_note",
-  "last_kot_ticket"
+  "last_kot_ticket",
+  "cancel_reason",
+  "cancelled_by",
+  "cancelled_at",
+  "cancel_approved_by"
  ],
  "fields": [
   {
@@ -258,12 +263,47 @@
    "label": "Saved KOT tickets",
    "read_only": 1,
    "description": "JSON of every KOT round fired on this bill, so reprints do not depend on the browser print dialog."
+  },
+  {
+   "fieldname": "guest",
+   "fieldtype": "Link",
+   "label": "Guest",
+   "options": "Guest",
+   "search_index": 1,
+   "description": "The guest profile this bill is for: an in-house guest, or a walk-in customer the captain attached by phone or name."
+  },
+  {
+   "fieldname": "cancel_reason",
+   "fieldtype": "Small Text",
+   "label": "Cancel Reason",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cancelled_by",
+   "fieldtype": "Link",
+   "label": "Cancelled By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cancelled_at",
+   "fieldtype": "Datetime",
+   "label": "Cancelled At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cancel_approved_by",
+   "fieldtype": "Link",
+   "label": "Cancel Approved By",
+   "options": "User",
+   "read_only": 1,
+   "description": "The supervisor who approved cancelling a bill the kitchen had already started."
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-19 12:30:00.000000",
+ "modified": "2026-10-20 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "POS Order",

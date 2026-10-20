@@ -654,6 +654,41 @@ export const outletsConfig: ScreenConfig = {
   ],
 }
 
+export const ingredientsConfig: ScreenConfig = {
+  doctype: "Ingredient",
+  title: "Ingredients",
+  description:
+    "The kitchen store cupboard - name, unit, category and cost. Stock movements live under Kitchen Inventory; recipes under Menu → Recipes.",
+  searchFields: ["ingredient_name", "category"],
+  filters: [
+    { field: "is_active", label: "Active", options: ["1", "0"] },
+  ],
+  pageSize: 50,
+  propertyScoped: true,
+  orderBy: "category, ingredient_name",
+  columns: [
+    { field: "ingredient_name", label: "Ingredient" },
+    { field: "category", label: "Category" },
+    { field: "uom", label: "Unit", badge: true },
+    { field: "cost_per_unit", label: `Cost / unit` },
+    { field: "is_active", label: "Active", badge: true },
+  ],
+  form: [
+    { field: "ingredient_name", label: "Ingredient", type: "data", required: true },
+    { field: "category", label: "Category", type: "data",
+      hint: "Produce, Dairy, Dry Goods, Bar - free text" },
+    { field: "uom", label: "Unit", type: "select", required: true,
+      options: ["kg", "g", "L", "ml", "pc", "bottle", "packet"],
+      hint: "One unit only. Recipes and purchases both use it - buy and cook in the same unit (e.g. define in g if you cook in g)." },
+    { field: "cost_per_unit", label: "Cost / unit", type: "currency",
+      hint: "Last known cost, used to value wastage. Indicative only - not FIFO and not on the books." },
+    { field: "gst_rate", label: "Input GST %", type: "float",
+      hint: "Tax paid when buying this." },
+    { field: "is_active", label: "Active", type: "check",
+      hint: "Turn off instead of deleting when a recipe or stock history uses it." },
+  ],
+}
+
 export const menuItemsConfig: ScreenConfig = {
   doctype: "Menu Item",
   title: "Menu",

@@ -263,7 +263,7 @@ def main(argv: list[str] | None = None) -> int:
 	print(report)
 	summary = os.environ.get("GITHUB_STEP_SUMMARY")
 	if summary:
-		with open(summary, "a", encoding="utf-8") as fh:
+		with open(summary, "a", encoding="utf-8") as fh:  # nosemgrep: frappe-security-file-traversal -- GITHUB_STEP_SUMMARY is set by the Actions runner, not by input; CI tooling, not shipped in the app
 			fh.write(f"## GHCR retention — {args.package}\n\n```\n{report}\n```\n")
 
 	if not args.apply or not plan.delete:
