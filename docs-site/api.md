@@ -33,8 +33,8 @@ OAuth for Claude) or, for service integrations, on Developers.
 | Chain | `crs_search` (via `kamra.crs`) · `portfolio_dashboard` (via `kamra.dashboards`) |
 
 Guest-facing (no auth) endpoints live in `kamra.public_api` - the booking
-page, QR menus and self check-in run on them; they are rate-limited and
-never trust caller-supplied prices.
+page and self check-in run on them; they are rate-limited and never trust
+caller-supplied prices.
 
 Responses are JSON: `{"message": <return value>}`. Errors return an HTTP
 4xx with a human-readable reason - surface it to your user as-is.

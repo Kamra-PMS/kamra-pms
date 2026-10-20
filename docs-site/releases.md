@@ -40,7 +40,7 @@ bills cannot close unpaid; advance deposits clear at check-in.
 ### v2.6.14
 
 Request-to-Book inbox, per-property no-show policy, rate lock at booking,
-security deposits, day use, printable QR codes, city-ledger payments, a
+security deposits, day use, city-ledger payments, a
 complete ledger, and a lighter first page load.
 
 ### v2.6.13

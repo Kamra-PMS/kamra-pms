@@ -32,7 +32,7 @@ amount on a public endpoint, an MCP tool that computes its own price).
 | Layer | What it is |
 | --- | --- |
 | Staff UI | React SPA at `/kamra` (and `/hk` for housekeeping) |
-| Guest surfaces | `/book`, `/stay/:slug`, self check-in, QR menu |
+| Guest surfaces | `/book`, `/stay/:slug`, self check-in |
 | API | Frappe whitelisted methods: `POST /api/method/kamra.<module>.<fn>` |
 | Agents | Hosted MCP at `/mcp` (OAuth) or stdio sidecar `mcp/kamra_mcp.py` |
 | Money | Pricing engine, folio ledger, cashier, night audit |
@@ -149,7 +149,7 @@ MCP tool visibility:
 | Night audit | End of Day, business date, no-show | [Night audit](/night-audit) |
 | Housekeeping | Room board, `/hk` app, laundry, L&F | [Housekeeping](/housekeeping) |
 | Operations | Guest requests / SLA tickets | [Guest requests](/operations) |
-| F&B | POS, KOT, kitchen display, QR menu | [F&B](/fnb) |
+| F&B | POS, KOT, kitchen display | [F&B](/fnb) |
 | Events | Banquets from enquiry to BEO | [Banquets](/banquets) |
 | Revenue | Rates, seasons, hurdles, vouchers | [Revenue](/revenue) |
 | Booking engine | `/book`, villa catalogue, policies | [Booking engine](/booking-engine) |

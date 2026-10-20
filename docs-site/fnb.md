@@ -253,18 +253,6 @@ print waiting on a dialog.
 - Set the thermal printer as the system's default printer, with 80 mm (or
   58 mm) paper and no margins.
 
-## Guest QR ordering
-
-**F&B → QR Codes** makes a code for every restaurant table, and for every
-room (in-room dining from the Room Service outlet's menu). Download each as
-PNG or SVG, or **Print sheet** for A4 cards. The codes are drawn on your
-device; no outside QR service is used.
-Guests scan it, see the menu on their phone and place an order. The order
-waits on the POS until a captain confirms it; nothing goes to the kitchen
-on a guest's word alone.
-
-![QR codes for each table of the Poolside Bar, with PNG and SVG downloads](/img/fnb/qr-codes.png)
-
 ## Kitchen inventory
 
 **F&B → Kitchen Inventory** keeps ingredients, a recipe for each dish and a
