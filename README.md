@@ -54,9 +54,11 @@
 
 ## What's new
 
-Latest release: **[v2.6.15](https://github.com/Kamra-PMS/kamra-pms/releases/latest)**
+Latest release: **[v2.6.16](https://github.com/Kamra-PMS/kamra-pms/releases/latest)**
 (`develop` ships nightly).
 
+- **2.6.16** — pet charge per pet, stay or night; guests above room capacity
+  billed as their own line
 - **2.6.15** — End of Day night-audit checklist with a saved report pack and a
   Night Auditor role; corporate guests settle their own extras; POS bills
   can't close unpaid; advance deposits clear at check-in

@@ -25,15 +25,6 @@ upgrade-breaking changes (removed doctypes / API contracts).
 * **banquet:** Phase 1 enterprise ops (issue #67) — email/WhatsApp send
   quotation, desk-led guest response, department checklists + notify on
   Confirm (Sales/Finance/HK/F&B), and quote no-response chase reminders
-
-### Features (next release)
-
-* **booking:** pet charge — a property can allow pets and charge per pet,
-  per stay or per night (Settings → Finance → Fees & levies). Guests and the
-  desk enter a pets count; the quote shows the charge as its own line, and
-  it posts to the guest folio once at check-in. Bookings with pets are
-  refused at a property that doesn't allow them ([#222](https://github.com/Kamra-PMS/kamra-pms/pull/222))
-
 * **deploy:** prebuilt-image install path — `install.sh` can pull
   `ghcr.io/kamra-pms/kamra` (`KAMRA_PULL=1` / `KAMRA_TAG=…`), resolve
   `:stable` to the concrete `vX.Y.Z` and pin it; building on the server
@@ -46,11 +37,23 @@ upgrade-breaking changes (removed doctypes / API contracts).
   keeping every manifest the kept tags reference (part of
   [#228](https://github.com/Kamra-PMS/kamra-pms/issues/228))
 
-### Bug Fixes (next release)
+## [2.6.16](https://github.com/Kamra-PMS/kamra-pms/compare/v2.6.15...v2.6.16) (2026-10-19)
+
+
+### Features
+
+* **booking:** pet charge — a property can allow pets and charge per pet,
+  per stay or per night (Settings → Finance → Fees & levies). Guests and the
+  desk enter a pets count; the quote shows the charge as its own line, and
+  it posts to the guest folio once at check-in. Bookings with pets are
+  refused at a property that doesn't allow them ([#222](https://github.com/Kamra-PMS/kamra-pms/pull/222))
+
+### Bug Fixes
 
 * **pricing:** guests above a room's capacity are billed as their own
   "Extra Guests" line on the quote and folio, instead of being folded into
   the room rate ([#221](https://github.com/Kamra-PMS/kamra-pms/pull/221))
+
 
 ## [2.6.15](https://github.com/Kamra-PMS/kamra-pms/compare/v2.6.14...v2.6.15) (2026-10-16)
 
