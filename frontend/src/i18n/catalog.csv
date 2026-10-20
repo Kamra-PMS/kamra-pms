@@ -139,6 +139,7 @@ A late check-out charge is already on the bill.,A late check-out charge is alrea
 A masked Aadhaar (last 4 digits showing) is fine.,A masked Aadhaar (last 4 digits showing) is fine.,يكفي آدهار مخفي تظهر فيه آخر 4 أرقام.,screens/PublicCheckin.tsx,,translated
 "A multi-room booking can't override a blacklist. Book one room, or remove the flag on the guest profile.","A multi-room booking can't override a blacklist. Book one room, or remove the flag on the guest profile.",لا يمكن لحجز متعدد الغرف تجاوز القائمة السوداء. احجز غرفة واحدة، أو أزل العلامة من ملف النزيل.,components/BookingDialog.tsx,,translated
 "A multi-room booking can't override a credit block. Book one room, or have Finance raise the limit.","A multi-room booking can't override a credit block. Book one room, or have Finance raise the limit.",,components/BookingDialog.tsx,,needs_translation
+A sound for new orders at the kitchen. Separate from the rest.,A sound for new orders at the kitchen. Separate from the rest.,صوت للطلبات الجديدة في المطبخ. منفصل عن بقية الأصوات.,components/AlertSettings.tsx,,translated
 A station comes from each menu item. Tick the same outlet on several printers to print a copy on each.,A station comes from each menu item. Tick the same outlet on several printers to print a copy on each.,,screens/KitchenPrinters.tsx,,needs_translation
 "A station is where food or drinks are prepared: the kitchen, the bar, a tandoor. Kitchen tickets (KOTs) print at the station that makes the item. Bills print separately, at the till.","A station is where food or drinks are prepared: the kitchen, the bar, a tandoor. Kitchen tickets (KOTs) print at the station that makes the item. Bills print separately, at the till.",,screens/Setup.tsx,,needs_translation
 A supervisor passes the inspection,A supervisor passes the inspection,,screens/HkApp.tsx,,needs_translation
@@ -208,6 +209,7 @@ Air Conditioning,Air Conditioning,تكييف الهواء,screens/Setup.tsx,,tra
 Airport drop,Airport drop,توصيل إلى المطار,components/CheckInDialog.tsx,,translated
 Alcohol,Alcohol,كحول,components/RoomStayPanels.tsx; screens/FolioView.tsx,,translated
 Alcohol is always paid by the guest.,Alcohol is always paid by the guest.,الكحول يدفعه الضيف دائما.,components/CheckInDialog.tsx,,translated
+Alerts and sound,Alerts and sound,التنبيهات والصوت,components/AlertSettings.tsx,,translated
 All,All,الكل,screens/Kitchen.tsx; screens/POS.tsx; screens/VoidAllowanceReport.tsx; screens/pos/PosSidePanel.tsx; screens/settings/WebhooksPage.tsx,,translated
 All ({n}),All ({n}),الكل ({n}),screens/POS.tsx,n,translated
 All audits,All audits,كل عمليات التدقيق,screens/Billing.tsx,,translated
@@ -247,6 +249,7 @@ Amount {cur},Amount {cur},المبلغ {cur},screens/FolioView.tsx; screens/HkAp
 Amount collected,Amount collected,المبلغ المحصّل,components/BookingDialog.tsx,,translated
 Amount to bank,Amount to bank,,screens/CashierBoard.tsx,,needs_translation
 Amounts are inclusive of GST at the rates shown.,Amounts are inclusive of GST at the rates shown.,المبالغ شاملة ضريبة GST بالأسعار المعروضة.,screens/FolioView.tsx,,translated
+"An alert on screen when a booking, ticket or laundry order comes in.","An alert on screen when a booking, ticket or laundry order comes in.",تنبيه على الشاشة عند وصول حجز أو تذكرة أو طلب غسيل.,components/AlertSettings.tsx,,translated
 "An outlet is a place that sells food or drink: a restaurant, bar, room service, a spa cafe. Each has its own menu and bills. How many do you run?","An outlet is a place that sells food or drink: a restaurant, bar, room service, a spa cafe. Each has its own menu and bills. How many do you run?",,screens/Setup.tsx,,needs_translation
 and choose Print for this printer.,and choose Print for this printer.,,screens/KitchenPrinters.tsx,,needs_translation
 "and take UPI, cards and netbanking for advances and bills.","and take UPI, cards and netbanking for advances and bills.",,screens/settings/cards.tsx,,needs_translation
@@ -638,7 +641,7 @@ Disabled,Disabled,معطّل,screens/CashierBoard.tsx; screens/KitchenPrinters.t
 Discard,Discard,,screens/settings/ModulePage.tsx,,needs_translation
 Disconnect,Disconnect,قطع الاتصال,screens/Marketplace.tsx,,translated
 Discount,Discount,خصم,screens/POS.tsx; screens/pos/PosSidePanel.tsx,,translated
-Dismiss,Dismiss,إغلاق,components/UpdateNag.tsx; screens/HkApp.tsx; screens/POS.tsx; screens/settings/ModulePage.tsx,,translated
+Dismiss,Dismiss,إغلاق,components/NotificationHost.tsx; components/UpdateNag.tsx; screens/HkApp.tsx; screens/POS.tsx; screens/settings/ModulePage.tsx,,translated
 Do it,Do it,,screens/FinishSetup.tsx,,needs_translation
 Do not take money for the room. Extras are paid by the guest.,Do not take money for the room. Extras are paid by the guest.,لا تأخذ مالا مقابل الغرفة. الإضافات يدفعها الضيف.,components/CheckInDialog.tsx,,translated
 Docker (self-host),Docker (self-host),Docker (استضافة ذاتية),screens/SystemHealth.tsx,,translated
@@ -1082,10 +1085,13 @@ New {thing},New {thing},جديد: {thing},components/ResourceScreen.tsx,thing,tr
 New bill,New bill,فاتورة جديدة,screens/POS.tsx,,translated
 New Bill,New Bill,فاتورة جديدة,screens/POS.tsx,,translated
 New booking,New booking,حجز جديد,AppShell.tsx; components/BookingDialog.tsx,,translated
+New booking {name},New booking {name},حجز جديد {name},components/NotificationHost.tsx,name,translated
 New enquiry,New enquiry,استفسار جديد,screens/Banquet.tsx,,translated
 New function enquiry,New function enquiry,استفسار مناسبة جديدة,screens/Banquet.tsx,,translated
 New ID number (leave empty to keep),New ID number (leave empty to keep),رقم هوية جديد (اتركه فارغا للإبقاء على الحالي),components/CheckInDialog.tsx,,translated
+New laundry order {name},New laundry order {name},طلب غسيل جديد {name},components/NotificationHost.tsx,name,translated
 New request,New request,طلب جديد,components/RoomStayPanels.tsx,,translated
+New service ticket {name},New service ticket {name},تذكرة خدمة جديدة {name},components/NotificationHost.tsx,name,translated
 New ticket,New ticket,تذكرة جديدة,screens/Tickets.tsx,,translated
 New voucher,New voucher,,screens/PettyCash.tsx,,needs_translation
 Next,Next,التالي,components/ResourceScreen.tsx; screens/Agents.tsx; screens/TapeChart.tsx,,translated
@@ -1233,6 +1239,8 @@ Nothing to invoice,Nothing to invoice,لا شيء للفوترة,components/Chec
 Nothing to set up in Cashfree: every link reports back to,Nothing to set up in Cashfree: every link reports back to,,screens/settings/cards.tsx,,needs_translation
 Nothing was sent to the kitchen. A reason is enough.,Nothing was sent to the kitchen. A reason is enough.,لم يُرسل شيء إلى المطبخ. يكفي ذكر السبب.,screens/pos/VoidApproval.tsx,,translated
 Nothing yet.,Nothing yet.,لا شيء بعد.,screens/Banquet.tsx,,translated
+Notification sound,Notification sound,صوت الإشعارات,components/AlertSettings.tsx,,translated
+Notifications,Notifications,الإشعارات,components/AlertSettings.tsx,,translated
 Now,Now,الآن,components/RoomDrawer.tsx,,translated
 Now in {room} · {n} rooms free for these dates,Now in {room} · {n} rooms free for these dates,حاليًا في {room} · {n} غرف متاحة لهذه التواريخ,components/RoomChangeDialog.tsx,room n,translated
 Occ %,Occ %,إشغال %,screens/Dashboard.tsx; screens/Reports.tsx,,translated
@@ -1395,7 +1403,9 @@ Pieces,Pieces,قطع,screens/Laundry.tsx,,translated
 PIN reset,PIN reset,,screens/settings/AccessPages.tsx,,needs_translation
 PIN reset for {name}.,PIN reset for {name}.,,screens/settings/AccessPages.tsx,name,needs_translation
 Place of supply,Place of supply,مكان التوريد,screens/FolioView.tsx,,translated
+Play a sound with those alerts.,Play a sound with those alerts.,شغّل صوتًا مع هذه التنبيهات.,components/AlertSettings.tsx,,translated
 Port,Port,,screens/KitchenPrinters.tsx,,needs_translation
+POS and kitchen sound,POS and kitchen sound,صوت نقطة البيع والمطبخ,components/AlertSettings.tsx,,translated
 POS bill cancelled,POS bill cancelled,فاتورة مطعم ملغاة,screens/VoidAllowanceReport.tsx,,translated
 POS speed check,POS speed check,,screens/settings/cards.tsx,,needs_translation
 POS void,POS void,إبطال في المطعم,screens/VoidAllowanceReport.tsx,,translated
@@ -1828,6 +1838,7 @@ Test failed,Test failed,,screens/settings/WebhooksPage.tsx,,needs_translation
 Test page sent to {ip}.,Test page sent to {ip}.,,screens/KitchenPrinters.tsx,ip,needs_translation
 Test page sent. It prints on the kitchen screen set to print for {printer}.,Test page sent. It prints on the kitchen screen set to print for {printer}.,,screens/KitchenPrinters.tsx,printer,needs_translation
 Test print,Test print,,screens/KitchenPrinters.tsx,,needs_translation
+Test sound,Test sound,جرّب الصوت,components/AlertSettings.tsx,,translated
 Testing…,Testing…,,screens/settings/cards.tsx,,needs_translation
 Thanks - our team will reach out about {name}.,Thanks - our team will reach out about {name}.,شكراً - سيتواصل فريقنا بشأن {name}.,screens/Marketplace.tsx,name,translated
 That date has already passed.,That date has already passed.,هذا التاريخ قد مضى بالفعل.,components/BookingDialog.tsx,,translated
@@ -1864,6 +1875,7 @@ Their PIN,Their PIN,رمزه,screens/pos/VoidApproval.tsx,,translated
 Theme,Theme,المظهر,AppShell.tsx; screens/settings/cards.tsx,,translated
 Theme (system),Theme (system),المظهر (النظام),AppShell.tsx,,translated
 Then recreate the stack / run migrate. Nightly channel,Then recreate the stack / run migrate. Nightly channel,ثم أعد إنشاء المكدس / نفّذ migrate. قناة Nightly,screens/SystemHealth.tsx,,translated
+These apply to this device only.,These apply to this device only.,تنطبق هذه الإعدادات على هذا الجهاز فقط.,components/AlertSettings.tsx,,translated
 They sign in with this email.,They sign in with this email.,,screens/settings/AccessPages.tsx,,needs_translation
 Thinking...,Thinking...,جارٍ التفكير...,screens/TapeChart.tsx,,translated
 This bill,This bill,هذه الفاتورة,screens/pos/PosSidePanel.tsx,,translated
