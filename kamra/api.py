@@ -3643,33 +3643,26 @@ def _assert_settled(doc, credit_override_reason: str | None = None) -> list[dict
 	"""
 	if frappe.flags.allow_unsettled_checkout:
 		return []
+	from kamra.checkout import settlement_position
 	from kamra.folio import post_remaining_nights
-	from kamra.ledger import company_payer_of
 	from kamra.localization import pack_for
 
 	post_remaining_nights(doc)
 	symbol = pack_for(doc.property).locale(
 		frappe.get_cached_doc("Property", doc.property)).get("currency_symbol", "")
-	owed = refund = 0.0
-	to_city_ledger = []
-	for f in frappe.get_all("Folio", filters={"reservation": doc.name},
-	                        fields=["name", "balance", "folio_type",
-	                                "group_booking", "reservation"]):
-		balance = float(f.balance or 0)
-		if balance > 0.009:
-			payer = company_payer_of(f)
-			if payer:
-				to_city_ledger.append((f.name, payer))
-			else:
-				owed += balance
-		elif balance < -0.009:
-			refund -= balance
+	# the one judgement of what is owed either way, shared with the desk's
+	# check-out dialog (checkout_settlement)
+	position = settlement_position(doc.name)
+	owed, refund = position["owed"], position["refund_due"]
+	to_city_ledger = [(f, c) for f, c, _b in position["to_city_ledger"]]
 	if owed:
 		frappe.throw(_("Cannot check out: {0}{1:,.2f} is still owed. Collect payment "
-		               "or transfer it to the city ledger before departure.").format(symbol, owed))
+		               "or transfer it to the city ledger before departure.").format(symbol, owed),
+		             title=_("Settle before check-out"))
 	if refund:
 		frappe.throw(_("Cannot check out: the guest is owed {0}{1:,.2f}. Issue the "
-		               "refund before departure.").format(symbol, refund))
+		               "refund before departure.").format(symbol, refund),
+		             title=_("Settle before check-out"))
 	# nothing moves until the guest's side is settled - and the company's
 	# credit is checked once for everything the stay bills to it
 	from kamra.credit import enforce_company_credit
@@ -3991,6 +3984,21 @@ def check_out(reservation: str, credit_override_reason: str | None = None):
 			{"company": c["company"], "reasons": c["reasons"],
 			 "overridden": bool(c.get("overridden"))} for c in credit]
 	return out
+
+
+@frappe.whitelist()
+@require_roles("Front Desk", "Finance", "Night Auditor", "Kamra Agent")
+def checkout_settlement(reservation: str):
+	"""What stands between this stay and check-out, without changing
+	anything: each folio's balance after the nights check-out would still
+	post, what the guest owes (`collect`) or is owed (`refunds`, a held
+	security deposit first, through its own refund path), what moves to the
+	city ledger and its credit check, each folio's invoice, the payment
+	modes, whether a cashier PIN and an open till are needed, and every
+	refusal check-out would give (`blockers`). check_out judges the
+	balances with the same helper, so the two never disagree."""
+	from kamra.checkout import settlement_preview
+	return settlement_preview(reservation)
 
 
 HK_SUPERVISOR = "Housekeeping Supervisor"
