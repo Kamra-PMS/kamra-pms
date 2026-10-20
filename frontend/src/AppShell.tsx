@@ -439,7 +439,7 @@ export default function AppShell() {
                     ? "h-[100dvh] overflow-hidden p-0"
                     : "min-h-[calc(100dvh-3.5rem)] overflow-auto p-3 lg:min-h-0 lg:flex-1 lg:overflow-hidden",
                 )
-              : "mx-auto max-w-6xl px-4 py-6"
+              : "w-full max-w-none px-4 py-6 lg:px-6"
           }
         >
           <Outlet

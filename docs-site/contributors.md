@@ -33,5 +33,5 @@ desk, or disclosed a security problem responsibly.
 ## Join in
 
 Open an issue from your front desk, pick up a `good first issue`, or send a
-PR — see [CONTRIBUTING.md](https://github.com/Kamra-PMS/kamra-pms/blob/develop/CONTRIBUTING.md).
+PR - see [CONTRIBUTING.md](https://github.com/Kamra-PMS/kamra-pms/blob/develop/CONTRIBUTING.md).
 Security issues go through [private advisories](https://github.com/Kamra-PMS/kamra-pms/security/advisories/new).

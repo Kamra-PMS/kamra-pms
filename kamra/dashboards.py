@@ -91,6 +91,11 @@ def property_dashboard(property: str, date: str | None = None):
 		"revenue_today": round(
 			today.get("room_revenue", 0) + today.get("fnb_revenue", 0)
 			+ today.get("other_revenue", 0), 0),
+		# Room revenue ÷ rooms available today — same day as revenue_today.
+		# (MTD RevPAR lives under statistics.revpar for the flash report.)
+		"revpar": today.get("revpar", 0),
+		"adr": today.get("adr", 0),
+		"room_revenue_today": today.get("room_revenue", 0),
 		"collections_today": finance["collections_today"],
 		# statistics (month to date)
 		"statistics": {

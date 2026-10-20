@@ -19,7 +19,6 @@ async function openWizard(page, route = WIZ) {
 }
 const step = (page, title) =>
   page.locator("ol button", { hasText: title }).first().click().then(() => page.waitForTimeout(1200))
-const MAIN = { x: 300, y: 75, width: 1065 }
 /** The wizard (step list + panel) as laid out, however wide its tables make it. */
 async function wizShot(page, name, height) {
   const root = page.getByText("Manage End of Day").first().locator("xpath=ancestor::div[contains(@class,'space-y-4')][1]")

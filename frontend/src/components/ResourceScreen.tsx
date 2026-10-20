@@ -42,7 +42,13 @@ export interface ScreenConfig {
   doctype: string
   title: string
   description?: string
-  columns: { field: string; label: string; badge?: boolean }[]
+  columns: {
+    field: string
+    label: string
+    badge?: boolean
+    /** Map a Check field (0/1) to Active / Disabled badges. */
+    statusCheck?: boolean
+  }[]
   form: FieldSpec[]
   propertyScoped?: boolean
   allowCreate?: boolean
@@ -521,11 +527,16 @@ export function ResourceScreen({
             </div>
           </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full table-fixed text-sm">
             <thead>
               <tr className="border-b border-zinc-200 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">
-                {visibleCols.map((c) => (
-                  <th key={c.field} className="py-2 pr-4">
+                {visibleCols.map((c, i) => (
+                  <th
+                    key={c.field}
+                    className={
+                      "py-2 pr-4" + (i === 0 ? " w-[22%]" : "")
+                    }
+                  >
                     {t(c.label)}
                   </th>
                 ))}
@@ -542,13 +553,17 @@ export function ResourceScreen({
                     <td
                       key={c.field}
                       className={
-                        "py-2.5 pr-4" +
+                        "truncate py-2.5 pr-4" +
                         (typeof row[c.field] === "number"
                           ? " text-right tabular-nums"
                           : "")
                       }
                     >
-                      {c.badge && row[c.field] ? (
+                      {c.statusCheck ? (
+                        <Badge tone={row[c.field] ? "zinc" : "green"}>
+                          {t(row[c.field] ? "Disabled" : "Active")}
+                        </Badge>
+                      ) : c.badge && row[c.field] ? (
                         <Badge
                           tone={BADGE_TONES[String(row[c.field])] ?? "zinc"}
                         >

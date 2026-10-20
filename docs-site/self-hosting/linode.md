@@ -31,7 +31,7 @@ ssh root@<server-ip>
 curl -fsSL https://raw.githubusercontent.com/Kamra-PMS/kamra-pms/main/deploy/install.sh | bash
 ```
 
-Site domain, admin email, admin password — no default.
+Site domain, admin email, admin password - no default.
 
 ### 4. TLS
 

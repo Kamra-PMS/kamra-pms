@@ -10,11 +10,11 @@ VPS**; if you have access to the prebuilt image on `ghcr.io` it can
 
 - A server or VPS: **2 vCPU · 4 GB RAM · 40 GB disk** minimum (Ubuntu
   22.04/24.04); **4 vCPU · 8 GB** recommended. Under 8 GB the installer adds
-  a swap file so the image build doesn't run out of memory — it just builds
+  a swap file so the image build doesn't run out of memory - it just builds
   slower.
 - Docker Engine ≥ 24 with Compose v2 (the installer can install Docker for you)
 - A domain (e.g. `pms.yourhotel.com`) pointed at the server
-- **20–45 minutes** for the first image build (a few minutes when
+- **20-45 minutes** for the first image build (a few minutes when
   [pulling the prebuilt image](#faster-pull-the-prebuilt-image))
 
 ::: tip Where to get a server
@@ -35,7 +35,7 @@ You will be asked for:
 | --- | --- |
 | Site domain | `pms.yourhotel.com` |
 | Admin email | `you@yourhotel.com` |
-| Admin password | (min 10 characters — **there is no default**) |
+| Admin password | (min 10 characters - **there is no default**) |
 
 The script clones `frappe_docker`, builds a local `kamra:local` image
 (payments + kamra from GitHub), starts MariaDB + Redis + Kamra, creates
@@ -44,8 +44,8 @@ the site, enables the scheduler, and points `/` at `/kamra`.
 ## Faster: pull the prebuilt image
 
 Every release is also published as a Docker image,
-`ghcr.io/kamra-pms/kamra`. Pulling it skips the 20–45 minute build (no
-buildx, no swap file) — usually **2–5 minutes** on a VPS connection:
+`ghcr.io/kamra-pms/kamra`. Pulling it skips the 20-45 minute build (no
+buildx, no swap file) - usually **2-5 minutes** on a VPS connection:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Kamra-PMS/kamra-pms/main/deploy/install.sh | KAMRA_PULL=1 bash
@@ -53,7 +53,7 @@ curl -fsSL https://raw.githubusercontent.com/Kamra-PMS/kamra-pms/main/deploy/ins
 
 The installer pulls `:stable`, works out which release that is (say
 `v2.6.16`) and **pins** it, so a restart never moves you to a new version
-— only `install.sh update` does. Pick a tag with `KAMRA_TAG=v2.6.16`
+ -  only `install.sh update` does. Pick a tag with `KAMRA_TAG=v2.6.16`
 (or `nightly` for testing).
 
 ::: warning Registry access
@@ -86,7 +86,7 @@ docker compose -f quickstart.yaml logs -f create-site   # wait for "Kamra is rea
 Open <http://localhost:8080/kamra> and sign in as `Administrator` with
 `KAMRA_ADMIN_PASSWORD`. Nothing is published beyond `127.0.0.1`.
 `docker compose -f quickstart.yaml down -v` deletes it all. This is for
-evaluation — use the installer for a real hotel.
+evaluation - use the installer for a real hotel.
 
 ## Sign in and set up
 
@@ -101,7 +101,7 @@ DNS + TLS).
 
 Then open **`/kamra/setup`** and create your property. Product UI is
 `/kamra`; Frappe Desk at `/app` is an admin escape hatch (accounting apps,
-etc.) — not the hotel.
+etc.) - not the hotel.
 
 Forgot the password?
 
@@ -132,10 +132,10 @@ in `sites/<site>/private/backups`) and **stops if the backup fails**. Then:
 
 - **Build installs** rebuild the image from the branch recorded in
   `/opt/kamra/apps.json` (fetching the latest Kamra code). Pin a release
-  with `sudo KAMRA_BRANCH=v2.6.4 /opt/kamra/install.sh update`. 10–30
+  with `sudo KAMRA_BRANCH=v2.6.4 /opt/kamra/install.sh update`. 10-30
   minutes; the site stays up until the containers are recreated.
 - **Pull installs** pull the newest `:stable`, pin the release it resolves
-  to, and recreate — a few minutes. Move to a specific release with
+  to, and recreate - a few minutes. Move to a specific release with
   `sudo KAMRA_TAG=v2.6.16 /opt/kamra/install.sh update`.
 
 Either way it then runs `bench migrate` on every site.

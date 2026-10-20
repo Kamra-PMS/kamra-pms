@@ -6,7 +6,7 @@
 // While the /book shots are taken, the two villa properties are switched
 // off the booking engine so /book shows the hotel; they are switched back on
 // at the end.
-import { session, api, open, shot, gif, typeSlow, done, PROPERTY } from "./lib.mjs"
+import { session, api, open, shot, gif, typeSlow, done } from "./lib.mjs"
 
 const VILLAS = ["Kamra Beach Homestay", "Kamra Lakeside Villa"]
 const day = (n) => new Date(Date.now() + n * 864e5).toISOString().slice(0, 10)

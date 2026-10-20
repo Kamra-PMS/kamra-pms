@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { Check, KeyRound, Minus, Search, UserPlus } from "lucide-react"
+import { KeyRound, Search, UserPlus } from "lucide-react"
 
 import { Badge } from "../../components/ui/badge"
 import { Button } from "../../components/ui/button"
@@ -421,82 +421,6 @@ function StaffSheet({
         )}
       </div>
     </Sheet>
-  )
-}
-
-// --- Roles matrix ------------------------------------------------------------
-
-const MATRIX_ROLES = [
-  "Hotel Admin", "Front Desk", "Revenue Manager", "Finance", "Night Auditor",
-  "Housekeeping Supervisor", "Housekeeping",
-]
-
-function Cell({ on }: { on: boolean }) {
-  return (
-    <td className="px-3 py-2 text-center">
-      {on ? (
-        <Check className="mx-auto size-4 text-brand-600" aria-label="yes" />
-      ) : (
-        <Minus className="mx-auto size-4 text-zinc-300" aria-label="no" />
-      )}
-    </td>
-  )
-}
-
-function Matrix({ title, rows }: { title: string; rows: { label: string; on: (role: string) => boolean }[] }) {
-  const { t } = useT()
-  return (
-    <Card className="overflow-x-auto">
-      <table className="w-full min-w-[640px] text-sm">
-        <thead>
-          <tr className="border-b border-zinc-200 bg-zinc-50/60 text-xs text-zinc-500">
-            <th className="px-4 py-2.5 text-start font-medium">{t(title)}</th>
-            {MATRIX_ROLES.map((r) => (
-              <th key={r} className="px-3 py-2.5 text-center font-medium">{t(r)}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-zinc-100">
-          {rows.map((row) => (
-            <tr key={row.label}>
-              <td className="px-4 py-2 font-medium text-zinc-800">{t(row.label)}</td>
-              {MATRIX_ROLES.map((r) => <Cell key={r} on={row.on(r)} />)}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </Card>
-  )
-}
-
-export function RolesPage({ modules }: { modules: SettingsModule[] }) {
-  const { t } = useT()
-  const opens = (appRoles: string[], role: string) =>
-    ADMIN_ROLES.includes(role) || appRoles.includes(role) ||
-    (role === "Housekeeping Supervisor" && appRoles.includes("Housekeeping"))
-  const adminOnly = (role: string) => role === "Hotel Admin"
-  return (
-    <div className="space-y-6">
-      <p className="max-w-3xl text-sm text-zinc-600">
-        {t("Roles are fixed bundles. Every screen, API call and AI tool checks them on the server, so this is what is enforced. Hotel Admin can do everything below; IT (System Manager) also manages developer keys and new properties.")}
-      </p>
-      <Matrix
-        title="Opens the app"
-        rows={APPS.map((a) => ({ label: a.name, on: (r) => opens(a.roles, r) }))}
-      />
-      <Matrix
-        title="Changes the settings"
-        rows={[
-          ...modules.map((m) => ({
-            label: m.title,
-            on: (r: string) => adminOnly(r) || m.editors.includes(r),
-          })),
-          { label: "Staff & access", on: adminOnly },
-          { label: "Modules on/off", on: adminOnly },
-          { label: "Payments & AI keys", on: adminOnly },
-        ]}
-      />
-    </div>
   )
 }
 

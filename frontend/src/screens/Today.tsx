@@ -8,7 +8,7 @@ import {
   ListChecks,
   PieChart,
 } from "lucide-react"
-import { Link, useNavigate, useOutletContext } from "react-router-dom"
+import { Link, useNavigate, useLocation, useOutletContext } from "react-router-dom"
 import {
   call,
   getCurrentProperty,
@@ -36,7 +36,7 @@ import BookingRequests from "../components/BookingRequests"
 import { serverError } from "../lib/resource"
 import { cur, moneyLocale } from "../lib/money"
 import { useT } from "../lib/i18n"
-import { useCreditCheckout } from "../components/CreditCheckout"
+import CheckOutDialog from "../components/CheckOutDialog"
 
 const HK_CYCLE: RoomRow["housekeeping_status"][] = [
   "Dirty",
@@ -328,7 +328,12 @@ export default function Today() {
     return () => clearInterval(t)
   }, [refresh, refreshKey])
 
-  const credit = useCreditCheckout(() => void refresh())
+  const location = useLocation()
+  const [checkingOut, setCheckingOut] = useState<string | null>(null)
+  useEffect(() => {
+    const res = (location.state as { checkout?: string } | null)?.checkout
+    if (res) setCheckingOut(res)
+  }, [location.state])
 
   async function act(key: string, fn: () => Promise<unknown>) {
     setBusy(key)
@@ -353,7 +358,9 @@ export default function Today() {
   const inhouseN = snap?.in_house.length ?? 0
   const roomsN = snap?.rooms.length ?? 0
   const revenue = Number(kpi?.revenue_today ?? 0)
-  const revpar = Number(kpi?.statistics?.revpar ?? 0)
+  // Today's RevPAR (room revenue / rooms). MTD lives on statistics.revpar.
+  const revpar = Number(kpi?.revpar ?? kpi?.statistics?.revpar ?? 0)
+  const roomRevenueToday = Number(kpi?.room_revenue_today ?? 0)
   const tasksN = Number(kpi?.housekeeping?.open_tasks ?? 0)
   const overdueN = Number(kpi?.housekeeping?.overdue_tasks ?? 0)
   const allRooms = snap?.rooms ?? []
@@ -435,7 +442,6 @@ export default function Today() {
 
   return (
     <div>
-      {credit.dialog}
       <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold text-zinc-900">
@@ -490,14 +496,28 @@ export default function Today() {
           icon={<Wallet className="size-4" />}
           label={t("Revenue")}
           value={`${cur()}${inr0(revenue)}`}
-          sub={t("RevPAR {amount}", { amount: `${cur()}${inr0(revpar)}` })}
+          sub={
+            roomRevenueToday > 0 || revpar > 0
+              ? t("RevPAR {amount} · room {room}", {
+                  amount: `${cur()}${inr0(revpar)}`,
+                  room: `${cur()}${inr0(roomRevenueToday)}`,
+                })
+              : t("RevPAR {amount} · no room charges posted today", {
+                  amount: `${cur()}${inr0(revpar)}`,
+                })
+          }
           spark={mkTrend(revenue)}
         />
         <StatCard
           icon={<ListChecks className="size-4" />}
           label={t("Open tasks")}
           value={tasksN}
-          sub={overdueN ? t("{n} overdue", { n: overdueN }) : undefined}
+          sub={
+            overdueN
+              ? t("{n} overdue · Housekeeping", { n: overdueN })
+              : t("Housekeeping")
+          }
+          to={"/housekeeping"}
         />
       </div>
 
@@ -538,7 +558,7 @@ export default function Today() {
                   <Button
                     variant="outline"
                     disabled={busy === row.name}
-                    onClick={() => act(row.name, () => credit.start(row.name))}
+                    onClick={() => setCheckingOut(row.name)}
                   >
                     {t("Check out")}
                   </Button>
@@ -644,6 +664,17 @@ export default function Today() {
           </Card>
         </div>
       </div>
+      {checkingOut && (
+        <CheckOutDialog
+          reservation={checkingOut}
+          onClose={() => setCheckingOut(null)}
+          onDone={() => {
+            setCheckingOut(null)
+            void refresh()
+          }}
+          onOpenReservation={(name) => setCheckingOut(name)}
+        />
+      )}
       {checkingIn && (
         <CheckInDialog
           reservation={checkingIn}

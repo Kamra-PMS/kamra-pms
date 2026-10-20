@@ -13,7 +13,6 @@ async function add(doc) {
   return d
 }
 const card = () => page.locator("div.rounded-xl.border.bg-white.shadow-sm").first()
-const sheet = () => page.locator('[role="dialog"] > div.shadow-2xl')
 async function openRow(text) {
   await page.getByRole("cell", { name: text, exact: true }).first().click()
   await page.waitForTimeout(900)

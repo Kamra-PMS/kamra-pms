@@ -1,4 +1,4 @@
-# Night audit — End of Day
+# Night audit - End of Day
 
 The night audit closes the hotel's business date. It posts the night's
 room charges for every in-house guest, applies the no-show policy, saves
@@ -50,7 +50,7 @@ each step.
 | 1 | Prepare End of Day | Read the pre-checks. |
 | 2 | Arrivals not checked in | **Check in**, **Mark no-show**, or Continue. Each row shows what the no-show policy will do with it. |
 | 3 | Departures not checked out | **Check out**, **Extend stay**, or **Quick check out** every zero-balance departure at once. Blocks by default. |
-| 4 | Open folios and high balances | In-house folios owing more than the threshold, balances left on departed stays, companies over their credit limit, and companies with overdue bills (past the due date, by 1–30 / 31–60 / 61–90 / 90+ days). |
+| 4 | Open folios and high balances | In-house folios owing more than the threshold, balances left on departed stays, companies over their credit limit. |
 | 5 | Outlets and room postings | Open restaurant bills (blocks by default), and every outlet bill posted to a room today, so a wrong-room posting stands out. |
 | 6 | Rate check | Room nights posted away from the booked rate, and zero-rate or complimentary rooms. |
 | 7 | Room status | Rooms where the front office and the room board disagree, and vacant rooms. |

@@ -26,6 +26,7 @@ def execute():
 			                        "Kamra Beach House is barefoot luxury on the Gokarna coast.",
 			"hero_image": "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=1600",
 			"property_amenities": "Sea view, Cafe, Free WiFi, Hammocks",
+			"petty_cash_float": 3000,
 		}).insert(ignore_permissions=True)
 		print(f"created property: {P2}")
 
@@ -53,6 +54,17 @@ def execute():
 			"is_default": 1,
 		}).insert(ignore_permissions=True)
 		print("room types, rooms, meal plan seeded")
+
+	if frappe.db.exists("Property", P2):
+		cur = frappe.db.get_value("Property", P2, "petty_cash_float")
+		if cur in (None, "", 0, 0.0):
+			frappe.db.set_value("Property", P2, "petty_cash_float", 3000,
+			                    update_modified=False)
+	if frappe.db.exists("Property", P1):
+		cur = frappe.db.get_value("Property", P1, "petty_cash_float")
+		if cur in (None, "", 0, 0.0):
+			frappe.db.set_value("Property", P1, "petty_cash_float", 10000,
+			                    update_modified=False)
 
 	# Ravi (front desk) works only at the Palace
 	if not frappe.db.exists(

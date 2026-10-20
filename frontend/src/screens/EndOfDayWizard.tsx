@@ -23,6 +23,7 @@ import {
 } from "lucide-react"
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom"
 import { call } from "../lib/api"
+import CheckOutDialog from "../components/CheckOutDialog"
 import { useCreditCheckout } from "../components/CreditCheckout"
 import {
   eodAcknowledge,
@@ -420,6 +421,7 @@ export default function EndOfDayWizard() {
   // check-out from the departures step runs company credit control the
   // same way the Today screen does (warning / override dialog)
   const credit = useCreditCheckout(() => void load(active))
+  const [checkingOut, setCheckingOut] = useState<string | null>(null)
 
   async function act(label: string, fn: () => Promise<unknown>, reload = true) {
     setBusy(label)
@@ -594,7 +596,7 @@ export default function EndOfDayWizard() {
             state.ran ? null : (
               <div className="flex justify-end gap-1">
                 <Button variant="outline" className="h-7 px-2 text-xs" disabled={!!busy}
-                  onClick={() => act("checkout", () => credit.start(String(r.reservation)))}>
+                  onClick={() => setCheckingOut(String(r.reservation))}>
                   {t("Check out")}
                 </Button>
                 <Button variant="ghost" className="h-7 px-2 text-xs"
@@ -890,6 +892,17 @@ export default function EndOfDayWizard() {
   return (
     <div className="space-y-4">
       {credit.dialog}
+      {checkingOut && (
+        <CheckOutDialog
+          reservation={checkingOut}
+          onClose={() => setCheckingOut(null)}
+          onDone={() => {
+            setCheckingOut(null)
+            void load(active)
+          }}
+          onOpenReservation={(name) => setCheckingOut(name)}
+        />
+      )}
       <div className="flex flex-wrap items-center justify-between gap-2 print:hidden">
         <div>
           <Link to="/end-of-day" className="inline-flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-800">
