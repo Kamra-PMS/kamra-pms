@@ -8978,6 +8978,69 @@ def t355():
 	assert frappe.db.get_value("Reservation", res.name, "room_charges_allowed") == 1
 
 
+# Every endpoint the tape chart's stay panel (and its drag-to-move / drag-to-
+# resize confirm steps) calls. The screen once offered no visible action on a
+# bar; this keeps the endpoints behind its buttons callable by the desk.
+TAPE_PANEL_ENDPOINTS = (
+	"kamra.api.tape_chart", "kamra.api.tape_chart_hourly",
+	"kamra.api.movable_rooms", "kamra.api.room_move_preview",
+	"kamra.api.move_reservation", "kamra.api.amend_stay_preview",
+	"kamra.api.amend_stay", "kamra.api.set_stay_times",
+	"kamra.checkin.checkin_flow", "kamra.api.checkout_context",
+)
+
+
+@check("tape chart stay panel: its endpoints are whitelisted for the desk, and move / change dates round-trip with the price confirmed")
+def t356():
+	import os
+	import re
+
+	from kamra import api
+
+	endpoints = set(TAPE_PANEL_ENDPOINTS)
+	# the screen's own calls, read from the source when the app ships it
+	root = os.path.dirname(frappe.get_app_path("kamra"))
+	for rel in ("frontend/src/screens/TapeChart.tsx",
+	            "frontend/src/components/RoomChangeDialog.tsx"):
+		path = os.path.join(root, rel)
+		if os.path.exists(path):
+			with open(path, encoding="utf-8") as f:
+				endpoints |= set(re.findall(r"[\"'](kamra\.[a-z_]+\.[a-z_]+)[\"']", f.read()))
+	fns = {ep: frappe.get_attr(ep) for ep in sorted(endpoints)}  # imports = registers
+	whitelisted = {f"{w.__module__}.{w.__name__}" for w in frappe.whitelisted}
+	for ep, fn in fns.items():
+		assert f"{fn.__module__}.{fn.__name__}" in whitelisted, f"{ep} is not whitelisted"
+		roles = getattr(fn, "_kamra_roles", None)
+		assert roles is None or "Front Desk" in roles, f"{ep}: desk cannot call it ({roles})"
+
+	room_a = _ci_room("G356A")
+	room_b = _ci_room("G356B")
+	g = _guest("Eval Tape Panel", "+91 70035 60001")
+	ci_d, co_d = add_days(nowdate(), 3), add_days(nowdate(), 5)
+	res = _res(g, ci_d, co_d, room=room_a)
+	with _as_user(FD):
+		tape = api.tape_chart(P, start_date=nowdate(), days=14)
+		bar = next((b for r in tape["rooms"] if r["name"] == room_a
+		            for b in r["bookings"] if b["name"] == res.name), None)
+		assert bar, "the stay is not on the tape chart"
+		for k in ("room", "status", "check_in_date", "check_out_date", "is_day_use"):
+			assert k in bar, f"tape bar lacks {k}"
+		movable = {r["name"]: r for r in api.movable_rooms(res.name)}
+		assert movable[room_b]["free"] and movable[room_a]["current"], movable.get(room_b)
+		pv = api.room_move_preview(res.name, room_b)
+		for k in ("current_amount", "new_amount", "difference", "needs_confirmation", "in_house"):
+			assert k in pv, f"room_move_preview lacks {k}"
+		api.move_reservation(res.name, room_b, reason="Guest request",
+		                     confirm_price=1 if pv["needs_confirmation"] else 0)
+		assert frappe.db.get_value("Reservation", res.name, "room") == room_b
+		new_co = add_days(co_d, 1)
+		dv = api.amend_stay_preview(res.name, ci_d, new_co)
+		assert dv["new_amount"] > dv["current_amount"], dv
+		api.amend_stay(res.name, ci_d, new_co,
+		               confirm_price=1 if dv["needs_confirmation"] else 0)
+	assert str(frappe.db.get_value("Reservation", res.name, "check_out_date")) == str(new_co)
+
+
 def execute():
 	global RT, ROOM
 	# frappe.locale.get_locale_value crashes (UnboundLocalError) when no
@@ -9013,7 +9076,7 @@ def execute():
 		           t320, t321, t322, t323, t324, t325, t326, t327, t328, t310, t311, t312, t313,
 		           t314, t315, t316, t317, t318, t330, t331, t332, t333, t334, t335, t336,
 		           t225, t226, t227, t228, t229, t230, t340, t341, t342, t343, t344,
-		           t350, t351, t352, t353, t354, t355):
+		           t350, t351, t352, t353, t354, t355, t356):
 			fn()
 	finally:
 		frappe.flags.kamra_checkin_steps_off = False
