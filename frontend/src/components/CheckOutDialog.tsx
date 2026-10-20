@@ -28,7 +28,9 @@ import TillCard, { type TillState } from "./TillCard"
    action, and check_out stays the only write that departs the guest.
    The invoice comes after check-out on purpose: check-out may still post
    the last night and move the company's share to the city ledger, and a
-   folio invoiced before that is frozen and stops the check-out. */
+   folio invoiced before that is frozen and stops the check-out. When the
+   till is already open, Check out closes ready folios automatically;
+   Finish will not dismiss while an invoice is still owed. */
 
 interface ChargeLine {
   name: string
@@ -494,6 +496,30 @@ export default function CheckOutDialog(props: {
     })
   }
 
+  /** Open charge-bearing folios ready to close (zero balance, not group). */
+  function readyToInvoice(c: CheckoutContext | null | undefined) {
+    if (!c) return [] as FolioRow[]
+    return c.folios.filter((f) =>
+      f.side !== "group" && f.status === "Open" && f.has_charges && Math.abs(f.balance) <= EPS)
+  }
+
+  async function invoice(folios: string[]): Promise<boolean> {
+    setBusy(true)
+    setError(null)
+    try {
+      if (ctx?.pin_required) await ensureUnlocked()
+      for (const f of folios) await call("kamra.api.close_folio", { folio: f })
+      await load()
+      return true
+    } catch (e) {
+      setError(serverError(e))
+      await load()
+      return false
+    } finally {
+      setBusy(false)
+    }
+  }
+
   async function doCheckOut() {
     setBusy(true)
     setError(null)
@@ -507,7 +533,19 @@ export default function CheckOutDialog(props: {
           .flatMap((w) => w.reasons.map((r) => `${w.company}: ${r}`)),
       )
       setCheckedOut(true)
-      await load()
+      const fresh = await load()
+      // Issue invoices in the same beat when the till is already open —
+      // Finish used to dismiss with folios still Open and no INV-.
+      try {
+        const ready = readyToInvoice(fresh)
+        if (fresh?.till.open && ready.length) {
+          if (fresh.pin_required) await ensureUnlocked()
+          for (const f of ready) await call("kamra.api.close_folio", { folio: f.folio })
+          await load()
+        }
+      } catch (invErr) {
+        setError(serverError(invErr))
+      }
     } catch (e) {
       const msg = serverError(e)
       setError(msg.replace(/^CREDIT_BLOCKED:\s*/, ""))
@@ -518,13 +556,24 @@ export default function CheckOutDialog(props: {
     }
   }
 
-  function invoice(folios: string[]) {
-    return run(async () => {
-      for (const f of folios) await call("kamra.api.close_folio", { folio: f })
-    })
+  const readyInvoices = readyToInvoice(ctx)
+  const invoicesPending = checkedOut && readyInvoices.length > 0
+  const tillBlocksInvoice = Boolean(invoicesPending && ctx && !ctx.till.open)
+
+  async function finishCheckout() {
+    if (tillBlocksInvoice) {
+      setError(t("Open your till above to issue the invoice."))
+      flow.goTo("invoice")
+      return
+    }
+    if (invoicesPending) {
+      const ok = await invoice(readyInvoices.map((f) => f.folio))
+      if (!ok) return
+    }
+    props.onDone()
   }
 
-  const close = checkedOut ? props.onDone : props.onClose
+  const close = checkedOut ? () => void finishCheckout() : props.onClose
   const r = ctx?.reservation
 
   // ---- footer: what Continue means on each step ----------------------
@@ -556,9 +605,11 @@ export default function CheckOutDialog(props: {
     }
   }
   if (current === "invoice") {
-    continueLabel = t("Finish")
-    continueDisabled = !checkedOut
-    onContinue = props.onDone
+    continueLabel = invoicesPending ? t("Generate invoices & finish") : t("Finish")
+    continueDisabled = !checkedOut || tillBlocksInvoice
+    onContinue = () => void finishCheckout()
+    if (tillBlocksInvoice)
+      disabledReason = t("Open your till above to issue the invoice.")
   }
 
   const footer = (
@@ -1105,10 +1156,9 @@ export default function CheckOutDialog(props: {
               )}
               {checkedOut && (() => {
                 const own = ctx.folios.filter((f) => f.side !== "group")
-                const ready = own.filter((f) => f.status === "Open" && f.has_charges && Math.abs(f.balance) <= EPS)
                 return (
                   <>
-                  {ready.length > 0 && (
+                  {readyInvoices.length > 0 && (
                     <TillCard till={ctx.till} onOpened={() => void load()}
                       purpose={t("to issue the invoice")} />
                   )}
@@ -1143,8 +1193,9 @@ export default function CheckOutDialog(props: {
                         </li>
                       ))}
                     </ul>
-                    {ready.length > 1 && (
-                      <Button className="mt-3" disabled={busy || !ctx.till.open} onClick={() => void invoice(ready.map((f) => f.folio))}>
+                    {readyInvoices.length > 1 && (
+                      <Button className="mt-3" disabled={busy || !ctx.till.open}
+                        onClick={() => void invoice(readyInvoices.map((f) => f.folio))}>
                         {t("Generate all invoices")}
                       </Button>
                     )}
