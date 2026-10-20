@@ -37,6 +37,46 @@ upgrade-breaking changes (removed doctypes / API contracts).
   keeping every manifest the kept tags reference (part of
   [#228](https://github.com/Kamra-PMS/kamra-pms/issues/228))
 
+## [2.6.17](https://github.com/Kamra-PMS/kamra-pms/compare/v2.6.16...v2.6.17) (2026-10-20)
+
+
+### Features
+
+* **credit:** payment terms, due-date aging and company credit control ([#238](https://github.com/Kamra-PMS/kamra-pms/issues/238) phase 1) ([#240](https://github.com/Kamra-PMS/kamra-pms/issues/240)) ([c948efe](https://github.com/Kamra-PMS/kamra-pms/commit/c948efef1392d1462902b56d66b2488aaf09b29e))
+* **deploy:** prebuilt-image pull mode, :stable tag, quickstart compose, GHCR retention ([#241](https://github.com/Kamra-PMS/kamra-pms/issues/241)) ([bb632e4](https://github.com/Kamra-PMS/kamra-pms/commit/bb632e45164447ecdfa500bee50451130fc48348))
+* **fnb:** auto-accept and print KOT as an F&B setting ([972a25c](https://github.com/Kamra-PMS/kamra-pms/commit/972a25c27e38213f8b903665a3e9475e09c896d0))
+* **fnb:** auto-accept and print KOT as an F&B setting ([ebc6186](https://github.com/Kamra-PMS/kamra-pms/commit/ebc61865c84bcc402b0833d7456a3db7afb02403))
+* **fnb:** kitchen printers - route KOTs by outlet and station ([52291dc](https://github.com/Kamra-PMS/kamra-pms/commit/52291dc09efb862b09c27b9510cea1a6c601cea0))
+* **fnb:** kitchen printers - route KOTs by outlet and station ([f4c4829](https://github.com/Kamra-PMS/kamra-pms/commit/f4c482920706374fe4945a5c9867b1ecab253a30))
+* **golive:** companies, opening balances and reconciliation for go-live ([#231](https://github.com/Kamra-PMS/kamra-pms/issues/231)) ([0580927](https://github.com/Kamra-PMS/kamra-pms/commit/0580927715503350c7ee3412b7640428cf9b766c))
+* outbound webhooks, external POS room-charge API, door-lock adapter interface, integrations docs ([#230](https://github.com/Kamra-PMS/kamra-pms/issues/230)) ([71e4c81](https://github.com/Kamra-PMS/kamra-pms/commit/71e4c8146f3bb540a38a5f2e9ef94b3842cf91fd))
+
+
+### Bug Fixes
+
+* **authz:** scope Property Setting to the user's properties ([#232](https://github.com/Kamra-PMS/kamra-pms/issues/232)) ([b405f2f](https://github.com/Kamra-PMS/kamra-pms/commit/b405f2f9707abe01777253ca4fc88b707290ed91))
+* banquets, revenue and booking-engine gaps found in the docs pass ([04d472a](https://github.com/Kamra-PMS/kamra-pms/commit/04d472ab9213a1dba4fa7dffce13b9d0476a594f))
+* banquets, revenue and booking-engine server gaps ([2f65c83](https://github.com/Kamra-PMS/kamra-pms/commit/2f65c8385bbf969ba2c62709c5812f24ccafc385))
+* **billing:** concurrency-safe EOD/cashier loads, pack tax labels, ledger check, export codes ([317b340](https://github.com/Kamra-PMS/kamra-pms/commit/317b3409c1f36c509348b7303a30cbc0ddd1a282))
+* **billing:** EOD/cashier load race, pack tax labels, ledger check, export codes, voids report ([e906812](https://github.com/Kamra-PMS/kamra-pms/commit/e9068125046b2869328a155ca20bc3605fa749cf))
+* **booking-engine:** the page slug hint names the links that work ([48a2142](https://github.com/Kamra-PMS/kamra-pms/commit/48a21423bb26dd4191b1b261f32ee94128e9f9d4))
+* **fnb:** a duplicate printer name says so instead of a database error ([f6d0e97](https://github.com/Kamra-PMS/kamra-pms/commit/f6d0e97cff85d348518a2d06b0af14a8d7f2e934))
+* **front-desk:** no check-in into an occupied room; honest quote, balance and labels ([32539c2](https://github.com/Kamra-PMS/kamra-pms/commit/32539c2ae40dcc79133be3cc59ceb43e8c39cebc))
+* **front-desk:** no check-in into an occupied room; honest quote, balance and labels ([6db6138](https://github.com/Kamra-PMS/kamra-pms/commit/6db6138c23046b28fbc8471c1a3f4a0004430d4c))
+* **housekeeping:** inspections, assignment, stay instructions and ops consistency ([e8e3479](https://github.com/Kamra-PMS/kamra-pms/commit/e8e3479eb31ae231430fde4708ad41db65a997e0))
+* **housekeeping:** inspections, assignment, stay instructions and ops consistency ([879ade7](https://github.com/Kamra-PMS/kamra-pms/commit/879ade7ec623ceebc89ea464892dbeca2d077660))
+* **pos:** reopen the till on the outlet it used last ([80ef8ea](https://github.com/Kamra-PMS/kamra-pms/commit/80ef8ea39755f14ab814c6123a3454cf8e82f8da))
+* **printing:** annotate the background jobs' commits for the marketplace audit ([b62b7ae](https://github.com/Kamra-PMS/kamra-pms/commit/b62b7ae1282dc490947c9bab0da64e468f0aab7e))
+* **printing:** annotate the print-station ping like the other change pings ([15ae4bb](https://github.com/Kamra-PMS/kamra-pms/commit/15ae4bb8c700735c1b3afa187b0c87bda40d2a66))
+* **reports:** count unposted nights stay by stay ([d39cf3b](https://github.com/Kamra-PMS/kamra-pms/commit/d39cf3bd8c4f6b86bd296aa6e515c79b2a688bb9))
+* **ui:** property chooser, function group link and reopen, rate plan picker ([68200f9](https://github.com/Kamra-PMS/kamra-pms/commit/68200f92fbca06947e1b3300421cc305079ea050))
+
+
+### Performance Improvements
+
+* **fnb:** faster KOT send, live kitchen display, speed check ([f13095c](https://github.com/Kamra-PMS/kamra-pms/commit/f13095cdf052d5bf3d495b5b96d8a88bc4be75a9))
+* **fnb:** faster send, live kitchen display, silent-print tip, speed check ([5b217c4](https://github.com/Kamra-PMS/kamra-pms/commit/5b217c48567076fdb1ac01733124f43dbe8edcfe))
+
 ## [2.6.16](https://github.com/Kamra-PMS/kamra-pms/compare/v2.6.15...v2.6.16) (2026-10-19)
 
 
