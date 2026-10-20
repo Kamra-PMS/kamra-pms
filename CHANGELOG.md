@@ -25,17 +25,63 @@ upgrade-breaking changes (removed doctypes / API contracts).
 * **banquet:** Phase 1 enterprise ops (issue #67) — email/WhatsApp send
   quotation, desk-led guest response, department checklists + notify on
   Confirm (Sales/Finance/HK/F&B), and quote no-response chase reminders
-* **deploy:** prebuilt-image install path — `install.sh` can pull
-  `ghcr.io/kamra-pms/kamra` (`KAMRA_PULL=1` / `KAMRA_TAG=…`), resolve
-  `:stable` to the concrete `vX.Y.Z` and pin it; building on the server
-  stays the default while the package is private (a refused pull falls
-  back to building). `install.sh update` now always takes
-  `bench backup --with-files` first and aborts if it fails. Releases also
-  publish `:stable` (moved only by the newest release);
-  `deploy/compose/quickstart.yaml` runs the image locally for evaluation;
-  a weekly `ghcr-retention` workflow prunes old image versions while
-  keeping every manifest the kept tags reference (part of
-  [#228](https://github.com/Kamra-PMS/kamra-pms/issues/228))
+
+## [2.6.17](https://github.com/Kamra-PMS/kamra-pms/compare/v2.6.16...v2.6.17) (2026-10-20)
+
+**Upgrading:** run `bench migrate`. It adds the kitchen printer doctypes and
+new fields, and runs three data patches (outlet KOT mode, company credit
+days, city ledger due dates).
+
+### Features
+
+* **F&B:** auto-accept and print KOTs is now an F&B setting, and each outlet
+  can follow it, always auto-accept, or wait for the kitchen to press Start
+  ([#226](https://github.com/Kamra-PMS/kamra-pms/pull/226))
+* **F&B:** kitchen printers on the local network. Route KOTs by outlet and
+  station to a print station (a kitchen display that prints) or straight to
+  a thermal printer's IP. Several restaurants can feed one kitchen; void
+  slips, reprint and a fallback printer are included
+  ([#229](https://github.com/Kamra-PMS/kamra-pms/pull/229))
+* **credit:** payment terms, due-date aging and credit limits for companies
+  ([#240](https://github.com/Kamra-PMS/kamra-pms/pull/240))
+* **go-live:** load companies and opening balances, then reconcile them
+  before the first night ([#231](https://github.com/Kamra-PMS/kamra-pms/pull/231))
+* **integrations:** outbound webhooks, a room-charge API for outside POS
+  systems, and a door-lock adapter interface
+  ([#230](https://github.com/Kamra-PMS/kamra-pms/pull/230))
+* **deploy:** `install.sh` can pull a prebuilt image and pin `:stable` to the
+  release; `install.sh update` always backs up first; a quickstart compose
+  file runs Kamra locally for evaluation ([#241](https://github.com/Kamra-PMS/kamra-pms/pull/241))
+* **docs:** a guide for every module, with screenshots and short GIFs
+  ([#233](https://github.com/Kamra-PMS/kamra-pms/pull/233))
+
+### Performance
+
+* **F&B:** sending an order is one request instead of four, tickets reach the
+  kitchen display at once instead of after up to 15 seconds, and Settings →
+  F&B has a speed check that tells you whether the server is the slow part
+  ([#227](https://github.com/Kamra-PMS/kamra-pms/pull/227))
+
+### Bug Fixes
+
+* **security:** Property Settings are limited to the user's own properties
+  ([#232](https://github.com/Kamra-PMS/kamra-pms/pull/232))
+* **front desk:** no check-in into an occupied room; quotes show the
+  cancellation terms; departure balances and labels are correct
+  ([#234](https://github.com/Kamra-PMS/kamra-pms/pull/234))
+* **housekeeping:** inspections, assigning rooms, the Ready state, stay
+  instructions and SLA counts all work as documented
+  ([#235](https://github.com/Kamra-PMS/kamra-pms/pull/235))
+* **billing:** End of Day and cashier screens no longer race each other; the
+  ledger check compares ledgers with folios; new Voids & Allowances report
+  ([#236](https://github.com/Kamra-PMS/kamra-pms/pull/236))
+* **revenue and booking engine:** `/book` lets guests choose a property;
+  negotiated rate plans, reopening a closed function, and budget vs actual
+  work; unposted nights are counted stay by stay
+  ([#237](https://github.com/Kamra-PMS/kamra-pms/pull/237))
+* **POS:** the till reopens on the outlet it used last, and a duplicate
+  printer name gives a clear message
+
 
 ## [2.6.16](https://github.com/Kamra-PMS/kamra-pms/compare/v2.6.15...v2.6.16) (2026-10-19)
 
