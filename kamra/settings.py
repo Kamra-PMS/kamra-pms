@@ -385,6 +385,8 @@ MODULES: tuple[Module, ...] = (
 				S("pin_max_attempts", "Lock a PIN after", "number", 5, min=3, max=10, unit="wrong tries"),
 				S("pin_lock_minutes", "Lock for / stay unlocked for", "number", 15, min=1, max=240, unit="min"),
 				S("max_cash_refund", "Cash refund limit for new cashiers", "number", 5000, min=0),
+				S("till_variance_tolerance", "Till variance that needs a manager", "number", 0, min=0,
+				  hint="A till closed over or short by more than this is flagged for a manager to review. 0 turns the check off."),
 			)),
 		),
 	),

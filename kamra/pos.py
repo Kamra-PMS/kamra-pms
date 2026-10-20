@@ -1032,7 +1032,7 @@ def pay_order(order: str, mode: str, pin: str | None = None):
 	from kamra.cashier import record_cashier_txn, require_open_session
 	sess = None
 	try:
-		sess = require_open_session(prop)
+		sess = require_open_session(prop, doc.outlet)
 	except Exception:
 		if "Kamra Agent" not in frappe.get_roles() and \
 		   frappe.session.user != "Administrator":

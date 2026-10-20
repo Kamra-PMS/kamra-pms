@@ -1,0 +1,142 @@
+{
+ "actions": [],
+ "autoname": "format:{property}-{terminal_name}",
+ "creation": "2026-10-20 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "property",
+  "terminal_name",
+  "kind",
+  "outlet",
+  "bill_printer",
+  "column_break_a",
+  "default_float",
+  "disabled"
+ ],
+ "fields": [
+  {
+   "fieldname": "property",
+   "fieldtype": "Link",
+   "label": "Property",
+   "options": "Property",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "terminal_name",
+   "fieldtype": "Data",
+   "label": "Terminal Name",
+   "reqd": 1,
+   "in_list_view": 1,
+   "description": "What staff call this till, e.g. Lobby, Bar 1, Pool Bar."
+  },
+  {
+   "fieldname": "kind",
+   "fieldtype": "Select",
+   "label": "Kind",
+   "options": "Front Desk\nRestaurant\nBar\nSpa\nCash Office\nOther",
+   "default": "Front Desk",
+   "in_list_view": 1,
+   "description": "A Cash Office is the central safe: drops from tills are received here."
+  },
+  {
+   "fieldname": "outlet",
+   "fieldtype": "Link",
+   "label": "POS Outlet",
+   "options": "POS Outlet",
+   "description": "Optional. Cash taken at this till is reported against this outlet."
+  },
+  {
+   "fieldname": "column_break_a",
+   "fieldtype": "Column Break",
+   "label": "Column Break A"
+  },
+  {
+   "fieldname": "default_float",
+   "fieldtype": "Currency",
+   "label": "Default Opening Float"
+  },
+  {
+   "fieldname": "disabled",
+   "fieldtype": "Check",
+   "label": "Disabled",
+   "default": "0"
+  },
+  {
+   "fieldname": "bill_printer",
+   "fieldtype": "Link",
+   "label": "Bill Printer",
+   "options": "Kitchen Printer",
+   "description": "Where bills and receipts raised at this till print. Empty: the till prints from its own device. KOT printing is not set here: it follows each printer's outlet and station routes."
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-10-20 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kamra",
+ "name": "Cashier Terminal",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Hotel Admin",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Finance",
+   "write": 1
+  },
+  {
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Front Desk"
+  },
+  {
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Kamra Agent"
+  },
+  {
+   "read": 1,
+   "report": 1,
+   "print": 1,
+   "role": "Night Auditor"
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "terminal_name",
+ "track_changes": 1
+}

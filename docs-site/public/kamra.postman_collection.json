@@ -6705,6 +6705,43 @@
    "name": "Kitchen printers (routing, print stations, print queue)",
    "item": [
     {
+     "name": "print_bill",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.printing.print_bill",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.printing.print_bill"
+       ]
+      },
+      "description": "Send a bill to the station set up to print bills. No bill printer\nconfigured: nothing is queued and the till prints from its own device,\nexactly as before.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"order\": \"ORD-2026-00001\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
      "name": "claim_jobs",
      "request": {
       "method": "POST",
@@ -13798,7 +13835,7 @@
         "kamra.public_api.site_info"
        ]
       },
-      "description": "Public site metadata for the login/boot screen.\n\ndemo_mode is true only on the seeded demo site (seed_demo sets the\n`kamra_demo_mode` default), so a real install never advertises the\ndemo login accounts."
+      "description": "Public site metadata for the login/boot screen.\n\ndemo_mode is true only on the seeded demo site (seed_demo sets the\n`kamra_demo_mode` default), so a real install never advertises the\ndemo login accounts. The running version is public on purpose: it is\nwhat a bug report and the login screen quote."
      }
     },
     {

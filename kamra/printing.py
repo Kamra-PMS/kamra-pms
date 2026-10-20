@@ -46,7 +46,8 @@ KEEP_DAYS = 7
 def _printers(property: str) -> list[dict]:
 	rows = frappe.get_all(
 		"Kitchen Printer", filters={"property": property, "disabled": 0},
-		fields=["name", "printer_name", "connection", "copies", "fallback_printer"])
+		fields=["name", "printer_name", "connection", "copies", "fallback_printer",
+		        "prints_kots", "prints_bills"])
 	if not rows:
 		return []
 	routes = frappe.get_all(
@@ -58,6 +59,9 @@ def _printers(property: str) -> list[dict]:
 		by_printer.setdefault(r.parent, []).append((r.outlet, r.prep_station or ""))
 	for r in rows:
 		r["routes"] = by_printer.get(r.name, [])
+		# a printer saved before the split prints KOTs only, as it always did
+		r["prints_kots"] = 1 if r.get("prints_kots") is None else int(r["prints_kots"])
+		r["prints_bills"] = int(r.get("prints_bills") or 0)
 	return rows
 
 
@@ -70,7 +74,7 @@ def route_kot(doc, rows, ticket: dict, kind: str = "KOT") -> dict:
 	stations. `rows` are the POS Order Item rows just fired (or voided);
 	`ticket` is the till's ticket for the whole round. Returns the jobs and
 	the lines no printer took, which the till prints itself."""
-	printers = _printers(doc.property)
+	printers = [p for p in _printers(doc.property) if p["prints_kots"]]
 	lines = [{"item_name": it.item_name, "qty": it.qty,
 	          "instructions": it.instructions, "menu_item": it.menu_item} for it in rows]
 	if not printers or not lines:
@@ -137,6 +141,49 @@ def void_slip(doc, rows) -> list:
 	          "nc": bool(doc.nc), "customer": doc.customer_name, "address": doc.delivery_address}
 	out = route_kot(doc, rows, ticket, kind="Void")
 	return out["jobs"]
+
+
+def _bill_printer(property: str, outlet: str, terminal: str | None):
+	"""The printer that prints this bill, or None (the till prints it itself).
+	The till's own bill printer wins; else a bill printer routed to the
+	bill's outlet. A KOT-only printer is never picked."""
+	printers = {p["name"]: p for p in _printers(property) if p["prints_bills"]}
+	if terminal:
+		named = frappe.db.get_value("Cashier Terminal", terminal, "bill_printer")
+		if named in printers:
+			return printers[named]
+	for p in printers.values():
+		if any(o == outlet for o, _s in p["routes"]):
+			return p
+	return None
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles(*STATION_ROLES)
+def print_bill(order: str, terminal: str | None = None) -> dict:
+	"""Send a bill to the station set up to print bills. No bill printer
+	configured: nothing is queued and the till prints from its own device,
+	exactly as before."""
+	doc = frappe.get_doc("POS Order", order)
+	assert_property_access(doc.property)
+	if terminal and frappe.db.get_value("Cashier Terminal", terminal, "property") != doc.property:
+		frappe.throw(_("That terminal is not at this property."))
+	if not terminal:
+		# the till this person is working: the one serving the bill's outlet
+		from kamra.cashier import _open_session_names, _pick_session
+		sess = _pick_session(_open_session_names(doc.property, frappe.session.user), doc.outlet)
+		terminal = frappe.db.get_value("Cashier Session", sess, "cashier_terminal") if sess else None
+	printer = _bill_printer(doc.property, doc.outlet, terminal)
+	if not printer:
+		return {"jobs": [], "unrouted": True}
+	from kamra.pos import bill_data
+	ticket = dict(bill_data(order), kind="Bill", at=str(now_datetime()),
+	              outlet=frappe.db.get_value("POS Outlet", doc.outlet, "outlet_name"),
+	              copies=int(printer.get("copies") or 1))
+	job = _queue(doc.property, printer, "Bill", ticket, order=doc.name,
+	             outlet=doc.outlet, kot_no=doc.kot_no)
+	return {"jobs": [{"job": job, "printer": printer["name"],
+	                  "printer_name": printer["printer_name"]}], "unrouted": False}
 
 
 # --- print stations -------------------------------------------------------------
@@ -231,6 +278,8 @@ def escpos(ticket: dict, width_mm: str = "80 mm") -> bytes:
 		out.append(str(text).encode("ascii", "replace") + b"\n")
 
 	kind = ticket.get("kind") or "KOT"
+	if kind == "Bill":
+		return _escpos_bill(ticket, cols, line, out)
 	head = "VOID" if kind == "Void" else ("TEST PAGE" if kind == "Test" else
 	                                      f"KOT {ticket.get('kot_no') or ''}".strip())
 	if kind == "Reprint" or ticket.get("reprint"):
@@ -259,6 +308,40 @@ def escpos(ticket: dict, width_mm: str = "80 mm") -> bytes:
 			line(f"    > {it['instructions']}"[:cols], bold=True)
 	line("-" * cols)
 	out.append(b"\n\n\n" + GS + b"V\x41\x03")  # feed and partial cut
+	return b"".join(out)
+
+
+def _escpos_bill(ticket: dict, cols: int, line, out: list) -> bytes:
+	"""A guest bill as ESC/POS bytes: lines, tax and total."""
+	line(ticket.get("property_name") or "", big=True, bold=True, center=True)
+	line(ticket.get("outlet_name") or ticket.get("outlet") or "", center=True)
+	line("BILL" + (" REPRINT" if ticket.get("reprint") else ""), bold=True, center=True)
+	if ticket.get("order"):
+		line(f"{ticket['order']}  {str(ticket.get('at') or '')[:16]}")
+	if ticket.get("table_no"):
+		line(f"Table {ticket['table_no']}")
+	if ticket.get("room_no"):
+		line(f"Room {ticket['room_no']}")
+	line("-" * cols)
+	for it in ticket.get("items") or []:
+		qty = f"{float(it.get('qty') or 0):g}"
+		amt = f"{float(it.get('amount') or 0):.2f}"
+		name = f"{qty} x {it.get('item_name') or ''}"
+		line(f"{name[:max(cols - len(amt) - 1, 4)]:<{cols - len(amt)}}{amt}")
+	line("-" * cols)
+
+	def money(label, value):
+		v = f"{float(value or 0):.2f}"
+		line(f"{label:<{cols - len(v)}}{v}")
+	money("Subtotal", ticket.get("subtotal"))
+	if float(ticket.get("discount_amount") or 0):
+		money("Discount", -float(ticket["discount_amount"]))
+	for part in ticket.get("tax_parts") or []:
+		money(f"{part['label']} {part['rate']:g}%", part["amount"])
+	money("TOTAL", ticket.get("grand_total"))
+	if ticket.get("nc"):
+		line("NC - NO CHARGE", bold=True, center=True)
+	out.append(b"\n\n\n" + GS + b"V\x41\x03")
 	return b"".join(out)
 
 
@@ -305,7 +388,7 @@ def printers(property: str) -> list:
 	rows = frappe.get_all(
 		"Kitchen Printer", filters={"property": property},
 		fields=["name", "printer_name", "connection", "paper_width", "copies", "ip_address",
-		        "port", "fallback_printer", "disabled", "last_seen", "last_printed", "last_error"],
+		        "port", "fallback_printer", "disabled", "prints_kots", "prints_bills", "last_seen", "last_printed", "last_error"],
 		order_by="printer_name")
 	routes = frappe.get_all(
 		"Kitchen Printer Route", filters={"parent": ["in", [r.name for r in rows] or [""]],
@@ -321,6 +404,8 @@ def printers(property: str) -> list:
 		(property, add_to_date(now_datetime(), days=-1))))
 	cutoff = add_to_date(now_datetime(), seconds=-ONLINE_S)
 	for r in rows:
+		r["prints_kots"] = 1 if r.prints_kots is None else int(r.prints_kots)
+		r["prints_bills"] = int(r.prints_bills or 0)
 		r["routes"] = [{"outlet": x.outlet, "prep_station": x.prep_station or ""}
 		               for x in routes if x.parent == r.name]
 		r["queued"] = queued.get(r.name, 0)
@@ -364,7 +449,12 @@ def save_printer(property: str, printer: dict | str, name: str | None = None) ->
 		"ip_address": (data.get("ip_address") or "").strip() or None,
 		"port": int(data.get("port") or 9100),
 		"fallback_printer": fallback, "disabled": 1 if data.get("disabled") else 0,
+		# omitted keeps today's meaning: KOTs yes, bills no
+		"prints_kots": 0 if data.get("prints_kots") in (0, "0", False) else 1,
+		"prints_bills": 1 if data.get("prints_bills") in (1, "1", True) else 0,
 	}
+	if not (fields["prints_kots"] or fields["prints_bills"]):
+		frappe.throw(_("A printer has to print KOTs, bills, or both."))
 	if name:
 		doc = frappe.get_doc("Kitchen Printer", name)
 		if doc.property != property:

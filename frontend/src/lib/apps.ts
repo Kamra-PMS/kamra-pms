@@ -257,6 +257,7 @@ export const APPS: AppDef[] = [
     items: [
       // Cashier
       { to: "/cashier", label: "My Till", icon: Wallet, group: "Cashier" },
+      { to: "/cashier/board", label: "All Tills", icon: Landmark, group: "Cashier" },
       { to: "/cashier/sessions", label: "Sessions", icon: Clock, group: "Cashier" },
       { to: "/cashier/petty-cash", label: "Petty Cash", icon: Banknote, group: "Cashier" },
       { to: "/cashier/shift-report", label: "Shift Report", icon: ScrollText, group: "Cashier" },

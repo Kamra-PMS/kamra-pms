@@ -69,6 +69,7 @@ const CalendarView = lazy(() =>
 const WhatsAppChat = lazy(() => import("./screens/WhatsAppChat"))
 const CashierTill = lazy(() => import("./screens/CashierTill"))
 const CashierSessions = lazy(() => import("./screens/CashierSessions"))
+const CashierBoard = lazy(() => import("./screens/CashierBoard"))
 const PettyCash = lazy(() => import("./screens/PettyCash"))
 const CashierShiftReport = lazy(() => import("./screens/CashierShiftReport"))
 const Ledgers = lazy(() => import("./screens/Ledgers"))
@@ -258,6 +259,7 @@ export default function App() {
           <Route path="billing/:name" element={<FolioView />} />
           <Route path="cashier" element={<CashierTill />} />
           <Route path="cashier/sessions" element={<CashierSessions />} />
+          <Route path="cashier/board" element={<CashierBoard />} />
           <Route path="cashier/petty-cash" element={<PettyCash />} />
           <Route path="cashier/shift-report" element={<CashierShiftReport />} />
           <Route path="cashier/fx" element={<CurrencyDesk />} />

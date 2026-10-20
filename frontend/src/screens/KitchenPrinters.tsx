@@ -28,6 +28,8 @@ interface KitchenPrinter {
   port: number | null
   fallback_printer: string | null
   disabled: 0 | 1
+  prints_kots: 0 | 1
+  prints_bills: 0 | 1
   last_seen: string | null
   last_printed: string | null
   last_error: string | null
@@ -51,6 +53,8 @@ const blankPrinter = (): PrinterDraft => ({
   port: 9100,
   fallback_printer: null,
   disabled: 0,
+  prints_kots: 1,
+  prints_bills: 0,
   routes: [],
 })
 
@@ -299,6 +303,8 @@ export default function KitchenPrinters() {
                             port: p.port || 9100,
                             fallback_printer: p.fallback_printer,
                             disabled: p.disabled,
+                            prints_kots: p.prints_kots ?? 1,
+                            prints_bills: p.prints_bills ?? 0,
                             routes: p.routes,
                           })
                         }}
@@ -428,6 +434,34 @@ export default function KitchenPrinters() {
                     {t("Where a ticket goes if this printer fails.")}
                   </span>
                 </label>
+                <div className="sm:col-span-2">
+                  <p className="mb-1 text-sm font-medium text-zinc-700">{t("This printer prints")}</p>
+                  <div className="flex flex-wrap gap-4 text-sm">
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={!!form.prints_kots}
+                        onChange={(e) =>
+                          setForm({ ...form, prints_kots: e.target.checked ? 1 : 0 })
+                        }
+                      />
+                      {t("KOTs (kitchen and bar tickets)")}
+                    </label>
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={!!form.prints_bills}
+                        onChange={(e) =>
+                          setForm({ ...form, prints_bills: e.target.checked ? 1 : 0 })
+                        }
+                      />
+                      {t("Bills and receipts")}
+                    </label>
+                  </div>
+                  <span className="mt-1 block text-xs text-zinc-400">
+                    {t("KOTs follow the outlet and station routes below. A bill goes to the printer chosen on the till, else to a bill printer routed to the bill's outlet.")}
+                  </span>
+                </div>
                 <label className="flex items-center gap-2 self-end pb-2 text-sm">
                   <input
                     type="checkbox"
@@ -441,7 +475,7 @@ export default function KitchenPrinters() {
               </div>
 
               <div>
-                <p className="mb-1.5 text-sm font-medium text-zinc-700">{t("Prints KOTs for")}</p>
+                <p className="mb-1.5 text-sm font-medium text-zinc-700">{t("Routes: outlets and stations this printer serves")}</p>
                 {outlets.length === 0 ? (
                   <p className="text-sm text-zinc-500">
                     {t("Add an outlet first.")}{" "}
