@@ -54,9 +54,12 @@
 
 ## What's new
 
-Latest release: **[v2.6.16](https://github.com/Kamra-PMS/kamra-pms/releases/latest)**
+Latest release: **[v2.6.17](https://github.com/Kamra-PMS/kamra-pms/releases/latest)**
 (`develop` ships nightly).
 
+- **2.6.17** — kitchen printers on the local network; auto-accept KOT setting;
+  faster POS and live kitchen display; company credit terms; go-live
+  opening balances; webhooks and a door-lock interface
 - **2.6.16** — pet charge per pet, stay or night; guests above room capacity
   billed as their own line
 - **2.6.15** — End of Day night-audit checklist with a saved report pack and a
