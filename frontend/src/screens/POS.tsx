@@ -355,12 +355,21 @@ export default function POS() {
     openTab(open[next].name)
   }
 
-  const addToCart = (it: MenuItem) =>
+  const addToCart = (it: MenuItem) => {
     setCart((c) => {
       const ex = c.find((l) => l.menu_item === it.name)
-      if (ex) return c.map((l) => l.menu_item === it.name ? { ...l, qty: l.qty + 1 } : l)
-      return [...c, { menu_item: it.name, item_name: it.item_name, price: it.price, is_veg: it.is_veg, qty: 1, instructions: "" }]
+      // bump qty and move that line to the top so the add is never buried
+      if (ex) {
+        const next = c.map((l) => l.menu_item === it.name ? { ...l, qty: l.qty + 1 } : l)
+        const line = next.find((l) => l.menu_item === it.name)!
+        return [line, ...next.filter((l) => l.menu_item !== it.name)]
+      }
+      return [{
+        menu_item: it.name, item_name: it.item_name, price: it.price,
+        is_veg: it.is_veg, qty: 1, instructions: "",
+      }, ...c]
     })
+  }
   const setQty = (mi: string, d: number) =>
     setCart((c) => c.flatMap((l) => l.menu_item === mi ? (l.qty + d <= 0 ? [] : [{ ...l, qty: l.qty + d }]) : [l]))
   const setInstr = (mi: string, v: string) =>
@@ -1346,17 +1355,9 @@ export default function POS() {
             })()}
           </div>
 
-          {/* zone 2: line items — the only scroll area in the bill */}
-          <div className="min-h-0 flex-1 p-3 md:overflow-y-auto">
-            {/* items */}
-            <div className="mb-1 flex items-center justify-between">
-              <h3 className="text-sm font-medium text-zinc-500">{t("Order items")}</h3>
-              {!selected && cart.length > 0 && (
-                <button onClick={() => setCart([])} className="text-xs text-zinc-400 hover:text-rose-500">{t("Clear all")}</button>
-              )}
-            </div>
-
-            {selected && detail && (
+          {/* zone 2: already-sent lines scroll; new cart pins above the footer */}
+          <div className="min-h-0 flex-1 overflow-y-auto p-3">
+            {selected && detail ? (
               <>
                 {!!detail.nc && (
                   <div className="mb-2 rounded-lg border border-amber-200 bg-amber-50 px-2 py-1.5 text-xs text-amber-800">
@@ -1369,7 +1370,10 @@ export default function POS() {
                     {t("Tick the lines moving to the new bill.")}
                   </p>
                 )}
-                <ul className="mb-2 space-y-1 border-b border-zinc-100 pb-2 text-sm">
+                <h3 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-zinc-400">
+                  {t("On the bill")} · {detail.items.filter((i) => !i.voided).length}
+                </h3>
+                <ul className="mb-2 space-y-1 text-sm">
                   {detail.items.map((it) => (
                     <li key={it.row} className="flex min-h-9 items-center justify-between gap-1">
                       <span className={"flex items-center gap-1.5 " + (it.voided ? "text-zinc-400 line-through" : "")}>
@@ -1388,7 +1392,6 @@ export default function POS() {
                         <span className="tabular-nums">{cur()}{inr(it.amount)}</span>
                         {!splitMode && !it.voided && detail.status !== "Delivered" && detail.status !== "Cancelled" && (
                           it.kot_status === "New" ? (
-                            /* never sent: comes off freely, nothing was cooked */
                             <button title={t("Remove (not sent to the kitchen)")} aria-label={t("Remove (not sent to the kitchen)")}
                               disabled={busy} onClick={() => removeLine(it.row)}
                               className="-my-1 grid size-9 place-items-center rounded-md text-zinc-400 transition hover:bg-rose-50 hover:text-rose-500">
@@ -1426,38 +1429,51 @@ export default function POS() {
                     <Button variant="ghost" onClick={() => { setSplitMode(false); setSplitSel(new Set()) }}>✕</Button>
                   </div>
                 )}
-                {cart.length > 0 && <h4 className="mb-1 text-xs font-semibold uppercase tracking-wide text-zinc-400">New round</h4>}
+                {cart.length === 0 && (
+                  <p className="py-2 text-center text-xs text-zinc-400">{t("Tap the menu to add a new round.")}</p>
+                )}
               </>
-            )}
+            ) : cart.length === 0 ? (
+              <p className="py-8 text-center text-sm text-zinc-400">{t("Tap menu items to add.")}</p>
+            ) : null}
+          </div>
 
-            {cart.length === 0 && !(selected && detail) ? (
-              <p className="py-4 text-center text-sm text-zinc-400">{t("Tap menu items to add.")}</p>
-            ) : (
-              <div className="space-y-2">
+          {/* pinned cart — new lines never hide under kitchen items or the footer */}
+          {cart.length > 0 && (
+            <div className="shrink-0 border-t border-brand-200 bg-brand-50/70 px-3 py-2.5">
+              <div className="mb-1.5 flex items-center justify-between gap-2">
+                <h3 className="text-xs font-bold uppercase tracking-wide text-brand-800">
+                  {selected ? t("Adding now") : t("Order items")} · {cart.reduce((s, l) => s + l.qty, 0)}
+                </h3>
+                <button type="button" onClick={() => setCart([])}
+                  className="text-[11px] font-semibold text-brand-700 hover:text-rose-600">
+                  {t("Clear all")}
+                </button>
+              </div>
+              <div className="max-h-[11rem] space-y-2 overflow-y-auto">
                 {cart.map((l) => (
-                  <div key={l.menu_item} className="border-b border-zinc-100 pb-2">
-                    <div className="flex min-h-11 items-center gap-1.5">
-                      <span className="min-w-0 flex-1 truncate text-sm font-medium">{l.item_name}</span>
-                      <button onClick={() => setQty(l.menu_item, -1)} aria-label="One less"
+                  <div key={l.menu_item} className="rounded-xl border border-brand-100 bg-white px-2 py-1.5 shadow-sm">
+                    <div className="flex min-h-10 items-center gap-1.5">
+                      <span className="min-w-0 flex-1 truncate text-sm font-semibold text-zinc-900">{l.item_name}</span>
+                      <button type="button" onClick={() => setQty(l.menu_item, -1)} aria-label="One less"
                         className="grid size-9 shrink-0 place-items-center rounded-lg border border-zinc-300 text-zinc-600 hover:bg-zinc-50"><Minus className="size-4" /></button>
                       <span className="w-6 shrink-0 text-center text-base font-semibold tabular-nums">{l.qty}</span>
-                      <button onClick={() => setQty(l.menu_item, 1)} aria-label="One more"
+                      <button type="button" onClick={() => setQty(l.menu_item, 1)} aria-label="One more"
                         className="grid size-9 shrink-0 place-items-center rounded-lg border border-zinc-300 text-zinc-600 hover:bg-zinc-50"><Plus className="size-4" /></button>
                       <span className="w-14 shrink-0 text-right text-sm font-semibold tabular-nums">{cur()}{inr(l.qty * l.price)}</span>
-                      <button onClick={() => setQty(l.menu_item, -l.qty)} aria-label="Remove line"
+                      <button type="button" onClick={() => setQty(l.menu_item, -l.qty)} aria-label="Remove line"
                         className="grid size-9 shrink-0 place-items-center rounded-lg text-zinc-300 hover:bg-rose-50 hover:text-rose-500"><Trash2 className="size-4" /></button>
                     </div>
-                    <input className="mt-1 w-full rounded border border-zinc-200 px-2 py-1 text-xs" placeholder="Instructions"
+                    <input className="mt-1 w-full rounded border border-zinc-200 px-2 py-1 text-xs" placeholder={t("Instructions")}
                       value={l.instructions} onChange={(e) => setInstr(l.menu_item, e.target.value)} />
                   </div>
                 ))}
               </div>
-            )}
+            </div>
+          )}
 
-          </div>
-
-          {/* zone 3: totals + actions — always visible, sticky on phones */}
-          <div className="sticky bottom-0 z-20 shrink-0 space-y-2 rounded-b-xl border-t border-zinc-100 bg-white p-3 md:static">
+          {/* zone 3: totals + actions — always visible */}
+          <div className="shrink-0 space-y-2 rounded-b-2xl border-t border-zinc-100 bg-white p-3">
             <div className="space-y-1 text-sm">
               <div className="flex items-center justify-between">
                 <span className="text-zinc-500">{t("Discount")}</span>
@@ -1644,11 +1660,12 @@ export default function POS() {
 
       {/* phone: the bill's essentials ride along on the other panes */}
       {mobilePane !== "bill" && (cart.length > 0 || selected) && (
-        <div className="sticky bottom-2 z-30 flex shrink-0 items-center gap-2 rounded-xl border border-zinc-200 bg-white p-2 shadow-lg md:hidden">
-          <button onClick={() => setMobilePane("bill")} className="min-w-0 flex-1 text-left">
-            <div className="truncate text-[10px] font-semibold uppercase tracking-wide text-zinc-400">
-              {Math.round(billItemCount)} item{billItemCount === 1 ? "" : "s"}
-              {selected && detail ? ` · ${orderLabel(detail)}` : ""}
+        <div className="sticky bottom-2 z-30 flex shrink-0 items-center gap-2 rounded-xl border border-brand-200 bg-white p-2 shadow-lg md:hidden">
+          <button type="button" onClick={() => setMobilePane("bill")} className="min-w-0 flex-1 text-left">
+            <div className="truncate text-[10px] font-semibold uppercase tracking-wide text-brand-700">
+              {cart.length > 0
+                ? `+ ${cart[0].item_name}${cart[0].qty > 1 ? ` ×${cart[0].qty}` : ""}`
+                : `${Math.round(billItemCount)} item${billItemCount === 1 ? "" : "s"}${selected && detail ? ` · ${orderLabel(detail)}` : ""}`}
             </div>
             <div className="text-lg font-bold tabular-nums">{cur()}{inr2(grand)}</div>
           </button>
