@@ -1314,9 +1314,44 @@ export function SpeedCheckCard({ property }: { property: string }) {
   )
 }
 
-/** Pointer to the F&B Printers screen - CRUD lives under F&B → Printers. */
-export function KitchenPrintersCard({ property: _property }: { property: string }) {
+/** Live status summary; add/edit lives under F&B → Printers. */
+export function KitchenPrintersCard({ property }: { property: string }) {
   const { t } = useT()
+  const [rows, setRows] = useState<{
+    name: string
+    printer_name: string
+    connection: string
+    disabled: 0 | 1
+    online: boolean | null
+    queued: number
+    failed_today: number
+    last_error: string | null
+    routes: { outlet: string; prep_station: string }[]
+  }[]>([])
+  const [err, setErr] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!property) return
+    const load = () =>
+      call<typeof rows>("kamra.printing.printers", { property })
+        .then((r) => { setRows(r); setErr(null) })
+        .catch((e) => setErr(serverError(e)))
+    load()
+    const tm = setInterval(load, 15_000)
+    return () => clearInterval(tm)
+  }, [property])
+
+  const status = (p: (typeof rows)[0]) => {
+    if (p.disabled) return { tone: "bg-zinc-300", text: t("Disabled") }
+    if (p.last_error && p.failed_today) return { tone: "bg-rose-500", text: p.last_error }
+    if (p.connection === "Print station") {
+      return p.online
+        ? { tone: "bg-emerald-500", text: t("A kitchen screen is printing for it") }
+        : { tone: "bg-amber-500", text: t("No kitchen screen is printing for it right now") }
+    }
+    return { tone: "bg-zinc-300", text: t("Direct IP") }
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -1325,7 +1360,7 @@ export function KitchenPrintersCard({ property: _property }: { property: string 
             <CardTitle>{t("Kitchen printers")}</CardTitle>
             <p className="mt-0.5 text-xs text-zinc-400">
               {t(
-                "Add printers, connection type, paper and which outlets and stations each one prints. Managed under F&B → Printers.",
+                "Status of each printer. Add or edit under F&B → Printers.",
               )}
             </p>
           </div>
@@ -1333,10 +1368,32 @@ export function KitchenPrintersCard({ property: _property }: { property: string 
             to="/printers"
             className="shrink-0 rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm font-medium text-zinc-800 hover:bg-zinc-50"
           >
-            {t("Open printers")}
+            {t("Manage printers")}
           </Link>
         </div>
       </CardHeader>
+      <CardContent className="space-y-2">
+        {err && <p className="text-sm text-rose-700">{err}</p>}
+        {!err && rows.length === 0 && (
+          <p className="text-sm text-zinc-500">{t("No kitchen printers yet.")}</p>
+        )}
+        {rows.map((p) => {
+          const st = status(p)
+          return (
+            <div key={p.name} className="flex items-start gap-2 rounded-lg border border-zinc-200 px-3 py-2">
+              <span className={`mt-1.5 size-2 shrink-0 rounded-full ${st.tone}`} title={st.text} />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold text-zinc-900">{p.printer_name}</p>
+                <p className="text-xs text-zinc-500">
+                  {st.text}
+                  {p.queued ? ` · ${t("{n} waiting", { n: p.queued })}` : ""}
+                  {p.failed_today ? ` · ${t("{n} failed today", { n: p.failed_today })}` : ""}
+                </p>
+              </div>
+            </div>
+          )
+        })}
+      </CardContent>
     </Card>
   )
 }
