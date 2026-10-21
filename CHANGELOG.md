@@ -26,6 +26,14 @@ upgrade-breaking changes (removed doctypes / API contracts).
   quotation, desk-led guest response, department checklists + notify on
   Confirm (Sales/Finance/HK/F&B), and quote no-response chase reminders
 
+## [2.6.19](https://github.com/Kamra-PMS/kamra-pms/compare/v2.6.18...v2.6.19) (2026-10-21)
+
+
+### Bug Fixes
+
+* **tickets:** annotate the audited ticket list query on the f-string line so the Semgrep gate passes ([f8656ca](https://github.com/Kamra-PMS/kamra-pms/commit/f8656cae5afe2a67c815e375071d17b34a146994))
+* **tickets:** build the ticket list with frappe.qb instead of an f-string query ([c509c4e](https://github.com/Kamra-PMS/kamra-pms/commit/c509c4e2013fbfa9e3756a5de8ae5b32c184f68e))
+
 ## [2.6.18](https://github.com/Kamra-PMS/kamra-pms/compare/v2.6.17...v2.6.18) (2026-10-20)
 
 
