@@ -732,7 +732,7 @@ Every action is recorded in the Activity Log.,Every action is recorded in the Ac
 Every arrival for this day already has a room.,Every arrival for this day already has a room.,كل وصول لهذا اليوم لديه غرفة بالفعل.,screens/TapeChart.tsx,,translated
 Every file ties to Kamra as of business date {date}. Switch the desk over.,Every file ties to Kamra as of business date {date}. Switch the desk over.,,screens/GoLiveImport.tsx,date,needs_translation
 "Every guest, their stays and lifetime value. Click for the full journey.","Every guest, their stays and lifetime value. Click for the full journey.",كل ضيف وإقاماته وقيمته مدى الحياة. انقر للرحلة الكاملة.,screens/Guests.tsx,,translated
-"Every past bill: search, filter by date, type and payment, and export","Every past bill: search, filter by date, type and payment, and export",كل الفواتير السابقة: ابحث وصفِّ بالتاريخ والنوع والدفع ثم صدّر,screens/POS.tsx; screens/pos/PosSidePanel.tsx,,translated
+"Every past bill: search, filter by date, type and payment, and export","Every past bill: search, filter by date, type and payment, and export",كل الفواتير السابقة: ابحث وصفِّ بالتاريخ والنوع والدفع ثم صدّر,screens/POS.tsx,,translated
 Every room,Every room,كل الغرف,components/RoomInsights.tsx,,translated
 Every room at a glance. Tap a room to set its status.,Every room at a glance. Tap a room to set its status.,كل الغرف في لمحة. اضغط على غرفة لتغيير حالتها.,screens/HousekeepingBoard.tsx,,translated
 Every room at a glance. You can mark rooms Clean or Dirty.,Every room at a glance. You can mark rooms Clean or Dirty.,كل الغرف في لمحة. يمكنك تعليم الغرف نظيفة أو متسخة.,screens/HousekeepingBoard.tsx,,translated
@@ -825,8 +825,8 @@ Front Desk,Front Desk,الاستقبال,screens/CashierTill.tsx,,translated
 Front desk (name & sign),Front desk (name & sign),الاستقبال (الاسم والتوقيع),screens/RegistrationCard.tsx,,translated
 Front Desk Overview,Front Desk Overview,نظرة عامة على الاستقبال,screens/Today.tsx,,translated
 full,full,,screens/RateCalendar.tsx,,needs_translation
-Full history,Full history,,screens/pos/PosSidePanel.tsx,,needs_translation
 Full name,Full name,,screens/settings/AccessPages.tsx,,needs_translation
+"Full order history: any date, filters, export","Full order history: any date, filters, export",سجل الطلبات الكامل: أي تاريخ، مرشحات، تصدير,screens/pos/PosSidePanel.tsx,,translated
 Full payment,Full payment,دفع كامل,screens/Setup.tsx,,translated
 Full screen till,Full screen till,صندوق بملء الشاشة,screens/POS.tsx,,translated
 "Function prospecting through to the event order - enquiry, quotation, contract, and the day itself.","Function prospecting through to the event order - enquiry, quotation, contract, and the day itself.",من استقطاب المناسبة إلى أمر الفعالية - استفسار وعرض وعقد واليوم نفسه.,screens/Banquet.tsx,,translated
@@ -1091,7 +1091,7 @@ Month by month,Month by month,شهراً بشهر,screens/Banquet.tsx,,translate
 month to date,month to date,من بداية الشهر,screens/Dashboard.tsx,,translated
 Month to date,Month to date,من بداية الشهر حتى اليوم,screens/AuditPack.tsx; screens/Reports.tsx,,translated
 more,more,المزيد,screens/Laundry.tsx,,translated
-More,More,,screens/POS.tsx,,needs_translation
+More,More,المزيد,screens/POS.tsx,,translated
 More information,More information,,components/InfoTip.tsx,,needs_translation
 More keys,More keys,مفاتيح أكثر,components/CheckInDialog.tsx,,translated
 Most used rooms,Most used rooms,الغرف الأكثر استخدامًا,components/RoomInsights.tsx,,translated
@@ -1385,7 +1385,7 @@ Order history,Order history,سجل الطلبات,screens/POS.tsx; screens/pos/O
 Order items,Order items,عناصر الطلب,screens/pos/OpenBillsPopup.tsx,,translated
 Order type,Order type,نوع الطلب,screens/pos/OrderHistory.tsx,,translated
 Ordered,Ordered,طُلب,screens/Kitchen.tsx,,translated
-Orders,Orders,الطلبات,screens/pos/PosSidePanel.tsx,,translated
+Orders,Orders,الطلبات,screens/POS.tsx; screens/pos/PosSidePanel.tsx,,translated
 Orders history,Orders history,,screens/pos/PosSidePanel.tsx,,needs_translation
 OTA,OTA,OTA,components/BookingRequests.tsx; screens/TapeChart.tsx; screens/Today.tsx,,translated
 "OTA booking, guest pays here","OTA booking, guest pays here",حجز عبر وكالة، والضيف يدفع هنا,components/CheckInDialog.tsx,,translated
@@ -2016,6 +2016,7 @@ to take the walk-in's payment,to take the walk-in's payment,لاستلام دف�
 today,today,اليوم,screens/Dashboard.tsx,,translated
 Today,Today,اليوم,screens/Today.tsx; screens/pos/OrderHistory.tsx,,translated
 "Today at this property, by department.","Today at this property, by department.",اليوم في هذا العقار، حسب القسم.,screens/Dashboard.tsx,,translated
+"Today's orders, and the bills still open","Today's orders, and the bills still open",طلبات اليوم والفواتير التي ما زالت مفتوحة,screens/POS.tsx,,translated
 Tomorrow,Tomorrow,غداً,screens/Today.tsx,,translated
 "Too many bills in this range to list them all. Narrow the dates, or export the range.","Too many bills in this range to list them all. Narrow the dates, or export the range.",فواتير هذه الفترة أكثر من أن تُعرض كلها. ضيّق التواريخ أو صدّر الفترة.,screens/pos/OrderHistory.tsx,,translated
 Top of the page,Top of the page,أعلى الصفحة,components/CustomizeToday.tsx,,translated

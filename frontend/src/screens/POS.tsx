@@ -1094,15 +1094,30 @@ export default function POS() {
               <Menu className="size-4" />{t("Menu")}
             </button>
           )}
+          {/* old and open bills are always one labelled tap away, never only under the menu */}
+          <button type="button" onClick={() => setPanel("orders")}
+            className="relative inline-flex items-center gap-1.5 rounded-lg border border-brand-600 bg-white px-3 py-2 text-sm font-semibold text-brand-700 hover:bg-brand-50"
+            title={t("Today's orders, and the bills still open")}>
+            <ListOrdered className="size-4" />
+            {t("Orders")}
+            {open.some((o) => o.stale) && <span className="size-2 rounded-full bg-rose-600" aria-label={t("A bill was never sent")} />}
+          </button>
+          <button type="button" onClick={() => setHistoryOpen(true)}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-400 bg-white px-3 py-2 text-sm font-semibold text-zinc-800 hover:bg-zinc-50"
+            title={t("Every past bill: search, filter by date, type and payment, and export")}>
+            <History className="size-4" />
+            {t("Order history")}
+          </button>
           <Button onClick={() => newOrder()}>
             <Plus className="size-4" />{t("New Bill")}
             <kbd className="rounded bg-white/20 px-1 text-[10px]">F2</kbd>
           </Button>
           <div className="relative">
             <button type="button" onClick={() => setMoreOpen((v) => !v)}
-              className="rounded-lg border border-zinc-300 bg-white p-2 text-zinc-600 hover:bg-zinc-50"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-400 bg-white px-2.5 py-2 text-sm font-semibold text-zinc-800 hover:bg-zinc-50"
               title={t("More")} aria-label={t("More")} aria-expanded={moreOpen}>
               <MoreVertical className="size-4" />
+              <span className="hidden lg:inline">{t("More")}</span>
               {open.some((o) => o.stale) && (
                 <span className="absolute right-1 top-1 size-2 rounded-full bg-rose-600" aria-label={t("A bill was never sent")} />
               )}

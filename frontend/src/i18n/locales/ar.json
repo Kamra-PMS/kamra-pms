@@ -2126,5 +2126,6 @@
   "This property deletes ID scans at checkout and keeps only the last 4 digits. The profile keeps the type, dates and that the ID was verified. Ask for the ID again on a new stay.": "يحذف هذا العقار صور الهوية عند المغادرة ويحتفظ بآخر 4 أرقام فقط. يحتفظ الملف بالنوع والتواريخ وبأن الهوية جرى التحقق منها. اطلب الهوية مجددًا عند إقامة جديدة.",
   "Used on {n} earlier stays": "استُخدمت في {n} إقامات سابقة",
   "Used on 1 earlier stay": "استُخدمت في إقامة سابقة واحدة",
-  "View ID scan": "عرض صورة الهوية"
+  "View ID scan": "عرض صورة الهوية",
+  "More": "المزيد"
 }

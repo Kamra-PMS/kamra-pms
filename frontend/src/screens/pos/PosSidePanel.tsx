@@ -349,6 +349,11 @@ function OrdersTab({ outlet, refreshKey, onOpenBill, onHistory }: {
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-3">
+      {onHistory && (
+        <Button variant="outline" className="w-full" onClick={onHistory}>
+          <History className="size-4" />{t("Full order history: any date, filters, export")}
+        </Button>
+      )}
       <div className="flex flex-wrap items-end gap-2">
         <label className="relative min-w-[12rem] flex-1">
           <Search className="pointer-events-none absolute start-2.5 top-1/2 size-4 -translate-y-1/2 text-zinc-400" aria-hidden />
@@ -377,12 +382,6 @@ function OrdersTab({ outlet, refreshKey, onOpenBill, onHistory }: {
             onClick={doExportExcel} title={t("Download for Excel")}>
             <FileSpreadsheet className="size-4" />{t("Excel")}
           </Button>
-          {onHistory && (
-            <Button type="button" variant="outline" className="h-10 gap-1.5" onClick={onHistory}
-              title={t("Every past bill: search, filter by date, type and payment, and export")}>
-              <History className="size-4" />{t("Full history")}
-            </Button>
-          )}
         </div>
       </div>
       <div className="flex flex-wrap items-center gap-1">
