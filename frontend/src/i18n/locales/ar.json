@@ -1932,7 +1932,6 @@
   "Holds also show on the Tape Chart and in": "تظهر الإيقافات أيضًا في مخطط الحجوزات وفي",
   "Hotel default": "الإعداد الافتراضي للفندق",
   "Housekeeping: mark {to}": "التدبير الفندقي: وضع {to}",
-  "How": "الطريقة",
   "in house": "مقيم",
   "In the room now": "في الغرفة الآن",
   "Insights": "تحليلات",
@@ -2070,5 +2069,17 @@
   "Hotel Admin": "مدير الفندق",
   "Not on the bill yet. Post it to the room, or the guest pays for it at the outlet.": "غير مضافة إلى الفاتورة بعد. أضفها إلى الغرفة، أو يدفعها النزيل في المنفذ.",
   "Back from the laundry. Hand it to the guest and post it to the room.": "عادت من المغسلة. سلّمها للنزيل وأضفها إلى الغرفة.",
-  "Pickup requested, nothing collected yet: there is nothing to bill.": "طُلب الاستلام ولم يُجمع شيء بعد: لا يوجد ما يُحاسب عليه."
+  "Pickup requested, nothing collected yet: there is nothing to bill.": "طُلب الاستلام ولم يُجمع شيء بعد: لا يوجد ما يُحاسب عليه.",
+  "A sound for new orders at the kitchen. Separate from the rest.": "صوت للطلبات الجديدة في المطبخ. منفصل عن بقية الأصوات.",
+  "Alerts and sound": "التنبيهات والصوت",
+  "An alert on screen when a booking, ticket or laundry order comes in.": "تنبيه على الشاشة عند وصول حجز أو تذكرة أو طلب غسيل.",
+  "New booking {name}": "حجز جديد {name}",
+  "New laundry order {name}": "طلب غسيل جديد {name}",
+  "New service ticket {name}": "تذكرة خدمة جديدة {name}",
+  "Notification sound": "صوت الإشعارات",
+  "Notifications": "الإشعارات",
+  "Play a sound with those alerts.": "شغّل صوتًا مع هذه التنبيهات.",
+  "POS and kitchen sound": "صوت نقطة البيع والمطبخ",
+  "Test sound": "جرّب الصوت",
+  "These apply to this device only.": "تنطبق هذه الإعدادات على هذا الجهاز فقط."
 }

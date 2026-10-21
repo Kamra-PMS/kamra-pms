@@ -12,6 +12,8 @@ import { cn } from "../lib/utils"
 import { cur } from "../lib/money"
 import { useFloorFullscreen } from "../lib/kiosk"
 import { useT } from "../lib/i18n"
+import { usePref } from "../lib/notifications"
+import { playAlert, previewSound } from "../lib/sound"
 import { usePrintStation, type StationPrinter } from "../lib/printStation"
 
 type LineState = "cooking" | "held" | "cancelled" | "done"
@@ -57,7 +59,6 @@ const DEFAULT_STATIONS = ["Kitchen", "Tandoor", "Grill", "Fryer", "Bar"]
 // The kitchen's own thresholds, in minutes: fresh, working, needs eyes.
 const AMBER_AT = 5
 const LATE_AT = 10
-const CHIME_KEY = "kamra.kds.chime"
 
 const STATION_ICON: Record<string, typeof Flame> = {
   Kitchen: ChefHat, Tandoor: Flame, Grill: Flame, Fryer: CookingPot, Bar: Martini,
@@ -153,33 +154,6 @@ function useNow(ms = 1000): number {
     return () => clearInterval(t)
   }, [ms])
   return now
-}
-
-/* A ticket landing on a screen nobody is looking at is the whole reason KDS
-   chimes exist. Synthesised, so there is no asset to ship or fail to load. */
-function chime() {
-  try {
-    const Ctx = window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
-    const ctx = new Ctx()
-    const t0 = ctx.currentTime
-    for (const [i, hz] of [880, 1320].entries()) {
-      const osc = ctx.createOscillator()
-      const gain = ctx.createGain()
-      const at = t0 + i * 0.13
-      osc.type = "sine"
-      osc.frequency.value = hz
-      gain.gain.setValueAtTime(0.0001, at)
-      gain.gain.exponentialRampToValueAtTime(0.25, at + 0.012)
-      gain.gain.exponentialRampToValueAtTime(0.0001, at + 0.12)
-      osc.connect(gain).connect(ctx.destination)
-      osc.start(at)
-      osc.stop(at + 0.13)
-    }
-    setTimeout(() => void ctx.close(), 600)
-  } catch {
-    // Browsers block audio until the screen has been touched once. The board
-    // still works; the chime starts once someone taps anything.
-  }
 }
 
 function VegDot({ veg }: { veg: 0 | 1 | null }) {
@@ -499,7 +473,8 @@ export default function Kitchen() {
   const [orders, setOrders] = useState<KotOrder[]>([])
   const [busy, setBusy] = useState<string | null>(null)
   const [openOrder, setOpenOrder] = useState<string | null>(null)
-  const [sound, setSound] = useState(() => localStorage.getItem(CHIME_KEY) !== "off")
+  // the POS and kitchen sound has its own switch (also in the sidebar)
+  const [sound, setSoundPref] = usePref("pos")
   const rootRef = useRef<HTMLDivElement>(null)
   const openOrderRef = useRef<string | null>(null)
   openOrderRef.current = openOrder
@@ -558,16 +533,13 @@ export default function Kitchen() {
     if (seen.current === null) { seen.current = ids; return }
     const fresh = [...ids].some((id) => !seen.current!.has(id))
     seen.current = ids
-    if (fresh && sound) chime()
+    if (fresh && sound) playAlert("pos")
   }, [orders, sound])
 
   const toggleSound = useCallback(() => {
-    setSound((on) => {
-      localStorage.setItem(CHIME_KEY, on ? "off" : "on")
-      if (!on) chime() // confirm it works, and unlock audio on this tap
-      return !on
-    })
-  }, [])
+    setSoundPref(!sound)
+    if (!sound) previewSound() // confirm it works, and unlock audio on this tap
+  }, [sound, setSoundPref])
 
   const act = useCallback(async (order: string, fn: string, params: Record<string, unknown>) => {
     setBusy(order + (params.item_row ?? params.course ?? ""))
