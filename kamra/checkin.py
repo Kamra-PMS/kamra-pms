@@ -375,7 +375,7 @@ def after_check_in(res) -> dict | None:
 	count = cint(res.get("key_count"))
 	if not count or not res.room:
 		return None
-	from kamra.door_lock import KeyRequest, get_adapter
+	from kamra.door_lock import get_adapter
 	adapter = get_adapter(res.property)
 	if adapter.key == "manual":
 		return None

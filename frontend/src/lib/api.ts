@@ -1746,23 +1746,6 @@ export async function amendStayConfirmed(
   return amendStay(reservation, check_in_date, check_out_date, p.needs_confirmation ? 1 : 0)
 }
 
-/** Same for a room move: a different room type re-prices the stay. */
-export async function moveRoomConfirmed(
-  reservation: string,
-  new_room: string,
-  ask: (p: RepricePreview) => boolean,
-  reason?: string,
-) {
-  const p = await call<RepricePreview>("kamra.api.room_move_preview", { reservation, new_room })
-  if (p.needs_confirmation && !ask(p)) return null
-  return call<{ room: string; room_type: string }>("kamra.api.move_reservation", {
-    reservation,
-    new_room,
-    reason,
-    confirm_price: p.needs_confirmation ? 1 : 0,
-  })
-}
-
 export const setLateArrival = (reservation: string, late_arrival: boolean, eta?: string) =>
   call<{ ok: boolean }>("kamra.api.set_late_arrival", {
     reservation,

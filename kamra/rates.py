@@ -16,11 +16,9 @@ same pricing functions the quote uses, so what is shown is what is charged."""
 
 from __future__ import annotations
 
-from decimal import Decimal
-
 import frappe
 from frappe import _
-from frappe.utils import add_days, cint, date_diff, getdate
+from frappe.utils import add_days, date_diff, getdate
 
 from kamra.authz import assert_property_access, require_roles
 
