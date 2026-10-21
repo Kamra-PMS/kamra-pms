@@ -26,6 +26,33 @@ upgrade-breaking changes (removed doctypes / API contracts).
   quotation, desk-led guest response, department checklists + notify on
   Confirm (Sales/Finance/HK/F&B), and quote no-response chase reminders
 
+## [2.6.19](https://github.com/Kamra-PMS/kamra-pms/compare/v2.6.18...v2.6.19) (2026-10-21)
+
+
+### Features
+
+* **pos:** till redesign: menu-first with a category rail, cart pinned above the bill footer, open-bills popup, and a settle sheet with pick-then-confirm and charge to room on any bill ([#311](https://github.com/Kamra-PMS/kamra-pms/pull/311))
+* **pos:** Order history screen: up to a year of bills, search, order type and payment filters, paging with totals across every matching bill, CSV export; Orders and Order history are labelled buttons on the till ([#311](https://github.com/Kamra-PMS/kamra-pms/pull/311))
+* **guests:** Documents card on the guest profile (ID type, number, place and dates of issue and expiry, scan, address proof, earlier stays that used it); check-in shows expired, expiring and already-used badges, as warnings only ([#311](https://github.com/Kamra-PMS/kamra-pms/pull/311))
+* **notifications:** new notification sound and on-screen alerts for new bookings, service tickets and laundry orders made by someone else, with separate switches for alerts, their sound, and the POS and kitchen sound ([#311](https://github.com/Kamra-PMS/kamra-pms/pull/311))
+* **checkout:** keypad shortcuts for the guest checklist, invoices issued on check-out, and a note on who pays and why Folio View differs from the check-out total ([#311](https://github.com/Kamra-PMS/kamra-pms/pull/311))
+* **cashier:** many tills per property, cash office, bill vs KOT printing per station ([#281](https://github.com/Kamra-PMS/kamra-pms/pull/281))
+* **setup:** quick and guided property setup, modules, outlets and tills, and a finish-setup checklist ([#287](https://github.com/Kamra-PMS/kamra-pms/pull/287))
+* **rates:** rate calendar and a rates panel on bookings with BAR visible ([#291](https://github.com/Kamra-PMS/kamra-pms/pull/291))
+* **tickets:** assignee, who solved it, timeline, filters, old tickets, and deeper SLA ([#283](https://github.com/Kamra-PMS/kamra-pms/pull/283))
+* **eod:** fix paths for End of Day blockers, Night Audit naming, and wider search ([#284](https://github.com/Kamra-PMS/kamra-pms/pull/284))
+* **finance:** Reason Codes and Transaction Codes config screens ([#290](https://github.com/Kamra-PMS/kamra-pms/pull/290))
+* **fnb:** menu master lists for allergens, stations and courses ([#300](https://github.com/Kamra-PMS/kamra-pms/pull/300))
+* **app:** build version shown in the navigation menu and on the login screen ([#281](https://github.com/Kamra-PMS/kamra-pms/pull/281))
+
+
+### Bug Fixes
+
+* **today:** KPI sparkline no longer overlaps the figure on narrow cards ([#297](https://github.com/Kamra-PMS/kamra-pms/pull/297))
+* **tickets:** build the ticket list with frappe.qb instead of an f-string query ([c509c4e](https://github.com/Kamra-PMS/kamra-pms/commit/c509c4e2013fbfa9e3756a5de8ae5b32c184f68e))
+* **quality:** CodeQL findings, unused imports and a dead helper removed ([#298](https://github.com/Kamra-PMS/kamra-pms/pull/298), [#311](https://github.com/Kamra-PMS/kamra-pms/pull/311))
+* **docs:** Unicode dashes removed so the docs build passes; docs no longer advertise unreleased Kamra Verify and connected services; Hostinger referral and partner badges ([#294](https://github.com/Kamra-PMS/kamra-pms/pull/294), [#311](https://github.com/Kamra-PMS/kamra-pms/pull/311))
+
 ## [2.6.18](https://github.com/Kamra-PMS/kamra-pms/compare/v2.6.17...v2.6.18) (2026-10-20)
 
 
