@@ -2512,11 +2512,15 @@ only.
 
 **GET/POST**
 
-The outlet's bills for a day, or a range of up to 31 days, newest
+The outlet's bills for a day, or a range of up to a year, newest
 first: open (not sent to the kitchen), sent, paid, posted to a room, NC,
 closed or cancelled, with the table, who it was for, the amount and the
 time. `q` searches the bill and KOT number, table, room, customer name
-and phone, and the in-house guest's name. `state` keeps one state.
+and phone, and the in-house guest's name. `state` keeps one state,
+`order_type` one kind of order and `mode` one way of paying (Cash, Card,
+UPI, Room). Pages come back `limit` at a time from `offset`; `total`,
+`has_more`, `counts` and `totals` always cover every bill the filters
+match, not only the page, so nothing is hidden by paging.
 Looking at today also brings in bills still open from earlier days
 (`carried`), so a forgotten order cannot hide. Only this outlet's bills.
 
@@ -2528,6 +2532,9 @@ Looking at today also brings in bills still open from earlier days
 | `q` | no | `None` |
 | `state` | no | `None` |
 | `limit` | no | `200` |
+| `offset` | no | `0` |
+| `order_type` | no | `None` |
+| `mode` | no | `None` |
 
 ### `kamra.pos.orders_export`
 
@@ -2547,6 +2554,7 @@ except to a supervisor, as on the till. Returns {filename, csv, rows}.
 | `q` | no | `None` |
 | `state` | no | `None` |
 | `mode` | no | `None` |
+| `order_type` | no | `None` |
 
 ### `kamra.pos.find_customer`
 

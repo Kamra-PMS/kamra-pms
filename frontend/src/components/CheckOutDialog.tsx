@@ -28,7 +28,9 @@ import TillCard, { type TillState } from "./TillCard"
    action, and check_out stays the only write that departs the guest.
    The invoice comes after check-out on purpose: check-out may still post
    the last night and move the company's share to the city ledger, and a
-   folio invoiced before that is frozen and stops the check-out. */
+   folio invoiced before that is frozen and stops the check-out. When the
+   till is already open, Check out closes ready folios automatically;
+   Finish will not dismiss while an invoice is still owed. */
 
 interface ChargeLine {
   name: string
@@ -40,6 +42,8 @@ interface ChargeLine {
   group: string
   folio: string
   folio_type: string
+  /** True when this line is not on the folio yet - check-out will post it. */
+  posts_at_checkout?: boolean
 }
 
 interface FolioRow {
@@ -53,9 +57,33 @@ interface FolioRow {
   paid_total: number
   refundable: number
   city_ledger_company: string | null
+  city_ledger_company_name?: string | null
   side: "guest" | "company" | "group"
   has_charges: boolean
   charges: ChargeLine[]
+}
+
+interface BillSplit {
+  on_folio_now: number
+  at_checkout: number
+  will_post: number
+  will_post_lines: {
+    charge_type: string
+    description: string
+    posting_date: string
+    amount: number
+    gst_amount: number
+    folio: string
+    folio_type: string
+    group: string
+  }[]
+  pending_not_on_folio: number
+  guest_pays: number
+  company_pays: number
+  company: string | null
+  company_name: string | null
+  rules: { charge_type: string; pay_by: string }[]
+  explained: boolean
 }
 
 interface SopStep {
@@ -139,6 +167,7 @@ export interface CheckoutContext {
   till: TillState
   folios: FolioRow[]
   groups: Record<string, { group: string; amount: number; count: number; lines: ChargeLine[] }>
+  bill_split?: BillSplit
   totals: {
     charges: number
     paid: number
@@ -305,7 +334,10 @@ export default function CheckOutDialog(props: {
   const reviewProblems = blockersFor("review")
   const credit = ctx?.credit
   const creditBlocked = Boolean(credit?.blocked)
-  const guestSteps = (ctx?.sop.steps ?? []).filter((s) => ["ask_guest", "confirm"].includes(s.step_type))
+  const guestSteps = useMemo(
+    () => (ctx?.sop.steps ?? []).filter((s) => ["ask_guest", "confirm"].includes(s.step_type)),
+    [ctx?.sop.steps],
+  )
   const inHouse = ctx?.reservation.status === "Checked In"
 
   const need: Record<StepKey, boolean> = {
@@ -347,6 +379,36 @@ export default function CheckOutDialog(props: {
 
   const flow = useStepFlow(steps)
   const current = flow.current as StepKey
+
+  // Guest moment: 1-9 toggles each routine item; A ticks all (desk keypad / till).
+  useEffect(() => {
+    if (current !== "guest" || guestSteps.length === 0) return
+    const onKey = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement | null)?.tagName
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || (e.target as HTMLElement)?.isContentEditable)
+        return
+      if (e.metaKey || e.ctrlKey || e.altKey) return
+      const k = e.key.toLowerCase()
+      if (k === "a") {
+        e.preventDefault()
+        setTicked((p) => {
+          const next = { ...p }
+          for (const s of guestSteps) if (s.step_key) next[s.step_key] = true
+          return next
+        })
+        return
+      }
+      const n = Number(e.key)
+      if (n >= 1 && n <= guestSteps.length) {
+        e.preventDefault()
+        const key = guestSteps[n - 1]?.step_key
+        if (!key) return
+        setTicked((p) => ({ ...p, [key]: !p[key] }))
+      }
+    }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [current, guestSteps])
   // a step the desk has moved past counts as done unless it says otherwise
   const headerSteps = useMemo(() => {
     const order = flow.visible.map((s) => s.key)
@@ -461,6 +523,30 @@ export default function CheckOutDialog(props: {
     })
   }
 
+  /** Open charge-bearing folios ready to close (zero balance, not group). */
+  function readyToInvoice(c: CheckoutContext | null | undefined) {
+    if (!c) return [] as FolioRow[]
+    return c.folios.filter((f) =>
+      f.side !== "group" && f.status === "Open" && f.has_charges && Math.abs(f.balance) <= EPS)
+  }
+
+  async function invoice(folios: string[]): Promise<boolean> {
+    setBusy(true)
+    setError(null)
+    try {
+      if (ctx?.pin_required) await ensureUnlocked()
+      for (const f of folios) await call("kamra.api.close_folio", { folio: f })
+      await load()
+      return true
+    } catch (e) {
+      setError(serverError(e))
+      await load()
+      return false
+    } finally {
+      setBusy(false)
+    }
+  }
+
   async function doCheckOut() {
     setBusy(true)
     setError(null)
@@ -474,7 +560,19 @@ export default function CheckOutDialog(props: {
           .flatMap((w) => w.reasons.map((r) => `${w.company}: ${r}`)),
       )
       setCheckedOut(true)
-      await load()
+      const fresh = await load()
+      // Issue invoices in the same beat when the till is already open -
+      // Finish used to dismiss with folios still Open and no INV-.
+      try {
+        const ready = readyToInvoice(fresh)
+        if (fresh?.till.open && ready.length) {
+          if (fresh.pin_required) await ensureUnlocked()
+          for (const f of ready) await call("kamra.api.close_folio", { folio: f.folio })
+          await load()
+        }
+      } catch (invErr) {
+        setError(serverError(invErr))
+      }
     } catch (e) {
       const msg = serverError(e)
       setError(msg.replace(/^CREDIT_BLOCKED:\s*/, ""))
@@ -485,13 +583,24 @@ export default function CheckOutDialog(props: {
     }
   }
 
-  function invoice(folios: string[]) {
-    return run(async () => {
-      for (const f of folios) await call("kamra.api.close_folio", { folio: f })
-    })
+  const readyInvoices = readyToInvoice(ctx)
+  const invoicesPending = checkedOut && readyInvoices.length > 0
+  const tillBlocksInvoice = Boolean(invoicesPending && ctx && !ctx.till.open)
+
+  async function finishCheckout() {
+    if (tillBlocksInvoice) {
+      setError(t("Open your till above to issue the invoice."))
+      flow.goTo("invoice")
+      return
+    }
+    if (invoicesPending) {
+      const ok = await invoice(readyInvoices.map((f) => f.folio))
+      if (!ok) return
+    }
+    props.onDone()
   }
 
-  const close = checkedOut ? props.onDone : props.onClose
+  const close = checkedOut ? () => void finishCheckout() : props.onClose
   const r = ctx?.reservation
 
   // ---- footer: what Continue means on each step ----------------------
@@ -523,9 +632,11 @@ export default function CheckOutDialog(props: {
     }
   }
   if (current === "invoice") {
-    continueLabel = t("Finish")
-    continueDisabled = !checkedOut
-    onContinue = props.onDone
+    continueLabel = invoicesPending ? t("Generate invoices & finish") : t("Finish")
+    continueDisabled = !checkedOut || tillBlocksInvoice
+    onContinue = () => void finishCheckout()
+    if (tillBlocksInvoice)
+      disabledReason = t("Open your till above to issue the invoice.")
   }
 
   const footer = (
@@ -591,6 +702,120 @@ export default function CheckOutDialog(props: {
                   {ctx.notices.map((n) => <li key={n.code}>{n.message}</li>)}
                 </ul>
               )}
+
+              {ctx.bill_split && (
+                <Section title={t("Who pays")} tone={ctx.bill_split.company ? "info" : undefined}>
+                  {ctx.bill_split.company ? (
+                    <div className="space-y-2 text-sm">
+                      <p className="font-medium text-sky-950">
+                        {t("Corporate billing: {name}", {
+                          name: ctx.bill_split.company_name || ctx.bill_split.company,
+                        })}
+                      </p>
+                      <dl className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                        <div>
+                          <dt className="text-xs text-zinc-500">{t("Company pays at check-out")}</dt>
+                          <dd className="font-medium tabular-nums text-sky-900">
+                            {fmt(ctx.bill_split.company_pays)}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt className="text-xs text-zinc-500">{t("Guest pays")}</dt>
+                          <dd className="font-medium tabular-nums">{fmt(ctx.bill_split.guest_pays)}</dd>
+                        </div>
+                      </dl>
+                      {ctx.bill_split.rules.length > 0 ? (
+                        <ul className="space-y-0.5 text-xs text-zinc-600">
+                          {ctx.bill_split.rules.map((rule) => (
+                            <li key={rule.charge_type}>
+                              {t(rule.charge_type)} →{" "}
+                              {rule.pay_by === "Company"
+                                ? t("Company")
+                                : t("Guest")}
+                            </li>
+                          ))}
+                          <li className="text-zinc-500">
+                            {t("Alcohol always stays with the guest.")}
+                          </li>
+                        </ul>
+                      ) : (
+                        <p className="text-xs text-zinc-500">
+                          {t("No charge-type rules on this company - check the Company folio before collecting.")}
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-zinc-700">
+                      {t("No corporate account on this stay - the guest pays the full bill.")}
+                    </p>
+                  )}
+                </Section>
+              )}
+
+              {ctx.bill_split && (ctx.bill_split.will_post > EPS
+                || ctx.bill_split.pending_not_on_folio > EPS
+                || Math.abs(ctx.bill_split.at_checkout - ctx.bill_split.on_folio_now) > EPS) && (
+                <Section title={t("Why this total")} tone="warn">
+                  <p className="mb-2 text-sm text-zinc-700">
+                    {t("Folio View shows what is posted today. Check-out uses the full stay once remaining nights are posted.")}
+                  </p>
+                  <dl className="space-y-1.5 text-sm">
+                    <div className="flex justify-between gap-3">
+                      <dt className="text-zinc-600">{t("Already on the folio")}</dt>
+                      <dd className="font-medium tabular-nums">{fmt(ctx.bill_split.on_folio_now)}</dd>
+                    </div>
+                    {ctx.bill_split.will_post > EPS && (
+                      <div className="flex justify-between gap-3">
+                        <dt className="text-zinc-600">
+                          {t("Posts at check-out")}
+                          <span className="ms-1 text-xs text-amber-800">
+                            ({ctx.bill_split.will_post_lines.length === 1
+                              ? t("1 night / charge")
+                              : t("{n} nights / charges", { n: ctx.bill_split.will_post_lines.length })})
+                          </span>
+                        </dt>
+                        <dd className="font-medium tabular-nums text-amber-900">
+                          +{fmt(ctx.bill_split.will_post)}
+                        </dd>
+                      </div>
+                    )}
+                    <div className="flex justify-between gap-3 border-t border-amber-200/80 pt-1.5">
+                      <dt className="font-medium text-zinc-800">{t("Check-out total")}</dt>
+                      <dd className="font-semibold tabular-nums">{fmt(ctx.bill_split.at_checkout)}</dd>
+                    </div>
+                    {ctx.bill_split.pending_not_on_folio > EPS && (
+                      <div className="flex justify-between gap-3 text-rose-800">
+                        <dt>
+                          {t("Restaurant / laundry not on folio yet")}
+                          <span className="ms-1 text-xs font-normal">
+                            ({t("post to room or settle separately")})
+                          </span>
+                        </dt>
+                        <dd className="font-medium tabular-nums">
+                          {fmt(ctx.bill_split.pending_not_on_folio)}
+                        </dd>
+                      </div>
+                    )}
+                  </dl>
+                  {ctx.bill_split.will_post_lines.length > 0 && (
+                    <ul className="mt-2 space-y-1 border-t border-amber-200/80 pt-2 text-xs text-zinc-600">
+                      {ctx.bill_split.will_post_lines.map((l, i) => (
+                        <li key={`${l.folio}-${l.posting_date}-${i}`} className="flex justify-between gap-2">
+                          <span>
+                            {t(l.charge_type)}
+                            {l.description ? `: ${l.description}` : ""}
+                            {l.posting_date ? ` · ${l.posting_date}` : ""}
+                          </span>
+                          <span className="shrink-0 tabular-nums">
+                            {fmt(l.amount + l.gst_amount)}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </Section>
+              )}
+
               <Section title={t("Stay summary")}>
                 <dl className="grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
                   {[
@@ -613,7 +838,7 @@ export default function CheckOutDialog(props: {
               </Section>
 
               {ctx.pending_bills.length > 0 && (
-                <Section title={t("Bills not on the folio yet")} tone="warn">
+                <Section title={t("Restaurant & other bills to check")} tone="warn">
                   <ul className="space-y-3 text-sm">
                     {ctx.pending_bills.map((b) => (
                       <li key={b.name} className="space-y-2" data-testid="pending-bill">
@@ -689,6 +914,11 @@ export default function CheckOutDialog(props: {
                             {line.is_alcohol ? (
                               <span className="ms-1 text-[10px] font-semibold uppercase text-rose-600">{t("Guest only")}</span>
                             ) : null}
+                            {line.posts_at_checkout ? (
+                              <span className="ms-1 text-[10px] font-semibold uppercase text-amber-700">
+                                {t("At check-out")}
+                              </span>
+                            ) : null}
                             <span className="ms-1 text-xs text-zinc-400">({t(line.folio_type)})</span>
                           </span>
                           <span className="shrink-0 tabular-nums text-zinc-800">
@@ -706,7 +936,16 @@ export default function CheckOutDialog(props: {
                   <li key={f.folio} className="flex flex-wrap items-center justify-between gap-2">
                     <span>
                       {t("{type} folio", { type: t(f.folio_type) })} · {f.folio}
-                      {f.invoice_number ? ` · ${f.invoice_number}` : ""} · {t("Balance")} {fmt(f.balance)}
+                      {f.invoice_number ? ` · ${f.invoice_number}` : ""}
+                      {" · "}
+                      {f.side === "company"
+                        ? t("Billed to {name}", {
+                            name: f.city_ledger_company_name || f.city_ledger_company || t("Company"),
+                          })
+                        : f.side === "group"
+                          ? t("Group bill")
+                          : t("Billed to guest")}
+                      {" · "}{t("Balance")} {fmt(f.balance)}
                     </span>
                     <a href={folioLink(f.folio)} target="_blank" rel="noreferrer"
                       className="inline-flex items-center gap-1 font-medium text-brand-700 hover:underline">
@@ -934,11 +1173,29 @@ export default function CheckOutDialog(props: {
 
           {current === "guest" && (
             <div className="space-y-3">
-              <p className="text-sm text-zinc-600">
-                {t("Your property's check-out routine. Tick each one as you go.")}
-              </p>
-              {guestSteps.map((s) => {
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-sm text-zinc-600">
+                  {t("Your property's check-out routine. Tick each one as you go.")}
+                  <span className="ms-1 text-zinc-400">
+                    {t("Keys {range} · {all} all", {
+                      range: `1-${Math.min(guestSteps.length, 9)}`,
+                      all: "A",
+                    })}
+                  </span>
+                </p>
+                <Button type="button" variant="outline" className="h-8 shrink-0 text-xs"
+                  onClick={() => setTicked((p) => {
+                    const next = { ...p }
+                    for (const s of guestSteps) if (s.step_key) next[s.step_key] = true
+                    return next
+                  })}>
+                  {t("Tick all")}
+                  <kbd className="ms-1.5 rounded border border-zinc-300 bg-zinc-50 px-1 py-0.5 text-[10px] font-semibold text-zinc-500">A</kbd>
+                </Button>
+              </div>
+              {guestSteps.map((s, i) => {
                 const done = ticked[s.step_key] || s.state === "done"
+                const hotkey = i < 9 ? String(i + 1) : null
                 return (
                   <button key={s.step_key || s.title} type="button"
                     onClick={() => setTicked((p) => ({ ...p, [s.step_key]: !p[s.step_key] }))}
@@ -953,7 +1210,15 @@ export default function CheckOutDialog(props: {
                       {done ? <Check className="size-3" aria-hidden /> : null}
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className="block text-sm font-semibold text-zinc-800">{t(s.title)}</span>
+                      <span className="flex items-center gap-2">
+                        <span className="block text-sm font-semibold text-zinc-800">{t(s.title)}</span>
+                        {hotkey && (
+                          <kbd className="rounded border border-zinc-300 bg-white px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-zinc-500"
+                            title={t("Press {key} to tick", { key: hotkey })}>
+                            {hotkey}
+                          </kbd>
+                        )}
+                      </span>
                       <span className="mt-1 block text-sm text-zinc-600">
                         {s.prompt_to_guest ? `"${t(s.prompt_to_guest)}"` : s.tip || t(s.instruction)}
                       </span>
@@ -1046,10 +1311,9 @@ export default function CheckOutDialog(props: {
               )}
               {checkedOut && (() => {
                 const own = ctx.folios.filter((f) => f.side !== "group")
-                const ready = own.filter((f) => f.status === "Open" && f.has_charges && Math.abs(f.balance) <= EPS)
                 return (
                   <>
-                  {ready.length > 0 && (
+                  {readyInvoices.length > 0 && (
                     <TillCard till={ctx.till} onOpened={() => void load()}
                       purpose={t("to issue the invoice")} />
                   )}
@@ -1084,8 +1348,9 @@ export default function CheckOutDialog(props: {
                         </li>
                       ))}
                     </ul>
-                    {ready.length > 1 && (
-                      <Button className="mt-3" disabled={busy || !ctx.till.open} onClick={() => void invoice(ready.map((f) => f.folio))}>
+                    {readyInvoices.length > 1 && (
+                      <Button className="mt-3" disabled={busy || !ctx.till.open}
+                        onClick={() => void invoice(readyInvoices.map((f) => f.folio))}>
                         {t("Generate all invoices")}
                       </Button>
                     )}

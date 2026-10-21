@@ -23,6 +23,9 @@
   "sb_id",
   "id_type",
   "id_number",
+  "id_place_of_issue",
+  "id_issue_date",
+  "id_expiry_date",
   "column_break_b",
   "nationality",
   "address_line",
@@ -91,6 +94,22 @@
    "fieldname": "id_number",
    "fieldtype": "Data",
    "label": "Id Number"
+  },
+  {
+   "fieldname": "id_place_of_issue",
+   "fieldtype": "Data",
+   "label": "ID Place of Issue"
+  },
+  {
+   "fieldname": "id_issue_date",
+   "fieldtype": "Date",
+   "label": "ID Date of Issue"
+  },
+  {
+   "fieldname": "id_expiry_date",
+   "fieldtype": "Date",
+   "label": "ID Date of Expiry",
+   "description": "Shown as a warning at check-in when passed; it never blocks an arrival."
   },
   {
    "fieldname": "column_break_b",

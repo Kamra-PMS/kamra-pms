@@ -8,6 +8,10 @@ import { Sparkline } from "./sparkline"
  * One headline metric in the front-desk KPI strip: a soft-green icon chip,
  * a quiet label, the big number, and either a sparkline or a progress bar,
  * with an optional delta vs. a prior period.
+ *
+ * Layout rule: the value is never beside a 96px spark on a 6-up grid - that
+ * used to draw the chart through the digits. Spark sits on its own row under
+ * the number; sub text is full-width below that.
  */
 export function StatCard({
   icon,
