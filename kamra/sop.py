@@ -987,7 +987,7 @@ def evaluate_early_late_step(step: dict, context: dict) -> dict:
 		if amount_f is not None and amount_f <= 0.009:
 			tip = _("Fee waived (free {0}). Confirm with the guest, then save.").format(label)
 			state = "todo"
-		elif amount_f is not None and amount_f > 0.009:
+		elif amount_f is not None:
 			tip = _("Agreed fee {0} for {1}. Confirm with the guest before posting.").format(
 				format_money(symbol, amount_f), label)
 			state = "todo"

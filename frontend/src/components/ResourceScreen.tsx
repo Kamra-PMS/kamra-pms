@@ -8,7 +8,7 @@ import {
 } from "react"
 import { Columns3, Download, Plus, Search, Trash2 } from "lucide-react"
 import { Sheet } from "./ui/sheet"
-import { getCurrentProperty } from "../lib/api"
+import { call, getCurrentProperty } from "../lib/api"
 import {
   createResource,
   deleteResource,
@@ -25,11 +25,31 @@ import ImageField from "./ImageField"
 import { moneyLocale } from "../lib/money"
 import { useT, t as translate } from "../lib/i18n"
 
+/** Keys from kamra.settings.menu_masters - property-editable master lists. */
+export type MenuMasterKey =
+  | "allergens"
+  | "prep_stations"
+  | "courses"
+  | "categories"
+
 export interface FieldSpec {
   field: string
   label: string
-  type: "data" | "int" | "float" | "currency" | "select" | "check" | "date" | "link" | "readonly" | "image"
-  options?: string[] // for select
+  type:
+    | "data"
+    | "int"
+    | "float"
+    | "currency"
+    | "select"
+    | "check"
+    | "date"
+    | "link"
+    | "readonly"
+    | "image"
+    | "tags"
+  options?: string[] // for select / tags (static fallback)
+  /** Load options from Settings → F&B → Menu master lists */
+  optionsFrom?: MenuMasterKey
   linkDoctype?: string // for link
   /** link options only from the current property (the target has a `property` field) */
   linkPropertyScoped?: boolean
@@ -78,16 +98,91 @@ const inputCls =
   "focus:outline-2 focus:outline-offset-1 focus:outline-brand-600 " +
   "disabled:bg-zinc-50 disabled:text-zinc-400"
 
+function parseTags(value: unknown): string[] {
+  if (Array.isArray(value))
+    return value.map((x) => String(x).trim()).filter(Boolean)
+  return String(value ?? "")
+    .split(",")
+    .map((x) => x.trim())
+    .filter(Boolean)
+}
+
+function TagsInput(props: {
+  value: unknown
+  onChange: (v: string) => void
+  options: string[]
+  t: (s: string) => string
+}) {
+  const selected = parseTags(props.value)
+  const available = props.options.filter(
+    (o) => !selected.some((s) => s.toLowerCase() === o.toLowerCase()),
+  )
+  const toggle = (tag: string) => {
+    const next = selected.some((s) => s.toLowerCase() === tag.toLowerCase())
+      ? selected.filter((s) => s.toLowerCase() !== tag.toLowerCase())
+      : [...selected, tag]
+    props.onChange(next.join(", "))
+  }
+  return (
+    <div className="space-y-2">
+      <div className="flex flex-wrap gap-1.5">
+        {selected.length === 0 && (
+          <span className="text-xs text-zinc-400">{props.t("None selected")}</span>
+        )}
+        {selected.map((tag) => (
+          <button
+            key={tag}
+            type="button"
+            onClick={() => toggle(tag)}
+            className="inline-flex items-center gap-1 rounded-full border border-brand-200 bg-brand-50 px-2.5 py-0.5 text-xs font-medium text-brand-800 hover:bg-brand-100"
+          >
+            {props.t(tag)}
+            <span aria-hidden className="text-brand-500">×</span>
+          </button>
+        ))}
+      </div>
+      {available.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {available.map((tag) => (
+            <button
+              key={tag}
+              type="button"
+              onClick={() => toggle(tag)}
+              className="rounded-full border border-zinc-200 bg-white px-2.5 py-0.5 text-xs text-zinc-600 hover:border-zinc-300 hover:bg-zinc-50"
+            >
+              + {props.t(tag)}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function FieldInput(props: {
   spec: FieldSpec
   value: unknown
   onChange: (v: unknown) => void
   linkOptions: Record<string, string[]>
+  masterOptions: Partial<Record<MenuMasterKey, string[]>>
   /** Translate display labels; API values stay English. */
   t: (s: string) => string
 }) {
   const { spec, value, onChange, t } = props
+  const masterOpts =
+    (spec.optionsFrom && props.masterOptions[spec.optionsFrom]) ||
+    spec.options ||
+    []
   switch (spec.type) {
+    case "tags":
+      return (
+        <TagsInput
+          value={value}
+          onChange={(v) => onChange(v)}
+          options={masterOpts}
+          t={t}
+        />
+      )
     case "select":
       return (
         <select
@@ -96,7 +191,7 @@ function FieldInput(props: {
           onChange={(e) => onChange(e.target.value)}
         >
           <option value="">-</option>
-          {spec.options?.map((o) => (
+          {masterOpts.map((o) => (
             <option key={o} value={o}>
               {t(o)}
             </option>
@@ -163,11 +258,21 @@ function FieldInput(props: {
       )
     default:
       return (
-        <input
-          className={inputCls}
-          value={String(value ?? "")}
-          onChange={(e) => onChange(e.target.value)}
-        />
+        <>
+          <input
+            className={inputCls}
+            list={spec.optionsFrom ? `masters-${spec.field}` : undefined}
+            value={String(value ?? "")}
+            onChange={(e) => onChange(e.target.value)}
+          />
+          {spec.optionsFrom && masterOpts.length > 0 && (
+            <datalist id={`masters-${spec.field}`}>
+              {masterOpts.map((o) => (
+                <option key={o} value={o} />
+              ))}
+            </datalist>
+          )}
+        </>
       )
   }
 }
@@ -205,6 +310,9 @@ export function ResourceScreen({
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [linkOptions, setLinkOptions] = useState<Record<string, string[]>>({})
+  const [masterOptions, setMasterOptions] = useState<
+    Partial<Record<MenuMasterKey, string[]>>
+  >({})
   const [search, setSearch] = useState("")
   // Frappe-style list settings: choose which columns this table shows,
   // remembered per user per doctype.
@@ -318,7 +426,7 @@ export function ResourceScreen({
     URL.revokeObjectURL(a.href)
   }
 
-  // load link options once per screen
+  // load link options and menu master lists once per screen
   useEffect(() => {
     const links = config.form.filter((f) => f.type === "link" && f.linkDoctype)
     links.forEach((f) => {
@@ -336,6 +444,13 @@ export function ResourceScreen({
         })),
       )
     })
+    if (config.form.some((f) => f.optionsFrom)) {
+      call<Record<MenuMasterKey, string[]>>("kamra.settings.menu_masters", {
+        property: getCurrentProperty(),
+      })
+        .then(setMasterOptions)
+        .catch(() => setMasterOptions({}))
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [config.doctype])
 
@@ -346,7 +461,7 @@ export function ResourceScreen({
       setDraft({})
       return
     }
-    // List rows only carry column fields — fetch the full document so
+    // List rows only carry column fields - fetch the full document so
     // form extras (location, slugs, etc.) aren't blank and can't wipe DB values.
     setDraft({ ...row })
     frappeFetch<{ data: Row }>(
@@ -359,7 +474,7 @@ export function ResourceScreen({
   async function save() {
     setBusy(true)
     try {
-      // Only persist form fields — never the raw list-row or full-doc dump.
+      // Only persist form fields - never the raw list-row or full-doc dump.
       const payload: Record<string, unknown> = {}
       for (const f of config.form) {
         if (f.type === "readonly") continue
@@ -670,7 +785,9 @@ export function ResourceScreen({
                     key={spec.field}
                     className={
                       "block" +
-                      (spec.type === "check" ? " sm:col-span-2" : "")
+                      (spec.type === "check" || spec.type === "tags"
+                        ? " sm:col-span-2"
+                        : "")
                     }
                   >
                     <span className="mb-1.5 block text-sm font-medium text-zinc-600">
@@ -684,6 +801,7 @@ export function ResourceScreen({
                         setDraft((d) => ({ ...d, [spec.field]: v }))
                       }
                       linkOptions={linkOptions}
+                      masterOptions={masterOptions}
                       t={t}
                     />
                     {spec.hint && spec.type !== "image" && (

@@ -9,7 +9,7 @@ import { Sparkline } from "./sparkline"
  * a quiet label, the big number, and either a sparkline or a progress bar,
  * with an optional delta vs. a prior period.
  *
- * Layout rule: the value is never beside a 96px spark on a 6-up grid — that
+ * Layout rule: the value is never beside a 96px spark on a 6-up grid - that
  * used to draw the chart through the digits. Spark sits on its own row under
  * the number; sub text is full-width below that.
  */
@@ -52,27 +52,26 @@ export function StatCard({
           {label}
         </span>
       </div>
-
-      <div
-        className={cn(
-          "mt-2.5 text-2xl font-semibold tracking-tight tabular-nums",
-          accent ? "text-brand-700" : "text-zinc-900",
-        )}
-      >
-        {value}
+      <div className="mt-2.5 flex flex-wrap items-end justify-between gap-x-2 gap-y-1.5">
+        <div className="max-w-full">
+          <div
+            className={cn(
+              "text-2xl font-semibold tracking-tight tabular-nums",
+              accent ? "text-brand-700" : "text-zinc-900",
+            )}
+          >
+            {value}
+          </div>
+        </div>
+        {spark ? (
+          <div className="max-w-full shrink-0">
+            <Sparkline data={spark} color={sparkColor} />
+          </div>
+        ) : null}
       </div>
-
-      {spark ? (
-        <div className="mt-1.5 w-full max-w-[7rem]" aria-hidden>
-          <Sparkline data={spark} color={sparkColor} width={112} height={28} />
-        </div>
-      ) : null}
-
-      {sub ? (
-        <div className="mt-1.5 space-y-0.5 text-xs leading-snug text-zinc-400">
-          {sub}
-        </div>
-      ) : null}
+      {/* the chart drops under the number when the card is too narrow for both, never over it */}
+      {/* full card width, so it never wraps into a thin column beside the chart */}
+      {sub ? <div className="mt-1 text-xs text-zinc-400">{sub}</div> : null}
 
       {progress !== undefined ? (
         <div className="mt-3">

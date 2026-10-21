@@ -10,9 +10,9 @@ import { cn } from "../lib/utils"
 
 /* Kitchen stock. Two things here are deliberate and read as bugs if you don't
    know why:
-     - Stock is PER OUTLET, so there is no merged "all outlets" total and this
+    - Stock is PER OUTLET, so there is no merged "all outlets" total and this
        screen never offers one. There is no such number.
-     - NEGATIVE is a valid state, not an error. It means the count is stale,
+    - NEGATIVE is a valid state, not an error. It means the count is stale,
        and it is the loudest thing on the screen because it is the system
        admitting it doesn't know something. */
 
@@ -259,13 +259,13 @@ export default function Inventory() {
               {shown.map((r) => (
                 <tr key={r.name} className={cn(r.status === "NEGATIVE" && "bg-rose-50/60")}>
                   <td className="px-4 py-2 font-semibold text-zinc-800">{r.ingredient_name}</td>
-                  <td className="px-4 py-2 text-zinc-500">{r.category || "—"}</td>
+                  <td className="px-4 py-2 text-zinc-500">{r.category || "-"}</td>
                   <td className={cn("px-4 py-2 text-right font-bold tabular-nums",
                     r.status === "NEGATIVE" ? "text-rose-600" : "text-zinc-800")}>
                     {fmt(r.qty_on_hand)} <span className="font-normal text-zinc-400">{r.uom}</span>
                   </td>
                   <td className="px-4 py-2 text-right tabular-nums text-zinc-400">
-                    {r.par_level ? fmt(r.par_level) : "—"}
+                    {r.par_level ? fmt(r.par_level) : "-"}
                   </td>
                   <td className="px-4 py-2"><StatusChip s={r.status} /></td>
                   <td className="px-4 py-2 text-zinc-400">
@@ -342,7 +342,7 @@ function ReceiveModal({ rows, busy, onClose, onSubmit }: {
                 onChange={(e) => setPicked({ ...picked, [r.ingredient]: e.target.value })} /></td>
               <td className="py-1.5"><input type="number" min="0" step="any" inputMode="decimal"
                 className="w-24 rounded border border-zinc-300 px-2 py-1 tabular-nums"
-                placeholder={r.cost_per_unit ? String(r.cost_per_unit) : "—"}
+                placeholder={r.cost_per_unit ? String(r.cost_per_unit) : "-"}
                 value={cost[r.ingredient] ?? ""}
                 onChange={(e) => setCost({ ...cost, [r.ingredient]: e.target.value })} /></td>
             </tr>
@@ -350,7 +350,7 @@ function ReceiveModal({ rows, busy, onClose, onSubmit }: {
         </tbody>
       </table>
       <p className="mt-3 text-xs text-zinc-400">
-        A cost here updates the ingredient's cost, which is what wastage gets valued at. Indicative only — it doesn't tie to the books.
+        A cost here updates the ingredient's cost, which is what wastage gets valued at. Indicative only - it doesn't tie to the books.
       </p>
       <Button className="mt-4 h-12 w-full justify-center" disabled={busy || !lines.length}
         onClick={() => onSubmit({ rows: lines, supplier: supplier || null, invoice_no: invoice || null })}>
@@ -401,7 +401,7 @@ function CountModal({ rows, busy, onClose, onSubmit }: {
                   delta === null ? "text-zinc-300"
                     : Math.abs(delta) < 1e-9 ? "text-zinc-400"
                       : delta < 0 ? "text-rose-600" : "text-emerald-600")}>
-                  {delta === null ? "—" : `${delta > 0 ? "+" : ""}${fmt(delta)}`}
+                  {delta === null ? "-" : `${delta > 0 ? "+" : ""}${fmt(delta)}`}
                 </td>
               </tr>
             )
@@ -431,7 +431,7 @@ function WasteModal({ rows, busy, onClose, onSubmit }: {
   return (
     <Modal title="Record wastage" onClose={onClose}>
       <p className="mb-3 text-sm text-zinc-500">
-        Stock destroyed outside a sale — spoiled, broken, dropped. Food that was
+        Stock destroyed outside a sale - spoiled, broken, dropped. Food that was
         cooked and then voided is already accounted for; it shows in the wastage
         report on its own.
       </p>
@@ -441,7 +441,7 @@ function WasteModal({ rows, busy, onClose, onSubmit }: {
           <option value="">Pick an ingredient…</option>
           {rows.map((r) => (
             <option key={r.name} value={r.ingredient}>
-              {r.ingredient_name} — {fmt(r.qty_on_hand)} {r.uom} on hand
+              {r.ingredient_name} - {fmt(r.qty_on_hand)} {r.uom} on hand
             </option>
           ))}
         </select>
@@ -502,7 +502,7 @@ function LedgerModal({ row, outlet, onClose }: {
                   {fmt(e.balance_after)}
                 </td>
                 <td className="py-1.5 text-zinc-400">
-                  {e.note || e.supplier || e.reference_name || "—"}
+                  {e.note || e.supplier || e.reference_name || "-"}
                 </td>
               </tr>
             ))}

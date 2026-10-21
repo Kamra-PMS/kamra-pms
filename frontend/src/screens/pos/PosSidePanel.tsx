@@ -312,6 +312,7 @@ function OrdersTab({ outlet, refreshKey, onOpenBill }: {
   }, [outlet, from, to, qLive])
   useEffect(load, [load, refreshKey])
 
+
   if (viewing) {
     return <OrderView name={viewing} onBack={() => setViewing(null)}
       onOpenBill={(n) => onOpenBill(n)} />
@@ -467,12 +468,12 @@ function OrdersTab({ outlet, refreshKey, onOpenBill }: {
                       </div>
                     </td>
                     <td className="px-3 py-2.5"><StateBadge state={r.state} /></td>
-                    <td className="px-3 py-2.5 text-zinc-600">{r.order_type || "—"}</td>
+                    <td className="px-3 py-2.5 text-zinc-600">{r.order_type || "-"}</td>
                     <td className="px-3 py-2.5 text-zinc-600">
                       {r.table_no ? t("Table {n}", { n: r.table_no })
-                        : r.room_no ? t("Room {n}", { n: r.room_no }) : "—"}
+                        : r.room_no ? t("Room {n}", { n: r.room_no }) : "-"}
                     </td>
-                    <td className="max-w-[10rem] truncate px-3 py-2.5 text-zinc-600">{r.who || "—"}</td>
+                    <td className="max-w-[10rem] truncate px-3 py-2.5 text-zinc-600">{r.who || "-"}</td>
                     <td className={cn("px-3 py-2.5 text-end font-semibold tabular-nums",
                       r.state === "cancelled" && "text-zinc-400 line-through")}>
                       {cur()}{money(r.amount)}
@@ -480,7 +481,7 @@ function OrdersTab({ outlet, refreshKey, onOpenBill }: {
                     <td className="px-3 py-2.5 text-end tabular-nums text-zinc-600">
                       {r.items}{r.voided > 0 ? <span className="text-rose-600"> (−{r.voided})</span> : null}
                     </td>
-                    <td className="px-3 py-2.5 text-zinc-600">{r.payment_mode || "—"}</td>
+                    <td className="px-3 py-2.5 text-zinc-600">{r.payment_mode || "-"}</td>
                   </tr>
                 ))}
               </tbody>
@@ -502,6 +503,16 @@ function OrderView({ name, onBack, onOpenBill }: {
     call<ViewDetail>("kamra.pos.order_detail", { order: name })
       .then(setD).catch((e) => setErr(serverError(e)))
   }, [name])
+  const [changing, setChanging] = useState(false)
+  const [busy, setBusy] = useState(false)
+  async function changeMode(mode: string) {
+    setBusy(true)
+    try {
+      await call("kamra.pos.change_payment_mode", { order: name, mode, reason: "" })
+      setD(await call<ViewDetail>("kamra.pos.order_detail", { order: name }))
+      setChanging(false); setErr(null)
+    } catch (e) { setErr(serverError(e)) } finally { setBusy(false) }
+  }
   async function printBill() {
     try {
       const bill = await call<BillData>("kamra.pos.bill_data", { order: name })
@@ -552,7 +563,24 @@ function OrderView({ name, onBack, onOpenBill }: {
               <div className="flex justify-between text-zinc-500"><span>{t("Discount")}</span><span className="tabular-nums">-{cur()}{money(d.discount_amount)}</span></div>
             )}
             <div className="flex justify-between font-semibold"><span>{t("Total before tax")}</span><span className="tabular-nums">{cur()}{money(d.order_total)}</span></div>
-            {d.state === "paid" && <p className="text-xs text-emerald-700">{t("Paid by {mode}", { mode: d.payment_mode || "" })}</p>}
+            {d.state === "paid" && (
+              <div className="space-y-1.5">
+                <p className="text-xs text-emerald-700">{t("Paid by {mode}", { mode: d.payment_mode || "" })}</p>
+                {changing ? (
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="text-xs text-zinc-500">{t("It was paid by")}</span>
+                    {["Cash", "Card", "UPI"].filter((m) => m !== d.payment_mode).map((m) => (
+                      <Button key={m} variant="outline" className="h-9" disabled={busy} onClick={() => changeMode(m)}>{m}</Button>
+                    ))}
+                    <Button variant="ghost" className="h-9" onClick={() => setChanging(false)}>{t("Back")}</Button>
+                  </div>
+                ) : (
+                  <button className="text-xs font-semibold text-brand-700 hover:underline" onClick={() => setChanging(true)}>
+                    {t("Wrong payment mode? Change it")}
+                  </button>
+                )}
+              </div>
+            )}
             {d.state === "room" && <p className="text-xs text-violet-700">{t("Posted to the room folio")}</p>}
             {d.state === "nc" && <p className="text-xs text-amber-700">{t("Complimentary, authorized by {who}", { who: d.nc_authorized_by || "" })}</p>}
           </div>

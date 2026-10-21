@@ -26,8 +26,8 @@ import {
 
 /** Desktop home for the full laundry module: the operational board (pickup →
  * collect → process → deliver + cancel), the price menu (rate card) and a
- * billing view. Reuses kamra.laundry.* — the same backend the /hk phone app
- * drives — so the two stay in lockstep. */
+ * billing view. Reuses kamra.laundry.* - the same backend the /hk phone app
+ * drives - so the two stay in lockstep. */
 
 const OPERATOR_ROLES = [
   "Housekeeping",
@@ -352,7 +352,7 @@ export default function Laundry() {
             {t("Laundry")}
           </h1>
           <p className="text-sm text-zinc-400">
-            {t("Guest laundry — pickup, processing, return and billing.")}
+            {t("Guest laundry - pickup, processing, return and billing.")}
           </p>
         </div>
         {tab === "board" && canOperate && (
@@ -564,7 +564,7 @@ export default function Laundry() {
                           setCounting({ ...counting, comp: e.target.checked })
                         }
                       />
-                      {t("Complimentary — don't bill the guest")}
+                      {t("Complimentary (don't bill the guest)")}
                     </label>
                   </>
                 ) : (
@@ -628,7 +628,7 @@ export default function Laundry() {
               })}
               {rates.length === 0 && (
                 <p className="py-4 text-center text-sm text-zinc-400">
-                  {t("No rate card yet — add laundry rates in the Price menu tab.")}
+                  {t("No rate card yet - add laundry rates in the Price menu tab.")}
                 </p>
               )}
             </div>
@@ -714,7 +714,7 @@ export default function Laundry() {
             {returnPending > 0 && (
               <input
                 className="w-full rounded-xl border border-rose-300 bg-rose-50 px-3 py-2.5 text-sm"
-                placeholder={t("{n} piece(s) short — why? (required)", { n: returnPending })}
+                placeholder={t("{n} piece(s) short - why? (required)", { n: returnPending })}
                 value={returning.note}
                 onChange={(e) =>
                   setReturning({ ...returning, note: e.target.value })
@@ -728,7 +728,7 @@ export default function Laundry() {
       {/* cancel drawer */}
       {cancelling && (
         <Sheet
-          title={t("Cancel laundry — room {room}", { room: cancelling.order.room_no })}
+          title={t("Cancel laundry - room {room}", { room: cancelling.order.room_no })}
           onClose={() => setCancelling(null)}
           footer={
             <Button
@@ -743,7 +743,7 @@ export default function Laundry() {
         >
           <div className="space-y-3">
             <p className="text-sm text-zinc-500">
-              {t("This closes the bag without billing. Tell us why — it's recorded on the order.")}
+              {t("This closes the bag without billing. Tell us why - it's recorded on the order.")}
             </p>
             <input
               className={inputCls}
@@ -865,7 +865,7 @@ function Stepper({
   )
 }
 
-/** The price menu (rate card) — read-only for viewers, editable for
+/** The price menu (rate card) - read-only for viewers, editable for
  * Front Desk / Finance. Adapted from Settings' LaundryRatesCard. */
 function PriceMenu({
   rates,
@@ -983,7 +983,7 @@ function PriceMenu({
         {rates.length === 0 ? (
           <p className="py-3 text-sm text-zinc-400">
             {t("No rates yet{hint}", {
-              hint: canEdit ? t(" — add the first item.") : ".",
+              hint: canEdit ? t(" - add the first item.") : ".",
             })}
           </p>
         ) : (
@@ -1056,7 +1056,7 @@ interface Revenue {
   by_service: { service_type: string; pieces: number; revenue: number }[]
 }
 
-/** Billing view — a revenue rollup plus the recent orders and whether each
+/** Billing view - a revenue rollup plus the recent orders and whether each
  * charge posted to the folio. */
 function Billing({
   recent,
@@ -1162,7 +1162,7 @@ function Billing({
                   <td className="text-zinc-500">{o.guest_name || o.name}</td>
                   <td className="text-right tabular-nums">{o.pieces}</td>
                   <td className="text-right tabular-nums">
-                    {o.total > 0 ? `${cur()}${inr(o.total)}` : "—"}
+                    {o.total > 0 ? `${cur()}${inr(o.total)}` : "-"}
                   </td>
                   <td>
                     <Badge tone={STATUS_TONE[o.status] || "zinc"}>
@@ -1171,7 +1171,7 @@ function Billing({
                   </td>
                   <td>
                     {o.status !== "Delivered" ? (
-                      <span className="text-xs text-zinc-400">—</span>
+                      <span className="text-xs text-zinc-400"> - </span>
                     ) : o.posted_to_folio ? (
                       <span className="text-xs font-medium text-emerald-700">
                         {t("Posted")}

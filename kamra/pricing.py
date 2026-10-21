@@ -271,9 +271,8 @@ def _season_covers_day(season, day_abbr: str) -> bool:
 	return days_cover(season.days_of_week, day_abbr)
 
 
-def season_adjust(property: str, date, base: Decimal,
-                  room_type: str | None = None) -> Decimal:
-	"""Apply the active season covering `date` for this room type.
+def active_season(property: str, date, room_type: str | None = None):
+	"""The season that prices `date` for this room type, or None.
 
 	A season that names a room type moves only that room type's rate; one
 	with the field left blank is house-wide - "blank = all", as the Seasons
@@ -291,24 +290,31 @@ def season_adjust(property: str, date, base: Decimal,
 			"end_date": (">=", date),
 			"room_type": ("in", [room_type, "", None]),
 		},
-		fields=["adjustment_type", "adjustment_value", "days_of_week",
-		        "room_type", "priority"],
+		fields=["name", "season_name", "adjustment_type", "adjustment_value",
+		        "days_of_week", "room_type", "priority"],
 		order_by="priority desc",
 	)
 	if not seasons:
-		return base
+		return None
 
 	from frappe.utils import getdate
 	day_abbr = getdate(date).strftime("%a").lower()
 	todays = [s for s in seasons if _season_covers_day(s, day_abbr)]
 	if not todays:
-		return base
+		return None
 
 	# most specific wins, then priority - `todays` is already priority desc,
 	# so max() keeps the highest-priority season within each group
-	s = max(todays, key=lambda x: (1 if x.room_type else 0,
-	                               float(x.priority or 0)))
+	return max(todays, key=lambda x: (1 if x.room_type else 0,
+	                                  float(x.priority or 0)))
 
+
+def season_adjust(property: str, date, base: Decimal,
+                  room_type: str | None = None) -> Decimal:
+	"""Apply the active season covering `date` for this room type."""
+	s = active_season(property, date, room_type)
+	if not s:
+		return base
 	v = _dec(s.adjustment_value)
 	if s.adjustment_type == "Percent":
 		return base * (Decimal(1) + v / Decimal(100))

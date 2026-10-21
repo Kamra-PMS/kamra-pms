@@ -162,7 +162,7 @@ export default function SystemHealth() {
                   kamra {data.installed.kamra}
                 </p>
                 <p className="text-xs text-zinc-500">
-                  Frappe {data.installed.frappe ?? "—"}
+                  Frappe {data.installed.frappe ?? "-"}
                 </p>
               </div>
               <div className="rounded-lg border border-zinc-100 bg-zinc-50 px-3 py-2">

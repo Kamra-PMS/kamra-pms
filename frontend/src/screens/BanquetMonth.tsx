@@ -1,14 +1,14 @@
 /*  The month, at a glance.
 
     A banquet office gets asked one question more than any other: "do you
-    have the 14th of December?" Not "what are your hours" — a hall is sold
+    have the 14th of December?" Not "what are your hours" - a hall is sold
     by the session, and the answer is yes or no for a specific hall on a
     specific evening.
 
     So this is that answer, for a whole month at once: halls down the side
     split into morning / afternoon / evening, days across the top, every
     cell either open or carrying its function. Colour does the reading for
-    you — the eye finds the free Saturday evening before you've finished
+    you - the eye finds the free Saturday evening before you've finished
     the sentence. Click an open cell to start the enquiry already knowing
     the hall, the date and the session. */
 
@@ -121,7 +121,7 @@ export default function BanquetMonth() {
           {!data ? (
             <Empty>Loading the month…</Empty>
           ) : data.rows.length === 0 ? (
-            <Empty>No halls yet — add them under Halls &amp; Venues.</Empty>
+            <Empty>No halls yet - add them under Halls &amp; Venues.</Empty>
           ) : (
             <>
               <div className="mb-4 flex flex-wrap items-center gap-4">
@@ -134,7 +134,7 @@ export default function BanquetMonth() {
                         {openPrime.length} weekend evening
                         {openPrime.length === 1 ? "" : "s"}
                       </span>{" "}
-                      still open — the slots worth selling first.
+                      still open - the slots worth selling first.
                     </span>
                   </p>
                 )}
@@ -290,7 +290,7 @@ function Slot({
         aria-label={
           cell
             ? `${cell.customer_name}, ${cell.event_type}`
-            : "Open — start an enquiry"
+            : "Open - start an enquiry"
         }
         className={
           "block h-7 w-full rounded transition-all " +
@@ -333,7 +333,7 @@ function Slot({
   )
 }
 
-/** How much of the month is sold — one number a manager reads instantly. */
+/** How much of the month is sold - one number a manager reads instantly. */
 function Gauge({ value }: { value: number }) {
   return (
     <div className="flex items-center gap-3">

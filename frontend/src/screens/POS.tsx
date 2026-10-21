@@ -332,7 +332,7 @@ export default function POS() {
     setTablesOpen(false)
     setMobilePane("menu") // a fresh bill starts at the menu on a phone
   }
-  /** Cart / draft table pick — same rules as the Tables drawer. */
+  /** Cart / draft table pick - same rules as the Tables drawer. */
   function pickCartTable(value: string) {
     if (value === "__custom__") {
       setCustomTable(true)
@@ -454,7 +454,7 @@ export default function POS() {
       customer, address, nc: !!kot.nc, nc_by: ncBy, items: kot.fired_items,
     }
     if (!full.items?.length) return
-    const kotNo = full.kot_no ?? "—"
+    const kotNo = full.kot_no ?? "-"
     // Kitchen printers took the lines they serve; this till prints the rest.
     const sentTo = [...new Set((kot.print_jobs ?? []).map((j) => j.printer_name))]
     const mine = kot.till_ticket ?? full
@@ -538,7 +538,7 @@ export default function POS() {
     if (selected || cart.length === 0) return
     await act(async () => { await createBill(false); newOrder() })
   }
-  async function proceedToPay() { // F4 — opens the settle overlay
+  async function proceedToPay() { // F4 - opens the settle overlay
     setBillMenuOpen(false)
     setMoreOpen(false)
     if (selected && detail) {
@@ -923,7 +923,7 @@ export default function POS() {
                     return (
                       <div className="mt-2 space-y-1 rounded-xl bg-zinc-50 p-2">
                         <div className="flex items-center justify-between">
-                          <span className="text-xs font-semibold text-zinc-500">{t.table} — {t.bills} bills</span>
+                          <span className="text-xs font-semibold text-zinc-500">{t.table} - {t.bills} bills</span>
                           <button onClick={() => setChooser(null)} className="text-zinc-400 hover:text-zinc-600">✕</button>
                         </div>
                         {t.orders.map((b) => (
@@ -942,7 +942,7 @@ export default function POS() {
                 </>
               ) : (
                 <p className="py-2 text-xs text-zinc-400">
-                  No table layout for this outlet yet — add tables (one per line,
+                  No table layout for this outlet yet - add tables (one per line,
                   <code className="mx-1 rounded bg-zinc-100 px-1">T1:4</code> = 4 seats) on the POS Outlet.
                 </p>
               )}
@@ -1052,7 +1052,7 @@ export default function POS() {
 
   return (
     <div ref={rootRef} className={cn("flex h-full min-h-0 flex-col gap-3", floorOn && "bg-zinc-50 p-3")}>
-      {/* header — outlet, order type, New Bill; secondary tools in overflow */}
+      {/* header - outlet, order type, New Bill; secondary tools in overflow */}
       <div className="flex shrink-0 flex-wrap items-center justify-between gap-3">
         <h1 className="flex items-center gap-2 text-xl font-bold text-zinc-800">
           <UtensilsCrossed className="size-5 text-brand-600" />
@@ -1158,7 +1158,7 @@ export default function POS() {
                   <button type="button" onClick={() => { toggleFocus(); setMoreOpen(false) }}
                     className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm text-zinc-700 hover:bg-zinc-50">
                     <Focus className="size-4 text-zinc-500" />
-                    {kioskOn ? t("Show PMS menus") : t("Focus mode — hide PMS menus")}
+                    {kioskOn ? t("Show PMS menus") : t("Focus mode - hide PMS menus")}
                   </button>
                   <button type="button" onClick={() => { toggleBrowserFs(); setMoreOpen(false) }}
                     className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm text-zinc-700 hover:bg-zinc-50">
@@ -1221,7 +1221,7 @@ export default function POS() {
       )}
 
       <div className="flex min-h-0 flex-1 items-stretch gap-3">
-        {/* tables: phone pane only — desktop uses the header drawer */}
+        {/* tables: phone pane only - desktop uses the header drawer */}
         <div className={cn("min-h-0 w-full flex-col gap-2 overflow-y-auto md:hidden",
           mobilePane === "tables" ? "flex" : "hidden")}>
           {tablesPane}
@@ -1294,7 +1294,7 @@ export default function POS() {
           "md:w-[min(42vw,36rem)] md:shrink-0 md:basis-[min(42vw,36rem)]",
           mobilePane === "bill" ? "grid" : "hidden md:grid",
         )}>
-          {/* row 1 — thin who/where chrome */}
+          {/* row 1 - thin who/where chrome */}
           <div className="space-y-1.5 border-b border-zinc-100 px-3 py-2">
             {selected && detail ? (
               <div className="flex items-center gap-2">
@@ -1430,7 +1430,7 @@ export default function POS() {
             })()}
           </div>
 
-          {/* row 2 — THIS is the cart: tall scroll, large readable lines */}
+          {/* row 2 - THIS is the cart: tall scroll, large readable lines */}
           <div className="flex min-h-0 flex-col overflow-hidden bg-zinc-50/60">
             <div className="flex shrink-0 items-center justify-between gap-2 border-b border-zinc-200/80 bg-white px-3 py-1.5">
               <span className="text-[11px] font-bold uppercase tracking-wide text-zinc-600">
@@ -1573,7 +1573,7 @@ export default function POS() {
             </div>
           </div>
 
-          {/* row 3 — compact totals + actions only */}
+          {/* row 3 - compact totals + actions only */}
           <div className="border-t border-zinc-200 bg-white px-3 py-2">
             <div className="mb-2 flex items-end justify-between gap-2">
               <div className="min-w-0 text-[11px] leading-snug text-zinc-500">
@@ -1723,7 +1723,6 @@ export default function POS() {
           busy={busy}
           nc={!!detail.nc}
           room={detail.room}
-          orderType={detail.order_type}
           rooms={rooms}
           postRoom={postRoom}
           onPostRoom={setPostRoom}
@@ -1760,7 +1759,7 @@ export default function POS() {
         </div>
       )}
 
-      {/* tables drawer — desktop/tablet; phones use the Tables pane */}
+      {/* tables drawer - desktop/tablet; phones use the Tables pane */}
       {tablesOpen && (
         <div className="fixed inset-0 z-40 hidden md:block">
           <div className="absolute inset-0 bg-black/40 animate-fade-in" onClick={() => setTablesOpen(false)} />

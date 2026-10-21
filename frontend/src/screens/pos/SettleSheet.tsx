@@ -3,7 +3,7 @@
  * charge and complimentary close. Opens over the till (POSNext-style pay
  * dialog) so the bill column stays readable.
  */
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { BedDouble, Gift, X } from "lucide-react"
 import { Button } from "../../components/ui/button"
 import { cn } from "../../lib/utils"
@@ -29,7 +29,6 @@ export default function SettleSheet({
   busy,
   nc,
   room,
-  orderType,
   rooms,
   postRoom,
   onPostRoom,
@@ -53,7 +52,6 @@ export default function SettleSheet({
   busy: boolean
   nc: boolean
   room: string | null
-  orderType: string | null
   rooms: SettleRoom[]
   postRoom: string
   onPostRoom: (room: string) => void
@@ -83,6 +81,7 @@ export default function SettleSheet({
     return () => window.removeEventListener("keydown", onKey)
   }, [onClose])
 
+  const [pendingMode, setPendingMode] = useState<string | null>(null) // tender picked, not yet confirmed
   const roomNo = room?.split("-").pop() || ""
   const roomBlocked =
     !!room &&
@@ -164,14 +163,20 @@ export default function SettleSheet({
                 {modes.map((m) => (
                   <Button
                     key={m}
+                    variant={pendingMode === m ? "primary" : "outline"}
                     className="h-14 justify-center text-base font-semibold"
                     disabled={busy}
-                    onClick={() => onSettle(m)}
+                    onClick={() => setPendingMode(pendingMode === m ? null : m)}
                   >
                     {m}
                   </Button>
                 ))}
               </div>
+              {pendingMode && (
+                <Button className="h-14 w-full text-base" disabled={busy} onClick={() => onSettle(pendingMode)}>
+                  {t("Confirm {mode} · {amount}", { mode: pendingMode, amount: grandLabel })}
+                </Button>
+              )}
 
               {room ? (
                 roomBlocked ? (
@@ -191,26 +196,34 @@ export default function SettleSheet({
                     {t("Deliver and post to Room {n}", { n: roomNo })}
                   </Button>
                 )
-              ) : orderType === "Dine In" && rooms.length > 0 ? (
-                <div className="flex gap-2">
-                  <RoomPicker
-                    rooms={rooms}
-                    value={postRoom}
-                    onChange={onPostRoom}
-                    onOpen={onLoadRooms}
-                    placeholder={t("Charge to a guest's room…")}
-                  />
-                  <Button
-                    variant="outline"
-                    className="h-11 shrink-0"
-                    disabled={busy || !postRoom}
-                    onClick={onChargeToRoom}
-                  >
-                    <BedDouble className="size-4" />
-                    {t("Post")}
-                  </Button>
+              ) : (
+                /* a guest who wants it on the room: its own way to settle,
+                   for any bill (dine in, takeaway, delivery), not hidden */
+                <div className="space-y-1.5 rounded-xl border border-brand-200 bg-white p-2.5">
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-brand-800">
+                    <BedDouble className="size-3.5" />
+                    {t("Charge to the guest's room")}
+                  </div>
+                  {rooms.length > 0 ? (
+                    <div className="flex gap-2">
+                      <RoomPicker
+                        rooms={rooms}
+                        value={postRoom}
+                        onChange={onPostRoom}
+                        onOpen={onLoadRooms}
+                        placeholder={t("Pick the room…")}
+                      />
+                      <Button className="h-11 shrink-0" disabled={busy || !postRoom} onClick={onChargeToRoom}>
+                        {t("Post to room")}
+                      </Button>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-zinc-500">
+                      {t("No guest is checked in right now. Check the guest in first, or take payment above.")}
+                    </p>
+                  )}
                 </div>
-              ) : null}
+              )}
 
               <Button
                 variant="outline"

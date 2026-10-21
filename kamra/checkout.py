@@ -25,7 +25,7 @@ import re
 
 import frappe
 from frappe import _
-from frappe.utils import flt, getdate, nowdate
+from frappe.utils import flt, getdate
 
 EPS = 0.009
 OPEN_POS_STATUSES = ("Placed", "Confirmed", "Preparing")
@@ -337,7 +337,7 @@ def _checkout_context(reservation: str) -> dict:
 	groups: dict[str, dict] = {}
 
 	# What is already on the folio today (before the remaining-nights
-	# preview). Front desk often sees ~4k on Folio View vs ~7k here — the
+	# preview). Front desk often sees ~4k on Folio View vs ~7k here - the
 	# gap is usually an unposted room night that check-out will add.
 	posted_charge_names: set[str] = set()
 	posted_charges = 0.0

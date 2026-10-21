@@ -42,7 +42,7 @@ interface ChargeLine {
   group: string
   folio: string
   folio_type: string
-  /** True when this line is not on the folio yet — check-out will post it. */
+  /** True when this line is not on the folio yet - check-out will post it. */
   posts_at_checkout?: boolean
 }
 
@@ -380,7 +380,7 @@ export default function CheckOutDialog(props: {
   const flow = useStepFlow(steps)
   const current = flow.current as StepKey
 
-  // Guest moment: 1–9 toggles each routine item; A ticks all (desk keypad / till).
+  // Guest moment: 1-9 toggles each routine item; A ticks all (desk keypad / till).
   useEffect(() => {
     if (current !== "guest" || guestSteps.length === 0) return
     const onKey = (e: KeyboardEvent) => {
@@ -561,7 +561,7 @@ export default function CheckOutDialog(props: {
       )
       setCheckedOut(true)
       const fresh = await load()
-      // Issue invoices in the same beat when the till is already open —
+      // Issue invoices in the same beat when the till is already open -
       // Finish used to dismiss with folios still Open and no INV-.
       try {
         const ready = readyToInvoice(fresh)
@@ -740,13 +740,13 @@ export default function CheckOutDialog(props: {
                         </ul>
                       ) : (
                         <p className="text-xs text-zinc-500">
-                          {t("No charge-type rules on this company — check the Company folio before collecting.")}
+                          {t("No charge-type rules on this company - check the Company folio before collecting.")}
                         </p>
                       )}
                     </div>
                   ) : (
                     <p className="text-sm text-zinc-700">
-                      {t("No corporate account on this stay — the guest pays the full bill.")}
+                      {t("No corporate account on this stay - the guest pays the full bill.")}
                     </p>
                   )}
                 </Section>
@@ -1178,7 +1178,7 @@ export default function CheckOutDialog(props: {
                   {t("Your property's check-out routine. Tick each one as you go.")}
                   <span className="ms-1 text-zinc-400">
                     {t("Keys {range} · {all} all", {
-                      range: `1–${Math.min(guestSteps.length, 9)}`,
+                      range: `1-${Math.min(guestSteps.length, 9)}`,
                       all: "A",
                     })}
                   </span>

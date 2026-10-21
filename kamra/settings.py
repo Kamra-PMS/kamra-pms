@@ -290,6 +290,21 @@ MODULES: tuple[Module, ...] = (
 				S("pos_room_charge_limit", "Largest room charge from an external POS", "number", 0, min=0,
 				  hint="One ticket above this is refused - settle it at the outlet. 0 means no limit."),
 			)),
+			Section("menu_masters", "Menu master lists",
+			        "Labels used when adding a dish. Edit here once; every New Menu form and the kitchen use them.", (
+				S("menu_allergen_tags", "Allergens & dietary tags", "textarea",
+				  "Egg\nDairy\nNuts\nPeanuts\nGluten\nSoy\nShellfish\nFish\nSesame\nSulphites",
+				  hint="One per line. Shown as chips on each menu item (Egg, Nuts, …). Matched against the guest's allergy note on the kitchen display."),
+				S("menu_prep_stations", "Prep stations", "textarea",
+				  "Kitchen\nTandoor\nGrill\nFryer\nBar",
+				  hint="One per line. Which KOT a dish prints to, and how the kitchen display groups tickets."),
+				S("menu_courses", "Courses", "textarea",
+				  "Starter\nMain\nDessert\nDrink",
+				  hint="One per line. Serving order on the kitchen display (starters before mains)."),
+				S("menu_categories", "Menu categories", "textarea",
+				  "Starters\nMains\nBreads\nRice\nDesserts\nBeverages\nBar",
+				  hint="One per line. Suggestions when typing a category on a menu item - free text still allowed."),
+			)),
 		),
 	),
 	Module(
@@ -326,7 +341,8 @@ MODULES: tuple[Module, ...] = (
 	Module(
 		"finance", "Finance", "Room tax, fees, company credit and cashier controls.",
 		editors=("Hotel Admin", "Finance"), toggle=True,
-		related=(("Currency desk", "/cashier/fx"), ("Ledgers", "/ledgers")),
+		related=(("Currency desk", "/cashier/fx"), ("Ledgers", "/ledgers"),
+		         ("Transaction codes", "/transaction-codes"), ("Reason codes", "/reason-codes")),
 		sections=(
 			Section("tax", "Room tax", "Tax on the room rate. Outlet and service rates come from the country pack.", (
 				S("gst_mode", "Tax mode", "select", "Slab", P, options=("Slab", "Fixed"),
@@ -493,6 +509,33 @@ def get_setting(property: str | None, key: str, default=None):
 	return _coerce(spec, val)
 
 
+def parse_list(raw) -> list[str]:
+	"""Split a master-list setting (textarea: one per line, or commas) into
+	trimmed unique labels, keeping first-seen order."""
+	if raw is None or raw == "":
+		return []
+	if isinstance(raw, (list, tuple)):
+		parts = [str(x) for x in raw]
+	else:
+		parts = str(raw).replace(",", "\n").splitlines()
+	out, seen = [], set()
+	for p in parts:
+		label = p.strip()
+		if not label:
+			continue
+		key = label.casefold()
+		if key in seen:
+			continue
+		seen.add(key)
+		out.append(label)
+	return out
+
+
+def list_setting(property: str | None, key: str) -> list[str]:
+	"""A registry textarea/text setting as an ordered list of labels."""
+	return parse_list(get_setting(property, key))
+
+
 def _coerce(spec: S, val):
 	if spec.type == "number":
 		f = float(val)
@@ -552,6 +595,21 @@ def _spec_json(s: S) -> dict:
 		if v not in (None, "", ()):
 			d[k] = list(v) if isinstance(v, tuple) else v
 	return d
+
+
+@frappe.whitelist()
+@require_roles("Finance", "Front Desk", "Night Auditor", "Kamra Agent")
+def menu_masters(property: str) -> dict:
+	"""Allergen tags, prep stations, courses and category suggestions for
+	the Menu form and kitchen display. Edited under Settings → F&B → Menu
+	master lists."""
+	assert_property_access(property)
+	return {
+		"allergens": list_setting(property, "menu_allergen_tags"),
+		"prep_stations": list_setting(property, "menu_prep_stations"),
+		"courses": list_setting(property, "menu_courses"),
+		"categories": list_setting(property, "menu_categories"),
+	}
 
 
 @frappe.whitelist()

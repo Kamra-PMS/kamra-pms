@@ -121,7 +121,7 @@ const inputCls =
   "focus:outline-2 focus:outline-offset-1 focus:outline-brand-600"
 
 function money(n: number | null | undefined) {
-  return n === null || n === undefined ? "—" : fmtMoney(n)
+  return n === null || n === undefined ? "-" : fmtMoney(n)
 }
 
 export default function GoLiveImport({
@@ -535,7 +535,7 @@ function ReconView({ recon }: { recon: Reconciliation }) {
               <tr key={c.category} className="border-t border-zinc-200 align-top">
                 <td className="py-1.5">{t(c.label)}</td>
                 <td className="py-1.5 text-right">{c.file_count}</td>
-                <td className="py-1.5 text-right">{c.category === "companies" ? "—" : money(c.file_total)}</td>
+                <td className="py-1.5 text-right">{c.category === "companies" ? "-" : money(c.file_total)}</td>
                 <td className="py-1.5 text-right">{c.kamra_count}</td>
                 <td className="py-1.5 text-right">{money(c.kamra_total)}</td>
                 <td className="py-1.5 text-right">

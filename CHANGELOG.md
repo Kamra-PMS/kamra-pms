@@ -26,6 +26,65 @@ upgrade-breaking changes (removed doctypes / API contracts).
   quotation, desk-led guest response, department checklists + notify on
   Confirm (Sales/Finance/HK/F&B), and quote no-response chase reminders
 
+## [2.6.18](https://github.com/Kamra-PMS/kamra-pms/compare/v2.6.17...v2.6.18) (2026-10-20)
+
+
+### Features
+
+* **booking:** villa party rules - extra guests, child ages, group si… ([1368271](https://github.com/Kamra-PMS/kamra-pms/commit/1368271fbbe046c320b3b81174b0ff7e60eb134d))
+* **booking:** villa party rules - extra guests, child ages, group size, holiday seasons ([4727c89](https://github.com/Kamra-PMS/kamra-pms/commit/4727c8934acb512788101e130e2597cca6bf0a19))
+* **demo:** seasons, guardrails and voucher sample data ([0bf4fbc](https://github.com/Kamra-PMS/kamra-pms/commit/0bf4fbc2eb052e4d5dd362d00a7ff340811fb26e))
+* **demo:** seed seasons, guardrails and vouchers with active/paused samples ([3c06699](https://github.com/Kamra-PMS/kamra-pms/commit/3c0669977d3a8bccca88b5d225da0290ff9e6a1e))
+* **fnb:** Ingredients config screen ([dae2d12](https://github.com/Kamra-PMS/kamra-pms/commit/dae2d127ddaf3bc61b71c805fc8c6f96fa5b252e))
+* **fnb:** Ingredients config screen for the store cupboard ([a21e074](https://github.com/Kamra-PMS/kamra-pms/commit/a21e074cb53bf6a2c96cc324cbcf2cb44f4d3f5a))
+* **front-desk:** check in from the tape chart stay panel ([1b4a77b](https://github.com/Kamra-PMS/kamra-pms/commit/1b4a77bacafdba41502c190c75da305c6d587188))
+* **front-desk:** guided check-in screen from every Check in button ([32590ef](https://github.com/Kamra-PMS/kamra-pms/commit/32590ef5a50d0a1cdc908a6392dd174a76e5f708))
+* **front-desk:** guided check-in steps, enforced by check_in ([10b7357](https://github.com/Kamra-PMS/kamra-pms/commit/10b7357845b41fb5ac7c9c49183b686ba42a5e92))
+* **front-desk:** guided check-in, required steps enforced, check-in audit (stacked on [#275](https://github.com/Kamra-PMS/kamra-pms/issues/275)) ([5058c86](https://github.com/Kamra-PMS/kamra-pms/commit/5058c8623841ed098a9f207cf8c298ff234e8450))
+* **mcp:** accept a Frappe API key on /mcp for unattended agents ([044fd49](https://github.com/Kamra-PMS/kamra-pms/commit/044fd49d0ad72cc98f9f5d5a15564f7108a2c3fb))
+* **mcp:** accept a Frappe API key on /mcp for unattended agents ([16baa0e](https://github.com/Kamra-PMS/kamra-pms/commit/16baa0eb7b8fdf3dd80b53219ed1990e4e0dd413))
+* **pos:** cancel/void by kitchen state, orders list and guest panel in the POS ([#288](https://github.com/Kamra-PMS/kamra-pms/issues/288)) ([84c26e7](https://github.com/Kamra-PMS/kamra-pms/commit/84c26e779bd5d4d6a37ff9a7da26bf62f0d2e7cd))
+* **rooms:** Rooms screen, room panel with stay work, insights, and a configurable Today ([#289](https://github.com/Kamra-PMS/kamra-pms/issues/289)) ([fd15f76](https://github.com/Kamra-PMS/kamra-pms/commit/fd15f76514118a6448dee522f77fa63e3db01271))
+
+
+### Bug Fixes
+
+* **cashier:** clarify till flow and fill empty shift screens ([be777a2](https://github.com/Kamra-PMS/kamra-pms/commit/be777a208fa83c7998d7db9a87130333751be251))
+* **cashier:** clearer till UX — no empty JSON dump ([bbba651](https://github.com/Kamra-PMS/kamra-pms/commit/bbba6513a87d759d0660447f58dccd9009f69359))
+* **cashier:** keep petty cash imprest and vouchers per property ([1c3ae5d](https://github.com/Kamra-PMS/kamra-pms/commit/1c3ae5dc641cc2c44429ff18d1c071f6e90defcb))
+* **cashier:** petty cash is property-scoped ([27e10a9](https://github.com/Kamra-PMS/kamra-pms/commit/27e10a9fd81c1e99bb7ddeb3b8170d2489c46c41))
+* **docs:** drop go-live QR menu checklist item ([1e6ac13](https://github.com/Kamra-PMS/kamra-pms/commit/1e6ac13ffb54b4628d8dc052030be37eb9cd0cf5))
+* **docs:** finish guest QR ordering removal ([2837f0b](https://github.com/Kamra-PMS/kamra-pms/commit/2837f0be3704404f9b1c974a67ebbac2f59279ce))
+* **docs:** finish guest QR ordering removal ([b87fb13](https://github.com/Kamra-PMS/kamra-pms/commit/b87fb1320b77b3a04548c9e79405861baef4e374))
+* **docs:** remove em dashes blocking docs publish ([514c66a](https://github.com/Kamra-PMS/kamra-pms/commit/514c66a03d2e60689ec953cf9dbc45cf14b2e0d5))
+* **docs:** strip em dashes from MCP tool reference at the source ([4befc5f](https://github.com/Kamra-PMS/kamra-pms/commit/4befc5faf148ca277a89bde1f326bd1b779131cc))
+* **fnb:** seed kitchen printers and show their status ([09f8842](https://github.com/Kamra-PMS/kamra-pms/commit/09f88429e55a9fbf29a350736ab8d29ed2c7ab4b))
+* **fnb:** seed kitchen printers and show their status ([4a35262](https://github.com/Kamra-PMS/kamra-pms/commit/4a352621ed2cd701c8cd02b9b39ce234600c9175))
+* **front-desk:** check-out opens settle flow per guest ([aa0dcfc](https://github.com/Kamra-PMS/kamra-pms/commit/aa0dcfc527fe613d5aec6b1ed7029cc5279abb99))
+* **front-desk:** close StatCard to= prop on Open tasks ([8584114](https://github.com/Kamra-PMS/kamra-pms/commit/8584114dbcba65e94ec198361e0d3d5dc70d6c72))
+* **front-desk:** drop checkout call to missing rephrase_sop_tip ([dcd0244](https://github.com/Kamra-PMS/kamra-pms/commit/dcd0244e507ee89f28e7ca2c3cd30635e124b4af))
+* **front-desk:** guided check-in and check-out finish for the desk ([#296](https://github.com/Kamra-PMS/kamra-pms/issues/296)) ([84c3c6b](https://github.com/Kamra-PMS/kamra-pms/commit/84c3c6b5ca6fd0ed74df0b09579f65274826b645))
+* **front-desk:** guided check-out settles, invoices and never dead-ends ([37d2875](https://github.com/Kamra-PMS/kamra-pms/commit/37d28758ba58ec3046e6071d3c80570d7333c0e6))
+* **front-desk:** guided check-out that settles, refunds and invoices (follows [#271](https://github.com/Kamra-PMS/kamra-pms/issues/271)) ([3fcaaf0](https://github.com/Kamra-PMS/kamra-pms/commit/3fcaaf069a36a6e36d19dafe7b7de454da22d3c3))
+* **front-desk:** mark passed check-out steps done; translate the SOP tip ([9e5f535](https://github.com/Kamra-PMS/kamra-pms/commit/9e5f5357bacce006d8151ecdc0a3b69356e742c2))
+* **front-desk:** open a settle flow on check-out instead of a top error ([1a9b573](https://github.com/Kamra-PMS/kamra-pms/commit/1a9b573baf95571171071577dea3421c9bcb9e1a))
+* **front-desk:** repair mangled useNavigate in Today ([21a3dcb](https://github.com/Kamra-PMS/kamra-pms/commit/21a3dcb0f55d5c19f5b352cd1f65f26c5e69c9db))
+* **front-desk:** RevPAR today + where Open tasks live ([1805896](https://github.com/Kamra-PMS/kamra-pms/commit/18058967f62fdafc0a14e2e6e90fb7d0e9413e5a))
+* **front-desk:** show today's RevPAR and link Open tasks to Housekeeping ([5b46aa7](https://github.com/Kamra-PMS/kamra-pms/commit/5b46aa701de44303792710809a5bfaffdff94c5b))
+* **front-desk:** tape chart bars open a stay panel that does what the hint says ([#285](https://github.com/Kamra-PMS/kamra-pms/issues/285)) ([d1f6f05](https://github.com/Kamra-PMS/kamra-pms/commit/d1f6f053248455797ccb6a53b36d2fbd31591962))
+* **front-desk:** Today compiles again (useNavigate typo from [#271](https://github.com/Kamra-PMS/kamra-pms/issues/271)) ([a614870](https://github.com/Kamra-PMS/kamra-pms/commit/a614870edd8e3673e86cb4c0c5ab2631c51b778e))
+* **front-desk:** type companions on CheckoutContext ([cdaf1aa](https://github.com/Kamra-PMS/kamra-pms/commit/cdaf1aae784971c80ce8d8d331db3dd46aff4e67))
+* **front-desk:** use to={...} for Open tasks StatCard link ([974915a](https://github.com/Kamra-PMS/kamra-pms/commit/974915a9698401f7c37931d272761ab751795130))
+* **marketplace:** remove symlinks and annotate the flagged queries so the Frappe Cloud audit passes ([07765ec](https://github.com/Kamra-PMS/kamra-pms/commit/07765ec160df2a720319d796a79f32dfa6a29f17))
+* **marketplace:** remove symlinks, annotate flagged queries, keep the Frappe Cloud audit green ([d91e2a0](https://github.com/Kamra-PMS/kamra-pms/commit/d91e2a032196d95e9872cf6468280deacea43702))
+* **settings:** remove read-only Roles & permissions page ([f03be4c](https://github.com/Kamra-PMS/kamra-pms/commit/f03be4c4cd3b8cbd61a4bf0666121dc52340c0f4))
+* **settings:** remove read-only Roles & permissions page ([0883bf9](https://github.com/Kamra-PMS/kamra-pms/commit/0883bf9be407ea91f0c1178cae74f08aa93bb30f))
+* **today:** no sideways scroll on phones, tablets and in Arabic ([46e8ab3](https://github.com/Kamra-PMS/kamra-pms/commit/46e8ab3f09ace449a9456c03deb9719cc40d6dcf))
+* **ui:** day-use Adults double text box ([92e8f8e](https://github.com/Kamra-PMS/kamra-pms/commit/92e8f8e30d7bc3b1e6fc57ff3c0686b8e9946b73))
+* **ui:** full-width desk lists and tables ([11b42c2](https://github.com/Kamra-PMS/kamra-pms/commit/11b42c2e1562816928a6a78c5e4d9dac0840df9e))
+* **ui:** let desk lists and tables use the full content width ([0528975](https://github.com/Kamra-PMS/kamra-pms/commit/0528975982f7914ba0989afcd409e0d3993bad42))
+* **ui:** stop day-use time slot overflowing into Adults ([5fdc165](https://github.com/Kamra-PMS/kamra-pms/commit/5fdc1650138eaa1fc1d8f6f0d3023a8f9f28c892))
+
 ## [2.6.17](https://github.com/Kamra-PMS/kamra-pms/compare/v2.6.16...v2.6.17) (2026-10-20)
 
 **Upgrading:** run `bench migrate`. It adds the kitchen printer doctypes and

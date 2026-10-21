@@ -124,7 +124,7 @@ export default function RecipeManager({ onClose }: { onClose: () => void }) {
                       <span className="truncate text-sm font-semibold text-zinc-800">{d.item_name}</span>
                       <span className={cn("shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold",
                         d.lines ? "bg-emerald-50 text-emerald-700" : "bg-zinc-100 text-zinc-400")}>
-                        {d.lines || "—"}
+                        {d.lines || "-"}
                       </span>
                     </div>
                     <div className="truncate text-xs text-zinc-400">{d.outlet_name}</div>
@@ -157,7 +157,7 @@ export default function RecipeManager({ onClose }: { onClose: () => void }) {
                       <CircleAlert className="mx-auto mb-2 size-5 text-zinc-300" />
                       <p className="text-sm font-semibold text-zinc-600">No recipe</p>
                       <p className="mt-0.5 text-xs text-zinc-400">
-                        This dish never touches inventory. That's a valid choice — most
+                        This dish never touches inventory. That's a valid choice - most
                         menus only ever cost their big movers.
                       </p>
                     </div>
@@ -201,7 +201,7 @@ export default function RecipeManager({ onClose }: { onClose: () => void }) {
                               </td>
                               <td className="py-1.5 tabular-nums text-zinc-400">
                                 {l.qty_on_hand === null || l.qty_on_hand === undefined
-                                  ? "—"
+                                  ? "-"
                                   : <span className={cn(l.qty_on_hand < 0 && "font-bold text-rose-600")}>
                                       {l.qty_on_hand}
                                     </span>}
@@ -226,7 +226,7 @@ export default function RecipeManager({ onClose }: { onClose: () => void }) {
                   </Button>
 
                   <p className="mt-4 text-xs text-zinc-400">
-                    Quantities are per one dish, in each ingredient's own unit — there are no
+                    Quantities are per one dish, in each ingredient's own unit - there are no
                     conversions. Editing a recipe never rewrites history: past consumption was
                     recorded at the quantity in force when it was fired.
                   </p>

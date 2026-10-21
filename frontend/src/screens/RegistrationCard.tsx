@@ -324,7 +324,7 @@ function ActualTimeRow(props: {
   const [error, setError] = useState<string | null>(null)
   const shown = props.value
     ? props.value.replace("T", " ").slice(0, 16)
-    : "—"
+    : "-"
   return (
     <div className="flex flex-wrap items-center gap-2 border-b border-zinc-200 py-1.5 text-sm">
       <span className="w-40 shrink-0 text-zinc-500">{props.label}</span>

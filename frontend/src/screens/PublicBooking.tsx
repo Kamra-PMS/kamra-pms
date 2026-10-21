@@ -602,7 +602,7 @@ export default function PublicBooking() {
       className="min-h-screen bg-zinc-50"
       style={accentVars(data?.property.brand_accent)}
     >
-      {/* hero — photo when available, otherwise brand accent fill */}
+      {/* hero - photo when available, otherwise brand accent fill */}
       <div className="relative h-72 overflow-hidden sm:h-96">
         {heroSrc ? (
           <img
@@ -925,7 +925,7 @@ export default function PublicBooking() {
           </div>
         ) : (
           <>
-            {/* room cards — hotel / single-site catalog */}
+            {/* room cards - hotel / single-site catalog */}
             <div id="stay-results" className="space-y-5">
               {data.room_types.map((rt) => {
                 const r = results[rt.name]

@@ -66,10 +66,19 @@ with `KAMRA_BUILD=1`.
 
 | Provider | Plan that fits | Price | Guide |
 | --- | --- | --- | --- |
-| Hostinger | KVM 2 (2 vCPU / 8 GB) | ~₹549/mo | [Guide](/self-hosting/hostinger) |
+| [Hostinger](https://www.hostinger.com/in?REFERRALCODE=kamrapms) (referral · **20% off** · coupon `KAMRAPMS`) | KVM 2 (2 vCPU / 8 GB) | ~₹549/mo | [Guide](/self-hosting/hostinger) |
 | DigitalOcean | Basic 4 GB | ~$24/mo | [Guide](/self-hosting/digitalocean) |
 | Linode | Shared 4 GB | ~$24/mo | [Guide](/self-hosting/linode) |
 | AWS | t3.medium + EBS | ~$30/mo | [Guide](/self-hosting/aws) |
+
+::: tip Hostinger referral
+Use **[our Hostinger referral link](https://www.hostinger.com/in?REFERRALCODE=kamrapms)**
+(or coupon **`KAMRAPMS`**) — you save **20%**, and it helps keep Kamra afloat.
+
+<a href="https://www.hostinger.com/in?REFERRALCODE=kamrapms" rel="sponsored noopener" target="_blank">
+  <img src="/img/hostinger/Badge_brand_light.svg" alt="Hostinger Partner" width="240" height="90" />
+</a>
+:::
 
 Hyperscaler storefronts (free self-host AMI, planned):
 [AWS / Azure / GCP](/self-hosting/marketplace/hyperscalers).

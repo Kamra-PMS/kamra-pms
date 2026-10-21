@@ -31,6 +31,7 @@ const GoLiveImport = lazy(() => import("./screens/GoLiveImport"))
 const HousekeepingBoard = lazy(() => import("./screens/HousekeepingBoard"))
 const Rooms = lazy(() => import("./screens/Rooms"))
 const Settings = lazy(() => import("./screens/settings/SettingsHub"))
+const FinishSetup = lazy(() => import("./screens/FinishSetup"))
 const SystemHealth = lazy(() => import("./screens/SystemHealth"))
 const BookingEngine = lazy(() => import("./screens/BookingEngine"))
 const Developers = lazy(() => import("./screens/Developers"))
@@ -46,6 +47,7 @@ const Activity = lazy(() => import("./screens/Activity"))
 const AppLauncher = lazy(() => import("./screens/AppLauncher"))
 const Marketplace = lazy(() => import("./screens/Marketplace"))
 const Reports = lazy(() => import("./screens/Reports"))
+const RateCalendar = lazy(() => import("./screens/RateCalendar"))
 const RevenueReports = lazy(() => import("./screens/RevenueReports"))
 const OpsSLA = lazy(() => import("./screens/OpsSLA"))
 const Dashboard = lazy(() => import("./screens/Dashboard"))
@@ -259,6 +261,7 @@ export default function App() {
           <Route path="billing/:name" element={<FolioView />} />
           <Route path="cashier" element={<CashierTill />} />
           <Route path="cashier/sessions" element={<CashierSessions />} />
+          <Route path="finish-setup" element={<FinishSetup />} />
           <Route path="cashier/board" element={<CashierBoard />} />
           <Route path="cashier/petty-cash" element={<PettyCash />} />
           <Route path="cashier/shift-report" element={<CashierShiftReport />} />
@@ -318,6 +321,7 @@ export default function App() {
           <Route path="developers" element={<Developers />} />
           <Route path="reports" element={<Reports />} />
           <Route path="voids-allowances" element={<VoidAllowanceReport />} />
+          <Route path="rate-calendar" element={<RateCalendar />} />
           <Route path="revenue-reports" element={<RevenueReports />} />
           <Route path="ops-sla" element={<OpsSLA />} />
           <Route path="whatsapp" element={<WhatsAppChat />} />
@@ -344,6 +348,14 @@ export default function App() {
           <Route path="printers" element={<KitchenPrinters />} />
           <Route path="outlets" element={<ConfiguredScreen config="outletsConfig" />} />
           <Route path="accounting-export" element={<AccountingExport />} />
+          <Route
+            path="reason-codes"
+            element={<ConfiguredScreen config="reasonCodesConfig" />}
+          />
+          <Route
+            path="transaction-codes"
+            element={<ConfiguredScreen config="transactionCodesConfig" />}
+          />
           <Route path="tickets" element={<Tickets />} />
           <Route path="laundry" element={<Laundry />} />
           <Route path="housekeeping-board" element={<HousekeepingBoard />} />
