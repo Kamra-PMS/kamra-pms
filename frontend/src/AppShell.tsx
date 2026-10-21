@@ -35,6 +35,8 @@ import { loadLocale } from "./lib/money"
 import { cn } from "./lib/utils"
 import { useKiosk } from "./lib/kiosk"
 import { getSiteInfo, versionLabel } from "./lib/siteInfo"
+import AlertSettings from "./components/AlertSettings"
+import NotificationHost from "./components/NotificationHost"
 
 // On-demand UI kept out of the entry chunk: the booking dialog opens on
 // request; the palette and help panel load right after the shell paints.
@@ -310,6 +312,7 @@ export default function AppShell() {
     // Floor pages (POS / Kitchen) get a bounded frame at lg+ so only pane
     // content scrolls; everything else keeps normal page flow.
     <div className={cn("flex min-h-screen flex-col", floor && "lg:h-screen")}>
+      <NotificationHost />
       {demoMode && !kiosk && (
         <div className="bg-amber-500 px-4 py-1.5 text-center text-xs font-medium text-amber-950">
           {t("Shared playground, not your hotel. Data is wiped every night.")}
@@ -382,9 +385,12 @@ export default function AppShell() {
             ))
           })()}
         </nav>
+        <div className="mt-auto pt-6">
+          <AlertSettings />
+        </div>
         {build ? (
           <p
-            className="mt-auto px-2.5 pt-6 text-[11px] text-zinc-400"
+            className="px-2.5 pt-2 text-[11px] text-zinc-400"
             title={t("The Kamra version this site is running")}
           >
             Kamra v{build}

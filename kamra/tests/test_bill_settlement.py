@@ -221,6 +221,47 @@ class BillSettlementTestCase(AuditTestCase):
 		only_cash = pos.orders_export(self.outlet, nowdate(), mode="Cash")
 		self.assertNotIn(o, only_cash["csv"])
 
+	def test_order_history_reaches_back_a_year_and_filters(self):
+		from frappe.utils import add_days, nowdate
+		a = self.order(table_no="H1")
+		pos.pay_order(a, "UPI")
+		b = self.order("Takeaway")
+		pos.pay_order(b, "Cash")
+		old = self.order(table_no="H3")
+		pos.pay_order(old, "Cash")
+		frappe.db.set_value("POS Order", old, "creation", f"{add_days(nowdate(), -90)} 12:00:00")
+		wide = pos.orders_list(self.outlet, add_days(nowdate(), -120), nowdate())
+		names = {r["name"] for r in wide["rows"]}
+		self.assertTrue({a, b, old} <= names, "a 90 day old bill must be reachable")
+		# today alone does not include it
+		self.assertNotIn(old, {r["name"] for r in pos.orders_list(self.outlet, nowdate())["rows"]})
+		# one kind of order, one way of paying
+		self.assertEqual({r["order_type"] for r in pos.orders_list(
+			self.outlet, add_days(nowdate(), -120), nowdate(), order_type="Takeaway")["rows"]}, {"Takeaway"})
+		cash = pos.orders_list(self.outlet, add_days(nowdate(), -120), nowdate(), mode="Cash")
+		self.assertTrue({b, old} <= {r["name"] for r in cash["rows"]})
+		self.assertNotIn(a, {r["name"] for r in cash["rows"]})
+		self.assertEqual(set(cash["totals"]["by_mode"]), {"Cash"})
+		# a year is the most that can be asked for
+		with self.assertRaisesRegex(frappe.ValidationError, "one year"):
+			pos.orders_list(self.outlet, add_days(nowdate(), -400), nowdate())
+
+	def test_order_history_pages_without_changing_the_totals(self):
+		from frappe.utils import nowdate
+		for i in range(3):
+			pos.pay_order(self.order(table_no=f"P{i}"), "Card")
+		full = pos.orders_list(self.outlet, nowdate(), mode="Card")
+		first = pos.orders_list(self.outlet, nowdate(), mode="Card", limit=2)
+		rest = pos.orders_list(self.outlet, nowdate(), mode="Card", limit=2, offset=2)
+		self.assertEqual(len(first["rows"]), 2)
+		self.assertTrue(first["has_more"])
+		self.assertEqual(first["total"], full["total"])
+		self.assertEqual(first["totals"], full["totals"])
+		self.assertEqual(len(first["rows"]) + len(rest["rows"]), full["total"])
+		self.assertFalse(set(r["name"] for r in first["rows"]) & set(r["name"] for r in rest["rows"]))
+		self.assertAlmostEqual(first["totals"]["sales"],
+		                       sum(r["amount"] for r in full["rows"] if r["state"] == "paid"), 2)
+
 	def test_payment_mode_stays_once_the_till_is_closed(self):
 		from kamra import cashier
 		cashier.open_session(PROP_A, 0)

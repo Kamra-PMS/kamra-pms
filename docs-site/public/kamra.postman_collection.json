@@ -4984,7 +4984,7 @@
         "kamra.api.verify_tax_id"
        ]
       },
-      "description": "Check a buyer's tax ID before the invoice goes out, where the\nproperty's country pack offers it (India: GSTIN via Kamra Verify).",
+      "description": "Check a buyer's tax ID before the invoice goes out, where the\nproperty's country pack offers it.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\",\n  \"tax_id\": \"<tax_id>\",\n  \"business_name\": \"\"\n}",
@@ -5021,7 +5021,7 @@
         "kamra.api.verify_guest_id"
        ]
       },
-      "description": "Read the guest's ID document on file into the profile, where the\nproperty's country pack offers it (India: Aadhaar and others via Kamra\nVerify). consent: the desk confirms the guest was told.",
+      "description": "Read the guest's ID document on file into the profile, where the\nproperty's country pack offers it. consent: the desk confirms the guest\nwas told.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\",\n  \"guest\": \"G-00001\",\n  \"id_type\": \"<id_type>\",\n  \"consent\": 0\n}",
@@ -6502,10 +6502,10 @@
         "kamra.pos.orders_list"
        ]
       },
-      "description": "The outlet's bills for a day, or a range of up to 31 days, newest\nfirst: open (not sent to the kitchen), sent, paid, posted to a room, NC,\nclosed or cancelled, with the table, who it was for, the amount and the\ntime. `q` searches the bill and KOT number, table, room, customer name\nand phone, and the in-house guest's name. `state` keeps one state.\nLooking at today also brings in bills still open from earlier days\n(`carried`), so a forgotten order cannot hide. Only this outlet's bills.",
+      "description": "The outlet's bills for a day, or a range of up to a year, newest\nfirst: open (not sent to the kitchen), sent, paid, posted to a room, NC,\nclosed or cancelled, with the table, who it was for, the amount and the\ntime. `q` searches the bill and KOT number, table, room, customer name\nand phone, and the in-house guest's name. `state` keeps one state,\n`order_type` one kind of order and `mode` one way of paying (Cash, Card,\nUPI, Room). Pages come back `limit` at a time from `offset`; `total`,\n`has_more`, `counts` and `totals` always cover every bill the filters\nmatch, not only the page, so nothing is hidden by paging.\nLooking at today also brings in bills still open from earlier days\n(`carried`), so a forgotten order cannot hide. Only this outlet's bills.",
       "body": {
        "mode": "raw",
-       "raw": "{\n  \"outlet\": \"Your Property-Restaurant\",\n  \"date\": \"2026-08-01\",\n  \"to_date\": \"2026-08-31\",\n  \"limit\": 200\n}",
+       "raw": "{\n  \"outlet\": \"Your Property-Restaurant\",\n  \"date\": \"2026-08-01\",\n  \"to_date\": \"2026-08-31\",\n  \"limit\": 200,\n  \"offset\": 0\n}",
        "options": {
         "raw": {
          "language": "json"

@@ -11,7 +11,7 @@ Own your PMS end to end. Ways to install:
 
 Every feature is included - there is no paid edition to upgrade to.
 
-Want company books or HR on the same Frappe site? That is optional  - 
+Want company books or HR on the same Frappe site? That is optional -
 see [ERPNext and Frappe HR](/self-hosting/erpnext-hr) (Marketplace and
 own-server steps).
 
@@ -73,7 +73,7 @@ with `KAMRA_BUILD=1`.
 
 ::: tip Hostinger referral
 Use **[our Hostinger referral link](https://www.hostinger.com/in?REFERRALCODE=kamrapms)**
-(or coupon **`KAMRAPMS`**) — you save **20%**, and it helps keep Kamra afloat.
+(or coupon **`KAMRAPMS`**) - you save **20%**, and it helps keep Kamra afloat.
 
 <a href="https://www.hostinger.com/in?REFERRALCODE=kamrapms" rel="sponsored noopener" target="_blank">
   <img src="/img/hostinger/Badge_brand_light.svg" alt="Hostinger Partner" width="240" height="90" />
@@ -84,7 +84,7 @@ Hyperscaler storefronts (free self-host AMI, planned):
 [AWS / Azure / GCP](/self-hosting/marketplace/hyperscalers).
 
 ::: tip Rather not run a server?
-Install from the [Frappe Cloud Marketplace](/self-hosting/frappe-cloud)  - 
+Install from the [Frappe Cloud Marketplace](/self-hosting/frappe-cloud) -
 Frappe hosts, backs up and updates it - and add our
 [implementation](https://kamrapms.com/implementation/) if you want
 migration and training done for you. You can export everything and move
@@ -94,7 +94,7 @@ to self-hosting any time; that's the point of open source.
 ## After install - production checklist
 
 1. **Create your property** - sign in at `/kamra` as `Administrator` with
-   the admin password you chose at install - there is **no default**  - 
+   the admin password you chose at install - there is **no default** -
    then open **`/kamra/setup`** (rooms, room types, rates).
 2. **Staff users & roles** - Hotel Admin / Front Desk / Revenue / Finance /
    Housekeeping; roles decide what each person sees.

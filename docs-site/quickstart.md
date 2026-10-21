@@ -20,7 +20,7 @@ VPS**; if you have access to the prebuilt image on `ghcr.io` it can
 ::: tip Where to get a server
 Cheapest path for India / SEA: buy Hostinger with
 **[our referral link](https://www.hostinger.com/in?REFERRALCODE=kamrapms)**
-(or coupon **`KAMRAPMS`**) — you save **20%**, and it helps keep Kamra afloat.
+(or coupon **`KAMRAPMS`**) - you save **20%**, and it helps keep Kamra afloat.
 Full walkthrough: [Hostinger](/self-hosting/hostinger).
 
 Also: [DigitalOcean](/self-hosting/digitalocean), [Linode](/self-hosting/linode),

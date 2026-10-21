@@ -1384,6 +1384,10 @@ def _order_list_state(o) -> str:
 	return "sent" if o.get("kot_fired") else "open"
 
 
+# most bills one history query looks at; a year at a busy outlet fits easily
+ORDERS_LIST_MAX = 5000
+
+
 def _like(q: str) -> str:
 	return "%" + q.replace("%", r"\%").replace("_", r"\_") + "%"
 
@@ -1391,12 +1395,17 @@ def _like(q: str) -> str:
 @frappe.whitelist()
 @require_roles(*POS_ROLES)
 def orders_list(outlet: str, date: str | None = None, to_date: str | None = None,
-                q: str | None = None, state: str | None = None, limit: int = 200):
-	"""The outlet's bills for a day, or a range of up to 31 days, newest
+                q: str | None = None, state: str | None = None, limit: int = 200,
+                offset: int = 0, order_type: str | None = None, mode: str | None = None):
+	"""The outlet's bills for a day, or a range of up to a year, newest
 	first: open (not sent to the kitchen), sent, paid, posted to a room, NC,
 	closed or cancelled, with the table, who it was for, the amount and the
 	time. `q` searches the bill and KOT number, table, room, customer name
-	and phone, and the in-house guest's name. `state` keeps one state.
+	and phone, and the in-house guest's name. `state` keeps one state,
+	`order_type` one kind of order and `mode` one way of paying (Cash, Card,
+	UPI, Room). Pages come back `limit` at a time from `offset`; `total`,
+	`has_more`, `counts` and `totals` always cover every bill the filters
+	match, not only the page, so nothing is hidden by paging.
 	Looking at today also brings in bills still open from earlier days
 	(`carried`), so a forgotten order cannot hide. Only this outlet's bills."""
 	from frappe.utils import getdate, nowdate
@@ -1406,9 +1415,10 @@ def orders_list(outlet: str, date: str | None = None, to_date: str | None = None
 	end = getdate(to_date) if to_date else start
 	if end < start:
 		start, end = end, start
-	if (end - start).days > 31:
-		frappe.throw(_("Pick a range of 31 days or less."))
-	cap = max(1, min(cint(limit) or 200, 300))
+	if (end - start).days > 366:
+		frappe.throw(_("Pick a range of one year or less."))
+	page = max(1, min(cint(limit) or 200, 500))
+	skip = max(0, cint(offset))
 	fields = ["name", "status", "order_type", "room", "reservation", "table_no",
 	          "customer_name", "guest", "order_total", "paid", "payment_mode",
 	          "nc", "posted_to_folio", "kot_fired", "kot_no", "guests",
@@ -1430,7 +1440,8 @@ def orders_list(outlet: str, date: str | None = None, to_date: str | None = None
 		"POS Order",
 		filters={"outlet": outlet, "creation": ["between", [
 			f"{start} 00:00:00", f"{end} 23:59:59.999999"]]},
-		or_filters=or_filters, fields=fields, order_by="creation desc", limit=cap)
+		or_filters=or_filters, fields=fields, order_by="creation desc",
+		limit=ORDERS_LIST_MAX)
 	if end >= today:
 		earlier = frappe.get_all(
 			"POS Order",
@@ -1441,7 +1452,36 @@ def orders_list(outlet: str, date: str | None = None, to_date: str | None = None
 			r["carried"] = 1
 		rows = earlier + rows
 
-	names = [r.name for r in rows]
+	# decide each bill's state and apply the filters over the whole range,
+	# then page: the counts and totals must not depend on which page is shown
+	typed = [r for r in rows if not order_type or r.order_type == order_type]
+	scoped, counts = [], dict.fromkeys(LIST_STATES, 0)
+	for r in typed:
+		st = _order_list_state(r)
+		paid_by = "Room" if st == "room" else (r.payment_mode if st == "paid" else None)
+		if mode and paid_by != mode:
+			continue
+		counts[st] += 1
+		scoped.append((r, st, paid_by))
+	shown = [x for x in scoped if not state or x[1] == state]
+
+	totals = {"bills": len(shown), "sales": 0.0, "cancelled": 0.0, "by_mode": {}, "by_type": {}}
+	for r, st, paid_by in shown:
+		amt = float(r.order_total or 0)
+		if st in ("paid", "room"):
+			totals["sales"] += amt
+			totals["by_mode"][paid_by or "Other"] = totals["by_mode"].get(paid_by or "Other", 0.0) + amt
+			key = r.order_type or "Other"
+			totals["by_type"][key] = totals["by_type"].get(key, 0.0) + amt
+		elif st == "cancelled":
+			totals["cancelled"] += amt
+	totals["sales"] = round(totals["sales"], 2)
+	totals["cancelled"] = round(totals["cancelled"], 2)
+	totals["by_mode"] = {k: round(v, 2) for k, v in totals["by_mode"].items()}
+	totals["by_type"] = {k: round(v, 2) for k, v in totals["by_type"].items()}
+
+	window = shown[skip:skip + page]
+	names = [r.name for r, _, _ in window]
 	lines: dict[str, dict] = {}
 	for it in frappe.get_all(
 			"POS Order Item", filters={"parent": ["in", names or [""]],
@@ -1454,18 +1494,14 @@ def orders_list(outlet: str, date: str | None = None, to_date: str | None = None
 		else:
 			c["live"] += 1
 	stay_names = dict(frappe.get_all(
-		"Reservation", filters={"name": ["in", [r.reservation for r in rows
+		"Reservation", filters={"name": ["in", [r.reservation for r, _, _ in window
 		                                        if r.reservation] or [""]]},
 		fields=["name", "guest_name"], as_list=True))
-	stale_after = _unfired_alert_min(outlet) if rows else 0
+	stale_after = _unfired_alert_min(outlet) if window else 0
 	now = frappe.utils.now_datetime()
 
-	out, counts = [], dict.fromkeys(LIST_STATES, 0)
-	for r in rows:
-		st = _order_list_state(r)
-		counts[st] += 1
-		if state and st != state:
-			continue
+	out = []
+	for r, st, _paid_by in window:
 		c = lines.get(r.name, {})
 		age = int((now - frappe.utils.get_datetime(r.creation)).total_seconds() // 60)
 		out.append({
@@ -1483,7 +1519,9 @@ def orders_list(outlet: str, date: str | None = None, to_date: str | None = None
 			"stale": 1 if st == "open" and age >= stale_after else 0,
 			"carried": r.get("carried", 0), "cancel_reason": r.cancel_reason,
 		})
-	return {"from": str(start), "to": str(end), "rows": out, "counts": counts}
+	return {"from": str(start), "to": str(end), "rows": out, "counts": counts,
+	        "total": len(shown), "has_more": skip + page < len(shown),
+	        "truncated": len(rows) >= ORDERS_LIST_MAX, "totals": totals}
 
 
 EXPORT_COLUMNS = ("Bill", "KOT", "Date", "Time", "Outlet", "Type", "Table", "Room",
@@ -1496,7 +1534,7 @@ EXPORT_COLUMNS = ("Bill", "KOT", "Date", "Time", "Outlet", "Type", "Table", "Roo
 @require_roles(*POS_ROLES)
 def orders_export(outlet: str, date: str | None = None, to_date: str | None = None,
                   q: str | None = None, state: str | None = None,
-                  mode: str | None = None):
+                  mode: str | None = None, order_type: str | None = None):
 	"""The outlet's bill history as CSV for a day or up to a year: every
 	bill with its state, payment mode, amount, discount, who it was for and
 	who cancelled it. Same search and state filters as the orders list;
@@ -1529,6 +1567,10 @@ def orders_export(outlet: str, date: str | None = None, to_date: str | None = No
 		f"{start} 00:00:00", f"{end} 23:59:59.999999"]]}
 	if mode in ("Cash", "Card", "UPI"):
 		filters["payment_mode"] = mode
+	elif mode == "Room":
+		filters["posted_to_folio"] = 1
+	if order_type:
+		filters["order_type"] = order_type
 	rows = frappe.get_all(
 		"POS Order", filters=filters, or_filters=or_filters,
 		fields=["name", "status", "order_type", "room", "reservation", "table_no",

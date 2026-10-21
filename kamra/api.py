@@ -2467,6 +2467,8 @@ def guest_journey(guest: str):
 	"""One guest's full story: profile, stats, chronological timeline.
 	This is the CRM detail view - and the context an AI concierge loads
 	before speaking to a returning guest."""
+	from kamra.guest_documents import guest_documents
+
 	doc = frappe.get_doc("Guest", guest)
 
 	filters = {"guest": guest}
@@ -2564,6 +2566,9 @@ def guest_journey(guest: str):
 			"email": doc.email, "vip": doc.vip,
 			"nationality": doc.nationality, "id_type": doc.id_type,
 			"id_number": doc.id_number,
+			"id_place_of_issue": doc.get("id_place_of_issue"),
+			"id_issue_date": str(doc.get("id_issue_date") or "") or None,
+			"id_expiry_date": str(doc.get("id_expiry_date") or "") or None,
 			"blacklisted": doc.get("blacklisted"),
 			"blacklist_reason": doc.get("blacklist_reason"),
 			"address": ", ".join(filter(None, [  # nosemgrep: frappe-no-functional-code -- filter(None, ...) drops empty address parts; equivalent to a comprehension
@@ -2571,6 +2576,7 @@ def guest_journey(guest: str):
 			"notes": doc.guest_notes,
 		},
 		"stats": stats,
+		"documents": guest_documents(guest, scope),
 		"reservations": reservations,
 		"timeline": timeline,
 	}
@@ -6013,7 +6019,7 @@ def property_locale(property: str):
 @require_roles("Front Desk", "Finance")
 def verify_tax_id(property: str, tax_id: str, business_name: str = ""):
 	"""Check a buyer's tax ID before the invoice goes out, where the
-	property's country pack offers it (India: GSTIN via Kamra Verify)."""
+	property's country pack offers it."""
 	from kamra import localization as loc
 	return loc.verify_tax_id(loc.pack_for(property), property, tax_id,
 	                         business_name)
@@ -6023,8 +6029,8 @@ def verify_tax_id(property: str, tax_id: str, business_name: str = ""):
 @require_roles("Front Desk", scope={"guest": "Guest"})
 def verify_guest_id(property: str, guest: str, id_type: str, consent: int = 0):
 	"""Read the guest's ID document on file into the profile, where the
-	property's country pack offers it (India: Aadhaar and others via Kamra
-	Verify). consent: the desk confirms the guest was told."""
+	property's country pack offers it. consent: the desk confirms the guest
+	was told."""
 	from kamra import localization as loc
 	return loc.verify_guest_id(loc.pack_for(property), property, guest,
 	                           id_type, consent)
