@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function - the same governed layer
-the UI and the AI use. **401 endpoints**, generated from the source
+the UI and the AI use. **404 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -2813,6 +2813,45 @@ A solved ticket that came back. Needs a reason; it is kept in the timeline.
 | --- | --- | --- |
 | `ticket` | yes |  |
 | `reason` | yes |  |
+
+
+## Guest documents (photo, ID and address proof images)
+
+> Stored privately and served as data URLs to the desk. A property on Verify & Discard keeps no ID images.
+
+### `kamra.guest_documents.save_guest_file`
+
+**POST** · roles: `Front Desk`, `Kamra Agent`
+
+Keep a photo, ID image or address proof on the profile, replacing the
+previous one. A property on Verify & Discard keeps no ID images, so only
+the photo is accepted there (the check-in ID step verifies and discards).
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `guest` | yes |  |
+| `kind` | yes |  |
+| `data` | yes |  |
+
+### `kamra.guest_documents.guest_file`
+
+**GET/POST** · roles: `Front Desk`, `Kamra Agent`
+
+One of the profile's images as a data URL.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `guest` | yes |  |
+| `kind` | yes |  |
+
+### `kamra.guest_documents.remove_guest_file`
+
+**POST** · roles: `Front Desk`, `Kamra Agent`
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `guest` | yes |  |
+| `kind` | yes |  |
 
 
 ## Kitchen printers (routing, print stations, print queue)

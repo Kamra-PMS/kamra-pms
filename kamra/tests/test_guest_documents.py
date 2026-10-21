@@ -21,7 +21,7 @@ from kamra.tests.audit_fixtures import (
 )
 
 
-class GuestDocumentsTestCase(AuditTestCase):
+class _GuestCase(AuditTestCase):
 	properties = (PROP_A,)
 
 	def setUp(self):
@@ -35,6 +35,8 @@ class GuestDocumentsTestCase(AuditTestCase):
 		return make_reservation(PROP_A, self.rt, d(-30), d(-28), "Checked Out",
 		                        guest=guest, **kw)
 
+
+class GuestDocumentsTestCase(_GuestCase):
 	def test_status_none_valid_expiring_expired(self):
 		self.assertEqual(id_status(None, False), "none")
 		# many IDs never expire: no date is valid, not lapsed
@@ -102,3 +104,73 @@ class GuestDocumentsTestCase(AuditTestCase):
 		# expired ID still counts as an ID that was collected
 		self.assertTrue(flow["ids"]["ok"])
 		self.assertEqual(flow["ids"]["missing"], [])
+
+
+def _png() -> str:
+	"""A tiny real PNG as a data URL, as the camera or an upload sends it."""
+	import base64
+	import io
+
+	from PIL import Image
+
+	buf = io.BytesIO()
+	Image.new("RGB", (8, 8), (40, 120, 90)).save(buf, format="PNG")
+	return "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode()
+
+
+class GuestImagesTestCase(_GuestCase):
+	"""The optional photo, ID and address images kept on the profile."""
+
+	def files(self, guest, field):
+		return frappe.get_all("File", filters={"attached_to_doctype": "Guest", "attached_to_name": guest,
+		                                       "attached_to_field": field}, fields=["name", "is_private"])
+
+	def test_photo_is_saved_privately_read_back_replaced_and_removed(self):
+		from kamra.guest_documents import guest_file, remove_guest_file, save_guest_file
+
+		g = make_guest("Asha Rao")
+		save_guest_file(g, "photo", _png())
+		save_guest_file(g, "photo", _png())  # replaces, never piles up
+		files = self.files(g, "photo")
+		self.assertEqual(len(files), 1)
+		self.assertTrue(files[0].is_private)
+		self.assertTrue(guest_documents(g)["photo"])
+		self.assertTrue(guest_file(g, "photo")["data"].startswith("data:image/"))
+
+		remove_guest_file(g, "photo")
+		self.assertEqual(self.files(g, "photo"), [])
+		self.assertFalse(guest_documents(g)["photo"])
+
+	def test_verify_and_discard_keeps_no_id_image_but_takes_a_photo(self):
+		from kamra.guest_documents import save_guest_file
+
+		frappe.db.set_value("Property", PROP_A, "id_retention", "Verify & Discard")
+		g = make_guest("Ravi Menon")
+		self.stay(g)
+		with self.assertRaises(frappe.ValidationError):
+			save_guest_file(g, "id", _png())
+		with self.assertRaises(frappe.ValidationError):
+			save_guest_file(g, "address", _png())
+		save_guest_file(g, "photo", _png())
+		self.assertTrue(guest_documents(g)["photo"])
+
+	def test_store_keeps_the_id_image_and_erasure_removes_every_image(self):
+		from kamra.guest_documents import save_guest_file
+		from kamra.privacy import erase_guest
+
+		frappe.db.set_value("Property", PROP_A, "id_retention", "Store")
+		g = make_guest("Meera Iyer")
+		self.stay(g)
+		save_guest_file(g, "id", _png())
+		save_guest_file(g, "photo", _png())
+		self.assertTrue(guest_documents(g)["id"]["file"])
+
+		erase_guest(g)
+		self.assertEqual(self.files(g, "id_file") + self.files(g, "photo"), [])
+		self.assertFalse(frappe.db.get_value("Guest", g, "photo"))
+
+	def test_an_unknown_kind_is_refused(self):
+		from kamra.guest_documents import save_guest_file
+
+		with self.assertRaises(frappe.ValidationError):
+			save_guest_file(make_guest("Test Kind"), "passport_scan", _png())

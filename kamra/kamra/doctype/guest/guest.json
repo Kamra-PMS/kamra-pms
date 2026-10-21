@@ -32,7 +32,8 @@
   "city",
   "guest_notes",
   "id_file",
-  "address_proof_file"
+  "address_proof_file",
+  "photo"
  ],
  "fields": [
   {
@@ -162,6 +163,12 @@
    "description": "Private photo/scan of the address proof. Deleted at checkout under Verify & Discard retention."
   },
   {
+   "fieldname": "photo",
+   "fieldtype": "Attach Image",
+   "label": "Photo",
+   "description": "Optional. Taken at the desk with the guest's consent, or uploaded. Stored privately."
+  },
+  {
    "fieldname": "guest_category",
    "fieldtype": "Select",
    "label": "Guest Category",
@@ -184,7 +191,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-09-28 18:00:00.000000",
+ "modified": "2026-10-21 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Guest",
@@ -252,5 +259,6 @@
  "sort_order": "DESC",
  "states": [],
  "title_field": "full_name",
- "track_changes": 1
+ "track_changes": 1,
+ "image_field": "photo"
 }
