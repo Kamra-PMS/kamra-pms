@@ -6,7 +6,7 @@ display** and **kitchen printers**, and bills are settled at the outlet or
 posted to the guest's room. Front Desk and Finance staff can use the POS;
 Hotel Admin and Finance set it up.
 
-![The restaurant POS: open bills along the top, the table map on the left, the menu in the middle and the running bill for Table T2 on the right](/img/fnb/pos-bill.png)
+![The restaurant POS: open bills along the top, the menu by category in the middle and the running bill for Table T2 on the right](/img/fnb/pos-bill.png)
 
 ## Before you start
 

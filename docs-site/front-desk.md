@@ -83,7 +83,7 @@ arrival on **Today**, the booking under **Reservations**, a stay on the
    (the button names the room). A red step in the summary is required and
    not done yet: click **Go to step** to finish it.
 
-![The check-in panel for Nikhil Rao: registration chips, the suggested room 202 and a list of other free rooms](/img/front-desk/checkin-sheet.png)
+![The check-in panel for Nikhil Rao: the steps along the top, open on Guest and IDs](/img/front-desk/checkin-sheet.png)
 
 The room turns occupied, the guest folio opens, and any deposit taken
 before arrival moves onto the stay's bill. The last screen links to the
@@ -232,6 +232,8 @@ Check-out is a short guided sheet. Open it from any of these:
 ![The departures list with a Check out button on each row](/img/front-desk/departures.png)
 
 The sheet shows only the steps this stay needs, in this order:
+
+![The check-out sheet for Priya Nair on the Bill step: who pays, why this total, and the stay summary](/img/front-desk/checkout-sheet.png)
 
 1. **Bill.** Every folio of the stay with its lines, as it will stand at
    check-out: nights the night audit has not posted yet are counted in.
