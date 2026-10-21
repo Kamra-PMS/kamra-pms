@@ -188,7 +188,7 @@ Add to pickup queue,Add to pickup queue,إضافة إلى قائمة الاست�
 Add webhook,Add webhook,,screens/settings/WebhooksPage.tsx,,needs_translation
 Add-ons (incl. {tax}),Add-ons (incl. {tax}),الإضافات (شامل {tax}),components/BookingDialog.tsx,tax,translated
 Address,Address,العنوان,screens/FolioView.tsx; screens/PublicCheckin.tsx; screens/RegistrationCard.tsx,,translated
-Address proof,Address proof,إثبات العنوان,screens/RegistrationCard.tsx,,translated
+Address proof,Address proof,إثبات العنوان,components/GuestDocuments.tsx; screens/RegistrationCard.tsx,,translated
 Address proof (optional),Address proof (optional),إثبات العنوان (اختياري),screens/PublicCheckin.tsx,,translated
 Address proof on file,Address proof on file,إثبات العنوان محفوظ,components/GuestDocuments.tsx,,translated
 Administrator or you@hotel.com,Administrator or you@hotel.com,Administrator أو you@hotel.com,screens/Login.tsx,,translated
@@ -412,6 +412,7 @@ CANCELLED - STOP COOKING,CANCELLED - STOP COOKING,ملغى - أوقف الطبخ
 Cancelling…,Cancelling…,جارٍ الإلغاء…,components/CancelPanel.tsx,,translated
 capped at 300,capped at 300,,screens/pos/PosSidePanel.tsx,,needs_translation
 Capture,Capture,التقاط,screens/RegistrationCard.tsx,,translated
+Captured picture,Captured picture,الصورة الملتقطة,components/CameraCapture.tsx,,translated
 Card,Card,بطاقة,screens/CashierShiftReport.tsx; screens/CashierTill.tsx,,translated
 Card slip / transfer ref (optional),Card slip / transfer ref (optional),إيصال البطاقة / مرجع التحويل (اختياري),components/BookingDialog.tsx; components/DepositPanel.tsx; components/SecurityDepositPanel.tsx,,translated
 carried,carried,,screens/pos/PosSidePanel.tsx,,needs_translation
@@ -496,7 +497,7 @@ Clear new,Clear new,,screens/POS.tsx,,needs_translation
 "Click a bar to move the room, change dates, check in or check out. With a mouse, drag a bar to another room or drag its ends to change dates.","Click a bar to move the room, change dates, check in or check out. With a mouse, drag a bar to another room or drag its ends to change dates.",انقر شريطاً لنقل الغرفة أو تغيير التواريخ أو تسجيل الوصول أو المغادرة. بالفأرة، اسحب الشريط إلى غرفة أخرى أو اسحب طرفيه لتغيير التواريخ.,screens/TapeChart.tsx,,translated
 "Click a folio to post charges, settle and print the GST invoice","Click a folio to post charges, settle and print the GST invoice",انقر فاتورة لترحيل الرسوم والتسوية وطباعة فاتورة GST,screens/Billing.tsx,,translated
 Click a room to advance its housekeeping status,Click a room to advance its housekeeping status,انقر غرفة لتقديم حالة التدبير المنزلي,screens/Today.tsx,,translated
-Close,Close,إغلاق,components/BookingDialog.tsx; components/CheckInDialog.tsx; components/CheckOutDialog.tsx; components/PinPad.tsx; components/RoomChangeDialog.tsx; screens/POS.tsx; screens/TapeChart.tsx; screens/pos/OpenBillsPopup.tsx; screens/pos/OrderHistory.tsx; screens/pos/PosSidePanel.tsx; screens/pos/SettleSheet.tsx,,translated
+Close,Close,إغلاق,components/BookingDialog.tsx; components/CameraCapture.tsx; components/CheckInDialog.tsx; components/CheckOutDialog.tsx; components/PinPad.tsx; components/RoomChangeDialog.tsx; screens/POS.tsx; screens/TapeChart.tsx; screens/pos/OpenBillsPopup.tsx; screens/pos/OrderHistory.tsx; screens/pos/PosSidePanel.tsx; screens/pos/SettleSheet.tsx,,translated
 Close & generate invoice,Close & generate invoice,إغلاق وإنشاء فاتورة,screens/FolioView.tsx,,translated
 Close and generate invoice,Close and generate invoice,إغلاق وإصدار الفاتورة,components/CheckOutDialog.tsx,,translated
 Close complimentary bill,Close complimentary bill,إغلاق الفاتورة المجانية,screens/pos/SettleSheet.tsx,,translated
@@ -926,6 +927,7 @@ ID missing,ID missing,الهوية ناقصة,components/CheckInDialog.tsx,,tran
 ID number,ID number,رقم الهوية,components/BookingDialog.tsx; components/CheckInDialog.tsx; components/GuestDocuments.tsx; screens/PublicCheckin.tsx,,translated
 ID on file,ID on file,هوية محفوظة,components/CheckInDialog.tsx; components/GuestDocuments.tsx,,translated
 ID photos are deleted and ID numbers cut to the last 4 digits at checkout.,ID photos are deleted and ID numbers cut to the last 4 digits at checkout.,تُحذف صور الهوية ويُقتصر رقمها على آخر 4 أرقام عند المغادرة.,components/PrivacyNotice.tsx,,translated
+ID proof,ID proof,إثبات الهوية,components/GuestDocuments.tsx,,translated
 ID scan,ID scan,صورة الهوية,components/GuestDocuments.tsx,,translated
 ID still needed for: {names}.,ID still needed for: {names}.,لا تزال الهوية مطلوبة لـ: {names}.,components/CheckInDialog.tsx,names,translated
 ID type,ID type,نوع الهوية,components/BookingDialog.tsx; components/CheckInDialog.tsx; screens/PublicCheckin.tsx,,translated
@@ -1166,6 +1168,7 @@ No bills match these filters.,No bills match these filters.,لا توجد فوا
 No bills match.,No bills match.,لا توجد فواتير مطابقة.,screens/pos/PosSidePanel.tsx,,translated
 No bills yet today.,No bills yet today.,لا توجد فواتير اليوم بعد.,screens/pos/PosSidePanel.tsx,,translated
 No busy-house rule applies ({p}% full).,No busy-house rule applies ({p}% full).,,screens/RateCalendar.tsx,p,needs_translation
+"No camera, or the browser blocked it. Allow the camera, or upload a picture instead.","No camera, or the browser blocked it. Allow the camera, or upload a picture instead.",لا توجد كاميرا، أو حظرها المتصفح. اسمح بالكاميرا، أو ارفع صورة بدلًا من ذلك.,components/CameraCapture.tsx,,translated
 No change to the price.,No change to the price.,لا تغيير في السعر.,components/RoomChangeDialog.tsx,,translated
 No charge-type rules on this company - check the Company folio before collecting.,No charge-type rules on this company - check the Company folio before collecting.,,components/CheckOutDialog.tsx,,needs_translation
 No cleaning photos for this room yet.,No cleaning photos for this room yet.,لا توجد صور تنظيف لهذه الغرفة بعد.,components/RoomDrawer.tsx,,translated
@@ -1215,6 +1218,7 @@ No other room of this type - try All types.,No other room of this type - try All
 No outlet,No outlet,,screens/Setup.tsx,,needs_translation
 No pack,No pack,لا حزمة,screens/Billing.tsx; screens/EndOfDay.tsx,,translated
 No petty cash vouchers for this property yet. Post one above - other hotels keep their own lists.,No petty cash vouchers for this property yet. Post one above - other hotels keep their own lists.,,screens/PettyCash.tsx,,needs_translation
+No photo (optional),No photo (optional),لا توجد صورة (اختياري),components/GuestDocuments.tsx,,translated
 No photos of this room type yet.,No photos of this room type yet.,لا توجد صور لهذا النوع من الغرف بعد.,components/RoomDrawer.tsx,,translated
 No pickups waiting.,No pickups waiting.,لا استلامات بانتظار.,screens/Laundry.tsx,,translated
 No postings on this business date.,No postings on this business date.,لا ترحيلات في تاريخ العمل هذا.,screens/AuditPack.tsx,,translated
@@ -1315,6 +1319,7 @@ Off,Off,,screens/settings/ModulePage.tsx; screens/settings/SettingsHub.tsx,,need
 on,on,تشغيل,screens/Kitchen.tsx,,translated
 On,On,,screens/settings/ModulePage.tsx,,needs_translation
 "On a kitchen device, open","On a kitchen device, open",,screens/KitchenPrinters.tsx,,needs_translation
+On file,On file,محفوظ,components/GuestDocuments.tsx,,translated
 On its way,On its way,,screens/CashierBoard.tsx,,needs_translation
 One consolidated company bill across every room of the group,One consolidated company bill across every room of the group,فاتورة شركة موحّدة عبر كل غرف المجموعة,screens/FolioView.tsx,,translated
 One listing for the whole property. No room numbers required.,One listing for the whole property. No room numbers required.,قائمة واحدة للعقار بالكامل. لا حاجة لأرقام غرف.,screens/Setup.tsx,,translated
@@ -1349,6 +1354,7 @@ Open for over 30 days,Open for over 30 days,,screens/Tickets.tsx,,needs_translat
 Open for over 7 days,Open for over 7 days,,screens/Tickets.tsx,,needs_translation
 Open full bill,Open full bill,,screens/POS.tsx,,needs_translation
 Open full folio,Open full folio,فتح الفاتورة كاملة,components/RoomStayPanels.tsx,,translated
+Open full size,Open full size,عرض بالحجم الكامل,components/GuestDocuments.tsx,,translated
 Open full view,Open full view,فتح العرض الكامل,screens/Today.tsx,,translated
 Open Marketplace → HeyKoala WhatsApp,Open Marketplace → HeyKoala WhatsApp,,screens/Setup.tsx,,needs_translation
 Open my till,Open my till,افتح درجي النقدي,components/TillCard.tsx,,translated
@@ -1454,6 +1460,7 @@ Petty Cash,Petty Cash,النثرية,screens/PettyCash.tsx,,translated
 Petty cash →,Petty cash →,النثرية ←,screens/CashierTill.tsx,,translated
 Phone,Phone,الهاتف,components/BookingDialog.tsx; components/CheckInDialog.tsx; screens/Banquet.tsx; screens/CRS.tsx; screens/Guests.tsx; screens/POS.tsx; screens/RegistrationCard.tsx; screens/Setup.tsx; screens/pos/PosSidePanel.tsx,,translated
 Phone or name,Phone or name,الهاتف أو الاسم,screens/pos/PosSidePanel.tsx,,translated
+Photo,Photo,الصورة,components/GuestDocuments.tsx,,translated
 Photo on file,Photo on file,الصورة محفوظة,components/CheckInDialog.tsx,,translated
 Photograph the guest's ID,Photograph the guest's ID,صور هوية الضيف,components/CheckInDialog.tsx,,translated
 Photos,Photos,الصور,components/RoomDrawer.tsx,,translated
@@ -1614,7 +1621,7 @@ Registration card - your signature,Registration card - your signature,بطاقة
 Registration checklist,Registration checklist,قائمة التسجيل,screens/RegistrationCard.tsx,,translated
 Release notes,Release notes,ملاحظات الإصدار,screens/SystemHealth.tsx,,translated
 Remind me later,Remind me later,ذكّرني لاحقاً,components/UpdateNag.tsx,,translated
-Remove,Remove,إزالة,screens/HkApp.tsx; screens/KitchenPrinters.tsx; screens/POS.tsx; screens/Setup.tsx,,translated
+Remove,Remove,إزالة,components/GuestDocuments.tsx; screens/HkApp.tsx; screens/KitchenPrinters.tsx; screens/POS.tsx; screens/Setup.tsx,,translated
 Remove (not sent to the kitchen),Remove (not sent to the kitchen),إزالة (لم يُرسل إلى المطبخ),screens/POS.tsx; screens/pos/OpenBillsPopup.tsx,,translated
 Remove & retake,Remove & retake,إزالة وإعادة التصوير,screens/PublicCheckin.tsx,,translated
 Remove from bill,Remove from bill,إزالة من الفاتورة,screens/pos/PosSidePanel.tsx,,translated
@@ -1646,6 +1653,7 @@ Restaurant / laundry not on folio yet,Restaurant / laundry not on folio yet,,com
 Restaurant & other bills to check,Restaurant & other bills to check,,components/CheckOutDialog.tsx,,needs_translation
 Restaurant POS,Restaurant POS,نقطة بيع المطعم,screens/CashierTill.tsx; screens/POS.tsx,,translated
 "Restaurant, laundry and minibar go on the guest's bill.","Restaurant, laundry and minibar go on the guest's bill.",المطعم والمغسلة والميني بار تضاف إلى فاتورة الضيف.,components/CheckInDialog.tsx,,translated
+Retake,Retake,إعادة الالتقاط,components/CameraCapture.tsx,,translated
 Return & deliver,Return & deliver,إرجاع وتسليم,screens/Laundry.tsx,,translated
 Return to room {room},Return to room {room},إرجاع إلى غرفة {room},screens/Laundry.tsx,room,translated
 Returning guest · {n} stay{s},Returning guest · {n} stay{s},ضيف عائد · {n} إقامة{s},components/BookingDialog.tsx,n s,translated
@@ -1881,6 +1889,8 @@ Supervisor passes,Supervisor passes,,screens/HkApp.tsx,,needs_translation
 Supervisor PIN,Supervisor PIN,رمز المشرف,screens/pos/VoidApproval.tsx,,translated
 Supervisor…,Supervisor…,المشرف…,screens/pos/VoidApproval.tsx,,translated
 Switch app,Switch app,تبديل التطبيق,AppShell.tsx,,translated
+Switch between the front and back camera,Switch between the front and back camera,التبديل بين الكاميرا الأمامية والخلفية,components/CameraCapture.tsx,,translated
+Switch camera,Switch camera,تبديل الكاميرا,components/CameraCapture.tsx,,translated
 Switch off {name} for this property?,Switch off {name} for this property?,,screens/settings/AccessPages.tsx; screens/settings/SettingsHub.tsx,name,needs_translation
 "Switch off what this property doesn't run. Its apps leave the launcher, search and the AI agent's tools for everyone. Data is kept and comes back when you switch it on.","Switch off what this property doesn't run. Its apps leave the launcher, search and the AI agent's tools for everyone. Data is kept and comes back when you switch it on.",,screens/settings/AccessPages.tsx,,needs_translation
 Switch on what you need. You can change this any time in Settings.,Switch on what you need. You can change this any time in Settings.,,screens/Setup.tsx,,needs_translation
@@ -1899,7 +1909,8 @@ Tables & running bills,Tables & running bills,الطاولات والفواتي�
 Take a payment,Take a payment,استلام دفعة,components/RoomStayPanels.tsx,,translated
 Take it,Take it,,screens/Tickets.tsx,,needs_translation
 Take out of service,Take out of service,إخراج من الخدمة,components/RoomDrawer.tsx,,translated
-Take photo,Take photo,التقاط صورة,screens/PublicCheckin.tsx,,translated
+Take photo,Take photo,التقاط صورة,components/GuestDocuments.tsx; screens/PublicCheckin.tsx,,translated
+Take picture,Take picture,التقط صورة,components/CameraCapture.tsx,,translated
 Take the deposit (or waive it with a reason) to continue.,Take the deposit (or waive it with a reason) to continue.,استلم التأمين (أو أعفِ منه مع ذكر السبب) للمتابعة.,components/CheckInDialog.tsx,,translated
 Take the security deposit (or waive it with a reason) and any advance the booking still owes.,Take the security deposit (or waive it with a reason) and any advance the booking still owes.,خذ مبلغ التأمين (أو اعف منه مع ذكر السبب) وأي دفعة مقدمة لا يزال الحجز مدينا بها.,components/CheckInDialog.tsx,,translated
 Take the security deposit or waive it with a reason to continue.,Take the security deposit or waive it with a reason to continue.,خذ مبلغ التأمين أو اعف منه مع ذكر السبب للمتابعة.,components/CheckInDialog.tsx,,translated
@@ -1967,6 +1978,7 @@ They sign in with this email.,They sign in with this email.,,screens/settings/Ac
 Thinking...,Thinking...,جارٍ التفكير...,screens/TapeChart.tsx,,translated
 This bill,This bill,هذه الفاتورة,screens/pos/PosSidePanel.tsx,,translated
 "This blocks the audit. Fix it above, or override it with a reason - your name and the time are recorded on the audit.","This blocks the audit. Fix it above, or override it with a reason - your name and the time are recorded on the audit.",,screens/EndOfDayWizard.tsx,,needs_translation
+This browser cannot use a camera here. Upload a picture instead.,This browser cannot use a camera here. Upload a picture instead.,لا يمكن لهذا المتصفح استخدام الكاميرا هنا. ارفع صورة بدلًا من ذلك.,components/CameraCapture.tsx,,translated
 This check-in link isn't valid. Please contact the hotel.,This check-in link isn't valid. Please contact the hotel.,رابط تسجيل الوصول هذا غير صالح. يرجى التواصل مع الفندق.,screens/PublicCheckin.tsx,,translated
 This checks out {name} only. Check out the others one at a time when they leave.,This checks out {name} only. Check out the others one at a time when they leave.,هذا يسجل مغادرة {name} فقط. سجّل مغادرة الآخرين واحداً تلو الآخر عند مغادرتهم.,components/CheckOutDialog.tsx,name,translated
 This closes the bag without billing. Tell us why - it's recorded on the order.,This closes the bag without billing. Tell us why - it's recorded on the order.,يغلق هذا الحقيبة دون فوترة. أخبرنا لماذا - يُسجَّل على الطلب.,screens/Laundry.tsx,,translated
@@ -2047,10 +2059,12 @@ Unsaved,Unsaved,,screens/settings/ModulePage.tsx,,needs_translation
 Updating quote,Updating quote,تحديث العرض,components/BookingDialog.tsx,,translated
 Upgrade or another type,Upgrade or another type,ترقية أو نوع آخر,components/CheckInDialog.tsx,,translated
 UPI,UPI,UPI,screens/CashierShiftReport.tsx; screens/CashierTill.tsx,,translated
+Upload,Upload,رفع,components/GuestDocuments.tsx,,translated
 Upload CSV file,Upload CSV file,رفع ملف CSV,screens/GoLiveImport.tsx,,translated
 Upload image,Upload image,رفع صورة,screens/PublicCheckin.tsx,,translated
 Use property default ({n} days),Use property default ({n} days),,components/CreditTermsEditor.tsx,n,needs_translation
 Use the hotel default,Use the hotel default,استخدام الإعداد الافتراضي للفندق,components/CustomizeToday.tsx,,translated
+Use this picture,Use this picture,استخدم هذه الصورة,components/CameraCapture.tsx,,translated
 Used on {n} earlier stays,Used on {n} earlier stays,استُخدمت في {n} إقامات سابقة,components/CheckInDialog.tsx; components/GuestDocuments.tsx,n,translated
 Used on 1 earlier stay,Used on 1 earlier stay,استُخدمت في إقامة سابقة واحدة,components/CheckInDialog.tsx; components/GuestDocuments.tsx,,translated
 Vacant,Vacant,شاغرة,components/RoomDrawer.tsx,,translated

@@ -22,7 +22,7 @@ import { useAuth } from "../lib/auth"
 import { serverError, updateResource } from "../lib/resource"
 import type { ShellContext } from "../AppShell"
 import EditableNationality from "../components/EditableNationality"
-import GuestDocuments, { type GuestDocs } from "../components/GuestDocuments"
+import GuestDocuments, { GuestAvatar, type GuestDocs } from "../components/GuestDocuments"
 import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
 import {
@@ -416,9 +416,7 @@ export default function GuestJourney() {
       <Card className="mb-4">
         <CardContent className="py-5">
           <div className="flex flex-wrap items-start gap-4">
-            <div className="flex size-14 items-center justify-center rounded-2xl bg-brand-50 text-xl font-semibold text-brand-700">
-              {guest.full_name?.slice(0, 1) ?? "G"}
-            </div>
+            <GuestAvatar guestId={guest.name} has={!!data.documents?.photo} initial={guest.full_name?.slice(0, 1) ?? "G"} />
             <div className="min-w-0 flex-1">
               <h1 className="flex flex-wrap items-center gap-2 text-xl font-semibold">
                 {guest.full_name}

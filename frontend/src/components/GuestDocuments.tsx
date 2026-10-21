@@ -5,15 +5,16 @@
     record. Everything here is a warning or a record: it never blocks a
     check-in. Data from kamra.api.guest_journey (documents). */
 
-import { useState } from "react"
-import { FileX2, ImageOff, ShieldCheck } from "lucide-react"
-import { idDocumentImage } from "../lib/api"
+import { useEffect, useRef, useState } from "react"
+import { Camera, FileX2, ImageOff, ShieldCheck, Trash2, Upload, UserRound } from "lucide-react"
+import { guestFile, idDocumentImage, removeGuestFile, saveGuestFile, type GuestFileKind } from "../lib/api"
 import { serverError, updateResource } from "../lib/resource"
 import { useT } from "../lib/i18n"
 import { cn } from "../lib/utils"
 import { Badge } from "./ui/badge"
 import { Button } from "./ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
+import CameraCapture from "./CameraCapture"
 
 export interface GuestDocs {
   id: {
@@ -26,8 +27,11 @@ export interface GuestDocs {
     on_file: boolean
     scan_reservation: string | null
     scan_on: string | null
+    /** an image kept on the profile itself */
+    file: boolean
   }
   address_proof: { on_file: boolean }
+  photo: boolean
   used: { count: number; last_on: string | null; last_reservation: string | null }
   retention: "Store" | "Verify & Discard" | null
 }
@@ -79,6 +83,9 @@ export default function GuestDocuments({ guestId, docs, onSaved }: {
       setErr(null)
     } catch (e) { setErr(serverError(e)) } finally { setScanBusy(false) }
   }
+
+  // a property on Verify & Discard keeps no ID images on the profile
+  const keepsIds = docs.retention !== "Verify & Discard"
 
   const status = {
     none: { tone: "zinc", text: t("No ID on file") },
@@ -137,28 +144,30 @@ export default function GuestDocuments({ guestId, docs, onSaved }: {
           </div>
         </div>
 
-        {/* the proofs themselves, or the plain "none" the desk can act on */}
+        {/* the photo and the proofs themselves, or the plain "none" the desk can act on */}
         <div className="flex flex-wrap gap-3">
-          {scan ? (
-            <img src={scan} alt={t("ID scan")} className="h-28 rounded-lg border border-zinc-200 object-cover" />
-          ) : id.scan_reservation ? (
-            <button type="button" onClick={viewScan} disabled={scanBusy}
-              className="flex h-28 w-44 flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-brand-400 bg-brand-50/40 text-xs font-medium text-brand-700 hover:bg-brand-50">
-              <ShieldCheck className="size-6" aria-hidden />
-              {scanBusy ? t("Opening…") : t("View ID scan")}
-              {id.scan_on ? <span className="font-normal text-zinc-500">{id.scan_on.slice(0, 10)}</span> : null}
-            </button>
+          <ImageTile guestId={guestId} kind="photo" has={docs.photo} facing="user"
+            label={t("Photo")} empty={<><UserRound className="size-6" aria-hidden />{t("No photo (optional)")}</>}
+            onChanged={onSaved} />
+          {!docs.id.file && id.scan_reservation ? (
+            scan ? (
+              <img src={scan} alt={t("ID scan")} className="h-28 rounded-lg border border-zinc-200 object-cover" />
+            ) : (
+              <button type="button" onClick={viewScan} disabled={scanBusy}
+                className="flex h-28 w-44 flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-brand-400 bg-brand-50/40 text-xs font-medium text-brand-700 hover:bg-brand-50">
+                <ShieldCheck className="size-6" aria-hidden />
+                {scanBusy ? t("Opening…") : t("View ID scan")}
+                {id.scan_on ? <span className="font-normal text-zinc-500">{id.scan_on.slice(0, 10)}</span> : null}
+              </button>
+            )
           ) : (
-            <div className="flex h-28 w-44 flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-zinc-300 bg-zinc-50 text-xs text-zinc-400">
-              <ImageOff className="size-6" aria-hidden />{t("No ID proof")}
-            </div>
+            <ImageTile guestId={guestId} kind="id" has={docs.id.file} facing="environment" canStore={keepsIds}
+              label={t("ID proof")} empty={<><ImageOff className="size-6" aria-hidden />{t("No ID proof")}</>}
+              onChanged={onSaved} />
           )}
-          <div className={cn("flex h-28 w-44 flex-col items-center justify-center gap-1 rounded-lg border border-dashed text-xs",
-            docs.address_proof.on_file ? "border-emerald-300 bg-emerald-50/50 text-emerald-700" : "border-zinc-300 bg-zinc-50 text-zinc-400")}>
-            {docs.address_proof.on_file
-              ? <><ShieldCheck className="size-6" aria-hidden />{t("Address proof on file")}</>
-              : <><FileX2 className="size-6" aria-hidden />{t("No address proof")}</>}
-          </div>
+          <ImageTile guestId={guestId} kind="address" has={docs.address_proof.on_file} facing="environment" canStore={keepsIds}
+            label={t("Address proof")} empty={<><FileX2 className="size-6" aria-hidden />{t("No address proof")}</>}
+            onChanged={onSaved} />
         </div>
 
         {docs.retention === "Verify & Discard" && (
@@ -172,5 +181,122 @@ export default function GuestDocuments({ guestId, docs, onSaved }: {
         </Button>
       </CardContent>
     </Card>
+  )
+}
+
+/** One picture slot on the card: shows what is on file, and lets the desk
+ *  take a new one with the camera, upload one, or remove it. */
+function ImageTile({ guestId, kind, has, label, empty, facing, canStore = true, onChanged }: {
+  guestId: string
+  kind: GuestFileKind
+  has: boolean
+  label: string
+  empty: React.ReactNode
+  facing: "user" | "environment"
+  canStore?: boolean
+  onChanged: () => void
+}) {
+  const { t } = useT()
+  const [src, setSrc] = useState<string | null>(null)
+  const [camera, setCamera] = useState(false)
+  const [big, setBig] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState<string | null>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (!has) { setSrc(null); return }
+    let live = true
+    guestFile(guestId, kind).then((r) => { if (live) setSrc(r.is_image ? r.data : null) }).catch(() => {})
+    return () => { live = false }
+  }, [guestId, kind, has])
+
+  async function save(data: string) {
+    setBusy(true)
+    try {
+      await saveGuestFile(guestId, kind, data)
+      setSrc(data); setErr(null); setCamera(false)
+      onChanged()
+    } catch (e) { setErr(serverError(e)) } finally { setBusy(false) }
+  }
+
+  function pick(f: File | undefined) {
+    if (!f) return
+    const r = new FileReader()
+    r.onload = () => void save(String(r.result))
+    r.readAsDataURL(f)
+  }
+
+  async function remove() {
+    setBusy(true)
+    try {
+      await removeGuestFile(guestId, kind)
+      setSrc(null); setErr(null)
+      onChanged()
+    } catch (e) { setErr(serverError(e)) } finally { setBusy(false) }
+  }
+
+  return (
+    <div className="w-44">
+      <div className="mb-1 text-xs font-medium uppercase tracking-wider text-zinc-400">{label}</div>
+      {src ? (
+        <button type="button" onClick={() => setBig(true)} title={t("Open full size")} className="block">
+          <img src={src} alt={label} className="h-28 w-44 rounded-lg border border-zinc-200 object-cover" />
+        </button>
+      ) : (
+        <div className={cn("flex h-28 w-44 flex-col items-center justify-center gap-1 rounded-lg border border-dashed text-xs",
+          has ? "border-emerald-300 bg-emerald-50/50 text-emerald-700" : "border-zinc-300 bg-zinc-50 text-zinc-400")}>
+          {has ? <><ShieldCheck className="size-6" aria-hidden />{t("On file")}</> : empty}
+        </div>
+      )}
+      {canStore && (
+        <div className="mt-1.5 flex items-center gap-1">
+          <button type="button" disabled={busy} onClick={() => setCamera(true)}
+            className="inline-flex items-center gap-1 rounded-md px-1.5 py-1 text-xs font-medium text-brand-700 hover:bg-brand-50 disabled:opacity-40">
+            <Camera className="size-3.5" />{t("Take photo")}
+          </button>
+          <button type="button" disabled={busy} onClick={() => fileRef.current?.click()}
+            className="inline-flex items-center gap-1 rounded-md px-1.5 py-1 text-xs font-medium text-zinc-600 hover:bg-zinc-100 disabled:opacity-40">
+            <Upload className="size-3.5" />{t("Upload")}
+          </button>
+          {has && (
+            <button type="button" disabled={busy} onClick={remove} aria-label={t("Remove")} title={t("Remove")}
+              className="ms-auto rounded-md p-1 text-zinc-400 hover:bg-rose-50 hover:text-rose-600 disabled:opacity-40">
+              <Trash2 className="size-3.5" />
+            </button>
+          )}
+          <input ref={fileRef} type="file" accept="image/jpeg,image/png" className="hidden"
+            onChange={(e) => { pick(e.target.files?.[0]); e.target.value = "" }} />
+        </div>
+      )}
+      {err && <p className="mt-1 text-xs text-rose-700">{err}</p>}
+      {big && src && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 p-4" role="dialog" aria-modal="true"
+          aria-label={label} onClick={() => setBig(false)}>
+          <img src={src} alt={label} className="max-h-full max-w-full rounded-lg object-contain" />
+        </div>
+      )}
+      {camera && (
+        <CameraCapture title={label} facing={facing} onUse={(d) => void save(d)} onClose={() => setCamera(false)} />
+      )}
+    </div>
+  )
+}
+
+/** The guest's photo for the profile header, or their initial. */
+export function GuestAvatar({ guestId, has, initial }: { guestId: string; has: boolean; initial: string }) {
+  const [src, setSrc] = useState<string | null>(null)
+  useEffect(() => {
+    if (!has) { setSrc(null); return }
+    let live = true
+    guestFile(guestId, "photo").then((r) => { if (live) setSrc(r.data) }).catch(() => {})
+    return () => { live = false }
+  }, [guestId, has])
+  return src ? (
+    <img src={src} alt="" className="size-14 rounded-2xl object-cover" />
+  ) : (
+    <div className="flex size-14 items-center justify-center rounded-2xl bg-brand-50 text-xl font-semibold text-brand-700">
+      {initial}
+    </div>
   )
 }
