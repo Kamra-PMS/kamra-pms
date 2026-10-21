@@ -6,7 +6,7 @@ const inputCls =
   "rounded-lg border border-zinc-300 bg-white px-2 py-1 text-sm " +
   "focus:outline-2 focus:outline-offset-1 focus:outline-brand-600"
 
-/** Inline nationality edit — updates the Guest profile (shown on folio & GRC). */
+/** Inline nationality edit - updates the Guest profile (shown on folio & GRC). */
 export default function EditableNationality(props: {
   guestId: string
   value: string | null
@@ -16,7 +16,7 @@ export default function EditableNationality(props: {
 }) {
   const listId = useId()
   const variant = props.variant ?? "inline"
-  const displayed = props.value?.trim() || "—"
+  const displayed = props.value?.trim() || "-"
   const [editing, setEditing] = useState(false)
   const [val, setVal] = useState(props.value ?? "Indian")
   const [busy, setBusy] = useState(false)

@@ -12,6 +12,10 @@ export interface ChangeEvent {
   property?: string | null
   outlet?: string | null
   name?: string
+  /** the document was just created, not edited */
+  is_new?: boolean
+  /** hash of who made the change (see lib/notifications.ts `who`) */
+  by?: string
 }
 
 export interface RealtimeOptions {

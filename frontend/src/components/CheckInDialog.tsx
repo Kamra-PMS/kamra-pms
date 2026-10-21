@@ -18,6 +18,7 @@ import { fmtMoney } from "../lib/money"
 import { useT } from "../lib/i18n"
 import { cn } from "../lib/utils"
 import { Button } from "./ui/button"
+import { Badge } from "./ui/badge"
 import { Sheet } from "./ui/sheet"
 import { IdDocumentField } from "./IdDocumentField"
 import { SignaturePad } from "./SignaturePad"
@@ -84,6 +85,10 @@ interface Flow {
     id_type: string | null
     id_number: string | null
     id_on_file: boolean
+    /** what the profile already holds: warnings for the desk, never a block */
+    id_status: "none" | "valid" | "expiring" | "expired"
+    id_expiry_date: string | null
+    id_used_count: number
     address: string
   }
   vocabulary: { id_types: string[] }
@@ -655,11 +660,26 @@ export default function CheckInDialog(props: {
                 <Row
                   label={t("ID")}
                   value={
-                    flow.guest.id_number
-                      ? `${flow.guest.id_type ? t(flow.guest.id_type) + " · " : ""}${flow.guest.id_number}`
-                      : flow.guest.id_on_file
-                        ? t("Photo on file")
-                        : <span className="text-rose-700">{t("Missing")}</span>
+                    <span className="flex flex-wrap items-center justify-end gap-1.5">
+                      {flow.guest.id_number
+                        ? `${flow.guest.id_type ? t(flow.guest.id_type) + " · " : ""}${flow.guest.id_number}`
+                        : flow.guest.id_on_file
+                          ? t("Photo on file")
+                          : <span className="text-rose-700">{t("Missing")}</span>}
+                      {flow.guest.id_status === "expired" && (
+                        <Badge tone="rose">{t("Expired {date}", { date: flow.guest.id_expiry_date ?? "" })}</Badge>
+                      )}
+                      {flow.guest.id_status === "expiring" && (
+                        <Badge tone="amber">{t("Expires {date}", { date: flow.guest.id_expiry_date ?? "" })}</Badge>
+                      )}
+                      {flow.guest.id_used_count > 0 && (
+                        <Badge tone="brand">
+                          {flow.guest.id_used_count === 1
+                            ? t("Used on 1 earlier stay")
+                            : t("Used on {n} earlier stays", { n: flow.guest.id_used_count })}
+                        </Badge>
+                      )}
+                    </span>
                   }
                 />
               </dl>

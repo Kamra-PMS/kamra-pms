@@ -19,6 +19,7 @@ import {
   MoonStar,
   Search,
   SkipForward,
+  Sparkles,
   TriangleAlert,
 } from "lucide-react"
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom"
@@ -39,6 +40,7 @@ import {
 } from "../lib/eod"
 import { serverError } from "../lib/resource"
 import { useCashierAuth } from "../lib/cashierAuth"
+import { CHECK_FIXES } from "../lib/eodFixes"
 import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
 import { Card } from "../components/ui/card"
@@ -286,6 +288,46 @@ function Message({ tone, children }: { tone: "info" | "warn" | "block" | "ok"; c
   return <div className={cn("rounded-lg border px-3 py-2 text-sm", cls)}>{children}</div>
 }
 
+/** What to do about a check: usual fixes, ask the agent, or override. */
+function FixHelp({ check, date }: { check: Check; date: string }) {
+  const { t } = useT()
+  const navigate = useNavigate()
+  const fix = CHECK_FIXES[check.key]
+  if (!fix) return null
+  return (
+    <div className="rounded-lg border border-zinc-200 bg-white p-3 text-sm">
+      <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">{t("How to clear this")}</p>
+      <p className="mt-1 text-zinc-600">{t(fix.why)}</p>
+      <ol className="mt-2 list-decimal space-y-1 ps-5 text-zinc-700">
+        {fix.steps.map((st) => (
+          <li key={st.text}>
+            {t(st.text)}
+            {st.to && (
+              <Link to={st.to} className="ms-2 text-brand-700 hover:underline">
+                {t(st.cta ?? "Open")} →
+              </Link>
+            )}
+          </li>
+        ))}
+      </ol>
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <Button
+          variant="outline"
+          className="h-8 px-3 text-xs"
+          onClick={() => navigate("/assistant", { state: { prompt: fix.ask(check.count, date) } })}
+        >
+          <Sparkles className="me-1.5 size-3.5" aria-hidden />
+          {t("Ask Kamra Agent to help")}
+        </Button>
+        <span className="text-xs text-zinc-400">{t("It opens the agent with this check described. You approve what it changes.")}</span>
+      </div>
+      <p className="mt-3 text-xs text-zinc-500">
+        <span className="font-medium text-zinc-600">{t("If you override:")}</span> {t(fix.override)}
+      </p>
+    </div>
+  )
+}
+
 function CheckBlock({
   check,
   children,
@@ -319,11 +361,14 @@ function CheckBlock({
         )}
       </div>
       {check.count > 0 && <p className="text-xs text-zinc-500">{t(check.action)}</p>}
+      {check.count > 0 && !state.ran && check.severity !== "info" && (
+        <FixHelp check={check} date={state.business_date} />
+      )}
       {children}
       {blocking && !ack && !state.ran && (
         <div className="rounded-lg border border-rose-200 bg-rose-50/60 p-3">
           <p className="text-xs text-rose-800">
-            {t("This blocks the audit. Resolve it, or acknowledge it with a reason - your name and the time are recorded on the audit.")}
+            {t("This blocks the audit. Fix it above, or override it with a reason - your name and the time are recorded on the audit.")}
           </p>
           <div className="mt-2 flex flex-wrap gap-2">
             <input
@@ -345,7 +390,7 @@ function CheckBlock({
                 }
               }}
             >
-              {t("Acknowledge")}
+              {t("Override with reason")}
             </Button>
           </div>
         </div>
@@ -915,10 +960,10 @@ export default function EndOfDayWizard() {
         <div>
           <Link to="/end-of-day" className="inline-flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-800">
             <ArrowLeft className="size-3.5" aria-hidden />
-            {t("Manage End of Day")}
+            {t("Manage End of Day / Night Audit")}
           </Link>
           <h1 className="text-lg font-semibold text-zinc-900">
-            {t("End of Day")} — {state.property_name} — {fmtDay(state.business_date)}
+            {t("End of Day / Night Audit")} - {state.property_name} - {fmtDay(state.business_date)}
           </h1>
         </div>
         <Badge tone={state.ran ? "green" : blockedSteps.length ? "rose" : "brand"}>

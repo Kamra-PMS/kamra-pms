@@ -9,8 +9,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react"
 import {
-  ArrowLeft, BedDouble, ListOrdered, Phone, Receipt, Search, Star, UserPlus,
-  UserRound, XCircle,
+  ArrowLeft, BedDouble, Download, FileSpreadsheet, History, ListOrdered, Phone, Receipt,
+  Search, Star, UserPlus, UserRound, XCircle,
 } from "lucide-react"
 import { call } from "../../lib/api"
 import { serverError } from "../../lib/resource"
@@ -120,7 +120,7 @@ interface CustomerHit {
   in_house_room: string | null
 }
 
-const money = (n: unknown) =>
+export const money = (n: unknown) =>
   Number(n ?? 0).toLocaleString(moneyLocale(), { maximumFractionDigits: 2 })
 
 const BADGE: Record<ListState, string> = {
@@ -132,16 +132,16 @@ const BADGE: Record<ListState, string> = {
   closed: "bg-zinc-100 text-zinc-600",
   cancelled: "bg-rose-100 text-rose-700",
 }
-const STATES: ListState[] = ["open", "sent", "paid", "room", "nc", "cancelled", "closed"]
+export const STATES: ListState[] = ["open", "sent", "paid", "room", "nc", "cancelled", "closed"]
 
 /** yyyy-mm-dd for the device's own day */
-function localDay(d = new Date()) {
+export function localDay(d = new Date()) {
   const p = (n: number) => String(n).padStart(2, "0")
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
 }
-const hhmm = (ts?: string | null) => (ts ? ts.slice(11, 16) : "")
+export const hhmm = (ts?: string | null) => (ts ? ts.slice(11, 16) : "")
 const dayOf = (ts?: string | null) => (ts ? ts.slice(0, 10) : "")
-function shortDay(d: string) {
+export function shortDay(d: string) {
   if (!d) return ""
   const dt = new Date(`${d}T00:00:00`)
   return isNaN(dt.getTime()) ? d : dt.toLocaleDateString(moneyLocale(), { day: "numeric", month: "short" })
@@ -170,7 +170,7 @@ export function StateBadge({ state, className }: { state: ListState; className?:
 }
 
 export default function PosSidePanel({
-  outlet, tab, onTab, onClose, refreshKey, order, draft, onDraftGuest, onOpenBill, onGuestChanged,
+  outlet, tab, onTab, onClose, refreshKey, order, draft, onDraftGuest, onOpenBill, onGuestChanged, onHistory,
 }: {
   outlet: string
   tab: "orders" | "guest"
@@ -185,6 +185,8 @@ export default function PosSidePanel({
   onDraftGuest: (g: { guest: string; full_name: string } | null) => void
   onOpenBill: (name: string) => void
   onGuestChanged: () => void
+  /** open the full-screen order history */
+  onHistory?: () => void
 }) {
   const { t } = useT()
   useEffect(() => {
@@ -192,29 +194,44 @@ export default function PosSidePanel({
     window.addEventListener("keydown", onKey)
     return () => window.removeEventListener("keydown", onKey)
   }, [onClose])
+  const wide = tab === "orders"
   return (
     <div className="fixed inset-0 z-50">
-      <div className="absolute inset-0 bg-black/30" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/40 animate-fade-in" onClick={onClose} />
       <aside role="dialog" aria-label={tab === "orders" ? t("Orders") : t("Guest")}
-        className="absolute inset-y-0 end-0 flex w-full flex-col bg-zinc-50 shadow-2xl sm:w-[28rem]">
-        <div className="flex shrink-0 items-center gap-2 border-b border-zinc-200 bg-white px-3 py-2">
-          <div className="flex flex-1 rounded-xl border border-zinc-200 bg-zinc-50 p-1">
+        className={cn(
+          "absolute inset-y-0 end-0 flex flex-col border-s border-zinc-200 bg-zinc-50 shadow-2xl animate-sheet-in",
+          wide
+            ? "w-full md:w-[min(100%,75vw)] xl:w-[min(100%,80rem)]"
+            : "w-full sm:w-[28rem]",
+        )}>
+        <div className="flex shrink-0 items-center gap-2 border-b border-zinc-100 bg-white px-4 py-3">
+          <div className={cn("flex rounded-xl border border-zinc-200 bg-zinc-50 p-1", wide ? "w-auto" : "flex-1")}>
             {([["orders", t("Orders"), ListOrdered], ["guest", t("Guest"), UserRound]] as const).map(([k, l, Icon]) => (
               <button key={k} onClick={() => onTab(k)}
-                className={cn("flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium",
-                  tab === k ? "bg-brand-600 text-white" : "text-zinc-600 hover:bg-white")}>
+                className={cn("flex items-center justify-center gap-1.5 rounded-lg px-3 py-2.5 text-sm font-semibold transition",
+                  wide ? "px-4" : "flex-1",
+                  tab === k ? "bg-brand-600 text-white shadow-sm" : "text-zinc-600 hover:bg-white")}>
                 <Icon className="size-4" />{l}
               </button>
             ))}
           </div>
+          {wide && (
+            <h2 className="ms-1 hidden min-w-0 flex-1 truncate text-base font-semibold text-zinc-800 sm:block">
+              {t("Orders history")}
+            </h2>
+          )}
           <button onClick={onClose} aria-label={t("Close")}
-            className="rounded-lg p-2 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700">
+            className="ms-auto rounded-xl p-2.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700">
             <XCircle className="size-5" />
           </button>
         </div>
-        <div className="min-h-0 flex-1 overflow-y-auto p-3">
+        <div className={cn(
+          "min-h-0 flex-1",
+          wide ? "flex flex-col overflow-hidden p-4 sm:p-5" : "overflow-y-auto p-4",
+        )}>
           {tab === "orders"
-            ? <OrdersTab outlet={outlet} refreshKey={refreshKey} onOpenBill={onOpenBill} />
+            ? <OrdersTab outlet={outlet} refreshKey={refreshKey} onOpenBill={onOpenBill} onHistory={onHistory} />
             : <GuestTab outlet={outlet} order={order} draft={draft} refreshKey={refreshKey}
                 onDraftGuest={onDraftGuest} onChanged={onGuestChanged} />}
         </div>
@@ -225,12 +242,56 @@ export default function PosSidePanel({
 
 /* ── orders ─────────────────────────────────────────────────────────── */
 
-function OrdersTab({ outlet, refreshKey, onOpenBill }: {
-  outlet: string; refreshKey: number; onOpenBill: (name: string) => void
+const EXPORT_COLS = [
+  "Bill", "Time", "Label", "State", "Type", "Table", "Room", "Customer",
+  "Amount", "Items", "Voided", "KOT", "Payment", "Guests", "Cancel reason",
+] as const
+
+function exportRows(rows: ListRow[], stateLabel: (s: ListState) => string) {
+  return rows.map((r) => [
+    r.name,
+    r.time,
+    r.label,
+    stateLabel(r.state),
+    r.order_type || "",
+    r.table_no || "",
+    r.room_no || "",
+    r.who || "",
+    String(r.amount),
+    String(r.items),
+    String(r.voided),
+    r.kot_no != null ? String(r.kot_no) : "",
+    r.payment_mode || "",
+    r.guests != null ? String(r.guests) : "",
+    r.cancel_reason || "",
+  ])
+}
+
+function downloadBlob(filename: string, mime: string, body: string) {
+  const blob = new Blob([body], { type: mime })
+  const a = document.createElement("a")
+  a.href = URL.createObjectURL(blob)
+  a.download = filename
+  a.click()
+  URL.revokeObjectURL(a.href)
+}
+
+function escCsv(v: string) {
+  return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
+}
+
+function escXml(v: string) {
+  return v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+}
+
+function OrdersTab({ outlet, refreshKey, onOpenBill, onHistory }: {
+  outlet: string; refreshKey: number; onOpenBill: (name: string) => void; onHistory?: () => void
 }) {
   const { t } = useT()
   const label = useStateLabel()
-  const [day, setDay] = useState(localDay())
+  const today = localDay()
+  const [from, setFrom] = useState(today)
+  const [to, setTo] = useState(today)
   const [q, setQ] = useState("")
   const [qLive, setQLive] = useState("")
   const [only, setOnly] = useState<ListState | null>(null)
@@ -245,96 +306,201 @@ function OrdersTab({ outlet, refreshKey, onOpenBill }: {
 
   const load = useCallback(() => {
     if (!outlet) return
-    call<ListOut>("kamra.pos.orders_list", { outlet, date: day, q: qLive || null })
+    call<ListOut>("kamra.pos.orders_list", {
+      outlet, date: from, to_date: to === from ? null : to, q: qLive || null, limit: 300,
+    })
       .then((d) => { setData(d); setErr(null) })
       .catch((e) => setErr(serverError(e)))
-  }, [outlet, day, qLive])
+  }, [outlet, from, to, qLive])
   useEffect(load, [load, refreshKey])
+
 
   if (viewing) {
     return <OrderView name={viewing} onBack={() => setViewing(null)}
       onOpenBill={(n) => onOpenBill(n)} />
   }
   const rows = (data?.rows ?? []).filter((r) => !only || r.state === only)
-  const today = day === localDay()
+  const singleDay = from === to
+  const isToday = singleDay && from === today
+  const stamp = singleDay ? from : `${from}_to_${to}`
+
+  function doExportCsv() {
+    const lines = [
+      EXPORT_COLS.join(","),
+      ...exportRows(rows, label).map((cells) => cells.map(escCsv).join(",")),
+    ]
+    downloadBlob(`pos-orders-${stamp}.csv`, "text/csv;charset=utf-8", "\ufeff" + lines.join("\n") + "\n")
+  }
+
+  function doExportExcel() {
+    const header = EXPORT_COLS.map((h) =>
+      `<Cell><Data ss:Type="String">${escXml(h)}</Data></Cell>`).join("")
+    const body = exportRows(rows, label).map((cells) =>
+      `<Row>${cells.map((c) =>
+        `<Cell><Data ss:Type="String">${escXml(c)}</Data></Cell>`).join("")}</Row>`).join("")
+    const xml = `<?xml version="1.0"?><?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+<Worksheet ss:Name="Orders"><Table>
+<Row>${header}</Row>${body}
+</Table></Worksheet></Workbook>`
+    downloadBlob(`pos-orders-${stamp}.xls`, "application/vnd.ms-excel", xml)
+  }
+
   return (
-    <div className="space-y-2">
-      <div className="flex gap-2">
-        <label className="relative flex-1">
+    <div className="flex h-full min-h-0 flex-col gap-3">
+      {onHistory && (
+        <Button variant="outline" className="w-full" onClick={onHistory}>
+          <History className="size-4" />{t("Full order history: any date, filters, export")}
+        </Button>
+      )}
+      <div className="flex flex-wrap items-end gap-2">
+        <label className="relative min-w-[12rem] flex-1">
           <Search className="pointer-events-none absolute start-2.5 top-1/2 size-4 -translate-y-1/2 text-zinc-400" aria-hidden />
           <input value={q} onChange={(e) => setQ(e.target.value)}
             placeholder={t("Bill, KOT, table, room, name or phone")}
             className="w-full rounded-lg border border-zinc-300 bg-white py-2 ps-8 pe-2 text-sm focus:outline-2 focus:outline-brand-600" />
         </label>
-        <input type="date" value={day} max={localDay()} aria-label={t("Day")}
-          onChange={(e) => setDay(e.target.value || localDay())}
-          className="w-[9.5rem] rounded-lg border border-zinc-300 bg-white px-2 py-2 text-sm" />
+        <label className="text-xs text-zinc-500">
+          <span className="mb-0.5 block font-medium">{t("From")}</span>
+          <input type="date" value={from} max={to || today} aria-label={t("From")}
+            onChange={(e) => setFrom(e.target.value || today)}
+            className="w-[9.5rem] rounded-lg border border-zinc-300 bg-white px-2 py-2 text-sm" />
+        </label>
+        <label className="text-xs text-zinc-500">
+          <span className="mb-0.5 block font-medium">{t("To")}</span>
+          <input type="date" value={to} min={from} max={today} aria-label={t("To")}
+            onChange={(e) => setTo(e.target.value || from)}
+            className="w-[9.5rem] rounded-lg border border-zinc-300 bg-white px-2 py-2 text-sm" />
+        </label>
+        <div className="flex gap-1.5">
+          <Button type="button" variant="outline" className="h-10 gap-1.5" disabled={rows.length === 0}
+            onClick={doExportCsv} title={t("Download as CSV")}>
+            <Download className="size-4" />{t("CSV")}
+          </Button>
+          <Button type="button" variant="outline" className="h-10 gap-1.5" disabled={rows.length === 0}
+            onClick={doExportExcel} title={t("Download for Excel")}>
+            <FileSpreadsheet className="size-4" />{t("Excel")}
+          </Button>
+        </div>
       </div>
-      <div className="flex flex-wrap gap-1">
-        <button onClick={() => setOnly(null)}
+      <div className="flex flex-wrap items-center gap-1">
+        <button type="button" onClick={() => setOnly(null)}
           className={cn("rounded-full px-2.5 py-1 text-xs font-medium",
             only === null ? "bg-zinc-800 text-white" : "bg-white text-zinc-600 ring-1 ring-zinc-200")}>
           {t("All")} · {data?.rows.length ?? 0}
         </button>
         {STATES.filter((s) => (data?.counts[s] ?? 0) > 0).map((s) => (
-          <button key={s} onClick={() => setOnly(only === s ? null : s)}
+          <button type="button" key={s} onClick={() => setOnly(only === s ? null : s)}
             className={cn("rounded-full px-2.5 py-1 text-xs font-medium",
               only === s ? "bg-zinc-800 text-white" : "bg-white text-zinc-600 ring-1 ring-zinc-200")}>
             {label(s)} · {data?.counts[s]}
           </button>
         ))}
+        {rows.length > 0 && (
+          <span className="ms-auto text-[11px] text-zinc-400">
+            {t("Showing {n}", { n: rows.length })}
+            {data && data.rows.length >= 300 ? ` · ${t("capped at 300")}` : ""}
+          </span>
+        )}
       </div>
       {err && <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">{err}</p>}
       {data === null && !err ? (
         <p className="py-6 text-center text-sm text-zinc-400">{t("Loading…")}</p>
       ) : rows.length === 0 ? (
         <p className="py-6 text-center text-sm text-zinc-400">
-          {qLive ? t("No bills match.") : today ? t("No bills yet today.") : t("No bills on this day.")}
+          {qLive ? t("No bills match.") : isToday ? t("No bills yet today.") : t("No bills in this range.")}
         </p>
       ) : (
-        <ul className="space-y-1.5">
-          {rows.map((r) => (
-            <li key={r.name}>
-              <button
-                onClick={() => (r.state === "open" || r.state === "sent") ? onOpenBill(r.name) : setViewing(r.name)}
-                className={cn("w-full rounded-xl border bg-white px-3 py-2 text-start transition hover:border-brand-400",
-                  r.stale ? "border-rose-300" : "border-zinc-200")}>
-                <div className="flex items-center justify-between gap-2">
-                  <span className="min-w-0 truncate text-sm font-semibold text-zinc-800">
-                    {r.label}
-                    {r.who && r.who !== r.label && <span className="ms-1 font-normal text-zinc-500">· {r.who}</span>}
-                  </span>
-                  <span className={cn("shrink-0 text-sm font-semibold tabular-nums",
-                    r.state === "cancelled" && "text-zinc-400 line-through")}>
-                    {cur()}{money(r.amount)}
-                  </span>
-                </div>
-                <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px] text-zinc-500">
-                  <StateBadge state={r.state} />
-                  {r.stale ? (
-                    <span className="rounded-full bg-rose-100 px-1.5 py-0.5 text-[10px] font-semibold text-rose-700">
-                      {t("Not sent for {mins} min", { mins: r.age_min })}
+        <>
+          {/* compact cards on phone */}
+          <ul className="space-y-1.5 md:hidden">
+            {rows.map((r) => (
+              <li key={r.name}>
+                <button type="button"
+                  onClick={() => (r.state === "open" || r.state === "sent") ? onOpenBill(r.name) : setViewing(r.name)}
+                  className={cn("w-full rounded-2xl border bg-white px-3.5 py-2.5 text-start shadow-sm transition hover:border-brand-400",
+                    r.stale ? "border-rose-300" : "border-zinc-200")}>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="min-w-0 truncate text-[15px] font-semibold text-zinc-800">
+                      {r.label}
+                      {r.who && r.who !== r.label && <span className="ms-1 font-normal text-zinc-500">· {r.who}</span>}
                     </span>
-                  ) : null}
-                  {r.carried ? <span className="text-rose-600">{t("from {day}", { day: shortDay(dayOf(r.time)) })}</span> : null}
-                  <span className="tabular-nums">{hhmm(r.time)}</span>
-                  {r.kot_no ? <span>· {t("KOT {n}", { n: r.kot_no })}</span> : null}
-                  <span>· {r.name}</span>
-                  {r.payment_mode && r.state === "paid" ? <span>· {r.payment_mode}</span> : null}
-                </div>
-                {r.state === "cancelled" && r.cancel_reason && (
-                  <p className="mt-1 truncate text-[11px] text-rose-700">{r.cancel_reason}</p>
-                )}
-              </button>
-            </li>
-          ))}
-        </ul>
+                    <span className={cn("shrink-0 text-sm font-semibold tabular-nums",
+                      r.state === "cancelled" && "text-zinc-400 line-through")}>
+                      {cur()}{money(r.amount)}
+                    </span>
+                  </div>
+                  <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px] text-zinc-500">
+                    <StateBadge state={r.state} />
+                    <span className="tabular-nums">{shortDay(dayOf(r.time))} {hhmm(r.time)}</span>
+                    {r.kot_no ? <span>· {t("KOT {n}", { n: r.kot_no })}</span> : null}
+                  </div>
+                </button>
+              </li>
+            ))}
+          </ul>
+          {/* wide table on tablet+ */}
+          <div className="hidden min-h-0 flex-1 overflow-auto rounded-xl border border-zinc-200 bg-white md:block">
+            <table className="w-full min-w-[52rem] border-collapse text-sm">
+              <thead className="sticky top-0 z-10 bg-zinc-50 text-left text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
+                <tr className="border-b border-zinc-200">
+                  <th className="px-3 py-2.5">{t("Time")}</th>
+                  <th className="px-3 py-2.5">{t("Bill")}</th>
+                  <th className="px-3 py-2.5">{t("State")}</th>
+                  <th className="px-3 py-2.5">{t("Type")}</th>
+                  <th className="px-3 py-2.5">{t("Where")}</th>
+                  <th className="px-3 py-2.5">{t("Customer")}</th>
+                  <th className="px-3 py-2.5 text-end">{t("Amount")}</th>
+                  <th className="px-3 py-2.5 text-end">{t("Items")}</th>
+                  <th className="px-3 py-2.5">{t("Pay")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((r) => (
+                  <tr key={r.name}
+                    onClick={() => (r.state === "open" || r.state === "sent") ? onOpenBill(r.name) : setViewing(r.name)}
+                    className={cn(
+                      "cursor-pointer border-b border-zinc-100 transition hover:bg-brand-50/60",
+                      !!r.stale && "bg-rose-50/40",
+                    )}>
+                    <td className="whitespace-nowrap px-3 py-2.5 tabular-nums text-zinc-600">
+                      {shortDay(dayOf(r.time))} {hhmm(r.time)}
+                      {!!r.carried && <span className="ms-1 text-[10px] font-semibold text-rose-600">{t("carried")}</span>}
+                    </td>
+                    <td className="px-3 py-2.5">
+                      <div className="font-semibold text-zinc-800">{r.label}</div>
+                      <div className="text-[11px] text-zinc-400">
+                        {r.name}{r.kot_no ? ` · KOT ${r.kot_no}` : ""}
+                      </div>
+                    </td>
+                    <td className="px-3 py-2.5"><StateBadge state={r.state} /></td>
+                    <td className="px-3 py-2.5 text-zinc-600">{r.order_type || "-"}</td>
+                    <td className="px-3 py-2.5 text-zinc-600">
+                      {r.table_no ? t("Table {n}", { n: r.table_no })
+                        : r.room_no ? t("Room {n}", { n: r.room_no }) : "-"}
+                    </td>
+                    <td className="max-w-[10rem] truncate px-3 py-2.5 text-zinc-600">{r.who || "-"}</td>
+                    <td className={cn("px-3 py-2.5 text-end font-semibold tabular-nums",
+                      r.state === "cancelled" && "text-zinc-400 line-through")}>
+                      {cur()}{money(r.amount)}
+                    </td>
+                    <td className="px-3 py-2.5 text-end tabular-nums text-zinc-600">
+                      {r.items}{r.voided > 0 ? <span className="text-rose-600"> (−{r.voided})</span> : null}
+                    </td>
+                    <td className="px-3 py-2.5 text-zinc-600">{r.payment_mode || "-"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </div>
   )
 }
 
-function OrderView({ name, onBack, onOpenBill }: {
+export function OrderView({ name, onBack, onOpenBill }: {
   name: string; onBack: () => void; onOpenBill: (n: string) => void
 }) {
   const { t } = useT()
@@ -344,6 +510,16 @@ function OrderView({ name, onBack, onOpenBill }: {
     call<ViewDetail>("kamra.pos.order_detail", { order: name })
       .then(setD).catch((e) => setErr(serverError(e)))
   }, [name])
+  const [changing, setChanging] = useState(false)
+  const [busy, setBusy] = useState(false)
+  async function changeMode(mode: string) {
+    setBusy(true)
+    try {
+      await call("kamra.pos.change_payment_mode", { order: name, mode, reason: "" })
+      setD(await call<ViewDetail>("kamra.pos.order_detail", { order: name }))
+      setChanging(false); setErr(null)
+    } catch (e) { setErr(serverError(e)) } finally { setBusy(false) }
+  }
   async function printBill() {
     try {
       const bill = await call<BillData>("kamra.pos.bill_data", { order: name })
@@ -394,7 +570,24 @@ function OrderView({ name, onBack, onOpenBill }: {
               <div className="flex justify-between text-zinc-500"><span>{t("Discount")}</span><span className="tabular-nums">-{cur()}{money(d.discount_amount)}</span></div>
             )}
             <div className="flex justify-between font-semibold"><span>{t("Total before tax")}</span><span className="tabular-nums">{cur()}{money(d.order_total)}</span></div>
-            {d.state === "paid" && <p className="text-xs text-emerald-700">{t("Paid by {mode}", { mode: d.payment_mode || "" })}</p>}
+            {d.state === "paid" && (
+              <div className="space-y-1.5">
+                <p className="text-xs text-emerald-700">{t("Paid by {mode}", { mode: d.payment_mode || "" })}</p>
+                {changing ? (
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="text-xs text-zinc-500">{t("It was paid by")}</span>
+                    {["Cash", "Card", "UPI"].filter((m) => m !== d.payment_mode).map((m) => (
+                      <Button key={m} variant="outline" className="h-9" disabled={busy} onClick={() => changeMode(m)}>{m}</Button>
+                    ))}
+                    <Button variant="ghost" className="h-9" onClick={() => setChanging(false)}>{t("Back")}</Button>
+                  </div>
+                ) : (
+                  <button className="text-xs font-semibold text-brand-700 hover:underline" onClick={() => setChanging(true)}>
+                    {t("Wrong payment mode? Change it")}
+                  </button>
+                )}
+              </div>
+            )}
             {d.state === "room" && <p className="text-xs text-violet-700">{t("Posted to the room folio")}</p>}
             {d.state === "nc" && <p className="text-xs text-amber-700">{t("Complimentary, authorized by {who}", { who: d.nc_authorized_by || "" })}</p>}
           </div>

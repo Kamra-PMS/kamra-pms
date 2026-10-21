@@ -137,7 +137,7 @@ export default function FolioHistory() {
                   <div className="text-xs text-zinc-400">{r.reservation}</div>
                 </td>
                 <td className="px-3 py-2 font-mono text-xs">
-                  {r.invoice_number || "—"}
+                  {r.invoice_number || "-"}
                 </td>
                 <td className="px-3 py-2">
                   <Badge tone={r.status === "Open" ? "green" : "zinc"}>

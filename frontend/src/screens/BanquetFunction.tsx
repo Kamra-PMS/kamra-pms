@@ -147,7 +147,7 @@ export default function BanquetFunction() {
               ? ` → ${fn.end_date}`
               : ""}
             {fn.start_time
-              ? ` · ${fn.start_time.slice(0, 5)}–${(fn.end_time ?? "").slice(0, 5)}`
+              ? ` · ${fn.start_time.slice(0, 5)}-${(fn.end_time ?? "").slice(0, 5)}`
               : ""}
             {away >= 0 && fn.status !== "Completed" && (
               <span className="text-zinc-400">
@@ -203,7 +203,7 @@ export default function BanquetFunction() {
           sub={
             fn.total_cost
               ? `${fn.margin_percent}% after ${inr(fn.net_cost)} cost`
-              : "nothing costed yet — see Cost & margin"
+              : "nothing costed yet - see Cost & margin"
           }
           tone={
             !fn.total_cost
@@ -254,7 +254,7 @@ function Money({
         {label}
       </p>
       <p className={"mt-1 text-xl font-semibold tabular-nums " + tone}>
-        {value === null ? "—" : inr(value)}
+        {value === null ? "-" : inr(value)}
       </p>
       {sub && <p className="mt-0.5 text-xs text-zinc-400">{sub}</p>}
     </div>
@@ -424,7 +424,7 @@ function StatusActions({
       {guest && (
         <Sheet
           title="Guest response"
-          description="They confirmed by phone, email, or WhatsApp — record it here. No guest portal."
+          description="They confirmed by phone, email, or WhatsApp - record it here. No guest portal."
           onClose={() => setGuest(false)}
           footer={
             <div className="flex justify-end gap-2">
@@ -474,7 +474,7 @@ function StatusActions({
               <textarea
                 rows={3}
                 className={inputCls}
-                placeholder="Optional — what they said…"
+                placeholder="Optional - what they said…"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
               />
@@ -634,7 +634,7 @@ function DetailTab({
             <Field label="Event name" className="sm:col-span-2">
               <input
                 className={inputCls}
-                placeholder="Sharma–Verma reception"
+                placeholder="Sharma-Verma reception"
                 value={get("event_name", "")}
                 onChange={(e) => set("event_name", e.target.value)}
               />
@@ -1229,7 +1229,7 @@ function ItemsTab({
                         </select>
                       </td>
                       <td className="py-1.5 pr-2 text-right text-xs tabular-nums text-zinc-400">
-                        {l.list_rate ? inr(l.list_rate) : "—"}
+                        {l.list_rate ? inr(l.list_rate) : "-"}
                       </td>
                       <td className="py-1.5 pr-2">
                         <input
@@ -2203,7 +2203,7 @@ function CloseOutCard({
           </p>
         ) : (
           <p className="text-xs text-zinc-400">
-            A security deposit is held money, not payment — it never nets
+            A security deposit is held money, not payment - it never nets
             against the bill. Record it as a Security Deposit receipt, then
             close out to return what's left after damages.
           </p>
@@ -2280,7 +2280,7 @@ function CloseOutCard({
               {!!Number(damage) && (
                 <Field
                   label="What was damaged"
-                  hint="Required — a deduction the customer can't see the reason for is a dispute waiting"
+                  hint="Required - a deduction the customer can't see the reason for is a dispute waiting"
                   className="mt-2"
                 >
                   <textarea
@@ -2328,7 +2328,7 @@ function CloseOutCard({
               {!!Number(damage) && (
                 <p className="pt-2 text-xs text-zinc-500">
                   The {inr(Number(damage))} deducted goes on the bill as a
-                  damage-recovery line — it's the hotel's money now, not a
+                  damage-recovery line - it's the hotel's money now, not a
                   deposit.
                 </p>
               )}
@@ -2639,7 +2639,7 @@ function ChecklistPanel({
 /* ── the receipt ──────────────────────────────────────────────────────── */
 
 /** A receipt the customer can keep. A banquet office takes money weeks or
- *  months before the event, and "we've got your advance" is not a document —
+ *  months before the event, and "we've got your advance" is not a document - 
  *  this is. Printed straight from the drawer so there's no extra journey. */
 function ReceiptPrint({
   fn,

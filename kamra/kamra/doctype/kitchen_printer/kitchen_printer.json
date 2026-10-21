@@ -10,6 +10,8 @@
   "connection",
   "paper_width",
   "copies",
+  "prints_kots",
+  "prints_bills",
   "column_break_a",
   "ip_address",
   "port",
@@ -123,10 +125,24 @@
    "fieldtype": "Small Text",
    "label": "Last error",
    "read_only": 1
+  },
+  {
+   "fieldname": "prints_kots",
+   "fieldtype": "Check",
+   "label": "Prints KOTs",
+   "default": "1",
+   "description": "Kitchen and bar order tickets, by the outlet and station routes below."
+  },
+  {
+   "fieldname": "prints_bills",
+   "fieldtype": "Check",
+   "label": "Prints Bills",
+   "default": "0",
+   "description": "Guest bills and receipts. A bill goes to the printer named on the till (Cashier Terminal), else to a bill printer routed to the bill's outlet."
   }
  ],
  "links": [],
- "modified": "2026-10-19 13:00:00.000000",
+ "modified": "2026-10-20 13:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Kitchen Printer",

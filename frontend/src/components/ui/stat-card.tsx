@@ -8,6 +8,10 @@ import { Sparkline } from "./sparkline"
  * One headline metric in the front-desk KPI strip: a soft-green icon chip,
  * a quiet label, the big number, and either a sparkline or a progress bar,
  * with an optional delta vs. a prior period.
+ *
+ * Layout rule: the value is never beside a 96px spark on a 6-up grid - that
+ * used to draw the chart through the digits. Spark sits on its own row under
+ * the number; sub text is full-width below that.
  */
 export function StatCard({
   icon,
@@ -48,8 +52,8 @@ export function StatCard({
           {label}
         </span>
       </div>
-      <div className="mt-2.5 flex items-end justify-between gap-2">
-        <div className="min-w-0">
+      <div className="mt-2.5 flex flex-wrap items-end justify-between gap-x-2 gap-y-1.5">
+        <div className="max-w-full">
           <div
             className={cn(
               "text-2xl font-semibold tracking-tight tabular-nums",
@@ -60,11 +64,12 @@ export function StatCard({
           </div>
         </div>
         {spark ? (
-          <div className="shrink-0">
+          <div className="max-w-full shrink-0">
             <Sparkline data={spark} color={sparkColor} />
           </div>
         ) : null}
       </div>
+      {/* the chart drops under the number when the card is too narrow for both, never over it */}
       {/* full card width, so it never wraps into a thin column beside the chart */}
       {sub ? <div className="mt-1 text-xs text-zinc-400">{sub}</div> : null}
 

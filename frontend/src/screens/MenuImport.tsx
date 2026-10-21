@@ -166,7 +166,7 @@ export default function MenuImport({
   return (
     <Sheet
       title="Bulk upload menu"
-      description="Paste or upload a spreadsheet export — we'll map the columns and show you what changes before anything is saved."
+      description="Paste or upload a spreadsheet export - we'll map the columns and show you what changes before anything is saved."
       onClose={onClose}
       wide
       footer={
@@ -286,7 +286,7 @@ export default function MenuImport({
                             {s.item_name}
                           </td>
                           <td className="px-2 text-zinc-500">
-                            {s.category || "—"}
+                            {s.category || "-"}
                           </td>
                           <td className="px-2 text-right tabular-nums">
                             {cur()}{s.price}
@@ -350,7 +350,7 @@ export default function MenuImport({
                 ))}
               </select>
               <span className="mt-1 block text-xs text-zinc-400">
-                Used for every row — unless your file has its own{" "}
+                Used for every row - unless your file has its own{" "}
                 <code>outlet</code> column.
               </span>
             </label>
@@ -392,7 +392,7 @@ export default function MenuImport({
               />
             </label>
             <p className="text-xs text-zinc-400">
-              Headers are matched loosely — <em>Dish / Item / Product</em>,{" "}
+              Headers are matched loosely - <em>Dish / Item / Product</em>,{" "}
               <em>Rate / Price / MRP</em>, <em>Veg / Non-Veg</em> all work.
               Only <strong>item name</strong> and <strong>price</strong> are
               required. Re-importing updates existing dishes instead of
@@ -424,7 +424,7 @@ function IssueList({
               Row {i.row}
               {i.item ? ` · ${i.item}` : ""}
             </span>{" "}
-            — {i.error}
+           - {i.error}
           </li>
         ))}
       </ul>

@@ -24,6 +24,13 @@ POS_ROLES = ("Front Desk", "Finance", "Kamra Agent")
 # Menus written before coursing existed have no course; they behave as mains.
 DEFAULT_COURSE = "Main"
 COURSE_ORDER = ("Starter", "Main", "Dessert", "Drink")
+
+
+def _course_order(property: str | None = None) -> list[str]:
+	"""Serving order for held courses - property list when set, else default."""
+	from kamra.settings import list_setting
+	custom = list_setting(property, "menu_courses") if property else []
+	return custom or list(COURSE_ORDER)
 # a bill still being served: not paid, posted, made NC or cancelled
 OPEN_STATUSES = ("Placed", "Confirmed", "Preparing")
 
@@ -924,7 +931,9 @@ def kitchen_queue(property: str, outlet: str | None = None,
 		o["items"] = items
 		# courses still held back, in the order they would be served
 		held = {i["course"] for i in items if i["state"] == "held"}
-		o["held_courses"] = [c for c in COURSE_ORDER if c in held]
+		serve = _course_order(property)
+		o["held_courses"] = [c for c in serve if c in held] + \
+			sorted(c for c in held if c not in serve)
 		out.append(o)
 	return out
 
@@ -1032,7 +1041,7 @@ def pay_order(order: str, mode: str, pin: str | None = None):
 	from kamra.cashier import record_cashier_txn, require_open_session
 	sess = None
 	try:
-		sess = require_open_session(prop)
+		sess = require_open_session(prop, doc.outlet)
 	except Exception:
 		if "Kamra Agent" not in frappe.get_roles() and \
 		   frappe.session.user != "Administrator":
@@ -1052,6 +1061,56 @@ def pay_order(order: str, mode: str, pin: str | None = None):
 		float(frappe.db.get_value("POS Outlet", doc.outlet, "gst_rate") or 0))
 	return {"ok": True, "status": "Delivered", "paid": True, "mode": mode,
 	        "order_total": doc.order_total}
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles(*POS_ROLES)
+def change_payment_mode(order: str, mode: str, reason: str = "",
+                        pin: str | None = None):
+	"""Correct the tender on a bill that was settled with the wrong mode (Card
+	pressed for Cash). The till keeps its history: a reversing entry for the
+	old mode and a new entry for the right one, same till session, with a
+	comment on the bill. Only while that till is still open - once it is
+	counted and closed, the day's cash is final and a manager must correct it
+	from the till screens."""
+	if mode not in ("Cash", "Card", "UPI"):
+		frappe.throw(_("Pick a payment mode: Cash, Card or UPI."))
+	doc = frappe.get_doc("POS Order", order)
+	if not doc.paid or doc.status == "Cancelled":
+		frappe.throw(_("Only a bill that was paid at the outlet can change its payment mode."))
+	if doc.posted_to_folio or doc.nc:
+		frappe.throw(_("This bill was posted to a room or made complimentary - "
+		              "there is no payment mode to change."))
+	old = doc.payment_mode
+	if old == mode:
+		frappe.throw(_("This bill is already marked {0}.").format(mode))
+	from kamra.authz import require_cashier_pin
+	require_cashier_pin(doc.property, pin)
+	original = frappe.db.get_value(
+		"Cashier Transaction",
+		{"pos_order": doc.name, "kind": "Payment", "amount": [">", 0]},
+		["name", "session", "amount"], as_dict=True, order_by="creation desc")
+	if original and original.session:
+		if frappe.db.get_value("Cashier Session", original.session, "status") != "Open":
+			frappe.throw(_("The till this bill was taken on is already closed and "
+			              "counted. Ask a manager to correct it."))
+	from kamra.cashier import record_cashier_txn
+	amt = float(original.amount if original else doc.order_total or 0)
+	sess = original.session if original else None
+	why = (reason or "").strip() or _("Wrong payment mode pressed")
+	if original:
+		record_cashier_txn(
+			doc.property, "Payment", old or "Cash", -amt, pos_order=doc.name,
+			reference=f"POS {doc.name}", notes=f"Mode corrected to {mode}: {why}",
+			session=sess)
+		record_cashier_txn(
+			doc.property, "Payment", mode, amt, pos_order=doc.name,
+			reference=f"POS {doc.name}", notes=f"Mode corrected from {old}: {why}",
+			session=sess)
+	doc.db_set("payment_mode", mode)
+	doc.add_comment("Comment", _("Payment mode changed from {0} to {1}: {2}").format(
+		old, mode, why))
+	return {"ok": True, "order": doc.name, "mode": mode, "was": old}
 
 
 @frappe.whitelist(methods=["POST"])
@@ -1325,6 +1384,10 @@ def _order_list_state(o) -> str:
 	return "sent" if o.get("kot_fired") else "open"
 
 
+# most bills one history query looks at; a year at a busy outlet fits easily
+ORDERS_LIST_MAX = 5000
+
+
 def _like(q: str) -> str:
 	return "%" + q.replace("%", r"\%").replace("_", r"\_") + "%"
 
@@ -1332,12 +1395,17 @@ def _like(q: str) -> str:
 @frappe.whitelist()
 @require_roles(*POS_ROLES)
 def orders_list(outlet: str, date: str | None = None, to_date: str | None = None,
-                q: str | None = None, state: str | None = None, limit: int = 200):
-	"""The outlet's bills for a day, or a range of up to 31 days, newest
+                q: str | None = None, state: str | None = None, limit: int = 200,
+                offset: int = 0, order_type: str | None = None, mode: str | None = None):
+	"""The outlet's bills for a day, or a range of up to a year, newest
 	first: open (not sent to the kitchen), sent, paid, posted to a room, NC,
 	closed or cancelled, with the table, who it was for, the amount and the
 	time. `q` searches the bill and KOT number, table, room, customer name
-	and phone, and the in-house guest's name. `state` keeps one state.
+	and phone, and the in-house guest's name. `state` keeps one state,
+	`order_type` one kind of order and `mode` one way of paying (Cash, Card,
+	UPI, Room). Pages come back `limit` at a time from `offset`; `total`,
+	`has_more`, `counts` and `totals` always cover every bill the filters
+	match, not only the page, so nothing is hidden by paging.
 	Looking at today also brings in bills still open from earlier days
 	(`carried`), so a forgotten order cannot hide. Only this outlet's bills."""
 	from frappe.utils import getdate, nowdate
@@ -1347,9 +1415,10 @@ def orders_list(outlet: str, date: str | None = None, to_date: str | None = None
 	end = getdate(to_date) if to_date else start
 	if end < start:
 		start, end = end, start
-	if (end - start).days > 31:
-		frappe.throw(_("Pick a range of 31 days or less."))
-	cap = max(1, min(cint(limit) or 200, 300))
+	if (end - start).days > 366:
+		frappe.throw(_("Pick a range of one year or less."))
+	page = max(1, min(cint(limit) or 200, 500))
+	skip = max(0, cint(offset))
 	fields = ["name", "status", "order_type", "room", "reservation", "table_no",
 	          "customer_name", "guest", "order_total", "paid", "payment_mode",
 	          "nc", "posted_to_folio", "kot_fired", "kot_no", "guests",
@@ -1371,7 +1440,8 @@ def orders_list(outlet: str, date: str | None = None, to_date: str | None = None
 		"POS Order",
 		filters={"outlet": outlet, "creation": ["between", [
 			f"{start} 00:00:00", f"{end} 23:59:59.999999"]]},
-		or_filters=or_filters, fields=fields, order_by="creation desc", limit=cap)
+		or_filters=or_filters, fields=fields, order_by="creation desc",
+		limit=ORDERS_LIST_MAX)
 	if end >= today:
 		earlier = frappe.get_all(
 			"POS Order",
@@ -1382,7 +1452,36 @@ def orders_list(outlet: str, date: str | None = None, to_date: str | None = None
 			r["carried"] = 1
 		rows = earlier + rows
 
-	names = [r.name for r in rows]
+	# decide each bill's state and apply the filters over the whole range,
+	# then page: the counts and totals must not depend on which page is shown
+	typed = [r for r in rows if not order_type or r.order_type == order_type]
+	scoped, counts = [], dict.fromkeys(LIST_STATES, 0)
+	for r in typed:
+		st = _order_list_state(r)
+		paid_by = "Room" if st == "room" else (r.payment_mode if st == "paid" else None)
+		if mode and paid_by != mode:
+			continue
+		counts[st] += 1
+		scoped.append((r, st, paid_by))
+	shown = [x for x in scoped if not state or x[1] == state]
+
+	totals = {"bills": len(shown), "sales": 0.0, "cancelled": 0.0, "by_mode": {}, "by_type": {}}
+	for r, st, paid_by in shown:
+		amt = float(r.order_total or 0)
+		if st in ("paid", "room"):
+			totals["sales"] += amt
+			totals["by_mode"][paid_by or "Other"] = totals["by_mode"].get(paid_by or "Other", 0.0) + amt
+			key = r.order_type or "Other"
+			totals["by_type"][key] = totals["by_type"].get(key, 0.0) + amt
+		elif st == "cancelled":
+			totals["cancelled"] += amt
+	totals["sales"] = round(totals["sales"], 2)
+	totals["cancelled"] = round(totals["cancelled"], 2)
+	totals["by_mode"] = {k: round(v, 2) for k, v in totals["by_mode"].items()}
+	totals["by_type"] = {k: round(v, 2) for k, v in totals["by_type"].items()}
+
+	window = shown[skip:skip + page]
+	names = [r.name for r, _, _ in window]
 	lines: dict[str, dict] = {}
 	for it in frappe.get_all(
 			"POS Order Item", filters={"parent": ["in", names or [""]],
@@ -1395,18 +1494,14 @@ def orders_list(outlet: str, date: str | None = None, to_date: str | None = None
 		else:
 			c["live"] += 1
 	stay_names = dict(frappe.get_all(
-		"Reservation", filters={"name": ["in", [r.reservation for r in rows
+		"Reservation", filters={"name": ["in", [r.reservation for r, _, _ in window
 		                                        if r.reservation] or [""]]},
 		fields=["name", "guest_name"], as_list=True))
-	stale_after = _unfired_alert_min(outlet) if rows else 0
+	stale_after = _unfired_alert_min(outlet) if window else 0
 	now = frappe.utils.now_datetime()
 
-	out, counts = [], dict.fromkeys(LIST_STATES, 0)
-	for r in rows:
-		st = _order_list_state(r)
-		counts[st] += 1
-		if state and st != state:
-			continue
+	out = []
+	for r, st, _paid_by in window:
 		c = lines.get(r.name, {})
 		age = int((now - frappe.utils.get_datetime(r.creation)).total_seconds() // 60)
 		out.append({
@@ -1424,7 +1519,99 @@ def orders_list(outlet: str, date: str | None = None, to_date: str | None = None
 			"stale": 1 if st == "open" and age >= stale_after else 0,
 			"carried": r.get("carried", 0), "cancel_reason": r.cancel_reason,
 		})
-	return {"from": str(start), "to": str(end), "rows": out, "counts": counts}
+	return {"from": str(start), "to": str(end), "rows": out, "counts": counts,
+	        "total": len(shown), "has_more": skip + page < len(shown),
+	        "truncated": len(rows) >= ORDERS_LIST_MAX, "totals": totals}
+
+
+EXPORT_COLUMNS = ("Bill", "KOT", "Date", "Time", "Outlet", "Type", "Table", "Room",
+                  "Guest or customer", "Phone", "State", "Payment mode", "Lines",
+                  "Discount", "Amount before tax", "Complimentary authorised by",
+                  "Captain", "Cancel reason", "Cancelled by")
+
+
+@frappe.whitelist()
+@require_roles(*POS_ROLES)
+def orders_export(outlet: str, date: str | None = None, to_date: str | None = None,
+                  q: str | None = None, state: str | None = None,
+                  mode: str | None = None, order_type: str | None = None):
+	"""The outlet's bill history as CSV for a day or up to a year: every
+	bill with its state, payment mode, amount, discount, who it was for and
+	who cancelled it. Same search and state filters as the orders list;
+	`mode` keeps one payment mode (Cash, Card, UPI). A phone number is masked
+	except to a supervisor, as on the till. Returns {filename, csv, rows}."""
+	import csv
+	import io
+
+	from frappe.utils import getdate, nowdate
+	prop = frappe.db.get_value("POS Outlet", outlet, "property")
+	from kamra.crs import assert_property_access
+	assert_property_access(prop)
+	today = getdate(nowdate())
+	start = getdate(date) if date else today
+	end = getdate(to_date) if to_date else start
+	if end < start:
+		start, end = end, start
+	if (end - start).days > 366:
+		frappe.throw(_("Pick a range of one year or less."))
+	or_filters = None
+	qq = (q or "").strip()[:60]
+	if qq:
+		like = _like(qq)
+		or_filters = [["name", "like", like], ["customer_name", "like", like],
+		              ["customer_phone", "like", like], ["table_no", "like", like],
+		              ["room", "like", like]]
+		if qq.isdigit():
+			or_filters.append(["kot_no", "=", int(qq)])
+	filters = {"outlet": outlet, "creation": ["between", [
+		f"{start} 00:00:00", f"{end} 23:59:59.999999"]]}
+	if mode in ("Cash", "Card", "UPI"):
+		filters["payment_mode"] = mode
+	elif mode == "Room":
+		filters["posted_to_folio"] = 1
+	if order_type:
+		filters["order_type"] = order_type
+	rows = frappe.get_all(
+		"POS Order", filters=filters, or_filters=or_filters,
+		fields=["name", "status", "order_type", "room", "reservation", "table_no",
+		        "customer_name", "customer_phone", "order_total", "discount_amount",
+		        "paid", "payment_mode", "nc", "nc_authorized_by", "posted_to_folio",
+		        "kot_fired", "kot_no", "creation", "cancel_reason", "cancelled_by",
+		        "captain"],
+		order_by="creation desc", limit_page_length=20000)
+	names = [r.name for r in rows]
+	live: dict[str, int] = {}
+	for it in frappe.get_all(
+			"POS Order Item", filters={"parent": ["in", names], "parenttype": "POS Order",
+			                           "voided": 0}, fields=["parent"]) if names else []:
+		live[it.parent] = live.get(it.parent, 0) + 1
+	stays = dict(frappe.get_all(
+		"Reservation", filters={"name": ["in", [r.reservation for r in rows
+		                                       if r.reservation] or [""]]},
+		fields=["name", "guest_name"], as_list=True))
+	outlet_name = frappe.db.get_value("POS Outlet", outlet, "outlet_name") or outlet
+	buf = io.StringIO()
+	w = csv.writer(buf)
+	w.writerow(EXPORT_COLUMNS)
+	n = 0
+	for r in rows:
+		st = _order_list_state(r)
+		if state and st != state:
+			continue
+		n += 1
+		created = frappe.utils.get_datetime(r.creation)
+		w.writerow([
+			r.name, r.kot_no or "", created.date().isoformat(),
+			created.strftime("%H:%M"), outlet_name, r.order_type or "",
+			r.table_no or "", (r.room or "").split("-")[-1] if r.room else "",
+			r.customer_name or stays.get(r.reservation) or "",
+			_shown_phone(r.customer_phone) or "", st,
+			r.payment_mode if st == "paid" else ("Room" if st == "room" else ""),
+			live.get(r.name, 0), float(r.discount_amount or 0),
+			float(r.order_total or 0), r.nc_authorized_by or "", r.captain or "",
+			r.cancel_reason or "", r.cancelled_by or ""])
+	return {"filename": f"orders-{outlet_name}-{start}_{end}.csv".replace(" ", "-"),
+	        "csv": "\ufeff" + buf.getvalue(), "rows": n}
 
 
 # ── who the bill is for ───────────────────────────────────────────────────

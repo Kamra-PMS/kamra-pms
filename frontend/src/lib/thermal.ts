@@ -104,9 +104,9 @@ export function kotHtml(o: {
       : "")).join("")
   return `
     <div class="c b lg">${esc(o.outlet)}</div>
-    <div class="c xl b">${o.kind === "Void" ? `*** VOID *** KOT #${o.kot_no ?? "—"}`
+    <div class="c xl b">${o.kind === "Void" ? `*** VOID *** KOT #${o.kot_no ?? "-"}`
       : o.kind === "Test" ? "TEST PAGE"
-        : `KOT #${o.kot_no ?? "—"}`}${o.reprint ? " (REPRINT)" : ""}</div>
+        : `KOT #${o.kot_no ?? "-"}`}${o.reprint ? " (REPRINT)" : ""}</div>
     ${o.station ? `<div class="c b">${esc(o.station)}</div>` : ""}
     ${o.fallback_from ? `<div class="c sm">for ${esc(o.fallback_from)}</div>` : ""}
     ${o.nc ? `<div class="c b lg">*** NC - NO CHARGE ***</div>` +
@@ -216,7 +216,7 @@ export function billHtml(b: BillData) {
       `<div class="c b sm" dir="rtl">${esc(b.statutory.title_ar)}</div>` : ""}
     <div class="rule"></div>
     <div class="row"><span class="b">${esc(label)}</span><span>${when}</span></div>
-    <div class="row sm"><span>Bill: ${esc(b.order)}</span><span>KOT #${b.kot_no ?? "—"}</span></div>
+    <div class="row sm"><span>Bill: ${esc(b.order)}</span><span>KOT #${b.kot_no ?? "-"}</span></div>
     ${b.customer_name || b.customer_phone
       ? `<div class="sm">${esc([b.customer_name, b.customer_phone].filter(Boolean).join(" · "))}</div>` : ""}
     ${b.delivery_address ? `<div class="sm">→ ${esc(b.delivery_address)}</div>` : ""}
@@ -235,7 +235,7 @@ export function billHtml(b: BillData) {
     <div class="rule"></div>
     ${money("TOTAL", b.grand_total, "b lg")}
     ${b.nc ? `<div class="c b" style="margin-top:4px">COMPLIMENTARY - NO CHARGE</div>` +
-      `<div class="c sm">auth: ${esc(b.nc_authorized_by || "—")}${b.nc_note ? ` · ${esc(b.nc_note)}` : ""}</div>` : ""}
+      `<div class="c sm">auth: ${esc(b.nc_authorized_by || "-")}${b.nc_note ? ` · ${esc(b.nc_note)}` : ""}</div>` : ""}
     ${b.paid ? `<div class="c b" style="margin-top:4px">PAID · ${esc(b.payment_mode)}</div>` : ""}
     <div class="rule"></div>
     ${b.statutory ? `<div class="c"><img src="${b.statutory.qr_image}" alt="QR" style="width:120px;height:120px"/></div>` +

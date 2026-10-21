@@ -4984,7 +4984,7 @@
         "kamra.api.verify_tax_id"
        ]
       },
-      "description": "Check a buyer's tax ID before the invoice goes out, where the\nproperty's country pack offers it (India: GSTIN via Kamra Verify).",
+      "description": "Check a buyer's tax ID before the invoice goes out, where the\nproperty's country pack offers it.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\",\n  \"tax_id\": \"<tax_id>\",\n  \"business_name\": \"\"\n}",
@@ -5021,7 +5021,7 @@
         "kamra.api.verify_guest_id"
        ]
       },
-      "description": "Read the guest's ID document on file into the profile, where the\nproperty's country pack offers it (India: Aadhaar and others via Kamra\nVerify). consent: the desk confirms the guest was told.",
+      "description": "Read the guest's ID document on file into the profile, where the\nproperty's country pack offers it. consent: the desk confirms the guest\nwas told.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\",\n  \"guest\": \"G-00001\",\n  \"id_type\": \"<id_type>\",\n  \"consent\": 0\n}",
@@ -6256,6 +6256,43 @@
      }
     },
     {
+     "name": "change_payment_mode",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.pos.change_payment_mode",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.pos.change_payment_mode"
+       ]
+      },
+      "description": "Correct the tender on a bill that was settled with the wrong mode (Card\npressed for Cash). The till keeps its history: a reversing entry for the\nold mode and a new entry for the right one, same till session, with a\ncomment on the bill. Only while that till is still open - once it is\ncounted and closed, the day's cash is final and a manager must correct it\nfrom the till screens.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"order\": \"ORD-2026-00001\",\n  \"mode\": \"<mode>\",\n  \"reason\": \"\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
      "name": "mark_nc",
      "request": {
       "method": "POST",
@@ -6465,10 +6502,47 @@
         "kamra.pos.orders_list"
        ]
       },
-      "description": "The outlet's bills for a day, or a range of up to 31 days, newest\nfirst: open (not sent to the kitchen), sent, paid, posted to a room, NC,\nclosed or cancelled, with the table, who it was for, the amount and the\ntime. `q` searches the bill and KOT number, table, room, customer name\nand phone, and the in-house guest's name. `state` keeps one state.\nLooking at today also brings in bills still open from earlier days\n(`carried`), so a forgotten order cannot hide. Only this outlet's bills.",
+      "description": "The outlet's bills for a day, or a range of up to a year, newest\nfirst: open (not sent to the kitchen), sent, paid, posted to a room, NC,\nclosed or cancelled, with the table, who it was for, the amount and the\ntime. `q` searches the bill and KOT number, table, room, customer name\nand phone, and the in-house guest's name. `state` keeps one state,\n`order_type` one kind of order and `mode` one way of paying (Cash, Card,\nUPI, Room). Pages come back `limit` at a time from `offset`; `total`,\n`has_more`, `counts` and `totals` always cover every bill the filters\nmatch, not only the page, so nothing is hidden by paging.\nLooking at today also brings in bills still open from earlier days\n(`carried`), so a forgotten order cannot hide. Only this outlet's bills.",
       "body": {
        "mode": "raw",
-       "raw": "{\n  \"outlet\": \"Your Property-Restaurant\",\n  \"date\": \"2026-08-01\",\n  \"to_date\": \"2026-08-31\",\n  \"limit\": 200\n}",
+       "raw": "{\n  \"outlet\": \"Your Property-Restaurant\",\n  \"date\": \"2026-08-01\",\n  \"to_date\": \"2026-08-31\",\n  \"limit\": 200,\n  \"offset\": 0\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "orders_export",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.pos.orders_export",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.pos.orders_export"
+       ]
+      },
+      "description": "The outlet's bill history as CSV for a day or up to a year: every\nbill with its state, payment mode, amount, discount, who it was for and\nwho cancelled it. Same search and state filters as the orders list;\n`mode` keeps one payment mode (Cash, Card, UPI). A phone number is masked\nexcept to a supervisor, as on the till. Returns {filename, csv, rows}.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"outlet\": \"Your Property-Restaurant\",\n  \"date\": \"2026-08-01\",\n  \"to_date\": \"2026-08-31\"\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -6702,8 +6776,504 @@
    ]
   },
   {
+   "name": "Setup checklist (finish setting up a property)",
+   "item": [
+    {
+     "name": "setup_checklist",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.onboarding.setup_checklist",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.onboarding.setup_checklist"
+       ]
+      },
+      "description": "What is set up and what is still to do, for the Finish setup screen.\nOnly items that matter for the modules this property runs.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "name": "Rates (rate calendar, what moves a rate)",
+   "item": [
+    {
+     "name": "rate_calendar",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.rates.rate_calendar",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.rates.rate_calendar"
+       ]
+      },
+      "description": "Every room type's rate for each of the next `days` dates, with what\nmoved it. A room type's own days are read with the same functions the\nquote uses; nothing here sets a price.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"from_date\": \"2026-08-01\",\n  \"days\": 14,\n  \"adults\": 2,\n  \"children\": 0\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "rate_options",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.rates.rate_options",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.rates.rate_options"
+       ]
+      },
+      "description": "For the booking dialog: this stay night by night (BAR, season,\ndemand), the whole stay under each active rate plan against the plain\nrate, and what the voucher would do. Each total is a real quote.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"room_type\": \"Your Property-DLX\",\n  \"check_in_date\": \"2026-08-01\",\n  \"check_out_date\": \"2026-08-03\",\n  \"adults\": 2,\n  \"children\": 0\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "name": "Service tickets (assign, resolve, timeline)",
+   "item": [
+    {
+     "name": "tickets_search",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.tickets.tickets_search",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.tickets.tickets_search"
+       ]
+      },
+      "description": "Tickets for a property with the filters a supervisor needs.\n\nview: open (default), mine, unassigned, overdue, resolved, all. Old\ntickets are never hidden: 'all' and 'resolved' go back as far as the\ndata does, and older_than_days narrows to the ones still open past that.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"view\": \"open\",\n  \"older_than_days\": 0,\n  \"limit\": 200\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "ticket_detail",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.tickets.ticket_detail",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.tickets.ticket_detail"
+       ]
+      },
+      "description": "One ticket in full: its fields, SLA, and the timeline.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"ticket\": \"<ticket>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "ticket_assignees",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.tickets.ticket_assignees",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.tickets.ticket_assignees"
+       ]
+      },
+      "description": "Staff a ticket can be handed to.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "assign_ticket",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.tickets.assign_ticket",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.tickets.assign_ticket"
+       ]
+      },
+      "description": "Hand a ticket to someone, or clear the assignee (user empty).",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"ticket\": \"<ticket>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "claim_ticket",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.tickets.claim_ticket",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.tickets.claim_ticket"
+       ]
+      },
+      "description": "Take a ticket yourself.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"ticket\": \"<ticket>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "start_ticket",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.tickets.start_ticket",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.tickets.start_ticket"
+       ]
+      },
+      "description": "Begin work: moves it to In Progress and, if nobody has it, gives it to you.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"ticket\": \"<ticket>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "add_ticket_note",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.tickets.add_ticket_note",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.tickets.add_ticket_note"
+       ]
+      },
+      "description": "A comment on the timeline (what was tried, who was called).",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"ticket\": \"<ticket>\",\n  \"note\": \"<note>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "resolve_ticket",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.tickets.resolve_ticket",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.tickets.resolve_ticket"
+       ]
+      },
+      "description": "Mark a ticket solved, recording who did it and what was done.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"ticket\": \"<ticket>\",\n  \"close\": 0\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "reopen_ticket",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.tickets.reopen_ticket",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.tickets.reopen_ticket"
+       ]
+      },
+      "description": "A solved ticket that came back. Needs a reason; it is kept in the timeline.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"ticket\": \"<ticket>\",\n  \"reason\": \"<reason>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
    "name": "Kitchen printers (routing, print stations, print queue)",
    "item": [
+    {
+     "name": "print_bill",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.printing.print_bill",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.printing.print_bill"
+       ]
+      },
+      "description": "Send a bill to the station set up to print bills. No bill printer\nconfigured: nothing is queued and the till prints from its own device,\nexactly as before.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"order\": \"ORD-2026-00001\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
     {
      "name": "claim_jobs",
      "request": {
@@ -12117,6 +12687,43 @@
    "name": "Settings hub (module settings)",
    "item": [
     {
+     "name": "menu_masters",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.settings.menu_masters",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.settings.menu_masters"
+       ]
+      },
+      "description": "Allergen tags, prep stations, courses and category suggestions for\nthe Menu form and kitchen display. Edited under Settings \u2192 F&B \u2192 Menu\nmaster lists.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
      "name": "settings_schema",
      "request": {
       "method": "POST",
@@ -13798,7 +14405,7 @@
         "kamra.public_api.site_info"
        ]
       },
-      "description": "Public site metadata for the login/boot screen.\n\ndemo_mode is true only on the seeded demo site (seed_demo sets the\n`kamra_demo_mode` default), so a real install never advertises the\ndemo login accounts."
+      "description": "Public site metadata for the login/boot screen.\n\ndemo_mode is true only on the seeded demo site (seed_demo sets the\n`kamra_demo_mode` default), so a real install never advertises the\ndemo login accounts. The running version is public on purpose: it is\nwhat a bug report and the login screen quote."
      }
     },
     {

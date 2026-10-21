@@ -7698,7 +7698,7 @@ def t316():
 		assert rate in [float(x) for x in pack.tax_rate_options(None)], (country, rate)
 	assert services_tax_rate(pack_for_country("Saudi Arabia"), None) == 15.0
 	assert services_tax_rate(pack_for_country("Malaysia"), None) == 8.0
-	import kamra.laundry as laundry
+	from kamra import laundry
 	assert not hasattr(laundry, "LAUNDRY_GST"), "laundry still hardcodes a GST rate"
 	# activity-log money follows the property's currency, not a fixed rupee
 	cur = frappe.db.get_value("Property", P, "currency")
@@ -9542,8 +9542,10 @@ def t373():
 	# yesterday alone: just the carried bill's day
 	y = pos.orders_list(outlet, date=str(frappe.utils.add_days(nowdate(), -1)))
 	assert [r["name"] for r in y["rows"]] == [e["order"]], y["rows"]
-	_refused(pos.orders_list, outlet, date="2037-01-01", to_date="2037-03-01",
-	         contains="31 days")
+	_refused(pos.orders_list, outlet, date="2036-01-01", to_date="2037-03-01",
+	         contains="one year")
+	# a full year is allowed (the history screen reaches back that far)
+	pos.orders_list(outlet, date="2036-03-01", to_date="2037-03-01")
 
 	# property scope: a captain limited to this hotel cannot list another's
 	p2 = "Eval POS Other Hotel"

@@ -36,6 +36,24 @@ Then, for the whole stay:
 Once a booking is confirmed, its nightly rates are locked. A later season,
 rate change or demand premium never changes what a confirmed guest pays.
 
+## See the rate for any date
+
+A room type's base price is its **BAR**, the best available rate: the price
+before a season, a demand rule, a rate plan or a voucher touches it.
+
+- **Rate calendar** (Revenue, Rate Calendar) shows every room type's rate
+  for the next 7 to 31 days. Amber nights are above BAR and blue nights are
+  below it. A dot means a season or a busy-house rule moved the night;
+  select it to see which one and by how much. The page also links to where
+  each layer is changed.
+- **On a booking or a walk-in**, the form has a Rates for these dates panel.
+  It lists each night's rate and what moved it, the whole stay under each
+  rate plan next to the standard rate (select one to use it), and whether
+  the voucher is valid and what it takes off.
+
+These screens explain a price. They never set one: every figure comes from
+the same code as the quote, so what you see is what is charged.
+
 ## Set room type prices
 
 1. Open **Revenue → Room Types** (or **Admin → Room Types**) and pick a

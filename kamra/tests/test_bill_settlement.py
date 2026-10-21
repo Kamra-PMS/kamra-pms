@@ -190,6 +190,88 @@ class BillSettlementTestCase(AuditTestCase):
 		self.assertTrue(pos.pay_order(o, "Cash")["paid"])
 		self.assertEqual(self.status(o), "Delivered")
 
+	def test_wrong_payment_mode_can_be_corrected_while_the_till_is_open(self):
+		from kamra import cashier
+		cashier.open_session(PROP_A, 0)
+		o = self.order(table_no="T3b")
+		pos.pay_order(o, "Card")
+		out = pos.change_payment_mode(o, "Cash", "pressed Card by mistake")
+		self.assertEqual(out["was"], "Card")
+		self.assertEqual(frappe.db.get_value("POS Order", o, "payment_mode"), "Cash")
+		by_mode = {m: a for m, a in frappe.db.sql(
+			"""SELECT mode, SUM(amount) FROM `tabCashier Transaction`
+			   WHERE pos_order = %s AND kind = 'Payment' GROUP BY mode""", o)}
+		self.assertEqual(float(by_mode.get("Card") or 0), 0.0)
+		self.assertGreater(float(by_mode.get("Cash") or 0), 0)
+		with self.assertRaisesRegex(frappe.ValidationError, "already marked"):
+			pos.change_payment_mode(o, "Cash")
+
+	def test_order_history_exports_with_payment_mode(self):
+		import csv
+		import io
+
+		from frappe.utils import nowdate
+		o = self.order(table_no="T3d")
+		pos.pay_order(o, "UPI")
+		out = pos.orders_export(self.outlet, nowdate())
+		rows = list(csv.DictReader(io.StringIO(out["csv"].lstrip("\ufeff"))))
+		mine = [r for r in rows if r["Bill"] == o]
+		self.assertEqual(len(mine), 1)
+		self.assertEqual((mine[0]["Payment mode"], mine[0]["State"]), ("UPI", "paid"))
+		only_cash = pos.orders_export(self.outlet, nowdate(), mode="Cash")
+		self.assertNotIn(o, only_cash["csv"])
+
+	def test_order_history_reaches_back_a_year_and_filters(self):
+		from frappe.utils import add_days, nowdate
+		a = self.order(table_no="H1")
+		pos.pay_order(a, "UPI")
+		b = self.order("Takeaway")
+		pos.pay_order(b, "Cash")
+		old = self.order(table_no="H3")
+		pos.pay_order(old, "Cash")
+		frappe.db.set_value("POS Order", old, "creation", f"{add_days(nowdate(), -90)} 12:00:00")
+		wide = pos.orders_list(self.outlet, add_days(nowdate(), -120), nowdate())
+		names = {r["name"] for r in wide["rows"]}
+		self.assertTrue({a, b, old} <= names, "a 90 day old bill must be reachable")
+		# today alone does not include it
+		self.assertNotIn(old, {r["name"] for r in pos.orders_list(self.outlet, nowdate())["rows"]})
+		# one kind of order, one way of paying
+		self.assertEqual({r["order_type"] for r in pos.orders_list(
+			self.outlet, add_days(nowdate(), -120), nowdate(), order_type="Takeaway")["rows"]}, {"Takeaway"})
+		cash = pos.orders_list(self.outlet, add_days(nowdate(), -120), nowdate(), mode="Cash")
+		self.assertTrue({b, old} <= {r["name"] for r in cash["rows"]})
+		self.assertNotIn(a, {r["name"] for r in cash["rows"]})
+		self.assertEqual(set(cash["totals"]["by_mode"]), {"Cash"})
+		# a year is the most that can be asked for
+		with self.assertRaisesRegex(frappe.ValidationError, "one year"):
+			pos.orders_list(self.outlet, add_days(nowdate(), -400), nowdate())
+
+	def test_order_history_pages_without_changing_the_totals(self):
+		from frappe.utils import nowdate
+		for i in range(3):
+			pos.pay_order(self.order(table_no=f"P{i}"), "Card")
+		full = pos.orders_list(self.outlet, nowdate(), mode="Card")
+		first = pos.orders_list(self.outlet, nowdate(), mode="Card", limit=2)
+		rest = pos.orders_list(self.outlet, nowdate(), mode="Card", limit=2, offset=2)
+		self.assertEqual(len(first["rows"]), 2)
+		self.assertTrue(first["has_more"])
+		self.assertEqual(first["total"], full["total"])
+		self.assertEqual(first["totals"], full["totals"])
+		self.assertEqual(len(first["rows"]) + len(rest["rows"]), full["total"])
+		self.assertFalse(set(r["name"] for r in first["rows"]) & set(r["name"] for r in rest["rows"]))
+		self.assertAlmostEqual(first["totals"]["sales"],
+		                       sum(r["amount"] for r in full["rows"] if r["state"] == "paid"), 2)
+
+	def test_payment_mode_stays_once_the_till_is_closed(self):
+		from kamra import cashier
+		cashier.open_session(PROP_A, 0)
+		o = self.order(table_no="T3c")
+		pos.pay_order(o, "Card")
+		sess = frappe.db.get_value("Cashier Transaction", {"pos_order": o}, "session")
+		frappe.db.set_value("Cashier Session", sess, "status", "Closed")
+		with self.assertRaisesRegex(frappe.ValidationError, "closed"):
+			pos.change_payment_mode(o, "Cash")
+
 	def test_paid_flag_without_a_payment_mode_is_refused(self):
 		doc = frappe.get_doc("POS Order", self.order("Takeaway"))
 		doc.paid, doc.status = 1, "Delivered"

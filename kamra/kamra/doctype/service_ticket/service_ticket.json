@@ -22,6 +22,8 @@
   "guest",
   "guest_name",
   "assigned_to_user",
+  "assigned_by",
+  "assigned_at",
   "sb_detail",
   "description",
   "sb_sla",
@@ -29,7 +31,10 @@
   "resolved_on",
   "column_break_c",
   "breached",
-  "resolution_note"
+  "first_response_at",
+  "resolution_note",
+  "resolved_by",
+  "reopened_count"
  ],
  "fields": [
   {
@@ -169,12 +174,45 @@
    "fieldname": "resolution_note",
    "fieldtype": "Small Text",
    "label": "Resolution Note"
+  },
+  {
+   "fieldname": "assigned_by",
+   "fieldtype": "Link",
+   "label": "Assigned By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "assigned_at",
+   "fieldtype": "Datetime",
+   "label": "Assigned At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "first_response_at",
+   "fieldtype": "Datetime",
+   "label": "First Response At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "resolved_by",
+   "fieldtype": "Link",
+   "label": "Resolved By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reopened_count",
+   "fieldtype": "Int",
+   "label": "Times Reopened",
+   "default": "0",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-09-28 12:51:22.820746",
+ "modified": "2026-10-20 15:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Service Ticket",

@@ -65,9 +65,9 @@ export default function EndOfDay() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-lg font-semibold text-zinc-900">{t("Manage End of Day")}</h1>
+        <h1 className="text-lg font-semibold text-zinc-900">{t("Manage End of Day / Night Audit")}</h1>
         <p className="text-sm text-zinc-500">
-          {t("Close each property's business date: work through the checklist, post room and tax, roll the date and print the audit pack. The 3 AM job runs the same steps on its own.")}
+          {t("End of Day is the night audit. Close each property's business date: work through the checklist, post room and tax, roll the date and print the audit pack. The 3 AM job runs the same steps on its own.")}
         </p>
       </div>
       {err && <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{err}</p>}

@@ -9,10 +9,28 @@ Install or upgrade: [Frappe Cloud Marketplace](/self-hosting/frappe-cloud)
 or [self-hosting](/self-hosting/). After upgrade, open
 **Admin → System Health** to confirm the site version.
 
-## Current stable: v2.6.17
+## Current stable: v2.6.18
 
 Released 20 Oct 2026.
-[GitHub release](https://github.com/Kamra-PMS/kamra-pms/releases/tag/v2.6.17).
+[GitHub release](https://github.com/Kamra-PMS/kamra-pms/releases/tag/v2.6.18).
+
+- **Guided check-in and check-out** - step by step screens from every
+  Check in and Check out button; required steps are enforced and the
+  check-out settles, refunds and invoices without dead ends.
+- **Villa party rules** - extra guests, child ages, group size and
+  holiday seasons.
+- **Rooms** - a Rooms screen with a room panel, insights and a
+  configurable Today; tape chart bars open a stay panel.
+- **POS** - cancel or void by kitchen state, an orders list and a guest
+  panel; kitchen printers are seeded with their status.
+- **Agents** - a Frappe API key works on `/mcp` for unattended agents.
+- **Fixes** - petty cash stays per property, desk lists use the full
+  width, Today no longer scrolls sideways on phones or in Arabic, and
+  the Frappe Cloud marketplace audit passes.
+
+## Recent stables
+
+### v2.6.17
 
 - **Company credit control** - payment terms, due-date aging, warn or
   block at booking and check-out (Finance override logged).
@@ -23,8 +41,6 @@ Released 20 Oct 2026.
 - **Integrations** - outbound webhooks, external POS room-charge API,
   door-lock adapter interface.
 - **Self-host** - prebuilt image pull, `:stable` tag, quickstart compose.
-
-## Recent stables
 
 ### v2.6.16
 

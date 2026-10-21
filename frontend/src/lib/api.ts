@@ -43,7 +43,7 @@ async function doFetch(path: string, init?: RequestInit) {
       console.warn(`[kamra] network failure calling ${path}`, err)
       window.dispatchEvent(new Event("kamra:offline"))
       throw Object.assign(
-        new Error("Can't reach Kamra right now. Check your connection — we'll reconnect automatically."),
+        new Error("Can't reach Kamra right now. Check your connection - we'll reconnect automatically."),
         { network: true },
       )
     }
@@ -82,7 +82,7 @@ export async function logout() {
 
 /** Upload an image to Frappe's public files; resolves to its served URL.
  *  Pass doctype/docname/fieldname so Attach Image fields keep a real File
- *  link — otherwise the URL shows in the form but is easy to lose on save. */
+ *  link - otherwise the URL shows in the form but is easy to lose on save. */
 export async function uploadFile(
   file: File,
   opts?: { doctype?: string; docname?: string; fieldname?: string },
@@ -123,7 +123,7 @@ export async function uploadFile(
 /** Upload a file to a custom Kamra endpoint (multipart), returning its result.
  *  Unlike uploadFile (Frappe's built-in upload_file, which authorises against
  *  the target doctype's own perms), this posts to a @require_roles endpoint that
- *  handles the File itself — the pattern the rest of Kamra uses. */
+ *  handles the File itself - the pattern the rest of Kamra uses. */
 export async function uploadTo(
   method: string,
   file: File,
@@ -1744,23 +1744,6 @@ export async function amendStayConfirmed(
   const p = await amendStayPreview(reservation, check_in_date, check_out_date)
   if (p.needs_confirmation && !ask(p)) return null
   return amendStay(reservation, check_in_date, check_out_date, p.needs_confirmation ? 1 : 0)
-}
-
-/** Same for a room move: a different room type re-prices the stay. */
-export async function moveRoomConfirmed(
-  reservation: string,
-  new_room: string,
-  ask: (p: RepricePreview) => boolean,
-  reason?: string,
-) {
-  const p = await call<RepricePreview>("kamra.api.room_move_preview", { reservation, new_room })
-  if (p.needs_confirmation && !ask(p)) return null
-  return call<{ room: string; room_type: string }>("kamra.api.move_reservation", {
-    reservation,
-    new_room,
-    reason,
-    confirm_price: p.needs_confirmation ? 1 : 0,
-  })
 }
 
 export const setLateArrival = (reservation: string, late_arrival: boolean, eta?: string) =>

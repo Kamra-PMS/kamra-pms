@@ -372,7 +372,7 @@ function Letterhead({ doc }: { doc: Doc }) {
           </table>
           {!h.is_final && h.kind !== "pack_list" && h.kind !== "beo" && (
             <p className="mt-1.5 max-w-48 text-[11px] text-amber-700">
-              Draft — no number issued yet.
+              Draft - no number issued yet.
             </p>
           )}
         </div>
@@ -447,7 +447,7 @@ function Parties({ doc }: { doc: Doc }) {
           {e.start_time ? (
             <Line
               k="Time"
-              v={`${e.start_time} – ${e.end_time}${
+              v={`${e.start_time} - ${e.end_time}${
                 e.hours ? ` (${e.hours} hrs)` : ""
               }`}
             />
@@ -795,7 +795,7 @@ function Amt({ k, v, muted }: { k: string; v: number; muted?: boolean }) {
 
 /* ── the menu card ────────────────────────────────────────────────────── */
 
-/** What will actually be served, course by course, with no money on it —
+/** What will actually be served, course by course, with no money on it - 
  *  the sheet the customer signs and the kitchen cooks from. Keeping price
  *  off it is the point: the moment a plate rate appears, the conversation
  *  stops being about the food. */
@@ -889,7 +889,7 @@ function MenuCardSheet({ name, card }: { name: string; card: MenuCard }) {
                   <div key={j}>
                     <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-zinc-500">
                       {c.course}
-                      {c.choice_of ? ` — choose ${c.choice_of}` : ""}
+                      {c.choice_of ? ` - choose ${c.choice_of}` : ""}
                       {c.is_live_counter && (
                         <span className="ml-1 text-amber-600">live</span>
                       )}

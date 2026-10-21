@@ -10,6 +10,7 @@ import {
 } from "lucide-react"
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom"
 import UpdateNag from "./components/UpdateNag"
+import SetupNag from "./components/SetupNag"
 import { Button } from "./components/ui/button"
 import {
   appForPath,
@@ -33,6 +34,9 @@ import { useT } from "./lib/i18n"
 import { loadLocale } from "./lib/money"
 import { cn } from "./lib/utils"
 import { useKiosk } from "./lib/kiosk"
+import { getSiteInfo, versionLabel } from "./lib/siteInfo"
+import AlertSettings from "./components/AlertSettings"
+import NotificationHost from "./components/NotificationHost"
 
 // On-demand UI kept out of the entry chunk: the booking dialog opens on
 // request; the palette and help panel load right after the shell paints.
@@ -84,7 +88,7 @@ function SearchShortcut() {
       className="flex w-full items-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50/70 px-3 py-2 text-sm text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600"
     >
       <Search className="size-4 shrink-0" aria-hidden />
-      <span className="truncate whitespace-nowrap">{t("Search reservations, guests, rooms…")}</span>
+      <span className="truncate whitespace-nowrap">{t("Search guests, bookings, screens, settings…")}</span>
       <kbd className="ml-auto hidden rounded border border-zinc-200 bg-white px-1.5 py-0.5 text-[10px] font-semibold text-zinc-500 md:inline">
         {combo}
       </kbd>
@@ -207,6 +211,11 @@ export default function AppShell() {
   const [properties, setProperties] = useState<PropertyRow[]>([])
   const [property, setProperty] = useState(getCurrentProperty())
   const [demoMode, setDemoMode] = useState(false)
+  const [build, setBuild] = useState<string | null>(null)
+
+  useEffect(() => {
+    getSiteInfo().then((info) => setBuild(versionLabel(info)))
+  }, [])
 
   useEffect(() => {
     myProperties().then((props) => {
@@ -303,6 +312,7 @@ export default function AppShell() {
     // Floor pages (POS / Kitchen) get a bounded frame at lg+ so only pane
     // content scrolls; everything else keeps normal page flow.
     <div className={cn("flex min-h-screen flex-col", floor && "lg:h-screen")}>
+      <NotificationHost />
       {demoMode && !kiosk && (
         <div className="bg-amber-500 px-4 py-1.5 text-center text-xs font-medium text-amber-950">
           {t("Shared playground, not your hotel. Data is wiped every night.")}
@@ -316,18 +326,24 @@ export default function AppShell() {
         </div>
       )}
       {!kiosk && !demoMode && <UpdateNag />}
+      {!kiosk && !demoMode && <SetupNag />}
       <div className="flex min-h-0 flex-1">
       {!kiosk && (
-      <aside className="hidden w-56 shrink-0 border-r border-zinc-200 bg-white px-3 py-5 sm:sticky sm:top-0 sm:block sm:h-screen sm:overflow-y-auto">
-        <div className="mb-5 flex items-center gap-2 px-1">
+      <aside className="hidden w-56 shrink-0 flex-col border-r border-zinc-200 bg-white px-3 py-5 sm:sticky sm:top-0 sm:flex sm:h-screen sm:overflow-y-auto">
+        <NavLink
+          to="/"
+          end
+          aria-label={t("Home")}
+          className="mb-5 flex items-center gap-2 rounded-lg px-1 outline-none focus-visible:ring-2 focus-visible:ring-brand-600"
+        >
           <img src={asset("kamra-mark.svg")} alt="" className="size-7" aria-hidden />
-          <span className="text-lg font-semibold tracking-tight">
+          <span className="text-lg font-semibold tracking-tight text-zinc-900">
             kamra
             <span className="ml-1 align-middle text-[10px] font-semibold tracking-[0.2em] text-brand-600">
               PMS
             </span>
           </span>
-        </div>
+        </NavLink>
 
         {currentApp && (
           <div className="mb-2 flex items-center gap-2 rounded-lg px-2 py-1.5">
@@ -369,6 +385,17 @@ export default function AppShell() {
             ))
           })()}
         </nav>
+        <div className="mt-auto pt-6">
+          <AlertSettings />
+        </div>
+        {build ? (
+          <p
+            className="px-2.5 pt-2 text-[11px] text-zinc-400"
+            title={t("The Kamra version this site is running")}
+          >
+            Kamra v{build}
+          </p>
+        ) : null}
       </aside>
       )}
 

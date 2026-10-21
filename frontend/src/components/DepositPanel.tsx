@@ -148,7 +148,7 @@ export default function DepositPanel(props: {
             {deposit.pct > 0 ? t("Expected ({pct}%)", { pct: deposit.pct }) : t("Expected")}
           </dt>
           <dd className="font-semibold tabular-nums text-zinc-900">
-            {deposit.expected > 0 ? fmt(deposit.expected) : "—"}
+            {deposit.expected > 0 ? fmt(deposit.expected) : "-"}
           </dd>
         </div>
         <div>

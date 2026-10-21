@@ -3,7 +3,7 @@ import { useEffect, useState } from "react"
 import { login } from "../lib/api"
 import { asset } from "../lib/asset"
 import { Button } from "../components/ui/button"
-import { getSiteInfo } from "../lib/siteInfo"
+import { getSiteInfo, versionLabel } from "../lib/siteInfo"
 import { LANGS, getLang, setLang, type Lang } from "../lib/dir"
 import { useT } from "../lib/i18n"
 
@@ -39,7 +39,7 @@ export default function Login(props: { onSuccess: () => void }) {
   useEffect(() => {
     getSiteInfo().then((info) => {
       setDemoMode(Boolean(info.demo_mode))
-      setVersion(info.version ?? null)
+      setVersion(versionLabel(info))
     })
   }, [])
 

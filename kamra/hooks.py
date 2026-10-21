@@ -238,7 +238,7 @@ after_migrate = ["kamra.install.after_migrate"]
 _PROPERTY_SCOPED = (
 	"Agent Action Log", "AI Assistant Settings", "Banquet Checklist Template",
 	"Banquet Dish", "Banquet Function Task", "Banquet Menu",
-	"Banquet Service Item", "Cancelled Invoice", "Cashier", "Cashier Session",
+	"Banquet Service Item", "Cancelled Invoice", "Cash Transfer", "Cashier", "Cashier Session", "Cashier Terminal",
 	"Cashier Transaction", "Channel Manager Connection",
 	"Channel Provider Connection", "City Ledger Account", "City Ledger Entry",
 	"Copilot Conversation", "Credit Note", "Discount Voucher", "Exchange Rate",
@@ -253,7 +253,7 @@ _PROPERTY_SCOPED = (
 	"Proforma Folio", "Property Setting", "Rate Guardrail", "Rate Plan",
 	"Reservation",
 	"Revenue Budget", "Room", "Room Block", "Room Type", "Season",
-	"Security Deposit", "Sellable Unit", "Service Ticket", "Shift Handover",
+	"Security Deposit", "Sellable Unit", "Service Ticket", "Shift Handover", "SOP Template", "Ticket Event",
 	"Transaction Code", "Turnover Profile", "Venue", "Venue Booking",
 	"WhatsApp Message", "ZATCA Invoice", "ZATCA Settings",
 )

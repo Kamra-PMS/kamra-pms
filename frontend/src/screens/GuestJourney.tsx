@@ -22,6 +22,7 @@ import { useAuth } from "../lib/auth"
 import { serverError, updateResource } from "../lib/resource"
 import type { ShellContext } from "../AppShell"
 import EditableNationality from "../components/EditableNationality"
+import GuestDocuments, { type GuestDocs } from "../components/GuestDocuments"
 import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
 import {
@@ -62,6 +63,9 @@ interface Journey {
     nationality: string | null
     id_type: string | null
     id_number: string | null
+    id_place_of_issue: string | null
+    id_issue_date: string | null
+    id_expiry_date: string | null
     blacklisted: 0 | 1
     blacklist_reason: string | null
     address: string
@@ -74,6 +78,7 @@ interface Journey {
     lifetime_value: number
     first_seen: string
   }
+  documents: GuestDocs
   reservations: ResRow[]
   timeline: {
     ts: string
@@ -594,6 +599,10 @@ export default function GuestJourney() {
         </Card>
 
         <div className="space-y-4">
+          {/* key on the saved values so the form resets after a save */}
+          <GuestDocuments
+            key={`${guest.id_type}|${guest.id_number}|${guest.id_place_of_issue}|${guest.id_issue_date}|${guest.id_expiry_date}`}
+            guestId={guest.name} docs={data.documents} onSaved={load} />
           <Card>
             <CardHeader>
               <CardTitle>Notes & preferences</CardTitle>

@@ -25,9 +25,20 @@ import { useT } from "../lib/i18n"
 const inr = (n: unknown) =>
   Number(n ?? 0).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
 
+type Terminal = {
+  name: string
+  terminal_name: string
+  kind: string
+  default_float: number
+  open_session: { user: string } | null
+}
+
 type Session = {
   open?: boolean
   name?: string
+  terminal?: string
+  cashier_terminal?: string | null
+  open_tills?: { name: string; cashier_terminal: string | null; terminal: string }[]
   business_date?: string
   cashier_id?: string
   status?: string
@@ -65,19 +76,29 @@ export default function CashierTill() {
   const [paidOutAmt, setPaidOutAmt] = useState("")
   const [paidOutReason, setPaidOutReason] = useState("")
   const [dropAmt, setDropAmt] = useState("")
+  const [terminals, setTerminals] = useState<Terminal[]>([])
+  const [terminalSel, setTerminalSel] = useState("")
+  const [dropTo, setDropTo] = useState("")
+  const [viewTerminal, setViewTerminal] = useState<string | undefined>(undefined)
   const [err, setErr] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
   const load = useCallback(async () => {
     try {
-      const s = await call<Session>("kamra.cashier.current_session", {
-        property: getCurrentProperty(),
-      })
+      const property = getCurrentProperty()
+      const [s, tl] = await Promise.all([
+        call<Session>("kamra.cashier.current_session", {
+          property,
+          cashier_terminal: viewTerminal,
+        }),
+        call<Terminal[]>("kamra.cashier.terminals", { property }),
+      ])
       setSession(s)
+      setTerminals(tl)
     } catch (e) {
       setErr(serverError(e))
     }
-  }, [])
+  }, [viewTerminal])
 
   useEffect(() => {
     void load()
@@ -101,8 +122,11 @@ export default function CashierTill() {
       await ensureUnlocked()
       const s = await call<Session>("kamra.cashier.open_session", {
         property: getCurrentProperty(),
-        opening_float: Number(floatAmt || 0),
+        // a terminal with a default float opens at it unless one is typed
+        ...(floatAmt !== "" ? { opening_float: Number(floatAmt) } : {}),
+        ...(terminalSel ? { cashier_terminal: terminalSel } : {}),
       })
+      setViewTerminal(terminalSel || undefined)
       setSession({ open: true, ...s })
     })
 
@@ -138,6 +162,7 @@ export default function CashierTill() {
         await call("kamra.cashier.cash_drop", {
           property: getCurrentProperty(),
           amount: Number(dropAmt || 0),
+          ...(dropTo ? { to_terminal: dropTo } : {}),
           pin,
         })
         setDropAmt("")
@@ -145,6 +170,8 @@ export default function CashierTill() {
     })
 
   const openTill = session?.open || session?.status === "Open"
+  const cashOffices = terminals.filter((x) => x.kind === "Cash Office")
+  const freeTerminals = terminals.filter((x) => !x.open_session)
   const txns = session?.transactions || []
 
   return (
@@ -160,8 +187,15 @@ export default function CashierTill() {
           <p className="mt-1 text-sm text-zinc-500">
             {t("Business date")}{" "}
             <span className="font-medium text-zinc-700">
-              {session?.business_date ?? "—"}
+              {session?.business_date ?? "-"}
             </span>
+            {session?.terminal ? (
+              <>
+                {" "}
+                · {t("Till")}{" "}
+                <span className="font-medium text-zinc-700">{session.terminal}</span>
+              </>
+            ) : null}
             {session?.cashier_id ? (
               <>
                 {" "}
@@ -174,6 +208,12 @@ export default function CashierTill() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <Link
+            to="/cashier/board"
+            className="rounded-lg border border-zinc-200 px-3 py-1.5 text-sm text-zinc-600 hover:bg-zinc-50"
+          >
+            {t("All tills")}
+          </Link>
           <Link
             to="/cashier/sessions"
             className="rounded-lg border border-zinc-200 px-3 py-1.5 text-sm text-zinc-600 hover:bg-zinc-50"
@@ -218,6 +258,27 @@ export default function CashierTill() {
         </div>
       ) : null}
 
+      {(session?.open_tills?.length ?? 0) > 1 ? (
+        <div className="flex flex-wrap items-center gap-2 text-sm">
+          <span className="text-zinc-500">{t("Your open tills")}</span>
+          {session!.open_tills!.map((x) => (
+            <button
+              key={x.name}
+              type="button"
+              onClick={() => setViewTerminal(x.cashier_terminal ?? "")}
+              className={
+                "rounded-full border px-3 py-1 " +
+                (x.name === session?.name
+                  ? "border-brand-600 bg-brand-50 text-brand-700"
+                  : "border-zinc-200 text-zinc-600 hover:bg-zinc-50")
+              }
+            >
+              {x.terminal}
+            </button>
+          ))}
+        </div>
+      ) : null}
+
       {!openTill ? (
         <Card>
           <CardHeader className="pb-2">
@@ -231,6 +292,27 @@ export default function CashierTill() {
             </p>
           </CardHeader>
           <CardContent className="flex flex-wrap items-end gap-3">
+            {terminals.length ? (
+              <label className="block text-sm">
+                <span className="mb-1 block text-zinc-600">{t("Till")}</span>
+                <select
+                  className="w-48 rounded-lg border border-zinc-300 px-3 py-2 text-sm"
+                  value={terminalSel}
+                  onChange={(e) => {
+                    setTerminalSel(e.target.value)
+                    const tm = terminals.find((x) => x.name === e.target.value)
+                    setFloatAmt(tm && tm.default_float ? String(tm.default_float) : floatAmt)
+                  }}
+                >
+                  <option value="">{t("Default")}</option>
+                  {freeTerminals.map((x) => (
+                    <option key={x.name} value={x.name}>
+                      {x.terminal_name} ({x.kind})
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
             <label className="block text-sm">
               <span className="mb-1 block text-zinc-600">{t("Opening float")}</span>
               <input
@@ -319,13 +401,27 @@ export default function CashierTill() {
                   value={dropAmt}
                   onChange={(e) => setDropAmt(e.target.value)}
                 />
+                {cashOffices.length ? (
+                  <select
+                    className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm"
+                    value={dropTo}
+                    onChange={(e) => setDropTo(e.target.value)}
+                  >
+                    <option value="">{t("Safe (no receipt)")}</option>
+                    {cashOffices.map((x) => (
+                      <option key={x.name} value={x.name}>
+                        {x.terminal_name}
+                      </option>
+                    ))}
+                  </select>
+                ) : null}
                 <Button
                   className="w-full"
                   variant="outline"
                   disabled={busy || !dropAmt}
                   onClick={drop}
                 >
-                  {t("Drop to safe")}
+                  {dropTo ? t("Send to cash office") : t("Drop to safe")}
                 </Button>
                 <Link
                   to="/cashier/petty-cash"
@@ -401,7 +497,7 @@ export default function CashierTill() {
                         <td className="py-2 pr-3">{tx.mode}</td>
                         <td className="py-2 pr-3 tabular-nums">{inr(tx.amount)}</td>
                         <td className="truncate py-2 pr-3 text-zinc-500">
-                          {tx.reference || tx.folio || tx.pos_order || "—"}
+                          {tx.reference || tx.folio || tx.pos_order || "-"}
                         </td>
                         <td className="py-2 text-zinc-500">
                           {tx.posted_at

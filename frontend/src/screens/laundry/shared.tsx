@@ -205,7 +205,7 @@ export function ExpressToggle({
       onClick={() => onChange(!value)}
     >
       <Zap className="size-4" />
-      {value ? "Express — same day (higher rate)" : "Standard service"}
+      {value ? "Express - same day (higher rate)" : "Standard service"}
     </button>
   )
 }

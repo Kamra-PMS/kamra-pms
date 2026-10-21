@@ -253,9 +253,9 @@ export default function CityLedgerPayment(props: {
           <div className="grid grid-cols-5 overflow-hidden rounded-lg border border-zinc-200 text-center text-xs">
             {([
               ["Not due", acc.not_due],
-              ["1–30 overdue", acc.d1_30],
-              ["31–60", acc.d31_60],
-              ["61–90", acc.d61_90],
+              ["1 to 30 overdue", acc.d1_30],
+              ["31 to 60", acc.d31_60],
+              ["61 to 90", acc.d61_90],
               ["90+", acc.d90p],
             ] as const).map(([k, v]) => (
               <div key={k} className="border-r border-zinc-100 px-2 py-2 last:border-r-0">
@@ -337,10 +337,10 @@ export default function CityLedgerPayment(props: {
                         </td>
                       ) : null}
                       <td className="py-2 pr-3 font-mono text-xs">{it.invoice_number || it.folio}</td>
-                      <td className="py-2 pr-3">{it.guest_name || "—"}</td>
+                      <td className="py-2 pr-3">{it.guest_name || "-"}</td>
                       <td className="py-2 pr-3">{it.invoice_date}</td>
                       <td className={`py-2 pr-3 ${it.days_overdue ? "text-rose-700" : ""}`}>
-                        {it.due_date || "—"}
+                        {it.due_date || "-"}
                         {it.days_overdue ? (
                           <span className="ml-1 text-xs">({it.days_overdue}d late)</span>
                         ) : null}
@@ -357,7 +357,7 @@ export default function CityLedgerPayment(props: {
                             onChange={(e) =>
                               setPicks((cur) => ({ ...cur, [it.folio]: e.target.value }))}
                           />
-                        ) : p ? fmtMoney(p.amount) : "—"}
+                        ) : p ? fmtMoney(p.amount) : "-"}
                       </td>
                     </tr>
                   )
@@ -385,7 +385,7 @@ export default function CityLedgerPayment(props: {
               <ul className="space-y-0.5 text-sm text-zinc-600">
                 {acc.payments.map((p) => (
                   <li key={p.name} className="flex justify-between">
-                    <span>{p.posting_date} · {p.reference || "—"}</span>
+                    <span>{p.posting_date} · {p.reference || "-"}</span>
                     <span className="tabular-nums">{fmtMoney(p.credit)}</span>
                   </li>
                 ))}
