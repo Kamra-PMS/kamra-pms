@@ -133,13 +133,13 @@ if (want("currency-desk")) {
 if (want("voids-allowances")) {
   await open(page, "/voids-allowances", 3500)
   const root = page.getByRole("heading", { name: "Voids & Allowances" }).locator("xpath=ancestor::div[contains(@class,'max-w-5xl')][1]")
-  await shot(page, "billing/voids-allowances", { locator: root })
+  await shot(page, "billing/voids-allowances", (await root.count()) ? { locator: root } : {})
 }
 
 if (want("ledgers")) {
   await open(page, "/ledgers", 4000)
   const root = page.getByRole("heading", { name: "Ledgers", exact: true }).locator("xpath=ancestor::div[contains(@class,'max-w-5xl')][1]")
-  await shot(page, "billing/ledgers", { locator: root })
+  await shot(page, "billing/ledgers", (await root.count()) ? { locator: root } : {})
 }
 
 await done()
