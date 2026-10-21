@@ -144,14 +144,18 @@ We never charge for rooms, users, features, data export or API access. An **ente
 |---|---|
 | ![Today, front desk morning view](docs/screenshots/today.png) | ![Reservation 360](docs/screenshots/reservation-360.png) |
 | **Today**: arrivals, departures, in-house, paid/due chips, room board | **Reservation 360**: billing, amend dates, check-in / out / cancel |
+| ![Check-in](docs/screenshots/checkin.png) | ![Check-out](docs/screenshots/checkout.png) |
+| **Check-in**: step by step, guest and IDs, who pays, room, deposit, registration card, keys | **Check-out**: the bill and why the total, late check-out, payment, invoice |
+| ![Folio](docs/screenshots/invoice.png) | ![Settings](docs/screenshots/settings.png) |
+| **Folio & tax invoice**: per-line GST, void, move, split, proforma, payment links | **Settings**: one searchable page per module, staff & access, integrations |
+| ![Restaurant POS](docs/screenshots/pos.png) | ![Open bills](docs/screenshots/pos-bills.png) |
+| **Restaurant POS**: running bills on top, menu by category, KOT, settle, F-keys | **Open bills**: every running table at a glance, bills never sent flagged |
 | ![Tape chart](docs/screenshots/tape-chart.png) | ![Reports](docs/screenshots/reports.png) |
 | **Tape chart**: rooms × dates, moves & stay amendments | **Reports**: occupancy, ADR, RevPAR, flash |
 | ![New booking](docs/screenshots/booking-dialog.png) | ![Guest profile](docs/screenshots/guest-profile.png) |
 | **New booking**: live quote, multi-room, add-ons, cancellation policy | **Guest profile**: stay strip, merge & anonymize (DPDP) |
-| ![GST invoice](docs/screenshots/invoice.png) | ![Booking Engine](docs/screenshots/booking-engine.png) |
-| **Folio & tax invoice**: per-line GST, splits, payment links | **Booking engine console**: gallery, policies, FAQ, SEO |
-| ![Restaurant POS](docs/screenshots/pos.png) | ![Dashboard](docs/screenshots/dashboard.png) |
-| **Restaurant POS**: table map, KOT / bill print, F-keys | **Dashboard**: occupancy, revenue, chain roll-up |
+| ![Booking Engine](docs/screenshots/booking-engine.png) | ![Dashboard](docs/screenshots/dashboard.png) |
+| **Booking engine console**: gallery, policies, FAQ, SEO | **Dashboard**: occupancy, revenue, chain roll-up |
 | ![Laundry](docs/screenshots/laundry.png) | ![Self check-in](docs/screenshots/checkin-id.png) |
 | **Laundry**: pickup → return → folio; guest self-service | **Self check-in**: ID capture, e-sign, retention policy |
 
@@ -286,7 +290,7 @@ In-repo: [`docs/`](docs/) · [user guide](docs/user-guide.md) · [AI & API](docs
 
 | Method | For | How |
 | --- | --- | --- |
-| **Hostinger VPS** | Cheapest self-host (India / SEA) | Buy KVM 2 via the [Kamra referral link](https://www.hostinger.com/in?REFERRALCODE=kamrapms) (**20% off**, or coupon `KAMRAPMS` — helps keep Kamra afloat), paste the Docker one-liner below · [guide](https://kamrapms.com/docs/self-hosting/hostinger) |
+| **Hostinger VPS** | Cheapest self-host (India / SEA) | Buy KVM 2 via the [Kamra referral link](https://www.hostinger.com/in?REFERRALCODE=kamrapms) (**20% off**, or coupon `KAMRAPMS`; it helps keep Kamra afloat), paste the Docker one-liner below · [guide](https://kamrapms.com/docs/self-hosting/hostinger) |
 | **Docker on any VPS** | DigitalOcean, Linode, AWS, your own box | One-liner below · [quickstart](https://kamrapms.com/docs/quickstart) |
 | **Bench** | Existing Frappe / ERPNext benches | Commands below · [guide](https://kamrapms.com/docs/self-hosting/bench) |
 | **Frappe Cloud Marketplace** | Managed Frappe hosting | [Install Kamra](https://cloud.frappe.io/marketplace/apps/kamra) on a private bench |
