@@ -942,7 +942,13 @@ export default function CheckInDialog(props: {
                   onChanged={() => load()}
                 />
               )}
-              {!flow.deposit.satisfied && (
+              {flow.deposit.satisfied ? (
+                <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+                  {flow.deposit.security.status === "Waived"
+                    ? t("Security deposit waived. Continue.")
+                    : t("Security deposit is taken. Continue.")}
+                </p>
+              ) : (
                 <p className="text-sm font-medium text-rose-700">
                   {t("Take the security deposit or waive it with a reason to continue.")}
                 </p>
