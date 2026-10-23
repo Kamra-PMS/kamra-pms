@@ -2141,5 +2141,11 @@
   "Take picture": "التقط صورة",
   "Captured picture": "الصورة الملتقطة",
   "This browser cannot use a camera here. Upload a picture instead.": "لا يمكن لهذا المتصفح استخدام الكاميرا هنا. ارفع صورة بدلًا من ذلك.",
-  "No camera, or the browser blocked it. Allow the camera, or upload a picture instead.": "لا توجد كاميرا، أو حظرها المتصفح. اسمح بالكاميرا، أو ارفع صورة بدلًا من ذلك."
+  "No camera, or the browser blocked it. Allow the camera, or upload a picture instead.": "لا توجد كاميرا، أو حظرها المتصفح. اسمح بالكاميرا، أو ارفع صورة بدلًا من ذلك.",
+  "Country calling code": "رمز الاتصال الدولي",
+  "Select a calling code.": "اختر رمز الاتصال الدولي.",
+  "Mobile number": "رقم الهاتف المحمول",
+  "Check the phone number and calling code.": "تحقق من رقم الهاتف ورمز الاتصال الدولي.",
+  "+{v0} numbers are {v1} digits.": "تتكون أرقام +{v0} من {v1} أرقام.",
+  "+{v0} numbers are {v1}-{v2} digits.": "تتكون أرقام +{v0} من {v1} إلى {v2} أرقام."
 }
