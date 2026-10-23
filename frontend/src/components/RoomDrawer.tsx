@@ -77,7 +77,7 @@ const REASON_LABEL: Record<string, string> = {
 
 export function useDates() {
   const { lang } = useT()
-  const loc = lang === "ar" ? "ar" : undefined
+  const loc = lang === "ar" ? "ar" : lang === "es" ? "es" : undefined
   const day = (s?: string | null) =>
     s
       ? new Date(s.slice(0, 10) + "T00:00:00").toLocaleDateString(loc, {

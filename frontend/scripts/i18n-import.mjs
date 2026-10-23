@@ -4,6 +4,7 @@
  *
  * Usage:
  *   node scripts/i18n-import.mjs              # arabic → ar.json
+ *   node scripts/i18n-import.mjs --lang es --column spanish
  *   node scripts/i18n-import.mjs --lang hi --column hindi
  */
 import fs from "node:fs"

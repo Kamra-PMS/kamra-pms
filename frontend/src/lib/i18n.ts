@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useState } from "react"
 import { getLang, type Lang } from "./dir"
 import ar from "../i18n/locales/ar.json"
+import es from "../i18n/locales/es.json"
 
 /** Locale dictionaries keyed by English source string. Missing keys fall back
  * to English so the app never blanks as coverage expands. */
 const DICT: Record<string, Record<string, string>> = {
   en: {},
+  es: es as Record<string, string>,
   ar: ar as Record<string, string>,
 }
 

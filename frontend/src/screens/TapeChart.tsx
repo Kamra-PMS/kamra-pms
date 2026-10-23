@@ -182,7 +182,7 @@ interface Drag {
 }
 
 export default function TapeChart() {
-  const { t } = useT()
+  const { t, lang } = useT()
   const [start, setStart] = useState(todayIso())
   const [data, setData] = useState<TapeData | null>(null)
   const [sel, setSel] = useState<TapeBooking | null>(null)
@@ -736,7 +736,7 @@ export default function TapeChart() {
                     ? t("Assigning...")
                     : t("Assign {n} room{s}", {
                         n: alloc.proposals.length,
-                        s: alloc.proposals.length === 1 ? "" : "s",
+                        s: alloc.proposals.length === 1 ? "" : lang === "es" ? "es" : "s",
                       })}
                 </Button>
               )}

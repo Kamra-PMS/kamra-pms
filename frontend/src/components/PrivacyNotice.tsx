@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { useT, type Vars } from "../lib/i18n"
+import { LANGS } from "../lib/dir"
 import bn from "../i18n/notice/bn.json"
 import hi from "../i18n/notice/hi.json"
 import kn from "../i18n/notice/kn.json"
@@ -63,7 +64,7 @@ export default function PrivacyNotice({
   idRetention?: string | null
   collectsId?: boolean
 }) {
-  const { t: pageT } = useT()
+  const { t: pageT, lang: pageLang } = useT()
   const offered = (terms.notice_languages ?? []).filter((c) => NOTICE[c])
   // "" reads the notice in the page's own language
   const [lang, setLang] = useState(() => browserNoticeLang(offered))
@@ -85,7 +86,7 @@ export default function PrivacyNotice({
         {offered.length > 0 && (
           <p className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <span>{t("Read this notice in:")}</span>
-            {[["", "English"] as const, ...offered.map((c) => [c, NOTICE[c].label] as const)].map(
+            {[["", LANGS.find((l) => l.code === pageLang)?.nativeLabel ?? "English"] as const, ...offered.map((c) => [c, NOTICE[c].label] as const)].map(
               ([code, label]) => (
                 <button
                   key={code || "page"}

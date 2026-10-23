@@ -50,7 +50,7 @@ function plusDays(iso: string, n: number) {
 }
 
 export default function CRS() {
-  const { t } = useT()
+  const { t, tn } = useT()
   const [checkIn, setCheckIn] = useState(isoToday())
   const [nights, setNights] = useState(1)
   const [adults, setAdults] = useState(2)
@@ -165,15 +165,9 @@ export default function CRS() {
       {data && (
         <div className="space-y-3">
           <p className="text-sm text-zinc-500">
-            {t("{n} propert{ies} with space · {nights} night{s}, {adults} adult{s2}{children}", {
-              n: data.properties.length,
-              ies: data.properties.length === 1 ? "y" : "ies",
-              nights: data.nights,
-              s: data.nights === 1 ? "" : "s",
-              adults: data.adults,
-              s2: data.adults === 1 ? "" : "s",
-              children: data.children ? `, ${data.children} children` : "",
-            })}
+            {tn(data.properties.length, "{n} property with space", "{n} properties with space")} ·{" "}
+            {tn(data.nights, "{n} night", "{n} nights")}, {tn(data.adults, "{n} adult", "{n} adults")}
+            {data.children ? `, ${tn(data.children, "{n} child", "{n} children")}` : ""}
           </p>
           {data.properties.length === 0 && (
             <Card><CardContent className="p-8 text-center text-sm text-zinc-400">

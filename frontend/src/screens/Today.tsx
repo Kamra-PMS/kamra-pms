@@ -200,10 +200,15 @@ function ReservationList(props: {
 // silently vanish from Today. They group under this key.
 const NO_FLOOR = "__none__"
 
-function ordinalFloor(f: string, t: (s: string, vars?: Record<string, string | number>) => string) {
+function ordinalFloor(
+  f: string,
+  t: (s: string, vars?: Record<string, string | number>) => string,
+  lang: string,
+) {
   if (f === NO_FLOOR) return t("Unassigned floor")
   const n = Number(f)
   if (Number.isNaN(n)) return /floor/i.test(f) ? f : t("{f} Floor", { f })
+  if (lang === "es") return t("{n} Floor", { n })
   const s = ["th", "st", "nd", "rd"]
   const v = n % 100
   return t("{n}{ord} Floor", { n, ord: s[(v - 20) % 10] || s[v] || s[0] })
@@ -343,7 +348,7 @@ function InHouseTable({
 }
 
 export default function Today() {
-  const { t } = useT()
+  const { t, lang } = useT()
   const { refreshKey } = useOutletContext<ShellContext>()
   const navigate = useNavigate()
   const [snap, setSnap] = useState<Snapshot | null>(null)
@@ -746,7 +751,7 @@ export default function Today() {
                     : "text-zinc-500 hover:text-zinc-700",
                 )}
               >
-                {f === "All" ? t("All Floors") : ordinalFloor(f, t)}
+                {f === "All" ? t("All Floors") : ordinalFloor(f, t, lang)}
                 {floor === f && (
                   <span className="absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-brand-600" />
                 )}
@@ -757,7 +762,7 @@ export default function Today() {
             {shownFloors.map((fl) => (
               <div key={fl} className="flex items-start gap-3">
                 <div className="w-16 shrink-0 pt-2 text-xs font-medium text-zinc-500">
-                  {ordinalFloor(fl, t)}
+                  {ordinalFloor(fl, t, lang)}
                 </div>
                 <div className="grid flex-1 grid-cols-[repeat(auto-fill,minmax(6.25rem,1fr))] gap-2">
                   {allRooms

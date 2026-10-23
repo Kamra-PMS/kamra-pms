@@ -431,7 +431,7 @@ function RemindersBoard({
 /* ── month by month ───────────────────────────────────────────────────── */
 
 function PipelineBoard({ data }: { data: BanquetPipeline | null }) {
-  const { t } = useT()
+  const { t, tn } = useT()
   if (!data) return <Empty>{t("Loading…")}</Empty>
   const peak = Math.max(
     1,
@@ -470,11 +470,7 @@ function PipelineBoard({ data }: { data: BanquetPipeline | null }) {
                       )}
                       <span className="text-zinc-400">
                         {" "}
-                        · {t("{n} function{s} · {pax} pax", {
-                          n: m.count,
-                          s: m.count === 1 ? "" : "s",
-                          pax: m.pax,
-                        })}
+                        · {tn(m.count, "{n} function", "{n} functions")} · {t("{pax} pax", { pax: m.pax })}
                       </span>
                     </span>
                   </div>

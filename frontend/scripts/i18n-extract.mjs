@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Extract English UI strings from t() / translate() calls into catalog.csv.
- * Merges existing Arabic from locales/ar.json.
+ * Merges existing Arabic and Spanish from their locale files.
  *
  * Usage: node scripts/i18n-extract.mjs
  */
@@ -14,15 +14,10 @@ const root = path.join(__dirname, "..")
 const src = path.join(root, "src")
 const outCsv = path.join(root, "src/i18n/catalog.csv")
 const arPath = path.join(root, "src/i18n/locales/ar.json")
-
-const SKIP = new Set([
-  "PublicBooking.tsx",
-  "PublicListing.tsx",
-])
+const esPath = path.join(root, "src/i18n/locales/es.json")
 
 function walk(dir, files = []) {
   for (const name of fs.readdirSync(dir)) {
-    if (SKIP.has(name)) continue
     const p = path.join(dir, name)
     const st = fs.statSync(p)
     if (st.isDirectory()) walk(p, files)
@@ -42,6 +37,9 @@ function placeholders(s) {
 
 const existingAr = fs.existsSync(arPath)
   ? JSON.parse(fs.readFileSync(arPath, "utf8"))
+  : {}
+const existingEs = fs.existsSync(esPath)
+  ? JSON.parse(fs.readFileSync(esPath, "utf8"))
   : {}
 
 const keys = new Map()
@@ -77,17 +75,19 @@ for (const file of walk(src)) {
 }
 
 const rows = [...keys.entries()].sort((a, b) => a[0].localeCompare(b[0]))
-const lines = ["key,english,arabic,sources,placeholders,status"]
+const lines = ["key,english,arabic,spanish,sources,placeholders,status"]
 for (const [key, sources] of rows) {
   const ar = existingAr[key] ?? ""
+  const es = existingEs[key] ?? ""
   lines.push(
     [
       csvEscape(key),
       csvEscape(key),
       csvEscape(ar),
+      csvEscape(es),
       csvEscape([...sources].sort().join("; ")),
       csvEscape(placeholders(key)),
-      ar ? "translated" : "needs_translation",
+      ar && es ? "translated" : "needs_translation",
     ].join(","),
   )
 }

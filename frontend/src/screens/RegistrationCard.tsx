@@ -433,7 +433,7 @@ function ReadIdButton({ guest, idType, idTypes, onDone }: {
   idTypes: string[]
   onDone: () => void
 }) {
-  const { t } = useT()
+  const { t, tn } = useT()
   const [type, setType] = useState(idType && idTypes.includes(idType) ? idType : idTypes[0] ?? "")
   const [busy, setBusy] = useState(false)
   const [told, setTold] = useState(false)
@@ -462,7 +462,7 @@ function ReadIdButton({ guest, idType, idTypes, onDone }: {
             setMsg({
               ok: true,
               text: n
-                ? t("Filled {n} field(s) · {amt}", { n, amt: `${cur()}${r.charged}` })
+                ? tn(n, "Filled {n} field · {amt}", "Filled {n} fields · {amt}", { amt: `${cur()}${r.charged}` })
                 : t("Nothing new on the ID · {amt}", { amt: `${cur()}${r.charged}` }),
             })
             onDone()
@@ -842,7 +842,7 @@ export default function RegistrationCard() {
                   [
                     [t("Charges"), d.money.grand_total, ""],
                     [t("Paid"), d.money.paid_total, "text-emerald-700"],
-                    ...(d.money.advance ? [[t("of which advance"), d.money.advance, "text-zinc-500"]] : []),
+                    ...(d.money.advance ? [[t("Advance included in amount paid"), d.money.advance, "text-zinc-500"]] : []),
                     ...(d.money.deposit_held ? [[t("Deposit held"), d.money.deposit_held, "text-zinc-500"]] : []),
                     [t("Balance"), d.money.balance, d.money.balance > 0 ? "font-semibold text-rose-600" : "font-semibold text-zinc-400"],
                   ] as [string, number, string][]
