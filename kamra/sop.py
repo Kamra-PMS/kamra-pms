@@ -694,6 +694,10 @@ def evaluate_checkin_step(step: dict, context: dict) -> dict:
 	elif key == "assign_room" and facts:
 		# the room itself is the record (room_assigned_by / _at)
 		state = "done"
+	elif key == "security_deposit" and facts:
+		# collecting or waiving the deposit is the record — do not keep the
+		# step red / blocking until the desk also taps "Done, continue"
+		state = "done"
 	elif rec.get("state") == "done" and facts:
 		state = "done"
 	elif rec.get("state") == "skipped" and not blocking:

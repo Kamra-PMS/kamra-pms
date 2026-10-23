@@ -8951,6 +8951,43 @@ def t354():
 		_refused(staff_sign_ins, P, exc=frappe.PermissionError)
 
 
+@check("guided check-in: waiving the security deposit clears the deposit step (no extra Done tap)")
+def t354b():
+	"""Waive alone must mark Deposit and advance done — the desk was stuck on
+	red 'required, not done' and could not check in after a waiver."""
+	from kamra import checkin as ci
+	from kamra.api import check_in
+	from kamra.deposit import waive_deposit
+
+	was = frappe.db.get_value("Property", P, ["security_deposit_amount", "deposit_pct"])
+	frappe.db.set_value("Property", P, {"security_deposit_amount": 5000, "deposit_pct": 0})
+	frappe.clear_document_cache("Property", P)
+	try:
+		room = _ci_room("G174B")
+		res = _ci_stay("Eval Waive CI", "+91 70034 17401", room=room)
+		frappe.db.set_value("Guest", res.guest, "id_number", "W174B001")
+		with _steps_enforced(), _as_user(FD):
+			ci.complete_checkin_step(res.name, "guest_ids")
+			ci.confirm_billing(res.name, "Guest")
+			ci.set_room_charges(res.name, 1)
+			ci.sign_registration_card(res.name, on_paper=1)
+			missing = {m["step"] for m in ci.check_in_readiness(res.name)["missing_required"]}
+			assert "security_deposit" in missing, missing
+			waive_deposit(res.name, "Owner said skip for this guest")
+			ready = ci.check_in_readiness(res.name)
+			dep = next(s for s in ready["steps"] if s["step"] == "security_deposit")
+			assert dep["state"] == "done" and dep["applies"] == 1, dep
+			assert "security_deposit" not in {m["step"] for m in ready["missing_required"]}
+			assert ready["ready"] is True, ready
+			# no complete_checkin_step for security_deposit — waive is enough
+			check_in(res.name)
+		assert frappe.db.get_value("Reservation", res.name, "status") == "Checked In"
+	finally:
+		frappe.db.set_value("Property", P, {
+			"security_deposit_amount": was[0], "deposit_pct": was[1]})
+		frappe.clear_document_cache("Property", P)
+
+
 @check("walk-in: defer_check_in books and assigns, records what the counter did, then the guided check-in finishes it")
 def t355():
 	from kamra import checkin as ci
