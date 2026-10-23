@@ -33,7 +33,7 @@ export const FEATURES: FeatureEntry[] = [
   { label: "Raise a service ticket", to: "/tickets", where: "Operations · Tickets", keywords: ["complaint", "maintenance request", "sla", "issue", "request"] },
   { label: "Take a restaurant order", to: "/pos", where: "F&B · POS", keywords: ["kot", "table", "bill", "room service", "dine in", "takeaway"] },
   { label: "Set up printers", to: "/printers", where: "F&B · Printers", keywords: ["kot printer", "bill printer", "receipt", "thermal"] },
-  { label: "Edit the menu", to: "/menu", where: "F&B · Menu", keywords: ["dish", "price", "recipe", "item", "category"] },
+  { label: "Edit the menu", to: "/menu-items", where: "F&B · Menu", keywords: ["dish", "price", "recipe", "item", "category"] },
   { label: "Book a banquet or function", to: "/banquet", where: "Events", keywords: ["wedding", "conference", "hall", "venue", "party"] },
   { label: "Connect a channel manager", to: "/settings/front-desk", where: "Settings", keywords: ["ota", "booking.com", "makemytrip", "aiosell", "staah", "channel"] },
   { label: "Invite or manage staff", to: "/settings/staff", where: "Admin · Staff & Access", keywords: ["user", "role", "permission", "password", "pin"] },
