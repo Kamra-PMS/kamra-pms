@@ -1694,7 +1694,7 @@
   "Room number or guest": "Número de habitación o huésped",
   "Room numbers per type, comma-separated.": "Números de habitación por tipo, separados por comas.",
   "Room only": "Solo habitación",
-  "room rate / room sold": "tarifa de habitación / habitación vendida",
+  "room rate / room sold": "ingresos por habitaciones / habitaciones vendidas",
   "room rev / room": "ingresos por habitaciones / habitación",
   "room revenue": "ingresos por habitaciones",
   "Room revenue": "Ingresos por habitaciones",
@@ -2804,5 +2804,8 @@
   "{n} codes": "Códigos: {n}",
   "{n} due": "Pendientes de pago: {n}",
   "{n} overdue": "Vencidos: {n}",
-  "{type} · settled": "{type} · liquidado"
+  "{type} · settled": "{type} · liquidado",
+  "Exchange rate": "Tipo de cambio",
+  "Set rate": "Establecer tipo de cambio",
+  "Breach rate": "Porcentaje de incumplimiento"
 }

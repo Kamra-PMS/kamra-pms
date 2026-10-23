@@ -5,6 +5,7 @@ import { useCashierAuth } from "../lib/cashierAuth"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { moneyLocale } from "../lib/money"
+import { useT } from "../lib/i18n"
 
 const inr = (n: unknown) =>
   Number(n ?? 0).toLocaleString(moneyLocale(), {
@@ -12,6 +13,7 @@ const inr = (n: unknown) =>
   })
 
 export default function CurrencyDesk() {
+  const { lang, t } = useT()
   const { withPin } = useCashierAuth()
   const [rates, setRates] = useState<
     {
@@ -155,7 +157,7 @@ export default function CurrencyDesk() {
             </div>
             {calc ? (
               <p className="text-sm text-zinc-600">
-                Rate {String(calc.exchange_rate)} → local{" "}
+                {lang === "es" ? t("Exchange rate") : "Rate"} {String(calc.exchange_rate)} → local{" "}
                 <span className="font-semibold tabular-nums">
                   {inr(calc.local_amount)}
                 </span>
@@ -170,7 +172,7 @@ export default function CurrencyDesk() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Set rate</CardTitle>
+            <CardTitle className="text-base">{t("Set rate")}</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-wrap gap-2">
             <input
@@ -233,7 +235,7 @@ export default function CurrencyDesk() {
               <tr>
                 <th className="px-3 py-2">Dir</th>
                 <th className="px-3 py-2">FX</th>
-                <th className="px-3 py-2">Rate</th>
+                <th className="px-3 py-2">{lang === "es" ? t("Exchange rate") : "Rate"}</th>
                 <th className="px-3 py-2">Local</th>
               </tr>
             </thead>

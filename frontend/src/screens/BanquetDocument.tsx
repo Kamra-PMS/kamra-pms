@@ -21,6 +21,7 @@ import {
 import { serverError } from "../lib/resource"
 import { Button } from "../components/ui/button"
 import { taxLabel } from "../lib/money"
+import { useT } from "../lib/i18n"
 import { Empty, ErrorNote, inrExact } from "./banquet/shared"
 
 const KINDS: DocumentKind[] = ["quote", "contract", "beo", "pack_list", "invoice"]
@@ -697,6 +698,7 @@ function PackList({ doc }: { doc: Doc }) {
 }
 
 function TaxBreakup({ doc }: { doc: Doc }) {
+  const { lang, t } = useT()
   const rows = doc.tax_breakup ?? []
   if (!rows.length) return null
   const label = doc.header.tax_label ?? "GST"
@@ -705,7 +707,7 @@ function TaxBreakup({ doc }: { doc: Doc }) {
       <table className="w-full">
         <thead>
           <tr className="border-b border-zinc-200 text-left text-xs uppercase tracking-wider text-zinc-400">
-            <th className="py-1.5 font-medium">Rate</th>
+            <th className="py-1.5 font-medium">{lang === "es" ? t("Tax rate") : "Rate"}</th>
             <th className="py-1.5 text-right font-medium">Taxable</th>
             {rows[0].parts.map((p) => (
               <th key={p.label} className="py-1.5 text-right font-medium">

@@ -4,6 +4,7 @@ import { Link } from "react-router-dom"
 
 import { call, getCurrentProperty } from "../lib/api"
 import { serverError } from "../lib/resource"
+import { useT } from "../lib/i18n"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { Badge } from "../components/ui/badge"
 
@@ -83,6 +84,7 @@ function breachTone(pct: number): "rose" | "amber" | "brand" {
 }
 
 export default function OpsSLA() {
+  const { t } = useT()
   const [from, setFrom] = useState(isoDaysAgo(30))
   const [to, setTo] = useState(new Date().toISOString().slice(0, 10))
   const [data, setData] = useState<Sla | null>(null)
@@ -181,7 +183,7 @@ export default function OpsSLA() {
               ["Tickets", String(data.total), "text-zinc-800"],
               ["Resolved", `${data.resolved} / ${data.total}`, "text-zinc-800"],
               [
-                "Breach rate",
+                t("Breach rate"),
                 `${data.breach_pct}%`,
                 data.breach_pct >= 25 ? "text-rose-600" : data.breach_pct >= 10 ? "text-amber-600" : "text-brand-600",
               ],

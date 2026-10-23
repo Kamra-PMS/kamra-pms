@@ -474,6 +474,7 @@ Booking…,Booking…,جارٍ الحجز…,Reservando…,components\BookingDia
 Bookings,Bookings,الحجوزات,Reservas,screens\Guests.tsx,,translated
 Bookings in this period,Bookings in this period,الحجوزات في هذه الفترة,Reservas en este periodo,components\RoomDrawer.tsx,,translated
 Books,Books,الدفاتر,Contabilidad,,,translated
+Breach rate,Breach rate,,Porcentaje de incumplimiento,screens\OpsSLA.tsx,,needs_translation
 Breached,Breached,,Incumplido,screens\Tickets.tsx,,needs_translation
 Breakfast,Breakfast,الإفطار,Desayuno,components\CheckInDialog.tsx,,translated
 "Bring bookings, companies and opening balances over from your old system, then reconcile before you switch.","Bring bookings, companies and opening balances over from your old system, then reconcile before you switch.",,"Importe las reservas, las empresas y los saldos iniciales de su sistema anterior; después concilie los datos antes de empezar a operar.",screens\GoLiveImport.tsx,,needs_translation
@@ -959,6 +960,7 @@ Everything came back,Everything came back,عاد كل شيء,Todo volvió,screen
 Everything required is done. Check the guest in.,Everything required is done. Check the guest in.,تم كل ما هو مطلوب. سجل وصول الضيف.,Todo lo necesario está hecho. Registre la entrada del huésped.,components\CheckInDialog.tsx,,translated
 Excel,Excel,,Excel,screens\pos\PosSidePanel.tsx,,needs_translation
 Exceptions,Exceptions,الاستثناءات,Excepciones,screens\EndOfDay.tsx,,translated
+Exchange rate,Exchange rate,,Tipo de cambio,screens\CurrencyDesk.tsx,,needs_translation
 Exit,Exit,خروج,Salir,screens\Kitchen.tsx,,translated
 Exit full screen,Exit full screen,,Salir de pantalla completa,screens\POS.tsx,,needs_translation
 Exit full screen (Esc),Exit full screen (Esc),الخروج من ملء الشاشة (Esc),Salir de pantalla completa (Esc),screens\Kitchen.tsx,,translated
@@ -2177,7 +2179,7 @@ Room number,Room number,رقم الغرفة,Número de habitación,,,translated
 Room number or guest,Room number or guest,رقم الغرفة أو النزيل,Número de habitación o huésped,screens\Rooms.tsx,,translated
 "Room numbers per type, comma-separated.","Room numbers per type, comma-separated.",أرقام الغرف لكل نوع، مفصولة بفواصل.,"Números de habitación por tipo, separados por comas.",screens\Setup.tsx,,translated
 Room only,Room only,غرفة فقط,Solo habitación,components\BookingDialog.tsx; screens\PublicBooking.tsx,,translated
-room rate / room sold,room rate / room sold,سعر الغرفة / غرفة مباعة,tarifa de habitación / habitación vendida,screens\Reports.tsx,,translated
+room rate / room sold,room rate / room sold,سعر الغرفة / غرفة مباعة,ingresos por habitaciones / habitaciones vendidas,screens\Reports.tsx,,translated
 Room rate variances,Room rate variances,فروقات أسعار الغرف,Diferencias de tarifas de habitación,,,translated
 room rev / room,room rev / room,إيراد الغرفة / غرفة,ingresos por habitaciones / habitación,screens\Reports.tsx,,translated
 room revenue,room revenue,إيراد الغرفة,ingresos por habitaciones,components\RoomDrawer.tsx,,translated
@@ -2295,6 +2297,7 @@ Sessions opened without choosing a till.,Sessions opened without choosing a till
 Set,Set,تعيين,Establecer,screens\TapeChart.tsx,,translated
 Set for corporate business - it also decides which folio the bill lands on.,Set for corporate business - it also decides which folio the bill lands on.,للأعمال الشركاتية - يحدد أيضاً أي فاتورة تستلم الفاتورة.,Configure las condiciones para empresas; también determinan a qué folio se carga la cuenta.,screens\Banquet.tsx,,translated
 Set PIN,Set PIN,تعيين الرمز,Establecer PIN,components\PinPad.tsx; screens\FolioView.tsx,,translated
+Set rate,Set rate,,Establecer tipo de cambio,screens\CurrencyDesk.tsx,,needs_translation
 Set up,Set up,إعداد,Configurar,screens\Marketplace.tsx,,translated
 Set up a new property,Set up a new property,إعداد عقار جديد,Configurar un nuevo alojamiento,screens\Setup.tsx,,translated
 Set your cashier PIN to post payments and settle folios.,Set your cashier PIN to post payments and settle folios.,عيّن رمز أمين الصندوق لترحيل المدفوعات وتسوية الفواتير.,Configure su PIN de cajero para registrar pagos y liquidar folios.,screens\FolioView.tsx,,translated
@@ -2465,7 +2468,7 @@ Tax,Tax,الضريبة,Impuestos,components\RoomStayPanels.tsx,,translated
 Tax applies to the levy,Tax applies to the levy,تُطبّق الضريبة على الرسم,Aplicar impuesto a la tasa de alojamiento,,,translated
 Tax ID,Tax ID,الرقم الضريبي,Número de identificación fiscal,screens\Setup.tsx,,translated
 Tax Invoice,Tax Invoice,فاتورة ضريبية,Factura fiscal,screens\FolioView.tsx,,translated
-Tax rate,Tax rate,نسبة الضريبة,Tasa impositiva,components\CheckOutDialog.tsx,,translated
+Tax rate,Tax rate,نسبة الضريبة,Tasa impositiva,components\CheckOutDialog.tsx; screens\BanquetDocument.tsx,,translated
 taxable {cur}{amount},taxable {cur}{amount},خاضع للضريبة {cur}{amount},base imponible: {cur}{amount},screens\FolioView.tsx,cur amount,translated
 Team,Team,الفريق,Equipo,components\RoomStayPanels.tsx,,translated
 "Tell the guest the Wi-Fi, breakfast and check-out times. Print it or send it on WhatsApp.","Tell the guest the Wi-Fi, breakfast and check-out times. Print it or send it on WhatsApp.",أخبر الضيف بالواي فاي ومواعيد الإفطار وتسجيل المغادرة. اطبعها أو أرسلها عبر واتساب.,Informe al huésped los datos del wifi y los horarios de desayuno y salida. Imprima la información o envíela por WhatsApp.,components\CheckInDialog.tsx,,translated
