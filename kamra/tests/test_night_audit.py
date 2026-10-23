@@ -1400,10 +1400,40 @@ class NightAuditChecklistTestCase(AuditTestCase):
 		frappe.get_doc({"doctype": "Night Audit Run", "property": PROP_A,
 		                "business_date": d(-5), "status": "Completed"}
 		               ).insert(ignore_permissions=True)
-		out = night_audit.night_audit_pack(f"AUDIT-{d(-5)}-{PROP_A}")
+		name = f"AUDIT-{d(-5)}-{PROP_A}"
+		out = night_audit.night_audit_pack(name)
 		self.assertFalse(out["has_pack"])
 		self.assertIsNone(out["pack"])
-		self.assertIn("before audit packs", out["message"])
+		self.assertTrue(out.get("can_rebuild"))
+		self.assertIn("Rebuild", out["message"])
+		rebuilt = night_audit.rebuild_audit_pack(name)
+		self.assertTrue(rebuilt["has_pack"])
+		self.assertIn("manager_flash", rebuilt["pack"])
+		self.assertEqual(rebuilt["pack"].get("prechecks_source"), "live_rebuild")
+
+	def test_stuck_business_date_surfaces_on_eod_and_recovers(self):
+		from kamra import night_audit
+		from kamra.business_date import get_business_date
+		# Quiet day, run audit (rolls BD), then pin BD back to simulate a
+		# restore / roll that did not stick.
+		out = self.run_manual()
+		closed = out["business_date"] if "business_date" in out else YESTERDAY
+		frappe.db.set_value("Property", PROP_A, "business_date", closed)
+		stuck = night_audit.stuck_business_date(PROP_A)
+		self.assertIsNotNone(stuck)
+		self.assertEqual(stuck["audit"], out["audit"])
+		s = night_audit.eod_session(PROP_A)
+		self.assertTrue(s["ran"])
+		self.assertEqual(s["stuck_date"]["audit"], out["audit"])
+		self.assertEqual(s["open_business_date"], closed)
+		rows = {r["property"]: r for r in night_audit.eod_overview()}
+		self.assertEqual(rows[PROP_A]["stuck_date"]["audit"], out["audit"])
+		rec = night_audit.recover_stuck_business_date(PROP_A)
+		self.assertEqual(rec["next_business_date"], TODAY)
+		self.assertEqual(get_business_date(PROP_A), TODAY)
+		self.assertIsNone(night_audit.stuck_business_date(PROP_A))
+		cleared = night_audit.eod_session(PROP_A)
+		self.assertIsNone(cleared.get("stuck_date"))
 
 	# End of Day wizard ---------------------------------------------------
 
@@ -1482,9 +1512,13 @@ class NightAuditChecklistTestCase(AuditTestCase):
 		user = ensure_user("ut.audit.night@test.local", ["Night Auditor"])
 		for fn in (api.run_night_audit, night_audit.night_audit_precheck,
 		           night_audit.eod_session, night_audit.eod_acknowledge,
+		           night_audit.night_audit_pack, night_audit.rebuild_audit_pack,
 		           api.check_in, api.check_out, cashier.close_session,
 		           api.get_folio):
 			self.assertIn("Night Auditor", fn._kamra_roles, fn.__name__)
+		# recover_stuck_business_date is Finance / Hotel Admin / Night Auditor
+		self.assertIn("Night Auditor",
+		              night_audit.recover_stuck_business_date._kamra_roles)
 		frappe.set_user(user)  # nosemgrep: frappe-setuser -- acting as the persona
 		out = night_audit.night_audit_precheck(PROP_A)
 		self.assertEqual(out["business_date"], YESTERDAY)

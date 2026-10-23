@@ -6971,7 +6971,33 @@ def t211():
 	                      ).insert(ignore_permissions=True).name
 	out = night_audit.night_audit_pack(name)
 	assert out["has_pack"] is False and out["pack"] is None, out
-	assert out["message"], out
+	assert out["message"] and out.get("can_rebuild") is True, out
+	rebuilt = night_audit.rebuild_audit_pack(name)
+	assert rebuilt["has_pack"] and rebuilt["pack"], rebuilt
+	assert "manager_flash" in rebuilt["pack"]
+
+
+@check("stuck business date after a completed audit can be advanced without re-posting")
+def t211b():
+	from kamra import night_audit
+	from kamra.business_date import get_business_date
+	from kamra.folio import run_night_audit
+	_na_reset()
+	bd = nowdate()
+	frappe.db.set_value("Property", P, "business_date", bd)
+	out = _audit_eval(bd, f"{bd} 23:00", lambda: run_night_audit(P))
+	assert not out.get("already_ran"), out
+	# simulate restore / roll that did not stick: BD back on the closed day
+	frappe.db.set_value("Property", P, "business_date", bd)
+	stuck = night_audit.stuck_business_date(P)
+	assert stuck and stuck["audit"] == out["audit"], stuck
+	again = run_night_audit(P)
+	assert again.get("already_ran") is True
+	assert get_business_date(P) == bd
+	rec = night_audit.recover_stuck_business_date(P)
+	assert rec["next_business_date"] == add_days(bd, 1), rec
+	assert get_business_date(P) == add_days(bd, 1)
+	assert night_audit.stuck_business_date(P) is None
 
 
 @check("the checklist's no-show forecast matches what the audit does (OTA fee waived)")
@@ -7030,13 +7056,17 @@ def t214():
 	from kamra.mcp_tools import BY_NAME
 	for fn in (api.run_night_audit, night_audit.night_audit_precheck,
 	           night_audit.eod_session, night_audit.eod_acknowledge,
-	           night_audit.night_audit_pack, api.check_in, api.check_out,
+	           night_audit.night_audit_pack, night_audit.rebuild_audit_pack,
+	           night_audit.recover_stuck_business_date,
+	           api.check_in, api.check_out,
 	           ledger.quick_checkout, cashier.close_session, api.get_folio):
 		assert "Night Auditor" in fn._kamra_roles, fn.__name__
 	assert frappe.db.exists("Role", "Night Auditor")
 	spec = BY_NAME["night_audit_precheck"]
 	assert spec.group == "Night audit" and not spec.mutating and spec.inject_property
 	assert "acknowledge" in BY_NAME["run_night_audit"].parameters
+	assert BY_NAME["rebuild_audit_pack"].mutating
+	assert BY_NAME["recover_stuck_business_date"].mutating
 
 
 @check("extra beds agreed at the desk bill as their own line, at the night's slab, as accommodation, and to the company billed for the room")

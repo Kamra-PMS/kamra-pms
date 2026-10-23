@@ -31,6 +31,7 @@ import {
   eodMarkNoShow,
   eodProgress,
   eodSession,
+  recoverStuckBusinessDate,
   runNightAudit,
   type Check,
   type CheckItem,
@@ -966,10 +967,41 @@ export default function EndOfDayWizard() {
             {t("End of Day / Night Audit")} - {state.property_name} - {fmtDay(state.business_date)}
           </h1>
         </div>
-        <Badge tone={state.ran ? "green" : blockedSteps.length ? "rose" : "brand"}>
-          {state.ran ? t("Closed") : blockedSteps.length ? t("{n} blocker(s)", { n: blockedSteps.length }) : t("Ready")}
+        <Badge
+          tone={
+            state.stuck_date ? "rose" : state.ran ? "green" : blockedSteps.length ? "rose" : "brand"
+          }
+        >
+          {state.stuck_date
+            ? t("Date stuck")
+            : state.ran
+              ? t("Closed")
+              : blockedSteps.length
+                ? t("{n} blocker(s)", { n: blockedSteps.length })
+                : t("Ready")}
         </Badge>
       </div>
+      {state.stuck_date && (
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800 print:hidden">
+          <p>
+            {t("The night audit already closed {d}, but the business date did not move. Advance it without posting again.", {
+              d: fmtDay(state.stuck_date.business_date),
+            })}
+          </p>
+          <Button
+            variant="outline"
+            disabled={busy === "recover"}
+            onClick={() =>
+              act("recover", async () => {
+                await recoverStuckBusinessDate(property)
+                setParams({})
+              })
+            }
+          >
+            {busy === "recover" ? t("Saving…") : t("Advance date")}
+          </Button>
+        </div>
+      )}
       {err && <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700 print:hidden">{err}</p>}
       <div className="grid gap-4 lg:grid-cols-[280px_1fr] print:block">
         <Card className="h-fit p-2 print:hidden">
