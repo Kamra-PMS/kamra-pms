@@ -1162,6 +1162,7 @@ Changed by,Changed by,,Cambiado por,screens\settings\SettingsHub.tsx,,needs_tran
 CHANGEOVER CONFLICT,CHANGEOVER CONFLICT,تعارض تبديل الغرفة,CONFLICTO ENTRE SALIDA Y ENTRADA,screens\TapeChart.tsx,,translated
 Changes Requested,Changes Requested,,Cambios solicitados,,,needs_translation
 Channel,Channel,,Canal,,,needs_translation
+Channel manager,Channel manager,,Gestor de canales,..\..\kamra\onboarding.py,,needs_translation
 Channel Manager,Channel Manager,مدير القنوات,Gestor de canales,,,translated
 Channel Manager Connection,Channel Manager Connection,,Conexión del gestor de canales,,,needs_translation
 Channel Provider Connection,Channel Provider Connection,,Conexión del proveedor de canal,,,needs_translation
@@ -1433,6 +1434,7 @@ Connect Claude,Connect Claude,,Conectar Claude,screens\Agents.tsx; screens\setti
 "Connect Claude to this property's governed tools. It acts as the signed-in person, within their role, and every action lands in the Activity log.","Connect Claude to this property's governed tools. It acts as the signed-in person, within their role, and every action lands in the Activity log.",,Conecte Claude a las herramientas de este alojamiento con control de permisos. Actúa con la identidad y el rol del usuario conectado; cada acción queda en Actividad.,screens\settings\cards.tsx,,needs_translation
 Connect key,Connect key,,Conectar clave,screens\settings\cards.tsx,,needs_translation
 Connect your AI,Connect your AI,,Conecte su IA,screens\Agents.tsx,,needs_translation
+Connect your channel manager so OTA bookings arrive and rates and availability go out.,Connect your channel manager so OTA bookings arrive and rates and availability go out.,,Conecte su gestor de canales para recibir las reservas de las agencias de viajes en línea (OTA) y sincronizar tarifas y disponibilidad.,..\..\kamra\onboarding.py,,needs_translation
 "Connect your WhatsApp Business number under Channels and messages will start flowing: booking confirmations and check-in links go out on their own, and anything guests write appears here.","Connect your WhatsApp Business number under Channels and messages will start flowing: booking confirmations and check-in links go out on their own, and anything guests write appears here.",اربط رقم واتساب للأعمال تحت القنوات وستبدأ الرسائل بالتدفق: تأكيدات الحجز وروابط تسجيل الوصول تُرسل تلقائياً، وما يكتبه الضيوف يظهر هنا.,Conecte su número de WhatsApp Business en la sección Canales para recibir mensajes. Las confirmaciones de reserva y los enlaces de registro de entrada se envían automáticamente; los mensajes de los huéspedes aparecen aquí.,screens\WhatsAppChat.tsx,,translated
 Connected,Connected,,Conectado,,,needs_translation
 Connected ({ms} ms) - {reply},Connected ({ms} ms) - {reply},,Conectado ({ms} ms) - {reply},screens\settings\cards.tsx,ms reply,needs_translation
@@ -1691,6 +1693,7 @@ Discounts,Discounts,الخصومات,Descuentos,,,translated
 Dish / Item / Product,Dish / Item / Product,,Dish / Item / Product,screens\MenuImport.tsx,,needs_translation
 Dish name,Dish name,,Nombre del plato,screens\BanquetCatalogue.tsx,,needs_translation
 "Dishes and drinks across your outlets - photo, price, veg/non-veg. Allergens, stations and courses are edited under Settings → F&B → Menu master lists.","Dishes and drinks across your outlets - photo, price, veg/non-veg. Allergens, stations and courses are edited under Settings → F&B → Menu master lists.",,"Platos y bebidas de sus puntos de venta: foto, precio y clasificación vegetariana. Edite alérgenos, estaciones y tiempos en Configuración → Alimentos y bebidas → Listas del menú.",,,needs_translation
+Dishes and prices per outlet.,Dishes and prices per outlet.,,Platos y precios de cada punto de venta.,..\..\kamra\onboarding.py,,needs_translation
 Disk space,Disk space,مساحة القرص,Espacio en disco,,,translated
 Dismiss,Dismiss,إغلاق,Descartar,components\NotificationHost.tsx; components\UpdateNag.tsx; screens\HkApp.tsx; screens\POS.tsx; screens\settings\ModulePage.tsx,,translated
 Displayed rates include tax,Displayed rates include tax,,Las tarifas mostradas incluyen impuestos,,,needs_translation
@@ -1752,6 +1755,7 @@ e.g. grand-kamra-palace,e.g. grand-kamra-palace,,"p. ej., grand-kamra-palace",sc
 "e.g. prayer mat, high floor, allergy notes","e.g. prayer mat, high floor, allergy notes",,"p. ej., alfombra de oración, piso alto, información sobre alergias",components\BookingDialog.tsx,,needs_translation
 "e.g. Rooms, F&B, Other - used on ledgers and exports.","e.g. Rooms, F&B, Other - used on ledgers and exports.",,"p. ej., Habitaciones, Alimentos y bebidas u Otros; se utiliza en libros contables y exportaciones.",,,needs_translation
 Each hotel / branch keeps its own float and voucher list. Changing property in the header switches the box.,Each hotel / branch keeps its own float and voucher list. Changing property in the header switches the box.,,"Cada hotel o sucursal tiene su propio fondo de caja chica y sus vales. Al cambiar de alojamiento en el encabezado, se cambia también de caja chica.",screens\PettyCash.tsx,,needs_translation
+Each place that sells food or drink.,Each place that sells food or drink.,,Cada punto donde se venden alimentos o bebidas.,..\..\kamra\onboarding.py,,needs_translation
 Each request becomes a task for the right team.,Each request becomes a task for the right team.,يصبح كل طلب مهمة للفريق المختص.,Cada solicitud se convierte en una tarea para el equipo adecuado.,components\CheckInDialog.tsx,,translated
 "Each request carries X-Kamra-Event, X-Kamra-Event-Id, X-Kamra-Timestamp and X-Kamra-Signature. Recompute the signature over the raw body and reject old timestamps:","Each request carries X-Kamra-Event, X-Kamra-Event-Id, X-Kamra-Timestamp and X-Kamra-Signature. Recompute the signature over the raw body and reject old timestamps:",,"Cada solicitud lleva X-Kamra-Event, X-Kamra-Event-Id, X-Kamra-Timestamp y X-Kamra-Signature. Vuelva a calcular la firma sobre el cuerpo sin procesar y rechace las marcas de tiempo antiguas:",screens\settings\WebhooksPage.tsx,,needs_translation
 Each unit / room sells on its own (hotel-style inventory).,Each unit / room sells on its own (hotel-style inventory).,كل وحدة / غرفة تُباع بمفردها (مخزون بأسلوب الفندق).,"Cada unidad o habitación se reserva por separado, como en un hotel.",screens\Setup.tsx,,translated
@@ -2430,6 +2434,7 @@ Internal,Internal,,Uso interno,screens\BanquetFunction.tsx,,needs_translation
 Inventory,Inventory,,Inventario,,,needs_translation
 Invite a short review of the stay. It keeps the farewell warm and useful.,Invite a short review of the stay. It keeps the farewell warm and useful.,ادعُ الضيف إلى تقييم قصير للإقامة. يجعل الوداع ودياً ومفيداً.,Pida al huésped una breve opinión sobre su estancia para despedirlo de forma cercana y recoger sus comentarios.,,,translated
 Invite or manage staff,Invite or manage staff,,Invitar o administrar personal,,,needs_translation
+Invite staff and give each the right role.,Invite staff and give each the right role.,,Invite al personal y asigne el rol adecuado a cada integrante.,..\..\kamra\onboarding.py,,needs_translation
 Invoice,Invoice,فاتورة,Factura,components\CheckOutDialog.tsx; components\CommandPalette.tsx; screens\Billing.tsx; screens\FolioHistory.tsx,,translated
 Invoice {v0},Invoice {v0},,Factura {v0},components\LinkedRecords.tsx,v0,needs_translation
 Invoice Amount,Invoice Amount,,Importe de factura,,,needs_translation
@@ -2522,7 +2527,7 @@ Kitchen Inventory,Kitchen Inventory,مخزون المطبخ,Inventario de cocina
 Kitchen orders (KOT),Kitchen orders (KOT),,Comandas de cocina,,,needs_translation
 Kitchen pass,Kitchen pass,ممر المطبخ,Pase de cocina,screens\Kitchen.tsx,,translated
 Kitchen presses Start,Kitchen presses Start,,Inicio manual en cocina,,,needs_translation
-Kitchen printers,Kitchen printers,,Impresoras de cocina,screens\KitchenPrinters.tsx; screens\settings\cards.tsx,,needs_translation
+Kitchen printers,Kitchen printers,,Impresoras de cocina,..\..\kamra\onboarding.py; screens\KitchenPrinters.tsx; screens\settings\cards.tsx,,needs_translation
 Kitchen stations,Kitchen stations,,Estaciones de cocina,screens\Setup.tsx,,needs_translation
 KOT,KOT,أمر المطبخ,Comanda (KOT),screens\POS.tsx,,translated
 KOT ,KOT ,,Comanda ,screens\pos\OrderHistory.tsx,,needs_translation
@@ -2719,7 +2724,7 @@ Meal Plans,Meal Plans,خطط الوجبات,Planes de comidas,,,translated
 Meals,Meals,الوجبات,Comidas,components\BookingDialog.tsx,,translated
 Medical,Medical,,Atención médica,components\BookingDialog.tsx,,needs_translation
 Medium,Medium,متوسطة,Media,,,translated
-Menu,Menu,القائمة,Menú,screens\BanquetFunction.tsx; screens\Kitchen.tsx; screens\POS.tsx,,translated
+Menu,Menu,القائمة,Menú,..\..\kamra\onboarding.py; screens\BanquetFunction.tsx; screens\Kitchen.tsx; screens\POS.tsx,,translated
 Menu card,Menu card,,Carta del menú,screens\BanquetDocument.tsx,,needs_translation
 Menu categories,Menu categories,,Categorías del menú,,,needs_translation
 menu chosen · edit dishes,menu chosen · edit dishes,,menú seleccionado: editar platos,screens\BanquetFunction.tsx,,needs_translation
@@ -2810,6 +2815,7 @@ My Till,My Till,صندوقي,Mi caja,screens\CashierSessions.tsx; screens\Cashie
 Name,Name,الاسم,Nombre,components\CheckInDialog.tsx; screens\CashierBoard.tsx; screens\RegistrationCard.tsx; screens\ReservationDetail.tsx; screens\pos\PosSidePanel.tsx,,translated
 Name (Deluxe),Name (Deluxe),الاسم (ديلوكس),Nombre (De lujo),screens\Setup.tsx,,translated
 "Name each till, tie it to an outlet, and choose the printer that prints its bills. Without terminals everyone uses the Default till.","Name each till, tie it to an outlet, and choose the printer that prints its bills. Without terminals everyone uses the Default till.",,"Asigne un nombre a cada caja, vincúlela con un punto de venta y elija la impresora que imprimirá sus cuentas. Si no hay terminales, todos usan la caja predeterminada.",screens\CashierBoard.tsx,,needs_translation
+"Name each till, tie it to an outlet. Without any, everyone uses the Default till.","Name each till, tie it to an outlet. Without any, everyone uses the Default till.",,"Asigne un nombre a cada caja y vincúlela a un punto de venta. Si no configura ninguna, todos usarán la caja predeterminada.",..\..\kamra\onboarding.py,,needs_translation
 Name or phone…,Name or phone…,الاسم أو الهاتف…,Nombre o teléfono…,screens\Guests.tsx,,translated
 Narrow column,Narrow column,العمود الضيق,Columna estrecha,components\CustomizeToday.tsx,,translated
 National ID,National ID,الهوية الوطنية,Documento nacional de identidad,,,translated
@@ -3211,7 +3217,7 @@ One printer is set up per station. Connect the physical printers later under Pri
 "One row per balance. Type is In-house (what the guest owes; negative if in credit, 0 if settled), City ledger (an unpaid company invoice; negative for money paid ahead) or Deposit (an advance a future booking has paid). Use the closing figures from the old system's last night audit.","One row per balance. Type is In-house (what the guest owes; negative if in credit, 0 if settled), City ledger (an unpaid company invoice; negative for money paid ahead) or Deposit (an advance a future booking has paid). Use the closing figures from the old system's last night audit.",,"Una fila por saldo. El tipo puede ser «Huésped alojado» (lo que debe el huésped; negativo si tiene saldo a favor y 0 si está saldado), «Cuenta de empresa» (factura pendiente; negativo si se pagó por adelantado) o «Anticipo de reserva» (anticipo recibido para una reserva futura). Use las cifras del último cierre nocturno del sistema anterior.",screens\GoLiveImport.tsx,,needs_translation
 One ticket above this is refused - settle it at the outlet. 0 means no limit.,One ticket above this is refused - settle it at the outlet. 0 means no limit.,,Se rechaza una cuenta superior a este importe; debe liquidarse en el punto de venta. 0 = sin límite.,,,needs_translation
 One unit only. Recipes and purchases both use it - buy and cook in the same unit (e.g. define in g if you cook in g).,One unit only. Recipes and purchases both use it - buy and cook in the same unit (e.g. define in g if you cook in g).,,"Una sola unidad para recetas y compras. Compre y cocine en la misma unidad; por ejemplo, defina gramos si cocina en gramos.",,,needs_translation
-Online booking page,Online booking page,,Página de reservas en línea,,,needs_translation
+Online booking page,Online booking page,,Página de reservas en línea,..\..\kamra\onboarding.py,,needs_translation
 "Online bookings on these dates pay the whole amount, not the usual advance","Online bookings on these dates pay the whole amount, not the usual advance",,Las reservas en línea para estas fechas pagan el importe total en lugar del anticipo habitual,,,needs_translation
 Online check-in,Online check-in,تسجيل الوصول عبر الإنترنت,Registro de entrada en línea,screens\PublicCheckin.tsx,,translated
 Online check-in {status},Online check-in {status},التسجيل عبر الإنترنت {status},Registro de entrada en línea {status},screens\RegistrationCard.tsx,status,translated
@@ -3666,6 +3672,7 @@ Print this receipt,Print this receipt,,Imprimir este recibo,screens\BanquetFunct
 Print void slips in the kitchen,Print void slips in the kitchen,,Imprimir anulaciones en cocina,,,needs_translation
 Printed,Printed,,Impreso,screens\BanquetDocument.tsx,,needs_translation
 Printed from the audit pack of {when},Printed from the audit pack of {when},مطبوع من حزمة التدقيق بتاريخ {when},Impreso desde el paquete de auditoría de {when},screens\AuditPack.tsx,when,translated
+Printed on invoices. Add it when you have it.,Printed on invoices. Add it when you have it.,,Se imprime en las facturas. Agréguelo cuando esté disponible.,..\..\kamra\onboarding.py,,needs_translation
 Printer name,Printer name,,Nombre de la impresora,screens\KitchenPrinters.tsx,,needs_translation
 Printer removed.,Printer removed.,,Impresora eliminada.,screens\KitchenPrinters.tsx,,needs_translation
 Printer saved.,Printer saved.,,Impresora guardada.,screens\KitchenPrinters.tsx,,needs_translation
@@ -3869,6 +3876,7 @@ Refundable deposit held,Refundable deposit held,,Depósito de garantía reembols
 Refundable deposit: {amount},Refundable deposit: {amount},,Depósito de garantía reembolsable: {amount},screens\PublicListing.tsx,amount,needs_translation
 Refunded,Refunded,مُسترد,Reembolsado,components\SecurityDepositPanel.tsx,,translated
 Region *,Region *,,Región *,screens\Setup.tsx,,needs_translation
+"Region, currency and tax","Region, currency and tax",,"Región, moneda e impuestos",..\..\kamra\onboarding.py,,needs_translation
 Registers,Registers,السجلات,Registros,,,translated
 Registration,Registration,التسجيل,Registro de huéspedes,,,translated
 Registration card,Registration card,بطاقة التسجيل,Ficha de registro,components\CheckInDialog.tsx; components\RoomDrawer.tsx; screens\RegistrationCard.tsx; screens\Today.tsx; screens\settings\cards.tsx,,translated
@@ -3947,6 +3955,7 @@ Restaurant,Restaurant,المطعم,Restaurante,,,translated
 Restaurant / laundry not on folio yet,Restaurant / laundry not on folio yet,,Consumos de restaurante o lavandería aún sin cargar al folio,components\CheckOutDialog.tsx,,needs_translation
 Restaurant & other bills to check,Restaurant & other bills to check,,Cuentas de restaurante y otros servicios por revisar,components\CheckOutDialog.tsx,,needs_translation
 Restaurant and POS,Restaurant and POS,,Restaurante y punto de venta,,,needs_translation
+Restaurant outlets,Restaurant outlets,,Puntos de venta de alimentos y bebidas,..\..\kamra\onboarding.py,,needs_translation
 "Restaurant outlets, the menu and table reservations.","Restaurant outlets, the menu and table reservations.",,"Puntos de venta de restaurante, menú y reservas de mesas.",,,needs_translation
 Restaurant POS,Restaurant POS,نقطة بيع المطعم,Punto de venta del restaurante,screens\CashierTill.tsx; screens\POS.tsx,,translated
 "Restaurant POS, kitchen display, the menu and kitchen stock.","Restaurant POS, kitchen display, the menu and kitchen stock.",نقطة بيع المطعم وشاشة المطبخ والقائمة ومخزون المطبخ.,"Punto de venta del restaurante, pantalla de cocina, menú e inventario de cocina.",,,translated
@@ -4073,10 +4082,11 @@ Room Type Name (e.g. Standard Room),Room Type Name (e.g. Standard Room),اسم �
 Room type…,Room type…,,Tipo de habitación…,components\GroupControl.tsx,,needs_translation
 Room types,Room types,أنواع الغرف,Tipos de habitaciones,components\RoomChangeDialog.tsx,,translated
 Room Types,Room Types,أنواع الغرف,Tipos de habitación,,,translated
+Room types and rates,Room types and rates,,Tipos de habitación y tarifas,..\..\kamra\onboarding.py,,needs_translation
 "Room types, meal & rate plans, add-ons","Room types, meal & rate plans, add-ons",,"Tipos de habitación, planes de comidas, planes tarifarios y servicios adicionales",,,needs_translation
 Room…,Room…,غرفة…,Habitación…,screens\HkLaundry.tsx; screens\Laundry.tsx; screens\POS.tsx,,translated
 Rooming list (,Rooming list (,,Lista de huéspedes del grupo (,components\GroupControl.tsx,,needs_translation
-Rooms,Rooms,الغرف,Habitaciones,components\BookingDialog.tsx; components\GroupControl.tsx; screens\HkApp.tsx; screens\HousekeepingBoard.tsx; screens\Rooms.tsx,,translated
+Rooms,Rooms,الغرف,Habitaciones,..\..\kamra\onboarding.py; components\BookingDialog.tsx; components\GroupControl.tsx; screens\HkApp.tsx; screens\HousekeepingBoard.tsx; screens\Rooms.tsx,,translated
 Rooms · takeaway · delivery,Rooms · takeaway · delivery,,Habitaciones · para llevar · entrega a domicilio,screens\POS.tsx,,needs_translation
 Rooms × dates with live rates,Rooms × dates with live rates,,Habitaciones por fecha con tarifas actuales,,,needs_translation
 "Rooms are matched to each guest's type and preferences. Assigning places them now; ""Review"" flags a choice worth a second look.","Rooms are matched to each guest's type and preferences. Assigning places them now; ""Review"" flags a choice worth a second look.","تُطابق الغرف نوع كل ضيف وتفضيلاته. التعيين يضعهم الآن؛ ""مراجعة"" تعلّم اختياراً يستحق نظرة ثانية.","Las habitaciones se seleccionan según el tipo reservado y las preferencias del huésped. Al asignarlas, la habitación queda confirmada; «Revisar» indica una propuesta que conviene comprobar.",screens\TapeChart.tsx,,translated
@@ -4256,6 +4266,7 @@ Sessions opened without choosing a till.,Sessions opened without choosing a till
 Set,Set,تعيين,Establecer,screens\TapeChart.tsx,,translated
 "Set each room type's base rate, extra adult and child prices.","Set each room type's base rate, extra adult and child prices.",,Configure la tarifa base de cada tipo de habitación y los precios de adultos y menores adicionales.,,,needs_translation
 Set for corporate business - it also decides which folio the bill lands on.,Set for corporate business - it also decides which folio the bill lands on.,للأعمال الشركاتية - يحدد أيضاً أي فاتورة تستلم الفاتورة.,Configure las condiciones para empresas; también determinan a qué folio se carga la cuenta.,screens\Banquet.tsx,,translated
+Set from the country you chose.,Set from the country you chose.,,Se configuran según el país seleccionado.,..\..\kamra\onboarding.py,,needs_translation
 Set PIN,Set PIN,تعيين الرمز,Establecer PIN,components\PinPad.tsx; screens\FolioView.tsx,,translated
 Set rate,Set rate,,Establecer tipo de cambio,screens\CurrencyDesk.tsx,,needs_translation
 Set targets,Set targets,,Definir metas,screens\RevenueReports.tsx,,needs_translation
@@ -4579,7 +4590,7 @@ Tax mode,Tax mode,,Modalidad de impuesto,,,needs_translation
 Tax on the room rate. Outlet and service rates come from the country pack.,Tax on the room rate. Outlet and service rates come from the country pack.,,Impuesto sobre la tarifa de habitación. Los impuestos de puntos de venta y servicios se obtienen de la configuración del país.,,,needs_translation
 Tax paid when buying this.,Tax paid when buying this.,,Impuesto pagado al comprar este ingrediente.,,,needs_translation
 Tax rate,Tax rate,نسبة الضريبة,Tasa impositiva,components\CheckOutDialog.tsx; screens\BanquetDocument.tsx,,translated
-Tax registration number,Tax registration number,,Número de registro fiscal,,,needs_translation
+Tax registration number,Tax registration number,,Número de registro fiscal,..\..\kamra\onboarding.py,,needs_translation
 Taxable,Taxable,,Base imponible,screens\BanquetDocument.tsx; screens\BanquetFunction.tsx; screens\banquet\Economics.tsx,,needs_translation
 taxable {cur}{amount},taxable {cur}{amount},خاضع للضريبة {cur}{amount},base imponible: {cur}{amount},screens\FolioView.tsx,cur amount,translated
 Team,Team,الفريق,Equipo,components\RoomStayPanels.tsx,,translated
@@ -4682,6 +4693,7 @@ The minimum they pay for - menus bill on this,The minimum they pay for - menus b
 The mismatch stays and may show up as a wrong room status tomorrow.,The mismatch stays and may show up as a wrong room status tomorrow.,,La discrepancia permanece y puede mostrar un estado de habitación incorrecto mañana.,,,needs_translation
 The night,The night,,El evento,,,needs_translation
 The night audit holds this arrival as Due In instead of marking a no-show; the next audit decides.,The night audit holds this arrival as Due In instead of marking a no-show; the next audit decides.,,La auditoría nocturna mantiene esta llegada como Pendiente de entrada en lugar de marcarla como no presentada; se resuelve en la siguiente auditoría.,screens\ReservationDetail.tsx,,needs_translation
+The numbered rooms the front desk assigns.,The numbered rooms the front desk assigns.,,Habitaciones numeradas que asigna el personal de recepción.,..\..\kamra\onboarding.py,,needs_translation
 The online booking page can run alongside a channel manager or on its own.,The online booking page can run alongside a channel manager or on its own.,,La página de reservas en línea puede funcionar junto con un gestor de canales o de forma independiente.,screens\Setup.tsx,,needs_translation
 The OTA,The OTA,,La agencia en línea,,,needs_translation
 The OTA paid the room and nothing is held for extras. Blocking charges to the room is safer.,The OTA paid the room and nothing is held for extras. Blocking charges to the room is safer.,دفعت وكالة الحجز ثمن الغرفة ولا يوجد مبلغ محجوز للإضافات. منع الرسوم على الغرفة أكثر أمانا.,La OTA pagó la habitación y no se retiene nada para extras. Bloquear cargos a la habitación es más seguro.,components\CheckInDialog.tsx,,translated
@@ -4778,7 +4790,7 @@ Till,Till,,Caja,screens\CashierTill.tsx,,needs_translation
 Till detail,Till detail,,Detalle de caja,screens\CashierShiftReport.tsx,,needs_translation
 Till name,Till name,,Nombre de caja,screens\Setup.tsx,,needs_translation
 Till variance that needs a manager,Till variance that needs a manager,,Diferencia de caja que requiere un gerente,,,needs_translation
-Tills,Tills,,Cajas,screens\Setup.tsx,,needs_translation
+Tills,Tills,,Cajas,..\..\kamra\onboarding.py; screens\Setup.tsx,,needs_translation
 Tills to review,Tills to review,,Cajas para revisar,screens\CashierBoard.tsx,,needs_translation
 "Tills, ledgers, night audit, reports and accounting export.","Tills, ledgers, night audit, reports and accounting export.",,"Cajas, libros contables, auditoría nocturna, informes y exportación contable.",,,needs_translation
 Time,Time,الوقت,Hora,screens\pos\PosSidePanel.tsx,,translated
@@ -4851,6 +4863,7 @@ Trial balance,Trial balance,ميزان المراجعة,Balance de comprobación
 Trigger,Trigger,المشغّل,Origen de la ejecución,screens\EndOfDay.tsx,,translated
 TripAdvisor,TripAdvisor,,Tripadvisor,screens\PublicBooking.tsx,,needs_translation
 TripAdvisor URL,TripAdvisor URL,,URL de TripAdvisor,screens\BookingEngine.tsx,,needs_translation
+"Turn it on, add photos and policies.","Turn it on, add photos and policies.",,Active la página y agregue fotografías y políticas de alojamiento.,..\..\kamra\onboarding.py,,needs_translation
 Turn off instead of deleting when a recipe or stock history uses it.,Turn off instead of deleting when a recipe or stock history uses it.,,Desactive en lugar de eliminar si ya se utiliza en una receta o en el historial de existencias.,,,needs_translation
 Turn off instead of deleting when a void or refund already used it.,Turn off instead of deleting when a void or refund already used it.,,Desactive en lugar de eliminar si ya se utilizó en una anulación o reembolso.,,,needs_translation
 Turn off instead of deleting when the journal already posted it.,Turn off instead of deleting when the journal already posted it.,,Desactive en lugar de eliminar si ya tiene registros en el diario.,,,needs_translation
@@ -5083,6 +5096,7 @@ What was it,What was it,,Concepto,screens\banquet\Economics.tsx,,needs_translati
 "What was quoted, and whether it landed","What was quoted, and whether it landed",,Cotizaciones emitidas y su resultado,,,needs_translation
 What you agreed for them,What you agreed for them,,Importe acordado para los huéspedes adicionales,components\BookingDialog.tsx,,needs_translation
 What you asked for,What you asked for,,Su solicitud,screens\BanquetDocument.tsx,,needs_translation
+What you sell and the base rate (BAR) for each.,What you sell and the base rate (BAR) for each.,,Tipos de habitación que ofrece y la tarifa base (BAR) de cada uno.,..\..\kamra\onboarding.py,,needs_translation
 What's included,What's included,,Qué incluye,screens\BanquetDocument.tsx,,needs_translation
 What's still unsettled while the price is being agreed - and what agreeing it would do to the quote.,What's still unsettled while the price is being agreed - and what agreeing it would do to the quote.,,Lo que aún está pendiente de acordar y su posible efecto en la cotización.,screens\BanquetFunction.tsx,,needs_translation
 WhatsApp,WhatsApp,واتساب,WhatsApp,components\DepositPanel.tsx; screens\WhatsAppChat.tsx,,translated
@@ -5112,6 +5126,7 @@ Which hall - free for these dates and hours,Which hall - free for these dates an
 Which KOT this item prints to,Which KOT this item prints to,,Comanda en la que se imprime este artículo,,,needs_translation
 "Which printer gets which KOTs. Two restaurants can share a kitchen printer, and the bar's drinks can print at the bar. With no printers here, each till prints its own KOTs.","Which printer gets which KOTs. Two restaurants can share a kitchen printer, and the bar's drinks can print at the bar. With no printers here, each till prints its own KOTs.",,"Qué impresora recibe cada comanda. Dos restaurantes pueden compartir una impresora de cocina, y las bebidas del bar pueden imprimirse en la impresora del bar. Si no hay impresoras configuradas, cada caja imprime sus propias comandas.",screens\KitchenPrinters.tsx,,needs_translation
 Which section cooks it,Which section cooks it,,Sección de cocina responsable,screens\BanquetCatalogue.tsx,,needs_translation
+"Which station prints which tickets, and where bills print.","Which station prints which tickets, and where bills print.",,Defina qué estación imprime cada comanda y dónde se imprimen las cuentas.,..\..\kamra\onboarding.py,,needs_translation
 Which system is this export from?,Which system is this export from?,من أي نظام هذا التصدير؟,¿Desde qué sistema se exporta?,screens\GoLiveImport.tsx,,translated
 Which waitlisted guests can I now give a room?,Which waitlisted guests can I now give a room?,,¿A qué huéspedes en lista de espera puedo asignar ahora una habitación?,,,needs_translation
 Who,Who,من,Quién,screens\Agents.tsx,,translated
@@ -5203,6 +5218,7 @@ Your role has no settings to manage.,Your role has no settings to manage.,,Su ro
 Your room types matched to the channel manager's room and rate-plan ids. Every mapped type gets availability and rates pushed; incoming bookings resolve their room through this table.,Your room types matched to the channel manager's room and rate-plan ids. Every mapped type gets availability and rates pushed; incoming bookings resolve their room through this table.,,"Correspondencia entre sus tipos de habitación y los ID de habitación y plan tarifario del gestor de canales. Se envían tarifas y disponibilidad de cada tipo vinculado, y las reservas entrantes se asignan mediante esta tabla.",,,needs_translation
 Your rooms are held until the advance is received.,Your rooms are held until the advance is received.,,Mantendremos tus habitaciones reservadas hasta recibir el anticipo.,screens\PublicBooking.tsx,,needs_translation
 Your session ended. Sign in to pick up where you left off.,Your session ended. Sign in to pick up where you left off.,انتهت جلستك. سجّل الدخول للمتابعة من حيث توقفت.,Su sesión finalizó. Inicie sesión para continuar donde lo dejó.,screens\Login.tsx,,translated
+Your team,Your team,,Su equipo,..\..\kamra\onboarding.py,,needs_translation
 Your till is closed,Your till is closed,درجك النقدي مغلق,Su caja está cerrada,components\TillCard.tsx,,translated
 Your till is closed. Open it here to take or give back money.,Your till is closed. Open it here to take or give back money.,,Su caja está cerrada. Ábrala aquí para cobrar o devolver dinero.,,,needs_translation
 ZATCA · ICV ,ZATCA · ICV ,,ZATCA · ICV ,screens\FolioView.tsx,,needs_translation

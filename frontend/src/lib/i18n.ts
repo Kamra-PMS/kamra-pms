@@ -29,7 +29,11 @@ const patternsFor = (dictionary: Record<string, string>) => Object.entries(dicti
       }
       return part.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
     }).join("")
-    return { expression: new RegExp(`^${escaped}$`), names, translated }
+    // Bare room/table labels must contain an identifier with a number.
+    // Otherwise a missing phrase such as "Room types and rates" could be
+    // mistaken for "Room {n}" and become a partly translated sentence.
+    const numberedLabel = /^(?:Room|Table) \{\w+\}$/.test(source)
+    return { expression: new RegExp(`^${escaped}$`), names, translated, numberedLabel }
   })
 
 const patternsByLanguage = new Map<string, ReturnType<typeof patternsFor>>()
@@ -38,9 +42,9 @@ function translatedTemplate(source: string, language: string): string {
   const dictionary = dictionaryFor(language)
   if (Object.prototype.hasOwnProperty.call(dictionary, source)) return dictionary[source]
   if (!patternsByLanguage.has(language)) patternsByLanguage.set(language, patternsFor(dictionary))
-  for (const { expression, names, translated } of patternsByLanguage.get(language)!) {
+  for (const { expression, names, translated, numberedLabel } of patternsByLanguage.get(language)!) {
     const match = expression.exec(source)
-    if (match) {
+    if (match && (!numberedLabel || /\p{N}/u.test(match[1]))) {
       const values = Object.fromEntries(names.map((name, i) => [name, match[i + 1]]))
       return translated.replace(/\{(\w+)\}/g, (token, name: string) => values[name] ?? token)
     }

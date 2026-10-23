@@ -5194,5 +5194,21 @@
   " · {n} guaranteed": " · garantizadas: {n}",
   " · {n} actual": " · asistentes reales: {n}",
   "TAKEAWAY": "PARA LLEVAR",
-  "DELIVERY": "A DOMICILIO"
+  "DELIVERY": "A DOMICILIO",
+  "Region, currency and tax": "Región, moneda e impuestos",
+  "Set from the country you chose.": "Se configuran según el país seleccionado.",
+  "Room types and rates": "Tipos de habitación y tarifas",
+  "What you sell and the base rate (BAR) for each.": "Tipos de habitación que ofrece y la tarifa base (BAR) de cada uno.",
+  "Your team": "Su equipo",
+  "Invite staff and give each the right role.": "Invite al personal y asigne el rol adecuado a cada integrante.",
+  "Printed on invoices. Add it when you have it.": "Se imprime en las facturas. Agréguelo cuando esté disponible.",
+  "The numbered rooms the front desk assigns.": "Habitaciones numeradas que asigna el personal de recepción.",
+  "Turn it on, add photos and policies.": "Active la página y agregue fotografías y políticas de alojamiento.",
+  "Channel manager": "Gestor de canales",
+  "Connect your channel manager so OTA bookings arrive and rates and availability go out.": "Conecte su gestor de canales para recibir las reservas de las agencias de viajes en línea (OTA) y sincronizar tarifas y disponibilidad.",
+  "Restaurant outlets": "Puntos de venta de alimentos y bebidas",
+  "Each place that sells food or drink.": "Cada punto donde se venden alimentos o bebidas.",
+  "Dishes and prices per outlet.": "Platos y precios de cada punto de venta.",
+  "Which station prints which tickets, and where bills print.": "Defina qué estación imprime cada comanda y dónde se imprimen las cuentas.",
+  "Name each till, tie it to an outlet. Without any, everyone uses the Default till.": "Asigne un nombre a cada caja y vincúlela a un punto de venta. Si no configura ninguna, todos usarán la caja predeterminada."
 }

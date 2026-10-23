@@ -74,6 +74,17 @@ for (const file of walk(src)) {
   }
 }
 
+// Finish setup receives its labels and help text from this server endpoint.
+// Include those literals so new checklist copy appears in the catalog too.
+const checklistFile = path.join(root, "../kamra/onboarding.py")
+const serverCall = /\b_\(\s*(["'])((?:\\.|(?!\1)[^\\])*)\1\s*\)/g
+for (const match of fs.readFileSync(checklistFile, "utf8").matchAll(serverCall)) {
+  add(
+    match[2].replace(/\\n/g, "\n").replace(/\\'/g, "'").replace(/\\"/g, '"'),
+    checklistFile,
+  )
+}
+
 // Menu labels, statuses and saved reports can call t(variable). Keep their
 // dictionary keys when rebuilding the catalog so a later import retains them.
 for (const key of new Set([...Object.keys(existingAr), ...Object.keys(existingEs)])) {
