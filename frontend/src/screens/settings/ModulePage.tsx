@@ -4,11 +4,12 @@ import { ArrowUpRight, Lock, RotateCcw } from "lucide-react"
 
 import ImageField from "../../components/ImageField"
 import { Card } from "../../components/ui/card"
-import { useT } from "../../lib/i18n"
+import { useT, t as translate, useUILanguage } from "../../lib/i18n"
 import { cur } from "../../lib/money"
 import { serverError } from "../../lib/resource"
 import { cn } from "../../lib/utils"
 import { saveSettings, type SettingSpec, type SettingsModule } from "./api"
+
 
 export const inputCls =
   "w-full rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm " +
@@ -39,13 +40,14 @@ export function Switch({
   label?: string
   id?: string
 }) {
+  useUILanguage()
   return (
     <button
       id={id}
       type="button"
       role="switch"
       aria-checked={on}
-      aria-label={label}
+      aria-label={translate(label)}
       disabled={disabled}
       onClick={onToggle}
       className={cn(
@@ -332,7 +334,7 @@ export function ModulePage({
               </span>
             )}
             {msg && (
-              <span className={cn("text-sm", msg.ok ? "text-emerald-700" : "text-rose-600")}>{msg.text}</span>
+              <span className={cn("text-sm", msg.ok ? "text-emerald-700" : "text-rose-600")}>{translate(msg.text)}</span>
             )}
             <div className="ms-auto flex gap-2">
               {changed.length > 0 ? (

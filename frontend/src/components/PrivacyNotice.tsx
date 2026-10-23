@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { useT, type Vars } from "../lib/i18n"
+import { useT, type Vars, t as translate } from "../lib/i18n"
 import { LANGS } from "../lib/dir"
 import bn from "../i18n/notice/bn.json"
 import hi from "../i18n/notice/hi.json"
@@ -8,6 +8,7 @@ import ml from "../i18n/notice/ml.json"
 import mr from "../i18n/notice/mr.json"
 import ta from "../i18n/notice/ta.json"
 import te from "../i18n/notice/te.json"
+
 
 /** Who a guest complains to and the statutory guest report the hotel files
  *  come from the property's country pack (public pages pass them in with
@@ -96,7 +97,7 @@ export default function PrivacyNotice({
                   onClick={() => setLang(code)}
                   className={lang === code ? "font-semibold text-zinc-700" : "underline"}
                 >
-                  {label}
+                  {translate(label)}
                 </button>
               ),
             )}

@@ -45,7 +45,8 @@ import {
   STATUSES,
   today,
 } from "./banquet/shared"
-import { useT } from "../lib/i18n"
+import { useT, t as translate } from "../lib/i18n"
+
 
 type Tab = "today" | "pipeline" | "functions"
 
@@ -217,7 +218,7 @@ export default function Banquet() {
                 : "border-transparent text-zinc-500 hover:text-zinc-800")
             }
           >
-            {label}
+            {translate(label)}
           </button>
         ))}
       </div>
@@ -252,7 +253,7 @@ export default function Banquet() {
               >
                 <option value="">{t("All statuses")}</option>
                 {STATUSES.map((s) => (
-                  <option key={s}>{s}</option>
+                  <option key={s} value={s}>{translate(s)}</option>
                 ))}
               </select>
             </div>
@@ -304,7 +305,7 @@ export default function Banquet() {
                         </td>
                         <td className="py-2 pr-3 text-zinc-600">{r.venue}</td>
                         <td className="py-2 pr-3 text-zinc-600">
-                          {r.event_type}
+                          {translate(r.event_type)}
                         </td>
                         <td className="py-2 pr-3 text-right tabular-nums">
                           {r.pax_guaranteed || r.attendees || "-"}
@@ -408,7 +409,7 @@ function RemindersBoard({
                       (a.urgency === "high" ? "text-amber-800" : "text-zinc-500")
                     }
                   >
-                    {a.message}
+                    {translate(a.message)}
                   </li>
                 ))}
               </ul>
@@ -537,7 +538,7 @@ function BreakdownCard({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{title}</CardTitle>
+        <CardTitle>{translate(title)}</CardTitle>
       </CardHeader>
       <CardContent>
         {rows.length === 0 ? (
@@ -778,7 +779,7 @@ function EnquirySheet({
           </Field>
           <Field
             label={t("Session")}
-            hint={custom ? undefined : `${from}-${to}`}
+            hint={translate(custom ? undefined : `${from}-${to}`)}
           >
             <Select
               value={form.session}
@@ -851,8 +852,8 @@ function EnquirySheet({
                       </span>
                     </div>
                     <div className="mt-0.5 text-xs text-zinc-400">
-                      {v.venue_type} · {t("seats {n}", { n: v.capacity })}
-                      {v.hourly_rate ? ` · ${inr(v.hourly_rate)}/hr` : ""}
+                      {translate(v.venue_type)} · {t("seats {n}", { n: v.capacity })}
+                      {v.hourly_rate ? translate(" · {v0}/hr", { v0: String(inr(v.hourly_rate)) }) : ""}
                     </div>
                     {blocked && (
                       <div className="mt-1 text-xs text-rose-700">

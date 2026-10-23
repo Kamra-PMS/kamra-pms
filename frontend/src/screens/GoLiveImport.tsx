@@ -8,7 +8,8 @@ import { Button } from "../components/ui/button"
 import { Card, CardContent } from "../components/ui/card"
 import { cn } from "../lib/utils"
 import { fmtMoney } from "../lib/money"
-import { useT } from "../lib/i18n"
+import { useT, t as translate, useUILanguage } from "../lib/i18n"
+
 
 /** Go-live import: move a hotel off its old system on one night, from
  *  Kamra's own CSV templates. Bookings (kamra.migrate), companies and
@@ -329,7 +330,7 @@ export default function GoLiveImport({
             <textarea
               className={cn(inputCls, "font-mono text-xs")}
               rows={7}
-              placeholder={PLACEHOLDER[kind]}
+              placeholder={translate(PLACEHOLDER[kind])}
               value={files[kind]}
               onChange={(e) => setFile(kind, e.target.value)}
             />
@@ -393,22 +394,22 @@ export default function GoLiveImport({
       )}
 
       {error && (
-        <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</div>
+        <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{translate(error)}</div>
       )}
     </div>
   )
 }
 
 function IssueList({ issues }: { issues: Issue[] }) {
+  useUILanguage()
   if (!issues.length) return null
   return (
     <ul className="mt-1 space-y-0.5">
       {issues.map((iss, i) => {
         const who = iss.guest || iss.name || iss.who
         return (
-          <li key={`${iss.row}-${i}`} className="text-rose-600">
-            Row {iss.row}
-            {who ? ` (${who})` : ""}: {iss.error}
+          <li key={`${iss.row}-${i}`} className="text-rose-600">{translate("Row ")}{iss.row}
+            {who ? ` (${who})` : ""}: {translate(iss.error)}
           </li>
         )
       })}

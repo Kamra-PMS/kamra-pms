@@ -32,7 +32,8 @@ import { visibleApps, type AppNavItem } from "../lib/apps"
 import { FEATURES } from "../lib/searchIndex"
 import { cn } from "../lib/utils"
 import { cur, moneyLocale } from "../lib/money"
-import { useT } from "../lib/i18n"
+import { useT, t as translate } from "../lib/i18n"
+
 
 interface Result {
   id: string
@@ -469,7 +470,7 @@ export function CommandPalette() {
               grp.items.length > 0 && (
                 <div key={grp.title} className="mb-2">
                   <div className="px-2 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-widest text-zinc-400">
-                    {grp.title}
+                    {translate(grp.title)}
                   </div>
                   <ul>
                     {grp.items.map((item) => {
@@ -493,9 +494,9 @@ export function CommandPalette() {
                           >
                             <item.icon className="size-4 shrink-0 text-zinc-400" aria-hidden />
                             <div className="min-w-0 flex-1">
-                              <div className="truncate font-medium">{item.label}</div>
+                              <div className="truncate font-medium">{translate(item.label)}</div>
                               <div className="truncate text-xs text-zinc-500">
-                                {item.hint}
+                                {translate(item.hint)}
                               </div>
                             </div>
                             <ArrowRight className="size-3.5 shrink-0 text-zinc-300" aria-hidden />

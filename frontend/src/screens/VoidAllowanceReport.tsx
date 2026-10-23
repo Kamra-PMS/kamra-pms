@@ -9,7 +9,8 @@ import { Printer, Search } from "lucide-react"
 import { call, getCurrentProperty } from "../lib/api"
 import { serverError } from "../lib/resource"
 import { Button } from "../components/ui/button"
-import { useT } from "../lib/i18n"
+import { useT, t as translate } from "../lib/i18n"
+
 
 interface Row {
   when: string
@@ -108,7 +109,7 @@ export default function VoidAllowanceReport() {
           </Button>
         </div>
       </div>
-      {err ? <p className="text-sm text-rose-600">{err}</p> : null}
+      {err ? <p className="text-sm text-rose-600">{translate(err)}</p> : null}
 
       <div className="flex flex-wrap items-center gap-2 print:hidden">
         <button
@@ -129,7 +130,7 @@ export default function VoidAllowanceReport() {
               only === a ? "border-brand-600 bg-brand-50 text-brand-800" : "border-zinc-200 text-zinc-600 hover:bg-zinc-50"
             }`}
           >
-            {actionLabel[a]} · {counts[a] ?? 0}
+            {translate(actionLabel[a])} · {counts[a] ?? 0}
           </button>
         ))}
         <label className="relative ms-auto">
@@ -179,7 +180,7 @@ export default function VoidAllowanceReport() {
                             : "bg-zinc-100 text-zinc-700"
                       }`}
                     >
-                      {actionLabel[r.action] ?? t(r.action)}
+                      {translate(actionLabel[r.action]) ?? t(r.action)}
                     </span>
                   </td>
                   <td className="whitespace-nowrap px-3 py-2">

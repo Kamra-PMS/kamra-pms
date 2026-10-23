@@ -14,10 +14,11 @@ import {
   type WidgetId,
 } from "../lib/rooms"
 import { serverError } from "../lib/resource"
-import { useT } from "../lib/i18n"
+import { useT, t as translate, useUILanguage } from "../lib/i18n"
 import { cn } from "../lib/utils"
 import { Sheet } from "./ui/sheet"
 import { Button } from "./ui/button"
+
 
 export const WIDGET_LABEL: Record<WidgetId, string> = {
   kpis: "Key numbers",
@@ -103,7 +104,7 @@ export default function CustomizeToday(props: {
 
   const column = (col: Col, title: string) => (
     <section className="mb-5">
-      <h3 className="mb-2 text-sm font-semibold text-zinc-800">{title}</h3>
+      <h3 className="mb-2 text-sm font-semibold text-zinc-800">{translate(title)}</h3>
       <ul className="space-y-2">
         {draft[col].map((id, i) => {
           const off = hidden.has(id)
@@ -151,7 +152,7 @@ export default function CustomizeToday(props: {
                     <ArrowDown className="size-4" />
                   </IconBtn>
                   <IconBtn
-                    label={col === "left" ? t("Move to the wide column") : t("Move to the narrow column")}
+                    label={translate(col === "left" ? t("Move to the wide column") : t("Move to the narrow column"))}
                     onClick={() => switchColumn(col, i)}
                   >
                     <ArrowLeftRight className="size-4" />
@@ -201,7 +202,7 @@ export default function CustomizeToday(props: {
       <p className="mb-4 rounded-lg bg-zinc-50 px-3 py-2 text-sm text-zinc-600">{sourceText}</p>
       {error && (
         <div className="mb-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-          {error}
+          {translate(error)}
         </div>
       )}
       {note && (
@@ -252,11 +253,12 @@ function IconBtn(props: {
   onClick: () => void
   children: React.ReactNode
 }) {
+  useUILanguage()
   return (
     <button
       type="button"
-      aria-label={props.label}
-      title={props.label}
+      aria-label={translate(props.label)}
+      title={translate(props.label)}
       disabled={props.disabled}
       onClick={props.onClick}
       className="inline-flex size-11 items-center justify-center rounded-lg border border-zinc-200 text-zinc-600 hover:bg-zinc-50 disabled:opacity-30"

@@ -7,8 +7,9 @@
 import { useEffect, useState } from "react"
 import { AlertTriangle, ShieldCheck } from "lucide-react"
 import { call } from "../../lib/api"
-import { useT } from "../../lib/i18n"
+import { useT, t as translate } from "../../lib/i18n"
 import { Button } from "../../components/ui/button"
+
 
 export interface VoidArgs {
   reason: string
@@ -72,7 +73,7 @@ export default function VoidApproval({
 
   return (
     <div className="space-y-2 rounded-lg border border-rose-200 bg-rose-50 p-2.5">
-      <p className="text-xs font-semibold text-rose-800">{title}</p>
+      <p className="text-xs font-semibold text-rose-800">{translate(title)}</p>
       {needsApproval ? (
         <p className="flex gap-1.5 text-xs text-rose-800">
           <AlertTriangle className="mt-0.5 size-3.5 shrink-0" aria-hidden />
@@ -87,11 +88,11 @@ export default function VoidApproval({
         <select className={inputCls} value={code} onChange={(e) => setCode(e.target.value)}
           aria-label={t("Void reason")}>
           <option value="">{t("Reason…")}</option>
-          {codes.map((c) => <option key={c.name} value={c.name}>{c.description}</option>)}
+          {codes.map((c) => <option key={c.name} value={c.name}>{translate(c.description)}</option>)}
         </select>
       )}
       <input autoFocus className={inputCls} value={reason}
-        placeholder={needsApproval ? t("Details (optional with a reason above)") : t("Reason, e.g. guest left")}
+        placeholder={translate(needsApproval ? t("Details (optional with a reason above)") : t("Reason, e.g. guest left"))}
         onChange={(e) => setReason(e.target.value)}
         onKeyDown={(e) => e.key === "Enter" && submit()} />
       {needsApproval && (canApprove ? (

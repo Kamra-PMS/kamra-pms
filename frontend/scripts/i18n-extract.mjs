@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Extract English UI strings from t() / translate() calls into catalog.csv.
+ * Extract English UI strings from t() and its translate()/translateUI() aliases into catalog.csv.
  * Merges existing Arabic and Spanish from their locale files.
  *
  * Usage: node scripts/i18n-extract.mjs
@@ -44,7 +44,7 @@ const existingEs = fs.existsSync(esPath)
 
 const keys = new Map()
 const tCall =
-  /\b(?:t|translate)\(\s*(["'`])((?:\\.|(?!\1)[^\\])*)\1/g
+  /\b(?:t|translate|translateUI)\(\s*(["'`])((?:\\.|(?!\1)[^\\])*)\1/g
 
 // tn(count, "{n} child", "{n} children"): both forms are keys
 const tnCall =

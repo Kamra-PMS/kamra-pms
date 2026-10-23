@@ -7,7 +7,7 @@ import { Card } from "../../components/ui/card"
 import { Sheet } from "../../components/ui/sheet"
 import { myProperties, type PropertyRow } from "../../lib/api"
 import { APPS } from "../../lib/apps"
-import { useT } from "../../lib/i18n"
+import { useT, t as translate, uiDateLocale } from "../../lib/i18n"
 import { serverError } from "../../lib/resource"
 import { cn } from "../../lib/utils"
 import {
@@ -23,6 +23,7 @@ import {
 } from "./api"
 import { inputCls, Switch } from "./ModulePage"
 
+
 const ADMIN_ROLES = ["Hotel Admin", "System Manager", "Administrator"]
 
 const initials = (name: string) =>
@@ -37,7 +38,7 @@ function lastSeen(d: string | null): { key: string; n?: number; date?: string } 
   if (days < 30) return { key: "Active {n} days ago", n: days }
   return {
     key: "Last active {date}",
-    date: dt.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }),
+    date: dt.toLocaleDateString(uiDateLocale(undefined), { day: "numeric", month: "short", year: "numeric" }),
   }
 }
 
@@ -116,7 +117,7 @@ export function StaffPage() {
       {notice && (
         <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">{notice}</p>
       )}
-      {error && <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-600">{error}</p>}
+      {error && <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-600">{translate(error)}</p>}
 
       <Card className="overflow-hidden">
         {rows === null ? (
@@ -196,11 +197,11 @@ export function StaffPage() {
                       disabled={!r.editable}
                       onClick={() => setEditing(r)}
                       title={
-                        r.editable
+                        translate(r.editable
                           ? undefined
                           : r.is_self
                             ? t("You can't change your own access")
-                            : t("Only IT can change this person")
+                            : t("Only IT can change this person"))
                       }
                     >
                       {t("Manage")}
@@ -288,12 +289,12 @@ function StaffSheet({
 
   return (
     <Sheet
-      title={row ? t("Manage access") : t("Add staff")}
-      description={row ? row.email : t("They sign in with this email.")}
+      title={translate(row ? t("Manage access") : t("Add staff"))}
+      description={translate(row ? row.email : t("They sign in with this email."))}
       onClose={onClose}
       footer={
         <div className="flex w-full items-center gap-2">
-          {err && <p className="flex-1 text-sm text-rose-600">{err}</p>}
+          {err && <p className="flex-1 text-sm text-rose-600">{translate(err)}</p>}
           <Button variant="ghost" className="ms-auto" onClick={onClose}>{t("Cancel")}</Button>
           <Button disabled={busy || invalid} onClick={submit}>
             {busy ? t("Saving…") : row ? t("Save") : t("Add staff")}
@@ -443,7 +444,7 @@ export function ModulesPage({
       <p className="max-w-3xl text-sm text-zinc-600">
         {t("Switch off what this property doesn't run. Its apps leave the launcher, search and the AI agent's tools for everyone. Data is kept and comes back when you switch it on.")}
       </p>
-      {err && <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-600">{err}</p>}
+      {err && <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-600">{translate(err)}</p>}
       <Card className="divide-y divide-zinc-100">
         {[
           { id: "front-desk", title: "Front Desk" },

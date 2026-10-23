@@ -1,3 +1,4 @@
+import { t as translate, uiDateLocale } from "./i18n"
 /** 80mm thermal printing for KOT tickets and bills.
  *
  * Opens a bare popup, renders the ticket with an `@page: 80mm` sheet and a
@@ -40,14 +41,14 @@ export function printThermal(title: string, body: string): boolean {
   document.querySelectorAll("iframe[data-kamra-print]").forEach((n) => n.remove())
   const iframe = document.createElement("iframe")
   iframe.setAttribute("data-kamra-print", "1")
-  iframe.setAttribute("title", title)
+  iframe.setAttribute("title", translate(title))
   iframe.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0;opacity:0"
   document.body.appendChild(iframe)
   const w = iframe.contentWindow
   if (!w) { iframe.remove(); return false }
   w.document.open()
   w.document.write(
-    `<!doctype html><html><head><title>${esc(title)}</title>` +
+    `<!doctype html><html><head><title>${esc(translate(title))}</title>` +
     `<style>${CSS}</style></head><body>${body}</body></html>`)
   w.document.close()
   const cleanup = () => { try { iframe.remove() } catch { /* already gone */ } }
@@ -93,7 +94,7 @@ export function kotHtml(o: {
   /** printed on the fallback because this printer failed */
   fallback_from?: string | null
 }) {
-  const when = new Date().toLocaleString(moneyLocale(), {
+  const when = new Date().toLocaleString(uiDateLocale(moneyLocale()), {
     day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit",
   })
   const rows = o.items.map((it) =>
@@ -104,23 +105,23 @@ export function kotHtml(o: {
       : "")).join("")
   return `
     <div class="c b lg">${esc(o.outlet)}</div>
-    <div class="c xl b">${o.kind === "Void" ? `*** VOID *** KOT #${o.kot_no ?? "-"}`
-      : o.kind === "Test" ? "TEST PAGE"
-        : `KOT #${o.kot_no ?? "-"}`}${o.reprint ? " (REPRINT)" : ""}</div>
+    <div class="c xl b">${o.kind === "Void" ? esc(translate("*** VOID *** KOT #{number}", { number: String(o.kot_no ?? "-") }))
+      : o.kind === "Test" ? esc(translate("TEST PAGE"))
+        : esc(translate("KOT #{number}", { number: String(o.kot_no ?? "-") }))}${o.reprint ? esc(translate(" (REPRINT)")) : ""}</div>
     ${o.station ? `<div class="c b">${esc(o.station)}</div>` : ""}
-    ${o.fallback_from ? `<div class="c sm">for ${esc(o.fallback_from)}</div>` : ""}
-    ${o.nc ? `<div class="c b lg">*** NC - NO CHARGE ***</div>` +
-      (o.nc_by ? `<div class="c sm">auth: ${esc(o.nc_by)}</div>` : "") : ""}
+    ${o.fallback_from ? `<div class="c sm">${esc(translate("for"))} ${esc(o.fallback_from)}</div>` : ""}
+    ${o.nc ? `<div class="c b lg">${esc(translate("*** NC - NO CHARGE ***"))}</div>` +
+      (o.nc_by ? `<div class="c sm">${esc(translate("auth:"))} ${esc(o.nc_by)}</div>` : "") : ""}
     <div class="rule"></div>
-    <div class="row"><span class="b lg">${esc(o.label)}</span><span class="sm">${esc(o.order_type || "")}</span></div>
+    <div class="row"><span class="b lg">${esc(translate(o.label))}</span><span class="sm">${esc(translate(o.order_type || ""))}</span></div>
     <div class="row sm"><span>${esc(o.order)}</span><span>${when}</span></div>
-    ${o.customer ? `<div class="sm">For: ${esc(o.customer)}</div>` : ""}
+    ${o.customer ? `<div class="sm">${esc(translate("For:"))} ${esc(o.customer)}</div>` : ""}
     ${o.address ? `<div class="sm">→ ${esc(o.address)}</div>` : ""}
     <div class="rule"></div>
     <table>${rows}</table>
     <div class="rule"></div>
-    <div class="c sm">${o.items.length} item${o.items.length === 1 ? "" : "s"}</div>
-    <div class="cut">- cut -</div>`
+    <div class="c sm">${o.items.length} ${esc(translate("item"))}${o.items.length === 1 ? "" : "s"}</div>
+    <div class="cut">${esc(translate("- cut -"))}</div>`
 }
 
 /** Several tickets in one print: one paper cut between each. */
@@ -139,29 +140,29 @@ export function laundryDocketHtml(o: {
   items: { item_name: string; service_type: string; qty: number }[]
   total: number
 }) {
-  const when = new Date().toLocaleString(moneyLocale(), {
+  const when = new Date().toLocaleString(uiDateLocale(moneyLocale()), {
     day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit",
   })
   const rows = o.items.map((it) =>
     `<tr><td class="num b" style="width:26px">${Math.round(it.qty)}×</td>` +
     `<td class="b">${esc(it.item_name)}` +
-    `<div class="sm" style="font-weight:400">${esc(it.service_type)}</div>` +
+    `<div class="sm" style="font-weight:400">${esc(translate(it.service_type))}</div>` +
     `</td></tr>`).join("")
   return `
-    <div class="c b lg">${esc(o.property_name || "Laundry")}</div>
-    <div class="c xl b">LAUNDRY DOCKET</div>
+    <div class="c b lg">${esc(o.property_name || translate("Laundry"))}</div>
+    <div class="c xl b">${esc(translate("LAUNDRY DOCKET"))}</div>
     <div class="rule"></div>
     <div class="row"><span class="b lg">${esc(o.room_no)}</span>` +
-    `<span class="sm">${esc(o.order_type || "Guest")}</span></div>
+    `<span class="sm">${esc(translate(o.order_type || "Guest"))}</span></div>
     <div class="row sm"><span>${esc(o.order)}</span><span>${when}</span></div>
     ${o.guest_name ? `<div class="sm">${esc(o.guest_name)}</div>` : ""}
-    ${o.express ? `<div class="c b">EXPRESS - SAME DAY</div>` : ""}
-    ${o.ready_by ? `<div class="sm">Ready by: ${esc(o.ready_by)}</div>` : ""}
+    ${o.express ? `<div class="c b">${esc(translate("EXPRESS - SAME DAY"))}</div>` : ""}
+    ${o.ready_by ? `<div class="sm">${esc(translate("Ready by:"))} ${esc(o.ready_by)}</div>` : ""}
     <div class="rule"></div>
     <table>${rows}</table>
     <div class="rule"></div>
-    <div class="row b lg"><span>Total</span><span class="num">${cur()}${inr(o.total)}</span></div>
-    <div class="c sm">Counted with the guest. Billed to the room.</div>`
+    <div class="row b lg"><span>${esc(translate("Total"))}</span><span class="num">${cur()}${inr(o.total)}</span></div>
+    <div class="c sm">${esc(translate("Counted with the guest. Billed to the room."))}</div>`
 }
 
 export interface BillData {
@@ -197,11 +198,11 @@ export interface BillData {
 }
 
 export function billHtml(b: BillData) {
-  const when = new Date().toLocaleString(moneyLocale(), {
+  const when = new Date().toLocaleString(uiDateLocale(moneyLocale()), {
     day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit",
   })
-  const label = b.table_no ? `Table ${b.table_no}`
-    : b.room_no ? `Room ${b.room_no}` : (b.order_type || "Counter")
+  const label = b.table_no ? translate("Table {n}", { n: String(b.table_no) })
+    : b.room_no ? translate("Room {n}", { n: String(b.room_no) }) : translate(b.order_type || "Counter")
   const rows = b.items.map((it) =>
     `<tr><td>${esc(it.item_name)}</td>` +
     `<td class="num" style="width:28px">${Math.round(it.qty)}</td>` +
@@ -216,30 +217,30 @@ export function billHtml(b: BillData) {
       `<div class="c b sm" dir="rtl">${esc(b.statutory.title_ar)}</div>` : ""}
     <div class="rule"></div>
     <div class="row"><span class="b">${esc(label)}</span><span>${when}</span></div>
-    <div class="row sm"><span>Bill: ${esc(b.order)}</span><span>KOT #${b.kot_no ?? "-"}</span></div>
+    <div class="row sm"><span>${esc(translate("Bill:"))} ${esc(b.order)}</span><span>${esc(translate("KOT #{number}", { number: String(b.kot_no ?? "-") }))}</span></div>
     ${b.customer_name || b.customer_phone
       ? `<div class="sm">${esc([b.customer_name, b.customer_phone].filter(Boolean).join(" · "))}</div>` : ""}
     ${b.delivery_address ? `<div class="sm">→ ${esc(b.delivery_address)}</div>` : ""}
     <div class="rule"></div>
     <table>
-      <tr class="sm"><td>Item</td><td class="num">Qty</td><td class="num">Rate</td><td class="num">Amt</td></tr>
+      <tr class="sm"><td>${esc(translate("Item"))}</td><td class="num">${esc(translate("Qty"))}</td><td class="num">${esc(translate("Rate"))}</td><td class="num">${esc(translate("Amt"))}</td></tr>
       ${rows}
     </table>
     <div class="rule"></div>
-    ${money("Subtotal", b.subtotal)}
-    ${b.discount_amount ? money("Discount", -b.discount_amount) : ""}
+    ${money(esc(translate("Subtotal")), b.subtotal)}
+    ${b.discount_amount ? money(esc(translate("Discount")), -b.discount_amount) : ""}
     ${(b.tax_parts ?? [
       { label: "CGST", rate: b.gst_rate / 2, amount: b.cgst },
       { label: "SGST", rate: b.gst_rate / 2, amount: b.sgst },
     ]).map((p) => money(`${esc(p.label)} @ ${p.rate}%`, p.amount, "sm")).join("")}
     <div class="rule"></div>
-    ${money("TOTAL", b.grand_total, "b lg")}
-    ${b.nc ? `<div class="c b" style="margin-top:4px">COMPLIMENTARY - NO CHARGE</div>` +
-      `<div class="c sm">auth: ${esc(b.nc_authorized_by || "-")}${b.nc_note ? ` · ${esc(b.nc_note)}` : ""}</div>` : ""}
-    ${b.paid ? `<div class="c b" style="margin-top:4px">PAID · ${esc(b.payment_mode)}</div>` : ""}
+    ${money(esc(translate("TOTAL")), b.grand_total, "b lg")}
+    ${b.nc ? `<div class="c b" style="margin-top:4px">${esc(translate("COMPLIMENTARY - NO CHARGE"))}</div>` +
+      `<div class="c sm">${esc(translate("auth:"))} ${esc(b.nc_authorized_by || "-")}${b.nc_note ? ` · ${esc(b.nc_note)}` : ""}</div>` : ""}
+    ${b.paid ? `<div class="c b" style="margin-top:4px">${esc(translate("PAID"))} · ${esc(translate(b.payment_mode))}</div>` : ""}
     <div class="rule"></div>
     ${b.statutory ? `<div class="c"><img src="${b.statutory.qr_image}" alt="QR" style="width:120px;height:120px"/></div>` +
       `<div class="c sm">ICV ${b.statutory.icv}</div>` : ""}
-    <div class="c sm">Thank you. See you again.</div>
-    <div class="cut">- cut -</div>`
+    <div class="c sm">${esc(translate("Thank you. See you again."))}</div>
+    <div class="cut">${esc(translate("- cut -"))}</div>`
 }

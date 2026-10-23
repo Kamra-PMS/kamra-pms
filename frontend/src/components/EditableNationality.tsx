@@ -1,6 +1,7 @@
 import { useEffect, useId, useState } from "react"
 import { updateResource, serverError } from "../lib/resource"
 import { Button } from "./ui/button"
+import { t as translate, useUILanguage } from "../lib/i18n"
 
 const inputCls =
   "rounded-lg border border-zinc-300 bg-white px-2 py-1 text-sm " +
@@ -14,6 +15,7 @@ export default function EditableNationality(props: {
   /** inline: folio fact row; row: GRC label/value layout */
   variant?: "inline" | "row"
 }) {
+  useUILanguage()
   const listId = useId()
   const variant = props.variant ?? "inline"
   const displayed = props.value?.trim() || "-"
@@ -54,7 +56,7 @@ export default function EditableNationality(props: {
         className={inputCls}
         value={val}
         onChange={(e) => setVal(e.target.value)}
-        placeholder="Nationality"
+        placeholder={translate("Nationality")}
         list={listId}
       />
       <datalist id={listId}>
@@ -70,7 +72,7 @@ export default function EditableNationality(props: {
         disabled={busy || !val.trim()}
         onClick={save}
       >
-        {busy ? "…" : "Save"}
+        {busy ? "…" : translate("Save")}
       </Button>
       <button
         type="button"
@@ -80,7 +82,7 @@ export default function EditableNationality(props: {
       >
         ✕
       </button>
-      {error && <span className="text-xs text-rose-600">{error}</span>}
+      {error && <span className="text-xs text-rose-600">{translate(error)}</span>}
     </span>
   ) : (
     <span className="font-medium">
@@ -89,16 +91,14 @@ export default function EditableNationality(props: {
         type="button"
         className="ml-2 text-xs font-medium text-brand-700 hover:underline print:hidden"
         onClick={startEdit}
-      >
-        edit
-      </button>
+      >{translate("edit")}</button>
     </span>
   )
 
   if (variant === "row") {
     return (
       <div className="flex border-b border-zinc-200 py-1.5 text-sm">
-        <span className="w-40 shrink-0 text-zinc-500">Nationality</span>
+        <span className="w-40 shrink-0 text-zinc-500">{translate("Nationality")}</span>
         {editor}
       </div>
     )

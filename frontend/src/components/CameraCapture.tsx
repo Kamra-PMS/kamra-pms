@@ -6,8 +6,9 @@
 
 import { useEffect, useRef, useState } from "react"
 import { Camera, RefreshCw, SwitchCamera, X } from "lucide-react"
-import { useT } from "../lib/i18n"
+import { useT, t as translate } from "../lib/i18n"
 import { Button } from "./ui/button"
+
 
 export default function CameraCapture({ title, facing = "user", onUse, onClose }: {
   title: string
@@ -58,11 +59,11 @@ export default function CameraCapture({ title, facing = "user", onUse, onClose }
   }
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-end justify-center p-3 sm:items-center" role="dialog" aria-modal="true" aria-label={title}>
+    <div className="fixed inset-0 z-[70] flex items-end justify-center p-3 sm:items-center" role="dialog" aria-modal="true" aria-label={translate(title)}>
       <div className="absolute inset-0 bg-black/50" onClick={onClose} aria-hidden />
       <div className="relative z-10 w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl">
         <div className="flex items-center justify-between border-b border-zinc-100 px-4 py-3">
-          <h2 className="text-sm font-semibold text-zinc-800">{title}</h2>
+          <h2 className="text-sm font-semibold text-zinc-800">{translate(title)}</h2>
           <button type="button" onClick={onClose} aria-label={t("Close")}
             className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700">
             <X className="size-5" />
@@ -72,7 +73,7 @@ export default function CameraCapture({ title, facing = "user", onUse, onClose }
           {shot ? (
             <img src={shot} alt={t("Captured picture")} className="mx-auto max-h-[60vh] w-full object-contain" />
           ) : err ? (
-            <p className="px-4 py-16 text-center text-sm text-zinc-200">{err}</p>
+            <p className="px-4 py-16 text-center text-sm text-zinc-200">{translate(err)}</p>
           ) : (
             <video ref={video} playsInline muted className="mx-auto max-h-[60vh] w-full object-contain" />
           )}

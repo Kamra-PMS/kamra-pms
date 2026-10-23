@@ -19,12 +19,13 @@ import { Sheet } from "../components/ui/sheet"
 import { cur, moneyLocale, adoptUiLocale } from "../lib/money"
 import { formatPhoneDisplay, formatPhoneTel } from "../lib/phone"
 import { petChargeBasis } from "../lib/pets"
-import { useT } from "../lib/i18n"
+import { useT, t as translate } from "../lib/i18n"
 import { adoptBrowserLanguage } from "../lib/dir"
 import ChildAges, {
   agesToSend, canReserve, sizeAges, StayNotice,
   type ChildAge, type StayFit,
 } from "../components/ChildAges"
+
 
 const inr = (n: number) =>
   n.toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
@@ -409,7 +410,7 @@ export default function PublicListing() {
 
   if (!data || !resolved)
     return (
-      <p className="py-20 text-center text-zinc-400">{error ?? t("Loading…")}</p>
+      <p className="py-20 text-center text-zinc-400">{translate(error) ?? t("Loading…")}</p>
     )
 
   const p = data.property
@@ -491,7 +492,7 @@ export default function PublicListing() {
                 <img
                   key={`${m.url}-${i}`}
                   src={m.url}
-                  alt={m.caption ?? ""}
+                  alt={translate(m.caption ?? "")}
                   className="h-16 w-24 shrink-0 rounded-lg object-cover"
                 />
               ))}
@@ -506,7 +507,7 @@ export default function PublicListing() {
                 {isSite ? p.property_name : siteMeta?.name ?? p.property_name}
               </p>
               <h1 className="mt-1 text-3xl font-semibold tracking-tight text-zinc-900 sm:text-4xl">
-                {title}
+                {translate(title)}
               </h1>
               {address && (
                 <p className="mt-2 inline-flex items-start gap-1.5 text-sm text-zinc-500">
@@ -868,11 +869,11 @@ export default function PublicListing() {
       {booking && (
         <Sheet
           wide
-          title={done ? (done.status === "Requested" ? t("Request sent") : t("Booking confirmed")) : t("Complete your booking")}
+          title={translate(done ? (done.status === "Requested" ? t("Request sent") : t("Booking confirmed")) : t("Complete your booking"))}
           description={
-            done
+            translate(done
               ? undefined
-              : data.room_types.find((r) => r.name === booking)?.room_type_name
+              : data.room_types.find((r) => r.name === booking)?.room_type_name)
           }
           onClose={() => {
             setBooking(null)
@@ -943,7 +944,7 @@ export default function PublicListing() {
                 />
               </label>
               {error && (
-                <p className="text-sm text-rose-600 sm:col-span-2">{error}</p>
+                <p className="text-sm text-rose-600 sm:col-span-2">{translate(error)}</p>
               )}
             </div>
           )}

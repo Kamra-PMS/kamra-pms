@@ -11,6 +11,7 @@ import { call, getCurrentProperty } from "./api"
 import { useAuth } from "./auth"
 import { serverError } from "./resource"
 import { PinPad } from "../components/PinPad"
+import { t as translate, useUILanguage } from "./i18n"
 
 type PinStatus = {
   required: boolean
@@ -34,6 +35,7 @@ type CashierAuth = {
 const Ctx = createContext<CashierAuth | null>(null)
 
 export function CashierAuthProvider({ children }: { children: ReactNode }) {
+  useUILanguage()
   // the PIN status belongs to a signed-in user: asking before login only
   // earns a 403 from the server
   const { status: authStatus } = useAuth()
@@ -143,11 +145,11 @@ export function CashierAuthProvider({ children }: { children: ReactNode }) {
       <PinPad
         open={padOpen}
         mode={padMode}
-        title={padMode === "enroll" ? "Set your cashier PIN" : "Cashier PIN"}
+        title={translate(padMode === "enroll" ? translate("Set your cashier PIN") : translate("Cashier PIN"))}
         subtitle={
-          padMode === "enroll"
-            ? "4-8 digits. Required for money actions at this property."
-            : `Unlocks your till for ${status?.unlock_minutes ?? 15} minutes.`
+          translate(padMode === "enroll"
+            ? translate("4-8 digits. Required for money actions at this property.")
+            : translate("Unlocks your till for {v0} minutes.", { v0: String(status?.unlock_minutes ?? 15) }))
         }
         error={padError}
         busy={busy}

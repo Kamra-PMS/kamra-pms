@@ -21,12 +21,13 @@ import { Sheet } from "../components/ui/sheet"
 import { cur, moneyLocale, adoptUiLocale } from "../lib/money"
 import { formatPhoneDisplay, formatPhoneTel } from "../lib/phone"
 import { petChargeBasis } from "../lib/pets"
-import { useT } from "../lib/i18n"
+import { useT, t as translate } from "../lib/i18n"
 import { adoptBrowserLanguage } from "../lib/dir"
 import ChildAges, {
   agesToSend, canReserve, sizeAges, StayNotice,
   type ChildAge, type StayFit,
 } from "../components/ChildAges"
+
 
 const inr = (n: number) =>
   n.toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
@@ -578,7 +579,7 @@ export default function PublicBooking() {
   if (!data)
     return (
       <p className="py-20 text-center text-zinc-400">
-        {error ?? t("Loading…")}
+        {translate(error) ?? t("Loading…")}
       </p>
     )
 
@@ -664,7 +665,7 @@ export default function PublicBooking() {
             )}
             <span className="inline-flex items-center gap-1 text-white/80">
               <MapPin className="size-3.5" aria-hidden />
-              {p.city}, {p.state}
+              {p.city}, {translate(p.state)}
             </span>
           </div>
           <h1 className="text-3xl font-semibold tracking-tight">
@@ -847,10 +848,10 @@ export default function PublicBooking() {
             <div className="flex gap-3 overflow-x-auto pb-3 scrollbar-thin">
               {p.gallery.map((img: any, i: number) => (
                 <div key={i} className="relative h-40 w-64 shrink-0 rounded-xl overflow-hidden shadow-sm border border-zinc-200 bg-zinc-100">
-                  <img src={img.url} alt={img.caption || ""} className="size-full object-cover" />
+                  <img src={img.url} alt={translate(img.caption || "")} className="size-full object-cover" />
                   {img.caption && (
                     <div className="absolute inset-x-0 bottom-0 bg-black/60 px-3 py-1 text-center text-xs text-white truncate">
-                      {img.caption}
+                      {translate(img.caption)}
                     </div>
                   )}
                 </div>
@@ -947,7 +948,7 @@ export default function PublicBooking() {
                       {rt.media[0] ? (
                         <img
                           src={rt.media[0].url}
-                          alt={rt.media[0].caption ?? rt.room_type_name}
+                          alt={translate(rt.media[0].caption ?? rt.room_type_name)}
                           className="h-52 w-full object-cover sm:h-full"
                           loading="lazy"
                         />
@@ -1243,11 +1244,11 @@ export default function PublicBooking() {
       {booking && (
         <Sheet
           wide
-          title={done ? (done.status === "Requested" ? t("Request sent") : t("Booking confirmed")) : t("Complete your booking")}
+          title={translate(done ? (done.status === "Requested" ? t("Request sent") : t("Booking confirmed")) : t("Complete your booking"))}
           description={
-            done
+            translate(done
               ? undefined
-              : `${data.room_types.find((r) => r.name === booking)?.room_type_name} · ${search.check_in_date} → ${checkOut}`
+              : `${data.room_types.find((r) => r.name === booking)?.room_type_name} · ${search.check_in_date} → ${checkOut}`)
           }
           onClose={() => {
             setBooking(null)
@@ -1324,7 +1325,7 @@ export default function PublicBooking() {
                   <option value="">{t("Room only")}</option>
                   {data.meal_plans.map((mp) => (
                     <option key={mp.name} value={mp.name}>
-                      {mp.label} ({t("+{amount}/adult/night", { amount: `${cur()}${inr(mp.price_per_adult)}` })})
+                      {translate(mp.label)} ({t("+{amount}/adult/night", { amount: `${cur()}${inr(mp.price_per_adult)}` })})
                     </option>
                   ))}
                 </select>
@@ -1360,7 +1361,7 @@ export default function PublicBooking() {
                               </span>
                               {exp.category && (
                                 <span className="shrink-0 rounded-full bg-zinc-100 px-1.5 py-0.5 text-[10px] text-zinc-500">
-                                  {exp.category}
+                                  {translate(exp.category)}
                                 </span>
                               )}
                             </div>
@@ -1468,7 +1469,7 @@ export default function PublicBooking() {
                     "mt-1 text-xs " +
                     (voucherMsg.ok ? "text-brand-700" : "text-rose-600")
                   }>
-                    {voucherMsg.text}
+                    {translate(voucherMsg.text)}
                   </p>
                 )}
               </div>
@@ -1494,7 +1495,7 @@ export default function PublicBooking() {
               )}
               {error && (
                 <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700 sm:col-span-2">
-                  {error}
+                  {translate(error)}
                 </div>
               )}
             </div>

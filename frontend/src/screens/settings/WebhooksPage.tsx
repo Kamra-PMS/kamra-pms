@@ -5,10 +5,11 @@ import { Badge } from "../../components/ui/badge"
 import { Button } from "../../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card"
 import { call } from "../../lib/api"
-import { useT } from "../../lib/i18n"
+import { useT, t as translate } from "../../lib/i18n"
 import { serverError } from "../../lib/resource"
 import { cn } from "../../lib/utils"
 import { Switch } from "./ModulePage"
+
 
 /** Outbound webhooks: per-property endpoints that receive signed event
  *  notifications, and the delivery log. Backend: kamra.webhooks (Hotel
@@ -162,7 +163,7 @@ function HookForm({
           ))}
         </div>
       </fieldset>
-      {error && <p className="rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p>}
+      {error && <p className="rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-700">{translate(error)}</p>}
       <div className="flex gap-2">
         <Button onClick={save} disabled={busy || !picked.length}>
           {busy ? t("Saving…") : hook ? t("Save") : t("Add webhook")}
@@ -210,7 +211,7 @@ export function WebhooksPage({ property }: { property: string }) {
       if (done) setNote(done)
       load()
     } catch (e) {
-      setError(e instanceof ShownError ? e.message : serverError(e))
+      setError(e instanceof ShownError ? translate(e.message) : serverError(e))
     }
   }
 
@@ -219,11 +220,11 @@ export function WebhooksPage({ property }: { property: string }) {
     return h?.label || h?.url || name
   }
 
-  if (!hooks) return <p className="py-6 text-sm text-zinc-400">{error ?? t("Loading…")}</p>
+  if (!hooks) return <p className="py-6 text-sm text-zinc-400">{translate(error) ?? t("Loading…")}</p>
 
   return (
     <div className="space-y-5">
-      {error && <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p>}
+      {error && <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">{translate(error)}</p>}
       {note && <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{note}</p>}
       {secret && <SecretOnce secret={secret} onDone={() => setSecret(null)} />}
 

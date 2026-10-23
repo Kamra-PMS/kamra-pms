@@ -6,6 +6,7 @@ import { serverError } from "../lib/resource"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader } from "../components/ui/card"
 import { cur, moneyLocale } from "../lib/money"
+import { t as translate, useUILanguage } from "../lib/i18n"
 
 type Row = Record<string, unknown>
 type Line = Record<string, unknown>
@@ -123,6 +124,7 @@ const FORMATS = [
 ]
 
 export default function AccountingExport() {
+  useUILanguage()
   const property = getCurrentProperty()
   const today = new Date().toISOString().slice(0, 10)
   const monthAgo = new Date(Date.now() - 30 * 864e5).toISOString().slice(0, 10)
@@ -168,12 +170,8 @@ export default function AccountingExport() {
     <div className="space-y-5">
       <header className="flex items-center gap-2">
         <FileSpreadsheet className="size-5 text-brand-600" aria-hidden />
-        <h1 className="text-xl font-semibold tracking-tight">
-          Accounting Export
-        </h1>
-        <p className="ml-2 text-sm text-zinc-500">
-          Closed invoices, ready to import into your books.
-        </p>
+        <h1 className="text-xl font-semibold tracking-tight">{translate("Accounting Export")}</h1>
+        <p className="ml-2 text-sm text-zinc-500">{translate("Closed invoices, ready to import into your books.")}</p>
       </header>
 
       <Card>
@@ -184,53 +182,48 @@ export default function AccountingExport() {
               className="rounded-lg border border-zinc-300 px-2 py-1.5 text-sm"
               value={from}
               onChange={(e) => setFrom(e.target.value)}
-              aria-label="From"
+              aria-label={translate("From")}
             />
-            <span className="text-xs text-zinc-400">to</span>
+            <span className="text-xs text-zinc-400">{translate("to")}</span>
             <input
               type="date"
               className="rounded-lg border border-zinc-300 px-2 py-1.5 text-sm"
               value={to}
               onChange={(e) => setTo(e.target.value)}
-              aria-label="To"
+              aria-label={translate("To")}
             />
             <select
               className="rounded-lg border border-zinc-300 px-2.5 py-1.5 text-sm"
               value={format}
               onChange={(e) => setFormat(e.target.value)}
-              aria-label="Format"
+              aria-label={translate("Format")}
             >
               {FORMATS.map((f) => (
                 <option key={f.key} value={f.key}>
-                  {f.label}
+                  {translate(f.label)}
                 </option>
               ))}
             </select>
           </div>
           <Button disabled={!data || data.rows.length === 0} onClick={download}>
-            <Download className="size-4" aria-hidden />
-            Download CSV
-          </Button>
+            <Download className="size-4" aria-hidden />{translate("Download CSV")}</Button>
         </CardHeader>
         <CardContent>
           {error && (
             <div className="mb-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-              {error}
+              {translate(error)}
             </div>
           )}
           {data && (
             <>
               <p className="mb-3 text-sm text-zinc-500">
-                {data.totals.invoices} invoice
-                {data.totals.invoices === 1 ? "" : "s"} · taxable {cur()}
+                {data.totals.invoices}{translate(" invoice")}{data.totals.invoices === 1 ? "" : translate("s")}{translate(" · taxable ")}{cur()}
                 {data.totals.taxable.toLocaleString(moneyLocale())} · {data.tax_label} {cur()}
-                {data.totals.total_tax.toLocaleString(moneyLocale())} · total {cur()}
+                {data.totals.total_tax.toLocaleString(moneyLocale())}{translate(" · total ")}{cur()}
                 {data.totals.grand_total.toLocaleString(moneyLocale())}
               </p>
               {data.rows.length === 0 ? (
-                <p className="py-6 text-center text-sm text-zinc-400">
-                  No closed invoices in this window.
-                </p>
+                <p className="py-6 text-center text-sm text-zinc-400">{translate("No closed invoices in this window.")}</p>
               ) : (
                 <div className="overflow-x-auto rounded-xl border border-zinc-200">
                   <table className="w-full text-sm">
@@ -238,7 +231,7 @@ export default function AccountingExport() {
                       <tr className="border-b border-zinc-200 bg-zinc-50 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">
                         {cols.map((c) => (
                           <th key={c.header} className="whitespace-nowrap px-3 py-2">
-                            {c.header}
+                            {translate(c.header)}
                           </th>
                         ))}
                       </tr>
@@ -259,9 +252,7 @@ export default function AccountingExport() {
                     </tbody>
                   </table>
                   {shown.length > 12 && (
-                    <p className="px-3 py-2 text-xs text-zinc-400">
-                      Showing 12 of {shown.length} rows - download for all.
-                    </p>
+                    <p className="px-3 py-2 text-xs text-zinc-400">{translate("Showing 12 of ")}{shown.length}{translate(" rows - download for all.")}</p>
                   )}
                 </div>
               )}

@@ -4,6 +4,7 @@ import { HelpCircle, Loader2, Send, X } from "lucide-react"
 import { call, getCurrentProperty } from "../lib/api"
 import { cn } from "../lib/utils"
 import { Markdown } from "../lib/markdown"
+import { t as translate, useUILanguage } from "../lib/i18n"
 
 /** How-to help assistant - explains how to use Kamra (it never acts on data;
  *  that's Kamra Agent). Streams answers, grounded in the app. */
@@ -22,6 +23,7 @@ const SUGGESTIONS = [
 ]
 
 export default function HelpPanel() {
+  useUILanguage()
   const [enabled, setEnabled] = useState(false)
   const [open, setOpen] = useState(false)
   const [msgs, setMsgs] = useState<Msg[]>([])
@@ -102,7 +104,7 @@ export default function HelpPanel() {
       if (!gotAny) throw new Error("empty")
     } catch {
       setError(
-        "Couldn't reach the help assistant - check the AI key in Settings.",
+        translate("Couldn't reach the help assistant - check the AI key in Settings."),
       )
       setMsgs((ms) => ms.filter((_, i) => i !== aIdx))
     } finally {
@@ -113,7 +115,7 @@ export default function HelpPanel() {
   return (
     <>
       <button
-        aria-label="Open help"
+        aria-label={translate("Open help")}
         onClick={() => setOpen((o) => !o)}
         className="fixed bottom-5 right-5 z-40 flex size-12 items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-600 shadow-lg hover:text-brand-700 print:hidden"
       >
@@ -124,25 +126,21 @@ export default function HelpPanel() {
         <div className="fixed bottom-20 right-5 z-40 flex h-[520px] w-[360px] max-w-[calc(100vw-2.5rem)] flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-2xl print:hidden">
           <div className="flex items-center gap-2 border-b border-zinc-100 px-4 py-3">
             <HelpCircle className="size-4 text-brand-600" />
-            <span className="text-sm font-semibold">How-to help</span>
-            <span className="ml-auto text-[10px] uppercase tracking-wider text-zinc-400">
-              explains, doesn't act
-            </span>
+            <span className="text-sm font-semibold">{translate("How-to help")}</span>
+            <span className="ml-auto text-[10px] uppercase tracking-wider text-zinc-400">{translate("explains, doesn't act")}</span>
           </div>
 
           <div className="flex-1 space-y-3 overflow-y-auto px-4 py-3">
             {msgs.length === 0 && (
               <div className="space-y-2">
-                <p className="text-sm text-zinc-600">
-                  Ask how to do anything in Kamra - I'll walk you through it.
-                </p>
+                <p className="text-sm text-zinc-600">{translate("Ask how to do anything in Kamra - I'll walk you through it.")}</p>
                 {SUGGESTIONS.map((s) => (
                   <button
                     key={s}
                     className="block w-full rounded-lg border border-zinc-200 px-3 py-1.5 text-left text-sm text-zinc-600 hover:border-brand-600"
-                    onClick={() => send(s)}
+                    onClick={() => send(translate(s))}
                   >
-                    {s}
+                    {translate(s)}
                   </button>
                 ))}
               </div>
@@ -165,7 +163,7 @@ export default function HelpPanel() {
             )}
             {error && (
               <p className="rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-600">
-                {error}
+                {translate(error)}
               </p>
             )}
             <div ref={endRef} />
@@ -180,13 +178,13 @@ export default function HelpPanel() {
           >
             <input
               className="flex-1 rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm focus:outline-2 focus:outline-offset-1 focus:outline-brand-600"
-              placeholder="How do I…?"
+              placeholder={translate("How do I…?")}
               value={input}
               onChange={(e) => setInput(e.target.value)}
             />
             <button
               type="submit"
-              aria-label="Send"
+              aria-label={translate("Send")}
               disabled={busy || !input.trim()}
               className="rounded-lg bg-brand-600 p-2 text-white disabled:opacity-40"
             >

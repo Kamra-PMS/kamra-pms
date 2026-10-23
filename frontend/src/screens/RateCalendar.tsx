@@ -10,9 +10,10 @@ import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { InfoTip } from "../components/InfoTip"
 import { cur, moneyLocale } from "../lib/money"
-import { useT } from "../lib/i18n"
+import { useT, t as translate, uiDateLocale } from "../lib/i18n"
 import { cn } from "../lib/utils"
 import type { NightRate } from "../components/RateOptions"
+
 
 const n0 = (n: number) => Number(n ?? 0).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
 
@@ -86,7 +87,7 @@ export default function RateCalendar() {
         </div>
       </div>
 
-      {err && <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{err}</p>}
+      {err && <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{translate(err)}</p>}
 
       {data && (
         <Card>
@@ -101,7 +102,7 @@ export default function RateCalendar() {
                     const wk = d.getDay() === 5 || d.getDay() === 6
                     return (
                       <th key={x.date} className={cn("px-2 py-2 text-center font-medium", wk && "text-zinc-800")}>
-                        <div>{d.toLocaleDateString(undefined, { weekday: "short" })}</div>
+                        <div>{d.toLocaleDateString(uiDateLocale(undefined), { weekday: "short" })}</div>
                         <div className="tabular-nums">{x.date.slice(5)}</div>
                       </th>
                     )

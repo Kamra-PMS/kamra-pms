@@ -4,7 +4,8 @@ import { call, getCurrentProperty } from "../lib/api"
 import { serverError } from "../lib/resource"
 import { Badge } from "../components/ui/badge"
 import { moneyLocale } from "../lib/money"
-import { useT } from "../lib/i18n"
+import { useT, t as translate } from "../lib/i18n"
+
 
 const inr = (n: unknown) =>
   Number(n ?? 0).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
@@ -126,7 +127,7 @@ export default function CashierShiftReport() {
           />
         </div>
       </div>
-      {err ? <p className="text-sm text-rose-600">{err}</p> : null}
+      {err ? <p className="text-sm text-rose-600">{translate(err)}</p> : null}
 
       <div className="overflow-x-auto rounded-xl border border-zinc-200 bg-white">
         <table className="w-full table-fixed text-left text-sm">
@@ -211,7 +212,7 @@ export default function CashierShiftReport() {
                 className="rounded-xl border border-zinc-200 bg-white px-3 py-2.5"
               >
                 <p className="text-[10px] font-medium uppercase tracking-wide text-zinc-400">
-                  {label}
+                  {translate(label)}
                 </p>
                 <p className="mt-0.5 text-base font-semibold tabular-nums">
                   {inr(val)}
@@ -239,8 +240,8 @@ export default function CashierShiftReport() {
             <tbody>
               {(report?.journal || []).map((j, i) => (
                 <tr key={i} className="border-t">
-                  <td className="px-3 py-2">{j.kind}</td>
-                  <td className="px-3 py-2">{j.mode}</td>
+                  <td className="px-3 py-2">{translate(j.kind)}</td>
+                  <td className="px-3 py-2">{translate(j.mode)}</td>
                   <td className="px-3 py-2 tabular-nums">{j.txns}</td>
                   <td className="px-3 py-2 tabular-nums">{inr(j.total)}</td>
                 </tr>

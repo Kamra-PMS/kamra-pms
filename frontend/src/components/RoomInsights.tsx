@@ -7,10 +7,11 @@ import { BarChart3, BedDouble, Clock, Wallet, Wrench } from "lucide-react"
 import { getRoomInsights, type InsightRoom, type RoomInsights as Data } from "../lib/rooms"
 import { serverError } from "../lib/resource"
 import { fmtMoney } from "../lib/money"
-import { useT } from "../lib/i18n"
+import { useT, t as translate } from "../lib/i18n"
 import { cn } from "../lib/utils"
 import { StatCard } from "./ui/stat-card"
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
+
 
 type SortKey = "nights" | "occupancy_pct" | "revenue" | "out_of_service_nights" | "avg_clean_minutes"
 
@@ -73,7 +74,7 @@ export default function RoomInsights(props: { onOpenRoom: (room: string) => void
       </div>
       {error && (
         <div className="mb-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-          {error}
+          {translate(error)}
         </div>
       )}
       {!d ? (
@@ -109,9 +110,9 @@ export default function RoomInsights(props: { onOpenRoom: (room: string) => void
                   : t("{n} min", { n: Math.round(d.summary.avg_clean_minutes) })
               }
               sub={
-                d.summary.timed_cleans
+                translate(d.summary.timed_cleans
                   ? t("from {n} timed cleans", { n: d.summary.timed_cleans })
-                  : t("No timed cleans yet")
+                  : t("No timed cleans yet"))
               }
             />
           </div>
@@ -146,7 +147,7 @@ export default function RoomInsights(props: { onOpenRoom: (room: string) => void
                         sort === c.key ? "bg-brand-50 text-brand-800" : "text-zinc-600 hover:bg-zinc-100",
                       )}
                     >
-                      {c.label}
+                      {translate(c.label)}
                     </button>
                   ))}
               </div>
@@ -187,7 +188,7 @@ export default function RoomInsights(props: { onOpenRoom: (room: string) => void
                         .filter((c) => c.show)
                         .map((c) => (
                           <th key={c.key} className="pb-2 text-end font-medium">
-                            {c.label}
+                            {translate(c.label)}
                           </th>
                         ))}
                     </tr>
@@ -246,7 +247,7 @@ function TopList(props: { title: string; rows: InsightRoom[]; onOpen: (room: str
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{props.title}</CardTitle>
+        <CardTitle>{translate(props.title)}</CardTitle>
       </CardHeader>
       <CardContent className="pt-2">
         {props.rows.length === 0 ? (

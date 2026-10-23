@@ -12,10 +12,11 @@ import { Button } from "../components/ui/button"
 import { Sheet } from "../components/ui/sheet"
 import { cn } from "../lib/utils"
 import { cur, moneyLocale } from "../lib/money"
-import { useT } from "../lib/i18n"
+import { useT, t as translate, uiDateLocale } from "../lib/i18n"
 import CheckOutDialog from "../components/CheckOutDialog"
 import CheckInDialog from "../components/CheckInDialog"
 import RoomChangeDialog from "../components/RoomChangeDialog"
+
 
 /** The tape chart: rooms × dates, bookings as bars. Click a bar to open the
  *  stay panel (move room, change dates, check in / out); with a mouse, drag a
@@ -506,7 +507,7 @@ export default function TapeChart() {
             <span key={c.in_res} className="me-3 whitespace-nowrap">
               {t("Room {room} on {date}: out {etd} ({out}) / in {eta} ({in})", {
                 room: c.room_number,
-                date: new Date(c.date).toLocaleDateString("en-IN", { day: "numeric", month: "short" }),
+                date: new Date(c.date).toLocaleDateString(uiDateLocale("en-IN"), { day: "numeric", month: "short" }),
                 etd: c.etd, out: c.out_guest, eta: c.eta, in: c.in_guest,
               })}
             </span>
@@ -527,7 +528,7 @@ export default function TapeChart() {
                 <div key={d} style={{ width: cellW }}
                   className={cn("shrink-0 border-l border-zinc-100 px-1 py-2 text-center",
                     weekend && "bg-brand-50 text-brand-700")}>
-                  {day.toLocaleDateString("en-IN", { weekday: "short" })}{" "}
+                  {day.toLocaleDateString(uiDateLocale("en-IN"), { weekday: "short" })}{" "}
                   <span className="font-semibold">{day.getDate()}</span>
                 </div>
               )
@@ -540,17 +541,17 @@ export default function TapeChart() {
             </div>
             {data?.position?.map((p) => (
               <div key={p.date} style={{ width: cellW }}
-                title={`${p.sold}/${p.capacity} sold (${p.occupancy}%)` +
+                title={translate(`${p.sold}/${p.capacity} sold (${p.occupancy}%)` +
                   (p.limit > p.capacity ? ` · can sell to ${p.limit} (overbooking)` : "") +
                   (p.premium_pct ? ` · demand premium +${p.premium_pct}%` : "") +
-                  (p.min_rate ? ` · hurdle ${cur()}${p.min_rate.toLocaleString(moneyLocale())}` : "")}
+                  (p.min_rate ? ` · hurdle ${cur()}${p.min_rate.toLocaleString(moneyLocale())}` : ""))}
                 className={cn("shrink-0 border-l border-zinc-100 px-1 py-1 text-center tabular-nums",
                   p.overbooked ? "bg-rose-50 font-bold text-rose-600"
                     : p.occupancy >= 80 ? "bg-emerald-50 font-semibold text-emerald-700"
                       : p.occupancy >= 50 ? "text-amber-600" : "text-zinc-400")}>
                 {p.sold}/{p.capacity}
                 {p.premium_pct > 0 && <span className="ms-0.5 text-emerald-600">▲</span>}
-                {p.overbooked && " OB"}
+                {p.overbooked && translate(" OB")}
               </div>
             ))}
           </div>
@@ -570,7 +571,7 @@ export default function TapeChart() {
                       className={cn("size-3.5 transition-transform", isCollapsed && "-rotate-90 rtl:rotate-90")}
                       aria-hidden
                     />
-                    {g.label}
+                    {translate(g.label)}
                     <span className="font-normal normal-case tracking-normal text-zinc-400">
                       {t("{rooms} rooms · {booked} in use", {
                         rooms: g.rooms.length,
@@ -613,7 +614,7 @@ export default function TapeChart() {
                                   "repeating-linear-gradient(45deg, #d4d4d8 0 6px, #e4e4e7 6px 12px)",
                               }}
                               className="absolute top-1.5 flex h-8 items-center gap-1 truncate rounded-md border border-zinc-300 px-1.5 text-start text-[11px] font-medium text-zinc-600"
-                              title={`${k.reason}${k.note ? ` · ${k.note}` : ""} · ${k.from_date} → ${k.to_date}`}>
+                              title={translate(`${k.reason}${k.note ? ` · ${k.note}` : ""} · ${k.from_date} → ${k.to_date}`)}>
                               <Lock className="size-3 shrink-0" aria-hidden />
                               <span className="truncate">{k.reason}</span>
                             </div>
@@ -659,8 +660,8 @@ export default function TapeChart() {
                                 inConflict && "ring-2 ring-rose-500 ring-offset-1",
                                 dd && "pointer-events-none z-20 cursor-grabbing opacity-90 shadow-lg ring-2 ring-white",
                               )}
-                              title={`${b.guest_name} · ${t(seg.label)} · ${b.check_in_date}${eta ? ` ${eta}` : ""} → ${b.check_out_date}${etd ? ` ${etd}` : ""}` +
-                                (inConflict ? ` · ${t("CHANGEOVER CONFLICT")}` : "")}>
+                              title={translate(`${b.guest_name} · ${t(seg.label)} · ${b.check_in_date}${eta ? ` ${eta}` : ""} → ${b.check_out_date}${etd ? ` ${etd}` : ""}` +
+                                (inConflict ? ` · ${t("CHANGEOVER CONFLICT")}` : ""))}>
                               {/* drag handles: arrival (not once checked in) and departure */}
                               {resizable && b.status === "Confirmed" && s0 >= 0 && (
                                 <span aria-hidden data-handle="start"
@@ -762,7 +763,7 @@ export default function TapeChart() {
                       · {p.room_type_name}
                     </span>
                   </div>
-                  <p className="mt-0.5 text-xs text-zinc-500">{p.why}</p>
+                  <p className="mt-0.5 text-xs text-zinc-500">{translate(p.why)}</p>
                 </div>
                 <div className="text-right">
                   <div className="text-sm font-semibold">{t("Room {n}", { n: p.room_number })}</div>
@@ -822,8 +823,8 @@ export default function TapeChart() {
       )}
       {sel && (
         <Sheet
-          title={sel.guest_name}
-          description={`${sel.name} · ${t(sel.status)}`}
+          title={translate(sel.guest_name)}
+          description={translate(`${sel.name} · ${t(sel.status)}`)}
           onClose={() => setSel(null)}
           footer={
             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -982,7 +983,7 @@ export default function TapeChart() {
             </p>
             {error && (
               <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-                {error}
+                {translate(error)}
               </div>
             )}
           </div>
@@ -1048,7 +1049,7 @@ function TapeHourly({
                     onClick={() => onOpen(b)}
                     style={{ insetInlineStart: 130, width: gridW }}
                     className="absolute top-2 flex h-9 items-center gap-1 rounded-md bg-zinc-200/70 px-2 text-start text-xs font-medium text-zinc-600 hover:bg-zinc-300/70"
-                    title={`${b.guest_name} · ${t("overnight stay")}`}
+                    title={translate(`${b.guest_name} · ${t("overnight stay")}`)}
                   >
                     {seg.vip && <Star className="size-3 fill-amber-400 text-amber-400" />}
                     <span className="truncate">{b.guest_name} · {t("staying over")}</span>
@@ -1064,7 +1065,7 @@ function TapeHourly({
                     "absolute top-2 flex h-9 items-center gap-1 truncate rounded-md px-1.5 text-start text-xs font-medium text-white",
                     b.status === "Checked In" ? "bg-brand-600 hover:bg-brand-700" : "bg-sky-500 hover:bg-sky-600",
                   )}
-                  title={`${b.guest_name} · ${b.from_hour}-${b.to_hour} · day use`}
+                  title={translate("{v0} · {v1}-{v2} · day use", { v0: String(b.guest_name), v1: String(b.from_hour), v2: String(b.to_hour) })}
                 >
                   {seg.vip ? (
                     <Star className="size-3 shrink-0 fill-amber-300 text-amber-300" />

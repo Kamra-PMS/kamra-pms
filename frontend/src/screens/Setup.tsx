@@ -9,8 +9,9 @@ import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { cn } from "../lib/utils"
 import { cur, loadLocale } from "../lib/money"
-import { useT } from "../lib/i18n"
+import { useT, t as translate } from "../lib/i18n"
 import GoLiveImport from "./GoLiveImport"
+
 
 const inputCls =
   "w-full rounded-lg border border-zinc-300 bg-white px-3.5 py-2.5 text-base " +
@@ -436,7 +437,7 @@ export default function Setup() {
               {t("Everything else starts at sensible defaults. You will land on a Finish setup list: rooms and rates, the booking page, outlets, tills and your team.")}
             </p>
             {error && (
-              <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</div>
+              <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{translate(error)}</div>
             )}
             <div className="flex justify-between pt-2">
               <Button variant="outline" onClick={() => setMode("choose")}>{t("Back")}</Button>
@@ -506,8 +507,8 @@ export default function Setup() {
                       : "border-zinc-200 bg-white hover:border-zinc-300",
                   )}
                 >
-                  <div className="text-sm font-semibold text-zinc-900">{opt.title}</div>
-                  <p className="mt-1 text-xs leading-relaxed text-zinc-500">{opt.blurb}</p>
+                  <div className="text-sm font-semibold text-zinc-900">{translate(opt.title)}</div>
+                  <p className="mt-1 text-xs leading-relaxed text-zinc-500">{translate(opt.blurb)}</p>
                 </button>
               ))}
             </div>
@@ -593,7 +594,7 @@ export default function Setup() {
                 ] as const
               ).map(([k, label, type, ph]) => (
                 <label key={k} className="block">
-                  <span className="mb-1.5 block text-sm font-medium text-zinc-600">{label}</span>
+                  <span className="mb-1.5 block text-sm font-medium text-zinc-600">{translate(label)}</span>
                   {k === "booking_payment_mode" ? (
                     <select
                       className={cn(inputCls, "bg-white")}
@@ -612,7 +613,7 @@ export default function Setup() {
                     >
                       {timeOptions.map((opt) => (
                         <option key={opt.value} value={opt.value}>
-                          {opt.label}
+                          {translate(opt.label)}
                         </option>
                       ))}
                     </select>
@@ -620,7 +621,7 @@ export default function Setup() {
                     <input
                       type={type}
                       className={inputCls}
-                      placeholder={ph}
+                      placeholder={translate(ph)}
                       value={prop[k]}
                       onChange={(e) => setProp({ ...prop, [k]: e.target.value })}
                     />
@@ -653,7 +654,7 @@ export default function Setup() {
                     </span>
                     <input
                       className={inputCls}
-                      placeholder="CODE"
+                      placeholder={translate("CODE")}
                       value={rt.code}
                       onChange={(e) => setRT(i, "code", e.target.value)}
                     />
@@ -664,7 +665,7 @@ export default function Setup() {
                     </span>
                     <input
                       className={inputCls}
-                      placeholder={isStr ? t("Entire villa") : t("Name (Deluxe)")}
+                      placeholder={translate(isStr ? t("Entire villa") : t("Name (Deluxe)"))}
                       value={rt.name}
                       onChange={(e) => setRT(i, "name", e.target.value)}
                     />
@@ -816,8 +817,8 @@ export default function Setup() {
                         : "border-zinc-200 bg-white hover:border-zinc-300",
                     )}
                   >
-                    <div className="text-sm font-semibold text-zinc-900">{opt.title}</div>
-                    <p className="mt-1 text-xs leading-relaxed text-zinc-500">{opt.blurb}</p>
+                    <div className="text-sm font-semibold text-zinc-900">{translate(opt.title)}</div>
+                    <p className="mt-1 text-xs leading-relaxed text-zinc-500">{translate(opt.blurb)}</p>
                   </button>
                 ))}
               </div>
@@ -887,7 +888,7 @@ export default function Setup() {
                     }
                   />
                   <span className="w-40 text-sm">
-                    {mp.label} ({mp.code})
+                    {translate(mp.label)} ({mp.code})
                   </span>
                   <input
                     className={cn(inputCls, "w-32")}
@@ -982,7 +983,7 @@ export default function Setup() {
                       onChange={(e) => setOutlets((r) => r.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)))} />
                     <select className={cn(inputCls, "w-40 bg-white")} value={o.type}
                       onChange={(e) => setOutlets((r) => r.map((x, j) => (j === i ? { ...x, type: e.target.value } : x)))}>
-                      {["Restaurant", "Room Service", "Bar", "Spa", "Other"].map((x) => <option key={x}>{x}</option>)}
+                      {["Restaurant", "Room Service", "Bar", "Spa", "Other"].map((x) => <option key={x} value={x}>{translate(x)}</option>)}
                     </select>
                     {outlets.length > 1 && (
                       <Button variant="ghost" aria-label={t("Remove")} onClick={() => setOutlets((r) => r.filter((_, j) => j !== i))}>
@@ -1031,7 +1032,7 @@ export default function Setup() {
                       onChange={(e) => setTills((r) => r.map((y, j) => (j === i ? { ...y, name: e.target.value } : y)))} />
                     <select className={cn(inputCls, "w-36 bg-white")} value={x.kind}
                       onChange={(e) => setTills((r) => r.map((y, j) => (j === i ? { ...y, kind: e.target.value } : y)))}>
-                      {TILL_KINDS.map((k) => <option key={k}>{k}</option>)}
+                      {TILL_KINDS.map((k) => <option key={k} value={k}>{translate(k)}</option>)}
                     </select>
                     <select className={cn(inputCls, "w-40 bg-white")} value={x.outlet}
                       onChange={(e) => setTills((r) => r.map((y, j) => (j === i ? { ...y, outlet: e.target.value } : y)))}>
@@ -1131,7 +1132,7 @@ export default function Setup() {
 
           {error && (
             <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-              {error}
+              {translate(error)}
             </div>
           )}
 

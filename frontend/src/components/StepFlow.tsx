@@ -16,9 +16,10 @@
 
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react"
 import { Check, Minus, TriangleAlert } from "lucide-react"
-import { useT } from "../lib/i18n"
+import { useT, t as translate } from "../lib/i18n"
 import { cn } from "../lib/utils"
 import { Button } from "./ui/button"
+
 
 export type StepStatus = "todo" | "current" | "done" | "skipped" | "blocked"
 
@@ -125,7 +126,7 @@ export function StepFlowHeader(props: {
                     i + 1
                   )}
                 </span>
-                {s.label}
+                {translate(s.label)}
                 <span className="sr-only">
                   {status === "done"
                     ? t("done")
@@ -165,12 +166,12 @@ export function StepFlowFooter(props: {
     <div className="flex w-full flex-col gap-2">
       {props.error ? (
         <p role="alert" className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">
-          {props.error}
+          {translate(props.error)}
         </p>
       ) : null}
       {props.continueDisabled && props.disabledReason && !props.busy ? (
         <p className="text-end text-xs text-zinc-500" data-testid="disabled-reason">
-          {props.disabledReason}
+          {translate(props.disabledReason)}
         </p>
       ) : null}
       <div className="flex flex-wrap items-center gap-2">

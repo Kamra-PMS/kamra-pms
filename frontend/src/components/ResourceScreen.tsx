@@ -23,7 +23,8 @@ import { Button } from "./ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
 import ImageField from "./ImageField"
 import { moneyLocale } from "../lib/money"
-import { useT, t as translate } from "../lib/i18n"
+import { useT, t as translate, useUILanguage } from "../lib/i18n"
+
 
 /** Keys from kamra.settings.menu_masters - property-editable master lists. */
 export type MenuMasterKey =
@@ -168,6 +169,7 @@ function FieldInput(props: {
   /** Translate display labels; API values stay English. */
   t: (s: string) => string
 }) {
+  useUILanguage()
   const { spec, value, onChange, t } = props
   const masterOpts =
     (spec.optionsFrom && props.masterOptions[spec.optionsFrom]) ||
@@ -303,7 +305,7 @@ export function ResourceScreen({
   /** Extra control rendered in the header next to New (e.g. a bulk import). */
   headerAction?: ReactNode
 }) {
-  const { t } = useT()
+  const { t, lang } = useT()
   const [rows, setRows] = useState<Row[]>([])
   const [editing, setEditing] = useState<Row | "new" | null>(null)
   const [draft, setDraft] = useState<Record<string, unknown>>({})
@@ -533,7 +535,7 @@ export function ResourceScreen({
       <CardContent>
         {error && !editing && (
           <div className="mb-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-            {error}
+            {translate(error)}
           </div>
         )}
         <div className="mb-4 flex flex-wrap items-center gap-2">
@@ -570,7 +572,7 @@ export function ResourceScreen({
                 <span className="text-xs">{t(config.dateFilter.label)}</span>
                 <input
                   type="date"
-                  aria-label={`${t(config.dateFilter.label)} ${t("from")}`}
+                  aria-label={translate(`${t(config.dateFilter.label)} ${t("from")}`)}
                   className="rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-sm"
                   value={dateFrom}
                   onChange={(e) => setDateFrom(e.target.value)}
@@ -578,7 +580,7 @@ export function ResourceScreen({
                 <span className="text-xs">{t("to")}</span>
                 <input
                   type="date"
-                  aria-label={`${t(config.dateFilter.label)} ${t("to")}`}
+                  aria-label={translate(`${t(config.dateFilter.label)} ${t("to")}`)}
                   className="rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-sm"
                   value={dateTo}
                   onChange={(e) => setDateTo(e.target.value)}
@@ -734,12 +736,12 @@ export function ResourceScreen({
           wide
           title={
             editing === "new"
-              ? t("New {thing}", {
+              ? (lang !== "en") ? t("New record in {section}", { section: t(config.title) }) : t("New {thing}", {
                   thing: t(config.title.replace(/s$/, "")),
                 })
               : String(editing.name)
           }
-          description={useDetail ? undefined : config.description ? t(config.description) : undefined}
+          description={translate(useDetail ? undefined : config.description ? t(config.description) : undefined)}
           onClose={() => setEditing(null)}
           footer={
             useDetail ? undefined : (
@@ -819,7 +821,7 @@ export function ResourceScreen({
               )}
               {error && (
                 <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-                  {error}
+                  {translate(error)}
                 </div>
               )}
             </div>

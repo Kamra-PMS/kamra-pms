@@ -10,11 +10,12 @@ import { call } from "../lib/api"
 import { serverError } from "../lib/resource"
 import { fmtMoney, loadLocale, locale, useLocale } from "../lib/money"
 import { useCashierAuth } from "../lib/cashierAuth"
-import { useT } from "../lib/i18n"
+import { useT, t as translate } from "../lib/i18n"
 import { cn } from "../lib/utils"
 import { Badge } from "./ui/badge"
 import { Button } from "./ui/button"
 import type { RoomDetail } from "../lib/rooms"
+
 
 const inputCls =
   "block min-h-11 w-full min-w-0 rounded-lg border border-zinc-300 bg-white px-3 text-base " +
@@ -88,7 +89,7 @@ export function GuestRequests({ d, onChanged }: { d: RoomDetail; onChanged: () =
 
   return (
     <div>
-      {error && <Note tone="error">{error}</Note>}
+      {error && <Note tone="error">{translate(error)}</Note>}
       <h3 className="mb-2 text-sm font-semibold text-zinc-800">{t("Open requests")}</h3>
       {rows === null ? (
         <p className="text-sm text-zinc-400">{t("Loading…")}</p>
@@ -315,7 +316,7 @@ export function StayBilling({ d, onChanged }: { d: RoomDetail; onChanged: () => 
     <div>
       {error && (
         <Note tone="error">
-          {error}{" "}
+          {translate(error)}{" "}
           {/till|session|cashier/i.test(error) && (
             <Link to="/cashier" className="font-medium underline">
               {t("Open the till")}
@@ -378,7 +379,7 @@ export function StayBilling({ d, onChanged }: { d: RoomDetail; onChanged: () => 
               <li key={l.key} className="flex items-center justify-between gap-3 py-1.5">
                 <span className="min-w-0 truncate text-zinc-700">
                   <span className="me-2 text-xs tabular-nums text-zinc-400">{l.date}</span>
-                  {l.label}
+                  {translate(l.label)}
                 </span>
                 <span className={cn("shrink-0 tabular-nums", l.pay ? "text-emerald-700" : "text-zinc-800")}>
                   {l.pay ? "-" : ""}

@@ -12,8 +12,9 @@ import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { cur, moneyLocale } from "../lib/money"
-import { useT } from "../lib/i18n"
+import { useT, t as translate } from "../lib/i18n"
 import { fmtDay } from "./AuditPack"
+
 
 const amount = (n: unknown) =>
   Number(n ?? 0).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
@@ -70,7 +71,7 @@ export default function EndOfDay() {
           {t("End of Day is the night audit. Close each property's business date: work through the checklist, post room and tax, roll the date and print the audit pack. The 3 AM job runs the same steps on its own.")}
         </p>
       </div>
-      {err && <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{err}</p>}
+      {err && <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{translate(err)}</p>}
       {!rows && !err && <p className="text-sm text-zinc-400">{t("Loading…")}</p>}
       <div className="grid gap-4 lg:grid-cols-2">
         {(rows ?? []).map((r) => (
@@ -99,10 +100,10 @@ export default function EndOfDay() {
             </CardHeader>
             <CardContent className="pt-3">
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                <Count label="Arrivals pending" n={r.arrivals_pending} />
-                <Count label="Departures pending" n={r.departures_pending} warn />
-                <Count label="Open cashiers" n={r.open_cashiers} warn />
-                <Count label="Open POS bills" n={r.open_pos_bills} warn />
+                <Count label={translate("Arrivals pending")} n={r.arrivals_pending} />
+                <Count label={translate("Departures pending")} n={r.departures_pending} warn />
+                <Count label={translate("Open cashiers")} n={r.open_cashiers} warn />
+                <Count label={translate("Open POS bills")} n={r.open_pos_bills} warn />
               </div>
               <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
                 <span className="text-xs text-zinc-500">

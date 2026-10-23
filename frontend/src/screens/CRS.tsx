@@ -6,7 +6,8 @@ import { Card, CardContent } from "../components/ui/card"
 import { Button } from "../components/ui/button"
 import { Sheet } from "../components/ui/sheet"
 import { cur, moneyLocale } from "../lib/money"
-import { useT } from "../lib/i18n"
+import { useT, t as translate } from "../lib/i18n"
+
 
 const inr = (n: unknown) =>
   Number(n ?? 0).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
@@ -153,7 +154,7 @@ export default function CRS() {
 
       {error && (
         <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-          {error}
+          {translate(error)}
         </div>
       )}
       {done && (
@@ -225,7 +226,7 @@ export default function CRS() {
       {booking && (
         <Sheet
           title={t("Book {type}", { type: booking.rt.room_type_name })}
-          description={`${booking.property_name} · ${checkIn} → ${checkOut} · ${cur()}${inr(booking.rt.total)} ${t("total")}`}
+          description={translate(`${booking.property_name} · ${checkIn} → ${checkOut} · ${cur()}${inr(booking.rt.total)} ${t("total")}`)}
           onClose={() => setBooking(null)}
           footer={
             <div className="flex justify-end gap-2">

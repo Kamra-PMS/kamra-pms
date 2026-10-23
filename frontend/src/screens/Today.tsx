@@ -36,7 +36,7 @@ import CheckInDialog from "../components/CheckInDialog"
 import BookingRequests from "../components/BookingRequests"
 import { serverError } from "../lib/resource"
 import { cur, moneyLocale } from "../lib/money"
-import { useT } from "../lib/i18n"
+import { useT, t as translate, uiDateLocale } from "../lib/i18n"
 import CheckOutDialog from "../components/CheckOutDialog"
 import RoomDrawer, { type RoomTab } from "../components/RoomDrawer"
 import RoomChangeDialog from "../components/RoomChangeDialog"
@@ -50,6 +50,7 @@ import {
   type TodayLayoutInfo,
   type WidgetId,
 } from "../lib/rooms"
+
 
 const HK_CYCLE: RoomRow["housekeeping_status"][] = [
   "Dirty",
@@ -110,7 +111,7 @@ function ReservationList(props: {
 }) {
   const { t } = useT()
   if (props.rows.length === 0) {
-    return <p className="px-1 py-3 text-sm text-zinc-400">{props.empty}</p>
+    return <p className="px-1 py-3 text-sm text-zinc-400">{translate(props.empty)}</p>
   }
   return (
     <ul className="divide-y divide-zinc-100">
@@ -133,22 +134,22 @@ function ReservationList(props: {
                 : t("Unassigned")}{" "}
               · {t("{n} night{s}", { n: row.nights, s: row.nights === 1 ? "" : "s" })} ·{" "}
               {t("{n} ad", { n: row.adults })}
-              {row.children ? ` + ${row.children} ch` : ""}
-              {row.eta && ` · ETA ${row.eta}`}
+              {row.children ? translate(" + {v0} ch", { v0: String(row.children) }) : ""}
+              {row.eta && translate(" · ETA {v0}", { v0: String(row.eta) })}
               {row.booked_by_name && (
                 <span
                   title={
-                    (row.booked_by_phone
+                    translate((row.booked_by_phone
                       ? `${row.booked_by_phone} · `
                       : "") +
                     t("send links & updates to: {pref}", {
-                      pref: row.contact_preference ?? "Booker",
-                    })
+                      pref: translate(row.contact_preference ?? "Booker"),
+                    }))
                   }
                 >
                   {" "}
                   · {t("via {name}", { name: row.booked_by_name })}
-                  {row.booker_relation ? ` (${row.booker_relation})` : ""}
+                  {row.booker_relation ? ` (${translate(row.booker_relation)})` : ""}
                 </span>
               )}
               {row.status === "Confirmed" && (
@@ -172,7 +173,7 @@ function ReservationList(props: {
                       )
                     }}
                     title={
-                      row.contact_preference === "Booker" && row.booked_by_name
+                      translate(row.contact_preference === "Booker" && row.booked_by_name
                         ? t("Copy the self check-in link - send to the booker, {name}{phone}", {
                             name: row.booked_by_name,
                             phone: row.booked_by_phone ? ` (${row.booked_by_phone})` : "",
@@ -181,7 +182,7 @@ function ReservationList(props: {
                           ? t("Copy the self check-in link - send to the guest and the booker ({name})", {
                               name: row.booked_by_name,
                             })
-                          : t("Copy the self check-in link - send to the guest")
+                          : t("Copy the self check-in link - send to the guest"))
                     }
                   >
                     {t("copy check-in link")}
@@ -472,14 +473,14 @@ export default function Today() {
       <div key={room.name} className="relative">
         <button
           title={
-            stay
+            translate(stay
               ? t("{guest} · check out or open registration", { guest: stay.guest_name })
               : arriving
                 ? t("{guest} arrives today · check in", { guest: arriving.guest_name })
                 : t("Housekeeping: {from} → {to} (click to advance)", {
                     from: room.housekeeping_status,
                     to: next,
-                  })
+                  }))
           }
           disabled={busy === room.name}
           aria-haspopup={hasMenu ? "menu" : undefined}
@@ -604,7 +605,7 @@ export default function Today() {
   const greeting =
     hh < 12 ? t("Good morning") : hh < 17 ? t("Good afternoon") : t("Good evening")
   const prettyDate = snap?.date
-    ? new Date(snap.date + "T00:00:00").toLocaleDateString(undefined, {
+    ? new Date(snap.date + "T00:00:00").toLocaleDateString(uiDateLocale(undefined), {
         weekday: "short",
         day: "numeric",
         month: "short",
@@ -651,7 +652,7 @@ export default function Today() {
           label={t("Revenue")}
           value={`${cur()}${inr0(revenue)}`}
           sub={
-            roomRevenueToday > 0 || revpar > 0
+            translate(roomRevenueToday > 0 || revpar > 0
               ? t("RevPAR {amount} · room {room}", {
                   amount: `${cur()}${inr0(revpar)}`,
                   room: `${cur()}${inr0(roomRevenueToday)}`,
@@ -659,7 +660,7 @@ export default function Today() {
                 }).replace(/ (\S+)$/, "\u00a0$1")
               : t("RevPAR {amount} · no room charges posted today", {
                   amount: `${cur()}${inr0(revpar)}`,
-                })
+                }))
           }
           spark={mkTrend(revenue)}
         />
@@ -668,9 +669,9 @@ export default function Today() {
           label={t("Open tasks")}
           value={tasksN}
           sub={
-            overdueN
+            translate(overdueN
               ? t("{n} overdue · Housekeeping", { n: overdueN })
-              : t("Housekeeping")
+              : t("Housekeeping"))
           }
           to={"/housekeeping"}
         />
@@ -820,7 +821,7 @@ export default function Today() {
                 <span className="text-lg font-semibold tabular-nums">
                   {s.value}
                 </span>
-                <span className="text-xs text-zinc-500">{s.label}</span>
+                <span className="text-xs text-zinc-500">{translate(s.label)}</span>
               </div>
             ))}
           </div>
@@ -863,7 +864,7 @@ export default function Today() {
 
       {error && (
         <div className="mb-4 rounded-lg border border-rose-200 bg-rose-50 px-4 py-2 text-sm text-rose-700">
-          {error}
+          {translate(error)}
         </div>
       )}
 

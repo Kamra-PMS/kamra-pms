@@ -18,6 +18,7 @@ import { serverError } from "../../lib/resource"
 import { Button } from "../../components/ui/button"
 import { Sheet } from "../../components/ui/sheet"
 import { Empty, ErrorNote, inr } from "./shared"
+import { t as translate, useUILanguage } from "../../lib/i18n"
 
 type Pick = {
   course: string
@@ -49,6 +50,7 @@ export default function MenuComposer({
   onClose: () => void
   onSaved: () => void
 }) {
+  useUILanguage()
   const [data, setData] = useState<MenuChoices | null>(null)
   const [picks, setPicks] = useState<Pick[]>([])
   const [error, setError] = useState<string | null>(null)
@@ -131,40 +133,35 @@ export default function MenuComposer({
 
   return (
     <Sheet
-      title={data ? `Choose the ${data.menu_name}` : "Choose the menu"}
-      description="What they pick is what the kitchen cooks and what the card prints."
+      title={translate(data ? translate("Choose the {v0}", { v0: String(data.menu_name) }) : translate("Choose the menu"))}
+      description={translate("What they pick is what the kitchen cooks and what the card prints.")}
       onClose={onClose}
       wide
       footer={
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="text-sm">
             {incomplete.length > 0 ? (
-              <span className="text-amber-700">
-                Still to choose:{" "}
+              <span className="text-amber-700">{translate("Still to choose:")}{" "}
                 {incomplete
                   .map(
                     (c) =>
-                      `${c.course} (${chosenIn(c.course).length}/${c.choice_of})`,
+                      `${translate(c.course)} (${chosenIn(c.course).length}/${c.choice_of})`,
                   )
                   .join(", ")}
               </span>
             ) : (
               <span className="text-zinc-500">
-                {picks.length} dish{picks.length === 1 ? "" : "es"} ·{" "}
-                {inr(totals.cost)}/pax to make
-                {totals.supplement > 0 && (
+                {picks.length}{translate(" dish")}{picks.length === 1 ? "" : translate("es")} ·{" "}
+                {inr(totals.cost)}{translate("/pax to make")}{totals.supplement > 0 && (
                   <span className="text-amber-700">
                     {" "}
-                    · +{inr(totals.supplement)}/pax upgrades
-                  </span>
+                    · +{inr(totals.supplement)}{translate("/pax upgrades")}</span>
                 )}
               </span>
             )}
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={onClose}>
-              Cancel
-            </Button>
+            <Button variant="outline" onClick={onClose}>{translate("Cancel")}</Button>
             <Button
               disabled={busy || !picks.length}
               onClick={async () => {
@@ -180,36 +177,29 @@ export default function MenuComposer({
                   setBusy(false)
                 }
               }}
-            >
-              Save the menu
-            </Button>
+            >{translate("Save the menu")}</Button>
           </div>
         </div>
       }
     >
       <ErrorNote error={error} />
       {!data ? (
-        <Empty>Loading…</Empty>
+        <Empty>{translate("Loading…")}</Empty>
       ) : data.courses.every((c) => c.options.length === 0) ? (
-        <Empty>
-          This package has no dishes attached yet - add them to its courses
-          under Menus &amp; Services, and the customer can start choosing.
-        </Empty>
+        <Empty>{translate("This package has no dishes attached yet - add them to its courses under Menus & Services, and the customer can start choosing.")}</Empty>
       ) : (
         <div className="space-y-5">
           {data.courses.map((c) => {
             const taken = chosenIn(c.course).length
             const done = !c.choice_of || taken >= c.choice_of
             return (
-              <section key={c.course}>
+              <section key={translate(c.course)}>
                 <div className="mb-2 flex items-center justify-between">
                   <h3 className="flex items-center gap-1.5 text-sm font-semibold">
-                    {c.course}
+                    {translate(c.course)}
                     {c.is_live_counter && (
                       <span className="inline-flex items-center gap-1 rounded bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-700">
-                        <Flame className="size-3" />
-                        live
-                      </span>
+                        <Flame className="size-3" />{translate("live")}</span>
                     )}
                   </h3>
                   <span
@@ -218,14 +208,14 @@ export default function MenuComposer({
                     }
                   >
                     {c.choice_of
-                      ? `choose ${c.choice_of} · ${taken} picked`
-                      : `${taken} picked`}
+                      ? translate("choose {v0} · {v1} picked", { v0: String(c.choice_of), v1: String(taken) })
+                      : translate("{v0} picked", { v0: String(taken) })}
                   </span>
                 </div>
 
                 {c.options.length === 0 ? (
                   <p className="rounded-lg bg-zinc-50 px-3 py-2 text-sm text-zinc-500">
-                    {c.free_text || "Nothing listed for this course."}
+                    {c.free_text || translate("Nothing listed for this course.")}
                   </p>
                 ) : (
                   <div className="grid gap-2 sm:grid-cols-2">
@@ -247,15 +237,13 @@ export default function MenuComposer({
                               "mt-1 size-2.5 shrink-0 rounded-full " +
                               (DOT[o.food_type ?? ""] ?? "bg-zinc-300")
                             }
-                            title={o.food_type ?? ""}
+                            title={translate(o.food_type ?? "")}
                           />
                           <span className="min-w-0 flex-1">
                             <span className="flex items-center gap-1.5 font-medium">
                               {o.dish_name}
                               {o.is_default && !on && (
-                                <span className="text-[10px] font-normal text-zinc-400">
-                                  standard
-                                </span>
+                                <span className="text-[10px] font-normal text-zinc-400">{translate("standard")}</span>
                               )}
                             </span>
                             <span className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-zinc-400">
@@ -273,8 +261,7 @@ export default function MenuComposer({
                               {o.supplement_per_pax > 0 && (
                                 <span className="inline-flex items-center gap-0.5 font-medium text-amber-700">
                                   <Sparkles className="size-3" />
-                                  +{inr(o.supplement_per_pax)}/pax
-                                </span>
+                                  +{inr(o.supplement_per_pax)}{translate("/pax")}</span>
                               )}
                             </span>
                           </span>
@@ -292,20 +279,14 @@ export default function MenuComposer({
 
           {pax > 0 && (
             <div className="rounded-xl bg-zinc-50 px-4 py-3 text-sm">
-              <p className="text-zinc-500">
-                At {pax} pax this menu costs{" "}
+              <p className="text-zinc-500">{translate("At ")}{pax}{translate(" pax this menu costs")}{" "}
                 <span className="font-semibold text-zinc-900">
                   {inr(totals.cost * pax)}
-                </span>{" "}
-                to produce
-                {totals.supplement > 0 && (
-                  <>
-                    , and the upgrades add{" "}
+                </span>{" "}{translate("to produce")}{totals.supplement > 0 && (
+                  <>{translate(", and the upgrades add")}{" "}
                     <span className="font-semibold text-amber-700">
                       {inr(totals.supplement * pax)}
-                    </span>{" "}
-                    to the quote
-                  </>
+                    </span>{" "}{translate("to the quote")}</>
                 )}
                 .
               </p>

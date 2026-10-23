@@ -26,12 +26,13 @@ import {
   splitPhone,
 } from "../lib/phone"
 import { clampGuests, sleeps } from "../lib/occupancy"
-import { useT } from "../lib/i18n"
+import { useT, t as translate, useUILanguage } from "../lib/i18n"
 import { petChargeBasis } from "../lib/pets"
 import { useCashierAuth } from "../lib/cashierAuth"
 import DepositPanel, { type DepositState } from "./DepositPanel"
 import CheckInDialog from "./CheckInDialog"
 import TillCard, { useTill } from "./TillCard"
+
 
 interface CompanyCredit {
   applies: boolean
@@ -65,6 +66,7 @@ function PhoneInput(props: {
   onChange: (phone: string) => void
   placeholder?: string
 }) {
+  useUILanguage()
   const { dial, local } = splitPhone(props.value, props.country)
   const { min, max } = phoneLengthForDial(dial)
   // only nag once they have stopped short - not on every keystroke of a
@@ -93,7 +95,7 @@ function PhoneInput(props: {
           onChange={(e) =>
             props.onChange(joinPhone(dial, clampLocal(e.target.value, dial)))
           }
-          placeholder={props.placeholder ?? (dial === "91" ? "91488 69914" : "Mobile number")}
+          placeholder={translate(props.placeholder ?? (dial === "91" ? "91488 69914" : translate("Mobile number")))}
         />
         <span className="shrink-0 pr-3.5 text-xs tabular-nums text-zinc-400">
           {local.length}/{max}
@@ -102,8 +104,8 @@ function PhoneInput(props: {
       {short && (
         <p className="mt-1.5 text-xs text-rose-600">
           {min === max
-            ? `+${dial} numbers are ${min} digits.`
-            : `+${dial} numbers are ${min}-${max} digits.`}
+            ? translate("+{v0} numbers are {v1} digits.", { v0: String(dial), v1: String(min) })
+            : translate("+{v0} numbers are {v1}-{v2} digits.", { v0: String(dial), v1: String(min), v2: String(max) })}
         </p>
       )}
     </>
@@ -111,10 +113,11 @@ function PhoneInput(props: {
 }
 
 function Field(props: { label: string; children: React.ReactNode }) {
+  useUILanguage()
   return (
     <label className="block">
       <span className="mb-1.5 block text-sm font-medium text-zinc-600">
-        {props.label}
+        {translate(props.label)}
       </span>
       {props.children}
     </label>
@@ -615,7 +618,7 @@ export function BookingDialog(props: {
         })
         if (out.skipped.length > 0) {
           setError(
-            `Booked ${out.created.length} of ${rooms.length} rooms - ` +
+            translate("Booked {v0} of {v1} rooms - ", { v0: String(out.created.length), v1: String(rooms.length) }) +
               out.skipped.map((s) => s.reason).join("; "),
           )
           if (out.created.length === 0) return
@@ -832,7 +835,7 @@ export function BookingDialog(props: {
       className="fixed inset-0 z-50"
       role="dialog"
       aria-modal="true"
-      aria-label={walkIn ? t("Walk-in") : t("New booking")}
+      aria-label={translate(walkIn ? t("Walk-in") : t("New booking"))}
       onKeyDown={(e) => e.key === "Escape" && props.onClose()}
     >
       <div
@@ -879,7 +882,7 @@ export function BookingDialog(props: {
                       : "text-zinc-500 hover:text-zinc-800")
                   }
                 >
-                  {m.label}
+                  {translate(m.label)}
                 </button>
               ))}
             </div>
@@ -1211,7 +1214,7 @@ export function BookingDialog(props: {
                         </p>
                         <ul className="mt-1 list-disc space-y-0.5 pl-4">
                           {credit.reasons.map((r) => (
-                            <li key={r}>{r}</li>
+                            <li key={r}>{translate(r)}</li>
                           ))}
                         </ul>
                       </div>
@@ -1400,7 +1403,7 @@ export function BookingDialog(props: {
                       min={todayLocal()}
                       value={form.check_in_date}
                       readOnly={walkIn}
-                      title={walkIn ? t("A walk-in arrives today") : undefined}
+                      title={translate(walkIn ? t("A walk-in arrives today") : undefined)}
                       onChange={(e) => set("check_in_date", e.target.value)}
                     />
                     {pastCheckIn && (
@@ -1583,9 +1586,8 @@ export function BookingDialog(props: {
                       <option value="">{t("Room only")}</option>
                       {options?.meal_plans.map((mp) => (
                         <option key={mp.name} value={mp.name}>
-                          {mp.label} (+{cur()}
-                          {inr(mp.price_per_adult)}/adult)
-                        </option>
+                          {translate(mp.label)} (+{cur()}
+                          {inr(mp.price_per_adult)}{translate("/adult)")}</option>
                       ))}
                     </select>
                   </Field>
@@ -1712,12 +1714,11 @@ export function BookingDialog(props: {
                     key={i}
                     className="flex flex-wrap items-end gap-2 rounded-xl border border-zinc-200 bg-zinc-50/50 px-3 py-2.5"
                   >
-                    <span className="w-full text-xs font-medium uppercase tracking-wider text-zinc-400">
-                      Room {i + 2}
+                    <span className="w-full text-xs font-medium uppercase tracking-wider text-zinc-400">{translate("Room ")}{i + 2}
                     </span>
                     <select
                       className={`${inputCls} !w-auto flex-1`}
-                      aria-label={`Room ${i + 2} type`}
+                      aria-label={translate("Room {v0} type", { v0: String(i + 2) })}
                       value={r.room_type}
                       onChange={(e) =>
                         setMoreRooms((rs) =>
@@ -1737,7 +1738,7 @@ export function BookingDialog(props: {
                       type="number"
                       min={1}
                       max={sleeps(rt, "adults") || undefined}
-                      aria-label={`Room ${i + 2} adults`}
+                      aria-label={translate("Room {v0} adults", { v0: String(i + 2) })}
                       className={`${inputCls} !w-16`}
                       value={r.adults}
                       onChange={(e) =>
@@ -1758,7 +1759,7 @@ export function BookingDialog(props: {
                     />
                     <select
                       className={`${inputCls} !w-auto`}
-                      aria-label={`Room ${i + 2} meal plan`}
+                      aria-label={translate("Room {v0} meal plan", { v0: String(i + 2) })}
                       value={r.meal_plan}
                       onChange={(e) =>
                         setMoreRooms((rs) =>
@@ -1768,16 +1769,16 @@ export function BookingDialog(props: {
                         )
                       }
                     >
-                      <option value="">Room only</option>
+                      <option value="">{translate("Room only")}</option>
                       {options?.meal_plans.map((mp) => (
                         <option key={mp.name} value={mp.name}>
-                          {mp.label}
+                          {translate(mp.label)}
                         </option>
                       ))}
                     </select>
                     <button
                       className="rounded p-1.5 text-zinc-400 hover:text-rose-500"
-                      aria-label={`Remove room ${i + 2}`}
+                      aria-label={translate("Remove room {v0}", { v0: String(i + 2) })}
                       onClick={() =>
                         setMoreRooms((rs) => rs.filter((_, j) => j !== i))
                       }
@@ -1827,7 +1828,7 @@ export function BookingDialog(props: {
                   {moreOpen && (
                     <div className="space-y-5 pb-2 pt-1">
                       <div className="grid gap-3 sm:grid-cols-2">
-                        <Field label="Company (bill corporate)">
+                        <Field label={translate("Company (bill corporate)")}>
                           <select
                             className={inputCls}
                             value={form.company}
@@ -1841,7 +1842,7 @@ export function BookingDialog(props: {
                             ))}
                           </select>
                         </Field>
-                        <Field label="Travel agent">
+                        <Field label={translate("Travel agent")}>
                           <select
                             className={inputCls}
                             value={form.travel_agent}
@@ -1862,9 +1863,7 @@ export function BookingDialog(props: {
                       {moreRooms.length === 0 &&
                         (options?.experiences.length ?? 0) > 0 && (
                           <div>
-                            <span className="mb-1.5 block text-sm font-medium text-zinc-600">
-                              Add-ons
-                            </span>
+                            <span className="mb-1.5 block text-sm font-medium text-zinc-600">{translate("Add-ons")}</span>
                             <div className="flex flex-wrap gap-1.5">
                               {options?.experiences.map((x) => {
                                 const on = (addonQty[x.name] ?? 0) > 0
@@ -1895,11 +1894,7 @@ export function BookingDialog(props: {
                         )}
 
                       {moreRooms.length > 0 && (
-                        <p className="text-xs text-zinc-400">
-                          Multi-room bookings are created as a group - vouchers,
-                          add-ons and booker details can be added per stay
-                          afterwards.
-                        </p>
+                        <p className="text-xs text-zinc-400">{translate("Multi-room bookings are created as a group - vouchers, add-ons and booker details can be added per stay afterwards.")}</p>
                       )}
 
                       {moreRooms.length === 0 && (
@@ -1910,23 +1905,21 @@ export function BookingDialog(props: {
                               className="size-4 accent-brand-600"
                               checked={onBehalf}
                               onChange={(e) => setOnBehalf(e.target.checked)}
-                            />
-                            Booked on someone&apos;s behalf
-                          </label>
+                            />{translate("Booked on someone's behalf")}</label>
                           {onBehalf && (
                             <div className="space-y-3">
                               <div className="grid gap-3 sm:grid-cols-2">
-                                <Field label="Booker name">
+                                <Field label={translate("Booker name")}>
                                   <input
                                     className={inputCls}
                                     value={form.booked_by_name}
                                     onChange={(e) =>
                                       set("booked_by_name", e.target.value)
                                     }
-                                    placeholder="Who arranged this stay"
+                                    placeholder={translate("Who arranged this stay")}
                                   />
                                 </Field>
-                                <Field label="Booker phone">
+                                <Field label={translate("Booker phone")}>
                                   <PhoneInput
                                     value={form.booked_by_phone}
                                     country={options?.property?.country}
@@ -1937,7 +1930,7 @@ export function BookingDialog(props: {
                                 </Field>
                               </div>
                               <div className="grid gap-3 sm:grid-cols-2">
-                                <Field label="Relation">
+                                <Field label={translate("Relation")}>
                                   <select
                                     className={inputCls}
                                     value={form.booker_relation}
@@ -1952,11 +1945,11 @@ export function BookingDialog(props: {
                                       "Company Travel Desk",
                                       "Travel Agent",
                                     ].map((r) => (
-                                      <option key={r}>{r}</option>
+                                      <option key={r} value={r}>{translate(r)}</option>
                                     ))}
                                   </select>
                                 </Field>
-                                <Field label="Send links & updates to">
+                                <Field label={translate("Send links & updates to")}>
                                   <select
                                     className={inputCls}
                                     value={form.contact_preference}
@@ -1964,20 +1957,20 @@ export function BookingDialog(props: {
                                       set("contact_preference", e.target.value)
                                     }
                                   >
-                                    <option value="Booker">Booker</option>
-                                    <option value="Guest">Guest</option>
-                                    <option value="Both">Both</option>
+                                    <option value="Booker">{translate("Booker")}</option>
+                                    <option value="Guest">{translate("Guest")}</option>
+                                    <option value="Both">{translate("Both")}</option>
                                   </select>
                                 </Field>
                               </div>
                             </div>
                           )}
 
-                          <Field label="Special requests">
+                          <Field label={translate("Special requests")}>
                             <textarea
                               className={inputCls}
                               rows={2}
-                              placeholder="e.g. prayer mat, high floor, allergy notes"
+                              placeholder={translate("e.g. prayer mat, high floor, allergy notes")}
                               value={extra.special_requests}
                               onChange={(e) =>
                                 setX("special_requests", e.target.value)
@@ -2002,13 +1995,13 @@ export function BookingDialog(props: {
                                   checked={extra[k]}
                                   onChange={(e) => setX(k, e.target.checked)}
                                 />
-                                {lbl}
+                                {translate(lbl)}
                               </label>
                             ))}
                           </div>
                           {extra.pickup_required && (
                             <div className="grid gap-3 sm:grid-cols-2">
-                              <Field label="Arrival mode">
+                              <Field label={translate("Arrival mode")}>
                                 <select
                                   className={inputCls}
                                   value={extra.arrival_mode}
@@ -2017,14 +2010,14 @@ export function BookingDialog(props: {
                                   }
                                 >
                                   <option value=""> - </option>
-                                  <option>Air</option>
-                                  <option>Road</option>
-                                  <option>Rail</option>
-                                  <option>Sea</option>
-                                  <option>Own vehicle</option>
+                                  <option value={"Air"}>{translate("Air")}</option>
+                                  <option value={"Road"}>{translate("Road")}</option>
+                                  <option value={"Rail"}>{translate("Rail")}</option>
+                                  <option value={"Sea"}>{translate("Sea")}</option>
+                                  <option value={"Own vehicle"}>{translate("Own vehicle")}</option>
                                 </select>
                               </Field>
-                              <Field label="Flight / train no.">
+                              <Field label={translate("Flight / train no.")}>
                                 <input
                                   className={inputCls}
                                   value={extra.arrival_ref}
@@ -2033,7 +2026,7 @@ export function BookingDialog(props: {
                                   }
                                 />
                               </Field>
-                              <Field label="Arrival time">
+                              <Field label={translate("Arrival time")}>
                                 <input
                                   type="datetime-local"
                                   className={inputCls}
@@ -2043,7 +2036,7 @@ export function BookingDialog(props: {
                                   }
                                 />
                               </Field>
-                              <Field label="Extra beds">
+                              <Field label={translate("Extra beds")}>
                                 <input
                                   type="number"
                                   min={0}
@@ -2057,7 +2050,7 @@ export function BookingDialog(props: {
                             </div>
                           )}
                           <div className="grid gap-3 sm:grid-cols-2">
-                            <Field label="Purpose of visit">
+                            <Field label={translate("Purpose of visit")}>
                               <select
                                 className={inputCls}
                                 value={extra.purpose}
@@ -2066,16 +2059,16 @@ export function BookingDialog(props: {
                                 }
                               >
                                 <option value=""> - </option>
-                                <option>Leisure</option>
-                                <option>Business</option>
-                                <option>Event / Wedding</option>
-                                <option>Medical</option>
-                                <option>Pilgrimage</option>
-                                <option>Crew</option>
-                                <option>Other</option>
+                                <option value={"Leisure"}>{translate("Leisure")}</option>
+                                <option value={"Business"}>{translate("Business")}</option>
+                                <option value={"Event / Wedding"}>{translate("Event / Wedding")}</option>
+                                <option value={"Medical"}>{translate("Medical")}</option>
+                                <option value={"Pilgrimage"}>{translate("Pilgrimage")}</option>
+                                <option value={"Crew"}>{translate("Crew")}</option>
+                                <option value={"Other"}>{translate("Other")}</option>
                               </select>
                             </Field>
-                            <Field label="Guest category">
+                            <Field label={translate("Guest category")}>
                               <select
                                 className={inputCls}
                                 value={extra.guest_category}
@@ -2083,11 +2076,11 @@ export function BookingDialog(props: {
                                   setX("guest_category", e.target.value)
                                 }
                               >
-                                <option value="">Standard</option>
-                                <option>VIP</option>
-                                <option>Corporate</option>
-                                <option>Complimentary</option>
-                                <option>Crew</option>
+                                <option value="">{translate("Standard")}</option>
+                                <option value={"VIP"}>{translate("VIP")}</option>
+                                <option value={"Corporate"}>{translate("Corporate")}</option>
+                                <option value={"Complimentary"}>{translate("Complimentary")}</option>
+                                <option value={"Crew"}>{translate("Crew")}</option>
                               </select>
                             </Field>
                           </div>
@@ -2122,7 +2115,7 @@ export function BookingDialog(props: {
                         {roomTypeName} ·{" "}
                         {quote.day_use
                           ? t("Day use {from}-{to}", { from: slot.from, to: slot.to })
-                          : `${quote.nights} night${quote.nights === 1 ? "" : "s"}`}
+                          : translate("{v0} night{v1}", { v0: String(quote.nights), v1: String(quote.nights === 1 ? "" : "s") })}
                       </span>
                       <span className="shrink-0 tabular-nums">
                         {cur()}
@@ -2182,8 +2175,7 @@ export function BookingDialog(props: {
                           key={i}
                           className="flex justify-between gap-3 text-zinc-600"
                         >
-                          <span className="min-w-0 truncate">
-                            Room {i + 2} ·{" "}
+                          <span className="min-w-0 truncate">{translate("Room ")}{i + 2} ·{" "}
                             {options?.room_types.find(
                               (rt) => rt.name === moreRooms[i]?.room_type,
                             )?.room_type_name ?? ""}
@@ -2226,9 +2218,9 @@ export function BookingDialog(props: {
                       <p className="pt-1 text-xs leading-relaxed text-zinc-500">
                         {cancelText}
                         {(options.property.no_show_charge || "None") !== "None" &&
-                          ` No-show: ${String(options.property.no_show_charge).toLowerCase()} charged.`}
+                          translate(" No-show: {v0} charged.", { v0: String(String(options.property.no_show_charge).toLowerCase()) })}
                         {(options.property.deposit_pct ?? 0) > 0 &&
-                          ` Deposit expected now: ${cur()}${inr((grandTotal * options.property.deposit_pct) / 100)} (${options.property.deposit_pct}%).`}
+                          translate(" Deposit expected now: {v0}{v1} ({v2}%).", { v0: String(cur()), v1: String(inr((grandTotal * options.property.deposit_pct) / 100)), v2: String(options.property.deposit_pct) })}
                       </p>
                     )}
                   </div>
@@ -2240,7 +2232,7 @@ export function BookingDialog(props: {
 
                 {error && (
                   <div className="mt-4 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2.5 text-sm text-rose-700">
-                    {error}
+                    {translate(error)}
                   </div>
                 )}
               </div>

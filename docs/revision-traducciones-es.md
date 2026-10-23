@@ -4,6 +4,8 @@ Fecha: 22 de octubre de 2026. Base de comparación: commit beaabe9a.
 
 Revisión posterior específica de «rate»: [criterios, cambios y las 51 entradas revisadas](revision-rate-es.md).
 
+Revisión del 23 de octubre de 2026: [textos adicionales, cobertura y uso de t()/tn()](revision-textos-pendientes-es.md).
+
 Se revisaron las 2,339 entradas existentes, se corrigieron 722 traducciones y se añadieron 467 entradas para etiquetas dinámicas, estados y compatibilidad con el diccionario existente. El recurso español contiene ahora 2,806 entradas.
 
 La revisión se apoyó en las pantallas y operaciones del código: recepción, reservas, habitaciones, limpieza, lavandería, restaurante y cocina, caja, facturación, tarifas, banquetes y auditoría nocturna.

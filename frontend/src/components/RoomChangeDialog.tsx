@@ -8,9 +8,10 @@ import { ArrowRight, BedDouble, Loader2, Search, X } from "lucide-react"
 import { call } from "../lib/api"
 import { serverError } from "../lib/resource"
 import { cur, moneyLocale } from "../lib/money"
-import { useT } from "../lib/i18n"
+import { useT, t as translate } from "../lib/i18n"
 import { cn } from "../lib/utils"
 import { Button } from "./ui/button"
+
 
 interface MovableRoom {
   name: string
@@ -187,7 +188,7 @@ export default function RoomChangeDialog(props: {
                   scope === k ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-500",
                 )}
               >
-                {label}
+                {translate(label)}
               </button>
             ))}
           </div>
@@ -228,7 +229,7 @@ export default function RoomChangeDialog(props: {
                       disabled={!r.free}
                       aria-pressed={pick?.name === r.name}
                       onClick={() => { setPick(r); setError(null) }}
-                      title={r.free ? undefined : t("Booked for these dates")}
+                      title={translate(r.free ? undefined : t("Booked for these dates"))}
                       className={cn(
                         "rounded-lg border px-2.5 py-2 text-left transition-colors",
                         !r.free && "cursor-not-allowed border-dashed border-zinc-200 bg-zinc-50 opacity-50",
@@ -319,7 +320,7 @@ export default function RoomChangeDialog(props: {
             </Button>
           </div>
           {error && (
-            <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</div>
+            <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{translate(error)}</div>
           )}
         </footer>
       </div>
