@@ -74,6 +74,12 @@ for (const file of walk(src)) {
   }
 }
 
+// Menu labels, statuses and saved reports can call t(variable). Keep their
+// dictionary keys when rebuilding the catalog so a later import retains them.
+for (const key of new Set([...Object.keys(existingAr), ...Object.keys(existingEs)])) {
+  if (!keys.has(key)) keys.set(key, new Set())
+}
+
 const rows = [...keys.entries()].sort((a, b) => a[0].localeCompare(b[0]))
 const lines = ["key,english,arabic,spanish,sources,placeholders,status"]
 for (const [key, sources] of rows) {
