@@ -17,7 +17,6 @@ kamra/public/node_modules/
 # Local
 .DS_Store
 .env
-/docs/
 
 # Internal operator plans — keep local only, never publish
 PLAN.md
