@@ -5213,8 +5213,5 @@
   "Name each till, tie it to an outlet. Without any, everyone uses the Default till.": "Asigne un nombre a cada caja y vincúlela a un punto de venta. Si no configura ninguna, todos usarán la caja predeterminada.",
   "Desserts": "Postres",
   "Tandoor": "Horno tandoor",
-  "Bar": "Bar",
-  "Country calling code": "Prefijo telefónico internacional",
-  "Select a calling code.": "Seleccione un prefijo telefónico.",
-  "Check the phone number and calling code.": "Revise el número de teléfono y el prefijo internacional."
+  "Bar": "Bar"
 }
