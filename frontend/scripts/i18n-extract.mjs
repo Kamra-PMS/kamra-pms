@@ -85,6 +85,15 @@ for (const match of fs.readFileSync(checklistFile, "utf8").matchAll(serverCall))
   )
 }
 
+// These server defaults are displayed as menu categories, courses, stations and tags.
+const settingsFile = path.join(root, "../kamra/settings.py")
+const menuDefaults = /\bS\("menu_(?:categories|courses|prep_stations|allergen_tags)",\s*"[^"\n]*",\s*"textarea",\s*"((?:\\.|[^"\\])*)"/g
+for (const match of fs.readFileSync(settingsFile, "utf8").matchAll(menuDefaults)) {
+  for (const option of match[1].replace(/\\n/g, "\n").split("\n")) {
+    add(option.trim(), settingsFile)
+  }
+}
+
 // Menu labels, statuses and saved reports can call t(variable). Keep their
 // dictionary keys when rebuilding the catalog so a later import retains them.
 for (const key of new Set([...Object.keys(existingAr), ...Object.keys(existingEs)])) {

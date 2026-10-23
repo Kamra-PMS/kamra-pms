@@ -5210,5 +5210,8 @@
   "Each place that sells food or drink.": "Cada punto donde se venden alimentos o bebidas.",
   "Dishes and prices per outlet.": "Platos y precios de cada punto de venta.",
   "Which station prints which tickets, and where bills print.": "Defina qué estación imprime cada comanda y dónde se imprimen las cuentas.",
-  "Name each till, tie it to an outlet. Without any, everyone uses the Default till.": "Asigne un nombre a cada caja y vincúlela a un punto de venta. Si no configura ninguna, todos usarán la caja predeterminada."
+  "Name each till, tie it to an outlet. Without any, everyone uses the Default till.": "Asigne un nombre a cada caja y vincúlela a un punto de venta. Si no configura ninguna, todos usarán la caja predeterminada.",
+  "Desserts": "Postres",
+  "Tandoor": "Horno tandoor",
+  "Bar": "Bar"
 }

@@ -258,24 +258,44 @@ function FieldInput(props: {
           onChange={(url) => onChange(url)}
         />
       )
-    default:
+    default: {
+      const optionLabels = masterOpts.map((option) => ({ value: option, label: t(option) }))
+      const labelCounts = new Map<string, number>()
+      for (const { label } of optionLabels) {
+        labelCounts.set(label, (labelCounts.get(label) ?? 0) + 1)
+      }
+      // Keep distinct original values selectable when their translations coincide.
+      const suggestions = optionLabels.map((option) => ({
+        ...option,
+        label: (labelCounts.get(option.label) ?? 0) > 1 && option.label !== option.value
+          ? `${option.label} (${option.value})`
+          : option.label,
+      }))
+      const rawValue = String(value ?? "")
+      const selected = suggestions.find((option) => option.value === rawValue)
       return (
         <>
           <input
             className={inputCls}
             list={spec.optionsFrom ? `masters-${spec.field}` : undefined}
-            value={String(value ?? "")}
-            onChange={(e) => onChange(e.target.value)}
+            value={selected?.label ?? rawValue}
+            onChange={(e) => {
+              const entered = e.target.value
+              const suggestion = suggestions.find((option) => option.label === entered)
+              // Store the master value; free text remains available for new categories.
+              onChange(suggestion?.value ?? entered)
+            }}
           />
-          {spec.optionsFrom && masterOpts.length > 0 && (
+          {spec.optionsFrom && suggestions.length > 0 && (
             <datalist id={`masters-${spec.field}`}>
-              {masterOpts.map((o) => (
-                <option key={o} value={o} />
+              {suggestions.map((option) => (
+                <option key={option.value} value={option.label} />
               ))}
             </datalist>
           )}
         </>
       )
+    }
   }
 }
 

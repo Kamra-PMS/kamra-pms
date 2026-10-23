@@ -873,6 +873,7 @@ Banquet registers,Banquet registers,,Registros de banquetes,screens\BanquetRegis
 Banquets,Banquets,المآدب,Banquetes,screens\Banquet.tsx; screens\BanquetFunction.tsx,,translated
 Banquets & Groups,Banquets & Groups,المآدب والمجموعات,Banquetes y grupos,,,translated
 Banquets and events,Banquets and events,,Banquetes y eventos,,,needs_translation
+Bar,Bar,,Bar,..\..\kamra\settings.py,,needs_translation
 BAR,BAR,,BAR,components\BookingDialog.tsx; screens\RateCalendar.tsx,,needs_translation
 BAR (base price),BAR (base price),,BAR (precio base),,,needs_translation
 "BAR (best available rate) is the base price of a room type. A season changes it for a date range, and a busy-house rule raises it when the house fills. This table shows the result per night. Rate plans and vouchers apply on top, per booking.","BAR (best available rate) is the base price of a room type. A season changes it for a date range, and a busy-house rule raises it when the house fills. This table shows the result per night. Rate plans and vouchers apply on top, per booking.",,"BAR (mejor tarifa disponible) es el precio base de cada tipo de habitación. Las temporadas pueden modificarla durante ciertos rangos de fechas, y una regla de alta ocupación la aumenta cuando hay mucha demanda. Esta tabla muestra la tarifa por noche. Los planes tarifarios y los cupones se aplican por reserva.",screens\RateCalendar.tsx,,needs_translation
@@ -902,7 +903,7 @@ Below this it still bills for the minimum,Below this it still bills for the mini
 Bench,Bench,Bench,Bench,screens\SystemHealth.tsx,,translated
 best available rate,best available rate,,mejor tarifa disponible,,,needs_translation
 Beverage,Beverage,,Bebidas,,,needs_translation
-Beverages,Beverages,,Bebidas,,,needs_translation
+Beverages,Beverages,,Bebidas,..\..\kamra\settings.py,,needs_translation
 bill,bill,,cuenta,screens\POS.tsx,,needs_translation
 Bill,Bill,فاتورة,Cuenta,components\CheckOutDialog.tsx; screens\CityLedgerPayment.tsx; screens\POS.tsx; screens\pos\OrderHistory.tsx; screens\pos\PosSidePanel.tsx,,translated
 Bill {total} · paid {paid},Bill {total} · paid {paid},الفاتورة {total} · المدفوع {paid},Cuenta: {total} · pagado: {paid},components\RoomStayPanels.tsx,total paid,translated
@@ -1001,7 +1002,7 @@ Breach %,Breach %,,Incumplimiento (%),screens\OpsSLA.tsx,,needs_translation
 Breach rate,Breach rate,,Porcentaje de incumplimiento,screens\OpsSLA.tsx,,needs_translation
 Breached,Breached,,Incumplido,screens\OpsSLA.tsx; screens\Tickets.tsx,,needs_translation
 Breadcrumb,Breadcrumb,,Ruta de navegación,screens\BanquetFunction.tsx,,needs_translation
-Breads,Breads,,Panes,,,needs_translation
+Breads,Breads,,Panes,..\..\kamra\settings.py,,needs_translation
 Breakfast,Breakfast,الإفطار,Desayuno,components\CheckInDialog.tsx,,translated
 Breakfast + Dinner,Breakfast + Dinner,,Desayuno y cena,,,needs_translation
 Breakfast Included,Breakfast Included,,Desayuno incluido,,,needs_translation
@@ -1557,7 +1558,7 @@ Customize Today,Customize Today,تخصيص صفحة اليوم,Personalizar Hoy,
 Cutoff,Cutoff,,Fecha límite de liberación,components\GroupControl.tsx,,needs_translation
 Cycle open bills,Cycle open bills,تصفح الفواتير المفتوحة,Alternar entre cuentas abiertas,,,translated
 d late),d late),, días de atraso),screens\CityLedgerPayment.tsx,,needs_translation
-Dairy,Dairy,,Lácteos,,,needs_translation
+Dairy,Dairy,,Lácteos,..\..\kamra\settings.py,,needs_translation
 Damage to the room?,Damage to the room?,هل توجد أضرار في الغرفة؟,¿Daños en la habitación?,components\CheckOutDialog.tsx,,translated
 Damaged,Damaged,,Dañado,,,needs_translation
 Damages,Damages,الأضرار,Daños,screens\BanquetFunction.tsx,,translated
@@ -1655,7 +1656,8 @@ Deposits,Deposits,,Anticipos y depósitos de garantía,,,needs_translation
 Deposits & payment links,Deposits & payment links,,Depósitos y enlaces de pago,,,needs_translation
 Description,Description,الوصف,Descripción,components\CheckOutDialog.tsx; components\RoomTypeMedia.tsx; screens\BanquetCatalogue.tsx; screens\FolioView.tsx; screens\Ledgers.tsx,,translated
 Description (shown to guests),Description (shown to guests),,Descripción (visible para los huéspedes),,,needs_translation
-Dessert,Dessert,,Postre,,,needs_translation
+Dessert,Dessert,,Postre,..\..\kamra\settings.py,,needs_translation
+Desserts,Desserts,,Postres,..\..\kamra\settings.py,,needs_translation
 Detach profile,Detach profile,فصل الملف,Desvincular perfil,components\BookingDialog.tsx,,translated
 Detail,Detail,التفاصيل,Detalle,screens\Inventory.tsx; screens\VoidAllowanceReport.tsx,,translated
 Details,Details,التفاصيل,Detalles,components\RoomDrawer.tsx; screens\Tickets.tsx,,translated
@@ -1729,7 +1731,7 @@ Download the current view as CSV (Excel-ready),Download the current view as CSV 
 Dr ,Dr ,,Debe ,screens\Ledgers.tsx,,needs_translation
 Draft,Draft,,Borrador,screens\POS.tsx,,needs_translation
 Draft - no number issued yet.,Draft - no number issued yet.,,Borrador: aún sin número asignado.,screens\BanquetDocument.tsx,,needs_translation
-Drink,Drink,,Bebida,,,needs_translation
+Drink,Drink,,Bebida,..\..\kamra\settings.py,,needs_translation
 Driving Directions,Driving Directions,,Cómo llegar en auto,screens\BookingEngine.tsx; screens\PublicBooking.tsx,,needs_translation
 Driving License,Driving License,رخصة قيادة,Licencia de conducir,,,translated
 Drop to safe,Drop to safe,إيداع في الخزنة,Entregar efectivo a caja central,screens\CashierTill.tsx,,translated
@@ -1770,7 +1772,7 @@ Edit service,Edit service,,Editar servicio,screens\BanquetCatalogue.tsx,,needs_t
 Edit targets,Edit targets,,Editar metas,screens\RevenueReports.tsx,,needs_translation
 Edit the list under Settings → F&B → Menu master lists. Matched against the guest allergy note on the kitchen display.,Edit the list under Settings → F&B → Menu master lists. Matched against the guest allergy note on the kitchen display.,,Edite la lista en Configuración → Alimentos y bebidas → Listas del menú. Se compara con las alergias del huésped en la pantalla de cocina.,,,needs_translation
 Edit the menu,Edit the menu,,Editar el menú,,,needs_translation
-Egg,Egg,,Huevo,,,needs_translation
+Egg,Egg,,Huevo,..\..\kamra\settings.py,,needs_translation
 EGS serial (Phase 2),EGS serial (Phase 2),,Número de serie EGS (fase 2),,,needs_translation
 elapsed,elapsed,منقضي,transcurrido,screens\Kitchen.tsx,,translated
 Email,Email,البريد الإلكتروني,Correo electrónico,components\CheckInDialog.tsx; screens\Banquet.tsx; screens\BanquetFunction.tsx; screens\BookingEngine.tsx; screens\PublicCheckin.tsx; screens\RegistrationCard.tsx; screens\ReservationDetail.tsx; screens\settings\AccessPages.tsx,,translated
@@ -1993,7 +1995,7 @@ First Night,First Night,,Primera noche,,,needs_translation
 First response,First response,,Primera respuesta,screens\Tickets.tsx,,needs_translation
 First stay,First stay,,Primera estancia,,,needs_translation
 First visit here.,First visit here.,أول زيارة هنا.,Primera visita aquí.,screens\pos\PosSidePanel.tsx,,translated
-Fish,Fish,,Pescado,,,needs_translation
+Fish,Fish,,Pescado,..\..\kamra\settings.py,,needs_translation
 Fix End of Day blockers,Fix End of Day blockers,,Resolver impedimentos del cierre del día,,,needs_translation
 Fix the issue below to see a price.,Fix the issue below to see a price.,أصلح المشكلة أدناه لرؤية السعر.,Solucione el problema a continuación para ver un precio.,components\BookingDialog.tsx,,translated
 "Fix what is listed below, import again (already-posted rows are skipped), then reconcile again.","Fix what is listed below, import again (already-posted rows are skipped), then reconcile again.",,"Corrija los elementos indicados abajo e importe de nuevo. Las filas ya registradas se omitirán; después, vuelva a conciliar.",screens\GoLiveImport.tsx,,needs_translation
@@ -2071,7 +2073,7 @@ Front Desk Overview,Front Desk Overview,نظرة عامة على الاستقب�
 Front desk till,Front desk till,,Caja de recepción,,,needs_translation
 Front office,Front office,المكتب الأمامي,Recepción,,,translated
 Front office and the room board agree.,Front office and the room board agree.,المكتب الأمامي ولوحة الغرف متطابقان.,Los datos de recepción coinciden con el panel de habitaciones.,screens\EndOfDayWizard.tsx,,translated
-Fryer,Fryer,,Freidora,,,needs_translation
+Fryer,Fryer,,Freidora,..\..\kamra\settings.py,,needs_translation
 full,full,,completo,screens\RateCalendar.tsx,,needs_translation
 Full,Full,,Completo,,,needs_translation
 Full 360 for one booking,Full 360 for one booking,,Información completa de una reserva,,,needs_translation
@@ -2116,7 +2118,7 @@ GitHub releases,GitHub releases,إصدارات GitHub,Lanzamientos de GitHub,scr
 "Give a clean, empty room of the booked type, or keep the room already assigned.","Give a clean, empty room of the booked type, or keep the room already assigned.",أعط غرفة نظيفة وفارغة من النوع المحجوز، أو أبق الغرفة المخصصة مسبقا.,"Dar una habitación limpia y vacía del tipo reservado, o mantener la habitación ya asignada.",components\CheckInDialog.tsx,,translated
 Give a reason for acknowledging this check.,Give a reason for acknowledging this check.,,Indique un motivo para autorizar esta comprobación.,,,needs_translation
 Give the guest the cancellation number.,Give the guest the cancellation number.,أعطِ الضيف رقم الإلغاء.,Proporciona al huésped el número de cancelación.,components\CancelPanel.tsx,,translated
-Gluten,Gluten,,Gluten,,,needs_translation
+Gluten,Gluten,,Gluten,..\..\kamra\settings.py,,needs_translation
 Go to step,Go to step,اذهب إلى الخطوة,Vaya al paso,components\CheckInDialog.tsx,,translated
 Go-live import,Go-live import,,Importación para puesta en marcha,screens\GoLiveImport.tsx,,needs_translation
 Go-live Import,Go-live Import,,Importación inicial,,,needs_translation
@@ -2136,7 +2138,7 @@ Grand Total (grand_total),Grand Total (grand_total),,Total general (grand_total)
 GRC,GRC,بطاقة التسجيل,GRC,screens\GuestJourney.tsx; screens\Today.tsx,,translated
 Green room,Green room,,Camerino,screens\BanquetFunction.tsx,,needs_translation
 Grievance contact,Grievance contact,,Contacto para reclamaciones,,,needs_translation
-Grill,Grill,,Parrilla,,,needs_translation
+Grill,Grill,,Parrilla,..\..\kamra\settings.py,,needs_translation
 Gross margin,Gross margin,,Margen bruto,screens\banquet\Economics.tsx,,needs_translation
 Gross sales,Gross sales,,Ventas brutas,screens\PosDashboard.tsx,,needs_translation
 Group,Group,مجموعة,Grupo,components\LinkedRecords.tsx; screens\TapeChart.tsx,,translated
@@ -2518,7 +2520,7 @@ Lake view
 Free Wi-Fi",,"Cama king
 Vista al lago
 Wifi gratuito",components\RoomTypeMedia.tsx,,needs_translation
-Kitchen,Kitchen,مطبخ,Cocina,components\RoomDrawer.tsx,,translated
+Kitchen,Kitchen,مطبخ,Cocina,..\..\kamra\settings.py; components\RoomDrawer.tsx,,translated
 kitchen average,kitchen average,,promedio de cocina,screens\PosDashboard.tsx,,needs_translation
 Kitchen Display,Kitchen Display,شاشة المطبخ,Pantalla de cocina,screens\KitchenPrinters.tsx,,translated
 Kitchen indent,Kitchen indent,,Requisición de cocina,screens\banquet\Economics.tsx,,needs_translation
@@ -2668,11 +2670,11 @@ Low,Low,منخفضة,Baja,,,translated
 LOW,LOW,,BAJO,,,needs_translation
 Lump Sum,Lump Sum,,Importe global,,,needs_translation
 Lunch,Lunch,,Almuerzo,,,needs_translation
-Main,Main,,Principal,,,needs_translation
+Main,Main,,Principal,..\..\kamra\settings.py,,needs_translation
 Main Course,Main Course,,Plato principal,,,needs_translation
 Main kitchen,Main kitchen,,Cocina principal,screens\KitchenPrinters.tsx,,needs_translation
 Main Kitchen,Main Kitchen,,Cocina principal,,,needs_translation
-Mains,Mains,,Platos principales,,,needs_translation
+Mains,Mains,,Platos principales,..\..\kamra\settings.py,,needs_translation
 Maintenance,Maintenance,صيانة,Mantenimiento,,,translated
 Maintenance and service tickets,Maintenance and service tickets,تذاكر الصيانة والخدمة,Solicitudes de mantenimiento y servicio,components\RoomDrawer.tsx,,translated
 maintenance request,maintenance request,,solicitud de mantenimiento,,,needs_translation
@@ -3166,7 +3168,7 @@ Now,Now,الآن,Ahora,components\RoomDrawer.tsx,,translated
 Now in {room} · {n} rooms free for these dates,Now in {room} · {n} rooms free for these dates,حاليًا في {room} · {n} غرف متاحة لهذه التواريخ,Ahora en {room} · {n} habitaciones libres para estas fechas,components\RoomChangeDialog.tsx,room n,translated
 Number,Number,,Número,,,needs_translation
 Number = rooms available · price = 2-adult nightly rate with seasons applied. Weekend columns in green.,Number = rooms available · price = 2-adult nightly rate with seasons applied. Weekend columns in green.,,"Número = habitaciones disponibles · precio = tarifa por noche para 2 adultos, con temporadas aplicadas. Los fines de semana aparecen en verde.",components\CalendarView.tsx,,needs_translation
-Nuts,Nuts,,Frutos secos,,,needs_translation
+Nuts,Nuts,,Frutos secos,..\..\kamra\settings.py,,needs_translation
 "Nuts, dairy","Nuts, dairy",,"Frutos secos, lácteos",screens\BanquetCatalogue.tsx,,needs_translation
 Occ %,Occ %,إشغال %,% de ocupación,screens\Dashboard.tsx; screens\Reports.tsx,,translated
 Occupancy,Occupancy,الإشغال,Ocupación,components\RoomInsights.tsx; screens\AuditPack.tsx; screens\Dashboard.tsx; screens\Reports.tsx; screens\Today.tsx,,translated
@@ -3475,7 +3477,7 @@ Payments,Payments,المدفوعات,Pagos,screens\FolioView.tsx; screens\settin
 Payments are handled by the hotel's payment gateway; the hotel does not see your card.,Payments are handled by the hotel's payment gateway; the hotel does not see your card.,تتم المدفوعات عبر بوابة الدفع الخاصة بالفندق؛ ولا يطّلع الفندق على بطاقتك.,La pasarela de pago del hotel procesa los pagos; el hotel no puede ver los datos de su tarjeta.,components\PrivacyNotice.tsx,,translated
 "Payments, invoices, allowances and settlements re-confirm who is acting. Agents are exempt.","Payments, invoices, allowances and settlements re-confirm who is acting. Agents are exempt.",,"Los pagos, facturas, bonificaciones y liquidaciones verifican nuevamente al responsable. Los agentes están exentos.",,,needs_translation
 Payouts,Payouts,,Salidas de efectivo,,,needs_translation
-Peanuts,Peanuts,,Maní,,,needs_translation
+Peanuts,Peanuts,,Maní,..\..\kamra\settings.py,,needs_translation
 Pending,Pending,قيد الانتظار,Pendiente,screens\BanquetFunction.tsx,,translated
 Pending Payment,Pending Payment,بانتظار الدفع,Pago pendiente,,,translated
 People only,People only,الأشخاص فقط,Solo personas,screens\Agents.tsx,,translated
@@ -4000,7 +4002,7 @@ RevPAR {amount} · room {room},RevPAR {amount} · room {room},RevPAR {amount} ·
 RevPAR {cur},RevPAR {cur},إيراد لكل غرفة {cur},RevPAR {cur},screens\Reports.tsx,cur,translated
 RevPAX,RevPAX,إيراد لكل ضيف,RevPAX,screens\Reports.tsx,,translated
 RevPAX = total guest spend (room + F&B + experiences + extras) per in-house guest - the ancillary revenue RevPAR can't see.,RevPAX = total guest spend (room + F&B + experiences + extras) per in-house guest - the ancillary revenue RevPAR can't see.,إيراد لكل ضيف = إجمالي إنفاق الضيف (غرفة + مأكولات + تجارب + إضافات) لكل ضيف داخل الفندق - الإيراد الإضافي الذي لا يراه متوسط الغرفة.,"RevPAX = gasto total (habitación, alimentos y bebidas, experiencias y extras) por huésped alojado. Incluye los ingresos adicionales que no refleja el RevPAR.",screens\Reports.tsx,,translated
-Rice,Rice,,Arroz,,,needs_translation
+Rice,Rice,,Arroz,..\..\kamra\settings.py,,needs_translation
 Road,Road,,Carretera,components\BookingDialog.tsx,,needs_translation
 Roles,Roles,,Roles,screens\settings\AccessPages.tsx,,needs_translation
 roll date,roll date,,cambiar fecha operativa,,,needs_translation
@@ -4259,7 +4261,7 @@ service ticket,service ticket,,solicitud de servicio,,,needs_translation
 Service Ticket,Service Ticket,,Solicitud de servicio,,,needs_translation
 Service Tickets,Service Tickets,تذاكر الخدمة,Solicitudes de servicio,screens\Tickets.tsx,,translated
 Services & hire,Services & hire,,Servicios y alquileres,screens\banquet\Economics.tsx,,needs_translation
-Sesame,Sesame,,Sésamo,,,needs_translation
+Sesame,Sesame,,Sésamo,..\..\kamra\settings.py,,needs_translation
 Session,Session,الجلسة,Sesión,screens\Banquet.tsx; screens\BanquetFunction.tsx; screens\BanquetMonth.tsx,,translated
 Sessions,Sessions,الجلسات,Sesiones,screens\CashierSessions.tsx,,translated
 Sessions opened without choosing a till.,Sessions opened without choosing a till.,,Sesiones abiertas sin elegir caja.,screens\CashierBoard.tsx,,needs_translation
@@ -4310,7 +4312,7 @@ Shared playground - not your hotel. Data is wiped every night.,Shared playground
 "Shared playground, not a live hotel. Play data is wiped every night and the sample hotel is seeded again. Don't put real guests, payments or API keys here.","Shared playground, not a live hotel. Play data is wiped every night and the sample hotel is seeded again. Don't put real guests, payments or API keys here.",ملعب مشترك، ليس فندقاً حياً. تُمسح بيانات التجربة كل ليلة ويُعاد تهيئة الفندق النموذجي. لا تضع ضيوفًا أو مدفوعات أو مفاتيح API حقيقية هنا.,"Entorno de pruebas compartido; no es un hotel en funcionamiento. Los datos de prueba se borran cada noche y se vuelve a cargar el hotel de ejemplo. No ingrese aquí datos reales de huéspedes, pagos ni claves de API.",screens\Login.tsx,,translated
 "Shared playground, not your hotel. Data is wiped every night.","Shared playground, not your hotel. Data is wiped every night.",ملعب مشترك، ليس فندقك. تُمسح البيانات كل ليلة.,Entorno de demostración compartido. Los datos se borran cada noche.,AppShell.tsx,,translated
 Sharma-Verma reception,Sharma-Verma reception,,Recepción de la familia Sharma-Verma,screens\BanquetFunction.tsx,,needs_translation
-Shellfish,Shellfish,,Mariscos,,,needs_translation
+Shellfish,Shellfish,,Mariscos,..\..\kamra\settings.py,,needs_translation
 Shift,Shift,,Turno,,,needs_translation
 Shift Handover,Shift Handover,تسليم الوردية,Entrega de turno,,,translated
 Shift report,Shift report,تقرير الوردية,Informe de turno,screens\CashierTill.tsx,,translated
@@ -4412,7 +4414,7 @@ Sound {state},Sound {state},الصوت {state},Sonido {state},screens\Kitchen.ts
 Soup,Soup,,Sopa,,,needs_translation
 source,source,,origen,,,needs_translation
 Source,Source,المصدر,Origen,screens\RegistrationCard.tsx; screens\Today.tsx,,translated
-Soy,Soy,,Soya,,,needs_translation
+Soy,Soy,,Soya,..\..\kamra\settings.py,,needs_translation
 Spa,Spa,السبا,Spa,,,translated
 Special occasion,Special occasion,مناسبة خاصة,Ocasión especial,components\CheckInDialog.tsx,,translated
 Special requests,Special requests,,Solicitudes especiales,components\BookingDialog.tsx; screens\PublicBooking.tsx; screens\ReservationDetail.tsx,,needs_translation
@@ -4443,8 +4445,8 @@ Start,Start,بدء,Iniciar,components\RoomStayPanels.tsx; screens\EndOfDayWizard
 Start / accept,Start / accept,بدء / قبول,Iniciar o aceptar,,,translated
 Start date,Start date,,Fecha de inicio,,,needs_translation
 Start work,Start work,,Iniciar trabajo,screens\Tickets.tsx,,needs_translation
-Starter,Starter,,Entrada,,,needs_translation
-Starters,Starters,,Entradas,,,needs_translation
+Starter,Starter,,Entrada,..\..\kamra\settings.py,,needs_translation
+Starters,Starters,,Entradas,..\..\kamra\settings.py,,needs_translation
 Starters (Veg),Starters (Veg),,Entradas vegetarianas,screens\BanquetCatalogue.tsx,,needs_translation
 starts later,starts later,يبدأ لاحقًا,comienza más tarde,components\RoomDrawer.tsx,,translated
 State,State,الولاية,Estado,screens\BookingEngine.tsx; screens\pos\PosSidePanel.tsx,,translated
@@ -4501,7 +4503,7 @@ Subtotal,Subtotal,المجموع الفرعي,Subtotal,lib\thermal.ts; screens\B
 Subtotals by cashier and transaction code,Subtotals by cashier and transaction code,المجاميع الفرعية حسب الصراف ورمز المعاملة,Subtotales por cajero y código de transacción,screens\AuditPack.tsx,,translated
 Success,Success,نجاح,Correcto,,,translated
 Suggested room plan for {date},Suggested room plan for {date},خطة غرف مقترحة لـ {date},Propuesta de asignación de habitaciones para {date},screens\TapeChart.tsx,date,translated
-Sulphites,Sulphites,,Sulfitos,,,needs_translation
+Sulphites,Sulphites,,Sulfitos,..\..\kamra\settings.py,,needs_translation
 Summary,Summary,الملخص,Resumen,screens\FolioView.tsx,,translated
 Sunset,Sunset,,Atardecer,,,needs_translation
 Supervisor,Supervisor,المشرف,Supervisor,screens\pos\VoidApproval.tsx,,translated
@@ -4564,6 +4566,7 @@ Takeaway,Takeaway,سفري,Para llevar,,,translated
 TAKEAWAY,TAKEAWAY,,PARA LLEVAR,screens\Kitchen.tsx,,needs_translation
 Taken,Taken,مأخوذ,Reservado,screens\Banquet.tsx,,translated
 "Taking or giving back money needs an open till, and your role can't open one. Ask {v0} to settle the bill.","Taking or giving back money needs an open till, and your role can't open one. Ask {v0} to settle the bill.",,Para cobrar o devolver dinero se necesita una caja abierta y su rol no permite abrirla. Solicite a {v0} que liquide la cuenta.,,v0,needs_translation
+Tandoor,Tandoor,,Horno tandoor,..\..\kamra\settings.py,,needs_translation
 Tap a panel to show or hide it. Use the arrows to change the order.,Tap a panel to show or hide it. Use the arrows to change the order.,اضغط على اللوحة لإظهارها أو إخفائها. استخدم الأسهم لتغيير الترتيب.,Toque un panel para mostrarlo u ocultarlo. Utilice las flechas para cambiar el orden.,components\CustomizeToday.tsx,,translated
 "Tap a room to change its status, see who is in it, who stayed and who cleaned it.","Tap a room to change its status, see who is in it, who stayed and who cleaned it.",اضغط على غرفة لتغيير حالتها ومعرفة من فيها ومن أقام فيها ومن نظّفها.,"Toque una habitación para cambiar su estado, ver quién está en ella, quién se quedó y quién la limpió.",screens\Rooms.tsx,,translated
 Tap an occupied room to post minibar or laundry.,Tap an occupied room to post minibar or laundry.,انقر غرفة مشغولة لترحيل ميني بار أو غسيل.,Toque una habitación ocupada para cargar los consumos del minibar o la lavandería al folio.,screens\HkApp.tsx,,translated
