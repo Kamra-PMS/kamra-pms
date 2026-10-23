@@ -133,7 +133,7 @@ function StayStrip({ rows }: { rows: ResRow[] }) {
         {ordered.map((r) => (
           <span
             key={r.name}
-            title={translate(`${r.check_in_date} → ${r.check_out_date} · ${r.status} · ${cur()}${inr(r.amount_after_tax)}`)}
+            title={`${r.check_in_date} → ${r.check_out_date} · ${translate(r.status)} · ${cur()}${inr(r.amount_after_tax)}`}
             className={cn(
               "rounded-sm",
               stripTone[r.status] ?? "bg-zinc-300",

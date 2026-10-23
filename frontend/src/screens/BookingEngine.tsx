@@ -314,7 +314,7 @@ export default function BookingEngine() {
                         >
                           {["", "1 Star", "2 Star", "3 Star", "4 Star", "5 Star", "Boutique", "Homestay"].map((c) => (
                             <option key={c} value={c}>
-                              {translate(c || translate("None"))}
+                              {(translate(c) || translate("None"))}
                             </option>
                           ))}
                         </select>

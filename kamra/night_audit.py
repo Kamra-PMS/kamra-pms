@@ -26,9 +26,12 @@ flash, revenue by transaction code, ledger balances, occupancy / ADR / RevPAR,
 the in-house list, departures, arrivals, no-shows with the policy outcome,
 high balances, credit limits, POS room postings, rate variances, the cashier
 sessions and the pre-check results with their acknowledgements.
-`night_audit_pack` returns it.
+`night_audit_pack` returns it; `rebuild_audit_pack` rebuilds a missing pack
+so the desk can still print. `recover_stuck_business_date` advances the BD
+when a Completed run exists for the current date but the roll did not stick
+(restore / ops surgery) — money is never re-posted.
 
-kamra.folio.run_night_audit stays the only writer; this module reads.
+Money and the date roll still go only through `kamra.folio.run_night_audit`.
 """
 
 from __future__ import annotations
@@ -740,8 +743,8 @@ def night_audit_precheck(property: str):
 @frappe.whitelist()
 @require_roles(*AUDIT_ROLES, scope={"audit": "Night Audit Run"})
 def night_audit_pack(audit: str):
-	"""The saved audit pack of one Night Audit Run. A run from before packs
-	were saved answers has_pack: false with a message, not an error."""
+	"""The saved audit pack of one Night Audit Run. Missing packs answer
+	has_pack: false with a message; rebuild_audit_pack can recreate them."""
 	if not frappe.db.exists("Night Audit Run", audit):
 		frappe.throw(_("Night audit run {0} not found.").format(audit),
 		             frappe.DoesNotExistError)
@@ -764,9 +767,146 @@ def night_audit_pack(audit: str):
 			pack = None
 	if not pack:
 		return {"audit": audit, "run": run, "has_pack": False, "pack": None,
-		        "message": _("No audit pack was saved for this run - it ran "
-		                     "before audit packs were introduced.")}
-	return {"audit": audit, "run": run, "has_pack": True, "pack": pack}
+		        "can_rebuild": run.status != "Draft",
+		        "message": _("No audit pack was saved for this run. Rebuild it "
+		                     "to print the night's reports.")}
+	return {"audit": audit, "run": run, "has_pack": True, "pack": pack,
+	        "can_rebuild": True}
+
+
+def _pack_summary_from_run(run) -> dict:
+	return {
+		"audit": run.name,
+		"status": run.status,
+		"room_charges_posted": cint(run.room_charges_posted),
+		"amount_posted": flt(run.amount_posted),
+		"no_shows_flagged": cint(run.no_shows_flagged),
+		"late_arrivals_held": cint(run.late_arrivals_held),
+		"no_show_fees_waived": cint(run.no_show_fees_waived),
+		"folios_opened": cint(run.folios_opened),
+		"trigger": run.run_trigger,
+		"run_by": run.run_by,
+		"exceptions": cint(run.exceptions),
+		"notes": run.auditor_notes,
+	}
+
+
+def _no_shows_for_pack(property: str, bd: str) -> list[dict]:
+	rows = frappe.get_all(
+		"Reservation",
+		filters={"property": property, "status": "No Show", "check_in_date": bd},
+		fields=["name", "guest_name", "room", "room_type", "source", "channel"],
+		order_by="name asc", limit_page_length=MAX_ITEMS)
+	return [{
+		"reservation": r.name, "guest_name": r.guest_name,
+		"room": _room_no(r.room), "room_type": (r.room_type or "").split("-")[-1],
+		"source": r.channel or r.source, "outcome": "no_show",
+	} for r in rows]
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles(*AUDIT_ROLES, scope={"audit": "Night Audit Run"})
+def rebuild_audit_pack(audit: str):
+	"""Rebuild and save the printable audit pack for a completed run.
+	Use when the automatic night left has_pack false, or to refresh the
+	pack. Does not re-post charges or roll the business date."""
+	if not frappe.db.exists("Night Audit Run", audit):
+		frappe.throw(_("Night audit run {0} not found.").format(audit),
+		             frappe.DoesNotExistError)
+	run = frappe.get_doc("Night Audit Run", audit)
+	from kamra.crs import assert_property_access
+	assert_property_access(run.property)
+	if run.status == "Draft":
+		frappe.throw(_("Finish End of Day before printing the audit pack."))
+	bd = _iso(run.business_date)
+	acks = []
+	if run.acknowledgements:
+		try:
+			acks = json.loads(run.acknowledgements)
+		except ValueError:
+			acks = []
+	# Prefer the original pack's prechecks / held_late when a partial JSON
+	# still exists (failed save mid-write). Otherwise rebuild live sections
+	# and mark prechecks as rebuilt so printers know they are not the night's
+	# snapshot. Held late arrivals cannot be reconstructed after the fact.
+	prior = None
+	if run.report_pack:
+		try:
+			prior = json.loads(run.report_pack)
+		except ValueError:
+			prior = None
+	checks = (prior or {}).get("prechecks") or run_checks(run.property, bd)
+	held_late = list((prior or {}).get("held_late_arrivals") or [])
+	if not held_late and cint(run.late_arrivals_held):
+		held_late = [{
+			"reservation": None,
+			"guest_name": None,
+			"eta": None,
+			"reason": _("({n} late arrival(s) held that night — list not "
+			            "saved on the original pack)").format(
+				n=cint(run.late_arrivals_held)),
+		}]
+	summary = _pack_summary_from_run(run)
+	pack = build_pack(
+		run.property, bd, checks=checks, acknowledgements=acks,
+		summary=summary, no_shows=_no_shows_for_pack(run.property, bd),
+		held_late=held_late)
+	pack["rebuilt_at"] = str(now_datetime())
+	pack["rebuilt_by"] = frappe.session.user
+	pack["prechecks_source"] = (
+		"original" if (prior or {}).get("prechecks") else "live_rebuild")
+	run.report_pack = json.dumps(pack, default=str)
+	run.save(ignore_permissions=True)
+	from kamra.savings import log_action
+	log_action(
+		"rebuild_audit_pack", "Night Audit Run", run.name, run.property,
+		rationale=f"Rebuilt audit pack for {bd}",
+		channel="MCP" if frappe.flags.get("kamra_agent_call") else "Desk")
+	return night_audit_pack(audit)
+
+
+def stuck_business_date(property: str) -> dict | None:
+	"""A Completed (or Warnings) run exists for the *current* business date —
+	the roll did not stick after a successful audit. Returns the run, or None."""
+	from kamra.business_date import get_business_date
+	bd = get_business_date(property)
+	row = frappe.db.get_value(
+		"Night Audit Run",
+		{"property": property, "business_date": bd, "status": ("!=", "Draft")},
+		["name", "status", "business_date", "run_trigger"], as_dict=True)
+	if not row:
+		return None
+	return {
+		"audit": row.name, "status": row.status,
+		"business_date": _iso(row.business_date),
+		"run_trigger": row.run_trigger,
+	}
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Finance", "Hotel Admin", "Night Auditor", "Kamra Agent")
+def recover_stuck_business_date(property: str):
+	"""Advance the business date when a completed audit exists for the
+	current date but the roll did not stick. Never re-posts room nights."""
+	from kamra.crs import assert_property_access
+	from kamra.business_date import advance_business_date, get_business_date
+	assert_property_access(property)
+	stuck = stuck_business_date(property)
+	if not stuck:
+		frappe.throw(_("The business date is not stuck — no completed audit "
+		               "for today's open date."))
+	bd = get_business_date(property)
+	new_bd = advance_business_date(property, bd)
+	from kamra.savings import log_action
+	log_action(
+		"night_audit_recover_bd", "Night Audit Run", stuck["audit"], property,
+		rationale=f"Recovered stuck business date {bd} → {new_bd} "
+		          f"(audit {stuck['audit']} already completed)",
+		channel="MCP" if frappe.flags.get("kamra_agent_call") else "Desk",
+		after_snapshot={"from": bd, "to": new_bd, "audit": stuck["audit"]})
+	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- persists recovery before returning
+	return {"ok": True, "audit": stuck["audit"], "business_date": bd,
+	        "next_business_date": new_bd}
 
 
 @frappe.whitelist()
@@ -1192,6 +1332,10 @@ def _eod_state(property: str, audit: str | None = None) -> dict:
 		"Property", property,
 		["property_name", "currency", "require_cashier_pin", "timezone"],
 		as_dict=True) or {}
+	# stuck_date: a completed audit exists for the *current* open BD — the
+	# roll did not stick. Surface it so the wizard never looks "fully closed"
+	# while the property is still on yesterday.
+	stuck = stuck_business_date(property)
 	base = {
 		"property": property,
 		"property_name": prop.get("property_name") or property,
@@ -1206,6 +1350,8 @@ def _eod_state(property: str, audit: str | None = None) -> dict:
 		"high_balance_threshold": flt(_setting(property, "na_high_balance_threshold")),
 		"auto_audit_with_blockers": _setting(property, "na_auto_audit_with_blockers"),
 		"reports": [{"key": k, "title": t} for k, t in REPORTS],
+		"stuck_date": stuck,
+		"open_business_date": get_business_date(property),
 	}
 	if audit:
 		# a finished run: the wizard resumes at its reports
@@ -1402,8 +1548,10 @@ def eod_overview():
 			as_dict=True)
 		last = frappe.db.get_value(
 			"Night Audit Run", {"property": p.name, "status": ("!=", "Draft")},
-			["name", "business_date", "status"], as_dict=True,
-			order_by="business_date desc")
+			["name", "business_date", "status", "report_pack", "run_trigger"],
+			as_dict=True, order_by="business_date desc")
+		stuck = stuck_business_date(p.name)
+		held = _last_hold(p.name)
 		out.append({
 			"property": p.name, "property_name": p.property_name or p.name,
 			"business_date": bd, "property_now": str(property_now(p.name))[:16],
@@ -1414,8 +1562,12 @@ def eod_overview():
 			"blockers": len(blockers),
 			"blocker_keys": [c["key"] for c in blockers],
 			"draft_step": cint(draft.eod_step) if draft else None,
+			"held": held,
+			"stuck_date": stuck,
 			"last_run": {"audit": last.name,
 			             "business_date": _iso(last.business_date),
-			             "status": last.status} if last else None,
+			             "status": last.status,
+			             "run_trigger": last.run_trigger,
+			             "has_pack": bool(last.report_pack)} if last else None,
 		})
 	return out

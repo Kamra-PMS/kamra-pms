@@ -178,7 +178,7 @@ function TicketSheet({
     <Sheet
       wide
       title={translate(d ? d.subject : name)}
-      description={translate(d ? `${d.name} · ${t(d.category)}` : undefined)}
+      description={(d ? `${d.name} · ${t(d.category)}` : undefined)}
       onClose={onClose}
     >
       {err && (

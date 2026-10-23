@@ -661,8 +661,8 @@ export default function CheckOutDialog(props: {
   return (
     <Sheet
       wide
-      title={translate(r ? t("Check out {name}", { name: r.guest_name }) : t("Check out"))}
-      description={translate(r ? [
+      title={(r ? t("Check out {name}", { name: r.guest_name }) : t("Check out"))}
+      description={(r ? [
         r.room_number ? t("Room {n}", { n: r.room_number }) : null,
         r.room_type_name,
         `${r.check_in_date} → ${r.check_out_date}`,
@@ -906,7 +906,7 @@ export default function CheckOutDialog(props: {
               {GROUP_ORDER.filter((g) => ctx.groups[g]).map((g) => {
                 const grp = ctx.groups[g]
                 return (
-                  <Section key={g} title={translate(`${t(g)} · ${fmt(grp.amount)}`)}>
+                  <Section key={g} title={(`${t(g)} · ${fmt(grp.amount)}`)}>
                     <ul className="divide-y divide-zinc-100 text-sm">
                       {grp.lines.map((line) => (
                         <li key={line.name} className="flex items-start justify-between gap-3 py-1.5">
@@ -1033,7 +1033,7 @@ export default function CheckOutDialog(props: {
                 </p>
               </Section>
               {credit && !credit.ok && (
-                <Section title={translate(creditBlocked ? t("Company credit is blocked") : t("Company credit warning"))} tone="warn">
+                <Section title={(creditBlocked ? t("Company credit is blocked") : t("Company credit warning"))} tone="warn">
                   <ul className="list-disc space-y-1 ps-5 text-sm text-zinc-700">
                     {credit.checks.filter((c) => !c.ok).flatMap((c) =>
                       c.reasons.map((reason) => <li key={c.company + reason}>{translate(reason)}</li>))}

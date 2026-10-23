@@ -165,7 +165,7 @@ function VegDot({ veg }: { veg: 0 | 1 | null }) {
   // cook and a sun-washed screen.
   return (
     <span
-      aria-label={translate(veg ? t("Veg") : t("Non-veg"))}
+      aria-label={(veg ? t("Veg") : t("Non-veg"))}
       className={cn("grid size-4 shrink-0 place-items-center rounded-[3px] border-2",
         veg ? "border-emerald-600" : "border-rose-700")}>
       {veg ? (
@@ -594,7 +594,7 @@ export default function Kitchen() {
           </select>
           {(stationPrinters.length > 0 || printStation.printer) && (
             <label className="inline-flex items-center gap-1.5 text-sm"
-              title={translate(printStation.error
+              title={(printStation.error
                 ? printStation.error
                 : printStation.last
                   ? t("Last printed {n} ticket(s) at {time}", {
@@ -641,12 +641,12 @@ export default function Kitchen() {
               kioskOn
                 ? "border-brand-600 bg-brand-50 text-brand-800"
                 : "border-zinc-300 bg-white text-zinc-600 hover:bg-zinc-50")}
-            title={translate(kioskOn ? t("Show PMS menus (Esc)") : t("Focus mode - hide PMS menus"))}>
+            title={(kioskOn ? t("Show PMS menus (Esc)") : t("Focus mode - hide PMS menus"))}>
             <Focus className="size-4" />
           </button>
           <button onClick={toggleBrowserFs}
             className="rounded-lg border border-zinc-300 bg-white p-2 text-zinc-600 hover:bg-zinc-50"
-            title={translate(browserFs ? t("Exit full screen (Esc)") : t("Browser full screen"))}>
+            title={(browserFs ? t("Exit full screen (Esc)") : t("Browser full screen"))}>
             {browserFs ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
           </button>
           <button onClick={() => { exitFloor(); navigate("/dashboard") }}

@@ -229,7 +229,7 @@ export default function RoomChangeDialog(props: {
                       disabled={!r.free}
                       aria-pressed={pick?.name === r.name}
                       onClick={() => { setPick(r); setError(null) }}
-                      title={translate(r.free ? undefined : t("Booked for these dates"))}
+                      title={(r.free ? undefined : t("Booked for these dates"))}
                       className={cn(
                         "rounded-lg border px-2.5 py-2 text-left transition-colors",
                         !r.free && "cursor-not-allowed border-dashed border-zinc-200 bg-zinc-50 opacity-50",

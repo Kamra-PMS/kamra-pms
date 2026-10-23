@@ -82,7 +82,7 @@ export default function LinkedRecords({
           key={f.name}
           className={chipCls}
           onClick={() => navigate(`/billing/${encodeURIComponent(f.name)}`)}
-          title={translate(f.invoice_number ? translate("Invoice {v0}", { v0: String(f.invoice_number) }) : translate("Open folio"))}
+          title={(f.invoice_number ? translate("Invoice {v0}", { v0: String(f.invoice_number) }) : translate("Open folio"))}
         >
           <Receipt className="size-3.5" aria-hidden />
           {translate(f.folio_type)}{translate(" folio")}<span

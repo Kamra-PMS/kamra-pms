@@ -234,7 +234,7 @@ function OccupantsEditor(props: {
                     ? "border-emerald-200 bg-emerald-50 text-emerald-700"
                     : "border-zinc-200 text-zinc-500 hover:border-brand-400 hover:text-brand-700"
                 }`}
-                title={translate(o.id_file ? translate("Replace this occupant's ID document") : translate("Capture or upload this occupant's ID document"))}
+                title={(o.id_file ? translate("Replace this occupant's ID document") : translate("Capture or upload this occupant's ID document"))}
               >
                 <Camera className="size-3.5" aria-hidden />
                 {o.id_file ? translate("ID ✓ Replace") : translate("Capture ID")}

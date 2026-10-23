@@ -139,7 +139,7 @@ function ReservationList(props: {
               {row.booked_by_name && (
                 <span
                   title={
-                    translate((row.booked_by_phone
+                    ((row.booked_by_phone
                       ? `${row.booked_by_phone} · `
                       : "") +
                     t("send links & updates to: {pref}", {
@@ -173,7 +173,7 @@ function ReservationList(props: {
                       )
                     }}
                     title={
-                      translate(row.contact_preference === "Booker" && row.booked_by_name
+                      (row.contact_preference === "Booker" && row.booked_by_name
                         ? t("Copy the self check-in link - send to the booker, {name}{phone}", {
                             name: row.booked_by_name,
                             phone: row.booked_by_phone ? ` (${row.booked_by_phone})` : "",
@@ -473,7 +473,7 @@ export default function Today() {
       <div key={room.name} className="relative">
         <button
           title={
-            translate(stay
+            (stay
               ? t("{guest} · check out or open registration", { guest: stay.guest_name })
               : arriving
                 ? t("{guest} arrives today · check in", { guest: arriving.guest_name })
@@ -652,7 +652,7 @@ export default function Today() {
           label={t("Revenue")}
           value={`${cur()}${inr0(revenue)}`}
           sub={
-            translate(roomRevenueToday > 0 || revpar > 0
+            (roomRevenueToday > 0 || revpar > 0
               ? t("RevPAR {amount} · room {room}", {
                   amount: `${cur()}${inr0(revpar)}`,
                   room: `${cur()}${inr0(roomRevenueToday)}`,
@@ -669,7 +669,7 @@ export default function Today() {
           label={t("Open tasks")}
           value={tasksN}
           sub={
-            translate(overdueN
+            (overdueN
               ? t("{n} overdue · Housekeeping", { n: overdueN })
               : t("Housekeeping"))
           }

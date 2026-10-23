@@ -541,10 +541,12 @@ export default function TapeChart() {
             </div>
             {data?.position?.map((p) => (
               <div key={p.date} style={{ width: cellW }}
-                title={translate(`${p.sold}/${p.capacity} sold (${p.occupancy}%)` +
-                  (p.limit > p.capacity ? ` · can sell to ${p.limit} (overbooking)` : "") +
-                  (p.premium_pct ? ` · demand premium +${p.premium_pct}%` : "") +
-                  (p.min_rate ? ` · hurdle ${cur()}${p.min_rate.toLocaleString(moneyLocale())}` : ""))}
+                title={[
+                  t("{sold}/{capacity} sold ({occupancy}%)", { sold: p.sold, capacity: p.capacity, occupancy: p.occupancy }),
+                  p.limit > p.capacity ? t("can sell to {limit} (overbooking)", { limit: p.limit }) : null,
+                  p.premium_pct ? t("demand premium +{premium}%", { premium: p.premium_pct }) : null,
+                  p.min_rate ? t("hurdle {amount}", { amount: `${cur()}${p.min_rate.toLocaleString(moneyLocale())}` }) : null,
+                ].filter(Boolean).join(" · ")}
                 className={cn("shrink-0 border-l border-zinc-100 px-1 py-1 text-center tabular-nums",
                   p.overbooked ? "bg-rose-50 font-bold text-rose-600"
                     : p.occupancy >= 80 ? "bg-emerald-50 font-semibold text-emerald-700"
@@ -614,7 +616,7 @@ export default function TapeChart() {
                                   "repeating-linear-gradient(45deg, #d4d4d8 0 6px, #e4e4e7 6px 12px)",
                               }}
                               className="absolute top-1.5 flex h-8 items-center gap-1 truncate rounded-md border border-zinc-300 px-1.5 text-start text-[11px] font-medium text-zinc-600"
-                              title={translate(`${k.reason}${k.note ? ` · ${k.note}` : ""} · ${k.from_date} → ${k.to_date}`)}>
+                              title={`${t(k.reason)}${k.note ? ` · ${k.note}` : ""} · ${k.from_date} → ${k.to_date}`}>
                               <Lock className="size-3 shrink-0" aria-hidden />
                               <span className="truncate">{k.reason}</span>
                             </div>
@@ -660,7 +662,7 @@ export default function TapeChart() {
                                 inConflict && "ring-2 ring-rose-500 ring-offset-1",
                                 dd && "pointer-events-none z-20 cursor-grabbing opacity-90 shadow-lg ring-2 ring-white",
                               )}
-                              title={translate(`${b.guest_name} · ${t(seg.label)} · ${b.check_in_date}${eta ? ` ${eta}` : ""} → ${b.check_out_date}${etd ? ` ${etd}` : ""}` +
+                              title={(`${b.guest_name} · ${t(seg.label)} · ${b.check_in_date}${eta ? ` ${eta}` : ""} → ${b.check_out_date}${etd ? ` ${etd}` : ""}` +
                                 (inConflict ? ` · ${t("CHANGEOVER CONFLICT")}` : ""))}>
                               {/* drag handles: arrival (not once checked in) and departure */}
                               {resizable && b.status === "Confirmed" && s0 >= 0 && (
@@ -824,7 +826,7 @@ export default function TapeChart() {
       {sel && (
         <Sheet
           title={translate(sel.guest_name)}
-          description={translate(`${sel.name} · ${t(sel.status)}`)}
+          description={(`${sel.name} · ${t(sel.status)}`)}
           onClose={() => setSel(null)}
           footer={
             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -1049,7 +1051,7 @@ function TapeHourly({
                     onClick={() => onOpen(b)}
                     style={{ insetInlineStart: 130, width: gridW }}
                     className="absolute top-2 flex h-9 items-center gap-1 rounded-md bg-zinc-200/70 px-2 text-start text-xs font-medium text-zinc-600 hover:bg-zinc-300/70"
-                    title={translate(`${b.guest_name} · ${t("overnight stay")}`)}
+                    title={(`${b.guest_name} · ${t("overnight stay")}`)}
                   >
                     {seg.vip && <Star className="size-3 fill-amber-400 text-amber-400" />}
                     <span className="truncate">{b.guest_name} · {t("staying over")}</span>

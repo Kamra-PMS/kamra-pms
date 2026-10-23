@@ -42,7 +42,7 @@ import {
   SERVICE_CATEGORIES,
   SERVICE_STYLES,
 } from "./banquet/shared"
-import { t as translate, useUILanguage } from "../lib/i18n"
+import { t as translate, tn, useUILanguage } from "../lib/i18n"
 
 const EDIT_ROLES = [
   "Front Desk",
@@ -425,7 +425,7 @@ function MenuSheet({
 
   return (
     <Sheet
-      title={translate(draft.name ? translate("Edit menu package") : translate("New menu package"))}
+      title={(draft.name ? translate("Edit menu package") : translate("New menu package"))}
       description={translate("Priced per plate. The courses print on the event order, so the kitchen reads the same sheet the customer signed.")}
       onClose={onClose}
       wide
@@ -648,7 +648,7 @@ function ServiceSheet({
 
   return (
     <Sheet
-      title={translate(draft.name ? translate("Edit service") : translate("New service"))}
+      title={(draft.name ? translate("Edit service") : translate("New service"))}
       description={translate("Everything that isn't food: AV, decor, entertainment, furniture, staffing, bar.")}
       onClose={onClose}
       footer={
@@ -817,8 +817,8 @@ function DishLibrary({
       const out = await banquet.recostDishes()
       setChanges(
         out.recosted
-          ? `${out.recosted} dish${out.recosted === 1 ? "" : "es"} re-costed.`
-          : "Every dish already matches today's prices.",
+          ? tn(out.recosted, "{n} dish re-costed.", "{n} dishes re-costed.")
+          : translate("Every dish already matches today's prices."),
       )
       onChanged()
     } catch (e) {
@@ -854,7 +854,7 @@ function DishLibrary({
       <p className="rounded-lg bg-zinc-50 px-3 py-2 text-xs text-zinc-500">{translate("A dish costs the sum of its recipe: for each ingredient,")}{" "}
         <span className="font-medium text-zinc-700">{translate("quantity per portion x that ingredient's cost per unit")}</span>{translate(". Re-costing walks every dish and recomputes it at today's ingredient prices, so a quote is never priced off last season's onions.")}</p>
       {changes && (
-        <p className="text-xs text-emerald-700">{translate(changes)}</p>
+        <p className="text-xs text-emerald-700">{changes}</p>
       )}
 
       {dishes.length === 0 ? (
@@ -988,7 +988,7 @@ function DishSheet({
 
   return (
     <Sheet
-      title={translate(draft.name ? translate("Edit {v0}", { v0: String(draft.dish_name) }) : translate("New dish"))}
+      title={(draft.name ? translate("Edit {v0}", { v0: String(draft.dish_name) }) : translate("New dish"))}
       description={translate("What it is, which section cooks it, and what one portion costs to make.")}
       onClose={onClose}
       wide

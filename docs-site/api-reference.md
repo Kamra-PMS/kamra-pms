@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function - the same governed layer
-the UI and the AI use. **404 endpoints**, generated from the source
+the UI and the AI use. **406 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -4751,12 +4751,35 @@ acknowledged with a reason (run_night_audit acknowledge=[keys], note).
 
 **GET/POST**
 
-The saved audit pack of one Night Audit Run. A run from before packs
-were saved answers has_pack: false with a message, not an error.
+The saved audit pack of one Night Audit Run. Missing packs answer
+has_pack: false with a message; rebuild_audit_pack can recreate them.
 
 | Param | Required | Default |
 | --- | --- | --- |
 | `audit` | yes |  |
+
+### `kamra.night_audit.rebuild_audit_pack`
+
+**POST**
+
+Rebuild and save the printable audit pack for a completed run.
+Use when the automatic night left has_pack false, or to refresh the
+pack. Does not re-post charges or roll the business date.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `audit` | yes |  |
+
+### `kamra.night_audit.recover_stuck_business_date`
+
+**POST** · roles: `Finance`, `Hotel Admin`, `Night Auditor`, `Kamra Agent`
+
+Advance the business date when a completed audit exists for the
+current date but the roll did not stick. Never re-posts room nights.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
 
 ### `kamra.night_audit.night_audit_history`
 

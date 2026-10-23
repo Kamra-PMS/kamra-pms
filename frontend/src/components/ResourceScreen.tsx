@@ -592,7 +592,7 @@ export function ResourceScreen({
                 <span className="text-xs">{t(config.dateFilter.label)}</span>
                 <input
                   type="date"
-                  aria-label={translate(`${t(config.dateFilter.label)} ${t("from")}`)}
+                  aria-label={(`${t(config.dateFilter.label)} ${t("from")}`)}
                   className="rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-sm"
                   value={dateFrom}
                   onChange={(e) => setDateFrom(e.target.value)}
@@ -600,7 +600,7 @@ export function ResourceScreen({
                 <span className="text-xs">{t("to")}</span>
                 <input
                   type="date"
-                  aria-label={translate(`${t(config.dateFilter.label)} ${t("to")}`)}
+                  aria-label={(`${t(config.dateFilter.label)} ${t("to")}`)}
                   className="rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-sm"
                   value={dateTo}
                   onChange={(e) => setDateTo(e.target.value)}
@@ -761,7 +761,7 @@ export function ResourceScreen({
                 })
               : String(editing.name)
           }
-          description={translate(useDetail ? undefined : config.description ? t(config.description) : undefined)}
+          description={(useDetail ? undefined : config.description ? t(config.description) : undefined)}
           onClose={() => setEditing(null)}
           footer={
             useDetail ? undefined : (

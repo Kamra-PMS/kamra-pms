@@ -6,7 +6,14 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import { CheckCircle2, FileText, MoonStar, Search, TriangleAlert } from "lucide-react"
 import { Link, useNavigate } from "react-router-dom"
 import { getCurrentProperty } from "../lib/api"
-import { auditHistory, eodOverview, type OverviewRow, type RunRow } from "../lib/eod"
+import {
+  auditHistory,
+  eodOverview,
+  rebuildAuditPack,
+  recoverStuckBusinessDate,
+  type OverviewRow,
+  type RunRow,
+} from "../lib/eod"
 import { serverError } from "../lib/resource"
 import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
@@ -39,21 +46,54 @@ export default function EndOfDay() {
   const [histProp, setHistProp] = useState(getCurrentProperty())
   const [history, setHistory] = useState<RunRow[]>([])
   const [q, setQ] = useState("")
+  const [busy, setBusy] = useState<string | null>(null)
 
-  useEffect(() => {
+  const loadOverview = useCallback(() => {
     eodOverview()
       .then((r) => {
         setRows(r)
         if (r.length && !r.some((x) => x.property === histProp)) setHistProp(r[0].property)
       })
       .catch((e) => setErr(serverError(e)))
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [histProp])
+
+  useEffect(() => {
+    loadOverview()
+  }, [loadOverview])
 
   const loadHistory = useCallback(() => {
     if (!histProp) return
     auditHistory(histProp).then(setHistory).catch(() => setHistory([]))
   }, [histProp])
   useEffect(loadHistory, [loadHistory])
+
+  async function recover(property: string) {
+    setBusy(property)
+    setErr(null)
+    try {
+      await recoverStuckBusinessDate(property)
+      loadOverview()
+    } catch (e) {
+      setErr(serverError(e))
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  async function rebuild(audit: string) {
+    setBusy(audit)
+    setErr(null)
+    try {
+      await rebuildAuditPack(audit)
+      loadHistory()
+      loadOverview()
+      navigate(`/end-of-day/pack/${encodeURIComponent(audit)}`)
+    } catch (e) {
+      setErr(serverError(e))
+    } finally {
+      setBusy(null)
+    }
+  }
 
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase()
@@ -68,7 +108,7 @@ export default function EndOfDay() {
       <div>
         <h1 className="text-lg font-semibold text-zinc-900">{t("Manage End of Day / Night Audit")}</h1>
         <p className="text-sm text-zinc-500">
-          {t("End of Day is the night audit. Close each property's business date: work through the checklist, post room and tax, roll the date and print the audit pack. The 3 AM job runs the same steps on its own.")}
+          {t("End of Day is the night audit. Close each property's business date, then print the audit pack. The 3 AM job runs the same steps; find every automatic run and its pack under Audit history.")}
         </p>
       </div>
       {err && <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{translate(err)}</p>}
@@ -86,7 +126,17 @@ export default function EndOfDay() {
                   })}
                 </p>
               </div>
-              {r.blockers ? (
+              {r.stuck_date ? (
+                <Badge tone="rose">
+                  <TriangleAlert className="me-1 size-3" aria-hidden />
+                  {t("Date stuck")}
+                </Badge>
+              ) : r.held ? (
+                <Badge tone="amber">
+                  <TriangleAlert className="me-1 size-3" aria-hidden />
+                  {t("03:00 held")}
+                </Badge>
+              ) : r.blockers ? (
                 <Badge tone="rose">
                   <TriangleAlert className="me-1 size-3" aria-hidden />
                   {t("{n} blocker(s)", { n: r.blockers })}
@@ -99,6 +149,18 @@ export default function EndOfDay() {
               )}
             </CardHeader>
             <CardContent className="pt-3">
+              {r.stuck_date && (
+                <p className="mb-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800">
+                  {t("The night audit already closed {d}, but the business date did not move. Advance it without posting again.", {
+                    d: fmtDay(r.stuck_date.business_date),
+                  })}
+                </p>
+              )}
+              {r.held && !r.stuck_date && (
+                <p className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                  {t("The 03:00 audit held the date. Clear the blockers and run End of Day, then print the pack.")}
+                </p>
+              )}
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                 <Count label={translate("Arrivals pending")} n={r.arrivals_pending} />
                 <Count label={translate("Departures pending")} n={r.departures_pending} warn />
@@ -110,12 +172,33 @@ export default function EndOfDay() {
                   {r.last_run
                     ? t("Last closed {d}", { d: fmtDay(r.last_run.business_date) })
                     : t("No audit run yet")}
+                  {r.last_run?.run_trigger ? ` · ${t(r.last_run.run_trigger)}` : ""}
                   {r.draft_step ? ` · ${t("in progress at step {n}", { n: r.draft_step })}` : ""}
                 </span>
-                <Button onClick={() => navigate(`/end-of-day/${encodeURIComponent(r.property)}`)}>
-                  <MoonStar className="size-4" aria-hidden />
-                  {r.draft_step ? t("Continue") : t("Manage")}
-                </Button>
+                <div className="flex flex-wrap gap-2">
+                  {r.stuck_date && (
+                    <Button
+                      variant="outline"
+                      disabled={busy === r.property}
+                      onClick={() => recover(r.property)}
+                    >
+                      {busy === r.property ? t("Saving…") : t("Advance date")}
+                    </Button>
+                  )}
+                  {r.last_run?.has_pack && (
+                    <Button
+                      variant="outline"
+                      onClick={() => navigate(`/end-of-day/pack/${encodeURIComponent(r.last_run!.audit)}`)}
+                    >
+                      <FileText className="size-4" aria-hidden />
+                      {t("Print pack")}
+                    </Button>
+                  )}
+                  <Button onClick={() => navigate(`/end-of-day/${encodeURIComponent(r.property)}`)}>
+                    <MoonStar className="size-4" aria-hidden />
+                    {r.draft_step ? t("Continue") : r.held ? t("Run End of Day") : t("Manage")}
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -183,10 +266,17 @@ export default function EndOfDay() {
                           className="inline-flex items-center gap-1 text-brand-700 hover:underline"
                         >
                           <FileText className="size-4" aria-hidden />
-                          {t("View")}
+                          {t("Print")}
                         </Link>
                       ) : (
-                        <span className="text-xs text-zinc-400">{t("No pack")}</span>
+                        <Button
+                          variant="ghost"
+                          className="h-8 px-2 text-xs"
+                          disabled={busy === r.name}
+                          onClick={() => rebuild(r.name)}
+                        >
+                          {busy === r.name ? t("Building…") : t("Rebuild pack")}
+                        </Button>
                       )}
                     </td>
                   </tr>

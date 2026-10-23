@@ -1,6 +1,6 @@
 # MCP tool reference
 
-Kamra exposes **112 governed tools** on the hosted MCP
+Kamra exposes **114 governed tools** on the hosted MCP
 endpoint (`/mcp`) and the stdio sidecar (`mcp/kamra_mcp.py`). Every
 call runs as the connected user - **role** permissions apply, tools
 are further filtered by the property's **enabled modules**, prices
@@ -578,6 +578,25 @@ suggested action. blockers lists the checks stopping a manual run;
 can_run is true when there are none.
 
 Endpoint: `kamra.night_audit.night_audit_precheck`.
+
+### `rebuild_audit_pack(audit)`
+
+Rebuild the printable night-audit pack for a completed Night Audit
+Run (when has_pack is false, or to refresh). Does not re-post charges
+or roll the business date. Pass the audit run name.
+
+Endpoint: `kamra.night_audit.rebuild_audit_pack`.
+Mutating - logged to the activity ledger.
+
+### `recover_stuck_business_date()`
+
+Advance the business date when a completed night audit exists for
+the current open date but the roll did not stick (restore / ops).
+Never re-posts room nights. Call only when stuck_date is set on the
+End of Day overview.
+
+Endpoint: `kamra.night_audit.recover_stuck_business_date`.
+Mutating - logged to the activity ledger.
 
 ## Groups
 

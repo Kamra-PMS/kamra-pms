@@ -110,7 +110,7 @@ export default function RoomInsights(props: { onOpenRoom: (room: string) => void
                   : t("{n} min", { n: Math.round(d.summary.avg_clean_minutes) })
               }
               sub={
-                translate(d.summary.timed_cleans
+                (d.summary.timed_cleans
                   ? t("from {n} timed cleans", { n: d.summary.timed_cleans })
                   : t("No timed cleans yet"))
               }

@@ -415,7 +415,7 @@ export default function Assistant() {
             <input
               className="flex-1 bg-transparent py-2 text-sm outline-none placeholder:text-zinc-400 disabled:cursor-not-allowed"
               placeholder={
-                translate(aiEnabled === false
+                (aiEnabled === false
                   ? translate("Add an AI key in Settings to start chatting")
                   : translate("Ask anything about the hotel…"))
               }

@@ -6,7 +6,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react"
 import { ArrowLeft, Download, Printer } from "lucide-react"
 import { Link, useParams } from "react-router-dom"
-import { auditPack, type Pack, type PackResponse } from "../lib/eod"
+import { auditPack, rebuildAuditPack, type Pack, type PackResponse } from "../lib/eod"
 import { serverError } from "../lib/resource"
 import { Button } from "../components/ui/button"
 import { Card } from "../components/ui/card"
@@ -612,6 +612,7 @@ export function AuditPackView({ audit, embedded = false }: { audit: string; embe
   const [err, setErr] = useState<string | null>(null)
   const [active, setActive] = useState(REPORTS[0].key)
   const [all, setAll] = useState(false)
+  const [busy, setBusy] = useState(false)
 
   useEffect(() => {
     setData(null)
@@ -629,12 +630,29 @@ export function AuditPackView({ audit, embedded = false }: { audit: string; embe
     setTimeout(() => window.print(), 60)
   }
 
-  if (err) return <p className="text-sm text-rose-600">{translate(err)}</p>
+  async function rebuild() {
+    setBusy(true)
+    setErr(null)
+    try {
+      setData(await rebuildAuditPack(audit))
+    } catch (e) {
+      setErr(serverError(e))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  if (err) return <p className="text-sm text-rose-600">{err}</p>
   if (!data) return <p className="text-sm text-zinc-400">{t("Loading the audit pack…")}</p>
   if (!data.has_pack || !data.pack)
     return (
-      <Card className="p-5 text-sm text-zinc-600">
-        {t("No audit pack was saved for this run - it ran before audit packs were introduced.")}
+      <Card className="space-y-3 p-5 text-sm text-zinc-600">
+        <p>{data.message || t("No audit pack was saved for this run.")}</p>
+        {data.can_rebuild !== false && (
+          <Button disabled={busy} onClick={rebuild}>
+            {busy ? t("Building…") : t("Rebuild pack to print")}
+          </Button>
+        )}
       </Card>
     )
   const p = data.pack

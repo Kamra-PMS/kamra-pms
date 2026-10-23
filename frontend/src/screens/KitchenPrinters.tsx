@@ -507,7 +507,7 @@ export default function KitchenPrinters() {
                                 type="checkbox"
                                 checked={has(o.name, "")}
                                 onChange={() => toggle(o.name, "")}
-                                aria-label={translate(`${o.outlet_name} - ${t("All stations")}`)}
+                                aria-label={(`${o.outlet_name} - ${t("All stations")}`)}
                               />
                             </td>
                             {STATIONS.map((st) => (

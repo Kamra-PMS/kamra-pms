@@ -336,7 +336,7 @@ export default function HkApp() {
               // an inspection is passed (room → Inspected / Ready), not "done"
               <button
                 disabled={busy === task.name || !supervisor}
-                title={translate(supervisor ? undefined : t("A supervisor passes the inspection"))}
+                title={(supervisor ? undefined : t("A supervisor passes the inspection"))}
                 onClick={() => run(task.name, "kamra.api.hk_update_task", { status: "Verified" })}
                 className="flex-1 rounded-xl bg-sky-600 py-3 text-base font-semibold text-white active:bg-sky-700 disabled:opacity-50"
               >
@@ -650,7 +650,7 @@ export default function HkApp() {
                 </div>
                 <input
                   className="w-full rounded-xl border border-zinc-300 px-3 py-3 text-base"
-                  placeholder={translate(charge.type === "Minibar" ? t("e.g. 2 cola, 1 water") : t("e.g. 3 shirts pressed"))}
+                  placeholder={(charge.type === "Minibar" ? t("e.g. 2 cola, 1 water") : t("e.g. 3 shirts pressed"))}
                   value={charge.desc}
                   autoFocus
                   onChange={(e) => setCharge({ ...charge, desc: e.target.value })}

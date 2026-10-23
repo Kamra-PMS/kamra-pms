@@ -438,7 +438,7 @@ function WasteModal({ rows, busy, onClose, onSubmit }: {
         </select>
         <input type="number" min="0" step="any" inputMode="decimal" value={qty}
           onChange={(e) => setQty(e.target.value)}
-          placeholder={translate(row ? translate("Qty wasted ({v0})", { v0: String(row.uom) }) : translate("Qty wasted"))}
+          placeholder={(row ? translate("Qty wasted ({v0})", { v0: String(row.uom) }) : translate("Qty wasted"))}
           className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm tabular-nums" />
         <textarea rows={2} value={note} onChange={(e) => setNote(e.target.value)}
           placeholder={translate("What happened? (required)")}

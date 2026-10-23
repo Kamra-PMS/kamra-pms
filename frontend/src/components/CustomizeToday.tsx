@@ -152,7 +152,7 @@ export default function CustomizeToday(props: {
                     <ArrowDown className="size-4" />
                   </IconBtn>
                   <IconBtn
-                    label={translate(col === "left" ? t("Move to the wide column") : t("Move to the narrow column"))}
+                    label={(col === "left" ? t("Move to the wide column") : t("Move to the narrow column"))}
                     onClick={() => switchColumn(col, i)}
                   >
                     <ArrowLeftRight className="size-4" />

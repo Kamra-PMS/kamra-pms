@@ -869,7 +869,7 @@ export default function PublicListing() {
       {booking && (
         <Sheet
           wide
-          title={translate(done ? (done.status === "Requested" ? t("Request sent") : t("Booking confirmed")) : t("Complete your booking"))}
+          title={(done ? (done.status === "Requested" ? t("Request sent") : t("Booking confirmed")) : t("Complete your booking"))}
           description={
             translate(done
               ? undefined

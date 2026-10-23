@@ -298,7 +298,7 @@ export default function SecurityDepositPanel(props: {
             <input
               className={inputCls}
               value={text}
-              placeholder={translate(mode === "withhold" ? t("e.g. Broken glass table, photos on file") : undefined)}
+              placeholder={(mode === "withhold" ? t("e.g. Broken glass table, photos on file") : undefined)}
               onChange={(e) => setText(e.target.value)}
             />
           </label>

@@ -59,7 +59,7 @@ export default function ImageField(props: {
         ) : null}
         <input
           className="min-w-0 flex-1 rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm focus:outline-2 focus:outline-offset-1 focus:outline-brand-600"
-          placeholder={translate(props.placeholder ?? translate("Upload, or paste an image URL"))}
+          placeholder={(props.placeholder ? translate(props.placeholder) : translate("Upload, or paste an image URL"))}
           value={props.value}
           onChange={(e) => props.onChange(e.target.value)}
         />

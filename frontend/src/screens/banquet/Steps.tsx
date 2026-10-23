@@ -15,7 +15,7 @@ import { Check } from "lucide-react"
 
 import type { FunctionSheet } from "../../lib/api"
 import { inr } from "./shared"
-import { t as translate, useUILanguage } from "../../lib/i18n"
+import { t as translate, tn, useUILanguage } from "../../lib/i18n"
 
 export type StepId =
   | "enquiry"
@@ -69,7 +69,7 @@ export function stepsFor(fn: FunctionSheet): Step[] {
       n: 2,
       label: "Quote",
       state: lines
-        ? translate("{v0} line{v1} · {v2}", { v0: String(lines), v1: String(lines === 1 ? "" : "s"), v2: String(inr(fn.grand_total)) })
+        ? tn(lines, "{n} line · {amount}", "{n} lines · {amount}", { amount: inr(fn.grand_total) })
         : "Nothing priced",
       done: lines > 0,
       blocker: !lines ? "Add the menu and the extras" : undefined,
@@ -184,7 +184,7 @@ export function Steps({
                   </span>
                 </span>
                 <span
-                  title={translate(s.done ? translate(s.state) : (s.blocker ?? translate(s.state)))}
+                  title={translate(s.done ? s.state : s.blocker ?? s.state)}
                   className={
                     "line-clamp-2 pl-7 text-xs " +
                     (s.done

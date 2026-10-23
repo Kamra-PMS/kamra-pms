@@ -74,7 +74,7 @@ export default function Economics({
           label={translate("Cost")}
           value={inr(data.cost.net)}
           sub={
-            translate(data.cost.itc_eligible
+            (data.cost.itc_eligible
               ? translate("after {v0} credit", { v0: String(inr(data.cost.input_tax)) })
               : translate("no credit claimable"))
           }
@@ -89,7 +89,7 @@ export default function Economics({
         <Tile
           label={translate("Margin")}
           value={`${m.percent}%`}
-          sub={translate(healthy ? translate("healthy") : translate("thin - check the discount"))}
+          sub={(healthy ? translate("healthy") : translate("thin - check the discount"))}
           tone={healthy ? "text-emerald-700" : "text-amber-700"}
         />
       </div>

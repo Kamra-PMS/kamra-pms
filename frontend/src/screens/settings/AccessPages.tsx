@@ -197,7 +197,7 @@ export function StaffPage() {
                       disabled={!r.editable}
                       onClick={() => setEditing(r)}
                       title={
-                        translate(r.editable
+                        (r.editable
                           ? undefined
                           : r.is_self
                             ? t("You can't change your own access")
@@ -289,8 +289,8 @@ function StaffSheet({
 
   return (
     <Sheet
-      title={translate(row ? t("Manage access") : t("Add staff"))}
-      description={translate(row ? row.email : t("They sign in with this email."))}
+      title={(row ? t("Manage access") : t("Add staff"))}
+      description={(row ? row.email : t("They sign in with this email."))}
       onClose={onClose}
       footer={
         <div className="flex w-full items-center gap-2">

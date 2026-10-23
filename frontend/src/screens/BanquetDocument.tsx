@@ -516,7 +516,7 @@ function Lines({ doc, showsMoney }: { doc: Doc; showsMoney: boolean }) {
   const all = [...doc.lines, ...doc.complimentary]
   if (all.length === 0) return null
   return (
-    <Section title={translate(showsMoney ? translate("Charges") : translate("What's included"))}>
+    <Section title={(showsMoney ? translate("Charges") : translate("What's included"))}>
       <table className="w-full">
         <thead>
           <tr className="border-b border-zinc-200 text-left text-xs uppercase tracking-wider text-zinc-400">

@@ -145,9 +145,9 @@ export function CashierAuthProvider({ children }: { children: ReactNode }) {
       <PinPad
         open={padOpen}
         mode={padMode}
-        title={translate(padMode === "enroll" ? translate("Set your cashier PIN") : translate("Cashier PIN"))}
+        title={(padMode === "enroll" ? translate("Set your cashier PIN") : translate("Cashier PIN"))}
         subtitle={
-          translate(padMode === "enroll"
+          (padMode === "enroll"
             ? translate("4-8 digits. Required for money actions at this property.")
             : translate("Unlocks your till for {v0} minutes.", { v0: String(status?.unlock_minutes ?? 15) }))
         }

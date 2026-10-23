@@ -3,8 +3,9 @@
 The steps and which of them are required come from the property's check-in
 SOP (kamra.sop, "checkin"; Settings > Front desk > Check-in steps). This
 module builds what each step needs, records who did each step and when, and
-holds the one rule the server enforces: check_in refuses while a required
-step that applies to the stay is not done.
+holds the one hard rule the server enforces: check_in refuses only while
+there is no room (assign_room). Other steps the property marks required are
+soft: the desk can check the guest in and finish them later (backfill).
 
 Every step writes through the existing writer for its data: rooms through
 move_reservation, deposits through the security deposit endpoints, payments
@@ -13,10 +14,8 @@ through the folio, requests through create_ticket. The step record itself
 trail, and each step also lands in the activity log under the operator who
 did it.
 
-A required step cannot be skipped. sop.py's other procedures (checkout tips,
-walk-in tips) stay advisory; check-in steps the property marks required are
-enforced here because a check-in done without them cannot be undone by a
-tip later (no ID on the register, a key handed over with no deposit).
+Only the room step cannot be skipped. Soft-required steps can be skipped
+with a reason, or left open and finished after check-in.
 """
 
 from __future__ import annotations
@@ -350,22 +349,39 @@ def evaluate(res, room_override: str | None = None) -> tuple[list[dict], dict]:
 	return steps, ctx
 
 
-def missing_required(steps: list[dict]) -> list[dict]:
+def hard_missing(steps: list[dict]) -> list[dict]:
+	"""Steps that refuse check_in: only the room (no room, no stay)."""
+	from kamra.sop import CHECKIN_ALWAYS_REQUIRED
 	return [s for s in steps
-	        if s.get("is_blocking") and s.get("relevant") and s.get("state") != "done"]
+	        if s.get("step_key") in CHECKIN_ALWAYS_REQUIRED
+	        and s.get("relevant") and s.get("state") != "done"]
+
+
+def soft_pending(steps: list[dict]) -> list[dict]:
+	"""Property-marked required steps still open — warn and backfill later;
+	they do not refuse check_in."""
+	from kamra.sop import CHECKIN_ALWAYS_REQUIRED
+	return [s for s in steps
+	        if s.get("is_blocking") and s.get("relevant") and s.get("state") != "done"
+	        and s.get("step_key") not in CHECKIN_ALWAYS_REQUIRED]
+
+
+def missing_required(steps: list[dict]) -> list[dict]:
+	"""What still blocks check_in (room only). Kept name for callers."""
+	return hard_missing(steps)
 
 
 def assert_ready(res, room: str | None = None) -> None:
-	"""check_in's gate: every required step that applies is done. Turned
-	off only by server code (frappe.flags), never by a request."""
+	"""check_in's hard gate: a room must be assigned. Other required steps
+	are soft — check_in goes through and the desk finishes them later.
+	Turned off only by server code (frappe.flags), never by a request."""
 	if frappe.flags.kamra_checkin_steps_off:
 		return
 	steps, _ctx = evaluate(res, room_override=room)
-	todo = missing_required(steps)
+	todo = hard_missing(steps)
 	if todo:
 		frappe.throw(
-			_("Finish these check-in steps first: {0}.").format(
-				", ".join(_(s["title"]) for s in todo)),
+			_("Assign a room before check-in."),
 			exc=CheckInStepsMissing, title=_("Check-in not finished"))
 
 
@@ -486,7 +502,10 @@ def _flow_payload(res, steps, ctx, guest) -> dict:
 		},
 		"vocabulary": front_desk_vocabulary(pack_for(res.property)),
 		"steps": steps,
-		"missing_required": [s["step_key"] for s in missing_required(steps)],
+		"missing_required": [s["step_key"] for s in hard_missing(steps)],
+		"pending_backfill": [
+			{"step": s["step_key"], "title": s["title"], "tip": s.get("tip") or ""}
+			for s in soft_pending(steps)],
 		"rooms": _free_rooms(res) if not res.room else [],
 		"request_presets": [{"key": k, "label": v[0]} for k, v in REQUEST_PRESETS.items()],
 		# the deposit step takes money: is the operator's till open, or can
@@ -500,17 +519,21 @@ def _flow_payload(res, steps, ctx, guest) -> dict:
 @frappe.whitelist()
 @require_roles("Front Desk", "Night Auditor", "Finance", "Hotel Admin", "Kamra Agent")
 def check_in_readiness(reservation: str):
-	"""Read-only: which check-in steps are done, which are still required,
-	and whether check_in would go through now. Agents read this; they
-	cannot do the desk's steps for it."""
+	"""Read-only: which check-in steps are done, whether check_in would go
+	through now (room assigned), and which soft-required steps are still
+	open to finish later. Agents read this; they cannot do the desk's
+	steps for it."""
 	res = _res(reservation)
 	steps, _ctx = evaluate(res)
-	missing = missing_required(steps)
+	hard = hard_missing(steps)
+	soft = soft_pending(steps)
 	return {
 		"reservation": res.name, "status": res.status,
-		"ready": res.status == "Confirmed" and not missing,
+		"ready": res.status == "Confirmed" and not hard,
 		"missing_required": [{"step": s["step_key"], "title": s["title"], "tip": s["tip"]}
-		                     for s in missing],
+		                     for s in hard],
+		"pending_backfill": [{"step": s["step_key"], "title": s["title"], "tip": s["tip"]}
+		                     for s in soft],
 		"steps": [{"step": s["step_key"], "title": s["title"],
 		           "required": s["is_blocking"], "applies": s["relevant"],
 		           "state": s["state"], "done_by": s.get("done_by"),
@@ -540,14 +563,16 @@ def complete_checkin_step(reservation: str, step: str, note: str | None = None):
 @frappe.whitelist(methods=["POST"])
 @require_roles(*STAFF)
 def skip_checkin_step(reservation: str, step: str, reason: str | None = None):
-	"""Skip an optional step. A required one cannot be skipped."""
+	"""Skip a step to finish later. Only the room cannot be skipped."""
+	from kamra.sop import CHECKIN_ALWAYS_REQUIRED
 	res = _res(reservation)
 	_open(res)
 	s = _step(res, step)
-	if cint(s.get("is_blocking")):
-		frappe.throw(_("{0} is required at this property and cannot be skipped.")
+	if (s.get("step_key") or step) in CHECKIN_ALWAYS_REQUIRED:
+		frappe.throw(_("{0} cannot be skipped — assign a room first.")
 		             .format(_(s.get("title") or step)))
-	record_step(res, step, "skipped", note=reason)
+	note = (reason or "").strip() or _("Backfill after check-in")
+	record_step(res, step, "skipped", note=note)
 	return checkin_flow(reservation)
 
 

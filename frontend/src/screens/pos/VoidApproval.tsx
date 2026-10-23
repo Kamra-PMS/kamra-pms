@@ -92,7 +92,7 @@ export default function VoidApproval({
         </select>
       )}
       <input autoFocus className={inputCls} value={reason}
-        placeholder={translate(needsApproval ? t("Details (optional with a reason above)") : t("Reason, e.g. guest left"))}
+        placeholder={(needsApproval ? t("Details (optional with a reason above)") : t("Reason, e.g. guest left"))}
         onChange={(e) => setReason(e.target.value)}
         onKeyDown={(e) => e.key === "Enter" && submit()} />
       {needsApproval && (canApprove ? (

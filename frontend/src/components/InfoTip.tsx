@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react"
 import { Info } from "lucide-react"
-import { useT, t as translate } from "../lib/i18n"
+import { useT } from "../lib/i18n"
 import { cn } from "../lib/utils"
 
 
@@ -42,7 +42,7 @@ export function InfoTip({
     <span ref={ref} className={cn("relative inline-flex align-middle", className)}>
       <button
         type="button"
-        aria-label={translate(label ?? t("More information"))}
+        aria-label={(label ? t(label) : t("More information"))}
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
         className="rounded-full text-zinc-400 hover:text-brand-700 focus-visible:text-brand-700 focus-visible:outline-2 focus-visible:outline-brand-600"

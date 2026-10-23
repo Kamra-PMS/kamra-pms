@@ -252,7 +252,7 @@ export default function OrderHistory({ outlet, onClose, onOpenBill }: {
                 <Tile title={t("Bills")} value={String(totals.bills)} />
                 <Tile title={t("Sales")} value={`${cur()}${money(totals.sales)}`} strong />
                 {Object.entries(totals.by_mode).map(([m, v]) => (
-                  <Tile key={m} title={translate(m === "Room" ? t("Posted to room") : m)} value={`${cur()}${money(v)}`} />
+                  <Tile key={m} title={t(m === "Room" ? "Posted to room" : m)} value={`${cur()}${money(v)}`} />
                 ))}
                 {totals.cancelled > 0 && (
                   <Tile title={t("Cancelled")} value={`${cur()}${money(totals.cancelled)}`} tone="rose" />

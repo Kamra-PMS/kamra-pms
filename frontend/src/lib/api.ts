@@ -1675,6 +1675,8 @@ export interface ReservationDetail {
     id_document_missing: boolean
     id_unverified: boolean
   }
+  /** Soft-required check-in steps still open (finish after the guest is in). */
+  checkin_backfill: { step: string; title: string; tip: string }[]
 }
 
 export const reservationDetail = (name: string) =>

@@ -133,7 +133,7 @@ export default function MenuComposer({
 
   return (
     <Sheet
-      title={translate(data ? translate("Choose the {v0}", { v0: String(data.menu_name) }) : translate("Choose the menu"))}
+      title={(data ? translate("Choose the {v0}", { v0: String(data.menu_name) }) : translate("Choose the menu"))}
       description={translate("What they pick is what the kitchen cooks and what the card prints.")}
       onClose={onClose}
       wide

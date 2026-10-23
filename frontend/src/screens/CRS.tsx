@@ -226,7 +226,7 @@ export default function CRS() {
       {booking && (
         <Sheet
           title={t("Book {type}", { type: booking.rt.room_type_name })}
-          description={translate(`${booking.property_name} · ${checkIn} → ${checkOut} · ${cur()}${inr(booking.rt.total)} ${t("total")}`)}
+          description={(`${booking.property_name} · ${checkIn} → ${checkOut} · ${cur()}${inr(booking.rt.total)} ${t("total")}`)}
           onClose={() => setBooking(null)}
           footer={
             <div className="flex justify-end gap-2">

@@ -176,7 +176,7 @@ export default function CityLedgerPayment(props: {
   return (
     <Sheet
       title={translate("Record company payment")}
-      description={translate(acc ? translate("{v0} · city ledger", { v0: String(acc.company) }) : translate("City ledger"))}
+      description={(acc ? translate("{v0} · city ledger", { v0: String(acc.company) }) : translate("City ledger"))}
       onClose={props.onClose}
       footer={footer}
       wide

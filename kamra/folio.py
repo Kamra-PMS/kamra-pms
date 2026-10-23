@@ -1227,14 +1227,17 @@ def run_night_audit(property: str, business_date: str | None = None,
 		"notes": (frappe.db.get_value("Night Audit Run", draft_name,
 		                              "auditor_notes") if draft_name else None),
 	}
-	try:
-		pack = na.build_pack(property, business_date, checks=checks,
-		                     acknowledgements=acks, summary=summary,
-		                     no_shows=no_show_rows, held_late=held_late)
-		report_pack = json.dumps(pack, default=str)
-	except Exception:
-		frappe.log_error(title=f"Night audit pack failed: {property}")
-		report_pack = None
+	report_pack = None
+	for _attempt in (1, 2):
+		try:
+			pack = na.build_pack(property, business_date, checks=checks,
+			                     acknowledgements=acks, summary=summary,
+			                     no_shows=no_show_rows, held_late=held_late)
+			report_pack = json.dumps(pack, default=str)
+			break
+		except Exception:
+			frappe.log_error(title=f"Night audit pack failed: {property}")
+			report_pack = None
 
 	values = {
 		"status": "Completed with Warnings" if blockers else "Completed",

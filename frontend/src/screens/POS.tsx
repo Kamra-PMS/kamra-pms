@@ -1405,7 +1405,7 @@ export default function POS() {
                 )}
                 {orderType === "Room Service" && (
                   <RoomPicker rooms={rooms} value={room} onChange={setRoom} onOpen={loadRooms}
-                    placeholder={translate(rooms.length ? t("Room…") : t("No guests in house"))} />
+                    placeholder={(rooms.length ? t("Room…") : t("No guests in house"))} />
                 )}
                 {orderType === "Dine In" && rooms.length > 0 && (
                   <RoomPicker rooms={rooms} value={room} onChange={setRoom} onOpen={loadRooms}
@@ -1887,7 +1887,7 @@ function RunningStrip({
 function VegMark({ veg }: { veg: number }) {
   const { t } = useT()
   return (
-    <span aria-label={translate(veg ? t("Veg") : t("Non-veg"))}
+    <span aria-label={(veg ? t("Veg") : t("Non-veg"))}
       className={"grid size-3.5 shrink-0 place-items-center rounded-[3px] border-2 " +
         (veg ? "border-emerald-600" : "border-rose-700")}>
       {veg ? (

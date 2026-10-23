@@ -198,7 +198,7 @@ export default function BanquetFunction() {
           label={translate("Margin")}
           value={fn.total_cost ? fn.gross_margin : null}
           sub={
-            translate(fn.total_cost
+            (fn.total_cost
               ? translate("{v0}% after {v1} cost", { v0: String(fn.margin_percent), v1: String(inr(fn.net_cost)) })
               : translate("nothing costed yet - see Cost & margin"))
           }
@@ -308,7 +308,7 @@ function StatusActions({
           disabled={busy}
           onClick={() => setGuest(true)}
           title={
-            translate(fn.customer_confirm_outcome
+            (fn.customer_confirm_outcome
               ? translate("Guest {v0} via {v1} on {v2}", { v0: String(fn.customer_confirm_outcome), v1: String(fn.customer_confirm_channel), v2: String(fn.customer_confirmed_on) })
               : translate("Record how the guest replied"))
           }
@@ -380,7 +380,7 @@ function StatusActions({
       )}
       {ask && (
         <Sheet
-          title={translate(ask === "Lost" ? translate("Mark this lost") : translate("Cancel this function"))}
+          title={(ask === "Lost" ? translate("Mark this lost") : translate("Cancel this function"))}
           description={translate("The reason is what makes the pipeline worth reading later.")}
           onClose={() => setAsk(null)}
           footer={
@@ -522,7 +522,7 @@ function GroupLinkField({
     <Field
       label={translate("Group booking")}
       hint={
-        translate(fn.group_detail
+        (fn.group_detail
           ? `${fn.group_detail.check_in_date} → ${fn.group_detail.check_out_date} · ${fn.group_detail.status}`
           : translate("Tie it to the group staying for the event to bill both on one master folio"))
       }
@@ -671,7 +671,7 @@ function DetailTab({
             <Field
               label={translate("To")}
               hint={
-                translate(fn.billable_hours
+                (fn.billable_hours
                   ? translate("{v0} billable hours", { v0: String(fn.billable_hours) })
                   : undefined)
               }
@@ -1207,7 +1207,7 @@ function ItemsTab({
                           className="size-4 accent-brand-600"
                           checked={Boolean(l.chargeable)}
                           title={
-                            translate(l.chargeable
+                            (l.chargeable
                               ? translate("Billed")
                               : translate("Complimentary - still on the event order and pack list"))
                           }
@@ -1222,7 +1222,7 @@ function ItemsTab({
                             type="number"
                             className={inputCls + " !py-1 text-right"}
                             title={
-                              translate(l.tax_exempt
+                              (l.tax_exempt
                                 ? translate("Zero-rated on purpose")
                                 : translate("0 marks the line exempt; blank re-derives the rate for a {v0} line", { v0: String(l.item_type) }))
                             }
@@ -1441,9 +1441,9 @@ function CataloguePicker({
 
   return (
     <Sheet
-      title={translate(kind === "menu" ? translate("Add a menu package") : translate("Add a service"))}
+      title={(kind === "menu" ? translate("Add a menu package") : translate("Add a service"))}
       description={
-        translate(kind === "menu"
+        (kind === "menu"
           ? translate("Priced per plate. The quantity follows the guaranteed pax.")
           : translate("Projectors, LED walls, DJ, podium, stage, decor, bar. Add it free to give it away."))
       }
@@ -2325,7 +2325,7 @@ function PaperTab({
               !(fn.customer_email || "").trim()
             }
             title={
-              translate(!(fn.customer_email || "").trim()
+              (!(fn.customer_email || "").trim()
                 ? translate("Add a customer email on the Enquiry step first")
                 : translate("Email the stamped quotation to the guest"))
             }
@@ -2342,7 +2342,7 @@ function PaperTab({
               !(fn.customer_phone || "").trim()
             }
             title={
-              translate(!(fn.customer_phone || "").trim()
+              (!(fn.customer_phone || "").trim()
                 ? translate("Add a customer phone on the Enquiry step first")
                 : translate("WhatsApp the quotation summary to the guest"))
             }
@@ -2467,7 +2467,7 @@ function ChecklistPanel({
                         : "border-zinc-300 bg-white text-transparent hover:border-brand-500")
                     }
                     aria-label={
-                      translate(t.status === "Done" ? translate("Mark open") : translate("Mark done"))
+                      (t.status === "Done" ? translate("Mark open") : translate("Mark done"))
                     }
                     onClick={() =>
                       act(async () => {

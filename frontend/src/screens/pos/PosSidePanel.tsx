@@ -199,7 +199,7 @@ export default function PosSidePanel({
   return (
     <div className="fixed inset-0 z-50">
       <div className="absolute inset-0 bg-black/40 animate-fade-in" onClick={onClose} />
-      <aside role="dialog" aria-label={translate(tab === "orders" ? t("Orders") : t("Guest"))}
+      <aside role="dialog" aria-label={(tab === "orders" ? t("Orders") : t("Guest"))}
         className={cn(
           "absolute inset-y-0 end-0 flex flex-col border-s border-zinc-200 bg-zinc-50 shadow-2xl animate-sheet-in",
           wide

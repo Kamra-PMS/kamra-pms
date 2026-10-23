@@ -95,7 +95,7 @@ function PhoneInput(props: {
           onChange={(e) =>
             props.onChange(joinPhone(dial, clampLocal(e.target.value, dial)))
           }
-          placeholder={translate(props.placeholder ?? (dial === "91" ? "91488 69914" : translate("Mobile number")))}
+          placeholder={(props.placeholder ? translate(props.placeholder) : dial === "91" ? "91488 69914" : translate("Mobile number"))}
         />
         <span className="shrink-0 pr-3.5 text-xs tabular-nums text-zinc-400">
           {local.length}/{max}
@@ -835,7 +835,7 @@ export function BookingDialog(props: {
       className="fixed inset-0 z-50"
       role="dialog"
       aria-modal="true"
-      aria-label={translate(walkIn ? t("Walk-in") : t("New booking"))}
+      aria-label={(walkIn ? t("Walk-in") : t("New booking"))}
       onKeyDown={(e) => e.key === "Escape" && props.onClose()}
     >
       <div
@@ -1403,7 +1403,7 @@ export function BookingDialog(props: {
                       min={todayLocal()}
                       value={form.check_in_date}
                       readOnly={walkIn}
-                      title={translate(walkIn ? t("A walk-in arrives today") : undefined)}
+                      title={(walkIn ? t("A walk-in arrives today") : undefined)}
                       onChange={(e) => set("check_in_date", e.target.value)}
                     />
                     {pastCheckIn && (

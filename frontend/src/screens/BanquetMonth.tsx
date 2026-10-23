@@ -277,7 +277,7 @@ function Slot({
       <button
         onClick={onOpen}
         aria-label={
-          translate(cell
+          (cell
             ? `${cell.customer_name}, ${cell.event_type}`
             : translate("Open - start an enquiry"))
         }

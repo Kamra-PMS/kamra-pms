@@ -13,43 +13,10 @@ function interpolate(template: string, vars?: Vars): string {
   )
 }
 
-// Some settings labels and server messages arrive with values already inserted.
-const patternsFor = (dictionary: Record<string, string>) => Object.entries(dictionary)
-  .filter(([source, translated]) =>
-    source !== translated && /\{\w+\}/.test(source) &&
-    source.replace(/\{\w+\}/g, "").replace(/[^A-Za-z]/g, "").length >= 4,
-  )
-  .sort(([a], [b]) => b.replace(/\{\w+\}/g, "").length - a.replace(/\{\w+\}/g, "").length)
-  .map(([source, translated]) => {
-    const names: string[] = []
-    const escaped = source.split(/(\{\w+\})/).map((part) => {
-      if (/^\{\w+\}$/.test(part)) {
-        names.push(part.slice(1, -1))
-        return "([\\s\\S]*?)"
-      }
-      return part.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-    }).join("")
-    // Bare room/table labels must contain an identifier with a number.
-    // Otherwise a missing phrase such as "Room types and rates" could be
-    // mistaken for "Room {n}" and become a partly translated sentence.
-    const numberedLabel = /^(?:Room|Table) \{\w+\}$/.test(source)
-    return { expression: new RegExp(`^${escaped}$`), names, translated, numberedLabel }
-  })
-
-const patternsByLanguage = new Map<string, ReturnType<typeof patternsFor>>()
-
-function translatedTemplate(source: string, language: string): string {
+/** Exact dictionary lookup only; never infer a translation from runtime text. */
+function translated(source: string, language: string): string {
   const dictionary = dictionaryFor(language)
-  if (Object.prototype.hasOwnProperty.call(dictionary, source)) return dictionary[source]
-  if (!patternsByLanguage.has(language)) patternsByLanguage.set(language, patternsFor(dictionary))
-  for (const { expression, names, translated, numberedLabel } of patternsByLanguage.get(language)!) {
-    const match = expression.exec(source)
-    if (match && (!numberedLabel || /\p{N}/u.test(match[1]))) {
-      const values = Object.fromEntries(names.map((name, i) => [name, match[i + 1]]))
-      return translated.replace(/\{(\w+)\}/g, (token, name: string) => values[name] ?? token)
-    }
-  }
-  return source
+  return Object.hasOwn(dictionary, source) ? dictionary[source] : source
 }
 
 /** Translate UI text; non-string React content and missing labels pass through. */
@@ -57,7 +24,7 @@ export function t(s: string, vars?: Vars): string
 export function t<T>(s: T): T
 export function t(s: unknown, vars?: Vars): unknown {
   if (typeof s !== "string") return s
-  return interpolate(translatedTemplate(s, getLang()), vars)
+  return interpolate(translated(s, getLang()), vars)
 }
 
 /** English plural form for a count: "one" or "other". Arabic and other
@@ -93,7 +60,7 @@ export function useT() {
   const lang = useUILanguage()
   const t = useCallback(
     (s: string, vars?: Vars) => {
-      return interpolate(translatedTemplate(s, lang), vars)
+      return interpolate(translated(s, lang), vars)
     },
     [lang],
   )

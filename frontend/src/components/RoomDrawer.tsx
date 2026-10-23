@@ -553,7 +553,7 @@ function NowTab({
           <Empty>{t("Nobody is staying in this room.")}</Empty>
         )}
       </Section>
-      <Section title={translate(a?.arriving_today ? t("Arriving today") : t("Next arrival"))}>
+      <Section title={(a?.arriving_today ? t("Arriving today") : t("Next arrival"))}>
         {a ? (
           <div className="rounded-xl border border-zinc-200 p-4">
             <div className="text-lg font-semibold text-zinc-900">{a.guest_name}</div>
@@ -670,7 +670,7 @@ function AvailabilityTab({ room }: { room: string }) {
                 <div
                   key={c.date}
                   title={
-                    translate(c.state === "booked"
+                    (c.state === "booked"
                       ? `${c.guest_name ?? ""}`
                       : c.state === "blocked"
                         ? t(REASON_LABEL[c.reason ?? ""] ?? c.reason ?? "")

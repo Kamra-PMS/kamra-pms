@@ -665,7 +665,7 @@ export default function Setup() {
                     </span>
                     <input
                       className={inputCls}
-                      placeholder={translate(isStr ? t("Entire villa") : t("Name (Deluxe)"))}
+                      placeholder={(isStr ? t("Entire villa") : t("Name (Deluxe)"))}
                       value={rt.name}
                       onChange={(e) => setRT(i, "name", e.target.value)}
                     />
