@@ -160,7 +160,7 @@ gives exactly what was printed that night. Find past audits in **Audit
 history** at the bottom of **Manage End of Day**: search by date and press
 **Print** in the **Audit pack** column. Automatic (03:00) runs appear
 there with trigger **Scheduled**. If a pack is missing, press
-**Rebuild pack** — that recreates the printable reports without posting
+**Rebuild pack**  -  that recreates the printable reports without posting
 charges again.
 
 On the property card, **Print pack** opens the latest run's pack when one
@@ -179,7 +179,7 @@ as the manual run. If a blocking check is still open, it follows
   items are recorded as exceptions in the pack.
 - **Hold and alert**: the business date stays where it is, and Hotel
   Admin and Finance users get an in-app notification and an email. Manage
-  End of Day shows **03:00 held** — clear blockers and press **Run End of
+  End of Day shows **03:00 held**  -  clear blockers and press **Run End of
   Day**, then print the pack.
 
 If someone already closed the day by hand, the 03:00 run skips it.
@@ -188,7 +188,7 @@ If someone already closed the day by hand, the 03:00 run skips it.
 
 A completed audit for the open business date with the date not rolled
 (after a restore or ops change) shows **Date stuck**. Press **Advance
-date** — Kamra moves the business date forward without posting room
+date**  -  Kamra moves the business date forward without posting room
 nights again. You cannot undo a completed night audit.
 
 ## Settings
