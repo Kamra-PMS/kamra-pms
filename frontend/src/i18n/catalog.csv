@@ -254,7 +254,7 @@
 {n} functions,{n} functions,{n} مناسبات,{n} eventos,screens\Banquet.tsx,n,translated
 {n} functions on the books,{n} functions on the books,{n} مناسبة في الدفاتر,Eventos registrados: {n},screens\Banquet.tsx,n,translated
 {n} item{s},{n} item{s},{n} بند{s},{n} artículo{s},screens\Kitchen.tsx,n s,translated
-{n} item{s} left for after check-in. The guest can go to the room now.,{n} item{s} left for after check-in. The guest can go to the room now.,,Quedan {n} tarea{s} para después del registro de entrada. El huésped ya puede pasar a su habitación.,components\CheckInDialog.tsx,n s,needs_translation
+{n} item{s} left for after check-in. The guest can go to the room now.,{n} item{s} left for after check-in. The guest can go to the room now.,,{n} tarea{s} pendiente{s} para después del registro de entrada. El huésped ya puede pasar a su habitación.,components\CheckInDialog.tsx,n s,needs_translation
 {n} key(s) handed over.,{n} key(s) handed over.,تم تسليم {n} مفتاح.,Llaves entregadas: {n}.,components\CheckInDialog.tsx,n,translated
 {n} late arrival(s) held,{n} late arrival(s) held,{n} وصول متأخر محجوز,Reservas mantenidas por llegada tardía: {n},screens\Billing.tsx,n,translated
 {n} line · {amount},{n} line · {amount},,{n} concepto · {amount},screens\banquet\Steps.tsx,n amount,needs_translation

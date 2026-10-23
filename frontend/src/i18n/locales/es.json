@@ -5225,7 +5225,7 @@
   "Security deposit is taken. Continue.": "Se ha recibido el depósito de garantía. Continúe.",
   "need a room": "falta asignar una habitación",
   "finish after check-in": "completar después del registro de entrada",
-  "{n} item{s} left for after check-in. The guest can go to the room now.": "Quedan {n} tarea{s} para después del registro de entrada. El huésped ya puede pasar a su habitación.",
+  "{n} item{s} left for after check-in. The guest can go to the room now.": "{n} tarea{s} pendiente{s} para después del registro de entrada. El huésped ya puede pasar a su habitación.",
   "Ready. Check the guest in.": "Todo listo. Registre la entrada del huésped.",
   "No audit pack was saved for this run.": "No se guardó un paquete de informes para esta auditoría.",
   "Building…": "Generando…",
