@@ -5236,5 +5236,8 @@
   "{sold}/{capacity} sold ({occupancy}%)": "{sold}/{capacity} vendidas ({occupancy}%)",
   "can sell to {limit} (overbooking)": "venta permitida hasta {limit} (sobreventa)",
   "demand premium +{premium}%": "recargo por demanda +{premium}%",
-  "hurdle {amount}": "tarifa mínima de venta {amount}"
+  "hurdle {amount}": "tarifa mínima de venta {amount}",
+  "Country calling code": "Prefijo telefónico internacional",
+  "Select a calling code.": "Seleccione un prefijo telefónico.",
+  "Check the phone number and calling code.": "Revise el número de teléfono y el prefijo internacional."
 }
