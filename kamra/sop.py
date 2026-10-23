@@ -110,15 +110,19 @@ CHECKOUT_DEFAULT_STEPS = [
 ]
 
 # The guided check-in, one screen per step. A Required step (is_blocking)
-# cannot be skipped at the desk AND check_in refuses until it is done; the
-# property changes which are required in Settings > Front desk > Check-in
-# steps. assign_room is always required (no room, no check-in). The
-# registration card's default follows the country pack (required in India).
+# is soft: the desk is nudged to finish it, can skip with "backfill later",
+# and check_in still goes through. Only assign_room hard-blocks check_in
+# (no room, no stay). The property changes which are soft-required in
+# Settings > Front desk > Check-in steps. The registration card's default
+# follows the country pack (soft-required in India).
 CHECKIN_STEP_KEYS = (
 	"guest_ids", "billing_check", "assign_room", "security_deposit",
 	"registration_card", "keys", "stay_info", "guest_requests", "room_charges",
 )
 CHECKIN_ALWAYS_REQUIRED = ("assign_room",)
+# Optional niceties: hidden from the main stepper so check-in stays short;
+# still available from the confirm screen / reservation after check-in.
+CHECKIN_EXPRESS_HIDE = ("keys", "stay_info", "guest_requests")
 
 CHECKIN_DEFAULT_STEPS = [
 	{

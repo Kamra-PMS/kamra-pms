@@ -8769,50 +8769,55 @@ def _refused(fn, *args, exc=None, contains=None, **kwargs):
 FD = "frontdesk@kamra.local"
 
 
-@check("guided check-in: check_in refuses until required steps are done; required steps cannot be skipped")
+@check("guided check-in: only the room hard-blocks; soft-required steps warn and backfill")
 def t350():
 	from kamra import checkin as ci
 	from kamra.api import check_in
 
+	# no room yet: check_in refuses
+	res_bare = _ci_stay("Eval Guided Bare", "+91 70034 00000")
+	assert not res_bare.room
+	with _steps_enforced(), _no_deposit_policy():
+		_refused(check_in, res_bare.name, exc=ci.CheckInStepsMissing, contains="room")
+		bare = ci.check_in_readiness(res_bare.name)
+		assert bare["ready"] is False
+		assert {m["step"] for m in bare["missing_required"]} == {"assign_room"}
+
 	room = _ci_room("G340")
 	res = _ci_stay("Eval Guided", "+91 70034 00001", room=room)
 	with _steps_enforced(), _no_deposit_policy():
-		msg = _refused(check_in, res.name, exc=ci.CheckInStepsMissing,
-		               contains=["Guest and IDs", "Who pays", "Charges to the room"])
-		assert "Room," not in msg and not msg.rstrip(".").endswith("Room"), msg
 		r = ci.check_in_readiness(res.name)
-		assert r["ready"] is False
-		missing = {m["step"] for m in r["missing_required"]}
-		# the eval property is in India: the signed registration card is
-		# required by the pack's default
-		assert missing == {"guest_ids", "billing_check", "room_charges",
-		                   "registration_card"}, missing
-		# the security deposit step does not apply with no deposit policy
+		# room assigned → ready even while soft-required steps are open
+		assert r["ready"] is True and not r["missing_required"], r
+		backfill = {m["step"] for m in r["pending_backfill"]}
+		# India pack: registration card is soft-required by default
+		assert {"guest_ids", "billing_check", "room_charges",
+		        "registration_card"} <= backfill, backfill
 		dep = next(s for s in r["steps"] if s["step"] == "security_deposit")
 		assert dep["applies"] == 0, dep
 
 		with _as_user(FD):
-			# a required step cannot be skipped; an optional one can
-			_refused(ci.skip_checkin_step, res.name, "guest_ids",
+			# room cannot be skipped; soft-required can (backfill later)
+			_refused(ci.skip_checkin_step, res.name, "assign_room",
 			         contains="cannot be skipped")
+			ci.skip_checkin_step(res.name, "guest_ids", reason="Guest in a hurry")
 			ci.skip_checkin_step(res.name, "keys", reason="Code lock")
-			# no ID yet: the ID step cannot be marked done
 			_refused(ci.complete_checkin_step, res.name, "guest_ids",
 			         contains="ID still needed")
-			ci.save_guest_details(res.name, id_type="Passport", id_number="Z1234567")
-			ci.complete_checkin_step(res.name, "guest_ids")
-			ci.confirm_billing(res.name, "Guest")
-			ci.set_room_charges(res.name, 1)
-			ci.sign_registration_card(res.name, signature="data:image/png;base64,iVBORw0KGgo=")
-			assert ci.check_in_readiness(res.name)["ready"] is True
+			# check-in goes through with soft steps still open
 			out = check_in(res.name)
+			assert out.get("pending_backfill"), out
 		assert out["checked_in_by"] == FD, out
 	res.reload()
 	assert res.status == "Checked In"
 	assert res.checked_in_by == FD and res.checked_in_at, (res.checked_in_by, res.checked_in_at)
-	# the ID number is masked when read back for the desk
+	# finish IDs after check-in (backfill)
+	with _as_user(FD):
+		ci.save_guest_details(res.name, id_type="Passport", id_number="Z1234567")
+		ci.complete_checkin_step(res.name, "guest_ids")
 	flow = ci.checkin_flow(res.name)
 	assert flow["guest"]["id_number"].endswith("4567") and "Z123" not in flow["guest"]["id_number"]
+	assert "guest_ids" not in {p["step"] for p in flow["pending_backfill"]}
 
 
 @check("guided check-in: who assigned the room, issued keys and did each step is recorded (and a later move too)")
@@ -8912,8 +8917,11 @@ def t353():
 			ci.complete_checkin_step(res.name, "guest_ids")
 			ci.confirm_billing(res.name, "Guest")
 			ci.set_room_charges(res.name, 1)
-			_refused(check_in, res.name, exc=ci.CheckInStepsMissing,
-			         contains=["Deposit and advance", "Registration card"])
+			# soft: deposit + GRC open → check_in still allowed, listed as backfill
+			ready = ci.check_in_readiness(res.name)
+			assert ready["ready"] is True
+			assert {"security_deposit", "registration_card"} <= {
+				m["step"] for m in ready["pending_backfill"]}, ready
 			_refused(ci.complete_checkin_step, res.name, "security_deposit",
 			         contains="security deposit")
 			waive_deposit(res.name, "Regular guest")
@@ -8971,13 +8979,13 @@ def t354b():
 			ci.confirm_billing(res.name, "Guest")
 			ci.set_room_charges(res.name, 1)
 			ci.sign_registration_card(res.name, on_paper=1)
-			missing = {m["step"] for m in ci.check_in_readiness(res.name)["missing_required"]}
-			assert "security_deposit" in missing, missing
+			pending = {m["step"] for m in ci.check_in_readiness(res.name)["pending_backfill"]}
+			assert "security_deposit" in pending, pending
 			waive_deposit(res.name, "Owner said skip for this guest")
 			ready = ci.check_in_readiness(res.name)
 			dep = next(s for s in ready["steps"] if s["step"] == "security_deposit")
 			assert dep["state"] == "done" and dep["applies"] == 1, dep
-			assert "security_deposit" not in {m["step"] for m in ready["missing_required"]}
+			assert "security_deposit" not in {m["step"] for m in ready["pending_backfill"]}
 			assert ready["ready"] is True, ready
 			# no complete_checkin_step for security_deposit — waive is enough
 			check_in(res.name)
@@ -9003,13 +9011,17 @@ def t355():
 		res = frappe.get_doc("Reservation", out["reservation"])
 		assert res.status == "Confirmed" and res.room == room
 		assert res.room_assigned_by == FD
-		missing = {m["step"] for m in ci.check_in_readiness(res.name)["missing_required"]}
-		assert missing == {"room_charges", "registration_card"}, missing
-		# the plain walk-in (no defer) refuses while a required step is open
-		# (over HTTP the request rolls the booking back with it)
-		_refused(walk_in, P, RT, _ci_room("G345B"), add_days(nowdate(), 1),
-		         "Eval Walk Plain", phone="+91 70034 50002",
-		         exc=ci.CheckInStepsMissing)
+		ready = ci.check_in_readiness(res.name)
+		assert ready["ready"] is True and not ready["missing_required"]
+		assert {"room_charges", "registration_card"} <= {
+			m["step"] for m in ready["pending_backfill"]}, ready
+		# plain walk-in checks the guest in immediately (room assigned; soft
+		# steps stay as backfill)
+		plain = walk_in(P, RT, _ci_room("G345B"), add_days(nowdate(), 1),
+		                "Eval Walk Plain", phone="+91 70034 50002",
+		                id_type="Passport", id_number="W1234568")
+		assert frappe.db.get_value("Reservation", plain["reservation"],
+		                           "status") == "Checked In"
 		ci.set_room_charges(res.name, 1)
 		ci.sign_registration_card(res.name, on_paper=1)
 		check_in(res.name)

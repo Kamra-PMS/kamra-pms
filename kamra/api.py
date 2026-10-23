@@ -2935,6 +2935,17 @@ def set_stay_instruction_status(reservation: str, row: str, status: str):
 	return _stay_instruction_rows(reservation)
 
 
+def _checkin_backfill(res) -> list[dict]:
+	"""Soft-required check-in steps still open (Checked In or Confirmed).
+	Empty when nothing applies or everything is done / skipped."""
+	if res.status not in ("Confirmed", "Checked In"):
+		return []
+	from kamra.checkin import evaluate, soft_pending
+	steps, _ctx = evaluate(res)
+	return [{"step": s["step_key"], "title": s["title"], "tip": s.get("tip") or ""}
+	        for s in soft_pending(steps)]
+
+
 @frappe.whitelist()
 @require_roles("Front Desk", "Kamra Agent", "Finance", "Revenue Manager")
 def reservation_detail(reservation: str):
@@ -3054,6 +3065,7 @@ def reservation_detail(reservation: str):
 			and not res.get("id_document_discarded"),
 			"id_unverified": res.precheckin_status == "Submitted",
 		},
+		"checkin_backfill": _checkin_backfill(res),
 	}
 
 
@@ -3218,14 +3230,14 @@ def checkin_context(reservation: str):
 def check_in(reservation: str, room: str | None = None):
 	"""Check the guest in: the last step of the guided check-in.
 
-	Refused while a check-in step the property marks required (Settings >
-	Front desk > Check-in steps) is not done for this stay - the ID, who
-	pays, the deposit, the registration card... - so neither the desk, the
-	API nor an AI agent can skip them. kamra.checkin.check_in_readiness says
-	what is missing. Records who checked the guest in and when; a connected
-	door-lock system then makes the keys recorded in the Keys step."""
+	Hard gate: a room must be assigned (or passed here). Soft-required
+	steps (ID, deposit, registration card, …) may still be open — the desk
+	is warned and finishes them later. kamra.checkin.check_in_readiness
+	lists hard blockers and pending backfill. Records who checked the guest
+	in and when; a connected door-lock system then makes the keys recorded
+	in the Keys step."""
 	doc = frappe.get_doc("Reservation", reservation)
-	from kamra.checkin import after_check_in, assert_ready
+	from kamra.checkin import after_check_in, assert_ready, evaluate, soft_pending
 	if doc.status == "Confirmed":
 		assert_ready(doc, room=room)
 	if room:
@@ -3241,6 +3253,11 @@ def check_in(reservation: str, room: str | None = None):
 	           rationale=f"{doc.guest_name} into {where}")
 	out = {"ok": True, "reservation": doc.name, "room": doc.room,
 	       "checked_in_by": frappe.session.user}
+	steps, _ctx = evaluate(doc)
+	pending = soft_pending(steps)
+	if pending:
+		out["pending_backfill"] = [
+			{"step": s["step_key"], "title": s["title"]} for s in pending]
 	keys = after_check_in(doc)
 	if keys:
 		out["keys"] = keys
@@ -3269,10 +3286,9 @@ def walk_in(property: str, room_type: str, room: str, check_out_date: str,
 
 	defer_check_in=1 books, assigns the room and takes the money (as an
 	advance) but leaves the stay Confirmed, so the desk finishes it in the
-	guided check-in, where the property's required steps apply. Without it
-	the required steps are enforced here as well: the walk-in records the
-	steps it does itself (room, who pays, the ID when given) and refuses,
-	rolling the booking back, if another required step is still open.
+	guided check-in. Without it, check_in runs now (room is enough; other
+	soft-required steps stay as backfill). The walk-in records the steps it
+	does itself (room, who pays, the ID when given).
 
 	It is the same writers chained (create_booking → check_in →
 	add_folio_payment), inside one request, so it is all-or-nothing: a

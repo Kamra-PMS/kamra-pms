@@ -1425,8 +1425,9 @@ const CHECKIN_STEP_TITLES: Record<string, string> = {
   room_charges: translate("Charges to the room"),
 }
 
-/** Which check-in steps are required at this property. A required step has
- *  no Skip button and the server refuses check-in until it is done. */
+/** Which check-in steps are soft-required at this property. Soft-required
+ *  steps nudge the desk and stay on a backfill list, but only Room blocks
+ *  check-in. */
 export function CheckInStepsCard({ property }: { property: string }) {
   const { t } = useT()
   const [name, setName] = useState<string | null>(null)
@@ -1487,7 +1488,7 @@ export function CheckInStepsCard({ property }: { property: string }) {
         <div>
           <CardTitle>{t("Check-in steps")}</CardTitle>
           <p className="mt-0.5 text-xs text-zinc-400">
-            {t("The guided check-in follows these steps in order. Required steps cannot be skipped, and the guest cannot be checked in until they are done.")}
+            {t("The guided check-in follows these steps. Only Room must be done before check-in. Other required steps can finish after the guest is in — the desk sees a warning to backfill.")}
           </p>
         </div>
       </CardHeader>
@@ -1516,7 +1517,7 @@ export function CheckInStepsCard({ property }: { property: string }) {
                       )
                     }
                   />
-                  {locked ? t("Always required") : t("Required")}
+                  {locked ? t("Must have room") : t("Do now or later")}
                 </label>
               </li>
             )
