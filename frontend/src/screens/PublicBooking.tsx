@@ -23,6 +23,7 @@ import { formatPhoneDisplay, formatPhoneTel } from "../lib/phone"
 import { petChargeBasis } from "../lib/pets"
 import { useT, t as translate } from "../lib/i18n"
 import { adoptBrowserLanguage } from "../lib/dir"
+import { LanguageSwitcher } from "../components/LanguageSwitcher"
 import ChildAges, {
   agesToSend, canReserve, sizeAges, StayNotice,
   type ChildAge, type StayFit,
@@ -609,9 +610,12 @@ export default function PublicBooking() {
 
   return (
     <div
-      className="min-h-screen bg-zinc-50"
+      className="relative min-h-screen bg-zinc-50"
       style={accentVars(data?.property.brand_accent)}
     >
+      <div className="absolute end-4 top-4 z-20">
+        <LanguageSwitcher className="border-white/40 bg-white/95 shadow-sm backdrop-blur" />
+      </div>
       {/* hero - photo when available, otherwise brand accent fill */}
       <div className="relative h-72 overflow-hidden sm:h-96">
         {heroSrc ? (

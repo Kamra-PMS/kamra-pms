@@ -9,7 +9,8 @@ import { IdDocumentField } from "../components/IdDocumentField"
 import { GuestLaundryCard } from "./laundry/GuestLaundryCard"
 import { adoptUiLocale } from "../lib/money"
 import { useT, t as translate } from "../lib/i18n"
-import { LANGS, adoptBrowserLanguage, setLang } from "../lib/dir"
+import { adoptBrowserLanguage } from "../lib/dir"
+import { LanguageSwitcher } from "../components/LanguageSwitcher"
 
 
 /** Downscale a picked/captured photo so the upload stays small (max edge
@@ -131,7 +132,7 @@ interface Info {
 
 export default function PublicCheckin() {
   const { token } = useParams()
-  const { t, lang } = useT()
+  const { t } = useT()
   // a guest's phone speaks their language: follow it until they choose
   useEffect(() => adoptBrowserLanguage(), [])
   const [info, setInfo] = useState<Info | null>(null)
@@ -213,22 +214,7 @@ export default function PublicCheckin() {
             <h1 className="text-lg font-semibold">{p.property_name}</h1>
             <p className="text-sm text-zinc-500">{t("Online check-in")} · {p.city}</p>
           </div>
-          <div className="flex shrink-0 rounded-lg border border-zinc-200 bg-white p-0.5 text-xs" role="group" aria-label={t("Language")}>
-            {LANGS.map((l) => (
-              <button
-                key={l.code}
-                type="button"
-                aria-pressed={lang === l.code}
-                onClick={() => setLang(l.code)}
-                className={
-                  "rounded-md px-2 py-1 " +
-                  (lang === l.code ? "bg-zinc-900 text-white" : "text-zinc-600")
-                }
-              >
-                {l.nativeLabel}
-              </button>
-            ))}
-          </div>
+          <LanguageSwitcher />
         </div>
 
         <div className="mb-5 rounded-xl border border-zinc-200 bg-white p-4 text-sm shadow-sm">
