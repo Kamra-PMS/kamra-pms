@@ -31,19 +31,18 @@ upgrade-breaking changes (removed doctypes / API contracts).
 
 ### Features
 
-* **demo:** 75 days of history rebuilt by every demo reset ([e5e8c4a](https://github.com/Kamra-PMS/kamra-pms/commit/e5e8c4a726a6395e6d2c833d449d2899029aa3c8))
-* **front-desk:** agent fixes and action cards, In House, one Reports hub, live agent scenarios ([8c9e639](https://github.com/Kamra-PMS/kamra-pms/commit/8c9e63922c81011623b56014cc8e6505539ae100))
-* **mcp:** MCP Read and MCP Manage roles, AI access admin page, bulk room assignment ([59219c0](https://github.com/Kamra-PMS/kamra-pms/commit/59219c015478a11e1e9a3afe406994f762576cbe))
-* **reports:** custom report builder with save and email ([#335](https://github.com/Kamra-PMS/kamra-pms/issues/335)) ([a1cc4ce](https://github.com/Kamra-PMS/kamra-pms/commit/a1cc4cefa32ae4809c1a12bda22237caf819595c))
+* **mcp:** MCP Read and MCP Manage roles decide who may use Kamra from Claude, ChatGPT or other MCP clients, checked on every request; Settings > Access > AI access (MCP) shows staff levels and connections with revoke, per-property switches and extra allowed OAuth redirects; tools carry read-only and destructive annotations; new bulk room assignment (116 tools); ChatGPT can connect over OAuth ([#331](https://github.com/Kamra-PMS/kamra-pms/pull/331))
+* **agent:** Kamra Agent action cards (check in, check out, collect, open folio, waive deposit, book from a quote) and shortcut chips; it waives the security deposit after booking, collects what check-out needs, never guesses ids, refuses another property's records and cannot double-book; live agent scenarios in kamra/scripts/agent_eval.py ([#336](https://github.com/Kamra-PMS/kamra-pms/pull/336))
+* **front-desk:** In House page with arrivals, in-house guests and departures; every Today card opens what is behind it; Night Audit naming; a highlighted Kamra Agent; menu ordered by daily use ([#336](https://github.com/Kamra-PMS/kamra-pms/pull/336))
+* **reports:** one Reports hub per role and module; custom report builder with save, share and scheduled email; Dashboard moves to Revenue ([#335](https://github.com/Kamra-PMS/kamra-pms/pull/335), [#336](https://github.com/Kamra-PMS/kamra-pms/pull/336))
+* **demo:** 75 days of history (stays, folios, night audits, POS, housekeeping, banquets, AR aging) rebuilt by every demo reset ([#334](https://github.com/Kamra-PMS/kamra-pms/pull/334))
 
 
 ### Bug Fixes
 
-* **i18n:** include Spanish localization in 2.6.21 ([c6240a4](https://github.com/Kamra-PMS/kamra-pms/commit/c6240a454e7a489f908afe991e324e7cc7ae4d0b))
-* **i18n:** include Spanish localization in 2.6.21 ([a64a3ce](https://github.com/Kamra-PMS/kamra-pms/commit/a64a3ce49fc95776b9a8a9156e7bad56377ca4e1))
-* **i18n:** polish Spanish after [#324](https://github.com/Kamra-PMS/kamra-pms/issues/324) ([0dc0487](https://github.com/Kamra-PMS/kamra-pms/commit/0dc0487521e2f481aa92ebecf49e68ffdc91fcfd))
-* **i18n:** polish Spanish after [#324](https://github.com/Kamra-PMS/kamra-pms/issues/324) merge ([b753da1](https://github.com/Kamra-PMS/kamra-pms/commit/b753da1d943e4f734cf252775a2afc61fcffdb28))
-* **night-audit:** 03:00 run recovers a stuck business date and catches up ([7f20de1](https://github.com/Kamra-PMS/kamra-pms/commit/7f20de1b5d8d4e5b18b602b953294a9adef74f05))
+* **night-audit:** the 03:00 run recovers a stuck business date and catches up to three missed days; further behind, it alerts Hotel Admin and Finance instead of posting silently ([#333](https://github.com/Kamra-PMS/kamra-pms/pull/333))
+* **rooms:** bulk room allocation re-checks each room before assigning ([#331](https://github.com/Kamra-PMS/kamra-pms/pull/331))
+* **i18n:** Spanish localization included and polished ([#326](https://github.com/Kamra-PMS/kamra-pms/pull/326), [#329](https://github.com/Kamra-PMS/kamra-pms/pull/329))
 
 ## [2.6.20](https://github.com/Kamra-PMS/kamra-pms/compare/v2.6.19...v2.6.20) (2026-10-24)
 
