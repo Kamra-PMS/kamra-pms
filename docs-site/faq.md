@@ -68,6 +68,21 @@ want one - not automatically on every `feat:` commit. See the
 and [releasing notes](https://github.com/Kamra-PMS/kamra-pms/blob/main/RELEASING.md)
 in the repo.
 
+## Can I downgrade after trying a newer version?
+
+**Not from a button in `/kamra`.** System Health only documents how to
+upgrade; it does not change the install. On a self-hosted Docker site,
+pin the release you want again:
+
+```bash
+sudo KAMRA_TAG=v2.6.16 /opt/kamra/install.sh update
+```
+
+Use the tag you were on before. Updates always backup first; if migrate
+has already moved the database forward, restore that backup when the
+older image will not run cleanly. Details:
+[Going back (downgrade)](/quickstart#going-back-downgrade).
+
 ## How do I report a bug or ask for a feature?
 
 [GitHub issues](https://github.com/Kamra-PMS/kamra-pms/issues) for bugs

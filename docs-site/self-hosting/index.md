@@ -123,6 +123,23 @@ recorded in `/opt/kamra/apps.json` (pin a release with
 the containers and run `bench migrate` on every site. Details:
 [quickstart → Updating](/quickstart#updating).
 
+### Going back (downgrade)
+
+No in-app downgrade control - System Health never rolls the site back.
+Pin the previous release and update:
+
+```bash
+sudo KAMRA_TAG=v2.6.16 /opt/kamra/install.sh update
+# build installs: sudo KAMRA_BRANCH=v2.6.16 /opt/kamra/install.sh update
+```
+
+Pick the `vX.Y.Z` you left (from
+[Releases](https://github.com/Kamra-PMS/kamra-pms/releases)). Migrations
+are forward-biased: if the older code disagrees with a newer database,
+restore the backup taken at the start of the upgrade. Keep production on
+`:stable` or a pinned tag - not `:nightly`. Full notes:
+[quickstart → Going back](/quickstart#going-back-downgrade).
+
 Bench self-host:
 
 ```bash
