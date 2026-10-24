@@ -14,12 +14,20 @@ def after_install():
 	set_site_home_and_favicon()
 	ensure_agent_identity()
 	ensure_staff_roles()
+	ensure_mcp_roles()
 
 
 def after_migrate():
 	# heals sites that were installed before the agent identity existed here
 	ensure_agent_identity()
 	ensure_staff_roles()
+	ensure_mcp_roles()
+
+
+def ensure_mcp_roles():
+	from kamra.mcp_access import ensure_roles
+
+	ensure_roles()
 
 
 def ensure_staff_roles():

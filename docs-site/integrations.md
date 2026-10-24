@@ -21,7 +21,7 @@ a call arrives:
 | Integration | Direction | How | Set up in |
 | --- | --- | --- | --- |
 | [REST API keys](#rest-api) | in | `POST /api/method/kamra.*` with a token | Developers |
-| [AI agents (MCP)](#ai-agents-mcp) | in | `/mcp` with OAuth, or the stdio sidecar | Settings → Claude & MCP |
+| [AI agents (MCP)](#ai-agents-mcp) | in | `/mcp` with OAuth, or the stdio sidecar | Settings → AI access (MCP) |
 | [Outbound webhooks](#outbound-webhooks) | out | Signed JSON `POST` per event | Settings → Webhooks |
 | [External POS room charges](#external-pos-room-charges) | in | `kamra.pos_interface.*` | Staff & access + Developers |
 | [Channel manager (OTAs)](#channel-manager) | both | Channex, STAAH, AioSell adapters | Revenue → Channel Manager |

@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function - the same governed layer
-the UI and the AI use. **406 endpoints**, generated from the source
+the UI and the AI use. **413 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -1095,12 +1095,12 @@ suggestion plus every room the desk may hand over instead.
 
 Check the guest in: the last step of the guided check-in.
 
-Refused while a check-in step the property marks required (Settings >
-Front desk > Check-in steps) is not done for this stay - the ID, who
-pays, the deposit, the registration card... - so neither the desk, the
-API nor an AI agent can skip them. kamra.checkin.check_in_readiness says
-what is missing. Records who checked the guest in and when; a connected
-door-lock system then makes the keys recorded in the Keys step.
+Hard gate: a room must be assigned (or passed here). Soft-required
+steps (ID, deposit, registration card, …) may still be open  -  the desk
+is warned and finishes them later. kamra.checkin.check_in_readiness
+lists hard blockers and pending backfill. Records who checked the guest
+in and when; a connected door-lock system then makes the keys recorded
+in the Keys step.
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -1116,10 +1116,9 @@ room and take the money - the counter flow that used to be four screens.
 
 defer_check_in=1 books, assigns the room and takes the money (as an
 advance) but leaves the stay Confirmed, so the desk finishes it in the
-guided check-in, where the property's required steps apply. Without it
-the required steps are enforced here as well: the walk-in records the
-steps it does itself (room, who pays, the ID when given) and refuses,
-rolling the booking back, if another required step is still open.
+guided check-in. Without it, check_in runs now (room is enough; other
+soft-required steps stay as backfill). The walk-in records the steps it
+does itself (room, who pays, the ID when given).
 
 It is the same writers chained (create_booking → check_in →
 add_folio_payment), inside one request, so it is all-or-nothing: a
@@ -5153,9 +5152,10 @@ what each step screen needs.
 
 **GET/POST** · roles: `Front Desk`, `Night Auditor`, `Finance`, `Hotel Admin`, `Kamra Agent`
 
-Read-only: which check-in steps are done, which are still required,
-and whether check_in would go through now. Agents read this; they
-cannot do the desk's steps for it.
+Read-only: which check-in steps are done, whether check_in would go
+through now (room assigned), and which soft-required steps are still
+open to finish later. Agents read this; they cannot do the desk's
+steps for it.
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -5179,7 +5179,7 @@ not true yet - an ID still missing, a deposit not taken.
 
 **POST**
 
-Skip an optional step. A required one cannot be skipped.
+Skip a step to finish later. Only the room cannot be skipped.
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -5325,6 +5325,103 @@ and whether they can sign in.
 **GET/POST**
 
 Per role, the settings pages it may change (admins: all of them).
+
+
+## AI access over MCP (MCP roles, property switches, connections)
+
+> Hotel Admin / System Manager. Extra OAuth redirect addresses are IT only.
+
+### `kamra.mcp_access.access_overview`
+
+**GET/POST**
+
+Everything the AI access page shows: the property switches, who has
+which MCP role, the live connections and the recent AI actions.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+
+### `kamra.mcp_access.set_mcp_level`
+
+**POST**
+
+Give a person no MCP access, MCP Read or MCP Manage. Their other
+roles are left alone; admins already have full access.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `user` | yes |  |
+| `level` | yes |  |
+
+### `kamra.mcp_access.set_mcp_policy`
+
+**POST**
+
+Change this property's AI switches. Pass only what changes.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `enabled` | no | `None` |
+| `read_only` | no | `None` |
+| `blocked_tools` | no | `None` |
+
+### `kamra.mcp_access.revoke_connection`
+
+**POST**
+
+Disconnect one AI client. It has to sign in again to come back.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `grant` | yes |  |
+
+### `kamra.mcp_access.set_extra_redirect_uris`
+
+**POST** · roles: `System Manager`, `Administrator`
+
+Extra OAuth redirect addresses for clients Kamra doesn't know by name,
+such as a self-hosted n8n. https only, exact match, no wildcards. IT only:
+it applies to every property on the site.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `uris` | yes |  |
+
+
+## Room assignment for arrivals (suggest, then apply)
+
+### `kamra.allocation.suggest_allocation`
+
+**GET/POST** · roles: `Front Desk`, `Revenue Manager`, `Kamra Agent`
+
+Propose a room for every unassigned arrival on `date`. No mutation.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `date` | no | `None` |
+
+### `kamra.allocation.apply_allocation`
+
+**POST** · roles: `Front Desk`, `Revenue Manager`, `Kamra Agent`
+
+Assign the proposed rooms - run by a person from the tape chart, or by
+an AI client on their behalf. Every pair is checked again before it is
+written: the stay is a confirmed one at this property still without a
+room, and the room is of the booked type and free and ready for those
+nights (the same available_rooms rule the suggestion used). Pairs that
+fail are returned in `skipped` with the reason. A pair already in place
+is skipped too, so repeating the call changes nothing. Each assignment is
+recorded in the action log.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `assignments` | yes |  |
 
 
 ## Outbound webhooks (subscriptions, delivery log)

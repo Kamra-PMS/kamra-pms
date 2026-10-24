@@ -30,6 +30,8 @@ await open(page, "/settings/payments", 2000)
 await shot(page, "settings/payments")
 await open(page, "/settings/ai", 2000)
 await shot(page, "settings/ai")
+await open(page, "/settings/claude", 2500)
+await shot(page, "settings/ai-access", { fullPage: true })
 await open(page, "/settings/appearance", 1500)
 await shot(page, "settings/appearance")
 

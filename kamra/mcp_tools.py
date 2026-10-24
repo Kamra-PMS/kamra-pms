@@ -412,6 +412,38 @@ TOOLS: tuple[ToolSpec, ...] = (
 		required=("reservation", "new_room"),
 	),
 	_t(
+		"assign_rooms_preview",
+		"allocation.suggest_allocation",
+		"""Propose a room for every confirmed arrival on a date (default today)
+		that has none yet: a free room of the booked type, ready for the
+		guest, matched to their requests and VIP flag, with no two arrivals
+		given the same room. Lists arrivals no room can take, and why.
+		Read-only: show the plan to the user, then call assign_rooms_apply
+		with the pairs they agree to.""",
+		{"date": _p("string", format="date")},
+		property=True,
+	),
+	_t(
+		"assign_rooms_apply",
+		"allocation.apply_allocation",
+		"""Assign rooms to arrivals: assignments is a list of
+		{"reservation": id, "room": room id}, usually from
+		assign_rooms_preview after the user agreed. Each pair is checked
+		again (the stay still needs a room, the room is of the booked type
+		and still free and ready); pairs that fail are returned in skipped
+		with the reason, and nothing else is changed. Running it again with
+		the same pairs changes nothing.""",
+		{"assignments": _p("array", items={
+			"type": "object",
+			"properties": {"reservation": {"type": "string"},
+			               "room": {"type": "string"}},
+			"required": ["reservation", "room"],
+		})},
+		required=("assignments",),
+		property=True,
+		mutating=True,
+	),
+	_t(
 		"set_late_arrival",
 		"api.set_late_arrival",
 		"""Flag a confirmed arrival as arriving late (late_arrival=1), with the
@@ -1624,14 +1656,52 @@ def input_schema(spec: ToolSpec) -> dict[str, Any]:
 	return schema
 
 
+# Writes that can't simply be undone: MCP clients may ask before each one
+DESTRUCTIVE = frozenset({
+	"cancel_booking", "decline_booking_request", "check_out", "void_charge",
+	"close_folio", "waive_security_deposit", "pos_cancel_order", "pos_remove_item",
+	"run_night_audit", "recover_stuck_business_date",
+})
+# Writes where the same call twice has the effect of one (idempotency keys,
+# set-to-value, once per business date)
+IDEMPOTENT = frozenset({
+	"create_booking", "add_to_waitlist", "pickup_group_room", "set_late_arrival",
+	"set_room_hk_status", "set_room_rate", "run_night_audit", "rebuild_audit_pack",
+	"assign_rooms_apply",
+})
+# Tools that reach someone outside Kamra (a message to the guest)
+OPEN_WORLD = frozenset({"send_payment_link", "send_deposit_link"})
+_TITLE_WORDS = {"hk": "HK", "pos": "POS", "kot": "KOT", "id": "ID", "ar": "AR"}
+
+
+def tool_title(name: str) -> str:
+	words = [_TITLE_WORDS.get(w, w) for w in name.split("_")]
+	first = words[0] if words[0].isupper() else words[0].capitalize()
+	return " ".join([first, *words[1:]])
+
+
+def annotations(spec: ToolSpec) -> dict[str, Any]:
+	"""MCP tool annotations, so a client can let reads run and put writes,
+	and the destructive ones above all, behind an approval."""
+	return {
+		"title": tool_title(spec.name),
+		"readOnlyHint": not spec.mutating,
+		"destructiveHint": spec.mutating and spec.name in DESTRUCTIVE,
+		"idempotentHint": (not spec.mutating) or spec.name in IDEMPOTENT,
+		"openWorldHint": spec.name in OPEN_WORLD,
+	}
+
+
 def mcp_tool_list(allowed: list[ToolSpec] | None = None) -> list[dict[str, Any]]:
 	out = []
 	for spec in allowed if allowed is not None else TOOLS:
 		out.append(
 			{
 				"name": spec.name,
+				"title": tool_title(spec.name),
 				"description": spec.description,
 				"inputSchema": input_schema(spec),
+				"annotations": annotations(spec),
 			}
 		)
 	return out

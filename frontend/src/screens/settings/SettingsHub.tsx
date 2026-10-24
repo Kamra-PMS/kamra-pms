@@ -48,6 +48,7 @@ import {
   TIMEZONES,
   ZatcaCard,
 } from "./cards"
+import { McpAccessPage } from "./McpAccessPage"
 import { ModulePage, Switch, type OptionSources } from "./ModulePage"
 import { WebhooksPage } from "./WebhooksPage"
 
@@ -92,9 +93,9 @@ const CUSTOM_PAGES: CustomPage[] = [
   { id: "ai", title: "AI assistant", group: "integrations", icon: Bot,
     description: "Bring your own AI key for Kamra Agent in the console.",
     keywords: "openai gemini groq openrouter key model llm kamra agent chat" },
-  { id: "claude", title: "Claude & MCP", group: "integrations", icon: LayoutGrid,
-    description: "Let staff connect Claude to this property's governed tools.",
-    keywords: "mcp claude desktop connector oauth agent" },
+  { id: "claude", title: "AI access (MCP)", group: "access", icon: LayoutGrid,
+    description: "Who may connect Claude or another AI client, what it may do here, and the live connections.",
+    keywords: "mcp claude chatgpt n8n desktop connector oauth agent ai access read manage permissions roles block tools disconnect" },
   { id: "webhooks", title: "Webhooks", group: "integrations", icon: Webhook,
     description: "Send bookings, check-ins, folio postings and the night audit to another system as signed events.",
     keywords: "webhook integration events api door lock pos crm data warehouse signature delivery log resend" },
@@ -509,7 +510,12 @@ function CustomPageBody({
     case "ai":
       return <AiSection property={property} />
     case "claude":
-      return <AgentAccessCard />
+      return (
+        <div className="space-y-4">
+          <McpAccessPage />
+          <AgentAccessCard />
+        </div>
+      )
     case "webhooks":
       return <WebhooksPage property={property} />
     case "verify":

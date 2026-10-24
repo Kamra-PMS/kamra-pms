@@ -432,7 +432,7 @@
 0 turns the high-balance check off.,0 turns the high-balance check off.,,0 desactiva la comprobación de saldos elevados.,,,needs_translation
 0-30,0-30,0-30,0-30,,,translated
 0.5 means one portion feeds two,0.5 means one portion feeds two,,"0,5 significa que una porción alcanza para dos personas",screens\BanquetCatalogue.tsx,,needs_translation
-03:00 held,03:00 held,,,screens\EndOfDay.tsx,,needs_translation
+03:00 held,03:00 held,موقوف عند 03:00,03:00 en espera,screens\EndOfDay.tsx,,translated
 1 · Bookings,1 · Bookings,,1 · Reservas,,,needs_translation
 1 night,1 night,,1 noche,screens\EndOfDayWizard.tsx,,needs_translation
 1 night / charge,1 night / charge,,1 noche / cargo,components\CheckOutDialog.tsx,,needs_translation
@@ -634,10 +634,15 @@ Agent name,Agent name,,Nombre de la agencia,,,needs_translation
 Agreed,Agreed,,Acordado,screens\BanquetFunction.tsx,,needs_translation
 "Agreed charge / night, all of them","Agreed charge / night, all of them",,Cargo por noche acordado para todos los huéspedes adicionales,components\BookingDialog.tsx,,needs_translation
 Agrees with folios,Agrees with folios,مطابق للفواتير,Concuerda con los folios,screens\AuditPack.tsx,,translated
+AI access at this property,AI access at this property,,,screens\settings\McpAccessPage.tsx,,needs_translation
+AI access for {name},AI access for {name},,,screens\settings\McpAccessPage.tsx,name,needs_translation
+AI access over MCP,AI access over MCP,,,screens\settings\McpAccessPage.tsx,,needs_translation
+AI access updated for {name}.,AI access updated for {name}.,,,screens\settings\McpAccessPage.tsx,name,needs_translation
 AI Agent,AI Agent,وكيل الذكاء الاصطناعي,Agente de IA,screens\Today.tsx,,translated
 AI assistant,AI assistant,,Asistente de IA,,,needs_translation
 AI assistant (bring your own key),AI assistant (bring your own key),مساعد الذكاء الاصطناعي (مفتاحك الخاص),Asistente de IA (use su propia clave API),screens\settings\cards.tsx,,translated
 AI Assistant Settings,AI Assistant Settings,,Configuración del asistente de IA,,,needs_translation
+"AI clients can look but never change anything here, even for people with MCP Manage.","AI clients can look but never change anything here, even for people with MCP Manage.",,,screens\settings\McpAccessPage.tsx,,needs_translation
 AI only,AI only,الذكاء الاصطناعي فقط,Solo IA,screens\Agents.tsx,,translated
 Air,Air,,Avión,components\BookingDialog.tsx,,needs_translation
 Air conditioning,Air conditioning,التكييف,Aire acondicionado,components\RoomDrawer.tsx,,translated
@@ -757,7 +762,7 @@ Apply discount,Apply discount,تطبيق الخصم,Aplicar descuento,,,translat
 Approve,Approve,,Aprobar,screens\CashierBoard.tsx,,needs_translation
 approved by {name},approved by {name},بموافقة {name},aprobado por {name},screens\VoidAllowanceReport.tsx; screens\pos\PosSidePanel.tsx,name,translated
 AR balance,AR balance,رصيد الذمم المدينة,Saldo de cuentas por cobrar,,,translated
-Arabic switches the interface to right-to-left,Arabic switches the interface to right-to-left,,El árabe muestra la interfaz de derecha a izquierda,screens\settings\cards.tsx,,needs_translation
+Arabic switches the interface to right-to-left,Arabic switches the interface to right-to-left,العربية تبدّل الواجهة من اليمين إلى اليسار,El árabe muestra la interfaz de derecha a izquierda,screens\settings\cards.tsx,,translated
 Arabic switches the interface to right-to-left · this browser only,Arabic switches the interface to right-to-left · this browser only,العربية تبدّل الواجهة من اليمين لليسار · هذا المتصفح فقط,El árabe muestra la interfaz de derecha a izquierda · solo en este navegador,,,translated
 Are guest requests being resolved inside their promised window?,Are guest requests being resolved inside their promised window?,,¿Se resuelven las solicitudes de los huéspedes dentro del plazo prometido?,screens\OpsSLA.tsx,,needs_translation
 Area,Area,المنطقة,Área,,,translated
@@ -798,9 +803,9 @@ Ask the company to pay or raise the limit.,Ask the company to pay or raise the l
 "Ask the guest for a payment on account, or confirm a company will pay.","Ask the guest for a payment on account, or confirm a company will pay.",,Solicite al huésped un abono a cuenta o confirme que una empresa pagará.,,,needs_translation
 "ask to see, correct or erase your data, or withdraw consent, by contacting {contact}.","ask to see, correct or erase your data, or withdraw consent, by contacting {contact}.",اطلب الاطلاع على بياناتك أو تصحيحها أو حذفها، أو اسحب موافقتك، بالتواصل مع {contact}.,"Puede solicitar acceso a sus datos, pedir su corrección o eliminación, o retirar su consentimiento contactando con {contact}.",components\PrivacyNotice.tsx,contact,translated
 "ask to see, correct or erase your data, or withdraw consent, by contacting the hotel.","ask to see, correct or erase your data, or withdraw consent, by contacting the hotel.",اطلب الاطلاع على بياناتك أو تصحيحها أو حذفها، أو اسحب موافقتك، بالتواصل مع الفندق.,"Puede solicitar acceso a sus datos, pedir su corrección o eliminación, o retirar su consentimiento contactando con el hotel.",components\PrivacyNotice.tsx,,translated
-Assign {n} room,Assign {n} room,,Asignar {n} habitación,,n,needs_translation
-Assign {n} room{s},Assign {n} room{s},تعيين {n} غرفة{s},Asignar {n} habitación{s},screens\TapeChart.tsx,n s,translated
-Assign {n} rooms,Assign {n} rooms,,Asignar {n} habitaciones,,n,needs_translation
+Assign {n} room,Assign {n} room,,Asignar {n} habitación,screens\TapeChart.tsx,n,needs_translation
+Assign {n} room{s},Assign {n} room{s},تعيين {n} غرفة{s},Asignar {n} habitación{s},,n s,translated
+Assign {n} rooms,Assign {n} rooms,,Asignar {n} habitaciones,screens\TapeChart.tsx,n,needs_translation
 Assign {task} to,Assign {task} to,,Asignar {task} a,screens\HousekeepingBoard.tsx,task,needs_translation
 Assign a room before check-in.,Assign a room before check-in.,,Asigne una habitación antes de registrar la entrada.,components\CheckInDialog.tsx,,needs_translation
 Assign housekeeping,Assign housekeeping,,Asignar limpieza,,,needs_translation
@@ -955,7 +960,9 @@ Block,Block,,Bloquear,,,needs_translation
 Block a room,Block a room,,Bloquear una habitación,,,needs_translation
 Block charges to the room,Block charges to the room,منع الرسوم على الغرفة,Bloquear cargos a la habitación,components\CheckInDialog.tsx,,translated
 Block cutoff,Block cutoff,,Fecha límite del bloqueo,,,needs_translation
+Block write tools,Block write tools,,,screens\settings\McpAccessPage.tsx,,needs_translation
 Blocked,Blocked,محجوب,Bloqueado,,,translated
+Blocked tools,Blocked tools,,,screens\settings\McpAccessPage.tsx,,needs_translation
 Blocked: {steps}. Resolve or acknowledge them before posting room and tax.,Blocked: {steps}. Resolve or acknowledge them before posting room and tax.,متوقف: {steps}. عالجها أو أقرّ بها قبل ترحيل الغرفة والضريبة.,Bloqueado: {steps}. Resuelva estos puntos o confírmelos antes de registrar los cargos de habitación e impuestos.,screens\EndOfDayWizard.tsx,steps,translated
 Blocks new bookings for this guest until a Hotel Admin lifts it.,Blocks new bookings for this guest until a Hotel Admin lifts it.,,Impide nuevas reservas para este huésped hasta que Administración del hotel levante el bloqueo.,screens\GuestJourney.tsx,,needs_translation
 Board,Board,اللوحة,Panel,screens\Laundry.tsx; screens\Rooms.tsx,,translated
@@ -1170,6 +1177,7 @@ Change room,Change room,تغيير الغرفة,Cambiar de habitación,component
 Change room or upgrade,Change room or upgrade,تغيير الغرفة أو الترقية,Cambiar de habitación o mejorar de categoría,components\CheckInDialog.tsx,,translated
 Changed by,Changed by,,Cambiado por,screens\settings\SettingsHub.tsx,,needs_translation
 CHANGEOVER CONFLICT,CHANGEOVER CONFLICT,تعارض تبديل الغرفة,CONFLICTO ENTRE SALIDA Y ENTRADA,screens\TapeChart.tsx,,translated
+changes data,changes data,,,screens\settings\McpAccessPage.tsx,,needs_translation
 Changes Requested,Changes Requested,,Cambios solicitados,,,needs_translation
 Channel,Channel,,Canal,,,needs_translation
 Channel manager,Channel manager,,Gestor de canales,..\..\kamra\onboarding.py,,needs_translation
@@ -1215,7 +1223,7 @@ Check speed,Check speed,,Comprobar velocidad,screens\settings\cards.tsx,,needs_t
 Check the phone number and calling code.,Check the phone number and calling code.,,Revise el número de teléfono y el prefijo internacional.,,,needs_translation
 Check the status of this Kamra site and whether a newer open-source release is available.,Check the status of this Kamra site and whether a newer open-source release is available.,تحقق من حالة موقع كامرا وما إذا كان هناك إصدار مفتوح المصدر أحدث.,Compruebe el estado de este sitio de Kamra y si hay disponible una versión más reciente de código abierto.,screens\SystemHealth.tsx,,translated
 check-in,check-in,تسجيل الوصول,registro de entrada,components\CommandPalette.tsx,,translated
-Check-in,Check-in,تسجيل الوصول,Entrada,components\BookingDialog.tsx; screens\CRS.tsx; screens\PublicBooking.tsx; screens\PublicListing.tsx; screens\RegistrationCard.tsx; screens\ReservationDetail.tsx; screens\TapeChart.tsx,,translated
+Check-in,Check-in,تسجيل الوصول,Registro de entrada,components\BookingDialog.tsx; screens\CRS.tsx; screens\PublicBooking.tsx; screens\PublicListing.tsx; screens\RegistrationCard.tsx; screens\ReservationDetail.tsx; screens\TapeChart.tsx,,translated
 Check-in & check-out,Check-in & check-out,,Entrada y salida,,,needs_translation
 Check-in not finished,Check-in not finished,,Registro de llegada sin finalizar,,,needs_translation
 Check-in opens on the arrival date ({date}).,Check-in opens on the arrival date ({date}).,يتاح تسجيل الوصول في تاريخ الوصول ({date}).,El registro de entrada se habilita en la fecha de llegada ({date}).,screens\TapeChart.tsx,date,translated
@@ -1285,9 +1293,11 @@ City ledger by company,City ledger by company,,Cuentas por cobrar a empresas,scr
 Classroom,Classroom,,Aula,,,needs_translation
 Claude & MCP,Claude & MCP,,Claude y MCP,screens\settings\cards.tsx,,needs_translation
 Claude acts as you at ,Claude acts as you at ,,Claude actúa con su identidad en ,screens\Agents.tsx,,needs_translation
+"Claude and other MCP clients act as the person who connected them, within that person's roles, and every change lands in Activity under their name.","Claude and other MCP clients act as the person who connected them, within that person's roles, and every change lands in Activity under their name.",,,screens\settings\McpAccessPage.tsx,,needs_translation
 "Claude is authorised for this property. Enable the connector in a chat with the + menu, then talk in hotel language.","Claude is authorised for this property. Enable the connector in a chat with the + menu, then talk in hotel language.",,Claude tiene autorización para este alojamiento. Active el conector en una conversación desde el menú + y haga sus consultas en términos hoteleros.,screens\Agents.tsx,,needs_translation
 "Claude opens with this hotel's MCP URL filled in. Confirm Add, sign in here if asked, pick the property, Allow. Then in Claude enable the connector on the chat + menu and say things like ""occupancy this week"" or ""book a Deluxe for Friday"".","Claude opens with this hotel's MCP URL filled in. Confirm Add, sign in here if asked, pick the property, Allow. Then in Claude enable the connector on the chat + menu and say things like ""occupancy this week"" or ""book a Deluxe for Friday"".",,"Claude se abre con la URL MCP de este hotel. Confirme Agregar, inicie sesión aquí si se le solicita, seleccione el alojamiento y autorice el acceso. Después active el conector en el menú + de Claude y pruebe consultas como «ocupación de esta semana» o «reservar una Deluxe para el viernes».",screens\Agents.tsx,,needs_translation
 "Claude reaches this hotel from Anthropic's cloud, so the site needs public HTTPS. This origin looks local - use Claude Code over HTTP on this machine, or the stdio sidecar, until you have a public URL.","Claude reaches this hotel from Anthropic's cloud, so the site needs public HTTPS. This origin looks local - use Claude Code over HTTP on this machine, or the stdio sidecar, until you have a public URL.",,"Claude accede a este hotel desde la nube de Anthropic, por lo que el sitio necesita HTTPS público. Esta dirección parece local: utilice Claude Code mediante HTTP en este equipo o el adaptador stdio hasta disponer de una URL pública.",screens\Agents.tsx,,needs_translation
+"Claude, Claude Code and ChatGPT work out of the box. For another client, such as your own n8n, add its exact OAuth redirect address: https only, no wildcards, one per line. Applies to every property on this site.","Claude, Claude Code and ChatGPT work out of the box. For another client, such as your own n8n, add its exact OAuth redirect address: https only, no wildcards, one per line. Applies to every property on this site.",,,screens\settings\McpAccessPage.tsx,,needs_translation
 Clean,Clean,نظيفة,Limpia,screens\Dashboard.tsx; screens\Rooms.tsx; screens\Today.tsx,,translated
 clean room,clean room,,limpiar habitación,,,needs_translation
 "Cleaned by {who}, {when}","Cleaned by {who}, {when}",نظّفها {who}، {when},"Limpieza realizada por {who}, {when}",components\RoomDrawer.tsx,who when,translated
@@ -1451,6 +1461,8 @@ Connect your channel manager so OTA bookings arrive and rates and availability g
 "Connect your WhatsApp Business number under Channels and messages will start flowing: booking confirmations and check-in links go out on their own, and anything guests write appears here.","Connect your WhatsApp Business number under Channels and messages will start flowing: booking confirmations and check-in links go out on their own, and anything guests write appears here.",اربط رقم واتساب للأعمال تحت القنوات وستبدأ الرسائل بالتدفق: تأكيدات الحجز وروابط تسجيل الوصول تُرسل تلقائياً، وما يكتبه الضيوف يظهر هنا.,Conecte su número de WhatsApp Business en la sección Canales para recibir mensajes. Las confirmaciones de reserva y los enlaces de registro de entrada se envían automáticamente; los mensajes de los huéspedes aparecen aquí.,screens\WhatsAppChat.tsx,,translated
 Connected,Connected,,Conectado,,,needs_translation
 Connected ({ms} ms) - {reply},Connected ({ms} ms) - {reply},,Conectado ({ms} ms) - {reply},screens\settings\cards.tsx,ms reply,needs_translation
+Connected {when},Connected {when},,,screens\settings\McpAccessPage.tsx,when,needs_translation
+Connected AI clients,Connected AI clients,,,screens\settings\McpAccessPage.tsx,,needs_translation
 Connected. Paste these into HeyKoala:,Connected. Paste these into HeyKoala:,متصل. الصق هذه في HeyKoala:,Conectado. Pégalos en HeyKoala:,screens\Marketplace.tsx,,translated
 Connecting...,Connecting...,جارٍ الاتصال...,Conectando...,screens\Marketplace.tsx,,translated
 Connection,Connection,,Conexión,screens\KitchenPrinters.tsx,,needs_translation
@@ -1699,8 +1711,9 @@ Dirty,Dirty,متسخة,Sucia,screens\Dashboard.tsx; screens\Rooms.tsx; screens\T
 Disabled,Disabled,معطّل,Deshabilitado,screens\CashierBoard.tsx; screens\KitchenPrinters.tsx; screens\settings\cards.tsx,,translated
 Disabled (unpublished),Disabled (unpublished),,Desactivado (sin publicar),,,needs_translation
 Discard,Discard,,Descartar,screens\BanquetFunction.tsx; screens\settings\ModulePage.tsx,,needs_translation
-Disconnect,Disconnect,قطع الاتصال,Desconectar,screens\Agents.tsx; screens\Marketplace.tsx,,translated
+Disconnect,Disconnect,قطع الاتصال,Desconectar,screens\Agents.tsx; screens\Marketplace.tsx; screens\settings\McpAccessPage.tsx,,translated
 Disconnect Claude? It will have to sign in again.,Disconnect Claude? It will have to sign in again.,,¿Desconectar Claude? Tendrá que iniciar sesión nuevamente.,screens\Agents.tsx,,needs_translation
+Disconnected.,Disconnected.,,,screens\settings\McpAccessPage.tsx,,needs_translation
 Discount,Discount,خصم,Descuento,lib\thermal.ts; screens\POS.tsx; screens\banquet\Economics.tsx; screens\pos\PosSidePanel.tsx,,translated
 Discount %,Discount %,خصم %,Descuento (%),,,translated
 Discount codes guests or agents can apply at booking. Toggle Disabled to activate or deactivate a code.,Discount codes guests or agents can apply at booking. Toggle Disabled to activate or deactivate a code.,,Cupones de descuento que los huéspedes o agentes pueden aplicar al reservar. Use Desactivado para activar o desactivar un código.,,,needs_translation
@@ -1777,6 +1790,7 @@ Each hotel / branch keeps its own float and voucher list. Changing property in t
 Each place that sells food or drink.,Each place that sells food or drink.,,Cada punto donde se venden alimentos o bebidas.,..\..\kamra\onboarding.py,,needs_translation
 Each request becomes a task for the right team.,Each request becomes a task for the right team.,يصبح كل طلب مهمة للفريق المختص.,Cada solicitud se convierte en una tarea para el equipo adecuado.,components\CheckInDialog.tsx,,translated
 "Each request carries X-Kamra-Event, X-Kamra-Event-Id, X-Kamra-Timestamp and X-Kamra-Signature. Recompute the signature over the raw body and reject old timestamps:","Each request carries X-Kamra-Event, X-Kamra-Event-Id, X-Kamra-Timestamp and X-Kamra-Signature. Recompute the signature over the raw body and reject old timestamps:",,"Cada solicitud lleva X-Kamra-Event, X-Kamra-Event-Id, X-Kamra-Timestamp y X-Kamra-Signature. Vuelva a calcular la firma sobre el cuerpo sin procesar y rechace las marcas de tiempo antiguas:",screens\settings\WebhooksPage.tsx,,needs_translation
+"Each sign-in from Claude, ChatGPT or another MCP client. Disconnect one and it has to sign in again.","Each sign-in from Claude, ChatGPT or another MCP client. Disconnect one and it has to sign in again.",,,screens\settings\McpAccessPage.tsx,,needs_translation
 Each unit / room sells on its own (hotel-style inventory).,Each unit / room sells on its own (hotel-style inventory).,كل وحدة / غرفة تُباع بمفردها (مخزون بأسلوب الفندق).,"Cada unidad o habitación se reserva por separado, como en un hotel.",screens\Setup.tsx,,translated
 Earlier,Earlier,,Anterior,screens\BanquetDiary.tsx; screens\RateCalendar.tsx,,needs_translation
 Early check-in,Early check-in,,Entrada anticipada,,,needs_translation
@@ -1811,7 +1825,7 @@ End of day,End of day,نهاية اليوم,Cierre del día,,,translated
 End of Day,End of Day,نهاية اليوم,Cierre del día,screens\AuditPack.tsx,,translated
 End of Day / Night Audit,End of Day / Night Audit,,Cierre del día / Auditoría nocturna,screens\EndOfDayWizard.tsx,,needs_translation
 End of Day for {bd} is complete.,End of Day for {bd} is complete.,اكتملت نهاية اليوم لتاريخ {bd}.,Se completó el cierre del día {bd}.,screens\EndOfDayWizard.tsx,bd,translated
-"End of Day is the night audit. Close each property's business date, then print the audit pack. The 3 AM job runs the same steps; find every automatic run and its pack under Audit history.","End of Day is the night audit. Close each property's business date, then print the audit pack. The 3 AM job runs the same steps; find every automatic run and its pack under Audit history.",,,screens\EndOfDay.tsx,,needs_translation
+"End of Day is the night audit. Close each property's business date, then print the audit pack. The 3 AM job runs the same steps; find every automatic run and its pack under Audit history.","End of Day is the night audit. Close each property's business date, then print the audit pack. The 3 AM job runs the same steps; find every automatic run and its pack under Audit history.",إقفال اليوم هو التدقيق الليلي. أغلق تاريخ العمل لكل منشأة ثم اطبع حزمة التدقيق. مهمة الساعة 3 صباحاً تنفّذ نفس الخطوات؛ اعثر على كل تشغيل تلقائي وحزمته ضمن سجل التدقيق.,El cierre del día es la auditoría nocturna. Cierre la fecha operativa de cada alojamiento e imprima el paquete de auditoría. El proceso de las 3 a. m. realiza los mismos pasos; encuentre cada ejecución automática y su paquete en Historial de auditoría.,screens\EndOfDay.tsx,,translated
 "End of Day is the night audit. Close each property's business date: work through the checklist, post room and tax, roll the date and print the audit pack. The 3 AM job runs the same steps on its own.","End of Day is the night audit. Close each property's business date: work through the checklist, post room and tax, roll the date and print the audit pack. The 3 AM job runs the same steps on its own.",,"El cierre del día corresponde a la auditoría nocturna. Cierre la fecha operativa de cada alojamiento: complete la lista de verificación, registre los cargos de habitación e impuestos, avance la fecha e imprima el paquete de auditoría. El proceso de las 3 a. m. realiza los mismos pasos automáticamente.",,,needs_translation
 "End of Day walks the night audit checklist, posts room and tax, rolls the business date and prints the audit pack. Runs automatically at 3 AM.","End of Day walks the night audit checklist, posts room and tax, rolls the business date and prints the audit pack. Runs automatically at 3 AM.",نهاية اليوم تمر على قائمة فحص التدقيق الليلي، وترحّل الغرفة والضريبة، وتنقل تاريخ العمل وتطبع حزمة التدقيق. تعمل تلقائيًا الساعة 3 صباحًا.,"El cierre del día recorre la lista de verificación de auditoría nocturna, registra los cargos de habitación e impuestos, avanza la fecha operativa e imprime el paquete de auditoría. Se ejecuta automáticamente a las 3 a. m.",screens\Billing.tsx,,translated
 Endpoint URL (HTTPS),Endpoint URL (HTTPS),,URL del endpoint (HTTPS),screens\settings\WebhooksPage.tsx,,needs_translation
@@ -1945,6 +1959,7 @@ Extra guests,Extra guests,,Huéspedes adicionales,components\BookingDialog.tsx,,
 Extra Guests,Extra Guests,ضيوف إضافيون,Huéspedes adicionales,,,translated
 "Extra guests by arrangement - up to {beds} above the {cap} it sleeps, at a price you agree","Extra guests by arrangement - up to {beds} above the {cap} it sleeps, at a price you agree",,"Huéspedes adicionales sujetos a acuerdo: hasta {beds} personas por encima de la capacidad de {cap}, con una tarifa acordada",components\BookingDialog.tsx,beds cap,needs_translation
 Extra instructions,Extra instructions,,Instrucciones adicionales,screens\settings\cards.tsx,,needs_translation
+Extra sign-in addresses,Extra sign-in addresses,,,screens\settings\McpAccessPage.tsx,,needs_translation
 "Extra towels, AC not cooling…","Extra towels, AC not cooling…",مناشف إضافية، التكييف لا يبرد…,"Toallas adicionales, el aire acondicionado no enfría...",components\RoomStayPanels.tsx,,translated
 Extras,Extras,إضافات,Extras,,,translated
 eZee export,eZee export,تصدير eZee,Exportación eZee,screens\GoLiveImport.tsx,,translated
@@ -1992,6 +2007,7 @@ Finance · Reports,Finance · Reports,,Finanzas · Informes,,,needs_translation
 Finance or a Hotel Admin can change these.,Finance or a Hotel Admin can change these.,,Finanzas o el administrador del hotel pueden cambiarlos.,components\CreditTermsEditor.tsx,,needs_translation
 Find a dish…,Find a dish…,,Buscar un plato…,screens\RecipeManager.tsx,,needs_translation
 "Find a room across every property you manage, and book into whichever has space.","Find a room across every property you manage, and book into whichever has space.",اعثر على غرفة عبر كل عقار تديره، واحجز حيث يوجد مكان.,Busque habitaciones en todos los alojamientos que administra y reserve donde haya disponibilidad.,screens\CRS.tsx,,translated
+Find a tool,Find a tool,,,screens\settings\McpAccessPage.tsx,,needs_translation
 Find it under Arrivals on the stay date.,Find it under Arrivals on the stay date.,ابحث عنه تحت الوصول في تاريخ الإقامة.,Encontrará la reserva en Llegadas para la fecha de entrada.,components\BookingDialog.tsx,,translated
 Find the duplicate by name or phone,Find the duplicate by name or phone,,Busque el duplicado por nombre o teléfono,screens\GuestJourney.tsx,,needs_translation
 Find the reservation for room 101 and show me the folio.,Find the reservation for room 101 and show me the folio.,,Busque la reserva de la habitación 101 y muéstreme el folio.,,,needs_translation
@@ -2096,6 +2112,7 @@ Fryer,Fryer,,Freidora,..\..\kamra\settings.py,,needs_translation
 full,full,,completo,screens\RateCalendar.tsx,,needs_translation
 Full,Full,,Completo,,,needs_translation
 Full 360 for one booking,Full 360 for one booking,,Información completa de una reserva,,,needs_translation
+Full access (admin),Full access (admin),,,screens\settings\McpAccessPage.tsx,,needs_translation
 Full Day,Full Day,,Día completo,,,needs_translation
 Full name,Full name,,Nombre completo,screens\PublicBooking.tsx; screens\PublicListing.tsx; screens\RegistrationCard.tsx; screens\settings\AccessPages.tsx,,needs_translation
 Full online,Full online,,Pago total en línea,screens\BookingEngine.tsx,,needs_translation
@@ -2393,6 +2410,7 @@ In,In,,Entrada,,,needs_translation
 In {n} days,In {n} days,خلال {n} أيام,En {n} días,screens\Today.tsx,n,translated
 In / out,In / out,دخول / خروج,Entrada/salida,screens\FolioView.tsx,,translated
 In balance,In balance,متوازن,Cuadrado,,,translated
+"In Claude, set write tools to Needs approval as well: Kamra marks every tool as read-only or as making changes, and the destructive ones (cancel, void, check-out, night audit) separately.","In Claude, set write tools to Needs approval as well: Kamra marks every tool as read-only or as making changes, and the destructive ones (cancel, void, check-out, night audit) separately.",,,screens\settings\McpAccessPage.tsx,,needs_translation
 In hand,In hand,في اليد,Efectivo disponible,screens\Laundry.tsx,,translated
 In hand (,In hand (,,En custodia (,screens\HkLaundry.tsx,,needs_translation
 in house,in house,مقيم,alojado,components\RoomDrawer.tsx,,translated
@@ -2571,7 +2589,8 @@ KOTs (kitchen and bar tickets),KOTs (kitchen and bar tickets),,Comandas de cocin
 "KOTs follow the outlet and station routes below. A bill goes to the printer chosen on the till, else to a bill printer routed to the bill's outlet.","KOTs follow the outlet and station routes below. A bill goes to the printer chosen on the till, else to a bill printer routed to the bill's outlet.",,"Las comandas siguen las rutas de punto de venta y estación que aparecen abajo. La cuenta se imprime en la impresora seleccionada para la caja; si no se eligió una, se envía a la impresora configurada para el punto de venta de la cuenta.",screens\KitchenPrinters.tsx,,needs_translation
 Label,Label,,Etiqueta,screens\settings\WebhooksPage.tsx,,needs_translation
 Labels used when adding a dish. Edit here once; every New Menu form and the kitchen use them.,Labels used when adding a dish. Edit here once; every New Menu form and the kitchen use them.,,Etiquetas utilizadas al agregar platos. Edítelas aquí para utilizarlas en todos los formularios de menú y en cocina.,,,needs_translation
-Language,Language,اللغة,Idioma,screens\Login.tsx; screens\PublicCheckin.tsx; screens\settings\cards.tsx,,translated
+Language,Language,اللغة,Idioma,components\LanguageSwitcher.tsx; screens\Login.tsx; screens\settings\cards.tsx,,translated
+Language applies to this browser only,Language applies to this browser only,اللغة تنطبق على هذا المتصفح فقط,El idioma solo se aplica en este navegador,screens\settings\cards.tsx,,translated
 Largest room charge from an external POS,Largest room charge from an external POS,,Cargo máximo a habitación desde un punto de venta externo,,,needs_translation
 last {date},last {date},آخر مرة {date},último {date},components\GuestDocuments.tsx,date,translated
 Last {days} days,Last {days} days,آخر {days} أيام,Últimos {days} días,screens\Laundry.tsx,days,translated
@@ -2588,7 +2607,9 @@ Last printed {at},Last printed {at},,Última impresión {at},screens\KitchenPrin
 Last printed {n} ticket(s) at {time},Last printed {n} ticket(s) at {time},,Última impresión: {n} comandas a las {time},screens\Kitchen.tsx,n time,needs_translation
 Last push,Last push,,Último envío,,,needs_translation
 Last stay,Last stay,آخر إقامة,Última estancia,screens\Guests.tsx,,translated
+Last used {when},Last used {when},,,screens\settings\McpAccessPage.tsx,when,needs_translation
 Last year,Last year,آخر سنة,El año pasado,screens\pos\OrderHistory.tsx,,translated
+"Last: {action} by {actor}, {when}","Last: {action} by {actor}, {when}",,,screens\settings\McpAccessPage.tsx,action actor when,needs_translation
 Late,Late,,Fuera de plazo,screens\OpsSLA.tsx,,needs_translation
 LATE,LATE,متأخر,CON RETRASO,screens\Kitchen.tsx,,translated
 Late arrival,Late arrival,,Llegada tardía,screens\ReservationDetail.tsx,,needs_translation
@@ -2659,7 +2680,7 @@ Loading the audit pack…,Loading the audit pack…,جارٍ تحميل حزمة
 Loading the day…,Loading the day…,,Cargando el día…,screens\PosDashboard.tsx,,needs_translation
 Loading the document…,Loading the document…,,Cargando el documento…,screens\ReservationDetail.tsx,,needs_translation
 Loading the month…,Loading the month…,,Cargando el mes…,screens\BanquetMonth.tsx,,needs_translation
-Loading…,Loading…,جارٍ التحميل…,Cargando…,App.tsx; components\BookingDialog.tsx; components\CalendarView.tsx; components\CheckInDialog.tsx; components\HkMedia.tsx; components\OpenTasksCard.tsx; components\ResourceScreen.tsx; components\RoomChangeDialog.tsx; components\RoomDrawer.tsx; components\RoomInsights.tsx; components\RoomStayPanels.tsx; screens\Agents.tsx; screens\Banquet.tsx; screens\BanquetCatalogue.tsx; screens\BanquetDocument.tsx; screens\BanquetFunction.tsx; screens\BanquetRegisters.tsx; screens\CancellationLetter.tsx; screens\EndOfDay.tsx; screens\FolioView.tsx; screens\GuestJourney.tsx; screens\HkApp.tsx; screens\HousekeepingBoard.tsx; screens\Inventory.tsx; screens\PublicBooking.tsx; screens\PublicCheckin.tsx; screens\PublicListing.tsx; screens\RegistrationCard.tsx; screens\Reports.tsx; screens\ReservationDetail.tsx; screens\Rooms.tsx; screens\SystemHealth.tsx; screens\Tickets.tsx; screens\VoidAllowanceReport.tsx; screens\banquet\Economics.tsx; screens\banquet\MenuComposer.tsx; screens\pos\OrderHistory.tsx; screens\pos\PosSidePanel.tsx; screens\pos\VoidApproval.tsx; screens\settings\AccessPages.tsx; screens\settings\SettingsHub.tsx; screens\settings\WebhooksPage.tsx,,translated
+Loading…,Loading…,جارٍ التحميل…,Cargando…,App.tsx; components\BookingDialog.tsx; components\CalendarView.tsx; components\CheckInDialog.tsx; components\HkMedia.tsx; components\OpenTasksCard.tsx; components\ResourceScreen.tsx; components\RoomChangeDialog.tsx; components\RoomDrawer.tsx; components\RoomInsights.tsx; components\RoomStayPanels.tsx; screens\Agents.tsx; screens\Banquet.tsx; screens\BanquetCatalogue.tsx; screens\BanquetDocument.tsx; screens\BanquetFunction.tsx; screens\BanquetRegisters.tsx; screens\CancellationLetter.tsx; screens\EndOfDay.tsx; screens\FolioView.tsx; screens\GuestJourney.tsx; screens\HkApp.tsx; screens\HousekeepingBoard.tsx; screens\Inventory.tsx; screens\PublicBooking.tsx; screens\PublicCheckin.tsx; screens\PublicListing.tsx; screens\RegistrationCard.tsx; screens\Reports.tsx; screens\ReservationDetail.tsx; screens\Rooms.tsx; screens\SystemHealth.tsx; screens\Tickets.tsx; screens\VoidAllowanceReport.tsx; screens\banquet\Economics.tsx; screens\banquet\MenuComposer.tsx; screens\pos\OrderHistory.tsx; screens\pos\PosSidePanel.tsx; screens\pos\VoidApproval.tsx; screens\settings\AccessPages.tsx; screens\settings\McpAccessPage.tsx; screens\settings\SettingsHub.tsx; screens\settings\WebhooksPage.tsx,,translated
 Local,Local,,Moneda local,screens\CurrencyDesk.tsx,,needs_translation
 Local endpoint: chat may stay on your infrastructure when Ollama runs on this server or LAN.,Local endpoint: chat may stay on your infrastructure when Ollama runs on this server or LAN.,,Dirección local: la conversación puede permanecer en su infraestructura si Ollama se ejecuta en este servidor o en la red local.,,,needs_translation
 Location & Directions,Location & Directions,,Ubicación e indicaciones,screens\PublicBooking.tsx,,needs_translation
@@ -2738,6 +2759,8 @@ Max children,Max children,,Máximo de menores,,,needs_translation
 Max guests (base),Max guests (base),أقصى ضيوف (أساسي),Capacidad base de huéspedes,screens\Setup.tsx,,translated
 Max uses,Max uses,,Máximo de usos,,,needs_translation
 Max uses (0 = unlimited),Max uses (0 = unlimited),,Máximo de usos (0 = ilimitado),,,needs_translation
+"MCP is turned off for this whole site (kamra_mcp_disabled), so nothing below takes effect until IT turns it back on.","MCP is turned off for this whole site (kamra_mcp_disabled), so nothing below takes effect until IT turns it back on.",,,screens\settings\McpAccessPage.tsx,,needs_translation
+"MCP Read lets the AI look; MCP Manage also lets it make changes. Hotel admins and IT always have full access. A person never gets more through the AI than their own roles allow. A change applies to their next request, no reconnect needed.","MCP Read lets the AI look; MCP Manage also lets it make changes. Hotel admins and IT always have full access. A person never gets more through the AI than their own roles allow. A change applies to their next request, no reconnect needed.",,,screens\settings\McpAccessPage.tsx,,needs_translation
 MCP URL · ,MCP URL · ,,URL MCP · ,screens\Agents.tsx,,needs_translation
 Meal,Meal,,Comida,screens\BanquetCatalogue.tsx,,needs_translation
 Meal plan,Meal plan,خطة الوجبات,Plan de comidas,components\BookingDialog.tsx; screens\PublicBooking.tsx; screens\ReservationDetail.tsx,,translated
@@ -2832,7 +2855,7 @@ Moving…,Moving…,جارٍ النقل…,Moviendo…,components\RoomChangeDial
 Municipality fee,Municipality fee,رسوم البلدية,Tasa municipal,,,translated
 "Municipality fee, city or tourism tax.","Municipality fee, city or tourism tax.",,"Tasa municipal, de ciudad o turística.",,,needs_translation
 Must do,Must do,,Obligatorio,components\CheckInDialog.tsx,,needs_translation
-Must have room,Must have room,,,screens\settings\cards.tsx,,needs_translation
+Must have room,Must have room,الغرفة مطلوبة,Habitación obligatoria,screens\settings\cards.tsx,,translated
 My Tasks{n},My Tasks{n},مهامي{n},Mis tareas{n},screens\HkApp.tsx,n,translated
 My till,My till,,Mi caja,screens\CashierBoard.tsx,,needs_translation
 My Till,My Till,صندوقي,Mi caja,screens\CashierSessions.tsx; screens\CashierShiftReport.tsx; screens\CashierTill.tsx; screens\PettyCash.tsx,,translated
@@ -2917,6 +2940,7 @@ No,No,لا,No,components\RoomDrawer.tsx; screens\AuditPack.tsx; screens\EndOfDay
 No {gateway} account yet?,No {gateway} account yet?,,¿Aún no tienes cuenta {gateway}?,screens\settings\cards.tsx,gateway,needs_translation
 No activity yet - their story starts with the first booking.,No activity yet - their story starts with the first booking.,,Aún no hay actividad. El historial comienza con la primera reserva.,screens\GuestJourney.tsx,,needs_translation
 No address proof,No address proof,لا يوجد إثبات عنوان,Sin comprobante de domicilio,components\GuestDocuments.tsx,,translated
+No AI client is connected to this property.,No AI client is connected to this property.,,,screens\settings\McpAccessPage.tsx,,needs_translation
 No arrival is booked into this room yet.,No arrival is booked into this room yet.,لا يوجد وصول محجوز في هذه الغرفة بعد.,Esta habitación aún no tiene una llegada asignada.,components\RoomDrawer.tsx,,translated
 No arrivals expected today.,No arrivals expected today.,لا وصول متوقع اليوم.,No se esperan llegadas hoy.,screens\Today.tsx,,translated
 No audit pack was saved for this run - it ran before audit packs were introduced.,No audit pack was saved for this run - it ran before audit packs were introduced.,لم تُحفظ حزمة تدقيق لهذا التشغيل - جرى قبل إضافة حزم التدقيق.,No se guardó ningún paquete de auditoría para esta ejecución; se ejecutó antes de que se introdujeran los paquetes de auditoría.,,,translated
@@ -3004,7 +3028,7 @@ No NC bills.,No NC bills.,,No hay cuentas sin cargo.,screens\PosDashboard.tsx,,n
 No no-show fee on OTA bookings,No no-show fee on OTA bookings,بلا رسوم عدم حضور على حجوزات وكالات السفر الإلكترونية,No aplicar cargos por no presentación a reservas de agencias en línea,,,translated
 No no-shows.,No no-shows.,لا حالات عدم حضور.,No hay huéspedes no presentados.,screens\AuditPack.tsx,,translated
 No notes on this room.,No notes on this room.,لا توجد ملاحظات على هذه الغرفة.,No hay notas sobre esta habitación.,components\RoomDrawer.tsx,,translated
-No one matches.,No one matches.,,Nadie coincide.,screens\settings\AccessPages.tsx,,needs_translation
+No one matches.,No one matches.,,Nadie coincide.,screens\settings\AccessPages.tsx; screens\settings\McpAccessPage.tsx,,needs_translation
 No open bills,No open bills,,No hay cuentas abiertas,screens\POS.tsx,,needs_translation
 No open bills.,No open bills.,,No hay cuentas abiertas.,screens\pos\OpenBillsPopup.tsx,,needs_translation
 No open bills. A payment now is kept as credit.,No open bills. A payment now is kept as credit.,,No hay facturas pendientes. Un pago ahora quedará como saldo a favor.,screens\CityLedgerPayment.tsx,,needs_translation
@@ -3212,6 +3236,7 @@ of which advance,of which advance,منها دفعة مقدمة,Anticipo incluido
 off,off,إيقاف,desactivado,screens\Kitchen.tsx,,translated
 Off,Off,,Desactivado,screens\settings\ModulePage.tsx; screens\settings\SettingsHub.tsx,,needs_translation
 Off = thrown in as standard. It still prints on the event order and the pack list; any function can override it.,Off = thrown in as standard. It still prints on the event order and the pack list; any function can override it.,,Desactivado = se incluye sin cargo. Aun así aparece en la orden del evento y la lista de materiales; se puede cambiar en cada evento.,screens\BanquetCatalogue.tsx,,needs_translation
+"Off: nobody can connect an AI client to this property, and existing connections stop working.","Off: nobody can connect an AI client to this property, and existing connections stop working.",,,screens\settings\McpAccessPage.tsx,,needs_translation
 Offer,Offer,,Oferta,,,needs_translation
 OG image (share card),OG image (share card),,Imagen para compartir (OG),screens\BookingEngine.tsx,,needs_translation
 OK,OK,موافق,Correcto,screens\POS.tsx,,translated
@@ -3266,6 +3291,7 @@ Only Front Desk or a Hotel Admin can check the guest out.,Only Front Desk or a H
 "Only guests beyond the base occupancy are charged, children included","Only guests beyond the base occupancy are charged, children included",,"Solo se cobra a los huéspedes que superen la ocupación base, incluidos los menores",,,needs_translation
 Only Hotel Admin can switch modules.,Only Hotel Admin can switch modules.,,Solo un administrador del hotel puede activar o desactivar módulos.,screens\settings\AccessPages.tsx,,needs_translation
 Only if your address proof is a different document from your ID.,Only if your address proof is a different document from your ID.,فقط إذا كان إثبات العنوان مستندًا مختلفًا عن الهوية.,Solo si el comprobante de domicilio es un documento distinto de tu documento de identidad.,screens\PublicCheckin.tsx,,translated
+Only IT can change these.,Only IT can change these.,,,screens\settings\McpAccessPage.tsx,,needs_translation
 Only IT can change this person,Only IT can change this person,,Sólo TI puede cambiar a esta persona,screens\settings\AccessPages.tsx,,needs_translation
 "Only printers set to print bills are listed. KOTs are set on each printer's routes, not here.","Only printers set to print bills are listed. KOTs are set on each printer's routes, not here.",,"Solo se enumeran las impresoras configuradas para imprimir cuentas. Los KOT se configuran en las rutas de cada impresora, no aquí.",screens\CashierBoard.tsx,,needs_translation
 Only these properties,Only these properties,,Solo estos alojamientos,screens\settings\AccessPages.tsx,,needs_translation
@@ -3690,7 +3716,7 @@ Print GRC,Print GRC,طباعة بطاقة التسجيل,Imprimir ficha de regis
 Print invoice,Print invoice,طباعة الفاتورة,Imprimir factura,screens\FolioView.tsx,,translated
 "Print it, or send the PDF straight from the print dialog.","Print it, or send the PDF straight from the print dialog.",,Imprímalo o envíe el PDF desde el diálogo de impresión.,screens\BanquetFunction.tsx,,needs_translation
 Print KOT,Print KOT,طباعة أمر المطبخ,Imprimir comandas,,,translated
-Print pack,Print pack,,,screens\EndOfDay.tsx,,needs_translation
+Print pack,Print pack,طباعة الحزمة,Imprimir paquete,screens\EndOfDay.tsx,,translated
 Print registration card,Print registration card,اطبع بطاقة التسجيل,Imprimir ficha de registro,components\CheckInDialog.tsx,,translated
 Print sheet,Print sheet,طباعة الورقة,Imprimir hoja,,,translated
 Print station,Print station,,Estación de impresión,screens\KitchenPrinters.tsx,,needs_translation
@@ -3841,7 +3867,7 @@ Reason for the credit override (logged),Reason for the credit override (logged),
 Reason for the override (logged with your name),Reason for the override (logged with your name),سبب التجاوز (يُسجَّل باسمك),Motivo de la excepción (se registra con su nombre),components\CheckOutDialog.tsx,,translated
 "Reason, e.g. guest left","Reason, e.g. guest left",السبب، مثل: غادر الضيف,"Motivo, por ejemplo, el huésped ya se retiró",screens\pos\VoidApproval.tsx,,translated
 Reason…,Reason…,السبب…,Motivo…,screens\pos\VoidApproval.tsx,,translated
-Rebuild pack,Rebuild pack,,,screens\EndOfDay.tsx,,needs_translation
+Rebuild pack,Rebuild pack,إعادة بناء الحزمة,Reconstruir paquete,screens\EndOfDay.tsx,,translated
 Rebuild pack to print,Rebuild pack to print,,Regenerar el paquete de informes para imprimir,screens\AuditPack.tsx,,needs_translation
 Recall,Recall,استدعاء,Recuperar,screens\Kitchen.tsx,,translated
 Receipt,Receipt,,Recibo,screens\BanquetFunction.tsx,,needs_translation
@@ -4137,7 +4163,7 @@ Rows,Rows,,Filas,screens\GoLiveImport.tsx,,needs_translation
 Royal,Royal,,Azul real,,,needs_translation
 Run and report exceptions,Run and report exceptions,تشغيل والإبلاغ عن الاستثناءات,Ejecutar y registrar incidencias,,,translated
 Run and report exceptions: the date always rolls; open items go in the audit pack as exceptions. Hold and alert: the business date is not rolled and Hotel Admin and Finance are alerted.,Run and report exceptions: the date always rolls; open items go in the audit pack as exceptions. Hold and alert: the business date is not rolled and Hotel Admin and Finance are alerted.,,Ejecutar e informar excepciones: la fecha avanza y los pendientes se documentan como excepciones. Detener y avisar: la fecha operativa no avanza y se notifica a Administración del hotel y Finanzas.,,,needs_translation
-Run End of Day,Run End of Day,,,screens\EndOfDay.tsx,,needs_translation
+Run End of Day,Run End of Day,تشغيل إقفال اليوم,Ejecutar cierre del día,screens\EndOfDay.tsx,,translated
 Run night audit,Run night audit,تشغيل تدقيق الليل,Ejecutar auditoría nocturna,,,translated
 "Run one or more restaurants, bars or room service from Kamra, with kitchen tickets and bills. Turning this on adds a step for outlets, stations and tills.","Run one or more restaurants, bars or room service from Kamra, with kitchen tickets and bills. Turning this on adds a step for outlets, stations and tills.",,"Gestione restaurantes, bares o servicio a la habitación desde Kamra, con comandas y cuentas. Al activarlo se agrega la configuración de puntos de venta, estaciones y cajas.",,,needs_translation
 "Run this on a till when service feels slow. It tells you whether the network, the server or live updates are the cause.","Run this on a till when service feels slow. It tells you whether the network, the server or live updates are the cause.",,"Ejecute esto en una caja cuando el servicio se sienta lento. Le indica si la causa es la red, el servidor o las actualizaciones en vivo.",screens\settings\cards.tsx,,needs_translation
@@ -4165,6 +4191,7 @@ Saudi Arabia (FATOORA): seller details for every invoice XML.,Saudi Arabia (FATO
 Saudi Arabia (FATOORA). Seller details printed in every invoice XML.,Saudi Arabia (FATOORA). Seller details printed in every invoice XML.,,Arabia Saudita (FATOORA). Datos del emisor incluidos en el XML de cada factura.,screens\settings\cards.tsx,,needs_translation
 Save,Save,حفظ,Guardar,components\EditableNationality.tsx; components\ResourceScreen.tsx; screens\BanquetFunction.tsx; screens\CashierBoard.tsx; screens\CurrencyDesk.tsx; screens\Laundry.tsx; screens\RegistrationCard.tsx; screens\settings\AccessPages.tsx; screens\settings\WebhooksPage.tsx; screens\settings\cards.tsx,,translated
 Save & reprice,Save & reprice,,Guardar y recalcular precio,screens\BanquetFunction.tsx,,needs_translation
+Save addresses,Save addresses,,,screens\settings\McpAccessPage.tsx,,needs_translation
 Save and attach,Save and attach,حفظ وربط,Guardar y adjuntar,screens\pos\PosSidePanel.tsx,,translated
 Save block,Save block,,Guardar bloqueo,components\GroupControl.tsx,,needs_translation
 Save changes,Save changes,,Guardar cambios,screens\settings\ModulePage.tsx,,needs_translation
@@ -4192,7 +4219,7 @@ Save the menu,Save the menu,,Guardar menú,screens\banquet\MenuComposer.tsx,,nee
 Saved,Saved,تم الحفظ,Guardado,components\BillingRulesEditor.tsx; components\CreditTermsEditor.tsx; screens\RecipeManager.tsx; screens\settings\ModulePage.tsx; screens\settings\cards.tsx,,translated
 Saved access for {name}.,Saved access for {name}.,,Acceso guardado para {name}.,screens\settings\AccessPages.tsx,name,needs_translation
 Saved as the hotel default.,Saved as the hotel default.,تم الحفظ كإعداد افتراضي للفندق.,Guardado como valor predeterminado del hotel.,components\CustomizeToday.tsx,,translated
-Saved.,Saved.,تم الحفظ.,Guardado.,components\CustomizeToday.tsx,,translated
+Saved.,Saved.,تم الحفظ.,Guardado.,components\CustomizeToday.tsx; screens\settings\McpAccessPage.tsx,,translated
 Saving...,Saving...,,Guardando…,screens\RevenueReports.tsx,,needs_translation
 Saving…,Saving…,جارٍ الحفظ…,Guardando…,components\BillingRulesEditor.tsx; components\BookingDialog.tsx; components\CheckInDialog.tsx; components\CreditTermsEditor.tsx; components\DepositPanel.tsx; components\GuestDocuments.tsx; components\ResourceScreen.tsx; components\RoomTypeMedia.tsx; components\SecurityDepositPanel.tsx; screens\BookingEngine.tsx; screens\EndOfDay.tsx; screens\EndOfDayWizard.tsx; screens\GuestJourney.tsx; screens\KitchenPrinters.tsx; screens\PublicCheckin.tsx; screens\RegistrationCard.tsx; screens\settings\AccessPages.tsx; screens\settings\ModulePage.tsx; screens\settings\WebhooksPage.tsx; screens\settings\cards.tsx,,translated
 Scan for in-room dining,Scan for in-room dining,امسح لطلب الطعام داخل الغرفة,Escanee para pedir servicio a la habitación,,,translated
@@ -4213,11 +4240,11 @@ Search guest / invoice,Search guest / invoice,,Buscar huésped / factura,screens
 "Search guests, bookings, invoices, screens, features, settings…","Search guests, bookings, invoices, screens, features, settings…",,"Buscar huéspedes, reservas, facturas, pantallas, funciones, configuración…",components\CommandPalette.tsx,,needs_translation
 "Search guests, bookings, screens, settings…","Search guests, bookings, screens, settings…",,"Buscar huéspedes, reservas, pantallas, configuración…",AppShell.tsx,,needs_translation
 Search menu items…,Search menu items…,بحث في عناصر القائمة…,Buscar artículos del menú…,screens\POS.tsx,,translated
-Search name or email,Search name or email,,Buscar nombre o correo electrónico,screens\settings\AccessPages.tsx,,needs_translation
+Search name or email,Search name or email,,Buscar nombre o correo electrónico,screens\settings\AccessPages.tsx; screens\settings\McpAccessPage.tsx,,needs_translation
 "Search reservations, guests, rooms…","Search reservations, guests, rooms…",ابحث عن الحجوزات والضيوف والغرف…,"Buscar reservas, huéspedes, habitaciones…",,,translated
 Search room number,Search room number,ابحث برقم الغرفة,Buscar número de habitación,components\RoomChangeDialog.tsx,,translated
 Search settings,Search settings,,Buscar en configuración,screens\settings\SettingsHub.tsx,,needs_translation
-Search staff,Search staff,,Buscar personal,screens\settings\AccessPages.tsx,,needs_translation
+Search staff,Search staff,,Buscar personal,screens\settings\AccessPages.tsx; screens\settings\McpAccessPage.tsx,,needs_translation
 "Search subject, room, guest, id","Search subject, room, guest, id",,"Buscar por asunto, habitación, huésped o identificador",screens\Tickets.tsx,,needs_translation
 Search table…,Search table…,بحث في الجدول…,Buscar mesa…,screens\POS.tsx,,translated
 "Search: find a guest or booking, or jump anywhere - press {combo}","Search: find a guest or booking, or jump anywhere - press {combo}",بحث: اعثر على ضيف أو حجز، أو انتقل لأي مكان - اضغط {combo},"Buscar: busque un huésped o una reserva, o salte a cualquier lugar: presione {combo}",AppShell.tsx,combo,translated
@@ -4241,6 +4268,7 @@ Security deposit is taken. Continue.,Security deposit is taken. Continue.,,Se ha
 Security deposit waived. Continue.,Security deposit waived. Continue.,,Se ha exonerado el depósito de garantía. Continúe.,components\CheckInDialog.tsx,,needs_translation
 See all open bills,See all open bills,,Ver todas las cuentas abiertas,screens\POS.tsx,,needs_translation
 See all orders / history,See all orders / history,,Ver todos los pedidos/historial,screens\POS.tsx,,needs_translation
+See every AI action in Activity,See every AI action in Activity,,,screens\settings\McpAccessPage.tsx,,needs_translation
 See every till and who holds it.,See every till and who holds it.,,Consulte todas las cajas y sus responsables.,,,needs_translation
 See prices,See prices,,Ver precios,screens\laundry\GuestLaundryCard.tsx,,needs_translation
 See rooms and prices,See rooms and prices,,Ver habitaciones y precios,screens\PublicBooking.tsx,,needs_translation
@@ -4564,6 +4592,7 @@ Switch between the front and back camera,Switch between the front and back camer
 Switch camera,Switch camera,تبديل الكاميرا,Cambiar cámara,components\CameraCapture.tsx,,translated
 "Switch it on, save, and come back here.","Switch it on, save, and come back here.",,"Actívelo, guarde los cambios y vuelva aquí.",,,needs_translation
 Switch off {name} for this property?,Switch off {name} for this property?,,¿Desactivar {name} para este alojamiento?,screens\settings\AccessPages.tsx; screens\settings\SettingsHub.tsx,name,needs_translation
+Switch off single tools for AI clients at this property. Staff can still do the same thing in Kamra.,Switch off single tools for AI clients at this property. Staff can still do the same thing in Kamra.,,,screens\settings\McpAccessPage.tsx,,needs_translation
 Switch off the parts of Kamra this property doesn't run.,Switch off the parts of Kamra this property doesn't run.,,Desactive las funciones de Kamra que este alojamiento no utiliza.,,,needs_translation
 "Switch off what this property doesn't run. Its apps leave the launcher, search and the AI agent's tools for everyone. Data is kept and comes back when you switch it on.","Switch off what this property doesn't run. Its apps leave the launcher, search and the AI agent's tools for everyone. Data is kept and comes back when you switch it on.",,"Desactive los módulos que este alojamiento no utiliza. Dejarán de aparecer en el lanzador de aplicaciones, en las búsquedas y entre las herramientas disponibles para el agente de IA. Los datos se conservan y vuelven a aparecer cuando los active.",screens\settings\AccessPages.tsx,,needs_translation
 Switch on what you need. You can change this any time in Settings.,Switch on what you need. You can change this any time in Settings.,,Active los módulos que necesite. Puede cambiarlos en cualquier momento en Configuración.,screens\Setup.tsx,,needs_translation
@@ -4669,7 +4698,7 @@ That record wasn't found - it may have been removed.,That record wasn't found - 
 "That room is another type. Use Upgrade or change type, so the price is shown first.","That room is another type. Use Upgrade or change type, so the price is shown first.",,Esa habitación es de otro tipo. Utilice Mejora de categoría o Cambiar tipo para ver primero el precio.,,,needs_translation
 That signature image is too large.,That signature image is too large.,,La imagen de firma es demasiado grande.,,,needs_translation
 The ,The ,,El importe de ,screens\BanquetFunction.tsx,,needs_translation
-"The 03:00 audit held the date. Clear the blockers and run End of Day, then print the pack.","The 03:00 audit held the date. Clear the blockers and run End of Day, then print the pack.",,,screens\EndOfDay.tsx,,needs_translation
+"The 03:00 audit held the date. Clear the blockers and run End of Day, then print the pack.","The 03:00 audit held the date. Clear the blockers and run End of Day, then print the pack.",تدقيق الساعة 03:00 أوقف التاريخ. أزل العوائق وشغّل إقفال اليوم ثم اطبع الحزمة.,"La auditoría de las 03:00 dejó la fecha en espera. Resuelva los bloqueos, ejecute el cierre del día e imprima el paquete.",screens\EndOfDay.tsx,,translated
 The agent couldn't finish - check the AI key in Settings.,The agent couldn't finish - check the AI key in Settings.,,El agente no pudo completar la solicitud. Revise la clave de IA en Configuración.,screens\Assistant.tsx,,needs_translation
 The audit continues and the no-show policy applies to whoever is still listed.,The audit continues and the no-show policy applies to whoever is still listed.,,La auditoría continúa y la política de no presentación se aplica a las llegadas que sigan pendientes.,,,needs_translation
 The audit posts as it stands.,The audit posts as it stands.,,La auditoría registra los datos actuales.,,,needs_translation
@@ -4713,7 +4742,7 @@ The guest pays.,The guest pays.,,Paga el huésped.,,,needs_translation
 The guest signed the printed card,The guest signed the printed card,وقع الضيف على البطاقة المطبوعة,El huésped firmó la ficha impresa,components\CheckInDialog.tsx,,translated
 The guest's bill is settled.,The guest's bill is settled.,تمت تسوية فاتورة الضيف.,La cuenta del huésped está liquidada.,components\CheckOutDialog.tsx,,translated
 "The guided check-in follows these steps in order. Required steps cannot be skipped, and the guest cannot be checked in until they are done.","The guided check-in follows these steps in order. Required steps cannot be skipped, and the guest cannot be checked in until they are done.",يتبع تسجيل الوصول الموجه هذه الخطوات بالترتيب. لا يمكن تخطي الخطوات المطلوبة، ولا يمكن تسجيل وصول الضيف حتى تنجز.,El check-in guiado sigue estos pasos en orden. No se pueden omitir los pasos requeridos y no se puede registrar al huésped hasta que haya terminado.,,,translated
-The guided check-in follows these steps. Only Room must be done before check-in. Other required steps can finish after the guest is in — the desk sees a warning to backfill.,The guided check-in follows these steps. Only Room must be done before check-in. Other required steps can finish after the guest is in — the desk sees a warning to backfill.,,,screens\settings\cards.tsx,,needs_translation
+The guided check-in follows these steps. Only Room must be done before check-in. Other required steps can finish after the guest is in — the desk sees a warning to backfill.,The guided check-in follows these steps. Only Room must be done before check-in. Other required steps can finish after the guest is in — the desk sees a warning to backfill.,يتبع تسجيل الوصول الموجّه هذه الخطوات. الغرفة وحدها يجب إنجازها قبل تسجيل الوصول. يمكن إكمال الخطوات المطلوبة الأخرى بعد دخول النزيل — يرى المكتب تنبيهاً لاستكمالها.,El check-in guiado sigue estos pasos. Solo Habitación debe completarse antes del check-in. Los demás pasos obligatorios pueden terminarse después de que el huésped entre — recepción verá un aviso para completarlos.,screens\settings\cards.tsx,,translated
 The hall's rack rental goes on as the first line - the number the conversation starts from.,The hall's rack rental goes on as the first line - the number the conversation starts from.,إيجار القاعة الأساسي يُضاف كأول بند - الرقم الذي تبدأ منه المحادثة.,La tarifa base de alquiler del salón se agrega como primera línea y sirve de punto de partida para la cotización.,screens\Banquet.tsx,,translated
 The high-balance check is off (threshold 0).,The high-balance check is off (threshold 0).,فحص الرصيد المرتفع متوقف (الحد 0).,La verificación de saldo alto está desactivada (umbral 0).,screens\EndOfDayWizard.tsx,,translated
 The hotel default is the standard layout again.,The hotel default is the standard layout again.,عاد الإعداد الافتراضي للفندق إلى التخطيط القياسي.,El diseño predeterminado del hotel vuelve a ser el estándar.,components\CustomizeToday.tsx,,translated
@@ -5090,6 +5119,7 @@ Webhook,Webhook,,Webhook,screens\settings\WebhooksPage.tsx,,needs_translation
 Webhook secret,Webhook secret,,Secreto del webhook,,,needs_translation
 Webhook URL,Webhook URL,رابط Webhook,URL de webhook,screens\Marketplace.tsx,,translated
 Webhook verify token,Webhook verify token,,Token de verificación del webhook,,,needs_translation
+Webhooks,Webhooks,Webhooks,Webhooks,,,translated
 Website,Website,الموقع,Sitio web,screens\BookingEngine.tsx,,translated
 Wedding,Wedding,,Boda,,,needs_translation
 Weekend nightly price (optional),Weekend nightly price (optional),سعر ليلة نهاية الأسبوع (اختياري),Precio por noche de fin de semana (opcional),screens\Setup.tsx,,translated
@@ -5173,6 +5203,7 @@ Who,Who,من,Quién,screens\Agents.tsx,,translated
 Who arranged this stay,Who arranged this stay,,Persona que organizó esta estancia,components\BookingDialog.tsx,,needs_translation
 Who brings the business - revenue and share by channel.,Who brings the business - revenue and share by channel.,,Origen del negocio: ingresos y participación por canal.,screens\RevenueReports.tsx,,needs_translation
 "Who can sign in, what each person can do and which properties they reach.","Who can sign in, what each person can do and which properties they reach.",,"Quién puede iniciar sesión, qué puede hacer cada persona y a qué alojamientos tiene acceso.",,,needs_translation
+Who can use MCP,Who can use MCP,,,screens\settings\McpAccessPage.tsx,,needs_translation
 Who cleaned,Who cleaned,,Quién realizó la limpieza,,,needs_translation
 Who cleaned it,Who cleaned it,من نظّفها,Responsable de limpieza,components\RoomDrawer.tsx,,translated
 Who has it,Who has it,,¿Quién lo tiene?,screens\Tickets.tsx,,needs_translation
