@@ -26,6 +26,22 @@ upgrade-breaking changes (removed doctypes / API contracts).
   quotation, desk-led guest response, department checklists + notify on
   Confirm (Sales/Finance/HK/F&B), and quote no-response chase reminders
 
+## [2.6.20](https://github.com/Kamra-PMS/kamra-pms/compare/v2.6.19...v2.6.20) (2026-10-24)
+
+
+### Features
+
+* **check-in:** soft-gate — room only hard-blocks; finish the rest later ([1cef5ac](https://github.com/Kamra-PMS/kamra-pms/commit/1cef5ace544e4ae5379d8ab497f7b173187396ad))
+* **check-in:** soft-gate check-in — room only hard-blocks ([be65444](https://github.com/Kamra-PMS/kamra-pms/commit/be654443b3d0f1ae893323691bd1a901861fca36))
+* **guests:** webcam photo and ID/address images on the guest profile ([f279bfa](https://github.com/Kamra-PMS/kamra-pms/commit/f279bfa32e6e91f8eae11e3ba29657fa3b14e620))
+
+
+### Bug Fixes
+
+* **check-in:** waived security deposit no longer blocks check-in ([fad593a](https://github.com/Kamra-PMS/kamra-pms/commit/fad593affcc1ce351e4cbbaea012c87cb57a7edc))
+* **docs:** replace em dashes in night-audit.md for docs CI ([b1c7ec9](https://github.com/Kamra-PMS/kamra-pms/commit/b1c7ec925aea45fcc4a2d46d0edaf8468ac62d84))
+* **night-audit:** recover stuck date + rebuild printable pack from the desk ([f3237e0](https://github.com/Kamra-PMS/kamra-pms/commit/f3237e0132edbd9d1551dae96ace1d6b9b3156a5))
+
 ## [2.6.19](https://github.com/Kamra-PMS/kamra-pms/compare/v2.6.18...v2.6.19) (2026-10-21)
 
 
