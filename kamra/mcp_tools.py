@@ -1731,7 +1731,10 @@ INSTRUCTIONS = (
 	"availability are computed by the PMS, never estimate them "
 	"yourself - always quote before booking. Confirm irreversible "
 	"actions (checkout, cancelling a stay, closing a folio) with the "
-	"user first."
+	"user first. A quote's deposit_required is the refundable security "
+	"deposit, collected at check-in; it never blocks a booking. To skip "
+	"it, book first, then call waive_security_deposit with the user's "
+	"reason."
 )
 
 def input_schema(spec: ToolSpec) -> dict[str, Any]:

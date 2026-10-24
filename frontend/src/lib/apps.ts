@@ -35,7 +35,6 @@ import {
   Plus,
   Receipt,
   ScrollText,
-  FileX2,
   Settings as SettingsIcon,
   Shirt,
   Smartphone,
@@ -57,7 +56,6 @@ import {
   HelpCircle,
   Search,
   Lock,
-  AlarmClock,
   LayoutDashboard,
   Wallet,
   BookOpen,
@@ -72,7 +70,7 @@ import {
 } from "lucide-react"
 
 /** "Night audit" is what most hotels call End of Day; EOD is what they type. */
-const EOD_KEYWORDS = ["Night audit", "End of day", "EOD", "Close the day"]
+const EOD_KEYWORDS = ["End of day", "EOD", "Close the day", "Roll the date"]
 
 /** Shared tile treatment for switcher and launcher. One quiet system, not a rainbow. */
 export const APP_TILE =
@@ -88,6 +86,8 @@ export interface AppNavItem {
   group?: string
   /** Other words search (Ctrl/Cmd+K) finds this page by. */
   keywords?: string[]
+  /** Drawn as a highlighted entry in the sidebar (Kamra Agent). */
+  featured?: boolean
 }
 
 export interface AppDef {
@@ -115,18 +115,21 @@ export const APPS: AppDef[] = [
     roles: ["Front Desk", "Night Auditor", "Hotel Admin", "System Manager", "Administrator"],
     items: [
       { to: "/", label: "Today", icon: Home },
-      { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-      { to: "/assistant", label: "Kamra Agent", icon: Sparkles },
+      { to: "/assistant", label: "Kamra Agent", icon: Sparkles, featured: true,
+        keywords: ["AI", "Assistant", "Copilot", "Ask"] },
+      { to: "/in-house", label: "In House", icon: BedDouble,
+        keywords: ["Arrivals", "Departures", "In-house guests", "Who is in", "Due out"] },
       { to: "/reservations", label: "Reservations", icon: ClipboardList },
-      { to: "/crs", label: "Central Reservations", icon: Search },
       { to: "/tape", label: "Tape Chart", icon: LayoutGrid },
       { to: "/room-board", label: "Rooms", icon: DoorOpen,
         keywords: ["Room board", "Room status", "Out of order", "Room history"] },
-      { to: "/calendar", label: "Calendar", icon: CalendarDays },
       { to: "/guests", label: "Guests", icon: Users },
-      { to: "/room-blocks", label: "Room Blocks", icon: Lock },
-      { to: "/end-of-day", label: "End of Day / Night Audit", icon: MoonStar,
+      { to: "/end-of-day", label: "Night Audit", icon: MoonStar,
         keywords: EOD_KEYWORDS },
+      { to: "/calendar", label: "Calendar", icon: CalendarDays },
+      { to: "/crs", label: "Central Reservations", icon: Search },
+      { to: "/room-blocks", label: "Room Blocks", icon: Lock },
+      { to: "/reports", label: "Reports", icon: ChartLine },
       { to: "/settings/front-desk", label: "Settings", icon: SettingsIcon,
         roles: ["Hotel Admin", "System Manager", "Administrator"] },
     ],
@@ -172,10 +175,11 @@ export const APPS: AppDef[] = [
       { to: "/whatsapp", label: "WhatsApp", icon: MessageCircle },
       { to: "/channels", label: "Channels", icon: PhoneCall,
         roles: ["Hotel Admin", "System Manager", "Administrator"] },
-      { to: "/ops-sla", label: "SLA Report", icon: AlarmClock },
+      { to: "/reports", label: "Reports", icon: ChartLine },
       { to: "/settings/operations", label: "Settings", icon: SettingsIcon,
         roles: ["Hotel Admin", "System Manager", "Administrator"] },
     ],
+    extraPrefixes: ["/ops-sla"],
   },
   {
     id: "fnb",
@@ -229,7 +233,9 @@ export const APPS: AppDef[] = [
     description: "Rates, seasons, offers and the partners who sell you.",
     roles: ["Revenue Manager", "Hotel Admin", "System Manager", "Administrator"],
     items: [
-      { to: "/revenue-reports", label: "Revenue Reports", icon: ChartLine },
+      { to: "/dashboard", label: "Revenue Dashboard", icon: LayoutDashboard,
+        keywords: ["Dashboard", "KPIs", "ADR", "RevPAR", "Portfolio"] },
+      { to: "/reports", label: "Reports", icon: ChartLine },
       { to: "/channel-manager", label: "Channel Manager", icon: Share2 },
       { to: "/ota-mappings", label: "OTA Room Mappings", icon: Network },
       { to: "/rate-calendar", label: "Rate Calendar", icon: CalendarDays,
@@ -247,6 +253,7 @@ export const APPS: AppDef[] = [
       { to: "/settings/revenue", label: "Settings", icon: SettingsIcon,
         roles: ["Revenue Manager", "Hotel Admin", "System Manager", "Administrator"] },
     ],
+    extraPrefixes: ["/revenue-reports"],
   },
   {
     id: "finance",
@@ -264,11 +271,10 @@ export const APPS: AppDef[] = [
       { to: "/cashier/board", label: "All Tills", icon: Landmark, group: "Cashier" },
       { to: "/cashier/sessions", label: "Sessions", icon: Clock, group: "Cashier" },
       { to: "/cashier/petty-cash", label: "Petty Cash", icon: Banknote, group: "Cashier" },
-      { to: "/cashier/shift-report", label: "Shift Report", icon: ScrollText, group: "Cashier" },
       { to: "/shifts", label: "Shift Handover", icon: Clock, group: "Cashier" },
       { to: "/cashier/fx", label: "Currency Desk", icon: Calculator, group: "Cashier" },
       // Billing
-      { to: "/end-of-day", label: "End of Day / Night Audit", icon: MoonStar, group: "Billing",
+      { to: "/end-of-day", label: "Night Audit", icon: MoonStar, group: "Billing",
         keywords: EOD_KEYWORDS },
       { to: "/billing", label: "Billing", icon: Receipt, group: "Billing" },
       { to: "/folio-history", label: "Folio History", icon: History, group: "Billing" },
@@ -282,8 +288,6 @@ export const APPS: AppDef[] = [
         keywords: ["Void reason", "Refund reason", "Allowance"],
         roles: ["Finance", "Hotel Admin", "System Manager", "Administrator"] },
       { to: "/reports", label: "Reports", icon: ChartLine, group: "Books" },
-      { to: "/voids-allowances", label: "Voids & Allowances", icon: FileX2, group: "Books",
-        roles: ["Finance", "Hotel Admin", "System Manager", "Administrator"] },
       { to: "/accounting-export", label: "Accounting Export", icon: FileSpreadsheet, group: "Books" },
       { to: "/settings/finance", label: "Settings", icon: SettingsIcon, group: "Books",
         roles: ["Finance", "Hotel Admin", "System Manager", "Administrator"] },
@@ -291,6 +295,7 @@ export const APPS: AppDef[] = [
     extraPrefixes: [
       "/billing/", "/cashier/", "/ledgers", "/folio-history",
       "/end-of-day", "/night-audit", "/reason-codes", "/transaction-codes",
+      "/voids-allowances",
     ],
   },
   {

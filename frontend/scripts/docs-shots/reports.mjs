@@ -22,8 +22,12 @@ if (want("portfolio")) {
   await page.waitForTimeout(3000)
   await shot(page, "reports/portfolio", { clip: { x: 340, y: 75, width: 985, height: 445 } })
 }
+if (want("hub")) {
+  await open(page, "/reports", 3000)
+  await shot(page, "reports/hub")
+}
 if (want("flash")) {
-  await open(page, "/reports", 4000)
+  await open(page, "/reports/flash", 4000)
   const root = page.locator("div", { has: page.getByText("Manager flash", { exact: true }), hasText: "Next 7 days" }).last()
   await shot(page, "reports/manager-flash", { fullPage: true, clip: await box(root, 12) })
 }

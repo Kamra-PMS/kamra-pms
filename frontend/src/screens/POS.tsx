@@ -1184,7 +1184,7 @@ export default function POS() {
                     {browserFs ? <Minimize2 className="size-4 text-zinc-500" /> : <Maximize2 className="size-4 text-zinc-500" />}
                     {browserFs ? t("Exit full screen") : t("Full screen till")}
                   </button>
-                  <button type="button" onClick={() => { setMoreOpen(false); exitFloor(); navigate("/dashboard") }}
+                  <button type="button" onClick={() => { setMoreOpen(false); exitFloor(); navigate("/") }}
                     className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm text-zinc-700 hover:bg-zinc-50">
                     <LogOut className="size-4 text-zinc-500" />
                     {t("Leave POS")}
