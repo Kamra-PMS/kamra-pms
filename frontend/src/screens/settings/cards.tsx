@@ -898,7 +898,9 @@ export function AppearanceCard() {
             ))}
           </select>
           <span className="text-xs text-zinc-400">
-            {t("Arabic switches the interface to right-to-left")}
+            {lang === "ar"
+              ? t("Arabic switches the interface to right-to-left")
+              : t("Language applies to this browser only")}
           </span>
         </label>
       </CardContent>

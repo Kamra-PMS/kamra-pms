@@ -106,7 +106,7 @@ const CUSTOM_PAGES: CustomPage[] = [
     keywords: "saudi vat fatoora e-invoice qr xml" },
   { id: "appearance", title: "Appearance", group: "personal", icon: Palette,
     description: "Theme and language for this browser.",
-    keywords: "dark mode theme language arabic rtl" },
+    keywords: "dark mode theme language arabic rtl spanish español idioma es" },
 ]
 
 const GROUPS: { id: string; label: string }[] = [
