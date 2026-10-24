@@ -47,6 +47,8 @@ const Activity = lazy(() => import("./screens/Activity"))
 const AppLauncher = lazy(() => import("./screens/AppLauncher"))
 const Marketplace = lazy(() => import("./screens/Marketplace"))
 const Reports = lazy(() => import("./screens/Reports"))
+const ReportsHub = lazy(() => import("./screens/ReportsHub"))
+const InHouse = lazy(() => import("./screens/InHouse"))
 const RateCalendar = lazy(() => import("./screens/RateCalendar"))
 const RevenueReports = lazy(() => import("./screens/RevenueReports"))
 const OpsSLA = lazy(() => import("./screens/OpsSLA"))
@@ -319,7 +321,12 @@ export default function App() {
           <Route path="booking-settings" element={<BookingEngine />} />
           <Route path="booking-settings/:section" element={<BookingEngine />} />
           <Route path="developers" element={<Developers />} />
-          <Route path="reports" element={<Reports />} />
+          <Route path="reports" element={<ReportsHub />} />
+          <Route path="reports/flash" element={<Reports initialTab="flash" />} />
+          <Route path="reports/custom" element={<Reports />} />
+          <Route path="in-house" element={<InHouse />} />
+          <Route path="arrivals" element={<Navigate to="/in-house?tab=arrivals" replace />} />
+          <Route path="departures" element={<Navigate to="/in-house?tab=departures" replace />} />
           <Route path="voids-allowances" element={<VoidAllowanceReport />} />
           <Route path="rate-calendar" element={<RateCalendar />} />
           <Route path="revenue-reports" element={<RevenueReports />} />

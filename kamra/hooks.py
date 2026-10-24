@@ -28,7 +28,11 @@ add_to_apps_screen = [
 # Automated end-of-day: post room charges, flag no-shows, per property.
 scheduler_events = {
 	"cron": {
-		"0 * * * *": ["kamra.channel_manager.push_all_ari"],
+		"0 * * * *": [
+			"kamra.channel_manager.push_all_ari",
+			# custom reports with Daily/Weekly email schedule
+			"kamra.custom_reports.run_scheduled_custom_reports",
+		],
 		# 03:00 site time, daily - the night audit closes the day
 		"0 3 * * *": ["kamra.folio.nightly_audit_all_properties"],
 		# 09:00 - send self check-in links to upcoming arrivals, for properties
@@ -367,7 +371,11 @@ page_renderer = ["kamra.mcp_http.MCPPageRenderer"]
 # ----------------
 # Preserve AioSell's Basic-auth header for the channel webhook before Frappe's
 # own api-key auth rejects it (see kamra.channels.aiosell.preserve_webhook_auth).
-before_request = ["kamra.channels.aiosell.preserve_webhook_auth"]
+before_request = [
+	"kamra.channels.aiosell.preserve_webhook_auth",
+	# the public demo shows the maintenance page while it rebuilds
+	"kamra.demo_guard.block_while_rebuilding",
+]
 # after_request = ["kamra.utils.after_request"]
 
 # Job Events

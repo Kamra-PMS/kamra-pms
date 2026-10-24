@@ -168,6 +168,17 @@ Gemini, Groq, OpenRouter, Ollama, Azure, or Custom) → paste the key →
   your provider.
 - **Governed:** the model only calls Kamra's tools.
 - **Role-scoped:** tools match the signed-in user's roles.
+- **Cards with actions:** under a reply, each stay the agent worked on
+  shows as a card: guest, room, dates, status and what is due, with
+  **Check in**, **Check out**, **Collect**, **Open folio**, **Waive
+  deposit** and **Open stay**. A priced stay shows as a quote card with
+  **Book**. The buttons open the same sheets as the rest of Kamra, as you;
+  nothing is paid or posted until you finish that sheet.
+- **Shortcuts:** chips above the message box send the common asks in one
+  tap (today's arrivals, departures and balances, in-house guests, a
+  quote, the night audit check).
+
+![Kamra Agent: a reply with a stay card for an in-house guest, with Check out, Collect, Open folio, Waive deposit and Open stay](/img/ai/agent-cards.png)
 
 ## What work it can do
 
@@ -223,6 +234,24 @@ the window, closing a folio) in the chat before the tool runs.
 Named always-on jobs (a night auditor that runs at 3am, an owner brief
 on WhatsApp, waitlist chase) are on the backlog below. Until they ship,
 Claude is the loop: you open a chat, it uses the tools.
+
+## Testing Kamra Agent
+
+`kamra.scripts.agent_eval` talks to Kamra Agent the way staff do: real
+conversations, the property's own AI provider, then checks on what changed
+in the PMS. It covers booking without the security deposit, quote then
+book, check-out that collects what check-out asks for, one charge per bill,
+cancelling only after a yes, refusing what no tool can do, and role limits.
+It calls a live AI provider, so it is not part of CI. It runs on the EVAL
+Hotel sandbox and rolls everything back.
+
+```bash
+bench --site <site> execute kamra.scripts.agent_eval.execute
+bench --site <site> execute kamra.scripts.agent_eval.execute \
+  --kwargs "{'only': 'checkout', 'runs': 3, 'model': 'gpt-4o'}"
+```
+
+Models vary from run to run, so use `runs` to see a pass rate.
 
 ## Limitations
 

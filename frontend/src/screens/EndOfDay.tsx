@@ -106,7 +106,7 @@ export default function EndOfDay() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-lg font-semibold text-zinc-900">{t("Manage End of Day / Night Audit")}</h1>
+        <h1 className="text-lg font-semibold text-zinc-900">{t("Manage Night Audit")}</h1>
         <p className="text-sm text-zinc-500">
           {t("End of Day is the night audit. Close each property's business date, then print the audit pack. The 3 AM job runs the same steps; find every automatic run and its pack under Audit history.")}
         </p>

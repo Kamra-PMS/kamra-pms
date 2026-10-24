@@ -27,7 +27,12 @@ seconds.
 
 - The six counts across the top: **Arrivals**, **Departures**,
   **In-house**, **Occupancy**, **Revenue** (with RevPAR) and **Open tasks**
-  for housekeeping.
+  for housekeeping. Each one opens what is behind it: the first three open
+  [In House](#see-everyone-in-house) on that tab, Occupancy the room
+  board, Revenue the Revenue dashboard, Open tasks housekeeping.
+- Under them, the money row: **Collected today**, **Outstanding**, **Open
+  folios** and month-to-date **ADR**, **RevPAR** and **Occupancy**, each a
+  link to the till board, ledgers, billing or the report.
 - **Arrivals** and **Departures** list today's stays. Each row shows the
   source (Website, Phone, OTA, AI Agent…), a payment chip (**Paid**,
   **₹… due** or **Unpaid**) and **Pre-checked-in** when the guest has filled
@@ -44,6 +49,16 @@ seconds.
   leave. Click a row for the registration card.
 
 ![The arrivals list: each guest with source and payment chips, the room, nights and party size, the GRC and copy check-in link shortcuts, and a Check in button](/img/front-desk/arrivals.png)
+
+## See everyone in house
+
+**Front Desk → In House** puts the day's guests in one list, with three
+tabs: **Arrivals**, **In house** and **Departures**, each with its count.
+Step the date with the arrows (click the date to come back to today). A
+row opens the stay; the buttons on it check in today's arrivals, check out,
+or open the folio. **View all** on Today's lists opens the same page.
+
+![In House: the Arrivals, In house and Departures tabs with counts, and the guests in a table with their room, stay, source, amount due and actions](/img/front-desk/in-house.png)
 
 ## Choose what Today shows
 

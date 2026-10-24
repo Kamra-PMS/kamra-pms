@@ -1323,6 +1323,12 @@ def run_night_audit(property: str, business_date: str | None = None,
 	}
 
 
+# The 03:00 cron closes at most this many overdue days in one night. A
+# property further behind gets an alert instead: weeks of unattended room
+# nights and no-show fees need a person to check the stays first.
+NIGHTLY_CATCH_UP_DAYS = 3
+
+
 def nightly_audit_all_properties():
 	"""Scheduler entry point - runs the audit for every active property.
 
@@ -1332,13 +1338,46 @@ def nightly_audit_all_properties():
 	today = getdate(nowdate())
 	for p in frappe.get_all("Property", filters={"disabled": 0}):
 		try:
-			from kamra.business_date import ensure_business_date
-			bd = getdate(ensure_business_date(p.name))
-			if bd >= today:
-				frappe.logger("kamra").info(
-					f"Night audit skipped for {p.name}: business date {bd} "
-					f"is not before today ({today})")
-				continue
-			run_night_audit(p.name, mode="scheduled")
+			_nightly_audit_property(p.name, today)
 		except Exception:
 			frappe.log_error(title=f"Night audit failed: {p.name}")
+
+
+def _nightly_audit_property(property: str, today) -> None:
+	from frappe.utils import date_diff
+
+	from kamra import night_audit as na
+	from kamra.business_date import advance_business_date, ensure_business_date
+
+	log = frappe.logger("kamra")
+	bd = getdate(ensure_business_date(property))
+	if bd >= today:
+		log.info(f"Night audit skipped for {property}: business date {bd} "
+		         f"is not before today ({today})")
+		return
+	# A completed run for the open date whose roll did not stick. Without
+	# this every night answered already_ran and the date never moved again.
+	# Advance it like recover_stuck_business_date does; nothing is re-posted.
+	stuck = na.stuck_business_date(property)
+	if stuck:
+		bd = getdate(advance_business_date(property, str(bd)))
+		log.warning(f"Night audit for {property}: business date was stuck on "
+		            f"{stuck['business_date']} (audit {stuck['audit']}), moved to {bd}")
+		if bd >= today:
+			return
+	behind = date_diff(today, bd)
+	if behind > NIGHTLY_CATCH_UP_DAYS:
+		name = frappe.db.get_value("Property", property, "property_name") or property
+		msg = (f"The business date is {bd}, {behind} days behind today. The "
+		       f"scheduled night audit only catches up {NIGHTLY_CATCH_UP_DAYS} "
+		       f"days on its own. Check in-house stays and arrivals, then close "
+		       f"the open days from End of Day.")
+		log.warning(f"Night audit not run for {property}: {msg}")
+		na.alert_staff(property, ("Hotel Admin", "Finance"),
+		               f"Night audit behind - {name}", f"{name}: {msg}")
+		return
+	for _ in range(behind):
+		out = run_night_audit(property, mode="scheduled") or {}
+		nxt = out.get("next_business_date")
+		if not nxt or getdate(nxt) >= today:
+			return

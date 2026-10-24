@@ -1637,6 +1637,91 @@ TOOLS: tuple[ToolSpec, ...] = (
 		{"days": _p("integer")},
 		property=True,
 	),
+	_t(
+		"list_report_datasets",
+		"custom_reports.list_report_datasets",
+		"""Whitelisted custom-report datasets (arrivals, occupancy, payments,
+		etc.) with allowed columns and filter ops. Use before save_custom_report
+		or run_custom_report. Read-only.""",
+		{},
+		property=True,
+		group="Billing",
+	),
+	_t(
+		"list_custom_reports",
+		"custom_reports.list_custom_reports",
+		"""Saved custom reports for this property that the user can open.
+		Read-only.""",
+		{},
+		property=True,
+		group="Billing",
+	),
+	_t(
+		"save_custom_report",
+		"custom_reports.save_custom_report",
+		"""Create or update a saved custom report: title, dataset id, columns
+		(JSON array of field ids), filters (JSON array of
+		{field, op, value}), optional share/schedule/recipients. Pass name to
+		update. Only catalog field ids - never invent SQL.""",
+		{
+			"title": _p("string"),
+			"dataset": _p("string"),
+			"columns": _p("string"),
+			"filters": _p("string"),
+			"is_shared": _p("integer"),
+			"schedule_frequency": _p("string"),
+			"schedule_time": _p("string"),
+			"schedule_weekday": _p("string"),
+			"recipients": _p("string"),
+			"name": _p("string"),
+		},
+		required=("title", "dataset"),
+		property=True,
+		mutating=True,
+		group="Billing",
+	),
+	_t(
+		"run_custom_report",
+		"custom_reports.run_custom_report",
+		"""Run a saved custom report (name) or an ad-hoc definition (dataset +
+		columns/filters). from_date / to_date YYYY-MM-DD. format=json (default),
+		csv, or html. Prefer json for agents. Read-only.""",
+		{
+			"name": _p("string"),
+			"dataset": _p("string"),
+			"from_date": _p("string", format="date"),
+			"to_date": _p("string", format="date"),
+			"columns": _p("string"),
+			"filters": _p("string"),
+			"format": _p("string"),
+			"lang": _p("string"),
+		},
+		property=True,
+		group="Billing",
+	),
+	_t(
+		"email_custom_report",
+		"custom_reports.email_custom_report",
+		"""Run a custom report and email a CSV (or HTML) attachment to
+		comma-separated recipients. Pass name for a saved report, or dataset
+		(+ columns/filters) for ad-hoc. from_date / to_date optional (defaults
+		to yesterday).""",
+		{
+			"recipients": _p("string"),
+			"name": _p("string"),
+			"dataset": _p("string"),
+			"from_date": _p("string", format="date"),
+			"to_date": _p("string", format="date"),
+			"columns": _p("string"),
+			"filters": _p("string"),
+			"attach_format": _p("string"),
+			"lang": _p("string"),
+		},
+		required=("recipients",),
+		property=True,
+		mutating=True,
+		group="Billing",
+	),
 )
 
 BY_NAME: dict[str, ToolSpec] = {t.name: t for t in TOOLS}
@@ -1646,7 +1731,10 @@ INSTRUCTIONS = (
 	"availability are computed by the PMS, never estimate them "
 	"yourself - always quote before booking. Confirm irreversible "
 	"actions (checkout, cancelling a stay, closing a folio) with the "
-	"user first."
+	"user first. A quote's deposit_required is the refundable security "
+	"deposit, collected at check-in; it never blocks a booking. To skip "
+	"it, book first, then call waive_security_deposit with the user's "
+	"reason."
 )
 
 def input_schema(spec: ToolSpec) -> dict[str, Any]:

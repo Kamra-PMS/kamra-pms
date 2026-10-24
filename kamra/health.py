@@ -280,8 +280,10 @@ def _upgrade_payload() -> dict:
 			"--app kamra && bench restart"
 		),
 		"note": (
-			"Kamra does not auto-upgrade the site from this screen. "
-			"Self-host: pull the new image or bench update, then migrate. "
+			"Kamra does not auto-upgrade or downgrade the site from this "
+			"screen. Self-host: pull the new image or bench update, then "
+			"migrate. To leave a newer tag, pin the previous vX.Y.Z with "
+			"KAMRA_TAG=… install.sh update (see docs: Going back). "
 			"Frappe Cloud: create a Marketplace release from main."
 		),
 	}

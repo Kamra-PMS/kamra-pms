@@ -278,6 +278,15 @@ export default function SystemHealth() {
                   {t("Self-hosting docs")}
                   <ExternalLink className="size-3.5" aria-hidden />
                 </a>
+                <a
+                  href="https://kamrapms.com/docs/quickstart#going-back-downgrade"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 text-sm font-medium text-brand-700 hover:underline"
+                >
+                  {t("Going back (downgrade)")}
+                  <ExternalLink className="size-3.5" aria-hidden />
+                </a>
               </div>
             </CardContent>
           </Card>

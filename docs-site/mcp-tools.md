@@ -1,6 +1,6 @@
 # MCP tool reference
 
-Kamra exposes **116 governed tools** on the hosted MCP
+Kamra exposes **121 governed tools** on the hosted MCP
 endpoint (`/mcp`) and the stdio sidecar (`mcp/kamra_mcp.py`). Every
 call runs as the connected user - **role** permissions apply, tools
 are further filtered by the property's **enabled modules**, prices
@@ -534,6 +534,49 @@ Waive the property's security deposit for one stay. A reason is
 required and goes on the record; refused once money was taken.
 
 Endpoint: `kamra.api.waive_security_deposit`.
+Mutating - logged to the activity ledger.
+
+### `list_report_datasets()`
+
+Whitelisted custom-report datasets (arrivals, occupancy, payments,
+etc.) with allowed columns and filter ops. Use before save_custom_report
+or run_custom_report. Read-only.
+
+Endpoint: `kamra.custom_reports.list_report_datasets`.
+
+### `list_custom_reports()`
+
+Saved custom reports for this property that the user can open.
+Read-only.
+
+Endpoint: `kamra.custom_reports.list_custom_reports`.
+
+### `save_custom_report(title, dataset, columns, filters, is_shared, schedule_frequency, schedule_time, schedule_weekday, recipients, name)`
+
+Create or update a saved custom report: title, dataset id, columns
+(JSON array of field ids), filters (JSON array of
+{field, op, value}), optional share/schedule/recipients. Pass name to
+update. Only catalog field ids - never invent SQL.
+
+Endpoint: `kamra.custom_reports.save_custom_report`.
+Mutating - logged to the activity ledger.
+
+### `run_custom_report(name, dataset, from_date, to_date, columns, filters, format, lang)`
+
+Run a saved custom report (name) or an ad-hoc definition (dataset +
+columns/filters). from_date / to_date YYYY-MM-DD. format=json (default),
+csv, or html. Prefer json for agents. Read-only.
+
+Endpoint: `kamra.custom_reports.run_custom_report`.
+
+### `email_custom_report(recipients, name, dataset, from_date, to_date, columns, filters, attach_format, lang)`
+
+Run a custom report and email a CSV (or HTML) attachment to
+comma-separated recipients. Pass name for a saved report, or dataset
+(+ columns/filters) for ad-hoc. from_date / to_date optional (defaults
+to yesterday).
+
+Endpoint: `kamra.custom_reports.email_custom_report`.
 Mutating - logged to the activity ledger.
 
 ## Revenue

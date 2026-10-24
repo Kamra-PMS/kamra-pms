@@ -962,10 +962,10 @@ export default function EndOfDayWizard() {
         <div>
           <Link to="/end-of-day" className="inline-flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-800">
             <ArrowLeft className="size-3.5" aria-hidden />
-            {t("Manage End of Day / Night Audit")}
+            {t("Manage Night Audit")}
           </Link>
           <h1 className="text-lg font-semibold text-zinc-900">
-            {t("End of Day / Night Audit")} - {state.property_name} - {fmtDay(state.business_date)}
+            {t("Night Audit")} - {state.property_name} - {fmtDay(state.business_date)}
           </h1>
         </div>
         <Badge
