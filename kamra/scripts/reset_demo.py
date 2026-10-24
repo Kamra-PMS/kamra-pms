@@ -1,9 +1,9 @@
 """Wipe play data on the public demo so it cannot be used as a live PMS.
 
 The shared sandbox at demo.kamrapms.com (and nightly) is for trying Kamra,
-not for running a hotel. This script deletes everything people created —
+not for running a hotel. This script deletes everything people created:
 extra properties, users, bookings, folios, POS tickets, uploaded IDs,
-pasted API keys — then reseeds the sample hotel.
+pasted API keys, then reseeds the sample hotel.
 
 Guarded: refuses unless ``kamra_demo_mode`` is on *and* the site is a
 known playground. A real tenant can never trip this.
@@ -39,7 +39,7 @@ KEEP_USERS = {
 }
 
 # Core Frappe clutter that accumulates when someone treats the demo as
-# their hotel. Email Account is *not* in here — ops wires SMTP for us.
+# their hotel. Email Account is *not* in here; ops wires SMTP for us.
 CORE_WIPE = (
 	"Communication",
 	"Contact",
@@ -72,7 +72,9 @@ def scheduled():
 	"""Scheduler entry: no-op on real tenants, never throws."""
 	if not is_playground():
 		return
-	reset()
+	# the history replay outlasts the default queue's timeout, so it runs
+	# as its own job on the long queue
+	reset(history="queue")
 
 
 def execute():
@@ -82,12 +84,19 @@ def execute():
 			"Refusing to reset: this site is not a Kamra demo playground. "
 			"Set kamra_demo_mode and use demo.kamrapms.com / nightly / localhost."
 		)
-	return reset()
+	return reset(history="inline")
 
 
-def reset() -> dict:
-	"""Wipe Kamra + leftover users, then reseed the sample hotel."""
+def reset(history: str | None = None) -> dict:
+	"""Wipe Kamra + leftover users, then reseed the sample hotel.
+
+	history "inline" replays the hotel's past (seed_history) before
+	returning, "queue" hands it to a long-queue job, None skips it. While
+	the demo is rebuilding, kamra.demo_guard turns visitors away with the
+	maintenance page instead of showing a half-built hotel."""
 	summary: dict = {"site": frappe.local.site, "wiped": {}}
+	from kamra.demo_guard import start_rebuild
+	start_rebuild()
 
 	frappe.flags.ignore_permissions = True
 	frappe.flags.in_import = True
@@ -118,6 +127,17 @@ def reset() -> dict:
 	frappe.db.set_default("kamra_demo_mode", "1")
 	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- persist demo flag after reseed
 	frappe.clear_cache()
+
+	from kamra.demo_guard import end_rebuild
+	if history == "inline":
+		from kamra.scripts.seed_history import after_reset
+		summary["history"] = after_reset()
+	elif history == "queue":
+		# the seed is committed above; queue now rather than on a later commit
+		frappe.enqueue("kamra.scripts.seed_history.after_reset", queue="long",
+		               timeout=1800)
+	else:
+		end_rebuild()
 
 	msg = (
 		f"Demo playground reset on {summary['site']}: "

@@ -6,10 +6,25 @@ folios, a restaurant menu and experiences. It's shared and **resets every
 night**: create bookings, post charges, break nothing. Don't run a real
 property on it.
 
+Every reset also rebuilds about 75 days of history, ending yesterday:
+stays checked in and out, restaurant and bar bills, housekeeping, laundry,
+service tickets, banquets, a corporate group, company accounts at
+different stages of payment, closed tills and a night audit for every
+day. Reports, the manager flash, audit packs and AR aging all have real
+numbers to show. The history is replayed through the same booking,
+billing and audit code the hotel uses, so the figures tie out. For the
+minute or two the rebuild takes, the demo shows a maintenance page.
+
 To wipe and reseed by hand:
 
 ```
 bench --site demo.kamrapms.com execute kamra.scripts.reset_demo.execute
+```
+
+To add the same history to a local demo hotel that has none yet:
+
+```
+bench --site kamra.localhost execute kamra.scripts.seed_history.execute
 ```
 
 ## One-tap logins
