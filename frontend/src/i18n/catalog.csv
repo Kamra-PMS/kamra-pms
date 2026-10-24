@@ -5300,3 +5300,61 @@ ZATCA: still needed for valid e-invoices - {fields}.,ZATCA: still needed for val
 Zero-rate and complimentary rooms,Zero-rate and complimentary rooms,غرف بسعر صفر ومجانية,Habitaciones con tarifa cero y de cortesía,screens\AuditPack.tsx,,translated
 Zero-rated on purpose,Zero-rated on purpose,,Tasa cero aplicada intencionalmente,screens\BanquetFunction.tsx,,needs_translation
 AI,AI,ذكاء اصطناعي,IA,AppShell.tsx,,translated
++ {amount} refundable deposit,+ {amount} refundable deposit,+ {amount} تأمين قابل للاسترداد,+ {amount} de depósito reembolsable,components\AgentCards.tsx,amount,translated
+"ADR, month to date","ADR, month to date",متوسط سعر الغرفة، الشهر حتى اليوم,"ADR, mes a la fecha",screens\Today.tsx,,translated
+Accounting export,Accounting export,تصدير المحاسبة,Exportación contable,screens\ReportsHub.tsx,,translated
+Arrivals and departures,Arrivals and departures,الوصول والمغادرة,Llegadas y salidas,lib\searchIndex.ts,,translated
+"Arrivals, guests in house and departures, in one list.","Arrivals, guests in house and departures, in one list.",الوصول والنزلاء المقيمون والمغادرة في قائمة واحدة.,"Llegadas, huéspedes alojados y salidas, en una sola lista.",screens\InHouse.tsx,,translated
+Back to today,Back to today,العودة إلى اليوم,Volver a hoy,screens\InHouse.tsx,,translated
+Books for your accounting software.,Books for your accounting software.,الدفاتر لبرنامج المحاسبة لديك.,Libros para su software contable.,screens\ReportsHub.tsx,,translated
+Closed bills and invoices.,Closed bills and invoices.,الفواتير والحسابات المغلقة.,Cuentas y facturas cerradas.,screens\ReportsHub.tsx,,translated
+Daily,Daily,يومي,Diario,screens\ReportsHub.tsx,,translated
+Departures and balances,Departures and balances,المغادرة والأرصدة,Salidas y saldos,screens\Assistant.tsx,,translated
+Each closed business date and its audit pack.,Each closed business date and its audit pack.,كل تاريخ عمل مغلق وحزمة التدقيق الخاصة به.,Cada fecha de negocio cerrada y su paquete de auditoría.,screens\ReportsHub.tsx,,translated
+Every report in one place.,Every report in one place.,كل التقارير في مكان واحد.,Todos los informes en un solo lugar.,screens\ReportsHub.tsx,,translated
+"Every void and allowance, with who and why.","Every void and allowance, with who and why.",كل إلغاء وخصم، مع من ولماذا.,"Cada anulación y bonificación, con quién y por qué.",screens\ReportsHub.tsx,,translated
+F&B dashboard,F&B dashboard,لوحة الأطعمة والمشروبات,Panel de A y B,screens\ReportsHub.tsx,,translated
+Folio history,Folio history,سجل الفواتير,Historial de folios,screens\ReportsHub.tsx,,translated
+Front Desk · In House,Front Desk · In House,الاستقبال · المقيمون,Recepción · Alojados,lib\searchIndex.ts,,translated
+"Functions, quotations, enquiries, receipts and sales.","Functions, quotations, enquiries, receipts and sales.",المناسبات وعروض الأسعار والاستفسارات والإيصالات والمبيعات.,"Eventos, cotizaciones, consultas, recibos y ventas.",screens\ReportsHub.tsx,,translated
+Guest requests against their response times.,Guest requests against their response times.,طلبات النزلاء مقابل أوقات الاستجابة.,Solicitudes de huéspedes frente a sus tiempos de respuesta.,screens\ReportsHub.tsx,,translated
+"Guest, city ledger, deposit and AR aging.","Guest, city ledger, deposit and AR aging.",النزلاء ودفتر المدينة والتأمينات وأعمار الذمم.,"Huésped, cuentas por cobrar, depósitos y antigüedad de saldos.",screens\ReportsHub.tsx,,translated
+Housekeeping tasks,Housekeeping tasks,مهام التدبير الفندقي,Tareas de limpieza,screens\ReportsHub.tsx,,translated
+In House,In House,المقيمون,Alojados,lib\apps.ts; screens\InHouse.tsx,,translated
+List the guests in house now with their rooms.,List the guests in house now with their rooms.,اعرض النزلاء المقيمين الآن مع غرفهم.,Enumera los huéspedes alojados ahora con sus habitaciones.,screens\Assistant.tsx,,translated
+Next day,Next day,اليوم التالي,Día siguiente,screens\InHouse.tsx,,translated
+Night audit check,Night audit check,فحص التدقيق الليلي,Revisión de auditoría nocturna,screens\Assistant.tsx,,translated
+Night audit history,Night audit history,سجل التدقيق الليلي,Historial de auditoría nocturna,screens\ReportsHub.tsx,,translated
+No arrivals on this day.,No arrivals on this day.,لا يوجد وصول في هذا اليوم.,No hay llegadas este día.,screens\InHouse.tsx,,translated
+No departures on this day.,No departures on this day.,لا توجد مغادرة في هذا اليوم.,No hay salidas este día.,screens\InHouse.tsx,,translated
+Nobody is in house.,Nobody is in house.,لا يوجد نزلاء مقيمون.,No hay nadie alojado.,screens\InHouse.tsx,,translated
+Nothing due,Nothing due,لا شيء مستحق,Nada pendiente,components\AgentCards.tsx,,translated
+"Occupancy, ADR, RevPAR, revenue and collections for a day, with the month to date.","Occupancy, ADR, RevPAR, revenue and collections for a day, with the month to date.",الإشغال ومتوسط السعر والإيراد لكل غرفة متاحة والإيرادات والتحصيلات ليوم، مع الشهر حتى اليوم.,"Ocupación, ADR, RevPAR, ingresos y cobros de un día, con el mes a la fecha.",screens\ReportsHub.tsx,,translated
+"Occupancy, month to date","Occupancy, month to date",الإشغال، الشهر حتى اليوم,"Ocupación, mes a la fecha",screens\Today.tsx,,translated
+Open stay,Open stay,فتح الإقامة,Abrir estancia,components\AgentCards.tsx,,translated
+"Open, overdue and finished room tasks.","Open, overdue and finished room tasks.",مهام الغرف المفتوحة والمتأخرة والمنجزة.,"Tareas de habitación abiertas, vencidas y terminadas.",screens\ReportsHub.tsx,,translated
+"Outlet sales, covers and top items.","Outlet sales, covers and top items.",مبيعات المنافذ وعدد الأشخاص وأكثر الأصناف مبيعًا.,"Ventas por punto de venta, cubiertos y artículos principales.",screens\ReportsHub.tsx,,translated
+"Pickup, pace, source and segment mix.","Pickup, pace, source and segment mix.",الحجوزات المكتسبة والوتيرة والمصدر ومزيج الشرائح.,"Recogida, ritmo, origen y mezcla de segmentos.",screens\ReportsHub.tsx,,translated
+Previous day,Previous day,اليوم السابق,Día anterior,screens\InHouse.tsx,,translated
+Quote a stay,Quote a stay,تسعير إقامة,Cotizar una estancia,screens\Assistant.tsx,,translated
+Quote a stay for 2 adults: ,Quote a stay for 2 adults: ,سعّر إقامة لشخصين بالغين: ,Cotiza una estancia para 2 adultos: ,screens\Assistant.tsx,,translated
+Reason (goes on the record),Reason (goes on the record),السبب (يُسجَّل),Motivo (queda registrado),components\AgentCards.tsx,,translated
+Reports · Daily,Reports · Daily,التقارير · يومي,Informes · Diario,lib\searchIndex.ts,,translated
+Reports · Finance,Reports · Finance,التقارير · المالية,Informes · Finanzas,lib\searchIndex.ts,,translated
+Reports · Operations,Reports · Operations,التقارير · العمليات,Informes · Operaciones,lib\searchIndex.ts,,translated
+"RevPAR, month to date","RevPAR, month to date",الإيراد لكل غرفة متاحة، الشهر حتى اليوم,"RevPAR, mes a la fecha",screens\Today.tsx,,translated
+Revenue Dashboard,Revenue Dashboard,لوحة الإيرادات,Panel de ingresos,lib\apps.ts; screens\Dashboard.tsx,,translated
+Revenue dashboard,Revenue dashboard,لوحة الإيرادات,Panel de ingresos,screens\ReportsHub.tsx,,translated
+Revenue reports,Revenue reports,تقارير الإيرادات,Informes de ingresos,screens\ReportsHub.tsx,,translated
+Run the night audit precheck and tell me what blocks it.,Run the night audit precheck and tell me what blocks it.,شغّل الفحص المسبق للتدقيق الليلي وأخبرني بما يمنعه.,Ejecuta la verificación previa de la auditoría nocturna y dime qué la bloquea.,screens\Assistant.tsx,,translated
+SLA report,SLA report,تقرير مستوى الخدمة,Informe de SLA,screens\ReportsHub.tsx,,translated
+Security deposit: {status},Security deposit: {status},التأمين: {status},Depósito de garantía: {status},components\AgentCards.tsx,status,translated
+"Today and month to date by department, or the whole portfolio.","Today and month to date by department, or the whole portfolio.",اليوم والشهر حتى اليوم حسب القسم، أو المحفظة كاملة.,"Hoy y el mes a la fecha por departamento, o toda la cartera.",screens\ReportsHub.tsx,,translated
+Today's arrivals,Today's arrivals,وصول اليوم,Llegadas de hoy,screens\Assistant.tsx,,translated
+View all,View all,عرض الكل,Ver todo,screens\Today.tsx,,translated
+Voids and allowances,Voids and allowances,الإلغاءات والخصومات,Anulaciones y bonificaciones,screens\ReportsHub.tsx,,translated
+"What each till took, by payment mode.","What each till took, by payment mode.",ما حصّله كل صندوق حسب طريقة الدفع.,"Lo que cobró cada caja, por forma de pago.",screens\ReportsHub.tsx,,translated
+"Who is arriving today, and are their rooms ready?","Who is arriving today, and are their rooms ready?",من سيصل اليوم، وهل غرفهم جاهزة؟,¿Quién llega hoy y están listas sus habitaciones?,screens\Assistant.tsx,,translated
+Who is leaving today and what does each still owe?,Who is leaving today and what does each still owe?,من سيغادر اليوم وكم يدين كل منهم؟,¿Quién se va hoy y cuánto debe cada uno?,screens\Assistant.tsx,,translated
+Your role has no reports.,Your role has no reports.,لا توجد تقارير لدورك.,Su rol no tiene informes.,screens\ReportsHub.tsx,,translated
+{amount} due,{amount} due,{amount} مستحق,{amount} pendiente,components\AgentCards.tsx,amount,translated

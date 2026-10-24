@@ -2,9 +2,13 @@
 
 Kamra's reports answer the daily questions: how full were we, what did we
 earn, what came in, are we on budget, where does the business come from,
-and are guest requests handled in time. Front Desk staff see the property
-dashboard; Finance, Revenue Manager and Hotel Admin see the money and
-portfolio views.
+and are guest requests handled in time. **Reports** (in the Front Desk,
+Revenue, Operations and Finance menus) lists every report in one place,
+showing only the ones your role can open. Today's key numbers sit on
+[Today](/front-desk); Revenue Manager, Finance and Hotel Admin also get the
+Revenue dashboard and portfolio views.
+
+![Reports: every report in one place, grouped as Daily, Revenue, Finance and Operations](/img/reports/hub.png)
 
 ![The Manager flash: occupancy, ADR, RevPAR, RevPAX and the day's revenue, the last 14 days, today's movement, collections and the next 7 days](/img/reports/manager-flash.png)
 
@@ -20,7 +24,10 @@ portfolio views.
 
 ## See today at a glance
 
-Open **Front Desk → Dashboard**. **This property** shows:
+Today's headline numbers, collections, outstanding and month-to-date ADR,
+RevPAR and occupancy are on **Front Desk → Today**; each tile opens the
+list or report behind it. For the department view, open **Revenue →
+Revenue Dashboard** (also under **Reports**). **This property** shows:
 
 - **Occupancy** today, **ADR** and **RevPAR** (month to date),
   **Revenue** and **Collections** today, and **Outstanding** (owed on
@@ -42,7 +49,7 @@ departures, in-house, revenue, collected and outstanding for each hotel.
 
 ## Read the manager flash
 
-Open **Finance → Reports**. The **Manager flash** is the morning report
+Open **Reports → Manager flash**. The **Manager flash** is the morning report
 for one date (pick it in the date box at the top right):
 
 - **Occupancy**, **ADR**, **RevPAR**, **RevPAX** and **Revenue (day)**
@@ -66,7 +73,7 @@ The same flash is the first report in each night's
 
 ## Track the month against budget
 
-Open **Revenue → Revenue Reports**. **Budget vs Actual** compares the
+Open **Reports → Revenue reports**. **Budget vs Actual** compares the
 month to date with your targets: **Room Revenue**, **Occupancy %**, **ADR
 / ARR** and **RevPAR**, each with the variance and how much of the target
 you have reached.
@@ -91,7 +98,7 @@ Revenue Manager, Finance and Hotel Admin users can save targets.
 
 ## See where the business comes from
 
-**Contribution analysis** on **Revenue → Revenue Reports** groups the
+**Contribution analysis** on **Reports → Revenue reports** groups the
 bookings arriving in a date range **By source**, **By company** or **By
 travel agent**: bookings, room nights, revenue and share of the total.
 
@@ -103,7 +110,7 @@ company or agent are shown as **Direct**.
 
 ## Check guest-request response times
 
-Open **Operations → SLA Report**. For guest requests created in the date
+Open **Reports → SLA report**. For guest requests created in the date
 range (the last 30 days by default) it shows the number of **Tickets**,
 how many are **Resolved**, the **Breach rate** and the average time to
 resolve, then the same by category and by priority, and **Overdue now**:

@@ -380,9 +380,10 @@ export interface PropertyRow {
 export const myProperties = () =>
   call<PropertyRow[]>("kamra.api.my_properties")
 
-export const getSnapshot = () =>
+export const getSnapshot = (date?: string) =>
   call<Snapshot>("kamra.api.front_desk_snapshot", {
     property: getCurrentProperty(),
+    ...(date ? { date } : {}),
   })
 
 export const getCalendar = (days = 14, startDate?: string) =>
@@ -1543,6 +1544,8 @@ export interface ChatMsg {
   role: "user" | "assistant"
   content: string
   actions?: { tool: string; ok: boolean }[]
+  /** Stays and quotes the turn touched (kamra.assistant._turn_cards). */
+  cards?: import("../components/AgentCards").AgentCard[]
 }
 export interface ConversationSummary {
   name: string

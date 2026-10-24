@@ -125,7 +125,7 @@ export default function Dashboard() {
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold text-zinc-900">{t("Dashboard")}</h1>
+          <h1 className="text-xl font-semibold text-zinc-900">{t("Revenue Dashboard")}</h1>
           <p className="text-xs text-zinc-500">
             {scope === "property"
               ? t("Today at this property, by department.")

@@ -168,6 +168,17 @@ Gemini, Groq, OpenRouter, Ollama, Azure, or Custom) → paste the key →
   your provider.
 - **Governed:** the model only calls Kamra's tools.
 - **Role-scoped:** tools match the signed-in user's roles.
+- **Cards with actions:** under a reply, each stay the agent worked on
+  shows as a card: guest, room, dates, status and what is due, with
+  **Check in**, **Check out**, **Collect**, **Open folio**, **Waive
+  deposit** and **Open stay**. A priced stay shows as a quote card with
+  **Book**. The buttons open the same sheets as the rest of Kamra, as you;
+  nothing is paid or posted until you finish that sheet.
+- **Shortcuts:** chips above the message box send the common asks in one
+  tap (today's arrivals, departures and balances, in-house guests, a
+  quote, the night audit check).
+
+![Kamra Agent: a reply with a stay card for an in-house guest, with Check out, Collect, Open folio, Waive deposit and Open stay](/img/ai/agent-cards.png)
 
 ## What work it can do
 

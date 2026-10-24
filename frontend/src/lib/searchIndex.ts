@@ -39,5 +39,10 @@ export const FEATURES: FeatureEntry[] = [
   { label: "Invite or manage staff", to: "/settings/staff", where: "Admin · Staff & Access", keywords: ["user", "role", "permission", "password", "pin"] },
   { label: "Turn the AI agent on", to: "/settings/ai", where: "Settings · AI", keywords: ["api key", "openai", "claude", "mcp", "assistant", "agent"] },
   { label: "Manage AI access (MCP)", to: "/settings/claude", where: "Settings · AI access (MCP)", keywords: ["mcp", "claude", "chatgpt", "mcp read", "mcp manage", "disconnect", "block tools", "permissions"] },
-  { label: "Reports and exports", to: "/reports", where: "Finance · Reports", keywords: ["occupancy", "adr", "revpar", "tally", "accounting export", "csv"] },
+  { label: "Reports and exports", to: "/reports", where: "Reports", keywords: ["tally", "accounting export", "csv", "all reports"] },
+  { label: "Manager flash", to: "/reports/flash", where: "Reports · Daily", keywords: ["occupancy", "adr", "revpar", "flash", "daily report", "collections"] },
+  { label: "Voids and allowances", to: "/voids-allowances", where: "Reports · Finance", keywords: ["void", "allowance", "who voided"], roles: ["Finance", "Hotel Admin", "System Manager", "Administrator"] },
+  { label: "Shift report", to: "/cashier/shift-report", where: "Reports · Daily", keywords: ["till report", "cashier report", "shift"] },
+  { label: "SLA report", to: "/ops-sla", where: "Reports · Operations", keywords: ["sla", "response time", "tickets late"] },
+  { label: "Arrivals and departures", to: "/in-house", where: "Front Desk · In House", keywords: ["arrivals", "departures", "due out", "due in", "in house", "who is staying"] },
 ]

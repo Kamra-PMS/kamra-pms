@@ -590,6 +590,16 @@ export default function Today() {
       </div>
     )
   }
+  // the old Front Desk dashboard's money row, folded into Today
+  const outstanding = Number(kpi?.finance?.outstanding ?? 0)
+  const moneyTiles: { label: string; value: string; to: string; tone?: string }[] = [
+    { label: t("Collected today"), value: `${cur()}${inr0(Number(kpi?.collections_today ?? 0))}`, to: "/cashier/board" },
+    { label: t("Outstanding"), value: `${cur()}${inr0(outstanding)}`, to: "/ledgers", tone: outstanding ? "text-amber-700" : undefined },
+    { label: t("Open folios"), value: String(kpi?.finance?.open_folios ?? 0), to: "/billing" },
+    { label: t("ADR, month to date"), value: `${cur()}${inr0(Number(kpi?.statistics?.adr ?? 0))}`, to: "/dashboard" },
+    { label: t("RevPAR, month to date"), value: `${cur()}${inr0(Number(kpi?.statistics?.revpar ?? 0))}`, to: "/dashboard" },
+    { label: t("Occupancy, month to date"), value: `${kpi?.statistics?.mtd_occupancy_pct ?? 0}%`, to: "/reports/flash" },
+  ]
   const hkRoom = kpi?.housekeeping?.room_status ?? {}
   const hkStats = [
     { label: t("Clean"), value: hkRoom.Clean ?? 0, dot: "bg-emerald-500" },
@@ -617,12 +627,14 @@ export default function Today() {
   // order (Customize). The built-in layout is the classic Today.
   const widgets: Record<WidgetId, React.ReactNode> = {
     kpis: (
-      <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+      <div className="mb-6 space-y-3">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
         <StatCard
           icon={<LogIn className="size-4" />}
           label={t("Arrivals")}
           value={arrivalsN}
           spark={mkTrend(arrivalsN)}
+          to="/in-house?tab=arrivals"
         />
         <StatCard
           icon={<LogOut className="size-4" />}
@@ -630,16 +642,19 @@ export default function Today() {
           value={departuresN}
           spark={mkTrend(departuresN, false)}
           sparkColor="var(--color-amber-600)"
+          to="/in-house?tab=departures"
         />
         <StatCard
           icon={<Users className="size-4" />}
           label={t("In-house")}
           value={inhouseN}
           spark={mkTrend(inhouseN)}
+          to="/in-house?tab=in-house"
         />
         <StatCard
           icon={<PieChart className="size-4" />}
           label={t("Occupancy")}
+          to="/room-board"
           value={`${occupancyPct}%`}
           progress={occupancyPct}
           progressLabel={t("{occupied} of {total} rooms", {
@@ -663,6 +678,7 @@ export default function Today() {
                 }))
           }
           spark={mkTrend(revenue)}
+          to="/dashboard"
         />
         <StatCard
           icon={<ListChecks className="size-4" />}
@@ -676,13 +692,28 @@ export default function Today() {
           to={"/housekeeping"}
         />
       </div>
+      {kpi && (
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+          {moneyTiles.map((m) => (
+            <Link
+              key={m.label}
+              to={m.to}
+              className="rounded-lg border border-zinc-200 bg-white px-3 py-2 transition-colors hover:border-brand-300"
+            >
+              <div className="text-[11px] font-medium text-zinc-500">{m.label}</div>
+              <div className={cn("text-sm font-semibold tabular-nums", m.tone ?? "text-zinc-900")}>{m.value}</div>
+            </Link>
+          ))}
+        </div>
+      )}
+      </div>
     ),
     booking_requests: <BookingRequests refreshKey={refreshKey} onChanged={refresh} />,
     arrivals: (
       <Card>
         <CardHeader>
           <CardTitle>{t("Arrivals")}</CardTitle>
-          <LogIn className="size-4 text-zinc-400" aria-hidden />
+          <Link to="/in-house?tab=arrivals" className="text-xs font-medium text-brand-700 hover:underline">{t("View all")}</Link>
         </CardHeader>
         <CardContent className="pt-1">
           <ReservationList
@@ -704,7 +735,7 @@ export default function Today() {
       <Card>
         <CardHeader>
           <CardTitle>{t("Departures")}</CardTitle>
-          <LogOut className="size-4 text-zinc-400" aria-hidden />
+          <Link to="/in-house?tab=departures" className="text-xs font-medium text-brand-700 hover:underline">{t("View all")}</Link>
         </CardHeader>
         <CardContent className="pt-1">
           <ReservationList
@@ -789,9 +820,9 @@ export default function Today() {
       <Card>
         <CardHeader>
           <CardTitle>{t("In-house guests")}</CardTitle>
-          <span className="text-xs text-zinc-400">
+          <Link to="/in-house?tab=in-house" className="text-xs font-medium text-brand-700 hover:underline">
             {t("{n} staying", { n: inhouseN })}
-          </span>
+          </Link>
         </CardHeader>
         <CardContent className="pt-1">
           <InHouseTable rows={snap?.in_house ?? []} today={snap?.date} />
@@ -813,16 +844,17 @@ export default function Today() {
         <CardContent>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             {hkStats.map((s) => (
-              <div
+              <Link
+                to="/housekeeping-board"
                 key={s.label}
-                className="flex items-center gap-2 rounded-lg border border-zinc-200 px-3 py-2"
+                className="flex items-center gap-2 rounded-lg border border-zinc-200 px-3 py-2 hover:border-brand-300"
               >
                 <span className={cn("size-2 rounded-full", s.dot)} />
                 <span className="text-lg font-semibold tabular-nums">
                   {s.value}
                 </span>
                 <span className="text-xs text-zinc-500">{translate(s.label)}</span>
-              </div>
+              </Link>
             ))}
           </div>
         </CardContent>

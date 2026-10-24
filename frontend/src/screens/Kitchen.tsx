@@ -649,7 +649,7 @@ export default function Kitchen() {
             title={(browserFs ? t("Exit full screen (Esc)") : t("Browser full screen"))}>
             {browserFs ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
           </button>
-          <button onClick={() => { exitFloor(); navigate("/dashboard") }}
+          <button onClick={() => { exitFloor(); navigate("/") }}
             className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-2.5 py-2 text-xs font-semibold text-zinc-600 hover:bg-zinc-50"
             title={t("Exit the kitchen pass - back to the PMS")}>
             <LogOut className="size-4" />

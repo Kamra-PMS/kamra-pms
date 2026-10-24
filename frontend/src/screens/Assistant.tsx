@@ -25,6 +25,7 @@ import {
 } from "../lib/api"
 import { cn } from "../lib/utils"
 import { Markdown } from "../lib/markdown"
+import AgentCards, { type AgentCard } from "../components/AgentCards"
 import { t as translate, useUILanguage } from "../lib/i18n"
 
 const TOOL_LABEL: Record<string, string> = {
@@ -42,6 +43,17 @@ const TOOL_LABEL: Record<string, string> = {
   front_desk_today: "Checked today's desk",
   waitlist_ready: "Checked waitlist openings",
   promote_waitlist: "Promoted from waitlist",
+  booking_options: "Read booking options",
+  checkout_context: "Read the check-out bill",
+  get_folio: "Opened the folio",
+  record_payment: "Recorded a payment",
+  cancellation_preview: "Priced the cancellation",
+  cancel_booking: "Cancelled a booking",
+  waive_security_deposit: "Waived the deposit",
+  collect_security_deposit: "Took the deposit",
+  security_deposit_status: "Read the deposit",
+  raise_ticket: "Raised a ticket",
+  hk_queue: "Read housekeeping",
 }
 const toolLabel = (t: string) =>
   TOOL_LABEL[t] ?? t.replace(/_/g, " ")
@@ -51,6 +63,15 @@ const SUGGESTIONS = [
   "Find the reservation for room 101 and show me the folio.",
   "Quote 2 nights in a Deluxe for 2 adults from this Friday.",
   "Which waitlisted guests can I now give a room?",
+]
+
+// one tap, sent as typed: the desk's most common asks
+const SHORTCUTS: { label: string; prompt: string }[] = [
+  { label: "Today's arrivals", prompt: "Who is arriving today, and are their rooms ready?" },
+  { label: "Departures and balances", prompt: "Who is leaving today and what does each still owe?" },
+  { label: "In-house guests", prompt: "List the guests in house now with their rooms." },
+  { label: "Quote a stay", prompt: "Quote a stay for 2 adults: " },
+  { label: "Night audit check", prompt: "Run the night audit precheck and tell me what blocks it." },
 ]
 
 function ThinkingDots() {
@@ -182,6 +203,7 @@ export default function Assistant() {
 
     let content = ""
     const actions: { tool: string; ok: boolean }[] = []
+    const cards: AgentCard[] = []
     try {
       let convId = activeId
       if (!convId) {
@@ -233,6 +255,9 @@ export default function Assistant() {
           } else if (event === "action") {
             actions.push({ tool: d.tool, ok: d.ok })
             patch((m) => ({ ...m, actions: [...actions] }))
+          } else if (event === "card") {
+            cards.push(d as AgentCard)
+            patch((m) => ({ ...m, cards: [...cards] }))
           } else if (event === "error") {
             setError(d.message)
           }
@@ -241,7 +266,7 @@ export default function Assistant() {
       // persist the completed turn
       const finalMsgs: ChatMsg[] = [
         ...history,
-        { role: "assistant", content, actions },
+        { role: "assistant", content, actions, cards },
       ]
       await saveConversation(
         convId,
@@ -344,8 +369,8 @@ export default function Assistant() {
             </div>
           )}
           {msgs.map((m, i) => (
+            <div key={i} className="space-y-2">
             <div
-              key={i}
               className={cn(
                 "flex items-end gap-2",
                 m.role === "user" ? "justify-end" : "justify-start",
@@ -395,6 +420,12 @@ export default function Assistant() {
                 )}
               </div>
             </div>
+            {m.role === "assistant" && m.cards && m.cards.length > 0 && (
+              <div className="ms-9 max-w-[75%]">
+                <AgentCards cards={m.cards} />
+              </div>
+            )}
+            </div>
           ))}
           {error && (
             <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-600">
@@ -404,8 +435,25 @@ export default function Assistant() {
           <div ref={endRef} />
         </div>
 
+        {aiEnabled !== false && (
+          <div className="flex gap-1.5 overflow-x-auto border-t border-zinc-100 px-3 pt-2.5">
+            {SHORTCUTS.map((sc) => (
+              <button
+                key={sc.label}
+                type="button"
+                disabled={busy}
+                onClick={() =>
+                  sc.prompt.endsWith(": ") ? setInput(translate(sc.prompt)) : send(translate(sc.prompt))
+                }
+                className="shrink-0 rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs font-medium text-zinc-600 hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700 disabled:opacity-50"
+              >
+                {translate(sc.label)}
+              </button>
+            ))}
+          </div>
+        )}
         <form
-          className="border-t border-zinc-100 p-3"
+          className="p-3"
           onSubmit={(e) => {
             e.preventDefault()
             send(input)

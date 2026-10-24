@@ -801,6 +801,37 @@ def _note_refs(args: dict, result) -> None:
 			refs.append(ref)
 
 
+def _note_quote(args: dict, result) -> None:
+	"""Keep the turn's last quote, so the chat can show it as a card."""
+	if not isinstance(result, dict) or "amount_after_tax" not in result:
+		return
+	frappe.local.kamra_chat_quote = {
+		"type": "quote",
+		"room_type": args.get("room_type"),
+		"check_in_date": args.get("check_in_date"),
+		"check_out_date": args.get("check_out_date"),
+		"adults": args.get("adults"),
+		"children": args.get("children"),
+		"nights": result.get("nights"),
+		"total": result.get("amount_after_tax"),
+		"deposit": (result.get("totals") or {}).get("deposit_required") or 0,
+		"currency": result.get("currency"),
+	}
+
+
+def _turn_cards() -> list[dict]:
+	"""What the chat draws under a reply: the stays the turn touched (the
+	screen loads each through reservation_detail, with the user's own
+	permissions) and the last quote, unless the turn went on to book it."""
+	refs = list(getattr(frappe.local, "kamra_chat_refs", None) or [])
+	cards: list[dict] = []
+	quote = getattr(frappe.local, "kamra_chat_quote", None)
+	if quote and not refs:
+		cards.append(quote)
+	cards += [{"type": "stay", "reservation": r} for r in refs[:3]]
+	return cards
+
+
 def _missing_refs(text: str) -> str:
 	"""Later turns only see the replies, not tool results: a reply about a
 	stay that never names its reservation id leaves the next turn guessing
@@ -856,6 +887,8 @@ def _run_tool(name: str, args: dict, property: str):
 		           rationale=frappe.as_json(clean)[:400],
 		           agent_name="Front Desk Copilot", channel="Chat")
 	_note_refs(clean, result)
+	if name == "quote":
+		_note_quote(clean, result)
 	return json.loads(frappe.as_json(result))
 
 
@@ -897,6 +930,7 @@ def ask(property: str, messages):
 	actions = []
 	frappe.local.kamra_chat_bookings = {}
 	frappe.local.kamra_chat_refs = []
+	frappe.local.kamra_chat_quote = None
 	for _ in range(MAX_TOOL_ROUNDS):
 		resp = _post_chat(base, headers, chat_payload(
 			model, convo, tools=_tool_defs(), temperature=0.2))
@@ -909,7 +943,8 @@ def ask(property: str, messages):
 		calls = msg.get("tool_calls") or []
 		if not calls:
 			reply = msg.get("content") or ""
-			return {"reply": reply + _missing_refs(reply), "actions": actions}
+			return {"reply": reply + _missing_refs(reply), "actions": actions,
+			        "cards": _turn_cards()}
 
 		for call in calls:
 			name = call["function"]["name"]
@@ -941,7 +976,8 @@ def ask_stream(property: str, messages):
 	`token` events. The generator itself touches no DB - only the OpenAI stream
 	- so it's safe to iterate after the request handler returns.
 
-	Events: action {tool, ok} · token {text} · error {message} · done {}
+	Events: action {tool, ok} · token {text} · card {type, ...} · error
+	{message} · done {}
 	"""
 	from werkzeug.wrappers import Response
 
@@ -968,6 +1004,7 @@ def ask_stream(property: str, messages):
 	actions = []
 	frappe.local.kamra_chat_bookings = {}
 	frappe.local.kamra_chat_refs = []
+	frappe.local.kamra_chat_quote = None
 	for _ in range(MAX_TOOL_ROUNDS):
 		resp = _post_chat(base, headers, chat_payload(
 			model, convo, tools=_tool_defs(), temperature=0.2))
@@ -997,6 +1034,7 @@ def ask_stream(property: str, messages):
 
 	# read now: the generator runs after the request context is gone
 	refs = list(getattr(frappe.local, "kamra_chat_refs", None) or [])
+	cards = _turn_cards()
 
 	def gen():
 		streamed = []
@@ -1029,6 +1067,8 @@ def ask_stream(property: str, messages):
 				missing = [r for r in refs if r not in text][:3]
 				if missing:
 					yield sse("token", {"text": f"\n\nRef: {', '.join(missing)}"})
+				for card in cards:
+					yield sse("card", card)
 		except Exception as e:
 			yield sse("error", {"message": str(e)[:150]})
 		yield sse("done", {})
