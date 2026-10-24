@@ -72,7 +72,7 @@ import {
 } from "lucide-react"
 
 /** "Night audit" is what most hotels call End of Day; EOD is what they type. */
-const EOD_KEYWORDS = ["Night audit", "End of day", "EOD", "Close the day"]
+const EOD_KEYWORDS = ["End of day", "EOD", "Close the day", "Roll the date"]
 
 /** Shared tile treatment for switcher and launcher. One quiet system, not a rainbow. */
 export const APP_TILE =
@@ -88,6 +88,8 @@ export interface AppNavItem {
   group?: string
   /** Other words search (Ctrl/Cmd+K) finds this page by. */
   keywords?: string[]
+  /** Drawn as a highlighted entry in the sidebar (Kamra Agent). */
+  featured?: boolean
 }
 
 export interface AppDef {
@@ -115,18 +117,19 @@ export const APPS: AppDef[] = [
     roles: ["Front Desk", "Night Auditor", "Hotel Admin", "System Manager", "Administrator"],
     items: [
       { to: "/", label: "Today", icon: Home },
-      { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-      { to: "/assistant", label: "Kamra Agent", icon: Sparkles },
+      { to: "/assistant", label: "Kamra Agent", icon: Sparkles, featured: true,
+        keywords: ["AI", "Assistant", "Copilot", "Ask"] },
       { to: "/reservations", label: "Reservations", icon: ClipboardList },
-      { to: "/crs", label: "Central Reservations", icon: Search },
       { to: "/tape", label: "Tape Chart", icon: LayoutGrid },
       { to: "/room-board", label: "Rooms", icon: DoorOpen,
         keywords: ["Room board", "Room status", "Out of order", "Room history"] },
-      { to: "/calendar", label: "Calendar", icon: CalendarDays },
       { to: "/guests", label: "Guests", icon: Users },
-      { to: "/room-blocks", label: "Room Blocks", icon: Lock },
-      { to: "/end-of-day", label: "End of Day / Night Audit", icon: MoonStar,
+      { to: "/end-of-day", label: "Night Audit", icon: MoonStar,
         keywords: EOD_KEYWORDS },
+      { to: "/calendar", label: "Calendar", icon: CalendarDays },
+      { to: "/crs", label: "Central Reservations", icon: Search },
+      { to: "/room-blocks", label: "Room Blocks", icon: Lock },
+      { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
       { to: "/settings/front-desk", label: "Settings", icon: SettingsIcon,
         roles: ["Hotel Admin", "System Manager", "Administrator"] },
     ],
@@ -268,7 +271,7 @@ export const APPS: AppDef[] = [
       { to: "/shifts", label: "Shift Handover", icon: Clock, group: "Cashier" },
       { to: "/cashier/fx", label: "Currency Desk", icon: Calculator, group: "Cashier" },
       // Billing
-      { to: "/end-of-day", label: "End of Day / Night Audit", icon: MoonStar, group: "Billing",
+      { to: "/end-of-day", label: "Night Audit", icon: MoonStar, group: "Billing",
         keywords: EOD_KEYWORDS },
       { to: "/billing", label: "Billing", icon: Receipt, group: "Billing" },
       { to: "/folio-history", label: "Folio History", icon: History, group: "Billing" },

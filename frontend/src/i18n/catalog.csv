@@ -1823,7 +1823,7 @@ Encode {v0} key card(s) for room {v1} at the encoder.,Encode {v0} key card(s) fo
 End date (inclusive),End date (inclusive),,Fecha final (inclusive),,,needs_translation
 End of day,End of day,نهاية اليوم,Cierre del día,,,translated
 End of Day,End of Day,نهاية اليوم,Cierre del día,screens\AuditPack.tsx,,translated
-End of Day / Night Audit,End of Day / Night Audit,,Cierre del día / Auditoría nocturna,screens\EndOfDayWizard.tsx,,needs_translation
+Night Audit,Night Audit,التدقيق الليلي,Auditoría nocturna,screens\EndOfDayWizard.tsx,,translated
 End of Day for {bd} is complete.,End of Day for {bd} is complete.,اكتملت نهاية اليوم لتاريخ {bd}.,Se completó el cierre del día {bd}.,screens\EndOfDayWizard.tsx,bd,translated
 "End of Day is the night audit. Close each property's business date, then print the audit pack. The 3 AM job runs the same steps; find every automatic run and its pack under Audit history.","End of Day is the night audit. Close each property's business date, then print the audit pack. The 3 AM job runs the same steps; find every automatic run and its pack under Audit history.",إقفال اليوم هو التدقيق الليلي. أغلق تاريخ العمل لكل منشأة ثم اطبع حزمة التدقيق. مهمة الساعة 3 صباحاً تنفّذ نفس الخطوات؛ اعثر على كل تشغيل تلقائي وحزمته ضمن سجل التدقيق.,El cierre del día es la auditoría nocturna. Cierre la fecha operativa de cada alojamiento e imprima el paquete de auditoría. El proceso de las 3 a. m. realiza los mismos pasos; encuentre cada ejecución automática y su paquete en Historial de auditoría.,screens\EndOfDay.tsx,,translated
 "End of Day is the night audit. Close each property's business date: work through the checklist, post room and tax, roll the date and print the audit pack. The 3 AM job runs the same steps on its own.","End of Day is the night audit. Close each property's business date: work through the checklist, post room and tax, roll the date and print the audit pack. The 3 AM job runs the same steps on its own.",,"El cierre del día corresponde a la auditoría nocturna. Cierre la fecha operativa de cada alojamiento: complete la lista de verificación, registre los cargos de habitación e impuestos, avance la fecha e imprima el paquete de auditoría. El proceso de las 3 a. m. realiza los mismos pasos automáticamente.",,,needs_translation
@@ -2726,7 +2726,7 @@ Manage,Manage,إدارة,Administrar,screens\EndOfDay.tsx; screens\Marketplace.t
 Manage access,Manage access,,Administrar acceso,screens\settings\AccessPages.tsx,,needs_translation
 "Manage direct booking setup, property profile, photo gallery, FAQs, and SEO rules.","Manage direct booking setup, property profile, photo gallery, FAQs, and SEO rules.",إدارة إعداد الحجز المباشر وملف العقار ومعرض الصور والأسئلة الشائعة وقواعد تحسين البحث.,"Configure las reservas directas, el perfil del alojamiento, la galería de fotos, las preguntas frecuentes y el posicionamiento en buscadores.",,,translated
 Manage End of Day,Manage End of Day,إدارة نهاية اليوم,Gestionar cierre del día,,,translated
-Manage End of Day / Night Audit,Manage End of Day / Night Audit,,Administrar cierre del día / auditoría nocturna,screens\EndOfDay.tsx; screens\EndOfDayWizard.tsx,,needs_translation
+Manage Night Audit,Manage Night Audit,إدارة التدقيق الليلي,Administrar auditoría nocturna,screens\EndOfDay.tsx; screens\EndOfDayWizard.tsx,,translated
 Manage printers,Manage printers,,Administrar impresoras,screens\settings\cards.tsx,,needs_translation
 Manage Users,Manage Users,إدارة المستخدمين,Administrar usuarios,,,translated
 Managed on their own screens,Managed on their own screens,,Gestionado en sus propias pantallas,screens\settings\ModulePage.tsx,,needs_translation
@@ -5299,3 +5299,4 @@ ZATCA: still needed for valid e-invoices - {fields}.,ZATCA: still needed for val
 "Zero balance: use Quick check out above, or Check out on the row.","Zero balance: use Quick check out above, or Check out on the row.",,Saldo cero: utilice Salida rápida arriba o Registrar salida en la fila.,,,needs_translation
 Zero-rate and complimentary rooms,Zero-rate and complimentary rooms,غرف بسعر صفر ومجانية,Habitaciones con tarifa cero y de cortesía,screens\AuditPack.tsx,,translated
 Zero-rated on purpose,Zero-rated on purpose,,Tasa cero aplicada intencionalmente,screens\BanquetFunction.tsx,,needs_translation
+AI,AI,ذكاء اصطناعي,IA,AppShell.tsx,,translated

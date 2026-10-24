@@ -224,6 +224,24 @@ Named always-on jobs (a night auditor that runs at 3am, an owner brief
 on WhatsApp, waitlist chase) are on the backlog below. Until they ship,
 Claude is the loop: you open a chat, it uses the tools.
 
+## Testing Kamra Agent
+
+`kamra.scripts.agent_eval` talks to Kamra Agent the way staff do: real
+conversations, the property's own AI provider, then checks on what changed
+in the PMS. It covers booking without the security deposit, quote then
+book, check-out that collects what check-out asks for, one charge per bill,
+cancelling only after a yes, refusing what no tool can do, and role limits.
+It calls a live AI provider, so it is not part of CI. It runs on the EVAL
+Hotel sandbox and rolls everything back.
+
+```bash
+bench --site <site> execute kamra.scripts.agent_eval.execute
+bench --site <site> execute kamra.scripts.agent_eval.execute \
+  --kwargs "{'only': 'checkout', 'runs': 3, 'model': 'gpt-4o'}"
+```
+
+Models vary from run to run, so use `runs` to see a pass rate.
+
 ## Limitations
 
 Be honest with the model, and with buyers:

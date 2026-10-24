@@ -14,8 +14,8 @@ export interface FeatureEntry {
 }
 
 export const FEATURES: FeatureEntry[] = [
-  { label: "Close the day", to: "/end-of-day", where: "End of Day / Night Audit", keywords: ["night audit", "eod", "roll date", "business date", "3 am", "audit pack", "blockers"] },
-  { label: "Fix End of Day blockers", to: "/end-of-day", where: "End of Day / Night Audit", keywords: ["blocker", "acknowledge", "override", "cannot close", "stuck"] },
+  { label: "Close the day", to: "/end-of-day", where: "Night Audit", keywords: ["night audit", "eod", "roll date", "business date", "3 am", "audit pack", "blockers"] },
+  { label: "Fix End of Day blockers", to: "/end-of-day", where: "Night Audit", keywords: ["blocker", "acknowledge", "override", "cannot close", "stuck"] },
   { label: "Add a till or terminal", to: "/cashier/board", where: "Finance · All tills", keywords: ["cash office", "register", "pos station", "drawer", "terminal"] },
   { label: "Cash drop", to: "/cashier", where: "Finance · My Till", keywords: ["safe", "paid out", "float", "count cash", "close till", "open till"] },
   { label: "Petty cash voucher", to: "/cashier/petty-cash", where: "Finance · Petty Cash", keywords: ["imprest", "expense", "voucher"] },
