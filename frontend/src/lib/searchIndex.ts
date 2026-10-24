@@ -39,5 +39,6 @@ export const FEATURES: FeatureEntry[] = [
   { label: "Invite or manage staff", to: "/settings/staff", where: "Admin · Staff & Access", keywords: ["user", "role", "permission", "password", "pin"] },
   { label: "Turn the AI agent on", to: "/settings/ai", where: "Settings · AI", keywords: ["api key", "openai", "claude", "mcp", "assistant", "agent"] },
   { label: "Manage AI access (MCP)", to: "/settings/claude", where: "Settings · AI access (MCP)", keywords: ["mcp", "claude", "chatgpt", "mcp read", "mcp manage", "disconnect", "block tools", "permissions"] },
-  { label: "Reports and exports", to: "/reports", where: "Finance · Reports", keywords: ["occupancy", "adr", "revpar", "tally", "accounting export", "csv"] },
+  { label: "Reports and exports", to: "/reports", where: "Finance · Reports", keywords: ["occupancy", "adr", "revpar", "tally", "accounting export", "csv", "custom report", "email report", "schedule"] },
+  { label: "Custom report builder", to: "/reports", where: "Finance · Reports", keywords: ["saved report", "dataset", "mail", "arrivals list", "contribution"] },
 ]

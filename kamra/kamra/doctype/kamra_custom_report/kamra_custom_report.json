@@ -1,0 +1,162 @@
+{
+ "actions": [],
+ "autoname": "hash",
+ "creation": "2026-10-24 10:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "property",
+  "title",
+  "is_shared",
+  "dataset",
+  "columns_json",
+  "filters_json",
+  "group_by_json",
+  "sort_json",
+  "schedule_section",
+  "schedule_frequency",
+  "schedule_time",
+  "schedule_weekday",
+  "recipients",
+  "last_sent_on"
+ ],
+ "fields": [
+  {
+   "fieldname": "property",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Property",
+   "options": "Property",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Title",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "description": "Visible to everyone on the property who can run this dataset",
+   "fieldname": "is_shared",
+   "fieldtype": "Check",
+   "label": "Shared with property"
+  },
+  {
+   "fieldname": "dataset",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Dataset",
+   "reqd": 1
+  },
+  {
+   "fieldname": "columns_json",
+   "fieldtype": "Long Text",
+   "label": "Columns JSON"
+  },
+  {
+   "fieldname": "filters_json",
+   "fieldtype": "Long Text",
+   "label": "Filters JSON"
+  },
+  {
+   "fieldname": "group_by_json",
+   "fieldtype": "Long Text",
+   "label": "Group By JSON"
+  },
+  {
+   "fieldname": "sort_json",
+   "fieldtype": "Long Text",
+   "label": "Sort JSON"
+  },
+  {
+   "fieldname": "schedule_section",
+   "fieldtype": "Section Break",
+   "label": "Email schedule"
+  },
+  {
+   "default": "Off",
+   "fieldname": "schedule_frequency",
+   "fieldtype": "Select",
+   "label": "Schedule",
+   "options": "Off\nDaily\nWeekly"
+  },
+  {
+   "default": "07:00",
+   "description": "HH:MM in the site timezone",
+   "fieldname": "schedule_time",
+   "fieldtype": "Data",
+   "label": "Send at"
+  },
+  {
+   "default": "Mon",
+   "depends_on": "eval:doc.schedule_frequency=='Weekly'",
+   "fieldname": "schedule_weekday",
+   "fieldtype": "Select",
+   "label": "Weekday",
+   "options": "Mon\nTue\nWed\nThu\nFri\nSat\nSun"
+  },
+  {
+   "description": "Comma-separated email addresses",
+   "fieldname": "recipients",
+   "fieldtype": "Small Text",
+   "label": "Recipients"
+  },
+  {
+   "fieldname": "last_sent_on",
+   "fieldtype": "Datetime",
+   "label": "Last sent on",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-10-24 10:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kamra",
+ "name": "Kamra Custom Report",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Hotel Admin",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Finance",
+   "write": 1
+  },
+  {
+   "read": 1,
+   "role": "Front Desk"
+  },
+  {
+   "read": 1,
+   "role": "Revenue Manager"
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

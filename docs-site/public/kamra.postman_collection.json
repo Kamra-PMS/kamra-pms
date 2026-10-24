@@ -11429,6 +11429,270 @@
    ]
   },
   {
+   "name": "Custom reports (builder, save, email)",
+   "item": [
+    {
+     "name": "list_report_datasets",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.custom_reports.list_report_datasets",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.custom_reports.list_report_datasets"
+       ]
+      },
+      "description": "Whitelisted datasets the current user may run on this property.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "list_custom_reports",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.custom_reports.list_custom_reports",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.custom_reports.list_custom_reports"
+       ]
+      },
+      "description": "Saved reports visible to this user on the property.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "get_custom_report",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.custom_reports.get_custom_report",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.custom_reports.get_custom_report"
+       ]
+      },
+      "description": "Full saved definition for the builder.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"name\": \"<name>\",\n  \"property\": \"Your Property\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "save_custom_report",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.custom_reports.save_custom_report",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.custom_reports.save_custom_report"
+       ]
+      },
+      "description": "Create or update a saved custom report definition.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"title\": \"<title>\",\n  \"dataset\": \"<dataset>\",\n  \"is_shared\": 0,\n  \"schedule_frequency\": \"Off\",\n  \"schedule_time\": \"07:00\",\n  \"schedule_weekday\": \"Mon\",\n  \"recipients\": \"\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "delete_custom_report",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.custom_reports.delete_custom_report",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.custom_reports.delete_custom_report"
+       ]
+      },
+      "description": "Delete a saved report the user can edit.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"name\": \"<name>\",\n  \"property\": \"Your Property\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "run_custom_report",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.custom_reports.run_custom_report",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.custom_reports.run_custom_report"
+       ]
+      },
+      "description": "Run a saved report or an ad-hoc definition. format=json|csv|html.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"from_date\": \"2026-08-01\",\n  \"to_date\": \"2026-08-31\",\n  \"format\": \"json\",\n  \"lang\": \"en\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "email_custom_report",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.custom_reports.email_custom_report",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.custom_reports.email_custom_report"
+       ]
+      },
+      "description": "Run a report and email it (CSV or HTML attachment).",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"recipients\": \"<recipients>\",\n  \"from_date\": \"2026-08-01\",\n  \"to_date\": \"2026-08-31\",\n  \"lang\": \"en\",\n  \"attach_format\": \"csv\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
    "name": "Ledgers (trial balance, city ledger / AR, FX desk)",
    "item": [
     {
@@ -14102,275 +14366,6 @@
        ]
       },
       "description": "Per role, the settings pages it may change (admins: all of them)."
-     }
-    }
-   ]
-  },
-  {
-   "name": "AI access over MCP (MCP roles, property switches, connections)",
-   "item": [
-    {
-     "name": "access_overview",
-     "request": {
-      "method": "POST",
-      "header": [
-       {
-        "key": "Content-Type",
-        "value": "application/json"
-       },
-       {
-        "key": "Authorization",
-        "value": "token {{api_key}}:{{api_secret}}"
-       }
-      ],
-      "url": {
-       "raw": "{{base_url}}/api/method/kamra.mcp_access.access_overview",
-       "host": [
-        "{{base_url}}"
-       ],
-       "path": [
-        "api",
-        "method",
-        "kamra.mcp_access.access_overview"
-       ]
-      },
-      "description": "Everything the AI access page shows: the property switches, who has\nwhich MCP role, the live connections and the recent AI actions.",
-      "body": {
-       "mode": "raw",
-       "raw": "{\n  \"property\": \"Your Property\"\n}",
-       "options": {
-        "raw": {
-         "language": "json"
-        }
-       }
-      }
-     }
-    },
-    {
-     "name": "set_mcp_level",
-     "request": {
-      "method": "POST",
-      "header": [
-       {
-        "key": "Content-Type",
-        "value": "application/json"
-       },
-       {
-        "key": "Authorization",
-        "value": "token {{api_key}}:{{api_secret}}"
-       }
-      ],
-      "url": {
-       "raw": "{{base_url}}/api/method/kamra.mcp_access.set_mcp_level",
-       "host": [
-        "{{base_url}}"
-       ],
-       "path": [
-        "api",
-        "method",
-        "kamra.mcp_access.set_mcp_level"
-       ]
-      },
-      "description": "Give a person no MCP access, MCP Read or MCP Manage. Their other\nroles are left alone; admins already have full access.",
-      "body": {
-       "mode": "raw",
-       "raw": "{\n  \"property\": \"Your Property\",\n  \"user\": \"<user>\",\n  \"level\": \"<level>\"\n}",
-       "options": {
-        "raw": {
-         "language": "json"
-        }
-       }
-      }
-     }
-    },
-    {
-     "name": "set_mcp_policy",
-     "request": {
-      "method": "POST",
-      "header": [
-       {
-        "key": "Content-Type",
-        "value": "application/json"
-       },
-       {
-        "key": "Authorization",
-        "value": "token {{api_key}}:{{api_secret}}"
-       }
-      ],
-      "url": {
-       "raw": "{{base_url}}/api/method/kamra.mcp_access.set_mcp_policy",
-       "host": [
-        "{{base_url}}"
-       ],
-       "path": [
-        "api",
-        "method",
-        "kamra.mcp_access.set_mcp_policy"
-       ]
-      },
-      "description": "Change this property's AI switches. Pass only what changes.",
-      "body": {
-       "mode": "raw",
-       "raw": "{\n  \"property\": \"Your Property\"\n}",
-       "options": {
-        "raw": {
-         "language": "json"
-        }
-       }
-      }
-     }
-    },
-    {
-     "name": "revoke_connection",
-     "request": {
-      "method": "POST",
-      "header": [
-       {
-        "key": "Content-Type",
-        "value": "application/json"
-       },
-       {
-        "key": "Authorization",
-        "value": "token {{api_key}}:{{api_secret}}"
-       }
-      ],
-      "url": {
-       "raw": "{{base_url}}/api/method/kamra.mcp_access.revoke_connection",
-       "host": [
-        "{{base_url}}"
-       ],
-       "path": [
-        "api",
-        "method",
-        "kamra.mcp_access.revoke_connection"
-       ]
-      },
-      "description": "Disconnect one AI client. It has to sign in again to come back.",
-      "body": {
-       "mode": "raw",
-       "raw": "{\n  \"property\": \"Your Property\",\n  \"grant\": \"<grant>\"\n}",
-       "options": {
-        "raw": {
-         "language": "json"
-        }
-       }
-      }
-     }
-    },
-    {
-     "name": "set_extra_redirect_uris",
-     "request": {
-      "method": "POST",
-      "header": [
-       {
-        "key": "Content-Type",
-        "value": "application/json"
-       },
-       {
-        "key": "Authorization",
-        "value": "token {{api_key}}:{{api_secret}}"
-       }
-      ],
-      "url": {
-       "raw": "{{base_url}}/api/method/kamra.mcp_access.set_extra_redirect_uris",
-       "host": [
-        "{{base_url}}"
-       ],
-       "path": [
-        "api",
-        "method",
-        "kamra.mcp_access.set_extra_redirect_uris"
-       ]
-      },
-      "description": "Extra OAuth redirect addresses for clients Kamra doesn't know by name,\nsuch as a self-hosted n8n. https only, exact match, no wildcards. IT only:\nit applies to every property on the site.",
-      "body": {
-       "mode": "raw",
-       "raw": "{\n  \"uris\": \"<uris>\"\n}",
-       "options": {
-        "raw": {
-         "language": "json"
-        }
-       }
-      }
-     }
-    }
-   ]
-  },
-  {
-   "name": "Room assignment for arrivals (suggest, then apply)",
-   "item": [
-    {
-     "name": "suggest_allocation",
-     "request": {
-      "method": "POST",
-      "header": [
-       {
-        "key": "Content-Type",
-        "value": "application/json"
-       },
-       {
-        "key": "Authorization",
-        "value": "token {{api_key}}:{{api_secret}}"
-       }
-      ],
-      "url": {
-       "raw": "{{base_url}}/api/method/kamra.allocation.suggest_allocation",
-       "host": [
-        "{{base_url}}"
-       ],
-       "path": [
-        "api",
-        "method",
-        "kamra.allocation.suggest_allocation"
-       ]
-      },
-      "description": "Propose a room for every unassigned arrival on `date`. No mutation.",
-      "body": {
-       "mode": "raw",
-       "raw": "{\n  \"property\": \"Your Property\",\n  \"date\": \"2026-08-01\"\n}",
-       "options": {
-        "raw": {
-         "language": "json"
-        }
-       }
-      }
-     }
-    },
-    {
-     "name": "apply_allocation",
-     "request": {
-      "method": "POST",
-      "header": [
-       {
-        "key": "Content-Type",
-        "value": "application/json"
-       },
-       {
-        "key": "Authorization",
-        "value": "token {{api_key}}:{{api_secret}}"
-       }
-      ],
-      "url": {
-       "raw": "{{base_url}}/api/method/kamra.allocation.apply_allocation",
-       "host": [
-        "{{base_url}}"
-       ],
-       "path": [
-        "api",
-        "method",
-        "kamra.allocation.apply_allocation"
-       ]
-      },
-      "description": "Assign the proposed rooms - run by a person from the tape chart, or by\nan AI client on their behalf. Every pair is checked again before it is\nwritten: the stay is a confirmed one at this property still without a\nroom, and the room is of the booked type and free and ready for those\nnights (the same available_rooms rule the suggestion used). Pairs that\nfail are returned in `skipped` with the reason. A pair already in place\nis skipped too, so repeating the call changes nothing. Each assignment is\nrecorded in the action log.",
-      "body": {
-       "mode": "raw",
-       "raw": "{\n  \"property\": \"Your Property\",\n  \"assignments\": \"<assignments>\"\n}",
-       "options": {
-        "raw": {
-         "language": "json"
-        }
-       }
-      }
      }
     }
    ]
