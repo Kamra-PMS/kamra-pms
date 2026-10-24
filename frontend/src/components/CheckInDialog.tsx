@@ -34,10 +34,10 @@ import {
 } from "./StepFlow"
 
 /* Guided check-in: one decision per screen, in the property's order
-   (Settings > Front desk > Check-in steps). Required steps have no Skip
-   and kamra.api.check_in refuses until they are done, so this screen and
-   the server agree. Every step writes through its own endpoint in
-   kamra.checkin, which records who did it and when. */
+   (Settings > Front desk > Check-in steps). Only the room hard-blocks
+   check-in; other "required" steps are soft — Skip / check in anyway and
+   finish later. Optional niceties (keys, Wi-Fi, requests) stay off the
+   main stepper so the desk can finish in a few taps. */
 
 type StepState = "done" | "skipped" | "todo" | "blocked"
 
@@ -93,7 +93,10 @@ interface Flow {
   }
   vocabulary: { id_types: string[] }
   steps: Step[]
+  /** Hard blockers only (room). */
   missing_required: string[]
+  /** Soft-required steps still open — warn, allow check-in, backfill later. */
+  pending_backfill: { step: string; title: string; tip: string }[]
   rooms: Room[]
   request_presets: { key: string; label: string }[]
   ids: {
@@ -223,6 +226,10 @@ const PAYER_LABEL: Record<string, string> = {
   Company: translate("Company pays"),
   Group: translate("Group account pays"),
 }
+
+/** Kept off the main stepper so check-in stays short (confirm / detail later). */
+const EXPRESS_HIDE = new Set(["keys", "stay_info", "guest_requests"])
+const HARD_STEP = "assign_room"
 
 const REQUEST_LABEL: Record<string, string> = {
   extra_bed: translate("Extra bed"),
@@ -366,16 +373,16 @@ export default function CheckInDialog(props: {
         ? t(BUILT_IN[s.step_key].title)
         : s.title,
       status: s.state === "done" ? "done" : s.state === "skipped" ? "skipped" : undefined,
-      optional: !s.is_blocking,
-      hidden: !s.relevant,
+      // everything except the room can be skipped / finished later
+      optional: s.step_key !== HARD_STEP,
+      hidden: !s.relevant || EXPRESS_HIDE.has(s.step_key),
     }))
     out.push({ key: "confirm", label: t("Check in") })
     return out
   }, [flow, t])
 
   const nav = useStepFlow(flowSteps)
-  // the last step reads "needs attention" only once the desk gets there
-  // with required steps still open, not from the first screen
+  // confirm goes red only when the room is still missing
   const headerSteps = useMemo(
     () => flowSteps.map((s) =>
       s.key === "confirm" && nav.current === "confirm" && flow?.missing_required.length
@@ -383,14 +390,17 @@ export default function CheckInDialog(props: {
     [flowSteps, nav, flow],
   )
   const step = flow?.steps.find((s) => s.step_key === nav.current) ?? null
+  const roomReady = !!flow && !flow.missing_required.length
 
-  // open on the first step still to do (a pre-assigned room is already done)
+  // open on the first visible step still to do (room first when missing)
   const started = useRef(false)
   const { goTo } = nav
   useEffect(() => {
     if (!flow || started.current) return
     started.current = true
-    const first = flow.steps.find((s) => s.relevant && s.state !== "done")
+    const first = flow.steps.find(
+      (s) => s.relevant && s.state !== "done" && !EXPRESS_HIDE.has(s.step_key),
+    )
     goTo(first ? first.step_key : "confirm")
   }, [flow, goTo])
 
@@ -437,7 +447,15 @@ export default function CheckInDialog(props: {
     }
     switch (key) {
       case "guest_ids":
-        if (await saveDetails()) await run("kamra.checkin.complete_checkin_step", { step: key })
+        if (!(await saveDetails())) return
+        // complete when IDs are on file; otherwise soft-skip to finish later
+        if (!(await run("kamra.checkin.complete_checkin_step", { step: key }))) {
+          setError(null)
+          await run("kamra.checkin.skip_checkin_step", {
+            step: key,
+            reason: "Backfill after check-in",
+          })
+        }
         return
       case "billing_check":
         await run("kamra.checkin.confirm_billing", { payer })
@@ -454,7 +472,10 @@ export default function CheckInDialog(props: {
         } else if (flow.grc.signed) {
           await run("kamra.checkin.complete_checkin_step", { step: key, note: "Signed online" })
         } else {
-          setError(t("Have the guest sign on screen, or tick that they signed the printed card."))
+          await run("kamra.checkin.skip_checkin_step", {
+            step: key,
+            reason: "Backfill after check-in",
+          })
         }
         return
       case "keys":
@@ -469,6 +490,16 @@ export default function CheckInDialog(props: {
           reason: chargesReason || undefined,
         })
         return
+      case "security_deposit":
+        if (flow.deposit.satisfied) {
+          await run("kamra.checkin.complete_checkin_step", { step: key })
+        } else {
+          await run("kamra.checkin.skip_checkin_step", {
+            step: key,
+            reason: "Backfill after check-in",
+          })
+        }
+        return
       case "stay_info":
         await run("kamra.checkin.complete_checkin_step", { step: key, note: "Told the guest" })
         return
@@ -478,7 +509,10 @@ export default function CheckInDialog(props: {
   }
 
   async function onSkip() {
-    await run("kamra.checkin.skip_checkin_step", { step: nav.current })
+    await run("kamra.checkin.skip_checkin_step", {
+      step: nav.current,
+      reason: "Backfill after check-in",
+    })
   }
 
   async function confirm() {
@@ -555,7 +589,9 @@ export default function CheckInDialog(props: {
   }
 
   const isConfirm = nav.current === "confirm"
-  const optional = !isConfirm && step && !step.is_blocking && step.state !== "done"
+  const hardStep = step?.step_key === HARD_STEP
+  const optional = !isConfirm && step && !hardStep && step.state !== "done"
+  const softPending = flow?.pending_backfill?.length ?? 0
   const builtIn = step ? BUILT_IN[step.step_key] : undefined
   const instruction = step
     ? builtIn && step.instruction === builtIn.instruction
@@ -572,30 +608,40 @@ export default function CheckInDialog(props: {
       footer={
         <StepFlowFooter
           start={
-            <Button variant="outline" disabled={busy} onClick={props.onClose}>
-              {t("Close")}
-            </Button>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button variant="outline" disabled={busy} onClick={props.onClose}>
+                {t("Close")}
+              </Button>
+              {!isConfirm && roomReady && (
+                <Button variant="ghost" disabled={busy} onClick={() => nav.goTo("confirm")}>
+                  {t("Skip to check-in")}
+                </Button>
+              )}
+            </div>
           }
           error={error}
           busy={busy || !flow}
           onBack={nav.isFirst ? undefined : nav.back}
           onSkip={optional ? onSkip : undefined}
           onContinue={onContinue}
-          continueDisabled={(isConfirm && !!flow?.missing_required.length) ||
-            (nav.current === "security_deposit" && !!flow && !flow.deposit.satisfied && step?.state !== "done")}
-          disabledReason={isConfirm
-            ? t("Finish the required steps first.")
-            : t("Take the deposit (or waive it with a reason) to continue.")}
+          continueDisabled={isConfirm && !!flow?.missing_required.length}
+          disabledReason={t("Assign a room before check-in.")}
           continueLabel={
             busy
               ? t("Saving…")
               : isConfirm
-                ? flow?.room.room_number
-                  ? t("Check in to room {room}", { room: flow.room.room_number })
-                  : t("Check in")
-                : step?.state === "done"
-                  ? t("Continue")
-                  : t("Done, continue")
+                ? softPending > 0
+                  ? flow?.room.room_number
+                    ? t("Check in to {room} — finish later", { room: flow.room.room_number })
+                    : t("Check in — finish later")
+                  : flow?.room.room_number
+                    ? t("Check in to room {room}", { room: flow.room.room_number })
+                    : t("Check in")
+                : nav.current === "security_deposit" && flow && !flow.deposit.satisfied && step?.state !== "done"
+                  ? t("Continue without deposit")
+                  : step?.state === "done"
+                    ? t("Continue")
+                    : t("Done, continue")
           }
         />
       }
@@ -624,12 +670,14 @@ export default function CheckInDialog(props: {
                 <span
                   className={cn(
                     "rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase",
-                    step.is_blocking
+                    hardStep
                       ? "border-rose-200 bg-rose-50 text-rose-700"
-                      : "border-zinc-200 bg-zinc-50 text-zinc-500",
+                      : step.is_blocking
+                        ? "border-amber-200 bg-amber-50 text-amber-800"
+                        : "border-zinc-200 bg-zinc-50 text-zinc-500",
                   )}
                 >
-                  {step.is_blocking ? t("Required") : t("Optional")}
+                  {hardStep ? t("Must do") : step.is_blocking ? t("Do now or later") : t("Optional")}
                 </span>
               </h3>
               <p className="text-sm text-zinc-600">{instruction}</p>
@@ -942,7 +990,13 @@ export default function CheckInDialog(props: {
                   onChanged={() => load()}
                 />
               )}
-              {!flow.deposit.satisfied && (
+              {flow.deposit.satisfied ? (
+                <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+                  {flow.deposit.security.status === "Waived"
+                    ? t("Security deposit waived. Continue.")
+                    : t("Security deposit is taken. Continue.")}
+                </p>
+              ) : (
                 <p className="text-sm font-medium text-rose-700">
                   {t("Take the security deposit or waive it with a reason to continue.")}
                 </p>
@@ -1095,33 +1149,44 @@ export default function CheckInDialog(props: {
               <h3 className="text-lg font-semibold text-zinc-900">{t("Check-in summary")}</h3>
               <ul className="divide-y divide-zinc-100 rounded-xl border border-zinc-200 bg-white">
                 {flow.steps
-                  .filter((s) => s.relevant)
+                  .filter((s) => s.relevant && (!EXPRESS_HIDE.has(s.step_key) || s.state === "done"))
                   .map((s) => {
-                    const missing = flow.missing_required.includes(s.step_key)
+                    const hardMissing = flow.missing_required.includes(s.step_key)
+                    const soft = (flow.pending_backfill ?? []).some((p) => p.step === s.step_key)
+                    const ok = s.state === "done" && !soft
+                    const label = BUILT_IN[s.step_key] && s.title === BUILT_IN[s.step_key].title
+                      ? t(BUILT_IN[s.step_key].title)
+                      : s.title
                     return (
                       <li key={s.step_key} className="flex flex-wrap items-center gap-2 px-4 py-2.5 text-sm">
                         <span
                           aria-hidden
                           className={cn(
                             "flex size-5 items-center justify-center rounded-full text-white",
-                            s.state === "done" ? "bg-emerald-500" : missing ? "bg-rose-500" : "bg-zinc-300",
+                            ok
+                              ? "bg-emerald-500"
+                              : hardMissing
+                                ? "bg-rose-500"
+                                : soft
+                                  ? "bg-amber-500"
+                                  : "bg-zinc-300",
                           )}
                         >
-                          {s.state === "done" ? <Check className="size-3" /> : "!"}
+                          {ok ? <Check className="size-3" /> : "!"}
                         </span>
-                        <span className="font-medium">{flowSteps.find((f) => f.key === s.step_key)?.label}</span>
+                        <span className="font-medium">{label}</span>
                         <span className="text-zinc-400">
-                          {s.state === "done"
+                          {ok
                             ? (s.done_by || (s.step_key === "assign_room" && flow.room.assigned_by))
                               ? t("by {who}", { who: who(s.done_by || flow.room.assigned_by) })
                               : ""
-                            : s.state === "skipped"
-                              ? t("skipped")
-                              : missing
-                                ? t("required, not done")
+                            : hardMissing
+                              ? t("need a room")
+                              : soft
+                                ? t("finish after check-in")
                                 : t("not done")}
                         </span>
-                        {s.state !== "done" && (
+                        {!ok && !hardMissing && !EXPRESS_HIDE.has(s.step_key) && (
                           <Button variant="ghost" className="ms-auto h-8 px-2 text-xs" onClick={() => nav.goTo(s.step_key)}>
                             {t("Go to step")}
                           </Button>
@@ -1132,10 +1197,17 @@ export default function CheckInDialog(props: {
               </ul>
               {flow.missing_required.length > 0 ? (
                 <p className="text-sm font-medium text-rose-700">
-                  {t("Finish the required steps first.")}
+                  {t("Assign a room before check-in.")}
+                </p>
+              ) : softPending > 0 ? (
+                <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                  {t("{n} item{s} left for after check-in. The guest can go to the room now.", {
+                    n: softPending,
+                    s: softPending === 1 ? "" : "s",
+                  })}
                 </p>
               ) : (
-                <p className="text-sm text-zinc-600">{t("Everything required is done. Check the guest in.")}</p>
+                <p className="text-sm text-zinc-600">{t("Ready. Check the guest in.")}</p>
               )}
             </div>
           )}

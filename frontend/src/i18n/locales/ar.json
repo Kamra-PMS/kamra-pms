@@ -2127,5 +2127,19 @@
   "Used on {n} earlier stays": "استُخدمت في {n} إقامات سابقة",
   "Used on 1 earlier stay": "استُخدمت في إقامة سابقة واحدة",
   "View ID scan": "عرض صورة الهوية",
-  "More": "المزيد"
+  "More": "المزيد",
+  "Photo": "الصورة",
+  "No photo (optional)": "لا توجد صورة (اختياري)",
+  "ID proof": "إثبات الهوية",
+  "On file": "محفوظ",
+  "Upload": "رفع",
+  "Open full size": "عرض بالحجم الكامل",
+  "Retake": "إعادة الالتقاط",
+  "Use this picture": "استخدم هذه الصورة",
+  "Switch camera": "تبديل الكاميرا",
+  "Switch between the front and back camera": "التبديل بين الكاميرا الأمامية والخلفية",
+  "Take picture": "التقط صورة",
+  "Captured picture": "الصورة الملتقطة",
+  "This browser cannot use a camera here. Upload a picture instead.": "لا يمكن لهذا المتصفح استخدام الكاميرا هنا. ارفع صورة بدلًا من ذلك.",
+  "No camera, or the browser blocked it. Allow the camera, or upload a picture instead.": "لا توجد كاميرا، أو حظرها المتصفح. اسمح بالكاميرا، أو ارفع صورة بدلًا من ذلك."
 }

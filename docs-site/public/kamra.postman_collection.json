@@ -7235,6 +7235,122 @@
    ]
   },
   {
+   "name": "Guest documents (photo, ID and address proof images)",
+   "item": [
+    {
+     "name": "save_guest_file",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.guest_documents.save_guest_file",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.guest_documents.save_guest_file"
+       ]
+      },
+      "description": "Keep a photo, ID image or address proof on the profile, replacing the\nprevious one. A property on Verify & Discard keeps no ID images, so only\nthe photo is accepted there (the check-in ID step verifies and discards).",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"guest\": \"G-00001\",\n  \"kind\": \"<kind>\",\n  \"data\": \"<data>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "guest_file",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.guest_documents.guest_file",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.guest_documents.guest_file"
+       ]
+      },
+      "description": "One of the profile's images as a data URL.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"guest\": \"G-00001\",\n  \"kind\": \"<kind>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "remove_guest_file",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.guest_documents.remove_guest_file",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.guest_documents.remove_guest_file"
+       ]
+      },
+      "description": "",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"guest\": \"G-00001\",\n  \"kind\": \"<kind>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
    "name": "Kitchen printers (routing, print stations, print queue)",
    "item": [
     {
@@ -12340,10 +12456,84 @@
         "kamra.night_audit.night_audit_pack"
        ]
       },
-      "description": "The saved audit pack of one Night Audit Run. A run from before packs\nwere saved answers has_pack: false with a message, not an error.",
+      "description": "The saved audit pack of one Night Audit Run. Missing packs answer\nhas_pack: false with a message; rebuild_audit_pack can recreate them.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"audit\": \"<audit>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "rebuild_audit_pack",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.night_audit.rebuild_audit_pack",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.night_audit.rebuild_audit_pack"
+       ]
+      },
+      "description": "Rebuild and save the printable audit pack for a completed run.\nUse when the automatic night left has_pack false, or to refresh the\npack. Does not re-post charges or roll the business date.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"audit\": \"<audit>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "recover_stuck_business_date",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.night_audit.recover_stuck_business_date",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.night_audit.recover_stuck_business_date"
+       ]
+      },
+      "description": "Advance the business date when a completed audit exists for the\ncurrent date but the roll did not stick. Never re-posts room nights.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\"\n}",
        "options": {
         "raw": {
          "language": "json"

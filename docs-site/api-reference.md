@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function - the same governed layer
-the UI and the AI use. **401 endpoints**, generated from the source
+the UI and the AI use. **406 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -2815,6 +2815,45 @@ A solved ticket that came back. Needs a reason; it is kept in the timeline.
 | `reason` | yes |  |
 
 
+## Guest documents (photo, ID and address proof images)
+
+> Stored privately and served as data URLs to the desk. A property on Verify & Discard keeps no ID images.
+
+### `kamra.guest_documents.save_guest_file`
+
+**POST** · roles: `Front Desk`, `Kamra Agent`
+
+Keep a photo, ID image or address proof on the profile, replacing the
+previous one. A property on Verify & Discard keeps no ID images, so only
+the photo is accepted there (the check-in ID step verifies and discards).
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `guest` | yes |  |
+| `kind` | yes |  |
+| `data` | yes |  |
+
+### `kamra.guest_documents.guest_file`
+
+**GET/POST** · roles: `Front Desk`, `Kamra Agent`
+
+One of the profile's images as a data URL.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `guest` | yes |  |
+| `kind` | yes |  |
+
+### `kamra.guest_documents.remove_guest_file`
+
+**POST** · roles: `Front Desk`, `Kamra Agent`
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `guest` | yes |  |
+| `kind` | yes |  |
+
+
 ## Kitchen printers (routing, print stations, print queue)
 
 ### `kamra.printing.print_bill`
@@ -4712,12 +4751,35 @@ acknowledged with a reason (run_night_audit acknowledge=[keys], note).
 
 **GET/POST**
 
-The saved audit pack of one Night Audit Run. A run from before packs
-were saved answers has_pack: false with a message, not an error.
+The saved audit pack of one Night Audit Run. Missing packs answer
+has_pack: false with a message; rebuild_audit_pack can recreate them.
 
 | Param | Required | Default |
 | --- | --- | --- |
 | `audit` | yes |  |
+
+### `kamra.night_audit.rebuild_audit_pack`
+
+**POST**
+
+Rebuild and save the printable audit pack for a completed run.
+Use when the automatic night left has_pack false, or to refresh the
+pack. Does not re-post charges or roll the business date.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `audit` | yes |  |
+
+### `kamra.night_audit.recover_stuck_business_date`
+
+**POST** · roles: `Finance`, `Hotel Admin`, `Night Auditor`, `Kamra Agent`
+
+Advance the business date when a completed audit exists for the
+current date but the roll did not stick. Never re-posts room nights.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
 
 ### `kamra.night_audit.night_audit_history`
 

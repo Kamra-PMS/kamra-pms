@@ -900,6 +900,29 @@ TOOLS: tuple[ToolSpec, ...] = (
 		group="Night audit",
 	),
 	_t(
+		"rebuild_audit_pack",
+		"night_audit.rebuild_audit_pack",
+		"""Rebuild the printable night-audit pack for a completed Night Audit
+		Run (when has_pack is false, or to refresh). Does not re-post charges
+		or roll the business date. Pass the audit run name.""",
+		{"audit": _p("string", description="Night Audit Run name, e.g. AUDIT-2026-10-22-PROP.")},
+		required=("audit",),
+		mutating=True,
+		group="Night audit",
+	),
+	_t(
+		"recover_stuck_business_date",
+		"night_audit.recover_stuck_business_date",
+		"""Advance the business date when a completed night audit exists for
+		the current open date but the roll did not stick (restore / ops).
+		Never re-posts room nights. Call only when stuck_date is set on the
+		End of Day overview.""",
+		{},
+		property=True,
+		mutating=True,
+		group="Night audit",
+	),
+	_t(
 		"create_group_block",
 		"api.create_group_block",
 		"""Draft a MICE piece of business in one call: a group booking with a room

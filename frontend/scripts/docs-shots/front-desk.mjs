@@ -66,11 +66,9 @@ if (want("checkin-sheet")) {
   await open(page, "/", 3000)
   const row = page.locator("li").filter({ hasText: "Nikhil Rao" })
   await row.getByRole("button", { name: "Check in" }).click()
-  await page.getByText("Registration", { exact: true }).waitFor()
-  await page.waitForTimeout(1500)
-  const sheet = page.locator("[role=dialog] > div").last()
-  const b = await sheet.boundingBox()
-  await shot(page, "front-desk/checkin-sheet", { clip: { x: b.x, y: 0, width: b.width, height: 420 } })
+  await page.getByRole("dialog").first().waitFor()
+  await page.waitForTimeout(2000)
+  await shot(page, "front-desk/checkin-sheet", { clip: { x: 480, y: 0, width: 960, height: 900 } })
   await page.keyboard.press("Escape")
 }
 
@@ -150,7 +148,7 @@ async function fillWalkIn(p, slow) {
   await p.waitForTimeout(1500)
   // pick a room nobody is in (the list can include a room whose guest
   // departs today but has not checked out yet)
-  await dlg.locator("select").nth(2).selectOption(`${PROPERTY}-105`)
+  await dlg.locator("select").nth(2).selectOption({ index: 1 })
   await p.waitForTimeout(400)
   const amt = dlg.locator("label").filter({ hasText: "Amount collected" }).locator("input")
   await amt.fill("0")
@@ -181,7 +179,7 @@ if (want("checkin-gif")) {
     await p.waitForTimeout(600)
     const row = p.locator("li").filter({ hasText: "Nikhil Rao" })
     await row.getByRole("button", { name: "Check in" }).click()
-    await p.getByText("Registration", { exact: true }).waitFor()
+    await p.getByRole("dialog").first().waitFor()
     await p.waitForTimeout(2000)
     // the suggestion can be a room whose guest leaves today but is still
     // in it - pick a room that is empty now
@@ -195,18 +193,15 @@ if (want("checkin-gif")) {
   })
 }
 
-// ------------------------------------- check-out blocked by a balance
-if (want("checkout-owed")) {
-  const res = await stayOf("Nikhil Rao")
-  await open(page, "/reservations", 2500)
-  await page.locator("tr").filter({ hasText: res }).first().click()
-  await page.getByRole("button", { name: "Check out" }).waitFor()
-  await page.getByRole("button", { name: "Check out" }).click()
-  await page.getByText(/Cannot check out/).waitFor({ timeout: 10000 })
-  await page.waitForTimeout(500)
-  const err = page.locator("div.rounded-lg.border-rose-200").filter({ hasText: "Cannot check out" }).first()
-  await err.scrollIntoViewIfNeeded()
-  await shot(page, "front-desk/checkout-owed", { locator: err })
+// ------------------------------------------------------ check-out sheet
+if (want("checkout-sheet")) {
+  await open(page, "/", 3000)
+  const row = page.locator("li").filter({ has: page.getByRole("button", { name: "Check out" }) }).first()
+  await row.getByRole("button", { name: "Check out" }).click()
+  await page.getByText("Stay summary").waitFor({ timeout: 15000 })
+  await page.waitForTimeout(1500)
+  await shot(page, "front-desk/checkout-sheet", { clip: { x: 480, y: 0, width: 960, height: 900 } })
+  await page.keyboard.press("Escape")
 }
 
 // ------------------------------------------------ check out (no image)

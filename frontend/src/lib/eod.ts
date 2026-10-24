@@ -77,6 +77,8 @@ export interface EodState {
   property_name: string
   currency?: string
   business_date: string
+  /** Property's open BD (may still equal a closed audit day when stuck). */
+  open_business_date?: string
   server_date: string
   server_time: string
   property_now: string
@@ -96,6 +98,13 @@ export interface EodState {
   steps: Step[]
   sessions: Session[]
   has_pack?: boolean
+  /** Completed audit for the open BD but the date roll did not stick. */
+  stuck_date?: {
+    audit: string
+    status: string
+    business_date: string
+    run_trigger?: string
+  } | null
 }
 
 export interface OverviewRow {
@@ -110,7 +119,22 @@ export interface OverviewRow {
   blockers: number
   blocker_keys: string[]
   draft_step: number | null
-  last_run: { audit: string; business_date: string; status: string } | null
+  /** 03:00 Hold and alert — BD not rolled; resolve and run EOD. */
+  held: { at: string; detail: string } | null
+  /** Completed audit for current BD but date roll did not stick. */
+  stuck_date: {
+    audit: string
+    status: string
+    business_date: string
+    run_trigger?: string
+  } | null
+  last_run: {
+    audit: string
+    business_date: string
+    status: string
+    run_trigger?: string
+    has_pack?: boolean
+  } | null
 }
 
 export interface RunRow {
@@ -139,6 +163,7 @@ export interface PackResponse {
   has_pack: boolean
   pack: Pack | null
   message?: string
+  can_rebuild?: boolean
 }
 
 export const eodOverview = () =>
@@ -175,3 +200,12 @@ export const auditHistory = (property: string, limit = 60) =>
 
 export const auditPack = (audit: string) =>
   call<PackResponse>("kamra.night_audit.night_audit_pack", { audit })
+
+export const rebuildAuditPack = (audit: string) =>
+  call<PackResponse>("kamra.night_audit.rebuild_audit_pack", { audit })
+
+export const recoverStuckBusinessDate = (property: string) =>
+  call<{ ok: boolean; audit: string; business_date: string; next_business_date: string }>(
+    "kamra.night_audit.recover_stuck_business_date",
+    { property },
+  )

@@ -111,6 +111,9 @@ await shot(page, "fnb/pos")
 // a running bill
 await page.getByText("Table T2", { exact: false }).first().click()
 await page.waitForTimeout(1500)
+// picking a bill from the strip opens the open-bills view; go back to the till
+await page.getByRole("button", { name: "Back to till" }).click().catch(() => {})
+await page.waitForTimeout(1500)
 await shot(page, "fnb/pos-bill")
 
 await open(page, "/kitchen", 2500)
@@ -183,7 +186,7 @@ await gif("fnb/send-order", async (p, _c, rec) => {
   await p.getByText("Tandoori Roti").first().click()
   await p.getByText("Tandoori Roti").first().click()
   await p.waitForTimeout(700)
-  await p.getByRole("button", { name: /Send to kitchen|Send and print/ }).click()
+  await p.getByRole("button", { name: /Send to kitchen|Send and print|^KOT$/ }).click()
   await p.waitForTimeout(2500)
 })
 

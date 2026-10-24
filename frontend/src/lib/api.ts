@@ -1675,6 +1675,8 @@ export interface ReservationDetail {
     id_document_missing: boolean
     id_unverified: boolean
   }
+  /** Soft-required check-in steps still open (finish after the guest is in). */
+  checkin_backfill: { step: string; title: string; tip: string }[]
 }
 
 export const reservationDetail = (name: string) =>
@@ -1685,6 +1687,15 @@ export const reservationDetail = (name: string) =>
  *  doctype perms, which this site's Custom DocPerm rows deny to Front Desk. */
 export const idDocumentImage = (reservation: string) =>
   call<{ data: string; captured_on: string }>("kamra.api.id_document_image", { reservation })
+
+/** Images kept on the guest profile: an optional photo, the ID, the address proof. */
+export type GuestFileKind = "photo" | "id" | "address"
+export const guestFile = (guest: string, kind: GuestFileKind) =>
+  call<{ data: string; is_image: boolean }>("kamra.guest_documents.guest_file", { guest, kind })
+export const saveGuestFile = (guest: string, kind: GuestFileKind, data: string) =>
+  call<{ ok: boolean }>("kamra.guest_documents.save_guest_file", { guest, kind, data })
+export const removeGuestFile = (guest: string, kind: GuestFileKind) =>
+  call<{ ok: boolean }>("kamra.guest_documents.remove_guest_file", { guest, kind })
 
 export const verifyPrecheckin = (reservation: string) =>
   call<{ ok: boolean; status: string }>("kamra.api.verify_precheckin", { reservation })

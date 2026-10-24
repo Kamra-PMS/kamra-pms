@@ -698,6 +698,12 @@ export default function ReservationDetail({
             <LogIn className="size-4" /> Check in
           </Button>
         )}
+        {d.status === "Checked In" && (d.checkin_backfill?.length ?? 0) > 0 && (
+          <Button variant="outline" disabled={busy} onClick={() => setCheckingIn(true)}>
+            <TriangleAlert className="size-4 text-amber-600" />
+            Finish check-in ({d.checkin_backfill.length})
+          </Button>
+        )}
         {d.actions.can_check_out && d.security_deposit?.blocks_checkout && (
           <span className="inline-flex items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-2.5 py-1.5 text-xs font-medium text-amber-800">
             <ShieldCheck className="size-3.5" /> Security deposit still held - withhold or refund it
