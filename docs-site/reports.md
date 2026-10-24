@@ -40,10 +40,31 @@ departures, in-house, revenue, collected and outstanding for each hotel.
 
 ![The portfolio dashboard: properties, occupancy, arrivals, in-house, revenue and collections across three properties, and the By property table](/img/reports/portfolio.png)
 
+## Build a custom report
+
+Open **Finance → Reports**. Staff (and the Kamra Agent / MCP) build
+reports from **whitelisted datasets** - arrivals, departures, in-house,
+no-shows, occupancy by day, folio charges, payments, voids, contribution,
+housekeeping tasks, POS orders - not from Frappe Desk Query Reports and
+not with free SQL.
+
+1. Open **New report**, pick a dataset, choose columns and optional
+   filters, set the date range, and press **Preview**.
+2. **Save** to keep the definition under **My reports**. Finance and
+   Hotel Admin can **share** a report with the property and set a
+   **Daily** or **Weekly** email schedule (recipients + time).
+3. **CSV**, **Print** (HTML), and **Email** work for ad-hoc or saved
+   runs. Scheduled sends attach yesterday (or the last 7 days for
+   weekly) as CSV.
+
+The same `list_report_datasets` / `save_custom_report` /
+`run_custom_report` / `email_custom_report` APIs power the SPA and
+agents. Desk is not required to build or view these reports.
+
 ## Read the manager flash
 
-Open **Finance → Reports**. The **Manager flash** is the morning report
-for one date (pick it in the date box at the top right):
+Still under **Finance → Reports**, open the **Manager flash** tab. It is
+the morning report for one date (pick it in the date box):
 
 - **Occupancy**, **ADR**, **RevPAR**, **RevPAX** and **Revenue (day)**
   split into room, F&B and other. RevPAX is total guest spend (room, F&B,

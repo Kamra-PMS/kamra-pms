@@ -4409,6 +4409,116 @@ breached if it was resolved after due_by, or is still open past due_by.
 | `to_date` | yes |  |
 
 
+## Custom reports (builder, save, email)
+
+> Whitelisted datasets only - no Desk Query Reports or free SQL. Saved definitions live on Kamra Custom Report; staff use Finance → Reports.
+
+### `kamra.custom_reports.list_report_datasets`
+
+**GET/POST** · roles: `Front Desk`, `Finance`, `Hotel Admin`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`
+
+Whitelisted datasets the current user may run on this property.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+
+### `kamra.custom_reports.list_custom_reports`
+
+**GET/POST** · roles: `Front Desk`, `Finance`, `Hotel Admin`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`
+
+Saved reports visible to this user on the property.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+
+### `kamra.custom_reports.get_custom_report`
+
+**GET/POST** · roles: `Front Desk`, `Finance`, `Hotel Admin`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`
+
+Full saved definition for the builder.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `name` | yes |  |
+| `property` | no | `None` |
+
+### `kamra.custom_reports.save_custom_report`
+
+**POST** · roles: `Finance`, `Hotel Admin`, `System Manager`, `Front Desk`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`
+
+Create or update a saved custom report definition.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `title` | yes |  |
+| `dataset` | yes |  |
+| `columns` | no | `None` |
+| `filters` | no | `None` |
+| `group_by` | no | `None` |
+| `sort` | no | `None` |
+| `is_shared` | no | `0` |
+| `schedule_frequency` | no | `'Off'` |
+| `schedule_time` | no | `'07:00'` |
+| `schedule_weekday` | no | `'Mon'` |
+| `recipients` | no | `''` |
+| `name` | no | `None` |
+
+### `kamra.custom_reports.delete_custom_report`
+
+**POST** · roles: `Finance`, `Hotel Admin`, `System Manager`, `Front Desk`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`
+
+Delete a saved report the user can edit.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `name` | yes |  |
+| `property` | no | `None` |
+
+### `kamra.custom_reports.run_custom_report`
+
+**GET/POST** · roles: `Front Desk`, `Finance`, `Hotel Admin`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`
+
+Run a saved report or an ad-hoc definition. format=json|csv|html.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `dataset` | no | `None` |
+| `from_date` | no | `None` |
+| `to_date` | no | `None` |
+| `columns` | no | `None` |
+| `filters` | no | `None` |
+| `group_by` | no | `None` |
+| `sort` | no | `None` |
+| `name` | no | `None` |
+| `format` | no | `'json'` |
+| `lang` | no | `'en'` |
+
+### `kamra.custom_reports.email_custom_report`
+
+**POST** · roles: `Finance`, `Hotel Admin`, `System Manager`, `Front Desk`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`
+
+Run a report and email it (CSV or HTML attachment).
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `recipients` | yes |  |
+| `name` | no | `None` |
+| `dataset` | no | `None` |
+| `from_date` | no | `None` |
+| `to_date` | no | `None` |
+| `columns` | no | `None` |
+| `filters` | no | `None` |
+| `group_by` | no | `None` |
+| `sort` | no | `None` |
+| `lang` | no | `'en'` |
+| `attach_format` | no | `'csv'` |
+
+
 ## Ledgers (trial balance, city ledger / AR, FX desk)
 
 ### `kamra.ledger.ledger_balances`
@@ -5325,103 +5435,6 @@ and whether they can sign in.
 **GET/POST**
 
 Per role, the settings pages it may change (admins: all of them).
-
-
-## AI access over MCP (MCP roles, property switches, connections)
-
-> Hotel Admin / System Manager. Extra OAuth redirect addresses are IT only.
-
-### `kamra.mcp_access.access_overview`
-
-**GET/POST**
-
-Everything the AI access page shows: the property switches, who has
-which MCP role, the live connections and the recent AI actions.
-
-| Param | Required | Default |
-| --- | --- | --- |
-| `property` | yes |  |
-
-### `kamra.mcp_access.set_mcp_level`
-
-**POST**
-
-Give a person no MCP access, MCP Read or MCP Manage. Their other
-roles are left alone; admins already have full access.
-
-| Param | Required | Default |
-| --- | --- | --- |
-| `property` | yes |  |
-| `user` | yes |  |
-| `level` | yes |  |
-
-### `kamra.mcp_access.set_mcp_policy`
-
-**POST**
-
-Change this property's AI switches. Pass only what changes.
-
-| Param | Required | Default |
-| --- | --- | --- |
-| `property` | yes |  |
-| `enabled` | no | `None` |
-| `read_only` | no | `None` |
-| `blocked_tools` | no | `None` |
-
-### `kamra.mcp_access.revoke_connection`
-
-**POST**
-
-Disconnect one AI client. It has to sign in again to come back.
-
-| Param | Required | Default |
-| --- | --- | --- |
-| `property` | yes |  |
-| `grant` | yes |  |
-
-### `kamra.mcp_access.set_extra_redirect_uris`
-
-**POST** · roles: `System Manager`, `Administrator`
-
-Extra OAuth redirect addresses for clients Kamra doesn't know by name,
-such as a self-hosted n8n. https only, exact match, no wildcards. IT only:
-it applies to every property on the site.
-
-| Param | Required | Default |
-| --- | --- | --- |
-| `uris` | yes |  |
-
-
-## Room assignment for arrivals (suggest, then apply)
-
-### `kamra.allocation.suggest_allocation`
-
-**GET/POST** · roles: `Front Desk`, `Revenue Manager`, `Kamra Agent`
-
-Propose a room for every unassigned arrival on `date`. No mutation.
-
-| Param | Required | Default |
-| --- | --- | --- |
-| `property` | yes |  |
-| `date` | no | `None` |
-
-### `kamra.allocation.apply_allocation`
-
-**POST** · roles: `Front Desk`, `Revenue Manager`, `Kamra Agent`
-
-Assign the proposed rooms - run by a person from the tape chart, or by
-an AI client on their behalf. Every pair is checked again before it is
-written: the stay is a confirmed one at this property still without a
-room, and the room is of the booked type and free and ready for those
-nights (the same available_rooms rule the suggestion used). Pairs that
-fail are returned in `skipped` with the reason. A pair already in place
-is skipped too, so repeating the call changes nothing. Each assignment is
-recorded in the action log.
-
-| Param | Required | Default |
-| --- | --- | --- |
-| `property` | yes |  |
-| `assignments` | yes |  |
 
 
 ## Outbound webhooks (subscriptions, delivery log)
