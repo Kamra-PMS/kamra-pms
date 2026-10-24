@@ -184,12 +184,21 @@ as the manual run. If a blocking check is still open, it follows
 
 If someone already closed the day by hand, the 03:00 run skips it.
 
+If a few days were missed (the server was down, say), the 03:00 run
+closes them one by one, oldest first, up to three days. A property more
+than three days behind is not closed automatically: Hotel Admin and
+Finance get an alert, so someone can check in-house stays and arrivals
+before weeks of room nights and no-show fees are posted. Close those days
+from End of Day.
+
 ### If the business date looks stuck
 
 A completed audit for the open business date with the date not rolled
 (after a restore or ops change) shows **Date stuck**. Press **Advance
 date**  -  Kamra moves the business date forward without posting room
-nights again. You cannot undo a completed night audit.
+nights again. You cannot undo a completed night audit. The 03:00 run
+does the same on its own when it finds a stuck date, then closes the day
+that is actually due.
 
 ## Settings
 
