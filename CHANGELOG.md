@@ -26,6 +26,24 @@ upgrade-breaking changes (removed doctypes / API contracts).
   quotation, desk-led guest response, department checklists + notify on
   Confirm (Sales/Finance/HK/F&B), and quote no-response chase reminders
 
+## [2.6.21](https://github.com/Kamra-PMS/kamra-pms/compare/v2.6.20...v2.6.21) (2026-10-24)
+
+
+### Features
+
+* **mcp:** MCP Read and MCP Manage roles decide who may use Kamra from Claude, ChatGPT or other MCP clients, checked on every request; Settings > Access > AI access (MCP) shows staff levels and connections with revoke, per-property switches and extra allowed OAuth redirects; tools carry read-only and destructive annotations; new bulk room assignment (116 tools); ChatGPT can connect over OAuth ([#331](https://github.com/Kamra-PMS/kamra-pms/pull/331))
+* **agent:** Kamra Agent action cards (check in, check out, collect, open folio, waive deposit, book from a quote) and shortcut chips; it waives the security deposit after booking, collects what check-out needs, never guesses ids, refuses another property's records and cannot double-book; live agent scenarios in kamra/scripts/agent_eval.py ([#336](https://github.com/Kamra-PMS/kamra-pms/pull/336))
+* **front-desk:** In House page with arrivals, in-house guests and departures; every Today card opens what is behind it; Night Audit naming; a highlighted Kamra Agent; menu ordered by daily use ([#336](https://github.com/Kamra-PMS/kamra-pms/pull/336))
+* **reports:** one Reports hub per role and module; custom report builder with save, share and scheduled email; Dashboard moves to Revenue ([#335](https://github.com/Kamra-PMS/kamra-pms/pull/335), [#336](https://github.com/Kamra-PMS/kamra-pms/pull/336))
+* **demo:** 75 days of history (stays, folios, night audits, POS, housekeeping, banquets, AR aging) rebuilt by every demo reset ([#334](https://github.com/Kamra-PMS/kamra-pms/pull/334))
+
+
+### Bug Fixes
+
+* **night-audit:** the 03:00 run recovers a stuck business date and catches up to three missed days; further behind, it alerts Hotel Admin and Finance instead of posting silently ([#333](https://github.com/Kamra-PMS/kamra-pms/pull/333))
+* **rooms:** bulk room allocation re-checks each room before assigning ([#331](https://github.com/Kamra-PMS/kamra-pms/pull/331))
+* **i18n:** Spanish localization included and polished ([#326](https://github.com/Kamra-PMS/kamra-pms/pull/326), [#329](https://github.com/Kamra-PMS/kamra-pms/pull/329))
+
 ## [2.6.20](https://github.com/Kamra-PMS/kamra-pms/compare/v2.6.19...v2.6.20) (2026-10-24)
 
 
