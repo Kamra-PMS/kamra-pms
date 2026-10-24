@@ -38,5 +38,6 @@ export const FEATURES: FeatureEntry[] = [
   { label: "Connect a channel manager", to: "/settings/front-desk", where: "Settings", keywords: ["ota", "booking.com", "makemytrip", "aiosell", "staah", "channel"] },
   { label: "Invite or manage staff", to: "/settings/staff", where: "Admin · Staff & Access", keywords: ["user", "role", "permission", "password", "pin"] },
   { label: "Turn the AI agent on", to: "/settings/ai", where: "Settings · AI", keywords: ["api key", "openai", "claude", "mcp", "assistant", "agent"] },
+  { label: "Manage AI access (MCP)", to: "/settings/claude", where: "Settings · AI access (MCP)", keywords: ["mcp", "claude", "chatgpt", "mcp read", "mcp manage", "disconnect", "block tools", "permissions"] },
   { label: "Reports and exports", to: "/reports", where: "Finance · Reports", keywords: ["occupancy", "adr", "revpar", "tally", "accounting export", "csv"] },
 ]

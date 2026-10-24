@@ -1,6 +1,6 @@
 # MCP tool reference
 
-Kamra exposes **114 governed tools** on the hosted MCP
+Kamra exposes **116 governed tools** on the hosted MCP
 endpoint (`/mcp`) and the stdio sidecar (`mcp/kamra_mcp.py`). Every
 call runs as the connected user - **role** permissions apply, tools
 are further filtered by the property's **enabled modules**, prices
@@ -224,6 +224,30 @@ What moving a stay to a room would do to the bill: same type keeps
 the price; another type is re-quoted. Read-only.
 
 Endpoint: `kamra.api.room_move_preview`.
+
+### `assign_rooms_preview(date)`
+
+Propose a room for every confirmed arrival on a date (default today)
+that has none yet: a free room of the booked type, ready for the
+guest, matched to their requests and VIP flag, with no two arrivals
+given the same room. Lists arrivals no room can take, and why.
+Read-only: show the plan to the user, then call assign_rooms_apply
+with the pairs they agree to.
+
+Endpoint: `kamra.allocation.suggest_allocation`.
+
+### `assign_rooms_apply(assignments)`
+
+Assign rooms to arrivals: assignments is a list of
+{"reservation": id, "room": room id}, usually from
+assign_rooms_preview after the user agreed. Each pair is checked
+again (the stay still needs a room, the room is of the booked type
+and still free and ready); pairs that fail are returned in skipped
+with the reason, and nothing else is changed. Running it again with
+the same pairs changes nothing.
+
+Endpoint: `kamra.allocation.apply_allocation`.
+Mutating - logged to the activity ledger.
 
 ### `set_late_arrival(reservation, late_arrival, eta)`
 

@@ -21,6 +21,7 @@ import { formatPhoneDisplay, formatPhoneTel } from "../lib/phone"
 import { petChargeBasis } from "../lib/pets"
 import { useT, t as translate } from "../lib/i18n"
 import { adoptBrowserLanguage } from "../lib/dir"
+import { LanguageSwitcher } from "../components/LanguageSwitcher"
 import ChildAges, {
   agesToSend, canReserve, sizeAges, StayNotice,
   type ChildAge, type StayFit,
@@ -463,6 +464,7 @@ export default function PublicListing() {
           <span className="ml-auto truncate text-sm font-medium text-zinc-500">
             {p.property_name}
           </span>
+          <LanguageSwitcher />
         </div>
       </header>
 

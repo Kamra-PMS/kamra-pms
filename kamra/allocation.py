@@ -169,26 +169,63 @@ def suggest_allocation(property: str, date: str | None = None):
 @frappe.whitelist(methods=["POST"])
 @require_roles("Front Desk", "Revenue Manager", "Kamra Agent")
 def apply_allocation(property: str, assignments):
-	"""Assign the proposed rooms - run by a person from the tape chart, on their
-	own authority. Each assignment is recorded in the action log."""
+	"""Assign the proposed rooms - run by a person from the tape chart, or by
+	an AI client on their behalf. Every pair is checked again before it is
+	written: the stay is a confirmed one at this property still without a
+	room, and the room is of the booked type and free and ready for those
+	nights (the same available_rooms rule the suggestion used). Pairs that
+	fail are returned in `skipped` with the reason. A pair already in place
+	is skipped too, so repeating the call changes nothing. Each assignment is
+	recorded in the action log."""
 	if isinstance(assignments, str):
 		assignments = frappe.parse_json(assignments)
 
+	from kamra.api import available_rooms
 	from kamra.savings import log_action
-	executed = []
-	for a in assignments:
+	executed, skipped = [], []
+	taken: set[str] = set()
+	for a in assignments or []:
 		res, room = a.get("reservation"), a.get("room") or a.get("suggested_room")
 		if not (res and room):
+			skipped.append({"reservation": res, "room": room,
+			                "reason": "Needs a reservation and a room"})
 			continue
-		doc = frappe.db.get_value("Reservation", res, ["room", "status"],
-		                          as_dict=True)
-		if not doc or doc.status not in ("Confirmed", "Checked In"):
+		doc = frappe.db.get_value(
+			"Reservation", res,
+			["property", "room", "status", "room_type", "check_in_date",
+			 "check_out_date", "group_booking"], as_dict=True)
+		why = None
+		if not doc or doc.property != property:
+			why = "Not a booking at this property"
+		elif doc.room == room:
+			why = "Already in that room"
+		elif doc.status != "Confirmed":
+			why = f"The stay is {doc.status}, not waiting for arrival"
+		elif doc.room:
+			why = "The stay already has a room; use a room move to change it"
+		elif room in taken:
+			why = "That room was just given to another arrival"
+		else:
+			r = frappe.db.get_value("Room", room, ["property", "room_type"], as_dict=True)
+			if not r or r.property != property:
+				why = "Not a room at this property"
+			elif r.room_type != doc.room_type:
+				why = "That room is another type; use a room move so the price is shown first"
+			else:
+				free = available_rooms(property, doc.room_type, doc.check_in_date,
+				                       doc.check_out_date, group_booking=doc.group_booking,
+				                       ready_now=1)
+				if room not in {f["name"] for f in free}:
+					why = "That room is no longer free or ready for these nights"
+		if why:
+			skipped.append({"reservation": res, "room": room, "reason": why})
 			continue
 		frappe.db.set_value("Reservation", res, "room", room)
+		taken.add(room)
 		log_action("allocate_room", "Reservation", res, property,
 		           minutes_saved=2,
 		           rationale=f"→ room {room}. {a.get('why') or ''}".strip())
 		executed.append({"reservation": res, "room": room})
 
 	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- persists the completed operation before returning to an external/public caller; reviewed as intentional
-	return {"executed": executed}
+	return {"executed": executed, "skipped": skipped}

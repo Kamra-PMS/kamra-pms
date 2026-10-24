@@ -88,3 +88,21 @@ def test_prepare_arguments_injects_property_and_bools():
 	assert out["property"] == "Hotel"
 	assert out["source"] == "AI Agent"
 	assert "phone" not in out
+
+
+def test_annotation_lists_name_real_tools():
+	from kamra.mcp_tools import DESTRUCTIVE, IDEMPOTENT, OPEN_WORLD, annotations
+
+	for name in DESTRUCTIVE | IDEMPOTENT | OPEN_WORLD:
+		assert name in BY_NAME, name
+	for name in DESTRUCTIVE:
+		assert BY_NAME[name].mutating, name
+	ann = annotations(BY_NAME["availability"])
+	assert ann["readOnlyHint"] and not ann["destructiveHint"]
+
+
+def test_room_assignment_tools():
+	preview, apply = BY_NAME["assign_rooms_preview"], BY_NAME["assign_rooms_apply"]
+	assert not preview.mutating and preview.inject_property
+	assert apply.mutating and apply.inject_property
+	assert preview.module == apply.module == "front-desk"
