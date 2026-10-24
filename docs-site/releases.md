@@ -102,6 +102,11 @@ export, retention, notices).
 | Stable | `main` + tag `vX.Y.Z` | Production, Marketplace, demo.kamrapms.com |
 | Nightly | `develop` | nightly.kamrapms.com, testing only |
 
+Self-host production should stay on **stable** or a pinned `vX.Y.Z`. After
+trying a newer tag, go back by pinning the previous release again
+(`KAMRA_TAG=… install.sh update`) - there is no in-app Downgrade control.
+See [Going back (downgrade)](/quickstart#going-back-downgrade).
+
 ## Docs versioning
 
 The manual is versioned from **v2.6.17** onward:
