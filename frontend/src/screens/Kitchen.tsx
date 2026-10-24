@@ -11,10 +11,11 @@ import { Button } from "../components/ui/button"
 import { cn } from "../lib/utils"
 import { cur } from "../lib/money"
 import { useFloorFullscreen } from "../lib/kiosk"
-import { useT } from "../lib/i18n"
+import { useT, t as translate, uiDateLocale } from "../lib/i18n"
 import { usePref } from "../lib/notifications"
 import { playAlert, previewSound } from "../lib/sound"
 import { usePrintStation, type StationPrinter } from "../lib/printStation"
+
 
 type LineState = "cooking" | "held" | "cancelled" | "done"
 
@@ -68,7 +69,7 @@ function parse(iso: string): number {
   return new Date(iso.replace(" ", "T")).getTime()
 }
 function clockOf(ms: number): string {
-  return new Date(ms).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
+  return new Date(ms).toLocaleTimeString(uiDateLocale([]), { hour: "numeric", minute: "2-digit" })
 }
 
 /* The cook's clock starts when the course was FIRED, never when the captain
@@ -122,10 +123,10 @@ function progressOf(o: KotOrder) {
 /* Where the food goes, in the words the kitchen uses. Takeaway and delivery
    have no table or room, and the pass needs to know to pack them. */
 function destination(o: KotOrder): string {
-  if (o.order_type === "Takeaway") return "TAKEAWAY"
-  if (o.order_type === "Delivery") return "DELIVERY"
-  if (o.room_no) return `Room ${o.room_no}`
-  if (o.table_no) return `Table ${o.table_no}`
+  if (o.order_type === "Takeaway") return translate("TAKEAWAY")
+  if (o.order_type === "Delivery") return translate("DELIVERY")
+  if (o.room_no) return translate("Room {n}", { n: String(o.room_no) })
+  if (o.table_no) return translate("Table {n}", { n: String(o.table_no) })
   return o.outlet_name
 }
 
@@ -164,7 +165,7 @@ function VegDot({ veg }: { veg: 0 | 1 | null }) {
   // cook and a sun-washed screen.
   return (
     <span
-      aria-label={veg ? t("Veg") : t("Non-veg")}
+      aria-label={(veg ? t("Veg") : t("Non-veg"))}
       className={cn("grid size-4 shrink-0 place-items-center rounded-[3px] border-2",
         veg ? "border-emerald-600" : "border-rose-700")}>
       {veg ? (
@@ -215,7 +216,7 @@ function Timeline({ order, now }: { order: KotOrder; now: number }) {
         {steps.map(([Icon, label, at]) => (
           <div key={label} className="flex items-center gap-1.5">
             <Icon className={cn("size-4", at ? "text-brand-600" : "text-zinc-300")} />
-            <span className={cn("text-xs font-bold", at ? "text-zinc-700" : "text-zinc-400")}>{label}</span>
+            <span className={cn("text-xs font-bold", at ? "text-zinc-700" : "text-zinc-400")}>{translate(label)}</span>
             <span className={cn("text-xs tabular-nums", at ? "text-zinc-600" : "text-zinc-300")}>
               {at ? clockOf(at) : "-"}
             </span>
@@ -325,26 +326,26 @@ function TicketDetail({ order, onClose, onAction, busy, now, stations }: {
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
             <span className="text-2xl font-black tabular-nums">
-              {order.kot_no ? `KOT ${order.kot_no}` : "KOT - "} · {destination(order)}
+              {order.kot_no ? translate("KOT {v0}", { v0: String(order.kot_no) }) : translate("KOT - ")} · {destination(order)}
             </span>
             {order.order_type && (
               <span className="rounded bg-brand-50 px-2 py-0.5 text-xs font-bold uppercase tracking-wide text-brand-700">
-                {order.order_type}
+                {translate(order.order_type)}
               </span>
             )}
           </div>
           <div className="mt-1 text-sm text-zinc-500">
-            {[order.captain ? `Captain: ${order.captain.split("@")[0]}` : null,
-              order.guests ? `${order.guests} guests` : null,
+            {[order.captain ? translate("Captain: {name}", { name: String(order.captain.split("@")[0]) }) : null,
+              order.guests ? translate("{diners} guests", { diners: String(order.guests) }) : null,
               order.outlet_name,
-              order.order_total ? `Order ${cur()}${Math.round(order.order_total)}` : null]
+              order.order_total ? translate("Order {amount}", { amount: String(`${cur()}${Math.round(order.order_total)}`) }) : null]
               .filter(Boolean).join(" · ")}
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-3">
           <div className="text-right">
             <div className={cn("text-3xl font-black tabular-nums leading-none", tone.text)}>
-              {secs === null ? "-" : `${Math.floor(secs / 60)}m`}
+              {secs === null ? "-" : translate("{v0}m", { v0: String(Math.floor(secs / 60)) })}
             </div>
             <div className="mt-1 text-[10px] font-bold uppercase tracking-widest text-zinc-400">{t("elapsed")}</div>
           </div>
@@ -405,12 +406,12 @@ function TicketDetail({ order, onClose, onAction, busy, now, stations }: {
             <div key={course} className="mt-4 rounded-xl border-2 border-dashed border-amber-300 bg-amber-50/40 p-3">
               <div className="mb-2 flex items-center justify-between gap-3">
                 <span className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-amber-700">
-                  <Lock className="size-3.5" />{course} · {t("held")}
+                  <Lock className="size-3.5" />{translate(course)} · {t("held")}
                 </span>
                 <Button disabled={busy === order.name + course}
                   onClick={() => onAction("fire_kot", { course })}
                   className="h-11 bg-amber-600 px-5 text-base hover:bg-amber-700">
-                  <Flame className="size-4" />{t("Fire {course}", { course: course.toLowerCase() })}
+                  <Flame className="size-4" />{t("Fire {course}", { course: translate(course).toLowerCase() })}
                 </Button>
               </div>
               <ul className="space-y-1.5">
@@ -593,14 +594,14 @@ export default function Kitchen() {
           </select>
           {(stationPrinters.length > 0 || printStation.printer) && (
             <label className="inline-flex items-center gap-1.5 text-sm"
-              title={printStation.error
+              title={(printStation.error
                 ? printStation.error
                 : printStation.last
                   ? t("Last printed {n} ticket(s) at {time}", {
                     n: printStation.last.count,
-                    time: printStation.last.at.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+                    time: printStation.last.at.toLocaleTimeString(uiDateLocale([]), { hour: "2-digit", minute: "2-digit" }),
                   })
-                  : t("Tickets for this printer print on this device's default printer.")}>
+                  : t("Tickets for this printer print on this device's default printer."))}>
               <span className={cn("size-2 rounded-full",
                 !printStation.printer ? "bg-zinc-300" : printStation.error ? "bg-rose-500" : "bg-emerald-500")} />
               <select
@@ -625,9 +626,8 @@ export default function Kitchen() {
           {kioskOn && (
             <button type="button" onClick={exitFloor}
               className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-2.5 py-1.5 text-sm font-medium text-zinc-600 hover:bg-zinc-50"
-              title="Show the app menu (Esc)">
-              <Menu className="size-4" />Menu
-            </button>
+              title={translate("Show the app menu (Esc)")}>
+              <Menu className="size-4" />{translate("Menu")}</button>
           )}
           <button onClick={toggleSound}
             aria-pressed={sound}
@@ -641,12 +641,12 @@ export default function Kitchen() {
               kioskOn
                 ? "border-brand-600 bg-brand-50 text-brand-800"
                 : "border-zinc-300 bg-white text-zinc-600 hover:bg-zinc-50")}
-            title={kioskOn ? t("Show PMS menus (Esc)") : t("Focus mode - hide PMS menus")}>
+            title={(kioskOn ? t("Show PMS menus (Esc)") : t("Focus mode - hide PMS menus"))}>
             <Focus className="size-4" />
           </button>
           <button onClick={toggleBrowserFs}
             className="rounded-lg border border-zinc-300 bg-white p-2 text-zinc-600 hover:bg-zinc-50"
-            title={browserFs ? t("Exit full screen (Esc)") : t("Browser full screen")}>
+            title={(browserFs ? t("Exit full screen (Esc)") : t("Browser full screen"))}>
             {browserFs ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
           </button>
           <button onClick={() => { exitFloor(); navigate("/dashboard") }}
@@ -687,7 +687,7 @@ export default function Kitchen() {
                   className="w-full px-3 py-2 text-left hover:bg-zinc-50">
                   <div className="flex items-start justify-between gap-2">
                     <span className="min-w-0 text-[10px] font-black uppercase tracking-wider text-zinc-400">
-                      {o.kot_no ? `KOT ${o.kot_no} · ` : ""}{o.order_type}
+                      {o.kot_no ? translate("KOT {v0} · ", { v0: String(o.kot_no) }) : ""}{o.order_type}
                     </span>
                     <span className={cn("shrink-0 text-[10px] font-black uppercase tracking-wider",
                       waiting ? "text-amber-700" : tone.text)}>
@@ -702,18 +702,18 @@ export default function Kitchen() {
                   <div className="flex items-end justify-between gap-2">
                     <span className="min-w-0 truncate text-lg font-bold text-zinc-900">{destination(o)}</span>
                     <span className={cn("inline-flex shrink-0 items-center gap-1 text-lg font-black tabular-nums", tone.text)}>
-                      <Clock className="size-4" />{secs === null ? "-" : `${Math.floor(secs / 60)}m`}
+                      <Clock className="size-4" />{secs === null ? "-" : translate("{v0}m", { v0: String(Math.floor(secs / 60)) })}
                     </span>
                   </div>
                   <div className="truncate text-xs text-zinc-400">
-                    {[o.guests ? `${o.guests} guests` : null,
-                      o.captain ? `Capt. ${o.captain.split("@")[0]}` : null].filter(Boolean).join(" · ")}
+                    {[o.guests ? translate("{diners} guests", { diners: String(o.guests) }) : null,
+                      o.captain ? translate("Capt. {name}", { name: String(o.captain.split("@")[0]) }) : null].filter(Boolean).join(" · ")}
                   </div>
                   {tags.length > 0 && (
                     <div className="mt-1.5 flex flex-wrap gap-1">
                       {tags.map((t) => (
                         <span key={t} className="rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-zinc-500">
-                          {t}
+                          {translate(t)}
                         </span>
                       ))}
                     </div>

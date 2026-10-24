@@ -7,7 +7,8 @@ import { useEffect, useState } from "react"
 import { BedDouble, Gift, X } from "lucide-react"
 import { Button } from "../../components/ui/button"
 import { cn } from "../../lib/utils"
-import { useT } from "../../lib/i18n"
+import { useT, t as translate } from "../../lib/i18n"
+
 
 export interface SettleRoom {
   room: string
@@ -105,7 +106,7 @@ export default function SettleSheet({
             >
               {grandLabel}
             </h2>
-            <p className="mt-1 text-sm text-zinc-500">{subtitle}</p>
+            <p className="mt-1 text-sm text-zinc-500">{translate(subtitle)}</p>
           </div>
           <button
             type="button"
@@ -135,7 +136,7 @@ export default function SettleSheet({
                   onChange={(e) => onNcBy(e.target.value)}
                 >
                   {["Captain", "Chef", "Manager", "GM", "Management", "Owner"].map((w) => (
-                    <option key={w}>{w}</option>
+                    <option key={w} value={w}>{translate(w)}</option>
                   ))}
                 </select>
                 <input
@@ -168,7 +169,7 @@ export default function SettleSheet({
                     disabled={busy}
                     onClick={() => setPendingMode(pendingMode === m ? null : m)}
                   >
-                    {m}
+                    {translate(m)}
                   </Button>
                 ))}
               </div>

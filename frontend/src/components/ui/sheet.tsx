@@ -1,6 +1,7 @@
 import { useEffect } from "react"
 import { X } from "lucide-react"
 import { Button } from "./button"
+import { t as translate, useUILanguage } from "../../lib/i18n"
 
 /**
  * Right-side drawer for create/edit forms - Kamra's standard form surface.
@@ -15,6 +16,7 @@ export function Sheet(props: {
   /** Wide surface (~2/3 screen) for rich detail panels. */
   wide?: boolean
 }) {
+  useUILanguage()
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") props.onClose()
@@ -51,7 +53,7 @@ export function Sheet(props: {
               </p>
             )}
           </div>
-          <Button variant="ghost" onClick={props.onClose} aria-label="Close">
+          <Button variant="ghost" onClick={props.onClose} aria-label={translate("Close")}>
             <X className="size-5" />
           </Button>
         </div>

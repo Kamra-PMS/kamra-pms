@@ -28,7 +28,7 @@ import {
 
 import { Badge } from "../../components/ui/badge"
 import { call, getCurrentProperty } from "../../lib/api"
-import { useT } from "../../lib/i18n"
+import { useT, t as translate } from "../../lib/i18n"
 import { useLocale } from "../../lib/money"
 import { serverError } from "../../lib/resource"
 import { cn } from "../../lib/utils"
@@ -50,6 +50,7 @@ import {
 } from "./cards"
 import { ModulePage, Switch, type OptionSources } from "./ModulePage"
 import { WebhooksPage } from "./WebhooksPage"
+
 
 /** Settings hub. One place, one left rail: the property, each module's
  *  own page, who can do what, and the integrations - with search across
@@ -238,7 +239,7 @@ export default function SettingsHub() {
   )
 
   if (error)
-    return <p className="rounded-lg bg-rose-50 px-4 py-3 text-sm text-rose-600">{error}</p>
+    return <p className="rounded-lg bg-rose-50 px-4 py-3 text-sm text-rose-600">{translate(error)}</p>
   if (!schema) return <p className="py-10 text-center text-sm text-zinc-400">{t("Loading…")}</p>
   if (!nav.length)
     return <p className="py-10 text-center text-sm text-zinc-500">{t("Your role has no settings to manage.")}</p>

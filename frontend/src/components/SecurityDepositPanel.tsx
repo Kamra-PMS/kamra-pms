@@ -13,8 +13,9 @@ import { useAuth } from "../lib/auth"
 import { serverError } from "../lib/resource"
 import { useCashierAuth } from "../lib/cashierAuth"
 import { cur, moneyLocale, useLocale } from "../lib/money"
-import { useT } from "../lib/i18n"
+import { useT, t as translate } from "../lib/i18n"
 import { Button } from "./ui/button"
+
 
 export interface SecurityDepositState {
   name: string | null
@@ -297,7 +298,7 @@ export default function SecurityDepositPanel(props: {
             <input
               className={inputCls}
               value={text}
-              placeholder={mode === "withhold" ? t("e.g. Broken glass table, photos on file") : undefined}
+              placeholder={(mode === "withhold" ? t("e.g. Broken glass table, photos on file") : undefined)}
               onChange={(e) => setText(e.target.value)}
             />
           </label>
@@ -326,7 +327,7 @@ export default function SecurityDepositPanel(props: {
 
       {error && (
         <div className="mt-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-          {error}
+          {translate(error)}
         </div>
       )}
     </div>

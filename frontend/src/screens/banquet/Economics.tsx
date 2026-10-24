@@ -32,6 +32,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/ca
 import { Sheet } from "../../components/ui/sheet"
 import { taxLabel } from "../../lib/money"
 import { Empty, ErrorNote, Field, inputCls, inr, Select } from "./shared"
+import { t as translate, useUILanguage } from "../../lib/i18n"
 
 type Act = (work: () => Promise<unknown>) => Promise<void>
 
@@ -44,6 +45,7 @@ export default function Economics({
   busy: boolean
   act: Act
 }) {
+  useUILanguage()
   const [data, setData] = useState<FunctionEconomics | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [indent, setIndent] = useState<KitchenIndent | null>(null)
@@ -58,7 +60,7 @@ export default function Economics({
   }, [fn])
   useEffect(load, [load])
 
-  if (!data) return <Empty>{error ?? "Loading…"}</Empty>
+  if (!data) return <Empty>{translate(error) ?? translate("Loading…")}</Empty>
   const m = data.margin
   const healthy = m.percent >= 35
 
@@ -67,27 +69,27 @@ export default function Economics({
       <ErrorNote error={error} />
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Tile label="Revenue" value={inr(data.revenue.taxable)} sub="before tax" />
+        <Tile label={translate("Revenue")} value={inr(data.revenue.taxable)} sub={translate("before tax")} />
         <Tile
-          label="Cost"
+          label={translate("Cost")}
           value={inr(data.cost.net)}
           sub={
-            data.cost.itc_eligible
-              ? `after ${inr(data.cost.input_tax)} credit`
-              : "no credit claimable"
+            (data.cost.itc_eligible
+              ? translate("after {v0} credit", { v0: String(inr(data.cost.input_tax)) })
+              : translate("no credit claimable"))
           }
           tone="text-zinc-600"
         />
         <Tile
-          label="Gross margin"
+          label={translate("Gross margin")}
           value={inr(m.gross)}
-          sub={`${inr(m.per_pax)} per head`}
+          sub={translate("{v0} per head", { v0: String(inr(m.per_pax)) })}
           tone={healthy ? "text-emerald-700" : "text-amber-700"}
         />
         <Tile
-          label="Margin"
+          label={translate("Margin")}
           value={`${m.percent}%`}
-          sub={healthy ? "healthy" : "thin - check the discount"}
+          sub={(healthy ? translate("healthy") : translate("thin - check the discount"))}
           tone={healthy ? "text-emerald-700" : "text-amber-700"}
         />
       </div>
@@ -97,14 +99,9 @@ export default function Economics({
           <AlertTriangle className="mt-0.5 size-4 shrink-0" />
           <p>
             <span className="font-medium">
-              {data.uncosted_lines.length} line
-              {data.uncosted_lines.length === 1 ? "" : "s"} cost nothing yet
-            </span>{" "}
+              {data.uncosted_lines.length}{translate(" line")}{data.uncosted_lines.length === 1 ? "" : translate("s")}{translate(" cost nothing yet")}</span>{" "}
            - {data.uncosted_lines.slice(0, 4).join(", ")}
-            {data.uncosted_lines.length > 4 ? "…" : ""}. The margin above is
-            optimistic until they carry a cost: choose the menu's dishes, or
-            put a cost rate on the service in the catalogue.
-          </p>
+            {data.uncosted_lines.length > 4 ? "…" : ""}{translate(". The margin above is optimistic until they carry a cost: choose the menu's dishes, or put a cost rate on the service in the catalogue.")}</p>
         </div>
       )}
 
@@ -113,64 +110,62 @@ export default function Economics({
           <CardHeader>
             <CardTitle>
               <span className="inline-flex items-center gap-1.5">
-                <TrendingUp className="size-4" />
-                Where the money goes
-              </span>
+                <TrendingUp className="size-4" />{translate("Where the money goes")}</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
             <Bar
-              label="Food"
+              label={translate("Food")}
               value={data.cost.food}
               of={data.revenue.taxable}
               tone="bg-orange-400"
             />
             <Bar
-              label="Services & hire"
+              label={translate("Services & hire")}
               value={data.cost.service}
               of={data.revenue.taxable}
               tone="bg-sky-400"
             />
             <Bar
-              label="Margin"
+              label={translate("Margin")}
               value={Math.max(0, m.gross)}
               of={data.revenue.taxable}
               tone="bg-emerald-500"
             />
             <dl className="mt-3 space-y-1 border-t border-zinc-100 pt-3">
-              <Line label="Subtotal" value={data.revenue.subtotal} />
+              <Line label={translate("Subtotal")} value={data.revenue.subtotal} />
               {data.revenue.discount > 0 && (
-                <Line label="Discount" value={-data.revenue.discount} />
+                <Line label={translate("Discount")} value={-data.revenue.discount} />
               )}
               {data.revenue.service_charge > 0 && (
                 <Line
-                  label="Service charge"
+                  label={translate("Service charge")}
                   value={data.revenue.service_charge}
                 />
               )}
               {data.revenue.supplementary > 0 && (
                 <Line
-                  label="Ordered on the night"
+                  label={translate("Ordered on the night")}
                   value={data.revenue.supplementary}
                   tone="text-amber-700"
                 />
               )}
-              <Line label="Taxable" value={data.revenue.taxable} bold />
+              <Line label={translate("Taxable")} value={data.revenue.taxable} bold />
               <Line
-                label={`${taxLabel()} charged`}
+                label={translate("{v0} charged", { v0: String(taxLabel()) })}
                 value={data.revenue.tax}
                 tone="text-zinc-400"
               />
               <Line
-                label={`${taxLabel()} paid on cost`}
+                label={translate("{v0} paid on cost", { v0: String(taxLabel()) })}
                 value={data.cost.input_tax}
                 tone="text-zinc-400"
               />
             </dl>
             <p className="pt-1 text-xs text-zinc-400">
               {data.cost.itc_eligible
-                ? `Billed at 12% or more, so the ${inr(data.cost.input_tax)} paid on the cost side is claimable as input credit - the margin above nets it off.`
-                : `Billed under the 5% food scheme, so the ${inr(data.cost.input_tax)} paid on purchases is NOT claimable. It stays in the cost.`}
+                ? translate("Billed at 12% or more, so the {v0} paid on the cost side is claimable as input credit - the margin above nets it off.", { v0: String(inr(data.cost.input_tax)) })
+                : translate("Billed under the 5% food scheme, so the {v0} paid on purchases is NOT claimable. It stays in the cost.", { v0: String(inr(data.cost.input_tax)) })}
             </p>
           </CardContent>
         </Card>
@@ -179,9 +174,7 @@ export default function Economics({
           <CardHeader>
             <CardTitle>
               <span className="inline-flex items-center gap-1.5">
-                <ChefHat className="size-4" />
-                The kitchen
-              </span>
+                <ChefHat className="size-4" />{translate("The kitchen")}</span>
             </CardTitle>
             <Button
               variant="outline"
@@ -189,26 +182,16 @@ export default function Economics({
                 act(async () => setIndent(await banquet.indent(fn.name)))
               }
               disabled={busy}
-            >
-              Build the indent
-            </Button>
+            >{translate("Build the indent")}</Button>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-zinc-500">
-              The chosen dishes, exploded through their recipes at{" "}
-              {fn.billable_pax} pax, checked against what's on the shelf - the
-              sheet that has always been written by hand between the event
-              order and the store room.
-            </p>
+            <p className="text-sm text-zinc-500">{translate("The chosen dishes, exploded through their recipes at")}{" "}
+              {fn.billable_pax}{translate(" pax, checked against what's on the shelf - the sheet that has always been written by hand between the event order and the store room.")}</p>
             {fn.selections?.length ? (
               <p className="mt-2 text-xs text-emerald-700">
-                {fn.selections.length} dish
-                {fn.selections.length === 1 ? "" : "es"} chosen.
-              </p>
+                {fn.selections.length}{translate(" dish")}{fn.selections.length === 1 ? "" : translate("es")}{translate(" chosen.")}</p>
             ) : (
-              <p className="mt-2 text-xs text-amber-700">
-                Nothing chosen yet - compose the menu first.
-              </p>
+              <p className="mt-2 text-xs text-amber-700">{translate("Nothing chosen yet - compose the menu first.")}</p>
             )}
           </CardContent>
         </Card>
@@ -216,16 +199,12 @@ export default function Economics({
 
       <Card>
         <CardHeader>
-          <CardTitle>Quoted vs served</CardTitle>
+          <CardTitle>{translate("Quoted vs served")}</CardTitle>
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => setSupp(true)}>
-              <Plus className="size-4" />
-              Ordered on the night
-            </Button>
+              <Plus className="size-4" />{translate("Ordered on the night")}</Button>
             <Button onClick={() => setCounting(true)}>
-              <PackageCheck className="size-4" />
-              Count the night
-            </Button>
+              <PackageCheck className="size-4" />{translate("Count the night")}</Button>
           </div>
         </CardHeader>
         <CardContent>
@@ -233,12 +212,12 @@ export default function Economics({
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-zinc-200 text-left text-xs uppercase tracking-wider text-zinc-400">
-                  <th className="py-2 pr-3 font-medium">Item</th>
-                  <th className="py-2 pr-3 text-right font-medium">Quoted</th>
-                  <th className="py-2 pr-3 text-right font-medium">Served</th>
-                  <th className="py-2 pr-3 text-right font-medium">Revenue</th>
-                  <th className="py-2 pr-3 text-right font-medium">Cost</th>
-                  <th className="py-2 text-right font-medium">Margin</th>
+                  <th className="py-2 pr-3 font-medium">{translate("Item")}</th>
+                  <th className="py-2 pr-3 text-right font-medium">{translate("Quoted")}</th>
+                  <th className="py-2 pr-3 text-right font-medium">{translate("Served")}</th>
+                  <th className="py-2 pr-3 text-right font-medium">{translate("Revenue")}</th>
+                  <th className="py-2 pr-3 text-right font-medium">{translate("Cost")}</th>
+                  <th className="py-2 text-right font-medium">{translate("Margin")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -247,14 +226,10 @@ export default function Economics({
                     <td className="py-1.5 pr-3">
                       {l.item_name}
                       {l.is_supplementary && (
-                        <span className="ml-1.5 rounded bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-700">
-                          on the night
-                        </span>
+                        <span className="ml-1.5 rounded bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-700">{translate("on the night")}</span>
                       )}
                       {!l.chargeable && (
-                        <span className="ml-1.5 rounded bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700">
-                          free
-                        </span>
+                        <span className="ml-1.5 rounded bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700">{translate("free")}</span>
                       )}
                     </td>
                     <td className="py-1.5 pr-3 text-right tabular-nums text-zinc-400">
@@ -365,13 +340,14 @@ function Tile({
   sub?: string
   tone?: string
 }) {
+  useUILanguage()
   return (
     <div className="rounded-xl border border-zinc-200 bg-white px-4 py-3">
       <p className="text-[11px] font-medium uppercase tracking-wider text-zinc-400">
-        {label}
+        {translate(label)}
       </p>
       <p className={"mt-1 text-xl font-semibold tabular-nums " + tone}>{value}</p>
-      {sub && <p className="mt-0.5 text-xs text-zinc-400">{sub}</p>}
+      {sub && <p className="mt-0.5 text-xs text-zinc-400">{translate(sub)}</p>}
     </div>
   )
 }
@@ -387,11 +363,12 @@ function Bar({
   of: number
   tone: string
 }) {
+  useUILanguage()
   const pct = of ? Math.min(100, (value / of) * 100) : 0
   return (
     <div>
       <div className="flex justify-between text-xs">
-        <span className="text-zinc-600">{label}</span>
+        <span className="text-zinc-600">{translate(label)}</span>
         <span className="tabular-nums text-zinc-500">
           {inr(value)} <span className="text-zinc-400">({pct.toFixed(0)}%)</span>
         </span>
@@ -414,6 +391,7 @@ function Line({
   bold?: boolean
   tone?: string
 }) {
+  useUILanguage()
   return (
     <div
       className={
@@ -422,7 +400,7 @@ function Line({
         tone
       }
     >
-      <dt className={bold ? "" : "text-zinc-500"}>{label}</dt>
+      <dt className={bold ? "" : "text-zinc-500"}>{translate(label)}</dt>
       <dd className="tabular-nums">{inr(value)}</dd>
     </div>
   )
@@ -441,6 +419,7 @@ function IndentSheet({
   onClose: () => void
   onIssue: (outlet: string) => void
 }) {
+  useUILanguage()
   const [outlets, setOutlets] = useState<Row[]>([])
   const [outlet, setOutlet] = useState("")
   useEffect(() => {
@@ -457,23 +436,21 @@ function IndentSheet({
 
   return (
     <Sheet
-      title="Kitchen indent"
-      description={`${indent.pax} pax · ${indent.venue} · ${indent.event_date}`}
+      title={translate("Kitchen indent")}
+      description={translate("{v0} pax · {v1} · {v2}", { v0: String(indent.pax), v1: String(indent.venue), v2: String(indent.event_date) })}
       onClose={onClose}
       wide
       footer={
         <div className="flex flex-wrap items-center justify-between gap-3">
           <span className="text-sm text-zinc-500">
-            {inr(indent.total_cost)} of ingredients
-            {indent.shortfall_lines > 0 && (
+            {inr(indent.total_cost)}{translate(" of ingredients")}{indent.shortfall_lines > 0 && (
               <span className="text-amber-700">
                 {" "}
-                · {indent.shortfall_lines} short on the shelf
-              </span>
+                · {indent.shortfall_lines}{translate(" short on the shelf")}</span>
             )}
           </span>
           <div className="flex items-end gap-2">
-            <Field label="Issue from">
+            <Field label={translate("Issue from")}>
               <select
                 className={inputCls + " !w-44"}
                 value={outlet}
@@ -486,31 +463,24 @@ function IndentSheet({
                 ))}
               </select>
             </Field>
-            <Button variant="outline" onClick={() => window.print()}>
-              Print
-            </Button>
-            <Button disabled={busy || !outlet} onClick={() => onIssue(outlet)}>
-              Issue the stock
-            </Button>
+            <Button variant="outline" onClick={() => window.print()}>{translate("Print")}</Button>
+            <Button disabled={busy || !outlet} onClick={() => onIssue(outlet)}>{translate("Issue the stock")}</Button>
           </div>
         </div>
       }
     >
       {indent.uncosted.length > 0 && (
-        <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-          No recipe for {indent.uncosted.join(", ")} - those dishes aren't on
-          this list and won't be pulled from stock.
-        </div>
+        <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">{translate("No recipe for ")}{indent.uncosted.join(", ")}{translate(" - those dishes aren't on this list and won't be pulled from stock.")}</div>
       )}
 
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-zinc-200 text-left text-xs uppercase tracking-wider text-zinc-400">
-            <th className="py-2 pr-3 font-medium">Ingredient</th>
-            <th className="py-2 pr-3 text-right font-medium">Need</th>
-            <th className="py-2 pr-3 text-right font-medium">On hand</th>
-            <th className="py-2 pr-3 text-right font-medium">Short</th>
-            <th className="py-2 text-right font-medium">Cost</th>
+            <th className="py-2 pr-3 font-medium">{translate("Ingredient")}</th>
+            <th className="py-2 pr-3 text-right font-medium">{translate("Need")}</th>
+            <th className="py-2 pr-3 text-right font-medium">{translate("On hand")}</th>
+            <th className="py-2 pr-3 text-right font-medium">{translate("Short")}</th>
+            <th className="py-2 text-right font-medium">{translate("Cost")}</th>
           </tr>
         </thead>
         <tbody>
@@ -583,6 +553,7 @@ function CountSheet({
   onClose: () => void
   onSave: (rows: Record<string, number>, paxActual: number) => void
 }) {
+  useUILanguage()
   const [rows, setRows] = useState<Record<string, string>>(() =>
     Object.fromEntries(
       data.lines.map((l) => [
@@ -595,15 +566,13 @@ function CountSheet({
 
   return (
     <Sheet
-      title="Count the night"
-      description="What was actually served. Until this is recorded the bill is a forecast."
+      title={translate("Count the night")}
+      description={translate("What was actually served. Until this is recorded the bill is a forecast.")}
       onClose={onClose}
       wide
       footer={
         <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
+          <Button variant="outline" onClick={onClose}>{translate("Cancel")}</Button>
           <Button
             disabled={busy}
             onClick={() =>
@@ -616,15 +585,13 @@ function CountSheet({
                 Number(actual) || 0,
               )
             }
-          >
-            Record it
-          </Button>
+          >{translate("Record it")}</Button>
         </div>
       }
     >
       <Field
-        label="Covers actually served"
-        hint="Menus bill on the higher of this and the guarantee"
+        label={translate("Covers actually served")}
+        hint={translate("Menus bill on the higher of this and the guarantee")}
         className="mb-4 max-w-48"
       >
         <input
@@ -637,9 +604,9 @@ function CountSheet({
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-zinc-200 text-left text-xs uppercase tracking-wider text-zinc-400">
-            <th className="py-2 pr-3 font-medium">Item</th>
-            <th className="py-2 pr-3 text-right font-medium">Quoted</th>
-            <th className="py-2 text-right font-medium">Served</th>
+            <th className="py-2 pr-3 font-medium">{translate("Item")}</th>
+            <th className="py-2 pr-3 text-right font-medium">{translate("Quoted")}</th>
+            <th className="py-2 text-right font-medium">{translate("Served")}</th>
           </tr>
         </thead>
         <tbody>
@@ -676,6 +643,7 @@ function SupplementarySheet({
   onClose: () => void
   onAdd: (params: Record<string, unknown>) => void
 }) {
+  useUILanguage()
   const [form, setForm] = useState({
     item_name: "",
     item_type: "Food & Beverage",
@@ -690,14 +658,12 @@ function SupplementarySheet({
 
   return (
     <Sheet
-      title="Ordered on the night"
-      description="Another round at the bar, twenty extra plates, a second cake - it bills on top of the agreed quote."
+      title={translate("Ordered on the night")}
+      description={translate("Another round at the bar, twenty extra plates, a second cake - it bills on top of the agreed quote.")}
       onClose={onClose}
       footer={
         <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
+          <Button variant="outline" onClick={onClose}>{translate("Cancel")}</Button>
           <Button
             disabled={busy || !form.item_name.trim() || !Number(form.rate)}
             onClick={() =>
@@ -711,23 +677,21 @@ function SupplementarySheet({
                 is_alcohol: form.is_alcohol ? 1 : 0,
               })
             }
-          >
-            Add it
-          </Button>
+          >{translate("Add it")}</Button>
         </div>
       }
     >
       <div className="space-y-3">
-        <Field label="What was it">
+        <Field label={translate("What was it")}>
           <input
             className={inputCls}
-            placeholder="Extra bar round"
+            placeholder={translate("Extra bar round")}
             value={form.item_name}
             onChange={(e) => set("item_name", e.target.value)}
           />
         </Field>
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Kind">
+          <Field label={translate("Kind")}>
             <Select
               value={form.item_type}
               onChange={(v) => set("item_type", v)}
@@ -741,14 +705,14 @@ function SupplementarySheet({
               ]}
             />
           </Field>
-          <Field label="Per">
+          <Field label={translate("Per")}>
             <Select
               value={form.uom}
               onChange={(v) => set("uom", v)}
               options={["Unit", "Pax", "Hour", "Day", "Lot"]}
             />
           </Field>
-          <Field label="Quantity">
+          <Field label={translate("Quantity")}>
             <input
               type="number"
               className={inputCls}
@@ -756,7 +720,7 @@ function SupplementarySheet({
               onChange={(e) => set("qty", e.target.value)}
             />
           </Field>
-          <Field label="Rate">
+          <Field label={translate("Rate")}>
             <input
               type="number"
               className={inputCls}
@@ -764,7 +728,7 @@ function SupplementarySheet({
               onChange={(e) => set("rate", e.target.value)}
             />
           </Field>
-          <Field label="What it cost us" hint="Keeps the margin honest">
+          <Field label={translate("What it cost us")} hint={translate("Keeps the margin honest")}>
             <input
               type="number"
               className={inputCls}
@@ -781,12 +745,8 @@ function SupplementarySheet({
             onChange={(e) => set("is_alcohol", e.target.checked)}
           />
           <span>
-            <span className="block text-sm font-medium text-zinc-700">
-              Alcohol
-            </span>
-            <span className="block text-xs text-zinc-400">
-              Never rides a company bill - it settles separately.
-            </span>
+            <span className="block text-sm font-medium text-zinc-700">{translate("Alcohol")}</span>
+            <span className="block text-xs text-zinc-400">{translate("Never rides a company bill - it settles separately.")}</span>
           </span>
         </label>
       </div>

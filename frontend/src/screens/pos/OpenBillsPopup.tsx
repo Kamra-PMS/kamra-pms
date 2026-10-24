@@ -8,7 +8,8 @@ import { Clock, Maximize2, X, XCircle } from "lucide-react"
 import { Button } from "../../components/ui/button"
 import { cn } from "../../lib/utils"
 import { cur, moneyLocale } from "../../lib/money"
-import { useT } from "../../lib/i18n"
+import { useT, t as translate } from "../../lib/i18n"
+
 
 const inr = (n: unknown) =>
   Number(n ?? 0).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
@@ -157,7 +158,7 @@ export default function OpenBillsPopup({
                         selected === o.name && "ring-2 ring-brand-600 ring-offset-1",
                       )}
                     >
-                      <span className="truncate text-sm font-bold text-zinc-900">{o.label}</span>
+                      <span className="truncate text-sm font-bold text-zinc-900">{translate(o.label)}</span>
                       <span className="mt-1 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-zinc-600">
                         <Clock className="size-3.5" />
                         {tag}
@@ -165,7 +166,7 @@ export default function OpenBillsPopup({
                       <span className="mt-1 text-sm font-semibold tabular-nums text-zinc-800">
                         {cur()}
                         {inr(o.order_total)}
-                        {o.kot_no ? ` · KOT ${o.kot_no}` : ""}
+                        {o.kot_no ? translate(" · KOT {v0}", { v0: String(o.kot_no) }) : ""}
                         {o.items ? ` · ${o.items}` : ""}
                       </span>
                     </button>
@@ -184,10 +185,10 @@ export default function OpenBillsPopup({
               <>
                 <div className="flex shrink-0 items-start justify-between gap-3 border-b border-zinc-100 px-4 py-3 sm:px-5">
                   <div>
-                    <h3 className="text-xl font-semibold text-zinc-900">{detailLabel}</h3>
+                    <h3 className="text-xl font-semibold text-zinc-900">{translate(detailLabel)}</h3>
                     <p className="mt-0.5 text-sm text-zinc-500">
-                      {detailKot ? `KOT #${detailKot} · ` : ""}
-                      {detailStatus}
+                      {detailKot ? translate("KOT #{v0} · ", { v0: String(detailKot) }) : ""}
+                      {translate(detailStatus)}
                       {detailNc ? ` · ${t("Complimentary")}` : ""}
                     </p>
                   </div>

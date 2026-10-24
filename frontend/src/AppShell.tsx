@@ -38,6 +38,7 @@ import { getSiteInfo, versionLabel } from "./lib/siteInfo"
 import AlertSettings from "./components/AlertSettings"
 import NotificationHost from "./components/NotificationHost"
 
+
 // On-demand UI kept out of the entry chunk: the booking dialog opens on
 // request; the palette and help panel load right after the shell paints.
 const BookingDialog = lazy(() =>
@@ -103,13 +104,13 @@ function ThemeToggle() {
   )
   return (
     <button
-      aria-label={dark ? t("Switch to light mode") : t("Switch to dark mode")}
+      aria-label={(dark ? t("Switch to light mode") : t("Switch to dark mode"))}
       className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700"
       onClick={() => {
         setTheme(dark ? "light" : "dark")
         setDark(!dark)
       }}
-      title={getTheme() === "system" ? t("Theme (system)") : t("Theme")}
+      title={(getTheme() === "system" ? t("Theme (system)") : t("Theme"))}
     >
       {dark ? (
         <Sun className="size-4" aria-hidden />

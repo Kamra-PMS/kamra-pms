@@ -11,7 +11,8 @@ import { useCashierAuth } from "../lib/cashierAuth"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { moneyLocale } from "../lib/money"
-import { useT } from "../lib/i18n"
+import { useT, t as translate } from "../lib/i18n"
+
 
 const inr = (n: unknown) =>
   Number(n ?? 0).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
@@ -183,7 +184,7 @@ export default function CashierBoard() {
 
       {err ? (
         <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-2 text-sm text-rose-700">
-          {err}
+          {translate(err)}
         </div>
       ) : null}
 
@@ -207,7 +208,7 @@ export default function CashierBoard() {
                 </span>
               </CardTitle>
               <p className="text-xs text-zinc-400">
-                {tl.kind}
+                {translate(tl.kind)}
                 {tl.outlet ? ` · ${outlets.find((o) => o.name === tl.outlet)?.outlet_name ?? tl.outlet}` : ""}
               </p>
             </CardHeader>
@@ -352,7 +353,7 @@ export default function CashierBoard() {
                         <span className="ml-2 text-xs text-zinc-400">{t("Disabled")}</span>
                       ) : null}
                     </td>
-                    <td className="py-2 pr-3">{x.kind}</td>
+                    <td className="py-2 pr-3">{translate(x.kind)}</td>
                     <td className="py-2 pr-3 text-zinc-500">
                       {outlets.find((o) => o.name === x.outlet)?.outlet_name ?? "-"}
                     </td>
@@ -395,7 +396,7 @@ export default function CashierBoard() {
                     onChange={(e) => setForm({ ...form, kind: e.target.value })}
                   >
                     {KINDS.map((k) => (
-                      <option key={k}>{k}</option>
+                      <option key={k} value={k}>{translate(k)}</option>
                     ))}
                   </select>
                 </label>

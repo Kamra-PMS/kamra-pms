@@ -9,7 +9,8 @@ import { serverError } from "../lib/resource"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { StatCard } from "../components/ui/stat-card"
 import { cur, moneyLocale } from "../lib/money"
-import { useT } from "../lib/i18n"
+import { useT, t as translate, useUILanguage } from "../lib/i18n"
+
 
 const inr = (n: unknown) =>
   Number(n ?? 0).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
@@ -80,12 +81,13 @@ function Tile({ icon: Icon, label, value, sub, tone }: {
   sub?: string
   tone?: string
 }) {
+  useUILanguage()
   return (
     <StatCard
       icon={<Icon className="size-4" />}
-      label={label}
+      label={translate(label)}
       value={value}
-      sub={sub}
+      sub={translate(sub)}
       accent={tone === "text-brand-600"}
     />
   )
@@ -150,7 +152,7 @@ export default function Dashboard() {
 
       {error && (
         <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-          {error}
+          {translate(error)}
         </div>
       )}
 
@@ -183,7 +185,7 @@ export default function Dashboard() {
                   [t("Rooms sold"), inr(prop.statistics.rooms_sold_mtd)],
                 ].map(([k, v]) => (
                   <div key={String(k)}>
-                    <div className="text-[11px] font-medium uppercase tracking-wider text-zinc-400">{k}</div>
+                    <div className="text-[11px] font-medium uppercase tracking-wider text-zinc-400">{translate(k)}</div>
                     <div className="mt-0.5 text-lg font-semibold text-zinc-800">{v}</div>
                   </div>
                 ))}
@@ -269,9 +271,10 @@ export default function Dashboard() {
 }
 
 function Row({ label, value, tone }: { label: string; value: unknown; tone?: string }) {
+  useUILanguage()
   return (
     <div className="flex items-center justify-between">
-      <span className="text-zinc-500">{label}</span>
+      <span className="text-zinc-500">{translate(label)}</span>
       <span className={`font-semibold tabular-nums ${tone ?? "text-zinc-800"}`}>{String(value)}</span>
     </div>
   )

@@ -46,9 +46,10 @@ import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
 import { Card } from "../components/ui/card"
 import { cur, moneyLocale } from "../lib/money"
-import { useT } from "../lib/i18n"
+import { useT, t as translate } from "../lib/i18n"
 import { cn } from "../lib/utils"
 import { AuditPackView, SESSION_COLS, DataTable, fmtDay } from "./AuditPack"
+
 
 const money = (n: unknown) =>
   n === null || n === undefined || n === ""
@@ -221,7 +222,7 @@ const ARRIVAL_COLS: Column[] = [
       <div className="whitespace-nowrap">
         <div>{r.check_in_date ? fmtDay(r.check_in_date) : "-"}</div>
         <div className="text-xs text-zinc-500">
-          {Number(r.nights) === 1 ? "1 night" : `${r.nights ?? 0} nights`}
+          {Number(r.nights) === 1 ? translate("1 night") : translate("{v0} nights", { v0: String(r.nights ?? 0) })}
         </div>
       </div>
     ),
@@ -315,7 +316,7 @@ function FixHelp({ check, date }: { check: Check; date: string }) {
         <Button
           variant="outline"
           className="h-8 px-3 text-xs"
-          onClick={() => navigate("/assistant", { state: { prompt: fix.ask(check.count, date) } })}
+          onClick={() => navigate("/assistant", { state: { prompt: translate(fix.ask(check.count, date)) } })}
         >
           <Sparkles className="me-1.5 size-3.5" aria-hidden />
           {t("Ask Kamra Agent to help")}
@@ -526,7 +527,7 @@ export default function EndOfDayWizard() {
   }
 
   if (err && !state)
-    return <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{err}</p>
+    return <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{translate(err)}</p>
   if (!state || !step) return <p className="text-sm text-zinc-400">{t("Preparing End of Day…")}</p>
 
   const blockedSteps = state.steps.filter((s) => s.index < 10 && s.status === "blocked")
@@ -595,7 +596,7 @@ export default function EndOfDayWizard() {
             },
           ]}
           rows={c?.items ?? []}
-          empty="Every arrival is checked in."
+          empty={translate("Every arrival is checked in.")}
           actions={(r) =>
             state.ran ? null : (
               <div className="flex flex-col items-stretch gap-1">
@@ -636,7 +637,7 @@ export default function EndOfDayWizard() {
         <StepTable
           cols={STAY_COLS}
           rows={c?.items ?? []}
-          empty="Every departure is checked out."
+          empty={translate("Every departure is checked out.")}
           actions={(r) =>
             state.ran ? null : (
               <div className="flex justify-end gap-1">
@@ -665,10 +666,10 @@ export default function EndOfDayWizard() {
               {t("Threshold {cur}{n}", { cur: cur(), n: money(hb.threshold) })}
             </p>
           )}
-          <StepTable cols={FOLIO_COLS} rows={hb?.items ?? []} empty="No in-house folio is over the threshold." />
+          <StepTable cols={FOLIO_COLS} rows={hb?.items ?? []} empty={translate("No in-house folio is over the threshold.")} />
         </CheckBlock>
         <CheckBlock check={checks.departed_balances} state={state} onAck={ack}>
-          <StepTable cols={FOLIO_COLS} rows={checks.departed_balances?.items ?? []} empty="No balances on departed stays." />
+          <StepTable cols={FOLIO_COLS} rows={checks.departed_balances?.items ?? []} empty={translate("No balances on departed stays.")} />
         </CheckBlock>
         <CheckBlock check={checks.credit_limit} state={state} onAck={ack}>
           <StepTable
@@ -681,7 +682,7 @@ export default function EndOfDayWizard() {
               { key: "over_by", label: "Over by", kind: "money" },
             ]}
             rows={checks.credit_limit?.items ?? []}
-            empty="No company is over its credit limit."
+            empty={translate("No company is over its credit limit.")}
           />
         </CheckBlock>
         <CheckBlock check={checks.overdue_ar} state={state} onAck={ack}>
@@ -697,7 +698,7 @@ export default function EndOfDayWizard() {
               { key: "overdue", label: "Overdue", kind: "money" },
             ]}
             rows={checks.overdue_ar?.items ?? []}
-            empty="No company has an overdue bill."
+            empty={translate("No company has an overdue bill.")}
           />
         </CheckBlock>
       </div>
@@ -707,7 +708,7 @@ export default function EndOfDayWizard() {
     panel = (
       <div className="space-y-6">
         <CheckBlock check={checks.open_pos_bills} state={state} onAck={ack}>
-          <StepTable cols={POS_COLS} rows={checks.open_pos_bills?.items ?? []} empty="Every outlet bill is settled." />
+          <StepTable cols={POS_COLS} rows={checks.open_pos_bills?.items ?? []} empty={translate("Every outlet bill is settled.")} />
         </CheckBlock>
         <CheckBlock check={pr} state={state} onAck={ack}>
           {(pr?.mismatches ?? 0) > 0 && (
@@ -723,7 +724,7 @@ export default function EndOfDayWizard() {
               },
             ]}
             rows={pr?.items ?? []}
-            empty="No outlet bills were posted to rooms today."
+            empty={translate("No outlet bills were posted to rooms today.")}
           />
         </CheckBlock>
       </div>
@@ -744,11 +745,11 @@ export default function EndOfDayWizard() {
               { key: "folio", label: "Folio", render: folioLink },
             ]}
             rows={checks.rate_variance?.items ?? []}
-            empty="Every room night posted so far matches its booked rate."
+            empty={translate("Every room night posted so far matches its booked rate.")}
           />
         </CheckBlock>
         <CheckBlock check={checks.zero_rate} state={state} onAck={ack}>
-          <StepTable cols={STAY_COLS} rows={checks.zero_rate?.items ?? []} empty="No zero-rate rooms tonight." />
+          <StepTable cols={STAY_COLS} rows={checks.zero_rate?.items ?? []} empty={translate("No zero-rate rooms tonight.")} />
         </CheckBlock>
       </div>
     )
@@ -766,7 +767,7 @@ export default function EndOfDayWizard() {
               { key: "issue", label: "Issue", render: (r) => t(String(r.issue)) },
             ]}
             rows={checks.room_status?.items ?? []}
-            empty="Front office and the room board agree."
+            empty={translate("Front office and the room board agree.")}
           />
         </CheckBlock>
         <CheckBlock check={checks.vacant_rooms} state={state} onAck={ack}>
@@ -778,7 +779,7 @@ export default function EndOfDayWizard() {
               { key: "room_board", label: "Room board" },
             ]}
             rows={checks.vacant_rooms?.items ?? []}
-            empty="No vacant rooms."
+            empty={translate("No vacant rooms.")}
           />
         </CheckBlock>
       </div>
@@ -799,7 +800,7 @@ export default function EndOfDayWizard() {
               ...(blind ? [] : [{ key: "cash_taken", label: "Cash taken", kind: "money" as const }]),
             ]}
             rows={c?.items ?? []}
-            empty="Every till is closed."
+            empty={translate("Every till is closed.")}
             actions={(r) =>
               state.ran ? null : (
                 <div className="flex items-center justify-end gap-1">
@@ -837,7 +838,7 @@ export default function EndOfDayWizard() {
             dense
             cols={blind ? SESSION_COLS.filter((x) => x.key !== "expected_cash" && x.key !== "variance") : SESSION_COLS}
             rows={state.sessions}
-            empty="No cashier sessions on this business date."
+            empty={translate("No cashier sessions on this business date.")}
           />
         </div>
       </div>

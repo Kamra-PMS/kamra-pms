@@ -4,6 +4,7 @@
  *
  * Usage:
  *   node scripts/i18n-import.mjs              # arabic → ar.json
+ *   node scripts/i18n-import.mjs --lang es --column spanish
  *   node scripts/i18n-import.mjs --lang hi --column hindi
  */
 import fs from "node:fs"
@@ -91,9 +92,10 @@ const dict = {}
 let filled = 0
 for (const row of table.slice(1)) {
   const key = row[keyIdx]
-  const val = (row[colIdx] || "").trim()
+  // Some translated fragments need their spaces when joined to other text.
+  const val = row[colIdx] || ""
   if (!key) continue
-  if (val) {
+  if (val.trim()) {
     dict[key] = val
     filled++
   }

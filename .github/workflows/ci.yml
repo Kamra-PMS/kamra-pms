@@ -26,6 +26,8 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - run: npm ci
         working-directory: frontend
+      - run: npm run i18n:check
+        working-directory: frontend
       - run: npm run build
         working-directory: frontend
       - name: Verify production serve base

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * Extract English UI strings from t() / translate() calls into catalog.csv.
- * Merges existing Arabic from locales/ar.json.
+ * Extract English UI strings from t() and its translate()/translateUI() aliases into catalog.csv.
+ * Merges existing Arabic and Spanish from their locale files.
  *
  * Usage: node scripts/i18n-extract.mjs
  */
@@ -14,15 +14,10 @@ const root = path.join(__dirname, "..")
 const src = path.join(root, "src")
 const outCsv = path.join(root, "src/i18n/catalog.csv")
 const arPath = path.join(root, "src/i18n/locales/ar.json")
-
-const SKIP = new Set([
-  "PublicBooking.tsx",
-  "PublicListing.tsx",
-])
+const esPath = path.join(root, "src/i18n/locales/es.json")
 
 function walk(dir, files = []) {
   for (const name of fs.readdirSync(dir)) {
-    if (SKIP.has(name)) continue
     const p = path.join(dir, name)
     const st = fs.statSync(p)
     if (st.isDirectory()) walk(p, files)
@@ -43,10 +38,13 @@ function placeholders(s) {
 const existingAr = fs.existsSync(arPath)
   ? JSON.parse(fs.readFileSync(arPath, "utf8"))
   : {}
+const existingEs = fs.existsSync(esPath)
+  ? JSON.parse(fs.readFileSync(esPath, "utf8"))
+  : {}
 
 const keys = new Map()
 const tCall =
-  /\b(?:t|translate)\(\s*(["'`])((?:\\.|(?!\1)[^\\])*)\1/g
+  /\b(?:t|translate|translateUI)\(\s*(["'`])((?:\\.|(?!\1)[^\\])*)\1/g
 
 // tn(count, "{n} child", "{n} children"): both forms are keys
 const tnCall =
@@ -76,18 +74,46 @@ for (const file of walk(src)) {
   }
 }
 
+// Finish setup receives its labels and help text from this server endpoint.
+// Include those literals so new checklist copy appears in the catalog too.
+const checklistFile = path.join(root, "../kamra/onboarding.py")
+const serverCall = /\b_\(\s*(["'])((?:\\.|(?!\1)[^\\])*)\1\s*\)/g
+for (const match of fs.readFileSync(checklistFile, "utf8").matchAll(serverCall)) {
+  add(
+    match[2].replace(/\\n/g, "\n").replace(/\\'/g, "'").replace(/\\"/g, '"'),
+    checklistFile,
+  )
+}
+
+// These server defaults are displayed as menu categories, courses, stations and tags.
+const settingsFile = path.join(root, "../kamra/settings.py")
+const menuDefaults = /\bS\("menu_(?:categories|courses|prep_stations|allergen_tags)",\s*"[^"\n]*",\s*"textarea",\s*"((?:\\.|[^"\\])*)"/g
+for (const match of fs.readFileSync(settingsFile, "utf8").matchAll(menuDefaults)) {
+  for (const option of match[1].replace(/\\n/g, "\n").split("\n")) {
+    add(option.trim(), settingsFile)
+  }
+}
+
+// Menu labels, statuses and saved reports can call t(variable). Keep their
+// dictionary keys when rebuilding the catalog so a later import retains them.
+for (const key of new Set([...Object.keys(existingAr), ...Object.keys(existingEs)])) {
+  if (!keys.has(key)) keys.set(key, new Set())
+}
+
 const rows = [...keys.entries()].sort((a, b) => a[0].localeCompare(b[0]))
-const lines = ["key,english,arabic,sources,placeholders,status"]
+const lines = ["key,english,arabic,spanish,sources,placeholders,status"]
 for (const [key, sources] of rows) {
   const ar = existingAr[key] ?? ""
+  const es = existingEs[key] ?? ""
   lines.push(
     [
       csvEscape(key),
       csvEscape(key),
       csvEscape(ar),
+      csvEscape(es),
       csvEscape([...sources].sort().join("; ")),
       csvEscape(placeholders(key)),
-      ar ? "translated" : "needs_translation",
+      ar && es ? "translated" : "needs_translation",
     ].join(","),
   )
 }

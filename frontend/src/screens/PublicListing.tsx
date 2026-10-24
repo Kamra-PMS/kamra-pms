@@ -19,10 +19,13 @@ import { Sheet } from "../components/ui/sheet"
 import { cur, moneyLocale, adoptUiLocale } from "../lib/money"
 import { formatPhoneDisplay, formatPhoneTel } from "../lib/phone"
 import { petChargeBasis } from "../lib/pets"
+import { useT, t as translate } from "../lib/i18n"
+import { adoptBrowserLanguage } from "../lib/dir"
 import ChildAges, {
   agesToSend, canReserve, sizeAges, StayNotice,
   type ChildAge, type StayFit,
 } from "../components/ChildAges"
+
 
 const inr = (n: number) =>
   n.toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
@@ -153,15 +156,16 @@ function MapBlock({
   lat: number | null | undefined
   lng: number | null | undefined
 }) {
+  const { t } = useT()
   if (!address && !mapsUrl && (lat == null || lng == null)) return null
   return (
     <section className="space-y-3">
-      <h2 className="text-xl font-semibold text-zinc-900">Where you’ll be</h2>
+      <h2 className="text-xl font-semibold text-zinc-900">{t("Where you’ll be")}</h2>
       {address && <p className="text-sm text-zinc-600">{address}</p>}
       {lat != null && lng != null && (
         <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-100 shadow-sm">
           <iframe
-            title="Map"
+            title={t("Map")}
             className="h-64 w-full border-0"
             loading="lazy"
             referrerPolicy="no-referrer-when-downgrade"
@@ -176,7 +180,7 @@ function MapBlock({
           rel="noreferrer"
           className="inline-flex items-center gap-1.5 text-sm font-medium text-brand-700 hover:underline"
         >
-          Open in Google Maps <ExternalLink className="size-3.5" aria-hidden />
+          {t("Open in Google Maps")} <ExternalLink className="size-3.5" aria-hidden />
         </a>
       )}
     </section>
@@ -194,14 +198,15 @@ function HostBlock({
   city: string
   country?: string | null
 }) {
+  const { t } = useT()
   if (!phone) return null
   const display = formatPhoneDisplay(phone, country)
   const tel = formatPhoneTel(phone, country)
   return (
     <section className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
-      <h2 className="text-lg font-semibold text-zinc-900">Host & caretaker</h2>
+      <h2 className="text-lg font-semibold text-zinc-900">{t("Host & caretaker")}</h2>
       <p className="mt-1 text-sm text-zinc-500">
-        Coordinated by {brand}
+        {t("Coordinated by {brand}", { brand })}
         {city ? ` · ${city}` : ""}
       </p>
       <a
@@ -212,13 +217,15 @@ function HostBlock({
         {display}
       </a>
       <p className="mt-2 text-xs text-zinc-400">
-        Call for directions, check-in help, or on-site questions.
+        {t("Call for directions, check-in help, or on-site questions.")}
       </p>
     </section>
   )
 }
 
 export default function PublicListing() {
+  const { t, tn } = useT()
+  useEffect(() => adoptBrowserLanguage(), [])
   const { slug, checkin, checkout, adults: adultsParam, children: childrenParam } =
     useParams()
   const navigate = useNavigate()
@@ -373,7 +380,7 @@ export default function PublicListing() {
       ? resolved.location_name ?? data.property.property_name
       : primary?.room_type_name ?? data.property.property_name
     document.title = `${name} · ${data.property.property_name}`
-  }, [data, resolved, isSite, primary])
+  }, [data, resolved, isSite, primary, t])
 
   async function submitBooking() {
     if (!booking || !resolved) return
@@ -403,7 +410,7 @@ export default function PublicListing() {
 
   if (!data || !resolved)
     return (
-      <p className="py-20 text-center text-zinc-400">{error ?? "Loading…"}</p>
+      <p className="py-20 text-center text-zinc-400">{translate(error) ?? t("Loading…")}</p>
     )
 
   const p = data.property
@@ -411,10 +418,10 @@ export default function PublicListing() {
   const minNights = p.minimum_nights || 1
   const confirmLabel =
     p.booking_mode === "Request to Book"
-      ? "Request to book"
+      ? t("Request to book")
       : p.payment_mode === "Full online"
-        ? "Confirm & pay"
-        : "Reserve"
+        ? t("Confirm & pay")
+        : t("Reserve")
   const title = isSite
     ? resolved.location_name ?? siteMeta?.name ?? p.property_name
     : primary?.room_type_name ?? p.property_name
@@ -451,7 +458,7 @@ export default function PublicListing() {
             className="inline-flex items-center gap-1.5 text-sm font-medium text-zinc-600 hover:text-zinc-900"
           >
             <ArrowLeft className="size-4" aria-hidden />
-            {isSite ? "All properties" : "Back to property"}
+            {isSite ? t("All properties") : t("Back to property")}
           </Link>
           <span className="ml-auto truncate text-sm font-medium text-zinc-500">
             {p.property_name}
@@ -485,7 +492,7 @@ export default function PublicListing() {
                 <img
                   key={`${m.url}-${i}`}
                   src={m.url}
-                  alt={m.caption ?? ""}
+                  alt={translate(m.caption ?? "")}
                   className="h-16 w-24 shrink-0 rounded-lg object-cover"
                 />
               ))}
@@ -500,7 +507,7 @@ export default function PublicListing() {
                 {isSite ? p.property_name : siteMeta?.name ?? p.property_name}
               </p>
               <h1 className="mt-1 text-3xl font-semibold tracking-tight text-zinc-900 sm:text-4xl">
-                {title}
+                {translate(title)}
               </h1>
               {address && (
                 <p className="mt-2 inline-flex items-start gap-1.5 text-sm text-zinc-500">
@@ -511,16 +518,14 @@ export default function PublicListing() {
               {!isSite && primary && (
                 <p className="mt-2 inline-flex items-center gap-1.5 text-sm text-zinc-600">
                   <Users className="size-4" aria-hidden />
-                  Up to {primary.adults_capacity} guests
-                  {primary.bed_type ? ` · ${primary.bed_type} bed` : ""}
+                  {t("Up to {n} guests", { n: primary.adults_capacity })}
+                  {primary.bed_type ? ` · ${t("{type} bed", { type: primary.bed_type })}` : ""}
                   {primary.room_view ? ` · ${primary.room_view}` : ""}
                 </p>
               )}
               {isSite && (
                 <p className="mt-2 text-sm text-zinc-600">
-                  from {cur()}
-                  {inr(fromRate)}/night · {data.room_types.length} listing
-                  {data.room_types.length === 1 ? "" : "s"}
+                  {t("From {amount} per night", { amount: `${cur()}${inr(fromRate)}` })} · {tn(data.room_types.length, "{n} listing", "{n} listings")}
                 </p>
               )}
             </div>
@@ -545,7 +550,7 @@ export default function PublicListing() {
             {isSite && (
               <section id="choose-listing" className="space-y-4">
                 <h2 className="text-xl font-semibold text-zinc-900">
-                  Choose a listing
+                  {t("Choose a listing")}
                 </h2>
                 <div className="space-y-4">
                   {data.room_types.map((rt) => {
@@ -575,8 +580,7 @@ export default function PublicListing() {
                               {rt.room_type_name}
                             </h3>
                             <p className="mt-1 text-sm text-zinc-500">
-                              Up to {rt.adults_capacity} guests · from {cur()}
-                              {inr(rt.base_price)}/night
+                              {t("Up to {n} guests", { n: rt.adults_capacity })} · {t("From {amount} per night", { amount: `${cur()}${inr(rt.base_price)}` })}
                             </p>
                             {rt.description && (
                               <p className="mt-2 line-clamp-2 text-sm text-zinc-600">
@@ -591,13 +595,13 @@ export default function PublicListing() {
                                   {cur()}
                                   {inr(r.quote.amount_after_tax)}
                                   <span className="ml-1 font-normal text-zinc-500">
-                                    total
+                                    {t("total")}
                                   </span>
                                 </p>
                               ) : soldOut ? (
-                                <p className="font-medium text-rose-600">Sold out</p>
+                                <p className="font-medium text-rose-600">{t("Sold out")}</p>
                               ) : (
-                                <p className="text-zinc-400">Checking…</p>
+                                <p className="text-zinc-400">{t("Checking…")}</p>
                               )}
                               <StayNotice row={r} />
                             </div>
@@ -609,14 +613,14 @@ export default function PublicListing() {
                                     navigate(`/stay/${rt.listing_slug}/${stayPathSuffix}`)
                                   }
                                 >
-                                  View details
+                                  {t("View details")}
                                 </Button>
                               )}
                               <Button
                                 disabled={!canReserve(r) || agesMissing}
                                 onClick={() => setBooking(rt.name)}
                               >
-                                Reserve
+                                {t("Reserve")}
                               </Button>
                             </div>
                           </div>
@@ -640,7 +644,7 @@ export default function PublicListing() {
             {(p.house_rules || p.pets_policy || p.children_policy) && (
               <section className="rounded-2xl border border-zinc-200 bg-white p-5 text-sm shadow-sm">
                 <h2 className="mb-3 text-lg font-semibold text-zinc-900">
-                  House rules
+                  {t("House rules")}
                 </h2>
                 {p.house_rules && (
                   <p className="whitespace-pre-line leading-relaxed text-zinc-600">
@@ -648,27 +652,24 @@ export default function PublicListing() {
                   </p>
                 )}
                 {p.pets_policy && (
-                  <p className="mt-3 text-zinc-600">Pets: {p.pets_policy}</p>
+                  <p className="mt-3 text-zinc-600">{t("Pets: {policy}", { policy: p.pets_policy })}</p>
                 )}
                 {!!p.pets_allowed && (p.pet_charge || 0) > 0 && (
                   <p className="mt-1 text-zinc-600">
-                    Pet charge {cur()}
-                    {inr(p.pet_charge || 0)} {petChargeBasis(p.pet_charge_basis)}
+                    {t("Pet charge: {amount} {basis}", { amount: `${cur()}${inr(p.pet_charge || 0)}`, basis: petChargeBasis(p.pet_charge_basis, t) })}
                   </p>
                 )}
                 {p.children_policy && (
-                  <p className="mt-2 text-zinc-600">Children: {p.children_policy}</p>
+                  <p className="mt-2 text-zinc-600">{t("Children: {policy}", { policy: p.children_policy })}</p>
                 )}
                 {(p.cleaning_fee || 0) > 0 && (
                   <p className="mt-3 text-zinc-600">
-                    Cleaning fee {cur()}
-                    {inr(p.cleaning_fee)} (one-time)
+                    {t("Cleaning fee: {amount} (one-time)", { amount: `${cur()}${inr(p.cleaning_fee)}` })}
                   </p>
                 )}
                 {(p.security_deposit_amount || 0) > 0 && (
                   <p className="mt-1 text-zinc-600">
-                    Refundable deposit {cur()}
-                    {inr(p.security_deposit_amount)}
+                    {t("Refundable deposit: {amount}", { amount: `${cur()}${inr(p.security_deposit_amount)}` })}
                   </p>
                 )}
               </section>
@@ -688,14 +689,14 @@ export default function PublicListing() {
                 </p>
                 <p className="text-sm text-zinc-500">
                   {!isSite && results[primary?.name ?? ""]?.quote
-                    ? `${results[primary!.name].quote!.nights} nights · taxes in`
-                    : "from / night"}
+                    ? tn(results[primary!.name].quote!.nights, "{n} night · taxes included", "{n} nights · taxes included")
+                    : t("Price per night")}
                 </p>
                 {!isSite && (results[primary?.name ?? ""]?.quote?.pet_charge || 0) > 0 && (
                   <p className="text-xs text-zinc-500">
-                    Includes {cur()}
-                    {inr(results[primary!.name].quote!.pet_charge || 0)} for{" "}
-                    {search.pets} pet{search.pets === 1 ? "" : "s"}
+                    {tn(search.pets, "Includes {amount} for {n} pet", "Includes {amount} for {n} pets", {
+                      amount: `${cur()}${inr(results[primary!.name].quote!.pet_charge || 0)}`,
+                    })}
                   </p>
                 )}
               </div>
@@ -703,7 +704,7 @@ export default function PublicListing() {
               <div className="grid grid-cols-2 gap-3">
                 <label className="block">
                   <span className="mb-1 block text-sm font-medium text-zinc-600">
-                    Check-in
+                    {t("Check-in")}
                   </span>
                   <input
                     type="date"
@@ -724,7 +725,7 @@ export default function PublicListing() {
                 </label>
                 <label className="block">
                   <span className="mb-1 block text-sm font-medium text-zinc-600">
-                    Check-out
+                    {t("Check-out")}
                   </span>
                   <input
                     type="date"
@@ -738,7 +739,7 @@ export default function PublicListing() {
                 </label>
                 <label className="block">
                   <span className="mb-1 block text-sm font-medium text-zinc-600">
-                    Adults
+                    {t("Adults")}
                   </span>
                   <input
                     type="number"
@@ -755,13 +756,13 @@ export default function PublicListing() {
                   />
                   {atAdultCap && (
                     <span className="mt-1 block text-xs text-rose-600">
-                      Sleeps up to {maxAdults}
+                      {t("Sleeps up to {n}", { n: maxAdults })}
                     </span>
                   )}
                 </label>
                 <label className="block">
                   <span className="mb-1 block text-sm font-medium text-zinc-600">
-                    Children
+                    {t("Children")}
                   </span>
                   <input
                     type="number"
@@ -778,14 +779,14 @@ export default function PublicListing() {
                   />
                   {atChildCap && (
                     <span className="mt-1 block text-xs text-rose-600">
-                      Up to {maxChildren} children
+                      {t("Up to {n} children", { n: maxChildren })}
                     </span>
                   )}
                 </label>
                 {!!p.pets_allowed && (
                   <label className="block">
                     <span className="mb-1 block text-sm font-medium text-zinc-600">
-                      Pets
+                      {t("Pets")}
                     </span>
                     <input
                       type="number"
@@ -802,7 +803,7 @@ export default function PublicListing() {
                     {(p.pet_charge || 0) > 0 && (
                       <span className="mt-1 block text-xs text-zinc-500">
                         {cur()}
-                        {inr(p.pet_charge || 0)} {petChargeBasis(p.pet_charge_basis)}
+                        {inr(p.pet_charge || 0)} {petChargeBasis(p.pet_charge_basis, t)}
                       </span>
                     )}
                   </label>
@@ -810,8 +811,7 @@ export default function PublicListing() {
               </div>
               <ChildAges ages={childAges} onChange={setChildAges} selectCls={inputCls} />
               <p className="text-center text-xs text-zinc-400">
-                {nightsBetween(search.check_in_date, search.check_out_date)} night
-                {nightsBetween(search.check_in_date, search.check_out_date) === 1 ? "" : "s"}
+                {tn(nightsBetween(search.check_in_date, search.check_out_date), "{n} night", "{n} nights")}
               </p>
 
               <Button
@@ -825,7 +825,7 @@ export default function PublicListing() {
                 }}
               >
                 <Search className="size-4" aria-hidden />
-                Check availability
+                {t("Check availability")}
               </Button>
 
               {!isSite && primary && (
@@ -842,14 +842,14 @@ export default function PublicListing() {
 
               {isSite && (
                 <p className="text-center text-sm text-zinc-500">
-                  Pick a listing below to reserve, or scroll the options on the left.
+                  {t("Pick a listing below to reserve, or scroll the options on the left.")}
                 </p>
               )}
 
               <p className="text-center text-xs text-zinc-400">
-                Check-in {p.checkin_time?.slice(0, 5)} · Check-out{" "}
+                {t("Check-in")} {p.checkin_time?.slice(0, 5)} · {t("Check-out")}{" "}
                 {p.checkout_time?.slice(0, 5)}
-                {minNights > 1 ? ` · ${minNights}-night min` : ""}
+                {minNights > 1 ? ` · ${t("{n}-night minimum", { n: minNights })}` : ""}
               </p>
 
               {phone && (
@@ -858,7 +858,7 @@ export default function PublicListing() {
                   className="flex items-center justify-center gap-2 text-sm font-medium text-brand-700 hover:underline"
                 >
                   <Phone className="size-3.5" aria-hidden />
-                  Call caretaker {formatPhoneDisplay(phone, p.country)}
+                  {t("Call caretaker")} {formatPhoneDisplay(phone, p.country)}
                 </a>
               )}
             </div>
@@ -869,11 +869,11 @@ export default function PublicListing() {
       {booking && (
         <Sheet
           wide
-          title={done ? (done.status === "Requested" ? "Request sent" : "Booking confirmed") : "Complete your booking"}
+          title={(done ? (done.status === "Requested" ? t("Request sent") : t("Booking confirmed")) : t("Complete your booking"))}
           description={
-            done
+            translate(done
               ? undefined
-              : data.room_types.find((r) => r.name === booking)?.room_type_name
+              : data.room_types.find((r) => r.name === booking)?.room_type_name)
           }
           onClose={() => {
             setBooking(null)
@@ -888,7 +888,7 @@ export default function PublicListing() {
                   setDone(null)
                 }}
               >
-                Done
+                {t("Done")}
               </Button>
             ) : (
               <Button
@@ -896,7 +896,7 @@ export default function PublicListing() {
                 disabled={busy || !form.guest_name || !form.phone}
                 onClick={submitBooking}
               >
-                {busy ? "Booking…" : confirmLabel}
+                {busy ? t("Booking…") : confirmLabel}
               </Button>
             )
           }
@@ -905,15 +905,14 @@ export default function PublicListing() {
             <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-emerald-800">
               <p className="text-lg font-semibold">{done.reservation}</p>
               <p className="mt-1 text-sm">
-                Total {cur()}
-                {inr(done.amount)}
+                {t("Total {amount}", { amount: `${cur()}${inr(done.amount)}` })}
               </p>
             </div>
           ) : (
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="block">
                 <span className="mb-1.5 block text-sm font-medium text-zinc-600">
-                  Full name
+                  {t("Full name")}
                 </span>
                 <input
                   className={inputCls}
@@ -924,7 +923,7 @@ export default function PublicListing() {
               </label>
               <label className="block">
                 <span className="mb-1.5 block text-sm font-medium text-zinc-600">
-                  Phone
+                  {t("Phone")}
                 </span>
                 <input
                   className={inputCls}
@@ -935,7 +934,7 @@ export default function PublicListing() {
               </label>
               <label className="block sm:col-span-2">
                 <span className="mb-1.5 block text-sm font-medium text-zinc-600">
-                  Email (optional)
+                  {t("Email (optional)")}
                 </span>
                 <input
                   className={inputCls}
@@ -945,7 +944,7 @@ export default function PublicListing() {
                 />
               </label>
               {error && (
-                <p className="text-sm text-rose-600 sm:col-span-2">{error}</p>
+                <p className="text-sm text-rose-600 sm:col-span-2">{translate(error)}</p>
               )}
             </div>
           )}

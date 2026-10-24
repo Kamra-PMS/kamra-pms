@@ -14,7 +14,8 @@ import {
   CardTitle,
 } from "../components/ui/card"
 import { cn } from "../lib/utils"
-import { useT } from "../lib/i18n"
+import { useT, t as translate } from "../lib/i18n"
+
 
 type View = "open" | "mine" | "unassigned" | "overdue" | "resolved" | "all"
 
@@ -176,12 +177,12 @@ function TicketSheet({
   return (
     <Sheet
       wide
-      title={d ? d.subject : name}
-      description={d ? `${d.name} · ${t(d.category)}` : undefined}
+      title={translate(d ? d.subject : name)}
+      description={(d ? `${d.name} · ${t(d.category)}` : undefined)}
       onClose={onClose}
     >
       {err && (
-        <div className="mb-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{err}</div>
+        <div className="mb-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{translate(err)}</div>
       )}
       {!d ? (
         <p className="text-sm text-zinc-400">{t("Loading…")}</p>
@@ -207,7 +208,7 @@ function TicketSheet({
               [t("SLA"), d.breached || d.overdue ? t("Breached") : t("Within")],
             ].map(([k, v]) => (
               <div key={k} className="rounded-lg border border-zinc-200 px-3 py-2">
-                <p className="text-[10px] font-medium uppercase tracking-wide text-zinc-400">{k}</p>
+                <p className="text-[10px] font-medium uppercase tracking-wide text-zinc-400">{translate(k)}</p>
                 <p className={cn("mt-0.5 font-semibold tabular-nums", !!(d.overdue || d.breached) && k === t("SLA") && "text-rose-600")}>{v}</p>
               </div>
             ))}
@@ -427,7 +428,7 @@ export default function Tickets() {
       <CardContent>
         {error && (
           <div className="mb-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-            {error}
+            {translate(error)}
           </div>
         )}
 

@@ -13,13 +13,14 @@ import { Download, Receipt, Search, X } from "lucide-react"
 import { call } from "../../lib/api"
 import { serverError } from "../../lib/resource"
 import { cur } from "../../lib/money"
-import { useT } from "../../lib/i18n"
+import { useT, t as translate, useUILanguage } from "../../lib/i18n"
 import { cn } from "../../lib/utils"
 import { Button } from "../../components/ui/button"
 import {
   OrderView, STATES, StateBadge, hhmm, localDay, money, shortDay, useStateLabel,
   type ListState,
 } from "./PosSidePanel"
+
 
 interface Row {
   name: string
@@ -251,7 +252,7 @@ export default function OrderHistory({ outlet, onClose, onOpenBill }: {
                 <Tile title={t("Bills")} value={String(totals.bills)} />
                 <Tile title={t("Sales")} value={`${cur()}${money(totals.sales)}`} strong />
                 {Object.entries(totals.by_mode).map(([m, v]) => (
-                  <Tile key={m} title={m === "Room" ? t("Posted to room") : m} value={`${cur()}${money(v)}`} />
+                  <Tile key={m} title={t(m === "Room" ? "Posted to room" : m)} value={`${cur()}${money(v)}`} />
                 ))}
                 {totals.cancelled > 0 && (
                   <Tile title={t("Cancelled")} value={`${cur()}${money(totals.cancelled)}`} tone="rose" />
@@ -259,7 +260,7 @@ export default function OrderHistory({ outlet, onClose, onOpenBill }: {
               </div>
             )}
 
-            {err && <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">{err}</p>}
+            {err && <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">{translate(err)}</p>}
             {data?.truncated && (
               <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
                 {t("Too many bills in this range to list them all. Narrow the dates, or export the range.")}
@@ -296,7 +297,7 @@ export default function OrderHistory({ outlet, onClose, onOpenBill }: {
                         <tr key={r.name} onClick={() => open(r)}
                           className={cn("cursor-pointer hover:bg-brand-50/40", r.stale ? "bg-rose-50/50" : "")}>
                           <td className="px-3 py-2 font-medium text-zinc-900">
-                            {r.name}{r.kot_no ? <span className="ms-1 text-xs font-normal text-zinc-500">KOT {r.kot_no}</span> : null}
+                            {r.name}{r.kot_no ? <span className="ms-1 text-xs font-normal text-zinc-500">{translate("KOT ")}{r.kot_no}</span> : null}
                           </td>
                           <td className="whitespace-nowrap px-3 py-2 tabular-nums text-zinc-600">
                             {shortDay(r.time.slice(0, 10))} {hhmm(r.time)}
@@ -306,7 +307,7 @@ export default function OrderHistory({ outlet, onClose, onOpenBill }: {
                           <td className="px-3 py-2 text-zinc-600">{r.room_no ? `${t("Room")} ${r.room_no}` : r.table_no ?? ""}</td>
                           <td className="max-w-[12rem] truncate px-3 py-2 text-zinc-700">{r.who ?? ""}</td>
                           <td className="px-3 py-2 text-end tabular-nums text-zinc-600">{r.items}</td>
-                          <td className="px-3 py-2 text-zinc-600">{r.state === "room" ? t("Posted to room") : r.state === "paid" ? r.payment_mode ?? "" : ""}</td>
+                          <td className="px-3 py-2 text-zinc-600">{r.state === "room" ? t("Posted to room") : r.state === "paid" ? translate(r.payment_mode) ?? "" : ""}</td>
                           <td className="px-3 py-2">
                             <StateBadge state={r.state} />
                             {r.state === "cancelled" && r.cancel_reason
@@ -338,7 +339,7 @@ export default function OrderHistory({ outlet, onClose, onOpenBill }: {
                           r.stale ? "border-rose-300" : "border-zinc-200")}>
                         <div className="flex items-center justify-between gap-2">
                           <span className="truncate text-sm font-semibold text-zinc-900">
-                            {r.label}{r.who && r.who !== r.label ? <span className="font-normal text-zinc-500"> · {r.who}</span> : null}
+                            {translate(r.label)}{r.who && r.who !== r.label ? <span className="font-normal text-zinc-500"> · {r.who}</span> : null}
                           </span>
                           <span className={cn("shrink-0 text-sm font-semibold tabular-nums",
                             r.state === "cancelled" && "text-zinc-400 line-through")}>
@@ -350,7 +351,7 @@ export default function OrderHistory({ outlet, onClose, onOpenBill }: {
                           <span>{shortDay(r.time.slice(0, 10))} {hhmm(r.time)}</span>
                           <span>· {r.name}</span>
                           {r.order_type ? <span>· {t(r.order_type)}</span> : null}
-                          {r.state === "paid" && r.payment_mode ? <span>· {r.payment_mode}</span> : null}
+                          {r.state === "paid" && r.payment_mode ? <span>· {translate(r.payment_mode)}</span> : null}
                           {r.state === "room" ? <span>· {t("Posted to room")}</span> : null}
                         </div>
                         <span className="mt-2 inline-block rounded-lg border border-zinc-300 px-3 py-1 text-xs font-semibold text-zinc-700">
@@ -383,10 +384,11 @@ export default function OrderHistory({ outlet, onClose, onOpenBill }: {
 function Tile({ title, value, strong, tone }: {
   title: string; value: string; strong?: boolean; tone?: "rose"
 }) {
+  useUILanguage()
   return (
     <div className={cn("rounded-xl border bg-white px-3 py-2",
       tone === "rose" ? "border-rose-200" : "border-zinc-200")}>
-      <p className="text-[11px] font-medium uppercase tracking-wide text-zinc-500">{title}</p>
+      <p className="text-[11px] font-medium uppercase tracking-wide text-zinc-500">{translate(title)}</p>
       <p className={cn("tabular-nums", strong ? "text-lg font-semibold text-zinc-900" : "text-base font-medium text-zinc-800",
         tone === "rose" && "text-rose-700")}>{value}</p>
     </div>

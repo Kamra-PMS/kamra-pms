@@ -3,6 +3,7 @@ import { Info } from "lucide-react"
 import { useT } from "../lib/i18n"
 import { cn } from "../lib/utils"
 
+
 const DOCS = "https://kamrapms.com/docs"
 
 /** A small (i) that explains a choice in place, with a link to the docs.
@@ -41,7 +42,7 @@ export function InfoTip({
     <span ref={ref} className={cn("relative inline-flex align-middle", className)}>
       <button
         type="button"
-        aria-label={label ?? t("More information")}
+        aria-label={(label ? t(label) : t("More information"))}
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
         className="rounded-full text-zinc-400 hover:text-brand-700 focus-visible:text-brand-700 focus-visible:outline-2 focus-visible:outline-brand-600"

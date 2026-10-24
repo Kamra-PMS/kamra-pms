@@ -9,8 +9,9 @@ import { call } from "../lib/api"
 import { serverError } from "../lib/resource"
 import { useCashierAuth } from "../lib/cashierAuth"
 import { cur, moneyLocale, useLocale } from "../lib/money"
-import { useT } from "../lib/i18n"
+import { useT, t as translate } from "../lib/i18n"
 import { Button } from "./ui/button"
+
 
 export interface DepositState {
   pct: number
@@ -265,7 +266,7 @@ export default function DepositPanel(props: {
           {mode === "link" && link && (
             <div className="space-y-2">
               <p className="break-all rounded-md border border-zinc-200 bg-white px-2.5 py-2 text-xs text-zinc-700">
-                {link.message}
+                {translate(link.message)}
               </p>
               <div className="flex flex-wrap gap-2">
                 <Button
@@ -290,9 +291,7 @@ export default function DepositPanel(props: {
                     target="_blank"
                     rel="noreferrer"
                   >
-                    <MessageCircle className="size-4" aria-hidden />
-                    WhatsApp
-                  </a>
+                    <MessageCircle className="size-4" aria-hidden />{translate("WhatsApp")}</a>
                 )}
                 {link.test_mode && (
                   <Button variant="ghost" disabled={busy} onClick={simulate}>
@@ -310,7 +309,7 @@ export default function DepositPanel(props: {
 
       {error && (
         <div className="mt-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-          {error}
+          {translate(error)}
         </div>
       )}
     </div>

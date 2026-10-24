@@ -9,12 +9,13 @@ import {
 } from "../../lib/resource"
 import { getTheme, setTheme, type Theme } from "../../lib/theme"
 import { getLang, setLang, LANGS, type Lang } from "../../lib/dir"
-import { useT } from "../../lib/i18n"
+import { useT, t as translateUI, useUILanguage } from "../../lib/i18n"
 import { probeSocket } from "../../lib/realtime"
 import { Button } from "../../components/ui/button"
 import ImageField from "../../components/ImageField"
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card"
 import { cur, moneyLocale, useLocale } from "../../lib/money"
+
 
 /** Self-contained cards the settings hub (./SettingsHub) places on its
  * module and integration pages: payments, AI, ZATCA, Verify, rate cards. */
@@ -44,7 +45,7 @@ function Field(props: {
     return (
       <ImageField
         label={t(spec.label)}
-        hint={spec.hint ? t(spec.hint) : ""}
+        hint={(spec.hint ? t(spec.hint) : "")}
         value={String(value ?? "")}
         onChange={onChange}
       />
@@ -89,7 +90,7 @@ function Field(props: {
         <input
           className={inputCls}
           type={spec.type ?? "text"}
-          placeholder={spec.type === "password" ? t("unchanged") : undefined}
+          placeholder={(spec.type === "password" ? t("unchanged") : undefined)}
           value={
             spec.type === "password" ? String(value ?? "") : String(value ?? "")
           }
@@ -179,7 +180,7 @@ export function SettingsCard(props: {
             <span className="text-xs text-emerald-600">{t("Saved")}</span>
           )}
           {state !== "idle" && state !== "saved" && (
-            <span className="text-xs text-rose-600">{state}</span>
+            <span className="text-xs text-rose-600">{translateUI(state)}</span>
           )}
         </div>
       </CardContent>
@@ -248,7 +249,7 @@ export function ZatcaCard({ property }: { property: string }) {
       .catch((e) => setError(serverError(e)))
   }, [property])
   useEffect(load, [load])
-  if (error) return <p className="text-sm text-rose-600">{error}</p>
+  if (error) return <p className="text-sm text-rose-600">{translateUI(error)}</p>
   if (!info || !doc) return null
   return (
     <div className="space-y-2">
@@ -272,8 +273,8 @@ export function ZatcaCard({ property }: { property: string }) {
         })}
       </div>
       <SettingsCard
-        title="ZATCA e-invoicing"
-        description="Saudi Arabia (FATOORA). Seller details printed in every invoice XML."
+        title={translateUI("ZATCA e-invoicing")}
+        description={translateUI("Saudi Arabia (FATOORA). Seller details printed in every invoice XML.")}
         specs={ZATCA_SPECS}
         doc={doc}
         onSave={async (changes) => {
@@ -411,7 +412,7 @@ export function KamraVerifyCard() {
             <Button disabled={busy || !key.trim()} onClick={() => run("link")}>{t("Link")}</Button>
           </div>
         )}
-        {err && <p className="text-rose-600">{err}</p>}
+        {err && <p className="text-rose-600">{translateUI(err)}</p>}
       </CardContent>
     </Card>
   )
@@ -625,13 +626,13 @@ function AiAssistantCard({
           >
             {presets.map((p) => (
               <option key={p.id} value={p.id}>
-                {p.label}
+                {translateUI(p.label)}
               </option>
             ))}
           </select>
-          <span className="mt-0.5 block text-xs text-zinc-400">{activeHint}</span>
+          <span className="mt-0.5 block text-xs text-zinc-400">{translateUI(activeHint)}</span>
           <span className="mt-2 block rounded-lg border border-amber-100 bg-amber-50/80 px-3 py-2 text-xs text-amber-950">
-            {processorNote}
+            {translateUI(processorNote)}
           </span>
         </label>
         <div className="grid gap-3 sm:grid-cols-2">
@@ -723,7 +724,7 @@ function AiAssistantCard({
             <span className="text-xs text-emerald-600">{t("Saved")}</span>
           )}
           {state !== "idle" && state !== "saved" && (
-            <span className="text-xs text-rose-600">{state}</span>
+            <span className="text-xs text-rose-600">{translateUI(state)}</span>
           )}
         </div>
         {testMsg && (
@@ -778,8 +779,8 @@ export function PaymentsSection({ property }: { property: string }) {
   return (
     <div className="space-y-4">
       <SettingsCard
-        title="Payment gateway"
-        description="Payment links for advances and folio settlement. Money goes straight to this property's own account. Secrets are write-only."
+        title={translateUI("Payment gateway")}
+        description={translateUI("Payment links for advances and folio settlement. Money goes straight to this property's own account. Secrets are write-only.")}
         specs={gatewaySpecs(gateways)}
         doc={{ ...gateway, gateway: gateway.gateway || gateways[0] }}
         onSave={async (changes) => {
@@ -826,34 +827,22 @@ export function AiSection({ property }: { property: string }) {
 }
 
 export function AgentAccessCard() {
+  useUILanguage()
   return (
     <Card>
       <CardHeader>
         <div>
-          <CardTitle>Claude & MCP</CardTitle>
-          <p className="mt-0.5 text-xs text-zinc-400">
-            Connect Claude to this property's governed tools. It acts as the
-            signed-in person, within their role, and every action lands in the
-            Activity log.
-          </p>
+          <CardTitle>{translateUI("Claude & MCP")}</CardTitle>
+          <p className="mt-0.5 text-xs text-zinc-400">{translateUI("Connect Claude to this property's governed tools. It acts as the signed-in person, within their role, and every action lands in the Activity log.")}</p>
         </div>
       </CardHeader>
       <CardContent className="space-y-3 text-sm">
-        <p className="text-zinc-600">
-          Staff open{" "}
-          <Link to="/assistant" className="font-medium text-brand-700 hover:underline">
-            Kamra Agent → Connect your AI
-          </Link>{" "}
-          and click <strong>Connect Claude</strong>. Claude opens with this
-          hotel&apos;s MCP URL filled in; they confirm and sign in as themselves.
-          No API keys on a laptop.
-        </p>
+        <p className="text-zinc-600">{translateUI("Staff open")}{" "}
+          <Link to="/assistant" className="font-medium text-brand-700 hover:underline">{translateUI("Kamra Agent → Connect your AI")}</Link>{" "}{translateUI("and click ")}<strong>{translateUI("Connect Claude")}</strong>{translateUI(". Claude opens with this hotel's MCP URL filled in; they confirm and sign in as themselves. No API keys on a laptop.")}</p>
         <pre className="overflow-x-auto rounded-lg bg-zinc-100 p-3 text-xs leading-relaxed text-zinc-700">
           {`claude mcp add --transport http kamra ${window.location.origin}/mcp`}
         </pre>
-        <p className="text-xs text-zinc-400">
-          Service keys for unattended agents are issued by IT under Developers.
-        </p>
+        <p className="text-xs text-zinc-400">{translateUI("Service keys for unattended agents are issued by IT under Developers.")}</p>
       </CardContent>
     </Card>
   )
@@ -928,6 +917,7 @@ interface LaundryRate {
 /** The laundry rate card - what the floor team quotes and bills from.
  * Express defaults to 1.5x when its column is left blank. */
 export function LaundryRatesCard({ property }: { property: string }) {
+  useUILanguage()
   const [rates, setRates] = useState<LaundryRate[]>([])
   const [form, setForm] = useState<{ name?: string; item: string; service: string; rate: string; express: string } | null>(null)
   const [err, setErr] = useState<string | null>(null)
@@ -959,9 +949,9 @@ export function LaundryRatesCard({ property }: { property: string }) {
         { property, csv_text: await file.text() },
       )
       setImportMsg(
-        `${res.created} added, ${res.updated} updated` +
-        (res.issues.length ? ` - ${res.issues.length} row(s) skipped: ` +
-          res.issues.slice(0, 3).map((i) => `row ${i.row} (${i.error})`).join("; ") : ""))
+        translateUI("{added} added, {updated} updated", { added: String(res.created), updated: String(res.updated) }) +
+        (res.issues.length ? translateUI(" - {n} row(s) skipped: ", { n: String(res.issues.length) }) +
+          res.issues.slice(0, 3).map((i) => translateUI("row {n} ({error})", { n: String(i.row), error: String(translateUI(i.error)) })).join("; ") : ""))
       load()
     } catch (e) {
       setErr(serverError(e))
@@ -988,75 +978,62 @@ export function LaundryRatesCard({ property }: { property: string }) {
     <Card>
       <CardHeader>
         <div>
-          <CardTitle>Laundry rate card</CardTitle>
-          <p className="mt-0.5 text-xs text-zinc-400">
-            Per-item prices the housekeeping app quotes and bills from.
-            A blank express price uses the express multiplier above.
-          </p>
+          <CardTitle>{translateUI("Laundry rate card")}</CardTitle>
+          <p className="mt-0.5 text-xs text-zinc-400">{translateUI("Per-item prices the housekeeping app quotes and bills from. A blank express price uses the express multiplier above.")}</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="ghost" disabled={rates.length === 0} onClick={exportCsv}>
-            Export CSV
-          </Button>
-          <label className="inline-flex cursor-pointer items-center rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm font-medium text-zinc-800 transition-colors hover:bg-zinc-100">
-            Import CSV
-            <input type="file" accept=".csv,text/csv" className="hidden"
+          <Button variant="ghost" disabled={rates.length === 0} onClick={exportCsv}>{translateUI("Export CSV")}</Button>
+          <label className="inline-flex cursor-pointer items-center rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm font-medium text-zinc-800 transition-colors hover:bg-zinc-100">{translateUI("Import CSV")}<input type="file" accept=".csv,text/csv" className="hidden"
               onChange={(e) => {
                 const f = e.target.files?.[0]
                 if (f) importCsv(f)
                 e.target.value = ""
               }} />
           </label>
-          <Button variant="outline" onClick={() => setForm({ item: "", service: "Wash & Iron", rate: "", express: "" })}>
-            Add rate
-          </Button>
+          <Button variant="outline" onClick={() => setForm({ item: "", service: "Wash & Iron", rate: "", express: "" })}>{translateUI("Add rate")}</Button>
         </div>
       </CardHeader>
       <CardContent>
-        {err && <p className="mb-2 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">{err}</p>}
+        {err && <p className="mb-2 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">{translateUI(err)}</p>}
         {importMsg && <p className="mb-2 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{importMsg}</p>}
         {form && (
           <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl bg-zinc-50 p-2">
-            <input className="w-36 rounded-lg border border-zinc-300 px-2 py-1.5 text-sm" placeholder="Item (Shirt…)"
+            <input className="w-36 rounded-lg border border-zinc-300 px-2 py-1.5 text-sm" placeholder={translateUI("Item (Shirt…)")}
               value={form.item} onChange={(e) => setForm({ ...form, item: e.target.value })} autoFocus />
             <select className="rounded-lg border border-zinc-300 px-2 py-1.5 text-sm"
               value={form.service} onChange={(e) => setForm({ ...form, service: e.target.value })}>
-              {["Wash & Iron", "Dry Clean", "Iron Only"].map((s) => <option key={s}>{s}</option>)}
+              {["Wash & Iron", "Dry Clean", "Iron Only"].map((s) => <option key={s} value={s}>{translateUI(s)}</option>)}
             </select>
-            <input className="w-24 rounded-lg border border-zinc-300 px-2 py-1.5 text-sm" placeholder={`Rate ${cur()}`} inputMode="numeric"
+            <input className="w-24 rounded-lg border border-zinc-300 px-2 py-1.5 text-sm" placeholder={translateUI("Rate {v0}", { v0: String(cur()) })} inputMode="numeric"
               value={form.rate} onChange={(e) => setForm({ ...form, rate: e.target.value.replace(/[^\d.]/g, "") })} />
-            <input className="w-28 rounded-lg border border-zinc-300 px-2 py-1.5 text-sm" placeholder={`Express ${cur()} (opt)`} inputMode="numeric"
+            <input className="w-28 rounded-lg border border-zinc-300 px-2 py-1.5 text-sm" placeholder={translateUI("Express {v0} (opt)", { v0: String(cur()) })} inputMode="numeric"
               value={form.express} onChange={(e) => setForm({ ...form, express: e.target.value.replace(/[^\d.]/g, "") })} />
-            <Button disabled={!form.item.trim() || !form.rate} onClick={save}>Save</Button>
-            <Button variant="ghost" onClick={() => setForm(null)}>Cancel</Button>
+            <Button disabled={!form.item.trim() || !form.rate} onClick={save}>{translateUI("Save")}</Button>
+            <Button variant="ghost" onClick={() => setForm(null)}>{translateUI("Cancel")}</Button>
           </div>
         )}
         {rates.length === 0 ? (
-          <p className="py-3 text-sm text-zinc-400">No rates yet - add the first item.</p>
+          <p className="py-3 text-sm text-zinc-400">{translateUI("No rates yet - add the first item.")}</p>
         ) : (
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-xs uppercase tracking-wide text-zinc-400">
-                <th className="py-1.5">Item</th><th>Service</th>
-                <th className="text-right">Rate</th><th className="text-right">Express</th><th />
+                <th className="py-1.5">{translateUI("Item")}</th><th>{translateUI("Service")}</th>
+                <th className="text-right">{translateUI("Rate")}</th><th className="text-right">{translateUI("Express")}</th><th />
               </tr>
             </thead>
             <tbody>
               {rates.map((r) => (
                 <tr key={r.name} className="border-t border-zinc-100">
                   <td className="py-1.5 font-medium">{r.item_name}</td>
-                  <td className="text-zinc-500">{r.service_type}</td>
+                  <td className="text-zinc-500">{translateUI(r.service_type)}</td>
                   <td className="text-right tabular-nums">{cur()}{r.rate.toLocaleString(moneyLocale())}</td>
                   <td className="text-right tabular-nums text-zinc-500">{cur()}{r.express_rate.toLocaleString(moneyLocale())}</td>
                   <td className="text-right">
                     <button className="text-xs font-medium text-brand-700 hover:underline"
-                      onClick={() => setForm({ name: r.name, item: r.item_name, service: r.service_type, rate: String(r.rate), express: "" })}>
-                      Edit
-                    </button>
+                      onClick={() => setForm({ name: r.name, item: r.item_name, service: r.service_type, rate: String(r.rate), express: "" })}>{translateUI("Edit")}</button>
                     <button className="ml-2 text-xs text-zinc-400 hover:text-rose-600"
-                      onClick={async () => { await call("kamra.laundry.delete_laundry_rate", { name: r.name }); load() }}>
-                      Delete
-                    </button>
+                      onClick={async () => { await call("kamra.laundry.delete_laundry_rate", { name: r.name }); load() }}>{translateUI("Delete")}</button>
                   </td>
                 </tr>
               ))}
@@ -1080,6 +1057,7 @@ interface HurdleTier {
 /** Demand tiers: at each occupancy threshold, quotes carry a premium and
  * manual rates can't undercut the hurdle (the minimum sell rate). */
 export function HurdleRatesCard({ property }: { property: string }) {
+  useUILanguage()
   const [tiers, setTiers] = useState<HurdleTier[]>([])
   const [form, setForm] = useState<{
     name?: string
@@ -1130,50 +1108,34 @@ export function HurdleRatesCard({ property }: { property: string }) {
     <Card>
       <CardHeader>
         <div>
-          <CardTitle>Demand pricing (hurdle rates)</CardTitle>
-          <p className="mt-0.5 text-xs text-zinc-400">
-            When forecast occupancy for a date crosses a threshold, quotes
-            carry the premium automatically and no rate may sell below the
-            hurdle. A room-type tier beats the all-types tier. Guardrails
-            (floor and ceiling) only bound rates set through set_room_rate -
-            Kamra Agent, MCP or the API - not these premiums, staff seasons
-            or quotes.
-          </p>
+          <CardTitle>{translateUI("Demand pricing (hurdle rates)")}</CardTitle>
+          <p className="mt-0.5 text-xs text-zinc-400">{translateUI("When forecast occupancy for a date crosses a threshold, quotes carry the premium automatically and no rate may sell below the hurdle. A room-type tier beats the all-types tier. Guardrails (floor and ceiling) only bound rates set through set_room_rate - Kamra Agent, MCP or the API - not these premiums, staff seasons or quotes.")}</p>
         </div>
-        <Button variant="outline" className="shrink-0" onClick={() => setForm({ from: "", premium: "", min: "", room_type: "" })}>
-          Add tier
-        </Button>
+        <Button variant="outline" className="shrink-0" onClick={() => setForm({ from: "", premium: "", min: "", room_type: "" })}>{translateUI("Add tier")}</Button>
       </CardHeader>
       <CardContent>
-        {err && <p className="mb-2 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">{err}</p>}
+        {err && <p className="mb-2 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">{translateUI(err)}</p>}
         {form && (
           <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl bg-zinc-50 p-2">
-            <label className="flex items-center gap-1 text-sm text-zinc-600">
-              Occupancy ≥
-              <input className="w-16 rounded-lg border border-zinc-300 px-2 py-1.5 text-sm" placeholder="80" inputMode="numeric"
+            <label className="flex items-center gap-1 text-sm text-zinc-600">{translateUI("Occupancy ≥")}<input className="w-16 rounded-lg border border-zinc-300 px-2 py-1.5 text-sm" placeholder="80" inputMode="numeric"
                 value={form.from} onChange={(e) => setForm({ ...form, from: e.target.value.replace(/[^\d.]/g, "") })} autoFocus />
               %
             </label>
-            <label className="flex items-center gap-1 text-sm text-zinc-600">
-              Premium +
-              <input className="w-16 rounded-lg border border-zinc-300 px-2 py-1.5 text-sm" placeholder="15" inputMode="numeric"
+            <label className="flex items-center gap-1 text-sm text-zinc-600">{translateUI("Premium +")}<input className="w-16 rounded-lg border border-zinc-300 px-2 py-1.5 text-sm" placeholder="15" inputMode="numeric"
                 value={form.premium} onChange={(e) => setForm({ ...form, premium: e.target.value.replace(/[^\d.]/g, "") })} />
               %
             </label>
-            <label className="flex items-center gap-1 text-sm text-zinc-600">
-              Hurdle {cur()}
-              <input className="w-24 rounded-lg border border-zinc-300 px-2 py-1.5 text-sm" placeholder="min rate" inputMode="numeric"
+            <label className="flex items-center gap-1 text-sm text-zinc-600">{translateUI("Hurdle ")}{cur()}
+              <input className="w-24 rounded-lg border border-zinc-300 px-2 py-1.5 text-sm" placeholder={translateUI("min rate")} inputMode="numeric"
                 value={form.min} onChange={(e) => setForm({ ...form, min: e.target.value.replace(/[^\d.]/g, "") })} />
             </label>
-            <label className="flex items-center gap-1 text-sm text-zinc-600">
-              For
-              <select
-                aria-label="Room type"
+            <label className="flex items-center gap-1 text-sm text-zinc-600">{translateUI("For")}<select
+                aria-label={translateUI("Room type")}
                 className="rounded-lg border border-zinc-300 px-2 py-1.5 text-sm"
                 value={form.room_type}
                 onChange={(e) => setForm({ ...form, room_type: e.target.value })}
               >
-                <option value="">All room types</option>
+                <option value="">{translateUI("All room types")}</option>
                 {roomTypes.map((rt) => (
                   <option key={rt.name} value={rt.name}>{rt.room_type_name}</option>
                 ))}
@@ -1182,40 +1144,35 @@ export function HurdleRatesCard({ property }: { property: string }) {
                 )}
               </select>
             </label>
-            <Button disabled={!form.from} onClick={save}>Save</Button>
-            <Button variant="ghost" onClick={() => setForm(null)}>Cancel</Button>
+            <Button disabled={!form.from} onClick={save}>{translateUI("Save")}</Button>
+            <Button variant="ghost" onClick={() => setForm(null)}>{translateUI("Cancel")}</Button>
           </div>
         )}
         {tiers.length === 0 ? (
-          <p className="py-3 text-sm text-zinc-400">
-            No tiers yet - e.g. `at 80% occupancy, +15% premium, minimum ${cur()}6,000`.
+          <p className="py-3 text-sm text-zinc-400">{translateUI("No tiers yet - e.g. `at 80% occupancy, +15% premium, minimum $")}{cur()}6,000`.
           </p>
         ) : (
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-xs uppercase tracking-wide text-zinc-400">
-                <th className="py-1.5">When occupancy ≥</th>
-                <th>Room type</th>
-                <th className="text-right">Premium</th>
-                <th className="text-right">Hurdle (min rate)</th><th />
+                <th className="py-1.5">{translateUI("When occupancy ≥")}</th>
+                <th>{translateUI("Room type")}</th>
+                <th className="text-right">{translateUI("Premium")}</th>
+                <th className="text-right">{translateUI("Hurdle (min rate)")}</th><th />
               </tr>
             </thead>
             <tbody>
               {tiers.map((t) => (
                 <tr key={t.name} className="border-t border-zinc-100">
                   <td className="py-1.5 font-medium">{t.occupancy_from}%</td>
-                  <td className="text-zinc-600">{t.room_type ? (t.room_type_name || t.room_type) : <span className="text-zinc-400">All</span>}</td>
+                  <td className="text-zinc-600">{t.room_type ? (t.room_type_name || t.room_type) : <span className="text-zinc-400">{translateUI("All")}</span>}</td>
                   <td className="text-right tabular-nums">{t.premium_pct ? `+${t.premium_pct}%` : "-"}</td>
                   <td className="text-right tabular-nums">{t.min_rate ? `${cur()}${t.min_rate.toLocaleString(moneyLocale())}` : "-"}</td>
                   <td className="text-right">
                     <button className="text-xs font-medium text-brand-700 hover:underline"
-                      onClick={() => setForm({ name: t.name, from: String(t.occupancy_from), premium: String(t.premium_pct || ""), min: String(t.min_rate || ""), room_type: t.room_type || "" })}>
-                      Edit
-                    </button>
+                      onClick={() => setForm({ name: t.name, from: String(t.occupancy_from), premium: String(t.premium_pct || ""), min: String(t.min_rate || ""), room_type: t.room_type || "" })}>{translateUI("Edit")}</button>
                     <button className="ml-2 text-xs text-zinc-400 hover:text-rose-600"
-                      onClick={async () => { await call("kamra.api.delete_hurdle_rate", { name: t.name }); load() }}>
-                      Delete
-                    </button>
+                      onClick={async () => { await call("kamra.api.delete_hurdle_rate", { name: t.name }); load() }}>{translateUI("Delete")}</button>
                   </td>
                 </tr>
               ))}
@@ -1300,7 +1257,7 @@ export function SpeedCheckCard({ property }: { property: string }) {
       </CardHeader>
       {(res || err) && (
         <CardContent>
-          {err && <p className="text-sm text-rose-700">{err}</p>}
+          {err && <p className="text-sm text-rose-700">{translateUI(err)}</p>}
           <ul className="space-y-1.5 text-sm">
             {verdicts.map((v, i) => (
               <li key={i} className={v.ok ? "text-emerald-700" : "text-amber-800"}>
@@ -1373,7 +1330,7 @@ export function KitchenPrintersCard({ property }: { property: string }) {
         </div>
       </CardHeader>
       <CardContent className="space-y-2">
-        {err && <p className="text-sm text-rose-700">{err}</p>}
+        {err && <p className="text-sm text-rose-700">{translateUI(err)}</p>}
         {!err && rows.length === 0 && (
           <p className="text-sm text-zinc-500">{t("No kitchen printers yet.")}</p>
         )}
@@ -1381,11 +1338,11 @@ export function KitchenPrintersCard({ property }: { property: string }) {
           const st = status(p)
           return (
             <div key={p.name} className="flex items-start gap-2 rounded-lg border border-zinc-200 px-3 py-2">
-              <span className={`mt-1.5 size-2 shrink-0 rounded-full ${st.tone}`} title={st.text} />
+              <span className={`mt-1.5 size-2 shrink-0 rounded-full ${st.tone}`} title={translateUI(st.text)} />
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold text-zinc-900">{p.printer_name}</p>
                 <p className="text-xs text-zinc-500">
-                  {st.text}
+                  {translateUI(st.text)}
                   {p.queued ? ` · ${t("{n} waiting", { n: p.queued })}` : ""}
                   {p.failed_today ? ` · ${t("{n} failed today", { n: p.failed_today })}` : ""}
                 </p>
@@ -1502,7 +1459,7 @@ export function CheckInStepsCard({ property }: { property: string }) {
             return (
               <li key={s.step_key} className="flex items-center gap-3 py-2.5">
                 <span className="w-5 text-xs tabular-nums text-zinc-400">{i + 1}</span>
-                <span className="flex-1 text-sm font-medium text-zinc-800">{label}</span>
+                <span className="flex-1 text-sm font-medium text-zinc-800">{translateUI(label)}</span>
                 <label className="flex items-center gap-2 text-sm text-zinc-600">
                   <input
                     type="checkbox"
@@ -1528,7 +1485,7 @@ export function CheckInStepsCard({ property }: { property: string }) {
             {busy ? t("Saving…") : t("Save")}
           </Button>
           {msg && (
-            <span className={msg.ok ? "text-xs text-emerald-600" : "text-xs text-rose-600"}>{msg.text}</span>
+            <span className={msg.ok ? "text-xs text-emerald-600" : "text-xs text-rose-600"}>{translateUI(msg.text)}</span>
           )}
         </div>
       </CardContent>
