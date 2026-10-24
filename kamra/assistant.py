@@ -249,6 +249,41 @@ EXTRA_TOOLS = {
 		{"business_date": {"type": "string"},
 		 "acknowledge": {"type": "array", "items": {"type": "string"}},
 		 "note": {"type": "string"}}, True, True),
+	"list_report_datasets": (
+		"custom_reports.list_report_datasets",
+		"Whitelisted custom-report datasets and columns. Call before building "
+		"or running a custom report.",
+		{}, True, False),
+	"list_custom_reports": (
+		"custom_reports.list_custom_reports",
+		"Saved custom reports for this property.",
+		{}, True, False),
+	"save_custom_report": (
+		"custom_reports.save_custom_report",
+		"Create or update a saved custom report (dataset + columns/filters). "
+		"Only catalog field ids - never invent SQL. Pass name to update.",
+		{"title": {"type": "string"}, "dataset": {"type": "string"},
+		 "columns": {"type": "string"}, "filters": {"type": "string"},
+		 "is_shared": {"type": "integer"},
+		 "schedule_frequency": {"type": "string"},
+		 "schedule_time": {"type": "string"},
+		 "recipients": {"type": "string"}, "name": {"type": "string"}},
+		True, True),
+	"run_custom_report": (
+		"custom_reports.run_custom_report",
+		"Run a saved (name) or ad-hoc (dataset) custom report. Prefer "
+		"format=json. from_date / to_date YYYY-MM-DD.",
+		{"name": {"type": "string"}, "dataset": {"type": "string"},
+		 "from_date": {"type": "string"}, "to_date": {"type": "string"},
+		 "columns": {"type": "string"}, "filters": {"type": "string"},
+		 "format": {"type": "string"}, "lang": {"type": "string"}},
+		True, False),
+	"email_custom_report": (
+		"custom_reports.email_custom_report",
+		"Email a custom report CSV to recipients (comma-separated).",
+		{"recipients": {"type": "string"}, "name": {"type": "string"},
+		 "dataset": {"type": "string"}, "from_date": {"type": "string"},
+		 "to_date": {"type": "string"}}, True, True),
 }
 
 TOOLS = {

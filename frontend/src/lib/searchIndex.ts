@@ -40,6 +40,7 @@ export const FEATURES: FeatureEntry[] = [
   { label: "Turn the AI agent on", to: "/settings/ai", where: "Settings · AI", keywords: ["api key", "openai", "claude", "mcp", "assistant", "agent"] },
   { label: "Manage AI access (MCP)", to: "/settings/claude", where: "Settings · AI access (MCP)", keywords: ["mcp", "claude", "chatgpt", "mcp read", "mcp manage", "disconnect", "block tools", "permissions"] },
   { label: "Reports and exports", to: "/reports", where: "Reports", keywords: ["tally", "accounting export", "csv", "all reports"] },
+  { label: "Custom report builder", to: "/reports/custom", where: "Reports · Custom reports", keywords: ["custom report", "saved report", "dataset", "email report", "schedule", "contribution"] },
   { label: "Manager flash", to: "/reports/flash", where: "Reports · Daily", keywords: ["occupancy", "adr", "revpar", "flash", "daily report", "collections"] },
   { label: "Voids and allowances", to: "/voids-allowances", where: "Reports · Finance", keywords: ["void", "allowance", "who voided"], roles: ["Finance", "Hotel Admin", "System Manager", "Administrator"] },
   { label: "Shift report", to: "/cashier/shift-report", where: "Reports · Daily", keywords: ["till report", "cashier report", "shift"] },

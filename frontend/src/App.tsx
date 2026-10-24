@@ -322,7 +322,8 @@ export default function App() {
           <Route path="booking-settings/:section" element={<BookingEngine />} />
           <Route path="developers" element={<Developers />} />
           <Route path="reports" element={<ReportsHub />} />
-          <Route path="reports/flash" element={<Reports />} />
+          <Route path="reports/flash" element={<Reports initialTab="flash" />} />
+          <Route path="reports/custom" element={<Reports />} />
           <Route path="in-house" element={<InHouse />} />
           <Route path="arrivals" element={<Navigate to="/in-house?tab=arrivals" replace />} />
           <Route path="departures" element={<Navigate to="/in-house?tab=departures" replace />} />

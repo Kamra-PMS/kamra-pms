@@ -89,30 +89,33 @@ def _book(guest, phone, ci, co, **kw):
 def chat(*turns):
 	"""Run the turns as the desk user; returns (replies, tools called)."""
 	from kamra import assistant
+	from unittest.mock import patch
+
 	from kamra.assistant import ask
 	messages, replies, tools = [], [], []
 	real_run = assistant._run_tool
 
 	def spy(name, args, prop):
+		# what the money and booking tools returned, for the transcript
 		out = real_run(name, args, prop)
 		if name in ("check_out", "record_payment", "cancel_booking", "create_booking"):
 			CTX.setdefault("errors", []).append(
 				f"{name}({json.dumps(args, default=str)[:300]}) -> "
 				f"{json.dumps(out, default=str)[:200]}")
 		return out
-	assistant._run_tool = spy
+
 	frappe.set_user(FD_USER)  # nosemgrep: frappe-setuser -- eval runs the agent as a scoped Front Desk persona
 	try:
-		for turn in turns:
-			messages.append({"role": "user", "content": turn})
-			out = ask(P, messages)
-			messages.append({"role": "assistant", "content": out["reply"]})
-			replies.append(out["reply"])
-			tools.append([(a["tool"], a["ok"]) for a in out["actions"]])
-			CTX.setdefault("errors", []).extend(
-				f'{a["tool"]}: {a.get("error", "")[:160]}' for a in out["actions"] if not a["ok"])
+		with patch.object(assistant, "_run_tool", side_effect=spy):
+			for turn in turns:
+				messages.append({"role": "user", "content": turn})
+				out = ask(P, messages)
+				messages.append({"role": "assistant", "content": out["reply"]})
+				replies.append(out["reply"])
+				tools.append([(a["tool"], a["ok"]) for a in out["actions"]])
+				CTX.setdefault("errors", []).extend(
+					f'{a["tool"]}: {a.get("error", "")[:160]}' for a in out["actions"] if not a["ok"])
 	finally:
-		assistant._run_tool = real_run
 		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- back to the runner after the persona's turns
 	return replies, tools
 

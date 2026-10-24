@@ -37,6 +37,12 @@ const MONEY_ROLES = ["Finance", "Hotel Admin", "System Manager", "Administrator"
 
 const SECTIONS: { title: string; items: ReportLink[] }[] = [
   {
+    title: "Your reports",
+    items: [
+      { to: "/reports/custom", label: "Custom reports", blurb: "Build a report from arrivals, payments, POS and more; save it, share it, email it on a schedule.", icon: FileSpreadsheet, app: "finance" },
+    ],
+  },
+  {
     title: "Daily",
     items: [
       { to: "/reports/flash", label: "Manager flash", blurb: "Occupancy, ADR, RevPAR, revenue and collections for a day, with the month to date.", icon: ChartLine, app: "finance" },

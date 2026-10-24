@@ -5358,3 +5358,7 @@ Voids and allowances,Voids and allowances,الإلغاءات والخصومات,
 Who is leaving today and what does each still owe?,Who is leaving today and what does each still owe?,من سيغادر اليوم وكم يدين كل منهم؟,¿Quién se va hoy y cuánto debe cada uno?,screens\Assistant.tsx,,translated
 Your role has no reports.,Your role has no reports.,لا توجد تقارير لدورك.,Su rol no tiene informes.,screens\ReportsHub.tsx,,translated
 {amount} due,{amount} due,{amount} مستحق,{amount} pendiente,components\AgentCards.tsx,amount,translated
+Your reports,Your reports,تقاريرك,Tus informes,screens\ReportsHub.tsx,,translated
+Custom reports,Custom reports,تقارير مخصصة,Informes personalizados,screens\ReportsHub.tsx,,translated
+"Build a report from arrivals, payments, POS and more; save it, share it, email it on a schedule.","Build a report from arrivals, payments, POS and more; save it, share it, email it on a schedule.",أنشئ تقريرًا من الوصول والمدفوعات ونقاط البيع وغيرها، واحفظه وشاركه وأرسله بالبريد وفق جدول.,"Crea un informe con llegadas, pagos, TPV y más; guárdalo, compártelo y envíalo por correo según un horario.",screens\ReportsHub.tsx,,translated
+Custom report builder,Custom report builder,منشئ التقارير المخصصة,Generador de informes personalizados,screens\ReportsHub.tsx,,translated
