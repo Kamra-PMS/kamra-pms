@@ -18,13 +18,8 @@ import {
 } from "../lib/api"
 import { Button } from "./ui/button"
 import { cur, moneyLocale, useLocale } from "../lib/money"
-import {
-  clampLocal,
-  isPhoneComplete,
-  joinPhone,
-  phoneLengthForDial,
-  splitPhone,
-} from "../lib/phone"
+import { isPhoneComplete } from "../lib/phone"
+import PhoneInput from "./PhoneInput"
 import { clampGuests, sleeps } from "../lib/occupancy"
 import { useT, t as translate, useUILanguage } from "../lib/i18n"
 import { petChargeBasis } from "../lib/pets"
@@ -55,62 +50,6 @@ const inputCls =
   "w-full rounded-lg border border-zinc-300 bg-white px-3.5 py-2.5 text-base " +
   "focus:outline-2 focus:outline-offset-1 focus:outline-brand-600"
 
-/**
- * Phone entry with the property's dial code shown as a fixed prefix, so staff
- * type only the local number. `value`/`onChange` stay fully qualified
- * (`+919876543210`) - the prefix is presentation, not a separate field.
- */
-function PhoneInput(props: {
-  value: string
-  country?: string | null
-  onChange: (phone: string) => void
-  placeholder?: string
-}) {
-  useUILanguage()
-  const { dial, local } = splitPhone(props.value, props.country)
-  const { min, max } = phoneLengthForDial(dial)
-  // only nag once they have stopped short - not on every keystroke of a
-  // number they are still typing
-  const short = local.length > 0 && local.length < min
-  return (
-    <>
-      <div
-        className={
-          "flex items-center gap-1.5 rounded-lg border bg-white pl-3.5 " +
-          "focus-within:outline-2 focus-within:outline-offset-1 " +
-          (short
-            ? "border-rose-300 focus-within:outline-rose-500"
-            : "border-zinc-300 focus-within:outline-brand-600")
-        }
-      >
-        <span className="shrink-0 text-base text-zinc-500">+{dial}</span>
-        <input
-          type="tel"
-          inputMode="numeric"
-          maxLength={max}
-          className="w-full min-w-0 bg-transparent py-2.5 pr-3.5 text-base focus:outline-none"
-          value={local}
-          // clamp rather than trust maxLength: it does not apply to paste in
-          // every browser, and autofill bypasses it entirely
-          onChange={(e) =>
-            props.onChange(joinPhone(dial, clampLocal(e.target.value, dial)))
-          }
-          placeholder={(props.placeholder ? translate(props.placeholder) : dial === "91" ? "91488 69914" : translate("Mobile number"))}
-        />
-        <span className="shrink-0 pr-3.5 text-xs tabular-nums text-zinc-400">
-          {local.length}/{max}
-        </span>
-      </div>
-      {short && (
-        <p className="mt-1.5 text-xs text-rose-600">
-          {min === max
-            ? translate("+{v0} numbers are {v1} digits.", { v0: String(dial), v1: String(min) })
-            : translate("+{v0} numbers are {v1}-{v2} digits.", { v0: String(dial), v1: String(min), v2: String(max) })}
-        </p>
-      )}
-    </>
-  )
-}
 
 function Field(props: { label: string; children: React.ReactNode }) {
   useUILanguage()
