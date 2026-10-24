@@ -213,9 +213,10 @@ flowchart LR
   API --> AAL[Activity Log]
 ```
 
-- **101 governed tools** on develop (see [MCP tools](/mcp-tools)); stable
+- **116 governed tools** on develop (see [MCP tools](/mcp-tools)); stable
   `main` publishes the count for that tag.
-- Tools are filtered by **role ∩ enabled modules**.
+- Tools are filtered by **role ∩ MCP role ∩ enabled modules ∩ the
+  property's AI switches** (see [Who can use MCP](/ai-and-mcp#who-can-use-mcp)).
 - Mutating tools set `frappe.flags.kamra_agent_call` and log
   `mcp_<name>`.
 - Connect UI: **Kamra Agent → Connect your AI**. Public HTTPS is

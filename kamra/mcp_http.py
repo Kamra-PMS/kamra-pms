@@ -26,6 +26,14 @@ from kamra.mcp_oauth import (
 	protected_resource_doc,
 	protected_resource_url,
 )
+from kamra.mcp_access import (
+	access_refusal,
+	mcp_level,
+	permitted_tools,
+	property_policy,
+	tool_refusal,
+	touch_grant,
+)
 from kamra.mcp_tools import (
 	BY_NAME,
 	INSTRUCTIONS,
@@ -147,6 +155,13 @@ def _mcp_endpoint(method: str, request) -> Response:
 		return _unauthorized()
 
 	frappe.set_user(grant.user)  # nosemgrep: frappe-setuser -- OAuth bearer or API key already validated; impersonate its owner for role-filtered MCP tools
+	# MCP roles and the property switches are read on every request, so a
+	# change made by an admin applies to the next call, not the next sign-in
+	refusal = access_refusal(grant.user, grant.property)
+	if refusal:
+		return _forbidden(refusal)
+	if grant.get("via") != "api_key":
+		touch_grant(grant)
 	body = _read_json(request)
 	if body is None:
 		return _rpc_error(None, -32700, "Parse error", 400)
@@ -281,7 +296,9 @@ def _dispatch_method(method: str, params: dict, grant) -> dict:
 	if method == "ping":
 		return {}
 	if method == "tools/list":
-		return {"tools": mcp_tool_list(allowed_tools(property=grant.property))}
+		tools = permitted_tools(allowed_tools(property=grant.property),
+		                        mcp_level(grant.user), property_policy(grant.property))
+		return {"tools": mcp_tool_list(tools)}
 	if method == "tools/call":
 		return _tools_call(params, grant)
 	raise ValueError(f"Unknown method: {method}")
@@ -296,6 +313,9 @@ def _tools_call(params: dict, grant) -> dict:
 			"content": [{"type": "text", "text": f"Unknown tool: {name}"}],
 			"isError": True,
 		}
+	refused = tool_refusal(spec, mcp_level(grant.user), property_policy(grant.property))
+	if refused:
+		return {"content": [{"type": "text", "text": refused}], "isError": True}
 	try:
 		result = call_tool(spec, arguments, grant.property)
 		text = frappe.as_json(result)

@@ -116,8 +116,14 @@ switching a module back on brings it back as it was.
 
   ![AI assistant settings: provider, model and key](/img/settings/ai.png)
 
-- **Claude & MCP**: let staff connect Claude to this property's tools. See
-  [Connect your AI](/ai-and-mcp).
+- **AI access (MCP)** (under Access): who may connect Claude, ChatGPT or
+  another MCP client (No access, MCP Read or MCP Manage, per person),
+  whether AI access is on here, **Block write tools**, single blocked
+  tools, the connected clients with **Disconnect**, and extra OAuth
+  sign-in addresses (IT only). See
+  [Who can use MCP](/ai-and-mcp#who-can-use-mcp).
+
+  ![AI access (MCP): the property switches, each person's MCP role, connected clients and blocked tools](/img/settings/ai-access.png)
 - **ZATCA e-invoicing**: shown for Saudi Arabia only. See
   [Country setup](/country-setup).
 
