@@ -5,6 +5,7 @@ import { subscribeRealtime } from "../../lib/realtime"
 import { serverError } from "../../lib/resource"
 import { cn } from "../../lib/utils"
 import { moneyLocale } from "../../lib/money"
+import { t as translate, useUILanguage } from "../../lib/i18n"
 
 /** Shared laundry types, helpers and data hook used by BOTH the housekeeping
  * phone app (HkLaundry) and the desktop Laundry module. Keep the pricing and
@@ -193,6 +194,7 @@ export function ExpressToggle({
   value: boolean
   onChange: (v: boolean) => void
 }) {
+  useUILanguage()
   return (
     <button
       type="button"
@@ -205,7 +207,7 @@ export function ExpressToggle({
       onClick={() => onChange(!value)}
     >
       <Zap className="size-4" />
-      {value ? "Express - same day (higher rate)" : "Standard service"}
+      {value ? translate("Express - same day (higher rate)") : translate("Standard service")}
     </button>
   )
 }

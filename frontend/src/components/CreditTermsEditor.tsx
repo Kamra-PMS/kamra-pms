@@ -2,8 +2,9 @@ import { useEffect, useState } from "react"
 import { call, getCurrentProperty } from "../lib/api"
 import { serverError, type Row } from "../lib/resource"
 import { fmtMoney } from "../lib/money"
-import { useT } from "../lib/i18n"
+import { useT, t as translate } from "../lib/i18n"
 import { Button } from "./ui/button"
+
 
 /** A company's credit terms at the current property: credit limit and
  * payment terms (credit days). Finance / Hotel Admin edit them; the server
@@ -72,7 +73,7 @@ export default function CreditTermsEditor({ row }: { row: Row; reload: () => voi
     }
   }
 
-  if (!terms) return err ? <p className="text-xs text-rose-600">{err}</p> : null
+  if (!terms) return err ? <p className="text-xs text-rose-600">{translate(err)}</p> : null
   if (!terms.credit_allowed)
     return (
       <div className="border-t border-zinc-200 pt-4">
@@ -155,7 +156,7 @@ export default function CreditTermsEditor({ row }: { row: Row; reload: () => voi
           n: terms.effective_credit_days,
         })}
       </p>
-      {err ? <p className="mt-2 text-xs text-rose-600">{err}</p> : null}
+      {err ? <p className="mt-2 text-xs text-rose-600">{translate(err)}</p> : null}
       {terms.can_edit ? (
         <div className="mt-3 flex items-center gap-2">
           <Button variant="outline" disabled={busy} onClick={save}>

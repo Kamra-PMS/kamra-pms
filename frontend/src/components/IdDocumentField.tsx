@@ -3,6 +3,7 @@ import { Camera, Check, Loader2, RefreshCw, TriangleAlert } from "lucide-react"
 import { call } from "../lib/api"
 import { Button } from "./ui/button"
 import { cn } from "../lib/utils"
+import { t as translate, useUILanguage } from "../lib/i18n"
 
 /* Capture a photo of a guest's ID.
  *
@@ -50,6 +51,7 @@ export function IdDocumentField({
   label?: string
   hint?: string
 }) {
+  useUILanguage()
   const fileRef = useRef<HTMLInputElement>(null)
   const [preview, setPreview] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
@@ -67,7 +69,7 @@ export function IdDocumentField({
       setPreview(data)
       onUploaded()
     } catch (e) {
-      setErr(e instanceof Error ? e.message : String(e))
+      setErr(e instanceof Error ? translate(e.message) : String(e))
     } finally {
       setBusy(false)
       if (fileRef.current) fileRef.current.value = ""
@@ -88,7 +90,7 @@ export function IdDocumentField({
       />
 
       {preview && (
-        <img src={preview} alt="Your ID"
+        <img src={preview} alt={translate("Your ID")}
           className="mb-2 max-h-44 w-auto rounded-lg border border-zinc-200" />
       )}
 
@@ -102,22 +104,22 @@ export function IdDocumentField({
         <div className="min-w-0 flex-1">
           <div className={cn("text-sm font-semibold",
             have ? "text-emerald-800" : "text-zinc-700")}>
-            {have ? "ID photo received" : label}
+            {have ? translate("ID photo received") : translate(label)}
           </div>
-          {hint && !have && <div className="mt-0.5 text-xs text-zinc-500">{hint}</div>}
+          {hint && !have && <div className="mt-0.5 text-xs text-zinc-500">{translate(hint)}</div>}
         </div>
         <Button type="button" variant="outline" disabled={busy}
           onClick={() => fileRef.current?.click()} className="shrink-0">
           {busy ? <Loader2 className="size-4 animate-spin" />
             : have ? <RefreshCw className="size-4" />
               : <Camera className="size-4" />}
-          {busy ? "Uploading" : have ? "Replace" : "Add photo"}
+          {busy ? translate("Uploading") : have ? translate("Replace") : translate("Add photo")}
         </Button>
       </div>
 
       {err && (
         <div className="mt-2 flex items-start gap-1.5 rounded-lg border border-rose-300 bg-rose-50 px-3 py-2 text-xs font-medium text-rose-700">
-          <TriangleAlert className="mt-px size-3.5 shrink-0" />{err}
+          <TriangleAlert className="mt-px size-3.5 shrink-0" />{translate(err)}
         </div>
       )}
     </div>

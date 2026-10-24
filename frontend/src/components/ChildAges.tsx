@@ -1,3 +1,5 @@
+import { useT } from "../lib/i18n"
+
 /** One age picker per child on the public booking pages. The property's own
  * age bands (free under a certain age, adult over another) are applied by
  * the server from these ages - the page never decides who pays. */
@@ -11,7 +13,6 @@ export function sizeAges(ages: ChildAge[], count: number): ChildAge[] {
     ? ages
     : Array.from({ length: n }, (_, i) => ages[i] ?? "")
 }
-
 /** Ages ready to send, or undefined until every child has one. */
 export function agesToSend(ages: ChildAge[]): number[] | undefined {
   return ages.length && ages.every((a) => a !== "")
@@ -32,14 +33,36 @@ export interface StayFit {
 export const canReserve = (r?: StayFit & { quote: unknown }) =>
   !!r?.quote && r.available !== false
 
+function translateAvailabilityNote(source: string, t: (source: string, vars?: Record<string, string | number>) => string) {
+  if (source === "The property cannot accommodate the number of people requested.")
+    return t("The property cannot accommodate the number of people requested.")
+  const minStay = source.match(/^These dates need a stay of at least (\d+) nights(?: \((.+)\))?\.$/)
+  if (minStay) {
+    const n = Number(minStay[1])
+    const base = n === 1
+      ? t("These dates require a minimum stay of {n} night.", { n })
+      : t("These dates require a minimum stay of {n} nights.", { n })
+    return minStay[2] ? `${base} (${minStay[2]})` : base
+  }
+  const overCapacity = source.match(/^(\d+) guests? above what it sleeps: possible only if the group is happy to share beds\. The property confirms the arrangement and the price for them\.$/)
+  if (overCapacity) {
+    const n = Number(overCapacity[1])
+    return n === 1
+      ? t("The group exceeds the listed capacity by {n} guest. The property must confirm bed sharing and the price.", { n })
+      : t("The group exceeds the listed capacity by {n} guests. The property must confirm bed sharing and the price.", { n })
+  }
+  return source
+}
+
 export function StayNotice({ row }: { row?: StayFit }) {
+  const { t } = useT()
   if (!row) return null
   if (row.available === false && row.reason)
-    return <p className="text-xs font-medium text-rose-600">{row.reason}</p>
+    return <p className="text-xs font-medium text-rose-600">{translateAvailabilityNote(row.reason, t)}</p>
   if (row.needs_confirmation)
     return (
       <p className="text-xs text-amber-700">
-        {row.confirmation_reason} Your request goes to the property to confirm.
+        {translateAvailabilityNote(row.confirmation_reason || "", t)} {t("Your request goes to the property to confirm.")}
       </p>
     )
   return null
@@ -54,6 +77,7 @@ export default function ChildAges({
   onChange: (ages: ChildAge[]) => void
   selectCls: string
 }) {
+  const { t } = useT()
   if (!ages.length) return null
   const missing = ages.some((a) => a === "")
   return (
@@ -62,7 +86,7 @@ export default function ChildAges({
         {ages.map((age, i) => (
           <label key={i} className="block">
             <span className="mb-1 block text-xs font-medium text-zinc-500">
-              Child {i + 1} age
+              {t("Child {n} age", { n: i + 1 })}
             </span>
             <select
               className={selectCls}
@@ -73,8 +97,8 @@ export default function ChildAges({
                 onChange(next)
               }}
             >
-              <option value="">Age…</option>
-              <option value={0}>Under 1</option>
+              <option value="">{t("Age…")}</option>
+              <option value={0}>{t("Under 1")}</option>
               {Array.from({ length: 17 }, (_, k) => k + 1).map((a) => (
                 <option key={a} value={a}>
                   {a}
@@ -86,7 +110,7 @@ export default function ChildAges({
       </div>
       {missing && (
         <p className="text-xs text-amber-700">
-          Choose each child's age - it decides the price.
+          {t("Choose each child's age; this determines the price.")}
         </p>
       )}
     </div>

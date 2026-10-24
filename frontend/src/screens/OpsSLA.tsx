@@ -4,8 +4,10 @@ import { Link } from "react-router-dom"
 
 import { call, getCurrentProperty } from "../lib/api"
 import { serverError } from "../lib/resource"
+import { useT, t as translate } from "../lib/i18n"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { Badge } from "../components/ui/badge"
+
 
 interface Group {
   label: string
@@ -83,6 +85,7 @@ function breachTone(pct: number): "rose" | "amber" | "brand" {
 }
 
 export default function OpsSLA() {
+  const { t } = useT()
   const [from, setFrom] = useState(isoDaysAgo(30))
   const [to, setTo] = useState(new Date().toISOString().slice(0, 10))
   const [data, setData] = useState<Sla | null>(null)
@@ -106,28 +109,28 @@ export default function OpsSLA() {
   const GroupTable = ({ title, rows }: { title: string; rows: Group[] }) => (
     <Card>
       <CardHeader>
-        <CardTitle>{title}</CardTitle>
+        <CardTitle>{translate(title)}</CardTitle>
       </CardHeader>
       <CardContent>
         {rows.length === 0 ? (
-          <p className="py-6 text-center text-sm text-zinc-400">No tickets.</p>
+          <p className="py-6 text-center text-sm text-zinc-400">{translate("No tickets.")}</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-zinc-200 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">
-                  <th className="py-2 pr-3">{title.includes("category") ? "Category" : "Priority"}</th>
-                  <th className="py-2 pr-3 text-right">Tickets</th>
-                  <th className="py-2 pr-3 text-right">Resolved</th>
-                  <th className="py-2 pr-3 text-right">Breached</th>
-                  <th className="py-2 pr-3 text-right">Breach %</th>
-                  <th className="py-2 text-right">Avg resolve</th>
+                  <th className="py-2 pr-3">{title.includes("category") ? translate("Category") : translate("Priority")}</th>
+                  <th className="py-2 pr-3 text-right">{translate("Tickets")}</th>
+                  <th className="py-2 pr-3 text-right">{translate("Resolved")}</th>
+                  <th className="py-2 pr-3 text-right">{translate("Breached")}</th>
+                  <th className="py-2 pr-3 text-right">{translate("Breach %")}</th>
+                  <th className="py-2 text-right">{translate("Avg resolve")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-100">
                 {rows.map((r) => (
                   <tr key={r.label}>
-                    <td className="py-2 pr-3 font-medium">{r.label}</td>
+                    <td className="py-2 pr-3 font-medium">{translate(r.label)}</td>
                     <td className="py-2 pr-3 text-right tabular-nums">{r.count}</td>
                     <td className="py-2 pr-3 text-right tabular-nums">{r.resolved}</td>
                     <td className="py-2 pr-3 text-right tabular-nums">{r.breached}</td>
@@ -152,12 +155,8 @@ export default function OpsSLA() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="flex items-center gap-2 text-xl font-bold text-zinc-800">
-            <AlarmClock className="size-5 text-brand-600" />
-            Operations SLA
-          </h1>
-          <p className="text-xs text-zinc-500">
-            Are guest requests being resolved inside their promised window?
-          </p>
+            <AlarmClock className="size-5 text-brand-600" />{translate("Operations SLA")}</h1>
+          <p className="text-xs text-zinc-500">{translate("Are guest requests being resolved inside their promised window?")}</p>
         </div>
         <div className="flex items-center gap-2 text-sm">
           <input type="date" className={inputCls} value={from}
@@ -170,7 +169,7 @@ export default function OpsSLA() {
 
       {error && (
         <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-          {error}
+          {translate(error)}
         </div>
       )}
 
@@ -181,7 +180,7 @@ export default function OpsSLA() {
               ["Tickets", String(data.total), "text-zinc-800"],
               ["Resolved", `${data.resolved} / ${data.total}`, "text-zinc-800"],
               [
-                "Breach rate",
+                t("Breach rate"),
                 `${data.breach_pct}%`,
                 data.breach_pct >= 25 ? "text-rose-600" : data.breach_pct >= 10 ? "text-amber-600" : "text-brand-600",
               ],
@@ -192,7 +191,7 @@ export default function OpsSLA() {
               <Card key={label}>
                 <CardContent className="p-4">
                   <div className="text-[11px] font-medium uppercase tracking-wider text-zinc-400">
-                    {label}
+                    {translate(label)}
                   </div>
                   <div className={`mt-1 text-2xl font-bold ${tone}`}>{val}</div>
                 </CardContent>
@@ -201,37 +200,32 @@ export default function OpsSLA() {
           </div>
 
           <div className="grid gap-4 lg:grid-cols-2">
-            <GroupTable title="By category" rows={data.by_category} />
-            <GroupTable title="By priority" rows={data.by_priority} />
+            <GroupTable title={translate("By category")} rows={data.by_category} />
+            <GroupTable title={translate("By priority")} rows={data.by_priority} />
           </div>
 
           <Card>
             <CardHeader>
-              <CardTitle>
-                Overdue now
-                {data.overdue.length > 0 && (
+              <CardTitle>{translate("Overdue now")}{data.overdue.length > 0 && (
                   <span className="ml-2 text-sm font-normal text-rose-600">
-                    {data.overdue.length} past due
-                  </span>
+                    {data.overdue.length}{translate(" past due")}</span>
                 )}
               </CardTitle>
             </CardHeader>
             <CardContent>
               {data.overdue.length === 0 ? (
-                <p className="py-6 text-center text-sm text-zinc-400">
-                  Nothing overdue - every open request is inside its window.
-                </p>
+                <p className="py-6 text-center text-sm text-zinc-400">{translate("Nothing overdue - every open request is inside its window.")}</p>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-zinc-200 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">
-                        <th className="py-2 pr-3">Ticket</th>
-                        <th className="py-2 pr-3">Subject</th>
-                        <th className="py-2 pr-3">With</th>
-                        <th className="py-2 pr-3">Category</th>
-                        <th className="py-2 pr-3">Priority</th>
-                        <th className="py-2 text-right">Overdue by</th>
+                        <th className="py-2 pr-3">{translate("Ticket")}</th>
+                        <th className="py-2 pr-3">{translate("Subject")}</th>
+                        <th className="py-2 pr-3">{translate("With")}</th>
+                        <th className="py-2 pr-3">{translate("Category")}</th>
+                        <th className="py-2 pr-3">{translate("Priority")}</th>
+                        <th className="py-2 text-right">{translate("Overdue by")}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-zinc-100">
@@ -241,12 +235,11 @@ export default function OpsSLA() {
                             <Link to={ticketLink(o.name)} className="text-brand-700 hover:underline">{o.name}</Link>
                           </td>
                           <td className="py-2 pr-3">{o.subject ?? ""}</td>
-                          <td className="py-2 pr-3">{o.assigned_to_user ?? <span className="text-amber-600">Unassigned</span>}</td>
-                          <td className="py-2 pr-3">{o.category}</td>
+                          <td className="py-2 pr-3">{o.assigned_to_user ?? <span className="text-amber-600">{translate("Unassigned")}</span>}</td>
+                          <td className="py-2 pr-3">{translate(o.category)}</td>
                           <td className="py-2 pr-3">{o.priority}</td>
                           <td className="py-2 text-right tabular-nums text-rose-600">
-                            {o.overdue_hours} h
-                          </td>
+                            {o.overdue_hours}{translate(" h")}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -258,19 +251,19 @@ export default function OpsSLA() {
           <div className="grid gap-4 lg:grid-cols-2">
             <Card>
               <CardHeader>
-                <CardTitle>Solved by</CardTitle>
+                <CardTitle>{translate("Solved by")}</CardTitle>
               </CardHeader>
               <CardContent>
                 {data.by_resolver.length === 0 ? (
-                  <p className="py-6 text-center text-sm text-zinc-400">No tickets solved in this window.</p>
+                  <p className="py-6 text-center text-sm text-zinc-400">{translate("No tickets solved in this window.")}</p>
                 ) : (
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-zinc-200 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">
-                        <th className="py-2 pr-3">Person</th>
-                        <th className="py-2 pr-3 text-right">Solved</th>
-                        <th className="py-2 pr-3 text-right">Late</th>
-                        <th className="py-2 text-right">Avg time</th>
+                        <th className="py-2 pr-3">{translate("Person")}</th>
+                        <th className="py-2 pr-3 text-right">{translate("Solved")}</th>
+                        <th className="py-2 pr-3 text-right">{translate("Late")}</th>
+                        <th className="py-2 text-right">{translate("Avg time")}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-zinc-100">
@@ -285,15 +278,13 @@ export default function OpsSLA() {
                     </tbody>
                   </table>
                 )}
-                <p className="mt-2 text-xs text-zinc-400">
-                  Tickets solved before tracking began show as "Not recorded".
-                </p>
+                <p className="mt-2 text-xs text-zinc-400">{translate("Tickets solved before tracking began show as \"Not recorded\".")}</p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle>How long open tickets have waited</CardTitle>
+                <CardTitle>{translate("How long open tickets have waited")}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-4 gap-2">
@@ -302,34 +293,32 @@ export default function OpsSLA() {
                       <div className={`text-xl font-bold tabular-nums ${a.label === "Over 7 days" && a.count ? "text-rose-600" : "text-zinc-800"}`}>
                         {a.count}
                       </div>
-                      <div className="text-[11px] text-zinc-500">{a.label}</div>
+                      <div className="text-[11px] text-zinc-500">{translate(a.label)}</div>
                     </div>
                   ))}
                 </div>
-                <p className="mt-2 text-xs text-zinc-400">
-                  Every ticket still open, whatever the date range above.
-                </p>
+                <p className="mt-2 text-xs text-zinc-400">{translate("Every ticket still open, whatever the date range above.")}</p>
               </CardContent>
             </Card>
           </div>
 
           <Card>
             <CardHeader>
-              <CardTitle>Oldest open tickets</CardTitle>
+              <CardTitle>{translate("Oldest open tickets")}</CardTitle>
             </CardHeader>
             <CardContent>
               {data.oldest_open.length === 0 ? (
-                <p className="py-6 text-center text-sm text-zinc-400">Nothing is waiting.</p>
+                <p className="py-6 text-center text-sm text-zinc-400">{translate("Nothing is waiting.")}</p>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-zinc-200 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">
-                        <th className="py-2 pr-3">Ticket</th>
-                        <th className="py-2 pr-3">Subject</th>
-                        <th className="py-2 pr-3">Priority</th>
-                        <th className="py-2 pr-3">With</th>
-                        <th className="py-2 text-right">Open for</th>
+                        <th className="py-2 pr-3">{translate("Ticket")}</th>
+                        <th className="py-2 pr-3">{translate("Subject")}</th>
+                        <th className="py-2 pr-3">{translate("Priority")}</th>
+                        <th className="py-2 pr-3">{translate("With")}</th>
+                        <th className="py-2 text-right">{translate("Open for")}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-zinc-100">
@@ -340,8 +329,8 @@ export default function OpsSLA() {
                           </td>
                           <td className="py-2 pr-3">{o.subject}</td>
                           <td className="py-2 pr-3">{o.priority}</td>
-                          <td className="py-2 pr-3">{o.assigned_to_name ?? o.assigned_to_user ?? <span className="text-amber-600">Unassigned</span>}</td>
-                          <td className="py-2 text-right tabular-nums">{o.age_days} d</td>
+                          <td className="py-2 pr-3">{o.assigned_to_name ?? o.assigned_to_user ?? <span className="text-amber-600">{translate("Unassigned")}</span>}</td>
+                          <td className="py-2 text-right tabular-nums">{o.age_days}{translate(" d")}</td>
                         </tr>
                       ))}
                     </tbody>

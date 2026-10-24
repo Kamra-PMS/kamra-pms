@@ -5,7 +5,8 @@ import { serverError } from "../lib/resource"
 import type { Row } from "../lib/resource"
 import { Button } from "./ui/button"
 import { cur, moneyLocale } from "../lib/money"
-import { useT } from "../lib/i18n"
+import { useT, t as translate } from "../lib/i18n"
+
 
 /** Cancel a stay the right way: see what it costs, say why, get a
  * cancellation number the guest can keep. Lives in the reservation
@@ -166,7 +167,7 @@ export default function CancelPanel({ row, reload }: { row: Row; reload: () => v
               {t("Keep the booking")}
             </Button>
           </div>
-          {error && <p className="text-xs text-rose-600">{error}</p>}
+          {error && <p className="text-xs text-rose-600">{translate(error)}</p>}
         </div>
       )}
     </div>

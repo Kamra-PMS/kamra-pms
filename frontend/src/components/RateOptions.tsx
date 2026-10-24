@@ -2,8 +2,9 @@ import { useEffect, useState } from "react"
 import { call, getCurrentProperty } from "../lib/api"
 import { InfoTip } from "./InfoTip"
 import { cur, moneyLocale } from "../lib/money"
-import { useT } from "../lib/i18n"
+import { useT, t as translate } from "../lib/i18n"
 import { cn } from "../lib/utils"
+
 
 const n0 = (n: number) => Number(n ?? 0).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
 
@@ -88,7 +89,7 @@ export function RateOptions({
     }
   }, [roomType, checkIn, checkOut, adults, children, mealPlan, voucher, t])
 
-  if (err) return <p className="text-xs text-zinc-400">{err}</p>
+  if (err) return <p className="text-xs text-zinc-400">{translate(err)}</p>
   if (!data) return null
   const moved = data.nights.some((x) => x.season || x.demand)
   return (

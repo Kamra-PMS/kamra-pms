@@ -5,8 +5,9 @@ import { call, getCurrentProperty } from "../lib/api"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { cur, moneyLocale } from "../lib/money"
-import { useT } from "../lib/i18n"
+import { useT, t as translate, useUILanguage } from "../lib/i18n"
 import { useAuth } from "../lib/auth"
+
 
 // kamra.reports.void_allowance_report is Finance / Hotel Admin
 const VOID_REPORT_ROLES = ["Finance", "Hotel Admin", "System Manager", "Administrator"]
@@ -59,13 +60,14 @@ function trendValue(row: Day, key: SortKey): number {
 }
 
 function Stat(props: { label: string; value: string; sub?: string }) {
+  useUILanguage()
   return (
     <div className="rounded-xl border border-zinc-200 bg-white px-4 py-3">
       <div className="text-xl font-semibold">{props.value}</div>
       <div className="text-[10px] font-medium uppercase tracking-widest text-zinc-400">
-        {props.label}
+        {translate(props.label)}
       </div>
-      {props.sub && <div className="mt-0.5 text-xs text-zinc-500">{props.sub}</div>}
+      {props.sub && <div className="mt-0.5 text-xs text-zinc-500">{translate(props.sub)}</div>}
     </div>
   )
 }
@@ -212,7 +214,7 @@ export default function Reports() {
                           }}
                           className="inline-flex items-center gap-1 hover:text-brand-600"
                         >
-                          {col.label}
+                          {translate(col.label)}
                           {arrow}
                         </button>
                       </th>
@@ -270,7 +272,7 @@ export default function Reports() {
               )}
               {d.collections.modes.map((m) => (
                 <div key={m.mode} className="flex justify-between py-0.5">
-                  <span>{m.mode} · {m.txns}</span>
+                  <span>{translate(m.mode)} · {m.txns}</span>
                   <span>{cur()}{inr(m.total)}</span>
                 </div>
               ))}

@@ -11,7 +11,7 @@ import {
 import AppShell, { type ShellContext } from "./AppShell"
 const Login = lazy(() => import("./screens/Login"))
 import { useAuth } from "./lib/auth"
-import { t, useT } from "./lib/i18n"
+import { t, useT, t as translate, useUILanguage } from "./lib/i18n"
 import { toFullPath } from "./lib/routing"
 const Billing = lazy(() => import("./screens/Billing"))
 const EndOfDay = lazy(() => import("./screens/EndOfDay"))
@@ -79,6 +79,7 @@ const FolioHistory = lazy(() => import("./screens/FolioHistory"))
 const CurrencyDesk = lazy(() => import("./screens/CurrencyDesk"))
 import ConnectionBanner from "./components/ConnectionBanner"
 
+
 class ErrorBoundary extends Component<
   { children: ReactNode },
   { error: Error | null }
@@ -94,16 +95,14 @@ class ErrorBoundary extends Component<
       return (
         <div className="mx-auto max-w-lg p-8">
           <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
-            <p className="font-semibold">Something broke in the UI.</p>
+            <p className="font-semibold">{translate("Something broke in the UI.")}</p>
             <p className="mt-1 font-mono text-xs">
               {this.state.error.message}
             </p>
             <button
               className="mt-3 rounded-lg bg-rose-600 px-3 py-1.5 text-white"
               onClick={() => location.reload()}
-            >
-              Reload
-            </button>
+            >{translate("Reload")}</button>
           </div>
         </div>
       )
@@ -171,12 +170,13 @@ function CalendarScreen() {
 }
 
 export default function App() {
+  useUILanguage()
   return (
     <ErrorBoundary>
       <ConnectionBanner />
       <Suspense
         fallback={
-          <div className="p-10 text-center text-sm text-zinc-400">Loading…</div>
+          <div className="p-10 text-center text-sm text-zinc-400">{translate("Loading…")}</div>
         }
       >
       <Routes>
@@ -343,6 +343,7 @@ export default function App() {
           <Route path="pos-dashboard" element={<PosDashboard />} />
           <Route path="kitchen" element={<Kitchen />} />
           <Route path="inventory" element={<Inventory />} />
+          <Route path="menu" element={<Navigate to="/menu-items" replace />} />
           <Route path="menu-items" element={<MenuItems />} />
           <Route path="ingredients" element={<ConfiguredScreen config="ingredientsConfig" />} />
           <Route path="printers" element={<KitchenPrinters />} />

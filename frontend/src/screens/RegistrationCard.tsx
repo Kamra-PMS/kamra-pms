@@ -7,9 +7,10 @@ import EditableNationality from "../components/EditableNationality"
 import { Button } from "../components/ui/button"
 import { cur, locale, moneyLocale, taxLabel, useLocale } from "../lib/money"
 import { serverError } from "../lib/resource"
-import { useT } from "../lib/i18n"
+import { useT, t as translate, useUILanguage } from "../lib/i18n"
 import { cn } from "../lib/utils"
 import RoomChangeDialog from "../components/RoomChangeDialog"
+
 
 /** Printable Guest Registration Card (GRC) - sign at check-in. */
 
@@ -95,9 +96,10 @@ const inr = (n: number) =>
   n.toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
 
 function Row(props: { label: string; value?: string | null }) {
+  useUILanguage()
   return (
     <div className="flex border-b border-zinc-200 py-1.5 text-sm">
-      <span className="w-40 shrink-0 text-zinc-500">{props.label}</span>
+      <span className="w-40 shrink-0 text-zinc-500">{translate(props.label)}</span>
       <span className="min-w-0 break-words font-medium">{props.value || "-"}</span>
     </div>
   )
@@ -127,6 +129,7 @@ function OccupantsEditor(props: {
   occupants: Occupant[]
   onSaved: () => void
 }) {
+  useUILanguage()
   const loc = useLocale()
   const idTypes = loc.id_types
   /** A minor is recorded by name and age; ID only where the register needs it. */
@@ -162,24 +165,21 @@ function OccupantsEditor(props: {
 
   return (
     <div className="mt-4 rounded-xl border border-zinc-200 bg-white p-4 print:hidden">
-      <h2 className="text-sm font-semibold">Occupant register</h2>
-      <p className="mb-3 mt-0.5 text-xs text-zinc-400">
-        Everyone staying in the room - required for the hotel register.
-        Saved occupants print on the GRC above.
-      </p>
+      <h2 className="text-sm font-semibold">{translate("Occupant register")}</h2>
+      <p className="mb-3 mt-0.5 text-xs text-zinc-400">{translate("Everyone staying in the room - required for the hotel register. Saved occupants print on the GRC above.")}</p>
       <div className="space-y-2">
         {rows.map((o, i) => (
           <div key={i} className="flex flex-wrap items-center gap-1.5">
             <input
               className={`${editInputCls} w-40`}
-              placeholder="Full name"
+              placeholder={translate("Full name")}
               value={o.full_name}
               onChange={(e) => set(i, { full_name: e.target.value })}
             />
             <input
               className={`${editInputCls} w-16`}
               type="number"
-              placeholder="Age"
+              placeholder={translate("Age")}
               value={o.age ?? ""}
               onChange={(e) =>
                 set(i, { age: e.target.value === "" ? null : Number(e.target.value) })
@@ -190,42 +190,40 @@ function OccupantsEditor(props: {
               value={o.gender ?? ""}
               onChange={(e) => set(i, { gender: e.target.value })}
             >
-              <option value="">Gender</option>
+              <option value="">{translate("Gender")}</option>
               {["Male", "Female", "Other"].map((g) => (
-                <option key={g}>{g}</option>
+                <option key={g} value={g}>{translate(g)}</option>
               ))}
             </select>
             <input
               className={`${editInputCls} w-24`}
-              placeholder="Nationality"
+              placeholder={translate("Nationality")}
               value={o.nationality ?? ""}
               onChange={(e) => set(i, { nationality: e.target.value })}
             />
             {noMinorId(o) ? (
               <span
                 className="text-xs text-zinc-400"
-                title="Children's data: the register needs only name and age, so no ID is kept"
-              >
-                Under {loc.adult_age}: name and age only
-              </span>
+                title={translate("Children's data: the register needs only name and age, so no ID is kept")}
+              >{translate("Under ")}{loc.adult_age}{translate(": name and age only")}</span>
             ) : (<>
             <select
               className={editInputCls}
               value={o.id_type ?? ""}
               onChange={(e) => set(i, { id_type: e.target.value })}
             >
-              <option value="">ID type</option>
+              <option value="">{translate("ID type")}</option>
               {/* a value recorded under another list stays visible */}
               {[
                 ...idTypes,
                 ...(o.id_type && !idTypes.includes(o.id_type) ? [o.id_type] : []),
               ].map((t) => (
-                <option key={t}>{t}</option>
+                <option key={t} value={t}>{translate(t)}</option>
               ))}
             </select>
             <input
               className={`${editInputCls} w-36`}
-              placeholder="ID number"
+              placeholder={translate("ID number")}
               value={o.id_number ?? ""}
               onChange={(e) => set(i, { id_number: e.target.value })}
             />
@@ -236,10 +234,10 @@ function OccupantsEditor(props: {
                     ? "border-emerald-200 bg-emerald-50 text-emerald-700"
                     : "border-zinc-200 text-zinc-500 hover:border-brand-400 hover:text-brand-700"
                 }`}
-                title={o.id_file ? "Replace this occupant's ID document" : "Capture or upload this occupant's ID document"}
+                title={(o.id_file ? translate("Replace this occupant's ID document") : translate("Capture or upload this occupant's ID document"))}
               >
                 <Camera className="size-3.5" aria-hidden />
-                {o.id_file ? "ID ✓ Replace" : "Capture ID"}
+                {o.id_file ? translate("ID ✓ Replace") : translate("Capture ID")}
                 <input
                   type="file"
                   accept="image/*"
@@ -262,14 +260,12 @@ function OccupantsEditor(props: {
                 />
               </label>
             ) : (
-              <span className="text-xs text-zinc-400" title="Save the register first, then capture this occupant's ID">
-                save row → ID
-              </span>
+              <span className="text-xs text-zinc-400" title={translate("Save the register first, then capture this occupant's ID")}>{translate("save row → ID")}</span>
             )}
             </>)}
             <button
               className="rounded p-1 text-zinc-400 hover:text-rose-500"
-              aria-label="Remove occupant"
+              aria-label={translate("Remove occupant")}
               onClick={() => setRows((r) => r.filter((_, j) => j !== i))}
             >
               <Trash2 className="size-4" aria-hidden />
@@ -282,10 +278,9 @@ function OccupantsEditor(props: {
           variant="outline"
           onClick={() => setRows((r) => [...r, emptyOccupant()])}
         >
-          <Plus className="size-4" aria-hidden /> Add occupant
-        </Button>
+          <Plus className="size-4" aria-hidden />{translate(" Add occupant")}</Button>
         <Button disabled={busy} onClick={save}>
-          {busy ? "Saving…" : "Save register"}
+          {busy ? translate("Saving…") : translate("Save register")}
         </Button>
       </div>
     </div>
@@ -318,6 +313,7 @@ function ActualTimeRow(props: {
   value?: string | null
   onSaved: () => void
 }) {
+  useUILanguage()
   const [editing, setEditing] = useState(false)
   const [val, setVal] = useState("")
   const [busy, setBusy] = useState(false)
@@ -327,7 +323,7 @@ function ActualTimeRow(props: {
     : "-"
   return (
     <div className="flex flex-wrap items-center gap-2 border-b border-zinc-200 py-1.5 text-sm">
-      <span className="w-40 shrink-0 text-zinc-500">{props.label}</span>
+      <span className="w-40 shrink-0 text-zinc-500">{translate(props.label)}</span>
       {editing ? (
         <span className="flex min-w-0 flex-wrap items-center justify-end gap-1 print:hidden">
           <input
@@ -361,13 +357,13 @@ function ActualTimeRow(props: {
                 setEditing(false)
                 props.onSaved()
               } catch (e) {
-                setError(e instanceof Error ? e.message : "Could not save")
+                setError(e instanceof Error ? translate(e.message) : translate("Could not save"))
               } finally {
                 setBusy(false)
               }
             }}
           >
-            {busy ? "…" : "Save"}
+            {busy ? "…" : translate("Save")}
           </Button>
           <button
             type="button"
@@ -381,7 +377,7 @@ function ActualTimeRow(props: {
           </button>
           {error && (
             <span className="basis-full text-right text-xs text-rose-600">
-              {error}
+              {translate(error)}
             </span>
           )}
         </span>
@@ -396,9 +392,7 @@ function ActualTimeRow(props: {
               setError(null)
               setEditing(true)
             }}
-          >
-            edit
-          </button>
+          >{translate("edit")}</button>
         </span>
       )}
     </div>
@@ -433,7 +427,7 @@ function ReadIdButton({ guest, idType, idTypes, onDone }: {
   idTypes: string[]
   onDone: () => void
 }) {
-  const { t } = useT()
+  const { t, tn } = useT()
   const [type, setType] = useState(idType && idTypes.includes(idType) ? idType : idTypes[0] ?? "")
   const [busy, setBusy] = useState(false)
   const [told, setTold] = useState(false)
@@ -462,7 +456,7 @@ function ReadIdButton({ guest, idType, idTypes, onDone }: {
             setMsg({
               ok: true,
               text: n
-                ? t("Filled {n} field(s) · {amt}", { n, amt: `${cur()}${r.charged}` })
+                ? tn(n, "Filled {n} field · {amt}", "Filled {n} fields · {amt}", { amt: `${cur()}${r.charged}` })
                 : t("Nothing new on the ID · {amt}", { amt: `${cur()}${r.charged}` }),
             })
             onDone()
@@ -474,7 +468,7 @@ function ReadIdButton({ guest, idType, idTypes, onDone }: {
         }}>
         {busy ? t("Reading…") : t("Read details")}
       </button>
-      {msg && <span className={msg.ok ? "text-emerald-700" : "text-red-700"}>{msg.text}</span>}
+      {msg && <span className={msg.ok ? "text-emerald-700" : "text-red-700"}>{translate(msg.text)}</span>}
     </div>
   )
 }
@@ -503,7 +497,7 @@ export default function RegistrationCard() {
   if (error && !d)
     return (
       <div className="mx-auto max-w-2xl rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-        {error}
+        {translate(error)}
       </div>
     )
   if (!d) return <p className="py-10 text-center text-zinc-400">{t("Loading…")}</p>
@@ -586,7 +580,7 @@ export default function RegistrationCard() {
 
       {error && (
         <div className="mb-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700 print:hidden">
-          {error}
+          {translate(error)}
         </div>
       )}
 
@@ -604,7 +598,7 @@ export default function RegistrationCard() {
                 <p className="text-xs text-zinc-500">
                   {d.property.gstin && (
                     <>
-                      {d.property.tax_id_label ?? "GSTIN"} {d.property.gstin} ·{" "}
+                      {d.property.tax_id_label ?? translate("GSTIN")} {d.property.gstin} ·{" "}
                     </>
                   )}
                   {d.property.phone}
@@ -700,9 +694,9 @@ export default function RegistrationCard() {
               ).map(([kind, label, url]) =>
                 url ? (
                   <figure key={kind}>
-                    <figcaption className={sectionCls}>{label}</figcaption>
+                    <figcaption className={sectionCls}>{translate(label)}</figcaption>
                     <a href={url} target="_blank" rel="noreferrer">
-                      <img src={url} alt={label} className="max-h-32 rounded-lg border border-zinc-200 object-contain" />
+                      <img src={url} alt={translate(label)} className="max-h-32 rounded-lg border border-zinc-200 object-contain" />
                     </a>
                   </figure>
                 ) : null,
@@ -782,8 +776,8 @@ export default function RegistrationCard() {
                     {c.ok ? "✓" : "·"}
                   </span>
                   <span className={c.ok ? "text-zinc-800" : "text-zinc-500"}>
-                    {c.label}
-                    {!c.ok && c.hint && <span className="text-xs text-zinc-400"> · {c.hint}</span>}
+                    {translate(c.label)}
+                    {!c.ok && c.hint && <span className="text-xs text-zinc-400"> · {translate(c.hint)}</span>}
                   </span>
                 </li>
               ))}
@@ -810,7 +804,7 @@ export default function RegistrationCard() {
                 >
                   <span className="flex items-center gap-2">
                     <Camera className="size-4 text-zinc-400" aria-hidden />
-                    {label}
+                    {translate(label)}
                   </span>
                   <span className="text-xs font-medium text-brand-700">
                     {uploading === kind ? t("Saving…") : url ? t("Replace") : t("Capture")}
@@ -842,13 +836,13 @@ export default function RegistrationCard() {
                   [
                     [t("Charges"), d.money.grand_total, ""],
                     [t("Paid"), d.money.paid_total, "text-emerald-700"],
-                    ...(d.money.advance ? [[t("of which advance"), d.money.advance, "text-zinc-500"]] : []),
+                    ...(d.money.advance ? [[t("Advance included in amount paid"), d.money.advance, "text-zinc-500"]] : []),
                     ...(d.money.deposit_held ? [[t("Deposit held"), d.money.deposit_held, "text-zinc-500"]] : []),
                     [t("Balance"), d.money.balance, d.money.balance > 0 ? "font-semibold text-rose-600" : "font-semibold text-zinc-400"],
                   ] as [string, number, string][]
                 ).map(([k, v, cls]) => (
                   <div key={k} className="flex justify-between">
-                    <dt className="text-zinc-500">{k}</dt>
+                    <dt className="text-zinc-500">{translate(k)}</dt>
                     <dd className={cn("tabular-nums", cls)}>{cur()}{inr(v)}</dd>
                   </div>
                 ))}

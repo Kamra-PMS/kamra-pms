@@ -9,6 +9,7 @@ import { call } from "../lib/api"
 import { serverError } from "../lib/resource"
 import { Button } from "./ui/button"
 import { cn } from "../lib/utils"
+import { t as translate, useUILanguage } from "../lib/i18n"
 
 const DEPARTMENTS = ["Housekeeping", "Front Desk", "F&B", "Concierge", "Transport", "Maintenance", "Security"]
 
@@ -28,6 +29,7 @@ export default function StayInstructions({
   reservation: string
   canAdd?: boolean
 }) {
+  useUILanguage()
   const [rows, setRows] = useState<Instruction[] | null>(null)
   const [dept, setDept] = useState(DEPARTMENTS[0])
   const [text, setText] = useState("")
@@ -64,24 +66,21 @@ export default function StayInstructions({
   return (
     <div className="rounded-xl border border-zinc-200 bg-white p-4">
       <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-zinc-700">
-        <ListChecks className="size-4 text-zinc-400" aria-hidden />
-        Instructions
-        {open > 0 && (
+        <ListChecks className="size-4 text-zinc-400" aria-hidden />{translate("Instructions")}{open > 0 && (
           <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
-            {open} open
-          </span>
+            {open}{translate(" open")}</span>
         )}
       </div>
 
       {rows && rows.length === 0 && (
-        <p className="text-sm text-zinc-400">No instructions on this stay.</p>
+        <p className="text-sm text-zinc-400">{translate("No instructions on this stay.")}</p>
       )}
       {rows && rows.length > 0 && (
         <ul className="divide-y divide-zinc-100">
           {rows.map((r) => (
             <li key={r.name} className="flex items-start gap-3 py-2">
               <span className="mt-0.5 shrink-0 rounded bg-zinc-100 px-1.5 py-0.5 text-[11px] font-medium text-zinc-600">
-                {r.department}
+                {translate(r.department)}
               </span>
               <div className="min-w-0 flex-1">
                 <p
@@ -93,8 +92,7 @@ export default function StayInstructions({
                   {r.instruction}
                 </p>
                 {r.status === "Done" && r.done_by && (
-                  <p className="text-xs text-zinc-400">
-                    Done by {r.done_by}
+                  <p className="text-xs text-zinc-400">{translate("Done by ")}{r.done_by}
                     {r.done_on ? ` · ${String(r.done_on).slice(0, 16)}` : ""}
                   </p>
                 )}
@@ -112,12 +110,10 @@ export default function StayInstructions({
               >
                 {r.status === "Done" ? (
                   <>
-                    <RotateCcw className="size-3" aria-hidden /> Reopen
-                  </>
+                    <RotateCcw className="size-3" aria-hidden />{translate(" Reopen")}</>
                 ) : (
                   <>
-                    <Check className="size-3" aria-hidden /> Done
-                  </>
+                    <Check className="size-3" aria-hidden />{translate(" Done")}</>
                 )}
               </button>
             </li>
@@ -128,19 +124,19 @@ export default function StayInstructions({
       {canAdd && (
         <div className="mt-3 flex flex-wrap gap-2">
           <select
-            aria-label="For"
+            aria-label={translate("For")}
             value={dept}
             onChange={(e) => setDept(e.target.value)}
             className="rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-sm"
           >
             {DEPARTMENTS.map((d) => (
-              <option key={d}>{d}</option>
+              <option key={d} value={d}>{translate(d)}</option>
             ))}
           </select>
           <input
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder="e.g. Fruit basket before arrival"
+            placeholder={translate("e.g. Fruit basket before arrival")}
             className="min-w-0 flex-1 rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm focus:outline-2 focus:outline-offset-1 focus:outline-brand-600"
           />
           <Button
@@ -150,12 +146,10 @@ export default function StayInstructions({
               if (await act("kamra.api.add_stay_instruction", { department: dept, instruction: text.trim() }))
                 setText("")
             }}
-          >
-            Add
-          </Button>
+          >{translate("Add")}</Button>
         </div>
       )}
-      {error && <p className="mt-2 text-sm text-rose-700">{error}</p>}
+      {error && <p className="mt-2 text-sm text-rose-700">{translate(error)}</p>}
     </div>
   )
 }

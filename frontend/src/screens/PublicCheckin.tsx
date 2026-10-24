@@ -8,8 +8,8 @@ import { SignaturePad } from "../components/SignaturePad"
 import { IdDocumentField } from "../components/IdDocumentField"
 import { GuestLaundryCard } from "./laundry/GuestLaundryCard"
 import { adoptUiLocale } from "../lib/money"
-import { useT } from "../lib/i18n"
-import { LANGS, setLang } from "../lib/dir"
+import { useT, t as translate } from "../lib/i18n"
+import { LANGS, adoptBrowserLanguage, setLang } from "../lib/dir"
 
 
 /** Downscale a picked/captured photo so the upload stays small (max edge
@@ -45,7 +45,7 @@ function DocCapture(props: {
   const { t } = useT()
   return (
     <div className="rounded-xl border border-zinc-200 p-3">
-      <span className="block text-sm font-medium text-zinc-600">{title}</span>
+      <span className="block text-sm font-medium text-zinc-600">{translate(title)}</span>
       <p className="mb-2 mt-0.5 text-xs text-zinc-400">{note}</p>
       {hasExisting && !value && (
         <p className="mb-2 rounded-lg bg-emerald-50 px-2.5 py-1.5 text-xs text-emerald-800">
@@ -54,7 +54,7 @@ function DocCapture(props: {
       )}
       {value ? (
         <div className="flex items-center gap-3">
-          <img src={value} alt={title} className="h-20 rounded-lg border border-zinc-200 object-cover" />
+          <img src={value} alt={translate(title)} className="h-20 rounded-lg border border-zinc-200 object-cover" />
           <button type="button" className="text-sm font-medium text-rose-600 hover:underline"
             onClick={() => onChange("")}>
             {t("Remove & retake")}
@@ -133,14 +133,7 @@ export default function PublicCheckin() {
   const { token } = useParams()
   const { t, lang } = useT()
   // a guest's phone speaks their language: follow it until they choose
-  useEffect(() => {
-    try {
-      if (!localStorage.getItem("kamra-lang") && navigator.language?.toLowerCase().startsWith("ar"))
-        setLang("ar")
-    } catch {
-      /* private mode - stay in English */
-    }
-  }, [])
+  useEffect(() => adoptBrowserLanguage(), [])
   const [info, setInfo] = useState<Info | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
@@ -195,7 +188,7 @@ export default function PublicCheckin() {
   if (error && !info)
     return (
       <div className="flex min-h-screen items-center justify-center bg-zinc-50 px-4">
-        <p className="text-zinc-500">{error}</p>
+        <p className="text-zinc-500">{translate(error)}</p>
       </div>
     )
   if (!info)
@@ -417,7 +410,7 @@ export default function PublicCheckin() {
             </div>
             {error && (
               <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-                {error}
+                {translate(error)}
               </div>
             )}
             <Button

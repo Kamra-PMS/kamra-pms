@@ -7,20 +7,22 @@ import { useState } from "react"
 import { Bell, BellOff } from "lucide-react"
 import { usePref, type Pref } from "../lib/notifications"
 import { previewSound } from "../lib/sound"
-import { useT } from "../lib/i18n"
+import { useT, t as translate, useUILanguage } from "../lib/i18n"
 import { cn } from "../lib/utils"
+
 
 function Switch({ pref, title, hint, disabled }: {
   pref: Pref; title: string; hint: string; disabled?: boolean
 }) {
+  useUILanguage()
   const [on, set] = usePref(pref)
   return (
     <label className={cn("flex items-start gap-2.5 py-1.5", disabled && "opacity-50")}>
       <input type="checkbox" role="switch" className="mt-0.5 size-4 accent-brand-600"
         checked={on} disabled={disabled} onChange={(e) => set(e.target.checked)} />
       <span className="min-w-0">
-        <span className="block text-sm font-medium text-zinc-800">{title}</span>
-        <span className="block text-xs text-zinc-500">{hint}</span>
+        <span className="block text-sm font-medium text-zinc-800">{translate(title)}</span>
+        <span className="block text-xs text-zinc-500">{translate(hint)}</span>
       </span>
     </label>
   )

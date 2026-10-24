@@ -5,7 +5,8 @@ import { Check, Copy, Store, Terminal } from "lucide-react"
 import { call, getCurrentProperty } from "../lib/api"
 import { serverError } from "../lib/resource"
 import { Button } from "../components/ui/button"
-import { useT } from "../lib/i18n"
+import { useT, t as translate } from "../lib/i18n"
+
 
 interface Card {
   kind: "module" | "connector" | "bench_app" | "enterprise"
@@ -119,7 +120,7 @@ export default function Marketplace() {
 
       {error && (
         <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-          {error}
+          {translate(error)}
         </div>
       )}
 
@@ -127,9 +128,9 @@ export default function Marketplace() {
         <section key={cat.category} className="space-y-3">
           <div>
             <h2 className="text-sm font-semibold uppercase tracking-wider text-zinc-500">
-              {cat.category}
+              {translate(cat.category)}
             </h2>
-            <p className="mt-0.5 text-xs text-zinc-400">{cat.blurb}</p>
+            <p className="mt-0.5 text-xs text-zinc-400">{translate(cat.blurb)}</p>
           </div>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {cat.cards.map((c) => {
@@ -154,7 +155,7 @@ export default function Marketplace() {
                         : t(STATUS_LABEL[c.status] ?? c.status)}
                     </span>
                   </div>
-                  <p className="mt-1 flex-1 text-sm text-zinc-500">{c.blurb}</p>
+                  <p className="mt-1 flex-1 text-sm text-zinc-500">{translate(c.blurb)}</p>
 
                   {c.status === "connected" && c.detail && (
                     <p className="mt-2 text-xs text-emerald-700">{c.detail}</p>
@@ -212,9 +213,7 @@ export default function Marketplace() {
                         setResult(null)
                         setPhone("")
                       }}
-                    >
-                      Connect
-                    </Button>
+                    >{translate("Connect")}</Button>
                   )}
                   {isKoala && c.status === "connected" && c.connection && (
                     <Button
@@ -237,8 +236,7 @@ export default function Marketplace() {
                       {!result ? (
                         <>
                           <label className="block text-xs font-medium text-zinc-600">
-                            {c.channel} number
-                          </label>
+                            {c.channel}{translate(" number")}</label>
                           <input
                             className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm"
                             placeholder="+91 80 4000 8000"
@@ -282,9 +280,7 @@ export default function Marketplace() {
                             </div>
                           </div>
                           <p className="text-zinc-400">
-                            {result.signature_note} Goes live once HeyKoala
-                            confirms.
-                          </p>
+                            {result.signature_note}{translate(" Goes live once HeyKoala confirms.")}</p>
                           <Button
                             variant="ghost"
                             onClick={() => setWizard(null)}

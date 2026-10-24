@@ -9,7 +9,7 @@ import { BedDouble, Lock, LogIn, LogOut, RefreshCw, Search } from "lucide-react"
 import type { ShellContext } from "../AppShell"
 import { getRoomsBoard, type BoardRoom, type RoomsBoard } from "../lib/rooms"
 import { serverError } from "../lib/resource"
-import { useT } from "../lib/i18n"
+import { useT, t as translate } from "../lib/i18n"
 import { cn } from "../lib/utils"
 import { Button } from "../components/ui/button"
 import RoomDrawer, { HK_TONE } from "../components/RoomDrawer"
@@ -17,6 +17,7 @@ import RoomInsights from "../components/RoomInsights"
 import CheckOutDialog from "../components/CheckOutDialog"
 import CheckInDialog from "../components/CheckInDialog"
 import RoomChangeDialog from "../components/RoomChangeDialog"
+
 
 const NO_FLOOR = "__none__"
 
@@ -167,7 +168,7 @@ export default function Rooms() {
 
       {error && (
         <div className="mb-4 rounded-lg border border-rose-200 bg-rose-50 px-4 py-2 text-sm text-rose-700">
-          {error}
+          {translate(error)}
         </div>
       )}
 
@@ -226,7 +227,7 @@ export default function Rooms() {
                     : "border-zinc-200 bg-white text-zinc-700 hover:border-zinc-400",
                 )}
               >
-                {c.label}
+                {translate(c.label)}
                 <span className="ms-1.5 tabular-nums opacity-75">{count(c.id)}</span>
               </button>
             ))}
@@ -386,7 +387,7 @@ function Legend() {
       {items.map(([label, cls]) => (
         <span key={label} className="inline-flex items-center gap-1.5">
           <span className={cn("size-3.5 rounded border", cls)} />
-          {label}
+          {translate(label)}
         </span>
       ))}
       <span className="inline-flex items-center gap-1">

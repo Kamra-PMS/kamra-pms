@@ -15,10 +15,11 @@ import {
 import { call } from "../../lib/api"
 import { serverError } from "../../lib/resource"
 import { cur, moneyLocale } from "../../lib/money"
-import { useT } from "../../lib/i18n"
+import { useT, t as translate, uiDateLocale } from "../../lib/i18n"
 import { cn } from "../../lib/utils"
 import { Button } from "../../components/ui/button"
 import { billHtml, printThermal, type BillData } from "../../lib/thermal"
+
 
 export type ListState = "open" | "sent" | "paid" | "room" | "nc" | "closed" | "cancelled"
 
@@ -144,7 +145,7 @@ const dayOf = (ts?: string | null) => (ts ? ts.slice(0, 10) : "")
 export function shortDay(d: string) {
   if (!d) return ""
   const dt = new Date(`${d}T00:00:00`)
-  return isNaN(dt.getTime()) ? d : dt.toLocaleDateString(moneyLocale(), { day: "numeric", month: "short" })
+  return isNaN(dt.getTime()) ? d : dt.toLocaleDateString(uiDateLocale(moneyLocale()), { day: "numeric", month: "short" })
 }
 
 export function useStateLabel() {
@@ -198,7 +199,7 @@ export default function PosSidePanel({
   return (
     <div className="fixed inset-0 z-50">
       <div className="absolute inset-0 bg-black/40 animate-fade-in" onClick={onClose} />
-      <aside role="dialog" aria-label={tab === "orders" ? t("Orders") : t("Guest")}
+      <aside role="dialog" aria-label={(tab === "orders" ? t("Orders") : t("Guest"))}
         className={cn(
           "absolute inset-y-0 end-0 flex flex-col border-s border-zinc-200 bg-zinc-50 shadow-2xl animate-sheet-in",
           wide
@@ -404,7 +405,7 @@ function OrdersTab({ outlet, refreshKey, onOpenBill, onHistory }: {
           </span>
         )}
       </div>
-      {err && <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">{err}</p>}
+      {err && <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">{translate(err)}</p>}
       {data === null && !err ? (
         <p className="py-6 text-center text-sm text-zinc-400">{t("Loading…")}</p>
       ) : rows.length === 0 ? (
@@ -423,7 +424,7 @@ function OrdersTab({ outlet, refreshKey, onOpenBill, onHistory }: {
                     r.stale ? "border-rose-300" : "border-zinc-200")}>
                   <div className="flex items-center justify-between gap-2">
                     <span className="min-w-0 truncate text-[15px] font-semibold text-zinc-800">
-                      {r.label}
+                      {translate(r.label)}
                       {r.who && r.who !== r.label && <span className="ms-1 font-normal text-zinc-500">· {r.who}</span>}
                     </span>
                     <span className={cn("shrink-0 text-sm font-semibold tabular-nums",
@@ -469,13 +470,13 @@ function OrdersTab({ outlet, refreshKey, onOpenBill, onHistory }: {
                       {!!r.carried && <span className="ms-1 text-[10px] font-semibold text-rose-600">{t("carried")}</span>}
                     </td>
                     <td className="px-3 py-2.5">
-                      <div className="font-semibold text-zinc-800">{r.label}</div>
+                      <div className="font-semibold text-zinc-800">{translate(r.label)}</div>
                       <div className="text-[11px] text-zinc-400">
-                        {r.name}{r.kot_no ? ` · KOT ${r.kot_no}` : ""}
+                        {r.name}{r.kot_no ? translate(" · KOT {v0}", { v0: String(r.kot_no) }) : ""}
                       </div>
                     </td>
                     <td className="px-3 py-2.5"><StateBadge state={r.state} /></td>
-                    <td className="px-3 py-2.5 text-zinc-600">{r.order_type || "-"}</td>
+                    <td className="px-3 py-2.5 text-zinc-600">{translate(r.order_type) || "-"}</td>
                     <td className="px-3 py-2.5 text-zinc-600">
                       {r.table_no ? t("Table {n}", { n: r.table_no })
                         : r.room_no ? t("Room {n}", { n: r.room_no }) : "-"}
@@ -488,7 +489,7 @@ function OrdersTab({ outlet, refreshKey, onOpenBill, onHistory }: {
                     <td className="px-3 py-2.5 text-end tabular-nums text-zinc-600">
                       {r.items}{r.voided > 0 ? <span className="text-rose-600"> (−{r.voided})</span> : null}
                     </td>
-                    <td className="px-3 py-2.5 text-zinc-600">{r.payment_mode || "-"}</td>
+                    <td className="px-3 py-2.5 text-zinc-600">{translate(r.payment_mode) || "-"}</td>
                   </tr>
                 ))}
               </tbody>
@@ -531,7 +532,7 @@ export function OrderView({ name, onBack, onOpenBill }: {
       <button onClick={onBack} className="inline-flex items-center gap-1 text-sm font-medium text-brand-700 hover:underline">
         <ArrowLeft className="size-4 rtl:rotate-180" />{t("All orders")}
       </button>
-      {err && <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">{err}</p>}
+      {err && <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">{translate(err)}</p>}
       {!d ? (!err && <p className="py-6 text-center text-sm text-zinc-400">{t("Loading…")}</p>) : (
         <div className="space-y-3 rounded-xl border border-zinc-200 bg-white p-3">
           <div className="flex items-start justify-between gap-2">
@@ -660,11 +661,11 @@ function GuestTab({ outlet, order, draft, refreshKey, onDraftGuest, onChanged }:
     finally { setBusy(false) }
   }
 
-  if (!data) return <p className="py-6 text-center text-sm text-zinc-400">{err || t("Loading…")}</p>
+  if (!data) return <p className="py-6 text-center text-sm text-zinc-400">{translate(err) || t("Loading…")}</p>
   const g = data.guest
   return (
     <div className="space-y-3">
-      {err && <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">{err}</p>}
+      {err && <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">{translate(err)}</p>}
 
       {data.kind === "in_house" && data.stay && (
         <div className="rounded-xl border border-violet-200 bg-violet-50 p-3">
@@ -731,7 +732,7 @@ function GuestTab({ outlet, order, draft, refreshKey, onDraftGuest, onChanged }:
                 {data.history.orders.map((o) => (
                   <li key={o.name} className="rounded-lg bg-zinc-50 px-2 py-1.5 text-xs">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="font-medium text-zinc-700">{shortDay(dayOf(o.time))} · {o.label}</span>
+                      <span className="font-medium text-zinc-700">{shortDay(dayOf(o.time))} · {translate(o.label)}</span>
                       <span className="flex items-center gap-1.5">
                         <StateBadge state={o.state} />
                         <span className="font-semibold tabular-nums">{cur()}{money(o.amount)}</span>

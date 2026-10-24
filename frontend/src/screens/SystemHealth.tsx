@@ -10,9 +10,10 @@ import {
 } from "lucide-react"
 import { call } from "../lib/api"
 import { serverError } from "../lib/resource"
-import { useT } from "../lib/i18n"
+import { useT, t as translate } from "../lib/i18n"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
+
 
 type CheckStatus = "passed" | "attention" | "failed" | "info"
 
@@ -138,7 +139,7 @@ export default function SystemHealth() {
 
       {error && (
         <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
-          {error}
+          {translate(error)}
         </p>
       )}
 

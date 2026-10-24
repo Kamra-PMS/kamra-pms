@@ -112,7 +112,7 @@ def setup_checklist(property: str) -> dict:
 	if "fnb" in mods:
 		add("outlets", _("Restaurant outlets"), n("POS Outlet") > 0,
 		    _("Each place that sells food or drink."), "/outlets", "fnb")
-		add("menu", _("Menu"), n("Menu Item") > 0, _("Dishes and prices per outlet."), "/menu", "fnb")
+		add("menu", _("Menu"), n("Menu Item") > 0, _("Dishes and prices per outlet."), "/menu-items", "fnb")
 		add("printers", _("Kitchen printers"), n("Kitchen Printer") > 0,
 		    _("Which station prints which tickets, and where bills print."), "/printers", "fnb")
 	if "finance" in mods or "fnb" in mods:

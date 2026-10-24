@@ -9,6 +9,7 @@ import LinkedRecords from "./LinkedRecords"
 import { Badge } from "./ui/badge"
 import { Button } from "./ui/button"
 import { cur, moneyLocale } from "../lib/money"
+import { t as translate, useUILanguage } from "../lib/i18n"
 
 /** Group Rooms Control - the MICE cockpit for one piece of business:
  *  the room block (with pickup progress), the rooming list, the tied
@@ -76,6 +77,7 @@ export default function GroupControl({
   row: Row
   reload: () => void
 }) {
+  useUILanguage()
   const name = String(row.name)
   const [d, setD] = useState<Detail | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -143,7 +145,7 @@ export default function GroupControl({
   if (!d)
     return (
       <p className="py-8 text-center text-sm text-zinc-400">
-        {error ?? "Loading group…"}
+        {translate(error) ?? translate("Loading group…")}
       </p>
     )
 
@@ -158,19 +160,15 @@ export default function GroupControl({
             {g.company && <> · {g.company}</>}
           </div>
         </div>
-        <Badge tone={STATUS_TONE[g.status] ?? "zinc"}>{g.status}</Badge>
+        <Badge tone={STATUS_TONE[g.status] ?? "zinc"}>{translate(g.status)}</Badge>
         {g.status === "Open" && (
-          <Button disabled={busy} onClick={() => saveBlocks("Confirmed")}>
-            Confirm block
-          </Button>
+          <Button disabled={busy} onClick={() => saveBlocks("Confirmed")}>{translate("Confirm block")}</Button>
         )}
         {d.master_folio ? (
           <Link
             to={`/billing/${encodeURIComponent(d.master_folio)}`}
             className="text-sm font-medium text-brand-700 hover:underline"
-          >
-            Group folio →
-          </Link>
+          >{translate("Group folio →")}</Link>
         ) : (
           <Button
             variant="outline"
@@ -180,9 +178,7 @@ export default function GroupControl({
                 call("kamra.api.group_master_folio", { group_booking: name }),
               )
             }
-          >
-            Open group folio
-          </Button>
+          >{translate("Open group folio")}</Button>
         )}
       </div>
 
@@ -190,24 +186,20 @@ export default function GroupControl({
 
       {error && (
         <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-          {error}
+          {translate(error)}
         </div>
       )}
 
       {/* block editor + pickup */}
       <div>
         <div className="mb-2 flex items-center justify-between">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
-            Room block
-          </h3>
-          <label className="flex items-center gap-2 text-xs text-zinc-500">
-            Cutoff
-            <input
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">{translate("Room block")}</h3>
+          <label className="flex items-center gap-2 text-xs text-zinc-500">{translate("Cutoff")}<input
               type="date"
               className="rounded-lg border border-zinc-300 px-2 py-1 text-xs"
               value={cutoff}
               onChange={(e) => setCutoff(e.target.value)}
-              title="Unsold blocked rooms release back to sale after this date"
+              title={translate("Unsold blocked rooms release back to sale after this date")}
             />
           </label>
         </div>
@@ -230,7 +222,7 @@ export default function GroupControl({
                     )
                   }
                 >
-                  <option value="">Room type…</option>
+                  <option value="">{translate("Room type…")}</option>
                   {roomTypes.map((rt) => (
                     <option key={rt} value={rt}>
                       {short(rt)}
@@ -240,7 +232,7 @@ export default function GroupControl({
                 <input
                   type="number"
                   className="w-20 rounded-lg border border-zinc-300 px-2 py-1.5 text-sm"
-                  placeholder="Rooms"
+                  placeholder={translate("Rooms")}
                   value={b.rooms_blocked}
                   onChange={(e) =>
                     setBlocks((bs) =>
@@ -253,7 +245,7 @@ export default function GroupControl({
                 <input
                   type="number"
                   className="w-28 rounded-lg border border-zinc-300 px-2 py-1.5 text-sm"
-                  placeholder={`${cur()}/night`}
+                  placeholder={translate("{v0}/night", { v0: String(cur()) })}
                   value={b.block_rate}
                   onChange={(e) =>
                     setBlocks((bs) =>
@@ -272,13 +264,11 @@ export default function GroupControl({
                       />
                     </div>
                     <span className="whitespace-nowrap text-xs text-zinc-500">
-                      {p.picked_up}/{p.rooms_blocked} picked · {p.remaining}{" "}
-                      left
-                    </span>
+                      {p.picked_up}/{p.rooms_blocked}{translate(" picked · ")}{p.remaining}{" "}{translate("left")}</span>
                   </div>
                 )}
                 <button
-                  aria-label="Remove block row"
+                  aria-label={translate("Remove block row")}
                   onClick={() =>
                     setBlocks((bs) => bs.filter((_, j) => j !== i))
                   }
@@ -300,20 +290,15 @@ export default function GroupControl({
               ])
             }
           >
-            <Plus className="size-4" /> Add room type
-          </Button>
-          <Button variant="outline" disabled={busy} onClick={() => saveBlocks()}>
-            Save block
-          </Button>
+            <Plus className="size-4" />{translate(" Add room type")}</Button>
+          <Button variant="outline" disabled={busy} onClick={() => saveBlocks()}>{translate("Save block")}</Button>
         </div>
       </div>
 
       {/* pickup a guest */}
       {g.status === "Confirmed" && d.pickup.some((p) => p.remaining > 0) && (
         <div>
-          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-zinc-500">
-            Pick up a room
-          </h3>
+          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-zinc-500">{translate("Pick up a room")}</h3>
           <div className="flex flex-wrap items-center gap-2">
             <select
               className="rounded-lg border border-zinc-300 px-2 py-1.5 text-sm"
@@ -324,19 +309,18 @@ export default function GroupControl({
                 .filter((p) => p.remaining > 0)
                 .map((p) => (
                   <option key={p.room_type} value={p.room_type}>
-                    {short(p.room_type)} ({p.remaining} left)
-                  </option>
+                    {short(p.room_type)} ({p.remaining}{translate(" left)")}</option>
                 ))}
             </select>
             <input
               className="min-w-40 flex-1 rounded-lg border border-zinc-300 px-3 py-1.5 text-sm"
-              placeholder="Guest name"
+              placeholder={translate("Guest name")}
               value={pick.guest_name}
               onChange={(e) => setPick({ ...pick, guest_name: e.target.value })}
             />
             <input
               className="w-36 rounded-lg border border-zinc-300 px-3 py-1.5 text-sm"
-              placeholder="Phone"
+              placeholder={translate("Phone")}
               value={pick.phone}
               onChange={(e) => setPick({ ...pick, phone: e.target.value })}
             />
@@ -353,9 +337,7 @@ export default function GroupControl({
                   setPick((pk) => ({ ...pk, guest_name: "", phone: "" }))
                 })
               }
-            >
-              Pick up
-            </Button>
+            >{translate("Pick up")}</Button>
           </div>
         </div>
       )}
@@ -363,28 +345,23 @@ export default function GroupControl({
       {/* event */}
       {d.event && (
         <div className="rounded-lg bg-zinc-50 px-4 py-2.5 text-sm">
-          <span className="font-medium">{d.event.event_type}</span>
+          <span className="font-medium">{translate(d.event.event_type)}</span>
           <span className="text-zinc-500">
-            {" "}
-            at {short(d.event.venue)} · {d.event.event_date} ·{" "}
-            {d.event.attendees} pax
-            {d.event.quoted_amount ? ` · ${inr(d.event.quoted_amount)}` : ""} ·{" "}
+            {" "}{translate("at ")}{short(d.event.venue)} · {d.event.event_date} ·{" "}
+            {d.event.attendees}{translate(" pax")}{d.event.quoted_amount ? ` · ${inr(d.event.quoted_amount)}` : ""} ·{" "}
           </span>
           <Badge tone={d.event.status === "Confirmed" ? "green" : "amber"}>
-            {d.event.status}
+            {translate(d.event.status)}
           </Badge>
         </div>
       )}
 
       {/* rooming list */}
       <div>
-        <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-zinc-500">
-          Rooming list ({d.rooming_list.length})
+        <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-zinc-500">{translate("Rooming list (")}{d.rooming_list.length})
         </h3>
         {d.rooming_list.length === 0 ? (
-          <p className="text-sm text-zinc-400">
-            No guests named into the block yet.
-          </p>
+          <p className="text-sm text-zinc-400">{translate("No guests named into the block yet.")}</p>
         ) : (
           <table className="w-full text-sm">
             <tbody className="divide-y divide-zinc-100">
@@ -393,7 +370,7 @@ export default function GroupControl({
                   <td className="py-1.5 pr-3 font-medium">{r.guest_name}</td>
                   <td className="py-1.5 pr-3 text-zinc-500">
                     {short(r.room_type)}
-                    {r.room ? ` · Room ${short(r.room)}` : ""}
+                    {r.room ? translate(" · Room {v0}", { v0: String(short(r.room)) }) : ""}
                   </td>
                   <td className="py-1.5 pr-3">
                     <Badge
@@ -405,7 +382,7 @@ export default function GroupControl({
                             : "zinc"
                       }
                     >
-                      {r.status}
+                      {translate(r.status)}
                     </Badge>
                   </td>
                   <td className="py-1.5 text-right text-xs text-zinc-400">

@@ -3,6 +3,7 @@ import { Link } from "react-router-dom"
 import { ArrowUpRight, ArrowDownRight } from "lucide-react"
 import { cn } from "../../lib/utils"
 import { Sparkline } from "./sparkline"
+import { t as translate, useUILanguage } from "../../lib/i18n"
 
 /**
  * One headline metric in the front-desk KPI strip: a soft-green icon chip,
@@ -41,6 +42,7 @@ export function StatCard({
   to?: string
   className?: string
 }) {
+  useUILanguage()
   const down = delta?.dir === "down"
   const inner = (
     <>
@@ -49,7 +51,7 @@ export function StatCard({
           {icon}
         </span>
         <span className="truncate text-[13px] font-medium text-zinc-500">
-          {label}
+          {translate(label)}
         </span>
       </div>
       <div className="mt-2.5 flex flex-wrap items-end justify-between gap-x-2 gap-y-1.5">
@@ -71,7 +73,7 @@ export function StatCard({
       </div>
       {/* the chart drops under the number when the card is too narrow for both, never over it */}
       {/* full card width, so it never wraps into a thin column beside the chart */}
-      {sub ? <div className="mt-1 text-xs text-zinc-400">{sub}</div> : null}
+      {sub ? <div className="mt-1 text-xs text-zinc-400">{translate(sub)}</div> : null}
 
       {progress !== undefined ? (
         <div className="mt-3">

@@ -11,8 +11,9 @@ import { Button } from "./ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
 import { serverError } from "../lib/resource"
 import { cur, moneyLocale } from "../lib/money"
-import { useT } from "../lib/i18n"
+import { useT, t as translate } from "../lib/i18n"
 import { useAuth } from "../lib/auth"
+
 
 // kamra.booking_requests.booking_requests: Front Desk, plus the admins
 const INBOX_ROLES = ["Front Desk", "Hotel Admin", "System Manager", "Administrator", "Kamra Agent"]
@@ -119,7 +120,7 @@ export default function BookingRequests({
         </p>
         {error && (
           <p className="mb-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs text-rose-700">
-            {error}
+            {translate(error)}
           </p>
         )}
         {notice && (
@@ -142,7 +143,7 @@ export default function BookingRequests({
                         {t("{n} free now", { n: r.rooms_free })}
                       </Badge>
                     ) : (
-                      <Badge tone="rose" title={r.blocker ?? undefined}>
+                      <Badge tone="rose" title={translate(r.blocker ?? undefined)}>
                         {t("Sold out")}
                       </Badge>
                     )}
@@ -151,7 +152,7 @@ export default function BookingRequests({
                     {r.room_type_name} · {r.check_in_date} → {r.check_out_date} ·{" "}
                     {t("{n} night{s}", { n: r.nights, s: r.nights === 1 ? "" : "s" })} ·{" "}
                     {t("{n} ad", { n: r.adults })}
-                    {r.children ? ` + ${r.children} ch` : ""}
+                    {r.children ? translate(" + {v0} ch", { v0: String(r.children) }) : ""}
                     {Number(r.amount_after_tax) > 0 &&
                       ` · ${cur()}${money0(Number(r.amount_after_tax))}`}
                   </div>
@@ -167,7 +168,7 @@ export default function BookingRequests({
                 <div className="flex shrink-0 gap-1.5">
                   <Button
                     disabled={busy === r.name || !r.can_accept}
-                    title={r.can_accept ? undefined : r.blocker ?? undefined}
+                    title={translate(r.can_accept ? undefined : r.blocker ?? undefined)}
                     onClick={() =>
                       run(
                         r.name,

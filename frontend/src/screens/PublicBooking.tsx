@@ -21,10 +21,13 @@ import { Sheet } from "../components/ui/sheet"
 import { cur, moneyLocale, adoptUiLocale } from "../lib/money"
 import { formatPhoneDisplay, formatPhoneTel } from "../lib/phone"
 import { petChargeBasis } from "../lib/pets"
+import { useT, t as translate } from "../lib/i18n"
+import { adoptBrowserLanguage } from "../lib/dir"
 import ChildAges, {
   agesToSend, canReserve, sizeAges, StayNotice,
   type ChildAge, type StayFit,
 } from "../components/ChildAges"
+
 
 const inr = (n: number) =>
   n.toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
@@ -192,9 +195,10 @@ function PropertyChooser({
   stayPath: string
   query: string
 }) {
+  const { t } = useT()
   useEffect(() => {
-    document.title = "Places to stay - book direct"
-  }, [])
+    document.title = t("Places to stay - book direct")
+  }, [t])
   const linkFor = (slug: string) => {
     const qs = new URLSearchParams(query)
     qs.set("property", slug)
@@ -204,10 +208,10 @@ function PropertyChooser({
     <div className="min-h-screen bg-zinc-50">
       <div className="mx-auto max-w-5xl px-5 py-10 sm:py-14">
         <h1 className="text-3xl font-semibold tracking-tight text-zinc-900">
-          Places to stay
+          {t("Places to stay")}
         </h1>
         <p className="mt-1.5 text-sm text-zinc-500">
-          Pick a property to see its rooms, prices and availability.
+          {t("Pick a property to see its rooms, prices and availability.")}
         </p>
         <div className="mt-8 grid gap-6 sm:grid-cols-2">
           {properties.map((p) => (
@@ -242,7 +246,7 @@ function PropertyChooser({
                   </h2>
                   {p.property_kind && (
                     <Badge tone="zinc">
-                      {p.property_kind === "Short Term Rental" ? "Villa / home" : p.property_kind}
+                      {p.property_kind === "Short Term Rental" ? t("Villa / home") : p.property_kind}
                     </Badge>
                   )}
                 </div>
@@ -259,18 +263,18 @@ function PropertyChooser({
                   <p className="text-sm text-zinc-600">
                     {p.from_rate > 0 ? (
                       <>
-                        <span className="text-zinc-500">from </span>
+                        <span className="text-zinc-500">{t("from")}{" "}</span>
                         <span className="text-lg font-semibold text-zinc-900">
                           {cur()}
                           {inr(p.from_rate)}
                         </span>
-                        <span className="text-zinc-500"> / night</span>
+                        <span className="text-zinc-500"> / {t("night")}</span>
                       </>
                     ) : (
-                      <span className="text-zinc-500">See rooms and prices</span>
+                      <span className="text-zinc-500">{t("See rooms and prices")}</span>
                     )}
                   </p>
-                  <p className="text-sm font-medium text-brand-700">View & book →</p>
+                  <p className="text-sm font-medium text-brand-700">{t("View & book →")}</p>
                 </div>
               </div>
             </Link>
@@ -282,6 +286,8 @@ function PropertyChooser({
 }
 
 export default function PublicBooking() {
+  const { t, tn } = useT()
+  useEffect(() => adoptBrowserLanguage(), [])
   const params = useParams()
   const navigate = useNavigate()
   const location = useLocation()
@@ -424,12 +430,16 @@ export default function PublicBooking() {
     if (!data) return
     const p = data.property
     const minPrice = Math.min(...data.room_types.map((r) => r.base_price))
-    document.title = p.meta_title || `${p.property_name}, ${p.city} - book direct from ${cur()}${inr(minPrice)}/night`
+    document.title = p.meta_title || t("{property} in {city} · book direct from {price} per night", {
+      property: p.property_name, city: p.city, price: `${cur()}${inr(minPrice)}`,
+    })
     setMetaTag(
       "description",
       p.meta_description ||
-        (`${p.property_name} in ${p.city}: ${data.room_types.length} room types from ${cur()}${inr(minPrice)}/night. ` +
-          `Best-rate direct booking, pay at hotel. ${p.description ?? ""}`).slice(0, 158),
+        t("{property} in {city}: {count} room types from {price} per night. Best-rate direct booking, pay at hotel. {description}", {
+          property: p.property_name, city: p.city, count: data.room_types.length,
+          price: `${cur()}${inr(minPrice)}`, description: p.description ?? "",
+        }).slice(0, 158),
     )
     if (p.og_image) {
       setMetaTag("og:image", p.og_image)
@@ -490,7 +500,7 @@ export default function PublicBooking() {
       document.head.appendChild(script)
     }
     script.textContent = JSON.stringify(jsonld)
-  }, [data])
+  }, [data, t])
 
   useEffect(() => {
     if (!property || catalogMode === "sites") return
@@ -569,7 +579,7 @@ export default function PublicBooking() {
   if (!data)
     return (
       <p className="py-20 text-center text-zinc-400">
-        {error ?? "Loading…"}
+        {translate(error) ?? t("Loading…")}
       </p>
     )
 
@@ -578,12 +588,12 @@ export default function PublicBooking() {
   const isStr = p.property_kind === "Short Term Rental"
   const bookCta =
     p.booking_mode === "Request to Book"
-      ? "Request to book"
+      ? t("Request to book")
       : p.payment_mode === "Full online"
-        ? "Confirm & pay"
+        ? t("Confirm & pay")
         : isStr
-          ? "Book this listing"
-          : "Book now"
+          ? t("Book this listing")
+          : t("Book now")
   const locations = data.locations?.length
     ? data.locations
     : [{ name: p.property_name, address: p.address_line, google_maps_url: null,
@@ -632,7 +642,7 @@ export default function PublicBooking() {
             {p.logo_url ? (
               <img
                 src={p.logo_url}
-                alt={`${p.property_name} logo`}
+                alt={t("{property} logo", { property: p.property_name })}
                 className="size-full object-contain p-1"
               />
             ) : (
@@ -655,7 +665,7 @@ export default function PublicBooking() {
             )}
             <span className="inline-flex items-center gap-1 text-white/80">
               <MapPin className="size-3.5" aria-hidden />
-              {p.city}, {p.state}
+              {p.city}, {translate(p.state)}
             </span>
           </div>
           <h1 className="text-3xl font-semibold tracking-tight">
@@ -669,7 +679,7 @@ export default function PublicBooking() {
                 rel="noreferrer"
                 className="inline-flex items-center gap-1 text-white/90 underline-offset-2 hover:underline"
               >
-                Google Reviews <ExternalLink className="size-3.5" aria-hidden />
+                {t("Google Reviews")} <ExternalLink className="size-3.5" aria-hidden />
               </a>
             )}
             {p.tripadvisor_url && (
@@ -679,7 +689,7 @@ export default function PublicBooking() {
                 rel="noreferrer"
                 className="inline-flex items-center gap-1 text-white/90 underline-offset-2 hover:underline"
               >
-                TripAdvisor <ExternalLink className="size-3.5" aria-hidden />
+                {t("TripAdvisor")} <ExternalLink className="size-3.5" aria-hidden />
               </a>
             )}
             {p.phone && (
@@ -701,7 +711,7 @@ export default function PublicBooking() {
         <div className="relative z-10 -mt-6 mb-8 rounded-xl border border-zinc-200 bg-white p-4 shadow-lg">
           <div className={`grid gap-3 ${p.pets_allowed ? "sm:grid-cols-5" : "sm:grid-cols-4"}`}>
             <label className="block">
-              <span className="mb-1 block text-xs font-medium text-zinc-500">Check-in</span>
+              <span className="mb-1 block text-xs font-medium text-zinc-500">{t("Check-in")}</span>
               <input
                 type="date"
                 className={inputCls}
@@ -720,7 +730,7 @@ export default function PublicBooking() {
               />
             </label>
             <label className="block">
-              <span className="mb-1 block text-xs font-medium text-zinc-500">Check-out</span>
+              <span className="mb-1 block text-xs font-medium text-zinc-500">{t("Check-out")}</span>
               <input
                 type="date"
                 className={inputCls}
@@ -732,7 +742,7 @@ export default function PublicBooking() {
               />
             </label>
             <label className="block">
-              <span className="mb-1 block text-xs font-medium text-zinc-500">Adults</span>
+              <span className="mb-1 block text-xs font-medium text-zinc-500">{t("Adults")}</span>
               <input
                 type="number"
                 min={1}
@@ -748,12 +758,12 @@ export default function PublicBooking() {
               />
               {maxAdults > 0 && search.adults >= maxAdults && (
                 <span className="mt-1 block text-xs text-rose-600">
-                  Sleeps up to {maxAdults}
+                  {t("Sleeps up to {n}", { n: maxAdults })}
                 </span>
               )}
             </label>
             <label className="block">
-              <span className="mb-1 block text-xs font-medium text-zinc-500">Children</span>
+              <span className="mb-1 block text-xs font-medium text-zinc-500">{t("Children")}</span>
               <input
                 type="number"
                 min={0}
@@ -769,13 +779,13 @@ export default function PublicBooking() {
               />
               {maxChildren > 0 && search.children >= maxChildren && (
                 <span className="mt-1 block text-xs text-rose-600">
-                  Up to {maxChildren} children
+                  {t("Up to {n} children", { n: maxChildren })}
                 </span>
               )}
             </label>
             {!!p.pets_allowed && (
               <label className="block">
-                <span className="mb-1 block text-xs font-medium text-zinc-500">Pets</span>
+                <span className="mb-1 block text-xs font-medium text-zinc-500">{t("Pets")}</span>
                 <input
                   type="number"
                   min={0}
@@ -791,7 +801,7 @@ export default function PublicBooking() {
                 {(p.pet_charge || 0) > 0 && (
                   <span className="mt-1 block text-xs text-zinc-500">
                     {cur()}
-                    {inr(p.pet_charge || 0)} {petChargeBasis(p.pet_charge_basis)}
+                    {inr(p.pet_charge || 0)} {petChargeBasis(p.pet_charge_basis, t)}
                   </span>
                 )}
               </label>
@@ -801,9 +811,8 @@ export default function PublicBooking() {
             <ChildAges ages={childAges} onChange={setChildAges} selectCls={inputCls} />
           </div>
           <p className="mt-1.5 text-xs text-zinc-400">
-            {nightsBetween(search.check_in_date, search.check_out_date)} night
-            {nightsBetween(search.check_in_date, search.check_out_date) === 1 ? "" : "s"}
-            {minNights > 1 ? ` · ${minNights}-night minimum` : ""}
+            {tn(nightsBetween(search.check_in_date, search.check_out_date), "{n} night", "{n} nights")}
+            {minNights > 1 ? ` · ${t("{n}-night minimum", { n: minNights })}` : ""}
           </p>
           <Button
             className="mt-3 w-full justify-center gap-2 py-2.5 text-base"
@@ -815,7 +824,7 @@ export default function PublicBooking() {
             }}
           >
             <Search className="size-4" aria-hidden />
-            Check availability
+            {t("Check availability")}
           </Button>
         </div>
 
@@ -829,20 +838,20 @@ export default function PublicBooking() {
             <Badge key={a} tone="zinc">{a}</Badge>
           ))}
           <Badge tone="brand">
-            Check-in {p.checkin_time.slice(0, 5)} · Check-out {p.checkout_time.slice(0, 5)}
+            {t("Check-in")} {p.checkin_time.slice(0, 5)} · {t("Check-out")} {p.checkout_time.slice(0, 5)}
           </Badge>
         </div>
 
         {p.gallery && p.gallery.length > 0 && (
           <div className="mb-8">
-            <h2 className="mb-3 text-lg font-semibold text-zinc-800">Photo Gallery</h2>
+            <h2 className="mb-3 text-lg font-semibold text-zinc-800">{t("Photo Gallery")}</h2>
             <div className="flex gap-3 overflow-x-auto pb-3 scrollbar-thin">
               {p.gallery.map((img: any, i: number) => (
                 <div key={i} className="relative h-40 w-64 shrink-0 rounded-xl overflow-hidden shadow-sm border border-zinc-200 bg-zinc-100">
-                  <img src={img.url} alt={img.caption || ""} className="size-full object-cover" />
+                  <img src={img.url} alt={translate(img.caption || "")} className="size-full object-cover" />
                   {img.caption && (
                     <div className="absolute inset-x-0 bottom-0 bg-black/60 px-3 py-1 text-center text-xs text-white truncate">
-                      {img.caption}
+                      {translate(img.caption)}
                     </div>
                   )}
                 </div>
@@ -855,10 +864,10 @@ export default function PublicBooking() {
           <div id="stay-results" className="mb-10">
             <div className="mb-5">
               <h2 className="text-2xl font-semibold tracking-tight text-zinc-900">
-                Places to stay
+                {t("Places to stay")}
               </h2>
               <p className="mt-1 text-sm text-zinc-500">
-                Pick a villa, then choose a room or the whole house.
+                {t("Pick a villa, then choose a room or the whole house.")}
               </p>
             </div>
             <div className="grid gap-6 sm:grid-cols-2">
@@ -911,10 +920,10 @@ export default function PublicBooking() {
                             {cur()}
                             {inr(site.from_rate)}
                           </span>
-                          <span className="text-zinc-500"> / night</span>
+                          <span className="text-zinc-500"> / {t("night")}</span>
                         </p>
                         <p className="text-sm font-medium text-brand-700">
-                          {count} listing{count === 1 ? "" : "s"} →
+                          {tn(count, "{n} listing", "{n} listings")} →
                         </p>
                       </div>
                     </div>
@@ -939,7 +948,7 @@ export default function PublicBooking() {
                       {rt.media[0] ? (
                         <img
                           src={rt.media[0].url}
-                          alt={rt.media[0].caption ?? rt.room_type_name}
+                          alt={translate(rt.media[0].caption ?? rt.room_type_name)}
                           className="h-52 w-full object-cover sm:h-full"
                           loading="lazy"
                         />
@@ -950,7 +959,7 @@ export default function PublicBooking() {
                       )}
                       {rt.media.length > 1 && (
                         <span className="absolute bottom-2 right-2 rounded-md bg-black/70 px-2 py-0.5 text-xs text-white">
-                          {rt.media.length} photos
+                          {tn(rt.media.length, "{n} photo", "{n} photos")}
                         </span>
                       )}
                     </div>
@@ -958,11 +967,11 @@ export default function PublicBooking() {
                       <div>
                         <div className="flex flex-wrap items-center gap-2">
                           <h2 className="text-lg font-semibold">{rt.room_type_name}</h2>
-                          {rt.bed_type && <Badge tone="zinc">{rt.bed_type} bed</Badge>}
+                          {rt.bed_type && <Badge tone="zinc">{t("{type} bed", { type: rt.bed_type })}</Badge>}
                           {rt.room_view && <Badge tone="sky">{rt.room_view}</Badge>}
                           <span className="inline-flex items-center gap-1 text-xs text-zinc-500">
                             <Users className="size-3.5" aria-hidden />
-                            up to {rt.adults_capacity} adults
+                            {t("Up to {n} adults", { n: rt.adults_capacity })}
                           </span>
                         </div>
                         {locations.length > 1 && rt.location_name && (
@@ -994,53 +1003,50 @@ export default function PublicBooking() {
                                 {cur()}
                                 {inr(r.quote.amount_after_tax)}
                                 <span className="ml-1 text-sm font-normal text-zinc-500">
-                                  total · {r.quote.nights} night
-                                  {r.quote.nights === 1 ? "" : "s"}, taxes in
+                                  {tn(r.quote.nights, "Total · {n} night, taxes included", "Total · {n} nights, taxes included")}
                                 </span>
                               </p>
                               <StayNotice row={r} />
                               {(r.quote.cleaning_fee || 0) > 0 && (
                                 <p className="text-xs text-zinc-500">
-                                  Includes {cur()}
-                                  {inr(r.quote.cleaning_fee || 0)} cleaning fee
+                                  {t("Includes {amount} cleaning fee", { amount: `${cur()}${inr(r.quote.cleaning_fee || 0)}` })}
                                 </p>
                               )}
                               {(r.quote.pet_charge || 0) > 0 && (
                                 <p className="text-xs text-zinc-500">
-                                  Includes {cur()}
-                                  {inr(r.quote.pet_charge || 0)} for {search.pets} pet
-                                  {search.pets === 1 ? "" : "s"}
+                                  {tn(search.pets, "Includes {amount} for {n} pet", "Includes {amount} for {n} pets", {
+                                    amount: `${cur()}${inr(r.quote.pet_charge || 0)}`,
+                                  })}
                                 </p>
                               )}
                               {(r.quote.totals?.deposit_required || 0) > 0 && (
                                 <p className="text-xs text-zinc-500">
-                                  Refundable deposit {cur()}
-                                  {inr(r.quote.totals?.deposit_required || 0)} due
-                                  separately
+                                  {t("Refundable deposit of {amount}, payable separately", {
+                                    amount: `${cur()}${inr(r.quote.totals?.deposit_required || 0)}`,
+                                  })}
                                 </p>
                               )}
                               {(r.quote.advance_due || 0) > 0 && (
                                 <p className="text-xs font-medium text-zinc-700">
-                                  {cur()}{inr(r.quote.advance_due || 0)} due now
+                                  {t("{amount} due now", { amount: `${cur()}${inr(r.quote.advance_due || 0)}` })}
                                   {(r.quote.balance_at_hotel || 0) > 0
-                                    ? ` · ${cur()}${inr(r.quote.balance_at_hotel || 0)} at the hotel`
+                                    ? ` · ${t("{amount} payable at the hotel", { amount: `${cur()}${inr(r.quote.balance_at_hotel || 0)}` })}`
                                     : ""}
                                 </p>
                               )}
                               {r.rooms_left <= 2 && (
                                 <p className="text-xs font-medium text-rose-600">
-                                  Only {r.rooms_left} left for these dates
+                                  {tn(r.rooms_left, "Only {n} room left for these dates", "Only {n} rooms left for these dates")}
                                 </p>
                               )}
                             </>
                           ) : soldOut ? (
                             <p className="text-sm font-medium text-rose-600">
-                              Sold out for these dates
+                              {t("Sold out for these dates")}
                             </p>
                           ) : (
                             <p className="text-sm text-zinc-400">
-                              from {cur()}
-                              {inr(rt.base_price)}/night
+                              {t("From {amount} per night", { amount: `${cur()}${inr(rt.base_price)}` })}
                             </p>
                           )}
                         </div>
@@ -1051,7 +1057,7 @@ export default function PublicBooking() {
                               className="px-4 py-2.5"
                               onClick={() => navigate(`/stay/${rt.listing_slug}`)}
                             >
-                              View listing
+                              {t("View listing")}
                             </Button>
                           )}
                           <Button
@@ -1077,75 +1083,75 @@ export default function PublicBooking() {
           {/* Policies & Rules */}
           <div className="space-y-4">
             <h2 className="text-xl font-bold text-zinc-800">
-              {p.property_kind === "Short Term Rental" ? "Stay policies" : "Hotel Policies & Rules"}
+              {p.property_kind === "Short Term Rental" ? t("Stay policies") : t("Hotel Policies & Rules")}
             </h2>
             <div className="rounded-xl border border-zinc-200 bg-white p-5 space-y-4 shadow-sm text-sm">
               <div className="flex justify-between border-b border-zinc-100 pb-2">
-                <span className="font-medium text-zinc-500">Check-in</span>
-                <span className="font-semibold text-zinc-800">{p.checkin_time?.slice(0, 5)} onwards</span>
+                <span className="font-medium text-zinc-500">{t("Check-in")}</span>
+                <span className="font-semibold text-zinc-800">{t("From {time}", { time: p.checkin_time?.slice(0, 5) })}</span>
               </div>
               <div className="flex justify-between border-b border-zinc-100 pb-2">
-                <span className="font-medium text-zinc-500">Check-out</span>
-                <span className="font-semibold text-zinc-800">by {p.checkout_time?.slice(0, 5)}</span>
+                <span className="font-medium text-zinc-500">{t("Check-out")}</span>
+                <span className="font-semibold text-zinc-800">{t("By {time}", { time: p.checkout_time?.slice(0, 5) })}</span>
               </div>
               {(p.minimum_nights || 1) > 1 && (
                 <div className="flex justify-between border-b border-zinc-100 pb-2">
-                  <span className="font-medium text-zinc-500">Minimum stay</span>
-                  <span className="font-semibold text-zinc-800">{p.minimum_nights} nights</span>
+                  <span className="font-medium text-zinc-500">{t("Minimum stay")}</span>
+                  <span className="font-semibold text-zinc-800">{tn(p.minimum_nights, "{n} night", "{n} nights")}</span>
                 </div>
               )}
               {(p.cleaning_fee || 0) > 0 && (
                 <div className="flex justify-between border-b border-zinc-100 pb-2">
-                  <span className="font-medium text-zinc-500">Cleaning fee</span>
-                  <span className="font-semibold text-zinc-800">{cur()}{inr(p.cleaning_fee)} (one-time)</span>
+                  <span className="font-medium text-zinc-500">{t("Cleaning fee")}</span>
+                  <span className="font-semibold text-zinc-800">{t("{amount} (one-time)", { amount: `${cur()}${inr(p.cleaning_fee)}` })}</span>
                 </div>
               )}
               {(p.security_deposit_amount || 0) > 0 && (
                 <div className="flex justify-between border-b border-zinc-100 pb-2">
-                  <span className="font-medium text-zinc-500">Security deposit</span>
-                  <span className="font-semibold text-zinc-800">{cur()}{inr(p.security_deposit_amount)} (refundable)</span>
+                  <span className="font-medium text-zinc-500">{t("Security deposit")}</span>
+                  <span className="font-semibold text-zinc-800">{t("{amount} (refundable)", { amount: `${cur()}${inr(p.security_deposit_amount)}` })}</span>
                 </div>
               )}
               <div className="flex justify-between border-b border-zinc-100 pb-2">
-                <span className="font-medium text-zinc-500">Cancellation</span>
+                <span className="font-medium text-zinc-500">{t("Cancellation")}</span>
                 <span className="font-semibold text-zinc-800 text-right max-w-[60%]">
                   {(p.free_cancel_days || 0) > 0
-                    ? `Free up to ${p.free_cancel_days} day${p.free_cancel_days === 1 ? "" : "s"} before arrival`
-                    : "Per property policy"}
+                    ? tn(p.free_cancel_days, "Free cancellation up to {n} day before arrival", "Free cancellation up to {n} days before arrival")
+                    : t("According to the property policy")}
                   {p.cancellation_fee && p.cancellation_fee !== "None"
-                    ? ` · fee: ${p.cancellation_fee}`
+                    ? ` · ${t("fee: {amount}", { amount: p.cancellation_fee })}`
                     : ""}
                 </span>
               </div>
               {p.house_rules && (
                 <div>
-                  <span className="block font-semibold text-zinc-700 mb-1">House Rules</span>
+                  <span className="block font-semibold text-zinc-700 mb-1">{t("House Rules")}</span>
                   <p className="text-zinc-600 text-xs leading-relaxed whitespace-pre-line">{p.house_rules}</p>
                 </div>
               )}
               {p.pets_policy && (
                 <div>
-                  <span className="block font-semibold text-zinc-700 mb-1">Pets Policy</span>
+                  <span className="block font-semibold text-zinc-700 mb-1">{t("Pets Policy")}</span>
                   <p className="text-zinc-600 text-xs leading-relaxed whitespace-pre-line">{p.pets_policy}</p>
                 </div>
               )}
               {!!p.pets_allowed && (p.pet_charge || 0) > 0 && (
                 <div className="flex justify-between border-b border-zinc-100 pb-2">
-                  <span className="font-medium text-zinc-500">Pet charge</span>
+                  <span className="font-medium text-zinc-500">{t("Pet charge")}</span>
                   <span className="font-semibold text-zinc-800">
-                    {cur()}{inr(p.pet_charge || 0)} {petChargeBasis(p.pet_charge_basis)}
+                    {cur()}{inr(p.pet_charge || 0)} {petChargeBasis(p.pet_charge_basis, t)}
                   </span>
                 </div>
               )}
               {p.children_policy && (
                 <div>
-                  <span className="block font-semibold text-zinc-700 mb-1">Children & Extra Beds</span>
+                  <span className="block font-semibold text-zinc-700 mb-1">{t("Children & Extra Beds")}</span>
                   <p className="text-zinc-600 text-xs leading-relaxed whitespace-pre-line">{p.children_policy}</p>
                 </div>
               )}
               {p.extra_bed_policy && (
                 <div>
-                  <span className="block font-semibold text-zinc-700 mb-1">Extra Bed Policy</span>
+                  <span className="block font-semibold text-zinc-700 mb-1">{t("Extra Bed Policy")}</span>
                   <p className="text-zinc-600 text-xs leading-relaxed whitespace-pre-line">{p.extra_bed_policy}</p>
                 </div>
               )}
@@ -1156,7 +1162,7 @@ export default function PublicBooking() {
               spans multiple addresses, one card when it doesn't. */}
           <div className="space-y-4">
             <h2 className="text-xl font-bold text-zinc-800">
-              {locations.length > 1 ? "Our Locations" : "Location & Directions"}
+              {locations.length > 1 ? t("Our Locations") : t("Location & Directions")}
             </h2>
             <div className="space-y-4">
               {locations.map((loc, i) => (
@@ -1166,7 +1172,7 @@ export default function PublicBooking() {
                   )}
                   {loc.latitude && loc.longitude ? (
                     <iframe
-                      title={`${loc.name} map`}
+                      title={t("{name} map", { name: loc.name })}
                       width="100%"
                       height="220"
                       src={`https://maps.google.com/maps?q=${loc.latitude},${loc.longitude}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
@@ -1174,7 +1180,7 @@ export default function PublicBooking() {
                     />
                   ) : (
                     <div className="flex h-40 items-center justify-center bg-zinc-50 rounded-lg border border-zinc-200">
-                      <span className="text-sm text-zinc-400">Map location not set</span>
+                      <span className="text-sm text-zinc-400">{t("Map location not set")}</span>
                     </div>
                   )}
                   <p className="text-sm font-medium text-zinc-800 flex items-start gap-2">
@@ -1184,12 +1190,12 @@ export default function PublicBooking() {
                   {loc.google_maps_url && (
                     <a href={loc.google_maps_url} target="_blank" rel="noreferrer"
                       className="inline-flex items-center gap-1 text-xs font-medium text-brand-700 hover:underline">
-                      Open in Google Maps <ExternalLink className="size-3" />
+                      {t("Open in Google Maps")} <ExternalLink className="size-3" />
                     </a>
                   )}
                   {locations.length > 1 && loc.room_types.length > 0 && (
                     <p className="text-xs text-zinc-500 border-t border-zinc-100 pt-3">
-                      Rooms here:{" "}
+                      {t("Rooms here:")}{" "}
                       {loc.room_types
                         .map((rt) => data.room_types.find((r) => r.name === rt)?.room_type_name || rt)
                         .join(", ")}
@@ -1197,7 +1203,7 @@ export default function PublicBooking() {
                   )}
                   {locations.length <= 1 && p.driving_directions && (
                     <div className="text-xs text-zinc-600 border-t border-zinc-100 pt-3">
-                      <span className="block font-semibold text-zinc-700 mb-1">Driving Directions</span>
+                      <span className="block font-semibold text-zinc-700 mb-1">{t("Driving Directions")}</span>
                       <p className="leading-relaxed whitespace-pre-line">{p.driving_directions}</p>
                     </div>
                   )}
@@ -1209,7 +1215,7 @@ export default function PublicBooking() {
 
         {p.faqs && p.faqs.length > 0 && (
           <div className="mt-12 border-t border-zinc-200 pt-8 max-w-3xl mx-auto space-y-4">
-            <h2 className="text-xl font-bold text-zinc-800 text-center mb-6">Frequently Asked Questions</h2>
+            <h2 className="text-xl font-bold text-zinc-800 text-center mb-6">{t("Frequently Asked Questions")}</h2>
             <div className="space-y-3">
               {p.faqs.map((faq: any, i: number) => (
                 <details key={i} className="group rounded-xl border border-zinc-200 bg-white p-4 shadow-sm [&_summary::-webkit-details-marker]:hidden cursor-pointer">
@@ -1231,18 +1237,18 @@ export default function PublicBooking() {
         )}
 
         <p className="mt-10 text-center text-xs text-zinc-400">
-          Powered by Kamra - the open-source, agent-ready hotel PMS
+          {t("Powered by Kamra - the open-source, agent-ready hotel PMS")}
         </p>
       </div>
 
       {booking && (
         <Sheet
           wide
-          title={done ? (done.status === "Requested" ? "Request sent" : "Booking confirmed") : "Complete your booking"}
+          title={(done ? (done.status === "Requested" ? t("Request sent") : t("Booking confirmed")) : t("Complete your booking"))}
           description={
-            done
+            translate(done
               ? undefined
-              : `${data.room_types.find((r) => r.name === booking)?.room_type_name} · ${search.check_in_date} → ${checkOut}`
+              : `${data.room_types.find((r) => r.name === booking)?.room_type_name} · ${search.check_in_date} → ${checkOut}`)
           }
           onClose={() => {
             setBooking(null)
@@ -1251,7 +1257,7 @@ export default function PublicBooking() {
           footer={
             done ? (
               <Button className="w-full justify-center py-2.5" onClick={() => { setBooking(null); setDone(null) }}>
-                Done
+                {t("Done")}
               </Button>
             ) : (
               <div className="w-full space-y-2">
@@ -1262,7 +1268,7 @@ export default function PublicBooking() {
                   disabled={busy || !form.guest_name || !form.phone}
                   onClick={submitBooking}
                 >
-                  {busy ? "Booking…" : bookCta}
+                  {busy ? t("Booking…") : bookCta}
                 </Button>
               </div>
             )
@@ -1274,25 +1280,23 @@ export default function PublicBooking() {
                 <p className="text-lg font-semibold">{done.reservation}</p>
                 {done.advance_due > 0 ? (
                   <div className="mt-1 space-y-1 text-sm">
-                    <p>Total {cur()}{inr(done.amount)}</p>
+                    <p>{t("Total {amount}", { amount: `${cur()}${inr(done.amount)}` })}</p>
                     <p className="font-semibold">
-                      Advance due now: {cur()}{inr(done.advance_due)}
+                      {t("Advance due now: {amount}", { amount: `${cur()}${inr(done.advance_due)}` })}
                     </p>
                     {done.balance_at_hotel > 0 && (
-                      <p>Balance payable at the hotel: {cur()}{inr(done.balance_at_hotel)}</p>
+                      <p>{t("Balance payable at the hotel: {amount}", { amount: `${cur()}${inr(done.balance_at_hotel)}` })}</p>
                     )}
                     <p>
                       {done.status === "Pending Payment"
-                        ? "Your rooms are held until the advance is received. "
+                        ? `${t("Your rooms are held until the advance is received.")} `
                         : ""}
-                      We've saved your number; the front desk will reach out with
-                      payment details and before arrival.
+                      {t("We've saved your number; the front desk will reach out with payment details and before arrival.")}
                     </p>
                   </div>
                 ) : (
                   <p className="mt-1 text-sm">
-                    Total {cur()}{inr(done.amount)} - payable at the hotel. We've saved
-                    your number; the front desk will reach out before arrival.
+                    {t("Total {amount} · payable at the hotel. We've saved your number; the front desk will reach out before arrival.", { amount: `${cur()}${inr(done.amount)}` })}
                   </p>
                 )}
               </div>
@@ -1300,28 +1304,28 @@ export default function PublicBooking() {
           ) : (
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="block">
-                <span className="mb-1.5 block text-sm font-medium text-zinc-600">Full name</span>
+                <span className="mb-1.5 block text-sm font-medium text-zinc-600">{t("Full name")}</span>
                 <input className={inputCls} value={form.guest_name} autoFocus
                   onChange={(e) => setForm({ ...form, guest_name: e.target.value })} />
               </label>
               <label className="block">
-                <span className="mb-1.5 block text-sm font-medium text-zinc-600">Phone</span>
+                <span className="mb-1.5 block text-sm font-medium text-zinc-600">{t("Phone")}</span>
                 <input className={inputCls} value={form.phone} placeholder="+91 …"
                   onChange={(e) => setForm({ ...form, phone: e.target.value })} />
               </label>
               <label className="block">
-                <span className="mb-1.5 block text-sm font-medium text-zinc-600">Email (optional)</span>
+                <span className="mb-1.5 block text-sm font-medium text-zinc-600">{t("Email (optional)")}</span>
                 <input className={inputCls} type="email" value={form.email}
                   onChange={(e) => setForm({ ...form, email: e.target.value })} />
               </label>
               <label className="block">
-                <span className="mb-1.5 block text-sm font-medium text-zinc-600">Meal plan</span>
+                <span className="mb-1.5 block text-sm font-medium text-zinc-600">{t("Meal plan")}</span>
                 <select className={inputCls} value={form.meal_plan}
                   onChange={(e) => setForm({ ...form, meal_plan: e.target.value })}>
-                  <option value="">Room only</option>
+                  <option value="">{t("Room only")}</option>
                   {data.meal_plans.map((mp) => (
                     <option key={mp.name} value={mp.name}>
-                      {mp.label} (+{cur()}{inr(mp.price_per_adult)}/adult/night)
+                      {translate(mp.label)} ({t("+{amount}/adult/night", { amount: `${cur()}${inr(mp.price_per_adult)}` })})
                     </option>
                   ))}
                 </select>
@@ -1329,7 +1333,7 @@ export default function PublicBooking() {
               {data.experiences.length > 0 && (
                 <div className="block sm:col-span-2">
                   <span className="mb-1.5 block text-sm font-medium text-zinc-600">
-                    Add experiences
+                    {t("Add experiences")}
                   </span>
                   <div className="grid gap-2 sm:grid-cols-2">
                     {data.experiences.map((exp) => {
@@ -1357,7 +1361,7 @@ export default function PublicBooking() {
                               </span>
                               {exp.category && (
                                 <span className="shrink-0 rounded-full bg-zinc-100 px-1.5 py-0.5 text-[10px] text-zinc-500">
-                                  {exp.category}
+                                  {translate(exp.category)}
                                 </span>
                               )}
                             </div>
@@ -1399,7 +1403,7 @@ export default function PublicBooking() {
                                 setAddons((a) => ({ ...a, [exp.name]: 1 }))
                               }
                             >
-                              Add
+                              {t("Add")}
                             </button>
                           )}
                         </div>
@@ -1413,24 +1417,23 @@ export default function PublicBooking() {
                     )
                     return addonTotal > 0 ? (
                       <p className="mt-2 text-right text-xs text-zinc-500">
-                        Experiences: +{cur()}{inr(addonTotal)} · added to your bill at
-                        the hotel
+                        {t("Experiences: +{amount} · added to your bill at the hotel", { amount: `${cur()}${inr(addonTotal)}` })}
                       </p>
                     ) : null
                   })()}
                 </div>
               )}
               <label className="block sm:col-span-2">
-                <span className="mb-1.5 block text-sm font-medium text-zinc-600">Special requests</span>
+                <span className="mb-1.5 block text-sm font-medium text-zinc-600">{t("Special requests")}</span>
                 <textarea className={inputCls} rows={2} value={form.special_requests}
                   onChange={(e) => setForm({ ...form, special_requests: e.target.value })} />
               </label>
               <div className="block sm:col-span-2">
                 <span className="mb-1.5 block text-sm font-medium text-zinc-600">
-                  Promo code
+                  {t("Promo code")}
                 </span>
                 <div className="flex gap-2">
-                  <input className={inputCls} placeholder="Have a code?"
+                  <input className={inputCls} placeholder={t("Have a code?")}
                     value={voucher}
                     onChange={(e) => {
                       setVoucher(e.target.value)
@@ -1455,10 +1458,10 @@ export default function PublicBooking() {
                         )
                         setVoucherMsg({ ok: r.ok, text: r.message })
                       } catch {
-                        setVoucherMsg({ ok: false, text: "Couldn't check that code." })
+                        setVoucherMsg({ ok: false, text: t("Couldn't check that code.") })
                       }
                     }}>
-                    Apply
+                    {t("Apply")}
                   </button>
                 </div>
                 {voucherMsg && (
@@ -1466,7 +1469,7 @@ export default function PublicBooking() {
                     "mt-1 text-xs " +
                     (voucherMsg.ok ? "text-brand-700" : "text-rose-600")
                   }>
-                    {voucherMsg.text}
+                    {translate(voucherMsg.text)}
                   </p>
                 )}
               </div>
@@ -1474,25 +1477,25 @@ export default function PublicBooking() {
                 data.property.payment_mode !== "Pay at hotel" && (
                   <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2.5 text-sm text-zinc-600 sm:col-span-2">
                     {data.property.payment_mode === "Full online"
-                      ? "Full amount is paid online to confirm this booking."
+                      ? t("The full amount is paid online to confirm this booking.")
                       : data.property.payment_mode === "Advance percent"
-                        ? `A ${data.property.advance_percent}% advance is collected to confirm; the rest is paid at the hotel.`
-                        : `A ${cur()}${inr(data.property.registration_fee)} registration fee is collected to confirm; the rest is paid at the hotel.`}
+                        ? t("A {percent}% advance is collected to confirm; the rest is paid at the hotel.", { percent: data.property.advance_percent })
+                        : t("A registration fee of {amount} is collected to confirm; the rest is paid at the hotel.", { amount: `${cur()}${inr(data.property.registration_fee)}` })}
                   </div>
                 )}
               {(data.property.cleaning_fee || 0) > 0 && (
                 <p className="text-xs text-zinc-500 sm:col-span-2">
-                  Cleaning fee {cur()}{inr(data.property.cleaning_fee)} is included in the total.
+                  {t("Cleaning fee of {amount} is included in the total.", { amount: `${cur()}${inr(data.property.cleaning_fee)}` })}
                 </p>
               )}
               {(data.property.security_deposit_amount || 0) > 0 && (
                 <p className="text-xs text-zinc-500 sm:col-span-2">
-                  A refundable security deposit of {cur()}{inr(data.property.security_deposit_amount)} may be collected separately.
+                  {t("A refundable security deposit of {amount} may be collected separately.", { amount: `${cur()}${inr(data.property.security_deposit_amount)}` })}
                 </p>
               )}
               {error && (
                 <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700 sm:col-span-2">
-                  {error}
+                  {translate(error)}
                 </div>
               )}
             </div>

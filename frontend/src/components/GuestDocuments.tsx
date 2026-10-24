@@ -9,12 +9,13 @@ import { useEffect, useRef, useState } from "react"
 import { Camera, FileX2, ImageOff, ShieldCheck, Trash2, Upload, UserRound } from "lucide-react"
 import { guestFile, idDocumentImage, removeGuestFile, saveGuestFile, type GuestFileKind } from "../lib/api"
 import { serverError, updateResource } from "../lib/resource"
-import { useT } from "../lib/i18n"
+import { useT, t as translate } from "../lib/i18n"
 import { cn } from "../lib/utils"
 import { Badge } from "./ui/badge"
 import { Button } from "./ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
 import CameraCapture from "./CameraCapture"
+
 
 export interface GuestDocs {
   id: {
@@ -99,7 +100,7 @@ export default function GuestDocuments({ guestId, docs, onSaved }: {
       <CardHeader>
         <CardTitle>{t("Documents")}</CardTitle>
         <div className="flex flex-wrap items-center gap-1.5">
-          <Badge tone={status.tone}>{status.text}</Badge>
+          <Badge tone={status.tone}>{translate(status.text)}</Badge>
           {docs.used.count > 0 && (
             <Badge tone="brand">
               {docs.used.count === 1
@@ -175,7 +176,7 @@ export default function GuestDocuments({ guestId, docs, onSaved }: {
             {t("This property deletes ID scans at checkout and keeps only the last 4 digits. The profile keeps the type, dates and that the ID was verified. Ask for the ID again on a new stay.")}
           </p>
         )}
-        {err && <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">{err}</p>}
+        {err && <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">{translate(err)}</p>}
         <Button variant="outline" disabled={busy || !dirty} onClick={save}>
           {busy ? t("Saving…") : t("Save documents")}
         </Button>
@@ -238,15 +239,15 @@ function ImageTile({ guestId, kind, has, label, empty, facing, canStore = true, 
 
   return (
     <div className="w-44">
-      <div className="mb-1 text-xs font-medium uppercase tracking-wider text-zinc-400">{label}</div>
+      <div className="mb-1 text-xs font-medium uppercase tracking-wider text-zinc-400">{translate(label)}</div>
       {src ? (
         <button type="button" onClick={() => setBig(true)} title={t("Open full size")} className="block">
-          <img src={src} alt={label} className="h-28 w-44 rounded-lg border border-zinc-200 object-cover" />
+          <img src={src} alt={translate(label)} className="h-28 w-44 rounded-lg border border-zinc-200 object-cover" />
         </button>
       ) : (
         <div className={cn("flex h-28 w-44 flex-col items-center justify-center gap-1 rounded-lg border border-dashed text-xs",
           has ? "border-emerald-300 bg-emerald-50/50 text-emerald-700" : "border-zinc-300 bg-zinc-50 text-zinc-400")}>
-          {has ? <><ShieldCheck className="size-6" aria-hidden />{t("On file")}</> : empty}
+          {has ? <><ShieldCheck className="size-6" aria-hidden />{t("On file")}</> : translate(empty)}
         </div>
       )}
       {canStore && (
@@ -269,15 +270,15 @@ function ImageTile({ guestId, kind, has, label, empty, facing, canStore = true, 
             onChange={(e) => { pick(e.target.files?.[0]); e.target.value = "" }} />
         </div>
       )}
-      {err && <p className="mt-1 text-xs text-rose-700">{err}</p>}
+      {err && <p className="mt-1 text-xs text-rose-700">{translate(err)}</p>}
       {big && src && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 p-4" role="dialog" aria-modal="true"
-          aria-label={label} onClick={() => setBig(false)}>
-          <img src={src} alt={label} className="max-h-full max-w-full rounded-lg object-contain" />
+          aria-label={translate(label)} onClick={() => setBig(false)}>
+          <img src={src} alt={translate(label)} className="max-h-full max-w-full rounded-lg object-contain" />
         </div>
       )}
       {camera && (
-        <CameraCapture title={label} facing={facing} onUse={(d) => void save(d)} onClose={() => setCamera(false)} />
+        <CameraCapture title={translate(label)} facing={facing} onUse={(d) => void save(d)} onClose={() => setCamera(false)} />
       )}
     </div>
   )

@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from "react"
 import { Delete, X } from "lucide-react"
 import { cn } from "../lib/utils"
-import { useT } from "../lib/i18n"
+import { useT, t as translate } from "../lib/i18n"
 import { Button } from "./ui/button"
+
 
 type PinPadProps = {
   open: boolean
@@ -113,7 +114,7 @@ export function PinPad({
         </div>
 
         {error ? (
-          <p className="mb-3 text-center text-sm text-rose-600">{error}</p>
+          <p className="mb-3 text-center text-sm text-rose-600">{translate(error)}</p>
         ) : null}
 
         <div className="grid grid-cols-3 gap-2">
@@ -130,7 +131,7 @@ export function PinPad({
                   k === "⌫" ? setPin((p) => p.slice(0, -1)) : push(k)
                 }
               >
-                {k === "⌫" ? <Delete className="size-5" /> : k}
+                {k === "⌫" ? <Delete className="size-5" /> : translate(k)}
               </button>
             ),
           )}

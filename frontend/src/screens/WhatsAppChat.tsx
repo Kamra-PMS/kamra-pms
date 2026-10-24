@@ -6,7 +6,8 @@ import { serverError } from "../lib/resource"
 import { toFullPath } from "../lib/routing"
 import { Button } from "../components/ui/button"
 import { cn } from "../lib/utils"
-import { useT } from "../lib/i18n"
+import { useT, t as translate, uiDateLocale } from "../lib/i18n"
+
 
 /* The desk's WhatsApp inbox - threads on the left, the conversation on
    the right, replies into the guest's 24-hour session window. Modeled on
@@ -35,7 +36,7 @@ interface Msg {
 }
 
 const fmtTime = (d: string) =>
-  new Date(d.replace(" ", "T")).toLocaleString(undefined, {
+  new Date(d.replace(" ", "T")).toLocaleString(uiDateLocale(undefined), {
     day: "2-digit",
     month: "short",
     hour: "2-digit",
@@ -213,8 +214,7 @@ export default function WhatsAppChat() {
                           ? "text-brand-100"
                           : "text-zinc-400",
                       )}
-                    >
-                      template · {m.template_name}
+                    >{translate("template · ")}{m.template_name}
                     </p>
                   )}
                   <p className="whitespace-pre-wrap">{m.content}</p>
@@ -227,10 +227,10 @@ export default function WhatsAppChat() {
                     )}
                   >
                     {fmtTime(m.creation)}
-                    {m.direction === "Outbound" && ` · ${m.status}`}
+                    {m.direction === "Outbound" && ` · ${translate(m.status)}`}
                   </p>
                   {m.status === "Failed" && m.error && (
-                    <p className="mt-0.5 text-[11px] text-rose-200">{m.error}</p>
+                    <p className="mt-0.5 text-[11px] text-rose-200">{translate(m.error)}</p>
                   )}
                 </div>
               ))}
@@ -242,7 +242,7 @@ export default function WhatsAppChat() {
                   {t("No guest message in the last 24 hours - WhatsApp only delivers templates outside the session window. A guest writing to you reopens it.")}
                 </p>
               )}
-              {error && <p className="mb-2 text-xs text-rose-600">{error}</p>}
+              {error && <p className="mb-2 text-xs text-rose-600">{translate(error)}</p>}
               <div className="flex gap-2">
                 <input
                   className="flex-1 rounded-xl border border-zinc-300 bg-white px-3.5 py-2 text-sm focus:outline-2 focus:outline-offset-1 focus:outline-brand-600"

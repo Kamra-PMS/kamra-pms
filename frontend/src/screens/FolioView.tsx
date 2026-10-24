@@ -10,13 +10,14 @@ import { useCashierAuth } from "../lib/cashierAuth"
 import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
 import { cur, locale, moneyLocale, taxLabel, useLocale } from "../lib/money"
-import { useT } from "../lib/i18n"
+import { useT, t as translate, useUILanguage } from "../lib/i18n"
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
 } from "../components/ui/card"
+
 
 const inr = (n: unknown) =>
   Number(n ?? 0).toLocaleString(moneyLocale(), { maximumFractionDigits: 2 })
@@ -195,9 +196,10 @@ const isEmptyFolio = (s: SiblingFolio) =>
 /** One labelled fact on the printed bill - label and value stay on the
  *  same line so the header block reads as a form, not a paragraph. */
 function Fact({ label, children }: { label: string; children: React.ReactNode }) {
+  useUILanguage()
   return (
     <div className="flex gap-2">
-      <dt className="w-24 shrink-0 text-zinc-500">{label}</dt>
+      <dt className="w-24 shrink-0 text-zinc-500">{translate(label)}</dt>
       <dd className="min-w-0">{children}</dd>
     </div>
   )
@@ -234,7 +236,7 @@ function VerifyTaxId({ taxId, name }: { taxId: string; name: string }) {
         }}>
         {busy ? t("Checking…") : t("Verify")}
       </button>
-      {res && <span className={`ml-1 text-xs ${res.ok ? "text-emerald-700" : "text-red-700"}`}>{res.text}</span>}
+      {res && <span className={`ml-1 text-xs ${res.ok ? "text-emerald-700" : "text-red-700"}`}>{translate(res.text)}</span>}
     </span>
   )
 }
@@ -415,15 +417,13 @@ export default function FolioView() {
                   navigator.clipboard.writeText(r.url)
                 })
               }
-              title={`Creates a payment link for the balance and copies it - send to the ${
-                data.stay.contact_preference === "Booker" &&
+              title={translate("Creates a payment link for the balance and copies it - send to the {v0}", { v0: String(data.stay.contact_preference === "Booker" &&
                 data.stay.booked_by_name
                   ? `booker, ${data.stay.booked_by_name}${data.stay.booked_by_phone ? ` (${data.stay.booked_by_phone})` : ""}`
                   : data.stay.contact_preference === "Both" &&
                       data.stay.booked_by_name
                     ? `guest and the booker (${data.stay.booked_by_name})`
-                    : "guest"
-              }`}
+                    : "guest") })}
             >
               {t("Payment link")}
             </Button>
@@ -508,7 +508,7 @@ export default function FolioView() {
               <Button
                 variant="outline"
                 disabled={busy}
-                title="Interim invoice: freeze this paid folio and keep the stay running on a fresh one - for long stays settled every few days"
+                title={translate("Interim invoice: freeze this paid folio and keep the stay running on a fresh one - for long stays settled every few days")}
                 onClick={() =>
                   act(async () => {
                     const r = await call<{ new_folio: string }>(
@@ -602,7 +602,7 @@ export default function FolioView() {
       ) : null}
       {error && (
         <div className="mb-4 rounded-lg border border-rose-200 bg-rose-50 px-4 py-2 text-sm text-rose-700 print:hidden">
-          {error}
+          {translate(error)}
         </div>
       )}
 
@@ -618,7 +618,7 @@ export default function FolioView() {
                   : "border border-dashed border-amber-400 bg-amber-50 text-amber-700")
               }
             >
-              {doc?.title ?? (folio.invoice_number ? t("Tax Invoice") : t("Provisional Bill"))}
+              {translate(doc?.title) ?? (folio.invoice_number ? t("Tax Invoice") : t("Provisional Bill"))}
               {doc?.title_local && (
                 <>
                   <span aria-hidden className="mx-2 opacity-50">·</span>
@@ -653,7 +653,7 @@ export default function FolioView() {
                 <p className="text-sm text-zinc-500">
                   {property.gstin && (
                     <>
-                      {property.tax_id_label ?? "GSTIN"}:{" "}
+                      {property.tax_id_label ?? translate("GSTIN")}:{" "}
                       <span className="font-medium">{property.gstin}</span>{" "}
                       ·{" "}
                     </>
@@ -688,7 +688,7 @@ export default function FolioView() {
               <span className="text-zinc-500">{t("Bill to")}: </span>
               <span className="font-medium">{data.bill_to.name}</span>
               {data.bill_to.gstin && (
-                <span className="text-zinc-500"> · GSTIN {data.bill_to.gstin}</span>
+                <span className="text-zinc-500">{translate(" · GSTIN ")}{data.bill_to.gstin}</span>
               )}
               {data.bill_to.gstin && loc.integrations.verify_tax_id && (
                 <VerifyTaxId taxId={data.bill_to.gstin} name={data.bill_to.name} />
@@ -963,7 +963,7 @@ export default function FolioView() {
                           )}
                           <td className="py-2 pr-3 text-zinc-500">{c.posting_date}</td>
                           <td className="py-2 pr-3">
-                            <span className="font-medium">{c.charge_type}</span>
+                            <span className="font-medium">{translate(c.charge_type)}</span>
                             {c.description && (
                               <span className="text-zinc-500"> - {c.description}</span>
                             )}
@@ -1129,7 +1129,7 @@ export default function FolioView() {
               {data.statutory && (
                 <div className="flex items-center justify-end gap-3 pt-2">
                   <div className="text-right text-[10px] leading-tight text-zinc-400">
-                    <p>ZATCA · ICV {data.statutory.icv}</p>
+                    <p>{translate("ZATCA · ICV ")}{data.statutory.icv}</p>
                     <p className="font-mono">{data.statutory.uuid}</p>
                   </div>
                   <img
@@ -1163,7 +1163,7 @@ export default function FolioView() {
                 {folio.payments.map((p, i) => (
                   <li key={i} className="flex justify-between py-1.5">
                     <span>
-                      {p.posting_date} · {p.mode}
+                      {p.posting_date} · {translate(p.mode)}
                       {p.payment_kind && p.payment_kind !== "Payment" && (
                         <span className={"ml-1.5 rounded px-1.5 py-0.5 text-[10px] font-semibold " +
                           (p.payment_kind === "Refund" ? "bg-rose-50 text-rose-600"
@@ -1182,11 +1182,11 @@ export default function FolioView() {
               </ul>
               {refund ? (
                 <div className="mt-2 flex flex-wrap items-end gap-2 rounded-lg border border-rose-200 bg-rose-50 p-2">
-                  <input className={`${inputCls} w-24`} type="number" placeholder={cur()}
+                  <input className={`${inputCls} w-24`} type="number" placeholder={translate(cur())}
                     value={refund.amount} onChange={(e) => setRefund({ ...refund, amount: e.target.value })} />
                   <select className={inputCls} value={refund.mode}
                     onChange={(e) => setRefund({ ...refund, mode: e.target.value })}>
-                    {PAY_MODES.map((m) => <option key={m}>{m}</option>)}
+                    {PAY_MODES.map((m) => <option key={m} value={m}>{translate(m)}</option>)}
                   </select>
                   <input className={`${inputCls} flex-1`} placeholder={t("Reason (required - e.g. deposit returned)")}
                     value={refund.reason} onChange={(e) => setRefund({ ...refund, reason: e.target.value })} />
@@ -1263,7 +1263,7 @@ export default function FolioView() {
               <input
                 className={`${inputCls} w-24`}
                 type="number"
-                placeholder={`${cur()}`}
+                placeholder={translate(`${cur()}`)}
                 value={charge.amount}
                 onChange={(e) => setCharge({ ...charge, amount: e.target.value })}
               />
@@ -1334,7 +1334,7 @@ export default function FolioView() {
                   <input
                     className={`${inputCls} w-24`}
                     type="number"
-                    placeholder={`${cur()}`}
+                    placeholder={translate(`${cur()}`)}
                     value={allowance.amount}
                     onChange={(e) =>
                       setAllowance({ ...allowance, amount: e.target.value })
@@ -1410,7 +1410,7 @@ export default function FolioView() {
               <input
                 className={`${inputCls} w-28`}
                 type="number"
-                placeholder={`${cur()}`}
+                placeholder={translate(`${cur()}`)}
                 value={payment.amount}
                 onChange={(e) =>
                   setPayment({ ...payment, amount: e.target.value })

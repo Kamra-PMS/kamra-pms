@@ -1,3 +1,4 @@
+
 import { useCallback, useEffect, useState } from "react"
 import { MoonStar } from "lucide-react"
 import { useNavigate } from "react-router-dom"
@@ -7,7 +8,7 @@ import { auditHistory, type RunRow } from "../lib/eod"
 import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
 import { cur, moneyLocale } from "../lib/money"
-import { useT } from "../lib/i18n"
+import { useT, uiDateLocale } from "../lib/i18n"
 import {
   Card,
   CardContent,
@@ -20,7 +21,7 @@ const inr = (n: unknown) =>
 
 const fmtDate = (d: unknown) =>
   d
-    ? new Date(String(d) + "T00:00:00").toLocaleDateString("en-IN", {
+    ? new Date(String(d) + "T00:00:00").toLocaleDateString(uiDateLocale("en-IN"), {
         day: "2-digit",
         month: "short",
         year: "numeric",
@@ -29,7 +30,7 @@ const fmtDate = (d: unknown) =>
 const fmtWhen = (d: unknown) =>
   d
     ? new Date(String(d).replace(" ", "T").slice(0, 19)).toLocaleString(
-        "en-IN",
+        uiDateLocale("en-IN"),
         { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" },
       )
     : ""

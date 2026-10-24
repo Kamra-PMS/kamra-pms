@@ -15,7 +15,7 @@ import { call } from "../lib/api"
 import { serverError } from "../lib/resource"
 import { toFullPath } from "../lib/routing"
 import { fmtMoney } from "../lib/money"
-import { useT } from "../lib/i18n"
+import { useT, t as translateUI, useUILanguage } from "../lib/i18n"
 import { cn } from "../lib/utils"
 import { Button } from "./ui/button"
 import { Badge } from "./ui/badge"
@@ -32,6 +32,7 @@ import {
   useStepFlow,
   type FlowStep,
 } from "./StepFlow"
+
 
 /* Guided check-in: one decision per screen, in the property's order
    (Settings > Front desk > Check-in steps). Only the room hard-blocks
@@ -259,6 +260,7 @@ function Choice(props: {
   hint?: string
   disabled?: boolean
 }) {
+  useUILanguage()
   return (
     <button
       type="button"
@@ -283,17 +285,18 @@ function Choice(props: {
         {props.selected && <Check className="size-3.5" />}
       </span>
       <span>
-        <span className="block text-base font-semibold text-zinc-900">{props.title}</span>
-        {props.hint && <span className="mt-0.5 block text-sm text-zinc-500">{props.hint}</span>}
+        <span className="block text-base font-semibold text-zinc-900">{translateUI(props.title)}</span>
+        {props.hint && <span className="mt-0.5 block text-sm text-zinc-500">{translateUI(props.hint)}</span>}
       </span>
     </button>
   )
 }
 
 function Row(props: { label: string; value: React.ReactNode; strong?: boolean }) {
+  useUILanguage()
   return (
     <div className="flex items-baseline justify-between gap-3 py-1.5">
-      <dt className="text-sm text-zinc-500">{props.label}</dt>
+      <dt className="text-sm text-zinc-500">{translateUI(props.label)}</dt>
       <dd className={cn("text-end text-sm tabular-nums", props.strong && "font-semibold text-zinc-900")}>
         {props.value}
       </dd>
@@ -542,8 +545,8 @@ export default function CheckInDialog(props: {
     return (
       <Sheet
         wide
-        title={title}
-        description={description}
+        title={translateUI(title)}
+        description={translateUI(description)}
         onClose={props.onDone}
         footer={
           <div className="flex w-full flex-wrap items-center gap-2">
@@ -580,7 +583,7 @@ export default function CheckInDialog(props: {
           {(finished.keys?.message || keyMessage) && (
             <p className="flex items-start gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-700">
               <KeyRound className="mt-0.5 size-4 shrink-0 text-zinc-500" aria-hidden />
-              {finished.keys?.message || keyMessage}
+              {translateUI(finished.keys?.message || keyMessage)}
             </p>
           )}
         </div>
@@ -602,8 +605,8 @@ export default function CheckInDialog(props: {
   return (
     <Sheet
       wide
-      title={title}
-      description={description}
+      title={translateUI(title)}
+      description={translateUI(description)}
       onClose={props.onClose}
       footer={
         <StepFlowFooter
@@ -666,7 +669,7 @@ export default function CheckInDialog(props: {
           {step && (
             <header className="space-y-1">
               <h3 className="flex flex-wrap items-center gap-2 text-lg font-semibold text-zinc-900">
-                {flowSteps.find((s) => s.key === step.step_key)?.label}
+                {translateUI(flowSteps.find((s) => s.key === step.step_key)?.label)}
                 <span
                   className={cn(
                     "rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase",
@@ -740,7 +743,7 @@ export default function CheckInDialog(props: {
                   ] as const
                 ).map(([k, label, type]) => (
                   <label key={k} className="block">
-                    <span className="mb-1 block text-xs font-medium text-zinc-500">{label}</span>
+                    <span className="mb-1 block text-xs font-medium text-zinc-500">{translateUI(label)}</span>
                     <input
                       className={inputCls}
                       type={type}
@@ -855,13 +858,13 @@ export default function CheckInDialog(props: {
                       onClick={() => setPayer(p)}
                       title={t(PAYER_LABEL[p] ?? p)}
                       hint={
-                        p === "Company"
+                        translateUI(p === "Company"
                           ? flow.billing.company_name ?? undefined
                           : p === "Group"
                             ? flow.billing.group_name ?? undefined
                             : p.startsWith("OTA")
                               ? [flow.billing.channel, flow.billing.ota_ref].filter(Boolean).join(" · ") || undefined
-                              : undefined
+                              : undefined)
                       }
                     />
                   ))}
@@ -1064,7 +1067,7 @@ export default function CheckInDialog(props: {
               )}
               {keyMessage && (
                 <p className="flex items-start gap-2 text-sm text-zinc-600">
-                  <KeyRound className="mt-0.5 size-4 shrink-0" aria-hidden /> {keyMessage}
+                  <KeyRound className="mt-0.5 size-4 shrink-0" aria-hidden /> {translateUI(keyMessage)}
                 </p>
               )}
             </div>
@@ -1267,7 +1270,7 @@ function StayInfoCard({ flow }: { flow: Flow }) {
           <div key={k} className="flex items-baseline justify-between gap-3 py-2">
             <dt className="flex items-center gap-1.5 text-sm text-zinc-500">
               {k === t("Wi-Fi") && <Wifi className="size-4" aria-hidden />}
-              {k}
+              {translateUI(k)}
             </dt>
             <dd className="whitespace-pre-line text-end text-base font-medium text-zinc-900">{v}</dd>
           </div>

@@ -15,6 +15,7 @@ import { Check } from "lucide-react"
 
 import type { FunctionSheet } from "../../lib/api"
 import { inr } from "./shared"
+import { t as translate, tn, useUILanguage } from "../../lib/i18n"
 
 export type StepId =
   | "enquiry"
@@ -55,8 +56,8 @@ export function stepsFor(fn: FunctionSheet): Step[] {
       label: "Enquiry",
       state: [
         fn.venue?.split("-").pop(),
-        fn.session,
-        fn.billable_pax ? `${fn.billable_pax} pax` : null,
+        translate(fn.session),
+        fn.billable_pax ? translate("{v0} pax", { v0: String(fn.billable_pax) }) : null,
       ]
         .filter(Boolean)
         .join(" · "),
@@ -68,7 +69,7 @@ export function stepsFor(fn: FunctionSheet): Step[] {
       n: 2,
       label: "Quote",
       state: lines
-        ? `${lines} line${lines === 1 ? "" : "s"} · ${inr(fn.grand_total)}`
+        ? tn(lines, "{n} line · {amount}", "{n} lines · {amount}", { amount: inr(fn.grand_total) })
         : "Nothing priced",
       done: lines > 0,
       blocker: !lines ? "Add the menu and the extras" : undefined,
@@ -88,9 +89,9 @@ export function stepsFor(fn: FunctionSheet): Step[] {
       n: 4,
       label: "Money",
       state: collected
-        ? `${inr(fn.advance_received)} in · ${inr(fn.balance_due)} due`
+        ? translate("{v0} in · {v1} due", { v0: String(inr(fn.advance_received)), v1: String(inr(fn.balance_due)) })
         : fn.payment_terms.length
-          ? `${fn.payment_terms.length} milestones · nothing in`
+          ? translate("{v0} milestones · nothing in", { v0: String(fn.payment_terms.length) })
           : "No terms set",
       done: collected,
       blocker: !fn.payment_terms.length
@@ -104,9 +105,7 @@ export function stepsFor(fn: FunctionSheet): Step[] {
       n: 5,
       label: "Documents",
       state: quoted
-        ? `Quote v${fn.quote_version}${emailed ? " · emailed" : ""}${
-            paper ? " · event order out" : ""
-          }`
+        ? translate("Quote v{v0}{v1}{v2}", { v0: String(fn.quote_version), v1: String(emailed ? translate(" · emailed") : ""), v2: String(paper ? translate(" · event order out") : "") })
         : "Nothing issued",
       done: quoted && emailed,
       blocker: !quoted
@@ -123,7 +122,7 @@ export function stepsFor(fn: FunctionSheet): Step[] {
         ? "Closed out"
         : sold
           ? fn.pax_actual
-            ? `${fn.pax_actual} served`
+            ? translate("{v0} served", { v0: String(fn.pax_actual) })
             : "Not counted yet"
           : "After the function",
       done: closed,
@@ -141,11 +140,12 @@ export function Steps({
   current: StepId
   onPick: (id: StepId) => void
 }) {
+  useUILanguage()
   return (
     // A grid, not a scrolling strip: six steps always fit the width they're
     // given, wrapping to two or three rows on a narrow screen rather than
     // hiding the last step off the right edge.
-    <nav aria-label="Function progress">
+    <nav aria-label={translate("Function progress")}>
       <ol className="grid grid-cols-2 gap-1 sm:grid-cols-3 lg:grid-cols-6">
         {steps.map((s) => {
           const active = s.id === current
@@ -180,11 +180,11 @@ export function Steps({
                       (active ? "text-brand-800" : "text-zinc-700")
                     }
                   >
-                    {s.label}
+                    {translate(s.label)}
                   </span>
                 </span>
                 <span
-                  title={s.done ? s.state : (s.blocker ?? s.state)}
+                  title={translate(s.done ? s.state : s.blocker ?? s.state)}
                   className={
                     "line-clamp-2 pl-7 text-xs " +
                     (s.done
@@ -194,7 +194,7 @@ export function Steps({
                         : "text-zinc-400")
                   }
                 >
-                  {s.done ? s.state : (s.blocker ?? s.state)}
+                  {translate(s.done ? s.state : s.blocker ?? s.state)}
                 </span>
               </button>
             </li>
