@@ -10,7 +10,7 @@ import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { cn } from "../lib/utils"
 import { cur } from "../lib/money"
-import { useT } from "../lib/i18n"
+import { useT, t as translate, useUILanguage } from "../lib/i18n"
 import {
   ExpressToggle,
   inr,
@@ -23,6 +23,7 @@ import {
   type Rate,
   type Room,
 } from "./laundry/shared"
+
 
 /** Desktop home for the full laundry module: the operational board (pickup →
  * collect → process → deliver + cancel), the price menu (rate card) and a
@@ -328,7 +329,7 @@ export default function Laundry() {
   }) => (
     <div className="flex min-w-0 flex-col gap-3">
       <p className="px-1 text-sm font-medium text-zinc-500">
-        {title} ({orders.length})
+        {translate(title)} ({orders.length})
       </p>
       <ul className="space-y-3">
         {orders.map((o) => (
@@ -336,7 +337,7 @@ export default function Laundry() {
         ))}
         {orders.length === 0 && (
           <li className="rounded-2xl border border-dashed border-zinc-300 p-8 text-center text-sm text-zinc-400">
-            {empty}
+            {translate(empty)}
           </li>
         )}
       </ul>
@@ -409,14 +410,14 @@ export default function Laundry() {
             )}
             onClick={() => setTab(id)}
           >
-            {label}
+            {translate(label)}
           </button>
         ))}
       </div>
 
       {error && (
         <p className="rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-700">
-          {error}
+          {translate(error)}
         </p>
       )}
 
@@ -602,7 +603,7 @@ export default function Laundry() {
                         {r.item_name}
                       </p>
                       <p className="text-xs text-zinc-400">
-                        {r.service_type} · {cur()}{inr(price)}
+                        {translate(r.service_type)} · {cur()}{inr(price)}
                       </p>
                     </div>
                     <Stepper
@@ -682,7 +683,7 @@ export default function Laundry() {
                         {it.item_name}
                       </p>
                       <p className="text-xs text-zinc-400">
-                        {it.service_type} · {t("collected {n}", { n: it.qty })}
+                        {translate(it.service_type)} · {t("collected {n}", { n: it.qty })}
                       </p>
                     </div>
                     <Stepper
@@ -930,7 +931,7 @@ function PriceMenu({
       <CardContent>
         {err && (
           <p className="mb-2 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">
-            {err}
+            {translate(err)}
           </p>
         )}
         {form && (
@@ -948,7 +949,7 @@ function PriceMenu({
               onChange={(e) => setForm({ ...form, service: e.target.value })}
             >
               {LAUNDRY_SERVICES.map((s) => (
-                <option key={s}>{s}</option>
+                <option key={s} value={s}>{translate(s)}</option>
               ))}
             </select>
             <input
@@ -1001,7 +1002,7 @@ function PriceMenu({
               {rates.map((r) => (
                 <tr key={r.name} className="border-t border-zinc-100">
                   <td className="py-1.5 font-medium">{r.item_name}</td>
-                  <td className="text-zinc-500">{r.service_type}</td>
+                  <td className="text-zinc-500">{translate(r.service_type)}</td>
                   <td className="text-right tabular-nums">{cur()}{inr(r.rate)}</td>
                   <td className="text-right tabular-nums text-zinc-500">
                     {cur()}{inr(r.express_rate)}
@@ -1113,7 +1114,7 @@ function Billing({
                       key={s.service_type}
                       className="border-t border-zinc-100"
                     >
-                      <td className="py-1.5">{s.service_type}</td>
+                      <td className="py-1.5">{translate(s.service_type)}</td>
                       <td className="text-right tabular-nums">{s.pieces}</td>
                       <td className="text-right tabular-nums">
                         {cur()}{inr(s.revenue)}
@@ -1153,7 +1154,7 @@ function Billing({
                     {o.shortage_note && (
                       <span
                         className="ml-1 text-rose-500"
-                        title={o.shortage_note}
+                        title={translate(o.shortage_note)}
                       >
                         !
                       </span>
@@ -1200,9 +1201,10 @@ function Billing({
 }
 
 function Stat({ label, value }: { label: string; value: string | number }) {
+  useUILanguage()
   return (
     <div className="rounded-xl border border-zinc-200 bg-white p-3">
-      <p className="text-xs text-zinc-400">{label}</p>
+      <p className="text-xs text-zinc-400">{translate(label)}</p>
       <p className="mt-0.5 text-lg font-semibold tabular-nums">{value}</p>
     </div>
   )

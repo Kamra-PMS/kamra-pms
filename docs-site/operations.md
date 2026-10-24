@@ -89,7 +89,7 @@ category, so pick the one that matches the team that will do the work.
 
 ## Check the SLA Report
 
-**Operations → SLA Report** answers one question: are guest requests
+**Reports → SLA report** answers one question: are guest requests
 resolved inside their deadline?
 
 1. Pick the dates at the top right. The default is the last 30 days.

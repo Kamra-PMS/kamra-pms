@@ -3097,7 +3097,7 @@
         "kamra.api.check_in"
        ]
       },
-      "description": "Check the guest in: the last step of the guided check-in.\n\nRefused while a check-in step the property marks required (Settings >\nFront desk > Check-in steps) is not done for this stay - the ID, who\npays, the deposit, the registration card... - so neither the desk, the\nAPI nor an AI agent can skip them. kamra.checkin.check_in_readiness says\nwhat is missing. Records who checked the guest in and when; a connected\ndoor-lock system then makes the keys recorded in the Keys step.",
+      "description": "Check the guest in: the last step of the guided check-in.\n\nHard gate: a room must be assigned (or passed here). Soft-required\nsteps (ID, deposit, registration card, \u2026) may still be open \u2014 the desk\nis warned and finishes them later. kamra.checkin.check_in_readiness\nlists hard blockers and pending backfill. Records who checked the guest\nin and when; a connected door-lock system then makes the keys recorded\nin the Keys step.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"room\": \"Your Property-101\"\n}",
@@ -3134,7 +3134,7 @@
         "kamra.api.walk_in"
        ]
       },
-      "description": "Walk-in in one step: book, register the ID, check into the chosen\nroom and take the money - the counter flow that used to be four screens.\n\ndefer_check_in=1 books, assigns the room and takes the money (as an\nadvance) but leaves the stay Confirmed, so the desk finishes it in the\nguided check-in, where the property's required steps apply. Without it\nthe required steps are enforced here as well: the walk-in records the\nsteps it does itself (room, who pays, the ID when given) and refuses,\nrolling the booking back, if another required step is still open.\n\nIt is the same writers chained (create_booking \u2192 check_in \u2192\nadd_folio_payment), inside one request, so it is all-or-nothing: a\nrefused PIN or a room that just sold rolls the booking back too.\nArrival is always today (calendar, like every new booking - a lagging\nnight audit must not turn walk-ins away); a future stay is a normal\nbooking, not a walk-in.",
+      "description": "Walk-in in one step: book, register the ID, check into the chosen\nroom and take the money - the counter flow that used to be four screens.\n\ndefer_check_in=1 books, assigns the room and takes the money (as an\nadvance) but leaves the stay Confirmed, so the desk finishes it in the\nguided check-in. Without it, check_in runs now (room is enough; other\nsoft-required steps stay as backfill). The walk-in records the steps it\ndoes itself (room, who pays, the ID when given).\n\nIt is the same writers chained (create_booking \u2192 check_in \u2192\nadd_folio_payment), inside one request, so it is all-or-nothing: a\nrefused PIN or a room that just sold rolls the booking back too.\nArrival is always today (calendar, like every new booking - a lagging\nnight audit must not turn walk-ins away); a future stay is a normal\nbooking, not a walk-in.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\",\n  \"room_type\": \"Your Property-DLX\",\n  \"room\": \"Your Property-101\",\n  \"check_out_date\": \"2026-08-03\",\n  \"guest_name\": \"A. Guest\",\n  \"phone\": \"+91 90000 00000\",\n  \"guest\": \"G-00001\",\n  \"adults\": 2,\n  \"children\": 0,\n  \"payment_amount\": 0,\n  \"defer_check_in\": 0\n}",
@@ -11429,6 +11429,270 @@
    ]
   },
   {
+   "name": "Custom reports (builder, save, email)",
+   "item": [
+    {
+     "name": "list_report_datasets",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.custom_reports.list_report_datasets",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.custom_reports.list_report_datasets"
+       ]
+      },
+      "description": "Whitelisted datasets the current user may run on this property.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "list_custom_reports",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.custom_reports.list_custom_reports",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.custom_reports.list_custom_reports"
+       ]
+      },
+      "description": "Saved reports visible to this user on the property.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "get_custom_report",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.custom_reports.get_custom_report",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.custom_reports.get_custom_report"
+       ]
+      },
+      "description": "Full saved definition for the builder.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"name\": \"<name>\",\n  \"property\": \"Your Property\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "save_custom_report",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.custom_reports.save_custom_report",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.custom_reports.save_custom_report"
+       ]
+      },
+      "description": "Create or update a saved custom report definition.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"title\": \"<title>\",\n  \"dataset\": \"<dataset>\",\n  \"is_shared\": 0,\n  \"schedule_frequency\": \"Off\",\n  \"schedule_time\": \"07:00\",\n  \"schedule_weekday\": \"Mon\",\n  \"recipients\": \"\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "delete_custom_report",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.custom_reports.delete_custom_report",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.custom_reports.delete_custom_report"
+       ]
+      },
+      "description": "Delete a saved report the user can edit.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"name\": \"<name>\",\n  \"property\": \"Your Property\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "run_custom_report",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.custom_reports.run_custom_report",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.custom_reports.run_custom_report"
+       ]
+      },
+      "description": "Run a saved report or an ad-hoc definition. format=json|csv|html.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"from_date\": \"2026-08-01\",\n  \"to_date\": \"2026-08-31\",\n  \"format\": \"json\",\n  \"lang\": \"en\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "email_custom_report",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.custom_reports.email_custom_report",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.custom_reports.email_custom_report"
+       ]
+      },
+      "description": "Run a report and email it (CSV or HTML attachment).",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"recipients\": \"<recipients>\",\n  \"from_date\": \"2026-08-01\",\n  \"to_date\": \"2026-08-31\",\n  \"lang\": \"en\",\n  \"attach_format\": \"csv\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
    "name": "Ledgers (trial balance, city ledger / AR, FX desk)",
    "item": [
     {
@@ -13624,7 +13888,7 @@
         "kamra.checkin.check_in_readiness"
        ]
       },
-      "description": "Read-only: which check-in steps are done, which are still required,\nand whether check_in would go through now. Agents read this; they\ncannot do the desk's steps for it.",
+      "description": "Read-only: which check-in steps are done, whether check_in would go\nthrough now (room assigned), and which soft-required steps are still\nopen to finish later. Agents read this; they cannot do the desk's\nsteps for it.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"reservation\": \"RES-2026-00001\"\n}",
@@ -13698,7 +13962,7 @@
         "kamra.checkin.skip_checkin_step"
        ]
       },
-      "description": "Skip an optional step. A required one cannot be skipped.",
+      "description": "Skip a step to finish later. Only the room cannot be skipped.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"step\": \"<step>\"\n}",

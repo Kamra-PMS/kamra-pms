@@ -412,6 +412,38 @@ TOOLS: tuple[ToolSpec, ...] = (
 		required=("reservation", "new_room"),
 	),
 	_t(
+		"assign_rooms_preview",
+		"allocation.suggest_allocation",
+		"""Propose a room for every confirmed arrival on a date (default today)
+		that has none yet: a free room of the booked type, ready for the
+		guest, matched to their requests and VIP flag, with no two arrivals
+		given the same room. Lists arrivals no room can take, and why.
+		Read-only: show the plan to the user, then call assign_rooms_apply
+		with the pairs they agree to.""",
+		{"date": _p("string", format="date")},
+		property=True,
+	),
+	_t(
+		"assign_rooms_apply",
+		"allocation.apply_allocation",
+		"""Assign rooms to arrivals: assignments is a list of
+		{"reservation": id, "room": room id}, usually from
+		assign_rooms_preview after the user agreed. Each pair is checked
+		again (the stay still needs a room, the room is of the booked type
+		and still free and ready); pairs that fail are returned in skipped
+		with the reason, and nothing else is changed. Running it again with
+		the same pairs changes nothing.""",
+		{"assignments": _p("array", items={
+			"type": "object",
+			"properties": {"reservation": {"type": "string"},
+			               "room": {"type": "string"}},
+			"required": ["reservation", "room"],
+		})},
+		required=("assignments",),
+		property=True,
+		mutating=True,
+	),
+	_t(
 		"set_late_arrival",
 		"api.set_late_arrival",
 		"""Flag a confirmed arrival as arriving late (late_arrival=1), with the
@@ -1605,6 +1637,91 @@ TOOLS: tuple[ToolSpec, ...] = (
 		{"days": _p("integer")},
 		property=True,
 	),
+	_t(
+		"list_report_datasets",
+		"custom_reports.list_report_datasets",
+		"""Whitelisted custom-report datasets (arrivals, occupancy, payments,
+		etc.) with allowed columns and filter ops. Use before save_custom_report
+		or run_custom_report. Read-only.""",
+		{},
+		property=True,
+		group="Billing",
+	),
+	_t(
+		"list_custom_reports",
+		"custom_reports.list_custom_reports",
+		"""Saved custom reports for this property that the user can open.
+		Read-only.""",
+		{},
+		property=True,
+		group="Billing",
+	),
+	_t(
+		"save_custom_report",
+		"custom_reports.save_custom_report",
+		"""Create or update a saved custom report: title, dataset id, columns
+		(JSON array of field ids), filters (JSON array of
+		{field, op, value}), optional share/schedule/recipients. Pass name to
+		update. Only catalog field ids - never invent SQL.""",
+		{
+			"title": _p("string"),
+			"dataset": _p("string"),
+			"columns": _p("string"),
+			"filters": _p("string"),
+			"is_shared": _p("integer"),
+			"schedule_frequency": _p("string"),
+			"schedule_time": _p("string"),
+			"schedule_weekday": _p("string"),
+			"recipients": _p("string"),
+			"name": _p("string"),
+		},
+		required=("title", "dataset"),
+		property=True,
+		mutating=True,
+		group="Billing",
+	),
+	_t(
+		"run_custom_report",
+		"custom_reports.run_custom_report",
+		"""Run a saved custom report (name) or an ad-hoc definition (dataset +
+		columns/filters). from_date / to_date YYYY-MM-DD. format=json (default),
+		csv, or html. Prefer json for agents. Read-only.""",
+		{
+			"name": _p("string"),
+			"dataset": _p("string"),
+			"from_date": _p("string", format="date"),
+			"to_date": _p("string", format="date"),
+			"columns": _p("string"),
+			"filters": _p("string"),
+			"format": _p("string"),
+			"lang": _p("string"),
+		},
+		property=True,
+		group="Billing",
+	),
+	_t(
+		"email_custom_report",
+		"custom_reports.email_custom_report",
+		"""Run a custom report and email a CSV (or HTML) attachment to
+		comma-separated recipients. Pass name for a saved report, or dataset
+		(+ columns/filters) for ad-hoc. from_date / to_date optional (defaults
+		to yesterday).""",
+		{
+			"recipients": _p("string"),
+			"name": _p("string"),
+			"dataset": _p("string"),
+			"from_date": _p("string", format="date"),
+			"to_date": _p("string", format="date"),
+			"columns": _p("string"),
+			"filters": _p("string"),
+			"attach_format": _p("string"),
+			"lang": _p("string"),
+		},
+		required=("recipients",),
+		property=True,
+		mutating=True,
+		group="Billing",
+	),
 )
 
 BY_NAME: dict[str, ToolSpec] = {t.name: t for t in TOOLS}
@@ -1614,7 +1731,10 @@ INSTRUCTIONS = (
 	"availability are computed by the PMS, never estimate them "
 	"yourself - always quote before booking. Confirm irreversible "
 	"actions (checkout, cancelling a stay, closing a folio) with the "
-	"user first."
+	"user first. A quote's deposit_required is the refundable security "
+	"deposit, collected at check-in; it never blocks a booking. To skip "
+	"it, book first, then call waive_security_deposit with the user's "
+	"reason."
 )
 
 def input_schema(spec: ToolSpec) -> dict[str, Any]:
@@ -1624,14 +1744,52 @@ def input_schema(spec: ToolSpec) -> dict[str, Any]:
 	return schema
 
 
+# Writes that can't simply be undone: MCP clients may ask before each one
+DESTRUCTIVE = frozenset({
+	"cancel_booking", "decline_booking_request", "check_out", "void_charge",
+	"close_folio", "waive_security_deposit", "pos_cancel_order", "pos_remove_item",
+	"run_night_audit", "recover_stuck_business_date",
+})
+# Writes where the same call twice has the effect of one (idempotency keys,
+# set-to-value, once per business date)
+IDEMPOTENT = frozenset({
+	"create_booking", "add_to_waitlist", "pickup_group_room", "set_late_arrival",
+	"set_room_hk_status", "set_room_rate", "run_night_audit", "rebuild_audit_pack",
+	"assign_rooms_apply",
+})
+# Tools that reach someone outside Kamra (a message to the guest)
+OPEN_WORLD = frozenset({"send_payment_link", "send_deposit_link"})
+_TITLE_WORDS = {"hk": "HK", "pos": "POS", "kot": "KOT", "id": "ID", "ar": "AR"}
+
+
+def tool_title(name: str) -> str:
+	words = [_TITLE_WORDS.get(w, w) for w in name.split("_")]
+	first = words[0] if words[0].isupper() else words[0].capitalize()
+	return " ".join([first, *words[1:]])
+
+
+def annotations(spec: ToolSpec) -> dict[str, Any]:
+	"""MCP tool annotations, so a client can let reads run and put writes,
+	and the destructive ones above all, behind an approval."""
+	return {
+		"title": tool_title(spec.name),
+		"readOnlyHint": not spec.mutating,
+		"destructiveHint": spec.mutating and spec.name in DESTRUCTIVE,
+		"idempotentHint": (not spec.mutating) or spec.name in IDEMPOTENT,
+		"openWorldHint": spec.name in OPEN_WORLD,
+	}
+
+
 def mcp_tool_list(allowed: list[ToolSpec] | None = None) -> list[dict[str, Any]]:
 	out = []
 	for spec in allowed if allowed is not None else TOOLS:
 		out.append(
 			{
 				"name": spec.name,
+				"title": tool_title(spec.name),
 				"description": spec.description,
 				"inputSchema": input_schema(spec),
+				"annotations": annotations(spec),
 			}
 		)
 	return out

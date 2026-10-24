@@ -14,8 +14,8 @@ export interface FeatureEntry {
 }
 
 export const FEATURES: FeatureEntry[] = [
-  { label: "Close the day", to: "/end-of-day", where: "End of Day / Night Audit", keywords: ["night audit", "eod", "roll date", "business date", "3 am", "audit pack", "blockers"] },
-  { label: "Fix End of Day blockers", to: "/end-of-day", where: "End of Day / Night Audit", keywords: ["blocker", "acknowledge", "override", "cannot close", "stuck"] },
+  { label: "Close the day", to: "/end-of-day", where: "Night Audit", keywords: ["night audit", "eod", "roll date", "business date", "3 am", "audit pack", "blockers"] },
+  { label: "Fix End of Day blockers", to: "/end-of-day", where: "Night Audit", keywords: ["blocker", "acknowledge", "override", "cannot close", "stuck"] },
   { label: "Add a till or terminal", to: "/cashier/board", where: "Finance · All tills", keywords: ["cash office", "register", "pos station", "drawer", "terminal"] },
   { label: "Cash drop", to: "/cashier", where: "Finance · My Till", keywords: ["safe", "paid out", "float", "count cash", "close till", "open till"] },
   { label: "Petty cash voucher", to: "/cashier/petty-cash", where: "Finance · Petty Cash", keywords: ["imprest", "expense", "voucher"] },
@@ -33,10 +33,17 @@ export const FEATURES: FeatureEntry[] = [
   { label: "Raise a service ticket", to: "/tickets", where: "Operations · Tickets", keywords: ["complaint", "maintenance request", "sla", "issue", "request"] },
   { label: "Take a restaurant order", to: "/pos", where: "F&B · POS", keywords: ["kot", "table", "bill", "room service", "dine in", "takeaway"] },
   { label: "Set up printers", to: "/printers", where: "F&B · Printers", keywords: ["kot printer", "bill printer", "receipt", "thermal"] },
-  { label: "Edit the menu", to: "/menu", where: "F&B · Menu", keywords: ["dish", "price", "recipe", "item", "category"] },
+  { label: "Edit the menu", to: "/menu-items", where: "F&B · Menu", keywords: ["dish", "price", "recipe", "item", "category"] },
   { label: "Book a banquet or function", to: "/banquet", where: "Events", keywords: ["wedding", "conference", "hall", "venue", "party"] },
   { label: "Connect a channel manager", to: "/settings/front-desk", where: "Settings", keywords: ["ota", "booking.com", "makemytrip", "aiosell", "staah", "channel"] },
   { label: "Invite or manage staff", to: "/settings/staff", where: "Admin · Staff & Access", keywords: ["user", "role", "permission", "password", "pin"] },
   { label: "Turn the AI agent on", to: "/settings/ai", where: "Settings · AI", keywords: ["api key", "openai", "claude", "mcp", "assistant", "agent"] },
-  { label: "Reports and exports", to: "/reports", where: "Finance · Reports", keywords: ["occupancy", "adr", "revpar", "tally", "accounting export", "csv"] },
+  { label: "Manage AI access (MCP)", to: "/settings/claude", where: "Settings · AI access (MCP)", keywords: ["mcp", "claude", "chatgpt", "mcp read", "mcp manage", "disconnect", "block tools", "permissions"] },
+  { label: "Reports and exports", to: "/reports", where: "Reports", keywords: ["tally", "accounting export", "csv", "all reports"] },
+  { label: "Custom report builder", to: "/reports/custom", where: "Reports · Custom reports", keywords: ["custom report", "saved report", "dataset", "email report", "schedule", "contribution"] },
+  { label: "Manager flash", to: "/reports/flash", where: "Reports · Daily", keywords: ["occupancy", "adr", "revpar", "flash", "daily report", "collections"] },
+  { label: "Voids and allowances", to: "/voids-allowances", where: "Reports · Finance", keywords: ["void", "allowance", "who voided"], roles: ["Finance", "Hotel Admin", "System Manager", "Administrator"] },
+  { label: "Shift report", to: "/cashier/shift-report", where: "Reports · Daily", keywords: ["till report", "cashier report", "shift"] },
+  { label: "SLA report", to: "/ops-sla", where: "Reports · Operations", keywords: ["sla", "response time", "tickets late"] },
+  { label: "Arrivals and departures", to: "/in-house", where: "Front Desk · In House", keywords: ["arrivals", "departures", "due out", "due in", "in house", "who is staying"] },
 ]

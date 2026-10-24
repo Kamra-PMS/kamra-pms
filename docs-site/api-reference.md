@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function - the same governed layer
-the UI and the AI use. **406 endpoints**, generated from the source
+the UI and the AI use. **413 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -1095,12 +1095,12 @@ suggestion plus every room the desk may hand over instead.
 
 Check the guest in: the last step of the guided check-in.
 
-Refused while a check-in step the property marks required (Settings >
-Front desk > Check-in steps) is not done for this stay - the ID, who
-pays, the deposit, the registration card... - so neither the desk, the
-API nor an AI agent can skip them. kamra.checkin.check_in_readiness says
-what is missing. Records who checked the guest in and when; a connected
-door-lock system then makes the keys recorded in the Keys step.
+Hard gate: a room must be assigned (or passed here). Soft-required
+steps (ID, deposit, registration card, …) may still be open  -  the desk
+is warned and finishes them later. kamra.checkin.check_in_readiness
+lists hard blockers and pending backfill. Records who checked the guest
+in and when; a connected door-lock system then makes the keys recorded
+in the Keys step.
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -1116,10 +1116,9 @@ room and take the money - the counter flow that used to be four screens.
 
 defer_check_in=1 books, assigns the room and takes the money (as an
 advance) but leaves the stay Confirmed, so the desk finishes it in the
-guided check-in, where the property's required steps apply. Without it
-the required steps are enforced here as well: the walk-in records the
-steps it does itself (room, who pays, the ID when given) and refuses,
-rolling the booking back, if another required step is still open.
+guided check-in. Without it, check_in runs now (room is enough; other
+soft-required steps stay as backfill). The walk-in records the steps it
+does itself (room, who pays, the ID when given).
 
 It is the same writers chained (create_booking → check_in →
 add_folio_payment), inside one request, so it is all-or-nothing: a
@@ -4410,6 +4409,116 @@ breached if it was resolved after due_by, or is still open past due_by.
 | `to_date` | yes |  |
 
 
+## Custom reports (builder, save, email)
+
+> Whitelisted datasets only - no Desk Query Reports or free SQL. Saved definitions live on Kamra Custom Report; staff use Finance → Reports.
+
+### `kamra.custom_reports.list_report_datasets`
+
+**GET/POST** · roles: `Front Desk`, `Finance`, `Hotel Admin`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`
+
+Whitelisted datasets the current user may run on this property.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+
+### `kamra.custom_reports.list_custom_reports`
+
+**GET/POST** · roles: `Front Desk`, `Finance`, `Hotel Admin`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`
+
+Saved reports visible to this user on the property.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+
+### `kamra.custom_reports.get_custom_report`
+
+**GET/POST** · roles: `Front Desk`, `Finance`, `Hotel Admin`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`
+
+Full saved definition for the builder.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `name` | yes |  |
+| `property` | no | `None` |
+
+### `kamra.custom_reports.save_custom_report`
+
+**POST** · roles: `Finance`, `Hotel Admin`, `System Manager`, `Front Desk`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`
+
+Create or update a saved custom report definition.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `title` | yes |  |
+| `dataset` | yes |  |
+| `columns` | no | `None` |
+| `filters` | no | `None` |
+| `group_by` | no | `None` |
+| `sort` | no | `None` |
+| `is_shared` | no | `0` |
+| `schedule_frequency` | no | `'Off'` |
+| `schedule_time` | no | `'07:00'` |
+| `schedule_weekday` | no | `'Mon'` |
+| `recipients` | no | `''` |
+| `name` | no | `None` |
+
+### `kamra.custom_reports.delete_custom_report`
+
+**POST** · roles: `Finance`, `Hotel Admin`, `System Manager`, `Front Desk`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`
+
+Delete a saved report the user can edit.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `name` | yes |  |
+| `property` | no | `None` |
+
+### `kamra.custom_reports.run_custom_report`
+
+**GET/POST** · roles: `Front Desk`, `Finance`, `Hotel Admin`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`
+
+Run a saved report or an ad-hoc definition. format=json|csv|html.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `dataset` | no | `None` |
+| `from_date` | no | `None` |
+| `to_date` | no | `None` |
+| `columns` | no | `None` |
+| `filters` | no | `None` |
+| `group_by` | no | `None` |
+| `sort` | no | `None` |
+| `name` | no | `None` |
+| `format` | no | `'json'` |
+| `lang` | no | `'en'` |
+
+### `kamra.custom_reports.email_custom_report`
+
+**POST** · roles: `Finance`, `Hotel Admin`, `System Manager`, `Front Desk`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`
+
+Run a report and email it (CSV or HTML attachment).
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `recipients` | yes |  |
+| `name` | no | `None` |
+| `dataset` | no | `None` |
+| `from_date` | no | `None` |
+| `to_date` | no | `None` |
+| `columns` | no | `None` |
+| `filters` | no | `None` |
+| `group_by` | no | `None` |
+| `sort` | no | `None` |
+| `lang` | no | `'en'` |
+| `attach_format` | no | `'csv'` |
+
+
 ## Ledgers (trial balance, city ledger / AR, FX desk)
 
 ### `kamra.ledger.ledger_balances`
@@ -5153,9 +5262,10 @@ what each step screen needs.
 
 **GET/POST** · roles: `Front Desk`, `Night Auditor`, `Finance`, `Hotel Admin`, `Kamra Agent`
 
-Read-only: which check-in steps are done, which are still required,
-and whether check_in would go through now. Agents read this; they
-cannot do the desk's steps for it.
+Read-only: which check-in steps are done, whether check_in would go
+through now (room assigned), and which soft-required steps are still
+open to finish later. Agents read this; they cannot do the desk's
+steps for it.
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -5179,7 +5289,7 @@ not true yet - an ID still missing, a deposit not taken.
 
 **POST**
 
-Skip an optional step. A required one cannot be skipped.
+Skip a step to finish later. Only the room cannot be skipped.
 
 | Param | Required | Default |
 | --- | --- | --- |

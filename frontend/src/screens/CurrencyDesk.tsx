@@ -5,6 +5,8 @@ import { useCashierAuth } from "../lib/cashierAuth"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { moneyLocale } from "../lib/money"
+import { useT, t as translate } from "../lib/i18n"
+
 
 const inr = (n: unknown) =>
   Number(n ?? 0).toLocaleString(moneyLocale(), {
@@ -12,6 +14,7 @@ const inr = (n: unknown) =>
   })
 
 export default function CurrencyDesk() {
+  const { lang, t } = useT()
   const { withPin } = useCashierAuth()
   const [rates, setRates] = useState<
     {
@@ -108,17 +111,15 @@ export default function CurrencyDesk() {
   return (
     <div className="w-full space-y-4">
       <div>
-        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-400">
-          Cashier
-        </p>
-        <h1 className="text-2xl font-semibold">Currency Desk</h1>
+        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-400">{translate("Cashier")}</p>
+        <h1 className="text-2xl font-semibold">{translate("Currency Desk")}</h1>
       </div>
-      {err ? <p className="text-sm text-rose-600">{err}</p> : null}
+      {err ? <p className="text-sm text-rose-600">{translate(err)}</p> : null}
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Calculator</CardTitle>
+            <CardTitle className="text-base">{translate("Calculator")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex flex-wrap gap-2">
@@ -138,8 +139,8 @@ export default function CurrencyDesk() {
                 value={direction}
                 onChange={(e) => setDirection(e.target.value as "Buy" | "Sell")}
               >
-                <option value="Buy">Buy (guest sells FX)</option>
-                <option value="Sell">Sell (guest buys FX)</option>
+                <option value="Buy">{translate("Buy (guest sells FX)")}</option>
+                <option value="Sell">{translate("Sell (guest buys FX)")}</option>
               </select>
               <input
                 className="w-28 rounded-lg border border-zinc-300 px-2 py-1.5 text-sm"
@@ -148,19 +149,17 @@ export default function CurrencyDesk() {
               />
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" onClick={() => void doCalc()}>
-                Calculate
-              </Button>
-              <Button onClick={() => void post()}>Post exchange</Button>
+              <Button variant="outline" onClick={() => void doCalc()}>{translate("Calculate")}</Button>
+              <Button onClick={() => void post()}>{translate("Post exchange")}</Button>
             </div>
             {calc ? (
               <p className="text-sm text-zinc-600">
-                Rate {String(calc.exchange_rate)} → local{" "}
+                {(lang !== "en") ? t("Exchange rate") : translate("Rate")} {String(calc.exchange_rate)}{translate(" → local")}{" "}
                 <span className="font-semibold tabular-nums">
                   {inr(calc.local_amount)}
                 </span>
                 {Number(calc.service_tax) > 0
-                  ? ` + tax ${inr(calc.service_tax)}`
+                  ? translate(" + tax {v0}", { v0: String(inr(calc.service_tax)) })
                   : ""}{" "}
                 = {inr(calc.total)}
               </p>
@@ -170,7 +169,7 @@ export default function CurrencyDesk() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Set rate</CardTitle>
+            <CardTitle className="text-base">{t("Set rate")}</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-wrap gap-2">
             <input
@@ -179,13 +178,13 @@ export default function CurrencyDesk() {
               onChange={(e) =>
                 setNewRate((r) => ({ ...r, currency: e.target.value }))
               }
-              placeholder="CCY"
+              placeholder={translate("CCY")}
             />
             <input
               className="w-24 rounded-lg border px-2 py-1.5 text-sm"
               value={newRate.buy}
               onChange={(e) => setNewRate((r) => ({ ...r, buy: e.target.value }))}
-              placeholder="Buy"
+              placeholder={translate("Buy")}
             />
             <input
               className="w-24 rounded-lg border px-2 py-1.5 text-sm"
@@ -193,11 +192,9 @@ export default function CurrencyDesk() {
               onChange={(e) =>
                 setNewRate((r) => ({ ...r, sell: e.target.value }))
               }
-              placeholder="Sell"
+              placeholder={translate("Sell")}
             />
-            <Button variant="outline" onClick={() => void saveRate()}>
-              Save
-            </Button>
+            <Button variant="outline" onClick={() => void saveRate()}>{translate("Save")}</Button>
           </CardContent>
         </Card>
       </div>
@@ -206,10 +203,10 @@ export default function CurrencyDesk() {
         <table className="w-full text-left text-sm">
           <thead className="border-b text-xs uppercase text-zinc-400">
             <tr>
-              <th className="px-3 py-2">Currency</th>
-              <th className="px-3 py-2">Buy</th>
-              <th className="px-3 py-2">Sell</th>
-              <th className="px-3 py-2">Tax %</th>
+              <th className="px-3 py-2">{translate("Currency")}</th>
+              <th className="px-3 py-2">{translate("Buy")}</th>
+              <th className="px-3 py-2">{translate("Sell")}</th>
+              <th className="px-3 py-2">{translate("Tax %")}</th>
             </tr>
           </thead>
           <tbody>
@@ -226,15 +223,15 @@ export default function CurrencyDesk() {
       </div>
 
       <div>
-        <h2 className="mb-2 text-sm font-semibold">Today&apos;s exchanges</h2>
+        <h2 className="mb-2 text-sm font-semibold">{translate("Today's exchanges")}</h2>
         <div className="overflow-x-auto rounded-xl border bg-white">
           <table className="w-full text-left text-sm">
             <thead className="border-b text-xs uppercase text-zinc-400">
               <tr>
-                <th className="px-3 py-2">Dir</th>
-                <th className="px-3 py-2">FX</th>
-                <th className="px-3 py-2">Rate</th>
-                <th className="px-3 py-2">Local</th>
+                <th className="px-3 py-2">{translate("Dir")}</th>
+                <th className="px-3 py-2">{translate("FX")}</th>
+                <th className="px-3 py-2">{(lang !== "en") ? t("Exchange rate") : translate("Rate")}</th>
+                <th className="px-3 py-2">{translate("Local")}</th>
               </tr>
             </thead>
             <tbody>

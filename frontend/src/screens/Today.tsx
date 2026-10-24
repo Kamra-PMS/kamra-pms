@@ -36,7 +36,7 @@ import CheckInDialog from "../components/CheckInDialog"
 import BookingRequests from "../components/BookingRequests"
 import { serverError } from "../lib/resource"
 import { cur, moneyLocale } from "../lib/money"
-import { useT } from "../lib/i18n"
+import { useT, t as translate, uiDateLocale } from "../lib/i18n"
 import CheckOutDialog from "../components/CheckOutDialog"
 import RoomDrawer, { type RoomTab } from "../components/RoomDrawer"
 import RoomChangeDialog from "../components/RoomChangeDialog"
@@ -50,6 +50,7 @@ import {
   type TodayLayoutInfo,
   type WidgetId,
 } from "../lib/rooms"
+
 
 const HK_CYCLE: RoomRow["housekeeping_status"][] = [
   "Dirty",
@@ -110,7 +111,7 @@ function ReservationList(props: {
 }) {
   const { t } = useT()
   if (props.rows.length === 0) {
-    return <p className="px-1 py-3 text-sm text-zinc-400">{props.empty}</p>
+    return <p className="px-1 py-3 text-sm text-zinc-400">{translate(props.empty)}</p>
   }
   return (
     <ul className="divide-y divide-zinc-100">
@@ -133,22 +134,22 @@ function ReservationList(props: {
                 : t("Unassigned")}{" "}
               · {t("{n} night{s}", { n: row.nights, s: row.nights === 1 ? "" : "s" })} ·{" "}
               {t("{n} ad", { n: row.adults })}
-              {row.children ? ` + ${row.children} ch` : ""}
-              {row.eta && ` · ETA ${row.eta}`}
+              {row.children ? translate(" + {v0} ch", { v0: String(row.children) }) : ""}
+              {row.eta && translate(" · ETA {v0}", { v0: String(row.eta) })}
               {row.booked_by_name && (
                 <span
                   title={
-                    (row.booked_by_phone
+                    ((row.booked_by_phone
                       ? `${row.booked_by_phone} · `
                       : "") +
                     t("send links & updates to: {pref}", {
-                      pref: row.contact_preference ?? "Booker",
-                    })
+                      pref: translate(row.contact_preference ?? "Booker"),
+                    }))
                   }
                 >
                   {" "}
                   · {t("via {name}", { name: row.booked_by_name })}
-                  {row.booker_relation ? ` (${row.booker_relation})` : ""}
+                  {row.booker_relation ? ` (${translate(row.booker_relation)})` : ""}
                 </span>
               )}
               {row.status === "Confirmed" && (
@@ -172,7 +173,7 @@ function ReservationList(props: {
                       )
                     }}
                     title={
-                      row.contact_preference === "Booker" && row.booked_by_name
+                      (row.contact_preference === "Booker" && row.booked_by_name
                         ? t("Copy the self check-in link - send to the booker, {name}{phone}", {
                             name: row.booked_by_name,
                             phone: row.booked_by_phone ? ` (${row.booked_by_phone})` : "",
@@ -181,7 +182,7 @@ function ReservationList(props: {
                           ? t("Copy the self check-in link - send to the guest and the booker ({name})", {
                               name: row.booked_by_name,
                             })
-                          : t("Copy the self check-in link - send to the guest")
+                          : t("Copy the self check-in link - send to the guest"))
                     }
                   >
                     {t("copy check-in link")}
@@ -200,10 +201,15 @@ function ReservationList(props: {
 // silently vanish from Today. They group under this key.
 const NO_FLOOR = "__none__"
 
-function ordinalFloor(f: string, t: (s: string, vars?: Record<string, string | number>) => string) {
+function ordinalFloor(
+  f: string,
+  t: (s: string, vars?: Record<string, string | number>) => string,
+  lang: string,
+) {
   if (f === NO_FLOOR) return t("Unassigned floor")
   const n = Number(f)
   if (Number.isNaN(n)) return /floor/i.test(f) ? f : t("{f} Floor", { f })
+  if (lang === "es") return t("{n} Floor", { n })
   const s = ["th", "st", "nd", "rd"]
   const v = n % 100
   return t("{n}{ord} Floor", { n, ord: s[(v - 20) % 10] || s[v] || s[0] })
@@ -343,7 +349,7 @@ function InHouseTable({
 }
 
 export default function Today() {
-  const { t } = useT()
+  const { t, lang } = useT()
   const { refreshKey } = useOutletContext<ShellContext>()
   const navigate = useNavigate()
   const [snap, setSnap] = useState<Snapshot | null>(null)
@@ -467,14 +473,14 @@ export default function Today() {
       <div key={room.name} className="relative">
         <button
           title={
-            stay
+            (stay
               ? t("{guest} · check out or open registration", { guest: stay.guest_name })
               : arriving
                 ? t("{guest} arrives today · check in", { guest: arriving.guest_name })
                 : t("Housekeeping: {from} → {to} (click to advance)", {
                     from: room.housekeeping_status,
                     to: next,
-                  })
+                  }))
           }
           disabled={busy === room.name}
           aria-haspopup={hasMenu ? "menu" : undefined}
@@ -584,6 +590,16 @@ export default function Today() {
       </div>
     )
   }
+  // the old Front Desk dashboard's money row, folded into Today
+  const outstanding = Number(kpi?.finance?.outstanding ?? 0)
+  const moneyTiles: { label: string; value: string; to: string; tone?: string }[] = [
+    { label: t("Collected today"), value: `${cur()}${inr0(Number(kpi?.collections_today ?? 0))}`, to: "/cashier/board" },
+    { label: t("Outstanding"), value: `${cur()}${inr0(outstanding)}`, to: "/ledgers", tone: outstanding ? "text-amber-700" : undefined },
+    { label: t("Open folios"), value: String(kpi?.finance?.open_folios ?? 0), to: "/billing" },
+    { label: t("ADR, month to date"), value: `${cur()}${inr0(Number(kpi?.statistics?.adr ?? 0))}`, to: "/dashboard" },
+    { label: t("RevPAR, month to date"), value: `${cur()}${inr0(Number(kpi?.statistics?.revpar ?? 0))}`, to: "/dashboard" },
+    { label: t("Occupancy, month to date"), value: `${kpi?.statistics?.mtd_occupancy_pct ?? 0}%`, to: "/reports/flash" },
+  ]
   const hkRoom = kpi?.housekeeping?.room_status ?? {}
   const hkStats = [
     { label: t("Clean"), value: hkRoom.Clean ?? 0, dot: "bg-emerald-500" },
@@ -599,7 +615,7 @@ export default function Today() {
   const greeting =
     hh < 12 ? t("Good morning") : hh < 17 ? t("Good afternoon") : t("Good evening")
   const prettyDate = snap?.date
-    ? new Date(snap.date + "T00:00:00").toLocaleDateString(undefined, {
+    ? new Date(snap.date + "T00:00:00").toLocaleDateString(uiDateLocale(undefined), {
         weekday: "short",
         day: "numeric",
         month: "short",
@@ -611,12 +627,14 @@ export default function Today() {
   // order (Customize). The built-in layout is the classic Today.
   const widgets: Record<WidgetId, React.ReactNode> = {
     kpis: (
-      <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+      <div className="mb-6 space-y-3">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
         <StatCard
           icon={<LogIn className="size-4" />}
           label={t("Arrivals")}
           value={arrivalsN}
           spark={mkTrend(arrivalsN)}
+          to="/in-house?tab=arrivals"
         />
         <StatCard
           icon={<LogOut className="size-4" />}
@@ -624,16 +642,19 @@ export default function Today() {
           value={departuresN}
           spark={mkTrend(departuresN, false)}
           sparkColor="var(--color-amber-600)"
+          to="/in-house?tab=departures"
         />
         <StatCard
           icon={<Users className="size-4" />}
           label={t("In-house")}
           value={inhouseN}
           spark={mkTrend(inhouseN)}
+          to="/in-house?tab=in-house"
         />
         <StatCard
           icon={<PieChart className="size-4" />}
           label={t("Occupancy")}
+          to="/room-board"
           value={`${occupancyPct}%`}
           progress={occupancyPct}
           progressLabel={t("{occupied} of {total} rooms", {
@@ -646,7 +667,7 @@ export default function Today() {
           label={t("Revenue")}
           value={`${cur()}${inr0(revenue)}`}
           sub={
-            roomRevenueToday > 0 || revpar > 0
+            (roomRevenueToday > 0 || revpar > 0
               ? t("RevPAR {amount} · room {room}", {
                   amount: `${cur()}${inr0(revpar)}`,
                   room: `${cur()}${inr0(roomRevenueToday)}`,
@@ -654,21 +675,37 @@ export default function Today() {
                 }).replace(/ (\S+)$/, "\u00a0$1")
               : t("RevPAR {amount} · no room charges posted today", {
                   amount: `${cur()}${inr0(revpar)}`,
-                })
+                }))
           }
           spark={mkTrend(revenue)}
+          to="/dashboard"
         />
         <StatCard
           icon={<ListChecks className="size-4" />}
           label={t("Open tasks")}
           value={tasksN}
           sub={
-            overdueN
+            (overdueN
               ? t("{n} overdue · Housekeeping", { n: overdueN })
-              : t("Housekeeping")
+              : t("Housekeeping"))
           }
           to={"/housekeeping"}
         />
+      </div>
+      {kpi && (
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+          {moneyTiles.map((m) => (
+            <Link
+              key={m.label}
+              to={m.to}
+              className="rounded-lg border border-zinc-200 bg-white px-3 py-2 transition-colors hover:border-brand-300"
+            >
+              <div className="text-[11px] font-medium text-zinc-500">{m.label}</div>
+              <div className={cn("text-sm font-semibold tabular-nums", m.tone ?? "text-zinc-900")}>{m.value}</div>
+            </Link>
+          ))}
+        </div>
+      )}
       </div>
     ),
     booking_requests: <BookingRequests refreshKey={refreshKey} onChanged={refresh} />,
@@ -676,7 +713,7 @@ export default function Today() {
       <Card>
         <CardHeader>
           <CardTitle>{t("Arrivals")}</CardTitle>
-          <LogIn className="size-4 text-zinc-400" aria-hidden />
+          <Link to="/in-house?tab=arrivals" className="text-xs font-medium text-brand-700 hover:underline">{t("View all")}</Link>
         </CardHeader>
         <CardContent className="pt-1">
           <ReservationList
@@ -698,7 +735,7 @@ export default function Today() {
       <Card>
         <CardHeader>
           <CardTitle>{t("Departures")}</CardTitle>
-          <LogOut className="size-4 text-zinc-400" aria-hidden />
+          <Link to="/in-house?tab=departures" className="text-xs font-medium text-brand-700 hover:underline">{t("View all")}</Link>
         </CardHeader>
         <CardContent className="pt-1">
           <ReservationList
@@ -746,7 +783,7 @@ export default function Today() {
                     : "text-zinc-500 hover:text-zinc-700",
                 )}
               >
-                {f === "All" ? t("All Floors") : ordinalFloor(f, t)}
+                {f === "All" ? t("All Floors") : ordinalFloor(f, t, lang)}
                 {floor === f && (
                   <span className="absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-brand-600" />
                 )}
@@ -757,7 +794,7 @@ export default function Today() {
             {shownFloors.map((fl) => (
               <div key={fl} className="flex items-start gap-3">
                 <div className="w-16 shrink-0 pt-2 text-xs font-medium text-zinc-500">
-                  {ordinalFloor(fl, t)}
+                  {ordinalFloor(fl, t, lang)}
                 </div>
                 <div className="grid flex-1 grid-cols-[repeat(auto-fill,minmax(6.25rem,1fr))] gap-2">
                   {allRooms
@@ -783,9 +820,9 @@ export default function Today() {
       <Card>
         <CardHeader>
           <CardTitle>{t("In-house guests")}</CardTitle>
-          <span className="text-xs text-zinc-400">
+          <Link to="/in-house?tab=in-house" className="text-xs font-medium text-brand-700 hover:underline">
             {t("{n} staying", { n: inhouseN })}
-          </span>
+          </Link>
         </CardHeader>
         <CardContent className="pt-1">
           <InHouseTable rows={snap?.in_house ?? []} today={snap?.date} />
@@ -807,16 +844,17 @@ export default function Today() {
         <CardContent>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             {hkStats.map((s) => (
-              <div
+              <Link
+                to="/housekeeping-board"
                 key={s.label}
-                className="flex items-center gap-2 rounded-lg border border-zinc-200 px-3 py-2"
+                className="flex items-center gap-2 rounded-lg border border-zinc-200 px-3 py-2 hover:border-brand-300"
               >
                 <span className={cn("size-2 rounded-full", s.dot)} />
                 <span className="text-lg font-semibold tabular-nums">
                   {s.value}
                 </span>
-                <span className="text-xs text-zinc-500">{s.label}</span>
-              </div>
+                <span className="text-xs text-zinc-500">{translate(s.label)}</span>
+              </Link>
             ))}
           </div>
         </CardContent>
@@ -858,7 +896,7 @@ export default function Today() {
 
       {error && (
         <div className="mb-4 rounded-lg border border-rose-200 bg-rose-50 px-4 py-2 text-sm text-rose-700">
-          {error}
+          {translate(error)}
         </div>
       )}
 

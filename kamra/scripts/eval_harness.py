@@ -10074,6 +10074,130 @@ def t383():
 	assert len(calls) == 2 and s["reservation"]["name"] == res.name, calls
 
 
+
+# ── AI access over MCP and bulk room assignment (t384-t386) ──
+
+EVAL_MCP = "eval.mcp@kamra.local"
+
+
+def _mcp_user(*roles):
+	"""A Front Desk user holding exactly these extra roles."""
+	if not frappe.db.exists("User", EVAL_MCP):
+		frappe.get_doc({
+			"doctype": "User", "email": EVAL_MCP, "first_name": "Mira",
+			"enabled": 1, "user_type": "System User", "send_welcome_email": 0,
+			"roles": [{"role": "Front Desk"}],
+		}).insert(ignore_permissions=True)
+	from kamra.mcp_access import MCP_ROLES, ensure_roles
+	ensure_roles()
+	u = frappe.get_doc("User", EVAL_MCP)
+	keep = [r.role for r in u.roles if r.role not in MCP_ROLES]
+	u.set("roles", [{"role": r} for r in [*keep, *roles]])
+	u.save(ignore_permissions=True)
+	return EVAL_MCP
+
+
+@check("room assignment for arrivals: apply re-checks every pair, skips bad ones with a reason, and repeating it changes nothing")
+def t384():
+	from kamra.allocation import apply_allocation, suggest_allocation
+	rt, (r1, r2) = _t300_rooms("T3M")
+	today, tomorrow = nowdate(), add_days(nowdate(), 1)
+	a = frappe.get_doc({
+		"doctype": "Reservation", "property": P, "guest": _guest("Eval Assign A", "+91 70000 38401"),
+		"room_type": rt, "check_in_date": today, "check_out_date": tomorrow,
+		"adults": 2, "auto_price": 1,
+	}).insert(ignore_permissions=True)
+	b = frappe.get_doc({
+		"doctype": "Reservation", "property": P, "guest": _guest("Eval Assign B", "+91 70000 38402"),
+		"room_type": rt, "check_in_date": today, "check_out_date": tomorrow,
+		"adults": 2, "auto_price": 1,
+	}).insert(ignore_permissions=True)
+	plan = {p_["reservation"]: p_["suggested_room"]
+	        for p_ in suggest_allocation(P, today)["proposals"]
+	        if p_["reservation"] in (a.name, b.name)}
+	assert set(plan) == {a.name, b.name} and set(plan.values()) == {r1, r2}, plan
+	# the same room twice, a room of another type, an unknown stay
+	out = apply_allocation(P, [
+		{"reservation": a.name, "room": r1},
+		{"reservation": b.name, "room": r1},
+		{"reservation": b.name, "room": ROOM},
+		{"reservation": "RES-NOPE", "room": r2},
+	])
+	assert out["executed"] == [{"reservation": a.name, "room": r1}], out
+	reasons = {(s_["reservation"], s_["room"]): s_["reason"] for s_ in out["skipped"]}
+	assert "Already in that room" not in reasons.get((b.name, r1), ""), reasons
+	assert "free" in reasons[(b.name, r1)] or "another arrival" in reasons[(b.name, r1)], reasons
+	assert "another type" in reasons[(b.name, ROOM)], reasons
+	assert "this property" in reasons[("RES-NOPE", r2)], reasons
+	assert frappe.db.get_value("Reservation", b.name, "room") in (None, ""), "b got a room"
+	# repeat: nothing new happens
+	again = apply_allocation(P, [{"reservation": a.name, "room": r1}])
+	assert again["executed"] == [] and again["skipped"][0]["reason"] == "Already in that room", again
+	# a room taken out of order since the preview is refused
+	frappe.db.set_value("Room", r2, "housekeeping_status", "Out of Order")
+	late = apply_allocation(P, [{"reservation": b.name, "room": r2}])
+	assert not late["executed"] and "no longer free" in late["skipped"][0]["reason"], late
+
+
+@check("MCP access: no role sees nothing, MCP Read only reads, MCP Manage writes; admins always pass; changes apply at once")
+def t385():
+	from kamra.mcp_access import (NO_ACCESS, READ_ONLY, access_refusal, mcp_level,
+	                              permitted_tools, property_policy, tool_refusal)
+	from kamra.mcp_tools import BY_NAME, allowed_tools
+	assert mcp_level("Administrator") == "manage"
+	user = _mcp_user()
+	assert access_refusal(user) == NO_ACCESS
+	policy = property_policy(P)
+	assert policy.enabled and not policy.read_only and not policy.blocked, policy
+	with _as_user(user):
+		visible = allowed_tools(property=P)
+	assert not permitted_tools(visible, mcp_level(user), policy)
+	_mcp_user("MCP Read")
+	assert access_refusal(user, P) is None and mcp_level(user) == "read"
+	with _as_user(user):
+		names = {t.name for t in permitted_tools(allowed_tools(property=P), mcp_level(user), policy)}
+	assert "quote" in names and "assign_rooms_preview" in names, names
+	assert not any(BY_NAME[n].mutating for n in names), [n for n in names if BY_NAME[n].mutating]
+	assert tool_refusal(BY_NAME["create_booking"], "read", policy) == READ_ONLY
+	# promoted: the very next listing has the writes, no reconnect needed
+	_mcp_user("MCP Manage")
+	with _as_user(user):
+		names = {t.name for t in permitted_tools(allowed_tools(property=P), mcp_level(user), policy)}
+	assert "create_booking" in names and "assign_rooms_apply" in names, sorted(names)[:10]
+	# still bounded by the normal role: Front Desk never gets rate tools
+	assert "set_room_rate" not in names
+
+
+@check("MCP property switches: AI access off refuses everyone, read-only drops writes even for MCP Manage, blocked tools vanish")
+def t386():
+	from kamra.mcp_access import (access_overview, access_refusal, property_policy,
+	                              set_mcp_level, set_mcp_policy, tool_refusal)
+	from kamra.mcp_tools import BY_NAME
+	user = _mcp_user("MCP Manage")
+	try:
+		set_mcp_policy(P, read_only=1, blocked_tools=["quote"])
+		pol = property_policy(P)
+		assert pol.read_only and pol.blocked == {"quote"}, pol
+		assert "read-only" in tool_refusal(BY_NAME["create_booking"], "manage", pol)
+		assert "blocked" in tool_refusal(BY_NAME["quote"], "manage", pol)
+		assert tool_refusal(BY_NAME["availability"], "manage", pol) is None
+		_refused(set_mcp_policy, P, blocked_tools=["no_such_tool"], contains="Unknown tool")
+		set_mcp_policy(P, enabled=0)
+		assert "turned off" in access_refusal(user, P)
+		assert "turned off" in access_refusal("Administrator", P)
+		# the admin screen changes a person's level and leaves their other roles
+		set_mcp_level(P, user, "read")
+		roles = set(frappe.get_roles(user))
+		assert "MCP Read" in roles and "MCP Manage" not in roles and "Front Desk" in roles, roles
+		row = next(s_ for s_ in access_overview(P)["staff"] if s_["user"] == user)
+		assert row["level"] == "read", row
+		# and a Front Desk user can't use the screen at all
+		with _as_user(FD):
+			_refused(access_overview, P, exc=frappe.PermissionError)
+	finally:
+		set_mcp_policy(P, enabled=1, read_only=0, blocked_tools=[])
+
+
 def execute():
 	global RT, ROOM
 	# frappe.locale.get_locale_value crashes (UnboundLocalError) when no
@@ -10113,7 +10237,7 @@ def execute():
 		           t360, t361, t362, t363, t364, t365,
 		           t370, t371, t372, t373, t374, t375, t376,
 		           t217, t260, t261, t262, t263, t264,
-		           t380, t381, t382, t383):
+		           t380, t381, t382, t383, t384, t385, t386):
 			fn()
 	finally:
 		frappe.flags.kamra_checkin_steps_off = False

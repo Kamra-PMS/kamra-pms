@@ -6,10 +6,11 @@ import { Link } from "react-router-dom"
 import { Printer } from "lucide-react"
 import { call, getCurrentProperty } from "../lib/api"
 import { useAuth } from "../lib/auth"
-import { useT } from "../lib/i18n"
+import { useT, t as translate } from "../lib/i18n"
 import { serverError } from "../lib/resource"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
+
 
 const WRITE_ROLES = ["Finance", "Hotel Admin", "System Manager", "Administrator"]
 const STATIONS = ["Kitchen", "Tandoor", "Grill", "Fryer", "Bar"]
@@ -220,7 +221,7 @@ export default function KitchenPrinters() {
           <CardTitle className="text-base">{t("Printers at this property")}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          {err && <p className="text-sm text-rose-700">{err}</p>}
+          {err && <p className="text-sm text-rose-700">{translate(err)}</p>}
           {note && <p className="text-sm text-emerald-700">{note}</p>}
 
           {!form && !err && printers.length === 0 && (
@@ -258,7 +259,7 @@ export default function KitchenPrinters() {
                 >
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 text-sm font-semibold text-zinc-900">
-                      <span className={`size-2 shrink-0 rounded-full ${st.tone}`} title={st.text} />
+                      <span className={`size-2 shrink-0 rounded-full ${st.tone}`} title={translate(st.text)} />
                       {p.printer_name}
                       <span className="text-xs font-normal text-zinc-400">
                         {p.connection === "Direct IP"
@@ -279,7 +280,7 @@ export default function KitchenPrinters() {
                         : t("Prints nothing yet - choose outlets and stations.")}
                     </p>
                     <p className="mt-0.5 text-xs text-zinc-400">
-                      {st.text}
+                      {translate(st.text)}
                       {p.queued ? ` · ${t("{n} waiting", { n: p.queued })}` : ""}
                       {p.failed_today ? ` · ${t("{n} failed today", { n: p.failed_today })}` : ""}
                     </p>
@@ -506,7 +507,7 @@ export default function KitchenPrinters() {
                                 type="checkbox"
                                 checked={has(o.name, "")}
                                 onChange={() => toggle(o.name, "")}
-                                aria-label={`${o.outlet_name} - ${t("All stations")}`}
+                                aria-label={(`${o.outlet_name} - ${t("All stations")}`)}
                               />
                             </td>
                             {STATIONS.map((st) => (
@@ -516,7 +517,7 @@ export default function KitchenPrinters() {
                                   checked={has(o.name, "") || has(o.name, st)}
                                   disabled={has(o.name, "")}
                                   onChange={() => toggle(o.name, st)}
-                                  aria-label={`${o.outlet_name} - ${st}`}
+                                  aria-label={translate(`${o.outlet_name} - ${st}`)}
                                 />
                               </td>
                             ))}

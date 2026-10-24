@@ -7,7 +7,7 @@ import json
 import frappe
 from frappe.tests import IntegrationTestCase
 
-from kamra import mcp_http, mcp_oauth
+from kamra import mcp_access, mcp_http, mcp_oauth
 from kamra.mcp_tools import BY_NAME
 from kamra.tests.fixtures import PROPERTY, build, ensure_roles_and_users
 
@@ -38,9 +38,58 @@ class TestOAuthHelpers(IntegrationTestCase):
 			"http://localhost:9/callback"))
 		self.assertFalse(mcp_oauth.redirect_uri_allowed(
 			"https://evil.example/steal"))
+		# ChatGPT: the stable callback and the per-connection form, nothing else
+		self.assertTrue(mcp_oauth.redirect_uri_allowed(
+			"https://chatgpt.com/connector_platform_oauth_redirect"))
+		self.assertTrue(mcp_oauth.redirect_uri_allowed(
+			"https://chatgpt.com/connector/oauth/abc_123-XYZ"))
+		for bad in ("https://chatgpt.com/connector/oauth/a/b",
+		            "https://chatgpt.com/connector/oauth/abc?x=1",
+		            "https://chatgpt.com/other",
+		            "http://chatgpt.com/connector_platform_oauth_redirect",
+		            "https://evil.chatgpt.com.example/connector/oauth/abc"):
+			self.assertFalse(mcp_oauth.redirect_uri_allowed(bad), bad)
 		self.assertFalse(mcp_oauth.is_public_https("http://hotel.example"))
 		self.assertFalse(mcp_oauth.is_public_https("https://localhost"))
 		self.assertTrue(mcp_oauth.is_public_https("https://pms.example.com"))
+
+
+class TestExtraRedirects(IntegrationTestCase):
+	def tearDown(self):
+		frappe.db.set_default(mcp_access.REDIRECTS_KEY, "[]")
+		# handle_register commits, so the list must be cleared for real
+		frappe.db.commit()  # nosemgrep: frappe-manual-commit -- undo the site-wide test value
+
+	def setUp(self):
+		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- IT changes the site-wide list
+		frappe.db.set_default(mcp_access.REDIRECTS_KEY, "[]")
+
+	def test_admin_added_redirect_is_exact_and_https_only(self):
+		n8n = "https://n8n.hotel.example/rest/oauth2-credential/callback"
+		self.assertFalse(mcp_oauth.redirect_uri_allowed(n8n))
+		mcp_access.set_extra_redirect_uris([n8n])
+		self.assertTrue(mcp_oauth.redirect_uri_allowed(n8n))
+		self.assertFalse(mcp_oauth.redirect_uri_allowed(n8n + "/x"))
+		self.assertFalse(mcp_oauth.redirect_uri_allowed(n8n.replace("n8n.", "n9n.")))
+		for bad in ("http://n8n.hotel.example/cb", "https://*.hotel.example/cb",
+		            "https://n8n.hotel.example/cb#x", "n8n.hotel.example/cb"):
+			with self.assertRaises(frappe.ValidationError):
+				mcp_access.set_extra_redirect_uris([bad])
+		status, body = mcp_oauth.handle_register({"redirect_uris": [n8n]})
+		self.assertEqual(status, 201, body)
+
+	def test_only_it_can_change_redirects(self):
+		frappe.set_user("banquet.sales@test.local")  # nosemgrep: frappe-setuser -- a non-IT user must be refused
+		try:
+			with self.assertRaises(frappe.PermissionError):
+				mcp_access.set_extra_redirect_uris(["https://x.example/cb"])
+		finally:
+			frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- restore admin
+
+	def test_metadata_advertises_iss_and_no_cimd(self):
+		doc = mcp_oauth.authorization_server_doc()
+		self.assertTrue(doc["authorization_response_iss_parameter_supported"])
+		self.assertFalse(doc["client_id_metadata_document_supported"])
 
 
 class TestRemoteMCP(IntegrationTestCase):
@@ -49,6 +98,9 @@ class TestRemoteMCP(IntegrationTestCase):
 		ensure_roles_and_users()
 		build()
 		self.property = PROPERTY
+		# AI access on, nothing blocked: the switches persist across tests
+		frappe.db.set_value("Property", PROPERTY, {
+			"mcp_enabled": 1, "mcp_read_only": 0, "mcp_blocked_tools": ""})
 
 	def tearDown(self):
 		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- test fixture restores admin after MCP OAuth tests
@@ -167,14 +219,18 @@ class TestRemoteMCP(IntegrationTestCase):
 		self.assertIn("quote", names)
 		self.assertEqual(len(names), len(set(names)))
 
-	def _key_user(self, email, *, restrict=True, enabled=1):
-		"""A Front Desk user with an API key, limited to the test property."""
+	def _key_user(self, email, *, restrict=True, enabled=1, mcp="MCP Manage"):
+		"""A Front Desk user with an API key, limited to the test property,
+		holding the given MCP role (None for no MCP access)."""
+		mcp_access.ensure_roles()
 		if not frappe.db.exists("User", email):
 			frappe.get_doc({
 				"doctype": "User", "email": email, "first_name": "MCP Agent",
 				"send_welcome_email": 0, "roles": [{"role": "Front Desk"}],
 			}).insert(ignore_permissions=True)
 		user = frappe.get_doc("User", email)
+		keep = [r.role for r in user.roles if r.role not in mcp_access.MCP_ROLES]
+		user.set("roles", [{"role": r} for r in keep + ([mcp] if mcp else [])])
 		user.enabled = enabled
 		user.api_key = frappe.generate_hash(length=15)
 		secret = frappe.generate_hash(length=15)
@@ -188,12 +244,80 @@ class TestRemoteMCP(IntegrationTestCase):
 			}).insert(ignore_permissions=True)
 		return f"token {user.api_key}:{secret}"
 
-	def _call(self, auth, method="tools/list", **headers):
+	def _call(self, auth, method="tools/list", params=None, **headers):
 		return mcp_http.dispatch("mcp", FakeRequest(
 			"POST",
-			data=json.dumps({"jsonrpc": "2.0", "id": 1, "method": method}),
+			data=json.dumps({"jsonrpc": "2.0", "id": 1, "method": method,
+			                 "params": params or {}}),
 			headers={"Authorization": auth, **headers},
 		))
+
+	def _tools(self, auth):
+		resp = self._call(auth)
+		self.assertEqual(resp.status_code, 200, resp.get_data(as_text=True))
+		return {t["name"]: t for t in json.loads(resp.get_data(as_text=True))["result"]["tools"]}
+
+	def test_no_mcp_role_is_403_with_a_clear_message(self):
+		auth = self._key_user("mcp.none@test.local", mcp=None)
+		resp = self._call(auth)
+		self.assertEqual(resp.status_code, 403)
+		self.assertIn("MCP Read or MCP Manage", resp.get_data(as_text=True))
+
+	def test_mcp_read_lists_and_runs_only_reads(self):
+		auth = self._key_user("mcp.read@test.local", mcp="MCP Read")
+		tools = self._tools(auth)
+		self.assertIn("quote", tools)
+		self.assertNotIn("create_booking", tools)
+		self.assertTrue(all(t["annotations"]["readOnlyHint"] for t in tools.values()))
+		resp = self._call(auth, "tools/call", {"name": "create_booking", "arguments": {}})
+		result = json.loads(resp.get_data(as_text=True))["result"]
+		self.assertTrue(result["isError"])
+		self.assertIn("read-only", result["content"][0]["text"])
+
+	def test_role_change_applies_on_the_next_call(self):
+		auth = self._key_user("mcp.promote@test.local", mcp="MCP Read")
+		self.assertNotIn("create_booking", self._tools(auth))
+		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- the admin changes the role
+		user = frappe.get_doc("User", "mcp.promote@test.local")
+		user.append("roles", {"role": "MCP Manage"})
+		user.save(ignore_permissions=True)
+		self.assertIn("create_booking", self._tools(auth))
+
+	def test_property_switches(self):
+		auth = self._key_user("mcp.switch@test.local")
+		# a call runs as the key's user, so switch back before each admin change
+		mcp_access.set_mcp_policy(self.property, read_only=1, blocked_tools=["quote"])
+		tools = self._tools(auth)
+		self.assertNotIn("create_booking", tools)
+		self.assertNotIn("quote", tools)
+		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- the admin changes the switch
+		mcp_access.set_mcp_policy(self.property, enabled=0)
+		self.assertEqual(self._call(auth).status_code, 403)
+
+	def test_annotations(self):
+		tools = self._tools(self._key_user("mcp.ann@test.local"))
+		self.assertEqual(tools["quote"]["annotations"]["readOnlyHint"], True)
+		cancel = tools["cancel_booking"]["annotations"]
+		self.assertFalse(cancel["readOnlyHint"])
+		self.assertTrue(cancel["destructiveHint"])
+		self.assertTrue(tools["create_booking"]["annotations"]["idempotentHint"])
+		self.assertEqual(tools["create_booking"]["title"], "Create booking")
+
+	def test_consent_page_refuses_a_user_without_mcp_access(self):
+		self._key_user("mcp.consent@test.local", mcp=None)
+		client_id = self._register()
+		frappe.set_user("mcp.consent@test.local")  # nosemgrep: frappe-setuser -- the consent page is rendered for the signed-in user
+		try:
+			status, _ctype, body = mcp_oauth.handle_authorize_get({
+				"response_type": "code", "client_id": client_id,
+				"redirect_uri": "https://claude.ai/api/mcp/auth_callback",
+				"code_challenge": mcp_oauth.pkce_s256("e" * 43),
+				"code_challenge_method": "S256", "state": "s",
+			})
+		finally:
+			frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- restore admin
+		self.assertEqual(status, 403)
+		self.assertIn("MCP Read or MCP Manage", body)
 
 	def test_api_key_acts_as_its_user_for_its_one_property(self):
 		auth = self._key_user("mcp.agent@test.local")

@@ -12,8 +12,9 @@ import { Button } from "../components/ui/button"
 import { Card } from "../components/ui/card"
 import { Badge } from "../components/ui/badge"
 import { cur, moneyLocale } from "../lib/money"
-import { useT } from "../lib/i18n"
+import { useT, t as translate, useUILanguage, uiDateLocale } from "../lib/i18n"
 import { cn } from "../lib/utils"
+
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -25,7 +26,7 @@ const money = (n: unknown) =>
 
 export const fmtDay = (d: unknown) =>
   d
-    ? new Date(String(d).slice(0, 10) + "T00:00:00").toLocaleDateString(moneyLocale(), {
+    ? new Date(String(d).slice(0, 10) + "T00:00:00").toLocaleDateString(uiDateLocale(moneyLocale()), {
         day: "2-digit",
         month: "short",
         year: "numeric",
@@ -148,10 +149,10 @@ function ManagerFlash({ p }: { p: Pack }) {
   return (
     <div>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <Stat label="Occupancy" value={`${today.occupancy_pct ?? 0}%`} />
-        <Stat label="ADR" value={`${cur()}${money(today.adr)}`} />
-        <Stat label="RevPAR" value={`${cur()}${money(today.revpar)}`} />
-        <Stat label="Total revenue" value={`${cur()}${money(today.total_revenue)}`} />
+        <Stat label={translate("Occupancy")} value={`${today.occupancy_pct ?? 0}%`} />
+        <Stat label={translate("ADR")} value={`${cur()}${money(today.adr)}`} />
+        <Stat label={translate("RevPAR")} value={`${cur()}${money(today.revpar)}`} />
+        <Stat label={translate("Total revenue")} value={`${cur()}${money(today.total_revenue)}`} />
       </div>
       <Sub>{t("Day and month to date")}</Sub>
       <DataTable
@@ -271,12 +272,13 @@ export const SESSION_COLS: Col[] = [
 ]
 
 function CashierSummary({ p }: { p: Pack }) {
+  useUILanguage()
   const rows = p.cashier_sessions || []
   return (
     <DataTable
       cols={SESSION_COLS}
       rows={rows}
-      empty="No cashier sessions on this business date."
+      empty={translate("No cashier sessions on this business date.")}
       total={{
         cashier_id: "Total",
         cash: money(sum(rows, "cash")),
@@ -291,6 +293,7 @@ function CashierSummary({ p }: { p: Pack }) {
 }
 
 function GuestLedger({ p }: { p: Pack }) {
+  useUILanguage()
   const rows = p.in_house || []
   return (
     <DataTable
@@ -305,13 +308,14 @@ function GuestLedger({ p }: { p: Pack }) {
         { key: "balance", label: "Balance", kind: "money" },
       ]}
       rows={rows}
-      empty="No guests in house."
+      empty={translate("No guests in house.")}
       total={{ room: "Total", balance: money(sum(rows, "balance")) }}
     />
   )
 }
 
 function CityLedger({ p }: { p: Pack }) {
+  useUILanguage()
   const rows = p.city_ledger?.accounts || []
   // packs saved before due-date aging only carry the invoice-age buckets
   const byDue = rows.length === 0 || "not_due" in rows[0]
@@ -344,13 +348,14 @@ function CityLedger({ p }: { p: Pack }) {
             ]
       }
       rows={rows}
-      empty="No city ledger accounts."
+      empty={translate("No city ledger accounts.")}
       total={{ company: "Total", open_balance: money(sum(rows, "open_balance")) }}
     />
   )
 }
 
 function DepositLedger({ p }: { p: Pack }) {
+  useUILanguage()
   const d = p.deposit_ledger || { items: [] }
   return (
     <DataTable
@@ -363,7 +368,7 @@ function DepositLedger({ p }: { p: Pack }) {
         { key: "balance", label: "Balance", kind: "money" },
       ]}
       rows={d.items || []}
-      empty="No deposits held."
+      empty={translate("No deposits held.")}
       total={{ reservation: "Total", balance: money(d.total) }}
     />
   )
@@ -419,10 +424,10 @@ function Occupancy({ p }: { p: Pack }) {
   return (
     <div>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <Stat label="Occupancy" value={`${s.occupancy_pct ?? 0}%`} />
-        <Stat label="Rooms sold" value={`${s.rooms_sold ?? 0} / ${s.total_rooms ?? 0}`} />
-        <Stat label="ADR" value={`${cur()}${money(s.adr)}`} />
-        <Stat label="RevPAR" value={`${cur()}${money(s.revpar)}`} />
+        <Stat label={translate("Occupancy")} value={`${s.occupancy_pct ?? 0}%`} />
+        <Stat label={translate("Rooms sold")} value={`${s.rooms_sold ?? 0} / ${s.total_rooms ?? 0}`} />
+        <Stat label={translate("ADR")} value={`${cur()}${money(s.adr)}`} />
+        <Stat label={translate("RevPAR")} value={`${cur()}${money(s.revpar)}`} />
       </div>
       <Sub>{t("Revenue")}</Sub>
       <DataTable
@@ -471,7 +476,7 @@ function NoShows({ p }: { p: Pack }) {
           { key: "fee_amount", label: "Fee", kind: "money" },
         ]}
         rows={p.no_shows || []}
-        empty="No no-shows."
+        empty={translate("No no-shows.")}
       />
       <Sub>{t("Held late arrivals")}</Sub>
       <DataTable
@@ -482,7 +487,7 @@ function NoShows({ p }: { p: Pack }) {
           { key: "reason", label: "Reason" },
         ]}
         rows={p.held_late_arrivals || []}
-        empty="None held."
+        empty={translate("None held.")}
       />
       <Sub>{t("Cancellations")}</Sub>
       <DataTable
@@ -495,7 +500,7 @@ function NoShows({ p }: { p: Pack }) {
           { key: "fee", label: "Fee", kind: "money" },
         ]}
         rows={p.cancellations || []}
-        empty="No cancellations."
+        empty={translate("No cancellations.")}
       />
     </div>
   )
@@ -518,7 +523,7 @@ function RateVariance({ p }: { p: Pack }) {
           { key: "manual", label: "Manual", render: (r) => (r.manual ? t("Yes") : t("No")) },
         ]}
         rows={rv}
-        empty="Every room night was posted at its booked rate."
+        empty={translate("Every room night was posted at its booked rate.")}
       />
       <Sub>{t("Zero-rate and complimentary rooms")}</Sub>
       <DataTable
@@ -529,7 +534,7 @@ function RateVariance({ p }: { p: Pack }) {
           { key: "rate_plan", label: "Rate plan" },
         ]}
         rows={zero}
-        empty="None."
+        empty={translate("None.")}
       />
     </div>
   )

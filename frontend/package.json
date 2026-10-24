@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "i18n:extract": "node scripts/i18n-extract.mjs",
     "i18n:import": "node scripts/i18n-import.mjs",
+    "i18n:check": "node scripts/i18n-check.mjs",
     "phone:check": "node scripts/phone-check.mjs"
   },
   "dependencies": {

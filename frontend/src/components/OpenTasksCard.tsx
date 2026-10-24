@@ -6,9 +6,10 @@ import { Link } from "react-router-dom"
 import { ListChecks } from "lucide-react"
 import { getRoomsBoard, type BoardRoom } from "../lib/rooms"
 import { serverError } from "../lib/resource"
-import { useT } from "../lib/i18n"
+import { useT, t as translate } from "../lib/i18n"
 import { Badge } from "./ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
+
 
 export default function OpenTasksCard({ refreshKey }: { refreshKey?: number }) {
   const { t } = useT()
@@ -27,7 +28,7 @@ export default function OpenTasksCard({ refreshKey }: { refreshKey?: number }) {
       </CardHeader>
       <CardContent className="pt-1">
         {error ? (
-          <p className="text-sm text-rose-700">{error}</p>
+          <p className="text-sm text-rose-700">{translate(error)}</p>
         ) : rows === null ? (
           <p className="py-3 text-sm text-zinc-400">{t("Loading…")}</p>
         ) : rows.length === 0 ? (

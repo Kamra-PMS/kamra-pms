@@ -9,6 +9,7 @@ import { serverError, updateResource } from "../lib/resource"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { cur } from "../lib/money"
+import { t as translate, useUILanguage } from "../lib/i18n"
 
 type Doc = Record<string, any>
 
@@ -20,6 +21,7 @@ const isVideo = (u: string) =>
   /\.(mp4|mov|webm|m4v|3gp|avi)$/i.test((u ?? "").trim())
 
 export default function BookingEngine() {
+  useUILanguage()
   const property = getCurrentProperty()
   const { section = "profile" } = useParams()
 
@@ -36,7 +38,7 @@ export default function BookingEngine() {
   useEffect(load, [load])
 
   if (!doc)
-    return <p className="py-20 text-center text-zinc-400">Loading Booking Engine Settings…</p>
+    return <p className="py-20 text-center text-zinc-400">{translate("Loading Booking Engine Settings…")}</p>
 
   async function save() {
     setBusy(true)
@@ -164,12 +166,8 @@ export default function BookingEngine() {
         <CardContent className="flex flex-wrap items-center justify-between gap-4 p-6">
           <div className="space-y-1">
             <h1 className="text-xl font-bold flex items-center gap-2 text-zinc-800">
-              <Globe className="size-5 text-brand-600" />
-              Booking Engine Console
-            </h1>
-            <p className="text-xs text-zinc-500">
-              Configure your direct-booking page settings.
-            </p>
+              <Globe className="size-5 text-brand-600" />{translate("Booking Engine Console")}</h1>
+            <p className="text-xs text-zinc-500">{translate("Configure your direct-booking page settings.")}</p>
           </div>
           <div className="flex items-center gap-3">
             <label className="flex items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-sm font-medium text-zinc-700 shadow-sm cursor-pointer hover:bg-zinc-50">
@@ -178,18 +176,14 @@ export default function BookingEngine() {
                 className="size-4 accent-brand-600 rounded"
                 checked={Boolean(Number(doc.booking_engine_enabled ?? 0))}
                 onChange={(e) => updateField("booking_engine_enabled", e.target.checked ? 1 : 0)}
-              />
-              Engine Live
-            </label>
+              />{translate("Engine Live")}</label>
             <a
               href={`/book`}
               target="_blank"
               rel="noreferrer"
               className="inline-flex items-center gap-1.5 rounded-lg bg-white border border-zinc-200 px-3.5 py-1.5 text-sm font-medium text-zinc-700 shadow-sm hover:bg-zinc-50"
             >
-              <Eye className="size-4 text-zinc-500" />
-              Preview Page
-            </a>
+              <Eye className="size-4 text-zinc-500" />{translate("Preview Page")}</a>
           </div>
         </CardContent>
       </Card>
@@ -200,17 +194,15 @@ export default function BookingEngine() {
         <div>
           <Card>
             <CardHeader>
-              <CardTitle>{sections.find((s) => s.id === section)?.label}</CardTitle>
-              <p className="mt-1 text-xs text-zinc-400">
-                Customize settings visible on the booking flow.
-              </p>
+              <CardTitle>{translate(sections.find((s) => s.id === section)?.label)}</CardTitle>
+              <p className="mt-1 text-xs text-zinc-400">{translate("Customize settings visible on the booking flow.")}</p>
             </CardHeader>
             <CardContent className="space-y-4">
               {section === "profile" && (
                 <div className="space-y-4">
                   <div className="grid gap-4 sm:grid-cols-2">
                     <label className="block">
-                      <span className="mb-1 block text-sm font-medium text-zinc-600">Property Name</span>
+                      <span className="mb-1 block text-sm font-medium text-zinc-600">{translate("Property Name")}</span>
                       <input
                         className={inputCls}
                         value={doc.property_name ?? ""}
@@ -218,7 +210,7 @@ export default function BookingEngine() {
                       />
                     </label>
                     <label className="block">
-                      <span className="mb-1 block text-sm font-medium text-zinc-600">Legal Name</span>
+                      <span className="mb-1 block text-sm font-medium text-zinc-600">{translate("Legal Name")}</span>
                       <input
                         className={inputCls}
                         value={doc.legal_name ?? ""}
@@ -228,7 +220,7 @@ export default function BookingEngine() {
                   </div>
 
                   <label className="block">
-                    <span className="mb-1 block text-sm font-medium text-zinc-600">About (Description)</span>
+                    <span className="mb-1 block text-sm font-medium text-zinc-600">{translate("About (Description)")}</span>
                     <textarea
                       rows={3}
                       className={inputCls}
@@ -239,7 +231,7 @@ export default function BookingEngine() {
 
                   <div className="grid gap-4 sm:grid-cols-3">
                     <label className="block">
-                      <span className="mb-1 block text-sm font-medium text-zinc-600">Phone</span>
+                      <span className="mb-1 block text-sm font-medium text-zinc-600">{translate("Phone")}</span>
                       <input
                         className={inputCls}
                         value={doc.phone ?? ""}
@@ -247,7 +239,7 @@ export default function BookingEngine() {
                       />
                     </label>
                     <label className="block">
-                      <span className="mb-1 block text-sm font-medium text-zinc-600">Email</span>
+                      <span className="mb-1 block text-sm font-medium text-zinc-600">{translate("Email")}</span>
                       <input
                         className={inputCls}
                         type="email"
@@ -256,7 +248,7 @@ export default function BookingEngine() {
                       />
                     </label>
                     <label className="block">
-                      <span className="mb-1 block text-sm font-medium text-zinc-600">Website</span>
+                      <span className="mb-1 block text-sm font-medium text-zinc-600">{translate("Website")}</span>
                       <input
                         className={inputCls}
                         value={doc.website ?? ""}
@@ -266,10 +258,10 @@ export default function BookingEngine() {
                   </div>
 
                   <div className="border-t border-zinc-100 pt-4">
-                    <h3 className="text-sm font-semibold text-zinc-700 mb-2">Location & Map</h3>
+                    <h3 className="text-sm font-semibold text-zinc-700 mb-2">{translate("Location & Map")}</h3>
                     <div className="grid gap-4 sm:grid-cols-2">
                       <label className="block">
-                        <span className="mb-1 block text-sm font-medium text-zinc-600">Address Line</span>
+                        <span className="mb-1 block text-sm font-medium text-zinc-600">{translate("Address Line")}</span>
                         <input
                           className={inputCls}
                           value={doc.address_line ?? ""}
@@ -278,7 +270,7 @@ export default function BookingEngine() {
                       </label>
                       <div className="grid grid-cols-2 gap-2">
                         <label className="block">
-                          <span className="mb-1 block text-sm font-medium text-zinc-600">City</span>
+                          <span className="mb-1 block text-sm font-medium text-zinc-600">{translate("City")}</span>
                           <input
                             className={inputCls}
                             value={doc.city ?? ""}
@@ -286,7 +278,7 @@ export default function BookingEngine() {
                           />
                         </label>
                         <label className="block">
-                          <span className="mb-1 block text-sm font-medium text-zinc-600">State</span>
+                          <span className="mb-1 block text-sm font-medium text-zinc-600">{translate("State")}</span>
                           <input
                             className={inputCls}
                             value={doc.state ?? ""}
@@ -298,7 +290,7 @@ export default function BookingEngine() {
 
                     <div className="grid gap-4 sm:grid-cols-3 mt-3">
                       <label className="block">
-                        <span className="mb-1 block text-sm font-medium text-zinc-600">Country</span>
+                        <span className="mb-1 block text-sm font-medium text-zinc-600">{translate("Country")}</span>
                         <input
                           className={inputCls}
                           value={doc.country ?? ""}
@@ -306,7 +298,7 @@ export default function BookingEngine() {
                         />
                       </label>
                       <label className="block">
-                        <span className="mb-1 block text-sm font-medium text-zinc-600">PIN Code</span>
+                        <span className="mb-1 block text-sm font-medium text-zinc-600">{translate("PIN Code")}</span>
                         <input
                           className={inputCls}
                           value={doc.pincode ?? ""}
@@ -314,7 +306,7 @@ export default function BookingEngine() {
                         />
                       </label>
                       <label className="block">
-                        <span className="mb-1 block text-sm font-medium text-zinc-600">Category</span>
+                        <span className="mb-1 block text-sm font-medium text-zinc-600">{translate("Category")}</span>
                         <select
                           className={inputCls}
                           value={doc.star_category ?? ""}
@@ -322,7 +314,7 @@ export default function BookingEngine() {
                         >
                           {["", "1 Star", "2 Star", "3 Star", "4 Star", "5 Star", "Boutique", "Homestay"].map((c) => (
                             <option key={c} value={c}>
-                              {c || "None"}
+                              {(translate(c) || translate("None"))}
                             </option>
                           ))}
                         </select>
@@ -331,7 +323,7 @@ export default function BookingEngine() {
 
                     <div className="grid gap-4 sm:grid-cols-2 mt-3">
                       <label className="block">
-                        <span className="mb-1 block text-sm font-medium text-zinc-600">Latitude</span>
+                        <span className="mb-1 block text-sm font-medium text-zinc-600">{translate("Latitude")}</span>
                         <input
                           className={inputCls}
                           type="number"
@@ -341,7 +333,7 @@ export default function BookingEngine() {
                         />
                       </label>
                       <label className="block">
-                        <span className="mb-1 block text-sm font-medium text-zinc-600">Longitude</span>
+                        <span className="mb-1 block text-sm font-medium text-zinc-600">{translate("Longitude")}</span>
                         <input
                           className={inputCls}
                           type="number"
@@ -353,7 +345,7 @@ export default function BookingEngine() {
                     </div>
 
                     <label className="block mt-3">
-                      <span className="mb-1 block text-sm font-medium text-zinc-600">Driving Directions</span>
+                      <span className="mb-1 block text-sm font-medium text-zinc-600">{translate("Driving Directions")}</span>
                       <textarea
                         rows={2}
                         className={inputCls}
@@ -364,9 +356,9 @@ export default function BookingEngine() {
 
                     {doc.latitude && doc.longitude && (
                       <div className="mt-4">
-                        <span className="mb-1.5 block text-xs font-semibold text-zinc-500 uppercase tracking-wider">Map Preview</span>
+                        <span className="mb-1.5 block text-xs font-semibold text-zinc-500 uppercase tracking-wider">{translate("Map Preview")}</span>
                         <iframe
-                          title="Embedded Location Map"
+                          title={translate("Embedded Location Map")}
                           width="100%"
                           height="220"
                           src={`https://maps.google.com/maps?q=${doc.latitude},${doc.longitude}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
@@ -378,7 +370,7 @@ export default function BookingEngine() {
 
                   <div className="border-t border-zinc-100 pt-4 grid gap-4 sm:grid-cols-2">
                     <label className="block">
-                      <span className="mb-1 block text-sm font-medium text-zinc-600">Google Reviews URL</span>
+                      <span className="mb-1 block text-sm font-medium text-zinc-600">{translate("Google Reviews URL")}</span>
                       <input
                         className={inputCls}
                         value={doc.google_reviews_url ?? ""}
@@ -386,7 +378,7 @@ export default function BookingEngine() {
                       />
                     </label>
                     <label className="block">
-                      <span className="mb-1 block text-sm font-medium text-zinc-600">TripAdvisor URL</span>
+                      <span className="mb-1 block text-sm font-medium text-zinc-600">{translate("TripAdvisor URL")}</span>
                       <input
                         className={inputCls}
                         value={doc.tripadvisor_url ?? ""}
@@ -399,13 +391,11 @@ export default function BookingEngine() {
 
               {section === "amenities" && (
                 <label className="block">
-                  <span className="mb-1 block text-sm font-medium text-zinc-600">
-                    Property-level Amenities (one per line)
-                  </span>
+                  <span className="mb-1 block text-sm font-medium text-zinc-600">{translate("Property-level Amenities (one per line)")}</span>
                   <textarea
                     rows={8}
                     className={inputCls}
-                    placeholder={"Swimming Pool\nFree Parking\nComplimentary Wi-Fi\nFine-dining Restaurant\nSpa & Wellness"}
+                    placeholder={translate("Swimming Pool\nFree Parking\nComplimentary Wi-Fi\nFine-dining Restaurant\nSpa & Wellness")}
                     value={doc.property_amenities ?? ""}
                     onChange={(e) => updateField("property_amenities", e.target.value)}
                   />
@@ -415,8 +405,8 @@ export default function BookingEngine() {
               {section === "photos" && (
                 <div className="space-y-4">
                   <ImageField
-                    label="Logo"
-                    hint="Square, 512×512px · PNG or SVG with a transparent background. Shown on the booking page and invoices. Uploads save automatically."
+                    label={translate("Logo")}
+                    hint={translate("Square, 512×512px · PNG or SVG with a transparent background. Shown on the booking page and invoices. Uploads save automatically.")}
                     accept="image/png,image/svg+xml,image/webp"
                     value={doc.logo_url ?? ""}
                     attach={{ doctype: "Property", docname: property, fieldname: "logo_url" }}
@@ -425,8 +415,8 @@ export default function BookingEngine() {
                   />
 
                   <ImageField
-                    label="Hero showcase image"
-                    hint="1920×1080px (16:9 landscape) · JPG or WebP, under 2 MB. Uploads save automatically."
+                    label={translate("Hero showcase image")}
+                    hint={translate("1920×1080px (16:9 landscape) · JPG or WebP, under 2 MB. Uploads save automatically.")}
                     value={doc.hero_image ?? ""}
                     attach={{ doctype: "Property", docname: property, fieldname: "hero_image" }}
                     onChange={(v) => updateField("hero_image", v)}
@@ -434,13 +424,11 @@ export default function BookingEngine() {
                   />
 
                   <div className="block">
-                    <span className="mb-1 block text-sm font-medium text-zinc-600">
-                      Booking page accent
-                    </span>
+                    <span className="mb-1 block text-sm font-medium text-zinc-600">{translate("Booking page accent")}</span>
                     <div className="flex flex-wrap items-center gap-2">
                       <input
                         type="color"
-                        aria-label="Accent colour"
+                        aria-label={translate("Accent colour")}
                         className="size-10 cursor-pointer rounded-lg border border-zinc-300 bg-white p-0.5"
                         value={accentHex(doc.brand_accent)}
                         onChange={(e) => updateField("brand_accent", e.target.value)}
@@ -451,13 +439,13 @@ export default function BookingEngine() {
                         value={doc.brand_accent ?? ""}
                         onChange={(e) => updateField("brand_accent", e.target.value)}
                       />
-                      <span className="text-xs text-zinc-400">or a quick preset:</span>
+                      <span className="text-xs text-zinc-400">{translate("or a quick preset:")}</span>
                       {PRESETS.map((p) => (
                         <button
                           key={p.name}
                           type="button"
-                          title={p.name}
-                          aria-label={p.name}
+                          title={translate(p.name)}
+                          aria-label={translate(p.name)}
                           className={
                             "size-6 rounded-full border-2 " +
                             (accentHex(doc.brand_accent).toLowerCase() === p.hex
@@ -469,19 +457,12 @@ export default function BookingEngine() {
                         />
                       ))}
                     </div>
-                    <p className="mt-1 text-xs text-zinc-400">
-                      Buttons, links and highlights on the guest page take this
-                      colour - pick any hex to match the hotel's branding.
-                    </p>
+                    <p className="mt-1 text-xs text-zinc-400">{translate("Buttons, links and highlights on the guest page take this colour - pick any hex to match the hotel's branding.")}</p>
                   </div>
 
                   <div className="border-t border-zinc-100 pt-4">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-semibold text-zinc-700">
-                        Photo & Video Gallery
-                        <span className="ml-2 text-xs font-normal text-zinc-400">
-                          Images 1600×900px (16:9) JPG/WebP, or a video (MP4, up to ~10 MB)
-                        </span>
+                      <span className="text-sm font-semibold text-zinc-700">{translate("Photo & Video Gallery")}<span className="ml-2 text-xs font-normal text-zinc-400">{translate("Images 1600×900px (16:9) JPG/WebP, or a video (MP4, up to ~10 MB)")}</span>
                       </span>
                       <Button
                         variant="outline"
@@ -490,8 +471,7 @@ export default function BookingEngine() {
                           updateField("gallery", gallery)
                         }}
                       >
-                        <Plus className="size-4" /> Add Photo / Video
-                      </Button>
+                        <Plus className="size-4" />{translate(" Add Photo / Video")}</Button>
                     </div>
 
                     <div className="space-y-2">
@@ -501,7 +481,7 @@ export default function BookingEngine() {
                             <ImageField
                               hint=""
                               accept="image/*,video/*"
-                              placeholder="Upload, or paste an image/video URL"
+                              placeholder={translate("Upload, or paste an image/video URL")}
                               value={photo.url ?? ""}
                               onChange={(v) => {
                                 const gallery = (doc.gallery || []).map((g: any, idx: number) =>
@@ -519,7 +499,7 @@ export default function BookingEngine() {
                           </div>
                           <input
                             className="w-48 rounded-lg border border-zinc-300 px-3 py-1.5 text-sm"
-                            placeholder="Caption"
+                            placeholder={translate("Caption")}
                             value={photo.caption ?? ""}
                             onChange={(e) => {
                               const gallery = (doc.gallery || []).map((g: any, idx: number) =>
@@ -563,45 +543,34 @@ export default function BookingEngine() {
 
               {section === "payments" && (
                 <div className="space-y-4">
-                  <p className="text-sm text-zinc-500">
-                    What guests pay online when booking on your public page.
-                    Existing bookings keep the terms they were made under - a
-                    change here only affects new bookings.
-                  </p>
+                  <p className="text-sm text-zinc-500">{translate("What guests pay online when booking on your public page. Existing bookings keep the terms they were made under - a change here only affects new bookings.")}</p>
                   <label className="block">
-                    <span className="mb-1 block text-sm font-medium text-zinc-600">
-                      Collect on booking
-                    </span>
+                    <span className="mb-1 block text-sm font-medium text-zinc-600">{translate("Collect on booking")}</span>
                     <select
                       className={inputCls}
                       value={doc.booking_payment_mode ?? "Pay at hotel"}
                       onChange={(e) => updateField("booking_payment_mode", e.target.value)}
                     >
-                      <option>Pay at hotel</option>
-                      <option>Advance percent</option>
-                      <option>Registration fee</option>
-                      <option>Full online</option>
+                      <option value={"Pay at hotel"}>{translate("Pay at hotel")}</option>
+                      <option value={"Advance percent"}>{translate("Advance percent")}</option>
+                      <option value={"Registration fee"}>{translate("Registration fee")}</option>
+                      <option value={"Full online"}>{translate("Full online")}</option>
                     </select>
                   </label>
                   {doc.booking_payment_mode === "Advance percent" && (
                     <label className="block max-w-xs">
-                      <span className="mb-1 block text-sm font-medium text-zinc-600">
-                        Advance percentage
-                      </span>
+                      <span className="mb-1 block text-sm font-medium text-zinc-600">{translate("Advance percentage")}</span>
                       <input
                         type="number" min={0} max={100} className={inputCls}
                         value={doc.advance_percent ?? ""}
                         onChange={(e) => updateField("advance_percent", Number(e.target.value))}
                       />
-                      <span className="mt-1 block text-xs text-zinc-400">
-                        Collected upfront; the rest is paid at the hotel.
-                      </span>
+                      <span className="mt-1 block text-xs text-zinc-400">{translate("Collected upfront; the rest is paid at the hotel.")}</span>
                     </label>
                   )}
                   {doc.booking_payment_mode === "Registration fee" && (
                     <label className="block max-w-xs">
-                      <span className="mb-1 block text-sm font-medium text-zinc-600">
-                        Registration fee ({cur()})
+                      <span className="mb-1 block text-sm font-medium text-zinc-600">{translate("Registration fee (")}{cur()})
                       </span>
                       <input
                         type="number" min={0} className={inputCls}
@@ -610,12 +579,7 @@ export default function BookingEngine() {
                       />
                     </label>
                   )}
-                  <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
-                    Online collection uses the payment gateway set under
-                    Settings → Payments, where your country offers one (India:
-                    Razorpay or Cashfree). Until a gateway is connected, the
-                    advance is recorded as due and settled at the desk.
-                  </div>
+                  <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">{translate("Online collection uses the payment gateway set under Settings → Payments, where your country offers one (India: Razorpay or Cashfree). Until a gateway is connected, the advance is recorded as due and settled at the desk.")}</div>
                 </div>
               )}
 
@@ -623,7 +587,7 @@ export default function BookingEngine() {
                 <div className="space-y-4">
                   <div className="grid gap-4 sm:grid-cols-2">
                     <label className="block">
-                      <span className="mb-1 block text-sm font-medium text-zinc-600">Check-in Time</span>
+                      <span className="mb-1 block text-sm font-medium text-zinc-600">{translate("Check-in Time")}</span>
                       <input
                         className={inputCls}
                         type="time"
@@ -632,7 +596,7 @@ export default function BookingEngine() {
                       />
                     </label>
                     <label className="block">
-                      <span className="mb-1 block text-sm font-medium text-zinc-600">Check-out Time</span>
+                      <span className="mb-1 block text-sm font-medium text-zinc-600">{translate("Check-out Time")}</span>
                       <input
                         className={inputCls}
                         type="time"
@@ -644,7 +608,7 @@ export default function BookingEngine() {
 
                   <div className="grid gap-4 sm:grid-cols-2 border-t border-zinc-100 pt-4">
                     <label className="block">
-                      <span className="mb-1 block text-sm font-medium text-zinc-600">Free cancellation window (days before arrival)</span>
+                      <span className="mb-1 block text-sm font-medium text-zinc-600">{translate("Free cancellation window (days before arrival)")}</span>
                       <input
                         className={inputCls}
                         type="number"
@@ -653,7 +617,7 @@ export default function BookingEngine() {
                       />
                     </label>
                     <label className="block">
-                      <span className="mb-1 block text-sm font-medium text-zinc-600">Late cancellation fee basis</span>
+                      <span className="mb-1 block text-sm font-medium text-zinc-600">{translate("Late cancellation fee basis")}</span>
                       <select
                         className={inputCls}
                         value={doc.cancellation_fee ?? "First Night"}
@@ -661,7 +625,7 @@ export default function BookingEngine() {
                       >
                         {["None", "First Night", "Full Stay"].map((o) => (
                           <option key={o} value={o}>
-                            {o}
+                            {translate(o)}
                           </option>
                         ))}
                       </select>
@@ -670,7 +634,7 @@ export default function BookingEngine() {
 
                   <div className="grid gap-4 sm:grid-cols-2">
                     <label className="block">
-                      <span className="mb-1 block text-sm font-medium text-zinc-600">No-show charge basis</span>
+                      <span className="mb-1 block text-sm font-medium text-zinc-600">{translate("No-show charge basis")}</span>
                       <select
                         className={inputCls}
                         value={doc.no_show_charge ?? "First Night"}
@@ -678,13 +642,13 @@ export default function BookingEngine() {
                       >
                         {["None", "First Night", "Full Stay"].map((o) => (
                           <option key={o} value={o}>
-                            {o}
+                            {translate(o)}
                           </option>
                         ))}
                       </select>
                     </label>
                     <label className="block">
-                      <span className="mb-1 block text-sm font-medium text-zinc-600">Deposit expected (%)</span>
+                      <span className="mb-1 block text-sm font-medium text-zinc-600">{translate("Deposit expected (%)")}</span>
                       <input
                         className={inputCls}
                         type="number"
@@ -696,41 +660,41 @@ export default function BookingEngine() {
 
                   <div className="border-t border-zinc-100 pt-4 space-y-3">
                     <label className="block">
-                      <span className="mb-1 block text-sm font-medium text-zinc-600">House Rules</span>
+                      <span className="mb-1 block text-sm font-medium text-zinc-600">{translate("House Rules")}</span>
                       <textarea
                         rows={2}
                         className={inputCls}
-                        placeholder="No loud music after 10 PM. Swimming pool requires proper swimwear."
+                        placeholder={translate("No loud music after 10 PM. Swimming pool requires proper swimwear.")}
                         value={doc.house_rules ?? ""}
                         onChange={(e) => updateField("house_rules", e.target.value)}
                       />
                     </label>
                     <label className="block">
-                      <span className="mb-1 block text-sm font-medium text-zinc-600">Pets Policy</span>
+                      <span className="mb-1 block text-sm font-medium text-zinc-600">{translate("Pets Policy")}</span>
                       <textarea
                         rows={2}
                         className={inputCls}
-                        placeholder="Pets allowed on request. Charges may apply."
+                        placeholder={translate("Pets allowed on request. Charges may apply.")}
                         value={doc.pets_policy ?? ""}
                         onChange={(e) => updateField("pets_policy", e.target.value)}
                       />
                     </label>
                     <label className="block">
-                      <span className="mb-1 block text-sm font-medium text-zinc-600">Children & Occupancy Policy</span>
+                      <span className="mb-1 block text-sm font-medium text-zinc-600">{translate("Children & Occupancy Policy")}</span>
                       <textarea
                         rows={2}
                         className={inputCls}
-                        placeholder="Children under 5 stay free using existing beds."
+                        placeholder={translate("Children under 5 stay free using existing beds.")}
                         value={doc.children_policy ?? ""}
                         onChange={(e) => updateField("children_policy", e.target.value)}
                       />
                     </label>
                     <label className="block">
-                      <span className="mb-1 block text-sm font-medium text-zinc-600">Extra Bed Policy</span>
+                      <span className="mb-1 block text-sm font-medium text-zinc-600">{translate("Extra Bed Policy")}</span>
                       <textarea
                         rows={2}
                         className={inputCls}
-                        placeholder={`Extra bed available for select rooms at ${cur()}1,000 per night.`}
+                        placeholder={translate("Extra bed available for select rooms at {v0}1,000 per night.", { v0: String(cur()) })}
                         value={doc.extra_bed_policy ?? ""}
                         onChange={(e) => updateField("extra_bed_policy", e.target.value)}
                       />
@@ -742,7 +706,7 @@ export default function BookingEngine() {
               {section === "faq" && (
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-semibold text-zinc-700">FAQ Directory</span>
+                    <span className="text-sm font-semibold text-zinc-700">{translate("FAQ Directory")}</span>
                     <Button
                       variant="outline"
                       onClick={() => {
@@ -750,8 +714,7 @@ export default function BookingEngine() {
                         updateField("faqs", faqs)
                       }}
                     >
-                      <Plus className="size-4" /> Add FAQ
-                    </Button>
+                      <Plus className="size-4" />{translate(" Add FAQ")}</Button>
                   </div>
 
                   <div className="space-y-4">
@@ -763,15 +726,15 @@ export default function BookingEngine() {
                             updateField("faqs", faqs)
                           }}
                           className="absolute top-2 right-2 rounded-lg p-1.5 text-rose-500 hover:bg-rose-50"
-                          aria-label="Delete FAQ"
+                          aria-label={translate("Delete FAQ")}
                         >
                           <Trash2 className="size-4" />
                         </button>
                         <label className="block pr-8">
-                          <span className="mb-1 block text-xs font-semibold text-zinc-500 uppercase tracking-wider">Question</span>
+                          <span className="mb-1 block text-xs font-semibold text-zinc-500 uppercase tracking-wider">{translate("Question")}</span>
                           <input
                             className={inputCls}
-                            placeholder="What is check-in time?"
+                            placeholder={translate("What is check-in time?")}
                             value={faq.question ?? ""}
                             onChange={(e) => {
                               const faqs = (doc.faqs || []).map((f: any, idx: number) =>
@@ -782,11 +745,11 @@ export default function BookingEngine() {
                           />
                         </label>
                         <label className="block">
-                          <span className="mb-1 block text-xs font-semibold text-zinc-500 uppercase tracking-wider">Answer</span>
+                          <span className="mb-1 block text-xs font-semibold text-zinc-500 uppercase tracking-wider">{translate("Answer")}</span>
                           <textarea
                             rows={2}
                             className={inputCls}
-                            placeholder="Standard check-in is at 2:00 PM, and checkout is 11:00 AM."
+                            placeholder={translate("Standard check-in is at 2:00 PM, and checkout is 11:00 AM.")}
                             value={faq.answer ?? ""}
                             onChange={(e) => {
                               const faqs = (doc.faqs || []).map((f: any, idx: number) =>
@@ -805,21 +768,21 @@ export default function BookingEngine() {
               {section === "seo" && (
                 <div className="space-y-4">
                   <label className="block">
-                    <span className="mb-1 block text-sm font-medium text-zinc-600">Meta Title</span>
+                    <span className="mb-1 block text-sm font-medium text-zinc-600">{translate("Meta Title")}</span>
                     <input
                       className={inputCls}
-                      placeholder="Grand Kamra Palace | Luxury Stay in Udaipur"
+                      placeholder={translate("Grand Kamra Palace | Luxury Stay in Udaipur")}
                       value={doc.meta_title ?? ""}
                       onChange={(e) => updateField("meta_title", e.target.value)}
                     />
                   </label>
 
                   <label className="block">
-                    <span className="mb-1 block text-sm font-medium text-zinc-600">Meta Description</span>
+                    <span className="mb-1 block text-sm font-medium text-zinc-600">{translate("Meta Description")}</span>
                     <textarea
                       rows={3}
                       className={inputCls}
-                      placeholder="Book directly for best rates at Grand Kamra Palace, Udaipur. Located right on Lake Pichola with luxury amenities, rooftop pool, and five-star dine-in options."
+                      placeholder={translate("Book directly for best rates at Grand Kamra Palace, Udaipur. Located right on Lake Pichola with luxury amenities, rooftop pool, and five-star dine-in options.")}
                       value={doc.meta_description ?? ""}
                       onChange={(e) => updateField("meta_description", e.target.value)}
                     />
@@ -827,22 +790,20 @@ export default function BookingEngine() {
 
                   <div className="grid gap-4 sm:grid-cols-2">
                     <ImageField
-                      label="OG image (share card)"
-                      hint="Exactly 1200×630px · JPG or PNG. What WhatsApp, Google and social previews show."
+                      label={translate("OG image (share card)")}
+                      hint={translate("Exactly 1200×630px · JPG or PNG. What WhatsApp, Google and social previews show.")}
                       value={doc.og_image ?? ""}
                       onChange={(v) => updateField("og_image", v)}
                     />
                     <label className="block">
-                      <span className="mb-1 block text-sm font-medium text-zinc-600">Page Slug Prefix</span>
+                      <span className="mb-1 block text-sm font-medium text-zinc-600">{translate("Page Slug Prefix")}</span>
                       <input
                         className={inputCls}
-                        placeholder="e.g. grand-kamra-palace"
+                        placeholder={translate("e.g. grand-kamra-palace")}
                         value={doc.page_slug ?? ""}
                         onChange={(e) => updateField("page_slug", e.target.value)}
                       />
-                      <p className="mt-1 text-xs text-zinc-400">
-                        Used when several properties share one site: guests reach this property at /book?property=your-slug or /stay/your-slug. Room types have their own /stay/listing-slug.
-                      </p>
+                      <p className="mt-1 text-xs text-zinc-400">{translate("Used when several properties share one site: guests reach this property at /book?property=your-slug or /stay/your-slug. Room types have their own /stay/listing-slug.")}</p>
                     </label>
                   </div>
                 </div>
@@ -856,13 +817,13 @@ export default function BookingEngine() {
       <Card>
         <CardContent className="flex items-center gap-4 py-4 justify-end">
           {state === "saved" && (
-            <span className="text-sm font-medium text-emerald-600">Settings Saved Successfully</span>
+            <span className="text-sm font-medium text-emerald-600">{translate("Settings Saved Successfully")}</span>
           )}
           {state !== "idle" && state !== "saved" && (
-            <span className="text-sm font-medium text-rose-600">{state}</span>
+            <span className="text-sm font-medium text-rose-600">{translate(state)}</span>
           )}
           <Button disabled={busy} onClick={save} className="px-6 py-2">
-            {busy ? "Saving…" : "Save Changes"}
+            {busy ? translate("Saving…") : translate("Save Changes")}
           </Button>
         </CardContent>
       </Card>

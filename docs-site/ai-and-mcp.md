@@ -24,6 +24,60 @@ Staff connect **as themselves**. A front-desk session can quote, book and
 check in; it cannot change rates or run finance. Unattended jobs
 (HeyKoala, night scripts) use a service key from Developers.
 
+## Who can use MCP
+
+A hotel admin decides, per person, under **Settings → AI access (MCP)**
+(`/kamra/settings/claude`):
+
+| MCP role | What the AI may do for this person |
+| --- | --- |
+| No access | Nothing. Sign-in is refused with "Your Kamra user has no MCP access". |
+| **MCP Read** | Look: arrivals, stays, folios, reports, room boards. Every tool that changes data is hidden and refused. |
+| **MCP Manage** | Look and make changes: book, check in, post charges, assign rooms. |
+
+Hotel Admin and IT always have full access.
+
+The MCP role only opens the door. What a tool can see or change is still
+decided by the person's normal Kamra roles: someone with MCP Manage
+whose only role is Housekeeping still can't book a room or touch a
+folio. Nobody can do more through an AI than they can in Kamra itself.
+
+Roles and the switches below are read on **every request**. A change
+applies to the person's next tool call: no reconnect, no waiting for a
+token to expire. (The AI client may keep showing its old tool list until
+it reloads it, but a refused tool stays refused.)
+
+Sites upgraded from 2.6.19 or earlier: everyone who already had a live
+Claude connection, or whose API key had made MCP changes, was given MCP
+Manage so nothing stopped working. Review the list after upgrading.
+
+### Property switches
+
+On the same page, for the property you are in:
+
+- **AI access over MCP** - off means nobody can connect an AI client to
+  this property, and existing connections stop working at once. The site
+  setting `kamra_mcp_disabled` still turns MCP off for every property.
+- **Block write tools** - AI clients can look but never change anything
+  here, whatever the person's MCP role.
+- **Blocked tools** - switch off single tools (for example
+  `run_night_audit` or `void_charge`) for AI clients. Staff can still do
+  the same thing in Kamra.
+
+The page also lists **connected AI clients** (who, which client, when it
+connected and was last used) with **Disconnect**, and links to every AI
+action in **Activity**.
+
+### Needs approval in Claude
+
+Every tool tells the client what it does (MCP tool annotations):
+`readOnlyHint` for tools that only look, `destructiveHint` for writes
+that can't simply be undone (cancel, void, check-out, close folio, night
+audit), `idempotentHint` where the same call twice does no more than
+once, and `openWorldHint` for tools that message a guest. In Claude's
+connector settings, leave reads on and set the write tools to **Needs
+approval** while your team gets used to it.
+
 ## 1. Connect Claude (the usual path)
 
 Your Kamra site must be **public HTTPS** - Claude talks to it from
@@ -49,7 +103,39 @@ claude mcp add --transport http kamra https://pms.yourhotel.com/mcp
 Then `/mcp` in the session and complete the browser sign-in.
 
 Disconnect from the same Connect panel - that revokes the grant. Claude
-must sign in again.
+must sign in again. A hotel admin can disconnect anyone's client under
+Settings → AI access (MCP).
+
+### ChatGPT
+
+ChatGPT connects to the same `/mcp` URL as a custom connector (it calls
+them apps or plugins in newer screens, and you may need Developer mode in
+its advanced settings).
+
+1. In ChatGPT, add a new connector / app with the MCP server URL
+   `https://pms.yourhotel.com/mcp` and OAuth authentication. Leave
+   client ID and secret empty.
+2. Sign in to Kamra on the page that opens, pick the property, **Allow**.
+
+Kamra accepts ChatGPT's OAuth callbacks
+(`https://chatgpt.com/connector_platform_oauth_redirect` and
+`https://chatgpt.com/connector/oauth/<id>`) out of the box. The same MCP
+roles and property switches apply.
+
+### n8n and other clients
+
+**Unattended workflows** (an n8n agent with nobody to click Allow): use
+an API key. Give the key's user MCP Read or MCP Manage, then send
+`Authorization: token <api_key>:<api_secret>` to `/mcp` with Streamable
+HTTP, and `X-Kamra-Property: <property>` if the user can reach more than
+one property.
+
+**Interactive sign-in** from a client Kamra doesn't know by name, such
+as your own n8n: an IT admin adds the client's exact OAuth redirect
+address under Settings → AI access (MCP) → **Extra sign-in addresses**
+(for n8n, `https://<your-n8n>/rest/oauth2-credential/callback`). Only
+`https://` addresses, exact match, no wildcards. Then use OAuth with the
+server URL `https://pms.yourhotel.com/mcp`.
 
 ### Localhost and air-gapped sites
 
@@ -82,18 +168,29 @@ Gemini, Groq, OpenRouter, Ollama, Azure, or Custom) → paste the key →
   your provider.
 - **Governed:** the model only calls Kamra's tools.
 - **Role-scoped:** tools match the signed-in user's roles.
+- **Cards with actions:** under a reply, each stay the agent worked on
+  shows as a card: guest, room, dates, status and what is due, with
+  **Check in**, **Check out**, **Collect**, **Open folio**, **Waive
+  deposit** and **Open stay**. A priced stay shows as a quote card with
+  **Book**. The buttons open the same sheets as the rest of Kamra, as you;
+  nothing is paid or posted until you finish that sheet.
+- **Shortcuts:** chips above the message box send the common asks in one
+  tap (today's arrivals, departures and balances, in-house guests, a
+  quote, the night audit check).
+
+![Kamra Agent: a reply with a stay card for an in-house guest, with Check out, Collect, Open folio, Waive deposit and Open stay](/img/ai/agent-cards.png)
 
 ## What work it can do
 
-Kamra ships **101 governed tools** on MCP (see the
+Kamra ships **116 governed tools** on MCP (see the
 [tool reference](/mcp-tools)). Visibility is the intersection of the
-connected user's **roles** and the property's **enabled modules** - a
-house without F&B never sees POS tools; Front Desk still cannot change
-rates.
+connected user's **roles**, their **MCP role** (Read hides every write),
+the property's **enabled modules** and its **AI switches** - a house
+without F&B never sees POS tools; Front Desk still cannot change rates.
 
 | Job | Tools |
 | --- | --- |
-| Front desk | Today's board, find stays, stay detail, availability, quote, book, waitlist, amend / move, check-in / out, guest lookup and journey, occupants |
+| Front desk | Today's board, find stays, stay detail, availability, quote, book, waitlist, amend / move, assign rooms to arrivals (preview, then apply), check-in / out, guest lookup and journey, occupants |
 | Billing | Folio(s), post / split / move charges, take payment, void, allowance, close folio, payment link |
 | Housekeeping | Queue, assign / claim / update tasks, room HK status, minibar / laundry post from the floor |
 | Ops | Create, list, and advance service tickets |
@@ -111,6 +208,9 @@ rates.
 Say the hotel work, not the API:
 
 - "Who's arriving today, and who still owes?"
+- "Assign rooms for tomorrow's arrivals." (`assign_rooms_preview` shows
+  the plan; `assign_rooms_apply` writes the pairs you agree to, checking
+  each again)
 - "Quote a deluxe Friday to Sunday, two adults, breakfast."
 - "Book that for Priya Sharma, 98765 43210."
 - "The Rao booking wants to cancel - what's the fee?"
@@ -134,6 +234,24 @@ the window, closing a folio) in the chat before the tool runs.
 Named always-on jobs (a night auditor that runs at 3am, an owner brief
 on WhatsApp, waitlist chase) are on the backlog below. Until they ship,
 Claude is the loop: you open a chat, it uses the tools.
+
+## Testing Kamra Agent
+
+`kamra.scripts.agent_eval` talks to Kamra Agent the way staff do: real
+conversations, the property's own AI provider, then checks on what changed
+in the PMS. It covers booking without the security deposit, quote then
+book, check-out that collects what check-out asks for, one charge per bill,
+cancelling only after a yes, refusing what no tool can do, and role limits.
+It calls a live AI provider, so it is not part of CI. It runs on the EVAL
+Hotel sandbox and rolls everything back.
+
+```bash
+bench --site <site> execute kamra.scripts.agent_eval.execute
+bench --site <site> execute kamra.scripts.agent_eval.execute \
+  --kwargs "{'only': 'checkout', 'runs': 3, 'model': 'gpt-4o'}"
+```
+
+Models vary from run to run, so use `runs` to see a pass rate.
 
 ## Limitations
 

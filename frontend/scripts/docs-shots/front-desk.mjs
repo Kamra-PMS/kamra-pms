@@ -214,6 +214,40 @@ if (want("checkout")) {
   console.log("checkout Sneha Iyer:", err || "ok")
 }
 
+if (want("in-house")) {
+  await open(page, "/in-house?tab=in-house", 3000)
+  await shot(page, "front-desk/in-house")
+}
+
+if (want("agent-cards")) {
+  // a saved chat whose reply carries a stay card and a quote card, so the
+  // shot needs no AI key; the cards load live from the stay itself
+  const [stay] = await api(ctx, "frappe.client.get_list", {
+    doctype: "Reservation", filters: { property: PROPERTY, status: "Checked In" },
+    fields: ["name", "guest_name"], limit_page_length: 1, order_by: "check_out_date asc",
+  })
+  const c = await api(ctx, "kamra.assistant.create_conversation", {
+    property: PROPERTY, title: "Docs: check out",
+  })
+  await api(ctx, "kamra.assistant.save_conversation", {
+    name: c.name,
+    messages: JSON.stringify([
+      { role: "user", content: `check out ${stay.guest_name}` },
+      {
+        role: "assistant",
+        content: `${stay.guest_name} is in house. Here is the stay; check out from the card once the bill is settled.\n\nRef: ${stay.name}`,
+        actions: [{ tool: "find_reservations", ok: true }, { tool: "checkout_context", ok: true }],
+        cards: [{ type: "stay", reservation: stay.name }],
+      },
+    ]),
+  })
+  await open(page, "/assistant", 2500)
+  await page.getByText("Docs: check out", { exact: true }).first().click()
+  await page.waitForTimeout(3500)
+  await shot(page, "ai/agent-cards")
+  await api(ctx, "kamra.assistant.delete_conversation", { name: c.name })
+}
+
 await page.close()
 await ctx.close()
 await done()

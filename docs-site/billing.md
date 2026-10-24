@@ -263,7 +263,7 @@ Finance and the night auditor can also close someone else's till, in the
 Sessions** lists every session with its float, expected and counted cash
 and variance.
 
-**Shift Report** (**Finance → Shift Report**) lists every session of a
+**Shift Report** (**Reports → Shift report**) lists every session of a
 business date with its cash, card and variance, and a journal of the day's
 transactions by kind and mode.
 
@@ -328,7 +328,7 @@ Both screens are also linked from **Settings → Finance**.
 
 ## Review voids and allowances
 
-**Finance → Voids & Allowances** (also linked from **Finance → Reports**)
+**Reports → Voids and allowances**
 lists every void, allowance and cancelled invoice on the property: when,
 which folio, who did it and the reason. Finance and Hotel Admin users see
 it.

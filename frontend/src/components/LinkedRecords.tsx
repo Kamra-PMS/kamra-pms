@@ -10,6 +10,7 @@ import {
 
 import { call } from "../lib/api"
 import { cur, moneyLocale } from "../lib/money"
+import { t as translate, useUILanguage } from "../lib/i18n"
 
 /** The connective tissue, rendered: one strip of chips on any record that
  *  jumps straight to its guest, folios (billing), company, group or event.
@@ -48,6 +49,7 @@ export default function LinkedRecords({
   /** hide chip kinds that would link back to the current screen */
   exclude?: ("guest" | "folio" | "company" | "group" | "event")[]
 }) {
+  useUILanguage()
   const [links, setLinks] = useState<Links | null>(null)
   const navigate = useNavigate()
 
@@ -70,7 +72,7 @@ export default function LinkedRecords({
         onClick={() => navigate(`/guests/${encodeURIComponent(links.guest!)}`)}
       >
         <UserCircle2 className="size-3.5" aria-hidden />
-        {links.guest_name || "Guest"}
+        {links.guest_name || translate("Guest")}
       </button>,
     )
   if (!exclude.includes("folio"))
@@ -80,11 +82,10 @@ export default function LinkedRecords({
           key={f.name}
           className={chipCls}
           onClick={() => navigate(`/billing/${encodeURIComponent(f.name)}`)}
-          title={f.invoice_number ? `Invoice ${f.invoice_number}` : "Open folio"}
+          title={(f.invoice_number ? translate("Invoice {v0}", { v0: String(f.invoice_number) }) : translate("Open folio"))}
         >
           <Receipt className="size-3.5" aria-hidden />
-          {f.folio_type} folio
-          <span
+          {translate(f.folio_type)}{translate(" folio")}<span
             className={
               f.balance > 0 ? "text-amber-600" : "text-zinc-400"
             }
@@ -99,10 +100,10 @@ export default function LinkedRecords({
         key="group"
         className={chipCls}
         onClick={() => navigate("/groups")}
-        title="Open Groups & Blocks"
+        title={translate("Open Groups & Blocks")}
       >
         <Users className="size-3.5" aria-hidden />
-        {links.group_name || "Group"}
+        {links.group_name || translate("Group")}
       </button>,
     )
   if (links.event && !exclude.includes("event"))
@@ -111,10 +112,10 @@ export default function LinkedRecords({
         key="event"
         className={chipCls}
         onClick={() => navigate("/events")}
-        title="Open Event Bookings"
+        title={translate("Open Event Bookings")}
       >
         <PartyPopper className="size-3.5" aria-hidden />
-        {links.event_type || "Event"}
+        {translate(links.event_type) || translate("Event")}
       </button>,
     )
   if (links.company && !exclude.includes("company"))
@@ -123,7 +124,7 @@ export default function LinkedRecords({
         key="company"
         className={chipCls}
         onClick={() => navigate("/companies")}
-        title="Open Companies"
+        title={translate("Open Companies")}
       >
         <Building2 className="size-3.5" aria-hidden />
         {links.company}

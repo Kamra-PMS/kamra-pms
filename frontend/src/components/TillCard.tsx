@@ -3,8 +3,9 @@ import { Loader2, Wallet } from "lucide-react"
 import { call, getCurrentProperty } from "../lib/api"
 import { useCashierAuth } from "../lib/cashierAuth"
 import { serverError } from "../lib/resource"
-import { useT } from "../lib/i18n"
+import { useT, t as translate } from "../lib/i18n"
 import { Button } from "./ui/button"
+
 
 /** The caller's till at a property (kamra.cashier.till_state). */
 export interface TillState {
@@ -119,7 +120,7 @@ export default function TillCard(props: {
           })}
         </p>
       )}
-      {error && <p role="alert" className="mt-2 text-rose-700">{error}</p>}
+      {error && <p role="alert" className="mt-2 text-rose-700">{translate(error)}</p>}
     </section>
   )
 }

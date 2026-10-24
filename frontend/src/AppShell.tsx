@@ -38,6 +38,7 @@ import { getSiteInfo, versionLabel } from "./lib/siteInfo"
 import AlertSettings from "./components/AlertSettings"
 import NotificationHost from "./components/NotificationHost"
 
+
 // On-demand UI kept out of the entry chunk: the booking dialog opens on
 // request; the palette and help panel load right after the shell paints.
 const BookingDialog = lazy(() =>
@@ -103,13 +104,13 @@ function ThemeToggle() {
   )
   return (
     <button
-      aria-label={dark ? t("Switch to light mode") : t("Switch to dark mode")}
+      aria-label={(dark ? t("Switch to light mode") : t("Switch to dark mode"))}
       className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700"
       onClick={() => {
         setTheme(dark ? "light" : "dark")
         setDark(!dark)
       }}
-      title={getTheme() === "system" ? t("Theme (system)") : t("Theme")}
+      title={(getTheme() === "system" ? t("Theme (system)") : t("Theme"))}
     >
       {dark ? (
         <Sun className="size-4" aria-hidden />
@@ -289,6 +290,35 @@ export default function AppShell() {
         <item.icon className="size-4 shrink-0" aria-hidden />
         <span className="truncate" title={t(item.label)}>{t(item.label)}</span>
       </a>
+    ) : item.featured ? (
+      <NavLink
+        key={item.to}
+        to={item.to!}
+        className={({ isActive }) =>
+          cn(
+            "my-1 flex items-center gap-2.5 rounded-lg border px-2 py-1.5 text-sm font-semibold transition-colors",
+            isActive
+              ? "border-brand-700 bg-brand-600 text-white shadow-sm"
+              : "border-brand-100 bg-gradient-to-r from-brand-50 to-white text-brand-800 hover:border-brand-200 hover:from-brand-100",
+          )
+        }
+      >
+        {({ isActive }) => (
+          <>
+            <span className={cn(
+              "flex size-6 shrink-0 items-center justify-center rounded-md",
+              isActive ? "bg-white/20 text-white" : "bg-brand-600 text-white",
+            )}>
+              <item.icon className="size-3.5" aria-hidden />
+            </span>
+            <span className="truncate" title={t(item.label)}>{t(item.label)}</span>
+            <span className={cn(
+              "ml-auto rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+              isActive ? "bg-white/20 text-white" : "bg-brand-100 text-brand-700",
+            )}>{t("AI")}</span>
+          </>
+        )}
+      </NavLink>
     ) : (
       <NavLink
         key={item.to}

@@ -65,10 +65,10 @@ import {
 import { Steps, stepsFor, type StepId } from "./banquet/Steps"
 import Economics from "./banquet/Economics"
 import MenuComposer from "./banquet/MenuComposer"
-
-
+import { t as translate, useUILanguage } from "../lib/i18n"
 
 export default function BanquetFunction() {
+  useUILanguage()
   const { name = "" } = useParams()
   const navigate = useNavigate()
   const [fn, setFn] = useState<FunctionSheet | null>(null)
@@ -104,7 +104,7 @@ export default function BanquetFunction() {
     [load],
   )
 
-  if (!fn) return <Empty>{error ?? "Loading…"}</Empty>
+  if (!fn) return <Empty>{translate(error) ?? translate("Loading…")}</Empty>
 
   const away = daysAway(fn.event_date)
   const steps = stepsFor(fn)
@@ -113,22 +113,20 @@ export default function BanquetFunction() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <nav aria-label="Breadcrumb" className="mb-1">
+          <nav aria-label={translate("Breadcrumb")} className="mb-1">
             <ol className="flex items-center gap-1.5 text-xs text-zinc-400">
               <li>
                 <button
                   onClick={() => navigate("/banquet")}
                   className="inline-flex items-center gap-1 hover:text-zinc-700"
                 >
-                  <ArrowLeft className="size-3.5" />
-                  Banquets
-                </button>
+                  <ArrowLeft className="size-3.5" />{translate("Banquets")}</button>
               </li>
               <li aria-hidden>/</li>
               <li className="font-mono">{fn.name}</li>
               <li aria-hidden>/</li>
               <li className="text-zinc-600">
-                {steps.find((x) => x.id === step)?.label}
+                {translate(steps.find((x) => x.id === step)?.label)}
               </li>
             </ol>
           </nav>
@@ -140,7 +138,7 @@ export default function BanquetFunction() {
             </span>
           </h1>
           <p className="mt-0.5 text-sm text-zinc-500">
-            {fn.event_type}
+            {translate(fn.event_type)}
             {fn.event_name ? ` · ${fn.event_name}` : ""} · {fn.venue} ·{" "}
             {fn.event_date}
             {fn.end_date && fn.end_date !== fn.event_date
@@ -151,8 +149,7 @@ export default function BanquetFunction() {
               : ""}
             {away >= 0 && fn.status !== "Completed" && (
               <span className="text-zinc-400">
-                {" "}
-                · in {away} day{away === 1 ? "" : "s"}
+                {" "}{translate("· in ")}{away}{translate(" day")}{away === 1 ? "" : translate("s")}
               </span>
             )}
           </p>
@@ -177,33 +174,33 @@ export default function BanquetFunction() {
                 (a.urgency === "high" ? "text-amber-900" : "text-amber-700")
               }
             >
-              {a.message}
+              {translate(a.message)}
             </li>
           ))}
         </ul>
       )}
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Money label="Quote" value={fn.grand_total} sub={`v${fn.quote_version || 0}`} />
+        <Money label={translate("Quote")} value={fn.grand_total} sub={translate(`v${fn.quote_version || 0}`)} />
         <Money
-          label="Received"
+          label={translate("Received")}
           value={fn.advance_received}
-          sub={`${fn.receipts.length} receipt${fn.receipts.length === 1 ? "" : "s"}`}
+          sub={translate("{v0} receipt{v1}", { v0: String(fn.receipts.length), v1: String(fn.receipts.length === 1 ? "" : "s") })}
         />
         <Money
-          label="Balance"
+          label={translate("Balance")}
           value={fn.balance_due}
           tone={fn.balance_due > 0 ? "text-rose-700" : "text-emerald-700"}
         />
         {/* Claiming 100% because nothing has been costed is the most
             flattering possible lie - say "not costed yet" instead. */}
         <Money
-          label="Margin"
+          label={translate("Margin")}
           value={fn.total_cost ? fn.gross_margin : null}
           sub={
-            fn.total_cost
-              ? `${fn.margin_percent}% after ${inr(fn.net_cost)} cost`
-              : "nothing costed yet - see Cost & margin"
+            (fn.total_cost
+              ? translate("{v0}% after {v1} cost", { v0: String(fn.margin_percent), v1: String(inr(fn.net_cost)) })
+              : translate("nothing costed yet - see Cost & margin"))
           }
           tone={
             !fn.total_cost
@@ -248,15 +245,16 @@ function Money({
   sub?: string
   tone?: string
 }) {
+  useUILanguage()
   return (
     <div className="rounded-xl border border-zinc-200 bg-white px-4 py-3">
       <p className="text-[11px] font-medium uppercase tracking-wider text-zinc-400">
-        {label}
+        {translate(label)}
       </p>
       <p className={"mt-1 text-xl font-semibold tabular-nums " + tone}>
         {value === null ? "-" : inr(value)}
       </p>
-      {sub && <p className="mt-0.5 text-xs text-zinc-400">{sub}</p>}
+      {sub && <p className="mt-0.5 text-xs text-zinc-400">{translate(sub)}</p>}
     </div>
   )
 }
@@ -284,6 +282,7 @@ function StatusActions({
   /** Close out is a step (covers, damage, deposit), not a status jump */
   onCloseOut: () => void
 }) {
+  useUILanguage()
   const { roles } = useAuth()
   const canReopen = roles.some((r) => REOPEN_ROLES.includes(r))
   const [reopening, setReopening] = useState(false)
@@ -309,15 +308,15 @@ function StatusActions({
           disabled={busy}
           onClick={() => setGuest(true)}
           title={
-            fn.customer_confirm_outcome
-              ? `Guest ${fn.customer_confirm_outcome} via ${fn.customer_confirm_channel} on ${fn.customer_confirmed_on}`
-              : "Record how the guest replied"
+            (fn.customer_confirm_outcome
+              ? translate("Guest {v0} via {v1} on {v2}", { v0: String(fn.customer_confirm_outcome), v1: String(fn.customer_confirm_channel), v2: String(fn.customer_confirmed_on) })
+              : translate("Record how the guest replied"))
           }
         >
           <Handshake className="size-4" />
           {fn.customer_confirm_outcome
-            ? `Guest: ${fn.customer_confirm_outcome}`
-            : "Guest response"}
+            ? translate("Guest: {v0}", { v0: String(fn.customer_confirm_outcome) })
+            : translate("Guest response")}
         </Button>
       )}
       {options.map((s) => (
@@ -332,37 +331,31 @@ function StatusActions({
           }
         >
           {s === "Confirmed"
-            ? "Confirm"
+            ? translate("Confirm")
             : s === "Enquiry"
-              ? "Reopen"
-              : s}
+              ? translate("Reopen")
+              : translate(s)}
         </Button>
       ))}
       {fn.status === "Confirmed" && (
-        <Button variant="outline" disabled={busy} onClick={onCloseOut}>
-          Close out
-        </Button>
+        <Button variant="outline" disabled={busy} onClick={onCloseOut}>{translate("Close out")}</Button>
       )}
       {fn.status === "Completed" && canReopen && (
         <Button
           variant="outline"
           disabled={busy}
           onClick={() => setReopening(true)}
-          title="Back to Confirmed so the sheet can be corrected"
-        >
-          Reopen
-        </Button>
+          title={translate("Back to Confirmed so the sheet can be corrected")}
+        >{translate("Reopen")}</Button>
       )}
       {reopening && (
         <Sheet
-          title="Reopen this function"
-          description="It goes back to Confirmed so the sheet can be corrected. Receipts, refunds and damages already recorded stay as they are; closing it again only re-counts the covers. The reason goes on the activity log."
+          title={translate("Reopen this function")}
+          description={translate("It goes back to Confirmed so the sheet can be corrected. Receipts, refunds and damages already recorded stay as they are; closing it again only re-counts the covers. The reason goes on the activity log.")}
           onClose={() => setReopening(false)}
           footer={
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setReopening(false)}>
-                Back
-              </Button>
+              <Button variant="outline" onClick={() => setReopening(false)}>{translate("Back")}</Button>
               <Button
                 disabled={busy || !reopenWhy.trim()}
                 onClick={async () => {
@@ -370,17 +363,15 @@ function StatusActions({
                   setReopening(false)
                   setReopenWhy("")
                 }}
-              >
-                Reopen
-              </Button>
+              >{translate("Reopen")}</Button>
             </div>
           }
         >
-          <Field label="Why reopen it?" hint="Required">
+          <Field label={translate("Why reopen it?")} hint={translate("Required")}>
             <textarea
               rows={3}
               className={inputCls}
-              placeholder="Customer disputes the cover count; recounting from the gate list"
+              placeholder={translate("Customer disputes the cover count; recounting from the gate list")}
               value={reopenWhy}
               onChange={(e) => setReopenWhy(e.target.value)}
             />
@@ -389,14 +380,12 @@ function StatusActions({
       )}
       {ask && (
         <Sheet
-          title={ask === "Lost" ? "Mark this lost" : "Cancel this function"}
-          description="The reason is what makes the pipeline worth reading later."
+          title={(ask === "Lost" ? translate("Mark this lost") : translate("Cancel this function"))}
+          description={translate("The reason is what makes the pipeline worth reading later.")}
           onClose={() => setAsk(null)}
           footer={
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setAsk(null)}>
-                Back
-              </Button>
+              <Button variant="outline" onClick={() => setAsk(null)}>{translate("Back")}</Button>
               <Button
                 disabled={busy || !reason.trim()}
                 onClick={async () => {
@@ -405,16 +394,16 @@ function StatusActions({
                   setReason("")
                 }}
               >
-                {ask === "Lost" ? "Mark lost" : "Cancel it"}
+                {ask === "Lost" ? translate("Mark lost") : translate("Cancel it")}
               </Button>
             </div>
           }
         >
-          <Field label="What happened?">
+          <Field label={translate("What happened?")}>
             <textarea
               rows={4}
               className={inputCls}
-              placeholder="Went to a competitor on price / date moved / event called off…"
+              placeholder={translate("Went to a competitor on price / date moved / event called off…")}
               value={reason}
               onChange={(e) => setReason(e.target.value)}
             />
@@ -423,14 +412,12 @@ function StatusActions({
       )}
       {guest && (
         <Sheet
-          title="Guest response"
-          description="They confirmed by phone, email, or WhatsApp - record it here. No guest portal."
+          title={translate("Guest response")}
+          description={translate("They confirmed by phone, email, or WhatsApp - record it here. No guest portal.")}
           onClose={() => setGuest(false)}
           footer={
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setGuest(false)}>
-                Back
-              </Button>
+              <Button variant="outline" onClick={() => setGuest(false)}>{translate("Back")}</Button>
               <Button
                 disabled={busy}
                 onClick={async () => {
@@ -445,14 +432,12 @@ function StatusActions({
                   setGuest(false)
                   setNotes("")
                 }}
-              >
-                Save response
-              </Button>
+              >{translate("Save response")}</Button>
             </div>
           }
         >
           <div className="space-y-3">
-            <Field label="Outcome">
+            <Field label={translate("Outcome")}>
               <Select
                 value={outcome}
                 onChange={(v) =>
@@ -463,18 +448,18 @@ function StatusActions({
                 options={["Confirmed", "Changes Requested", "Declined"]}
               />
             </Field>
-            <Field label="Heard via">
+            <Field label={translate("Heard via")}>
               <Select
                 value={channel}
                 onChange={setChannel}
                 options={["Phone", "Email", "WhatsApp"]}
               />
             </Field>
-            <Field label="Notes">
+            <Field label={translate("Notes")}>
               <textarea
                 rows={3}
                 className={inputCls}
-                placeholder="Optional - what they said…"
+                placeholder={translate("Optional - what they said…")}
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
               />
@@ -488,10 +473,7 @@ function StatusActions({
                     checked={alsoConfirm}
                     onChange={(e) => setAlsoConfirm(e.target.checked)}
                   />
-                  <span>
-                    Also move the function to Confirmed (creates department
-                    checklists and notifies Finance, HK, F&amp;B, Sales).
-                  </span>
+                  <span>{translate("Also move the function to Confirmed (creates department checklists and notifies Finance, HK, F&B, Sales).")}</span>
                 </label>
               )}
           </div>
@@ -515,6 +497,7 @@ function GroupLinkField({
   busy: boolean
   act: Act
 }) {
+  useUILanguage()
   const [groups, setGroups] = useState<LinkableGroup[] | null>(null)
   const [pick, setPick] = useState(fn.group_booking ?? "")
 
@@ -537,16 +520,16 @@ function GroupLinkField({
 
   return (
     <Field
-      label="Group booking"
+      label={translate("Group booking")}
       hint={
-        fn.group_detail
+        (fn.group_detail
           ? `${fn.group_detail.check_in_date} → ${fn.group_detail.check_out_date} · ${fn.group_detail.status}`
-          : "Tie it to the group staying for the event to bill both on one master folio"
+          : translate("Tie it to the group staying for the event to bill both on one master folio"))
       }
     >
       <div className="flex flex-wrap items-center gap-2">
         <select
-          aria-label="Group booking"
+          aria-label={translate("Group booking")}
           className={inputCls + " min-w-0 flex-1"}
           disabled={busy || locked || groups === null}
           value={pick}
@@ -554,15 +537,15 @@ function GroupLinkField({
         >
           <option value="">
             {groups === null
-              ? "Loading groups…"
+              ? translate("Loading groups…")
               : groups.length
-                ? "Not tied to a group"
-                : "No groups around this date"}
+                ? translate("Not tied to a group")
+                : translate("No groups around this date")}
           </option>
           {(groups ?? []).map((g) => (
             <option key={g.name} value={g.name} disabled={g.taken}>
               {g.group_name} · {g.check_in_date} → {g.check_out_date}
-              {g.taken ? " (tied to another function)" : ""}
+              {g.taken ? translate(" (tied to another function)") : ""}
             </option>
           ))}
         </select>
@@ -572,16 +555,14 @@ function GroupLinkField({
             disabled={busy}
             onClick={() => act(() => banquet.linkGroup(fn.name, pick || null))}
           >
-            {pick ? "Tie to group" : "Untie"}
+            {pick ? translate("Tie to group") : translate("Untie")}
           </Button>
         )}
         {fn.group_detail && !changed && (
           <Link
             className="text-xs font-medium text-brand-700 hover:underline"
             to="/groups"
-          >
-            Open groups
-          </Link>
+          >{translate("Open groups")}</Link>
         )}
       </div>
     </Field>
@@ -597,6 +578,7 @@ function DetailTab({
   busy: boolean
   act: Act
 }) {
+  useUILanguage()
   const [draft, setDraft] = useState<Record<string, unknown>>({})
   const [rooms, setRooms] = useState<Row[]>([])
   const dirty = Object.keys(draft).length > 0
@@ -625,35 +607,33 @@ function DetailTab({
           <CardHeader>
             <CardTitle>
               <span className="inline-flex items-center gap-1.5">
-                <CalendarClock className="size-4" />
-                When & how the room is set
-              </span>
+                <CalendarClock className="size-4" />{translate("When & how the room is set")}</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="grid gap-3 sm:grid-cols-2">
-            <Field label="Event name" className="sm:col-span-2">
+            <Field label={translate("Event name")} className="sm:col-span-2">
               <input
                 className={inputCls}
-                placeholder="Sharma-Verma reception"
+                placeholder={translate("Sharma-Verma reception")}
                 value={get("event_name", "")}
                 onChange={(e) => set("event_name", e.target.value)}
               />
             </Field>
-            <Field label="Event type">
+            <Field label={translate("Event type")}>
               <Select
                 value={get("event_type", "Other")}
                 onChange={(v) => set("event_type", v)}
                 options={EVENT_TYPES}
               />
             </Field>
-            <Field label="Setup style">
+            <Field label={translate("Setup style")}>
               <Select
                 value={get("setup_style", "Round Table")}
                 onChange={(v) => set("setup_style", v)}
                 options={SETUP_STYLES}
               />
             </Field>
-            <Field label="Date">
+            <Field label={translate("Date")}>
               <input
                 type="date"
                 className={inputCls}
@@ -661,7 +641,7 @@ function DetailTab({
                 onChange={(e) => set("event_date", e.target.value)}
               />
             </Field>
-            <Field label="Ends" hint="Blank for a single day">
+            <Field label={translate("Ends")} hint={translate("Blank for a single day")}>
               <input
                 type="date"
                 className={inputCls}
@@ -670,8 +650,8 @@ function DetailTab({
               />
             </Field>
             <Field
-              label="Session"
-              hint="Halls sell by the session; pick Custom Hours to state your own"
+              label={translate("Session")}
+              hint={translate("Halls sell by the session; pick Custom Hours to state your own")}
             >
               <Select
                 value={get<string>("session", "Evening")}
@@ -679,7 +659,7 @@ function DetailTab({
                 options={SESSIONS}
               />
             </Field>
-            <Field label="From">
+            <Field label={translate("From")}>
               <input
                 type="time"
                 className={inputCls}
@@ -689,11 +669,11 @@ function DetailTab({
               />
             </Field>
             <Field
-              label="To"
+              label={translate("To")}
               hint={
-                fn.billable_hours
-                  ? `${fn.billable_hours} billable hours`
-                  : undefined
+                (fn.billable_hours
+                  ? translate("{v0} billable hours", { v0: String(fn.billable_hours) })
+                  : undefined)
               }
             >
               <input
@@ -703,7 +683,7 @@ function DetailTab({
                 onChange={(e) => set("end_time", e.target.value || null)}
               />
             </Field>
-            <Field label="Decorator can start" hint="Setup access">
+            <Field label={translate("Decorator can start")} hint={translate("Setup access")}>
               <input
                 type="datetime-local"
                 className={inputCls}
@@ -711,7 +691,7 @@ function DetailTab({
                 onChange={(e) => set("setup_from", e.target.value || null)}
               />
             </Field>
-            <Field label="Cleared by">
+            <Field label={translate("Cleared by")}>
               <input
                 type="datetime-local"
                 className={inputCls}
@@ -719,11 +699,11 @@ function DetailTab({
                 onChange={(e) => set("teardown_by", e.target.value || null)}
               />
             </Field>
-            <Field label="Setup notes" className="sm:col-span-2">
+            <Field label={translate("Setup notes")} className="sm:col-span-2">
               <textarea
                 rows={2}
                 className={inputCls}
-                placeholder="Stage 20×12 at the north end, dance floor centre, buffet along the east wall…"
+                placeholder={translate("Stage 20×12 at the north end, dance floor centre, buffet along the east wall…")}
                 value={get("setup_notes", "")}
                 onChange={(e) => set("setup_notes", e.target.value)}
               />
@@ -735,13 +715,11 @@ function DetailTab({
           <CardHeader>
             <CardTitle>
               <span className="inline-flex items-center gap-1.5">
-                <Users className="size-4" />
-                Pax & the customer
-              </span>
+                <Users className="size-4" />{translate("Pax & the customer")}</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="grid gap-3 sm:grid-cols-2">
-            <Field label="Expected pax" hint="The working number">
+            <Field label={translate("Expected pax")} hint={translate("The working number")}>
               <input
                 type="number"
                 className={inputCls}
@@ -750,8 +728,8 @@ function DetailTab({
               />
             </Field>
             <Field
-              label="Guaranteed pax"
-              hint="The minimum they pay for - menus bill on this"
+              label={translate("Guaranteed pax")}
+              hint={translate("The minimum they pay for - menus bill on this")}
             >
               <input
                 type="number"
@@ -762,7 +740,7 @@ function DetailTab({
                 }
               />
             </Field>
-            <Field label="Actual pax" hint="Counted on the day">
+            <Field label={translate("Actual pax")} hint={translate("Counted on the day")}>
               <input
                 type="number"
                 className={inputCls}
@@ -770,42 +748,42 @@ function DetailTab({
                 onChange={(e) => set("pax_actual", Number(e.target.value) || 0)}
               />
             </Field>
-            <Field label="Billing on" hint={`${fn.billable_pax} pax`}>
+            <Field label={translate("Billing on")} hint={translate("{v0} pax", { v0: String(fn.billable_pax) })}>
               <Select
                 value={get("rate_basis", "Per Pax")}
                 onChange={(v) => set("rate_basis", v)}
                 options={["Per Pax", "Per Plate", "Lump Sum", "Per Hour"]}
               />
             </Field>
-            <Field label="Contact name">
+            <Field label={translate("Contact name")}>
               <input
                 className={inputCls}
                 value={get("customer_name", "")}
                 onChange={(e) => set("customer_name", e.target.value)}
               />
             </Field>
-            <Field label="Phone">
+            <Field label={translate("Phone")}>
               <input
                 className={inputCls}
                 value={get("customer_phone", "")}
                 onChange={(e) => set("customer_phone", e.target.value)}
               />
             </Field>
-            <Field label="Email">
+            <Field label={translate("Email")}>
               <input
                 className={inputCls}
                 value={get("customer_email", "")}
                 onChange={(e) => set("customer_email", e.target.value)}
               />
             </Field>
-            <Field label="Came from">
+            <Field label={translate("Came from")}>
               <Select
                 value={get("source", "Phone")}
                 onChange={(v) => set("source", v)}
                 options={SOURCES}
               />
             </Field>
-            <Field label="Next follow-up">
+            <Field label={translate("Next follow-up")}>
               <input
                 type="date"
                 className={inputCls}
@@ -815,8 +793,8 @@ function DetailTab({
             </Field>
             {fn.status === "Tentative" && (
               <Field
-                label="Hold expires"
-                hint="After this the hall is sellable again"
+                label={translate("Hold expires")}
+                hint={translate("After this the hall is sellable again")}
               >
                 <input
                   type="date"
@@ -833,12 +811,12 @@ function DetailTab({
 
         <Card>
           <CardHeader>
-            <CardTitle>Billing & {taxLabel()}</CardTitle>
+            <CardTitle>{translate("Billing & ")}{taxLabel()}</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-3 sm:grid-cols-2">
             <Field
-              label="Invoice name"
-              hint="If the legal name differs from the contact"
+              label={translate("Invoice name")}
+              hint={translate("If the legal name differs from the contact")}
             >
               <input
                 className={inputCls}
@@ -846,7 +824,7 @@ function DetailTab({
                 onChange={(e) => set("billing_name", e.target.value)}
               />
             </Field>
-            <Field label={`${taxLabel()} number`}>
+            <Field label={translate("{v0} number", { v0: String(taxLabel()) })}>
               <input
                 className={inputCls}
                 placeholder="29AABCU9603R1ZM"
@@ -855,8 +833,8 @@ function DetailTab({
               />
             </Field>
             <Field
-              label="Place of supply"
-              hint="Decides CGST+SGST vs IGST"
+              label={translate("Place of supply")}
+              hint={translate("Decides CGST+SGST vs IGST")}
             >
               <input
                 className={inputCls}
@@ -865,7 +843,7 @@ function DetailTab({
                 onChange={(e) => set("place_of_supply", e.target.value)}
               />
             </Field>
-            <Field label="Contract signed on">
+            <Field label={translate("Contract signed on")}>
               <input
                 type="date"
                 className={inputCls}
@@ -875,7 +853,7 @@ function DetailTab({
                 }
               />
             </Field>
-            <Field label="Billing address" className="sm:col-span-2">
+            <Field label={translate("Billing address")} className="sm:col-span-2">
               <textarea
                 rows={2}
                 className={inputCls}
@@ -893,10 +871,10 @@ function DetailTab({
 
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle>Notes</CardTitle>
+            <CardTitle>{translate("Notes")}</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-3 lg:grid-cols-3">
-            <Field label="What they asked for" hint="In the customer's words">
+            <Field label={translate("What they asked for")} hint={translate("In the customer's words")}>
               <textarea
                 rows={4}
                 className={inputCls}
@@ -905,8 +883,8 @@ function DetailTab({
               />
             </Field>
             <Field
-              label="Event order notes"
-              hint="Prints for the banquet, kitchen and AV teams"
+              label={translate("Event order notes")}
+              hint={translate("Prints for the banquet, kitchen and AV teams")}
             >
               <textarea
                 rows={4}
@@ -915,7 +893,7 @@ function DetailTab({
                 onChange={(e) => set("beo_notes", e.target.value)}
               />
             </Field>
-            <Field label="Internal" hint="Never printed on anything they see">
+            <Field label={translate("Internal")} hint={translate("Never printed on anything they see")}>
               <textarea
                 rows={4}
                 className={inputCls}
@@ -930,19 +908,14 @@ function DetailTab({
       {dirty && (
         <div className="sticky bottom-4 flex items-center justify-between gap-3 rounded-xl border border-brand-200 bg-brand-50 px-4 py-3">
           <span className="text-sm text-brand-900">
-            {Object.keys(draft).length} unsaved change
-            {Object.keys(draft).length === 1 ? "" : "s"}
+            {Object.keys(draft).length}{translate(" unsaved change")}{Object.keys(draft).length === 1 ? "" : translate("s")}
           </span>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setDraft({})}>
-              Discard
-            </Button>
+            <Button variant="outline" onClick={() => setDraft({})}>{translate("Discard")}</Button>
             <Button
               disabled={busy}
               onClick={() => act(() => banquet.update(fn.name, draft))}
-            >
-              Save
-            </Button>
+            >{translate("Save")}</Button>
           </div>
         </div>
       )}
@@ -961,6 +934,7 @@ function GreenRoomCard({
   busy: boolean
   act: Act
 }) {
+  useUILanguage()
   const [room, setRoom] = useState(fn.green_room ?? "")
   const [comp, setComp] = useState(Boolean(fn.green_room_complimentary))
   const [rate, setRate] = useState("")
@@ -974,25 +948,19 @@ function GreenRoomCard({
       <CardHeader>
         <CardTitle>
           <span className="inline-flex items-center gap-1.5">
-            <Gift className="size-4" />
-            Green room
-          </span>
+            <Gift className="size-4" />{translate("Green room")}</span>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        <p className="text-xs text-zinc-400">
-          The changing room for the wedding party. Assigning one puts a room
-          block on it, so it genuinely leaves the sellable inventory rather
-          than living on a note.
-        </p>
+        <p className="text-xs text-zinc-400">{translate("The changing room for the wedding party. Assigning one puts a room block on it, so it genuinely leaves the sellable inventory rather than living on a note.")}</p>
         <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="Room">
+          <Field label={translate("Room")}>
             <select
               className={inputCls}
               value={room}
               onChange={(e) => setRoom(e.target.value)}
             >
-              <option value="">None held</option>
+              <option value="">{translate("None held")}</option>
               {rooms.map((r) => (
                 <option key={r.name} value={r.name}>
                   {String(r.room_number)} · {String(r.room_type ?? "")}
@@ -1000,18 +968,18 @@ function GreenRoomCard({
               ))}
             </select>
           </Field>
-          <Field label="How it bills">
+          <Field label={translate("How it bills")}>
             <select
               className={inputCls}
               value={comp ? "comp" : "charge"}
               onChange={(e) => setComp(e.target.value === "comp")}
             >
-              <option value="comp">Complimentary (house use)</option>
-              <option value="charge">Charged as accommodation</option>
+              <option value="comp">{translate("Complimentary (house use)")}</option>
+              <option value="charge">{translate("Charged as accommodation")}</option>
             </select>
           </Field>
           {!comp && (
-            <Field label="Rate">
+            <Field label={translate("Rate")}>
               <input
                 type="number"
                 className={inputCls}
@@ -1023,11 +991,10 @@ function GreenRoomCard({
         </div>
         <div className="flex items-center justify-between">
           {fn.green_room_block ? (
-            <span className="text-xs text-emerald-700">
-              Held out of sale ({fn.green_room_block})
+            <span className="text-xs text-emerald-700">{translate("Held out of sale (")}{fn.green_room_block})
             </span>
           ) : (
-            <span className="text-xs text-zinc-400">Nothing held</span>
+            <span className="text-xs text-zinc-400">{translate("Nothing held")}</span>
           )}
           <Button
             variant="outline"
@@ -1042,7 +1009,7 @@ function GreenRoomCard({
               )
             }
           >
-            {room ? "Hold it" : "Release"}
+            {room ? translate("Hold it") : translate("Release")}
           </Button>
         </div>
       </CardContent>
@@ -1063,6 +1030,7 @@ function ItemsTab({
   busy: boolean
   act: Act
 }) {
+  useUILanguage()
   const [lines, setLines] = useState<FunctionItem[]>(fn.items)
   const [picker, setPicker] = useState<"menu" | "service" | null>(null)
   const [composing, setComposing] = useState<string | null>(null)
@@ -1094,16 +1062,12 @@ function ItemsTab({
     <div className="space-y-4">
       <Card>
         <CardHeader>
-          <CardTitle>What they're buying</CardTitle>
+          <CardTitle>{translate("What they're buying")}</CardTitle>
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => setPicker("menu")}>
-              <Plus className="size-4" />
-              Menu
-            </Button>
+              <Plus className="size-4" />{translate("Menu")}</Button>
             <Button variant="outline" onClick={() => setPicker("service")}>
-              <Plus className="size-4" />
-              Service
-            </Button>
+              <Plus className="size-4" />{translate("Service")}</Button>
             <Button
               variant="outline"
               onClick={() =>
@@ -1134,32 +1098,28 @@ function ItemsTab({
                 ])
               }
             >
-              <Plus className="size-4" />
-              Blank line
-            </Button>
+              <Plus className="size-4" />{translate("Blank line")}</Button>
           </div>
         </CardHeader>
         <CardContent>
           {lines.length === 0 ? (
-            <Empty>
-              Nothing on the quote yet - add the menu and the extras.
-            </Empty>
+            <Empty>{translate("Nothing on the quote yet - add the menu and the extras.")}</Empty>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-zinc-200 text-left text-[11px] uppercase tracking-wider text-zinc-400">
-                    <th className="w-36 py-2 pr-2 font-medium">Type</th>
-                    <th className="min-w-56 py-2 pr-2 font-medium">Item</th>
-                    <th className="w-20 py-2 pr-2 text-right font-medium">Qty</th>
-                    <th className="w-24 py-2 pr-2 font-medium">Per</th>
-                    <th className="w-24 py-2 pr-2 text-right font-medium">Rack</th>
-                    <th className="w-28 py-2 pr-2 text-right font-medium">Agreed</th>
-                    <th className="w-16 py-2 pr-2 text-center font-medium">Charge</th>
+                    <th className="w-36 py-2 pr-2 font-medium">{translate("Type")}</th>
+                    <th className="min-w-56 py-2 pr-2 font-medium">{translate("Item")}</th>
+                    <th className="w-20 py-2 pr-2 text-right font-medium">{translate("Qty")}</th>
+                    <th className="w-24 py-2 pr-2 font-medium">{translate("Per")}</th>
+                    <th className="w-24 py-2 pr-2 text-right font-medium">{translate("Rack")}</th>
+                    <th className="w-28 py-2 pr-2 text-right font-medium">{translate("Agreed")}</th>
+                    <th className="w-16 py-2 pr-2 text-center font-medium">{translate("Charge")}</th>
                     <th className="w-20 py-2 pr-2 text-right font-medium">
                       {taxLabel()} %
                     </th>
-                    <th className="w-28 py-2 pr-2 text-right font-medium">Amount</th>
+                    <th className="w-28 py-2 pr-2 text-right font-medium">{translate("Amount")}</th>
                     <th className="w-8 py-2" />
                   </tr>
                 </thead>
@@ -1181,7 +1141,7 @@ function ItemsTab({
                           }
                         >
                           {ITEM_TYPES.map((t) => (
-                            <option key={t}>{t}</option>
+                            <option key={t} value={t}>{translate(t)}</option>
                           ))}
                         </select>
                       </td>
@@ -1189,7 +1149,7 @@ function ItemsTab({
                         <input
                           className={inputCls + " !py-1"}
                           value={l.item_name}
-                          placeholder="What is it?"
+                          placeholder={translate("What is it?")}
                           onChange={(e) =>
                             edit(i, { item_name: e.target.value })
                           }
@@ -1202,8 +1162,8 @@ function ItemsTab({
                             {fn.selections?.some(
                               (x) => x.banquet_menu === l.banquet_menu,
                             )
-                              ? "menu chosen · edit dishes"
-                              : "choose the dishes →"}
+                              ? translate("menu chosen · edit dishes")
+                              : translate("choose the dishes →")}
                           </button>
                         )}
                       </td>
@@ -1224,7 +1184,7 @@ function ItemsTab({
                           onChange={(e) => edit(i, { uom: e.target.value })}
                         >
                           {UOMS.map((u) => (
-                            <option key={u}>{u}</option>
+                            <option key={u} value={u}>{translate(u)}</option>
                           ))}
                         </select>
                       </td>
@@ -1247,9 +1207,9 @@ function ItemsTab({
                           className="size-4 accent-brand-600"
                           checked={Boolean(l.chargeable)}
                           title={
-                            l.chargeable
-                              ? "Billed"
-                              : "Complimentary - still on the event order and pack list"
+                            (l.chargeable
+                              ? translate("Billed")
+                              : translate("Complimentary - still on the event order and pack list"))
                           }
                           onChange={(e) =>
                             edit(i, { chargeable: e.target.checked ? 1 : 0 })
@@ -1262,9 +1222,9 @@ function ItemsTab({
                             type="number"
                             className={inputCls + " !py-1 text-right"}
                             title={
-                              l.tax_exempt
-                                ? "Zero-rated on purpose"
-                                : `0 marks the line exempt; blank re-derives the rate for a ${l.item_type} line`
+                              (l.tax_exempt
+                                ? translate("Zero-rated on purpose")
+                                : translate("0 marks the line exempt; blank re-derives the rate for a {v0} line", { v0: String(l.item_type) }))
                             }
                             value={l.tax_exempt ? 0 : l.gst_rate || ""}
                             // 0 is a deliberate exemption, not a blank - without
@@ -1287,8 +1247,7 @@ function ItemsTab({
                           inr(l.net_amount || l.amount)
                         ) : (
                           <span className="text-zinc-400">
-                            {inr(l.qty * l.rate)} free
-                          </span>
+                            {inr(l.qty * l.rate)}{translate(" free")}</span>
                         )}
                       </td>
                       <td className="py-1.5 text-right">
@@ -1297,7 +1256,7 @@ function ItemsTab({
                           onClick={() =>
                             setLines((ls) => ls.filter((_, x) => x !== i))
                           }
-                          aria-label="Remove line"
+                          aria-label={translate("Remove line")}
                         >
                           <Trash2 className="size-4" />
                         </button>
@@ -1311,7 +1270,7 @@ function ItemsTab({
 
           <div className="mt-4 flex flex-wrap items-end justify-between gap-4">
             <div className="flex flex-wrap items-end gap-3">
-              <Field label="Discount on the whole quote">
+              <Field label={translate("Discount on the whole quote")}>
                 <input
                   type="number"
                   className={inputCls + " !w-40"}
@@ -1320,8 +1279,8 @@ function ItemsTab({
                 />
               </Field>
               <Field
-                label="Service charge %"
-                hint="On the food and the people serving it, not the hall"
+                label={translate("Service charge %")}
+                hint={translate("On the food and the people serving it, not the hall")}
               >
                 <input
                   type="number"
@@ -1330,43 +1289,40 @@ function ItemsTab({
                   onChange={(e) => setServiceCharge(e.target.value)}
                 />
               </Field>
-              <p className="max-w-64 pb-2 text-xs text-zinc-400">
-                The discount spreads pro-rata across the lines, so each keeps
-                its own {taxLabel()} rate.
-              </p>
+              <p className="max-w-64 pb-2 text-xs text-zinc-400">{translate("The discount spreads pro-rata across the lines, so each keeps its own ")}{taxLabel()}{translate(" rate.")}</p>
             </div>
             <div className="min-w-56 space-y-1 text-sm">
-              <Row label="Subtotal" value={inr(fn.subtotal)} />
+              <Row label={translate("Subtotal")} value={inr(fn.subtotal)} />
               {fn.discount_amount > 0 && (
                 <Row
-                  label="Less discount"
+                  label={translate("Less discount")}
                   value={"-" + inr(fn.discount_amount)}
                   tone="text-amber-700"
                 />
               )}
               {fn.service_charge > 0 && (
                 <Row
-                  label={`Service charge ${fn.service_charge_percent}%`}
+                  label={translate("Service charge {v0}%", { v0: String(fn.service_charge_percent) })}
                   value={inr(fn.service_charge)}
                 />
               )}
-              <Row label="Taxable" value={inr(fn.taxable_amount)} />
-              <Row label={taxLabel()} value={inr(fn.tax_amount)} />
+              <Row label={translate("Taxable")} value={inr(fn.taxable_amount)} />
+              <Row label={translate(taxLabel())} value={inr(fn.tax_amount)} />
               <Row
-                label="Grand total"
+                label={translate("Grand total")}
                 value={inr(fn.grand_total)}
                 tone="font-semibold border-t border-zinc-200 pt-1"
               />
               {fn.non_chargeable_value > 0 && (
                 <Row
-                  label="Complimentary"
+                  label={translate("Complimentary")}
                   value={inr(fn.non_chargeable_value)}
                   tone="text-zinc-400"
                 />
               )}
               {openImpact !== 0 && (
                 <Row
-                  label="If open items land"
+                  label={translate("If open items land")}
                   value={inr(fn.grand_total + openImpact)}
                   tone="text-zinc-400"
                 />
@@ -1383,9 +1339,7 @@ function ItemsTab({
                   setDiscount(String(fn.discount_amount || ""))
                   setServiceCharge(String(fn.service_charge_percent || ""))
                 }}
-              >
-                Discard
-              </Button>
+              >{translate("Discard")}</Button>
               <Button
                 disabled={busy}
                 onClick={() =>
@@ -1405,9 +1359,7 @@ function ItemsTab({
                       })
                   })
                 }
-              >
-                Save &amp; reprice
-              </Button>
+              >{translate("Save & reprice")}</Button>
             </div>
           )}
         </CardContent>
@@ -1454,9 +1406,10 @@ function Row({
   value: string
   tone?: string
 }) {
+  useUILanguage()
   return (
     <div className={"flex justify-between gap-6 " + tone}>
-      <span className="text-zinc-500">{label}</span>
+      <span className="text-zinc-500">{translate(label)}</span>
       <span className="tabular-nums">{value}</span>
     </div>
   )
@@ -1473,6 +1426,7 @@ function CataloguePicker({
   onClose: () => void
   onPick: (id: string, chargeable: number) => void
 }) {
+  useUILanguage()
   const [q, setQ] = useState("")
   const list =
     kind === "menu"
@@ -1487,25 +1441,23 @@ function CataloguePicker({
 
   return (
     <Sheet
-      title={kind === "menu" ? "Add a menu package" : "Add a service"}
+      title={(kind === "menu" ? translate("Add a menu package") : translate("Add a service"))}
       description={
-        kind === "menu"
-          ? "Priced per plate. The quantity follows the guaranteed pax."
-          : "Projectors, LED walls, DJ, podium, stage, decor, bar. Add it free to give it away."
+        (kind === "menu"
+          ? translate("Priced per plate. The quantity follows the guaranteed pax.")
+          : translate("Projectors, LED walls, DJ, podium, stage, decor, bar. Add it free to give it away."))
       }
       onClose={onClose}
       wide
     >
       <input
         className={inputCls + " mb-3"}
-        placeholder="Search…"
+        placeholder={translate("Search…")}
         value={q}
         onChange={(e) => setQ(e.target.value)}
       />
       {list.length === 0 ? (
-        <Empty>
-          Nothing in the catalogue yet - build it under Banquet Catalogue.
-        </Empty>
+        <Empty>{translate("Nothing in the catalogue yet - build it under Banquet Catalogue.")}</Empty>
       ) : (
         <ul className="space-y-2">
           {list.map((item) => {
@@ -1524,9 +1476,9 @@ function CataloguePicker({
                     <p className="text-xs text-zinc-400">
                       {isMenu
                         ? `${item.meal_period} · ${item.food_type} · ${item.service_style}` +
-                          (item.min_pax ? ` · min ${item.min_pax} pax` : "")
+                          (item.min_pax ? translate(" · min {v0} pax", { v0: String(item.min_pax) }) : "")
                         : `${item.category} · ${item.uom}` +
-                          (item.chargeable ? "" : " · normally free")}
+                          (item.chargeable ? "" : translate(" · normally free"))}
                     </p>
                     {isMenu && item.courses.length > 0 && (
                       <p className="mt-1 line-clamp-2 text-xs text-zinc-500">
@@ -1542,17 +1494,13 @@ function CataloguePicker({
                       <Button
                         className="!px-2 !py-1 !text-xs"
                         onClick={() => onPick(item.name, 1)}
-                      >
-                        Add
-                      </Button>
+                      >{translate("Add")}</Button>
                       <Button
                         variant="outline"
                         className="!px-2 !py-1 !text-xs"
                         onClick={() => onPick(item.name, 0)}
-                        title="Goes on the event order and pack list, not the quote"
-                      >
-                        Free
-                      </Button>
+                        title={translate("Goes on the event order and pack list, not the quote")}
+                      >{translate("Free")}</Button>
                     </div>
                   </div>
                 </div>
@@ -1574,6 +1522,7 @@ function OpenItemsCard({
   busy: boolean
   act: Act
 }) {
+  useUILanguage()
   const [rows, setRows] = useState<Partial<OpenItem>[]>(fn.open_items)
   useEffect(() => setRows(fn.open_items), [fn])
   const dirty = JSON.stringify(rows) !== JSON.stringify(fn.open_items)
@@ -1585,9 +1534,7 @@ function OpenItemsCard({
       <CardHeader>
         <CardTitle>
           <span className="inline-flex items-center gap-1.5">
-            <Handshake className="size-4" />
-            Open items
-          </span>
+            <Handshake className="size-4" />{translate("Open items")}</span>
         </CardTitle>
         <Button
           variant="outline"
@@ -1603,17 +1550,12 @@ function OpenItemsCard({
             ])
           }
         >
-          <Plus className="size-4" />
-          Add
-        </Button>
+          <Plus className="size-4" />{translate("Add")}</Button>
       </CardHeader>
       <CardContent>
-        <p className="mb-3 text-xs text-zinc-400">
-          What's still unsettled while the price is being agreed - and what
-          agreeing it would do to the quote.
-        </p>
+        <p className="mb-3 text-xs text-zinc-400">{translate("What's still unsettled while the price is being agreed - and what agreeing it would do to the quote.")}</p>
         {rows.length === 0 ? (
-          <Empty>Nothing outstanding.</Empty>
+          <Empty>{translate("Nothing outstanding.")}</Empty>
         ) : (
           <div className="space-y-2">
             {rows.map((r, i) => (
@@ -1623,7 +1565,7 @@ function OpenItemsCard({
               >
                 <input
                   className={inputCls}
-                  placeholder="Sangeet stage - who pays?"
+                  placeholder={translate("Sangeet stage - who pays?")}
                   value={r.title ?? ""}
                   onChange={(e) => edit(i, { title: e.target.value })}
                 />
@@ -1634,8 +1576,8 @@ function OpenItemsCard({
                     edit(i, { owner_side: e.target.value as "Hotel" | "Client" })
                   }
                 >
-                  <option>Hotel</option>
-                  <option>Client</option>
+                  <option value={"Hotel"}>{translate("Hotel")}</option>
+                  <option value={"Client"}>{translate("Client")}</option>
                 </select>
                 <input
                   type="date"
@@ -1646,7 +1588,7 @@ function OpenItemsCard({
                 <input
                   type="number"
                   className={inputCls + " sm:!w-28 text-right"}
-                  placeholder="Impact"
+                  placeholder={translate("Impact")}
                   value={r.price_impact ?? 0}
                   onChange={(e) =>
                     edit(i, { price_impact: Number(e.target.value) })
@@ -1661,9 +1603,9 @@ function OpenItemsCard({
                     })
                   }
                 >
-                  <option>Open</option>
-                  <option>Agreed</option>
-                  <option>Dropped</option>
+                  <option value={"Open"}>{translate("Open")}</option>
+                  <option value={"Agreed"}>{translate("Agreed")}</option>
+                  <option value={"Dropped"}>{translate("Dropped")}</option>
                 </select>
               </div>
             ))}
@@ -1671,9 +1613,7 @@ function OpenItemsCard({
         )}
         {dirty && (
           <div className="mt-3 flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setRows(fn.open_items)}>
-              Discard
-            </Button>
+            <Button variant="outline" onClick={() => setRows(fn.open_items)}>{translate("Discard")}</Button>
             <Button
               disabled={busy}
               onClick={() =>
@@ -1684,9 +1624,7 @@ function OpenItemsCard({
                   ),
                 )
               }
-            >
-              Save
-            </Button>
+            >{translate("Save")}</Button>
           </div>
         )}
       </CardContent>
@@ -1695,11 +1633,12 @@ function OpenItemsCard({
 }
 
 function RevisionsCard({ fn }: { fn: FunctionSheet }) {
+  useUILanguage()
   if (fn.revisions.length === 0) return null
   return (
     <Card>
       <CardHeader>
-        <CardTitle>How the price moved</CardTitle>
+        <CardTitle>{translate("How the price moved")}</CardTitle>
       </CardHeader>
       <CardContent>
         <ol className="space-y-2">
@@ -1712,8 +1651,7 @@ function RevisionsCard({ fn }: { fn: FunctionSheet }) {
                 <p className="text-zinc-700">{r.change_note}</p>
                 <p className="text-xs text-zinc-400">
                   {String(r.revised_on).slice(0, 16)} · {r.revised_by} ·{" "}
-                  {r.pax} pax
-                </p>
+                  {r.pax}{translate(" pax")}</p>
               </div>
               <span className="shrink-0 tabular-nums">{inr(r.grand_total)}</span>
             </li>
@@ -1735,6 +1673,7 @@ function MoneyTab({
   busy: boolean
   act: Act
 }) {
+  useUILanguage()
   const [terms, setTerms] = useState<Partial<PaymentTerm>[]>(fn.payment_terms)
   const [note, setNote] = useState(fn.payment_terms_note ?? "")
   const [receipt, setReceipt] = useState<{
@@ -1761,15 +1700,13 @@ function MoneyTab({
     <div className="space-y-4">
       <Card>
         <CardHeader>
-          <CardTitle>Payment terms</CardTitle>
+          <CardTitle>{translate("Payment terms")}</CardTitle>
           <div className="flex gap-2">
             <Button
               variant="outline"
               disabled={busy}
               onClick={() => act(() => banquet.defaultPaymentTerms(fn.name))}
-            >
-              Use the usual schedule
-            </Button>
+            >{translate("Use the usual schedule")}</Button>
             <Button
               variant="outline"
               onClick={() =>
@@ -1779,17 +1716,12 @@ function MoneyTab({
                 ])
               }
             >
-              <Plus className="size-4" />
-              Add
-            </Button>
+              <Plus className="size-4" />{translate("Add")}</Button>
           </div>
         </CardHeader>
         <CardContent>
           {terms.length === 0 ? (
-            <Empty>
-              No schedule yet - the usual one is an advance, a call before the
-              date, and the rest on completion.
-            </Empty>
+            <Empty>{translate("No schedule yet - the usual one is an advance, a call before the date, and the rest on completion.")}</Empty>
           ) : (
             <div className="space-y-2">
               {terms.map((t, i) => (
@@ -1799,7 +1731,7 @@ function MoneyTab({
                 >
                   <input
                     className={inputCls}
-                    placeholder="Booking advance"
+                    placeholder={translate("Booking advance")}
                     value={t.milestone ?? ""}
                     onChange={(e) => edit(i, { milestone: e.target.value })}
                   />
@@ -1823,7 +1755,7 @@ function MoneyTab({
                   <input
                     type="number"
                     className={inputCls + " sm:!w-32 text-right"}
-                    placeholder="Amount"
+                    placeholder={translate("Amount")}
                     value={t.amount ?? ""}
                     onChange={(e) => edit(i, { amount: Number(e.target.value) })}
                   />
@@ -1838,28 +1770,27 @@ function MoneyTab({
                       edit(i, { status: e.target.value as PaymentTerm["status"] })
                     }
                   >
-                    <option>Pending</option>
-                    <option>Overdue</option>
-                    <option>Received</option>
-                    <option>Waived</option>
+                    <option value={"Pending"}>{translate("Pending")}</option>
+                    <option value={"Overdue"}>{translate("Overdue")}</option>
+                    <option value={"Received"}>{translate("Received")}</option>
+                    <option value={"Waived"}>{translate("Waived")}</option>
                   </select>
                 </div>
               ))}
-              <p className="pt-1 text-xs text-zinc-400">
-                Scheduled {inr(scheduled)} of {inr(fn.grand_total)}
+              <p className="pt-1 text-xs text-zinc-400">{translate("Scheduled ")}{inr(scheduled)}{translate(" of ")}{inr(fn.grand_total)}
                 {Math.abs(scheduled - fn.grand_total) > 1 && (
                   <span className="text-amber-700">
                     {" "}
                     · {inr(Math.abs(scheduled - fn.grand_total))}{" "}
-                    {scheduled > fn.grand_total ? "over" : "unscheduled"}
+                    {scheduled > fn.grand_total ? translate("over") : translate("unscheduled")}
                   </span>
                 )}
               </p>
             </div>
           )}
           <Field
-            label="Terms & policy"
-            hint="Cancellation, retention, taxes-extra wording - prints on the contract"
+            label={translate("Terms & policy")}
+            hint={translate("Cancellation, retention, taxes-extra wording - prints on the contract")}
             className="mt-3"
           >
             <textarea
@@ -1877,9 +1808,7 @@ function MoneyTab({
                   setTerms(fn.payment_terms)
                   setNote(fn.payment_terms_note ?? "")
                 }}
-              >
-                Discard
-              </Button>
+              >{translate("Discard")}</Button>
               <Button
                 disabled={busy}
                 onClick={() =>
@@ -1891,9 +1820,7 @@ function MoneyTab({
                     ),
                   )
                 }
-              >
-                Save terms
-              </Button>
+              >{translate("Save terms")}</Button>
             </div>
           )}
         </CardContent>
@@ -1903,9 +1830,7 @@ function MoneyTab({
         <CardHeader>
           <CardTitle>
             <span className="inline-flex items-center gap-1.5">
-              <Receipt className="size-4" />
-              Receipts
-            </span>
+              <Receipt className="size-4" />{translate("Receipts")}</span>
           </CardTitle>
           <Button
             onClick={() =>
@@ -1918,13 +1843,11 @@ function MoneyTab({
               })
             }
           >
-            <Plus className="size-4" />
-            Record money in
-          </Button>
+            <Plus className="size-4" />{translate("Record money in")}</Button>
         </CardHeader>
         <CardContent>
           {fn.receipts.length === 0 ? (
-            <Empty>Nothing received yet.</Empty>
+            <Empty>{translate("Nothing received yet.")}</Empty>
           ) : (
             <table className="w-full text-sm">
               <tbody>
@@ -1934,14 +1857,12 @@ function MoneyTab({
                       {r.receipt_date}
                     </td>
                     <td className="py-2">
-                      {r.kind}
+                      {translate(r.kind)}
                       {r.kind === "Security Deposit" && (
-                        <span className="ml-1.5 rounded bg-violet-50 px-1.5 py-0.5 text-[10px] font-medium text-violet-700">
-                          held
-                        </span>
+                        <span className="ml-1.5 rounded bg-violet-50 px-1.5 py-0.5 text-[10px] font-medium text-violet-700">{translate("held")}</span>
                       )}
                     </td>
-                    <td className="py-2 text-zinc-500">{r.mode}</td>
+                    <td className="py-2 text-zinc-500">{translate(r.mode)}</td>
                     <td className="py-2 text-zinc-400">{r.reference}</td>
                     <td
                       className={
@@ -1956,8 +1877,8 @@ function MoneyTab({
                       {/* every advance a banquet office takes needs a piece
                           of paper against it */}
                       <button
-                        title="Print this receipt"
-                        aria-label="Print this receipt"
+                        title={translate("Print this receipt")}
+                        aria-label={translate("Print this receipt")}
                         className="text-zinc-300 opacity-0 transition-opacity hover:text-brand-700 group-hover:opacity-100"
                         onClick={() => setReceiptDoc(r.name)}
                       >
@@ -1970,9 +1891,9 @@ function MoneyTab({
             </table>
           )}
           <div className="mt-3 flex justify-end gap-6 text-sm">
-            <Row label="Received" value={inr(fn.advance_received)} />
+            <Row label={translate("Received")} value={inr(fn.advance_received)} />
             <Row
-              label="Balance"
+              label={translate("Balance")}
               value={inr(fn.balance_due)}
               tone={fn.balance_due > 0 ? "text-rose-700" : "text-emerald-700"}
             />
@@ -1984,15 +1905,12 @@ function MoneyTab({
         <CardHeader>
           <CardTitle>
             <span className="inline-flex items-center gap-1.5">
-              <BadgeIndianRupee className="size-4" />
-              Settlement
-            </span>
+              <BadgeIndianRupee className="size-4" />{translate("Settlement")}</span>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
           {fn.posted_to_folio ? (
-            <p className="text-sm text-emerald-700">
-              Billed to folio{" "}
+            <p className="text-sm text-emerald-700">{translate("Billed to folio")}{" "}
               <Link
                 className="font-medium hover:underline"
                 to={`/billing/${encodeURIComponent(fn.folio ?? "")}`}
@@ -2005,16 +1923,14 @@ function MoneyTab({
             <>
               <p className="text-sm text-zinc-500">
                 {fn.group_detail
-                  ? `Posts to ${fn.group_detail.group_name}'s master folio - one bill for the rooms and the function.`
-                  : "Tie this function to a group booking to bill it onto the group's master folio."}
+                  ? translate("Posts to {v0}'s master folio - one bill for the rooms and the function.", { v0: String(fn.group_detail.group_name) })
+                  : translate("Tie this function to a group booking to bill it onto the group's master folio.")}
               </p>
               <GroupLinkField fn={fn} busy={busy} act={act} />
               <Button
                 disabled={busy || !fn.group_booking || fn.status === "Enquiry"}
                 onClick={() => act(() => banquet.postToFolio(fn.name))}
-              >
-                Post to the bill
-              </Button>
+              >{translate("Post to the bill")}</Button>
             </>
           )}
         </CardContent>
@@ -2030,13 +1946,11 @@ function MoneyTab({
 
       {receipt && (
         <Sheet
-          title="Record money in"
+          title={translate("Record money in")}
           onClose={() => setReceipt(null)}
           footer={
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setReceipt(null)}>
-                Cancel
-              </Button>
+              <Button variant="outline" onClick={() => setReceipt(null)}>{translate("Cancel")}</Button>
               <Button
                 disabled={busy || !Number(receipt.amount)}
                 onClick={async () => {
@@ -2051,14 +1965,12 @@ function MoneyTab({
                   )
                   setReceipt(null)
                 }}
-              >
-                Record it
-              </Button>
+              >{translate("Record it")}</Button>
             </div>
           }
         >
           <div className="space-y-3">
-            <Field label="Amount">
+            <Field label={translate("Amount")}>
               <input
                 type="number"
                 className={inputCls}
@@ -2069,14 +1981,14 @@ function MoneyTab({
               />
             </Field>
             <div className="grid grid-cols-2 gap-3">
-              <Field label="What is it">
+              <Field label={translate("What is it")}>
                 <Select
                   value={receipt.kind}
                   onChange={(v) => setReceipt({ ...receipt, kind: v })}
                   options={["Advance", "Payment", "Security Deposit", "Refund"]}
                 />
               </Field>
-              <Field label="How">
+              <Field label={translate("How")}>
                 <Select
                   value={receipt.mode}
                   onChange={(v) => setReceipt({ ...receipt, mode: v })}
@@ -2084,7 +1996,7 @@ function MoneyTab({
                 />
               </Field>
             </div>
-            <Field label="Reference" hint="Transfer ref, cheque number, card slip">
+            <Field label={translate("Reference")} hint={translate("Transfer ref, cheque number, card slip")}>
               <input
                 className={inputCls}
                 value={receipt.reference}
@@ -2094,7 +2006,7 @@ function MoneyTab({
               />
             </Field>
             {fn.payment_terms.some((t) => t.status !== "Received") && (
-              <Field label="Ticks off which milestone">
+              <Field label={translate("Ticks off which milestone")}>
                 <select
                   className={inputCls}
                   value={receipt.settle_term}
@@ -2102,7 +2014,7 @@ function MoneyTab({
                     setReceipt({ ...receipt, settle_term: e.target.value })
                   }
                 >
-                  <option value="">None</option>
+                  <option value="">{translate("None")}</option>
                   {fn.payment_terms
                     .filter((t) => t.status !== "Received")
                     .map((t) => (
@@ -2138,6 +2050,7 @@ function CloseOutCard({
   act: Act
   onCount?: () => void
 }) {
+  useUILanguage()
   const [open, setOpen] = useState(false)
   const [pax, setPax] = useState(String(fn.pax_actual || fn.pax_guaranteed || ""))
   const [damage, setDamage] = useState("")
@@ -2158,68 +2071,54 @@ function CloseOutCard({
       <CardHeader>
         <CardTitle>
           <span className="inline-flex items-center gap-1.5">
-            <ShieldCheck className="size-4" />
-            Deposit &amp; close-out
-          </span>
+            <ShieldCheck className="size-4" />{translate("Deposit & close-out")}</span>
         </CardTitle>
         <div className="flex gap-2">
           {onCount && (
-            <Button variant="outline" onClick={onCount}>
-              Count what was served
-            </Button>
+            <Button variant="outline" onClick={onCount}>{translate("Count what was served")}</Button>
           )}
           {fn.status === "Confirmed" && (
             <Button onClick={() => setOpen(true)}>
-              {reopened ? "Close it again" : "Close out the function"}
+              {reopened ? translate("Close it again") : translate("Close out the function")}
             </Button>
           )}
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="grid gap-3 sm:grid-cols-3">
-          <Money label="Deposit held" value={held} tone="text-violet-700" />
+          <Money label={translate("Deposit held")} value={held} tone="text-violet-700" />
           <Money
-            label="Damages"
+            label={translate("Damages")}
             value={fn.damage_amount}
-            sub={fn.damage_note ?? undefined}
+            sub={translate(fn.damage_note ?? undefined)}
             tone={fn.damage_amount ? "text-rose-700" : "text-zinc-400"}
           />
           <Money
-            label="Returned"
+            label={translate("Returned")}
             value={fn.deposit_refunded}
             tone="text-emerald-700"
           />
         </div>
         {reopened ? (
-          <p className="text-sm text-amber-700">
-            Reopened after its close-out on{" "}
-            {String(fn.closed_out_on).slice(0, 16).replace("T", " ")}. Correct
-            the sheet, then close it again.
-          </p>
+          <p className="text-sm text-amber-700">{translate("Reopened after its close-out on")}{" "}
+            {String(fn.closed_out_on).slice(0, 16).replace("T", " ")}{translate(". Correct the sheet, then close it again.")}</p>
         ) : done ? (
-          <p className="text-sm text-emerald-700">
-            Closed out {String(fn.closed_out_on).slice(0, 16).replace("T", " ")}
-            {fn.closed_out_by ? ` by ${fn.closed_out_by}` : ""}.
+          <p className="text-sm text-emerald-700">{translate("Closed out ")}{String(fn.closed_out_on).slice(0, 16).replace("T", " ")}
+            {fn.closed_out_by ? translate(" by {v0}", { v0: String(fn.closed_out_by) }) : ""}.
           </p>
         ) : (
-          <p className="text-xs text-zinc-400">
-            A security deposit is held money, not payment - it never nets
-            against the bill. Record it as a Security Deposit receipt, then
-            close out to return what's left after damages.
-          </p>
+          <p className="text-xs text-zinc-400">{translate("A security deposit is held money, not payment - it never nets against the bill. Record it as a Security Deposit receipt, then close out to return what's left after damages.")}</p>
         )}
       </CardContent>
 
       {open && (
         <Sheet
-          title="Close out the function"
-          description="Walk the room, count the covers, note the damage. One motion."
+          title={translate("Close out the function")}
+          description={translate("Walk the room, count the covers, note the damage. One motion.")}
           onClose={() => setOpen(false)}
           footer={
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setOpen(false)}>
-                Not yet
-              </Button>
+              <Button variant="outline" onClick={() => setOpen(false)}>{translate("Not yet")}</Button>
               <Button
                 disabled={busy || (!!Number(damage) && !note.trim())}
                 onClick={async () => {
@@ -2234,16 +2133,14 @@ function CloseOutCard({
                   )
                   setOpen(false)
                 }}
-              >
-                Close it out
-              </Button>
+              >{translate("Close it out")}</Button>
             </div>
           }
         >
           <div className="space-y-4">
             <Field
-              label="Covers actually served"
-              hint={`Guaranteed ${fn.pax_guaranteed || 0}. The bill uses whichever is higher.`}
+              label={translate("Covers actually served")}
+              hint={translate("Guaranteed {v0}. The bill uses whichever is higher.", { v0: String(fn.pax_guaranteed || 0) })}
             >
               <input
                 type="number"
@@ -2254,17 +2151,13 @@ function CloseOutCard({
             </Field>
 
             {reopened ? (
-              <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">
-                The deposit and damages were settled at the first close-out.
-                Closing again records the covers only - bill anything
-                further as a line on the function.
-              </p>
+              <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">{translate("The deposit and damages were settled at the first close-out. Closing again records the covers only - bill anything further as a line on the function.")}</p>
             ) : (
               <>
             <div className="rounded-xl border border-zinc-200 p-3">
-              <p className="mb-2 text-sm font-medium">Anything broken?</p>
+              <p className="mb-2 text-sm font-medium">{translate("Anything broken?")}</p>
               <div className="grid gap-3 sm:grid-cols-2">
-                <Field label="Deduct from the deposit">
+                <Field label={translate("Deduct from the deposit")}>
                   <input
                     type="number"
                     className={inputCls}
@@ -2273,20 +2166,20 @@ function CloseOutCard({
                     onChange={(e) => setDamage(e.target.value)}
                   />
                 </Field>
-                <Field label="Return the rest by">
+                <Field label={translate("Return the rest by")}>
                   <Select value={mode} onChange={setMode} options={payModes()} />
                 </Field>
               </div>
               {!!Number(damage) && (
                 <Field
-                  label="What was damaged"
-                  hint="Required - a deduction the customer can't see the reason for is a dispute waiting"
+                  label={translate("What was damaged")}
+                  hint={translate("Required - a deduction the customer can't see the reason for is a dispute waiting")}
                   className="mt-2"
                 >
                   <textarea
                     rows={2}
                     className={inputCls}
-                    placeholder="Two chairs and a table lamp in the pre-function area"
+                    placeholder={translate("Two chairs and a table lamp in the pre-function area")}
                     value={note}
                     onChange={(e) => setNote(e.target.value)}
                   />
@@ -2302,35 +2195,27 @@ function CloseOutCard({
                 onChange={(e) => setRefund(e.target.checked)}
               />
               <span>
-                <span className="block text-sm font-medium text-zinc-700">
-                  Return the deposit balance now
-                </span>
-                <span className="block text-xs text-zinc-400">
-                  Recorded as a refund on the function's ledger.
-                </span>
+                <span className="block text-sm font-medium text-zinc-700">{translate("Return the deposit balance now")}</span>
+                <span className="block text-xs text-zinc-400">{translate("Recorded as a refund on the function's ledger.")}</span>
               </span>
             </label>
 
             <div className="space-y-1 rounded-xl bg-zinc-50 px-4 py-3 text-sm">
-              <Row label="Deposit held" value={inr(held)} />
+              <Row label={translate("Deposit held")} value={inr(held)} />
               {!!Number(damage) && (
                 <Row
-                  label="Less damages"
+                  label={translate("Less damages")}
                   value={"-" + inr(Number(damage))}
                   tone="text-rose-700"
                 />
               )}
               <Row
-                label="Returning"
+                label={translate("Returning")}
                 value={inr(willRefund)}
                 tone="font-semibold border-t border-zinc-200 pt-1"
               />
               {!!Number(damage) && (
-                <p className="pt-2 text-xs text-zinc-500">
-                  The {inr(Number(damage))} deducted goes on the bill as a
-                  damage-recovery line - it's the hotel's money now, not a
-                  deposit.
-                </p>
+                <p className="pt-2 text-xs text-zinc-500">{translate("The ")}{inr(Number(damage))}{translate(" deducted goes on the bill as a damage-recovery line - it's the hotel's money now, not a deposit.")}</p>
               )}
             </div>
               </>
@@ -2353,6 +2238,7 @@ function PaperTab({
   busy: boolean
   act: Act
 }) {
+  useUILanguage()
   const docs: {
     kind: string
     title: string
@@ -2405,18 +2291,16 @@ function PaperTab({
             <CardContent>
               <p className="flex items-center gap-1.5 font-medium">
                 <FileText className="size-4 text-zinc-400" />
-                {d.title}
+                {translate(d.title)}
               </p>
-              <p className="mt-1 min-h-10 text-xs text-zinc-400">{d.blurb}</p>
+              <p className="mt-1 min-h-10 text-xs text-zinc-400">{translate(d.blurb)}</p>
               {d.ready ? (
                 <Link
                   to={`/banquet/${encodeURIComponent(fn.name)}/${d.kind}`}
                   className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-700"
-                >
-                  Open
-                </Link>
+                >{translate("Open")}</Link>
               ) : (
-                <p className="mt-2 text-xs text-amber-700">{d.why}</p>
+                <p className="mt-2 text-xs text-amber-700">{translate(d.why)}</p>
               )}
             </CardContent>
           </Card>
@@ -2425,14 +2309,13 @@ function PaperTab({
 
       <Card>
         <CardHeader>
-          <CardTitle>Issue</CardTitle>
+          <CardTitle>{translate("Issue")}</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-wrap items-center gap-3">
           <Button
             disabled={busy || fn.items.length === 0}
             onClick={() => act(() => banquet.generateQuote(fn.name))}
-          >
-            Stamp quote v{(fn.quote_version || 0) + 1}
+          >{translate("Stamp quote v")}{(fn.quote_version || 0) + 1}
           </Button>
           <Button
             variant="outline"
@@ -2442,17 +2325,15 @@ function PaperTab({
               !(fn.customer_email || "").trim()
             }
             title={
-              !(fn.customer_email || "").trim()
-                ? "Add a customer email on the Enquiry step first"
-                : "Email the stamped quotation to the guest"
+              (!(fn.customer_email || "").trim()
+                ? translate("Add a customer email on the Enquiry step first")
+                : translate("Email the stamped quotation to the guest"))
             }
             onClick={() =>
               act(() => banquet.sendQuotation(fn.name, ["email"]))
             }
           >
-            <Mail className="size-4" />
-            Email to guest
-          </Button>
+            <Mail className="size-4" />{translate("Email to guest")}</Button>
           <Button
             variant="outline"
             disabled={
@@ -2461,38 +2342,34 @@ function PaperTab({
               !(fn.customer_phone || "").trim()
             }
             title={
-              !(fn.customer_phone || "").trim()
-                ? "Add a customer phone on the Enquiry step first"
-                : "WhatsApp the quotation summary to the guest"
+              (!(fn.customer_phone || "").trim()
+                ? translate("Add a customer phone on the Enquiry step first")
+                : translate("WhatsApp the quotation summary to the guest"))
             }
             onClick={() =>
               act(() => banquet.sendQuotation(fn.name, ["whatsapp"]))
             }
-          >
-            WhatsApp guest
-          </Button>
+          >{translate("WhatsApp guest")}</Button>
           <Button
             variant="outline"
             disabled={busy || (fn.status !== "Confirmed" && fn.status !== "Completed")}
             onClick={() => act(() => banquet.generateBeo(fn.name))}
           >
-            {fn.beo_number ? "Reissue event order" : "Issue event order"}
+            {fn.beo_number ? translate("Reissue event order") : translate("Issue event order")}
           </Button>
           <div className="basis-full text-xs text-zinc-400">
             {fn.quote_sent_on
-              ? `Quote v${fn.quote_version} issued ${fn.quote_sent_on}${
-                  fn.quote_valid_till ? `, valid till ${fn.quote_valid_till}` : ""
-                }.`
-              : "No quote issued yet."}
+              ? translate("Quote v{v0} issued {v1}{v2}.", { v0: String(fn.quote_version), v1: String(fn.quote_sent_on), v2: String(fn.quote_valid_till ? `, valid till ${fn.quote_valid_till}` : "") })
+              : translate("No quote issued yet.")}
             {fn.quote_emailed_on
-              ? ` Sent to guest ${String(fn.quote_emailed_on).slice(0, 16)}.`
+              ? translate(" Sent to guest {v0}.", { v0: String(String(fn.quote_emailed_on).slice(0, 16)) })
               : fn.quote_version > 0
-                ? " Not emailed yet."
+                ? translate(" Not emailed yet.")
                 : ""}
             {fn.customer_confirm_outcome
-              ? ` Guest ${fn.customer_confirm_outcome.toLowerCase()} via ${fn.customer_confirm_channel} on ${fn.customer_confirmed_on}.`
+              ? translate(" Guest {v0} via {v1} on {v2}.", { v0: String(fn.customer_confirm_outcome.toLowerCase()), v1: String(fn.customer_confirm_channel), v2: String(fn.customer_confirmed_on) })
               : ""}
-            {fn.beo_number && ` Event order ${fn.beo_number}.`}
+            {fn.beo_number && translate(" Event order {v0}.", { v0: String(fn.beo_number) })}
           </div>
         </CardContent>
       </Card>
@@ -2511,6 +2388,7 @@ function ChecklistPanel({
   busy: boolean
   act: Act
 }) {
+  useUILanguage()
   const [board, setBoard] = useState<{
     open: number
     done: number
@@ -2547,16 +2425,11 @@ function ChecklistPanel({
         <CardHeader>
           <CardTitle>
             <span className="inline-flex items-center gap-1.5">
-              <CheckSquare className="size-4" />
-              Department checklist
-            </span>
+              <CheckSquare className="size-4" />{translate("Department checklist")}</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-zinc-500">
-            No checklist tasks yet. Confirming a function creates Sales,
-            Finance, Housekeeping and F&amp;B tasks from property templates.
-          </p>
+          <p className="text-sm text-zinc-500">{translate("No checklist tasks yet. Confirming a function creates Sales, Finance, Housekeeping and F&B tasks from property templates.")}</p>
         </CardContent>
       </Card>
     )
@@ -2567,11 +2440,8 @@ function ChecklistPanel({
       <CardHeader>
         <CardTitle>
           <span className="inline-flex items-center gap-1.5">
-            <CheckSquare className="size-4" />
-            Department checklist
-            <span className="ml-2 font-mono text-xs font-normal text-zinc-400">
-              {board.done}/{board.total} done · {board.open} open
-            </span>
+            <CheckSquare className="size-4" />{translate("Department checklist")}<span className="ml-2 font-mono text-xs font-normal text-zinc-400">
+              {board.done}/{board.total}{translate(" done · ")}{board.open}{translate(" open")}</span>
           </span>
         </CardTitle>
       </CardHeader>
@@ -2579,7 +2449,7 @@ function ChecklistPanel({
         {board.departments.map((dept) => (
           <div key={dept.department}>
             <p className="mb-2 text-[11px] font-medium uppercase tracking-wider text-zinc-400">
-              {dept.department}
+              {translate(dept.department)}
             </p>
             <ul className="space-y-1.5">
               {dept.tasks.map((t) => (
@@ -2597,7 +2467,7 @@ function ChecklistPanel({
                         : "border-zinc-300 bg-white text-transparent hover:border-brand-500")
                     }
                     aria-label={
-                      t.status === "Done" ? "Mark open" : "Mark done"
+                      (t.status === "Done" ? translate("Mark open") : translate("Mark done"))
                     }
                     onClick={() =>
                       act(async () => {
@@ -2619,11 +2489,10 @@ function ChecklistPanel({
                         : "text-zinc-800")
                     }
                   >
-                    {t.title}
+                    {translate(t.title)}
                   </span>
                   {t.due_date && (
-                    <span className="text-xs text-zinc-400">
-                      due {t.due_date}
+                    <span className="text-xs text-zinc-400">{translate("due ")}{t.due_date}
                     </span>
                   )}
                 </li>
@@ -2650,6 +2519,7 @@ function ReceiptPrint({
   receipt: string
   onClose: () => void
 }) {
+  useUILanguage()
   const [doc, setDoc] = useState<ReceiptDocument | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -2662,25 +2532,21 @@ function ReceiptPrint({
 
   return (
     <Sheet
-      title="Receipt"
-      description="Print it, or send the PDF straight from the print dialog."
+      title={translate("Receipt")}
+      description={translate("Print it, or send the PDF straight from the print dialog.")}
       onClose={onClose}
       wide
       footer={
         <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={onClose}>
-            Close
-          </Button>
+          <Button variant="outline" onClick={onClose}>{translate("Close")}</Button>
           <Button disabled={!doc} onClick={() => window.print()}>
-            <Printer className="size-4" />
-            Print
-          </Button>
+            <Printer className="size-4" />{translate("Print")}</Button>
         </div>
       }
     >
       <ErrorNote error={error} />
       {!doc ? (
-        <Empty>Loading…</Empty>
+        <Empty>{translate("Loading…")}</Empty>
       ) : (
         <article className="mx-auto max-w-xl rounded-xl border border-zinc-200 px-8 py-6 text-sm print:border-0">
           <header className="border-b border-zinc-200 pb-3 text-center">
@@ -2694,7 +2560,7 @@ function ReceiptPrint({
               {doc.property.phone ? ` · ${doc.property.phone}` : ""}
             </p>
             <p className="mt-3 text-xs font-semibold uppercase tracking-[0.25em] text-zinc-400">
-              {doc.header.title}
+              {translate(doc.header.title)}
             </p>
           </header>
 
@@ -2717,7 +2583,7 @@ function ReceiptPrint({
               .filter(([, v]) => v && v.trim() && v.trim() !== "·")
               .map(([k, v]) => (
                 <div key={k} className="flex gap-2">
-                  <dt className="w-28 shrink-0 text-zinc-400">{k}</dt>
+                  <dt className="w-28 shrink-0 text-zinc-400">{translate(k)}</dt>
                   <dd className="font-medium">{v}</dd>
                 </div>
               ))}
@@ -2727,7 +2593,7 @@ function ReceiptPrint({
             <div className="flex items-baseline justify-between">
               <div>
                 <p className="text-xs uppercase tracking-wider text-zinc-400">
-                  {doc.receipt.kind} · {doc.receipt.mode}
+                  {translate(doc.receipt.kind)} · {translate(doc.receipt.mode)}
                 </p>
                 {doc.receipt.reference && (
                   <p className="text-xs text-zinc-500">
@@ -2745,16 +2611,16 @@ function ReceiptPrint({
           </div>
 
           <dl className="mt-4 space-y-1 text-xs">
-            <RunLine label="Function total" value={doc.running.grand_total} />
-            <RunLine label="Received to date" value={doc.running.received} />
+            <RunLine label={translate("Function total")} value={doc.running.grand_total} />
+            <RunLine label={translate("Received to date")} value={doc.running.received} />
             {doc.running.deposit_held > 0 && (
               <RunLine
-                label="Refundable deposit held"
+                label={translate("Refundable deposit held")}
                 value={doc.running.deposit_held}
               />
             )}
             <RunLine
-              label="Balance due"
+              label={translate("Balance due")}
               value={doc.running.balance_due}
               bold
             />
@@ -2763,12 +2629,11 @@ function ReceiptPrint({
           <div className="mt-10 grid grid-cols-2 gap-12">
             <div className="text-center">
               <div className="h-10 border-b border-zinc-400" />
-              <p className="mt-1 text-[11px] text-zinc-400">Customer</p>
+              <p className="mt-1 text-[11px] text-zinc-400">{translate("Customer")}</p>
             </div>
             <div className="text-center">
               <div className="h-10 border-b border-zinc-400" />
-              <p className="mt-1 text-[11px] text-zinc-400">
-                For {doc.property.property_name}
+              <p className="mt-1 text-[11px] text-zinc-400">{translate("For ")}{doc.property.property_name}
               </p>
             </div>
           </div>
@@ -2787,6 +2652,7 @@ function RunLine({
   value: number
   bold?: boolean
 }) {
+  useUILanguage()
   return (
     <div
       className={
@@ -2794,7 +2660,7 @@ function RunLine({
         (bold ? "border-t border-zinc-200 pt-1 font-semibold" : "text-zinc-500")
       }
     >
-      <dt>{label}</dt>
+      <dt>{translate(label)}</dt>
       <dd className="tabular-nums">{inr(value)}</dd>
     </div>
   )

@@ -19,6 +19,7 @@ import frappe
 
 from kamra import business_date as bdm
 from kamra import folio as folio_mod
+from kamra import night_audit as na_mod
 from kamra.tests.audit_fixtures import (
 	PROP_A,
 	PROP_B,
@@ -562,6 +563,8 @@ class NightlySchedulerTestCase(AuditTestCase):
 			patch.object(folio_mod, "run_night_audit", side_effect=only_ours))
 		self.log_error = self._stack.enter_context(
 			patch.object(frappe, "log_error"))
+		self.alert = self._stack.enter_context(
+			patch.object(na_mod, "alert_staff"))
 
 	def bd(self, prop):
 		return str(frappe.db.get_value("Property", prop, "business_date"))
@@ -627,6 +630,42 @@ class NightlySchedulerTestCase(AuditTestCase):
 		folio_mod.nightly_audit_all_properties()
 		self.assertEqual(self.bd(PROP_A), TODAY)
 		self.log_error.assert_not_called()
+
+	# ewa, Sep 2026: a completed run for the open date whose roll did not
+	# stick. Every night answered already_ran and the date never moved.
+	def test_recovers_a_stuck_business_date_and_closes_the_next_day(self):
+		res = make_reservation(PROP_A, self.rt, d(-4), d(2),
+		                       status="Checked In", room=self.room)
+		frappe.db.set_value("Property", PROP_A, "business_date", d(-2))
+		folio_mod.run_night_audit(PROP_A, d(-2))
+		frappe.db.set_value("Property", PROP_A, "business_date", d(-2))
+		folio_mod.nightly_audit_all_properties()
+		self.assertEqual(sorted(str(x) for x in self.audits(PROP_A)),
+		                 [d(-2), YESTERDAY])
+		self.assertEqual(self.bd(PROP_A), TODAY)
+		# one night for the recovered day, one for yesterday; nothing twice
+		self.assertEqual(len(charges(res.name, "Room")), 2)
+
+	def test_catches_up_a_few_missed_days_in_order(self):
+		res = make_reservation(PROP_A, self.rt, d(-5), d(2),
+		                       status="Checked In", room=self.room)
+		frappe.db.set_value("Property", PROP_A, "business_date", d(-3))
+		folio_mod.nightly_audit_all_properties()
+		self.assertEqual(sorted(str(x) for x in self.audits(PROP_A)),
+		                 [d(-3), d(-2), YESTERDAY])
+		self.assertEqual(self.bd(PROP_A), TODAY)
+		self.assertEqual(len(charges(res.name, "Room")), 3)
+
+	def test_alerts_instead_of_posting_weeks_behind(self):
+		res = make_reservation(PROP_A, self.rt, d(-30), d(2),
+		                       status="Checked In", room=self.room)
+		frappe.db.set_value("Property", PROP_A, "business_date", d(-20))
+		folio_mod.nightly_audit_all_properties()
+		self.assertEqual(self.audits(PROP_A), [])
+		self.assertEqual(self.bd(PROP_A), d(-20))
+		self.assertFalse(charges(res.name, "Room"))
+		alerted = [c.args[0] for c in self.alert.call_args_list]
+		self.assertIn(PROP_A, alerted)
 
 
 class NightAuditPermissionTestCase(AuditTestCase):

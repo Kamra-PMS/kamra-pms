@@ -6,12 +6,13 @@ import { useCashierAuth } from "../lib/cashierAuth"
 import { serverError } from "../lib/resource"
 import { toFullPath } from "../lib/routing"
 import { moneyLocale, useLocale } from "../lib/money"
-import { useT } from "../lib/i18n"
+import { useT, t as translate, useUILanguage } from "../lib/i18n"
 import { cn } from "../lib/utils"
 import { Button } from "./ui/button"
 import { Sheet } from "./ui/sheet"
 import { StepFlowFooter, StepFlowHeader, useStepFlow, type FlowStep } from "./StepFlow"
 import TillCard, { type TillState } from "./TillCard"
+
 
 /* Guided check-out, one stay at a time:
      Bill (folios, lines, bills not on the folio yet)
@@ -214,6 +215,7 @@ const inputCls =
   "focus:outline-2 focus:outline-offset-1 focus:outline-brand-600"
 
 function Section(props: { title: string; tone?: "warn" | "info" | "ok"; children: ReactNode }) {
+  useUILanguage()
   return (
     <section
       className={cn(
@@ -224,7 +226,7 @@ function Section(props: { title: string; tone?: "warn" | "info" | "ok"; children
         !props.tone && "border-zinc-200",
       )}
     >
-      <h3 className="mb-2 text-sm font-semibold text-zinc-800">{props.title}</h3>
+      <h3 className="mb-2 text-sm font-semibold text-zinc-800">{translate(props.title)}</h3>
       {props.children}
     </section>
   )
@@ -239,7 +241,7 @@ function Problems(props: { items: Blocker[]; folioLink?: (f: string) => string }
         <li key={b.code + (b.folio ?? "")} className="flex items-start gap-2">
           <TriangleAlert className="mt-0.5 size-4 shrink-0" aria-hidden />
           <span>
-            {b.message}
+            {translate(b.message)}
             {b.folio && props.folioLink ? (
               <>
                 {" "}
@@ -659,12 +661,12 @@ export default function CheckOutDialog(props: {
   return (
     <Sheet
       wide
-      title={r ? t("Check out {name}", { name: r.guest_name }) : t("Check out")}
-      description={r ? [
+      title={(r ? t("Check out {name}", { name: r.guest_name }) : t("Check out"))}
+      description={(r ? [
         r.room_number ? t("Room {n}", { n: r.room_number }) : null,
         r.room_type_name,
         `${r.check_in_date} → ${r.check_out_date}`,
-      ].filter(Boolean).join(" · ") : undefined}
+      ].filter(Boolean).join(" · ") : undefined)}
       onClose={close}
       footer={footer}
     >
@@ -699,7 +701,7 @@ export default function CheckOutDialog(props: {
               <Problems items={reviewProblems} folioLink={folioLink} />
               {ctx.notices.length > 0 && (
                 <ul className="space-y-1 rounded-xl border border-sky-200 bg-sky-50 p-3 text-sm text-sky-900">
-                  {ctx.notices.map((n) => <li key={n.code}>{n.message}</li>)}
+                  {ctx.notices.map((n) => <li key={n.code}>{translate(n.message)}</li>)}
                 </ul>
               )}
 
@@ -825,7 +827,7 @@ export default function CheckOutDialog(props: {
                     [t("Owed to guest"), ctx.totals.refund_due, "text-amber-700"],
                   ].map(([label, n, tone]) => (
                     <div key={String(label)}>
-                      <dt className="text-xs text-zinc-500">{label}</dt>
+                      <dt className="text-xs text-zinc-500">{translate(label)}</dt>
                       <dd className={cn("font-medium tabular-nums", String(tone))}>{fmt(Number(n))}</dd>
                     </div>
                   ))}
@@ -844,7 +846,7 @@ export default function CheckOutDialog(props: {
                       <li key={b.name} className="space-y-2" data-testid="pending-bill">
                         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                           <span>
-                            <span className="font-medium">{b.label}</span>{" "}
+                            <span className="font-medium">{translate(b.label)}</span>{" "}
                             <span className="text-zinc-500">· {b.name} · {t(b.status)}</span>
                             {b.complimentary ? (
                               <span className="ms-1 text-xs text-zinc-500">({t("complimentary")})</span>
@@ -904,7 +906,7 @@ export default function CheckOutDialog(props: {
               {GROUP_ORDER.filter((g) => ctx.groups[g]).map((g) => {
                 const grp = ctx.groups[g]
                 return (
-                  <Section key={g} title={`${t(g)} · ${fmt(grp.amount)}`}>
+                  <Section key={g} title={(`${t(g)} · ${fmt(grp.amount)}`)}>
                     <ul className="divide-y divide-zinc-100 text-sm">
                       {grp.lines.map((line) => (
                         <li key={line.name} className="flex items-start justify-between gap-3 py-1.5">
@@ -1031,10 +1033,10 @@ export default function CheckOutDialog(props: {
                 </p>
               </Section>
               {credit && !credit.ok && (
-                <Section title={creditBlocked ? t("Company credit is blocked") : t("Company credit warning")} tone="warn">
+                <Section title={(creditBlocked ? t("Company credit is blocked") : t("Company credit warning"))} tone="warn">
                   <ul className="list-disc space-y-1 ps-5 text-sm text-zinc-700">
                     {credit.checks.filter((c) => !c.ok).flatMap((c) =>
-                      c.reasons.map((reason) => <li key={c.company + reason}>{reason}</li>))}
+                      c.reasons.map((reason) => <li key={c.company + reason}>{translate(reason)}</li>))}
                   </ul>
                   {creditBlocked && credit.can_override && (
                     <label className="mt-3 block">
@@ -1255,7 +1257,7 @@ export default function CheckOutDialog(props: {
                   <ul className="space-y-1 text-sm text-zinc-700">
                     {ctx.pending_bills.filter((b) => b.billable).map((b) => (
                       <li key={b.name} className="flex justify-between gap-2">
-                        <span>{b.label} · {b.name} · {t(b.status)}</span>
+                        <span>{translate(b.label)} · {b.name} · {t(b.status)}</span>
                         <span className="font-medium tabular-nums">{fmt(b.amount)}</span>
                       </li>
                     ))}
@@ -1306,7 +1308,7 @@ export default function CheckOutDialog(props: {
               )}
               {creditWarnings.length > 0 && (
                 <Section title={t("Checked out with a company credit warning")} tone="warn">
-                  <ul className="list-disc ps-5 text-sm">{creditWarnings.map((w) => <li key={w}>{w}</li>)}</ul>
+                  <ul className="list-disc ps-5 text-sm">{creditWarnings.map((w) => <li key={w}>{translate(w)}</li>)}</ul>
                 </Section>
               )}
               {checkedOut && (() => {

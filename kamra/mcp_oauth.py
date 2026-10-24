@@ -28,6 +28,11 @@ CODE_TTL_MINUTES = 10
 
 CLAUDE_CALLBACK = "https://claude.ai/api/mcp/auth_callback"
 CLAUDE_CALLBACK_COM = "https://claude.com/api/mcp/auth_callback"
+# ChatGPT connectors (OpenAI Apps SDK auth docs): the stable callback, used
+# because we return `iss` on every authorization response (RFC 9207), and the
+# per-connection form /connector/oauth/{callback_id}
+CHATGPT_CALLBACK = "https://chatgpt.com/connector_platform_oauth_redirect"
+CHATGPT_CALLBACK_ID = re.compile(r"^/connector/oauth/[A-Za-z0-9_-]{1,128}$")
 LOOPBACK_PATH = "/callback"
 
 
@@ -82,7 +87,15 @@ def redirect_uri_allowed(uri: str) -> bool:
 		return parsed.path == "/api/mcp/auth_callback"
 	if parsed.scheme == "http" and parsed.hostname in ("127.0.0.1", "localhost"):
 		return parsed.path == LOOPBACK_PATH
-	return False
+	if uri == CHATGPT_CALLBACK:
+		return True
+	if (parsed.scheme == "https" and parsed.hostname == "chatgpt.com"
+			and not parsed.query and not parsed.fragment and not parsed.port
+			and CHATGPT_CALLBACK_ID.match(parsed.path or "")):
+		return True
+	# exact addresses an IT admin added (self-hosted n8n and the like)
+	from kamra.mcp_access import extra_redirect_uris
+	return uri in extra_redirect_uris()
 
 
 def parse_form(raw: bytes | str | None) -> dict[str, str]:
@@ -114,9 +127,11 @@ def authorization_server_doc() -> dict:
 		"response_types_supported": ["code"],
 		"grant_types_supported": ["authorization_code", "refresh_token"],
 		"code_challenge_methods_supported": ["S256"],
+		"authorization_response_iss_parameter_supported": True,
 		"token_endpoint_auth_methods_supported": ["none"],
 		"scopes_supported": [SCOPE, "offline_access"],
-		"client_id_metadata_document_supported": True,
+		# not implemented: clients register through registration_endpoint (DCR)
+		"client_id_metadata_document_supported": False,
 	}
 
 
@@ -208,11 +223,17 @@ def handle_authorize_get(params: dict[str, str]) -> tuple[int, str, str]:
 	if error:
 		return 400, "text/html", _error_page(error)
 
-	properties = frappe.get_all(
-		"Property", fields=["name", "property_name"], order_by="property_name asc"
-	)
-	if not properties:
+	from kamra.mcp_access import access_refusal, visible_properties
+	refusal = access_refusal(user)
+	if refusal:
+		return 403, "text/html", _error_page(refusal)
+	if not frappe.db.count("Property"):
 		return 400, "text/html", _error_page("This site has no property yet.")
+	properties = visible_properties(user)
+	if not properties:
+		return 403, "text/html", _error_page(
+			"AI access over MCP is turned off for every property you can open. "
+			"A hotel admin can turn it on under Settings, AI access (MCP).")
 	return 200, "text/html", _consent_page(params, user, properties)
 
 
@@ -245,7 +266,7 @@ def handle_authorize_post(form: dict[str, str]) -> tuple[int, str, str]:
 		state = form.get("state") or ""
 		if redirect_uri_allowed(redirect):
 			sep = "&" if "?" in redirect else "?"
-			return 302, "text/plain", f"{redirect}{sep}{urlencode({'error': 'access_denied', 'state': state})}"
+			return 302, "text/plain", f"{redirect}{sep}{urlencode({'error': 'access_denied', 'state': state, 'iss': issuer_url()})}"
 		return 400, "text/html", _error_page("Access denied.")
 
 	params = {
@@ -267,6 +288,10 @@ def handle_authorize_post(form: dict[str, str]) -> tuple[int, str, str]:
 	allowed = restricted_properties(user)
 	if allowed is not None and property_name not in allowed:
 		return 403, "text/html", _error_page("You don't have access to that property.")
+	from kamra.mcp_access import access_refusal
+	refusal = access_refusal(user, property_name)
+	if refusal:
+		return 403, "text/html", _error_page(refusal)
 
 	code = new_token()
 	frappe.get_doc(
@@ -285,7 +310,7 @@ def handle_authorize_post(form: dict[str, str]) -> tuple[int, str, str]:
 	).insert(ignore_permissions=True)
 	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- auth code must persist before the redirect
 
-	q = {"code": code, "state": params["state"]}
+	q = {"code": code, "state": params["state"], "iss": issuer_url()}
 	sep = "&" if "?" in params["redirect_uri"] else "?"
 	return 302, "text/plain", f"{params['redirect_uri']}{sep}{urlencode(q)}"
 

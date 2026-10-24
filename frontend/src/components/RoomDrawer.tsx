@@ -30,13 +30,14 @@ import {
 } from "../lib/rooms"
 import { serverError } from "../lib/resource"
 import { fmtMoney } from "../lib/money"
-import { useT } from "../lib/i18n"
+import { useT, t as translate, useUILanguage, uiDateLocale } from "../lib/i18n"
 import { cn } from "../lib/utils"
 import { Sheet } from "./ui/sheet"
 import { Button } from "./ui/button"
 import { Badge } from "./ui/badge"
 import { HkMediaView } from "./HkMedia"
 import { GuestRequests, StayBilling } from "./RoomStayPanels"
+
 
 export type RoomTab =
   | "status"
@@ -77,17 +78,17 @@ const REASON_LABEL: Record<string, string> = {
 
 export function useDates() {
   const { lang } = useT()
-  const loc = lang === "ar" ? "ar" : undefined
+  const loc = lang === "ar" ? "ar" : lang === "es" ? "es" : undefined
   const day = (s?: string | null) =>
     s
-      ? new Date(s.slice(0, 10) + "T00:00:00").toLocaleDateString(loc, {
+      ? new Date(s.slice(0, 10) + "T00:00:00").toLocaleDateString(uiDateLocale(loc), {
           day: "numeric",
           month: "short",
         })
       : ""
   const when = (s?: string | null) =>
     s
-      ? new Date(s.replace(" ", "T")).toLocaleString(loc, {
+      ? new Date(s.replace(" ", "T")).toLocaleString(uiDateLocale(loc), {
           day: "numeric",
           month: "short",
           hour: "2-digit",
@@ -171,10 +172,10 @@ export default function RoomDrawer(props: {
     : undefined
 
   return (
-    <Sheet title={title} description={description} onClose={props.onClose} wide>
+    <Sheet title={translate(title)} description={translate(description)} onClose={props.onClose} wide>
       {error && (
         <div className="mb-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-          {error}
+          {translate(error)}
         </div>
       )}
       {!d ? (
@@ -215,7 +216,7 @@ export default function RoomDrawer(props: {
                 )}
               >
                 {x.icon}
-                {x.label}
+                {translate(x.label)}
                 {tab === x.id && (
                   <span className="absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-brand-600" />
                 )}
@@ -248,10 +249,11 @@ export default function RoomDrawer(props: {
 }
 
 function Section(props: { title: string; children: React.ReactNode; aside?: React.ReactNode }) {
+  useUILanguage()
   return (
     <section className="mb-6">
       <div className="mb-2 flex items-center justify-between gap-2">
-        <h3 className="text-sm font-semibold text-zinc-800">{props.title}</h3>
+        <h3 className="text-sm font-semibold text-zinc-800">{translate(props.title)}</h3>
         {props.aside}
       </div>
       {props.children}
@@ -551,7 +553,7 @@ function NowTab({
           <Empty>{t("Nobody is staying in this room.")}</Empty>
         )}
       </Section>
-      <Section title={a?.arriving_today ? t("Arriving today") : t("Next arrival")}>
+      <Section title={(a?.arriving_today ? t("Arriving today") : t("Next arrival"))}>
         {a ? (
           <div className="rounded-xl border border-zinc-200 p-4">
             <div className="text-lg font-semibold text-zinc-900">{a.guest_name}</div>
@@ -588,9 +590,10 @@ function NowTab({
 }
 
 function Money(props: { label: string; value?: number; strong?: boolean }) {
+  useUILanguage()
   return (
     <div className="rounded-lg bg-zinc-50 px-3 py-2">
-      <div className="text-[11px] text-zinc-500">{props.label}</div>
+      <div className="text-[11px] text-zinc-500">{translate(props.label)}</div>
       <div
         className={cn(
           "tabular-nums font-semibold",
@@ -655,7 +658,7 @@ function AvailabilityTab({ room }: { room: string }) {
           </span>
         )}
       </div>
-      {error && <p className="text-sm text-rose-700">{error}</p>}
+      {error && <p className="text-sm text-rose-700">{translate(error)}</p>}
       {!a ? (
         !error && <Empty>{t("Loading…")}</Empty>
       ) : (
@@ -667,11 +670,11 @@ function AvailabilityTab({ room }: { room: string }) {
                 <div
                   key={c.date}
                   title={
-                    c.state === "booked"
+                    (c.state === "booked"
                       ? `${c.guest_name ?? ""}`
                       : c.state === "blocked"
                         ? t(REASON_LABEL[c.reason ?? ""] ?? c.reason ?? "")
-                        : t("Free")
+                        : t("Free"))
                   }
                   className={cn(
                     "min-w-0 rounded-lg border px-1 py-1.5 text-center",
@@ -681,7 +684,7 @@ function AvailabilityTab({ room }: { room: string }) {
                   )}
                 >
                   <div className="text-[10px] uppercase opacity-70">
-                    {dt.toLocaleDateString(loc, { weekday: "short" })}
+                    {dt.toLocaleDateString(uiDateLocale(loc), { weekday: "short" })}
                   </div>
                   <div className="text-sm font-semibold tabular-nums">{dt.getDate()}</div>
                   <div className="truncate text-[10px]">
@@ -744,7 +747,7 @@ function HistoryTab({ room }: { room: string }) {
       .then(setH)
       .catch((e) => setError(serverError(e)))
   }, [room])
-  if (error) return <p className="text-sm text-rose-700">{error}</p>
+  if (error) return <p className="text-sm text-rose-700">{translate(error)}</p>
   if (!h) return <Empty>{t("Loading…")}</Empty>
   return (
     <div>
@@ -944,7 +947,7 @@ function DetailsTab({ d }: { d: RoomDetail }) {
             .filter(([, v]) => v !== null && v !== undefined && v !== "")
             .map(([k, v]) => (
               <div key={k} className="flex justify-between gap-3 border-b border-zinc-100 pb-1.5">
-                <dt className="text-zinc-500">{k}</dt>
+                <dt className="text-zinc-500">{translate(k)}</dt>
                 <dd className="text-end font-medium text-zinc-800">{v}</dd>
               </div>
             ))}
@@ -971,7 +974,7 @@ function DetailsTab({ d }: { d: RoomDetail }) {
               <img
                 key={u}
                 src={u}
-                alt={rt.room_type_name ?? ""}
+                alt={translate(rt.room_type_name ?? "")}
                 className="aspect-[4/3] w-full rounded-lg object-cover"
               />
             ))}

@@ -23,6 +23,7 @@ import {
   StatusPill,
   today,
 } from "./banquet/shared"
+import { t as translate, useUILanguage } from "../lib/i18n"
 
 const REGISTERS = [
   ["functions", "Functions", "Everything booked in the period"],
@@ -47,6 +48,7 @@ function monthBounds(iso: string) {
 }
 
 export default function BanquetRegisters() {
+  useUILanguage()
   const navigate = useNavigate()
   const [defaultFrom, defaultTo] = useMemo(() => monthBounds(today()), [])
   const [from, setFrom] = useState(defaultFrom)
@@ -93,16 +95,12 @@ export default function BanquetRegisters() {
         <div>
           <CardTitle>
             <span className="inline-flex items-center gap-1.5">
-              <ScrollText className="size-4" />
-              Banquet registers
-            </span>
+              <ScrollText className="size-4" />{translate("Banquet registers")}</span>
           </CardTitle>
-          <p className="mt-0.5 text-xs text-zinc-400">
-            Pick the period once - every book is a tab away.
-          </p>
+          <p className="mt-0.5 text-xs text-zinc-400">{translate("Pick the period once - every book is a tab away.")}</p>
         </div>
         <div className="flex flex-wrap items-end gap-2">
-          <Field label="From">
+          <Field label={translate("From")}>
             <input
               type="date"
               className={inputCls + " !w-36"}
@@ -110,7 +108,7 @@ export default function BanquetRegisters() {
               onChange={(e) => setFrom(e.target.value)}
             />
           </Field>
-          <Field label="To">
+          <Field label={translate("To")}>
             <input
               type="date"
               className={inputCls + " !w-36"}
@@ -119,13 +117,9 @@ export default function BanquetRegisters() {
             />
           </Field>
           <Button variant="outline" onClick={exportCsv} disabled={!data?.rows.length}>
-            <Download className="size-4" />
-            CSV
-          </Button>
+            <Download className="size-4" />{translate("CSV")}</Button>
           <Button variant="outline" onClick={() => window.print()}>
-            <Printer className="size-4" />
-            Print
-          </Button>
+            <Printer className="size-4" />{translate("Print")}</Button>
         </div>
       </CardHeader>
       <CardContent>
@@ -136,7 +130,7 @@ export default function BanquetRegisters() {
             <button
               key={id}
               onClick={() => setReg(id)}
-              title={blurb}
+              title={translate(blurb)}
               className={
                 "-mb-px border-b-2 px-3 py-2 text-sm font-medium transition-colors " +
                 (reg === id
@@ -144,23 +138,23 @@ export default function BanquetRegisters() {
                   : "border-transparent text-zinc-500 hover:text-zinc-800")
               }
             >
-              {label}
+              {translate(label)}
             </button>
           ))}
         </div>
 
         {/* the print header - on screen the toolbar already says all this */}
         <div className="mb-3 hidden print:block">
-          <h2 className="text-base font-semibold">{data?.title}</h2>
+          <h2 className="text-base font-semibold">{translate(data?.title)}</h2>
           <p className="text-xs text-zinc-500">
-            {from} to {to}
+            {from}{translate(" to ")}{to}
           </p>
         </div>
 
         {!data ? (
-          <Empty>Loading…</Empty>
+          <Empty>{translate("Loading…")}</Empty>
         ) : data.rows.length === 0 ? (
-          <Empty>Nothing in this period.</Empty>
+          <Empty>{translate("Nothing in this period.")}</Empty>
         ) : (
           <>
             <Totals data={data} />
@@ -182,6 +176,7 @@ export default function BanquetRegisters() {
 }
 
 function Totals({ data }: { data: BanquetRegister }) {
+  useUILanguage()
   const t = data.totals
   const cells: [string, string][] = [
     ["Rows", String(t.count)],
@@ -198,7 +193,7 @@ function Totals({ data }: { data: BanquetRegister }) {
     <div className="mb-4 flex flex-wrap gap-x-8 gap-y-2 rounded-xl bg-zinc-50 px-4 py-3">
       {cells.map(([k, v]) => (
         <div key={k}>
-          <p className="text-[11px] uppercase tracking-wider text-zinc-400">{k}</p>
+          <p className="text-[11px] uppercase tracking-wider text-zinc-400">{translate(k)}</p>
           <p className="text-lg font-semibold tabular-nums">{v}</p>
         </div>
       ))}
@@ -213,21 +208,22 @@ function FunctionList({
   data: BanquetRegister
   onOpen: (name: string) => void
 }) {
+  useUILanguage()
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-zinc-200 text-left text-xs uppercase tracking-wider text-zinc-400">
-            <th className="py-2 pr-3 font-medium">Ref</th>
-            <th className="py-2 pr-3 font-medium">Date</th>
-            <th className="py-2 pr-3 font-medium">Customer</th>
-            <th className="py-2 pr-3 font-medium">Hall / session</th>
-            <th className="py-2 pr-3 font-medium">Event</th>
-            <th className="py-2 pr-3 text-right font-medium">Pax</th>
-            <th className="py-2 pr-3 text-right font-medium">Rate/pax</th>
-            <th className="py-2 pr-3 text-right font-medium">Value</th>
-            <th className="py-2 pr-3 text-right font-medium">Due</th>
-            <th className="py-2 font-medium">Status</th>
+            <th className="py-2 pr-3 font-medium">{translate("Ref")}</th>
+            <th className="py-2 pr-3 font-medium">{translate("Date")}</th>
+            <th className="py-2 pr-3 font-medium">{translate("Customer")}</th>
+            <th className="py-2 pr-3 font-medium">{translate("Hall / session")}</th>
+            <th className="py-2 pr-3 font-medium">{translate("Event")}</th>
+            <th className="py-2 pr-3 text-right font-medium">{translate("Pax")}</th>
+            <th className="py-2 pr-3 text-right font-medium">{translate("Rate/pax")}</th>
+            <th className="py-2 pr-3 text-right font-medium">{translate("Value")}</th>
+            <th className="py-2 pr-3 text-right font-medium">{translate("Due")}</th>
+            <th className="py-2 font-medium">{translate("Status")}</th>
           </tr>
         </thead>
         <tbody>
@@ -251,10 +247,10 @@ function FunctionList({
               </td>
               <td className="py-1.5 pr-3 text-zinc-600">
                 {r.venue}
-                <span className="text-zinc-400"> · {r.session}</span>
+                <span className="text-zinc-400"> · {translate(r.session)}</span>
               </td>
               <td className="py-1.5 pr-3 text-zinc-600">
-                {r.event_name || r.event_type}
+                {r.event_name || translate(r.event_type)}
               </td>
               <td className="py-1.5 pr-3 text-right tabular-nums">
                 {r.pax || "-"}
@@ -285,19 +281,20 @@ function FunctionList({
 }
 
 function CashBook({ data }: { data: BanquetRegister }) {
+  useUILanguage()
   return (
     <div className="grid gap-4 lg:grid-cols-[2fr_1fr]">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-zinc-200 text-left text-xs uppercase tracking-wider text-zinc-400">
-              <th className="py-2 pr-3 font-medium">Date</th>
-              <th className="py-2 pr-3 font-medium">Customer</th>
-              <th className="py-2 pr-3 font-medium">Hall</th>
-              <th className="py-2 pr-3 font-medium">Kind</th>
-              <th className="py-2 pr-3 font-medium">Mode</th>
-              <th className="py-2 pr-3 font-medium">Reference</th>
-              <th className="py-2 text-right font-medium">Amount</th>
+              <th className="py-2 pr-3 font-medium">{translate("Date")}</th>
+              <th className="py-2 pr-3 font-medium">{translate("Customer")}</th>
+              <th className="py-2 pr-3 font-medium">{translate("Hall")}</th>
+              <th className="py-2 pr-3 font-medium">{translate("Kind")}</th>
+              <th className="py-2 pr-3 font-medium">{translate("Mode")}</th>
+              <th className="py-2 pr-3 font-medium">{translate("Reference")}</th>
+              <th className="py-2 text-right font-medium">{translate("Amount")}</th>
             </tr>
           </thead>
           <tbody>
@@ -308,8 +305,8 @@ function CashBook({ data }: { data: BanquetRegister }) {
                 </td>
                 <td className="py-1.5 pr-3">{r.customer_name}</td>
                 <td className="py-1.5 pr-3 text-zinc-500">{r.venue}</td>
-                <td className="py-1.5 pr-3">{r.kind}</td>
-                <td className="py-1.5 pr-3 text-zinc-500">{r.mode}</td>
+                <td className="py-1.5 pr-3">{translate(r.kind)}</td>
+                <td className="py-1.5 pr-3 text-zinc-500">{translate(r.mode)}</td>
                 <td className="py-1.5 pr-3 text-zinc-400">{r.reference}</td>
                 <td
                   className={
@@ -326,16 +323,14 @@ function CashBook({ data }: { data: BanquetRegister }) {
       </div>
       {data.by_mode && (
         <div>
-          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-zinc-400">
-            By mode
-          </h3>
+          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-zinc-400">{translate("By mode")}</h3>
           <ul className="space-y-1.5">
             {data.by_mode.map((m) => (
               <li
-                key={m.mode}
+                key={translate(m.mode)}
                 className="flex justify-between rounded-lg bg-zinc-50 px-3 py-2 text-sm"
               >
-                <span>{m.mode}</span>
+                <span>{translate(m.mode)}</span>
                 <span className="font-medium tabular-nums">{inr(m.amount)}</span>
               </li>
             ))}
@@ -347,6 +342,7 @@ function CashBook({ data }: { data: BanquetRegister }) {
 }
 
 function SalesSummary({ data }: { data: BanquetRegister }) {
+  useUILanguage()
   const blocks: [string, RegisterRollup[] | undefined][] = [
     ["By hall", data.by_venue],
     ["By event type", data.by_event_type],
@@ -359,7 +355,7 @@ function SalesSummary({ data }: { data: BanquetRegister }) {
         rows?.length ? (
           <div key={title}>
             <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-zinc-400">
-              {title}
+              {translate(title)}
             </h3>
             <Bars rows={rows} />
           </div>
@@ -370,6 +366,7 @@ function SalesSummary({ data }: { data: BanquetRegister }) {
 }
 
 function Bars({ rows }: { rows: RegisterRollup[] }) {
+  useUILanguage()
   const peak = Math.max(1, ...rows.map((r) => r.value))
   return (
     <ul className="space-y-2">
@@ -380,8 +377,7 @@ function Bars({ rows }: { rows: RegisterRollup[] }) {
             <span className="shrink-0 tabular-nums">
               {inr(r.value)}{" "}
               <span className="text-zinc-400">
-                ({r.count} · {r.pax} pax)
-              </span>
+                ({r.count} · {r.pax}{translate(" pax)")}</span>
             </span>
           </div>
           <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-zinc-100">

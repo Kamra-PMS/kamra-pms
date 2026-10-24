@@ -23,7 +23,8 @@ import { Button } from "./ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
 import ImageField from "./ImageField"
 import { moneyLocale } from "../lib/money"
-import { useT, t as translate } from "../lib/i18n"
+import { useT, t as translate, useUILanguage } from "../lib/i18n"
+
 
 /** Keys from kamra.settings.menu_masters - property-editable master lists. */
 export type MenuMasterKey =
@@ -168,6 +169,7 @@ function FieldInput(props: {
   /** Translate display labels; API values stay English. */
   t: (s: string) => string
 }) {
+  useUILanguage()
   const { spec, value, onChange, t } = props
   const masterOpts =
     (spec.optionsFrom && props.masterOptions[spec.optionsFrom]) ||
@@ -256,24 +258,44 @@ function FieldInput(props: {
           onChange={(url) => onChange(url)}
         />
       )
-    default:
+    default: {
+      const optionLabels = masterOpts.map((option) => ({ value: option, label: t(option) }))
+      const labelCounts = new Map<string, number>()
+      for (const { label } of optionLabels) {
+        labelCounts.set(label, (labelCounts.get(label) ?? 0) + 1)
+      }
+      // Keep distinct original values selectable when their translations coincide.
+      const suggestions = optionLabels.map((option) => ({
+        ...option,
+        label: (labelCounts.get(option.label) ?? 0) > 1 && option.label !== option.value
+          ? `${option.label} (${option.value})`
+          : option.label,
+      }))
+      const rawValue = String(value ?? "")
+      const selected = suggestions.find((option) => option.value === rawValue)
       return (
         <>
           <input
             className={inputCls}
             list={spec.optionsFrom ? `masters-${spec.field}` : undefined}
-            value={String(value ?? "")}
-            onChange={(e) => onChange(e.target.value)}
+            value={selected?.label ?? rawValue}
+            onChange={(e) => {
+              const entered = e.target.value
+              const suggestion = suggestions.find((option) => option.label === entered)
+              // Store the master value; free text remains available for new categories.
+              onChange(suggestion?.value ?? entered)
+            }}
           />
-          {spec.optionsFrom && masterOpts.length > 0 && (
+          {spec.optionsFrom && suggestions.length > 0 && (
             <datalist id={`masters-${spec.field}`}>
-              {masterOpts.map((o) => (
-                <option key={o} value={o} />
+              {suggestions.map((option) => (
+                <option key={option.value} value={option.label} />
               ))}
             </datalist>
           )}
         </>
       )
+    }
   }
 }
 
@@ -303,7 +325,7 @@ export function ResourceScreen({
   /** Extra control rendered in the header next to New (e.g. a bulk import). */
   headerAction?: ReactNode
 }) {
-  const { t } = useT()
+  const { t, lang } = useT()
   const [rows, setRows] = useState<Row[]>([])
   const [editing, setEditing] = useState<Row | "new" | null>(null)
   const [draft, setDraft] = useState<Record<string, unknown>>({})
@@ -533,7 +555,7 @@ export function ResourceScreen({
       <CardContent>
         {error && !editing && (
           <div className="mb-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-            {error}
+            {translate(error)}
           </div>
         )}
         <div className="mb-4 flex flex-wrap items-center gap-2">
@@ -570,7 +592,7 @@ export function ResourceScreen({
                 <span className="text-xs">{t(config.dateFilter.label)}</span>
                 <input
                   type="date"
-                  aria-label={`${t(config.dateFilter.label)} ${t("from")}`}
+                  aria-label={(`${t(config.dateFilter.label)} ${t("from")}`)}
                   className="rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-sm"
                   value={dateFrom}
                   onChange={(e) => setDateFrom(e.target.value)}
@@ -578,7 +600,7 @@ export function ResourceScreen({
                 <span className="text-xs">{t("to")}</span>
                 <input
                   type="date"
-                  aria-label={`${t(config.dateFilter.label)} ${t("to")}`}
+                  aria-label={(`${t(config.dateFilter.label)} ${t("to")}`)}
                   className="rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-sm"
                   value={dateTo}
                   onChange={(e) => setDateTo(e.target.value)}
@@ -734,12 +756,12 @@ export function ResourceScreen({
           wide
           title={
             editing === "new"
-              ? t("New {thing}", {
+              ? (lang !== "en") ? t("New record in {section}", { section: t(config.title) }) : t("New {thing}", {
                   thing: t(config.title.replace(/s$/, "")),
                 })
               : String(editing.name)
           }
-          description={useDetail ? undefined : config.description ? t(config.description) : undefined}
+          description={(useDetail ? undefined : config.description ? t(config.description) : undefined)}
           onClose={() => setEditing(null)}
           footer={
             useDetail ? undefined : (
@@ -819,7 +841,7 @@ export function ResourceScreen({
               )}
               {error && (
                 <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-                  {error}
+                  {translate(error)}
                 </div>
               )}
             </div>

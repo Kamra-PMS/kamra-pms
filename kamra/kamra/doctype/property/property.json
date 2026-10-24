@@ -101,7 +101,11 @@
   "og_image",
   "page_slug",
   "overbooking_pct",
-  "setup_wants"
+  "setup_wants",
+  "mcp_section",
+  "mcp_enabled",
+  "mcp_read_only",
+  "mcp_blocked_tools"
  ],
  "fields": [
   {
@@ -683,12 +687,38 @@
    "label": "Setup Wishlist",
    "hidden": 1,
    "description": "What was asked for during setup (e.g. channel-manager), so the Finish setup list can remind."
+  },
+  {
+   "fieldname": "mcp_section",
+   "fieldtype": "Section Break",
+   "label": "AI access (MCP)",
+   "collapsible": 1
+  },
+  {
+   "default": "1",
+   "description": "Let staff with MCP Read or MCP Manage connect Claude or another MCP client to this property. The site setting kamra_mcp_disabled still turns MCP off everywhere.",
+   "fieldname": "mcp_enabled",
+   "fieldtype": "Check",
+   "label": "AI access over MCP"
+  },
+  {
+   "default": "0",
+   "description": "AI clients can look but never change anything at this property, whatever the person's MCP role.",
+   "fieldname": "mcp_read_only",
+   "fieldtype": "Check",
+   "label": "Block write tools"
+  },
+  {
+   "description": "Tool names AI clients may not use at this property, as a JSON list. Managed under Settings, AI access (MCP).",
+   "fieldname": "mcp_blocked_tools",
+   "fieldtype": "Small Text",
+   "label": "Blocked MCP tools"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-20 17:00:00.000000",
+ "modified": "2026-10-24 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Property",

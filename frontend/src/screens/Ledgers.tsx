@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { moneyLocale } from "../lib/money"
 import { useAuth } from "../lib/auth"
 import CityLedgerPayment from "./CityLedgerPayment"
+import { t as translate, useUILanguage } from "../lib/i18n"
 
 // recording a company's payment is a Finance action (the server gates it too)
 const CAN_SETTLE = ["Finance", "Hotel Admin", "System Manager", "Administrator"]
@@ -35,6 +36,7 @@ type Recon = {
 }
 
 export default function Ledgers() {
+  useUILanguage()
   const [date, setDate] = useState("")
   const [ledgers, setLedgers] = useState<Ledger[]>([])
   const [inBalance, setInBalance] = useState<boolean | null>(true)
@@ -93,13 +95,9 @@ export default function Ledgers() {
     <div className="w-full space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-400">
-            Books
-          </p>
-          <h1 className="text-2xl font-semibold">Ledgers</h1>
-          <p className="text-sm text-zinc-500">
-            Guest · Deposit · AR · Package trial balance
-          </p>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-400">{translate("Books")}</p>
+          <h1 className="text-2xl font-semibold">{translate("Ledgers")}</h1>
+          <p className="text-sm text-zinc-500">{translate("Guest · Deposit · AR · Package trial balance")}</p>
         </div>
         <div className="flex items-center gap-2">
           <input
@@ -108,12 +106,10 @@ export default function Ledgers() {
             value={date}
             onChange={(e) => setDate(e.target.value)}
           />
-          <Button variant="outline" onClick={() => void load()}>
-            Refresh
-          </Button>
+          <Button variant="outline" onClick={() => void load()}>{translate("Refresh")}</Button>
         </div>
       </div>
-      {err ? <p className="text-sm text-rose-600">{err}</p> : null}
+      {err ? <p className="text-sm text-rose-600">{translate(err)}</p> : null}
 
       {/* These are subsidiary ledgers: a charge's revenue side and a
           payment's cash side live in the books the accounting export feeds,
@@ -129,24 +125,21 @@ export default function Ledgers() {
         }`}
       >
         {inBalance === null ? (
-          `Ledgers as of ${date}. Debits ${inr(totals.debit)} · credits ${inr(totals.credit)}. The check against folio balances runs for the current business date.`
+          translate("Ledgers as of {v0}. Debits {v1} · credits {v2}. The check against folio balances runs for the current business date.", { v0: String(date), v1: String(inr(totals.debit)), v2: String(inr(totals.credit)) })
         ) : inBalance ? (
-          `Ledgers agree with folios - Guest + Deposit net ${inr(recon?.ledger_net)} equals the ${inr(recon?.folios_net)} folios carry. Debits exceed credits by what guests owe (${inr(totals.debit - totals.credit)}); that is not an imbalance.`
+          translate("Ledgers agree with folios - Guest + Deposit net {v0} equals the {v1} folios carry. Debits exceed credits by what guests owe ({v2}); that is not an imbalance.", { v0: String(inr(recon?.ledger_net)), v1: String(inr(recon?.folios_net)), v2: String(inr(totals.debit - totals.credit)) })
         ) : (
           <div>
             <p className="font-medium">
-              {`Ledger differs from folios on ${recon?.folios_out ?? 0} folio(s) by ${inr(recon?.difference)}.`}
+              {translate("Ledger differs from folios on {v0} folio(s) by {v1}.", { v0: String(recon?.folios_out ?? 0), v1: String(inr(recon?.difference)) })}
             </p>
-            <p className="mt-0.5 text-xs">
-              A posting reached the folio but not the ledger, or the other way round.
-            </p>
+            <p className="mt-0.5 text-xs">{translate("A posting reached the folio but not the ledger, or the other way round.")}</p>
             <ul className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-xs">
               {(recon?.folios ?? []).map((f) => (
                 <li key={f.folio}>
                   <Link className="underline" to={`/billing/${encodeURIComponent(f.folio)}`}>
                     {f.folio}
-                  </Link>{" "}
-                  folio {inr(f.balance)} · ledger {inr(f.ledger)}
+                  </Link>{" "}{translate("folio ")}{inr(f.balance)}{translate(" · ledger ")}{inr(f.ledger)}
                 </li>
               ))}
             </ul>
@@ -159,15 +152,13 @@ export default function Ledgers() {
           <Card key={l.ledger}>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-zinc-500">
-                {l.ledger} ledger
-              </CardTitle>
+                {l.ledger}{translate(" ledger")}</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-2xl font-semibold tabular-nums">
                 {inr(l.balance)}
               </p>
-              <p className="mt-1 text-xs text-zinc-400">
-                Dr {inr(l.debit)} · Cr {inr(l.credit)}
+              <p className="mt-1 text-xs text-zinc-400">{translate("Dr ")}{inr(l.debit)}{translate(" · Cr ")}{inr(l.credit)}
               </p>
             </CardContent>
           </Card>
@@ -176,19 +167,17 @@ export default function Ledgers() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">
-            Journal by transaction code
-          </CardTitle>
+          <CardTitle className="text-base">{translate("Journal by transaction code")}</CardTitle>
         </CardHeader>
         <CardContent className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead className="text-xs uppercase text-zinc-400">
               <tr>
-                <th className="py-2 pr-3">Code</th>
-                <th className="py-2 pr-3">Description</th>
-                <th className="py-2 pr-3">Debit</th>
-                <th className="py-2 pr-3">Credit</th>
-                <th className="py-2">Entries</th>
+                <th className="py-2 pr-3">{translate("Code")}</th>
+                <th className="py-2 pr-3">{translate("Description")}</th>
+                <th className="py-2 pr-3">{translate("Debit")}</th>
+                <th className="py-2 pr-3">{translate("Credit")}</th>
+                <th className="py-2">{translate("Entries")}</th>
               </tr>
             </thead>
             <tbody>
@@ -210,25 +199,23 @@ export default function Ledgers() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">City ledger aging</CardTitle>
-          <span className="text-xs text-zinc-400">
-            By due date - invoice date + the company's credit days
-          </span>
+          <CardTitle className="text-base">{translate("City ledger aging")}</CardTitle>
+          <span className="text-xs text-zinc-400">{translate("By due date - invoice date + the company's credit days")}</span>
         </CardHeader>
         <CardContent className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead className="text-xs uppercase text-zinc-400">
               <tr>
-                <th className="py-2 pr-3">Company</th>
-                <th className="py-2 pr-3">Terms</th>
-                <th className="py-2 pr-3">Balance</th>
-                <th className="py-2 pr-3">Not due</th>
-                <th className="py-2 pr-3">1 to 30</th>
-                <th className="py-2 pr-3">31 to 60</th>
-                <th className="py-2 pr-3">61 to 90</th>
+                <th className="py-2 pr-3">{translate("Company")}</th>
+                <th className="py-2 pr-3">{translate("Terms")}</th>
+                <th className="py-2 pr-3">{translate("Balance")}</th>
+                <th className="py-2 pr-3">{translate("Not due")}</th>
+                <th className="py-2 pr-3">{translate("1 to 30")}</th>
+                <th className="py-2 pr-3">{translate("31 to 60")}</th>
+                <th className="py-2 pr-3">{translate("61 to 90")}</th>
                 <th className="py-2 pr-3">90+</th>
-                <th className="py-2 pr-3">Overdue</th>
-                <th className="py-2 pr-3">Credit</th>
+                <th className="py-2 pr-3">{translate("Overdue")}</th>
+                <th className="py-2 pr-3">{translate("Credit")}</th>
                 {canSettle ? <th className="py-2" /> : null}
               </tr>
             </thead>
@@ -242,14 +229,11 @@ export default function Ledgers() {
                     <td className="py-2 pr-3">
                       {String(a.company)}
                       {over ? (
-                        <span className="ml-2 rounded bg-rose-50 px-1.5 py-0.5 text-[10px] font-medium text-rose-700">
-                          Over limit
-                        </span>
+                        <span className="ml-2 rounded bg-rose-50 px-1.5 py-0.5 text-[10px] font-medium text-rose-700">{translate("Over limit")}</span>
                       ) : null}
                     </td>
                     <td className="py-2 pr-3 text-xs text-zinc-500">
-                      {Number(a.credit_days ?? 0)} days
-                    </td>
+                      {Number(a.credit_days ?? 0)}{translate(" days")}</td>
                     <td className="py-2 pr-3 tabular-nums">{inr(a.balance)}</td>
                     <td className="py-2 pr-3 tabular-nums">{inr(a.not_due)}</td>
                     <td className="py-2 pr-3 tabular-nums">{inr(a.d1_30)}</td>
@@ -266,9 +250,7 @@ export default function Ledgers() {
                     </td>
                     {canSettle ? (
                       <td className="py-2 text-right">
-                        <Button variant="outline" onClick={() => setPaying(String(a.name))}>
-                          Record payment
-                        </Button>
+                        <Button variant="outline" onClick={() => setPaying(String(a.name))}>{translate("Record payment")}</Button>
                       </td>
                     ) : null}
                   </tr>
@@ -276,9 +258,7 @@ export default function Ledgers() {
               })}
               {!aging.length ? (
                 <tr>
-                  <td colSpan={canSettle ? 11 : 10} className="py-6 text-center text-zinc-400">
-                    No city ledger accounts yet.
-                  </td>
+                  <td colSpan={canSettle ? 11 : 10} className="py-6 text-center text-zinc-400">{translate("No city ledger accounts yet.")}</td>
                 </tr>
               ) : null}
             </tbody>

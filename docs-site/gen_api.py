@@ -55,6 +55,9 @@ MODULES = [
     ("crs", "Central reservations (chain)", ""),
     ("dashboards", "Dashboards", ""),
     ("reports", "Reports", ""),
+    ("custom_reports", "Custom reports (builder, save, email)",
+     "Whitelisted datasets only - no Desk Query Reports or free SQL. "
+     "Saved definitions live on Kamra Custom Report; staff use Finance → Reports."),
     ("ledger", "Ledgers (trial balance, city ledger / AR, FX desk)", ""),
     ("credit", "Company credit (payment terms, credit limit, overdue check)",
      "Credit control is enforced inside check_out, create_booking and city_ledger_transfer; these endpoints explain and configure it."),

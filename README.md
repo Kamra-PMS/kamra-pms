@@ -126,7 +126,7 @@ We never charge for rooms, users, features, data export or API access. An **ente
 
 ## What makes it different
 
-- **Agent-ready, not agent-locked.** [MCP server](https://kamrapms.com/docs/ai-and-mcp) with **101** governed tools: role-scoped, module-gated, permission-checked, fully logged. Connect Claude; no bundled agent to trust.
+- **Agent-ready, not agent-locked.** [MCP server](https://kamrapms.com/docs/ai-and-mcp) with **116** governed tools: role-scoped, module-gated, permission-checked, fully logged. A hotel admin picks who may use it (MCP Read or MCP Manage) and can make a property read-only for AI. Connect Claude or ChatGPT; no bundled agent to trust.
 - **Bring your own key.** No AI markup or model lock-in. Optional [HeyKoala](https://heykoala.ai) for voice / WhatsApp concierge.
 - **Deterministic money.** Rates, tax slabs, availability, and no-overbooking guards come from code, never from a language model.
 - **Full audit trail.** Every human or AI action: who, what, why.
@@ -230,7 +230,7 @@ flowchart LR
   desk["Front desk SPA<br/>React + Vite"] --> api
   book["Booking engine<br/>/book"] --> api
   hk["Housekeeping<br/>/hk"] --> api
-  agent["Claude / any MCP client"] --> mcp["MCP server<br/>112 tools"] --> api
+  agent["Claude / any MCP client"] --> mcp["MCP server<br/>116 tools"] --> api
   api["Governed API<br/>RBAC · property scope · audit log"] --> core["PMS core<br/>pricing · folios · night audit"]
   core --> pack["Country pack<br/>tax · invoices · integrations"]
   core --> db[("Frappe v16<br/>MariaDB")]

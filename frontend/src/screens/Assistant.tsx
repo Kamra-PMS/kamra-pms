@@ -25,6 +25,8 @@ import {
 } from "../lib/api"
 import { cn } from "../lib/utils"
 import { Markdown } from "../lib/markdown"
+import AgentCards, { type AgentCard } from "../components/AgentCards"
+import { t as translate, useUILanguage } from "../lib/i18n"
 
 const TOOL_LABEL: Record<string, string> = {
   availability: "Checked availability",
@@ -41,6 +43,17 @@ const TOOL_LABEL: Record<string, string> = {
   front_desk_today: "Checked today's desk",
   waitlist_ready: "Checked waitlist openings",
   promote_waitlist: "Promoted from waitlist",
+  booking_options: "Read booking options",
+  checkout_context: "Read the check-out bill",
+  get_folio: "Opened the folio",
+  record_payment: "Recorded a payment",
+  cancellation_preview: "Priced the cancellation",
+  cancel_booking: "Cancelled a booking",
+  waive_security_deposit: "Waived the deposit",
+  collect_security_deposit: "Took the deposit",
+  security_deposit_status: "Read the deposit",
+  raise_ticket: "Raised a ticket",
+  hk_queue: "Read housekeeping",
 }
 const toolLabel = (t: string) =>
   TOOL_LABEL[t] ?? t.replace(/_/g, " ")
@@ -52,11 +65,19 @@ const SUGGESTIONS = [
   "Which waitlisted guests can I now give a room?",
 ]
 
+// one tap, sent as typed: the desk's most common asks
+const SHORTCUTS: { label: string; prompt: string }[] = [
+  { label: "Today's arrivals", prompt: "Who is arriving today, and are their rooms ready?" },
+  { label: "Departures and balances", prompt: "Who is leaving today and what does each still owe?" },
+  { label: "In-house guests", prompt: "List the guests in house now with their rooms." },
+  { label: "Quote a stay", prompt: "Quote a stay for 2 adults: " },
+  { label: "Night audit check", prompt: "Run the night audit precheck and tell me what blocks it." },
+]
+
 function ThinkingDots() {
+  useUILanguage()
   return (
-    <span className="inline-flex items-center gap-1.5 text-sm text-zinc-500">
-      Thinking
-      <span className="inline-flex gap-0.5">
+    <span className="inline-flex items-center gap-1.5 text-sm text-zinc-500">{translate("Thinking")}<span className="inline-flex gap-0.5">
         <span className="size-1.5 animate-bounce rounded-full bg-zinc-400 [animation-delay:0ms]" />
         <span className="size-1.5 animate-bounce rounded-full bg-zinc-400 [animation-delay:150ms]" />
         <span className="size-1.5 animate-bounce rounded-full bg-zinc-400 [animation-delay:300ms]" />
@@ -72,17 +93,14 @@ const SETUP_STEPS = [
 ]
 
 function AiSetupNotice() {
+  useUILanguage()
   return (
     <div className="mx-auto max-w-md text-center">
       <span className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-brand-50 ring-1 ring-brand-100">
         <KeyRound className="size-5 text-brand-600" aria-hidden />
       </span>
-      <h2 className="mt-4 text-lg font-semibold tracking-tight text-zinc-900">
-        Add an AI key to start
-      </h2>
-      <p className="mt-1 text-sm text-zinc-500">
-        Kamra Agent runs on your own AI account. It takes about two minutes.
-      </p>
+      <h2 className="mt-4 text-lg font-semibold tracking-tight text-zinc-900">{translate("Add an AI key to start")}</h2>
+      <p className="mt-1 text-sm text-zinc-500">{translate("Kamra Agent runs on your own AI account. It takes about two minutes.")}</p>
       <ol className="mt-5 space-y-2.5 text-left">
         {SETUP_STEPS.map((step, i) => (
           <li
@@ -92,26 +110,22 @@ function AiSetupNotice() {
             <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-brand-600 text-[11px] font-semibold text-white">
               {i + 1}
             </span>
-            {step}
+            {translate(step)}
           </li>
         ))}
       </ol>
       <Link
         to="/settings/ai"
         className="mt-5 inline-flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
-      >
-        Open AI settings
-        <ArrowRight className="size-4" aria-hidden />
+      >{translate("Open AI settings")}<ArrowRight className="size-4" aria-hidden />
       </Link>
-      <p className="mt-4 text-xs text-zinc-400">
-        The key stays on your server, stored masked. Usage is billed to your
-        own provider account.
-      </p>
+      <p className="mt-4 text-xs text-zinc-400">{translate("The key stays on your server, stored masked. Usage is billed to your own provider account.")}</p>
     </div>
   )
 }
 
 export default function Assistant() {
+  useUILanguage()
   const [convos, setConvos] = useState<ConversationSummary[]>([])
   const [activeId, setActiveId] = useState<string | null>(null)
   const [msgs, setMsgs] = useState<ChatMsg[]>([])
@@ -156,7 +170,7 @@ export default function Assistant() {
       setActiveId(c.name)
       setMsgs(c.messages)
     } catch {
-      setError("Couldn't open that conversation.")
+      setError(translate("Couldn't open that conversation."))
     }
   }
 
@@ -189,6 +203,7 @@ export default function Assistant() {
 
     let content = ""
     const actions: { tool: string; ok: boolean }[] = []
+    const cards: AgentCard[] = []
     try {
       let convId = activeId
       if (!convId) {
@@ -240,6 +255,9 @@ export default function Assistant() {
           } else if (event === "action") {
             actions.push({ tool: d.tool, ok: d.ok })
             patch((m) => ({ ...m, actions: [...actions] }))
+          } else if (event === "card") {
+            cards.push(d as AgentCard)
+            patch((m) => ({ ...m, cards: [...cards] }))
           } else if (event === "error") {
             setError(d.message)
           }
@@ -248,7 +266,7 @@ export default function Assistant() {
       // persist the completed turn
       const finalMsgs: ChatMsg[] = [
         ...history,
-        { role: "assistant", content, actions },
+        { role: "assistant", content, actions, cards },
       ]
       await saveConversation(
         convId,
@@ -257,7 +275,7 @@ export default function Assistant() {
       )
       if (isFirst) refreshList()
     } catch {
-      setError("The agent couldn't finish - check the AI key in Settings.")
+      setError(translate("The agent couldn't finish - check the AI key in Settings."))
       if (!content) setMsgs((ms) => ms.filter((_, i) => i !== aIdx))
     } finally {
       setBusy(false)
@@ -275,16 +293,13 @@ export default function Assistant() {
             disabled={busy}
             className="flex w-full items-center justify-center gap-2 rounded-lg border border-zinc-200 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50"
           >
-            <Plus className="size-4" /> New chat
-          </button>
+            <Plus className="size-4" />{translate(" New chat")}</button>
         </div>
         <div className="flex-1 space-y-0.5 overflow-y-auto p-2">
           {convos.length === 0 && (
             <div className="flex flex-col items-center gap-2 px-3 py-10 text-center">
               <MessageSquare className="size-5 text-zinc-300" aria-hidden />
-              <p className="text-xs text-zinc-400">
-                Your chats will show up here.
-              </p>
+              <p className="text-xs text-zinc-400">{translate("Your chats will show up here.")}</p>
             </div>
           )}
           {convos.map((c) => (
@@ -298,10 +313,10 @@ export default function Assistant() {
                   : "text-zinc-600 hover:bg-zinc-50",
               )}
             >
-              <span className="flex-1 truncate">{c.title || "Untitled"}</span>
+              <span className="flex-1 truncate">{c.title || translate("Untitled")}</span>
               <button
                 onClick={(e) => removeConvo(c.name, e)}
-                aria-label="Delete conversation"
+                aria-label={translate("Delete conversation")}
                 className="opacity-0 group-hover:opacity-100"
               >
                 <Trash2 className="size-3.5 text-zinc-400 hover:text-rose-500" />
@@ -322,9 +337,9 @@ export default function Assistant() {
             aria-hidden
           />
           <span className="truncate">
-            {aiEnabled === false ? "Not set up" : "Acting as you"} ·{" "}
+            {aiEnabled === false ? translate("Not set up") : translate("Acting as you")} ·{" "}
             <span className="font-medium text-zinc-700">
-              {getCurrentProperty()?.split("-")[0] ?? "your hotel"}
+              {getCurrentProperty()?.split("-")[0] ?? translate("your hotel")}
             </span>
           </span>
         </div>
@@ -338,30 +353,24 @@ export default function Assistant() {
           {msgs.length === 0 && aiEnabled !== false && (
             <div className="mx-auto max-w-xl space-y-3 py-8 text-center">
               <Sparkles className="mx-auto size-8 text-brand-500" />
-              <h2 className="text-lg font-semibold">
-                Your AI, acting as you
-              </h2>
-              <p className="text-sm text-zinc-500">
-                It can look things up and act - quote and book stays, check
-                guests in and out, post charges and payments, work the waitlist,
-                and read the day's numbers.
-              </p>
+              <h2 className="text-lg font-semibold">{translate("Your AI, acting as you")}</h2>
+              <p className="text-sm text-zinc-500">{translate("It can look things up and act - quote and book stays, check guests in and out, post charges and payments, work the waitlist, and read the day's numbers.")}</p>
               <div className="grid gap-2 pt-2 sm:grid-cols-2">
                 {SUGGESTIONS.map((s) => (
                   <button
                     key={s}
-                    onClick={() => send(s)}
+                    onClick={() => send(translate(s))}
                     className="rounded-lg border border-zinc-200 px-3 py-2 text-left text-sm text-zinc-600 hover:border-brand-400 hover:bg-zinc-50"
                   >
-                    {s}
+                    {translate(s)}
                   </button>
                 ))}
               </div>
             </div>
           )}
           {msgs.map((m, i) => (
+            <div key={i} className="space-y-2">
             <div
-              key={i}
               className={cn(
                 "flex items-end gap-2",
                 m.role === "user" ? "justify-end" : "justify-start",
@@ -395,7 +404,7 @@ export default function Assistant() {
                             )}
                           >
                             <Wrench className="size-3" />
-                            {toolLabel(a.tool)}
+                            {translate(toolLabel(a.tool))}
                           </span>
                         ))}
                       </div>
@@ -411,17 +420,40 @@ export default function Assistant() {
                 )}
               </div>
             </div>
+            {m.role === "assistant" && m.cards && m.cards.length > 0 && (
+              <div className="ms-9 max-w-[75%]">
+                <AgentCards cards={m.cards} />
+              </div>
+            )}
+            </div>
           ))}
           {error && (
             <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-600">
-              {error}
+              {translate(error)}
             </p>
           )}
           <div ref={endRef} />
         </div>
 
+        {aiEnabled !== false && (
+          <div className="flex gap-1.5 overflow-x-auto border-t border-zinc-100 px-3 pt-2.5">
+            {SHORTCUTS.map((sc) => (
+              <button
+                key={sc.label}
+                type="button"
+                disabled={busy}
+                onClick={() =>
+                  sc.prompt.endsWith(": ") ? setInput(translate(sc.prompt)) : send(translate(sc.prompt))
+                }
+                className="shrink-0 rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs font-medium text-zinc-600 hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700 disabled:opacity-50"
+              >
+                {translate(sc.label)}
+              </button>
+            ))}
+          </div>
+        )}
         <form
-          className="border-t border-zinc-100 p-3"
+          className="p-3"
           onSubmit={(e) => {
             e.preventDefault()
             send(input)
@@ -431,9 +463,9 @@ export default function Assistant() {
             <input
               className="flex-1 bg-transparent py-2 text-sm outline-none placeholder:text-zinc-400 disabled:cursor-not-allowed"
               placeholder={
-                aiEnabled === false
-                  ? "Add an AI key in Settings to start chatting"
-                  : "Ask anything about the hotel…"
+                (aiEnabled === false
+                  ? translate("Add an AI key in Settings to start chatting")
+                  : translate("Ask anything about the hotel…"))
               }
               value={input}
               onChange={(e) => setInput(e.target.value)}
@@ -441,7 +473,7 @@ export default function Assistant() {
             />
             <button
               type="submit"
-              aria-label="Send"
+              aria-label={translate("Send")}
               disabled={busy || aiEnabled === false || !input.trim()}
               className="flex size-9 items-center justify-center rounded-full bg-brand-600 text-white transition hover:bg-brand-700 disabled:opacity-40"
             >

@@ -10,7 +10,8 @@ import { serverError } from "../lib/resource"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { cn } from "../lib/utils"
-import { useT } from "../lib/i18n"
+import { useT, t as translate } from "../lib/i18n"
+
 
 // Ready: passed its inspection when the turnover profile requires one
 type HkStatus = "Clean" | "Dirty" | "Inspected" | "Ready" | "Out of Order"
@@ -126,7 +127,7 @@ export default function HousekeepingBoard() {
   if (error && !rooms)
     return (
       <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-        {error}
+        {translate(error)}
       </div>
     )
   if (!rooms) return <p className="py-10 text-center text-zinc-400">{t("Loading…")}</p>
@@ -165,7 +166,7 @@ export default function HousekeepingBoard() {
 
       {error && (
         <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-2 text-sm text-rose-700">
-          {error}
+          {translate(error)}
         </div>
       )}
 

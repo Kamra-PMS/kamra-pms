@@ -144,6 +144,38 @@ in `sites/<site>/private/backups`) and **stops if the backup fails**. Then:
 
 Either way it then runs `bench migrate` on every site.
 
+### Going back (downgrade)
+
+There is **no Downgrade button** in the product UI (System Health only
+explains how to upgrade; it never changes the site for you).
+
+To leave a newer tag after trying it, pin the release you want and run
+the same update command:
+
+```bash
+# Pull install - example: leave a trial of a newer release
+sudo KAMRA_TAG=v2.6.16 /opt/kamra/install.sh update
+
+# Build install - pin the previous release branch/tag
+sudo KAMRA_BRANCH=v2.6.16 /opt/kamra/install.sh update
+```
+
+Use the exact `vX.Y.Z` you were on before (see
+[GitHub Releases](https://github.com/Kamra-PMS/kamra-pms/releases)). Do
+**not** use `:nightly` on a live hotel - keep production on `:stable` or a
+pinned release.
+
+**Caveats**
+
+- Every update already backs up first (`sites/<site>/private/backups`).
+  Keep that archive off-site before you experiment.
+- `bench migrate` mostly moves **forward**. An older image may not like
+  schema or data written by a newer one. If the site misbehaves after
+  pinning an older tag, restore the pre-upgrade backup rather than
+  forcing the old code onto a newer database.
+- Kamra-operated **nightly.kamrapms.com** is a shared develop channel -
+  hotels do not upgrade or downgrade it themselves.
+
 Next: [production checklist](/self-hosting/#after-install-production-checklist) ·
 [email setup](/self-hosting/email) · [AI assistant](/ai-and-mcp) ·
 [ERPNext & HR (optional)](/self-hosting/erpnext-hr)

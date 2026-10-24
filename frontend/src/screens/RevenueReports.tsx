@@ -6,6 +6,8 @@ import { serverError } from "../lib/resource"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { cur, moneyLocale } from "../lib/money"
+import { getLang } from "../lib/dir"
+import { t as translate, useUILanguage } from "../lib/i18n"
 
 const inr = (n: number) =>
   Number(n || 0).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
@@ -57,6 +59,7 @@ function attainTone(a: number | null) {
 // ---------------------------------------------------------------------------
 
 function BudgetVsActual() {
+  useUILanguage()
   const property = getCurrentProperty()
   const [period, setPeriod] = useState(() =>
     new Date().toISOString().slice(0, 7),
@@ -109,12 +112,8 @@ function BudgetVsActual() {
       <CardHeader>
         <div>
           <CardTitle className="flex items-center gap-2">
-            <Target className="size-4 text-brand-600" aria-hidden />
-            Budget vs Actual
-          </CardTitle>
-          <p className="mt-0.5 text-xs text-zinc-400">
-            Month-to-date performance against your targets.
-          </p>
+            <Target className="size-4 text-brand-600" aria-hidden />{translate("Budget vs Actual")}</CardTitle>
+          <p className="mt-0.5 text-xs text-zinc-400">{translate("Month-to-date performance against your targets.")}</p>
         </div>
         <div className="flex items-center gap-1.5">
           <Button variant="outline" onClick={() => setPeriod((p) => shiftMonth(p, -1))}>
@@ -125,31 +124,31 @@ function BudgetVsActual() {
             <ChevronRight className="size-4" />
           </Button>
           <Button variant="outline" onClick={() => setEdit((e) => !e)}>
-            {edit ? "Cancel" : data?.has_budget ? "Edit targets" : "Set targets"}
+            {edit ? translate("Cancel") : data?.has_budget ? translate("Edit targets") : translate("Set targets")}
           </Button>
         </div>
       </CardHeader>
       <CardContent>
         {error && (
           <div className="mb-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-            {error}
+            {translate(error)}
           </div>
         )}
         {data && (
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-zinc-200 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">
-                <th className="py-2 pr-3">Metric</th>
-                <th className="py-2 pr-3 text-right">Actual (MTD)</th>
-                <th className="py-2 pr-3 text-right">Target</th>
-                <th className="py-2 pr-3 text-right">Variance</th>
-                <th className="py-2 text-right">Attainment</th>
+                <th className="py-2 pr-3">{translate("Metric")}</th>
+                <th className="py-2 pr-3 text-right">{translate("Actual (MTD)")}</th>
+                <th className="py-2 pr-3 text-right">{translate("Target")}</th>
+                <th className="py-2 pr-3 text-right">{translate("Variance")}</th>
+                <th className="py-2 text-right">{translate("Attainment")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100">
               {data.rows.map((r) => (
                 <tr key={r.key}>
-                  <td className="py-2.5 pr-3 font-medium">{r.metric}</td>
+                  <td className="py-2.5 pr-3 font-medium">{translate(r.metric)}</td>
                   <td className="py-2.5 pr-3 text-right tabular-nums">
                     {fmt(r.key, r.actual)}
                   </td>
@@ -200,37 +199,29 @@ function BudgetVsActual() {
         )}
         {data && (
           <div className="mt-3 space-y-1 text-xs text-zinc-500">
-            <p>
-              Actual counts room nights posted to folios - End of Day posts
-              each night, so tonight counts after tonight's audit.{" "}
-              {data.posted_nights ?? 0} room night
-              {(data.posted_nights ?? 0) === 1 ? "" : "s"} posted
-              {data.posted_through ? ` through ${data.posted_through}` : ""};
-              occupancy and RevPAR are over the {data.days_elapsed} of{" "}
-              {data.total_days} days elapsed.
-            </p>
+            <p>{translate("Actual counts room nights posted to folios - End of Day posts each night, so tonight counts after tonight's audit.")}{" "}
+              {(getLang() !== "en") ? translate("Posted room nights: {n}. Through {date}. Occupancy and RevPAR use {elapsed} of {total} elapsed days.", {
+                n: String(data.posted_nights ?? 0), date: String(data.posted_through ?? "-"), elapsed: String(data.days_elapsed), total: String(data.total_days),
+              }) : <>
+              {data.posted_nights ?? 0}{translate(" room night")}{(data.posted_nights ?? 0) === 1 ? "" : translate("s")}{translate(" posted")}{data.posted_through ? translate(" through {v0}", { v0: String(data.posted_through) }) : ""}{translate("; occupancy and RevPAR are over the ")}{data.days_elapsed}{translate(" of")}{" "}
+              {data.total_days}{translate(" days elapsed.")}</>}</p>
             {(data.unposted_nights ?? 0) > 0 && (
               <p className="text-amber-700">
-                {data.unposted_nights} sold room night
-                {data.unposted_nights === 1 ? " isn't" : "s aren't"} posted
-                yet ({data.on_books_nights} on the books this month so far).
-                They count once End of Day runs for those dates.
-              </p>
+                {(getLang() !== "en") ? translate("Unposted sold room nights: {pending} ({total} on the books this month). End of Day includes them once those dates close.", {
+                  pending: String(data.unposted_nights), total: String(data.on_books_nights),
+                }) : <>{data.unposted_nights}{translate(" sold room night")}{data.unposted_nights === 1 ? translate(" isn't") : translate("s aren't")}{translate(" posted yet (")}{data.on_books_nights}{translate(" on the books this month so far). They count once End of Day runs for those dates.")}</>}</p>
             )}
           </div>
         )}
         {edit && (
           <div className="mt-3 flex justify-end">
             <Button disabled={busy} onClick={save}>
-              {busy ? "Saving..." : "Save targets"}
+              {busy ? translate("Saving...") : translate("Save targets")}
             </Button>
           </div>
         )}
         {data && !data.has_budget && !edit && (
-          <p className="mt-3 text-xs text-zinc-400">
-            No targets set for {data.period} yet - "Set targets" to track
-            attainment.
-          </p>
+          <p className="mt-3 text-xs text-zinc-400">{translate("No targets set for ")}{data.period}{translate(" yet - \"Set targets\" to track attainment.")}</p>
         )}
       </CardContent>
     </Card>
@@ -246,6 +237,7 @@ const BY_OPTIONS: { key: string; label: string }[] = [
 ]
 
 function Contribution() {
+  useUILanguage()
   const property = getCurrentProperty()
   const today = new Date().toISOString().slice(0, 10)
   const monthAgo = new Date(Date.now() - 30 * 864e5).toISOString().slice(0, 10)
@@ -268,10 +260,8 @@ function Contribution() {
     <Card>
       <CardHeader>
         <div>
-          <CardTitle>Contribution analysis</CardTitle>
-          <p className="mt-0.5 text-xs text-zinc-400">
-            Who brings the business - revenue and share by channel.
-          </p>
+          <CardTitle>{translate("Contribution analysis")}</CardTitle>
+          <p className="mt-0.5 text-xs text-zinc-400">{translate("Who brings the business - revenue and share by channel.")}</p>
         </div>
         <div className="flex flex-wrap items-center gap-1.5">
           <input
@@ -279,25 +269,25 @@ function Contribution() {
             className="rounded-lg border border-zinc-300 px-2 py-1.5 text-sm"
             value={from}
             onChange={(e) => setFrom(e.target.value)}
-            aria-label="From"
+            aria-label={translate("From")}
           />
-          <span className="text-xs text-zinc-400">to</span>
+          <span className="text-xs text-zinc-400">{translate("to")}</span>
           <input
             type="date"
             className="rounded-lg border border-zinc-300 px-2 py-1.5 text-sm"
             value={to}
             onChange={(e) => setTo(e.target.value)}
-            aria-label="To"
+            aria-label={translate("To")}
           />
           <select
             className="rounded-lg border border-zinc-300 px-2.5 py-1.5 text-sm"
             value={by}
             onChange={(e) => setBy(e.target.value)}
-            aria-label="Group by"
+            aria-label={translate("Group by")}
           >
             {BY_OPTIONS.map((o) => (
               <option key={o.key} value={o.key}>
-                {o.label}
+                {translate(o.label)}
               </option>
             ))}
           </select>
@@ -305,25 +295,23 @@ function Contribution() {
       </CardHeader>
       <CardContent>
         {data && data.rows.length === 0 && (
-          <p className="py-6 text-center text-sm text-zinc-400">
-            No bookings in this window.
-          </p>
+          <p className="py-6 text-center text-sm text-zinc-400">{translate("No bookings in this window.")}</p>
         )}
         {data && data.rows.length > 0 && (
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-zinc-200 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">
-                <th className="py-2 pr-3">{BY_OPTIONS.find((o) => o.key === by)?.label.replace("By ", "")}</th>
-                <th className="py-2 pr-3 text-right">Bookings</th>
-                <th className="py-2 pr-3 text-right">Room nights</th>
-                <th className="py-2 pr-3 text-right">Revenue {cur()}</th>
-                <th className="py-2 text-right">Share</th>
+                <th className="py-2 pr-3">{translate(BY_OPTIONS.find((o) => o.key === by)?.label.replace("By ", ""))}</th>
+                <th className="py-2 pr-3 text-right">{translate("Bookings")}</th>
+                <th className="py-2 pr-3 text-right">{translate("Room nights")}</th>
+                <th className="py-2 pr-3 text-right">{translate("Revenue ")}{cur()}</th>
+                <th className="py-2 text-right">{translate("Share")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100">
               {data.rows.map((r) => (
                 <tr key={r.label}>
-                  <td className="py-2.5 pr-3 font-medium">{r.label}</td>
+                  <td className="py-2.5 pr-3 font-medium">{by === "source" || r.label === "Direct" ? translate(r.label) : r.label}</td>
                   <td className="py-2.5 pr-3 text-right tabular-nums">{r.bookings}</td>
                   <td className="py-2.5 pr-3 text-right tabular-nums">{r.room_nights}</td>
                   <td className="py-2.5 pr-3 text-right tabular-nums">{inr(r.revenue)}</td>
@@ -343,7 +331,7 @@ function Contribution() {
             </tbody>
             <tfoot>
               <tr className="border-t border-zinc-200 font-semibold">
-                <td className="py-2 pr-3">Total</td>
+                <td className="py-2 pr-3">{translate("Total")}</td>
                 <td />
                 <td />
                 <td className="py-2 pr-3 text-right tabular-nums">{inr(data.total)}</td>
@@ -358,15 +346,12 @@ function Contribution() {
 }
 
 export default function RevenueReports() {
+  useUILanguage()
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="text-xl font-semibold tracking-tight">
-          Revenue Reports
-        </h1>
-        <p className="mt-0.5 text-sm text-zinc-500">
-          Targets vs performance, and where the business comes from.
-        </p>
+        <h1 className="text-xl font-semibold tracking-tight">{translate("Revenue Reports")}</h1>
+        <p className="mt-0.5 text-sm text-zinc-500">{translate("Targets vs performance, and where the business comes from.")}</p>
       </header>
       <BudgetVsActual />
       <Contribution />
