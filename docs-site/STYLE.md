@@ -86,3 +86,18 @@ to [MCP tools](/mcp-tools) and the [API reference](/api-reference).
 - GIFs: 5-15 s, 960 px wide, 8 fps, under ~2 MB. One flow per GIF.
 - Alt text describes what the image shows, in a sentence.
 - No real guest data, no API keys, no passwords in any image.
+
+## Translations
+
+The staff guides (the "Run your hotel" pages, the introduction pages and
+the FAQ) also live in `es/` (Spanish) and `ar/` (Arabic, right to left).
+The list is `TRANSLATED` in `.vitepress/config.mts`; every other page is
+English only and the translated sidebars link to it in English.
+
+- When you change a translated page, change its `es/` and `ar/` copies in
+  the same PR, or open an issue saying which section is behind.
+- Bold UI labels use the app's own wording: look the English label up in
+  `frontend/src/i18n/locales/es.json` / `ar.json` and copy the value.
+- Links between translated pages stay inside the language (`/es/billing`);
+  links to English-only pages stay as they are.
+- The no-dash rule applies in every language.
