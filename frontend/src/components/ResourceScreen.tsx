@@ -24,6 +24,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
 import ImageField from "./ImageField"
 import { moneyLocale } from "../lib/money"
 import { useT, t as translate, useUILanguage } from "../lib/i18n"
+import { useAuth } from "../lib/auth"
+
+const BACKDATE_ROLES = ["Finance", "Hotel Admin", "System Manager", "Administrator"]
+
+function isoToday() {
+  const d = new Date()
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, "0")
+  const day = String(d.getDate()).padStart(2, "0")
+  return `${y}-${m}-${day}`
+}
 
 
 /** Keys from kamra.settings.menu_masters - property-editable master lists. */
@@ -57,6 +68,8 @@ export interface FieldSpec {
   required?: boolean
   hint?: string // for image: recommended size/format
   dependsOn?: (draft: Record<string, unknown>) => boolean
+  /** Block dates before today unless the user may backdate (Finance / Hotel Admin). */
+  notPast?: boolean
 }
 
 export interface ScreenConfig {
@@ -168,9 +181,10 @@ function FieldInput(props: {
   masterOptions: Partial<Record<MenuMasterKey, string[]>>
   /** Translate display labels; API values stay English. */
   t: (s: string) => string
+  canBackdate?: boolean
 }) {
   useUILanguage()
-  const { spec, value, onChange, t } = props
+  const { spec, value, onChange, t, canBackdate } = props
   const masterOpts =
     (spec.optionsFrom && props.masterOptions[spec.optionsFrom]) ||
     spec.options ||
@@ -230,6 +244,7 @@ function FieldInput(props: {
           type="date"
           className={inputCls}
           value={String(value ?? "")}
+          min={spec.notPast && !canBackdate ? isoToday() : undefined}
           onChange={(e) => onChange(e.target.value)}
         />
       )
@@ -326,6 +341,8 @@ export function ResourceScreen({
   headerAction?: ReactNode
 }) {
   const { t, lang } = useT()
+  const { roles } = useAuth()
+  const canBackdate = roles.some((r) => BACKDATE_ROLES.includes(r))
   const [rows, setRows] = useState<Row[]>([])
   const [editing, setEditing] = useState<Row | "new" | null>(null)
   const [draft, setDraft] = useState<Record<string, unknown>>({})
@@ -480,7 +497,12 @@ export function ResourceScreen({
     setEditing(row)
     setError(null)
     if (row === "new") {
-      setDraft({})
+      // ponytail: transaction dates default to today when notPast is set
+      const defaults: Record<string, unknown> = {}
+      for (const spec of config.form) {
+        if (spec.type === "date" && spec.notPast) defaults[spec.field] = isoToday()
+      }
+      setDraft(defaults)
       return
     }
     // List rows only carry column fields - fetch the full document so
@@ -825,6 +847,7 @@ export function ResourceScreen({
                       linkOptions={linkOptions}
                       masterOptions={masterOptions}
                       t={t}
+                      canBackdate={canBackdate}
                     />
                     {spec.hint && spec.type !== "image" && (
                       <span className="mt-1 block text-xs leading-relaxed text-zinc-400">

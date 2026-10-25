@@ -1990,7 +1990,7 @@ Express {cur} (opt),Express {cur} (opt),مستعجل {cur} (اختياري),Expr
 Express {v0} (opt),Express {v0} (opt),سريع {v0} (اختياري),Exprés {v0} (opcional),screens/settings/cards.tsx,v0,translated
 Express price,Express price,السعر السريع,Tarifa exprés,,,translated
 Extend a stay,Extend a stay,تمديد إقامة,Extender una estancia,,,translated
-Extend stay,Extend stay,تمديد الإقامة,Extender estancia,screens/EndOfDayWizard.tsx,,translated
+Extend stay,Extend stay,تمديد الإقامة,Extender estancia,screens/EndOfDayWizard.tsx; screens/Today.tsx,,translated
 External POS,External POS,نقاط بيع خارجية,Punto de venta externo,,,translated
 Extra,Extra,إضافية,Extra,,,translated
 Extra adult {v0},Extra adult {v0},بالغ إضافي {v0},Adulto adicional {v0},,v0,translated
