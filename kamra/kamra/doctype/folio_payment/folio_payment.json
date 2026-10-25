@@ -55,13 +55,13 @@
    "label": "Reference"
   },
   {
-   "default": "INR",
+   "description": "Property currency for a normal payment; FX rows set this to the foreign currency",
    "fieldname": "currency",
    "fieldtype": "Data",
    "label": "Currency"
   },
   {
-   "description": "Amount in the foreign currency (amount stays the INR ledger value)",
+   "description": "Amount in the foreign currency (amount stays the property-currency ledger value)",
    "fieldname": "fx_amount",
    "fieldtype": "Float",
    "label": "FX Amount"

@@ -180,11 +180,18 @@ def capacity_overflow(cap, adults: int, children: int,
 	Guests above capacity arrive either as extra guests on top of a full room
 	or, from older bookings and API callers, counted inside adults or
 	children - never both, so the two are not added.
+
+	`max_total_occupants` (when set) caps adults + children together, so a
+	room that sleeps 6 adults or 6 children still refuses 6 + 1 (#342).
 	"""
 	cap_a = int(cap.get("adults_capacity") or 0)
 	cap_c = int(cap.get("children_capacity") or 0)
 	overflow = ((max(0, int(adults or 0) - cap_a) if cap_a else 0)
 	            + (max(0, int(children or 0) - cap_c) if cap_c else 0))
+	max_total = int(cap.get("max_total_occupants") or 0)
+	if max_total:
+		total = int(adults or 0) + int(children or 0)
+		overflow = max(overflow, max(0, total - max_total))
 	return max(int(extra_guests or 0), overflow), int(cap.get("max_extra_beds") or 0)
 
 

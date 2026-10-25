@@ -32,3 +32,4 @@ kamra.patches.v42.backfill_city_ledger_due_dates
 kamra.patches.v43.seed_petty_cash_floats
 kamra.patches.v43.backfill_checkin_record
 kamra.patches.v44.grant_mcp_manage_to_connected_users
+kamra.patches.v45.fix_folio_payment_currency
