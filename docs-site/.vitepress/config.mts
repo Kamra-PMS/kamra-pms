@@ -122,6 +122,7 @@ export default defineConfig({
         items: [
           { text: "All integrations", link: "/integrations" },
           { text: "Country setup & e-invoicing", link: "/country-setup" },
+          { text: "Write a country pack", link: "/write-a-country-pack" },
           { text: "WhatsApp on your number", link: "/whatsapp" },
           { text: "Channel manager (OTA sync)", link: "/channel-manager" },
           { text: "Connect your AI (MCP)", link: "/ai-and-mcp" },
