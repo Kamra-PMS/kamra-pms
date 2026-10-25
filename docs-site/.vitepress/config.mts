@@ -209,7 +209,19 @@ export default defineConfig({
     siteTitle: false,
     nav: navFor("en"),
     sidebar: sidebarFor("en"),
-    search: { provider: "local" },
+    search: {
+      provider: "local",
+      options: {
+        locales: {
+          es: { translations: { button: { buttonText: "Buscar", buttonAriaLabel: "Buscar" },
+            modal: { noResultsText: "Sin resultados para", resetButtonTitle: "Borrar",
+              footer: { selectText: "elegir", navigateText: "moverse", closeText: "cerrar" } } } },
+          ar: { translations: { button: { buttonText: "بحث", buttonAriaLabel: "بحث" },
+            modal: { noResultsText: "لا نتائج لـ", resetButtonTitle: "مسح",
+              footer: { selectText: "اختيار", navigateText: "تنقّل", closeText: "إغلاق" } } } },
+        },
+      },
+    },
     outline: { level: [2, 3], label: "On this page" },
     editLink: {
       pattern: "https://github.com/Kamra-PMS/kamra-pms/edit/develop/docs-site/:path",

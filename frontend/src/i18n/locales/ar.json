@@ -3257,7 +3257,7 @@
   "Country selects the tax and invoicing pack.": "تحدد الدولة حزمة الضرائب والفوترة.",
   "Course": "الطبق",
   "Courses": "الأطباق",
-  "Covers": "الأغطية",
+  "Covers": "عدد الضيوف",
   "Covers actually served": "الأغطية المقدّمة فعلياً",
   "Create a reservation (guest deduped by phone)": "إنشاء حجز (يُعرَّف الضيف برقم الهاتف لتجنب التكرار)",
   "Create an API key with your AI provider (OpenAI works out of the box).": "أنشئ مفتاح API لدى مزوّد الذكاء الاصطناعي (OpenAI يعمل مباشرة).",
@@ -3934,7 +3934,7 @@
   "Logout": "تسجيل الخروج",
   "Longitude": "خط الطول",
   "Looked up reservations": "استعلم عن الحجوزات",
-  "Lost": "مفقود",
+  "Lost": "خاسرة",
   "Lost And Found Item": "غرض مفقود أو معثور عليه",
   "lost item": "غرض مفقود",
   "Lot": "دفعة",
@@ -5422,5 +5422,6 @@
   "Share %": "الحصة %",
   "The report is attached.": "التقرير مرفق.",
   "Voids & allowances": "الإلغاءات والخصومات",
-  "{n} rows": "{n} صف"
+  "{n} rows": "{n} صف",
+  "No charge": "بدون رسوم"
 }

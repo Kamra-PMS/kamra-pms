@@ -1563,7 +1563,7 @@ Country selects the tax and invoicing pack.,Country selects the tax and invoicin
 Course,Course,الطبق,Tiempo del menú,screens/BanquetCatalogue.tsx,,translated
 Courses,Courses,الأطباق,Tiempos del menú,screens/BanquetCatalogue.tsx,,translated
 Cover count,Cover count,عدد الأغطية,Número de comensales,,,translated
-Covers,Covers,الأغطية,Comensales,screens/PosDashboard.tsx,,translated
+Covers,Covers,عدد الضيوف,Comensales,screens/PosDashboard.tsx,,translated
 Covers actually served,Covers actually served,الأغطية المقدّمة فعلياً,Comensales atendidos,screens/BanquetFunction.tsx; screens/banquet/Economics.tsx,,translated
 Create a reservation (guest deduped by phone),Create a reservation (guest deduped by phone),إنشاء حجز (يُعرَّف الضيف برقم الهاتف لتجنب التكرار),Crear reserva (identifica al huésped por teléfono para evitar duplicados),,,translated
 Create an API key with your AI provider (OpenAI works out of the box).,Create an API key with your AI provider (OpenAI works out of the box).,أنشئ مفتاح API لدى مزوّد الذكاء الاصطناعي (OpenAI يعمل مباشرة).,Cree una clave de API con su proveedor de IA (OpenAI funciona directamente).,,,translated
@@ -2130,7 +2130,7 @@ found item,found item,غرض معثور عليه,objeto encontrado,,,translated
 Found on,Found on,تاريخ العثور,Encontrado el,,,translated
 Frappe Desk,Frappe Desk,مكتب فراب,Escritorio de Frappe,,,translated
 free,free,مجاني,sin cargo,screens/banquet/Economics.tsx,,translated
-Free,Free,متاحة,Disponible,components/RoomDrawer.tsx; screens/BanquetFunction.tsx,,translated
+Free,Free,متاحة,Disponible,components/RoomDrawer.tsx,,translated
 Free cancellation until,Free cancellation until,إلغاء مجاني حتى,Cancelación gratuita hasta,,,translated
 Free cancellation until {date}; after that {fee} is charged.,Free cancellation until {date}; after that {fee} is charged.,إلغاء مجاني حتى {date}، وبعدها تُفرض {fee}.,Cancelación gratuita hasta {date}; después de eso se carga {fee}.,components/BookingDialog.tsx,date fee,translated
 Free cancellation up to {n} day before arrival,Free cancellation up to {n} day before arrival,إلغاء مجاني حتى {n} يوم قبل الوصول,Cancelación gratuita hasta {n} día antes de la llegada,screens/PublicBooking.tsx,n,translated
@@ -2775,7 +2775,7 @@ Logo,Logo,الشعار,Logotipo,screens/BookingEngine.tsx,,translated
 Logout,Logout,تسجيل الخروج,Cierre de sesión,,,translated
 Longitude,Longitude,خط الطول,Longitud,screens/BookingEngine.tsx,,translated
 Looked up reservations,Looked up reservations,استعلم عن الحجوزات,Reservas consultadas,,,translated
-Lost,Lost,مفقود,Perdido,,,translated
+Lost,Lost,خاسرة,Perdido,,,translated
 Lost & Found,Lost & Found,المفقودات,Objetos perdidos y encontrados,,,translated
 Lost and found,Lost and found,المفقودات,Objetos perdidos,,,translated
 Lost And Found Item,Lost And Found Item,غرض مفقود أو معثور عليه,Objeto perdido o encontrado,,,translated
@@ -3042,6 +3042,7 @@ No busy-house rule applies ({p}% full).,No busy-house rule applies ({p}% full).,
 No cancellations.,No cancellations.,لا إلغاءات.,No hay cancelaciones.,screens/AuditPack.tsx; screens/PosDashboard.tsx,,translated
 No cashier sessions on this business date.,No cashier sessions on this business date.,لا جلسات صرافين في تاريخ العمل هذا.,No hay sesiones de caja para esta fecha operativa.,screens/AuditPack.tsx; screens/EndOfDayWizard.tsx,,translated
 No change to the price.,No change to the price.,لا تغيير في السعر.,Sin cambios en el precio.,components/RoomChangeDialog.tsx,,translated
+No charge,No charge,بدون رسوم,Sin cargo,screens/BanquetFunction.tsx,,translated
 No charge-type rules on this company - check the Company folio before collecting.,No charge-type rules on this company - check the Company folio before collecting.,لا قواعد لأنواع الرسوم على هذه الشركة، راجع فاتورة الشركة قبل التحصيل.,No hay reglas de tipo de cargo en esta empresa: consulte el folio de la empresa antes de cobrar.,components/CheckOutDialog.tsx,,translated
 "No checklist tasks yet. Confirming a function creates Sales, Finance, Housekeeping and F&B tasks from property templates.","No checklist tasks yet. Confirming a function creates Sales, Finance, Housekeeping and F&B tasks from property templates.",لا مهام بعد. تأكيد المناسبة ينشئ مهام للمبيعات والمالية والتدبير المنزلي والأطعمة والمشروبات من قوالب العقار.,"Aún no hay tareas. Al confirmar el evento se crean tareas de Ventas, Finanzas, Limpieza y Alimentos y bebidas según las plantillas del alojamiento.",screens/BanquetFunction.tsx,,translated
 No city ledger accounts yet.,No city ledger accounts yet.,لا حسابات دفتر مدينة بعد.,Aún no hay cuentas por cobrar a empresas.,screens/Ledgers.tsx,,translated
@@ -3454,7 +3455,7 @@ Open session,Open session,فتح جلسة,Abrir sesión de caja,screens/CashierT
 "Open Settings → AI assistant, paste the key, pick a model and Test.","Open Settings → AI assistant, paste the key, pick a model and Test.",افتح الإعدادات ← مساعد الذكاء الاصطناعي، والصق المفتاح، واختر نموذجا، ثم اختبر.,"Abra Configuración → Asistente de IA, pegue la clave, seleccione un modelo y pulse Probar.",,,translated
 Open stay,Open stay,فتح الإقامة,Abrir estancia,components/AgentCards.tsx,,translated
 Open stay →,Open stay →,فتح الإقامة ←,Abrir estancia →,screens/WhatsAppChat.tsx,,translated
-Open task,Open task,مهمة مفتوحة,Abrir tarea,screens/Rooms.tsx,,translated
+Open task,Open task,مهمة مفتوحة,Tarea abierta,screens/Rooms.tsx,,translated
 Open tasks,Open tasks,المهام المفتوحة,Tareas abiertas,components/OpenTasksCard.tsx; screens/Dashboard.tsx; screens/Today.tsx,,translated
 Open the card to show or print,Open the card to show or print,افتح البطاقة لعرضها أو طباعتها,Abra la tarjeta para mostrar o imprimir,components/CheckInDialog.tsx,,translated
 Open the enquiry,Open the enquiry,فتح الاستفسار,Abrir la consulta,screens/Banquet.tsx,,translated

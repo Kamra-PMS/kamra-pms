@@ -38,9 +38,9 @@ muestra las pantallas con imágenes y vídeos cortos.
 
 | Necesita… | Guía |
 | --- | --- |
-| Tomar un pedido y enviarlo a la cocina | [Alimentos y bebidas → Tomar un pedido](/es/fnb#tomar-un-pedido-y-enviarlo-a-la-cocina) |
-| Liquidar una cuenta o cargarla a una habitación | [Alimentos y bebidas → Liquidar una cuenta](/es/fnb#liquidar-una-cuenta) |
-| Trabajar con la pantalla de cocina | [Alimentos y bebidas → Pantalla de cocina](/es/fnb#usar-la-pantalla-de-cocina) |
+| Tomar un pedido y enviarlo a la cocina | [Alimentos y bebidas → Tomar un pedido](/es/fnb#tome-un-pedido-y-envielo-a-la-cocina) |
+| Liquidar una cuenta o cargarla a una habitación | [Alimentos y bebidas → Liquidar una cuenta](/es/fnb#liquide-una-cuenta) |
+| Trabajar con la pantalla de cocina | [Alimentos y bebidas → Pantalla de cocina](/es/fnb#use-la-pantalla-de-cocina) |
 | Configurar las impresoras de cocina | [Alimentos y bebidas → Impresoras de cocina](/es/fnb#impresoras-de-cocina) |
 
 ## Ventas y eventos

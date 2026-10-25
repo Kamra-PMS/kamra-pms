@@ -2965,7 +2965,7 @@
   "Open search": "Abrir búsqueda",
   "Open session": "Abrir sesión de caja",
   "Open stay →": "Abrir estancia →",
-  "Open task": "Abrir tarea",
+  "Open task": "Tarea abierta",
   "Open tasks": "Tareas abiertas",
   "Open the card to show or print": "Abra la tarjeta para mostrar o imprimir",
   "Open the enquiry": "Abrir la consulta",
@@ -5423,5 +5423,6 @@
   "Share %": "Participación %",
   "The report is attached.": "El informe va adjunto.",
   "Voids & allowances": "Anulaciones y bonificaciones",
-  "{n} rows": "{n} filas"
+  "{n} rows": "{n} filas",
+  "No charge": "Sin cargo"
 }

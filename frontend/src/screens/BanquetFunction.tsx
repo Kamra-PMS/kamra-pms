@@ -1500,7 +1500,7 @@ function CataloguePicker({
                         className="!px-2 !py-1 !text-xs"
                         onClick={() => onPick(item.name, 0)}
                         title={translate("Goes on the event order and pack list, not the quote")}
-                      >{translate("Free")}</Button>
+                      >{translate("No charge")}</Button>
                     </div>
                   </div>
                 </div>

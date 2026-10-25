@@ -23,7 +23,7 @@ lavandería de huéspedes funciona desde el mismo módulo.
    - Los roles **Recepción** y **Administrador del hotel** también pueden
      usar el Panel de habitaciones y poner cualquier estado.
 2. **Defina los plazos de las tareas** en **Configuración → Limpieza →
-   Plazos de las tareas** (consulte [Configuración](#configuración)).
+   Plazos de las tareas** (consulte [Configuración](#configuracion)).
    Kamra los usa para marcar las limpiezas atrasadas y escalarlas.
 3. **Ponga un número de móvil en el usuario de cada gerente** si quiere
    recibir los avisos de escalado por WhatsApp. Los avisos se envían por
@@ -31,7 +31,7 @@ lavandería de huéspedes funciona desde el mismo módulo.
    ([configuración de WhatsApp](/whatsapp)).
 4. **Complete la hoja de tarifas de lavandería** si ofrece lavandería a
    huéspedes: **Limpieza → Lavandería → Tarifario** (consulte
-   [Configurar el tarifario de lavandería](#configurar-el-tarifario-de-lavandería)).
+   [Configurar el tarifario de lavandería](#configurar-el-tarifario-de-lavanderia)).
 
 ## De dónde vienen las tareas de limpieza
 
@@ -88,7 +88,7 @@ limpió y cuándo, incidencias, las próximas semanas) y sus cifras, abra
 
 **Listo** significa que la habitación pasó su inspección, en los hoteles
 que inspeccionan cada limpieza por salida (consulte
-[Configuración](#configuración)). El personal de limpieza solo ve
+[Configuración](#configuracion)). El personal de limpieza solo ve
 **Marcar como Limpia** y **Marcar como Sucia**. Aprobar una habitación
 (**Inspeccionada** o **Listo**) o ponerla **Fuera de servicio**
 corresponde a un supervisor, a la recepción o a un Administrador del

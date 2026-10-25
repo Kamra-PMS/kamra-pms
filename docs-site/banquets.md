@@ -90,7 +90,7 @@ done, or the one thing still missing. You can open any step at any time.
 1. Open the **Quote** step.
 2. Click **+ Menu** and **Add** a menu package. Its quantity follows the
    guaranteed pax.
-3. Click **+ Service** and **Add** what they're buying. Click **Free**
+3. Click **+ Service** and **Add** what they're buying. Click **No charge**
    instead to give it away: it costs nothing on the quote but still prints
    on the event order and pack list.
 4. Change **Agreed** to the negotiated rate on any line. The **Rack**
