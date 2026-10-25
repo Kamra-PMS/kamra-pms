@@ -2289,5 +2289,10 @@
   "Condition": "الحالة",
   "Found by": "عثر عليه",
   "Returned on": "تاريخ الإرجاع",
-  "Closed from": "أُغلق من"
+  "Closed from": "أُغلق من",
+  "New room's rate": "سعر الغرفة الجديدة",
+  "Keep current price": "الإبقاء على السعر الحالي",
+  "Enter a rate": "إدخال سعر",
+  "Rate per night": "السعر لليلة",
+  "Lifetime value": "القيمة الإجمالية"
 }

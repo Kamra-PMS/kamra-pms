@@ -368,9 +368,23 @@ export const APPS: AppDef[] = [
  *  A page listed in two apps (End of Day, Laundry, Room Types) belongs to
  *  the first one *among* the apps given - pass the user's visible apps so
  *  the page opens inside an app they can actually see. */
-export function appForPath(pathname: string, among: AppDef[] = APPS): AppDef {
+export function appForPath(pathname: string, among: AppDef[] = APPS, keep?: string): AppDef {
+  const pool = among.length ? among : APPS
+  // The app you are in stays put: a page it lists (Rooms from Housekeeping,
+  // Reports from Finance) or a drill-in (a folio, a GRC, a guest) opens
+  // inside it. Only another app's own menu page switches apps.
+  const kept = keep ? pool.find((a) => a.id === keep) : undefined
+  if (kept) {
+    const owns = (a: AppDef) =>
+      [...a.items.filter((i) => i.to).map((i) => i.to!), ...(a.extraPrefixes ?? [])].some(
+        (p) => (p === "/" ? pathname === "/" : pathname === p || pathname.startsWith(p.endsWith("/") ? p : p + "/")),
+      )
+    if (owns(kept)) return kept
+    const menuApp = pool.find((a) => a.items.some((i) => i.to === pathname))
+    return menuApp ?? kept
+  }
   let best: { app: AppDef; len: number } | null = null
-  for (const app of among.length ? among : APPS) {
+  for (const app of pool) {
     const prefixes = [
       ...app.items.filter((i) => i.to).map((i) => i.to!),
       ...(app.extraPrefixes ?? []),

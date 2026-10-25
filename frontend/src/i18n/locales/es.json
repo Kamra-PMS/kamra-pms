@@ -5405,5 +5405,10 @@
   "See every AI action in Activity": "Ver cada acción de IA en Actividad",
   "Switch off single tools for AI clients at this property. Staff can still do the same thing in Kamra.": "Desactive herramientas concretas para los clientes de IA en este alojamiento. El personal puede seguir haciendo lo mismo en Kamra.",
   "Title": "Título",
-  "Who can use MCP": "Quién puede usar MCP"
+  "Who can use MCP": "Quién puede usar MCP",
+  "New room's rate": "Tarifa de la nueva habitación",
+  "Keep current price": "Mantener el precio actual",
+  "Enter a rate": "Introducir una tarifa",
+  "Rate per night": "Tarifa por noche",
+  "Lifetime value": "Valor histórico"
 }
