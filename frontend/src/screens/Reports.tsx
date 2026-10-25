@@ -145,7 +145,10 @@ export default function Reports({ initialTab = "saved" }: { initialTab?: Tab }) 
   const [scheduleTime, setScheduleTime] = useState("07:00")
   const [scheduleWeekday, setScheduleWeekday] = useState("Mon")
   const [recipients, setRecipients] = useState("")
+  const [groupBy, setGroupBy] = useState("")
   const [preview, setPreview] = useState<RunPayload | null>(null)
+  // the grouped preview we drilled down from; null when not drilled in
+  const [summary, setSummary] = useState<RunPayload | null>(null)
   const [busy, setBusy] = useState(false)
 
   // Manager flash
@@ -196,12 +199,14 @@ export default function Reports({ initialTab = "saved" }: { initialTab?: Tab }) 
     setDatasetId(d?.id || "")
     setSelectedCols(d?.columns.map((c) => c.id) || [])
     setFilters([])
+    setGroupBy("")
     setIsShared(false)
     setScheduleFrequency("Off")
     setScheduleTime("07:00")
     setScheduleWeekday("Mon")
     setRecipients("")
     setPreview(null)
+    setSummary(null)
   }
 
   async function openSaved(row: SavedReport) {
@@ -214,6 +219,7 @@ export default function Reports({ initialTab = "saved" }: { initialTab?: Tab }) 
         dataset: string
         columns: string[]
         filters: FilterRow[]
+        group_by: string[]
         is_shared: boolean
         schedule_frequency: string
         schedule_time: string
@@ -225,12 +231,14 @@ export default function Reports({ initialTab = "saved" }: { initialTab?: Tab }) 
       setDatasetId(def.dataset)
       setSelectedCols(def.columns)
       setFilters(def.filters || [])
+      setGroupBy(def.group_by?.[0] || "")
       setIsShared(def.is_shared)
       setScheduleFrequency(def.schedule_frequency || "Off")
       setScheduleTime(def.schedule_time || "07:00")
       setScheduleWeekday(def.schedule_weekday || "Mon")
       setRecipients(def.recipients || "")
       setPreview(null)
+      setSummary(null)
       setTab("builder")
     } catch (e) {
       setError((e as Error).message)
@@ -246,7 +254,9 @@ export default function Reports({ initialTab = "saved" }: { initialTab?: Tab }) 
       setSelectedCols(d.columns.map((c) => c.id))
       if (!editName) setTitle(d.label)
     }
+    setGroupBy("")
     setPreview(null)
+    setSummary(null)
   }
 
   function toggleCol(id: string) {
@@ -255,25 +265,40 @@ export default function Reports({ initialTab = "saved" }: { initialTab?: Tab }) 
     )
   }
 
-  async function runPreview(format: "json" | "csv" | "html" = "json") {
+  async function runPreview(
+    format: "json" | "csv" | "html" = "json",
+    drill?: { field: string; value: string },
+  ) {
     if (!datasetId) return
     setBusy(true)
     setError(null)
     try {
+      // Always send the builder's current state (no saved `name`): the
+      // server would otherwise run the saved definition and ignore edits.
+      const active = filters.filter((f) => f.field && f.value !== "")
       const res = await call<RunPayload & { format?: string; content?: string; filename?: string }>(
         "kamra.custom_reports.run_custom_report",
         {
           property,
           dataset: datasetId,
-          name: editName || undefined,
           from_date: fromDate,
           to_date: toDate,
-          columns: JSON.stringify(selectedCols),
-          filters: JSON.stringify(filters.filter((f) => f.field && f.value !== "")),
+          columns: JSON.stringify(
+            groupBy && !selectedCols.includes(groupBy) ? [groupBy, ...selectedCols] : selectedCols,
+          ),
+          filters: JSON.stringify(drill ? [...active, { ...drill, op: "=" }] : active),
+          group_by: JSON.stringify(groupBy && !drill ? [groupBy] : []),
           format,
           lang: language,
         },
       )
+      if (title.trim()) res.title = title.trim()
+      if (drill) {
+        res.title = `${res.title} · ${drill.value}`
+        setSummary(preview)
+      } else if (format === "json") {
+        setSummary(null)
+      }
       if (format === "csv" && res.content) {
         downloadText(res.filename || "report.csv", res.content, "text/csv")
       } else if (format === "html" && res.content) {
@@ -304,6 +329,7 @@ export default function Reports({ initialTab = "saved" }: { initialTab?: Tab }) 
         dataset: datasetId,
         columns: JSON.stringify(selectedCols),
         filters: JSON.stringify(filters.filter((f) => f.field && f.value !== "")),
+        group_by: JSON.stringify(groupBy ? [groupBy] : []),
         is_shared: isShared ? 1 : 0,
         schedule_frequency: scheduleFrequency,
         schedule_time: scheduleTime,
@@ -350,6 +376,7 @@ export default function Reports({ initialTab = "saved" }: { initialTab?: Tab }) 
         filters: name || editName
           ? undefined
           : JSON.stringify(filters.filter((f) => f.field && f.value !== "")),
+        group_by: name || editName ? undefined : JSON.stringify(groupBy ? [groupBy] : []),
         lang: language,
         attach_format: "csv",
       })
@@ -661,6 +688,26 @@ export default function Reports({ initialTab = "saved" }: { initialTab?: Tab }) 
                 </div>
               </fieldset>
 
+              <label className="block">
+                <span className="text-xs uppercase tracking-wider text-zinc-500">
+                  {t("Group by")}
+                </span>
+                <select
+                  className="mt-1 w-full rounded-lg border border-zinc-300 px-2 py-1.5"
+                  value={groupBy}
+                  onChange={(e) => setGroupBy(e.target.value)}
+                >
+                  <option value="">{t("None")}</option>
+                  {activeDataset?.columns
+                    .filter((c) => c.type !== "number")
+                    .map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {translate(c.label)}
+                      </option>
+                    ))}
+                </select>
+              </label>
+
               {canShare && (
                 <label className="flex items-center gap-2">
                   <input
@@ -747,6 +794,23 @@ export default function Reports({ initialTab = "saved" }: { initialTab?: Tab }) 
               </CardTitle>
             </CardHeader>
             <CardContent className="overflow-x-auto">
+              {summary && (
+                <Button
+                  variant="outline"
+                  className="mb-2 px-2 py-1 text-xs"
+                  onClick={() => {
+                    setPreview(summary)
+                    setSummary(null)
+                  }}
+                >
+                  ← {t("Back to summary")}
+                </Button>
+              )}
+              {preview && groupBy && !summary && (
+                <p className="mb-2 text-xs text-zinc-500">
+                  {t("Click a row to see the rows behind it.")}
+                </p>
+              )}
               {!preview && (
                 <p className="py-8 text-center text-sm text-zinc-400">
                   {t("Choose columns and press Preview.")}
@@ -764,15 +828,25 @@ export default function Reports({ initialTab = "saved" }: { initialTab?: Tab }) 
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-zinc-100">
-                    {preview.rows.slice(0, 200).map((row, i) => (
-                      <tr key={i}>
+                    {preview.rows.slice(0, 200).map((row, i) => {
+                      const key = groupBy && !summary ? row[groupBy] : null
+                      // ponytail: null group keys aren't drillable; "=" can't match an empty value
+                      const drill = key == null || busy ? undefined : () =>
+                        runPreview("json", { field: groupBy, value: String(key) })
+                      return (
+                      <tr
+                        key={i}
+                        onClick={drill}
+                        className={drill ? "cursor-pointer hover:bg-zinc-50" : undefined}
+                      >
                         {preview.columns.map((c) => (
                           <td key={c.id} className="px-2 py-1.5 whitespace-nowrap">
                             {row[c.id] == null ? "" : String(row[c.id])}
                           </td>
                         ))}
                       </tr>
-                    ))}
+                      )
+                    })}
                   </tbody>
                 </table>
               )}

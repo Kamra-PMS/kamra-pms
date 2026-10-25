@@ -2003,7 +2003,6 @@
   "How to clear this": "Cómo resolverlo",
   "How to upgrade": "Cómo actualizar",
   "Going back (downgrade)": "Volver atrás (bajar de versión)",
-
   "How was your stay with us? Is there anything we could have done better?": "¿Cómo fue su estancia con nosotros? ¿Hay algo que podríamos haber hecho mejor?",
   "How-to help": "Ayuda de uso",
   "Hurdle ": "Tarifa mínima ",
@@ -5338,5 +5337,7 @@
   "Your reports": "Tus informes",
   "Custom reports": "Informes personalizados",
   "Build a report from arrivals, payments, POS and more; save it, share it, email it on a schedule.": "Crea un informe con llegadas, pagos, TPV y más; guárdalo, compártelo y envíalo por correo según un horario.",
-  "Custom report builder": "Generador de informes personalizados"
+  "Custom report builder": "Generador de informes personalizados",
+  "Back to summary": "Volver al resumen",
+  "Click a row to see the rows behind it.": "Haga clic en una fila para ver el detalle."
 }
