@@ -104,8 +104,10 @@ def write_ledger_entry(
 	business_date: str | None = None,
 ) -> str:
 	"""The one Folio Ledger Entry writer. `business_date` defaults to the
-	property's current business date; only a backfill passes its own."""
-	bd = business_date or get_business_date(property)
+	property's current business date; only a backfill passes its own
+	(and needs backdate permission or allow_past_transaction)."""
+	from kamra.business_date import assert_transaction_date
+	bd = assert_transaction_date(property, business_date, label="Business date")
 	doc = frappe.get_doc({
 		"doctype": "Folio Ledger Entry",
 		"property": property,

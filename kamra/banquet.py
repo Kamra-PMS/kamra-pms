@@ -796,8 +796,10 @@ def record_receipt(function: str, amount: float, mode: str = "Bank Transfer",
 	if kind not in ("Advance", "Payment", "Security Deposit", "Refund"):
 		frappe.throw(_("Unknown receipt kind: {0}").format(kind))
 	doc = _fn(function)
+	from kamra.business_date import assert_transaction_date
+	rd = assert_transaction_date(doc.property, receipt_date, label="Receipt date")
 	doc.append("receipts", {
-		"receipt_date": receipt_date or nowdate(),
+		"receipt_date": rd,
 		"kind": kind, "mode": mode, "amount": float(amount),
 		"reference": reference, "received_by": frappe.session.user,
 	})
@@ -806,7 +808,7 @@ def record_receipt(function: str, amount: float, mode: str = "Bank Transfer",
 		if not term:
 			frappe.throw(_("No such payment term on this function."))
 		term.status = "Received"
-		term.received_on = receipt_date or nowdate()
+		term.received_on = rd
 		term.reference = reference or term.reference
 	doc.save()
 	from kamra.savings import log_action
