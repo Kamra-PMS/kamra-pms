@@ -22,7 +22,7 @@ ALL_MODULES = ("front-desk", "housekeeping", "operations", "fnb", "events",
 
 @frappe.whitelist()
 @require_roles("Front Desk", "Finance", "Revenue Manager", "Housekeeping",
-               "Housekeeping Supervisor", "Kamra Agent")
+               "Housekeeping Supervisor", "Kamra Agent", "Night Auditor")
 def enabled_modules(property: str) -> list:
 	"""Which parts of Kamra this property runs. Empty setting = all of
 	them, so an existing property keeps working untouched."""

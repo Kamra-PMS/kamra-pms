@@ -158,6 +158,7 @@ export const APPS: AppDef[] = [
       { to: "/housekeeping", label: "Tasks", icon: ListChecks },
       { to: "/laundry", label: "Laundry", icon: Shirt },
       { to: "/lost-found", label: "Lost & Found", icon: PackageSearch },
+      { to: "/reports", label: "Reports", icon: ChartLine },
       { href: "/kamra/hk", label: "Phone App", icon: Smartphone },
       { to: "/settings/housekeeping", label: "Settings", icon: SettingsIcon,
         roles: ["Housekeeping Supervisor", "Hotel Admin", "System Manager", "Administrator"] },

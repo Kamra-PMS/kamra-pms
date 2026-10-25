@@ -11,7 +11,7 @@ import { useAuth } from "../lib/auth"
 const VOID_REPORT_ROLES = ["Finance", "Hotel Admin", "System Manager", "Administrator"]
 const EDIT_ROLES = ["Finance", "Hotel Admin", "System Manager", "Administrator"]
 
-type Tab = "saved" | "builder" | "flash"
+type Tab = "saved" | "builder" | "packs" | "flash"
 
 interface DatasetCol {
   id: string
@@ -41,6 +41,13 @@ interface SavedReport {
   recipients: string
   last_sent_on: string | null
   modified: string
+}
+
+interface Pack {
+  id: string
+  label: string
+  description: string
+  sections: string[]
 }
 
 interface FilterRow {
@@ -130,6 +137,7 @@ export default function Reports({ initialTab = "saved" }: { initialTab?: Tab }) 
   const [tab, setTab] = useState<Tab>(initialTab)
   const [datasets, setDatasets] = useState<Dataset[]>([])
   const [saved, setSaved] = useState<SavedReport[]>([])
+  const [packs, setPacks] = useState<Pack[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -165,12 +173,14 @@ export default function Reports({ initialTab = "saved" }: { initialTab?: Tab }) 
     setLoading(true)
     setError(null)
     try {
-      const [ds, list] = await Promise.all([
+      const [ds, list, pk] = await Promise.all([
         call<Dataset[]>("kamra.custom_reports.list_report_datasets", { property }),
         call<SavedReport[]>("kamra.custom_reports.list_custom_reports", { property }),
+        call<Pack[]>("kamra.custom_reports.list_report_packs", { property }),
       ])
       setDatasets(ds)
       setSaved(list)
+      setPacks(pk)
       if (!datasetId && ds[0]) {
         setDatasetId(ds[0].id)
         setSelectedCols(ds[0].columns.map((c) => c.id))
@@ -210,6 +220,7 @@ export default function Reports({ initialTab = "saved" }: { initialTab?: Tab }) 
   }
 
   async function openSaved(row: SavedReport) {
+    if (row.dataset.startsWith("pack:")) return openPack(row.dataset, row.name)
     setBusy(true)
     setError(null)
     try {
@@ -317,6 +328,64 @@ export default function Reports({ initialTab = "saved" }: { initialTab?: Tab }) 
     }
   }
 
+  async function openPack(pack: string, name?: string) {
+    setBusy(true)
+    setError(null)
+    try {
+      const res = await call<{ content: string }>(
+        name ? "kamra.custom_reports.run_custom_report" : "kamra.custom_reports.run_report_pack",
+        { property, pack, name, from_date: fromDate, to_date: toDate, format: "html", lang: language },
+      )
+      const w = window.open("", "_blank")
+      if (w) {
+        w.document.write(res.content)
+        w.document.close()
+      }
+    } catch (e) {
+      setError((e as Error).message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function emailPack(pack: Pack) {
+    const to = window.prompt(t("Email addresses (comma-separated)"), "")
+    if (!to) return
+    setBusy(true)
+    setError(null)
+    try {
+      await call("kamra.custom_reports.email_custom_report", {
+        property, recipients: to, dataset: pack.id,
+        from_date: fromDate, to_date: toDate, lang: language,
+      })
+      window.alert(t("Report emailed."))
+    } catch (e) {
+      setError((e as Error).message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function schedulePack(pack: Pack) {
+    const to = window.prompt(t("Email this pack every Monday at 07:00 to (comma-separated)"), "")
+    if (!to) return
+    setBusy(true)
+    setError(null)
+    try {
+      await call("kamra.custom_reports.save_custom_report", {
+        property, title: translate(pack.label), dataset: pack.id, is_shared: 1,
+        schedule_frequency: "Weekly", schedule_weekday: "Mon", schedule_time: "07:00",
+        recipients: to,
+      })
+      await reload()
+      setTab("saved")
+    } catch (e) {
+      setError((e as Error).message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
   async function saveReport() {
     if (!datasetId || !title.trim()) return
     setBusy(true)
@@ -392,6 +461,7 @@ export default function Reports({ initialTab = "saved" }: { initialTab?: Tab }) 
   const tabs: { id: Tab; label: string }[] = [
     { id: "saved", label: t("My reports") },
     { id: "builder", label: t("New report") },
+    { id: "packs", label: t("Department packs") },
     { id: "flash", label: t("Manager flash") },
   ]
 
@@ -543,6 +613,67 @@ export default function Reports({ initialTab = "saved" }: { initialTab?: Tab }) 
               </table>
             </div>
           )}
+        </div>
+      )}
+
+      {tab === "packs" && (
+        <div>
+          <div className="mb-3 flex flex-wrap items-end gap-2">
+            <p className="mr-auto text-sm text-zinc-500">
+              {t("One page per department. You see the parts your role can open.")}
+            </p>
+            <label className="text-xs text-zinc-500">
+              {t("From")}
+              <input
+                type="date"
+                className="ms-1 rounded-lg border border-zinc-300 px-2 py-1"
+                value={fromDate}
+                onChange={(e) => e.target.value && setFromDate(e.target.value)}
+              />
+            </label>
+            <label className="text-xs text-zinc-500">
+              {t("To")}
+              <input
+                type="date"
+                className="ms-1 rounded-lg border border-zinc-300 px-2 py-1"
+                value={toDate}
+                onChange={(e) => e.target.value && setToDate(e.target.value)}
+              />
+            </label>
+          </div>
+          {!loading && packs.length === 0 && (
+            <p className="text-sm text-zinc-500">{t("Your role has no reports.")}</p>
+          )}
+          <div className="grid gap-3 md:grid-cols-2">
+            {packs.map((p) => (
+              <Card key={p.id}>
+                <CardHeader>
+                  <CardTitle>{translate(p.label)}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3 text-sm">
+                  <p className="text-zinc-500">{translate(p.description)}</p>
+                  <ul className="list-disc ps-5 text-zinc-600">
+                    {p.sections.map((x) => (
+                      <li key={x}>{translate(x)}</li>
+                    ))}
+                  </ul>
+                  <div className="flex flex-wrap gap-2">
+                    <Button disabled={busy} onClick={() => openPack(p.id)}>
+                      <Printer className="size-4" aria-hidden /> {t("Open")}
+                    </Button>
+                    <Button variant="outline" disabled={busy} onClick={() => emailPack(p)}>
+                      <Mail className="size-4" aria-hidden /> {t("Email now")}
+                    </Button>
+                    {canShare && (
+                      <Button variant="outline" disabled={busy} onClick={() => schedulePack(p)}>
+                        {t("Email every Monday")}
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
       )}
 

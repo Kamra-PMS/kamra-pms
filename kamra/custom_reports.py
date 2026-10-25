@@ -39,6 +39,9 @@ def _col(id: str, label: str, typ: str = "string") -> Column:
 	return {"id": id, "label": label, "type": typ}
 
 
+HK_ROLES = ("Housekeeping", "Housekeeping Supervisor", "Front Desk",
+            "Hotel Admin", "Kamra Agent")
+
 DATASETS: dict[str, Dataset] = {
 	"arrivals": {
 		"id": "arrivals",
@@ -227,9 +230,10 @@ DATASETS: dict[str, Dataset] = {
 		"label": "Housekeeping tasks",
 		"description": "Housekeeping tasks created in the date range.",
 		"module": "housekeeping",
-		"roles": ("Housekeeping", "Front Desk", "Hotel Admin", "Kamra Agent"),
+		"roles": HK_ROLES,
 		"date_field": "creation",
 		"needs_range": True,
+		"averages": ("clean_minutes",),
 		"columns": [
 			_col("name", "Task"),
 			_col("room", "Room"),
@@ -239,7 +243,46 @@ DATASETS: dict[str, Dataset] = {
 			_col("assigned_to_user", "Assigned to"),
 			_col("due_by", "Due by"),
 			_col("breached", "Breached", "number"),
+			_col("tasks", "Tasks", "number"),
+			_col("clean_minutes", "Clean minutes", "number"),
 			_col("creation", "Created"),
+		],
+	},
+	"room_status": {
+		"id": "room_status",
+		"label": "Room status",
+		"description": "Every room's housekeeping and occupancy status right now.",
+		"module": "housekeeping",
+		"roles": HK_ROLES,
+		"needs_range": False,
+		"columns": [
+			_col("room", "Room"),
+			_col("room_type", "Room type"),
+			_col("floor", "Floor"),
+			_col("housekeeping_status", "HK status"),
+			_col("occupancy_status", "Occupancy"),
+			_col("rooms", "Rooms", "number"),
+		],
+	},
+	"lost_found": {
+		"id": "lost_found",
+		"label": "Lost and found",
+		"description": "Items logged as found, missing or damaged, by date found.",
+		"module": "housekeeping",
+		"roles": HK_ROLES,
+		"date_field": "found_on",
+		"needs_range": True,
+		"columns": [
+			_col("name", "Item"),
+			_col("found_on", "Found on", "date"),
+			_col("item_description", "Description"),
+			_col("condition", "Condition"),
+			_col("found_in_room", "Room"),
+			_col("found_by", "Found by"),
+			_col("status", "Status"),
+			_col("guest", "Guest"),
+			_col("returned_on", "Returned on", "date"),
+			_col("items", "Items", "number"),
 		],
 	},
 	"pos_orders": {
@@ -264,6 +307,91 @@ DATASETS: dict[str, Dataset] = {
 }
 
 
+# Department packs: several grouped datasets in one report, emailed weekly.
+# A section the user's roles (or the property's modules) can't run is left
+# out, so each person gets the part of the pack their access allows.
+# ponytail: no this-week-vs-last-week column yet; add a comparison run when
+# a hotel asks for variance (#346).
+PACK_PREFIX = "pack:"
+PACKS: dict[str, dict] = {
+	"front_office": {
+		"label": "Front Office pack",
+		"description": "Occupancy by day, arrivals by source, in-house by room "
+		               "type, no-shows and cancellations.",
+		"sections": [
+			{"title": "Occupancy by day", "dataset": "occupancy_by_day",
+			 "columns": ["date", "rooms_sold", "occupancy_pct", "adr", "revpar",
+			             "room_revenue", "total_revenue"]},
+			{"title": "Arrivals by source", "dataset": "arrivals",
+			 "columns": ["source", "nights", "adults", "children"], "group_by": ["source"]},
+			{"title": "In house by room type", "dataset": "in_house",
+			 "columns": ["room_type", "nights", "adults", "children"],
+			 "group_by": ["room_type"]},
+			{"title": "No-shows and cancellations", "dataset": "no_shows_cancels"},
+		],
+	},
+	"housekeeping": {
+		"label": "Housekeeping pack",
+		"description": "Room status now, cleans by type and by attendant with "
+		               "average minutes, and lost and found.",
+		"sections": [
+			{"title": "Room status", "dataset": "room_status",
+			 "columns": ["housekeeping_status", "rooms"],
+			 "group_by": ["housekeeping_status"]},
+			{"title": "Tasks by type", "dataset": "hk_tasks",
+			 "columns": ["task_type", "tasks", "breached", "clean_minutes"],
+			 "group_by": ["task_type"]},
+			{"title": "Tasks by attendant", "dataset": "hk_tasks",
+			 "columns": ["assigned_to_user", "tasks", "breached", "clean_minutes"],
+			 "group_by": ["assigned_to_user"]},
+			{"title": "Lost and found", "dataset": "lost_found",
+			 "columns": ["found_on", "item_description", "found_in_room",
+			             "status", "returned_on"]},
+		],
+	},
+	"fnb": {
+		"label": "F&B pack",
+		"description": "Sales and covers by outlet, and orders by status.",
+		"sections": [
+			{"title": "Sales by outlet", "dataset": "pos_orders",
+			 "columns": ["outlet", "covers", "grand_total"], "group_by": ["outlet"]},
+			{"title": "Orders by status", "dataset": "pos_orders",
+			 "columns": ["status", "covers", "grand_total"], "group_by": ["status"]},
+		],
+	},
+	"hotel_manager": {
+		"label": "Hotel Manager pack",
+		"description": "Occupancy and revenue by day, revenue by source, "
+		               "collections by mode, charges by type, voids.",
+		"sections": [
+			{"title": "Occupancy and revenue", "dataset": "occupancy_by_day"},
+			{"title": "Revenue by source", "dataset": "contribution"},
+			{"title": "Collections by mode", "dataset": "payments",
+			 "columns": ["mode", "amount"], "group_by": ["mode"]},
+			{"title": "Charges by type", "dataset": "folio_charges",
+			 "columns": ["charge_type", "amount"], "group_by": ["charge_type"]},
+			{"title": "Voids and allowances", "dataset": "voids"},
+		],
+	},
+}
+
+
+def _pack_sections(property: str, pack_id: str) -> list[dict]:
+	"""The sections of a pack this user may run on this property."""
+	return [s for s in PACKS[pack_id]["sections"]
+	        if _dataset_allowed(DATASETS[s["dataset"]])
+	        and _module_enabled(property, DATASETS[s["dataset"]].get("module"))]
+
+
+def _pack_id(dataset: str | None) -> str | None:
+	if dataset and dataset.startswith(PACK_PREFIX):
+		pid = dataset[len(PACK_PREFIX):]
+		if pid not in PACKS:
+			frappe.throw(_("Unknown report pack: {0}").format(pid))
+		return pid
+	return None
+
+
 def _user_roles() -> set[str]:
 	return set(frappe.get_roles())
 
@@ -281,18 +409,9 @@ def _dataset_allowed(ds: Dataset) -> bool:
 
 
 def _module_enabled(property: str, module: str | None) -> bool:
-	if not module:
-		return True
-	enabled = frappe.db.get_value("Property", property, "enabled_modules")
-	if not enabled:
-		return True
-	try:
-		mods = json.loads(enabled) if isinstance(enabled, str) else enabled
-	except (TypeError, ValueError):
-		return True
-	if not mods:
-		return True
-	return module in mods
+	from kamra.api import enabled_modules
+
+	return not module or module in enabled_modules(property)
 
 
 def _parse_json(raw: Any, default: Any):
@@ -462,11 +581,39 @@ def _fetch_hk_tasks(property: str, from_date: str, to_date: str,
 		order_by="creation desc",
 		limit_page_length=MAX_ROWS,
 	)
+	from kamra.rooms import _minutes, _task_timeline
+
+	timeline = _task_timeline([r.name for r in rows if r.status in ("Done", "Verified")
+	                           and r.task_type != "Inspection"])
 	for r in rows:
+		tl = timeline.get(r.name, {})
+		r["clean_minutes"] = _minutes((tl.get("started") or {}).get("at"),
+		                              (tl.get("done") or tl.get("verified") or {}).get("at"))
+		r["tasks"] = 1
 		r["creation"] = str(r.get("creation") or "")
 		r["due_by"] = str(r.get("due_by") or "") if r.get("due_by") else ""
 		r["breached"] = 1 if r.get("breached") else 0
 	return rows
+
+
+def _fetch_room_status(property: str, **_) -> list[dict]:
+	rows = frappe.get_all(
+		"Room", filters={"property": property},
+		fields=["room_number", "room_type", "floor", "housekeeping_status",
+		        "occupancy_status"],
+		order_by="room_number asc", limit_page_length=MAX_ROWS)
+	return [{**r, "room": r.pop("room_number"), "rooms": 1} for r in rows]
+
+
+def _fetch_lost_found(property: str, from_date: str, to_date: str,
+                      **_) -> list[dict]:
+	rows = frappe.get_all(
+		"Lost And Found Item",
+		filters={"property": property, "found_on": ["between", [from_date, to_date]]},
+		fields=["name", "found_on", "item_description", "condition",
+		        "found_in_room", "found_by", "status", "guest", "returned_on"],
+		order_by="found_on desc", limit_page_length=MAX_ROWS)
+	return [{**r, "items": 1} for r in rows]
 
 
 def _fetch_pos_orders(property: str, from_date: str, to_date: str,
@@ -510,6 +657,8 @@ FETCHERS: dict[str, Callable[..., list[dict]]] = {
 	"voids": _fetch_voids,
 	"contribution": _fetch_contribution,
 	"hk_tasks": _fetch_hk_tasks,
+	"room_status": _fetch_room_status,
+	"lost_found": _fetch_lost_found,
 	"pos_orders": _fetch_pos_orders,
 }
 
@@ -575,12 +724,18 @@ def _apply_sort(rows: list[dict], sort_spec: list[dict]) -> list[dict]:
 
 
 def _apply_group(rows: list[dict], group_by: list[str],
-                 columns: list[str]) -> list[dict]:
-	"""Group by fields; numeric columns are summed, others take first value."""
+                 columns: list[str], averages: tuple = ()) -> list[dict]:
+	"""Group by fields; numeric columns are summed (or averaged over rows that
+	have a value, for `averages`), others take first value."""
 	if not group_by:
 		return rows
 	buckets: dict[tuple, dict] = {}
+	seen: dict[tuple, dict] = {}  # key -> {avg column: [values]}
 	for row in rows:
+		vals = seen.setdefault(tuple(row.get(g) for g in group_by), {})
+		for c in averages:
+			if row.get(c) is not None:
+				vals.setdefault(c, []).append(_num(row.get(c)))
 		key = tuple(row.get(g) for g in group_by)
 		if key not in buckets:
 			buckets[key] = {c: row.get(c) for c in columns}
@@ -594,6 +749,11 @@ def _apply_group(rows: list[dict], group_by: list[str],
 				continue
 			if isinstance(row.get(c), (int, float)) or isinstance(agg.get(c), (int, float)):
 				agg[c] = _num(agg.get(c)) + _num(row.get(c))
+	for key, agg in buckets.items():
+		for c in averages:
+			if c in agg and c not in group_by:
+				v = seen[key].get(c)
+				agg[c] = round(sum(v) / len(v), 1) if v else None
 	return list(buckets.values())
 
 
@@ -644,7 +804,7 @@ def _run_dataset(
 
 	rows = _apply_filters(rows, safe_filters)
 	if safe_group:
-		rows = _apply_group(rows, safe_group, col_ids)
+		rows = _apply_group(rows, safe_group, col_ids, ds.get("averages", ()))
 	rows = _apply_sort(rows, safe_sort)
 	rows = _project(rows, col_ids)
 	if len(rows) > MAX_ROWS:
@@ -682,41 +842,52 @@ def _to_csv(payload: dict) -> str:
 	return buf.getvalue()
 
 
-def _to_html(payload: dict, lang: str = "en") -> str:
-	rtl = lang == "ar"
-	direction = "rtl" if rtl else "ltr"
+def _table_html(payload: dict) -> str:
+	esc = frappe.utils.escape_html
 	cols = payload["columns"]
-	ths = "".join(f"<th>{frappe.utils.escape_html(c['label'])}</th>" for c in cols)
-	trs = []
-	for row in payload["rows"]:
-		tds = "".join(
-			f"<td>{frappe.utils.escape_html(str(row.get(c['id']) if row.get(c['id']) is not None else ''))}</td>"
-			for c in cols
-		)
-		trs.append(f"<tr>{tds}</tr>")
-	title = frappe.utils.escape_html(payload.get("title") or "Report")
-	meta = frappe.utils.escape_html(
-		f"{payload.get('property')} · {payload.get('from_date')} → {payload.get('to_date')}"
-	)
+	ths = "".join(f"<th>{esc(c['label'])}</th>" for c in cols)
+	trs = "".join(
+		"<tr>" + "".join(
+			f"<td>{esc(str(row.get(c['id']) if row.get(c['id']) is not None else ''))}</td>"
+			for c in cols) + "</tr>"
+		for row in payload["rows"])
+	return f"<table><thead><tr>{ths}</tr></thead><tbody>{trs}</tbody></table>"
+
+
+def _page_html(title: str, meta: str, body: str, lang: str = "en") -> str:
+	rtl = lang == "ar"
 	align = "right" if rtl else "left"
-	row_count = payload.get("row_count", 0)
-	body_rows = "".join(trs)
+	esc = frappe.utils.escape_html
 	return (
-		f'<!DOCTYPE html>\n<html lang="{lang}" dir="{direction}">\n'
-		f'<head><meta charset="utf-8"><title>{title}</title>\n'
+		f'<!DOCTYPE html>\n<html lang="{lang}" dir="{"rtl" if rtl else "ltr"}">\n'
+		f'<head><meta charset="utf-8"><title>{esc(title)}</title>\n'
 		"<style>\n"
 		"body{font-family:system-ui,sans-serif;font-size:12px;color:#18181b;margin:24px}\n"
 		"h1{font-size:18px;margin:0 0 4px}\n"
+		"h2{font-size:14px;margin:24px 0 6px}\n"
 		".meta{color:#71717a;margin-bottom:16px}\n"
 		"table{border-collapse:collapse;width:100%}\n"
 		f"th,td{{border:1px solid #e4e4e7;padding:6px 8px;text-align:{align}}}\n"
 		"th{background:#f4f4f5;font-size:10px;text-transform:uppercase;letter-spacing:.04em}\n"
 		"</style></head>\n<body>\n"
-		f"<h1>{title}</h1>\n"
-		f'<div class="meta">{meta} · {row_count} rows</div>\n'
-		f"<table><thead><tr>{ths}</tr></thead><tbody>{body_rows}</tbody></table>\n"
-		"</body></html>"
+		f"<h1>{esc(title)}</h1>\n"
+		f'<div class="meta">{esc(meta)}</div>\n'
+		f"{body}\n</body></html>"
 	)
+
+
+def _to_html(payload: dict, lang: str = "en") -> str:
+	meta = (f"{payload.get('property')} · {payload.get('from_date')} → "
+	        f"{payload.get('to_date')} · {payload.get('row_count', 0)} rows")
+	return _page_html(payload.get("title") or "Report", meta, _table_html(payload), lang)
+
+
+def _pack_html(pack: dict, lang: str = "en") -> str:
+	esc = frappe.utils.escape_html
+	body = "".join(f"<h2>{esc(s['title'])}</h2>\n{_table_html(s)}\n"
+	               for s in pack["sections"])
+	meta = f"{pack['property']} · {pack['from_date']} → {pack['to_date']}"
+	return _page_html(pack["title"], meta, body, lang)
 
 
 # ---------------------------------------------------------------------------
@@ -750,6 +921,53 @@ def list_report_datasets(property: str):
 @frappe.whitelist()
 @require_roles("Front Desk", "Finance", "Hotel Admin", "Revenue Manager",
                "Housekeeping", "Kamra Agent", "Night Auditor")
+def list_report_packs(property: str):
+	"""Department packs with the sections this user may run here."""
+	assert_property_access(property)
+	out = []
+	for pid, pack in PACKS.items():
+		sections = _pack_sections(property, pid)
+		if sections:
+			out.append({"id": PACK_PREFIX + pid, "label": pack["label"],
+			            "description": pack["description"],
+			            "sections": [s["title"] for s in sections]})
+	return out
+
+
+@frappe.whitelist()
+@require_roles("Front Desk", "Finance", "Hotel Admin", "Revenue Manager",
+               "Housekeeping", "Kamra Agent", "Night Auditor")
+def run_report_pack(property: str, pack: str, from_date: str | None = None,
+                    to_date: str | None = None, format: str | None = "json",
+                    lang: str | None = "en"):
+	"""Run a department pack (id from list_report_packs) for a date range.
+	format=json (sections of rows) or html (one printable page)."""
+	assert_property_access(property)
+	pid = _pack_id(pack if pack.startswith(PACK_PREFIX) else PACK_PREFIX + pack)
+	sections = _pack_sections(property, pid)
+	if not sections:
+		frappe.throw(_("Your role cannot run any part of this pack."),
+		             frappe.PermissionError)
+	to_date = to_date or add_days(nowdate(), -1)
+	from_date = from_date or add_days(to_date, -6)
+	out = {"pack": PACK_PREFIX + pid, "title": PACKS[pid]["label"],
+	       "property": property, "from_date": from_date, "to_date": to_date,
+	       "sections": []}
+	for s in sections:
+		res = _run_dataset(property, s["dataset"], from_date, to_date,
+		                   s.get("columns"), s.get("filters"), s.get("group_by"))
+		res["title"] = s["title"]
+		out["sections"].append(res)
+	out["row_count"] = sum(s["row_count"] for s in out["sections"])
+	if (format or "json").lower() == "html":
+		return {"format": "html", "title": out["title"],
+		        "filename": _filename(out, "html"), "content": _pack_html(out, lang or "en")}
+	return out
+
+
+@frappe.whitelist()
+@require_roles("Front Desk", "Finance", "Hotel Admin", "Revenue Manager",
+               "Housekeeping", "Kamra Agent", "Night Auditor")
 def list_custom_reports(property: str):
 	"""Saved reports visible to this user on the property."""
 	assert_property_access(property)
@@ -770,6 +988,11 @@ def list_custom_reports(property: str):
 		ds = DATASETS.get(r.dataset)
 		if ds and not _dataset_allowed(ds):
 			continue
+		pid = r.dataset[len(PACK_PREFIX):] if r.dataset.startswith(PACK_PREFIX) else None
+		if pid and (pid not in PACKS or not _pack_sections(property, pid)):
+			continue
+		if pid:
+			ds = {"label": PACKS[pid]["label"]}
 		if r.is_shared or r.owner == user or _can_edit():
 			visible.append({
 				**r,
@@ -845,13 +1068,17 @@ def save_custom_report(
 ):
 	"""Create or update a saved custom report definition."""
 	assert_property_access(property)
-	ds = DATASETS.get(dataset)
+	pid = _pack_id(dataset)
+	ds = {"label": PACKS[pid]["label"], "columns": []} if pid else DATASETS.get(dataset)
 	if not ds:
 		frappe.throw(_("Unknown dataset: {0}").format(dataset))
-	if not _dataset_allowed(ds):
+	if pid and not _pack_sections(property, pid):
+		frappe.throw(_("Your role cannot run any part of this pack."),
+		             frappe.PermissionError)
+	if not pid and not _dataset_allowed(ds):
 		frappe.throw(_("Your role cannot save this dataset."), frappe.PermissionError)
 
-	cols = _resolve_columns(ds, _parse_json(columns, []))
+	cols = [] if pid else _resolve_columns(ds, _parse_json(columns, []))
 	flts = _parse_json(filters, [])
 	grp = _parse_json(group_by, [])
 	srt = _parse_json(sort, [])
@@ -943,6 +1170,12 @@ def run_custom_report(
 		srt = _parse_json(sort, [])
 		title = None
 
+	if _pack_id(ds_id):
+		res = run_report_pack(property, ds_id, from_date, to_date, format, lang)
+		if title and isinstance(res, dict):
+			res["title"] = title
+		return res
+
 	payload = _run_dataset(
 		property, ds_id, from_date, to_date, cols, flts, grp, srt)
 	if title:
@@ -1004,7 +1237,10 @@ def email_custom_report(
 		lang=lang or "en",
 	)
 	fmt = (attach_format or "csv").lower()
-	if fmt == "html":
+	if "sections" in meta:  # a department pack is one HTML page
+		content = _pack_html(meta, lang or "en")
+		fname = _filename(meta, "html")
+	elif fmt == "html":
 		content = _to_html(meta, lang or "en")
 		fname = _filename(meta, "html")
 	else:

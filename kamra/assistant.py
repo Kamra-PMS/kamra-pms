@@ -293,6 +293,18 @@ EXTRA_TOOLS = {
 		"Whitelisted custom-report datasets and columns. Call before building "
 		"or running a custom report.",
 		{}, True, False),
+	"list_report_packs": (
+		"custom_reports.list_report_packs",
+		"Department report packs (Front Office, Housekeeping, F&B, Hotel "
+		"Manager) with the sections this user may see.",
+		{}, True, False),
+	"run_report_pack": (
+		"custom_reports.run_report_pack",
+		"Run a department pack (id from list_report_packs) for a date range; "
+		"defaults to the last 7 days. format=json.",
+		{"pack": {"type": "string"}, "from_date": {"type": "string"},
+		 "to_date": {"type": "string"}, "format": {"type": "string"}},
+		True, False),
 	"list_custom_reports": (
 		"custom_reports.list_custom_reports",
 		"Saved custom reports for this property.",
@@ -1174,8 +1186,9 @@ What Kamra does and where to find it:
 - Billing: folios, post charges, take payments, payment links. Closing a folio
   assigns a GST tax invoice (logo, GSTIN, place of supply, SAC 996311).
 - Reports: one Reports hub - manager flash, shift report, F&B dashboard,
-  banquet registers, SLA, voids, and custom reports (build, save, group and
-  drill down, email daily or weekly). Which reports a user sees follows their
+  banquet registers, SLA, voids, department packs (Front Office,
+  Housekeeping, F&B, Hotel Manager) and custom reports (build, save, group
+  and drill down, email daily or weekly). Which reports a user sees follows their
   role.
 - Housekeeping: room board + a phone app at /kamra/hk.
 - Revenue: rate plans, seasons, vouchers, rate guardrails.
