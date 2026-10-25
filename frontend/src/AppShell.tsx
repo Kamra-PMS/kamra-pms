@@ -51,6 +51,9 @@ const HelpPanel = lazy(() => import("./components/HelpPanel"))
 
 export interface BookingInitial {
   room_type?: string
+  /** a specific room (a vacant tape chart cell); used while room_type matches */
+  room?: string
+  room_number?: string
   date?: string
   guest?: string
   guest_name?: string

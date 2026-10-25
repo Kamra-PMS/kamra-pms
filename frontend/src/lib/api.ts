@@ -456,6 +456,7 @@ export const createBooking = (
     guest_name: string
     phone?: string
     guest?: string
+    room?: string
     company?: string
     travel_agent?: string
     booking_type?: string

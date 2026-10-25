@@ -226,7 +226,7 @@ export default function TapeChart() {
       return next
     })
 
-  const { refreshKey } = useOutletContext<ShellContext>()
+  const { refreshKey, canBook, openBooking: newBooking } = useOutletContext<ShellContext>()
 
   // rooms grouped by room type, honoring the filter (rooms arrive ordered)
   const groups = useMemo(() => {
@@ -596,7 +596,14 @@ export default function TapeChart() {
                             {t(room.housekeeping_status)}
                           </span>
                         </div>
-                        {data.dates.map((d) => (
+                        {/* vacant cell: bars and blocks sit on top, so a click here is a free night */}
+                        {data.dates.map((d) => canBook && d >= todayIso() ? (
+                          <button key={d} type="button" style={{ width: cellW }}
+                            aria-label={t("New booking")}
+                            onClick={() => newBooking({ room_type: room.room_type, room: room.name,
+                              room_number: room.room_number, date: d })}
+                            className="shrink-0 border-l border-zinc-100 hover:bg-brand-50" />
+                        ) : (
                           <div key={d} style={{ width: cellW }}
                             className="shrink-0 border-l border-zinc-100" />
                         ))}
