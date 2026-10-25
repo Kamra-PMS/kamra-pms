@@ -411,6 +411,11 @@ Contributions welcome: see [CONTRIBUTING.md](CONTRIBUTING.md). The full list liv
 - [@ShaikhAmerPasha](https://github.com/ShaikhAmerPasha): saved bookings keep their voucher after it expires or hits its limit ([#142](https://github.com/Kamra-PMS/kamra-pms/issues/142), [#143](https://github.com/Kamra-PMS/kamra-pms/pull/143)), folio charges refuse zero or minus amounts and unknown tax rates ([#146](https://github.com/Kamra-PMS/kamra-pms/issues/146), [#147](https://github.com/Kamra-PMS/kamra-pms/pull/147)), and the bill screen's Void button, which now asks for a reason ([#160](https://github.com/Kamra-PMS/kamra-pms/issues/160), [#161](https://github.com/Kamra-PMS/kamra-pms/pull/161))
 - [@ernestoruiz89](https://github.com/ernestoruiz89): Spanish localization and menu navigation fixes (fork [#320](https://github.com/Kamra-PMS/kamra-pms/pull/320), landed via [#324](https://github.com/Kamra-PMS/kamra-pms/pull/324), included in 2.6.21)
 
+
+**Docs and guides**
+
+- [@caseylee-TC](https://github.com/caseylee-TC): [Write a country pack](https://kamrapms.com/docs/write-a-country-pack) tutorial ([#362](https://github.com/Kamra-PMS/kamra-pms/pull/362), fixes [#258](https://github.com/Kamra-PMS/kamra-pms/issues/258))
+
 **Hotels and users who shaped it through issues**
 
 - [@lhertig](https://github.com/lhertig): folio payments in the property currency ([#341](https://github.com/Kamra-PMS/kamra-pms/issues/341)), `max_total_occupants` on mixed adult/child bookings ([#342](https://github.com/Kamra-PMS/kamra-pms/issues/342)), pre-arrival advance refunds releasing Deposit and reducing `advance_paid` ([#343](https://github.com/Kamra-PMS/kamra-pms/issues/343)), and concurrent booking `tabSeries` deadlock retries ([#344](https://github.com/Kamra-PMS/kamra-pms/issues/344))
