@@ -26,6 +26,27 @@ upgrade-breaking changes (removed doctypes / API contracts).
   quotation, desk-led guest response, department checklists + notify on
   Confirm (Sales/Finance/HK/F&B), and quote no-response chase reminders
 
+## [2.6.21](https://github.com/Kamra-PMS/kamra-pms/compare/v2.6.20...v2.6.21) (2026-10-25)
+
+
+### Features
+
+* **demo:** 75 days of history rebuilt by every demo reset ([e5e8c4a](https://github.com/Kamra-PMS/kamra-pms/commit/e5e8c4a726a6395e6d2c833d449d2899029aa3c8))
+* **front-desk:** agent fixes and action cards, In House, one Reports hub, live agent scenarios ([8c9e639](https://github.com/Kamra-PMS/kamra-pms/commit/8c9e63922c81011623b56014cc8e6505539ae100))
+* **mcp:** MCP Read and MCP Manage roles, AI access admin page, bulk room assignment ([59219c0](https://github.com/Kamra-PMS/kamra-pms/commit/59219c015478a11e1e9a3afe406994f762576cbe))
+* report drilldown and department packs, front desk moves, complete Arabic, Spanish and Arabic docs ([#352](https://github.com/Kamra-PMS/kamra-pms/issues/352)) ([bdf2b22](https://github.com/Kamra-PMS/kamra-pms/commit/bdf2b228a26c9dae15702f6a47720b56f1fbbf47))
+* **reports:** custom report builder with save and email ([#335](https://github.com/Kamra-PMS/kamra-pms/issues/335)) ([a1cc4ce](https://github.com/Kamra-PMS/kamra-pms/commit/a1cc4cefa32ae4809c1a12bda22237caf819595c))
+
+
+### Bug Fixes
+
+* **booking:** support international guest phone prefixes (from [#345](https://github.com/Kamra-PMS/kamra-pms/issues/345)) ([#360](https://github.com/Kamra-PMS/kamra-pms/issues/360)) ([956cd12](https://github.com/Kamra-PMS/kamra-pms/commit/956cd12742e3d397a5b89429b55e44a8324e1545))
+* **i18n:** include Spanish localization in 2.6.21 ([c6240a4](https://github.com/Kamra-PMS/kamra-pms/commit/c6240a454e7a489f908afe991e324e7cc7ae4d0b))
+* **i18n:** include Spanish localization in 2.6.21 ([a64a3ce](https://github.com/Kamra-PMS/kamra-pms/commit/a64a3ce49fc95776b9a8a9156e7bad56377ca4e1))
+* **i18n:** polish Spanish after [#324](https://github.com/Kamra-PMS/kamra-pms/issues/324) ([0dc0487](https://github.com/Kamra-PMS/kamra-pms/commit/0dc0487521e2f481aa92ebecf49e68ffdc91fcfd))
+* **i18n:** polish Spanish after [#324](https://github.com/Kamra-PMS/kamra-pms/issues/324) merge ([b753da1](https://github.com/Kamra-PMS/kamra-pms/commit/b753da1d943e4f734cf252775a2afc61fcffdb28))
+* **night-audit:** 03:00 run recovers a stuck business date and catches up ([7f20de1](https://github.com/Kamra-PMS/kamra-pms/commit/7f20de1b5d8d4e5b18b602b953294a9adef74f05))
+
 ## [2.6.20](https://github.com/Kamra-PMS/kamra-pms/compare/v2.6.19...v2.6.20) (2026-10-24)
 
 
