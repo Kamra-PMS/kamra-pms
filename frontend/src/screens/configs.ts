@@ -467,7 +467,7 @@ export const shiftsConfig: ScreenConfig = {
   ],
   form: [
     { field: "shift", label: "Shift", type: "select", options: ["Morning", "Evening", "Night"], required: true },
-    { field: "shift_date", label: "Date", type: "date", required: true },
+    { field: "shift_date", label: "Date", type: "date", required: true, notPast: true },
     { field: "opening_cash", label: "Opening cash", type: "currency" },
     { field: "cash_collected", label: "Cash collected", type: "currency" },
     { field: "payouts", label: "Payouts", type: "currency" },

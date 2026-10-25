@@ -1481,9 +1481,9 @@ def _post_folio_charge(folio: str, charge_type: str, description: str,
 	# F&B/minibar charge posted without a rate lands on the bill untaxed
 	gst_rate = _resolve_charge_gst(doc.property, charge_type, description,
 	                               int(is_alcohol or 0), float(gst_rate or 0))
-	from kamra.business_date import get_business_date
+	from kamra.business_date import assert_transaction_date
 	from kamra.ledger import code_for_charge_type, record_charge_ledger
-	bd = posting_date or get_business_date(doc.property)
+	bd = assert_transaction_date(doc.property, posting_date, label="Posting date")
 	code = code_for_charge_type(charge_type)
 	doc.append("charges", {
 		"posting_date": bd,
