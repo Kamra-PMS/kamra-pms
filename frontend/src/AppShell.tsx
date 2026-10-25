@@ -143,7 +143,7 @@ function AppSwitcher({ apps, current }: { apps: AppDef[]; current: AppDef }) {
   const go = (app: AppDef) => {
     setOpen(false)
     const first = app.items.find((i) => i.to)
-    if (first?.to) navigate(first.to)
+    if (first?.to) navigate(first.to, { state: { app: app.id } })
   }
 
   return (
@@ -271,8 +271,31 @@ export default function AppShell() {
   }, [property])
 
   const apps = visibleApps(roles, modules)
-  const routeApp = appForPath(location.pathname, apps)
+  // the app the desk was last in, kept across reloads of a shared page
+  const lastApp = useRef<string | undefined>(
+    (() => {
+      try {
+        return sessionStorage.getItem("kamra:app") ?? undefined
+      } catch {
+        return undefined
+      }
+    })(),
+  )
+  // the switcher / launcher / palette name the app they open (state.app)
+  const routeApp = appForPath(
+    location.pathname, apps,
+    (location.state as { app?: string } | null)?.app ?? lastApp.current,
+  )
   const currentApp = apps.some((a) => a.id === routeApp.id) ? routeApp : apps[0]
+  useEffect(() => {
+    if (!currentApp) return
+    lastApp.current = currentApp.id
+    try {
+      sessionStorage.setItem("kamra:app", currentApp.id)
+    } catch {
+      /* private window: the app still follows the page */
+    }
+  }, [currentApp])
   const floor = location.pathname === "/pos" || location.pathname === "/kitchen"
   const { on: kiosk } = useKiosk()
   const canBook = BOOKING_ROLES.some((r) => roles.includes(r))

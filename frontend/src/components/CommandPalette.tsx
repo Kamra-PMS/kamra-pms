@@ -309,7 +309,7 @@ export function CommandPalette() {
         icon: LayoutGrid,
         onSelect: () => {
           setOpen(false)
-          navigate(a.items.find((i) => i.to)!.to!)
+          navigate(a.items.find((i) => i.to)!.to!, { state: { app: a.id } })
         },
       }))
   }, [q, roles, navigate, t])
