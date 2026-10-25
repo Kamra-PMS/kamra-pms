@@ -46,7 +46,7 @@ DATASETS: dict[str, Dataset] = {
 		"description": "Confirmed and checked-in arrivals by check-in date.",
 		"module": "front-desk",
 		"roles": ("Front Desk", "Finance", "Hotel Admin", "Revenue Manager",
-		          "Kamra Agent"),
+		          "Kamra Agent", "Night Auditor"),
 		"date_field": "check_in_date",
 		"needs_range": True,
 		"columns": [
@@ -72,7 +72,7 @@ DATASETS: dict[str, Dataset] = {
 		"description": "Checked-in and checked-out departures by check-out date.",
 		"module": "front-desk",
 		"roles": ("Front Desk", "Finance", "Hotel Admin", "Revenue Manager",
-		          "Kamra Agent"),
+		          "Kamra Agent", "Night Auditor"),
 		"date_field": "check_out_date",
 		"needs_range": True,
 		"columns": [
@@ -93,7 +93,7 @@ DATASETS: dict[str, Dataset] = {
 		"description": "Guests currently checked in (as of to-date).",
 		"module": "front-desk",
 		"roles": ("Front Desk", "Finance", "Hotel Admin", "Revenue Manager",
-		          "Kamra Agent"),
+		          "Kamra Agent", "Night Auditor"),
 		"date_field": None,
 		"needs_range": False,
 		"columns": [
@@ -116,7 +116,7 @@ DATASETS: dict[str, Dataset] = {
 		"description": "No-shows and cancelled stays by check-in date.",
 		"module": "front-desk",
 		"roles": ("Front Desk", "Finance", "Hotel Admin", "Revenue Manager",
-		          "Kamra Agent"),
+		          "Kamra Agent", "Night Auditor"),
 		"date_field": "check_in_date",
 		"needs_range": True,
 		"columns": [
@@ -135,7 +135,7 @@ DATASETS: dict[str, Dataset] = {
 		"label": "Occupancy & revenue by day",
 		"description": "Rooms sold, occupancy, ADR, RevPAR and revenue per day.",
 		"module": "finance",
-		"roles": ("Finance", "Hotel Admin", "Revenue Manager", "Kamra Agent"),
+		"roles": ("Finance", "Hotel Admin", "Revenue Manager", "Kamra Agent", "Front Desk", "Night Auditor"),
 		"date_field": "date",
 		"needs_range": True,
 		"columns": [
@@ -157,7 +157,7 @@ DATASETS: dict[str, Dataset] = {
 		"label": "Folio charges",
 		"description": "Posted folio charge lines by posting date.",
 		"module": "finance",
-		"roles": ("Finance", "Hotel Admin", "Kamra Agent"),
+		"roles": ("Finance", "Hotel Admin", "Kamra Agent", "Night Auditor"),
 		"date_field": "posting_date",
 		"needs_range": True,
 		"columns": [
@@ -175,7 +175,7 @@ DATASETS: dict[str, Dataset] = {
 		"label": "Payments",
 		"description": "Folio payments by payment date.",
 		"module": "finance",
-		"roles": ("Finance", "Hotel Admin", "Kamra Agent"),
+		"roles": ("Finance", "Hotel Admin", "Kamra Agent", "Night Auditor"),
 		"date_field": "posting_date",
 		"needs_range": True,
 		"columns": [
@@ -247,7 +247,7 @@ DATASETS: dict[str, Dataset] = {
 		"label": "POS orders",
 		"description": "Restaurant / outlet orders by creation date.",
 		"module": "fnb",
-		"roles": ("Finance", "Hotel Admin", "Kamra Agent"),
+		"roles": ("Finance", "Hotel Admin", "Kamra Agent", "Front Desk"),
 		"date_field": "creation",
 		"needs_range": True,
 		"columns": [
@@ -725,7 +725,7 @@ def _to_html(payload: dict, lang: str = "en") -> str:
 
 @frappe.whitelist()
 @require_roles("Front Desk", "Finance", "Hotel Admin", "Revenue Manager",
-               "Housekeeping", "Kamra Agent")
+               "Housekeeping", "Kamra Agent", "Night Auditor")
 def list_report_datasets(property: str):
 	"""Whitelisted datasets the current user may run on this property."""
 	assert_property_access(property)
@@ -749,7 +749,7 @@ def list_report_datasets(property: str):
 
 @frappe.whitelist()
 @require_roles("Front Desk", "Finance", "Hotel Admin", "Revenue Manager",
-               "Housekeeping", "Kamra Agent")
+               "Housekeeping", "Kamra Agent", "Night Auditor")
 def list_custom_reports(property: str):
 	"""Saved reports visible to this user on the property."""
 	assert_property_access(property)
@@ -796,7 +796,7 @@ def _assert_can_edit_doc(doc):
 
 @frappe.whitelist()
 @require_roles("Front Desk", "Finance", "Hotel Admin", "Revenue Manager",
-               "Housekeeping", "Kamra Agent")
+               "Housekeeping", "Kamra Agent", "Night Auditor")
 def get_custom_report(name: str, property: str | None = None):
 	"""Full saved definition for the builder."""
 	doc = _load_report(name, property)
@@ -827,7 +827,7 @@ def get_custom_report(name: str, property: str | None = None):
 
 @frappe.whitelist(methods=["POST"])
 @require_roles("Finance", "Hotel Admin", "System Manager", "Front Desk",
-               "Revenue Manager", "Housekeeping", "Kamra Agent")
+               "Revenue Manager", "Housekeeping", "Kamra Agent", "Night Auditor")
 def save_custom_report(
 	property: str,
 	title: str,
@@ -897,7 +897,7 @@ def save_custom_report(
 
 @frappe.whitelist(methods=["POST"])
 @require_roles("Finance", "Hotel Admin", "System Manager", "Front Desk",
-               "Revenue Manager", "Housekeeping", "Kamra Agent")
+               "Revenue Manager", "Housekeeping", "Kamra Agent", "Night Auditor")
 def delete_custom_report(name: str, property: str | None = None):
 	"""Delete a saved report the user can edit."""
 	doc = _load_report(name, property)
@@ -909,7 +909,7 @@ def delete_custom_report(name: str, property: str | None = None):
 
 @frappe.whitelist()
 @require_roles("Front Desk", "Finance", "Hotel Admin", "Revenue Manager",
-               "Housekeeping", "Kamra Agent")
+               "Housekeeping", "Kamra Agent", "Night Auditor")
 def run_custom_report(
 	property: str,
 	dataset: str | None = None,
@@ -971,7 +971,7 @@ def _filename(payload: dict, ext: str) -> str:
 
 @frappe.whitelist(methods=["POST"])
 @require_roles("Finance", "Hotel Admin", "System Manager", "Front Desk",
-               "Revenue Manager", "Housekeeping", "Kamra Agent")
+               "Revenue Manager", "Housekeeping", "Kamra Agent", "Night Auditor")
 def email_custom_report(
 	property: str,
 	recipients: str,
