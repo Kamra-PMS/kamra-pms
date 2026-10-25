@@ -168,9 +168,9 @@ Gemini, Groq, OpenRouter, Ollama, Azure, or Custom) → paste the key →
   your provider.
 - **Governed:** the model only calls Kamra's tools.
 - **Role-scoped:** tools match the signed-in user's roles.
-- **Demo playgrounds** (demo and nightly) wipe everything each night,
-  including this setting. Keep the key in the site's config instead and
-  the reset switches the agent back on for every property:
+- **Demo playgrounds** (demo and nightly) wipe their data every night,
+  but this setting and its key are kept. To have the agent on even on a
+  freshly built demo, also put the key in the site's config:
   `bench --site <site> set-config kamra_agent_api_key <key>` (optional
   `kamra_agent_model`, `kamra_agent_base_url`).
 - **Cards with actions:** under a reply, each stay the agent worked on

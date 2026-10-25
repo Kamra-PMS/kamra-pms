@@ -38,6 +38,11 @@ KEEP_USERS = {
 	*(spec["email"] for spec in USERS),
 }
 
+# Kept across resets: the Kamra Agent setup (provider, model, and the key,
+# which Frappe stores encrypted in __Auth, never wiped here). The demo
+# property is reseeded under the same name, so the row still matches it.
+KEEP_DOCTYPES = {"AI Assistant Settings"}
+
 # Core Frappe clutter that accumulates when someone treats the demo as
 # their hotel. Email Account is *not* in here; ops wires SMTP for us.
 CORE_WIPE = (
@@ -152,8 +157,9 @@ def reset(history: str | None = None) -> dict:
 
 
 def restore_agent_from_site_config() -> int:
-	"""Kamra Agent survives the nightly wipe: its key lives in the site's own
-	site_config.json, which the reset never touches.
+	"""A key kept in the site's own site_config.json switches Kamra Agent on
+	for every property after a reset, even on a fresh demo where nobody has
+	pasted one in Settings yet.
 
 	    bench --site <site> set-config kamra_agent_api_key <key>
 	    (optional) kamra_agent_model, kamra_agent_base_url
@@ -183,7 +189,7 @@ def restore_agent_from_site_config() -> int:
 def _wipe_kamra_doctypes() -> int:
 	rows = frappe.get_all(
 		"DocType",
-		filters={"module": "Kamra"},
+		filters={"module": "Kamra", "name": ("not in", list(KEEP_DOCTYPES))},
 		fields=["name", "istable", "issingle"],
 	)
 	# Children first so parent deletes don't fight leftover rows.

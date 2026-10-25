@@ -27,3 +27,12 @@ class DemoAgentKeyTestCase(AuditTestCase):
 			self.assertEqual(frappe.db.count("AI Assistant Settings", {"property": PROP_A}), 1)
 		finally:
 			frappe.conf.pop("kamra_agent_api_key", None)
+
+	def test_reset_keeps_the_agent_settings(self):
+		from kamra.scripts import reset_demo
+
+		kept = {r.name for r in frappe.get_all(
+			"DocType", filters={"module": "Kamra",
+			                    "name": ("not in", list(reset_demo.KEEP_DOCTYPES))})}
+		self.assertNotIn("AI Assistant Settings", kept)
+		self.assertIn("Reservation", kept)
