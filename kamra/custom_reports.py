@@ -1246,7 +1246,6 @@ def email_custom_report(
 	else:
 		content = _to_csv(meta)
 		fname = _filename(meta, "csv")
-		fmt = "csv"
 
 	title = meta.get("title") or "Kamra report"
 
