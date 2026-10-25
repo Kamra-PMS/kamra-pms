@@ -185,9 +185,16 @@ export default function Laundry() {
   const OrderCard = ({ o }: { o: LaundryOrder }) => (
     <li className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
       <div className="flex items-center gap-3">
-        <span className="text-2xl font-bold tabular-nums">{o.room_no}</span>
+        {/* house orders have no room: the label is the name, not the number */}
+        {o.order_type === "House" ? (
+          <Shirt className="size-7 shrink-0 text-indigo-500" aria-hidden />
+        ) : (
+          <span className="shrink-0 text-2xl font-bold tabular-nums">{o.room_no}</span>
+        )}
         <div className="min-w-0 flex-1">
-          <p className="truncate font-medium">{o.guest_name || o.name}</p>
+          <p className="truncate font-medium" title={o.house_label || o.guest_name || o.name}>
+            {o.order_type === "House" ? o.house_label || t("House") : o.guest_name || o.name}
+          </p>
           <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
             <Badge tone={STATUS_TONE[o.status] || "zinc"}>{t(o.status)}</Badge>
             {o.order_type === "House" && <Badge tone="indigo">{t("house")}</Badge>}
@@ -208,7 +215,7 @@ export default function Laundry() {
           </div>
         </div>
         {o.total > 0 && (
-          <span className="text-sm font-semibold tabular-nums">
+          <span className="shrink-0 self-start text-sm font-semibold tabular-nums">
             {cur()}{inr(o.total)}
           </span>
         )}
@@ -392,7 +399,7 @@ export default function Laundry() {
         )}
       </div>
 
-      <div className="flex gap-1 rounded-xl bg-zinc-100 p-1 text-sm font-medium">
+      <div className="inline-flex gap-1 rounded-xl bg-zinc-100 p-1 text-sm font-medium">
         {(
           [
             ["board", t("Board")],
@@ -403,7 +410,7 @@ export default function Laundry() {
           <button
             key={id}
             className={cn(
-              "flex-1 rounded-lg px-3 py-1.5 transition",
+              "rounded-lg px-4 py-1.5 transition",
               tab === id
                 ? "bg-white text-zinc-900 shadow-sm"
                 : "text-zinc-500 hover:text-zinc-700",
