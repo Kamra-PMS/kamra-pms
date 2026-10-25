@@ -17,6 +17,7 @@ desk, or disclosed a security problem responsibly.
 
 | Reporter | What it led to |
 | --- | --- |
+| [@lhertig](https://github.com/lhertig) | Property-currency folio payments (#341), `max_total_occupants` on mixed adult/child bookings (#342), pre-arrival advance refunds releasing Deposit and reducing `advance_paid` (#343), concurrent booking `tabSeries` deadlock retries (#344) |
 | [@faresalslahi-collab](https://github.com/faresalslahi-collab) (Sarawat Park Hotel & Resort) | One-screen walk-in (#97), the Saudi Arabia pack and ZATCA e-invoicing; Arab-world dial codes (#98); ERPNext Purchase Invoices working alongside Kamra's kitchen ledger (#131) |
 | [@atomic-glitch](https://github.com/atomic-glitch) | Housekeeping Room Board and role checks (#99), room change from the reservation and GRC (#113), deposits before arrival (#114) |
 | [@ali-qa-sudo](https://github.com/ali-qa-sudo) | Role-aware Walk-in / New booking buttons (#120) |
