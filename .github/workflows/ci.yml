@@ -35,6 +35,10 @@ jobs:
         # a wrong base here silently breaks the /kamra install.
         run: grep -q "/assets/kamra/frontend/assets/" kamra/public/frontend/index.html
 
+      - name: Check international phone handling
+        run: npm run phone:check
+        working-directory: frontend
+
   evals:
     name: Backend eval harness
     runs-on: ubuntu-latest
