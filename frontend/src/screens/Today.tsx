@@ -507,6 +507,13 @@ export default function Today() {
           <div className="mt-0.5 truncate pe-6 text-[9px] font-medium uppercase tracking-wide opacity-80">
             {occupied ? t("Occupied") : arriving ? t("Arriving") : t(room.housekeeping_status)}
           </div>
+          {/* ponytail: glance balance; drawer still has full money */}
+          {stay?.balance_due != null && Number(stay.balance_due) > 0 && (
+            <div className="mt-0.5 truncate pe-6 text-[9px] font-semibold tabular-nums">
+              {cur()}
+              {inr0(stay.balance_due)} {t("due")}
+            </div>
+          )}
         </button>
         {(occupied || room.housekeeping_status === "Clean") && (
           <RoomMediaButton room={room.name} />
@@ -530,6 +537,16 @@ export default function Today() {
                   }}
                 >
                   {t("Check out")}
+                </button>
+                <button
+                  role="menuitem"
+                  className={cn(item, "text-zinc-700")}
+                  onClick={() => {
+                    setRoomMenu(null)
+                    navigate(`/reservations/${stay.name}`)
+                  }}
+                >
+                  {t("Extend stay")}
                 </button>
                 <button
                   role="menuitem"
