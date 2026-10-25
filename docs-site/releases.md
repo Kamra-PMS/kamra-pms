@@ -9,26 +9,55 @@ Install or upgrade: [Frappe Cloud Marketplace](/self-hosting/frappe-cloud)
 or [self-hosting](/self-hosting/). After upgrade, open
 **Admin → System Health** to confirm the site version.
 
-## Current stable: v2.6.18
+## Current stable: v2.6.20
 
-Released 20 Oct 2026.
-[GitHub release](https://github.com/Kamra-PMS/kamra-pms/releases/tag/v2.6.18).
+Released 24 Oct 2026.
+[GitHub release](https://github.com/Kamra-PMS/kamra-pms/releases/tag/v2.6.20).
 
-- **Guided check-in and check-out** - step by step screens from every
-  Check in and Check out button; required steps are enforced and the
-  check-out settles, refunds and invoices without dead ends.
-- **Villa party rules** - extra guests, child ages, group size and
-  holiday seasons.
-- **Rooms** - a Rooms screen with a room panel, insights and a
-  configurable Today; tape chart bars open a stay panel.
-- **POS** - cancel or void by kitchen state, an orders list and a guest
-  panel; kitchen printers are seeded with their status.
-- **Agents** - a Frappe API key works on `/mcp` for unattended agents.
-- **Fixes** - petty cash stays per property, desk lists use the full
-  width, Today no longer scrolls sideways on phones or in Arabic, and
-  the Frappe Cloud marketplace audit passes.
+- **Check in now, finish later** - only the room has to be done before
+  check-in. Other required steps can be finished after the guest is in,
+  and the desk sees a reminder to complete them.
+- **Guest photos and ID images** - take a webcam photo and attach ID and
+  address images on the guest profile.
+- **Night audit recovery** - a stuck business date recovers, and the
+  printable audit pack can be rebuilt from the desk.
+- **Fixes** - a waived security deposit no longer blocks check-in.
 
 ## Recent stables
+
+### v2.6.19
+
+Released 21 Oct 2026.
+
+- **POS till** - menu first with a category rail, the cart above the
+  bill, an open-bills popup, and a settle sheet that can charge any bill
+  to a room. **Order history** covers up to a year of bills with search,
+  filters, totals and CSV export.
+- **Guest documents** - ID type, number, issue and expiry dates, scans
+  and address proof on the guest profile; check-in warns on expired,
+  expiring or already-used documents.
+- **Alerts** - an on-screen alert and sound for new bookings, service
+  tickets and laundry orders made by someone else, with separate
+  switches for alerts, sound and the POS and kitchen sound.
+- **Tills** - several tills per property, a cash office, and bill or KOT
+  printing per station.
+- **Setup** - quick or guided property setup with modules, outlets and
+  tills, and a finish-setup checklist.
+- **Rates** - a rate calendar, and a rates panel on bookings with BAR
+  shown.
+- **Guest requests** - assignee, who solved it, a timeline, filters and a
+  deeper SLA view.
+- **Config** - Reason Codes, Transaction Codes, and menu lists for
+  allergens, stations and courses.
+- The build version shows in the navigation menu and on the login
+  screen.
+
+### v2.6.18
+
+Released 20 Oct 2026. Guided check-in and check-out, villa party rules
+(extra guests, child ages, group size, holiday seasons), the Rooms screen
+with insights and a configurable Today, POS cancel and void by kitchen
+state, and a Frappe API key on `/mcp` for unattended agents.
 
 ### v2.6.17
 
@@ -109,7 +138,7 @@ See [Going back (downgrade)](/quickstart#going-back-downgrade).
 
 ## Docs versioning
 
-The manual is versioned from **v2.6.17** onward:
+The manual is versioned from **v2.6.16** onward:
 
 | URL | What it is |
 | --- | --- |
@@ -118,7 +147,8 @@ The manual is versioned from **v2.6.17** onward:
 
 Use the **version** control in the top nav to switch. Older snapshots show a
 banner linking back to latest. Each new GitHub Release freezes a copy
-automatically (see `.github/workflows/docs.yml`).
+automatically: the release workflow starts `.github/workflows/docs.yml`,
+which builds the snapshot and lists it in the switcher.
 
 How maintainers cut releases: [`RELEASING.md`](https://github.com/Kamra-PMS/kamra-pms/blob/main/RELEASING.md)
 in the repo. How the pieces fit together: [How Kamra works](/how-it-works).

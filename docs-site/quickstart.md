@@ -56,8 +56,8 @@ curl -fsSL https://raw.githubusercontent.com/Kamra-PMS/kamra-pms/main/deploy/ins
 ```
 
 The installer pulls `:stable`, works out which release that is (say
-`v2.6.16`) and **pins** it, so a restart never moves you to a new version
- -  only `install.sh update` does. Pick a tag with `KAMRA_TAG=v2.6.16`
+`v2.6.20`) and **pins** it, so a restart never moves you to a new version
+ -  only `install.sh update` does. Pick a tag with `KAMRA_TAG=v2.6.20`
 (or `nightly` for testing).
 
 ::: warning Registry access
@@ -136,11 +136,11 @@ in `sites/<site>/private/backups`) and **stops if the backup fails**. Then:
 
 - **Build installs** rebuild the image from the branch recorded in
   `/opt/kamra/apps.json` (fetching the latest Kamra code). Pin a release
-  with `sudo KAMRA_BRANCH=v2.6.4 /opt/kamra/install.sh update`. 10-30
+  with `sudo KAMRA_BRANCH=v2.6.20 /opt/kamra/install.sh update`. 10-30
   minutes; the site stays up until the containers are recreated.
 - **Pull installs** pull the newest `:stable`, pin the release it resolves
   to, and recreate - a few minutes. Move to a specific release with
-  `sudo KAMRA_TAG=v2.6.16 /opt/kamra/install.sh update`.
+  `sudo KAMRA_TAG=v2.6.20 /opt/kamra/install.sh update`.
 
 Either way it then runs `bench migrate` on every site.
 
@@ -154,10 +154,10 @@ the same update command:
 
 ```bash
 # Pull install - example: leave a trial of a newer release
-sudo KAMRA_TAG=v2.6.16 /opt/kamra/install.sh update
+sudo KAMRA_TAG=v2.6.19 /opt/kamra/install.sh update
 
 # Build install - pin the previous release branch/tag
-sudo KAMRA_BRANCH=v2.6.16 /opt/kamra/install.sh update
+sudo KAMRA_BRANCH=v2.6.19 /opt/kamra/install.sh update
 ```
 
 Use the exact `vX.Y.Z` you were on before (see
