@@ -313,11 +313,12 @@ of it. Read-only.
 
 Endpoint: `kamra.rooms.room_history`.
 
-### `room_insights(days)`
+### `room_insights(days, from_date, to_date)`
 
 Per-room numbers for the last 7, 30, 90, 180 or 365 nights: room
 nights and occupancy, posted room revenue, out-of-service nights and
-average cleaning time, with the most and least used rooms. Read-only.
+average cleaning time, with the most and least used rooms. Or pass
+from_date / to_date (up to 365 days) instead of days. Read-only.
 
 Endpoint: `kamra.rooms.room_insights`.
 
@@ -558,10 +559,10 @@ required and goes on the record; refused once money was taken.
 Endpoint: `kamra.api.waive_security_deposit`.
 Mutating - logged to the activity ledger.
 
-### `cashier_shift_report(business_date)`
+### `cashier_shift_report(business_date, to_date)`
 
-What each cashier took on a business date, by payment mode.
-Read-only.
+What each cashier took on a business date (or business_date to
+to_date), by payment mode. Read-only.
 
 Endpoint: `kamra.cashier.shift_report`.
 
@@ -648,11 +649,12 @@ as a crisp shift briefing - never change the figures.
 
 Endpoint: `kamra.api.position_briefing`.
 
-### `manager_flash(date)`
+### `manager_flash(date, from_date)`
 
 The daily flash: yesterday's occupancy, ADR, RevPAR and revenue,
 month to date, today's movement, collections by mode and the 7-day
-outlook. date YYYY-MM-DD. Read-only.
+outlook. date YYYY-MM-DD; pass from_date for a range ending on date.
+Read-only.
 
 Endpoint: `kamra.reports.manager_flash`.
 
@@ -1083,11 +1085,11 @@ outlet_dashboard or wastage_report to get an outlet id. Read-only.
 
 Endpoint: `kamra.pos.outlets`.
 
-### `outlet_dashboard(outlet, date)`
+### `outlet_dashboard(outlet, date, to_date)`
 
 One outlet's day: sales, bills, covers, average bill, by order type
 and tender, open bills, NC / voids / cancellations, kitchen times.
-Read-only.
+Pass to_date for a range starting on date. Read-only.
 
 Endpoint: `kamra.pos.outlet_dashboard`.
 

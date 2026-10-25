@@ -33,6 +33,7 @@ export default function CashierShiftReport() {
   const { t } = useT()
   const [params, setParams] = useSearchParams()
   const [date, setDate] = useState("")
+  const [toDate, setToDate] = useState("") // "" = the one business date
   const [report, setReport] = useState<{
     business_date: string
     sessions: SessionRow[]
@@ -60,6 +61,7 @@ export default function CashierShiftReport() {
       }>("kamra.cashier.shift_report", {
         property: getCurrentProperty(),
         business_date: date || undefined,
+        to_date: toDate || undefined,
       })
       setReport(out)
       if (!date) setDate(out.business_date)
@@ -83,7 +85,7 @@ export default function CashierShiftReport() {
     } catch (e) {
       setErr(serverError(e))
     }
-  }, [date, selected])
+  }, [date, toDate, selected])
 
   useEffect(() => {
     void load()
@@ -124,6 +126,15 @@ export default function CashierShiftReport() {
             className="rounded-lg border border-zinc-300 px-2 py-1.5 text-sm"
             value={date}
             onChange={(e) => setDate(e.target.value)}
+          />
+          <span className="text-sm text-zinc-400">→</span>
+          <input
+            type="date"
+            aria-label={t("To")}
+            className="rounded-lg border border-zinc-300 px-2 py-1.5 text-sm"
+            value={toDate || date}
+            min={date}
+            onChange={(e) => setToDate(e.target.value === date ? "" : e.target.value)}
           />
         </div>
       </div>

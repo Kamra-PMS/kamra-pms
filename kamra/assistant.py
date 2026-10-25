@@ -254,12 +254,15 @@ EXTRA_TOOLS = {
 	"manager_flash": (
 		"reports.manager_flash",
 		"The daily flash: yesterday's occupancy, ADR, RevPAR and revenue, month "
-		"to date, today's movement, collections by mode and the 7-day outlook.",
-		{"date": {"type": "string"}}, True, False),
+		"to date, today's movement, collections by mode and the 7-day outlook. "
+		"Pass from_date for a range ending on date.",
+		{"date": {"type": "string"}, "from_date": {"type": "string"}}, True, False),
 	"cashier_shift_report": (
 		"cashier.shift_report",
-		"What each cashier took on a business date, by payment mode.",
-		{"business_date": {"type": "string"}}, True, False),
+		"What each cashier took on a business date (or business_date to "
+		"to_date), by payment mode.",
+		{"business_date": {"type": "string"}, "to_date": {"type": "string"}},
+		True, False),
 	"voids_allowances_report": (
 		"reports.void_allowance_report",
 		"Every void and allowance in a date range, with who did it and why.",
@@ -279,8 +282,10 @@ EXTRA_TOOLS = {
 	"outlet_dashboard": (
 		"pos.outlet_dashboard",
 		"One outlet's day: sales, bills, covers, average bill, by order type "
-		"and tender, open bills, NC / voids / cancellations, kitchen times.",
-		{"outlet": {"type": "string"}, "date": {"type": "string"}},
+		"and tender, open bills, NC / voids / cancellations, kitchen times. "
+		"Pass to_date for a range starting on date.",
+		{"outlet": {"type": "string"}, "date": {"type": "string"},
+		 "to_date": {"type": "string"}},
 		False, False),
 	"wastage_report": (
 		"inventory.wastage_report",

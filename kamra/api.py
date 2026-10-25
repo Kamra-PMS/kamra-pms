@@ -698,7 +698,8 @@ def registration_card(reservation: str):
 
 @frappe.whitelist()
 @require_roles("Finance", "Front Desk", "Night Auditor", "Kamra Agent")
-def cash_summary(property: str, date: str | None = None):
+def cash_summary(property: str, date: str | None = None,
+                 to_date: str | None = None):
 	"""Cashier reconciliation: what the system says was collected today,
 	per payment mode - the number the drawer must match at shift close.
 
@@ -708,7 +709,9 @@ def cash_summary(property: str, date: str | None = None):
 	date = date or get_business_date(property)
 	try:
 		from kamra.cashier import cash_summary_v2
-		return cash_summary_v2(property, date)
+		return cash_summary_v2(property, date, to_date)
+	except frappe.ValidationError:
+		raise
 	except Exception:
 		pass
 	rows = frappe.db.sql(
@@ -716,10 +719,10 @@ def cash_summary(property: str, date: str | None = None):
 		SELECT fp.mode, COUNT(*) AS txns, COALESCE(SUM(fp.amount), 0) AS total
 		FROM `tabFolio Payment` fp
 		JOIN `tabFolio` f ON fp.parent = f.name
-		WHERE f.property = %(property)s AND fp.posting_date = %(date)s
+		WHERE f.property = %(property)s AND fp.posting_date BETWEEN %(date)s AND %(to)s
 		GROUP BY fp.mode ORDER BY total DESC
 		""",
-		{"property": property, "date": date}, as_dict=True,
+		{"property": property, "date": date, "to": to_date or date}, as_dict=True,
 	)
 	return {"date": date, "modes": rows,
 	        "grand_total": float(sum(r.total for r in rows)),

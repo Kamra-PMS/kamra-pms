@@ -1633,8 +1633,10 @@ TOOLS: tuple[ToolSpec, ...] = (
 		"rooms.room_insights",
 		"""Per-room numbers for the last 7, 30, 90, 180 or 365 nights: room
 		nights and occupancy, posted room revenue, out-of-service nights and
-		average cleaning time, with the most and least used rooms. Read-only.""",
-		{"days": _p("integer")},
+		average cleaning time, with the most and least used rooms. Or pass
+		from_date / to_date (up to 365 days) instead of days. Read-only.""",
+		{"days": _p("integer"), "from_date": _p("string", format="date"),
+		 "to_date": _p("string", format="date")},
 		property=True,
 	),
 	_t(
@@ -1642,17 +1644,19 @@ TOOLS: tuple[ToolSpec, ...] = (
 		"reports.manager_flash",
 		"""The daily flash: yesterday's occupancy, ADR, RevPAR and revenue,
 		month to date, today's movement, collections by mode and the 7-day
-		outlook. date YYYY-MM-DD. Read-only.""",
-		{"date": _p("string", format="date")},
+		outlook. date YYYY-MM-DD; pass from_date for a range ending on date.
+		Read-only.""",
+		{"date": _p("string", format="date"), "from_date": _p("string", format="date")},
 		property=True,
 		group="Briefings",
 	),
 	_t(
 		"cashier_shift_report",
 		"cashier.shift_report",
-		"""What each cashier took on a business date, by payment mode.
-		Read-only.""",
-		{"business_date": _p("string", format="date")},
+		"""What each cashier took on a business date (or business_date to
+		to_date), by payment mode. Read-only.""",
+		{"business_date": _p("string", format="date"),
+		 "to_date": _p("string", format="date")},
 		property=True,
 		group="Billing",
 	),
@@ -1692,8 +1696,9 @@ TOOLS: tuple[ToolSpec, ...] = (
 		"pos.outlet_dashboard",
 		"""One outlet's day: sales, bills, covers, average bill, by order type
 		and tender, open bills, NC / voids / cancellations, kitchen times.
-		Read-only.""",
-		{"outlet": _p("string"), "date": _p("string", format="date")},
+		Pass to_date for a range starting on date. Read-only.""",
+		{"outlet": _p("string"), "date": _p("string", format="date"),
+		 "to_date": _p("string", format="date")},
 		required=("outlet",),
 		group="F&B",
 	),

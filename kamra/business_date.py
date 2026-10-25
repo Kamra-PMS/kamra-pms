@@ -35,3 +35,20 @@ def advance_business_date(property: str, from_date: str | None = None) -> str:
 	frappe.db.set_value("Property", property, "business_date", nxt,
 	                    update_modified=False)
 	return str(nxt)
+
+
+MAX_REPORT_DAYS = 92
+
+
+def report_range_end(start, end=None) -> str:
+	"""The last day of a report's date range: `end`, or `start` for a
+	one-day report. Refuses a backwards or longer-than-92-day range."""
+	from frappe.utils import date_diff
+
+	end = str(end or start)
+	span = date_diff(end, start)
+	if span < 0:
+		frappe.throw("The end date is before the start date.")
+	if span >= MAX_REPORT_DAYS:
+		frappe.throw(f"Pick a range of {MAX_REPORT_DAYS} days or less.")
+	return end

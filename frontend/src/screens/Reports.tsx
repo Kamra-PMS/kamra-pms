@@ -83,6 +83,7 @@ interface Day {
 
 interface Flash {
   date: string
+  from_date: string
   total_rooms: number
   today: Day | null
   mtd: Day & { occupancy_pct: number }
@@ -161,6 +162,7 @@ export default function Reports({ initialTab = "saved" }: { initialTab?: Tab }) 
 
   // Manager flash
   const [flashDate, setFlashDate] = useState(todayISO)
+  const [flashFrom, setFlashFrom] = useState("") // "" = the one day
   const [flash, setFlash] = useState<Flash | null>(null)
 
   const property = getCurrentProperty()
@@ -199,8 +201,14 @@ export default function Reports({ initialTab = "saved" }: { initialTab?: Tab }) 
 
   useEffect(() => {
     if (tab !== "flash") return
-    call<Flash>("kamra.reports.manager_flash", { property, date: flashDate }).then(setFlash)
-  }, [tab, flashDate, property])
+    call<Flash>("kamra.reports.manager_flash", {
+      property,
+      date: flashDate,
+      from_date: flashFrom && flashFrom < flashDate ? flashFrom : undefined,
+    })
+      .then(setFlash)
+      .catch((e) => setError((e as Error).message))
+  }, [tab, flashDate, flashFrom, property])
 
   function resetBuilder(ds?: Dataset) {
     const d = ds || datasets[0]
@@ -996,6 +1004,8 @@ export default function Reports({ initialTab = "saved" }: { initialTab?: Tab }) 
           d={flash}
           date={flashDate}
           setDate={setFlashDate}
+          from={flashFrom}
+          setFrom={setFlashFrom}
           t={t}
         />
       )}
@@ -1007,15 +1017,27 @@ function FlashPanel(props: {
   d: Flash | null
   date: string
   setDate: (v: string) => void
+  from: string
+  setFrom: (v: string) => void
   t: (k: string, vars?: Record<string, string | number>) => string
 }) {
-  const { d, date, setDate, t } = props
+  const { d, date, setDate, from, setFrom, t } = props
   if (!d) return <p className="py-10 text-center text-zinc-400">{t("Loading…")}</p>
   const todayData = d.today
+  const ranged = d.from_date !== d.date
 
   return (
     <div>
       <div className="mb-4 flex justify-end gap-2 print:hidden">
+        <input
+          type="date"
+          aria-label={t("From")}
+          className="rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-sm"
+          value={from || date}
+          max={date}
+          onChange={(e) => setFrom(e.target.value === date ? "" : e.target.value)}
+        />
+        <span className="self-center text-sm text-zinc-400">→</span>
         <input
           type="date"
           aria-label={t("Report date")}
@@ -1044,7 +1066,7 @@ function FlashPanel(props: {
           sub={t("total spend / guest · {pax} pax", { pax: todayData?.pax ?? 0 })}
         />
         <Stat
-          label={t("Revenue (day)")}
+          label={ranged ? t("Revenue") : t("Revenue (day)")}
           value={`${cur()}${inr(todayData?.total_revenue ?? 0)}`}
           sub={t("room {room} · F&B {fnb} · other {other}", {
             room: `${cur()}${inr(todayData?.room_revenue ?? 0)}`,
@@ -1056,7 +1078,7 @@ function FlashPanel(props: {
       <div className="grid gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle>{t("Last 14 days")}</CardTitle>
+            <CardTitle>{ranged ? `${d.from_date} → ${d.date}` : t("Last 14 days")}</CardTitle>
           </CardHeader>
           <CardContent className="overflow-x-auto">
             <table className="w-full text-sm">
