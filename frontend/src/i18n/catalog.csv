@@ -537,6 +537,7 @@ Acknowledged by {who} at {when}: {why},Acknowledged by {who} at {when}: {why},أ
 Acknowledged check,Acknowledged check,الفحص المُقَرّ,Comprobación revisada,,,translated
 Acting as you,Acting as you,يعمل بهويتك,Actuando con su identidad,screens/Assistant.tsx,,translated
 Action,Action,الإجراء,Acción,screens/VoidAllowanceReport.tsx,,translated
+action|Open,action|Open,فتح,Abrir,screens/BanquetFunction.tsx; screens/Reports.tsx; screens/Tickets.tsx,,translated
 Actions,Actions,إجراءات,Acciones,screens/FolioView.tsx; screens/InHouse.tsx; screens/Reports.tsx; screens/pos/OrderHistory.tsx,,translated
 Active,Active,نشط,Activo,screens/settings/AccessPages.tsx; screens/settings/WebhooksPage.tsx,,translated
 Active {n} days ago,Active {n} days ago,نشط قبل {n} أيام,Activo hace {n} días,,n,translated
@@ -1303,9 +1304,9 @@ Choose the {v0},Choose the {v0},اختر {v0},Seleccione {v0},screens/banquet/Me
 choose the dishes →,choose the dishes →,اختر الأطباق ←,seleccionar los platos →,screens/BanquetFunction.tsx,,translated
 "Choose the dishes, or cost the services","Choose the dishes, or cost the services",اختر الأطباق، أو حدّد تكلفة الخدمات,Seleccione los platos o defina el costo de los servicios,,,translated
 Choose the menu,Choose the menu,اختر القائمة,Seleccione el menú,screens/banquet/MenuComposer.tsx,,translated
-Choose what Today shows,Choose what Today shows,اختر ما تعرضه صفحة اليوم,Elige lo que muestra Hoy,screens/Today.tsx,,translated
+Choose what Today shows,Choose what Today shows,اختر ما تعرضه صفحة اليوم,Elija lo que muestra Hoy,screens/Today.tsx,,translated
 Choose which columns this table shows,Choose which columns this table shows,اختر الأعمدة المعروضة في هذا الجدول,Elija qué columnas muestra esta tabla,components/ResourceScreen.tsx; screens/Guests.tsx,,translated
-Choose…,Choose…,اختر…,Elige…,components/CheckInDialog.tsx; screens/BanquetCatalogue.tsx,,translated
+Choose…,Choose…,اختر…,Elija…,components/CheckInDialog.tsx; screens/BanquetCatalogue.tsx,,translated
 City,City,المدينة,Ciudad,screens/BookingEngine.tsx; screens/PublicCheckin.tsx; screens/Setup.tsx,,translated
 City ledger,City ledger,دفتر المدينة,Cuentas por cobrar a empresas,screens/CityLedgerPayment.tsx,,translated
 City ledger / AR summary,City ledger / AR summary,ملخص دفتر المدينة / الذمم المدينة,Resumen de cuentas por cobrar a empresas,,,translated
@@ -1883,7 +1884,7 @@ Enquiry,Enquiry,استفسار,Consulta,,,translated
 "Enter 1-99%, or a {cur} amount under the line's {cur}{amount} (before GST).","Enter 1-99%, or a {cur} amount under the line's {cur}{amount} (before GST).",أدخل 1-99٪، أو مبلغاً بـ {cur} أقل من {cur}{amount} للبند (قبل GST).,"Ingrese un porcentaje entre 1 y 99 %, o un importe en {cur} inferior al total de la línea ({cur}{amount}, antes del GST).",,cur amount,translated
 Enter a rate,Enter a rate,إدخال سعر,Introducir una tarifa,components/RoomChangeDialog.tsx,,translated
 Enter the amount received.,Enter the amount received.,أدخل المبلغ المستلم.,Indique el importe recibido.,,,translated
-Enter your PIN to continue,Enter your PIN to continue,أدخل رمزك للمتابعة,Ingresa tu PIN para continuar,components/PinPad.tsx,,translated
+Enter your PIN to continue,Enter your PIN to continue,أدخل رمزك للمتابعة,Ingrese su PIN para continuar,components/PinPad.tsx,,translated
 Enterprise,Enterprise,المؤسسات,Empresarial,,,translated
 Entertainment,Entertainment,الترفيه,Entretenimiento,,,translated
 Entire place,Entire place,المكان بالكامل,Alojamiento completo,screens/Setup.tsx,,translated
@@ -1900,7 +1901,7 @@ Error,Error,خطأ,Error,,,translated
 es,es,,s,screens/banquet/Economics.tsx; screens/banquet/MenuComposer.tsx,,needs_translation
 ETA,ETA,وقت الوصول المتوقع,Hora prevista de llegada,screens/ReservationDetail.tsx,,translated
 ETA {eta},ETA {eta},الوصول المتوقع {eta},ETA {eta},components/RoomDrawer.tsx,eta,translated
-Evening,Evening,مساء,Noche,,,translated
+Evening,Evening,مساء,Vespertino,,,translated
 Event,Event,الفعالية,Evento,components/LinkedRecords.tsx; screens/BanquetRegisters.tsx,,translated
 Event / Wedding,Event / Wedding,فعالية / حفل زفاف,Evento / boda,components/BookingDialog.tsx,,translated
 Event date,Event date,تاريخ الفعالية,Fecha del evento,,,translated
@@ -1912,7 +1913,7 @@ Event type,Event type,نوع المناسبة,Tipo de evento,screens/Banquet.tsx
 Events,Events,الفعاليات,Eventos,screens/settings/WebhooksPage.tsx,,translated
 Every action is recorded in the Activity Log.,Every action is recorded in the Activity Log.,يُسجَّل كل إجراء في سجل النشاط.,Cada acción se registra en el Registro de actividad.,components/CommandPalette.tsx,,translated
 "Every action on the property, newest first - who did it and what changed.","Every action on the property, newest first - who did it and what changed.",كل إجراء في المنشأة، الأحدث أولا - من قام به وما الذي تغير.,"Todas las acciones del alojamiento, de la más reciente a la más antigua: quién las realizó y qué cambió.",screens/Agents.tsx,,translated
-"Every app included, plus the AI, channels, payments, accounting and country packs you can plug in.","Every app included, plus the AI, channels, payments, accounting and country packs you can plug in.",كل التطبيقات مشمولة، بالإضافة إلى الذكاء الاصطناعي والقنوات والمدفوعات والمحاسبة وحزم الدول التي يمكنك توصيلها.,"Todas las aplicaciones incluidas, además de los paquetes de IA, canales, pagos, contabilidad y países que puedes conectar.",screens/Marketplace.tsx,,translated
+"Every app included, plus the AI, channels, payments, accounting and country packs you can plug in.","Every app included, plus the AI, channels, payments, accounting and country packs you can plug in.",كل التطبيقات مشمولة، بالإضافة إلى الذكاء الاصطناعي والقنوات والمدفوعات والمحاسبة وحزم الدول التي يمكنك توصيلها.,"Todas las aplicaciones incluidas, además de los paquetes de IA, canales, pagos, contabilidad y países que puede conectar.",screens/Marketplace.tsx,,translated
 Every arrival for this day already has a room.,Every arrival for this day already has a room.,كل وصول لهذا اليوم لديه غرفة بالفعل.,Cada llegada para este día ya tiene una habitación.,screens/TapeChart.tsx,,translated
 Every arrival is checked in.,Every arrival is checked in.,كل الواصلين سجّلوا الدخول.,Todas las llegadas tienen su entrada registrada.,screens/EndOfDayWizard.tsx,,translated
 Every bill is settled. Clean floor.,Every bill is settled. Clean floor.,كل الفواتير مسددة. لا شيء معلق.,Todas las cuentas están liquidadas.,screens/PosDashboard.tsx,,translated
@@ -1947,7 +1948,7 @@ Everything came back,Everything came back,عاد كل شيء,Todo volvió,screen
 "Everything else starts at sensible defaults. You will land on a Finish setup list: rooms and rates, the booking page, outlets, tills and your team.","Everything else starts at sensible defaults. You will land on a Finish setup list: rooms and rates, the booking page, outlets, tills and your team.",كل الإعدادات الأخرى تبدأ بقيم افتراضية مناسبة. ستصل إلى قائمة إكمال الإعداد: الغرف والأسعار، وصفحة الحجز، والمنافذ، والصناديق، وفريقك.,"El resto comienza con valores predeterminados razonables. Después verá una lista de configuración pendiente: habitaciones y tarifas, la página de reservas, puntos de venta, cajas y su equipo.",screens/Setup.tsx,,translated
 Everything except liquor,Everything except liquor,كل شيء عدا الكحول,Todo excepto bebidas alcohólicas,,,translated
 "Everything held about this guest, for a data-access request.","Everything held about this guest, for a data-access request.",كل البيانات المحفوظة عن هذا الضيف، لطلب الاطلاع على البيانات.,"Toda la información del huésped, para una solicitud de acceso a datos.",screens/GuestJourney.tsx,,translated
-"Everything Kamra does, one room at a time. Pick where you want to work.","Everything Kamra does, one room at a time. Pick where you want to work.",كل ما تفعله كامرا، غرفة بغرفة. اختر أين تريد العمل.,"Todo lo que hace Kamra, una habitación a la vez. Elige dónde quieres trabajar.",screens/AppLauncher.tsx,,translated
+"Everything Kamra does, one room at a time. Pick where you want to work.","Everything Kamra does, one room at a time. Pick where you want to work.",كل ما تفعله كامرا، غرفة بغرفة. اختر أين تريد العمل.,"Todo lo que hace Kamra, una habitación a la vez. Elija dónde quiere trabajar.",screens/AppLauncher.tsx,,translated
 Everything required is done. Check the guest in.,Everything required is done. Check the guest in.,تم كل ما هو مطلوب. سجل وصول الضيف.,Todo lo necesario está hecho. Registre la entrada del huésped.,,,translated
 "Everything that happened on the property, by people and by AI.","Everything that happened on the property, by people and by AI.",كل ما حدث في العقار، من الموظفين ومن الذكاء الاصطناعي.,"Todas las acciones realizadas en el alojamiento, por personas y por IA.",screens/Activity.tsx,,translated
 "Everything that isn't food: AV, decor, entertainment, furniture, staffing, bar.","Everything that isn't food: AV, decor, entertainment, furniture, staffing, bar.",كل ما ليس طعاما: الصوت والصورة، والديكور، والترفيه، والأثاث، والطاقم، والبار.,"Todo lo que no es comida: audiovisuales, decoración, entretenimiento, mobiliario, personal y bar.",screens/BanquetCatalogue.tsx,,translated
@@ -2205,7 +2206,7 @@ generates fake payment links for demos,generates fake payment links for demos,ي
 Generating…,Generating…,جارٍ الإنشاء…,Generando…,screens/Developers.tsx,,translated
 Generic CSV,Generic CSV,CSV عام,CSV genérico,,,translated
 German,German,ألماني,Alemana,,,translated
-Get your own Kamra →,Get your own Kamra →,احصل على كامرا الخاص بك ←,Consigue tu propia Kamra →,AppShell.tsx,,translated
+Get your own Kamra →,Get your own Kamra →,احصل على كامرا الخاص بك ←,Consiga su propio Kamra →,AppShell.tsx,,translated
 Getting guests checked in before they reach the desk.,Getting guests checked in before they reach the desk.,تسجيل وصول الضيوف قبل وصولهم إلى الاستقبال.,Registro previo de huéspedes antes de su llegada a recepción.,,,translated
 getting started,getting started,البدء,primeros pasos,,,translated
 GitHub releases,GitHub releases,إصدارات GitHub,Lanzamientos de GitHub,screens/SystemHealth.tsx,,translated
@@ -2476,7 +2477,7 @@ In {n} days,In {n} days,خلال {n} أيام,En {n} días,screens/Today.tsx,n,t
 In / out,In / out,دخول / خروج,Entrada/salida,screens/FolioView.tsx,,translated
 In balance,In balance,متوازن,Cuadrado,,,translated
 "In Claude, set write tools to Needs approval as well: Kamra marks every tool as read-only or as making changes, and the destructive ones (cancel, void, check-out, night audit) separately.","In Claude, set write tools to Needs approval as well: Kamra marks every tool as read-only or as making changes, and the destructive ones (cancel, void, check-out, night audit) separately.",في Claude، اضبط أدوات الكتابة على يحتاج موافقة أيضا: يصنف Kamra كل أداة كقراءة فقط أو كأداة تُجري تغييرات، والأدوات الحساسة (الإلغاء، الإبطال، تسجيل المغادرة، تدقيق الليل) بشكل منفصل.,"En Claude, configure también las herramientas de escritura como Needs approval: Kamra marca cada herramienta como de solo lectura o como que realiza cambios, y las destructivas (cancelar, anular, salida, auditoría nocturna) por separado.",screens/settings/McpAccessPage.tsx,,translated
-In hand,In hand,في اليد,Efectivo disponible,screens/Laundry.tsx,,translated
+In hand,In hand,بحوزتنا,En custodia,screens/Laundry.tsx,,translated
 In hand (,In hand (,في العهدة (,En custodia (,screens/HkLaundry.tsx,,translated
 in house,in house,مقيم,alojado,components/RoomDrawer.tsx,,translated
 In house,In house,داخل الفندق,Huéspedes alojados,screens/Dashboard.tsx,,translated
@@ -2806,7 +2807,7 @@ Manage Users,Manage Users,إدارة المستخدمين,Administrar usuarios,,
 Managed on their own screens,Managed on their own screens,تُدار على شاشاتها الخاصة,Gestionado en sus propias pantallas,screens/settings/ModulePage.tsx,,translated
 Management,Management,الإدارة,Gerencia,,,translated
 Manager,Manager,المدير,Gerente,,,translated
-Manager flash,Manager flash,تنبيه المدير,Resumen gerencial,screens/Reports.tsx,,translated
+Manager flash,Manager flash,التقرير السريع للمدير,Resumen gerencial,screens/Reports.tsx,,translated
 Manager's flash,Manager's flash,التقرير السريع للمدير,Resumen gerencial,,,translated
 manual,manual,يدوي,manual,,,translated
 Manual,Manual,يدوي,Manual,screens/Tickets.tsx,,translated
@@ -3018,7 +3019,7 @@ Nights,Nights,الليالي,Noches,components/BookingDialog.tsx; screens/CRS.ts
 Nights out of service,Nights out of service,ليالٍ خارج الخدمة,Noches fuera de servicio,components/RoomInsights.tsx,,translated
 Nights sold,Nights sold,الليالي المباعة,Noches vendidas,components/RoomInsights.tsx,,translated
 No,No,لا,No,components/RoomDrawer.tsx; screens/AuditPack.tsx; screens/EndOfDayWizard.tsx; screens/Reports.tsx,,translated
-No {gateway} account yet?,No {gateway} account yet?,لا تملك حساب {gateway} بعد؟,¿Aún no tienes cuenta {gateway}?,screens/settings/cards.tsx,gateway,translated
+No {gateway} account yet?,No {gateway} account yet?,لا تملك حساب {gateway} بعد؟,¿Aún no tiene cuenta {gateway}?,screens/settings/cards.tsx,gateway,translated
 No activity yet - their story starts with the first booking.,No activity yet - their story starts with the first booking.,لا نشاط بعد، تبدأ قصته مع أول حجز.,Aún no hay actividad. El historial comienza con la primera reserva.,screens/GuestJourney.tsx,,translated
 No address proof,No address proof,لا يوجد إثبات عنوان,Sin comprobante de domicilio,components/GuestDocuments.tsx,,translated
 No AI client is connected to this property.,No AI client is connected to this property.,لا يوجد عميل ذكاء اصطناعي متصل بهذا العقار.,No hay ningún cliente de IA conectado a este alojamiento.,screens/settings/McpAccessPage.tsx,,translated
@@ -3391,7 +3392,7 @@ Only IT can change these.,Only IT can change these.,تقنية المعلوما�
 Only IT can change this person,Only IT can change this person,تقنية المعلومات فقط يمكنها تغيير هذا الشخص,Sólo TI puede cambiar a esta persona,screens/settings/AccessPages.tsx,,translated
 "Only printers set to print bills are listed. KOTs are set on each printer's routes, not here.","Only printers set to print bills are listed. KOTs are set on each printer's routes, not here.",تظهر فقط الطابعات المعدّة لطباعة الفواتير. تُضبط أمر المطبخ على مسارات كل طابعة، لا هنا.,"Solo se enumeran las impresoras configuradas para imprimir cuentas. Los KOT se configuran en las rutas de cada impresora, no aquí.",screens/CashierBoard.tsx,,translated
 Only these properties,Only these properties,هذه العقارات فقط,Solo estos alojamientos,screens/settings/AccessPages.tsx,,translated
-Open,Open,مفتوح,Abrir,screens/BanquetFunction.tsx; screens/BanquetMonth.tsx; screens/CashierBoard.tsx; screens/FolioHistory.tsx; screens/Reports.tsx; screens/Tickets.tsx,,translated
+Open,Open,مفتوح,Abierto,screens/BanquetFunction.tsx; screens/BanquetMonth.tsx; screens/CashierBoard.tsx; screens/FolioHistory.tsx,,translated
 Open - start an enquiry,Open - start an enquiry,متاح: ابدأ استفسارا,Disponible: iniciar consulta,screens/BanquetDiary.tsx; screens/BanquetMonth.tsx,,translated
 open {t},open {t},مفتوح {t},abierto {t},screens/Tickets.tsx,t,translated
 Open {v0},Open {v0},فتح {v0},Abrir {v0},screens/GuestJourney.tsx,v0,translated
@@ -3520,8 +3521,8 @@ Out,Out,خارج,Salida,,,translated
 OUT,OUT,نفد,SIN EXISTENCIAS,,,translated
 Out of balance,Out of balance,غير متوازن,Descuadrado,,,translated
 out of order,out of order,خارج الخدمة,fuera de servicio,,,translated
-Out of order,Out of order,خارج الخدمة,Fuera de servicio,screens/Dashboard.tsx,,translated
-Out of Order,Out of Order,خارج الخدمة,Fuera de servicio,screens/Today.tsx,,translated
+Out of order,Out of order,معطّلة,Fuera de servicio,screens/Dashboard.tsx,,translated
+Out of Order,Out of Order,معطّلة,Fuera de servicio,screens/Today.tsx,,translated
 Out of order (repairs),Out of order (repairs),معطّلة (إصلاحات),Fuera de servicio (reparaciones),,,translated
 Out of order room has an in-house guest,Out of order room has an in-house guest,غرفة خارج الخدمة فيها نزيل مقيم,Habitación fuera de servicio con un huésped alojado,,,translated
 Out of service,Out of service,خارج الخدمة,Fuera de servicio,components/RoomDrawer.tsx; components/RoomInsights.tsx; screens/Rooms.tsx,,translated
@@ -3679,13 +3680,13 @@ Photos,Photos,الصور,Fotos,components/RoomDrawer.tsx; components/RoomTypeMed
 Photos saved,Photos saved,تم حفظ الصور,Fotos guardadas,components/RoomTypeMedia.tsx,,translated
 "Physical rooms - number, type, floor and live status.","Physical rooms - number, type, floor and live status.",الغرف الفعلية - الرقم والنوع والطابق والحالة الحالية.,"Habitaciones físicas: número, tipo, piso y estado actual.",,,translated
 Pick,Pick,اختيار,Elegir,screens/BanquetCatalogue.tsx,,translated
-Pick a bill to see every line,Pick a bill to see every line,اختر فاتورة لعرض كل البنود,Elige una cuenta para ver cada línea,screens/pos/OpenBillsPopup.tsx,,translated
+Pick a bill to see every line,Pick a bill to see every line,اختر فاتورة لعرض كل البنود,Elija una cuenta para ver cada línea,screens/pos/OpenBillsPopup.tsx,,translated
 Pick a dish to give it a recipe.,Pick a dish to give it a recipe.,اختر طبقاً لتحديد وصفته.,Seleccione un plato para definir su receta.,screens/RecipeManager.tsx,,translated
 Pick a hall.,Pick a hall.,اختر قاعة.,Seleccione un salón.,screens/Banquet.tsx,,translated
 "Pick a listing below to reserve, or scroll the options on the left.","Pick a listing below to reserve, or scroll the options on the left.",اختر قائمة أدناه للحجز، أو تصفّح الخيارات على اليسار.,Elige una opción abajo para reservar o desplázate por las opciones de la izquierda.,screens/PublicListing.tsx,,translated
 Pick a property first.,Pick a property first.,اختر عقاراً أولاً.,Seleccione primero un alojamiento.,screens/GoLiveImport.tsx; screens/KitchenPrinters.tsx,,translated
 "Pick a property to see its rooms, prices and availability.","Pick a property to see its rooms, prices and availability.",اختر عقاراً لعرض غرفه وأسعاره وتوفره.,"Elige un alojamiento para ver sus habitaciones, precios y disponibilidad.",screens/PublicBooking.tsx,,translated
-Pick a room,Pick a room,اختر غرفة,Elige una habitación,components/RoomChangeDialog.tsx,,translated
+Pick a room,Pick a room,اختر غرفة,Elija una habitación,components/RoomChangeDialog.tsx,,translated
 Pick a room first.,Pick a room first.,اختر غرفة أولاً.,Seleccione primero una habitación.,,,translated
 Pick a suggestion or type a new one,Pick a suggestion or type a new one,اختر اقتراحاً أو اكتب جديداً,Seleccione una sugerencia o escriba una nueva,,,translated
 Pick a table with an open bill to add items to it.,Pick a table with an open bill to add items to it.,اختر طاولة عليها فاتورة مفتوحة لإضافة أصناف إليها.,Elija una mesa con una cuenta abierta para agregarle elementos.,screens/POS.tsx,,translated
@@ -3696,7 +3697,7 @@ Pick folios,Pick folios,اختيار الفواتير,Seleccionar folios,screens
 Pick the ID type too.,Pick the ID type too.,اختر نوع الهوية أيضاً.,Elija también el tipo de ID.,components/BookingDialog.tsx,,translated
 Pick the new dates.,Pick the new dates.,اختر التواريخ الجديدة.,Elija las nuevas fechas.,screens/TapeChart.tsx,,translated
 Pick the period once - every book is a tab away.,Pick the period once - every book is a tab away.,اختر الفترة مرة واحدة، وكل سجل في تبويب خاص به.,Seleccione el periodo una vez y consulte cada registro en su pestaña.,screens/BanquetRegisters.tsx,,translated
-Pick the room…,Pick the room…,اختر الغرفة…,Elige la habitación…,screens/pos/SettleSheet.tsx,,translated
+Pick the room…,Pick the room…,اختر الغرفة…,Elija la habitación…,screens/pos/SettleSheet.tsx,,translated
 Pick up,Pick up,حجز من الكتلة,Reservar del bloqueo,components/GroupControl.tsx,,translated
 Pick up a room,Pick up a room,حجز غرفة من الكتلة,Reservar una habitación del bloqueo,components/GroupControl.tsx,,translated
 Pick who pays: {v0}.,Pick who pays: {v0}.,اختر من يدفع: {v0}.,Seleccione quién paga: {v0}.,,v0,translated
@@ -3810,12 +3811,12 @@ Priced the stay,Priced the stay,تم تسعير الإقامة,Estancia cotizada
 Prices are before tax.,Prices are before tax.,الأسعار قبل الضريبة.,Los precios son antes de impuestos.,screens/RateCalendar.tsx,,translated
 Prices include tax.,Prices include tax.,الأسعار شاملة الضريبة.,Los precios incluyen impuestos.,screens/RateCalendar.tsx,,translated
 Print,Print,طباعة,Imprimir,components/CheckInDialog.tsx; screens/AuditPack.tsx; screens/BanquetDocument.tsx; screens/BanquetFunction.tsx; screens/BanquetRegisters.tsx; screens/EndOfDay.tsx; screens/Reports.tsx; screens/VoidAllowanceReport.tsx; screens/banquet/Economics.tsx,,translated
-Print / share the confirmation letter,Print / share the confirmation letter,طباعة / مشاركة رسالة التأكيد,Imprime/comparte la carta de confirmación,components/CancelPanel.tsx,,translated
+Print / share the confirmation letter,Print / share the confirmation letter,طباعة / مشاركة رسالة التأكيد,Imprima o comparta la carta de confirmación,components/CancelPanel.tsx,,translated
 Print all,Print all,طباعة الكل,Imprimir todo,screens/AuditPack.tsx,,translated
 Print an invoice,Print an invoice,طباعة فاتورة,Imprimir una factura,,,translated
 Print bill,Print bill,طباعة الفاتورة,Imprimir cuenta,screens/POS.tsx; screens/pos/PosSidePanel.tsx,,translated
 Print final reports,Print final reports,طباعة التقارير النهائية,Imprimir informes finales,,,translated
-Print folio,Print folio,طباعة الفاتورة,Imprimir folio,screens/FolioView.tsx,,translated
+Print folio,Print folio,طباعة كشف الحساب,Imprimir folio,screens/FolioView.tsx,,translated
 Print for {printer},Print for {printer},طباعة لـ {printer},Imprimir para {printer},screens/Kitchen.tsx,printer,translated
 Print GRC,Print GRC,طباعة بطاقة التسجيل,Imprimir ficha de registro,screens/RegistrationCard.tsx,,translated
 Print invoice,Print invoice,طباعة الفاتورة,Imprimir factura,screens/FolioView.tsx,,translated
@@ -5246,7 +5247,7 @@ Wake-up call,Wake-up call,مكالمة إيقاظ,Llamada de despertador,compone
 "Walk the guest through every open folio: room nights, extras, and credits.","Walk the guest through every open folio: room nights, extras, and credits.",راجع مع الضيف كل فاتورة مفتوحة: ليالي الإقامة والإضافات والأرصدة.,"Revise con el huésped cada folio abierto: noches de alojamiento, extras y abonos.",,,translated
 "Walk the room, count the covers, note the damage. One motion.","Walk the room, count the covers, note the damage. One motion.",تفقّد القاعة، وعدّ الأشخاص، وسجّل الأضرار. في خطوة واحدة.,"Revise el salón, cuente los comensales y registre los daños en un solo paso.",screens/BanquetFunction.tsx,,translated
 Walk-in,Walk-in,حجز مباشر,Sin reserva previa,AppShell.tsx; components/BookingDialog.tsx,,translated
-Want Claude the app?,Want Claude the app?,تريد تطبيق Claude؟,¿Quieres Claude la aplicación?,screens/settings/cards.tsx,,translated
+Want Claude the app?,Want Claude the app?,تريد تطبيق Claude؟,¿Quiere usar la aplicación Claude?,screens/settings/cards.tsx,,translated
 Want Claude the model in this chat? Use the OpenRouter preset.,Want Claude the model in this chat? Use the OpenRouter preset.,تريد نموذج Claude في هذه المحادثة؟ استخدم الإعداد المسبق لـ OpenRouter.,¿Quieres que Claude sea el modelo en este chat? Utilice el valor preestablecido de OpenRouter.,screens/settings/cards.tsx,,translated
 "Warm regards,","Warm regards,",مع أطيب التحيات،,"Saludos cordiales,",screens/CancellationLetter.tsx,,translated
 warn,warn,تحذير,advertir,,,translated
@@ -5384,7 +5385,7 @@ Withheld,Withheld,محتجز للأضرار,Retenido,components/SecurityDepositP
 Withhold {amt},Withhold {amt},احتجاز {amt},Retener {amt},components/SecurityDepositPanel.tsx,amt,translated
 Withhold for damage,Withhold for damage,احتجاز مقابل الأضرار,Retener por daños,components/CheckOutDialog.tsx; components/SecurityDepositPanel.tsx,,translated
 Within,Within,ضمن المهلة,Dentro del plazo,screens/Tickets.tsx,,translated
-"Without the booking page, bookings come from the front desk and your channels.","Without the booking page, bookings come from the front desk and your channels.",بدون صفحة الحجز، تأتي الحجوزات من الاستقبال وقنواتك.,"Sin la página de reservas, las reservas provienen de la recepción y de tus canales.",screens/Setup.tsx,,translated
+"Without the booking page, bookings come from the front desk and your channels.","Without the booking page, bookings come from the front desk and your channels.",بدون صفحة الحجز، تأتي الحجوزات من الاستقبال وقنواتك.,"Sin la página de reservas, las reservas llegan desde la recepción y sus canales.",screens/Setup.tsx,,translated
 Write it off,Write it off,شطبه,Registrar baja,screens/Inventory.tsx,,translated
 Write the reason for the override to continue.,Write the reason for the override to continue.,اكتب سبب التجاوز للمتابعة.,Indique el motivo de la excepción para continuar.,components/CheckOutDialog.tsx,,translated
 Wrong email or password.,Wrong email or password.,البريد الإلكتروني أو كلمة المرور غير صحيحة.,Correo electrónico o contraseña incorrectos.,,,translated
@@ -5401,10 +5402,10 @@ You already have an API key. Rotate it below to get a fresh key + secret.,You al
 You approve this as a supervisor.,You approve this as a supervisor.,أنت توافق على هذا بصفتك مشرفًا.,Usted aprueba esto como supervisor.,screens/pos/VoidApproval.tsx,,translated
 You are using the hotel's default layout.,You are using the hotel's default layout.,أنت تستخدم التخطيط الافتراضي للفندق.,Estás utilizando el diseño predeterminado del hotel.,components/CustomizeToday.tsx,,translated
 You are using the standard layout.,You are using the standard layout.,أنت تستخدم التخطيط القياسي.,Está utilizando el diseño estándar.,components/CustomizeToday.tsx,,translated
-You are using your own layout.,You are using your own layout.,أنت تستخدم تخطيطك الخاص.,Estás utilizando tu propio diseño.,components/CustomizeToday.tsx,,translated
+You are using your own layout.,You are using your own layout.,أنت تستخدم تخطيطك الخاص.,Está usando su propio diseño.,components/CustomizeToday.tsx,,translated
 "You can still check out. These are not on the guest's bill: when they are posted later they land on the departed stay's folio and have to be collected separately. To add them now, go back to the Bill step.","You can still check out. These are not on the guest's bill: when they are posted later they land on the departed stay's folio and have to be collected separately. To add them now, go back to the Bill step.",يمكنك تسجيل المغادرة. هذه غير مضافة إلى فاتورة النزيل: إذا أُضيفت لاحقًا فستذهب إلى حساب الإقامة المنتهية ويجب تحصيلها بشكل منفصل. لإضافتها الآن، ارجع إلى خطوة الفاتورة.,"Todavía puede registrar la salida. Estos cargos no están incluidos en la cuenta del huésped. Si se registran más adelante, se cargarán al folio de la estancia finalizada y deberán cobrarse por separado. Para agregarlos ahora, vuelva al paso «Cuenta».",components/CheckOutDialog.tsx,,translated
-You can't change your own access,You can't change your own access,لا يمكنك تغيير صلاحياتك,No puedes cambiar tu propio acceso,screens/settings/AccessPages.tsx,,translated
-"You close it at the end of your shift with a cash count (Finance, Cashier).","You close it at the end of your shift with a cash count (Finance, Cashier).",تغلقه في نهاية نوبتك بعد عدّ النقد (المالية، أمين الصندوق).,"Lo cierras al final de tu turno con un arqueo de caja (Finanzas, Cajero).",components/TillCard.tsx,,translated
+You can't change your own access,You can't change your own access,لا يمكنك تغيير صلاحياتك,No puede cambiar su propio acceso,screens/settings/AccessPages.tsx,,translated
+"You close it at the end of your shift with a cash count (Finance, Cashier).","You close it at the end of your shift with a cash count (Finance, Cashier).",تغلقه في نهاية نوبتك بعد عدّ النقد (المالية، أمين الصندوق).,"Lo cierra al final de su turno con un arqueo de caja (Finanzas, Cajero).",components/TillCard.tsx,,translated
 You don't have an API key yet. Generate one to call the REST API or connect an agent.,You don't have an API key yet. Generate one to call the REST API or connect an agent.,ليس لديك مفتاح API بعد. أنشئ مفتاحًا لاستدعاء REST API أو ربط وكيل.,Aún no tiene una clave de API. Genere una para utilizar la API REST o conectar un agente.,screens/Developers.tsx,,translated
 "You don't have permission for that, or your session ended - sign in again if this persists.","You don't have permission for that, or your session ended - sign in again if this persists.",ليست لديك صلاحية لذلك، أو انتهت جلستك. سجّل الدخول مجددًا إذا استمرت المشكلة.,"No tiene permiso para esta acción o su sesión terminó. Si el problema continúa, vuelva a iniciar sesión.",lib/resource.ts,,translated
 You're checked in online,You're checked in online,تم تسجيل وصولك عبر الإنترنت,Ya completaste el registro de entrada en línea,screens/PublicCheckin.tsx,,translated

@@ -241,7 +241,7 @@ folio; consulte [Facturación](/es/billing).
 ![Cancelar una reserva el día de llegada: dentro del plazo de 1 día, así que se cobrará la primera noche (₹2,800), con el motivo, la nota y la opción de eximir el cargo](/img/reservations/cancel-preview.png)
 
 Kamra da un número de cancelación (CXL-…) y carga cualquier cargo al folio.
-Pulse **Imprime/comparte la carta de confirmación** para obtener una carta que enviar al
+Pulse **Imprima o comparta la carta de confirmación** para obtener una carta que enviar al
 huésped.
 
 ![La carta de confirmación de la cancelación con el número de cancelación, el valor de la estancia y el cargo por cancelación](/img/reservations/cancellation-letter.png)

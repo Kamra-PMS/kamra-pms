@@ -351,7 +351,7 @@ y **Estado**.
 ## Entregue un turno
 
 **Finanzas → Entrega de turno** guarda un registro por turno (**Mañana**,
-**Tarde**, **Noche**): efectivo inicial, efectivo cobrado, pagos,
+**Vespertino**, **Noche**): efectivo inicial, efectivo cobrado, pagos,
 efectivo final, a quién entregó el turno y notas para el siguiente turno.
 Pulse **Nuevo**, complételo y ponga **Estado** en **Cerrado** cuando el
 siguiente turno haya tomado el relevo.

@@ -61,7 +61,7 @@ sus horarios no se solapen.
    decide a qué folio va la cuenta.
 3. Elija el **Tipo de evento**, la **Fecha** (y la **Fecha de
    finalización** para un evento de varios días), el **Número de
-   asistentes previsto** y la **Sesión**. Una sesión (**Noche**, etc.)
+   asistentes previsto** y la **Sesión**. Una sesión (**Vespertino**, etc.)
    fija el horario y se guarda en el evento. Elija **Horario
    personalizado** para indicar su propio **De** y **A**.
 4. Elija de dónde **Vino de** el cliente.

@@ -2298,7 +2298,7 @@ function PaperTab({
                 <Link
                   to={`/banquet/${encodeURIComponent(fn.name)}/${d.kind}`}
                   className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-700"
-                >{translate("Open")}</Link>
+                >{translate("action|Open")}</Link>
               ) : (
                 <p className="mt-2 text-xs text-amber-700">{translate(d.why)}</p>
               )}

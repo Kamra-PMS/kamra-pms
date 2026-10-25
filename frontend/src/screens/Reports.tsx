@@ -595,7 +595,7 @@ export default function Reports({ initialTab = "saved" }: { initialTab?: Tab }) 
                             disabled={busy}
                             onClick={() => openSaved(r)}
                           >
-                            {t("Open")}
+                            {t("action|Open")}
                           </Button>
                           <Button
                             variant="outline"
@@ -669,7 +669,7 @@ export default function Reports({ initialTab = "saved" }: { initialTab?: Tab }) 
                   </ul>
                   <div className="flex flex-wrap gap-2">
                     <Button disabled={busy} onClick={() => openPack(p.id)}>
-                      <Printer className="size-4" aria-hidden /> {t("Open")}
+                      <Printer className="size-4" aria-hidden /> {t("action|Open")}
                     </Button>
                     <Button variant="outline" disabled={busy} onClick={() => emailPack(p)}>
                       <Mail className="size-4" aria-hidden /> {t("Email now")}
