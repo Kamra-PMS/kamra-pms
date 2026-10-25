@@ -530,12 +530,15 @@ def room_insights(property: str, days: int = 30, refresh: int = 0,
 	cached = None if cint(refresh) else frappe.cache().get_value(key)
 	if cached:
 		return cached
-	out = _compute_insights(property, days, getdate(today), money)
+	# a picked range counts cleans up to its last day; presets include today's
+	clean_to = to_date if from_date else nowdate()
+	out = _compute_insights(property, days, getdate(today), money, clean_to)
 	frappe.cache().set_value(key, out, expires_in_sec=INSIGHTS_CACHE_SECONDS)
 	return out
 
 
-def _compute_insights(property: str, days: int, today, money: bool) -> dict:
+def _compute_insights(property: str, days: int, today, money: bool,
+                      clean_to: str | None = None) -> dict:
 	start = getdate(add_days(today, -days))
 	end = today  # nights up to last night
 	rooms = frappe.get_all(
@@ -600,7 +603,7 @@ def _compute_insights(property: str, days: int, today, money: bool) -> dict:
 	tasks = frappe.get_all(
 		"Housekeeping Task",
 		filters={"property": property,
-		         "creation": ("between", [str(start), f"{add_days(end, -1)} 23:59:59"]),
+		         "creation": ("between", [str(start), f"{clean_to or today} 23:59:59"]),
 		         "task_type": ("!=", "Inspection"),
 		         "status": ("in", ["Done", "Verified"])},
 		fields=["name", "room"])
