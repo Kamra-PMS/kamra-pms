@@ -1069,6 +1069,33 @@ class RateLockTestCase(AuditTestCase):
 		self.assertEqual([float(r.rate) for r in doc.night_rates], [2500, 2500])
 		self.assertAlmostEqual(float(doc.amount_after_tax), pv["new_amount"], places=2)
 
+	def test_upgrade_move_can_keep_the_price_or_take_an_agreed_rate(self):
+		from kamra import api
+		res = make_reservation(PROP_A, self.rt, d(5), d(7), room=self.rooms[1])
+		amount = float(res.amount_after_tax)
+		# keep what the guest pays
+		self.assertFalse(api.room_move_preview(
+			res.name, self.deluxe_room, rate_mode="source")["needs_confirmation"])
+		api.move_reservation(res.name, self.deluxe_room, rate_mode="source")
+		doc = frappe.get_doc("Reservation", res.name)
+		self.assertEqual(doc.room_type, self.rt_deluxe)
+		self.assertEqual([float(r.rate) for r in doc.night_rates], [1000, 1000])
+		self.assertAlmostEqual(float(doc.amount_after_tax), amount, places=2)
+		# a rate the desk agreed, once confirmed
+		api.move_reservation(res.name, self.rooms[2], confirm_price=1,
+		                     rate_mode="custom", agreed_rate=1800)
+		doc = frappe.get_doc("Reservation", res.name)
+		self.assertEqual([float(r.rate) for r in doc.night_rates], [1800, 1800])
+		# Front Desk alone may not set a rate
+		ensure_user("ut.rate.desk@test.local", ["Front Desk"])
+		frappe.set_user("ut.rate.desk@test.local")  # nosemgrep: frappe-setuser -- acting as the persona
+		try:
+			with self.assertRaises(frappe.PermissionError):
+				api.room_move_preview(res.name, self.rooms[3],
+				                      rate_mode="custom", agreed_rate=900)
+		finally:
+			frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- restore
+
 	def test_backfill_locks_old_bookings_once(self):
 		from kamra.patches.v40 import lock_confirmed_night_rates as patch_mod
 		hurdle = frappe.get_doc({

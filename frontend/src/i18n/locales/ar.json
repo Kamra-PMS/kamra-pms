@@ -782,7 +782,6 @@
   "How long:": "المدة:",
   "How to upgrade": "كيفية الترقية",
   "Going back (downgrade)": "العودة (خفض الإصدار)",
-
   "How was your stay with us? Is there anything we could have done better?": "كيف كانت إقامتك معنا؟ هل هناك ما كان بإمكاننا فعله بشكل أفضل؟",
   "I accept the registration declaration.": "أوافق على إقرار التسجيل.",
   "I certify the above details are correct. I agree to the hotel's policies on check-out time, damage to property and applicable taxes, and consent to my details being kept in the guest register as required by law.": "أقرّ بصحة البيانات أعلاه، وأوافق على سياسات الفندق بشأن وقت المغادرة والأضرار والضرائب المطبقة، وعلى حفظ بياناتي في سجل النزلاء وفق ما يقتضيه النظام.",
@@ -2253,5 +2252,9 @@
   "Your reports": "تقاريرك",
   "Custom reports": "تقارير مخصصة",
   "Build a report from arrivals, payments, POS and more; save it, share it, email it on a schedule.": "أنشئ تقريرًا من الوصول والمدفوعات ونقاط البيع وغيرها، واحفظه وشاركه وأرسله بالبريد وفق جدول.",
-  "Custom report builder": "منشئ التقارير المخصصة"
+  "Custom report builder": "منشئ التقارير المخصصة",
+  "New room's rate": "سعر الغرفة الجديدة",
+  "Keep current price": "الإبقاء على السعر الحالي",
+  "Enter a rate": "إدخال سعر",
+  "Rate per night": "السعر لليلة"
 }

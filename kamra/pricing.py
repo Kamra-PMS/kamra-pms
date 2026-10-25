@@ -495,6 +495,7 @@ def quote(
 	exclude_reservation: str | None = None,
 	pets: int = 0,
 	company: str | None = None,
+	agreed_rate: float = 0,
 ) -> dict:
 	# a stay for a company is priced on the plan the company negotiated,
 	# unless the caller named a plan of its own
@@ -540,6 +541,9 @@ def quote(
 				property, date, exclude=exclude_reservation)
 		rate, tier = demand_adjust(property, room_type, date, rate,
 		                           occupancy=occ_cache[str(date)])
+		if agreed_rate:
+			# a rate the desk agreed replaces the card and the premium
+			rate, tier = _dec(agreed_rate), None
 		# The agreed amount for extra beds counts toward the slab even though
 		# it bills as its own line: GST reads what the unit fetches for the
 		# day, not the occupancy its rate card started from. A room at 7,000
@@ -560,7 +564,7 @@ def quote(
 		room_total += rate
 		room_tax += rate * gst / Decimal(100)
 
-	if rate_plan:
+	if rate_plan and not agreed_rate:
 		old_room_total = room_total
 		room_total = apply_rate_plan(rate_plan, room_total)
 		if old_room_total:
