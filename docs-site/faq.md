@@ -75,7 +75,7 @@ upgrade; it does not change the install. On a self-hosted Docker site,
 pin the release you want again:
 
 ```bash
-sudo KAMRA_TAG=v2.6.16 /opt/kamra/install.sh update
+sudo KAMRA_TAG=v2.6.19 /opt/kamra/install.sh update
 ```
 
 Use the tag you were on before. Updates always backup first; if migrate

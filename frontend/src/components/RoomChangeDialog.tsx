@@ -33,7 +33,12 @@ interface Preview {
   difference: number
   auto_price: boolean
   in_house: boolean
+  can_set_rate: boolean
 }
+
+/** What the guest pays after the move: the new room's rate, what they pay
+ *  now, or a nightly rate typed in (Revenue Manager / admins). */
+type RateMode = "destination" | "source" | "custom"
 
 const REASONS = ["Guest request", "Upgrade", "Maintenance", "Noise / complaint", "Other"]
 
@@ -62,6 +67,9 @@ export default function RoomChangeDialog(props: {
   const [q, setQ] = useState("")
   const [pick, setPick] = useState<MovableRoom | null>(null)
   const [preview, setPreview] = useState<Preview | null>(null)
+  const [rateMode, setRateMode] = useState<RateMode>("destination")
+  const [agreedRate, setAgreedRate] = useState("")
+  const [canSetRate, setCanSetRate] = useState(false)
   const [reason, setReason] = useState(REASONS[0])
   const [note, setNote] = useState("")
   const [busy, setBusy] = useState(false)
@@ -83,18 +91,25 @@ export default function RoomChangeDialog(props: {
 
   useEffect(() => {
     setPreview(null)
-    if (!pick) return
+    if (!pick || (rateMode === "custom" && !(Number(agreedRate) > 0))) return
     let live = true
     call<Preview>("kamra.api.room_move_preview", {
       reservation: props.reservation,
       new_room: pick.name,
+      rate_mode: rateMode,
+      agreed_rate: rateMode === "custom" ? Number(agreedRate) : undefined,
     })
-      .then((p) => live && setPreview(p))
+      .then((p) => {
+        if (!live) return
+        setPreview(p)
+        setCanSetRate(p.can_set_rate)
+        setError(null)
+      })
       .catch((e) => live && setError(serverError(e)))
     return () => {
       live = false
     }
-  }, [pick, props.reservation])
+  }, [pick, props.reservation, rateMode, agreedRate])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && props.onClose()
@@ -136,6 +151,8 @@ export default function RoomChangeDialog(props: {
         // the dialog shows the re-priced total before this button; pressing
         // it is the confirmation the server asks for
         confirm_price: 1,
+        rate_mode: rateMode,
+        agreed_rate: rateMode === "custom" ? Number(agreedRate) : undefined,
       })
       props.onMoved(r)
       props.onClose()
@@ -283,6 +300,44 @@ export default function RoomChangeDialog(props: {
                 )
               ) : (
                 <Loader2 className="size-4 animate-spin text-zinc-400" aria-label={t("Checking price")} />
+              )}
+              {(preview ? preview.auto_price && (!preview.same_type || preview.can_set_rate)
+                : rateMode === "custom") && (
+                <div role="radiogroup" aria-label={t("Rate")} className="flex basis-full flex-wrap items-center gap-1.5">
+                  {(
+                    [
+                      ["destination", t("New room's rate")],
+                      ["source", t("Keep current price")],
+                      ...(canSetRate ? [["custom", t("Enter a rate")] as const] : []),
+                    ] as const
+                  ).map(([k, label]) => (
+                    <button
+                      key={k}
+                      type="button"
+                      role="radio"
+                      aria-checked={rateMode === k}
+                      onClick={() => setRateMode(k)}
+                      className={cn(
+                        "rounded-md border px-2.5 py-1 text-xs font-medium",
+                        rateMode === k ? "border-brand-600 bg-brand-50 text-brand-700" : "border-zinc-200 bg-white text-zinc-600",
+                      )}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                  {rateMode === "custom" && (
+                    <input
+                      type="number"
+                      min={1}
+                      inputMode="decimal"
+                      value={agreedRate}
+                      onChange={(e) => setAgreedRate(e.target.value)}
+                      placeholder={t("Rate per night")}
+                      aria-label={t("Rate per night")}
+                      className="w-32 rounded-md border border-zinc-300 bg-white px-2 py-1 text-xs"
+                    />
+                  )}
+                </div>
               )}
               {preview?.in_house && (
                 <span className="basis-full text-xs text-zinc-500">

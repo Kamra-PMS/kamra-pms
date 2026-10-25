@@ -45,6 +45,7 @@ jobs:
     permissions:
       contents: write
       packages: write
+      actions: write  # release.yml dispatches the docs snapshot
     secrets: inherit
     with:
       tag: ${{ needs.release-please.outputs.tag_name }}

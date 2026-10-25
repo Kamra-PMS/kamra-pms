@@ -49,29 +49,79 @@ departures, in-house, revenue, collected and outstanding for each hotel.
 
 ## Build a custom report
 
-Open **Reports → Custom reports**. Staff (and the Kamra Agent / MCP) build
-reports from **whitelisted datasets** - arrivals, departures, in-house,
-no-shows, occupancy by day, folio charges, payments, voids, contribution,
-housekeeping tasks, POS orders - not from Frappe Desk Query Reports and
-not with free SQL.
+Open **Reports → Custom reports**. You build a report from a **dataset**:
+arrivals, departures, in-house, no-shows and cancellations, occupancy by
+day, folio charges, payments, voids, contribution, housekeeping tasks,
+room status, lost and found, and POS orders. You only see the datasets
+your role can open (see [Who sees which report](#who-sees-which-report)).
 
 1. Open **New report**, pick a dataset, choose columns and optional
-   filters, set the date range, and press **Preview**.
+   filters, set the date range (up to 92 days), and press **Preview**.
 2. **Save** to keep the definition under **My reports**. Finance and
    Hotel Admin can **share** a report with the property and set a
    **Daily** or **Weekly** email schedule (recipients + time).
-3. **CSV**, **Print** (HTML), and **Email** work for ad-hoc or saved
-   runs. Scheduled sends attach yesterday (or the last 7 days for
-   weekly) as CSV.
+3. **CSV**, **Print** and **Email** work for new or saved reports.
+   Scheduled sends attach yesterday (or the last 7 days for weekly) as
+   CSV.
 
-The same `list_report_datasets` / `save_custom_report` /
-`run_custom_report` / `email_custom_report` APIs power the SPA and
-agents. Desk is not required to build or view these reports.
+### Group and drill down
+
+Pick a column in **Group by** and press **Preview**: you get one row per
+value, with the number columns added up. For housekeeping tasks, **Clean
+minutes** is the average over the cleans that were timed, not a sum.
+
+Click a group row to see the rows behind it. **Back to summary** returns
+to the grouped view. The grouping is saved with the report and used in
+its emails.
+
+## Send a department pack
+
+Open **Reports → Department packs**. A pack puts several grouped reports
+on one page:
+
+| Pack | What's on it |
+|---|---|
+| **Front Office pack** | Occupancy by day, arrivals by source, in house by room type, no-shows and cancellations |
+| **Housekeeping pack** | Room status now, tasks by type and by attendant with average clean minutes, lost and found |
+| **F&B pack** | Sales and covers by outlet, orders by status |
+| **Hotel Manager pack** | Occupancy and revenue, revenue by source, collections by mode, charges by type, voids and allowances |
+
+1. Set the **From** and **To** dates.
+2. Press **Open** for a printable page, or **Email now** and type the
+   addresses.
+3. Finance and Hotel Admin can press **Email every Monday** to send it
+   at 07:00 each Monday with the last 7 days. The schedule shows under
+   **My reports**, where you can open, email or delete it.
+
+A pack only holds the parts your role can open. A night auditor's Hotel
+Manager pack has occupancy, collections and charges, but no voids. The
+page follows the language you use Kamra in, and Arabic reads right to
+left.
+
+## Who sees which report
+
+Each report checks your roles, the same way its screen does, and the
+Kamra Agent and Claude (MCP) follow the same rules: they never show
+someone a report their role can't open.
+
+| Role | Fixed reports | Custom report datasets | Packs |
+|---|---|---|---|
+| Front Desk | Manager flash, shift report, SLA, F&B dashboard, wastage, banquet registers | Arrivals, departures, in-house, no-shows, occupancy, housekeeping tasks, room status, lost and found, POS orders | All four |
+| Night Auditor | Manager flash, shift report | Arrivals, departures, in-house, no-shows, occupancy, folio charges, payments | Front Office, Hotel Manager |
+| Finance | Manager flash, shift report, voids, F&B dashboard, wastage, banquet registers | Front office datasets, folio charges, payments, voids, contribution, POS orders | Front Office, F&B, Hotel Manager |
+| Housekeeping, Housekeeping Supervisor | None | Housekeeping tasks, room status, lost and found | Housekeeping |
+
+Hotel Admin sees everything. A dataset also needs its module switched on
+for the property (**Settings → Modules**).
 
 ## Read the manager flash
 
 Open **Reports → Manager flash**. The **Manager flash** is the morning report
-for one date (pick it in the date box at the top right):
+for one date. Pick it in the right-hand date box. To see a range, set the
+left-hand date to an earlier day (up to 92 days): the tiles, the daily
+table, movement and collections then cover the whole range, and
+**Revenue (day)** becomes **Revenue**. Month to date and the next 7 days
+don't change.
 
 - **Occupancy**, **ADR**, **RevPAR**, **RevPAX** and **Revenue (day)**
   split into room, F&B and other. RevPAX is total guest spend (room, F&B,
@@ -170,6 +220,10 @@ The preview shows the first 12 rows; the download has them all.
 
 ## Good to know
 
+- **Single-day reports also take a range.** The F&B dashboard, the
+  cashier shift report, folio history, room insights and the banquet
+  pipeline have a **From** and **To** date. Leave the end date alone for
+  one day.
 - **Dashboards and the flash use the calendar date**, not the hotel's
   business date. Between midnight and the night audit, "today" on the
   dashboard is already the new day.

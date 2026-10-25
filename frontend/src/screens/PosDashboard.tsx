@@ -114,6 +114,7 @@ export default function PosDashboard() {
   const [outlets, setOutlets] = useState<Outlet[]>([])
   const [outlet, setOutlet] = useState("")
   const [date, setDate] = useState(today())
+  const [toDate, setToDate] = useState("") // "" = the one day
   const [data, setData] = useState<Dash | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -125,18 +126,18 @@ export default function PosDashboard() {
 
   const load = useCallback(() => {
     if (!outlet) return
-    call<Dash>("kamra.pos.outlet_dashboard", { outlet, date })
+    call<Dash>("kamra.pos.outlet_dashboard", { outlet, date, to_date: toDate || undefined })
       .then((d) => { setData(d); setError(null) })
       .catch((e) => setError(serverError(e)))
-  }, [outlet, date])
+  }, [outlet, date, toDate])
 
   useEffect(() => {
     load()
-    if (date !== today()) return // a past day doesn't move
+    if ((toDate || date) !== today()) return // the past doesn't move
     const unsub = subscribeRealtime(load)
     const t = setInterval(load, 30_000)
     return () => { unsub(); clearInterval(t) }
-  }, [load, date])
+  }, [load, date, toDate])
 
   const inputCls =
     "rounded-lg border border-zinc-300 bg-white px-2.5 py-1.5 text-sm " +
@@ -151,8 +152,12 @@ export default function PosDashboard() {
           </select>
         </h1>
         <div className="flex flex-wrap items-center gap-2">
-          <input type="date" className={inputCls} value={date} max={today()}
+          <input type="date" aria-label={translate("From")} className={inputCls} value={date} max={today()}
             onChange={(e) => setDate(e.target.value || today())} />
+          <span className="text-sm text-zinc-400">→</span>
+          <input type="date" aria-label={translate("To")} className={inputCls} value={toDate || date}
+            min={date} max={today()}
+            onChange={(e) => setToDate(e.target.value === date ? "" : e.target.value)} />
           <Link to="/pos"
             className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-2.5 py-1.5 text-sm font-medium text-zinc-600 hover:bg-zinc-50">
             <UtensilsCrossed className="size-4" />{translate("Open POS")}</Link>

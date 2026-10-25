@@ -7,7 +7,7 @@ you.
 Kamra is **live** on the marketplace:
 [frappecloud.com/marketplace/apps/kamra](https://frappecloud.com/marketplace/apps/kamra).
 Stable builds track the GitHub `main` branch (current release
-[v2.6.16](https://github.com/Kamra-PMS/kamra-pms/releases/tag/v2.6.16)).
+[v2.6.20](https://github.com/Kamra-PMS/kamra-pms/releases/tag/v2.6.20)).
 A shorter get-started page also lives on the product site:
 [kamrapms.com/frappe-cloud](https://kamrapms.com/frappe-cloud/).
 

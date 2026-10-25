@@ -90,7 +90,7 @@ done, or the one thing still missing. You can open any step at any time.
 1. Open the **Quote** step.
 2. Click **+ Menu** and **Add** a menu package. Its quantity follows the
    guaranteed pax.
-3. Click **+ Service** and **Add** what they're buying. Click **Free**
+3. Click **+ Service** and **Add** what they're buying. Click **No charge**
    instead to give it away: it costs nothing on the quote but still prints
    on the event order and pack list.
 4. Change **Agreed** to the negotiated rate on any line. The **Rack**
@@ -224,6 +224,13 @@ as they are. On **The night**, click **Close it again**: this time it only
 re-counts the covers. Bill anything further as a line on the function.
 A function already posted to a folio can't be reopened; correct the bill
 on the folio instead.
+
+## See the months ahead
+
+On the Banquets home, open **Month by month**. Each month shows the value
+of confirmed functions and of those still in play, dated by the event,
+with the totals by status. It covers the next six months from the 1st;
+set **From** and **To** to look at any other period.
 
 ## Print the registers
 

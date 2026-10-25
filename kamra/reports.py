@@ -123,49 +123,36 @@ def void_allowance_report(
 
 @frappe.whitelist()
 @require_roles("Finance", "Front Desk", "Night Auditor", "Kamra Agent")
-def manager_flash(property: str, date: str | None = None):
+def manager_flash(property: str, date: str | None = None,
+                  from_date: str | None = None):
 	"""The daily flash: yesterday's performance, month to date, today's
-	movement, collections by mode, and the 7-day outlook."""
+	movement, collections by mode, and the 7-day outlook. With from_date,
+	the day figures, trend, movement and collections cover from_date..date."""
+	from kamra.business_date import report_range_end
+
 	date = date or nowdate()
+	start = from_date or date
+	report_range_end(start, date)
 	total_rooms = frappe.db.count("Room", {"property": property}) or 0
 
-	# month-to-date across day stats
-	mtd = {"rooms_sold": 0, "room_revenue": 0.0, "fnb_revenue": 0.0,
-	       "other_revenue": 0.0}
-	d = getdate(date).replace(day=1)
-	end = getdate(date)
-	days = 0
-	trend = []
-	while d <= end:
-		s = _day_stats(property, str(d), total_rooms)
-		for k in mtd:
-			mtd[k] += s[k]
-		trend.append(s)
-		days += 1
-		d = getdate(add_days(d, 1))
-	mtd["occupancy_pct"] = round(
-		100 * mtd["rooms_sold"] / (total_rooms * days), 1) if total_rooms and days else 0
-	mtd["adr"] = round(mtd["room_revenue"] / mtd["rooms_sold"], 0) \
-		if mtd["rooms_sold"] else 0
-	mtd["revpar"] = round(mtd["room_revenue"] / (total_rooms * days), 0) \
-		if total_rooms and days else 0
+	month = _days(property, getdate(date).replace(day=1), getdate(date), total_rooms)
+	days = _days(property, getdate(start), getdate(date), total_rooms)
+
+	def count(field, statuses):
+		return frappe.db.count("Reservation", {
+			"property": property, field: ("between", [start, date]),
+			"status": ("in", statuses)})
 
 	movement = {
-		"arrivals": frappe.db.count("Reservation", {
-			"property": property, "check_in_date": date,
-			"status": ("in", ["Confirmed", "Checked In"])}),
-		"departures": frappe.db.count("Reservation", {
-			"property": property, "check_out_date": date,
-			"status": ("in", ["Checked In", "Checked Out"])}),
+		"arrivals": count("check_in_date", ["Confirmed", "Checked In"]),
+		"departures": count("check_out_date", ["Checked In", "Checked Out"]),
 		"in_house": frappe.db.count("Reservation", {
 			"property": property, "status": "Checked In"}),
-		"no_shows": frappe.db.count("Reservation", {
-			"property": property, "check_in_date": date,
-			"status": "No Show"}),
+		"no_shows": count("check_in_date", ["No Show"]),
 	}
 
 	from kamra.api import cash_summary
-	collections = cash_summary(property, date)
+	collections = cash_summary(property, start, date)
 
 	outlook = []
 	for i in range(1, 8):
@@ -183,13 +170,34 @@ def manager_flash(property: str, date: str | None = None):
 		})
 
 	return {
-		"date": str(date), "total_rooms": total_rooms,
-		"today": trend[-1] if trend else None,
-		"mtd": mtd, "movement": movement,
+		"date": str(date), "from_date": str(start), "total_rooms": total_rooms,
+		"today": days[-1] if len(days) == 1 else _sum_days(days, total_rooms),
+		"mtd": _sum_days(month, total_rooms), "movement": movement,
 		"collections": collections,
-		"trend": trend[-14:],
+		"trend": days if len(days) > 1 else month[-14:],
 		"outlook": outlook,
 	}
+
+
+def _days(property: str, d, end, total_rooms: int) -> list[dict]:
+	out = []
+	while d <= end:
+		out.append(_day_stats(property, str(d), total_rooms))
+		d = getdate(add_days(d, 1))
+	return out
+
+
+def _sum_days(days: list[dict], total_rooms: int) -> dict:
+	"""Several days' stats as one: totals, with rates over the whole span."""
+	tot = {k: sum(d[k] for d in days) for k in
+	       ("rooms_sold", "pax", "room_revenue", "fnb_revenue", "other_revenue",
+	        "total_revenue")}
+	n = total_rooms * len(days)
+	return {**tot,
+	        "occupancy_pct": round(100 * tot["rooms_sold"] / n, 1) if n else 0,
+	        "adr": round(tot["room_revenue"] / tot["rooms_sold"], 0) if tot["rooms_sold"] else 0,
+	        "revpar": round(tot["room_revenue"] / n, 0) if n else 0,
+	        "revpax": round(tot["total_revenue"] / tot["pax"], 0) if tot["pax"] else 0}
 
 
 def _month_bounds(period: str):

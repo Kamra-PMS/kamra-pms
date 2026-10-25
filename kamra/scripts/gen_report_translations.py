@@ -1,0 +1,43 @@
+"""Write kamra/translations/{es,ar}.csv for report pages and emails, from the
+SPA's dictionaries, so a report reads the same in the app and in the inbox.
+
+Run after changing a report dataset, column or pack label:
+    python kamra/scripts/gen_report_translations.py
+"""
+
+import csv
+import json
+import re
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[2]
+SRC = (ROOT / "kamra" / "custom_reports.py").read_text()
+# every label/title literal in the report catalog, plus the page and email text
+WORDS = sorted(set(re.findall(r'"(?:label|title)": "([^"]+)"', SRC))
+               | set(re.findall(r'_col\("\w+", "([^"]+)"', SRC))
+               | {"Report", "Kamra report", "The report is attached."})
+ROWS = "{0} rows"  # the SPA says "{n} rows"
+
+
+def main():
+	missing = []
+	for lang in ("es", "ar"):
+		ui = json.loads((ROOT / "frontend/src/i18n/locales" / f"{lang}.json").read_text())
+		out = ROOT / "kamra" / "translations" / f"{lang}.csv"
+		with out.open("w", newline="", encoding="utf-8") as f:
+			w = csv.writer(f)
+			for word in WORDS:
+				if word in ui:
+					w.writerow([word, ui[word]])
+				else:
+					missing.append((lang, word))
+			if "{n} rows" in ui:
+				w.writerow([ROWS, ui["{n} rows"].replace("{n}", "{0}")])
+			else:
+				missing.append((lang, "{n} rows"))
+	for lang, word in missing:
+		print(f"missing {lang}: {word}")
+
+
+if __name__ == "__main__":
+	main()

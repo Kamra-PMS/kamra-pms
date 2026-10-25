@@ -221,9 +221,15 @@ goes to the folio.
 2. Pick a room. **Same type** lists rooms of the booked type; **All types
    (upgrade)** shows every type. Free, clean rooms come first; booked rooms
    are greyed out.
-3. Check the price line at the bottom. Moving to another type re-prices
-   the stay, and Kamra shows the difference and the new total before
-   anything changes.
+3. Moving to another room type, choose the price under **Rate**:
+   - **New room's rate**: the stay is priced as the new type.
+   - **Keep current price**: the guest keeps the rate they booked, for
+     example for a free upgrade.
+   - **Enter a rate**: type a nightly rate agreed with the guest. Only
+     Revenue Manager and Hotel Admin see this option.
+
+   The price line at the bottom shows the difference and the new total
+   before anything changes. The folio bills the price you chose.
 4. Pick a reason (**Guest request**, **Upgrade**, **Maintenance**, **Noise
    / complaint**, **Other**), add a note if you like, and click **Move to
    303**.
@@ -322,6 +328,11 @@ did it.
 **Front Desk → Guests** lists every guest with their bookings, stays,
 nights, lifetime value and last stay. Search by name or phone, and click a
 guest to open their journey.
+
+- **Columns** picks which columns show. Your choice is kept in this
+  browser.
+- **Export** downloads the list as a CSV file with the columns you see.
+  The list shows up to 200 guests, so search first for a longer list.
 
 ![The guests list with phone, bookings, stays, nights, lifetime value and last stay](/img/front-desk/guests.png)
 

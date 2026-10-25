@@ -249,11 +249,67 @@ EXTRA_TOOLS = {
 		{"business_date": {"type": "string"},
 		 "acknowledge": {"type": "array", "items": {"type": "string"}},
 		 "note": {"type": "string"}}, True, True),
+	# Fixed reports. Each keeps its endpoint's role gate (_tool_allowed), so
+	# the agent offers a user exactly the reports their roles can open.
+	"manager_flash": (
+		"reports.manager_flash",
+		"The daily flash: yesterday's occupancy, ADR, RevPAR and revenue, month "
+		"to date, today's movement, collections by mode and the 7-day outlook. "
+		"Pass from_date for a range ending on date.",
+		{"date": {"type": "string"}, "from_date": {"type": "string"}}, True, False),
+	"cashier_shift_report": (
+		"cashier.shift_report",
+		"What each cashier took on a business date (or business_date to "
+		"to_date), by payment mode.",
+		{"business_date": {"type": "string"}, "to_date": {"type": "string"}},
+		True, False),
+	"voids_allowances_report": (
+		"reports.void_allowance_report",
+		"Every void and allowance in a date range, with who did it and why.",
+		{"from_date": {"type": "string"}, "to_date": {"type": "string"}},
+		True, False),
+	"sla_report": (
+		"reports.sla_report",
+		"Guest request (ticket) SLA over a date range: resolution and breach "
+		"rates by category and priority, and the overdue queue.",
+		{"from_date": {"type": "string"}, "to_date": {"type": "string"}},
+		True, False),
+	"outlets": (
+		"pos.outlets",
+		"The property's restaurants, bars and other outlets. Call before "
+		"outlet_dashboard or wastage_report to get an outlet id.",
+		{}, True, False),
+	"outlet_dashboard": (
+		"pos.outlet_dashboard",
+		"One outlet's day: sales, bills, covers, average bill, by order type "
+		"and tender, open bills, NC / voids / cancellations, kitchen times. "
+		"Pass to_date for a range starting on date.",
+		{"outlet": {"type": "string"}, "date": {"type": "string"},
+		 "to_date": {"type": "string"}},
+		False, False),
+	"wastage_report": (
+		"inventory.wastage_report",
+		"Food cooked and then voided over the last N days (default 30), with "
+		"its cost; optionally for one outlet.",
+		{"outlet": {"type": "string"}, "days": {"type": "integer"}},
+		True, False),
 	"list_report_datasets": (
 		"custom_reports.list_report_datasets",
 		"Whitelisted custom-report datasets and columns. Call before building "
 		"or running a custom report.",
 		{}, True, False),
+	"list_report_packs": (
+		"custom_reports.list_report_packs",
+		"Department report packs (Front Office, Housekeeping, F&B, Hotel "
+		"Manager) with the sections this user may see.",
+		{}, True, False),
+	"run_report_pack": (
+		"custom_reports.run_report_pack",
+		"Run a department pack (id from list_report_packs) for a date range; "
+		"defaults to the last 7 days. format=json.",
+		{"pack": {"type": "string"}, "from_date": {"type": "string"},
+		 "to_date": {"type": "string"}, "format": {"type": "string"}},
+		True, False),
 	"list_custom_reports": (
 		"custom_reports.list_custom_reports",
 		"Saved custom reports for this property.",
@@ -788,7 +844,8 @@ def _payment_folio(args: dict) -> dict:
 
 
 # the documents a chat tool may name, and the field that ties each to a property
-_SCOPED_ARGS = {"reservation": "Reservation", "folio": "Folio"}
+_SCOPED_ARGS = {"reservation": "Reservation", "folio": "Folio",
+                "outlet": "POS Outlet"}
 
 
 def _assert_this_property(args: dict, property: str) -> None:
@@ -1133,7 +1190,11 @@ What Kamra does and where to find it:
 - Guests: profiles with stay history, VIP/blacklist, merge and anonymize.
 - Billing: folios, post charges, take payments, payment links. Closing a folio
   assigns a GST tax invoice (logo, GSTIN, place of supply, SAC 996311).
-- Reports: occupancy, ADR, RevPAR, RevPAX, MTD, collections, 14-day trend.
+- Reports: one Reports hub - manager flash, shift report, F&B dashboard,
+  banquet registers, SLA, voids, department packs (Front Office,
+  Housekeeping, F&B, Hotel Manager) and custom reports (build, save, group
+  and drill down, email daily or weekly). Which reports a user sees follows their
+  role.
 - Housekeeping: room board + a phone app at /kamra/hk.
 - Revenue: rate plans, seasons, vouchers, rate guardrails.
 - Events: Venue Bookings and a Venue Calendar (banquet/function diary);
