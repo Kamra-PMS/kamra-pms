@@ -109,7 +109,14 @@ jobs:
         working-directory: docs-site
         env:
           DOCS_VERSION: ${{ steps.ver.outputs.version }}
-        run: node scripts/build.mjs --archive
+        run: |
+          # Freeze the pages as they were in that release, whichever branch
+          # this run started from (keep this run's switcher and build script).
+          cp versions.json /tmp/versions.json && cp scripts/build.mjs /tmp/build.mjs
+          git checkout -q "v${DOCS_VERSION}" -- . \
+            || echo "::warning::No tag v${DOCS_VERSION}; freezing this branch's pages"
+          cp /tmp/versions.json versions.json && cp /tmp/build.mjs scripts/build.mjs
+          node scripts/build.mjs --archive
 
       - name: Register the version on develop
         if: steps.ver.outputs.freeze == 'true'
