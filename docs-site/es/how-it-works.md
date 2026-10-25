@@ -11,7 +11,7 @@ producto; el resto de esta página muestra cómo el sistema lo hace seguro.
 Las guías de cada módulo explican las tareas diarias del hotel.
 
 **Versión estable actual:**
-[v2.6.16](https://github.com/Kamra-PMS/kamra-pms/releases/tag/v2.6.16)
+[v2.6.20](https://github.com/Kamra-PMS/kamra-pms/releases/tag/v2.6.20)
 (rama `main`). Las compilaciones nocturnas siguen `develop`. Instale desde
 [Frappe Cloud Marketplace](/self-hosting/frappe-cloud) o
 [en su propio servidor](/self-hosting/).

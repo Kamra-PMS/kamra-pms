@@ -74,7 +74,7 @@ Frappe Cloud أو على خادمك. راجع
 مرة أخرى:
 
 ```bash
-sudo KAMRA_TAG=v2.6.16 /opt/kamra/install.sh update
+sudo KAMRA_TAG=v2.6.19 /opt/kamra/install.sh update
 ```
 
 استخدم الوسم الذي كنت عليه من قبل. التحديثات تأخذ نسخة احتياطية أولا

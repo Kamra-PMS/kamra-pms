@@ -10,7 +10,7 @@ MCP) الأدوات نفسها المحصورة حسب الدور التي تس�
 توضح كيف تجعل البنية ذلك آمنا. أدلة الوحدات تغطي مهام الفندق اليومية.
 
 **الإصدار المستقر الحالي:**
-[v2.6.16](https://github.com/Kamra-PMS/kamra-pms/releases/tag/v2.6.16)
+[v2.6.20](https://github.com/Kamra-PMS/kamra-pms/releases/tag/v2.6.20)
 (الفرع `main`). البناءات الليلية تتبع `develop`. ثبّت من
 [سوق Frappe Cloud](/self-hosting/frappe-cloud) أو
 [استضفه ذاتيا](/self-hosting/).

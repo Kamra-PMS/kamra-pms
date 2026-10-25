@@ -81,7 +81,7 @@ actualizar; no cambia la instalación. En un sitio Docker en su propio
 servidor, vuelva a fijar la versión que quiera:
 
 ```bash
-sudo KAMRA_TAG=v2.6.16 /opt/kamra/install.sh update
+sudo KAMRA_TAG=v2.6.19 /opt/kamra/install.sh update
 ```
 
 Use la etiqueta que tenía antes. Las actualizaciones siempre hacen primero

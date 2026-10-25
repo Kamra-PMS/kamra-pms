@@ -36,7 +36,7 @@ features:
     details: استدعِ الدوال نفسها من أنظمتك. نزّل مجموعة Postman وابدأ.
     link: /developers
   - title: الميزات وآخر إصدار
-    details: من الاستقبال إلى المآدب، والمأكولات والمشروبات، وWhatsApp، وحزم الضرائب لكل دولة، مع الجديد في v2.6.17.
+    details: من الاستقبال إلى المآدب، والمأكولات والمشروبات، وWhatsApp، وحزم الضرائب لكل دولة، مع الجديد في v2.6.20.
     link: /ar/features
   - title: التثبيت
     details: Docker على خادم VPS، أو bench التقليدي، أو سوق Frappe Cloud. التطبيق نفسه كاملا برخصة AGPL.
@@ -64,7 +64,7 @@ features:
 **[كيف يعمل Kamra](/ar/how-it-works)** ·
 **[اختصارات المطورين](/developers)**
 
-**الإصدار المستقر الحالي:** [v2.6.17](/releases) ·
+**الإصدار المستقر الحالي:** [v2.6.20](/releases) ·
 [العرض الحي](https://demo.kamrapms.com) ·
 [سوق Frappe Cloud](https://frappecloud.com/marketplace/apps/kamra)
 

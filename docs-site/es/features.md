@@ -4,7 +4,7 @@ Qué hace Kamra, módulo por módulo, con un enlace a la guía completa de cada
 uno. Todo lo que aparece aquí está en la aplicación de código abierto; no
 hay ediciones.
 
-**Última versión estable:** [v2.6.16](/releases). Mapa del sistema y
+**Última versión estable:** [v2.6.20](/releases). Mapa del sistema y
 arquitectura: [Cómo funciona Kamra](/es/how-it-works).
 
 ## Recepción

@@ -36,7 +36,7 @@ features:
     details: Llame a los mismos métodos desde su sistema. Descargue la colección de Postman y empiece.
     link: /developers
   - title: Funciones y última versión
-    details: De la recepción a los banquetes, Alimentos y bebidas, WhatsApp y paquetes fiscales por país, además de las novedades de la v2.6.17.
+    details: De la recepción a los banquetes, Alimentos y bebidas, WhatsApp y paquetes fiscales por país, además de las novedades de la v2.6.20.
     link: /es/features
   - title: Instalación
     details: Docker en un VPS, bench clásico o Frappe Cloud Marketplace. La misma aplicación AGPL completa.
@@ -67,7 +67,7 @@ Empiece aquí: **[Conecte su IA (MCP)](/ai-and-mcp)** ·
 **[Cómo funciona Kamra](/es/how-it-works)** ·
 **[Accesos rápidos para desarrolladores](/developers)**
 
-**Versión estable actual:** [v2.6.17](/releases) ·
+**Versión estable actual:** [v2.6.20](/releases) ·
 [Demo en vivo](https://demo.kamrapms.com) ·
 [Frappe Cloud Marketplace](https://frappecloud.com/marketplace/apps/kamra)
 
