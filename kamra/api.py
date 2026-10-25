@@ -22,7 +22,7 @@ ALL_MODULES = ("front-desk", "housekeeping", "operations", "fnb", "events",
 
 @frappe.whitelist()
 @require_roles("Front Desk", "Finance", "Revenue Manager", "Housekeeping",
-               "Housekeeping Supervisor", "Kamra Agent")
+               "Housekeeping Supervisor", "Kamra Agent", "Night Auditor")
 def enabled_modules(property: str) -> list:
 	"""Which parts of Kamra this property runs. Empty setting = all of
 	them, so an existing property keeps working untouched."""
@@ -698,7 +698,8 @@ def registration_card(reservation: str):
 
 @frappe.whitelist()
 @require_roles("Finance", "Front Desk", "Night Auditor", "Kamra Agent")
-def cash_summary(property: str, date: str | None = None):
+def cash_summary(property: str, date: str | None = None,
+                 to_date: str | None = None):
 	"""Cashier reconciliation: what the system says was collected today,
 	per payment mode - the number the drawer must match at shift close.
 
@@ -708,7 +709,9 @@ def cash_summary(property: str, date: str | None = None):
 	date = date or get_business_date(property)
 	try:
 		from kamra.cashier import cash_summary_v2
-		return cash_summary_v2(property, date)
+		return cash_summary_v2(property, date, to_date)
+	except frappe.ValidationError:
+		raise
 	except Exception:
 		pass
 	rows = frappe.db.sql(
@@ -716,10 +719,10 @@ def cash_summary(property: str, date: str | None = None):
 		SELECT fp.mode, COUNT(*) AS txns, COALESCE(SUM(fp.amount), 0) AS total
 		FROM `tabFolio Payment` fp
 		JOIN `tabFolio` f ON fp.parent = f.name
-		WHERE f.property = %(property)s AND fp.posting_date = %(date)s
+		WHERE f.property = %(property)s AND fp.posting_date BETWEEN %(date)s AND %(to)s
 		GROUP BY fp.mode ORDER BY total DESC
 		""",
-		{"property": property, "date": date}, as_dict=True,
+		{"property": property, "date": date, "to": to_date or date}, as_dict=True,
 	)
 	return {"date": date, "modes": rows,
 	        "grand_total": float(sum(r.total for r in rows)),
@@ -4500,7 +4503,9 @@ def venue_calendar(property: str, start_date: str | None = None, days: int = 14)
 @frappe.whitelist()
 @require_roles("Front Desk", "Kamra Agent")
 def move_reservation(reservation: str, new_room: str,
-                     reason: str | None = None, confirm_price: int = 0):
+                     reason: str | None = None, confirm_price: int = 0,
+                     rate_mode: str = "destination",
+                     agreed_rate: float | None = None):
 	"""Room move / upgrade - mid-stay or before arrival. Overlap guard re-runs.
 	One writer for the tape chart, the reservation drawer and the GRC (#113).
 
@@ -4509,7 +4514,11 @@ def move_reservation(reservation: str, new_room: str,
 	downgrades are allowed. If the booking auto-prices, the new type's rate
 	is quoted and locked - shown first by room_move_preview, and refused
 	unless confirm_price=1 when it changes the bill. A same-type move keeps
-	the locked nightly rates; a manually-priced booking keeps its amount."""
+	the locked nightly rates; a manually-priced booking keeps its amount.
+
+	rate_mode: "destination" (the new type's rate, above), "source" (keep
+	what the guest pays now) or "custom" (agreed_rate per night; Revenue
+	Manager / admins only)."""
 	doc = frappe.get_doc("Reservation", reservation)
 	from kamra.crs import assert_property_access
 	assert_property_access(doc.property)
@@ -4521,11 +4530,12 @@ def move_reservation(reservation: str, new_room: str,
 	old_type = doc.room_type
 	old_amount = float(doc.amount_after_tax or 0)
 	new_type = frappe.db.get_value("Room", new_room, "room_type")
-	if new_type and new_type != doc.room_type:
-		# upgrade / downgrade: the room type follows the room
-		_require_price_confirmation(
-			_reprice_preview(doc, room_type=new_type), confirm_price)
+	_require_price_confirmation(
+		_move_price(doc, new_type, rate_mode, agreed_rate), confirm_price)
 	doc.room = new_room
+	if rate_mode == "source":
+		# keep what the guest pays: re-key the lock so the save keeps the rates
+		doc.rate_lock_key = doc.rate_lock_key_for(doc.quote_inputs())
 	doc.save()
 	if doc.status == "Checked In" and old_room and old_room != new_room:
 		frappe.db.set_value("Room", old_room,
@@ -4539,11 +4549,44 @@ def move_reservation(reservation: str, new_room: str,
 	if abs(float(doc.amount_after_tax or 0) - old_amount) >= 0.01:
 		note += (f" · re-priced {old_amount:,.2f} → "
 		         f"{float(doc.amount_after_tax or 0):,.2f} (confirmed)")
+	if rate_mode != "destination":
+		note += f" · rate: {rate_mode}"
 	if (reason or "").strip():
 		note += f" · {reason.strip()[:140]}"
 	log_action("room_move", "Reservation", doc.name, doc.property, rationale=note)
 	return {"ok": True, "room": doc.room, "room_type": doc.room_type,
 	        "amount_after_tax": float(doc.amount_after_tax or 0)}
+
+
+def _can_set_rate() -> bool:
+	# the same people who may set room rates (set_room_rate)
+	return _is_admin() or "Revenue Manager" in frappe.get_roles()
+
+
+def _move_price(res, new_type: str | None, rate_mode: str,
+                agreed_rate: float | None) -> dict:
+	"""Price preview for a room move. Leaves res holding the move's price
+	inputs (room type, agreed rate) for the save that follows."""
+	if rate_mode not in ("destination", "source", "custom"):
+		frappe.throw(_("Unknown rate option: {0}").format(rate_mode))
+	changes = {} if not new_type or new_type == res.room_type else {"room_type": new_type}
+	if rate_mode == "source":
+		pv = _reprice_preview(res, **changes)
+		pv.update(new_amount=pv["current_amount"], difference=0.0,
+		          needs_confirmation=False, reprices=False)
+		return pv
+	if rate_mode == "custom":
+		if not _can_set_rate():
+			frappe.throw(_("Only a Revenue Manager or Hotel Admin can enter a new rate."),
+			             frappe.PermissionError)
+		if float(agreed_rate or 0) <= 0:
+			frappe.throw(_("Enter the new nightly rate."))
+		if not res.get("auto_price"):
+			frappe.throw(_("This booking is priced by hand; change its amount instead."))
+		changes["agreed_rate"] = float(agreed_rate)
+	else:
+		changes["agreed_rate"] = 0  # the destination's own rate card
+	return _reprice_preview(res, **changes)
 
 
 class PriceConfirmationRequired(frappe.ValidationError):
@@ -4598,7 +4641,9 @@ def _require_price_confirmation(preview: dict, confirm_price) -> None:
 
 @frappe.whitelist()
 @require_roles("Front Desk", "Kamra Agent")
-def room_move_preview(reservation: str, new_room: str):
+def room_move_preview(reservation: str, new_room: str,
+                      rate_mode: str = "destination",
+                      agreed_rate: float | None = None):
 	"""What a move would do to the bill before the desk confirms it: a
 	same-type swap keeps the price (and the locked nightly rates); an
 	upgrade / downgrade on an auto-priced booking is re-quoted at the new
@@ -4609,8 +4654,7 @@ def room_move_preview(reservation: str, new_room: str):
 	assert_property_access(res.property)
 	new_type = frappe.db.get_value("Room", new_room, "room_type")
 	same_type = new_type == res.room_type
-	pv = _reprice_preview(res, **({} if same_type or not new_type
-	                              else {"room_type": new_type}))
+	pv = _move_price(res, new_type, rate_mode, agreed_rate)
 	return {
 		"same_type": same_type,
 		"new_room_type": new_type,
@@ -4623,6 +4667,7 @@ def room_move_preview(reservation: str, new_room: str):
 		"nights": pv["nights"],
 		"auto_price": pv["auto_price"],
 		"in_house": res.status == "Checked In",
+		"can_set_rate": _can_set_rate(),
 	}
 
 

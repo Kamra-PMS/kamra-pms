@@ -4,7 +4,7 @@
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import cint, date_diff, formatdate, now_datetime, today
+from frappe.utils import cint, date_diff, flt, formatdate, now_datetime, today
 
 
 class InventoryRefused(frappe.ValidationError):
@@ -497,6 +497,9 @@ class Reservation(Document):
 		# made before pets existed stays the same and nothing re-prices
 		if cint(self.get("pets")) > 0:
 			inputs["pets"] = cint(self.get("pets"))
+		# same rule: only when set, so existing rate-lock keys stay put
+		if flt(self.get("agreed_rate")) > 0:
+			inputs["agreed_rate"] = flt(self.get("agreed_rate"))
 		return inputs
 
 	@staticmethod

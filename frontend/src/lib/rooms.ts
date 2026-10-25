@@ -259,10 +259,12 @@ export interface RoomInsights {
   rooms: InsightRoom[]
 }
 
-export const getRoomInsights = (days: number) =>
+export const getRoomInsights = (days: number, from_date?: string, to_date?: string) =>
   call<RoomInsights>("kamra.rooms.room_insights", {
     property: getCurrentProperty(),
     days,
+    from_date,
+    to_date,
   })
 
 // --- Today layout -------------------------------------------------------------

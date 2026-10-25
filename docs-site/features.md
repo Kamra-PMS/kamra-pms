@@ -3,7 +3,7 @@
 What Kamra does, module by module, with a link to the full guide for each.
 Everything here is in the open-source app; there are no editions.
 
-**Latest stable:** [v2.6.16](/releases). System map and architecture:
+**Latest stable:** [v2.6.20](/releases). System map and architecture:
 [How Kamra works](/how-it-works).
 
 ## Front desk

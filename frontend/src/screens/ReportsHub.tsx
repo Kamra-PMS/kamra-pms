@@ -29,17 +29,21 @@ interface ReportLink {
   label: string
   blurb: string
   icon: LucideIcon
-  app: string
+  app?: string
   roles?: string[]
 }
 
 const MONEY_ROLES = ["Finance", "Hotel Admin", "System Manager", "Administrator"]
+// the report builder's own gate (custom_reports.py), not one app's
+const BUILDER_ROLES = [...MONEY_ROLES, "Front Desk", "Revenue Manager", "Night Auditor",
+  "Housekeeping", "Housekeeping Supervisor"]
 
 const SECTIONS: { title: string; items: ReportLink[] }[] = [
   {
     title: "Your reports",
     items: [
-      { to: "/reports/custom", label: "Custom reports", blurb: "Build a report from arrivals, payments, POS and more; save it, share it, email it on a schedule.", icon: FileSpreadsheet, app: "finance" },
+      { to: "/reports/packs", label: "Department packs", blurb: "Front Office, Housekeeping, F&B and Hotel Manager, each on one page, emailed weekly.", icon: ClipboardCheck, roles: BUILDER_ROLES },
+      { to: "/reports/custom", label: "Custom reports", blurb: "Build a report from arrivals, payments, POS and more; save it, share it, email it on a schedule.", icon: FileSpreadsheet, roles: BUILDER_ROLES },
     ],
   },
   {
@@ -85,7 +89,7 @@ export default function ReportsHub() {
   const sections = SECTIONS.map((s) => ({
     ...s,
     items: s.items.filter(
-      (r) => apps.has(r.app) && (!r.roles || r.roles.some((x) => roles.includes(x))),
+      (r) => (!r.app || apps.has(r.app)) && (!r.roles || r.roles.some((x) => roles.includes(x))),
     ),
   })).filter((s) => s.items.length)
 

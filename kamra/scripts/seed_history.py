@@ -172,13 +172,13 @@ def simulated_past():
 # -- entry -------------------------------------------------------------------
 
 
-def execute(days: int = DAYS):
+def execute(days: int = DAYS) -> dict:
 	if not frappe.db.exists("Property", PROPERTY):
 		print(f"seed_history: no '{PROPERTY}' here, nothing to do.")
-		return
+		return {"skipped": "no demo property"}
 	if frappe.db.exists("Night Audit Run", {"property": PROPERTY}):
 		print("seed_history: history already present, skipping.")
-		return
+		return {"skipped": "history already present"}
 	started = time.monotonic()
 	user = frappe.session.user
 	try:

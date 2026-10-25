@@ -128,6 +128,20 @@ jobs:
           secret-files: |
             apps_json=./apps.json
 
+  docs-snapshot:
+    name: Freeze the docs for this release
+    # A Release made with GITHUB_TOKEN never fires docs.yml's `release`
+    # trigger; workflow_dispatch is the one event that token may start.
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - name: Dispatch docs.yml
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag || github.ref_name }}
+        run: gh workflow run docs.yml --repo "$GITHUB_REPOSITORY" --ref main -f archive_version="${TAG#v}"
+
   deploy-demo:
     name: Deploy demo.kamrapms.com
     needs: docker

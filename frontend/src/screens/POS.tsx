@@ -21,6 +21,7 @@ import { Button } from "../components/ui/button"
 import { cn } from "../lib/utils"
 import { cur, moneyLocale, useLocale } from "../lib/money"
 import { useT, t as translate } from "../lib/i18n"
+import { docsUrl } from "../components/InfoTip"
 
 
 const inr = (n: unknown) =>
@@ -1214,7 +1215,7 @@ export default function POS() {
         <div className="flex shrink-0 items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
           <span>
             {t("Printing waited on the print dialog. Start Chrome with --kiosk-printing on this till to print KOTs instantly.")}{" "}
-            <a className="font-semibold underline" href="https://kamrapms.com/docs/features#fast-silent-printing"
+            <a className="font-semibold underline" href={docsUrl("features#fast-silent-printing")}
               target="_blank" rel="noreferrer">{t("How")}</a>
           </span>
           <button className="text-xs font-semibold" onClick={() => setPrintTip(false)}>{t("Dismiss")}</button>

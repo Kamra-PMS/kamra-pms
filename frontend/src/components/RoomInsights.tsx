@@ -18,19 +18,22 @@ type SortKey = "nights" | "occupancy_pct" | "revenue" | "out_of_service_nights" 
 export default function RoomInsights(props: { onOpenRoom: (room: string) => void }) {
   const { t } = useT()
   const [days, setDays] = useState(30)
+  // a picked range overrides the preset windows ("" = use the preset)
+  const [fromDate, setFromDate] = useState("")
+  const [toDate, setToDate] = useState("")
   const [d, setD] = useState<Data | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [sort, setSort] = useState<SortKey>("nights")
 
   useEffect(() => {
     setD(null)
-    getRoomInsights(days)
+    getRoomInsights(days, fromDate || undefined, (fromDate && toDate) || undefined)
       .then((x) => {
         setD(x)
         setError(null)
       })
       .catch((e) => setError(serverError(e)))
-  }, [days])
+  }, [days, fromDate, toDate])
 
   const sorted = useMemo(() => {
     if (!d) return []
@@ -55,10 +58,14 @@ export default function RoomInsights(props: { onOpenRoom: (room: string) => void
         {[30, 90].map((n) => (
           <button
             key={n}
-            onClick={() => setDays(n)}
+            onClick={() => {
+              setDays(n)
+              setFromDate("")
+              setToDate("")
+            }}
             className={cn(
               "min-h-10 rounded-lg border px-3 text-sm font-medium",
-              days === n
+              days === n && !fromDate
                 ? "border-brand-600 bg-brand-50 text-brand-800"
                 : "border-zinc-200 bg-white text-zinc-600",
             )}
@@ -66,6 +73,22 @@ export default function RoomInsights(props: { onOpenRoom: (room: string) => void
             {t("Last {n} days", { n })}
           </button>
         ))}
+        <input
+          type="date"
+          aria-label={t("From")}
+          className="min-h-10 rounded-lg border border-zinc-200 px-2 text-sm"
+          value={fromDate}
+          onChange={(e) => setFromDate(e.target.value)}
+        />
+        <input
+          type="date"
+          aria-label={t("To")}
+          className="min-h-10 rounded-lg border border-zinc-200 px-2 text-sm"
+          value={toDate}
+          min={fromDate || undefined}
+          disabled={!fromDate}
+          onChange={(e) => setToDate(e.target.value)}
+        />
         {d && (
           <span className="text-sm text-zinc-500">
             {t("{from} to {to}, nights up to last night", { from: d.from_date, to: d.to_date })}

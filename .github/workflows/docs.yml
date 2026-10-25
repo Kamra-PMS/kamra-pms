@@ -109,22 +109,32 @@ jobs:
         working-directory: docs-site
         env:
           DOCS_VERSION: ${{ steps.ver.outputs.version }}
-        run: node scripts/build.mjs --archive
+        run: |
+          # Freeze the pages as they were in that release, whichever branch
+          # this run started from (keep this run's switcher and build script).
+          cp versions.json /tmp/versions.json && cp scripts/build.mjs /tmp/build.mjs
+          git checkout -q "v${DOCS_VERSION}" -- . \
+            || echo "::warning::No tag v${DOCS_VERSION}; freezing this branch's pages"
+          cp /tmp/versions.json versions.json && cp /tmp/build.mjs scripts/build.mjs
+          node scripts/build.mjs --archive
 
-      - name: Commit versions.json when it changed
+      - name: Register the version on develop
         if: steps.ver.outputs.freeze == 'true'
         run: |
-          if git diff --quiet -- docs-site/versions.json; then
-            echo "versions.json unchanged"
-            exit 0
-          fi
+          # The live /docs/ is built from develop, so the switcher has to
+          # change there. A refused push (branch protection) must not stop
+          # the publish below: warn, and bump versions.json by PR instead.
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch -q origin develop
+          git checkout -q -f -B bump origin/develop
+          DOCS_VERSION="${{ steps.ver.outputs.version }}" DOCS_MAKE_LATEST=1 \
+            node docs-site/scripts/prepare-versions.mjs
           git add docs-site/versions.json
-          git commit -m "docs: register v${{ steps.ver.outputs.version }} in the version switcher"
-          # Push to the ref we built from (usually main on release)
-          BRANCH="${{ github.event_name == 'release' && github.event.release.target_commitish || github.ref_name }}"
-          git push origin "HEAD:refs/heads/${BRANCH}"
+          if git diff --cached --quiet; then echo "versions.json already lists it"; exit 0; fi
+          git commit -qm "docs: register v${{ steps.ver.outputs.version }} in the version switcher"
+          git push origin HEAD:refs/heads/develop \
+            || echo "::warning::Could not push versions.json to develop; open a PR with it."
 
       - name: Publish to kamrapms.com/docs
         env:

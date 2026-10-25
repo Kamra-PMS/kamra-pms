@@ -324,6 +324,7 @@ export default function App() {
           <Route path="reports" element={<ReportsHub />} />
           <Route path="reports/flash" element={<Reports initialTab="flash" />} />
           <Route path="reports/custom" element={<Reports />} />
+          <Route path="reports/packs" element={<Reports key="packs" initialTab="packs" />} />
           <Route path="in-house" element={<InHouse />} />
           <Route path="arrivals" element={<Navigate to="/in-house?tab=arrivals" replace />} />
           <Route path="departures" element={<Navigate to="/in-house?tab=departures" replace />} />

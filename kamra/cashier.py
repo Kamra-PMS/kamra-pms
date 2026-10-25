@@ -13,6 +13,7 @@ from frappe.utils import now_datetime
 
 from kamra.authz import require_roles
 from kamra.business_date import ensure_business_date, get_business_date
+from kamra.business_date import report_range_end as _range_end
 from kamra.settings import get_setting
 
 CASH_MODES = ("Cash",)
@@ -662,19 +663,22 @@ def session_report(session: str):
 
 @frappe.whitelist()
 @require_roles("Front Desk", "Finance", "Hotel Admin", "Night Auditor", "Kamra Agent")
-def cash_summary_v2(property: str, date: str | None = None):
-	"""Unified FO + POS cash for a business date (replaces folio-only summary)."""
+def cash_summary_v2(property: str, date: str | None = None,
+                    to_date: str | None = None):
+	"""Unified FO + POS cash for a business date, or date..to_date
+	(replaces folio-only summary)."""
 	date = date or get_business_date(property)
+	to = _range_end(date, to_date)
 	# Prefer cashier transactions when sessions exist for the day
 	rows = frappe.db.sql(
 		"""
 		SELECT mode, kind, COUNT(*) AS txns, COALESCE(SUM(amount), 0) AS total
 		FROM `tabCashier Transaction`
-		WHERE property = %(property)s AND business_date = %(date)s
+		WHERE property = %(property)s AND business_date BETWEEN %(date)s AND %(to)s
 		GROUP BY mode, kind
 		ORDER BY total DESC
 		""",
-		{"property": property, "date": date}, as_dict=True,
+		{"property": property, "date": date, "to": to}, as_dict=True,
 	)
 	if rows:
 		by_mode: dict[str, dict] = {}
@@ -698,10 +702,10 @@ def cash_summary_v2(property: str, date: str | None = None):
 		SELECT fp.mode, COUNT(*) AS txns, COALESCE(SUM(fp.amount), 0) AS total
 		FROM `tabFolio Payment` fp
 		JOIN `tabFolio` f ON fp.parent = f.name
-		WHERE f.property = %(property)s AND fp.posting_date = %(date)s
+		WHERE f.property = %(property)s AND fp.posting_date BETWEEN %(date)s AND %(to)s
 		GROUP BY fp.mode ORDER BY total DESC
 		""",
-		{"property": property, "date": date}, as_dict=True,
+		{"property": property, "date": date, "to": to}, as_dict=True,
 	)
 	return {
 		"date": date,
@@ -713,12 +717,14 @@ def cash_summary_v2(property: str, date: str | None = None):
 
 @frappe.whitelist()
 @require_roles("Front Desk", "Finance", "Hotel Admin", "Night Auditor", "Kamra Agent")
-def shift_report(property: str, business_date: str | None = None):
-	"""Per-cashier totals for a business date."""
+def shift_report(property: str, business_date: str | None = None,
+                 to_date: str | None = None):
+	"""Per-cashier totals for a business date, or business_date..to_date."""
 	date = business_date or get_business_date(property)
+	to = _range_end(date, to_date)
 	sessions = frappe.get_all(
 		"Cashier Session",
-		filters={"property": property, "business_date": date},
+		filters={"property": property, "business_date": ("between", [date, to])},
 		fields=["name", "cashier", "user", "status", "opening_float",
 		        "system_cash", "system_card", "system_upi", "system_other",
 		        "paid_outs", "drops", "petty_cash", "expected_cash",
@@ -732,13 +738,14 @@ def shift_report(property: str, business_date: str | None = None):
 		SELECT ct.kind, ct.mode, COUNT(*) AS txns,
 		       COALESCE(SUM(ct.amount), 0) AS total
 		FROM `tabCashier Transaction` ct
-		WHERE ct.property = %(property)s AND ct.business_date = %(date)s
+		WHERE ct.property = %(property)s AND ct.business_date BETWEEN %(date)s AND %(to)s
 		GROUP BY ct.kind, ct.mode
 		ORDER BY ct.kind, ct.mode
 		""",
-		{"property": property, "date": date}, as_dict=True,
+		{"property": property, "date": date, "to": to}, as_dict=True,
 	)
-	return {"business_date": date, "sessions": sessions, "journal": journal}
+	return {"business_date": date, "to_date": to, "sessions": sessions,
+	        "journal": journal}
 
 
 # --- terminals: many tills, one place to see them ------------------------------
