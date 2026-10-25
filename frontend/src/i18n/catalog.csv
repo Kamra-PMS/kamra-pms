@@ -428,8 +428,8 @@
 + New Extra folio,+ New Extra folio,+ فاتورة إضافية جديدة,+ Nuevo folio de extras,screens/FolioView.tsx,,translated
 +{amount}/adult/night,+{amount}/adult/night,+{amount}/بالغ/ليلة,+{amount}/adulto/noche,screens/PublicBooking.tsx,amount,translated
 +{n} house / complimentary order{s} (not billed),+{n} house / complimentary order{s} (not billed),+{n} طلب{s} منزل / مجاني (غير مفوتر),+{n} pedido{s} de cortesía (sin cargo),screens/Laundry.tsx,n s,translated
-+{v0} numbers are {v1} digits.,+{v0} numbers are {v1} digits.,أرقام +{v0} مكونة من {v1} خانات.,Los números con prefijo +{v0} tienen {v1} dígitos.,components/BookingDialog.tsx,v0 v1,translated
-+{v0} numbers are {v1}-{v2} digits.,+{v0} numbers are {v1}-{v2} digits.,أرقام +{v0} مكونة من {v1}-{v2} خانة.,Los números con prefijo +{v0} tienen entre {v1} y {v2} dígitos.,components/BookingDialog.tsx,v0 v1 v2,translated
++{v0} numbers are {v1} digits.,+{v0} numbers are {v1} digits.,تتكون أرقام +{v0} من {v1} أرقام.,Los números con prefijo +{v0} tienen {v1} dígitos.,components/PhoneInput.tsx,v0 v1,translated
++{v0} numbers are {v1}-{v2} digits.,+{v0} numbers are {v1}-{v2} digits.,تتكون أرقام +{v0} من {v1} إلى {v2} أرقام.,Los números con prefijo +{v0} tienen entre {v1} y {v2} dígitos.,components/PhoneInput.tsx,v0 v1 v2,translated
 0 = all served. N = the guest chooses N.,0 = all served. N = the guest chooses N.,0 = تقديم الكل. N = يختار الضيف N.,0 = se sirven todos. N = el cliente elige N opciones.,screens/BanquetCatalogue.tsx,,translated
 0 = no limit,0 = no limit,0 = بلا حد,0 = sin límite,components/CreditTermsEditor.tsx,,translated
 0 marks the line exempt; blank re-derives the rate for a {v0} line,0 marks the line exempt; blank re-derives the rate for a {v0} line,0 يجعل البند معفى؛ تركه فارغًا يعيد احتساب النسبة لبند {v0},"0 marca la línea como exenta; en blanco, se recalcula la tasa para una línea de {v0}",screens/BanquetFunction.tsx,v0,translated
@@ -1241,7 +1241,7 @@ Check out {name},Check out {name},تسجيل مغادرة {name},Registrar la sa
 Check out a guest,Check out a guest,تسجيل مغادرة ضيف,Registrar la salida de un huésped,components/CommandPalette.tsx,,translated
 Check speed,Check speed,فحص السرعة,Comprobar velocidad,screens/settings/cards.tsx,,translated
 "Check the guest's name and phone, then the ID for the guest and everyone staying. If they checked in online, review what they sent.","Check the guest's name and phone, then the ID for the guest and everyone staying. If they checked in online, review what they sent.",تحقق من اسم الضيف وهاتفه، ثم من هوية الضيف وكل من يقيم معه. إذا سجل الوصول عبر الإنترنت، راجع ما أرسله.,"Verifique el nombre y el teléfono del huésped, luego la identificación del huésped y de todos los que se hospedan. Si realizaron el check-in en línea, revise lo que enviaron.",components/CheckInDialog.tsx,,translated
-Check the phone number and calling code.,Check the phone number and calling code.,تحقق من رقم الهاتف ورمز الاتصال الدولي.,Revise el número de teléfono y el prefijo internacional.,,,translated
+Check the phone number and calling code.,Check the phone number and calling code.,تحقق من رقم الهاتف ورمز الاتصال الدولي.,Revise el número de teléfono y el prefijo internacional.,components/PhoneInput.tsx,,translated
 Check the status of this Kamra site and whether a newer open-source release is available.,Check the status of this Kamra site and whether a newer open-source release is available.,تحقق من حالة موقع كامرا وما إذا كان هناك إصدار مفتوح المصدر أحدث.,Compruebe el estado de este sitio de Kamra y si hay disponible una versión más reciente de código abierto.,screens/SystemHealth.tsx,,translated
 check-in,check-in,تسجيل الوصول,registro de entrada,components/CommandPalette.tsx,,translated
 Check-in,Check-in,تسجيل الوصول,Registro de entrada,components/BookingDialog.tsx; screens/CRS.tsx; screens/PublicBooking.tsx; screens/PublicListing.tsx; screens/RegistrationCard.tsx; screens/ReservationDetail.tsx; screens/TapeChart.tsx,,translated
@@ -1557,7 +1557,7 @@ Counted with the guest. Billed to the room.,Counted with the guest. Billed to th
 Counter,Counter,الكاونتر,Mostrador,,,translated
 Country,Country,الدولة,País,screens/BookingEngine.tsx,,translated
 Country *,Country *,الدولة *,País *,screens/Setup.tsx,,translated
-Country calling code,Country calling code,رمز الاتصال الدولي,Prefijo telefónico internacional,,,translated
+Country calling code,Country calling code,رمز الاتصال الدولي,Prefijo telefónico internacional,components/PhoneInput.tsx,,translated
 Country name,Country name,اسم الدولة,Nombre del país,screens/Setup.tsx,,translated
 Country name *,Country name *,اسم الدولة *,Nombre del país *,screens/Setup.tsx,,translated
 Country selects the tax and invoicing pack.,Country selects the tax and invoicing pack.,تحدد الدولة حزمة الضرائب والفوترة.,El país determina la configuración de impuestos y facturación.,,,translated
@@ -1990,7 +1990,7 @@ Express {cur} (opt),Express {cur} (opt),مستعجل {cur} (اختياري),Expr
 Express {v0} (opt),Express {v0} (opt),سريع {v0} (اختياري),Exprés {v0} (opcional),screens/settings/cards.tsx,v0,translated
 Express price,Express price,السعر السريع,Tarifa exprés,,,translated
 Extend a stay,Extend a stay,تمديد إقامة,Extender una estancia,,,translated
-Extend stay,Extend stay,تمديد الإقامة,Extender estancia,screens/EndOfDayWizard.tsx,,translated
+Extend stay,Extend stay,تمديد الإقامة,Extender estancia,screens/EndOfDayWizard.tsx; screens/Today.tsx,,translated
 External POS,External POS,نقاط بيع خارجية,Punto de venta externo,,,translated
 Extra,Extra,إضافية,Extra,,,translated
 Extra adult {v0},Extra adult {v0},بالغ إضافي {v0},Adulto adicional {v0},,v0,translated
@@ -2885,7 +2885,7 @@ Misc,Misc,متفرقات,Varios,,,translated
 Miscellaneous,Miscellaneous,متنوعات,Varios,,,translated
 Missing,Missing,ناقص,Falta,components/CheckInDialog.tsx,,translated
 Mixed,Mixed,مختلط,Mixto,,,translated
-Mobile number,Mobile number,رقم الجوال,Número de teléfono móvil,components/BookingDialog.tsx,,translated
+Mobile number,Mobile number,رقم الهاتف المحمول,Número de teléfono móvil,components/PhoneInput.tsx,,translated
 Mode,Mode,الوضع,Modo,screens/BanquetRegisters.tsx; screens/CashierShiftReport.tsx; screens/CashierTill.tsx; screens/CityLedgerPayment.tsx,,translated
 Model,Model,الطراز,Modelo,screens/settings/cards.tsx,,translated
 Modifier,Modifier,معدّل,Ajuste,,,translated
@@ -3666,7 +3666,7 @@ Petty cash,Petty cash,النثرية,Caja chica,screens/CashierShiftReport.tsx; 
 Petty Cash,Petty Cash,النثرية,Caja chica,screens/PettyCash.tsx,,translated
 Petty cash →,Petty cash →,النثرية ←,Caja chica →,screens/CashierTill.tsx,,translated
 Petty cash voucher,Petty cash voucher,سند صرف نثرية,Vale de caja chica,,,translated
-Phone,Phone,الهاتف,Teléfono,components/BookingDialog.tsx; components/CheckInDialog.tsx; components/GroupControl.tsx; screens/Banquet.tsx; screens/BanquetFunction.tsx; screens/BookingEngine.tsx; screens/CRS.tsx; screens/POS.tsx; screens/PublicBooking.tsx; screens/PublicListing.tsx; screens/RegistrationCard.tsx; screens/ReservationDetail.tsx; screens/Setup.tsx; screens/pos/PosSidePanel.tsx,,translated
+Phone,Phone,الهاتف,Teléfono,components/BookingDialog.tsx; components/CheckInDialog.tsx; components/GroupControl.tsx; components/PhoneInput.tsx; screens/Banquet.tsx; screens/BanquetFunction.tsx; screens/BookingEngine.tsx; screens/CRS.tsx; screens/POS.tsx; screens/PublicBooking.tsx; screens/PublicListing.tsx; screens/RegistrationCard.tsx; screens/ReservationDetail.tsx; screens/Setup.tsx; screens/pos/PosSidePanel.tsx,,translated
 "Phone and messaging lines connected to this property. For WhatsApp on your own number, add a Meta Business connection: phone number ID, access token, webhook verify token, and the names of your approved templates.","Phone and messaging lines connected to this property. For WhatsApp on your own number, add a Meta Business connection: phone number ID, access token, webhook verify token, and the names of your approved templates.",خطوط الهاتف والمراسلة المرتبطة بهذا العقار. لاستخدام WhatsApp على رقمك الخاص، أضف اتصال Meta Business: معرّف رقم الهاتف، ورمز الوصول، ورمز التحقق من Webhook، وأسماء القوالب المعتمدة.,"Líneas telefónicas y de mensajería de este alojamiento. Para usar WhatsApp con su número, agregue una conexión de Meta Business: ID del número, token de acceso, token de verificación del webhook y nombres de las plantillas aprobadas.",,,translated
 Phone App,Phone App,تطبيق الهاتف,Aplicación móvil,,,translated
 Phone number (display),Phone number (display),رقم الهاتف (للعرض),Número de teléfono (visible),,,translated
@@ -4401,9 +4401,9 @@ See every till and who holds it.,See every till and who holds it.,اطّلع ع�
 See prices,See prices,عرض الأسعار,Ver precios,screens/laundry/GuestLaundryCard.tsx,,translated
 See rooms and prices,See rooms and prices,عرض الغرف والأسعار,Ver habitaciones y precios,screens/PublicBooking.tsx,,translated
 See what is left,See what is left,عرض ما تبقى,Ver lo que queda,components/SetupNag.tsx,,translated
-Select,Select,اختر,Seleccionar,components/BookingDialog.tsx; screens/FolioView.tsx; screens/Setup.tsx,,translated
+Select,Select,اختر,Seleccionar,components/BookingDialog.tsx; components/PhoneInput.tsx; screens/FolioView.tsx; screens/Setup.tsx,,translated
 Select a bill on the left to see every line.,Select a bill on the left to see every line.,اختر فاتورة على اليسار لعرض كل البنود.,Seleccione una cuenta a la izquierda para ver cada línea.,screens/pos/OpenBillsPopup.tsx,,translated
-Select a calling code.,Select a calling code.,اختر رمز الاتصال الدولي.,Seleccione un prefijo telefónico.,,,translated
+Select a calling code.,Select a calling code.,اختر رمز الاتصال الدولي.,Seleccione un prefijo telefónico.,components/PhoneInput.tsx,,translated
 Select charge,Select charge,اختر الرسوم,Seleccionar cargo,screens/FolioView.tsx,,translated
 Select items from the menu,Select items from the menu,اختر أصنافاً من القائمة,Seleccione artículos del menú,screens/POS.tsx,,translated
 Select…,Select…,اختر…,Seleccionar…,,,translated
@@ -4880,6 +4880,7 @@ The guest pays.,The guest pays.,يدفع الضيف.,Paga el huésped.,,,transla
 The guest signed the printed card,The guest signed the printed card,وقع الضيف على البطاقة المطبوعة,El huésped firmó la ficha impresa,components/CheckInDialog.tsx,,translated
 The guest's bill is settled.,The guest's bill is settled.,تمت تسوية فاتورة الضيف.,La cuenta del huésped está liquidada.,components/CheckOutDialog.tsx,,translated
 "The guided check-in follows these steps in order. Required steps cannot be skipped, and the guest cannot be checked in until they are done.","The guided check-in follows these steps in order. Required steps cannot be skipped, and the guest cannot be checked in until they are done.",يتبع تسجيل الوصول الموجه هذه الخطوات بالترتيب. لا يمكن تخطي الخطوات المطلوبة، ولا يمكن تسجيل وصول الضيف حتى تنجز.,El check-in guiado sigue estos pasos en orden. No se pueden omitir los pasos requeridos y no se puede registrar al huésped hasta que haya terminado.,,,translated
+The guided check-in follows these steps. Only Room must be done before check-in. Other required steps can finish after the guest is in — the desk sees a warning to backfill.,The guided check-in follows these steps. Only Room must be done before check-in. Other required steps can finish after the guest is in — the desk sees a warning to backfill.,يتبع تسجيل الوصول الموجّه هذه الخطوات. الغرفة وحدها يجب إنجازها قبل تسجيل الوصول. يمكن إكمال الخطوات المطلوبة الأخرى بعد دخول النزيل — يرى المكتب تنبيهاً لاستكمالها.,,,,needs_translation
 The guided check-in follows these steps. Only Room must be done before check-in. Other required steps can finish after the guest is in; the desk sees a warning to backfill.,The guided check-in follows these steps. Only Room must be done before check-in. Other required steps can finish after the guest is in; the desk sees a warning to backfill.,يتبع تسجيل الوصول الموجّه هذه الخطوات. الغرفة وحدها يجب إنجازها قبل تسجيل الوصول. يمكن إكمال الخطوات المطلوبة الأخرى بعد دخول النزيل؛ ويرى المكتب تنبيهاً لاستكمالها.,El check-in guiado sigue estos pasos. Solo Habitación debe completarse antes del check-in. Los demás pasos obligatorios pueden terminarse después de que el huésped entre; recepción verá un aviso para completarlos.,screens/settings/cards.tsx,,translated
 The hall's rack rental goes on as the first line - the number the conversation starts from.,The hall's rack rental goes on as the first line - the number the conversation starts from.,إيجار القاعة الأساسي يُضاف كأول بند - الرقم الذي تبدأ منه المحادثة.,La tarifa base de alquiler del salón se agrega como primera línea y sirve de punto de partida para la cotización.,screens/Banquet.tsx,,translated
 The high-balance check is off (threshold 0).,The high-balance check is off (threshold 0).,فحص الرصيد المرتفع متوقف (الحد 0).,La verificación de saldo alto está desactivada (umbral 0).,screens/EndOfDayWizard.tsx,,translated

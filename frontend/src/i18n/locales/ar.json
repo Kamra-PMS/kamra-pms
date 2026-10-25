@@ -2607,8 +2607,8 @@
   "/pax upgrades": "/شخص للترقيات",
   "/portion": "/حصة",
   "+{amount}/adult/night": "+{amount}/بالغ/ليلة",
-  "+{v0} numbers are {v1} digits.": "أرقام +{v0} مكونة من {v1} خانات.",
-  "+{v0} numbers are {v1}-{v2} digits.": "أرقام +{v0} مكونة من {v1}-{v2} خانة.",
+  "+{v0} numbers are {v1} digits.": "تتكون أرقام +{v0} من {v1} أرقام.",
+  "+{v0} numbers are {v1}-{v2} digits.": "تتكون أرقام +{v0} من {v1} إلى {v2} أرقام.",
   "0 = all served. N = the guest chooses N.": "0 = تقديم الكل. N = يختار الضيف N.",
   "0 = no limit": "0 = بلا حد",
   "0 marks the line exempt; blank re-derives the rate for a {v0} line": "0 يجعل البند معفى؛ تركه فارغًا يعيد احتساب النسبة لبند {v0}",
@@ -4011,7 +4011,7 @@
   "Minutes saved": "الدقائق الموفرة",
   "Miscellaneous": "متنوعات",
   "Mixed": "مختلط",
-  "Mobile number": "رقم الجوال",
+  "Mobile number": "رقم الهاتف المحمول",
   "Model": "الطراز",
   "Modifier": "معدّل",
   "Modifier type": "نوع المعدّل",
@@ -5424,5 +5424,6 @@
   "Voids & allowances": "الإلغاءات والخصومات",
   "{n} rows": "{n} صف",
   "No charge": "بدون رسوم",
-  "action|Open": "فتح"
+  "action|Open": "فتح",
+  "The guided check-in follows these steps. Only Room must be done before check-in. Other required steps can finish after the guest is in — the desk sees a warning to backfill.": "يتبع تسجيل الوصول الموجّه هذه الخطوات. الغرفة وحدها يجب إنجازها قبل تسجيل الوصول. يمكن إكمال الخطوات المطلوبة الأخرى بعد دخول النزيل — يرى المكتب تنبيهاً لاستكمالها."
 }
