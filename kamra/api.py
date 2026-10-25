@@ -1537,6 +1537,9 @@ def add_folio_payment(folio: str, mode: str, amount: float,
 	from kamra.business_date import get_business_date
 	from kamra.cashier import record_cashier_txn, require_open_session
 	bd = get_business_date(doc.property)
+	# Property currency — never leave Folio Payment on the INR schema default (#341)
+	currency = (frappe.get_cached_value("Property", doc.property, "currency")
+	            or "INR")
 	sess = None
 	try:
 		sess = require_open_session(doc.property)
@@ -1550,6 +1553,7 @@ def add_folio_payment(folio: str, mode: str, amount: float,
 		"mode": mode,
 		"amount": float(amount),
 		"reference": reference,
+		"currency": currency,
 	})
 	from kamra.folio import _recalculate
 	_recalculate(doc)
@@ -1605,7 +1609,10 @@ def _refund_folio_payment(folio: str, amount: float, mode: str, reason: str,
                           ledger: str | None = None):
 	"""The one refund writer (folio row, till, ledger). Not whitelisted:
 	ledger lets a security-deposit refund release the Deposit ledger -
-	callers that pass it have already checked the deposit's balance."""
+	callers that pass it have already checked the deposit's balance.
+
+	A pre-arrival Advance still sitting in Deposit is refunded there too
+	(#343), not onto Guest, and Reservation.advance_paid is reduced."""
 	if float(amount) <= 0:
 		frappe.throw("Refund amount must be positive.")
 	if not (reason or "").strip() and not reason_code:
@@ -1626,9 +1633,16 @@ def _refund_folio_payment(folio: str, amount: float, mode: str, reason: str,
 	if float(amount) > received - refunded:
 		frappe.throw(f"Only ₹{received - refunded:,.2f} was collected on "
 		             "this folio - can't refund more than that.")
+	# Pre-arrival advance: release Deposit liability, not Guest (#343)
+	release_advance = False
+	if not ledger:
+		ledger = _prearrival_advance_refund_ledger(doc)
+		release_advance = ledger == "Deposit"
 	from kamra.business_date import get_business_date
 	from kamra.cashier import record_cashier_txn, require_open_session
 	bd = get_business_date(doc.property)
+	currency = (frappe.get_cached_value("Property", doc.property, "currency")
+	            or "INR")
 	sess = None
 	try:
 		sess = require_open_session(doc.property)
@@ -1642,6 +1656,7 @@ def _refund_folio_payment(folio: str, amount: float, mode: str, reason: str,
 		"mode": mode,
 		"amount": -float(amount),
 		"reference": str(reason_text)[:140],
+		"currency": currency,
 	})
 	from kamra.folio import _recalculate
 	_recalculate(doc)
@@ -1655,13 +1670,41 @@ def _refund_folio_payment(folio: str, amount: float, mode: str, reason: str,
 		record_payment_ledger(doc, pay.as_dict(), session=sess, ledger=ledger)
 	except Exception:
 		frappe.log_error(title="ledger refund write failed")
+	if release_advance and doc.reservation:
+		paid = float(frappe.db.get_value(
+			"Reservation", doc.reservation, "advance_paid") or 0)
+		frappe.db.set_value(
+			"Reservation", doc.reservation, "advance_paid",
+			max(0.0, round(paid - float(amount), 2)))
 	if ledger != "Deposit":  # a deposit refund logs itself (kamra.deposit)
 		from kamra.localization import money_text
 		from kamra.savings import log_action
 		log_action("folio_refund", "Folio", doc.name, doc.property,
 		           rationale=f"Refund {money_text(doc.property, amount)} by {mode}: "
 		                     f"{str(reason_text)[:100]}")
+	elif release_advance:
+		from kamra.localization import money_text
+		from kamra.savings import log_action
+		log_action("folio_refund", "Folio", doc.name, doc.property,
+		           rationale=f"Advance refund {money_text(doc.property, amount)} "
+		                     f"by {mode}: {str(reason_text)[:100]}")
 	return {"ok": True, "balance": doc.balance}
+
+
+def _prearrival_advance_refund_ledger(doc) -> str | None:
+	"""Deposit when a pre-arrival Advance is still held there; else None
+	(record_payment_ledger defaults Refund → Guest)."""
+	if not doc.reservation:
+		return None
+	status = frappe.db.get_value("Reservation", doc.reservation, "status")
+	if status not in ("Confirmed", "Held", "Pending Payment", "Waitlist"):
+		return None
+	held = float(frappe.db.sql(
+		"""SELECT COALESCE(SUM(credit - debit), 0)
+		   FROM `tabFolio Ledger Entry`
+		   WHERE folio = %s AND ledger = 'Deposit'""",
+		(doc.name,))[0][0] or 0)
+	return "Deposit" if held > 0 else None
 
 
 @frappe.whitelist(methods=["POST"])
@@ -5373,21 +5416,37 @@ def create_booking(property: str, room_type: str, check_in_date: str,
 	from kamra.credit import credit_applies, credit_policy
 	gate_credit = (credit_applies(company) and doc.status != "Waitlist"
 	               and credit_policy(property) != "off")
-	if gate_credit:
-		frappe.db.savepoint("kamra_credit_gate")
-	doc.insert(ignore_permissions=False)
+	# Concurrent bookings race on tabSeries (RES-YYYY-#####); retry instead
+	# of returning HTTP 500 QueryDeadlockError (#344).
 	credit = None
-	if gate_credit:
-		from kamra.credit import enforce_company_credit
+	for attempt in (1, 2, 3):
 		try:
-			credit = enforce_company_credit(
-				company, property, float(doc.amount_after_tax or 0),
-				override_reason=credit_override_reason,
-				context="booking", reference_doctype="Reservation",
-				reference_name=doc.name)
-		except Exception:
-			frappe.db.rollback(save_point="kamra_credit_gate")
-			raise
+			if gate_credit:
+				frappe.db.savepoint("kamra_credit_gate")
+			doc.insert(ignore_permissions=False)
+			if gate_credit:
+				from kamra.credit import enforce_company_credit
+				try:
+					credit = enforce_company_credit(
+						company, property, float(doc.amount_after_tax or 0),
+						override_reason=credit_override_reason,
+						context="booking", reference_doctype="Reservation",
+						reference_name=doc.name)
+				except Exception:
+					frappe.db.rollback(save_point="kamra_credit_gate")
+					raise
+			break
+		except frappe.QueryDeadlockError:
+			frappe.db.rollback()
+			if attempt == 3:
+				raise
+			# Guest may have been created in the rolled-back transaction
+			if not frappe.db.exists("Guest", guest):
+				guest = _find_or_create_guest(guest_name, phone, property)
+			payload = doc.as_dict()
+			payload.pop("name", None)
+			payload["guest"] = guest
+			doc = frappe.get_doc(payload)
 
 	from kamra.savings import log_action
 	log_action(

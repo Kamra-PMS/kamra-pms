@@ -358,7 +358,7 @@ class Reservation(Document):
 		cap = frappe.db.get_value(
 			"Room Type", self.room_type,
 			["adults_capacity", "children_capacity", "room_type_name",
-			 "max_extra_beds"],
+			 "max_extra_beds", "max_total_occupants"],
 			as_dict=True,
 		) or frappe._dict()
 		cap_a, cap_c = cint(cap.adults_capacity), cint(cap.children_capacity)
