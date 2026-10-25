@@ -1,6 +1,6 @@
 # MCP tool reference
 
-Kamra exposes **121 governed tools** on the hosted MCP
+Kamra exposes **130 governed tools** on the hosted MCP
 endpoint (`/mcp`) and the stdio sidecar (`mcp/kamra_mcp.py`). Every
 call runs as the connected user - **role** permissions apply, tools
 are further filtered by the property's **enabled modules**, prices
@@ -313,13 +313,29 @@ of it. Read-only.
 
 Endpoint: `kamra.rooms.room_history`.
 
-### `room_insights(days)`
+### `room_insights(days, from_date, to_date)`
 
 Per-room numbers for the last 7, 30, 90, 180 or 365 nights: room
 nights and occupancy, posted room revenue, out-of-service nights and
-average cleaning time, with the most and least used rooms. Read-only.
+average cleaning time, with the most and least used rooms. Or pass
+from_date / to_date (up to 365 days) instead of days. Read-only.
 
 Endpoint: `kamra.rooms.room_insights`.
+
+### `list_report_packs()`
+
+Department report packs (Front Office, Housekeeping, F&B, Hotel
+Manager) with the sections this user's roles may see. Read-only.
+
+Endpoint: `kamra.custom_reports.list_report_packs`.
+
+### `run_report_pack(pack, from_date, to_date, format, lang)`
+
+Run a department pack (id from list_report_packs) for a date range;
+defaults to the last 7 days. format=json (default) or html.
+Read-only.
+
+Endpoint: `kamra.custom_reports.run_report_pack`.
 
 ## Ops
 
@@ -345,6 +361,13 @@ Cancelled. Pass a resolution_note when resolving.
 
 Endpoint: `kamra.api.advance_ticket`.
 Mutating - logged to the activity ledger.
+
+### `sla_report(from_date, to_date)`
+
+Guest request (ticket) SLA over a date range: resolution and breach
+rates by category and priority, and the overdue queue. Read-only.
+
+Endpoint: `kamra.reports.sla_report`.
 
 ## Housekeeping
 
@@ -536,6 +559,20 @@ required and goes on the record; refused once money was taken.
 Endpoint: `kamra.api.waive_security_deposit`.
 Mutating - logged to the activity ledger.
 
+### `cashier_shift_report(business_date, to_date)`
+
+What each cashier took on a business date (or business_date to
+to_date), by payment mode. Read-only.
+
+Endpoint: `kamra.cashier.shift_report`.
+
+### `voids_allowances_report(from_date, to_date)`
+
+Every void and allowance in a date range, with who did it and why.
+Read-only.
+
+Endpoint: `kamra.reports.void_allowance_report`.
+
 ### `list_report_datasets()`
 
 Whitelisted custom-report datasets (arrivals, occupancy, payments,
@@ -611,6 +648,15 @@ tier pricing is applying, and a 7-day occupancy outlook. Read it out
 as a crisp shift briefing - never change the figures.
 
 Endpoint: `kamra.api.position_briefing`.
+
+### `manager_flash(date, from_date)`
+
+The daily flash: yesterday's occupancy, ADR, RevPAR and revenue,
+month to date, today's movement, collections by mode and the 7-day
+outlook. date YYYY-MM-DD; pass from_date for a range ending on date.
+Read-only.
+
+Endpoint: `kamra.reports.manager_flash`.
 
 ## Night audit
 
@@ -1031,6 +1077,28 @@ guest's own folio. Confirm the amount with staff before calling.
 
 Endpoint: `kamra.pos_interface.pos_post_room_charge`.
 Mutating - logged to the activity ledger.
+
+### `outlets()`
+
+The property's restaurants, bars and other outlets. Call before
+outlet_dashboard or wastage_report to get an outlet id. Read-only.
+
+Endpoint: `kamra.pos.outlets`.
+
+### `outlet_dashboard(outlet, date, to_date)`
+
+One outlet's day: sales, bills, covers, average bill, by order type
+and tender, open bills, NC / voids / cancellations, kitchen times.
+Pass to_date for a range starting on date. Read-only.
+
+Endpoint: `kamra.pos.outlet_dashboard`.
+
+### `wastage_report(outlet, days)`
+
+Food cooked and then voided over the last N days (default 30), with
+its cost; optionally for one outlet. Read-only.
+
+Endpoint: `kamra.inventory.wastage_report`.
 
 ## Laundry
 

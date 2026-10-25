@@ -18,7 +18,7 @@ import frappe
 from frappe import _
 from frappe.utils import cint
 
-from kamra.authz import require_roles
+from kamra.authz import assert_record_access, require_roles
 
 POS_ROLES = ("Front Desk", "Finance", "Kamra Agent")
 # Menus written before coursing existed have no course; they behave as mains.
@@ -1908,12 +1908,16 @@ def bill_data(order: str):
 
 @frappe.whitelist()
 @require_roles(*POS_ROLES)
-def outlet_dashboard(outlet: str, date: str | None = None):
+def outlet_dashboard(outlet: str, date: str | None = None,
+                     to_date: str | None = None):
 	"""One shift at a glance: what the outlet sold, what's still open, the
 	exceptions that need a manager's eye (NC, voids, cancellations), and how
 	fast the kitchen is turning tickets. Defaults to today."""
+	assert_record_access("POS Outlet", outlet)
+	from kamra.business_date import report_range_end
+
 	day = frappe.utils.getdate(date) if date else frappe.utils.getdate()
-	start, end = f"{day} 00:00:00", f"{day} 23:59:59"
+	start, end = f"{day} 00:00:00", f"{report_range_end(day, to_date)} 23:59:59"
 
 	orders = frappe.get_all(
 		"POS Order",
@@ -2000,7 +2004,7 @@ def outlet_dashboard(outlet: str, date: str | None = None):
 		return None
 
 	return {
-		"outlet": outlet, "date": str(day),
+		"outlet": outlet, "date": str(day), "to_date": end[:10],
 		"gross_sales": round(gross, 2),
 		"bills": len(sold),
 		"covers": covers,

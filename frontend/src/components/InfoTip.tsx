@@ -1,10 +1,26 @@
 import { useEffect, useRef, useState, type ReactNode } from "react"
 import { Info } from "lucide-react"
 import { useT } from "../lib/i18n"
+import { getLang } from "../lib/dir"
 import { cn } from "../lib/utils"
 
 
 const DOCS = "https://kamrapms.com/docs"
+// pages the docs site has in Spanish and Arabic (TRANSLATED in
+// docs-site/.vitepress/config.mts)
+const TRANSLATED = new Set([
+  "why-kamra", "how-it-works", "features", "user-guide", "faq", "settings",
+  "reports", "rooms", "front-desk", "reservations", "operations", "billing",
+  "night-audit", "revenue", "housekeeping", "fnb", "banquets", "booking-engine",
+])
+
+/** A docs link in the reader's language when that page is translated.
+ *  An #anchor is dropped there: translated headings have other slugs. */
+export function docsUrl(doc: string): string {
+  const lang = getLang()
+  const [page] = doc.split("#")
+  return lang !== "en" && TRANSLATED.has(page) ? `${DOCS}/${lang}/${page}` : `${DOCS}/${doc}`
+}
 
 /** A small (i) that explains a choice in place, with a link to the docs.
  *  `doc` is a docs page name ("fnb" -> kamrapms.com/docs/fnb). Click or
@@ -57,7 +73,7 @@ export function InfoTip({
           {children}
           {doc && (
             <a
-              href={`${DOCS}/${doc}`}
+              href={docsUrl(doc)}
               target="_blank"
               rel="noreferrer"
               className="mt-2 block font-medium text-brand-700 hover:underline"

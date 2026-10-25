@@ -13,10 +13,13 @@ function interpolate(template: string, vars?: Vars): string {
   )
 }
 
-/** Exact dictionary lookup only; never infer a translation from runtime text. */
+/** Exact dictionary lookup only; never infer a translation from runtime text.
+ * A key may name its sense, "Open" vs "Open" (the button), when one
+ * English word needs two translations; without a translation the sense
+ * prefix is dropped. */
 function translated(source: string, language: string): string {
   const dictionary = dictionaryFor(language)
-  return Object.hasOwn(dictionary, source) ? dictionary[source] : source
+  return Object.hasOwn(dictionary, source) ? dictionary[source] : source.replace(/^[a-z]+\|/, "")
 }
 
 /** Translate UI text; non-string React content and missing labels pass through. */

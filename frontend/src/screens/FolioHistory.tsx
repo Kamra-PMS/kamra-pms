@@ -26,6 +26,8 @@ export default function FolioHistory() {
   useUILanguage()
   const [q, setQ] = useState("")
   const [status, setStatus] = useState("")
+  const [fromDate, setFromDate] = useState("") // closed on, "" = any day
+  const [toDate, setToDate] = useState("")
   const [rows, setRows] = useState<FolioRow[]>([])
   const [selected, setSelected] = useState<string[]>([])
   const [err, setErr] = useState<string | null>(null)
@@ -39,13 +41,15 @@ export default function FolioHistory() {
           property: getCurrentProperty(),
           query: q || undefined,
           status: status || undefined,
+          from_date: fromDate || undefined,
+          to_date: (fromDate && toDate) || undefined,
         },
       )
       setRows(out.folios)
     } catch (e) {
       setErr(serverError(e))
     }
-  }, [q, status])
+  }, [q, status, fromDate, toDate])
 
   useEffect(() => {
     void load()
@@ -94,6 +98,26 @@ export default function FolioHistory() {
             <option value="Open">{translate("Open")}</option>
             <option value="Closed">{translate("Closed")}</option>
           </select>
+          <label className="flex items-center gap-1 text-xs text-zinc-500">
+            {translate("Closed from")}
+            <input
+              type="date"
+              className="rounded-lg border border-zinc-300 px-2 py-1.5 text-sm"
+              value={fromDate}
+              onChange={(e) => setFromDate(e.target.value)}
+            />
+          </label>
+          <label className="flex items-center gap-1 text-xs text-zinc-500">
+            {translate("To")}
+            <input
+              type="date"
+              className="rounded-lg border border-zinc-300 px-2 py-1.5 text-sm"
+              value={toDate}
+              min={fromDate || undefined}
+              disabled={!fromDate}
+              onChange={(e) => setToDate(e.target.value)}
+            />
+          </label>
           <Button
             variant="outline"
             disabled={!selected.length || busy}

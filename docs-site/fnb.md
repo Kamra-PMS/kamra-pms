@@ -375,7 +375,8 @@ Recipes are set on the **Menu** screen (**Recipes**).
 
 ## F&B dashboard
 
-**F&B → F&B Dashboard** shows one outlet's day: gross sales, average bill,
+**F&B → F&B Dashboard** shows one outlet's day (or set the second date for
+a range of up to 92 days): gross sales, average bill,
 covers, open bills, complimentary bills, the kitchen's average send-to-ready
 time, sales by order type and by payment, top items, and every NC bill,
 voided line and cancelled bill with its reason.

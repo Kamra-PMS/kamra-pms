@@ -1,0 +1,97 @@
+ADR,ADR
+Action,Acción
+Actor,Responsable de la acción
+Adults,Adultos
+Amount,Importe
+Approver,Aprobado por
+Arrivals,Llegadas
+Arrivals by source,Llegadas por origen
+Assigned to,Asignado a
+Bookings,Reservas
+Breached,Incumplido
+Channel,Canal
+Charges by type,Cargos por tipo
+Check-in,Registro de entrada
+Check-out,Salida
+Children,Niños
+Clean minutes,Minutos de limpieza
+Collections by mode,Cobros por medio de pago
+Company,Empresa
+Condition,Condición
+Contribution by source,Contribución por origen
+Covers,Comensales
+Created,Creado
+Date,Fecha
+Departures,Salidas
+Description,Descripción
+Detail,Detalle
+Due by,Vence
+ETA,Hora prevista de llegada
+F&B pack,Paquete de Alimentos y bebidas
+F&B revenue,Ingresos de alimentos y bebidas
+Floor,Piso
+Folio,Folio
+Folio charges,Cargos de folio
+Found by,Encontrado por
+Found on,Encontrado el
+Front Office pack,Paquete de Recepción
+Guest,Huésped
+HK status,Estado HK
+Hotel Manager pack,Paquete del Gerente del hotel
+Housekeeping pack,Paquete de Limpieza
+Housekeeping tasks,Tareas de limpieza
+In house by room type,Alojados por tipo de habitación
+In-house guests,Huéspedes alojados
+Item,Artículo
+Items,Artículos
+Kamra report,Informe de Kamra
+Lost and found,Objetos perdidos
+Mode,Modo
+Nights,Noches
+No-shows & cancellations,No presentados y cancelaciones
+No-shows and cancellations,No presentados y cancelaciones
+Occ %,% de ocupación
+Occupancy,Ocupación
+Occupancy & revenue by day,Ocupación e ingresos por día
+Occupancy and revenue,Ocupación e ingresos
+Occupancy by day,Ocupación por día
+Order,Pedido
+Orders by status,Pedidos por estado
+Other revenue,Otros ingresos
+Outlet,Punto de venta
+POS order,Pedido POS
+POS orders,Pedidos POS
+Pax,Personas
+Payments,Pagos
+Priority,Prioridad
+Reference,Referencia
+Report,Informe
+Reservation,Reserva
+Returned on,Fecha de devolución
+RevPAR,RevPAR
+RevPAX,RevPAX
+Revenue,Ingresos
+Revenue by source,Ingresos por origen
+Room,Habitación
+Room nights,Noches de habitación
+Room revenue,Ingresos por habitaciones
+Room status,Estado de la habitación
+Room type,Tipo de habitación
+Rooms,Habitaciones
+Rooms sold,Habitaciones vendidas
+Sales by outlet,Ventas por punto de venta
+Share %,Participación %
+Source,Origen
+Status,Estado
+Task,Tarea
+Tasks,Tareas
+Tasks by attendant,Tareas por camarera
+Tasks by type,Tareas por tipo
+The report is attached.,El informe va adjunto.
+Total,Total
+Total revenue,Ingresos totales
+Type,Tipo
+Voids & allowances,Anulaciones y bonificaciones
+Voids and allowances,Anulaciones y bonificaciones
+When,Cuándo
+{0} rows,{0} filas

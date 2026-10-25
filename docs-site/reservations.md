@@ -148,6 +148,11 @@ Only confirmed and checked-in bookings can be changed.
 top, with each stay as a bar. Use it to see who is in which room and to
 move stays around.
 
+To book a free room, click an empty cell on today or a later date.
+**New booking** opens with that room type, room and date filled in, and
+the booking is kept on that room (it shows **Room** and the number). If
+you change the room type, Kamra picks the room for you instead.
+
 ![The tape chart for two weeks: rooms grouped by type, guest bars, and the position row with rooms sold per day](/img/reservations/tape-chart.png)
 
 1. Click (or tap) a guest's bar. A panel opens with the room, the dates

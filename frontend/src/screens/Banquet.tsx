@@ -73,6 +73,9 @@ export default function Banquet() {
   const [error, setError] = useState<string | null>(null)
   const [reminders, setReminders] = useState<ReminderRow[] | null>(null)
   const [pipeline, setPipeline] = useState<BanquetPipeline | null>(null)
+  // "" = the next six months from the 1st
+  const [fromDate, setFromDate] = useState("")
+  const [toDate, setToDate] = useState("")
   const [rows, setRows] = useState<FunctionRow[] | null>(null)
   const [query, setQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState("")
@@ -96,10 +99,6 @@ export default function Banquet() {
     banquet
       .reminders(60)
       .then((r) => setReminders(r.functions))
-      .catch((e) => setError(serverError(e)))
-    banquet
-      .pipeline({ months: 6 })
-      .then(setPipeline)
       .catch((e) => setError(serverError(e)))
     listResource("Venue Booking", {
       fields: [
@@ -125,6 +124,12 @@ export default function Banquet() {
       .catch((e) => setError(serverError(e)))
   }, [])
   useEffect(load, [load])
+  useEffect(() => {
+    banquet
+      .pipeline(fromDate && toDate ? { from_date: fromDate, to_date: toDate } : { months: 6 })
+      .then(setPipeline)
+      .catch((e) => setError(serverError(e)))
+  }, [fromDate, toDate])
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -230,7 +235,29 @@ export default function Banquet() {
         />
       )}
 
-      {tab === "pipeline" && <PipelineBoard data={pipeline} />}
+      {tab === "pipeline" && (
+        <>
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              type="date"
+              aria-label={t("From")}
+              className="rounded-lg border border-zinc-300 px-2 py-1.5 text-sm"
+              value={fromDate}
+              onChange={(e) => setFromDate(e.target.value)}
+            />
+            <span className="text-sm text-zinc-400">→</span>
+            <input
+              type="date"
+              aria-label={t("To")}
+              className="rounded-lg border border-zinc-300 px-2 py-1.5 text-sm"
+              value={toDate}
+              min={fromDate || undefined}
+              onChange={(e) => setToDate(e.target.value)}
+            />
+          </div>
+          <PipelineBoard data={pipeline} />
+        </>
+      )}
 
       {tab === "functions" && (
         <Card>

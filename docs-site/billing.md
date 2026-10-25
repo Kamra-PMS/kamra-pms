@@ -35,6 +35,10 @@ property, newest first, with its status, invoice number, total, paid and
 balance. Click a row to open the folio. You can also reach a stay's folio
 from the reservation.
 
+**Finance → Folio History** lists closed bills and invoices. Search by
+guest, invoice or folio, filter by status, or set **Closed from** and
+**To** to see the bills closed in a date range.
+
 ![The Billing screen: shortcuts to End of Day and My Till, and the list of folios with their balances](/img/billing/billing-list.png)
 
 A folio opens by itself at check-in. Until it is settled it is a
@@ -265,7 +269,8 @@ and variance.
 
 **Shift Report** (**Reports → Shift report**) lists every session of a
 business date with its cash, card and variance, and a journal of the day's
-transactions by kind and mode.
+transactions by kind and mode. Set the second date to cover several
+business dates (up to 92 days).
 
 ![The Shift Report: one cashier's session and the journal by kind and mode](/img/billing/shift-report.png)
 

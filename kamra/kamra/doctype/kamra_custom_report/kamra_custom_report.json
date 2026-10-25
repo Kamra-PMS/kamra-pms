@@ -18,6 +18,7 @@
   "schedule_time",
   "schedule_weekday",
   "recipients",
+  "lang",
   "last_sent_on"
  ],
  "fields": [
@@ -107,6 +108,13 @@
    "label": "Recipients"
   },
   {
+   "fieldname": "lang",
+   "fieldtype": "Data",
+   "label": "Language",
+   "default": "en",
+   "description": "Language of emailed reports (en, es, ar)."
+  },
+  {
    "fieldname": "last_sent_on",
    "fieldtype": "Datetime",
    "label": "Last sent on",
@@ -115,7 +123,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-10-24 10:00:00.000000",
+ "modified": "2026-10-25 18:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Kamra Custom Report",
