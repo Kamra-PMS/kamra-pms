@@ -298,6 +298,7 @@ export interface BookingOptions {
     negotiated_rate_plan?: string | null
   }[]
   travel_agents: { name: string; agent_name: string; commission_pct: number }[]
+  ota_channels?: string[]
   experiences: {
     name: string
     experience_name: string
@@ -478,6 +479,9 @@ export const createBooking = (
     blacklist_override_reason?: string
     /** Finance / Hotel Admin only: book past a company credit block (logged) */
     credit_override_reason?: string
+    booked_via?: string
+    ota_ref?: string
+    ota_total?: number
   },
 ) =>
   call<{

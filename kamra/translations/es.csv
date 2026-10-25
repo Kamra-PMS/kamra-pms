@@ -95,3 +95,4 @@ Voids & allowances,Anulaciones y bonificaciones
 Voids and allowances,Anulaciones y bonificaciones
 When,Cuándo
 {0} rows,{0} filas
+"OTA booking {0} is already reservation {1}.","La reserva OTA {0} ya es la reserva {1}."

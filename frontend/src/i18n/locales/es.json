@@ -5425,5 +5425,12 @@
   "Voids & allowances": "Anulaciones y bonificaciones",
   "{n} rows": "{n} filas",
   "No charge": "Sin cargo",
-  "action|Open": "Abrir"
+  "action|Open": "Abrir",
+  "Booked via": "Reservado vía",
+  "Other site…": "Otro sitio…",
+  "Site name": "Nombre del sitio",
+  "OTA booking ref": "Ref. de reserva OTA",
+  "Sold for (incl. tax)": "Vendida por (imp. incl.)",
+  "Rate card price": "Precio de tarifa",
+  "Billed at the price {site} sold it for": "Se factura al precio de venta de {site}"
 }
