@@ -31,21 +31,30 @@ upgrade-breaking changes (removed doctypes / API contracts).
 
 ### Features
 
-* **demo:** 75 days of history rebuilt by every demo reset ([e5e8c4a](https://github.com/Kamra-PMS/kamra-pms/commit/e5e8c4a726a6395e6d2c833d449d2899029aa3c8))
-* **front-desk:** agent fixes and action cards, In House, one Reports hub, live agent scenarios ([8c9e639](https://github.com/Kamra-PMS/kamra-pms/commit/8c9e63922c81011623b56014cc8e6505539ae100))
-* **mcp:** MCP Read and MCP Manage roles, AI access admin page, bulk room assignment ([59219c0](https://github.com/Kamra-PMS/kamra-pms/commit/59219c015478a11e1e9a3afe406994f762576cbe))
-* report drilldown and department packs, front desk moves, complete Arabic, Spanish and Arabic docs ([#352](https://github.com/Kamra-PMS/kamra-pms/issues/352)) ([bdf2b22](https://github.com/Kamra-PMS/kamra-pms/commit/bdf2b228a26c9dae15702f6a47720b56f1fbbf47))
-* **reports:** custom report builder with save and email ([#335](https://github.com/Kamra-PMS/kamra-pms/issues/335)) ([a1cc4ce](https://github.com/Kamra-PMS/kamra-pms/commit/a1cc4cefa32ae4809c1a12bda22237caf819595c))
+* **i18n:** Spanish, complete. Contributed by @ernestoruiz89 ([#324](https://github.com/Kamra-PMS/kamra-pms/issues/324)), finished and aligned to its glossary ([#352](https://github.com/Kamra-PMS/kamra-pms/issues/352))
+* **i18n:** Arabic, complete: about 3,100 missing strings added ([#352](https://github.com/Kamra-PMS/kamra-pms/issues/352))
+* **docs:** staff guides in Spanish (`/docs/es/`) and Arabic (`/docs/ar/`, right to left) ([#352](https://github.com/Kamra-PMS/kamra-pms/issues/352))
+* **reports:** custom report builder with save and email ([#335](https://github.com/Kamra-PMS/kamra-pms/issues/335)); group by and drill down; Front Office, Housekeeping, F&B and Hotel Manager packs, opened, emailed or sent every Monday; report pages and emails in the reader's language ([#352](https://github.com/Kamra-PMS/kamra-pms/issues/352))
+* **reports:** From/To ranges on manager flash, F&B dashboard, shift report, folio history, room insights and the banquet pipeline ([#352](https://github.com/Kamra-PMS/kamra-pms/issues/352))
+* **housekeeping:** room status, lost and found and clean-minutes reports; Reports in the Housekeeping menu ([#352](https://github.com/Kamra-PMS/kamra-pms/issues/352))
+* **front-desk:** book from an empty tape chart cell; on a room move keep the price, take the new room's rate or enter an agreed rate; guest list columns and CSV export ([#352](https://github.com/Kamra-PMS/kamra-pms/issues/352))
+* **front-desk:** Today room tiles show the balance due and an Extend stay action ([#347](https://github.com/Kamra-PMS/kamra-pms/issues/347)); In House, one Reports hub, agent action cards ([8c9e639](https://github.com/Kamra-PMS/kamra-pms/commit/8c9e63922c81011623b56014cc8e6505539ae100))
+* **booking:** international guest phone prefixes; the property's country is the default. Contributed by @ernestoruiz89 ([#345](https://github.com/Kamra-PMS/kamra-pms/issues/345), [#360](https://github.com/Kamra-PMS/kamra-pms/issues/360))
+* **finance:** past transaction dates need Finance or Hotel Admin ([#348](https://github.com/Kamra-PMS/kamra-pms/issues/348))
+* **mcp:** MCP Read and MCP Manage roles, AI access admin page, bulk room assignment ([59219c0](https://github.com/Kamra-PMS/kamra-pms/commit/59219c015478a11e1e9a3afe406994f762576cbe)); Kamra Agent and MCP offer exactly the reports each role may open ([#352](https://github.com/Kamra-PMS/kamra-pms/issues/352))
+* **demo:** 75 days of history rebuilt by every reset ([e5e8c4a](https://github.com/Kamra-PMS/kamra-pms/commit/e5e8c4a726a6395e6d2c833d449d2899029aa3c8)); the reset keeps Kamra Agent's settings and key ([#352](https://github.com/Kamra-PMS/kamra-pms/issues/352))
 
 
 ### Bug Fixes
 
-* **booking:** support international guest phone prefixes (from [#345](https://github.com/Kamra-PMS/kamra-pms/issues/345)) ([#360](https://github.com/Kamra-PMS/kamra-pms/issues/360)) ([956cd12](https://github.com/Kamra-PMS/kamra-pms/commit/956cd12742e3d397a5b89429b55e44a8324e1545))
-* **i18n:** include Spanish localization in 2.6.21 ([c6240a4](https://github.com/Kamra-PMS/kamra-pms/commit/c6240a454e7a489f908afe991e324e7cc7ae4d0b))
-* **i18n:** include Spanish localization in 2.6.21 ([a64a3ce](https://github.com/Kamra-PMS/kamra-pms/commit/a64a3ce49fc95776b9a8a9156e7bad56377ca4e1))
-* **i18n:** polish Spanish after [#324](https://github.com/Kamra-PMS/kamra-pms/issues/324) ([0dc0487](https://github.com/Kamra-PMS/kamra-pms/commit/0dc0487521e2f481aa92ebecf49e68ffdc91fcfd))
-* **i18n:** polish Spanish after [#324](https://github.com/Kamra-PMS/kamra-pms/issues/324) merge ([b753da1](https://github.com/Kamra-PMS/kamra-pms/commit/b753da1d943e4f734cf252775a2afc61fcffdb28))
-* **night-audit:** 03:00 run recovers a stuck business date and catches up ([7f20de1](https://github.com/Kamra-PMS/kamra-pms/commit/7f20de1b5d8d4e5b18b602b953294a9adef74f05))
+* **billing:** payments carry the property's currency, not INR; a migrate patch restamps non-FX rows ([#341](https://github.com/Kamra-PMS/kamra-pms/issues/341), [#349](https://github.com/Kamra-PMS/kamra-pms/issues/349))
+* **booking:** a room type's total occupancy caps adults and children together ([#342](https://github.com/Kamra-PMS/kamra-pms/issues/342), [#349](https://github.com/Kamra-PMS/kamra-pms/issues/349))
+* **billing:** refunding a pre-arrival advance releases the Deposit ledger and lowers the advance held ([#343](https://github.com/Kamra-PMS/kamra-pms/issues/343), [#349](https://github.com/Kamra-PMS/kamra-pms/issues/349))
+* **booking:** simultaneous bookings no longer fail with HTTP 500 on the reservation number ([#344](https://github.com/Kamra-PMS/kamra-pms/issues/344), [#349](https://github.com/Kamra-PMS/kamra-pms/issues/349)). [#341](https://github.com/Kamra-PMS/kamra-pms/issues/341) to [#344](https://github.com/Kamra-PMS/kamra-pms/issues/344) were reported by @lhertig
+* **night-audit:** the 03:00 run recovers a stuck business date and catches up ([7f20de1](https://github.com/Kamra-PMS/kamra-pms/commit/7f20de1b5d8d4e5b18b602b953294a9adef74f05))
+* **security:** outlet dashboard checks the outlet's property; report module switches apply ([#352](https://github.com/Kamra-PMS/kamra-pms/issues/352))
+* **deps:** vite 6.4.5, closing all 10 Dependabot alerts (dev server only) ([#358](https://github.com/Kamra-PMS/kamra-pms/issues/358)); no open code quality findings ([#359](https://github.com/Kamra-PMS/kamra-pms/issues/359))
+* **docs:** each release freezes its docs snapshot again ([#353](https://github.com/Kamra-PMS/kamra-pms/issues/353))
 
 ## [2.6.20](https://github.com/Kamra-PMS/kamra-pms/compare/v2.6.19...v2.6.20) (2026-10-24)
 
