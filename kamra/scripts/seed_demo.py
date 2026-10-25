@@ -58,9 +58,11 @@ def _execute():
 		ensure_users()
 		from kamra.scripts.seed_showcase import execute as seed_showcase
 		from kamra.scripts.seed_v1 import execute as seed_v1
+		from kamra.scripts.seed_yemen_fnb import execute as seed_yemen_fnb
 		seed_showcase()
 		seed_v1()
 		seed_generic_properties()
+		seed_yemen_fnb()
 		ensure_petty_cash_floats()
 		frappe.db.commit()  # nosemgrep: frappe-manual-commit -- batch/seed/migration script runs outside the request cycle; explicit commit persists the staged writes
 		print("Demo property already exists — ensured demo users + showcase + revenue samples."
@@ -238,6 +240,9 @@ def _execute():
 
 	# Seed generic demo properties (lakeside villa with whole-property lock, and beach homestay with AC/non-AC rooms)
 	seed_generic_properties()
+	# Yemen properties (e.g. demoyemen): halal restaurants + kitchen stock
+	from kamra.scripts.seed_yemen_fnb import execute as seed_yemen_fnb
+	seed_yemen_fnb()
 	ensure_petty_cash_floats()
 
 	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- batch/seed/migration script runs outside the request cycle; explicit commit persists the staged writes

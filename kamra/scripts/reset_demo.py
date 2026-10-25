@@ -28,6 +28,13 @@ PLAYGROUND_SITES = {
 	"nightly.kamrapms.com",
 }
 
+# Country / partner demos with curated F&B (e.g. Yemeni halal POS). Never
+# wipe even if kamra_demo_mode is on — their menus and stock are seeded
+# once and must survive any accidental reset.
+NEVER_RESET_SITES = {
+	"demoyemen.kamrapms.com",
+}
+
 # AGENT_EMAIL is the governed writer behind /book, guest check-in and
 # OTA webhooks (public_api.set_user). Deleting it breaks website
 # bookings until the next migrate, so it survives like Administrator.
@@ -62,9 +69,11 @@ CORE_WIPE = (
 
 
 def is_playground() -> bool:
+	site = frappe.local.site or ""
+	if site in NEVER_RESET_SITES:
+		return False
 	if frappe.db.get_default("kamra_demo_mode") != "1":
 		return False
-	site = frappe.local.site or ""
 	return site in PLAYGROUND_SITES or site.endswith(".localhost")
 
 
