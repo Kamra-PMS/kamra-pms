@@ -11,7 +11,7 @@ import { useAuth } from "../lib/auth"
 const VOID_REPORT_ROLES = ["Finance", "Hotel Admin", "System Manager", "Administrator"]
 const EDIT_ROLES = ["Finance", "Hotel Admin", "System Manager", "Administrator"]
 
-type Tab = "saved" | "builder" | "flash"
+type Tab = "saved" | "builder" | "packs" | "flash"
 
 interface DatasetCol {
   id: string
@@ -41,6 +41,13 @@ interface SavedReport {
   recipients: string
   last_sent_on: string | null
   modified: string
+}
+
+interface Pack {
+  id: string
+  label: string
+  description: string
+  sections: string[]
 }
 
 interface FilterRow {
@@ -76,6 +83,7 @@ interface Day {
 
 interface Flash {
   date: string
+  from_date: string
   total_rooms: number
   today: Day | null
   mtd: Day & { occupancy_pct: number }
@@ -130,6 +138,7 @@ export default function Reports({ initialTab = "saved" }: { initialTab?: Tab }) 
   const [tab, setTab] = useState<Tab>(initialTab)
   const [datasets, setDatasets] = useState<Dataset[]>([])
   const [saved, setSaved] = useState<SavedReport[]>([])
+  const [packs, setPacks] = useState<Pack[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -145,11 +154,15 @@ export default function Reports({ initialTab = "saved" }: { initialTab?: Tab }) 
   const [scheduleTime, setScheduleTime] = useState("07:00")
   const [scheduleWeekday, setScheduleWeekday] = useState("Mon")
   const [recipients, setRecipients] = useState("")
+  const [groupBy, setGroupBy] = useState("")
   const [preview, setPreview] = useState<RunPayload | null>(null)
+  // the grouped preview we drilled down from; null when not drilled in
+  const [summary, setSummary] = useState<RunPayload | null>(null)
   const [busy, setBusy] = useState(false)
 
   // Manager flash
   const [flashDate, setFlashDate] = useState(todayISO)
+  const [flashFrom, setFlashFrom] = useState("") // "" = the one day
   const [flash, setFlash] = useState<Flash | null>(null)
 
   const property = getCurrentProperty()
@@ -162,12 +175,14 @@ export default function Reports({ initialTab = "saved" }: { initialTab?: Tab }) 
     setLoading(true)
     setError(null)
     try {
-      const [ds, list] = await Promise.all([
+      const [ds, list, pk] = await Promise.all([
         call<Dataset[]>("kamra.custom_reports.list_report_datasets", { property }),
         call<SavedReport[]>("kamra.custom_reports.list_custom_reports", { property }),
+        call<Pack[]>("kamra.custom_reports.list_report_packs", { property }),
       ])
       setDatasets(ds)
       setSaved(list)
+      setPacks(pk)
       if (!datasetId && ds[0]) {
         setDatasetId(ds[0].id)
         setSelectedCols(ds[0].columns.map((c) => c.id))
@@ -186,8 +201,14 @@ export default function Reports({ initialTab = "saved" }: { initialTab?: Tab }) 
 
   useEffect(() => {
     if (tab !== "flash") return
-    call<Flash>("kamra.reports.manager_flash", { property, date: flashDate }).then(setFlash)
-  }, [tab, flashDate, property])
+    call<Flash>("kamra.reports.manager_flash", {
+      property,
+      date: flashDate,
+      from_date: flashFrom && flashFrom < flashDate ? flashFrom : undefined,
+    })
+      .then(setFlash)
+      .catch((e) => setError((e as Error).message))
+  }, [tab, flashDate, flashFrom, property])
 
   function resetBuilder(ds?: Dataset) {
     const d = ds || datasets[0]
@@ -196,15 +217,18 @@ export default function Reports({ initialTab = "saved" }: { initialTab?: Tab }) 
     setDatasetId(d?.id || "")
     setSelectedCols(d?.columns.map((c) => c.id) || [])
     setFilters([])
+    setGroupBy("")
     setIsShared(false)
     setScheduleFrequency("Off")
     setScheduleTime("07:00")
     setScheduleWeekday("Mon")
     setRecipients("")
     setPreview(null)
+    setSummary(null)
   }
 
   async function openSaved(row: SavedReport) {
+    if (row.dataset.startsWith("pack:")) return openPack(row.dataset, row.name)
     setBusy(true)
     setError(null)
     try {
@@ -214,6 +238,7 @@ export default function Reports({ initialTab = "saved" }: { initialTab?: Tab }) 
         dataset: string
         columns: string[]
         filters: FilterRow[]
+        group_by: string[]
         is_shared: boolean
         schedule_frequency: string
         schedule_time: string
@@ -225,12 +250,14 @@ export default function Reports({ initialTab = "saved" }: { initialTab?: Tab }) 
       setDatasetId(def.dataset)
       setSelectedCols(def.columns)
       setFilters(def.filters || [])
+      setGroupBy(def.group_by?.[0] || "")
       setIsShared(def.is_shared)
       setScheduleFrequency(def.schedule_frequency || "Off")
       setScheduleTime(def.schedule_time || "07:00")
       setScheduleWeekday(def.schedule_weekday || "Mon")
       setRecipients(def.recipients || "")
       setPreview(null)
+      setSummary(null)
       setTab("builder")
     } catch (e) {
       setError((e as Error).message)
@@ -246,7 +273,9 @@ export default function Reports({ initialTab = "saved" }: { initialTab?: Tab }) 
       setSelectedCols(d.columns.map((c) => c.id))
       if (!editName) setTitle(d.label)
     }
+    setGroupBy("")
     setPreview(null)
+    setSummary(null)
   }
 
   function toggleCol(id: string) {
@@ -255,25 +284,40 @@ export default function Reports({ initialTab = "saved" }: { initialTab?: Tab }) 
     )
   }
 
-  async function runPreview(format: "json" | "csv" | "html" = "json") {
+  async function runPreview(
+    format: "json" | "csv" | "html" = "json",
+    drill?: { field: string; value: string },
+  ) {
     if (!datasetId) return
     setBusy(true)
     setError(null)
     try {
+      // Always send the builder's current state (no saved `name`): the
+      // server would otherwise run the saved definition and ignore edits.
+      const active = filters.filter((f) => f.field && f.value !== "")
       const res = await call<RunPayload & { format?: string; content?: string; filename?: string }>(
         "kamra.custom_reports.run_custom_report",
         {
           property,
           dataset: datasetId,
-          name: editName || undefined,
           from_date: fromDate,
           to_date: toDate,
-          columns: JSON.stringify(selectedCols),
-          filters: JSON.stringify(filters.filter((f) => f.field && f.value !== "")),
+          columns: JSON.stringify(
+            groupBy && !selectedCols.includes(groupBy) ? [groupBy, ...selectedCols] : selectedCols,
+          ),
+          filters: JSON.stringify(drill ? [...active, { ...drill, op: "=" }] : active),
+          group_by: JSON.stringify(groupBy && !drill ? [groupBy] : []),
           format,
           lang: language,
         },
       )
+      if (title.trim()) res.title = title.trim()
+      if (drill) {
+        res.title = `${res.title} · ${drill.value}`
+        setSummary(preview)
+      } else if (format === "json") {
+        setSummary(null)
+      }
       if (format === "csv" && res.content) {
         downloadText(res.filename || "report.csv", res.content, "text/csv")
       } else if (format === "html" && res.content) {
@@ -285,6 +329,65 @@ export default function Reports({ initialTab = "saved" }: { initialTab?: Tab }) 
       } else {
         setPreview(res as RunPayload)
       }
+    } catch (e) {
+      setError((e as Error).message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function openPack(pack: string, name?: string) {
+    setBusy(true)
+    setError(null)
+    try {
+      const res = await call<{ content: string }>(
+        name ? "kamra.custom_reports.run_custom_report" : "kamra.custom_reports.run_report_pack",
+        { property, pack, name, from_date: fromDate, to_date: toDate, format: "html", lang: language },
+      )
+      const w = window.open("", "_blank")
+      if (w) {
+        w.document.write(res.content)
+        w.document.close()
+      }
+    } catch (e) {
+      setError((e as Error).message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function emailPack(pack: Pack) {
+    const to = window.prompt(t("Email addresses (comma-separated)"), "")
+    if (!to) return
+    setBusy(true)
+    setError(null)
+    try {
+      await call("kamra.custom_reports.email_custom_report", {
+        property, recipients: to, dataset: pack.id,
+        from_date: fromDate, to_date: toDate, lang: language,
+      })
+      window.alert(t("Report emailed."))
+    } catch (e) {
+      setError((e as Error).message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function schedulePack(pack: Pack) {
+    const to = window.prompt(t("Email this pack every Monday at 07:00 to (comma-separated)"), "")
+    if (!to) return
+    setBusy(true)
+    setError(null)
+    try {
+      await call("kamra.custom_reports.save_custom_report", {
+        property, title: translate(pack.label), dataset: pack.id, is_shared: 1,
+        schedule_frequency: "Weekly", schedule_weekday: "Mon", schedule_time: "07:00",
+        recipients: to,
+        lang: language,
+      })
+      await reload()
+      setTab("saved")
     } catch (e) {
       setError((e as Error).message)
     } finally {
@@ -304,11 +407,13 @@ export default function Reports({ initialTab = "saved" }: { initialTab?: Tab }) 
         dataset: datasetId,
         columns: JSON.stringify(selectedCols),
         filters: JSON.stringify(filters.filter((f) => f.field && f.value !== "")),
+        group_by: JSON.stringify(groupBy ? [groupBy] : []),
         is_shared: isShared ? 1 : 0,
         schedule_frequency: scheduleFrequency,
         schedule_time: scheduleTime,
         schedule_weekday: scheduleWeekday,
         recipients,
+        lang: language,
       })
       setEditName(savedDef.name)
       await reload()
@@ -350,6 +455,7 @@ export default function Reports({ initialTab = "saved" }: { initialTab?: Tab }) 
         filters: name || editName
           ? undefined
           : JSON.stringify(filters.filter((f) => f.field && f.value !== "")),
+        group_by: name || editName ? undefined : JSON.stringify(groupBy ? [groupBy] : []),
         lang: language,
         attach_format: "csv",
       })
@@ -365,6 +471,7 @@ export default function Reports({ initialTab = "saved" }: { initialTab?: Tab }) 
   const tabs: { id: Tab; label: string }[] = [
     { id: "saved", label: t("My reports") },
     { id: "builder", label: t("New report") },
+    { id: "packs", label: t("Department packs") },
     { id: "flash", label: t("Manager flash") },
   ]
 
@@ -488,7 +595,7 @@ export default function Reports({ initialTab = "saved" }: { initialTab?: Tab }) 
                             disabled={busy}
                             onClick={() => openSaved(r)}
                           >
-                            {t("Open")}
+                            {t("action|Open")}
                           </Button>
                           <Button
                             variant="outline"
@@ -516,6 +623,67 @@ export default function Reports({ initialTab = "saved" }: { initialTab?: Tab }) 
               </table>
             </div>
           )}
+        </div>
+      )}
+
+      {tab === "packs" && (
+        <div>
+          <div className="mb-3 flex flex-wrap items-end gap-2">
+            <p className="mr-auto text-sm text-zinc-500">
+              {t("One page per department. You see the parts your role can open.")}
+            </p>
+            <label className="text-xs text-zinc-500">
+              {t("From")}
+              <input
+                type="date"
+                className="ms-1 rounded-lg border border-zinc-300 px-2 py-1"
+                value={fromDate}
+                onChange={(e) => e.target.value && setFromDate(e.target.value)}
+              />
+            </label>
+            <label className="text-xs text-zinc-500">
+              {t("To")}
+              <input
+                type="date"
+                className="ms-1 rounded-lg border border-zinc-300 px-2 py-1"
+                value={toDate}
+                onChange={(e) => e.target.value && setToDate(e.target.value)}
+              />
+            </label>
+          </div>
+          {!loading && packs.length === 0 && (
+            <p className="text-sm text-zinc-500">{t("Your role has no reports.")}</p>
+          )}
+          <div className="grid gap-3 md:grid-cols-2">
+            {packs.map((p) => (
+              <Card key={p.id}>
+                <CardHeader>
+                  <CardTitle>{translate(p.label)}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3 text-sm">
+                  <p className="text-zinc-500">{translate(p.description)}</p>
+                  <ul className="list-disc ps-5 text-zinc-600">
+                    {p.sections.map((x) => (
+                      <li key={x}>{translate(x)}</li>
+                    ))}
+                  </ul>
+                  <div className="flex flex-wrap gap-2">
+                    <Button disabled={busy} onClick={() => openPack(p.id)}>
+                      <Printer className="size-4" aria-hidden /> {t("action|Open")}
+                    </Button>
+                    <Button variant="outline" disabled={busy} onClick={() => emailPack(p)}>
+                      <Mail className="size-4" aria-hidden /> {t("Email now")}
+                    </Button>
+                    {canShare && (
+                      <Button variant="outline" disabled={busy} onClick={() => schedulePack(p)}>
+                        {t("Email every Monday")}
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
       )}
 
@@ -661,6 +829,26 @@ export default function Reports({ initialTab = "saved" }: { initialTab?: Tab }) 
                 </div>
               </fieldset>
 
+              <label className="block">
+                <span className="text-xs uppercase tracking-wider text-zinc-500">
+                  {t("Group by")}
+                </span>
+                <select
+                  className="mt-1 w-full rounded-lg border border-zinc-300 px-2 py-1.5"
+                  value={groupBy}
+                  onChange={(e) => setGroupBy(e.target.value)}
+                >
+                  <option value="">{t("None")}</option>
+                  {activeDataset?.columns
+                    .filter((c) => c.type !== "number")
+                    .map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {translate(c.label)}
+                      </option>
+                    ))}
+                </select>
+              </label>
+
               {canShare && (
                 <label className="flex items-center gap-2">
                   <input
@@ -747,6 +935,23 @@ export default function Reports({ initialTab = "saved" }: { initialTab?: Tab }) 
               </CardTitle>
             </CardHeader>
             <CardContent className="overflow-x-auto">
+              {summary && (
+                <Button
+                  variant="outline"
+                  className="mb-2 px-2 py-1 text-xs"
+                  onClick={() => {
+                    setPreview(summary)
+                    setSummary(null)
+                  }}
+                >
+                  ← {t("Back to summary")}
+                </Button>
+              )}
+              {preview && groupBy && !summary && (
+                <p className="mb-2 text-xs text-zinc-500">
+                  {t("Click a row to see the rows behind it.")}
+                </p>
+              )}
               {!preview && (
                 <p className="py-8 text-center text-sm text-zinc-400">
                   {t("Choose columns and press Preview.")}
@@ -764,15 +969,25 @@ export default function Reports({ initialTab = "saved" }: { initialTab?: Tab }) 
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-zinc-100">
-                    {preview.rows.slice(0, 200).map((row, i) => (
-                      <tr key={i}>
+                    {preview.rows.slice(0, 200).map((row, i) => {
+                      const key = groupBy && !summary ? row[groupBy] : null
+                      // ponytail: null group keys aren't drillable; "=" can't match an empty value
+                      const drill = key == null || busy ? undefined : () =>
+                        runPreview("json", { field: groupBy, value: String(key) })
+                      return (
+                      <tr
+                        key={i}
+                        onClick={drill}
+                        className={drill ? "cursor-pointer hover:bg-zinc-50" : undefined}
+                      >
                         {preview.columns.map((c) => (
                           <td key={c.id} className="px-2 py-1.5 whitespace-nowrap">
                             {row[c.id] == null ? "" : String(row[c.id])}
                           </td>
                         ))}
                       </tr>
-                    ))}
+                      )
+                    })}
                   </tbody>
                 </table>
               )}
@@ -791,6 +1006,8 @@ export default function Reports({ initialTab = "saved" }: { initialTab?: Tab }) 
           d={flash}
           date={flashDate}
           setDate={setFlashDate}
+          from={flashFrom}
+          setFrom={setFlashFrom}
           t={t}
         />
       )}
@@ -802,15 +1019,27 @@ function FlashPanel(props: {
   d: Flash | null
   date: string
   setDate: (v: string) => void
+  from: string
+  setFrom: (v: string) => void
   t: (k: string, vars?: Record<string, string | number>) => string
 }) {
-  const { d, date, setDate, t } = props
+  const { d, date, setDate, from, setFrom, t } = props
   if (!d) return <p className="py-10 text-center text-zinc-400">{t("Loading…")}</p>
   const todayData = d.today
+  const ranged = d.from_date !== d.date
 
   return (
     <div>
       <div className="mb-4 flex justify-end gap-2 print:hidden">
+        <input
+          type="date"
+          aria-label={t("From")}
+          className="rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-sm"
+          value={from || date}
+          max={date}
+          onChange={(e) => setFrom(e.target.value === date ? "" : e.target.value)}
+        />
+        <span className="self-center text-sm text-zinc-400">→</span>
         <input
           type="date"
           aria-label={t("Report date")}
@@ -839,7 +1068,7 @@ function FlashPanel(props: {
           sub={t("total spend / guest · {pax} pax", { pax: todayData?.pax ?? 0 })}
         />
         <Stat
-          label={t("Revenue (day)")}
+          label={ranged ? t("Revenue") : t("Revenue (day)")}
           value={`${cur()}${inr(todayData?.total_revenue ?? 0)}`}
           sub={t("room {room} · F&B {fnb} · other {other}", {
             room: `${cur()}${inr(todayData?.room_revenue ?? 0)}`,
@@ -851,7 +1080,7 @@ function FlashPanel(props: {
       <div className="grid gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle>{t("Last 14 days")}</CardTitle>
+            <CardTitle>{ranged ? `${d.from_date} → ${d.date}` : t("Last 14 days")}</CardTitle>
           </CardHeader>
           <CardContent className="overflow-x-auto">
             <table className="w-full text-sm">

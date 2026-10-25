@@ -10,7 +10,7 @@ model. That is the product edge - the rest of this page shows how the
 stack makes it safe. Module guides cover day-to-day hotel tasks.
 
 **Current stable release:**
-[v2.6.16](https://github.com/Kamra-PMS/kamra-pms/releases/tag/v2.6.16)
+[v2.6.20](https://github.com/Kamra-PMS/kamra-pms/releases/tag/v2.6.20)
 (branch `main`). Nightly builds track `develop`. Install from the
 [Frappe Cloud Marketplace](/self-hosting/frappe-cloud) or
 [self-host](/self-hosting/).

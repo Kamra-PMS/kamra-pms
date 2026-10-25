@@ -38,6 +38,11 @@ KEEP_USERS = {
 	*(spec["email"] for spec in USERS),
 }
 
+# Kept across resets: the Kamra Agent setup (provider, model, and the key,
+# which Frappe stores encrypted in __Auth, never wiped here). The demo
+# property is reseeded under the same name, so the row still matches it.
+KEEP_DOCTYPES = {"AI Assistant Settings"}
+
 # Core Frappe clutter that accumulates when someone treats the demo as
 # their hotel. Email Account is *not* in here; ops wires SMTP for us.
 CORE_WIPE = (
@@ -123,6 +128,7 @@ def reset(history: str | None = None) -> dict:
 	# deleted it, so this rebuilds rooms, guests, stays and showcase.
 	from kamra.scripts.seed_demo import execute as seed_demo
 	seed_demo()
+	summary["agent"] = restore_agent_from_site_config()
 
 	frappe.db.set_default("kamra_demo_mode", "1")
 	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- persist demo flag after reseed
@@ -150,10 +156,40 @@ def reset(history: str | None = None) -> dict:
 	return summary
 
 
+def restore_agent_from_site_config() -> int:
+	"""A key kept in the site's own site_config.json switches Kamra Agent on
+	for every property after a reset, even on a fresh demo where nobody has
+	pasted one in Settings yet.
+
+	    bench --site <site> set-config kamra_agent_api_key <key>
+	    (optional) kamra_agent_model, kamra_agent_base_url
+
+	Returns how many properties got the agent switched on."""
+	key = frappe.conf.get("kamra_agent_api_key")
+	if not key:
+		return 0
+	n = 0
+	for prop in frappe.get_all("Property", pluck="name"):
+		name = frappe.db.get_value("AI Assistant Settings", {"property": prop})
+		doc = (frappe.get_doc("AI Assistant Settings", name) if name
+		       else frappe.new_doc("AI Assistant Settings"))
+		doc.update({
+			"property": prop,
+			"enabled": 1,
+			"api_key": key,
+			"model": frappe.conf.get("kamra_agent_model") or "gpt-4o-mini",
+			"base_url": frappe.conf.get("kamra_agent_base_url") or "https://api.openai.com/v1",
+		})
+		doc.save(ignore_permissions=True)
+		n += 1
+	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- reset script runs outside the request cycle
+	return n
+
+
 def _wipe_kamra_doctypes() -> int:
 	rows = frappe.get_all(
 		"DocType",
-		filters={"module": "Kamra"},
+		filters={"module": "Kamra", "name": ("not in", list(KEEP_DOCTYPES))},
 		fields=["name", "istable", "issingle"],
 	)
 	# Children first so parent deletes don't fight leftover rows.

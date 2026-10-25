@@ -519,7 +519,7 @@ export default function Tickets() {
                     </Button>
                   )}
                   <Button variant="ghost" onClick={() => openTicket(row.name)}>
-                    {t("Open")}
+                    {t("action|Open")}
                   </Button>
                 </div>
               </li>

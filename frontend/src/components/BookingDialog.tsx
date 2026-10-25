@@ -94,6 +94,8 @@ const inr = (n: number) =>
 export function BookingDialog(props: {
   initial: {
     room_type?: string
+    room?: string
+    room_number?: string
     date?: string
     guest?: string
     guest_name?: string
@@ -230,6 +232,8 @@ export function BookingDialog(props: {
   const loc = useLocale()
   const { ensureUnlocked, status: pinStatus } = useCashierAuth()
   const [walkIn, setWalkIn] = useState(!!props.initial.walkIn)
+  // the room clicked on the tape chart; dropped once the desk picks another type
+  const pinnedRoom = !!props.initial.room && !walkIn && form.room_type === props.initial.room_type
   const [freeRooms, setFreeRooms] = useState<FreeRoom[] | null>(null)
   const [walk, setWalk] = useState({
     room: "",
@@ -574,6 +578,7 @@ export function BookingDialog(props: {
         phone: form.phone || undefined,
         guest: profile?.name,
         room_type: form.room_type,
+        room: pinnedRoom ? props.initial.room : undefined,
         check_in_date: form.check_in_date,
         check_out_date: checkOut,
         adults: form.adults,
@@ -796,6 +801,12 @@ export function BookingDialog(props: {
               {walkIn
                 ? t("Book, check in and collect in one step")
                 : t("Live quote as you type")}
+              {pinnedRoom && (
+                <>
+                  <span className="text-zinc-300"> · </span>
+                  {t("Room {n}", { n: props.initial.room_number || props.initial.room || "" })}
+                </>
+              )}
             </p>
           </div>
           {!done && (

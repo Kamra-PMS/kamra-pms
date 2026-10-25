@@ -239,7 +239,7 @@ class BillSettlementTestCase(AuditTestCase):
 		self.assertEqual({r["order_type"] for r in pos.orders_list(
 			self.outlet, add_days(nowdate(), -120), nowdate(), order_type="Takeaway")["rows"]}, {"Takeaway"})
 		cash = pos.orders_list(self.outlet, add_days(nowdate(), -120), nowdate(), mode="Cash")
-		self.assertTrue({b, old} <= {r["name"] for r in cash["rows"]})
+		self.assertLessEqual({b, old}, {r["name"] for r in cash["rows"]})
 		self.assertNotIn(a, {r["name"] for r in cash["rows"]})
 		self.assertEqual(set(cash["totals"]["by_mode"]), {"Cash"})
 		# a year is the most that can be asked for

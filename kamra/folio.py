@@ -1228,7 +1228,7 @@ def run_night_audit(property: str, business_date: str | None = None,
 		                              "auditor_notes") if draft_name else None),
 	}
 	report_pack = None
-	for _attempt in (1, 2):
+	for _ in range(2):  # one retry
 		try:
 			pack = na.build_pack(property, business_date, checks=checks,
 			                     acknowledgements=acks, summary=summary,

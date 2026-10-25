@@ -1,0 +1,97 @@
+ADR,متوسط سعر الغرفة
+Action,الإجراء
+Actor,المنفّذ
+Adults,البالغون
+Amount,المبلغ
+Approver,المعتمِد
+Arrivals,الوصول
+Arrivals by source,الوصول حسب المصدر
+Assigned to,مُسند إلى
+Bookings,الحجوزات
+Breached,تم الإخلال
+Channel,القناة
+Charges by type,الرسوم حسب النوع
+Check-in,تسجيل الوصول
+Check-out,تسجيل المغادرة
+Children,الأطفال
+Clean minutes,دقائق التنظيف
+Collections by mode,التحصيل حسب طريقة الدفع
+Company,الشركة
+Condition,الحالة
+Contribution by source,المساهمة حسب المصدر
+Covers,الأغطية
+Created,تاريخ الإنشاء
+Date,التاريخ
+Departures,المغادرة
+Description,الوصف
+Detail,التفاصيل
+Due by,موعد الاستحقاق
+ETA,وقت الوصول المتوقع
+F&B pack,حزمة الأغذية والمشروبات
+F&B revenue,إيراد الأغذية والمشروبات
+Floor,الطابق
+Folio,الفاتورة
+Folio charges,رسوم الفوليو
+Found by,عثر عليه
+Found on,تاريخ العثور
+Front Office pack,حزمة المكتب الأمامي
+Guest,ضيف
+HK status,حالة التنظيف
+Hotel Manager pack,حزمة مدير الفندق
+Housekeeping pack,حزمة التدبير المنزلي
+Housekeeping tasks,مهام التدبير الفندقي
+In house by room type,النزلاء المقيمون حسب نوع الغرفة
+In-house guests,الضيوف داخل الفندق
+Item,البند
+Items,العناصر
+Kamra report,تقرير Kamra
+Lost and found,المفقودات
+Mode,الوضع
+Nights,الليالي
+No-shows & cancellations,عدم الحضور والإلغاءات
+No-shows and cancellations,عدم الحضور والإلغاءات
+Occ %,إشغال %
+Occupancy,الإشغال
+Occupancy & revenue by day,الإشغال والإيراد حسب اليوم
+Occupancy and revenue,الإشغال والإيرادات
+Occupancy by day,الإشغال حسب اليوم
+Order,الطلب
+Orders by status,الطلبات حسب الحالة
+Other revenue,إيرادات أخرى
+Outlet,المنفذ
+POS order,طلب نقطة البيع
+POS orders,طلبات نقاط البيع
+Pax,عدد الضيوف
+Payments,المدفوعات
+Priority,الأولوية
+Reference,المرجع
+Report,التقرير
+Reservation,حجز
+Returned on,تاريخ الإرجاع
+RevPAR,إيراد لكل غرفة متاحة
+RevPAX,إيراد لكل ضيف
+Revenue,الإيرادات
+Revenue by source,الإيرادات حسب المصدر
+Room,غرفة
+Room nights,ليالي الغرف
+Room revenue,إيراد الغرف
+Room status,حالة الغرف
+Room type,نوع الغرفة
+Rooms,الغرف
+Rooms sold,غرف مباعة
+Sales by outlet,المبيعات حسب المنفذ
+Share %,الحصة %
+Source,المصدر
+Status,الحالة
+Task,المهمة
+Tasks,المهام
+Tasks by attendant,المهام حسب العامل
+Tasks by type,المهام حسب النوع
+The report is attached.,التقرير مرفق.
+Total,الإجمالي
+Total revenue,إجمالي الإيرادات
+Type,النوع
+Voids & allowances,الإلغاءات والخصومات
+Voids and allowances,الإلغاءات والخصومات
+When,متى
+{0} rows,{0} صف

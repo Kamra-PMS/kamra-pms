@@ -112,7 +112,8 @@ rooms).
 ## See which rooms work hardest
 
 Click **Insights** at the top of the screen, then **Last 30 days** or
-**Last 90 days**. The numbers count nights up to last night.
+**Last 90 days**, or pick a **From** and **To** date (up to 365 days).
+The presets count nights up to last night.
 
 - **Room nights sold** and occupancy. Occupancy counts only the nights a
   room could be sold: nights it was out of service are left out.
