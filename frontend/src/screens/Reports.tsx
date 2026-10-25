@@ -384,6 +384,7 @@ export default function Reports({ initialTab = "saved" }: { initialTab?: Tab }) 
         property, title: translate(pack.label), dataset: pack.id, is_shared: 1,
         schedule_frequency: "Weekly", schedule_weekday: "Mon", schedule_time: "07:00",
         recipients: to,
+        lang: language,
       })
       await reload()
       setTab("saved")
@@ -412,6 +413,7 @@ export default function Reports({ initialTab = "saved" }: { initialTab?: Tab }) 
         schedule_time: scheduleTime,
         schedule_weekday: scheduleWeekday,
         recipients,
+        lang: language,
       })
       setEditName(savedDef.name)
       await reload()

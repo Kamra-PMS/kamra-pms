@@ -225,6 +225,13 @@ re-counts the covers. Bill anything further as a line on the function.
 A function already posted to a folio can't be reopened; correct the bill
 on the folio instead.
 
+## See the months ahead
+
+On the Banquets home, open **Month by month**. Each month shows the value
+of confirmed functions and of those still in play, dated by the event,
+with the totals by status. It covers the next six months from the 1st;
+set **From** and **To** to look at any other period.
+
 ## Print the registers
 
 **Banquets & Groups → Registers**: pick the period once, then switch

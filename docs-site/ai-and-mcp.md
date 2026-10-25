@@ -182,7 +182,7 @@ Gemini, Groq, OpenRouter, Ollama, Azure, or Custom) → paste the key →
 
 ## What work it can do
 
-Kamra ships **116 governed tools** on MCP (see the
+Kamra ships **130 governed tools** on MCP (see the
 [tool reference](/mcp-tools)). Visibility is the intersection of the
 connected user's **roles**, their **MCP role** (Read hides every write),
 the property's **enabled modules** and its **AI switches** - a house
@@ -198,6 +198,7 @@ without F&B never sees POS tools; Front Desk still cannot change rates.
 | Laundry | Board, rates, collect, status, deliver |
 | Revenue | Rate changes inside the owner's floor / ceiling |
 | Briefings | Owner briefing, hotel-position briefing - never change the figures |
+| Reports | Manager flash, shift report, voids, SLA, F&B dashboard, wastage, banquet registers, department packs, custom reports (build, run, email). Each follows the user's roles, the same as its screen; see [Who sees which report](/reports#who-sees-which-report) |
 | Night audit | Idempotent end-of-day posting and no-shows |
 | Groups | Draft a block, pickup status, name a guest into the block, group billing |
 | Banquets | Availability, catalogue, enquiry → quote → event order → close-out |

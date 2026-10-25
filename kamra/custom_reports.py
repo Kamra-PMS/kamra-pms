@@ -836,16 +836,21 @@ def _to_csv(payload: dict) -> str:
 	cols = [c["id"] for c in payload["columns"]]
 	buf = io.StringIO()
 	w = csv.writer(buf)
-	w.writerow([c["label"] for c in payload["columns"]])
+	w.writerow([_tr(c["label"], payload.get("lang")) for c in payload["columns"]])
 	for row in payload["rows"]:
 		w.writerow([row.get(c) for c in cols])
 	return buf.getvalue()
 
 
-def _table_html(payload: dict) -> str:
+def _tr(text: str, lang: str | None) -> str:
+	"""Report wording in the reader's language, from kamra/translations."""
+	return _(text, lang=lang) if lang and lang != "en" else text
+
+
+def _table_html(payload: dict, lang: str = "en") -> str:
 	esc = frappe.utils.escape_html
 	cols = payload["columns"]
-	ths = "".join(f"<th>{esc(c['label'])}</th>" for c in cols)
+	ths = "".join(f"<th>{esc(_tr(c['label'], lang))}</th>" for c in cols)
 	trs = "".join(
 		"<tr>" + "".join(
 			f"<td>{esc(str(row.get(c['id']) if row.get(c['id']) is not None else ''))}</td>"
@@ -878,16 +883,18 @@ def _page_html(title: str, meta: str, body: str, lang: str = "en") -> str:
 
 def _to_html(payload: dict, lang: str = "en") -> str:
 	meta = (f"{payload.get('property')} · {payload.get('from_date')} → "
-	        f"{payload.get('to_date')} · {payload.get('row_count', 0)} rows")
-	return _page_html(payload.get("title") or "Report", meta, _table_html(payload), lang)
+	        f"{payload.get('to_date')} · "
+	        + _tr("{0} rows", lang).format(payload.get("row_count", 0)))
+	return _page_html(_tr(payload.get("title") or "Report", lang), meta,
+	                  _table_html(payload, lang), lang)
 
 
 def _pack_html(pack: dict, lang: str = "en") -> str:
 	esc = frappe.utils.escape_html
-	body = "".join(f"<h2>{esc(s['title'])}</h2>\n{_table_html(s)}\n"
+	body = "".join(f"<h2>{esc(_tr(s['title'], lang))}</h2>\n{_table_html(s, lang)}\n"
 	               for s in pack["sections"])
 	meta = f"{pack['property']} · {pack['from_date']} → {pack['to_date']}"
-	return _page_html(pack["title"], meta, body, lang)
+	return _page_html(_tr(pack["title"], lang), meta, body, lang)
 
 
 # ---------------------------------------------------------------------------
@@ -1042,6 +1049,7 @@ def get_custom_report(name: str, property: str | None = None):
 		"schedule_time": doc.schedule_time or "07:00",
 		"schedule_weekday": doc.schedule_weekday or "Mon",
 		"recipients": doc.recipients or "",
+		"lang": doc.lang or "en",
 		"last_sent_on": str(doc.last_sent_on) if doc.last_sent_on else None,
 		"owner": doc.owner,
 		"can_edit": doc.owner == frappe.session.user or _can_edit(),
@@ -1065,8 +1073,10 @@ def save_custom_report(
 	schedule_weekday: str | None = "Mon",
 	recipients: str | None = "",
 	name: str | None = None,
+	lang: str | None = None,
 ):
-	"""Create or update a saved custom report definition."""
+	"""Create or update a saved custom report definition. lang (en, es, ar)
+	is the language its scheduled emails go out in."""
 	assert_property_access(property)
 	pid = _pack_id(dataset)
 	ds = {"label": PACKS[pid]["label"], "columns": []} if pid else DATASETS.get(dataset)
@@ -1111,6 +1121,8 @@ def save_custom_report(
 	doc.schedule_time = (schedule_time or "07:00").strip()[:5]
 	doc.schedule_weekday = schedule_weekday or "Mon"
 	doc.recipients = (recipients or "").strip()
+	if lang:
+		doc.lang = lang
 	if freq != "Off" and not doc.recipients:
 		frappe.throw(_("Add at least one recipient email for a scheduled report."))
 	if freq != "Off" and not _can_edit():
@@ -1247,18 +1259,18 @@ def email_custom_report(
 		content = _to_csv(meta)
 		fname = _filename(meta, "csv")
 
-	title = meta.get("title") or "Kamra report"
-
+	title = _tr(meta.get("title") or "Kamra report", lang)
+	esc = frappe.utils.escape_html
 	frappe.sendmail(
 		recipients=emails,
 		subject=f"{title} · {meta.get('from_date')} - {meta.get('to_date')}",
 		message=(
-			f"<p>{frappe.utils.escape_html(title)}</p>"
-			f"<p>{frappe.utils.escape_html(str(meta.get('property')))} · "
-			f"{frappe.utils.escape_html(str(meta.get('from_date')))} → "
-			f"{frappe.utils.escape_html(str(meta.get('to_date')))} · "
-			f"{meta.get('row_count', 0)} rows</p>"
-			"<p>The report is attached.</p>"
+			f'<div dir="{"rtl" if lang == "ar" else "ltr"}">'
+			f"<p>{esc(title)}</p>"
+			f"<p>{esc(str(meta.get('property')))} · "
+			f"{esc(str(meta.get('from_date')))} → {esc(str(meta.get('to_date')))} · "
+			+ esc(_tr("{0} rows", lang).format(meta.get("row_count", 0))) + "</p>"
+			f"<p>{esc(_tr('The report is attached.', lang))}</p></div>"
 		),
 		attachments=[{
 			"fname": fname,
@@ -1290,7 +1302,7 @@ def run_scheduled_custom_reports():
 		fields=[
 			"name", "property", "title", "dataset", "schedule_frequency",
 			"schedule_time", "schedule_weekday", "recipients", "last_sent_on",
-			"columns_json", "filters_json", "group_by_json", "sort_json",
+			"columns_json", "filters_json", "group_by_json", "sort_json", "lang",
 		],
 	)
 	for r in rows:
@@ -1324,6 +1336,7 @@ def run_scheduled_custom_reports():
 					from_date=from_date,
 					to_date=to_date,
 					attach_format="csv",
+					lang=r.lang or "en",
 				)
 		except Exception:
 			frappe.log_error(

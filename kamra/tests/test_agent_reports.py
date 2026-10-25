@@ -101,3 +101,25 @@ class AgentReportAccessTestCase(AuditTestCase):
 		        {"t": "A", "tasks": 1, "m": None}]
 		self.assertEqual(_apply_group(rows, ["t"], ["t", "tasks", "m"], ("m",)),
 		                 [{"t": "A", "tasks": 3.0, "m": 30.0}])
+
+	def test_report_pages_follow_the_language(self):
+		import csv
+		from pathlib import Path
+
+		from frappe.translate import clear_cache
+
+		from kamra.custom_reports import DATASETS, PACKS
+
+		labels = ({d["label"] for d in DATASETS.values()}
+		          | {c["label"] for d in DATASETS.values() for c in d["columns"]}
+		          | {p["label"] for p in PACKS.values()}
+		          | {s["title"] for p in PACKS.values() for s in p["sections"]})
+		for lang in ("es", "ar"):
+			path = Path(frappe.get_app_path("kamra", "translations", f"{lang}.csv"))
+			have = {row[0] for row in csv.reader(path.open(encoding="utf-8"))}
+			self.assertEqual(labels - have, set(), f"{lang}: run gen_report_translations.py")
+		clear_cache()
+		html = run_report_pack(PROP_A, "front_office", format="html", lang="ar")["content"]
+		self.assertIn('dir="rtl"', html)
+		self.assertIn("حزمة المكتب الأمامي", html)
+		self.assertNotIn("Front Office pack", html)
