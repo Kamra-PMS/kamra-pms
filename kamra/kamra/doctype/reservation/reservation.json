@@ -70,6 +70,7 @@
   "voucher",
   "discount_amount",
   "auto_price",
+  "agreed_rate",
   "sb_notes",
   "special_requests",
   "sb_precheckin",
@@ -460,6 +461,14 @@
    "fieldname": "auto_price",
    "fieldtype": "Check",
    "label": "Auto Price"
+  },
+  {
+   "depends_on": "auto_price",
+   "description": "A nightly room rate the desk agreed (Revenue Manager / Hotel Admin). Replaces the rate card, demand premium and rate plan; taxes still apply.",
+   "fieldname": "agreed_rate",
+   "fieldtype": "Currency",
+   "label": "Agreed Nightly Rate",
+   "read_only": 1
   },
   {
    "default": "0",
@@ -876,7 +885,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-20 10:00:00.000000",
+ "modified": "2026-10-25 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Reservation",

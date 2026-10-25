@@ -23,7 +23,7 @@ from __future__ import annotations
 import json
 
 import frappe
-from frappe.utils import add_days, flt, nowdate
+from frappe.utils import add_days, nowdate
 
 from kamra.scripts import eval_harness
 

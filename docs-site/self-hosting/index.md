@@ -129,8 +129,8 @@ No in-app downgrade control - System Health never rolls the site back.
 Pin the previous release and update:
 
 ```bash
-sudo KAMRA_TAG=v2.6.16 /opt/kamra/install.sh update
-# build installs: sudo KAMRA_BRANCH=v2.6.16 /opt/kamra/install.sh update
+sudo KAMRA_TAG=v2.6.19 /opt/kamra/install.sh update
+# build installs: sudo KAMRA_BRANCH=v2.6.19 /opt/kamra/install.sh update
 ```
 
 Pick the `vX.Y.Z` you left (from

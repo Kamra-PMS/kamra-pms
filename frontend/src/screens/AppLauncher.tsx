@@ -23,7 +23,7 @@ export default function AppLauncher() {
 
   const open = (app: AppDef) => {
     const first = app.items.find((i) => i.to)
-    if (first?.to) navigate(first.to)
+    if (first?.to) navigate(first.to, { state: { app: app.id } })
   }
 
   return (

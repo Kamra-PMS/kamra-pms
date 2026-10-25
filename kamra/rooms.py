@@ -507,7 +507,8 @@ def _overlap(a_start, a_end, b_start, b_end) -> int:
 
 @frappe.whitelist()
 @require_roles(*BOARD_ROLES)
-def room_insights(property: str, days: int = 30, refresh: int = 0):
+def room_insights(property: str, days: int = 30, refresh: int = 0,
+                  from_date: str | None = None, to_date: str | None = None):
 	"""Per-room numbers for the last `days` nights (7, 30, 90, 180 or 365,
 	up to yesterday): room nights sold and occupancy, room revenue posted to
 	folios, out-of-service nights, and how long cleans take. Cached for a
@@ -519,16 +520,25 @@ def room_insights(property: str, days: int = 30, refresh: int = 0):
 		days = 30
 	money = _can(_MONEY_ROLES)
 	today = nowdate()
+	if from_date:  # a picked range: nights from_date..to_date
+		to_date = to_date or str(add_days(today, -1))
+		days = date_diff(to_date, from_date) + 1
+		if not 1 <= days <= max(INSIGHT_WINDOWS):
+			frappe.throw(f"Pick a range of 1 to {max(INSIGHT_WINDOWS)} days.")
+		today = str(add_days(to_date, 1))
 	key = f"kamra_room_insights:{property}:{days}:{today}:{int(money)}"
 	cached = None if cint(refresh) else frappe.cache().get_value(key)
 	if cached:
 		return cached
-	out = _compute_insights(property, days, getdate(today), money)
+	# a picked range counts cleans up to its last day; presets include today's
+	clean_to = to_date if from_date else nowdate()
+	out = _compute_insights(property, days, getdate(today), money, clean_to)
 	frappe.cache().set_value(key, out, expires_in_sec=INSIGHTS_CACHE_SECONDS)
 	return out
 
 
-def _compute_insights(property: str, days: int, today, money: bool) -> dict:
+def _compute_insights(property: str, days: int, today, money: bool,
+                      clean_to: str | None = None) -> dict:
 	start = getdate(add_days(today, -days))
 	end = today  # nights up to last night
 	rooms = frappe.get_all(
@@ -592,7 +602,8 @@ def _compute_insights(property: str, days: int, today, money: bool) -> dict:
 	# cleaning time: from In Progress to Done, out of the task change log
 	tasks = frappe.get_all(
 		"Housekeeping Task",
-		filters={"property": property, "creation": (">=", start),
+		filters={"property": property,
+		         "creation": ("between", [str(start), f"{clean_to or today} 23:59:59"]),
 		         "task_type": ("!=", "Inspection"),
 		         "status": ("in", ["Done", "Verified"])},
 		fields=["name", "room"])

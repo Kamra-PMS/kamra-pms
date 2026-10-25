@@ -1193,10 +1193,16 @@ def record_folio_reprint(folio: str, document: str = "Guest Folio",
 @frappe.whitelist()
 @require_roles("Front Desk", "Finance", "Hotel Admin", "Night Auditor", "Kamra Agent")
 def folio_history(property: str, query: str | None = None,
-                  status: str | None = None):
+                  status: str | None = None, from_date: str | None = None,
+                  to_date: str | None = None):
 	filters: list = [["property", "=", property]]
 	if status:
 		filters.append(["status", "=", status])
+	if from_date:  # by the day the bill was closed
+		from kamra.business_date import report_range_end
+
+		to = report_range_end(from_date, to_date)
+		filters.append(["closed_on", "between", [from_date, f"{to} 23:59:59"]])
 	rows = frappe.get_all(
 		"Folio",
 		filters=filters,

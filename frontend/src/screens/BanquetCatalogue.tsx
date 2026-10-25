@@ -833,7 +833,7 @@ function DishLibrary({
       <ErrorNote error={error} />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-zinc-500">
-          {dishes.length}{translate(" dish")}{dishes.length === 1 ? "" : translate("es")}
+          {tn(dishes.length, "{n} dish", "{n} dishes")}
           {uncosted.length > 0 && (
             <span className="text-amber-700">
               {" "}

@@ -36,7 +36,7 @@ features:
     details: Call the same methods from your stack. Download the Postman collection and go.
     link: /developers
   - title: Features & latest release
-    details: Front desk through banquets, F&B, WhatsApp and country tax packs - plus what's new in v2.6.17.
+    details: Front desk through banquets, F&B, WhatsApp and country tax packs - plus what's new in v2.6.20.
     link: /features
   - title: Install
     details: Docker on a VPS, classic bench, or the Frappe Cloud Marketplace. Same complete AGPL app.
@@ -64,7 +64,7 @@ Start here: **[Connect your AI (MCP)](/ai-and-mcp)** ·
 **[How Kamra works](/how-it-works)** ·
 **[Developer shortcuts](/developers)**
 
-**Current stable:** [v2.6.17](/releases) ·
+**Current stable:** [v2.6.20](/releases) ·
 [Live demo](https://demo.kamrapms.com) ·
 [Frappe Cloud Marketplace](https://frappecloud.com/marketplace/apps/kamra)
 

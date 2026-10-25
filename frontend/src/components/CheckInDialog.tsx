@@ -635,8 +635,8 @@ export default function CheckInDialog(props: {
               : isConfirm
                 ? softPending > 0
                   ? flow?.room.room_number
-                    ? t("Check in to {room} — finish later", { room: flow.room.room_number })
-                    : t("Check in — finish later")
+                    ? t("Check in to {room}, finish later", { room: flow.room.room_number })
+                    : t("Check in, finish later")
                   : flow?.room.room_number
                     ? t("Check in to room {room}", { room: flow.room.room_number })
                     : t("Check in")

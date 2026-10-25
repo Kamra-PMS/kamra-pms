@@ -1633,9 +1633,105 @@ TOOLS: tuple[ToolSpec, ...] = (
 		"rooms.room_insights",
 		"""Per-room numbers for the last 7, 30, 90, 180 or 365 nights: room
 		nights and occupancy, posted room revenue, out-of-service nights and
-		average cleaning time, with the most and least used rooms. Read-only.""",
-		{"days": _p("integer")},
+		average cleaning time, with the most and least used rooms. Or pass
+		from_date / to_date (up to 365 days) instead of days. Read-only.""",
+		{"days": _p("integer"), "from_date": _p("string", format="date"),
+		 "to_date": _p("string", format="date")},
 		property=True,
+	),
+	_t(
+		"manager_flash",
+		"reports.manager_flash",
+		"""The daily flash: yesterday's occupancy, ADR, RevPAR and revenue,
+		month to date, today's movement, collections by mode and the 7-day
+		outlook. date YYYY-MM-DD; pass from_date for a range ending on date.
+		Read-only.""",
+		{"date": _p("string", format="date"), "from_date": _p("string", format="date")},
+		property=True,
+		group="Briefings",
+	),
+	_t(
+		"cashier_shift_report",
+		"cashier.shift_report",
+		"""What each cashier took on a business date (or business_date to
+		to_date), by payment mode. Read-only.""",
+		{"business_date": _p("string", format="date"),
+		 "to_date": _p("string", format="date")},
+		property=True,
+		group="Billing",
+	),
+	_t(
+		"voids_allowances_report",
+		"reports.void_allowance_report",
+		"""Every void and allowance in a date range, with who did it and why.
+		Read-only.""",
+		{"from_date": _p("string", format="date"),
+		 "to_date": _p("string", format="date")},
+		required=("from_date", "to_date"),
+		property=True,
+		group="Billing",
+	),
+	_t(
+		"sla_report",
+		"reports.sla_report",
+		"""Guest request (ticket) SLA over a date range: resolution and breach
+		rates by category and priority, and the overdue queue. Read-only.""",
+		{"from_date": _p("string", format="date"),
+		 "to_date": _p("string", format="date")},
+		required=("from_date", "to_date"),
+		property=True,
+		group="Ops",
+	),
+	_t(
+		"outlets",
+		"pos.outlets",
+		"""The property's restaurants, bars and other outlets. Call before
+		outlet_dashboard or wastage_report to get an outlet id. Read-only.""",
+		{},
+		property=True,
+		group="F&B",
+	),
+	_t(
+		"outlet_dashboard",
+		"pos.outlet_dashboard",
+		"""One outlet's day: sales, bills, covers, average bill, by order type
+		and tender, open bills, NC / voids / cancellations, kitchen times.
+		Pass to_date for a range starting on date. Read-only.""",
+		{"outlet": _p("string"), "date": _p("string", format="date"),
+		 "to_date": _p("string", format="date")},
+		required=("outlet",),
+		group="F&B",
+	),
+	_t(
+		"wastage_report",
+		"inventory.wastage_report",
+		"""Food cooked and then voided over the last N days (default 30), with
+		its cost; optionally for one outlet. Read-only.""",
+		{"outlet": _p("string"), "days": _p("integer")},
+		property=True,
+		group="F&B",
+	),
+	_t(
+		"list_report_packs",
+		"custom_reports.list_report_packs",
+		"""Department report packs (Front Office, Housekeeping, F&B, Hotel
+		Manager) with the sections this user's roles may see. Read-only.""",
+		{},
+		property=True,
+		module="",
+	),
+	_t(
+		"run_report_pack",
+		"custom_reports.run_report_pack",
+		"""Run a department pack (id from list_report_packs) for a date range;
+		defaults to the last 7 days. format=json (default) or html.
+		Read-only.""",
+		{"pack": _p("string"), "from_date": _p("string", format="date"),
+		 "to_date": _p("string", format="date"), "format": _p("string"),
+		 "lang": _p("string")},
+		required=("pack",),
+		property=True,
+		module="",
 	),
 	_t(
 		"list_report_datasets",
@@ -1646,6 +1742,7 @@ TOOLS: tuple[ToolSpec, ...] = (
 		{},
 		property=True,
 		group="Billing",
+		module="",  # each dataset checks its own module
 	),
 	_t(
 		"list_custom_reports",
@@ -1655,6 +1752,7 @@ TOOLS: tuple[ToolSpec, ...] = (
 		{},
 		property=True,
 		group="Billing",
+		module="",
 	),
 	_t(
 		"save_custom_report",
@@ -1679,6 +1777,7 @@ TOOLS: tuple[ToolSpec, ...] = (
 		property=True,
 		mutating=True,
 		group="Billing",
+		module="",
 	),
 	_t(
 		"run_custom_report",
@@ -1698,6 +1797,7 @@ TOOLS: tuple[ToolSpec, ...] = (
 		},
 		property=True,
 		group="Billing",
+		module="",
 	),
 	_t(
 		"email_custom_report",
@@ -1721,6 +1821,7 @@ TOOLS: tuple[ToolSpec, ...] = (
 		property=True,
 		mutating=True,
 		group="Billing",
+		module="",
 	),
 )
 

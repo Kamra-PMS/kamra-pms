@@ -78,3 +78,20 @@ def assert_transaction_date(
 			title=_("Past date not allowed"),
 		)
 	return resolved
+
+
+MAX_REPORT_DAYS = 92
+
+
+def report_range_end(start, end=None) -> str:
+	"""The last day of a report's date range: `end`, or `start` for a
+	one-day report. Refuses a backwards or longer-than-92-day range."""
+	from frappe.utils import date_diff
+
+	end = str(end or start)
+	span = date_diff(end, start)
+	if span < 0:
+		frappe.throw("The end date is before the start date.")
+	if span >= MAX_REPORT_DAYS:
+		frappe.throw(f"Pick a range of {MAX_REPORT_DAYS} days or less.")
+	return end
