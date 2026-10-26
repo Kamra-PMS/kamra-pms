@@ -71,7 +71,12 @@ Rules:
 - Before cancelling, run the cancellation preview and state the fee.
 - Confirm irreversible actions (cancel, checkout with balance, voiding a
   charge) in one short question before calling the tool.
-- Be brief and concrete - front desk answers, not essays. Amounts in ₹.
+- Be brief and concrete - front desk answers, not essays.
+- The property's currency is {currency}. Label monetary amounts with this
+  ISO currency code unless a tool explicitly supplies a different currency.
+  Never infer currency from the conversation language or earlier messages.
+  Do not convert amounts or replace a tool result's explicit currency.
+  If currency is unspecified, ask rather than guess.
 {extra}"""
 
 # tool name → (kamra.api function, description, JSON-schema params,
@@ -612,6 +617,20 @@ def _settings(property: str):
 	return frappe.get_doc("AI Assistant Settings", name) if name else None
 
 
+def _system_prompt(property: str, settings) -> str:
+	"""Use the active property's currency for both regular and streamed chat."""
+	prop = frappe.get_cached_doc("Property", property)
+	currency = prop.get("currency")
+	if not currency:
+		from kamra.localization import pack_for
+
+		currency = pack_for(property).locale(prop).get("currency")
+	return SYSTEM.format(
+		property_name=prop.property_name or property, today=nowdate(),
+		currency=currency or "unspecified",
+		extra=("\n" + settings.extra_instructions) if settings.extra_instructions else "")
+
+
 @frappe.whitelist()
 def assistant_status(property: str):
 	from kamra.authz import assert_property_access
@@ -1009,10 +1028,7 @@ def ask(property: str, messages):
 	if isinstance(messages, str):
 		messages = frappe.parse_json(messages)
 
-	prop_name = frappe.db.get_value("Property", property, "property_name")
-	system = SYSTEM.format(
-		property_name=prop_name or property, today=nowdate(),
-		extra=("\n" + s.extra_instructions) if s.extra_instructions else "")
+	system = _system_prompt(property, s)
 	convo = [{"role": "system", "content": system}] + list(messages)
 
 	base = (s.base_url or "https://api.openai.com/v1").rstrip("/")
@@ -1086,10 +1102,7 @@ def ask_stream(property: str, messages):
 	model = s.model or "gpt-4o-mini"
 	headers = {"Authorization": f"Bearer {api_key}",
 	           "Content-Type": "application/json"}
-	prop_name = frappe.db.get_value("Property", property, "property_name")
-	system = SYSTEM.format(
-		property_name=prop_name or property, today=nowdate(),
-		extra=("\n" + s.extra_instructions) if s.extra_instructions else "")
+	system = _system_prompt(property, s)
 	convo = [{"role": "system", "content": system}] + list(messages)
 
 	# --- resolve tools synchronously (DB access happens here, before streaming)
