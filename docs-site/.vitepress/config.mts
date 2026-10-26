@@ -79,6 +79,7 @@ const SIDEBAR: { text: ReturnType<typeof L>; collapsed?: boolean; items: [Return
     items: [
       [L("All integrations", "Todas las integraciones", "كل التكاملات"), "integrations"],
       [L("Country setup & e-invoicing", "Configuración por país y factura electrónica", "إعداد الدولة والفوترة الإلكترونية"), "country-setup"],
+      [L("Write a country pack", "Escribir un country pack", "كتابة حزمة دولة"), "write-a-country-pack"],
       [L("WhatsApp on your number", "WhatsApp en su número", "WhatsApp على رقمك"), "whatsapp"],
       [L("Channel manager (OTA sync)", "Channel manager (sincronización OTA)", "مدير القنوات (مزامنة OTA)"), "channel-manager"],
       [L("Connect your AI (MCP)", "Conecte su IA (MCP)", "اربط الذكاء الاصطناعي (MCP)"), "ai-and-mcp"],
