@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import hmac
 import json
+import re
 from decimal import Decimal
 
 import frappe
@@ -22,6 +23,25 @@ from frappe.utils import add_days, nowdate
 
 from kamra.authz import require_roles
 from kamra.channels import provider_for
+
+
+# The sites a booking can arrive from. Channel managers spell them their own
+# way ("BookingCom", "booking"); one name per site keeps reports and badges
+# together whether the booking came in by API or was keyed from the email.
+OTA_CHANNELS = ["Booking.com", "Agoda", "Airbnb", "Expedia", "MakeMyTrip",
+                "Goibibo"]
+_CHANNEL_ALIASES = {"booking": "Booking.com", "mmt": "MakeMyTrip"}
+
+
+def canonical_channel(name: str | None) -> str | None:
+	"""Booking.com for "BookingCom" / "booking.com" / "booking"; any other
+	site is kept as typed."""
+	name = (name or "").strip()
+	if not name:
+		return None
+	key = re.sub(r"[^a-z0-9]", "", name.lower())
+	known = {re.sub(r"[^a-z0-9]", "", c.lower()): c for c in OTA_CHANNELS}
+	return known.get(key) or _CHANNEL_ALIASES.get(key) or name
 
 
 def _connections(property: str | None = None, only_active=True):
@@ -309,6 +329,7 @@ def _reservations_for_booking(property: str, booking_id: str) -> list[dict]:
 
 def _apply_event(conn, e: dict, requested_reason: str | None = None) -> dict:
 	"""One normalized OTA event -> the same paths a human would take."""
+	e["channel"] = canonical_channel(e.get("channel")) or "OTA"
 	existing = frappe.db.get_value(
 		"Reservation", {"property": conn.property, "ota_ref": e["ota_ref"]},
 		["name", "status"], as_dict=True) if e.get("ota_ref") else None

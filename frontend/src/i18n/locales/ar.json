@@ -5425,5 +5425,12 @@
   "{n} rows": "{n} صف",
   "No charge": "بدون رسوم",
   "action|Open": "فتح",
-  "The guided check-in follows these steps. Only Room must be done before check-in. Other required steps can finish after the guest is in — the desk sees a warning to backfill.": "يتبع تسجيل الوصول الموجّه هذه الخطوات. الغرفة وحدها يجب إنجازها قبل تسجيل الوصول. يمكن إكمال الخطوات المطلوبة الأخرى بعد دخول النزيل — يرى المكتب تنبيهاً لاستكمالها."
+  "The guided check-in follows these steps. Only Room must be done before check-in. Other required steps can finish after the guest is in — the desk sees a warning to backfill.": "يتبع تسجيل الوصول الموجّه هذه الخطوات. الغرفة وحدها يجب إنجازها قبل تسجيل الوصول. يمكن إكمال الخطوات المطلوبة الأخرى بعد دخول النزيل — يرى المكتب تنبيهاً لاستكمالها.",
+  "Booked via": "حُجز عبر",
+  "Other site…": "موقع آخر…",
+  "Site name": "اسم الموقع",
+  "OTA booking ref": "مرجع حجز OTA",
+  "Sold for (incl. tax)": "سعر البيع (شامل الضريبة)",
+  "Rate card price": "سعر قائمة الأسعار",
+  "Billed at the price {site} sold it for": "تُحتسب بالسعر الذي باع به {site}"
 }
