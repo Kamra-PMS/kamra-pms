@@ -279,7 +279,6 @@ export const APPS: AppDef[] = [
         keywords: EOD_KEYWORDS },
       { to: "/billing", label: "Billing", icon: Receipt, group: "Billing" },
       { to: "/folio-history", label: "Folio History", icon: History, group: "Billing" },
-      { to: "/laundry", label: "Laundry", icon: Shirt, group: "Billing" },
       // Books
       { to: "/ledgers", label: "Ledgers", icon: BookOpen, group: "Books" },
       { to: "/transaction-codes", label: "Transaction Codes", icon: Hash, group: "Books",
@@ -365,7 +364,7 @@ export const APPS: AppDef[] = [
 ]
 
 /** Which app owns a path? Longest matching item route wins; "/" only exact.
- *  A page listed in two apps (End of Day, Laundry, Room Types) belongs to
+ *  A page listed in two apps (End of Day, Room Types) belongs to
  *  the first one *among* the apps given - pass the user's visible apps so
  *  the page opens inside an app they can actually see. */
 export function appForPath(pathname: string, among: AppDef[] = APPS, keep?: string): AppDef {
