@@ -9,6 +9,17 @@ Install or upgrade: [Frappe Cloud Marketplace](/self-hosting/frappe-cloud)
 or [self-hosting](/self-hosting/). After upgrade, open
 **Admin → System Health** to confirm the site version.
 
+## New: free video course
+
+Released 29 Oct 2026.
+
+A 27-part [video course](/video-course) on YouTube takes you through
+Kamra from the first sign-in to night audit, reports and AI agents. Each
+episode is about 8 minutes, with chapters, English captions and a link to
+the matching guide. The first three are out now, and new episodes follow
+every Monday, Wednesday and Friday.
+[Watch the playlist](https://www.youtube.com/playlist?list=PLcNTRQwzkzAs).
+
 ## Current stable: v2.6.20
 
 Released 24 Oct 2026.

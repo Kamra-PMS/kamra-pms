@@ -49,6 +49,7 @@ const SIDEBAR: { text: ReturnType<typeof L>; collapsed?: boolean; items: [Return
       [L("How Kamra works", "Cómo funciona Kamra", "كيف يعمل Kamra"), "how-it-works"],
       [L("Features at a glance", "Funciones de un vistazo", "الميزات بنظرة سريعة"), "features"],
       [L("What's new", "Novedades", "الجديد"), "releases"],
+      [L("Video course", "Curso en video", "دورة الفيديو"), "video-course"],
       [L("Try the live demo", "Pruebe la demo", "جرّب العرض الحي"), "demo"],
       [L("Quickstart (Docker)", "Inicio rápido (Docker)", "البدء السريع (Docker)"), "quickstart"],
       [L("Go-live checklist", "Lista para la puesta en marcha", "قائمة بدء التشغيل"), "go-live"],
