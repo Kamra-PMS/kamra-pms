@@ -26,6 +26,21 @@ upgrade-breaking changes (removed doctypes / API contracts).
   quotation, desk-led guest response, department checklists + notify on
   Confirm (Sales/Finance/HK/F&B), and quote no-response chase reminders
 
+## [2.6.22](https://github.com/Kamra-PMS/kamra-pms/compare/v2.6.21...v2.6.22) (2026-10-27)
+
+
+### Features
+
+* **booking:** Booked via an OTA, with its reference and sold price ([#365](https://github.com/Kamra-PMS/kamra-pms/issues/365)) ([01b894a](https://github.com/Kamra-PMS/kamra-pms/commit/01b894a6f6dab64c874845de9f86bb23749adfb6))
+* **mcp:** city_ledger_aging read-only tool for AR aging ([#259](https://github.com/Kamra-PMS/kamra-pms/issues/259)) ([53ff963](https://github.com/Kamra-PMS/kamra-pms/commit/53ff963d3c5c683e372d59edb5d88e95898c73bf))
+* **reports:** department packs, new datasets, week-over-week ([#346](https://github.com/Kamra-PMS/kamra-pms/issues/346)) ([077d3ae](https://github.com/Kamra-PMS/kamra-pms/commit/077d3ae248183dd1ab0e5243e4075fccae7c1344))
+
+
+### Bug Fixes
+
+* **assistant:** respect the property's currency in chat. Contributed by @ernestoruiz89 ([#368](https://github.com/Kamra-PMS/kamra-pms/issues/368)) ([8a6b783](https://github.com/Kamra-PMS/kamra-pms/commit/8a6b783059fe553814ac5ec0816e75207d3f46ca))
+* **laundry:** keep it in Housekeeping only, tidy house order cards ([#364](https://github.com/Kamra-PMS/kamra-pms/issues/364)) ([5a1119f](https://github.com/Kamra-PMS/kamra-pms/commit/5a1119fdd1f172c96446fe82a14ad7179ca91094))
+
 ## [2.6.21](https://github.com/Kamra-PMS/kamra-pms/compare/v2.6.20...v2.6.21) (2026-10-25)
 
 
