@@ -853,6 +853,17 @@ TOOLS: tuple[ToolSpec, ...] = (
 		group="Billing",
 	),
 	_t(
+		"city_ledger_aging",
+		"ledger.city_ledger_aging",
+		"""Every company's city-ledger (AR) balance at this property, aged by
+		due date. Buckets per account and in totals: not due, 1 to 30 days,
+		31 to 60, 61 to 90, and 90+ days overdue (plus their sum `overdue`).
+		Read-only — use it to answer who owes money and how late.""",
+		{},
+		property=True,
+		group="Billing",
+	),
+	_t(
 		"security_deposit_status",
 		"api.security_deposit",
 		"""The stay's refundable security (damage) deposit: the property's
