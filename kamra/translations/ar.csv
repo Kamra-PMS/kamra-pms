@@ -1,6 +1,7 @@
 ADR,متوسط سعر الغرفة
 Action,الإجراء
 Actor,المنفّذ
+Actual check-out,المغادرة الفعلية
 Adults,البالغون
 Amount,المبلغ
 Approver,المعتمِد
@@ -9,24 +10,34 @@ Arrivals by source,الوصول حسب المصدر
 Assigned to,مُسند إلى
 Bookings,الحجوزات
 Breached,تم الإخلال
+By item,حسب الصنف
+By status,حسب الحالة
+Cash collected,النقد المحصّل
+Category,الفئة
 Channel,القناة
 Charges by type,الرسوم حسب النوع
 Check-in,تسجيل الوصول
 Check-out,تسجيل المغادرة
 Children,الأطفال
 Clean minutes,دقائق التنظيف
+Closing cash,النقد الختامي
+Collected at,وقت الجمع
 Collections by mode,التحصيل حسب طريقة الدفع
 Company,الشركة
 Condition,الحالة
 Contribution by source,المساهمة حسب المصدر
-Covers,الأغطية
+Covers,عدد الضيوف
 Created,تاريخ الإنشاء
 Date,التاريخ
+Delivered at,وقت التسليم
 Departures,المغادرة
 Description,الوصف
 Detail,التفاصيل
 Due by,موعد الاستحقاق
 ETA,وقت الوصول المتوقع
+Early departures,مغادرات مبكرة
+Engineering pack,حزمة الهندسة
+Express,مستعجل
 F&B pack,حزمة الأغذية والمشروبات
 F&B revenue,إيراد الأغذية والمشروبات
 Floor,الطابق
@@ -37,6 +48,9 @@ Found on,تاريخ العثور
 Front Office pack,حزمة المكتب الأمامي
 Guest,ضيف
 HK status,حالة التنظيف
+Handed over to,سُلّم إلى
+Handover,التسليم
+Handover notes,ملاحظات التسليم
 Hotel Manager pack,حزمة مدير الفندق
 Housekeeping pack,حزمة التدبير المنزلي
 Housekeeping tasks,مهام التدبير الفندقي
@@ -44,10 +58,15 @@ In house by room type,النزلاء المقيمون حسب نوع الغرفة
 In-house guests,الضيوف داخل الفندق
 Item,البند
 Items,العناصر
+Items by menu,الأصناف حسب القائمة
 Kamra report,تقرير Kamra
+Laundry orders,طلبات المغسلة
+Laundry pack,حزمة المغسلة
 Lost and found,المفقودات
+Metric,المؤشر
 Mode,الوضع
 Nights,الليالي
+Nights short,ليالٍ ناقصة
 No-shows & cancellations,عدم الحضور والإلغاءات
 No-shows and cancellations,عدم الحضور والإلغاءات
 Occ %,إشغال %
@@ -55,18 +74,30 @@ Occupancy,الإشغال
 Occupancy & revenue by day,الإشغال والإيراد حسب اليوم
 Occupancy and revenue,الإشغال والإيرادات
 Occupancy by day,الإشغال حسب اليوم
+Open tickets,تذاكر مفتوحة
+Opening cash,النقد الافتتاحي
 Order,الطلب
+Order type,نوع الطلب
 Orders by status,الطلبات حسب الحالة
 Other revenue,إيرادات أخرى
 Outlet,المنفذ
+POS items,أصناف نقطة البيع
 POS order,طلب نقطة البيع
 POS orders,طلبات نقاط البيع
 Pax,عدد الضيوف
 Payments,المدفوعات
+Payouts,المصروفات النقدية
+Previous period,الفترة السابقة
 Priority,الأولوية
+Qty,الكمية
+Rate,السعر
 Reference,المرجع
 Report,التقرير
 Reservation,حجز
+Resolution minutes,دقائق الحل
+Resolved on,تاريخ الحل
+Response minutes,دقائق الاستجابة
+Returned,مُعاد
 Returned on,تاريخ الإرجاع
 RevPAR,إيراد لكل غرفة متاحة
 RevPAX,إيراد لكل ضيف
@@ -79,20 +110,39 @@ Room status,حالة الغرف
 Room type,نوع الغرفة
 Rooms,الغرف
 Rooms sold,غرف مباعة
+SLA breaches,خروقات اتفاقية مستوى الخدمة
 Sales by outlet,المبيعات حسب المنفذ
+Scheduled check-out,المغادرة المجدولة
+Service,الخدمة
+Service tickets,تذاكر الخدمة
 Share %,الحصة %
+Shift,المناوبة
+Shift date,تاريخ الوردية
+Shift handover,تسليم الوردية
+Shift handovers,تسليم الورديات
 Source,المصدر
 Status,الحالة
+Subject,الموضوع
 Task,المهمة
 Tasks,المهام
 Tasks by attendant,المهام حسب العامل
 Tasks by type,المهام حسب النوع
 The report is attached.,التقرير مرفق.
+This period,هذه الفترة
+Ticket,التذكرة
+Tickets,التذاكر
+Tickets by category,التذاكر حسب الفئة
+Tickets by priority,التذاكر حسب الأولوية
 Total,الإجمالي
 Total revenue,إجمالي الإيرادات
+Turnaround,وقت الإنجاز
+Turnaround hours,ساعات الإنجاز
 Type,النوع
+Variance,الفارق
+Variance %,نسبة التباين
 Voids & allowances,الإلغاءات والخصومات
 Voids and allowances,الإلغاءات والخصومات
+Volume by guest vs house,الحجم: ضيف مقابل بيت
 When,متى
+vs previous period,مقارنة بالفترة السابقة
 {0} rows,{0} صف
-"OTA booking {0} is already reservation {1}.","حجز OTA {0} مسجّل بالفعل كحجز {1}."
