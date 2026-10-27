@@ -4824,7 +4824,17 @@ def booking_options(property: str):
 			order_by="price asc",
 		),
 		"property": _booking_property_policy(property),
+		"ota_channels": _ota_channels(property),
 	}
+
+
+def _ota_channels(property: str) -> list[str]:
+	"""The common OTAs, then any other site this property has booked through."""
+	from kamra.channel_manager import OTA_CHANNELS
+	used = frappe.get_all("Reservation", filters={
+		"property": property, "source": "OTA", "channel": ["is", "set"]},
+		pluck="channel", distinct=True, limit=50)
+	return OTA_CHANNELS + sorted({c for c in used if c not in OTA_CHANNELS})
 
 
 def _booking_property_policy(property: str) -> dict:
@@ -5184,7 +5194,10 @@ def create_booking(property: str, room_type: str, check_in_date: str,
                    check_out_time: str | None = None,
                    blacklist_override_reason: str | None = None,
                    pets: int = 0,
-                   credit_override_reason: str | None = None):
+                   credit_override_reason: str | None = None,
+                   booked_via: str | None = None,
+                   ota_ref: str | None = None,
+                   ota_total: float = 0):
 	"""One-call booking: attach to an existing guest profile when given,
 	else dedup by phone / create one. Optional auto room assignment,
 	voucher applied, price computed by the engine.
@@ -5224,6 +5237,22 @@ def create_booking(property: str, room_type: str, check_in_date: str,
 	channel = agent_channel()
 	if channel and source == "Manual":
 		source = "AI Agent"
+
+	# Booked via an OTA and keyed in from its email: tag the site and its
+	# reference, and keep the price the OTA charged (as a channel manager
+	# booking does). One reference books once.
+	from kamra.channel_manager import canonical_channel, lock_channel_rates
+	via = canonical_channel(booked_via)
+	ota_ref = (ota_ref or "").strip() or None
+	if via:
+		source = "OTA"
+	if ota_ref:
+		dup = frappe.db.get_value(
+			"Reservation", {"property": property, "ota_ref": ota_ref,
+			                "status": ["!=", "Cancelled"]}, "name")
+		if dup:
+			frappe.throw(_("OTA booking {0} is already reservation {1}.").format(
+				ota_ref, dup))
 
 	key = (idempotency_key or "").strip() or None
 	if key:
@@ -5338,6 +5367,12 @@ def create_booking(property: str, room_type: str, check_in_date: str,
 		doc.status = "Waitlist"
 	elif status:
 		doc.status = status
+	if via:
+		doc.channel, doc.ota_ref = via, ota_ref
+		if float(ota_total or 0) > 0:
+			doc.auto_price = 0
+			doc.amount_after_tax = float(ota_total)
+			lock_channel_rates(doc, float(ota_total))
 
 	# Booking a party above the room's capacity is a decision someone makes
 	# by arrangement; the reason is what records who agreed it, and the

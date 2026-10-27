@@ -164,6 +164,9 @@ The full interface is in the docstring of `kamra/localization/__init__.py`.
 `saudi.py` shows e-invoicing hooks. Add an eval check for the new pack's
 tax and invoice labels.
 
+For a step-by-step walkthrough, see
+[Write a country pack](https://kamrapms.com/docs/write-a-country-pack).
+
 ## Credit
 
 Every merged PR is credited in the release notes and on the

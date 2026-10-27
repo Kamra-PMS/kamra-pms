@@ -15,7 +15,7 @@ from typing import Any, Callable
 
 import frappe
 from frappe import _
-from frappe.utils import add_days, getdate, now_datetime, nowdate
+from frappe.utils import add_days, date_diff, getdate, now_datetime, nowdate
 
 from kamra.authz import require_roles
 from kamra.crs import assert_property_access
@@ -304,20 +304,136 @@ DATASETS: dict[str, Dataset] = {
 			_col("grand_total", "Total", "number"),
 		],
 	},
+	"pos_items": {
+		"id": "pos_items",
+		"label": "POS items",
+		"description": "Sold menu items by order date (voids excluded).",
+		"module": "fnb",
+		"roles": ("Finance", "Hotel Admin", "Kamra Agent", "Front Desk"),
+		"date_field": "creation",
+		"needs_range": True,
+		"columns": [
+			_col("item_name", "Item"),
+			_col("outlet", "Outlet"),
+			_col("posting_date", "Date", "date"),
+			_col("qty", "Qty", "number"),
+			_col("rate", "Rate", "number"),
+			_col("amount", "Amount", "number"),
+			_col("order", "Order"),
+		],
+	},
+	"service_tickets": {
+		"id": "service_tickets",
+		"label": "Service tickets",
+		"description": "Guest and maintenance tickets created in the date range.",
+		"module": "operations",
+		"roles": ("Front Desk", "Housekeeping", "Housekeeping Supervisor",
+		          "Hotel Admin", "Kamra Agent", "Finance"),
+		"date_field": "creation",
+		"needs_range": True,
+		"averages": ("resolution_minutes", "response_minutes"),
+		"columns": [
+			_col("name", "Ticket"),
+			_col("subject", "Subject"),
+			_col("category", "Category"),
+			_col("priority", "Priority"),
+			_col("status", "Status"),
+			_col("source", "Source"),
+			_col("room", "Room"),
+			_col("guest_name", "Guest"),
+			_col("assigned_to_user", "Assigned to"),
+			_col("breached", "Breached", "number"),
+			_col("tickets", "Tickets", "number"),
+			_col("resolution_minutes", "Resolution minutes", "number"),
+			_col("response_minutes", "Response minutes", "number"),
+			_col("creation", "Created"),
+			_col("due_by", "Due by"),
+			_col("resolved_on", "Resolved on"),
+		],
+	},
+	"laundry_orders": {
+		"id": "laundry_orders",
+		"label": "Laundry orders",
+		"description": "Laundry line items by order date, with turnaround.",
+		"module": "housekeeping",
+		"roles": HK_ROLES,
+		"date_field": "creation",
+		"needs_range": True,
+		"averages": ("turnaround_hours",),
+		"columns": [
+			_col("name", "Order"),
+			_col("order_type", "Order type"),
+			_col("room", "Room"),
+			_col("status", "Status"),
+			_col("express", "Express", "number"),
+			_col("item_name", "Item"),
+			_col("service_type", "Service"),
+			_col("qty", "Qty", "number"),
+			_col("returned_qty", "Returned", "number"),
+			_col("amount", "Amount", "number"),
+			_col("turnaround_hours", "Turnaround hours", "number"),
+			_col("collected_at", "Collected at"),
+			_col("delivered_at", "Delivered at"),
+			_col("creation", "Created"),
+		],
+	},
+	"shift_handover": {
+		"id": "shift_handover",
+		"label": "Shift handover",
+		"description": "Cashier shift handovers by shift date.",
+		"module": "front-desk",
+		"roles": ("Front Desk", "Finance", "Hotel Admin", "Kamra Agent",
+		          "Night Auditor"),
+		"date_field": "shift_date",
+		"needs_range": True,
+		"columns": [
+			_col("name", "Handover"),
+			_col("shift_date", "Shift date", "date"),
+			_col("shift", "Shift"),
+			_col("status", "Status"),
+			_col("handed_over_to", "Handed over to"),
+			_col("opening_cash", "Opening cash", "number"),
+			_col("cash_collected", "Cash collected", "number"),
+			_col("payouts", "Payouts", "number"),
+			_col("closing_cash", "Closing cash", "number"),
+			_col("handover_notes", "Handover notes"),
+		],
+	},
+	"early_departures": {
+		"id": "early_departures",
+		"label": "Early departures",
+		"description": "Guests who checked out before their scheduled departure.",
+		"module": "front-desk",
+		"roles": ("Front Desk", "Finance", "Hotel Admin", "Revenue Manager",
+		          "Kamra Agent", "Night Auditor"),
+		"date_field": "actual_check_out",
+		"needs_range": True,
+		"columns": [
+			_col("name", "Reservation"),
+			_col("guest_name", "Guest"),
+			_col("room_type", "Room type"),
+			_col("room", "Room"),
+			_col("check_in_date", "Check-in", "date"),
+			_col("check_out_date", "Scheduled check-out", "date"),
+			_col("actual_check_out", "Actual check-out"),
+			_col("nights_short", "Nights short", "number"),
+			_col("company", "Company"),
+			_col("source", "Source"),
+		],
+	},
 }
 
 
 # Department packs: several grouped datasets in one report, emailed weekly.
 # A section the user's roles (or the property's modules) can't run is left
 # out, so each person gets the part of the pack their access allows.
-# ponytail: no this-week-vs-last-week column yet; add a comparison run when
-# a hotel asks for variance (#346).
+# Packs compare this period to the previous window of the same length (#346).
 PACK_PREFIX = "pack:"
 PACKS: dict[str, dict] = {
 	"front_office": {
 		"label": "Front Office pack",
 		"description": "Occupancy by day, arrivals by source, in-house by room "
-		               "type, no-shows and cancellations.",
+		               "type, no-shows, early departures and shift handovers.",
 		"sections": [
 			{"title": "Occupancy by day", "dataset": "occupancy_by_day",
 			 "columns": ["date", "rooms_sold", "occupancy_pct", "adr", "revpar",
@@ -328,6 +444,8 @@ PACKS: dict[str, dict] = {
 			 "columns": ["room_type", "nights", "adults", "children"],
 			 "group_by": ["room_type"]},
 			{"title": "No-shows and cancellations", "dataset": "no_shows_cancels"},
+			{"title": "Early departures", "dataset": "early_departures"},
+			{"title": "Shift handovers", "dataset": "shift_handover"},
 		],
 	},
 	"housekeeping": {
@@ -351,12 +469,52 @@ PACKS: dict[str, dict] = {
 	},
 	"fnb": {
 		"label": "F&B pack",
-		"description": "Sales and covers by outlet, and orders by status.",
+		"description": "Sales and covers by outlet, orders by status, and "
+		               "items sold by menu name.",
 		"sections": [
 			{"title": "Sales by outlet", "dataset": "pos_orders",
 			 "columns": ["outlet", "covers", "grand_total"], "group_by": ["outlet"]},
 			{"title": "Orders by status", "dataset": "pos_orders",
 			 "columns": ["status", "covers", "grand_total"], "group_by": ["status"]},
+			{"title": "Items by menu", "dataset": "pos_items",
+			 "columns": ["item_name", "qty", "amount"], "group_by": ["item_name"]},
+		],
+	},
+	"engineering": {
+		"label": "Engineering pack",
+		"description": "Tickets by category and priority, open work, SLA "
+		               "breaches and average resolution time.",
+		"sections": [
+			{"title": "Tickets by category", "dataset": "service_tickets",
+			 "columns": ["category", "tickets", "breached", "resolution_minutes"],
+			 "group_by": ["category"]},
+			{"title": "Tickets by priority", "dataset": "service_tickets",
+			 "columns": ["priority", "tickets", "breached", "resolution_minutes"],
+			 "group_by": ["priority"]},
+			{"title": "Open tickets", "dataset": "service_tickets",
+			 "columns": ["name", "subject", "category", "priority", "status",
+			             "room", "due_by", "breached"],
+			 "filters": [{"field": "status", "op": "=", "value": "Open"}]},
+			{"title": "SLA breaches", "dataset": "service_tickets",
+			 "columns": ["name", "subject", "category", "priority", "status",
+			             "room", "due_by", "resolved_on"],
+			 "filters": [{"field": "breached", "op": "=", "value": 1}]},
+		],
+	},
+	"laundry": {
+		"label": "Laundry pack",
+		"description": "Volume by guest vs house, by item and status, with "
+		               "turnaround hours.",
+		"sections": [
+			{"title": "Volume by guest vs house", "dataset": "laundry_orders",
+			 "columns": ["order_type", "qty", "amount"], "group_by": ["order_type"]},
+			{"title": "By item", "dataset": "laundry_orders",
+			 "columns": ["item_name", "qty", "amount"], "group_by": ["item_name"]},
+			{"title": "By status", "dataset": "laundry_orders",
+			 "columns": ["status", "qty", "amount"], "group_by": ["status"]},
+			{"title": "Turnaround", "dataset": "laundry_orders",
+			 "columns": ["name", "order_type", "status", "turnaround_hours", "qty"],
+			 "group_by": ["name"]},
 		],
 	},
 	"hotel_manager": {
@@ -646,6 +804,194 @@ def _fetch_pos_orders(property: str, from_date: str, to_date: str,
 	return out
 
 
+def _elapsed_minutes(start, end) -> float | None:
+	if not start or not end:
+		return None
+	from frappe.utils import get_datetime
+
+	try:
+		a, b = get_datetime(start), get_datetime(end)
+	except Exception:
+		return None
+	return round((b - a).total_seconds() / 60.0, 1)
+
+
+def _fetch_pos_items(property: str, from_date: str, to_date: str,
+                     **_) -> list[dict]:
+	return frappe.db.sql(
+		"""
+		SELECT COALESCE(poi.item_name, poi.menu_item) AS item_name,
+		       po.outlet, DATE(po.creation) AS posting_date,
+		       poi.qty, poi.rate, poi.amount, po.name AS `order`
+		FROM `tabPOS Order Item` poi
+		JOIN `tabPOS Order` po ON poi.parent = po.name
+		WHERE po.property = %(p)s
+		  AND po.creation BETWEEN %(f)s AND %(t)s
+		  AND IFNULL(poi.voided, 0) = 0
+		ORDER BY po.creation DESC, poi.idx
+		LIMIT %(lim)s
+		""",
+		{"p": property, "f": from_date, "t": f"{to_date} 23:59:59",
+		 "lim": MAX_ROWS},
+		as_dict=True,
+	)
+
+
+def _fetch_service_tickets(property: str, from_date: str, to_date: str,
+                           **_) -> list[dict]:
+	rows = frappe.get_all(
+		"Service Ticket",
+		filters={
+			"property": property,
+			"creation": ["between", [from_date, f"{to_date} 23:59:59"]],
+		},
+		fields=[
+			"name", "subject", "category", "priority", "status", "source",
+			"room", "guest_name", "assigned_to_user", "breached", "creation",
+			"due_by", "resolved_on", "first_response_at",
+		],
+		order_by="creation desc",
+		limit_page_length=MAX_ROWS,
+	)
+	out = []
+	for r in rows:
+		out.append({
+			"name": r.name,
+			"subject": r.get("subject") or "",
+			"category": r.get("category"),
+			"priority": r.get("priority"),
+			"status": r.get("status"),
+			"source": r.get("source"),
+			"room": r.get("room"),
+			"guest_name": r.get("guest_name") or "",
+			"assigned_to_user": r.get("assigned_to_user") or "",
+			"breached": 1 if r.get("breached") else 0,
+			"tickets": 1,
+			"resolution_minutes": _elapsed_minutes(r.get("creation"),
+			                                       r.get("resolved_on")),
+			"response_minutes": _elapsed_minutes(r.get("creation"),
+			                                     r.get("first_response_at")),
+			"creation": str(r.get("creation") or ""),
+			"due_by": str(r.get("due_by") or "") if r.get("due_by") else "",
+			"resolved_on": (str(r.get("resolved_on") or "")
+			                if r.get("resolved_on") else ""),
+		})
+	return out
+
+
+def _fetch_laundry_orders(property: str, from_date: str, to_date: str,
+                          **_) -> list[dict]:
+	rows = frappe.db.sql(
+		"""
+		SELECT lo.name, lo.order_type, lo.room, lo.status, lo.express,
+		       lo.collected_at, lo.delivered_at, lo.creation,
+		       li.item_name, li.service_type, li.qty, li.returned_qty, li.amount
+		FROM `tabLaundry Order` lo
+		LEFT JOIN `tabLaundry Order Item` li ON li.parent = lo.name
+		WHERE lo.property = %(p)s
+		  AND lo.creation BETWEEN %(f)s AND %(t)s
+		ORDER BY lo.creation DESC, li.idx
+		LIMIT %(lim)s
+		""",
+		{"p": property, "f": from_date, "t": f"{to_date} 23:59:59",
+		 "lim": MAX_ROWS},
+		as_dict=True,
+	)
+	out = []
+	for r in rows:
+		mins = _elapsed_minutes(r.get("collected_at") or r.get("creation"),
+		                        r.get("delivered_at"))
+		out.append({
+			"name": r.name,
+			"order_type": r.get("order_type") or "Guest",
+			"room": r.get("room") or "",
+			"status": r.get("status"),
+			"express": 1 if r.get("express") else 0,
+			"item_name": r.get("item_name") or "",
+			"service_type": r.get("service_type") or "",
+			"qty": int(r.get("qty") or 0),
+			"returned_qty": int(r.get("returned_qty") or 0),
+			"amount": float(r.get("amount") or 0),
+			"turnaround_hours": (round(mins / 60.0, 1) if mins is not None
+			                     else None),
+			"collected_at": (str(r.get("collected_at") or "")
+			                 if r.get("collected_at") else ""),
+			"delivered_at": (str(r.get("delivered_at") or "")
+			                 if r.get("delivered_at") else ""),
+			"creation": str(r.get("creation") or ""),
+		})
+	return out
+
+
+def _fetch_shift_handover(property: str, from_date: str, to_date: str,
+                          **_) -> list[dict]:
+	rows = frappe.get_all(
+		"Shift Handover",
+		filters={
+			"property": property,
+			"shift_date": ["between", [from_date, to_date]],
+		},
+		fields=[
+			"name", "shift_date", "shift", "status", "handed_over_to",
+			"opening_cash", "cash_collected", "payouts", "closing_cash",
+			"handover_notes",
+		],
+		order_by="shift_date desc, shift asc",
+		limit_page_length=MAX_ROWS,
+	)
+	out = []
+	for r in rows:
+		out.append({
+			"name": r.name,
+			"shift_date": str(r.get("shift_date") or ""),
+			"shift": r.get("shift"),
+			"status": r.get("status"),
+			"handed_over_to": r.get("handed_over_to") or "",
+			"opening_cash": float(r.get("opening_cash") or 0),
+			"cash_collected": float(r.get("cash_collected") or 0),
+			"payouts": float(r.get("payouts") or 0),
+			"closing_cash": float(r.get("closing_cash") or 0),
+			"handover_notes": r.get("handover_notes") or "",
+		})
+	return out
+
+
+def _fetch_early_departures(property: str, from_date: str, to_date: str,
+                            **_) -> list[dict]:
+	rows = frappe.db.sql(
+		"""
+		SELECT name, guest_name, room_type, room, check_in_date,
+		       check_out_date, actual_check_out, company, source
+		FROM `tabReservation`
+		WHERE property = %(p)s
+		  AND status = 'Checked Out'
+		  AND actual_check_out IS NOT NULL
+		  AND DATE(actual_check_out) < check_out_date
+		  AND DATE(actual_check_out) BETWEEN %(f)s AND %(t)s
+		ORDER BY actual_check_out DESC
+		LIMIT %(lim)s
+		""",
+		{"p": property, "f": from_date, "t": to_date, "lim": MAX_ROWS},
+		as_dict=True,
+	)
+	out = []
+	for r in rows:
+		short = date_diff(r.check_out_date, getdate(r.actual_check_out))
+		out.append({
+			"name": r.name,
+			"guest_name": r.get("guest_name") or "",
+			"room_type": r.get("room_type"),
+			"room": r.get("room"),
+			"check_in_date": str(r.get("check_in_date") or ""),
+			"check_out_date": str(r.get("check_out_date") or ""),
+			"actual_check_out": str(r.get("actual_check_out") or ""),
+			"nights_short": max(int(short or 0), 0),
+			"company": r.get("company") or "",
+			"source": r.get("source") or "",
+		})
+	return out
+
+
 FETCHERS: dict[str, Callable[..., list[dict]]] = {
 	"arrivals": _fetch_arrivals,
 	"departures": _fetch_departures,
@@ -660,6 +1006,11 @@ FETCHERS: dict[str, Callable[..., list[dict]]] = {
 	"room_status": _fetch_room_status,
 	"lost_found": _fetch_lost_found,
 	"pos_orders": _fetch_pos_orders,
+	"pos_items": _fetch_pos_items,
+	"service_tickets": _fetch_service_tickets,
+	"laundry_orders": _fetch_laundry_orders,
+	"shift_handover": _fetch_shift_handover,
+	"early_departures": _fetch_early_departures,
 }
 
 
@@ -769,6 +1120,67 @@ def _resolve_columns(ds: Dataset, columns: list[str] | None) -> list[str]:
 	return picked or [c["id"] for c in ds["columns"]]
 
 
+def _previous_range(from_date: str, to_date: str) -> tuple[str, str]:
+	"""Same-length window ending the day before from_date."""
+	f, t = getdate(from_date), getdate(to_date)
+	span = (t - f).days
+	prev_to = getdate(add_days(f, -1))
+	prev_from = getdate(add_days(prev_to, -span))
+	return str(prev_from), str(prev_to)
+
+
+def _numeric_totals(payload: dict) -> dict[str, float]:
+	totals: dict[str, float] = {}
+	for c in payload.get("columns") or []:
+		if c.get("type") != "number":
+			continue
+		cid = c["id"]
+		# averages (occ %, ADR) use mean; counts/sums use sum
+		if cid in ("occupancy_pct", "adr", "revpar", "revpax",
+		           "clean_minutes", "resolution_minutes", "response_minutes",
+		           "turnaround_hours"):
+			vals = [_num(r.get(cid)) for r in payload["rows"]
+			        if r.get(cid) is not None]
+			totals[cid] = round(sum(vals) / len(vals), 2) if vals else 0.0
+		else:
+			totals[cid] = round(
+				sum(_num(r.get(cid)) for r in payload["rows"]), 2)
+	return totals
+
+
+def _build_comparison(current: dict, previous: dict,
+                      label_by_id: dict[str, str] | None = None) -> dict:
+	"""Metric / this / previous / variance rows for numeric columns."""
+	cur = _numeric_totals(current)
+	prev = _numeric_totals(previous)
+	labels = label_by_id or {
+		c["id"]: c["label"] for c in (current.get("columns") or [])}
+	rows = []
+	for cid, this_v in cur.items():
+		prev_v = prev.get(cid, 0.0)
+		var = round(this_v - prev_v, 2)
+		pct = (round(var / abs(prev_v) * 100, 1)
+		       if prev_v else (100.0 if this_v else 0.0))
+		rows.append({
+			"metric": labels.get(cid, cid),
+			"this_period": this_v,
+			"previous_period": prev_v,
+			"variance": var,
+			"variance_pct": pct,
+		})
+	return {
+		"from_date": current.get("from_date"),
+		"to_date": current.get("to_date"),
+		"previous_from_date": previous.get("from_date"),
+		"previous_to_date": previous.get("to_date"),
+		"rows": rows,
+	}
+
+
+def _truthy(v) -> bool:
+	return str(v).lower() not in ("0", "false", "none", "")
+
+
 def _run_dataset(
 	property: str,
 	dataset_id: str,
@@ -778,6 +1190,7 @@ def _run_dataset(
 	filters: list[dict] | None = None,
 	group_by: list[str] | None = None,
 	sort: list[dict] | None = None,
+	compare: bool = False,
 ) -> dict:
 	ds = DATASETS.get(dataset_id)
 	if not ds:
@@ -815,7 +1228,7 @@ def _run_dataset(
 	by_id = {c["id"]: c for c in col_meta}
 	ordered = [by_id[c] for c in col_ids if c in by_id]
 
-	return {
+	payload = {
 		"dataset": dataset_id,
 		"title": ds["label"],
 		"property": property,
@@ -826,6 +1239,13 @@ def _run_dataset(
 		"row_count": len(rows),
 		"truncated": len(rows) >= MAX_ROWS,
 	}
+	if compare and ds.get("needs_range"):
+		pf, pt = _previous_range(from_date, to_date)
+		prev = _run_dataset(
+			property, dataset_id, pf, pt, columns, filters, group_by, sort,
+			compare=False)
+		payload["comparison"] = _build_comparison(payload, prev)
+	return payload
 
 
 # ---------------------------------------------------------------------------
@@ -870,7 +1290,15 @@ def _page_html(title: str, meta: str, body: str, lang: str = "en") -> str:
 		"body{font-family:system-ui,sans-serif;font-size:12px;color:#18181b;margin:24px}\n"
 		"h1{font-size:18px;margin:0 0 4px}\n"
 		"h2{font-size:14px;margin:24px 0 6px}\n"
+		"h3{font-size:12px;margin:12px 0 4px;color:#52525b}\n"
 		".meta{color:#71717a;margin-bottom:16px}\n"
+		".kpis{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 20px}\n"
+		".kpi{border:1px solid #e4e4e7;padding:10px 14px;min-width:110px}\n"
+		".kpi .lbl{font-size:10px;text-transform:uppercase;letter-spacing:.04em;"
+		"color:#71717a}\n"
+		".kpi .val{font-size:18px;font-weight:600;margin-top:2px}\n"
+		".kpi .delta{font-size:11px;margin-top:2px;color:#71717a}\n"
+		".kpi .up{color:#15803d}.kpi .down{color:#b91c1c}\n"
 		"table{border-collapse:collapse;width:100%}\n"
 		f"th,td{{border:1px solid #e4e4e7;padding:6px 8px;text-align:{align}}}\n"
 		"th{background:#f4f4f5;font-size:10px;text-transform:uppercase;letter-spacing:.04em}\n"
@@ -881,19 +1309,92 @@ def _page_html(title: str, meta: str, body: str, lang: str = "en") -> str:
 	)
 
 
+def _comparison_html(comparison: dict, lang: str = "en") -> str:
+	if not comparison or not comparison.get("rows"):
+		return ""
+	esc = frappe.utils.escape_html
+	cols = [
+		{"id": "metric", "label": "Metric"},
+		{"id": "this_period", "label": "This period"},
+		{"id": "previous_period", "label": "Previous period"},
+		{"id": "variance", "label": "Variance"},
+		{"id": "variance_pct", "label": "Variance %"},
+	]
+	payload = {"columns": cols, "rows": comparison["rows"]}
+	heading = _tr("vs previous period", lang)
+	return (f"<h3>{esc(heading)}</h3>\n{_table_html(payload, lang)}\n")
+
+
+def _kpi_html(kpis: list[dict], lang: str = "en") -> str:
+	if not kpis:
+		return ""
+	esc = frappe.utils.escape_html
+	tiles = []
+	for k in kpis:
+		var = k.get("variance")
+		cls = ""
+		delta = ""
+		if var is not None:
+			cls = "up" if var > 0 else ("down" if var < 0 else "")
+			sign = "+" if var > 0 else ""
+			pct = k.get("variance_pct")
+			delta = (f'<div class="delta {cls}">{esc(sign)}{esc(str(var))}'
+			         + (f" ({sign}{esc(str(pct))}%)" if pct is not None else "")
+			         + "</div>")
+		tiles.append(
+			f'<div class="kpi"><div class="lbl">{esc(_tr(k["label"], lang))}</div>'
+			f'<div class="val">{esc(str(k["value"]))}</div>{delta}</div>')
+	return f'<div class="kpis">{"".join(tiles)}</div>\n'
+
+
 def _to_html(payload: dict, lang: str = "en") -> str:
 	meta = (f"{payload.get('property')} · {payload.get('from_date')} → "
 	        f"{payload.get('to_date')} · "
 	        + _tr("{0} rows", lang).format(payload.get("row_count", 0)))
+	body = _table_html(payload, lang)
+	if payload.get("comparison"):
+		body += _comparison_html(payload["comparison"], lang)
 	return _page_html(_tr(payload.get("title") or "Report", lang), meta,
-	                  _table_html(payload, lang), lang)
+	                  body, lang)
+
+
+def _pack_kpis(sections: list[dict]) -> list[dict]:
+	"""KPI tiles from an occupancy_by_day section when the pack has one."""
+	occ = next((s for s in sections if s.get("dataset") == "occupancy_by_day"),
+	           None)
+	if not occ:
+		return []
+	label_of = {c["id"]: c["label"] for c in occ.get("columns") or []}
+	cmp_by_label = {
+		r["metric"]: r for r in (occ.get("comparison") or {}).get("rows", [])}
+	wanted = ("rooms_sold", "occupancy_pct", "adr", "revpar",
+	          "room_revenue", "total_revenue")
+	totals = _numeric_totals(occ)
+	out = []
+	for cid in wanted:
+		if cid not in totals:
+			continue
+		label = label_of.get(cid, cid)
+		row = cmp_by_label.get(label)
+		tile = {"label": label, "value": totals[cid]}
+		if row:
+			tile["variance"] = row.get("variance")
+			tile["variance_pct"] = row.get("variance_pct")
+		out.append(tile)
+	return out
 
 
 def _pack_html(pack: dict, lang: str = "en") -> str:
 	esc = frappe.utils.escape_html
-	body = "".join(f"<h2>{esc(_tr(s['title'], lang))}</h2>\n{_table_html(s, lang)}\n"
-	               for s in pack["sections"])
+	body = _kpi_html(pack.get("kpis") or [], lang)
+	for s in pack["sections"]:
+		body += f"<h2>{esc(_tr(s['title'], lang))}</h2>\n{_table_html(s, lang)}\n"
+		if s.get("comparison"):
+			body += _comparison_html(s["comparison"], lang)
 	meta = f"{pack['property']} · {pack['from_date']} → {pack['to_date']}"
+	if pack.get("previous_from_date"):
+		meta += (f" · {_tr('vs previous period', lang)} "
+		         f"{pack['previous_from_date']} → {pack['previous_to_date']}")
 	return _page_html(_tr(pack["title"], lang), meta, body, lang)
 
 
@@ -946,9 +1447,10 @@ def list_report_packs(property: str):
                "Housekeeping", "Kamra Agent", "Night Auditor")
 def run_report_pack(property: str, pack: str, from_date: str | None = None,
                     to_date: str | None = None, format: str | None = "json",
-                    lang: str | None = "en"):
+                    lang: str | None = "en", compare: int | str | None = 1):
 	"""Run a department pack (id from list_report_packs) for a date range.
-	format=json (sections of rows) or html (one printable page)."""
+	format=json (sections of rows) or html (one printable page).
+	compare=1 (default) adds this-vs-previous totals on each section."""
 	assert_property_access(property)
 	pid = _pack_id(pack if pack.startswith(PACK_PREFIX) else PACK_PREFIX + pack)
 	sections = _pack_sections(property, pid)
@@ -957,18 +1459,27 @@ def run_report_pack(property: str, pack: str, from_date: str | None = None,
 		             frappe.PermissionError)
 	to_date = to_date or add_days(nowdate(), -1)
 	from_date = from_date or add_days(to_date, -6)
+	do_compare = _truthy(1 if compare is None else compare)
 	out = {"pack": PACK_PREFIX + pid, "title": PACKS[pid]["label"],
 	       "property": property, "from_date": from_date, "to_date": to_date,
 	       "sections": []}
+	if do_compare:
+		pf, pt = _previous_range(from_date, to_date)
+		out["previous_from_date"] = pf
+		out["previous_to_date"] = pt
 	for s in sections:
 		res = _run_dataset(property, s["dataset"], from_date, to_date,
-		                   s.get("columns"), s.get("filters"), s.get("group_by"))
+		                   s.get("columns"), s.get("filters"), s.get("group_by"),
+		                   compare=do_compare and DATASETS[s["dataset"]].get(
+			                   "needs_range", False))
 		res["title"] = s["title"]
 		out["sections"].append(res)
 	out["row_count"] = sum(s["row_count"] for s in out["sections"])
+	out["kpis"] = _pack_kpis(out["sections"])
 	if (format or "json").lower() == "html":
 		return {"format": "html", "title": out["title"],
-		        "filename": _filename(out, "html"), "content": _pack_html(out, lang or "en")}
+		        "filename": _filename(out, "html"),
+		        "content": _pack_html(out, lang or "en")}
 	return out
 
 
@@ -1161,8 +1672,10 @@ def run_custom_report(
 	name: str | None = None,
 	format: str | None = "json",
 	lang: str | None = "en",
+	compare: int | str | None = 0,
 ):
-	"""Run a saved report or an ad-hoc definition. format=json|csv|html."""
+	"""Run a saved report or an ad-hoc definition. format=json|csv|html.
+	compare=1 adds this-vs-previous totals for number columns."""
 	assert_property_access(property)
 	if name:
 		doc = _load_report(name, property)
@@ -1183,13 +1696,15 @@ def run_custom_report(
 		title = None
 
 	if _pack_id(ds_id):
-		res = run_report_pack(property, ds_id, from_date, to_date, format, lang)
+		res = run_report_pack(property, ds_id, from_date, to_date, format, lang,
+		                      compare=compare if compare is not None else 1)
 		if title and isinstance(res, dict):
 			res["title"] = title
 		return res
 
 	payload = _run_dataset(
-		property, ds_id, from_date, to_date, cols, flts, grp, srt)
+		property, ds_id, from_date, to_date, cols, flts, grp, srt,
+		compare=_truthy(compare))
 	if title:
 		payload["title"] = title
 	payload["lang"] = lang or "en"

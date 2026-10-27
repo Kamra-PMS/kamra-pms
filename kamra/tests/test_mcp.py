@@ -201,6 +201,20 @@ class TestRemoteMCP(IntegrationTestCase):
 		self.assertIn("create_booking", names)
 		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- restore admin after role-filter test
 
+	def test_housekeeping_does_not_see_city_ledger_aging(self):
+		from kamra.mcp_tools import BY_NAME, allowed_tools, tool_allowed
+		from kamra.tests.audit_fixtures import ensure_user
+
+		email = "ut.mcp.hk.aging@test.local"
+		ensure_user(email, ["Housekeeping"])
+		frappe.set_user(email)  # nosemgrep: frappe-setuser -- Housekeeping must not see AR aging
+		try:
+			self.assertFalse(tool_allowed(BY_NAME["city_ledger_aging"]))
+			self.assertNotIn("city_ledger_aging",
+			                 {t.name for t in allowed_tools()})
+		finally:
+			frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- restore
+
 	def test_tools_call_logs_mcp_channel(self):
 		tokens = self._grant_tokens("Administrator")
 		req = FakeRequest(

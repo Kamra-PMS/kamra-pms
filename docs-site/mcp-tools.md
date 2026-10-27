@@ -1,6 +1,6 @@
 # MCP tool reference
 
-Kamra exposes **130 governed tools** on the hosted MCP
+Kamra exposes **131 governed tools** on the hosted MCP
 endpoint (`/mcp`) and the stdio sidecar (`mcp/kamra_mcp.py`). Every
 call runs as the connected user - **role** permissions apply, tools
 are further filtered by the property's **enabled modules**, prices
@@ -531,6 +531,15 @@ control. Read-only. Bookings on company billing and check-outs run
 the same check; an agent can't override a block.
 
 Endpoint: `kamra.credit.company_credit_status`.
+
+### `city_ledger_aging()`
+
+Every company's city-ledger (AR) balance at this property, aged by
+due date. Buckets per account and in totals: not due, 1 to 30 days,
+31 to 60, 61 to 90, and 90+ days overdue (plus their sum `overdue`).
+Read-only  -  use it to answer who owes money and how late.
+
+Endpoint: `kamra.ledger.city_ledger_aging`.
 
 ### `security_deposit_status(reservation)`
 

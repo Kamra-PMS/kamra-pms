@@ -42,7 +42,7 @@ const SECTIONS: { title: string; items: ReportLink[] }[] = [
   {
     title: "Your reports",
     items: [
-      { to: "/reports/packs", label: "Department packs", blurb: "Front Office, Housekeeping, F&B and Hotel Manager, each on one page, emailed weekly.", icon: ClipboardCheck, roles: BUILDER_ROLES },
+      { to: "/reports/packs", label: "Department packs", blurb: "Front Office, Housekeeping, F&B, Engineering, Laundry and Hotel Manager — one page each, with week-over-week comparison, emailed weekly.", icon: ClipboardCheck, roles: BUILDER_ROLES },
       { to: "/reports/custom", label: "Custom reports", blurb: "Build a report from arrivals, payments, POS and more; save it, share it, email it on a schedule.", icon: FileSpreadsheet, roles: BUILDER_ROLES },
     ],
   },

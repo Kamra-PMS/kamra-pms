@@ -1,6 +1,7 @@
 ADR,ADR
 Action,Acción
 Actor,Responsable de la acción
+Actual check-out,Hora real de salida
 Adults,Adultos
 Amount,Importe
 Approver,Aprobado por
@@ -9,12 +10,18 @@ Arrivals by source,Llegadas por origen
 Assigned to,Asignado a
 Bookings,Reservas
 Breached,Incumplido
+By item,Por artículo
+By status,Por estado
+Cash collected,Efectivo cobrado
+Category,Categoría
 Channel,Canal
 Charges by type,Cargos por tipo
 Check-in,Registro de entrada
 Check-out,Salida
 Children,Niños
 Clean minutes,Minutos de limpieza
+Closing cash,Efectivo de cierre
+Collected at,Recogido a las
 Collections by mode,Cobros por medio de pago
 Company,Empresa
 Condition,Condición
@@ -22,11 +29,15 @@ Contribution by source,Contribución por origen
 Covers,Comensales
 Created,Creado
 Date,Fecha
+Delivered at,Entregado a las
 Departures,Salidas
 Description,Descripción
 Detail,Detalle
 Due by,Vence
 ETA,Hora prevista de llegada
+Early departures,Salidas anticipadas
+Engineering pack,Paquete de Ingeniería
+Express,Expreso
 F&B pack,Paquete de Alimentos y bebidas
 F&B revenue,Ingresos de alimentos y bebidas
 Floor,Piso
@@ -37,6 +48,9 @@ Found on,Encontrado el
 Front Office pack,Paquete de Recepción
 Guest,Huésped
 HK status,Estado HK
+Handed over to,Entregado a
+Handover,Entrega
+Handover notes,Notas de entrega de turno
 Hotel Manager pack,Paquete del Gerente del hotel
 Housekeeping pack,Paquete de Limpieza
 Housekeeping tasks,Tareas de limpieza
@@ -44,10 +58,15 @@ In house by room type,Alojados por tipo de habitación
 In-house guests,Huéspedes alojados
 Item,Artículo
 Items,Artículos
+Items by menu,Artículos por menú
 Kamra report,Informe de Kamra
+Laundry orders,Pedidos de lavandería
+Laundry pack,Paquete de Lavandería
 Lost and found,Objetos perdidos
+Metric,Indicador
 Mode,Modo
 Nights,Noches
+Nights short,Noches de menos
 No-shows & cancellations,No presentados y cancelaciones
 No-shows and cancellations,No presentados y cancelaciones
 Occ %,% de ocupación
@@ -55,18 +74,30 @@ Occupancy,Ocupación
 Occupancy & revenue by day,Ocupación e ingresos por día
 Occupancy and revenue,Ocupación e ingresos
 Occupancy by day,Ocupación por día
+Open tickets,Tickets abiertos
+Opening cash,Efectivo inicial
 Order,Pedido
+Order type,Tipo de pedido
 Orders by status,Pedidos por estado
 Other revenue,Otros ingresos
 Outlet,Punto de venta
+POS items,Artículos POS
 POS order,Pedido POS
 POS orders,Pedidos POS
 Pax,Personas
 Payments,Pagos
+Payouts,Salidas de efectivo
+Previous period,Período anterior
 Priority,Prioridad
+Qty,Cant.
+Rate,Tarifa
 Reference,Referencia
 Report,Informe
 Reservation,Reserva
+Resolution minutes,Minutos de resolución
+Resolved on,Resuelto el
+Response minutes,Minutos de respuesta
+Returned,Devuelto
 Returned on,Fecha de devolución
 RevPAR,RevPAR
 RevPAX,RevPAX
@@ -79,19 +110,39 @@ Room status,Estado de la habitación
 Room type,Tipo de habitación
 Rooms,Habitaciones
 Rooms sold,Habitaciones vendidas
+SLA breaches,Incumplimientos de SLA
 Sales by outlet,Ventas por punto de venta
+Scheduled check-out,Salida programada
+Service,Servicio
+Service tickets,Tickets de servicio
 Share %,Participación %
+Shift,Turno
+Shift date,Fecha del turno
+Shift handover,Entrega de turno
+Shift handovers,Entregas de turno
 Source,Origen
 Status,Estado
+Subject,Asunto
 Task,Tarea
 Tasks,Tareas
 Tasks by attendant,Tareas por camarera
 Tasks by type,Tareas por tipo
 The report is attached.,El informe va adjunto.
+This period,Este período
+Ticket,Solicitud
+Tickets,Solicitudes
+Tickets by category,Tickets por categoría
+Tickets by priority,Tickets por prioridad
 Total,Total
 Total revenue,Ingresos totales
+Turnaround,Tiempo de entrega
+Turnaround hours,Horas de entrega
 Type,Tipo
+Variance,Variación
+Variance %,Variación %
 Voids & allowances,Anulaciones y bonificaciones
 Voids and allowances,Anulaciones y bonificaciones
+Volume by guest vs house,Volumen huésped vs casa
 When,Cuándo
+vs previous period,vs período anterior
 {0} rows,{0} filas

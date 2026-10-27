@@ -149,6 +149,11 @@ export function BookingDialog(props: {
     booker_relation: "",
     contact_preference: "Booker",
   })
+  // Booked via an OTA (keyed from its email): the site, its reference and
+  // the price it charged. "" = direct, "other" = a site typed by hand.
+  const [via, setVia] = useState({ site: "", other: "", ref: "", total: "" })
+  const viaName = via.site === "other" ? via.other.trim() : via.site
+  const otaTotal = viaName ? Number(via.total) || 0 : 0
   const [onBehalf, setOnBehalf] = useState(false)
   // Day use (hourly): check in and out the same day, inside a time slot.
   // The server prices it (one billable date) - the quote shows that rate.
@@ -625,6 +630,9 @@ export function BookingDialog(props: {
         ...slotArgs,
         blacklist_override_reason: blacklistOverride,
         credit_override_reason: creditOverride,
+        booked_via: viaName || undefined,
+        ota_ref: viaName ? via.ref.trim() || undefined : undefined,
+        ota_total: otaTotal || undefined,
       })
       setDone({ ref: res.reservation, room: res.room })
       props.onBooked()
@@ -718,7 +726,7 @@ export function BookingDialog(props: {
       return x && q > 0 ? s + q * x.price * (1 + x.gst_rate / 100) : s
     }, 0)
     return (
-      quote.amount_after_tax +
+      (otaTotal > 0 ? otaTotal : quote.amount_after_tax) +
       moreQuotes.reduce((s, q) => s + (q?.amount_after_tax ?? 0), 0) +
       addonsGross
     )
@@ -1758,6 +1766,53 @@ export function BookingDialog(props: {
                   {t("Add another room")}
                 </button>}
 
+                {!walkIn && moreRooms.length === 0 && (
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    <Field label={translate("Booked via")}>
+                      <select
+                        className={inputCls}
+                        value={via.site}
+                        onChange={(e) => setVia({ ...via, site: e.target.value })}
+                      >
+                        <option value="">{translate("Direct")}</option>
+                        {options?.ota_channels?.map((c) => (
+                          <option key={c} value={c}>{c}</option>
+                        ))}
+                        <option value="other">{translate("Other site…")}</option>
+                      </select>
+                    </Field>
+                    {via.site === "other" && (
+                      <Field label={translate("Site name")}>
+                        <input
+                          className={inputCls}
+                          value={via.other}
+                          onChange={(e) => setVia({ ...via, other: e.target.value })}
+                        />
+                      </Field>
+                    )}
+                    {via.site && (
+                      <>
+                        <Field label={translate("OTA booking ref")}>
+                          <input
+                            className={inputCls}
+                            value={via.ref}
+                            onChange={(e) => setVia({ ...via, ref: e.target.value })}
+                          />
+                        </Field>
+                        <Field label={translate("Sold for (incl. tax)")}>
+                          <input
+                            className={inputCls}
+                            inputMode="decimal"
+                            placeholder={translate("Rate card price")}
+                            value={via.total}
+                            onChange={(e) => setVia({ ...via, total: e.target.value })}
+                          />
+                        </Field>
+                      </>
+                    )}
+                  </div>
+                )}
+
                 <div className="border-t border-zinc-100 pt-2">
                   <button
                     type="button"
@@ -2162,6 +2217,11 @@ export function BookingDialog(props: {
                           ? `${form.check_in_date} · ${slot.from}-${slot.to}`
                           : `${form.check_in_date} → ${checkOut}`}
                       </p>
+                      {otaTotal > 0 && (
+                        <p className="mt-1 text-xs font-medium text-indigo-600">
+                          {t("Billed at the price {site} sold it for", { site: viaName })}
+                        </p>
+                      )}
                     </div>
 
                     {options?.property && (

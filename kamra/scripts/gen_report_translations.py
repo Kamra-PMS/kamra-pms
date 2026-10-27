@@ -15,7 +15,9 @@ SRC = (ROOT / "kamra" / "custom_reports.py").read_text()
 # every label/title literal in the report catalog, plus the page and email text
 WORDS = sorted(set(re.findall(r'"(?:label|title)": "([^"]+)"', SRC))
                | set(re.findall(r'_col\("\w+", "([^"]+)"', SRC))
-               | {"Report", "Kamra report", "The report is attached."})
+               | {"Report", "Kamra report", "The report is attached.",
+                  "Metric", "This period", "Previous period", "Variance",
+                  "Variance %", "vs previous period"})
 ROWS = "{0} rows"  # the SPA says "{n} rows"
 
 

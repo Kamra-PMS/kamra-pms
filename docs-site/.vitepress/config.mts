@@ -49,6 +49,7 @@ const SIDEBAR: { text: ReturnType<typeof L>; collapsed?: boolean; items: [Return
       [L("How Kamra works", "Cómo funciona Kamra", "كيف يعمل Kamra"), "how-it-works"],
       [L("Features at a glance", "Funciones de un vistazo", "الميزات بنظرة سريعة"), "features"],
       [L("What's new", "Novedades", "الجديد"), "releases"],
+      [L("Video course", "Curso en video", "دورة الفيديو"), "video-course"],
       [L("Try the live demo", "Pruebe la demo", "جرّب العرض الحي"), "demo"],
       [L("Quickstart (Docker)", "Inicio rápido (Docker)", "البدء السريع (Docker)"), "quickstart"],
       [L("Go-live checklist", "Lista para la puesta en marcha", "قائمة بدء التشغيل"), "go-live"],
@@ -79,6 +80,7 @@ const SIDEBAR: { text: ReturnType<typeof L>; collapsed?: boolean; items: [Return
     items: [
       [L("All integrations", "Todas las integraciones", "كل التكاملات"), "integrations"],
       [L("Country setup & e-invoicing", "Configuración por país y factura electrónica", "إعداد الدولة والفوترة الإلكترونية"), "country-setup"],
+      [L("Write a country pack", "Escribir un country pack", "كتابة حزمة دولة"), "write-a-country-pack"],
       [L("WhatsApp on your number", "WhatsApp en su número", "WhatsApp على رقمك"), "whatsapp"],
       [L("Channel manager (OTA sync)", "Channel manager (sincronización OTA)", "مدير القنوات (مزامنة OTA)"), "channel-manager"],
       [L("Connect your AI (MCP)", "Conecte su IA (MCP)", "اربط الذكاء الاصطناعي (MCP)"), "ai-and-mcp"],

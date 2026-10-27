@@ -59,6 +59,25 @@ connection row. No code changes needed for the standard flows; field
 name adjustments against their partner docs are expected on first
 certification.
 
+## No channel manager? Key it in from the email
+
+When an OTA booking reaches you only as an email, open **New booking**
+and set **Booked via** to the site: Booking.com, Agoda, Airbnb,
+Expedia, MakeMyTrip, Goibibo, or **Other site** for any other. Then
+enter:
+
+- **OTA booking ref** - the reference in the email. Kamra refuses the
+  same reference twice, so one email cannot be booked twice.
+- **Sold for (incl. tax)** - the total the OTA charged. The stay is
+  billed at that price, split across the nights, not at your rate card.
+  Leave it empty to bill the rate card.
+
+The booking is then tagged exactly like one that arrived through the
+channel manager: the site's name shows on Today, In House and the tape
+chart, and reports group it with the same site's API bookings (site
+names from the channel managers are matched up, so "BookingCom" and
+"Booking.com" count as one).
+
 ## Is any of this gated?
 
 No. The integrations are open source like everything else. You pay the
