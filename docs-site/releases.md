@@ -11,7 +11,7 @@ or [self-hosting](/self-hosting/). After upgrade, open
 
 ## New: free video course
 
-Released 29 Oct 2026.
+Released 27 Oct 2026.
 
 A 27-part [video course](/video-course) on YouTube takes you through
 Kamra from the first sign-in to night audit, reports and AI agents. Each
