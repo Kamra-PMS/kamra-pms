@@ -32,9 +32,7 @@ upgrade-breaking changes (removed doctypes / API contracts).
 ### Features
 
 * **booking:** Booked via an OTA, with its reference and sold price ([#365](https://github.com/Kamra-PMS/kamra-pms/issues/365)) ([01b894a](https://github.com/Kamra-PMS/kamra-pms/commit/01b894a6f6dab64c874845de9f86bb23749adfb6))
-* **mcp:** city_ledger_aging read-only tool ([#259](https://github.com/Kamra-PMS/kamra-pms/issues/259)) ([cc9db50](https://github.com/Kamra-PMS/kamra-pms/commit/cc9db50e786857642bd31f199937094684eb6768))
 * **mcp:** city_ledger_aging read-only tool for AR aging ([#259](https://github.com/Kamra-PMS/kamra-pms/issues/259)) ([53ff963](https://github.com/Kamra-PMS/kamra-pms/commit/53ff963d3c5c683e372d59edb5d88e95898c73bf))
-* **reports:** department packs with WoW comparison ([#346](https://github.com/Kamra-PMS/kamra-pms/issues/346)) ([f1591ae](https://github.com/Kamra-PMS/kamra-pms/commit/f1591aef067ed1a1349d284e8712bba393bab8c8))
 * **reports:** department packs, new datasets, week-over-week ([#346](https://github.com/Kamra-PMS/kamra-pms/issues/346)) ([077d3ae](https://github.com/Kamra-PMS/kamra-pms/commit/077d3ae248183dd1ab0e5243e4075fccae7c1344))
 
 
