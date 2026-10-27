@@ -10166,6 +10166,27 @@ def t385():
 	assert "create_booking" in names and "assign_rooms_apply" in names, sorted(names)[:10]
 	# still bounded by the normal role: Front Desk never gets rate tools
 	assert "set_room_rate" not in names
+	# city ledger aging is the same gate as Finance → Ledgers (Front Desk may)
+	assert "city_ledger_aging" in names
+	assert not BY_NAME["city_ledger_aging"].mutating
+	assert BY_NAME["city_ledger_aging"].inject_property
+	assert BY_NAME["city_ledger_aging"].module == "finance"
+
+
+@check("city_ledger_aging MCP tool: Housekeeping cannot see it; Front Desk can")
+def t385b():
+	from kamra.mcp_tools import BY_NAME, allowed_tools, tool_allowed
+
+	spec = BY_NAME["city_ledger_aging"]
+	assert spec.dotted == "ledger.city_ledger_aging"
+	assert not tool_allowed(spec, roles={"Housekeeping"})
+	assert tool_allowed(spec, roles={"Front Desk"})
+	with _as_user("hk@kamra.local"):
+		names = {t.name for t in allowed_tools(property=P)}
+	assert "city_ledger_aging" not in names
+	with _as_user(FD):
+		names = {t.name for t in allowed_tools(property=P)}
+	assert "city_ledger_aging" in names
 
 
 @check("MCP property switches: AI access off refuses everyone, read-only drops writes even for MCP Manage, blocked tools vanish")
