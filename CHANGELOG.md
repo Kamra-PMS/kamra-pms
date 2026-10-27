@@ -38,7 +38,7 @@ upgrade-breaking changes (removed doctypes / API contracts).
 
 ### Bug Fixes
 
-* **assistant:** respect the property's currency in chat ([#368](https://github.com/Kamra-PMS/kamra-pms/issues/368)) ([8a6b783](https://github.com/Kamra-PMS/kamra-pms/commit/8a6b783059fe553814ac5ec0816e75207d3f46ca))
+* **assistant:** respect the property's currency in chat. Contributed by @ernestoruiz89 ([#368](https://github.com/Kamra-PMS/kamra-pms/issues/368)) ([8a6b783](https://github.com/Kamra-PMS/kamra-pms/commit/8a6b783059fe553814ac5ec0816e75207d3f46ca))
 * **laundry:** keep it in Housekeeping only, tidy house order cards ([#364](https://github.com/Kamra-PMS/kamra-pms/issues/364)) ([5a1119f](https://github.com/Kamra-PMS/kamra-pms/commit/5a1119fdd1f172c96446fe82a14ad7179ca91094))
 
 ## [2.6.21](https://github.com/Kamra-PMS/kamra-pms/compare/v2.6.20...v2.6.21) (2026-10-25)
