@@ -1,0 +1,98 @@
+ADR,Diária média (ADR)
+Action,Ação
+Actor,Ator
+Adults,Adultos
+Amount,Montante
+Approver,Aprovador
+Arrivals,Chegadas
+Arrivals by source,Chegadas por canal
+Assigned to,Atribuído a
+Bookings,Reservas
+Breached,Violado
+Channel,Canal
+Charges by type,Encargos por tipo
+Check-in,Check-in
+Check-out,Check-out
+Children,Crianças
+Clean minutes,Minutos limpos
+Collections by mode,Coleções por modo
+Company,Empresa
+Condition,Condição
+Contribution by source,Contribuição por fonte
+Covers,Capas
+Created,Criado
+Date,Data
+Departures,Saídas
+Description,Descrição
+Detail,Detalhe
+Due by,Vencimento até
+ETA,Hora prevista de chegada
+F&B pack,Pacote de comida e bebida
+F&B revenue,Receitas de alimentos e bebidas
+Floor,Piso
+Folio,Extrato da conta
+Folio charges,Encargos de extrato
+Found by,Encontrado por
+Found on,Encontrado em
+Front Office pack,Pacote Front Office
+Guest,Hóspede
+HK status,Estado de Hong Kong
+Hotel Manager pack,Pacote Gerente de Hotel
+Housekeeping pack,Pacote de limpeza
+Housekeeping tasks,Tarefas domésticas
+In house by room type,Hóspedes por tipo de quarto
+In-house guests,Hóspedes internos
+Item,Artigo
+Items,Itens
+Kamra report,Relatório Kamra
+Lost and found,Perdidos e Achados
+Mode,Modo
+Nights,Noites
+No-shows & cancellations,Não comparecimentos e cancelamentos
+No-shows and cancellations,Não comparecimentos e cancelamentos
+Occ %,% de ocupação
+Occupancy,Ocupação
+Occupancy & revenue by day,Ocupação e receitas por dia
+Occupancy and revenue,Ocupação e receitas
+Occupancy by day,Ocupação por dia
+Order,Encomenda
+Orders by status,Pedidos por status
+Other revenue,Outras receitas
+Outlet,Saída
+POS order,Pedido de PDV
+POS orders,Pedidos de PDV
+Pax,Pax
+Payments,Pagamentos
+Priority,Prioridade
+Reference,Referência
+Report,Relatório
+Reservation,Reserva
+Returned on,Retornado em
+RevPAR,Receita por quarto (RevPAR)
+RevPAX,RevPAX
+Revenue,Receita
+Revenue by source,Receitas por fonte
+Room,Quarto
+Room nights,Noites de quarto
+Room revenue,Receita de quarto
+Room status,Situação do quarto
+Room type,Tipo de quarto
+Rooms,Quartos
+Rooms sold,Quartos vendidos
+Sales by outlet,Vendas por ponto de venda
+Share %,Compartilhar%
+Source,Fonte
+Status,Estado
+Task,Tarefa
+Tasks,Tarefas
+Tasks by attendant,Tarefas por atendente
+Tasks by type,Tarefas por tipo
+The report is attached.,O relatório está anexado.
+Total,Total
+Total revenue,Receita total
+Type,Digite
+Voids & allowances,Vazios e subsídios
+Voids and allowances,Vazios e subsídios
+When,Quando
+{0} rows,{0} linhas
+OTA booking {0} is already reservation {1}.,A reserva OTA {0} já é a reserva {1}.
