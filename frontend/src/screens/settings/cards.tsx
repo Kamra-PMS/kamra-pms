@@ -189,6 +189,13 @@ export function SettingsCard(props: {
 }
 
 export const TIMEZONES = [
+  "America/Noronha",
+  "America/Sao_Paulo",
+  "America/Fortaleza",
+  "America/Belem",
+  "America/Manaus",
+  "America/Cuiaba",
+  "America/Rio_Branco",
   "Asia/Aden",
   "Asia/Riyadh",
   "Asia/Dubai",
