@@ -26,6 +26,18 @@ upgrade-breaking changes (removed doctypes / API contracts).
   quotation, desk-led guest response, department checklists + notify on
   Confirm (Sales/Finance/HK/F&B), and quote no-response chase reminders
 
+## [2.6.23](https://github.com/Kamra-PMS/kamra-pms/compare/v2.6.22...v2.6.23) (2026-10-28)
+
+
+### Features
+
+* **booking:** Booked via for multi-room and walk-ins, OTA commission ([#386](https://github.com/Kamra-PMS/kamra-pms/issues/386)) ([95c3b26](https://github.com/Kamra-PMS/kamra-pms/commit/95c3b26248d607aecfd9ddd32293e3ce362cec63))
+* **finance:** company statements, due-date reminders and DSO ([#238](https://github.com/Kamra-PMS/kamra-pms/issues/238) phase 2) ([#388](https://github.com/Kamra-PMS/kamra-pms/issues/388)) ([e83c26a](https://github.com/Kamra-PMS/kamra-pms/commit/e83c26ab9183958cd999f094e2344d523006460a))
+* **i18n:** Portuguese (pt-BR), and Today screen null-safety. Contributed by @SandroG1977 ([#377](https://github.com/Kamra-PMS/kamra-pms/issues/377), [#383](https://github.com/Kamra-PMS/kamra-pms/issues/383)) ([5f5cdc5](https://github.com/Kamra-PMS/kamra-pms/commit/5f5cdc5b958fbaeb1b7f6e6a9b1adaf760d9ded6))
+* **localization:** Brazil country pack: ISS, BRL, CNPJ/CPF, NFS-e. Contributed by @SandroG1977 ([#378](https://github.com/Kamra-PMS/kamra-pms/issues/378)) ([2061e81](https://github.com/Kamra-PMS/kamra-pms/commit/2061e81510c5177dda513c10de1f717ce7007cb7))
+* **night-audit:** per-property schedule and run log ([#203](https://github.com/Kamra-PMS/kamra-pms/issues/203)) ([#389](https://github.com/Kamra-PMS/kamra-pms/issues/389)) ([083e2c5](https://github.com/Kamra-PMS/kamra-pms/commit/083e2c59641300eea8d9371660d0918fda883e2e))
+* **privacy:** WhatsApp marketing consent and opt-out ([#89](https://github.com/Kamra-PMS/kamra-pms/issues/89)) ([#385](https://github.com/Kamra-PMS/kamra-pms/issues/385)) ([dc0c708](https://github.com/Kamra-PMS/kamra-pms/commit/dc0c708999fa186d48a2d8ac659f568585d09712))
+
 ## [2.6.22](https://github.com/Kamra-PMS/kamra-pms/compare/v2.6.21...v2.6.22) (2026-10-27)
 
 
