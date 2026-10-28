@@ -53,10 +53,12 @@ class SchedulerHooksTestCase(AuditTestCase):
 		for path in jobs:
 			self.assertTrue(callable(frappe.get_attr(path)), path)
 
-	def test_night_audit_runs_daily_before_the_retention_purges(self):
+	def test_night_audit_ticks_every_15_minutes(self):
 		from kamra import hooks
 		cron = hooks.scheduler_events["cron"]
-		self.assertIn("kamra.folio.nightly_audit_all_properties", cron["0 3 * * *"])
+		# per-property run time on the property clock (#203)
+		self.assertIn("kamra.folio.nightly_audit_all_properties", cron["*/15 * * * *"])
+		self.assertNotIn("0 3 * * *", cron)
 		self.assertIn("kamra.privacy.apply_retention", cron["30 3 * * *"])
 		self.assertIn("kamra.channel_manager.push_all_ari", cron["0 * * * *"])
 

@@ -6,7 +6,7 @@
     steps cannot be passed without resolving them or acknowledging them with
     a reason; warning steps have Continue. Progress lives on the draft Night
     Audit Run, so reopening resumes where the auditor left off. Step 10 runs
-    the same audit the 3 AM job runs; 11 prints the saved audit pack. */
+    the same audit the scheduler runs; 11 prints the saved audit pack. */
 
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react"
 import {
@@ -572,7 +572,7 @@ export default function EndOfDayWizard() {
           rows={state.checks}
         />
         <p className="text-xs text-zinc-500">
-          {t("Scheduled 3 AM audit when checks block: {mode}", { mode: t(state.auto_audit_with_blockers) })}
+          {t("Scheduled audit when checks block: {mode}", { mode: t(state.auto_audit_with_blockers) })}
         </p>
       </div>
     )

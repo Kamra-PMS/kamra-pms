@@ -12,7 +12,7 @@ Run via bench console:
 import json
 
 import frappe
-from frappe.utils import add_days, getdate, nowdate
+from frappe.utils import add_days, get_datetime, getdate, nowdate
 
 P = "EVAL Hotel"
 RESULTS = []
@@ -4915,8 +4915,11 @@ def t110():
 	saved = frappe.db.get_value("Property", P, "business_date")
 	calls = []
 	try:
+		# 04:00 on the property clock: past the default 03:00 run time
 		with patch.object(folio_mod, "run_night_audit",
-		                  side_effect=lambda prop, *a, **k: calls.append(prop)):
+		                  side_effect=lambda prop, *a, **k: calls.append(prop)), \
+		     patch.object(folio_mod, "audit_clock",
+		                  return_value=get_datetime(f"{today} 04:00:00")):
 			# staff closed yesterday by hand at 23:00: today has only just begun
 			frappe.db.set_value("Property", P, "business_date", today)
 			folio_mod.nightly_audit_all_properties()

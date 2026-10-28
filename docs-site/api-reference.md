@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function - the same governed layer
-the UI and the AI use. **413 endpoints**, generated from the source
+the UI and the AI use. **416 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -29,7 +29,7 @@ Content-Type: application/json
 
 ### `kamra.api.enabled_modules`
 
-**GET/POST** · roles: `Front Desk`, `Finance`, `Revenue Manager`, `Housekeeping`, `Housekeeping Supervisor`, `Kamra Agent`
+**GET/POST** · roles: `Front Desk`, `Finance`, `Revenue Manager`, `Housekeeping`, `Housekeeping Supervisor`, `Kamra Agent`, `Night Auditor`
 
 Which parts of Kamra this property runs. Empty setting = all of
 them, so an existing property keeps working untouched.
@@ -168,6 +168,7 @@ payments for properties that have not opened a till yet.
 | --- | --- | --- |
 | `property` | yes |  |
 | `date` | no | `None` |
+| `to_date` | no | `None` |
 
 ### `kamra.api.record_advance`
 
@@ -1441,12 +1442,18 @@ is quoted and locked - shown first by room_move_preview, and refused
 unless confirm_price=1 when it changes the bill. A same-type move keeps
 the locked nightly rates; a manually-priced booking keeps its amount.
 
+rate_mode: "destination" (the new type's rate, above), "source" (keep
+what the guest pays now) or "custom" (agreed_rate per night; Revenue
+Manager / admins only).
+
 | Param | Required | Default |
 | --- | --- | --- |
 | `reservation` | yes |  |
 | `new_room` | yes |  |
 | `reason` | no | `None` |
 | `confirm_price` | no | `0` |
+| `rate_mode` | no | `'destination'` |
+| `agreed_rate` | no | `None` |
 
 ### `kamra.api.room_move_preview`
 
@@ -1462,6 +1469,8 @@ confirm_price=1.
 | --- | --- | --- |
 | `reservation` | yes |  |
 | `new_room` | yes |  |
+| `rate_mode` | no | `'destination'` |
+| `agreed_rate` | no | `None` |
 
 ### `kamra.api.movable_rooms`
 
@@ -1625,6 +1634,9 @@ a block refuses (CREDIT_BLOCKED) unless Finance or a Hotel Admin passes
 | `blacklist_override_reason` | no | `None` |
 | `pets` | no | `0` |
 | `credit_override_reason` | no | `None` |
+| `booked_via` | no | `None` |
+| `ota_ref` | no | `None` |
+| `ota_total` | no | `0` |
 
 ### `kamra.api.waitlist`
 
@@ -2631,6 +2643,7 @@ fast the kitchen is turning tickets. Defaults to today.
 | --- | --- | --- |
 | `outlet` | yes |  |
 | `date` | no | `None` |
+| `to_date` | no | `None` |
 
 ### `kamra.pos.speed_check`
 
@@ -4336,12 +4349,14 @@ cannot drift from what actually happened.
 **GET/POST** · roles: `Finance`, `Front Desk`, `Night Auditor`, `Kamra Agent`
 
 The daily flash: yesterday's performance, month to date, today's
-movement, collections by mode, and the 7-day outlook.
+movement, collections by mode, and the 7-day outlook. With from_date,
+the day figures, trend, movement and collections cover from_date..date.
 
 | Param | Required | Default |
 | --- | --- | --- |
 | `property` | yes |  |
 | `date` | no | `None` |
+| `from_date` | no | `None` |
 
 ### `kamra.reports.budget_vs_actual`
 
@@ -4415,7 +4430,7 @@ breached if it was resolved after due_by, or is still open past due_by.
 
 ### `kamra.custom_reports.list_report_datasets`
 
-**GET/POST** · roles: `Front Desk`, `Finance`, `Hotel Admin`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`
+**GET/POST** · roles: `Front Desk`, `Finance`, `Hotel Admin`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`, `Night Auditor`
 
 Whitelisted datasets the current user may run on this property.
 
@@ -4423,9 +4438,37 @@ Whitelisted datasets the current user may run on this property.
 | --- | --- | --- |
 | `property` | yes |  |
 
+### `kamra.custom_reports.list_report_packs`
+
+**GET/POST** · roles: `Front Desk`, `Finance`, `Hotel Admin`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`, `Night Auditor`
+
+Department packs with the sections this user may run here.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+
+### `kamra.custom_reports.run_report_pack`
+
+**GET/POST** · roles: `Front Desk`, `Finance`, `Hotel Admin`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`, `Night Auditor`
+
+Run a department pack (id from list_report_packs) for a date range.
+format=json (sections of rows) or html (one printable page).
+compare=1 (default) adds this-vs-previous totals on each section.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `pack` | yes |  |
+| `from_date` | no | `None` |
+| `to_date` | no | `None` |
+| `format` | no | `'json'` |
+| `lang` | no | `'en'` |
+| `compare` | no | `1` |
+
 ### `kamra.custom_reports.list_custom_reports`
 
-**GET/POST** · roles: `Front Desk`, `Finance`, `Hotel Admin`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`
+**GET/POST** · roles: `Front Desk`, `Finance`, `Hotel Admin`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`, `Night Auditor`
 
 Saved reports visible to this user on the property.
 
@@ -4435,7 +4478,7 @@ Saved reports visible to this user on the property.
 
 ### `kamra.custom_reports.get_custom_report`
 
-**GET/POST** · roles: `Front Desk`, `Finance`, `Hotel Admin`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`
+**GET/POST** · roles: `Front Desk`, `Finance`, `Hotel Admin`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`, `Night Auditor`
 
 Full saved definition for the builder.
 
@@ -4446,9 +4489,10 @@ Full saved definition for the builder.
 
 ### `kamra.custom_reports.save_custom_report`
 
-**POST** · roles: `Finance`, `Hotel Admin`, `System Manager`, `Front Desk`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`
+**POST** · roles: `Finance`, `Hotel Admin`, `System Manager`, `Front Desk`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`, `Night Auditor`
 
-Create or update a saved custom report definition.
+Create or update a saved custom report definition. lang (en, es, ar)
+is the language its scheduled emails go out in.
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -4465,10 +4509,11 @@ Create or update a saved custom report definition.
 | `schedule_weekday` | no | `'Mon'` |
 | `recipients` | no | `''` |
 | `name` | no | `None` |
+| `lang` | no | `None` |
 
 ### `kamra.custom_reports.delete_custom_report`
 
-**POST** · roles: `Finance`, `Hotel Admin`, `System Manager`, `Front Desk`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`
+**POST** · roles: `Finance`, `Hotel Admin`, `System Manager`, `Front Desk`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`, `Night Auditor`
 
 Delete a saved report the user can edit.
 
@@ -4479,9 +4524,10 @@ Delete a saved report the user can edit.
 
 ### `kamra.custom_reports.run_custom_report`
 
-**GET/POST** · roles: `Front Desk`, `Finance`, `Hotel Admin`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`
+**GET/POST** · roles: `Front Desk`, `Finance`, `Hotel Admin`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`, `Night Auditor`
 
 Run a saved report or an ad-hoc definition. format=json|csv|html.
+compare=1 adds this-vs-previous totals for number columns.
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -4496,10 +4542,11 @@ Run a saved report or an ad-hoc definition. format=json|csv|html.
 | `name` | no | `None` |
 | `format` | no | `'json'` |
 | `lang` | no | `'en'` |
+| `compare` | no | `0` |
 
 ### `kamra.custom_reports.email_custom_report`
 
-**POST** · roles: `Finance`, `Hotel Admin`, `System Manager`, `Front Desk`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`
+**POST** · roles: `Finance`, `Hotel Admin`, `System Manager`, `Front Desk`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`, `Night Auditor`
 
 Run a report and email it (CSV or HTML attachment).
 
@@ -4661,6 +4708,8 @@ nights: 'tonight' | 'entire' | integer string of nights.
 | `property` | yes |  |
 | `query` | no | `None` |
 | `status` | no | `None` |
+| `from_date` | no | `None` |
+| `to_date` | no | `None` |
 
 ### `kamra.ledger.batch_post_charge`
 
@@ -4902,6 +4951,18 @@ each has a saved audit pack.
 | `property` | yes |  |
 | `limit` | no | `20` |
 
+### `kamra.night_audit.night_audit_schedule`
+
+**GET/POST** · roles: `Finance`, `Hotel Admin`, `Night Auditor`
+
+The automatic night audit at a glance: on or off, the next run on the
+property clock (None = manual only), the business date and the last 30
+runs, scheduled and manual, from the Night Audit Log.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+
 ### `kamra.night_audit.eod_session`
 
 **POST**
@@ -5134,6 +5195,8 @@ per room.
 | `property` | yes |  |
 | `days` | no | `30` |
 | `refresh` | no | `0` |
+| `from_date` | no | `None` |
+| `to_date` | no | `None` |
 
 
 ## Today layout (per-user widgets, hotel default)
