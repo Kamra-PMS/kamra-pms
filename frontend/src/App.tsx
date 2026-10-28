@@ -64,6 +64,7 @@ const TapeChart = lazy(() => import("./screens/TapeChart"))
 const Tickets = lazy(() => import("./screens/Tickets"))
 const Laundry = lazy(() => import("./screens/Laundry"))
 const MenuItems = lazy(() => import("./screens/MenuItems"))
+const Groups = lazy(() => import("./screens/Groups"))
 const KitchenPrinters = lazy(() => import("./screens/KitchenPrinters"))
 const Today = lazy(() => import("./screens/Today"))
 const ConfiguredScreen = lazy(() => import("./screens/ConfiguredScreen"))
@@ -301,10 +302,7 @@ export default function App() {
           <Route path="banquet-catalogue" element={<BanquetCatalogue />} />
           <Route path="banquet/:name" element={<BanquetFunction />} />
           <Route path="banquet/:name/:kind" element={<BanquetDocument />} />
-          <Route
-            path="groups"
-            element={<ConfiguredScreen config="groupsConfig" />}
-          />
+          <Route path="groups" element={<Groups />} />
           <Route
             path="lost-found"
             element={<ConfiguredScreen config="lostFoundConfig" />}

@@ -188,6 +188,36 @@ are in **Reports** (and for AI agents through `run_custom_report`). DSO is
 the balance at the end of the period divided by what was billed in it,
 times the days in the period.
 
+## Bill a group from its main room
+
+A group booked with a main room (see
+[Group bookings](/reservations#group-bookings-corporate-wedding)) has one
+**Group** folio, the group bill, kept on the main room. As each charge is
+posted, Kamra sends what the main room pays to the group bill:
+
+- **Room + tax** (the default): the room night, its meal plan, levies,
+  early check-in / late checkout, cleaning fee and extra guests.
+- **Room and F&B (liquor to guest)**: the same plus food.
+- **Everything except liquor**: every charge.
+
+Anything else stays on the guest's own folio. Alcohol never goes to the
+group bill. A company group keeps its own billing rules, which come first.
+
+**A room that pays for itself:** tick **Pays own charges** on its row in
+the rooming list. Only new charges stay on that room's folio; move charges
+already posted with **Move charges** on the folio.
+
+**Settle the group bill:**
+
+1. Open the group. The header shows **Open group bill** with its balance.
+2. Click **Settle group bill**. Pick the payment mode and amount, or, for a
+   company with credit, tick **Send to the company's city ledger**.
+3. Click **Settle**. Once nothing is left on it, the bill closes and gets its
+   invoice number.
+
+You can settle while rooms are still in house. Kamra warns you; their later
+charges open a new group bill.
+
 ## Take and return a security deposit
 
 A refundable damage deposit (villas, long stays) is held for the guest,

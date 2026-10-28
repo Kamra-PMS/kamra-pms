@@ -2129,6 +2129,117 @@
      }
     },
     {
+     "name": "set_group_master",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.set_group_master",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.set_group_master"
+       ]
+      },
+      "description": "Make this room the group's main room: its guest pays for the group.\nAn open group bill moves with it (re-anchored to the new main room).",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"group_booking\": \"<group_booking>\",\n  \"reservation\": \"RES-2026-00001\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "set_pays_own_charges",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.set_pays_own_charges",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.set_pays_own_charges"
+       ]
+      },
+      "description": "Opt a group room out of the main room's bill (or back in). Affects new\ncharges only; move lines already posted with transfer_folio_charges.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"value\": 1\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "settle_group_bill",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.settle_group_bill",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.settle_group_bill"
+       ]
+      },
+      "description": "Settle the group's master bill: take a payment on it (`mode`, and\n`amount`, default the whole balance) or, for a group whose company has\ncredit, move the balance to the city ledger. The bill closes (and is\ninvoiced) once nothing is left on it. Allowed while rooms are still in\nhouse: the reply warns, and their later charges open a new group bill.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"group_booking\": \"<group_booking>\",\n  \"amount\": 1000,\n  \"to_city_ledger\": 0\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
      "name": "close_folio",
      "request": {
       "method": "POST",
@@ -4355,7 +4466,7 @@
         "kamra.api.create_group_booking"
        ]
       },
-      "description": "Create a Group Booking plus one reservation per requested room.\n`rooms` = [{\"room_type\": <name>, \"count\": 2}, ...] (JSON string ok).\n\nBooked via an OTA (see create_booking): every room carries the site and\nthe one OTA reference, and the sold total (`ota_total`, tax included) is\nsplit across the rooms in proportion to their rate-card prices, each\nroom locked to its share.",
+      "description": "Create a Group Booking plus one reservation per requested room.\n`rooms` = [{\"room_type\": <name>, \"count\": 2, \"room\": <optional>,\n\"guest_name\": <optional>}, ...] (JSON string ok).\n\n`master_index` picks the main room (the index of the room as expanded\nby count, default the first): its guest pays what `master_pays` covers\n(a key of folio.COMPANY_BILLING_DEFAULTS, default \"Room only\") for every\nroom on one group bill. If that room could not be booked, the next one\nmade is the main room. Pass neither to keep a plain group.\n\nBooked via an OTA (see create_booking): every room carries the site and\nthe one OTA reference, and the sold total (`ota_total`, tax included) is\nsplit across the rooms in proportion to their rate-card prices, each\nroom locked to its share.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\",\n  \"group_name\": \"<group_name>\",\n  \"check_in_date\": \"2026-08-01\",\n  \"check_out_date\": \"2026-08-03\",\n  \"rooms\": \"<rooms>\",\n  \"guest_name\": \"A. Guest\",\n  \"phone\": \"+91 90000 00000\",\n  \"ota_total\": 0\n}",

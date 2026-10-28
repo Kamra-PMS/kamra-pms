@@ -1,6 +1,6 @@
 # MCP tool reference
 
-Kamra exposes **131 governed tools** on the hosted MCP
+Kamra exposes **133 governed tools** on the hosted MCP
 endpoint (`/mcp`) and the stdio sidecar (`mcp/kamra_mcp.py`). Every
 call runs as the connected user - **role** permissions apply, tools
 are further filtered by the property's **enabled modules**, prices
@@ -745,9 +745,35 @@ Mutating - logged to the activity ledger.
 ### `group_pickup_status(group_booking)`
 
 Group Rooms Control: the block, per-room-type pickup (blocked / picked
-up / remaining), rooming list, tied event and master folio.
+up / remaining), rooming list (status, room, main room, pays own
+charges), tied event, the main room and the group bill with its
+balance.
 
 Endpoint: `kamra.api.group_detail`.
+
+### `create_group_booking(group_name, check_in_date, check_out_date, rooms, guest_name, phone, company, group_type, master_index, master_pays, meal_plan)`
+
+Book a group (corporate, wedding, event, tour) in one call: one
+reservation per room on the same dates. rooms = [{room_type, count,
+room?, guest_name?}]; unnamed rooms take guest_name. master_index
+picks the main room (default the first) whose guest pays what
+master_pays covers for every room on one group bill: "Room only"
+(room + tax, the default), "Room and F&B (liquor to guest)",
+"Everything except liquor". Rooms that cannot be booked are skipped
+and reported. Prices come from the rate card.
+
+Endpoint: `kamra.api.create_group_booking`.
+Mutating - logged to the activity ledger.
+
+### `settle_group_bill(group_booking, mode, amount, to_city_ledger, reference)`
+
+Settle a group's bill (the main room's master folio): take a payment
+by mode (amount defaults to the whole balance) or, for a company group
+with credit, set to_city_ledger. The bill closes and is invoiced once
+its balance is 0. Check group_pickup_status for the balance first.
+
+Endpoint: `kamra.api.settle_group_bill`.
+Mutating - logged to the activity ledger.
 
 ### `pickup_group_room(group_booking, room_type, guest_name, phone, adults, children, idempotency_key)`
 

@@ -432,8 +432,30 @@ TOOLS = {
 	"group_pickup_status": (
 		"group_detail",
 		"Group Rooms Control for a group booking: the block, per-room-type "
-		"pickup (blocked/picked/remaining), rooming list, event, folio.",
+		"pickup (blocked/picked/remaining), rooming list, event, the main "
+		"room and the group bill balance.",
 		{"group_booking": {"type": "string"}}, False, False),
+	"create_group_booking": (
+		"create_group_booking",
+		"Book a group (corporate, wedding) in one go: rooms = [{room_type, "
+		"count, room?, guest_name?}]. master_index picks the main room whose "
+		"guest pays master_pays (default \"Room only\" = room + tax) for every "
+		"room on one group bill.",
+		{"group_name": {"type": "string"},
+		 "check_in_date": {"type": "string"},
+		 "check_out_date": {"type": "string"},
+		 "rooms": {"type": "array", "items": {"type": "object"}},
+		 "guest_name": {"type": "string"}, "phone": {"type": "string"},
+		 "company": {"type": "string"}, "group_type": {"type": "string"},
+		 "master_index": {"type": "integer"},
+		 "master_pays": {"type": "string"}}, True, True),
+	"settle_group_bill": (
+		"settle_group_bill",
+		"Settle a group's bill: a payment by mode (amount defaults to the "
+		"balance) or to_city_ledger=1 for a company with credit. Closes it at 0.",
+		{"group_booking": {"type": "string"}, "mode": {"type": "string"},
+		 "amount": {"type": "number"}, "to_city_ledger": {"type": "integer"},
+		 "reference": {"type": "string"}}, False, True),
 	"pickup_group_room": (
 		"pickup_group_room",
 		"Name a guest into a group's room block (creates their reservation "

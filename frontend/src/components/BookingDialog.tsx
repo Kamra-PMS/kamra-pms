@@ -1781,6 +1781,18 @@ export function BookingDialog(props: {
                   <Plus className="size-4" aria-hidden />
                   {t("Add another room")}
                 </button>}
+                {!dayUse && !walkIn && (
+                  <button
+                    type="button"
+                    className="ml-3 text-sm font-medium text-brand-700 hover:underline"
+                    onClick={() => {
+                      props.onClose()
+                      navigate("/groups?new=1")
+                    }}
+                  >
+                    {t("Group booking with a main room")}
+                  </button>
+                )}
 
                 <div className="grid gap-3 sm:grid-cols-3">
                   <Field label={translate("Booked via")}>

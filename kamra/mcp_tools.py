@@ -995,9 +995,61 @@ TOOLS: tuple[ToolSpec, ...] = (
 		"group_pickup_status",
 		"api.group_detail",
 		"""Group Rooms Control: the block, per-room-type pickup (blocked / picked
-		up / remaining), rooming list, tied event and master folio.""",
+		up / remaining), rooming list (status, room, main room, pays own
+		charges), tied event, the main room and the group bill with its
+		balance.""",
 		{"group_booking": _p("string")},
 		required=("group_booking",),
+		group="Groups",
+	),
+	_t(
+		"create_group_booking",
+		"api.create_group_booking",
+		"""Book a group (corporate, wedding, event, tour) in one call: one
+		reservation per room on the same dates. rooms = [{room_type, count,
+		room?, guest_name?}]; unnamed rooms take guest_name. master_index
+		picks the main room (default the first) whose guest pays what
+		master_pays covers for every room on one group bill: "Room only"
+		(room + tax, the default), "Room and F&B (liquor to guest)",
+		"Everything except liquor". Rooms that cannot be booked are skipped
+		and reported. Prices come from the rate card.""",
+		{
+			"group_name": _p("string"),
+			"check_in_date": _p("string"),
+			"check_out_date": _p("string"),
+			"rooms": _p("array", items=_p("object")),
+			"guest_name": _p("string"),
+			"phone": _p("string"),
+			"company": _p("string"),
+			"group_type": _p("string", enum=["Corporate", "Wedding", "Event",
+			                                 "Tour", "Other"]),
+			"master_index": _p("integer"),
+			"master_pays": _p("string"),
+			"meal_plan": _p("string"),
+		},
+		required=("group_name", "check_in_date", "check_out_date", "rooms",
+		          "guest_name"),
+		property=True,
+		mutating=True,
+		group="Groups",
+	),
+	_t(
+		"settle_group_bill",
+		"api.settle_group_bill",
+		"""Settle a group's bill (the main room's master folio): take a payment
+		by mode (amount defaults to the whole balance) or, for a company group
+		with credit, set to_city_ledger. The bill closes and is invoiced once
+		its balance is 0. Check group_pickup_status for the balance first.""",
+		{
+			"group_booking": _p("string"),
+			"mode": _p("string"),
+			"amount": _p("number"),
+			"to_city_ledger": _p("boolean"),
+			"reference": _p("string"),
+		},
+		required=("group_booking",),
+		mutating=True,
+		bools=("to_city_ledger",),
 		group="Groups",
 	),
 	_t(

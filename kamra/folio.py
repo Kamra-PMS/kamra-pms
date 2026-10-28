@@ -185,20 +185,30 @@ def _post_addons(reservation, folio_name: str):
 
 def open_group_folio(group_booking: str) -> str:
 	"""Open (or return) the group's master folio - one consolidated bill
-	for everything the company pays across all rooms of the group. It is
-	anchored to the group's lead (first) reservation so invoicing and
-	printing work unchanged."""
+	for everything the company (or the main room) pays across all rooms of
+	the group. It is anchored to the group's main room when one is set,
+	else its first reservation, so invoicing and printing work unchanged."""
 	existing = frappe.db.get_value(
 		"Folio", {"group_booking": group_booking, "folio_type": "Group",
 		          "status": "Open"})
 	if existing:
 		return existing
+	filters = {"group_booking": group_booking,
+	           "status": ("not in", ("Cancelled", "No Show"))}
+	master = frappe.db.get_value("Group Booking", group_booking,
+	                             "master_reservation")
+	if master:
+		filters["name"] = master
 	lead = frappe.get_all(
-		"Reservation",
-		filters={"group_booking": group_booking,
-		         "status": ("not in", ("Cancelled", "No Show"))},
+		"Reservation", filters=filters,
 		fields=["name", "property", "guest"],
 		order_by="creation asc", limit=1)
+	if not lead and master:  # the main room was cancelled: first live room
+		del filters["name"]
+		lead = frappe.get_all(
+			"Reservation", filters=filters,
+			fields=["name", "property", "guest"],
+			order_by="creation asc", limit=1)
 	if not lead:
 		frappe.throw(f"Group {group_booking} has no active reservations.")
 	lead = lead[0]
@@ -282,15 +292,24 @@ def target_folio(reservation, charge_type: str, is_alcohol: int = 0) -> str:
 	credit company with no rules uses the property's default
 	(`default_company_billing`). Alcohol never bills to a company -
 	Indian corporates won't settle it and most travel policies prohibit it.
+
+	A group with a main room (`master_reservation`) and no paying company
+	routes what `master_pays` covers to the same master folio, unless the
+	room opted out (`pays_own_charges`). Alcohol stays with the guest.
 	"""
 	if not is_alcohol:
 		group = reservation.get("group_booking")
 		if group:
-			company = frappe.db.get_value(
-				"Group Booking", group, "company")
-			if company and _company_pays(
-					company, charge_type, reservation.get("property")):
+			g = frappe.db.get_value(
+				"Group Booking", group,
+				["company", "master_reservation", "master_pays"], as_dict=True)
+			if g.company and _company_pays(
+					g.company, charge_type, reservation.get("property")):
 				return open_group_folio(group)
+			if g.master_reservation and not reservation.get("pays_own_charges"):
+				covered = COMPANY_BILLING_DEFAULTS.get(g.master_pays, frozenset())
+				if covered is None or charge_type in covered:
+					return open_group_folio(group)
 		if reservation.get("company") and _company_pays(
 				reservation.company, charge_type, reservation.get("property")):
 			return open_company_folio(reservation)
