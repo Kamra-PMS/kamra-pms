@@ -30,17 +30,19 @@ def main():
 	for lang in ("es", "ar"):
 		ui = json.loads((ROOT / "frontend/src/i18n/locales" / f"{lang}.json").read_text())
 		out = ROOT / "kamra" / "translations" / f"{lang}.csv"
-		with out.open("w", newline="", encoding="utf-8") as f:
-			w = csv.writer(f)
-			for word in WORDS:
-				if word in ui:
-					w.writerow([word, ui[word]])
-				else:
-					missing.append((lang, word))
-			if "{n} rows" in ui:
-				w.writerow([ROWS, ui["{n} rows"].replace("{n}", "{0}")])
+		# keep rows other code added by hand (booking, privacy messages)
+		rows = dict(csv.reader(out.open(encoding="utf-8"))) if out.exists() else {}
+		for word in WORDS:
+			if word in ui:
+				rows[word] = ui[word]
 			else:
-				missing.append((lang, "{n} rows"))
+				missing.append((lang, word))
+		if "{n} rows" in ui:
+			rows[ROWS] = ui["{n} rows"].replace("{n}", "{0}")
+		else:
+			missing.append((lang, "{n} rows"))
+		with out.open("w", newline="", encoding="utf-8") as f:
+			csv.writer(f).writerows(rows.items())
 	for lang, word in missing:
 		print(f"missing {lang}: {word}")
 

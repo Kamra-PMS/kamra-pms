@@ -77,7 +77,7 @@ def erase_guest(guest: str, reason: str = "request") -> dict:
 	         "id_type": "", "id_number": "", "id_place_of_issue": "", "id_issue_date": None,
 	         "id_expiry_date": None, "nationality": "", "address_line": "", "city": "",
 	         "id_file": None, "address_proof_file": None, "photo": None, "date_of_birth": None, "gender": "",
-	         "guest_notes": "Profile erased.", "vip": 0}
+	         "guest_notes": "Profile erased.", "vip": 0, "marketing_consent": 0}
 	frappe.db.set_value("Guest", guest, {k: v for k, v in blank.items() if g.meta.has_field(k)},
 	                    update_modified=False)
 
@@ -224,3 +224,36 @@ def _clear_chats(filters: dict) -> int:
 		frappe.db.set_value("Copilot Conversation", name,
 		                    {"messages": "[]", "title": CLEARED_CHAT_TITLE}, update_modified=False)
 	return len(names)
+
+
+# Marketing consent (DPDP s.6): promotional WhatsApp goes only to guests who
+# opted in, and withdrawing is as easy as giving it.
+CONSENT_CHANNEL = {"Booking Page": "API", "Desk": "Desk", "WhatsApp Keyword": "WhatsApp"}
+
+
+def set_marketing_consent(guest: str, consent, source: str, property: str | None = None) -> bool:
+	"""The only writer of Guest.marketing_consent. Records when and how, and
+	logs the change. Returns False when nothing changed."""
+	if source not in CONSENT_CHANNEL:
+		frappe.throw(f"Unknown consent source {source}.")
+	consent = 1 if cint(consent) else 0
+	if cint(frappe.db.get_value("Guest", guest, "marketing_consent")) == consent:
+		return False
+	frappe.db.set_value("Guest", guest, {"marketing_consent": consent,
+	                                     "marketing_consent_date": now_datetime(),
+	                                     "marketing_consent_source": source})
+	from kamra.savings import log_action
+	verb = "granted" if consent else "withdrawn"
+	log_action(f"marketing_consent_{verb}", "Guest", guest, property=property,
+	           channel=CONSENT_CHANNEL[source],
+	           rationale=f"Marketing consent {verb} ({source})")
+	return True
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Front Desk", "Kamra Agent", scope={"guest": "Guest"})
+def update_marketing_consent(guest: str, consent) -> dict:
+	"""Desk toggle in the guest profile: record or withdraw consent."""
+	set_marketing_consent(guest, consent, "Desk")
+	return frappe.db.get_value("Guest", guest, ["marketing_consent", "marketing_consent_date",
+	                                            "marketing_consent_source"], as_dict=True)

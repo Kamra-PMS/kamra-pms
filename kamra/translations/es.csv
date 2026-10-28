@@ -150,6 +150,7 @@ Sales by outlet,Ventas por punto de venta
 Scheduled check-out,Salida programada
 Service,Servicio
 Service tickets,Tickets de servicio
+Commission,Comisión
 Share %,Participación %
 Shift,Turno
 Shift date,Fecha del turno
@@ -190,3 +191,8 @@ vs previous period,vs período anterior
 {0} has no billing contact email. Add one on the corporate account or type an address.,{0} no tiene correo de contacto de facturación. Agréguelo en la cuenta corporativa o escriba una dirección.
 {0}: reminder sent for {1} ({2}),{0}: recordatorio enviado para {1} ({2})
 {0} rows,{0} filas
+"Marketing consent is changed from the guest profile, the booking page or a STOP / START reply.","El consentimiento de marketing se cambia desde el perfil del huésped, la página de reservas o una respuesta STOP / START."
+This guest has no phone number on file.,Este huésped no tiene un número de teléfono registrado.
+This guest has not agreed to marketing messages.,Este huésped no ha aceptado recibir mensajes de marketing.
+You will get offers from {0} on WhatsApp. Reply STOP at any time to opt out.,Recibirá ofertas de {0} por WhatsApp. Responda BAJA en cualquier momento para darse de baja.
+You will no longer get offers from {0}. Booking and stay messages continue. Reply START to opt in again.,Ya no recibirá ofertas de {0}. Los mensajes de reserva y estancia continúan. Responda START para volver a suscribirse.

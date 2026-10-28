@@ -37,7 +37,7 @@ interface Bva {
 interface Contrib {
   by: string
   total: number
-  rows: { label: string; bookings: number; room_nights: number; revenue: number; share: number }[]
+  rows: { label: string; bookings: number; room_nights: number; revenue: number; commission: number; share: number }[]
 }
 
 function shiftMonth(period: string, by: number) {
@@ -234,6 +234,7 @@ const BY_OPTIONS: { key: string; label: string }[] = [
   { key: "source", label: "By source" },
   { key: "company", label: "By company" },
   { key: "travel_agent", label: "By travel agent" },
+  { key: "channel", label: "By channel" },
 ]
 
 function Contribution() {
@@ -305,6 +306,7 @@ function Contribution() {
                 <th className="py-2 pr-3 text-right">{translate("Bookings")}</th>
                 <th className="py-2 pr-3 text-right">{translate("Room nights")}</th>
                 <th className="py-2 pr-3 text-right">{translate("Revenue ")}{cur()}</th>
+                <th className="py-2 pr-3 text-right">{translate("Commission")}</th>
                 <th className="py-2 text-right">{translate("Share")}</th>
               </tr>
             </thead>
@@ -315,6 +317,7 @@ function Contribution() {
                   <td className="py-2.5 pr-3 text-right tabular-nums">{r.bookings}</td>
                   <td className="py-2.5 pr-3 text-right tabular-nums">{r.room_nights}</td>
                   <td className="py-2.5 pr-3 text-right tabular-nums">{inr(r.revenue)}</td>
+                  <td className="py-2.5 pr-3 text-right tabular-nums">{r.commission ? inr(r.commission) : "-"}</td>
                   <td className="py-2.5 text-right">
                     <div className="flex items-center justify-end gap-2">
                       <div className="h-1.5 w-16 overflow-hidden rounded-full bg-zinc-100">
@@ -335,6 +338,9 @@ function Contribution() {
                 <td />
                 <td />
                 <td className="py-2 pr-3 text-right tabular-nums">{inr(data.total)}</td>
+                <td className="py-2 pr-3 text-right tabular-nums">
+                  {inr(data.rows.reduce((s, r) => s + (r.commission || 0), 0))}
+                </td>
                 <td className="py-2 text-right">100%</td>
               </tr>
             </tfoot>

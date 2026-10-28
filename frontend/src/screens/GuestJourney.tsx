@@ -69,6 +69,9 @@ interface Journey {
     id_expiry_date: string | null
     blacklisted: 0 | 1
     blacklist_reason: string | null
+    marketing_consent: 0 | 1
+    marketing_consent_date: string | null
+    marketing_consent_source: string | null
     address: string
     notes: string | null
   }
@@ -384,6 +387,10 @@ export default function GuestJourney() {
     .filter((r) => r.status === "Confirmed" && r.check_in_date >= today)
     .sort((a, b) => a.check_in_date.localeCompare(b.check_in_date))
   const avgNight = stats.nights ? stats.lifetime_value / stats.nights : 0
+  // when and how marketing consent last changed (source names are translated)
+  const consentWhen = guest.marketing_consent_date
+    ? { v0: guest.marketing_consent_date.slice(0, 10), v1: translate(guest.marketing_consent_source ?? "Desk") }
+    : null
 
   async function saveField(patch: Record<string, unknown>) {
     setBusy(true)
@@ -631,6 +638,34 @@ export default function GuestJourney() {
               <CardTitle>{translate("Profile actions")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
+              <div>
+                <label className="flex items-center gap-2 text-sm font-medium text-zinc-700">
+                  <input
+                    type="checkbox"
+                    className="size-4 accent-brand-600"
+                    checked={Boolean(guest.marketing_consent)}
+                    disabled={busy}
+                    onChange={async (e) => {
+                      setBusy(true)
+                      try {
+                        await call("kamra.privacy.update_marketing_consent", {
+                          guest: guest.name,
+                          consent: e.target.checked ? 1 : 0,
+                        })
+                        load()
+                      } finally {
+                        setBusy(false)
+                      }
+                    }}
+                  />{translate("Offers on WhatsApp")}</label>
+                <p className="mt-1.5 text-xs text-zinc-400">
+                  {!consentWhen
+                    ? translate("Not opted in. Booking and stay messages are not affected.")
+                    : guest.marketing_consent
+                      ? translate("Opted in on {v0} ({v1})", consentWhen)
+                      : translate("Opted out on {v0} ({v1})", consentWhen)}
+                </p>
+              </div>
               {canBlacklist && (
                 <BlacklistControl
                   guest={guest.name}

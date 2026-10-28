@@ -222,6 +222,7 @@ DATASETS: dict[str, Dataset] = {
 			_col("bookings", "Bookings", "number"),
 			_col("room_nights", "Room nights", "number"),
 			_col("revenue", "Revenue", "number"),
+			_col("commission", "Commission", "number"),
 			_col("share", "Share %", "number"),
 		],
 	},
