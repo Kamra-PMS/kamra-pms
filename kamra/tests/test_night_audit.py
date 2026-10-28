@@ -16,6 +16,7 @@ from typing import ClassVar
 from unittest.mock import patch
 
 import frappe
+from frappe.utils import get_datetime
 
 from kamra import business_date as bdm
 from kamra import folio as folio_mod
@@ -533,11 +534,15 @@ class BusinessDateTestCase(AuditTestCase):
 
 
 class NightlySchedulerTestCase(AuditTestCase):
-	"""kamra.folio.nightly_audit_all_properties - the 03:00 cron."""
+	"""kamra.folio.nightly_audit_all_properties - the 15 minute tick, here
+	at 04:00 on TODAY (after the default 03:00 run time)."""
 
 	def setUp(self):
 		super().setUp()
 		self.at(TODAY)
+		self._stack.enter_context(patch.object(
+			folio_mod, "audit_clock",
+			return_value=get_datetime(f"{TODAY} 04:00:00")))
 		make_property(PROP_A, business_date=YESTERDAY)
 		make_property(PROP_B, business_date=YESTERDAY)
 		self.rt = make_room_type(PROP_A, "STD", base_price=1000)
@@ -650,7 +655,9 @@ class NightlySchedulerTestCase(AuditTestCase):
 		res = make_reservation(PROP_A, self.rt, d(-5), d(2),
 		                       status="Checked In", room=self.room)
 		frappe.db.set_value("Property", PROP_A, "business_date", d(-3))
-		folio_mod.nightly_audit_all_properties()
+		# one business date per tick (#203)
+		for _ in range(4):
+			folio_mod.nightly_audit_all_properties()
 		self.assertEqual(sorted(str(x) for x in self.audits(PROP_A)),
 		                 [d(-3), d(-2), YESTERDAY])
 		self.assertEqual(self.bd(PROP_A), TODAY)

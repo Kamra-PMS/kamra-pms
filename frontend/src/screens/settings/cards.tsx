@@ -189,6 +189,13 @@ export function SettingsCard(props: {
 }
 
 export const TIMEZONES = [
+  "America/Noronha",
+  "America/Sao_Paulo",
+  "America/Fortaleza",
+  "America/Belem",
+  "America/Manaus",
+  "America/Cuiaba",
+  "America/Rio_Branco",
   "Asia/Aden",
   "Asia/Riyadh",
   "Asia/Dubai",
@@ -1490,6 +1497,104 @@ export function CheckInStepsCard({ property }: { property: string }) {
             <span className={msg.ok ? "text-xs text-emerald-600" : "text-xs text-rose-600"}>{translateUI(msg.text)}</span>
           )}
         </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+interface AuditLogRow {
+  business_date: string | null
+  status: "Closed" | "Held" | "Skipped" | "Failed"
+  run_trigger: "Scheduled" | "Manual"
+  user: string | null
+  started_at: string | null
+  message: string | null
+}
+
+interface AuditSchedule {
+  auto: number
+  time: string
+  timezone: string
+  business_date: string
+  next_run: string | null
+  runs: AuditLogRow[]
+}
+
+const RUN_TONE: Record<AuditLogRow["status"], string> = {
+  Closed: "text-emerald-700",
+  Held: "text-amber-700",
+  Skipped: "text-zinc-500",
+  Failed: "text-rose-700",
+}
+
+/** The automatic night audit at a glance: next run and the last 30 runs. */
+export function NightAuditScheduleCard({ property }: { property: string }) {
+  const { t } = useT()
+  const [data, setData] = useState<AuditSchedule | null>(null)
+  const [err, setErr] = useState<string | null>(null)
+
+  useEffect(() => {
+    call<AuditSchedule>("kamra.night_audit.night_audit_schedule", { property })
+      .then(setData)
+      .catch((e) => setErr(serverError(e)))
+  }, [property])
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <CardTitle>{t("Night audit runs")}</CardTitle>
+            {data && (
+              <p className="mt-0.5 text-xs text-zinc-500">
+                {t("Business date {bd}", { bd: data.business_date })}
+                {" · "}
+                {data.next_run
+                  ? t("Next automatic run {at} ({tz})", { at: data.next_run.slice(0, 16), tz: data.timezone })
+                  : t("Manual only")}
+              </p>
+            )}
+          </div>
+          <Link
+            to={`/end-of-day/${encodeURIComponent(property)}`}
+            className="shrink-0 rounded-lg border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:border-brand-300 hover:text-brand-700"
+          >
+            {t("Run night audit now")}
+          </Link>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {err && <p className="text-sm text-rose-700">{translateUI(err)}</p>}
+        {data && !data.runs.length && <p className="text-sm text-zinc-500">{t("No runs yet.")}</p>}
+        {data && data.runs.length > 0 && (
+          <div className="max-h-80 overflow-auto">
+            <table className="w-full text-sm">
+              <thead className="text-start text-xs text-zinc-500">
+                <tr>
+                  <th className="py-1 pe-3 text-start font-medium">{t("Started")}</th>
+                  <th className="py-1 pe-3 text-start font-medium">{t("Business date")}</th>
+                  <th className="py-1 pe-3 text-start font-medium">{t("Result")}</th>
+                  <th className="py-1 text-start font-medium">{t("Details")}</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-100">
+                {data.runs.map((r, i) => (
+                  <tr key={i} className="align-top">
+                    <td className="py-1.5 pe-3 whitespace-nowrap tabular-nums">{r.started_at?.slice(0, 16)}</td>
+                    <td className="py-1.5 pe-3 whitespace-nowrap tabular-nums">{r.business_date}</td>
+                    <td className={`py-1.5 pe-3 whitespace-nowrap ${RUN_TONE[r.status]}`}>
+                      {t(r.status)}
+                      <span className="block text-xs text-zinc-400">
+                        {r.run_trigger === "Scheduled" ? t("Scheduler") : r.user}
+                      </span>
+                    </td>
+                    <td className="py-1.5 text-xs text-zinc-600">{r.message}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </CardContent>
     </Card>
   )

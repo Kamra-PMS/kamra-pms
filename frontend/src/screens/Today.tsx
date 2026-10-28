@@ -368,8 +368,10 @@ export default function Today() {
   useEffect(() => {
     getTodayLayout()
       .then((info) => {
-        setLayoutInfo(info)
-        setLayout(info.layout)
+        if (info && info.layout) {
+          setLayoutInfo(info)
+          setLayout(info.layout)
+        }
       })
       .catch(() => {
         /* keep the cached / built-in layout */
@@ -879,10 +881,11 @@ export default function Today() {
     ),
     open_tasks: <OpenTasksCard refreshKey={refreshKey} />,
   }
-  const visible = (ids: WidgetId[]) => ids.filter((id) => !layout.hidden.includes(id))
-  const top = visible(layout.top)
-  const left = visible(layout.left)
-  const right = visible(layout.right)
+  const activeLayout = layout ?? DEFAULT_TODAY_LAYOUT
+  const visible = (ids?: WidgetId[]) => (ids ?? []).filter((id) => !activeLayout.hidden?.includes(id))
+  const top = visible(activeLayout.top)
+  const left = visible(activeLayout.left)
+  const right = visible(activeLayout.right)
 
   return (
     <div>

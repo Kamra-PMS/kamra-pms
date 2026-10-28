@@ -299,6 +299,8 @@ export interface BookingOptions {
   }[]
   travel_agents: { name: string; agent_name: string; commission_pct: number }[]
   ota_channels?: string[]
+  /** each OTA's default commission % (its Travel Agent record of type OTA) */
+  ota_commission?: Record<string, number>
   experiences: {
     name: string
     experience_name: string
@@ -482,6 +484,8 @@ export const createBooking = (
     booked_via?: string
     ota_ref?: string
     ota_total?: number
+    ota_commission_pct?: number
+    marketing_consent?: number
   },
 ) =>
   call<{

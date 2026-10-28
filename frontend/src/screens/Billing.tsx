@@ -64,7 +64,7 @@ export default function Billing() {
           <div>
             <CardTitle>{t("Night audit")}</CardTitle>
             <p className="mt-0.5 text-xs text-zinc-400">
-              {t("End of Day walks the night audit checklist, posts room and tax, rolls the business date and prints the audit pack. Runs automatically at 3 AM.")}
+              {t("End of Day walks the night audit checklist, posts room and tax, rolls the business date and prints the audit pack. Runs automatically every night at the time set in Settings.")}
             </p>
           </div>
           <Button onClick={() => navigate(`/end-of-day/${encodeURIComponent(getCurrentProperty())}`)}>

@@ -108,7 +108,7 @@ export default function EndOfDay() {
       <div>
         <h1 className="text-lg font-semibold text-zinc-900">{t("Manage Night Audit")}</h1>
         <p className="text-sm text-zinc-500">
-          {t("End of Day is the night audit. Close each property's business date, then print the audit pack. The 3 AM job runs the same steps; find every automatic run and its pack under Audit history.")}
+          {t("End of Day is the night audit. Close each property's business date, then print the audit pack. The automatic audit runs the same steps at each property's set time (Settings, Front Desk); find every run and its pack under Audit history.")}
         </p>
       </div>
       {err && <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{translate(err)}</p>}
@@ -124,6 +124,10 @@ export default function EndOfDay() {
                     bd: fmtDay(r.business_date),
                     now: r.property_now.slice(11, 16),
                   })}
+                  {" · "}
+                  {r.next_auto_run
+                    ? t("next automatic audit {at}", { at: r.next_auto_run.slice(0, 16) })
+                    : t("automatic audit off")}
                 </p>
               </div>
               {r.stuck_date ? (
@@ -134,7 +138,7 @@ export default function EndOfDay() {
               ) : r.held ? (
                 <Badge tone="amber">
                   <TriangleAlert className="me-1 size-3" aria-hidden />
-                  {t("03:00 held")}
+                  {t("Audit held")}
                 </Badge>
               ) : r.blockers ? (
                 <Badge tone="rose">
@@ -158,7 +162,7 @@ export default function EndOfDay() {
               )}
               {r.held && !r.stuck_date && (
                 <p className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
-                  {t("The 03:00 audit held the date. Clear the blockers and run End of Day, then print the pack.")}
+                  {t("The scheduled audit held the date. Clear the blockers and run End of Day, then print the pack.")}
                 </p>
               )}
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">

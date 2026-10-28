@@ -71,6 +71,22 @@ enter:
 - **Sold for (incl. tax)** - the total the OTA charged. The stay is
   billed at that price, split across the nights, not at your rate card.
   Leave it empty to bill the rate card.
+- **Commission %** - what the site keeps. It is prefilled from the
+  site's default and you can change it per booking.
+
+**Several rooms in one OTA booking:** add the rooms as usual. All of
+them share the one OTA booking ref, and the sold total is split across
+the rooms in proportion to their rate card prices. **Walk-ins** booked
+on an OTA the same day work the same way: set **Booked via** in the
+walk-in form.
+
+**Default commission per site:** in **Revenue > Travel Agents**, add the
+site with type **OTA** and its **Commission %** (name it as it appears
+in Booked via, for example "Booking.com"). New bookings from that site,
+keyed in or from the channel manager, record the commission on the
+pre-tax room price unless the channel sends its own amount. **Revenue
+Reports > Contribution analysis** shows it in the **Commission**
+column; choose **By channel** to see it per site.
 
 The booking is then tagged exactly like one that arrived through the
 channel manager: the site's name shows on Today, In House and the tape

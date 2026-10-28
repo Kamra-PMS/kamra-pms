@@ -794,7 +794,7 @@ def book(property: str, room_type: str, check_in_date: str,
          email: str = "", adults: int = 2, children: int = 0,
          meal_plan: str = "", special_requests: str = "", addons=None,
          voucher_code: str = "", idempotency_key: str = "", pets: int = 0,
-         child_ages=None):
+         child_ages=None, marketing_consent: int = 0):
 	"""Create a Website booking. Guest identity is the phone number; staff
 	verify at check-in. The advance owed is computed from the property's
 	current payment policy and snapshotted onto the booking.
@@ -917,6 +917,10 @@ def book(property: str, room_type: str, check_in_date: str,
 		frappe.db.set_value("Reservation", result["reservation"], updates)
 		if email:
 			frappe.db.set_value("Guest", result["guest"], "email", email)
+		if cint(marketing_consent):
+			# the guest ticked the (unticked by default) offers box
+			from kamra.privacy import set_marketing_consent
+			set_marketing_consent(result["guest"], 1, "Booking Page", property)
 		frappe.db.commit()  # nosemgrep: frappe-manual-commit -- persists the completed operation before returning to an external/public caller; reviewed as intentional
 
 	final_status = frappe.db.get_value(
