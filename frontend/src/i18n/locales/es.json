@@ -5468,5 +5468,9 @@
   "OTA booking ref": "Ref. de reserva OTA",
   "Sold for (incl. tax)": "Vendida por (imp. incl.)",
   "Rate card price": "Precio de tarifa",
-  "Billed at the price {site} sold it for": "Se factura al precio de venta de {site}"
+  "Billed at the price {site} sold it for": "Se factura al precio de venta de {site}",
+  "Commission": "Comisión",
+  "By channel": "Por canal",
+  "channel": "canal",
+  "Sold for, all rooms (incl. tax)": "Vendido por, todas las habitaciones (imp. incl.)"
 }

@@ -5468,5 +5468,9 @@
   "OTA booking ref": "مرجع حجز OTA",
   "Sold for (incl. tax)": "سعر البيع (شامل الضريبة)",
   "Rate card price": "سعر قائمة الأسعار",
-  "Billed at the price {site} sold it for": "تُحتسب بالسعر الذي باع به {site}"
+  "Billed at the price {site} sold it for": "تُحتسب بالسعر الذي باع به {site}",
+  "Commission": "العمولة",
+  "By channel": "حسب القناة",
+  "channel": "القناة",
+  "Sold for, all rooms (incl. tax)": "سعر البيع لكل الغرف (شامل الضريبة)"
 }
