@@ -342,16 +342,20 @@ def save_budget(property: str, period: str, room_revenue_target: float = 0,
 @require_roles("Finance", "Revenue Manager", "Kamra Agent")
 def contribution(property: str, from_date: str, to_date: str,
                  by: str = "source"):
-	"""Who brings the business: revenue + room nights + share, grouped by
-	booking source, company or travel agent. by = source | company | travel_agent."""
+	"""Who brings the business: revenue + room nights + share + the
+	commission paid for it (travel agent or OTA), grouped by booking source,
+	company, travel agent or OTA channel.
+	by = source | company | travel_agent | channel."""
 	col = {"source": "r.source", "company": "r.company",
-	       "travel_agent": "r.travel_agent"}.get(by, "r.source")
+	       "travel_agent": "r.travel_agent",
+	       "channel": "r.channel"}.get(by, "r.source")
 	rows = frappe.db.sql(  # nosemgrep: frappe-sql-format-injection -- values are parameterized; interpolated text is a constant or whitelisted identifier, not user input
 		f"""
 		SELECT COALESCE({col}, 'Direct') AS label,
 		       COUNT(*) AS bookings,
 		       COALESCE(SUM(r.nights),0) AS room_nights,
-		       COALESCE(SUM(r.amount_after_tax),0) AS revenue
+		       COALESCE(SUM(r.amount_after_tax),0) AS revenue,
+		       COALESCE(SUM(r.commission_amount),0) AS commission
 		FROM `tabReservation` r
 		WHERE r.property=%(p)s
 		  AND r.status IN ('Confirmed','Checked In','Checked Out')
@@ -363,6 +367,7 @@ def contribution(property: str, from_date: str, to_date: str,
 	total = sum(float(x.revenue or 0) for x in rows) or 1
 	for x in rows:
 		x["revenue"] = round(float(x.revenue or 0), 0)
+		x["commission"] = round(float(x.commission or 0), 0)
 		x["share"] = round(100 * x["revenue"] / total, 1)
 	return {"by": by, "total": round(total, 0), "rows": rows}
 

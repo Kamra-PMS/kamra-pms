@@ -3329,7 +3329,11 @@ def walk_in(property: str, room_type: str, room: str, check_out_date: str,
             check_out_time: str | None = None,
             blacklist_override_reason: str | None = None,
             credit_override_reason: str | None = None,
-            defer_check_in: int = 0):
+            defer_check_in: int = 0,
+            booked_via: str | None = None,
+            ota_ref: str | None = None,
+            ota_total: float = 0,
+            ota_commission_pct: float | None = None):
 	"""Walk-in in one step: book, register the ID, check into the chosen
 	room and take the money - the counter flow that used to be four screens.
 
@@ -3344,7 +3348,11 @@ def walk_in(property: str, room_type: str, room: str, check_out_date: str,
 	refused PIN or a room that just sold rolls the booking back too.
 	Arrival is always today (calendar, like every new booking - a lagging
 	night audit must not turn walk-ins away); a future stay is a normal
-	booking, not a walk-in."""
+	booking, not a walk-in.
+
+	An OTA guest who books and arrives the same day is a walk-in booked
+	via that site: booked_via / ota_ref / ota_total / ota_commission_pct
+	work as in create_booking (the stay's source is then OTA)."""
 	from kamra.crs import assert_property_access
 	from kamra.localization import pack_for, payment_modes, validate_id_type
 	assert_property_access(property)
@@ -3389,7 +3397,9 @@ def walk_in(property: str, room_type: str, room: str, check_out_date: str,
 		idempotency_key=idempotency_key,
 		check_in_time=check_in_time, check_out_time=check_out_time,
 		blacklist_override_reason=blacklist_override_reason,
-		credit_override_reason=credit_override_reason)
+		credit_override_reason=credit_override_reason,
+		booked_via=booked_via, ota_ref=ota_ref, ota_total=ota_total,
+		ota_commission_pct=ota_commission_pct)
 	reservation = booked["reservation"]
 	folio_filter = {"reservation": reservation, "folio_type": "Guest"}
 
@@ -4794,6 +4804,7 @@ def set_late_arrival(reservation: str, late_arrival: int = 1,
 @require_roles("Front Desk", "Kamra Agent")
 def booking_options(property: str):
 	"""Everything the booking form needs to render its dropdowns."""
+	from kamra.channel_manager import channel_commission_pcts
 	return {
 		"room_types": frappe.get_all(
 			"Room Type", filters={"property": property, "disabled": 0},
@@ -4828,7 +4839,22 @@ def booking_options(property: str):
 		),
 		"property": _booking_property_policy(property),
 		"ota_channels": _ota_channels(property),
+		"ota_commission": channel_commission_pcts(),
 	}
+
+
+def _refuse_taken_ota_ref(property: str, ota_ref: str | None,
+                          group_booking: str | None = None) -> None:
+	"""One OTA reference books once. The rooms of one multi-room booking
+	share it (same group booking); any other booking with it is refused."""
+	if not ota_ref:
+		return
+	for r in frappe.get_all("Reservation", filters={
+			"property": property, "ota_ref": ota_ref,
+			"status": ["!=", "Cancelled"]}, fields=["name", "group_booking"]):
+		if not group_booking or r.group_booking != group_booking:
+			frappe.throw(_("OTA booking {0} is already reservation {1}.").format(
+				ota_ref, r.name))
 
 
 def _ota_channels(property: str) -> list[str]:
@@ -5201,6 +5227,7 @@ def create_booking(property: str, room_type: str, check_in_date: str,
                    booked_via: str | None = None,
                    ota_ref: str | None = None,
                    ota_total: float = 0,
+                   ota_commission_pct: float | None = None,
                    marketing_consent: int = 0):
 	"""One-call booking: attach to an existing guest profile when given,
 	else dedup by phone / create one. Optional auto room assignment,
@@ -5244,19 +5271,18 @@ def create_booking(property: str, room_type: str, check_in_date: str,
 
 	# Booked via an OTA and keyed in from its email: tag the site and its
 	# reference, and keep the price the OTA charged (as a channel manager
-	# booking does). One reference books once.
-	from kamra.channel_manager import canonical_channel, lock_channel_rates
+	# booking does). One reference books once. The OTA's commission is its
+	# default % (its Travel Agent record of type OTA) unless the desk says.
+	from kamra.channel_manager import (canonical_channel,
+	                                   channel_commission_pcts,
+	                                   lock_channel_rates, set_ota_commission)
 	via = canonical_channel(booked_via)
 	ota_ref = (ota_ref or "").strip() or None
 	if via:
 		source = "OTA"
-	if ota_ref:
-		dup = frappe.db.get_value(
-			"Reservation", {"property": property, "ota_ref": ota_ref,
-			                "status": ["!=", "Cancelled"]}, "name")
-		if dup:
-			frappe.throw(_("OTA booking {0} is already reservation {1}.").format(
-				ota_ref, dup))
+		if ota_commission_pct in (None, ""):
+			ota_commission_pct = channel_commission_pcts().get(via)
+	_refuse_taken_ota_ref(property, ota_ref, group_booking)
 
 	key = (idempotency_key or "").strip() or None
 	if key:
@@ -5486,6 +5512,8 @@ def create_booking(property: str, room_type: str, check_in_date: str,
 			payload.pop("name", None)
 			payload["guest"] = guest
 			doc = frappe.get_doc(payload)
+	if via:
+		set_ota_commission(doc, ota_commission_pct)
 
 	from kamra.savings import log_action
 	log_action(
@@ -5572,11 +5600,38 @@ def create_group_booking(property: str, group_name: str, check_in_date: str,
                          guest_name: str, phone: str | None = None,
                          company: str | None = None,
                          meal_plan: str | None = None,
-                         rate_plan: str | None = None):
+                         rate_plan: str | None = None,
+                         booked_via: str | None = None,
+                         ota_ref: str | None = None,
+                         ota_total: float = 0,
+                         ota_commission_pct: float | None = None):
 	"""Create a Group Booking plus one reservation per requested room.
-	`rooms` = [{"room_type": <name>, "count": 2}, ...] (JSON string ok)."""
+	`rooms` = [{"room_type": <name>, "count": 2}, ...] (JSON string ok).
+
+	Booked via an OTA (see create_booking): every room carries the site and
+	the one OTA reference, and the sold total (`ota_total`, tax included) is
+	split across the rooms in proportion to their rate-card prices, each
+	room locked to its share."""
 	if isinstance(rooms, str):
 		rooms = json.loads(rooms)
+	lines = [spec for spec in rooms for _n in range(int(spec.get("count", 1)))]
+
+	ota_ref = (ota_ref or "").strip() or None
+	_refuse_taken_ota_ref(property, ota_ref)  # before the group is made
+	shares = [0.0] * len(lines)
+	total = float(ota_total or 0) if booked_via else 0
+	if total > 0 and lines:
+		weights = [float(get_quote(
+			property, spec["room_type"], check_in_date, check_out_date,
+			adults=int(spec.get("adults", 2)),
+			children=int(spec.get("children", 0)),
+			meal_plan=spec.get("meal_plan") or meal_plan, rate_plan=rate_plan,
+			company=company).get("amount_after_tax") or 0) for spec in lines]
+		if not sum(weights):
+			weights = [1.0] * len(lines)
+		for i, w in enumerate(weights):
+			shares[i] = round(total * w / sum(weights), 2)
+		shares[-1] = round(total - sum(shares[:-1]), 2)  # rounding
 
 	group = frappe.get_doc({
 		"doctype": "Group Booking",
@@ -5589,29 +5644,31 @@ def create_group_booking(property: str, group_name: str, check_in_date: str,
 	}).insert(ignore_permissions=False)
 
 	created, skipped = [], []
-	for spec in rooms:
-		# not `_`: that name is the translation function in this module
-		for _n in range(int(spec.get("count", 1))):
-			try:
-				res = create_booking(
-					property=property,
-					room_type=spec["room_type"],
-					room=spec.get("room"),
-					check_in_date=check_in_date,
-					check_out_date=check_out_date,
-					guest_name=spec.get("guest_name") or guest_name,
-					phone=spec.get("phone") or phone,
-					adults=int(spec.get("adults", 2)),
-					children=int(spec.get("children", 0)),
-					meal_plan=spec.get("meal_plan") or meal_plan,
-					rate_plan=rate_plan,
-					booking_type="Corporate" if company else "Group",
-					company=company,
-					group_booking=group.name,
-				)
-				created.append(res["reservation"])
-			except Exception as e:
-				skipped.append({"room_type": spec["room_type"], "reason": str(e)})
+	for spec, share in zip(lines, shares, strict=True):
+		try:
+			res = create_booking(
+				property=property,
+				room_type=spec["room_type"],
+				room=spec.get("room"),
+				check_in_date=check_in_date,
+				check_out_date=check_out_date,
+				guest_name=spec.get("guest_name") or guest_name,
+				phone=spec.get("phone") or phone,
+				adults=int(spec.get("adults", 2)),
+				children=int(spec.get("children", 0)),
+				meal_plan=spec.get("meal_plan") or meal_plan,
+				rate_plan=rate_plan,
+				booking_type="Corporate" if company else "Group",
+				company=company,
+				group_booking=group.name,
+				booked_via=booked_via,
+				ota_ref=ota_ref,
+				ota_total=share,
+				ota_commission_pct=ota_commission_pct,
+			)
+			created.append(res["reservation"])
+		except Exception as e:
+			skipped.append({"room_type": spec["room_type"], "reason": str(e)})
 
 	return {"group_booking": group.name, "created": created, "skipped": skipped}
 

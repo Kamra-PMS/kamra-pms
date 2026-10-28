@@ -5477,5 +5477,9 @@
   "Desk": "Recepción",
   "WhatsApp Keyword": "Palabra clave de WhatsApp",
   "Guest agrees to offers on WhatsApp": "El huésped acepta recibir ofertas por WhatsApp",
-  "Send me offers on WhatsApp. Reply STOP at any time to opt out.": "Envíenme ofertas por WhatsApp. Responda BAJA en cualquier momento para darse de baja."
+  "Send me offers on WhatsApp. Reply STOP at any time to opt out.": "Envíenme ofertas por WhatsApp. Responda BAJA en cualquier momento para darse de baja.",
+  "Commission": "Comisión",
+  "By channel": "Por canal",
+  "channel": "canal",
+  "Sold for, all rooms (incl. tax)": "Vendido por, todas las habitaciones (imp. incl.)"
 }

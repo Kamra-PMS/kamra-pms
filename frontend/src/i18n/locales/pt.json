@@ -5451,5 +5451,16 @@
   "Desk": "Recepção",
   "WhatsApp Keyword": "Palavra-chave do WhatsApp",
   "Guest agrees to offers on WhatsApp": "O hóspede aceita receber ofertas pelo WhatsApp",
-  "Send me offers on WhatsApp. Reply STOP at any time to opt out.": "Enviem-me ofertas pelo WhatsApp. Responda SAIR a qualquer momento para cancelar."
+  "Send me offers on WhatsApp. Reply STOP at any time to opt out.": "Enviem-me ofertas pelo WhatsApp. Responda SAIR a qualquer momento para cancelar.",
+  "Commission": "Comissão",
+  "By channel": "Por canal",
+  "channel": "canal",
+  "Sold for, all rooms (incl. tax)": "Vendido por, todos os quartos (com impostos)",
+  "Booked via": "Reservado via",
+  "Other site…": "Outro site…",
+  "Site name": "Nome do site",
+  "OTA booking ref": "Ref. da reserva na OTA",
+  "Sold for (incl. tax)": "Vendido por (com impostos)",
+  "Rate card price": "Preço da tabela",
+  "Billed at the price {site} sold it for": "Cobrado pelo preço vendido por {site}"
 }
