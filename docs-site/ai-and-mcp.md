@@ -122,6 +122,11 @@ Kamra accepts ChatGPT's OAuth callbacks
 `https://chatgpt.com/connector/oauth/<id>`) out of the box. The same MCP
 roles and property switches apply.
 
+If ChatGPT shows a Frappe login or "Login to Frappe" consent page instead
+of Kamra's property picker, the connection was made before 2.6.24 and
+registered with Frappe's own OAuth server. Delete the connector in ChatGPT
+and add it again.
+
 ### n8n and other clients
 
 **Unattended workflows** (an n8n agent with nobody to click Allow): use
