@@ -23,7 +23,9 @@ if (!version) {
 }
 
 const versions = Array.isArray(raw.versions) ? [...raw.versions] : []
-const latest = makeLatest ? version : raw.latest || version
+// Re-freezing an older release must not demote the current latest
+const newer = !raw.latest || version.localeCompare(raw.latest, undefined, { numeric: true }) >= 0
+const latest = makeLatest && newer ? version : raw.latest || version
 
 // Upsert this version: latest → path "/", archives → /vX.Y.Z/
 function entryFor(v, isLatest) {
