@@ -253,7 +253,7 @@ export default function Developers() {
         <CardHeader>
           <CardTitle>{translate("Connect an AI agent (MCP)")}</CardTitle>
           <p className="mt-0.5 text-xs text-zinc-400">{translate("Point Claude at this property over MCP. Staff should use")}{" "}
-            <a href="/kamra/assistant" className="font-medium text-brand-700 hover:underline">{translate("Kamra Agent → Connect Claude")}</a>{translate(". The key above is for unattended / service integrations.")}</p>
+            <a href="/kamra/assistant" className="font-medium text-brand-700 hover:underline">{translate("Kamra Agent → AI Provider")}</a>{translate(". The key above is for unattended / service integrations.")}</p>
         </CardHeader>
         <CardContent>
           <pre className="overflow-x-auto rounded-lg bg-zinc-100 p-3 text-xs leading-relaxed text-zinc-700">

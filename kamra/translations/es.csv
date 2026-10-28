@@ -196,3 +196,5 @@ This guest has no phone number on file.,Este huésped no tiene un número de tel
 This guest has not agreed to marketing messages.,Este huésped no ha aceptado recibir mensajes de marketing.
 You will get offers from {0} on WhatsApp. Reply STOP at any time to opt out.,Recibirá ofertas de {0} por WhatsApp. Responda BAJA en cualquier momento para darse de baja.
 You will no longer get offers from {0}. Booking and stay messages continue. Reply START to opt in again.,Ya no recibirá ofertas de {0}. Los mensajes de reserva y estancia continúan. Responda START para volver a suscribirse.
+AI Provider,Proveedor de IA
+"Your AI provider will act as {0}, within your role. Prices, taxes and availability stay in Kamra. Every action is recorded under your name in the Activity log.","Su proveedor de IA actuará como {0}, con los permisos de su rol. Los precios, los impuestos y la disponibilidad se gestionan en Kamra. Cada acción se registra con su nombre en el registro de Actividad."

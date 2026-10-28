@@ -5523,5 +5523,21 @@
   "Audit held": "Auditoria retida",
   "The scheduled audit held the date. Clear the blockers and run End of Day, then print the pack.": "A auditoria agendada reteve a data. Resolva os bloqueios e execute o Fim do Dia; depois imprima o pacote.",
   "End of Day walks the night audit checklist, posts room and tax, rolls the business date and prints the audit pack. Runs automatically every night at the time set in Settings.": "Fim do Dia percorre a lista de verificação da auditoria noturna, lança diárias e impostos, avança a data comercial e imprime o pacote de auditoria. Executa automaticamente toda noite no horário definido em Configurações.",
-  "Scheduled audit when checks block: {mode}": "Auditoria agendada quando há bloqueios: {mode}"
+  "Scheduled audit when checks block: {mode}": "Auditoria agendada quando há bloqueios: {mode}",
+  "AI Provider": "Provedor de IA",
+  "Chat here, or connect your AI provider. Either way it acts as you, within your role.": "Converse aqui ou conecte seu provedor de IA. Em ambos os casos, ele atua com sua identidade e as permissões da sua função.",
+  "Connect your AI provider to this hotel over MCP - scoped to your role": "Conecte seu provedor de IA a este hotel via MCP, com as permissões da sua função",
+  "AI provider connections are turned off on this site. On your own Kamra, every staff member can connect an AI provider and act within their role.": "As conexões com provedores de IA estão desativadas neste site. Na sua própria instalação do Kamra, cada funcionário pode conectar um provedor de IA e atuar com as permissões da sua função.",
+  "Your AI provider acts as you at ": "Seu provedor de IA atua com sua identidade em ",
+  "Remote AI providers need a public HTTPS URL to reach this hotel. For a local site, use a local MCP client or the stdio sidecar.": "Provedores de IA remotos precisam de uma URL HTTPS pública para acessar este hotel. Para uma instalação local, use um cliente MCP local ou o adaptador stdio.",
+  "Open Claude": "Abrir Claude",
+  "Disconnect your AI providers? They will have to sign in again.": "Desconectar seus provedores de IA? Eles precisarão entrar novamente.",
+  "An AI provider is authorised for this property. Enable its connector in your AI chat, then ask about the hotel.": "Há um provedor de IA autorizado para esta propriedade. Ative o conector no chat de IA e consulte os dados do hotel.",
+  "Connect ChatGPT, Claude or another MCP-compatible AI provider using this hotel's MCP URL and OAuth. Sign in to Kamra, select the property and allow access. The Claude shortcut opens with the MCP URL filled in.": "Conecte ChatGPT, Claude ou outro provedor de IA compatível com MCP usando a URL MCP deste hotel e OAuth. Entre no Kamra, selecione a propriedade e permita o acesso. O atalho do Claude abre com a URL MCP já preenchida.",
+  "Need a platform-wide or service key (HeyKoala, unattended jobs)? That is issued by your system admin under Developers. Staff should use AI Provider to connect with OAuth.": "Precisa de uma chave de serviço ou para toda a plataforma, por exemplo para HeyKoala ou tarefas automáticas? O administrador a emite em Desenvolvedores. A equipe deve usar Provedor de IA para se conectar via OAuth.",
+  "Connect your AI provider to this property's governed tools. It acts as the signed-in person, within their role, and every action lands in the Activity log.": "Conecte seu provedor de IA às ferramentas desta propriedade com controle de permissões. Ele atua com a identidade e a função do usuário conectado, e cada ação fica registrada em Atividade.",
+  "Kamra Agent → AI Provider": "Agente Kamra → Provedor de IA",
+  "Use the MCP URL to connect ChatGPT, Claude or another compatible provider. Each person signs in as themselves with OAuth.": "Use a URL MCP para conectar ChatGPT, Claude ou outro provedor compatível. Cada pessoa entra com sua própria conta via OAuth.",
+  "Your AI provider will act as {0}, within your role. Prices, taxes and availability stay in Kamra. Every action is recorded under your name in the Activity log.": "Seu provedor de IA atuará como {0}, com as permissões da sua função. Preços, impostos e disponibilidade continuam no Kamra. Cada ação é registrada com seu nome no registro de Atividade.",
+  "Enable the connector in your AI chat and say things like \"occupancy this week\" or \"book a Deluxe for Friday\".": "Ative o conector no chat de IA e experimente frases como «ocupação desta semana» ou «reserve um quarto Deluxe para sexta-feira»."
 }

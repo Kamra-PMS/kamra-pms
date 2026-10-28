@@ -74,6 +74,48 @@ def mcp_disabled() -> bool:
 	return bool(frappe.conf.get("kamra_mcp_disabled"))
 
 
+def authenticate():
+	"""Recognize Kamra bearer tokens before Frappe rejects unknown OAuth tokens."""
+	request = getattr(frappe.local, "request", None)
+	if not request or request.path != "/mcp" or mcp_disabled():
+		return
+	grant = _bearer(request)
+	if grant and frappe.db.get_value("User", grant.user, "enabled"):
+		frappe.set_user(grant.user)  # nosemgrep: frappe-setuser -- validated Kamra OAuth bearer, scoped to /mcp; Frappe still enforces the user's IP restrictions
+
+
+def after_request(request, response):
+	"""Keep MCP discovery separate from Frappe's site-wide OAuth server."""
+	path = request.path
+	metadata = {
+		"/.well-known/oauth-authorization-server/mcp/oauth": authorization_server_doc,
+		"/.well-known/oauth-protected-resource/mcp": protected_resource_doc,
+	}
+	if (path != "/mcp" and path not in metadata) or response is None or mcp_disabled():
+		return
+	if path in metadata:
+		if request.method == "GET":
+			# Frappe handles /.well-known/* before page renderers. These scoped
+			# RFC 8414/9728 paths belong to Kamra; the root documents stay Frappe's.
+			response.set_data(json.dumps(metadata[path]()))
+			response.status_code = 200
+			response.content_type = "application/json"
+			_apply_cors(response)
+		return
+	if response.status_code not in (401, 403):
+		return
+	challenge = _auth_challenge()
+	response.headers["WWW-Authenticate"] = challenge
+	# Frappe applies these headers after its own set_authenticate_headers().
+	frappe.local.response_headers["WWW-Authenticate"] = challenge
+
+
+def _auth_challenge() -> str:
+	return ('Bearer realm="Kamra", '
+	        f'resource_metadata="{protected_resource_url()}", '
+	        'scope="kamra.mcp"')
+
+
 def dispatch(path: str, request) -> Response:
 	if mcp_disabled():
 		return _json({"error": "mcp_disabled",
@@ -252,11 +294,7 @@ def _unauthorized() -> Response:
 		},
 		401,
 	)
-	resp.headers["WWW-Authenticate"] = (
-		'Bearer realm="Kamra", '
-		f'resource_metadata="{protected_resource_url()}", '
-		'scope="kamra.mcp"'
-	)
+	resp.headers["WWW-Authenticate"] = _auth_challenge()
 	return resp
 
 
