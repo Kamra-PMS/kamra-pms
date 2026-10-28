@@ -61,6 +61,7 @@ MODULES = [
     ("ledger", "Ledgers (trial balance, city ledger / AR, FX desk)", ""),
     ("credit", "Company credit (payment terms, credit limit, overdue check)",
      "Credit control is enforced inside check_out, create_booking and city_ledger_transfer; these endpoints explain and configure it."),
+    ("statements", "Company statements (print, email; daily payment reminders)", ""),
     ("night_audit", "Night audit (End of Day checklist, audit pack)", ""),
     ("agents_api", "Activity ledger", ""),
     ("settings", "Settings hub (module settings)", ""),

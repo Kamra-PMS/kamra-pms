@@ -390,6 +390,10 @@ MODULES: tuple[Module, ...] = (
 				       "which is logged. AI agents can never override."),
 				S("credit_overdue_grace_days", "Overdue grace period", "number", 0, min=0, max=365, unit="days",
 				  hint="A bill counts against the company only once it is this many days past its due date."),
+				S("credit_reminders", "Email payment reminders", "check", 0,
+				  hint="Each morning, email a company's billing contact 3 days before a bill is due, on the "
+				       "due date and 15 days after, with its statement attached. Each reminder goes once per "
+				       "bill, and Finance gets a notice of what was sent."),
 			)),
 			Section("cashier", "Cashier controls", "", (
 				S("use_cashier_tills", "Take money through cashier tills", "check", 1,

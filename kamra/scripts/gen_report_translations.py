@@ -12,12 +12,16 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 SRC = (ROOT / "kamra" / "custom_reports.py").read_text()
+# company statements and payment reminders (#238): labels, _tr() and _() text
+STATEMENTS = (ROOT / "kamra" / "statements.py").read_text()
 # every label/title literal in the report catalog, plus the page and email text
 WORDS = sorted(set(re.findall(r'"(?:label|title)": "([^"]+)"', SRC))
                | set(re.findall(r'_col\("\w+", "([^"]+)"', SRC))
+               | set(re.findall(r'\("[a-z0-9_]+", "([^"]+)"\)', STATEMENTS))
+               | set(re.findall(r'\b_(?:tr)?\(["\']([^"\']+)["\']', STATEMENTS))
                | {"Report", "Kamra report", "The report is attached.",
                   "Metric", "This period", "Previous period", "Variance",
-                  "Variance %", "vs previous period"})
+                  "Variance %", "vs previous period", "All companies"})
 ROWS = "{0} rows"  # the SPA says "{n} rows"
 
 
