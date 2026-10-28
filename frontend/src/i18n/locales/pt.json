@@ -5442,5 +5442,14 @@
   "guests": "hóspedes",
   "Guest folio": "Extrato do hóspede",
   "Guest ledger": "Razão de hóspedes",
-  "The guest": "O hóspede"
+  "The guest": "O hóspede",
+  "Offers on WhatsApp": "Ofertas pelo WhatsApp",
+  "Opted in on {v0} ({v1})": "Aceitou em {v0} ({v1})",
+  "Opted out on {v0} ({v1})": "Cancelou em {v0} ({v1})",
+  "Not opted in. Booking and stay messages are not affected.": "Sem consentimento. As mensagens de reserva e estadia não são afetadas.",
+  "Booking Page": "Página de reservas",
+  "Desk": "Recepção",
+  "WhatsApp Keyword": "Palavra-chave do WhatsApp",
+  "Guest agrees to offers on WhatsApp": "O hóspede aceita receber ofertas pelo WhatsApp",
+  "Send me offers on WhatsApp. Reply STOP at any time to opt out.": "Enviem-me ofertas pelo WhatsApp. Responda SAIR a qualquer momento para cancelar."
 }

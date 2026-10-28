@@ -2617,6 +2617,9 @@ def guest_journey(guest: str):
 			"id_expiry_date": str(doc.get("id_expiry_date") or "") or None,
 			"blacklisted": doc.get("blacklisted"),
 			"blacklist_reason": doc.get("blacklist_reason"),
+			"marketing_consent": doc.get("marketing_consent") or 0,
+			"marketing_consent_date": doc.get("marketing_consent_date"),
+			"marketing_consent_source": doc.get("marketing_consent_source"),
 			"address": ", ".join(filter(None, [  # nosemgrep: frappe-no-functional-code -- filter(None, ...) drops empty address parts; equivalent to a comprehension
 				doc.get("address_line"), doc.get("city")])),
 			"notes": doc.guest_notes,
@@ -5197,7 +5200,8 @@ def create_booking(property: str, room_type: str, check_in_date: str,
                    credit_override_reason: str | None = None,
                    booked_via: str | None = None,
                    ota_ref: str | None = None,
-                   ota_total: float = 0):
+                   ota_total: float = 0,
+                   marketing_consent: int = 0):
 	"""One-call booking: attach to an existing guest profile when given,
 	else dedup by phone / create one. Optional auto room assignment,
 	voucher applied, price computed by the engine.
@@ -5493,6 +5497,9 @@ def create_booking(property: str, room_type: str, check_in_date: str,
 		rationale=f"Booked {room_type} {check_in_date}→{check_out_date} for {guest_name}",
 		channel=channel or ("API" if source == "AI Agent" else "Desk"),
 	)
+	if cint(marketing_consent):
+		from kamra.privacy import set_marketing_consent
+		set_marketing_consent(doc.guest, 1, "Desk", property)
 	out = _booking_result(doc)
 	if credit and not credit["ok"]:
 		out["credit_warning"] = {
