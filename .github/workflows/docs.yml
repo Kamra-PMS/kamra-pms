@@ -25,12 +25,15 @@ on:
         required: false
         default: ""
 
+# A develop push only cancels an older develop push. A release freeze gets
+# its own group, so a push landing mid-release can't cancel the snapshot.
 concurrency:
-  group: docs-publish
-  cancel-in-progress: true
+  group: ${{ github.event_name == 'push' && 'docs-latest' || format('docs-freeze-{0}', github.run_id) }}
+  cancel-in-progress: ${{ github.event_name == 'push' }}
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   publish:
@@ -120,10 +123,12 @@ jobs:
 
       - name: Register the version on develop
         if: steps.ver.outputs.freeze == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           # The live /docs/ is built from develop, so the switcher has to
-          # change there. A refused push (branch protection) must not stop
-          # the publish below: warn, and bump versions.json by PR instead.
+          # change there. develop is protected, so this opens a PR; a failure
+          # must not stop the publish below.
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git fetch -q origin develop
@@ -132,9 +137,13 @@ jobs:
             node docs-site/scripts/prepare-versions.mjs
           git add docs-site/versions.json
           if git diff --cached --quiet; then echo "versions.json already lists it"; exit 0; fi
-          git commit -qm "docs: register v${{ steps.ver.outputs.version }} in the version switcher"
-          git push origin HEAD:refs/heads/develop \
-            || echo "::warning::Could not push versions.json to develop; open a PR with it."
+          V="${{ steps.ver.outputs.version }}"
+          git commit -qm "docs: register v$V in the version switcher"
+          git push -f origin "HEAD:refs/heads/docs/register-v$V" \
+            && gh pr create --base develop --head "docs/register-v$V" \
+                 --title "docs: register v$V in the version switcher" \
+                 --body "Opened by the docs freeze for v$V. Merge so the live switcher lists it." \
+            || echo "::warning::Could not open the versions.json PR; register v$V by hand."
 
       - name: Publish to kamrapms.com/docs
         env:
