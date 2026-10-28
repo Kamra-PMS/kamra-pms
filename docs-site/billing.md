@@ -168,6 +168,26 @@ allowed credit.
 Money left over stays on the account as unapplied credit and pays the
 company's next bill automatically.
 
+**Send a company its statement** (Finance and Hotel Admin): on the
+company's row in **City ledger aging**, press **Statement** to open it and
+print it or save it as PDF, or **Email statement** to send it (leave the
+address blank to use the billing contact email on the company). The
+statement lists every open bill with its invoice date, due date, days
+overdue, what was billed and paid, any unapplied credit, the balance due
+and the aging by days overdue.
+
+**Payment reminders** are off until you turn on **Email payment
+reminders** (Settings → Property → Company credit). Each morning Kamra
+then emails a company's billing contact 3 days before a bill is due, on
+the due date and 15 days after, with the statement attached. Each reminder
+goes once per bill and is written to the Activity log. Finance gets an
+in-app notice of what was sent, and of companies with no billing email.
+
+**Reports:** **Overdue by company** and **Days sales outstanding (DSO)**
+are in **Reports** (and for AI agents through `run_custom_report`). DSO is
+the balance at the end of the period divided by what was billed in it,
+times the days in the period.
+
 ## Take and return a security deposit
 
 A refundable damage deposit (villas, long stays) is held for the guest,
@@ -355,6 +375,7 @@ it.
 | Lock a PIN after | Settings → Finance → Cashier controls | 5 wrong tries | Locks the PIN after this many wrong entries. |
 | Lock for / stay unlocked for | Settings → Finance → Cashier controls | 15 min | How long a locked PIN stays locked, and how long money actions stay unlocked after a correct PIN. |
 | When a credit company has no billing rules | Settings → Finance → Corporate billing | Room and F&B (liquor to guest) | Which charges a credit company pays when it has no rules of its own. |
+| Email payment reminders | Settings → Property → Company credit | Off | Emails each company's billing contact 3 days before a bill is due, on the due date and 15 days after, once per bill per stage. |
 | Payment gateway | Settings → Payments | None | The gateway and keys used for payment links. |
 
 ## Good to know
@@ -409,7 +430,8 @@ The folio actions are MCP tools for AI agents (`get_folio`,
 `collect_security_deposit` and more): see [MCP tools](/mcp-tools#billing).
 The REST endpoints live in `kamra.api` (folios, payments, deposits),
 `kamra.cashier` (till sessions, petty cash, shift report) and
-`kamra.ledger` (ledgers, city ledger, credit notes, proforma, FX desk). The
+`kamra.ledger` (ledgers, city ledger, credit notes, proforma, FX desk) and
+`kamra.statements` (company statements and payment reminders). The
 **Voids & Allowances** screen reads `kamra.reports.void_allowance_report`
 (Finance, Hotel Admin). See the
 [API reference](/api-reference#core-front-desk-folios-guests-rooms) and

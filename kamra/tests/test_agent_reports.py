@@ -40,7 +40,8 @@ EXPECTED = {
 		{"manager_flash", "cashier_shift_report", "voids_allowances_report",
 		 "outlets", "outlet_dashboard", "wastage_report", "banquet_register",
 		 *BUILDER},
-		FRONT_DESK | {"folio_charges", "payments", "voids", "contribution"}
+		FRONT_DESK | {"folio_charges", "payments", "voids", "contribution",
+		              "overdue_by_company", "dso"}
 		| FNB | FO_EXTRA | OPS,
 		{"front_office", "fnb", "engineering", "hotel_manager"}),
 	"Housekeeping": (BUILDER, HK | OPS, {"housekeeping", "laundry", "engineering"}),
