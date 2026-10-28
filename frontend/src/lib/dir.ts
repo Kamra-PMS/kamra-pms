@@ -16,6 +16,7 @@ export interface LangDef {
 export const LANGS: LangDef[] = [
   { code: "en", nativeLabel: "English", englishLabel: "English", dir: "ltr" },
   { code: "es", nativeLabel: "Español", englishLabel: "Spanish", dir: "ltr" },
+  { code: "pt", nativeLabel: "Português", englishLabel: "Portuguese", dir: "ltr" },
   { code: "ar", nativeLabel: "العربية", englishLabel: "Arabic", dir: "rtl" },
 ]
 

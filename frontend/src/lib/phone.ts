@@ -205,7 +205,7 @@ const DIAL_BY_COUNTRY: Record<string, string> = {
 
 /** Resolve every supported country, retaining the existing city/name aliases. */
 const countries = getCountries(metadata)
-for (const language of ["en", "es", "ar"]) {
+for (const language of ["en", "es", "ar", "pt"]) {
   const names = new Intl.DisplayNames([language], { type: "region" })
   for (const country of countries) {
     const dial = getCountryCallingCode(country, metadata)
