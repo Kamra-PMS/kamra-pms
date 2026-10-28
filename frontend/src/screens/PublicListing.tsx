@@ -254,6 +254,7 @@ export default function PublicListing() {
     email: "",
     meal_plan: "",
     special_requests: "",
+    marketing_consent: 0,
   })
   const [done, setDone] = useState<{ reservation: string; amount: number; status?: string } | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -944,6 +945,12 @@ export default function PublicListing() {
                   value={form.email}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
                 />
+              </label>
+              <label className="flex items-start gap-2 text-sm text-zinc-600 sm:col-span-2">
+                <input type="checkbox" className="mt-0.5 size-4 accent-brand-600"
+                  checked={Boolean(form.marketing_consent)}
+                  onChange={(e) => setForm({ ...form, marketing_consent: e.target.checked ? 1 : 0 })} />
+                {t("Send me offers on WhatsApp. Reply STOP at any time to opt out.")}
               </label>
               {error && (
                 <p className="text-sm text-rose-600 sm:col-span-2">{translate(error)}</p>

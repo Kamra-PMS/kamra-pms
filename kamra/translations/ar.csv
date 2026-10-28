@@ -146,3 +146,8 @@ Volume by guest vs house,الحجم: ضيف مقابل بيت
 When,متى
 vs previous period,مقارنة بالفترة السابقة
 {0} rows,{0} صف
+"Marketing consent is changed from the guest profile, the booking page or a STOP / START reply.",يتم تغيير الموافقة التسويقية من ملف الضيف أو صفحة الحجز أو برد STOP / START.
+This guest has no phone number on file.,لا يوجد رقم هاتف مسجل لهذا الضيف.
+This guest has not agreed to marketing messages.,لم يوافق هذا الضيف على تلقي الرسائل التسويقية.
+You will get offers from {0} on WhatsApp. Reply STOP at any time to opt out.,ستصلك عروض {0} عبر واتساب. أرسل توقف في أي وقت لإلغاء الاشتراك.
+You will no longer get offers from {0}. Booking and stay messages continue. Reply START to opt in again.,لن تصلك عروض {0} بعد الآن. تستمر رسائل الحجز والإقامة. أرسل START للاشتراك مجددًا.

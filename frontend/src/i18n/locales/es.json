@@ -5468,5 +5468,14 @@
   "OTA booking ref": "Ref. de reserva OTA",
   "Sold for (incl. tax)": "Vendida por (imp. incl.)",
   "Rate card price": "Precio de tarifa",
-  "Billed at the price {site} sold it for": "Se factura al precio de venta de {site}"
+  "Billed at the price {site} sold it for": "Se factura al precio de venta de {site}",
+  "Offers on WhatsApp": "Ofertas por WhatsApp",
+  "Opted in on {v0} ({v1})": "Aceptó el {v0} ({v1})",
+  "Opted out on {v0} ({v1})": "Se dio de baja el {v0} ({v1})",
+  "Not opted in. Booking and stay messages are not affected.": "Sin consentimiento. Los mensajes de reserva y estancia no se ven afectados.",
+  "Booking Page": "Página de reservas",
+  "Desk": "Recepción",
+  "WhatsApp Keyword": "Palabra clave de WhatsApp",
+  "Guest agrees to offers on WhatsApp": "El huésped acepta recibir ofertas por WhatsApp",
+  "Send me offers on WhatsApp. Reply STOP at any time to opt out.": "Envíenme ofertas por WhatsApp. Responda BAJA en cualquier momento para darse de baja."
 }

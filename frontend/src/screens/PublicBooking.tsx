@@ -352,7 +352,7 @@ export default function PublicBooking() {
   const childAges = sizeAges(childAgesState, search.children)
   const agesMissing = search.children > 0 && !agesToSend(childAges)
   const [booking, setBooking] = useState<string | null>(null) // room type name
-  const [form, setForm] = useState({ guest_name: "", phone: "", email: "", meal_plan: "", special_requests: "" })
+  const [form, setForm] = useState({ guest_name: "", phone: "", email: "", meal_plan: "", special_requests: "", marketing_consent: 0 })
   // experience add-ons the guest picked: docname -> quantity
   const [addons, setAddons] = useState<Record<string, number>>({})
   const [voucher, setVoucher] = useState("")
@@ -1431,6 +1431,12 @@ export default function PublicBooking() {
                 <span className="mb-1.5 block text-sm font-medium text-zinc-600">{t("Special requests")}</span>
                 <textarea className={inputCls} rows={2} value={form.special_requests}
                   onChange={(e) => setForm({ ...form, special_requests: e.target.value })} />
+              </label>
+              <label className="flex items-start gap-2 text-sm text-zinc-600 sm:col-span-2">
+                <input type="checkbox" className="mt-0.5 size-4 accent-brand-600"
+                  checked={Boolean(form.marketing_consent)}
+                  onChange={(e) => setForm({ ...form, marketing_consent: e.target.checked ? 1 : 0 })} />
+                {t("Send me offers on WhatsApp. Reply STOP at any time to opt out.")}
               </label>
               <div className="block sm:col-span-2">
                 <span className="mb-1.5 block text-sm font-medium text-zinc-600">
