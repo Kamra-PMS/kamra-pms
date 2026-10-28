@@ -485,6 +485,7 @@ export const createBooking = (
     ota_ref?: string
     ota_total?: number
     ota_commission_pct?: number
+    marketing_consent?: number
   },
 ) =>
   call<{

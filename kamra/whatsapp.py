@@ -31,6 +31,7 @@ import hmac
 import json
 
 import frappe
+from frappe import _
 
 from kamra.authz import require_roles
 
@@ -113,8 +114,16 @@ def send_text(property: str, to: str, body: str, *,
 
 
 def send_template(property: str, to: str, template: str, args: list, *,
-                  guest=None, reservation=None, lang=None) -> dict:
-	"""Template message - the only way WhatsApp lets a business initiate."""
+                  guest=None, reservation=None, lang=None,
+                  marketing: bool = False) -> dict:
+	"""Template message - the only way WhatsApp lets a business initiate.
+
+	marketing=True marks a promotional template (Meta category MARKETING):
+	it goes only to a guest who opted in. Service templates (booking,
+	check-in link, payment) are unaffected."""
+	if marketing and not frappe.db.get_value(
+			"Guest", guest or {"phone": ("in", [to, f"+{to}"])}, "marketing_consent"):
+		return {"sent": False, "reason": "no_marketing_consent"}
 	conn = _conn(property)
 	if not conn:
 		return {"sent": False, "reason": "no_meta_connection"}
@@ -206,6 +215,52 @@ def send_payment_request(reservation: str, amount, note: str = "") -> dict:
 		res.property, phone, conn.tpl_payment_request,
 		[res.guest_name or "Guest", str(amount), note or "at the front desk"],
 		guest=res.guest, reservation=res.name)
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Front Desk", "Hotel Admin", "Kamra Agent", scope={"guest": "Guest"})
+def send_marketing(property: str, guest: str, template: str, args=None) -> dict:
+	"""A promotional template to one guest, refused without their consent."""
+	if isinstance(args, str):
+		args = frappe.parse_json(args)
+	phone = frappe.db.get_value("Guest", guest, "phone")
+	if not phone:
+		frappe.throw(_("This guest has no phone number on file."))
+	out = send_template(property, phone, template, args or [], guest=guest, marketing=True)
+	if out.get("reason") == "no_marketing_consent":
+		frappe.throw(_("This guest has not agreed to marketing messages."),
+		             frappe.PermissionError)
+	return out
+
+
+# Whole-message reply keywords and the language to confirm in
+OPT_OUT_WORDS = {"stop": "en", "unsubscribe": "en", "baja": "es", "alto": "es",
+                 "إلغاء": "ar", "الغاء": "ar", "توقف": "ar", "parar": "pt", "sair": "pt"}
+OPT_IN_WORDS = {"start": "en"}
+
+
+def _consent_keyword(conn, number: str, text: str) -> bool:
+	"""STOP-style replies withdraw marketing consent, START grants it. The
+	guest gets one confirmation when it changed. True = it was a keyword."""
+	from kamra.privacy import set_marketing_consent
+
+	word = " ".join(text.split()).strip(".!¡?¿ ").casefold()
+	lang = OPT_IN_WORDS.get(word) or OPT_OUT_WORDS.get(word)
+	if not lang:
+		return False
+	opt_in = word in OPT_IN_WORDS
+	bare = number.lstrip("+")
+	changed = [g for g in frappe.get_all("Guest", pluck="name",
+	                                     filters={"phone": ("in", [bare, f"+{bare}"])})
+	           if set_marketing_consent(g, opt_in, "WhatsApp Keyword", conn.property)]
+	if changed:
+		hotel = frappe.db.get_value("Property", conn.property, "property_name") or conn.property
+		msg = _("You will get offers from {0} on WhatsApp. Reply STOP at any time to opt out.",
+		        lang=lang) if opt_in else _(
+			"You will no longer get offers from {0}. Booking and stay messages continue. "
+			"Reply START to opt in again.", lang=lang)
+		send_text(conn.property, number, msg.format(hotel), guest=changed[0])
+	return True
 
 
 # ---------------------------------------------------------------------------
@@ -304,6 +359,8 @@ def _handle_inbound(value: dict) -> None:
 		_log(conn.property, conn, "Inbound", conn.phone_number, from_number,
 		     "Text", text, guest=guest, reservation=reservation,
 		     status="Received", meta_message_id=msg.get("id"))
+		if _consent_keyword(conn, from_number, text):
+			continue  # an opt-out or opt-in, not a service request
 		if reservation and text:
 			# in-house guest wrote in - put it on the desk's queue
 			frappe.get_doc({

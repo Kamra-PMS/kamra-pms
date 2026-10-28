@@ -165,6 +165,8 @@ export function BookingDialog(props: {
       }
     : {}
   const [onBehalf, setOnBehalf] = useState(false)
+  // explicit opt-in to promotional WhatsApp; never ticked by default
+  const [offers, setOffers] = useState(false)
   // Day use (hourly): check in and out the same day, inside a time slot.
   // The server prices it (one billable date) - the quote shows that rate.
   const [dayUse, setDayUse] = useState(false)
@@ -642,6 +644,7 @@ export function BookingDialog(props: {
         blacklist_override_reason: blacklistOverride,
         credit_override_reason: creditOverride,
         ...viaArgs,
+        marketing_consent: offers ? 1 : undefined,
       })
       setDone({ ref: res.reservation, room: res.room })
       props.onBooked()
@@ -1935,6 +1938,13 @@ export function BookingDialog(props: {
 
                       {moreRooms.length === 0 && (
                         <>
+                          <label className="flex items-center gap-2 text-sm font-medium text-zinc-700">
+                            <input
+                              type="checkbox"
+                              className="size-4 accent-brand-600"
+                              checked={offers}
+                              onChange={(e) => setOffers(e.target.checked)}
+                            />{translate("Guest agrees to offers on WhatsApp")}</label>
                           <label className="flex items-center gap-2 text-sm font-medium text-zinc-700">
                             <input
                               type="checkbox"

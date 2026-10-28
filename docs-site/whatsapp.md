@@ -149,8 +149,29 @@ bench --site yoursite install-app frappe_whatsapp
 
 It uses the same Meta credentials, adds template syncing from Frappe,
 notification-on-doctype-event rules, and bulk sends. Keep marketing
-lists consented - WhatsApp bans numbers that message people who
-didn't opt in.
+lists consented: filter them on the guest's **Marketing consent**
+(below). WhatsApp bans numbers that message people who didn't opt in.
+
+## Marketing consent and opt-out
+
+Booking confirmations, check-in links and payment requests are service
+messages and always go out. Offers and promotions (Meta category
+**Marketing**) need the guest's recorded consent.
+
+- **Opting in** is always explicit, and never pre-ticked: the *Send me
+  offers on WhatsApp* box on the booking page, *Guest agrees to offers
+  on WhatsApp* in the desk booking dialog, the *Offers on WhatsApp*
+  toggle in the guest profile, or the guest replying **START**.
+- **Opting out** is as easy: the guest replies **STOP** or
+  **UNSUBSCRIBE** (also **BAJA**, **ALTO**, **PARAR**, **SAIR**,
+  **إلغاء**, **توقف**; any case), or the desk clears the toggle. The
+  guest gets one confirmation in the language of the word they sent.
+- The guest profile shows when consent last changed and how (booking
+  page, desk or WhatsApp keyword). Every change is also written to the
+  activity log with who made it.
+- `kamra.whatsapp.send_marketing` sends a promotional template to one
+  guest and refuses when they have not opted in. Use it (or filter on
+  the consent field) for any promotional send.
 
 ## Troubleshooting
 

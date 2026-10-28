@@ -147,3 +147,8 @@ Volume by guest vs house,Volumen huésped vs casa
 When,Cuándo
 vs previous period,vs período anterior
 {0} rows,{0} filas
+"Marketing consent is changed from the guest profile, the booking page or a STOP / START reply.","El consentimiento de marketing se cambia desde el perfil del huésped, la página de reservas o una respuesta STOP / START."
+This guest has no phone number on file.,Este huésped no tiene un número de teléfono registrado.
+This guest has not agreed to marketing messages.,Este huésped no ha aceptado recibir mensajes de marketing.
+You will get offers from {0} on WhatsApp. Reply STOP at any time to opt out.,Recibirá ofertas de {0} por WhatsApp. Responda BAJA en cualquier momento para darse de baja.
+You will no longer get offers from {0}. Booking and stay messages continue. Reply START to opt in again.,Ya no recibirá ofertas de {0}. Los mensajes de reserva y estancia continúan. Responda START para volver a suscribirse.

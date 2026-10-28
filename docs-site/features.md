@@ -184,7 +184,9 @@ are refused.
 
 Guest erasure and access export, retention schedules for ID files and
 chat text, and a guest privacy notice in several Indian languages.
-Contact details are not sent to the AI provider.
+Contact details are not sent to the AI provider. Promotional WhatsApp
+goes only to guests who opted in, and a STOP reply opts them out
+([details](./whatsapp#marketing-consent-and-opt-out)).
 
 ## AI, done safely
 
