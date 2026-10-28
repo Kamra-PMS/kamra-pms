@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function - the same governed layer
-the UI and the AI use. **415 endpoints**, generated from the source
+the UI and the AI use. **418 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -1646,6 +1646,7 @@ a block refuses (CREDIT_BLOCKED) unless Finance or a Hotel Admin passes
 | `ota_ref` | no | `None` |
 | `ota_total` | no | `0` |
 | `ota_commission_pct` | no | `None` |
+| `marketing_consent` | no | `0` |
 
 ### `kamra.api.waitlist`
 
@@ -4908,6 +4909,37 @@ before / after.
 | `use_default_credit_days` | no | `None` |
 
 
+## Company statements (print, email; daily payment reminders)
+
+### `kamra.statements.company_statement`
+
+**GET/POST** · roles: `Finance`, `Hotel Admin`
+
+One company's statement at its property: open bills with invoice
+date, due date, days overdue and amounts, unapplied credit, recent
+payments, totals and aging by due date. format=html returns the
+printable page (print or save as PDF from the browser).
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `account` | yes |  |
+| `format` | no | `'json'` |
+| `lang` | no | `'en'` |
+
+### `kamra.statements.email_company_statement`
+
+**POST** · roles: `Finance`, `Hotel Admin`
+
+Email a company its statement (HTML attachment). Without recipients
+it goes to the company's billing contact email.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `account` | yes |  |
+| `recipients` | no | `None` |
+| `lang` | no | `'en'` |
+
+
 ## Night audit (End of Day checklist, audit pack)
 
 ### `kamra.night_audit.night_audit_precheck`
@@ -4970,6 +5002,18 @@ each has a saved audit pack.
 | --- | --- | --- |
 | `property` | yes |  |
 | `limit` | no | `20` |
+
+### `kamra.night_audit.night_audit_schedule`
+
+**GET/POST** · roles: `Finance`, `Hotel Admin`, `Night Auditor`
+
+The automatic night audit at a glance: on or off, the next run on the
+property clock (None = manual only), the business date and the last 30
+runs, scheduled and manual, from the Night Audit Log.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
 
 ### `kamra.night_audit.eod_session`
 
@@ -5863,6 +5907,7 @@ the sleeping arrangement and agrees the price for them.
 | `idempotency_key` | no | `''` |
 | `pets` | no | `0` |
 | `child_ages` | no | `None` |
+| `marketing_consent` | no | `0` |
 
 ### `kamra.public_api.access_info` <Badge type='tip' text='public' />
 

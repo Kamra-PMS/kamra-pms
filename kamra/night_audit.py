@@ -16,7 +16,7 @@ Each check has a severity:
   warn   listed, never stops the audit.
   info   for the auditor to eyeball (POS room postings), never stops it.
 
-The 03:00 scheduled run follows `na_auto_audit_with_blockers`: "Run and report
+The scheduled run (night_audit_time, default 03:00) follows `na_auto_audit_with_blockers`: "Run and report
 exceptions" (default - the date always rolls, the open items go in the pack)
 or "Hold and alert" (the date is not rolled, Hotel Admin and Finance are
 alerted).
@@ -935,6 +935,107 @@ def night_audit_history(property: str, limit: int = 20):
 	return rows
 
 
+# --- run log (scheduled and manual) -------------------------------------------
+
+def record_run(property: str, trigger: str, fn):
+	"""Run one night audit attempt (`fn`) and write a Night Audit Log row:
+	Closed, Held, Skipped or Failed, with when, who and why. `fn` returning
+	None means there was nothing to do, and nothing is logged. A failure is
+	rolled back, logged, alerted to Hotel Admin (scheduled runs) and raised."""
+	from kamra.business_date import get_business_date
+	started = now_datetime()
+	frappe.db.savepoint("kamra_na_run")
+	try:
+		out = fn()
+	except Exception as e:
+		frappe.db.rollback(save_point="kamra_na_run")
+		refused = trigger == "Manual" and isinstance(e, frappe.ValidationError)
+		msg = frappe.utils.strip_html(str(e))[:1000] or type(e).__name__
+		_write_log(property, trigger, get_business_date(property),
+		           "Skipped" if refused else "Failed", msg, started)
+		if not refused and trigger == "Scheduled":
+			name = frappe.db.get_value("Property", property, "property_name") or property
+			alert_staff(property, ("Hotel Admin",), f"Night audit failed - {name}",
+			            f"{name}: the scheduled night audit failed: {msg}")
+		frappe.db.commit()  # nosemgrep: frappe-manual-commit -- the failure log must survive the caller's rollback
+		raise
+	if out is None:
+		return None
+	if out.get("held"):
+		status, msg = "Held", out.get("message")
+	elif out.get("already_ran"):
+		status, msg = "Skipped", f"Already closed (audit {out.get('audit')})"
+	elif out.get("skipped"):
+		status, msg = "Skipped", out.get("message")
+	else:
+		status = "Closed"
+		msg = (f"Posted {out.get('room_charges_posted', 0)} room nights, flagged "
+		       f"{out.get('no_shows_flagged', 0)} no-shows; business date is now "
+		       f"{out.get('next_business_date')}")
+	_write_log(property, trigger, out.get("business_date") or get_business_date(property),
+	           status, msg, started, out.get("audit"))
+	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- persists the run log with the run
+	return out
+
+
+def _write_log(property, trigger, business_date, status, message, started, audit=None):
+	frappe.get_doc({
+		"doctype": "Night Audit Log", "property": property,
+		"business_date": business_date, "status": status, "run_trigger": trigger,
+		"user": frappe.session.user, "started_at": started,
+		"finished_at": now_datetime(), "message": message,
+		"audit": audit if audit and frappe.db.exists("Night Audit Run", audit) else None,
+	}).insert(ignore_permissions=True)
+
+
+@frappe.whitelist()
+@require_roles("Finance", "Hotel Admin", "Night Auditor")
+def night_audit_schedule(property: str):
+	"""The automatic night audit at a glance: on or off, the next run on the
+	property clock (None = manual only), the business date and the last 30
+	runs, scheduled and manual, from the Night Audit Log."""
+	from kamra.business_date import get_business_date
+	from kamra.crs import assert_property_access
+	from kamra.folio import audit_clock
+	assert_property_access(property)
+	bd = get_business_date(property)
+	now = audit_clock(property)
+	runs = frappe.get_all(
+		"Night Audit Log", filters={"property": property},
+		fields=["business_date", "status", "run_trigger", "user", "started_at",
+		        "finished_at", "message", "audit"],
+		order_by="creation desc", limit=30)
+	for r in runs:
+		for k in ("business_date", "started_at", "finished_at"):
+			r[k] = _iso(r[k])
+	return {
+		"auto": _setting(property, "night_audit_auto"),
+		"time": _setting(property, "night_audit_time"),
+		"grace_minutes": _setting(property, "night_audit_grace_minutes"),
+		"timezone": frappe.db.get_value("Property", property, "timezone")
+		            or frappe.utils.get_system_timezone(),
+		"business_date": bd, "now": str(now.replace(microsecond=0)),
+		"next_run": next_auto_run(property, bd, now), "runs": runs,
+	}
+
+
+def next_auto_run(property: str, bd, now) -> str | None:
+	"""When the scheduler will next try to close the day, on the property
+	clock `now`; None when the automatic audit is off (manual only)."""
+	from datetime import timedelta
+
+	from kamra.folio import audit_due_at, scheduled_attempt_made
+	if not _setting(property, "night_audit_auto"):
+		return None
+	due = audit_due_at(property, now.date())
+	if now >= due:
+		if getdate(bd) >= now.date() or scheduled_attempt_made(property, bd, now, due):
+			due += timedelta(days=1)
+		else:  # due now: the next 15 minute tick
+			due = (now + timedelta(minutes=15 - now.minute % 15)).replace(second=0, microsecond=0)
+	return str(due)
+
+
 # --- scheduled hold ------------------------------------------------------------
 
 def alert_staff(property: str, roles: tuple[str, ...], subject: str, body: str) -> int:
@@ -1535,6 +1636,7 @@ def eod_overview():
 		if allowed is not None and p.name not in allowed:
 			continue
 		bd = get_business_date(p.name)
+		now = property_now(p.name)
 		tills = check_open_tills(p.name, bd)
 		pos = check_open_pos_bills(p.name, bd)
 		deps = check_departures_due(p.name, bd)
@@ -1554,7 +1656,8 @@ def eod_overview():
 		held = _last_hold(p.name)
 		out.append({
 			"property": p.name, "property_name": p.property_name or p.name,
-			"business_date": bd, "property_now": str(property_now(p.name))[:16],
+			"business_date": bd, "property_now": str(now)[:16],
+			"next_auto_run": next_auto_run(p.name, bd, now),
 			"arrivals_pending": arrivals,
 			"departures_pending": deps["count"],
 			"open_cashiers": tills["count"],

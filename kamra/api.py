@@ -2285,8 +2285,9 @@ def run_night_audit(property: str, business_date: str | None = None,
 	listed in `acknowledge` (check keys) with a `note` giving the reason."""
 	# Night audit is a front-desk / night-auditor ritual, not admin-only.
 	from kamra.folio import run_night_audit as _run
-	return _run(property, business_date, acknowledge=acknowledge, note=note,
-	            mode="manual")
+	from kamra.night_audit import record_run
+	return record_run(property, "Manual", lambda: _run(
+		property, business_date, acknowledge=acknowledge, note=note, mode="manual"))
 
 
 @frappe.whitelist()
