@@ -376,7 +376,7 @@ before_request = [
 	# the public demo shows the maintenance page while it rebuilds
 	"kamra.demo_guard.block_while_rebuilding",
 ]
-# after_request = ["kamra.utils.after_request"]
+after_request = ["kamra.mcp_http.after_request"]
 
 # Job Events
 # ----------
@@ -410,9 +410,7 @@ before_request = [
 # Authentication and authorization
 # --------------------------------
 
-# auth_hooks = [
-# 	"kamra.auth.validate"
-# ]
+auth_hooks = ["kamra.mcp_http.authenticate"]
 
 # Automatically update python controller files with type annotations for this app.
 # export_python_type_annotations = True
