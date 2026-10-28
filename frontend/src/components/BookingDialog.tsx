@@ -150,11 +150,23 @@ export function BookingDialog(props: {
     contact_preference: "Booker",
   })
   // Booked via an OTA (keyed from its email): the site, its reference and
-  // the price it charged. "" = direct, "other" = a site typed by hand.
-  const [via, setVia] = useState({ site: "", other: "", ref: "", total: "" })
+  // the price it charged (all rooms) and its commission %, prefilled from
+  // the site's default. "" = direct, "other" = a site typed by hand.
+  const [via, setVia] = useState({ site: "", other: "", ref: "", total: "", pct: "" })
   const viaName = via.site === "other" ? via.other.trim() : via.site
   const otaTotal = viaName ? Number(via.total) || 0 : 0
+  const viaArgs = viaName
+    ? {
+        booked_via: viaName,
+        ota_ref: via.ref.trim() || undefined,
+        ota_total: otaTotal || undefined,
+        // blank = the site's default
+        ota_commission_pct: via.pct.trim() === "" ? undefined : Number(via.pct) || 0,
+      }
+    : {}
   const [onBehalf, setOnBehalf] = useState(false)
+  // explicit opt-in to promotional WhatsApp; never ticked by default
+  const [offers, setOffers] = useState(false)
   // Day use (hourly): check in and out the same day, inside a time slot.
   // The server prices it (one billable date) - the quote shows that rate.
   const [dayUse, setDayUse] = useState(false)
@@ -563,6 +575,7 @@ export function BookingDialog(props: {
           phone: form.phone || undefined,
           company: form.company || undefined,
           rate_plan: form.rate_plan || undefined,
+          ...viaArgs,
         })
         if (out.skipped.length > 0) {
           setError(
@@ -630,9 +643,8 @@ export function BookingDialog(props: {
         ...slotArgs,
         blacklist_override_reason: blacklistOverride,
         credit_override_reason: creditOverride,
-        booked_via: viaName || undefined,
-        ota_ref: viaName ? via.ref.trim() || undefined : undefined,
-        ota_total: otaTotal || undefined,
+        ...viaArgs,
+        marketing_consent: offers ? 1 : undefined,
       })
       setDone({ ref: res.reservation, room: res.room })
       props.onBooked()
@@ -686,6 +698,7 @@ export function BookingDialog(props: {
         idempotency_key: walkInKey,
         ...slotArgs,
         blacklist_override_reason: blacklistOverride,
+        ...viaArgs,
         // book, assign and take the money now; the guided check-in
         // (property's required steps) finishes it right after
         defer_check_in: 1,
@@ -725,9 +738,12 @@ export function BookingDialog(props: {
       const x = options?.experiences.find((e) => e.name === n)
       return x && q > 0 ? s + q * x.price * (1 + x.gst_rate / 100) : s
     }, 0)
+    // the OTA's sold price covers every room of the booking
     return (
-      (otaTotal > 0 ? otaTotal : quote.amount_after_tax) +
-      moreQuotes.reduce((s, q) => s + (q?.amount_after_tax ?? 0), 0) +
+      (otaTotal > 0
+        ? otaTotal
+        : quote.amount_after_tax +
+          moreQuotes.reduce((s, q) => s + (q?.amount_after_tax ?? 0), 0)) +
       addonsGross
     )
   })()
@@ -1766,52 +1782,70 @@ export function BookingDialog(props: {
                   {t("Add another room")}
                 </button>}
 
-                {!walkIn && moreRooms.length === 0 && (
-                  <div className="grid gap-3 sm:grid-cols-3">
-                    <Field label={translate("Booked via")}>
-                      <select
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <Field label={translate("Booked via")}>
+                    <select
+                      className={inputCls}
+                      value={via.site}
+                      onChange={(e) =>
+                        setVia({
+                          ...via,
+                          site: e.target.value,
+                          pct: String(options?.ota_commission?.[e.target.value] ?? ""),
+                        })
+                      }
+                    >
+                      <option value="">{translate("Direct")}</option>
+                      {options?.ota_channels?.map((c) => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                      <option value="other">{translate("Other site…")}</option>
+                    </select>
+                  </Field>
+                  {via.site === "other" && (
+                    <Field label={translate("Site name")}>
+                      <input
                         className={inputCls}
-                        value={via.site}
-                        onChange={(e) => setVia({ ...via, site: e.target.value })}
-                      >
-                        <option value="">{translate("Direct")}</option>
-                        {options?.ota_channels?.map((c) => (
-                          <option key={c} value={c}>{c}</option>
-                        ))}
-                        <option value="other">{translate("Other site…")}</option>
-                      </select>
+                        value={via.other}
+                        onChange={(e) => setVia({ ...via, other: e.target.value })}
+                      />
                     </Field>
-                    {via.site === "other" && (
-                      <Field label={translate("Site name")}>
+                  )}
+                  {via.site && (
+                    <>
+                      <Field label={translate("OTA booking ref")}>
                         <input
                           className={inputCls}
-                          value={via.other}
-                          onChange={(e) => setVia({ ...via, other: e.target.value })}
+                          value={via.ref}
+                          onChange={(e) => setVia({ ...via, ref: e.target.value })}
                         />
                       </Field>
-                    )}
-                    {via.site && (
-                      <>
-                        <Field label={translate("OTA booking ref")}>
-                          <input
-                            className={inputCls}
-                            value={via.ref}
-                            onChange={(e) => setVia({ ...via, ref: e.target.value })}
-                          />
-                        </Field>
-                        <Field label={translate("Sold for (incl. tax)")}>
-                          <input
-                            className={inputCls}
-                            inputMode="decimal"
-                            placeholder={translate("Rate card price")}
-                            value={via.total}
-                            onChange={(e) => setVia({ ...via, total: e.target.value })}
-                          />
-                        </Field>
-                      </>
-                    )}
-                  </div>
-                )}
+                      <Field
+                        label={
+                          moreRooms.length > 0
+                            ? translate("Sold for, all rooms (incl. tax)")
+                            : translate("Sold for (incl. tax)")
+                        }
+                      >
+                        <input
+                          className={inputCls}
+                          inputMode="decimal"
+                          placeholder={translate("Rate card price")}
+                          value={via.total}
+                          onChange={(e) => setVia({ ...via, total: e.target.value })}
+                        />
+                      </Field>
+                      <Field label={translate("Commission %")}>
+                        <input
+                          className={inputCls}
+                          inputMode="decimal"
+                          value={via.pct}
+                          onChange={(e) => setVia({ ...via, pct: e.target.value })}
+                        />
+                      </Field>
+                    </>
+                  )}
+                </div>
 
                 <div className="border-t border-zinc-100 pt-2">
                   <button
@@ -1904,6 +1938,13 @@ export function BookingDialog(props: {
 
                       {moreRooms.length === 0 && (
                         <>
+                          <label className="flex items-center gap-2 text-sm font-medium text-zinc-700">
+                            <input
+                              type="checkbox"
+                              className="size-4 accent-brand-600"
+                              checked={offers}
+                              onChange={(e) => setOffers(e.target.checked)}
+                            />{translate("Guest agrees to offers on WhatsApp")}</label>
                           <label className="flex items-center gap-2 text-sm font-medium text-zinc-700">
                             <input
                               type="checkbox"

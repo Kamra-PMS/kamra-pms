@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function - the same governed layer
-the UI and the AI use. **416 endpoints**, generated from the source
+the UI and the AI use. **418 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -1128,6 +1128,10 @@ Arrival is always today (calendar, like every new booking - a lagging
 night audit must not turn walk-ins away); a future stay is a normal
 booking, not a walk-in.
 
+An OTA guest who books and arrives the same day is a walk-in booked
+via that site: booked_via / ota_ref / ota_total / ota_commission_pct
+work as in create_booking (the stay's source is then OTA).
+
 | Param | Required | Default |
 | --- | --- | --- |
 | `property` | yes |  |
@@ -1156,6 +1160,10 @@ booking, not a walk-in.
 | `blacklist_override_reason` | no | `None` |
 | `credit_override_reason` | no | `None` |
 | `defer_check_in` | no | `0` |
+| `booked_via` | no | `None` |
+| `ota_ref` | no | `None` |
+| `ota_total` | no | `0` |
+| `ota_commission_pct` | no | `None` |
 
 ### `kamra.api.upload_occupant_id`
 
@@ -1637,6 +1645,8 @@ a block refuses (CREDIT_BLOCKED) unless Finance or a Hotel Admin passes
 | `booked_via` | no | `None` |
 | `ota_ref` | no | `None` |
 | `ota_total` | no | `0` |
+| `ota_commission_pct` | no | `None` |
+| `marketing_consent` | no | `0` |
 
 ### `kamra.api.waitlist`
 
@@ -1678,6 +1688,11 @@ can proactively reach the guest the moment a room opens.
 Create a Group Booking plus one reservation per requested room.
 `rooms` = [{"room_type": &lt;name>, "count": 2}, ...] (JSON string ok).
 
+Booked via an OTA (see create_booking): every room carries the site and
+the one OTA reference, and the sold total (`ota_total`, tax included) is
+split across the rooms in proportion to their rate-card prices, each
+room locked to its share.
+
 | Param | Required | Default |
 | --- | --- | --- |
 | `property` | yes |  |
@@ -1690,6 +1705,10 @@ Create a Group Booking plus one reservation per requested room.
 | `company` | no | `None` |
 | `meal_plan` | no | `None` |
 | `rate_plan` | no | `None` |
+| `booked_via` | no | `None` |
+| `ota_ref` | no | `None` |
+| `ota_total` | no | `0` |
+| `ota_commission_pct` | no | `None` |
 
 ### `kamra.api.inventory_availability`
 
@@ -4396,8 +4415,10 @@ of Day, so a zero is explained rather than mysterious.
 
 **GET/POST** · roles: `Finance`, `Revenue Manager`, `Kamra Agent`
 
-Who brings the business: revenue + room nights + share, grouped by
-booking source, company or travel agent. by = source | company | travel_agent.
+Who brings the business: revenue + room nights + share + the
+commission paid for it (travel agent or OTA), grouped by booking source,
+company, travel agent or OTA channel.
+by = source | company | travel_agent | channel.
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -4886,6 +4907,37 @@ before / after.
 | `credit_limit` | no | `None` |
 | `credit_days` | no | `None` |
 | `use_default_credit_days` | no | `None` |
+
+
+## Company statements (print, email; daily payment reminders)
+
+### `kamra.statements.company_statement`
+
+**GET/POST** · roles: `Finance`, `Hotel Admin`
+
+One company's statement at its property: open bills with invoice
+date, due date, days overdue and amounts, unapplied credit, recent
+payments, totals and aging by due date. format=html returns the
+printable page (print or save as PDF from the browser).
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `account` | yes |  |
+| `format` | no | `'json'` |
+| `lang` | no | `'en'` |
+
+### `kamra.statements.email_company_statement`
+
+**POST** · roles: `Finance`, `Hotel Admin`
+
+Email a company its statement (HTML attachment). Without recipients
+it goes to the company's billing contact email.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `account` | yes |  |
+| `recipients` | no | `None` |
+| `lang` | no | `'en'` |
 
 
 ## Night audit (End of Day checklist, audit pack)
@@ -5855,6 +5907,7 @@ the sleeping arrangement and agrees the price for them.
 | `idempotency_key` | no | `''` |
 | `pets` | no | `0` |
 | `child_ages` | no | `None` |
+| `marketing_consent` | no | `0` |
 
 ### `kamra.public_api.access_info` <Badge type='tip' text='public' />
 

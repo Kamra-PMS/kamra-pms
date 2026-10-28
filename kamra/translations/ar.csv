@@ -1,13 +1,25 @@
+1 to 30,1 إلى 30
+15 days overdue,متأخرة 15 يومًا
+31 to 60,31 إلى 60
+61 to 90,61 إلى 90
+90+,+90
 ADR,متوسط سعر الغرفة
 Action,الإجراء
 Actor,المنفّذ
 Actual check-out,المغادرة الفعلية
 Adults,البالغون
+Aging by days overdue,التقادم حسب أيام التأخير
+All companies,جميع الشركات
 Amount,المبلغ
 Approver,المعتمِد
 Arrivals,الوصول
 Arrivals by source,الوصول حسب المصدر
+As of {0},حتى {0}
 Assigned to,مُسند إلى
+Balance,الرصيد
+Balance due,الرصيد المستحق
+Balance due: {0},الرصيد المستحق: {0}
+Billed,مفوتر
 Bookings,الحجوزات
 Breached,تم الإخلال
 By item,حسب الصنف
@@ -20,6 +32,7 @@ Check-in,تسجيل الوصول
 Check-out,تسجيل المغادرة
 Children,الأطفال
 Clean minutes,دقائق التنظيف
+Closing balance,الرصيد الختامي
 Closing cash,النقد الختامي
 Collected at,وقت الجمع
 Collections by mode,التحصيل حسب طريقة الدفع
@@ -28,12 +41,17 @@ Condition,الحالة
 Contribution by source,المساهمة حسب المصدر
 Covers,عدد الضيوف
 Created,تاريخ الإنشاء
+DSO (days),متوسط أيام التحصيل (أيام)
 Date,التاريخ
+Days overdue,أيام التأخير
+Days sales outstanding (DSO),متوسط أيام التحصيل (DSO)
+"Dear {0},",السادة {0}،
 Delivered at,وقت التسليم
 Departures,المغادرة
 Description,الوصف
 Detail,التفاصيل
 Due by,موعد الاستحقاق
+Due date,تاريخ الاستحقاق
 ETA,وقت الوصول المتوقع
 Early departures,مغادرات مبكرة
 Engineering pack,حزمة الهندسة
@@ -56,6 +74,11 @@ Housekeeping pack,حزمة التدبير المنزلي
 Housekeeping tasks,مهام التدبير الفندقي
 In house by room type,النزلاء المقيمون حسب نوع الغرفة
 In-house guests,الضيوف داخل الفندق
+Invoice,فاتورة
+Invoice date,تاريخ الفاتورة
+Invoice {0} for {1} is due on {2}.,الفاتورة {0} بمبلغ {1} تستحق في {2}.
+Invoice {0} for {1} is due today.,الفاتورة {0} بمبلغ {1} تستحق اليوم.
+Invoice {0} for {1} was due on {2} and is {3} days overdue.,الفاتورة {0} بمبلغ {1} كانت مستحقة في {2} ومتأخرة {3} يومًا.
 Item,البند
 Items,العناصر
 Items by menu,الأصناف حسب القائمة
@@ -69,11 +92,15 @@ Nights,الليالي
 Nights short,ليالٍ ناقصة
 No-shows & cancellations,عدم الحضور والإلغاءات
 No-shows and cancellations,عدم الحضور والإلغاءات
+Not due,غير مستحق
+"Not sent, no billing contact email: {0}",لم يُرسل، لا يوجد بريد إلكتروني لجهة الفوترة: {0}
 Occ %,إشغال %
 Occupancy,الإشغال
 Occupancy & revenue by day,الإشغال والإيراد حسب اليوم
 Occupancy and revenue,الإشغال والإيرادات
 Occupancy by day,الإشغال حسب اليوم
+Oldest due date,أقدم تاريخ استحقاق
+Open bills,فواتير مفتوحة
 Open tickets,تذاكر مفتوحة
 Opening cash,النقد الافتتاحي
 Order,الطلب
@@ -81,16 +108,24 @@ Order type,نوع الطلب
 Orders by status,الطلبات حسب الحالة
 Other revenue,إيرادات أخرى
 Outlet,المنفذ
+Outstanding,مستحق
+Overdue,متأخر
+Overdue by company,المتأخرات حسب الشركة
 POS items,أصناف نقطة البيع
 POS order,طلب نقطة البيع
 POS orders,طلبات نقاط البيع
+Paid,مدفوع
 Pax,عدد الضيوف
+Payment reminder from {0},تذكير بالدفع من {0}
+Payment reminders at {0},تذكيرات الدفع في {0}
+Payment terms: {0} days,شروط الدفع: {0} يومًا
 Payments,المدفوعات
 Payouts,المصروفات النقدية
 Previous period,الفترة السابقة
 Priority,الأولوية
 Qty,الكمية
 Rate,السعر
+Recent payments,المدفوعات الأخيرة
 Reference,المرجع
 Report,التقرير
 Reservation,حجز
@@ -115,18 +150,22 @@ Sales by outlet,المبيعات حسب المنفذ
 Scheduled check-out,المغادرة المجدولة
 Service,الخدمة
 Service tickets,تذاكر الخدمة
+Commission,العمولة
 Share %,الحصة %
 Shift,المناوبة
 Shift date,تاريخ الوردية
 Shift handover,تسليم الوردية
 Shift handovers,تسليم الورديات
 Source,المصدر
+Statement of account,كشف حساب
+Statement of account from {0},كشف حساب من {0}
 Status,الحالة
 Subject,الموضوع
 Task,المهمة
 Tasks,المهام
 Tasks by attendant,المهام حسب العامل
 Tasks by type,المهام حسب النوع
+Terms (days),مدة السداد (أيام)
 The report is attached.,التقرير مرفق.
 This period,هذه الفترة
 Ticket,التذكرة
@@ -138,11 +177,22 @@ Total revenue,إجمالي الإيرادات
 Turnaround,وقت الإنجاز
 Turnaround hours,ساعات الإنجاز
 Type,النوع
+Unapplied credit,رصيد دائن غير مطبّق
 Variance,الفارق
 Variance %,نسبة التباين
 Voids & allowances,الإلغاءات والخصومات
 Voids and allowances,الإلغاءات والخصومات
 Volume by guest vs house,الحجم: ضيف مقابل بيت
 When,متى
+Your statement of account is attached.,مرفق كشف حسابكم.
+due in 3 days,تستحق خلال 3 أيام
+due today,تستحق اليوم
 vs previous period,مقارنة بالفترة السابقة
+{0} has no billing contact email. Add one on the corporate account or type an address.,لا يوجد بريد إلكتروني لجهة الفوترة لدى {0}. أضفه في حساب الشركة أو اكتب عنوانًا.
+{0}: reminder sent for {1} ({2}),{0}: تم إرسال تذكير لـ {1} ({2})
 {0} rows,{0} صف
+"Marketing consent is changed from the guest profile, the booking page or a STOP / START reply.",يتم تغيير الموافقة التسويقية من ملف الضيف أو صفحة الحجز أو برد STOP / START.
+This guest has no phone number on file.,لا يوجد رقم هاتف مسجل لهذا الضيف.
+This guest has not agreed to marketing messages.,لم يوافق هذا الضيف على تلقي الرسائل التسويقية.
+You will get offers from {0} on WhatsApp. Reply STOP at any time to opt out.,ستصلك عروض {0} عبر واتساب. أرسل توقف في أي وقت لإلغاء الاشتراك.
+You will no longer get offers from {0}. Booking and stay messages continue. Reply START to opt in again.,لن تصلك عروض {0} بعد الآن. تستمر رسائل الحجز والإقامة. أرسل START للاشتراك مجددًا.

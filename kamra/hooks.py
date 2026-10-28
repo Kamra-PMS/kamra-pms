@@ -35,7 +35,9 @@ scheduler_events = {
 		],
 		# 09:00 - send self check-in links to upcoming arrivals, for properties
 		# that turned the setting on (a plain automation, not an agent)
-		"0 9 * * *": ["kamra.prearrival.run_prearrival_outreach"],
+		# (and company payment reminders, off unless a property turns them on)
+		"0 9 * * *": ["kamra.prearrival.run_prearrival_outreach",
+		              "kamra.statements.run_payment_reminders"],
 		# every 15 min - escalate overdue housekeeping tasks up the ladder;
 		# also release expired Held / Pending Payment reservations (ADR-006)
 		# and, past the property's release time, today's non-guaranteed

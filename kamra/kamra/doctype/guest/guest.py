@@ -13,6 +13,12 @@ class Guest(Document):
 		self.full_name = " ".join(p.strip() for p in parts if p.strip())
 
 	def validate(self):
+		# consent changes only through kamra.privacy.set_marketing_consent,
+		# which records the source and logs the change
+		if self.has_value_changed("marketing_consent") \
+				and (self.marketing_consent or not self.is_new()):
+			frappe.throw(_("Marketing consent is changed from the guest profile, "
+			               "the booking page or a STOP / START reply."))
 		# a document cannot expire before it was issued; a typo here would
 		# otherwise show every check-in a false "expired" warning
 		if self.id_issue_date and self.id_expiry_date \
