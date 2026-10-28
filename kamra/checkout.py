@@ -38,8 +38,7 @@ def settlement_position(reservation: str) -> dict:
 	company's. The group master of a group with a main room is left out:
 	it is settled with the group. Only the stay's Company folio, or the
 	group master when the group's company has credit, goes to the city
-	ledger; anything else with
-	money on it is the guest's to settle. Closed folios count too: a bill
+	ledger; anything else with money on it is the guest's to settle. Closed folios count too: a bill
 	closed with money on it is still owed.
 
 	owed            what the guest still has to pay
