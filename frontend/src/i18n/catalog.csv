@@ -5467,3 +5467,5 @@ ZATCA: still needed for valid e-invoices - {fields}.,ZATCA: still needed for val
 Zero-rate and complimentary rooms,Zero-rate and complimentary rooms,غرف بسعر صفر ومجانية,Habitaciones con tarifa cero y de cortesía,screens/AuditPack.tsx,,translated
 Zero-rated on purpose,Zero-rated on purpose,خاضع لنسبة صفرية عمدًا,Tasa cero aplicada intencionalmente,screens/BanquetFunction.tsx,,translated
 "Enable the connector in your AI chat and say things like ""occupancy this week"" or ""book a Deluxe for Friday"".","Enable the connector in your AI chat and say things like ""occupancy this week"" or ""book a Deluxe for Friday"".",فعّل الموصّل في محادثة الذكاء الاصطناعي وجرّب عبارات مثل «نسبة الإشغال هذا الأسبوع» أو «احجز غرفة ديلوكس ليوم الجمعة».,Active el conector en su chat de IA y pruebe con «ocupación de esta semana» o «reserve una habitación Deluxe para el viernes».,screens/Agents.tsx,,translated
+Residence Card,Residence Card,بطاقة الإقامة,Cédula de residencia,../kamra/localization/nicaragua.py,,translated
+Nicaraguan,Nicaraguan,نيكاراغوي,Nicaragüense,../kamra/localization/nicaragua.py,,translated

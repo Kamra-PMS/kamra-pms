@@ -5539,5 +5539,7 @@
   "Kamra Agent → AI Provider": "Agente Kamra → Provedor de IA",
   "Use the MCP URL to connect ChatGPT, Claude or another compatible provider. Each person signs in as themselves with OAuth.": "Use a URL MCP para conectar ChatGPT, Claude ou outro provedor compatível. Cada pessoa entra com sua própria conta via OAuth.",
   "Your AI provider will act as {0}, within your role. Prices, taxes and availability stay in Kamra. Every action is recorded under your name in the Activity log.": "Seu provedor de IA atuará como {0}, com as permissões da sua função. Preços, impostos e disponibilidade continuam no Kamra. Cada ação é registrada com seu nome no registro de Atividade.",
-  "Enable the connector in your AI chat and say things like \"occupancy this week\" or \"book a Deluxe for Friday\".": "Ative o conector no chat de IA e experimente frases como «ocupação desta semana» ou «reserve um quarto Deluxe para sexta-feira»."
+  "Enable the connector in your AI chat and say things like \"occupancy this week\" or \"book a Deluxe for Friday\".": "Ative o conector no chat de IA e experimente frases como «ocupação desta semana» ou «reserve um quarto Deluxe para sexta-feira».",
+  "Residence Card": "Carteira de residência",
+  "Nicaraguan": "Nicaraguense"
 }

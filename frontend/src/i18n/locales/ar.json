@@ -5558,5 +5558,7 @@
   "Kamra Agent → AI Provider": "وكيل Kamra ← مزوّد الذكاء الاصطناعي",
   "Your AI provider will act as {0}, within your role. Prices, taxes and availability stay in Kamra. Every action is recorded under your name in the Activity log.": "سيعمل مزوّد الذكاء الاصطناعي باسم {0} وضمن صلاحيات دورك. تبقى الأسعار والضرائب والتوافر في Kamra. يُسجّل كل إجراء باسمك في سجل النشاط.",
   "Enable the connector in your AI chat and say things like \"occupancy this week\" or \"book a Deluxe for Friday\".": "فعّل الموصّل في محادثة الذكاء الاصطناعي وجرّب عبارات مثل «نسبة الإشغال هذا الأسبوع» أو «احجز غرفة ديلوكس ليوم الجمعة».",
-  "Use the MCP URL to connect ChatGPT, Claude or another compatible provider. Each person signs in as themselves with OAuth.": "استخدم عنوان MCP لربط ChatGPT أو Claude أو مزوّد آخر متوافق. يسجّل كل شخص الدخول بحسابه الخاص عبر OAuth."
+  "Use the MCP URL to connect ChatGPT, Claude or another compatible provider. Each person signs in as themselves with OAuth.": "استخدم عنوان MCP لربط ChatGPT أو Claude أو مزوّد آخر متوافق. يسجّل كل شخص الدخول بحسابه الخاص عبر OAuth.",
+  "Residence Card": "بطاقة الإقامة",
+  "Nicaraguan": "نيكاراغوي"
 }
