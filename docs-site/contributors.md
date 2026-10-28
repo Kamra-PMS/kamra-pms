@@ -12,6 +12,8 @@ desk, or disclosed a security problem responsibly.
 | [@Mohammed-Muneef](https://github.com/Mohammed-Muneef) | Laundry, kitchen display v2, inventory & recipes, menu import, ID-document hardening |
 | [@faresalslahi-collab](https://github.com/faresalslahi-collab) | Booking guest and room summary (#83) |
 | [@ShaikhAmerPasha](https://github.com/ShaikhAmerPasha) | Saved bookings keep their voucher after it expires or hits its limit (reported in #142, fixed in #143); folio charges refuse zero or minus amounts and tax rates outside the country's list (reported in #146, fixed in #147); the bill screen's Void button asks for the reason the ledger needs (reported in #160, fixed in #161) |
+| [@ernestoruiz89](https://github.com/ernestoruiz89) | Spanish localization and menu navigation fixes (#320, #324), international guest phone prefixes (#345, #360), the chat assistant using the property's currency (#368) |
+| [@SandroG1977](https://github.com/SandroG1977) | Brazil country pack (ISS, BRL, CNPJ/CPF, NFS-e) (#378); Portuguese (pt-BR) staff UI (#377, landed via #383) |
 | [@caseylee-TC](https://github.com/caseylee-TC) | Step-by-step tutorial for writing a country pack ([#362](https://github.com/Kamra-PMS/kamra-pms/pull/362), fixes [#258](https://github.com/Kamra-PMS/kamra-pms/issues/258)) |
 
 ## Issues from the front desk

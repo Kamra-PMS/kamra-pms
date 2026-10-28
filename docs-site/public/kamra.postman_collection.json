@@ -417,7 +417,7 @@
       "description": "Cashier reconciliation: what the system says was collected today,\nper payment mode - the number the drawer must match at shift close.\n\nPrefers Cashier Transaction totals (FO + POS); falls back to folio\npayments for properties that have not opened a till yet.",
       "body": {
        "mode": "raw",
-       "raw": "{\n  \"property\": \"Your Property\",\n  \"date\": \"2026-08-01\"\n}",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"date\": \"2026-08-01\",\n  \"to_date\": \"2026-08-31\"\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -3134,10 +3134,10 @@
         "kamra.api.walk_in"
        ]
       },
-      "description": "Walk-in in one step: book, register the ID, check into the chosen\nroom and take the money - the counter flow that used to be four screens.\n\ndefer_check_in=1 books, assigns the room and takes the money (as an\nadvance) but leaves the stay Confirmed, so the desk finishes it in the\nguided check-in. Without it, check_in runs now (room is enough; other\nsoft-required steps stay as backfill). The walk-in records the steps it\ndoes itself (room, who pays, the ID when given).\n\nIt is the same writers chained (create_booking \u2192 check_in \u2192\nadd_folio_payment), inside one request, so it is all-or-nothing: a\nrefused PIN or a room that just sold rolls the booking back too.\nArrival is always today (calendar, like every new booking - a lagging\nnight audit must not turn walk-ins away); a future stay is a normal\nbooking, not a walk-in.",
+      "description": "Walk-in in one step: book, register the ID, check into the chosen\nroom and take the money - the counter flow that used to be four screens.\n\ndefer_check_in=1 books, assigns the room and takes the money (as an\nadvance) but leaves the stay Confirmed, so the desk finishes it in the\nguided check-in. Without it, check_in runs now (room is enough; other\nsoft-required steps stay as backfill). The walk-in records the steps it\ndoes itself (room, who pays, the ID when given).\n\nIt is the same writers chained (create_booking \u2192 check_in \u2192\nadd_folio_payment), inside one request, so it is all-or-nothing: a\nrefused PIN or a room that just sold rolls the booking back too.\nArrival is always today (calendar, like every new booking - a lagging\nnight audit must not turn walk-ins away); a future stay is a normal\nbooking, not a walk-in.\n\nAn OTA guest who books and arrives the same day is a walk-in booked\nvia that site: booked_via / ota_ref / ota_total / ota_commission_pct\nwork as in create_booking (the stay's source is then OTA).",
       "body": {
        "mode": "raw",
-       "raw": "{\n  \"property\": \"Your Property\",\n  \"room_type\": \"Your Property-DLX\",\n  \"room\": \"Your Property-101\",\n  \"check_out_date\": \"2026-08-03\",\n  \"guest_name\": \"A. Guest\",\n  \"phone\": \"+91 90000 00000\",\n  \"guest\": \"G-00001\",\n  \"adults\": 2,\n  \"children\": 0,\n  \"payment_amount\": 0,\n  \"defer_check_in\": 0\n}",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"room_type\": \"Your Property-DLX\",\n  \"room\": \"Your Property-101\",\n  \"check_out_date\": \"2026-08-03\",\n  \"guest_name\": \"A. Guest\",\n  \"phone\": \"+91 90000 00000\",\n  \"guest\": \"G-00001\",\n  \"adults\": 2,\n  \"children\": 0,\n  \"payment_amount\": 0,\n  \"defer_check_in\": 0,\n  \"ota_total\": 0\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -3911,10 +3911,10 @@
         "kamra.api.move_reservation"
        ]
       },
-      "description": "Room move / upgrade - mid-stay or before arrival. Overlap guard re-runs.\nOne writer for the tape chart, the reservation drawer and the GRC (#113).\n\nThe new room may be a DIFFERENT room type (e.g. Standard -> Suite): the\nreservation's room type follows the room it moves into, so upgrades and\ndowngrades are allowed. If the booking auto-prices, the new type's rate\nis quoted and locked - shown first by room_move_preview, and refused\nunless confirm_price=1 when it changes the bill. A same-type move keeps\nthe locked nightly rates; a manually-priced booking keeps its amount.",
+      "description": "Room move / upgrade - mid-stay or before arrival. Overlap guard re-runs.\nOne writer for the tape chart, the reservation drawer and the GRC (#113).\n\nThe new room may be a DIFFERENT room type (e.g. Standard -> Suite): the\nreservation's room type follows the room it moves into, so upgrades and\ndowngrades are allowed. If the booking auto-prices, the new type's rate\nis quoted and locked - shown first by room_move_preview, and refused\nunless confirm_price=1 when it changes the bill. A same-type move keeps\nthe locked nightly rates; a manually-priced booking keeps its amount.\n\nrate_mode: \"destination\" (the new type's rate, above), \"source\" (keep\nwhat the guest pays now) or \"custom\" (agreed_rate per night; Revenue\nManager / admins only).",
       "body": {
        "mode": "raw",
-       "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"new_room\": \"<new_room>\",\n  \"confirm_price\": 0\n}",
+       "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"new_room\": \"<new_room>\",\n  \"confirm_price\": 0,\n  \"rate_mode\": \"destination\"\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -3951,7 +3951,7 @@
       "description": "What a move would do to the bill before the desk confirms it: a\nsame-type swap keeps the price (and the locked nightly rates); an\nupgrade / downgrade on an auto-priced booking is re-quoted at the new\ntype's rate by the pricing engine, and move_reservation then needs\nconfirm_price=1.",
       "body": {
        "mode": "raw",
-       "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"new_room\": \"<new_room>\"\n}",
+       "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"new_room\": \"<new_room>\",\n  \"rate_mode\": \"destination\"\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -4210,7 +4210,7 @@
       "description": "One-call booking: attach to an existing guest profile when given,\nelse dedup by phone / create one. Optional auto room assignment,\nvoucher applied, price computed by the engine.\n\nwaitlist=1 parks the stay with no room and status Waitlist - for dates\nthat are sold out or restricted; promote it later when a room frees.\n\nstatus / idempotency_key / hold_expires_on support Instant public booking\n(ADR-006 / ADR-007). Desk callers leave them unset \u2192 Confirmed.\n\nDay use: check_out_date == check_in_date books a same-day stay, priced\nby the quote engine (one billable date). check_in_time / check_out_time\n(HH:MM) are its slot - they place it on the hourly tape and tell\nhousekeeping when the room turns; on an overnight stay they are the\nETA / ETD.\n\nA stay billed to a company on credit runs the property's credit control\n(kamra.credit) for its amount: a warning comes back as `credit_warning`;\na block refuses (CREDIT_BLOCKED) unless Finance or a Hotel Admin passes\n`credit_override_reason`, which is logged. Agents can't override.",
       "body": {
        "mode": "raw",
-       "raw": "{\n  \"property\": \"Your Property\",\n  \"room_type\": \"Your Property-DLX\",\n  \"check_in_date\": \"2026-08-01\",\n  \"check_out_date\": \"2026-08-03\",\n  \"guest_name\": \"A. Guest\",\n  \"phone\": \"+91 90000 00000\",\n  \"adults\": 2,\n  \"children\": 0,\n  \"booking_type\": \"Individual\",\n  \"source\": \"Manual\",\n  \"assign_room\": 1,\n  \"guest\": \"G-00001\",\n  \"waitlist\": 0,\n  \"room\": \"Your Property-101\",\n  \"over_capacity_guests\": 0,\n  \"over_capacity_charge\": 0,\n  \"pets\": 0\n}",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"room_type\": \"Your Property-DLX\",\n  \"check_in_date\": \"2026-08-01\",\n  \"check_out_date\": \"2026-08-03\",\n  \"guest_name\": \"A. Guest\",\n  \"phone\": \"+91 90000 00000\",\n  \"adults\": 2,\n  \"children\": 0,\n  \"booking_type\": \"Individual\",\n  \"source\": \"Manual\",\n  \"assign_room\": 1,\n  \"guest\": \"G-00001\",\n  \"waitlist\": 0,\n  \"room\": \"Your Property-101\",\n  \"over_capacity_guests\": 0,\n  \"over_capacity_charge\": 0,\n  \"pets\": 0,\n  \"ota_total\": 0,\n  \"marketing_consent\": 0\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -4355,10 +4355,10 @@
         "kamra.api.create_group_booking"
        ]
       },
-      "description": "Create a Group Booking plus one reservation per requested room.\n`rooms` = [{\"room_type\": <name>, \"count\": 2}, ...] (JSON string ok).",
+      "description": "Create a Group Booking plus one reservation per requested room.\n`rooms` = [{\"room_type\": <name>, \"count\": 2}, ...] (JSON string ok).\n\nBooked via an OTA (see create_booking): every room carries the site and\nthe one OTA reference, and the sold total (`ota_total`, tax included) is\nsplit across the rooms in proportion to their rate-card prices, each\nroom locked to its share.",
       "body": {
        "mode": "raw",
-       "raw": "{\n  \"property\": \"Your Property\",\n  \"group_name\": \"<group_name>\",\n  \"check_in_date\": \"2026-08-01\",\n  \"check_out_date\": \"2026-08-03\",\n  \"rooms\": \"<rooms>\",\n  \"guest_name\": \"A. Guest\",\n  \"phone\": \"+91 90000 00000\"\n}",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"group_name\": \"<group_name>\",\n  \"check_in_date\": \"2026-08-01\",\n  \"check_out_date\": \"2026-08-03\",\n  \"rooms\": \"<rooms>\",\n  \"guest_name\": \"A. Guest\",\n  \"phone\": \"+91 90000 00000\",\n  \"ota_total\": 0\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -6727,7 +6727,7 @@
       "description": "One shift at a glance: what the outlet sold, what's still open, the\nexceptions that need a manager's eye (NC, voids, cancellations), and how\nfast the kitchen is turning tickets. Defaults to today.",
       "body": {
        "mode": "raw",
-       "raw": "{\n  \"outlet\": \"Your Property-Restaurant\",\n  \"date\": \"2026-08-01\"\n}",
+       "raw": "{\n  \"outlet\": \"Your Property-Restaurant\",\n  \"date\": \"2026-08-01\",\n  \"to_date\": \"2026-08-31\"\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -11266,10 +11266,10 @@
         "kamra.reports.manager_flash"
        ]
       },
-      "description": "The daily flash: yesterday's performance, month to date, today's\nmovement, collections by mode, and the 7-day outlook.",
+      "description": "The daily flash: yesterday's performance, month to date, today's\nmovement, collections by mode, and the 7-day outlook. With from_date,\nthe day figures, trend, movement and collections cover from_date..date.",
       "body": {
        "mode": "raw",
-       "raw": "{\n  \"property\": \"Your Property\",\n  \"date\": \"2026-08-01\"\n}",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"date\": \"2026-08-01\",\n  \"from_date\": \"2026-08-01\"\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -11377,7 +11377,7 @@
         "kamra.reports.contribution"
        ]
       },
-      "description": "Who brings the business: revenue + room nights + share, grouped by\nbooking source, company or travel agent. by = source | company | travel_agent.",
+      "description": "Who brings the business: revenue + room nights + share + the\ncommission paid for it (travel agent or OTA), grouped by booking source,\ncompany, travel agent or OTA channel.\nby = source | company | travel_agent | channel.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\",\n  \"from_date\": \"2026-08-01\",\n  \"to_date\": \"2026-08-31\",\n  \"by\": \"source\"\n}",
@@ -11460,6 +11460,80 @@
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "list_report_packs",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.custom_reports.list_report_packs",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.custom_reports.list_report_packs"
+       ]
+      },
+      "description": "Department packs with the sections this user may run here.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "run_report_pack",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.custom_reports.run_report_pack",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.custom_reports.run_report_pack"
+       ]
+      },
+      "description": "Run a department pack (id from list_report_packs) for a date range.\nformat=json (sections of rows) or html (one printable page).\ncompare=1 (default) adds this-vs-previous totals on each section.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"pack\": \"<pack>\",\n  \"from_date\": \"2026-08-01\",\n  \"to_date\": \"2026-08-31\",\n  \"format\": \"json\",\n  \"lang\": \"en\",\n  \"compare\": 1\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -11567,7 +11641,7 @@
         "kamra.custom_reports.save_custom_report"
        ]
       },
-      "description": "Create or update a saved custom report definition.",
+      "description": "Create or update a saved custom report definition. lang (en, es, ar)\nis the language its scheduled emails go out in.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\",\n  \"title\": \"<title>\",\n  \"dataset\": \"<dataset>\",\n  \"is_shared\": 0,\n  \"schedule_frequency\": \"Off\",\n  \"schedule_time\": \"07:00\",\n  \"schedule_weekday\": \"Mon\",\n  \"recipients\": \"\"\n}",
@@ -11641,10 +11715,10 @@
         "kamra.custom_reports.run_custom_report"
        ]
       },
-      "description": "Run a saved report or an ad-hoc definition. format=json|csv|html.",
+      "description": "Run a saved report or an ad-hoc definition. format=json|csv|html.\ncompare=1 adds this-vs-previous totals for number columns.",
       "body": {
        "mode": "raw",
-       "raw": "{\n  \"property\": \"Your Property\",\n  \"from_date\": \"2026-08-01\",\n  \"to_date\": \"2026-08-31\",\n  \"format\": \"json\",\n  \"lang\": \"en\"\n}",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"from_date\": \"2026-08-01\",\n  \"to_date\": \"2026-08-31\",\n  \"format\": \"json\",\n  \"lang\": \"en\",\n  \"compare\": 0\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -12130,7 +12204,7 @@
       "description": "",
       "body": {
        "mode": "raw",
-       "raw": "{\n  \"property\": \"Your Property\"\n}",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"from_date\": \"2026-08-01\",\n  \"to_date\": \"2026-08-31\"\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -12656,6 +12730,85 @@
    ]
   },
   {
+   "name": "Company statements (print, email; daily payment reminders)",
+   "item": [
+    {
+     "name": "company_statement",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.statements.company_statement",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.statements.company_statement"
+       ]
+      },
+      "description": "One company's statement at its property: open bills with invoice\ndate, due date, days overdue and amounts, unapplied credit, recent\npayments, totals and aging by due date. format=html returns the\nprintable page (print or save as PDF from the browser).",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"account\": \"<account>\",\n  \"format\": \"json\",\n  \"lang\": \"en\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "email_company_statement",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.statements.email_company_statement",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.statements.email_company_statement"
+       ]
+      },
+      "description": "Email a company its statement (HTML attachment). Without recipients\nit goes to the company's billing contact email.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"account\": \"<account>\",\n  \"lang\": \"en\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
    "name": "Night audit (End of Day checklist, audit pack)",
    "item": [
     {
@@ -12835,6 +12988,43 @@
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\",\n  \"limit\": 20\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "night_audit_schedule",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.night_audit.night_audit_schedule",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.night_audit.night_audit_schedule"
+       ]
+      },
+      "description": "The automatic night audit at a glance: on or off, the next run on the\nproperty clock (None = manual only), the business date and the last 30\nruns, scheduled and manual, from the Night Audit Log.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\"\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -13469,7 +13659,7 @@
       "description": "Per-room numbers for the last `days` nights (7, 30, 90, 180 or 365,\nup to yesterday): room nights sold and occupancy, room revenue posted to\nfolios, out-of-service nights, and how long cleans take. Cached for a\nfew minutes (refresh=1 recomputes); one query per measure, never one\nper room.",
       "body": {
        "mode": "raw",
-       "raw": "{\n  \"property\": \"Your Property\",\n  \"days\": 30,\n  \"refresh\": 0\n}",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"days\": 30,\n  \"refresh\": 0,\n  \"from_date\": \"2026-08-01\",\n  \"to_date\": \"2026-08-31\"\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -15141,7 +15331,7 @@
       "description": "Create a Website booking. Guest identity is the phone number; staff\nverify at check-in. The advance owed is computed from the property's\ncurrent payment policy and snapshotted onto the booking.\n\nInstant mode (default): Confirmed when nothing is due now, else\nPending Payment with a hold window. Request to Book: Requested (no\ninventory) until the host approves. A party above what the room sleeps,\nwithin the extra guests it allows, is also Requested: the host confirms\nthe sleeping arrangement and agrees the price for them.",
       "body": {
        "mode": "raw",
-       "raw": "{\n  \"property\": \"Your Property\",\n  \"room_type\": \"Your Property-DLX\",\n  \"check_in_date\": \"2026-08-01\",\n  \"check_out_date\": \"2026-08-03\",\n  \"guest_name\": \"A. Guest\",\n  \"phone\": \"+91 90000 00000\",\n  \"email\": \"guest@example.com\",\n  \"adults\": 2,\n  \"children\": 0,\n  \"meal_plan\": \"\",\n  \"special_requests\": \"\",\n  \"voucher_code\": \"\",\n  \"idempotency_key\": \"\",\n  \"pets\": 0\n}",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"room_type\": \"Your Property-DLX\",\n  \"check_in_date\": \"2026-08-01\",\n  \"check_out_date\": \"2026-08-03\",\n  \"guest_name\": \"A. Guest\",\n  \"phone\": \"+91 90000 00000\",\n  \"email\": \"guest@example.com\",\n  \"adults\": 2,\n  \"children\": 0,\n  \"meal_plan\": \"\",\n  \"special_requests\": \"\",\n  \"voucher_code\": \"\",\n  \"idempotency_key\": \"\",\n  \"pets\": 0,\n  \"marketing_consent\": 0\n}",
        "options": {
         "raw": {
          "language": "json"

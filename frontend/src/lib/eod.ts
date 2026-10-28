@@ -119,7 +119,9 @@ export interface OverviewRow {
   blockers: number
   blocker_keys: string[]
   draft_step: number | null
-  /** 03:00 Hold and alert — BD not rolled; resolve and run EOD. */
+  /** next automatic audit on the property clock; null = manual only */
+  next_auto_run: string | null
+  /** scheduled Hold and alert: BD not rolled; resolve and run EOD. */
   held: { at: string; detail: string } | null
   /** Completed audit for current BD but date roll did not stick. */
   stuck_date: {

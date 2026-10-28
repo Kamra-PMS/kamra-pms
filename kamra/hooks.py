@@ -33,16 +33,19 @@ scheduler_events = {
 			# custom reports with Daily/Weekly email schedule
 			"kamra.custom_reports.run_scheduled_custom_reports",
 		],
-		# 03:00 site time, daily - the night audit closes the day
-		"0 3 * * *": ["kamra.folio.nightly_audit_all_properties"],
 		# 09:00 - send self check-in links to upcoming arrivals, for properties
 		# that turned the setting on (a plain automation, not an agent)
-		"0 9 * * *": ["kamra.prearrival.run_prearrival_outreach"],
+		# (and company payment reminders, off unless a property turns them on)
+		"0 9 * * *": ["kamra.prearrival.run_prearrival_outreach",
+		              "kamra.statements.run_payment_reminders"],
 		# every 15 min - escalate overdue housekeeping tasks up the ladder;
 		# also release expired Held / Pending Payment reservations (ADR-006)
 		# and, past the property's release time, today's non-guaranteed
 		# arrivals (no-show policy, off unless a release time is set)
+		# also close the day: the night audit runs per property at its own
+		# night_audit_time on its own clock (default 03:00), one date a tick
 		"*/15 * * * *": [
+			"kamra.folio.nightly_audit_all_properties",
 			"kamra.housekeeping.escalate_overdue_tasks",
 			"kamra.reservation_state.expire_holds",
 			# group blocks past their cutoff give unpicked rooms back to sale
@@ -95,6 +98,8 @@ kamra_localization = {
 	"Malaysia": "kamra.localization.malaysia",
 	"United Arab Emirates": "kamra.localization.uae",
 	"Saudi Arabia": "kamra.localization.saudi",
+	"Brazil": "kamra.localization.brazil",
+	"Brasil": "kamra.localization.brazil",
 }
 
 # Served single-page app
@@ -250,7 +255,7 @@ _PROPERTY_SCOPED = (
 	"Folio Reprint", "Group Booking", "Housekeeping Task", "Hurdle Rate",
 	"Ingredient", "Ingredient Ledger Entry", "Ingredient Stock", "Kitchen Printer",
 	"Laundry Order", "Laundry Rate", "Lost And Found Item", "MCP OAuth Grant",
-	"Meal Plan", "Menu Item", "Night Audit Run", "Outbound Webhook",
+	"Meal Plan", "Menu Item", "Night Audit Log", "Night Audit Run", "Outbound Webhook",
 	"Outbound Webhook Delivery", "Payment Gateway Settings",
 	"Petty Cash Voucher", "POS Order", "POS Outlet", "POS Table Reservation",
 	"Print Job",

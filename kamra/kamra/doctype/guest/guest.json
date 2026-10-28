@@ -33,7 +33,11 @@
   "guest_notes",
   "id_file",
   "address_proof_file",
-  "photo"
+  "photo",
+  "sb_marketing",
+  "marketing_consent",
+  "marketing_consent_date",
+  "marketing_consent_source"
  ],
  "fields": [
   {
@@ -186,12 +190,38 @@
    "fieldtype": "Select",
    "label": "Gender",
    "options": "\nMale\nFemale\nOther\nPrefer not to say"
+  },
+  {
+   "fieldname": "sb_marketing",
+   "fieldtype": "Section Break",
+   "label": "Marketing consent"
+  },
+  {
+   "default": "0",
+   "description": "Promotional WhatsApp messages go only to guests who opted in. Changed through the guest profile, the booking page or a STOP / START reply; every change is logged.",
+   "fieldname": "marketing_consent",
+   "fieldtype": "Check",
+   "label": "Marketing consent",
+   "read_only": 1
+  },
+  {
+   "fieldname": "marketing_consent_date",
+   "fieldtype": "Datetime",
+   "label": "Consent changed on",
+   "read_only": 1
+  },
+  {
+   "fieldname": "marketing_consent_source",
+   "fieldtype": "Select",
+   "label": "Consent source",
+   "options": "\nBooking Page\nDesk\nWhatsApp Keyword",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-21 12:00:00.000000",
+ "modified": "2026-10-28 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Guest",

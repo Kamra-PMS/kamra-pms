@@ -1040,7 +1040,7 @@ def run_night_audit(property: str, business_date: str | None = None,
 	mode "manual" (Billing, REST, MCP): refused while a blocking check has
 	  items, unless every one is listed in ``acknowledge`` with a ``note``
 	  (the reason) - who acknowledged it and when is stored on the run.
-	mode "scheduled" (03:00): follows the property's
+	mode "scheduled" (the 15 minute tick): follows the property's
 	  na_auto_audit_with_blockers - "Run and report exceptions" closes the
 	  day and records the blockers as exceptions; "Hold and alert" leaves
 	  the business date and alerts Hotel Admin and Finance.
@@ -1323,27 +1323,69 @@ def run_night_audit(property: str, business_date: str | None = None,
 	}
 
 
-# The 03:00 cron closes at most this many overdue days in one night. A
+# The scheduler closes at most this many overdue days on its own. A
 # property further behind gets an alert instead: weeks of unattended room
 # nights and no-show fees need a person to check the stays first.
 NIGHTLY_CATCH_UP_DAYS = 3
 
 
+def audit_due_at(property: str, day):
+	"""When the automatic audit is due on `day`, on the property's clock:
+	night_audit_time plus the grace minutes."""
+	from datetime import datetime, timedelta
+
+	from kamra.settings import get_setting
+	at = datetime.strptime(get_setting(property, "night_audit_time"), "%H:%M").time()
+	grace = int(get_setting(property, "night_audit_grace_minutes") or 0)
+	return datetime.combine(getdate(day), at) + timedelta(minutes=grace)
+
+
+def scheduled_attempt_made(property: str, business_date, local_now, due) -> bool:
+	"""The scheduler already tried this business date since today's due
+	time and did not close it (held, skipped or failed). It then waits for
+	tomorrow or for staff, instead of retrying and alerting every tick."""
+	since = now_datetime() - (local_now - due)
+	return bool(frappe.db.exists("Night Audit Log", {
+		"property": property, "run_trigger": "Scheduled",
+		"business_date": business_date, "status": ("!=", "Closed"),
+		"started_at": (">=", since)}))
+
+
 def nightly_audit_all_properties():
-	"""Scheduler entry point - runs the audit for every active property.
-
-	The cron fires at 03:00, so it only closes a business date that is
-	strictly before today. If staff already closed yesterday by hand, the
-	business date is today and that day has only just started - leave it."""
-	today = getdate(nowdate())
-	for p in frappe.get_all("Property", filters={"disabled": 0}):
+	"""Scheduler entry point, every 15 minutes. For each active property
+	with night_audit_auto on, once its local clock is past night_audit_time
+	(+ grace) and its business date is before the local calendar date,
+	closes ONE business date. A property several days behind catches up
+	one day per tick. Each property runs on its own; one failing never
+	stops the rest."""
+	from kamra.night_audit import record_run
+	from kamra.settings import get_setting
+	for p in frappe.get_all("Property", filters={"disabled": 0}, pluck="name"):
 		try:
-			_nightly_audit_property(p.name, today)
+			if not get_setting(p, "night_audit_auto"):
+				continue
+			local_now = audit_clock(p)
+			today = local_now.date()
+			due = audit_due_at(p, today)
+			if local_now < due:
+				continue
+			bd = frappe.db.get_value("Property", p, "business_date")
+			if bd and getdate(bd) >= today:
+				continue
+			if bd and scheduled_attempt_made(p, bd, local_now, due):
+				continue
+			# a fresh snapshot, then a row lock on the property: a second
+			# worker waits here and then sees the first one's date roll
+			frappe.db.commit()  # nosemgrep: frappe-manual-commit -- releases the read snapshot before the per-property lock
+			frappe.db.sql("SELECT name FROM `tabProperty` WHERE name = %s FOR UPDATE", p)
+			record_run(p, "Scheduled", lambda p=p, today=today: _nightly_audit_property(p, today))
 		except Exception:
-			frappe.log_error(title=f"Night audit failed: {p.name}")
+			frappe.log_error(title=f"Night audit failed: {p}")
 
 
-def _nightly_audit_property(property: str, today) -> None:
+def _nightly_audit_property(property: str, today) -> dict | None:
+	"""One scheduled attempt: None when there is nothing to do, else what
+	happened (a run_night_audit result, or a skip with its reason)."""
 	from frappe.utils import date_diff
 
 	from kamra import night_audit as na
@@ -1354,17 +1396,19 @@ def _nightly_audit_property(property: str, today) -> None:
 	if bd >= today:
 		log.info(f"Night audit skipped for {property}: business date {bd} "
 		         f"is not before today ({today})")
-		return
+		return None
 	# A completed run for the open date whose roll did not stick. Without
 	# this every night answered already_ran and the date never moved again.
 	# Advance it like recover_stuck_business_date does; nothing is re-posted.
 	stuck = na.stuck_business_date(property)
 	if stuck:
 		bd = getdate(advance_business_date(property, str(bd)))
-		log.warning(f"Night audit for {property}: business date was stuck on "
-		            f"{stuck['business_date']} (audit {stuck['audit']}), moved to {bd}")
+		msg = (f"Business date was stuck on {stuck['business_date']} "
+		       f"(audit {stuck['audit']}), moved to {bd}")
+		log.warning(f"Night audit for {property}: {msg}")
 		if bd >= today:
-			return
+			return {"skipped": True, "business_date": stuck["business_date"],
+			        "message": msg}
 	behind = date_diff(today, bd)
 	if behind > NIGHTLY_CATCH_UP_DAYS:
 		name = frappe.db.get_value("Property", property, "property_name") or property
@@ -1375,9 +1419,5 @@ def _nightly_audit_property(property: str, today) -> None:
 		log.warning(f"Night audit not run for {property}: {msg}")
 		na.alert_staff(property, ("Hotel Admin", "Finance"),
 		               f"Night audit behind - {name}", f"{name}: {msg}")
-		return
-	for _ in range(behind):
-		out = run_night_audit(property, mode="scheduled") or {}
-		nxt = out.get("next_business_date")
-		if not nxt or getdate(nxt) >= today:
-			return
+		return {"skipped": True, "business_date": str(bd), "message": msg}
+	return run_night_audit(property, mode="scheduled")

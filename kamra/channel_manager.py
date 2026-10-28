@@ -44,6 +44,26 @@ def canonical_channel(name: str | None) -> str | None:
 	return known.get(key) or _CHANNEL_ALIASES.get(key) or name
 
 
+def channel_commission_pcts() -> dict[str, float]:
+	"""Each OTA's default commission %: its Travel Agent record of type OTA
+	(Settings > Travel Agents), keyed by the site's one name."""
+	return {canonical_channel(a.agent_name): float(a.commission_pct or 0)
+	        for a in frappe.get_all(
+	            "Travel Agent", filters={"agent_type": "OTA", "disabled": 0},
+	            fields=["agent_name", "commission_pct"])}
+
+
+def set_ota_commission(doc, pct) -> None:
+	"""Record the OTA's commission on an inserted booking: `pct` of its
+	pre-tax price (the base a travel agent's commission uses). A travel
+	agent's own commission wins."""
+	if doc.get("travel_agent") or not float(pct or 0):
+		return
+	base = (float(doc.amount_before_tax or 0)
+	        or sum(float(n.rate or 0) for n in doc.night_rates))
+	doc.db_set("commission_amount", round(base * float(pct) / 100, 2))
+
+
 def _connections(property: str | None = None, only_active=True):
 	filters = {}
 	if property:
@@ -430,6 +450,11 @@ def _apply_event(conn, e: dict, requested_reason: str | None = None) -> dict:
 		doc.amount_after_tax = e["total"]
 		lock_channel_rates(doc, e["total"], e.get("nightly"))
 	doc.insert(ignore_permissions=True)
+	# the channel's own commission when it sends one, else the site's default
+	if e.get("commission"):
+		doc.db_set("commission_amount", float(e["commission"]))
+	else:
+		set_ota_commission(doc, channel_commission_pcts().get(e.get("channel")))
 	from kamra.savings import log_action
 	log_action("channel.booking", "Reservation", doc.name, conn.property,
 	           minutes_saved=4,

@@ -39,6 +39,7 @@ import {
   AiSection,
   AppearanceCard,
   CheckInStepsCard,
+  NightAuditScheduleCard,
   HurdleRatesCard,
   KamraVerifyCard,
   LaundryRatesCard,
@@ -420,6 +421,13 @@ export default function SettingsHub() {
             }
           >
             {mod.id === "front-desk" && <CheckInStepsCard property={property} />}
+            {mod.id === "front-desk" && (
+              <NightAuditScheduleCard
+                key={["night_audit_auto", "night_audit_time", "night_audit_grace_minutes"]
+                  .map((k) => String(mod.values[k])).join("|")}
+                property={property}
+              />
+            )}
             {mod.id === "housekeeping" && <LaundryRatesCard property={property} />}
             {mod.id === "revenue" && <HurdleRatesCard property={property} />}
             {mod.id === "fnb" && <KitchenPrintersCard property={property} />}

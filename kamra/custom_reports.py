@@ -222,6 +222,7 @@ DATASETS: dict[str, Dataset] = {
 			_col("bookings", "Bookings", "number"),
 			_col("room_nights", "Room nights", "number"),
 			_col("revenue", "Revenue", "number"),
+			_col("commission", "Commission", "number"),
 			_col("share", "Share %", "number"),
 		],
 	},
@@ -419,6 +420,42 @@ DATASETS: dict[str, Dataset] = {
 			_col("nights_short", "Nights short", "number"),
 			_col("company", "Company"),
 			_col("source", "Source"),
+		],
+	},
+	"overdue_by_company": {
+		"id": "overdue_by_company",
+		"label": "Overdue by company",
+		"description": "Companies with city ledger bills past their due date, aged by days overdue.",
+		"module": "finance",
+		"roles": ("Finance", "Hotel Admin", "Kamra Agent"),
+		"needs_range": False,
+		"columns": [
+			_col("company", "Company"),
+			_col("credit_days", "Terms (days)", "number"),
+			_col("balance", "Balance", "number"),
+			_col("not_due", "Not due", "number"),
+			_col("d1_30", "1 to 30", "number"),
+			_col("d31_60", "31 to 60", "number"),
+			_col("d61_90", "61 to 90", "number"),
+			_col("d90p", "90+", "number"),
+			_col("overdue", "Overdue", "number"),
+			_col("oldest_overdue_due_date", "Oldest due date", "date"),
+		],
+	},
+	"dso": {
+		"id": "dso",
+		"label": "Days sales outstanding (DSO)",
+		"description": "Per company: city ledger billed and paid in the period, the balance at its end, "
+		               "and DSO = closing balance / billed x days. The last row is all companies.",
+		"module": "finance",
+		"roles": ("Finance", "Hotel Admin", "Kamra Agent"),
+		"needs_range": True,
+		"columns": [
+			_col("company", "Company"),
+			_col("billed", "Billed", "number"),
+			_col("paid", "Paid", "number"),
+			_col("closing_balance", "Closing balance", "number"),
+			_col("dso", "DSO (days)", "number"),
 		],
 	},
 }
@@ -992,6 +1029,41 @@ def _fetch_early_departures(property: str, from_date: str, to_date: str,
 	return out
 
 
+def _fetch_overdue_by_company(property: str, **_) -> list[dict]:
+	from kamra.ledger import city_ledger_aging
+	return [a for a in city_ledger_aging(property)["accounts"] if a["overdue"] > 0]
+
+
+def _fetch_dso(property: str, from_date: str, to_date: str, **kw) -> list[dict]:
+	"""DSO = closing AR / what was billed in the period x days in it. Billed
+	is invoices less credit notes and adjustments; a company billed nothing
+	has no DSO."""
+	rows = frappe.db.sql(
+		"""
+		SELECT a.company,
+		       SUM(CASE WHEN e.kind != 'Payment' AND e.posting_date BETWEEN %(f)s AND %(t)s
+		                THEN e.debit - e.credit ELSE 0 END) AS billed,
+		       SUM(CASE WHEN e.kind = 'Payment' AND e.posting_date BETWEEN %(f)s AND %(t)s
+		                THEN e.credit - e.debit ELSE 0 END) AS paid,
+		       SUM(CASE WHEN e.posting_date <= %(t)s THEN e.debit - e.credit ELSE 0 END)
+		           AS closing_balance
+		FROM `tabCity Ledger Entry` e
+		JOIN `tabCity Ledger Account` a ON a.name = e.account
+		WHERE a.property = %(p)s
+		GROUP BY a.company ORDER BY a.company
+		""", {"p": property, "f": from_date, "t": to_date}, as_dict=True)
+	days = date_diff(to_date, from_date) + 1
+	rows = [r for r in rows if r.billed or r.paid or r.closing_balance]
+	rows.append({"company": _("All companies"),
+	             **{k: sum(float(r[k] or 0) for r in rows)
+	                for k in ("billed", "paid", "closing_balance")}})
+	for r in rows:
+		for k in ("billed", "paid", "closing_balance"):
+			r[k] = round(float(r[k] or 0), 2)
+		r["dso"] = round(r["closing_balance"] / r["billed"] * days, 1) if r["billed"] > 0 else None
+	return rows
+
+
 FETCHERS: dict[str, Callable[..., list[dict]]] = {
 	"arrivals": _fetch_arrivals,
 	"departures": _fetch_departures,
@@ -1011,6 +1083,8 @@ FETCHERS: dict[str, Callable[..., list[dict]]] = {
 	"laundry_orders": _fetch_laundry_orders,
 	"shift_handover": _fetch_shift_handover,
 	"early_departures": _fetch_early_departures,
+	"overdue_by_company": _fetch_overdue_by_company,
+	"dso": _fetch_dso,
 }
 
 

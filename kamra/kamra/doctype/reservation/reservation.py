@@ -597,7 +597,10 @@ class Reservation(Document):
 			pct = frappe.db.get_value(
 				"Travel Agent", self.travel_agent, "commission_pct") or 0
 			self.commission_amount = float(self.amount_before_tax or 0) * float(pct) / 100
-		else:
+		# ponytail: an OTA booking's commission is set once at booking
+		# (channel_manager.set_ota_commission) and kept; a re-price does not
+		# rescale it. Store the % on the stay if that ever matters.
+		elif not self.get("channel"):
 			self.commission_amount = 0
 
 	def validate_room_belongs_to_type(self):

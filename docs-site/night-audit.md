@@ -4,7 +4,8 @@ The night audit closes the hotel's business date. It posts the night's
 room charges for every in-house guest, applies the no-show policy, saves
 an audit pack of the day's reports and moves the business date on by one
 day. You can run it by hand from the **End of Day** checklist, and it runs
-on its own at 03:00. Front Desk, Finance, Night Auditor and Hotel Admin
+on its own every night at each property's set time (03:00 unless you
+change it). Front Desk, Finance, Night Auditor and Hotel Admin
 users can run it.
 
 ![The End of Day wizard: the twelve steps on the left with their status, and the Prepare step showing the business date, server date, property time and every pre-check with its severity](/img/night-audit/wizard.png)
@@ -17,7 +18,7 @@ users can run it.
    [Settings](#settings).
 2. **Decide what blocks the audit.** **Settings → Front Desk → Night audit
    checklist** sets which checks stop a manual run, the high-balance
-   threshold and what the 03:00 run does when something is still open.
+   threshold and what the automatic run does when something is still open.
 3. **Give your night auditor the Night Auditor role** if they don't have
    Front Desk or Finance: **Settings → Staff & access**. It can run End of
    Day and acknowledge blockers, check guests in and out, close cashier
@@ -158,7 +159,7 @@ Step 11 lists the final reports on the left. Pick one to read it, then
 The pack is saved on the audit when it runs, so reprinting a past night
 gives exactly what was printed that night. Find past audits in **Audit
 history** at the bottom of **Manage End of Day**: search by date and press
-**Print** in the **Audit pack** column. Automatic (03:00) runs appear
+**Print** in the **Audit pack** column. Automatic runs appear
 there with trigger **Scheduled**. If a pack is missing, press
 **Rebuild pack**  -  that recreates the printable reports without posting
 charges again.
@@ -168,24 +169,39 @@ was saved.
 
 ![Audit history: each closed business date with its status, trigger, room nights, amount posted, no-shows, exceptions and a link to its audit pack](/img/night-audit/history.png)
 
-## The 03:00 run
+## The automatic run
 
-Every night at 03:00 Kamra runs the audit for each property whose
-business date is still behind the calendar date. It does the same work
-as the manual run. If a blocking check is still open, it follows
-**Scheduled 03:00 audit when checks block**:
+Kamra checks every 15 minutes. Once a property's clock is past its
+**Run at** time (default 03:00, plus any **Wait after that time**) and its
+business date is still behind the calendar date, it runs the audit for
+that property. The clock is the property's **Time zone** (Settings →
+Property), so two hotels in different time zones each close at their own
+03:00. Turn **Run the night audit automatically** off to close the day
+only by hand; End of Day then shows **automatic audit off**. These live
+in **Settings → Front Desk → Automatic night audit**, which Hotel Admin
+can change.
+
+The automatic run does the same work as the manual run. If a blocking
+check is still open, it follows **Scheduled audit when checks block**:
 
 - **Run and report exceptions** (default): the date rolls, and the open
   items are recorded as exceptions in the pack.
 - **Hold and alert**: the business date stays where it is, and Hotel
   Admin and Finance users get an in-app notification and an email. Manage
-  End of Day shows **03:00 held**  -  clear blockers and press **Run End of
+  End of Day shows **Audit held**  -  clear blockers and press **Run End of
   Day**, then print the pack.
 
-If someone already closed the day by hand, the 03:00 run skips it.
+If someone already closed the day by hand, the automatic run skips it. A
+held, skipped or failed day is tried once a day, not every 15 minutes. A
+failed run alerts Hotel Admin users.
 
-If a few days were missed (the server was down, say), the 03:00 run
-closes them one by one, oldest first, up to three days. A property more
+Every run, automatic or by hand, is listed under **Night audit runs** on
+the same settings page: when it started, who ran it (or the scheduler),
+the result (Closed, Held, Skipped or Failed) and why. End of Day shows
+the next automatic run on each property card.
+
+If a few days were missed (the server was down, say), the automatic run
+closes them one per 15 minute check, oldest first, up to three days. A property more
 than three days behind is not closed automatically: Hotel Admin and
 Finance get an alert, so someone can check in-house stays and arrivals
 before weeks of room nights and no-show fees are posted. Close those days
@@ -196,7 +212,7 @@ from End of Day.
 A completed audit for the open business date with the date not rolled
 (after a restore or ops change) shows **Date stuck**. Press **Advance
 date**  -  Kamra moves the business date forward without posting room
-nights again. You cannot undo a completed night audit. The 03:00 run
+nights again. You cannot undo a completed night audit. The automatic run
 does the same on its own when it finds a stuck date, then closes the day
 that is actually due.
 
@@ -211,7 +227,10 @@ that is actually due.
 | Departures still in house block the audit | Settings → Front Desk → Night audit checklist | On | Off lists them as a warning. |
 | Flag in-house folios owing more than | Settings → Front Desk → Night audit checklist | 50000 | 0 turns the high-balance check off. |
 | Rate variance tolerance | Settings → Front Desk → Night audit checklist | 1 | How far (in currency units) a posted room night may be from the booked rate before it is listed. |
-| Scheduled 03:00 audit when checks block | Settings → Front Desk → Night audit checklist | Run and report exceptions | Or **Hold and alert**. |
+| Run the night audit automatically | Settings → Front Desk → Automatic night audit | On | Off: only staff close the day. |
+| Run at | Settings → Front Desk → Automatic night audit | 03:00 | Property local time. |
+| Wait after that time | Settings → Front Desk → Automatic night audit | 0 min | Up to 120 minutes extra, for outlets still posting. |
+| Scheduled audit when checks block | Settings → Front Desk → Night audit checklist | Run and report exceptions | Or **Hold and alert**. |
 | Mark no-shows | Settings → Front Desk → Night audit & no-shows | At audit for arrival date | **One day later** keeps the arrival Due In until the next day's audit. |
 | Hold late arrivals until the next audit | Settings → Front Desk → Night audit & no-shows | On | An arrival due on the day being closed stays Due In if it is flagged **Late arrival** or its ETA is later than the moment the audit runs. An ETA before 06:00 counts as after midnight. |
 | No no-show fee on OTA bookings | Settings → Front Desk → Night audit & no-shows | On | OTA bookings are still marked No Show, but no fee is posted. |
@@ -242,9 +261,10 @@ already run. The next one can run once the next calendar day has started.
 **"Night audit can only close the current business date."** The audit
 closes one date at a time, the one shown on the card.
 
-**The 03:00 run didn't roll the date.** The property is set to **Hold and
-alert** and something was blocking. Check the alert, clear the items and
-run End of Day by hand.
+**The automatic run didn't roll the date.** Check **Night audit runs**
+for the reason. Usually the property is set to **Hold and alert** and
+something was blocking: check the alert, clear the items and run End of
+Day by hand. If automatic runs are off, nothing runs on its own.
 
 ## For developers
 
@@ -253,5 +273,5 @@ the audit with `run_night_audit` (blockers are acknowledged with a note):
 see [MCP tools](/mcp-tools#night-audit). The wizard's endpoints
 (`kamra.night_audit.eod_session`, `eod_progress`, `eod_acknowledge`,
 `eod_mark_no_show`, `eod_overview`, `night_audit_pack`,
-`night_audit_history`) are in the
+`night_audit_history`, `night_audit_schedule`) are in the
 [API reference](/api-reference#night-audit-end-of-day-checklist-audit-pack).

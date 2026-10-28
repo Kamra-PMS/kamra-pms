@@ -1,13 +1,25 @@
+1 to 30,De 1 a 30
+15 days overdue,15 días de retraso
+31 to 60,De 31 a 60
+61 to 90,De 61 a 90
+90+,90+
 ADR,ADR
 Action,Acción
 Actor,Responsable de la acción
 Actual check-out,Hora real de salida
 Adults,Adultos
+Aging by days overdue,Antigüedad por días de retraso
+All companies,Todas las empresas
 Amount,Importe
 Approver,Aprobado por
 Arrivals,Llegadas
 Arrivals by source,Llegadas por origen
+As of {0},Al {0}
 Assigned to,Asignado a
+Balance,Saldo
+Balance due,Saldo pendiente
+Balance due: {0},Saldo pendiente: {0}
+Billed,Facturado
 Bookings,Reservas
 Breached,Incumplido
 By item,Por artículo
@@ -20,6 +32,7 @@ Check-in,Registro de entrada
 Check-out,Salida
 Children,Niños
 Clean minutes,Minutos de limpieza
+Closing balance,Saldo final
 Closing cash,Efectivo de cierre
 Collected at,Recogido a las
 Collections by mode,Cobros por medio de pago
@@ -28,12 +41,17 @@ Condition,Condición
 Contribution by source,Contribución por origen
 Covers,Comensales
 Created,Creado
+DSO (days),DSO (días)
 Date,Fecha
+Days overdue,Días de retraso
+Days sales outstanding (DSO),Días de cobro (DSO)
+"Dear {0},",Estimados {0}:
 Delivered at,Entregado a las
 Departures,Salidas
 Description,Descripción
 Detail,Detalle
 Due by,Vence
+Due date,Fecha de vencimiento
 ETA,Hora prevista de llegada
 Early departures,Salidas anticipadas
 Engineering pack,Paquete de Ingeniería
@@ -56,6 +74,11 @@ Housekeeping pack,Paquete de Limpieza
 Housekeeping tasks,Tareas de limpieza
 In house by room type,Alojados por tipo de habitación
 In-house guests,Huéspedes alojados
+Invoice,Factura
+Invoice date,Fecha de factura
+Invoice {0} for {1} is due on {2}.,La factura {0} por {1} vence el {2}.
+Invoice {0} for {1} is due today.,La factura {0} por {1} vence hoy.
+Invoice {0} for {1} was due on {2} and is {3} days overdue.,La factura {0} por {1} venció el {2} y lleva {3} días de retraso.
 Item,Artículo
 Items,Artículos
 Items by menu,Artículos por menú
@@ -69,11 +92,15 @@ Nights,Noches
 Nights short,Noches de menos
 No-shows & cancellations,No presentados y cancelaciones
 No-shows and cancellations,No presentados y cancelaciones
+Not due,Por vencer
+"Not sent, no billing contact email: {0}","No enviado, sin correo de contacto de facturación: {0}"
 Occ %,% de ocupación
 Occupancy,Ocupación
 Occupancy & revenue by day,Ocupación e ingresos por día
 Occupancy and revenue,Ocupación e ingresos
 Occupancy by day,Ocupación por día
+Oldest due date,Vencimiento más antiguo
+Open bills,Cuentas abiertas
 Open tickets,Tickets abiertos
 Opening cash,Efectivo inicial
 Order,Pedido
@@ -81,16 +108,24 @@ Order type,Tipo de pedido
 Orders by status,Pedidos por estado
 Other revenue,Otros ingresos
 Outlet,Punto de venta
+Outstanding,Saldo pendiente
+Overdue,Vencido
+Overdue by company,Vencido por empresa
 POS items,Artículos POS
 POS order,Pedido POS
 POS orders,Pedidos POS
+Paid,Pagado
 Pax,Personas
+Payment reminder from {0},Recordatorio de pago de {0}
+Payment reminders at {0},Recordatorios de pago en {0}
+Payment terms: {0} days,Plazo de pago: {0} días
 Payments,Pagos
 Payouts,Salidas de efectivo
 Previous period,Período anterior
 Priority,Prioridad
 Qty,Cant.
 Rate,Tarifa
+Recent payments,Pagos recientes
 Reference,Referencia
 Report,Informe
 Reservation,Reserva
@@ -115,18 +150,22 @@ Sales by outlet,Ventas por punto de venta
 Scheduled check-out,Salida programada
 Service,Servicio
 Service tickets,Tickets de servicio
+Commission,Comisión
 Share %,Participación %
 Shift,Turno
 Shift date,Fecha del turno
 Shift handover,Entrega de turno
 Shift handovers,Entregas de turno
 Source,Origen
+Statement of account,Estado de cuenta
+Statement of account from {0},Estado de cuenta de {0}
 Status,Estado
 Subject,Asunto
 Task,Tarea
 Tasks,Tareas
 Tasks by attendant,Tareas por camarera
 Tasks by type,Tareas por tipo
+Terms (days),Plazo (días)
 The report is attached.,El informe va adjunto.
 This period,Este período
 Ticket,Solicitud
@@ -138,11 +177,22 @@ Total revenue,Ingresos totales
 Turnaround,Tiempo de entrega
 Turnaround hours,Horas de entrega
 Type,Tipo
+Unapplied credit,Saldo a favor sin aplicar
 Variance,Variación
 Variance %,Variación %
 Voids & allowances,Anulaciones y bonificaciones
 Voids and allowances,Anulaciones y bonificaciones
 Volume by guest vs house,Volumen huésped vs casa
 When,Cuándo
+Your statement of account is attached.,Adjuntamos su estado de cuenta.
+due in 3 days,vence en 3 días
+due today,vence hoy
 vs previous period,vs período anterior
+{0} has no billing contact email. Add one on the corporate account or type an address.,{0} no tiene correo de contacto de facturación. Agréguelo en la cuenta corporativa o escriba una dirección.
+{0}: reminder sent for {1} ({2}),{0}: recordatorio enviado para {1} ({2})
 {0} rows,{0} filas
+"Marketing consent is changed from the guest profile, the booking page or a STOP / START reply.","El consentimiento de marketing se cambia desde el perfil del huésped, la página de reservas o una respuesta STOP / START."
+This guest has no phone number on file.,Este huésped no tiene un número de teléfono registrado.
+This guest has not agreed to marketing messages.,Este huésped no ha aceptado recibir mensajes de marketing.
+You will get offers from {0} on WhatsApp. Reply STOP at any time to opt out.,Recibirá ofertas de {0} por WhatsApp. Responda BAJA en cualquier momento para darse de baja.
+You will no longer get offers from {0}. Booking and stay messages continue. Reply START to opt in again.,Ya no recibirá ofertas de {0}. Los mensajes de reserva y estancia continúan. Responda START para volver a suscribirse.

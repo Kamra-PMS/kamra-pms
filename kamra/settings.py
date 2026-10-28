@@ -189,6 +189,19 @@ MODULES: tuple[Module, ...] = (
 				       "are cancelled with no fee and the room goes back on sale. Late arrivals and "
 				       "bookings made after this time are kept."),
 			)),
+			Section("nightaudit", "Automatic night audit",
+			        "When the scheduler closes the business date. It runs on the property's "
+			        "time zone (Property settings) and closes one day per run.", (
+				S("night_audit_auto", "Run the night audit automatically", "check", 1,
+				  hint="Off: the scheduler never closes this property; staff close the day "
+				       "from End of Day."),
+				S("night_audit_time", "Run at", "time", "03:00",
+				  hint="Property local time. Checked every 15 minutes, so the audit starts "
+				       "within 15 minutes of this time."),
+				S("night_audit_grace_minutes", "Wait after that time", "number", 0,
+				  min=0, max=120, unit="min",
+				  hint="Extra delay, for a bar or restaurant still posting after the set time."),
+			)),
 			Section("auditchecks", "Night audit checklist",
 			        "Checks run before the night audit closes the day (Finance → End of Day). "
 			        "A blocking check stops a manual run until it is resolved or a supervisor "
@@ -208,7 +221,7 @@ MODULES: tuple[Module, ...] = (
 				  min=0, max=100000,
 				  hint="A room night posted more than this away from the booked (locked) "
 				       "nightly rate is listed as a rate variance."),
-				S("na_auto_audit_with_blockers", "Scheduled 03:00 audit when checks block", "select",
+				S("na_auto_audit_with_blockers", "Scheduled audit when checks block", "select",
 				  "Run and report exceptions",
 				  options=("Run and report exceptions", "Hold and alert"),
 				  hint="Run and report exceptions: the date always rolls; open items go in the "
@@ -390,6 +403,10 @@ MODULES: tuple[Module, ...] = (
 				       "which is logged. AI agents can never override."),
 				S("credit_overdue_grace_days", "Overdue grace period", "number", 0, min=0, max=365, unit="days",
 				  hint="A bill counts against the company only once it is this many days past its due date."),
+				S("credit_reminders", "Email payment reminders", "check", 0,
+				  hint="Each morning, email a company's billing contact 3 days before a bill is due, on the "
+				       "due date and 15 days after, with its statement attached. Each reminder goes once per "
+				       "bill, and Finance gets a notice of what was sent."),
 			)),
 			Section("cashier", "Cashier controls", "", (
 				S("use_cashier_tills", "Take money through cashier tills", "check", 1,

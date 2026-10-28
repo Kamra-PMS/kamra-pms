@@ -170,6 +170,18 @@ se guardó uno.
 
 ## La ejecución de las 03:00
 
+La hora es configurable por alojamiento en **Configuración → Recepción →
+Auditoría nocturna automática**: **Ejecutar la auditoría nocturna
+automáticamente** (activado por defecto), **Ejecutar a las** (03:00 por
+defecto, hora local según la **Zona horaria** del alojamiento) y **Esperar
+después de esa hora** (0 a 120 minutos). Kamra comprueba cada 15 minutos y
+cierra un día por comprobación. Cada ejecución, automática o manual, aparece
+en **Ejecuciones de la auditoría nocturna** en esa misma página, con su
+resultado (Cerrado, Retenido, Omitido o Fallido) y el motivo; un fallo avisa
+a los usuarios Hotel Admin. Un día retenido, omitido o fallido se intenta una
+vez al día. Con la ejecución automática desactivada, solo el personal cierra
+el día.
+
 Cada noche a las 03:00, Kamra ejecuta la auditoría de cada alojamiento cuya
 fecha operativa va por detrás de la fecha del calendario. Hace el mismo trabajo
 que la ejecución manual. Si una comprobación que bloquea sigue pendiente, sigue lo indicado en
