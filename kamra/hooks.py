@@ -95,6 +95,8 @@ kamra_localization = {
 	"Malaysia": "kamra.localization.malaysia",
 	"United Arab Emirates": "kamra.localization.uae",
 	"Saudi Arabia": "kamra.localization.saudi",
+	"Brazil": "kamra.localization.brazil",
+	"Brasil": "kamra.localization.brazil",
 }
 
 # Served single-page app

@@ -7720,7 +7720,7 @@ def t316():
 	# India keeps 18% GST on services; every pack's services rate is one it allows
 	assert services_tax_rate(pack_for_country("India"), P) == 18.0
 	for country in ("India", "Saudi Arabia", "United Arab Emirates", "Malaysia",
-	                "Thailand", "Indonesia"):
+	                "Thailand", "Indonesia", "Brazil"):
 		# no property: the pack's statutory default (P is an Indian hotel
 		# whose 5% room types would otherwise steer the VAT packs)
 		pack = pack_for_country(country)
@@ -10219,6 +10219,43 @@ def t386():
 		set_mcp_policy(P, enabled=1, read_only=0, blocked_tools=[])
 
 
+@check("Brazil pack: tax rates, labels and Region list entry")
+def t387():
+	from kamra.localization import pack_for, supported_countries
+	from kamra.pricing import quote
+
+	pname = "EVAL Brazil Hotel"
+	if not frappe.db.exists("Property", pname):
+		frappe.get_doc({
+			"doctype": "Property", "property_name": pname,
+			"city": "São Paulo", "country": "Brazil", "currency": "BRL",
+		}).insert(ignore_permissions=True)
+	rt_name = f"{pname}-STD"
+	if not frappe.db.exists("Room Type", rt_name):
+		rt = frappe.get_doc({
+			"doctype": "Room Type", "property": pname,
+			"room_type_code": "STD", "room_type_name": "Standard",
+			"base_price": 4000, "base_occupancy": 2,
+			"adults_capacity": 2, "children_capacity": 1,
+		}).insert(ignore_permissions=True).name
+	else:
+		rt = rt_name
+
+	pack = pack_for(pname)
+	assert pack.__name__.endswith("brazil"), pack.__name__
+	assert "Brazil" in {c["country"] for c in supported_countries()}
+	q = quote(pname, rt, "2031-06-01", "2031-06-02", 2, 0)
+	assert q["nightly"][0]["gst_rate"] == 5, q["nightly"]
+	assert pack.fnb_tax_rate(pname) == 5.0, pack.fnb_tax_rate(pname)
+	loc = pack.locale(frappe.get_doc("Property", pname))
+	assert loc["currency_symbol"] == "R$", loc
+	assert loc["currency"] == "BRL", loc
+	assert loc["locale"] == "pt-BR", loc
+	ctx = pack.invoice_context(frappe.get_doc("Property", pname))
+	assert ctx["tax_id_label"] == "CNPJ / CPF", ctx
+	assert ctx["tax_label"] == "ISS", ctx
+
+
 def execute():
 	global RT, ROOM
 	# frappe.locale.get_locale_value crashes (UnboundLocalError) when no
@@ -10258,7 +10295,7 @@ def execute():
 		           t360, t361, t362, t363, t364, t365,
 		           t370, t371, t372, t373, t374, t375, t376,
 		           t217, t260, t261, t262, t263, t264,
-		           t380, t381, t382, t383, t384, t385, t386):
+		           t380, t381, t382, t383, t384, t385, t386, t387):
 			fn()
 	finally:
 		frappe.flags.kamra_checkin_steps_off = False
