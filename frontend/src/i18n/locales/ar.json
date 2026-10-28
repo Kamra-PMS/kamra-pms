@@ -5468,5 +5468,21 @@
   "OTA booking ref": "مرجع حجز OTA",
   "Sold for (incl. tax)": "سعر البيع (شامل الضريبة)",
   "Rate card price": "سعر قائمة الأسعار",
-  "Billed at the price {site} sold it for": "تُحتسب بالسعر الذي باع به {site}"
+  "Billed at the price {site} sold it for": "تُحتسب بالسعر الذي باع به {site}",
+  "AI Provider": "مزوّد الذكاء الاصطناعي",
+  "Chat here, or connect your AI provider. Either way it acts as you, within your role.": "تحدّث هنا أو اربط مزوّد الذكاء الاصطناعي. في الحالتين يعمل باسمك وضمن صلاحيات دورك.",
+  "Connect your AI provider to this hotel over MCP - scoped to your role": "اربط مزوّد الذكاء الاصطناعي بهذا الفندق عبر MCP ضمن صلاحيات دورك",
+  "AI provider connections are turned off on this site. On your own Kamra, every staff member can connect an AI provider and act within their role.": "الاتصال بمزوّدي الذكاء الاصطناعي معطّل في هذا الموقع. في نسخة Kamra الخاصة بك، يمكن لكل موظف ربط مزوّد ذكاء اصطناعي والعمل ضمن صلاحيات دوره.",
+  "Your AI provider acts as you at ": "يعمل مزوّد الذكاء الاصطناعي باسمك في ",
+  "Remote AI providers need a public HTTPS URL to reach this hotel. For a local site, use a local MCP client or the stdio sidecar.": "يحتاج مزوّدو الذكاء الاصطناعي عن بُعد إلى عنوان HTTPS عام للوصول إلى هذا الفندق. للموقع المحلي، استخدم عميل MCP محلياً أو محوّل stdio.",
+  "Open Claude": "فتح Claude",
+  "Disconnect your AI providers? They will have to sign in again.": "هل تريد فصل مزوّدي الذكاء الاصطناعي؟ سيتعيّن عليهم تسجيل الدخول مجدداً.",
+  "An AI provider is authorised for this property. Enable its connector in your AI chat, then ask about the hotel.": "يوجد مزوّد ذكاء اصطناعي مخوّل لهذا العقار. فعّل موصّله في محادثة الذكاء الاصطناعي، ثم اسأل عن الفندق.",
+  "Connect ChatGPT, Claude or another MCP-compatible AI provider using this hotel's MCP URL and OAuth. Sign in to Kamra, select the property and allow access. The Claude shortcut opens with the MCP URL filled in.": "اربط ChatGPT أو Claude أو مزوّد ذكاء اصطناعي آخر متوافق مع MCP باستخدام عنوان MCP الخاص بهذا الفندق وOAuth. سجّل الدخول إلى Kamra، واختر العقار واسمح بالوصول. يفتح اختصار Claude مع تعبئة عنوان MCP مسبقاً.",
+  "Need a platform-wide or service key (HeyKoala, unattended jobs)? That is issued by your system admin under Developers. Staff should use AI Provider to connect with OAuth.": "تحتاج مفتاحاً على مستوى المنصة أو مفتاح خدمة (HeyKoala، مهام آلية)؟ يصدره مسؤول النظام ضمن المطوّرين. على الموظفين استخدام مزوّد الذكاء الاصطناعي للاتصال عبر OAuth.",
+  "Connect your AI provider to this property's governed tools. It acts as the signed-in person, within their role, and every action lands in the Activity log.": "اربط مزوّد الذكاء الاصطناعي بأدوات هذا العقار الخاضعة للصلاحيات. يعمل باسم الشخص المسجّل دخوله وضمن دوره، وكل إجراء يُسجّل في سجل النشاط.",
+  "Kamra Agent → AI Provider": "وكيل Kamra ← مزوّد الذكاء الاصطناعي",
+  "Your AI provider will act as {0}, within your role. Prices, taxes and availability stay in Kamra. Every action is recorded under your name in the Activity log.": "سيعمل مزوّد الذكاء الاصطناعي باسم {0} وضمن صلاحيات دورك. تبقى الأسعار والضرائب والتوافر في Kamra. يُسجّل كل إجراء باسمك في سجل النشاط.",
+  "Enable the connector in your AI chat and say things like \"occupancy this week\" or \"book a Deluxe for Friday\".": "فعّل الموصّل في محادثة الذكاء الاصطناعي وجرّب عبارات مثل «نسبة الإشغال هذا الأسبوع» أو «احجز غرفة ديلوكس ليوم الجمعة».",
+  "Use the MCP URL to connect ChatGPT, Claude or another compatible provider. Each person signs in as themselves with OAuth.": "استخدم عنوان MCP لربط ChatGPT أو Claude أو مزوّد آخر متوافق. يسجّل كل شخص الدخول بحسابه الخاص عبر OAuth."
 }

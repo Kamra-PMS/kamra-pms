@@ -146,3 +146,5 @@ Volume by guest vs house,الحجم: ضيف مقابل بيت
 When,متى
 vs previous period,مقارنة بالفترة السابقة
 {0} rows,{0} صف
+AI Provider,مزوّد الذكاء الاصطناعي
+"Your AI provider will act as {0}, within your role. Prices, taxes and availability stay in Kamra. Every action is recorded under your name in the Activity log.",سيعمل مزوّد الذكاء الاصطناعي باسم {0} وضمن صلاحيات دورك. تبقى الأسعار والضرائب والتوافر في Kamra. يُسجّل كل إجراء باسمك في سجل النشاط.

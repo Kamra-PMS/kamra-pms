@@ -5468,5 +5468,21 @@
   "OTA booking ref": "Ref. de reserva OTA",
   "Sold for (incl. tax)": "Vendida por (imp. incl.)",
   "Rate card price": "Precio de tarifa",
-  "Billed at the price {site} sold it for": "Se factura al precio de venta de {site}"
+  "Billed at the price {site} sold it for": "Se factura al precio de venta de {site}",
+  "AI Provider": "Proveedor de IA",
+  "Chat here, or connect your AI provider. Either way it acts as you, within your role.": "Converse aquí o conecte su proveedor de IA. En ambos casos, actúa con su identidad y los permisos de su rol.",
+  "Connect your AI provider to this hotel over MCP - scoped to your role": "Conecte su proveedor de IA a este hotel mediante MCP, con los permisos de su rol",
+  "AI provider connections are turned off on this site. On your own Kamra, every staff member can connect an AI provider and act within their role.": "Las conexiones con proveedores de IA están desactivadas en este sitio. En su propia instalación de Kamra, cada empleado puede conectar un proveedor de IA y actuar con los permisos de su rol.",
+  "Your AI provider acts as you at ": "Su proveedor de IA actúa con su identidad en ",
+  "Remote AI providers need a public HTTPS URL to reach this hotel. For a local site, use a local MCP client or the stdio sidecar.": "Los proveedores de IA remotos necesitan una URL HTTPS pública para acceder a este hotel. Para una instalación local, utilice un cliente MCP local o el adaptador stdio.",
+  "Open Claude": "Abrir Claude",
+  "Disconnect your AI providers? They will have to sign in again.": "¿Desconectar sus proveedores de IA? Tendrán que iniciar sesión nuevamente.",
+  "An AI provider is authorised for this property. Enable its connector in your AI chat, then ask about the hotel.": "Hay un proveedor de IA autorizado para este alojamiento. Active su conector en el chat de IA y consulte los datos del hotel.",
+  "Connect ChatGPT, Claude or another MCP-compatible AI provider using this hotel's MCP URL and OAuth. Sign in to Kamra, select the property and allow access. The Claude shortcut opens with the MCP URL filled in.": "Conecte ChatGPT, Claude u otro proveedor de IA compatible con MCP mediante la URL MCP de este hotel y OAuth. Inicie sesión en Kamra, seleccione el alojamiento y permita el acceso. El acceso directo de Claude se abre con la URL MCP ya completada.",
+  "Need a platform-wide or service key (HeyKoala, unattended jobs)? That is issued by your system admin under Developers. Staff should use AI Provider to connect with OAuth.": "¿Necesita una clave de servicio o para toda la plataforma, por ejemplo para HeyKoala o tareas automáticas? Su administrador la emite en Desarrolladores. El personal debe usar Proveedor de IA para conectarse mediante OAuth.",
+  "Connect your AI provider to this property's governed tools. It acts as the signed-in person, within their role, and every action lands in the Activity log.": "Conecte su proveedor de IA a las herramientas de este alojamiento con control de permisos. Actúa con la identidad y el rol del usuario conectado; cada acción queda en Actividad.",
+  "Kamra Agent → AI Provider": "Agente Kamra → Proveedor de IA",
+  "Your AI provider will act as {0}, within your role. Prices, taxes and availability stay in Kamra. Every action is recorded under your name in the Activity log.": "Su proveedor de IA actuará como {0}, con los permisos de su rol. Los precios, los impuestos y la disponibilidad se gestionan en Kamra. Cada acción se registra con su nombre en el registro de Actividad.",
+  "Enable the connector in your AI chat and say things like \"occupancy this week\" or \"book a Deluxe for Friday\".": "Active el conector en su chat de IA y pruebe con «ocupación de esta semana» o «reserve una habitación Deluxe para el viernes».",
+  "Use the MCP URL to connect ChatGPT, Claude or another compatible provider. Each person signs in as themselves with OAuth.": "Utilice la URL MCP para conectar ChatGPT, Claude u otro proveedor compatible. Cada persona inicia sesión con su propia cuenta mediante OAuth."
 }

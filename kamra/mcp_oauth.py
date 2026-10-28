@@ -422,7 +422,7 @@ def revoke_grants(user: str, property: str | None = None) -> int:
 @frappe.whitelist()
 @require_roles("Front Desk", "Finance", "Revenue Manager", "Housekeeping")
 def connect_info(property: str) -> dict:
-	"""What the Connect Claude button needs: public MCP URL, install link, status."""
+	"""AI Provider panel: public MCP URL, Claude shortcut and connection status."""
 	prop_name = frappe.db.get_value("Property", property, "property_name") or property
 	mcp_url = mcp_resource_url()
 	last = frappe.db.sql(
@@ -497,12 +497,14 @@ def _consent_page(params: dict[str, str], user: str, properties: list[dict]) -> 
 		val = frappe.utils.escape_html(params.get(key) or "")
 		hidden.append(f'<input type="hidden" name="{key}" value="{val}">')
 	who = frappe.utils.escape_html(user)
+	description = frappe._(
+		"Your AI provider will act as {0}, within your role. Prices, taxes and "
+		"availability stay in Kamra. Every action is recorded under your name in the Activity log."
+	).format(f"<strong>{who}</strong>")
 	return _html_shell(
-		"Connect Claude to this hotel",
+		frappe._("AI Provider"),
 		f"""
-		<p>Claude will act as <strong>{who}</strong> — the same role limits
-		as the desk. Prices, taxes and availability stay in Kamra. Every
-		action lands in the Activity log under your name.</p>
+		<p>{description}</p>
 		<form method="post" action="{issuer_url()}/authorize">
 		  <input type="hidden" name="csrf_token" value="{csrf}">
 		  {''.join(hidden)}
