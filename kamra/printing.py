@@ -275,7 +275,11 @@ def escpos(ticket: dict, width_mm: str = "80 mm") -> bytes:
 		out.append(ESC + b"a" + (b"\x01" if center else b"\x00"))
 		out.append(GS + b"!" + (b"\x11" if big else b"\x00"))
 		out.append(ESC + b"E" + (b"\x01" if bold else b"\x00"))
-		out.append(str(text).encode("ascii", "replace") + b"\n")
+		# free text (a waiter, a customer, an instruction) is printed, never
+		# obeyed: control bytes would reach the printer as commands (ESC p
+		# kicks the cash drawer open)
+		text = "".join(c for c in str(text) if " " <= c != "\x7f")
+		out.append(text.encode("ascii", "replace") + b"\n")
 
 	kind = ticket.get("kind") or "KOT"
 	if kind == "Bill":

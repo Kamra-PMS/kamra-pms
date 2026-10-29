@@ -141,3 +141,9 @@ class PosStaffKotTestCase(AuditTestCase):
 		line = self.lines(o["order"])[0]
 		self.assertEqual(str(line["started_at"]), str(line["fired_at"]))
 		self.assertEqual(pos.accept_ticket(o["order"])["started"], 0)
+
+	def test_a_waiter_name_cannot_send_printer_commands(self):
+		from kamra.printing import escpos
+		out = escpos({"kind": "Bill", "served_by": "Ravi\x1bp\x00\x19\xfa", "items": []})
+		self.assertIn(b"Served by: Ravip?", out)
+		self.assertNotIn(b"\x1bp\x00", out)
