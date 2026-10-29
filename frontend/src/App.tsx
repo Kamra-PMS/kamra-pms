@@ -78,6 +78,7 @@ const CashierBoard = lazy(() => import("./screens/CashierBoard"))
 const PettyCash = lazy(() => import("./screens/PettyCash"))
 const CashierShiftReport = lazy(() => import("./screens/CashierShiftReport"))
 const Ledgers = lazy(() => import("./screens/Ledgers"))
+const Receivables = lazy(() => import("./screens/Receivables"))
 const FolioHistory = lazy(() => import("./screens/FolioHistory"))
 const CurrencyDesk = lazy(() => import("./screens/CurrencyDesk"))
 import ConnectionBanner from "./components/ConnectionBanner"
@@ -240,6 +241,8 @@ export default function App() {
           <Route path="cashier/shift-report" element={<CashierShiftReport />} />
           <Route path="cashier/fx" element={<CurrencyDesk />} />
           <Route path="ledgers" element={<Ledgers />} />
+          <Route path="receivables" element={<Receivables />} />
+          <Route path="receivables/:account" element={<Receivables />} />
           <Route path="folio-history" element={<FolioHistory />} />
           <Route
             path="companies"

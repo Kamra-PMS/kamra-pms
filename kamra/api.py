@@ -2225,6 +2225,8 @@ def folio_invoice(folio: str):
 	from kamra import localization as loc
 
 	doc = frappe.get_doc("Folio", folio)
+	if not doc.reservation:
+		frappe.throw(_("This is an account invoice - open it from Receivables."))
 	prop = frappe.get_doc("Property", doc.property)
 	res = frappe.get_doc("Reservation", doc.reservation)
 	pack = loc.pack_for(doc.property)

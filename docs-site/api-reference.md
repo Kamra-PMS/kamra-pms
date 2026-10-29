@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function - the same governed layer
-the UI and the AI use. **421 endpoints**, generated from the source
+the UI and the AI use. **426 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -4994,6 +4994,92 @@ it goes to the company's billing contact email.
 | `lang` | no | `'en'` |
 
 
+## Accounts receivable (account setup, invoices on an account, transfers)
+
+> Bills land on the city ledger above; credit control runs on every new invoice.
+
+### `kamra.receivables.ar_accounts`
+
+**GET/POST** · roles: `Finance`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
+
+Every AR account at the property with its contact and position - the
+receivables list. Aging and balance come from city_ledger_aging so the
+two screens always agree.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+
+### `kamra.receivables.save_ar_account`
+
+**POST** · roles: `Finance`, `Hotel Admin`
+
+Open a company's AR account at a property, or edit it (`account`).
+One open account per company per property - checkout bills into it.
+The account number is the company's reference on statements and must
+be unique at the property. Opening an account puts the company on
+credit (Corporate Account.credit_allowed), since that is what it is for.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `company` | yes |  |
+| `account_number` | no | `None` |
+| `credit_limit` | no | `0` |
+| `use_default_credit_days` | no | `1` |
+| `credit_days` | no | `0` |
+| `billing_address` | no | `None` |
+| `restricted` | no | `0` |
+| `restricted_reason` | no | `None` |
+| `account` | no | `None` |
+
+### `kamra.receivables.create_ar_invoice`
+
+**POST** · roles: `Finance`, `Hotel Admin`, `Kamra Agent`
+
+Bill a company directly, without a stay. `lines` is
+[{charge_type, description, amount, qty, gst_rate}]: amount is the unit
+price before tax, the tax rate must be one of the property's, and F&B or
+alcohol lines take the hotel's own rate whatever is sent. Credit control
+runs as at checkout. Returns the invoice number and the account's new
+balance.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `account` | yes |  |
+| `lines` | yes |  |
+| `reference` | no | `None` |
+| `credit_override_reason` | no | `None` |
+
+### `kamra.receivables.ar_invoice`
+
+**GET/POST** · roles: `Finance`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
+
+One AR bill's lines and totals, whether it came from a stay or was
+raised on the account - what the invoice drawer shows and prints.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `folio` | yes |  |
+
+### `kamra.receivables.transfer_ar_invoice`
+
+**POST** · roles: `Finance`, `Hotel Admin`
+
+Move what is still owed on one bill to another company's account at
+the same property. What was already paid stays with the first account;
+the bill keeps its invoice number and invoice date, so it ages from when
+it was really raised. Credit control on the receiving company is not
+re-run - finance is choosing who pays.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `account` | yes |  |
+| `folio` | yes |  |
+| `to_account` | yes |  |
+| `reason` | no | `None` |
+
+
 ## Night audit (End of Day checklist, audit pack)
 
 ### `kamra.night_audit.night_audit_precheck`
@@ -5827,6 +5913,12 @@ Everything the public booking page needs to render.
 
 Availability + real quoted price per room type for the stay.
 
+Each available row also carries `plans`: the stay quoted room only
+(first) and with each meal plan, so the page lists real totals per plan. A valid
+`voucher_code` discounts every quote, and each plan then keeps its
+undiscounted `list_amount` for the strike-through; an invalid one is
+ignored here (check_voucher tells the guest why).
+
 `child_ages` (e.g. [3, 8, 13]) lets each room type's age bands decide who
 is free, a child or an adult; without it `children` are all children.
 Each row says whether the room type can take the party: `available`, a
@@ -5844,6 +5936,7 @@ what it sleeps but within the extra guests it allows by arrangement.
 | `location_slug` | no | `None` |
 | `pets` | no | `0` |
 | `child_ages` | no | `None` |
+| `voucher_code` | no | `None` |
 
 ### `kamra.public_api.precheckin_info` <Badge type='tip' text='public' />
 

@@ -155,9 +155,33 @@ At checkout, the guest settles their own folio. Whatever the company
 owes moves to its **city ledger** account by itself, if the company is
 allowed credit.
 
+**Receivables** (Finance → Receivables) is the home of every company
+account: who owes what, how late, and how much credit is left.
+
+- **Open an account** (Finance and Hotel Admin): press **New account**,
+  pick the company, and set the **Account number**, **Credit limit**
+  (0 = no limit), the **payment terms** (the property's, or days to pay
+  after the invoice date) and a **Billing address**. Opening an account
+  puts the company on credit. Checkout bills into the same account.
+- **Rolling credit:** **Credit available** is the limit less what the
+  company owes and what its stays in house are running up. Every bill uses
+  it up and every payment frees it again. Over the limit, credit control
+  (Settings → Property → Company credit) warns or blocks the next bill.
+- **Raise an invoice without a stay** (meeting room, contract fee): open
+  the account, press **New invoice**, add a line per charge with its
+  price, quantity and tax rate, and press **Raise invoice**. It gets an
+  invoice number, is due by the account's terms and ages like any bill.
+  Food and beverage lines take the hotel's F&B tax rate.
+- **Transfer a bill** to another company (the parent company or the
+  agency pays): press **Transfer** on the bill. What is still owed moves;
+  what was paid stays. The bill keeps its number and date.
+- **Restrict an account** under **Account setup** with a reason: it takes
+  no new invoices or transfers, and checkout runs it through credit
+  control. Payments and statements still work.
+
 **Record a company's payment** (Finance and Hotel Admin):
 
-1. Open **Finance → Ledgers**. **City ledger aging** lists each company's
+1. Open **Finance → Receivables** and the company (or **Finance → Ledgers**). **City ledger aging** lists each company's
    balance by age (0-30, 31-60, 61-90, 90+ days) and any unapplied credit.
 2. Press **Record payment** on the company's row.
 3. Enter **Amount received**, the **Mode** and the **Reference (UTR /

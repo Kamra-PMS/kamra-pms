@@ -280,6 +280,8 @@ export const APPS: AppDef[] = [
       { to: "/billing", label: "Billing", icon: Receipt, group: "Billing" },
       { to: "/folio-history", label: "Folio History", icon: History, group: "Billing" },
       // Books
+      { to: "/receivables", label: "Receivables", icon: Building2, group: "Books",
+        keywords: ["AR", "Accounts receivable", "City ledger", "Direct bill", "Company invoice"] },
       { to: "/ledgers", label: "Ledgers", icon: BookOpen, group: "Books" },
       { to: "/transaction-codes", label: "Transaction Codes", icon: Hash, group: "Books",
         keywords: ["Txn codes", "Revenue group", "Chart of accounts"],
@@ -293,7 +295,7 @@ export const APPS: AppDef[] = [
         roles: ["Finance", "Hotel Admin", "System Manager", "Administrator"] },
     ],
     extraPrefixes: [
-      "/billing/", "/cashier/", "/ledgers", "/folio-history",
+      "/billing/", "/cashier/", "/ledgers", "/receivables", "/folio-history",
       "/end-of-day", "/night-audit", "/reason-codes", "/transaction-codes",
       "/voids-allowances",
     ],

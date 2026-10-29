@@ -1,6 +1,6 @@
 # MCP tool reference
 
-Kamra exposes **133 governed tools** on the hosted MCP
+Kamra exposes **136 governed tools** on the hosted MCP
 endpoint (`/mcp`) and the stdio sidecar (`mcp/kamra_mcp.py`). Every
 call runs as the connected user - **role** permissions apply, tools
 are further filtered by the property's **enabled modules**, prices
@@ -540,6 +540,38 @@ due date. Buckets per account and in totals: not due, 1 to 30 days,
 Read-only  -  use it to answer who owes money and how late.
 
 Endpoint: `kamra.ledger.city_ledger_aging`.
+
+### `ar_accounts()`
+
+Every company account (AR) at this property: account number,
+billing contact, credit limit, payment terms, balance, overdue and
+whether it is restricted. Use the `name` it returns as `account` for
+ar_account_detail and create_ar_invoice. Read-only.
+
+Endpoint: `kamra.receivables.ar_accounts`.
+
+### `ar_account_detail(account)`
+
+One company account: balance, aging by due date, credit available
+under the limit (stays in house count against it), money paid ahead,
+each open bill with its due date and days late, and recent payments.
+Read-only.
+
+Endpoint: `kamra.ledger.city_ledger_account`.
+
+### `create_ar_invoice(account, lines, reference)`
+
+Bill a company account directly for something that was not a stay
+(meeting room, contract fee). `lines` is [{charge_type, description,
+amount, qty, gst_rate}]: amount is the unit price before tax,
+charge_type one of Room, Meal Plan, Food & Beverage, Minibar, Laundry,
+Spa, Misc (and the room fees); the PMS taxes F&B at the hotel's rate
+and refuses an unknown rate. Credit control runs as at check-out and
+an agent can't override a block. Refused on a restricted account.
+Confirm the lines and total with the user first.
+
+Endpoint: `kamra.receivables.create_ar_invoice`.
+Mutating - logged to the activity ledger.
 
 ### `security_deposit_status(reservation)`
 

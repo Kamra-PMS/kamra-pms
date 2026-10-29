@@ -615,8 +615,13 @@ def city_ledger_transfer(folio: str, company: str | None = None,
 	it warns, or refuses (CREDIT_BLOCKED) unless Finance or a Hotel Admin
 	passes `credit_override_reason`. Agents can't override."""
 	from kamra.authz import require_cashier_pin
+	from kamra.receivables import assert_billable
 	prop = frappe.db.get_value("Folio", folio, "property")
 	require_cashier_pin(prop, pin)
+	if company:
+		assert_billable(frappe.db.get_value(
+			"City Ledger Account",
+			{"property": prop, "company": company, "disabled": 0}, "name"))
 	return transfer_to_city_ledger(
 		folio, company, credit_override_reason=credit_override_reason)
 
@@ -982,13 +987,24 @@ def city_ledger_account(account: str):
 	today = nowdate()
 	for r in open_items:
 		r["days_overdue"] = max(days_overdue(r, today), 0)
+	# rolling credit: what is owed and what in-house stays will owe use the
+	# limit up, payments free it again (kamra.credit counts the same way)
+	from kamra.credit import in_house_exposure
+	in_house = in_house_exposure(acc.company, acc.property)
+	limit = float(acc.credit_limit or 0)
 	return {
+		"in_house": in_house,
+		"available_credit": round(limit - float(acc.balance or 0) - in_house, 2)
+		                    if limit > 0 else None,
 		"account": acc.name,
 		"company": acc.company,
 		"account_number": acc.account_number,
 		"credit_limit": acc.credit_limit,
 		"account_credit_days": int(acc.get("credit_days") or 0),
 		"use_default_credit_days": bool(acc.get("use_default_credit_days")),
+		"billing_address": acc.get("billing_address"),
+		"restricted": bool(acc.get("restricted")),
+		"restricted_reason": acc.get("restricted_reason"),
 		"balance": float(acc.balance or 0),
 		**pos,
 		"open_items": open_items,
@@ -1195,7 +1211,9 @@ def record_folio_reprint(folio: str, document: str = "Guest Folio",
 def folio_history(property: str, query: str | None = None,
                   status: str | None = None, from_date: str | None = None,
                   to_date: str | None = None):
-	filters: list = [["property", "=", property]]
+	# account invoices have no stay to show - they live on Receivables
+	filters: list = [["property", "=", property],
+	                 ["folio_type", "!=", "Account"]]
 	if status:
 		filters.append(["status", "=", status])
 	if from_date:  # by the day the bill was closed

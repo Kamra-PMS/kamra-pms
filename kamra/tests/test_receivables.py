@@ -1,0 +1,150 @@
+"""Accounts receivable by hand: account setup, invoices raised on an account
+(no stay), moving a bill between accounts, restricted accounts.
+
+kamra.receivables over the city ledger, checked against the same numbers
+the aging, statement and ledgers read. The company, account and bill
+helpers come from the credit-control fixture.
+"""
+
+from __future__ import annotations
+
+import frappe
+
+from kamra import credit, ledger, receivables
+from kamra.tests import test_credit_control as cc
+from kamra.tests.audit_fixtures import PROP_A
+
+OTHER = "UT AR Parent Co"
+
+
+def _open(account):
+	return {r["folio"]: r for r in ledger.city_ledger_open_folios(account)}
+
+
+class ReceivablesTestCase(cc.CreditControlTestCase):
+
+	def other_company(self):
+		if not frappe.db.exists("Corporate Account", OTHER):
+			frappe.get_doc({"doctype": "Corporate Account",
+			                "company_name": OTHER}).insert(ignore_permissions=True)
+		return OTHER
+
+	def invoice(self, *lines, **kw):
+		return receivables.create_ar_invoice(self.account, list(lines), **kw)
+
+	# account setup ---------------------------------------------------------
+
+	def test_opening_an_account_puts_the_company_on_credit(self):
+		co = self.other_company()
+		out = receivables.save_ar_account(PROP_A, co, account_number="UT-PARENT",
+		                                  credit_limit=5000, use_default_credit_days=0,
+		                                  credit_days=45, billing_address="1 Main St")
+		acc = frappe.get_doc("City Ledger Account", out["account"])
+		self.assertEqual((acc.account_number, acc.credit_days, acc.billing_address),
+		                 ("UT-PARENT", 45, "1 Main St"))
+		self.assertTrue(frappe.db.get_value("Corporate Account", co, "credit_allowed"))
+		# checkout bills into the same account, not a second one
+		self.assertEqual(ledger._ar_account(PROP_A, co), out["account"])
+		with self.assertRaises(frappe.ValidationError):
+			receivables.save_ar_account(PROP_A, co)
+		with self.assertRaises(frappe.ValidationError):  # number taken
+			receivables.save_ar_account(PROP_A, self.company, account_number="UT-PARENT",
+			                            account=self.account)
+		with self.assertRaises(frappe.ValidationError):  # restricted needs a why
+			receivables.save_ar_account(PROP_A, co, account=out["account"], restricted=1)
+
+	# invoices raised on the account -----------------------------------------
+
+	def test_invoice_on_the_account_is_billed_taxed_and_numbered(self):
+		out = self.invoice(
+			{"charge_type": "Misc", "description": "Meeting room", "amount": 1000,
+			 "qty": 2, "gst_rate": 18},
+			{"charge_type": "Misc", "description": "Projector", "amount": 500,
+			 "gst_rate": 0},
+			reference="PO-778")
+		self.assertAlmostEqual(out["total"], 2860, 2)       # 2000 + 360 tax + 500
+		self.assertAlmostEqual(out["balance"], 2860, 2)
+		folio = frappe.get_doc("Folio", out["folio"])
+		self.assertEqual((folio.folio_type, folio.status, folio.reservation),
+		                 ("Account", "Closed", None))
+		self.assertEqual(folio.invoice_number, out["invoice_number"])
+		item = _open(self.account)[out["folio"]]
+		self.assertEqual(item["invoice_number"], out["invoice_number"])
+		self.assertAlmostEqual(item["outstanding"], 2860, 2)
+		# guest ledger nets to zero (charged, then billed on); AR carries it
+		rows = frappe.db.sql(
+			"""SELECT ledger, SUM(debit - credit) FROM `tabFolio Ledger Entry`
+			   WHERE folio = %s GROUP BY ledger""", out["folio"])
+		net = {k: round(float(v), 2) for k, v in rows}
+		self.assertAlmostEqual(net.get("Guest", 0), 0, 2)
+		self.assertAlmostEqual(net["AR"], 2860, 2)
+		# a payment clears it like any company bill
+		ledger.city_ledger_settle(self.account, 2860)
+		self.assertNotIn(out["folio"], {f for f, r in _open(self.account).items()
+		                                if r["outstanding"] > 0})
+		# it lives on Receivables, not in the stay folio history
+		hist = ledger.folio_history(PROP_A)["folios"]
+		self.assertNotIn(out["folio"], [r.name for r in hist])
+
+	def test_invoice_refuses_bad_lines(self):
+		for line in ({"charge_type": "Misc", "description": "x", "amount": 0},
+		             {"charge_type": "Misc", "description": "", "amount": 10},
+		             {"charge_type": "Misc", "description": "x", "amount": 10, "gst_rate": 7},
+		             {"charge_type": "Allowance", "description": "x", "amount": 10},
+		             {"charge_type": "Misc", "description": "x", "amount": 10, "qty": 1.5}):
+			with self.assertRaises(frappe.ValidationError, msg=str(line)):
+				self.invoice(line)
+		with self.assertRaises(frappe.ValidationError):
+			self.invoice()
+
+	def test_invoice_runs_credit_control(self):
+		cc.set_setting(PROP_A, "credit_control", "Block")
+		self.terms(limit=100)
+		line = {"charge_type": "Misc", "description": "Hall", "amount": 500}
+		with self.assertRaises(credit.CreditBlocked):
+			self.invoice(line)
+		out = self.invoice(line, credit_override_reason="MD approved")
+		self.assertAlmostEqual(out["balance"], 500, 2)
+
+	# restricted --------------------------------------------------------------
+
+	def test_restricted_account_takes_no_new_bills_but_takes_payments(self):
+		self.bill(400)
+		frappe.db.set_value("City Ledger Account", self.account,
+		                    {"restricted": 1, "restricted_reason": "Disputed"})
+		with self.assertRaises(frappe.ValidationError):
+			self.invoice({"charge_type": "Misc", "description": "x", "amount": 10})
+		cc.set_setting(PROP_A, "credit_control", "Warn")
+		chk = credit.check_company_credit(self.account, PROP_A, 10)
+		self.assertFalse(chk["ok"])
+		self.assertTrue(chk.get("restricted"))
+		ledger.city_ledger_settle(self.account, 400)
+		self.assertAlmostEqual(
+			frappe.db.get_value("City Ledger Account", self.account, "balance"), 0, 2)
+
+	# transfer between accounts -------------------------------------------------
+
+	def test_transfer_moves_what_is_owed_and_keeps_the_bill_date(self):
+		parent = receivables.save_ar_account(
+			PROP_A, self.other_company(), account_number="UT-PARENT")["account"]
+		_, folio = self.bill(500)
+		ledger.city_ledger_settle(self.account, 200)
+		before = _open(self.account)[folio]
+		out = receivables.transfer_ar_invoice(self.account, folio, parent,
+		                                      reason="Parent pays")
+		self.assertAlmostEqual(out["amount"], 300, 2)
+		self.assertAlmostEqual(_open(self.account)[folio]["outstanding"], 0, 2)
+		moved = _open(parent)[folio]
+		self.assertAlmostEqual(moved["outstanding"], 300, 2)
+		self.assertEqual(moved["invoice_date"], before["invoice_date"])
+		# each account's stored balance agrees with its ledger
+		for acc in (self.account, parent):
+			stored = frappe.db.get_value("City Ledger Account", acc, "balance")
+			net = frappe.db.sql("""SELECT SUM(debit - credit) FROM `tabCity Ledger Entry`
+			                       WHERE account = %s""", acc)[0][0]
+			self.assertAlmostEqual(float(stored), float(net), 2)
+		with self.assertRaises(frappe.ValidationError):  # nothing left to move
+			receivables.transfer_ar_invoice(self.account, folio, parent)
+		# the parent pays it off
+		ledger.city_ledger_settle(parent, 300)
+		self.assertAlmostEqual(_open(parent)[folio]["outstanding"], 0, 2)
