@@ -1,6 +1,6 @@
 # MCP tool reference
 
-Kamra exposes **139 governed tools** on the hosted MCP
+Kamra exposes **141 governed tools** on the hosted MCP
 endpoint (`/mcp`) and the stdio sidecar (`mcp/kamra_mcp.py`). Every
 call runs as the connected user - **role** permissions apply, tools
 are further filtered by the property's **enabled modules**, prices
@@ -113,8 +113,8 @@ Endpoint: `kamra.crs.quote_itinerary`.
 Book a multi-property trip in one call: one normal reservation per
 leg (each with its own folio and its own property's cancellation
 policy) under one itinerary reference (ITN-...) to give the guest.
-All legs book or none do. Always quote_itinerary first. Advances are
-taken per leg on that leg's reservation.
+All legs book or none do. Always quote_itinerary first. Take the
+advance per leg, or once for the trip with record_trip_advance.
 
 Endpoint: `kamra.crs.create_itinerary`.
 Mutating - logged to the activity ledger.
@@ -122,9 +122,30 @@ Mutating - logged to the activity ledger.
 ### `get_itinerary(itinerary)`
 
 A trip (ITN-...) with its legs in date order: property, dates,
-status, price, advance paid and deposit due per leg, and the total.
+status, price, advance %, advance required, paid and still due per
+leg, and the trip totals.
 
 Endpoint: `kamra.crs.get_itinerary`.
+
+### `trip_advance_preview(itinerary, amount)`
+
+How one advance for a whole trip would be split across its legs:
+each leg up to its own advance still due (earliest stay first), any
+rest to the earliest leg up to its bill. Without an amount, the
+trip's advance still due. ALWAYS show this split to the staff
+member before record_trip_advance.
+
+Endpoint: `kamra.crs.trip_advance_preview`.
+
+### `record_trip_advance(itinerary, amount, mode, reference)`
+
+Take one advance payment for a whole trip. It is split as
+trip_advance_preview shows and each share posts as an Advance on
+that leg's folio at its own property. mode: Cash, UPI, Card, Bank.
+Confirm the amount and the split with staff before calling.
+
+Endpoint: `kamra.crs.record_trip_advance`.
+Mutating - logged to the activity ledger.
 
 ### `add_itinerary_leg(itinerary, property, room_type, check_in_date, check_out_date, adults, children)`
 

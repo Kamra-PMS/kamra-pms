@@ -16,7 +16,9 @@ checks, billed on its own folio (tax and invoices stay per property) - and
 points at one Itinerary record the guest can quote. Cancelling goes
 through each leg's cancellation_preview / cancel_reservation, so every
 leg's own policy and fee apply. Advances are taken per leg (record_advance
-on that leg's booking); the itinerary never holds money.
+on that leg's booking), or once for the whole trip (record_trip_advance),
+which splits the payment across the legs and books each share through
+record_advance on that leg - the itinerary itself never holds money.
 """
 
 import frappe
@@ -210,9 +212,13 @@ def quote_itinerary(legs, adults: int = 2, children: int = 0,
 			"available": len(available_rooms(
 				prop, rt, leg["check_in_date"], leg["check_out_date"])),
 			"amount_after_tax": q.get("amount_after_tax"),
+			# the advance this leg's dates ask for at its property
+			"advance_percent": q["advance"]["percent"],
+			"advance_due": q["advance"]["amount"],
 			"cancellation": q.get("cancellation"),
 		})
-	return {"legs": out, "total": _sum(out, "amount_after_tax")}
+	return {"legs": out, "total": _sum(out, "amount_after_tax"),
+	        "advance_due": _sum(out, "advance_due")}
 
 
 def _book_legs(itn, legs: list[dict], adults, children, phone,
@@ -281,7 +287,8 @@ def create_itinerary(legs, guest_name: str | None = None,
 	"""Book a trip across properties in one go: one reservation per leg
 	(each a normal booking at its own property, with its own folio) under
 	one itinerary reference. All legs book or none do. Quote first with
-	quote_itinerary. Take advances per leg with record_advance."""
+	quote_itinerary. Take one advance for the trip with record_trip_advance,
+	or per leg with record_advance."""
 	from kamra.api import _find_or_create_guest
 
 	legs = _parse_legs(legs)
@@ -395,10 +402,13 @@ def get_itinerary(itinerary: str):
 			                    ["property_name", "city", "phone"])
 		leg["room_type_name"] = frappe.db.get_value(
 			"Room Type", leg["room_type"], "room_type_name")
-		leg["deposit_due"] = _deposit_state(frappe._dict(
+		dep = _deposit_state(frappe._dict(
 			name=leg["reservation"], property=leg["property"],
 			amount_after_tax=leg["amount_after_tax"],
-			advance_paid=leg["advance_paid"], status=leg["status"]))["due"]
+			advance_paid=leg["advance_paid"], status=leg["status"]))
+		leg["advance_percent"] = dep["pct"]
+		leg["advance_required"] = dep["expected"] if dep["can_take"] else 0.0
+		leg["deposit_due"] = dep["due"] if dep["can_take"] else 0.0
 	live = [leg for leg in legs if leg["status"] in LIVE_STATUSES]
 	guest = frappe.db.get_value("Guest", itn.guest,
 	                            ["full_name", "phone", "email"], as_dict=True)
@@ -416,6 +426,8 @@ def get_itinerary(itinerary: str):
 		"legs": legs,
 		"total": _sum(live, "amount_after_tax"),
 		"advance_paid": _sum(live, "advance_paid"),
+		"advance_required": _sum(live, "advance_required"),
+		"advance_due": _sum(live, "deposit_due"),
 		"cancellation_fees": _sum(legs, "cancellation_fee"),
 	}
 
@@ -489,3 +501,116 @@ def cancel_itinerary(itinerary: str, reason: str = "Guest request",
 		                   waive_fee=waive_fee) for r in legs])
 	return {"itinerary": itn.name, "cancelled": results,
 	        **get_itinerary(itn.name)}
+
+
+# ── one advance for the whole trip ───────────────────────────────────────
+
+def allocate_trip_advance(rows: list[dict], amount: float) -> list[float]:
+	"""Split one trip payment across its legs (rows in date order, each
+	{due, open}: advance still due, and the bill not yet paid).
+
+	First every leg gets up to its own advance still due, earliest stay
+	first, so each hotel is secured to its own policy before any money
+	runs ahead. What is left goes to the earliest leg, up to that leg's
+	unpaid bill, then the next: one leg is never paid more than it costs,
+	so no hotel ends the stay holding money it has to refund. A payment
+	larger than the whole trip's unpaid total is refused by the caller."""
+	shares = [0.0] * len(rows)
+	left = round(float(amount), 2)
+	for key in ("due", "open"):
+		for i, r in enumerate(rows):
+			room = round(float(r[key]) - shares[i], 2)
+			take = min(left, max(room, 0.0))
+			shares[i] = round(shares[i] + take, 2)
+			left = round(left - take, 2)
+	return shares
+
+
+def _trip_advance(itinerary: str, amount=None) -> dict:
+	from kamra.api import _DEPOSIT_STATUSES
+
+	trip = get_itinerary(itinerary)
+	legs = [leg for leg in trip["legs"] if leg["status"] in _DEPOSIT_STATUSES]
+	if not legs:
+		frappe.throw(_("No stay on this trip is waiting for an advance. "
+		               "Take in-house payments on the leg's folio."))
+	if len({leg["currency"] for leg in legs}) > 1:
+		frappe.throw(_("The stays on this trip are in different currencies. "
+		               "Take the advance on each stay instead."))
+	rows = [{"due": float(leg["deposit_due"] or 0),
+	         "open": max(0.0, round(float(leg["amount_after_tax"] or 0)
+	                                - float(leg["advance_paid"] or 0), 2))}
+	        for leg in legs]
+	due = round(sum(r["due"] for r in rows), 2)
+	unpaid = round(sum(r["open"] for r in rows), 2)
+	amount = round(float(amount), 2) if amount not in (None, "") else due
+	if amount <= 0:
+		frappe.throw(_("Enter the advance amount."))
+	if amount > unpaid + 0.005:
+		frappe.throw(_("{0} is more than the trip still owes ({1}).").format(
+			f"{amount:,.2f}", f"{unpaid:,.2f}"))
+	shares = allocate_trip_advance(rows, amount)
+	return {
+		"itinerary": trip["name"], "amount": amount,
+		"currency": legs[0]["currency"],
+		"currency_symbol": legs[0]["currency_symbol"],
+		"advance_required": trip["advance_required"],
+		"advance_paid": trip["advance_paid"],
+		"advance_due": due, "unpaid": unpaid,
+		"legs": [{"reservation": leg["reservation"],
+		          "property": leg["property"],
+		          "property_name": leg["property_name"],
+		          "check_in_date": str(leg["check_in_date"]),
+		          "check_out_date": str(leg["check_out_date"]),
+		          "advance_percent": leg["advance_percent"],
+		          "advance_required": leg["advance_required"],
+		          "advance_paid": float(leg["advance_paid"] or 0),
+		          "advance_due": r["due"], "share": share}
+		         for leg, r, share in zip(legs, rows, shares)],
+	}
+
+
+@frappe.whitelist()
+@require_roles("Front Desk", "Finance", "Kamra Agent")
+def trip_advance_preview(itinerary: str, amount: float | None = None):
+	"""How one advance for the whole trip would be split across its legs,
+	before taking it: each leg's advance % and amount still due, and its
+	share. Without an amount, the trip's advance still due. Show this to
+	the guest or staff, then call record_trip_advance with the same amount."""
+	return _trip_advance(itinerary, amount)
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Front Desk", "Finance", "Kamra Agent")
+def record_trip_advance(itinerary: str, amount: float, mode: str = "Cash",
+                        reference: str | None = None, pin: str | None = None):
+	"""Take one advance for the whole trip. The payment is split as
+	trip_advance_preview shows and each share is recorded through
+	record_advance on its leg, so every hotel's folio, till and books get
+	their own part (refunds and cancellation then follow that leg's own
+	policy). All shares post or none do."""
+	from kamra.api import record_advance
+	from kamra.authz import require_cashier_pin
+	from kamra.cashier import require_open_session
+	from kamra.localization import pack_for, payment_modes
+
+	plan = _trip_advance(itinerary, amount)
+	paying = [leg for leg in plan["legs"] if leg["share"] > 0]
+	# every money guard of every hotel before the first write
+	for prop in dict.fromkeys(leg["property"] for leg in paying):
+		modes = payment_modes(pack_for(prop))
+		if mode not in modes:
+			frappe.throw(_("Pick a payment mode: {0}.").format(", ".join(modes)))
+		require_cashier_pin(prop, pin)
+		require_open_session(prop)
+	ref = reference or f"trip:{plan['itinerary']}"
+	_savepoint(lambda: [
+		record_advance(reservation=leg["reservation"], amount=leg["share"],
+		               mode=mode, reference=ref, pin=pin) for leg in paying])
+	from kamra.savings import log_action
+	log_action("record_trip_advance", "Itinerary", plan["itinerary"],
+	           paying[0]["property"],
+	           rationale=f"{mode} trip advance {plan['amount']:,.2f}: " + ", ".join(
+	               f"{leg['reservation']} {leg['share']:,.2f}" for leg in paying))
+	return {"allocation": plan["legs"], "amount": plan["amount"],
+	        **get_itinerary(plan["itinerary"])}

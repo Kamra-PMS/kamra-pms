@@ -241,6 +241,9 @@ A deposit taken from the folio's **Record a payment** form (kind
 **Booking deposits** (an advance before arrival) are taken from the
 **Deposit** panel on the booking: see [Reservations](/reservations). The
 percentage owed can differ by dates (a season's **Advance % at booking**).
+A trip across properties can take one advance for all its stops: Kamra
+splits it and posts each share as an Advance on that stop's own folio and
+till. See [Book a trip across properties](/reservations#book-a-trip-across-properties).
 
 ## Close the folio and print the invoice
 

@@ -497,6 +497,7 @@ A masked Aadhaar (last 4 digits showing) is fine.,A masked Aadhaar (last 4 digit
 "A multi-room booking can't override a blacklist. Book one room, or remove the flag on the guest profile.","A multi-room booking can't override a blacklist. Book one room, or remove the flag on the guest profile.",لا يمكن لحجز متعدد الغرف تجاوز القائمة السوداء. احجز غرفة واحدة، أو أزل العلامة من ملف النزيل.,Una reserva con varias habitaciones no puede omitir una restricción de lista negra. Reserve una sola habitación o quite la marca del perfil del huésped.,components/BookingDialog.tsx,,translated
 "A multi-room booking can't override a credit block. Book one room, or have Finance raise the limit.","A multi-room booking can't override a credit block. Book one room, or have Finance raise the limit.",لا يمكن لحجز متعدد الغرف تجاوز حظر الائتمان. احجز غرفة واحدة، أو اطلب من المالية رفع الحد.,Una reserva con varias habitaciones no puede omitir un bloqueo de crédito. Reserve una sola habitación o pida a Finanzas que aumente el límite.,components/BookingDialog.tsx,,translated
 A new version is ready,A new version is ready,يتوفر إصدار جديد,Hay una nueva versión disponible,components/ErrorBoundary.tsx,,translated
+"A percentage off each room night for stays of N nights or more. The highest tier a stay reaches applies, and no night goes below its guardrail floor.","A percentage off each room night for stays of N nights or more. The highest tier a stay reaches applies, and no night goes below its guardrail floor.",نسبة خصم على كل ليلة غرفة للإقامات التي تبلغ N ليلة أو أكثر. تُطبَّق أعلى شريحة تبلغها الإقامة، ولا تنزل أي ليلة عن حدها الأدنى للسعر.,Un porcentaje de descuento en cada noche de habitación para estancias de N noches o más. Se aplica el tramo más alto que alcance la estancia y ninguna noche baja de su precio mínimo.,,,translated
 A physical thing someone has to carry to the hall.,A physical thing someone has to carry to the hall.,شيء مادي يجب نقله إلى القاعة.,Un artículo físico que debe trasladarse al salón.,screens/BanquetCatalogue.tsx,,translated
 A POS service user (role ,A POS service user (role ,مستخدم خدمة POS (الدور ,Un usuario de servicio de punto de venta (rol ,screens/Developers.tsx,,translated
 "A posting reached the folio but not the ledger, or the other way round.","A posting reached the folio but not the ledger, or the other way round.",وصل ترحيل إلى الفاتورة دون الدفتر، أو العكس.,"Un registro llegó al folio sin llegar al libro contable, o a la inversa.",screens/Ledgers.tsx,,translated
@@ -634,15 +635,22 @@ Adults,Adults,البالغون,Adultos,components/BookingDialog.tsx; screens/CRS
 Adults included in base price,Adults included in base price,البالغون المشمولون في السعر الأساسي,Adultos incluidos en el precio base,,,translated
 Advance,Advance,دفعة مقدمة,Anticipo,,,translated
 Advance {v0},Advance {v0},دفعة مقدمة {v0},Anticipo {v0},,v0,translated
+Advance % at booking,Advance % at booking,نسبة الدفعة المقدمة % عند الحجز,Anticipo % al reservar,,,translated
+"Advance a booking on these dates owes (25, 50, 100). 0 = the property's usual deposit %. A stay crossing seasons owes the highest","Advance a booking on these dates owes (25, 50, 100). 0 = the property's usual deposit %. A stay crossing seasons owes the highest",الدفعة المقدمة المستحقة على الحجز في هذه التواريخ (25، 50، 100). 0 = نسبة العربون المعتادة للمنشأة. الإقامة التي تمتد عبر مواسم تدفع الأعلى,"Anticipo que debe una reserva en estas fechas (25, 50, 100). 0 = el depósito habitual de la propiedad. Una estancia que cruza temporadas paga el más alto",,,translated
 Advance at confirmation,Advance at confirmation,دفعة مقدمة عند التأكيد,Anticipo al confirmar,,,translated
 Advance bill,Advance bill,فاتورة مقدمة,Facturar por adelantado,screens/FolioView.tsx,,translated
 Advance date,Advance date,تقديم تاريخ العمل,Avanzar la fecha operativa,screens/EndOfDay.tsx; screens/EndOfDayWizard.tsx,,translated
+advance due {amount},advance due {amount},دفعة مقدمة مستحقة {amount},anticipo pendiente {amount},screens/CRS.tsx,amount,translated
+Advance due {amount} ({pct}%),Advance due {amount} ({pct}%),دفعة مقدمة مستحقة {amount} ({pct}%),Anticipo pendiente {amount} ({pct}%),screens/CRS.tsx,amount pct,translated
+Advance due at booking ({pcts}),Advance due at booking ({pcts}),الدفعة المقدمة المستحقة عند الحجز ({pcts}),Anticipo al reservar ({pcts}),screens/CRS.tsx,pcts,translated
 Advance due now: {amount},Advance due now: {amount},الدفعة المقدمة المستحقة الآن: {amount},Anticipo a pagar ahora: {amount},,amount,translated
 Advance included in amount paid,Advance included in amount paid,الدفعة المقدمة ضمن المبلغ المدفوع,Anticipo incluido en el total pagado,screens/RegistrationCard.tsx,,translated
 Advance paid,Advance paid,الدفعة المقدمة,Anticipo pagado,screens/CancellationLetter.tsx; screens/RegistrationCard.tsx; screens/TripConfirmation.tsx,,translated
 Advance percent,Advance percent,نسبة المقدمة,Porcentaje de anticipo,screens/BookingEngine.tsx; screens/Setup.tsx,,translated
 Advance Percent,Advance Percent,نسبة الدفعة المقدمة,Porcentaje de anticipo,screens/Setup.tsx,,translated
 Advance percentage,Advance percentage,نسبة الدفعة المقدمة,Porcentaje de anticipo,screens/BookingEngine.tsx,,translated
+Advance required,Advance required,الدفعة المقدمة المطلوبة,Anticipo requerido,screens/TripConfirmation.tsx,,translated
+Advance still due,Advance still due,الدفعة المقدمة المتبقية,Anticipo aún pendiente,screens/TripConfirmation.tsx,,translated
 Advance taken at booking; the rest is due at check-in.,Advance taken at booking; the rest is due at check-in.,تُؤخذ دفعة مقدمة عند الحجز، والباقي مستحق عند تسجيل الوصول.,Anticipo recibido al reservar; el saldo se paga al registrar la llegada.,screens/ReservationDetail.tsx,,translated
 After,After,بعد,Después,,,translated
 after {v0} credit,after {v0} credit,بعد رصيد {v0},después del crédito de {v0},screens/banquet/Economics.tsx,v0,translated
@@ -741,7 +749,7 @@ Always required,Always required,مطلوب دائما,Siempre obligatorio,,,tran
 Amenities,Amenities,المرافق,Comodidades,components/RoomDrawer.tsx; screens/PublicBooking.tsx,,translated
 Amenities (one per line),Amenities (one per line),المرافق (واحد في كل سطر),Servicios e instalaciones (uno por línea),components/RoomTypeMedia.tsx,,translated
 American,American,أمريكي,Estadounidense,,,translated
-Amount,Amount,المبلغ,Importe,components/CheckOutDialog.tsx; components/DepositPanel.tsx; components/RoomStayPanels.tsx; components/SecurityDepositPanel.tsx; screens/BanquetDocument.tsx; screens/BanquetFunction.tsx; screens/BanquetRegisters.tsx; screens/CashierTill.tsx; screens/PettyCash.tsx; screens/pos/OrderHistory.tsx; screens/pos/PosSidePanel.tsx,,translated
+Amount,Amount,المبلغ,Importe,components/CheckOutDialog.tsx; components/DepositPanel.tsx; components/RoomStayPanels.tsx; components/SecurityDepositPanel.tsx; screens/BanquetDocument.tsx; screens/BanquetFunction.tsx; screens/BanquetRegisters.tsx; screens/CRS.tsx; screens/CashierTill.tsx; screens/PettyCash.tsx; screens/pos/OrderHistory.tsx; screens/pos/PosSidePanel.tsx,,translated
 Amount (before tax),Amount (before tax),المبلغ (قبل الضريبة),Importe (antes de impuestos),components/RoomStayPanels.tsx,,translated
 Amount (held {amt}),Amount (held {amt}),المبلغ (المحتجز {amt}),Importe (retenido: {amt}),components/SecurityDepositPanel.tsx,amt,translated
 Amount {cur},Amount {cur},المبلغ {cur},Importe {cur},screens/FolioView.tsx; screens/HkApp.tsx,cur,translated
@@ -1400,7 +1408,7 @@ Click a cell to start a booking,Click a cell to start a booking,انقر على 
 Click a room to advance its housekeeping status,Click a room to advance its housekeeping status,انقر غرفة لتقديم حالة التدبير المنزلي,Haga clic en una habitación para avanzar en su estado de limpieza,screens/Today.tsx,,translated
 Click a row to see the rows behind it.,Click a row to see the rows behind it.,انقر على صف لعرض التفاصيل.,Haga clic en una fila para ver el detalle.,screens/Reports.tsx,,translated
 Client,Client,العميل,Cliente,screens/BanquetFunction.tsx,,translated
-Close,Close,إغلاق,Cerrar,components/BookingDialog.tsx; components/CameraCapture.tsx; components/CheckInDialog.tsx; components/CheckOutDialog.tsx; components/GroupBookingDialog.tsx; components/HkMedia.tsx; components/PinPad.tsx; components/RoomChangeDialog.tsx; components/ui/sheet.tsx; screens/BanquetFunction.tsx; screens/Inventory.tsx; screens/POS.tsx; screens/PublicBooking.tsx; screens/RecipeManager.tsx; screens/TapeChart.tsx; screens/pos/OpenBillsPopup.tsx; screens/pos/OrderHistory.tsx; screens/pos/PosSidePanel.tsx; screens/pos/SettleSheet.tsx,,translated
+Close,Close,إغلاق,Cerrar,components/BookingDialog.tsx; components/CameraCapture.tsx; components/CheckInDialog.tsx; components/CheckOutDialog.tsx; components/GroupBookingDialog.tsx; components/HkMedia.tsx; components/PinPad.tsx; components/RoomChangeDialog.tsx; components/ui/sheet.tsx; screens/BanquetFunction.tsx; screens/CRS.tsx; screens/Inventory.tsx; screens/POS.tsx; screens/PublicBooking.tsx; screens/RecipeManager.tsx; screens/TapeChart.tsx; screens/pos/OpenBillsPopup.tsx; screens/pos/OrderHistory.tsx; screens/pos/PosSidePanel.tsx; screens/pos/SettleSheet.tsx,,translated
 Close & generate invoice,Close & generate invoice,إغلاق وإنشاء فاتورة,Cerrar y generar factura,screens/FolioView.tsx,,translated
 Close and generate invoice,Close and generate invoice,إغلاق وإصدار الفاتورة,Cerrar y generar factura,components/CheckOutDialog.tsx,,translated
 Close complimentary bill,Close complimentary bill,إغلاق الفاتورة المجانية,Cerrar cuenta de cortesía,screens/pos/SettleSheet.tsx,,translated
@@ -1776,7 +1784,7 @@ Departures still in house block the audit,Departures still in house block the au
 Deposit,Deposit,عربون,Anticipo de reserva,components/DepositPanel.tsx,,translated
 Deposit & close-out,Deposit & close-out,العربون والإقفال,Depósito y cierre del evento,screens/BanquetFunction.tsx,,translated
 Deposit and advance,Deposit and advance,التأمين والدفعة المقدمة,Depósito de garantía y anticipo,components/CheckInDialog.tsx; screens/settings/cards.tsx,,translated
-Deposit due {amount},Deposit due {amount},العربون المستحق {amount},Depósito pendiente {amount},screens/CRS.tsx,amount,translated
+Deposit due {amount},Deposit due {amount},العربون المستحق {amount},Depósito pendiente {amount},,amount,translated
 Deposit expected (%),Deposit expected (%),العربون المتوقع (%),Anticipo esperado (%),screens/BookingEngine.tsx,,translated
 Deposit expected at booking,Deposit expected at booking,العربون المتوقع عند الحجز,Anticipo esperado al reservar,,,translated
 Deposit held,Deposit held,التأمين المحتجز,Depósito de garantía retenido,screens/BanquetFunction.tsx; screens/RegistrationCard.tsx,,translated
@@ -1820,6 +1828,7 @@ Disconnect your AI providers? They will have to sign in again.,Disconnect your A
 Disconnected.,Disconnected.,تم قطع الاتصال.,Desconectado.,screens/settings/McpAccessPage.tsx,,translated
 Discount,Discount,خصم,Descuento,lib/thermal.ts; screens/POS.tsx; screens/banquet/Economics.tsx; screens/pos/PosSidePanel.tsx,,translated
 Discount %,Discount %,خصم %,Descuento (%),,,translated
+Discount % off the room rate,Discount % off the room rate,نسبة الخصم % من سعر الغرفة,Descuento % sobre la tarifa de la habitación,,,translated
 Discount codes guests or agents can apply at booking. Toggle Disabled to activate or deactivate a code.,Discount codes guests or agents can apply at booking. Toggle Disabled to activate or deactivate a code.,رموز خصم يمكن للضيوف أو الوكلاء تطبيقها عند الحجز. استخدم معطّل لتفعيل الرمز أو إيقافه.,Cupones de descuento que los huéspedes o agentes pueden aplicar al reservar. Use Desactivado para activar o desactivar un código.,,,translated
 "Discount codes with dates, minimum nights and use limits.","Discount codes with dates, minimum nights and use limits.",رموز خصم بتواريخ وحد أدنى لعدد الليالي وحدود للاستخدام.,"Cupones con fechas de vigencia, mínimo de noches y límites de uso.",,,translated
 Discount on the whole quote,Discount on the whole quote,خصم على كامل عرض السعر,Descuento sobre toda la cotización,screens/BanquetFunction.tsx,,translated
@@ -1876,6 +1885,7 @@ DSO (days),DSO (days),متوسط أيام التحصيل (أيام),DSO (días),
 due,due,مستحق,pendiente de pago,screens/Banquet.tsx; screens/Today.tsx,,translated
 Due,Due,مستحق,Pendiente de pago,screens/Banquet.tsx; screens/BanquetDocument.tsx; screens/BanquetRegisters.tsx; screens/CityLedgerPayment.tsx; screens/InHouse.tsx; screens/Today.tsx,,translated
 due ,due ,مستحق ,vence ,screens/BanquetFunction.tsx,,translated
+due {amount} ({pct}%),due {amount} ({pct}%),مستحق {amount} ({pct}%),pendiente {amount} ({pct}%),screens/CRS.tsx,amount pct,translated
 Due {v0},Due {v0},مستحق {v0},Pendiente {v0},,v0,translated
 Due by,Due by,موعد الاستحقاق,Vence,,,translated
 Due date,Due date,تاريخ الاستحقاق,Fecha de vencimiento,,,translated
@@ -1905,7 +1915,9 @@ Each place that sells food or drink.,Each place that sells food or drink.,كل �
 Each request becomes a task for the right team.,Each request becomes a task for the right team.,يصبح كل طلب مهمة للفريق المختص.,Cada solicitud se convierte en una tarea para el equipo adecuado.,components/CheckInDialog.tsx,,translated
 "Each request carries X-Kamra-Event, X-Kamra-Event-Id, X-Kamra-Timestamp and X-Kamra-Signature. Recompute the signature over the raw body and reject old timestamps:","Each request carries X-Kamra-Event, X-Kamra-Event-Id, X-Kamra-Timestamp and X-Kamra-Signature. Recompute the signature over the raw body and reject old timestamps:",يحمل كل طلب X-Kamra-Event وX-Kamra-Event-Id وX-Kamra-Timestamp وX-Kamra-Signature. أعد حساب التوقيع على النص الخام وارفض الطوابع الزمنية القديمة:,"Cada solicitud lleva X-Kamra-Event, X-Kamra-Event-Id, X-Kamra-Timestamp y X-Kamra-Signature. Vuelva a calcular la firma sobre el cuerpo sin procesar y rechace las marcas de tiempo antiguas:",screens/settings/WebhooksPage.tsx,,translated
 "Each sign-in from Claude, ChatGPT or another MCP client. Disconnect one and it has to sign in again.","Each sign-in from Claude, ChatGPT or another MCP client. Disconnect one and it has to sign in again.",كل تسجيل دخول من Claude أو ChatGPT أو أي عميل MCP آخر. افصل أحدها وسيحتاج إلى تسجيل الدخول مجددا.,"Cada inicio de sesión desde Claude, ChatGPT u otro cliente MCP. Si desconecta uno, tendrá que iniciar sesión de nuevo.",screens/settings/McpAccessPage.tsx,,translated
-"Each stay becomes a normal booking at its own property, with its own bill. Take advances on each stay.","Each stay becomes a normal booking at its own property, with its own bill. Take advances on each stay.",تصبح كل إقامة حجزًا عاديًا في منشأتها، بفاتورتها الخاصة. استلم الدفعات المقدمة على كل إقامة.,"Cada estancia se convierte en una reserva normal en su propiedad, con su propia cuenta. Cobra los anticipos en cada estancia.",screens/CRS.tsx,,translated
+"Each stay becomes a normal booking at its own property, with its own bill. Take advances on each stay.","Each stay becomes a normal booking at its own property, with its own bill. Take advances on each stay.",تصبح كل إقامة حجزًا عاديًا في منشأتها، بفاتورتها الخاصة. استلم الدفعات المقدمة على كل إقامة.,"Cada estancia se convierte en una reserva normal en su propiedad, con su propia cuenta. Cobra los anticipos en cada estancia.",,,translated
+"Each stay becomes a normal booking at its own property, with its own bill. Take one advance for the trip from its sheet, or on each stay.","Each stay becomes a normal booking at its own property, with its own bill. Take one advance for the trip from its sheet, or on each stay.",تصبح كل إقامة حجزًا عاديًا في منشأتها، بفاتورتها الخاصة. استلم دفعة مقدمة واحدة للرحلة من صفحتها، أو على كل إقامة.,"Cada estancia se convierte en una reserva normal en su propiedad, con su propia cuenta. Cobra un solo anticipo para el viaje desde su ficha, o en cada estancia.",screens/CRS.tsx,,translated
+"Each stay first gets the advance its own dates ask for, earliest first. Anything more goes to the earliest stay, never past its bill.","Each stay first gets the advance its own dates ask for, earliest first. Anything more goes to the earliest stay, never past its bill.",تحصل كل إقامة أولًا على الدفعة المقدمة التي تطلبها تواريخها، بدءًا بالأقرب. وما يزيد يذهب إلى الإقامة الأولى، دون أن يتجاوز فاتورتها.,"Cada estancia recibe primero el anticipo que piden sus fechas, empezando por la más temprana. Lo que sobre va a la primera estancia, nunca por encima de su cuenta.",screens/CRS.tsx,,translated
 Each stay is billed in its own currency,Each stay is billed in its own currency,تُحاسب كل إقامة بعملتها الخاصة,Cada estancia se cobra en su propia moneda,screens/CRS.tsx; screens/TripConfirmation.tsx,,translated
 Each unit / room sells on its own (hotel-style inventory).,Each unit / room sells on its own (hotel-style inventory).,كل وحدة / غرفة تُباع بمفردها (مخزون بأسلوب الفندق).,"Cada unidad o habitación se reserva por separado, como en un hotel.",screens/Setup.tsx,,translated
 Earlier,Earlier,السابق,Anterior,screens/BanquetDiary.tsx; screens/RateCalendar.tsx,,translated
@@ -2239,6 +2251,7 @@ from {n} timed cleans,from {n} timed cleans,من {n} عمليات تنظيف م�
 From {time},From {time},من {time},Desde las {time},screens/PublicBooking.tsx,time,translated
 From date,From date,من تاريخ,Desde la fecha,,,translated
 From Meta Business Manager > WhatsApp > API setup,From Meta Business Manager > WhatsApp > API setup,من Meta Business Manager > WhatsApp > إعداد API,Desde Meta Business Manager > WhatsApp > Configuración de API,,,translated
+From nights,From nights,من عدد الليالي,Desde noches,,,translated
 Front desk,Front desk,الاستقبال,Recepción,,,translated
 Front Desk,Front Desk,الاستقبال,Recepción,screens/CashierTill.tsx,,translated
 Front Desk · In House,Front Desk · In House,الاستقبال · المقيمون,Recepción · Alojados,,,translated
@@ -2887,6 +2900,8 @@ Logged on,Logged on,تاريخ التسجيل,Fecha de registro,,,translated
 Login,Login,تسجيل الدخول,Inicio de sesión,,,translated
 Logo,Logo,الشعار,Logotipo,screens/BookingEngine.tsx,,translated
 Logout,Logout,تسجيل الخروج,Cierre de sesión,,,translated
+Long stay {pct}% off (in the room price),Long stay {pct}% off (in the room price),خصم الإقامة الطويلة {pct}% (ضمن سعر الغرفة),Estancia larga {pct}% de descuento (incluido en el precio de la habitación),components/BookingDialog.tsx,pct,translated
+Long-stay Discounts,Long-stay Discounts,خصومات الإقامة الطويلة,Descuentos por estancia larga,,,translated
 Longitude,Longitude,خط الطول,Longitud,screens/BookingEngine.tsx,,translated
 Looked up reservations,Looked up reservations,استعلم عن الحجوزات,Reservas consultadas,,,translated
 Lost,Lost,خاسرة,Perdido,,,translated
@@ -3492,6 +3507,7 @@ On its way,On its way,في الطريق,En camino,screens/CashierBoard.tsx,,tran
 on the night,on the night,خلال المناسبة,durante el evento,screens/banquet/Economics.tsx,,translated
 "On: sending an order prints the KOT and shows it on the kitchen display as started, so nobody presses Start. Off: the kitchen presses Start and each till chooses whether to print. An outlet can override this on its own record.","On: sending an order prints the KOT and shows it on the kitchen display as started, so nobody presses Start. Off: the kitchen presses Start and each till chooses whether to print. An outlet can override this on its own record.",تشغيل: إرسال الطلب يطبع أمر المطبخ ويظهره على شاشة المطبخ كمبدوء، فلا يحتاج أحد للضغط على بدء. إيقاف: يضغط المطبخ بدء ويختار كل صندوق ما إذا كان سيطبع. يمكن للمنفذ تجاوز ذلك في سجله الخاص.,Activado: enviar el pedido imprime la comanda y la marca como iniciada en cocina. Desactivado: cocina debe pulsar Iniciar y cada caja decide si imprime. Cada punto de venta puede cambiar esta opción en su configuración.,,,translated
 "On: staff open their till (with an opening float) before taking or giving back money, and close it with a cash count. Off, for a small place with no cash drawer: payments and refunds are recorded without a till.","On: staff open their till (with an opening float) before taking or giving back money, and close it with a cash count. Off, for a small place with no cash drawer: payments and refunds are recorded without a till.",تشغيل: يفتح الموظفون صندوقهم (برصيد افتتاحي) قبل استلام الأموال أو ردها، ويغلقونه بعد عدّ النقد. إيقاف، للمنشآت الصغيرة بلا درج نقدي: تُسجل الدفعات والمبالغ المستردة بدون صندوق.,"Activado: el personal abre su caja con un fondo inicial antes de cobrar o reembolsar y la cierra con un recuento. Desactivado: para alojamientos pequeños sin caja física, permite registrar pagos y reembolsos sin caja.",,,translated
+One advance for the whole trip,One advance for the whole trip,دفعة مقدمة واحدة للرحلة كلها,Un solo anticipo para todo el viaje,screens/CRS.tsx,,translated
 One consolidated company bill across every room of the group,One consolidated company bill across every room of the group,فاتورة شركة موحّدة عبر كل غرف المجموعة,Una sola cuenta de empresa para todas las habitaciones del grupo,screens/FolioView.tsx,,translated
 One day later,One day later,بعد يوم واحد,Un día después,,,translated
 One less,One less,واحد أقل,Una unidad menos,screens/POS.tsx,,translated
@@ -3775,7 +3791,7 @@ Payment Gateway Settings,Payment Gateway Settings,إعدادات بوابة ال
 Payment link,Payment link,رابط الدفع,Enlace de pago,screens/FolioView.tsx,,translated
 Payment Link,Payment Link,رابط الدفع,Enlace de pago,,,translated
 Payment links for advances and folio settlement. Money goes straight to this property's own account. Secrets are write-only.,Payment links for advances and folio settlement. Money goes straight to this property's own account. Secrets are write-only.,روابط دفع للدفعات المقدمة وتسوية الفواتير. تذهب الأموال مباشرة إلى حساب هذا العقار. الأسرار للكتابة فقط.,"Enlaces de pago para anticipos y liquidación de folios. El dinero llega directamente a la cuenta del alojamiento. Los secretos solo se pueden guardar, no consultar.",screens/settings/cards.tsx,,translated
-Payment mode,Payment mode,طريقة الدفع,Medio de pago,components/BookingDialog.tsx; components/CheckOutDialog.tsx; components/DepositPanel.tsx; components/SecurityDepositPanel.tsx; screens/pos/OrderHistory.tsx,,translated
+Payment mode,Payment mode,طريقة الدفع,Medio de pago,components/BookingDialog.tsx; components/CheckOutDialog.tsx; components/DepositPanel.tsx; components/SecurityDepositPanel.tsx; screens/CRS.tsx; screens/pos/OrderHistory.tsx,,translated
 Payment recorded.,Payment recorded.,تم تسجيل الدفعة.,Pago registrado.,components/RoomStayPanels.tsx,,translated
 Payment recorded. Account balance is now ,Payment recorded. Account balance is now ,تم تسجيل الدفع. رصيد الحساب الآن ,Pago registrado. El saldo de la cuenta es ahora ,screens/CityLedgerPayment.tsx,,translated
 Payment reminder from {0},Payment reminder from {0},تذكير بالدفع من {0},Recordatorio de pago de {0},,0,translated
@@ -4724,6 +4740,7 @@ Show on the public booking page,Show on the public booking page,العرض في 
 Show or print the registration card and have the guest sign it.,Show or print the registration card and have the guest sign it.,اعرض بطاقة التسجيل أو اطبعها واطلب من الضيف توقيعها.,Muestre o imprima la ficha de registro y solicite la firma del huésped.,components/CheckInDialog.tsx,,translated
 Show PMS menus,Show PMS menus,عرض قوائم PMS,Mostrar menús PMS,screens/POS.tsx,,translated
 Show PMS menus (Esc),Show PMS menus (Esc),إظهار قوائم النظام (Esc),Mostrar menús de PMS (Esc),screens/Kitchen.tsx,,translated
+Show split,Show split,عرض التوزيع,Ver reparto,screens/CRS.tsx,,translated
 Show the app menu (Esc),Show the app menu (Esc),إظهار قائمة التطبيق (Esc),Mostrar el menú de la aplicación (Esc),screens/Kitchen.tsx; screens/POS.tsx,,translated
 Showing {n},Showing {n},عرض {n},Mostrando {n},screens/pos/PosSidePanel.tsx,n,translated
 Showing {n} of {total} bills,Showing {n} of {total} bills,عرض {n} من {total} فاتورة,Mostrando {n} de {total} cuentas,screens/pos/OrderHistory.tsx,n total,translated
@@ -4877,6 +4894,7 @@ Staying on: use Extend stay so the stay covers tonight.,Staying on: use Extend s
 staying over,staying over,مقيم,continúa alojado,screens/TapeChart.tsx,,translated
 Stayover Clean,Stayover Clean,تنظيف أثناء الإقامة,Limpieza durante la estancia,,,translated
 Stays,Stays,الإقامات,Estancias,screens/GuestJourney.tsx,,translated
+Stays of at least (nights),Stays of at least (nights),إقامات لا تقل عن (ليالٍ),Estancias de al menos (noches),,,translated
 Stays past their departure date. The audit does not post a night for a stay past its departure.,Stays past their departure date. The audit does not post a night for a stay past its departure.,إقامات تجاوزت تاريخ المغادرة. لا يرحّل التدقيق ليلة لإقامة تجاوزت موعد مغادرتها.,Estancias cuya fecha de salida ya pasó. La auditoría no registra noches posteriores a la fecha de salida.,,,translated
 "Step by step: choose the modules you want, then rooms, rates, and, if you run a restaurant, outlets, stations and tills. Each step asks only what it needs.","Step by step: choose the modules you want, then rooms, rates, and, if you run a restaurant, outlets, stations and tills. Each step asks only what it needs.",خطوة بخطوة: اختر الوحدات التي تريدها، ثم الغرف والأسعار، وإذا كان لديك مطعم، المنافذ والمحطات والصناديق. كل خطوة تطلب ما تحتاجه فقط.,"Paso a paso: elija los módulos que necesita y luego configure las habitaciones y las tarifas. Si tiene un restaurante, agregue también los puntos de venta, las estaciones y las cajas. Cada paso solicita solo la información necesaria.",screens/Setup.tsx,,translated
 "Step status must be done, skipped or pending.","Step status must be done, skipped or pending.",يجب أن تكون حالة الخطوة: مكتملة أو متخطاة أو معلقة.,"El estado del paso debe ser completado, omitido o pendiente.",,,translated
@@ -4961,8 +4979,11 @@ Table reservations,Table reservations,حجوزات الطاولات,Reservas de 
 Table…,Table…,طاولة…,Mesa...,screens/POS.tsx,,translated
 Tables,Tables,الطاولات,Mesas,screens/POS.tsx,,translated
 Tables & running bills,Tables & running bills,الطاولات والفواتير الجارية,Mesas y cuentas abiertas,screens/POS.tsx,,translated
+Take {amount},Take {amount},استلام {amount},Cobrar {amount},screens/CRS.tsx,amount,translated
 Take a payment,Take a payment,استلام دفعة,Recibir un pago,components/RoomStayPanels.tsx,,translated
+Take a percentage off stays of N nights or more.,Take a percentage off stays of N nights or more.,اخصم نسبة مئوية من الإقامات التي تبلغ N ليلة أو أكثر.,Descuenta un porcentaje a las estancias de N noches o más.,,,translated
 Take a restaurant order,Take a restaurant order,أخذ طلب مطعم,Tomar un pedido de restaurante,,,translated
+Take advance,Take advance,استلام الدفعة المقدمة,Cobrar anticipo,screens/CRS.tsx,,translated
 Take it,Take it,تولَّها,Asignarme la solicitud,screens/Tickets.tsx,,translated
 Take money through cashier tills,Take money through cashier tills,تحصيل الأموال عبر صناديق الصرافين,Gestionar dinero mediante cajas,,,translated
 Take out of service,Take out of service,إخراج من الخدمة,Sacar de servicio,components/RoomDrawer.tsx,,translated
@@ -4972,6 +4993,7 @@ Take the deposit (or waive it with a reason) to continue.,Take the deposit (or w
 Take the security deposit (or waive it with a reason) and any advance the booking still owes.,Take the security deposit (or waive it with a reason) and any advance the booking still owes.,خذ مبلغ التأمين (أو اعف منه مع ذكر السبب) وأي دفعة مقدمة لا يزال الحجز مدينا بها.,"Cobre el depósito de garantía, o indique un motivo para exonerarlo, y el anticipo pendiente de la reserva.",components/CheckInDialog.tsx,,translated
 Take the security deposit or waive it with a reason to continue.,Take the security deposit or waive it with a reason to continue.,خذ مبلغ التأمين أو اعف منه مع ذكر السبب للمتابعة.,Cobre el depósito de garantía o indique un motivo para exonerarlo y continuar.,components/CheckInDialog.tsx,,translated
 Take this room,Take this room,خذ هذه الغرفة,Asignarme esta habitación,screens/HkApp.tsx,,translated
+Take trip advance,Take trip advance,استلام الدفعة المقدمة للرحلة,Cobrar anticipo del viaje,screens/CRS.tsx,,translated
 Takeaway,Takeaway,سفري,Para llevar,,,translated
 TAKEAWAY,TAKEAWAY,سفري,PARA LLEVAR,screens/Kitchen.tsx,,translated
 Taken,Taken,مأخوذ,Reservado,screens/Banquet.tsx,,translated

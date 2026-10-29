@@ -11293,7 +11293,7 @@
         "kamra.crs.create_itinerary"
        ]
       },
-      "description": "Book a trip across properties in one go: one reservation per leg\n(each a normal booking at its own property, with its own folio) under\none itinerary reference. All legs book or none do. Quote first with\nquote_itinerary. Take advances per leg with record_advance.",
+      "description": "Book a trip across properties in one go: one reservation per leg\n(each a normal booking at its own property, with its own folio) under\none itinerary reference. All legs book or none do. Quote first with\nquote_itinerary. Take one advance for the trip with record_trip_advance,\nor per leg with record_advance.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"legs\": \"<legs>\",\n  \"guest_name\": \"A. Guest\",\n  \"phone\": \"+91 90000 00000\",\n  \"guest\": \"G-00001\",\n  \"adults\": 2,\n  \"children\": 0\n}",
@@ -11482,6 +11482,80 @@
       "body": {
        "mode": "raw",
        "raw": "{\n  \"itinerary\": \"<itinerary>\",\n  \"reason\": \"Guest request\",\n  \"waive_fee\": 0\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "trip_advance_preview",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.crs.trip_advance_preview",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.crs.trip_advance_preview"
+       ]
+      },
+      "description": "How one advance for the whole trip would be split across its legs,\nbefore taking it: each leg's advance % and amount still due, and its\nshare. Without an amount, the trip's advance still due. Show this to\nthe guest or staff, then call record_trip_advance with the same amount.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"itinerary\": \"<itinerary>\",\n  \"amount\": 1000\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "record_trip_advance",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.crs.record_trip_advance",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.crs.record_trip_advance"
+       ]
+      },
+      "description": "Take one advance for the whole trip. The payment is split as\ntrip_advance_preview shows and each share is recorded through\nrecord_advance on its leg, so every hotel's folio, till and books get\ntheir own part (refunds and cancellation then follow that leg's own\npolicy). All shares post or none do.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"itinerary\": \"<itinerary>\",\n  \"amount\": 1000,\n  \"mode\": \"Cash\"\n}",
        "options": {
         "raw": {
          "language": "json"

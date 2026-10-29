@@ -4,6 +4,8 @@ existing per-property paths."""
 
 from __future__ import annotations
 
+from unittest.mock import patch
+
 import frappe
 
 from kamra import api, crs
@@ -14,7 +16,7 @@ from kamra.tests.audit_fixtures import (PROP_A, PROP_B, AuditTestCase, d,
 USER = "ut-itinerary-desk@example.com"
 
 
-class ItineraryTestCase(AuditTestCase):
+class _TripBase(AuditTestCase):
 	properties = (PROP_A, PROP_B)
 
 	def setUp(self):
@@ -41,6 +43,8 @@ class ItineraryTestCase(AuditTestCase):
 		return crs.create_itinerary(legs=self.legs(), guest_name="UT Traveller",
 		                            phone="+15550004111", **kw)
 
+
+class ItineraryTestCase(_TripBase):
 	def test_quote_is_each_legs_get_quote_and_their_sum(self):
 		q = crs.quote_itinerary(legs=self.legs())
 		self.assertEqual([leg["property"] for leg in q["legs"]], [PROP_A, PROP_B])
@@ -160,3 +164,71 @@ class ItineraryTestCase(AuditTestCase):
 			with self.assertRaises(frappe.ValidationError):
 				self.book()
 		self.assertFalse(frappe.db.exists("Reservation", {"guest_name": "UT Traveller"}))
+
+
+class TripAdvanceTestCase(_TripBase):
+	"""One advance for the whole trip, split across the legs' folios, each
+	leg owing the advance % its own dates ask for."""
+
+	def setUp(self):
+		super().setUp()
+		make_property(PROP_A, free_cancel_days=0, cancellation_fee="None",
+		              deposit_pct=50)
+		make_property(PROP_B, free_cancel_days=3650,
+		              cancellation_fee="First Night", deposit_pct=25)
+		# B's dates fall in a season that wants the whole stay up front
+		frappe.get_doc({"doctype": "Season", "property": PROP_B,
+		                "season_name": "UT Peak", "start_date": d(3),
+		                "end_date": d(5), "adjustment_type": "Percent",
+		                "adjustment_value": 0, "advance_percent": 100}).insert()
+
+	def test_allocation_rule(self):
+		rows = [{"due": 100, "open": 400}, {"due": 300, "open": 300}]
+		self.assertEqual(crs.allocate_trip_advance(rows, 250), [100, 150])
+		self.assertEqual(crs.allocate_trip_advance(rows, 400), [100, 300])
+		# the rest goes to the earliest leg, never past its bill
+		self.assertEqual(crs.allocate_trip_advance(rows, 600), [300, 300])
+		self.assertEqual(crs.allocate_trip_advance(rows, 700), [400, 300])
+
+	def test_each_leg_owes_its_own_period_percent(self):
+		itn = self.book()
+		a, b = itn["legs"]
+		self.assertEqual((a["advance_percent"], b["advance_percent"]), (50, 100))
+		self.assertAlmostEqual(a["advance_required"], round(a["amount_after_tax"] / 2, 2))
+		self.assertAlmostEqual(b["advance_required"], b["amount_after_tax"])
+		self.assertAlmostEqual(itn["advance_due"],
+		                       a["advance_required"] + b["advance_required"])
+		# the same guest at B outside the season owes B's usual 25%
+		q = api.get_quote(property=PROP_B, room_type=self.rt_b,
+		                  check_in_date=d(10), check_out_date=d(12))
+		self.assertEqual(q["advance"]["percent"], 25)
+		self.assertEqual(api.get_quote(property=PROP_B, room_type=self.rt_b,
+		                               check_in_date=d(3), check_out_date=d(5))
+		                 ["advance"]["season"], "UT Peak")
+
+	def test_one_payment_lands_on_each_legs_folio(self):
+		itn = self.book()
+		a, b = itn["legs"]
+		extra = 10.0
+		amount = itn["advance_due"] + extra
+		preview = crs.trip_advance_preview(itn["name"], amount)
+		self.assertEqual([leg["share"] for leg in preview["legs"]],
+		                 [round(a["advance_required"] + extra, 2), b["advance_required"]])
+		with self.assertRaises(frappe.ValidationError):
+			crs.trip_advance_preview(itn["name"], itn["total"] + 1)
+		out = crs.record_trip_advance(itn["name"], amount, mode="Cash")
+		self.assertAlmostEqual(out["advance_paid"], amount)
+		self.assertEqual(out["advance_due"], 0)
+		for leg, share in zip(out["legs"], [x["share"] for x in preview["legs"]]):
+			folio = frappe.get_doc("Folio", {"reservation": leg["reservation"],
+			                                 "folio_type": "Guest"})
+			self.assertEqual(folio.property, leg["property"])
+			self.assertEqual([(p.payment_kind, p.amount) for p in folio.payments],
+			                 [("Advance", share)])
+
+	def test_mixed_currencies_are_refused(self):
+		itn = self.book()
+		with patch("kamra.crs._locale", side_effect=lambda p: {
+				"currency": "USD" if p == PROP_B else "INR", "currency_symbol": ""}):
+			with self.assertRaises(frappe.ValidationError):
+				crs.trip_advance_preview(itn["name"])

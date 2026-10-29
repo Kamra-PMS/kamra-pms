@@ -8,7 +8,7 @@ import { serverError } from "../lib/resource"
 import { Card, CardContent } from "../components/ui/card"
 import { Button } from "../components/ui/button"
 import { Sheet } from "../components/ui/sheet"
-import { cur, moneyLocale } from "../lib/money"
+import { cur, moneyLocale, useLocale } from "../lib/money"
 import { useT, t as translate } from "../lib/i18n"
 
 
@@ -59,6 +59,8 @@ interface QuotedLeg extends TripLeg {
   available: number
   amount_after_tax: number
   currency_symbol: string
+  advance_percent: number
+  advance_due: number
 }
 interface ItineraryLeg extends QuotedLeg {
   reservation: string
@@ -66,6 +68,7 @@ interface ItineraryLeg extends QuotedLeg {
   room: string | null
   status: string
   advance_paid: number
+  advance_required: number
   deposit_due: number
   cancellation_number: string | null
   cancellation_fee: number
@@ -82,6 +85,16 @@ export interface Itinerary {
   legs: ItineraryLeg[]
   total: number | null
   advance_paid: number | null
+  advance_required: number | null
+  advance_due: number | null
+}
+interface AdvancePlan {
+  amount: number
+  currency_symbol: string
+  advance_due: number
+  unpaid: number
+  legs: { reservation: string; property_name: string; check_in_date: string;
+    advance_percent: number; advance_due: number; share: number }[]
 }
 interface TripRow {
   name: string
@@ -138,7 +151,7 @@ export default function CRS() {
   const [guest, setGuest] = useState({ name: "", phone: "" })
   const [done, setDone] = useState<string | null>(null)
   const [trip, setTrip] = useState<TripLeg[]>([])
-  const [tripQuote, setTripQuote] = useState<{ legs: QuotedLeg[]; total: number | null } | null>(null)
+  const [tripQuote, setTripQuote] = useState<{ legs: QuotedLeg[]; total: number | null; advance_due: number | null } | null>(null)
   const [traveller, setTraveller] = useState({ name: "", phone: "" })
   const [trips, setTrips] = useState<TripRow[]>([])
   const [tripSearch, setTripSearch] = useState("")
@@ -156,7 +169,7 @@ export default function CRS() {
   // the server prices the whole trip each time a stop changes
   useEffect(() => {
     if (!trip.length) { setTripQuote(null); return }
-    call<{ legs: QuotedLeg[]; total: number | null }>("kamra.crs.quote_itinerary", {
+    call<{ legs: QuotedLeg[]; total: number | null; advance_due: number | null }>("kamra.crs.quote_itinerary", {
       legs: trip, adults, children,
     }).then(setTripQuote).catch((e) => { setTripQuote(null); setError(serverError(e)) })
   }, [trip, adults, children])
@@ -321,6 +334,13 @@ export default function CRS() {
                   : tripQuote ? t("Each stay is billed in its own currency") : "…"}
               </span>
             </div>
+            {(tripQuote?.advance_due ?? 0) > 0 && (
+              <div className="flex justify-between text-sm text-zinc-600">
+                <span>{t("Advance due at booking ({pcts})", {
+                  pcts: tripQuote!.legs.map((l) => `${l.advance_percent}%`).join(", ") })}</span>
+                <span>{`${tripQuote!.legs[0]?.currency_symbol ?? ""}${inr(tripQuote!.advance_due)}`}</span>
+              </div>
+            )}
             <div className="grid gap-3 sm:grid-cols-3">
               <input className={inputCls} placeholder={t("Guest name")} value={traveller.name}
                 onChange={(e) => setTraveller({ ...traveller, name: e.target.value })} />
@@ -331,7 +351,7 @@ export default function CRS() {
               </Button>
             </div>
             <p className="text-xs text-zinc-500">
-              {t("Each stay becomes a normal booking at its own property, with its own bill. Take advances on each stay.")}
+              {t("Each stay becomes a normal booking at its own property, with its own bill. Take one advance for the trip from its sheet, or on each stay.")}
             </p>
           </CardContent>
         </Card>
@@ -481,6 +501,8 @@ function TripSheet({ name, onClose, onChanged }: { name: string; onClose: () => 
   const [reason, setReason] = useState(REASONS[0])
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const loc = useLocale()
+  const [adv, setAdv] = useState<{ amount: string; mode: string; plan: AdvancePlan | null } | null>(null)
 
   const load = () => call<Itinerary>("kamra.crs.get_itinerary", { itinerary: name })
     .then(setD).catch((e) => setError(serverError(e)))
@@ -503,7 +525,31 @@ function TripSheet({ name, onClose, onChanged }: { name: string; onClose: () => 
     } catch (e) { setError(serverError(e)) } finally { setBusy(false) }
   }
 
+  async function planAdvance(amount?: string) {
+    setError(null)
+    try {
+      const plan = await call<AdvancePlan>("kamra.crs.trip_advance_preview", {
+        itinerary: name, ...(amount ? { amount: Number(amount) } : {}) })
+      setAdv({ amount: amount ?? String(plan.amount), mode: adv?.mode ?? loc.payment_modes[0] ?? "Cash", plan })
+    } catch (e) {
+      setError(serverError(e))
+      if (adv) setAdv({ ...adv, plan: null })
+    }
+  }
+  async function takeAdvance() {
+    if (!adv?.plan) return
+    setBusy(true)
+    setError(null)
+    try {
+      setD(await call<Itinerary>("kamra.crs.record_trip_advance", {
+        itinerary: name, amount: adv.plan.amount, mode: adv.mode }))
+      setAdv(null)
+      onChanged()
+    } catch (e) { setError(serverError(e)) } finally { setBusy(false) }
+  }
+
   const sym = d?.legs[0]?.currency_symbol ?? ""
+  const canAdvance = d?.legs.some((l) => ["Confirmed", "Pending Payment", "Held"].includes(l.status))
   const cancellable = d?.legs.some((l) => l.status === "Confirmed")
   return (
     <Sheet wide title={t("Trip {ref}", { ref: name })}
@@ -514,6 +560,9 @@ function TripSheet({ name, onClose, onChanged }: { name: string; onClose: () => 
           <Link to={`/trip/${encodeURIComponent(name)}`}>
             <Button variant="outline"><Printer className="size-4" />{t("Confirmation")}</Button>
           </Link>
+          {canAdvance && !adv && d?.total != null && (
+            <Button variant="outline" onClick={() => planAdvance()}>{t("Take trip advance")}</Button>
+          )}
           {cancellable && !preview && (
             <Button variant="outline" onClick={askCancel}>{t("Cancel whole trip")}</Button>
           )}
@@ -532,6 +581,11 @@ function TripSheet({ name, onClose, onChanged }: { name: string; onClose: () => 
               <span className="text-sm text-zinc-600">
                 {t("Total {amount} · advance paid {paid}", {
                   amount: `${sym}${inr(d.total)}`, paid: `${sym}${inr(d.advance_paid ?? 0)}` })}
+                {(d.advance_due ?? 0) > 0 && (
+                  <span className="text-amber-700">
+                    {" · "}{t("advance due {amount}", { amount: `${sym}${inr(d.advance_due)}` })}
+                  </span>
+                )}
               </span>
             )}
           </div>
@@ -549,7 +603,7 @@ function TripSheet({ name, onClose, onChanged }: { name: string; onClose: () => 
                   <span>{l.room_type_name}{l.room ? ` · ${l.room}` : ""}</span>
                   <span>{l.currency_symbol}{inr(l.amount_after_tax)}</span>
                   {l.advance_paid > 0 && <span>{t("Paid {amount}", { amount: `${l.currency_symbol}${inr(l.advance_paid)}` })}</span>}
-                  {l.deposit_due > 0 && <span className="text-amber-700">{t("Deposit due {amount}", { amount: `${l.currency_symbol}${inr(l.deposit_due)}` })}</span>}
+                  {l.deposit_due > 0 && <span className="text-amber-700">{t("Advance due {amount} ({pct}%)", { amount: `${l.currency_symbol}${inr(l.deposit_due)}`, pct: String(l.advance_percent) })}</span>}
                   {l.cancellation_number && <span>{l.cancellation_number}</span>}
                 </div>
                 <button className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-brand-700 hover:underline"
@@ -559,6 +613,41 @@ function TripSheet({ name, onClose, onChanged }: { name: string; onClose: () => 
               </li>
             ))}
           </ol>
+          {adv && (
+            <div className="space-y-2 rounded-lg border border-brand-200 bg-brand-50/40 p-3 text-sm">
+              <p className="font-medium">{t("One advance for the whole trip")}</p>
+              <div className="grid gap-2 sm:grid-cols-3">
+                <input className={inputCls} type="number" min={0} aria-label={t("Amount")}
+                  value={adv.amount} onChange={(e) => setAdv({ ...adv, amount: e.target.value })}
+                  onBlur={() => adv.amount && planAdvance(adv.amount)} />
+                <select className={inputCls} aria-label={t("Payment mode")} value={adv.mode}
+                  onChange={(e) => setAdv({ ...adv, mode: e.target.value })}>
+                  {loc.payment_modes.map((m) => <option key={m} value={m}>{t(m)}</option>)}
+                </select>
+                <Button variant="outline" onClick={() => planAdvance(adv.amount)}>{t("Show split")}</Button>
+              </div>
+              {adv.plan && (
+                <>
+                  <p className="text-xs text-zinc-500">
+                    {t("Each stay first gets the advance its own dates ask for, earliest first. Anything more goes to the earliest stay, never past its bill.")}
+                  </p>
+                  {adv.plan.legs.map((l) => (
+                    <div key={l.reservation} className="flex justify-between gap-2">
+                      <span>{l.property_name} · {l.check_in_date} · {t("due {amount} ({pct}%)", {
+                        amount: `${adv.plan!.currency_symbol}${inr(l.advance_due)}`, pct: String(l.advance_percent) })}</span>
+                      <span className="font-medium">{adv.plan!.currency_symbol}{inr(l.share)}</span>
+                    </div>
+                  ))}
+                </>
+              )}
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setAdv(null)}>{t("Close")}</Button>
+                <Button disabled={busy || !adv.plan || Number(adv.amount) !== adv.plan.amount} onClick={takeAdvance}>
+                  {adv.plan ? t("Take {amount}", { amount: `${adv.plan.currency_symbol}${inr(adv.plan.amount)}` }) : t("Take advance")}
+                </Button>
+              </div>
+            </div>
+          )}
           {preview && (
             <div className="space-y-2 rounded-lg border border-rose-200 bg-rose-50/50 p-3 text-sm">
               <p className="font-medium">{t("Cancel every confirmed stay, each under its own property's policy:")}</p>

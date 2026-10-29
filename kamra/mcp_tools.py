@@ -288,8 +288,8 @@ TOOLS: tuple[ToolSpec, ...] = (
 		"""Book a multi-property trip in one call: one normal reservation per
 		leg (each with its own folio and its own property's cancellation
 		policy) under one itinerary reference (ITN-...) to give the guest.
-		All legs book or none do. Always quote_itinerary first. Advances are
-		taken per leg on that leg's reservation.""",
+		All legs book or none do. Always quote_itinerary first. Take the
+		advance per leg, or once for the trip with record_trip_advance.""",
 		{
 			"legs": ITINERARY_LEGS_PARAM,
 			"guest_name": _p("string"),
@@ -312,9 +312,37 @@ TOOLS: tuple[ToolSpec, ...] = (
 		"get_itinerary",
 		"crs.get_itinerary",
 		"""A trip (ITN-...) with its legs in date order: property, dates,
-		status, price, advance paid and deposit due per leg, and the total.""",
+		status, price, advance %, advance required, paid and still due per
+		leg, and the trip totals.""",
 		{"itinerary": _p("string")},
 		required=("itinerary",),
+	),
+	_t(
+		"trip_advance_preview",
+		"crs.trip_advance_preview",
+		"""How one advance for a whole trip would be split across its legs:
+		each leg up to its own advance still due (earliest stay first), any
+		rest to the earliest leg up to its bill. Without an amount, the
+		trip's advance still due. ALWAYS show this split to the staff
+		member before record_trip_advance.""",
+		{"itinerary": _p("string"), "amount": _p("number")},
+		required=("itinerary",),
+	),
+	_t(
+		"record_trip_advance",
+		"crs.record_trip_advance",
+		"""Take one advance payment for a whole trip. It is split as
+		trip_advance_preview shows and each share posts as an Advance on
+		that leg's folio at its own property. mode: Cash, UPI, Card, Bank.
+		Confirm the amount and the split with staff before calling.""",
+		{
+			"itinerary": _p("string"),
+			"amount": _p("number"),
+			"mode": _p("string"),
+			"reference": _p("string"),
+		},
+		required=("itinerary", "amount"),
+		mutating=True,
 	),
 	_t(
 		"add_itinerary_leg",

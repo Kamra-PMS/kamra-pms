@@ -81,9 +81,19 @@ export default function TripConfirmation() {
               <div className="flex justify-between font-medium">
                 <span>{t("Trip total, taxes in")}</span><span>{amt(sym, d.total)}</span>
               </div>
+              {(d.advance_required ?? 0) > 0 && (
+                <div className="flex justify-between text-zinc-500">
+                  <span>{t("Advance required")}</span><span>{amt(sym, d.advance_required ?? 0)}</span>
+                </div>
+              )}
               <div className="flex justify-between text-zinc-500">
                 <span>{t("Advance paid")}</span><span>{amt(sym, d.advance_paid ?? 0)}</span>
               </div>
+              {(d.advance_due ?? 0) > 0 && (
+                <div className="flex justify-between font-medium">
+                  <span>{t("Advance still due")}</span><span>{amt(sym, d.advance_due ?? 0)}</span>
+                </div>
+              )}
             </>
           ) : (
             <p className="text-zinc-500">{t("Each stay is billed in its own currency")}</p>

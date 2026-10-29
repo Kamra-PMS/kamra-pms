@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function - the same governed layer
-the UI and the AI use. **428 endpoints**, generated from the source
+the UI and the AI use. **430 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -4397,7 +4397,8 @@ check_out_date, adults?, children?, meal_plan?, rate_plan?}].
 Book a trip across properties in one go: one reservation per leg
 (each a normal booking at its own property, with its own folio) under
 one itinerary reference. All legs book or none do. Quote first with
-quote_itinerary. Take advances per leg with record_advance.
+quote_itinerary. Take one advance for the trip with record_trip_advance,
+or per leg with record_advance.
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -4483,6 +4484,38 @@ cancel_reservation on it.
 | `reason` | no | `'Guest request'` |
 | `note` | no | `None` |
 | `waive_fee` | no | `0` |
+
+### `kamra.crs.trip_advance_preview`
+
+**GET/POST** · roles: `Front Desk`, `Finance`, `Kamra Agent`
+
+How one advance for the whole trip would be split across its legs,
+before taking it: each leg's advance % and amount still due, and its
+share. Without an amount, the trip's advance still due. Show this to
+the guest or staff, then call record_trip_advance with the same amount.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `itinerary` | yes |  |
+| `amount` | no | `None` |
+
+### `kamra.crs.record_trip_advance`
+
+**POST** · roles: `Front Desk`, `Finance`, `Kamra Agent`
+
+Take one advance for the whole trip. The payment is split as
+trip_advance_preview shows and each share is recorded through
+record_advance on its leg, so every hotel's folio, till and books get
+their own part (refunds and cancellation then follow that leg's own
+policy). All shares post or none do.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `itinerary` | yes |  |
+| `amount` | yes |  |
+| `mode` | no | `'Cash'` |
+| `reference` | no | `None` |
+| `pin` | no | `None` |
 
 
 ## Dashboards

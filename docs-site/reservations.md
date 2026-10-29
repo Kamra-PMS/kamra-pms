@@ -302,18 +302,33 @@ trip gets one reference (ITN-...) the guest can quote.
    click **Add to trip** on the room type.
 2. Check-in moves to the day that stay ends. Set the nights, search again
    and click **Add to trip** for the next stop. Repeat for each stop.
-3. **New trip** lists the stops in date order with each price and the
-   trip total. Enter the guest's name and phone and click **Book trip**.
+3. **New trip** lists the stops in date order with each price, the
+   trip total and the advance due at booking (each stop at its own
+   percentage). Enter the guest's name and phone and click **Book trip**.
 
 Each stop becomes a normal booking at its own property, with its own room,
 bill and invoice. All stops book or none do. Two stops can't share a
 night; a stop can start the day the previous one ends.
 
 **Trips** lists recent trips. Click one to see each stop's status, price,
-advance paid and deposit due.
+advance percentage, advance paid and advance still due, and the trip's
+advance due against paid.
 
-- **Take an advance** on each stop: click **Open RES-...** and take it
+- **Take trip advance** takes one payment for the whole trip. The amount
+  starts at the trip's advance still due; change it and click **Show
+  split** to see how it is shared, then **Take**. Each stop first gets the
+  advance its own dates ask for, earliest stop first. Anything more goes to
+  the earliest stop, up to that stop's bill, then the next one. (Putting
+  the extra on the first stay means the guest's money is used soonest, and
+  no hotel ends up holding more than its own bill, so nobody has to refund
+  an overpayment at check-out.) A payment larger than what the trip still
+  owes is refused, and so is a trip whose stops are billed in different
+  currencies. Each share posts as an advance on that stop's own folio, at
+  its own property, through its till, so each hotel's books and tax stay
+  its own. All shares post or none do.
+- **Take an advance on one stop**: click **Open RES-...** and take it
   there, as for any booking. Money is never held on the trip itself.
+  Refunds and cancellation of a stop follow that stop's own policy.
 - **Change dates or cancel one stop** the same way, from its booking. A
   new date that runs into another stop is refused.
 - **Cancel whole trip** shows each stop's fee under its own property's
