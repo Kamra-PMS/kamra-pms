@@ -60,6 +60,7 @@ const PosDashboard = lazy(() => import("./screens/PosDashboard"))
 const Inventory = lazy(() => import("./screens/Inventory"))
 const AccountingExport = lazy(() => import("./screens/AccountingExport"))
 const VoidAllowanceReport = lazy(() => import("./screens/VoidAllowanceReport"))
+const AllowanceApprovals = lazy(() => import("./screens/AllowanceApprovals"))
 const TapeChart = lazy(() => import("./screens/TapeChart"))
 const Tickets = lazy(() => import("./screens/Tickets"))
 const Laundry = lazy(() => import("./screens/Laundry"))
@@ -297,6 +298,7 @@ export default function App() {
           <Route path="arrivals" element={<Navigate to="/in-house?tab=arrivals" replace />} />
           <Route path="departures" element={<Navigate to="/in-house?tab=departures" replace />} />
           <Route path="voids-allowances" element={<VoidAllowanceReport />} />
+          <Route path="allowances" element={<AllowanceApprovals />} />
           <Route path="rate-calendar" element={<RateCalendar />} />
           <Route path="revenue-reports" element={<RevenueReports />} />
           <Route path="ops-sla" element={<OpsSLA />} />

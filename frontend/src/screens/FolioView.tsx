@@ -4,6 +4,7 @@ import { Link, useNavigate, useParams } from "react-router-dom"
 import { call, getCurrentProperty } from "../lib/api"
 import EditableNationality from "../components/EditableNationality"
 import LinkedRecords from "../components/LinkedRecords"
+import AllowanceRequests from "../components/AllowanceRequests"
 import { loadLocale, taxRates } from "../lib/money"
 import { serverError } from "../lib/resource"
 import { useCashierAuth } from "../lib/cashierAuth"
@@ -25,6 +26,7 @@ const inr = (n: unknown) =>
 interface InvoiceData {
   folio: {
     name: string
+    property?: string
     status: "Open" | "Closed"
     invoice_number: string | null
     guest_name: string
@@ -270,7 +272,11 @@ export default function FolioView() {
   const [refund, setRefund] = useState<{ amount: string; mode: string; reason: string } | null>(null)
   const [showCancel, setShowCancel] = useState(false)
   const [cancelReason, setCancelReason] = useState("")
-  const [allowance, setAllowance] = useState({ amount: "", reason: "", gst_rate: "0" })
+  const [allowance, setAllowance] = useState({ amount: "", reason: "", gst_rate: "0", reason_code: "" })
+  const [adjustCodes, setAdjustCodes] = useState<{ name: string; description: string }[]>([])
+  const [allowanceNote, setAllowanceNote] = useState<string | null>(null)
+  const [allowanceKey, setAllowanceKey] = useState(0)
+
   const { ensureUnlocked, status: pinStatus } = useCashierAuth()
 
   const load = useCallback(() => {
@@ -288,6 +294,10 @@ export default function FolioView() {
   }, [name])
 
   useEffect(load, [load])
+  useEffect(() => {
+    call<{ name: string; description: string }[]>("kamra.ledger.list_reason_codes", { category: "Adjust" })
+      .then(setAdjustCodes).catch(() => {})
+  }, [])
 
   const [rates, setRates] = useState<number[]>(taxRates())
   useEffect(() => {
@@ -1353,9 +1363,22 @@ export default function FolioView() {
                       </option>
                     ))}
                   </select>
+                  {adjustCodes.length > 0 && (
+                    <select
+                      className={inputCls}
+                      aria-label={t("Allowance reason")}
+                      value={allowance.reason_code}
+                      onChange={(e) => setAllowance({ ...allowance, reason_code: e.target.value })}
+                    >
+                      <option value="">{t("Reason…")}</option>
+                      {adjustCodes.map((c) => (
+                        <option key={c.name} value={c.name}>{translate(c.description)}</option>
+                      ))}
+                    </select>
+                  )}
                   <input
                     className={`${inputCls} min-w-40 flex-1`}
-                    placeholder={t("Reason (required)")}
+                    placeholder={allowance.reason_code ? t("Details (optional)") : t("Reason (required)")}
                     value={allowance.reason}
                     onChange={(e) =>
                       setAllowance({ ...allowance, reason: e.target.value })
@@ -1363,21 +1386,31 @@ export default function FolioView() {
                   />
                   <Button
                     variant="outline"
-                    disabled={busy || !allowance.amount || !allowance.reason.trim()}
+                    disabled={busy || !allowance.amount || !(allowance.reason.trim() || allowance.reason_code)}
                     onClick={() =>
                       act(async () => {
-                        await call("kamra.api.post_allowance", withPin({
+                        const r = await call<{ pending?: boolean }>("kamra.api.post_allowance", withPin({
                           folio: folio.name,
                           amount: Number(allowance.amount),
                           reason: allowance.reason.trim(),
                           gst_rate: Number(allowance.gst_rate),
+                          reason_code: allowance.reason_code || undefined,
                         }))
-                        setAllowance({ amount: "", reason: "", gst_rate: "0" })
+                        setAllowance({ amount: "", reason: "", gst_rate: "0", reason_code: "" })
+                        setAllowanceNote(r?.pending
+                          ? t("Sent to a manager. It goes on the bill once approved.")
+                          : null)
+                        setAllowanceKey((k) => k + 1)
                       })
                     }
                   >
                     {t("Allow")}
                   </Button>
+                </div>
+                {allowanceNote && <p className="mt-2 text-xs text-amber-700">{allowanceNote}</p>}
+                <div className="mt-2">
+                  <AllowanceRequests property={folio.property ?? getCurrentProperty()} folio={folio.name}
+                    refreshKey={allowanceKey} onChanged={load} />
                 </div>
               </div>
             </CardContent>

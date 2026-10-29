@@ -246,7 +246,7 @@ after_migrate = ["kamra.install.after_migrate"]
 # Every Kamra DocType linking a Property fails closed under the opt-in
 # kamra_strict_property_scope site setting; with it off these add nothing.
 _PROPERTY_SCOPED = (
-	"Agent Action Log", "AI Assistant Settings", "Banquet Checklist Template",
+	"Agent Action Log", "AI Assistant Settings", "Allowance Request", "Banquet Checklist Template",
 	"Banquet Dish", "Banquet Function Task", "Banquet Menu",
 	"Banquet Service Item", "Cancelled Invoice", "Cash Transfer", "Cashier", "Cashier Session", "Cashier Terminal",
 	"Cashier Transaction", "Channel Manager Connection",

@@ -694,15 +694,28 @@ TOOLS: tuple[ToolSpec, ...] = (
 		"api.post_allowance",
 		"""Credit back part of a bill on an open folio without deleting the
 		original line (service recovery, dispute, agreed discount). Needs a
-		reason; it goes on the record.""",
+		reason (or an Adjust reason_code); it goes on the record. When the
+		property wants a manager's approval the result is pending: true
+		with a request id, and nothing is on the bill until a manager
+		approves it. You can ask, never approve.""",
 		{
 			"folio": _p("string"),
 			"amount": _p("number"),
 			"reason": _p("string"),
 			"gst_rate": _p("number"),
+			"reason_code": _p("string", description="Optional Adjust reason code, e.g. ADJ-RATE"),
 		},
 		required=("folio", "amount", "reason"),
 		mutating=True,
+		group="Billing",
+	),
+	_t(
+		"allowance_requests",
+		"api.allowance_requests",
+		"""Allowances waiting for a manager's approval (status Pending), or
+		decided ones (Approved / Rejected) with who decided and why.""",
+		{"status": _p("string"), "folio": _p("string")},
+		property=True,
 		group="Billing",
 	),
 	_t(

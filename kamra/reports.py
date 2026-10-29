@@ -69,8 +69,9 @@ def void_allowance_report(
 	from_date: str | None = None,
 	to_date: str | None = None,
 ):
-	"""Audit trail of every void, allowance and invoice cancellation on a
-	property: who reversed what, when, and why. The compliance answer to
+	"""Audit trail of every void, allowance (with the manager who approved
+	it, when one had to) and invoice cancellation on a property, plus
+	allowances a manager rejected: who reversed what, when, and why. The compliance answer to
 	"show me every write-off" - read straight from the action log, so it
 	cannot drift from what actually happened."""
 	from kamra.crs import assert_property_access
@@ -81,8 +82,8 @@ def void_allowance_report(
 		[
 			"action_type",
 			"in",
-			["void_charge", "post_allowance", "cancel_invoice",
-			 "pos_void_item", "pos_cancel_order"],
+			["void_charge", "post_allowance", "allowance_rejected",
+			 "cancel_invoice", "pos_void_item", "pos_cancel_order"],
 		],
 	]
 	if from_date:
@@ -100,6 +101,8 @@ def void_allowance_report(
 	label = {
 		"void_charge": "Void",
 		"post_allowance": "Allowance",
+		# asked for, refused by a manager: kept so the trail shows both
+		"allowance_rejected": "Allowance rejected",
 		"cancel_invoice": "Invoice cancelled",
 		# restaurant bills: a voided line, or a whole bill cancelled
 		"pos_void_item": "POS void",

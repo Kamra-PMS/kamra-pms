@@ -279,6 +279,8 @@ export const APPS: AppDef[] = [
         keywords: EOD_KEYWORDS },
       { to: "/billing", label: "Billing", icon: Receipt, group: "Billing" },
       { to: "/folio-history", label: "Folio History", icon: History, group: "Billing" },
+      { to: "/allowances", label: "Allowances to approve", icon: ListChecks, group: "Billing",
+        keywords: ["Allowance approval", "Write-off", "Manager approval"] },
       // Books
       { to: "/ledgers", label: "Ledgers", icon: BookOpen, group: "Books" },
       { to: "/transaction-codes", label: "Transaction Codes", icon: Hash, group: "Books",
@@ -295,7 +297,7 @@ export const APPS: AppDef[] = [
     extraPrefixes: [
       "/billing/", "/cashier/", "/ledgers", "/folio-history",
       "/end-of-day", "/night-audit", "/reason-codes", "/transaction-codes",
-      "/voids-allowances",
+      "/voids-allowances", "/allowances",
     ],
   },
   {

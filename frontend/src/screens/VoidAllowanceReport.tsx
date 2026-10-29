@@ -24,7 +24,7 @@ interface Row {
   detail: string | null
 }
 
-const ACTIONS = ["Void", "Allowance", "Invoice cancelled", "POS void", "POS bill cancelled"] as const
+const ACTIONS = ["Void", "Allowance", "Allowance rejected", "Invoice cancelled", "POS void", "POS bill cancelled"] as const
 
 const iso = (d: Date) => d.toISOString().slice(0, 10)
 
@@ -32,7 +32,8 @@ export default function VoidAllowanceReport() {
   const { t } = useT()
   // literal keys so the catalog picks them up
   const actionLabel: Record<string, string> = {
-    "Void": t("Void"), "Allowance": t("Allowance"), "Invoice cancelled": t("Invoice cancelled"),
+    "Void": t("Void"), "Allowance": t("Allowance"), "Allowance rejected": t("Allowance rejected"),
+    "Invoice cancelled": t("Invoice cancelled"),
     "POS void": t("POS void"), "POS bill cancelled": t("POS bill cancelled"),
   }
   const [from, setFrom] = useState(iso(new Date(Date.now() - 30 * 864e5)))

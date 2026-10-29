@@ -420,6 +420,13 @@ MODULES: tuple[Module, ...] = (
 				S("max_cash_refund", "Cash refund limit for new cashiers", "number", 5000, min=0),
 				S("till_variance_tolerance", "Till variance that needs a manager", "number", 0, min=0,
 				  hint="A till closed over or short by more than this is flagged for a manager to review. 0 turns the check off."),
+				S("allowance_approval", "Allowances need a manager's approval", "select", "Off",
+				  options=("Off", "Hotel Admin", "Hotel Admin or Finance"),
+				  hint="Who approves an allowance the desk asks for. Until approved it stays off the bill. "
+				       "A manager approves on the spot with their PIN, or later from Allowances to approve. "
+				       "AI agents can ask, never approve."),
+				S("allowance_approval_above", "Only allowances above", "number", 0, min=0,
+				  hint="Smaller allowances post straight away. 0 means every allowance needs approval."),
 			)),
 		),
 	),

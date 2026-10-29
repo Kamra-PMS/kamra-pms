@@ -11,7 +11,7 @@ import frappe
 from frappe import _
 from frappe.utils import add_days, cint, flt, get_datetime, getdate, now_datetime, nowdate
 
-from kamra.authz import act_as, require_it_admin, require_roles
+from kamra.authz import act_as, assert_property_access, require_it_admin, require_roles
 from kamra.install import AGENT_EMAIL
 
 # The apps a property actually runs. The launcher and the sidebar read
@@ -2175,16 +2175,221 @@ def close_folio(folio: str, pin: str | None = None):
 
 @frappe.whitelist(methods=["POST"])
 @require_roles("Finance", "Front Desk", "Kamra Agent")
-def post_allowance(folio: str, amount: float, reason: str,
-                   gst_rate: float = 0, pin: str | None = None):
-	"""Write off part of a bill against a specific folio, with a reason."""
+def post_allowance(folio: str, amount: float, reason: str = "",
+                   gst_rate: float = 0, pin: str | None = None,
+                   reason_code: str | None = None):
+	"""Write off part of a bill against a specific folio, with a reason.
+
+	When the property wants a manager's approval (Settings, Finance:
+	allowance_approval / allowance_approval_above) or the reason code needs
+	a supervisor, the allowance does not touch the folio yet: it becomes a
+	Pending Allowance Request ({"pending": True, "request": ...}) that a
+	manager approves on the spot with their PIN, or later from the list
+	(decide_allowance). A manager's own allowance posts at once. AI agents
+	can ask, never approve."""
+	from kamra.localization import money_text
 	_pin_guard(folio, pin)
-	from kamra.folio import post_allowance as _allow
-	_allow(folio, float(amount), reason, float(gst_rate or 0))
-	from kamra.savings import log_action
-	log_action("allowance", "Folio", folio,
-	           rationale=f"Allowance ₹{abs(float(amount)):,.2f}: {reason}")
+	doc = frappe.get_doc("Folio", folio)
+	if doc.status == "Closed":
+		frappe.throw(_("This folio is settled - pass the allowance on the "
+		               "guest's open folio, or cancel the invoice first."))
+	amount = round(abs(flt(amount)), 2)
+	if not amount:
+		frappe.throw(_("Allowance amount is required."))
+	text = _allowance_reason(reason_code, reason)
+	if _allowance_needs_approval(doc.property, amount, reason_code):
+		from kamra.credit import _is_agent
+		if _is_agent() or not _may_approve_allowance(doc.property):
+			req = frappe.get_doc({
+				"doctype": "Allowance Request", "property": doc.property,
+				"folio": doc.name, "reservation": doc.reservation,
+				"amount": amount, "gst_rate": flt(gst_rate),
+				"reason_code": reason_code or None, "reason": text,
+				"status": "Pending", "requested_by": frappe.session.user,
+				"requested_on": now_datetime(),
+				"channel": agent_channel() or "Desk",
+			}).insert(ignore_permissions=True)
+			from kamra.savings import log_action
+			log_action("allowance_requested", "Folio", doc.name, doc.property,
+			           rationale=f"Asked for an allowance of "
+			                     f"{money_text(doc.property, amount)}: {text}",
+			           channel=agent_channel() or "Desk",
+			           approval_status="Pending")
+			return {"ok": True, "pending": True, "request": req.name,
+			        "folio": folio}
+		# a manager's own allowance: they are the approval
+		_post_allowance(doc.name, amount, text, gst_rate, frappe.session.user)
+		return {"ok": True, "folio": folio, "approved_by": frappe.session.user}
+	_post_allowance(doc.name, amount, text, gst_rate)
 	return {"ok": True, "folio": folio}
+
+
+_ALLOWANCE_APPROVERS = {
+	"Hotel Admin": ("Hotel Admin",),
+	"Hotel Admin or Finance": ("Hotel Admin", "Finance"),
+}
+
+
+def _allowance_approver_roles(prop: str) -> tuple:
+	"""Roles that approve an allowance here. With the setting Off, only a
+	supervisor reason code asks, and the usual supervisor roles decide."""
+	from kamra.settings import get_setting
+	return _ALLOWANCE_APPROVERS.get(get_setting(prop, "allowance_approval"),
+	                                ("Hotel Admin", "Finance"))
+
+
+def _may_approve_allowance(prop: str, user: str | None = None) -> bool:
+	user = user or frappe.session.user
+	return user == "Administrator" or bool(
+		set(_allowance_approver_roles(prop) + ("System Manager",))
+		& set(frappe.get_roles(user)))
+
+
+def _allowance_needs_approval(prop: str, amount: float,
+                              reason_code: str | None) -> bool:
+	from kamra.settings import get_setting
+	if reason_code and frappe.db.get_value("Reason Code", reason_code,
+	                                       "requires_supervisor"):
+		return True
+	if get_setting(prop, "allowance_approval") not in _ALLOWANCE_APPROVERS:
+		return False
+	return amount > flt(get_setting(prop, "allowance_approval_above"))
+
+
+def _allowance_reason(reason_code: str | None, reason: str) -> str:
+	"""The text that goes on the bill and the record: the reason code's
+	description (an Adjust code), then the desk's note."""
+	note = (reason or "").strip()
+	if reason_code:
+		from kamra.ledger import ensure_default_reason_codes
+		ensure_default_reason_codes()
+		row = frappe.db.get_value("Reason Code", reason_code,
+		                          ["category", "description", "disabled"],
+		                          as_dict=True)
+		if not row or row.disabled:
+			frappe.throw(_("That reason code is not in use."))
+		if row.category != "Adjust":
+			frappe.throw(_("Pick an Adjust reason code for an allowance."))
+		return f"{row.description}: {note}" if note else row.description
+	if not note:
+		frappe.throw(_("An allowance needs a reason - it goes on the record."))
+	return note
+
+
+def _post_allowance(folio: str, amount: float, text: str, gst_rate,
+                    approver: str | None = None,
+                    requested_by: str | None = None):
+	"""The one allowance writer behind the desk, approvals and agents."""
+	from kamra.folio import post_allowance as _allow
+	_allow(folio, amount, text, flt(gst_rate), approver=approver,
+	       requested_by=requested_by)
+	from kamra.savings import log_action
+	from kamra.localization import money_text
+	log_action("allowance", "Folio", folio,
+	           rationale=f"Allowance {money_text(frappe.db.get_value('Folio', folio, 'property'), amount)}: {text}",
+	           approver=approver)
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Finance", "Front Desk", "Hotel Admin")
+def decide_allowance(allowance_request: str, approve: int = 1,
+                     note: str = "", pin: str | None = None,
+                     supervisor: str | None = None,
+                     supervisor_pin: str | None = None):
+	"""Approve or reject a pending allowance. The approver is the signed-in
+	manager, or, on the spot at the desk, a manager who picks their name
+	and types their own PIN (supervisor + supervisor_pin). Approving posts
+	it on the folio; a rejection needs a note and is kept with who and why.
+	AI agents never decide."""
+	from kamra.credit import _is_agent
+	from kamra.localization import money_text
+	if _is_agent():
+		frappe.throw(_("An AI agent can't approve or reject an allowance. "
+		               "Ask a manager."), frappe.PermissionError)
+	req = frappe.get_doc("Allowance Request", allowance_request, for_update=True)
+	if req.status != "Pending":
+		frappe.throw(_("This allowance was already {0}.").format(
+			_(req.status).lower()))
+	if supervisor:
+		from kamra.authz import verify_supervisor
+		approver = verify_supervisor(req.property, supervisor, supervisor_pin)
+	else:
+		_pin_guard(req.folio, pin)
+		approver = frappe.session.user
+	if not _may_approve_allowance(req.property, approver):
+		frappe.throw(_("{0} can't approve allowances here. It needs: {1}.").format(
+			approver, ", ".join(_(r) for r in _allowance_approver_roles(req.property))),
+			frappe.PermissionError)
+	note = (note or "").strip()
+	if cint(approve):
+		if frappe.db.get_value("Folio", req.folio, "status") == "Closed":
+			frappe.throw(_("This folio is settled now. Reject this request and "
+			               "pass the allowance on the guest's open folio."))
+		_post_allowance(req.folio, flt(req.amount), req.reason, req.gst_rate,
+		                approver, requested_by=req.requested_by)
+		req.status = "Approved"
+	else:
+		if not note:
+			frappe.throw(_("Say why the allowance is rejected - it goes on the record."))
+		req.status = "Rejected"
+		from kamra.savings import log_action
+		log_action("allowance_rejected", "Folio", req.folio, req.property,
+		           rationale=f"Rejected {money_text(req.property, req.amount)} "
+		                     f"({req.reason}) asked by {req.requested_by}: {note}",
+		           approver=approver, approval_status="Rejected")
+	req.decided_by = approver
+	req.decided_on = now_datetime()
+	req.decision_note = note
+	req.save(ignore_permissions=True)
+	return {"ok": True, "request": req.name, "status": req.status,
+	        "decided_by": approver}
+
+
+@frappe.whitelist()
+@require_roles("Finance", "Front Desk", "Hotel Admin", "Kamra Agent")
+def allowance_requests(property: str, status: str = "Pending",
+                       folio: str | None = None):
+	"""Allowances waiting for a manager (or decided ones, by status), with
+	the stay they are for. can_decide says if the caller may approve."""
+	assert_property_access(property)
+	filters = {"property": property}
+	if status:
+		filters["status"] = status
+	if folio:
+		filters["folio"] = folio
+	rows = frappe.get_all(
+		"Allowance Request", filters=filters,
+		fields=["name", "folio", "reservation", "amount", "gst_rate",
+		        "reason_code", "reason", "status", "requested_by",
+		        "requested_on", "channel", "decided_by", "decided_on",
+		        "decision_note"],
+		order_by="requested_on desc", limit_page_length=200)
+	stays = {r.name: r for r in frappe.get_all(
+		"Reservation",
+		filters={"name": ["in", list({r.reservation for r in rows if r.reservation}) or [""]]},
+		fields=["name", "guest_name", "room"])}
+	folios = {f.name: f for f in frappe.get_all(
+		"Folio", filters={"name": ["in", list({r.folio for r in rows}) or [""]]},
+		fields=["name", "status", "bill_to_name"])}
+	for r in rows:
+		s = stays.get(r.reservation) or {}
+		f = folios.get(r.folio) or {}
+		r.update(guest_name=s.get("guest_name"), room=s.get("room"),
+		         folio_status=f.get("status"),
+		         bill_to_name=f.get("bill_to_name"))
+	from kamra.credit import _is_agent
+	return {"requests": rows,
+	        "can_decide": not _is_agent() and _may_approve_allowance(property)}
+
+
+@frappe.whitelist()
+@require_roles("Finance", "Front Desk", "Hotel Admin")
+def allowance_approvers(property: str):
+	"""Managers who can approve an allowance on the spot here (role from
+	the property setting, cashier PIN set). Names only."""
+	assert_property_access(property)
+	from kamra.authz import supervisors_for
+	return supervisors_for(property, _allowance_approver_roles(property))
 
 
 @frappe.whitelist(methods=["POST"])

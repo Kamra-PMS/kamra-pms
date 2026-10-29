@@ -875,7 +875,8 @@ def close_folio(folio_name: str) -> str:
 
 
 def post_allowance(folio_name: str, amount: float, reason: str,
-                   gst_rate: float = 0) -> str:
+                   gst_rate: float = 0, approver: str | None = None,
+                   requested_by: str | None = None) -> str:
 	"""A negative adjustment against a specific folio - the hotel writes off
 	part of a charge (service recovery, dispute) WITHOUT touching the original
 	line, so the trail stays honest. GST reverses at the same rate as the
@@ -903,7 +904,11 @@ def post_allowance(folio_name: str, amount: float, reason: str,
 	save_folio(folio)
 	from kamra.savings import log_action
 	log_action("post_allowance", "Folio", folio.name, folio.property,
-	           rationale=f"Allowance ₹{amount:.0f} - {reason.strip()}")
+	           rationale=f"Allowance ₹{amount:.0f} - {reason.strip()}"
+	                     + (f" (asked by {requested_by})"
+	                        if requested_by and requested_by != frappe.session.user
+	                        else ""),
+	           approver=approver)
 	return folio.name
 
 
