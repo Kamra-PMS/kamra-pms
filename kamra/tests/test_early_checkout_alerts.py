@@ -148,6 +148,19 @@ class EarlyCheckoutTestCase(_Base):
 		folio_mod.post_remaining_nights(frappe.get_doc("Reservation", res.name))
 		self.assertEqual(self.nights(res), [d(-1)])
 
+	def test_company_that_pays_the_room_pays_the_charge(self):
+		self.setting("early_departure_fee", "One Night")
+		name = "UT Early Corp"
+		if not frappe.db.exists("Corporate Account", name):
+			frappe.get_doc({"doctype": "Corporate Account", "company_name": name,
+			                "credit_allowed": 1,
+			                "billing_rules": [{"charge_type": "Room", "pay_by": "Company"}]}
+			               ).insert(ignore_permissions=True)
+		res = self.stay(company=name, booking_type="Corporate")
+		api.early_departure(res.name, "Meeting ended early")
+		fee = [c for c in charges(res.name, "Misc") if "Early departure" in c.description]
+		self.assertEqual(frappe.db.get_value("Folio", fee[0].parent, "folio_type"), "Company")
+
 	def test_finance_can_waive_the_charge(self):
 		self.setting("early_departure_fee", "All Nights")
 		res = self.stay()

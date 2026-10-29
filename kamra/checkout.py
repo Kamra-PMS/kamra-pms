@@ -791,9 +791,12 @@ def apply_early_departure(reservation: str, reason: str,
 		"early_departure_reason": reason[:500]}, update_modified=False)
 	if amount > EPS:
 		from kamra.business_date import get_business_date
-		from kamra.folio import _recalculate, open_folio
+		from kamra.folio import _recalculate, target_folio
 		from kamra.ledger import save_folio
-		folio = frappe.get_doc("Folio", open_folio(res))
+		# the charge stands in for room nights: it bills where the room does
+		# (a company that pays the room pays it), as check-out would have
+		# billed those nights
+		folio = frappe.get_doc("Folio", target_folio(res, "Room"))
 		folio.append("charges", {
 			"posting_date": get_business_date(res.property),
 			"charge_type": "Misc",
