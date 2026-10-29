@@ -5591,5 +5591,7 @@
   "e.g. Sharma Wedding": "p. ej., Boda Sharma",
   "pays: {v0}": "paga: {v0}",
   "{n} room(s)": "{n} habitación(es)",
-  "{v0} room(s) are still in house. Their new charges open a new group bill.": "{v0} habitación(es) siguen alojadas. Sus nuevos cargos abren una nueva cuenta de grupo."
+  "{v0} room(s) are still in house. Their new charges open a new group bill.": "{v0} habitación(es) siguen alojadas. Sus nuevos cargos abren una nueva cuenta de grupo.",
+  "Residence Card": "Cédula de residencia",
+  "Nicaraguan": "Nicaragüense"
 }

@@ -5572,5 +5572,7 @@
   "e.g. Sharma Wedding": "ex.: Casamento Sharma",
   "pays: {v0}": "paga: {v0}",
   "{n} room(s)": "{n} quarto(s)",
-  "{v0} room(s) are still in house. Their new charges open a new group bill.": "{v0} quarto(s) ainda estão hospedados. As novas cobranças abrem uma nova conta de grupo."
+  "{v0} room(s) are still in house. Their new charges open a new group bill.": "{v0} quarto(s) ainda estão hospedados. As novas cobranças abrem uma nova conta de grupo.",
+  "Residence Card": "Carteira de residência",
+  "Nicaraguan": "Nicaraguense"
 }

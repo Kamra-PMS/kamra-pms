@@ -352,6 +352,10 @@ def _apply_country_defaults(p: dict):
 		frappe.throw(f"Unknown currency {p['currency']}.")
 	if not p.get("timezone") and getattr(pack, "DEFAULT_TIMEZONE", None):
 		p["timezone"] = pack.DEFAULT_TIMEZONE
+	# a flat-VAT pack's rate seeds the property rate, which otherwise
+	# defaults to India's 18 (packs that read gst_rate_low then see their own)
+	if p.get("gst_rate_low") in (None, "") and getattr(pack, "DEFAULT_VAT", None):
+		p["gst_rate_low"] = float(pack.DEFAULT_VAT)
 	# the levy's name follows the country; its % is the operator's to set
 	if not p.get("room_levy_label") and getattr(pack, "ROOM_LEVY_LABEL", None):
 		p["room_levy_label"] = pack.ROOM_LEVY_LABEL
