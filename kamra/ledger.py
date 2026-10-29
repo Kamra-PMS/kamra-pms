@@ -1408,21 +1408,40 @@ def upsert_exchange_rate(property: str, currency: str, buy_rate: float,
 # Swap the provider here; market_rates() is the only reader.
 FX_RATES_URL = "https://open.er-api.com/v6/latest/{base}"
 FX_TIMEOUT_S = 5
+FX_MAX_BYTES = 256 * 1024  # the real reply is ~4 KB
 
 
 def market_rates(home: str) -> tuple[dict, str | None]:
 	"""Market mid rates as home-currency units per 1 foreign unit, and the
 	provider's as-of time. Throws a plain message on any failure; never
-	called from a request that takes a payment."""
+	called from a request that takes a payment. The reply is untrusted:
+	size-capped, its base must be our home currency, and a rate that isn't
+	a finite positive number is dropped."""
+	import math
+
 	import requests
 	try:
-		r = requests.get(FX_RATES_URL.format(base=home), timeout=FX_TIMEOUT_S)
+		if not (len(home) == 3 and home.isalpha()):
+			raise ValueError(f"home currency {home!r} is not an ISO code")
+		r = requests.get(FX_RATES_URL.format(base=home.upper()), timeout=FX_TIMEOUT_S,
+		                 stream=True, allow_redirects=False)
 		r.raise_for_status()
-		data = r.json()
+		body = r.raw.read(FX_MAX_BYTES + 1, decode_content=True)
+		if len(body) > FX_MAX_BYTES:
+			raise ValueError("reply too large")
+		data = json.loads(body)
 		if data.get("result") != "success":
 			raise ValueError(data.get("error-type") or "no rates returned")
-		mids = {str(c).upper(): 1 / float(v)
-		        for c, v in (data.get("rates") or {}).items() if float(v or 0) > 0}
+		if str(data.get("base_code") or "").upper() != home.upper():
+			raise ValueError(f"rates are for {data.get('base_code')}, not {home}")
+		mids = {}
+		for c, v in (data.get("rates") or {}).items():
+			try:
+				mid = 1 / float(v)
+			except (TypeError, ValueError, ZeroDivisionError, OverflowError):
+				continue
+			if math.isfinite(mid) and mid > 0:
+				mids[str(c).upper()] = mid
 	except Exception as e:
 		frappe.throw(f"Could not fetch exchange rates ({type(e).__name__}: {e}). "
 		             "Today's rates are unchanged; type them in on the Currency Desk.")

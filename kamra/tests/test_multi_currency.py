@@ -136,13 +136,19 @@ class MultiCurrencyTestCase(AuditTestCase):
 			ledger.folio_in_currency(self.folio, "EUR")
 
 
+def _reply(resp, payload):
+	import json
+	body = payload if isinstance(payload, bytes) else json.dumps(payload).encode()
+	resp.raw.read.side_effect = lambda n=None, **kw: body[:n]
+
+
 def _fake_api(rates=None, fail=None):
 	"""requests.get stand-in for open.er-api.com (no network in tests)."""
 	from unittest.mock import MagicMock
 	resp = MagicMock()
-	resp.json.return_value = {"result": "success", "base_code": "INR",
-	                          "time_last_update_utc": "Thu, 29 Oct 2026 00:02:31 +0000",
-	                          "rates": rates or {"INR": 1, "USD": 0.0125, "EUR": 0.01}}
+	_reply(resp, {"result": "success", "base_code": "INR",
+	              "time_last_update_utc": "Thu, 29 Oct 2026 00:02:31 +0000",
+	              "rates": rates or {"INR": 1, "USD": 0.0125, "EUR": 0.01}})
 	return MagicMock(side_effect=fail) if fail else MagicMock(return_value=resp)
 
 
@@ -190,6 +196,11 @@ class OnlineRatesTestCase(AuditTestCase):
 		self.assertEqual(self.row("USD").buy_rate, 98.0)
 		self.assertEqual(frappe.db.count("Exchange Rate", {"property": PROP_A, "currency": "USD"}), 1)
 
+	def test_nonsense_rates_are_dropped(self):
+		out = self.fetch(_fake_api({"USD": 0, "EUR": -0.5, "GBP": "abc", "AED": 1e-320}))
+		self.assertEqual(out["updated"], [])
+		self.assertFalse(frappe.db.exists("Exchange Rate", {"property": PROP_A}))
+
 	def test_manual_rate_wins_over_online(self):
 		self.rate(buy=83.0, sell=84.0)
 		out = self.fetch(_fake_api())
@@ -210,9 +221,15 @@ class OnlineRatesTestCase(AuditTestCase):
 			self.fetch(_fake_api(fail=requests.Timeout("read timed out")))
 		self.assertIn("unchanged", str(cm.exception))
 		bad = _fake_api()
-		bad.return_value.json.return_value = {"result": "error", "error-type": "unsupported-code"}
+		_reply(bad.return_value, {"result": "error", "error-type": "unsupported-code"})
 		with self.assertRaises(frappe.ValidationError):
 			self.fetch(bad)
+		# untrusted reply: wrong base, oversized, not JSON
+		for payload in ({"result": "success", "base_code": "USD", "rates": {"USD": 1}},
+		                b"[" * (ledger.FX_MAX_BYTES + 10), b"<html>"):
+			_reply(bad.return_value, payload)
+			with self.assertRaises(frappe.ValidationError, msg=str(payload)[:40]):
+				self.fetch(bad)
 		self.assertEqual(frappe.db.count("Exchange Rate", {"property": PROP_A}), before)
 
 	def test_scheduled_fetch_is_opt_in_and_fills_gaps(self):
