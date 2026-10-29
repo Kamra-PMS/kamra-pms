@@ -103,6 +103,9 @@ class MultiCurrencyTestCase(AuditTestCase):
 		with self.assertRaises(frappe.ValidationError):
 			api.add_folio_payment(self.folio, "Cash", 100, currency="USD",
 			                      kind="Security Deposit")
+		# a foreign amount that rounds to nothing is not a payment
+		with self.assertRaises(frappe.ValidationError):
+			api.add_folio_payment(self.folio, "Cash", 0.004, currency="USD")
 		self.assertFalse(frappe.db.exists("Folio Payment", {"parent": self.folio,
 		                                                   "currency": "USD"}))
 

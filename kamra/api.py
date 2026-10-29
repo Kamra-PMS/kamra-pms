@@ -1565,6 +1565,8 @@ def add_folio_payment(folio: str, mode: str, amount: float,
 		fx = {"currency": r["currency"], "fx_amount": round(float(amount), 2),
 		      "exchange_rate": r["rate"]}
 		amount = fx_to_home(fx["fx_amount"], r["rate"])
+		if amount <= 0:
+			frappe.throw("Amount must be positive.")
 	currency = currency_home
 	sess = None
 	try:
