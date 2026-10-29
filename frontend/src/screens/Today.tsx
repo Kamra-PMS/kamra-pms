@@ -69,6 +69,102 @@ const hkTone: Record<RoomRow["housekeeping_status"], string> = {
 const inr0 = (n: number) =>
   Number(n).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
 
+/** One night on the books: kamra.dashboards.occupancy_forecast. */
+interface ForecastDay {
+  date: string
+  booked: number
+  available: number
+  occupancy_pct: number
+}
+
+/** The next 90 nights as a heat strip (one cell a night, darker = fuller),
+ * with 30/60/90 day averages and a weekly table for screen readers. Rooms
+ * only: the desk sees it, so no money. */
+function OccupancyForecast({ days }: { days: ForecastDay[] }) {
+  const { t } = useT()
+  const fmt = (d: string, o: Intl.DateTimeFormatOptions) =>
+    new Date(d + "T00:00:00").toLocaleDateString(uiDateLocale(undefined), o)
+  const avg = (xs: ForecastDay[]) => {
+    const rooms = xs.reduce((a, x) => a + x.booked + x.available, 0)
+    return rooms ? Math.round((100 * xs.reduce((a, x) => a + x.booked, 0)) / rooms) : 0
+  }
+  const spans = [30, 60, 90].map((n) => ({ n, pct: avg(days.slice(0, n)) }))
+  const weeks = Array.from({ length: Math.ceil(days.length / 7) }, (_, i) =>
+    days.slice(i * 7, i * 7 + 7),
+  )
+  // sequential, one hue: the brand ramp from its light end to its dark end
+  // (both flip with the theme, so the fuller night always has more contrast)
+  const fill = (pct: number) =>
+    `color-mix(in oklab, var(--color-brand-700) ${Math.max(6, Math.min(100, pct))}%, var(--color-brand-50))`
+  const cols = { gridTemplateColumns: `repeat(${days.length}, minmax(0, 1fr))` }
+  const summary = spans.map((s) => t("{n} days {pct}%", s)).join(", ")
+  return (
+    <div className="rounded-lg border border-zinc-200 bg-white px-3 py-2.5">
+      <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+        <div className="text-xs font-medium text-zinc-700">
+          {t("Occupancy on the books, next 90 days")}
+        </div>
+        <div className="flex gap-3 text-[11px] text-zinc-500">
+          {spans.map((s) => (
+            <span key={s.n}>
+              {t("{n} days", { n: s.n })}{" "}
+              <span className="font-semibold tabular-nums text-zinc-900">{s.pct}%</span>
+            </span>
+          ))}
+        </div>
+      </div>
+      <div
+        role="img"
+        aria-label={t("Occupancy on the books: {summary}", { summary })}
+        className="grid gap-px"
+        style={cols}
+      >
+        {days.map((d) => (
+          <div
+            key={d.date}
+            className="h-6 rounded-[2px]"
+            style={{ background: fill(d.occupancy_pct) }}
+            title={t("{date}: {booked} of {total} rooms booked ({pct}%)", {
+              date: fmt(d.date, { weekday: "short", day: "numeric", month: "short" }),
+              booked: d.booked,
+              total: d.booked + d.available,
+              pct: Math.round(d.occupancy_pct),
+            })}
+          />
+        ))}
+      </div>
+      <div aria-hidden className="mt-1 grid text-[10px] text-zinc-400" style={cols}>
+        {days.map((d, i) => (
+          <div key={d.date} className="whitespace-nowrap">
+            {i === 0 || d.date.endsWith("-01") ? fmt(d.date, { month: "short" }) : ""}
+          </div>
+        ))}
+      </div>
+      <details className="mt-1 text-[11px] text-zinc-500">
+        <summary className="cursor-pointer select-none">{t("By week")}</summary>
+        <table className="mt-1 w-full tabular-nums">
+          <thead>
+            <tr className="text-zinc-400">
+              <th className="py-0.5 text-start font-medium">{t("Week of")}</th>
+              <th className="py-0.5 text-end font-medium">{t("Room nights booked")}</th>
+              <th className="py-0.5 text-end font-medium">{t("Occ %")}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {weeks.map((w) => (
+              <tr key={w[0].date} className="text-zinc-700">
+                <td className="py-0.5">{fmt(w[0].date, { day: "numeric", month: "short" })}</td>
+                <td className="py-0.5 text-end">{w.reduce((a, x) => a + x.booked, 0)}</td>
+                <td className="py-0.5 text-end">{avg(w)}%</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </details>
+    </div>
+  )
+}
+
 /** Paid / due / unpaid at a glance - the folio is the source of truth,
  * this chip just saves the trip to Billing. */
 function PaymentChip({ row }: { row: ReservationRow }) {
@@ -433,16 +529,17 @@ export default function Today() {
     }
   }
 
-  const occupied = snap?.rooms.filter(
-    (r) => r.occupancy_status === "Occupied",
-  ).length
-  const occupancyPct = snap?.rooms.length
-    ? Math.round(((occupied ?? 0) / snap.rooms.length) * 100)
-    : 0
+  // occupied over sellable rooms (out of order left out), from the server;
+  // the room snapshot until it answers
+  const occNow = kpi?.occupancy_now
+  const occupied = occNow
+    ? Number(occNow.occupied)
+    : snap?.rooms.filter((r) => r.occupancy_status === "Occupied").length
+  const sellableN = occNow ? Number(occNow.sellable) : (snap?.rooms.length ?? 0)
+  const occupancyPct = sellableN ? Math.round(((occupied ?? 0) / sellableN) * 100) : 0
   const arrivalsN = snap?.arrivals.length ?? 0
   const departuresN = snap?.departures.length ?? 0
   const inhouseN = snap?.in_house.length ?? 0
-  const roomsN = snap?.rooms.length ?? 0
   const revenue = Number(kpi?.revenue_today ?? 0)
   // Today's RevPAR (room revenue / rooms). MTD lives on statistics.revpar.
   const revpar = Number(kpi?.revpar ?? kpi?.statistics?.revpar ?? 0)
@@ -650,7 +747,7 @@ export default function Today() {
   const widgets: Record<WidgetId, React.ReactNode> = {
     kpis: (
       <div className="mb-6 space-y-3">
-      <div className={cn("grid grid-cols-2 gap-3 md:grid-cols-3", figures ? "xl:grid-cols-6" : "xl:grid-cols-4")}>
+      <div className={cn("grid grid-cols-2 gap-3 md:grid-cols-3", figures ? "xl:grid-cols-6" : "xl:grid-cols-5")}>
         <StatCard
           icon={<LogIn className="size-4" />}
           label={t("Arrivals")}
@@ -673,7 +770,7 @@ export default function Today() {
           spark={mkTrend(inhouseN)}
           to="/in-house?tab=in-house"
         />
-        {figures && <StatCard
+        <StatCard
           icon={<PieChart className="size-4" />}
           label={t("Occupancy")}
           to="/room-board"
@@ -681,9 +778,9 @@ export default function Today() {
           progress={occupancyPct}
           progressLabel={t("{occupied} of {total} rooms", {
             occupied: occupied ?? 0,
-            total: roomsN,
+            total: sellableN,
           })}
-        />}
+        />
         {figures && <StatCard
           icon={<Wallet className="size-4" />}
           label={t("Revenue")}
@@ -728,6 +825,7 @@ export default function Today() {
           ))}
         </div>
       )}
+      {kpi?.forecast?.length > 0 && <OccupancyForecast days={kpi.forecast} />}
       </div>
     ),
     booking_requests: <BookingRequests refreshKey={refreshKey} onChanged={refresh} />,
@@ -855,13 +953,13 @@ export default function Today() {
       <Card>
         <CardHeader>
           <CardTitle>{t("Housekeeping")}</CardTitle>
-          {figures && <span className="text-xs text-zinc-400">
+          <span className="text-xs text-zinc-400">
             {t("{pct}% occupied · {occupied} of {total}", {
               pct: occupancyPct,
               occupied: occupied ?? 0,
-              total: roomsN,
+              total: sellableN,
             })}
-          </span>}
+          </span>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">

@@ -212,11 +212,12 @@
 {cur}/adult/night,{cur}/adult/night,{cur}/بالغ/ليلة,{cur}/adulto/noche,screens/Setup.tsx,cur,translated
 {cur}/night,{cur}/night,{cur}/ليلة,{cur}/noche,screens/Setup.tsx,cur,translated
 {customer} on {date},{customer} on {date},{customer} في {date},"{customer}, el {date}",screens/BanquetDiary.tsx,customer date,translated
+{date}: {booked} of {total} rooms booked ({pct}%),{date}: {booked} of {total} rooms booked ({pct}%),{date}: {booked} من {total} غرف محجوزة ({pct}%),{date}: {booked} de {total} habitaciones reservadas ({pct}%),screens/Today.tsx,date booked total pct,translated
 {diners} guests,{diners} guests,{diners} ضيوف,Comensales: {diners},screens/Kitchen.tsx,diners,translated
 {done} of {total} done,{done} of {total} done,تم {done} من {total},{done} de {total} completados,screens/FinishSetup.tsx,done total,translated
 {f} Floor,{f} Floor,طابق {f},Piso {f},screens/Today.tsx,f,translated
 {free} free · {booked} booked · {blocked} held,{free} free · {booked} booked · {blocked} held,{free} متاحة · {booked} محجوزة · {blocked} موقوفة,{free} disponibles · {booked} reservadas · {blocked} bloqueadas,components/RoomDrawer.tsx,free booked blocked,translated
-{from} to {to},{from} to {to},من {from} إلى {to},{from} a {to},components/RoomDrawer.tsx,from to,translated
+{from} to {to},{from} to {to},من {from} إلى {to},{from} a {to},components/RoomDrawer.tsx; screens/Dashboard.tsx,from to,translated
 "{from} to {to}, nights up to last night","{from} to {to}, nights up to last night",من {from} إلى {to}، حتى الليلة الماضية,"Del {from} al {to}, con las noches hasta anoche",components/RoomInsights.tsx,from to,translated
 {guest} · check out or open registration,{guest} · check out or open registration,{guest} · تسجيل المغادرة أو فتح بطاقة التسجيل,{guest} · registrar la salida o abrir la ficha de registro,screens/Today.tsx,guest,translated
 {guest} · open registration,{guest} · open registration,{guest} · فتح التسجيل,{guest} · abrir ficha de registro,,guest,translated
@@ -243,7 +244,8 @@
 {n} children,{n} children,{n} أطفال,{n} niños,components/BookingDialog.tsx; components/RoomDrawer.tsx; screens/CRS.tsx,n,translated
 {n} codes,{n} codes,{n} رمز,Códigos: {n},,n,translated
 {n} day{s} before arrival.,{n} day{s} before arrival.,{n} يوم{s} قبل الوصول.,{n} día{s} antes de la llegada.,components/CancelPanel.tsx,n s,translated
-{n} days,{n} days,{n} أيام,{n} días,screens/RateCalendar.tsx,n,translated
+{n} days,{n} days,{n} أيام,{n} días,screens/RateCalendar.tsx; screens/Today.tsx,n,translated
+{n} days {pct}%,{n} days {pct}%,{n} أيام {pct}%,{n} días {pct}%,screens/Today.tsx,n pct,translated
 {n} dish,{n} dish,{n} طبق,{n} plato,screens/BanquetCatalogue.tsx,n,translated
 {n} dish re-costed.,{n} dish re-costed.,أُعيد حساب تكلفة {n} طبق.,Se recalculó el costo de {n} plato.,screens/BanquetCatalogue.tsx,n,translated
 {n} dishes,{n} dishes,{n} أطباق,{n} platos,screens/BanquetCatalogue.tsx,n,translated
@@ -343,6 +345,7 @@
 {tax} {rate}%,{tax} {rate}%,{tax} {rate}%,{tax} {rate}%,screens/FolioView.tsx,tax rate,translated
 {tax} rate,{tax} rate,نسبة {tax},Tasa de {tax},components/RoomStayPanels.tsx; screens/FolioView.tsx,tax,translated
 {tax} summary,{tax} summary,ملخص {tax},Resumen de {tax},screens/FolioView.tsx,tax,translated
+{this} against {last}. Year to date starts {fy}.,{this} against {last}. Year to date starts {fy}.,{this} مقابل {last}. يبدأ إجمالي السنة حتى تاريخه في {fy}.,{this} frente a {last}. El acumulado del año empieza el {fy}.,screens/Dashboard.tsx,this last fy,translated
 {type} · settled,{type} · settled,{type} · مُسوّى,{type} · liquidado,,type,translated
 {type} bed,{type} bed,سرير {type},Cama {type},screens/PublicBooking.tsx; screens/PublicListing.tsx,type,translated
 {type} folio,{type} folio,فاتورة {type},Folio de {type},components/CheckOutDialog.tsx; components/RoomStayPanels.tsx,type,translated
@@ -1118,6 +1121,7 @@ By session,By session,حسب الجلسة,Por sesión,,,translated
 By source,By source,حسب المصدر,Por origen,,,translated
 By status,By status,حسب الحالة,Por estado,screens/Banquet.tsx,,translated
 By travel agent,By travel agent,حسب وكيل السفر,Por agencia de viajes,,,translated
+By week,By week,حسب الأسبوع,Por semana,screens/Today.tsx,,translated
 Calculate,Calculate,احسب,Calcular,screens/CurrencyDesk.tsx,,translated
 Calculator,Calculator,الآلة الحاسبة,Calculadora,screens/CurrencyDesk.tsx,,translated
 Calendar,Calendar,التقويم,Calendario,,,translated
@@ -1221,6 +1225,7 @@ Central reservations,Central reservations,الحجوزات المركزية,Cent
 Central Reservations,Central Reservations,الحجوزات المركزية,Central de reservas,,,translated
 CGST ({rate}%),CGST ({rate}%),CGST ({rate}%),CGST ({rate}%),,rate,translated
 Change,Change,تغيير,Cambiar,screens/Inventory.tsx; screens/RegistrationCard.tsx,,translated
+Change %,Change %,نسبة التغيير %,Variación %,screens/Dashboard.tsx,,translated
 Change a room rate,Change a room rate,تغيير سعر غرفة,Cambiar una tarifa de habitación,,,translated
 change dates,change dates,تغيير التواريخ,cambiar fechas,,,translated
 Change dates,Change dates,تغيير التواريخ,Cambiar fechas,screens/TapeChart.tsx,,translated
@@ -2775,7 +2780,7 @@ Last printed {n} ticket(s) at {time},Last printed {n} ticket(s) at {time},آخر
 Last push,Last push,آخر إرسال,Último envío,,,translated
 Last stay,Last stay,آخر إقامة,Última estancia,,,translated
 Last used {when},Last used {when},آخر استخدام {when},Último uso {when},screens/settings/McpAccessPage.tsx,when,translated
-Last year,Last year,آخر سنة,El año pasado,screens/pos/OrderHistory.tsx,,translated
+Last year,Last year,آخر سنة,El año pasado,screens/Dashboard.tsx; screens/pos/OrderHistory.tsx,,translated
 "Last: {action} by {actor}, {when}","Last: {action} by {actor}, {when}",آخر إجراء: {action} بواسطة {actor}، {when},"Último: {action} por {actor}, {when}",screens/settings/McpAccessPage.tsx,action actor when,translated
 Late,Late,متأخر,Fuera de plazo,screens/OpsSLA.tsx,,translated
 LATE,LATE,متأخر,CON RETRASO,screens/Kitchen.tsx,,translated
@@ -3002,7 +3007,7 @@ money goes straight to this property's own gateway account,money goes straight t
 Month Availability,Month Availability,توفر الشهر,Disponibilidad mensual,,,translated
 Month by month,Month by month,شهراً بشهر,Mes a mes,screens/Banquet.tsx,,translated
 month to date,month to date,من بداية الشهر,acumulado del mes,screens/Dashboard.tsx,,translated
-Month to date,Month to date,من بداية الشهر حتى اليوم,Acumulado del mes,screens/AuditPack.tsx,,translated
+Month to date,Month to date,من بداية الشهر حتى اليوم,Acumulado del mes,screens/AuditPack.tsx; screens/Dashboard.tsx,,translated
 Month-to-date performance against your targets.,Month-to-date performance against your targets.,الأداء من بداية الشهر حتى الآن مقابل أهدافك.,Resultados del mes a la fecha respecto a sus metas.,screens/RevenueReports.tsx,,translated
 months,months,أشهر,meses,,,translated
 more,more,المزيد,más,screens/HkLaundry.tsx; screens/Laundry.tsx,,translated
@@ -3037,6 +3042,7 @@ My reports,My reports,تقاريري,Mis informes,screens/Reports.tsx,,translate
 My Tasks{n},My Tasks{n},مهامي{n},Mis tareas{n},screens/HkApp.tsx,n,translated
 My till,My till,صندوقي,Mi caja,screens/CashierBoard.tsx,,translated
 My Till,My Till,صندوقي,Mi caja,screens/CashierSessions.tsx; screens/CashierShiftReport.tsx; screens/CashierTill.tsx; screens/PettyCash.tsx,,translated
+n/a,n/a,غير متاح,n/d,screens/Dashboard.tsx,,translated
 Name,Name,الاسم,Nombre,components/CheckInDialog.tsx; screens/CashierBoard.tsx; screens/RegistrationCard.tsx; screens/ReservationDetail.tsx; screens/pos/PosSidePanel.tsx,,translated
 Name (Deluxe),Name (Deluxe),الاسم (ديلوكس),Nombre (De lujo),screens/Setup.tsx,,translated
 "Name each till, tie it to an outlet, and choose the printer that prints its bills. Without terminals everyone uses the Default till.","Name each till, tie it to an outlet, and choose the printer that prints its bills. Without terminals everyone uses the Default till.",سمِّ كل صندوق، واربطه بمنفذ، واختر الطابعة التي تطبع فواتيره. بدون أجهزة طرفية يستخدم الجميع الصندوق الافتراضي.,"Asigne un nombre a cada caja, vincúlela con un punto de venta y elija la impresora que imprimirá sus cuentas. Si no hay terminales, todos usan la caja predeterminada.",screens/CashierBoard.tsx,,translated
@@ -3102,6 +3108,7 @@ Next,Next,التالي,Siguiente,components/GroupBookingDialog.tsx; components/R
 Next {n} days,Next {n} days,الأيام {n} القادمة,Próximos {n} días,components/RoomDrawer.tsx,n,translated
 Next 14 days,Next 14 days,الأيام الـ 14 القادمة,14 días siguientes,components/CalendarView.tsx,,translated
 Next 7 days,Next 7 days,الـ 7 أيام القادمة,Próximos 7 días,,,translated
+Next 90 days,Next 90 days,الأيام الـ 90 القادمة,Próximos 90 días,screens/Dashboard.tsx,,translated
 Next arrival,Next arrival,الوصول التالي,Próxima llegada,components/RoomDrawer.tsx,,translated
 next automatic audit {at},next automatic audit {at},التدقيق التلقائي التالي {at},próxima auditoría automática {at},screens/EndOfDay.tsx,at,translated
 Next automatic run {at} ({tz}),Next automatic run {at} ({tz}),التشغيل التلقائي التالي {at} ({tz}),Próxima ejecución automática {at} ({tz}),screens/settings/cards.tsx,at tz,translated
@@ -3425,7 +3432,7 @@ Number,Number,الرقم,Número,,,translated
 Number = rooms available · price = 2-adult nightly rate with seasons applied. Weekend columns in green.,Number = rooms available · price = 2-adult nightly rate with seasons applied. Weekend columns in green.,الرقم = الغرف المتاحة · السعر = سعر الليلة لشخصين بالغين بعد تطبيق المواسم. أعمدة نهاية الأسبوع باللون الأخضر.,"Número = habitaciones disponibles · precio = tarifa por noche para 2 adultos, con temporadas aplicadas. Los fines de semana aparecen en verde.",components/CalendarView.tsx,,translated
 Nuts,Nuts,مكسرات,Frutos secos,../../kamra/settings.py,,translated
 "Nuts, dairy","Nuts, dairy",مكسرات، ألبان,"Frutos secos, lácteos",screens/BanquetCatalogue.tsx,,translated
-Occ %,Occ %,إشغال %,% de ocupación,screens/Dashboard.tsx; screens/Reports.tsx,,translated
+Occ %,Occ %,إشغال %,% de ocupación,screens/Dashboard.tsx; screens/Reports.tsx; screens/Today.tsx,,translated
 Occupancy,Occupancy,الإشغال,Ocupación,components/RoomInsights.tsx; screens/AuditPack.tsx; screens/Dashboard.tsx; screens/Reports.tsx; screens/Today.tsx,,translated
 Occupancy & revenue,Occupancy & revenue,الإشغال والإيراد,Ocupación e ingresos,,,translated
 Occupancy & revenue by day,Occupancy & revenue by day,الإشغال والإيراد حسب اليوم,Ocupación e ingresos por día,,,translated
@@ -3436,6 +3443,8 @@ Occupancy and revenue,Occupancy and revenue,الإشغال والإيرادات,
 Occupancy by day,Occupancy by day,الإشغال حسب اليوم,Ocupación por día,,,translated
 "Occupancy by day, arrivals by source, in-house by room type, no-shows and cancellations.","Occupancy by day, arrivals by source, in-house by room type, no-shows and cancellations.",الإشغال حسب اليوم، والوصول حسب المصدر، والنزلاء المقيمون حسب نوع الغرفة، وعدم الحضور والإلغاءات.,"Ocupación por día, llegadas por origen, alojados por tipo de habitación, no presentados y cancelaciones.",,,translated
 "Occupancy by day, arrivals by source, in-house by room type, no-shows, early departures and shift handovers.","Occupancy by day, arrivals by source, in-house by room type, no-shows, early departures and shift handovers.",الإشغال حسب اليوم، والوصول حسب المصدر، والنزلاء المقيمون حسب نوع الغرفة، وعدم الحضور، والمغادرة المبكرة وتسليم الورديات.,"Ocupación por día, llegadas por origen, alojados por tipo de habitación, no presentados, salidas anticipadas y entregas de turno.",,,translated
+"Occupancy on the books, next 90 days","Occupancy on the books, next 90 days",الإشغال المحجوز، الأيام الـ 90 القادمة,"Ocupación reservada, próximos 90 días",screens/Today.tsx,,translated
+Occupancy on the books: {summary},Occupancy on the books: {summary},الإشغال المحجوز: {summary},Ocupación reservada: {summary},screens/Today.tsx,summary,translated
 "Occupancy, ADR, RevPAR, revenue and collections for a day, with the month to date.","Occupancy, ADR, RevPAR, revenue and collections for a day, with the month to date.",الإشغال ومتوسط السعر والإيراد لكل غرفة متاحة والإيرادات والتحصيلات ليوم، مع الشهر حتى اليوم.,"Ocupación, ADR, RevPAR, ingresos y cobros de un día, con el mes a la fecha.",,,translated
 "Occupancy, month to date","Occupancy, month to date",الإشغال، الشهر حتى اليوم,"Ocupación, mes a la fecha",screens/Today.tsx,,translated
 Occupant register,Occupant register,سجل النزلاء,Registro de ocupantes,screens/RegistrationCard.tsx,,translated
@@ -3467,6 +3476,7 @@ On booking page,On booking page,في صفحة الحجز,En la página de reserv
 On file,On file,محفوظ,Guardado,components/GuestDocuments.tsx,,translated
 On hand,On hand,المتوفر,En existencia,screens/Inventory.tsx; screens/RecipeManager.tsx; screens/banquet/Economics.tsx,,translated
 On its way,On its way,في الطريق,En camino,screens/CashierBoard.tsx,,translated
+On the books,On the books,محجوز,Reservado,screens/Dashboard.tsx,,translated
 "On the food and the people serving it, not the hall","On the food and the people serving it, not the hall",على الطعام وطاقم الخدمة، لا على القاعة,"Sobre los alimentos y el personal de servicio, sin incluir el salón",screens/BanquetFunction.tsx,,translated
 on the night,on the night,خلال المناسبة,durante el evento,screens/banquet/Economics.tsx,,translated
 "On: sending an order prints the KOT and shows it on the kitchen display as started, so nobody presses Start. Off: the kitchen presses Start and each till chooses whether to print. An outlet can override this on its own record.","On: sending an order prints the KOT and shows it on the kitchen display as started, so nobody presses Start. Off: the kitchen presses Start and each till chooses whether to print. An outlet can override this on its own record.",تشغيل: إرسال الطلب يطبع أمر المطبخ ويظهره على شاشة المطبخ كمبدوء، فلا يحتاج أحد للضغط على بدء. إيقاف: يضغط المطبخ بدء ويختار كل صندوق ما إذا كان سيطبع. يمكن للمنفذ تجاوز ذلك في سجله الخاص.,Activado: enviar el pedido imprime la comanda y la marca como iniciada en cocina. Desactivado: cocina debe pulsar Iniciar y cada caja decide si imprime. Cada punto de venta puede cambiar esta opción en su configuración.,,,translated
@@ -4380,6 +4390,7 @@ Room levy %,Room levy %,نسبة الرسم على الغرفة,Tasa de alojamie
 Room levy name,Room levy name,اسم الرسم على الغرفة,Nombre de la tasa de alojamiento,,,translated
 Room moves,Room moves,نقل الغرف,Cambios de habitación,components/RoomDrawer.tsx,,translated
 Room nights,Room nights,ليالي الغرف,Noches de habitación,screens/EndOfDay.tsx; screens/RevenueReports.tsx,,translated
+Room nights booked,Room nights booked,ليالي الغرف المحجوزة,Noches de habitación reservadas,screens/Today.tsx,,translated
 Room nights posted at a different rate from the one booked.,Room nights posted at a different rate from the one booked.,ليالي غرف رُحّلت بسعر مختلف عن السعر المحجوز.,Noches de alojamiento registradas con una tarifa distinta de la reservada.,,,translated
 "Room nights posted off the booked rate, and rooms at zero rate.","Room nights posted off the booked rate, and rooms at zero rate.",ليالٍ رُحّلت بغير السعر المحجوز، وغرف بسعر صفر.,Noches de habitación registradas con una tarifa distinta de la reservada y habitaciones con tarifa cero.,,,translated
 Room nights sold,Room nights sold,ليالي الغرف المباعة,Noches de habitación vendidas,components/RoomInsights.tsx,,translated
@@ -4393,7 +4404,7 @@ room rate / room sold,room rate / room sold,سعر الغرفة / غرفة مب�
 Room rate variances,Room rate variances,فروقات أسعار الغرف,Diferencias de tarifas de habitación,,,translated
 room rev / room,room rev / room,إيراد الغرفة / غرفة,ingresos por habitaciones / habitación,screens/Reports.tsx,,translated
 room revenue,room revenue,إيراد الغرفة,ingresos por habitaciones,components/RoomDrawer.tsx,,translated
-Room revenue,Room revenue,إيراد الغرف,Ingresos por habitaciones,components/RoomInsights.tsx,,translated
+Room revenue,Room revenue,إيراد الغرف,Ingresos por habitaciones,components/RoomInsights.tsx; screens/Dashboard.tsx,,translated
 Room Revenue,Room Revenue,إيرادات الغرف,Ingresos por habitaciones,,,translated
 Room revenue (posted),Room revenue (posted),إيراد الغرف (المرحّل),Ingresos por habitaciones (registrados),components/RoomInsights.tsx,,translated
 room service,room service,خدمة الغرف,servicio a la habitación,,,translated
@@ -5171,6 +5182,8 @@ This room is in service.,This room is in service.,هذه الغرفة في ال�
 "This stay is {v0}, so there is nothing to check out.","This stay is {v0}, so there is nothing to check out.",حالة هذه الإقامة {v0}، فلا توجد مغادرة لتسجيلها.,Esta estancia está en estado {v0}; no hay una salida que registrar.,,v0,translated
 This step is not finished yet.,This step is not finished yet.,لم تكتمل هذه الخطوة بعد.,Este paso aún no está completo.,,,translated
 This type is full tonight - try another room type.,This type is full tonight - try another room type.,هذا النوع ممتلئ الليلة - جرّب نوع غرفة آخر.,No hay disponibilidad de este tipo de habitación para esta noche. Pruebe con otro tipo.,components/BookingDialog.tsx,,translated
+This year,This year,هذه السنة,Este año,screens/Dashboard.tsx,,translated
+This year against last year,This year against last year,هذه السنة مقابل السنة الماضية,Este año frente al año pasado,screens/Dashboard.tsx,,translated
 Threshold {cur}{n},Threshold {cur}{n},الحد {cur}{n},Umbral {cur}{n},screens/EndOfDayWizard.tsx,cur n,translated
 Tick all,Tick all,تحديد الكل,Seleccionar todo,components/CheckOutDialog.tsx,,translated
 Tick Credit allowed and save to bill this company on the city ledger.,Tick Credit allowed and save to bill this company on the city ledger.,حدد «الائتمان مسموح» واحفظ لفوترة هذه الشركة على دفتر المدينة.,Marque «Crédito permitido» y guarde los cambios para facturar a esta empresa en su cuenta por cobrar.,components/CreditTermsEditor.tsx,,translated
@@ -5227,7 +5240,7 @@ to take the payment,to take the payment,لاستلام الدفعة,para aceptar
 to take the walk-in's payment,to take the walk-in's payment,لاستلام دفعة النزيل بدون حجز,para cobrar al huésped sin reserva previa,components/BookingDialog.tsx,,translated
 to the quote,to the quote,إلى عرض السعر,a la cotización,screens/banquet/MenuComposer.tsx,,translated
 today,today,اليوم,hoy,screens/Dashboard.tsx; screens/Inventory.tsx,,translated
-Today,Today,اليوم,Hoy,screens/BanquetDiary.tsx; screens/Today.tsx; screens/pos/OrderHistory.tsx,,translated
+Today,Today,اليوم,Hoy,screens/BanquetDiary.tsx; screens/Dashboard.tsx; screens/Today.tsx; screens/pos/OrderHistory.tsx,,translated
 "Today and month to date by department, or the whole portfolio.","Today and month to date by department, or the whole portfolio.",اليوم والشهر حتى اليوم حسب القسم، أو المحفظة كاملة.,"Hoy y el mes a la fecha por departamento, o toda la cartera.",,,translated
 "Today at this property, by department.","Today at this property, by department.",اليوم في هذا العقار، حسب القسم.,"Actividad de hoy en este alojamiento, por departamento.",screens/Dashboard.tsx,,translated
 Today's and past orders,Today's and past orders,طلبات اليوم والسابقة,Pedidos de hoy y anteriores,,,translated
@@ -5255,7 +5268,7 @@ Total for {n} night,Total for {n} night,المجموع لليلة {n},Total por 
 "Total for {n} night, taxes and fees included","Total for {n} night, taxes and fees included",المجموع لليلة {n}، شاملًا الضرائب والرسوم,"Total por {n} noche, impuestos y cargos incluidos",screens/PublicBooking.tsx,n,translated
 Total for {n} nights,Total for {n} nights,المجموع لـ {n} ليالٍ,Total por {n} noches,screens/PublicBooking.tsx,n,translated
 "Total for {n} nights, taxes and fees included","Total for {n} nights, taxes and fees included",المجموع لـ {n} ليالٍ، شاملًا الضرائب والرسوم,"Total por {n} noches, impuestos y cargos incluidos",screens/PublicBooking.tsx,n,translated
-Total revenue,Total revenue,إجمالي الإيرادات,Ingresos totales,screens/AuditPack.tsx,,translated
+Total revenue,Total revenue,إجمالي الإيرادات,Ingresos totales,screens/AuditPack.tsx; screens/Dashboard.tsx,,translated
 total spend / guest · {pax} pax,total spend / guest · {pax} pax,إجمالي الإنفاق / ضيف · {pax} ضيف,gasto total / huésped · {pax} personas,screens/Reports.tsx,pax,translated
 Total Taxes (total_taxes_and_charges),Total Taxes (total_taxes_and_charges),إجمالي الضرائب (total_taxes_and_charges),Total de impuestos (total_taxes_and_charges),,,translated
 "total, taxes in","total, taxes in",الإجمالي شامل الضرائب,"total, impuestos incluidos",screens/CRS.tsx,,translated
@@ -5487,6 +5500,7 @@ Webhook verify token,Webhook verify token,رمز تحقق Webhook,Token de verif
 Webhooks,Webhooks,Webhooks,Webhooks,,,translated
 Website,Website,الموقع,Sitio web,screens/BookingEngine.tsx,,translated
 Wedding,Wedding,زفاف,Boda,,,translated
+Week of,Week of,أسبوع,Semana del,screens/Today.tsx,,translated
 Weekend nightly price (optional),Weekend nightly price (optional),سعر ليلة نهاية الأسبوع (اختياري),Precio por noche de fin de semana (opcional),screens/Setup.tsx,,translated
 weekend rate,weekend rate,سعر نهاية الأسبوع,tarifa de fin de semana,,,translated
 Weekly,Weekly,أسبوعي,Semanal,screens/Reports.tsx,,translated
@@ -5616,6 +5630,7 @@ Wrong payment mode? Change it,Wrong payment mode? Change it,طريقة دفع خ
 Wrong room?,Wrong room?,غرفة خاطئة؟,¿Habitación equivocada?,screens/EndOfDayWizard.tsx,,translated
 wrong tries,wrong tries,محاولات خاطئة,intentos incorrectos,,,translated
 x regular,x regular,أضعاف السعر العادي,veces la normal,,,translated
+Year to date,Year to date,منذ بداية السنة,Acumulado del año,screens/Dashboard.tsx,,translated
 Yes,Yes,نعم,Sí,components/RoomDrawer.tsx; screens/AuditPack.tsx; screens/EndOfDayWizard.tsx; screens/Reports.tsx,,translated
 yesterday,yesterday,أمس,ayer,screens/Inventory.tsx,,translated
 Yesterday,Yesterday,أمس,Ayer,screens/pos/OrderHistory.tsx,,translated

@@ -17,6 +17,8 @@ SERVICES_GST = 18.0  # laundry and other guest services
 DEFAULT_CURRENCY = "INR"
 DEFAULT_TIMEZONE = "Asia/Kolkata"
 DEFAULT_NATIONALITY = "Indian"
+# the financial year runs April to March: year-to-date reports start here
+FINANCIAL_YEAR_START = (4, 1)
 # named in the guest privacy notice
 PRIVACY_AUTHORITY = "the Data Protection Board of India"
 GUEST_REPORT = "for foreign nationals, Form C to the immigration authorities"

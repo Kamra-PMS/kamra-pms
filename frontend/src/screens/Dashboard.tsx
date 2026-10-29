@@ -45,6 +45,22 @@ interface PropDash {
     outstanding: number
     open_folios: number
   }
+  comparison?: {
+    financial_year_start: string
+    periods: Period[]
+  }
+}
+
+type Metric = "occupancy_pct" | "rooms_sold" | "room_revenue" | "total_revenue" | "adr" | "revpar"
+interface Period {
+  id: "today" | "mtd" | "ytd" | "on_the_books"
+  from_date: string
+  to_date: string
+  ly_from_date: string
+  ly_to_date: string
+  this_year: Partial<Record<Metric, number>>
+  last_year: Partial<Record<Metric, number>>
+  change_pct: Partial<Record<Metric, number | null>>
 }
 
 interface Portfolio {
@@ -195,6 +211,8 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
+          {prop.comparison && <Comparison data={prop.comparison} />}
+
           <div className="grid gap-4 lg:grid-cols-2">
             <Card>
               <CardHeader><CardTitle className="flex items-center gap-1.5"><Brush className="size-4 text-brand-600" />{t("Housekeeping")}</CardTitle></CardHeader>
@@ -279,5 +297,116 @@ function Row({ label, value, tone }: { label: string; value: unknown; tone?: str
       <span className="text-zinc-500">{translate(label)}</span>
       <span className={`font-semibold tabular-nums ${tone ?? "text-zinc-800"}`}>{String(value)}</span>
     </div>
+  )
+}
+
+const METRICS: [Metric, "pct" | "count" | "money"][] = [
+  ["occupancy_pct", "pct"],
+  ["rooms_sold", "count"],
+  ["room_revenue", "money"],
+  ["total_revenue", "money"],
+  ["adr", "money"],
+  ["revpar", "money"],
+]
+
+/** This year against the same dates last year: today, month to date, year
+ * to date (from the country's financial year) and the next 90 days on the
+ * books against what last year sold. kamra.dashboards.comparison */
+function Comparison({ data }: { data: NonNullable<PropDash["comparison"]> }) {
+  const { t } = useT()
+  const [pid, setPid] = useState<Period["id"]>("mtd")
+  const p = data.periods.find((x) => x.id === pid) ?? data.periods[0]
+  if (!p) return null
+  const periodLabel: Record<Period["id"], string> = {
+    today: t("Today"),
+    mtd: t("Month to date"),
+    ytd: t("Year to date"),
+    on_the_books: t("Next 90 days"),
+  }
+  const metricLabel: Record<Metric, string> = {
+    occupancy_pct: t("Occupancy"),
+    rooms_sold: t("Rooms sold"),
+    room_revenue: t("Room revenue"),
+    total_revenue: t("Total revenue"),
+    adr: t("ADR"),
+    revpar: t("RevPAR"),
+  }
+  const show = (v: number | undefined, kind: string) =>
+    v == null ? "" : kind === "pct" ? `${v}%` : kind === "money" ? `${cur()}${inr(v)}` : inr(v)
+  const range = (a: string, b: string) => (a === b ? a : t("{from} to {to}", { from: a, to: b }))
+  return (
+    <Card>
+      <CardHeader className="flex flex-wrap items-center justify-between gap-2">
+        <CardTitle>{t("This year against last year")}</CardTitle>
+        <div className="flex flex-wrap rounded-lg border border-zinc-200 bg-white p-0.5 text-xs">
+          {data.periods.map((x) => (
+            <button
+              key={x.id}
+              onClick={() => setPid(x.id)}
+              aria-pressed={x.id === p.id}
+              className={
+                "rounded-md px-2.5 py-1 font-medium " +
+                (x.id === p.id ? "bg-brand-600 text-white" : "text-zinc-600")
+              }
+            >
+              {periodLabel[x.id]}
+            </button>
+          ))}
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-zinc-200 text-xs font-medium text-zinc-500">
+                <th className="py-2 pe-3 text-start" />
+                <th className="py-2 pe-3 text-end" title={range(p.from_date, p.to_date)}>
+                  {p.id === "on_the_books" ? t("On the books") : t("This year")}
+                </th>
+                <th className="py-2 pe-3 text-end" title={range(p.ly_from_date, p.ly_to_date)}>
+                  {t("Last year")}
+                </th>
+                <th className="py-2 text-end">{t("Change %")}</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-zinc-100">
+              {METRICS.filter(([m]) => p.this_year[m] != null).map(([m, kind]) => {
+                const ch = p.change_pct[m]
+                return (
+                  <tr key={m}>
+                    <td className="py-1.5 pe-3 text-zinc-600">{metricLabel[m]}</td>
+                    <td className="py-1.5 pe-3 text-end font-semibold tabular-nums text-zinc-900">
+                      {show(p.this_year[m], kind)}
+                    </td>
+                    <td className="py-1.5 pe-3 text-end tabular-nums text-zinc-500">
+                      {show(p.last_year[m], kind)}
+                    </td>
+                    <td
+                      className={
+                        "py-1.5 text-end tabular-nums " +
+                        (ch == null || ch === 0
+                          ? "text-zinc-400"
+                          : ch > 0
+                            ? "text-emerald-700"
+                            : "text-rose-700")
+                      }
+                    >
+                      {ch == null ? t("n/a") : `${ch > 0 ? "▲ +" : ch < 0 ? "▼ " : ""}${ch}%`}
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+        <p className="mt-2 text-[11px] text-zinc-400">
+          {t("{this} against {last}. Year to date starts {fy}.", {
+            this: range(p.from_date, p.to_date),
+            last: range(p.ly_from_date, p.ly_to_date),
+            fy: data.financial_year_start,
+          })}
+        </p>
+      </CardContent>
+    </Card>
   )
 }

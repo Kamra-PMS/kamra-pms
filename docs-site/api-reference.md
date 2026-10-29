@@ -4379,7 +4379,7 @@ the room types with space for these dates and their all-in rate.
 
 ### `kamra.dashboards.property_dashboard`
 
-**GET/POST** · roles: `Front Desk`, `Finance`, `Revenue Manager`, `Hotel Admin`, `Kamra Agent`
+**GET/POST** · roles: `Front Desk`, `Finance`, `Revenue Manager`, `Night Auditor`, `Hotel Admin`, `Kamra Agent`
 
 Everything one hotel's dashboard needs, by department.
 

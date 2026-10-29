@@ -7,10 +7,11 @@ metrics rolled up across every property the signed-in user can access, with
 a per-property table - the chain's central view.
 """
 
+from datetime import date as date_type
 from decimal import ROUND_HALF_UP, Decimal
 
 import frappe
-from frappe.utils import nowdate
+from frappe.utils import add_days, add_years, getdate, nowdate
 
 from kamra.authz import ADMIN, require_roles
 
@@ -62,11 +63,100 @@ def _finance_slice(property: str, date: str):
 	}
 
 
-# who sees revenue and occupancy on the dashboard; the front desk sees
-# arrivals, departures, in house and rooms, not the hotel's numbers
+# who sees the money on the dashboard; the front desk sees arrivals,
+# departures, in house, rooms and occupancy (now and on the books), never
+# revenue, ADR, RevPAR, collections or outstanding
 FIGURE_ROLES = ("Finance", "Revenue Manager", "Night Auditor", "Kamra Agent", *ADMIN)
 FIGURE_KEYS = ("occupancy_pct", "revenue_today", "revpar", "adr", "room_revenue_today",
-               "collections_today", "statistics", "finance", "outlook")
+               "collections_today", "statistics", "finance", "outlook", "comparison")
+FORECAST_DAYS = 90
+
+
+def _sellable(property: str) -> int:
+	# out of order rooms are not for sale, as channel_manager._sellable counts
+	return frappe.db.count("Room", {
+		"property": property, "housekeeping_status": ("!=", "Out of Order")})
+
+
+def occupancy_now(property: str, hk: dict) -> dict:
+	"""Rooms occupied right now over sellable rooms."""
+	sellable = _sellable(property)
+	occupied = hk["occupied"]
+	return {"occupied": occupied, "sellable": sellable,
+	        "occupancy_pct": round(100 * occupied / sellable, 1) if sellable else 0}
+
+
+def occupancy_forecast(property: str, date: str, days: int = FORECAST_DAYS) -> list[dict]:
+	"""On the books for each night from date: live reservations covering the
+	night (the count pricing.forecast_occupancy makes) over sellable rooms.
+	Rooms only, no money."""
+	sellable = _sellable(property)
+	start = getdate(date)
+	end = getdate(add_days(start, days))
+	stays = frappe.db.sql(
+		"""SELECT check_in_date AS ci,
+		          GREATEST(check_out_date, DATE_ADD(check_in_date, INTERVAL 1 DAY)) AS co
+		   FROM `tabReservation`
+		   WHERE property = %(p)s AND status IN ('Confirmed', 'Checked In')
+		     AND check_in_date < %(e)s
+		     AND GREATEST(check_out_date, DATE_ADD(check_in_date, INTERVAL 1 DAY)) > %(s)s""",
+		{"p": property, "s": str(start), "e": str(end)}, as_dict=True)
+	out = []
+	for i in range(days):
+		d = getdate(add_days(start, i))
+		# ponytail: days x stays scan; group by date in SQL if a house books thousands ahead
+		booked = sum(1 for r in stays if getdate(r.ci) <= d < getdate(r.co))
+		out.append({"date": str(d), "booked": booked, "available": max(0, sellable - booked),
+		            "occupancy_pct": round(100 * booked / sellable, 1) if sellable else 0})
+	return out
+
+
+COMPARE_METRICS = ("occupancy_pct", "rooms_sold", "room_revenue", "total_revenue", "adr", "revpar")
+
+
+def financial_year_start(property: str, date) -> date_type:
+	"""The first day of the financial year date falls in, from the country
+	pack's FINANCIAL_YEAR_START (month, day); 1 January when it has none."""
+	from kamra.localization import pack_for
+	month, day = getattr(pack_for(property), "FINANCIAL_YEAR_START", (1, 1))
+	d = getdate(date)
+	start = d.replace(month=month, day=day)
+	return start if start <= d else start.replace(year=d.year - 1)
+
+
+def _change(this, last):
+	return round(100 * (this - last) / last, 1) if last else None
+
+
+def comparison(property: str, date: str, total_rooms: int, forecast: list[dict]) -> dict:
+	"""Today, month to date, year to date and the next 90 days on the books,
+	each against the same dates one year back. Year to date starts at the
+	country pack's financial year (April in India)."""
+	from kamra.reports import range_stats
+	d = getdate(date)
+	ly = lambda x: getdate(add_years(x, -1))  # noqa: E731 - 29 Feb -> 28 Feb
+	fy = financial_year_start(property, d)
+	periods = []
+	for pid, start, end in (("today", d, d), ("mtd", d.replace(day=1), d), ("ytd", fy, d)):
+		this = range_stats(property, start, end, total_rooms)
+		last = range_stats(property, ly(start), ly(end), total_rooms)
+		periods.append({"id": pid, "from_date": str(start), "to_date": str(end),
+		                "ly_from_date": str(ly(start)), "ly_to_date": str(ly(end)),
+		                "this_year": this, "last_year": last,
+		                "change_pct": {k: _change(this[k], last[k]) for k in COMPARE_METRICS}})
+	# the future: rooms on the books against what last year actually sold
+	ahead = forecast[1:]
+	if ahead:
+		start, end = getdate(ahead[0]["date"]), getdate(ahead[-1]["date"])
+		sold = sum(x["booked"] for x in ahead)
+		n = total_rooms * len(ahead)
+		this = {"rooms_sold": sold, "occupancy_pct": round(100 * sold / n, 1) if n else 0}
+		last = range_stats(property, ly(start), ly(end), total_rooms)
+		periods.append({"id": "on_the_books", "from_date": str(start), "to_date": str(end),
+		                "ly_from_date": str(ly(start)), "ly_to_date": str(ly(end)),
+		                "this_year": this, "last_year": last,
+		                "change_pct": {k: _change(this[k], last[k]) for k in this}})
+	return {"financial_year_start": str(fy), "periods": periods}
 
 
 def sees_figures() -> bool:
@@ -81,6 +171,8 @@ def property_dashboard(property: str, date: str | None = None):
 	from kamra.crs import assert_property_access
 	assert_property_access(property)
 	date = date or nowdate()
+	hk = _housekeeping_slice(property)
+	forecast = occupancy_forecast(property, date)
 	if not sees_figures():
 		from kamra.reports import movement_counts
 		move = movement_counts(property, date, date)
@@ -91,7 +183,9 @@ def property_dashboard(property: str, date: str | None = None):
 			"figures_hidden": True,
 			**move,
 			"front_desk": move,
-			"housekeeping": _housekeeping_slice(property),
+			"housekeeping": hk,
+			"occupancy_now": occupancy_now(property, hk),
+			"forecast": forecast,
 		}
 	from kamra.reports import manager_flash
 	flash = manager_flash(property, date)
@@ -99,7 +193,6 @@ def property_dashboard(property: str, date: str | None = None):
 	mtd = flash.get("mtd") or {}
 	move = flash.get("movement") or {}
 	finance = _finance_slice(property, date)
-	hk = _housekeeping_slice(property)
 
 	return {
 		"property": property,
@@ -141,6 +234,9 @@ def property_dashboard(property: str, date: str | None = None):
 		"housekeeping": hk,
 		"finance": finance,
 		"outlook": flash.get("outlook", []),
+		"occupancy_now": occupancy_now(property, hk),
+		"forecast": forecast,
+		"comparison": comparison(property, date, flash.get("total_rooms", 0), forecast),
 	}
 
 

@@ -139,6 +139,10 @@ DATASETS: dict[str, Dataset] = {
 		"description": "Rooms sold, occupancy, ADR, RevPAR and revenue per day.",
 		"module": "finance",
 		"roles": ("Finance", "Hotel Admin", "Revenue Manager", "Kamra Agent", "Front Desk", "Night Auditor"),
+		# the desk runs this for occupancy; the money columns are for
+		# kamra.dashboards.FIGURE_ROLES only
+		"money_columns": ("adr", "revpar", "revpax", "room_revenue", "fnb_revenue",
+		                  "other_revenue", "total_revenue"),
 		"date_field": "date",
 		"needs_range": True,
 		"columns": [
@@ -1186,12 +1190,22 @@ def _project(rows: list[dict], columns: list[str]) -> list[dict]:
 	return [{c: r.get(c) for c in columns} for r in rows]
 
 
+def _columns(ds: Dataset) -> list[Column]:
+	"""The dataset's columns this user may see: money columns only for the
+	roles that see the hotel's figures."""
+	money = ds.get("money_columns")
+	if not money:
+		return ds["columns"]
+	from kamra.dashboards import sees_figures
+	if sees_figures():
+		return ds["columns"]
+	return [c for c in ds["columns"] if c["id"] not in money]
+
+
 def _resolve_columns(ds: Dataset, columns: list[str] | None) -> list[str]:
-	allowed = {c["id"] for c in ds["columns"]}
-	if not columns:
-		return [c["id"] for c in ds["columns"]]
-	picked = [c for c in columns if c in allowed]
-	return picked or [c["id"] for c in ds["columns"]]
+	cols = [c["id"] for c in _columns(ds)]
+	picked = [c for c in (columns or []) if c in cols]
+	return picked or cols
 
 
 def _previous_range(from_date: str, to_date: str) -> tuple[str, str]:
@@ -1284,7 +1298,7 @@ def _run_dataset(
 				r[k] = str(v)
 
 	col_ids = _resolve_columns(ds, columns)
-	allowed = {c["id"] for c in ds["columns"]}
+	allowed = {c["id"] for c in _columns(ds)}
 	safe_filters = [f for f in (filters or []) if f.get("field") in allowed]
 	safe_group = [g for g in (group_by or []) if g in allowed]
 	safe_sort = [s for s in (sort or []) if s.get("field") in allowed]
@@ -1297,7 +1311,7 @@ def _run_dataset(
 	if len(rows) > MAX_ROWS:
 		rows = rows[:MAX_ROWS]
 
-	col_meta = [c for c in ds["columns"] if c["id"] in col_ids]
+	col_meta = [c for c in _columns(ds) if c["id"] in col_ids]
 	# preserve order of col_ids
 	by_id = {c["id"]: c for c in col_meta}
 	ordered = [by_id[c] for c in col_ids if c in by_id]
@@ -1494,7 +1508,7 @@ def list_report_datasets(property: str):
 			"description": ds["description"],
 			"module": ds.get("module"),
 			"needs_range": ds["needs_range"],
-			"columns": ds["columns"],
+			"columns": _columns(ds),
 			"filter_ops": list(OPS.keys()),
 		})
 	return out
