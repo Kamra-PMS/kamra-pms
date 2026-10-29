@@ -86,7 +86,7 @@ Kamra books every room under one group, so it can be billed together. If
 some rooms can't be booked, it tells you how many it booked and why the
 rest failed. Vouchers, add-ons and booker details are added to each stay
 afterwards. To hold a block of rooms for a group whose names come later,
-use [Groups & blocks](#hold-rooms-for-a-group) instead.
+use [Groups & blocks](#group-bookings-corporate-wedding) instead.
 
 ## Put a guest on the waitlist
 

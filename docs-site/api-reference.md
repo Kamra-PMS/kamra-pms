@@ -180,6 +180,9 @@ the balance at check-in is right; recorded through add_folio_payment,
 so the till, cashier PIN and ledger see it like any other payment.
 A Held / Pending Payment booking is confirmed by it.
 
+Pass idempotency_key (one per "Take advance" press): a retry with the
+same key returns the first result instead of posting again.
+
 | Param | Required | Default |
 | --- | --- | --- |
 | `reservation` | yes |  |
@@ -187,6 +190,7 @@ A Held / Pending Payment booking is confirmed by it.
 | `mode` | no | `'Cash'` |
 | `reference` | no | `None` |
 | `pin` | no | `None` |
+| `idempotency_key` | no | `None` |
 
 ### `kamra.api.deposit_payment_link`
 
@@ -541,6 +545,8 @@ Record money received on the stay ledger. kind labels WHY it came
 in - Payment (against the bill), Advance (collected before/at
 check-in) or Security Deposit (held, refundable). Refunds go through
 refund_folio_payment so they can never be entered by accident.
+A retry with the same idempotency_key returns the folio without
+posting again.
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -550,6 +556,7 @@ refund_folio_payment so they can never be entered by accident.
 | `reference` | no | `None` |
 | `pin` | no | `None` |
 | `kind` | no | `'Payment'` |
+| `idempotency_key` | no | `None` |
 
 ### `kamra.api.refund_folio_payment`
 
@@ -4507,7 +4514,8 @@ Take one advance for the whole trip. The payment is split as
 trip_advance_preview shows and each share is recorded through
 record_advance on its leg, so every hotel's folio, till and books get
 their own part (refunds and cancellation then follow that leg's own
-policy). All shares post or none do.
+policy). All shares post or none do. A retry with the same
+idempotency_key returns the trip without posting again.
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -4516,6 +4524,7 @@ policy). All shares post or none do.
 | `mode` | no | `'Cash'` |
 | `reference` | no | `None` |
 | `pin` | no | `None` |
+| `idempotency_key` | no | `None` |
 
 
 ## Dashboards

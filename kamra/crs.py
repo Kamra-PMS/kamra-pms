@@ -583,18 +583,31 @@ def trip_advance_preview(itinerary: str, amount: float | None = None):
 @frappe.whitelist(methods=["POST"])
 @require_roles("Front Desk", "Finance", "Kamra Agent")
 def record_trip_advance(itinerary: str, amount: float, mode: str = "Cash",
-                        reference: str | None = None, pin: str | None = None):
+                        reference: str | None = None, pin: str | None = None,
+                        idempotency_key: str | None = None):
 	"""Take one advance for the whole trip. The payment is split as
 	trip_advance_preview shows and each share is recorded through
 	record_advance on its leg, so every hotel's folio, till and books get
 	their own part (refunds and cancellation then follow that leg's own
-	policy). All shares post or none do."""
-	from kamra.api import record_advance
+	policy). All shares post or none do. A retry with the same
+	idempotency_key returns the trip without posting again."""
+	from kamra.api import _paid_with_key, record_advance
 	from kamra.authz import require_cashier_pin
 	from kamra.cashier import require_open_session
 	from kamra.localization import pack_for, payment_modes
 
-	plan = _trip_advance(itinerary, amount)
+	itn = _itinerary(itinerary)
+	# one trip advance at a time: lock the trip, then its legs (name order,
+	# as a per-leg record_advance locks them), so what is still owed is
+	# read after any advance a double submit just posted
+	frappe.db.get_value("Itinerary", itn.name, "name", for_update=True)
+	legs = frappe.db.sql(
+		"SELECT name FROM `tabReservation` WHERE itinerary = %s "
+		"ORDER BY name FOR UPDATE", (itn.name,), pluck=True)
+	key = (idempotency_key or "").strip() or None
+	if key and any(_paid_with_key(key, reservation=r) for r in legs):
+		return {"idempotent_replay": 1, **get_itinerary(itn.name)}
+	plan = _trip_advance(itn.name, amount)
 	paying = [leg for leg in plan["legs"] if leg["share"] > 0]
 	# every money guard of every hotel before the first write
 	for prop in dict.fromkeys(leg["property"] for leg in paying):
@@ -606,7 +619,8 @@ def record_trip_advance(itinerary: str, amount: float, mode: str = "Cash",
 	ref = reference or f"trip:{plan['itinerary']}"
 	_savepoint(lambda: [
 		record_advance(reservation=leg["reservation"], amount=leg["share"],
-		               mode=mode, reference=ref, pin=pin) for leg in paying])
+		               mode=mode, reference=ref, pin=pin, idempotency_key=key)
+		for leg in paying])
 	from kamra.savings import log_action
 	log_action("record_trip_advance", "Itinerary", plan["itinerary"],
 	           paying[0]["property"],

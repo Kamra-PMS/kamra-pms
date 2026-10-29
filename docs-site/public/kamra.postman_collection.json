@@ -451,7 +451,7 @@
         "kamra.api.record_advance"
        ]
       },
-      "description": "Take a deposit / advance on a booking before arrival (#114). Opens\nthe guest folio early so the money sits on the stay from day one and\nthe balance at check-in is right; recorded through add_folio_payment,\nso the till, cashier PIN and ledger see it like any other payment.\nA Held / Pending Payment booking is confirmed by it.",
+      "description": "Take a deposit / advance on a booking before arrival (#114). Opens\nthe guest folio early so the money sits on the stay from day one and\nthe balance at check-in is right; recorded through add_folio_payment,\nso the till, cashier PIN and ledger see it like any other payment.\nA Held / Pending Payment booking is confirmed by it.\n\nPass idempotency_key (one per \"Take advance\" press): a retry with the\nsame key returns the first result instead of posting again.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"amount\": 1000,\n  \"mode\": \"Cash\"\n}",
@@ -1524,7 +1524,7 @@
         "kamra.api.add_folio_payment"
        ]
       },
-      "description": "Record money received on the stay ledger. kind labels WHY it came\nin - Payment (against the bill), Advance (collected before/at\ncheck-in) or Security Deposit (held, refundable). Refunds go through\nrefund_folio_payment so they can never be entered by accident.",
+      "description": "Record money received on the stay ledger. kind labels WHY it came\nin - Payment (against the bill), Advance (collected before/at\ncheck-in) or Security Deposit (held, refundable). Refunds go through\nrefund_folio_payment so they can never be entered by accident.\nA retry with the same idempotency_key returns the folio without\nposting again.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"folio\": \"FOLIO-2026-00001\",\n  \"mode\": \"<mode>\",\n  \"amount\": 1000,\n  \"kind\": \"Payment\"\n}",
@@ -11552,7 +11552,7 @@
         "kamra.crs.record_trip_advance"
        ]
       },
-      "description": "Take one advance for the whole trip. The payment is split as\ntrip_advance_preview shows and each share is recorded through\nrecord_advance on its leg, so every hotel's folio, till and books get\ntheir own part (refunds and cancellation then follow that leg's own\npolicy). All shares post or none do.",
+      "description": "Take one advance for the whole trip. The payment is split as\ntrip_advance_preview shows and each share is recorded through\nrecord_advance on its leg, so every hotel's folio, till and books get\ntheir own part (refunds and cancellation then follow that leg's own\npolicy). All shares post or none do. A retry with the same\nidempotency_key returns the trip without posting again.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"itinerary\": \"<itinerary>\",\n  \"amount\": 1000,\n  \"mode\": \"Cash\"\n}",

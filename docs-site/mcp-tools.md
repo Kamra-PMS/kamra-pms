@@ -137,7 +137,7 @@ member before record_trip_advance.
 
 Endpoint: `kamra.crs.trip_advance_preview`.
 
-### `record_trip_advance(itinerary, amount, mode, reference)`
+### `record_trip_advance(itinerary, amount, mode, reference, idempotency_key)`
 
 Take one advance payment for a whole trip. It is split as
 trip_advance_preview shows and each share posts as an Advance on
@@ -533,7 +533,7 @@ balances - plus the group master when the stay is on a block.
 
 Endpoint: `kamra.api.reservation_folios`.
 
-### `record_payment(folio, mode, amount, reference, kind)`
+### `record_payment(folio, mode, amount, reference, kind, idempotency_key)`
 
 Record money received on a folio. mode: Cash, UPI, Card, Bank,
 Link. kind: Payment (default), Advance, or Security Deposit.

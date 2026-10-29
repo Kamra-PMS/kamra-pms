@@ -187,6 +187,13 @@ export async function frappeFetch<T = unknown>(
   return (await doFetch(path, init)) as T
 }
 
+/** A fresh idempotency key: one per money action, reused on its retries. */
+export function newIdempotencyKey(): string {
+  return typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? crypto.randomUUID()
+    : `k-${Date.now()}-${Math.random().toString(36).slice(2)}`
+}
+
 export async function call<T = unknown>(
   method: string,
   params: Record<string, unknown> = {},

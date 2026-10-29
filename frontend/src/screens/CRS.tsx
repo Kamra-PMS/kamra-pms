@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
 import { Search, BedDouble, MapPin, Loader2, Plus, X, Printer, ExternalLink } from "lucide-react"
-import { call, setCurrentProperty } from "../lib/api"
+import { call, newIdempotencyKey, setCurrentProperty } from "../lib/api"
 import { toFullPath } from "../lib/routing"
 import { Badge } from "../components/ui/badge"
 import { serverError } from "../lib/resource"
@@ -504,7 +504,7 @@ function TripSheet({ name, onClose, onChanged }: { name: string; onClose: () => 
   const [error, setError] = useState<string | null>(null)
   const loc = useLocale()
   const { ensureUnlocked } = useCashierAuth()
-  const [adv, setAdv] = useState<{ amount: string; mode: string; plan: AdvancePlan | null } | null>(null)
+  const [adv, setAdv] = useState<{ amount: string; mode: string; plan: AdvancePlan | null; key: string } | null>(null)
 
   const load = () => call<Itinerary>("kamra.crs.get_itinerary", { itinerary: name })
     .then(setD).catch((e) => setError(serverError(e)))
@@ -532,7 +532,9 @@ function TripSheet({ name, onClose, onChanged }: { name: string; onClose: () => 
     try {
       const plan = await call<AdvancePlan>("kamra.crs.trip_advance_preview", {
         itinerary: name, ...(amount ? { amount: Number(amount) } : {}) })
-      setAdv({ amount: amount ?? String(plan.amount), mode: adv?.mode ?? loc.payment_modes[0] ?? "Cash", plan })
+      setAdv({ amount: amount ?? String(plan.amount), mode: adv?.mode ?? loc.payment_modes[0] ?? "Cash", plan,
+        // one key per "Take advance": a retry after a lost response replays
+        key: adv?.key ?? newIdempotencyKey() })
     } catch (e) {
       setError(serverError(e))
       if (adv) setAdv({ ...adv, plan: null })
@@ -546,7 +548,7 @@ function TripSheet({ name, onClose, onChanged }: { name: string; onClose: () => 
       // money action: the till's cashier PIN, as on a single booking's deposit
       await ensureUnlocked()
       setD(await call<Itinerary>("kamra.crs.record_trip_advance", {
-        itinerary: name, amount: adv.plan.amount, mode: adv.mode }))
+        itinerary: name, amount: adv.plan.amount, mode: adv.mode, idempotency_key: adv.key }))
       setAdv(null)
       onChanged()
     } catch (e) { setError(serverError(e)) } finally { setBusy(false) }

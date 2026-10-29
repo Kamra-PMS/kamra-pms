@@ -5,7 +5,7 @@
 
 import { useState } from "react"
 import { Check, Copy, Link2, MessageCircle } from "lucide-react"
-import { call } from "../lib/api"
+import { call, newIdempotencyKey } from "../lib/api"
 import { serverError } from "../lib/resource"
 import { useCashierAuth } from "../lib/cashierAuth"
 import { cur, moneyLocale, useLocale } from "../lib/money"
@@ -44,6 +44,8 @@ export default function DepositPanel(props: {
   const [amount, setAmount] = useState(String(deposit.due || ""))
   const [payMode, setPayMode] = useState(loc.payment_modes[0] ?? "Cash")
   const [reference, setReference] = useState("")
+  // one key per "Take advance": a retry after a lost response replays
+  const [advKey, setAdvKey] = useState(newIdempotencyKey)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [link, setLink] = useState<{ url: string; message: string; test_mode: boolean } | null>(
@@ -69,7 +71,9 @@ export default function DepositPanel(props: {
         amount: Number(amount),
         mode: payMode,
         reference: reference.trim() || undefined,
+        idempotency_key: advKey,
       })
+      setAdvKey(newIdempotencyKey())
       props.onChanged(r.deposit)
       setMode(null)
       setReference("")

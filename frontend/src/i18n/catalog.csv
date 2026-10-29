@@ -58,6 +58,7 @@
  Add photo / video, Add photo / video, إضافة صورة / فيديو, Agregar foto / video,components/RoomTypeMedia.tsx,,translated
  Add Photo / Video, Add Photo / Video, إضافة صورة / فيديو, Agregar foto / video,screens/BookingEngine.tsx,,translated
  Add room type, Add room type, إضافة نوع غرفة, Agregar tipo de habitación,components/GroupControl.tsx,,translated
+ Advance {v0}{v1}:, Advance {v0}{v1}:, الدفعة المقدمة {v0}{v1}:, Anticipo {v0}{v1}:,components/BookingDialog.tsx,v0 v1,translated
  all work. Only , all work. Only , كلها مقبولة. فقط , son válidos. Solo se requieren ,screens/MenuImport.tsx,,translated
  and, and, و, y,screens/Developers.tsx,,translated
  and , and , و , y ,screens/MenuImport.tsx,,translated

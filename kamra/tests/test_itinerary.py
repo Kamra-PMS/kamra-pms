@@ -226,6 +226,36 @@ class TripAdvanceTestCase(_TripBase):
 			self.assertEqual([(p.payment_kind, p.amount) for p in folio.payments],
 			                 [("Advance", share)])
 
+	def test_trip_advance_retry_posts_once(self):
+		itn = self.book()
+		owed = itn["total"]
+		first = crs.record_trip_advance(itn["name"], owed, idempotency_key="ut-trip-k")
+		again = crs.record_trip_advance(itn["name"], owed, idempotency_key="ut-trip-k")
+		self.assertEqual(again["idempotent_replay"], 1)
+		self.assertAlmostEqual(again["advance_paid"], first["advance_paid"])
+		self.assertAlmostEqual(first["advance_paid"], owed)
+		# the full amount twice under different keys: nothing is owed now
+		with self.assertRaises(frappe.ValidationError):
+			crs.record_trip_advance(itn["name"], owed, idempotency_key="ut-trip-k2")
+		paid = frappe.db.sql(
+			"""SELECT SUM(fp.amount) FROM `tabFolio Payment` fp
+			   JOIN `tabFolio` f ON f.name = fp.parent
+			   WHERE f.reservation IN %s""",
+			([leg["reservation"] for leg in itn["legs"]],))[0][0]
+		self.assertAlmostEqual(float(paid), owed)
+
+	def test_stay_advance_retry_posts_once(self):
+		res = self.book()["legs"][0]["reservation"]
+		one = api.record_advance(res, 100, mode="Cash", idempotency_key="ut-adv-k")
+		two = api.record_advance(res, 100, mode="Cash", idempotency_key="ut-adv-k")
+		self.assertEqual(two["idempotent_replay"], 1)
+		self.assertEqual(two["folio"], one["folio"])
+		self.assertEqual(frappe.db.get_value("Reservation", res, "advance_paid"), 100)
+		self.assertEqual(len(frappe.get_doc("Folio", one["folio"]).payments), 1)
+		# a new press is a new payment
+		api.record_advance(res, 50, mode="Cash", idempotency_key="ut-adv-k2")
+		self.assertEqual(frappe.db.get_value("Reservation", res, "advance_paid"), 150)
+
 	def test_mixed_currencies_are_refused(self):
 		itn = self.book()
 		with patch("kamra.crs._locale", side_effect=lambda p: {

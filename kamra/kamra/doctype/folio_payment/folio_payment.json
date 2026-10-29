@@ -14,7 +14,8 @@
   "currency",
   "fx_amount",
   "exchange_rate",
-  "reference"
+  "reference",
+  "idempotency_key"
  ],
  "fields": [
   {
@@ -71,13 +72,23 @@
    "fieldname": "exchange_rate",
    "fieldtype": "Float",
    "label": "Exchange Rate"
+  },
+  {
+   "description": "Set by the client per press; a retry with the same key returns the first payment instead of posting again.",
+   "fieldname": "idempotency_key",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Idempotency Key",
+   "no_copy": 1,
+   "read_only": 1,
+   "search_index": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-10-25 12:00:00.000000",
+ "modified": "2026-10-30 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Folio Payment",

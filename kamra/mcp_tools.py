@@ -85,6 +85,13 @@ IDEMPOTENCY_KEY_PARAM = _p(
 	"second identical room on purpose.",
 )
 
+PAYMENT_KEY_PARAM = _p(
+	"string",
+	description="Optional unique key for this payment (e.g. a UUID), new for "
+	"each payment you mean to take. Retrying with the same key returns the "
+	"first result (idempotent_replay) instead of taking the money twice.",
+)
+
 ITINERARY_LEGS_PARAM = _p(
 	"array",
 	description="The stays, any order: each {property, room_type, "
@@ -340,6 +347,7 @@ TOOLS: tuple[ToolSpec, ...] = (
 			"amount": _p("number"),
 			"mode": _p("string"),
 			"reference": _p("string"),
+			"idempotency_key": PAYMENT_KEY_PARAM,
 		},
 		required=("itinerary", "amount"),
 		mutating=True,
@@ -799,6 +807,7 @@ TOOLS: tuple[ToolSpec, ...] = (
 			"amount": _p("number"),
 			"reference": _p("string"),
 			"kind": _p("string"),
+			"idempotency_key": PAYMENT_KEY_PARAM,
 		},
 		required=("folio", "mode", "amount"),
 		mutating=True,

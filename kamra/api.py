@@ -790,6 +790,19 @@ def _security_deposit_state(res) -> dict | None:
 		return None
 
 
+def _paid_with_key(key: str, *, reservation: str | None = None,
+                   folio: str | None = None) -> str | None:
+	"""The folio a payment with this idempotency key already landed on -
+	scoped to one booking's folios, or to one folio."""
+	return (frappe.db.sql(
+		"""SELECT f.name FROM `tabFolio Payment` fp
+		   JOIN `tabFolio` f ON f.name = fp.parent
+		   WHERE fp.idempotency_key = %(key)s AND fp.parenttype = 'Folio'
+		     AND (f.name = %(folio)s OR f.reservation = %(res)s) LIMIT 1""",
+		{"key": key, "folio": folio or "", "res": reservation or ""})
+		or [[None]])[0][0]
+
+
 def _deposit_reservation(reservation: str):
 	res = frappe.get_doc("Reservation", reservation)
 	from kamra.crs import assert_property_access
@@ -804,12 +817,28 @@ def _deposit_reservation(reservation: str):
 @frappe.whitelist(methods=["POST"])
 @require_roles("Front Desk", "Finance", "Kamra Agent")
 def record_advance(reservation: str, amount: float, mode: str = "Cash",
-                   reference: str | None = None, pin: str | None = None):
+                   reference: str | None = None, pin: str | None = None,
+                   idempotency_key: str | None = None):
 	"""Take a deposit / advance on a booking before arrival (#114). Opens
 	the guest folio early so the money sits on the stay from day one and
 	the balance at check-in is right; recorded through add_folio_payment,
 	so the till, cashier PIN and ledger see it like any other payment.
-	A Held / Pending Payment booking is confirmed by it."""
+	A Held / Pending Payment booking is confirmed by it.
+
+	Pass idempotency_key (one per "Take advance" press): a retry with the
+	same key returns the first result instead of posting again."""
+	# one advance at a time per booking: the lock serializes a double
+	# submit, so advance_paid and the key check below see the first post
+	frappe.db.get_value("Reservation", reservation, "name", for_update=True)
+	key = (idempotency_key or "").strip() or None
+	if key:
+		res = frappe.get_doc("Reservation", reservation)
+		from kamra.crs import assert_property_access
+		assert_property_access(res.property)
+		folio = _paid_with_key(key, reservation=res.name)
+		if folio:
+			return {"folio": folio, "status": res.status,
+			        "deposit": _deposit_state(res), "idempotent_replay": 1}
 	res = _deposit_reservation(reservation)
 	amount = float(amount or 0)
 	if amount <= 0:
@@ -829,7 +858,7 @@ def record_advance(reservation: str, amount: float, mode: str = "Cash",
 	folio = open_folio(res)
 	add_folio_payment(folio, mode, amount,
 	                  reference=reference or f"deposit:{res.name}", pin=pin,
-	                  kind="Advance")
+	                  kind="Advance", idempotency_key=key)
 	frappe.db.set_value("Reservation", res.name, "advance_paid",
 	                    float(res.advance_paid or 0) + amount)
 	res.reload()
@@ -1537,16 +1566,26 @@ def _pin_guard(folio: str, pin=None):
 @require_roles("Finance", "Front Desk", "Kamra Agent")
 def add_folio_payment(folio: str, mode: str, amount: float,
                       reference: str | None = None, pin: str | None = None,
-                      kind: str = "Payment"):
+                      kind: str = "Payment", idempotency_key: str | None = None):
 	"""Record money received on the stay ledger. kind labels WHY it came
 	in - Payment (against the bill), Advance (collected before/at
 	check-in) or Security Deposit (held, refundable). Refunds go through
-	refund_folio_payment so they can never be entered by accident."""
+	refund_folio_payment so they can never be entered by accident.
+	A retry with the same idempotency_key returns the folio without
+	posting again."""
 	if kind not in ("Payment", "Advance", "Security Deposit"):
 		frappe.throw("kind must be Payment, Advance or Security Deposit.")
 	if float(amount) <= 0:
 		frappe.throw("Amount must be positive.")
 	_pin_guard(folio, pin)
+	key = (idempotency_key or "").strip() or None
+	if key:
+		# serialize posts on this folio so a double submit sees the first
+		frappe.db.get_value("Folio", folio, "name", for_update=True)
+		if _paid_with_key(key, folio=folio):
+			out = frappe.get_doc("Folio", folio).as_dict()
+			out["idempotent_replay"] = 1
+			return out
 	doc = frappe.get_doc("Folio", folio)
 	from kamra.business_date import get_business_date
 	from kamra.cashier import record_cashier_txn, require_open_session
@@ -1568,6 +1607,7 @@ def add_folio_payment(folio: str, mode: str, amount: float,
 		"amount": float(amount),
 		"reference": reference,
 		"currency": currency,
+		"idempotency_key": key,
 	})
 	from kamra.folio import _recalculate
 	_recalculate(doc)
