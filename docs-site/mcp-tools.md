@@ -1,6 +1,6 @@
 # MCP tool reference
 
-Kamra exposes **133 governed tools** on the hosted MCP
+Kamra exposes **134 governed tools** on the hosted MCP
 endpoint (`/mcp`) and the stdio sidecar (`mcp/kamra_mcp.py`). Every
 call runs as the connected user - **role** permissions apply, tools
 are further filtered by the property's **enabled modules**, prices
@@ -142,6 +142,17 @@ Refused while a required check-in step is open; call
 check_in_readiness first and tell the desk what is missing.
 
 Endpoint: `kamra.api.check_in`.
+Mutating - logged to the activity ledger.
+
+### `group_check_in(group_booking, reservations)`
+
+Check in every arrival of a group booking due today (or only the
+reservations listed). Rooms still unassigned get the suggested free
+room of the booked type. Returns who went in, who did not and why,
+and how many rooms still have IDs, deposit or the registration card
+to finish. Confirm with the user first.
+
+Endpoint: `kamra.api.group_check_in`.
 Mutating - logged to the activity ledger.
 
 ### `check_out(reservation)`

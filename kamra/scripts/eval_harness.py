@@ -8782,7 +8782,13 @@ def _ci_room(number):
 
 def _ci_stay(name, phone, room=None):
 	g = _guest(name, phone)
-	return _res(g, nowdate(), add_days(nowdate(), 2), room=room)
+	res = _res(g, nowdate(), add_days(nowdate(), 2), room=room)
+	# the second adult is on the register with an ID: these checks are
+	# about the main guest's, and every adult on a booking needs one
+	res.append("occupants", {"full_name": f"{name} Partner", "age": 30,
+	                         "id_type": "Passport", "id_number": "E7654321"})
+	res.save(ignore_permissions=True)
+	return res
 
 
 def _refused(fn, *args, exc=None, contains=None, **kwargs):

@@ -1893,9 +1893,20 @@ def update_occupants(reservation: str, occupants):
 	                  for o in (doc.get("occupants") or [])}
 	existing_types = {o.name: o.get("id_type")
 	                  for o in (doc.get("occupants") or [])}
+	existing_photos = {o.name: o.get("photo")
+	                   for o in (doc.get("occupants") or [])}
+	kept = ("full_name", "age", "gender", "nationality", "id_type", "id_number", "phone")
+	existing_rows = {o.name: {k: o.get(k) for k in kept}
+	                 for o in (doc.get("occupants") or [])}
 	doc.set("occupants", [])
 	stale_scans, minors_trimmed = [], 0
 	for o in occupants or []:
+		# a saved row keeps what the client left out, and the stored ID
+		# number when the client only has the masked one (check-in shows it so)
+		prev = existing_rows.get(o.get("row")) or {}
+		o = {**prev, **{k: v for k, v in o.items() if v is not None}}
+		if "•" in str(o.get("id_number") or ""):
+			o["id_number"] = prev.get("id_number") or ""
 		if not (o.get("full_name") or "").strip():
 			continue
 		nationality = o.get("nationality") or default_nat
@@ -1910,6 +1921,7 @@ def update_occupants(reservation: str, occupants):
 			# an uploaded ID survives a register edit
 			"id_file": o.get("id_file")
 			           or existing_scans.get(o.get("row")) or None,
+			"photo": existing_photos.get(o.get("row")) or None,
 		}
 		if is_minor(pack, row["age"]):
 			# a child's phone is never needed; ID only where the register asks
@@ -1934,7 +1946,8 @@ def update_occupants(reservation: str, occupants):
 	            {"row": o.name, "full_name": o.full_name, "age": o.age,
 	             "gender": o.gender, "nationality": o.nationality,
 	             "id_type": o.id_type, "id_number": o.id_number,
-	             "phone": o.phone, "id_file": o.get("id_file")}
+	             "phone": o.phone, "id_file": o.get("id_file"),
+	             "photo": o.get("photo")}
 	            for o in doc.occupants]}
 
 
@@ -3556,13 +3569,16 @@ def walk_in(property: str, room_type: str, room: str, check_out_date: str,
 
 @frappe.whitelist(methods=["POST"])
 @require_roles("Front Desk", "Kamra Agent")
-def upload_occupant_id(reservation: str, row: str, image: str):
-	"""ID document for one occupant on the stay register. Same security
-	pipeline as every ID image: decoded, re-encoded through PIL (the
-	sanitisation boundary), stored private, attached to the reservation
-	so checkout retention rules find it."""
+def upload_occupant_id(reservation: str, row: str, image: str, kind: str = "id"):
+	"""ID document (kind "id") or face photo (kind "photo") for one
+	occupant on the stay register. Same security pipeline as every ID
+	image: decoded, re-encoded through PIL (the sanitisation boundary),
+	stored private, attached to the reservation so checkout retention
+	rules find it. Checkout discards the ID, never the photo."""
 	from kamra.id_documents import _decode, _sanitise
 
+	if kind not in ("id", "photo"):
+		frappe.throw("kind must be 'id' or 'photo'.")
 	res = frappe.get_doc("Reservation", reservation)
 	match = [o for o in (res.get("occupants") or []) if o.name == row]
 	if not match:
@@ -3570,6 +3586,22 @@ def upload_occupant_id(reservation: str, row: str, image: str):
 	occ = match[0]
 	from kamra.localization import adult_age, is_minor, minor_id_kept, pack_for
 	pack = pack_for(res.property)
+	if kind == "photo":
+		content = _sanitise(_decode(image))
+		if occ.get("photo"):
+			from kamra.privacy import _delete_files
+			_delete_files("Reservation", res.name, url=occ.photo)
+		fdoc = frappe.get_doc({
+			"doctype": "File",
+			"file_name": f"occupant-photo-{res.name}-{occ.idx}.jpg",
+			"attached_to_doctype": "Reservation",
+			"attached_to_name": res.name,
+			"is_private": 1,
+			"content": content,
+		}).insert(ignore_permissions=True)
+		frappe.db.set_value("Stay Occupant", occ.name, "photo", fdoc.file_url,
+		                    update_modified=False)
+		return {"ok": True, "file": fdoc.file_url, "row": occ.name}
 	if is_minor(pack, occ.age) and not minor_id_kept(pack, occ.nationality):
 		frappe.throw(f"Registration law needs only the name and age of a guest under "
 		             f"{adult_age(pack)}; their ID is not kept.")
@@ -6120,6 +6152,56 @@ def group_detail(group_booking: str):
 		"master_folio_status": bill.status if bill else None,
 		"master_folio_balance": round(flt(bill.balance), 2) if bill else 0,
 	}
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Front Desk", "Kamra Agent")
+def group_check_in(group_booking: str, reservations=None):
+	"""Check in a group's arrivals in one go. Rooms still unassigned get
+	the same suggestion the tape chart makes; then each stay goes through
+	check_in, the same call as a single check-in. One stay that cannot go
+	in (no free room) does not stop the rest. IDs, deposits and the
+	registration card stay open per room to finish later, as with any
+	check-in. `reservations` limits it to some of the group."""
+	from kamra.allocation import apply_allocation, suggest_allocation
+	from kamra.business_date import get_business_date
+
+	gb = frappe.get_doc("Group Booking", group_booking)
+	today = get_business_date(gb.property)
+	filters = {"group_booking": gb.name, "status": "Confirmed",
+	           "check_in_date": ("<=", today)}
+	if reservations:
+		if isinstance(reservations, str):
+			reservations = frappe.parse_json(reservations)
+		filters["name"] = ("in", list(reservations))
+	arrivals = frappe.get_all("Reservation", filters=filters,
+	                          fields=["name", "guest_name", "room"],
+	                          order_by="creation asc")
+	mine = {a.name for a in arrivals if not a.room}
+	if mine:
+		plan = suggest_allocation(gb.property, today)
+		pairs = [{"reservation": p["reservation"], "room": p["suggested_room"]}
+		         for p in plan["proposals"] if p["reservation"] in mine]
+		if pairs:
+			apply_allocation(gb.property, pairs)
+	checked_in, skipped, to_finish = [], [], 0
+	for a in arrivals:
+		sp = f"gci_{len(checked_in) + len(skipped)}"
+		frappe.db.savepoint(sp)
+		try:
+			out = check_in(a.name)
+		except Exception as e:
+			frappe.db.rollback(save_point=sp)
+			frappe.clear_messages()
+			skipped.append({"reservation": a.name, "guest_name": a.guest_name,
+			                "reason": str(e) or "Could not check in"})
+			continue
+		pending = out.get("pending_backfill") or []
+		to_finish += 1 if pending else 0
+		checked_in.append({"reservation": a.name, "guest_name": a.guest_name,
+		                   "room": out.get("room"),
+		                   "pending": [p["title"] for p in pending]})
+	return {"checked_in": checked_in, "skipped": skipped, "to_finish": to_finish}
 
 
 @frappe.whitelist(methods=["POST"])

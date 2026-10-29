@@ -17,6 +17,8 @@ SERVICES_GST = 18.0  # laundry and other guest services
 DEFAULT_CURRENCY = "INR"
 DEFAULT_TIMEZONE = "Asia/Kolkata"
 DEFAULT_NATIONALITY = "Indian"
+# a passport or ID card MRZ names the country by this code
+HOME_COUNTRY_ISO3 = "IND"
 # named in the guest privacy notice
 PRIVACY_AUTHORITY = "the Data Protection Board of India"
 GUEST_REPORT = "for foreign nationals, Form C to the immigration authorities"
@@ -179,3 +181,9 @@ def verify_tax_id(property, tax_id, business_name=""):
 def verify_guest_id(property, guest, id_type, consent=0):
 	from kamra.localization.india import verify
 	return verify.scan_guest_id(property, guest, id_type, consent)
+
+
+def read_id_scan(text):
+	"""An ID scanner's text the core could not read: the Aadhaar QR."""
+	from kamra.localization.india.aadhaar_qr import read
+	return read(text)

@@ -3,7 +3,6 @@ import {
   BedDouble,
   Check,
   CircleCheck,
-  ExternalLink,
   KeyRound,
   Loader2,
   MessageCircle,
@@ -21,6 +20,7 @@ import { Button } from "./ui/button"
 import { Badge } from "./ui/badge"
 import { Sheet } from "./ui/sheet"
 import { IdDocumentField } from "./IdDocumentField"
+import CheckInGuests, { type GuestOccupant } from "./CheckInGuests"
 import { SignaturePad } from "./SignaturePad"
 import DepositPanel, { type DepositState } from "./DepositPanel"
 import SecurityDepositPanel, { type SecurityDepositState } from "./SecurityDepositPanel"
@@ -91,6 +91,7 @@ interface Flow {
     id_expiry_date: string | null
     id_used_count: number
     address: string
+    has_photo: boolean
   }
   vocabulary: { id_types: string[] }
   steps: Step[]
@@ -106,13 +107,7 @@ interface Flow {
     online: boolean
     precheckin_status: string
     precheckin_on: string | null
-    occupants: {
-      row: string
-      full_name: string
-      age: number | null
-      has_id: boolean
-      exempt: boolean
-    }[]
+    occupants: GuestOccupant[]
   }
   billing: {
     payer: string
@@ -793,46 +788,17 @@ export default function CheckInDialog(props: {
                 onUploaded={load}
                 label={t("Photograph the guest's ID")}
               />
-              <section className="rounded-xl border border-zinc-200 bg-white p-4">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <h4 className="text-sm font-semibold text-zinc-800">{t("Everyone staying")}</h4>
-                  <a
-                    href={toFullPath(`/grc/${r.name}`)}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1 text-sm font-medium text-brand-700 hover:underline"
-                  >
-                    {t("Add guests and their IDs")} <ExternalLink className="size-3.5" aria-hidden />
-                  </a>
-                </div>
-                {flow.ids.occupants.length === 0 ? (
-                  <p className="mt-1 text-sm text-zinc-500">
-                    {t("No other guests recorded. Add them on the registration card, then come back here.")}
-                  </p>
-                ) : (
-                  <ul className="mt-2 divide-y divide-zinc-100">
-                    {flow.ids.occupants.map((o) => (
-                      <li key={o.row} className="flex items-center justify-between py-1.5 text-sm">
-                        <span>
-                          {o.full_name}
-                          {o.age != null ? ` · ${o.age}` : ""}
-                        </span>
-                        <span
-                          className={cn(
-                            "text-xs font-medium",
-                            o.has_id ? "text-emerald-700" : o.exempt ? "text-zinc-500" : "text-rose-700",
-                          )}
-                        >
-                          {o.has_id ? t("ID on file") : o.exempt ? t("No ID needed (child)") : t("ID missing")}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                <Button variant="ghost" className="mt-2 h-8 px-2 text-xs" onClick={load}>
-                  {t("Refresh")}
-                </Button>
-              </section>
+              <CheckInGuests
+                reservation={r.name}
+                guest={flow.guest.name}
+                guestName={flow.guest.full_name}
+                guestHasPhoto={flow.guest.has_photo}
+                adults={flow.reservation.adults}
+                children={flow.reservation.children}
+                occupants={flow.ids.occupants}
+                idTypes={flow.vocabulary.id_types}
+                onChanged={load}
+              />
               {!flow.ids.ok && (
                 <p className="text-sm font-medium text-rose-700">
                   {t("ID still needed for: {names}.", { names: flow.ids.missing.join(", ") })}
