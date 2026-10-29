@@ -44,6 +44,9 @@ interface InvoiceData {
       mode: string
       amount: number
       reference: string | null
+      currency?: string | null
+      fx_amount?: number | null
+      exchange_rate?: number | null
     }[]
     charges_total: number
     tax_total: number
@@ -266,7 +269,24 @@ export default function FolioView() {
     amount: "",
     reference: "",
     kind: "Payment",
+    currency: "",
   })
+  // foreign currencies the hotel set a rate for TODAY (the only rate the
+  // server converts a payment at); "" = the hotel's own currency
+  const [fxRates, setFxRates] = useState<{ currency: string; buy_rate: number }[]>([])
+  const [showIn, setShowIn] = useState("")
+  const [shown, setShown] = useState<{
+    currency: string; rate: number; rate_date: string; home_currency: string
+    grand_total: number; balance: number
+  } | null>(null)
+  useEffect(() => {
+    call<{ business_date: string; rates: { currency: string; buy_rate: number; rate_date: string }[] }>(
+      "kamra.ledger.list_exchange_rates", { property: getCurrentProperty() })
+      .then((r) => setFxRates(r.rates.filter((x) => x.rate_date === r.business_date)))
+      .catch(() => setFxRates([]))
+  }, [])
+  const fxRate = fxRates.find((r) => r.currency === payment.currency)?.buy_rate
+  const payModes = fxRate ? PAY_MODES.filter((m) => m === "Cash" || m === "Bank Transfer") : PAY_MODES
   const [refund, setRefund] = useState<{ amount: string; mode: string; reason: string } | null>(null)
   const [showCancel, setShowCancel] = useState(false)
   const [cancelReason, setCancelReason] = useState("")
@@ -278,7 +298,8 @@ export default function FolioView() {
       call<InvoiceData>("kamra.api.folio_invoice", { folio: name })
         .then((d) => {
           setData(d)
-          setPayment((p) => ({ ...p, amount: String(d.folio.balance || "") }))
+          // the balance prefill is home money; a foreign amount is typed in
+          setPayment((p) => ({ ...p, amount: p.currency ? "" : String(d.folio.balance || "") }))
           return call<SiblingFolio[]>("kamra.api.reservation_folios", {
             reservation: d.stay.reservation,
           })
@@ -288,6 +309,14 @@ export default function FolioView() {
   }, [name])
 
   useEffect(load, [load])
+
+  const balanceNow = data?.folio.balance
+  useEffect(() => {
+    if (!showIn || !name) return setShown(null)
+    call<NonNullable<typeof shown>>("kamra.ledger.folio_in_currency", { folio: name, currency: showIn })
+      .then(setShown)
+      .catch((e) => { setShown(null); setError(serverError(e)) })
+  }, [showIn, name, balanceNow])
 
   const [rates, setRates] = useState<number[]>(taxRates())
   useEffect(() => {
@@ -1126,6 +1155,24 @@ export default function FolioView() {
                   {doc.amount_in_words}
                 </p>
               )}
+              {fxRates.length > 0 && (
+                <label className="flex items-center justify-end gap-2 text-xs text-zinc-500 print:hidden">
+                  {t("Show in")}
+                  <select className="rounded border border-zinc-200 px-1.5 py-0.5"
+                    value={showIn} onChange={(e) => setShowIn(e.target.value)}>
+                    <option value="">{t("Hotel currency only")}</option>
+                    {fxRates.map((r) => <option key={r.currency}>{r.currency}</option>)}
+                  </select>
+                </label>
+              )}
+              {shown && (
+                <p className="text-xs text-zinc-600">
+                  {t("Approx. {cur} {total} (balance {cur} {balance}) at {rate}, rate of {date}. Tax invoice amounts are in {home}.", {
+                    cur: shown.currency, total: inr(shown.grand_total), balance: inr(shown.balance),
+                    rate: shown.rate, date: shown.rate_date, home: shown.home_currency,
+                  })}
+                </p>
+              )}
               {data.statutory && (
                 <div className="flex items-center justify-end gap-3 pt-2">
                   <div className="text-right text-[10px] leading-tight text-zinc-400">
@@ -1174,6 +1221,9 @@ export default function FolioView() {
                       )}
                       {p.reference && (
                         <span className="text-zinc-400"> · {p.reference}</span>
+                      )}
+                      {Number(p.fx_amount) > 0 && (
+                        <span className="text-zinc-400"> · {p.currency} {inr(p.fx_amount)} @ {p.exchange_rate}</span>
                       )}
                     </span>
                     <span className={Number(p.amount) < 0 ? "font-medium text-rose-600" : ""}>{cur()}{inr(p.amount)}</span>
@@ -1394,8 +1444,8 @@ export default function FolioView() {
                 title={t("What this money is: against the bill, an advance, or a refundable deposit")}
                 onChange={(e) => setPayment({ ...payment, kind: e.target.value })}
               >
-                {["Payment", "Advance", "Security Deposit"].map((k) => (
-                  <option key={k}>{t(k)}</option>
+                {["Payment", "Advance", ...(fxRate ? [] : ["Security Deposit"])].map((k) => (
+                  <option key={k} value={k}>{t(k)}</option>
                 ))}
               </select>
               <select
@@ -1403,14 +1453,31 @@ export default function FolioView() {
                 value={payment.mode}
                 onChange={(e) => setPayment({ ...payment, mode: e.target.value })}
               >
-                {PAY_MODES.map((m) => (
-                  <option key={m}>{t(m)}</option>
+                {payModes.map((m) => (
+                  <option key={m} value={m}>{t(m)}</option>
                 ))}
               </select>
+              {fxRates.length > 0 && (
+                <select
+                  className={inputCls}
+                  value={payment.currency}
+                  title={t("Currency the guest pays in")}
+                  onChange={(e) => {
+                    const currency = e.target.value
+                    // foreign money is notes or a wire; a card terminal charges home currency
+                    const mode = currency && !["Cash", "Bank Transfer"].includes(payment.mode) ? "Cash" : payment.mode
+                    setPayment({ ...payment, currency, mode, amount: "",
+                      kind: currency && payment.kind === "Security Deposit" ? "Payment" : payment.kind })
+                  }}
+                >
+                  <option value="">{locale().currency}</option>
+                  {fxRates.map((r) => <option key={r.currency}>{r.currency}</option>)}
+                </select>
+              )}
               <input
                 className={`${inputCls} w-28`}
                 type="number"
-                placeholder={translate(`${cur()}`)}
+                placeholder={fxRate ? payment.currency : translate(`${cur()}`)}
                 value={payment.amount}
                 onChange={(e) =>
                   setPayment({ ...payment, amount: e.target.value })
@@ -1424,6 +1491,13 @@ export default function FolioView() {
                   setPayment({ ...payment, reference: e.target.value })
                 }
               />
+              {fxRate && Number(payment.amount) > 0 && (
+                <span className="text-xs text-zinc-500">
+                  {t("About {cur}{amount} at {rate}", {
+                    cur: cur(), amount: inr(Number(payment.amount) * fxRate), rate: fxRate,
+                  })}
+                </span>
+              )}
               <Button
                 disabled={busy || !payment.amount}
                 onClick={() =>
@@ -1434,6 +1508,7 @@ export default function FolioView() {
                       kind: payment.kind,
                       amount: Number(payment.amount),
                       reference: payment.reference || undefined,
+                      currency: payment.currency || undefined,
                     })),
                   )
                 }

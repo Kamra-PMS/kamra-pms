@@ -23,6 +23,7 @@ export default function CurrencyDesk() {
       sell_rate: number
       service_tax_pct: number
       max_exchange?: number
+      rate_date?: string
     }[]
   >([])
   const [history, setHistory] = useState<Record<string, unknown>[]>([])
@@ -195,6 +196,9 @@ export default function CurrencyDesk() {
               placeholder={translate("Sell")}
             />
             <Button variant="outline" onClick={() => void saveRate()}>{translate("Save")}</Button>
+            <p className="w-full text-xs text-zinc-500">
+              {t("Rates are hotel currency per 1 unit of the foreign currency, for today's business date. A guest paying a bill in foreign money is converted at today's Buy rate.")}
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -207,6 +211,7 @@ export default function CurrencyDesk() {
               <th className="px-3 py-2">{translate("Buy")}</th>
               <th className="px-3 py-2">{translate("Sell")}</th>
               <th className="px-3 py-2">{translate("Tax %")}</th>
+              <th className="px-3 py-2">{t("Set on")}</th>
             </tr>
           </thead>
           <tbody>
@@ -216,6 +221,7 @@ export default function CurrencyDesk() {
                 <td className="px-3 py-2 tabular-nums">{r.buy_rate}</td>
                 <td className="px-3 py-2 tabular-nums">{r.sell_rate}</td>
                 <td className="px-3 py-2">{r.service_tax_pct}</td>
+                <td className="px-3 py-2 tabular-nums">{r.rate_date}</td>
               </tr>
             ))}
           </tbody>
