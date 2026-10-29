@@ -5593,5 +5593,15 @@
   "{n} room(s)": "{n} غرفة",
   "{v0} room(s) are still in house. Their new charges open a new group bill.": "لا تزال {v0} غرفة مشغولة. رسومها الجديدة تفتح فاتورة مجموعة جديدة.",
   "Residence Card": "بطاقة الإقامة",
-  "Nicaraguan": "نيكاراغوي"
+  "Nicaraguan": "نيكاراغوي",
+  "You're offline": "أنت غير متصل",
+  "A new version is ready": "يتوفر إصدار جديد",
+  "This page hit a problem": "واجهت هذه الصفحة مشكلة",
+  "Check your connection, then try again.": "تحقق من اتصالك ثم حاول مرة أخرى.",
+  "Reload to get the latest version of this page.": "أعد التحميل للحصول على أحدث إصدار من هذه الصفحة.",
+  "Try again, or reload the page if it keeps happening.": "حاول مرة أخرى، أو أعد تحميل الصفحة إذا استمرت المشكلة.",
+  "Try again": "حاول مرة أخرى",
+  "Go to Today": "الانتقال إلى اليوم",
+  "Your session ended. Please sign in again.": "انتهت جلستك. يرجى تسجيل الدخول مرة أخرى.",
+  "You seem to be offline. Check your connection and try again.": "يبدو أنك غير متصل. تحقق من اتصالك وحاول مرة أخرى."
 }

@@ -1,8 +1,6 @@
 // Generic Frappe REST resource helpers (list/create/update/delete).
 
 import { frappeFetch } from "./api"
-import { htmlToText } from "./utils"
-import { t as translate } from "./i18n"
 
 export type Row = Record<string, unknown> & { name: string }
 
@@ -60,31 +58,4 @@ export async function deleteResource(doctype: string, name: string) {
   )
 }
 
-export function serverError(e: unknown): string {
-  const body = (e as { body?: string }).body
-  if (body) {
-    try {
-      const parsed = JSON.parse(body)
-      const msgs = JSON.parse(parsed._server_messages ?? "[]")
-      if (msgs.length) {
-        const first = JSON.parse(msgs[0])
-        return translate(htmlToText(String(first.message)))
-      }
-      if (parsed.exception) return translate(String(parsed.exception).split(":").pop()!)
-    } catch {
-      /* ignore */
-    }
-  }
-  // no readable server message: translate, never show debug internals
-  if ((e as { network?: boolean }).network) return translate((e as Error).message)
-  const status = (e as { status?: number }).status
-  if (status === 401 || status === 403)
-    return translate("You don't have permission for that, or your session ended - sign in again if this persists.")
-  if (status === 404) return translate("That record wasn't found - it may have been removed.")
-  if (status === 429) return translate("Too many requests - give it a few seconds and try again.")
-  if (status && status >= 500)
-    return translate("Something went wrong on the server. Try again in a moment.")
-  if (status) return translate("That didn't go through. Please try again.")
-  console.warn("[kamra] unexpected error", e)
-  return translate("Something unexpected went wrong. Try again - if it keeps happening, let your admin know.")
-}
+export { serverError } from "./api"

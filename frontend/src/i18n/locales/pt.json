@@ -5574,5 +5574,15 @@
   "{n} room(s)": "{n} quarto(s)",
   "{v0} room(s) are still in house. Their new charges open a new group bill.": "{v0} quarto(s) ainda estão hospedados. As novas cobranças abrem uma nova conta de grupo.",
   "Residence Card": "Carteira de residência",
-  "Nicaraguan": "Nicaraguense"
+  "Nicaraguan": "Nicaraguense",
+  "You're offline": "Você está offline",
+  "A new version is ready": "Uma nova versão está disponível",
+  "This page hit a problem": "Esta página encontrou um problema",
+  "Check your connection, then try again.": "Verifique sua conexão e tente novamente.",
+  "Reload to get the latest version of this page.": "Recarregue para obter a versão mais recente desta página.",
+  "Try again, or reload the page if it keeps happening.": "Tente novamente ou recarregue a página se continuar acontecendo.",
+  "Try again": "Tentar novamente",
+  "Go to Today": "Ir para Hoje",
+  "Your session ended. Please sign in again.": "Sua sessão terminou. Entre novamente.",
+  "You seem to be offline. Check your connection and try again.": "Parece que você está offline. Verifique sua conexão e tente novamente."
 }
