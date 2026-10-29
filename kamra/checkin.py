@@ -741,13 +741,16 @@ def log_checkin_requests(reservation: str, requests=None, note: str | None = Non
 	if isinstance(prices, str):
 		prices = frappe.parse_json(prices) if prices.strip() else {}
 	from kamra.api import create_ticket, post_stay_charge
-	tickets, billed = [], []
+	tickets = []
+	# the step can be saved again (back, or a retry): a request already on
+	# the bill is not charged twice
+	billed = list((_records(res).get("guest_requests") or {}).get("billed") or [])
 	for key in requests:
 		subject, category, priority, charge_type = REQUEST_PRESETS[key]
 		amount = flt((prices or {}).get(key))
-		if charge_type and amount > 0:
+		if charge_type and amount > 0 and key not in billed:
 			post_stay_charge(res.name, charge_type, subject, amount)
-			billed.append(f"{subject} {amount:,.2f}")
+			billed.append(key)
 		tickets.append(create_ticket(
 			res.property, f"{subject} ({res.guest_name})", category,
 			priority=priority, room=res.room, reservation=res.name,

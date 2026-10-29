@@ -68,6 +68,21 @@ class QuickFixesTestCase(AuditTestCase):
 		self.assertFalse(frappe.get_all("Folio Charge", filters={
 			"parent": guest_folio(res.name), "description": "Wake-up call"}))
 
+	def test_a_lost_counter_restarts_after_the_highest_number(self):
+		first = make_reservation(PROP_A, self.rt, d(5), d(6))
+		prefix = first.name.rsplit("-", 1)[0] + "-"
+		frappe.db.sql("DELETE FROM `tabSeries` WHERE name = %s", prefix)
+		second = make_reservation(PROP_A, self.rt, d(7), d(8))
+		self.assertGreater(int(second.name.rsplit("-", 1)[1]), int(first.name.rsplit("-", 1)[1]))
+
+	def test_saving_the_requests_step_again_does_not_bill_twice(self):
+		res = make_reservation(PROP_A, self.rt, TODAY, d(2), status="Checked In",
+		                       room=self.room)
+		for _ in range(2):
+			checkin.log_checkin_requests(res.name, ["extra_bed"], prices={"extra_bed": 700})
+		self.assertEqual(len(frappe.get_all("Folio Charge", filters={
+			"parent": guest_folio(res.name), "description": "Extra bed"})), 1)
+
 	def test_whatsapp_payment_message_carries_the_link(self):
 		from kamra import whatsapp
 		res = make_reservation(PROP_A, self.rt, TODAY, d(2), status="Checked In",

@@ -142,13 +142,16 @@ class Reservation(Document):
 
 		from kamra.localization import financial_year, pack_for
 		prefix = f"RES-{financial_year(pack_for(self.property), today())}-"
-		# the old format counted every year on one shared counter: a year's
-		# own counter starts after the highest number that year already has
-		frappe.db.sql(
-			"""INSERT IGNORE INTO `tabSeries` (name, current)
-			   SELECT %(p)s, COALESCE(MAX(CAST(SUBSTRING(name, %(n)s) AS UNSIGNED)), 0)
-			   FROM `tabReservation` WHERE name LIKE %(like)s""",
-			{"p": prefix, "n": len(prefix) + 1, "like": f"{prefix}%"})
+		# a year's counter is seeded once, after the highest number that year
+		# already has. Plain reads: an INSERT ... SELECT would hold shared
+		# locks on Reservation rows and deadlock two bookings saved at once.
+		if not frappe.db.sql("SELECT 1 FROM `tabSeries` WHERE name = %s", prefix):
+			top = frappe.db.sql(
+				"""SELECT MAX(CAST(SUBSTRING(name, %s) AS UNSIGNED))
+				   FROM `tabReservation` WHERE name LIKE %s""",
+				(len(prefix) + 1, f"{prefix}%"))[0][0]
+			frappe.db.sql("INSERT IGNORE INTO `tabSeries` (name, current) VALUES (%s, %s)",
+			              (prefix, int(top or 0)))
 		self.name = make_autoname(f"{prefix}.#####")
 
 	def after_insert(self):
