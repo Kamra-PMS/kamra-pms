@@ -69,6 +69,16 @@ class MoveRoomBillTestCase(AuditTestCase):
 		with self.assertRaises(frappe.ValidationError):  # already there
 			pos.move_room_bill(order, self.room2, "again")
 
+	def test_a_split_bill_is_refused(self):
+		from kamra import folio as folio_mod
+		self.outlet_items = self.outlet()
+		order = self.bill(self.outlet_items[1])
+		src = guest_folio(self.wrong.name)
+		line = self.lines(src, order)[0].name
+		folio_mod.split_charge(src, line, folio_mod.split_folio(self.wrong.name), 50)
+		with self.assertRaisesRegex(frappe.ValidationError, "split"):
+			pos.move_room_bill(order, self.room2, "x")
+
 	def test_only_the_same_business_day(self):
 		self.outlet_items = self.outlet()
 		order = self.bill(self.outlet_items[1])

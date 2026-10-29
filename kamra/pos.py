@@ -252,13 +252,21 @@ def move_room_bill(order: str, room: str, reason: str, pin: str | None = None):
 		frappe.throw(_("This bill was settled at the outlet, so it is on no room."))
 	rows = frappe.get_all(
 		"Folio Charge",
-		filters={"parenttype": "Folio", "description": ("like", f"%({doc.name})"),
+		filters={"parenttype": "Folio", "description": ("like", f"%({doc.name})%"),
 		         "reservation": doc.reservation},
-		fields=["name", "parent", "posting_date", "is_alcohol"])
+		fields=["name", "parent", "posting_date", "is_alcohol", "amount"])
 	if not rows:
 		frappe.throw(_("Couldn't find this bill on the room's folio. It may have "
 		              "been moved or voided already."))
+	# split on the folio, or partly allowed off: moving one piece would
+	# leave the rest on the wrong guest
+	if len(rows) != 1 or abs(float(rows[0].amount or 0) - float(doc.order_total or 0)) > 0.009:
+		frappe.throw(_("This bill was split or changed on the folio, so it can't be "
+		              "moved in one go. Move its lines from the folio instead."))
 	row = rows[0]
+	if frappe.db.get_value("Folio", row.parent, "status") == "Closed":
+		frappe.throw(_("The bill is on a folio that is already closed. Ask Finance "
+		              "to correct it."))
 	if str(row.posting_date) != str(get_business_date(doc.property)):
 		frappe.throw(_("Only a bill posted today can be moved. For an earlier "
 		              "day, ask Finance to correct both folios."))
