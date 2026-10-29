@@ -270,9 +270,10 @@ leaving before the booked date starts with **Leaving early**:
    stay now ends today, through the same path as changing dates on the
    booking, so the room goes back on sale, the channel manager is told and
    the price is worked out again for the nights stayed; check-out then
-   bills only those nights, plus one **Early departure** line for the
+   bills only those nights, plus an **Early departure** line for the
    charge, on the bill that pays the room (the company's, when it pays
-   the room). Finance and Hotel Admins can pick a different charge for this
+   the room). Each unused night is taxed as its room charge would have
+   been, so nights in different tax slabs get one line per rate. Finance and Hotel Admins can pick a different charge for this
    stay; everyone else gets the property's policy. The booked date and the
    reason stay on the booking and show in the **Early departures** report.
    With the policy at **All unused nights** you can **Skip** the step and

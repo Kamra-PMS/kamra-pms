@@ -720,7 +720,9 @@ def early_departure_plan(res) -> dict | None:
 
 	The stay is shortened to the business date (never below one night), so
 	check-out posts only the nights stayed; the charge, if any, is the
-	room rate of the first unused night or of all of them, as one line."""
+	room rate of the first unused night or of all of them, one line per
+	tax rate: each night is taxed as its room charge would have been (an
+	Indian slab follows the night's tariff)."""
 	if res.status != "Checked In" or res.get("is_day_use"):
 		return None
 	from frappe.utils import add_days, date_diff
@@ -737,6 +739,12 @@ def early_departure_plan(res) -> dict | None:
 	unused = [getdate(add_days(new_out, i))
 	          for i in range(date_diff(booked_out, new_out))]
 	rates = [round(flt(_nightly_room_rate(res, d)), 2) for d in unused]
+	taxes = [flt(_nightly_gst(res, d)) for d in unused]
+	by_tax = {}
+	for rate, tax in zip(rates, taxes):
+		line = by_tax.setdefault(tax, {"nights": 0, "amount": 0.0, "tax_rate": tax})
+		line["nights"] += 1
+		line["amount"] = round(line["amount"] + rate, 2)
 	policy = get_setting(res.property, "early_departure_fee")
 	if policy not in EARLY_FEES:
 		policy = "All Nights"
@@ -748,7 +756,9 @@ def early_departure_plan(res) -> dict | None:
 		"policy": policy,
 		"fees": {"None": 0.0, "One Night": rates[0],
 		         "All Nights": round(sum(rates), 2)},
-		"tax_rate": flt(_nightly_gst(res, unused[0])),
+		"lines": {"None": [],
+		          "One Night": [{"nights": 1, "amount": rates[0], "tax_rate": taxes[0]}],
+		          "All Nights": list(by_tax.values())},
 		"can_override": can_override(),
 	}
 
@@ -797,16 +807,18 @@ def apply_early_departure(reservation: str, reason: str,
 		# (a company that pays the room pays it), as check-out would have
 		# billed those nights
 		folio = frappe.get_doc("Folio", target_folio(res, "Room"))
-		folio.append("charges", {
-			"posting_date": get_business_date(res.property),
-			"charge_type": "Misc",
-			"reservation": res.name,
-			"description": _("Early departure: {0} of {1} unused night(s)").format(
-				1 if fee == "One Night" else plan["unused_nights"],
-				plan["unused_nights"]),
-			"qty": 1, "rate": amount, "amount": amount,
-			"gst_rate": plan["tax_rate"], "auto_posted": 1,
-		})
+		# Misc, not Room: a Room line is a posted night (deduped by date),
+		# and the rate rides on the line, so Misc carries the slab exactly
+		for line in plan["lines"][fee]:
+			folio.append("charges", {
+				"posting_date": get_business_date(res.property),
+				"charge_type": "Misc",
+				"reservation": res.name,
+				"description": _("Early departure: {0} of {1} unused night(s) at {2}% tax").format(
+					line["nights"], plan["unused_nights"], f"{line['tax_rate']:g}"),
+				"qty": 1, "rate": line["amount"], "amount": line["amount"],
+				"gst_rate": line["tax_rate"], "auto_posted": 1,
+			})
 		_recalculate(folio)
 		save_folio(folio)
 	return {"ok": True, "reservation": res.name,

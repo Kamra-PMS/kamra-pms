@@ -205,7 +205,7 @@ def queue_room_charge_alert(folio, charge) -> bool:
 	connection names tpl_room_charge. Skips company and group bills, room
 	nights (the night audit never comes here), zero and negative lines, and
 	stays not in house; at most one alert per bill every 10 minutes (the
-	next one carries the running balance). Never raises: posting a charge
+	next one carries the running balance), claimed when the job runs. Never raises: posting a charge
 	must not fail over a message. True when queued."""
 	try:
 		charge = charge if isinstance(charge, dict) else charge.as_dict()
@@ -223,12 +223,8 @@ def queue_room_charge_alert(folio, charge) -> bool:
 		if not reservation or frappe.db.get_value(
 				"Reservation", reservation, "status") != "Checked In":
 			return False
-		cache = frappe.cache()
-		# ponytail: throttle, not batch - a charge inside the window shows up
-		# only in the next alert's balance
-		if not cache.set(cache.make_key(f"kamra_wa_room_charge:{folio.name}"), 1,
-		                 nx=True, ex=ROOM_CHARGE_ALERT_GAP):
-			return False
+		# the 10-minute throttle is claimed by the job, after the posting
+		# commits: a rolled-back posting never uses up the window
 		frappe.enqueue("kamra.whatsapp.send_room_charge_alert", queue="short",
 		               enqueue_after_commit=True, folio=folio.name,
 		               reservation=reservation,
@@ -244,6 +240,12 @@ def send_room_charge_alert(folio: str, reservation: str, amount: float,
                            description: str) -> dict:
 	"""The queued half of queue_room_charge_alert. Template args:
 	    {{1}} guest name  {{2}} amount  {{3}} what and where  {{4}} balance"""
+	cache = frappe.cache()
+	# ponytail: throttle, not batch - a charge inside the window shows up
+	# only in the next alert's balance
+	if not cache.set(cache.make_key(f"kamra_wa_room_charge:{folio}"), 1,
+	                 nx=True, ex=ROOM_CHARGE_ALERT_GAP):
+		return {"sent": False, "reason": "throttled"}
 	f = frappe.db.get_value("Folio", folio, ["property", "guest", "balance"], as_dict=True)
 	res = frappe.db.get_value("Reservation", reservation, ["guest", "guest_name"], as_dict=True)
 	if not (f and res):

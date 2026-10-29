@@ -161,6 +161,35 @@ class EarlyCheckoutTestCase(_Base):
 		fee = [c for c in charges(res.name, "Misc") if "Early departure" in c.description]
 		self.assertEqual(frappe.db.get_value("Folio", fee[0].parent, "folio_type"), "Company")
 
+	def test_unused_nights_in_different_slabs_bill_one_line_per_rate(self):
+		make_property(PROP_A, business_date=TODAY, gst_mode="Slab")
+		rt = make_room_type(PROP_A, "LUX", base_price=7000)
+		frappe.get_doc({
+			"doctype": "Season", "property": PROP_A, "season_name": "UT Slab",
+			"room_type": rt, "start_date": d(2), "end_date": d(2),
+			"adjustment_type": "Absolute", "adjustment_value": 9000,
+		}).insert(ignore_permissions=True)
+		res = make_reservation(PROP_A, rt, d(-1), d(3), status="Checked In",
+		                       room=make_room(PROP_A, rt, "201"))
+		# the same nights posted as room charges on a twin stay
+		twin = make_reservation(PROP_A, rt, d(-1), d(3), status="Checked In",
+		                        room=make_room(PROP_A, rt, "202"))
+		for night in (TODAY, d(1), d(2)):
+			folio_mod.post_room_night(twin, night)
+		lines = lambda name, ct: frappe.get_all(  # noqa: E731
+			"Folio Charge", filters={"reservation": name, "charge_type": ct},
+			fields=["amount", "gst_rate", "total", "description"], order_by="gst_rate")
+		rooms = lines(twin.name, "Room")
+
+		api.early_departure(res.name, "Flight moved")  # All Nights by default
+		fee = [c for c in lines(res.name, "Misc") if "Early departure" in c.description]
+		self.assertEqual([(c.amount, c.gst_rate) for c in fee],
+		                 [(14000, 5), (9000, 18)])
+		self.assertIn("2 of 3", fee[0].description)
+		self.assertEqual([c.gst_rate for c in rooms], [5, 5, 18])
+		self.assertAlmostEqual(sum(c.total for c in fee),
+		                       sum(c.total for c in rooms), places=2)
+
 	def test_finance_can_waive_the_charge(self):
 		self.setting("early_departure_fee", "All Nights")
 		res = self.stay()
@@ -207,11 +236,9 @@ class RoomChargeAlertTestCase(_Base):
 		self.post()
 		self.enq.assert_not_called()
 
-	def test_one_alert_per_window_with_the_charge(self):
+	def test_alert_is_queued_after_commit_with_the_charge(self):
 		self.setting("room_charge_whatsapp", 1)
 		self.post()
-		self.post()
-		self.assertEqual(self.enq.call_count, 1)
 		kw = self.enq.call_args.kwargs
 		self.assertEqual(kw["folio"], self.folio)
 		self.assertTrue(kw["enqueue_after_commit"])
@@ -224,6 +251,24 @@ class RoomChargeAlertTestCase(_Base):
 		self.assertEqual(args[1], "+919800000001")
 		self.assertEqual(args[2], "kamra_room_charge")
 		self.assertEqual(args[3][2], "Minibar: 2 sodas")
+
+	def test_rolled_back_posting_leaves_the_window_free(self):
+		self.setting("room_charge_whatsapp", 1)
+		frappe.db.savepoint("ut_wa")
+		self.post()
+		frappe.db.rollback(save_point="ut_wa")  # the posting never commits
+		c = frappe.cache()
+		self.assertFalse(c.get(c.make_key(f"kamra_wa_room_charge:{self.folio}")))
+
+	def test_two_committed_postings_in_the_window_send_one_message(self):
+		self.setting("room_charge_whatsapp", 1)
+		self.post()
+		self.post()
+		with patch.object(whatsapp, "send_template", return_value={"sent": True}) as st:
+			for call in self.enq.call_args_list:  # the jobs run after commit
+				whatsapp.send_room_charge_alert(**{k: call.kwargs[k] for k in
+				                                   ("folio", "reservation", "amount", "description")})
+		self.assertEqual(st.call_count, 1)
 
 	def test_room_nights_negative_lines_and_company_bills_never_alert(self):
 		self.setting("room_charge_whatsapp", 1)
