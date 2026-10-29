@@ -66,6 +66,12 @@ class TestFinanceBooks(AuditTestCase):
 		ensure_user(FIN, ["Finance"])
 		ensure_user(FD, ["Front Desk"])
 		ensure_user(ADMIN, ["Hotel Admin"])
+		# the money and the approval only move through kamra.payables: Desk
+		# and /api/resource can't approve, pay, re-price or delete a bill
+		for user in (FIN, ADMIN):
+			for ptype in ("write", "create", "delete"):
+				self.assertFalse(frappe.has_permission("Vendor Bill", ptype, user=user),
+				                 (user, ptype))
 		frappe.set_user(FD)
 		with self.assertRaises(frappe.PermissionError):
 			self.bill()
