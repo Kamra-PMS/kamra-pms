@@ -136,3 +136,27 @@ class ItineraryTestCase(AuditTestCase):
 		with self.assertRaises(frappe.PermissionError):
 			crs.get_itinerary(itn["name"])
 		self.assertNotIn(itn["name"], [r["name"] for r in crs.list_itineraries()])
+		# Desk and /api/resource: the Itinerary doctype has no property field,
+		# so the permission hooks carry the same rule
+		self.assertNotIn(itn["name"], frappe.get_list("Itinerary", pluck="name"))
+		self.assertFalse(frappe.has_permission("Itinerary", doc=itn["name"]))
+		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- back to the admin persona
+		own = crs.create_itinerary(legs=[self.legs(a=(10, 12))[1]], guest_name="UT Scoped Trip")
+		frappe.set_user(USER)  # nosemgrep: frappe-setuser -- acting as the restricted persona
+		self.assertIn(own["name"], [r["name"] for r in crs.list_itineraries()])
+		self.assertTrue(frappe.has_permission("Itinerary", doc=own["name"]))
+
+	def test_leg_booked_after_a_lost_transaction_is_refused(self):
+		# create_booking's deadlock retry rolls the whole transaction back,
+		# taking the itinerary with it: the leg must not survive on its own
+		from unittest.mock import patch
+		real = api.create_booking
+
+		def lost(**kw):
+			frappe.db.delete("Itinerary", {"guest_name": "UT Traveller"})
+			return real(**kw)
+
+		with patch("kamra.api.create_booking", side_effect=lost):
+			with self.assertRaises(frappe.ValidationError):
+				self.book()
+		self.assertFalse(frappe.db.exists("Reservation", {"guest_name": "UT Traveller"}))

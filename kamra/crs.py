@@ -235,6 +235,12 @@ def _book_legs(itn, legs: list[dict], adults, children, phone,
 			booked_by_name=itn.booked_by_name,
 			booked_by_phone=itn.booked_by_phone,
 			idempotency_key=f"{idempotency_key}:{i}" if idempotency_key else None)
+		if not frappe.db.exists("Itinerary", itn.name):
+			# create_booking's deadlock retry rolled the whole transaction
+			# back (the itinerary and the legs before this one with it):
+			# refuse rather than leave this leg booked on its own
+			frappe.throw(_("The booking system was busy. Nothing was booked; "
+			               "please try again."), title=_("Try again"))
 		other = frappe.db.get_value("Reservation", r["reservation"], "itinerary")
 		if other and other != itn.name:
 			# create_booking handed back a booking that already belongs to
@@ -252,7 +258,12 @@ def _savepoint(fn):
 	try:
 		return fn()
 	except Exception:
-		frappe.db.rollback(save_point=sp)
+		try:
+			frappe.db.rollback(save_point=sp)
+		except Exception:
+			# the savepoint went with a full rollback inside (create_booking's
+			# deadlock retry): drop what was written after it as well
+			frappe.db.rollback()
 		raise
 
 
@@ -414,27 +425,18 @@ def get_itinerary(itinerary: str):
 def list_itineraries(search: str | None = None, limit: int = 50):
 	"""Recent trips the user can work with (every leg at a property they
 	may access), newest first, with their legs and status."""
-	from kamra.authz import restricted_properties
-
-	filters = {}
-	if (search or "").strip():
-		filters["guest_name"] = ("like", f"%{search.strip()}%")
-	rows = frappe.get_all("Itinerary", filters=filters,
-	                      fields=["name", "guest_name"],
-	                      order_by="creation desc",
-	                      limit=min(cint(limit) or 50, 200))
+	# get_list, not get_all: kamra.authz.itinerary_query_conditions drops
+	# trips with a leg the user can't access in SQL, before the limit
 	ref = (search or "").strip()
-	if ref and frappe.db.exists("Itinerary", ref) \
-			and all(r.name != ref for r in rows):
-		rows.insert(0, frappe.db.get_value(
-			"Itinerary", ref, ["name", "guest_name"], as_dict=True))
+	or_filters = {"guest_name": ("like", f"%{ref}%"), "name": ref} if ref else None
+	rows = frappe.get_list("Itinerary", or_filters=or_filters,
+	                       fields=["name", "guest_name"],
+	                       order_by="creation desc",
+	                       limit=min(cint(limit) or 50, 200))
 	legs = _legs_of([r.name for r in rows]) if rows else {}
-	allowed = restricted_properties()
 	out = []
 	for row in rows:
 		ls = legs.get(row.name, [])
-		if allowed is not None and any(leg["property"] not in allowed for leg in ls):
-			continue
 		out.append({
 			"name": row.name, "guest_name": row.guest_name, "status": _status(ls),
 			"legs": [{"reservation": leg["name"], "property": leg["property"],

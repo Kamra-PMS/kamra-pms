@@ -270,11 +270,13 @@ _PROPERTY_SCOPED = (
 
 permission_query_conditions = {
 	"Guest": "kamra.authz.guest_query_conditions",
+	"Itinerary": "kamra.authz.itinerary_query_conditions",
 	**{dt: "kamra.authz.property_query_conditions" for dt in _PROPERTY_SCOPED},
 }
 
 has_permission = {
 	"Guest": "kamra.authz.guest_has_permission",
+	"Itinerary": "kamra.authz.itinerary_has_permission",
 	**{dt: "kamra.authz.property_has_permission" for dt in _PROPERTY_SCOPED},
 }
 
