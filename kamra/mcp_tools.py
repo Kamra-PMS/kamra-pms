@@ -735,7 +735,11 @@ TOOLS: tuple[ToolSpec, ...] = (
 		"api.update_occupants",
 		"""Record everyone staying in the room (the legal hotel register,
 		printed on the GRC). occupants = [{full_name, age, gender,
-		nationality, id_type, id_number, phone}] - replaces the list.""",
+		nationality, id_type, id_number, phone, arrived_at, left_at}] -
+		replaces the list. arrived_at / left_at ("YYYY-MM-DD HH:MM") are
+		optional: a guest already on the register keeps their times, and
+		one added while the stay is checked in arrived now. Set left_at
+		when a guest leaves before the room checks out.""",
 		{
 			"reservation": _p("string"),
 			"occupants": _p("array", items=_p("object")),

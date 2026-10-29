@@ -790,6 +790,11 @@ class Reservation(Document):
 		self.db_set({"actual_check_in": at, "checked_in_at": at,
 		             "checked_in_by": frappe.session.user},
 		            update_modified=False)
+		# everyone on the register so far arrived with the guest; someone
+		# added later gets their own time (api.update_occupants)
+		for occ in self.get("occupants") or []:
+			if not occ.get("arrived_at"):
+				occ.db_set("arrived_at", at, update_modified=False)
 		for room in rooms:
 			frappe.db.set_value("Room", room, "occupancy_status", "Occupied")
 		from kamra.folio import open_folio

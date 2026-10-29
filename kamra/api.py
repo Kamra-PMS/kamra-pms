@@ -694,7 +694,8 @@ def registration_card(reservation: str):
 			{"row": o.name, "full_name": o.full_name, "age": o.age,
 			 "gender": o.gender, "nationality": o.nationality,
 			 "id_type": o.id_type, "id_number": o.id_number,
-			 "phone": o.phone, "id_file": o.get("id_file")}
+			 "phone": o.phone, "id_file": o.get("id_file"),
+			 "arrived_at": _dt(o.get("arrived_at")), "left_at": _dt(o.get("left_at"))}
 			for o in (res.get("occupants") or [])
 		],
 	}
@@ -1878,7 +1879,10 @@ def company_billing_default(company: str, property: str | None = None):
 @require_roles("Front Desk", "Kamra Agent")
 def update_occupants(reservation: str, occupants):
 	"""Replace the stay's occupant register.
-	occupants = [{full_name, age, gender, nationality, id_type, id_number, phone}]
+	occupants = [{full_name, age, gender, nationality, id_type, id_number, phone,
+	              arrived_at, left_at}]
+	Guests sharing a room can arrive and leave at different times: see
+	_occupant_times for how arrived_at / left_at are kept.
 	A child keeps name and age only: no phone, and ID details only where the
 	country's register needs them (see localization.minor_id_kept)."""
 	if isinstance(occupants, str):
@@ -1893,6 +1897,16 @@ def update_occupants(reservation: str, occupants):
 	                  for o in (doc.get("occupants") or [])}
 	existing_types = {o.name: o.get("id_type")
 	                  for o in (doc.get("occupants") or [])}
+	# who arrived (or left) when: kept for rows the client sends back without
+	# it; a guest added to a stay already in house arrived now
+	existing_times = {o.name: (o.get("arrived_at"), o.get("left_at"))
+	                  for o in (doc.get("occupants") or [])}
+	# a client that replaces the list without row ids (an agent) still
+	# keeps each guest's times: match by name
+	times_by_name = {(o.full_name or "").strip().casefold(): existing_times[o.name]
+	                 for o in (doc.get("occupants") or [])}
+	in_house_now = now_datetime().replace(microsecond=0) \
+		if doc.status == "Checked In" else None
 	doc.set("occupants", [])
 	stale_scans, minors_trimmed = [], 0
 	for o in occupants or []:
@@ -1911,6 +1925,9 @@ def update_occupants(reservation: str, occupants):
 			"id_file": o.get("id_file")
 			           or existing_scans.get(o.get("row")) or None,
 		}
+		row.update(_occupant_times(
+			o, existing_times.get(o.get("row"))
+			or times_by_name.get(row["full_name"].casefold()), in_house_now))
 		if is_minor(pack, row["age"]):
 			# a child's phone is never needed; ID only where the register asks
 			trim = {"phone": ""} if minor_id_kept(pack, nationality) else \
@@ -1934,8 +1951,31 @@ def update_occupants(reservation: str, occupants):
 	            {"row": o.name, "full_name": o.full_name, "age": o.age,
 	             "gender": o.gender, "nationality": o.nationality,
 	             "id_type": o.id_type, "id_number": o.id_number,
-	             "phone": o.phone, "id_file": o.get("id_file")}
+	             "phone": o.phone, "id_file": o.get("id_file"),
+	             "arrived_at": _dt(o.get("arrived_at")),
+	             "left_at": _dt(o.get("left_at"))}
 	            for o in doc.occupants]}
+
+
+def _dt(v) -> str | None:
+	return str(v)[:19] if v else None
+
+
+def _occupant_times(o: dict, existing, in_house_now) -> dict:
+	"""arrived_at / left_at for one register row. A value the client sends
+	wins (the desk's "arrived now", or a corrected time; an empty one clears
+	it); a row sent back without the key keeps what it had; a new row on a
+	stay already in house arrived now."""
+	had_in, had_out = existing or (None, None)
+	out = {}
+	for key, had in (("arrived_at", had_in), ("left_at", had_out)):
+		out[key] = (get_datetime(o[key]) if o.get(key) else None) if key in o else had
+	if out["arrived_at"] is None and existing is None:
+		out["arrived_at"] = in_house_now
+	if out["arrived_at"] and out["left_at"] and out["left_at"] < out["arrived_at"]:
+		frappe.throw(_("{0} cannot leave before they arrived.").format(
+			o.get("full_name") or _("A guest")))
+	return out
 
 
 @frappe.whitelist()
