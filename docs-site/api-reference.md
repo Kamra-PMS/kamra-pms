@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function - the same governed layer
-the UI and the AI use. **421 endpoints**, generated from the source
+the UI and the AI use. **428 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -4374,6 +4374,116 @@ the room types with space for these dates and their all-in rate.
 | `adults` | no | `2` |
 | `children` | no | `0` |
 
+### `kamra.crs.quote_itinerary`
+
+**GET/POST** · roles: `Front Desk`, `Kamra Agent`
+
+Price a multi-property trip before booking it: each leg priced by
+get_quote (the same engine create_booking uses), rooms free per leg,
+and the combined total. legs: [{property, room_type, check_in_date,
+check_out_date, adults?, children?, meal_plan?, rate_plan?}].
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `legs` | yes |  |
+| `adults` | no | `2` |
+| `children` | no | `0` |
+| `company` | no | `None` |
+
+### `kamra.crs.create_itinerary`
+
+**POST** · roles: `Front Desk`, `Kamra Agent`
+
+Book a trip across properties in one go: one reservation per leg
+(each a normal booking at its own property, with its own folio) under
+one itinerary reference. All legs book or none do. Quote first with
+quote_itinerary. Take advances per leg with record_advance.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `legs` | yes |  |
+| `guest_name` | no | `None` |
+| `phone` | no | `None` |
+| `guest` | no | `None` |
+| `adults` | no | `2` |
+| `children` | no | `0` |
+| `company` | no | `None` |
+| `travel_agent` | no | `None` |
+| `booked_by_name` | no | `None` |
+| `booked_by_phone` | no | `None` |
+| `notes` | no | `None` |
+| `idempotency_key` | no | `None` |
+
+### `kamra.crs.add_itinerary_leg`
+
+**POST** · roles: `Front Desk`, `Kamra Agent`
+
+Add one more stay to an existing trip. It can't overlap a live leg.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `itinerary` | yes |  |
+| `property` | yes |  |
+| `room_type` | yes |  |
+| `check_in_date` | yes |  |
+| `check_out_date` | yes |  |
+| `adults` | no | `2` |
+| `children` | no | `0` |
+| `meal_plan` | no | `None` |
+| `rate_plan` | no | `None` |
+
+### `kamra.crs.get_itinerary`
+
+**GET/POST** · roles: `Front Desk`, `Finance`, `Kamra Agent`
+
+A trip with its legs in date order: each leg's property, dates,
+status, price, advance paid and deposit still due, plus the combined
+total (live legs) - what the combined confirmation prints.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `itinerary` | yes |  |
+
+### `kamra.crs.list_itineraries`
+
+**GET/POST** · roles: `Front Desk`, `Finance`, `Kamra Agent`
+
+Recent trips the user can work with (every leg at a property they
+may access), newest first, with their legs and status.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `search` | no | `None` |
+| `limit` | no | `50` |
+
+### `kamra.crs.cancel_itinerary_preview`
+
+**GET/POST** · roles: `Front Desk`, `Kamra Agent`
+
+What cancelling the whole trip would cost now: each leg's own
+cancellation_preview (its property's policy) and the total fee. Legs
+already checked in or finished can't be cancelled and are listed apart.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `itinerary` | yes |  |
+
+### `kamra.crs.cancel_itinerary`
+
+**POST** · roles: `Front Desk`, `Kamra Agent`
+
+Cancel every confirmed leg of a trip, each through cancel_reservation
+so its own property's policy and fee apply (waive_fee=1 waives them all,
+logged per leg). All legs cancel or none do. To cancel one leg, call
+cancel_reservation on it.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `itinerary` | yes |  |
+| `reason` | no | `'Guest request'` |
+| `note` | no | `None` |
+| `waive_fee` | no | `0` |
+
 
 ## Dashboards
 
@@ -5827,6 +5937,12 @@ Everything the public booking page needs to render.
 
 Availability + real quoted price per room type for the stay.
 
+Each available row also carries `plans`: the stay quoted room only
+(first) and with each meal plan, so the page lists real totals per plan. A valid
+`voucher_code` discounts every quote, and each plan then keeps its
+undiscounted `list_amount` for the strike-through; an invalid one is
+ignored here (check_voucher tells the guest why).
+
 `child_ages` (e.g. [3, 8, 13]) lets each room type's age bands decide who
 is free, a child or an adult; without it `children` are all children.
 Each row says whether the room type can take the party: `available`, a
@@ -5844,6 +5960,7 @@ what it sleeps but within the extra guests it allows by arrangement.
 | `location_slug` | no | `None` |
 | `pets` | no | `0` |
 | `child_ages` | no | `None` |
+| `voucher_code` | no | `None` |
 
 ### `kamra.public_api.precheckin_info` <Badge type='tip' text='public' />
 

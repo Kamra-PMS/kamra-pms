@@ -253,6 +253,7 @@ class Reservation(Document):
 		self.validate_occupancy()
 		self.validate_room_belongs_to_type()
 		self.validate_no_overlap()
+		self.validate_itinerary_leg()
 		self.validate_room_vacant()
 		self.validate_villa_lockout()
 		self.validate_type_capacity()
@@ -676,6 +677,16 @@ class Reservation(Document):
 				title=_("Double booking blocked"),
 				exc=InventoryRefused,
 			)
+
+	def validate_itinerary_leg(self):
+		"""A leg of an itinerary can't overlap another live leg of the same
+		trip - the guest can't sleep in two hotels on one night. Runs on
+		every save, so amend_stay on one leg is held to it too."""
+		from kamra.reservation_state import holds_inventory
+		if self.get("itinerary") and holds_inventory(self.status):
+			from kamra.crs import assert_leg_fits
+			assert_leg_fits(self.itinerary, self.check_in_date,
+			                self.check_out_date, self.name)
 
 	def validate_room_vacant(self):
 		"""One guest in a room at a time. The night-based overlap guard lets a

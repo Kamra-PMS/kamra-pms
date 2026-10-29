@@ -11230,6 +11230,265 @@
        }
       }
      }
+    },
+    {
+     "name": "quote_itinerary",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.crs.quote_itinerary",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.crs.quote_itinerary"
+       ]
+      },
+      "description": "Price a multi-property trip before booking it: each leg priced by\nget_quote (the same engine create_booking uses), rooms free per leg,\nand the combined total. legs: [{property, room_type, check_in_date,\ncheck_out_date, adults?, children?, meal_plan?, rate_plan?}].",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"legs\": \"<legs>\",\n  \"adults\": 2,\n  \"children\": 0\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "create_itinerary",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.crs.create_itinerary",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.crs.create_itinerary"
+       ]
+      },
+      "description": "Book a trip across properties in one go: one reservation per leg\n(each a normal booking at its own property, with its own folio) under\none itinerary reference. All legs book or none do. Quote first with\nquote_itinerary. Take advances per leg with record_advance.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"legs\": \"<legs>\",\n  \"guest_name\": \"A. Guest\",\n  \"phone\": \"+91 90000 00000\",\n  \"guest\": \"G-00001\",\n  \"adults\": 2,\n  \"children\": 0\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "add_itinerary_leg",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.crs.add_itinerary_leg",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.crs.add_itinerary_leg"
+       ]
+      },
+      "description": "Add one more stay to an existing trip. It can't overlap a live leg.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"itinerary\": \"<itinerary>\",\n  \"property\": \"Your Property\",\n  \"room_type\": \"Your Property-DLX\",\n  \"check_in_date\": \"2026-08-01\",\n  \"check_out_date\": \"2026-08-03\",\n  \"adults\": 2,\n  \"children\": 0\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "get_itinerary",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.crs.get_itinerary",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.crs.get_itinerary"
+       ]
+      },
+      "description": "A trip with its legs in date order: each leg's property, dates,\nstatus, price, advance paid and deposit still due, plus the combined\ntotal (live legs) - what the combined confirmation prints.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"itinerary\": \"<itinerary>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "list_itineraries",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.crs.list_itineraries",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.crs.list_itineraries"
+       ]
+      },
+      "description": "Recent trips the user can work with (every leg at a property they\nmay access), newest first, with their legs and status.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"limit\": 50\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "cancel_itinerary_preview",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.crs.cancel_itinerary_preview",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.crs.cancel_itinerary_preview"
+       ]
+      },
+      "description": "What cancelling the whole trip would cost now: each leg's own\ncancellation_preview (its property's policy) and the total fee. Legs\nalready checked in or finished can't be cancelled and are listed apart.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"itinerary\": \"<itinerary>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "cancel_itinerary",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.crs.cancel_itinerary",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.crs.cancel_itinerary"
+       ]
+      },
+      "description": "Cancel every confirmed leg of a trip, each through cancel_reservation\nso its own property's policy and fee apply (waive_fee=1 waives them all,\nlogged per leg). All legs cancel or none do. To cancel one leg, call\ncancel_reservation on it.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"itinerary\": \"<itinerary>\",\n  \"reason\": \"Guest request\",\n  \"waive_fee\": 0\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
     }
    ]
   },
@@ -15241,7 +15500,7 @@
         "kamra.public_api.search_stay"
        ]
       },
-      "description": "Availability + real quoted price per room type for the stay.\n\n`child_ages` (e.g. [3, 8, 13]) lets each room type's age bands decide who\nis free, a child or an adult; without it `children` are all children.\nEach row says whether the room type can take the party: `available`, a\n`reason` when it cannot, and `needs_confirmation` when the party is above\nwhat it sleeps but within the extra guests it allows by arrangement.",
+      "description": "Availability + real quoted price per room type for the stay.\n\nEach available row also carries `plans`: the stay quoted room only\n(first) and with each meal plan, so the page lists real totals per plan. A valid\n`voucher_code` discounts every quote, and each plan then keeps its\nundiscounted `list_amount` for the strike-through; an invalid one is\nignored here (check_voucher tells the guest why).\n\n`child_ages` (e.g. [3, 8, 13]) lets each room type's age bands decide who\nis free, a child or an adult; without it `children` are all children.\nEach row says whether the room type can take the party: `available`, a\n`reason` when it cannot, and `needs_confirmation` when the party is above\nwhat it sleeps but within the extra guests it allows by arrangement.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\",\n  \"check_in_date\": \"2026-08-01\",\n  \"check_out_date\": \"2026-08-03\",\n  \"adults\": 2,\n  \"children\": 0,\n  \"pets\": 0\n}",

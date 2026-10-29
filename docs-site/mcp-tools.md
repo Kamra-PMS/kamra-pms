@@ -1,6 +1,6 @@
 # MCP tool reference
 
-Kamra exposes **133 governed tools** on the hosted MCP
+Kamra exposes **139 governed tools** on the hosted MCP
 endpoint (`/mcp`) and the stdio sidecar (`mcp/kamra_mcp.py`). Every
 call runs as the connected user - **role** permissions apply, tools
 are further filtered by the property's **enabled modules**, prices
@@ -96,6 +96,59 @@ elsewhere, Other. Only waive the fee when a manager authorizes it;
 the waiver is logged.
 
 Endpoint: `kamra.api.cancel_reservation`.
+Mutating - logged to the activity ledger.
+
+### `quote_itinerary(legs, adults, children, company)`
+
+Price a trip across several properties of the chain (e.g. 2 nights
+at one hotel, then 3 at another) before booking it: each leg priced by
+the same engine as quote, rooms free per leg, and the combined total
+(null when legs are in different currencies). Legs can't overlap; a
+leg may start the day the previous one ends.
+
+Endpoint: `kamra.crs.quote_itinerary`.
+
+### `create_itinerary(legs, guest_name, phone, adults, children, company, booked_by_name, booked_by_phone, notes, idempotency_key)`
+
+Book a multi-property trip in one call: one normal reservation per
+leg (each with its own folio and its own property's cancellation
+policy) under one itinerary reference (ITN-...) to give the guest.
+All legs book or none do. Always quote_itinerary first. Advances are
+taken per leg on that leg's reservation.
+
+Endpoint: `kamra.crs.create_itinerary`.
+Mutating - logged to the activity ledger.
+
+### `get_itinerary(itinerary)`
+
+A trip (ITN-...) with its legs in date order: property, dates,
+status, price, advance paid and deposit due per leg, and the total.
+
+Endpoint: `kamra.crs.get_itinerary`.
+
+### `add_itinerary_leg(itinerary, property, room_type, check_in_date, check_out_date, adults, children)`
+
+Add one more stay to an existing trip. It can't overlap a live leg.
+
+Endpoint: `kamra.crs.add_itinerary_leg`.
+Mutating - logged to the activity ledger.
+
+### `cancel_itinerary_preview(itinerary)`
+
+What cancelling a whole trip would cost now: each leg's own
+cancellation terms and the total fee. ALWAYS read this to the guest
+before cancel_itinerary. To cancel one leg, use cancellation_preview
+and cancel_booking on that leg's reservation.
+
+Endpoint: `kamra.crs.cancel_itinerary_preview`.
+
+### `cancel_itinerary(itinerary, reason, note, waive_fee)`
+
+Cancel every confirmed leg of a trip, each under its own property's
+policy (fees post to that leg's folio). Returns a cancellation number
+per leg. Only waive fees when a manager authorizes it (logged).
+
+Endpoint: `kamra.crs.cancel_itinerary`.
 Mutating - logged to the activity ledger.
 
 ### `booking_requests()`

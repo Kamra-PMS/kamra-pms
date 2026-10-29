@@ -8,10 +8,20 @@ still goes through create_booking against the chosen property.
 `permitted_properties` / `assert_property_access` are the chain's access
 guard: endpoints that take a `property` argument can no longer be pointed
 at a hotel the user isn't allowed to touch.
+
+Itineraries: one trip across several properties (2 nights at A, then 3 at
+B). Each leg is an ordinary Reservation at its own property - priced by
+get_quote, booked by create_booking, guarded by the overlap and capacity
+checks, billed on its own folio (tax and invoices stay per property) - and
+points at one Itinerary record the guest can quote. Cancelling goes
+through each leg's cancellation_preview / cancel_reservation, so every
+leg's own policy and fee apply. Advances are taken per leg (record_advance
+on that leg's booking); the itinerary never holds money.
 """
 
 import frappe
-from frappe.utils import date_diff
+from frappe import _
+from frappe.utils import cint, date_diff, getdate
 
 from kamra.authz import require_roles
 
@@ -92,3 +102,388 @@ def crs_search(check_in_date: str, check_out_date: str,
 		"children": int(children),
 		"properties": results,
 	}
+
+
+# ── itineraries ──────────────────────────────────────────────────────────
+
+_LEG_KEYS = ("property", "room_type", "check_in_date", "check_out_date")
+
+
+def _parse_legs(legs) -> list[dict]:
+	"""The legs a caller asked for, checked and in date order: every leg
+	names a property the user may access, stays at least one night, and no
+	two legs overlap (the guest can't be in two hotels on one night; a leg
+	may start the day the previous one ends)."""
+	if isinstance(legs, str):
+		legs = frappe.parse_json(legs)
+	if not legs:
+		frappe.throw(_("Add at least one stay to the itinerary."))
+	out = []
+	for leg in legs:
+		missing = [k for k in _LEG_KEYS if not leg.get(k)]
+		if missing:
+			frappe.throw(_("Each stay needs {0}.").format(", ".join(missing)))
+		assert_property_access(leg["property"])
+		if date_diff(leg["check_out_date"], leg["check_in_date"]) < 1:
+			frappe.throw(_("Each stay in an itinerary is at least one night."))
+		out.append(dict(leg))
+	out.sort(key=lambda leg: getdate(leg["check_in_date"]))
+	_refuse_overlap(out)
+	return out
+
+
+def _refuse_overlap(legs: list[dict]):
+	"""legs in check-in order; refuse the first pair that shares a night."""
+	for prev, nxt in zip(legs, legs[1:]):
+		if getdate(nxt["check_in_date"]) < getdate(prev["check_out_date"]):
+			frappe.throw(_("Stays overlap: {0} to {1} and {2} to {3}. A guest "
+			               "can't be in two places on one night.").format(
+				prev["check_in_date"], prev["check_out_date"],
+				nxt["check_in_date"], nxt["check_out_date"]),
+				title=_("Itinerary dates overlap"))
+
+
+def _live_legs(itinerary: str, exclude: str | None = None) -> list[dict]:
+	from kamra.reservation_state import LIVE_STATUSES
+	filters = {"itinerary": itinerary, "status": ("in", list(LIVE_STATUSES))}
+	if exclude:
+		filters["name"] = ("!=", exclude)
+	return frappe.get_all("Reservation", filters=filters,
+	                      fields=["name", "check_in_date", "check_out_date"])
+
+
+def assert_leg_fits(itinerary: str, check_in_date, check_out_date,
+                    reservation: str | None = None):
+	"""Reservation.validate: a live leg can't overlap another live leg of
+	its itinerary (covers amend_stay on one leg)."""
+	legs = _live_legs(itinerary, exclude=reservation) + [{
+		"check_in_date": check_in_date, "check_out_date": check_out_date}]
+	legs.sort(key=lambda leg: getdate(leg["check_in_date"]))
+	_refuse_overlap(legs)
+
+
+def _locale(property: str) -> dict:
+	from kamra.localization import pack_for
+	loc = pack_for(property).locale(frappe.get_cached_doc("Property", property))
+	return {"currency": loc.get("currency"),
+	        "currency_symbol": loc.get("currency_symbol") or ""}
+
+
+def _sum(rows: list[dict], key: str):
+	"""A combined figure only when every leg is in one currency - two
+	currencies don't add up to one number."""
+	if len({r["currency"] for r in rows}) > 1:
+		return None
+	return round(sum(float(r.get(key) or 0) for r in rows), 2)
+
+
+@frappe.whitelist()
+@require_roles("Front Desk", "Kamra Agent")
+def quote_itinerary(legs, adults: int = 2, children: int = 0,
+                    company: str | None = None):
+	"""Price a multi-property trip before booking it: each leg priced by
+	get_quote (the same engine create_booking uses), rooms free per leg,
+	and the combined total. legs: [{property, room_type, check_in_date,
+	check_out_date, adults?, children?, meal_plan?, rate_plan?}]."""
+	from kamra.api import available_rooms, get_quote
+	from kamra.booking_refs import resolve_room_type
+
+	out = []
+	for leg in _parse_legs(legs):
+		prop = leg["property"]
+		q = get_quote(property=prop, room_type=leg["room_type"],
+		              check_in_date=leg["check_in_date"],
+		              check_out_date=leg["check_out_date"],
+		              adults=cint(leg.get("adults") or adults),
+		              children=cint(leg.get("children") or children),
+		              meal_plan=leg.get("meal_plan"),
+		              rate_plan=leg.get("rate_plan"), company=company)
+		rt = resolve_room_type(prop, leg["room_type"])
+		out.append({
+			**leg, **_locale(prop),
+			"room_type": rt,
+			"property_name": frappe.db.get_value(
+				"Property", prop, "property_name"),
+			"room_type_name": frappe.db.get_value(
+				"Room Type", rt, "room_type_name"),
+			"nights": date_diff(leg["check_out_date"], leg["check_in_date"]),
+			"available": len(available_rooms(
+				prop, rt, leg["check_in_date"], leg["check_out_date"])),
+			"amount_after_tax": q.get("amount_after_tax"),
+			"cancellation": q.get("cancellation"),
+		})
+	return {"legs": out, "total": _sum(out, "amount_after_tax")}
+
+
+def _book_legs(itn, legs: list[dict], adults, children, phone,
+               idempotency_key: str | None):
+	"""Book each leg through create_booking (pricing, room, overlap and
+	credit guards all apply) and tie it to the itinerary."""
+	from kamra.api import create_booking
+
+	for i, leg in enumerate(legs):
+		r = create_booking(
+			property=leg["property"], room_type=leg["room_type"],
+			check_in_date=leg["check_in_date"],
+			check_out_date=leg["check_out_date"],
+			guest_name=itn.guest_name, phone=phone, guest=itn.guest,
+			adults=cint(leg.get("adults") or adults),
+			children=cint(leg.get("children") or children),
+			meal_plan=leg.get("meal_plan"), rate_plan=leg.get("rate_plan"),
+			company=itn.company, travel_agent=itn.travel_agent,
+			booking_type="Corporate" if itn.company else "Individual",
+			booked_by_name=itn.booked_by_name,
+			booked_by_phone=itn.booked_by_phone,
+			idempotency_key=f"{idempotency_key}:{i}" if idempotency_key else None)
+		other = frappe.db.get_value("Reservation", r["reservation"], "itinerary")
+		if other and other != itn.name:
+			# create_booking handed back a booking that already belongs to
+			# another trip (an agent retry): never move it between trips
+			frappe.throw(_("{0} is already part of itinerary {1}.").format(
+				r["reservation"], other), title=_("Already booked"))
+		frappe.db.set_value("Reservation", r["reservation"], "itinerary",
+		                    itn.name)
+
+
+def _savepoint(fn):
+	"""All legs or none: a leg that fails rolls back the ones before it."""
+	sp = f"itn_{frappe.generate_hash(length=8)}"
+	frappe.db.savepoint(sp)
+	try:
+		return fn()
+	except Exception:
+		frappe.db.rollback(save_point=sp)
+		raise
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Front Desk", "Kamra Agent")
+def create_itinerary(legs, guest_name: str | None = None,
+                     phone: str | None = None, guest: str | None = None,
+                     adults: int = 2, children: int = 0,
+                     company: str | None = None,
+                     travel_agent: str | None = None,
+                     booked_by_name: str | None = None,
+                     booked_by_phone: str | None = None,
+                     notes: str | None = None,
+                     idempotency_key: str | None = None):
+	"""Book a trip across properties in one go: one reservation per leg
+	(each a normal booking at its own property, with its own folio) under
+	one itinerary reference. All legs book or none do. Quote first with
+	quote_itinerary. Take advances per leg with record_advance."""
+	from kamra.api import _find_or_create_guest
+
+	legs = _parse_legs(legs)
+	key = (idempotency_key or "").strip() or None
+	if key:
+		existing = frappe.db.get_value("Itinerary", {"idempotency_key": key})
+		if existing:
+			return {**get_itinerary(existing), "idempotent_replay": 1}
+	if guest:
+		if not frappe.db.exists("Guest", guest):
+			frappe.throw(_("Guest profile {0} not found.").format(guest))
+	elif (guest_name or "").strip():
+		guest = _find_or_create_guest(guest_name, phone, legs[0]["property"])
+	else:
+		frappe.throw(_("Enter the guest's name."))
+
+	def book():
+		itn = frappe.get_doc({
+			"doctype": "Itinerary", "guest": guest, "company": company or None,
+			"travel_agent": travel_agent or None,
+			"booked_by_name": booked_by_name or None,
+			"booked_by_phone": booked_by_phone or None,
+			"notes": notes or None, "idempotency_key": key,
+		}).insert()
+		_book_legs(itn, legs, adults, children, phone, key)
+		return itn.name
+
+	name = _savepoint(book)
+	from kamra.savings import log_action
+	log_action("create_itinerary", "Itinerary", name, legs[0]["property"],
+	           rationale=f"Trip of {len(legs)} stays for {guest_name or guest}: "
+	           + ", ".join(f"{leg['property']} {leg['check_in_date']} to "
+	                       f"{leg['check_out_date']}" for leg in legs))
+	return get_itinerary(name)
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Front Desk", "Kamra Agent")
+def add_itinerary_leg(itinerary: str, property: str, room_type: str,
+                      check_in_date: str, check_out_date: str,
+                      adults: int = 2, children: int = 0,
+                      meal_plan: str | None = None,
+                      rate_plan: str | None = None):
+	"""Add one more stay to an existing trip. It can't overlap a live leg."""
+	itn = _itinerary(itinerary)
+	leg = _parse_legs([{
+		"property": property, "room_type": room_type,
+		"check_in_date": check_in_date, "check_out_date": check_out_date,
+		"meal_plan": meal_plan, "rate_plan": rate_plan}])[0]
+	assert_leg_fits(itn.name, check_in_date, check_out_date)
+	phone = frappe.db.get_value("Guest", itn.guest, "phone")
+	_savepoint(lambda: _book_legs(itn, [leg], adults, children, phone, None))
+	return get_itinerary(itn.name)
+
+
+def _itinerary(itinerary: str):
+	"""The itinerary, if the user may access every property it touches -
+	a trip is worked as a whole, so a partial view is refused."""
+	if not frappe.db.exists("Itinerary", itinerary):
+		frappe.throw(_("Itinerary {0} not found.").format(itinerary),
+		             frappe.DoesNotExistError)
+	for prop in frappe.get_all("Reservation", filters={"itinerary": itinerary},
+	                           pluck="property", distinct=True):
+		assert_property_access(prop)
+	return frappe.get_doc("Itinerary", itinerary)
+
+
+def _status(legs: list[dict]) -> str:
+	statuses = {leg["status"] for leg in legs}
+	if not statuses or statuses == {"Cancelled"}:
+		return "Cancelled"
+	if "Checked In" in statuses:
+		return "In stay"
+	if statuses & {"Confirmed", "Held", "Pending Payment"}:
+		return "Booked"
+	return "Completed"
+
+
+_LEG_FIELDS = ["name", "property", "room_type", "room", "check_in_date",
+               "check_out_date", "nights", "adults", "children", "status",
+               "amount_after_tax", "advance_paid", "cancellation_number",
+               "cancellation_fee"]
+
+
+def _legs_of(names: list[str]) -> dict[str, list[dict]]:
+	rows = frappe.get_all("Reservation", filters={"itinerary": ("in", names)},
+	                      fields=["itinerary", *_LEG_FIELDS],
+	                      order_by="check_in_date asc, creation asc")
+	out: dict[str, list[dict]] = {}
+	for r in rows:
+		out.setdefault(r.pop("itinerary"), []).append(r)
+	return out
+
+
+@frappe.whitelist()
+@require_roles("Front Desk", "Finance", "Kamra Agent")
+def get_itinerary(itinerary: str):
+	"""A trip with its legs in date order: each leg's property, dates,
+	status, price, advance paid and deposit still due, plus the combined
+	total (live legs) - what the combined confirmation prints."""
+	from kamra.api import _deposit_state
+	from kamra.reservation_state import LIVE_STATUSES
+
+	itn = _itinerary(itinerary)
+	legs = _legs_of([itn.name]).get(itn.name, [])
+	for leg in legs:
+		leg.update(_locale(leg["property"]))
+		leg["reservation"] = leg.pop("name")
+		leg["property_name"], leg["city"], leg["property_phone"] = \
+			frappe.db.get_value("Property", leg["property"],
+			                    ["property_name", "city", "phone"])
+		leg["room_type_name"] = frappe.db.get_value(
+			"Room Type", leg["room_type"], "room_type_name")
+		leg["deposit_due"] = _deposit_state(frappe._dict(
+			name=leg["reservation"], property=leg["property"],
+			amount_after_tax=leg["amount_after_tax"],
+			advance_paid=leg["advance_paid"], status=leg["status"]))["due"]
+	live = [leg for leg in legs if leg["status"] in LIVE_STATUSES]
+	guest = frappe.db.get_value("Guest", itn.guest,
+	                            ["full_name", "phone", "email"], as_dict=True)
+	return {
+		"name": itn.name, "guest": itn.guest,
+		"guest_name": guest.full_name if guest else itn.guest_name,
+		"phone": guest.phone if guest else None,
+		"email": guest.email if guest else None,
+		"company": itn.company, "travel_agent": itn.travel_agent,
+		"booked_by_name": itn.booked_by_name, "notes": itn.notes,
+		"created": str(itn.creation),
+		"status": _status(legs),
+		"check_in_date": str(live[0]["check_in_date"]) if live else None,
+		"check_out_date": str(live[-1]["check_out_date"]) if live else None,
+		"legs": legs,
+		"total": _sum(live, "amount_after_tax"),
+		"advance_paid": _sum(live, "advance_paid"),
+		"cancellation_fees": _sum(legs, "cancellation_fee"),
+	}
+
+
+@frappe.whitelist()
+@require_roles("Front Desk", "Finance", "Kamra Agent")
+def list_itineraries(search: str | None = None, limit: int = 50):
+	"""Recent trips the user can work with (every leg at a property they
+	may access), newest first, with their legs and status."""
+	from kamra.authz import restricted_properties
+
+	filters = {}
+	if (search or "").strip():
+		filters["guest_name"] = ("like", f"%{search.strip()}%")
+	rows = frappe.get_all("Itinerary", filters=filters,
+	                      fields=["name", "guest_name"],
+	                      order_by="creation desc",
+	                      limit=min(cint(limit) or 50, 200))
+	ref = (search or "").strip()
+	if ref and frappe.db.exists("Itinerary", ref) \
+			and all(r.name != ref for r in rows):
+		rows.insert(0, frappe.db.get_value(
+			"Itinerary", ref, ["name", "guest_name"], as_dict=True))
+	legs = _legs_of([r.name for r in rows]) if rows else {}
+	allowed = restricted_properties()
+	out = []
+	for row in rows:
+		ls = legs.get(row.name, [])
+		if allowed is not None and any(leg["property"] not in allowed for leg in ls):
+			continue
+		out.append({
+			"name": row.name, "guest_name": row.guest_name, "status": _status(ls),
+			"legs": [{"reservation": leg["name"], "property": leg["property"],
+			          "check_in_date": str(leg["check_in_date"]),
+			          "check_out_date": str(leg["check_out_date"]),
+			          "status": leg["status"]} for leg in ls],
+		})
+	return out
+
+
+@frappe.whitelist()
+@require_roles("Front Desk", "Kamra Agent")
+def cancel_itinerary_preview(itinerary: str):
+	"""What cancelling the whole trip would cost now: each leg's own
+	cancellation_preview (its property's policy) and the total fee. Legs
+	already checked in or finished can't be cancelled and are listed apart."""
+	from kamra.api import cancellation_preview
+
+	itn = _itinerary(itinerary)
+	rows, skipped = [], []
+	for leg in _legs_of([itn.name]).get(itn.name, []):
+		if leg["status"] != "Confirmed":
+			skipped.append({"reservation": leg["name"], "status": leg["status"]})
+			continue
+		terms = cancellation_preview(reservation=leg["name"])
+		rows.append({"reservation": leg["name"], "property": leg["property"],
+		             **_locale(leg["property"]), **terms})
+	return {"legs": rows, "not_cancellable": skipped,
+	        "total_fee": _sum(rows, "estimated_fee")}
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Front Desk", "Kamra Agent")
+def cancel_itinerary(itinerary: str, reason: str = "Guest request",
+                     note: str | None = None, waive_fee: int = 0):
+	"""Cancel every confirmed leg of a trip, each through cancel_reservation
+	so its own property's policy and fee apply (waive_fee=1 waives them all,
+	logged per leg). All legs cancel or none do. To cancel one leg, call
+	cancel_reservation on it."""
+	from kamra.api import cancel_reservation
+
+	itn = _itinerary(itinerary)
+	legs = [leg["name"] for leg in _legs_of([itn.name]).get(itn.name, [])
+	        if leg["status"] == "Confirmed"]
+	if not legs:
+		frappe.throw(_("Nothing to cancel: no leg of this itinerary is "
+		               "confirmed."))
+	results = _savepoint(lambda: [
+		cancel_reservation(reservation=r, reason=reason, note=note,
+		                   waive_fee=waive_fee) for r in legs])
+	return {"itinerary": itn.name, "cancelled": results,
+	        **get_itinerary(itn.name)}

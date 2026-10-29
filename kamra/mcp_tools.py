@@ -85,6 +85,15 @@ IDEMPOTENCY_KEY_PARAM = _p(
 	"second identical room on purpose.",
 )
 
+ITINERARY_LEGS_PARAM = _p(
+	"array",
+	description="The stays, any order: each {property, room_type, "
+	"check_in_date, check_out_date, adults?, children?, meal_plan?, "
+	"rate_plan?}. property is the Property id; room_type, meal_plan and "
+	"rate_plan accept the id, code or exact name at that property.",
+	items=_p("object"),
+)
+
 
 def _t(
 	name: str,
@@ -254,6 +263,99 @@ TOOLS: tuple[ToolSpec, ...] = (
 			"waive_fee": _p("boolean"),
 		},
 		required=("reservation",),
+		mutating=True,
+		bools=("waive_fee",),
+	),
+	_t(
+		"quote_itinerary",
+		"crs.quote_itinerary",
+		"""Price a trip across several properties of the chain (e.g. 2 nights
+		at one hotel, then 3 at another) before booking it: each leg priced by
+		the same engine as quote, rooms free per leg, and the combined total
+		(null when legs are in different currencies). Legs can't overlap; a
+		leg may start the day the previous one ends.""",
+		{
+			"legs": ITINERARY_LEGS_PARAM,
+			"adults": _p("integer"),
+			"children": _p("integer"),
+			"company": COMPANY_PARAM,
+		},
+		required=("legs",),
+	),
+	_t(
+		"create_itinerary",
+		"crs.create_itinerary",
+		"""Book a multi-property trip in one call: one normal reservation per
+		leg (each with its own folio and its own property's cancellation
+		policy) under one itinerary reference (ITN-...) to give the guest.
+		All legs book or none do. Always quote_itinerary first. Advances are
+		taken per leg on that leg's reservation.""",
+		{
+			"legs": ITINERARY_LEGS_PARAM,
+			"guest_name": _p("string"),
+			"phone": _p("string"),
+			"adults": _p("integer"),
+			"children": _p("integer"),
+			"company": COMPANY_PARAM,
+			"booked_by_name": _p("string"),
+			"booked_by_phone": _p("string"),
+			"notes": _p("string"),
+			"idempotency_key": _p("string", description="Optional unique key "
+			                      "for this trip. Retrying with the same key "
+			                      "returns the first itinerary instead of "
+			                      "booking again."),
+		},
+		required=("legs", "guest_name"),
+		mutating=True,
+	),
+	_t(
+		"get_itinerary",
+		"crs.get_itinerary",
+		"""A trip (ITN-...) with its legs in date order: property, dates,
+		status, price, advance paid and deposit due per leg, and the total.""",
+		{"itinerary": _p("string")},
+		required=("itinerary",),
+	),
+	_t(
+		"add_itinerary_leg",
+		"crs.add_itinerary_leg",
+		"""Add one more stay to an existing trip. It can't overlap a live leg.""",
+		{
+			"itinerary": _p("string"),
+			"property": _p("string", description="Property id of this leg"),
+			"room_type": ROOM_TYPE_PARAM,
+			"check_in_date": _p("string"),
+			"check_out_date": _p("string"),
+			"adults": _p("integer"),
+			"children": _p("integer"),
+		},
+		required=("itinerary", "property", "room_type", "check_in_date",
+		          "check_out_date"),
+		mutating=True,
+	),
+	_t(
+		"cancel_itinerary_preview",
+		"crs.cancel_itinerary_preview",
+		"""What cancelling a whole trip would cost now: each leg's own
+		cancellation terms and the total fee. ALWAYS read this to the guest
+		before cancel_itinerary. To cancel one leg, use cancellation_preview
+		and cancel_booking on that leg's reservation.""",
+		{"itinerary": _p("string")},
+		required=("itinerary",),
+	),
+	_t(
+		"cancel_itinerary",
+		"crs.cancel_itinerary",
+		"""Cancel every confirmed leg of a trip, each under its own property's
+		policy (fees post to that leg's folio). Returns a cancellation number
+		per leg. Only waive fees when a manager authorizes it (logged).""",
+		{
+			"itinerary": _p("string"),
+			"reason": _p("string"),
+			"note": _p("string"),
+			"waive_fee": _p("boolean"),
+		},
+		required=("itinerary",),
 		mutating=True,
 		bools=("waive_fee",),
 	),
@@ -1910,14 +2012,14 @@ def input_schema(spec: ToolSpec) -> dict[str, Any]:
 
 # Writes that can't simply be undone: MCP clients may ask before each one
 DESTRUCTIVE = frozenset({
-	"cancel_booking", "decline_booking_request", "check_out", "void_charge",
+	"cancel_booking", "cancel_itinerary", "decline_booking_request", "check_out", "void_charge",
 	"close_folio", "waive_security_deposit", "pos_cancel_order", "pos_remove_item",
 	"run_night_audit", "recover_stuck_business_date",
 })
 # Writes where the same call twice has the effect of one (idempotency keys,
 # set-to-value, once per business date)
 IDEMPOTENT = frozenset({
-	"create_booking", "add_to_waitlist", "pickup_group_room", "set_late_arrival",
+	"create_booking", "create_itinerary", "add_to_waitlist", "pickup_group_room", "set_late_arrival",
 	"set_room_hk_status", "set_room_rate", "run_night_audit", "rebuild_audit_pack",
 	"assign_rooms_apply",
 })
