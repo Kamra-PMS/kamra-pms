@@ -1,11 +1,12 @@
-# Books - suppliers, the next five days, profit and loss
+# Books - suppliers, cash outlook, profit and loss
 
 Three screens under **Finance → Books** help the owner and the finance
 team see the money side of the hotel:
 
 - **Payables**: the suppliers you buy from on credit and the bills you
   owe them.
-- **Next 5 days**: money expected in and out, day by day.
+- **Cash outlook**: money expected in and out over the next 5, 15 or 30
+  days, day by day.
 - **Profit and loss** and **Balance sheet**: a management view of a
   period, and of what is owed to and by the hotel on a date.
 
@@ -55,15 +56,17 @@ can't be entered twice.
 
 ## Approve and pay
 
-Only a **Hotel Admin** approves and pays.
+A **Hotel Admin** approves a bill. Once it is approved, **Finance** or a
+**Hotel Admin** can pay it.
 
-1. Press **Approve** on a bill that is awaiting approval.
+1. A Hotel Admin presses **Approve** on a bill that is awaiting approval.
 2. Press **Pay**, enter the amount (all of it or part), the date, how it
    was paid and a reference such as the bank transfer number.
 3. Press **Record payment**. The bill shows **Part paid** until it is
    fully paid.
 
-Recording a payment does not take cash out of a till. A bill entered by
+Payments stay in accounts payable: recording one does not post to a
+general ledger and does not take cash out of a till. A bill entered by
 mistake can be cancelled with a reason, as long as nothing has been paid
 on it.
 
@@ -74,20 +77,25 @@ and how many bills wait for approval. The strip below ages it by due
 date: not due, 1 to 30 days overdue, 31 to 60, 61 to 90 and 90+, the
 same buckets as company accounts.
 
-## The next five days
+## Cash outlook
 
-**Finance → Next 5 days** lists, for today and the next four days:
+**Finance → Cash outlook** lists, day by day from today, for the next
+**5**, **15** or **30** days (pick one at the top):
 
 - **Company bills**: city ledger bills falling due.
 - **Guests leaving**: what departing guests still owe. Stays a company
   pays on credit are left out; they come in later as company bills.
 - **Deposits**: advance deposits due from guests arriving that day.
-- **Supplier bills**: bills falling due.
+- **Supplier bills**: bills falling due. Draft bills still awaiting
+  approval count too, marked **draft** when you open a day, and the total
+  in drafts is shown above the table.
 
 Anything already overdue is counted today. The position starts from the
 cash in open tills. Kamra does not know your bank balance, so type your
 cash and bank into **Cash and bank today** and press **Update** for a
-full picture. Click a day to see each item.
+full picture. Click a day to see each item. The 15 and 30 day views add
+a subtotal after each week. On a phone the table shows each day's net and
+position; open a day for the detail.
 
 Payroll, rent and other costs that you don't enter as supplier bills are
 not in it, and neither are extras guests may still spend.
@@ -124,7 +132,7 @@ totals.
 ## For developers and agents
 
 Endpoints are in `kamra.payables` and `kamra.books` (see the
-[API reference](/api-reference)). Agents can read payables, the five-day
-view, the P&L and the balance sheet, and can enter a supplier bill with
-`create_vendor_bill`; approving and paying stay with a Hotel Admin (see
-[MCP tools](/mcp-tools)).
+[API reference](/api-reference)). Agents can read payables, the cash
+outlook (`cash_forecast` with `days` 5, 15 or 30), the P&L and the balance sheet, and can enter a supplier bill with
+`create_vendor_bill`; approving stays with a Hotel Admin and paying with
+Finance or a Hotel Admin, in Payables (see [MCP tools](/mcp-tools)).

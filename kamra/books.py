@@ -56,27 +56,31 @@ def _company_credit(company: str | None) -> bool:
 @frappe.whitelist()
 @require_roles("Finance", "Hotel Admin", "Kamra Agent")
 def cash_forecast(property: str, days: int = 5, opening: float | None = None):
-	"""Money expected in and out over the next `days` days (default 5),
-	day by day from today, with a running position.
+	"""Money expected in and out over the next `days` days (5, 15 or 30;
+	default 5), day by day from today, with a running position and
+	subtotals by week.
 
 	In: company (city ledger) bills falling due, what departing guests
 	still owe, advance deposits due from arrivals. Out: supplier bills
-	falling due. Anything already overdue is counted today. `opening` is
+	falling due, drafts awaiting approval included and flagged `draft`.
+	Anything already overdue is counted today. `opening` is
 	the cash and bank to start from; without it, the cash in open tills.
 	Read-only."""
 	from kamra.api import _DEPOSIT_STATUSES, _deposit_state, _stay_balances
 	from kamra.ledger import _account_position, _netted
 
-	days = max(1, min(int(days or 5), 14))
+	days = int(days or 5)
+	if days not in (5, 15, 30):
+		frappe.throw(_("Choose 5, 15 or 30 days."))
 	today = getdate(nowdate())
 	end = add_days(today, days - 1)
 	items: list[dict] = []
 
-	def add(kind, when, label, amount, ref=None):
+	def add(kind, when, label, amount, ref=None, draft=False):
 		if flt(amount) > 0.005:
 			items.append({"kind": kind, "date": str(max(getdate(when), today)),
 			              "label": label, "amount": _r(amount), "reference": ref,
-			              "overdue": getdate(when) < today})
+			              "overdue": getdate(when) < today, "draft": draft})
 
 	# company bills, money paid ahead netted off the oldest
 	for acc in frappe.get_all("City Ledger Account",
@@ -138,7 +142,8 @@ def cash_forecast(property: str, days: int = 5, opening: float | None = None):
 			fields=["name", "vendor_name", "bill_number", "due_date", "outstanding",
 			        "status"]):
 		add("vendor_bills", b.due_date,
-		    f"{b.vendor_name} {b.bill_number or b.name}", b.outstanding, b.name)
+		    f"{b.vendor_name} {b.bill_number or b.name}", b.outstanding, b.name,
+		    draft=b.status == "Awaiting Approval")
 
 	source = "tills" if opening in (None, "") else "entered"
 	position = till_cash(property) if source == "tills" else _r(opening)
@@ -156,10 +161,18 @@ def cash_forecast(property: str, days: int = 5, opening: float | None = None):
 		out_days.append({"date": d, **sums, "money_in": money_in,
 		                 "money_out": money_out, "net": _r(money_in - money_out),
 		                 "closing": position, "items": todays})
+	weeks = []
+	for i in range(0, days, 7):
+		wk = out_days[i:i + 7]
+		money_in = _r(sum(d["money_in"] for d in wk))
+		money_out = _r(sum(d["money_out"] for d in wk))
+		weeks.append({"from_date": wk[0]["date"], "to_date": wk[-1]["date"],
+		              "money_in": money_in, "money_out": money_out,
+		              "net": _r(money_in - money_out), "closing": wk[-1]["closing"]})
 	return {
 		"from_date": str(today), "to_date": str(end),
 		"opening": start, "opening_source": source,
-		"days": out_days,
+		"days": out_days, "weeks": weeks,
 		"money_in": _r(sum(d["money_in"] for d in out_days)),
 		"money_out": _r(sum(d["money_out"] for d in out_days)),
 		"closing": position,
@@ -167,6 +180,7 @@ def cash_forecast(property: str, days: int = 5, opening: float | None = None):
 		                     if x["overdue"] and x["kind"] in IN)),
 		"overdue_out": _r(sum(x["amount"] for x in items
 		                      if x["overdue"] and x["kind"] == "vendor_bills")),
+		"draft_out": _r(sum(x["amount"] for x in items if x["draft"])),
 	}
 
 

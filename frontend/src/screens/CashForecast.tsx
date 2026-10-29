@@ -7,10 +7,11 @@ import { Card, CardContent } from "../components/ui/card"
 import { fmtMoney, useLocale } from "../lib/money"
 import { t as translate, uiDateLocale, useUILanguage } from "../lib/i18n"
 
-// The next five days of money in and out (kamra.books.cash_forecast).
+// Cash outlook: the next 5, 15 or 30 days of money in and out
+// (kamra.books.cash_forecast). Draft supplier bills count, flagged.
 // Read-only: every figure is the server's.
 
-type Item = { kind: string; date: string; label: string; amount: number; overdue: boolean }
+type Item = { kind: string; date: string; label: string; amount: number; overdue: boolean; draft?: boolean }
 type Day = {
   date: string
   company_bills: number
@@ -23,16 +24,20 @@ type Day = {
   closing: number
   items: Item[]
 }
+type Week = { from_date: string; to_date: string; money_in: number; money_out: number; net: number; closing: number }
 type Forecast = {
   opening: number
   opening_source: "tills" | "entered"
   days: Day[]
+  weeks: Week[]
   money_in: number
   money_out: number
   closing: number
   overdue_in: number
   overdue_out: number
+  draft_out: number
 }
+const SPANS = [5, 15, 30] as const
 
 const KIND: Record<string, string> = {
   company_bills: "Company bill",
@@ -46,18 +51,24 @@ export default function CashForecast() {
   useLocale()
   const [data, setData] = useState<Forecast | null>(null)
   const [opening, setOpening] = useState("")
+  const [span, setSpan] = useState<number>(5)
   const [open, setOpen] = useState<string | null>(null)
   const [err, setErr] = useState<string | null>(null)
 
-  const load = useCallback((start?: string) => {
+  const load = useCallback((start: string, days: number) => {
     call<Forecast>("kamra.books.cash_forecast", {
       property: getCurrentProperty(),
-      opening: start === undefined || start === "" ? undefined : Number(start),
+      days,
+      opening: start === "" ? undefined : Number(start),
     })
       .then(setData)
       .catch((e) => setErr(serverError(e)))
   }, [])
-  useEffect(() => load(), [load])
+  // ponytail: the opening amount applies on Update or when the span changes
+  useEffect(() => load(opening, span), [load, span]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const short = (iso: string) =>
+    new Date(`${iso}T00:00:00`).toLocaleDateString(uiDateLocale(), { day: "numeric", month: "short" })
 
   const day = (iso: string, i: number) =>
     i === 0
@@ -70,8 +81,21 @@ export default function CashForecast() {
     <div className="w-full space-y-5">
       <div>
         <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-400">{translate("Books")}</p>
-        <h1 className="text-2xl font-semibold">{translate("Next 5 days")}</h1>
+        <h1 className="text-2xl font-semibold">{translate("Cash outlook")}</h1>
         <p className="text-sm text-zinc-500">{translate("Money expected in and out, day by day. Overdue items are counted today.")}</p>
+      </div>
+      <div className="inline-flex rounded-lg border border-zinc-200 bg-white p-0.5" role="group" aria-label={translate("Days ahead")}>
+        {SPANS.map((n) => (
+          <button
+            key={n}
+            type="button"
+            aria-pressed={span === n}
+            onClick={() => setSpan(n)}
+            className={`rounded-md px-3 py-1.5 text-sm ${span === n ? "bg-zinc-900 text-white" : "text-zinc-600 hover:bg-zinc-50"}`}
+          >
+            {translate("{v0} days", { v0: n })}
+          </button>
+        ))}
       </div>
       {err ? <p className="text-sm text-rose-600">{translate(err)}</p> : null}
 
@@ -86,7 +110,7 @@ export default function CashForecast() {
             onChange={(e) => setOpening(e.target.value)}
           />
         </label>
-        <Button variant="outline" onClick={() => load(opening)}>{translate("Update")}</Button>
+        <Button variant="outline" onClick={() => load(opening, span)}>{translate("Update")}</Button>
         <p className="max-w-md text-xs text-zinc-500">
           {data?.opening_source === "tills"
             ? translate("Starting from the cash in open tills. Kamra does not know your bank balance, so type it in for a full picture.")
@@ -99,7 +123,7 @@ export default function CashForecast() {
           <Stat label="Starting position" value={fmtMoney(data.opening)} />
           <Stat label="Money in" value={fmtMoney(data.money_in)} tone="text-emerald-700" />
           <Stat label="Money out" value={fmtMoney(data.money_out)} tone="text-rose-700" />
-          <Stat label="Position after 5 days" value={fmtMoney(data.closing)} tone={data.closing < 0 ? "text-rose-700" : undefined} />
+          <Stat label={translate("Position after {v0} days", { v0: data.days.length })} value={fmtMoney(data.closing)} tone={data.closing < 0 ? "text-rose-700" : undefined} />
         </div>
       ) : null}
       {data && (data.overdue_in > 0 || data.overdue_out > 0) ? (
@@ -109,6 +133,11 @@ export default function CashForecast() {
           })}
         </p>
       ) : null}
+      {data && data.draft_out > 0 ? (
+        <p className="-mt-2 text-xs text-amber-700">
+          {translate("Money out includes {v0} in draft supplier bills still awaiting approval.", { v0: fmtMoney(data.draft_out) })}
+        </p>
+      ) : null}
 
       <Card>
         <CardContent className="overflow-x-auto pt-4">
@@ -116,10 +145,10 @@ export default function CashForecast() {
             <thead className="text-xs uppercase text-zinc-400">
               <tr>
                 <th className="py-2 pr-3">{translate("Day")}</th>
-                <th className="py-2 pr-3 text-right">{translate("Company bills")}</th>
-                <th className="py-2 pr-3 text-right">{translate("Guests leaving")}</th>
-                <th className="py-2 pr-3 text-right">{translate("Deposits")}</th>
-                <th className="py-2 pr-3 text-right">{translate("Supplier bills")}</th>
+                <th className="hidden py-2 pr-3 text-right sm:table-cell">{translate("Company bills")}</th>
+                <th className="hidden py-2 pr-3 text-right sm:table-cell">{translate("Guests leaving")}</th>
+                <th className="hidden py-2 pr-3 text-right sm:table-cell">{translate("Deposits")}</th>
+                <th className="hidden py-2 pr-3 text-right sm:table-cell">{translate("Supplier bills")}</th>
                 <th className="py-2 pr-3 text-right">{translate("Net")}</th>
                 <th className="py-2 text-right">{translate("Position")}</th>
               </tr>
@@ -137,10 +166,10 @@ export default function CashForecast() {
                         {day(d.date, i)}
                       </span>
                     </td>
-                    <Money v={d.company_bills} />
-                    <Money v={d.departures} />
-                    <Money v={d.deposits} />
-                    <Money v={-d.vendor_bills} />
+                    <Money v={d.company_bills} wide />
+                    <Money v={d.departures} wide />
+                    <Money v={d.deposits} wide />
+                    <Money v={-d.vendor_bills} wide />
                     <Money v={d.net} strong />
                     <td className={`py-2 text-right font-semibold tabular-nums ${d.closing < 0 ? "text-rose-700" : ""}`}>{fmtMoney(d.closing)}</td>
                   </tr>
@@ -155,6 +184,7 @@ export default function CashForecast() {
                                   <span className="text-zinc-400">{translate(KIND[it.kind] ?? it.kind)}</span>{" "}
                                   {it.label}
                                   {it.overdue ? <span className="ml-1 text-rose-700">({translate("overdue")})</span> : null}
+                                  {it.draft ? <span className="ml-1 text-amber-700">({translate("draft, awaiting approval")})</span> : null}
                                 </span>
                                 <span className={`tabular-nums ${it.kind === "vendor_bills" ? "text-rose-700" : ""}`}>
                                   {it.kind === "vendor_bills" ? "-" : ""}{fmtMoney(it.amount)}
@@ -167,6 +197,9 @@ export default function CashForecast() {
                         )}
                       </td>
                     </tr>
+                  ) : null}
+                  {data && data.days.length > 5 && (i % 7 === 6 || i === data.days.length - 1) ? (
+                    <WeekRow w={data.weeks[Math.floor(i / 7)]} label={`${short(data.weeks[Math.floor(i / 7)].from_date)} - ${short(d.date)}`} />
                   ) : null}
                 </Fragment>
               ))}
@@ -184,9 +217,25 @@ export default function CashForecast() {
   )
 }
 
-function Money({ v, strong }: { v: number; strong?: boolean }) {
+function WeekRow({ w, label }: { w: Week; label: string }) {
+  useUILanguage()
   return (
-    <td className={`py-2 pr-3 text-right tabular-nums ${strong ? "font-medium" : ""} ${v < 0 ? "text-rose-700" : v === 0 ? "text-zinc-300" : ""}`}>
+    <tr className="border-t border-zinc-200 bg-zinc-100/70 text-xs font-medium">
+      <td className="py-2 pr-3">{translate("Week {v0}", { v0: label })}</td>
+      <td colSpan={4} className="hidden py-2 pr-3 text-right tabular-nums sm:table-cell">
+        <span className="text-emerald-700">{fmtMoney(w.money_in)}</span>
+        {" / "}
+        <span className="text-rose-700">-{fmtMoney(w.money_out)}</span>
+      </td>
+      <Money v={w.net} strong />
+      <td className={`py-2 text-right font-semibold tabular-nums ${w.closing < 0 ? "text-rose-700" : ""}`}>{fmtMoney(w.closing)}</td>
+    </tr>
+  )
+}
+
+function Money({ v, strong, wide }: { v: number; strong?: boolean; wide?: boolean }) {
+  return (
+    <td className={`py-2 pr-3 text-right tabular-nums ${wide ? "hidden sm:table-cell" : ""} ${strong ? "font-medium" : ""} ${v < 0 ? "text-rose-700" : v === 0 ? "text-zinc-300" : ""}`}>
       {v === 0 ? "-" : fmtMoney(v)}
     </td>
   )

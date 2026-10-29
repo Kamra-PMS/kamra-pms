@@ -1,6 +1,6 @@
 """Accounts payable (kamra.payables) and the management books
 (kamra.books): bill lifecycle, who may do what, property scope, aging,
-the five-day cash view, the P&L and the balance sheet."""
+the 5, 15 and 30 day cash view, the P&L and the balance sheet."""
 
 from __future__ import annotations
 
@@ -79,6 +79,15 @@ class TestFinanceBooks(AuditTestCase):
 		self.bill(10)  # Finance enters
 		with self.assertRaises(frappe.PermissionError):
 			payables.approve_vendor_bill(b["name"])
+		with self.assertRaises(frappe.ValidationError):
+			payables.pay_vendor_bill(b["name"], 100)  # not approved yet
+		frappe.set_user("Administrator")
+		payables.approve_vendor_bill(b["name"])
+		frappe.set_user(FIN)
+		self.assertEqual(payables.pay_vendor_bill(b["name"], 100)["status"], "Part Paid")
+		frappe.set_user(FD)
+		with self.assertRaises(frappe.PermissionError):
+			payables.pay_vendor_bill(b["name"], 100)
 		frappe.set_user("Administrator")
 		frappe.db.delete("User Permission", {"user": ADMIN})
 		frappe.get_doc({"doctype": "User Permission", "user": ADMIN,
@@ -88,6 +97,8 @@ class TestFinanceBooks(AuditTestCase):
 		frappe.set_user(ADMIN)
 		with self.assertRaises(frappe.PermissionError):
 			payables.approve_vendor_bill(b["name"])  # PROP_A's bill
+		with self.assertRaises(frappe.PermissionError):
+			payables.pay_vendor_bill(b["name"], 100)
 		with self.assertRaises(frappe.PermissionError):
 			books.profit_and_loss(PROP_A, d(-30), d(0))
 
@@ -121,6 +132,20 @@ class TestFinanceBooks(AuditTestCase):
 		self.assertEqual(f["days"][1]["company_bills"], 700)
 		self.assertEqual((f["opening_source"], f["closing"]), ("entered", 1200))
 		self.assertEqual(f["overdue_out"], 300)
+		self.assertEqual(f["draft_out"], 500)  # none approved yet
+		self.assertTrue(all(x["draft"] for x in f["days"][0]["items"]
+		                    if x["kind"] == "vendor_bills"))
+		f = books.cash_forecast(PROP_A, days=15, opening=1000)
+		self.assertEqual(len(f["days"]), 15)
+		self.assertEqual(f["days"][9]["money_out"], 999)
+		self.assertEqual(f["draft_out"], 1499)
+		self.assertEqual([w["from_date"] for w in f["weeks"]],
+		                 [d(0), d(7), d(14)])
+		self.assertEqual(sum(w["money_out"] for w in f["weeks"]), 1499)
+		self.assertEqual(f["weeks"][-1]["closing"], f["closing"])
+		self.assertEqual(len(books.cash_forecast(PROP_A, days=30)["days"]), 30)
+		with self.assertRaises(frappe.ValidationError):
+			books.cash_forecast(PROP_A, days=7)
 
 	def test_pnl_and_balance_sheet(self):
 		folio = frappe.get_doc({
@@ -141,7 +166,7 @@ class TestFinanceBooks(AuditTestCase):
 				{"posting_date": d(0), "charge_type": "Room Levy", "description": "Levy",
 				 "qty": 1, "rate": 50, "amount": 50},
 			]})
-		folio.flags.ignore_links = True
+		folio.flags.ignore_links = folio.flags.ignore_mandatory = True
 		folio.insert(ignore_permissions=True)
 		b = self.bill(1000, tax_rate=10, bill_date=d(0))
 		payables.approve_vendor_bill(b["name"])

@@ -13285,7 +13285,7 @@
         "kamra.books.cash_forecast"
        ]
       },
-      "description": "Money expected in and out over the next `days` days (default 5),\nday by day from today, with a running position.\n\nIn: company (city ledger) bills falling due, what departing guests\nstill owe, advance deposits due from arrivals. Out: supplier bills\nfalling due. Anything already overdue is counted today. `opening` is\nthe cash and bank to start from; without it, the cash in open tills.\nRead-only.",
+      "description": "Money expected in and out over the next `days` days (5, 15 or 30;\ndefault 5), day by day from today, with a running position and\nsubtotals by week.\n\nIn: company (city ledger) bills falling due, what departing guests\nstill owe, advance deposits due from arrivals. Out: supplier bills\nfalling due, drafts awaiting approval included and flagged `draft`.\nAnything already overdue is counted today. `opening` is\nthe cash and bank to start from; without it, the cash in open tills.\nRead-only.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\",\n  \"days\": 5\n}",

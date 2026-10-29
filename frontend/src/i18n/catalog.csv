@@ -372,6 +372,7 @@
 {v0} collected since {v1},{v0} collected since {v1},{v0} المحصّل منذ {v1},{v0} cobrado desde {v1},screens/ManagementBooks.tsx,v0 v1,translated
 {v0} companies are over their credit limit on {v1}. Show each exposure and what is overdue.,{v0} companies are over their credit limit on {v1}. Show each exposure and what is overdue.,{v0} شركات تجاوزت حد الائتمان في {v1}. اعرض انكشاف كل منها وما هو متأخر.,Hay {v0} empresas que superan su límite de crédito el {v1}. Muestre la exposición de cada una y sus saldos vencidos.,,v0 v1,translated
 {v0} companies have overdue bills on {v1}. Summarise the overdue amount and age for each.,{v0} companies have overdue bills on {v1}. Summarise the overdue amount and age for each.,{v0} شركات لديها فواتير متأخرة في {v1}. لخّص المبلغ المتأخر وعمره لكل شركة.,Hay {v0} empresas con facturas vencidas el {v1}. Resuma los importes y la antigüedad por empresa.,,v0 v1,translated
+{v0} days,{v0} days,{v0} يومًا,{v0} días,screens/CashForecast.tsx,v0,translated
 {v0} departed stays still have a balance on {v1}. List them with the amount and whether a company can be billed.,{v0} departed stays still have a balance on {v1}. List them with the amount and whether a company can be billed.,{v0} إقامات مغادرة لا يزال عليها رصيد في {v1}. اعرضها مع المبلغ وما إذا كان يمكن فوترة شركة.,Hay {v0} estancias finalizadas con saldo pendiente el {v1}. Indique importes y si puede facturarse a una empresa.,,v0 v1,translated
 {v0} departures for {v1} are still in house. Check out the ones with a zero balance and list the rest with what each owes.,{v0} departures for {v1} are still in house. Check out the ones with a zero balance and list the rest with what each owes.,{v0} من المغادرين ليوم {v1} لا يزالون مقيمين. سجّل مغادرة من رصيده صفر واعرض البقية مع المستحق على كل منهم.,Hay {v0} salidas del {v1} aún alojadas. Registre la salida de las que tengan saldo cero y enumere el saldo pendiente de las demás.,,v0 v1,translated
 {v0} has collected the room. Extras are paid by the guest.,{v0} has collected the room. Extras are paid by the guest.,حصّل {v0} قيمة الغرفة. الإضافات يدفعها الضيف.,{v0} ya cobró el alojamiento. Los extras los paga el huésped.,,v0,translated
@@ -1218,6 +1219,7 @@ Cash in open tills,Cash in open tills,النقد في الصناديق المف�
 cash office,cash office,مكتب النقدية,caja central,,,translated
 Cash Office,Cash Office,مكتب النقدية,Caja central,,,translated
 Cash on its way to the cash office,Cash on its way to the cash office,نقد في الطريق إلى مكتب النقدية,Efectivo en tránsito a la caja central,screens/CashierBoard.tsx,,translated
+Cash outlook,Cash outlook,توقعات النقد,Previsión de caja,screens/CashForecast.tsx,,translated
 Cash refund limit for new cashiers,Cash refund limit for new cashiers,حد الاسترداد النقدي لأمناء الصندوق الجدد,Límite de reembolso en efectivo para cajeros nuevos,,,translated
 Cash taken,Cash taken,النقد المحصّل,Efectivo cobrado,,,translated
 Cashier,Cashier,أمين الصندوق,Cajero,screens/CashierBoard.tsx; screens/CashierSessions.tsx; screens/CashierShiftReport.tsx; screens/CashierTill.tsx; screens/CurrencyDesk.tsx; screens/PettyCash.tsx,,translated
@@ -1727,6 +1729,7 @@ Day-use hours,Day-use hours,ساعات الاستخدام اليومي,Horas de 
 days,days,أيام,días,,,translated
 Days,Days,الأيام,Días,screens/TapeChart.tsx,,translated
 "Days after the invoice date a company bill is due, for companies set to use the property default (the default for every company). 0 means due on the invoice date.","Days after the invoice date a company bill is due, for companies set to use the property default (the default for every company). 0 means due on the invoice date.",عدد الأيام بعد تاريخ الفاتورة حتى تستحق فاتورة الشركة، للشركات التي تستخدم الإعداد الافتراضي للعقار (الافتراضي لكل شركة). 0 تعني الاستحقاق في تاريخ الفاتورة.,Días desde la factura hasta su vencimiento para empresas que usan la configuración predeterminada del alojamiento. 0 = vence en la fecha de factura.,,,translated
+Days ahead,Days ahead,الأيام القادمة,Días por delante,screens/CashForecast.tsx,,translated
 days before,days before,أيام قبل,días antes,,,translated
 "Days of week (e.g. fri, sat)","Days of week (e.g. fri, sat)","أيام الأسبوع (مثل fri, sat)","Días de la semana (p. ej., fri, sat)",,,translated
 Days overdue,Days overdue,أيام التأخير,Días de retraso,,,translated
@@ -1884,6 +1887,7 @@ Download the current view as CSV (Excel-ready),Download the current view as CSV 
 Dr ,Dr ,مدين ,Debe ,screens/Ledgers.tsx,,translated
 Draft,Draft,مسودة,Borrador,screens/POS.tsx,,translated
 Draft - no number issued yet.,Draft - no number issued yet.,مسودة، لم يُصدر رقم بعد.,Borrador: aún sin número asignado.,screens/BanquetDocument.tsx,,translated
+"draft, awaiting approval","draft, awaiting approval",مسودة، بانتظار الموافقة,"borrador, pendiente de aprobación",screens/CashForecast.tsx,,translated
 Drink,Drink,مشروب,Bebida,../../kamra/settings.py,,translated
 Driving Directions,Driving Directions,اتجاهات القيادة,Cómo llegar en auto,screens/BookingEngine.tsx; screens/PublicBooking.tsx,,translated
 Driving License,Driving License,رخصة قيادة,Licencia de conducir,,,translated
@@ -3042,6 +3046,7 @@ Money,Money,المبالغ,Resumen de pagos,screens/RegistrationCard.tsx,,transl
 money goes straight to this property's own gateway account,money goes straight to this property's own gateway account,تذهب الأموال مباشرة إلى حساب بوابة الدفع الخاص بهذا العقار,el dinero llega directamente a la cuenta de la pasarela de este alojamiento,,,translated
 Money in,Money in,الداخل,Entradas,,,translated
 Money out,Money out,الخارج,Salidas,,,translated
+Money out includes {v0} in draft supplier bills still awaiting approval.,Money out includes {v0} in draft supplier bills still awaiting approval.,تشمل الأموال الخارجة {v0} في فواتير موردين مسودة لا تزال بانتظار الموافقة.,Las salidas incluyen {v0} en facturas de proveedor en borrador pendientes de aprobación.,screens/CashForecast.tsx,v0,translated
 Month Availability,Month Availability,توفر الشهر,Disponibilidad mensual,,,translated
 Month by month,Month by month,شهراً بشهر,Mes a mes,screens/Banquet.tsx,,translated
 month to date,month to date,من بداية الشهر,acumulado del mes,screens/Dashboard.tsx,,translated
@@ -3146,7 +3151,7 @@ New voucher,New voucher,قسيمة جديدة,Nuevo vale,screens/PettyCash.tsx,,
 Next,Next,التالي,Siguiente,components/GroupBookingDialog.tsx; components/ResourceScreen.tsx; screens/Agents.tsx; screens/TapeChart.tsx,,translated
 Next {n} days,Next {n} days,الأيام {n} القادمة,Próximos {n} días,components/RoomDrawer.tsx,n,translated
 Next 14 days,Next 14 days,الأيام الـ 14 القادمة,14 días siguientes,components/CalendarView.tsx,,translated
-Next 5 days,Next 5 days,الأيام الخمسة القادمة,Próximos 5 días,screens/CashForecast.tsx,,translated
+Next 5 days,Next 5 days,الأيام الخمسة القادمة,Próximos 5 días,,,translated
 Next 7 days,Next 7 days,الـ 7 أيام القادمة,Próximos 7 días,,,translated
 Next arrival,Next arrival,الوصول التالي,Próxima llegada,components/RoomDrawer.tsx,,translated
 next automatic audit {at},next automatic audit {at},التدقيق التلقائي التالي {at},próxima auditoría automática {at},screens/EndOfDay.tsx,at,translated
@@ -3946,6 +3951,7 @@ POS speed check,POS speed check,فحص سرعة POS,Comprobación de velocidad d
 pos station,pos station,محطة POS,terminal de punto de venta,,,translated
 POS void,POS void,إبطال في المطعم,Anulación en punto de venta,screens/VoidAllowanceReport.tsx,,translated
 Position,Position,الموقع,Posición,screens/CashForecast.tsx; screens/TapeChart.tsx,,translated
+Position after {v0} days,Position after {v0} days,الوضع بعد {v0} يومًا,Posición tras {v0} días,screens/CashForecast.tsx,v0,translated
 Position after 5 days,Position after 5 days,الوضع بعد 5 أيام,Posición tras 5 días,,,translated
 Post,Post,ترحيل,Registrar,screens/CashierTill.tsx; screens/FolioView.tsx,,translated
 Post {amount},Post {amount},ترحيل {amount},Registrar {amount},screens/HkApp.tsx,amount,translated
@@ -5576,6 +5582,7 @@ Webhook verify token,Webhook verify token,رمز تحقق Webhook,Token de verif
 Webhooks,Webhooks,Webhooks,Webhooks,,,translated
 Website,Website,الموقع,Sitio web,screens/BookingEngine.tsx,,translated
 Wedding,Wedding,زفاف,Boda,,,translated
+Week {v0},Week {v0},أسبوع {v0},Semana {v0},screens/CashForecast.tsx,v0,translated
 Weekend nightly price (optional),Weekend nightly price (optional),سعر ليلة نهاية الأسبوع (اختياري),Precio por noche de fin de semana (opcional),screens/Setup.tsx,,translated
 weekend rate,weekend rate,سعر نهاية الأسبوع,tarifa de fin de semana,,,translated
 Weekly,Weekly,أسبوعي,Semanal,screens/Reports.tsx,,translated

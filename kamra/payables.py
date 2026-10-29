@@ -9,8 +9,10 @@ own tax, total, paid and still-owed figures (VendorBill.validate).
 Who does what:
 - Finance and Hotel Admin enter vendors and bills (an agent may enter a
   bill too, from a photo or an email). A new bill waits for approval.
-- Hotel Admin approves a bill and records payments against it. Nothing is
-  paid before it is approved.
+- Hotel Admin approves a bill. Once approved, Finance or Hotel Admin
+  records payments against it. Nothing is paid before it is approved.
+  Payments stay here in accounts payable; nothing is posted to a general
+  ledger.
 
 Petty cash stays what it is: cash paid out of the till on the day, with a
 voucher (kamra.cashier.post_petty_cash). A bill here is supplier credit,
@@ -216,7 +218,7 @@ def approve_vendor_bill(bill: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Hotel Admin", scope=BILL)
+@require_roles("Finance", "Hotel Admin", scope=BILL)
 def pay_vendor_bill(bill: str, amount: float, mode: str = "Bank Transfer",
                     reference: str | None = None, payment_date: str | None = None):
 	"""Record a payment against an approved bill: all of it or part. It

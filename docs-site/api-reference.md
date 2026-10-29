@@ -5064,7 +5064,7 @@ Approve a bill so it can be paid.
 
 ### `kamra.payables.pay_vendor_bill`
 
-**POST** · roles: `Hotel Admin`
+**POST** · roles: `Finance`, `Hotel Admin`
 
 Record a payment against an approved bill: all of it or part. It
 can't be more than the bill still owes. This records the payment; it
@@ -5134,12 +5134,14 @@ d31_60, d61_90, d90p and their sum `overdue`, plus totals.
 
 **GET/POST** · roles: `Finance`, `Hotel Admin`, `Kamra Agent`
 
-Money expected in and out over the next `days` days (default 5),
-day by day from today, with a running position.
+Money expected in and out over the next `days` days (5, 15 or 30;
+default 5), day by day from today, with a running position and
+subtotals by week.
 
 In: company (city ledger) bills falling due, what departing guests
 still owe, advance deposits due from arrivals. Out: supplier bills
-falling due. Anything already overdue is counted today. `opening` is
+falling due, drafts awaiting approval included and flagged `draft`.
+Anything already overdue is counted today. `opening` is
 the cash and bank to start from; without it, the cash in open tills.
 Read-only.
 

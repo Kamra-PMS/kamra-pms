@@ -891,8 +891,9 @@ TOOLS: tuple[ToolSpec, ...] = (
 		the vendor's id or exact name at this property. `amount` is before
 		tax; the PMS works out the tax from `tax_rate` (%) and the due date
 		from the vendor's terms unless `due_date` is on the bill. Dates are
-		YYYY-MM-DD. The bill waits for a Hotel Admin to approve it; agents
-		cannot approve or pay.""",
+		YYYY-MM-DD. The bill waits for a Hotel Admin to approve it; once
+		approved, Finance or a Hotel Admin pays it in Payables. Agents cannot
+		approve or pay.""",
 		{
 			"vendor": _p("string"),
 			"bill_date": _p("string"),
@@ -914,11 +915,14 @@ TOOLS: tuple[ToolSpec, ...] = (
 	_t(
 		"cash_forecast",
 		"books.cash_forecast",
-		"""Money expected in and out over the next days (default 5), day by
-		day: company bills falling due, departing guests' balances and advance
-		deposits in; supplier bills out. Overdue items count today. `opening`
-		is today's cash and bank; without it, cash in open tills. Read-only.""",
-		{"days": _p("integer"), "opening": _p("number")},
+		"""Money expected in and out over the next 5, 15 or 30 days (`days`,
+		default 5), day by day with weekly subtotals: company bills falling
+		due, departing guests' balances and advance deposits in; supplier
+		bills out, including draft bills still awaiting approval (flagged
+		`draft`, totalled in `draft_out`). Overdue items count today.
+		`opening` is today's cash and bank; without it, cash in open tills.
+		Read-only.""",
+		{"days": _p("integer", enum=[5, 15, 30]), "opening": _p("number")},
 		property=True,
 		group="Billing",
 	),

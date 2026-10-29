@@ -11,7 +11,7 @@ import { t as translate, useUILanguage } from "../lib/i18n"
 
 // Accounts payable: suppliers and the bills the hotel owes them. Every
 // figure (tax, total, still owed, aging) comes from kamra.payables.
-// Finance and Hotel Admin enter; only Hotel Admin approves and pays.
+// Finance and Hotel Admin enter and pay approved bills; only Hotel Admin approves.
 
 const ENTER = ["Finance", "Hotel Admin", "System Manager", "Administrator"]
 const APPROVE = ["Hotel Admin", "System Manager", "Administrator"]
@@ -218,7 +218,7 @@ export default function Payables() {
                         {canApprove && b.status === "Awaiting Approval" ? (
                           <Button variant="outline" onClick={() => void approve(b)}>{translate("Approve")}</Button>
                         ) : null}
-                        {canApprove && (b.status === "Approved" || b.status === "Part Paid") ? (
+                        {canEnter && (b.status === "Approved" || b.status === "Part Paid") ? (
                           <Button variant="outline" onClick={() => setSheet({ pay: b })}>{translate("Pay")}</Button>
                         ) : null}
                         {canEnter && b.status !== "Cancelled" && b.status !== "Paid" && !b.paid ? (
