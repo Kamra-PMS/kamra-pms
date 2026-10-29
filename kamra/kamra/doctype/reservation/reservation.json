@@ -49,6 +49,8 @@
   "actual_check_in",
   "column_break_d",
   "actual_check_out",
+  "booked_check_out_date",
+  "early_departure_reason",
   "sb_checkin_record",
   "checked_in_by",
   "checked_in_at",
@@ -290,6 +292,19 @@
    "fieldname": "actual_check_out",
    "fieldtype": "Datetime",
    "label": "Actual Check Out",
+   "read_only": 1
+  },
+  {
+   "fieldname": "booked_check_out_date",
+   "fieldtype": "Date",
+   "label": "Booked Check Out",
+   "read_only": 1,
+   "description": "The departure date before an early check-out shortened the stay"
+  },
+  {
+   "fieldname": "early_departure_reason",
+   "fieldtype": "Small Text",
+   "label": "Early Departure Reason",
    "read_only": 1
   },
   {
@@ -893,7 +908,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-29 12:00:00.000000",
+ "modified": "2026-10-29 14:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Reservation",

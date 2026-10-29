@@ -109,6 +109,11 @@ MODULES: tuple[Module, ...] = (
 				S("cancellation_fee", "Late cancellation fee", "select", "First Night", P, options=("None", "First Night", "Full Stay")),
 				S("no_show_charge", "No-show charge", "select", "First Night", P, options=("None", "First Night", "Full Stay"),
 				  hint="Posted automatically by the night audit."),
+				S("early_departure_fee", "Early departure charge", "select", "All Nights",
+				  options=("None", "One Night", "All Nights"),
+				  hint="A guest checking out before the booked date: the stay is shortened and the unused "
+				       "nights are charged at none, one or all of them. Finance or a Hotel Admin can "
+				       "change it for one stay, with a reason."),
 			)),
 			Section("deposits", "Deposits", "", (
 				S("deposit_pct", "Deposit expected at booking", "number", 0, P, min=0, max=100, unit="%"),

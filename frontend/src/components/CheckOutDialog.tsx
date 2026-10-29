@@ -197,6 +197,17 @@ export interface CheckoutContext {
     folio: string | null
     tax_rate: number
   } | null
+  /** Leaving before the booked date: the plan, or what was done */
+  early_departure: {
+    applied?: boolean
+    booked_check_out: string
+    new_check_out: string
+    reason?: string
+    unused_nights?: number
+    policy?: EarlyFee
+    fees?: Record<EarlyFee, number>
+    can_override?: boolean
+  } | null
   companions: { name: string; guest_name: string; room_number: string | null }[]
   blockers: Blocker[]
   notices: { code: string; message: string }[]
@@ -205,7 +216,10 @@ export interface CheckoutContext {
   sop: { steps: SopStep[]; next_tip: string | null }
 }
 
-type StepKey = "review" | "late" | "company" | "settle" | "guest" | "confirm" | "invoice"
+type EarlyFee = "None" | "One Night" | "All Nights"
+const EARLY_FEES: EarlyFee[] = ["None", "One Night", "All Nights"]
+
+type StepKey = "early" | "review" | "late" | "company" | "settle" | "guest" | "confirm" | "invoice"
 
 const GROUP_ORDER = ["Room", "Restaurant", "Laundry", "Spa", "Damages", "Discounts", "Extras"]
 const EPS = 0.009
@@ -282,6 +296,8 @@ export default function CheckOutDialog(props: {
   const [refundReason, setRefundReason] = useState("")
   const [withholdAmt, setWithholdAmt] = useState("")
   const [withholdReason, setWithholdReason] = useState("")
+  const [earlyReason, setEarlyReason] = useState("")
+  const [earlyFee, setEarlyFee] = useState<EarlyFee | "">("")
   const [lateAmt, setLateAmt] = useState("")
   const [lateDesc, setLateDesc] = useState("")
   const [lateRate, setLateRate] = useState("")
@@ -342,7 +358,10 @@ export default function CheckOutDialog(props: {
   )
   const inHouse = ctx?.reservation.status === "Checked In"
 
+  const early = ctx?.early_departure ?? null
+  const earlyProblems = blockersFor("early")
   const need: Record<StepKey, boolean> = {
+    early: Boolean(inHouse && early),
     review: true,
     late: Boolean(inHouse && ctx?.late_checkout),
     company: Boolean(inHouse && ((ctx?.city_ledger.length ?? 0) > 0 || credit)),
@@ -360,6 +379,10 @@ export default function CheckOutDialog(props: {
     const allInvoiced = Boolean(ctx && ctx.folios.filter((f) => f.side !== "group" && f.has_charges)
       .every((f) => f.status === "Closed"))
     const list: (FlowStep & { key: StepKey })[] = [
+      // first: shortening the stay changes the bill every later step shows
+      { key: "early", label: t("Leaving early"), optional: !earlyProblems.length,
+        status: done("early") || early?.applied ? "done"
+          : earlyProblems.length ? "blocked" : skipped.early ? "skipped" : undefined },
       { key: "review", label: t("Bill"),
         status: done("review") ? "done" : reviewProblems.length ? "blocked" : undefined },
       { key: "late", label: t("Late check-out"), optional: true,
@@ -419,6 +442,14 @@ export default function CheckOutDialog(props: {
       !s.status && order.indexOf(s.key) > -1 && order.indexOf(s.key) < at
         ? { ...s, status: "done" as const } : s)
   }, [steps, flow.visible, current])
+  // a stay leaving early opens on that step: it changes the bill
+  const earlyShown = useRef(false)
+  useEffect(() => {
+    if (!early || early.applied || earlyShown.current || checkedOut) return
+    earlyShown.current = true
+    flow.goTo("early")
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [early, checkedOut])
   // a stay that is already checked out opens on its invoices
   useEffect(() => {
     if (checkedOut) flow.goTo("invoice")
@@ -480,6 +511,16 @@ export default function CheckOutDialog(props: {
       setWithholdAmt("")
       setWithholdReason("")
     })
+  }
+
+  function shortenStay() {
+    if (!early || early.applied) return
+    return run(async () => {
+      await call("kamra.api.early_departure", {
+        reservation: props.reservation, reason: earlyReason.trim(),
+        fee: earlyFee && earlyFee !== early.policy ? earlyFee : undefined,
+      })
+    }, false)
   }
 
   function addLateFee() {
@@ -611,6 +652,10 @@ export default function CheckOutDialog(props: {
   let disabledReason: string | undefined
   let onContinue: (() => void) | undefined = flow.next
   if (current === "review") continueDisabled = reviewProblems.length > 0
+  if (current === "early" && early && !early.applied) {
+    continueDisabled = earlyProblems.length > 0
+    if (continueDisabled) disabledReason = t("Shorten the stay above to continue.")
+  }
   if (current === "company") {
     continueDisabled = !companyOk || (creditBlocked && (!credit?.can_override || !override.trim()))
     if (!companyOk) disabledReason = t("Tick the confirmation above to continue.")
@@ -960,6 +1005,64 @@ export default function CheckOutDialog(props: {
                 ))}
               </ul>
             </div>
+          )}
+
+          {current === "early" && early && (
+            <Section title={t("Leaving early")} tone={early.applied ? "ok" : "warn"}>
+              {early.applied ? (
+                <p className="text-sm text-zinc-700">
+                  {t("The stay now ends {date} (booked to {booked}).", {
+                    date: early.new_check_out, booked: early.booked_check_out })}
+                  {early.reason ? ` ${early.reason}` : ""}
+                </p>
+              ) : (
+                <div className="space-y-3 text-sm text-zinc-700">
+                  <p className="font-medium text-zinc-900">
+                    {t("Leaving early: {n} nights unused", { n: early.unused_nights ?? 0 })}
+                  </p>
+                  <p>
+                    {t("Booked to {booked}. Shortening ends the stay {date}: only the nights stayed are billed, and the room goes back on sale.", {
+                      booked: early.booked_check_out, date: early.new_check_out })}
+                  </p>
+                  <label className="block text-xs">
+                    <span className="mb-1 block text-zinc-500">
+                      {t("Charge for the unused nights")}
+                      {!early.can_override && ` · ${t("property policy")}`}
+                    </span>
+                    <select className={inputCls} value={earlyFee || early.policy}
+                      disabled={!early.can_override}
+                      onChange={(e) => setEarlyFee(e.target.value as EarlyFee)}>
+                      {EARLY_FEES.map((f) => (
+                        <option key={f} value={f}>
+                          {t(f === "None" ? "No charge" : f === "One Night" ? "One night" : "All unused nights")}
+                          {` (${fmt(early.fees?.[f] ?? 0)})`}
+                          {f === early.policy ? ` · ${t("policy")}` : ""}
+                        </option>
+                      ))}
+                    </select>
+                    {early.can_override && earlyFee && earlyFee !== early.policy && (
+                      <span className="mt-1 block text-amber-700">
+                        {t("Differs from the property policy: the reason below is logged.")}
+                      </span>
+                    )}
+                  </label>
+                  <label className="block text-xs">
+                    <span className="mb-1 block text-zinc-500">{t("Reason")}</span>
+                    <input className={inputCls} value={earlyReason}
+                      placeholder={t("Flight changed, family emergency…")}
+                      onChange={(e) => setEarlyReason(e.target.value)} />
+                  </label>
+                  <Button disabled={busy || !earlyReason.trim()} onClick={() => void shortenStay()}>
+                    {t("Shorten the stay")}
+                  </Button>
+                  {!earlyProblems.length && (
+                    <p className="text-xs text-zinc-500">
+                      {t("Or skip: every booked night stays on the bill.")}
+                    </p>
+                  )}
+                </div>
+              )}
+            </Section>
           )}
 
           {current === "late" && ctx.late_checkout && (

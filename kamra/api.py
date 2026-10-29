@@ -3202,6 +3202,13 @@ def reservation_detail(reservation: str):
 		"special_requests": res.special_requests,
 		"eta": res.eta,
 		"late_arrival": int(res.get("late_arrival") or 0),
+		# who is in the room and when each arrived / left (names only here;
+		# IDs stay on the registration card)
+		"occupants": [{"full_name": o.full_name, "arrived_at": _dt(o.get("arrived_at")),
+		               "left_at": _dt(o.get("left_at"))}
+		              for o in (res.get("occupants") or [])],
+		"booked_check_out_date": str(res.get("booked_check_out_date") or "") or None,
+		"early_departure_reason": res.get("early_departure_reason"),
 		# the nightly rates confirmed at booking - what the folio bills
 		"night_rates": [
 			{"date": str(n.stay_date), "rate": float(n.rate or 0),
@@ -4019,13 +4026,34 @@ def checkout_context(reservation: str):
 
 @frappe.whitelist()
 @require_roles("Front Desk", "Night Auditor", "Kamra Agent")
-def check_out(reservation: str, credit_override_reason: str | None = None):
+def check_out(reservation: str, credit_override_reason: str | None = None,
+              early_reason: str | None = None, early_fee: str | None = None):
 	"""Check a guest out. What the company pays moves to the city ledger,
 	after the property's credit control: a warning comes back in
 	`credit_warnings`; a block refuses (CREDIT_BLOCKED) unless Finance or a
 	Hotel Admin passes `credit_override_reason` (logged). Agents can't
-	override."""
+	override.
+
+	Leaving before the booked date: pass `early_reason` and the stay is
+	first shortened to today with the property's early-departure charge
+	(early_departure, below). Without it, a property whose charge is not
+	"All Nights" refuses, so unused nights are never billed by accident;
+	under "All Nights" every booked night is billed as before."""
 	doc = frappe.get_doc("Reservation", reservation)
+	from kamra.checkout import apply_early_departure, early_departure_plan
+	if (early_reason or "").strip():
+		apply_early_departure(doc.name, early_reason, early_fee)
+		doc = frappe.get_doc("Reservation", reservation)
+	else:
+		plan = early_departure_plan(doc)
+		if plan and plan["policy"] != "All Nights":
+			frappe.throw(
+				_("{0} is leaving {1} night(s) early (booked to {2}). Give the reason "
+				  "(early_reason) so the stay is shortened and the property's early "
+				  "departure charge ({3}) applies.").format(
+					doc.guest_name, plan["unused_nights"], plan["booked_check_out"],
+					_(plan["policy"])),
+				title=_("Leaving early"))
 	credit = _assert_settled(doc, credit_override_reason)
 	# a held security deposit that the settled bill used up is recorded as
 	# applied, so the Deposit ledger doesn't keep a departed guest's money
@@ -4043,6 +4071,22 @@ def check_out(reservation: str, credit_override_reason: str | None = None):
 			{"company": c["company"], "reasons": c["reasons"],
 			 "overridden": bool(c.get("overridden"))} for c in credit]
 	return out
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Front Desk", "Finance", "Kamra Agent")
+def early_departure(reservation: str, reason: str, fee: str | None = None):
+	"""A guest in house is leaving before the booked date: shorten the stay
+	to today through the amend path (availability, channel manager and
+	price follow), post the property's early-departure charge for the
+	unused nights (None / One Night / All Nights) and log the reason. Then
+	settle and check out as usual. `fee` other than the property's policy
+	needs Finance or a Hotel Admin. checkout_context shows the plan
+	(`early_departure`) before anything changes."""
+	from kamra.crs import assert_property_access
+	assert_property_access(frappe.db.get_value("Reservation", reservation, "property"))
+	from kamra.checkout import apply_early_departure
+	return apply_early_departure(reservation, reason, fee)
 
 
 HK_SUPERVISOR = "Housekeeping Supervisor"
@@ -4886,6 +4930,13 @@ def amend_stay(reservation: str, check_in_date: str, check_out_date: str,
 	doc = frappe.get_doc("Reservation", reservation)
 	from kamra.crs import assert_property_access
 	assert_property_access(doc.property)
+	return _amend_dates(doc, check_in_date, check_out_date, confirm_price)
+
+
+def _amend_dates(doc, check_in_date: str, check_out_date: str,
+                 confirm_price: int = 0, note: str = "") -> dict:
+	"""amend_stay's writer, for callers that already checked access (the
+	early check-out shortens a stay through it)."""
 	if doc.status not in ("Confirmed", "Checked In"):
 		frappe.throw("Only active reservations can be amended.")
 	old = f"{doc.check_in_date}→{doc.check_out_date}"
@@ -4899,7 +4950,8 @@ def amend_stay(reservation: str, check_in_date: str, check_out_date: str,
 	           rationale=f"{old} → {check_in_date}→{check_out_date}; "
 	                     f"total {old_amount:,.2f} → "
 	                     f"{float(doc.amount_after_tax or 0):,.2f}"
-	                     + (" (new price confirmed)" if cint(confirm_price) else ""))
+	                     + (" (new price confirmed)" if cint(confirm_price) else "")
+	                     + (f"; {note}" if note else ""))
 	return {"ok": True, "nights": doc.nights,
 	        "previous_amount": old_amount,
 	        "amount_after_tax": doc.amount_after_tax}
