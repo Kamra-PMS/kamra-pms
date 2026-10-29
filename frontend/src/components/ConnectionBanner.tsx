@@ -10,17 +10,19 @@ import { useT } from "../lib/i18n"
  * screens' own polling/realtime refetch recovers the data. */
 export default function ConnectionBanner() {
   const { t } = useT()
-  const [offline, setOffline] = useState(false)
+  const [offline, setOffline] = useState(() => !navigator.onLine)
 
   useEffect(() => {
     const off = () => setOffline(true)
     const on = () => setOffline(false)
     window.addEventListener("kamra:offline", off)
     window.addEventListener("kamra:online", on)
+    window.addEventListener("offline", off) // the device lost its network
     window.addEventListener("online", off) // browser back online → verify
     return () => {
       window.removeEventListener("kamra:offline", off)
       window.removeEventListener("kamra:online", on)
+      window.removeEventListener("offline", off)
       window.removeEventListener("online", off)
     }
   }, [])
