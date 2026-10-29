@@ -26,6 +26,7 @@ const HkApp = lazy(() => import("./screens/HkApp"))
 const Guests = lazy(() => import("./screens/Guests"))
 const RegistrationCard = lazy(() => import("./screens/RegistrationCard"))
 const CancellationLetter = lazy(() => import("./screens/CancellationLetter"))
+const TripConfirmation = lazy(() => import("./screens/TripConfirmation"))
 const Setup = lazy(() => import("./screens/Setup"))
 const GoLiveImport = lazy(() => import("./screens/GoLiveImport"))
 const HousekeepingBoard = lazy(() => import("./screens/HousekeepingBoard"))
@@ -188,6 +189,7 @@ export default function App() {
           />
           <Route path="grc/:name" element={<RegistrationCard />} />
           <Route path="cancelled/:name" element={<CancellationLetter />} />
+          <Route path="trip/:name" element={<TripConfirmation />} />
           <Route path="guests" element={<Guests />} />
           <Route path="guests/:name" element={<GuestJourney />} />
           <Route

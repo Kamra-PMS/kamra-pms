@@ -287,7 +287,38 @@ searches all of them at once.
 
 ![Central reservations: availability for one night for two adults across three properties, with a Book button on each room type](/img/reservations/crs.png)
 
-## Hold rooms for a group
+## Book a trip across properties
+
+A guest, travel agent or company can book one trip that moves between
+your hotels, for example 2 nights at one, then 3 nights at another. The
+trip gets one reference (ITN-...) the guest can quote.
+
+1. In **Front Desk → Central Reservations**, search the first stop and
+   click **Add to trip** on the room type.
+2. Check-in moves to the day that stay ends. Set the nights, search again
+   and click **Add to trip** for the next stop. Repeat for each stop.
+3. **New trip** lists the stops in date order with each price and the
+   trip total. Enter the guest's name and phone and click **Book trip**.
+
+Each stop becomes a normal booking at its own property, with its own room,
+bill and invoice. All stops book or none do. Two stops can't share a
+night; a stop can start the day the previous one ends.
+
+**Trips** lists recent trips. Click one to see each stop's status, price,
+advance paid and deposit due.
+
+- **Take an advance** on each stop: click **Open RES-...** and take it
+  there, as for any booking. Money is never held on the trip itself.
+- **Change dates or cancel one stop** the same way, from its booking. A
+  new date that runs into another stop is refused.
+- **Cancel whole trip** shows each stop's fee under its own property's
+  policy, then cancels every confirmed stop. Stops already checked in or
+  finished are left as they are.
+- **Confirmation** opens a printable page with every stop and the
+  reference.
+
+You only see a trip if you can access every property in it.
+
 
 For a wedding, conference or tour, hold a block of rooms first and name
 the guests later. Groups live in **Banquets & Groups → Groups & Blocks**.
@@ -406,5 +437,8 @@ The detail panel reads `kamra.api.reservation_detail`; date changes use
 waitlist uses `kamra.api.promote_waitlist`. AI agents use the `quote`,
 `create_booking`, `add_to_waitlist`, `promote_waitlist`,
 `cancellation_preview`, `cancel_booking`, `amend_stay`, `move_room` and
-`create_group_block` tools. See [MCP tools](/mcp-tools) and the
+`create_group_block` tools. Trips across properties use
+`kamra.crs.quote_itinerary`, `create_itinerary`, `get_itinerary`,
+`add_itinerary_leg`, `cancel_itinerary_preview` and `cancel_itinerary`
+(MCP tools of the same names). See [MCP tools](/mcp-tools) and the
 [API reference](/api-reference).
