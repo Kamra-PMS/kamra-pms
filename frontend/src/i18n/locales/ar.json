@@ -5591,5 +5591,7 @@
   "e.g. Sharma Wedding": "مثال: زفاف شارما",
   "pays: {v0}": "يدفع: {v0}",
   "{n} room(s)": "{n} غرفة",
-  "{v0} room(s) are still in house. Their new charges open a new group bill.": "لا تزال {v0} غرفة مشغولة. رسومها الجديدة تفتح فاتورة مجموعة جديدة."
+  "{v0} room(s) are still in house. Their new charges open a new group bill.": "لا تزال {v0} غرفة مشغولة. رسومها الجديدة تفتح فاتورة مجموعة جديدة.",
+  "Residence Card": "بطاقة الإقامة",
+  "Nicaraguan": "نيكاراغوي"
 }

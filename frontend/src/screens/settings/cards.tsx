@@ -189,6 +189,7 @@ export function SettingsCard(props: {
 }
 
 export const TIMEZONES = [
+  "America/Managua",
   "America/Noronha",
   "America/Sao_Paulo",
   "America/Fortaleza",
