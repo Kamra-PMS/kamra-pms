@@ -106,12 +106,24 @@ class ReinstateCheckoutTestCase(AuditTestCase):
 
 	def test_refused_after_the_night_audit(self):
 		res, _folio, _n = self.guest_stay_out()
-		frappe.db.set_value("Reservation", res.name, "actual_check_out", "2000-01-01 10:00:00")
-		frappe.get_doc({"doctype": "Night Audit Run", "property": PROP_A,
-		                "business_date": TODAY}).insert(ignore_permissions=True,
-		                                                ignore_mandatory=True)
+		self.assertEqual(str(frappe.db.get_value("Reservation", res.name,
+		                                         "check_out_business_date")), TODAY)
+		frappe.db.set_value("Property", PROP_A, "business_date", d(1))  # the audit rolled
 		with self.assertRaisesRegex(frappe.ValidationError, "night audit"):
 			api.reinstate_checkout(res.name, "too late")
+
+	def test_a_bill_settled_earlier_keeps_its_invoice(self):
+		res = make_reservation(PROP_A, self.rt, d(-1), d(1), status="Checked In",
+		                       room=self.room)
+		folio_mod.post_remaining_nights(res)
+		folio = guest_folio(res.name)
+		api.add_folio_payment(folio, "Cash", leaks._balance(folio))
+		earlier = folio_mod.close_folio(folio)
+		frappe.db.set_value("Folio", folio, "closed_on", "2000-01-01 10:00:00")
+		api.check_out(res.name)
+		out = api.reinstate_checkout(res.name, "came back")
+		self.assertNotIn(earlier, out["cancelled_invoices"])
+		self.assertEqual(frappe.db.get_value("Folio", folio, "invoice_number"), earlier)
 
 	def test_refused_when_the_room_is_taken(self):
 		res, _folio, _n = self.guest_stay_out()

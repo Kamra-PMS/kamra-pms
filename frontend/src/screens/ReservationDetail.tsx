@@ -192,6 +192,7 @@ export default function ReservationDetail({
   const [d, setD] = useState<Detail | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [reinstated, setReinstated] = useState<string[]>([])
   const [changingRoom, setChangingRoom] = useState(false)
   const [declineReason, setDeclineReason] = useState("")
 
@@ -685,7 +686,12 @@ export default function ReservationDetail({
             <LogOut className="size-4" />{translate(" Check out")}</Button>
         )}
         {d.status === "Checked Out" && (
-          <ReinstatePanel reservation={name} onDone={() => { refresh(); reload() }} />
+          <ReinstatePanel reservation={name} onDone={(w) => { setReinstated(w); refresh(); reload() }} />
+        )}
+        {reinstated.length > 0 && (
+          <div className="w-full space-y-1 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+            {reinstated.map((w) => <p key={w}>{w}</p>)}
+          </div>
         )}
         <Link
           to={`/grc/${encodeURIComponent(name)}`}

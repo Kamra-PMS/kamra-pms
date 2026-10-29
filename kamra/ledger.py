@@ -626,9 +626,14 @@ def reverse_city_ledger_transfer(folio: str, reason: str) -> float:
 		"""SELECT COALESCE(SUM(debit - credit), 0) FROM `tabCity Ledger Entry`
 		   WHERE folio = %s AND account = %s AND kind != 'Payment'""",
 		(doc.name, account))[0][0] or 0)
-	if float(paid or 0) > 0.009 or billed < net - 0.009:
-		frappe.throw(frappe._("The company has already paid part of this bill, so the "
-		              "checkout can't be undone. Finance can correct it on the account."))
+	if float(paid or 0) > 0.009:
+		frappe.throw(frappe._("The company has already paid part of this bill (or money it "
+		              "paid ahead was applied), so the checkout can't be undone. Finance "
+		              "can correct it on the account."))
+	if billed < net - 0.009:
+		frappe.throw(frappe._("A credit note or adjustment already changed this bill on the "
+		              "company's account, so the checkout can't be undone. Finance can "
+		              "correct it on the account."))
 	bd = get_business_date(doc.property)
 	row = doc.append("payments", {
 		"posting_date": bd, "payment_kind": "Payment", "mode": "Company Credit",

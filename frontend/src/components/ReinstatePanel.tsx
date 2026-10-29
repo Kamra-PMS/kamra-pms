@@ -13,7 +13,9 @@ import { Button } from "./ui/button"
 
 export default function ReinstatePanel({ reservation, onDone }: {
   reservation: string
-  onDone: () => void
+  /** gets what the desk should still do (the stay is no longer checked
+   *  out, so this panel goes away) */
+  onDone: (warnings: string[]) => void
 }) {
   const { t } = useT()
   const { ensureUnlocked } = useCashierAuth()
@@ -27,9 +29,9 @@ export default function ReinstatePanel({ reservation, onDone }: {
     setErr(null)
     try {
       await ensureUnlocked()
-      await call("kamra.api.reinstate_checkout", { reservation, reason })
+      const out = await call<{ warnings?: string[] }>("kamra.api.reinstate_checkout", { reservation, reason })
       setOpen(false)
-      onDone()
+      onDone(out.warnings ?? [])
     } catch (e) {
       setErr(serverError(e))
     } finally {

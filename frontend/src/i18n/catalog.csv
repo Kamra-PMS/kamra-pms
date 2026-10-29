@@ -4023,7 +4023,7 @@ Public listing URL slug (/stay/…),Public listing URL slug (/stay/…),المع
 Purpose of visit,Purpose of visit,الغرض من الزيارة,Motivo de la visita,components/BookingDialog.tsx,,translated
 "Push events out instead of polling, and let a third-party POS post to guest folios.","Push events out instead of polling, and let a third-party POS post to guest folios.",أرسل الأحداث بدلاً من الاستعلام الدوري، واسمح لنظام POS خارجي بالترحيل إلى فواتير الضيوف.,Envíe eventos sin consultas periódicas y permita que un punto de venta externo registre cargos en los folios de huéspedes.,screens/Developers.tsx,,translated
 Put some lines on it first.,Put some lines on it first.,أضف بعض البنود أولاً.,Agregue primero algunos conceptos.,,,translated
-Puts the guest back in house in the same room. The invoice is cancelled (it stays in the cancelled register) and a company bill comes off the company's account. Only before the night audit.,Puts the guest back in house in the same room. The invoice is cancelled (it stays in the cancelled register) and a company bill comes off the company's account. Only before the night audit.,,,components/ReinstatePanel.tsx,,needs_translation
+Puts the guest back in house in the same room. The invoice is cancelled (it stays in the cancelled register) and a company bill comes off the company's account. Only before the night audit.,Puts the guest back in house in the same room. The invoice is cancelled (it stays in the cancelled register) and a company bill comes off the company's account. Only before the night audit.,يعيد الضيف مقيمًا في الغرفة نفسها. تُلغى الفاتورة (وتبقى في سجل الفواتير الملغاة) وتُزال فاتورة الشركة من حساب الشركة. قبل تدقيق الليل فقط.,Vuelve a alojar al huésped en la misma habitación. La factura se anula (queda en el registro de anuladas) y la cuenta de empresa sale de la cuenta de la empresa. Solo antes de la auditoría nocturna.,components/ReinstatePanel.tsx,,translated
 "QR code, UBL XML and hash chain on every invoice, credit note and paid outlet bill.","QR code, UBL XML and hash chain on every invoice, credit note and paid outlet bill.",رمز QR وUBL XML وسلسلة تجزئة على كل فاتورة وإشعار دائن وفاتورة منفذ مدفوعة.,"Código QR, XML UBL y cadena de hashes en cada factura, nota de crédito y cuenta pagada de punto de venta.",,,translated
 QR codes,QR codes,رموز QR,Códigos QR,,,translated
 Qty,Qty,الكمية,Cant.,lib/thermal.ts; screens/BanquetCatalogue.tsx; screens/BanquetDocument.tsx; screens/BanquetFunction.tsx,,translated
@@ -5308,7 +5308,7 @@ unchanged,unchanged,بدون تغيير,sin cambios,screens/settings/cards.tsx,,
 Under ,Under ,أقل من ,Menores de ,screens/RegistrationCard.tsx,,translated
 Under 1,Under 1,أقل من سنة,Menos de 1 año,components/ChildAges.tsx,,translated
 Undo - put it back on the board,Undo - put it back on the board,تراجع - أعده إلى اللوحة,Deshacer - volver a colocarlo en el tablero,screens/Kitchen.tsx,,translated
-Undo checkout,Undo checkout,,,components/ReinstatePanel.tsx,,needs_translation
+Undo checkout,Undo checkout,التراجع عن المغادرة,Deshacer salida,components/ReinstatePanel.tsx,,translated
 Undo NC,Undo NC,تراجع عن المجاني,Quitar cortesía,screens/POS.tsx,,translated
 Unit,Unit,الوحدة,Unidad,,,translated
 "Unit / room numbers per listing, comma-separated.","Unit / room numbers per listing, comma-separated.",أرقام الوحدات / الغرف لكل قائمة، مفصولة بفواصل.,"Números de unidad/habitación por anuncio, separados por comas.",screens/Setup.tsx,,translated
@@ -5587,7 +5587,7 @@ Who stayed here,Who stayed here,من أقام هنا,Quién se alojó aquí,comp
 Whole place,Whole place,المكان بالكامل,Alojamiento completo,,,translated
 Whole place: rooms {rooms},Whole place: rooms {rooms},المكان بالكامل: الغرف {rooms},Todo el lugar: habitaciones {rooms},components/CheckInDialog.tsx,rooms,translated
 Whose function is this?,Whose function is this?,لمن هذه المناسبة؟,¿Para quién se organiza este evento?,screens/Banquet.tsx,,translated
-Why (e.g. checked out the wrong room),Why (e.g. checked out the wrong room),,,components/ReinstatePanel.tsx,,needs_translation
+Why (e.g. checked out the wrong room),Why (e.g. checked out the wrong room),السبب (مثلًا: سُجّلت مغادرة الغرفة الخطأ),"Motivo (p. ej., se registró la salida de la habitación equivocada)",components/ReinstatePanel.tsx,,translated
 Why (optional),Why (optional),السبب (اختياري),Por qué (opcional),components/CheckInDialog.tsx,,translated
 Why business went away,Why business went away,لماذا ذهب العمل,Motivos de pérdida de oportunidades,screens/Banquet.tsx,,translated
 Why is it being reopened?,Why is it being reopened?,لماذا يُعاد فتحها؟,¿Por qué se vuelve a abrir?,screens/Tickets.tsx,,translated

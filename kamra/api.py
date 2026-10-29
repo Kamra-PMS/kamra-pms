@@ -3998,16 +3998,22 @@ def reinstate_checkout(reservation: str, reason: str, pin: str | None = None):
 	if doc.status != "Checked Out":
 		frappe.throw(_("Only a checked-out stay can be reinstated."))
 	require_cashier_pin(doc.property, pin)
-	out_at = doc.get("actual_check_out")
-	if not out_at or frappe.db.exists("Night Audit Run", {
-			"property": doc.property, "creation": (">", out_at)}):
+	from frappe.utils import add_to_date, get_datetime
+
+	from kamra.business_date import get_business_date
+	out_bd = doc.get("check_out_business_date")
+	if not out_bd or str(out_bd) != str(get_business_date(doc.property)):
 		frappe.throw(_("The night audit has run since this checkout, so it can't "
 		              "be undone. Make a new booking, or ask Finance to correct the bills."))
 	folios = frappe.get_all("Folio", filters={"reservation": doc.name},
-	                        fields=["name", "status", "invoice_number"])
+	                        fields=["name", "status", "invoice_number", "closed_on"])
+	# only the bills closed at this checkout: a bill settled earlier in the
+	# stay keeps its invoice (the desk closes them just before or after)
+	since = add_to_date(get_datetime(doc.actual_check_out), hours=-1)
 	cancelled, brought_back = [], 0.0
 	for f in folios:
-		if f.status == "Closed" and f.invoice_number:
+		if f.status == "Closed" and f.invoice_number and f.closed_on \
+				and get_datetime(f.closed_on) >= since:
 			cancelled.append(cancel_invoice(f.name, f"Checkout reinstated: {reason}")["cancelled"])
 	for f in folios:
 		brought_back += reverse_city_ledger_transfer(f.name, reason)
@@ -4021,8 +4027,16 @@ def reinstate_checkout(reservation: str, reason: str, pin: str | None = None):
 	log_action("reinstate_checkout", "Reservation", doc.name, doc.property,
 	           rationale=f"{doc.guest_name}: {reason}"
 	                     + (f"; invoices cancelled {', '.join(cancelled)}" if cancelled else ""))
+	warnings = []
+	if frappe.db.get_value("Security Deposit", {"reservation": doc.name, "status": "Withheld"}):
+		warnings.append(_("The security deposit was applied to the bill at checkout and "
+		                  "stays applied. Take a new deposit if the guest needs one."))
+	if frappe.db.get_value("Property", doc.property, "id_retention") == "Verify & Discard":
+		warnings.append(_("The guest's ID was discarded at checkout. Capture it again "
+		                  "in the check-in steps."))
 	return {"ok": True, "reservation": doc.name, "status": doc.status,
-	        "cancelled_invoices": cancelled, "from_city_ledger": round(brought_back, 2)}
+	        "cancelled_invoices": cancelled, "from_city_ledger": round(brought_back, 2),
+	        "warnings": warnings}
 
 
 @frappe.whitelist()

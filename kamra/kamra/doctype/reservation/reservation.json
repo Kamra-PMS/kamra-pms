@@ -49,6 +49,7 @@
   "actual_check_in",
   "column_break_d",
   "actual_check_out",
+  "check_out_business_date",
   "sb_checkin_record",
   "checked_in_by",
   "checked_in_at",
@@ -291,6 +292,13 @@
    "fieldtype": "Datetime",
    "label": "Actual Check Out",
    "read_only": 1
+  },
+  {
+   "fieldname": "check_out_business_date",
+   "fieldtype": "Date",
+   "label": "Check-out Business Date",
+   "read_only": 1,
+   "description": "The business date the guest checked out on: a checkout can be undone only until it moves on"
   },
   {
    "fieldname": "sb_checkin_record",
