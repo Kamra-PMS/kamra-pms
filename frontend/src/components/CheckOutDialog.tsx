@@ -949,7 +949,7 @@ export default function CheckOutDialog(props: {
                             ? t("Group bill stays open until the group is settled")
                             : t("Group bill")
                           : t("Billed to guest")}
-                      {" · "}{t("Balance")} {fmt(f.balance)}
+                      {" · "}{f.balance < 0 ? t("Advance") : t("Balance")} {fmt(Math.abs(f.balance))}
                     </span>
                     <a href={folioLink(f.folio)} target="_blank" rel="noreferrer"
                       className="inline-flex items-center gap-1 font-medium text-brand-700 hover:underline">

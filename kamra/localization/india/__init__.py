@@ -17,6 +17,8 @@ SERVICES_GST = 18.0  # laundry and other guest services
 DEFAULT_CURRENCY = "INR"
 DEFAULT_TIMEZONE = "Asia/Kolkata"
 DEFAULT_NATIONALITY = "Indian"
+# the financial year runs April to March: year-to-date reports start here
+FINANCIAL_YEAR_START = (4, 1)
 # named in the guest privacy notice
 PRIVACY_AUTHORITY = "the Data Protection Board of India"
 GUEST_REPORT = "for foreign nationals, Form C to the immigration authorities"
@@ -89,6 +91,7 @@ SAC_CODES = {
 	"Minibar": "996331",
 	"Laundry": "999712",           # washing, cleaning and dyeing
 	"Spa": "999722",               # physical well-being incl. health club
+	"Taxi": "996412",              # taxi services
 	"Misc": "999799",              # other services n.e.c.
 	# banquet line types
 	"Venue Rental": "997212",      # renting of non-residential property

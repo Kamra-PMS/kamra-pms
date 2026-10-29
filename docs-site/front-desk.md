@@ -130,6 +130,23 @@ required. A required step cannot be skipped at the desk, and Kamra will not
 check the guest in until it is done, whoever asks: the desk, the API or an
 AI agent.
 
+### Small things at the desk
+
+- **Expected arrivals over several days:** on **In House**, the Arrivals tab
+  has an **Until** date: pick up to two weeks ahead to see everyone due.
+- **Market segment:** a booking can carry its segment (Corporate, Leisure,
+  Group, MICE, Government, Wedding, Long Stay, Airline Crew, Complimentary,
+  House Use). A company booking is Corporate unless you pick another.
+- **Requests with a price:** at check-in, an extra bed, an airport drop or
+  a special occasion can take a price; it goes on the guest's bill (an
+  airport drop as **Taxi**). A wake-up call or dietary note is never charged.
+- **Room change** shows the room type the guest is in now and the one they
+  move to.
+- **Folio:** when the guest has paid more than has been charged so far, the
+  folio shows it as **Advance**, not as a negative balance.
+- **Reservation numbers** restart each financial year: in India in April
+  (RES-2026-… runs April 2026 to March 2027), elsewhere in January.
+
 ## Check in a walk-in
 
 For a guest standing at the counter with no booking, use **Walk-in** in

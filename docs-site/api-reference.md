@@ -1691,6 +1691,7 @@ a block refuses (CREDIT_BLOCKED) unless Finance or a Hotel Admin passes
 | `ota_total` | no | `0` |
 | `ota_commission_pct` | no | `None` |
 | `marketing_consent` | no | `0` |
+| `market_segment` | no | `None` |
 
 ### `kamra.api.waitlist`
 
@@ -5542,12 +5543,15 @@ encodes the cards at the encoder and notes the card numbers here.
 
 Quick requests at check-in become service tickets (one each); a free
 note is kept on the step and, if given alone, raised as one ticket.
+`prices` ({request: amount}) bills a paid request (an extra bed, an
+airport drop) to the stay, by the hotel's tax rules and billing rules.
 
 | Param | Required | Default |
 | --- | --- | --- |
 | `reservation` | yes |  |
 | `requests` | no | `None` |
 | `note` | no | `None` |
+| `prices` | no | `None` |
 
 ### `kamra.checkin.set_room_charges`
 
@@ -5827,6 +5831,12 @@ Everything the public booking page needs to render.
 
 Availability + real quoted price per room type for the stay.
 
+Each available row also carries `plans`: the stay quoted room only
+(first) and with each meal plan, so the page lists real totals per plan. A valid
+`voucher_code` discounts every quote, and each plan then keeps its
+undiscounted `list_amount` for the strike-through; an invalid one is
+ignored here (check_voucher tells the guest why).
+
 `child_ages` (e.g. [3, 8, 13]) lets each room type's age bands decide who
 is free, a child or an adult; without it `children` are all children.
 Each row says whether the room type can take the party: `available`, a
@@ -5844,6 +5854,7 @@ what it sleeps but within the extra guests it allows by arrangement.
 | `location_slug` | no | `None` |
 | `pets` | no | `0` |
 | `child_ages` | no | `None` |
+| `voucher_code` | no | `None` |
 
 ### `kamra.public_api.precheckin_info` <Badge type='tip' text='public' />
 

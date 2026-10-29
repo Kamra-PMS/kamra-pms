@@ -36,12 +36,14 @@ STAFF = ("Front Desk", "Night Auditor")
 PAYERS = ("OTA prepaid", "OTA, guest pays here", "Guest", "Company", "Group")
 
 # quick requests at check-in -> a service ticket each (subject, category, priority)
+# (label, team, priority, the charge type a price is billed as - None when
+# the request is never charged)
 REQUEST_PRESETS = {
-	"extra_bed": ("Extra bed", "Housekeeping", "Medium"),
-	"wake_up_call": ("Wake-up call", "Front Desk", "Medium"),
-	"airport_drop": ("Airport drop", "Concierge", "Medium"),
-	"dietary": ("Dietary needs", "Room Service", "Medium"),
-	"special_occasion": ("Special occasion", "Concierge", "Medium"),
+	"extra_bed": ("Extra bed", "Housekeeping", "Medium", "Extra Guests"),
+	"wake_up_call": ("Wake-up call", "Front Desk", "Medium", None),
+	"airport_drop": ("Airport drop", "Concierge", "Medium", "Taxi"),
+	"dietary": ("Dietary needs", "Room Service", "Medium", None),
+	"special_occasion": ("Special occasion", "Concierge", "Medium", "Misc"),
 }
 
 STAY_INFO_KEYS = ("guest_wifi_name", "guest_wifi_password", "breakfast_hours",
@@ -507,7 +509,8 @@ def _flow_payload(res, steps, ctx, guest) -> dict:
 			{"step": s["step_key"], "title": s["title"], "tip": s.get("tip") or ""}
 			for s in soft_pending(steps)],
 		"rooms": _free_rooms(res) if not res.room else [],
-		"request_presets": [{"key": k, "label": v[0]} for k, v in REQUEST_PRESETS.items()],
+		"request_presets": [{"key": k, "label": v[0], "priced": bool(v[3])}
+		                    for k, v in REQUEST_PRESETS.items()],
 		# the deposit step takes money: is the operator's till open, or can
 		# they open it here (kamra.cashier.open_session)
 		"till": _till(res.property),
@@ -723,19 +726,28 @@ def issue_keys(reservation: str, key_count: int = 1,
 
 @frappe.whitelist(methods=["POST"])
 @require_roles(*STAFF)
-def log_checkin_requests(reservation: str, requests=None, note: str | None = None):
+def log_checkin_requests(reservation: str, requests=None, note: str | None = None,
+                         prices=None):
 	"""Quick requests at check-in become service tickets (one each); a free
-	note is kept on the step and, if given alone, raised as one ticket."""
+	note is kept on the step and, if given alone, raised as one ticket.
+	`prices` ({request: amount}) bills a paid request (an extra bed, an
+	airport drop) to the stay, by the hotel's tax rules and billing rules."""
 	res = _res(reservation)
 	_open(res)
 	if isinstance(requests, str):
 		requests = frappe.parse_json(requests) if requests.strip() else []
 	requests = [r for r in (requests or []) if r in REQUEST_PRESETS]
 	note = (note or "").strip()[:500]
-	from kamra.api import create_ticket
-	tickets = []
+	if isinstance(prices, str):
+		prices = frappe.parse_json(prices) if prices.strip() else {}
+	from kamra.api import create_ticket, post_stay_charge
+	tickets, billed = [], []
 	for key in requests:
-		subject, category, priority = REQUEST_PRESETS[key]
+		subject, category, priority, charge_type = REQUEST_PRESETS[key]
+		amount = flt((prices or {}).get(key))
+		if charge_type and amount > 0:
+			post_stay_charge(res.name, charge_type, subject, amount)
+			billed.append(f"{subject} {amount:,.2f}")
 		tickets.append(create_ticket(
 			res.property, f"{subject} ({res.guest_name})", category,
 			priority=priority, room=res.room, reservation=res.name,
@@ -747,7 +759,7 @@ def log_checkin_requests(reservation: str, requests=None, note: str | None = Non
 			description=note)["ticket"])
 	record_step(res, "guest_requests", "done",
 	            note=", ".join(REQUEST_PRESETS[k][0] for k in requests) or note or _("Nothing needed"),
-	            tickets=tickets)
+	            tickets=tickets, billed=billed)
 	out = checkin_flow(reservation)
 	out["tickets"] = tickets
 	return out

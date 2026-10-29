@@ -183,6 +183,9 @@ TOOLS: tuple[ToolSpec, ...] = (
 			"rate_plan": RATE_PLAN_PARAM,
 			"voucher_code": _p("string"),
 			"company": COMPANY_PARAM,
+			"market_segment": _p("string", enum=[
+				"Corporate", "Leisure", "Group", "MICE", "Government", "Wedding",
+				"Long Stay", "Airline Crew", "Complimentary", "House Use"]),
 			"idempotency_key": IDEMPOTENCY_KEY_PARAM,
 		},
 		required=("guest_name", "room_type", "check_in_date", "check_out_date"),

@@ -211,10 +211,30 @@ def send_payment_request(reservation: str, amount, note: str = "") -> dict:
 	phone = frappe.db.get_value("Guest", res.guest, "phone")
 	if not phone:
 		frappe.throw("This guest has no phone number on file.")
-	return send_template(
+	link = None if note else _payment_link(res, amount)
+	out = send_template(
 		res.property, phone, conn.tpl_payment_request,
-		[res.guest_name or "Guest", str(amount), note or "at the front desk"],
+		[res.guest_name or "Guest", str(amount), note or link or "at the front desk"],
 		guest=res.guest, reservation=res.name)
+	if link:
+		out["payment_link"] = link
+	return out
+
+
+def _payment_link(res, amount) -> str | None:
+	"""A pay-online link for the guest's open bill, so the message carries
+	it without the desk copying one in. None where the property has no
+	payment gateway (the guest is asked to pay at the desk instead)."""
+	folio = frappe.db.get_value("Folio", {"reservation": res.name, "folio_type": "Guest",
+	                                      "status": "Open"}, "name")
+	if not folio:
+		return None
+	try:
+		from kamra.payments import create_payment_link
+		return (create_payment_link(folio, amount) or {}).get("url")
+	except frappe.ValidationError:
+		frappe.clear_messages()
+		return None
 
 
 @frappe.whitelist(methods=["POST"])

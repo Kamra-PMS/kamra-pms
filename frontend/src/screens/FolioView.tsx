@@ -154,7 +154,7 @@ interface InvoiceData {
 }
 
 const CHARGE_TYPES = [
-  "Food & Beverage", "Minibar", "Laundry", "Spa",
+  "Food & Beverage", "Minibar", "Laundry", "Spa", "Taxi",
   "Early Check-in", "Late Checkout", "Pet Charge", "Discount", "Misc",
 ]
 
@@ -385,7 +385,7 @@ export default function FolioView() {
                           (s.balance > 0 ? "text-amber-600" : "text-zinc-400")
                         }
                       >
-                        {cur()}{inr(s.balance)}
+                        {s.balance < 0 ? `${t("Advance")} ` : ""}{cur()}{inr(Math.abs(s.balance))}
                       </span>
                     </Link>
                     {canDelete && (
@@ -1140,7 +1140,9 @@ export default function FolioView() {
                 </div>
               )}
               <p className="text-zinc-500">
-                {t("Paid")}: {cur()}{inr(folio.payments_total)} · {t("Balance")}:{" "}
+                {t("Paid")}: {cur()}{inr(folio.payments_total)} ·{" "}
+                {/* paid more than charged so far: that money is the guest's advance */}
+                {folio.balance < 0 ? t("Advance") : t("Balance")}:{" "}
                 <span
                   className={
                     folio.balance > 0
@@ -1148,7 +1150,7 @@ export default function FolioView() {
                       : "font-medium text-emerald-600"
                   }
                 >
-                  {cur()}{inr(folio.balance)}
+                  {cur()}{inr(Math.abs(folio.balance))}
                 </span>
               </p>
             </div>

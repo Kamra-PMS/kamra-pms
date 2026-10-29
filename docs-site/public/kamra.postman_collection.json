@@ -14485,7 +14485,7 @@
         "kamra.checkin.log_checkin_requests"
        ]
       },
-      "description": "Quick requests at check-in become service tickets (one each); a free\nnote is kept on the step and, if given alone, raised as one ticket.",
+      "description": "Quick requests at check-in become service tickets (one each); a free\nnote is kept on the step and, if given alone, raised as one ticket.\n`prices` ({request: amount}) bills a paid request (an extra bed, an\nairport drop) to the stay, by the hotel's tax rules and billing rules.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"reservation\": \"RES-2026-00001\"\n}",
@@ -15241,7 +15241,7 @@
         "kamra.public_api.search_stay"
        ]
       },
-      "description": "Availability + real quoted price per room type for the stay.\n\n`child_ages` (e.g. [3, 8, 13]) lets each room type's age bands decide who\nis free, a child or an adult; without it `children` are all children.\nEach row says whether the room type can take the party: `available`, a\n`reason` when it cannot, and `needs_confirmation` when the party is above\nwhat it sleeps but within the extra guests it allows by arrangement.",
+      "description": "Availability + real quoted price per room type for the stay.\n\nEach available row also carries `plans`: the stay quoted room only\n(first) and with each meal plan, so the page lists real totals per plan. A valid\n`voucher_code` discounts every quote, and each plan then keeps its\nundiscounted `list_amount` for the strike-through; an invalid one is\nignored here (check_voucher tells the guest why).\n\n`child_ages` (e.g. [3, 8, 13]) lets each room type's age bands decide who\nis free, a child or an adult; without it `children` are all children.\nEach row says whether the room type can take the party: `available`, a\n`reason` when it cannot, and `needs_confirmation` when the party is above\nwhat it sleeps but within the extra guests it allows by arrangement.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\",\n  \"check_in_date\": \"2026-08-01\",\n  \"check_out_date\": \"2026-08-03\",\n  \"adults\": 2,\n  \"children\": 0,\n  \"pets\": 0\n}",

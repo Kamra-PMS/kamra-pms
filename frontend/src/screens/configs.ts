@@ -503,7 +503,7 @@ export const guardrailsConfig: ScreenConfig = {
 
 export const companiesConfig: ScreenConfig = {
   doctype: "Corporate Account",
-  title: "Corporate Accounts",
+  title: "Accounts Receivable",
   description: "Companies with negotiated rates and credit terms.",
   searchFields: ["company_name", "gstin"],
   pageSize: 25,
@@ -893,7 +893,7 @@ export const transactionCodesConfig: ScreenConfig = {
       hint: "Alcohol never bills a Company folio." },
     { field: "charge_type", label: "Legacy charge type", type: "select",
       options: [
-        "Room", "Meal Plan", "Food & Beverage", "Minibar", "Laundry", "Spa",
+        "Room", "Meal Plan", "Food & Beverage", "Minibar", "Laundry", "Spa", "Taxi",
         "Early Check-in", "Late Checkout", "Cleaning Fee", "Extra Guests",
         "Pet Charge", "Room Levy", "Discount", "Misc", "Allowance", "Opening Balance",
       ],

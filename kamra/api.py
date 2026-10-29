@@ -5319,7 +5319,8 @@ def create_booking(property: str, room_type: str, check_in_date: str,
                    ota_ref: str | None = None,
                    ota_total: float = 0,
                    ota_commission_pct: float | None = None,
-                   marketing_consent: int = 0):
+                   marketing_consent: int = 0,
+                   market_segment: str | None = None):
 	"""One-call booking: attach to an existing guest profile when given,
 	else dedup by phone / create one. Optional auto room assignment,
 	voucher applied, price computed by the engine.
@@ -5468,6 +5469,8 @@ def create_booking(property: str, room_type: str, check_in_date: str,
 		"rate_plan": rate_plan or None,
 		"voucher": voucher,
 		"booking_type": booking_type,
+		# corporate business defaults to the Corporate segment
+		"market_segment": market_segment or ("Corporate" if company else None),
 		"company": company or None,
 		"group_booking": group_booking or None,
 		"source": source,

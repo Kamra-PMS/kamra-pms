@@ -135,6 +135,22 @@ def villa_locked_nights(property: str, room_type: str | None, start,
 
 
 class Reservation(Document):
+	def autoname(self):
+		# RES-<year>-00001, the year being the property's financial year, so
+		# the count restarts in April in India and in January elsewhere
+		from frappe.model.naming import make_autoname
+
+		from kamra.localization import financial_year, pack_for
+		prefix = f"RES-{financial_year(pack_for(self.property), today())}-"
+		# the old format counted every year on one shared counter: a year's
+		# own counter starts after the highest number that year already has
+		frappe.db.sql(
+			"""INSERT IGNORE INTO `tabSeries` (name, current)
+			   SELECT %(p)s, COALESCE(MAX(CAST(SUBSTRING(name, %(n)s) AS UNSIGNED)), 0)
+			   FROM `tabReservation` WHERE name LIKE %(like)s""",
+			{"p": prefix, "n": len(prefix) + 1, "like": f"{prefix}%"})
+		self.name = make_autoname(f"{prefix}.#####")
+
 	def after_insert(self):
 		# every booking gets a pre-arrival check-in link
 		self.db_set(

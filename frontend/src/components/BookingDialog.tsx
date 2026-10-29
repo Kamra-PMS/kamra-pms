@@ -28,6 +28,10 @@ import DepositPanel, { type DepositState } from "./DepositPanel"
 import CheckInDialog from "./CheckInDialog"
 import TillCard, { useTill } from "./TillCard"
 
+/** Reservation.market_segment options (same list as the doctype). */
+const MARKET_SEGMENTS = ["Corporate", "Leisure", "Group", "MICE", "Government", "Wedding",
+  "Long Stay", "Airline Crew", "Complimentary", "House Use"]
+
 
 interface CompanyCredit {
   applies: boolean
@@ -144,6 +148,7 @@ export function BookingDialog(props: {
     pets: 0,
     company: "",
     travel_agent: "",
+    market_segment: "",
     booked_by_name: "",
     booked_by_phone: "",
     booker_relation: "",
@@ -608,6 +613,7 @@ export function BookingDialog(props: {
         company: form.company || undefined,
         travel_agent: form.travel_agent || undefined,
         booking_type: form.company ? "Corporate" : undefined,
+        market_segment: form.market_segment || undefined,
         booked_by_name: onBehalf ? form.booked_by_name || undefined : undefined,
         booked_by_phone: onBehalf
           ? form.booked_by_phone || undefined
@@ -1906,6 +1912,18 @@ export function BookingDialog(props: {
                               <option key={t.name} value={t.name}>
                                 {t.agent_name} ({t.commission_pct}%)
                               </option>
+                            ))}
+                          </select>
+                        </Field>
+                        <Field label={translate("Market segment")}>
+                          <select
+                            className={inputCls}
+                            value={form.market_segment}
+                            onChange={(e) => set("market_segment", e.target.value)}
+                          >
+                            <option value="">{form.company ? translate("Corporate") : "-"}</option>
+                            {MARKET_SEGMENTS.map((m) => (
+                              <option key={m} value={m}>{translate(m)}</option>
                             ))}
                           </select>
                         </Field>

@@ -22,6 +22,7 @@ CHARGE_TYPE_TO_CODE = {
 	"Minibar": ("2100", "Minibar", "F&B", "Minibar"),
 	"Laundry": ("3000", "Laundry", "Other", "Laundry"),
 	"Spa": ("3100", "Spa", "Other", "Spa"),
+	"Taxi": ("3200", "Taxi", "Other", "Taxi"),
 	"Early Check-in": ("1200", "Early Check-in", "Rooms", "Early Check-in"),
 	"Late Checkout": ("1210", "Late Checkout", "Rooms", "Late Checkout"),
 	"Cleaning Fee": ("1300", "Cleaning Fee", "Rooms", "Cleaning Fee"),

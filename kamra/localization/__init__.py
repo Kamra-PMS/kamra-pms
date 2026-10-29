@@ -155,6 +155,16 @@ def front_desk_vocabulary(pack) -> dict:
 # TM30 and the like); a pack whose register covers every guest sets
 # MINOR_IDS = "all".
 
+def financial_year(pack, d) -> int:
+	"""The year a date's financial year started in: 2026 for 10 Feb 2027
+	where the year runs from 1 April (India), 2027 where it is the
+	calendar year. Numbering that resets each year uses it."""
+	from frappe.utils import getdate
+	month, day = getattr(pack, "FINANCIAL_YEAR_START", (1, 1))
+	d = getdate(d)
+	return d.year if (d.month, d.day) >= (month, day) else d.year - 1
+
+
 def adult_age(pack) -> int:
 	return int(getattr(pack, "ADULT_AGE", 18))
 

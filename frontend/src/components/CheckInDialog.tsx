@@ -99,7 +99,7 @@ interface Flow {
   /** Soft-required steps still open — warn, allow check-in, backfill later. */
   pending_backfill: { step: string; title: string; tip: string }[]
   rooms: Room[]
-  request_presets: { key: string; label: string }[]
+  request_presets: { key: string; label: string; priced?: boolean }[]
   ids: {
     ok: boolean
     missing: string[]
@@ -330,6 +330,8 @@ export default function CheckInDialog(props: {
   const [keyCount, setKeyCount] = useState(1)
   const [keyCards, setKeyCards] = useState("")
   const [requests, setRequests] = useState<string[]>([])
+  // price of a paid request (extra bed, airport drop), billed to the stay
+  const [prices, setPrices] = useState<Record<string, string>>({})
   const [note, setNote] = useState("")
   const [allowCharges, setAllowCharges] = useState<boolean | null>(null)
   const [chargesReason, setChargesReason] = useState("")
@@ -485,7 +487,10 @@ export default function CheckInDialog(props: {
         await run("kamra.checkin.issue_keys", { key_count: keyCount, key_cards: keyCards || undefined })
         return
       case "guest_requests":
-        await run("kamra.checkin.log_checkin_requests", { requests, note })
+        await run("kamra.checkin.log_checkin_requests", {
+          requests, note,
+          prices: Object.fromEntries(Object.entries(prices).filter(([k, v]) => requests.includes(k) && Number(v) > 0)),
+        })
         return
       case "room_charges":
         await run("kamra.checkin.set_room_charges", {
@@ -1103,12 +1108,20 @@ export default function CheckInDialog(props: {
                   )
                 })}
               </div>
+              {flow.request_presets.filter((p) => p.priced && requests.includes(p.key)).map((p) => (
+                <label key={p.key} className="flex items-center gap-2 text-sm">
+                  <span className="w-40 text-zinc-600">{t("Price for {what}", { what: t(REQUEST_LABEL[p.key] ?? p.label) })}</span>
+                  <input className={cn(inputCls, "w-36")} inputMode="decimal" placeholder={t("Free")}
+                    value={prices[p.key] ?? ""}
+                    onChange={(e) => setPrices((x) => ({ ...x, [p.key]: e.target.value.replace(/[^0-9.]/g, "") }))} />
+                </label>
+              ))}
               <label className="block">
                 <span className="mb-1 block text-xs font-medium text-zinc-500">{t("Anything else (optional)")}</span>
                 <textarea className={inputCls} rows={3} value={note} onChange={(e) => setNote(e.target.value)} />
               </label>
               <p className="text-xs text-zinc-400">
-                {t("Each request becomes a task for the right team.")}
+                {t("Each request becomes a task for the right team. A price goes on the guest's bill.")}
               </p>
             </div>
           )}
