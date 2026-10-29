@@ -5,6 +5,7 @@ import { call, getCurrentProperty } from "../lib/api"
 import EditableNationality from "../components/EditableNationality"
 import LinkedRecords from "../components/LinkedRecords"
 import AllowanceRequests from "../components/AllowanceRequests"
+import ChangeCompany from "../components/ChangeCompany"
 import { loadLocale, taxRates } from "../lib/money"
 import { serverError } from "../lib/resource"
 import { useCashierAuth } from "../lib/cashierAuth"
@@ -279,7 +280,7 @@ export default function FolioView() {
   const [adjustCodes, setAdjustCodes] = useState<{ name: string; description: string }[]>([])
   const [allowanceNote, setAllowanceNote] = useState<string | null>(null)
   const [allowanceKey, setAllowanceKey] = useState(0)
-  const [panel, setPanel] = useState<"share" | null>(null)
+  const [panel, setPanel] = useState<"company" | "share" | null>(null)
   const [shares, setShares] = useState<Record<string, string>>({})
   const { ensureUnlocked, status: pinStatus } = useCashierAuth()
 
@@ -475,6 +476,12 @@ export default function FolioView() {
               {t("Bill each guest")}
             </Button>
           )}
+          {open && (
+            <Button variant="outline" disabled={busy}
+              onClick={() => setPanel(panel === "company" ? null : "company")}>
+              {t("Change company")}
+            </Button>
+          )}
           {open &&
             data.stay.group_booking &&
             !siblings.some((s) => s.folio_type === "Group") && (
@@ -632,6 +639,13 @@ export default function FolioView() {
       {error && (
         <div className="mb-4 rounded-lg border border-rose-200 bg-rose-50 px-4 py-2 text-sm text-rose-700 print:hidden">
           {translate(error)}
+        </div>
+      )}
+      {panel === "company" && (
+        <div className="mb-4 print:hidden">
+          <ChangeCompany reservation={data.stay.reservation} current={data.stay.company}
+            onCancel={() => setPanel(null)}
+            onDone={() => { setPanel(null); load() }} />
         </div>
       )}
       {panel === "share" && open && (() => {

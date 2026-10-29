@@ -238,6 +238,68 @@ class BillingApprovalsSplitTestCase(AuditTestCase):
 		moved = frappe.get_doc("Folio", bill).charges[0].amount
 		self.assertAlmostEqual(moved, round(base * 0.3, 2), places=2)
 
+	# 3. change the company ----------------------------------------------
+
+	def test_change_company_reroutes_and_logs(self):
+		res = self.stay(company=self.corp, booking_type="Corporate")
+		folio_mod.post_room_night(res, d(-1))
+		main = guest_folio(res.name)
+		api.add_folio_charge(main, "Laundry", "UT Laundry", 300, gst_rate=0)
+		cf = frappe.db.get_value("Folio", {"reservation": res.name,
+		                                   "folio_type": "Company"})
+		room_total = bal(cf)
+		self.assertGreater(room_total, 0)
+		with self.assertRaisesRegex(frappe.ValidationError, "why"):
+			api.change_stay_company(res.name, "", company=self.corp_b)
+		out = api.change_stay_company(res.name, "UT employer changed",
+		                              company=self.corp_b)
+		self.assertEqual(frappe.db.get_value("Reservation", res.name, "company"),
+		                 self.corp_b)
+		# company B also pays laundry: it joins the company bill
+		self.assertEqual(out["moved"], 1)
+		self.assertEqual(bal(cf), room_total + 300)
+		self.assertEqual(bal(main), 0)
+		for f in (cf, main):
+			self.assertEqual(ledger_net(f), bal(f))
+		# future charges route by company B's rules
+		self.assertEqual(folio_mod.target_folio(
+			frappe.get_doc("Reservation", res.name), "Laundry"), cf)
+		self.assertTrue(frappe.db.exists("Agent Action Log", {
+			"action_type": "change_company", "reference_name": res.name}))
+
+		# no company: everything goes back to the guest
+		api.change_stay_company(res.name, "UT paying himself", company=None)
+		self.assertEqual(bal(cf), 0)
+		self.assertEqual(bal(main), room_total + 300)
+		self.assertEqual(frappe.db.get_value("Reservation", res.name,
+		                                     "booking_type"), "Individual")
+
+	def test_change_company_refused_after_an_invoice_to_the_old_one(self):
+		from kamra import ledger
+		res = self.stay(company=self.corp, booking_type="Corporate")
+		folio_mod.post_room_night(res, d(-1))
+		cf = frappe.db.get_value("Folio", {"reservation": res.name,
+		                                   "folio_type": "Company"})
+		ledger.transfer_to_city_ledger(cf, self.corp)
+		with self.assertRaisesRegex(frappe.ValidationError, "city ledger"):
+			api.change_stay_company(res.name, "UT", company=self.corp_b)
+		folio_mod.close_folio(cf)
+		with self.assertRaisesRegex(frappe.ValidationError, "Cancel that invoice"):
+			api.change_stay_company(res.name, "UT", company=self.corp_b)
+
+	def test_change_company_runs_credit_control(self):
+		from kamra.credit import CreditBlocked
+		set_setting(PROP_A, "credit_control", "Block")
+		acct = frappe.get_doc({"doctype": "City Ledger Account",
+		                       "property": PROP_A, "company": self.corp_b,
+		                       "credit_limit": 100}).insert(ignore_permissions=True)
+		self.assertTrue(acct.name)
+		res = self.stay(company=self.corp, booking_type="Corporate")
+		folio_mod.post_room_night(res, d(-1))
+		frappe.set_user(DESK)
+		with self.assertRaises(CreditBlocked):
+			api.change_stay_company(res.name, "UT", company=self.corp_b)
+
 
 def api_report():
 	from kamra.reports import void_allowance_report

@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function - the same governed layer
-the UI and the AI use. **421 endpoints**, generated from the source
+the UI and the AI use. **427 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -721,6 +721,54 @@ Split one charge line between two folios - by percent or amount.
 | `percent` | no | `None` |
 | `amount` | no | `None` |
 
+### `kamra.api.open_guest_bills`
+
+**POST** · roles: `Finance`, `Front Desk`, `Kamra Agent`
+
+A separate bill for each guest sharing the room: one Extra folio per
+other occupant (or per name given), invoiced in that guest's name. The
+main guest keeps the Guest folio.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `reservation` | yes |  |
+| `names` | no | `None` |
+
+### `kamra.api.share_folio_charges`
+
+**POST** · roles: `Finance`, `Front Desk`, `Kamra Agent`
+
+Share charge lines (room nights) between the guests' bills: evenly,
+or by a percent per other bill (`shares`); the source keeps the rest.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `from_folio` | yes |  |
+| `charge_rows` | yes |  |
+| `to_folios` | yes |  |
+| `shares` | no | `None` |
+
+### `kamra.api.change_stay_company`
+
+**POST** · roles: `Finance`, `Front Desk`, `Kamra Agent`
+
+Change (or remove) the company a stay bills to, mid-stay or at
+check-out. Charges posted from now on route by the new company's
+billing rules. Charges already posted move too: `move="rules"` puts
+each line where the new company's rules send it (company bill or the
+guest's), `move="guest"` sends everything on the company bill back to
+the guest. Refused once a bill was issued to the old company. Credit
+control runs for the new company. The rate stays as booked; who and
+why go on the record.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `reservation` | yes |  |
+| `reason` | yes |  |
+| `company` | no | `None` |
+| `move` | no | `'rules'` |
+| `override_reason` | no | `None` |
+
 ### `kamra.api.reservation_folios`
 
 **GET/POST** · roles: `Finance`, `Front Desk`, `Kamra Agent`
@@ -813,13 +861,65 @@ house: the reply warns, and their later charges open a new group bill.
 
 Write off part of a bill against a specific folio, with a reason.
 
+When the property wants a manager's approval (Settings, Finance:
+allowance_approval / allowance_approval_above) or the reason code needs
+a supervisor, the allowance does not touch the folio yet: it becomes a
+Pending Allowance Request ({"pending": True, "request": ...}) that a
+manager approves on the spot with their PIN, or later from the list
+(decide_allowance). A manager's own allowance posts at once. AI agents
+can ask, never approve.
+
 | Param | Required | Default |
 | --- | --- | --- |
 | `folio` | yes |  |
 | `amount` | yes |  |
-| `reason` | yes |  |
+| `reason` | no | `''` |
 | `gst_rate` | no | `0` |
 | `pin` | no | `None` |
+| `reason_code` | no | `None` |
+
+### `kamra.api.decide_allowance`
+
+**POST** · roles: `Finance`, `Front Desk`, `Hotel Admin`
+
+Approve or reject a pending allowance. The approver is the signed-in
+manager, or, on the spot at the desk, a manager who picks their name
+and types their own PIN (supervisor + supervisor_pin). Approving posts
+it on the folio; a rejection needs a note and is kept with who and why.
+AI agents never decide.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `allowance_request` | yes |  |
+| `approve` | no | `1` |
+| `note` | no | `''` |
+| `pin` | no | `None` |
+| `supervisor` | no | `None` |
+| `supervisor_pin` | no | `None` |
+
+### `kamra.api.allowance_requests`
+
+**GET/POST** · roles: `Finance`, `Front Desk`, `Hotel Admin`, `Kamra Agent`
+
+Allowances waiting for a manager (or decided ones, by status), with
+the stay they are for. can_decide says if the caller may approve.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `status` | no | `'Pending'` |
+| `folio` | no | `None` |
+
+### `kamra.api.allowance_approvers`
+
+**GET/POST** · roles: `Finance`, `Front Desk`, `Hotel Admin`
+
+Managers who can approve an allowance on the spot here (role from
+the property setting, cashier PIN set). Names only.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
 
 ### `kamra.api.part_settle_folio`
 
@@ -4406,8 +4506,9 @@ property the signed-in user may access, plus a per-property table.
 
 **GET/POST** · roles: `Finance`, `Hotel Admin`
 
-Audit trail of every void, allowance and invoice cancellation on a
-property: who reversed what, when, and why. The compliance answer to
+Audit trail of every void, allowance (with the manager who approved
+it, when one had to) and invoice cancellation on a property, plus
+allowances a manager rejected: who reversed what, when, and why. The compliance answer to
 "show me every write-off" - read straight from the action log, so it
 cannot drift from what actually happened.
 
@@ -5827,6 +5928,12 @@ Everything the public booking page needs to render.
 
 Availability + real quoted price per room type for the stay.
 
+Each available row also carries `plans`: the stay quoted room only
+(first) and with each meal plan, so the page lists real totals per plan. A valid
+`voucher_code` discounts every quote, and each plan then keeps its
+undiscounted `list_amount` for the strike-through; an invalid one is
+ignored here (check_voucher tells the guest why).
+
 `child_ages` (e.g. [3, 8, 13]) lets each room type's age bands decide who
 is free, a child or an adult; without it `children` are all children.
 Each row says whether the room type can take the party: `available`, a
@@ -5844,6 +5951,7 @@ what it sleeps but within the extra guests it allows by arrangement.
 | `location_slug` | no | `None` |
 | `pets` | no | `0` |
 | `child_ages` | no | `None` |
+| `voucher_code` | no | `None` |
 
 ### `kamra.public_api.precheckin_info` <Badge type='tip' text='public' />
 

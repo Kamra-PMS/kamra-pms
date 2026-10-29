@@ -110,8 +110,30 @@ refunded. Every refund is written to the activity log with your name.
 **Pass an allowance** when the charge was right but you are giving money
 back (service recovery, a dispute): under **Post a charge**, fill in the
 **Pass an allowance** row with the amount, the tax rate of the charge it
-offsets and a reason, then press **Allow**. The original line stays on the
-bill and the allowance shows as a minus line, so the trail stays honest.
+offsets and a reason (pick an **Adjust** reason code, or type one), then
+press **Allow**. The original line stays on the bill and the allowance
+shows as a minus line, so the trail stays honest.
+
+### When an allowance needs a manager
+
+Turn on **Allowances need a manager's approval** (Settings → Finance →
+Cashier controls) and pick who approves: **Hotel Admin**, or **Hotel
+Admin or Finance**. **Only allowances above** sets the amount; 0 means
+every allowance. A reason code marked **Requires Supervisor** (such as
+**Complimentary adjustment**) always asks, even with the setting off.
+
+1. The desk passes the allowance as usual. Kamra says **Sent to a
+   manager**, and the request shows under the allowance row. Nothing is
+   off the bill yet.
+2. A manager at the desk presses **Manager approves now**, picks their
+   name and types their own cashier PIN. Or, later, a manager opens
+   **Finance → Allowances to approve** and presses **Approve**.
+3. To refuse, press **Reject** and say why. The request is kept with who
+   rejected it and why.
+
+A manager's own allowance posts straight away, with them as the approver.
+AI agents can ask for an allowance, never approve one. **Voids and
+allowances** shows the approver of each allowance and every rejection.
 
 Voids work only on an open folio. Once the folio is invoiced, use a
 [credit note](#cancel-an-invoice-or-issue-a-credit-note) instead.
@@ -134,6 +156,25 @@ tabs above the bill, each with its balance.
 Company folio first, then Extra folios). An empty Company or Extra folio
 can be deleted with the **×** on its tab.
 
+## Give each guest in a room their own bill
+
+When guests share a room and each wants their own bill:
+
+1. Add everyone to the stay's guest list (the registration card).
+2. On the main guest's bill, press **Bill each guest**. Kamra opens a bill
+   for every other guest, with their name on the tab and on the invoice.
+3. In **Share charges with the other guests' bills**, keep the even
+   split or type a percent for each guest, then press **Share**. The room
+   nights (room, meal plan, levy) are shared; tick lines first to share
+   other charges. Each part keeps its line's tax rate, and the main
+   guest's bill keeps the rest, rounding included.
+4. Move extras (a minibar, a spa visit) to a guest's bill the usual way:
+   tick the line and pick their bill.
+
+Each bill is settled and invoiced on its own; check-out waits until every
+bill is paid. Nights posted later (the night audit) land on the main
+guest's bill: share them again before check-out.
+
 ## Bill a company
 
 When a stay is booked for a company, Kamra routes each charge to the right
@@ -154,6 +195,24 @@ folio as it is posted:
 At checkout, the guest settles their own folio. Whatever the company
 owes moves to its **city ledger** account by itself, if the company is
 allowed credit.
+
+**Change the company** during the stay or at check-out (the guest changed
+employer, or pays after all):
+
+1. On the bill press **Change company** (at check-out it is under **Who
+   pays**).
+2. Pick the new company, or **No company: the guest pays**.
+3. Choose what happens to charges already posted: move them by the new
+   company's billing rules, or move everything on the company bill back
+   to the guest.
+4. Type the reason and press **Change company**.
+
+Charges posted from then on follow the new company's rules; the room rate
+stays as booked. The new company's credit check runs; if it blocks,
+Finance or a Hotel Admin can override with a reason. Kamra refuses once a
+bill went to the old company (its invoice is issued, or it moved to the
+city ledger): cancel that invoice first. Who changed it and why is on the
+Activity log.
 
 **Record a company's payment** (Finance and Hotel Admin):
 
@@ -405,6 +464,8 @@ it.
 | Lock a PIN after | Settings → Finance → Cashier controls | 5 wrong tries | Locks the PIN after this many wrong entries. |
 | Lock for / stay unlocked for | Settings → Finance → Cashier controls | 15 min | How long a locked PIN stays locked, and how long money actions stay unlocked after a correct PIN. |
 | When a credit company has no billing rules | Settings → Finance → Corporate billing | Room and F&B (liquor to guest) | Which charges a credit company pays when it has no rules of its own. |
+| Allowances need a manager's approval | Settings → Finance → Cashier controls | Off | Who approves an allowance: Hotel Admin, or Hotel Admin or Finance. Until approved, it stays off the bill. |
+| Only allowances above | Settings → Finance → Cashier controls | 0 | Smaller allowances post straight away. 0 means every allowance needs approval. |
 | Email payment reminders | Settings → Property → Company credit | Off | Emails each company's billing contact 3 days before a bill is due, on the due date and 15 days after, once per bill per stage. |
 | Payment gateway | Settings → Payments | None | The gateway and keys used for payment links. |
 
@@ -456,7 +517,8 @@ guests still owe.
 
 The folio actions are MCP tools for AI agents (`get_folio`,
 `add_folio_charge`, `record_payment`, `void_charge`, `apply_allowance`,
-`move_charges`, `split_folio_charge`, `close_folio`, `send_payment_link`,
+`allowance_requests`, `open_guest_bills`, `share_folio_charges`,
+`change_stay_company`, `move_charges`, `split_folio_charge`, `close_folio`, `send_payment_link`,
 `collect_security_deposit` and more): see [MCP tools](/mcp-tools#billing).
 The REST endpoints live in `kamra.api` (folios, payments, deposits),
 `kamra.cashier` (till sessions, petty cash, shift report) and

@@ -748,6 +748,25 @@ TOOLS: tuple[ToolSpec, ...] = (
 		group="Billing",
 	),
 	_t(
+		"change_stay_company",
+		"api.change_stay_company",
+		"""Change (or remove, company empty) the company a stay bills to.
+		move=rules re-routes posted charges by the new company's billing
+		rules; move=guest sends the company bill back to the guest.
+		Refused once an invoice went to the old company. Runs credit
+		control; an agent can't override a credit block. Confirm with
+		staff first and give the reason.""",
+		{
+			"reservation": _p("string"),
+			"company": _p("string", description="Corporate Account id, or empty for none"),
+			"reason": _p("string"),
+			"move": _p("string", enum=["rules", "guest"]),
+		},
+		required=("reservation", "reason"),
+		mutating=True,
+		group="Billing",
+	),
+	_t(
 		"move_charges",
 		"api.transfer_folio_charges",
 		"""Move charge lines to another folio of the same stay or group.

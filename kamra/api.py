@@ -2046,6 +2046,110 @@ def share_folio_charges(from_folio: str, charge_rows, to_folios,
 	return out
 
 
+@frappe.whitelist(methods=["POST"])
+@require_roles("Finance", "Front Desk", "Kamra Agent")
+def change_stay_company(reservation: str, reason: str,
+                        company: str | None = None, move: str = "rules",
+                        override_reason: str | None = None):
+	"""Change (or remove) the company a stay bills to, mid-stay or at
+	check-out. Charges posted from now on route by the new company's
+	billing rules. Charges already posted move too: `move="rules"` puts
+	each line where the new company's rules send it (company bill or the
+	guest's), `move="guest"` sends everything on the company bill back to
+	the guest. Refused once a bill was issued to the old company. Credit
+	control runs for the new company. The rate stays as booked; who and
+	why go on the record."""
+	from kamra.credit import credit_applies, enforce_company_credit
+	from kamra.folio import _company_pays, open_company_folio, transfer_charges
+	res = frappe.get_doc("Reservation", reservation)
+	if res.status in ("Checked Out", "Cancelled", "No Show"):
+		frappe.throw(_("This stay is {0}; its company can't change now.").format(
+			_(res.status).lower()))
+	if not (reason or "").strip():
+		frappe.throw(_("Say why the company changes - it goes on the record."))
+	if move not in ("rules", "guest"):
+		frappe.throw(_("move must be rules or guest."))
+	company = (company or "").strip() or None
+	old = res.company or None
+	if company == old:
+		frappe.throw(_("The stay already bills to that company."))
+	if company and not frappe.db.exists("Corporate Account",
+	                                    {"name": company, "disabled": 0}):
+		frappe.throw(_("Pick an active company."))
+	company_folios = frappe.get_all(
+		"Folio", filters={"reservation": res.name, "folio_type": "Company"},
+		fields=["name", "status", "invoice_number", "payments_total"])
+	for f in company_folios:
+		if f.status == "Closed":
+			frappe.throw(_("Invoice {0} was already issued to the old company. "
+			               "Cancel that invoice first, then change the company.")
+			             .format(f.invoice_number or f.name))
+		if flt(f.payments_total):
+			frappe.throw(_("The company bill {0} already has payments or was "
+			               "moved to the city ledger. Settle that with the old "
+			               "company first.").format(f.name))
+	booking_type = res.booking_type
+	if company and booking_type == "Individual":
+		booking_type = "Corporate"
+	elif not company and booking_type == "Corporate":
+		booking_type = "Individual"
+	# db_set, not save: a company change must not re-price the stay
+	res.db_set({"company": company, "booking_type": booking_type})
+
+	def company_pays(c) -> bool:
+		return bool(company) and not c.is_alcohol and _company_pays(
+			company, c.charge_type, res.property)
+
+	moved = 0
+	guest = frappe.db.get_value(
+		"Folio", {"reservation": res.name, "folio_type": "Guest",
+		          "status": "Open"})
+	for f in company_folios:
+		doc = frappe.get_doc("Folio", f.name)
+		# rules: an allowance stays with the bill it wrote down
+		back = [c.name for c in doc.charges
+		        if move == "guest" or not company
+		        or (c.charge_type != "Allowance" and not company_pays(c))]
+		if back:
+			if not guest:
+				frappe.throw(_("The guest has no open folio to take these charges."))
+			transfer_charges(doc.name, back, guest)
+			moved += len(back)
+	# a group stay's routing is the group's: only its own company bill moves
+	if move == "rules" and company and guest and not res.get("group_booking"):
+		gdoc = frappe.get_doc("Folio", guest)
+		inbound = [c.name for c in gdoc.charges
+		           if c.charge_type != "Allowance" and company_pays(c)]
+		if inbound:
+			transfer_charges(guest, inbound, open_company_folio(res))
+			moved += len(inbound)
+	credit = None
+	if company and credit_applies(company):
+		cf = frappe.db.get_value("Folio", {"reservation": res.name,
+		                                   "folio_type": "Company",
+		                                   "status": "Open"},
+		                         ["name", "balance"], as_dict=True)
+		credit = enforce_company_credit(
+			company, res.property, flt(cf.balance) if cf else 0,
+			override_reason=override_reason, context=_("company change"),
+			reference_doctype="Reservation", reference_name=res.name,
+			exclude_folios=[cf.name] if cf else None)
+	from kamra.savings import log_action
+
+	def label(c):
+		return (frappe.db.get_value("Corporate Account", c, "company_name") or c) \
+			if c else "no company"
+	log_action("change_company", "Reservation", res.name, res.property,
+	           rationale=f"Company {label(old)} -> {label(company)}: "
+	                     f"{reason.strip()[:300]}. {moved} charge lines moved.",
+	           channel=agent_channel() or "Desk",
+	           before_snapshot={"company": old},
+	           after_snapshot={"company": company, "move": move, "moved": moved})
+	return {"ok": True, "reservation": res.name, "company": company,
+	        "previous_company": old, "moved": moved,
+	        "credit_warning": (credit or {}).get("warning")}
+
+
 _FOLIO_LIST_FIELDS = ["name", "folio_type", "status", "invoice_number",
                       "grand_total", "payments_total", "balance",
                       "bill_to_name"]

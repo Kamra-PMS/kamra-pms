@@ -1,6 +1,6 @@
 # MCP tool reference
 
-Kamra exposes **133 governed tools** on the hosted MCP
+Kamra exposes **137 governed tools** on the hosted MCP
 endpoint (`/mcp`) and the stdio sidecar (`mcp/kamra_mcp.py`). Every
 call runs as the connected user - **role** permissions apply, tools
 are further filtered by the property's **enabled modules**, prices
@@ -477,13 +477,54 @@ from get_folio). For settled/invoiced bills use apply_allowance.
 Endpoint: `kamra.api.void_folio_charge`.
 Mutating - logged to the activity ledger.
 
-### `apply_allowance(folio, amount, reason, gst_rate)`
+### `apply_allowance(folio, amount, reason, gst_rate, reason_code)`
 
 Credit back part of a bill on an open folio without deleting the
 original line (service recovery, dispute, agreed discount). Needs a
-reason; it goes on the record.
+reason (or an Adjust reason_code); it goes on the record. When the
+property wants a manager's approval the result is pending: true
+with a request id, and nothing is on the bill until a manager
+approves it. You can ask, never approve.
 
 Endpoint: `kamra.api.post_allowance`.
+Mutating - logged to the activity ledger.
+
+### `allowance_requests(status, folio)`
+
+Allowances waiting for a manager's approval (status Pending), or
+decided ones (Approved / Rejected) with who decided and why.
+
+Endpoint: `kamra.api.allowance_requests`.
+
+### `open_guest_bills(reservation, names)`
+
+A separate bill for each guest sharing a room: opens one folio per
+other occupant (or per name given), invoiced in that guest's name.
+The main guest keeps the stay's Guest folio. Then use
+share_folio_charges to share the room nights.
+
+Endpoint: `kamra.api.open_guest_bills`.
+Mutating - logged to the activity ledger.
+
+### `share_folio_charges(from_folio, charge_rows, to_folios, shares)`
+
+Share charge lines (room nights) from one bill with the other
+guests' bills: evenly, or by shares (a percent per other bill, in
+the order of to_folios). The source bill keeps the rest.
+
+Endpoint: `kamra.api.share_folio_charges`.
+Mutating - logged to the activity ledger.
+
+### `change_stay_company(reservation, company, reason, move)`
+
+Change (or remove, company empty) the company a stay bills to.
+move=rules re-routes posted charges by the new company's billing
+rules; move=guest sends the company bill back to the guest.
+Refused once an invoice went to the old company. Runs credit
+control; an agent can't override a credit block. Confirm with
+staff first and give the reason.
+
+Endpoint: `kamra.api.change_stay_company`.
 Mutating - logged to the activity ledger.
 
 ### `move_charges(from_folio, charge_rows, to_folio)`

@@ -12,6 +12,7 @@ import { Button } from "./ui/button"
 import { Sheet } from "./ui/sheet"
 import { StepFlowFooter, StepFlowHeader, useStepFlow, type FlowStep } from "./StepFlow"
 import TillCard, { type TillState } from "./TillCard"
+import ChangeCompany from "./ChangeCompany"
 
 
 /* Guided check-out, one stay at a time:
@@ -287,6 +288,7 @@ export default function CheckOutDialog(props: {
   const [lateRate, setLateRate] = useState("")
   const [outletModes, setOutletModes] = useState<Record<string, string>>({})
   const [companyOk, setCompanyOk] = useState(false)
+  const [changingCompany, setChangingCompany] = useState(false)
   const [override, setOverride] = useState("")
   const [skipped, setSkipped] = useState<Record<string, boolean>>({})
   const [ticked, setTicked] = useState<Record<string, boolean>>({})
@@ -753,6 +755,15 @@ export default function CheckOutDialog(props: {
                   )}
                 </Section>
               )}
+              {inHouse && (changingCompany ? (
+                <ChangeCompany reservation={props.reservation} current={ctx.reservation.company}
+                  onCancel={() => setChangingCompany(false)}
+                  onDone={() => { setChangingCompany(false); setCompanyOk(false); void load() }} />
+              ) : (
+                <Button variant="outline" onClick={() => setChangingCompany(true)}>
+                  {t("Change company")}
+                </Button>
+              ))}
 
               {ctx.bill_split && (ctx.bill_split.will_post > EPS
                 || ctx.bill_split.pending_not_on_folio > EPS
@@ -1061,6 +1072,15 @@ export default function CheckOutDialog(props: {
                   onChange={(e) => setCompanyOk(e.target.checked)} />
                 {t("I confirmed with the guest that the company pays this part of the bill.")}
               </label>
+              {inHouse && (changingCompany ? (
+                <ChangeCompany reservation={props.reservation} current={ctx.reservation.company}
+                  onCancel={() => setChangingCompany(false)}
+                  onDone={() => { setChangingCompany(false); setCompanyOk(false); void load() }} />
+              ) : (
+                <Button variant="outline" onClick={() => setChangingCompany(true)}>
+                  {t("Change company")}
+                </Button>
+              ))}
             </div>
           )}
 
