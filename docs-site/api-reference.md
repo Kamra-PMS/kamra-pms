@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function - the same governed layer
-the UI and the AI use. **421 endpoints**, generated from the source
+the UI and the AI use. **422 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -654,7 +654,10 @@ What this company pays when it has no billing rules: the property's
 **GET/POST** · roles: `Front Desk`, `Kamra Agent`
 
 Replace the stay's occupant register.
-occupants = [{full_name, age, gender, nationality, id_type, id_number, phone}]
+occupants = [{full_name, age, gender, nationality, id_type, id_number, phone,
+              arrived_at, left_at}]
+Guests sharing a room can arrive and leave at different times: see
+_occupant_times for how arrived_at / left_at are kept.
 A child keeps name and age only: no phone, and ID details only where the
 country's register needs them (see localization.minor_id_kept).
 
@@ -1309,10 +1312,36 @@ after the property's credit control: a warning comes back in
 Hotel Admin passes `credit_override_reason` (logged). Agents can't
 override.
 
+Leaving before the booked date: pass `early_reason` and the stay is
+first shortened to today with the property's early-departure charge
+(early_departure, below). Without it, a property whose charge is not
+"All Nights" refuses, so unused nights are never billed by accident;
+under "All Nights" every booked night is billed as before.
+
 | Param | Required | Default |
 | --- | --- | --- |
 | `reservation` | yes |  |
 | `credit_override_reason` | no | `None` |
+| `early_reason` | no | `None` |
+| `early_fee` | no | `None` |
+
+### `kamra.api.early_departure`
+
+**POST** · roles: `Front Desk`, `Finance`, `Kamra Agent`
+
+A guest in house is leaving before the booked date: shorten the stay
+to today through the amend path (availability, channel manager and
+price follow), post the property's early-departure charge for the
+unused nights (None / One Night / All Nights) and log the reason. Then
+settle and check out as usual. `fee` other than the property's policy
+needs Finance or a Hotel Admin. checkout_context shows the plan
+(`early_departure`) before anything changes.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `reservation` | yes |  |
+| `reason` | yes |  |
+| `fee` | no | `None` |
 
 ### `kamra.api.set_housekeeping_status`
 
@@ -5827,6 +5856,12 @@ Everything the public booking page needs to render.
 
 Availability + real quoted price per room type for the stay.
 
+Each available row also carries `plans`: the stay quoted room only
+(first) and with each meal plan, so the page lists real totals per plan. A valid
+`voucher_code` discounts every quote, and each plan then keeps its
+undiscounted `list_amount` for the strike-through; an invalid one is
+ignored here (check_voucher tells the guest why).
+
 `child_ages` (e.g. [3, 8, 13]) lets each room type's age bands decide who
 is free, a child or an adult; without it `children` are all children.
 Each row says whether the room type can take the party: `available`, a
@@ -5844,6 +5879,7 @@ what it sleeps but within the extra guests it allows by arrangement.
 | `location_slug` | no | `None` |
 | `pets` | no | `0` |
 | `child_ages` | no | `None` |
+| `voucher_code` | no | `None` |
 
 ### `kamra.public_api.precheckin_info` <Badge type='tip' text='public' />
 

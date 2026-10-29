@@ -1,6 +1,6 @@
 # MCP tool reference
 
-Kamra exposes **133 governed tools** on the hosted MCP
+Kamra exposes **134 governed tools** on the hosted MCP
 endpoint (`/mcp`) and the stdio sidecar (`mcp/kamra_mcp.py`). Every
 call runs as the connected user - **role** permissions apply, tools
 are further filtered by the property's **enabled modules**, prices
@@ -144,7 +144,7 @@ check_in_readiness first and tell the desk what is missing.
 Endpoint: `kamra.api.check_in`.
 Mutating - logged to the activity ledger.
 
-### `check_out(reservation)`
+### `check_out(reservation, early_reason, early_fee)`
 
 Check a guest out (posts remaining nights to the folio, frees the
 room, queues housekeeping). Refused while any folio has a balance:
@@ -156,7 +156,26 @@ the reason. An agent can never override a credit block - tell the
 user; Finance or a Hotel Admin can override it at the desk. Confirm
 with the user first.
 
+Leaving before the booked date (checkout_context shows
+`early_departure`): call early_departure first so the stay is
+shortened and only the nights stayed are billed, settle, then check
+out. Passing early_reason here does both in one call, but is refused
+as a whole if the new bill is not settled.
+
 Endpoint: `kamra.api.check_out`.
+Mutating - logged to the activity ledger.
+
+### `early_departure(reservation, reason)`
+
+A guest in house leaves before the booked date: shorten the stay to
+today (availability, channel manager and price follow) and post the
+property's early-departure charge for the unused nights (None, One
+Night or All Nights of room rate). Give the guest's reason. An agent
+always applies the property's policy; only Finance or a Hotel Admin
+can change the charge for one stay. checkout_context shows the plan
+and amounts first. Confirm with the user first.
+
+Endpoint: `kamra.api.early_departure`.
 Mutating - logged to the activity ledger.
 
 ### `checkout_context(reservation)`
@@ -276,7 +295,11 @@ Endpoint: `kamra.api.guest_journey`.
 
 Record everyone staying in the room (the legal hotel register,
 printed on the GRC). occupants = [{full_name, age, gender,
-nationality, id_type, id_number, phone}] - replaces the list.
+nationality, id_type, id_number, phone, arrived_at, left_at}] -
+replaces the list. arrived_at / left_at ("YYYY-MM-DD HH:MM") are
+optional: a guest already on the register keeps their times, and
+one added while the stay is checked in arrived now. Set left_at
+when a guest leaves before the room checks out.
 
 Endpoint: `kamra.api.update_occupants`.
 Mutating - logged to the activity ledger.

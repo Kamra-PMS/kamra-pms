@@ -1820,7 +1820,7 @@
         "kamra.api.update_occupants"
        ]
       },
-      "description": "Replace the stay's occupant register.\noccupants = [{full_name, age, gender, nationality, id_type, id_number, phone}]\nA child keeps name and age only: no phone, and ID details only where the\ncountry's register needs them (see localization.minor_id_kept).",
+      "description": "Replace the stay's occupant register.\noccupants = [{full_name, age, gender, nationality, id_type, id_number, phone,\n              arrived_at, left_at}]\nGuests sharing a room can arrive and leave at different times: see\n_occupant_times for how arrived_at / left_at are kept.\nA child keeps name and age only: no phone, and ID details only where the\ncountry's register needs them (see localization.minor_id_kept).",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"occupants\": \"<occupants>\"\n}",
@@ -3504,10 +3504,47 @@
         "kamra.api.check_out"
        ]
       },
-      "description": "Check a guest out. What the company pays moves to the city ledger,\nafter the property's credit control: a warning comes back in\n`credit_warnings`; a block refuses (CREDIT_BLOCKED) unless Finance or a\nHotel Admin passes `credit_override_reason` (logged). Agents can't\noverride.",
+      "description": "Check a guest out. What the company pays moves to the city ledger,\nafter the property's credit control: a warning comes back in\n`credit_warnings`; a block refuses (CREDIT_BLOCKED) unless Finance or a\nHotel Admin passes `credit_override_reason` (logged). Agents can't\noverride.\n\nLeaving before the booked date: pass `early_reason` and the stay is\nfirst shortened to today with the property's early-departure charge\n(early_departure, below). Without it, a property whose charge is not\n\"All Nights\" refuses, so unused nights are never billed by accident;\nunder \"All Nights\" every booked night is billed as before.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"reservation\": \"RES-2026-00001\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "early_departure",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.early_departure",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.early_departure"
+       ]
+      },
+      "description": "A guest in house is leaving before the booked date: shorten the stay\nto today through the amend path (availability, channel manager and\nprice follow), post the property's early-departure charge for the\nunused nights (None / One Night / All Nights) and log the reason. Then\nsettle and check out as usual. `fee` other than the property's policy\nneeds Finance or a Hotel Admin. checkout_context shows the plan\n(`early_departure`) before anything changes.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"reason\": \"<reason>\"\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -15241,7 +15278,7 @@
         "kamra.public_api.search_stay"
        ]
       },
-      "description": "Availability + real quoted price per room type for the stay.\n\n`child_ages` (e.g. [3, 8, 13]) lets each room type's age bands decide who\nis free, a child or an adult; without it `children` are all children.\nEach row says whether the room type can take the party: `available`, a\n`reason` when it cannot, and `needs_confirmation` when the party is above\nwhat it sleeps but within the extra guests it allows by arrangement.",
+      "description": "Availability + real quoted price per room type for the stay.\n\nEach available row also carries `plans`: the stay quoted room only\n(first) and with each meal plan, so the page lists real totals per plan. A valid\n`voucher_code` discounts every quote, and each plan then keeps its\nundiscounted `list_amount` for the strike-through; an invalid one is\nignored here (check_voucher tells the guest why).\n\n`child_ages` (e.g. [3, 8, 13]) lets each room type's age bands decide who\nis free, a child or an adult; without it `children` are all children.\nEach row says whether the room type can take the party: `available`, a\n`reason` when it cannot, and `needs_confirmation` when the party is above\nwhat it sleeps but within the extra guests it allows by arrangement.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\",\n  \"check_in_date\": \"2026-08-01\",\n  \"check_out_date\": \"2026-08-03\",\n  \"adults\": 2,\n  \"children\": 0,\n  \"pets\": 0\n}",

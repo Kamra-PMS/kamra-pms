@@ -204,6 +204,14 @@ in-house guest, or with **Registration card** on the booking.
    **Save register**. Once a row is saved, **Capture ID** on that row takes
    the occupant's ID. A child's row asks for name and age only, unless your
    country's register needs children's IDs too.
+
+   Guests sharing a room don't always arrive together. Each row has its
+   own **Arrived** time: at check-in everyone already on the register gets
+   the check-in time, and a guest added while the stay is in house gets
+   the time they were saved. Correct it in the row, or press **Arrived
+   now**. When one guest leaves before the others, set **Left** (or
+   **Left now**). The GRC prints each guest's arrival, and the booking's
+   **Stay** card lists who is in the room.
 6. Click **Print GRC** and have the guest sign. A guest who signed online
    already has their signature on the card.
 
@@ -252,7 +260,23 @@ Check-out is a short guided sheet. Open it from any of these:
 
 ![The departures list with a Check out button on each row](/img/front-desk/departures.png)
 
-The sheet shows only the steps this stay needs, in this order:
+The sheet shows only the steps this stay needs, in this order. A guest
+leaving before the booked date starts with **Leaving early**:
+
+0. **Leaving early.** Shows how many booked nights the guest won't use
+   and what your **Early departure charge** makes of them: **No charge**,
+   **One night** or **All unused nights**, each with its amount (room rate
+   of those nights). Type the reason and press **Shorten the stay**. The
+   stay now ends today, through the same path as changing dates on the
+   booking, so the room goes back on sale, the channel manager is told and
+   the price is worked out again for the nights stayed; check-out then
+   bills only those nights, plus one **Early departure** line for the
+   charge. Finance and Hotel Admins can pick a different charge for this
+   stay; everyone else gets the property's policy. The booked date and the
+   reason stay on the booking and show in the **Early departures** report.
+   With the policy at **All unused nights** you can **Skip** the step and
+   every booked night stays on the bill, as before; with any other policy
+   the stay must be shortened before check-out.
 
 ![The check-out sheet for Priya Nair on the Bill step: who pays, why this total, and the stay summary](/img/front-desk/checkout-sheet.png)
 
@@ -357,6 +381,8 @@ The journey shows every stay and event, with:
 | Guest ID retention | Settings → Privacy & data | Verify & Discard | Verify & Discard masks ID numbers to the last 4 digits and deletes ID photos at check-out. Store keeps them. |
 | Security deposit | Settings → Stay policies → Deposits | 0 | A refundable amount to hold during the stay. When set, check-in has a **Deposit and advance** step. While it is held, the booking warns you before check-out. |
 | Check-in steps | Settings → Front Desk → Check-in steps | See [The steps](#the-steps) | Which check-in steps are required. Required steps cannot be skipped and block the check-in until done. |
+| Early departure charge | Settings → Stay policies → Cancellation & no-show | All Nights | What a guest leaving before the booked date pays for the unused nights: None, One Night or All Nights (room rate). Finance or a Hotel Admin can change it for one stay, with a reason. |
+| WhatsApp the guest when a charge is posted to the room | Settings → Front Desk → Guest alerts | Off | Sends the room charge template (see [WhatsApp](/whatsapp)) when a restaurant, laundry, minibar or desk charge reaches an in-house guest's bill. |
 | Wi-Fi name, Wi-Fi password, Breakfast times, Emergency number, Anything else for guests | Settings → Front Desk → Guest info at check-in | Empty | Shown in the **Wi-Fi and stay info** step, to tell, print or send on WhatsApp. The password is never written to the activity log. |
 
 ## Good to know
@@ -444,11 +470,14 @@ step (`save_guest_details`, `confirm_billing`, `assign_checkin_room`,
 (`kamra.checkin.check_in_readiness` lists what is missing). The steps and
 which are required live in the property's check-in SOP (`kamra.sop`). The
 walk-in is `kamra.api.walk_in` (`defer_check_in=1` books and hands over to
-the steps); check-out is `kamra.api.check_out`; room
+the steps); check-out is `kamra.api.check_out` (with `early_reason` /
+`early_fee` it shortens an early departure first); the early departure
+on its own is `kamra.api.early_departure` and its plan is
+`early_departure` in `kamra.api.checkout_context`; room
 moves use `kamra.api.movable_rooms`, `kamra.api.room_move_preview` and
 `kamra.api.move_reservation`. The Today layout is
 `kamra.today_layout.get_today_layout`, `save_today_layout`,
 `reset_today_layout` and `save_today_layout_default` (Hotel Admin). AI agents use the `front_desk_today`,
-`check_in_readiness`, `check_in`, `check_out`, `move_room`, `guest_lookup`, `guest_journey` and
+`check_in_readiness`, `check_in`, `check_out`, `early_departure`, `move_room`, `guest_lookup`, `guest_journey` and
 `update_occupants` tools. See [MCP tools](/mcp-tools) and the
 [API reference](/api-reference).
