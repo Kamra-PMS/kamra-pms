@@ -1515,6 +1515,8 @@ def _post_folio_charge(folio: str, charge_type: str, description: str,
 	           rationale=f"{charge_type}: {description} ₹{amount}")
 	from kamra.webhooks import emit_folio_posted
 	emit_folio_posted(doc, charge)
+	from kamra.whatsapp import queue_room_charge_alert
+	queue_room_charge_alert(doc, charge)
 	return doc.as_dict()
 
 

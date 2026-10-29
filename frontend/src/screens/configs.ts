@@ -766,6 +766,7 @@ export const channelConnectionsConfig: ScreenConfig = {
     { field: "tpl_booking_confirmation", label: "Template: booking confirmation", type: "data", hint: "Args: guest, property, check-in, check-out" },
     { field: "tpl_precheckin", label: "Template: self check-in link", type: "data", hint: "Args: guest, link" },
     { field: "tpl_payment_request", label: "Template: payment request", type: "data", hint: "Args: guest, amount, note" },
+    { field: "tpl_room_charge", label: "Template: room charge alert", type: "data", hint: "Args: guest, amount, what and where, balance. Sent only when Front Desk settings turn on room charge alerts" },
     { field: "active", label: "Active", type: "check" },
   ],
 }

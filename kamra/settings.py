@@ -169,6 +169,12 @@ MODULES: tuple[Module, ...] = (
 				S("guest_info_note", "Anything else for guests", "textarea",
 				  hint="Pool hours, parking, quiet hours. Keep it short."),
 			)),
+			Section("guest_alerts", "Guest alerts", "Messages the guest gets on WhatsApp during the stay.", (
+				S("room_charge_whatsapp", "WhatsApp the guest when a charge is posted to the room", "check", 0,
+				  hint="Restaurant, laundry, minibar and desk charges, with the running balance. Needs the "
+				       "room charge template on the WhatsApp connection. At most one message per bill "
+				       "every 10 minutes; room nights and company bills never send one."),
+			)),
 			Section("holds", "Holds & selling", "", (
 				S("hold_minutes", "Hold unconfirmed bookings for", "number", 120, P, min=5, max=10080, unit="min"),
 				S("sell_message", "Sell message", "textarea", store=P,
