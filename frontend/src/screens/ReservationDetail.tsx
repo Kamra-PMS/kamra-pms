@@ -31,6 +31,7 @@ import { serverError, updateResource, type Row } from "../lib/resource"
 import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
 import CancelPanel from "../components/CancelPanel"
+import ReinstatePanel from "../components/ReinstatePanel"
 import LinkedRecords from "../components/LinkedRecords"
 import DepositPanel from "../components/DepositPanel"
 import SecurityDepositPanel from "../components/SecurityDepositPanel"
@@ -682,6 +683,9 @@ export default function ReservationDetail({
         {d.actions.can_check_out && (
           <Button disabled={busy} onClick={() => setCheckingOut(true)}>
             <LogOut className="size-4" />{translate(" Check out")}</Button>
+        )}
+        {d.status === "Checked Out" && (
+          <ReinstatePanel reservation={name} onDone={() => { refresh(); reload() }} />
         )}
         <Link
           to={`/grc/${encodeURIComponent(name)}`}

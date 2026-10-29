@@ -753,7 +753,9 @@ class Reservation(Document):
 		old_status = previous.status if previous else None
 		if self.status == old_status:
 			return
-		if self.status == "Checked In":
+		if self.status == "Checked In" and old_status == "Checked Out":
+			self.handle_reinstate()
+		elif self.status == "Checked In":
 			self.handle_check_in()
 		elif self.status == "Checked Out":
 			self.handle_check_out()
@@ -800,6 +802,20 @@ class Reservation(Document):
 		from kamra.ledger import transfer_advances_to_guest
 		transfer_advances_to_guest(self.name)
 		self.log_action("check_in", minutes_saved=10)
+
+	def handle_reinstate(self):
+		"""Back in house after a checkout undone the same day: the rooms are
+		occupied again and the checkout clean that has not started is
+		dropped. The folios stay as they are (kamra.api.reinstate_checkout
+		reopened them)."""
+		self.db_set("actual_check_out", None, update_modified=False)
+		for room in self._occupied_rooms(checking_in=False):
+			frappe.db.set_value("Room", room, "occupancy_status", "Occupied")
+		for task in frappe.get_all("Housekeeping Task", pluck="name", filters={
+				"reservation": self.name, "task_type": "Checkout Clean",
+				"status": "Pending"}):
+			frappe.delete_doc("Housekeeping Task", task, ignore_permissions=True)
+		self.log_action("reinstate_checkout")
 
 	def handle_check_out(self):
 		self.db_set("actual_check_out", now_datetime(), update_modified=False)

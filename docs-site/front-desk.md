@@ -323,6 +323,22 @@ a high-priority checkout clean. Every step (payment, refund, check-out,
 invoice) is written to the activity log with the name of the person who
 did it.
 
+### Undo a checkout
+
+Checked out the wrong room, or the guest is staying after all? Open the
+stay and press **Undo checkout**, then say why. The guest is in house
+again in the same room:
+
+- the invoice made at checkout is cancelled and kept in the cancelled
+  invoice register (where the country needs it, a credit note is issued);
+  the next checkout gets a new number
+- a bill that went to the company's account comes off it
+- the room is occupied again and the checkout clean is dropped
+
+It works until the night audit runs. It is refused if someone else is in
+the room, or if the company has already paid part of the bill; Finance
+corrects those on the account.
+
 ## Look up a guest
 
 **Front Desk → Guests** lists every guest with their bookings, stays,

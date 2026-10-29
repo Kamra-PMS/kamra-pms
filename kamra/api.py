@@ -3977,6 +3977,54 @@ def checkout_context(reservation: str):
 	return ctx
 
 
+@frappe.whitelist(methods=["POST"])
+@require_roles("Front Desk", "Finance")
+def reinstate_checkout(reservation: str, reason: str, pin: str | None = None):
+	"""Undo a checkout made by mistake, the same business day: before the
+	night audit runs. Each bill closed at checkout has its invoice
+	cancelled the auditable way (the number goes to the Cancelled Invoice
+	register; where the country needs it, a credit note is issued), a
+	company bill comes back off the company's account, and the guest is
+	in house again in the same room. Refused once the night audit has run,
+	when someone else is in the room, or when the company has paid."""
+	from kamra.authz import require_cashier_pin
+	from kamra.folio import cancel_invoice
+	from kamra.ledger import reverse_city_ledger_transfer
+
+	reason = (reason or "").strip()
+	if not reason:
+		frappe.throw(_("Say why the checkout is being undone."))
+	doc = frappe.get_doc("Reservation", reservation)
+	if doc.status != "Checked Out":
+		frappe.throw(_("Only a checked-out stay can be reinstated."))
+	require_cashier_pin(doc.property, pin)
+	out_at = doc.get("actual_check_out")
+	if not out_at or frappe.db.exists("Night Audit Run", {
+			"property": doc.property, "creation": (">", out_at)}):
+		frappe.throw(_("The night audit has run since this checkout, so it can't "
+		              "be undone. Make a new booking, or ask Finance to correct the bills."))
+	folios = frappe.get_all("Folio", filters={"reservation": doc.name},
+	                        fields=["name", "status", "invoice_number"])
+	cancelled, brought_back = [], 0.0
+	for f in folios:
+		if f.status == "Closed" and f.invoice_number:
+			cancelled.append(cancel_invoice(f.name, f"Checkout reinstated: {reason}")["cancelled"])
+	for f in folios:
+		brought_back += reverse_city_ledger_transfer(f.name, reason)
+	doc.status = "Checked In"
+	frappe.flags.kamra_status_transition = True
+	try:
+		doc.save()
+	finally:
+		frappe.flags.kamra_status_transition = False
+	from kamra.savings import log_action
+	log_action("reinstate_checkout", "Reservation", doc.name, doc.property,
+	           rationale=f"{doc.guest_name}: {reason}"
+	                     + (f"; invoices cancelled {', '.join(cancelled)}" if cancelled else ""))
+	return {"ok": True, "reservation": doc.name, "status": doc.status,
+	        "cancelled_invoices": cancelled, "from_city_ledger": round(brought_back, 2)}
+
+
 @frappe.whitelist()
 @require_roles("Front Desk", "Night Auditor", "Kamra Agent")
 def check_out(reservation: str, credit_override_reason: str | None = None):

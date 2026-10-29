@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function - the same governed layer
-the UI and the AI use. **421 endpoints**, generated from the source
+the UI and the AI use. **422 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -1298,6 +1298,24 @@ Safe to call again and again: opening the sheet writes nothing.
 | Param | Required | Default |
 | --- | --- | --- |
 | `reservation` | yes |  |
+
+### `kamra.api.reinstate_checkout`
+
+**POST** · roles: `Front Desk`, `Finance`
+
+Undo a checkout made by mistake, the same business day: before the
+night audit runs. Each bill closed at checkout has its invoice
+cancelled the auditable way (the number goes to the Cancelled Invoice
+register; where the country needs it, a credit note is issued), a
+company bill comes back off the company's account, and the guest is
+in house again in the same room. Refused once the night audit has run,
+when someone else is in the room, or when the company has paid.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `reservation` | yes |  |
+| `reason` | yes |  |
+| `pin` | no | `None` |
 
 ### `kamra.api.check_out`
 
@@ -5827,6 +5845,12 @@ Everything the public booking page needs to render.
 
 Availability + real quoted price per room type for the stay.
 
+Each available row also carries `plans`: the stay quoted room only
+(first) and with each meal plan, so the page lists real totals per plan. A valid
+`voucher_code` discounts every quote, and each plan then keeps its
+undiscounted `list_amount` for the strike-through; an invalid one is
+ignored here (check_voucher tells the guest why).
+
 `child_ages` (e.g. [3, 8, 13]) lets each room type's age bands decide who
 is free, a child or an adult; without it `children` are all children.
 Each row says whether the room type can take the party: `available`, a
@@ -5844,6 +5868,7 @@ what it sleeps but within the extra guests it allows by arrangement.
 | `location_slug` | no | `None` |
 | `pets` | no | `0` |
 | `child_ages` | no | `None` |
+| `voucher_code` | no | `None` |
 
 ### `kamra.public_api.precheckin_info` <Badge type='tip' text='public' />
 
