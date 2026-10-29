@@ -1,6 +1,6 @@
 # MCP tool reference
 
-Kamra exposes **133 governed tools** on the hosted MCP
+Kamra exposes **134 governed tools** on the hosted MCP
 endpoint (`/mcp`) and the stdio sidecar (`mcp/kamra_mcp.py`). Every
 call runs as the connected user - **role** permissions apply, tools
 are further filtered by the property's **enabled modules**, prices
@@ -666,6 +666,17 @@ outlook. date YYYY-MM-DD; pass from_date for a range ending on date.
 Read-only.
 
 Endpoint: `kamra.reports.manager_flash`.
+
+### `night_audit_report(date)`
+
+The night audit report for a business date (default: the last one
+closed): room nights, occupancy, ADR, RevPAR, food and beverage apart,
+each outlet, banquets, meal plans and minibar, other income, for the
+day, month to date and year to date (India: from 1 April), and the
+guest, advance and city ledger balances brought and carried forward.
+Read-only.
+
+Endpoint: `kamra.audit_report.night_audit_report`.
 
 ## Night audit
 

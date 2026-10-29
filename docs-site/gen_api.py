@@ -55,6 +55,7 @@ MODULES = [
     ("crs", "Central reservations (chain)", ""),
     ("dashboards", "Dashboards", ""),
     ("reports", "Reports", ""),
+    ("audit_report", "Night audit report (day, MTD, YTD)", "Read only. Food and beverage come from the restaurant bills; the year starts where the country pack says."),
     ("custom_reports", "Custom reports (builder, save, email)",
      "Whitelisted datasets only - no Desk Query Reports or free SQL. "
      "Saved definitions live on Kamra Custom Report; staff use Finance → Reports."),

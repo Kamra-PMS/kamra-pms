@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function - the same governed layer
-the UI and the AI use. **421 endpoints**, generated from the source
+the UI and the AI use. **422 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -4499,6 +4499,25 @@ breached if it was resolved after due_by, or is still open past due_by.
 | `to_date` | yes |  |
 
 
+## Night audit report (day, MTD, YTD)
+
+> Read only. Food and beverage come from the restaurant bills; the year starts where the country pack says.
+
+### `kamra.audit_report.night_audit_report`
+
+**GET/POST** · roles: `Finance`, `Revenue Manager`, `Night Auditor`, `Kamra Agent`
+
+The night audit report for a business date (default: the last one
+closed): rooms, food and beverage separately, each outlet, banquets,
+meal plans and minibar, other income, for the day, month to date and
+year to date, plus each ledger's balance brought and carried forward.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `date` | no | `None` |
+
+
 ## Custom reports (builder, save, email)
 
 > Whitelisted datasets only - no Desk Query Reports or free SQL. Saved definitions live on Kamra Custom Report; staff use Finance → Reports.
@@ -5827,6 +5846,12 @@ Everything the public booking page needs to render.
 
 Availability + real quoted price per room type for the stay.
 
+Each available row also carries `plans`: the stay quoted room only
+(first) and with each meal plan, so the page lists real totals per plan. A valid
+`voucher_code` discounts every quote, and each plan then keeps its
+undiscounted `list_amount` for the strike-through; an invalid one is
+ignored here (check_voucher tells the guest why).
+
 `child_ages` (e.g. [3, 8, 13]) lets each room type's age bands decide who
 is free, a child or an adult; without it `children` are all children.
 Each row says whether the room type can take the party: `available`, a
@@ -5844,6 +5869,7 @@ what it sleeps but within the extra guests it allows by arrangement.
 | `location_slug` | no | `None` |
 | `pets` | no | `0` |
 | `child_ages` | no | `None` |
+| `voucher_code` | no | `None` |
 
 ### `kamra.public_api.precheckin_info` <Badge type='tip' text='public' />
 

@@ -1219,6 +1219,8 @@ def build_pack(property: str, bd: str, *, checks: list[dict],
 	                  "total_rooms": total_rooms})
 	_section(pack, "manager_flash",
 	         lambda: _raw(reports.manager_flash)(property, bd))
+	from kamra import audit_report
+	_section(pack, "audit_report", lambda: audit_report.build(property, bd))
 	_section(pack, "revenue_by_transaction_code",
 	         lambda: _raw(ledger.journal_by_transaction_code)(property, bd))
 	_section(pack, "ledger_balances",
@@ -1245,6 +1247,7 @@ def build_pack(property: str, bd: str, *, checks: list[dict],
 # The final reports the End of Day prints, in order. Each reads its section
 # of the saved pack, so history shows exactly what was printed.
 REPORTS = (
+	("audit_report", "Night audit report"),
 	("manager_flash", "Manager's flash"),
 	("journal", "Journal by cashier and transaction code"),
 	("cashier_summary", "Cashier summary"),
