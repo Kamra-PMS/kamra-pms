@@ -148,3 +148,33 @@ class ReceivablesTestCase(cc.CreditControlTestCase):
 		# the parent pays it off
 		ledger.city_ledger_settle(parent, 300)
 		self.assertAlmostEqual(_open(parent)[folio]["outstanding"], 0, 2)
+
+	# month-end bill ------------------------------------------------------------
+
+	def test_checkout_bill_gets_its_invoice_number_on_the_account(self):
+		from kamra import folio as folio_mod
+		_, folio = self.bill(500)
+		self.assertFalse(frappe.db.get_value("City Ledger Entry",
+		                                     {"folio": folio, "kind": "Invoice"}, "invoice_number"))
+		number = folio_mod.close_folio(folio)
+		self.assertEqual(_open(self.account)[folio]["invoice_number"], number)
+
+	def test_monthly_bill_rolls_up_the_month(self):
+		from frappe.utils import getdate
+
+		from kamra import statements
+		out = self.invoice({"charge_type": "Misc", "description": "Hall", "amount": 1000,
+		                    "gst_rate": 18})
+		ledger.city_ledger_settle(self.account, 500)
+		month = str(getdate(frappe.db.get_value(
+			"City Ledger Entry", {"folio": out["folio"], "kind": "Invoice"},
+			"posting_date")))[:7]
+		mb = statements.monthly_bill(self.account, month)
+		line = next(b for b in mb["bills"] if b["invoice"] == out["invoice_number"])
+		self.assertEqual((line["taxable"], line["tax"], line["amount"]), (1000, 180, 1180))
+		self.assertAlmostEqual(mb["paid"], 500, 2)
+		self.assertAlmostEqual(mb["closing"], mb["opening"] + mb["billed"] - 500, 2)
+		self.assertTrue(mb["number"].startswith("SOA-") and mb["number"].endswith(month.replace("-", "")))
+		html = statements.monthly_bill_html(mb)
+		self.assertIn(out["invoice_number"], html)
+		self.assertIn("not a tax invoice", html)

@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function - the same governed layer
-the UI and the AI use. **426 endpoints**, generated from the source
+the UI and the AI use. **428 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -4990,6 +4990,35 @@ it goes to the company's billing contact email.
 | Param | Required | Default |
 | --- | --- | --- |
 | `account` | yes |  |
+| `recipients` | no | `None` |
+| `lang` | no | `'en'` |
+
+### `kamra.statements.company_monthly_bill`
+
+**GET/POST** · roles: `Finance`, `Hotel Admin`, `Kamra Agent`
+
+A company's month-end bill: every bill of the month with its invoice
+number, taxable value and tax, the company's payments, and the balance
+brought and carried forward. format=html returns the printable page.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `account` | yes |  |
+| `month` | yes |  |
+| `format` | no | `'json'` |
+| `lang` | no | `'en'` |
+
+### `kamra.statements.email_monthly_bill`
+
+**POST** · roles: `Finance`, `Hotel Admin`
+
+Email a company its month-end bill (HTML attachment). Without
+recipients it goes to the company's billing contact email.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `account` | yes |  |
+| `month` | yes |  |
 | `recipients` | no | `None` |
 | `lang` | no | `'en'` |
 

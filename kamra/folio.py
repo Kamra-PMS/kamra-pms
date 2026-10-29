@@ -868,6 +868,11 @@ def close_folio(folio_name: str) -> str:
 	folio.invoice_number = make_autoname(f"INV-{code}-.YY.-.#####")
 	_recalculate(folio)
 	folio.save(ignore_permissions=True)
+	# a company bill moved to the city ledger at checkout, before it had a
+	# number: the account's bill takes the invoice number now
+	frappe.db.set_value("City Ledger Entry", {
+		"folio": folio.name, "kind": "Invoice", "invoice_number": ("is", "not set")},
+		"invoice_number", folio.invoice_number)
 	# statutory e-invoicing (ZATCA in Saudi Arabia) - the pack decides
 	from kamra import localization as loc
 	loc.on_invoice_issued(loc.pack_for(folio.property), folio.name)

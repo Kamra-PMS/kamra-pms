@@ -1,6 +1,6 @@
 # MCP tool reference
 
-Kamra exposes **136 governed tools** on the hosted MCP
+Kamra exposes **137 governed tools** on the hosted MCP
 endpoint (`/mcp`) and the stdio sidecar (`mcp/kamra_mcp.py`). Every
 call runs as the connected user - **role** permissions apply, tools
 are further filtered by the property's **enabled modules**, prices
@@ -558,6 +558,16 @@ each open bill with its due date and days late, and recent payments.
 Read-only.
 
 Endpoint: `kamra.ledger.city_ledger_account`.
+
+### `company_monthly_bill(account, month)`
+
+A company's month-end bill for one account: every bill of the month
+(month as YYYY-MM) with its invoice number, taxable value and tax, the
+company's payments, and the balance brought and carried forward.
+Each stay keeps its own tax invoice; this is the monthly summary.
+Read-only.
+
+Endpoint: `kamra.statements.company_monthly_bill`.
 
 ### `create_ar_invoice(account, lines, reference)`
 

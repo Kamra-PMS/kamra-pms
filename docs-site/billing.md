@@ -175,6 +175,13 @@ account: who owes what, how late, and how much credit is left.
 - **Transfer a bill** to another company (the parent company or the
   agency pays): press **Transfer** on the bill. What is still owed moves;
   what was paid stays. The bill keeps its number and date.
+- **Month-end bill** for corporates billed monthly: pick the month next to
+  **Month-end bill** (last month by default) and press it to print, or
+  **Email** to send it to the billing contact. It lists every bill of the
+  month with its invoice number, taxable value and tax, the company's
+  payments, and the balance brought and carried forward. Each stay keeps
+  its own tax invoice; the month-end bill is the summary the company pays
+  against, numbered `SOA-<account>-<YYYYMM>`.
 - **Restrict an account** under **Account setup** with a reason: it takes
   no new invoices or transfers, and checkout runs it through credit
   control. Payments and statements still work.
