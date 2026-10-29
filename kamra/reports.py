@@ -121,8 +121,24 @@ def void_allowance_report(
 	]
 
 
+def movement_counts(property: str, start: str, date: str) -> dict:
+	"""Arrivals, departures, no-shows over start..date, and who is in house."""
+	def count(field, statuses):
+		return frappe.db.count("Reservation", {
+			"property": property, field: ("between", [start, date]),
+			"status": ("in", statuses)})
+
+	return {
+		"arrivals": count("check_in_date", ["Confirmed", "Checked In"]),
+		"departures": count("check_out_date", ["Checked In", "Checked Out"]),
+		"in_house": frappe.db.count("Reservation", {
+			"property": property, "status": "Checked In"}),
+		"no_shows": count("check_in_date", ["No Show"]),
+	}
+
+
 @frappe.whitelist()
-@require_roles("Finance", "Front Desk", "Night Auditor", "Kamra Agent")
+@require_roles("Finance", "Revenue Manager", "Night Auditor", "Kamra Agent")
 def manager_flash(property: str, date: str | None = None,
                   from_date: str | None = None):
 	"""The daily flash: yesterday's performance, month to date, today's
@@ -138,18 +154,7 @@ def manager_flash(property: str, date: str | None = None,
 	month = _days(property, getdate(date).replace(day=1), getdate(date), total_rooms)
 	days = _days(property, getdate(start), getdate(date), total_rooms)
 
-	def count(field, statuses):
-		return frappe.db.count("Reservation", {
-			"property": property, field: ("between", [start, date]),
-			"status": ("in", statuses)})
-
-	movement = {
-		"arrivals": count("check_in_date", ["Confirmed", "Checked In"]),
-		"departures": count("check_out_date", ["Checked In", "Checked Out"]),
-		"in_house": frappe.db.count("Reservation", {
-			"property": property, "status": "Checked In"}),
-		"no_shows": count("check_in_date", ["No Show"]),
-	}
+	movement = movement_counts(property, start, date)
 
 	from kamra.api import cash_summary
 	collections = cash_summary(property, start, date)

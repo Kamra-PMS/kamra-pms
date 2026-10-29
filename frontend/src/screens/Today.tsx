@@ -35,6 +35,7 @@ import type { ShellContext } from "../AppShell"
 import CheckInDialog from "../components/CheckInDialog"
 import BookingRequests from "../components/BookingRequests"
 import { serverError } from "../lib/resource"
+import { useAuth } from "../lib/auth"
 import { cur, moneyLocale } from "../lib/money"
 import { useT, t as translate, uiDateLocale } from "../lib/i18n"
 import CheckOutDialog from "../components/CheckOutDialog"
@@ -348,8 +349,15 @@ function InHouseTable({
   )
 }
 
+/** Who sees revenue and occupancy here; the server gates the same way
+ *  (kamra.dashboards.FIGURE_ROLES). */
+const FIGURE_ROLES = ["Finance", "Revenue Manager", "Night Auditor", "Kamra Agent",
+  "Hotel Admin", "System Manager", "Administrator"]
+
 export default function Today() {
   const { t, lang } = useT()
+  const { roles } = useAuth()
+  const figures = roles.some((r) => FIGURE_ROLES.includes(r))
   const { refreshKey } = useOutletContext<ShellContext>()
   const navigate = useNavigate()
   const [snap, setSnap] = useState<Snapshot | null>(null)
@@ -647,7 +655,7 @@ export default function Today() {
   const widgets: Record<WidgetId, React.ReactNode> = {
     kpis: (
       <div className="mb-6 space-y-3">
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+      <div className={cn("grid grid-cols-2 gap-3 md:grid-cols-3", figures ? "xl:grid-cols-6" : "xl:grid-cols-4")}>
         <StatCard
           icon={<LogIn className="size-4" />}
           label={t("Arrivals")}
@@ -670,7 +678,7 @@ export default function Today() {
           spark={mkTrend(inhouseN)}
           to="/in-house?tab=in-house"
         />
-        <StatCard
+        {figures && <StatCard
           icon={<PieChart className="size-4" />}
           label={t("Occupancy")}
           to="/room-board"
@@ -680,8 +688,8 @@ export default function Today() {
             occupied: occupied ?? 0,
             total: roomsN,
           })}
-        />
-        <StatCard
+        />}
+        {figures && <StatCard
           icon={<Wallet className="size-4" />}
           label={t("Revenue")}
           value={`${cur()}${inr0(revenue)}`}
@@ -698,7 +706,7 @@ export default function Today() {
           }
           spark={mkTrend(revenue)}
           to="/dashboard"
-        />
+        />}
         <StatCard
           icon={<ListChecks className="size-4" />}
           label={t("Open tasks")}
@@ -711,7 +719,7 @@ export default function Today() {
           to={"/housekeeping"}
         />
       </div>
-      {kpi && (
+      {kpi && figures && (
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
           {moneyTiles.map((m) => (
             <Link
@@ -852,13 +860,13 @@ export default function Today() {
       <Card>
         <CardHeader>
           <CardTitle>{t("Housekeeping")}</CardTitle>
-          <span className="text-xs text-zinc-400">
+          {figures && <span className="text-xs text-zinc-400">
             {t("{pct}% occupied · {occupied} of {total}", {
               pct: occupancyPct,
               occupied: occupied ?? 0,
               total: roomsN,
             })}
-          </span>
+          </span>}
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">

@@ -33,6 +33,10 @@ seconds.
 - Under them, the money row: **Collected today**, **Outstanding**, **Open
   folios** and month-to-date **ADR**, **RevPAR** and **Occupancy**, each a
   link to the till board, ledgers, billing or the report.
+- Revenue, occupancy and the money row are for Finance, Revenue, the
+  night auditor and managers. A receptionist sees **Arrivals**,
+  **Departures**, **In-house** and **Open tasks** only, and the Revenue
+  dashboard and Manager's flash stay closed to them.
 - **Arrivals** and **Departures** list today's stays. Each row shows the
   source (Website, Phone, OTA, AI Agent…), a payment chip (**Paid**,
   **₹… due** or **Unpaid**) and **Pre-checked-in** when the guest has filled

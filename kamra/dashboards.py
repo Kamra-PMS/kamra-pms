@@ -12,7 +12,7 @@ from decimal import ROUND_HALF_UP, Decimal
 import frappe
 from frappe.utils import nowdate
 
-from kamra.authz import require_roles
+from kamra.authz import ADMIN, require_roles
 
 
 def _housekeeping_slice(property: str):
@@ -62,6 +62,17 @@ def _finance_slice(property: str, date: str):
 	}
 
 
+# who sees revenue and occupancy on the dashboard; the front desk sees
+# arrivals, departures, in house and rooms, not the hotel's numbers
+FIGURE_ROLES = ("Finance", "Revenue Manager", "Night Auditor", "Kamra Agent", *ADMIN)
+FIGURE_KEYS = ("occupancy_pct", "revenue_today", "revpar", "adr", "room_revenue_today",
+               "collections_today", "statistics", "finance", "outlook")
+
+
+def sees_figures() -> bool:
+	return bool(set(FIGURE_ROLES) & set(frappe.get_roles()))
+
+
 @frappe.whitelist()
 @require_roles("Front Desk", "Finance", "Revenue Manager", "Hotel Admin", "Kamra Agent")
 def property_dashboard(property: str, date: str | None = None):
@@ -69,6 +80,18 @@ def property_dashboard(property: str, date: str | None = None):
 	from kamra.crs import assert_property_access
 	assert_property_access(property)
 	date = date or nowdate()
+	if not sees_figures():
+		from kamra.reports import movement_counts
+		move = movement_counts(property, date, date)
+		return {
+			"property": property,
+			"property_name": frappe.db.get_value("Property", property, "property_name"),
+			"date": date,
+			"figures_hidden": True,
+			**move,
+			"front_desk": move,
+			"housekeeping": _housekeeping_slice(property),
+		}
 	from kamra.reports import manager_flash
 	flash = manager_flash(property, date)
 	today = flash.get("today") or {}

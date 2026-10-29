@@ -26,8 +26,9 @@ FNB = {"pos_orders", "pos_items"}
 
 # role -> (report tools, custom-report datasets, packs) it must get, exactly
 EXPECTED = {
+	# no manager's flash: the hotel's revenue and occupancy are not the desk's
 	"Front Desk": (
-		{"manager_flash", "cashier_shift_report", "sla_report", "outlets",
+		{"cashier_shift_report", "sla_report", "outlets",
 		 "outlet_dashboard", "wastage_report", "banquet_register", *BUILDER},
 		FRONT_DESK | HK | OPS | FO_EXTRA | FNB,
 		{"front_office", "housekeeping", "fnb", "engineering", "laundry",

@@ -110,14 +110,16 @@ export default function Dashboard() {
   const load = useCallback(() => {
     setError(null)
     if (scope === "property") {
-      call<PropDash>("kamra.dashboards.property_dashboard", {
+      call<PropDash & { figures_hidden?: boolean }>("kamra.dashboards.property_dashboard", {
         property: getCurrentProperty(),
-      }).then(setProp).catch((e) => setError(serverError(e)))
+      }).then((d) => d.figures_hidden
+        ? setError(t("The revenue dashboard is for Finance, Revenue and managers."))
+        : setProp(d)).catch((e) => setError(serverError(e)))
     } else {
       call<Portfolio>("kamra.dashboards.portfolio_dashboard", {})
         .then(setPort).catch((e) => setError(serverError(e)))
     }
-  }, [scope])
+  }, [scope, t])
   useEffect(load, [load])
   useRealtime(load)
 
