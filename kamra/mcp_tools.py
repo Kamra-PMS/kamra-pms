@@ -662,16 +662,43 @@ TOOLS: tuple[ToolSpec, ...] = (
 		"api.add_folio_payment",
 		"""Record money received on a folio. mode: Cash, UPI, Card, Bank,
 		Link. kind: Payment (default), Advance, or Security Deposit.
-		Confirm the amount with staff before calling.""",
+		Foreign money: pass currency (e.g. USD) and the foreign amount
+		as amount, mode Cash or Bank Transfer; the PMS converts at the
+		hotel's rate for today (see exchange_rates) and refuses if none
+		is set. Confirm the amount and currency with staff before calling.""",
 		{
 			"folio": _p("string"),
 			"mode": _p("string"),
 			"amount": _p("number"),
 			"reference": _p("string"),
 			"kind": _p("string"),
+			"currency": _p("string", description="Optional ISO code of "
+			               "foreign money received. Leave out for the "
+			               "hotel's own currency."),
 		},
 		required=("folio", "mode", "amount"),
 		mutating=True,
+		group="Billing",
+	),
+	_t(
+		"exchange_rates",
+		"ledger.list_exchange_rates",
+		"""The hotel's exchange rates: latest buy and sell rate per foreign
+		currency (home-currency units per 1 foreign unit) and the date each
+		was set. Foreign payments convert at the buy rate set for today's
+		business date. Read-only.""",
+		{},
+		property=True,
+		group="Billing",
+	),
+	_t(
+		"folio_in_currency",
+		"ledger.folio_in_currency",
+		"""A folio's total and balance shown in a foreign currency at
+		today's rate, rounded up to the cent. Display only: the bill and
+		tax invoice stay in the hotel's currency. Read-only.""",
+		{"folio": _p("string"), "currency": _p("string")},
+		required=("folio", "currency"),
 		group="Billing",
 	),
 	_t(

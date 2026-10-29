@@ -1519,6 +1519,10 @@ def _post_folio_charge(folio: str, charge_type: str, description: str,
 
 
 
+# foreign money arrives as notes or a wire; a card terminal charges home currency
+FX_PAYMENT_MODES = ("Cash", "Bank Transfer")
+
+
 def _pin_guard(folio: str, pin=None):
 	from kamra.authz import require_cashier_pin
 	require_cashier_pin(frappe.db.get_value("Folio", folio, "property"), pin)
@@ -1527,11 +1531,16 @@ def _pin_guard(folio: str, pin=None):
 @require_roles("Finance", "Front Desk", "Kamra Agent")
 def add_folio_payment(folio: str, mode: str, amount: float,
                       reference: str | None = None, pin: str | None = None,
-                      kind: str = "Payment"):
+                      kind: str = "Payment", currency: str | None = None):
 	"""Record money received on the stay ledger. kind labels WHY it came
 	in - Payment (against the bill), Advance (collected before/at
 	check-in) or Security Deposit (held, refundable). Refunds go through
-	refund_folio_payment so they can never be entered by accident."""
+	refund_folio_payment so they can never be entered by accident.
+
+	currency: leave out (or pass the home currency) for a normal payment.
+	A foreign code means `amount` is the foreign money received (cash or a
+	bank transfer); the server converts it at today's buy rate, posts the
+	home amount and keeps the foreign amount and rate on the row."""
 	if kind not in ("Payment", "Advance", "Security Deposit"):
 		frappe.throw("kind must be Payment, Advance or Security Deposit.")
 	if float(amount) <= 0:
@@ -1540,10 +1549,23 @@ def add_folio_payment(folio: str, mode: str, amount: float,
 	doc = frappe.get_doc("Folio", folio)
 	from kamra.business_date import get_business_date
 	from kamra.cashier import record_cashier_txn, require_open_session
+	from kamra.ledger import fx_to_home, home_currency, payment_rate
 	bd = get_business_date(doc.property)
 	# Property currency — never leave Folio Payment on the INR schema default (#341)
-	currency = (frappe.get_cached_value("Property", doc.property, "currency")
-	            or "INR")
+	currency_home = home_currency(doc.property)
+	fx = None
+	if currency and currency.strip().upper() != currency_home:
+		if mode not in FX_PAYMENT_MODES:
+			frappe.throw("Foreign currency is taken as Cash or Bank Transfer "
+			             "only. A card is charged in the hotel's currency.")
+		if kind == "Security Deposit":
+			frappe.throw("Take a security deposit in the hotel's currency: "
+			             "it is refunded in that currency.")
+		r = payment_rate(doc.property, currency)
+		fx = {"currency": r["currency"], "fx_amount": round(float(amount), 2),
+		      "exchange_rate": r["rate"]}
+		amount = fx_to_home(fx["fx_amount"], r["rate"])
+	currency = currency_home
 	sess = None
 	try:
 		sess = require_open_session(doc.property)
@@ -1558,14 +1580,19 @@ def add_folio_payment(folio: str, mode: str, amount: float,
 		"amount": float(amount),
 		"reference": reference,
 		"currency": currency,
+		**(fx or {}),  # an FX row keeps the foreign currency, amount and rate
 	})
 	from kamra.folio import _recalculate
 	_recalculate(doc)
 	doc.save()
 	pay = doc.payments[-1]
+	fx_note = (f"{fx['currency']} {fx['fx_amount']:,.2f} @ {fx['exchange_rate']}"
+	           if fx else None)
+	# foreign notes are not home cash: keep them out of the drawer count
 	record_cashier_txn(
-		doc.property, "Payment", mode, float(amount),
-		folio=doc.name, reference=reference, session=sess)
+		doc.property, "Payment",
+		"Other" if fx and mode == "Cash" else mode, float(amount),
+		folio=doc.name, reference=reference, notes=fx_note, session=sess)
 	try:
 		from kamra.ledger import record_payment_ledger
 		record_payment_ledger(doc, pay.as_dict(), session=sess)
@@ -1588,6 +1615,7 @@ def add_folio_payment(folio: str, mode: str, amount: float,
 		from kamra.savings import log_action
 		log_action("folio_payment", "Folio", doc.name, doc.property,
 		           rationale=f"{kind} {money_text(doc.property, amount)} by {mode}"
+		                     + (f" ({fx_note})" if fx_note else "")
 		                     + (f" ({reference})" if reference else ""))
 	return doc.as_dict()
 

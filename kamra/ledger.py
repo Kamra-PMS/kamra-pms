@@ -7,6 +7,7 @@ the four Opera ledgers (Guest / Deposit / AR / Package) can be balanced."""
 from __future__ import annotations
 
 import json
+from decimal import ROUND_HALF_UP, ROUND_UP, Decimal
 from typing import Any
 
 import frappe
@@ -1350,6 +1351,16 @@ def list_exchange_rates(property: str):
 def upsert_exchange_rate(property: str, currency: str, buy_rate: float,
                          sell_rate: float, service_tax_pct: float = 0,
                          max_exchange: float | None = None):
+	"""Set today's (business date) rate for one foreign currency. Rates are
+	home-currency units per 1 foreign unit, typed in by the hotel: Kamra
+	never fetches a market rate."""
+	currency = (currency or "").strip().upper()
+	if len(currency) != 3 or not currency.isalpha():
+		frappe.throw("Currency must be a 3-letter ISO code, e.g. USD.")
+	if currency == home_currency(property):
+		frappe.throw(f"{currency} is this hotel's own currency.")
+	if float(buy_rate or 0) <= 0 or float(sell_rate or 0) <= 0:
+		frappe.throw("Buy and sell rates must be above zero.")
 	bd = get_business_date(property)
 	existing = frappe.db.get_value(
 		"Exchange Rate",
@@ -1382,6 +1393,7 @@ def upsert_exchange_rate(property: str, currency: str, buy_rate: float,
 @require_roles("Front Desk", "Finance", "Kamra Agent")
 def currency_calculator(property: str, currency: str, fx_amount: float,
                         direction: str = "Buy"):
+	currency = (currency or "").strip().upper()
 	rate_row = frappe.get_all(
 		"Exchange Rate",
 		filters={"property": property, "currency": currency, "disabled": 0},
@@ -1445,27 +1457,67 @@ def post_exchange(property: str, currency: str, fx_amount: float,
 		notes=f"{direction} {fx_amount} {currency} @ {calc['exchange_rate']}",
 		session=sess,
 	)
-	if folio and direction == "Sell":
-		# Optionally record as folio payment in foreign currency
-		fdoc = frappe.get_doc("Folio", folio)
-		fdoc.append("payments", {
-			"posting_date": bd,
-			"payment_kind": "Payment",
-			"mode": "Cash",
-			"amount": calc["local_amount"],
-			"currency": currency.upper(),
-			"fx_amount": float(fx_amount),
-			"exchange_rate": calc["exchange_rate"],
-			"reference": f"fx:{txn.name}",
-		})
-		from kamra.folio import _recalculate
-		_recalculate(fdoc)
-		fdoc.save(ignore_permissions=True)
-		try:
-			record_payment_ledger(fdoc, fdoc.payments[-1].as_dict(), session=sess)
-		except Exception:
-			frappe.log_error(title="ledger payment write failed")
+	# ponytail: folio here is only a reference. Paying a bill in foreign
+	# money is api.add_folio_payment(currency=...), the one payment writer.
 	return {"transaction": txn.name, **calc}
+
+
+def home_currency(property: str) -> str:
+	"""The currency the hotel's books are kept in."""
+	return frappe.get_cached_value("Property", property, "currency") or "INR"
+
+
+def _money(value) -> Decimal:
+	return Decimal(str(value or 0))
+
+
+def fx_to_home(fx_amount, rate) -> float:
+	"""Foreign money received -> home amount posted. Half up to the cent."""
+	return float((_money(fx_amount) * _money(rate)).quantize(
+		Decimal("0.01"), rounding=ROUND_HALF_UP))
+
+
+def home_to_fx(amount, rate) -> float:
+	"""Home amount -> foreign amount shown to the guest. Rounded UP to the
+	cent so paying the shown figure always settles the bill; any extra is
+	change, given back in home currency."""
+	return float((_money(amount) / _money(rate)).quantize(
+		Decimal("0.01"), rounding=ROUND_UP))
+
+
+def payment_rate(property: str, currency: str) -> dict:
+	"""The rate a foreign-currency payment converts at: the hotel's BUY
+	rate (it is buying the guest's foreign money) set for the current
+	business date. A rate from an earlier day is refused, not reused."""
+	currency = (currency or "").strip().upper()
+	if currency == home_currency(property):
+		frappe.throw(f"{currency} is this hotel's own currency.")
+	bd = get_business_date(property)
+	row = frappe.db.get_value(
+		"Exchange Rate",
+		{"property": property, "currency": currency, "rate_date": bd,
+		 "disabled": 0},
+		["buy_rate", "rate_date"], as_dict=True)
+	if not row or float(row.buy_rate or 0) <= 0:
+		frappe.throw(f"No {currency} rate set for {bd}. Finance sets "
+		             "today's rate on the Currency Desk first.")
+	return {"currency": currency, "rate": float(row.buy_rate),
+	        "rate_date": str(row.rate_date)}
+
+
+@frappe.whitelist()
+@require_roles("Front Desk", "Finance", "Night Auditor", "Kamra Agent")
+def folio_in_currency(folio: str, currency: str):
+	"""A folio's total and balance shown in another currency, at today's
+	rate. Display only: the bill and tax invoice stay in home currency."""
+	doc = frappe.get_doc("Folio", folio)
+	r = payment_rate(doc.property, currency)
+	return {
+		**r,
+		"home_currency": home_currency(doc.property),
+		"grand_total": home_to_fx(doc.grand_total, r["rate"]),
+		"balance": home_to_fx(max(float(doc.balance or 0), 0), r["rate"]),
+	}
 
 
 @frappe.whitelist()
