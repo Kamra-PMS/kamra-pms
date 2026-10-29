@@ -21,6 +21,8 @@ interface Row {
   pos_order?: string | null
   /** the supervisor who approved it, when one had to */
   approver?: string | null
+  /** allowance voucher number */
+  serial?: string | null
   detail: string | null
 }
 
@@ -73,7 +75,7 @@ export default function VoidAllowanceReport() {
     return (rows ?? []).filter(
       (r) =>
         (!only || r.action === only) &&
-        (!s || `${r.actor} ${r.folio ?? ""} ${r.pos_order ?? ""} ${r.approver ?? ""} ${r.detail ?? ""}`.toLowerCase().includes(s)),
+        (!s || `${r.actor} ${r.folio ?? ""} ${r.pos_order ?? ""} ${r.approver ?? ""} ${r.serial ?? ""} ${r.detail ?? ""}`.toLowerCase().includes(s)),
     )
   }, [rows, only, q])
 
@@ -183,6 +185,12 @@ export default function VoidAllowanceReport() {
                     >
                       {translate(actionLabel[r.action]) ?? t(r.action)}
                     </span>
+                    {r.serial && (
+                      <Link className="mt-1 block font-mono text-xs text-brand-700 hover:underline"
+                        to={`/allowance-voucher/${encodeURIComponent(r.serial)}`} title={t("Print voucher")}>
+                        {r.serial}
+                      </Link>
+                    )}
                   </td>
                   <td className="whitespace-nowrap px-3 py-2">
                     {r.folio ? (

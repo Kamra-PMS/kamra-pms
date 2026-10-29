@@ -121,19 +121,39 @@ Cashier controls) and pick who approves: **Hotel Admin**, or **Hotel
 Admin or Finance**. **Only allowances above** sets the amount; 0 means
 every allowance. A reason code marked **Requires Supervisor** (such as
 **Complimentary adjustment**) always asks, even with the setting off.
+A new property starts with approval on (Hotel Admin, every allowance).
+A property you already run keeps its setting.
 
 1. The desk passes the allowance as usual. Kamra says **Sent to a
    manager**, and the request shows under the allowance row. Nothing is
    off the bill yet.
 2. A manager at the desk presses **Manager approves now**, picks their
    name and types their own cashier PIN. Or, later, a manager opens
-   **Finance → Allowances to approve** and presses **Approve**.
+   **Finance → Allowances to approve**, types their PIN and presses
+   **Approve**. The PIN is asked every time, even when the manager is
+   the one signed in and the cashier PIN setting is off.
 3. To refuse, press **Reject** and say why. The request is kept with who
    rejected it and why.
 
-A manager's own allowance posts straight away, with them as the approver.
-AI agents can ask for an allowance, never approve one. **Voids and
-allowances** shows the approver of each allowance and every rejection.
+A manager's own allowance posts straight away, with them as the approver,
+once they type their PIN. AI agents can ask for an allowance, never
+approve one. **Voids and allowances** shows the approver of each
+allowance and every rejection.
+
+### The allowance voucher
+
+Every allowance that goes on a bill gets a serial number, such as
+`ALW-KDP-26-00012`: one series per property, given when the allowance
+posts (a request that waits or is rejected gets none) and never reused.
+The number shows on the bill line, in **Allowances to approve**
+(Approved) and in **Voids and allowances**.
+
+Click the number, or **Print voucher**, for the printable voucher: the
+property, serial, date and time, guest, room, folio, the amount and the
+tax it reverses, the reason code and note, who asked, and the manager
+who approved it (name, role, "Approved with PIN" and when), with
+signature lines for the approver and the guest or requester. The voucher
+is at `/kamra/allowance-voucher/<serial>`.
 
 Voids work only on an open folio. Once the folio is invoiced, use a
 [credit note](#cancel-an-invoice-or-issue-a-credit-note) instead.
@@ -444,8 +464,8 @@ Both screens are also linked from **Settings → Finance**.
 
 **Reports → Voids and allowances**
 lists every void, allowance and cancelled invoice on the property: when,
-which folio, who did it and the reason. Finance and Hotel Admin users see
-it.
+which folio, who did it and the reason, and each allowance's voucher
+serial. Finance and Hotel Admin users see it.
 
 1. Set the dates. It shows the last 30 days to start with.
 2. Click **Void**, **Allowance** or **Invoice cancelled** to see one kind;
@@ -464,7 +484,7 @@ it.
 | Lock a PIN after | Settings → Finance → Cashier controls | 5 wrong tries | Locks the PIN after this many wrong entries. |
 | Lock for / stay unlocked for | Settings → Finance → Cashier controls | 15 min | How long a locked PIN stays locked, and how long money actions stay unlocked after a correct PIN. |
 | When a credit company has no billing rules | Settings → Finance → Corporate billing | Room and F&B (liquor to guest) | Which charges a credit company pays when it has no rules of its own. |
-| Allowances need a manager's approval | Settings → Finance → Cashier controls | Off | Who approves an allowance: Hotel Admin, or Hotel Admin or Finance. Until approved, it stays off the bill. |
+| Allowances need a manager's approval | Settings → Finance → Cashier controls | Off (Hotel Admin on new properties) | Who approves an allowance: Hotel Admin, or Hotel Admin or Finance. Until approved, it stays off the bill. |
 | Only allowances above | Settings → Finance → Cashier controls | 0 | Smaller allowances post straight away. 0 means every allowance needs approval. |
 | Email payment reminders | Settings → Property → Company credit | Off | Emails each company's billing contact 3 days before a bill is due, on the due date and 15 days after, once per bill per stage. |
 | Payment gateway | Settings → Payments | None | The gateway and keys used for payment links. |

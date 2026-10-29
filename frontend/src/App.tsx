@@ -26,6 +26,7 @@ const HkApp = lazy(() => import("./screens/HkApp"))
 const Guests = lazy(() => import("./screens/Guests"))
 const RegistrationCard = lazy(() => import("./screens/RegistrationCard"))
 const CancellationLetter = lazy(() => import("./screens/CancellationLetter"))
+const AllowanceVoucher = lazy(() => import("./screens/AllowanceVoucher"))
 const Setup = lazy(() => import("./screens/Setup"))
 const GoLiveImport = lazy(() => import("./screens/GoLiveImport"))
 const HousekeepingBoard = lazy(() => import("./screens/HousekeepingBoard"))
@@ -299,6 +300,7 @@ export default function App() {
           <Route path="departures" element={<Navigate to="/in-house?tab=departures" replace />} />
           <Route path="voids-allowances" element={<VoidAllowanceReport />} />
           <Route path="allowances" element={<AllowanceApprovals />} />
+          <Route path="allowance-voucher/:name" element={<AllowanceVoucher />} />
           <Route path="rate-calendar" element={<RateCalendar />} />
           <Route path="revenue-reports" element={<RevenueReports />} />
           <Route path="ops-sla" element={<OpsSLA />} />

@@ -14,6 +14,15 @@ class Property(Document):
 			from kamra.property_presets import apply_kind_change
 			apply_kind_change(self)
 
+	def after_insert(self):
+		# A new property starts with allowances signed off by a Hotel Admin,
+		# every amount. Existing properties keep the registry default (Off),
+		# so an upgrade changes nothing.
+		from kamra.settings import clear_cache, write_kv
+		write_kv(self.name, "allowance_approval", "Hotel Admin")
+		write_kv(self.name, "allowance_approval_above", 0)
+		clear_cache(self.name)
+
 	def on_update(self):
 		# Single-site tenants: keep Frappe's site clock aligned with the
 		# property so night audit / now_datetime follow hotel local time.

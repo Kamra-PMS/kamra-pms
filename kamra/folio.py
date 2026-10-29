@@ -952,7 +952,8 @@ def close_folio(folio_name: str) -> str:
 
 def post_allowance(folio_name: str, amount: float, reason: str,
                    gst_rate: float = 0, approver: str | None = None,
-                   requested_by: str | None = None) -> str:
+                   requested_by: str | None = None,
+                   serial: str | None = None) -> str:
 	"""A negative adjustment against a specific folio - the hotel writes off
 	part of a charge (service recovery, dispute) WITHOUT touching the original
 	line, so the trail stays honest. GST reverses at the same rate as the
@@ -970,6 +971,7 @@ def post_allowance(folio_name: str, amount: float, reason: str,
 		"posting_date": frappe.utils.nowdate(),
 		"charge_type": "Allowance",
 		"description": reason.strip(),
+		"allowance_serial": serial,
 		"qty": 1,
 		"rate": -amount,
 		"amount": -amount,
@@ -984,7 +986,8 @@ def post_allowance(folio_name: str, amount: float, reason: str,
 	                     + (f" (asked by {requested_by})"
 	                        if requested_by and requested_by != frappe.session.user
 	                        else ""),
-	           approver=approver)
+	           approver=approver,
+	           after_snapshot={"serial": serial} if serial else None)
 	return folio.name
 
 

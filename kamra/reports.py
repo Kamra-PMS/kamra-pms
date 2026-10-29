@@ -5,6 +5,8 @@ Everything is computed from folios (posted money) and reservations
 cash drawer reconcile to.
 """
 
+import json
+
 import frappe
 from frappe.utils import add_days, getdate, nowdate
 
@@ -94,7 +96,7 @@ def void_allowance_report(
 		"Agent Action Log",
 		filters=filters,
 		fields=["creation", "actor", "action_type", "reference_doctype",
-		        "reference_name", "rationale", "approver"],
+		        "reference_name", "rationale", "approver", "after_snapshot"],
 		order_by="creation desc",
 		limit_page_length=0,
 	)
@@ -109,6 +111,16 @@ def void_allowance_report(
 		"pos_cancel_order": "POS bill cancelled",
 	}
 	pos = {"pos_void_item", "pos_cancel_order"}
+
+	def serial(r):
+		# the allowance voucher number (kamra.api.allowance_voucher)
+		if r.action_type != "post_allowance" or not r.after_snapshot:
+			return None
+		try:
+			return (json.loads(r.after_snapshot) or {}).get("serial")
+		except ValueError:
+			return None
+
 	return [
 		{
 			"when": str(r.creation),
@@ -118,6 +130,7 @@ def void_allowance_report(
 			"folio": None if r.action_type in pos else r.reference_name,
 			"pos_order": r.reference_name if r.action_type in pos else None,
 			"approver": r.approver,
+			"serial": serial(r),
 			"detail": r.rationale,
 		}
 		for r in rows

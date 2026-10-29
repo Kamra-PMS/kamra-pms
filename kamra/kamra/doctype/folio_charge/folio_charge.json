@@ -11,6 +11,7 @@
   "charge_type",
   "transaction_code",
   "description",
+  "allowance_serial",
   "qty",
   "rate",
   "amount",
@@ -48,6 +49,13 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Description"
+  },
+  {
+   "fieldname": "allowance_serial",
+   "fieldtype": "Data",
+   "label": "Allowance Serial",
+   "read_only": 1,
+   "depends_on": "eval:doc.charge_type=='Allowance'"
   },
   {
    "default": "1",
@@ -114,7 +122,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-10-19 18:00:00.000000",
+ "modified": "2026-10-30 10:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Folio Charge",

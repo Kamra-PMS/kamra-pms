@@ -16,7 +16,8 @@ class AllowanceRequest(Document):
 		Desk or /api/resource can't approve, re-open a decided request to
 		post it twice, or change what is approved after it was asked."""
 		if self.is_new():
-			if self.status != "Pending":
+			# an allowance posted at once is written already Approved
+			if self.status != "Pending" and not self.flags.kamra_decision:
 				frappe.throw(_("A new allowance request is always Pending."))
 			return
 		old = self.get_doc_before_save()

@@ -36,6 +36,7 @@ interface InvoiceData {
       posting_date: string
       charge_type: string
       description: string
+      allowance_serial?: string | null
       amount: number
       gst_rate: number
       gst_amount: number
@@ -280,6 +281,8 @@ export default function FolioView() {
   const [adjustCodes, setAdjustCodes] = useState<{ name: string; description: string }[]>([])
   const [allowanceNote, setAllowanceNote] = useState<string | null>(null)
   const [allowanceKey, setAllowanceKey] = useState(0)
+  // a manager's own allowance is signed with their PIN, asked when needed
+  const [allowancePin, setAllowancePin] = useState<string | null>(null)
   const [panel, setPanel] = useState<"company" | "share" | null>(null)
   const [shares, setShares] = useState<Record<string, string>>({})
   const { ensureUnlocked, status: pinStatus } = useCashierAuth()
@@ -1064,6 +1067,13 @@ export default function FolioView() {
                             {c.description && (
                               <span className="text-zinc-500"> - {c.description}</span>
                             )}
+                            {c.allowance_serial && (
+                              <Link to={`/allowance-voucher/${encodeURIComponent(c.allowance_serial)}`}
+                                className="ml-1 font-mono text-xs text-brand-700 hover:underline print:text-zinc-500 print:no-underline"
+                                title={t("Print voucher")}>
+                                {c.allowance_serial}
+                              </Link>
+                            )}
                           </td>
                           <td className="hidden py-2 pr-3 font-mono text-xs text-zinc-400 print:table-cell">
                             {lines.find((l) => l.row === c.name)?.service_code ?? ""}
@@ -1471,9 +1481,19 @@ export default function FolioView() {
                       setAllowance({ ...allowance, reason: e.target.value })
                     }
                   />
+                  {allowancePin !== null && (
+                    <input
+                      className={`${inputCls} w-24`}
+                      type="password" inputMode="numeric" autoComplete="off" autoFocus
+                      value={allowancePin}
+                      onChange={(e) => setAllowancePin(e.target.value.replace(/\D/g, "").slice(0, 8))}
+                      placeholder={t("Your PIN")} aria-label={t("Your PIN")}
+                    />
+                  )}
                   <Button
                     variant="outline"
-                    disabled={busy || !allowance.amount || !(allowance.reason.trim() || allowance.reason_code)}
+                    disabled={busy || !allowance.amount || !(allowance.reason.trim() || allowance.reason_code)
+                      || allowancePin === ""}
                     onClick={() =>
                       act(async () => {
                         const r = await call<{ pending?: boolean }>("kamra.api.post_allowance", withPin({
@@ -1482,7 +1502,17 @@ export default function FolioView() {
                           reason: allowance.reason.trim(),
                           gst_rate: Number(allowance.gst_rate),
                           reason_code: allowance.reason_code || undefined,
-                        }))
+                          pin: allowancePin || undefined,
+                        })).catch((e) => {
+                          // the manager approves their own allowance: ask for their PIN
+                          if (serverError(e).includes("SUPERVISOR_PIN_REQUIRED")) {
+                            setAllowancePin("")
+                            return null
+                          }
+                          throw e
+                        })
+                        if (!r) return
+                        setAllowancePin(null)
                         setAllowance({ amount: "", reason: "", gst_rate: "0", reason_code: "" })
                         setAllowanceNote(r?.pending
                           ? t("Sent to a manager. It goes on the bill once approved.")
@@ -1494,6 +1524,9 @@ export default function FolioView() {
                     {t("Allow")}
                   </Button>
                 </div>
+                {allowancePin !== null && (
+                  <p className="mt-2 text-xs text-zinc-600">{t("Your PIN signs this allowance, like the paper voucher.")}</p>
+                )}
                 {allowanceNote && <p className="mt-2 text-xs text-amber-700">{allowanceNote}</p>}
                 <div className="mt-2">
                   <AllowanceRequests property={folio.property ?? getCurrentProperty()} folio={folio.name}

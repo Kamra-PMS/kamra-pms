@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function - the same governed layer
-the UI and the AI use. **427 endpoints**, generated from the source
+the UI and the AI use. **428 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -866,8 +866,10 @@ allowance_approval / allowance_approval_above) or the reason code needs
 a supervisor, the allowance does not touch the folio yet: it becomes a
 Pending Allowance Request ({"pending": True, "request": ...}) that a
 manager approves on the spot with their PIN, or later from the list
-(decide_allowance). A manager's own allowance posts at once. AI agents
-can ask, never approve.
+(decide_allowance). A manager's own allowance posts at once, signed
+with their own PIN (`pin`) whatever the property's cashier PIN setting.
+AI agents can ask, never approve. Every allowance that posts gets a
+voucher serial (allowance_voucher).
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -909,6 +911,18 @@ the stay they are for. can_decide says if the caller may approve.
 | `property` | yes |  |
 | `status` | no | `'Pending'` |
 | `folio` | no | `None` |
+
+### `kamra.api.allowance_voucher`
+
+**GET/POST** · roles: `Finance`, `Front Desk`, `Hotel Admin`
+
+The printable allowance voucher for a posted allowance, by request
+name or serial: who asked, the manager who approved it with their PIN,
+and what it took off the bill. Rejected or waiting requests have none.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `allowance_request` | yes |  |
 
 ### `kamra.api.allowance_approvers`
 

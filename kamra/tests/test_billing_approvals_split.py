@@ -11,6 +11,7 @@ from kamra import api, folio as folio_mod
 from kamra.settings import clear_cache
 from kamra.tests.audit_fixtures import (
 	PROP_A,
+	PROP_B,
 	TODAY,
 	AuditTestCase,
 	d,
@@ -72,7 +73,7 @@ def company(name: str, rules: list[tuple[str, str]], credit: int = 1) -> str:
 
 
 class BillingApprovalsSplitTestCase(AuditTestCase):
-	properties = (PROP_A,)
+	properties = (PROP_A, PROP_B)
 
 	def setUp(self):
 		super().setUp()
@@ -114,9 +115,10 @@ class BillingApprovalsSplitTestCase(AuditTestCase):
 		with self.assertRaises(frappe.PermissionError):
 			api.decide_allowance(out["request"], approve=1)
 
+		set_pin(GM, "2468")
 		frappe.set_user(GM)
 		self.assertTrue(api.allowance_requests(PROP_A)["can_decide"])
-		api.decide_allowance(out["request"], approve=1)
+		api.decide_allowance(out["request"], approve=1, pin="2468")
 		frappe.set_user("Administrator")
 		self.assertEqual(bal(folio), 250)
 		self.assertEqual(ledger_net(folio), 250)
@@ -126,7 +128,7 @@ class BillingApprovalsSplitTestCase(AuditTestCase):
 		self.assertEqual(rows[0]["approver"], GM)
 		self.assertIn(f"asked by {DESK}", rows[0]["detail"])
 		with self.assertRaisesRegex(frappe.ValidationError, "already approved"):
-			api.decide_allowance(out["request"], approve=1)
+			api.decide_allowance(out["request"], approve=1, pin="2468")
 
 	def test_rejection_is_kept_with_who_and_why(self):
 		set_setting(PROP_A, "allowance_approval", "Hotel Admin or Finance")
@@ -201,7 +203,8 @@ class BillingApprovalsSplitTestCase(AuditTestCase):
 			frappe.get_doc({"doctype": "Allowance Request", "property": PROP_A,
 			                "folio": folio, "amount": 10, "reason": "UT",
 			                "status": "Approved"}).insert(ignore_permissions=True)
-		api.decide_allowance(out["request"], approve=1)
+		set_pin("Administrator", "1357")
+		api.decide_allowance(out["request"], approve=1, pin="1357")
 		req.reload()
 		req.status = "Pending"  # re-opened, it would post twice
 		with self.assertRaises(frappe.ValidationError):
@@ -219,6 +222,82 @@ class BillingApprovalsSplitTestCase(AuditTestCase):
 		self.assertTrue(api.post_allowance(folio, 20, "UT", reason_code="ADJ-COMP")["pending"])
 		with self.assertRaisesRegex(frappe.ValidationError, "Adjust"):
 			api.post_allowance(folio, 20, "UT", reason_code="VOID-ERR")
+
+	def test_serial_given_once_when_an_allowance_posts(self):
+		set_setting(PROP_A, "allowance_approval", "Hotel Admin")
+		set_pin(GM, "2468")
+		res = self.stay()
+		folio = guest_folio(res.name)
+		api.add_folio_charge(folio, "Laundry", "UT Laundry", 500, gst_rate=0)
+		frappe.set_user(DESK)
+		asked = api.post_allowance(folio, 30, "UT asked")
+		refused = api.post_allowance(folio, 40, "UT refused")
+		frappe.set_user("Administrator")
+		# asking gives no number
+		self.assertFalse(frappe.db.get_value("Allowance Request", asked["request"], "serial"))
+		frappe.set_user(GM)
+		api.decide_allowance(refused["request"], approve=0, note="UT no")
+		with self.assertRaises(frappe.ValidationError):  # approving takes the PIN
+			api.decide_allowance(asked["request"], approve=1)
+		first = api.decide_allowance(asked["request"], approve=1, pin="2468")["serial"]
+		# a manager's own allowance posts at once, signed with their PIN
+		with self.assertRaises(frappe.ValidationError):
+			api.post_allowance(folio, 20, "UT own")
+		own = api.post_allowance(folio, 20, "UT own", pin="2468")
+		frappe.set_user("Administrator")
+		self.assertFalse(frappe.db.get_value("Allowance Request", refused["request"], "serial"))
+		code = "".join(w[0] for w in PROP_A.split())[:3].upper()
+		self.assertRegex(first, rf"^ALW-{code}-\d\d-\d{{5}}$")
+		self.assertEqual(int(own["serial"][-5:]), int(first[-5:]) + 1)
+		# on the bill line and the request, once each
+		lines = [c.allowance_serial for c in frappe.get_doc("Folio", folio).charges
+		         if c.charge_type == "Allowance"]
+		self.assertEqual(sorted(lines), sorted([first, own["serial"]]))
+		self.assertEqual(frappe.db.count("Allowance Request", {"serial": own["serial"]}), 1)
+		self.assertEqual(bal(folio), 450)
+		self.assertEqual(ledger_net(folio), 450)
+		self.assertEqual({r["serial"] for r in api_report() if r["action"] == "Allowance"},
+		                 {first, own["serial"]})
+
+		# the voucher names the approver and carries the number
+		v = api.allowance_voucher(first)
+		self.assertEqual((v["serial"], v["approved_by"], v["approved_by_role"],
+		                  v["requested_by"], v["amount"], v["approved_with_pin"]),
+		                 (first, GM, "Hotel Admin", DESK, 30, True))
+		self.assertEqual(v["room"], "101")
+		with self.assertRaisesRegex(frappe.ValidationError, "posted allowance"):
+			api.allowance_voucher(refused["request"])
+
+		# a second property counts on its own
+		make_property(PROP_B, business_date=TODAY)
+		frappe.db.delete("Property Setting", {"property": PROP_B})
+		set_setting(PROP_B, "use_cashier_tills", 0)
+		rt_b = make_room_type(PROP_B, "STD", base_price=1000)
+		res_b = make_reservation(PROP_B, rt_b, d(-1), d(1), status="Checked In",
+		                         room=make_room(PROP_B, rt_b, "201"))
+		folio_b = guest_folio(res_b.name)
+		api.add_folio_charge(folio_b, "Laundry", "UT Laundry", 500, gst_rate=0)
+		b = api.post_allowance(folio_b, 10, "UT other hotel")["serial"]
+		code_b = "".join(w[0] for w in PROP_B.split())[:3].upper()
+		self.assertTrue(b.startswith(f"ALW-{code_b}-"))
+		self.assertNotEqual(b, first)
+
+	def test_new_property_starts_with_approval_on(self):
+		from kamra.settings import get_setting
+		name = "UT Fresh Approvals"
+		frappe.db.delete("Property Setting", {"property": name})
+		if frappe.db.exists("Property", name):
+			frappe.delete_doc("Property", name, force=True, ignore_permissions=True)
+		frappe.get_doc({"doctype": "Property", "property_name": name,
+		                "city": "Testville", "state": "Karnataka"}
+		               ).insert(ignore_permissions=True)
+		self.assertEqual(get_setting(name, "allowance_approval"), "Hotel Admin")
+		self.assertEqual(get_setting(name, "allowance_approval_above"), 0)
+		# an existing property without the setting keeps the old default
+		frappe.db.delete("Property Setting", {"property": PROP_A})
+		clear_cache(PROP_A)
+		self.assertEqual(get_setting(PROP_A, "allowance_approval"), "Off")
+		clear_cache(name)
 
 	# 2. a bill for each guest -------------------------------------------
 

@@ -2412,7 +2412,7 @@
         "kamra.api.post_allowance"
        ]
       },
-      "description": "Write off part of a bill against a specific folio, with a reason.\n\nWhen the property wants a manager's approval (Settings, Finance:\nallowance_approval / allowance_approval_above) or the reason code needs\na supervisor, the allowance does not touch the folio yet: it becomes a\nPending Allowance Request ({\"pending\": True, \"request\": ...}) that a\nmanager approves on the spot with their PIN, or later from the list\n(decide_allowance). A manager's own allowance posts at once. AI agents\ncan ask, never approve.",
+      "description": "Write off part of a bill against a specific folio, with a reason.\n\nWhen the property wants a manager's approval (Settings, Finance:\nallowance_approval / allowance_approval_above) or the reason code needs\na supervisor, the allowance does not touch the folio yet: it becomes a\nPending Allowance Request ({\"pending\": True, \"request\": ...}) that a\nmanager approves on the spot with their PIN, or later from the list\n(decide_allowance). A manager's own allowance posts at once, signed\nwith their own PIN (`pin`) whatever the property's cashier PIN setting.\nAI agents can ask, never approve. Every allowance that posts gets a\nvoucher serial (allowance_voucher).",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"folio\": \"FOLIO-2026-00001\",\n  \"amount\": 1000,\n  \"reason\": \"\",\n  \"gst_rate\": 0\n}",
@@ -2490,6 +2490,43 @@
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\",\n  \"status\": \"Pending\",\n  \"folio\": \"FOLIO-2026-00001\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "allowance_voucher",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.allowance_voucher",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.allowance_voucher"
+       ]
+      },
+      "description": "The printable allowance voucher for a posted allowance, by request\nname or serial: who asked, the manager who approved it with their PIN,\nand what it took off the bill. Rejected or waiting requests have none.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"allowance_request\": \"<allowance_request>\"\n}",
        "options": {
         "raw": {
          "language": "json"

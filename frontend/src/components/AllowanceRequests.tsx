@@ -1,7 +1,8 @@
 /*  Allowances waiting for a manager. A manager approves or rejects
     (a rejection says why); at the desk, a manager can approve on the spot
-    by picking their name and typing their own PIN. Nothing is on the bill
-    until it is approved. The server (kamra.api.decide_allowance) checks who
+    by picking their name and typing their own PIN. A signed-in manager
+    types their PIN too: it is the signature on the allowance voucher.
+    Nothing is on the bill until it is approved. The server (kamra.api.decide_allowance) checks who
     may approve; agents never can. */
 
 import { useCallback, useEffect, useState } from "react"
@@ -15,6 +16,7 @@ import { Button } from "./ui/button"
 
 interface Req {
   name: string
+  serial: string | null
   folio: string
   amount: number
   reason: string
@@ -122,16 +124,29 @@ export default function AllowanceRequests({ property, folio, status = "Pending",
           {r.status !== "Pending" && (
             <p className="mt-0.5 text-xs text-zinc-600">
               {r.status === "Approved"
-                ? t("Approved by {who}", { who: r.decided_by ?? "" })
+                ? (r.decided_by ? t("Approved by {who}", { who: r.decided_by }) : t("Posted without approval"))
                 : t("Rejected by {who}: {why}", { who: r.decided_by ?? "", why: r.decision_note ?? "" })}
+              {r.serial && (
+                <>
+                  {" · "}
+                  <span className="font-mono">{r.serial}</span>{" · "}
+                  <Link to={`/allowance-voucher/${encodeURIComponent(r.serial)}`}
+                    className="text-brand-700 hover:underline">
+                    {t("Print voucher")}
+                  </Link>
+                </>
+              )}
             </p>
           )}
           {r.status === "Pending" && (
             <div className="mt-2 flex flex-wrap items-center gap-2">
               {canDecide ? (
                 <>
-                  <Button variant="outline" disabled={busy || r.folio_status === "Closed"}
-                    onClick={() => void decide(r.name, { approve: 1 }, true)}>
+                  <input className={`${inputCls} w-24`} type="password" inputMode="numeric" autoComplete="off"
+                    value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 8))}
+                    placeholder={t("Your PIN")} aria-label={t("Your PIN")} />
+                  <Button variant="outline" disabled={busy || !pin || r.folio_status === "Closed"}
+                    onClick={() => void decide(r.name, { approve: 1, pin }, false)}>
                     {t("Approve")}
                   </Button>
                   <Button variant="ghost" disabled={busy} onClick={() => setRejecting(r.name)}>
