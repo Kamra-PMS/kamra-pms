@@ -32,6 +32,9 @@ scheduler_events = {
 			"kamra.channel_manager.push_all_ari",
 			# custom reports with Daily/Weekly email schedule
 			"kamra.custom_reports.run_scheduled_custom_reports",
+			# online exchange rates for the business date (off unless a
+			# property turns on fx_auto_fetch; only fills missing rates)
+			"kamra.ledger.auto_fetch_exchange_rates",
 		],
 		# 09:00 - send self check-in links to upcoming arrivals, for properties
 		# that turned the setting on (a plain automation, not an agent)

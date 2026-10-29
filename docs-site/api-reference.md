@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function - the same governed layer
-the UI and the AI use. **422 endpoints**, generated from the source
+the UI and the AI use. **423 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -4853,8 +4853,9 @@ Quick-checkout every Checked In reservation on a group.
 **POST** · roles: `Finance`, `Hotel Admin`, `Kamra Agent`
 
 Set today's (business date) rate for one foreign currency. Rates are
-home-currency units per 1 foreign unit, typed in by the hotel: Kamra
-never fetches a market rate.
+home-currency units per 1 foreign unit. A rate typed in here is Manual
+and wins over a fetched (Online) one for the same day: a later fetch
+leaves it alone.
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -4864,6 +4865,19 @@ never fetches a market rate.
 | `sell_rate` | yes |  |
 | `service_tax_pct` | no | `0` |
 | `max_exchange` | no | `None` |
+
+### `kamra.ledger.fetch_exchange_rates`
+
+**POST** · roles: `Finance`, `Hotel Admin`
+
+Fetch today's market rates for the property's listed currencies
+(Settings, Finance, Exchange rates) and store them for the business
+date: buy = mid less the margin, sell = mid plus it. A Manual rate
+already set for today is kept.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
 
 ### `kamra.ledger.currency_calculator`
 

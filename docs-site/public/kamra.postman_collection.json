@@ -12534,10 +12534,47 @@
         "kamra.ledger.upsert_exchange_rate"
        ]
       },
-      "description": "Set today's (business date) rate for one foreign currency. Rates are\nhome-currency units per 1 foreign unit, typed in by the hotel: Kamra\nnever fetches a market rate.",
+      "description": "Set today's (business date) rate for one foreign currency. Rates are\nhome-currency units per 1 foreign unit. A rate typed in here is Manual\nand wins over a fetched (Online) one for the same day: a later fetch\nleaves it alone.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\",\n  \"currency\": \"<currency>\",\n  \"buy_rate\": \"<buy_rate>\",\n  \"sell_rate\": \"<sell_rate>\",\n  \"service_tax_pct\": 0\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "fetch_exchange_rates",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.ledger.fetch_exchange_rates",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.ledger.fetch_exchange_rates"
+       ]
+      },
+      "description": "Fetch today's market rates for the property's listed currencies\n(Settings, Finance, Exchange rates) and store them for the business\ndate: buy = mid less the margin, sell = mid plus it. A Manual rate\nalready set for today is kept.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\"\n}",
        "options": {
         "raw": {
          "language": "json"

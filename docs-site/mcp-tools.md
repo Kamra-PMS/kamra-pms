@@ -474,9 +474,11 @@ Mutating - logged to the activity ledger.
 ### `exchange_rates()`
 
 The hotel's exchange rates: latest buy and sell rate per foreign
-currency (home-currency units per 1 foreign unit) and the date each
-was set. Foreign payments convert at the buy rate set for today's
-business date. Read-only.
+currency (home-currency units per 1 foreign unit), the date each
+was set, and its source: Manual (typed in by set_by) or Online
+(fetched market_rate with the hotel's margin). Foreign payments
+convert at the buy rate set for today's business date. Finance
+fetches or types missing rates; agents cannot. Read-only.
 
 Endpoint: `kamra.ledger.list_exchange_rates`.
 

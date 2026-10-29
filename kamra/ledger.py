@@ -1332,7 +1332,8 @@ def list_exchange_rates(property: str):
 		"Exchange Rate",
 		filters={"property": property, "disabled": 0},
 		fields=["name", "currency", "rate_date", "buy_rate", "sell_rate",
-		        "service_tax_pct", "max_exchange"],
+		        "service_tax_pct", "max_exchange", "source", "set_by",
+		        "market_rate"],
 		order_by="currency asc, rate_date desc",
 	)
 	# Keep latest per currency
@@ -1352,8 +1353,9 @@ def upsert_exchange_rate(property: str, currency: str, buy_rate: float,
                          sell_rate: float, service_tax_pct: float = 0,
                          max_exchange: float | None = None):
 	"""Set today's (business date) rate for one foreign currency. Rates are
-	home-currency units per 1 foreign unit, typed in by the hotel: Kamra
-	never fetches a market rate."""
+	home-currency units per 1 foreign unit. A rate typed in here is Manual
+	and wins over a fetched (Online) one for the same day: a later fetch
+	leaves it alone."""
 	currency = (currency or "").strip().upper()
 	if len(currency) != 3 or not currency.isalpha():
 		frappe.throw("Currency must be a 3-letter ISO code, e.g. USD.")
@@ -1373,6 +1375,9 @@ def upsert_exchange_rate(property: str, currency: str, buy_rate: float,
 		doc.sell_rate = float(sell_rate)
 		doc.service_tax_pct = float(service_tax_pct or 0)
 		doc.max_exchange = max_exchange
+		doc.source = "Manual"
+		doc.set_by = frappe.session.user
+		doc.market_rate = None
 		doc.save(ignore_permissions=True)
 	else:
 		doc = frappe.get_doc({
@@ -1384,9 +1389,125 @@ def upsert_exchange_rate(property: str, currency: str, buy_rate: float,
 			"sell_rate": float(sell_rate),
 			"service_tax_pct": float(service_tax_pct or 0),
 			"max_exchange": max_exchange,
+			"source": "Manual",
+			"set_by": frappe.session.user,
 		})
 		doc.insert(ignore_permissions=True)
 	return doc.as_dict()
+
+
+# Online rates: ExchangeRate-API's free open endpoint. No key, HTTPS, covers
+# INR, SAR, AED, USD and ~160 more. Terms (exchangerate-api.com/docs/free):
+# free use, rates refresh once a day, rate limited (do not call more than
+# about hourly), and a page showing the rates must credit "Rates By Exchange
+# Rate API" with a link. Response shape:
+#   {"result": "success", "base_code": "INR",
+#    "time_last_update_utc": "Thu, 29 Oct 2026 00:02:31 +0000",
+#    "rates": {"INR": 1, "USD": 0.01189, ...}}   # foreign units per 1 base
+# and on failure {"result": "error", "error-type": "unsupported-code"}.
+# Swap the provider here; market_rates() is the only reader.
+FX_RATES_URL = "https://open.er-api.com/v6/latest/{base}"
+FX_TIMEOUT_S = 5
+
+
+def market_rates(home: str) -> tuple[dict, str | None]:
+	"""Market mid rates as home-currency units per 1 foreign unit, and the
+	provider's as-of time. Throws a plain message on any failure; never
+	called from a request that takes a payment."""
+	import requests
+	try:
+		r = requests.get(FX_RATES_URL.format(base=home), timeout=FX_TIMEOUT_S)
+		r.raise_for_status()
+		data = r.json()
+		if data.get("result") != "success":
+			raise ValueError(data.get("error-type") or "no rates returned")
+		mids = {str(c).upper(): 1 / float(v)
+		        for c, v in (data.get("rates") or {}).items() if float(v or 0) > 0}
+	except Exception as e:
+		frappe.throw(f"Could not fetch exchange rates ({type(e).__name__}: {e}). "
+		             "Today's rates are unchanged; type them in on the Currency Desk.")
+	return mids, data.get("time_last_update_utc")
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Finance", "Hotel Admin")
+def fetch_exchange_rates(property: str):
+	"""Fetch today's market rates for the property's listed currencies
+	(Settings, Finance, Exchange rates) and store them for the business
+	date: buy = mid less the margin, sell = mid plus it. A Manual rate
+	already set for today is kept."""
+	return _fetch_rates(property)
+
+
+def _fetch_rates(property: str, only_missing: bool = False) -> dict:
+	from kamra.settings import get_setting, list_setting
+	home = home_currency(property)
+	wanted = [c.upper() for c in list_setting(property, "fx_currencies")
+	          if len(c) == 3 and c.isalpha() and c.upper() != home]
+	if not wanted:
+		frappe.throw("No foreign currencies listed. Add them under Settings, "
+		             "Finance, Exchange rates.")
+	bd = get_business_date(property)
+	existing = {r.currency: r for r in frappe.get_all(
+		"Exchange Rate",
+		filters={"property": property, "rate_date": bd, "currency": ["in", wanted]},
+		fields=["name", "currency", "source"])}
+	out = {"business_date": str(bd), "updated": [], "kept_manual": [],
+	       "not_offered": [], "as_of": None}
+	if only_missing:
+		wanted = [c for c in wanted if c not in existing]
+		if not wanted:
+			return out
+	mids, out["as_of"] = market_rates(home)
+	margin = float(get_setting(property, "fx_margin_pct") or 0) / 100
+	for cur in wanted:
+		row = existing.get(cur)
+		if row and (row.source or "Manual") == "Manual":
+			out["kept_manual"].append(cur)
+			continue
+		mid = mids.get(cur)
+		if not mid:
+			out["not_offered"].append(cur)
+			continue
+		values = {"buy_rate": round(mid * (1 - margin), 6),
+		          "sell_rate": round(mid * (1 + margin), 6),
+		          "market_rate": round(mid, 6), "source": "Online",
+		          "set_by": frappe.session.user}
+		if row:
+			doc = frappe.get_doc("Exchange Rate", row.name)
+			doc.update(values)
+			doc.save(ignore_permissions=True)
+		else:
+			# carry the desk's FX tax and per-transaction limit forward
+			prev = frappe.db.get_value(
+				"Exchange Rate", {"property": property, "currency": cur},
+				["service_tax_pct", "max_exchange"], as_dict=True,
+				order_by="rate_date desc") or {}
+			frappe.get_doc({"doctype": "Exchange Rate", "property": property,
+			                "currency": cur, "rate_date": bd,
+			                "service_tax_pct": prev.get("service_tax_pct") or 0,
+			                "max_exchange": prev.get("max_exchange"),
+			                **values}).insert(ignore_permissions=True)
+		out["updated"].append(cur)
+	return out
+
+
+def auto_fetch_exchange_rates():
+	"""Hourly: for properties that turned on the daily fetch, fill in any
+	listed currency with no rate yet for the business date. Runs again
+	next hour if the provider was down, and after the night audit rolls
+	the date."""
+	from kamra.settings import get_setting
+	for prop in frappe.get_all("Property", filters={"disabled": 0}, pluck="name"):
+		if not get_setting(prop, "fx_auto_fetch"):
+			continue
+		try:
+			_fetch_rates(prop, only_missing=True)
+			frappe.db.commit()  # nosemgrep: frappe-manual-commit -- one property's rates stand even if a later property fails
+		except Exception:
+			frappe.db.rollback()
+			frappe.log_error(title=f"Exchange rate fetch failed: {prop}",
+			                 message=frappe.get_traceback())
 
 
 @frappe.whitelist()
@@ -1499,8 +1620,8 @@ def payment_rate(property: str, currency: str) -> dict:
 		 "disabled": 0},
 		["buy_rate", "rate_date"], as_dict=True)
 	if not row or float(row.buy_rate or 0) <= 0:
-		frappe.throw(f"No {currency} rate set for {bd}. Finance sets "
-		             "today's rate on the Currency Desk first.")
+		frappe.throw(f"No {currency} rate set for {bd}. Finance fetches "
+		             "or types today's rate on the Currency Desk first.")
 	return {"currency": currency, "rate": float(row.buy_rate),
 	        "rate_date": str(row.rate_date)}
 

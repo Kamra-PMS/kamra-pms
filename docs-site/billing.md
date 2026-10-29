@@ -347,14 +347,41 @@ business dates (up to 92 days).
 Finance and Hotel Admin set the buy and sell rates in **Set rate**
 (currency, buy, sell, then **Save**). A rate is hotel currency per 1 unit
 of the foreign currency, and it belongs to today's business date: saving
-again the same day updates it. Kamra never fetches market rates.
+again the same day updates it.
+
+### Fetch today's rates online
+
+Instead of typing each rate, Finance or a Hotel Admin can press **Fetch
+today's rates** on the Currency Desk. Kamra asks a free online service
+([Exchange Rate API](https://www.exchangerate-api.com), refreshed once a
+day) for the market mid rate of each currency you take, and stores:
+
+- **Buy** = market rate less your margin, **Sell** = market rate plus it.
+- **Source** Online, the market rate, and who fetched it.
+
+Set it up under **Settings → Finance → Exchange rates**:
+
+| Setting | Default | What it does |
+| --- | --- | --- |
+| Foreign currencies taken | USD, EUR, GBP, AED | ISO codes the fetch gets. |
+| Margin on the market rate | 2% | Taken off for Buy, added for Sell. |
+| Fetch rates automatically every day | Off | Each business date, any listed currency still without a rate is fetched (checked hourly, so it also fills in after the night audit rolls the date). |
+
+A rate typed in by staff is **Manual** and always wins: fetching again the
+same day leaves it as it is, and typing over a fetched rate turns it
+Manual. The FX tax and per-transaction limit carry over from the
+currency's last rate.
+
+If the service is down or slow (Kamra waits 5 seconds), nothing changes
+and the desk shows the error: type the rates in by hand. Taking a payment
+never calls the internet; it only reads the rate already stored for today.
 
 ## Take a payment in a foreign currency
 
 Your books stay in your hotel's currency. A guest or company can still
 pay in USD, EUR, AED or any other currency you set a rate for.
 
-1. Set today's rate on the **Currency Desk** (above). Payments use the
+1. Set or fetch today's rate on the **Currency Desk** (above). Payments use the
    **Buy** rate, because the hotel is buying the guest's foreign money. A
    rate from an earlier day is not used: set a new one each business day.
 2. On the folio, under **Record a payment**, pick the currency next to the

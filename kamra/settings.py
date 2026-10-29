@@ -421,6 +421,18 @@ MODULES: tuple[Module, ...] = (
 				S("till_variance_tolerance", "Till variance that needs a manager", "number", 0, min=0,
 				  hint="A till closed over or short by more than this is flagged for a manager to review. 0 turns the check off."),
 			)),
+			Section("fx", "Exchange rates",
+			        "A guest paying in foreign money needs today's rate: typed in on the Currency Desk, "
+			        "or fetched from an online market rate. A rate typed in by staff always wins over "
+			        "a fetched one for the same day.", (
+				S("fx_currencies", "Foreign currencies taken", "text", "USD, EUR, GBP, AED",
+				  hint="ISO codes, separated by commas. Fetch today's rates gets these."),
+				S("fx_margin_pct", "Margin on the market rate", "number", 2.0, min=0, max=20, unit="%",
+				  hint="Buy rate = market rate less this; sell rate = market rate plus this."),
+				S("fx_auto_fetch", "Fetch rates automatically every day", "check", 0,
+				  hint="Each business date, rates missing for these currencies are fetched online. "
+				       "Off: Finance fetches or types them on the Currency Desk."),
+			)),
 		),
 	),
 	Module(

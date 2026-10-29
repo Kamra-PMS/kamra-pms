@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react"
 import { call, getCurrentProperty } from "../lib/api"
 import { serverError } from "../lib/resource"
 import { useCashierAuth } from "../lib/cashierAuth"
+import { useAuth } from "../lib/auth"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { moneyLocale } from "../lib/money"
@@ -13,8 +14,14 @@ const inr = (n: unknown) =>
     maximumFractionDigits: 2,
   })
 
+const FETCH_ROLES = ["Finance", "Hotel Admin", "System Manager", "Administrator"]
+
 export default function CurrencyDesk() {
   const { lang, t } = useT()
+  const { roles } = useAuth()
+  const canFetch = roles.some((r) => FETCH_ROLES.includes(r))
+  const [fetching, setFetching] = useState(false)
+  const [note, setNote] = useState<string | null>(null)
   const { withPin } = useCashierAuth()
   const [rates, setRates] = useState<
     {
@@ -24,6 +31,9 @@ export default function CurrencyDesk() {
       service_tax_pct: number
       max_exchange?: number
       rate_date?: string
+      source?: string
+      set_by?: string
+      market_rate?: number
     }[]
   >([])
   const [history, setHistory] = useState<Record<string, unknown>[]>([])
@@ -94,6 +104,30 @@ export default function CurrencyDesk() {
     }
   }
 
+  const fetchRates = async () => {
+    setFetching(true)
+    setErr(null)
+    setNote(null)
+    try {
+      const out = await call<{
+        updated: string[]
+        kept_manual: string[]
+        not_offered: string[]
+      }>("kamra.ledger.fetch_exchange_rates", { property: getCurrentProperty() })
+      const parts = [t("Updated: {v0}", { v0: out.updated.join(", ") || "-" })]
+      if (out.kept_manual.length)
+        parts.push(t("Kept typed-in rates: {v0}", { v0: out.kept_manual.join(", ") }))
+      if (out.not_offered.length)
+        parts.push(t("Not offered online: {v0}", { v0: out.not_offered.join(", ") }))
+      setNote(parts.join(". "))
+      await load()
+    } catch (e) {
+      setErr(serverError(e))
+    } finally {
+      setFetching(false)
+    }
+  }
+
   const saveRate = async () => {
     try {
       await call("kamra.ledger.upsert_exchange_rate", {
@@ -116,6 +150,7 @@ export default function CurrencyDesk() {
         <h1 className="text-2xl font-semibold">{translate("Currency Desk")}</h1>
       </div>
       {err ? <p className="text-sm text-rose-600">{translate(err)}</p> : null}
+      {note ? <p className="text-sm text-emerald-700">{note}</p> : null}
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
@@ -196,6 +231,11 @@ export default function CurrencyDesk() {
               placeholder={translate("Sell")}
             />
             <Button variant="outline" onClick={() => void saveRate()}>{translate("Save")}</Button>
+            {canFetch ? (
+              <Button variant="outline" disabled={fetching} onClick={() => void fetchRates()}>
+                {fetching ? t("Fetching...") : t("Fetch today's rates")}
+              </Button>
+            ) : null}
             <p className="w-full text-xs text-zinc-500">
               {t("Rates are hotel currency per 1 unit of the foreign currency, for today's business date. A guest paying a bill in foreign money is converted at today's Buy rate.")}
             </p>
@@ -212,6 +252,7 @@ export default function CurrencyDesk() {
               <th className="px-3 py-2">{translate("Sell")}</th>
               <th className="px-3 py-2">{translate("Tax %")}</th>
               <th className="px-3 py-2">{t("Set on")}</th>
+              <th className="px-3 py-2">{t("Source")}</th>
             </tr>
           </thead>
           <tbody>
@@ -222,10 +263,23 @@ export default function CurrencyDesk() {
                 <td className="px-3 py-2 tabular-nums">{r.sell_rate}</td>
                 <td className="px-3 py-2">{r.service_tax_pct}</td>
                 <td className="px-3 py-2 tabular-nums">{r.rate_date}</td>
+                <td className="px-3 py-2 text-xs text-zinc-500">
+                  {r.source === "Online"
+                    ? t("Online, market {v0}", { v0: String(r.market_rate ?? "") })
+                    : t("Manual")}
+                  {r.set_by ? ` · ${r.set_by}` : ""}
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
+        {rates.some((r) => r.source === "Online") ? (
+          <p className="border-t px-3 py-2 text-xs text-zinc-400">
+            <a href="https://www.exchangerate-api.com" target="_blank" rel="noreferrer">
+              Rates By Exchange Rate API
+            </a>
+          </p>
+        ) : null}
       </div>
 
       <div>

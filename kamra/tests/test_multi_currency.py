@@ -134,3 +134,107 @@ class MultiCurrencyTestCase(AuditTestCase):
 	def test_display_needs_todays_rate(self):
 		with self.assertRaises(frappe.ValidationError):
 			ledger.folio_in_currency(self.folio, "EUR")
+
+
+def _fake_api(rates=None, fail=None):
+	"""requests.get stand-in for open.er-api.com (no network in tests)."""
+	from unittest.mock import MagicMock
+	resp = MagicMock()
+	resp.json.return_value = {"result": "success", "base_code": "INR",
+	                          "time_last_update_utc": "Thu, 29 Oct 2026 00:02:31 +0000",
+	                          "rates": rates or {"INR": 1, "USD": 0.0125, "EUR": 0.01}}
+	return MagicMock(side_effect=fail) if fail else MagicMock(return_value=resp)
+
+
+class OnlineRatesTestCase(AuditTestCase):
+	properties = (PROP_A,)
+
+	def setUp(self):
+		super().setUp()
+		self.at(TODAY, "kamra.folio", "kamra.business_date", "kamra.ledger")
+		make_property(PROP_A, business_date=TODAY, currency="INR")
+		frappe.db.delete("Exchange Rate", {"property": PROP_A})
+		frappe.db.delete("Property Setting", {"property": PROP_A, "setting_key": ["like", "fx_%"]})
+		from kamra import settings
+		settings.write_kv(PROP_A, "fx_currencies", "usd, EUR, INR, GBP")
+		settings.write_kv(PROP_A, "fx_margin_pct", 2)
+		settings.clear_cache(PROP_A)
+		self.addCleanup(settings.clear_cache, PROP_A)
+
+	rate = MultiCurrencyTestCase.rate
+
+	def fetch(self, fake):
+		from unittest.mock import patch
+		with patch("requests.get", fake):
+			return ledger.fetch_exchange_rates(PROP_A)
+
+	def row(self, cur):
+		return frappe.db.get_value("Exchange Rate", {"property": PROP_A, "currency": cur},
+		                           ["buy_rate", "sell_rate", "market_rate", "source", "set_by"],
+		                           as_dict=True)
+
+	def test_fetch_applies_margin_and_records_source(self):
+		fake = _fake_api()
+		out = self.fetch(fake)
+		self.assertEqual(fake.call_args.kwargs["timeout"], 5)
+		self.assertIn("/INR", fake.call_args.args[0])
+		self.assertEqual(sorted(out["updated"]), ["EUR", "USD"])
+		self.assertEqual(out["not_offered"], ["GBP"])  # home INR skipped
+		usd = self.row("USD")
+		self.assertEqual((usd.market_rate, usd.buy_rate, usd.sell_rate), (80.0, 78.4, 81.6))
+		self.assertEqual((usd.source, usd.set_by), ("Online", frappe.session.user))
+		# a payment now converts at the fetched buy rate
+		self.assertEqual(ledger.payment_rate(PROP_A, "USD")["rate"], 78.4)
+		# fetching again updates the online row, never a second one
+		self.fetch(_fake_api({"USD": 0.01}))
+		self.assertEqual(self.row("USD").buy_rate, 98.0)
+		self.assertEqual(frappe.db.count("Exchange Rate", {"property": PROP_A, "currency": "USD"}), 1)
+
+	def test_manual_rate_wins_over_online(self):
+		self.rate(buy=83.0, sell=84.0)
+		out = self.fetch(_fake_api())
+		self.assertEqual(out["kept_manual"], ["USD"])
+		self.assertEqual((self.row("USD").buy_rate, self.row("USD").source), (83.0, "Manual"))
+		# typing over an online rate turns it Manual
+		self.rate(buy=79.0, sell=82.0, currency="EUR")
+		eur = self.row("EUR")
+		self.assertEqual((eur.buy_rate, eur.source, eur.market_rate), (79.0, "Manual", 0))
+		listed = {r.currency: r for r in ledger.list_exchange_rates(PROP_A)["rates"]}
+		self.assertEqual(listed["EUR"].source, "Manual")
+
+	def test_failure_leaves_rates_alone(self):
+		import requests
+		self.rate(buy=83.0, sell=84.0)
+		before = frappe.db.count("Exchange Rate", {"property": PROP_A})
+		with self.assertRaises(frappe.ValidationError) as cm:
+			self.fetch(_fake_api(fail=requests.Timeout("read timed out")))
+		self.assertIn("unchanged", str(cm.exception))
+		bad = _fake_api()
+		bad.return_value.json.return_value = {"result": "error", "error-type": "unsupported-code"}
+		with self.assertRaises(frappe.ValidationError):
+			self.fetch(bad)
+		self.assertEqual(frappe.db.count("Exchange Rate", {"property": PROP_A}), before)
+
+	def test_scheduled_fetch_is_opt_in_and_fills_gaps(self):
+		from unittest.mock import patch
+
+		from kamra import settings
+		with patch("requests.get", _fake_api()) as fake, \
+		     patch("frappe.db.commit"):
+			ledger.auto_fetch_exchange_rates()
+			self.assertFalse(frappe.db.exists("Exchange Rate", {"property": PROP_A}))
+			settings.write_kv(PROP_A, "fx_auto_fetch", 1)
+			settings.clear_cache(PROP_A)
+			self.rate(buy=83.0, sell=84.0)  # manual USD already set
+			ledger.auto_fetch_exchange_rates()
+			self.assertEqual(self.row("USD").source, "Manual")
+			self.assertEqual(self.row("EUR").source, "Online")
+			calls = fake.call_count
+			settings.write_kv(PROP_A, "fx_currencies", "USD, EUR")
+			settings.clear_cache(PROP_A)
+			ledger.auto_fetch_exchange_rates()  # nothing missing: no call
+			self.assertEqual(fake.call_count, calls)
+
+	def test_fetch_needs_finance(self):
+		self.assertNotIn("Kamra Agent", ledger.fetch_exchange_rates._kamra_roles)
+		self.assertNotIn("Front Desk", ledger.fetch_exchange_rates._kamra_roles)
