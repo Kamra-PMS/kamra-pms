@@ -22,6 +22,7 @@ import { petChargeBasis } from "../lib/pets"
 import { useT, t as translate } from "../lib/i18n"
 import { adoptBrowserLanguage } from "../lib/dir"
 import { LanguageSwitcher } from "../components/LanguageSwitcher"
+import { addDays, nightsBetween, stayFromParams, todayPlus } from "../lib/stay"
 import ChildAges, {
   agesToSend, canReserve, sizeAges, StayNotice,
   type ChildAge, type StayFit,
@@ -120,22 +121,6 @@ const inputCls =
   "w-full rounded-lg border border-zinc-300 bg-white px-3.5 py-2.5 text-base " +
   "focus:outline-2 focus:outline-offset-1 focus:outline-brand-600"
 
-function todayPlus(days: number) {
-  const d = new Date()
-  d.setDate(d.getDate() + days)
-  return d.toISOString().slice(0, 10)
-}
-
-function nightsBetween(a: string, b: string) {
-  const ms = new Date(b).getTime() - new Date(a).getTime()
-  return Math.max(1, Math.round(ms / 86_400_000))
-}
-
-function addDays(date: string, days: number) {
-  const d = new Date(date)
-  d.setDate(d.getDate() + days)
-  return d.toISOString().slice(0, 10)
-}
 
 function mapEmbedUrl(lat: number, lng: number) {
   const d = 0.02
@@ -233,16 +218,9 @@ export default function PublicListing() {
   const [searchParams] = useSearchParams()
   const [resolved, setResolved] = useState<Resolved | null>(null)
   const [data, setData] = useState<Showcase | null>(null)
-  const [search, setSearch] = useState(() => {
-    const check_in_date = checkin ?? todayPlus(1)
-    return {
-      check_in_date,
-      check_out_date: checkout ?? addDays(check_in_date, 2),
-      adults: Number(adultsParam ?? 2) || 2,
-      pets: 0,
-      children: Number(childrenParam ?? 0) || 0,
-    }
-  })
+  const [search, setSearch] = useState(() =>
+    stayFromParams({ checkin, checkout, adults: adultsParam, children: childrenParam }),
+  )
   const [results, setResults] = useState<Record<string, StayResult>>({})
   const [childAgesState, setChildAges] = useState<ChildAge[]>([])
   const childAges = sizeAges(childAgesState, search.children)

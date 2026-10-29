@@ -107,6 +107,7 @@ def _property_payload(prop) -> dict:
 		"minimum_nights": int(prop.get("minimum_nights") or 1),
 		"free_cancel_days": int(prop.get("free_cancel_days") or 0),
 		"cancellation_fee": prop.get("cancellation_fee") or "None",
+		"has_cancellation_tiers": bool(prop.get("cancellation_tiers")),
 		"booking_mode": prop.get("booking_mode") or "Instant",
 		"property_kind": prop.get("property_kind") or "Hotel",
 	}
@@ -349,8 +350,14 @@ def search_stay(property: str, check_in_date: str, check_out_date: str,
                 adults: int = 2, children: int = 0,
                 listing_slug: str | None = None,
                 location_slug: str | None = None, pets: int = 0,
-                child_ages=None):
+                child_ages=None, voucher_code: str | None = None):
 	"""Availability + real quoted price per room type for the stay.
+
+	Each available row also carries `plans`: the stay quoted room only
+	(first) and with each meal plan, so the page lists real totals per plan. A valid
+	`voucher_code` discounts every quote, and each plan then keeps its
+	undiscounted `list_amount` for the strike-through; an invalid one is
+	ignored here (check_voucher tells the guest why).
 
 	`child_ages` (e.g. [3, 8, 13]) lets each room type's age bands decide who
 	is free, a child or an adult; without it `children` are all children.
@@ -373,6 +380,15 @@ def search_stay(property: str, check_in_date: str, check_out_date: str,
 	_party(None, adults, children, None)  # at least one adult, before any work
 
 	prop = frappe.get_cached_doc("Property", property)
+	voucher = _usable_voucher(property, voucher_code, nights)
+	# the first plan is the room-only price: a free plan (EP) when the
+	# property has one, else no meal plan at all
+	mps = frappe.get_all(
+		"Meal Plan", filters={"property": property, "disabled": 0},
+		fields=["name", "price_per_adult", "price_per_child"],
+		order_by="price_per_adult asc")
+	free = [m.name for m in mps if not (m.price_per_adult or m.price_per_child)]
+	meal_plans = [free[0] if free else ""] + [m.name for m in mps if m.name not in free]
 	results = []
 	for rt in frappe.get_all(
 		"Room Type",
@@ -404,12 +420,26 @@ def search_stay(property: str, check_in_date: str, check_out_date: str,
 			           confirmation_reason=_over_capacity_note(above))
 		if left:
 			try:
-				q = quote(property, rt, check_in_date, check_out_date,
-				          a, c, pets=int(pets or 0))
+				plans = []
+				for mp in meal_plans:
+					pq = quote(property, rt, check_in_date, check_out_date,
+					           a, c, mp or None, voucher_code=voucher,
+					           pets=int(pets or 0))
+					plan = {"meal_plan": mp, "amount_after_tax": pq["amount_after_tax"],
+					        **_payment_split(prop, pq["amount_after_tax"], (
+					            pq.get("stay_rules") or {}).get("full_payment"))}
+					if voucher:
+						plan["list_amount"] = quote(
+							property, rt, check_in_date, check_out_date, a, c,
+							mp or None, pets=int(pets or 0))["amount_after_tax"]
+					if not plans:
+						q = pq
+					plans.append(plan)
 				rules = q.get("stay_rules") or {}
 				q.update(_payment_split(prop, q.get("amount_after_tax"),
 				                        rules.get("full_payment")))
 				row["quote"] = q
+				row["plans"] = plans
 				need = max(int(rules.get("minimum_nights") or 0),
 				           int(prop.get("minimum_nights") or 1))
 				if nights < need:
@@ -420,6 +450,18 @@ def search_stay(property: str, check_in_date: str, check_out_date: str,
 				pass  # still list the room type even if this date range cannot be quoted
 		results.append(row)
 	return results
+
+
+def _usable_voucher(property: str, code: str | None, nights: int) -> str | None:
+	"""The code when it is valid for this stay, else None."""
+	if not (code or "").strip():
+		return None
+	from kamra.pricing import validate_voucher
+	try:
+		validate_voucher(property, code, nights)
+	except frappe.ValidationError:
+		return None
+	return code.strip()
 
 
 def _res_by_token(token: str):
