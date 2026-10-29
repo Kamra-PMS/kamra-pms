@@ -29,7 +29,7 @@ export const FEATURES: FeatureEntry[] = [
   { label: "Cancel a booking", to: "/reservations", where: "Front Desk · Reservations", keywords: ["no show", "cancellation fee", "waive fee"] },
   { label: "Block a room", to: "/room-blocks", where: "Front Desk · Room Blocks", keywords: ["maintenance", "out of order", "hold"] },
   { label: "Assign housekeeping", to: "/housekeeping", where: "Housekeeping", keywords: ["clean room", "turndown", "attendant", "dirty"] },
-  { label: "Lost and found", to: "/lost-and-found", where: "Housekeeping", keywords: ["lost item", "found item"] },
+  { label: "Lost and found", to: "/lost-found", where: "Housekeeping", keywords: ["lost item", "found item"] },
   { label: "Raise a service ticket", to: "/tickets", where: "Operations · Tickets", keywords: ["complaint", "maintenance request", "sla", "issue", "request"] },
   { label: "Take a restaurant order", to: "/pos", where: "F&B · POS", keywords: ["kot", "table", "bill", "room service", "dine in", "takeaway"] },
   { label: "Set up printers", to: "/printers", where: "F&B · Printers", keywords: ["kot printer", "bill printer", "receipt", "thermal"] },
