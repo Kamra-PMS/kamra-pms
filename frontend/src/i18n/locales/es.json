@@ -4298,6 +4298,7 @@
   "The region sets the currency, time zone, tax words and invoice format, ID types and payment methods. Time zone decides when your business day rolls over.": "La región determina la moneda, la zona horaria, los términos fiscales, el formato de las facturas, los tipos de documento de identidad y los métodos de pago. La zona horaria determina cuándo cambia la fecha operativa.",
   "The remaining nights could not be posted.": "No se pudieron registrar las noches pendientes.",
   "The rest printed here.": "Las comandas restantes se imprimieron aquí.",
+  "The revenue dashboard is for Finance, Revenue and managers.": "El panel de ingresos es para Finanzas, Ingresos y gerentes.",
   "The room is still occupied. Check the current guest out first.": "La habitación sigue ocupada. Registre primero la salida del huésped actual.",
   "The running sheet the banquet, kitchen and AV teams work from.": "Hoja de trabajo para los equipos de banquetes, cocina y audiovisuales.",
   "The security deposit of {v0}{v1} still held counts toward the bill; check-out records it as applied.": "El depósito de garantía retenido de {v0}{v1} se aplica a la cuenta al registrar la salida.",

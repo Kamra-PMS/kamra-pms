@@ -5106,7 +5106,7 @@ The reason is what makes the pipeline worth reading later.,The reason is what ma
 The remaining nights could not be posted.,The remaining nights could not be posted.,تعذّر ترحيل الليالي المتبقية.,No se pudieron registrar las noches pendientes.,,,translated
 The report is attached.,The report is attached.,التقرير مرفق.,El informe va adjunto.,,,translated
 The rest printed here.,The rest printed here.,طُبع الباقي هنا.,Las comandas restantes se imprimieron aquí.,screens/POS.tsx,,translated
-"The revenue dashboard is for Finance, Revenue and managers.","The revenue dashboard is for Finance, Revenue and managers.",,,screens/Dashboard.tsx,,needs_translation
+"The revenue dashboard is for Finance, Revenue and managers.","The revenue dashboard is for Finance, Revenue and managers.",لوحة الإيرادات مخصصة للمالية والإيرادات والمديرين.,"El panel de ingresos es para Finanzas, Ingresos y gerentes.",screens/Dashboard.tsx,,translated
 The room is still occupied. Check the current guest out first.,The room is still occupied. Check the current guest out first.,الغرفة ما زالت مشغولة. سجّل مغادرة النزيل الحالي أولًا.,La habitación sigue ocupada. Registre primero la salida del huésped actual.,components/RoomDrawer.tsx,,translated
 "The running sheet the banquet, kitchen and AV teams work from.","The running sheet the banquet, kitchen and AV teams work from.",ورقة التشغيل التي تعمل بها فرق المآدب والمطبخ والصوت والصورة.,"Hoja de trabajo para los equipos de banquetes, cocina y audiovisuales.",,,translated
 the Saudi Data & AI Authority (SDAIA),the Saudi Data & AI Authority (SDAIA),الهيئة السعودية للبيانات والذكاء الاصطناعي (سدايا),la Autoridad Saudí de Datos e Inteligencia Artificial (SDAIA),,,translated

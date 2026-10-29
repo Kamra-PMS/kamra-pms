@@ -35,7 +35,6 @@ import type { ShellContext } from "../AppShell"
 import CheckInDialog from "../components/CheckInDialog"
 import BookingRequests from "../components/BookingRequests"
 import { serverError } from "../lib/resource"
-import { useAuth } from "../lib/auth"
 import { cur, moneyLocale } from "../lib/money"
 import { useT, t as translate, uiDateLocale } from "../lib/i18n"
 import CheckOutDialog from "../components/CheckOutDialog"
@@ -349,20 +348,16 @@ function InHouseTable({
   )
 }
 
-/** Who sees revenue and occupancy here; the server gates the same way
- *  (kamra.dashboards.FIGURE_ROLES). */
-const FIGURE_ROLES = ["Finance", "Revenue Manager", "Night Auditor", "Kamra Agent",
-  "Hotel Admin", "System Manager", "Administrator"]
-
 export default function Today() {
   const { t, lang } = useT()
-  const { roles } = useAuth()
-  const figures = roles.some((r) => FIGURE_ROLES.includes(r))
   const { refreshKey } = useOutletContext<ShellContext>()
   const navigate = useNavigate()
   const [snap, setSnap] = useState<Snapshot | null>(null)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [kpi, setKpi] = useState<any>(null)
+  // revenue and occupancy only when the server sent them (it leaves them
+  // out for the front desk: kamra.dashboards.FIGURE_ROLES)
+  const figures = !!kpi && !kpi.figures_hidden
   const [busy, setBusy] = useState<string | null>(null)
   const [checkingIn, setCheckingIn] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)

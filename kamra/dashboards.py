@@ -74,7 +74,8 @@ def sees_figures() -> bool:
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Finance", "Revenue Manager", "Hotel Admin", "Kamra Agent")
+@require_roles("Front Desk", "Finance", "Revenue Manager", "Night Auditor", "Hotel Admin",
+               "Kamra Agent")
 def property_dashboard(property: str, date: str | None = None):
 	"""Everything one hotel's dashboard needs, by department."""
 	from kamra.crs import assert_property_access
