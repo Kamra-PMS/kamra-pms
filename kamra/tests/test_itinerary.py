@@ -232,3 +232,11 @@ class TripAdvanceTestCase(_TripBase):
 				"currency": "USD" if p == PROP_B else "INR", "currency_symbol": ""}):
 			with self.assertRaises(frappe.ValidationError):
 				crs.trip_advance_preview(itn["name"])
+
+	def test_season_advance_over_100_is_refused(self):
+		# more than the bill would be charged online by the booking page
+		with self.assertRaises(frappe.ValidationError):
+			frappe.get_doc({"doctype": "Season", "property": PROP_A,
+			                "season_name": "UT Bad Advance", "start_date": d(20),
+			                "end_date": d(22), "adjustment_type": "Percent",
+			                "adjustment_value": 0, "advance_percent": 150}).insert()

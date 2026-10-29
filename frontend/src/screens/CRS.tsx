@@ -10,6 +10,7 @@ import { Button } from "../components/ui/button"
 import { Sheet } from "../components/ui/sheet"
 import { cur, moneyLocale, useLocale } from "../lib/money"
 import { useT, t as translate } from "../lib/i18n"
+import { useCashierAuth } from "../lib/cashierAuth"
 
 
 const inr = (n: unknown) =>
@@ -502,6 +503,7 @@ function TripSheet({ name, onClose, onChanged }: { name: string; onClose: () => 
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const loc = useLocale()
+  const { ensureUnlocked } = useCashierAuth()
   const [adv, setAdv] = useState<{ amount: string; mode: string; plan: AdvancePlan | null } | null>(null)
 
   const load = () => call<Itinerary>("kamra.crs.get_itinerary", { itinerary: name })
@@ -541,6 +543,8 @@ function TripSheet({ name, onClose, onChanged }: { name: string; onClose: () => 
     setBusy(true)
     setError(null)
     try {
+      // money action: the till's cashier PIN, as on a single booking's deposit
+      await ensureUnlocked()
       setD(await call<Itinerary>("kamra.crs.record_trip_advance", {
         itinerary: name, amount: adv.plan.amount, mode: adv.mode }))
       setAdv(null)
