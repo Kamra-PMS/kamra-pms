@@ -4269,6 +4269,7 @@
   "The guest signed the printed card": "El huésped firmó la ficha impresa",
   "The guest's bill is settled.": "La cuenta del huésped está liquidada.",
   "The guided check-in follows these steps in order. Required steps cannot be skipped, and the guest cannot be checked in until they are done.": "El check-in guiado sigue estos pasos en orden. No se pueden omitir los pasos requeridos y no se puede registrar al huésped hasta que haya terminado.",
+  "The guided check-in follows these steps. Only Room must be done before check-in. Other required steps can finish after the guest is in — the desk sees a warning to backfill.": "El registro guiado sigue estos pasos. Solo Habitación debe completarse antes de la entrada. Los demás pasos obligatorios pueden terminarse con el huésped ya dentro; recepción ve un aviso para completarlos.",
   "The guided check-in follows these steps. Only Room must be done before check-in. Other required steps can finish after the guest is in; the desk sees a warning to backfill.": "El check-in guiado sigue estos pasos. Solo Habitación debe completarse antes del check-in. Los demás pasos obligatorios pueden terminarse después de que el huésped entre; recepción verá un aviso para completarlos.",
   "The hall's rack rental goes on as the first line - the number the conversation starts from.": "La tarifa base de alquiler del salón se agrega como primera línea y sirve de punto de partida para la cotización.",
   "The high-balance check is off (threshold 0).": "La verificación de saldo alto está desactivada (umbral 0).",
