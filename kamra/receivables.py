@@ -280,6 +280,10 @@ def transfer_ar_invoice(account: str, folio: str, to_account: str,
 	from kamra.ledger import city_ledger_open_folios, due_date_for
 	if account == to_account:
 		frappe.throw(_("Pick a different account to transfer to."))
+	# lock both accounts (fixed order) so two transfers of one bill can't
+	# both read the same amount owed and move it twice
+	for name in sorted((account, to_account)):
+		frappe.db.get_value("City Ledger Account", name, "name", for_update=True)
 	src, dst = _account(account), _account(to_account)
 	if src.property != dst.property:
 		frappe.throw(_("Both accounts must be at the same property."))
