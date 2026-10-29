@@ -2009,8 +2009,46 @@ def split_folio_charge(from_folio: str, charge_row: str, to_folio: str,
 	return out
 
 
+@frappe.whitelist(methods=["POST"])
+@require_roles("Finance", "Front Desk", "Kamra Agent")
+def open_guest_bills(reservation: str, names=None):
+	"""A separate bill for each guest sharing the room: one Extra folio per
+	other occupant (or per name given), invoiced in that guest's name. The
+	main guest keeps the Guest folio."""
+	if isinstance(names, str):
+		names = frappe.parse_json(names) if names.strip().startswith("[") \
+			else [n for n in names.split(",")]
+	from kamra.folio import open_guest_bills as _open
+	out = _open(reservation, names)
+	from kamra.savings import log_action
+	log_action("open_guest_bills", "Reservation", reservation,
+	           frappe.db.get_value("Reservation", reservation, "property"),
+	           rationale="Separate bills for " + ", ".join(b["name"] for b in out))
+	return {"bills": out}
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Finance", "Front Desk", "Kamra Agent")
+def share_folio_charges(from_folio: str, charge_rows, to_folios,
+                        shares=None):
+	"""Share charge lines (room nights) between the guests' bills: evenly,
+	or by a percent per other bill (`shares`); the source keeps the rest."""
+	charge_rows, to_folios, shares = (
+		frappe.parse_json(v) if isinstance(v, str) else v
+		for v in (charge_rows, to_folios, shares))
+	from kamra.folio import share_charges
+	out = share_charges(from_folio, charge_rows or [], to_folios or [],
+	                    shares or None)
+	from kamra.savings import log_action
+	log_action("split_charge", "Folio", from_folio,
+	           rationale=f"Shared {out['lines']} charges from {from_folio} "
+	                     f"with {', '.join(to_folios)}")
+	return out
+
+
 _FOLIO_LIST_FIELDS = ["name", "folio_type", "status", "invoice_number",
-                      "grand_total", "payments_total", "balance"]
+                      "grand_total", "payments_total", "balance",
+                      "bill_to_name"]
 
 
 @frappe.whitelist()
@@ -2438,7 +2476,9 @@ def folio_invoice(folio: str):
 	# B2B: corporate bookings carry the buyer's GSTIN on the invoice.
 	# A group master folio bills to the GROUP's company.
 	bill_to = None
-	bill_company = res.company
+	# a guest's own bill in a shared room is made out to that guest, never
+	# the company
+	bill_company = None if doc.get("bill_to_name") else res.company
 	if doc.folio_type == "Group" and doc.get("group_booking"):
 		bill_company = frappe.db.get_value(
 			"Group Booking", doc.group_booking, "company") or bill_company
@@ -2448,6 +2488,8 @@ def folio_invoice(folio: str):
 		if company:
 			bill_to = {"name": company.company_name, "gstin": company.gstin}
 
+	if doc.get("bill_to_name"):
+		bill_to = {"name": doc.bill_to_name, "gstin": None}
 	buyer_tax_id = (bill_to or {}).get("gstin")
 	split = loc.tax_split(pack, prop, buyer_tax_id)
 

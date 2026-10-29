@@ -193,6 +193,51 @@ class BillingApprovalsSplitTestCase(AuditTestCase):
 		with self.assertRaisesRegex(frappe.ValidationError, "Adjust"):
 			api.post_allowance(folio, 20, "UT", reason_code="VOID-ERR")
 
+	# 2. a bill for each guest -------------------------------------------
+
+	def test_each_guest_gets_a_bill_in_their_name(self):
+		res = self.stay(occupants=[{"full_name": "Asha Rao"},
+		                           {"full_name": "Ben Ode"}])
+		folio_mod.post_room_night(res, d(-1))
+		main = guest_folio(res.name)
+		total = bal(main)
+		bills = api.open_guest_bills(res.name)["bills"]
+		self.assertEqual({b["name"] for b in bills}, {"Asha Rao", "Ben Ode"})
+		# asking again reuses them
+		self.assertEqual(api.open_guest_bills(res.name)["bills"], bills)
+		room = [c.name for c in frappe.get_doc("Folio", main).charges
+		        if c.charge_type == "Room"]
+		api.share_folio_charges(main, room, [b["folio"] for b in bills])
+		others = [b["folio"] for b in bills]
+		parts = [bal(f) for f in others]
+		self.assertEqual(parts[0], parts[1])
+		self.assertAlmostEqual(bal(main) + sum(parts), total, places=2)
+		for f in [main, *others]:
+			self.assertEqual(ledger_net(f), bal(f))
+		# same tax rate on every part
+		rates = {c.gst_rate for f in [main, *others]
+		         for c in frappe.get_doc("Folio", f).charges if c.charge_type == "Room"}
+		self.assertEqual(len(rates), 1)
+		inv = api.folio_invoice(others[0])
+		self.assertEqual(inv["bill_to"]["name"], "Asha Rao")
+		# check-out wants every bill settled
+		with self.assertRaisesRegex(frappe.ValidationError, "owed"):
+			api.check_out(res.name)
+
+	def test_share_by_chosen_percent(self):
+		res = self.stay(occupants=[{"full_name": "Cara Lee"}])
+		folio_mod.post_room_night(res, d(-1))
+		main = guest_folio(res.name)
+		row = next(c for c in frappe.get_doc("Folio", main).charges
+		           if c.charge_type == "Room")
+		base = row.amount
+		bill = api.open_guest_bills(res.name)["bills"][0]["folio"]
+		with self.assertRaises(frappe.ValidationError):
+			api.share_folio_charges(main, [row.name], [bill], shares=[100])
+		api.share_folio_charges(main, [row.name], [bill], shares=[30])
+		moved = frappe.get_doc("Folio", bill).charges[0].amount
+		self.assertAlmostEqual(moved, round(base * 0.3, 2), places=2)
+
 
 def api_report():
 	from kamra.reports import void_allowance_report

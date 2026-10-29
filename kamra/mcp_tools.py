@@ -719,6 +719,35 @@ TOOLS: tuple[ToolSpec, ...] = (
 		group="Billing",
 	),
 	_t(
+		"open_guest_bills",
+		"api.open_guest_bills",
+		"""A separate bill for each guest sharing a room: opens one folio per
+		other occupant (or per name given), invoiced in that guest's name.
+		The main guest keeps the stay's Guest folio. Then use
+		share_folio_charges to share the room nights.""",
+		{"reservation": _p("string"),
+		 "names": _p("array", items=_p("string"))},
+		required=("reservation",),
+		mutating=True,
+		group="Billing",
+	),
+	_t(
+		"share_folio_charges",
+		"api.share_folio_charges",
+		"""Share charge lines (room nights) from one bill with the other
+		guests' bills: evenly, or by shares (a percent per other bill, in
+		the order of to_folios). The source bill keeps the rest.""",
+		{
+			"from_folio": _p("string"),
+			"charge_rows": _p("array", items=_p("string")),
+			"to_folios": _p("array", items=_p("string")),
+			"shares": _p("array", items=_p("number")),
+		},
+		required=("from_folio", "charge_rows", "to_folios"),
+		mutating=True,
+		group="Billing",
+	),
+	_t(
 		"move_charges",
 		"api.transfer_folio_charges",
 		"""Move charge lines to another folio of the same stay or group.
@@ -1932,7 +1961,7 @@ DESTRUCTIVE = frozenset({
 IDEMPOTENT = frozenset({
 	"create_booking", "add_to_waitlist", "pickup_group_room", "set_late_arrival",
 	"set_room_hk_status", "set_room_rate", "run_night_audit", "rebuild_audit_pack",
-	"assign_rooms_apply",
+	"assign_rooms_apply", "open_guest_bills",
 })
 # Tools that reach someone outside Kamra (a message to the guest)
 OPEN_WORLD = frozenset({"send_payment_link", "send_deposit_link"})

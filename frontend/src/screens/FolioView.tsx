@@ -172,6 +172,8 @@ interface SiblingFolio {
   balance: number
   grand_total: number
   payments_total: number
+  /** a guest's own bill in a shared room, made out to them */
+  bill_to_name?: string | null
 }
 
 /** A distinct label per folio. Extras get numbered when there's more than
@@ -179,6 +181,7 @@ interface SiblingFolio {
  *  folio and opens a fresh one) names the settled one by its invoice number,
  *  and numbers open ones that still share a type. */
 function folioLabel(siblings: SiblingFolio[], s: SiblingFolio, tr: (s: string, v?: Record<string, string | number>) => string) {
+  if (s.bill_to_name) return s.bill_to_name
   const same = siblings.filter((x) => x.folio_type === s.folio_type)
   if (s.folio_type === "Extra") {
     if (same.length <= 1) return tr("Extra")
@@ -276,7 +279,8 @@ export default function FolioView() {
   const [adjustCodes, setAdjustCodes] = useState<{ name: string; description: string }[]>([])
   const [allowanceNote, setAllowanceNote] = useState<string | null>(null)
   const [allowanceKey, setAllowanceKey] = useState(0)
-
+  const [panel, setPanel] = useState<"share" | null>(null)
+  const [shares, setShares] = useState<Record<string, string>>({})
   const { ensureUnlocked, status: pinStatus } = useCashierAuth()
 
   const load = useCallback(() => {
@@ -456,6 +460,21 @@ export default function FolioView() {
               {t("Split folio")}
             </Button>
           )}
+          {open && siblings.find((s) => s.folio_type === "Guest" && s.status === "Open")?.name === folio.name && (
+            <Button
+              variant="outline"
+              disabled={busy}
+              title={t("A separate bill for each guest sharing the room, in their own name")}
+              onClick={() =>
+                act(async () => {
+                  await call("kamra.api.open_guest_bills", { reservation: data.stay.reservation })
+                  setPanel("share")
+                })
+              }
+            >
+              {t("Bill each guest")}
+            </Button>
+          )}
           {open &&
             data.stay.group_booking &&
             !siblings.some((s) => s.folio_type === "Group") && (
@@ -615,6 +634,60 @@ export default function FolioView() {
           {translate(error)}
         </div>
       )}
+      {panel === "share" && open && (() => {
+        const bills = siblings.filter((s) => s.bill_to_name && s.status === "Open" && s.name !== folio.name)
+        const rows = selected.size
+          ? folio.charges.filter((c) => selected.has(c.name))
+          : folio.charges.filter((c) => ["Room", "Meal Plan", "Room Levy"].includes(c.charge_type) && c.amount > 0)
+        const even = (100 / (bills.length + 1)).toFixed(2)
+        const pct = (f: string) => shares[f] ?? even
+        const total = bills.reduce((n, b) => n + Number(pct(b.name) || 0), 0)
+        return (
+          <div className="mb-4 space-y-2 rounded-lg border border-zinc-200 bg-white p-3 text-sm print:hidden">
+            <p className="font-medium text-zinc-800">{t("Share charges with the other guests' bills")}</p>
+            {bills.length === 0 ? (
+              <p className="text-zinc-500">{t("Add the other guests' names to the stay, then press Bill each guest.")}</p>
+            ) : (
+              <>
+                <p className="text-xs text-zinc-500">
+                  {selected.size
+                    ? t("{n} ticked line(s) are shared.", { n: rows.length })
+                    : t("{n} room line(s) are shared. Tick lines on the bill to share others.", { n: rows.length })}
+                </p>
+                {bills.map((b) => (
+                  <label key={b.name} className="flex items-center gap-2">
+                    <span className="w-40 truncate">{b.bill_to_name}</span>
+                    <input className={`${inputCls} w-20`} type="number" min={0} max={100}
+                      value={pct(b.name)} onChange={(e) => setShares({ ...shares, [b.name]: e.target.value })} />
+                    <span className="text-zinc-500">%</span>
+                  </label>
+                ))}
+                <p className="text-xs text-zinc-500">
+                  {t("This bill keeps {pct}%.", { pct: (100 - total).toFixed(2) })}
+                </p>
+                <div className="flex gap-2">
+                  <Button variant="outline" disabled={busy || !rows.length || total >= 100}
+                    onClick={() =>
+                      act(async () => {
+                        await call("kamra.api.share_folio_charges", {
+                          from_folio: folio.name,
+                          charge_rows: rows.map((c) => c.name),
+                          to_folios: bills.map((b) => b.name),
+                          shares: bills.map((b) => Number(pct(b.name))),
+                        })
+                        setSelected(new Set())
+                        setPanel(null)
+                      })
+                    }>
+                    {t("Share")}
+                  </Button>
+                  <Button variant="ghost" onClick={() => setPanel(null)}>{t("Cancel")}</Button>
+                </div>
+              </>
+            )}
+          </div>
+        )
+      })()}
 
       {/* printable document */}
       <Card className="print:border-0 print:shadow-none">
