@@ -113,6 +113,9 @@ export default function Owner() {
   const { roles } = useAuth()
   const shell = useOutletContext<ShellContext | undefined>()
   const apps = new Set(visibleApps(roles, shell?.modules).map((a) => a.id))
+  // kamra.dashboards.portfolio_dashboard's roles: a night auditor gets one hotel at a time
+  const chainWide = ["Finance", "Revenue Manager", "Hotel Admin", "System Manager", "Administrator"]
+    .some((r) => roles.includes(r))
   const [period, setPeriod] = useState<Period>("today")
   const [scope, setScope] = useState<"property" | "all">("property")
   const [props, setProps] = useState<PropertyRow[]>([])
@@ -173,7 +176,7 @@ export default function Owner() {
             className="mt-2 min-h-11 w-full rounded-xl border border-zinc-200 bg-white px-3 text-base font-medium"
           >
             {props.map((p) => <option key={p.name} value={p.name}>{p.property_name}</option>)}
-            <option value="">{t("All properties, today")}</option>
+            {chainWide && <option value="">{t("All properties, today")}</option>}
           </select>
         ) : (
           <p className="truncate text-sm text-zinc-500">{snap?.property_name}</p>
