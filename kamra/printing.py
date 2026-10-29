@@ -341,6 +341,10 @@ def _escpos_bill(ticket: dict, cols: int, line, out: list) -> bytes:
 	money("TOTAL", ticket.get("grand_total"))
 	if ticket.get("nc"):
 		line("NC - NO CHARGE", bold=True, center=True)
+	if ticket.get("served_by"):
+		line(f"Served by: {ticket['served_by']}"[:cols])
+	if ticket.get("cashier"):
+		line(f"Cashier: {ticket['cashier']}"[:cols])
 	out.append(b"\n\n\n" + GS + b"V\x41\x03")
 	return b"".join(out)
 

@@ -177,6 +177,10 @@ export interface BillData {
   customer_phone: string | null
   delivery_address: string | null
   captain: string | null
+  /** the waiter typed on the bill, else the captain's name */
+  served_by?: string | null
+  /** who took payment or closed the bill */
+  cashier?: string | null
   items: { item_name: string; qty: number; rate: number; amount: number }[]
   subtotal: number
   discount_amount: number
@@ -238,6 +242,8 @@ export function billHtml(b: BillData) {
     ${b.nc ? `<div class="c b" style="margin-top:4px">${esc(translate("COMPLIMENTARY - NO CHARGE"))}</div>` +
       `<div class="c sm">${esc(translate("auth:"))} ${esc(b.nc_authorized_by || "-")}${b.nc_note ? ` · ${esc(b.nc_note)}` : ""}</div>` : ""}
     ${b.paid ? `<div class="c b" style="margin-top:4px">${esc(translate("PAID"))} · ${esc(translate(b.payment_mode))}</div>` : ""}
+    ${b.served_by ? `<div class="sm">${esc(translate("Served by: {name}", { name: b.served_by }))}</div>` : ""}
+    ${b.cashier ? `<div class="sm">${esc(translate("Cashier: {name}", { name: b.cashier }))}</div>` : ""}
     <div class="rule"></div>
     ${b.statutory ? `<div class="c"><img src="${b.statutory.qr_image}" alt="QR" style="width:120px;height:120px"/></div>` +
       `<div class="c sm">ICV ${b.statutory.icv}</div>` : ""}

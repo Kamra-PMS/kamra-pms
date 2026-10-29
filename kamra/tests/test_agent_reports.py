@@ -22,7 +22,7 @@ FRONT_DESK = {"arrivals", "departures", "in_house", "no_shows_cancels",
 HK = {"hk_tasks", "room_status", "lost_found", "laundry_orders"}
 OPS = {"service_tickets"}
 FO_EXTRA = {"shift_handover", "early_departures"}
-FNB = {"pos_orders", "pos_items"}
+FNB = {"pos_orders", "pos_items", "kitchen_times"}
 
 # role -> (report tools, custom-report datasets, packs) it must get, exactly
 EXPECTED = {

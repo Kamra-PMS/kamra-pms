@@ -39,6 +39,8 @@ interface Row {
   stale: 0 | 1
   carried: 0 | 1
   cancel_reason: string | null
+  served_by?: string | null
+  cashier?: string | null
 }
 interface Out {
   rows: Row[]
@@ -287,6 +289,7 @@ export default function OrderHistory({ outlet, onClose, onOpenBill }: {
                         <th className="px-3 py-2 text-start font-medium">{t("Guest or customer")}</th>
                         <th className="px-3 py-2 text-end font-medium">{t("Items")}</th>
                         <th className="px-3 py-2 text-start font-medium">{t("Paid by")}</th>
+                        <th className="px-3 py-2 text-start font-medium">{t("Staff")}</th>
                         <th className="px-3 py-2 text-start font-medium">{t("Status")}</th>
                         <th className="px-3 py-2 text-end font-medium">{t("Amount")}</th>
                         <th className="px-3 py-2"><span className="sr-only">{t("Actions")}</span></th>
@@ -308,6 +311,10 @@ export default function OrderHistory({ outlet, onClose, onOpenBill }: {
                           <td className="max-w-[12rem] truncate px-3 py-2 text-zinc-700">{r.who ?? ""}</td>
                           <td className="px-3 py-2 text-end tabular-nums text-zinc-600">{r.items}</td>
                           <td className="px-3 py-2 text-zinc-600">{r.state === "room" ? t("Posted to room") : r.state === "paid" ? translate(r.payment_mode) ?? "" : ""}</td>
+                          <td className="max-w-[10rem] px-3 py-2 text-xs text-zinc-600">
+                            <div className="truncate">{r.served_by ?? ""}</div>
+                            {r.cashier && <div className="truncate text-zinc-400">{t("Cashier: {name}", { name: r.cashier })}</div>}
+                          </td>
                           <td className="px-3 py-2">
                             <StateBadge state={r.state} />
                             {r.state === "cancelled" && r.cancel_reason
@@ -353,6 +360,7 @@ export default function OrderHistory({ outlet, onClose, onOpenBill }: {
                           {r.order_type ? <span>· {t(r.order_type)}</span> : null}
                           {r.state === "paid" && r.payment_mode ? <span>· {translate(r.payment_mode)}</span> : null}
                           {r.state === "room" ? <span>· {t("Posted to room")}</span> : null}
+                          {r.served_by ? <span>· {r.served_by}</span> : null}
                         </div>
                         <span className="mt-2 inline-block rounded-lg border border-zinc-300 px-3 py-1 text-xs font-semibold text-zinc-700">
                           {r.state === "open" || r.state === "sent" ? t("Open on till") : t("View bill")}

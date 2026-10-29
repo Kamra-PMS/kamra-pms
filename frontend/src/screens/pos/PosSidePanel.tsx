@@ -42,6 +42,8 @@ interface ListRow {
   stale: 0 | 1
   carried: 0 | 1
   cancel_reason: string | null
+  served_by?: string | null
+  cashier?: string | null
 }
 interface ListOut {
   from: string
@@ -59,6 +61,10 @@ interface ViewItem {
   void_reason: string | null
   voided_by?: string | null
   void_approved_by?: string | null
+  fired_at?: string | null
+  started_at?: string | null
+  prepared_at?: string | null
+  picked_up_at?: string | null
 }
 interface ViewDetail {
   name: string
@@ -81,6 +87,8 @@ interface ViewDetail {
   cancelled_by: string | null
   cancelled_at: string | null
   cancel_approved_by: string | null
+  served_by?: string | null
+  cashier?: string | null
   items: ViewItem[]
 }
 
@@ -246,6 +254,7 @@ export default function PosSidePanel({
 const EXPORT_COLS = [
   "Bill", "Time", "Label", "State", "Type", "Table", "Room", "Customer",
   "Amount", "Items", "Voided", "KOT", "Payment", "Guests", "Cancel reason",
+  "Served by", "Cashier",
 ] as const
 
 function exportRows(rows: ListRow[], stateLabel: (s: ListState) => string) {
@@ -265,6 +274,8 @@ function exportRows(rows: ListRow[], stateLabel: (s: ListState) => string) {
     r.payment_mode || "",
     r.guests != null ? String(r.guests) : "",
     r.cancel_reason || "",
+    r.served_by || "",
+    r.cashier || "",
   ])
 }
 
@@ -436,6 +447,7 @@ function OrdersTab({ outlet, refreshKey, onOpenBill, onHistory }: {
                     <StateBadge state={r.state} />
                     <span className="tabular-nums">{shortDay(dayOf(r.time))} {hhmm(r.time)}</span>
                     {r.kot_no ? <span>· {t("KOT {n}", { n: r.kot_no })}</span> : null}
+                    {r.served_by ? <span>· {r.served_by}</span> : null}
                   </div>
                 </button>
               </li>
@@ -455,6 +467,7 @@ function OrdersTab({ outlet, refreshKey, onOpenBill, onHistory }: {
                   <th className="px-3 py-2.5 text-end">{t("Amount")}</th>
                   <th className="px-3 py-2.5 text-end">{t("Items")}</th>
                   <th className="px-3 py-2.5">{t("Pay")}</th>
+                  <th className="px-3 py-2.5">{t("Staff")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -490,6 +503,10 @@ function OrdersTab({ outlet, refreshKey, onOpenBill, onHistory }: {
                       {r.items}{r.voided > 0 ? <span className="text-rose-600"> (−{r.voided})</span> : null}
                     </td>
                     <td className="px-3 py-2.5 text-zinc-600">{translate(r.payment_mode) || "-"}</td>
+                    <td className="max-w-[10rem] px-3 py-2.5 text-xs text-zinc-600">
+                      <div className="truncate">{r.served_by || "-"}</div>
+                      {r.cashier && <div className="truncate text-zinc-400">{t("Cashier: {name}", { name: r.cashier })}</div>}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -546,6 +563,12 @@ export function OrderView({ name, onBack, onOpenBill }: {
                 {d.kot_no ? ` · ${t("KOT {n}", { n: d.kot_no })}` : ""}
                 {d.customer_name ? ` · ${d.customer_name}` : ""}
               </p>
+              {(d.served_by || d.cashier) && (
+                <p className="text-xs text-zinc-500">
+                  {[d.served_by ? t("Served by: {name}", { name: d.served_by }) : null,
+                    d.cashier ? t("Cashier: {name}", { name: d.cashier }) : null].filter(Boolean).join(" · ")}
+                </p>
+              )}
             </div>
             <StateBadge state={d.state} />
           </div>
@@ -556,6 +579,15 @@ export function OrderView({ name, onBack, onOpenBill }: {
                   <span>{Math.round(it.qty)}× {it.item_name}</span>
                   <span className="tabular-nums">{cur()}{money(it.voided ? 0 : it.amount)}</span>
                 </div>
+                {!it.voided && it.fired_at && (
+                  <p className="text-[11px] tabular-nums text-zinc-400">
+                    {[t("Ordered {time}", { time: hhmm(it.fired_at) }),
+                      it.started_at ? t("Started {time}", { time: hhmm(it.started_at) }) : null,
+                      it.prepared_at ? t("Plated {time}", { time: hhmm(it.prepared_at) }) : null,
+                      it.picked_up_at ? t("Picked up {time}", { time: hhmm(it.picked_up_at) }) : null]
+                      .filter(Boolean).join(" · ")}
+                  </p>
+                )}
                 {!!it.voided && (
                   <p className="text-[11px] text-rose-700">
                     {it.kot_status !== "New" ? t("Voided after the kitchen had it") : t("Voided")}

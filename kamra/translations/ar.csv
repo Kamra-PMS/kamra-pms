@@ -198,3 +198,16 @@ You will get offers from {0} on WhatsApp. Reply STOP at any time to opt out.,س�
 You will no longer get offers from {0}. Booking and stay messages continue. Reply START to opt in again.,لن تصلك عروض {0} بعد الآن. تستمر رسائل الحجز والإقامة. أرسل START للاشتراك مجددًا.
 AI Provider,مزوّد الذكاء الاصطناعي
 "Your AI provider will act as {0}, within your role. Prices, taxes and availability stay in Kamra. Every action is recorded under your name in the Activity log.",سيعمل مزوّد الذكاء الاصطناعي باسم {0} وضمن صلاحيات دورك. تبقى الأسعار والضرائب والتوافر في Kamra. يُسجّل كل إجراء باسمك في سجل النشاط.
+Cashier,أمين الصندوق
+KOT,أمر المطبخ
+Kitchen times,أوقات المطبخ
+Kitchen turnaround,سرعة المطبخ
+Order to pickup minutes,دقائق من الطلب إلى الاستلام
+Order to start minutes,دقائق من الطلب إلى البدء
+Ordered at,وقت الطلب
+Picked up at,وقت الاستلام
+Plated at,وقت التجهيز
+Plated to pickup minutes,دقائق من التجهيز إلى الاستلام
+Served by,قدّمه
+Start to plated minutes,دقائق من البدء إلى التجهيز
+Started at,وقت البدء

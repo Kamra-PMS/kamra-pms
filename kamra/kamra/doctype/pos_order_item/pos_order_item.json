@@ -15,7 +15,9 @@
   "instructions",
   "kot_status",
   "fired_at",
+  "started_at",
   "prepared_at",
+  "picked_up_at",
   "stock_posted",
   "voided",
   "void_reason",
@@ -81,10 +83,24 @@
    "description": "When this line was sent to the kitchen. The cook's clock starts here - not when the captain opened the tab."
   },
   {
+   "fieldname": "started_at",
+   "fieldtype": "Datetime",
+   "label": "Started At",
+   "read_only": 1,
+   "description": "When the kitchen started it (Start on the kitchen display, or the fire time with auto KOT)."
+  },
+  {
    "fieldname": "prepared_at",
    "fieldtype": "Datetime",
    "label": "Prepared At",
    "read_only": 1
+  },
+  {
+   "fieldname": "picked_up_at",
+   "fieldtype": "Datetime",
+   "label": "Picked Up At",
+   "read_only": 1,
+   "description": "When a waiter took it from the pass."
   },
   {
    "fieldname": "stock_posted",
@@ -129,7 +145,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-10-20 12:00:00.000000",
+ "modified": "2026-10-29 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "POS Order Item",

@@ -56,6 +56,9 @@ Hotel Admin and Finance set it up.
 3. For dine-in, pick the table (from the table map or the **Table…**
    list) and the number of guests. For takeaway and delivery, enter the
    customer's name and phone, and the address for delivery.
+   Type the **Waiter** who serves the table if it is not you. Names used
+   before are suggested. Left blank, the bill shows the captain who took
+   the order. You can change it on a running bill.
 4. Tap dishes to add them. Use **+** / **−** on a line to change the
    quantity, and add an instruction to a line ("less spicy") if needed.
 5. Press **Send to kitchen** (or **F6**). The order gets a KOT number, shows
@@ -101,7 +104,9 @@ Hall, Patio…) or search a table.
 2. Pick how the guest pays: **Cash**, **Card** or **UPI**. Or post it to an
    in-house guest's room with **Charge to room**.
 3. **Print bill** prints the bill on the till's printer, with the tax split
-   your country uses.
+   your country uses. The bill shows **Served by** (the waiter, or the
+   captain) and **Cashier** (whoever took the payment or closed the bill),
+   by name.
 
 - **Room charges** need a guest who is checked in to that room. A room
   with nobody in house is refused - take it as a walk-in bill instead.
@@ -173,8 +178,11 @@ you never leave the POS.
 - **Search** by bill number, KOT number, table, room, customer name or
   phone, or the in-house guest's name. Tap a state to show only those.
 - **Pick another day** with the date box.
+- **Staff** shows who served each bill and, once it is closed, the
+  cashier.
 - **Tap a bill.** An open bill opens on the till. A closed one opens
-  read-only, with its lines, voids and who approved them, and **Reprint
+  read-only, with its lines, voids and who approved them, each line's
+  kitchen times (ordered, started, plated, picked up), and **Reprint
   bill**.
 
 The list only shows this outlet's bills.
@@ -217,18 +225,22 @@ on**).
 
 1. Filter by outlet and by station (**Kitchen**, **Tandoor**, **Bar** …) so
    each section sees only its own dishes.
-2. Press **Start** when the kitchen picks a ticket up. The ticket shows
+2. Press **Start** when the kitchen starts cooking. The ticket shows
    **WAITING** until then, and the cook's clock runs from the moment the
-   order was sent.
+   order was sent. Another round on the same ticket waits for its own
+   **Start**.
 3. Press **Mark ready** on each dish, or **All ready** for the ticket. The
    POS tile turns **Ready** so the captain knows to pick it up.
-4. Bumped a dish too soon? Open the ticket and **recall** it; it goes back
-   on the display.
+4. On the till, the dish shows **Ready at the pass**. The waiter taps
+   **Picked up** on the line when they take it.
+5. Bumped a dish too soon? Open the ticket and **recall** it; it goes back
+   on the display and its ready and pickup times are cleared.
 
 ![Starting a ticket and marking it ready on the kitchen display](/img/fnb/kitchen-flow.gif)
 
 Tickets age from green to amber to **LATE**. Each card shows the table,
-guests, captain, the stations involved, and instructions in red. If the
+guests, who serves it, when it was sent and started, the stations
+involved, and instructions in red. If the
 order has an allergy note, dishes whose allergens match are highlighted;
 treat it as a reminder, not a guarantee. A line voided after it was sent
 shows an alert on the ticket.
@@ -383,6 +395,14 @@ voided line and cancelled bill with its reason.
 
 ![The F&B dashboard](/img/fnb/dashboard.png)
 
+**Kitchen times.** Every line keeps four times: sent to the kitchen,
+started, plated (marked ready) and picked up. The **Kitchen times** report
+(**Reports → Custom reports**) lists them per line with the minutes for
+each step: order to start, start to plated, plated to pickup and order to
+pickup. The **F&B pack** has a **Kitchen turnaround** section with the
+averages by outlet. A step nobody tapped stays blank. With auto-accept on,
+a line starts the moment it is sent.
+
 ## Settings
 
 All under **Settings → F&B** (Hotel Admin and Finance can change them):
@@ -441,6 +461,14 @@ The cancel and void rules live on the server, not in the till:
 unless a supervisor approves (`supervisor` + `supervisor_pin`, checked
 against that user's cashier PIN), and always refuse an agent. An agent can
 cancel a bill with nothing sent (`pos_cancel_order`, logged) and remove an
-unsent line, but never voids food the kitchen has started. The orders list
+unsent line, but never voids food the kitchen has started.
+
+Kitchen times live on each POS Order Item: `fired_at`, `started_at`
+(`accept_ticket`, or the fire time with auto KOT), `prepared_at`
+(`mark_prepared`) and `picked_up_at` (`mark_picked_up`). `kot_status`
+stays `New`, `Fired` or `Prepared`. The waiter is `waiter` on the POS
+Order (free text, `set_waiter`), and `settled_by` is stamped when the bill
+closes; `order_detail`, `orders_list` and `bill_data` return them as
+`served_by` and `cashier`, by name. The orders list
 (`orders_list`) and guest panel (`guest_panel`, `find_customer`,
 `attach_customer`) are scoped to the outlet's property.

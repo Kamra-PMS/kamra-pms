@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function - the same governed layer
-the UI and the AI use. **421 endpoints**, generated from the source
+the UI and the AI use. **424 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -2188,6 +2188,7 @@ attach_customer); a room bill takes the in-house guest by itself.
 | `delivery_address` | no | `None` |
 | `allergy_note` | no | `None` |
 | `guest` | no | `None` |
+| `waiter` | no | `None` |
 
 ### `kamra.pos.open_orders`
 
@@ -2379,6 +2380,7 @@ round trip instead of four, and the kitchen gets a single update.
 | `discount` | no | `0` |
 | `discount_reason` | no | `''` |
 | `guest` | no | `None` |
+| `waiter` | no | `None` |
 
 ### `kamra.pos.send_round`
 
@@ -2454,6 +2456,42 @@ display. A mis-tap on a greasy touchscreen must not be one-way.
 | --- | --- | --- |
 | `order` | yes |  |
 | `item_row` | no | `None` |
+
+### `kamra.pos.mark_picked_up`
+
+**POST**
+
+A waiter takes food from the pass: one prepared line, or every
+prepared line still waiting there. Stamps picked_up_at; kot_status stays
+Prepared so nothing that reads it changes.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `order` | yes |  |
+| `item_row` | no | `None` |
+
+### `kamra.pos.set_waiter`
+
+**POST**
+
+Name who serves this bill (a steward may have no login). Blank
+clears it, and the bill shows the captain instead.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `order` | yes |  |
+| `waiter` | no | `''` |
+
+### `kamra.pos.waiters`
+
+**GET/POST**
+
+Names typed as waiter at this outlet in the last 60 days, most used
+first: suggestions for the till, not a staff register.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `outlet` | yes |  |
 
 ### `kamra.pos.acknowledge_void`
 
@@ -5827,6 +5865,12 @@ Everything the public booking page needs to render.
 
 Availability + real quoted price per room type for the stay.
 
+Each available row also carries `plans`: the stay quoted room only
+(first) and with each meal plan, so the page lists real totals per plan. A valid
+`voucher_code` discounts every quote, and each plan then keeps its
+undiscounted `list_amount` for the strike-through; an invalid one is
+ignored here (check_voucher tells the guest why).
+
 `child_ages` (e.g. [3, 8, 13]) lets each room type's age bands decide who
 is free, a child or an adult; without it `children` are all children.
 Each row says whether the room type can take the party: `available`, a
@@ -5844,6 +5888,7 @@ what it sleeps but within the extra guests it allows by arrangement.
 | `location_slug` | no | `None` |
 | `pets` | no | `0` |
 | `child_ages` | no | `None` |
+| `voucher_code` | no | `None` |
 
 ### `kamra.public_api.precheckin_info` <Badge type='tip' text='public' />
 

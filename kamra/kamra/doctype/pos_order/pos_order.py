@@ -20,6 +20,17 @@ class POSOrder(Document):
 		self.order_total = 0.0 if self.nc else subtotal - discount
 		self.guard_room_posting()
 		self.guard_bill_close()
+		self.stamp_cashier()
+
+	def stamp_cashier(self):
+		"""The cashier on the bill: whoever closes it (pay_order, a room
+		posting or an NC close all land here). Set once, on the close."""
+		if self.status != "Delivered" or self.settled_by:
+			return
+		previous = self.get_doc_before_save()
+		if previous and previous.status == "Delivered":
+			return
+		self.settled_by = frappe.session.user
 
 	def charges_to_room(self) -> bool:
 		"""The bill is meant for a guest's room: room service, or any order
