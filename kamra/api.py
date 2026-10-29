@@ -134,13 +134,7 @@ def _assert_within_guardrails(guardrails, room_type, rate: float,
 		return applied
 	from frappe.utils import add_days, date_diff
 
-	from kamra.pricing import days_cover
-
-	def _rank(g, day_abbr):
-		if not days_cover(g.days_of_week, day_abbr):
-			return None
-		return (1 if g.room_type == room_type else 0,
-		        1 if g.days_of_week else 0)
+	from kamra.pricing import rail_for_day
 
 	span = min(int(date_diff(end_date, start_date)) + 1, 92)
 	checked: set = set()
@@ -150,11 +144,9 @@ def _assert_within_guardrails(guardrails, room_type, rate: float,
 		if day_abbr in checked:
 			continue  # the rails repeat weekly; one check per weekday is enough
 		checked.add(day_abbr)
-		ranked = [(r, g) for g in guardrails
-		          if (r := _rank(g, day_abbr)) is not None]
-		if not ranked:
+		rail = rail_for_day(guardrails, room_type, day_abbr)
+		if not rail:
 			continue
-		rail = max(ranked, key=lambda x: x[0])[1]
 		if rail.name not in applied:
 			applied.append(rail.name)
 		scope = f" on {day_abbr.title()}" if rail.days_of_week else ""

@@ -2,8 +2,8 @@
 
 Deterministic by design: agents and humans both get quotes from this module;
 no LLM ever computes money. Resolution order per night:
-  season-adjusted occupancy rate -> rate-plan modifier -> meal plan
-  -> voucher discount -> tax.
+  season-adjusted occupancy rate -> long-stay discount (guardrail floor)
+  -> rate-plan modifier -> meal plan -> voucher discount -> tax.
 """
 
 from decimal import Decimal
@@ -274,6 +274,36 @@ def days_cover(days_of_week: str | None, day_abbr: str) -> bool:
 	return day_abbr in normalized_days
 
 
+def rail_for_day(guardrails, room_type: str | None, day_abbr: str):
+	"""The rate guardrail that governs this weekday, or None. The most
+	specific rail wins: room-type + days, then room-type, then
+	property-wide + days, then property-wide."""
+	ranked = [((1 if g.room_type == room_type else 0,
+	            1 if g.days_of_week else 0), g)
+	          for g in guardrails if days_cover(g.days_of_week, day_abbr)]
+	return max(ranked, key=lambda x: x[0])[1] if ranked else None
+
+
+def long_stay_rule(property: str, room_type: str, nights: int):
+	"""The Long Stay Discount a stay of `nights` earns, or None.
+
+	The highest tier the stay reaches wins (7+ nights 10% and 28+ nights
+	25%: a 30-night stay gets 25%); at the same tier a room-type rule beats
+	a house-wide one."""
+	if nights < 1:
+		return None
+	rules = frappe.get_all(
+		"Long Stay Discount",
+		filters={"property": property, "disabled": 0,
+		         "min_nights": ("<=", nights),
+		         "room_type": ("in", [room_type, "", None])},
+		fields=["name", "min_nights", "discount_percent", "room_type"])
+	if not rules:
+		return None
+	return max(rules, key=lambda r: (int(r.min_nights or 0),
+	                                 1 if r.room_type else 0))
+
+
 def _season_covers_day(season, day_abbr: str) -> bool:
 	return days_cover(season.days_of_week, day_abbr)
 
@@ -531,6 +561,17 @@ def quote(
 	over_cap = Decimal(0)
 	over_cap_tax = Decimal(0)
 	occ_cache: dict = {}
+	# long-stay discount: off each night's rate before tax, so the nights
+	# locked on the booking (and billed by the folio) already carry it. A
+	# desk-agreed rate is a price a person set and is left alone.
+	los = None if agreed_rate else long_stay_rule(property, room_type, nights)
+	los_pct = _dec(los.discount_percent) if los else Decimal(0)
+	rails = frappe.get_all(
+		"Rate Guardrail",
+		filters={"property": property, "disabled": 0,
+		         "room_type": ("in", [room_type, "", None])},
+		fields=["name", "room_type", "floor_price", "days_of_week"]) if los else []
+	los_saved = Decimal(0)
 	# a day-use stay bills one "night" on the check-in date
 	for i in range(max(nights, 1)):
 		date = add_days(check_in_date, i)
@@ -551,6 +592,19 @@ def quote(
 		if agreed_rate:
 			# a rate the desk agreed replaces the card and the premium
 			rate, tier = _dec(agreed_rate), None
+		if los_pct:
+			off = rate * (Decimal(1) - los_pct / Decimal(100))
+			# never below the owner's floor for this night (a rate already
+			# under the floor is not raised by it)
+			rail = rail_for_day(rails, room_type,
+			                    getdate(date).strftime("%a").lower())
+			floor = min(rate, _dec(rail.floor_price)) if rail else Decimal(0)
+			off = max(off, floor)
+			gst_off = room_gst_rate(property, rt, off + night_over_cap)
+			saved = rate - off
+			los_saved += (saved / (Decimal(1) + gst_off / Decimal(100))
+			              if inclusive else saved)
+			rate = off
 		# The agreed amount for extra beds counts toward the slab even though
 		# it bills as its own line: GST reads what the unit fetches for the
 		# day, not the occupancy its rate card started from. A room at 7,000
@@ -576,6 +630,7 @@ def quote(
 		room_total = apply_rate_plan(rate_plan, room_total)
 		if old_room_total:
 			room_tax *= room_total / old_room_total
+			los_saved *= room_total / old_room_total
 
 	from kamra.folio import _fnb_gst
 	FNB_GST = _fnb_gst(property)
@@ -676,6 +731,11 @@ def quote(
 			"nights_applied": billable_nights,
 		},
 	]
+	if los_saved > 0:
+		# already inside the room nights above: shown, not subtracted again
+		line_items[0]["description"] = (
+			f"Room nights, long stay {float(los_pct):g}% off")
+		line_items[0]["long_stay_discount"] = round(float(los_saved), 2)
 	if meal_total:
 		line_items.append({
 			"component": "meal_plan",
@@ -742,6 +802,11 @@ def quote(
 		"room_levy": float(levy),
 		"discount": float(discount),
 		"voucher": voucher_name,
+		# the long-stay discount already taken off the room nights
+		"long_stay": {"rule": los.name, "min_nights": int(los.min_nights),
+		              "percent": float(los_pct),
+		              "amount": round(float(los_saved), 2)}
+		if los_saved > 0 else None,
 		"rate_plan": rate_plan or None,
 		"amount_before_tax": float(total_base),
 		"tax_percent": round(effective_pct, 2),

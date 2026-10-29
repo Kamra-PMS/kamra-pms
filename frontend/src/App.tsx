@@ -217,6 +217,10 @@ export default function App() {
             element={<ConfiguredScreen config="seasonsConfig" />}
           />
           <Route
+            path="long-stay"
+            element={<ConfiguredScreen config="longStayConfig" />}
+          />
+          <Route
             path="vouchers"
             element={<ConfiguredScreen config="vouchersConfig" />}
           />

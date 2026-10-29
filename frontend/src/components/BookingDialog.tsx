@@ -2209,6 +2209,15 @@ export function BookingDialog(props: {
                         </span>
                       </div>
                     )}
+                    {quote.long_stay && (
+                      <div className="flex justify-between font-medium text-emerald-700">
+                        <span>{t("Long stay {pct}% off (in the room price)", { pct: String(quote.long_stay.percent) })}</span>
+                        <span className="tabular-nums">
+                          −{cur()}
+                          {inr(quote.long_stay.amount)}
+                        </span>
+                      </div>
+                    )}
                     {quote.discount > 0 && (
                       <div className="flex justify-between font-medium text-emerald-700">
                         <span>{t("Voucher")}</span>

@@ -179,6 +179,27 @@ export const vouchersConfig: ScreenConfig = {
   ],
 }
 
+export const longStayConfig: ScreenConfig = {
+  doctype: "Long Stay Discount",
+  title: "Long-stay Discounts",
+  description:
+    "A percentage off each room night for stays of N nights or more. The highest tier a stay reaches applies, and no night goes below its guardrail floor.",
+  propertyScoped: true,
+  orderBy: "min_nights asc",
+  columns: [
+    { field: "min_nights", label: "From nights" },
+    { field: "discount_percent", label: "Discount %" },
+    { field: "room_type", label: "Room type (blank = all)" },
+    { field: "disabled", label: "Status", statusCheck: true },
+  ],
+  form: [
+    { field: "min_nights", label: "Stays of at least (nights)", type: "int", required: true },
+    { field: "discount_percent", label: "Discount % off the room rate", type: "float", required: true },
+    { field: "room_type", label: "Room type (blank = all)", type: "link", linkDoctype: "Room Type" },
+    { field: "disabled", label: "Disabled", type: "check", hint: "Tick to deactivate; clear to activate" },
+  ],
+}
+
 export const mealPlansConfig: ScreenConfig = {
   doctype: "Meal Plan",
   title: "Meal Plans",

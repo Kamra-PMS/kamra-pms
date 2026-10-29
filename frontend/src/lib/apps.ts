@@ -245,6 +245,8 @@ export const APPS: AppDef[] = [
       { to: "/seasons", label: "Seasons", icon: CalendarDays },
       { to: "/guardrails", label: "Guardrails", icon: ShieldCheck },
       { to: "/vouchers", label: "Vouchers", icon: BadgePercent },
+      { to: "/long-stay", label: "Long-stay Discounts", icon: BadgePercent,
+        keywords: ["length of stay", "LOS", "weekly", "monthly", "extended stay"] },
       { to: "/meal-plans", label: "Meal Plans", icon: UtensilsCrossed },
       { to: "/experiences", label: "Experiences", icon: Compass },
       // also in Admin: Room Types hold the base rates revenue works from

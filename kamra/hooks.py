@@ -262,7 +262,7 @@ _PROPERTY_SCOPED = (
 	"Print Job",
 	"Proforma Folio", "Property Setting", "Rate Guardrail", "Rate Plan",
 	"Reservation",
-	"Revenue Budget", "Room", "Room Block", "Room Type", "Season",
+	"Long Stay Discount", "Revenue Budget", "Room", "Room Block", "Room Type", "Season",
 	"Security Deposit", "Sellable Unit", "Service Ticket", "Shift Handover", "SOP Template", "Ticket Event",
 	"Transaction Code", "Turnover Profile", "Venue", "Venue Booking",
 	"WhatsApp Message", "ZATCA Invoice", "ZATCA Settings",

@@ -373,6 +373,8 @@ export interface Quote {
   over_capacity_total?: number
   pet_charge?: number
   discount: number
+  /** long-stay discount already taken off room_total */
+  long_stay?: { rule: string; min_nights: number; percent: number; amount: number } | null
   amount_before_tax: number
   tax_percent: number
   tax_amount: number
