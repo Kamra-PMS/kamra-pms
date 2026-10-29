@@ -34,9 +34,15 @@ TD1 = ("I<UTOD231458907<<<<<<<<<<<<<<<\n"
        "ERIKSSON<<ANNA<MARIA<<<<<<<<<<")
 
 
-def secure_qr(*fields: bytes) -> str:
-	body = b"\xff".join(fields) + b"\xff" + b"JP2-PHOTO" + b"S" * 256
-	return str(int.from_bytes(gzip.compress(body), "big"))
+def secure_qr(*fields: bytes, photo: bytes = b"JP2-PHOTO") -> str:
+	body = b"\xff".join(fields) + b"\xff" + photo + b"S" * 256
+	import sys
+	limit = sys.get_int_max_str_digits()
+	sys.set_int_max_str_digits(0)  # the test writes what a scanner would type
+	try:
+		return str(int.from_bytes(gzip.compress(body), "big"))
+	finally:
+		sys.set_int_max_str_digits(limit)
 
 
 class IdScanTestCase(AuditTestCase):
@@ -79,6 +85,14 @@ class IdScanTestCase(AuditTestCase):
 		                 ("1990-02-01", "Female", "Bengaluru"))
 		self.assertIn("560038", out["address"])
 		self.assertNotIn("20190101", str(out))  # the rest of the reference id stays out
+
+	def test_a_real_size_secure_qr_is_read(self):
+		import os
+		# a card's photo makes the number 5,000+ digits, past int()'s default
+		text = secure_qr(b"V2", b"3", b"987620190101120000000", b"Ravi Rao",
+		                 b"02-03-1991", b"M", *([b"x"] * 11), photo=os.urandom(2600))
+		self.assertGreater(len(text), 4300)
+		self.assertEqual(aadhaar_qr.read(text)["id_number"], "XXXX XXXX 9876")
 
 	def test_old_aadhaar_qr(self):
 		out = aadhaar_qr.read('<?xml version="1.0"?><PrintLetterBarcodeData uid="987654321012" '

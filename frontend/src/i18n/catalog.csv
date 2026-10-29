@@ -193,7 +193,7 @@
 {0}: reminder sent for {1} ({2}),{0}: reminder sent for {1} ({2}),{0}: تم إرسال تذكير لـ {1} ({2}),{0}: recordatorio enviado para {1} ({2}),,0 1 2,translated
 "{a} adults, {c} children","{a} adults, {c} children",{a} بالغين، {c} أطفال,"{a} adultos, {c} niños",components/RoomDrawer.tsx,a c,translated
 "{added} added, {updated} updated","{added} added, {updated} updated",تمت إضافة {added}، وتحديث {updated},Agregados: {added}; actualizados: {updated},screens/settings/cards.tsx,added updated,translated
-"{adults} adults, {children} children on the booking","{adults} adults, {children} children on the booking",,,components/CheckInGuests.tsx,adults children,needs_translation
+"{adults} adults, {children} children on the booking","{adults} adults, {children} children on the booking",{adults} بالغين، {children} أطفال في الحجز,"{adults} adultos, {children} niños en la reserva",components/CheckInGuests.tsx,adults children,translated
 {amount} (one-time),{amount} (one-time),{amount} (مرة واحدة),{amount} (pago único),screens/PublicBooking.tsx,amount,translated
 {amount} (refundable),{amount} (refundable),{amount} (قابل للاسترداد),{amount} (reembolsable),screens/PublicBooking.tsx,amount,translated
 {amount} due,{amount} due,{amount} مستحق,{amount} pendiente,components/AgentCards.tsx,amount,translated
@@ -305,12 +305,12 @@
 {n} room(s),{n} room(s),{n} غرفة,{n} habitación(es),components/GroupBookingDialog.tsx,n,translated
 {n} rooms,{n} rooms,{n} غرف,Habitaciones: {n},screens/Dashboard.tsx,n,translated
 {n} rooms · from {rate}/night,{n} rooms · from {rate}/night,{n} غرف · من {rate}/ليلة,Habitaciones: {n} · desde {rate}/noche,screens/CRS.tsx,n rate,translated
-{n} rooms checked in.,{n} rooms checked in.,,,components/GroupControl.tsx,n,needs_translation
+{n} rooms checked in.,{n} rooms checked in.,تم تسجيل وصول {n} غرف.,{n} habitaciones con entrada registrada.,components/GroupControl.tsx,n,translated
 {n} rooms free for these dates,{n} rooms free for these dates,{n} غرف متاحة لهذه التواريخ,Habitaciones disponibles para estas fechas: {n},components/RoomChangeDialog.tsx,n,translated
 {n} rows,{n} rows,{n} صف,{n} filas,,n,translated
 {n} seats,{n} seats,{n} مقاعد,Asientos: {n},screens/POS.tsx,n,translated
 {n} staying,{n} staying,{n} مقيم,Huéspedes alojados: {n},screens/Today.tsx,n,translated
-{n} still need IDs or other steps: use Finish on each room.,{n} still need IDs or other steps: use Finish on each room.,,,components/GroupControl.tsx,n,needs_translation
+{n} still need IDs or other steps: use Finish on each room.,{n} still need IDs or other steps: use Finish on each room.,{n} ما زالت تحتاج هويات أو خطوات أخرى: استخدم إنهاء في كل غرفة.,{n} aún necesitan identificaciones u otros pasos: usa Terminar en cada habitación.,components/GroupControl.tsx,n,translated
 {n} task{s} for you - arrivals first,{n} task{s} for you - arrivals first,{n} مهمة{s} لك - الوصول أولاً,{n} tarea{s} para usted: llegadas primero,screens/HkApp.tsx,n s,translated
 {n} this session,{n} this session,{n} في هذه الجلسة,En esta sesión: {n},screens/CashierTill.tsx,n,translated
 {n} tickets,{n} tickets,{n} تذاكر,Comandas: {n},screens/Kitchen.tsx,n,translated
@@ -571,7 +571,7 @@ Add,Add,إضافة,Agregar,components/StayInstructions.tsx; screens/BanquetFunct
 Add a cash office (central safe),Add a cash office (central safe),إضافة مكتب نقدي (الخزنة المركزية),Agregar caja central,screens/Setup.tsx,,translated
 Add a customer email on the Enquiry step first,Add a customer email on the Enquiry step first,أضف بريد العميل في خطوة الاستفسار أولًا,Agregue primero el correo del cliente en la etapa Consulta,screens/BanquetFunction.tsx,,translated
 Add a customer phone on the Enquiry step first,Add a customer phone on the Enquiry step first,أضف هاتف العميل في خطوة الاستفسار أولًا,Agregue primero el teléfono del cliente en la etapa Consulta,screens/BanquetFunction.tsx,,translated
-Add a guest,Add a guest,,,components/CheckInGuests.tsx,,needs_translation
+Add a guest,Add a guest,إضافة ضيف,Agregar huésped,components/CheckInGuests.tsx,,translated
 Add a menu package,Add a menu package,إضافة باقة قائمة طعام,Agregar paquete de menú,screens/BanquetFunction.tsx,,translated
 Add a new customer,Add a new customer,إضافة عميل جديد,Añadir un nuevo cliente,screens/pos/PosSidePanel.tsx,,translated
 "Add a note: who was called, what was tried","Add a note: who was called, what was tried",أضف ملاحظة: من تم الاتصال به، وما الذي جُرّب,"Agregue una nota: quién fue llamado, qué se intentó",screens/Tickets.tsx,,translated
@@ -1272,8 +1272,8 @@ Check each row marked 'Wrong room?' against the guest's room.,Check each row mar
 Check in,Check in,تسجيل الوصول,Registrar entrada,components/AgentCards.tsx; components/CheckInDialog.tsx; components/GroupControl.tsx; components/RoomDrawer.tsx; screens/EndOfDayWizard.tsx; screens/InHouse.tsx; screens/TapeChart.tsx; screens/Today.tsx,,translated
 Check in {name},Check in {name},تسجيل وصول {name},Registrar la entrada de {name},components/CheckInDialog.tsx,name,translated
 Check in & collect {amt},Check in & collect {amt},تسجيل الوصول وتحصيل {amt},Registrar entrada y cobrar {amt},,amt,translated
-"Check in all {n} rooms arriving now? A room not given yet gets a free room of the booked type. IDs, deposits and the registration card can be finished room by room afterwards.","Check in all {n} rooms arriving now? A room not given yet gets a free room of the booked type. IDs, deposits and the registration card can be finished room by room afterwards.",,,components/GroupControl.tsx,n,needs_translation
-Check in the group ({n}),Check in the group ({n}),,,components/GroupControl.tsx,n,needs_translation
+"Check in all {n} rooms arriving now? A room not given yet gets a free room of the booked type. IDs, deposits and the registration card can be finished room by room afterwards.","Check in all {n} rooms arriving now? A room not given yet gets a free room of the booked type. IDs, deposits and the registration card can be finished room by room afterwards.",تسجيل وصول جميع الغرف الـ {n} الواصلة الآن؟ الحجز الذي لم تُخصص له غرفة يحصل على غرفة متاحة من النوع المحجوز. يمكن إكمال الهويات والتأمينات وبطاقة التسجيل لاحقًا غرفة بغرفة.,"¿Registrar la entrada de las {n} habitaciones que llegan ahora? Una reserva sin habitación recibe una libre del tipo reservado. Las identificaciones, los depósitos y la ficha de registro se pueden terminar después, habitación por habitación.",components/GroupControl.tsx,n,translated
+Check in the group ({n}),Check in the group ({n}),تسجيل وصول المجموعة ({n}),Registrar entrada del grupo ({n}),components/GroupControl.tsx,n,translated
 Check in to {room},Check in to {room},تسجيل الوصول إلى {room},Registrar entrada en la habitación {room},,room,translated
 "Check in to {room}, finish later","Check in to {room}, finish later",تسجيل الوصول إلى {room}، والإكمال لاحقاً,"Registrar la entrada en {room}, completar después",components/CheckInDialog.tsx,room,translated
 Check in to room {room},Check in to room {room},تسجيل الوصول إلى الغرفة {room},Registrar la entrada en la habitación {room},components/CheckInDialog.tsx,room,translated
@@ -1287,7 +1287,7 @@ Check speed,Check speed,فحص السرعة,Comprobar velocidad,screens/settings
 "Check the guest's name and phone, then the ID for the guest and everyone staying. If they checked in online, review what they sent.","Check the guest's name and phone, then the ID for the guest and everyone staying. If they checked in online, review what they sent.",تحقق من اسم الضيف وهاتفه، ثم من هوية الضيف وكل من يقيم معه. إذا سجل الوصول عبر الإنترنت، راجع ما أرسله.,"Verifique el nombre y el teléfono del huésped, luego la identificación del huésped y de todos los que se hospedan. Si realizaron el check-in en línea, revise lo que enviaron.",components/CheckInDialog.tsx,,translated
 Check the phone number and calling code.,Check the phone number and calling code.,تحقق من رقم الهاتف ورمز الاتصال الدولي.,Revise el número de teléfono y el prefijo internacional.,components/PhoneInput.tsx,,translated
 Check the status of this Kamra site and whether a newer open-source release is available.,Check the status of this Kamra site and whether a newer open-source release is available.,تحقق من حالة موقع كامرا وما إذا كان هناك إصدار مفتوح المصدر أحدث.,Compruebe el estado de este sitio de Kamra y si hay disponible una versión más reciente de código abierto.,screens/SystemHealth.tsx,,translated
-Check them in,Check them in,,,components/GroupControl.tsx,,needs_translation
+Check them in,Check them in,سجّل وصولهم,Registrar entrada,components/GroupControl.tsx,,translated
 "Check your connection, then try again.","Check your connection, then try again.",تحقق من اتصالك ثم حاول مرة أخرى.,Revise su conexión e inténtelo de nuevo.,components/ErrorBoundary.tsx,,translated
 check-in,check-in,تسجيل الوصول,registro de entrada,components/CommandPalette.tsx,,translated
 Check-in,Check-in,تسجيل الوصول,Registro de entrada,components/BookingDialog.tsx; screens/CRS.tsx; screens/PublicBooking.tsx; screens/PublicListing.tsx; screens/RegistrationCard.tsx; screens/ReservationDetail.tsx; screens/TapeChart.tsx,,translated
@@ -1329,7 +1329,7 @@ Chef,Chef,الشيف,Chef,,,translated
 Cheque,Cheque,شيك,Cheque,,,translated
 Child {n} age,Child {n} age,عمر الطفل {n},Edad del menor {n},components/ChildAges.tsx,n,translated
 Child / night,Child / night,طفل / ليلة,Menor / noche,,,translated
-"Child: name and age are enough, no ID needed.","Child: name and age are enough, no ID needed.",,,components/CheckInGuests.tsx,,needs_translation
+"Child: name and age are enough, no ID needed.","Child: name and age are enough, no ID needed.",طفل: يكفي الاسم والعمر، لا حاجة إلى هوية.,"Niño: basta con nombre y edad, no hace falta identificación.",components/CheckInGuests.tsx,,translated
 Children,Children,الأطفال,Niños,components/BookingDialog.tsx; screens/CRS.tsx; screens/PublicBooking.tsx; screens/PublicListing.tsx,,translated
 Children & Extra Beds,Children & Extra Beds,الأطفال والأسرّة الإضافية,Niños y camas adicionales,screens/PublicBooking.tsx,,translated
 Children & Occupancy Policy,Children & Occupancy Policy,سياسة الأطفال والإشغال,Política de menores y ocupación,screens/BookingEngine.tsx,,translated
@@ -2021,7 +2021,7 @@ Every till is closed.,Every till is closed.,كل الصناديق مغلقة.,To
 "Every void, allowance and cancelled invoice: who, when and why.","Every void, allowance and cancelled invoice: who, when and why.",كل إلغاء وخصم وفاتورة ملغاة: من ومتى ولماذا.,"Todas las anulaciones, bonificaciones y facturas anuladas: quién las realizó, cuándo y por qué.",screens/VoidAllowanceReport.tsx,,translated
 Everyone,Everyone,الجميع,Todos,screens/Agents.tsx,,translated
 Everyone staying,Everyone staying,كل المقيمين,Todas las personas alojadas,,,translated
-Everyone staying ({n}),Everyone staying ({n}),,,components/CheckInGuests.tsx,n,needs_translation
+Everyone staying ({n}),Everyone staying ({n}),جميع المقيمين ({n}),Todos los que se alojan ({n}),components/CheckInGuests.tsx,n,translated
 Everyone staying in the room - required for the hotel register. Saved occupants print on the GRC above.,Everyone staying in the room - required for the hotel register. Saved occupants print on the GRC above.,كل المقيمين في الغرفة، مطلوب لسجل الفندق. يُطبع المرافقون المحفوظون في بطاقة التسجيل أعلاه.,"Todas las personas alojadas en la habitación, requeridas para el registro hotelero. Los ocupantes guardados aparecen en la tarjeta de registro superior.",screens/RegistrationCard.tsx,,translated
 Everything,Everything,كل الرسوم,Todos los cargos,components/BillingRulesEditor.tsx,,translated
 Everything booked in the period,Everything booked in the period,كل ما حُجز في الفترة,Todas las reservas del periodo,,,translated
@@ -2354,7 +2354,7 @@ Guardrails,Guardrails,حدود الأسعار,Límites de tarifas,,,translated
 Guest,Guest,ضيف,Huésped,components/BookingDialog.tsx; components/CheckOutDialog.tsx; components/CommandPalette.tsx; components/LinkedRecords.tsx; screens/Billing.tsx; screens/CityLedgerPayment.tsx; screens/FolioHistory.tsx; screens/FolioView.tsx; screens/InHouse.tsx; screens/Laundry.tsx; screens/RegistrationCard.tsx; screens/ReservationDetail.tsx; screens/Today.tsx; screens/pos/PosSidePanel.tsx,,translated
 Guest · Deposit · AR · Package trial balance,Guest · Deposit · AR · Package trial balance,الضيف · العربون · الذمم المدينة · ميزان مراجعة الباقات,"Balance de comprobación: huéspedes, depósitos, cuentas por cobrar y paquetes",screens/Ledgers.tsx,,translated
 Guest (if known),Guest (if known),الضيف (إن كان معروفا),Huésped (si se conoce),,,translated
-Guest {n},Guest {n},,,components/CheckInGuests.tsx,n,needs_translation
+Guest {n},Guest {n},الضيف {n},Huésped {n},components/CheckInGuests.tsx,n,translated
 Guest {v0} via {v1} on {v2},Guest {v0} via {v1} on {v2},الضيف {v0} عبر {v1} في {v2},"Huésped {v0}, por {v1}, el {v2}",screens/BanquetFunction.tsx,v0 v1 v2,translated
 Guest agrees to offers on WhatsApp,Guest agrees to offers on WhatsApp,يوافق الضيف على تلقي العروض عبر واتساب,El huésped acepta recibir ofertas por WhatsApp,components/BookingDialog.tsx,,translated
 Guest allergy,Guest allergy,حساسية الضيف,Alergia del huésped,screens/Kitchen.tsx,,translated
@@ -2382,7 +2382,7 @@ Guest or customer,Guest or customer,النزيل أو العميل,Huésped o cl
 Guest owes,Guest owes,مستحق على الضيف,El huésped debe,components/CheckOutDialog.tsx,,translated
 Guest payment,Guest payment,دفعة الضيف,Pago del huésped,,,translated
 Guest pays,Guest pays,الضيف يدفع,El huésped paga,components/CheckInDialog.tsx; components/CheckOutDialog.tsx,,translated
-Guest photo,Guest photo,,,components/CheckInGuests.tsx,,needs_translation
+Guest photo,Guest photo,صورة الضيف,Foto del huésped,components/CheckInGuests.tsx,,translated
 Guest privacy,Guest privacy,خصوصية الضيف,Privacidad de los huéspedes,,,translated
 GUEST REGISTRATION CARD,GUEST REGISTRATION CARD,بطاقة تسجيل النزيل,FICHA DE REGISTRO DE HUÉSPEDES,screens/RegistrationCard.tsx,,translated
 guest registration with the Shomoos security system,guest registration with the Shomoos security system,تسجيل النزلاء في منظومة شموس الأمنية,registro de huéspedes en el sistema de seguridad Shomoos,,,translated
@@ -2542,7 +2542,7 @@ ID number,ID number,رقم الهوية,Número de documento de identidad,compon
 ID on file,ID on file,هوية محفوظة,Documento de identidad guardado,components/GuestDocuments.tsx,,translated
 ID photo received,ID photo received,تم استلام صورة الهوية,Foto del documento recibida,components/IdDocumentField.tsx,,translated
 ID photos are deleted and ID numbers cut to the last 4 digits at checkout.,ID photos are deleted and ID numbers cut to the last 4 digits at checkout.,تُحذف صور الهوية ويُقتصر رقمها على آخر 4 أرقام عند المغادرة.,Las fotos de su documento se eliminan al salir y el número se conserva solo con sus últimos cuatro dígitos.,components/PrivacyNotice.tsx,,translated
-ID picture,ID picture,,,components/CheckInGuests.tsx,,needs_translation
+ID picture,ID picture,صورة الهوية,Foto de la identificación,components/CheckInGuests.tsx,,translated
 ID proof,ID proof,إثبات الهوية,Documento de identidad,components/GuestDocuments.tsx,,translated
 ID scan,ID scan,صورة الهوية,Imagen del documento de identidad,components/GuestDocuments.tsx,,translated
 ID still needed for: {names}.,ID still needed for: {names}.,لا تزال الهوية مطلوبة لـ: {names}.,Falta el documento de identidad de: {names}.,components/CheckInDialog.tsx,names,translated
@@ -3163,7 +3163,7 @@ No bills yet today.,No bills yet today.,لا توجد فواتير اليوم ب
 No bookings in this window.,No bookings in this window.,لا حجوزات في هذه الفترة.,No hay reservas en este periodo.,screens/RevenueReports.tsx,,translated
 No busy-house rule applies ({p}% full).,No busy-house rule applies ({p}% full).,لا تنطبق قاعدة الإشغال المرتفع (الإشغال {p}%).,No se aplica ninguna regla de alta ocupación ({p}% de ocupación).,screens/RateCalendar.tsx,p,translated
 "No camera, or the browser blocked it. Allow the camera, or upload a picture instead.","No camera, or the browser blocked it. Allow the camera, or upload a picture instead.",لا توجد كاميرا، أو حظرها المتصفح. اسمح بالكاميرا، أو ارفع صورة بدلًا من ذلك.,No hay cámara o el navegador la bloqueó. Permita la cámara o cargue una imagen en su lugar.,components/CameraCapture.tsx,,translated
-"No camera, or the browser blocked it. Use the scanner instead.","No camera, or the browser blocked it. Use the scanner instead.",,,components/IdScan.tsx,,needs_translation
+"No camera, or the browser blocked it. Use the scanner instead.","No camera, or the browser blocked it. Use the scanner instead.",لا توجد كاميرا أو حظرها المتصفح. استخدم الماسح الضوئي بدلًا منها.,No hay cámara o el navegador la bloqueó. Usa el escáner.,components/IdScan.tsx,,translated
 No cancellations.,No cancellations.,لا إلغاءات.,No hay cancelaciones.,screens/AuditPack.tsx; screens/PosDashboard.tsx,,translated
 No cashier sessions on this business date.,No cashier sessions on this business date.,لا جلسات صرافين في تاريخ العمل هذا.,No hay sesiones de caja para esta fecha operativa.,screens/AuditPack.tsx; screens/EndOfDayWizard.tsx,,translated
 No change to the price.,No change to the price.,لا تغيير في السعر.,Sin cambios en el precio.,components/RoomChangeDialog.tsx,,translated
@@ -3367,7 +3367,7 @@ Not ready for go-live yet,Not ready for go-live yet,غير جاهز للتشغي
 Not ready to deliver yet,Not ready to deliver yet,غير جاهز للتسليم بعد,Aún no está listo para entregar,,,translated
 not recorded,not recorded,لم يُسجل,no registrado,screens/Tickets.tsx,,translated
 not recorded (before tracking),not recorded (before tracking),لم يُسجل (قبل بدء التتبع),no registrado (antes del seguimiento),screens/Tickets.tsx,,translated
-Not saved yet,Not saved yet,,,components/CheckInGuests.tsx,,needs_translation
+Not saved yet,Not saved yet,لم يُحفظ بعد,Aún sin guardar,components/CheckInGuests.tsx,,translated
 not sent,not sent,لم يُرسل,no enviado,screens/POS.tsx; screens/pos/OpenBillsPopup.tsx,,translated
 Not sent,Not sent,لم يُرسل,No enviado,screens/POS.tsx; screens/pos/OpenBillsPopup.tsx; screens/pos/PosSidePanel.tsx,,translated
 Not sent for {mins} min,Not sent for {mins} min,لم يُرسل منذ {mins} دقيقة,Sin enviar desde hace {mins} min,,mins,translated
@@ -3860,7 +3860,7 @@ Pick…,Pick…,اختر…,Seleccione…,screens/RecipeManager.tsx,,translated
 "Pickup requested, nothing collected yet: there is nothing to bill.","Pickup requested, nothing collected yet: there is nothing to bill.",طُلب الاستلام ولم يُجمع شيء بعد: لا يوجد ما يُحاسب عليه.,"Se solicitó la recogida, pero aún no se han recibido prendas. No hay nada que facturar.",,,translated
 Pickup requests,Pickup requests,طلبات الاستلام,Solicitudes de recogida,screens/HkLaundry.tsx; screens/Laundry.tsx,,translated
 "Pickup, pace, source and segment mix.","Pickup, pace, source and segment mix.",الحجوزات المكتسبة والوتيرة والمصدر ومزيج الشرائح.,"Recogida, ritmo, origen y mezcla de segmentos.",,,translated
-Picture of the ID,Picture of the ID,,,components/CheckInGuests.tsx,,needs_translation
+Picture of the ID,Picture of the ID,صورة الهوية,Foto de la identificación,components/CheckInGuests.tsx,,translated
 Pieces,Pieces,قطع,Prendas,screens/Laundry.tsx,,translated
 Pilgrimage,Pilgrimage,حج أو عمرة,Peregrinación,components/BookingDialog.tsx,,translated
 PIN code,PIN code,الرمز البريدي,Código postal,,,translated
@@ -4108,11 +4108,11 @@ Razorpay: Account & Settings → API Keys. Cashfree: Developers → API Keys (Ap
 Re-cost from today's ingredient prices,Re-cost from today's ingredient prices,إعادة التكلفة بأسعار المكوّنات اليوم,Recalcular costos con los precios actuales de los ingredientes,screens/BanquetCatalogue.tsx,,translated
 reach out any time and we'll find you a room.,reach out any time and we'll find you a room.,تواصل معنا في أي وقت وسنجد لك غرفة.,contáctenos cuando lo desee y le ayudaremos a encontrar una habitación.,screens/CancellationLetter.tsx,,translated
 Read details,Read details,قراءة التفاصيل,Leer detalles,screens/RegistrationCard.tsx,,translated
-Read from the ID: {name}{dob}. Check it is the guest at the desk.,Read from the ID: {name}{dob}. Check it is the guest at the desk.,,,components/CheckInGuests.tsx,name dob,needs_translation
+Read from the ID: {name}{dob}. Check it is the guest at the desk.,Read from the ID: {name}{dob}. Check it is the guest at the desk.,قُرئ من الهوية: {name}{dob}. تحقق أنه الضيف الموجود في الاستقبال.,Leído de la identificación: {name}{dob}. Comprueba que es el huésped en recepción.,components/CheckInGuests.tsx,name dob,translated
 Read the day's numbers,Read the day's numbers,تمت مراجعة أرقام اليوم,Resultados del día consultados,,,translated
 Read the guide,Read the guide,اقرأ الدليل,Leer la guía,components/InfoTip.tsx,,translated
 Read this notice in:,Read this notice in:,اقرأ هذا الإشعار بـ:,Leer este aviso en:,components/PrivacyNotice.tsx,,translated
-Reading,Reading,,,components/IdScan.tsx,,needs_translation
+Reading,Reading,جارٍ القراءة,Leyendo,components/IdScan.tsx,,translated
 Reading…,Reading…,جارٍ القراءة…,Leyendo…,screens/RegistrationCard.tsx,,translated
 ready,ready,جاهز,listo,screens/Kitchen.tsx,,translated
 Ready,Ready,جاهز,Listo,screens/EndOfDay.tsx; screens/EndOfDayWizard.tsx; screens/Kitchen.tsx,,translated
@@ -4502,7 +4502,7 @@ Save Changes,Save Changes,حفظ التغييرات,Guardar cambios,screens/Book
 Save dish,Save dish,حفظ الطبق,Guardar plato,screens/BanquetCatalogue.tsx,,translated
 Save documents,Save documents,حفظ الوثائق,Guardar documentos,components/GuestDocuments.tsx,,translated
 Save for me,Save for me,حفظ لي,Guardar mi diseño,components/CustomizeToday.tsx,,translated
-Save guests,Save guests,,,components/CheckInGuests.tsx,,needs_translation
+Save guests,Save guests,حفظ الضيوف,Guardar huéspedes,components/CheckInGuests.tsx,,translated
 Save imprest,Save imprest,حفظ السلفة المستديمة,Guardar fondo fijo de caja chica,screens/PettyCash.tsx,,translated
 Save menu,Save menu,حفظ القائمة,Guardar menú,screens/BanquetCatalogue.tsx,,translated
 Save note,Save note,حفظ الملاحظة,Guardar nota,screens/ReservationDetail.tsx,,translated
@@ -4527,9 +4527,9 @@ Saved.,Saved.,تم الحفظ.,Guardado.,components/CustomizeToday.tsx; screens/
 Saving...,Saving...,جارٍ الحفظ...,Guardando…,screens/RevenueReports.tsx,,translated
 Saving…,Saving…,جارٍ الحفظ…,Guardando…,components/BillingRulesEditor.tsx; components/BookingDialog.tsx; components/CheckInDialog.tsx; components/CreditTermsEditor.tsx; components/DepositPanel.tsx; components/GuestDocuments.tsx; components/ResourceScreen.tsx; components/RoomTypeMedia.tsx; components/SecurityDepositPanel.tsx; screens/BookingEngine.tsx; screens/EndOfDay.tsx; screens/EndOfDayWizard.tsx; screens/GuestJourney.tsx; screens/KitchenPrinters.tsx; screens/PublicCheckin.tsx; screens/RegistrationCard.tsx; screens/settings/AccessPages.tsx; screens/settings/ModulePage.tsx; screens/settings/WebhooksPage.tsx; screens/settings/cards.tsx,,translated
 Scan for in-room dining,Scan for in-room dining,امسح لطلب الطعام داخل الغرفة,Escanee para pedir servicio a la habitación,,,translated
-Scan ID,Scan ID,,,components/CheckInGuests.tsx,,needs_translation
-Scan the ID,Scan the ID,,,components/IdScan.tsx,,needs_translation
-Scan the passport strip or the QR on the card now. Or paste what the scanner read.,Scan the passport strip or the QR on the card now. Or paste what the scanner read.,,,components/IdScan.tsx,,needs_translation
+Scan ID,Scan ID,مسح الهوية,Escanear identificación,components/CheckInGuests.tsx,,translated
+Scan the ID,Scan the ID,امسح الهوية,Escanea la identificación,components/IdScan.tsx,,translated
+Scan the passport strip or the QR on the card now. Or paste what the scanner read.,Scan the passport strip or the QR on the card now. Or paste what the scanner read.,امسح الآن شريط جواز السفر أو رمز QR على البطاقة. أو الصق ما قرأه الماسح.,Escanea ahora la franja del pasaporte o el QR de la tarjeta. O pega lo que leyó el escáner.,components/IdScan.tsx,,translated
 Scan to see the menu and order,Scan to see the menu and order,امسح لعرض القائمة والطلب,Escanee para ver el menú y hacer un pedido,,,translated
 Schedule,Schedule,الجدول,Programación,screens/Reports.tsx,,translated
 Scheduled,Scheduled,مجدول,Programado,,,translated
@@ -4958,7 +4958,7 @@ Table…,Table…,طاولة…,Mesa...,screens/POS.tsx,,translated
 Tables,Tables,الطاولات,Mesas,screens/POS.tsx,,translated
 Tables & running bills,Tables & running bills,الطاولات والفواتير الجارية,Mesas y cuentas abiertas,screens/POS.tsx,,translated
 Take a payment,Take a payment,استلام دفعة,Recibir un pago,components/RoomStayPanels.tsx,,translated
-Take a picture of this guest's ID,Take a picture of this guest's ID,,,components/CheckInGuests.tsx,,needs_translation
+Take a picture of this guest's ID,Take a picture of this guest's ID,التقط صورة لهوية هذا الضيف,Toma una foto de la identificación de este huésped,components/CheckInGuests.tsx,,translated
 Take a restaurant order,Take a restaurant order,أخذ طلب مطعم,Tomar un pedido de restaurante,,,translated
 Take it,Take it,تولَّها,Asignarme la solicitud,screens/Tickets.tsx,,translated
 Take money through cashier tills,Take money through cashier tills,تحصيل الأموال عبر صناديق الصرافين,Gestionar dinero mediante cajas,,,translated
@@ -4966,7 +4966,7 @@ Take out of service,Take out of service,إخراج من الخدمة,Sacar de se
 Take photo,Take photo,التقاط صورة,Tomar foto,components/GuestDocuments.tsx; screens/PublicCheckin.tsx,,translated
 Take picture,Take picture,التقط صورة,Tomar fotografía,components/CameraCapture.tsx,,translated
 Take the deposit (or waive it with a reason) to continue.,Take the deposit (or waive it with a reason) to continue.,استلم التأمين (أو أعفِ منه مع ذكر السبب) للمتابعة.,Cobre el depósito de garantía o indique un motivo para exonerarlo y continuar.,,,translated
-Take the guest's photo,Take the guest's photo,,,components/CheckInGuests.tsx,,needs_translation
+Take the guest's photo,Take the guest's photo,التقط صورة الضيف,Toma la foto del huésped,components/CheckInGuests.tsx,,translated
 Take the security deposit (or waive it with a reason) and any advance the booking still owes.,Take the security deposit (or waive it with a reason) and any advance the booking still owes.,خذ مبلغ التأمين (أو اعف منه مع ذكر السبب) وأي دفعة مقدمة لا يزال الحجز مدينا بها.,"Cobre el depósito de garantía, o indique un motivo para exonerarlo, y el anticipo pendiente de la reserva.",components/CheckInDialog.tsx,,translated
 Take the security deposit or waive it with a reason to continue.,Take the security deposit or waive it with a reason to continue.,خذ مبلغ التأمين أو اعف منه مع ذكر السبب للمتابعة.,Cobre el depósito de garantía o indique un motivo para exonerarlo y continuar.,components/CheckInDialog.tsx,,translated
 Take this room,Take this room,خذ هذه الغرفة,Asignarme esta habitación,screens/HkApp.tsx,,translated
@@ -5318,7 +5318,7 @@ Two functions can share a hall morning and evening - only a real overlap in hour
 Txn codes,Txn codes,رموز المعاملات,Códigos de transacción,,,translated
 Txns,Txns,المعاملات,Movimientos,screens/CashierShiftReport.tsx,,translated
 Type,Type,النوع,Tipo,components/RoomInsights.tsx; components/RoomStayPanels.tsx; screens/Banquet.tsx; screens/BanquetFunction.tsx; screens/MenuImport.tsx; screens/pos/OrderHistory.tsx; screens/pos/PosSidePanel.tsx,,translated
-Type the guest's name first.,Type the guest's name first.,,,components/CheckInGuests.tsx,,needs_translation
+Type the guest's name first.,Type the guest's name first.,اكتب اسم الضيف أولًا.,Escribe primero el nombre del huésped.,components/CheckInGuests.tsx,,translated
 Type the room number or the guest's name,Type the room number or the guest's name,اكتب رقم الغرفة أو اسم الضيف,Escriba el número de habitación o el nombre del huésped,components/CommandPalette.tsx,,translated
 Type to find or create,Type to find or create,اكتب للبحث أو الإنشاء,Escriba para buscar o crear,components/BookingDialog.tsx,,translated
 U-Shape,U-Shape,على شكل حرف U,En U,,,translated
@@ -5377,13 +5377,13 @@ upload returned no file URL,upload returned no file URL,لم يُرجع الرف
 Uploading,Uploading,جارٍ الرفع,Subiendo,components/IdDocumentField.tsx,,translated
 Uploading…,Uploading…,جارٍ الرفع…,Subiendo…,components/ImageField.tsx,,translated
 Urgent,Urgent,عاجلة,Urgente,,,translated
-Use camera,Use camera,,,components/IdScan.tsx,,needs_translation
+Use camera,Use camera,استخدام الكاميرا,Usar cámara,components/IdScan.tsx,,translated
 Use F&B setting,Use F&B setting,استخدام إعداد الأطعمة والمشروبات,Usar configuración de Alimentos y bebidas,,,translated
 Use property default ({n} days),Use property default ({n} days),استخدام الإعداد الافتراضي للعقار ({n} أيام),Usar el plazo predeterminado del alojamiento ({n} días),components/CreditTermsEditor.tsx,n,translated
 Use the {v0} screen for this step.,Use the {v0} screen for this step.,استخدم شاشة {v0} لهذه الخطوة.,Utilice la pantalla {v0} para este paso.,,v0,translated
 Use the hotel default,Use the hotel default,استخدام الإعداد الافتراضي للفندق,Utilice el valor predeterminado del hotel,components/CustomizeToday.tsx,,translated
 "Use the MCP URL to connect ChatGPT, Claude or another compatible provider. Each person signs in as themselves with OAuth.","Use the MCP URL to connect ChatGPT, Claude or another compatible provider. Each person signs in as themselves with OAuth.",استخدم عنوان MCP لربط ChatGPT أو Claude أو مزوّد آخر متوافق. يسجّل كل شخص الدخول بحسابه الخاص عبر OAuth.,"Utilice la URL MCP para conectar ChatGPT, Claude u otro proveedor compatible. Cada persona inicia sesión con su propia cuenta mediante OAuth.",screens/settings/cards.tsx,,translated
-Use the scanner,Use the scanner,,,components/IdScan.tsx,,needs_translation
+Use the scanner,Use the scanner,استخدام الماسح,Usar el escáner,components/IdScan.tsx,,translated
 Use the usual schedule,Use the usual schedule,استخدام الجدول المعتاد,Usar el calendario habitual,screens/BanquetFunction.tsx,,translated
 Use this picture,Use this picture,استخدم هذه الصورة,Utilice esta imagen,components/CameraCapture.tsx,,translated
 Used,Used,مستخدم,Usado,,,translated

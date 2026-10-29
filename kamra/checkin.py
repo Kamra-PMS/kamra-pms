@@ -613,11 +613,14 @@ def save_guest_details(reservation: str, phone: str | None = None,
 		changes["email"] = email.strip() or None
 	if nationality is not None:
 		changes["nationality"] = nationality.strip() or None
-	for field, value in (("date_of_birth", date_of_birth),
-	                     ("id_expiry_date", id_expiry_date),
-	                     ("address_line", address_line), ("city", city)):
+	from frappe.utils import getdate
+	for field, value in (("date_of_birth", date_of_birth), ("id_expiry_date", id_expiry_date)):
 		if value:
-			changes[field] = value.strip()
+			changes[field] = str(getdate(value))
+	# Data fields hold 140 characters; an Aadhaar address can run longer
+	for field, value in (("address_line", address_line), ("city", city)):
+		if value and value.strip():
+			changes[field] = value.strip()[:140]
 	if gender in ("Male", "Female", "Other"):
 		changes["gender"] = gender
 	if id_type:

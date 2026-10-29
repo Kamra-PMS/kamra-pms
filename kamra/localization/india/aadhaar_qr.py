@@ -25,6 +25,7 @@ _GENDER = {"M": "Male", "F": "Female", "T": "Other"}
 _SECURE = ("email_mobile", "reference_id", "name", "dob", "gender", "care_of",
            "district", "landmark", "house", "location", "pincode",
            "post_office", "state", "street", "sub_district", "vtc")
+MAX_INFLATED = 64 * 1024
 _ADDRESS = ("house", "street", "landmark", "location", "vtc", "post_office",
             "sub_district", "district", "state", "pincode")
 
@@ -81,11 +82,20 @@ def _old_qr(text: str) -> dict:
 
 
 def _secure_qr(text: str) -> dict | None:
+	# a real secure QR runs to 5,000-6,500 digits, past Python's 4,300-digit
+	# int() limit: build the number in chunks instead
+	n = 0
+	for i in range(0, len(text), 1000):
+		chunk = text[i:i + 1000]
+		n = n * 10 ** len(chunk) + int(chunk)
+	raw = n.to_bytes((n.bit_length() + 7) // 8, "big")
 	try:
-		n = int(text)
-		raw = n.to_bytes((n.bit_length() + 7) // 8, "big")
-		data = zlib.decompress(raw, 16 + zlib.MAX_WBITS)
-	except (ValueError, OverflowError, zlib.error):
+		# capped: the card's text and photo are a few KB, never megabytes
+		inflate = zlib.decompressobj(16 + zlib.MAX_WBITS)
+		data = inflate.decompress(raw, MAX_INFLATED)
+	except zlib.error:
+		return None
+	if inflate.unconsumed_tail:
 		return None
 	fields = data.split(b"\xff")
 	if fields and fields[0][:1] == b"V":  # V2 and later lead with a version

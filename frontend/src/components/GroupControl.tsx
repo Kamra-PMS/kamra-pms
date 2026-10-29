@@ -26,6 +26,7 @@ interface PickupRow {
   remaining: number
 }
 interface Detail {
+  business_date?: string
   group: {
     name: string
     group_name: string
@@ -109,6 +110,8 @@ export default function GroupControl({
   const [checkingIn, setCheckingIn] = useState<string | null>(null)
   const [checkingOut, setCheckingOut] = useState<string | null>(null)
   const [groupIn, setGroupIn] = useState<"ask" | GroupCheckIn | null>(null)
+  // rooms checked in by the group button that still have steps to finish
+  const [unfinished, setUnfinished] = useState<Set<string>>(new Set())
   const loc = useLocale()
   const { ensureUnlocked, status: pinStatus } = useCashierAuth()
 
@@ -177,11 +180,8 @@ export default function GroupControl({
     )
 
   const g = d.group
-  // ponytail: the browser's date; the server checks against the business date
-  const today = new Date().toLocaleDateString("en-CA")
+  const today = d.business_date ?? new Date().toLocaleDateString("en-CA")
   const arriving = d.rooming_list.filter((r) => r.status === "Confirmed" && r.check_in_date <= today).length
-  const unfinished = new Set(groupIn && groupIn !== "ask"
-    ? groupIn.checked_in.filter((x) => x.pending.length).map((x) => x.reservation) : [])
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center gap-3">
@@ -497,7 +497,11 @@ export default function GroupControl({
             <p>{translate("Check in all {n} rooms arriving now? A room not given yet gets a free room of the booked type. IDs, deposits and the registration card can be finished room by room afterwards.", { n: String(arriving) })}</p>
             <div className="mt-2 flex gap-2">
               <Button disabled={busy} onClick={() =>
-                act(async () => setGroupIn(await call<GroupCheckIn>("kamra.api.group_check_in", { group_booking: name })))
+                act(async () => {
+                  const out = await call<GroupCheckIn>("kamra.api.group_check_in", { group_booking: name })
+                  setGroupIn(out)
+                  setUnfinished(new Set(out.checked_in.filter((x) => x.pending.length).map((x) => x.reservation)))
+                })
               }>{translate("Check them in")}</Button>
               <Button variant="outline" disabled={busy} onClick={() => setGroupIn(null)}>{translate("Cancel")}</Button>
             </div>

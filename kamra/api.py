@@ -1904,6 +1904,9 @@ def update_occupants(reservation: str, occupants):
 		# a saved row keeps what the client left out, and the stored ID
 		# number when the client only has the masked one (check-in shows it so)
 		prev = existing_rows.get(o.get("row")) or {}
+		if "•" in str(o.get("id_number") or "") and not prev:
+			# a masked number for a row that is gone: saving it would wipe the ID
+			frappe.throw(_("The guest list changed since you opened it. Reload and save again."))
 		o = {**prev, **{k: v for k, v in o.items() if v is not None}}
 		if "•" in str(o.get("id_number") or ""):
 			o["id_number"] = prev.get("id_number") or ""
@@ -1936,9 +1939,13 @@ def update_occupants(reservation: str, occupants):
 			validate_id_type(doc.property, row["id_type"])
 		doc.append("occupants", row)
 	doc.save()
+	# a row taken off the register takes its ID scan and photo with it
+	kept = {o.get("id_file") for o in doc.occupants} | {o.get("photo") for o in doc.occupants}
+	stale_scans += [url for url in list(existing_scans.values()) + list(existing_photos.values())
+	                if url and url not in kept]
 	if stale_scans:
 		from kamra.privacy import _delete_files
-		for url in stale_scans:
+		for url in set(stale_scans):
 			_delete_files("Reservation", reservation, url=url)
 	return {"reservation": reservation, "occupants": len(doc.occupants),
 	        "minors_trimmed": minors_trimmed,
@@ -3588,9 +3595,7 @@ def upload_occupant_id(reservation: str, row: str, image: str, kind: str = "id")
 	pack = pack_for(res.property)
 	if kind == "photo":
 		content = _sanitise(_decode(image))
-		if occ.get("photo"):
-			from kamra.privacy import _delete_files
-			_delete_files("Reservation", res.name, url=occ.photo)
+		old_photo = occ.get("photo")
 		fdoc = frappe.get_doc({
 			"doctype": "File",
 			"file_name": f"occupant-photo-{res.name}-{occ.idx}.jpg",
@@ -3601,6 +3606,12 @@ def upload_occupant_id(reservation: str, row: str, image: str, kind: str = "id")
 		}).insert(ignore_permissions=True)
 		frappe.db.set_value("Stay Occupant", occ.name, "photo", fdoc.file_url,
 		                    update_modified=False)
+		if old_photo:  # only once the new one is safely stored
+			from kamra.privacy import _delete_files
+			_delete_files("Reservation", res.name, url=old_photo)
+		from kamra.savings import log_action
+		log_action("occupant_photo_capture", "Reservation", res.name, res.property,
+		           rationale=f"Photo taken for occupant {occ.full_name}")
 		return {"ok": True, "file": fdoc.file_url, "row": occ.name}
 	if is_minor(pack, occ.age) and not minor_id_kept(pack, occ.nationality):
 		frappe.throw(f"Registration law needs only the name and age of a guest under "
@@ -6128,7 +6139,9 @@ def group_detail(group_booking: str):
 		fields=["name", "status", "balance"], order_by="creation desc", limit=1)
 	bill = bill[0] if bill else None
 	master = bill.name if bill else None
+	from kamra.business_date import get_business_date
 	return {
+		"business_date": get_business_date(gb.property),
 		"group": {
 			"name": gb.name, "group_name": gb.group_name,
 			"company": gb.company, "status": gb.status,
@@ -6175,11 +6188,12 @@ def group_check_in(group_booking: str, reservations=None):
 			reservations = frappe.parse_json(reservations)
 		filters["name"] = ("in", list(reservations))
 	arrivals = frappe.get_all("Reservation", filters=filters,
-	                          fields=["name", "guest_name", "room"],
+	                          fields=["name", "guest_name", "room", "check_in_date"],
 	                          order_by="creation asc")
-	mine = {a.name for a in arrivals if not a.room}
-	if mine:
-		plan = suggest_allocation(gb.property, today)
+	mine = {a.name: str(a.check_in_date) for a in arrivals if not a.room}
+	# suggestions are per arrival date: a late arrival from yesterday too
+	for day in sorted(set(mine.values())):
+		plan = suggest_allocation(gb.property, day)
 		pairs = [{"reservation": p["reservation"], "room": p["suggested_room"]}
 		         for p in plan["proposals"] if p["reservation"] in mine]
 		if pairs:
@@ -6199,9 +6213,10 @@ def group_check_in(group_booking: str, reservations=None):
 		pending = out.get("pending_backfill") or []
 		to_finish += 1 if pending else 0
 		checked_in.append({"reservation": a.name, "guest_name": a.guest_name,
-		                   "room": out.get("room"),
+		                   "room": out.get("room"), "keys": out.get("keys"),
 		                   "pending": [p["title"] for p in pending]})
-	return {"checked_in": checked_in, "skipped": skipped, "to_finish": to_finish}
+	return {"checked_in": checked_in, "skipped": skipped, "to_finish": to_finish,
+	        "business_date": today}
 
 
 @frappe.whitelist(methods=["POST"])

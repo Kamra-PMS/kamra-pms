@@ -789,6 +789,7 @@ export default function CheckInDialog(props: {
                 label={t("Photograph the guest's ID")}
               />
               <CheckInGuests
+                key={flow.ids.occupants.map((o) => o.row).join(",")}
                 reservation={r.name}
                 guest={flow.guest.name}
                 guestName={flow.guest.full_name}
