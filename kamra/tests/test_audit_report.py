@@ -81,3 +81,25 @@ class AuditReportTestCase(AuditTestCase):
 		self.assertAlmostEqual(guest["carried_forward"],
 		                       guest["brought_forward"] + guest["debit"] - guest["credit"], 2)
 		self.assertGreater(guest["debit"], 0)
+
+	def test_desk_and_banquet_folio_lines_count_once(self):
+		from kamra import api
+		from kamra.tests.audit_fixtures import ensure_user, guest_folio
+		res = make_reservation(PROP_A, self.rt, TODAY, d(2), status="Checked In",
+		                       room=self.room)
+		folio = guest_folio(res.name)
+		# F&B typed at the desk (no restaurant bill) counts; a function's line
+		# posted to the folio is already in the banquet figures
+		api.add_folio_charge(folio, "Food & Beverage", "UT room-service sandwich", 300,
+		                     gst_rate=0)
+		api.add_folio_charge(folio, "Misc", "EVT-2026-9999 · UT stage", 900, gst_rate=0)
+		day = audit_report.build(PROP_A, TODAY)["periods"][0]
+		self.assertEqual(day["food"], 300)
+		self.assertEqual(day["other"], 0)
+		# a Revenue Manager can read it (the ledger step has a narrower gate)
+		ensure_user("ut-rm-audit@kamra.local", ["Revenue Manager"])
+		frappe.set_user("ut-rm-audit@kamra.local")  # nosemgrep: frappe-setuser -- the role
+		try:
+			self.assertTrue(audit_report.night_audit_report(PROP_A, TODAY)["balances"])
+		finally:
+			frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- restore

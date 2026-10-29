@@ -5,10 +5,15 @@ Where each number comes from, so nothing is counted twice:
 - rooms, meal plans, minibar and other charges: posted folio charges
 - food and beverage: the restaurant bills themselves (POS Order), paid at
   the outlet or charged to a room, split per item by Menu Item.is_alcohol,
-  for each outlet. A bill charged to a room is also on the guest's folio,
-  so folio Food & Beverage lines are left out here.
+  for each outlet. A bill charged to a room is also on the guest's folio
+  (its line ends "(ORD-...)"), so those folio lines are left out; other
+  F&B on folios (an outside POS, a desk posting) is counted as is.
 - banquets: the functions held (Venue Booking, Confirmed or Completed) by
-  event date: food and beverage spend, hall rent, the rest
+  event date: food and beverage spend, hall rent, the rest. A function's
+  lines posted to a folio start with its "EVT-..." name and are left out
+  of the folio figures, so they count once.
+- discounts on the room come off room revenue; the room levy is a tax
+  collected for someone else, not revenue
 - brought forward / carried forward: the Guest, Advance deposit and City
   ledger (AR) balances before and after the day, with the day's movement
 
@@ -25,7 +30,8 @@ from frappe.utils import add_days, date_diff, flt, getdate
 
 from kamra.authz import require_roles
 
-FOLIO_SKIP = ("Food & Beverage", "Discount", "Opening Balance")
+FOLIO_SKIP = ("Opening Balance", "Room Levy")
+FNB_TYPES = ("Food & Beverage",)
 LEDGERS = (("Guest", "Guest ledger"), ("Deposit", "Advance deposits"), ("AR", "City ledger"))
 
 
@@ -44,14 +50,23 @@ def _folio(property: str, start, end) -> dict:
 		  COUNT(DISTINCT CASE WHEN fc.charge_type = 'Room' THEN
 		        CONCAT(COALESCE(fc.reservation, f.reservation), fc.posting_date) END)
 		        AS room_nights,
-		  COALESCE(SUM(CASE WHEN fc.charge_type = 'Room' THEN fc.amount END), 0) AS rooms,
+		  COALESCE(SUM(CASE WHEN fc.charge_type IN ('Room', 'Discount')
+		        THEN fc.amount END), 0) AS rooms,
 		  COALESCE(SUM(CASE WHEN fc.charge_type IN ('Meal Plan', 'Minibar')
 		        THEN fc.amount END), 0) AS meal_plan_minibar,
-		  COALESCE(SUM(CASE WHEN fc.charge_type NOT IN ('Room', 'Meal Plan', 'Minibar')
-		        AND fc.charge_type NOT IN %(skip)s THEN fc.amount END), 0) AS other
+		  COALESCE(SUM(CASE WHEN fc.charge_type IN %(fnb)s AND fc.is_alcohol = 0
+		        THEN fc.amount END), 0) AS food,
+		  COALESCE(SUM(CASE WHEN fc.charge_type IN %(fnb)s AND fc.is_alcohol = 1
+		        THEN fc.amount END), 0) AS beverage,
+		  COALESCE(SUM(CASE WHEN fc.charge_type NOT IN ('Room', 'Discount', 'Meal Plan', 'Minibar')
+		        AND fc.charge_type NOT IN %(fnb)s AND fc.charge_type NOT IN %(skip)s
+		        THEN fc.amount END), 0) AS other
 		FROM `tabFolio Charge` fc JOIN `tabFolio` f ON fc.parent = f.name
 		WHERE f.property = %(p)s AND fc.posting_date BETWEEN %(s)s AND %(e)s
-		""", {"p": property, "s": start, "e": end, "skip": FOLIO_SKIP}, as_dict=True)[0]
+		  AND IFNULL(fc.description, '') NOT LIKE '%%(ORD-%%'
+		  AND IFNULL(fc.description, '') NOT LIKE 'EVT-%%'
+		""", {"p": property, "s": start, "e": end, "skip": FOLIO_SKIP, "fnb": FNB_TYPES},
+		as_dict=True)[0]
 	return {k: flt(v) for k, v in row.items()}
 
 
@@ -109,8 +124,9 @@ def _period(property: str, label: str, start, end, total_rooms: int) -> dict:
 	f = _folio(property, start, end)
 	outlets = _outlets(property, start, end)
 	banq = _banquets(property, start, end)
-	food = sum(o["food"] for o in outlets)
-	bev = sum(o["beverage"] for o in outlets)
+	# the restaurants' bills, plus F&B posted on folios some other way
+	food = sum(o["food"] for o in outlets) + f["food"]
+	bev = sum(o["beverage"] for o in outlets) + f["beverage"]
 	nights = int(f["room_nights"])
 	available = total_rooms * (date_diff(end, start) + 1)
 	total = f["rooms"] + food + bev + banq["total"] + f["meal_plan_minibar"] + f["other"]
@@ -129,7 +145,10 @@ def _period(property: str, label: str, start, end, total_rooms: int) -> dict:
 
 
 def _balances(property: str, d) -> list[dict]:
-	from kamra.ledger import ledger_balances
+	from kamra.ledger import ledger_balances as guarded
+	from kamra.night_audit import _raw
+	# the report's own role check has run; the ledger endpoint's is narrower
+	ledger_balances = _raw(guarded)
 	before = {r["ledger"]: r for r in ledger_balances(property, str(add_days(d, -1)))["ledgers"]}
 	after = {r["ledger"]: r for r in ledger_balances(property, str(d))["ledgers"]}
 	return [{
@@ -164,6 +183,6 @@ def night_audit_report(property: str, date: str | None = None):
 	meal plans and minibar, other income, for the day, month to date and
 	year to date, plus each ledger's balance brought and carried forward."""
 	from kamra.business_date import get_business_date
-	from kamra.crs import assert_property_access
+	from kamra.authz import assert_property_access
 	assert_property_access(property)
 	return build(property, date or add_days(get_business_date(property), -1))
