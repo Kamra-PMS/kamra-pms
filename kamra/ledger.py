@@ -1147,13 +1147,17 @@ def issue_credit_note(folio: str, amount: float, reason: str,
 		# the allowance line carries the Guest-ledger credit itself
 		save_folio(doc)
 	else:
-		# Post AR credit if company linked on the reservation
-		company = None
-		if doc.get("reservation"):
+		# AR credit on the account the bill was last invoiced to (an Account
+		# folio has no stay; a transferred bill lives on the new account),
+		# else the stay's company
+		account = frappe.db.get_value(
+			"City Ledger Entry", {"folio": folio, "kind": "Invoice"}, "account",
+			order_by="creation desc")
+		if not account and doc.get("reservation"):
 			company = frappe.db.get_value(
 				"Reservation", doc.reservation, "company")
-		if company:
-			account = _ar_account(doc.property, company)
+			account = _ar_account(doc.property, company) if company else None
+		if account:
 			frappe.get_doc({
 				"doctype": "City Ledger Entry",
 				"account": account,

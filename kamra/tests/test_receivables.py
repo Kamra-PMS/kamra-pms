@@ -148,3 +148,32 @@ class ReceivablesTestCase(cc.CreditControlTestCase):
 		# the parent pays it off
 		ledger.city_ledger_settle(parent, 300)
 		self.assertAlmostEqual(_open(parent)[folio]["outstanding"], 0, 2)
+
+	# review follow-ups ---------------------------------------------------------
+
+	def test_credit_note_on_an_account_invoice_credits_the_account(self):
+		out = self.invoice({"charge_type": "Misc", "description": "Hall",
+		                    "amount": 1000})
+		ledger.issue_credit_note(out["folio"], 300, "Half day only")
+		stored = frappe.db.get_value("City Ledger Account", self.account, "balance")
+		net = frappe.db.sql("""SELECT SUM(debit - credit) FROM `tabCity Ledger Entry`
+		                       WHERE account = %s""", self.account)[0][0]
+		self.assertAlmostEqual(float(stored), float(net), 2)
+		self.assertAlmostEqual(_open(self.account)[out["folio"]]["outstanding"], 700, 2)
+
+	def test_zatca_buyer_of_an_account_invoice_is_the_company(self):
+		from kamra import zatca
+		frappe.db.set_value("Corporate Account", self.company, "gstin", "300000000000003")
+		out = self.invoice({"charge_type": "Misc", "description": "Hall",
+		                    "amount": 100})
+		kind, buyer = zatca._folio_buyer(frappe.get_doc("Folio", out["folio"]))
+		self.assertEqual((kind, buyer["vat"]), ("Standard", "300000000000003"))
+
+	def test_account_settings_only_change_through_receivables(self):
+		# restricted / limit / balance can't be flipped over /api/resource
+		for role in ("Front Desk", "Finance", "Hotel Admin", "Kamra Agent"):
+			perms = frappe.get_all("DocPerm", filters={
+				"parent": "City Ledger Account", "role": role},
+				fields=["write", "create", "delete"])
+			self.assertTrue(perms, role)
+			self.assertFalse(any(p.write or p.create or p.delete for p in perms), role)
