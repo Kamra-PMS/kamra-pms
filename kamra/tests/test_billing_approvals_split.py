@@ -181,6 +181,33 @@ class BillingApprovalsSplitTestCase(AuditTestCase):
 			frappe.flags.kamra_agent_call = None
 		self.assertEqual(bal(folio), 500)
 
+	def test_request_cannot_be_decided_or_reopened_outside_the_api(self):
+		set_setting(PROP_A, "allowance_approval", "Hotel Admin")
+		res = self.stay()
+		folio = guest_folio(res.name)
+		api.add_folio_charge(folio, "Laundry", "UT Laundry", 500, gst_rate=0)
+		frappe.set_user(DESK)
+		out = api.post_allowance(folio, 100, "UT rest bypass")
+		frappe.set_user("Administrator")
+		req = frappe.get_doc("Allowance Request", out["request"])
+		req.amount = 400  # what was asked for is fixed
+		with self.assertRaises(frappe.ValidationError):
+			req.save(ignore_permissions=True)
+		req.reload()
+		req.status = "Approved"  # /api/resource can't decide
+		with self.assertRaises(frappe.PermissionError):
+			req.save(ignore_permissions=True)
+		with self.assertRaises(frappe.ValidationError):
+			frappe.get_doc({"doctype": "Allowance Request", "property": PROP_A,
+			                "folio": folio, "amount": 10, "reason": "UT",
+			                "status": "Approved"}).insert(ignore_permissions=True)
+		api.decide_allowance(out["request"], approve=1)
+		req.reload()
+		req.status = "Pending"  # re-opened, it would post twice
+		with self.assertRaises(frappe.ValidationError):
+			req.save(ignore_permissions=True)
+		self.assertEqual(bal(folio), 400)
+
 	def test_supervisor_reason_code_asks_even_with_the_setting_off(self):
 		from kamra.ledger import ensure_default_reason_codes
 		ensure_default_reason_codes()
@@ -234,7 +261,8 @@ class BillingApprovalsSplitTestCase(AuditTestCase):
 		bill = api.open_guest_bills(res.name)["bills"][0]["folio"]
 		with self.assertRaises(frappe.ValidationError):
 			api.share_folio_charges(main, [row.name], [bill], shares=[100])
-		api.share_folio_charges(main, [row.name], [bill], shares=[30])
+		# a line listed twice is shared once
+		api.share_folio_charges(main, [row.name, row.name], [bill], shares=[30])
 		moved = frappe.get_doc("Folio", bill).charges[0].amount
 		self.assertAlmostEqual(moved, round(base * 0.3, 2), places=2)
 

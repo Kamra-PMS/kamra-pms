@@ -812,6 +812,8 @@ def share_charges(from_folio: str, charge_rows: list, to_folios: list,
 	to_folios = [f for f in to_folios if f and f != from_folio]
 	if not to_folios or len(set(to_folios)) != len(to_folios):
 		frappe.throw(frappe._("Pick the other guests' bills to share with."))
+	# a line listed twice would be cut twice: more than its share leaves
+	charge_rows = list(dict.fromkeys(charge_rows or []))
 	if not charge_rows:
 		frappe.throw(frappe._("Pick the charges to share."))
 	if shares:

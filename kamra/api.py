@@ -2482,6 +2482,7 @@ def decide_allowance(allowance_request: str, approve: int = 1,
 	req.decided_by = approver
 	req.decided_on = now_datetime()
 	req.decision_note = note
+	req.flags.kamra_decision = True
 	req.save(ignore_permissions=True)
 	return {"ok": True, "request": req.name, "status": req.status,
 	        "decided_by": approver}
