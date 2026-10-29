@@ -12,7 +12,7 @@ from decimal import ROUND_HALF_UP, Decimal
 import frappe
 from frappe.utils import nowdate
 
-from kamra.authz import require_roles
+from kamra.authz import ADMIN, require_roles
 
 
 def _housekeeping_slice(property: str):
@@ -182,3 +182,34 @@ def portfolio_dashboard(date: str | None = None):
 	}
 	rows.sort(key=lambda r: r["revenue_today"], reverse=True)
 	return {"date": date, "totals": totals, "properties": rows}
+
+
+@frappe.whitelist()
+@require_roles("Finance", "Revenue Manager", "Night Auditor", "Kamra Agent")
+def owner_snapshot(property: str, date: str | None = None, from_date: str | None = None):
+	"""The owner's phone view of one hotel: the flash for a day (or
+	from_date..date), what guests and companies still owe, and the last few
+	night audits. Read only; the same figures as the flash and the ledgers."""
+	from inspect import unwrap
+
+	from kamra.ledger import DUE_BUCKETS, city_ledger_aging
+	from kamra.night_audit import AUDIT_ROLES, night_audit_history
+	from kamra.reports import manager_flash
+
+	date = date or nowdate()
+	# this endpoint's gate stands in for the inner endpoints' own gates,
+	# which predate the owner view and leave out some of its roles
+	flash = unwrap(manager_flash)(property, date, from_date)
+	finance = _finance_slice(property, date)
+	ar = unwrap(city_ledger_aging)(property)["totals"]
+	sees_audits = (set(AUDIT_ROLES) | set(ADMIN)) & set(frappe.get_roles())
+	return {
+		**flash,
+		"property": property,
+		"property_name": frappe.db.get_value("Property", property, "property_name"),
+		"guest_balances": finance["outstanding"],
+		"open_folios": finance["open_folios"],
+		"city_ledger": round(sum(ar[k] for k in DUE_BUCKETS), 2),
+		"city_ledger_overdue": ar["overdue"],
+		"audits": unwrap(night_audit_history)(property, 5) if sees_audits else None,
+	}

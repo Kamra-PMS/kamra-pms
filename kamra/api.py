@@ -701,7 +701,7 @@ def registration_card(reservation: str):
 
 
 @frappe.whitelist()
-@require_roles("Finance", "Front Desk", "Night Auditor", "Kamra Agent")
+@require_roles("Finance", "Front Desk", "Night Auditor", "Revenue Manager", "Kamra Agent")
 def cash_summary(property: str, date: str | None = None,
                  to_date: str | None = None):
 	"""Cashier reconciliation: what the system says was collected today,
