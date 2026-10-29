@@ -212,7 +212,8 @@
 {cur}/adult/night,{cur}/adult/night,{cur}/بالغ/ليلة,{cur}/adulto/noche,screens/Setup.tsx,cur,translated
 {cur}/night,{cur}/night,{cur}/ليلة,{cur}/noche,screens/Setup.tsx,cur,translated
 {customer} on {date},{customer} on {date},{customer} في {date},"{customer}, el {date}",screens/BanquetDiary.tsx,customer date,translated
-{date}: {booked} of {total} rooms booked ({pct}%),{date}: {booked} of {total} rooms booked ({pct}%),{date}: {booked} من {total} غرف محجوزة ({pct}%),{date}: {booked} de {total} habitaciones reservadas ({pct}%),screens/Today.tsx,date booked total pct,translated
+"{date}: {booked} booked, {held} held for groups, of {total} rooms ({pct}%, {pctHolds}% with holds)","{date}: {booked} booked, {held} held for groups, of {total} rooms ({pct}%, {pctHolds}% with holds)",{date}: {booked} محجوزة، {held} محجوزة للمجموعات، من {total} غرف ({pct}%، {pctHolds}% مع الحجوزات المؤقتة),"{date}: {booked} reservadas, {held} retenidas para grupos, de {total} habitaciones ({pct}%, {pctHolds}% con retenciones)",screens/Today.tsx,date booked held total pct pctHolds,translated
+{date}: {booked} of {total} rooms booked ({pct}%),{date}: {booked} of {total} rooms booked ({pct}%),{date}: {booked} من {total} غرف محجوزة ({pct}%),{date}: {booked} de {total} habitaciones reservadas ({pct}%),,date booked total pct,translated
 {diners} guests,{diners} guests,{diners} ضيوف,Comensales: {diners},screens/Kitchen.tsx,diners,translated
 {done} of {total} done,{done} of {total} done,تم {done} من {total},{done} de {total} completados,screens/FinishSetup.tsx,done total,translated
 {f} Floor,{f} Floor,طابق {f},Piso {f},screens/Today.tsx,f,translated
@@ -1024,7 +1025,7 @@ Book a stay,Book a stay,حجز إقامة,Reservar una estancia,screens/GuestJou
 Book now,Book now,احجز الآن,Reservar ahora,screens/PublicBooking.tsx,,translated
 Book this listing,Book this listing,احجز هذا الخيار,Reservar esta opción,screens/PublicBooking.tsx,,translated
 "Book, check in and collect in one step","Book, check in and collect in one step",احجز وسجّل الوصول وحصّل الدفع بخطوة واحدة,"Reservar, registrar la entrada y cobrar en un solo paso.",components/BookingDialog.tsx,,translated
-Booked,Booked,محجوزة,Reservado,components/RoomChangeDialog.tsx; components/RoomDrawer.tsx,,translated
+Booked,Booked,محجوزة,Reservado,components/RoomChangeDialog.tsx; components/RoomDrawer.tsx; screens/Today.tsx,,translated
 Booked · {ref},Booked · {ref},محجوز · {ref},Reservado · {ref},components/BookingDialog.tsx,ref,translated
 Booked · Room {n}. Check-in not finished yet.,Booked · Room {n}. Check-in not finished yet.,تم الحجز · الغرفة {n}. لم يكتمل تسجيل الوصول بعد.,Reserva confirmada · Habitación {n}. El registro de entrada aún no ha finalizado.,components/BookingDialog.tsx,n,translated
 Booked {ref} at {property}.,Booked {ref} at {property}.,تم الحجز {ref} في {property}.,Reservado {ref} en {property}.,screens/CRS.tsx,ref property,translated
@@ -2432,6 +2433,7 @@ Held,Held,محجوز مؤقتًا,Retenido,components/RoomDrawer.tsx; components
 HELD,HELD,معلّق,EN ESPERA,screens/Kitchen.tsx,,translated
 Held (house use / VIP / maintenance),Held (house use / VIP / maintenance),محجوز (استخدام الفندق / VIP / صيانة),Bloqueada (uso interno / VIP / mantenimiento),screens/TapeChart.tsx,,translated
 Held / out of service,Held / out of service,موقوفة / خارج الخدمة,Bloqueada / fuera de servicio,components/RoomDrawer.tsx,,translated
+Held for groups,Held for groups,محجوزة للمجموعات,Retenidas para grupos,screens/Today.tsx,,translated
 Held late arrivals,Held late arrivals,وصول متأخر محجوز,Reservas mantenidas por llegada tardía,screens/AuditPack.tsx,,translated
 Held on the guest folio as a liability - not revenue.,Held on the guest folio as a liability - not revenue.,محتجز في فاتورة النزيل كالتزام - وليس إيرادًا.,"Se conserva en el folio de huésped como pasivo, no como ingreso.",components/SecurityDepositPanel.tsx,,translated
 Held out of sale (,Held out of sale (,محجوب عن البيع (,Fuera de venta (,screens/BanquetFunction.tsx,,translated

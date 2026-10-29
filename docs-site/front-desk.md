@@ -36,8 +36,12 @@ seconds.
 - **Occupancy** is rooms occupied now over the rooms you can sell (out of
   order rooms left out). Under the cards, **Occupancy on the books, next
   90 days** shows one cell a night, darker when fuller, with the 30, 60
-  and 90 day averages. Hover a cell for the rooms booked that night, or
-  open **By week** for a table. Check it before taking a large booking.
+  and 90 day averages. Rooms **held for groups** (a group block's rooms
+  not yet named into reservations) sit on top of the booked rooms in a
+  lighter shade; once the block's cutoff passes they are released and
+  drop off. Hover a cell for the rooms booked and held that night and the
+  occupancy without and with holds, or open **By week** for a table with
+  a held column. Check it before taking a large booking.
 - Revenue and the money row are for Finance, Revenue, the night auditor
   and managers. A receptionist sees **Arrivals**, **Departures**,
   **In-house**, **Occupancy**, the 90-day forecast and **Open tasks**,

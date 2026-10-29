@@ -88,8 +88,8 @@ def occupancy_now(property: str, hk: dict) -> dict:
 
 def occupancy_forecast(property: str, date: str, days: int = FORECAST_DAYS) -> list[dict]:
 	"""On the books for each night from date: live reservations covering the
-	night (the count pricing.forecast_occupancy makes) over sellable rooms.
-	Rooms only, no money."""
+	night (the count pricing.forecast_occupancy makes) over sellable rooms,
+	plus group block rooms held but not yet picked up. Rooms only, no money."""
 	sellable = _sellable(property)
 	start = getdate(date)
 	end = getdate(add_days(start, days))
@@ -101,13 +101,36 @@ def occupancy_forecast(property: str, date: str, days: int = FORECAST_DAYS) -> l
 		     AND check_in_date < %(e)s
 		     AND GREATEST(check_out_date, DATE_ADD(check_in_date, INTERVAL 1 DAY)) > %(s)s""",
 		{"p": property, "s": str(start), "e": str(end)}, as_dict=True)
+	held_by_night = _held_by_night(property, start, end)
+	pct = lambda n: round(100 * n / sellable, 1) if sellable else 0  # noqa: E731
 	out = []
 	for i in range(days):
 		d = getdate(add_days(start, i))
 		# ponytail: days x stays scan; group by date in SQL if a house books thousands ahead
 		booked = sum(1 for r in stays if getdate(r.ci) <= d < getdate(r.co))
-		out.append({"date": str(d), "booked": booked, "available": max(0, sellable - booked),
-		            "occupancy_pct": round(100 * booked / sellable, 1) if sellable else 0})
+		held = min(held_by_night.get(str(d), 0), max(0, sellable - booked))
+		out.append({"date": str(d), "booked": booked, "held": held,
+		            "available": max(0, sellable - booked - held),
+		            "occupancy_pct": pct(booked), "occupancy_with_holds_pct": pct(booked + held)})
+	return out
+
+
+def _held_by_night(property: str, start, end) -> dict[str, int]:
+	"""Group block rooms not yet picked up, per night, every room type: the
+	same holds group_blocks keeps off sale (released and past-cutoff blocks
+	no longer count)."""
+	from kamra.group_blocks import _holding_groups, _unpicked
+	out: dict[str, int] = {}
+	for gb in _holding_groups(property, start, end):
+		types = set(frappe.get_all("Group Room Block", filters={"parent": gb.name},
+		                           pluck="room_type"))
+		held = sum(_unpicked(gb.name, rt) for rt in types)
+		if not held:
+			continue
+		d, co = max(getdate(gb.check_in_date), start), min(getdate(gb.check_out_date), end)
+		while d < co:
+			out[str(d)] = out.get(str(d), 0) + held
+			d = getdate(add_days(d, 1))
 	return out
 
 

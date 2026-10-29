@@ -77,6 +77,35 @@ class DashboardRolesTestCase(AuditTestCase):
 		for row in fc:
 			self.assertFalse(money & set(row))
 
+	def _group(self, rooms: int, cutoff: str, **fields) -> str:
+		return frappe.get_doc({
+			"doctype": "Group Booking", "property": PROP_A, "group_name": "UT Wedding",
+			"check_in_date": "2031-03-13", "check_out_date": "2031-03-15",
+			"status": "Confirmed", "cutoff_date": cutoff, **fields,
+			"blocks": [{"room_type": self.rt, "rooms_blocked": rooms}],
+		}).insert(ignore_permissions=True).name
+
+	def test_forecast_shows_unpicked_group_rooms_as_held(self):
+		self.at(TODAY, "kamra.business_date", "kamra.group_blocks")
+		for no in ("103", "104", "105"):
+			make_room(PROP_A, self.rt, no)
+		gb = self._group(3, "2031-03-12")
+		make_reservation(PROP_A, self.rt, "2031-03-13", "2031-03-15", group_booking=gb)
+		frappe.set_user(DESK)  # nosemgrep: frappe-setuser -- the receptionist
+		fc = dashboards.property_dashboard(PROP_A, TODAY)["forecast"]
+		# 4 sellable; the 13th and 14th: 1 picked up (booked), 2 still held
+		self.assertEqual([(f["booked"], f["held"], f["available"]) for f in fc[:4]],
+		                 [(0, 0, 4), (1, 2, 1), (1, 2, 1), (0, 0, 4)])
+		self.assertEqual(fc[1]["occupancy_pct"], 25.0)
+		self.assertEqual(fc[1]["occupancy_with_holds_pct"], 75.0)
+
+	def test_released_group_holds_do_not_count(self):
+		self.at(TODAY, "kamra.business_date", "kamra.group_blocks")
+		self._group(1, "2031-03-11")  # cutoff passed yesterday
+		fc = dashboards.property_dashboard(PROP_A, TODAY)["forecast"]
+		self.assertEqual([f["held"] for f in fc[:4]], [0, 0, 0, 0])
+		self.assertEqual(fc[1]["occupancy_with_holds_pct"], fc[1]["occupancy_pct"])
+
 	def test_occupancy_report_has_no_money_for_the_desk(self):
 		from kamra import custom_reports
 		frappe.set_user(DESK)  # nosemgrep: frappe-setuser -- the receptionist

@@ -69,12 +69,18 @@ const hkTone: Record<RoomRow["housekeeping_status"], string> = {
 const inr0 = (n: number) =>
   Number(n).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
 
+/** Group rooms held but not picked up: a lighter step of the brand ramp. */
+const HELD_SHADE = "color-mix(in oklab, var(--color-brand-600) 35%, var(--color-brand-50))"
+
 /** One night on the books: kamra.dashboards.occupancy_forecast. */
 interface ForecastDay {
   date: string
   booked: number
+  /** group block rooms not yet picked up (released blocks left out) */
+  held: number
   available: number
   occupancy_pct: number
+  occupancy_with_holds_pct: number
 }
 
 /** The next 90 nights as a heat strip (one cell a night, darker = fuller),
@@ -85,7 +91,7 @@ function OccupancyForecast({ days }: { days: ForecastDay[] }) {
   const fmt = (d: string, o: Intl.DateTimeFormatOptions) =>
     new Date(d + "T00:00:00").toLocaleDateString(uiDateLocale(undefined), o)
   const avg = (xs: ForecastDay[]) => {
-    const rooms = xs.reduce((a, x) => a + x.booked + x.available, 0)
+    const rooms = xs.reduce((a, x) => a + x.booked + x.held + x.available, 0)
     return rooms ? Math.round((100 * xs.reduce((a, x) => a + x.booked, 0)) / rooms) : 0
   }
   const spans = [30, 60, 90].map((n) => ({ n, pct: avg(days.slice(0, n)) }))
@@ -96,6 +102,12 @@ function OccupancyForecast({ days }: { days: ForecastDay[] }) {
   // (both flip with the theme, so the fuller night always has more contrast)
   const fill = (pct: number) =>
     `color-mix(in oklab, var(--color-brand-700) ${Math.max(6, Math.min(100, pct))}%, var(--color-brand-50))`
+  // booked fills from the bottom; group holds sit on top in a lighter shade
+  const stack = (d: ForecastDay) => {
+    const b = d.occupancy_pct
+    const h = d.occupancy_with_holds_pct
+    return `linear-gradient(to top, ${fill(b)} ${b}%, ${HELD_SHADE} ${b}% ${h}%, var(--color-brand-50) ${h}%)`
+  }
   const cols = { gridTemplateColumns: `repeat(${days.length}, minmax(0, 1fr))` }
   const summary = spans.map((s) => t("{n} days {pct}%", s)).join(", ")
   return (
@@ -123,13 +135,18 @@ function OccupancyForecast({ days }: { days: ForecastDay[] }) {
           <div
             key={d.date}
             className="h-6 rounded-[2px]"
-            style={{ background: fill(d.occupancy_pct) }}
-            title={t("{date}: {booked} of {total} rooms booked ({pct}%)", {
-              date: fmt(d.date, { weekday: "short", day: "numeric", month: "short" }),
-              booked: d.booked,
-              total: d.booked + d.available,
-              pct: Math.round(d.occupancy_pct),
-            })}
+            style={{ background: stack(d) }}
+            title={t(
+              "{date}: {booked} booked, {held} held for groups, of {total} rooms ({pct}%, {pctHolds}% with holds)",
+              {
+                date: fmt(d.date, { weekday: "short", day: "numeric", month: "short" }),
+                booked: d.booked,
+                held: d.held,
+                total: d.booked + d.held + d.available,
+                pct: Math.round(d.occupancy_pct),
+                pctHolds: Math.round(d.occupancy_with_holds_pct),
+              },
+            )}
           />
         ))}
       </div>
@@ -140,6 +157,16 @@ function OccupancyForecast({ days }: { days: ForecastDay[] }) {
           </div>
         ))}
       </div>
+      <div className="mt-1 flex gap-3 text-[10px] text-zinc-500">
+        <span className="flex items-center gap-1">
+          <span aria-hidden className="size-2 rounded-[2px] bg-brand-700" />
+          {t("Booked")}
+        </span>
+        <span className="flex items-center gap-1">
+          <span aria-hidden className="size-2 rounded-[2px]" style={{ background: HELD_SHADE }} />
+          {t("Held for groups")}
+        </span>
+      </div>
       <details className="mt-1 text-[11px] text-zinc-500">
         <summary className="cursor-pointer select-none">{t("By week")}</summary>
         <table className="mt-1 w-full tabular-nums">
@@ -147,6 +174,7 @@ function OccupancyForecast({ days }: { days: ForecastDay[] }) {
             <tr className="text-zinc-400">
               <th className="py-0.5 text-start font-medium">{t("Week of")}</th>
               <th className="py-0.5 text-end font-medium">{t("Room nights booked")}</th>
+              <th className="py-0.5 text-end font-medium">{t("Held for groups")}</th>
               <th className="py-0.5 text-end font-medium">{t("Occ %")}</th>
             </tr>
           </thead>
@@ -155,6 +183,7 @@ function OccupancyForecast({ days }: { days: ForecastDay[] }) {
               <tr key={w[0].date} className="text-zinc-700">
                 <td className="py-0.5">{fmt(w[0].date, { day: "numeric", month: "short" })}</td>
                 <td className="py-0.5 text-end">{w.reduce((a, x) => a + x.booked, 0)}</td>
+                <td className="py-0.5 text-end">{w.reduce((a, x) => a + x.held, 0)}</td>
                 <td className="py-0.5 text-end">{avg(w)}%</td>
               </tr>
             ))}
