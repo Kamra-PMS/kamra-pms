@@ -47,6 +47,31 @@ departures, in-house, revenue, collected and outstanding for each hotel.
 
 ![The portfolio dashboard: properties, occupancy, arrivals, in-house, revenue and collections across three properties, and the By property table](/img/reports/portfolio.png)
 
+## Check the hotel on your phone
+
+**Reports → Owner view** (also under **Revenue** and **Finance**, or
+search for "owner") is one column made for a phone. Pick **Today**,
+**Yesterday** or **Month to date** and it shows:
+
+- **Revenue** for the period, with occupancy, rooms sold, ADR and RevPAR,
+  and the split between rooms, food and beverage, and other income;
+- **Guests**: arrivals, departures, in house and no-shows;
+- **Money**: what was collected (by payment mode), what guests still owe
+  on open bills, and what companies owe on the city ledger, with the
+  overdue part;
+- **Next 7 days**: how full each night is from bookings on hand;
+- **Night audits**: the last five, each opening its audit pack.
+
+The figures are the manager flash's, so the two always agree. If you have
+more than one property, the list at the top switches hotel, and **All
+properties, today** shows each one's occupancy, revenue, collections and
+outstanding. The owner view is for Finance, Revenue Manager, Night
+Auditor and Hotel Admin; the front desk can't open it. Revenue Managers
+see everything except the audit packs.
+
+Tip: add the page to your phone's home screen from the browser's share
+menu to open it like an app.
+
 ## Build a custom report
 
 Open **Reports → Custom reports**. You build a report from a **dataset**:

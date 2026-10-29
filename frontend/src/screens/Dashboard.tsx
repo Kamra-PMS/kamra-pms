@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react"
+import { Link } from "react-router-dom"
 import { useRealtime } from "../lib/realtime"
 import {
   BedDouble, LogIn, Users, Banknote, Wallet, Building2, Brush, Receipt,
@@ -132,6 +133,9 @@ export default function Dashboard() {
               : t("The whole portfolio at a glance.")}
           </p>
         </div>
+        <Link to="/owner" className="text-sm font-medium text-brand-700 sm:hidden">
+          {t("Owner view")}
+        </Link>
         {multi && (
           <div className="flex rounded-lg border border-zinc-200 bg-white p-0.5 text-sm">
             {(["property", "portfolio"] as const).map((s) => (

@@ -65,7 +65,8 @@ export function DataTable({
   const right = (c: Col) => (c.kind === "money" || c.kind === "num" ? "text-end tabular-nums" : "")
   return (
     <div className="overflow-x-auto print:overflow-visible">
-      <table className={cn("w-full table-fixed text-sm", dense && "text-xs")}>
+      {/* table-fixed squeezes every column to a sliver on a phone; scroll instead */}
+      <table className={cn("w-full min-w-[32rem] table-fixed text-sm print:min-w-0", dense && "text-xs")}>
         <thead>
           <tr className="border-b border-zinc-200 text-start text-[11px] font-medium uppercase tracking-wider text-zinc-500">
             {cols.map((c, i) => (

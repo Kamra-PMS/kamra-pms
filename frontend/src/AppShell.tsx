@@ -256,6 +256,12 @@ export default function AppShell() {
     setCurrentProperty(name)
     setProperty(name)
   }
+  // a screen can switch the property too (the owner view on a phone)
+  useEffect(() => {
+    const on = (e: Event) => setProperty((e as CustomEvent<string>).detail)
+    window.addEventListener("kamra:property", on)
+    return () => window.removeEventListener("kamra:property", on)
+  }, [])
 
   // which parts of the product this property runs - undefined until it
   // answers, so nothing flashes in and then disappears

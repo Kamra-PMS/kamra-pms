@@ -236,6 +236,8 @@ export const APPS: AppDef[] = [
     items: [
       { to: "/dashboard", label: "Revenue Dashboard", icon: LayoutDashboard,
         keywords: ["Dashboard", "KPIs", "ADR", "RevPAR", "Portfolio"] },
+      { to: "/owner", label: "Owner view", icon: Smartphone,
+        keywords: ["Phone", "Mobile", "Owner", "Flash", "MTD"] },
       { to: "/reports", label: "Reports", icon: ChartLine },
       { to: "/channel-manager", label: "Channel Manager", icon: Share2 },
       { to: "/ota-mappings", label: "OTA Room Mappings", icon: Network },
@@ -277,6 +279,9 @@ export const APPS: AppDef[] = [
       // Billing
       { to: "/end-of-day", label: "Night Audit", icon: MoonStar, group: "Billing",
         keywords: EOD_KEYWORDS },
+      { to: "/owner", label: "Owner view", icon: Smartphone, group: "Billing",
+        keywords: ["Phone", "Mobile", "Owner", "Flash", "MTD"],
+        roles: ["Finance", "Night Auditor", "Hotel Admin", "System Manager", "Administrator"] },
       { to: "/billing", label: "Billing", icon: Receipt, group: "Billing" },
       { to: "/folio-history", label: "Folio History", icon: History, group: "Billing" },
       // Books
