@@ -1,6 +1,6 @@
 # MCP tool reference
 
-Kamra exposes **133 governed tools** on the hosted MCP
+Kamra exposes **139 governed tools** on the hosted MCP
 endpoint (`/mcp`) and the stdio sidecar (`mcp/kamra_mcp.py`). Every
 call runs as the connected user - **role** permissions apply, tools
 are further filtered by the property's **enabled modules**, prices
@@ -540,6 +540,61 @@ due date. Buckets per account and in totals: not due, 1 to 30 days,
 Read-only  -  use it to answer who owes money and how late.
 
 Endpoint: `kamra.ledger.city_ledger_aging`.
+
+### `payables_aging()`
+
+What the hotel owes each supplier (accounts payable), aged by due
+date: not due, 1 to 30, 31 to 60, 61 to 90 and 90+ days overdue, with
+totals. Read-only.
+
+Endpoint: `kamra.payables.payables_aging`.
+
+### `vendor_bills(status, vendor)`
+
+Supplier bills at this property, most urgent first: amount, tax,
+total, paid, still owed, due date and status. `status` is "open" (the
+default: not paid or cancelled), "all", or one of Awaiting Approval,
+Approved, Part Paid, Paid, Cancelled. Read-only.
+
+Endpoint: `kamra.payables.vendor_bills`.
+
+### `create_vendor_bill(vendor, bill_date, amount, tax_rate, expense_category, bill_number, due_date, description)`
+
+Enter a supplier's bill so it can be approved and paid. `vendor` is
+the vendor's id or exact name at this property. `amount` is before
+tax; the PMS works out the tax from `tax_rate` (%) and the due date
+from the vendor's terms unless `due_date` is on the bill. Dates are
+YYYY-MM-DD. The bill waits for a Hotel Admin to approve it; agents
+cannot approve or pay.
+
+Endpoint: `kamra.payables.create_vendor_bill`.
+Mutating - logged to the activity ledger.
+
+### `cash_forecast(days, opening)`
+
+Money expected in and out over the next days (default 5), day by
+day: company bills falling due, departing guests' balances and advance
+deposits in; supplier bills out. Overdue items count today. `opening`
+is today's cash and bank; without it, cash in open tills. Read-only.
+
+Endpoint: `kamra.books.cash_forecast`.
+
+### `profit_and_loss(from_date, to_date)`
+
+Management P&L for a period (from_date, to_date as YYYY-MM-DD, a
+year at most): revenue by department before tax, less supplier bills
+by category and petty cash. Not statutory accounts. Read-only.
+
+Endpoint: `kamra.books.profit_and_loss`.
+
+### `balance_sheet(as_of)`
+
+What is owed to the hotel (guest ledger, city ledger, cash in open
+tills today) and what it owes (advance deposits, supplier bills) as of
+a date (default today). Not a full balance sheet: no bank, assets,
+loans or equity. Read-only.
+
+Endpoint: `kamra.books.balance_sheet`.
 
 ### `security_deposit_status(reservation)`
 

@@ -67,6 +67,9 @@ import {
   DoorOpen,
   Hash,
   ListOrdered,
+  HandCoins,
+  CalendarClock,
+  Scale,
 } from "lucide-react"
 
 /** "Night audit" is what most hotels call End of Day; EOD is what they type. */
@@ -281,6 +284,15 @@ export const APPS: AppDef[] = [
       { to: "/folio-history", label: "Folio History", icon: History, group: "Billing" },
       // Books
       { to: "/ledgers", label: "Ledgers", icon: BookOpen, group: "Books" },
+      { to: "/payables", label: "Payables", icon: HandCoins, group: "Books",
+        keywords: ["Accounts payable", "Vendors", "Suppliers", "Supplier bills"],
+        roles: ["Finance", "Hotel Admin", "System Manager", "Administrator"] },
+      { to: "/cash-forecast", label: "Next 5 days", icon: CalendarClock, group: "Books",
+        keywords: ["Cash flow", "Working capital", "Cash forecast"],
+        roles: ["Finance", "Hotel Admin", "System Manager", "Administrator"] },
+      { to: "/profit-and-loss", label: "Profit and loss", icon: Scale, group: "Books",
+        keywords: ["P&L", "Balance sheet", "Expenses"],
+        roles: ["Finance", "Hotel Admin", "System Manager", "Administrator"] },
       { to: "/transaction-codes", label: "Transaction Codes", icon: Hash, group: "Books",
         keywords: ["Txn codes", "Revenue group", "Chart of accounts"],
         roles: ["Finance", "Hotel Admin", "System Manager", "Administrator"] },
@@ -295,7 +307,7 @@ export const APPS: AppDef[] = [
     extraPrefixes: [
       "/billing/", "/cashier/", "/ledgers", "/folio-history",
       "/end-of-day", "/night-audit", "/reason-codes", "/transaction-codes",
-      "/voids-allowances",
+      "/voids-allowances", "/balance-sheet",
     ],
   },
   {

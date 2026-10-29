@@ -59,6 +59,9 @@ const Kitchen = lazy(() => import("./screens/Kitchen"))
 const PosDashboard = lazy(() => import("./screens/PosDashboard"))
 const Inventory = lazy(() => import("./screens/Inventory"))
 const AccountingExport = lazy(() => import("./screens/AccountingExport"))
+const Payables = lazy(() => import("./screens/Payables"))
+const CashForecast = lazy(() => import("./screens/CashForecast"))
+const ManagementBooks = lazy(() => import("./screens/ManagementBooks"))
 const VoidAllowanceReport = lazy(() => import("./screens/VoidAllowanceReport"))
 const TapeChart = lazy(() => import("./screens/TapeChart"))
 const Tickets = lazy(() => import("./screens/Tickets"))
@@ -325,6 +328,10 @@ export default function App() {
           <Route path="printers" element={<KitchenPrinters />} />
           <Route path="outlets" element={<ConfiguredScreen config="outletsConfig" />} />
           <Route path="accounting-export" element={<AccountingExport />} />
+          <Route path="payables" element={<Payables />} />
+          <Route path="cash-forecast" element={<CashForecast />} />
+          <Route path="profit-and-loss" element={<ManagementBooks view="pnl" />} />
+          <Route path="balance-sheet" element={<ManagementBooks view="balance" />} />
           <Route
             path="reason-codes"
             element={<ConfiguredScreen config="reasonCodesConfig" />}

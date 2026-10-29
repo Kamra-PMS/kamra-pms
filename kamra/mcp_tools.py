@@ -864,6 +864,87 @@ TOOLS: tuple[ToolSpec, ...] = (
 		group="Billing",
 	),
 	_t(
+		"payables_aging",
+		"payables.payables_aging",
+		"""What the hotel owes each supplier (accounts payable), aged by due
+		date: not due, 1 to 30, 31 to 60, 61 to 90 and 90+ days overdue, with
+		totals. Read-only.""",
+		{},
+		property=True,
+		group="Billing",
+	),
+	_t(
+		"vendor_bills",
+		"payables.vendor_bills",
+		"""Supplier bills at this property, most urgent first: amount, tax,
+		total, paid, still owed, due date and status. `status` is "open" (the
+		default: not paid or cancelled), "all", or one of Awaiting Approval,
+		Approved, Part Paid, Paid, Cancelled. Read-only.""",
+		{"status": _p("string"), "vendor": _p("string", description="Vendor id (see payables_aging).")},
+		property=True,
+		group="Billing",
+	),
+	_t(
+		"create_vendor_bill",
+		"payables.create_vendor_bill",
+		"""Enter a supplier's bill so it can be approved and paid. `vendor` is
+		the vendor's id or exact name at this property. `amount` is before
+		tax; the PMS works out the tax from `tax_rate` (%) and the due date
+		from the vendor's terms unless `due_date` is on the bill. Dates are
+		YYYY-MM-DD. The bill waits for a Hotel Admin to approve it; agents
+		cannot approve or pay.""",
+		{
+			"vendor": _p("string"),
+			"bill_date": _p("string"),
+			"amount": _p("number"),
+			"tax_rate": _p("number"),
+			"expense_category": _p("string", description="One of: " + ", ".join((
+				"Food & Beverage Supplies", "Linen & Laundry", "Housekeeping Supplies",
+				"Utilities", "Repairs & Maintenance", "Staff Costs", "Rent & Leases",
+				"Commissions & Marketing", "Professional Fees", "Other"))),
+			"bill_number": _p("string"),
+			"due_date": _p("string"),
+			"description": _p("string"),
+		},
+		required=("vendor", "bill_date", "amount"),
+		property=True,
+		mutating=True,
+		group="Billing",
+	),
+	_t(
+		"cash_forecast",
+		"books.cash_forecast",
+		"""Money expected in and out over the next days (default 5), day by
+		day: company bills falling due, departing guests' balances and advance
+		deposits in; supplier bills out. Overdue items count today. `opening`
+		is today's cash and bank; without it, cash in open tills. Read-only.""",
+		{"days": _p("integer"), "opening": _p("number")},
+		property=True,
+		group="Billing",
+	),
+	_t(
+		"profit_and_loss",
+		"books.profit_and_loss",
+		"""Management P&L for a period (from_date, to_date as YYYY-MM-DD, a
+		year at most): revenue by department before tax, less supplier bills
+		by category and petty cash. Not statutory accounts. Read-only.""",
+		{"from_date": _p("string"), "to_date": _p("string")},
+		required=("from_date", "to_date"),
+		property=True,
+		group="Billing",
+	),
+	_t(
+		"balance_sheet",
+		"books.balance_sheet",
+		"""What is owed to the hotel (guest ledger, city ledger, cash in open
+		tills today) and what it owes (advance deposits, supplier bills) as of
+		a date (default today). Not a full balance sheet: no bank, assets,
+		loans or equity. Read-only.""",
+		{"as_of": _p("string")},
+		property=True,
+		group="Billing",
+	),
+	_t(
 		"security_deposit_status",
 		"api.security_deposit",
 		"""The stay's refundable security (damage) deposit: the property's

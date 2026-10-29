@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function - the same governed layer
-the UI and the AI use. **421 endpoints**, generated from the source
+the UI and the AI use. **433 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -4994,6 +4994,194 @@ it goes to the company's billing contact email.
 | `lang` | no | `'en'` |
 
 
+## Accounts payable (vendors, supplier bills, approval, payments)
+
+> Finance and Hotel Admin enter vendors and bills; only Hotel Admin approves and pays.
+
+### `kamra.payables.vendors`
+
+**GET/POST** · roles: `Finance`, `Hotel Admin`, `Kamra Agent`
+
+Every vendor at the property with what the hotel still owes them,
+aged by due date - the payables list.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `include_disabled` | no | `0` |
+
+### `kamra.payables.save_vendor`
+
+**POST** · roles: `Finance`, `Hotel Admin`
+
+Add a supplier at the property, or edit one (`vendor`). Names are
+unique per property, so a bill can name its vendor by name.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `vendor_name` | yes |  |
+| `expense_category` | no | `None` |
+| `payment_terms_days` | no | `30` |
+| `tax_id` | no | `None` |
+| `contact_name` | no | `None` |
+| `phone` | no | `None` |
+| `email` | no | `None` |
+| `notes` | no | `None` |
+| `disabled` | no | `0` |
+| `vendor` | no | `None` |
+
+### `kamra.payables.create_vendor_bill`
+
+**POST** · roles: `Finance`, `Hotel Admin`, `Kamra Agent`
+
+Enter a supplier's bill. `amount` is before tax; the tax is
+amount x `tax_rate` %. The due date is the bill date plus the vendor's
+payment terms unless `due_date` is given. The bill then waits for a
+Hotel Admin to approve it.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `vendor` | yes |  |
+| `bill_date` | yes |  |
+| `amount` | yes |  |
+| `tax_rate` | no | `0` |
+| `expense_category` | no | `None` |
+| `bill_number` | no | `None` |
+| `due_date` | no | `None` |
+| `description` | no | `None` |
+
+### `kamra.payables.approve_vendor_bill`
+
+**POST** · roles: `Hotel Admin`
+
+Approve a bill so it can be paid.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `bill` | yes |  |
+
+### `kamra.payables.pay_vendor_bill`
+
+**POST** · roles: `Hotel Admin`
+
+Record a payment against an approved bill: all of it or part. It
+can't be more than the bill still owes. This records the payment; it
+does not move money in a till (cash from the till is petty cash).
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `bill` | yes |  |
+| `amount` | yes |  |
+| `mode` | no | `'Bank Transfer'` |
+| `reference` | no | `None` |
+| `payment_date` | no | `None` |
+
+### `kamra.payables.cancel_vendor_bill`
+
+**POST** · roles: `Finance`, `Hotel Admin`
+
+Cancel a bill entered by mistake. A bill with payments on it can't
+be cancelled.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `bill` | yes |  |
+| `reason` | yes |  |
+
+### `kamra.payables.vendor_bill`
+
+**GET/POST** · roles: `Finance`, `Hotel Admin`, `Kamra Agent`
+
+One bill with its payments.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `bill` | yes |  |
+
+### `kamra.payables.vendor_bills`
+
+**GET/POST** · roles: `Finance`, `Hotel Admin`, `Kamra Agent`
+
+Bills at the property, most urgent first. `status` is "open"
+(not paid or cancelled, the default), "all", or one status.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `status` | no | `'open'` |
+| `vendor` | no | `None` |
+| `limit` | no | `500` |
+
+### `kamra.payables.payables_aging`
+
+**GET/POST** · roles: `Finance`, `Hotel Admin`, `Kamra Agent`
+
+What the hotel owes each vendor, aged by due date: not_due, d1_30,
+d31_60, d61_90, d90p and their sum `overdue`, plus totals.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+
+
+## Management books (next days of cash, P&L, balance sheet)
+
+> Read-only management views. Not statutory accounts.
+
+### `kamra.books.cash_forecast`
+
+**GET/POST** · roles: `Finance`, `Hotel Admin`, `Kamra Agent`
+
+Money expected in and out over the next `days` days (default 5),
+day by day from today, with a running position.
+
+In: company (city ledger) bills falling due, what departing guests
+still owe, advance deposits due from arrivals. Out: supplier bills
+falling due. Anything already overdue is counted today. `opening` is
+the cash and bank to start from; without it, the cash in open tills.
+Read-only.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `days` | no | `5` |
+| `opening` | no | `None` |
+
+### `kamra.books.profit_and_loss`
+
+**GET/POST** · roles: `Finance`, `Hotel Admin`, `Kamra Agent`
+
+A management P&L for the period, before tax: revenue by department
+(rooms, food and beverage, banquets, other, less allowances) and
+expenses (supplier bills by category on their bill date, petty cash by
+category). Not statutory accounts: payroll, depreciation and anything
+paid outside Kamra are not in it.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `from_date` | yes |  |
+| `to_date` | yes |  |
+
+### `kamra.books.balance_sheet`
+
+**GET/POST** · roles: `Finance`, `Hotel Admin`, `Kamra Agent`
+
+What is owed to the hotel and what it owes, as of a date (default
+today): guest ledger and city ledger against advance deposits and
+supplier bills, plus cash in open tills when the date is today. Tax
+collected this month is shown for reference, not in the totals: Kamra
+does not record tax paid to the government. Not a full balance sheet:
+the bank, fixed assets, loans and equity are not in Kamra.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `as_of` | no | `None` |
+
+
 ## Night audit (End of Day checklist, audit pack)
 
 ### `kamra.night_audit.night_audit_precheck`
@@ -5827,6 +6015,12 @@ Everything the public booking page needs to render.
 
 Availability + real quoted price per room type for the stay.
 
+Each available row also carries `plans`: the stay quoted room only
+(first) and with each meal plan, so the page lists real totals per plan. A valid
+`voucher_code` discounts every quote, and each plan then keeps its
+undiscounted `list_amount` for the strike-through; an invalid one is
+ignored here (check_voucher tells the guest why).
+
 `child_ages` (e.g. [3, 8, 13]) lets each room type's age bands decide who
 is free, a child or an adult; without it `children` are all children.
 Each row says whether the room type can take the party: `available`, a
@@ -5844,6 +6038,7 @@ what it sleeps but within the extra guests it allows by arrangement.
 | `location_slug` | no | `None` |
 | `pets` | no | `0` |
 | `child_ages` | no | `None` |
+| `voucher_code` | no | `None` |
 
 ### `kamra.public_api.precheckin_info` <Badge type='tip' text='public' />
 
