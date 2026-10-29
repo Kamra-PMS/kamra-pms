@@ -9,7 +9,7 @@ import math
 
 import frappe
 from frappe import _
-from frappe.utils import add_days, cint, get_datetime, getdate, now_datetime, nowdate
+from frappe.utils import add_days, cint, flt, get_datetime, getdate, now_datetime, nowdate
 
 from kamra.authz import act_as, require_it_admin, require_roles
 from kamra.install import AGENT_EMAIL
@@ -2059,6 +2059,92 @@ def group_folios(group_booking: str):
 			"Folio", filters={"reservation": m.name},
 			fields=_FOLIO_LIST_FIELDS) if f.folio_type != "Group"]
 	return {"master": master[0] if master else None, "members": members}
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Front Desk", "Revenue Manager", "Kamra Agent")
+def set_group_master(group_booking: str, reservation: str):
+	"""Make this room the group's main room: its guest pays for the group.
+	An open group bill moves with it (re-anchored to the new main room)."""
+	gb = frappe.get_doc("Group Booking", group_booking)
+	from kamra.authz import assert_property_access
+	assert_property_access(gb.property)
+	if frappe.db.get_value("Reservation", reservation, "group_booking") != gb.name:
+		frappe.throw(_("That reservation is not part of this group."))
+	updates = {"master_reservation": reservation}
+	if not gb.get("master_pays") or gb.master_pays.startswith("Nothing"):
+		updates["master_pays"] = "Room only"
+	gb.db_set(updates)
+	bill = frappe.db.get_value(
+		"Folio", {"group_booking": gb.name, "folio_type": "Group",
+		          "status": "Open"})
+	if bill:
+		frappe.db.set_value("Folio", bill, {
+			"reservation": reservation,
+			"guest": frappe.db.get_value("Reservation", reservation, "guest")})
+	from kamra.savings import log_action
+	log_action("group_master", "Group Booking", gb.name, gb.property,
+	           rationale=f"Main room set to {reservation}")
+	return {"ok": True, "master_reservation": reservation, "master_folio": bill}
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Front Desk", "Revenue Manager", "Kamra Agent")
+def set_pays_own_charges(reservation: str, value: int = 1):
+	"""Opt a group room out of the main room's bill (or back in). Affects new
+	charges only; move lines already posted with transfer_folio_charges."""
+	res = frappe.get_doc("Reservation", reservation)
+	from kamra.authz import assert_property_access
+	assert_property_access(res.property)
+	if not res.get("group_booking"):
+		frappe.throw(_("Only a room of a group booking can pay its own charges."))
+	value = 1 if int(value or 0) else 0
+	res.db_set("pays_own_charges", value)
+	return {"ok": True, "reservation": res.name, "pays_own_charges": value}
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Finance", "Front Desk", "Kamra Agent")
+def settle_group_bill(group_booking: str, mode: str | None = None,
+                      amount: float | None = None, to_city_ledger: int = 0,
+                      reference: str | None = None, pin: str | None = None,
+                      credit_override_reason: str | None = None):
+	"""Settle the group's master bill: take a payment on it (`mode`, and
+	`amount`, default the whole balance) or, for a group whose company has
+	credit, move the balance to the city ledger. The bill closes (and is
+	invoiced) once nothing is left on it. Allowed while rooms are still in
+	house: the reply warns, and their later charges open a new group bill."""
+	gb = frappe.get_doc("Group Booking", group_booking)
+	from kamra.authz import assert_property_access
+	assert_property_access(gb.property)
+	folio = frappe.db.get_value(
+		"Folio", {"group_booking": gb.name, "folio_type": "Group",
+		          "status": "Open"})
+	if not folio:
+		frappe.throw(_("This group has no open group bill."))
+	balance = round(flt(frappe.db.get_value("Folio", folio, "balance")), 2)
+	if int(to_city_ledger or 0):
+		if not gb.company:
+			frappe.throw(_("Only a company group can go to the city ledger."))
+		from kamra.ledger import city_ledger_transfer
+		city_ledger_transfer(folio, gb.company, pin=pin,
+		                     credit_override_reason=credit_override_reason)
+	elif balance > 0:
+		if not mode:
+			frappe.throw(_("Choose how the group bill is paid."))
+		add_folio_payment(folio, mode, flt(amount) or balance,
+		                  reference=reference, pin=pin)
+	balance = round(flt(frappe.db.get_value("Folio", folio, "balance")), 2)
+	out = {"folio": folio, "balance": balance, "closed": False}
+	if abs(balance) <= 0.009:
+		out["invoice_number"] = close_folio(folio, pin=pin)["invoice_number"]
+		out["closed"] = True
+	in_house = frappe.db.count("Reservation", {"group_booking": gb.name,
+	                                           "status": "Checked In"})
+	if in_house and out["closed"]:
+		out["warning"] = _("{0} room(s) of the group are still in house. "
+		                   "Their new charges open a new group bill.").format(in_house)
+	return out
 
 
 @frappe.whitelist()
@@ -5605,9 +5691,19 @@ def create_group_booking(property: str, group_name: str, check_in_date: str,
                          booked_via: str | None = None,
                          ota_ref: str | None = None,
                          ota_total: float = 0,
-                         ota_commission_pct: float | None = None):
+                         ota_commission_pct: float | None = None,
+                         group_type: str | None = None,
+                         master_index: int | None = None,
+                         master_pays: str | None = None):
 	"""Create a Group Booking plus one reservation per requested room.
-	`rooms` = [{"room_type": <name>, "count": 2}, ...] (JSON string ok).
+	`rooms` = [{"room_type": <name>, "count": 2, "room": <optional>,
+	"guest_name": <optional>}, ...] (JSON string ok).
+
+	`master_index` picks the main room (the index of the room as expanded
+	by count, default the first): its guest pays what `master_pays` covers
+	(a key of folio.COMPANY_BILLING_DEFAULTS, default "Room only") for every
+	room on one group bill. If that room could not be booked, the next one
+	made is the main room. Pass neither to keep a plain group.
 
 	Booked via an OTA (see create_booking): every room carries the site and
 	the one OTA reference, and the sold total (`ota_total`, tax included) is
@@ -5616,6 +5712,11 @@ def create_group_booking(property: str, group_name: str, check_in_date: str,
 	if isinstance(rooms, str):
 		rooms = json.loads(rooms)
 	lines = [spec for spec in rooms for _n in range(int(spec.get("count", 1)))]
+	from kamra.folio import COMPANY_BILLING_DEFAULTS
+	with_master = master_index is not None or bool(master_pays)
+	if master_pays and master_pays not in COMPANY_BILLING_DEFAULTS:
+		frappe.throw(_("master_pays must be one of: {0}").format(
+			", ".join(COMPANY_BILLING_DEFAULTS)))
 
 	ota_ref = (ota_ref or "").strip() or None
 	_refuse_taken_ota_ref(property, ota_ref)  # before the group is made
@@ -5639,13 +5740,15 @@ def create_group_booking(property: str, group_name: str, check_in_date: str,
 		"property": property,
 		"group_name": group_name,
 		"company": company or None,
+		"group_type": group_type or None,
 		"check_in_date": check_in_date,
 		"check_out_date": check_out_date,
 		"status": "Confirmed",
 	}).insert(ignore_permissions=False)
 
 	created, skipped = [], []
-	for spec, share in zip(lines, shares, strict=True):
+	main = None
+	for i, (spec, share) in enumerate(zip(lines, shares, strict=True)):
 		try:
 			res = create_booking(
 				property=property,
@@ -5668,10 +5771,16 @@ def create_group_booking(property: str, group_name: str, check_in_date: str,
 				ota_commission_pct=ota_commission_pct,
 			)
 			created.append(res["reservation"])
+			if main is None and i >= int(master_index or 0):
+				main = res["reservation"]
 		except Exception as e:
 			skipped.append({"room_type": spec["room_type"], "reason": str(e)})
 
-	return {"group_booking": group.name, "created": created, "skipped": skipped}
+	if with_master and created:
+		group.db_set({"master_reservation": main or created[0],
+		              "master_pays": master_pays or "Room only"})
+	return {"group_booking": group.name, "created": created, "skipped": skipped,
+	        "master_reservation": group.get("master_reservation")}
 
 
 def _block_hold(property: str, room_type: str, check_in_date: str,
@@ -5964,20 +6073,33 @@ def group_detail(group_booking: str):
 		"Reservation",
 		filters={"group_booking": gb.name},
 		fields=["name", "guest_name", "room_type", "room", "status",
-		        "check_in_date", "check_out_date"],
+		        "check_in_date", "check_out_date", "pays_own_charges"],
 		order_by="creation asc")
+	numbers = dict(frappe.get_all(
+		"Room", filters={"name": ("in", [r.room for r in rooming if r.room])},
+		fields=["name", "room_number"], as_list=True)) if rooming else {}
+	for r in rooming:
+		r["room_number"] = numbers.get(r.room)
+		r["is_master"] = r.name == gb.get("master_reservation")
 	event = None
 	if gb.get("event"):
 		event = frappe.db.get_value(
 			"Venue Booking", gb.event,
 			["name", "venue", "event_type", "event_date", "status",
 			 "attendees", "quoted_amount"], as_dict=True)
-	master = frappe.db.get_value(
-		"Folio", {"group_booking": gb.name, "folio_type": "Group"}, "name")
+	bill = frappe.get_all(
+		"Folio", filters={"group_booking": gb.name, "folio_type": "Group"},
+		fields=["name", "status", "balance"], order_by="creation desc", limit=1)
+	bill = bill[0] if bill else None
+	master = bill.name if bill else None
 	return {
 		"group": {
 			"name": gb.name, "group_name": gb.group_name,
 			"company": gb.company, "status": gb.status,
+			"group_type": gb.get("group_type"),
+			"master_reservation": gb.get("master_reservation"),
+			"master_pays": gb.get("master_pays"),
+			"in_house": sum(1 for r in rooming if r.status == "Checked In"),
 			"check_in_date": str(gb.check_in_date),
 			"check_out_date": str(gb.check_out_date),
 			"cutoff_date": str(gb.cutoff_date) if gb.cutoff_date else None,
@@ -5991,6 +6113,8 @@ def group_detail(group_booking: str):
 		"rooming_list": rooming,
 		"event": event,
 		"master_folio": master,
+		"master_folio_status": bill.status if bill else None,
+		"master_folio_balance": round(flt(bill.balance), 2) if bill else 0,
 	}
 
 

@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function - the same governed layer
-the UI and the AI use. **418 endpoints**, generated from the source
+the UI and the AI use. **421 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -753,6 +753,50 @@ member reservation's folios, with balances.
 | Param | Required | Default |
 | --- | --- | --- |
 | `group_booking` | yes |  |
+
+### `kamra.api.set_group_master`
+
+**POST** · roles: `Front Desk`, `Revenue Manager`, `Kamra Agent`
+
+Make this room the group's main room: its guest pays for the group.
+An open group bill moves with it (re-anchored to the new main room).
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `group_booking` | yes |  |
+| `reservation` | yes |  |
+
+### `kamra.api.set_pays_own_charges`
+
+**POST** · roles: `Front Desk`, `Revenue Manager`, `Kamra Agent`
+
+Opt a group room out of the main room's bill (or back in). Affects new
+charges only; move lines already posted with transfer_folio_charges.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `reservation` | yes |  |
+| `value` | no | `1` |
+
+### `kamra.api.settle_group_bill`
+
+**POST** · roles: `Finance`, `Front Desk`, `Kamra Agent`
+
+Settle the group's master bill: take a payment on it (`mode`, and
+`amount`, default the whole balance) or, for a group whose company has
+credit, move the balance to the city ledger. The bill closes (and is
+invoiced) once nothing is left on it. Allowed while rooms are still in
+house: the reply warns, and their later charges open a new group bill.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `group_booking` | yes |  |
+| `mode` | no | `None` |
+| `amount` | no | `None` |
+| `to_city_ledger` | no | `0` |
+| `reference` | no | `None` |
+| `pin` | no | `None` |
+| `credit_override_reason` | no | `None` |
 
 ### `kamra.api.close_folio`
 
@@ -1686,7 +1730,14 @@ can proactively reach the guest the moment a room opens.
 **GET/POST** · roles: `Front Desk`, `Kamra Agent`
 
 Create a Group Booking plus one reservation per requested room.
-`rooms` = [{"room_type": &lt;name>, "count": 2}, ...] (JSON string ok).
+`rooms` = [{"room_type": &lt;name>, "count": 2, "room": &lt;optional>,
+"guest_name": &lt;optional>}, ...] (JSON string ok).
+
+`master_index` picks the main room (the index of the room as expanded
+by count, default the first): its guest pays what `master_pays` covers
+(a key of folio.COMPANY_BILLING_DEFAULTS, default "Room only") for every
+room on one group bill. If that room could not be booked, the next one
+made is the main room. Pass neither to keep a plain group.
 
 Booked via an OTA (see create_booking): every room carries the site and
 the one OTA reference, and the sold total (`ota_total`, tax included) is
@@ -1709,6 +1760,9 @@ room locked to its share.
 | `ota_ref` | no | `None` |
 | `ota_total` | no | `0` |
 | `ota_commission_pct` | no | `None` |
+| `group_type` | no | `None` |
+| `master_index` | no | `None` |
+| `master_pays` | no | `None` |
 
 ### `kamra.api.inventory_availability`
 

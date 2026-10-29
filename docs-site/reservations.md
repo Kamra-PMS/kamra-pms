@@ -307,6 +307,38 @@ cutoff, rooms not picked up go back on sale. **Open group folio** opens the
 group's master bill. For events tied to the group, see
 [Banquets](/banquets).
 
+## Group bookings (corporate, wedding)
+
+When one person or company pays for several rooms, book them as one group
+with a **main room**. The main room's guest pays for the group; everyone
+else pays only their own extras.
+
+1. In **Banquets & Groups → Groups & Blocks**, click **New group booking**
+   (or, in **New booking**, click **Group booking with a main room**).
+2. **Group:** the group name, its type (Corporate, Wedding, Event, Tour,
+   Other), the dates and who pays: **The main room's guest** or **A
+   company**. Fill in the main guest's name and phone.
+3. **Rooms:** one row per room type with the number of rooms. For a single
+   room you can pick the exact room, and you can name the guest. Rooms
+   without a name are booked as "Guest of (group)"; name them at check-in.
+4. **Main room and billing:** pick the row whose room is the main room and
+   what it pays. The default is **Room + tax**. Click **Create group
+   booking**.
+
+Rooms that can't be booked are listed with the reason; the rest are booked.
+
+**Check rooms in one at a time.** Open the group: each row of the
+**Rooming list** has **Check in** (the usual guided check-in, with ID and
+documents) and **Check out**. Guests can arrive on different days.
+
+**Change the main room** with **Make main room** on any row. The open group
+bill moves to that room.
+
+**The main guest can leave first.** Checking out the main room does not
+close the group bill: it stays open, and room charges of the rooms still in
+house keep landing on it. Settle it when the group is done (see
+[Billing](/billing#bill-a-group-from-its-main-room)).
+
 ## Take a room out of sale
 
 To keep a room free for house use, a VIP, the owner or maintenance:

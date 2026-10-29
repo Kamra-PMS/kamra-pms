@@ -35,9 +35,10 @@ POS_PAY_MODES = ("Cash", "Card", "UPI")  # what pos.pay_order accepts
 
 def settlement_position(reservation: str) -> dict:
 	"""Every folio of the stay, sorted into the guest's side and the
-	company's. Only the stay's Company folio, or the group master when the
-	group's company has credit, goes to the city ledger; anything else with
-	money on it is the guest's to settle. Closed folios count too: a bill
+	company's. The group master of a group with a main room is left out:
+	it is settled with the group. Only the stay's Company folio, or the
+	group master when the group's company has credit, goes to the city
+	ledger; anything else with money on it is the guest's to settle. Closed folios count too: a bill
 	closed with money on it is still owed.
 
 	owed            what the guest still has to pay
@@ -55,6 +56,11 @@ def settlement_position(reservation: str) -> dict:
 			        "reservation", "status", "invoice_number",
 			        "grand_total", "payments_total"],
 			order_by="creation asc"):
+		if f.folio_type == "Group" and f.group_booking and frappe.db.get_value(
+				"Group Booking", f.group_booking, "master_reservation"):
+			# a main room's group bill stays open past its own departure and
+			# is settled with the group (settle_group_bill), not this stay
+			continue
 		balance = round(flt(f.balance), 2)
 		payer = company_payer_of(f) if balance > EPS else None
 		if payer:

@@ -945,7 +945,9 @@ export default function CheckOutDialog(props: {
                             name: f.city_ledger_company_name || f.city_ledger_company || t("Company"),
                           })
                         : f.side === "group"
-                          ? t("Group bill")
+                          ? f.status === "Open"
+                            ? t("Group bill stays open until the group is settled")
+                            : t("Group bill")
                           : t("Billed to guest")}
                       {" · "}{t("Balance")} {fmt(f.balance)}
                     </span>

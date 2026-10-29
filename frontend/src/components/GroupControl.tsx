@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react"
 import { Link } from "react-router-dom"
-import { Plus, Trash2 } from "lucide-react"
+import { Plus, Star, Trash2 } from "lucide-react"
 
 import { call } from "../lib/api"
 import { useRealtime } from "../lib/realtime"
@@ -8,8 +8,11 @@ import { listResource, serverError, type Row } from "../lib/resource"
 import LinkedRecords from "./LinkedRecords"
 import { Badge } from "./ui/badge"
 import { Button } from "./ui/button"
-import { cur, moneyLocale } from "../lib/money"
+import { cur, moneyLocale, useLocale } from "../lib/money"
 import { t as translate, useUILanguage } from "../lib/i18n"
+import { useCashierAuth } from "../lib/cashierAuth"
+import CheckInDialog from "./CheckInDialog"
+import CheckOutDialog from "./CheckOutDialog"
 
 /** Group Rooms Control - the MICE cockpit for one piece of business:
  *  the room block (with pickup progress), the rooming list, the tied
@@ -32,6 +35,10 @@ interface Detail {
     check_out_date: string
     cutoff_date: string | null
     notes: string | null
+    group_type: string | null
+    master_reservation: string | null
+    master_pays: string | null
+    in_house: number
   }
   pickup: PickupRow[]
   rooming_list: {
@@ -39,8 +46,11 @@ interface Detail {
     guest_name: string
     room_type: string
     room: string | null
+    room_number: string | null
     status: string
     check_in_date: string
+    pays_own_charges: 0 | 1
+    is_master: boolean
   }[]
   event: {
     name: string
@@ -52,6 +62,8 @@ interface Detail {
     quoted_amount: number
   } | null
   master_folio: string | null
+  master_folio_status: string | null
+  master_folio_balance: number
 }
 
 interface BlockDraft {
@@ -86,6 +98,12 @@ export default function GroupControl({
   const [blocks, setBlocks] = useState<BlockDraft[]>([])
   const [cutoff, setCutoff] = useState("")
   const [pick, setPick] = useState({ room_type: "", guest_name: "", phone: "" })
+  const [settle, setSettle] = useState<{ mode: string; amount: string; cityLedger: boolean } | null>(null)
+  const [notice, setNotice] = useState<string | null>(null)
+  const [checkingIn, setCheckingIn] = useState<string | null>(null)
+  const [checkingOut, setCheckingOut] = useState<string | null>(null)
+  const loc = useLocale()
+  const { ensureUnlocked, status: pinStatus } = useCashierAuth()
 
   const load = useCallback(() => {
     call<Detail>("kamra.api.group_detail", { group_booking: name })
@@ -112,10 +130,12 @@ export default function GroupControl({
       .catch(() => {})
   }, [])
 
-  async function act(fn: () => Promise<unknown>) {
+  async function act(fn: () => Promise<unknown>, money = false) {
     setBusy(true)
     setError(null)
+    setNotice(null)
     try {
+      if (money && pinStatus?.required) await ensureUnlocked()
       await fn()
       load()
       reload()
@@ -165,10 +185,25 @@ export default function GroupControl({
           <Button disabled={busy} onClick={() => saveBlocks("Confirmed")}>{translate("Confirm block")}</Button>
         )}
         {d.master_folio ? (
-          <Link
-            to={`/billing/${encodeURIComponent(d.master_folio)}`}
-            className="text-sm font-medium text-brand-700 hover:underline"
-          >{translate("Group folio →")}</Link>
+          <>
+            <Link
+              to={`/billing/${encodeURIComponent(d.master_folio)}`}
+              className="text-sm font-medium text-brand-700 hover:underline"
+            >{translate("Open group bill ({v0}) →", { v0: inr(d.master_folio_balance) })}</Link>
+            {d.master_folio_status === "Open" && !settle && (
+              <Button
+                variant="outline"
+                disabled={busy}
+                onClick={() =>
+                  setSettle({
+                    mode: loc.payment_modes[0] ?? "Cash",
+                    amount: String(d.master_folio_balance || ""),
+                    cityLedger: false,
+                  })
+                }
+              >{translate("Settle group bill")}</Button>
+            )}
+          </>
         ) : (
           <Button
             variant="outline"
@@ -181,6 +216,84 @@ export default function GroupControl({
           >{translate("Open group folio")}</Button>
         )}
       </div>
+
+      {g.master_reservation && (
+        <div className="flex flex-wrap items-center gap-2 text-sm text-zinc-600">
+          <Badge tone="green"><Star className="mr-1 inline size-3" aria-hidden />{translate("Main room")}</Badge>
+          {(() => {
+            const m = d.rooming_list.find((r) => r.is_master)
+            return m ? `${m.guest_name}${m.room_number ? ` · ${m.room_number}` : ""}` : g.master_reservation
+          })()}
+          {g.master_pays && <span className="text-zinc-400">· {translate("pays: {v0}", { v0: translate(g.master_pays) })}</span>}
+        </div>
+      )}
+
+      {settle && (
+        <div className="space-y-2 rounded-lg border border-zinc-200 p-3">
+          <div className="text-sm font-medium">{translate("Settle group bill")}</div>
+          {g.in_house > 0 && (
+            <p className="text-xs text-amber-700">
+              {translate("{v0} room(s) are still in house. Their new charges open a new group bill.", { v0: String(g.in_house) })}
+            </p>
+          )}
+          {g.company && (
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={settle.cityLedger}
+                onChange={(e) => setSettle({ ...settle, cityLedger: e.target.checked })}
+              />
+              {translate("Send to the company's city ledger")}
+            </label>
+          )}
+          <div className="flex flex-wrap items-center gap-2">
+            {!settle.cityLedger && (
+              <>
+                <select
+                  className="rounded-lg border border-zinc-300 px-2 py-1.5 text-sm"
+                  value={settle.mode}
+                  onChange={(e) => setSettle({ ...settle, mode: e.target.value })}
+                >
+                  {loc.payment_modes.map((m) => (
+                    <option key={m} value={m}>{translate(m)}</option>
+                  ))}
+                </select>
+                <input
+                  type="number"
+                  className="w-32 rounded-lg border border-zinc-300 px-2 py-1.5 text-sm"
+                  value={settle.amount}
+                  onChange={(e) => setSettle({ ...settle, amount: e.target.value })}
+                />
+              </>
+            )}
+            <Button
+              disabled={busy}
+              onClick={() =>
+                act(async () => {
+                  const out = await call<{ closed: boolean; invoice_number?: string; warning?: string }>(
+                    "kamra.api.settle_group_bill",
+                    {
+                      group_booking: name,
+                      mode: settle.cityLedger ? null : settle.mode,
+                      amount: settle.cityLedger ? null : Number(settle.amount) || null,
+                      to_city_ledger: settle.cityLedger ? 1 : 0,
+                    },
+                  )
+                  setSettle(null)
+                  setNotice(
+                    [out.closed ? translate("Group bill closed, invoice {v0}.", { v0: out.invoice_number ?? "" }) : "",
+                     out.warning ?? ""].filter(Boolean).join(" ") || null,
+                  )
+                }, true)
+              }
+            >{translate("Settle")}</Button>
+            <Button variant="outline" onClick={() => setSettle(null)}>{translate("Cancel")}</Button>
+          </div>
+        </div>
+      )}
+      {notice && (
+        <div className="rounded-lg border border-brand-200 bg-brand-50 px-3 py-2 text-sm text-brand-800">{notice}</div>
+      )}
 
       <LinkedRecords doctype="Group Booking" name={name} exclude={["group"]} />
 
@@ -367,10 +480,15 @@ export default function GroupControl({
             <tbody className="divide-y divide-zinc-100">
               {d.rooming_list.map((r) => (
                 <tr key={r.name}>
-                  <td className="py-1.5 pr-3 font-medium">{r.guest_name}</td>
+                  <td className="py-1.5 pr-3 font-medium">
+                    {r.guest_name}
+                    {r.is_master && (
+                      <Star className="ml-1 inline size-3.5 text-amber-500" aria-label={translate("Main room")} />
+                    )}
+                  </td>
                   <td className="py-1.5 pr-3 text-zinc-500">
                     {short(r.room_type)}
-                    {r.room ? translate(" · Room {v0}", { v0: String(short(r.room)) }) : ""}
+                    {r.room ? translate(" · Room {v0}", { v0: String(r.room_number ?? short(r.room)) }) : ""}
                   </td>
                   <td className="py-1.5 pr-3">
                     <Badge
@@ -385,8 +503,45 @@ export default function GroupControl({
                       {translate(r.status)}
                     </Badge>
                   </td>
-                  <td className="py-1.5 text-right text-xs text-zinc-400">
+                  <td className="py-1.5 pr-3 text-xs text-zinc-400">
                     {r.name}
+                  </td>
+                  <td className="py-1.5 text-right">
+                    <div className="flex flex-wrap items-center justify-end gap-2 text-xs">
+                      {r.status === "Confirmed" && (
+                        <Button variant="outline" onClick={() => setCheckingIn(r.name)}>{translate("Check in")}</Button>
+                      )}
+                      {r.status === "Checked In" && (
+                        <Button variant="outline" onClick={() => setCheckingOut(r.name)}>{translate("Check out")}</Button>
+                      )}
+                      {!r.is_master && ["Confirmed", "Checked In"].includes(r.status) && (
+                        <button
+                          className="font-medium text-brand-700 hover:underline disabled:opacity-50"
+                          disabled={busy}
+                          onClick={() =>
+                            act(() => call("kamra.api.set_group_master", { group_booking: name, reservation: r.name }))
+                          }
+                        >{translate("Make main room")}</button>
+                      )}
+                      {g.master_reservation && !r.is_master && (
+                        <label className="flex items-center gap-1 text-zinc-500" title={translate("New charges of this room stay on its own bill")}>
+                          <input
+                            type="checkbox"
+                            checked={!!r.pays_own_charges}
+                            disabled={busy}
+                            onChange={(e) =>
+                              act(() =>
+                                call("kamra.api.set_pays_own_charges", {
+                                  reservation: r.name,
+                                  value: e.target.checked ? 1 : 0,
+                                }),
+                              )
+                            }
+                          />
+                          {translate("Pays own charges")}
+                        </label>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -394,6 +549,28 @@ export default function GroupControl({
           </table>
         )}
       </div>
+
+      {checkingIn && (
+        <CheckInDialog
+          reservation={checkingIn}
+          onClose={() => setCheckingIn(null)}
+          onDone={() => {
+            setCheckingIn(null)
+            load()
+          }}
+        />
+      )}
+      {checkingOut && (
+        <CheckOutDialog
+          reservation={checkingOut}
+          onClose={() => setCheckingOut(null)}
+          onDone={() => {
+            setCheckingOut(null)
+            load()
+          }}
+          onOpenReservation={(res) => setCheckingOut(res)}
+        />
+      )}
     </div>
   )
 }
