@@ -10,6 +10,7 @@ import {
 } from "lucide-react"
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom"
 import UpdateNag from "./components/UpdateNag"
+import ErrorBoundary from "./components/ErrorBoundary"
 import SetupNag from "./components/SetupNag"
 import { Button } from "./components/ui/button"
 import {
@@ -538,6 +539,7 @@ export default function AppShell() {
               : "w-full max-w-none px-4 py-6 lg:px-6"
           }
         >
+          <ErrorBoundary>
           <Outlet
             context={
               {
@@ -550,6 +552,7 @@ export default function AppShell() {
               } satisfies ShellContext
             }
           />
+          </ErrorBoundary>
         </main>
       </div>
 

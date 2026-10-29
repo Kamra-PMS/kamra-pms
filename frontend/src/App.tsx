@@ -1,4 +1,4 @@
-import { Component, lazy, Suspense, type ReactNode } from "react"
+import { lazy, Suspense } from "react"
 import {
   Navigate,
   Outlet,
@@ -81,38 +81,8 @@ const Ledgers = lazy(() => import("./screens/Ledgers"))
 const FolioHistory = lazy(() => import("./screens/FolioHistory"))
 const CurrencyDesk = lazy(() => import("./screens/CurrencyDesk"))
 import ConnectionBanner from "./components/ConnectionBanner"
+import ErrorBoundary from "./components/ErrorBoundary"
 
-
-class ErrorBoundary extends Component<
-  { children: ReactNode },
-  { error: Error | null }
-> {
-  state = { error: null as Error | null }
-
-  static getDerivedStateFromError(error: Error) {
-    return { error }
-  }
-
-  render() {
-    if (this.state.error) {
-      return (
-        <div className="mx-auto max-w-lg p-8">
-          <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
-            <p className="font-semibold">{translate("Something broke in the UI.")}</p>
-            <p className="mt-1 font-mono text-xs">
-              {this.state.error.message}
-            </p>
-            <button
-              className="mt-3 rounded-lg bg-rose-600 px-3 py-1.5 text-white"
-              onClick={() => location.reload()}
-            >{translate("Reload")}</button>
-          </div>
-        </div>
-      )
-    }
-    return this.props.children
-  }
-}
 
 function Splash() {
   const { t } = useT()
