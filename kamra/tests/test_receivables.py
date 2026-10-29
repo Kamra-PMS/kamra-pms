@@ -168,13 +168,19 @@ class ReceivablesTestCase(cc.CreditControlTestCase):
 		ledger.city_ledger_settle(self.account, 500)
 		month = str(getdate(frappe.db.get_value(
 			"City Ledger Entry", {"folio": out["folio"], "kind": "Invoice"},
-			"posting_date")))[:7]
+			"creation")))[:7]
 		mb = statements.monthly_bill(self.account, month)
 		line = next(b for b in mb["bills"] if b["invoice"] == out["invoice_number"])
 		self.assertEqual((line["taxable"], line["tax"], line["amount"]), (1000, 180, 1180))
 		self.assertAlmostEqual(mb["paid"], 500, 2)
 		self.assertAlmostEqual(mb["closing"], mb["opening"] + mb["billed"] - 500, 2)
 		self.assertTrue(mb["number"].startswith("SOA-") and mb["number"].endswith(month.replace("-", "")))
+		# the cancelled number leaves the account; the re-close gives a new one
+		from kamra import folio as folio_mod
+		folio_mod.cancel_invoice(out["folio"], "UT wrong GSTIN")
+		self.assertIsNone(frappe.db.get_value("City Ledger Entry",
+		                                      {"folio": out["folio"], "kind": "Invoice"},
+		                                      "invoice_number"))
 		html = statements.monthly_bill_html(mb)
 		self.assertIn(out["invoice_number"], html)
 		self.assertIn("not a tax invoice", html)

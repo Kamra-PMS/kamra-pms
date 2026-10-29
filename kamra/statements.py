@@ -191,18 +191,28 @@ def monthly_bill(account: str, month: str) -> dict:
 	if not acc:
 		frappe.throw(_("No such account."))
 
+	# a month holds what reached the account in it (by when the entry was
+	# made): a bill moved in later with its old invoice date lands in the
+	# month it moved, so a bill already sent never changes
 	rows = frappe.db.sql(
 		"""SELECT c.posting_date, c.kind, c.folio, c.invoice_number, c.debit, c.credit,
-		          c.reference, f.guest_name, f.charges_total, f.tax_total
+		          c.reference, f.guest_name, f.charges_total, f.tax_total, f.grand_total
 		   FROM `tabCity Ledger Entry` c LEFT JOIN `tabFolio` f ON f.name = c.folio
-		   WHERE c.account = %s AND c.posting_date BETWEEN %s AND %s
-		   ORDER BY c.posting_date, c.creation""", (account, start, end), as_dict=True)
+		   WHERE c.account = %s AND DATE(c.creation) BETWEEN %s AND %s
+		   ORDER BY c.creation""", (account, start, end), as_dict=True)
+
+	def whole(r) -> bool:
+		# the invoice's taxable value and tax describe this line only when
+		# the whole invoice came to the account (no guest part-payment, no
+		# partial transfer)
+		return r.kind == "Invoice" and abs(flt(r.debit) - flt(r.grand_total)) < 0.01
+
 	bills = [{
 		"date": str(r.posting_date), "kind": r.kind,
 		"invoice": r.invoice_number or r.folio or r.reference or "",
 		"guest": r.guest_name or "",
-		"taxable": flt(r.charges_total) if r.kind == "Invoice" else None,
-		"tax": flt(r.tax_total) if r.kind == "Invoice" else None,
+		"taxable": flt(r.charges_total) if whole(r) else None,
+		"tax": flt(r.tax_total) if whole(r) else None,
 		"amount": flt(r.debit) - flt(r.credit),
 	} for r in rows if r.kind != "Payment"]
 	payments = [{"date": str(r.posting_date), "reference": r.reference or "",
@@ -210,7 +220,7 @@ def monthly_bill(account: str, month: str) -> dict:
 	            for r in rows if r.kind == "Payment"]
 	opening = flt(frappe.db.sql(
 		"""SELECT COALESCE(SUM(debit - credit), 0) FROM `tabCity Ledger Entry`
-		   WHERE account = %s AND posting_date < %s""", (account, start))[0][0])
+		   WHERE account = %s AND DATE(creation) < %s""", (account, start))[0][0])
 	billed = sum(b["amount"] for b in bills)
 	paid = sum(p["amount"] for p in payments)
 	prop = acc.property
@@ -220,7 +230,9 @@ def monthly_bill(account: str, month: str) -> dict:
 		"contact_email": frappe.db.get_value("Corporate Account", acc.company, "contact_email"),
 		"billing_address": acc.billing_address or "",
 		# one number per account and month, so a reprint keeps it
-		"number": f"SOA-{acc.account_number or account}-{start.strftime('%Y%m')}",
+		"number": "SOA-{0}-{1}-{2}".format(
+			"".join(w[0] for w in prop.split())[:3].upper(),
+			acc.account_number or account, start.strftime("%Y%m")),
 		"month": start.strftime("%Y-%m"), "from_date": str(start), "to_date": str(end),
 		"credit_days": acc.credit_days, "currency_symbol": _symbol(prop),
 		"opening": opening, "billed": billed, "paid": paid,
@@ -263,7 +275,8 @@ def monthly_bill_html(mb: dict, lang: str = "en") -> str:
 	if payments["rows"]:
 		body += f"<h2>{esc(_tr('Payments this month', lang))}</h2>" + _table_html(payments, lang)
 	body += ("<p>" + esc(_tr("Each bill above is a tax invoice of its own; this is a "
-	                         "summary of the month, not a tax invoice.", lang)) + "</p>")
+	                         "summary of the month, not a tax invoice. Taxable value and "
+	                         "tax show where the whole invoice is on this account.", lang)) + "</p>")
 	meta = " · ".join([
 		mb["number"], mb["company"], mb["property_name"],
 		_tr("{0} to {1}", lang).format(mb["from_date"], mb["to_date"]),

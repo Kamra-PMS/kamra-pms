@@ -997,6 +997,11 @@ def cancel_invoice(folio_name: str, reason: str) -> dict:
 		"reason": reason.strip(),
 	}).insert(ignore_permissions=True)
 	old = folio.invoice_number
+	# the company's account stops quoting the cancelled number; the bill
+	# takes its new one when the folio closes again
+	frappe.db.set_value("City Ledger Entry", {
+		"folio": folio.name, "kind": "Invoice", "invoice_number": old},
+		"invoice_number", None)
 	folio.invoice_number = None
 	folio.status = "Open"
 	folio.closed_on = None
