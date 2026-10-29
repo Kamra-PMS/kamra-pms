@@ -112,6 +112,11 @@ Hall, Patio…) or search a table.
   list and cannot be picked, and the guest panel says so. Take payment at
   the outlet. The server refuses the posting too, so no till can get round
   it.
+- **Wrong room?** Open the bill and press **Move to room**, pick the
+  right room and say why. The charge leaves the first guest's bill and goes
+  on the right guest's, with liquor kept off a company bill. This works the
+  same business day the bill was posted; after the night audit, Finance
+  corrects both bills instead.
 - **Split** moves chosen items onto a new bill, with their kitchen status
   kept. The totals always add up to the original.
 - **Discounts**: **Add discount** takes an amount off the bill.
@@ -131,7 +136,7 @@ the bill says **not sent**, **In kitchen** or **Prepared**.
 | Nothing sent to the kitchen | **Cancel** with a reason. The table is free at once. | The captain |
 | A line not sent yet | The bin icon on the line takes it off. No reason needed: nothing was cooked. | The captain |
 | Lines the kitchen has | **Void** the line, or **Cancel** the bill, with a void reason and a supervisor's approval. | A supervisor |
-| Paid, posted to a room or NC | Closed. Correct it on the folio, or refund. | Finance |
+| Paid, posted to a room or NC | Closed. Correct it on the folio, or refund. A bill on the wrong room moves with **Move to room** the same day. | Finance |
 
 **Nothing sent yet.** Open the bill, press **Cancel**, type why ("guests
 left before ordering") and press **Cancel bill**. The bill closes as

@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function - the same governed layer
-the UI and the AI use. **421 endpoints**, generated from the source
+the UI and the AI use. **422 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -2158,6 +2158,23 @@ path as room service - billing rules and the alcohol rule included.
 | --- | --- | --- |
 | `order` | yes |  |
 | `room` | yes |  |
+
+### `kamra.pos.move_room_bill`
+
+**POST**
+
+A bill charged to the wrong room: move it to the right one, the same
+business day it was posted. The charge leaves the first guest's folio
+(ledger reversed) and lands on the right guest's, by the same billing
+rules as room service, so liquor never reaches a company bill. Later
+than that day it is a correction for Finance (allowance, then repost).
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `order` | yes |  |
+| `room` | yes |  |
+| `reason` | yes |  |
+| `pin` | no | `None` |
 
 ### `kamra.pos.create_order`
 
@@ -5827,6 +5844,12 @@ Everything the public booking page needs to render.
 
 Availability + real quoted price per room type for the stay.
 
+Each available row also carries `plans`: the stay quoted room only
+(first) and with each meal plan, so the page lists real totals per plan. A valid
+`voucher_code` discounts every quote, and each plan then keeps its
+undiscounted `list_amount` for the strike-through; an invalid one is
+ignored here (check_voucher tells the guest why).
+
 `child_ages` (e.g. [3, 8, 13]) lets each room type's age bands decide who
 is free, a child or an adult; without it `children` are all children.
 Each row says whether the room type can take the party: `available`, a
@@ -5844,6 +5867,7 @@ what it sleeps but within the extra guests it allows by arrangement.
 | `location_slug` | no | `None` |
 | `pets` | no | `0` |
 | `child_ages` | no | `None` |
+| `voucher_code` | no | `None` |
 
 ### `kamra.public_api.precheckin_info` <Badge type='tip' text='public' />
 

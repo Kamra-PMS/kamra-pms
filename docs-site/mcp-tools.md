@@ -1,6 +1,6 @@
 # MCP tool reference
 
-Kamra exposes **133 governed tools** on the hosted MCP
+Kamra exposes **134 governed tools** on the hosted MCP
 endpoint (`/mcp`) and the stdio sidecar (`mcp/kamra_mcp.py`). Every
 call runs as the connected user - **role** permissions apply, tools
 are further filtered by the property's **enabled modules**, prices
@@ -1083,6 +1083,17 @@ voided by a supervisor at the till, never by an agent. Check with
 pos_order_detail first (kitchen_lines must be 0).
 
 Endpoint: `kamra.pos.cancel_order`.
+Mutating - logged to the activity ledger.
+
+### `pos_move_room_bill(order, room, reason)`
+
+Move a restaurant bill that was charged to the wrong room onto the
+right in-house room, the same business day it was posted, with a
+reason. The charge leaves the first guest's bill and lands on the
+right guest's (liquor never on a company bill). Confirm the room with
+the user first.
+
+Endpoint: `kamra.pos.move_room_bill`.
 Mutating - logged to the activity ledger.
 
 ### `pos_remove_item(order, item_row)`

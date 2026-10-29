@@ -1558,6 +1558,19 @@ TOOLS: tuple[ToolSpec, ...] = (
 		group="F&B",
 	),
 	_t(
+		"pos_move_room_bill",
+		"pos.move_room_bill",
+		"""Move a restaurant bill that was charged to the wrong room onto the
+		right in-house room, the same business day it was posted, with a
+		reason. The charge leaves the first guest's bill and lands on the
+		right guest's (liquor never on a company bill). Confirm the room with
+		the user first.""",
+		{"order": _p("string"), "room": _p("string"), "reason": _p("string")},
+		required=("order", "room", "reason"),
+		mutating=True,
+		group="F&B",
+	),
+	_t(
 		"pos_remove_item",
 		"pos.remove_item",
 		"""Remove one line that has not been sent to the kitchen from an open
@@ -1911,7 +1924,7 @@ def input_schema(spec: ToolSpec) -> dict[str, Any]:
 # Writes that can't simply be undone: MCP clients may ask before each one
 DESTRUCTIVE = frozenset({
 	"cancel_booking", "decline_booking_request", "check_out", "void_charge",
-	"close_folio", "waive_security_deposit", "pos_cancel_order", "pos_remove_item",
+	"close_folio", "waive_security_deposit", "pos_cancel_order", "pos_remove_item", "pos_move_room_bill",
 	"run_night_audit", "recover_stuck_business_date",
 })
 # Writes where the same call twice has the effect of one (idempotency keys,
