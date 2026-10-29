@@ -142,6 +142,7 @@ export const seasonsConfig: ScreenConfig = {
     { field: "minimum_nights", label: "Minimum nights", type: "int", hint: "Shortest stay allowed on these dates. 0 = no minimum" },
     { field: "non_refundable", label: "Non-refundable", type: "check", hint: "A stay touching these dates cannot be cancelled free of charge" },
     { field: "full_payment", label: "Full payment on booking", type: "check", hint: "Online bookings on these dates pay the whole amount, not the usual advance" },
+    { field: "advance_percent", label: "Advance % at booking", type: "float", hint: "Advance a booking on these dates owes (25, 50, 100). 0 = the property's usual deposit %. A stay crossing seasons owes the highest" },
     { field: "no_small_group", label: "No small-group rate", type: "check", hint: "Small parties pay the house rate on these dates, as on a weekend" },
     { field: "is_holiday", label: "Holiday / long weekend", type: "check", hint: "Quotes say these are holiday dates" },
     { field: "disabled", label: "Disabled", type: "check", hint: "Tick to deactivate; clear to activate" },

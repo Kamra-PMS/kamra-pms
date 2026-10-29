@@ -732,6 +732,12 @@ export function BookingDialog(props: {
   const extraNeedsReason =
     form.over_capacity_guests > 0 && !form.over_capacity_reason.trim()
 
+  // the advance each room's dates ask for, priced by the server
+  const advanceNow = quote
+    ? (quote.advance?.amount ?? 0) +
+      moreQuotes.reduce((s, q) => s + (q?.advance?.amount ?? 0), 0)
+    : 0
+
   const grandTotal = (() => {
     if (!quote) return 0
     const addonsGross = Object.entries(addonQty).reduce((s, [n, q]) => {
@@ -2291,8 +2297,8 @@ export function BookingDialog(props: {
                         {cancelText}
                         {(options.property.no_show_charge || "None") !== "None" &&
                           translate(" No-show: {v0} charged.", { v0: String(String(options.property.no_show_charge).toLowerCase()) })}
-                        {(options.property.deposit_pct ?? 0) > 0 &&
-                          translate(" Deposit expected now: {v0}{v1} ({v2}%).", { v0: String(cur()), v1: String(inr((grandTotal * options.property.deposit_pct) / 100)), v2: String(options.property.deposit_pct) })}
+                        {advanceNow > 0 &&
+                          translate(" Deposit expected now: {v0}{v1} ({v2}%).", { v0: String(cur()), v1: String(inr(advanceNow)), v2: String(quote.advance?.percent ?? 0) })}
                       </p>
                     )}
                   </div>

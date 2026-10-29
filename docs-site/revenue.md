@@ -99,7 +99,14 @@ A season moves the nightly price between two dates.
 6. Optional: **Minimum nights** (shortest stay on these dates) and
    **Non-refundable** (a stay touching these dates can't be cancelled
    free of charge).
-7. Set a **Priority** and click **Save**.
+7. Optional: **Advance % at booking**: the advance a booking on these
+   dates owes, for example 100 over New Year and 25 in the monsoon. `0`
+   keeps the property's usual **Deposit expected at booking**. A stay that
+   crosses seasons owes the highest one. The desk's Deposit box, the
+   booking page (when it takes an advance online) and trips all use it.
+   To set an advance for dates without changing the price, make a season
+   with **Percent** `0`.
+8. Set a **Priority** and click **Save**.
 
 ![Filling in a new season: name, dates, Percent, 20, priority and minimum nights](/img/revenue/season-new.gif)
 

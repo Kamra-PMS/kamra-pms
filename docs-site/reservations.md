@@ -211,9 +211,14 @@ filled in.
 ## Take a deposit before arrival
 
 The **Deposit** box is on the booking-confirmed screen and in the
-booking's detail panel. It shows what the property expects (**Deposit
-expected at booking** in Stay policies), what has come in, and what is
-still due.
+booking's detail panel. It shows what the booking should secure, what has
+come in, and what is still due. The percentage comes from the stay's
+dates: a [season](/revenue#add-a-season) with an **Advance % at booking**
+sets it (25%, 50%, 100%), otherwise the property's **Deposit expected at
+booking** in Stay policies applies. So two bookings by the same guest at
+the same hotel can owe different advances. A stay that crosses seasons
+owes the highest percentage. The percentage is kept with the booking when
+it is priced; changing the season later does not change it.
 
 - **Record payment**: the guest paid at the desk or by transfer. Pick the
   method, check the amount and click **Record ₹…**. It goes through your

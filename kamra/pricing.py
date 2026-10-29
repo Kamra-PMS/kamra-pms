@@ -395,8 +395,9 @@ def stay_season_rules(property: str, check_in, check_out,
 		         "room_type": ("in", [room_type, "", None])},
 		fields=["season_name", "start_date", "end_date", "days_of_week",
 		        "minimum_nights", "non_refundable", "full_payment",
-		        "no_small_group", "is_holiday"])
+		        "no_small_group", "is_holiday", "advance_percent"])
 	min_nights, non_refundable, named = 0, False, None
+	advance_pct, advance_season = 0.0, None
 	full_payment = no_small_group = False
 	holiday = None
 	for i in range(nights):
@@ -412,13 +413,31 @@ def stay_season_rules(property: str, check_in, check_out,
 			if s.non_refundable:
 				non_refundable = True
 			full_payment = full_payment or bool(s.full_payment)
+			if float(s.advance_percent or 0) > advance_pct:
+				advance_pct = float(s.advance_percent)
+				advance_season = s.season_name
 			no_small_group = no_small_group or bool(s.no_small_group)
 			if s.is_holiday and not holiday:
 				holiday = s.season_name
 	return {"minimum_nights": min_nights, "non_refundable": non_refundable,
 	        "season": named, "nights": nights, "full_payment": full_payment,
 	        "no_small_group": no_small_group, "is_holiday": bool(holiday),
-	        "holiday": holiday}
+	        "holiday": holiday, "advance_percent": advance_pct,
+	        "advance_season": advance_season}
+
+
+def advance_percent(property: str, stay_rules: dict) -> tuple[float, str | None]:
+	"""The advance % a booking owes and the season that set it.
+
+	A season on the stay's dates with an advance % sets it (the highest
+	one when the stay crosses seasons, as the other season rules take the
+	strictest); otherwise the property's usual "Deposit expected at
+	booking". (pct, season name or None)."""
+	season = float(stay_rules.get("advance_percent") or 0)
+	if season > 0:
+		return season, stay_rules.get("advance_season")
+	return float(frappe.get_cached_value("Property", property,
+	                                     "deposit_pct") or 0), None
 
 
 def validate_voucher(property: str, voucher_code: str, nights: int,
@@ -788,6 +807,8 @@ def quote(
 			"nights_applied": billable_nights,
 		})
 
+	adv_pct, adv_season = advance_percent(property, stay_rules)
+
 	from frappe.utils import now_datetime
 	return {
 		"nights": nights,
@@ -807,6 +828,10 @@ def quote(
 		              "percent": float(los_pct),
 		              "amount": round(float(los_saved), 2)}
 		if los_saved > 0 else None,
+		# what the booking should secure in advance: the % its dates ask
+		# for (a season's advance %, else the property's usual deposit %)
+		"advance": {"percent": adv_pct, "season": adv_season,
+		            "amount": round(float(total) * adv_pct / 100, 2)},
 		"rate_plan": rate_plan or None,
 		"amount_before_tax": float(total_base),
 		"tax_percent": round(effective_pct, 2),
@@ -826,7 +851,7 @@ def quote(
 		# can say why a stay needs two nights or full payment
 		"stay_rules": {k: stay_rules[k] for k in (
 			"minimum_nights", "season", "non_refundable", "full_payment",
-			"is_holiday", "holiday")},
+			"is_holiday", "holiday", "advance_percent", "advance_season")},
 		"is_holiday": stay_rules["is_holiday"],
 		"quoted_at": str(now_datetime()),
 	}

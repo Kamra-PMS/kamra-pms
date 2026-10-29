@@ -239,7 +239,8 @@ A deposit taken from the folio's **Record a payment** form (kind
 **Security Deposit**) shows up in the same panel.
 
 **Booking deposits** (an advance before arrival) are taken from the
-**Deposit** panel on the booking: see [Reservations](/reservations).
+**Deposit** panel on the booking: see [Reservations](/reservations). The
+percentage owed can differ by dates (a season's **Advance % at booking**).
 
 ## Close the folio and print the invoice
 

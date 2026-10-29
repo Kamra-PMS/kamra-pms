@@ -375,6 +375,8 @@ export interface Quote {
   discount: number
   /** long-stay discount already taken off room_total */
   long_stay?: { rule: string; min_nights: number; percent: number; amount: number } | null
+  /** advance the stay's dates ask for: a season's %, else the property's */
+  advance?: { percent: number; season: string | null; amount: number }
   amount_before_tax: number
   tax_percent: number
   tax_amount: number

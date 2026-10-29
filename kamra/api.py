@@ -742,13 +742,31 @@ def _confirm_status(res):
 	res.reload()
 
 
+def booking_advance_percent(res) -> float:
+	"""The advance % this booking owes: the season % its dates asked for
+	when it was priced (kept in its quote snapshot, so a later change to
+	the season never re-bills it), else the property's deposit %."""
+	snap = res.get("quote_snapshot")
+	if snap is None and res.get("name"):
+		snap = frappe.db.get_value("Reservation", res.name, "quote_snapshot")
+	if snap:
+		try:
+			rules = (json.loads(snap) if isinstance(snap, str) else snap
+			         ).get("stay_rules") or {}
+			if float(rules.get("advance_percent") or 0) > 0:
+				return float(rules["advance_percent"])
+		except (ValueError, TypeError, AttributeError):
+			pass  # unreadable snapshot: the property's usual %
+	return float(frappe.get_cached_value("Property", res.property,
+	                                     "deposit_pct") or 0)
+
+
 def _deposit_state(res) -> dict:
-	"""What the booking should have secured it with (the property's
-	deposit %, the figure the quote promised), what has come in before
-	arrival, and any link already out with the guest."""
+	"""What the booking should have secured it with (its advance %, the
+	figure the quote promised), what has come in before arrival, and any
+	link already out with the guest."""
 	total = float(res.amount_after_tax or 0)
-	pct = float(frappe.get_cached_value("Property", res.property,
-	                                    "deposit_pct") or 0)
+	pct = booking_advance_percent(res)
 	expected = round(total * pct / 100, 2)
 	paid = float(res.advance_paid or 0)
 	link = frappe.db.get_value(
