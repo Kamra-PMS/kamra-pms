@@ -1524,7 +1524,7 @@
         "kamra.api.add_folio_payment"
        ]
       },
-      "description": "Record money received on the stay ledger. kind labels WHY it came\nin - Payment (against the bill), Advance (collected before/at\ncheck-in) or Security Deposit (held, refundable). Refunds go through\nrefund_folio_payment so they can never be entered by accident.",
+      "description": "Record money received on the stay ledger. kind labels WHY it came\nin - Payment (against the bill), Advance (collected before/at\ncheck-in) or Security Deposit (held, refundable). Refunds go through\nrefund_folio_payment so they can never be entered by accident.\n\ncurrency: leave out (or pass the home currency) for a normal payment.\nA foreign code means `amount` is the foreign money received (cash or a\nbank transfer); the server converts it at today's buy rate, posts the\nhome amount and keeps the foreign amount and rate on the row.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"folio\": \"FOLIO-2026-00001\",\n  \"mode\": \"<mode>\",\n  \"amount\": 1000,\n  \"kind\": \"Payment\"\n}",
@@ -12534,7 +12534,7 @@
         "kamra.ledger.upsert_exchange_rate"
        ]
       },
-      "description": "",
+      "description": "Set today's (business date) rate for one foreign currency. Rates are\nhome-currency units per 1 foreign unit, typed in by the hotel: Kamra\nnever fetches a market rate.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\",\n  \"currency\": \"<currency>\",\n  \"buy_rate\": \"<buy_rate>\",\n  \"sell_rate\": \"<sell_rate>\",\n  \"service_tax_pct\": 0\n}",
@@ -12612,6 +12612,43 @@
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\",\n  \"currency\": \"<currency>\",\n  \"fx_amount\": \"<fx_amount>\",\n  \"direction\": \"Buy\",\n  \"folio\": \"FOLIO-2026-00001\",\n  \"guest\": \"G-00001\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "folio_in_currency",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.ledger.folio_in_currency",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.ledger.folio_in_currency"
+       ]
+      },
+      "description": "A folio's total and balance shown in another currency, at today's\nrate. Display only: the bill and tax invoice stay in home currency.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"folio\": \"FOLIO-2026-00001\",\n  \"currency\": \"<currency>\"\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -15241,7 +15278,7 @@
         "kamra.public_api.search_stay"
        ]
       },
-      "description": "Availability + real quoted price per room type for the stay.\n\n`child_ages` (e.g. [3, 8, 13]) lets each room type's age bands decide who\nis free, a child or an adult; without it `children` are all children.\nEach row says whether the room type can take the party: `available`, a\n`reason` when it cannot, and `needs_confirmation` when the party is above\nwhat it sleeps but within the extra guests it allows by arrangement.",
+      "description": "Availability + real quoted price per room type for the stay.\n\nEach available row also carries `plans`: the stay quoted room only\n(first) and with each meal plan, so the page lists real totals per plan. A valid\n`voucher_code` discounts every quote, and each plan then keeps its\nundiscounted `list_amount` for the strike-through; an invalid one is\nignored here (check_voucher tells the guest why).\n\n`child_ages` (e.g. [3, 8, 13]) lets each room type's age bands decide who\nis free, a child or an adult; without it `children` are all children.\nEach row says whether the room type can take the party: `available`, a\n`reason` when it cannot, and `needs_confirmation` when the party is above\nwhat it sleeps but within the extra guests it allows by arrangement.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\",\n  \"check_in_date\": \"2026-08-01\",\n  \"check_out_date\": \"2026-08-03\",\n  \"adults\": 2,\n  \"children\": 0,\n  \"pets\": 0\n}",

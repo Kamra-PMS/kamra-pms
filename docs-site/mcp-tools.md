@@ -1,6 +1,6 @@
 # MCP tool reference
 
-Kamra exposes **133 governed tools** on the hosted MCP
+Kamra exposes **135 governed tools** on the hosted MCP
 endpoint (`/mcp`) and the stdio sidecar (`mcp/kamra_mcp.py`). Every
 call runs as the connected user - **role** permissions apply, tools
 are further filtered by the property's **enabled modules**, prices
@@ -459,14 +459,34 @@ balances - plus the group master when the stay is on a block.
 
 Endpoint: `kamra.api.reservation_folios`.
 
-### `record_payment(folio, mode, amount, reference, kind)`
+### `record_payment(folio, mode, amount, reference, kind, currency)`
 
 Record money received on a folio. mode: Cash, UPI, Card, Bank,
 Link. kind: Payment (default), Advance, or Security Deposit.
-Confirm the amount with staff before calling.
+Foreign money: pass currency (e.g. USD) and the foreign amount
+as amount, mode Cash or Bank Transfer; the PMS converts at the
+hotel's rate for today (see exchange_rates) and refuses if none
+is set. Confirm the amount and currency with staff before calling.
 
 Endpoint: `kamra.api.add_folio_payment`.
 Mutating - logged to the activity ledger.
+
+### `exchange_rates()`
+
+The hotel's exchange rates: latest buy and sell rate per foreign
+currency (home-currency units per 1 foreign unit) and the date each
+was set. Foreign payments convert at the buy rate set for today's
+business date. Read-only.
+
+Endpoint: `kamra.ledger.list_exchange_rates`.
+
+### `folio_in_currency(folio, currency)`
+
+A folio's total and balance shown in a foreign currency at
+today's rate, rounded up to the cent. Display only: the bill and
+tax invoice stay in the hotel's currency. Read-only.
+
+Endpoint: `kamra.ledger.folio_in_currency`.
 
 ### `void_charge(folio, charge_row, reason)`
 

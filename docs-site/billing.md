@@ -345,7 +345,46 @@ business dates (up to 92 days).
 ![The Currency Desk: the calculator showing 100 USD at the buy rate, the rate table and today's exchanges](/img/billing/currency-desk.png)
 
 Finance and Hotel Admin set the buy and sell rates in **Set rate**
-(currency, buy, sell, then **Save**).
+(currency, buy, sell, then **Save**). A rate is hotel currency per 1 unit
+of the foreign currency, and it belongs to today's business date: saving
+again the same day updates it. Kamra never fetches market rates.
+
+## Take a payment in a foreign currency
+
+Your books stay in your hotel's currency. A guest or company can still
+pay in USD, EUR, AED or any other currency you set a rate for.
+
+1. Set today's rate on the **Currency Desk** (above). Payments use the
+   **Buy** rate, because the hotel is buying the guest's foreign money. A
+   rate from an earlier day is not used: set a new one each business day.
+2. On the folio, under **Record a payment**, pick the currency next to the
+   mode. Only currencies with a rate for today are listed.
+3. Pick **Cash** or **Bank Transfer** and type the foreign amount the guest
+   hands over. The form shows about how much that is in your currency.
+4. Press **Record**. Kamra converts at today's rate and posts your
+   currency to the folio and the ledgers. The payment line keeps the
+   foreign amount and the rate it used, so later rate changes never
+   change it.
+
+Rules worth knowing:
+
+- **Rounding.** The posted amount is rounded half up to the cent. When you
+  show a balance in a foreign currency it is rounded **up** to the cent, so
+  paying the shown figure always clears the bill.
+- **Change and refunds are in your currency.** If the guest overpays,
+  refund the difference as usual (mode Cash for notes from the drawer).
+- **Foreign notes are kept out of the drawer count.** The till records a
+  foreign cash payment under **Other**, with the currency and rate in the
+  note, so the expected cash in your own currency stays right.
+- **Not for cards or security deposits.** A card terminal charges your
+  currency, and a deposit is refunded in your currency, so take both in
+  your currency.
+
+**Show a bill in another currency.** Under the grand total, **Show in**
+lists the currencies with a rate for today. Picking one adds a line such as
+"Approx. USD 120.40 (balance USD 60.20) at 83.10". It is a guide for the
+guest only: the tax invoice, its totals and its amount in words stay in
+your currency.
 
 ## Check the ledgers
 
@@ -457,7 +496,7 @@ guests still owe.
 The folio actions are MCP tools for AI agents (`get_folio`,
 `add_folio_charge`, `record_payment`, `void_charge`, `apply_allowance`,
 `move_charges`, `split_folio_charge`, `close_folio`, `send_payment_link`,
-`collect_security_deposit` and more): see [MCP tools](/mcp-tools#billing).
+`collect_security_deposit`, `exchange_rates`, `folio_in_currency` and more): see [MCP tools](/mcp-tools#billing).
 The REST endpoints live in `kamra.api` (folios, payments, deposits),
 `kamra.cashier` (till sessions, petty cash, shift report) and
 `kamra.ledger` (ledgers, city ledger, credit notes, proforma, FX desk) and

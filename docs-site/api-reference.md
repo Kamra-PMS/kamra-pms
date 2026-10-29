@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function - the same governed layer
-the UI and the AI use. **421 endpoints**, generated from the source
+the UI and the AI use. **422 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -542,6 +542,11 @@ in - Payment (against the bill), Advance (collected before/at
 check-in) or Security Deposit (held, refundable). Refunds go through
 refund_folio_payment so they can never be entered by accident.
 
+currency: leave out (or pass the home currency) for a normal payment.
+A foreign code means `amount` is the foreign money received (cash or a
+bank transfer); the server converts it at today's buy rate, posts the
+home amount and keeps the foreign amount and rate on the row.
+
 | Param | Required | Default |
 | --- | --- | --- |
 | `folio` | yes |  |
@@ -550,6 +555,7 @@ refund_folio_payment so they can never be entered by accident.
 | `reference` | no | `None` |
 | `pin` | no | `None` |
 | `kind` | no | `'Payment'` |
+| `currency` | no | `None` |
 
 ### `kamra.api.refund_folio_payment`
 
@@ -4846,6 +4852,10 @@ Quick-checkout every Checked In reservation on a group.
 
 **POST** · roles: `Finance`, `Hotel Admin`, `Kamra Agent`
 
+Set today's (business date) rate for one foreign currency. Rates are
+home-currency units per 1 foreign unit, typed in by the hotel: Kamra
+never fetches a market rate.
+
 | Param | Required | Default |
 | --- | --- | --- |
 | `property` | yes |  |
@@ -4879,6 +4889,18 @@ Quick-checkout every Checked In reservation on a group.
 | `folio` | no | `None` |
 | `guest` | no | `None` |
 | `pin` | no | `None` |
+
+### `kamra.ledger.folio_in_currency`
+
+**GET/POST** · roles: `Front Desk`, `Finance`, `Night Auditor`, `Kamra Agent`
+
+A folio's total and balance shown in another currency, at today's
+rate. Display only: the bill and tax invoice stay in home currency.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `folio` | yes |  |
+| `currency` | yes |  |
 
 ### `kamra.ledger.exchange_history`
 
@@ -5827,6 +5849,12 @@ Everything the public booking page needs to render.
 
 Availability + real quoted price per room type for the stay.
 
+Each available row also carries `plans`: the stay quoted room only
+(first) and with each meal plan, so the page lists real totals per plan. A valid
+`voucher_code` discounts every quote, and each plan then keeps its
+undiscounted `list_amount` for the strike-through; an invalid one is
+ignored here (check_voucher tells the guest why).
+
 `child_ages` (e.g. [3, 8, 13]) lets each room type's age bands decide who
 is free, a child or an adult; without it `children` are all children.
 Each row says whether the room type can take the party: `available`, a
@@ -5844,6 +5872,7 @@ what it sleeps but within the extra guests it allows by arrangement.
 | `location_slug` | no | `None` |
 | `pets` | no | `0` |
 | `child_ages` | no | `None` |
+| `voucher_code` | no | `None` |
 
 ### `kamra.public_api.precheckin_info` <Badge type='tip' text='public' />
 
