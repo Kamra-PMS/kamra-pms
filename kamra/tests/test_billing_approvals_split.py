@@ -246,7 +246,7 @@ class BillingApprovalsSplitTestCase(AuditTestCase):
 		own = api.post_allowance(folio, 20, "UT own", pin="2468")
 		frappe.set_user("Administrator")
 		self.assertFalse(frappe.db.get_value("Allowance Request", refused["request"], "serial"))
-		code = "".join(w[0] for w in PROP_A.split())[:3].upper()
+		code = frappe.db.get_value("Property", PROP_A, "short_code")
 		self.assertRegex(first, rf"^ALW-{code}-\d\d-\d{{5}}$")
 		self.assertEqual(int(own["serial"][-5:]), int(first[-5:]) + 1)
 		# on the bill line and the request, once each
@@ -265,6 +265,14 @@ class BillingApprovalsSplitTestCase(AuditTestCase):
 		                  v["requested_by"], v["amount"], v["approved_with_pin"]),
 		                 (first, GM, "Hotel Admin", DESK, 30, True))
 		self.assertEqual(v["room"], "101")
+		# signed with the job title from Staff & access, else the role
+		self.assertEqual(v["approved_by_title"], "Hotel Admin")
+		frappe.db.set_value("User", GM, "kamra_job_title", "Duty Manager")
+		self.assertEqual(api.allowance_voucher(first)["approved_by_title"], "Duty Manager")
+		row = next(r for r in api.allowance_requests(PROP_A, status="Approved")["requests"]
+		           if r["serial"] == first)
+		self.assertEqual(row["decided_by_title"], "Duty Manager")
+		frappe.db.set_value("User", GM, "kamra_job_title", "")
 		with self.assertRaisesRegex(frappe.ValidationError, "posted allowance"):
 			api.allowance_voucher(refused["request"])
 
@@ -278,9 +286,72 @@ class BillingApprovalsSplitTestCase(AuditTestCase):
 		folio_b = guest_folio(res_b.name)
 		api.add_folio_charge(folio_b, "Laundry", "UT Laundry", 500, gst_rate=0)
 		b = api.post_allowance(folio_b, 10, "UT other hotel")["serial"]
-		code_b = "".join(w[0] for w in PROP_B.split())[:3].upper()
+		code_b = frappe.db.get_value("Property", PROP_B, "short_code")
+		self.assertNotEqual(code_b, code)  # same initials, own code
 		self.assertTrue(b.startswith(f"ALW-{code_b}-"))
 		self.assertNotEqual(b, first)
+
+		# a new short code starts a new series: no number comes back
+		frappe.set_user("Administrator")
+		prop = frappe.get_doc("Property", PROP_A)
+		prop.short_code = "utz9"
+		prop.save(ignore_permissions=True)
+		self.assertEqual(prop.short_code, "UTZ9")
+		frappe.set_user(GM)
+		new = api.post_allowance(folio, 5, "UT new code", pin="2468")["serial"]
+		self.assertTrue(new.startswith("ALW-UTZ9-"), new)
+		self.assertNotIn(new, (first, own["serial"]))
+
+	def test_short_code_is_checked_and_unique(self):
+		from kamra.kamra.doctype.property.property import default_short_code
+		make_property(PROP_B, business_date=TODAY)
+		def save(code):
+			a = frappe.get_doc("Property", PROP_A)
+			a.short_code = code
+			a.save(ignore_permissions=True)
+			return a
+		for bad in ("A", "TOOLONG7", "S-R", "SR X"):
+			with self.assertRaisesRegex(frappe.ValidationError, "Short code"):
+				save(bad)
+		with self.assertRaisesRegex(frappe.ValidationError, "already used"):
+			save(frappe.db.get_value("Property", PROP_B, "short_code"))
+		# empty: back to its initials, de-duplicated
+		a = save("")
+		self.assertRegex(a.short_code, r"^[A-Z0-9]{2,6}$")
+		self.assertNotEqual(a.short_code, frappe.db.get_value("Property", PROP_B, "short_code"))
+		self.assertEqual(default_short_code("The Sunrise & Sea Residency", exclude=PROP_A)[:3], "TSS")
+		self.assertEqual(default_short_code("Ewa")[:2], "EW")  # one word: first letters
+
+	def test_backfill_gives_each_property_its_own_code(self):
+		from kamra.patches.v46.backfill_property_short_code import execute
+		twins = ("UT Sun Rise", "UT Sea Rock")  # both U S R
+		for p in twins:
+			make_property(p)
+		frappe.db.sql("UPDATE `tabProperty` SET short_code = NULL WHERE name IN %s", (twins,))
+		execute()
+		a, b = (frappe.db.get_value("Property", p, "short_code") for p in twins)
+		self.assertTrue(a and b and a != b, (a, b))
+		# same initials: the older one keeps them, the other gets a digit
+		self.assertEqual(a[:3], b[:3])
+		self.assertTrue(a[-1].isdigit() or b[-1].isdigit(), (a, b))
+
+	def test_staff_job_title_set_in_staff_and_access(self):
+		from kamra import staff
+		ensure_user("ut.bill.duty@test.local", ["Front Desk"])
+		frappe.set_user(GM)
+		staff.save_staff(PROP_A, "ut.bill.duty@test.local", "Duty Person", ["Front Desk"],
+		                 job_title=" Duty Manager ")
+		row = next(r for r in staff.list_staff(PROP_A) if r["user"] == "ut.bill.duty@test.local")
+		self.assertEqual(row["job_title"], "Duty Manager")
+		# your own name and title, never your own access
+		me = next(r for r in staff.list_staff(PROP_A) if r["is_self"])
+		staff.save_staff(PROP_A, GM, "UT General", me["roles"], me["properties"] or "all",
+		                 job_title="General Manager")
+		self.assertEqual(frappe.db.get_value("User", GM, "kamra_job_title"), "General Manager")
+		with self.assertRaises(frappe.PermissionError):
+			staff.save_staff(PROP_A, GM, "UT General", ["Front Desk"], "all")
+		frappe.set_user("Administrator")
+		frappe.db.set_value("User", GM, "kamra_job_title", "")
 
 	def test_new_property_starts_with_approval_on(self):
 		from kamra.settings import get_setting

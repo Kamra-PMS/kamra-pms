@@ -15,6 +15,7 @@ def after_install():
 	ensure_agent_identity()
 	ensure_staff_roles()
 	ensure_mcp_roles()
+	ensure_user_fields()
 
 
 def after_migrate():
@@ -22,6 +23,17 @@ def after_migrate():
 	ensure_agent_identity()
 	ensure_staff_roles()
 	ensure_mcp_roles()
+	ensure_user_fields()
+
+
+def ensure_user_fields():
+	"""A job title on the staff member's User (Frappe has none), set in
+	Staff & access and printed on allowance vouchers."""
+	from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
+	create_custom_fields({"User": [{
+		"fieldname": "kamra_job_title", "label": "Job Title", "fieldtype": "Data",
+		"insert_after": "last_name",
+	}]}, update=True)
 
 
 def ensure_mcp_roles():

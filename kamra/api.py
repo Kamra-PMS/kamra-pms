@@ -2427,12 +2427,13 @@ def _allowance_reason(reason_code: str | None, reason: str) -> str:
 
 
 def _allowance_serial(prop: str) -> str:
-	"""The next voucher number: ALW-<property code>-<YY>-#####, one series
-	per property code, taken only when an allowance posts."""
+	"""The next voucher number: ALW-<property short code>-<YY>-#####, one
+	series per short code, taken only when an allowance posts. A changed
+	short code starts a new series; the old one is never reused."""
 	from frappe.model.naming import make_autoname
-	# ponytail: the same initials code as the invoice series; two
-	# properties with the same initials share one counter (still unique)
-	code = "".join(w[0] for w in prop.split())[:3].upper()
+	from kamra.kamra.doctype.property.property import default_short_code
+	code = (frappe.db.get_value("Property", prop, "short_code")
+	        or default_short_code(prop, exclude=prop))
 	return make_autoname(f"ALW-{code}-.YY.-.#####")
 
 
@@ -2558,12 +2559,18 @@ def allowance_requests(property: str, status: str = "Pending",
 	folios = {f.name: f for f in frappe.get_all(
 		"Folio", filters={"name": ["in", list({r.folio for r in rows}) or [""]]},
 		fields=["name", "status", "bill_to_name"])}
+	people = {u.name: u for u in frappe.get_all(
+		"User", filters={"name": ["in", list({r.decided_by for r in rows if r.decided_by}) or [""]]},
+		fields=["name", "full_name", "kamra_job_title"])}
 	for r in rows:
 		s = stays.get(r.reservation) or {}
 		f = folios.get(r.folio) or {}
+		u = people.get(r.decided_by) or {}
 		r.update(guest_name=s.get("guest_name"), room=s.get("room"),
 		         folio_status=f.get("status"),
-		         bill_to_name=f.get("bill_to_name"))
+		         bill_to_name=f.get("bill_to_name"),
+		         decided_by_name=u.get("full_name"),
+		         decided_by_title=u.get("kamra_job_title"))
 	from kamra.credit import _is_agent
 	return {"requests": rows,
 	        "can_decide": not _is_agent() and _may_approve_allowance(property)}
@@ -2593,6 +2600,8 @@ def allowance_voucher(allowance_request: str):
 	approver_roles = frappe.get_roles(req.decided_by) if req.decided_by else []
 	role = next((r for r in _allowance_approver_roles(req.property)
 	             + ("System Manager",) if r in approver_roles), None)
+	title = (frappe.db.get_value("User", req.decided_by, "kamra_job_title")
+	         if req.decided_by else None)
 	return {
 		"property": {
 			"property_name": prop.property_name,
@@ -2619,6 +2628,8 @@ def allowance_voucher(allowance_request: str):
 		"approved_by": req.decided_by,
 		"approved_by_name": get_fullname(req.decided_by) if req.decided_by else None,
 		"approved_by_role": role,
+		# the staff job title from Staff & access, or the role when unset
+		"approved_by_title": title or role,
 		# every approval since vouchers began is signed with the PIN
 		"approved_with_pin": bool(req.decided_by),
 		"approved_on": str(req.decided_on or ""),

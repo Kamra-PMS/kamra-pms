@@ -145,13 +145,18 @@ allowance and every rejection.
 Every allowance that goes on a bill gets a serial number, such as
 `ALW-KDP-26-00012`: one series per property, given when the allowance
 posts (a request that waits or is rejected gets none) and never reused.
+`KDP` is the property's **Short code** (**Settings → Property**, 2 to 6
+letters or digits, different for every property). Changing it starts a
+new voucher series; numbers already given stay as they are. Invoices keep
+their existing series (GST and ZATCA numbering), whatever the short code.
 The number shows on the bill line, in **Allowances to approve**
 (Approved) and in **Voids and allowances**.
 
 Click the number, or **Print voucher**, for the printable voucher: the
 property, serial, date and time, guest, room, folio, the amount and the
 tax it reverses, the reason code and note, who asked, and the manager
-who approved it (name, role, "Approved with PIN" and when), with
+who approved it (name, their job title from **Staff & access**, or their
+role when no job title is set, "Approved with PIN" and when), with
 signature lines for the approver and the guest or requester. The voucher
 is at `/kamra/allowance-voucher/<serial>`.
 

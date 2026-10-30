@@ -5701,8 +5701,9 @@ Everyone with a Kamra role who can reach this property.
 
 **POST**
 
-Add a person, or change an existing person's roles, property access
-and whether they can sign in.
+Add a person, or change an existing person's roles, property access,
+job title and whether they can sign in. Your own record: name and job
+title only.
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -5713,6 +5714,7 @@ and whether they can sign in.
 | `properties` | no | `None` |
 | `enabled` | no | `1` |
 | `send_welcome` | no | `0` |
+| `job_title` | no | `None` |
 
 ### `kamra.staff.role_matrix`
 

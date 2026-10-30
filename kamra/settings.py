@@ -72,6 +72,8 @@ MODULES: tuple[Module, ...] = (
 			Section("identity", "Identity", "", (
 				S("property_name", "Property name", store=P),
 				S("legal_name", "Legal name", store=P, hint="As registered - printed on invoices."),
+				S("short_code", "Short code", store=P,
+				  hint="2 to 6 letters or digits in allowance voucher numbers (ALW-SR-26-00001). Changing it starts a new voucher series. Invoice numbers keep their own series."),
 				S("property_kind", "Property kind", "select", store=P, options=("Hotel", "Short Term Rental")),
 				S("logo_url", "Logo", "image", store=P, hint="Square, 512px+ - PNG or SVG with transparency looks best."),
 			)),

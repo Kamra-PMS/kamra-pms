@@ -25,6 +25,8 @@ interface Req {
   requested_on: string
   channel: string | null
   decided_by: string | null
+  decided_by_name?: string | null
+  decided_by_title?: string | null
   decided_on: string | null
   decision_note: string | null
   guest_name: string | null
@@ -124,7 +126,12 @@ export default function AllowanceRequests({ property, folio, status = "Pending",
           {r.status !== "Pending" && (
             <p className="mt-0.5 text-xs text-zinc-600">
               {r.status === "Approved"
-                ? (r.decided_by ? t("Approved by {who}", { who: r.decided_by }) : t("Posted without approval"))
+                ? (r.decided_by
+                    ? t("Approved by {who}", {
+                        who: [r.decided_by_name || r.decided_by, r.decided_by_title && translate(r.decided_by_title)]
+                          .filter(Boolean).join(", "),
+                      })
+                    : t("Posted without approval"))
                 : t("Rejected by {who}: {why}", { who: r.decided_by ?? "", why: r.decision_note ?? "" })}
               {r.serial && (
                 <>

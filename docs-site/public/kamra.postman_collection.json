@@ -14888,7 +14888,7 @@
         "kamra.staff.save_staff"
        ]
       },
-      "description": "Add a person, or change an existing person's roles, property access\nand whether they can sign in.",
+      "description": "Add a person, or change an existing person's roles, property access,\njob title and whether they can sign in. Your own record: name and job\ntitle only.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\",\n  \"email\": \"guest@example.com\",\n  \"full_name\": \"A. Guest\",\n  \"roles\": \"<roles>\",\n  \"enabled\": 1,\n  \"send_welcome\": 0\n}",

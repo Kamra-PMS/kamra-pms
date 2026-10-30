@@ -33,6 +33,8 @@ interface Voucher {
   approved_by: string | null
   approved_by_name: string | null
   approved_by_role: string | null
+  /** job title from Staff & access, else the role */
+  approved_by_title: string | null
   approved_with_pin: boolean
   approved_on: string
 }
@@ -113,7 +115,7 @@ export default function AllowanceVoucher() {
           {v.approved_by ? (
             <>
               {v.approved_by_name}
-              {v.approved_by_role && <span className="text-zinc-500">, {translate(v.approved_by_role)}</span>}
+              {v.approved_by_title && <span className="text-zinc-500">, {translate(v.approved_by_title)}</span>}
               <span className="block text-xs text-zinc-500">
                 {v.approved_with_pin ? t("Approved with PIN") : t("Approved")}, {v.approved_on.slice(0, 16)}
               </span>

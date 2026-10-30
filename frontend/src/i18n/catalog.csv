@@ -464,6 +464,7 @@
 "1920×1080px (16:9 landscape) · JPG or WebP, under 2 MB. Uploads save automatically.","1920×1080px (16:9 landscape) · JPG or WebP, under 2 MB. Uploads save automatically.",1920×1080px (أفقي 16:9) · JPG أو WebP، أقل من 2 MB. يُحفظ الرفع تلقائيًا.,"1920 × 1080 px (horizontal 16:9), JPG o WebP, menos de 2 MB. Se guarda automáticamente.",screens/BookingEngine.tsx,,translated
 2 · Companies,2 · Companies,2 · الشركات,2 · Empresas,,,translated
 2 Star,2 Star,نجمتان,2 estrellas,,,translated
+2 to 6 letters or digits in allowance voucher numbers (ALW-SR-26-00001). Changing it starts a new voucher series. Invoice numbers keep their own series.,2 to 6 letters or digits in allowance voucher numbers (ALW-SR-26-00001). Changing it starts a new voucher series. Invoice numbers keep their own series.,من 2 إلى 6 أحرف أو أرقام في أرقام قسائم خصم التسوية (ALW-SR-26-00001). تغييره يبدأ سلسلة قسائم جديدة. تحتفظ أرقام الفواتير بسلسلتها الخاصة.,"De 2 a 6 letras o dígitos en los números de los vales de bonificación (ALW-SR-26-00001). Si lo cambia, empieza una nueva serie de vales. Los números de factura mantienen su propia serie.",,,translated
 3 · Opening balances,3 · Opening balances,3 · الأرصدة الافتتاحية,3 · Saldos iniciales,,,translated
 3 am,3 am,3 صباحًا,3 a. m.,,,translated
 3 Star,3 Star,3 نجوم,3 estrellas,,,translated
@@ -1896,12 +1897,14 @@ due today,due today,تستحق اليوم,vence hoy,,,translated
 Duplicate booking,Duplicate booking,حجز مكرر,Reserva duplicada,,,translated
 Duration,Duration,المدة,Duración,,,translated
 "Duration (e.g. 90 min, half day)","Duration (e.g. 90 min, half day)",المدة (مثلا 90 دقيقة، نصف يوم),"Duración (p. ej., 90 min, medio día)",,,translated
+Duty Manager,Duty Manager,مدير المناوبة,Gerente de turno,,,translated
 E-invoice QR code,E-invoice QR code,رمز الفاتورة الإلكترونية,Código QR de factura electrónica,screens/FolioView.tsx,,translated
 e.g. 14:30,e.g. 14:30,مثال: 14:30,"p. ej., 14:30",screens/PublicCheckin.tsx,,translated
 "e.g. 2 cola, 1 water","e.g. 2 cola, 1 water",مثال: 2 كولا، 1 ماء,"p.ej. 2 colas, 1 agua",screens/HkApp.tsx,,translated
 e.g. 3 shirts pressed,e.g. 3 shirts pressed,مثال: 3 قمصان مكوية,p.ej. 3 camisas planchadas,screens/HkApp.tsx,,translated
 "e.g. Broken glass table, photos on file","e.g. Broken glass table, photos on file",مثال: طاولة زجاجية مكسورة، الصور محفوظة,"p.ej. Mesa de cristal rota, fotografías en el archivo",components/SecurityDepositPanel.tsx,,translated
 e.g. Door lock middleware,e.g. Door lock middleware,مثلا وسيط أقفال الأبواب,p.ej. Middleware de cerradura de puerta,screens/settings/WebhooksPage.tsx,,translated
+e.g. Duty Manager,e.g. Duty Manager,مثل: مدير المناوبة,"p. ej., Gerente de turno",screens/settings/AccessPages.tsx,,translated
 e.g. Fruit basket before arrival,e.g. Fruit basket before arrival,مثلا سلة فواكه قبل الوصول,"p. ej., canasta de frutas antes de la llegada",components/StayInstructions.tsx,,translated
 e.g. grand-kamra-palace,e.g. grand-kamra-palace,مثلا grand-kamra-palace,"p. ej., grand-kamra-palace",screens/BookingEngine.tsx,,translated
 "e.g. prayer mat, high floor, allergy notes","e.g. prayer mat, high floor, allergy notes",مثلا سجادة صلاة، طابق مرتفع، ملاحظات الحساسية,"p. ej., alfombra de oración, piso alto, información sobre alergias",components/BookingDialog.tsx,,translated
@@ -2109,6 +2112,7 @@ F&B · POS,F&B · POS,المأكولات والمشروبات · نقاط الب
 F&B · Printers,F&B · Printers,المأكولات والمشروبات · الطابعات,Alimentos y bebidas · Impresoras,,,translated
 F&B dashboard,F&B dashboard,لوحة الأطعمة والمشروبات,Panel de A y B,,,translated
 F&B Dashboard,F&B Dashboard,لوحة المأكولات والمشروبات,Panel de alimentos y bebidas,screens/PosDashboard.tsx,,translated
+F&B Manager,F&B Manager,مدير الأغذية والمشروبات,Gerente de alimentos y bebidas,,,translated
 F&B pack,F&B pack,حزمة الأغذية والمشروبات,Paquete de Alimentos y bebidas,,,translated
 F&B revenue,F&B revenue,إيراد الأغذية والمشروبات,Ingresos de alimentos y bebidas,,,translated
 F2 New · F3 Bills · F4 Settle · Esc menus,F2 New · F3 Bills · F4 Settle · Esc menus,F2 جديد · F3 الفواتير · F4 تسوية · Esc القوائم,F2 Nueva · F3 Cuentas · F4 Liquidar · Esc Menús,screens/POS.tsx,,translated
@@ -2148,6 +2152,7 @@ Finance · Currency Desk,Finance · Currency Desk,المالية · مكتب ا�
 Finance · My Till,Finance · My Till,المالية · صندوقي,Finanzas · Mi caja,,,translated
 Finance · Petty Cash,Finance · Petty Cash,المالية · النثرية,Finanzas · Caja chica,,,translated
 Finance · Reports,Finance · Reports,المالية · التقارير,Finanzas · Informes,,,translated
+Finance Manager,Finance Manager,المدير المالي,Gerente financiero,,,translated
 Finance or a Hotel Admin can change these.,Finance or a Hotel Admin can change these.,يمكن للمالية أو مدير الفندق تغيير هذه.,Finanzas o el administrador del hotel pueden cambiarlos.,components/CreditTermsEditor.tsx,,translated
 Find a dish…,Find a dish…,ابحث عن طبق…,Buscar un plato…,screens/RecipeManager.tsx,,translated
 "Find a room across every property you manage, and book into whichever has space.","Find a room across every property you manage, and book into whichever has space.",اعثر على غرفة عبر كل عقار تديره، واحجز حيث يوجد مكان.,Busque habitaciones en todos los alojamientos que administra y reserve donde haya disponibilidad.,screens/CRS.tsx,,translated
@@ -2260,6 +2265,7 @@ Front Desk Overview,Front Desk Overview,نظرة عامة على الاستقب�
 Front desk till,Front desk till,صندوق الاستقبال,Caja de recepción,,,translated
 Front office,Front office,المكتب الأمامي,Recepción,,,translated
 Front office and the room board agree.,Front office and the room board agree.,المكتب الأمامي ولوحة الغرف متطابقان.,Los datos de recepción coinciden con el panel de habitaciones.,screens/EndOfDayWizard.tsx,,translated
+Front Office Manager,Front Office Manager,مدير المكتب الأمامي,Gerente de recepción,,,translated
 Front Office pack,Front Office pack,حزمة المكتب الأمامي,Paquete de Recepción,,,translated
 "Front Office, Housekeeping, F&B and Hotel Manager, each on one page, emailed weekly.","Front Office, Housekeeping, F&B and Hotel Manager, each on one page, emailed weekly.",المكتب الأمامي والتدبير المنزلي والأغذية والمشروبات ومدير الفندق، كل منها في صفحة واحدة، تُرسل أسبوعيًا.,"Recepción, Limpieza, Alimentos y bebidas y Gerente del hotel, cada uno en una página, enviado cada semana.",,,translated
 "Front Office, Housekeeping, F&B, Engineering, Laundry and Hotel Manager — one page each, with week-over-week comparison, emailed weekly.","Front Office, Housekeeping, F&B, Engineering, Laundry and Hotel Manager — one page each, with week-over-week comparison, emailed weekly.",المكتب الأمامي والتدبير المنزلي والأغذية والمشروبات والهندسة والمغسلة ومدير الفندق — صفحة لكل منها مع مقارنة أسبوعية، تُرسل أسبوعيًا.,"Recepción, Limpieza, Alimentos y bebidas, Ingeniería, Lavandería y Gerente del hotel — una página cada uno, con comparación semana a semana, enviado cada semana.",,,translated
@@ -2295,6 +2301,7 @@ FX,FX,العملات الأجنبية,Divisas,screens/CurrencyDesk.tsx,,translat
 Gateway,Gateway,بوابة الدفع,Pasarela,,,translated
 GCC ID,GCC ID,هوية خليجية,Documento de identidad del CCG,,,translated
 Gender,Gender,الجنس,Género,screens/RegistrationCard.tsx,,translated
+General Manager,General Manager,المدير العام,Gerente general,,,translated
 Generate all invoices,Generate all invoices,إصدار كل الفواتير,Generar todas las facturas,components/CheckOutDialog.tsx,,translated
 Generate API key,Generate API key,إنشاء مفتاح API,Generar clave de API,screens/Developers.tsx,,translated
 Generate e-invoices,Generate e-invoices,إنشاء فواتير إلكترونية,Generar facturas electrónicas,,,translated
@@ -2700,6 +2707,7 @@ Items found on property; track storage and returns.,Items found on property; tra
 "Items logged as found, missing or damaged, by date found.","Items logged as found, missing or damaged, by date found.",الأغراض المسجلة كمعثور عليها أو مفقودة أو تالفة، حسب تاريخ العثور.,"Objetos registrados como encontrados, faltantes o dañados, por fecha de hallazgo.",,,translated
 Jain,Jain,جايني,Jainista,,,translated
 Japanese,Japanese,ياباني,Japonesa,,,translated
+Job title,Job title,المسمى الوظيفي,Cargo,screens/settings/AccessPages.tsx,,translated
 Journal by cashier and transaction code,Journal by cashier and transaction code,اليومية حسب الصراف ورمز المعاملة,Diario por cajero y código de transacción,,,translated
 Journal by kind / mode,Journal by kind / mode,اليومية حسب النوع / طريقة الدفع,Diario por tipo y medio de pago,screens/CashierShiftReport.tsx,,translated
 Journal by transaction code,Journal by transaction code,اليومية حسب رمز المعاملة,Diario por código de transacción,screens/Ledgers.tsx,,translated
@@ -4011,6 +4019,7 @@ Print void slips in the kitchen,Print void slips in the kitchen,طباعة قس�
 Print voucher,Print voucher,طباعة القسيمة,Imprimir vale,components/AllowanceRequests.tsx; screens/AllowanceVoucher.tsx; screens/FolioView.tsx; screens/VoidAllowanceReport.tsx,,translated
 Printed,Printed,مطبوع,Impreso,screens/BanquetDocument.tsx,,translated
 Printed from the audit pack of {when},Printed from the audit pack of {when},مطبوع من حزمة التدقيق بتاريخ {when},Impreso desde el paquete de auditoría de {when},screens/AuditPack.tsx,when,translated
+Printed on allowance vouchers they approve.,Printed on allowance vouchers they approve.,يُطبع على قسائم خصم التسوية التي يوافق عليها.,Se imprime en los vales de bonificación que apruebe.,screens/settings/AccessPages.tsx,,translated
 Printed on invoices. Add it when you have it.,Printed on invoices. Add it when you have it.,يُطبع على الفواتير. أضفه عند توفره.,Se imprime en las facturas. Agréguelo cuando esté disponible.,../../kamra/onboarding.py,,translated
 Printer name,Printer name,اسم الطابعة,Nombre de la impresora,screens/KitchenPrinters.tsx,,translated
 Printer removed.,Printer removed.,تمت إزالة الطابعة.,Impresora eliminada.,screens/KitchenPrinters.tsx,,translated
@@ -4181,6 +4190,7 @@ Recent runs,Recent runs,تشغيلات حديثة,Ejecuciones recientes,screens/
 Recent transactions,Recent transactions,معاملات حديثة,Transacciones recientes,screens/CashierTill.tsx,,translated
 Reception,Reception,الاستقبال,Recepción,,,translated
 "Reception or duty manager, day and night.","Reception or duty manager, day and night.",الاستقبال أو المدير المناوب، نهاراً وليلاً.,"Recepción o gerente de turno, de día y de noche.",,,translated
+Receptionist,Receptionist,موظف استقبال,Recepcionista,,,translated
 Recipe - one portion,Recipe - one portion,الوصفة، حصة واحدة,Receta para una porción,screens/BanquetCatalogue.tsx,,translated
 Recipes,Recipes,الوصفات,Recetas,screens/MenuItems.tsx; screens/RecipeManager.tsx,,translated
 Recipients (comma-separated emails),Recipients (comma-separated emails),المستلمون (بريد مفصول بفواصل),Destinatarios (correos separados por comas),screens/Reports.tsx,,translated
@@ -4727,6 +4737,8 @@ Shift report,Shift report,تقرير الوردية,Informe de turno,screens/Cas
 Shift Report,Shift Report,تقرير الوردية,Informe de turno,screens/CashierShiftReport.tsx,,translated
 Shifts,Shifts,الورديات,Turnos,,,translated
 Short,Short,عجز,Faltante,screens/banquet/Economics.tsx,,translated
+Short code,Short code,الرمز المختصر,Código corto,,,translated
+"Short code (on voucher numbers, e.g. SR)","Short code (on voucher numbers, e.g. SR)",الرمز المختصر (في أرقام القسائم، مثل SR),"Código corto (en los números de vale, p. ej., SR)",screens/Setup.tsx,,translated
 Short stable id (e.g. 1000). Becomes the document name - do not rename after use.,Short stable id (e.g. 1000). Becomes the document name - do not rename after use.,معرّف قصير وثابت (مثل 1000). يصبح اسم المستند، لا تغيّره بعد الاستخدام.,"Identificador corto y estable (p. ej., 1000). Se convierte en el nombre del documento; no lo cambie después de utilizarlo.",,,translated
 Short stable id (e.g. VOID-GUEST). Becomes the document name - do not rename after use.,Short stable id (e.g. VOID-GUEST). Becomes the document name - do not rename after use.,معرّف قصير وثابت (مثل VOID-GUEST). يصبح اسم المستند، لا تغيّره بعد الاستخدام.,"Identificador corto y estable (p. ej., VOID-GUEST). Se convierte en el nombre del documento; no lo cambie después de utilizarlo.",,,translated
 Short Term Rental,Short Term Rental,تأجير قصير الأجل,Alquiler de corta estancia,,,translated
@@ -5676,8 +5688,9 @@ You approve this as a supervisor.,You approve this as a supervisor.,أنت تو�
 You are using the hotel's default layout.,You are using the hotel's default layout.,أنت تستخدم التخطيط الافتراضي للفندق.,Estás utilizando el diseño predeterminado del hotel.,components/CustomizeToday.tsx,,translated
 You are using the standard layout.,You are using the standard layout.,أنت تستخدم التخطيط القياسي.,Está utilizando el diseño estándar.,components/CustomizeToday.tsx,,translated
 You are using your own layout.,You are using your own layout.,أنت تستخدم تخطيطك الخاص.,Está usando su propio diseño.,components/CustomizeToday.tsx,,translated
+You can change your name and job title. Ask another admin to change your access.,You can change your name and job title. Ask another admin to change your access.,يمكنك تغيير اسمك ومسماك الوظيفي. اطلب من مسؤول آخر تغيير صلاحياتك.,Puede cambiar su nombre y su cargo. Pida a otro administrador que cambie su acceso.,screens/settings/AccessPages.tsx,,translated
 "You can still check out. These are not on the guest's bill: when they are posted later they land on the departed stay's folio and have to be collected separately. To add them now, go back to the Bill step.","You can still check out. These are not on the guest's bill: when they are posted later they land on the departed stay's folio and have to be collected separately. To add them now, go back to the Bill step.",يمكنك تسجيل المغادرة. هذه غير مضافة إلى فاتورة النزيل: إذا أُضيفت لاحقًا فستذهب إلى حساب الإقامة المنتهية ويجب تحصيلها بشكل منفصل. لإضافتها الآن، ارجع إلى خطوة الفاتورة.,"Todavía puede registrar la salida. Estos cargos no están incluidos en la cuenta del huésped. Si se registran más adelante, se cargarán al folio de la estancia finalizada y deberán cobrarse por separado. Para agregarlos ahora, vuelva al paso «Cuenta».",components/CheckOutDialog.tsx,,translated
-You can't change your own access,You can't change your own access,لا يمكنك تغيير صلاحياتك,No puede cambiar su propio acceso,screens/settings/AccessPages.tsx,,translated
+You can't change your own access,You can't change your own access,لا يمكنك تغيير صلاحياتك,No puede cambiar su propio acceso,,,translated
 "You close it at the end of your shift with a cash count (Finance, Cashier).","You close it at the end of your shift with a cash count (Finance, Cashier).",تغلقه في نهاية نوبتك بعد عدّ النقد (المالية، أمين الصندوق).,"Lo cierra al final de su turno con un arqueo de caja (Finanzas, Cajero).",components/TillCard.tsx,,translated
 You don't have an API key yet. Generate one to call the REST API or connect an agent.,You don't have an API key yet. Generate one to call the REST API or connect an agent.,ليس لديك مفتاح API بعد. أنشئ مفتاحًا لاستدعاء REST API أو ربط وكيل.,Aún no tiene una clave de API. Genere una para utilizar la API REST o conectar un agente.,screens/Developers.tsx,,translated
 "You don't have permission for that, or your session ended - sign in again if this persists.","You don't have permission for that, or your session ended - sign in again if this persists.",ليست لديك صلاحية لذلك، أو انتهت جلستك. سجّل الدخول مجددًا إذا استمرت المشكلة.,"No tiene permiso para esta acción o su sesión terminó. Si el problema continúa, vuelva a iniciar sesión.",lib/api.ts,,translated
