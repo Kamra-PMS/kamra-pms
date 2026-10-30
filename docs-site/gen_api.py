@@ -152,7 +152,7 @@ def decorators(fn):
         elif name.endswith("require_perm") and isinstance(d, ast.Call):
             dt, pt = (literal(a) for a in d.args[:2])
             # the permission, then who holds it by default (Role Permission Manager)
-            roles = [f"{dt}: {pt}"] + perm_roles(dt, pt)
+            roles = [f"{dt}: {pt}", *perm_roles(dt, pt)]
         elif name.endswith("require_roles") and isinstance(d, ast.Call):
             roles = [literal(a) for a in d.args if literal(a)]
         elif name.endswith("require_it_admin"):
