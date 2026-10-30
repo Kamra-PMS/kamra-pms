@@ -770,8 +770,40 @@ def night_audit_pack(audit: str):
 		        "can_rebuild": run.status != "Draft",
 		        "message": _("No audit pack was saved for this run. Rebuild it "
 		                     "to print the night's reports.")}
-	return {"audit": audit, "run": run, "has_pack": True, "pack": pack,
+	return {"audit": audit, "run": run, "has_pack": True, "pack": _strip_figures(pack),
 	        "can_rebuild": True}
+
+
+# the money in a saved pack: the front desk runs End of Day but sees no
+# revenue, ADR, RevPAR, collections or balances; it keeps movement,
+# prechecks, its cashier sessions and the journal
+PACK_FIGURE_SECTIONS = ("statistics", "manager_flash", "audit_report",
+                        "revenue_by_transaction_code", "ledger_balances", "city_ledger",
+                        "overdue_ar", "deposit_ledger")
+PACK_FIGURE_REPORTS = ("audit_report", "manager_flash", "city_ledger", "deposit_ledger",
+                       "trial_balance", "occupancy")
+
+
+def _sees_figures() -> bool:
+	# the roles audit_report.night_audit_report admits, plus admins
+	from kamra.authz import ADMIN
+	return bool({"Finance", "Revenue Manager", "Night Auditor", "Kamra Agent", *ADMIN}
+	            & set(frappe.get_roles()))
+
+
+def _visible_reports() -> list[dict]:
+	hide = () if _sees_figures() else PACK_FIGURE_REPORTS
+	return [{"key": k, "title": t} for k, t in REPORTS if k not in hide]
+
+
+def _strip_figures(pack: dict) -> dict:
+	if _sees_figures():
+		return pack
+	for key in PACK_FIGURE_SECTIONS:
+		pack.pop(key, None)
+	pack["reports"] = _visible_reports()
+	pack["figures_hidden"] = True
+	return pack
 
 
 def _pack_summary_from_run(run) -> dict:
@@ -1453,7 +1485,7 @@ def _eod_state(property: str, audit: str | None = None) -> dict:
 		"blind_count": 0,
 		"high_balance_threshold": flt(_setting(property, "na_high_balance_threshold")),
 		"auto_audit_with_blockers": _setting(property, "na_auto_audit_with_blockers"),
-		"reports": [{"key": k, "title": t} for k, t in REPORTS],
+		"reports": _visible_reports(),
 		"stuck_date": stuck,
 		"open_business_date": get_business_date(property),
 	}

@@ -151,6 +151,10 @@ def _balances(property: str, d) -> list[dict]:
 	ledger_balances = _raw(guarded)
 	before = {r["ledger"]: r for r in ledger_balances(property, str(add_days(d, -1)))["ledgers"]}
 	after = {r["ledger"]: r for r in ledger_balances(property, str(d))["ledgers"]}
+	# the city ledger is what companies owe: City Ledger Entry, as the
+	# Receivables screen and the credit limit check read it, so a company
+	# payment not yet applied to a folio counts too
+	before["AR"], after["AR"] = _city_ledger(property, add_days(d, -1)), _city_ledger(property, d)
 	return [{
 		"ledger": key, "label": label,
 		"brought_forward": round(before[key]["balance"], 2),
@@ -158,6 +162,14 @@ def _balances(property: str, d) -> list[dict]:
 		"credit": round(after[key]["credit"] - before[key]["credit"], 2),
 		"carried_forward": round(after[key]["balance"], 2),
 	} for key, label in LEDGERS]
+
+
+def _city_ledger(property: str, d) -> dict:
+	debit, credit = frappe.db.sql(
+		"""SELECT COALESCE(SUM(debit), 0), COALESCE(SUM(credit), 0)
+		   FROM `tabCity Ledger Entry` WHERE property = %s AND posting_date <= %s""",
+		(property, str(d)))[0]
+	return {"debit": flt(debit), "credit": flt(credit), "balance": flt(debit) - flt(credit)}
 
 
 def build(property: str, d) -> dict:

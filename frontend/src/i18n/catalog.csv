@@ -918,7 +918,7 @@ Balance due,Balance due,الرصيد المستحق,Saldo pendiente,screens/Banq
 Balance due: {0},Balance due: {0},الرصيد المستحق: {0},Saldo pendiente: {0},,0,translated
 "Balance due: collect it from the row's Check out, or move the balance to a company or city ledger.","Balance due: collect it from the row's Check out, or move the balance to a company or city ledger.",الرصيد المستحق: حصّله من زر تسجيل المغادرة في الصف، أو انقل الرصيد إلى حساب شركة أو دفتر المدينة.,Saldo pendiente: cóbrelo desde Registrar salida en la fila o transfiéralo a una cuenta de empresa.,,,translated
 Balance payable at the hotel: {amount},Balance payable at the hotel: {amount},الرصيد المستحق الدفع في الفندق: {amount},Saldo a pagar en el hotel: {amount},,amount,translated
-Balances brought and carried forward,Balances brought and carried forward,,,screens/AuditPack.tsx,,needs_translation
+Balances brought and carried forward,Balances brought and carried forward,الأرصدة المرحّلة من السابق وإلى التالي,Saldos anteriores y a trasladar,screens/AuditPack.tsx,,translated
 Balances on departed stays,Balances on departed stays,أرصدة على إقامات مغادرة,Saldos pendientes de estancias finalizadas,,,translated
 Bank it,Bank it,إيداع في البنك,Depositar en el banco,screens/CashierBoard.tsx,,translated
 Bank Transfer,Bank Transfer,تحويل بنكي,Transferencia bancaria,,,translated
@@ -2187,8 +2187,8 @@ Follow up an enquiry after,Follow up an enquiry after,متابعة الاستف�
 Food,Food,الطعام,Alimentos,screens/banquet/Economics.tsx,,translated
 Food & Beverage,Food & Beverage,الطعام والمشروبات,Alimentos y bebidas,,,translated
 Food & beverage is taxed at the property's F&B rate.,Food & beverage is taxed at the property's F&B rate.,تخضع الأطعمة والمشروبات لنسبة ضريبة الأطعمة والمشروبات في المنشأة.,Los alimentos y bebidas tributan según la tasa de impuesto configurada para alimentos y bebidas en el alojamiento.,screens/FolioView.tsx,,translated
-Food and beverage by outlet,Food and beverage by outlet,,,screens/AuditPack.tsx,,needs_translation
-"Food and beverage come from the restaurant bills (paid at the outlet or charged to a room), split by whether the item is liquor. Year to date starts {d}.","Food and beverage come from the restaurant bills (paid at the outlet or charged to a room), split by whether the item is liquor. Year to date starts {d}.",,,screens/AuditPack.tsx,d,needs_translation
+Food and beverage by outlet,Food and beverage by outlet,الأطعمة والمشروبات حسب المنفذ,Alimentos y bebidas por punto de venta,screens/AuditPack.tsx,,translated
+"Food and beverage come from the restaurant bills (paid at the outlet or charged to a room), split by whether the item is liquor. Year to date starts {d}.","Food and beverage come from the restaurant bills (paid at the outlet or charged to a room), split by whether the item is liquor. Year to date starts {d}.",تأتي الأطعمة والمشروبات من فواتير المطعم (المدفوعة في المنفذ أو المحمّلة على غرفة)، مقسّمة حسب ما إذا كان الصنف مشروبًا كحوليًا. تبدأ السنة حتى تاريخه في {d}.,"Alimentos y bebidas salen de las cuentas del restaurante (pagadas en el punto de venta o cargadas a una habitación), separadas según si el artículo es licor. El acumulado del año empieza el {d}.",screens/AuditPack.tsx,d,translated
 Food type,Food type,نوع الطعام,Tipo de alimentación,screens/BanquetCatalogue.tsx,,translated
 for,for,لـ,para,lib/thermal.ts,,translated
 For,For,لـ,Para,components/StayInstructions.tsx; screens/BanquetDocument.tsx; screens/settings/cards.tsx,,translated
@@ -4425,6 +4425,7 @@ Room…,Room…,غرفة…,Habitación…,screens/HkLaundry.tsx; screens/Laundr
 Rooming list (,Rooming list (,قائمة نزلاء المجموعة (,Lista de huéspedes del grupo (,components/GroupControl.tsx,,translated
 Rooms,Rooms,الغرف,Habitaciones,../../kamra/onboarding.py; components/BookingDialog.tsx; components/GroupBookingDialog.tsx; components/GroupControl.tsx; screens/HkApp.tsx; screens/HousekeepingBoard.tsx; screens/Rooms.tsx,,translated
 Rooms · takeaway · delivery,Rooms · takeaway · delivery,الغرف · سفري · توصيل,Habitaciones · para llevar · entrega a domicilio,screens/POS.tsx,,translated
+Rooms (net of discounts),Rooms (net of discounts),الغرف (صافي الخصومات),Habitaciones (neto de descuentos),,,translated
 Rooms × dates with live rates,Rooms × dates with live rates,الغرف × التواريخ بأسعار مباشرة,Habitaciones por fecha con tarifas actuales,,,translated
 "Rooms are matched to each guest's type and preferences. Assigning places them now; ""Review"" flags a choice worth a second look.","Rooms are matched to each guest's type and preferences. Assigning places them now; ""Review"" flags a choice worth a second look.","تُطابق الغرف نوع كل ضيف وتفضيلاته. التعيين يضعهم الآن؛ ""مراجعة"" تعلّم اختياراً يستحق نظرة ثانية.","Las habitaciones se seleccionan según el tipo reservado y las preferencias del huésped. Al asignarlas, la habitación queda confirmada; «Revisar» indica una propuesta que conviene comprobar.",screens/TapeChart.tsx,,translated
 Rooms here:,Rooms here:,الغرف هنا:,Habitaciones en esta ubicación:,screens/PublicBooking.tsx,,translated
@@ -5137,7 +5138,7 @@ thin - check the discount,thin - check the discount,ضعيف: راجع الخص�
 Thinking,Thinking,جارٍ التفكير,Procesando,screens/Assistant.tsx,,translated
 Thinking...,Thinking...,جارٍ التفكير...,Pensando...,screens/TapeChart.tsx,,translated
 "This arrival is due on {v0}, after the business date {v1}.","This arrival is due on {v0}, after the business date {v1}.",موعد هذا الوصول {v0}، بعد تاريخ العمل {v1}.,"Esta llegada corresponde al {v0}, después de la fecha operativa {v1}.",,v0 v1,translated
-This audit was closed before the night audit report existed.,This audit was closed before the night audit report existed.,,,screens/AuditPack.tsx,,needs_translation
+This audit was closed before the night audit report existed.,This audit was closed before the night audit report existed.,أُغلق هذا التدقيق قبل وجود تقرير تدقيق الليل.,Esta auditoría se cerró antes de que existiera el informe de auditoría nocturna.,screens/AuditPack.tsx,,translated
 This bill,This bill,هذه الفاتورة,Esta cuenta,screens/pos/PosSidePanel.tsx,,translated
 "This blocks the audit. Fix it above, or override it with a reason - your name and the time are recorded on the audit.","This blocks the audit. Fix it above, or override it with a reason - your name and the time are recorded on the audit.",هذا يوقف التدقيق. أصلحه أعلاه، أو تجاوزه مع ذكر السبب، ويُسجل اسمك والوقت في التدقيق.,Esto bloquea la auditoría. Resuélvalo en la sección anterior o autorice una excepción indicando el motivo. Su nombre y la hora quedarán registrados en la auditoría.,screens/EndOfDayWizard.tsx,,translated
 "This blocks the audit. Resolve it, or acknowledge it with a reason - your name and the time are recorded on the audit.","This blocks the audit. Resolve it, or acknowledge it with a reason - your name and the time are recorded on the audit.",هذا يوقف التدقيق. عالجه أو أقرّ به مع ذكر السبب - يُسجّل اسمك والوقت في التدقيق.,Esto bloquea la auditoría. Resuélvalo o confirme la revisión indicando el motivo. Su nombre y la hora quedarán registrados en la auditoría.,,,translated

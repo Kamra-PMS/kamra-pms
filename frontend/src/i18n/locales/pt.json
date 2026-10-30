@@ -182,6 +182,7 @@
   ". The margin above is optimistic until they carry a cost: choose the menu's dishes, or put a cost rate on the service in the catalogue.": ". A margem acima é otimista até que tenham um custo: escolher os pratos do cardápio, ou colocar no catálogo uma taxa de custo do serviço.",
   ". The secret is shown once - copy it now.": ". O segredo é mostrado uma vez - copie-o agora.",
   ". There is no separate “create till” form - opening a session starts the shift.": ". Não existe um formulário separado de “criar caixa” - abrir uma sessão inicia o turno.",
+  "Rooms (net of discounts)": "Quartos (líquido de descontos)",
   "…or paste the rows here": "…ou cole as linhas aqui",
   "· in ": "· em ",
   "(complimentary)": "(cortesia)",

@@ -82,6 +82,20 @@ class AuditReportTestCase(AuditTestCase):
 		                       guest["brought_forward"] + guest["debit"] - guest["credit"], 2)
 		self.assertGreater(guest["debit"], 0)
 
+	def test_city_ledger_counts_unapplied_company_payments(self):
+		acc = frappe.get_doc({"doctype": "City Ledger Account", "property": PROP_A,
+		                      "company": "UT Co"}).insert(ignore_permissions=True,
+		                                                  ignore_links=True)
+		for day, kind, debit, credit in ((d(-1), "Invoice", 1000, 0), (TODAY, "Payment", 0, 400)):
+			frappe.get_doc({"doctype": "City Ledger Entry", "account": acc.name,
+			                "property": PROP_A, "posting_date": day, "kind": kind,
+			                "debit": debit, "credit": credit}).insert(ignore_permissions=True)
+		ar = next(b for b in audit_report.build(PROP_A, TODAY)["balances"]
+		          if b["ledger"] == "AR")
+		# the payment is on no folio yet, but the company owes 400 less
+		self.assertEqual((ar["brought_forward"], ar["debit"], ar["credit"], ar["carried_forward"]),
+		                 (1000, 0, 400, 600))
+
 	def test_desk_and_banquet_folio_lines_count_once(self):
 		from kamra import api
 		from kamra.tests.audit_fixtures import ensure_user, guest_folio
@@ -103,3 +117,46 @@ class AuditReportTestCase(AuditTestCase):
 			self.assertTrue(audit_report.night_audit_report(PROP_A, TODAY)["balances"])
 		finally:
 			frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- restore
+
+	def test_audit_pack_has_no_money_for_the_desk(self):
+		import json
+
+		from kamra import night_audit
+		from kamra.tests.audit_fixtures import ensure_user
+		pack = {"business_date": TODAY, "in_house": [], "journal": {"rows": []},
+		        **{k: {"x": 1} for k in night_audit.PACK_FIGURE_SECTIONS},
+		        "reports": [{"key": k, "title": t} for k, t in night_audit.REPORTS]}
+		run = frappe.get_doc({
+			"doctype": "Night Audit Run", "property": PROP_A, "business_date": TODAY,
+			"status": "Completed", "report_pack": json.dumps(pack),
+		}).insert(ignore_permissions=True).name
+		ensure_user("ut-desk-pack@kamra.local", ["Front Desk"])
+		frappe.set_user("ut-desk-pack@kamra.local")  # nosemgrep: frappe-setuser -- the desk
+		try:
+			out = night_audit.night_audit_pack(run)["pack"]
+		finally:
+			frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- restore
+		self.assertTrue(out["figures_hidden"])
+		self.assertNotIn("audit_report", out)
+		self.assertNotIn("manager_flash", out)
+		self.assertIn("in_house", out)
+		self.assertNotIn("audit_report", {r["key"] for r in out["reports"]})
+		self.assertIn("audit_report", night_audit.night_audit_pack(run)["pack"])
+
+	def test_backfill_pos_business_date(self):
+		from kamra.patches.v46.backfill_pos_order_business_date import execute
+		outlet, dosa, _gin = self.outlet()
+		make_reservation(PROP_A, self.rt, TODAY, d(2), status="Checked In", room=self.room)
+		to_room = pos.create_order(outlet, [{"menu_item": dosa, "qty": 1}],
+		                           room=self.room, order_type="Room Service")["order"]
+		pos.deliver_order(to_room)
+		paid = pos.create_order(outlet, [{"menu_item": dosa, "qty": 1}],
+		                        table_no="T1", order_type="Dine In")["order"]
+		pos.pay_order(paid, "Cash")
+		for o in (to_room, paid):
+			frappe.db.set_value("POS Order", o, {"business_date": None,
+			                                     "modified": "2020-01-05 23:30:00"},
+			                    update_modified=False)
+		execute()
+		self.assertEqual(str(frappe.db.get_value("POS Order", to_room, "business_date")), TODAY)
+		self.assertEqual(str(frappe.db.get_value("POS Order", paid, "business_date")), "2020-01-05")

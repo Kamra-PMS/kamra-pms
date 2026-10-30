@@ -595,7 +595,7 @@ function AuditReport({ p }: { p: Pack }) {
         cols={[
           { key: "label", label: "" },
           col("rooms_sold", "Room nights", "num"), col("occupancy_pct", "Occ %", "num"),
-          col("room_revenue", "Rooms"), col("adr", "ADR"), col("revpar", "RevPAR"),
+          col("room_revenue", "Rooms (net of discounts)"), col("adr", "ADR"), col("revpar", "RevPAR"),
           col("food", "Food"), col("beverage", "Beverage"), col("banquets", "Banquets"),
           col("meal_plan_minibar", "Meal plan & minibar"), col("other", "Other"),
           col("total_revenue", "Total"),
@@ -720,7 +720,10 @@ export function AuditPackView({ audit, embedded = false }: { audit: string; embe
       </Card>
     )
   const p = data.pack
-  const shown = all ? REPORTS : REPORTS.filter((r) => r.key === active)
+  // the server leaves the money reports out of the pack for the front desk
+  const reports = p.reports ? REPORTS.filter((r) => p.reports.some((x: { key: string }) => x.key === r.key)) : REPORTS
+  const current = reports.some((r) => r.key === active) ? active : reports[0]?.key
+  const shown = all ? reports : reports.filter((r) => r.key === current)
   return (
     <div className={cn("grid gap-4 print:block", !embedded && "lg:grid-cols-[260px_1fr]", embedded && "2xl:grid-cols-[240px_1fr]")}>
       <Card className="h-fit p-2 print:hidden">
@@ -728,7 +731,7 @@ export function AuditPackView({ audit, embedded = false }: { audit: string; embe
           {t("Final reports")}
         </div>
         <ul className={cn(embedded && "flex flex-wrap gap-1 2xl:block")}>
-          {REPORTS.map((r) => (
+          {reports.map((r) => (
             <li key={r.key}>
               <button
                 type="button"
@@ -736,7 +739,7 @@ export function AuditPackView({ audit, embedded = false }: { audit: string; embe
                 className={cn(
                   "rounded-lg px-2 py-1.5 text-start text-sm hover:bg-zinc-100",
                   embedded ? "2xl:w-full" : "w-full",
-                  active === r.key && "bg-brand-50 font-medium text-brand-700",
+                  current === r.key && "bg-brand-50 font-medium text-brand-700",
                 )}
               >
                 {t(r.title)}

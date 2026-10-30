@@ -2361,6 +2361,7 @@
   "Build a report, save it, run it again, or have Kamra email it on a schedule.": "Cree un informe, guárdelo, vuelva a ejecutarlo o programe que Kamra lo envíe por correo.",
   "Delete this saved report?": "¿Eliminar este informe guardado?",
   "Report emailed.": "Informe enviado por correo.",
+  "Rooms (net of discounts)": "Habitaciones (neto de descuentos)",
   "Share with property": "Compartir con la propiedad",
   "Email schedule": "Programación de correo",
   "Recipients (comma-separated emails)": "Destinatarios (correos separados por comas)",

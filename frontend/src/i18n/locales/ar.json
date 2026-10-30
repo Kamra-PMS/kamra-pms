@@ -925,6 +925,7 @@
   "Build a report, save it, run it again, or have Kamra email it on a schedule.": "أنشئ تقريراً واحفظه وشغّله مجدداً أو اجعل كامرا يرسله بالبريد وفق جدول.",
   "Delete this saved report?": "حذف هذا التقرير المحفوظ؟",
   "Report emailed.": "تم إرسال التقرير بالبريد.",
+  "Rooms (net of discounts)": "الغرف (صافي الخصومات)",
   "Share with property": "مشاركة مع العقار",
   "Email schedule": "جدولة البريد",
   "Recipients (comma-separated emails)": "المستلمون (بريد مفصول بفواصل)",
