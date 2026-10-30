@@ -36,7 +36,7 @@ export default function HelpPanel() {
     call<{ enabled: boolean }>("kamra.assistant.assistant_status", {
       property: getCurrentProperty(),
     })
-      .then((s) => setEnabled(s.enabled))
+      .then((s) => setEnabled(s?.enabled === true))
       .catch(() => setEnabled(false))
   }, [])
 
