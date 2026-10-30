@@ -11540,6 +11540,48 @@
    ]
   },
   {
+   "name": "Night audit report (day, MTD, YTD)",
+   "item": [
+    {
+     "name": "night_audit_report",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.audit_report.night_audit_report",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.audit_report.night_audit_report"
+       ]
+      },
+      "description": "The night audit report for a business date (default: the last one\nclosed): rooms, food and beverage separately, each outlet, banquets,\nmeal plans and minibar, other income, for the day, month to date and\nyear to date, plus each ledger's balance brought and carried forward.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"date\": \"2026-08-01\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
    "name": "Custom reports (builder, save, email)",
    "item": [
     {

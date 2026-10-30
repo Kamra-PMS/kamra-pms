@@ -96,6 +96,8 @@ class POSOrder(Document):
 		old_status = previous.status if previous else None
 		if self.status != "Delivered" or old_status == "Delivered":
 			return
+		from kamra.business_date import get_business_date
+		self.db_set("business_date", get_business_date(self.property), update_modified=False)
 		if self.posted_to_folio or not self.reservation:
 			return
 		# settled at the outlet (cash, card...) - never also post to the room

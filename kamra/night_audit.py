@@ -777,10 +777,11 @@ def night_audit_pack(audit: str):
 # the money in a saved pack: the front desk runs End of Day but sees no
 # revenue, ADR, RevPAR, collections or balances (kamra.dashboards.sees_figures);
 # it keeps movement, prechecks, its cashier sessions and the journal
-PACK_FIGURE_SECTIONS = ("statistics", "manager_flash", "revenue_by_transaction_code",
-                        "ledger_balances", "city_ledger", "overdue_ar", "deposit_ledger")
-PACK_FIGURE_REPORTS = ("manager_flash", "city_ledger", "deposit_ledger", "trial_balance",
-                       "occupancy")
+PACK_FIGURE_SECTIONS = ("statistics", "manager_flash", "audit_report",
+                        "revenue_by_transaction_code", "ledger_balances", "city_ledger",
+                        "overdue_ar", "deposit_ledger")
+PACK_FIGURE_REPORTS = ("audit_report", "manager_flash", "city_ledger", "deposit_ledger",
+                       "trial_balance", "occupancy")
 
 
 def _visible_reports() -> list[dict]:
@@ -1245,6 +1246,8 @@ def build_pack(property: str, bd: str, *, checks: list[dict],
 	                  "total_rooms": total_rooms})
 	_section(pack, "manager_flash",
 	         lambda: _raw(reports.manager_flash)(property, bd))
+	from kamra import audit_report
+	_section(pack, "audit_report", lambda: audit_report.build(property, bd))
 	_section(pack, "revenue_by_transaction_code",
 	         lambda: _raw(ledger.journal_by_transaction_code)(property, bd))
 	_section(pack, "ledger_balances",
@@ -1271,6 +1274,7 @@ def build_pack(property: str, bd: str, *, checks: list[dict],
 # The final reports the End of Day prints, in order. Each reads its section
 # of the saved pack, so history shows exactly what was printed.
 REPORTS = (
+	("audit_report", "Night audit report"),
 	("manager_flash", "Manager's flash"),
 	("journal", "Journal by cashier and transaction code"),
 	("cashier_summary", "Cashier summary"),

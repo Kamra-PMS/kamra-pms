@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function - the same governed layer
-the UI and the AI use. **421 endpoints**, generated from the source
+the UI and the AI use. **422 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -4497,6 +4497,25 @@ breached if it was resolved after due_by, or is still open past due_by.
 | `property` | yes |  |
 | `from_date` | yes |  |
 | `to_date` | yes |  |
+
+
+## Night audit report (day, MTD, YTD)
+
+> Read only. Food and beverage come from the restaurant bills; the year starts where the country pack says.
+
+### `kamra.audit_report.night_audit_report`
+
+**GET/POST** · roles: `Finance`, `Revenue Manager`, `Night Auditor`, `Kamra Agent`
+
+The night audit report for a business date (default: the last one
+closed): rooms, food and beverage separately, each outlet, banquets,
+meal plans and minibar, other income, for the day, month to date and
+year to date, plus each ledger's balance brought and carried forward.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `date` | no | `None` |
 
 
 ## Custom reports (builder, save, email)

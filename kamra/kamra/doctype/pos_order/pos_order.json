@@ -47,7 +47,8 @@
   "cancel_reason",
   "cancelled_by",
   "cancelled_at",
-  "cancel_approved_by"
+  "cancel_approved_by",
+  "business_date"
  ],
  "fields": [
   {
@@ -298,12 +299,19 @@
    "options": "User",
    "read_only": 1,
    "description": "The supervisor who approved cancelling a bill the kitchen had already started."
+  },
+  {
+   "fieldname": "business_date",
+   "fieldtype": "Date",
+   "label": "Business Date",
+   "read_only": 1,
+   "description": "The business date the bill closed on: the night audit report counts it on this day"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-20 12:00:00.000000",
+ "modified": "2026-10-29 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "POS Order",

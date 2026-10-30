@@ -574,7 +574,71 @@ function Exceptions({ p }: { p: Pack }) {
   )
 }
 
+/* Day, month to date and year to date side by side; packs saved before
+   this report existed simply have no audit_report section. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Period = Record<string, any>
+function AuditReport({ p }: { p: Pack }) {
+  const { t } = useT()
+  const r = p.audit_report
+  if (!r) return <p className="text-sm text-zinc-500">{t("This audit was closed before the night audit report existed.")}</p>
+  const periods: Period[] = r.periods || []
+  const col = (key: string, label: string, kind: "num" | "money" = "money") => ({ key, label, kind })
+  const outlets = new Map<string, Period>()
+  periods.forEach((per, i) => (per.outlets || []).forEach((o: Period) => {
+    const row = outlets.get(o.outlet) || { name: o.name }
+    row[`food${i}`] = o.food
+    row[`beverage${i}`] = o.beverage
+    outlets.set(o.outlet, row)
+  }))
+  return (
+    <div>
+      <DataTable
+        cols={[
+          { key: "label", label: "" },
+          col("rooms_sold", "Room nights", "num"), col("occupancy_pct", "Occ %", "num"),
+          col("room_revenue", "Rooms (net of discounts)"), col("adr", "ADR"), col("revpar", "RevPAR"),
+          col("food", "Food"), col("beverage", "Beverage"), col("banquets", "Banquets"),
+          col("meal_plan_minibar", "Meal plan & minibar"), col("other", "Other"),
+          col("total_revenue", "Total"),
+        ]}
+        rows={periods.map((per) => ({ ...per, label: t(per.label) }))}
+      />
+      <Sub>{t("Food and beverage by outlet")}</Sub>
+      <DataTable
+        cols={[
+          { key: "name", label: "Outlet" },
+          col("food0", "Food, day"), col("beverage0", "Beverage, day"),
+          col("food1", "Food, MTD"), col("beverage1", "Beverage, MTD"),
+          col("food2", "Food, YTD"), col("beverage2", "Beverage, YTD"),
+        ]}
+        rows={[...outlets.values()]}
+      />
+      <Sub>{t("Banquets")}</Sub>
+      <DataTable
+        cols={[
+          { key: "label", label: "" }, col("functions", "Functions", "num"),
+          col("fnb", "Food & beverage"), col("hall", "Hall"), col("other", "Other"), col("total", "Total"),
+        ]}
+        rows={periods.map((per) => ({ label: t(per.label), ...per.banquet }))}
+      />
+      <Sub>{t("Balances brought and carried forward")}</Sub>
+      <DataTable
+        cols={[
+          { key: "label", label: "" }, col("brought_forward", "Brought forward"),
+          col("debit", "Debits today"), col("credit", "Credits today"), col("carried_forward", "Carried forward"),
+        ]}
+        rows={(r.balances || []).map((b: Period) => ({ ...b, label: t(b.label) }))}
+      />
+      <p className="mt-2 text-xs text-zinc-500">
+        {t("Food and beverage come from the restaurant bills (paid at the outlet or charged to a room), split by whether the item is liquor. Year to date starts {d}.", { d: fmtDay(periods[2]?.from_date) })}
+      </p>
+    </div>
+  )
+}
+
 export const REPORTS: { key: string; title: string; Body: (props: { p: Pack }) => ReactNode }[] = [
+  { key: "audit_report", title: "Night audit report", Body: AuditReport },
   { key: "manager_flash", title: "Manager's flash", Body: ManagerFlash },
   { key: "journal", title: "Journal by cashier and transaction code", Body: Journal },
   { key: "cashier_summary", title: "Cashier summary", Body: CashierSummary },

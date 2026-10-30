@@ -1714,6 +1714,19 @@ TOOLS: tuple[ToolSpec, ...] = (
 		group="Briefings",
 	),
 	_t(
+		"night_audit_report",
+		"audit_report.night_audit_report",
+		"""The night audit report for a business date (default: the last one
+		closed): room nights, occupancy, ADR, RevPAR, food and beverage apart,
+		each outlet, banquets, meal plans and minibar, other income, for the
+		day, month to date and year to date from the start of the property's
+		financial year, and the guest, advance and city ledger balances
+		brought and carried forward. Read-only.""",
+		{"date": _p("string", format="date")},
+		property=True,
+		group="Briefings",
+	),
+	_t(
 		"cashier_shift_report",
 		"cashier.shift_report",
 		"""What each cashier took on a business date (or business_date to

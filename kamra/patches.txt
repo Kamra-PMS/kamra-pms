@@ -34,3 +34,4 @@ kamra.patches.v43.backfill_checkin_record
 kamra.patches.v44.grant_mcp_manage_to_connected_users
 kamra.patches.v45.fix_folio_payment_currency
 kamra.patches.v46.ledger_custom_perms_readonly
+kamra.patches.v46.backfill_pos_order_business_date
