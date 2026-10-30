@@ -121,8 +121,24 @@ def void_allowance_report(
 	]
 
 
+def movement_counts(property: str, start: str, date: str) -> dict:
+	"""Arrivals, departures, no-shows over start..date, and who is in house."""
+	def count(field, statuses):
+		return frappe.db.count("Reservation", {
+			"property": property, field: ("between", [start, date]),
+			"status": ("in", statuses)})
+
+	return {
+		"arrivals": count("check_in_date", ["Confirmed", "Checked In"]),
+		"departures": count("check_out_date", ["Checked In", "Checked Out"]),
+		"in_house": frappe.db.count("Reservation", {
+			"property": property, "status": "Checked In"}),
+		"no_shows": count("check_in_date", ["No Show"]),
+	}
+
+
 @frappe.whitelist()
-@require_roles("Finance", "Front Desk", "Night Auditor", "Kamra Agent")
+@require_roles("Finance", "Revenue Manager", "Night Auditor", "Kamra Agent")
 def manager_flash(property: str, date: str | None = None,
                   from_date: str | None = None):
 	"""The daily flash: yesterday's performance, month to date, today's
@@ -138,18 +154,7 @@ def manager_flash(property: str, date: str | None = None,
 	month = _days(property, getdate(date).replace(day=1), getdate(date), total_rooms)
 	days = _days(property, getdate(start), getdate(date), total_rooms)
 
-	def count(field, statuses):
-		return frappe.db.count("Reservation", {
-			"property": property, field: ("between", [start, date]),
-			"status": ("in", statuses)})
-
-	movement = {
-		"arrivals": count("check_in_date", ["Confirmed", "Checked In"]),
-		"departures": count("check_out_date", ["Checked In", "Checked Out"]),
-		"in_house": frappe.db.count("Reservation", {
-			"property": property, "status": "Checked In"}),
-		"no_shows": count("check_in_date", ["No Show"]),
-	}
+	movement = movement_counts(property, start, date)
 
 	from kamra.api import cash_summary
 	collections = cash_summary(property, start, date)
@@ -198,6 +203,35 @@ def _sum_days(days: list[dict], total_rooms: int) -> dict:
 	        "adr": round(tot["room_revenue"] / tot["rooms_sold"], 0) if tot["rooms_sold"] else 0,
 	        "revpar": round(tot["room_revenue"] / n, 0) if n else 0,
 	        "revpax": round(tot["total_revenue"] / tot["pax"], 0) if tot["pax"] else 0}
+
+
+def range_stats(property: str, start, end, total_rooms: int) -> dict:
+	"""start..end as one span in a single query: the totals _sum_days(_days())
+	would give (a room sold is one reservation on one posting date), without
+	a query per day - year to date is a year of days."""
+	row = frappe.db.sql(
+		"""
+		SELECT
+		  COUNT(DISTINCT CASE WHEN fc.charge_type = 'Room' THEN CONCAT(
+		        COALESCE(fc.reservation, f.reservation), '|', fc.posting_date) END)
+		        AS rooms_sold,
+		  COALESCE(SUM(CASE WHEN fc.charge_type = 'Room'
+		        THEN fc.amount ELSE 0 END), 0) AS room_revenue,
+		  COALESCE(SUM(CASE WHEN fc.charge_type NOT IN ('Discount', 'Opening Balance')
+		        THEN fc.amount ELSE 0 END), 0) AS total_revenue
+		FROM `tabFolio Charge` fc
+		JOIN `tabFolio` f ON fc.parent = f.name
+		WHERE f.property = %(p)s AND fc.posting_date BETWEEN %(s)s AND %(e)s
+		""",
+		{"p": property, "s": str(start), "e": str(end)}, as_dict=True)[0]
+	sold = int(row.rooms_sold or 0)
+	rev = float(row.room_revenue or 0)
+	n = total_rooms * ((getdate(end) - getdate(start)).days + 1)
+	return {"rooms_sold": sold, "room_revenue": rev,
+	        "total_revenue": float(row.total_revenue or 0),
+	        "occupancy_pct": round(100 * sold / n, 1) if n else 0,
+	        "adr": round(rev / sold, 0) if sold else 0,
+	        "revpar": round(rev / n, 0) if n else 0}
 
 
 def _month_bounds(period: str):

@@ -10,6 +10,9 @@ import { useAuth } from "../lib/auth"
 
 const VOID_REPORT_ROLES = ["Finance", "Hotel Admin", "System Manager", "Administrator"]
 const EDIT_ROLES = ["Finance", "Hotel Admin", "System Manager", "Administrator"]
+// kamra.reports.manager_flash: the hotel's figures, not the front desk's
+const FLASH_ROLES = ["Finance", "Revenue Manager", "Night Auditor", "Kamra Agent", "Hotel Admin",
+  "System Manager", "Administrator"]
 
 type Tab = "saved" | "builder" | "packs" | "flash"
 
@@ -472,7 +475,7 @@ export default function Reports({ initialTab = "saved" }: { initialTab?: Tab }) 
     { id: "saved", label: t("My reports") },
     { id: "builder", label: t("New report") },
     { id: "packs", label: t("Department packs") },
-    { id: "flash", label: t("Manager flash") },
+    ...(roles.some((r) => FLASH_ROLES.includes(r)) ? [{ id: "flash" as Tab, label: t("Manager flash") }] : []),
   ]
 
   return (

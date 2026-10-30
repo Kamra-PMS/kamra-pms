@@ -1,5 +1,6 @@
 <<<<<<<< HEAD:kamra/public/frontend/assets/stat-card-DrZW9k6F.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/stat-card-DrZW9k6F.js
+<<<<<<<< HEAD:kamra/public/frontend/assets/stat-card-DrZW9k6F.js
 import{j as s,L as $}from"./vendor-D6bHyl-8.js";import{b as k,i as z,t as N,e as v}from"./index-B3i2Wflk.js";import{A as M}from"./arrow-up-right-BrdATTMK.js";/**
 ========
 import{j as s,L as $}from"./vendor-D6bHyl-8.js";import{b as k,i as z,t as N,e as v}from"./index-DwNNU3P0.js";import{A as M}from"./arrow-up-right-971FtmbA.js";/**
@@ -7,6 +8,9 @@ import{j as s,L as $}from"./vendor-D6bHyl-8.js";import{b as k,i as z,t as N,e as
 ========
 import{j as s,L as $}from"./vendor-D6bHyl-8.js";import{b as k,j as z,t as N,e as v}from"./index-CTnWcLsp.js";import{A as M}from"./arrow-up-right-BoNJMEFA.js";/**
 >>>>>>>> origin/fix/upi-india-pack:kamra/public/frontend/assets/stat-card-Dm0VBPS_.js
+========
+import{j as s,L as $}from"./vendor-D6bHyl-8.js";import{b as k,i as z,t as N,e as v}from"./index-BBOVPGnf.js";import{A as M}from"./arrow-up-right-BsWJUeY4.js";/**
+>>>>>>>> origin/fix/dashboard-roles:kamra/public/frontend/assets/stat-card-BerRp4k6.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.

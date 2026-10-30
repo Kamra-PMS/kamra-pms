@@ -246,6 +246,22 @@ unassigned bookings may sell. `0` never oversells.
 The desk picks the agent on the booking form, and Kamra works out the
 commission on that agent's bookings.
 
+## This year against last year
+
+The **Revenue Dashboard** (Finance, Revenue Manager, the night auditor and
+managers) has a **This year against last year** table. Pick **Today**,
+**Month to date**, **Year to date** or **Next 90 days**; each row shows
+occupancy, rooms sold, room revenue, total revenue, ADR and RevPAR for
+this year, for the same dates one year back, and the change in percent.
+
+- **Year to date** starts at the country pack's financial year: 1 April in
+  India, 1 January where the pack sets none.
+- **Next 90 days** compares rooms on the books (confirmed and in house)
+  with what actually sold on the same dates last year. Future revenue is
+  not shown: it is posted night by night.
+- Last year's figures come from posted folio charges, the same numbers as
+  the Manager's flash. **n/a** means nothing was sold last year.
+
 ## Settings
 
 | Setting | Where | Default | What it does |

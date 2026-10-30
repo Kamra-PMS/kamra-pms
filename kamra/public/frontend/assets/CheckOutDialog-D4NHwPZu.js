@@ -1,5 +1,6 @@
 <<<<<<<< HEAD:kamra/public/frontend/assets/CheckOutDialog-D4NHwPZu.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/CheckOutDialog-D4NHwPZu.js
+<<<<<<<< HEAD:kamra/public/frontend/assets/CheckOutDialog-D4NHwPZu.js
 import{r as i,j as t}from"./vendor-D6bHyl-8.js";import{b as nt,f as x,u as Me,w as lt,d as it,s as D,B as b,t as C,e as F,E as ot,P as rt,m as ct,a8 as dt,i as mt}from"./index-B3i2Wflk.js";import{S as ut}from"./sheet-DLHqGkrv.js";import{u as ht,S as pt,a as xt,T as $e}from"./CheckInDialog-BOdn1WJ8.js";import{L as ft}from"./loader-circle-CTPfSWDM.js";import{C as ie}from"./check-BVGXkByb.js";import{T as yt}from"./triangle-alert-SK9yi8mQ.js";/**
 ========
 import{r as i,j as t}from"./vendor-D6bHyl-8.js";import{b as nt,f as x,u as Me,x as lt,d as it,s as D,B as b,t as C,e as F,E as ot,P as rt,m as ct,a8 as dt,i as mt}from"./index-DwNNU3P0.js";import{S as ut}from"./sheet-CdsIcees.js";import{u as ht,S as pt,a as xt,T as $e}from"./CheckInDialog-DX1-Zutr.js";import{L as ft}from"./loader-circle-BGDRPlNG.js";import{C as ie}from"./check-Cw_5SW30.js";import{T as yt}from"./triangle-alert-B8uoa2Dq.js";/**
@@ -7,6 +8,9 @@ import{r as i,j as t}from"./vendor-D6bHyl-8.js";import{b as nt,f as x,u as Me,x 
 ========
 import{r as i,j as t}from"./vendor-D6bHyl-8.js";import{b as nt,f as x,u as Me,y as lt,d as it,s as D,B as b,t as C,e as F,E as ot,P as rt,m as ct,a9 as dt,j as mt}from"./index-CTnWcLsp.js";import{S as ut}from"./sheet-DEHr7jy7.js";import{u as ht,S as pt,a as xt,T as $e}from"./CheckInDialog-2hdqvKh5.js";import{L as ft}from"./loader-circle-C0RwWsJV.js";import{C as ie}from"./check-Dba7xAWZ.js";import{T as yt}from"./triangle-alert-CcmPGvZt.js";/**
 >>>>>>>> origin/fix/upi-india-pack:kamra/public/frontend/assets/CheckOutDialog-gDUzNwAH.js
+========
+import{r as i,j as t}from"./vendor-D6bHyl-8.js";import{b as nt,f as x,u as Me,w as lt,d as it,s as D,B as b,t as C,e as F,E as ot,P as rt,m as ct,a8 as dt,i as mt}from"./index-BBOVPGnf.js";import{S as ut}from"./sheet-CFP1tZr0.js";import{u as ht,S as pt,a as xt,T as $e}from"./CheckInDialog-DOx7Gq-M.js";import{L as ft}from"./loader-circle-D17AAljC.js";import{C as ie}from"./check-BUPJNocQ.js";import{T as yt}from"./triangle-alert-CSC0K6LR.js";/**
+>>>>>>>> origin/fix/dashboard-roles:kamra/public/frontend/assets/CheckOutDialog-D-9YmtrS.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.

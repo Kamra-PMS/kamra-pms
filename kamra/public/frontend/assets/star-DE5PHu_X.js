@@ -1,5 +1,6 @@
 <<<<<<<< HEAD:kamra/public/frontend/assets/star-DE5PHu_X.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/star-DE5PHu_X.js
+<<<<<<<< HEAD:kamra/public/frontend/assets/star-DE5PHu_X.js
 import{b as a}from"./index-B3i2Wflk.js";/**
 ========
 import{b as a}from"./index-DwNNU3P0.js";/**
@@ -7,6 +8,9 @@ import{b as a}from"./index-DwNNU3P0.js";/**
 ========
 import{b as a}from"./index-CTnWcLsp.js";/**
 >>>>>>>> origin/fix/upi-india-pack:kamra/public/frontend/assets/star-BuzPQAuH.js
+========
+import{b as a}from"./index-BBOVPGnf.js";/**
+>>>>>>>> origin/fix/dashboard-roles:kamra/public/frontend/assets/star-x2G7-umG.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.

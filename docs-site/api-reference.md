@@ -4379,7 +4379,7 @@ the room types with space for these dates and their all-in rate.
 
 ### `kamra.dashboards.property_dashboard`
 
-**GET/POST** · roles: `Front Desk`, `Finance`, `Revenue Manager`, `Hotel Admin`, `Kamra Agent`
+**GET/POST** · roles: `Front Desk`, `Finance`, `Revenue Manager`, `Night Auditor`, `Hotel Admin`, `Kamra Agent`
 
 Everything one hotel's dashboard needs, by department.
 
@@ -4419,7 +4419,7 @@ cannot drift from what actually happened.
 
 ### `kamra.reports.manager_flash`
 
-**GET/POST** · roles: `Finance`, `Front Desk`, `Night Auditor`, `Kamra Agent`
+**GET/POST** · roles: `Finance`, `Revenue Manager`, `Night Auditor`, `Kamra Agent`
 
 The daily flash: yesterday's performance, month to date, today's
 movement, collections by mode, and the 7-day outlook. With from_date,

@@ -1,5 +1,6 @@
 <<<<<<<< HEAD:kamra/public/frontend/assets/MenuItems-BZh7dLVs.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/MenuItems-BZh7dLVs.js
+<<<<<<<< HEAD:kamra/public/frontend/assets/MenuItems-BZh7dLVs.js
 import{r,j as e}from"./vendor-D6bHyl-8.js";import{R as A,m as K}from"./configs-CMDPueCu.js";import{b as U,i as P,t as s,c as H,e as R,B as h,g as M,f as z,s as F,X as Q,S as V,Q as W,J}from"./index-B3i2Wflk.js";import{l as X}from"./resource-DLz1Dbte.js";import{S as G}from"./sheet-DLHqGkrv.js";import{B as C}from"./badge-BYCHF313.js";import{C as Y}from"./check-BVGXkByb.js";import{D as Z}from"./download-DCOw4-_K.js";import{U as D}from"./upload-BnJJP-To.js";import{T as ee}from"./trash-2-BIKDb3Jw.js";import{C as se}from"./cooking-pot-DAoECi4_.js";import"./card-P9sLO7kR.js";import"./ImageField-DSJXuSi6.js";import"./columns-3-qHHdSKtF.js";/**
 ========
 import{r,j as e}from"./vendor-D6bHyl-8.js";import{R as A,m as K}from"./configs-s9KGzGCJ.js";import{b as U,i as P,t as s,c as H,e as R,B as h,g as M,f as z,s as F,X as Q,S as V,Q as W,J}from"./index-DwNNU3P0.js";import{l as X}from"./resource-BT7Sg1rS.js";import{S as G}from"./sheet-CdsIcees.js";import{B as C}from"./badge-M3SgDzVp.js";import{C as Y}from"./check-Cw_5SW30.js";import{D as Z}from"./download-AiBb21Rv.js";import{U as D}from"./upload-D4QDS245.js";import{T as ee}from"./trash-2-z-RY0FyS.js";import{C as se}from"./cooking-pot-LQQgVi5p.js";import"./card-BUFQtSyT.js";import"./ImageField-CuJUQdlB.js";import"./columns-3-BgopcfI-.js";/**
@@ -7,6 +8,9 @@ import{r,j as e}from"./vendor-D6bHyl-8.js";import{R as A,m as K}from"./configs-s
 ========
 import{r,j as e}from"./vendor-D6bHyl-8.js";import{R as A,m as K}from"./configs-6s0vDZUd.js";import{b as U,j as P,t as s,c as H,e as R,B as h,g as M,f as z,s as T,X as V,S as Q,T as W,K as X}from"./index-CTnWcLsp.js";import{l as G}from"./resource-BOONDvFW.js";import{S as J}from"./sheet-DEHr7jy7.js";import{B as C}from"./badge-D_yvrRqQ.js";import{C as Y}from"./check-Dba7xAWZ.js";import{D as Z}from"./download-DrEraegU.js";import{U as D}from"./upload-C_ADm478.js";import{T as ee}from"./trash-2-cPw6iEM3.js";import{C as se}from"./cooking-pot-CUUHR_D2.js";import"./card-C0CKJeO_.js";import"./ImageField-B7mEX8EY.js";import"./columns-3-BLx6xQsg.js";/**
 >>>>>>>> origin/fix/upi-india-pack:kamra/public/frontend/assets/MenuItems-Smig4Obo.js
+========
+import{r,j as e}from"./vendor-D6bHyl-8.js";import{R as A,m as K}from"./configs-DRVzSm_u.js";import{b as U,i as P,t as s,c as H,e as R,B as h,g as M,f as z,s as F,X as Q,S as V,Q as W,J}from"./index-BBOVPGnf.js";import{l as X}from"./resource-B9yWZwLd.js";import{S as G}from"./sheet-CFP1tZr0.js";import{B as C}from"./badge-CC-hMXr2.js";import{C as Y}from"./check-BUPJNocQ.js";import{D as Z}from"./download-ebZ9dK8Z.js";import{U as D}from"./upload-DCoSJJT8.js";import{T as ee}from"./trash-2-NEVN-Kyd.js";import{C as se}from"./cooking-pot-BaC6pTIM.js";import"./card-CZGdWoql.js";import"./ImageField-BqevkAkT.js";import"./columns-3-C4nVssAJ.js";/**
+>>>>>>>> origin/fix/dashboard-roles:kamra/public/frontend/assets/MenuItems-CG7Fr0nN.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.
