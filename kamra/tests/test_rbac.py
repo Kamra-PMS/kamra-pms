@@ -258,6 +258,9 @@ class RbacTestCase(IntegrationTestCase):
 			stale = frappe.new_doc("Role Profile")
 			stale.name = name
 			stale.unlock()
+			# ship today's contents, not an earlier run's (rolled back on tearDown)
+			frappe.db.delete("Has Role", {"parent": name, "parenttype": "Role Profile"})
+			frappe.db.delete("Role Profile", name)
 		# run the user resync inline, as it does during install / migrate
 		frappe.flags.in_install = True
 		try:
@@ -267,6 +270,28 @@ class RbacTestCase(IntegrationTestCase):
 		for name, roles in ROLE_PROFILES.items():
 			got = {r.role for r in frappe.get_doc("Role Profile", name).roles}
 			self.assertTrue(set(roles) <= got, name)
+		self.assertIn("Finance", ROLE_PROFILES["General Manager"])
+		fnb = _user("rbac.fnb@test.local", *ROLE_PROFILES["F&B Manager"])
+		for doctype, ptype in (("POS Order", "take_orders"),  # charge to room
+		                       ("Ingredient", "manage_stock"),  # wastage, counts, goods-in
+		                       ("Kitchen Printer", "configure_printers")):
+			self.assertTrue(frappe.has_permission(doctype, ptype, user=fnb), (doctype, ptype))
+		self.assertIn("take_orders", _endpoint("pos.charge_to_room")._kamra_perm)
+
+	def test_only_it_edits_what_a_role_allows(self):
+		"""Hotel Admin assigns people to roles; what a role may do is IT's
+		(System Manager) call, in Role Permission Manager."""
+		from frappe.core.page.permission_manager import permission_manager as rpm
+		self.as_user(_user("rbac.gm@test.local", "Hotel Admin"))
+		for doctype in ("DocPerm", "Custom DocPerm"):
+			for ptype in ("create", "write", "delete"):
+				self.assertFalse(frappe.has_permission(doctype, ptype), (doctype, ptype))
+		for call in (lambda: rpm.get_permissions("Folio"),
+		             lambda: rpm.add("Folio", ROLE, 0),
+		             lambda: rpm.update("Folio", "Front Desk", 0, "bill", 1),
+		             lambda: rpm.reset("Folio")):
+			with self.assertRaises(frappe.PermissionError):
+				call()
 
 	def test_a_desk_role_with_kamra_permissions_is_assignable(self):
 		from kamra.staff import role_names, staff_roles

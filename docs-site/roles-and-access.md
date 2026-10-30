@@ -105,7 +105,7 @@ Kamra never overwrites your changes.
 | Night Auditor | Night Auditor, Front Desk |
 | F&B Manager | Front Desk, Finance |
 | Finance Manager | Finance, Night Auditor |
-| General Manager | Hotel Admin |
+| General Manager | Hotel Admin, Finance |
 
 ## Limit someone to one property
 

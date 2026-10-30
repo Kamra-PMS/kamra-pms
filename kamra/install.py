@@ -177,9 +177,13 @@ ROLE_PROFILES = {
 	"Front Office Manager": ("Front Desk", "Night Auditor", "Revenue Manager"),
 	"Duty Manager": ("Front Desk", "Night Auditor", "Housekeeping Supervisor"),
 	"Night Auditor": ("Night Auditor", "Front Desk"),
+	# takes orders and charges bills to rooms (POS Order: take_orders), runs
+	# kitchen stock (Ingredient: manage_stock) and kitchen printers and
+	# stations (Kitchen Printer: configure_printers). Swap to the F&B Manager
+	# role, holding the same Permission Types, once it ships (#417).
 	"F&B Manager": ("Front Desk", "Finance"),
 	"Finance Manager": ("Finance", "Night Auditor"),
-	"General Manager": ("Hotel Admin",),
+	"General Manager": ("Hotel Admin", "Finance"),
 }
 
 
