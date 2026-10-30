@@ -22,6 +22,8 @@ async function session({ enabled = false, statusError = false, pending = false,
   const context = await browser.newContext({ viewport: { width: 1440, height: 900 } })
   await context.addInitScript(() => localStorage.setItem("kamra_property", "Test Hotel"))
   const page = await context.newPage()
+  const errors = []
+  page.on("pageerror", (error) => errors.push(error.message))
   const calls = []
   let releaseStatus
   const held = new Promise((resolve) => { releaseStatus = resolve })
@@ -40,6 +42,9 @@ async function session({ enabled = false, statusError = false, pending = false,
         { name: "Other Hotel", property_name: "Other Hotel" },
       ],
       "kamra.api.enabled_modules": [],
+      "kamra.api.guest_search": [],
+      "kamra.api.find_reservations": [],
+      "kamra.api.find_invoices": [],
       "kamra.api.property_locale": { currency: "USD", locale: "en-US", currency_symbol: "$" },
       "kamra.api.cashier_pin_status": { required: false, unlocked: true },
       "kamra.onboarding.setup_checklist": { percent: 100, done: 1, total: 1 },
@@ -69,7 +74,10 @@ async function session({ enabled = false, statusError = false, pending = false,
       return route.fulfill({ status: 503, json: { message: "unavailable" } })
     return route.fulfill({ json: { message: payloads[method] ?? {} } })
   })
-  return { page, calls, releaseStatus, close: () => context.close() }
+  return { page, calls, releaseStatus, close: async () => {
+    await context.close()
+    assert.deepEqual(errors, [], "SPA must not raise unhandled browser errors")
+  } }
 }
 
 async function settled(page, route = "/apps", pending = false) {
@@ -84,6 +92,13 @@ async function assistantLinks(page) {
 }
 
 try {
+  await test("empty app registry never restores hidden assistant navigation", async () => {
+    const { appForPath, visibleApps } = await server.ssrLoadModule("/src/lib/apps.ts")
+    const apps = visibleApps([], undefined, false)
+    for (const route of ["/", "/apps", "/assistant"])
+      assert.deepEqual(appForPath(route, apps).items, [])
+  })
+
   await test("fallback navigation keeps assistant filtering on non-menu routes", async () => {
     const s = await session({ pending: true })
     try {
@@ -114,8 +129,11 @@ try {
         assert.equal(await assistantLinks(s.page), 0)
         await s.page.evaluate(() => window.dispatchEvent(new Event("kamra:open-palette")))
         const input = s.page.locator('input').filter({ visible: true }).first()
+        const searches = ["guest_search", "find_reservations", "find_invoices"]
+          .map((method) => s.page.waitForResponse(`**/api/method/kamra.api.${method}`))
         await input.fill("Kamra Agent")
-        await s.page.waitForTimeout(250)
+        await Promise.all(searches)
+        await s.page.getByRole("dialog").locator(".animate-spin").waitFor({ state: "hidden" })
         assert.equal(await s.page.getByRole("button", { name: /Kamra Agent/ }).count(), 0)
         if (screenshotDir && name === "disabled or unconfigured")
           await s.page.screenshot({ path: path.join(screenshotDir, "disabled-assistant-search.png") })
