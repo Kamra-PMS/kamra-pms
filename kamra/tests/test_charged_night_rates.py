@@ -112,6 +112,19 @@ class ChargedNightRatesTestCase(AuditTestCase):
 		self.assertEqual(len(self.adjustments()), 2)
 		self.assert_booking_matches_folio(frappe.get_doc("Reservation", res.name))
 
+	def test_credit_lowers_room_revenue_not_rooms_sold(self):
+		from kamra.reports import _day_stats
+		self.policy("Credit the difference")
+		folio_mod.post_room_night(self.res, TODAY)
+		before = _day_stats(PROP_A, TODAY, 1)
+		self.assertEqual((before["rooms_sold"], before["room_revenue"]), (1, 1000))
+		self.extend()  # three charged nights credited 200 each, dated today
+		after = _day_stats(PROP_A, TODAY, 1)
+		self.assertEqual(after["rooms_sold"], 1)
+		self.assertAlmostEqual(after["room_revenue"], 400)
+		self.assertEqual(after["adr"], 400)
+		self.assertAlmostEqual(after["other_revenue"], before["other_revenue"])
+
 	def test_credit_never_raises_a_charged_night(self):
 		self.policy("Credit the difference")
 		frappe.db.delete("Long Stay Discount", {"property": PROP_A})

@@ -17,12 +17,12 @@ def _day_stats(property: str, date: str, total_rooms: int) -> dict:
 		SELECT
 		  COUNT(DISTINCT CASE WHEN fc.charge_type = 'Room'
 		        THEN COALESCE(fc.reservation, f.reservation) END) AS rooms_sold,
-		  COALESCE(SUM(CASE WHEN fc.charge_type = 'Room'
+		  COALESCE(SUM(CASE WHEN fc.charge_type IN ('Room', 'Rate Adjustment')
 		        THEN fc.amount ELSE 0 END), 0) AS room_revenue,
 		  COALESCE(SUM(CASE WHEN fc.charge_type IN ('Food & Beverage',
 		        'Meal Plan', 'Minibar') THEN fc.amount ELSE 0 END), 0)
 		        AS fnb_revenue,
-		  COALESCE(SUM(CASE WHEN fc.charge_type NOT IN ('Room',
+		  COALESCE(SUM(CASE WHEN fc.charge_type NOT IN ('Room', 'Rate Adjustment',
 		        'Food & Beverage', 'Meal Plan', 'Minibar', 'Discount',
 		        'Opening Balance')
 		        THEN fc.amount ELSE 0 END), 0) AS other_revenue
@@ -246,7 +246,8 @@ def budget_vs_actual(property: str, period: str | None = None):
 		SELECT
 		  COUNT(DISTINCT CASE WHEN fc.charge_type='Room'
 		        THEN CONCAT(COALESCE(fc.reservation,f.reservation),'|',fc.posting_date) END) AS rooms_sold,
-		  COALESCE(SUM(CASE WHEN fc.charge_type='Room' THEN fc.amount ELSE 0 END),0) AS room_revenue,
+		  COALESCE(SUM(CASE WHEN fc.charge_type IN ('Room','Rate Adjustment')
+		                    THEN fc.amount ELSE 0 END),0) AS room_revenue,
 		  MAX(CASE WHEN fc.charge_type='Room' THEN fc.posting_date END) AS posted_through
 		FROM `tabFolio Charge` fc JOIN `tabFolio` f ON fc.parent=f.name
 		WHERE f.property=%(p)s AND fc.posting_date>=%(s)s AND fc.posting_date<%(n)s

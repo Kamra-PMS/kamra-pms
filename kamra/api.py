@@ -269,7 +269,7 @@ def owner_briefing(property: str, date: str | None = None):
 		JOIN `tabFolio` f ON fc.parent = f.name
 		WHERE f.property = %(property)s
 		  AND fc.posting_date = %(date)s
-		  AND fc.charge_type IN ('Room', 'Meal Plan')
+		  AND fc.charge_type IN ('Room', 'Meal Plan', 'Rate Adjustment')
 		""",
 		{"property": property, "date": yesterday},
 	)[0]

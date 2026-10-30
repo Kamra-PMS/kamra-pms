@@ -360,9 +360,12 @@ happens to those nights:
   can give it back with an [allowance](/billing#correct-a-charge) and a
   reason.
 - **Credit the difference**: when the new rate is lower, Kamra posts a
-  **Rate Adjustment** credit for each charged night, dated today, taxed
-  like that night and on the folio the night went to. A higher rate is
-  never added to a charged night.
+  **Rate Adjustment** credit for each charged night, dated today, on the
+  folio the night went to. The credit is taxed at the night's original
+  rate, even when the lower rate would fall in a lower tax slab: it
+  corrects the original supply. A higher rate is never added to a charged
+  night. Rate adjustments count as room revenue (ADR, RevPAR, flash) but
+  not as rooms sold.
 - **Correct back-dated rates**: dates change as with Keep. Finance or a
   Hotel Admin can then correct the charged nights from the folio, see
   [Correct charged nights](/billing#correct-charged-nights).
