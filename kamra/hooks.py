@@ -257,7 +257,7 @@ _PROPERTY_SCOPED = (
 	"Copilot Conversation", "Credit Note", "Discount Voucher", "Exchange Rate",
 	"Exchange Transaction", "Experience", "External POS Charge", "Folio", "Folio Ledger Entry",
 	"Folio Reprint", "Group Booking", "Housekeeping Task", "Hurdle Rate",
-	"Ingredient", "Ingredient Ledger Entry", "Ingredient Stock", "Kitchen Printer",
+	"Ingredient", "Ingredient Ledger Entry", "Ingredient Stock", "Kamra Custom Report", "Kitchen Printer",
 	"Laundry Order", "Laundry Rate", "Lost And Found Item", "MCP OAuth Grant",
 	"Meal Plan", "Menu Item", "Night Audit Log", "Night Audit Run", "Outbound Webhook",
 	"Outbound Webhook Delivery", "Payment Gateway Settings",
