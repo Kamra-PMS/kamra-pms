@@ -13,12 +13,13 @@ const server = await createServer({
 })
 await server.listen()
 const base = `http://127.0.0.1:${server.httpServer.address().port}`
-const browser = await chromium.launch({ channel: "chrome", headless: true })
+let browser
 const screenshotDir = process.env.KAMRA_CHECK_SCREENSHOTS
 if (screenshotDir) await fs.mkdir(screenshotDir, { recursive: true })
 
 async function session({ enabled = false, statusError = false, pending = false,
   branding = {}, siteError = false } = {}) {
+  browser ??= await chromium.launch({ channel: "chrome", headless: true })
   const context = await browser.newContext({ viewport: { width: 1440, height: 900 } })
   await context.addInitScript(() => localStorage.setItem("kamra_property", "Test Hotel"))
   const page = await context.newPage()
@@ -215,6 +216,6 @@ try {
     } finally { await s.close() }
   })
 } finally {
-  await browser.close()
+  await browser?.close()
   await server.close()
 }
