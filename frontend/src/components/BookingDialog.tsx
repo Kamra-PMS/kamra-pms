@@ -105,6 +105,8 @@ export function BookingDialog(props: {
     guest_name?: string
     phone?: string
     stays?: number
+    adults?: number
+    children?: number
     walkIn?: boolean
   }
   onClose: () => void
@@ -135,9 +137,9 @@ export function BookingDialog(props: {
     phone: props.initial.phone ?? "",
     room_type: props.initial.room_type ?? "",
     check_in_date: props.initial.date ?? new Date().toISOString().slice(0, 10),
-    nights: 1,
-    adults: 2,
-    children: 0,
+    nights: props.initial.stays ?? 1,
+    adults: props.initial.adults ?? 2,
+    children: props.initial.children ?? 0,
     meal_plan: "",
     // "" = no plan picked: the company's negotiated plan applies, if any
     rate_plan: "",
