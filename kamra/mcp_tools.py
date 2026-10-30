@@ -867,6 +867,46 @@ TOOLS: tuple[ToolSpec, ...] = (
 		group="Billing",
 	),
 	_t(
+		"ar_accounts",
+		"receivables.ar_accounts",
+		"""Every company account (AR) at this property: account number,
+		billing contact, credit limit, payment terms, balance, overdue and
+		whether it is restricted. Use the `name` it returns as `account` for
+		ar_account_detail and create_ar_invoice. Read-only.""",
+		{},
+		property=True,
+		group="Billing",
+	),
+	_t(
+		"ar_account_detail",
+		"ledger.city_ledger_account",
+		"""One company account: balance, aging by due date, credit available
+		under the limit (stays in house count against it), money paid ahead,
+		each open bill with its due date and days late, and recent payments.
+		Read-only.""",
+		{"account": _p("string")},
+		required=("account",),
+		group="Billing",
+	),
+	_t(
+		"create_ar_invoice",
+		"receivables.create_ar_invoice",
+		"""Bill a company account directly for something that was not a stay
+		(meeting room, contract fee). `lines` is [{charge_type, description,
+		amount, qty, gst_rate}]: amount is the unit price before tax,
+		charge_type one of Room, Meal Plan, Food & Beverage, Minibar, Laundry,
+		Spa, Misc (and the room fees); the PMS taxes F&B at the hotel's rate
+		and refuses an unknown rate. Credit control runs as at check-out and
+		an agent can't override a block. Refused on a restricted account.
+		Confirm the lines and total with the user first.""",
+		{"account": _p("string"),
+		 "lines": _p("array", items=_p("object")),
+		 "reference": _p("string")},
+		required=("account", "lines"),
+		mutating=True,
+		group="Billing",
+	),
+	_t(
 		"security_deposit_status",
 		"api.security_deposit",
 		"""The stay's refundable security (damage) deposit: the property's

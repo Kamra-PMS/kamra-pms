@@ -2245,17 +2245,25 @@ def folio_invoice(folio: str):
 
 	doc = frappe.get_doc("Folio", folio)
 	prop = frappe.get_doc("Property", doc.property)
-	res = frappe.get_doc("Reservation", doc.reservation)
+	# an Account folio (raised on a company's AR account) has no stay
+	res = frappe.get_doc("Reservation", doc.reservation) if doc.reservation else None
 	pack = loc.pack_for(doc.property)
 	_loc_ctx = pack.invoice_context(prop)
 
 	# B2B: corporate bookings carry the buyer's GSTIN on the invoice.
 	# A group master folio bills to the GROUP's company.
 	bill_to = None
-	bill_company = res.company
+	bill_company = res.company if res else None
 	if doc.folio_type == "Group" and doc.get("group_booking"):
 		bill_company = frappe.db.get_value(
 			"Group Booking", doc.group_booking, "company") or bill_company
+	if doc.folio_type == "Account":
+		# billed to the account it was raised on (as zatca._folio_buyer)
+		account = frappe.db.get_value(
+			"City Ledger Entry", {"folio": doc.name, "kind": "Invoice"},
+			"account", order_by="creation asc")
+		bill_company = account and frappe.db.get_value(
+			"City Ledger Account", account, "company")
 	if bill_company:
 		company = frappe.db.get_value(
 			"Corporate Account", bill_company, ["company_name", "gstin"], as_dict=True)
@@ -2330,8 +2338,8 @@ def folio_invoice(folio: str):
 			"tax_id_label": _loc_ctx["tax_id_label"],
 			"tax_note": loc.invoice_tax_note(pack),
 		},
-		"guest": _invoice_guest(res),
-		"stay": {
+		"guest": _invoice_guest(res) if res else {"name": doc.guest_name},
+		"stay": {"reservation": None, "company": bill_company} if not res else {
 			"reservation": res.name,
 			"check_in": str(res.check_in_date),
 			"check_out": str(res.check_out_date),

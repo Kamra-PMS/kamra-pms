@@ -3,6 +3,7 @@
 <<<<<<<< HEAD:kamra/public/frontend/assets/thermal-lR5O1Zqo.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/thermal-lR5O1Zqo.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/thermal-lR5O1Zqo.js
+<<<<<<<< HEAD:kamra/public/frontend/assets/thermal-lR5O1Zqo.js
 import{t as a,a as c,m as o,c as m}from"./index-B3i2Wflk.js";const v=`
 ========
 import{t as a,a as c,m as o,c as m}from"./index-DwNNU3P0.js";const v=`
@@ -19,6 +20,9 @@ import{t as a,a as c,m as o,c as m}from"./index-CLKM8cqz.js";const v=`
 ========
 import{t as a,a as c,m as o,c as m}from"./index-A1luJzPY.js";const v=`
 >>>>>>>> origin/feat/quick-fixes:kamra/public/frontend/assets/thermal-rfcUuvTS.js
+========
+import{t as a,a as c,m as o,c as m}from"./index-CE8_F8LC.js";const v=`
+>>>>>>>> origin/feat/accounts-receivable:kamra/public/frontend/assets/thermal-x-l5wHbk.js
   @page { size: 80mm auto; margin: 0 }
   * { margin: 0; padding: 0; box-sizing: border-box }
   html, body { background: #fff; color: #000 }

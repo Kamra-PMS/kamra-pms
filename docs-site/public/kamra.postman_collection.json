@@ -12962,6 +12962,196 @@
    ]
   },
   {
+   "name": "Accounts receivable (account setup, invoices on an account, transfers)",
+   "item": [
+    {
+     "name": "ar_accounts",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.receivables.ar_accounts",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.receivables.ar_accounts"
+       ]
+      },
+      "description": "Every AR account at the property with its contact and position - the\nreceivables list. Aging and balance come from city_ledger_aging so the\ntwo screens always agree.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "save_ar_account",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.receivables.save_ar_account",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.receivables.save_ar_account"
+       ]
+      },
+      "description": "Open a company's AR account at a property, or edit it (`account`).\nOne open account per company per property - checkout bills into it.\nThe account number is the company's reference on statements and must\nbe unique at the property. Opening an account puts the company on\ncredit (Corporate Account.credit_allowed), since that is what it is for.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"company\": \"<company>\",\n  \"credit_limit\": 0,\n  \"use_default_credit_days\": 1,\n  \"credit_days\": 0,\n  \"restricted\": 0\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "create_ar_invoice",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.receivables.create_ar_invoice",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.receivables.create_ar_invoice"
+       ]
+      },
+      "description": "Bill a company directly, without a stay. `lines` is\n[{charge_type, description, amount, qty, gst_rate}]: amount is the unit\nprice before tax, the tax rate must be one of the property's, and F&B or\nalcohol lines take the hotel's own rate whatever is sent. Credit control\nruns as at checkout. Returns the invoice number and the account's new\nbalance.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"account\": \"<account>\",\n  \"lines\": \"<lines>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "ar_invoice",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.receivables.ar_invoice",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.receivables.ar_invoice"
+       ]
+      },
+      "description": "One AR bill's lines and totals, whether it came from a stay or was\nraised on the account - what the invoice drawer shows and prints.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"folio\": \"FOLIO-2026-00001\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "transfer_ar_invoice",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.receivables.transfer_ar_invoice",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.receivables.transfer_ar_invoice"
+       ]
+      },
+      "description": "Move what is still owed on one bill to another company's account at\nthe same property. What was already paid stays with the first account;\nthe bill keeps its invoice number and invoice date, so it ages from when\nit was really raised. Credit control on the receiving company is not\nre-run - finance is choosing who pays.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"account\": \"<account>\",\n  \"folio\": \"FOLIO-2026-00001\",\n  \"to_account\": \"<to_account>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
    "name": "Night audit (End of Day checklist, audit pack)",
    "item": [
     {

@@ -171,10 +171,11 @@ def email_company_statement(account: str, recipients: str | None = None,
 
 # --- reminders ---------------------------------------------------------------
 
-def _reminded(folio: str, stage: str) -> bool:
+def _reminded(folio: str, stage: str, company: str) -> bool:
+	# per company: a bill moved to another account gets its own reminders
 	return bool(frappe.db.exists("Agent Action Log", {
 		"action_type": LOG_PREFIX + stage, "reference_doctype": "Folio",
-		"reference_name": folio}))
+		"reference_name": folio, "rationale": ["like", f"{company}:%"]}))
 
 
 def _line(r: dict, amount: float, stage: str, late: int, sym: str) -> str:
@@ -202,7 +203,7 @@ def send_property_reminders(property: str) -> dict:
 		for r, amount in _netted(st["open_items"], st["unapplied_credit"]):
 			late = days_overdue(r, today)
 			stage = reminder_stage(late)
-			if stage and not _reminded(r["folio"], stage):
+			if stage and not _reminded(r["folio"], stage, st["company"]):
 				due.append((r, amount, stage, late))
 		if not due:
 			continue

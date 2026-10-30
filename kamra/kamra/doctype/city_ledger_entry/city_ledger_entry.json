@@ -11,6 +11,7 @@
   "column_break_a",
   "folio",
   "invoice_number",
+  "invoice_date",
   "due_date",
   "debit",
   "credit",
@@ -64,6 +65,12 @@
    "label": "Invoice Number"
   },
   {
+   "fieldname": "invoice_date",
+   "fieldtype": "Date",
+   "label": "Invoice Date",
+   "description": "When the bill was first raised, if earlier than this entry's posting date (a bill moved from another account). Aging and the due date count from it."
+  },
+  {
    "fieldname": "due_date",
    "fieldtype": "Date",
    "label": "Due Date",
@@ -96,7 +103,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-10-30 10:00:00.000000",
+ "modified": "2026-10-30 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "City Ledger Entry",
