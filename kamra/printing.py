@@ -33,7 +33,7 @@ from kamra.authz import assert_property_access, require_roles
 STATION_ROLES = ("Front Desk", "Finance", "F&B Manager", "Kamra Agent")
 # Who may add, change and remove printers (admins always may) - the F&B
 # settings editors.
-EDITOR_ROLES = ("Finance",)
+EDITOR_ROLES = ("Finance", "F&B Manager")
 # A claimed job with no answer after this long is offered again.
 STALE_CLAIM_S = 60
 # A print station that hasn't asked for work in this long shows as offline.

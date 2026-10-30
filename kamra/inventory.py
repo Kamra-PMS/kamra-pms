@@ -39,9 +39,10 @@ from kamra.authz import require_roles
 # consume implicitly through fire_kot (already gated on POS_ROLES), because
 # consumption is a byproduct of service, not an inventory action. Receiving
 # and counting are money - a goods-in is an asset movement, a stock take is a
-# P&L event - so they sit with Finance (require_roles widens that to admins).
+# P&L event - so they sit with Finance and the F&B Manager who runs the
+# kitchen (require_roles widens that to admins).
 INVENTORY_READ = ("Front Desk", "Finance", "F&B Manager", "Kamra Agent", "Hotel Admin")
-INVENTORY_WRITE = ("Finance",)
+INVENTORY_WRITE = ("Finance", "F&B Manager")
 
 STATUS_OK, STATUS_LOW, STATUS_OUT, STATUS_NEGATIVE = "OK", "LOW", "OUT", "NEGATIVE"
 

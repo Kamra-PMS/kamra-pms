@@ -128,3 +128,32 @@ class FnbManagerTestCase(AuditTestCase):
 		tools = {s.name for s in mcp_tools.allowed_tools(property=PROP_A)}
 		self.assertTrue({"pos_create_order", "pos_kitchen_queue", "pos_table_map"} <= tools)
 		self.assertFalse({"get_folio", "check_in", "record_payment", "set_room_rate"} & tools)
+
+	def test_adjusts_kitchen_stock_and_sets_up_printers(self):
+		"""Wastage, counts and goods-in, plus kitchen printers and their
+		stations; the Front Desk still does neither."""
+		from kamra import inventory, printing
+		self.as_(self.fnb)
+		ing = inventory.save_ingredient(PROP_A, "UT FnB Onion", "kg",
+		                                cost_per_unit=40)["name"]
+		inventory.receive_stock(PROP_A, self.outlet, [{"ingredient": ing, "qty": 10}])
+		self.assertEqual(inventory.record_wastage(PROP_A, self.outlet, ing, 2,
+		                                          "rotted")["qty_on_hand"], 8)
+		r = inventory.adjust_stock(PROP_A, self.outlet,
+		                           [{"ingredient": ing, "counted_qty": 7}], "weekly count")
+		self.assertEqual(r["adjusted"][0]["now"], 7)
+		saved = printing.save_printer(PROP_A, {
+			"printer_name": "UT FnB Grill printer", "connection": "Print station",
+			"routes": [{"outlet": self.outlet, "prep_station": "Grill"}]})
+		self.assertTrue(saved["ok"])
+		# charging a bill to a room runs on the POS gate the F&B Manager holds
+		self.assertIn(ROLE, pos.charge_to_room._kamra_roles)
+
+		self.as_(ensure_user("ut.fnb.desk@example.com", ["Front Desk"]))
+		for call in (lambda: inventory.record_wastage(PROP_A, self.outlet, ing, 1, "x"),
+		             lambda: inventory.adjust_stock(PROP_A, self.outlet,
+		                                            [{"ingredient": ing, "counted_qty": 1}], "x"),
+		             lambda: printing.save_printer(PROP_A, {"printer_name": "UT Sneaky"},
+		                                           name=saved["name"])):
+			with self.assertRaises(frappe.PermissionError):
+				call()
