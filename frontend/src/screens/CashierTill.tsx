@@ -338,6 +338,9 @@ export default function CashierTill() {
               [t("Cash in"), session?.system_cash ?? session?.totals?.cash],
               [t("Card"), session?.system_card ?? session?.totals?.card],
               ...(instant ? [[t(instant), session?.system_upi ?? session?.totals?.upi]] : []),
+              ...(Number(session?.totals?.foreign_cash)
+                ? [[t("Foreign cash"), session?.totals?.foreign_cash]]
+                : []),
               [t("Paid outs"), session?.paid_outs],
               [t("Drops"), session?.drops],
               [t("Petty cash"), session?.petty_cash],

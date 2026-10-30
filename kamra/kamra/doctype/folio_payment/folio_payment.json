@@ -37,7 +37,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Mode",
-   "options": "Cash\nCard\nUPI\nBank Transfer\nOTA Prepaid\nCompany Credit\nPayment Link",
+   "options": "Cash\nForeign Cash\nCard\nUPI\nBank Transfer\nOTA Prepaid\nCompany Credit\nPayment Link",
    "reqd": 1
   },
   {

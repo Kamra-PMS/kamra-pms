@@ -171,7 +171,7 @@ def _recompute_session_totals(session: str, persist: bool = True) -> dict[str, f
 	# in system_upi / "upi" - field kept by name so existing tills read on
 	from kamra.localization import instant_payment_modes, pack_for
 	instant_modes = instant_payment_modes(pack_for(sess.property))
-	cash = card = upi = other = paid_outs = drops = petty = 0.0
+	cash = card = upi = other = foreign = paid_outs = drops = petty = 0.0
 	for r in rows:
 		amt = float(r.total or 0)
 		kind = r.kind
@@ -183,7 +183,9 @@ def _recompute_session_totals(session: str, persist: bool = True) -> dict[str, f
 		elif kind == "Petty Cash":
 			petty += abs(amt)
 		elif kind in ("Payment", "Exchange"):
-			if mode in CASH_MODES:
+			if mode == "Foreign Cash":
+				foreign += amt  # home value of foreign notes; not in expected cash
+			elif mode in CASH_MODES:
 				cash += amt
 			elif mode in CARD_MODES:
 				card += amt
@@ -212,7 +214,7 @@ def _recompute_session_totals(session: str, persist: bool = True) -> dict[str, f
 		sess.save(ignore_permissions=True)
 	return {
 		"cash": cash, "card": card, "upi": upi, "other": other,
-		"paid_outs": paid_outs, "drops": drops, "petty_cash": petty,
+		"foreign_cash": foreign, "paid_outs": paid_outs, "drops": drops, "petty_cash": petty,
 		"opening_float": opening, "expected_cash": expected,
 	}
 

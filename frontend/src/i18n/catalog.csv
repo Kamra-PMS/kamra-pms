@@ -491,6 +491,7 @@ A company,A company,شركة,Una empresa,components/GroupBookingDialog.tsx,,tran
 A different customer,A different customer,عميل آخر,Un cliente diferente,screens/pos/PosSidePanel.tsx,,translated
 "A dish costs the sum of its recipe: for each ingredient,","A dish costs the sum of its recipe: for each ingredient,",تكلفة الطبق هي مجموع وصفته: لكل مكوّن،,"El costo de un plato es la suma de su receta: para cada ingrediente,",screens/BanquetCatalogue.tsx,,translated
 A dot means a season or busy-house rule moved it. Select a night to see which.,A dot means a season or busy-house rule moved it. Select a night to see which.,النقطة تعني أن موسمًا أو قاعدة إشغال مرتفع غيّرت السعر. اختر ليلة لمعرفة أيهما.,Un punto indica que una temporada o una regla de alta ocupación modificó la tarifa. Seleccione una noche para ver cuál se aplicó.,screens/RateCalendar.tsx,,translated
+"A guest paying in foreign money needs today's rate: typed in on the Currency Desk, or fetched from an online market rate. A rate typed in by staff always wins over a fetched one for the same day.","A guest paying in foreign money needs today's rate: typed in on the Currency Desk, or fetched from an online market rate. A rate typed in by staff always wins over a fetched one for the same day.",يحتاج الضيف الذي يدفع بعملة أجنبية إلى سعر اليوم: يُدخل في مكتب العملات أو يُجلب من سعر السوق عبر الإنترنت. السعر الذي يُدخله الموظفون يتقدم دائمًا على السعر المجلوب لليوم نفسه.,Un huésped que paga en moneda extranjera necesita el tipo de hoy: introducido en el Mostrador de divisas u obtenido de un tipo de mercado en línea. Un tipo introducido por el personal siempre prevalece sobre uno obtenido para el mismo día.,,,translated
 A kitchen screen is printing for it,A kitchen screen is printing for it,شاشة مطبخ تطبع لها,Una pantalla de cocina está asignada para imprimir en esta impresora,screens/KitchenPrinters.tsx; screens/settings/cards.tsx,,translated
 A late check-out charge is already on the bill.,A late check-out charge is already on the bill.,رسوم المغادرة المتأخرة مضافة إلى الفاتورة بالفعل.,Ya se agregó a la cuenta un cargo por salida tardía.,components/CheckOutDialog.tsx,,translated
 "A line voided or an order cancelled after its KOT was sent prints a VOID slip on the kitchen printer that had it, so the cook stops.","A line voided or an order cancelled after its KOT was sent prints a VOID slip on the kitchen printer that had it, so the cook stops.",إبطال بند أو إلغاء طلب بعد إرسال أمر المطبخ الخاص به يطبع إيصال إبطال على طابعة المطبخ المعنية، ليتوقف الطاهي.,Anular una línea o cancelar un pedido después de enviar su comanda imprime un aviso de ANULACIÓN en la impresora correspondiente para detener su preparación.,,,translated
@@ -522,6 +523,7 @@ A walk-in arrives today,A walk-in arrives today,الحجز المباشر يصل
 A wrong rate: correct the night on the folio before the audit posts.,A wrong rate: correct the night on the folio before the audit posts.,سعر خاطئ: صحّح الليلة في الفاتورة قبل ترحيل التدقيق.,"Si la tarifa es incorrecta, corrija la noche en el folio antes de la auditoría.",,,translated
 Aadhaar,Aadhaar,آدهار,Aadhaar,,,translated
 About (Description),About (Description),نبذة (الوصف),Acerca del alojamiento (descripción),screens/BookingEngine.tsx,,translated
+About {cur}{amount} at {rate},About {cur}{amount} at {rate},حوالي {cur}{amount} بسعر {rate},Aprox. {cur}{amount} a {rate},screens/FolioView.tsx,cur amount rate,translated
 About a minute,About a minute,حوالي دقيقة,Aproximadamente un minuto,screens/Setup.tsx,,translated
 About this install,About this install,حول هذا التثبيت,Acerca de esta instalación,,,translated
 About this room,About this room,عن هذه الغرفة,Acerca de esta habitación,components/RoomDrawer.tsx,,translated
@@ -794,6 +796,7 @@ Apply discount,Apply discount,تطبيق الخصم,Aplicar descuento,,,translat
 Approve,Approve,موافقة,Aprobar,screens/CashierBoard.tsx,,translated
 approved by {name},approved by {name},بموافقة {name},aprobado por {name},screens/VoidAllowanceReport.tsx; screens/pos/PosSidePanel.tsx,name,translated
 Approver,Approver,المعتمِد,Aprobado por,,,translated
+"Approx. {cur} {total} (balance {cur} {balance}) at {rate}, rate of {date}. Tax invoice amounts are in {home}.","Approx. {cur} {total} (balance {cur} {balance}) at {rate}, rate of {date}. Tax invoice amounts are in {home}.",حوالي {cur} {total} (الرصيد {cur} {balance}) بسعر {rate}، سعر يوم {date}. مبالغ الفاتورة الضريبية بعملة {home}.,"Aprox. {cur} {total} (saldo {cur} {balance}) a {rate}, tipo de cambio del {date}. Los importes de la factura fiscal están en {home}.",screens/FolioView.tsx,cur total balance rate date home,translated
 AR balance,AR balance,رصيد الذمم المدينة,Saldo de cuentas por cobrar,,,translated
 Arabic switches the interface to right-to-left,Arabic switches the interface to right-to-left,العربية تبدّل الواجهة من اليمين إلى اليسار,El árabe muestra la interfaz de derecha a izquierda,screens/settings/cards.tsx,,translated
 Arabic switches the interface to right-to-left · this browser only,Arabic switches the interface to right-to-left · this browser only,العربية تبدّل الواجهة من اليمين لليسار · هذا المتصفح فقط,El árabe muestra la interfaz de derecha a izquierda · solo en este navegador,,,translated
@@ -1098,6 +1101,7 @@ Busy-house rules,Busy-house rules,قواعد الإشغال المرتفع,Regla
 "Buttons, links and highlights on the guest page take this colour - pick any hex to match the hotel's branding.","Buttons, links and highlights on the guest page take this colour - pick any hex to match the hotel's branding.",تأخذ الأزرار والروابط والعناصر البارزة في صفحة الضيف هذا اللون. اختر أي لون hex يناسب هوية الفندق.,"Los botones, enlaces y elementos destacados de la página del huésped usan este color. Indique un color hexadecimal acorde con la identidad del hotel.",screens/BookingEngine.tsx,,translated
 Buy,Buy,شراء,Compra,screens/CurrencyDesk.tsx,,translated
 Buy (guest sells FX),Buy (guest sells FX),شراء (الضيف يبيع العملة),Compra (el huésped vende divisas),screens/CurrencyDesk.tsx,,translated
+Buy rate = market rate less this; sell rate = market rate plus this.,Buy rate = market rate less this; sell rate = market rate plus this.,سعر الشراء = سعر السوق ناقص هذا؛ سعر البيع = سعر السوق زائد هذا.,Tipo de compra = tipo de mercado menos esto; tipo de venta = tipo de mercado más esto.,,,translated
 By,By,بواسطة,Por,screens/VoidAllowanceReport.tsx,,translated
 by ,by ,بواسطة ,por ,screens/Agents.tsx,,translated
 by {name},by {name},بواسطة {name},por {name},screens/pos/PosSidePanel.tsx,name,translated
@@ -1649,6 +1653,7 @@ Currency,Currency,العملة,Moneda,screens/CurrencyDesk.tsx,,translated
 Currency code *,Currency code *,رمز العملة *,Código de moneda *,screens/Setup.tsx,,translated
 Currency Desk,Currency Desk,مكتب العملات,Cambio de moneda,screens/CurrencyDesk.tsx,,translated
 Currency exchange,Currency exchange,صرف العملات,Cambio de moneda,,,translated
+Currency the guest pays in,Currency the guest pays in,العملة التي يدفع بها الضيف,Moneda en la que paga el huésped,screens/FolioView.tsx,,translated
 Custom,Custom,مخصص,Personalizado,,,translated
 Custom Hours,Custom Hours,ساعات مخصصة,Horario personalizado,,,translated
 Custom report builder,Custom report builder,منشئ التقارير المخصصة,Generador de informes personalizados,,,translated
@@ -1889,6 +1894,7 @@ e.g. grand-kamra-palace,e.g. grand-kamra-palace,مثلا grand-kamra-palace,"p. 
 "e.g. prayer mat, high floor, allergy notes","e.g. prayer mat, high floor, allergy notes",مثلا سجادة صلاة، طابق مرتفع، ملاحظات الحساسية,"p. ej., alfombra de oración, piso alto, información sobre alergias",components/BookingDialog.tsx,,translated
 "e.g. Rooms, F&B, Other - used on ledgers and exports.","e.g. Rooms, F&B, Other - used on ledgers and exports.",مثلا الغرف، المأكولات والمشروبات، أخرى، تُستخدم في الدفاتر والتصدير.,"p. ej., Habitaciones, Alimentos y bebidas u Otros; se utiliza en libros contables y exportaciones.",,,translated
 e.g. Sharma Wedding,e.g. Sharma Wedding,مثال: زفاف شارما,"p. ej., Boda Sharma",components/GroupBookingDialog.tsx,,translated
+"Each business date, rates missing for these currencies are fetched online. Off: Finance fetches or types them on the Currency Desk.","Each business date, rates missing for these currencies are fetched online. Off: Finance fetches or types them on the Currency Desk.",في كل تاريخ عمل تُجلب عبر الإنترنت الأسعار الناقصة لهذه العملات. عند الإيقاف: يجلبها قسم المالية أو يُدخلها في مكتب العملات.,En cada fecha operativa se obtienen en línea los tipos que falten para estas monedas. Desactivado: Finanzas los obtiene o los introduce en el Mostrador de divisas.,,,translated
 Each closed business date and its audit pack.,Each closed business date and its audit pack.,كل تاريخ عمل مغلق وحزمة التدقيق الخاصة به.,Cada fecha de negocio cerrada y su paquete de auditoría.,,,translated
 Each hotel / branch keeps its own float and voucher list. Changing property in the header switches the box.,Each hotel / branch keeps its own float and voucher list. Changing property in the header switches the box.,لكل فندق أو فرع صندوقه الثابت وقائمة قسائمه. تغيير العقار في الترويسة يبدّل الصندوق.,"Cada hotel o sucursal tiene su propio fondo de caja chica y sus vales. Al cambiar de alojamiento en el encabezado, se cambia también de caja chica.",screens/PettyCash.tsx,,translated
 "Each morning, email a company's billing contact 3 days before a bill is due, on the due date and 15 days after, with its statement attached. Each reminder goes once per bill, and Finance gets a notice of what was sent.","Each morning, email a company's billing contact 3 days before a bill is due, on the due date and 15 days after, with its statement attached. Each reminder goes once per bill, and Finance gets a notice of what was sent.",كل صباح، يُرسل بريد إلكتروني إلى جهة الفوترة لدى الشركة قبل 3 أيام من استحقاق الفاتورة، وفي تاريخ الاستحقاق، وبعده بـ 15 يومًا، مع إرفاق كشف الحساب. يُرسل كل تذكير مرة واحدة لكل فاتورة، ويتلقى قسم المالية إشعارًا بما أُرسل.,"Cada mañana, envía un correo al contacto de facturación de la empresa 3 días antes del vencimiento de una factura, en la fecha de vencimiento y 15 días después, con su estado de cuenta adjunto. Cada recordatorio se envía una sola vez por factura y Finanzas recibe un aviso de lo enviado.",,,translated
@@ -2032,6 +2038,7 @@ Excel,Excel,Excel,Excel,screens/pos/PosSidePanel.tsx,,translated
 Exceptions,Exceptions,الاستثناءات,Excepciones,screens/EndOfDay.tsx,,translated
 exchange rate,exchange rate,سعر الصرف,tipo de cambio,,,translated
 Exchange rate,Exchange rate,سعر الصرف,Tipo de cambio,screens/CurrencyDesk.tsx,,translated
+Exchange rates,Exchange rates,أسعار الصرف,Tipos de cambio,,,translated
 Excludes: ,Excludes: ,لا يشمل: ,No incluye: ,screens/BanquetDocument.tsx,,translated
 Executed,Executed,منفّذ,Ejecutado,,,translated
 Exhibition,Exhibition,معرض,Exposición,,,translated
@@ -2106,6 +2113,9 @@ Fee,Fee,الرسوم,Cargo,,,translated
 fee: {amount},fee: {amount},رسوم: {amount},cargo: {amount},screens/PublicBooking.tsx,amount,translated
 Fees & levies,Fees & levies,الرسوم والضرائب,Cargos y tasas,,,translated
 Female,Female,أنثى,Femenino,,,translated
+Fetch rates automatically every day,Fetch rates automatically every day,جلب الأسعار تلقائيًا كل يوم,Obtener los tipos automáticamente cada día,,,translated
+Fetch today's rates,Fetch today's rates,جلب أسعار اليوم,Obtener los tipos de hoy,screens/CurrencyDesk.tsx,,translated
+Fetching...,Fetching...,جارٍ الجلب...,Obteniendo...,screens/CurrencyDesk.tsx,,translated
 Fewer keys,Fewer keys,مفاتيح أقل,Menos llaves,components/CheckInDialog.tsx,,translated
 Field,Field,الحقل,Campo,screens/Reports.tsx,,translated
 File,File,الملف,Archivo,screens/GoLiveImport.tsx,,translated
@@ -2200,6 +2210,8 @@ For {name},For {name},لـ {name},Para {name},screens/FolioView.tsx,name,transla
 "For properties that host weddings, conferences or parties.","For properties that host weddings, conferences or parties.",للعقارات التي تستضيف حفلات الزفاف أو المؤتمرات أو الحفلات.,"Para alojamientos que organizan bodas, conferencias o celebraciones.",,,translated
 for your records. We'd love to host you another time -,for your records. We'd love to host you another time -,لسجلاتك. يسعدنا استضافتك مرة أخرى:,para sus registros. Será un gusto recibirle en otra ocasión:,screens/CancellationLetter.tsx,,translated
 For:,For:,لـ:,Para:,lib/thermal.ts,,translated
+Foreign cash,Foreign cash,نقد أجنبي,Efectivo extranjero,screens/CashierTill.tsx,,translated
+Foreign currencies taken,Foreign currencies taken,العملات الأجنبية المقبولة,Monedas extranjeras aceptadas,,,translated
 Format,Format,الصيغة,Formato,screens/AccountingExport.tsx,,translated
 Found,Found,موجود,Encontrado,,,translated
 Found by,Found by,عثر عليه,Encontrado por,,,translated
@@ -2463,6 +2475,7 @@ Host & caretaker,Host & caretaker,المضيف والقائم بالرعاية,A
 Hotel,Hotel,فندق,Hotel,screens/BanquetFunction.tsx; screens/Setup.tsx,,translated
 Hotel Admin,Hotel Admin,مدير الفندق,Administrador del hotel,,,translated
 Hotel Admin (GM),Hotel Admin (GM),مدير الفندق (المدير العام),Administrador del hotel (gerente general),,,translated
+Hotel currency only,Hotel currency only,عملة الفندق فقط,Solo moneda del hotel,screens/FolioView.tsx,,translated
 Hotel default,Hotel default,الإعداد الافتراضي للفندق,Valor predeterminado del hotel,components/CustomizeToday.tsx,,translated
 Hotel local clock - night audit and timestamps. Updates the site time zone too.,Hotel local clock - night audit and timestamps. Updates the site time zone too.,ساعة الفندق المحلية - التدقيق الليلي والطوابع الزمنية. تحدّث أيضاً المنطقة الزمنية للموقع.,Hora local del hotel para la auditoría nocturna y los registros. También actualiza la zona horaria del sitio.,,,translated
 Hotel local clock for the night audit and timestamps.,Hotel local clock for the night audit and timestamps.,الساعة المحلية للفندق لتدقيق الليل والطوابع الزمنية.,Hora local del hotel para la auditoría nocturna y las marcas de tiempo.,,,translated
@@ -2656,6 +2669,7 @@ Iron Only,Iron Only,كي فقط,Solo planchado,,,translated
 "is live. Bring your existing bookings over - paste a CSV, or let the AI migration assistant do the mapping via MCP.","is live. Bring your existing bookings over - paste a CSV, or let the AI migration assistant do the mapping via MCP.",يعمل الآن. انقل حجوزاتك الحالية - الصق CSV، أو دع مساعد ترحيل الذكاء الاصطناعي يقوم بالمطابقة عبر MCP.,ya está en funcionamiento. Importe sus reservas mediante un CSV o use el asistente de migración con IA para relacionar los campos mediante MCP.,,,translated
 Is the hall free?,Is the hall free?,هل القاعة متاحة؟,¿Está disponible el salón?,screens/BanquetDiary.tsx,,translated
 "ISO code, e.g. SAR, AED, USD.","ISO code, e.g. SAR, AED, USD.",رمز ISO، مثلا SAR وAED وUSD.,"Código ISO, p. ej., SAR, AED o USD.",,,translated
+"ISO codes, separated by commas. Fetch today's rates gets these.","ISO codes, separated by commas. Fetch today's rates gets these.",رموز ISO مفصولة بفواصل. جلب أسعار اليوم يجلب هذه العملات.,Códigos ISO separados por comas. Obtener los tipos de hoy trae estos.,,,translated
 Issue,Issue,المشكلة,Incidencia,screens/BanquetFunction.tsx,,translated
 Issue event order,Issue event order,إصدار أمر الفعالية,Emitir orden del evento,screens/BanquetFunction.tsx,,translated
 Issue from,Issue from,الصرف من,Retirar de,screens/banquet/Economics.tsx,,translated
@@ -2707,6 +2721,7 @@ Keep part of the security deposit ({held} held) against damage before refunding 
 Keep showing it until,Keep showing it until,استمر في عرضها حتى,Seguir mostrándola hasta,,,translated
 Keep the booking,Keep the booking,إبقاء الحجز,Mantener la reserva,components/CancelPanel.tsx,,translated
 Keeps the margin honest,Keeps the margin honest,يحافظ على دقة الهامش,Permite calcular el margen real,screens/banquet/Economics.tsx,,translated
+Kept typed-in rates: {v0},Kept typed-in rates: {v0},تم الإبقاء على الأسعار المُدخلة يدويًا: {v0},Se mantienen los tipos introducidos a mano: {v0},screens/CurrencyDesk.tsx,v0,translated
 Key card numbers (optional),Key card numbers (optional),أرقام بطاقات المفاتيح (اختياري),Números de tarjeta de acceso (opcional),components/CheckInDialog.tsx,,translated
 Key endpoints,Key endpoints,نقاط النهاية الرئيسية,Servicios principales,screens/Developers.tsx,,translated
 Key ID / App ID,Key ID / App ID,معرف المفتاح / معرف التطبيق,ID de clave / ID de aplicación,,,translated
@@ -2913,7 +2928,7 @@ Manager,Manager,المدير,Gerente,,,translated
 Manager flash,Manager flash,التقرير السريع للمدير,Resumen gerencial,screens/Reports.tsx,,translated
 Manager's flash,Manager's flash,التقرير السريع للمدير,Resumen gerencial,,,translated
 manual,manual,يدوي,manual,,,translated
-Manual,Manual,يدوي,Manual,screens/Tickets.tsx,,translated
+Manual,Manual,يدوي,Manual,screens/CurrencyDesk.tsx; screens/Tickets.tsx,,translated
 Manual only,Manual only,يدوي فقط,Solo manual,screens/settings/cards.tsx,,translated
 Manual: staff encode key cards at the lock's own encoder. Lock vendor connectors plug in here (see the integrations docs).,Manual: staff encode key cards at the lock's own encoder. Lock vendor connectors plug in here (see the integrations docs).,يدوي: يبرمج الموظفون بطاقات المفاتيح على جهاز ترميز القفل نفسه. تُربط موصلات موردي الأقفال هنا (راجع وثائق التكاملات).,Manual: el personal programa las tarjetas en el codificador de la cerradura. Aquí se conectan las integraciones de proveedores; consulte la guía de integraciones.,,,translated
 Map,Map,الخريطة,Mapa,screens/PublicListing.tsx,,translated
@@ -2921,6 +2936,7 @@ Map location not set,Map location not set,لم يُحدد موقع الخريط�
 Map Preview,Map Preview,معاينة الخريطة,Vista previa del mapa,screens/BookingEngine.tsx,,translated
 Maps to Folio Charge.charge_type for display on older lines.,Maps to Folio Charge.charge_type for display on older lines.,يقابل Folio Charge.charge_type لعرض البنود القديمة.,Corresponde a Folio Charge.charge_type para mostrar líneas antiguas.,,,translated
 Margin,Margin,الهامش,Margen,screens/BanquetFunction.tsx; screens/banquet/Economics.tsx,,translated
+Margin on the market rate,Margin on the market rate,الهامش على سعر السوق,Margen sobre el tipo de mercado,,,translated
 Mark {status},Mark {status},تعليم كـ {status},Marcar como {status},screens/HousekeepingBoard.tsx,status,translated
 Mark done,Mark done,تعليم كمكتمل,Marcar como completado,screens/BanquetFunction.tsx,,translated
 Mark lost,Mark lost,تعليم كمفقود,Marcar como perdido,screens/BanquetFunction.tsx,,translated
@@ -3350,6 +3366,7 @@ Not counted yet,Not counted yet,لم يُجرد بعد,Aún sin recuento,,,trans
 not done,not done,لم تنجز,sin completar,components/CheckInDialog.tsx,,translated
 Not due,Not due,غير مستحق,Por vencer,screens/Ledgers.tsx,,translated
 Not fired,Not fired,لم يُرسل,Sin enviar a preparación,,,translated
+Not offered online: {v0},Not offered online: {v0},غير متاحة عبر الإنترنت: {v0},No disponibles en línea: {v0},screens/CurrencyDesk.tsx,v0,translated
 "Not on the bill yet. Post it to the room, or the guest pays for it at the outlet.","Not on the bill yet. Post it to the room, or the guest pays for it at the outlet.",غير مضافة إلى الفاتورة بعد. أضفها إلى الغرفة، أو يدفعها النزيل في المنفذ.,Aún no está en la cuenta. Cárguelo a la habitación o cobre al huésped en el punto de venta.,,,translated
 Not opted in. Booking and stay messages are not affected.,Not opted in. Booking and stay messages are not affected.,لم يوافق بعد. رسائل الحجز والإقامة لا تتأثر.,Sin consentimiento. Los mensajes de reserva y estancia no se ven afectados.,screens/GuestJourney.tsx,,translated
 Not paid,Not paid,غير مدفوع,No pagado,components/DepositPanel.tsx,,translated
@@ -3500,6 +3517,7 @@ Online check-in not sent,Online check-in not sent,لم يُرسل التسجيل
 "Online check-in sent, not filled","Online check-in sent, not filled",أُرسل التسجيل عبر الإنترنت، لم يُملأ,"Enlace de registro en línea enviado, formulario sin completar",,,translated
 "Online collection uses the payment gateway set under Settings → Payments, where your country offers one (India: Razorpay or Cashfree). Until a gateway is connected, the advance is recorded as due and settled at the desk.","Online collection uses the payment gateway set under Settings → Payments, where your country offers one (India: Razorpay or Cashfree). Until a gateway is connected, the advance is recorded as due and settled at the desk.",يستخدم التحصيل عبر الإنترنت بوابة الدفع المحددة ضمن الإعدادات ← المدفوعات، حيث تتوفر في بلدك (الهند: Razorpay أو Cashfree). إلى أن تُربط بوابة، تُسجل الدفعة المقدمة كمستحقة وتُسوى في الاستقبال.,"El cobro en línea utiliza la pasarela configurada en Configuración → Pagos, si hay una disponible para su país (India: Razorpay o Cashfree). Hasta conectarla, el anticipo queda pendiente y se cobra en recepción.",screens/BookingEngine.tsx,,translated
 Online payment links are not available for this country yet. Take payments at the desk.,Online payment links are not available for this country yet. Take payments at the desk.,روابط الدفع عبر الإنترنت غير متاحة لهذا البلد بعد. حصّل الدفعات في الاستقبال.,Los enlaces de pago en línea aún no están disponibles para este país. Registre los cobros en recepción.,screens/settings/cards.tsx,,translated
+"Online, market {v0}","Online, market {v0}",عبر الإنترنت، سعر السوق {v0},"En línea, mercado {v0}",screens/CurrencyDesk.tsx,v0,translated
 Only {n} room left for these dates,Only {n} room left for these dates,تبقى {n} غرفة فقط لهذه التواريخ,Solo queda {n} habitación para estas fechas,screens/PublicBooking.tsx,n,translated
 Only {n} rooms left for these dates,Only {n} rooms left for these dates,تبقى {n} غرف فقط لهذه التواريخ,Solo quedan {n} habitaciones para estas fechas,screens/PublicBooking.tsx,n,translated
 Only a Confirmed arrival can be marked no-show (this one is {v0}).,Only a Confirmed arrival can be marked no-show (this one is {v0}).,يمكن تسجيل عدم الحضور لوصول مؤكد فقط (هذا الحجز {v0}).,Solo una llegada confirmada puede marcarse como no presentada; esta está en estado {v0}.,,v0,translated
@@ -4090,6 +4108,7 @@ Rate Plans,Rate Plans,خطط الأسعار,Planes tarifarios,,,translated
 Rate variance,Rate variance,فروقات الأسعار,Diferencia de tarifa,,,translated
 Rate variance tolerance,Rate variance tolerance,هامش فرق السعر,Tolerancia de diferencia de tarifa,,,translated
 Rate/pax,Rate/pax,السعر/شخص,Tarifa/persona,screens/BanquetRegisters.tsx,,translated
+"Rates are hotel currency per 1 unit of the foreign currency, for today's business date. A guest paying a bill in foreign money is converted at today's Buy rate.","Rates are hotel currency per 1 unit of the foreign currency, for today's business date. A guest paying a bill in foreign money is converted at today's Buy rate.",الأسعار بعملة الفندق لكل وحدة واحدة من العملة الأجنبية، لتاريخ العمل اليوم. عندما يدفع الضيف فاتورة بعملة أجنبية تُحوَّل بسعر الشراء لليوم.,"Los tipos son en moneda del hotel por 1 unidad de la moneda extranjera, para la fecha operativa de hoy. Si un huésped paga una cuenta en moneda extranjera, se convierte al tipo de compra de hoy.",screens/CurrencyDesk.tsx,,translated
 Rates for these dates,Rates for these dates,الأسعار لهذه التواريخ,Tarifas para estas fechas,components/RateOptions.tsx,,translated
 "Rates, seasons, offers and the partners who sell you.","Rates, seasons, offers and the partners who sell you.",الأسعار والمواسم والعروض والشركاء الذين يبيعونك.,"Tarifas, temporadas, ofertas y socios que comercializan su alojamiento.",,,translated
 Razorpay only: set the same secret on the Razorpay webhook. Cashfree signs with the secret key,Razorpay only: set the same secret on the Razorpay webhook. Cashfree signs with the secret key,Razorpay فقط: اضبط السر نفسه على Webhook في Razorpay. يوقّع Cashfree بالمفتاح السري,Solo Razorpay: configure el mismo secreto en su webhook. Cashfree firma con la clave secreta,,,translated
@@ -4632,6 +4651,7 @@ Set,Set,تعيين,Establecer,screens/TapeChart.tsx,,translated
 "Set each room type's base rate, extra adult and child prices.","Set each room type's base rate, extra adult and child prices.",حدّد السعر الأساسي لكل نوع غرفة وأسعار البالغ والطفل الإضافيين.,Configure la tarifa base de cada tipo de habitación y los precios de adultos y menores adicionales.,,,translated
 Set for corporate business - it also decides which folio the bill lands on.,Set for corporate business - it also decides which folio the bill lands on.,للأعمال الشركاتية - يحدد أيضاً أي فاتورة تستلم الفاتورة.,Configure las condiciones para empresas; también determinan a qué folio se carga la cuenta.,screens/Banquet.tsx,,translated
 Set from the country you chose.,Set from the country you chose.,مضبوطة حسب الدولة التي اخترتها.,Se configuran según el país seleccionado.,../../kamra/onboarding.py,,translated
+Set on,Set on,تاريخ التحديد,Fijado el,screens/CurrencyDesk.tsx,,translated
 Set PIN,Set PIN,تعيين الرمز,Establecer PIN,components/PinPad.tsx; screens/FolioView.tsx,,translated
 Set rate,Set rate,تحديد سعر الصرف,Establecer tipo de cambio,screens/CurrencyDesk.tsx,,translated
 Set targets,Set targets,تحديد الأهداف,Definir metas,screens/RevenueReports.tsx,,translated
@@ -4697,6 +4717,7 @@ Shortest stay allowed on these dates. 0 = no minimum,Shortest stay allowed on th
 Show {n} deactivated,Show {n} deactivated,عرض {n} معطّلين,Mostrar personal desactivado: {n},screens/settings/AccessPages.tsx,n,translated
 Show a reservation from,Show a reservation from,عرض حجز من,Mostrar una reserva desde,,,translated
 Show closed,Show closed,إظهار المغلق,Mostrar cerrados,,,translated
+Show in,Show in,عرض بـ,Mostrar en,screens/FolioView.tsx,,translated
 Show menus / exit full screen,Show menus / exit full screen,إظهار القوائم / الخروج من ملء الشاشة,Mostrar menús o salir de pantalla completa,,,translated
 Show more bills,Show more bills,عرض فواتير أكثر,Mostrar más cuentas,screens/pos/OrderHistory.tsx,,translated
 Show on the public booking page,Show on the public booking page,العرض في صفحة الحجز العامة,Mostrar en la página pública de reservas,,,translated
@@ -4792,7 +4813,7 @@ Sort by,Sort by,ترتيب حسب,Ordenar por,components/RoomInsights.tsx,,trans
 Sound {state},Sound {state},الصوت {state},Sonido {state},screens/Kitchen.tsx,state,translated
 Soup,Soup,شوربة,Sopa,,,translated
 source,source,المصدر,origen,,,translated
-Source,Source,المصدر,Origen,screens/InHouse.tsx; screens/RegistrationCard.tsx; screens/Today.tsx,,translated
+Source,Source,المصدر,Origen,screens/CurrencyDesk.tsx; screens/InHouse.tsx; screens/RegistrationCard.tsx; screens/Today.tsx,,translated
 Soy,Soy,الصويا,Soya,../../kamra/settings.py,,translated
 Spa,Spa,السبا,Spa,,,translated
 Special occasion,Special occasion,مناسبة خاصة,Ocasión especial,components/CheckInDialog.tsx,,translated
@@ -5340,6 +5361,7 @@ Upcoming,Upcoming,القادمة,Próximas,screens/GuestJourney.tsx,,translated
 update,update,تحديث,actualizar,screens/MenuImport.tsx,,translated
 Update dates & re-price,Update dates & re-price,تحديث التواريخ وإعادة التسعير,Actualizar fechas y recalcular precio,screens/ReservationDetail.tsx,,translated
 Update stay,Update stay,تحديث الإقامة,Actualizar estancia,,,translated
+Updated: {v0},Updated: {v0},تم التحديث: {v0},Actualizados: {v0},screens/CurrencyDesk.tsx,v0,translated
 Updating quote,Updating quote,تحديث العرض,Actualizando cotización,components/BookingDialog.tsx,,translated
 Updating…,Updating…,جارٍ التحديث…,Actualizando…,screens/ReservationDetail.tsx,,translated
 Upgrade,Upgrade,ترقية,Mejora de categoría,,,translated

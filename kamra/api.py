@@ -1525,6 +1525,10 @@ def _post_folio_charge(folio: str, charge_type: str, description: str,
 
 
 
+# foreign money arrives as notes or a wire; a card terminal charges home currency
+FX_PAYMENT_MODES = ("Cash", "Bank Transfer")
+
+
 def _pin_guard(folio: str, pin=None):
 	from kamra.authz import require_cashier_pin
 	require_cashier_pin(frappe.db.get_value("Folio", folio, "property"), pin)
@@ -1533,11 +1537,16 @@ def _pin_guard(folio: str, pin=None):
 @require_roles("Finance", "Front Desk", "Kamra Agent")
 def add_folio_payment(folio: str, mode: str, amount: float,
                       reference: str | None = None, pin: str | None = None,
-                      kind: str = "Payment"):
+                      kind: str = "Payment", currency: str | None = None):
 	"""Record money received on the stay ledger. kind labels WHY it came
 	in - Payment (against the bill), Advance (collected before/at
 	check-in) or Security Deposit (held, refundable). Refunds go through
-	refund_folio_payment so they can never be entered by accident."""
+	refund_folio_payment so they can never be entered by accident.
+
+	currency: leave out (or pass the home currency) for a normal payment.
+	A foreign code means `amount` is the foreign money received (cash or a
+	bank transfer); the server converts it at today's buy rate, posts the
+	home amount and keeps the foreign amount and rate on the row."""
 	if kind not in ("Payment", "Advance", "Security Deposit"):
 		frappe.throw("kind must be Payment, Advance or Security Deposit.")
 	if float(amount) <= 0:
@@ -1548,11 +1557,34 @@ def add_folio_payment(folio: str, mode: str, amount: float,
 	assert_payment_mode(doc.property, mode)
 	from kamra.business_date import get_business_date
 	from kamra.cashier import record_cashier_txn, require_open_session
+	from kamra.ledger import fx_to_home, home_currency, payment_rate, round_cents
 	bd = get_business_date(doc.property)
 	# Property currency — never leave Folio Payment on the INR schema default (#341)
-	from kamra.localization import default_currency, pack_for
-	currency = (frappe.get_cached_value("Property", doc.property, "currency")
-	            or default_currency(pack_for(doc.property)))
+	currency_home = home_currency(doc.property)
+	fx = None
+	foreign = bool(currency and currency.strip().upper() != currency_home)
+	if mode == "Foreign Cash":
+		if not foreign:
+			frappe.throw("Foreign Cash needs the currency of the notes received.")
+		mode = "Cash"
+	if foreign:
+		if mode not in FX_PAYMENT_MODES:
+			frappe.throw("Foreign currency is taken as Cash or Bank Transfer "
+			             "only. A card is charged in the hotel's currency.")
+		if kind == "Security Deposit":
+			frappe.throw("Take a security deposit in the hotel's currency: "
+			             "it is refunded in that currency.")
+		r = payment_rate(doc.property, currency)
+		fx = {"currency": r["currency"], "fx_amount": round_cents(amount),
+		      "exchange_rate": r["rate"]}
+		amount = fx_to_home(fx["fx_amount"], r["rate"])
+		if amount <= 0:
+			frappe.throw("Amount must be positive.")
+	currency = currency_home
+	if fx and mode == "Cash":
+		# foreign notes are not home cash: their own mode on the folio and
+		# the till, so reports agree and the drawer count stays home cash
+		mode = "Foreign Cash"
 	sess = None
 	try:
 		sess = require_open_session(doc.property)
@@ -1567,14 +1599,17 @@ def add_folio_payment(folio: str, mode: str, amount: float,
 		"amount": float(amount),
 		"reference": reference,
 		"currency": currency,
+		**(fx or {}),  # an FX row keeps the foreign currency, amount and rate
 	})
 	from kamra.folio import _recalculate
 	_recalculate(doc)
 	doc.save()
 	pay = doc.payments[-1]
+	fx_note = (f"{fx['currency']} {fx['fx_amount']:,.2f} @ {fx['exchange_rate']}"
+	           if fx else None)
 	record_cashier_txn(
 		doc.property, "Payment", mode, float(amount),
-		folio=doc.name, reference=reference, session=sess)
+		folio=doc.name, reference=reference, notes=fx_note, session=sess)
 	try:
 		from kamra.ledger import record_payment_ledger
 		record_payment_ledger(doc, pay.as_dict(), session=sess)
@@ -1597,6 +1632,7 @@ def add_folio_payment(folio: str, mode: str, amount: float,
 		from kamra.savings import log_action
 		log_action("folio_payment", "Folio", doc.name, doc.property,
 		           rationale=f"{kind} {money_text(doc.property, amount)} by {mode}"
+		                     + (f" ({fx_note})" if fx_note else "")
 		                     + (f" ({reference})" if reference else ""))
 	return doc.as_dict()
 

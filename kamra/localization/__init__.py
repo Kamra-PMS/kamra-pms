@@ -141,7 +141,7 @@ def amount_in_words(pack, prop_doc, amount) -> str:
 GENERIC_ID_TYPES = ["Passport", "National ID", "Driving License", "Other"]
 GENERIC_PAYMENT_MODES = ["Cash", "Card", "Bank Transfer"]
 # modes that are not a country's: any property may record them
-CORE_PAYMENT_MODES = ("Cash", "Card", "Bank Transfer", "OTA Prepaid",
+CORE_PAYMENT_MODES = ("Cash", "Foreign Cash", "Card", "Bank Transfer", "OTA Prepaid",
                       "Company Credit", "Payment Link", "Cheque", "Other")
 
 
@@ -175,6 +175,11 @@ def assert_payment_mode(property: str, mode: str | None) -> None:
 	if mode not in modes:
 		frappe.throw(frappe._("{0} is not a payment mode here. Pick one of: {1}.")
 		             .format(mode, ", ".join(modes)))
+
+
+def default_currency(pack) -> str:
+	"""The pack's home currency, for a property that has none set."""
+	return getattr(pack, "DEFAULT_CURRENCY", None) or "USD"
 
 
 def front_desk_vocabulary(pack) -> dict:
