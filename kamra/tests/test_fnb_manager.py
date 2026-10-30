@@ -98,6 +98,17 @@ class FnbManagerTestCase(AuditTestCase):
 		self.assertEqual(pos.cancel_order(o2["order"], reason="wrong table",
 		                                  supervisor_pin="4321")["approved_by"], self.fnb)
 
+	def test_pos_supervisor_only(self):
+		"""A POS void approver, never a folio supervisor: no full guest
+		phones, no folio corrections."""
+		from kamra.authz import POS_SUPERVISOR_ROLES, is_supervisor, verify_supervisor
+		self.assertFalse(is_supervisor(self.fnb))
+		self.assertTrue(is_supervisor(self.fnb, POS_SUPERVISOR_ROLES))
+		self.as_(self.fnb)
+		self.assertTrue(pos._shown_phone("+91 98450 12345").startswith("\u2022"))
+		with self.assertRaises(frappe.PermissionError):
+			verify_supervisor(PROP_A, self.fnb, "4321")
+
 	def test_no_folio_cashier_finance_front_desk_or_revenue(self):
 		for mod in ("kamra.cashier", "kamra.folio", "kamra.ledger", "kamra.night_audit",
 		            "kamra.checkin", "kamra.checkout", "kamra.rates", "kamra.credit",

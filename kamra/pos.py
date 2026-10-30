@@ -620,7 +620,7 @@ def order_detail(order: str):
 	or to look at a closed one from the orders list. `kitchen_lines` counts
 	the live lines the kitchen already has: while it is zero the captain can
 	cancel the bill alone; after that a supervisor approves."""
-	from kamra.authz import is_supervisor
+	from kamra.authz import POS_SUPERVISOR_ROLES, is_supervisor
 	doc = frappe.get_doc("POS Order", order)
 	return {
 		"state": _order_list_state(doc),
@@ -631,7 +631,7 @@ def order_detail(order: str):
 		"cancelled_at": str(doc.cancelled_at) if doc.cancelled_at else None,
 		"cancel_approved_by": doc.cancel_approved_by,
 		"kitchen_lines": len(_kitchen_lines(doc)),
-		"can_approve": 1 if is_supervisor() else 0,
+		"can_approve": 1 if is_supervisor(roles=POS_SUPERVISOR_ROLES) else 0,
 		"captain": doc.captain, "waiter": doc.waiter,
 		"served_by": _served_by(doc), "cashier": _full_name(doc.settled_by),
 		"name": doc.name, "outlet": doc.outlet, "status": doc.status,
@@ -960,12 +960,15 @@ def mark_prepared(order: str, item_row: str | None = None):
 	are never swept up by "all ready" - that food is cancelled, not cooked."""
 	doc = frappe.get_doc("POS Order", order)
 	now = frappe.utils.now()
-	for it in doc.items:
-		if it.voided:
-			continue
-		if (item_row and it.name == item_row) or (not item_row and it.kot_status == "Fired"):
-			it.kot_status = "Prepared"
-			it.prepared_at = now
+	# only a line the kitchen has (Fired): never one still on the till or
+	# one already prepared, whose times would be overwritten
+	lines = [it for it in doc.items if not it.voided and it.kot_status == "Fired"
+	         and (not item_row or it.name == item_row)]
+	if item_row and not lines:
+		frappe.throw(_("Only an item the kitchen is cooking can be marked ready."))
+	for it in lines:
+		it.kot_status = "Prepared"
+		it.prepared_at = now
 	doc.save()
 	live = [it for it in doc.items if not it.voided]
 	all_done = bool(live) and all(it.kot_status == "Prepared" for it in live)
@@ -1039,6 +1042,8 @@ def set_waiter(order: str, waiter: str = ""):
 	doc = frappe.get_doc("POS Order", order)
 	if doc.status == "Cancelled":
 		frappe.throw(_("This order was cancelled."))
+	if doc.status == "Delivered":
+		frappe.throw(_("This bill is closed. The waiter on it cannot change."))
 	doc.waiter = (waiter or "").strip()[:140] or None
 	doc.save()
 	return {"ok": True, "waiter": doc.waiter, "served_by": _served_by(doc)}
@@ -1323,15 +1328,18 @@ def _approve_kitchen_void(doc, supervisor: str | None, supervisor_pin) -> str:
 		frappe.throw(_("The kitchen already has items on this bill. An agent "
 		              "cannot void them: a supervisor does that at the till."),
 		             SupervisorRequired)
-	from kamra.authz import is_supervisor, require_cashier_pin, verify_supervisor
-	if is_supervisor() and (not supervisor or supervisor == frappe.session.user):
+	from kamra.authz import (POS_SUPERVISOR_ROLES, is_supervisor,
+	                         require_cashier_pin, verify_supervisor)
+	if is_supervisor(roles=POS_SUPERVISOR_ROLES) and \
+			(not supervisor or supervisor == frappe.session.user):
 		require_cashier_pin(doc.property, supervisor_pin)
 		return frappe.session.user
 	if not supervisor:
 		frappe.throw(_("SUPERVISOR_REQUIRED: the kitchen already has items on "
 		              "this bill. A supervisor approves voiding them with "
 		              "their PIN."), SupervisorRequired)
-	return verify_supervisor(doc.property, supervisor, supervisor_pin)
+	return verify_supervisor(doc.property, supervisor, supervisor_pin,
+	                         POS_SUPERVISOR_ROLES)
 
 
 def _void_lines(doc, lines, reason: str, approver: str | None):
@@ -1458,10 +1466,10 @@ def void_approvers(outlet: str):
 	"""Who can approve a void at this outlet's till: enabled Hotel Admin,
 	Finance and F&B Manager users with access to the property and a cashier PIN set. Names
 	only."""
-	from kamra.authz import SUPERVISOR_ROLES, restricted_properties
+	from kamra.authz import POS_SUPERVISOR_ROLES, restricted_properties
 	prop = frappe.db.get_value("POS Outlet", outlet, "property")
 	users = set(frappe.get_all(
-		"Has Role", filters={"role": ["in", [r for r in SUPERVISOR_ROLES
+		"Has Role", filters={"role": ["in", [r for r in POS_SUPERVISOR_ROLES
 		                                      if r != "Administrator"]],
 		                     "parenttype": "User"},
 		pluck="parent", distinct=True))

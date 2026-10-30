@@ -67,25 +67,44 @@ class PosStaffKotTestCase(AuditTestCase):
 		self.assertNotIn("@", served)
 
 		pos.set_waiter(o["order"], "Meena")
-		pos.pay_order(o["order"], "Cash")
-		self.assertEqual(frappe.db.get_value("POS Order", o["order"], "settled_by"),
-		                 "Administrator")
-		bill = pos.bill_data(o["order"])
-		self.assertEqual((bill["served_by"], bill["cashier"]), ("Meena", "Administrator"))
-		d = pos.order_detail(o["order"])
-		self.assertEqual((d["served_by"], d["cashier"]), ("Meena", "Administrator"))
-		row = next(r for r in pos.orders_list(self.outlet)["rows"] if r["name"] == o["order"])
-		self.assertEqual((row["served_by"], row["cashier"]), ("Meena", "Administrator"))
-		# the cashier is stamped once, on the close: a later change keeps it
 		frappe.set_user(captain)
 		try:
-			doc = frappe.get_doc("POS Order", o["order"])
-			doc.notes = "later edit"
-			doc.save(ignore_permissions=True)
+			from kamra import cashier
+			cashier.open_session(PROP_A, 0)
+			pos.pay_order(o["order"], "Cash")
 		finally:
 			frappe.set_user("Administrator")
-		self.assertEqual(frappe.db.get_value("POS Order", o["order"], "settled_by"),
-		                 "Administrator")
+		name = frappe.utils.get_fullname(captain)
+		self.assertEqual(frappe.db.get_value("POS Order", o["order"], "settled_by"), captain)
+		bill = pos.bill_data(o["order"])
+		self.assertEqual((bill["served_by"], bill["cashier"]), ("Meena", name))
+		d = pos.order_detail(o["order"])
+		self.assertEqual((d["served_by"], d["cashier"]), ("Meena", name))
+		row = next(r for r in pos.orders_list(self.outlet)["rows"] if r["name"] == o["order"])
+		self.assertEqual((row["served_by"], row["cashier"]), ("Meena", name))
+		# the cashier is stamped once, on the close: a later change keeps it,
+		# and a value sent by a client is put back
+		doc = frappe.get_doc("POS Order", o["order"])
+		doc.notes = "later edit"
+		doc.settled_by = "Administrator"
+		doc.save(ignore_permissions=True)
+		self.assertEqual(frappe.db.get_value("POS Order", o["order"], "settled_by"), captain)
+		# a closed bill keeps its waiter
+		with self.assertRaisesRegex(frappe.ValidationError, "closed"):
+			pos.set_waiter(o["order"], "Someone else")
+
+	def test_no_cashier_for_administrator(self):
+		o = self.send()
+		pos.pay_order(o["order"], "Cash")
+		self.assertIsNone(frappe.db.get_value("POS Order", o["order"], "settled_by"))
+
+	def test_only_a_cooking_line_is_marked_ready(self):
+		o = pos.create_order(self.outlet, [{"menu_item": self.dosa, "qty": 1}],
+		                     property=PROP_A, table_no="T1")
+		row = self.lines(o["order"])[0]["row"]
+		with self.assertRaisesRegex(frappe.ValidationError, "cooking"):
+			pos.mark_prepared(o["order"], row)  # still on the till
+		self.assertFalse(self.lines(o["order"])[0]["prepared_at"])
 
 	def test_start_and_pickup_times_and_turnaround_report(self):
 		o = self.send()
