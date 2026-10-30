@@ -23,8 +23,6 @@ financial year); everywhere else on 1 January.
 
 from __future__ import annotations
 
-from datetime import date as Date
-
 import frappe
 from frappe.utils import add_days, date_diff, flt, getdate
 
@@ -33,14 +31,6 @@ from kamra.authz import require_roles
 FOLIO_SKIP = ("Opening Balance", "Room Levy")
 FNB_TYPES = ("Food & Beverage",)
 LEDGERS = (("Guest", "Guest ledger"), ("Deposit", "Advance deposits"), ("AR", "City ledger"))
-
-
-def year_start(property: str, d) -> Date:
-	from kamra.localization import pack_for
-	month, day = getattr(pack_for(property), "FINANCIAL_YEAR_START", (1, 1))
-	d = getdate(d)
-	start = Date(d.year, month, day)
-	return start if start <= d else Date(d.year - 1, month, day)
 
 
 def _folio(property: str, start, end) -> dict:
@@ -173,6 +163,7 @@ def _city_ledger(property: str, d) -> dict:
 
 
 def build(property: str, d) -> dict:
+	from kamra.localization import financial_year_start, pack_for
 	d = getdate(d)
 	total_rooms = frappe.db.count("Room", {"property": property}) or 0
 	return {
@@ -181,7 +172,8 @@ def build(property: str, d) -> dict:
 		"periods": [
 			_period(property, "Day", d, d, total_rooms),
 			_period(property, "Month to date", d.replace(day=1), d, total_rooms),
-			_period(property, "Year to date", year_start(property, d), d, total_rooms),
+			_period(property, "Year to date", financial_year_start(pack_for(property), d), d,
+			        total_rooms),
 		],
 		"balances": _balances(property, d),
 	}

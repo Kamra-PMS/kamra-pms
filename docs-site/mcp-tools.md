@@ -672,9 +672,9 @@ Endpoint: `kamra.reports.manager_flash`.
 The night audit report for a business date (default: the last one
 closed): room nights, occupancy, ADR, RevPAR, food and beverage apart,
 each outlet, banquets, meal plans and minibar, other income, for the
-day, month to date and year to date (India: from 1 April), and the
-guest, advance and city ledger balances brought and carried forward.
-Read-only.
+day, month to date and year to date from the start of the property's
+financial year, and the guest, advance and city ledger balances
+brought and carried forward. Read-only.
 
 Endpoint: `kamra.audit_report.night_audit_report`.
 

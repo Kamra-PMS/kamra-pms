@@ -69,8 +69,9 @@ class AuditReportTestCase(AuditTestCase):
 
 	def test_year_starts_in_april_for_india(self):
 		from datetime import date
-		self.assertEqual(audit_report.year_start(PROP_A, "2027-02-10"), date(2026, 4, 1))
-		self.assertEqual(audit_report.year_start(PROP_A, "2026-05-10"), date(2026, 4, 1))
+		from kamra.localization import financial_year_start, pack_for
+		self.assertEqual(financial_year_start(pack_for(PROP_A), "2027-02-10"), date(2026, 4, 1))
+		self.assertEqual(financial_year_start(pack_for(PROP_A), "2026-05-10"), date(2026, 4, 1))
 
 	def test_balances_carry_forward(self):
 		res = make_reservation(PROP_A, self.rt, TODAY, d(2), status="Checked In",
