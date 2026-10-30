@@ -12,7 +12,7 @@ FLAGS = ("write", "create", "delete", "submit", "cancel", "amend")
 
 
 def execute():
-	frappe.db.sql(
+	frappe.db.sql(  # nosemgrep: frappe-sql-format-injection -- values are parameterized; the interpolated text is a module constant
 		f"""UPDATE `tabCustom DocPerm`
 		SET {", ".join(f"`{f}` = 0" for f in FLAGS)}
 		WHERE parent IN %(doctypes)s AND role != 'System Manager'""",

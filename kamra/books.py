@@ -194,7 +194,7 @@ def cash_forecast(property: str, days: int = 5, opening: float | None = None):
 
 def _revenue(property: str, start, end) -> dict:
 	from kamra.ledger import CHARGE_TYPE_TO_CODE
-	rows = frappe.db.sql(
+	rows = frappe.db.sql(  # nosemgrep: frappe-sql-format-injection -- values are parameterized; the interpolated text is a module constant
 		f"""
 		SELECT fc.charge_type, COALESCE(SUM(fc.amount), 0) AS amount
 		FROM `tabFolio Charge` fc JOIN `tabFolio` f ON fc.parent = f.name
@@ -215,7 +215,7 @@ def _revenue(property: str, start, end) -> dict:
 		     AND DATE(creation) BETWEEN %(s)s AND %(e)s""",
 		{"p": property, "s": start, "e": end})[0][0])
 	# a confirmed function counts once it has been held
-	rev["banquets"] += flt(frappe.db.sql(
+	rev["banquets"] += flt(frappe.db.sql(  # nosemgrep: frappe-sql-format-injection -- values are parameterized; the interpolated text is a module constant
 		f"""SELECT COALESCE(SUM(taxable_amount), 0) FROM `tabVenue Booking`
 		   WHERE property = %(p)s AND event_date BETWEEN %(s)s AND %(e)s
 		     AND {BANQUET_HELD}""",
@@ -242,7 +242,7 @@ def tax_collected(property: str, start, end) -> float:
 		   WHERE f.property = %(p)s AND fc.posting_date BETWEEN %(s)s AND %(e)s
 		     AND fc.charge_type NOT IN ('Opening Balance')""",
 		{"p": property, "s": start, "e": end})[0][0]
-	banquet = frappe.db.sql(
+	banquet = frappe.db.sql(  # nosemgrep: frappe-sql-format-injection -- values are parameterized; the interpolated text is a module constant
 		f"""SELECT COALESCE(SUM(tax_amount), 0) FROM `tabVenue Booking`
 		   WHERE property = %(p)s AND event_date BETWEEN %(s)s AND %(e)s
 		     AND {BANQUET_HELD} AND IFNULL(posted_to_folio, 0) = 0""",
@@ -251,7 +251,7 @@ def tax_collected(property: str, start, end) -> float:
 
 
 def _bills_in(property: str, start, end):
-	return frappe.db.sql(
+	return frappe.db.sql(  # nosemgrep: frappe-sql-format-injection -- values are parameterized; the interpolated text is a module constant
 		f"""SELECT expense_category AS category, COALESCE(SUM(amount), 0) AS amount,
 		          COALESCE(SUM(tax_amount), 0) AS tax, COUNT(*) AS bills
 		   FROM `tabVendor Bill`
@@ -327,11 +327,11 @@ def _ledger(property: str, ledger: str, as_of) -> float:
 def payables_at(property: str, as_of) -> float:
 	"""Supplier bills dated on or before `as_of` less what was paid on
 	them by then."""
-	billed = frappe.db.sql(
+	billed = frappe.db.sql(  # nosemgrep: frappe-sql-format-injection -- values are parameterized; the interpolated text is a module constant
 		f"""SELECT COALESCE(SUM(total), 0) FROM `tabVendor Bill`
 		   WHERE property = %s AND {BILL_COUNTS} AND bill_date <= %s""",
 		(property, as_of))[0][0]
-	paid = frappe.db.sql(
+	paid = frappe.db.sql(  # nosemgrep: frappe-sql-format-injection -- values are parameterized; the interpolated text is a module constant
 		f"""SELECT COALESCE(SUM(p.amount), 0) FROM `tabVendor Bill Payment` p
 		   JOIN `tabVendor Bill` b ON b.name = p.parent
 		   WHERE b.property = %s AND b.{BILL_COUNTS}
