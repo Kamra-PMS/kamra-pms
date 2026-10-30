@@ -229,10 +229,20 @@ def _payment_link(res, amount) -> str | None:
 	                                      "status": "Open"}, "name")
 	if not folio:
 		return None
+	# a test-mode gateway makes a fake link a guest cannot pay
+	if frappe.db.get_value("Payment Gateway Settings",
+	                       {"property": res.property, "enabled": 1}, "test_mode"):
+		return None
 	try:
 		from kamra.payments import create_payment_link
 		return (create_payment_link(folio, amount) or {}).get("url")
 	except frappe.ValidationError:
+		# no gateway here: the guest is asked to pay at the desk
+		frappe.clear_messages()
+		return None
+	except Exception:
+		# the gateway is down: the message still goes, with the desk wording
+		frappe.log_error(title="WhatsApp payment link failed")
 		frappe.clear_messages()
 		return None
 

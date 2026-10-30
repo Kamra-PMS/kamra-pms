@@ -15,6 +15,7 @@ from kamra.tests.audit_fixtures import (
 	TODAY,
 	AuditTestCase,
 	d,
+	ensure_user,
 	guest_folio,
 	make_property,
 	make_reservation,
@@ -97,3 +98,62 @@ class QuickFixesTestCase(AuditTestCase):
 			out = whatsapp.send_payment_request(res.name, 500)
 		self.assertEqual(sent["args"][2], "https://pay.example/abc")
 		self.assertEqual(out["payment_link"], "https://pay.example/abc")
+
+	def test_priced_requests_carry_the_hotels_tax(self):
+		from kamra.folio import _nightly_gst
+		from kamra.localization import services_tax_rate
+		res = make_reservation(PROP_A, self.rt, TODAY, d(2), status="Checked In",
+		                       room=self.room)
+		checkin.log_checkin_requests(res.name, ["extra_bed", "airport_drop"],
+		                             prices={"extra_bed": 700, "airport_drop": 900})
+		rates = dict(frappe.get_all("Folio Charge", filters={"parent": guest_folio(res.name),
+		                                                     "auto_posted": 0},
+		                            fields=["charge_type", "gst_rate"], as_list=True))
+		services = services_tax_rate(pack_for(PROP_A), PROP_A)
+		self.assertGreater(services, 0)
+		self.assertEqual(rates["Extra Guests"], _nightly_gst(res, TODAY))
+		self.assertEqual(rates["Taxi"], services)
+		# the desk's Taxi form sends no rate: the server fills the services rate
+		api.post_stay_charge(res.name, "Taxi", "UT desk taxi", 400, gst_rate=0)
+		self.assertEqual(frappe.db.get_value("Folio Charge", {
+			"parent": guest_folio(res.name), "description": "UT desk taxi"}, "gst_rate"),
+			services)
+
+	def test_a_hand_posted_extra_bed_does_not_skip_the_nights_charge(self):
+		from kamra.folio import post_room_night
+		res = make_reservation(PROP_A, self.rt, TODAY, d(2), status="Checked In",
+		                       room=self.room)
+		# an extra guest agreed at booking, billed each night by the audit
+		frappe.db.set_value("Reservation", res.name, {"over_capacity_charge": 300,
+		                                              "over_capacity_guests": 1})
+		checkin.log_checkin_requests(res.name, ["extra_bed"], prices={"extra_bed": 700})
+		post_room_night(frappe.get_doc("Reservation", res.name), TODAY)
+		lines = frappe.get_all("Folio Charge", filters={
+			"parent": guest_folio(res.name), "charge_type": "Extra Guests"},
+			fields=["amount", "auto_posted"], order_by="auto_posted")
+		self.assertEqual([(r.amount, r.auto_posted) for r in lines], [(700, 0), (300, 1)])
+
+	def test_the_night_auditor_can_bill_a_request(self):
+		res = make_reservation(PROP_A, self.rt, TODAY, d(2), status="Checked In",
+		                       room=self.room)
+		user = ensure_user("ut.quick.night@test.local", ["Night Auditor"])
+		frappe.set_user(user)  # nosemgrep: frappe-setuser -- acting as the persona
+		try:
+			checkin.log_checkin_requests(res.name, ["extra_bed"], prices={"extra_bed": 700})
+		finally:
+			frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- restore
+		self.assertEqual(checkin._records(frappe.get_doc("Reservation", res.name))
+		                 ["guest_requests"]["by"], user)
+		self.assertTrue(frappe.get_all("Folio Charge", filters={
+			"parent": guest_folio(res.name), "description": "Extra bed"}))
+
+	def test_a_gateway_error_falls_back_to_the_desk(self):
+		from kamra import whatsapp
+		res = make_reservation(PROP_A, self.rt, TODAY, d(2), status="Checked In",
+		                       room=self.room)
+		from kamra.folio import open_folio
+		open_folio(res)
+		with patch("kamra.payments.create_payment_link", side_effect=ConnectionError("down")), \
+				patch("frappe.log_error") as logged:
+			self.assertIsNone(whatsapp._payment_link(res, 500))
+		logged.assert_called_once()

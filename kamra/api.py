@@ -1766,13 +1766,18 @@ def _resolve_charge_gst(property: str, charge_type: str, description: str,
                         is_alcohol: int, provided: float) -> float:
 	"""The tax rate a charge actually carries, decided server-side so a caller
 	(human or agent) cannot mis-tax it. Food & beverage uses the F&B rate from
-	the localization pack; alcohol its own rate; otherwise the given rate."""
+	the localization pack; alcohol its own rate; a taxi with no rate the
+	services rate; otherwise the given rate."""
 	text = f"{charge_type} {description}".lower()
 	if is_alcohol:
 		return float(provided) if provided else 18.0
 	if any(w in text for w in _FNB_WORDS):
 		from kamra.folio import _fnb_gst
 		return float(_fnb_gst(property))
+	# a taxi is a taxable guest service: the desk form sends no rate
+	if charge_type == "Taxi" and not provided:
+		from kamra.localization import pack_for, services_tax_rate
+		return services_tax_rate(pack_for(property), property)
 	return float(provided or 0)
 
 
