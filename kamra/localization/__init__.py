@@ -27,6 +27,7 @@ and the accessors refuse rather than fall back to another country's:
 """
 
 import importlib
+from datetime import date
 
 import frappe
 
@@ -149,21 +150,29 @@ def front_desk_vocabulary(pack) -> dict:
 	}
 
 
-# ── children on the stay register (India DPDP s.9 and alike) ─────────────
-# A minor is recorded with name and age only. ID details are kept only where
-# registration law asks for them: by default for foreign nationals (Form C,
-# TM30 and the like); a pack whose register covers every guest sets
-# MINOR_IDS = "all".
+def financial_year_start(pack, d) -> date:
+	"""The first day of the financial year d falls in, from the pack's
+	FINANCIAL_YEAR_START (month, day): 1 April 2026 for 10 Feb 2027 where
+	the year runs from 1 April (India); 1 January where it has none."""
+	from frappe.utils import getdate
+	month, day = getattr(pack, "FINANCIAL_YEAR_START", (1, 1))
+	d = getdate(d)
+	start = date(d.year, month, day)
+	return start if start <= d else date(d.year - 1, month, day)
+
 
 def financial_year(pack, d) -> int:
 	"""The year a date's financial year started in: 2026 for 10 Feb 2027
 	where the year runs from 1 April (India), 2027 where it is the
 	calendar year. Numbering that resets each year uses it."""
-	from frappe.utils import getdate
-	month, day = getattr(pack, "FINANCIAL_YEAR_START", (1, 1))
-	d = getdate(d)
-	return d.year if (d.month, d.day) >= (month, day) else d.year - 1
+	return financial_year_start(pack, d).year
 
+
+# ── children on the stay register (India DPDP s.9 and alike) ─────────────
+# A minor is recorded with name and age only. ID details are kept only where
+# registration law asks for them: by default for foreign nationals (Form C,
+# TM30 and the like); a pack whose register covers every guest sets
+# MINOR_IDS = "all".
 
 def adult_age(pack) -> int:
 	return int(getattr(pack, "ADULT_AGE", 18))
