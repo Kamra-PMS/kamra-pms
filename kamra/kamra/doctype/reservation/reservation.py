@@ -4,7 +4,7 @@
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import cint, date_diff, flt, formatdate, now_datetime, today
+from frappe.utils import cint, date_diff, flt, formatdate, getdate, now_datetime, today
 
 
 class InventoryRefused(frappe.ValidationError):
@@ -244,6 +244,11 @@ class Reservation(Document):
 			!= (str(self.check_in_date), str(self.check_out_date), self.room_type)
 
 	def validate(self):
+		if self.get("booked_check_out_date") and getdate(self.check_out_date) \
+				>= getdate(self.booked_check_out_date):
+			# extended back to (or past) the booked date: no longer leaving early
+			self.booked_check_out_date = None
+			self.early_departure_reason = None
 		self.validate_dates()
 		self.validate_past_check_in()
 		self.nights = date_diff(self.check_out_date, self.check_in_date)

@@ -33,7 +33,8 @@ class _Base(AuditTestCase):
 
 	def setUp(self):
 		super().setUp()
-		self.at(TODAY, "kamra.folio", "kamra.business_date", "kamra.ledger")
+		self.at(TODAY, "kamra.folio", "kamra.business_date", "kamra.ledger",
+		        "kamra.checkout")
 		make_property(PROP_A, business_date=TODAY)
 		self.rt = make_room_type(PROP_A, "STD", base_price=1000)
 		self.room = make_room(PROP_A, self.rt, "101")
@@ -208,6 +209,38 @@ class EarlyCheckoutTestCase(_Base):
 		out = api.early_departure(res.name, "Complaint, GM waived", fee="None")
 		frappe.set_user("Administrator")
 		self.assertEqual(out["amount"], 0)
+
+	def test_morning_before_the_audit_counts_last_night_as_slept(self):
+		self.setting("early_departure_fee", "One Night")
+		# the audit has not rolled the date yet: business date is yesterday
+		make_property(PROP_A, business_date=d(-1))
+		res = self.stay(check_in=d(-2))
+		from kamra.checkout import early_departure_plan
+		plan = early_departure_plan(res)
+		self.assertEqual((plan["new_check_out"], plan["unused_nights"]), (TODAY, 3))
+
+	def test_repeat_is_refused_and_fee_has_its_code(self):
+		self.setting("early_departure_fee", "One Night")
+		res = self.stay()
+		api.early_departure(res.name, "Flight moved")
+		with self.assertRaises(frappe.ValidationError):
+			api.early_departure(res.name, "Flight moved")
+		fee = [c for c in charges(res.name, "Early Departure") if "Early departure" in c.description]
+		self.assertEqual(len(fee), 1)
+		self.assertEqual(frappe.db.get_value("Folio Charge", {
+			"reservation": res.name, "charge_type": "Early Departure"},
+			"transaction_code"), "1220")
+
+	def test_extending_again_clears_the_early_marker(self):
+		self.setting("early_departure_fee", "None")
+		res = self.stay()
+		api.early_departure(res.name, "Flight moved")
+		res = frappe.get_doc("Reservation", res.name)
+		self.assertEqual(str(res.booked_check_out_date), d(3))
+		res.check_out_date = d(3)
+		res.save(ignore_permissions=True)
+		self.assertFalse(frappe.db.get_value("Reservation", res.name, "booked_check_out_date"))
+		self.assertFalse(frappe.db.get_value("Reservation", res.name, "early_departure_reason"))
 
 	def test_not_early_is_refused_and_context_shows_the_plan(self):
 		self.setting("early_departure_fee", "None")

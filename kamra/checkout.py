@@ -25,7 +25,7 @@ import re
 
 import frappe
 from frappe import _
-from frappe.utils import flt, getdate
+from frappe.utils import flt, getdate, nowdate
 
 EPS = 0.009
 OPEN_POS_STATUSES = ("Placed", "Confirmed", "Preparing")
@@ -732,7 +732,9 @@ def early_departure_plan(res) -> dict | None:
 	from kamra.settings import get_setting
 
 	booked_out = getdate(res.check_out_date)
-	new_out = max(getdate(get_business_date(res.property)),
+	# the calendar too: leaving in the morning before the night audit has
+	# rolled the business date, last night was slept, not unused
+	new_out = max(getdate(get_business_date(res.property)), getdate(nowdate()),
 	              getdate(add_days(res.check_in_date, 1)))
 	if new_out >= booked_out:
 		return None
@@ -771,7 +773,9 @@ def apply_early_departure(reservation: str, reason: str,
 	date and the reason stay on the reservation for the Early departures
 	report. `fee` other than the property's policy is Finance's or a Hotel
 	Admin's call (kamra.credit.can_override), never an agent's."""
-	res = frappe.get_doc("Reservation", reservation)
+	# locked: two clicks at once must not shorten and charge twice; the
+	# second waits, then finds the stay already shortened and stops
+	res = frappe.get_doc("Reservation", reservation, for_update=True)
 	plan = early_departure_plan(res)
 	if not plan:
 		frappe.throw(_("This stay is not leaving before its booked date."))
@@ -802,7 +806,7 @@ def apply_early_departure(reservation: str, reason: str,
 	if amount > EPS:
 		from kamra.business_date import get_business_date
 		from kamra.folio import _recalculate, target_folio
-		from kamra.ledger import save_folio
+		from kamra.ledger import code_for_charge_type, save_folio
 		# the charge stands in for room nights: it bills where the room does
 		# (a company that pays the room pays it), as check-out would have
 		# billed those nights
@@ -814,6 +818,7 @@ def apply_early_departure(reservation: str, reason: str,
 			folio.append("charges", {
 				"posting_date": get_business_date(res.property),
 				"charge_type": "Early Departure",
+				"transaction_code": code_for_charge_type("Early Departure"),
 				"reservation": res.name,
 				"description": _("Early departure: {0} of {1} unused night(s) at {2}% tax").format(
 					line["nights"], plan["unused_nights"], f"{line['tax_rate']:g}"),
