@@ -149,6 +149,19 @@ class IdScanTestCase(AuditTestCase):
 		checkin.save_guest_details(res.name, id_type="Aadhaar", id_number="987654321099")
 		self.assertEqual(frappe.db.get_value("Guest", res.guest, "id_number"), "••••••••1099")
 
+	def test_core_keeps_a_plain_id_proof_as_typed(self):
+		from types import SimpleNamespace
+
+		from kamra import localization as loc
+		# the Aadhaar rule is the India pack's; core and other packs have none
+		self.assertIsNone(loc.store_id_number(SimpleNamespace(), "Aadhaar", "987654321012"))
+		self.assertIsNone(loc.store_id_number(loc.pack_for(PROP_A), "Passport", "Z1234567"))
+		res = make_reservation(PROP_A, self.rt, TODAY, d(2))
+		row = api.update_occupants(res.name, [
+			{"full_name": "UT Passport", "age": 30, "id_type": "Passport",
+			 "id_number": "Z1234567"}])["rows"][0]
+		self.assertEqual(row["id_number"], "Z1234567")
+
 	def test_a_child_photo_is_not_kept_either(self):
 		from kamra.tests.test_guest_documents import _png
 		res = make_reservation(PROP_A, self.rt, TODAY, d(2))

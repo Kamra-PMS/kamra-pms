@@ -187,3 +187,11 @@ def read_id_scan(text):
 	"""An ID scanner's text the core could not read: the Aadhaar QR."""
 	from kamra.localization.india.aadhaar_qr import read
 	return read(text)
+
+
+def store_id_number(id_type, value):
+	"""UIDAI rules: a hotel keeps an Aadhaar number masked to its last 4."""
+	if id_type == "Aadhaar":
+		from kamra.localization.india.aadhaar_qr import mask
+		return mask(value)
+	return None

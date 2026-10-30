@@ -69,6 +69,14 @@ def services_tax_rate(pack, property: str | None) -> float:
 	return float(pack.fnb_tax_rate(property))
 
 
+def store_id_number(pack, id_type: str | None, value: str | None) -> str | None:
+	"""How a guest's ID number is kept. Core treats every ID as a plain card
+	and keeps what was typed; a pack can hold a national ID differently
+	(India: Aadhaar keeps only its last 4 digits). None means no rule."""
+	fn = getattr(pack, "store_id_number", None)
+	return fn(id_type, value) if fn else None
+
+
 def money_text(property: str | None, amount) -> str:
 	"""An amount in the property's currency for server-written text (the
 	activity log, alerts) - never a hardcoded rupee sign."""

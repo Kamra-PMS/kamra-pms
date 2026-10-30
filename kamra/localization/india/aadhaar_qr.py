@@ -30,9 +30,14 @@ _ADDRESS = ("house", "street", "landmark", "location", "vtc", "post_office",
             "sub_district", "district", "state", "pincode")
 
 
-def _masked(last4: str) -> str:
-	from kamra.api import mask_aadhaar
-	return mask_aadhaar(last4)
+def mask(value: str | None) -> str:
+	"""Aadhaar is never held whole: its last 4 digits in the register mask,
+	'••••••••1012'. Takes a full number, a masked one or just the last 4."""
+	digits = re.sub(r"\D", "", value or "")
+	return "•" * 8 + digits[-4:] if digits else ""
+
+
+_masked = mask
 
 
 def _dob(value: str) -> str | None:

@@ -1884,7 +1884,7 @@ def update_occupants(reservation: str, occupants):
 	if isinstance(occupants, str):
 		occupants = frappe.parse_json(occupants)
 	doc = frappe.get_doc("Reservation", reservation)
-	from kamra.localization import is_minor, minor_id_kept, pack_for, validate_id_type
+	from kamra.localization import is_minor, minor_id_kept, pack_for, store_id_number, validate_id_type
 	pack = pack_for(doc.property)
 	default_nat = getattr(pack, "DEFAULT_NATIONALITY", "")
 	# scans survive edits even when the client sends stale rows: carry the
@@ -1905,8 +1905,9 @@ def update_occupants(reservation: str, occupants):
 		# number when the client only has the masked one (check-in shows it so)
 		prev = existing_rows.get(o.get("row")) or {}
 		o = {**prev, **{k: v for k, v in o.items() if v is not None}}
-		if o.get("id_type") == "Aadhaar":
-			o["id_number"] = mask_aadhaar(o.get("id_number"))
+		stored = store_id_number(pack, o.get("id_type"), o.get("id_number"))
+		if stored is not None:
+			o["id_number"] = stored
 		elif "•" in str(o.get("id_number") or ""):
 			if not prev:
 				# a masked number for a row that is gone: saving it would wipe the ID
@@ -3658,14 +3659,6 @@ def _mask_id(value: str | None) -> str | None:
 	if not value or len(value) <= 4 or value.startswith("•"):
 		return value
 	return "•" * (len(value) - 4) + value[-4:]
-
-
-def mask_aadhaar(value: str | None) -> str:
-	"""Aadhaar is never held whole: its last 4 digits in the register mask,
-	'••••••••1012'. Takes a full number, a masked one or just the last 4."""
-	import re
-	digits = re.sub(r"\D", "", value or "")
-	return "•" * 8 + digits[-4:] if digits else ""
 
 
 def _scrub_stay_ids(res):
