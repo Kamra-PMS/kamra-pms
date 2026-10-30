@@ -79,6 +79,27 @@ class MoveRoomBillTestCase(AuditTestCase):
 		with self.assertRaisesRegex(frappe.ValidationError, "split"):
 			pos.move_room_bill(order, self.room2, "x")
 
+	def test_an_allowance_after_the_bill_is_refused(self):
+		from kamra import folio as folio_mod
+		self.outlet_items = self.outlet()
+		order = self.bill(self.outlet_items[1])
+		src = guest_folio(self.wrong.name)
+		folio_mod.post_allowance(src, 50, "cold food")
+		with self.assertRaisesRegex(frappe.ValidationError, "allowance"):
+			pos.move_room_bill(order, self.room2, "x")
+		self.assertTrue(self.lines(src, order))
+
+	def test_the_move_is_announced_on_the_new_folio(self):
+		from unittest.mock import patch
+		self.outlet_items = self.outlet()
+		order = self.bill(self.outlet_items[1])
+		with patch("kamra.webhooks.emit_folio_posted") as emit:
+			out = pos.move_room_bill(order, self.room2, "wrong room")
+		emit.assert_called_once()
+		folio, line = emit.call_args.args
+		self.assertEqual(folio.name, out["folio"])
+		self.assertIn(f"({order})", line.description)
+
 	def test_only_the_same_business_day(self):
 		self.outlet_items = self.outlet()
 		order = self.bill(self.outlet_items[1])

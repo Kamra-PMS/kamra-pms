@@ -708,6 +708,7 @@ def move_charges(src, dst, charge_rows: list, reservation: str | None = None):
 	src.save(ignore_permissions=True)
 	dst.save(ignore_permissions=True)
 	ledger_charges(dst, moved)
+	return moved
 
 
 def split_charge(from_folio: str, charge_row: str, to_folio: str,

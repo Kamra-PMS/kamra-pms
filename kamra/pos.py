@@ -254,7 +254,7 @@ def move_room_bill(order: str, room: str, reason: str, pin: str | None = None):
 		"Folio Charge",
 		filters={"parenttype": "Folio", "description": ("like", f"%({doc.name})%"),
 		         "reservation": doc.reservation},
-		fields=["name", "parent", "posting_date", "is_alcohol", "amount"])
+		fields=["name", "parent", "idx", "posting_date", "is_alcohol", "amount"])
 	if not rows:
 		frappe.throw(_("Couldn't find this bill on the room's folio. It may have "
 		              "been moved or voided already."))
@@ -264,6 +264,12 @@ def move_room_bill(order: str, room: str, reason: str, pin: str | None = None):
 		frappe.throw(_("This bill was split or changed on the folio, so it can't be "
 		              "moved in one go. Move its lines from the folio instead."))
 	row = rows[0]
+	# an allowance carries no link to its charge: one posted after this bill
+	# on the same folio may be against it, and would stay with the wrong guest
+	if frappe.db.exists("Folio Charge", {"parenttype": "Folio", "parent": row.parent,
+	                                     "charge_type": "Allowance", "idx": (">", row.idx)}):
+		frappe.throw(_("An allowance was posted on this folio after the bill. Reverse "
+		              "the allowance first, then move the bill."))
 	if frappe.db.get_value("Folio", row.parent, "status") == "Closed":
 		frappe.throw(_("The bill is on a folio that is already closed. Ask Finance "
 		              "to correct it."))
@@ -278,7 +284,9 @@ def move_room_bill(order: str, room: str, reason: str, pin: str | None = None):
 	dst = frappe.get_doc("Folio", target_folio(
 		frappe.get_doc("Reservation", new_res), "Food & Beverage",
 		is_alcohol=bool(row.is_alcohol)))
-	move_charges(src, dst, [row.name], reservation=new_res)
+	from kamra.webhooks import emit_folio_posted
+	for line in move_charges(src, dst, [row.name], reservation=new_res):
+		emit_folio_posted(dst, line)
 	doc.db_set({"room": new_room, "reservation": new_res,
 	            "guest": _bill_guest(new_res, None)}, update_modified=False)
 	number = lambda r: frappe.db.get_value("Room", r, "room_number") or r  # noqa: E731
