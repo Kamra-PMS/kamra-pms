@@ -142,7 +142,7 @@
   }
  ],
  "links": [],
- "modified": "2026-10-30 12:32:21.000000",
+ "modified": "2026-10-30 14:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Security Deposit",
@@ -159,32 +159,25 @@
    "view_refunds": 1
   },
   {
-   "create": 1,
-   "delete": 1,
    "read": 1,
    "role": "Hotel Admin",
-   "write": 1,
    "refund_deposit": 1,
    "view_refunds": 1
   },
   {
-   "create": 1,
    "read": 1,
    "role": "Front Desk",
-   "write": 1,
    "refund_deposit": 1,
    "view_refunds": 1
   },
   {
    "read": 1,
    "role": "Finance",
-   "write": 1,
    "refund_deposit": 1
   },
   {
    "read": 1,
    "role": "Kamra Agent",
-   "write": 1,
    "view_refunds": 1
   }
  ],
