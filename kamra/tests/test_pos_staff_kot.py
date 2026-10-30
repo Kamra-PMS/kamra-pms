@@ -147,3 +147,28 @@ class PosStaffKotTestCase(AuditTestCase):
 		out = escpos({"kind": "Bill", "served_by": "Ravi\x1bp\x00\x19\xfa", "items": []})
 		self.assertIn(b"Served by: Ravip?", out)
 		self.assertNotIn(b"\x1bp\x00", out)
+
+	def test_outlet_waiter_list_comes_first_and_only_managers_edit_it(self):
+		self.send(waiter="Typed Tom")
+		r = pos.save_outlet_waiter(self.outlet, " Asha ")
+		self.assertTrue(r["can_edit"])
+		pos.save_outlet_waiter(self.outlet, "Bilal")
+		pos.save_outlet_waiter(self.outlet, "asha")  # same name: never doubled
+		self.assertEqual(pos.waiters(self.outlet)[:3], ["Asha", "Bilal", "Typed Tom"])
+
+		pos.save_outlet_waiter(self.outlet, "Bilal", active=0)
+		self.assertNotIn("Bilal", pos.waiters(self.outlet))
+		listed = pos.outlet_waiters(self.outlet)["waiters"]
+		self.assertEqual([(w["waiter_name"], w["active"]) for w in listed],
+		                 [("Asha", 1), ("Bilal", 0)])
+
+		# the till lists it; only Finance or an admin changes it
+		desk = ensure_user("ut.kot.desk@example.com", ["Front Desk"])
+		frappe.set_user(desk)
+		try:
+			self.assertFalse(pos.outlet_waiters(self.outlet)["can_edit"])
+			self.assertIn("Asha", pos.waiters(self.outlet))
+			with self.assertRaises(frappe.PermissionError):
+				pos.save_outlet_waiter(self.outlet, "Sneaky")
+		finally:
+			frappe.set_user("Administrator")

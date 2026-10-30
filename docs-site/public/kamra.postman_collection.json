@@ -6354,10 +6354,84 @@
         "kamra.pos.waiters"
        ]
       },
-      "description": "Names typed as waiter at this outlet in the last 60 days, most used\nfirst: suggestions for the till, not a staff register.",
+      "description": "Till suggestions: the outlet's active staff list first, then other\nnames typed as waiter here in the last 60 days, most used first.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"outlet\": \"Your Property-Restaurant\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "outlet_waiters",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.pos.outlet_waiters",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.pos.outlet_waiters"
+       ]
+      },
+      "description": "The outlet's waiter list (active and not), and whether this user\nmay change it.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"outlet\": \"Your Property-Restaurant\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "save_outlet_waiter",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.pos.save_outlet_waiter",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.pos.save_outlet_waiter"
+       ]
+      },
+      "description": "Add a name to the outlet's waiter list, or set it active / inactive.\nA name already on the list (any case) is updated, never doubled.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"outlet\": \"Your Property-Restaurant\",\n  \"waiter_name\": \"<waiter_name>\",\n  \"active\": 1\n}",
        "options": {
         "raw": {
          "language": "json"

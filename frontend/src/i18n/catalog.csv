@@ -564,7 +564,7 @@ Actual check-out,Actual check-out,المغادرة الفعلية,Hora real de s
 "Actual counts room nights posted to folios - End of Day posts each night, so tonight counts after tonight's audit.","Actual counts room nights posted to folios - End of Day posts each night, so tonight counts after tonight's audit.",الفعلي يحتسب ليالي الغرف المرحّلة إلى الفواتير. إغلاق اليوم يرحّل كل ليلة، لذا تُحتسب ليلة اليوم بعد تدقيق الليلة.,Los resultados cuentan las noches registradas en los folios. El cierre del día registra cada noche; la de hoy se incluye después de la auditoría de esta noche.,screens/RevenueReports.tsx,,translated
 Actual pax,Actual pax,العدد الفعلي,Asistentes reales,screens/BanquetFunction.tsx,,translated
 Ad/Ch,Ad/Ch,بالغ/طفل,Ad./Ni.,,,translated
-Add,Add,إضافة,Agregar,components/StayInstructions.tsx; screens/BanquetFunction.tsx; screens/PublicBooking.tsx,,translated
+Add,Add,إضافة,Agregar,components/OutletWaiters.tsx; components/StayInstructions.tsx; screens/BanquetFunction.tsx; screens/PublicBooking.tsx,,translated
 Add a cash office (central safe),Add a cash office (central safe),إضافة مكتب نقدي (الخزنة المركزية),Agregar caja central,screens/Setup.tsx,,translated
 Add a customer email on the Enquiry step first,Add a customer email on the Enquiry step first,أضف بريد العميل في خطوة الاستفسار أولًا,Agregue primero el correo del cliente en la etapa Consulta,screens/BanquetFunction.tsx,,translated
 Add a customer phone on the Enquiry step first,Add a customer phone on the Enquiry step first,أضف هاتف العميل في خطوة الاستفسار أولًا,Agregue primero el teléfono del cliente en la etapa Consulta,screens/BanquetFunction.tsx,,translated
@@ -608,6 +608,7 @@ Add terminal,Add terminal,إضافة جهاز,Agregar terminal,screens/CashierBo
 Add the menu and the extras,Add the menu and the extras,أضف القائمة والإضافات,Agregue el menú y los servicios adicionales,,,translated
 Add tier,Add tier,إضافة شريحة,Agregar nivel,screens/settings/cards.tsx,,translated
 Add till,Add till,إضافة صندوق,Agregar caja,screens/Setup.tsx,,translated
+Add to list,Add to list,إضافة إلى القائمة,Agregar a la lista,screens/POS.tsx,,translated
 Add to pickup queue,Add to pickup queue,إضافة إلى قائمة الاستلام,Agregar a la cola de recogida,screens/HkLaundry.tsx; screens/Laundry.tsx,,translated
 Add webhook,Add webhook,إضافة Webhook,Agregar webhook,screens/settings/WebhooksPage.tsx,,translated
 Add-ons,Add-ons,الإضافات,Servicios adicionales,components/BookingDialog.tsx,,translated
@@ -2596,6 +2597,7 @@ In-house folios over the high-balance threshold and balances left on departed st
 In-house guest,In-house guest,نزيل مقيم,Huésped alojado,screens/POS.tsx; screens/pos/PosSidePanel.tsx,,translated
 In-house guests,In-house guests,الضيوف داخل الفندق,Huéspedes alojados,screens/Today.tsx,,translated
 In-house guests whose balance is above the alert threshold.,In-house guests whose balance is above the alert threshold.,الضيوف المقيمون الذين يتجاوز رصيدهم حد التنبيه.,Huéspedes alojados cuyo saldo supera el límite de alerta.,,,translated
+Inactive,Inactive,غير نشط,Inactivo,components/OutletWaiters.tsx,,translated
 Inbound,Inbound,وارد,Entrante,,,translated
 incl. {tax},incl. {tax},شامل {tax},incl. {tax},screens/RegistrationCard.tsx,tax,translated
 Included,Included,مشمول,Incluido,,,translated
@@ -3048,6 +3050,7 @@ Name (Deluxe),Name (Deluxe),الاسم (ديلوكس),Nombre (De lujo),screens/S
 "Name each till, tie it to an outlet, and choose the printer that prints its bills. Without terminals everyone uses the Default till.","Name each till, tie it to an outlet, and choose the printer that prints its bills. Without terminals everyone uses the Default till.",سمِّ كل صندوق، واربطه بمنفذ، واختر الطابعة التي تطبع فواتيره. بدون أجهزة طرفية يستخدم الجميع الصندوق الافتراضي.,"Asigne un nombre a cada caja, vincúlela con un punto de venta y elija la impresora que imprimirá sus cuentas. Si no hay terminales, todos usan la caja predeterminada.",screens/CashierBoard.tsx,,translated
 "Name each till, tie it to an outlet. Without any, everyone uses the Default till.","Name each till, tie it to an outlet. Without any, everyone uses the Default till.",سمِّ كل صندوق واربطه بمنفذ. إن لم يوجد أي صندوق، يستخدم الجميع الصندوق الافتراضي.,"Asigne un nombre a cada caja y vincúlela a un punto de venta. Si no configura ninguna, todos usarán la caja predeterminada.",../../kamra/onboarding.py,,translated
 Name or phone…,Name or phone…,الاسم أو الهاتف…,Nombre o teléfono…,screens/Guests.tsx,,translated
+Names the till offers in its Waiter box. No login needed.,Names the till offers in its Waiter box. No login needed.,الأسماء التي يعرضها الصندوق في خانة النادل. لا يلزم تسجيل دخول.,Nombres que la caja ofrece en su campo Mesero. No necesitan usuario.,components/OutletWaiters.tsx,,translated
 Narrow column,Narrow column,العمود الضيق,Columna estrecha,components/CustomizeToday.tsx,,translated
 National ID,National ID,الهوية الوطنية,Documento nacional de identidad,,,translated
 Nationality,Nationality,الجنسية,Nacionalidad,components/BookingDialog.tsx; components/CheckInDialog.tsx; components/EditableNationality.tsx; screens/FolioView.tsx; screens/GuestJourney.tsx; screens/PublicCheckin.tsx; screens/RegistrationCard.tsx,,translated
@@ -3312,6 +3315,7 @@ No unassigned rooms right now.,No unassigned rooms right now.,لا غرف غير
 No vacant rooms.,No vacant rooms.,لا غرف شاغرة.,No hay habitaciones desocupadas.,screens/EndOfDayWizard.tsx,,translated
 "No voids, allowances or cancelled invoices in this window.","No voids, allowances or cancelled invoices in this window.",لا توجد إلغاءات أو خصومات أو فواتير ملغاة في هذه الفترة.,"No hay anulaciones, bonificaciones ni facturas anuladas en este periodo.",screens/VoidAllowanceReport.tsx,,translated
 No voids.,No voids.,لا إلغاءات.,Sin anulaciones.,screens/PosDashboard.tsx,,translated
+No waiters on the list yet.,No waiters on the list yet.,لا يوجد نُدُل في القائمة بعد.,Aún no hay meseros en la lista.,components/OutletWaiters.tsx,,translated
 "No webhooks yet. Add one to send bookings, check-ins, folio postings and the night audit to another system.","No webhooks yet. Add one to send bookings, check-ins, folio postings and the night audit to another system.",لا Webhooks بعد. أضف واحدا لإرسال الحجوزات وتسجيلات الوصول وقيود الفواتير والتدقيق الليلي إلى نظام آخر.,"Aún no hay webhooks. Agregue uno para enviar reservas, registros de entrada, movimientos de folio y la auditoría nocturna a otro sistema.",screens/settings/WebhooksPage.tsx,,translated
 No zero-rate rooms tonight.,No zero-rate rooms tonight.,لا غرف بسعر صفر الليلة.,No hay habitaciones con tarifa cero para esta noche.,screens/EndOfDayWizard.tsx,,translated
 No-show charge,No-show charge,رسوم عدم الحضور,Cargo por no presentación,,,translated
@@ -5477,7 +5481,9 @@ vs previous period,vs previous period,مقارنة بالفترة السابقة
 Wait after that time,Wait after that time,الانتظار بعد هذا الوقت,Esperar después de esa hora,,,translated
 Waiter,Waiter,النادل,Mesero,screens/POS.tsx,,translated
 Waiter (optional),Waiter (optional),النادل (اختياري),Mesero (opcional),screens/POS.tsx,,translated
+Waiter name,Waiter name,اسم النادل,Nombre del mesero,components/OutletWaiters.tsx,,translated
 Waiter: {name},Waiter: {name},النادل: {name},Mesero: {name},screens/POS.tsx,name,translated
+Waiters,Waiters,النُدُل,Meseros,components/OutletWaiters.tsx,,translated
 WAITING,WAITING,بانتظار البدء,EN ESPERA,screens/Kitchen.tsx,,translated
 Waitlist,Waitlist,قائمة الانتظار,Lista de espera,components/BookingDialog.tsx,,translated
 Waitlisted · {ref},Waitlisted · {ref},قائمة انتظار · {ref},En lista de espera · {ref},components/BookingDialog.tsx,ref,translated

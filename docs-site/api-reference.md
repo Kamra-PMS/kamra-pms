@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function - the same governed layer
-the UI and the AI use. **424 endpoints**, generated from the source
+the UI and the AI use. **426 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -2486,12 +2486,36 @@ clears it, and the bill shows the captain instead.
 
 **GET/POST**
 
-Names typed as waiter at this outlet in the last 60 days, most used
-first: suggestions for the till, not a staff register.
+Till suggestions: the outlet's active staff list first, then other
+names typed as waiter here in the last 60 days, most used first.
 
 | Param | Required | Default |
 | --- | --- | --- |
 | `outlet` | yes |  |
+
+### `kamra.pos.outlet_waiters`
+
+**GET/POST**
+
+The outlet's waiter list (active and not), and whether this user
+may change it.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `outlet` | yes |  |
+
+### `kamra.pos.save_outlet_waiter`
+
+**POST**
+
+Add a name to the outlet's waiter list, or set it active / inactive.
+A name already on the list (any case) is updated, never doubled.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `outlet` | yes |  |
+| `waiter_name` | yes |  |
+| `active` | no | `1` |
 
 ### `kamra.pos.acknowledge_void`
 

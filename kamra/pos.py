@@ -1044,17 +1044,54 @@ def set_waiter(order: str, waiter: str = ""):
 	return {"ok": True, "waiter": doc.waiter, "served_by": _served_by(doc)}
 
 
+# who keeps an outlet's waiter list (admins pass too), as for the menu
+WAITER_EDIT_ROLES = ("Finance",)
+
+
 @frappe.whitelist()
 @require_roles(*POS_ROLES)
 def waiters(outlet: str):
-	"""Names typed as waiter at this outlet in the last 60 days, most used
-	first: suggestions for the till, not a staff register."""
+	"""Till suggestions: the outlet's active staff list first, then other
+	names typed as waiter here in the last 60 days, most used first."""
+	staff = [w["waiter_name"] for w in outlet_waiters(outlet)["waiters"] if w["active"]]
 	rows = frappe.db.sql(
 		"""select waiter from `tabPOS Order`
 		   where outlet=%s and ifnull(waiter, '') != '' and creation >= %s
 		   group by waiter order by count(*) desc limit 50""",
 		(outlet, frappe.utils.add_days(frappe.utils.nowdate(), -60)))
-	return [r[0] for r in rows]
+	known = {n.lower() for n in staff}
+	return staff + [r[0] for r in rows if r[0].lower() not in known]
+
+
+@frappe.whitelist()
+@require_roles(*POS_ROLES)
+def outlet_waiters(outlet: str):
+	"""The outlet's waiter list (active and not), and whether this user
+	may change it."""
+	from kamra.authz import ADMIN
+	rows = frappe.get_all("POS Outlet Waiter", filters={"parent": outlet, "parenttype": "POS Outlet"},
+	                      fields=["waiter_name", "active"], order_by="idx")
+	can_edit = bool(set(WAITER_EDIT_ROLES + ADMIN) & set(frappe.get_roles()))
+	return {"waiters": [{"waiter_name": r.waiter_name, "active": cint(r.active)} for r in rows],
+	        "can_edit": can_edit}
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles(*WAITER_EDIT_ROLES)
+def save_outlet_waiter(outlet: str, waiter_name: str, active: int = 1):
+	"""Add a name to the outlet's waiter list, or set it active / inactive.
+	A name already on the list (any case) is updated, never doubled."""
+	name = (waiter_name or "").strip()[:140]
+	if not name:
+		frappe.throw(_("Type the waiter's name."))
+	doc = frappe.get_doc("POS Outlet", outlet)
+	row = next((w for w in doc.waiters if w.waiter_name.lower() == name.lower()), None)
+	if row:
+		row.active = cint(active)
+	else:
+		doc.append("waiters", {"waiter_name": name, "active": cint(active)})
+	doc.save(ignore_permissions=True)  # gated above: Finance or an admin
+	return outlet_waiters(outlet)
 
 
 def _full_name(user: str | None) -> str | None:

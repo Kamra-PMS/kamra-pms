@@ -14,6 +14,7 @@ import { useNavigate } from "react-router-dom"
 import { call, getCurrentProperty } from "../lib/api"
 import { subscribeRealtime } from "../lib/realtime"
 import { serverError } from "../lib/resource"
+import type { OutletWaiterList } from "../components/OutletWaiters"
 import { useCashierAuth } from "../lib/cashierAuth"
 import { printThermal, kotHtml, billHtml, PRINT_DIALOG_EVENT, type BillData, type KotLine } from "../lib/thermal"
 import { useFloorFullscreen } from "../lib/kiosk"
@@ -229,6 +230,7 @@ export default function POS() {
   const [guests, setGuests] = useState("")
   const [waiter, setWaiter] = useState("")
   const [waiterNames, setWaiterNames] = useState<string[]>([])
+  const [staffList, setStaffList] = useState<OutletWaiterList | null>(null)
   const [custName, setCustName] = useState("")
   const [custPhone, setCustPhone] = useState("")
   const [custAddr, setCustAddr] = useState("")
@@ -307,9 +309,21 @@ export default function POS() {
       .catch((e) => setError(serverError(e)))
   }, [outlet])
   useEffect(loadMenu, [loadMenu])
-  useEffect(() => {
-    if (outlet) call<string[]>("kamra.pos.waiters", { outlet }).then(setWaiterNames).catch(() => {})
+  const loadWaiters = useCallback(() => {
+    if (!outlet) return
+    call<string[]>("kamra.pos.waiters", { outlet }).then(setWaiterNames).catch(() => {})
+    call<OutletWaiterList>("kamra.pos.outlet_waiters", { outlet }).then(setStaffList).catch(() => {})
   }, [outlet])
+  useEffect(loadWaiters, [loadWaiters])
+  // a manager can put a typed name on the outlet's waiter list
+  const canAddWaiter = !!staffList?.can_edit && !!waiter.trim() &&
+    !staffList.waiters.some((w) => w.active && w.waiter_name.toLowerCase() === waiter.trim().toLowerCase())
+  async function addWaiterToList() {
+    await act(async () => {
+      await call("kamra.pos.save_outlet_waiter", { outlet, waiter_name: waiter.trim(), active: 1 })
+      loadWaiters()
+    })
+  }
 
   const loadOpen = useCallback(() => {
     if (!outlet) return
@@ -1476,6 +1490,7 @@ export default function POS() {
             })()}
             {(!detail || (detail.status !== "Delivered" && detail.status !== "Cancelled")) && (
               <>
+                <div className="flex items-center gap-1.5">
                 <input list="pos-waiters" className={inputCls + " !py-1 text-xs"} value={waiter}
                   aria-label={t("Waiter")}
                   placeholder={detail?.served_by ? t("Waiter: {name}", { name: detail.served_by }) : t("Waiter (optional)")}
@@ -1485,6 +1500,13 @@ export default function POS() {
                 <datalist id="pos-waiters">
                   {waiterNames.map((n) => <option key={n} value={n} />)}
                 </datalist>
+                {canAddWaiter && (
+                  <button type="button" onClick={() => { void addWaiterToList() }}
+                    className="shrink-0 rounded-md border border-zinc-300 px-2 py-1 text-[11px] font-semibold text-zinc-600 hover:border-brand-500 hover:text-brand-700">
+                    {t("Add to list")}
+                  </button>
+                )}
+                </div>
               </>
             )}
           </div>
