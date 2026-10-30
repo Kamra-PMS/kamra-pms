@@ -265,7 +265,7 @@ _PROPERTY_SCOPED = (
 	"Print Job",
 	"Proforma Folio", "Property Setting", "Rate Guardrail", "Rate Plan",
 	"Reservation",
-	"Revenue Budget", "Room", "Room Block", "Room Type", "Season",
+	"Long Stay Discount", "Revenue Budget", "Room", "Room Block", "Room Type", "Season",
 	"Security Deposit", "Sellable Unit", "Service Ticket", "Shift Handover", "SOP Template", "Ticket Event",
 	"Transaction Code", "Turnover Profile", "Vendor", "Vendor Bill", "Venue", "Venue Booking",
 	"WhatsApp Message", "ZATCA Invoice", "ZATCA Settings",
@@ -273,11 +273,13 @@ _PROPERTY_SCOPED = (
 
 permission_query_conditions = {
 	"Guest": "kamra.authz.guest_query_conditions",
+	"Itinerary": "kamra.authz.itinerary_query_conditions",
 	**{dt: "kamra.authz.property_query_conditions" for dt in _PROPERTY_SCOPED},
 }
 
 has_permission = {
 	"Guest": "kamra.authz.guest_has_permission",
+	"Itinerary": "kamra.authz.itinerary_has_permission",
 	**{dt: "kamra.authz.property_has_permission" for dt in _PROPERTY_SCOPED},
 }
 

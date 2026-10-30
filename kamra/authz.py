@@ -219,6 +219,36 @@ def guest_has_permission(doc, ptype: str | None = None, user: str | None = None,
 	return not props or bool(props & allowed)
 
 
+def itinerary_query_conditions(user: str | None = None, doctype: str | None = None) -> str:
+	"""permission_query_conditions hook for Itinerary. A trip has no property
+	of its own; a restricted user sees it only when every leg is at a
+	property they may access (kamra.crs._itinerary, same rule), and never
+	while it has no leg at all (nothing says which hotel it belongs to)."""
+	allowed = restricted_properties(user)
+	if allowed is None:
+		return ""
+	props = ", ".join(frappe.db.escape(p) for p in sorted(allowed)) or "''"
+	return (
+		"EXISTS (SELECT 1 FROM `tabReservation` il0"
+		" WHERE il0.itinerary = `tabItinerary`.name)"
+		" AND NOT EXISTS (SELECT 1 FROM `tabReservation` il"
+		" WHERE il.itinerary = `tabItinerary`.name"
+		f" AND il.property NOT IN ({props}))"
+	)
+
+
+def itinerary_has_permission(doc, ptype: str | None = None, user: str | None = None,
+                             debug: bool = False) -> bool:
+	"""has_permission hook for Itinerary (Desk, /api/resource): same rule
+	as itinerary_query_conditions. Must return True explicitly to allow."""
+	allowed = restricted_properties(user)
+	if allowed is None or not doc.name or doc.is_new():
+		return True
+	props = set(frappe.get_all("Reservation", filters={"itinerary": doc.name},
+	                           pluck="property", distinct=True))
+	return bool(props) and props <= allowed
+
+
 def _values(value) -> list[str]:
 	if isinstance(value, str) and value.startswith("["):
 		try:

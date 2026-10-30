@@ -9,6 +9,7 @@ import ChangeCompany from "../components/ChangeCompany"
 import { loadLocale, taxRates } from "../lib/money"
 import { serverError } from "../lib/resource"
 import { useCashierAuth } from "../lib/cashierAuth"
+import { useAuth } from "../lib/auth"
 import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
 import { cur, locale, moneyLocale, taxLabel, useLocale } from "../lib/money"
@@ -311,6 +312,14 @@ export default function FolioView() {
   const [panel, setPanel] = useState<"company" | "share" | null>(null)
   const [shares, setShares] = useState<Record<string, string>>({})
   const { ensureUnlocked, status: pinStatus } = useCashierAuth()
+  // Correct charged nights: Finance / Hotel Admin, when the property's
+  // rate-change policy allows it (the dry run refuses otherwise)
+  const { roles } = useAuth()
+  const canCorrect = roles.some((r) =>
+    ["Finance", "Hotel Admin", "System Manager", "Administrator"].includes(r))
+  const [toCorrect, setToCorrect] = useState<
+    { date: string; charged: number; new: number }[]>([])
+  const [correction, setCorrection] = useState({ reason: "", pin: "" })
 
   const load = useCallback(() => {
     if (name)
@@ -342,6 +351,16 @@ export default function FolioView() {
       .then(setShown)
       .catch((e) => { setShown(null); setError(serverError(e)) })
   }, [showIn, name, balanceNow])
+
+  const stayRes = data?.stay.reservation
+  const grand = data?.folio.grand_total
+  useEffect(() => {
+    if (!canCorrect || !stayRes) return
+    call<{ nights: { date: string; charged: number; new: number }[] }>(
+      "kamra.api.correct_charged_nights", { reservation: stayRes, dry_run: 1 })
+      .then((r) => setToCorrect(r.nights))
+      .catch(() => setToCorrect([]))  // policy off or nothing charged
+  }, [canCorrect, stayRes, grand])
 
   const [rates, setRates] = useState<number[]>(taxRates())
   useEffect(() => {
@@ -1596,6 +1615,58 @@ export default function FolioView() {
                     refreshKey={allowanceKey} onChanged={load} />
                 </div>
               </div>
+              {toCorrect.length > 0 && folio.status !== "Closed" && (
+                <div className="mt-1 w-full border-t border-zinc-100 pt-3">
+                  <div className="mb-1 text-xs font-medium uppercase tracking-wider text-zinc-400">
+                    {t("Correct charged nights")}
+                  </div>
+                  <p className="mb-2 text-xs text-zinc-500">
+                    {t("Each night is reversed and posted again at the current rate, dated today.")}
+                  </p>
+                  <ul className="mb-2 space-y-0.5 text-xs text-zinc-600">
+                    {toCorrect.map((n) => (
+                      <li key={n.date}>
+                        {t("Night of {date}: {from} to {to}", {
+                          date: n.date, from: inr(n.charged), to: inr(n.new),
+                        })}
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="flex flex-wrap items-end gap-2">
+                    <input
+                      className={`${inputCls} min-w-40 flex-1`}
+                      placeholder={t("Reason (required)")}
+                      value={correction.reason}
+                      onChange={(e) => setCorrection({ ...correction, reason: e.target.value })}
+                    />
+                    <input
+                      className={`${inputCls} w-28`}
+                      type="password"
+                      inputMode="numeric"
+                      autoComplete="off"
+                      placeholder={t("Your PIN")}
+                      value={correction.pin}
+                      onChange={(e) => setCorrection({ ...correction, pin: e.target.value })}
+                    />
+                    <Button
+                      variant="outline"
+                      disabled={busy || !correction.reason.trim() || !correction.pin.trim()}
+                      onClick={() =>
+                        act(async () => {
+                          await call("kamra.api.correct_charged_nights", {
+                            reservation: stay.reservation,
+                            reason: correction.reason.trim(),
+                            pin: correction.pin.trim(),
+                          })
+                          setCorrection({ reason: "", pin: "" })
+                        })
+                      }
+                    >
+                      {t("Correct")}
+                    </Button>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 

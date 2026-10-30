@@ -26,10 +26,13 @@ model ever calculates money. For each night of a stay:
 
 Then, for the whole stay:
 
-4. **Rate plan.** Its modifier works on the stay's room total.
-5. **Meal plan.** Price per adult and per child, per night.
-6. **Voucher.** Comes off the room and meal total.
-7. **Fees and tax.** Cleaning fee, pets, room levy, then tax. Tax rates
+4. **Long-stay discount.** A stay long enough for a
+   [long-stay discount](#give-a-long-stay-discount) takes its percentage
+   off each night, never below that night's guardrail floor.
+5. **Rate plan.** Its modifier works on the stay's room total.
+6. **Meal plan.** Price per adult and per child, per night.
+7. **Voucher.** Comes off the room and meal total.
+8. **Fees and tax.** Cleaning fee, pets, room levy, then tax. Tax rates
    and whether your prices include tax come from **Settings → Finance**
    and your [country pack](/country-setup).
 
@@ -96,7 +99,14 @@ A season moves the nightly price between two dates.
 6. Optional: **Minimum nights** (shortest stay on these dates) and
    **Non-refundable** (a stay touching these dates can't be cancelled
    free of charge).
-7. Set a **Priority** and click **Save**.
+7. Optional: **Advance % at booking**: the advance a booking on these
+   dates owes, for example 100 over New Year and 25 in the monsoon. `0`
+   keeps the property's usual **Deposit expected at booking**. A stay that
+   crosses seasons owes the highest one. The desk's Deposit box, the
+   booking page (when it takes an advance online) and trips all use it.
+   To set an advance for dates without changing the price, make a season
+   with **Percent** `0`.
+8. Set a **Priority** and click **Save**.
 
 ![Filling in a new season: name, dates, Percent, 20, priority and minimum nights](/img/revenue/season-new.gif)
 
@@ -157,6 +167,27 @@ The booking page lists every meal plan, plus **Room only**.
 Guests enter a voucher under **Have a code?** on the booking page; the
 desk enters it on the booking form. **Used** counts each booking that
 redeemed it.
+
+## Give a long-stay discount
+
+Long stays can pay less per night without anyone typing a code.
+
+1. Open **Revenue → Long-stay Discounts → New**.
+2. Enter **Stays of at least (nights)** and the **Discount % off the room
+   rate**, for example `7` and `10`.
+3. Optional: a **Room type**. Blank applies to every room type.
+4. Click **Save**. Add more tiers the same way, for example 28 nights at
+   25%.
+
+A stay gets the highest tier it reaches: with 7 nights at 10% and 28
+nights at 25%, a 30-night stay gets 25%. At the same tier, a rule for the
+room type wins over a house-wide one. The discount comes off each room
+night before tax, so the quote, the booking's locked nightly rates and the
+folio all agree. The desk quote shows it as **Long stay N% off**. No night
+goes below its [guardrail](#set-the-floor-and-ceiling-guardrails) floor.
+It applies on the desk, the booking page and the API alike, stacks with a
+rate plan and a voucher, and is skipped when the desk agrees a rate by
+hand. Existing bookings keep their price.
 
 ## Add experiences
 

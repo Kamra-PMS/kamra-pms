@@ -197,6 +197,7 @@ export default function RateCalendar() {
             ["/settings/revenue", "Busy-house rules", "Raise rates automatically as the house fills (hurdle tiers)."],
             ["/rate-plans", "Rate plans", "Corporate, package or member deals applied to a whole stay."],
             ["/vouchers", "Vouchers", "Discount codes with dates, minimum nights and use limits."],
+            ["/long-stay", "Long-stay Discounts", "Take a percentage off stays of N nights or more."],
             ["/guardrails", "Guardrails", "Floors and ceilings no rate can cross."],
           ].map(([to, label, blurb]) => (
             <Link key={to} to={to} className="rounded-lg border border-zinc-200 px-3 py-2 hover:border-brand-600">

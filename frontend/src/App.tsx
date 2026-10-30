@@ -27,6 +27,7 @@ const Guests = lazy(() => import("./screens/Guests"))
 const RegistrationCard = lazy(() => import("./screens/RegistrationCard"))
 const CancellationLetter = lazy(() => import("./screens/CancellationLetter"))
 const AllowanceVoucher = lazy(() => import("./screens/AllowanceVoucher"))
+const TripConfirmation = lazy(() => import("./screens/TripConfirmation"))
 const Setup = lazy(() => import("./screens/Setup"))
 const GoLiveImport = lazy(() => import("./screens/GoLiveImport"))
 const HousekeepingBoard = lazy(() => import("./screens/HousekeepingBoard"))
@@ -194,6 +195,7 @@ export default function App() {
           />
           <Route path="grc/:name" element={<RegistrationCard />} />
           <Route path="cancelled/:name" element={<CancellationLetter />} />
+          <Route path="trip/:name" element={<TripConfirmation />} />
           <Route path="guests" element={<Guests />} />
           <Route path="guests/:name" element={<GuestJourney />} />
           <Route
@@ -219,6 +221,10 @@ export default function App() {
           <Route
             path="seasons"
             element={<ConfiguredScreen config="seasonsConfig" />}
+          />
+          <Route
+            path="long-stay"
+            element={<ConfiguredScreen config="longStayConfig" />}
           />
           <Route
             path="vouchers"

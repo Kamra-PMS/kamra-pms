@@ -85,6 +85,22 @@ IDEMPOTENCY_KEY_PARAM = _p(
 	"second identical room on purpose.",
 )
 
+PAYMENT_KEY_PARAM = _p(
+	"string",
+	description="Optional unique key for this payment (e.g. a UUID), new for "
+	"each payment you mean to take. Retrying with the same key returns the "
+	"first result (idempotent_replay) instead of taking the money twice.",
+)
+
+ITINERARY_LEGS_PARAM = _p(
+	"array",
+	description="The stays, any order: each {property, room_type, "
+	"check_in_date, check_out_date, adults?, children?, meal_plan?, "
+	"rate_plan?}. property is the Property id; room_type, meal_plan and "
+	"rate_plan accept the id, code or exact name at that property.",
+	items=_p("object"),
+)
+
 
 def _t(
 	name: str,
@@ -261,6 +277,129 @@ TOOLS: tuple[ToolSpec, ...] = (
 		bools=("waive_fee",),
 	),
 	_t(
+		"quote_itinerary",
+		"crs.quote_itinerary",
+		"""Price a trip across several properties of the chain (e.g. 2 nights
+		at one hotel, then 3 at another) before booking it: each leg priced by
+		the same engine as quote, rooms free per leg, and the combined total
+		(null when legs are in different currencies). Legs can't overlap; a
+		leg may start the day the previous one ends.""",
+		{
+			"legs": ITINERARY_LEGS_PARAM,
+			"adults": _p("integer"),
+			"children": _p("integer"),
+			"company": COMPANY_PARAM,
+		},
+		required=("legs",),
+	),
+	_t(
+		"create_itinerary",
+		"crs.create_itinerary",
+		"""Book a multi-property trip in one call: one normal reservation per
+		leg (each with its own folio and its own property's cancellation
+		policy) under one itinerary reference (ITN-...) to give the guest.
+		All legs book or none do. Always quote_itinerary first. Take the
+		advance per leg, or once for the trip with record_trip_advance.""",
+		{
+			"legs": ITINERARY_LEGS_PARAM,
+			"guest_name": _p("string"),
+			"phone": _p("string"),
+			"adults": _p("integer"),
+			"children": _p("integer"),
+			"company": COMPANY_PARAM,
+			"booked_by_name": _p("string"),
+			"booked_by_phone": _p("string"),
+			"notes": _p("string"),
+			"idempotency_key": _p("string", description="Optional unique key "
+			                      "for this trip. Retrying with the same key "
+			                      "returns the first itinerary instead of "
+			                      "booking again."),
+		},
+		required=("legs", "guest_name"),
+		mutating=True,
+	),
+	_t(
+		"get_itinerary",
+		"crs.get_itinerary",
+		"""A trip (ITN-...) with its legs in date order: property, dates,
+		status, price, advance %, advance required, paid and still due per
+		leg, and the trip totals.""",
+		{"itinerary": _p("string")},
+		required=("itinerary",),
+	),
+	_t(
+		"trip_advance_preview",
+		"crs.trip_advance_preview",
+		"""How one advance for a whole trip would be split across its legs:
+		each leg up to its own advance still due (earliest stay first), any
+		rest to the earliest leg up to its bill. Without an amount, the
+		trip's advance still due. ALWAYS show this split to the staff
+		member before record_trip_advance.""",
+		{"itinerary": _p("string"), "amount": _p("number")},
+		required=("itinerary",),
+	),
+	_t(
+		"record_trip_advance",
+		"crs.record_trip_advance",
+		"""Take one advance payment for a whole trip. It is split as
+		trip_advance_preview shows and each share posts as an Advance on
+		that leg's folio at its own property. mode: one of the
+		payment modes every leg's property accepts.
+		Confirm the amount and the split with staff before calling.""",
+		{
+			"itinerary": _p("string"),
+			"amount": _p("number"),
+			"mode": _p("string"),
+			"reference": _p("string"),
+			"idempotency_key": PAYMENT_KEY_PARAM,
+		},
+		required=("itinerary", "amount"),
+		mutating=True,
+	),
+	_t(
+		"add_itinerary_leg",
+		"crs.add_itinerary_leg",
+		"""Add one more stay to an existing trip. It can't overlap a live leg.""",
+		{
+			"itinerary": _p("string"),
+			"property": _p("string", description="Property id of this leg"),
+			"room_type": ROOM_TYPE_PARAM,
+			"check_in_date": _p("string"),
+			"check_out_date": _p("string"),
+			"adults": _p("integer"),
+			"children": _p("integer"),
+		},
+		required=("itinerary", "property", "room_type", "check_in_date",
+		          "check_out_date"),
+		mutating=True,
+	),
+	_t(
+		"cancel_itinerary_preview",
+		"crs.cancel_itinerary_preview",
+		"""What cancelling a whole trip would cost now: each leg's own
+		cancellation terms and the total fee. ALWAYS read this to the guest
+		before cancel_itinerary. To cancel one leg, use cancellation_preview
+		and cancel_booking on that leg's reservation.""",
+		{"itinerary": _p("string")},
+		required=("itinerary",),
+	),
+	_t(
+		"cancel_itinerary",
+		"crs.cancel_itinerary",
+		"""Cancel every confirmed leg of a trip, each under its own property's
+		policy (fees post to that leg's folio). Returns a cancellation number
+		per leg. Only waive fees when a manager authorizes it (logged).""",
+		{
+			"itinerary": _p("string"),
+			"reason": _p("string"),
+			"note": _p("string"),
+			"waive_fee": _p("boolean"),
+		},
+		required=("itinerary",),
+		mutating=True,
+		bools=("waive_fee",),
+	),
+	_t(
 		"booking_requests",
 		"booking_requests.booking_requests",
 		"""Pending Request-to-Book stays (status Requested) waiting for the
@@ -404,7 +543,10 @@ TOOLS: tuple[ToolSpec, ...] = (
 		"""What new dates would do to a stay's bill before anything changes:
 		current and new totals, the difference and the new nightly rates,
 		priced by the engine. Read-only. Call before amend_stay and tell the
-		guest / staff the new price.""",
+		guest / staff the new price. For a guest in house, charged_nights
+		shows what happens to nights already on the folio: kept at their
+		charged rate (kept_difference can be given back as an allowance) or
+		credited (credit_total).""",
 		{
 			"reservation": _p("string"),
 			"check_in_date": _p("string"),
@@ -714,6 +856,7 @@ TOOLS: tuple[ToolSpec, ...] = (
 			"currency": _p("string", description="Optional ISO code of "
 			               "foreign money received. Leave out for the "
 			               "hotel's own currency."),
+			"idempotency_key": PAYMENT_KEY_PARAM,
 		},
 		required=("folio", "mode", "amount"),
 		mutating=True,
@@ -2206,14 +2349,15 @@ def input_schema(spec: ToolSpec) -> dict[str, Any]:
 
 # Writes that can't simply be undone: MCP clients may ask before each one
 DESTRUCTIVE = frozenset({
-	"cancel_booking", "decline_booking_request", "check_out", "early_departure", "void_charge",
-	"close_folio", "waive_security_deposit", "pos_cancel_order", "pos_remove_item", "pos_move_room_bill",
+	"cancel_booking", "cancel_itinerary", "decline_booking_request", "check_out", "early_departure",
+	"void_charge", "close_folio", "waive_security_deposit", "pos_cancel_order", "pos_remove_item",
+	"pos_move_room_bill",
 	"run_night_audit", "recover_stuck_business_date",
 })
 # Writes where the same call twice has the effect of one (idempotency keys,
 # set-to-value, once per business date)
 IDEMPOTENT = frozenset({
-	"create_booking", "add_to_waitlist", "pickup_group_room", "set_late_arrival",
+	"create_booking", "create_itinerary", "add_to_waitlist", "pickup_group_room", "set_late_arrival",
 	"set_room_hk_status", "set_room_rate", "run_night_audit", "rebuild_audit_pack",
 	"assign_rooms_apply", "open_guest_bills",
 })

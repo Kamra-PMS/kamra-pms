@@ -8,6 +8,7 @@
  "engine": "InnoDB",
  "field_order": [
   "posting_date",
+  "stay_date",
   "charge_type",
   "transaction_code",
   "description",
@@ -31,11 +32,18 @@
    "reqd": 1
   },
   {
+   "description": "The night a rate adjustment belongs to (the line itself is dated the business date it was posted).",
+   "fieldname": "stay_date",
+   "fieldtype": "Date",
+   "label": "Night Of",
+   "read_only": 1
+  },
+  {
    "fieldname": "charge_type",
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Charge Type",
-   "options": "Room\nMeal Plan\nFood & Beverage\nMinibar\nLaundry\nSpa\nTaxi\nEarly Check-in\nLate Checkout\nEarly Departure\nCleaning Fee\nExtra Guests\nPet Charge\nRoom Levy\nDiscount\nMisc\nAllowance\nOpening Balance",
+   "options": "Room\nMeal Plan\nFood & Beverage\nMinibar\nLaundry\nSpa\nTaxi\nEarly Check-in\nLate Checkout\nEarly Departure\nCleaning Fee\nExtra Guests\nPet Charge\nRoom Levy\nDiscount\nMisc\nAllowance\nRate Adjustment\nOpening Balance",
    "reqd": 1
   },
   {

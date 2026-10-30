@@ -134,13 +134,7 @@ def _assert_within_guardrails(guardrails, room_type, rate: float,
 		return applied
 	from frappe.utils import add_days, date_diff
 
-	from kamra.pricing import days_cover
-
-	def _rank(g, day_abbr):
-		if not days_cover(g.days_of_week, day_abbr):
-			return None
-		return (1 if g.room_type == room_type else 0,
-		        1 if g.days_of_week else 0)
+	from kamra.pricing import rail_for_day
 
 	span = min(int(date_diff(end_date, start_date)) + 1, 92)
 	checked: set = set()
@@ -150,11 +144,9 @@ def _assert_within_guardrails(guardrails, room_type, rate: float,
 		if day_abbr in checked:
 			continue  # the rails repeat weekly; one check per weekday is enough
 		checked.add(day_abbr)
-		ranked = [(r, g) for g in guardrails
-		          if (r := _rank(g, day_abbr)) is not None]
-		if not ranked:
+		rail = rail_for_day(guardrails, room_type, day_abbr)
+		if not rail:
 			continue
-		rail = max(ranked, key=lambda x: x[0])[1]
 		if rail.name not in applied:
 			applied.append(rail.name)
 		scope = f" on {day_abbr.title()}" if rail.days_of_week else ""
@@ -281,7 +273,7 @@ def owner_briefing(property: str, date: str | None = None):
 		JOIN `tabFolio` f ON fc.parent = f.name
 		WHERE f.property = %(property)s
 		  AND fc.posting_date = %(date)s
-		  AND fc.charge_type IN ('Room', 'Meal Plan')
+		  AND fc.charge_type IN ('Room', 'Meal Plan', 'Rate Adjustment')
 		""",
 		{"property": property, "date": yesterday},
 	)[0]
@@ -755,13 +747,31 @@ def _confirm_status(res):
 	res.reload()
 
 
+def booking_advance_percent(res) -> float:
+	"""The advance % this booking owes: the season % its dates asked for
+	when it was priced (kept in its quote snapshot, so a later change to
+	the season never re-bills it), else the property's deposit %."""
+	snap = res.get("quote_snapshot")
+	if snap is None and res.get("name"):
+		snap = frappe.db.get_value("Reservation", res.name, "quote_snapshot")
+	if snap:
+		try:
+			rules = (json.loads(snap) if isinstance(snap, str) else snap
+			         ).get("stay_rules") or {}
+			if float(rules.get("advance_percent") or 0) > 0:
+				return float(rules["advance_percent"])
+		except (ValueError, TypeError, AttributeError):
+			pass  # unreadable snapshot: the property's usual %
+	return float(frappe.get_cached_value("Property", res.property,
+	                                     "deposit_pct") or 0)
+
+
 def _deposit_state(res) -> dict:
-	"""What the booking should have secured it with (the property's
-	deposit %, the figure the quote promised), what has come in before
-	arrival, and any link already out with the guest."""
+	"""What the booking should have secured it with (its advance %, the
+	figure the quote promised), what has come in before arrival, and any
+	link already out with the guest."""
 	total = float(res.amount_after_tax or 0)
-	pct = float(frappe.get_cached_value("Property", res.property,
-	                                    "deposit_pct") or 0)
+	pct = booking_advance_percent(res)
 	expected = round(total * pct / 100, 2)
 	paid = float(res.advance_paid or 0)
 	link = frappe.db.get_value(
@@ -785,6 +795,19 @@ def _security_deposit_state(res) -> dict | None:
 		return None
 
 
+def _paid_with_key(key: str, *, reservation: str | None = None,
+                   folio: str | None = None) -> str | None:
+	"""The folio a payment with this idempotency key already landed on -
+	scoped to one booking's folios, or to one folio."""
+	return (frappe.db.sql(
+		"""SELECT f.name FROM `tabFolio Payment` fp
+		   JOIN `tabFolio` f ON f.name = fp.parent
+		   WHERE fp.idempotency_key = %(key)s AND fp.parenttype = 'Folio'
+		     AND (f.name = %(folio)s OR f.reservation = %(res)s) LIMIT 1""",
+		{"key": key, "folio": folio or "", "res": reservation or ""})
+		or [[None]])[0][0]
+
+
 def _deposit_reservation(reservation: str):
 	res = frappe.get_doc("Reservation", reservation)
 	from kamra.crs import assert_property_access
@@ -799,12 +822,28 @@ def _deposit_reservation(reservation: str):
 @frappe.whitelist(methods=["POST"])
 @require_roles("Front Desk", "Finance", "Kamra Agent")
 def record_advance(reservation: str, amount: float, mode: str = "Cash",
-                   reference: str | None = None, pin: str | None = None):
+                   reference: str | None = None, pin: str | None = None,
+                   idempotency_key: str | None = None):
 	"""Take a deposit / advance on a booking before arrival (#114). Opens
 	the guest folio early so the money sits on the stay from day one and
 	the balance at check-in is right; recorded through add_folio_payment,
 	so the till, cashier PIN and ledger see it like any other payment.
-	A Held / Pending Payment booking is confirmed by it."""
+	A Held / Pending Payment booking is confirmed by it.
+
+	Pass idempotency_key (one per "Take advance" press): a retry with the
+	same key returns the first result instead of posting again."""
+	# one advance at a time per booking: the lock serializes a double
+	# submit, so advance_paid and the key check below see the first post
+	frappe.db.get_value("Reservation", reservation, "name", for_update=True)
+	key = (idempotency_key or "").strip() or None
+	if key:
+		res = frappe.get_doc("Reservation", reservation)
+		from kamra.crs import assert_property_access
+		assert_property_access(res.property)
+		folio = _paid_with_key(key, reservation=res.name)
+		if folio:
+			return {"folio": folio, "status": res.status,
+			        "deposit": _deposit_state(res), "idempotent_replay": 1}
 	res = _deposit_reservation(reservation)
 	amount = float(amount or 0)
 	if amount <= 0:
@@ -824,7 +863,7 @@ def record_advance(reservation: str, amount: float, mode: str = "Cash",
 	folio = open_folio(res)
 	add_folio_payment(folio, mode, amount,
 	                  reference=reference or f"deposit:{res.name}", pin=pin,
-	                  kind="Advance")
+	                  kind="Advance", idempotency_key=key)
 	frappe.db.set_value("Reservation", res.name, "advance_paid",
 	                    float(res.advance_paid or 0) + amount)
 	res.reload()
@@ -1468,6 +1507,9 @@ def _refuse_opening_balance(charge_type: str):
 	if charge_type == "Opening Balance":
 		frappe.throw("Opening balances are posted by the go-live import "
 		             "only (Go-live import screen).")
+	if charge_type == "Rate Adjustment":
+		frappe.throw("Rate adjustments are posted by Kamra when a stay's rate "
+		             "changes. Post an allowance to give money back.")
 
 
 def _post_folio_charge(folio: str, charge_type: str, description: str,
@@ -1540,7 +1582,8 @@ def _pin_guard(folio: str, pin=None):
 @require_roles("Finance", "Front Desk", "Kamra Agent")
 def add_folio_payment(folio: str, mode: str, amount: float,
                       reference: str | None = None, pin: str | None = None,
-                      kind: str = "Payment", currency: str | None = None):
+                      kind: str = "Payment", currency: str | None = None,
+                      idempotency_key: str | None = None):
 	"""Record money received on the stay ledger. kind labels WHY it came
 	in - Payment (against the bill), Advance (collected before/at
 	check-in) or Security Deposit (held, refundable). Refunds go through
@@ -1549,12 +1592,22 @@ def add_folio_payment(folio: str, mode: str, amount: float,
 	currency: leave out (or pass the home currency) for a normal payment.
 	A foreign code means `amount` is the foreign money received (cash or a
 	bank transfer); the server converts it at today's buy rate, posts the
-	home amount and keeps the foreign amount and rate on the row."""
+	home amount and keeps the foreign amount and rate on the row.
+	A retry with the same idempotency_key returns the folio without
+	posting again."""
 	if kind not in ("Payment", "Advance", "Security Deposit"):
 		frappe.throw("kind must be Payment, Advance or Security Deposit.")
 	if float(amount) <= 0:
 		frappe.throw("Amount must be positive.")
 	_pin_guard(folio, pin)
+	key = (idempotency_key or "").strip() or None
+	if key:
+		# serialize posts on this folio so a double submit sees the first
+		frappe.db.get_value("Folio", folio, "name", for_update=True)
+		if _paid_with_key(key, folio=folio):
+			out = frappe.get_doc("Folio", folio).as_dict()
+			out["idempotent_replay"] = 1
+			return out
 	doc = frappe.get_doc("Folio", folio)
 	from kamra.localization import assert_payment_mode
 	assert_payment_mode(doc.property, mode)
@@ -1603,6 +1656,7 @@ def add_folio_payment(folio: str, mode: str, amount: float,
 		"reference": reference,
 		"currency": currency,
 		**(fx or {}),  # an FX row keeps the foreign currency, amount and rate
+		"idempotency_key": key,
 	})
 	from kamra.folio import _recalculate
 	_recalculate(doc)
@@ -5481,19 +5535,37 @@ def _reprice_preview(res, **changes) -> dict:
 	if res.get("night_rates") and old_key == res.rate_lock_key_for(inputs):
 		return out  # same stay, same locked rates
 	q = res.requote()
-	plan_free = sum(float(n["rate"]) for n in q["nightly"]) or 1.0
-	factor = float(q["room_total"]) / plan_free
-	new = round(float(q["amount_after_tax"]), 2)
+	# the same nights the save locks: charged nights held by the policy
+	rows = res.quote_night_rows(q)
+	hold = res.hold_charged_nights(rows)
+	new = round(float(q["amount_after_tax"]) + hold["base"] + hold["tax"], 2)
 	out.update({
 		"new_amount": new,
 		"difference": round(new - current, 2),
 		"reprices": True,
 		"needs_confirmation": abs(new - current) >= 0.01,
-		"nights": [{"date": n["date"], "rate": round(float(n["rate"]) * factor, 2),
-		            "demand_premium_pct": n.get("demand_premium_pct") or 0}
-		           for n in q["nightly"]],
+		"nights": [{"date": str(r["stay_date"]), "rate": r["rate"],
+		            "demand_premium_pct": r["demand_premium_pct"]}
+		           for r in rows],
 	})
+	if hold["nights"]:
+		out["charged_nights"] = _charged_nights_summary(hold)
 	return out
+
+
+def _charged_nights_summary(hold: dict) -> dict:
+	"""What a rate change does to the nights already on the folio, for a
+	preview: the policy, each night touched, what stays above the new price
+	(kept nights - the desk may give it back as an allowance) and the
+	credit lines Kamra posts (tax included)."""
+	lines = hold["lines"]
+	return {
+		"policy": hold["policy"],
+		"nights": hold["nights"],
+		"kept_difference": round(hold["base"] + hold["tax"], 2),
+		"credit_total": round(sum(
+			l["amount"] * (1 + l["gst_rate"] / 100) for l in lines), 2),
+	}
 
 
 def _require_price_confirmation(preview: dict, confirm_price) -> None:
@@ -5587,7 +5659,10 @@ def amend_stay_preview(reservation: str, check_in_date: str, check_out_date: str
 	"""What new dates would do to the bill, before anything changes: the
 	current and new totals and the new nightly rates, priced by the engine
 	from today's rules. amend_stay needs confirm_price=1 when the total
-	changes."""
+	changes. For a stay in house, `charged_nights` says what the property's
+	rate-change policy does to nights already on the folio: kept at their
+	charged rate (kept_difference is what the desk may give back as an
+	allowance) or credited (credit_total, posted by Kamra)."""
 	doc = frappe.get_doc("Reservation", reservation)
 	from kamra.crs import assert_property_access
 	assert_property_access(doc.property)
@@ -5605,7 +5680,9 @@ def amend_stay(reservation: str, check_in_date: str, check_out_date: str,
 	rates re-locked. That changes what the guest pays, so call
 	amend_stay_preview first, show the new price, and pass confirm_price=1;
 	without it a change in the total is refused. A manually-priced stay
-	keeps its amount."""
+	keeps its amount. Nights already charged are never re-priced in place:
+	the property's rate-change policy keeps them or credits them
+	(Reservation.hold_charged_nights)."""
 	doc = frappe.get_doc("Reservation", reservation)
 	from kamra.crs import assert_property_access
 	assert_property_access(doc.property)
@@ -5634,6 +5711,63 @@ def _amend_dates(doc, check_in_date: str, check_out_date: str,
 	return {"ok": True, "nights": doc.nights,
 	        "previous_amount": old_amount,
 	        "amount_after_tax": doc.amount_after_tax}
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Finance", "Hotel Admin")
+def correct_charged_nights(reservation: str, reason: str | None = None,
+                           pin: str | None = None,
+                           supervisor: str | None = None, dry_run: int = 0):
+	"""Correct the rate of nights already charged, for a hotel that fixed a
+	wrong tariff: each charged night whose rate differs from today's quote
+	is reversed and posted again at that rate (both lines dated the business
+	date, the night named in the description, each taxed at its own rate);
+	nights still to come take the rate directly. Posted lines are never
+	edited. Only when the property's rate-change policy is Correct
+	back-dated rates; needs a reason and the PIN of the Finance / Hotel
+	Admin user approving it (supervisor, default the caller). dry_run=1
+	lists the nights without changing anything. Not an agent tool."""
+	doc = frappe.get_doc("Reservation", reservation)
+	from kamra.crs import assert_property_access
+	assert_property_access(doc.property)
+	from kamra.settings import get_setting
+	if get_setting(doc.property, "charged_night_rate_change") != "Correct back-dated rates":
+		frappe.throw(_("Correcting charged nights is off. Choose Correct back-dated "
+		               "rates under Settings, Stay policies, Rate changes in house."))
+	if not doc.get("auto_price") or not doc.room_type:
+		frappe.throw(_("This stay is priced by hand; its rates are not re-quoted."))
+	if doc.status not in ("Checked In", "Checked Out"):
+		frappe.throw(_("Only a stay with charged nights can be corrected."))
+	hold = doc.hold_charged_nights(doc.quote_night_rows(doc.requote()), correct=True)
+	corrected = [n for n in hold["nights"] if n["action"] == "corrected"]
+	summary = {"nights": corrected, "lines": len(hold["lines"]),
+	           "current_amount": float(doc.amount_after_tax or 0)}
+	if cint(dry_run):
+		return summary
+	if not corrected:
+		frappe.throw(_("Every charged night already has the current rate."))
+	if not (reason or "").strip():
+		frappe.throw(_("A correction needs a reason. It goes on the record."))
+	from kamra.authz import verify_supervisor
+	approver = verify_supervisor(doc.property, supervisor or frappe.session.user, pin)
+	# a folio correction: Finance or Hotel Admin only, whatever other roles
+	# a supervisor list may grow to (the POS's F&B Manager, say)
+	if not {"Finance", "Hotel Admin"} & set(frappe.get_roles(approver)):
+		frappe.throw(_("{0} cannot approve this. A rate correction needs a "
+		               "Finance or Hotel Admin user.").format(approver),
+		             frappe.PermissionError)
+	doc.flags.correct_charged_nights = True
+	doc.rate_lock_key = None  # re-quote, so the save runs the correction
+	# Finance has no write on Reservation; the gate is this endpoint
+	doc.save(ignore_permissions=True)
+	from kamra.savings import log_action
+	log_action("correct_charged_nights", "Reservation", doc.name, doc.property,
+	           rationale=f"{reason.strip()}; approved by {approver}; "
+	                     + ", ".join(f"{n['date']} {n['charged']:,.2f} to {n['new']:,.2f}"
+	                                 for n in corrected)
+	                     + f"; total {summary['current_amount']:,.2f} to "
+	                       f"{float(doc.amount_after_tax or 0):,.2f}")
+	return {**summary, "ok": True, "amount_after_tax": doc.amount_after_tax}
 
 
 @frappe.whitelist(methods=["POST"])

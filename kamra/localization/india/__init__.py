@@ -96,6 +96,7 @@ SAC_CODES = {
 	"Pet Charge": "996311",        # part of the stay, billed with the room
 	"Meal Plan": "996311",         # bundled into the accommodation supply
 	"Extra Guests": "996311",      # extra beds in a let unit, same supply
+	"Rate Adjustment": "996311",   # a later change to a night's room rate
 	"Food & Beverage": "996331",   # restaurant / outdoor catering
 	"Minibar": "996331",
 	"Laundry": "999712",           # washing, cleaning and dyeing

@@ -738,6 +738,25 @@ export function BookingDialog(props: {
   const extraNeedsReason =
     form.over_capacity_guests > 0 && !form.over_capacity_reason.trim()
 
+  // the advance each room's dates ask for, priced by the server
+  const advanceNow = quote
+    ? (quote.advance?.amount ?? 0) +
+      moreQuotes.reduce((s, q) => s + (q?.advance?.amount ?? 0), 0)
+    : 0
+  // each room's own advance (server amounts): one % for all reads as one
+  // figure, mixed ones are listed per room
+  const advanceRooms = quote
+    ? [
+        { room_type: form.room_type, advance: quote.advance },
+        ...moreRooms.map((r, i) => ({ room_type: r.room_type, advance: moreQuotes[i]?.advance })),
+      ].map((r) => ({
+        name: options?.room_types.find((x) => x.name === r.room_type)?.room_type_name ?? r.room_type,
+        percent: r.advance?.percent ?? 0,
+        amount: r.advance?.amount ?? 0,
+      }))
+    : []
+  const advancePercents = new Set(advanceRooms.map((r) => r.percent))
+
   const grandTotal = (() => {
     if (!quote) return 0
     const addonsGross = Object.entries(addonQty).reduce((s, [n, q]) => {
@@ -2227,6 +2246,15 @@ export function BookingDialog(props: {
                         </span>
                       </div>
                     )}
+                    {quote.long_stay && (
+                      <div className="flex justify-between font-medium text-emerald-700">
+                        <span>{t("Long stay {pct}% off (in the room price)", { pct: String(quote.long_stay.percent) })}</span>
+                        <span className="tabular-nums">
+                          −{cur()}
+                          {inr(quote.long_stay.amount)}
+                        </span>
+                      </div>
+                    )}
                     {quote.discount > 0 && (
                       <div className="flex justify-between font-medium text-emerald-700">
                         <span>{t("Voucher")}</span>
@@ -2300,9 +2328,18 @@ export function BookingDialog(props: {
                         {cancelText}
                         {(options.property.no_show_charge || "None") !== "None" &&
                           translate(" No-show: {v0} charged.", { v0: String(String(options.property.no_show_charge).toLowerCase()) })}
-                        {(options.property.deposit_pct ?? 0) > 0 &&
-                          translate(" Deposit expected now: {v0}{v1} ({v2}%).", { v0: String(cur()), v1: String(inr((grandTotal * options.property.deposit_pct) / 100)), v2: String(options.property.deposit_pct) })}
+                        {advanceNow > 0 && advancePercents.size <= 1 &&
+                          translate(" Deposit expected now: {v0}{v1} ({v2}%).", { v0: String(cur()), v1: String(inr(advanceNow)), v2: String(advanceRooms[0]?.percent ?? 0) })}
+                        {advanceNow > 0 && advancePercents.size > 1 &&
+                          translate(" Advance {v0}{v1}:", { v0: String(cur()), v1: String(inr(advanceNow)) })}
                       </p>
+                    )}
+                    {options?.property && advanceNow > 0 && advancePercents.size > 1 && (
+                      <ul className="text-xs text-zinc-500">
+                        {advanceRooms.map((r, i) => (
+                          <li key={i}>{`${r.name} · ${r.percent}% · ${cur()}${inr(r.amount)}`}</li>
+                        ))}
+                      </ul>
                     )}
                   </div>
                 ) : (

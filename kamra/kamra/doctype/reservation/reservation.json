@@ -17,6 +17,7 @@
   "market_segment",
   "company",
   "group_booking",
+  "itinerary",
   "pays_own_charges",
   "source",
   "channel",
@@ -464,6 +465,15 @@
    "fieldtype": "Link",
    "label": "Group Booking",
    "options": "Group Booking"
+  },
+  {
+   "description": "A trip across several properties: this stay is one leg of it",
+   "fieldname": "itinerary",
+   "fieldtype": "Link",
+   "label": "Itinerary",
+   "options": "Itinerary",
+   "read_only": 1,
+   "search_index": 1
   },
   {
    "default": "0",
