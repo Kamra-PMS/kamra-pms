@@ -13,6 +13,8 @@ import random
 import frappe
 from frappe.utils import add_days, date_diff, nowdate
 
+from kamra.scripts.seed_booking_page import execute as seed_booking_page
+
 PROPERTY = "Kamra Demo Palace"
 
 ROOM_TYPES = [
@@ -61,6 +63,7 @@ def _execute():
 		seed_showcase()
 		seed_v1()
 		seed_generic_properties()
+		seed_booking_page()
 		ensure_petty_cash_floats()
 		frappe.db.commit()  # nosemgrep: frappe-manual-commit -- batch/seed/migration script runs outside the request cycle; explicit commit persists the staged writes
 		print("Demo property already exists — ensured demo users + showcase + revenue samples."
@@ -238,6 +241,7 @@ def _execute():
 
 	# Seed generic demo properties (lakeside villa with whole-property lock, and beach homestay with AC/non-AC rooms)
 	seed_generic_properties()
+	seed_booking_page()
 	ensure_petty_cash_floats()
 
 	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- batch/seed/migration script runs outside the request cycle; explicit commit persists the staged writes

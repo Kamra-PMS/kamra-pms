@@ -8,7 +8,7 @@ import { useEffect, useState } from "react"
 
 import { call } from "./api"
 import { subscribeRealtime } from "./realtime"
-import { joinTickets, kotHtml, printThermal, type KotLine } from "./thermal"
+import { billHtml, joinTickets, kotHtml, printThermal, type BillData, type KotLine } from "./thermal"
 
 const KEY = "kamra_print_station"
 const POLL_MS = 5000
@@ -73,7 +73,7 @@ export function usePrintStation() {
         setError(null)
         if (!jobs.length) return
         const bodies = jobs.flatMap((j) => {
-          const one = kotHtml({
+          const one = j.kind === "Bill" ? billHtml(j.ticket as unknown as BillData) : kotHtml({
             outlet: j.ticket.outlet || "", kot_no: j.ticket.kot_no, label: j.ticket.label || "",
             order_type: j.ticket.order_type, order: j.ticket.order || "",
             reprint: !!j.ticket.reprint || j.kind === "Reprint", customer: j.ticket.customer,

@@ -51,7 +51,7 @@ interface LowRow {
   dishes: { name: string; item_name: string; available: 0 | 1 }[]
 }
 
-const WRITE_ROLES = ["Finance", "Hotel Admin", "System Manager", "Administrator"]
+const WRITE_ROLES = ["Finance", "F&B Manager", "Hotel Admin", "System Manager", "Administrator"]
 const STATUSES: Status[] = ["NEGATIVE", "OUT", "LOW", "OK"]
 
 const TONE: Record<Status, string> = {

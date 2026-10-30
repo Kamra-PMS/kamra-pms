@@ -4,7 +4,7 @@
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import cint, date_diff, flt, formatdate, now_datetime, today
+from frappe.utils import cint, date_diff, flt, formatdate, getdate, now_datetime, today
 
 
 class InventoryRefused(frappe.ValidationError):
@@ -135,6 +135,25 @@ def villa_locked_nights(property: str, room_type: str | None, start,
 
 
 class Reservation(Document):
+	def autoname(self):
+		# RES-<year>-00001, the year being the property's financial year, so
+		# the count restarts in April in India and in January elsewhere
+		from frappe.model.naming import make_autoname
+
+		from kamra.localization import financial_year, pack_for
+		prefix = f"RES-{financial_year(pack_for(self.property), today())}-"
+		# a year's counter is seeded once, after the highest number that year
+		# already has. Plain reads: an INSERT ... SELECT would hold shared
+		# locks on Reservation rows and deadlock two bookings saved at once.
+		if not frappe.db.sql("SELECT 1 FROM `tabSeries` WHERE name = %s", prefix):
+			top = frappe.db.sql(
+				"""SELECT MAX(CAST(SUBSTRING(name, %s) AS UNSIGNED))
+				   FROM `tabReservation` WHERE name LIKE %s""",
+				(len(prefix) + 1, f"{prefix}%"))[0][0]
+			frappe.db.sql("INSERT IGNORE INTO `tabSeries` (name, current) VALUES (%s, %s)",
+			              (prefix, int(top or 0)))
+		self.name = make_autoname(f"{prefix}.#####")
+
 	def after_insert(self):
 		# every booking gets a pre-arrival check-in link
 		self.db_set(
@@ -244,6 +263,11 @@ class Reservation(Document):
 			!= (str(self.check_in_date), str(self.check_out_date), self.room_type)
 
 	def validate(self):
+		if self.get("booked_check_out_date") and getdate(self.check_out_date) \
+				>= getdate(self.booked_check_out_date):
+			# extended back to (or past) the booked date: no longer leaving early
+			self.booked_check_out_date = None
+			self.early_departure_reason = None
 		self.validate_dates()
 		self.validate_past_check_in()
 		self.nights = date_diff(self.check_out_date, self.check_in_date)
@@ -253,6 +277,7 @@ class Reservation(Document):
 		self.validate_occupancy()
 		self.validate_room_belongs_to_type()
 		self.validate_no_overlap()
+		self.validate_itinerary_leg()
 		self.validate_room_vacant()
 		self.validate_villa_lockout()
 		self.validate_type_capacity()
@@ -555,12 +580,33 @@ class Reservation(Document):
 			snap = dict(q)
 			snap["idempotency_key"] = getattr(self, "idempotency_key", None)
 			self.quote_snapshot = json.dumps(snap, default=str)
-		self.set_night_rates(q)
+		# nights already charged keep what the folio holds for them (or
+		# get their adjustment lines): the totals follow the same nights
+		d_base, d_tax = self.set_night_rates(q)
+		if d_base or d_tax:
+			self.amount_before_tax = round(flt(self.amount_before_tax) + d_base, 2)
+			self.tax_amount = round(flt(self.tax_amount) + d_tax, 2)
+			self.amount_after_tax = round(
+				flt(self.amount_before_tax) + flt(self.tax_amount), 2)
 		self.rate_lock_key = key
 		self._apply_commission()
 
-	def set_night_rates(self, q: dict):
+	def set_night_rates(self, q: dict) -> tuple[float, float]:
 		"""Lock the quote's nights on the booking - the rates the folio bills.
+
+		Nights already charged to the folio are held by the property's
+		rate-change policy (hold_charged_nights); returns what that changes
+		in the quote's totals (before tax, tax). Lines it decides to post
+		wait in flags until on_update."""
+		rows = self.quote_night_rows(q)
+		hold = self.hold_charged_nights(
+			rows, correct=bool(self.flags.get("correct_charged_nights")))
+		self.flags.rate_change_lines = hold["lines"]
+		self.set("night_rates", rows)
+		return hold["base"], hold["tax"]
+
+	def quote_night_rows(self, q: dict) -> list[dict]:
+		"""The quote's nights as night-rate rows.
 
 		A rate plan works on the stay total, so each night carries its share
 		of the planned total (same spread as folio._rate_plan_factor), and
@@ -590,7 +636,79 @@ class Reservation(Document):
 				"meal_amount": meal,
 				"demand_premium_pct": float(n.get("demand_premium_pct") or 0),
 			})
-		self.set("night_rates", rows)
+		return rows
+
+	def hold_charged_nights(self, rows: list[dict], correct: bool = False) -> dict:
+		"""Apply the property's rate-change policy to the nights already
+		charged (kamra.settings charged_night_rate_change). Nobody changes
+		the rate of a night on the folio in place:
+
+		- Keep charged nights (default): the night keeps what the folio
+		  holds; only nights still to come take the new rate.
+		- Credit the difference: a lower new rate is credited per night
+		  (one Rate Adjustment line, taxed like the night); a higher one is
+		  kept, as with Keep.
+		- Correct back-dated rates: as Keep, except inside the dedicated
+		  correction (correct=True), which reverses each changed night and
+		  posts it again at the new rate.
+
+		Mutates `rows` so each charged night carries what the folio will
+		hold for it. Returns {base, tax} - the change against the quote's
+		totals - plus `lines` to post and `nights` for a preview."""
+		out = {"base": 0.0, "tax": 0.0, "lines": [], "nights": [],
+		       "policy": None}
+		if self.is_new() or not rows:
+			return out
+		from kamra.folio import charged_nights
+		charged = charged_nights(self.name)
+		if not charged:
+			return out
+		from kamra.settings import get_setting
+		policy = get_setting(self.property, "charged_night_rate_change")
+		out["policy"] = policy
+		prop = frappe.get_cached_doc("Property", self.property)
+		levy_pct = flt(prop.get("room_levy_percent")) / 100
+		levy_taxed = cint(prop.get("room_levy_taxable")
+		                  if prop.get("room_levy_taxable") is not None else 1)
+		for row in rows:
+			c = charged.get(str(row["stay_date"]))
+			if not c:
+				continue
+			night = str(row["stay_date"])
+			new, new_gst = flt(row["rate"]), flt(row["gst_rate"])
+			base, gst = c["base"], c["gst_rate"]
+			changed = abs(new - base) >= 0.01 or (correct and abs(new_gst - gst) >= 0.01)
+			action = "kept" if changed else "same"
+			if changed and correct:
+				out["lines"] += [
+					{"night": night, "folio": c["folio"], "amount": -base,
+					 "gst_rate": gst,
+					 "description": f"Rate correction: night of {night} reversed at {base:,.2f}"},
+					{"night": night, "folio": c["folio"], "amount": round(new, 2),
+					 "gst_rate": new_gst,
+					 "description": f"Rate correction: night of {night} at {new:,.2f}"},
+				]
+				base, gst, action = new, new_gst, "corrected"
+			elif changed and policy == "Credit the difference" and new < base:
+				out["lines"].append(
+					{"night": night, "folio": c["folio"],
+					 "amount": round(new - base, 2), "gst_rate": gst,
+					 "description": f"Rate change: night of {night} {base:,.2f} to {new:,.2f}"})
+				action = "credited"
+				base = new
+			# the folio's levy for the night stays as posted
+			# ponytail: the quote taxes its levy at the stay's average rate;
+			# a per-night levy rate here can differ by a rounding paisa
+			levy_new = new * levy_pct
+			out["base"] += (base - new) + (c["levy_base"] - levy_new)
+			out["tax"] += (base * gst - new * new_gst) / 100 + c["levy_tax"] - (
+				levy_new * new_gst / 100 if levy_taxed else 0)
+			if action != "same":
+				out["nights"].append({"date": night, "charged": c["base"],
+				                      "new": round(new, 2), "action": action})
+			row["rate"], row["gst_rate"] = round(base, 2), gst
+		out["base"], out["tax"] = round(out["base"], 2), round(out["tax"], 2)
+		return out
 
 	def _apply_commission(self):
 		if getattr(self, "travel_agent", None):
@@ -677,6 +795,24 @@ class Reservation(Document):
 				exc=InventoryRefused,
 			)
 
+	def validate_itinerary_leg(self):
+		"""A leg of an itinerary can't overlap another live leg of the same
+		trip - the guest can't sleep in two hotels on one night. Runs on
+		every save, so amend_stay on one leg is held to it too.
+
+		The link itself is kamra.crs's alone (it sets it with db.set_value
+		when it books a leg): a save that adds, moves or drops it, from
+		/api/resource say, is refused."""
+		previous = None if self.is_new() else self.get_doc_before_save()
+		if (self.get("itinerary") or None) != ((previous and previous.get("itinerary")) or None):
+			frappe.throw(_("A stay joins or leaves a trip only through the "
+			               "trip itself."), frappe.PermissionError)
+		from kamra.reservation_state import holds_inventory
+		if self.get("itinerary") and holds_inventory(self.status):
+			from kamra.crs import assert_leg_fits
+			assert_leg_fits(self.itinerary, self.check_in_date,
+			                self.check_out_date, self.name, self.property)
+
 	def validate_room_vacant(self):
 		"""One guest in a room at a time. The night-based overlap guard lets a
 		new stay start on another stay's departure date - right for bookings,
@@ -749,11 +885,17 @@ class Reservation(Document):
 		)
 
 	def on_update(self):
+		lines = self.flags.pop("rate_change_lines", None)
+		if lines:
+			from kamra.folio import post_rate_lines
+			post_rate_lines(self, lines)
 		previous = self.get_doc_before_save()
 		old_status = previous.status if previous else None
 		if self.status == old_status:
 			return
-		if self.status == "Checked In":
+		if self.status == "Checked In" and old_status == "Checked Out":
+			self.handle_reinstate()
+		elif self.status == "Checked In":
 			self.handle_check_in()
 		elif self.status == "Checked Out":
 			self.handle_check_out()
@@ -790,6 +932,11 @@ class Reservation(Document):
 		self.db_set({"actual_check_in": at, "checked_in_at": at,
 		             "checked_in_by": frappe.session.user},
 		            update_modified=False)
+		# everyone on the register so far arrived with the guest; someone
+		# added later gets their own time (api.update_occupants)
+		for occ in self.get("occupants") or []:
+			if not occ.get("arrived_at"):
+				occ.db_set("arrived_at", at, update_modified=False)
 		for room in rooms:
 			frappe.db.set_value("Room", room, "occupancy_status", "Occupied")
 		from kamra.folio import open_folio
@@ -801,8 +948,25 @@ class Reservation(Document):
 		transfer_advances_to_guest(self.name)
 		self.log_action("check_in", minutes_saved=10)
 
+	def handle_reinstate(self):
+		"""Back in house after a checkout undone the same day: the rooms are
+		occupied again and the checkout clean is dropped. The folios stay as they are (kamra.api.reinstate_checkout
+		reopened them)."""
+		self.db_set({"actual_check_out": None, "check_out_business_date": None},
+		            update_modified=False)
+		# occupied again; it stays Dirty (the guest used it) for the next service
+		for room in self._occupied_rooms(checking_in=False):
+			frappe.db.set_value("Room", room, "occupancy_status", "Occupied")
+		for task in frappe.get_all("Housekeeping Task", pluck="name", filters={
+				"reservation": self.name, "task_type": "Checkout Clean",
+				"status": ("in", ["Pending", "In Progress"])}):
+			frappe.delete_doc("Housekeeping Task", task, ignore_permissions=True)
+
 	def handle_check_out(self):
-		self.db_set("actual_check_out", now_datetime(), update_modified=False)
+		from kamra.business_date import get_business_date
+		self.db_set({"actual_check_out": now_datetime(),
+		             "check_out_business_date": get_business_date(self.property)},
+		            update_modified=False)
 		from kamra.folio import post_remaining_nights
 		from kamra.ledger import transfer_advances_to_guest
 

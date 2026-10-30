@@ -5,7 +5,7 @@ AGENT_ROLE = "Kamra Agent"
 
 
 # business roles a hotel assigns to staff that no doctype perm creates
-STAFF_ROLES = ("Housekeeping Supervisor", "Night Auditor",
+STAFF_ROLES = ("Housekeeping Supervisor", "Night Auditor", "F&B Manager",
                # service account of a third-party POS (kamra.pos_interface)
                "POS Integrator")
 
@@ -15,6 +15,7 @@ def after_install():
 	ensure_agent_identity()
 	ensure_staff_roles()
 	ensure_mcp_roles()
+	ensure_user_fields()
 
 
 def after_migrate():
@@ -22,6 +23,19 @@ def after_migrate():
 	ensure_agent_identity()
 	ensure_staff_roles()
 	ensure_mcp_roles()
+	ensure_user_fields()
+
+
+def ensure_user_fields():
+	"""A job title on the staff member's User (Frappe has none), set by a
+	Hotel Admin in Staff & access and printed on allowance vouchers. Level 1
+	(System Manager only in the desk) so nobody retitles themselves from
+	their own profile."""
+	from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
+	create_custom_fields({"User": [{
+		"fieldname": "kamra_job_title", "label": "Job Title", "fieldtype": "Data",
+		"insert_after": "last_name", "permlevel": 1,
+	}]}, update=True)
 
 
 def ensure_mcp_roles():

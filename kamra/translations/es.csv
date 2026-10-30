@@ -196,3 +196,33 @@ This guest has no phone number on file.,Este huésped no tiene un número de tel
 This guest has not agreed to marketing messages.,Este huésped no ha aceptado recibir mensajes de marketing.
 You will get offers from {0} on WhatsApp. Reply STOP at any time to opt out.,Recibirá ofertas de {0} por WhatsApp. Responda BAJA en cualquier momento para darse de baja.
 You will no longer get offers from {0}. Booking and stay messages continue. Reply START to opt in again.,Ya no recibirá ofertas de {0}. Los mensajes de reserva y estancia continúan. Responda START para volver a suscribirse.
+AI Provider,Proveedor de IA
+"Your AI provider will act as {0}, within your role. Prices, taxes and availability stay in Kamra. Every action is recorded under your name in the Activity log.","Su proveedor de IA actuará como {0}, con los permisos de su rol. Los precios, los impuestos y la disponibilidad se gestionan en Kamra. Cada acción se registra con su nombre en el registro de Actividad."
+Tax,Impuestos
+{0} bill from {1},Factura de {0} de {1}
+{0} to {1},{0} a {1}
+Billed this month,Facturado este mes
+Bills this month,Facturas de este mes
+Brought forward,Saldo anterior
+"Each bill above is a tax invoice of its own; this is a summary of the month, not a tax invoice. Taxable value and tax show where the whole invoice is on this account.","Cada factura de arriba es una factura fiscal propia; esto es un resumen del mes, no una factura fiscal. La base imponible y el impuesto aparecen cuando toda la factura está en esta cuenta."
+Monthly bill,Factura mensual
+No such account.,No existe esa cuenta.
+Paid this month,Pagado este mes
+Payments this month,Pagos de este mes
+"Pick a month, like 2026-10.","Elige un mes, por ejemplo 2026-10."
+Taxable value,Base imponible
+"Your bill for {0} is attached: {1} billed, {2} due.","Adjuntamos tu factura de {0}: {1} facturado, {2} pendiente."
+Reason,Motivo
+Cashier,Cajero
+KOT,Comanda (KOT)
+Kitchen times,Tiempos de cocina
+Kitchen turnaround,Tiempos de cocina por punto de venta
+Order to pickup minutes,Minutos del pedido a la recogida
+Order to start minutes,Minutos del pedido al inicio
+Ordered at,Pedido a las
+Picked up at,Recogido a las
+Plated at,Emplatado a las
+Plated to pickup minutes,Minutos del emplatado a la recogida
+Served by,Atendido por
+Start to plated minutes,Minutos del inicio al emplatado
+Started at,Iniciado a las

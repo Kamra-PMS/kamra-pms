@@ -134,7 +134,7 @@ export default function Agents() {
             <Sparkles className="size-5 text-brand-600" aria-hidden />
             <h1 className="text-xl font-semibold tracking-tight">{translate("Kamra Agent")}</h1>
           </div>
-          <p className="mt-0.5 text-sm text-zinc-500">{translate("Chat here, or connect Claude. Either way it acts as you, within your role.")}</p>
+          <p className="mt-0.5 text-sm text-zinc-500">{translate("Chat here, or connect your AI provider. Either way it acts as you, within your role.")}</p>
         </div>
         <div className="ml-auto flex shrink-0 items-center gap-2">
           {panel !== "none" && (
@@ -148,7 +148,7 @@ export default function Agents() {
             onClick={() =>
               setPanel((p) => (p === "connect" ? "none" : "connect"))
             }
-            title={translate("Open Claude and connect this hotel over MCP - scoped to your role")}
+            title={translate("Connect your AI provider to this hotel over MCP - scoped to your role")}
             className={
               "flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm " +
               (panel === "connect"
@@ -156,7 +156,7 @@ export default function Agents() {
                 : "border-zinc-200 text-zinc-500 hover:bg-zinc-50 hover:text-zinc-700")
             }
           >
-            <Plug className="size-4" aria-hidden />{translate("Connect your AI")}</button>
+            <Plug className="size-4" aria-hidden />{translate("AI Provider")}</button>
         </div>
       </header>
 
@@ -497,10 +497,10 @@ export function ConnectTab({ property }: { property: string }) {
       <div className="max-w-2xl space-y-4">
         <Card>
           <CardHeader>
-            <CardTitle>{translate("Connect Claude")}</CardTitle>
+            <CardTitle>{translate("AI Provider")}</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-zinc-600">{translate("Connect Claude is turned off on this site. On your own Kamra, every staff member can connect Claude and act within their role.")}</p>
+            <p className="text-sm text-zinc-600">{translate("AI provider connections are turned off on this site. On your own Kamra, every staff member can connect an AI provider and act within their role.")}</p>
           </CardContent>
         </Card>
       </div>
@@ -512,13 +512,13 @@ export function ConnectTab({ property }: { property: string }) {
       <Card>
         <CardHeader>
           <div>
-            <CardTitle>{translate("Connect Claude")}</CardTitle>
-            <p className="mt-0.5 text-xs text-zinc-500">{translate("Claude acts as you at ")}{info?.property_name || translate("this hotel")}{translate(": your role decides what it can see and do. A front-desk connection books and checks in; it cannot touch rates or finance. Every action lands in Activity under your name.")}</p>
+            <CardTitle>{translate("AI Provider")}</CardTitle>
+            <p className="mt-0.5 text-xs text-zinc-500">{translate("Your AI provider acts as you at ")}{info?.property_name || translate("this hotel")}{translate(": your role decides what it can see and do. A front-desk connection books and checks in; it cannot touch rates or finance. Every action lands in Activity under your name.")}</p>
           </div>
         </CardHeader>
         <CardContent className="space-y-3">
           {info && !info.is_public_https && (
-            <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">{translate("Claude reaches this hotel from Anthropic's cloud, so the site needs public HTTPS. This origin looks local - use Claude Code over HTTP on this machine, or the stdio sidecar, until you have a public URL.")}</p>
+            <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">{translate("Remote AI providers need a public HTTPS URL to reach this hotel. For a local site, use a local MCP client or the stdio sidecar.")}</p>
           )}
           <div className="flex flex-wrap items-center gap-2">
             <Button
@@ -528,7 +528,7 @@ export function ConnectTab({ property }: { property: string }) {
                 window.open(info.claude_install_url, "_blank", "noopener")
               }}
             >
-              <ExternalLink className="size-4" aria-hidden />{translate("Connect Claude")}</Button>
+              <ExternalLink className="size-4" aria-hidden />{translate("Open Claude")}</Button>
             {info && info.active_grants > 0 && (
               <Button
                 variant="outline"
@@ -536,7 +536,7 @@ export function ConnectTab({ property }: { property: string }) {
                 onClick={async () => {
                   if (
                     !confirm(
-                      translate("Disconnect Claude? It will have to sign in again."),
+                      translate("Disconnect your AI providers? They will have to sign in again."),
                     )
                   )
                     return
@@ -561,9 +561,10 @@ export function ConnectTab({ property }: { property: string }) {
             </p>
           )}
           {info && info.active_grants > 0 && !info.last_mcp && (
-            <p className="text-xs text-green-700">{translate("Claude is authorised for this property. Enable the connector in a chat with the + menu, then talk in hotel language.")}</p>
+            <p className="text-xs text-green-700">{translate("An AI provider is authorised for this property. Enable its connector in your AI chat, then ask about the hotel.")}</p>
           )}
-          <p className="text-sm text-zinc-600">{translate("Claude opens with this hotel's MCP URL filled in. Confirm Add, sign in here if asked, pick the property, Allow. Then in Claude enable the connector on the chat + menu and say things like \"occupancy this week\" or \"book a Deluxe for Friday\".")}</p>
+          <p className="text-sm text-zinc-600">{translate("Connect ChatGPT, Claude or another MCP-compatible AI provider using this hotel's MCP URL and OAuth. Sign in to Kamra, select the property and allow access. The Claude shortcut opens with the MCP URL filled in.")}</p>
+          <p className="text-sm text-zinc-600">{translate("Enable the connector in your AI chat and say things like \"occupancy this week\" or \"book a Deluxe for Friday\".")}</p>
           {info && (
             <>
               <div>
@@ -607,7 +608,7 @@ export function ConnectTab({ property }: { property: string }) {
           )}
         </CardContent>
       </Card>
-      <p className="text-xs text-zinc-400">{translate("Need a platform-wide or service key (HeyKoala, unattended jobs)? That is issued by your system admin under Developers. Staff should use Connect Claude - no API secrets on a laptop.")}</p>
+      <p className="text-xs text-zinc-400">{translate("Need a platform-wide or service key (HeyKoala, unattended jobs)? That is issued by your system admin under Developers. Staff should use AI Provider to connect with OAuth.")}</p>
     </div>
   )
 }

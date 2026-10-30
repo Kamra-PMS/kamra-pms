@@ -196,3 +196,33 @@ This guest has no phone number on file.,لا يوجد رقم هاتف مسجل �
 This guest has not agreed to marketing messages.,لم يوافق هذا الضيف على تلقي الرسائل التسويقية.
 You will get offers from {0} on WhatsApp. Reply STOP at any time to opt out.,ستصلك عروض {0} عبر واتساب. أرسل توقف في أي وقت لإلغاء الاشتراك.
 You will no longer get offers from {0}. Booking and stay messages continue. Reply START to opt in again.,لن تصلك عروض {0} بعد الآن. تستمر رسائل الحجز والإقامة. أرسل START للاشتراك مجددًا.
+AI Provider,مزوّد الذكاء الاصطناعي
+"Your AI provider will act as {0}, within your role. Prices, taxes and availability stay in Kamra. Every action is recorded under your name in the Activity log.",سيعمل مزوّد الذكاء الاصطناعي باسم {0} وضمن صلاحيات دورك. تبقى الأسعار والضرائب والتوافر في Kamra. يُسجّل كل إجراء باسمك في سجل النشاط.
+Tax,الضريبة
+{0} bill from {1},فاتورة {0} من {1}
+{0} to {1},{0} إلى {1}
+Billed this month,المفوتر هذا الشهر
+Bills this month,فواتير هذا الشهر
+Brought forward,الرصيد المرحّل
+"Each bill above is a tax invoice of its own; this is a summary of the month, not a tax invoice. Taxable value and tax show where the whole invoice is on this account.",كل فاتورة أعلاه فاتورة ضريبية مستقلة؛ هذا ملخص للشهر وليس فاتورة ضريبية. تظهر القيمة الخاضعة للضريبة والضريبة عندما تكون الفاتورة كاملة على هذا الحساب.
+Monthly bill,الفاتورة الشهرية
+No such account.,لا يوجد هذا الحساب.
+Paid this month,المدفوع هذا الشهر
+Payments this month,دفعات هذا الشهر
+"Pick a month, like 2026-10.",اختر شهرًا، مثل 2026-10.
+Taxable value,القيمة الخاضعة للضريبة
+"Your bill for {0} is attached: {1} billed, {2} due.",مرفقة فاتورتك لشهر {0}: {1} مفوترة، {2} مستحقة.
+Reason,السبب
+Cashier,أمين الصندوق
+KOT,أمر المطبخ
+Kitchen times,أوقات المطبخ
+Kitchen turnaround,سرعة المطبخ
+Order to pickup minutes,دقائق من الطلب إلى الاستلام
+Order to start minutes,دقائق من الطلب إلى البدء
+Ordered at,وقت الطلب
+Picked up at,وقت الاستلام
+Plated at,وقت التجهيز
+Plated to pickup minutes,دقائق من التجهيز إلى الاستلام
+Served by,قدّمه
+Start to plated minutes,دقائق من البدء إلى التجهيز
+Started at,وقت البدء

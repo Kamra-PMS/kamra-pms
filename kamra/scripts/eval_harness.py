@@ -4096,7 +4096,7 @@ def t82c():
 	])
 	rows = {o["full_name"]: o for o in out["rows"]}
 	adult, child, visitor = rows["Evalfam Parent"], rows["Evalfam Child"], rows["Evalfam Visitor"]
-	assert adult["id_number"] == "987654321012" and adult["phone"], adult
+	assert adult["id_number"] == "••••••••1012" and adult["phone"], adult  # Aadhaar: last 4 only
 	assert child["age"] == 9 and not (child["id_type"] or child["id_number"] or child["phone"]), child
 	# Form C: a foreign child's passport is part of the register; a phone is not
 	assert visitor["id_number"] == "19FR12345" and not visitor["phone"], visitor
@@ -6136,6 +6136,7 @@ def t133():
 		kinds = {c.charge_type for c in frappe.get_doc("Folio", folio).charges}
 		assert {"Cleaning Fee", "Misc"} <= kinds, kinds
 		_assert_folio_on_ledger(folio)
+		_allowance_approval_off()
 		api.post_allowance(folio, 100, "eval service recovery")
 		_assert_folio_on_ledger(folio)
 	finally:
@@ -7549,6 +7550,14 @@ def t327():
 		assert wiz["open_pos_bills"]["count"] == row["open_pos_bills"]
 
 
+def _allowance_approval_off():
+	"""A new property asks a manager for every allowance; these checks are
+	about the ledger, so the eval property posts allowances straight away."""
+	from kamra.settings import clear_cache, write_kv
+	write_kv(P, "allowance_approval", "Off")
+	clear_cache(P)
+
+
 @check("voids & allowances report lists an allowance with its folio and reason")
 def t328():
 	from kamra import api
@@ -7556,6 +7565,7 @@ def t328():
 	res, folio = _in_house("Eval Void Report", "+91 70000 00328", "2037-01-18",
 	                       "2037-01-20", _ledger_room("L328"))
 	api.add_folio_charge(folio, "Misc", "eval void report", 500, gst_rate=0)
+	_allowance_approval_off()
 	api.post_allowance(folio, 100, "eval void report reason")
 	rows = void_allowance_report(P, nowdate(), nowdate())
 	assert any(r["folio"] == folio and r["action"] == "Allowance" for r in rows), rows[:3]
@@ -8782,7 +8792,13 @@ def _ci_room(number):
 
 def _ci_stay(name, phone, room=None):
 	g = _guest(name, phone)
-	return _res(g, nowdate(), add_days(nowdate(), 2), room=room)
+	res = _res(g, nowdate(), add_days(nowdate(), 2), room=room)
+	# the second adult is on the register with an ID: these checks are
+	# about the main guest's, and every adult on a booking needs one
+	res.append("occupants", {"full_name": f"{name} Partner", "age": 30,
+	                         "id_type": "Passport", "id_number": "E7654321"})
+	res.save(ignore_permissions=True)
+	return res
 
 
 def _refused(fn, *args, exc=None, contains=None, **kwargs):
@@ -10259,6 +10275,65 @@ def t387():
 	assert ctx["tax_label"] == "ISS", ctx
 
 
+@check("Nicaragua pack: IVA, regional defaults and separate manual INTUR levy")
+def t_nicaragua_pack():
+	from kamra.api import _apply_country_defaults
+	from kamra.localization import pack_for, supported_countries
+	from kamra.pricing import quote
+
+	sp = "nicaragua_pack_state"
+	frappe.db.savepoint(sp)
+	try:
+		values = {"property_name": "EVAL Nicaragua Hotel", "country": "Nicaragua",
+		          "city": "Rivas", "rates_include_tax": 0, "room_levy_percent": 0}
+		_apply_country_defaults(values)
+		assert values["currency"] == "NIO", values
+		assert values["timezone"] == "America/Managua", values
+		assert values["room_levy_label"] == "INTUR", values
+		assert values["room_levy_percent"] == 0, values
+		assert values["gst_rate_low"] == 15, values
+		prop = frappe.get_doc({"doctype": "Property", **values}).insert(ignore_permissions=True)
+		rt = frappe.get_doc({
+			"doctype": "Room Type", "property": prop.name,
+			"room_type_code": "STD", "room_type_name": "Standard",
+			"base_price": 1000, "base_occupancy": 2,
+			"adults_capacity": 2, "children_capacity": 1,
+		}).insert(ignore_permissions=True)
+		pack = pack_for(prop.name)
+		assert pack.__name__ == "kamra.localization.nicaragua", pack.__name__
+		assert "Nicaragua" in {row["country"] for row in supported_countries()}
+		q = quote(prop.name, rt.name, "2031-06-01", "2031-06-02", 2, 0)
+		assert q["nightly"][0]["gst_rate"] == 15, q
+		assert round(q["tax_amount"], 2) == 150, q
+		assert round(q["amount_after_tax"], 2) == 1150, q
+		assert q["room_levy"] == 0, q
+		assert pack.fnb_tax_rate(prop.name) == pack.services_tax_rate(prop.name) == 15
+		loc = pack.locale(prop)
+		assert (loc["currency"], loc["currency_symbol"], loc["locale"]) == ("NIO", "C$", "es-NI"), loc
+		ctx = pack.invoice_context(prop)
+		assert (ctx["tax_label"], ctx["tax_id_label"]) == ("IVA", "RUC"), ctx
+
+		frappe.db.set_value("Property", prop.name, "rates_include_tax", 1)
+		frappe.clear_document_cache("Property", prop.name)
+		gross = quote(prop.name, rt.name, "2031-06-01", "2031-06-02", 2, 0)
+		assert round(gross["amount_after_tax"], 2) == 1000, gross
+		assert round(gross["tax_amount"], 2) == 130.43, gross
+
+		# A deliberately configured levy exercises the core's separate line;
+		# it is not an automatic decision that INTUR is due on this stay.
+		frappe.db.set_value("Property", prop.name, {
+			"rates_include_tax": 0, "room_levy_percent": 2, "room_levy_taxable": 0})
+		frappe.clear_document_cache("Property", prop.name)
+		levied = quote(prop.name, rt.name, "2031-06-01", "2031-06-02", 2, 0)
+		assert levied["room_levy"] == 20 and levied["tax_amount"] == 150, levied
+		assert levied["amount_after_tax"] == 1170, levied
+		line = next(row for row in levied["line_items"] if row["component"] == "room_levy")
+		assert line["description"] == "INTUR" and line["tax_amount"] == 0, line
+	finally:
+		frappe.db.rollback(save_point=sp)
+		frappe.clear_document_cache("Property", "EVAL Nicaragua Hotel")
+
+
 def execute():
 	global RT, ROOM
 	# frappe.locale.get_locale_value crashes (UnboundLocalError) when no
@@ -10298,7 +10373,7 @@ def execute():
 		           t360, t361, t362, t363, t364, t365,
 		           t370, t371, t372, t373, t374, t375, t376,
 		           t217, t260, t261, t262, t263, t264,
-		           t380, t381, t382, t383, t384, t385, t386, t387):
+		           t380, t381, t382, t383, t384, t385, t386, t387, t_nicaragua_pack):
 			fn()
 	finally:
 		frappe.flags.kamra_checkin_steps_off = False

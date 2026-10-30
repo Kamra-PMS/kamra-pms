@@ -15,7 +15,7 @@
     header scrolls sideways rather than wrapping into a wall of pills. */
 
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react"
-import { Check, Minus, TriangleAlert } from "lucide-react"
+import { ArrowLeft, Check, Minus, TriangleAlert } from "lucide-react"
 import { useT, t as translate } from "../lib/i18n"
 import { cn } from "../lib/utils"
 import { Button } from "./ui/button"
@@ -145,6 +145,10 @@ export function StepFlowHeader(props: {
   )
 }
 
+/** Wizard buttons are pressed many times a shift, often on a tablet:
+ *  bigger than the app's default. */
+const BIG = "h-11 min-w-24 px-5 text-base"
+
 export function StepFlowFooter(props: {
   /** Left-hand slot, e.g. a Cancel button. */
   start?: ReactNode
@@ -178,17 +182,17 @@ export function StepFlowFooter(props: {
         {props.start}
         <div className="ms-auto flex flex-wrap items-center justify-end gap-2">
           {props.onBack && (
-            <Button variant="outline" disabled={props.busy} onClick={props.onBack}>
-              {t("Back")}
+            <Button variant="outline" className={BIG} disabled={props.busy} onClick={props.onBack}>
+              <ArrowLeft className="size-4" aria-hidden />{t("Back")}
             </Button>
           )}
           {props.onSkip && (
-            <Button variant="ghost" disabled={props.busy} onClick={props.onSkip}>
+            <Button variant="ghost" className={BIG} disabled={props.busy} onClick={props.onSkip}>
               {t("Skip")}
             </Button>
           )}
           {props.onContinue && (
-            <Button disabled={props.busy || props.continueDisabled} onClick={props.onContinue}>
+            <Button className={BIG} disabled={props.busy || props.continueDisabled} onClick={props.onContinue}>
               {props.continueLabel ?? t("Continue")}
             </Button>
           )}

@@ -11,6 +11,9 @@
   "property",
   "group_name",
   "company",
+  "group_type",
+  "master_reservation",
+  "master_pays",
   "column_break_a",
   "check_in_date",
   "check_out_date",
@@ -43,6 +46,27 @@
    "fieldtype": "Link",
    "label": "Company",
    "options": "Corporate Account"
+  },
+  {
+   "fieldname": "group_type",
+   "fieldtype": "Select",
+   "label": "Group Type",
+   "options": "\nCorporate\nWedding\nEvent\nTour\nOther"
+  },
+  {
+   "description": "The room whose guest pays for the group (the group bill is anchored to it)",
+   "fieldname": "master_reservation",
+   "fieldtype": "Link",
+   "label": "Main Room",
+   "options": "Reservation"
+  },
+  {
+   "default": "Nothing (guest pays unless rules say so)",
+   "description": "What the main room pays for every room of the group",
+   "fieldname": "master_pays",
+   "fieldtype": "Select",
+   "label": "Main Room Pays",
+   "options": "Room only\nRoom and F&B (liquor to guest)\nEverything except liquor\nNothing (guest pays unless rules say so)"
   },
   {
    "fieldname": "column_break_a",
@@ -109,7 +133,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-15 13:23:36.664745",
+ "modified": "2026-10-29 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Group Booking",

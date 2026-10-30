@@ -8,9 +8,11 @@
  "engine": "InnoDB",
  "field_order": [
   "posting_date",
+  "stay_date",
   "charge_type",
   "transaction_code",
   "description",
+  "allowance_serial",
   "qty",
   "rate",
   "amount",
@@ -30,11 +32,18 @@
    "reqd": 1
   },
   {
+   "description": "The night a rate adjustment belongs to (the line itself is dated the business date it was posted).",
+   "fieldname": "stay_date",
+   "fieldtype": "Date",
+   "label": "Night Of",
+   "read_only": 1
+  },
+  {
    "fieldname": "charge_type",
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Charge Type",
-   "options": "Room\nMeal Plan\nFood & Beverage\nMinibar\nLaundry\nSpa\nEarly Check-in\nLate Checkout\nCleaning Fee\nExtra Guests\nPet Charge\nRoom Levy\nDiscount\nMisc\nAllowance\nOpening Balance",
+   "options": "Room\nMeal Plan\nFood & Beverage\nMinibar\nLaundry\nSpa\nTaxi\nEarly Check-in\nLate Checkout\nEarly Departure\nCleaning Fee\nExtra Guests\nPet Charge\nRoom Levy\nDiscount\nMisc\nAllowance\nRate Adjustment\nOpening Balance",
    "reqd": 1
   },
   {
@@ -48,6 +57,13 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Description"
+  },
+  {
+   "fieldname": "allowance_serial",
+   "fieldtype": "Data",
+   "label": "Allowance Serial",
+   "read_only": 1,
+   "depends_on": "eval:doc.charge_type=='Allowance'"
   },
   {
    "default": "1",
@@ -114,7 +130,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-10-19 18:00:00.000000",
+ "modified": "2026-10-30 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Folio Charge",

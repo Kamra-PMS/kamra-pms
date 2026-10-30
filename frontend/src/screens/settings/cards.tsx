@@ -189,6 +189,7 @@ export function SettingsCard(props: {
 }
 
 export const TIMEZONES = [
+  "America/Managua",
   "America/Noronha",
   "America/Sao_Paulo",
   "America/Fortaleza",
@@ -353,7 +354,7 @@ function GatewayHelp({ property, gateway, hasKeys }: {
           {t("No {gateway} account yet?", { gateway: info.gateway })}{" "}
           <a className="font-medium text-brand-700 underline" href={info.signup_url}
              target="_blank" rel="noopener">{t("Create one free")}</a>
-          {" "}{t("and take UPI, cards and netbanking for advances and bills.")}
+          {" "}{t("and take online payments for advances and bills.")}
         </p>
       )}
       {info.needs_webhook ? (
@@ -839,13 +840,13 @@ export function AgentAccessCard() {
     <Card>
       <CardHeader>
         <div>
-          <CardTitle>{translateUI("Claude & MCP")}</CardTitle>
-          <p className="mt-0.5 text-xs text-zinc-400">{translateUI("Connect Claude to this property's governed tools. It acts as the signed-in person, within their role, and every action lands in the Activity log.")}</p>
+          <CardTitle>{translateUI("AI Provider")}</CardTitle>
+          <p className="mt-0.5 text-xs text-zinc-400">{translateUI("Connect your AI provider to this property's governed tools. It acts as the signed-in person, within their role, and every action lands in the Activity log.")}</p>
         </div>
       </CardHeader>
       <CardContent className="space-y-3 text-sm">
-        <p className="text-zinc-600">{translateUI("Staff open")}{" "}
-          <Link to="/assistant" className="font-medium text-brand-700 hover:underline">{translateUI("Kamra Agent → Connect your AI")}</Link>{" "}{translateUI("and click ")}<strong>{translateUI("Connect Claude")}</strong>{translateUI(". Claude opens with this hotel's MCP URL filled in; they confirm and sign in as themselves. No API keys on a laptop.")}</p>
+        <p className="text-zinc-600">
+          <Link to="/assistant" className="font-medium text-brand-700 hover:underline">{translateUI("Kamra Agent → AI Provider")}</Link>{": "}{translateUI("Use the MCP URL to connect ChatGPT, Claude or another compatible provider. Each person signs in as themselves with OAuth.")}</p>
         <pre className="overflow-x-auto rounded-lg bg-zinc-100 p-3 text-xs leading-relaxed text-zinc-700">
           {`claude mcp add --transport http kamra ${window.location.origin}/mcp`}
         </pre>

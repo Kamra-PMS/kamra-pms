@@ -32,6 +32,9 @@ scheduler_events = {
 			"kamra.channel_manager.push_all_ari",
 			# custom reports with Daily/Weekly email schedule
 			"kamra.custom_reports.run_scheduled_custom_reports",
+			# online exchange rates for the business date (off unless a
+			# property turns on fx_auto_fetch; only fills missing rates)
+			"kamra.ledger.auto_fetch_exchange_rates",
 		],
 		# 09:00 - send self check-in links to upcoming arrivals, for properties
 		# that turned the setting on (a plain automation, not an agent)
@@ -100,6 +103,7 @@ kamra_localization = {
 	"Saudi Arabia": "kamra.localization.saudi",
 	"Brazil": "kamra.localization.brazil",
 	"Brasil": "kamra.localization.brazil",
+	"Nicaragua": "kamra.localization.nicaragua",
 }
 
 # Served single-page app
@@ -245,7 +249,7 @@ after_migrate = ["kamra.install.after_migrate"]
 # Every Kamra DocType linking a Property fails closed under the opt-in
 # kamra_strict_property_scope site setting; with it off these add nothing.
 _PROPERTY_SCOPED = (
-	"Agent Action Log", "AI Assistant Settings", "Banquet Checklist Template",
+	"Agent Action Log", "AI Assistant Settings", "Allowance Request", "Banquet Checklist Template",
 	"Banquet Dish", "Banquet Function Task", "Banquet Menu",
 	"Banquet Service Item", "Cancelled Invoice", "Cash Transfer", "Cashier", "Cashier Session", "Cashier Terminal",
 	"Cashier Transaction", "Channel Manager Connection",
@@ -253,7 +257,7 @@ _PROPERTY_SCOPED = (
 	"Copilot Conversation", "Credit Note", "Discount Voucher", "Exchange Rate",
 	"Exchange Transaction", "Experience", "External POS Charge", "Folio", "Folio Ledger Entry",
 	"Folio Reprint", "Group Booking", "Housekeeping Task", "Hurdle Rate",
-	"Ingredient", "Ingredient Ledger Entry", "Ingredient Stock", "Kitchen Printer",
+	"Ingredient", "Ingredient Ledger Entry", "Ingredient Stock", "Kamra Custom Report", "Kitchen Printer",
 	"Laundry Order", "Laundry Rate", "Lost And Found Item", "MCP OAuth Grant",
 	"Meal Plan", "Menu Item", "Night Audit Log", "Night Audit Run", "Outbound Webhook",
 	"Outbound Webhook Delivery", "Payment Gateway Settings",
@@ -261,19 +265,21 @@ _PROPERTY_SCOPED = (
 	"Print Job",
 	"Proforma Folio", "Property Setting", "Rate Guardrail", "Rate Plan",
 	"Reservation",
-	"Revenue Budget", "Room", "Room Block", "Room Type", "Season",
+	"Long Stay Discount", "Revenue Budget", "Room", "Room Block", "Room Type", "Season",
 	"Security Deposit", "Sellable Unit", "Service Ticket", "Shift Handover", "SOP Template", "Ticket Event",
-	"Transaction Code", "Turnover Profile", "Venue", "Venue Booking",
+	"Transaction Code", "Turnover Profile", "Vendor", "Vendor Bill", "Venue", "Venue Booking",
 	"WhatsApp Message", "ZATCA Invoice", "ZATCA Settings",
 )
 
 permission_query_conditions = {
 	"Guest": "kamra.authz.guest_query_conditions",
+	"Itinerary": "kamra.authz.itinerary_query_conditions",
 	**{dt: "kamra.authz.property_query_conditions" for dt in _PROPERTY_SCOPED},
 }
 
 has_permission = {
 	"Guest": "kamra.authz.guest_has_permission",
+	"Itinerary": "kamra.authz.itinerary_has_permission",
 	**{dt: "kamra.authz.property_has_permission" for dt in _PROPERTY_SCOPED},
 }
 
@@ -381,7 +387,7 @@ before_request = [
 	# the public demo shows the maintenance page while it rebuilds
 	"kamra.demo_guard.block_while_rebuilding",
 ]
-# after_request = ["kamra.utils.after_request"]
+after_request = ["kamra.mcp_http.after_request"]
 
 # Job Events
 # ----------
@@ -415,9 +421,7 @@ before_request = [
 # Authentication and authorization
 # --------------------------------
 
-# auth_hooks = [
-# 	"kamra.auth.validate"
-# ]
+auth_hooks = ["kamra.mcp_http.authenticate"]
 
 # Automatically update python controller files with type annotations for this app.
 # export_python_type_annotations = True

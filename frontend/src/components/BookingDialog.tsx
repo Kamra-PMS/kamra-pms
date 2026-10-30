@@ -28,6 +28,10 @@ import DepositPanel, { type DepositState } from "./DepositPanel"
 import CheckInDialog from "./CheckInDialog"
 import TillCard, { useTill } from "./TillCard"
 
+/** Reservation.market_segment options (same list as the doctype). */
+const MARKET_SEGMENTS = ["Corporate", "Leisure", "Group", "MICE", "Government", "Wedding",
+  "Long Stay", "Airline Crew", "Complimentary", "House Use"]
+
 
 interface CompanyCredit {
   applies: boolean
@@ -144,6 +148,7 @@ export function BookingDialog(props: {
     pets: 0,
     company: "",
     travel_agent: "",
+    market_segment: "",
     booked_by_name: "",
     booked_by_phone: "",
     booker_relation: "",
@@ -608,6 +613,7 @@ export function BookingDialog(props: {
         company: form.company || undefined,
         travel_agent: form.travel_agent || undefined,
         booking_type: form.company ? "Corporate" : undefined,
+        market_segment: form.market_segment || undefined,
         booked_by_name: onBehalf ? form.booked_by_name || undefined : undefined,
         booked_by_phone: onBehalf
           ? form.booked_by_phone || undefined
@@ -731,6 +737,25 @@ export function BookingDialog(props: {
     form.over_capacity_guests > 0 ? form.over_capacity_charge : 0
   const extraNeedsReason =
     form.over_capacity_guests > 0 && !form.over_capacity_reason.trim()
+
+  // the advance each room's dates ask for, priced by the server
+  const advanceNow = quote
+    ? (quote.advance?.amount ?? 0) +
+      moreQuotes.reduce((s, q) => s + (q?.advance?.amount ?? 0), 0)
+    : 0
+  // each room's own advance (server amounts): one % for all reads as one
+  // figure, mixed ones are listed per room
+  const advanceRooms = quote
+    ? [
+        { room_type: form.room_type, advance: quote.advance },
+        ...moreRooms.map((r, i) => ({ room_type: r.room_type, advance: moreQuotes[i]?.advance })),
+      ].map((r) => ({
+        name: options?.room_types.find((x) => x.name === r.room_type)?.room_type_name ?? r.room_type,
+        percent: r.advance?.percent ?? 0,
+        amount: r.advance?.amount ?? 0,
+      }))
+    : []
+  const advancePercents = new Set(advanceRooms.map((r) => r.percent))
 
   const grandTotal = (() => {
     if (!quote) return 0
@@ -1781,6 +1806,18 @@ export function BookingDialog(props: {
                   <Plus className="size-4" aria-hidden />
                   {t("Add another room")}
                 </button>}
+                {!dayUse && !walkIn && (
+                  <button
+                    type="button"
+                    className="ml-3 text-sm font-medium text-brand-700 hover:underline"
+                    onClick={() => {
+                      props.onClose()
+                      navigate("/groups?new=1")
+                    }}
+                  >
+                    {t("Group booking with a main room")}
+                  </button>
+                )}
 
                 <div className="grid gap-3 sm:grid-cols-3">
                   <Field label={translate("Booked via")}>
@@ -1894,6 +1931,18 @@ export function BookingDialog(props: {
                               <option key={t.name} value={t.name}>
                                 {t.agent_name} ({t.commission_pct}%)
                               </option>
+                            ))}
+                          </select>
+                        </Field>
+                        <Field label={translate("Market segment")}>
+                          <select
+                            className={inputCls}
+                            value={form.market_segment}
+                            onChange={(e) => set("market_segment", e.target.value)}
+                          >
+                            <option value="">{form.company ? translate("Corporate") : "-"}</option>
+                            {MARKET_SEGMENTS.map((m) => (
+                              <option key={m} value={m}>{translate(m)}</option>
                             ))}
                           </select>
                         </Field>
@@ -2197,6 +2246,15 @@ export function BookingDialog(props: {
                         </span>
                       </div>
                     )}
+                    {quote.long_stay && (
+                      <div className="flex justify-between font-medium text-emerald-700">
+                        <span>{t("Long stay {pct}% off (in the room price)", { pct: String(quote.long_stay.percent) })}</span>
+                        <span className="tabular-nums">
+                          −{cur()}
+                          {inr(quote.long_stay.amount)}
+                        </span>
+                      </div>
+                    )}
                     {quote.discount > 0 && (
                       <div className="flex justify-between font-medium text-emerald-700">
                         <span>{t("Voucher")}</span>
@@ -2270,9 +2328,18 @@ export function BookingDialog(props: {
                         {cancelText}
                         {(options.property.no_show_charge || "None") !== "None" &&
                           translate(" No-show: {v0} charged.", { v0: String(String(options.property.no_show_charge).toLowerCase()) })}
-                        {(options.property.deposit_pct ?? 0) > 0 &&
-                          translate(" Deposit expected now: {v0}{v1} ({v2}%).", { v0: String(cur()), v1: String(inr((grandTotal * options.property.deposit_pct) / 100)), v2: String(options.property.deposit_pct) })}
+                        {advanceNow > 0 && advancePercents.size <= 1 &&
+                          translate(" Deposit expected now: {v0}{v1} ({v2}%).", { v0: String(cur()), v1: String(inr(advanceNow)), v2: String(advanceRooms[0]?.percent ?? 0) })}
+                        {advanceNow > 0 && advancePercents.size > 1 &&
+                          translate(" Advance {v0}{v1}:", { v0: String(cur()), v1: String(inr(advanceNow)) })}
                       </p>
+                    )}
+                    {options?.property && advanceNow > 0 && advancePercents.size > 1 && (
+                      <ul className="text-xs text-zinc-500">
+                        {advanceRooms.map((r, i) => (
+                          <li key={i}>{`${r.name} · ${r.percent}% · ${cur()}${inr(r.amount)}`}</li>
+                        ))}
+                      </ul>
                     )}
                   </div>
                 ) : (

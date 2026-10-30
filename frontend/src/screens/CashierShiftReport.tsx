@@ -3,7 +3,7 @@ import { Link, useSearchParams } from "react-router-dom"
 import { call, getCurrentProperty } from "../lib/api"
 import { serverError } from "../lib/resource"
 import { Badge } from "../components/ui/badge"
-import { moneyLocale } from "../lib/money"
+import { moneyLocale, useLocale } from "../lib/money"
 import { useT, t as translate } from "../lib/i18n"
 
 
@@ -31,6 +31,8 @@ type Totals = {
 
 export default function CashierShiftReport() {
   const { t } = useT()
+  // the country's instant modes (system_upi bucket), "" where it has none
+  const instant = useLocale().instant_payment_modes.join(" / ")
   const [params, setParams] = useSearchParams()
   const [date, setDate] = useState("")
   const [toDate, setToDate] = useState("") // "" = the one business date
@@ -148,7 +150,7 @@ export default function CashierShiftReport() {
               <th className="w-[12%] px-3 py-2">{t("Status")}</th>
               <th className="px-3 py-2">{t("Cash")}</th>
               <th className="px-3 py-2">{t("Card")}</th>
-              <th className="px-3 py-2">{t("UPI")}</th>
+              {instant ? <th className="px-3 py-2">{t(instant)}</th> : null}
               <th className="px-3 py-2">{t("Variance")}</th>
             </tr>
           </thead>
@@ -174,14 +176,14 @@ export default function CashierShiftReport() {
                   </td>
                   <td className="px-3 py-2.5 tabular-nums">{inr(s.system_cash)}</td>
                   <td className="px-3 py-2.5 tabular-nums">{inr(s.system_card)}</td>
-                  <td className="px-3 py-2.5 tabular-nums">{inr(s.system_upi)}</td>
+                  {instant ? <td className="px-3 py-2.5 tabular-nums">{inr(s.system_upi)}</td> : null}
                   <td className="px-3 py-2.5 tabular-nums">{inr(s.variance)}</td>
                 </tr>
               )
             })}
             {!report?.sessions?.length ? (
               <tr>
-                <td colSpan={6} className="px-3 py-10 text-center text-zinc-400">
+                <td colSpan={instant ? 6 : 5} className="px-3 py-10 text-center text-zinc-400">
                   {t("No sessions on this date. Open a till on My Till to start a shift.")}
                 </td>
               </tr>
@@ -209,7 +211,7 @@ export default function CashierShiftReport() {
                 [t("Float"), totals.opening_float],
                 [t("Cash"), totals.cash],
                 [t("Card"), totals.card],
-                [t("UPI"), totals.upi],
+                ...(instant ? [[t(instant), totals.upi]] : []),
                 [t("Paid outs"), totals.paid_outs],
                 [t("Drops"), totals.drops],
                 [t("Petty cash"), totals.petty_cash],

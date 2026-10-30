@@ -73,7 +73,7 @@ def require_it_admin(fn):
 SCOPED_ARGS = {
 	"reservation": ("Reservation", "POS Table Reservation"),
 	"folio": ("Folio",), "from_folio": ("Folio",), "to_folio": ("Folio",),
-	"folios": ("Folio",),
+	"folios": ("Folio",), "allowance_request": ("Allowance Request",),
 	"group_booking": ("Group Booking",), "group": ("Group Booking",),
 	"order": ("POS Order", "Laundry Order"),
 	"outlet": ("POS Outlet",),
@@ -219,6 +219,36 @@ def guest_has_permission(doc, ptype: str | None = None, user: str | None = None,
 	return not props or bool(props & allowed)
 
 
+def itinerary_query_conditions(user: str | None = None, doctype: str | None = None) -> str:
+	"""permission_query_conditions hook for Itinerary. A trip has no property
+	of its own; a restricted user sees it only when every leg is at a
+	property they may access (kamra.crs._itinerary, same rule), and never
+	while it has no leg at all (nothing says which hotel it belongs to)."""
+	allowed = restricted_properties(user)
+	if allowed is None:
+		return ""
+	props = ", ".join(frappe.db.escape(p) for p in sorted(allowed)) or "''"
+	return (
+		"EXISTS (SELECT 1 FROM `tabReservation` il0"
+		" WHERE il0.itinerary = `tabItinerary`.name)"
+		" AND NOT EXISTS (SELECT 1 FROM `tabReservation` il"
+		" WHERE il.itinerary = `tabItinerary`.name"
+		f" AND il.property NOT IN ({props}))"
+	)
+
+
+def itinerary_has_permission(doc, ptype: str | None = None, user: str | None = None,
+                             debug: bool = False) -> bool:
+	"""has_permission hook for Itinerary (Desk, /api/resource): same rule
+	as itinerary_query_conditions. Must return True explicitly to allow."""
+	allowed = restricted_properties(user)
+	if allowed is None or not doc.name or doc.is_new():
+		return True
+	props = set(frappe.get_all("Reservation", filters={"itinerary": doc.name},
+	                           pluck="property", distinct=True))
+	return bool(props) and props <= allowed
+
+
 def _values(value) -> list[str]:
 	if isinstance(value, str) and value.startswith("["):
 		try:
@@ -342,15 +372,38 @@ def require_cashier_pin(property: str, pin=None):
 # has already started, say). The same roles the reason-code supervisor
 # rule accepts (kamra.ledger.require_reason).
 SUPERVISOR_ROLES = ("Hotel Admin", "Finance", "System Manager", "Administrator")
+# At the POS only (void approvals): the F&B Manager runs the floor too, but
+# never approves folio corrections or sees full guest phones.
+POS_SUPERVISOR_ROLES = SUPERVISOR_ROLES + ("F&B Manager",)
 
 
-def is_supervisor(user: str | None = None) -> bool:
+def is_supervisor(user: str | None = None, roles=SUPERVISOR_ROLES) -> bool:
 	user = user or frappe.session.user
 	return user == "Administrator" or bool(
-		set(SUPERVISOR_ROLES) & set(frappe.get_roles(user)))
+		set(roles) & set(frappe.get_roles(user)))
 
 
-def verify_supervisor(property: str, supervisor: str | None, pin) -> str:
+def supervisors_for(property: str, roles=SUPERVISOR_ROLES) -> list[dict]:
+	"""Who can approve on a till at this property: enabled users holding
+	one of `roles`, with access to the property and a cashier PIN set.
+	Names only."""
+	users = set(frappe.get_all(
+		"Has Role", filters={"role": ["in", [r for r in roles if r != "Administrator"]],
+		                     "parenttype": "User"},
+		pluck="parent", distinct=True))
+	users &= set(frappe.get_all("Cashier PIN", pluck="name"))
+	out = []
+	for u in frappe.get_all("User", filters={"name": ["in", list(users) or [""]],
+	                                         "enabled": 1, "user_type": "System User"},
+	                        fields=["name", "full_name"], order_by="full_name"):
+		allowed = restricted_properties(u.name)
+		if allowed is None or property in allowed:
+			out.append({"user": u.name, "full_name": u.full_name or u.name})
+	return out
+
+
+def verify_supervisor(property: str, supervisor: str | None, pin,
+                      roles=SUPERVISOR_ROLES) -> str:
 	"""A supervisor approves at someone else's till with their user id and
 	their own cashier PIN. The PIN is always required here, whatever the
 	property's PIN setting, because it is the only proof the supervisor was
@@ -361,7 +414,7 @@ def verify_supervisor(property: str, supervisor: str | None, pin) -> str:
 		frappe.throw("SUPERVISOR_REQUIRED: pick the supervisor who approves this.",
 		             frappe.PermissionError)
 	if not frappe.db.get_value("User", supervisor, "enabled") or \
-			not is_supervisor(supervisor):
+			not is_supervisor(supervisor, roles):
 		frappe.throw(f"{supervisor} cannot approve this. It needs a Hotel "
 		             "Admin or Finance user.", frappe.PermissionError)
 	allowed = restricted_properties(supervisor)

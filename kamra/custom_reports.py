@@ -18,6 +18,7 @@ from frappe import _
 from frappe.utils import add_days, date_diff, getdate, now_datetime, nowdate
 
 from kamra.authz import require_roles
+from kamra.pos import _full_name, _served_by
 from kamra.crs import assert_property_access
 
 MAX_RANGE_DAYS = 92
@@ -139,6 +140,10 @@ DATASETS: dict[str, Dataset] = {
 		"description": "Rooms sold, occupancy, ADR, RevPAR and revenue per day.",
 		"module": "finance",
 		"roles": ("Finance", "Hotel Admin", "Revenue Manager", "Kamra Agent", "Front Desk", "Night Auditor"),
+		# the desk runs this for occupancy; the money columns are for
+		# kamra.dashboards.FIGURE_ROLES only
+		"money_columns": ("adr", "revpar", "revpax", "room_revenue", "fnb_revenue",
+		                  "other_revenue", "total_revenue"),
 		"date_field": "date",
 		"needs_range": True,
 		"columns": [
@@ -291,7 +296,7 @@ DATASETS: dict[str, Dataset] = {
 		"label": "POS orders",
 		"description": "Restaurant / outlet orders by creation date.",
 		"module": "fnb",
-		"roles": ("Finance", "Hotel Admin", "Kamra Agent", "Front Desk"),
+		"roles": ("Finance", "Hotel Admin", "Kamra Agent", "Front Desk", "F&B Manager"),
 		"date_field": "creation",
 		"needs_range": True,
 		"columns": [
@@ -303,6 +308,8 @@ DATASETS: dict[str, Dataset] = {
 			_col("room", "Room"),
 			_col("covers", "Covers", "number"),
 			_col("grand_total", "Total", "number"),
+			_col("served_by", "Served by"),
+			_col("cashier", "Cashier"),
 		],
 	},
 	"pos_items": {
@@ -310,7 +317,7 @@ DATASETS: dict[str, Dataset] = {
 		"label": "POS items",
 		"description": "Sold menu items by order date (voids excluded).",
 		"module": "fnb",
-		"roles": ("Finance", "Hotel Admin", "Kamra Agent", "Front Desk"),
+		"roles": ("Finance", "Hotel Admin", "Kamra Agent", "Front Desk", "F&B Manager"),
 		"date_field": "creation",
 		"needs_range": True,
 		"columns": [
@@ -321,6 +328,33 @@ DATASETS: dict[str, Dataset] = {
 			_col("rate", "Rate", "number"),
 			_col("amount", "Amount", "number"),
 			_col("order", "Order"),
+		],
+	},
+	"kitchen_times": {
+		"id": "kitchen_times",
+		"label": "Kitchen times",
+		"description": "Each kitchen line: minutes from order to start, start to plated, and plated to pickup.",
+		"module": "fnb",
+		"roles": ("Finance", "Hotel Admin", "Kamra Agent", "Front Desk", "F&B Manager"),
+		"date_field": "creation",
+		"needs_range": True,
+		"averages": ("wait_minutes", "cook_minutes", "pass_minutes", "total_minutes"),
+		"columns": [
+			_col("order", "Order"),
+			_col("kot_no", "KOT", "number"),
+			_col("outlet", "Outlet"),
+			_col("posting_date", "Date", "date"),
+			_col("item_name", "Item"),
+			_col("qty", "Qty", "number"),
+			_col("served_by", "Served by"),
+			_col("fired_at", "Ordered at"),
+			_col("started_at", "Started at"),
+			_col("prepared_at", "Plated at"),
+			_col("picked_up_at", "Picked up at"),
+			_col("wait_minutes", "Order to start minutes", "number"),
+			_col("cook_minutes", "Start to plated minutes", "number"),
+			_col("pass_minutes", "Plated to pickup minutes", "number"),
+			_col("total_minutes", "Order to pickup minutes", "number"),
 		],
 	},
 	"service_tickets": {
@@ -420,6 +454,7 @@ DATASETS: dict[str, Dataset] = {
 			_col("nights_short", "Nights short", "number"),
 			_col("company", "Company"),
 			_col("source", "Source"),
+			_col("reason", "Reason"),
 		],
 	},
 	"overdue_by_company": {
@@ -506,8 +541,8 @@ PACKS: dict[str, dict] = {
 	},
 	"fnb": {
 		"label": "F&B pack",
-		"description": "Sales and covers by outlet, orders by status, and "
-		               "items sold by menu name.",
+		"description": "Sales and covers by outlet, orders by status, "
+		               "items sold by menu name, and kitchen turnaround.",
 		"sections": [
 			{"title": "Sales by outlet", "dataset": "pos_orders",
 			 "columns": ["outlet", "covers", "grand_total"], "group_by": ["outlet"]},
@@ -515,6 +550,9 @@ PACKS: dict[str, dict] = {
 			 "columns": ["status", "covers", "grand_total"], "group_by": ["status"]},
 			{"title": "Items by menu", "dataset": "pos_items",
 			 "columns": ["item_name", "qty", "amount"], "group_by": ["item_name"]},
+			{"title": "Kitchen turnaround", "dataset": "kitchen_times",
+			 "columns": ["outlet", "qty", "wait_minutes", "cook_minutes",
+			             "pass_minutes", "total_minutes"], "group_by": ["outlet"]},
 		],
 	},
 	"engineering": {
@@ -821,7 +859,7 @@ def _fetch_pos_orders(property: str, from_date: str, to_date: str,
 		},
 		fields=[
 			"name", "outlet", "status", "room", "customer_name", "guest",
-			"guests", "order_total", "creation",
+			"guests", "order_total", "creation", "captain", "waiter", "settled_by",
 		],
 		order_by="creation desc",
 		limit_page_length=MAX_ROWS,
@@ -837,8 +875,46 @@ def _fetch_pos_orders(property: str, from_date: str, to_date: str,
 			"room": r.get("room"),
 			"covers": int(r.get("guests") or 0),
 			"grand_total": float(r.get("order_total") or 0),
+			"served_by": _served_by(r) or "",
+			"cashier": _full_name(r.settled_by) or "",
 		})
 	return out
+
+
+def _fetch_kitchen_times(property: str, from_date: str, to_date: str,
+                         **_) -> list[dict]:
+	"""Fired lines with their kitchen stamps. A step nobody tapped (no
+	Start on an auto-KOT outlet is filled at fire; no Picked up) stays
+	blank rather than guessed."""
+	rows = frappe.db.sql(
+		"""
+		SELECT po.name AS `order`, po.kot_no, po.outlet,
+		       DATE(po.creation) AS posting_date, po.captain, po.waiter,
+		       COALESCE(poi.item_name, poi.menu_item) AS item_name, poi.qty,
+		       poi.fired_at, poi.started_at, poi.prepared_at, poi.picked_up_at
+		FROM `tabPOS Order Item` poi
+		JOIN `tabPOS Order` po ON poi.parent = po.name
+		WHERE po.property = %(p)s
+		  AND po.creation BETWEEN %(f)s AND %(t)s
+		  AND IFNULL(poi.voided, 0) = 0
+		  AND poi.fired_at IS NOT NULL
+		ORDER BY po.creation DESC, poi.idx
+		LIMIT %(lim)s
+		""",
+		{"p": property, "f": from_date, "t": f"{to_date} 23:59:59",
+		 "lim": MAX_ROWS},
+		as_dict=True,
+	)
+	for r in rows:
+		r["served_by"] = _served_by(r) or ""
+		r["wait_minutes"] = _elapsed_minutes(r.fired_at, r.started_at)
+		r["cook_minutes"] = _elapsed_minutes(r.started_at, r.prepared_at)
+		r["pass_minutes"] = _elapsed_minutes(r.prepared_at, r.picked_up_at)
+		r["total_minutes"] = _elapsed_minutes(r.fired_at, r.picked_up_at)
+		for k in ("fired_at", "started_at", "prepared_at", "picked_up_at"):
+			r[k] = str(r[k])[:16] if r[k] else ""
+		del r["captain"], r["waiter"]
+	return rows
 
 
 def _elapsed_minutes(start, end) -> float | None:
@@ -998,12 +1074,14 @@ def _fetch_early_departures(property: str, from_date: str, to_date: str,
 	rows = frappe.db.sql(
 		"""
 		SELECT name, guest_name, room_type, room, check_in_date,
-		       check_out_date, actual_check_out, company, source
+		       COALESCE(booked_check_out_date, check_out_date) AS check_out_date,
+		       actual_check_out, company, source, early_departure_reason
 		FROM `tabReservation`
 		WHERE property = %(p)s
 		  AND status = 'Checked Out'
 		  AND actual_check_out IS NOT NULL
-		  AND DATE(actual_check_out) < check_out_date
+		  AND (booked_check_out_date IS NOT NULL
+		       OR DATE(actual_check_out) < check_out_date)
 		  AND DATE(actual_check_out) BETWEEN %(f)s AND %(t)s
 		ORDER BY actual_check_out DESC
 		LIMIT %(lim)s
@@ -1025,6 +1103,7 @@ def _fetch_early_departures(property: str, from_date: str, to_date: str,
 			"nights_short": max(int(short or 0), 0),
 			"company": r.get("company") or "",
 			"source": r.get("source") or "",
+			"reason": r.get("early_departure_reason") or "",
 		})
 	return out
 
@@ -1079,6 +1158,7 @@ FETCHERS: dict[str, Callable[..., list[dict]]] = {
 	"lost_found": _fetch_lost_found,
 	"pos_orders": _fetch_pos_orders,
 	"pos_items": _fetch_pos_items,
+	"kitchen_times": _fetch_kitchen_times,
 	"service_tickets": _fetch_service_tickets,
 	"laundry_orders": _fetch_laundry_orders,
 	"shift_handover": _fetch_shift_handover,
@@ -1186,12 +1266,22 @@ def _project(rows: list[dict], columns: list[str]) -> list[dict]:
 	return [{c: r.get(c) for c in columns} for r in rows]
 
 
+def _columns(ds: Dataset) -> list[Column]:
+	"""The dataset's columns this user may see: money columns only for the
+	roles that see the hotel's figures."""
+	money = ds.get("money_columns")
+	if not money:
+		return ds["columns"]
+	from kamra.dashboards import sees_figures
+	if sees_figures():
+		return ds["columns"]
+	return [c for c in ds["columns"] if c["id"] not in money]
+
+
 def _resolve_columns(ds: Dataset, columns: list[str] | None) -> list[str]:
-	allowed = {c["id"] for c in ds["columns"]}
-	if not columns:
-		return [c["id"] for c in ds["columns"]]
-	picked = [c for c in columns if c in allowed]
-	return picked or [c["id"] for c in ds["columns"]]
+	cols = [c["id"] for c in _columns(ds)]
+	picked = [c for c in (columns or []) if c in cols]
+	return picked or cols
 
 
 def _previous_range(from_date: str, to_date: str) -> tuple[str, str]:
@@ -1284,7 +1374,7 @@ def _run_dataset(
 				r[k] = str(v)
 
 	col_ids = _resolve_columns(ds, columns)
-	allowed = {c["id"] for c in ds["columns"]}
+	allowed = {c["id"] for c in _columns(ds)}
 	safe_filters = [f for f in (filters or []) if f.get("field") in allowed]
 	safe_group = [g for g in (group_by or []) if g in allowed]
 	safe_sort = [s for s in (sort or []) if s.get("field") in allowed]
@@ -1297,7 +1387,7 @@ def _run_dataset(
 	if len(rows) > MAX_ROWS:
 		rows = rows[:MAX_ROWS]
 
-	col_meta = [c for c in ds["columns"] if c["id"] in col_ids]
+	col_meta = [c for c in _columns(ds) if c["id"] in col_ids]
 	# preserve order of col_ids
 	by_id = {c["id"]: c for c in col_meta}
 	ordered = [by_id[c] for c in col_ids if c in by_id]
@@ -1478,7 +1568,7 @@ def _pack_html(pack: dict, lang: str = "en") -> str:
 
 @frappe.whitelist()
 @require_roles("Front Desk", "Finance", "Hotel Admin", "Revenue Manager",
-               "Housekeeping", "Kamra Agent", "Night Auditor")
+               "Housekeeping", "Kamra Agent", "Night Auditor", "F&B Manager")
 def list_report_datasets(property: str):
 	"""Whitelisted datasets the current user may run on this property."""
 	assert_property_access(property)
@@ -1494,7 +1584,7 @@ def list_report_datasets(property: str):
 			"description": ds["description"],
 			"module": ds.get("module"),
 			"needs_range": ds["needs_range"],
-			"columns": ds["columns"],
+			"columns": _columns(ds),
 			"filter_ops": list(OPS.keys()),
 		})
 	return out
@@ -1502,7 +1592,7 @@ def list_report_datasets(property: str):
 
 @frappe.whitelist()
 @require_roles("Front Desk", "Finance", "Hotel Admin", "Revenue Manager",
-               "Housekeeping", "Kamra Agent", "Night Auditor")
+               "Housekeeping", "Kamra Agent", "Night Auditor", "F&B Manager")
 def list_report_packs(property: str):
 	"""Department packs with the sections this user may run here."""
 	assert_property_access(property)
@@ -1518,7 +1608,7 @@ def list_report_packs(property: str):
 
 @frappe.whitelist()
 @require_roles("Front Desk", "Finance", "Hotel Admin", "Revenue Manager",
-               "Housekeeping", "Kamra Agent", "Night Auditor")
+               "Housekeeping", "Kamra Agent", "Night Auditor", "F&B Manager")
 def run_report_pack(property: str, pack: str, from_date: str | None = None,
                     to_date: str | None = None, format: str | None = "json",
                     lang: str | None = "en", compare: int | str | None = 1):
@@ -1559,7 +1649,7 @@ def run_report_pack(property: str, pack: str, from_date: str | None = None,
 
 @frappe.whitelist()
 @require_roles("Front Desk", "Finance", "Hotel Admin", "Revenue Manager",
-               "Housekeeping", "Kamra Agent", "Night Auditor")
+               "Housekeeping", "Kamra Agent", "Night Auditor", "F&B Manager")
 def list_custom_reports(property: str):
 	"""Saved reports visible to this user on the property."""
 	assert_property_access(property)
@@ -1611,7 +1701,7 @@ def _assert_can_edit_doc(doc):
 
 @frappe.whitelist()
 @require_roles("Front Desk", "Finance", "Hotel Admin", "Revenue Manager",
-               "Housekeeping", "Kamra Agent", "Night Auditor")
+               "Housekeeping", "Kamra Agent", "Night Auditor", "F&B Manager")
 def get_custom_report(name: str, property: str | None = None):
 	"""Full saved definition for the builder."""
 	doc = _load_report(name, property)
@@ -1643,7 +1733,7 @@ def get_custom_report(name: str, property: str | None = None):
 
 @frappe.whitelist(methods=["POST"])
 @require_roles("Finance", "Hotel Admin", "System Manager", "Front Desk",
-               "Revenue Manager", "Housekeeping", "Kamra Agent", "Night Auditor")
+               "Revenue Manager", "Housekeeping", "Kamra Agent", "Night Auditor", "F&B Manager")
 def save_custom_report(
 	property: str,
 	title: str,
@@ -1721,7 +1811,7 @@ def save_custom_report(
 
 @frappe.whitelist(methods=["POST"])
 @require_roles("Finance", "Hotel Admin", "System Manager", "Front Desk",
-               "Revenue Manager", "Housekeeping", "Kamra Agent", "Night Auditor")
+               "Revenue Manager", "Housekeeping", "Kamra Agent", "Night Auditor", "F&B Manager")
 def delete_custom_report(name: str, property: str | None = None):
 	"""Delete a saved report the user can edit."""
 	doc = _load_report(name, property)
@@ -1733,7 +1823,7 @@ def delete_custom_report(name: str, property: str | None = None):
 
 @frappe.whitelist()
 @require_roles("Front Desk", "Finance", "Hotel Admin", "Revenue Manager",
-               "Housekeeping", "Kamra Agent", "Night Auditor")
+               "Housekeeping", "Kamra Agent", "Night Auditor", "F&B Manager")
 def run_custom_report(
 	property: str,
 	dataset: str | None = None,
@@ -1805,7 +1895,7 @@ def _filename(payload: dict, ext: str) -> str:
 
 @frappe.whitelist(methods=["POST"])
 @require_roles("Finance", "Hotel Admin", "System Manager", "Front Desk",
-               "Revenue Manager", "Housekeeping", "Kamra Agent", "Night Auditor")
+               "Revenue Manager", "Housekeeping", "Kamra Agent", "Night Auditor", "F&B Manager")
 def email_custom_report(
 	property: str,
 	recipients: str,
@@ -1889,7 +1979,7 @@ def run_scheduled_custom_reports():
 		"Kamra Custom Report",
 		filters={"schedule_frequency": ["in", ["Daily", "Weekly"]]},
 		fields=[
-			"name", "property", "title", "dataset", "schedule_frequency",
+			"name", "owner", "property", "title", "dataset", "schedule_frequency",
 			"schedule_time", "schedule_weekday", "recipients", "last_sent_on",
 			"columns_json", "filters_json", "group_by_json", "sort_json", "lang",
 		],
@@ -1915,9 +2005,13 @@ def run_scheduled_custom_reports():
 				from_date = add_days(to_date, -6)
 			from kamra.authz import act_as
 
-			# Scheduler has no session roles; run as Administrator for the
-			# property-scoped send (same pattern as other nightly jobs).
-			with act_as("Administrator"):
+			# Scheduler has no session roles; send as the report's owner so
+			# the mail carries only the sections and columns they may see (a
+			# receptionist scheduling a manager's pack gets no money). A
+			# disabled owner's schedule stops.
+			if not frappe.db.get_value("User", r.owner, "enabled"):
+				continue
+			with act_as(r.owner):
 				email_custom_report(
 					property=r.property,
 					recipients=r.recipients,

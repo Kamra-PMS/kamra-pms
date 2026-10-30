@@ -12,7 +12,7 @@ import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 
 
-const WRITE_ROLES = ["Finance", "Hotel Admin", "System Manager", "Administrator"]
+const WRITE_ROLES = ["Finance", "F&B Manager", "Hotel Admin", "System Manager", "Administrator"]
 const STATIONS = ["Kitchen", "Tandoor", "Grill", "Fryer", "Bar"]
 
 const inputCls =

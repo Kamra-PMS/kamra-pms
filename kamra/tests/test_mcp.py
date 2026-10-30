@@ -3,6 +3,10 @@
 from __future__ import annotations
 
 import json
+import unittest
+from contextlib import ExitStack
+from types import SimpleNamespace
+from unittest.mock import Mock, patch
 
 import frappe
 from frappe.tests import IntegrationTestCase
@@ -10,6 +14,132 @@ from frappe.tests import IntegrationTestCase
 from kamra import mcp_access, mcp_http, mcp_oauth
 from kamra.mcp_tools import BY_NAME
 from kamra.tests.fixtures import PROPERTY, build, ensure_roles_and_users
+
+
+class TestMCPFrameworkAuth(unittest.TestCase):
+	"""Exercise Frappe's auth gate and final response processing without a database."""
+
+	def setUp(self):
+		self.stack = ExitStack()
+		self.addCleanup(self.stack.close)
+		self.context = SimpleNamespace(
+			request=SimpleNamespace(path="/mcp", method="GET", headers={"Authorization": "Bearer test-token"}),
+			response_headers={}, conf=frappe._dict(allow_cors=None),
+		)
+		self.framework = Mock()
+		self.framework.local = self.context
+		self.framework.conf = frappe._dict()
+		self.framework.session = SimpleNamespace(user="Guest")
+		self.framework.AuthenticationError = frappe.AuthenticationError
+		self.framework.get_request_header.return_value = "Bearer test-token"
+		self.framework.get_hooks.return_value = ["kamra.mcp_http.authenticate"]
+		self.framework.get_attr.return_value = mcp_http.authenticate
+		self.framework.db.get_value.return_value = 1
+		self.framework.set_user.side_effect = lambda user: setattr(self.framework.session, "user", user)
+		self.framework.monitor.get_trace_id.return_value = None
+		self.framework._dev_server = False
+		self.stack.enter_context(patch.object(mcp_http, "frappe", self.framework))
+		self.stack.enter_context(patch.object(mcp_http, "protected_resource_url",
+			return_value="https://hotel.example/mcp/.well-known/oauth-protected-resource"))
+
+	def validate_auth(self):
+		from frappe import auth
+
+		with patch.object(auth, "frappe", self.framework), \
+				patch.object(auth, "validate_oauth"), patch.object(auth, "validate_auth_via_api_keys"), \
+				patch.object(auth, "validate_ip_address", create=True) as check_ip:
+			auth.validate_auth()
+			return check_ip
+
+	def test_valid_kamra_token_passes_frappe_authentication_gate(self):
+		with patch.object(mcp_http, "lookup_access_token", return_value=SimpleNamespace(user="staff@example.test")) as lookup:
+			self.validate_auth()
+		lookup.assert_called_once_with("test-token")
+		self.assertEqual(self.framework.session.user, "staff@example.test")
+		self.framework.db.get_value.assert_called_once_with("User", "staff@example.test", "enabled")
+
+	def test_invalid_expired_or_revoked_token_is_rejected(self):
+		with patch.object(mcp_http, "lookup_access_token", return_value=None):
+			with self.assertRaises(frappe.AuthenticationError):
+				self.validate_auth()
+		self.framework.set_user.assert_not_called()
+
+	def test_disabled_user_is_rejected(self):
+		self.framework.db.get_value.return_value = 0
+		with patch.object(mcp_http, "lookup_access_token", return_value=SimpleNamespace(user="disabled@example.test")):
+			with self.assertRaises(frappe.AuthenticationError):
+				self.validate_auth()
+		self.framework.set_user.assert_not_called()
+
+	def test_other_routes_and_disabled_mcp_do_not_authenticate_kamra_tokens(self):
+		for path, disabled in (("/api/method/ping", False), ("/mcp/oauth/token", False),
+		                       ("/mcp-other", False), ("/mcp", True)):
+			with self.subTest(path=path, disabled=disabled):
+				self.context.request.path = path
+				self.framework.conf.kamra_mcp_disabled = disabled
+				with patch.object(mcp_http, "lookup_access_token") as lookup:
+					mcp_http.authenticate()
+				lookup.assert_not_called()
+		self.framework.set_user.assert_not_called()
+
+	def test_mcp_challenge_survives_frappe_final_response_processing(self):
+		from frappe import app
+		from werkzeug.wrappers import Response
+
+		for status in (401, 403):
+			with self.subTest(status=status):
+				self.context.response_headers.clear()
+				response = Response(status=status)
+				mcp_http.after_request(self.context.request, response)
+				with patch.object(app, "frappe", self.framework), \
+						patch.object(app, "is_oauth_metadata_enabled", return_value=True), \
+						patch.object(app, "get_resource_url", return_value="https://hotel.example"):
+					app.process_response(response)
+				self.assertIn('/mcp/.well-known/oauth-protected-resource', response.headers['WWW-Authenticate'])
+				self.assertIn('scope="kamra.mcp"', response.headers['WWW-Authenticate'])
+
+	def test_other_responses_keep_frappe_oauth_metadata(self):
+		from werkzeug.wrappers import Response
+
+		for path, status, disabled in (("/api/method/ping", 401, False),
+		                               ("/mcp/oauth/token", 403, False),
+		                               ("/mcp", 200, False), ("/mcp", 404, False),
+		                               ("/mcp", 401, True)):
+			with self.subTest(path=path, status=status, disabled=disabled):
+				self.context.request.path = path
+				self.framework.conf.kamra_mcp_disabled = disabled
+				response = Response(status=status)
+				response.headers['WWW-Authenticate'] = 'Bearer realm="Frappe"'
+				mcp_http.after_request(self.context.request, response)
+				self.assertEqual(response.headers['WWW-Authenticate'], 'Bearer realm="Frappe"')
+				self.assertEqual(self.context.response_headers, {})
+
+	def test_standard_scoped_discovery_uses_kamra_instead_of_frappe(self):
+		from werkzeug.wrappers import Response
+
+		for path, function, document in (
+			("/.well-known/oauth-authorization-server/mcp/oauth", "authorization_server_doc",
+			 {"issuer": "https://hotel.example/mcp/oauth"}),
+			("/.well-known/oauth-protected-resource/mcp", "protected_resource_doc",
+			 {"resource": "https://hotel.example/mcp"}),
+		):
+			with self.subTest(path=path):
+				self.context.request.path = path
+				response = Response('{"issuer": "https://hotel.example"}', content_type="application/json")
+				with patch.object(mcp_http, function, return_value=document):
+					mcp_http.after_request(self.context.request, response)
+				self.assertEqual(response.get_json(), document)
+				self.assertEqual(response.status_code, 200)
+				self.assertEqual(response.headers['Cache-Control'], 'no-store')
+
+	def test_root_oauth_discovery_remains_frappe(self):
+		from werkzeug.wrappers import Response
+
+		for path in ("/.well-known/oauth-protected-resource", "/.well-known/oauth-authorization-server"):
+			self.context.request.path = path
+			response = Response('{"issuer": "https://hotel.example"}', content_type="application/json")
+			mcp_http.after_request(self.context.request, response)
+			self.assertEqual(response.get_json(), {"issuer": "https://hotel.example"})
 
 
 class FakeRequest:
@@ -232,6 +362,19 @@ class TestRemoteMCP(IntegrationTestCase):
 		names = {t["name"] for t in payload["result"]["tools"]}
 		self.assertIn("quote", names)
 		self.assertEqual(len(names), len(set(names)))
+
+	def test_tools_call_structured_content_is_object(self):
+		from types import SimpleNamespace
+		from unittest.mock import patch
+
+		grant = SimpleNamespace(user="Administrator", property=None)
+		for result, has_structured in (([{"name": "R1"}], False), (None, False), ({"a": 1}, True)):
+			with patch.object(mcp_http, "call_tool", return_value=result):
+				out = mcp_http._tools_call({"name": "quote", "arguments": {}}, grant)
+			self.assertFalse(out["isError"])
+			self.assertEqual("structuredContent" in out, has_structured)
+			if has_structured:
+				self.assertIsInstance(out["structuredContent"], dict)
 
 	def _key_user(self, email, *, restrict=True, enabled=1, mcp="MCP Manage"):
 		"""A Front Desk user with an API key, limited to the test property,

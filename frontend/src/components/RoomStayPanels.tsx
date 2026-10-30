@@ -26,7 +26,7 @@ const CATEGORIES = [
 ]
 const PRIORITIES = ["Low", "Medium", "High", "Urgent"]
 const CHARGE_TYPES = [
-  "Food & Beverage", "Minibar", "Laundry", "Spa",
+  "Food & Beverage", "Minibar", "Laundry", "Spa", "Taxi",
   "Early Check-in", "Late Checkout", "Pet Charge", "Misc",
 ]
 

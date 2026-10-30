@@ -432,8 +432,30 @@ TOOLS = {
 	"group_pickup_status": (
 		"group_detail",
 		"Group Rooms Control for a group booking: the block, per-room-type "
-		"pickup (blocked/picked/remaining), rooming list, event, folio.",
+		"pickup (blocked/picked/remaining), rooming list, event, the main "
+		"room and the group bill balance.",
 		{"group_booking": {"type": "string"}}, False, False),
+	"create_group_booking": (
+		"create_group_booking",
+		"Book a group (corporate, wedding) in one go: rooms = [{room_type, "
+		"count, room?, guest_name?}]. master_index picks the main room whose "
+		"guest pays master_pays (default \"Room only\" = room + tax) for every "
+		"room on one group bill.",
+		{"group_name": {"type": "string"},
+		 "check_in_date": {"type": "string"},
+		 "check_out_date": {"type": "string"},
+		 "rooms": {"type": "array", "items": {"type": "object"}},
+		 "guest_name": {"type": "string"}, "phone": {"type": "string"},
+		 "company": {"type": "string"}, "group_type": {"type": "string"},
+		 "master_index": {"type": "integer"},
+		 "master_pays": {"type": "string"}}, True, True),
+	"settle_group_bill": (
+		"settle_group_bill",
+		"Settle a group's bill: a payment by mode (amount defaults to the "
+		"balance) or to_city_ledger=1 for a company with credit. Closes it at 0.",
+		{"group_booking": {"type": "string"}, "mode": {"type": "string"},
+		 "amount": {"type": "number"}, "to_city_ledger": {"type": "integer"},
+		 "reference": {"type": "string"}}, False, True),
 	"pickup_group_room": (
 		"pickup_group_room",
 		"Name a guest into a group's room block (creates their reservation "
@@ -481,7 +503,8 @@ TOOLS = {
 	"record_payment": (
 		"add_folio_payment",
 		"Record a payment staff say was received, against a folio (mode: "
-		"Cash, UPI, Card, Bank, Link). folio is "
+		"Cash, Card, Bank Transfer, Payment Link or the country's own modes "
+		"from the property locale). folio is "
 		"the folio id from checkout_context folios[].folio or get_folio. If you "
 		"only have the booking, pass reservation instead and leave folio out: "
 		"the stay's open guest folio is used.",
@@ -1207,7 +1230,8 @@ What Kamra does and where to find it:
   cancel, registration card.
 - Guests: profiles with stay history, VIP/blacklist, merge and anonymize.
 - Billing: folios, post charges, take payments, payment links. Closing a folio
-  assigns a GST tax invoice (logo, GSTIN, place of supply, SAC 996311).
+  assigns a tax invoice number (logo, tax ID and the tax details the
+  property's country requires).
 - Reports: one Reports hub - manager flash, shift report, F&B dashboard,
   banquet registers, SLA, voids, department packs (Front Office,
   Housekeeping, F&B, Hotel Manager) and custom reports (build, save, group

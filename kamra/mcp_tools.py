@@ -85,6 +85,22 @@ IDEMPOTENCY_KEY_PARAM = _p(
 	"second identical room on purpose.",
 )
 
+PAYMENT_KEY_PARAM = _p(
+	"string",
+	description="Optional unique key for this payment (e.g. a UUID), new for "
+	"each payment you mean to take. Retrying with the same key returns the "
+	"first result (idempotent_replay) instead of taking the money twice.",
+)
+
+ITINERARY_LEGS_PARAM = _p(
+	"array",
+	description="The stays, any order: each {property, room_type, "
+	"check_in_date, check_out_date, adults?, children?, meal_plan?, "
+	"rate_plan?}. property is the Property id; room_type, meal_plan and "
+	"rate_plan accept the id, code or exact name at that property.",
+	items=_p("object"),
+)
+
 
 def _t(
 	name: str,
@@ -183,6 +199,9 @@ TOOLS: tuple[ToolSpec, ...] = (
 			"rate_plan": RATE_PLAN_PARAM,
 			"voucher_code": _p("string"),
 			"company": COMPANY_PARAM,
+			"market_segment": _p("string", enum=[
+				"Corporate", "Leisure", "Group", "MICE", "Government", "Wedding",
+				"Long Stay", "Airline Crew", "Complimentary", "House Use"]),
 			"idempotency_key": IDEMPOTENCY_KEY_PARAM,
 		},
 		required=("guest_name", "room_type", "check_in_date", "check_out_date"),
@@ -258,6 +277,129 @@ TOOLS: tuple[ToolSpec, ...] = (
 		bools=("waive_fee",),
 	),
 	_t(
+		"quote_itinerary",
+		"crs.quote_itinerary",
+		"""Price a trip across several properties of the chain (e.g. 2 nights
+		at one hotel, then 3 at another) before booking it: each leg priced by
+		the same engine as quote, rooms free per leg, and the combined total
+		(null when legs are in different currencies). Legs can't overlap; a
+		leg may start the day the previous one ends.""",
+		{
+			"legs": ITINERARY_LEGS_PARAM,
+			"adults": _p("integer"),
+			"children": _p("integer"),
+			"company": COMPANY_PARAM,
+		},
+		required=("legs",),
+	),
+	_t(
+		"create_itinerary",
+		"crs.create_itinerary",
+		"""Book a multi-property trip in one call: one normal reservation per
+		leg (each with its own folio and its own property's cancellation
+		policy) under one itinerary reference (ITN-...) to give the guest.
+		All legs book or none do. Always quote_itinerary first. Take the
+		advance per leg, or once for the trip with record_trip_advance.""",
+		{
+			"legs": ITINERARY_LEGS_PARAM,
+			"guest_name": _p("string"),
+			"phone": _p("string"),
+			"adults": _p("integer"),
+			"children": _p("integer"),
+			"company": COMPANY_PARAM,
+			"booked_by_name": _p("string"),
+			"booked_by_phone": _p("string"),
+			"notes": _p("string"),
+			"idempotency_key": _p("string", description="Optional unique key "
+			                      "for this trip. Retrying with the same key "
+			                      "returns the first itinerary instead of "
+			                      "booking again."),
+		},
+		required=("legs", "guest_name"),
+		mutating=True,
+	),
+	_t(
+		"get_itinerary",
+		"crs.get_itinerary",
+		"""A trip (ITN-...) with its legs in date order: property, dates,
+		status, price, advance %, advance required, paid and still due per
+		leg, and the trip totals.""",
+		{"itinerary": _p("string")},
+		required=("itinerary",),
+	),
+	_t(
+		"trip_advance_preview",
+		"crs.trip_advance_preview",
+		"""How one advance for a whole trip would be split across its legs:
+		each leg up to its own advance still due (earliest stay first), any
+		rest to the earliest leg up to its bill. Without an amount, the
+		trip's advance still due. ALWAYS show this split to the staff
+		member before record_trip_advance.""",
+		{"itinerary": _p("string"), "amount": _p("number")},
+		required=("itinerary",),
+	),
+	_t(
+		"record_trip_advance",
+		"crs.record_trip_advance",
+		"""Take one advance payment for a whole trip. It is split as
+		trip_advance_preview shows and each share posts as an Advance on
+		that leg's folio at its own property. mode: one of the
+		payment modes every leg's property accepts.
+		Confirm the amount and the split with staff before calling.""",
+		{
+			"itinerary": _p("string"),
+			"amount": _p("number"),
+			"mode": _p("string"),
+			"reference": _p("string"),
+			"idempotency_key": PAYMENT_KEY_PARAM,
+		},
+		required=("itinerary", "amount"),
+		mutating=True,
+	),
+	_t(
+		"add_itinerary_leg",
+		"crs.add_itinerary_leg",
+		"""Add one more stay to an existing trip. It can't overlap a live leg.""",
+		{
+			"itinerary": _p("string"),
+			"property": _p("string", description="Property id of this leg"),
+			"room_type": ROOM_TYPE_PARAM,
+			"check_in_date": _p("string"),
+			"check_out_date": _p("string"),
+			"adults": _p("integer"),
+			"children": _p("integer"),
+		},
+		required=("itinerary", "property", "room_type", "check_in_date",
+		          "check_out_date"),
+		mutating=True,
+	),
+	_t(
+		"cancel_itinerary_preview",
+		"crs.cancel_itinerary_preview",
+		"""What cancelling a whole trip would cost now: each leg's own
+		cancellation terms and the total fee. ALWAYS read this to the guest
+		before cancel_itinerary. To cancel one leg, use cancellation_preview
+		and cancel_booking on that leg's reservation.""",
+		{"itinerary": _p("string")},
+		required=("itinerary",),
+	),
+	_t(
+		"cancel_itinerary",
+		"crs.cancel_itinerary",
+		"""Cancel every confirmed leg of a trip, each under its own property's
+		policy (fees post to that leg's folio). Returns a cancellation number
+		per leg. Only waive fees when a manager authorizes it (logged).""",
+		{
+			"itinerary": _p("string"),
+			"reason": _p("string"),
+			"note": _p("string"),
+			"waive_fee": _p("boolean"),
+		},
+		required=("itinerary",),
+		mutating=True,
+		bools=("waive_fee",),
+	),
+	_t(
 		"booking_requests",
 		"booking_requests.booking_requests",
 		"""Pending Request-to-Book stays (status Requested) waiting for the
@@ -309,6 +451,19 @@ TOOLS: tuple[ToolSpec, ...] = (
 		mutating=True,
 	),
 	_t(
+		"group_check_in",
+		"api.group_check_in",
+		"""Check in every arrival of a group booking due today (or only the
+		reservations listed). Rooms still unassigned get the suggested free
+		room of the booked type. Returns who went in, who did not and why,
+		and how many rooms still have IDs, deposit or the registration card
+		to finish. Confirm with the user first.""",
+		{"group_booking": _p("string"),
+		 "reservations": _p("array", items={"type": "string"})},
+		required=("group_booking",),
+		mutating=True,
+	),
+	_t(
 		"check_out",
 		"api.check_out",
 		"""Check a guest out (posts remaining nights to the folio, frees the
@@ -319,9 +474,31 @@ TOOLS: tuple[ToolSpec, ...] = (
 		(credit_warnings in the result) or is refused with CREDIT_BLOCKED and
 		the reason. An agent can never override a credit block - tell the
 		user; Finance or a Hotel Admin can override it at the desk. Confirm
-		with the user first.""",
-		{"reservation": _p("string")},
+		with the user first.
+
+		Leaving before the booked date (checkout_context shows
+		`early_departure`): call early_departure first so the stay is
+		shortened and only the nights stayed are billed, settle, then check
+		out. Passing early_reason here does both in one call, but is refused
+		as a whole if the new bill is not settled.""",
+		{"reservation": _p("string"),
+		 "early_reason": _p("string", description="Why the guest leaves before the booked date"),
+		 "early_fee": _p("string", description="None, One Night or All Nights; leave out to apply the property's policy")},
 		required=("reservation",),
+		mutating=True,
+	),
+	_t(
+		"early_departure",
+		"api.early_departure",
+		"""A guest in house leaves before the booked date: shorten the stay to
+		today (availability, channel manager and price follow) and post the
+		property's early-departure charge for the unused nights (None, One
+		Night or All Nights of room rate). Give the guest's reason. An agent
+		always applies the property's policy; only Finance or a Hotel Admin
+		can change the charge for one stay. checkout_context shows the plan
+		and amounts first. Confirm with the user first.""",
+		{"reservation": _p("string"), "reason": _p("string")},
+		required=("reservation", "reason"),
 		mutating=True,
 	),
 	_t(
@@ -366,7 +543,10 @@ TOOLS: tuple[ToolSpec, ...] = (
 		"""What new dates would do to a stay's bill before anything changes:
 		current and new totals, the difference and the new nightly rates,
 		priced by the engine. Read-only. Call before amend_stay and tell the
-		guest / staff the new price.""",
+		guest / staff the new price. For a guest in house, charged_nights
+		shows what happens to nights already on the folio: kept at their
+		charged rate (kept_difference can be given back as an allowance) or
+		credited (credit_total).""",
 		{
 			"reservation": _p("string"),
 			"check_in_date": _p("string"),
@@ -660,18 +840,49 @@ TOOLS: tuple[ToolSpec, ...] = (
 	_t(
 		"record_payment",
 		"api.add_folio_payment",
-		"""Record money received on a folio. mode: Cash, UPI, Card, Bank,
-		Link. kind: Payment (default), Advance, or Security Deposit.
-		Confirm the amount with staff before calling.""",
+		"""Record money received on a folio. mode: one of the
+		property's payment modes, or Payment Link. kind: Payment
+		(default), Advance, or Security Deposit.
+		Foreign money: pass currency (e.g. USD) and the foreign amount
+		as amount, mode Cash or Bank Transfer; the PMS converts at the
+		hotel's rate for today (see exchange_rates) and refuses if none
+		is set. Confirm the amount and currency with staff before calling.""",
 		{
 			"folio": _p("string"),
 			"mode": _p("string"),
 			"amount": _p("number"),
 			"reference": _p("string"),
 			"kind": _p("string"),
+			"currency": _p("string", description="Optional ISO code of "
+			               "foreign money received. Leave out for the "
+			               "hotel's own currency."),
+			"idempotency_key": PAYMENT_KEY_PARAM,
 		},
 		required=("folio", "mode", "amount"),
 		mutating=True,
+		group="Billing",
+	),
+	_t(
+		"exchange_rates",
+		"ledger.list_exchange_rates",
+		"""The hotel's exchange rates: latest buy and sell rate per foreign
+		currency (home-currency units per 1 foreign unit), the date each
+		was set, and its source: Manual (typed in by set_by) or Online
+		(fetched market_rate with the hotel's margin). Foreign payments
+		convert at the buy rate set for today's business date. Finance
+		fetches or types missing rates; agents cannot. Read-only.""",
+		{},
+		property=True,
+		group="Billing",
+	),
+	_t(
+		"folio_in_currency",
+		"ledger.folio_in_currency",
+		"""A folio's total and balance shown in a foreign currency at
+		today's rate, rounded up to the cent. Display only: the bill and
+		tax invoice stay in the hotel's currency. Read-only.""",
+		{"folio": _p("string"), "currency": _p("string")},
+		required=("folio", "currency"),
 		group="Billing",
 	),
 	_t(
@@ -694,14 +905,75 @@ TOOLS: tuple[ToolSpec, ...] = (
 		"api.post_allowance",
 		"""Credit back part of a bill on an open folio without deleting the
 		original line (service recovery, dispute, agreed discount). Needs a
-		reason; it goes on the record.""",
+		reason (or an Adjust reason_code); it goes on the record. When the
+		property wants a manager's approval the result is pending: true
+		with a request id, and nothing is on the bill until a manager
+		approves it. You can ask, never approve.""",
 		{
 			"folio": _p("string"),
 			"amount": _p("number"),
 			"reason": _p("string"),
 			"gst_rate": _p("number"),
+			"reason_code": _p("string", description="Optional Adjust reason code, e.g. ADJ-RATE"),
 		},
 		required=("folio", "amount", "reason"),
+		mutating=True,
+		group="Billing",
+	),
+	_t(
+		"allowance_requests",
+		"api.allowance_requests",
+		"""Allowances waiting for a manager's approval (status Pending), or
+		decided ones (Approved / Rejected) with who decided and why.""",
+		{"status": _p("string"), "folio": _p("string")},
+		property=True,
+		group="Billing",
+	),
+	_t(
+		"open_guest_bills",
+		"api.open_guest_bills",
+		"""A separate bill for each guest sharing a room: opens one folio per
+		other occupant (or per name given), invoiced in that guest's name.
+		The main guest keeps the stay's Guest folio. Then use
+		share_folio_charges to share the room nights.""",
+		{"reservation": _p("string"),
+		 "names": _p("array", items=_p("string"))},
+		required=("reservation",),
+		mutating=True,
+		group="Billing",
+	),
+	_t(
+		"share_folio_charges",
+		"api.share_folio_charges",
+		"""Share charge lines (room nights) from one bill with the other
+		guests' bills: evenly, or by shares (a percent per other bill, in
+		the order of to_folios). The source bill keeps the rest.""",
+		{
+			"from_folio": _p("string"),
+			"charge_rows": _p("array", items=_p("string")),
+			"to_folios": _p("array", items=_p("string")),
+			"shares": _p("array", items=_p("number")),
+		},
+		required=("from_folio", "charge_rows", "to_folios"),
+		mutating=True,
+		group="Billing",
+	),
+	_t(
+		"change_stay_company",
+		"api.change_stay_company",
+		"""Change (or remove, company empty) the company a stay bills to.
+		move=rules re-routes posted charges by the new company's billing
+		rules; move=guest sends the company bill back to the guest.
+		Refused once an invoice went to the old company. Runs credit
+		control; an agent can't override a credit block. Confirm with
+		staff first and give the reason.""",
+		{
+			"reservation": _p("string"),
+			"company": _p("string", description="Corporate Account id, or empty for none"),
+			"reason": _p("string"),
+			"move": _p("string", enum=["rules", "guest"]),
+		},
+		required=("reservation", "reason"),
 		mutating=True,
 		group="Billing",
 	),
@@ -735,7 +1007,11 @@ TOOLS: tuple[ToolSpec, ...] = (
 		"api.update_occupants",
 		"""Record everyone staying in the room (the legal hotel register,
 		printed on the GRC). occupants = [{full_name, age, gender,
-		nationality, id_type, id_number, phone}] - replaces the list.""",
+		nationality, id_type, id_number, phone, arrived_at, left_at}] -
+		replaces the list. arrived_at / left_at ("YYYY-MM-DD HH:MM") are
+		optional: a guest already on the register keeps their times, and
+		one added while the stay is checked in arrived now. Set left_at
+		when a guest leaves before the room checks out.""",
 		{
 			"reservation": _p("string"),
 			"occupants": _p("array", items=_p("object")),
@@ -819,7 +1095,7 @@ TOOLS: tuple[ToolSpec, ...] = (
 	_t(
 		"send_payment_link",
 		"api.folio_payment_link",
-		"""Create a Razorpay payment link for a folio's outstanding balance
+		"""Create an online payment link (the property's payment gateway) for a folio's outstanding balance
 		(SMS/email to the guest when contact details exist).""",
 		{"folio": _p("string")},
 		required=("folio",),
@@ -860,6 +1136,143 @@ TOOLS: tuple[ToolSpec, ...] = (
 		31 to 60, 61 to 90, and 90+ days overdue (plus their sum `overdue`).
 		Read-only — use it to answer who owes money and how late.""",
 		{},
+		property=True,
+		group="Billing",
+	),
+	_t(
+		"ar_accounts",
+		"receivables.ar_accounts",
+		"""Every company account (AR) at this property: account number,
+		billing contact, credit limit, payment terms, balance, overdue and
+		whether it is restricted. Use the `name` it returns as `account` for
+		ar_account_detail and create_ar_invoice. Read-only.""",
+		{},
+		property=True,
+		group="Billing",
+	),
+	_t(
+		"ar_account_detail",
+		"ledger.city_ledger_account",
+		"""One company account: balance, aging by due date, credit available
+		under the limit (stays in house count against it), money paid ahead,
+		each open bill with its due date and days late, and recent payments.
+		Read-only.""",
+		{"account": _p("string")},
+		required=("account",),
+		group="Billing",
+	),
+	_t(
+		"company_monthly_bill",
+		"statements.company_monthly_bill",
+		"""A company's month-end bill for one account: every bill of the month
+		(month as YYYY-MM) with its invoice number, taxable value and tax, the
+		company's payments, and the balance brought and carried forward.
+		Each stay keeps its own tax invoice; this is the monthly summary.
+		Read-only.""",
+		{"account": _p("string"), "month": _p("string")},
+		required=("account", "month"),
+		group="Billing",
+	),
+	_t(
+		"create_ar_invoice",
+		"receivables.create_ar_invoice",
+		"""Bill a company account directly for something that was not a stay
+		(meeting room, contract fee). `lines` is [{charge_type, description,
+		amount, qty, gst_rate}]: amount is the unit price before tax,
+		charge_type one of Room, Meal Plan, Food & Beverage, Minibar, Laundry,
+		Spa, Misc (and the room fees); the PMS taxes F&B at the hotel's rate
+		and refuses an unknown rate. Credit control runs as at check-out and
+		an agent can't override a block. Refused on a restricted account.
+		Confirm the lines and total with the user first.""",
+		{"account": _p("string"),
+		 "lines": _p("array", items=_p("object")),
+		 "reference": _p("string")},
+		required=("account", "lines"),
+		mutating=True,
+		group="Billing",
+	),
+	_t(
+		"payables_aging",
+		"payables.payables_aging",
+		"""What the hotel owes each supplier (accounts payable), aged by due
+		date: not due, 1 to 30, 31 to 60, 61 to 90 and 90+ days overdue, with
+		totals. Read-only.""",
+		{},
+		property=True,
+		group="Billing",
+	),
+	_t(
+		"vendor_bills",
+		"payables.vendor_bills",
+		"""Supplier bills at this property, most urgent first: amount, tax,
+		total, paid, still owed, due date and status. `status` is "open" (the
+		default: not paid or cancelled), "all", or one of Awaiting Approval,
+		Approved, Part Paid, Paid, Cancelled. Read-only.""",
+		{"status": _p("string"), "vendor": _p("string", description="Vendor id (see payables_aging).")},
+		property=True,
+		group="Billing",
+	),
+	_t(
+		"create_vendor_bill",
+		"payables.create_vendor_bill",
+		"""Enter a supplier's bill so it can be approved and paid. `vendor` is
+		the vendor's id or exact name at this property. `amount` is before
+		tax; the PMS works out the tax from `tax_rate` (%) and the due date
+		from the vendor's terms unless `due_date` is on the bill. Dates are
+		YYYY-MM-DD. The bill waits for a Hotel Admin to approve it; once
+		approved, Finance or a Hotel Admin pays it in Payables. Agents cannot
+		approve or pay.""",
+		{
+			"vendor": _p("string"),
+			"bill_date": _p("string"),
+			"amount": _p("number"),
+			"tax_rate": _p("number"),
+			"expense_category": _p("string", description="One of: " + ", ".join((
+				"Food & Beverage Supplies", "Linen & Laundry", "Housekeeping Supplies",
+				"Utilities", "Repairs & Maintenance", "Staff Costs", "Rent & Leases",
+				"Commissions & Marketing", "Professional Fees", "Other"))),
+			"bill_number": _p("string"),
+			"due_date": _p("string"),
+			"description": _p("string"),
+		},
+		required=("vendor", "bill_date", "amount"),
+		property=True,
+		mutating=True,
+		group="Billing",
+	),
+	_t(
+		"cash_forecast",
+		"books.cash_forecast",
+		"""Money expected in and out over the next 5, 15 or 30 days (`days`,
+		default 5), day by day with weekly subtotals: company bills falling
+		due, departing guests' balances and advance deposits in; supplier
+		bills out, including draft bills still awaiting approval (flagged
+		`draft`, totalled in `draft_out`). Overdue items count today.
+		`opening` is today's cash and bank; without it, cash in open tills.
+		Read-only.""",
+		{"days": _p("integer", enum=[5, 15, 30]), "opening": _p("number")},
+		property=True,
+		group="Billing",
+	),
+	_t(
+		"profit_and_loss",
+		"books.profit_and_loss",
+		"""Management P&L for a period (from_date, to_date as YYYY-MM-DD, a
+		year at most): revenue by department before tax, less supplier bills
+		by category and petty cash. Not statutory accounts. Read-only.""",
+		{"from_date": _p("string"), "to_date": _p("string")},
+		required=("from_date", "to_date"),
+		property=True,
+		group="Billing",
+	),
+	_t(
+		"balance_sheet",
+		"books.balance_sheet",
+		"""What is owed to the hotel (guest ledger, city ledger, cash in open
+		tills today) and what it owes (advance deposits, supplier bills) as of
+		a date (default today). Not a full balance sheet: no bank, assets,
+		loans or equity. Read-only.""",
+		{"as_of": _p("string")},
 		property=True,
 		group="Billing",
 	),
@@ -995,9 +1408,61 @@ TOOLS: tuple[ToolSpec, ...] = (
 		"group_pickup_status",
 		"api.group_detail",
 		"""Group Rooms Control: the block, per-room-type pickup (blocked / picked
-		up / remaining), rooming list, tied event and master folio.""",
+		up / remaining), rooming list (status, room, main room, pays own
+		charges), tied event, the main room and the group bill with its
+		balance.""",
 		{"group_booking": _p("string")},
 		required=("group_booking",),
+		group="Groups",
+	),
+	_t(
+		"create_group_booking",
+		"api.create_group_booking",
+		"""Book a group (corporate, wedding, event, tour) in one call: one
+		reservation per room on the same dates. rooms = [{room_type, count,
+		room?, guest_name?}]; unnamed rooms take guest_name. master_index
+		picks the main room (default the first) whose guest pays what
+		master_pays covers for every room on one group bill: "Room only"
+		(room + tax, the default), "Room and F&B (liquor to guest)",
+		"Everything except liquor". Rooms that cannot be booked are skipped
+		and reported. Prices come from the rate card.""",
+		{
+			"group_name": _p("string"),
+			"check_in_date": _p("string"),
+			"check_out_date": _p("string"),
+			"rooms": _p("array", items=_p("object")),
+			"guest_name": _p("string"),
+			"phone": _p("string"),
+			"company": _p("string"),
+			"group_type": _p("string", enum=["Corporate", "Wedding", "Event",
+			                                 "Tour", "Other"]),
+			"master_index": _p("integer"),
+			"master_pays": _p("string"),
+			"meal_plan": _p("string"),
+		},
+		required=("group_name", "check_in_date", "check_out_date", "rooms",
+		          "guest_name"),
+		property=True,
+		mutating=True,
+		group="Groups",
+	),
+	_t(
+		"settle_group_bill",
+		"api.settle_group_bill",
+		"""Settle a group's bill (the main room's master folio): take a payment
+		by mode (amount defaults to the whole balance) or, for a company group
+		with credit, set to_city_ledger. The bill closes and is invoiced once
+		its balance is 0. Check group_pickup_status for the balance first.""",
+		{
+			"group_booking": _p("string"),
+			"mode": _p("string"),
+			"amount": _p("number"),
+			"to_city_ledger": _p("boolean"),
+			"reference": _p("string"),
+		},
+		required=("group_booking",),
+		mutating=True,
+		bools=("to_city_ledger",),
 		group="Groups",
 	),
 	_t(
@@ -1360,7 +1825,9 @@ TOOLS: tuple[ToolSpec, ...] = (
 	_t(
 		"pos_order_detail",
 		"pos.order_detail",
-		"One POS order: items, KOTs, totals, payment state.",
+		"""One POS order: items, KOTs, totals, payment state, who served it
+		(served_by) and who settled it (cashier), and each line's kitchen
+		times (fired_at, started_at, prepared_at, picked_up_at).""",
 		{"order": _p("string")},
 		required=("order",),
 		group="F&B",
@@ -1437,6 +1904,7 @@ TOOLS: tuple[ToolSpec, ...] = (
 			"delivery_address": _p("string"),
 			"allergy_note": _p("string"),
 			"notes": _p("string"),
+			"waiter": _p("string", description="who serves the table; blank = the captain"),
 		},
 		required=("outlet", "items"),
 		property=True,
@@ -1466,7 +1934,7 @@ TOOLS: tuple[ToolSpec, ...] = (
 	_t(
 		"pos_pay_order",
 		"pos.pay_order",
-		"""Settle a POS check. mode: Cash, UPI, Card, Room Charge, etc.
+		"""Settle a POS check. mode: a payment mode the property offers (Cash, Card, ...) or Room Charge.
 		Confirm the total with staff before calling.""",
 		{"order": _p("string"), "mode": _p("string")},
 		required=("order", "mode"),
@@ -1502,6 +1970,19 @@ TOOLS: tuple[ToolSpec, ...] = (
 		pos_order_detail first (kitchen_lines must be 0).""",
 		{"order": _p("string"), "reason": _p("string")},
 		required=("order", "reason"),
+		mutating=True,
+		group="F&B",
+	),
+	_t(
+		"pos_move_room_bill",
+		"pos.move_room_bill",
+		"""Move a restaurant bill that was charged to the wrong room onto the
+		right in-house room, the same business day it was posted, with a
+		reason. The charge leaves the first guest's bill and lands on the
+		right guest's (liquor never on a company bill). Confirm the room with
+		the user first.""",
+		{"order": _p("string"), "room": _p("string"), "reason": _p("string")},
+		required=("order", "room", "reason"),
 		mutating=True,
 		group="F&B",
 	),
@@ -1658,6 +2139,19 @@ TOOLS: tuple[ToolSpec, ...] = (
 		outlook. date YYYY-MM-DD; pass from_date for a range ending on date.
 		Read-only.""",
 		{"date": _p("string", format="date"), "from_date": _p("string", format="date")},
+		property=True,
+		group="Briefings",
+	),
+	_t(
+		"night_audit_report",
+		"audit_report.night_audit_report",
+		"""The night audit report for a business date (default: the last one
+		closed): room nights, occupancy, ADR, RevPAR, food and beverage apart,
+		each outlet, banquets, meal plans and minibar, other income, for the
+		day, month to date and year to date from the start of the property's
+		financial year, and the guest, advance and city ledger balances
+		brought and carried forward. Read-only.""",
+		{"date": _p("string", format="date")},
 		property=True,
 		group="Briefings",
 	),
@@ -1858,16 +2352,17 @@ def input_schema(spec: ToolSpec) -> dict[str, Any]:
 
 # Writes that can't simply be undone: MCP clients may ask before each one
 DESTRUCTIVE = frozenset({
-	"cancel_booking", "decline_booking_request", "check_out", "void_charge",
-	"close_folio", "waive_security_deposit", "pos_cancel_order", "pos_remove_item",
+	"cancel_booking", "cancel_itinerary", "decline_booking_request", "check_out", "early_departure",
+	"void_charge", "close_folio", "waive_security_deposit", "pos_cancel_order", "pos_remove_item",
+	"pos_move_room_bill",
 	"run_night_audit", "recover_stuck_business_date",
 })
 # Writes where the same call twice has the effect of one (idempotency keys,
 # set-to-value, once per business date)
 IDEMPOTENT = frozenset({
-	"create_booking", "add_to_waitlist", "pickup_group_room", "set_late_arrival",
+	"create_booking", "create_itinerary", "add_to_waitlist", "pickup_group_room", "set_late_arrival",
 	"set_room_hk_status", "set_room_rate", "run_night_audit", "rebuild_audit_pack",
-	"assign_rooms_apply",
+	"assign_rooms_apply", "open_guest_bills",
 })
 # Tools that reach someone outside Kamra (a message to the guest)
 OPEN_WORLD = frozenset({"send_payment_link", "send_deposit_link"})

@@ -48,7 +48,7 @@ import { Card } from "../components/ui/card"
 import { cur, moneyLocale } from "../lib/money"
 import { useT, t as translate } from "../lib/i18n"
 import { cn } from "../lib/utils"
-import { AuditPackView, SESSION_COLS, DataTable, fmtDay } from "./AuditPack"
+import { AuditPackView, sessionCols, DataTable, fmtDay } from "./AuditPack"
 
 
 const money = (n: unknown) =>
@@ -836,7 +836,7 @@ export default function EndOfDayWizard() {
           <h3 className="mb-2 text-sm font-semibold text-zinc-800">{t("Expected vs counted")}</h3>
           <DataTable
             dense
-            cols={blind ? SESSION_COLS.filter((x) => x.key !== "expected_cash" && x.key !== "variance") : SESSION_COLS}
+            cols={blind ? sessionCols().filter((x) => x.key !== "expected_cash" && x.key !== "variance") : sessionCols()}
             rows={state.sessions}
             empty={translate("No cashier sessions on this business date.")}
           />

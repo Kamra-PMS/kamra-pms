@@ -110,11 +110,79 @@ refunded. Every refund is written to the activity log with your name.
 **Pass an allowance** when the charge was right but you are giving money
 back (service recovery, a dispute): under **Post a charge**, fill in the
 **Pass an allowance** row with the amount, the tax rate of the charge it
-offsets and a reason, then press **Allow**. The original line stays on the
-bill and the allowance shows as a minus line, so the trail stays honest.
+offsets and a reason (pick an **Adjust** reason code, or type one), then
+press **Allow**. The original line stays on the bill and the allowance
+shows as a minus line, so the trail stays honest.
+
+### When an allowance needs a manager
+
+Turn on **Allowances need a manager's approval** (Settings → Finance →
+Cashier controls) and pick who approves: **Hotel Admin**, or **Hotel
+Admin or Finance**. **Only allowances above** sets the amount; 0 means
+every allowance. A reason code marked **Requires Supervisor** (such as
+**Complimentary adjustment**) always asks, even with the setting off.
+A new property starts with approval on (Hotel Admin, every allowance).
+A property you already run keeps its setting.
+
+1. The desk passes the allowance as usual. Kamra says **Sent to a
+   manager**, and the request shows under the allowance row. Nothing is
+   off the bill yet.
+2. A manager at the desk presses **Manager approves now**, picks their
+   name and types their own cashier PIN. Or, later, a manager opens
+   **Finance → Allowances to approve**, types their PIN and presses
+   **Approve**. The PIN is asked every time, even when the manager is
+   the one signed in and the cashier PIN setting is off.
+3. To refuse, press **Reject** and say why. The request is kept with who
+   rejected it and why.
+
+A manager's own allowance posts straight away, with them as the approver,
+once they type their PIN. AI agents can ask for an allowance, never
+approve one. **Voids and allowances** shows the approver of each
+allowance and every rejection.
+
+### The allowance voucher
+
+Every allowance that goes on a bill gets a serial number, such as
+`ALW-KDP-26-00012`: one series per property, given when the allowance
+posts (a request that waits or is rejected gets none) and never reused.
+`KDP` is the property's **Short code** (**Settings → Property**, 2 to 6
+letters or digits, different for every property). Changing it starts a
+new voucher series; numbers already given stay as they are. Invoices keep
+their existing series (GST and ZATCA numbering), whatever the short code.
+The number shows on the bill line, in **Allowances to approve**
+(Approved) and in **Voids and allowances**.
+
+Click the number, or **Print voucher**, for the printable voucher: the
+property, serial, date and time, guest, room, folio, the amount and the
+tax it reverses, the reason code and note, who asked, and the manager
+who approved it (name, their job title from **Staff & access**, or their
+role when no job title is set, "Approved with PIN" and when), with
+signature lines for the approver and the guest or requester. The voucher
+is at `/kamra/allowance-voucher/<serial>`.
 
 Voids work only on an open folio. Once the folio is invoiced, use a
 [credit note](#cancel-an-invoice-or-issue-a-credit-note) instead.
+
+## Correct charged nights
+
+For a hotel that finds a wrong tariff after nights were charged. It is
+there only when **Settings → Stay policies → Rate changes in house** is
+**Correct back-dated rates**, and only for Finance and Hotel Admins.
+
+1. Fix the tariff (room type, season or rate plan) first.
+2. Open the guest's folio. Under **Post a charge**, **Correct charged
+   nights** lists each charged night with its charged and current rate.
+3. Type the reason and your cashier PIN, then press **Correct**.
+
+Kamra reverses each night and posts it again at the current rate. Both
+lines are **Rate Adjustment** lines dated today, with the night in the
+description, each taxed at its own rate. The original night line stays on
+the folio; nothing posted is edited. The correction goes to the activity
+log with the reason, who approved it and every night changed.
+
+When the rate of a stay in house changes for any other reason (new dates,
+a room move), charged nights keep their rate or get a credit; see
+[Change the rate of a guest in house](/front-desk#change-the-rate-of-a-guest-in-house).
 
 ## Split or move charges to another folio
 
@@ -133,6 +201,25 @@ tabs above the bill, each with its balance.
 **Split folio** in the action bar adds an empty folio to the stay (a
 Company folio first, then Extra folios). An empty Company or Extra folio
 can be deleted with the **×** on its tab.
+
+## Give each guest in a room their own bill
+
+When guests share a room and each wants their own bill:
+
+1. Add everyone to the stay's guest list (the registration card).
+2. On the main guest's bill, press **Bill each guest**. Kamra opens a bill
+   for every other guest, with their name on the tab and on the invoice.
+3. In **Share charges with the other guests' bills**, keep the even
+   split or type a percent for each guest, then press **Share**. The room
+   nights (room, meal plan, levy) are shared; tick lines first to share
+   other charges. Each part keeps its line's tax rate, and the main
+   guest's bill keeps the rest, rounding included.
+4. Move extras (a minibar, a spa visit) to a guest's bill the usual way:
+   tick the line and pick their bill.
+
+Each bill is settled and invoiced on its own; check-out waits until every
+bill is paid. Nights posted later (the night audit) land on the main
+guest's bill: share them again before check-out.
 
 ## Bill a company
 
@@ -155,9 +242,57 @@ At checkout, the guest settles their own folio. Whatever the company
 owes moves to its **city ledger** account by itself, if the company is
 allowed credit.
 
+**Receivables** (Finance → Receivables) is the home of every company
+account: who owes what, how late, and how much credit is left.
+
+- **Open an account** (Finance and Hotel Admin): press **New account**,
+  pick the company, and set the **Account number**, **Credit limit**
+  (0 = no limit), the **payment terms** (the property's, or days to pay
+  after the invoice date) and a **Billing address**. Opening an account
+  puts the company on credit. Checkout bills into the same account.
+- **Rolling credit:** **Credit available** is the limit less what the
+  company owes and what its stays in house are running up. Every bill uses
+  it up and every payment frees it again. Over the limit, credit control
+  (Settings → Property → Company credit) warns or blocks the next bill.
+- **Raise an invoice without a stay** (meeting room, contract fee): open
+  the account, press **New invoice**, add a line per charge with its
+  price, quantity and tax rate, and press **Raise invoice**. It gets an
+  invoice number, is due by the account's terms and ages like any bill.
+  Food and beverage lines take the hotel's F&B tax rate.
+- **Transfer a bill** to another company (the parent company or the
+  agency pays): press **Transfer** on the bill. What is still owed moves;
+  what was paid stays. The bill keeps its number and date.
+- **Month-end bill** for corporates billed monthly: pick the month next to
+  **Month-end bill** (last month by default) and press it to print, or
+  **Email** to send it to the billing contact. It lists every bill of the
+  month with its invoice number, taxable value and tax, the company's
+  payments, and the balance brought and carried forward. Each stay keeps
+  its own tax invoice; the month-end bill is the summary the company pays
+  against, numbered `SOA-<account>-<YYYYMM>`.
+- **Restrict an account** under **Account setup** with a reason: it takes
+  no new invoices or transfers, and checkout runs it through credit
+  control. Payments and statements still work.
+**Change the company** during the stay or at check-out (the guest changed
+employer, or pays after all):
+
+1. On the bill press **Change company** (at check-out it is under **Who
+   pays**).
+2. Pick the new company, or **No company: the guest pays**.
+3. Choose what happens to charges already posted: move them by the new
+   company's billing rules, or move everything on the company bill back
+   to the guest.
+4. Type the reason and press **Change company**.
+
+Charges posted from then on follow the new company's rules; the room rate
+stays as booked. The new company's credit check runs; if it blocks,
+Finance or a Hotel Admin can override with a reason. Kamra refuses once a
+bill went to the old company (its invoice is issued, or it moved to the
+city ledger): cancel that invoice first. Who changed it and why is on the
+Activity log.
+
 **Record a company's payment** (Finance and Hotel Admin):
 
-1. Open **Finance → Ledgers**. **City ledger aging** lists each company's
+1. Open **Finance → Receivables** and the company (or **Finance → Ledgers**). **City ledger aging** lists each company's
    balance by age (0-30, 31-60, 61-90, 90+ days) and any unapplied credit.
 2. Press **Record payment** on the company's row.
 3. Enter **Amount received**, the **Mode** and the **Reference (UTR /
@@ -188,6 +323,36 @@ are in **Reports** (and for AI agents through `run_custom_report`). DSO is
 the balance at the end of the period divided by what was billed in it,
 times the days in the period.
 
+## Bill a group from its main room
+
+A group booked with a main room (see
+[Group bookings](/reservations#group-bookings-corporate-wedding)) has one
+**Group** folio, the group bill, kept on the main room. As each charge is
+posted, Kamra sends what the main room pays to the group bill:
+
+- **Room + tax** (the default): the room night, its meal plan, levies,
+  early check-in / late checkout, cleaning fee and extra guests.
+- **Room and F&B (liquor to guest)**: the same plus food.
+- **Everything except liquor**: every charge.
+
+Anything else stays on the guest's own folio. Alcohol never goes to the
+group bill. A company group keeps its own billing rules, which come first.
+
+**A room that pays for itself:** tick **Pays own charges** on its row in
+the rooming list. Only new charges stay on that room's folio; move charges
+already posted with **Move charges** on the folio.
+
+**Settle the group bill:**
+
+1. Open the group. The header shows **Open group bill** with its balance.
+2. Click **Settle group bill**. Pick the payment mode and amount, or, for a
+   company with credit, tick **Send to the company's city ledger**.
+3. Click **Settle**. Once nothing is left on it, the bill closes and gets its
+   invoice number.
+
+You can settle while rooms are still in house. Kamra warns you; their later
+charges open a new group bill.
+
 ## Take and return a security deposit
 
 A refundable damage deposit (villas, long stays) is held for the guest,
@@ -209,7 +374,11 @@ A deposit taken from the folio's **Record a payment** form (kind
 **Security Deposit**) shows up in the same panel.
 
 **Booking deposits** (an advance before arrival) are taken from the
-**Deposit** panel on the booking: see [Reservations](/reservations).
+**Deposit** panel on the booking: see [Reservations](/reservations). The
+percentage owed can differ by dates (a season's **Advance % at booking**).
+A trip across properties can take one advance for all its stops: Kamra
+splits it and posts each share as an Advance on that stop's own folio and
+till. See [Book a trip across properties](/reservations#book-a-trip-across-properties).
 
 ## Close the folio and print the invoice
 
@@ -304,6 +473,9 @@ business dates (up to 92 days).
 
 ![The Petty Cash screen with the New voucher form and a posted voucher](/img/billing/petty-cash.png)
 
+A supplier who sends a bill and is paid later is not petty cash: enter it
+under **Finance → Payables** (see [Books](/books)).
+
 ## Change foreign currency
 
 1. Open **Finance → Currency Desk**.
@@ -315,7 +487,89 @@ business dates (up to 92 days).
 ![The Currency Desk: the calculator showing 100 USD at the buy rate, the rate table and today's exchanges](/img/billing/currency-desk.png)
 
 Finance and Hotel Admin set the buy and sell rates in **Set rate**
-(currency, buy, sell, then **Save**).
+(currency, buy, sell, then **Save**). A rate is hotel currency per 1 unit
+of the foreign currency, and it belongs to today's business date: saving
+again the same day updates it.
+
+### Fetch today's rates online
+
+Instead of typing each rate, Finance or a Hotel Admin can press **Fetch
+today's rates** on the Currency Desk. Kamra asks a free online service
+([Exchange Rate API](https://www.exchangerate-api.com), refreshed once a
+day) for the market mid rate of each currency you take, and stores:
+
+- **Buy** = market rate less your margin, **Sell** = market rate plus it.
+- **Source** Online, the market rate, and who fetched it.
+
+Set it up under **Settings → Finance → Exchange rates**:
+
+| Setting | Default | What it does |
+| --- | --- | --- |
+| Foreign currencies taken | From your country pack (see below) | ISO codes the fetch gets. |
+| Margin on the market rate | 2% | Taken off for Buy, added for Sell. |
+| Fetch rates automatically every day | Off | Each business date, any listed currency still without a rate is fetched (checked hourly, so it also fills in after the night audit rolls the date). |
+
+Until you set the list, it comes from the property's country, never
+including your own currency:
+
+| Country | Foreign currencies by default |
+| --- | --- |
+| India, and countries without their own pack | USD, EUR, GBP, AED, SAR, SGD, AUD, JPY |
+| Saudi Arabia | USD, EUR, GBP, AED, INR, PKR, EGP |
+| United Arab Emirates | USD, EUR, GBP, SAR, INR, PKR, CNY, RUB |
+| Brazil | USD, EUR, ARS, GBP, CLP, UYU, PYG |
+| Nicaragua | USD, EUR, CRC, HNL, MXN, CAD |
+| Malaysia | USD, SGD, EUR, GBP, AUD, CNY, JPY, IDR |
+| Indonesia | USD, SGD, AUD, EUR, JPY, CNY, MYR, SAR |
+| Thailand | USD, EUR, GBP, CNY, JPY, AUD, SGD, INR |
+
+Finance and Hotel Admin can fetch rates or type them in.
+
+A rate typed in by staff is **Manual** and always wins: fetching again the
+same day leaves it as it is, and typing over a fetched rate turns it
+Manual. The FX tax and per-transaction limit carry over from the
+currency's last rate.
+
+If the service is down or slow (Kamra waits 5 seconds), nothing changes
+and the desk shows the error: type the rates in by hand. Taking a payment
+never calls the internet; it only reads the rate already stored for today.
+
+## Take a payment in a foreign currency
+
+Your books stay in your hotel's currency. A guest or company can still
+pay in USD, EUR, AED or any other currency you set a rate for.
+
+1. Set or fetch today's rate on the **Currency Desk** (above). Payments use the
+   **Buy** rate, because the hotel is buying the guest's foreign money. A
+   rate from an earlier day is not used: set a new one each business day.
+2. On the folio, under **Record a payment**, pick the currency next to the
+   mode. Only currencies with a rate for today are listed.
+3. Pick **Cash** or **Bank Transfer** and type the foreign amount the guest
+   hands over. The form shows about how much that is in your currency.
+4. Press **Record**. Kamra converts at today's rate and posts your
+   currency to the folio and the ledgers. The payment line keeps the
+   foreign amount and the rate it used, so later rate changes never
+   change it.
+
+Rules worth knowing:
+
+- **Rounding.** The posted amount is rounded half up to the cent. When you
+  show a balance in a foreign currency it is rounded **up** to the cent, so
+  paying the shown figure always clears the bill.
+- **Change and refunds are in your currency.** If the guest overpays,
+  refund the difference as usual (mode Cash for notes from the drawer).
+- **Foreign notes are kept out of the drawer count.** The till records a
+  foreign cash payment under **Other**, with the currency and rate in the
+  note, so the expected cash in your own currency stays right.
+- **Not for cards or security deposits.** A card terminal charges your
+  currency, and a deposit is refunded in your currency, so take both in
+  your currency.
+
+**Show a bill in another currency.** Under the grand total, **Show in**
+lists the currencies with a rate for today. Picking one adds a line such as
+"Approx. USD 120.40 (balance USD 60.20) at 83.10". It is a guide for the
+guest only: the tax invoice, its totals and its amount in words stay in
+your currency.
 
 ## Check the ledgers
 
@@ -355,8 +609,8 @@ Both screens are also linked from **Settings → Finance**.
 
 **Reports → Voids and allowances**
 lists every void, allowance and cancelled invoice on the property: when,
-which folio, who did it and the reason. Finance and Hotel Admin users see
-it.
+which folio, who did it and the reason, and each allowance's voucher
+serial. Finance and Hotel Admin users see it.
 
 1. Set the dates. It shows the last 30 days to start with.
 2. Click **Void**, **Allowance** or **Invoice cancelled** to see one kind;
@@ -371,10 +625,13 @@ it.
 | Setting | Where | Default | What it does |
 | --- | --- | --- | --- |
 | Take money through cashier tills | Settings → Finance → Cashier controls | On | Staff open their till (with an opening float) before taking or giving back money, and close it with a cash count. The check-in, walk-in and check-out sheets offer **Open my till** in place. Off, for a small place with no cash drawer: payments and refunds are recorded without a till; paid-outs, drops, petty cash and exchange still need one. |
+| When a stay's rate changes after nights are charged | Settings → Stay policies → Rate changes in house | Keep charged nights | Keep: charged nights keep their rate. Credit the difference: a lower rate is credited per charged night. Correct back-dated rates: Finance or a Hotel Admin can [correct charged nights](#correct-charged-nights). |
 | Require cashier PIN on money actions | Settings → Finance → Cashier controls | Off | Payments, invoices, allowances, voids, refunds and till actions ask for the cashier's PIN. AI agents are exempt; their actions are logged instead. |
 | Lock a PIN after | Settings → Finance → Cashier controls | 5 wrong tries | Locks the PIN after this many wrong entries. |
 | Lock for / stay unlocked for | Settings → Finance → Cashier controls | 15 min | How long a locked PIN stays locked, and how long money actions stay unlocked after a correct PIN. |
 | When a credit company has no billing rules | Settings → Finance → Corporate billing | Room and F&B (liquor to guest) | Which charges a credit company pays when it has no rules of its own. |
+| Allowances need a manager's approval | Settings → Finance → Cashier controls | Off (Hotel Admin on new properties) | Who approves an allowance: Hotel Admin, or Hotel Admin or Finance. Until approved, it stays off the bill. |
+| Only allowances above | Settings → Finance → Cashier controls | 0 | Smaller allowances post straight away. 0 means every allowance needs approval. |
 | Email payment reminders | Settings → Property → Company credit | Off | Emails each company's billing contact 3 days before a bill is due, on the due date and 15 days after, once per bill per stage. |
 | Payment gateway | Settings → Payments | None | The gateway and keys used for payment links. |
 
@@ -427,6 +684,9 @@ guests still owe.
 The folio actions are MCP tools for AI agents (`get_folio`,
 `add_folio_charge`, `record_payment`, `void_charge`, `apply_allowance`,
 `move_charges`, `split_folio_charge`, `close_folio`, `send_payment_link`,
+`collect_security_deposit`, `exchange_rates`, `folio_in_currency` and more): see [MCP tools](/mcp-tools#billing).
+`allowance_requests`, `open_guest_bills`, `share_folio_charges`,
+`change_stay_company`, `move_charges`, `split_folio_charge`, `close_folio`, `send_payment_link`,
 `collect_security_deposit` and more): see [MCP tools](/mcp-tools#billing).
 The REST endpoints live in `kamra.api` (folios, payments, deposits),
 `kamra.cashier` (till sessions, petty cash, shift report) and

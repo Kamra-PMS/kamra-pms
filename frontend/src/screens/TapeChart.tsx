@@ -507,7 +507,7 @@ export default function TapeChart() {
             <span key={c.in_res} className="me-3 whitespace-nowrap">
               {t("Room {room} on {date}: out {etd} ({out}) / in {eta} ({in})", {
                 room: c.room_number,
-                date: new Date(c.date).toLocaleDateString(uiDateLocale("en-IN"), { day: "numeric", month: "short" }),
+                date: new Date(c.date).toLocaleDateString(uiDateLocale(moneyLocale()), { day: "numeric", month: "short" }),
                 etd: c.etd, out: c.out_guest, eta: c.eta, in: c.in_guest,
               })}
             </span>
@@ -528,7 +528,7 @@ export default function TapeChart() {
                 <div key={d} style={{ width: cellW }}
                   className={cn("shrink-0 border-l border-zinc-100 px-1 py-2 text-center",
                     weekend && "bg-brand-50 text-brand-700")}>
-                  {day.toLocaleDateString(uiDateLocale("en-IN"), { weekday: "short" })}{" "}
+                  {day.toLocaleDateString(uiDateLocale(moneyLocale()), { weekday: "short" })}{" "}
                   <span className="font-semibold">{day.getDate()}</span>
                 </div>
               )
@@ -947,6 +947,19 @@ export default function TapeChart() {
                           to: money(datePreview.new_amount),
                           amt: money(datePreview.difference),
                         })}
+                  </p>
+                )}
+                {datesChanged && datesValid && datePreview?.charged_nights && (
+                  <p className="text-xs text-zinc-500">
+                    {datePreview.charged_nights.credit_total < 0
+                      ? t("Nights already charged keep their line; Kamra credits {amt} for the lower rate.", {
+                          amt: money(-datePreview.charged_nights.credit_total),
+                        })
+                      : datePreview.charged_nights.kept_difference > 0
+                        ? t("Nights already charged keep their rate; difference {amt} can be given as an allowance.", {
+                            amt: money(datePreview.charged_nights.kept_difference),
+                          })
+                        : t("Nights already charged keep their rate.")}
                   </p>
                 )}
                 <div className="flex justify-end gap-2">
