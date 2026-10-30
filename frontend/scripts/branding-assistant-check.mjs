@@ -221,6 +221,20 @@ try {
     }
   })
 
+  await test("help fails closed when its own status check is malformed", async () => {
+    const s = await session({ enabled: true })
+    let calls = 0
+    try {
+      await s.page.route("**/api/method/kamra.assistant.assistant_status", (route) => {
+        calls++
+        return route.fulfill({ json: { message: { enabled: calls <= 2 ? true : "false" } } })
+      })
+      await settled(s.page)
+      assert.ok(calls >= 3, "StrictMode shell checks and help must each have checked status")
+      assert.equal(await s.page.getByRole("button", { name: "Open help", exact: true }).count(), 0)
+    } finally { await s.close() }
+  })
+
   for (const [name, branding, siteError, wantName, wantLogo] of [
     ["native branding", { app_name: "Example Hotels", app_logo: "/files/test-logo.svg" }, false, "Example Hotels", "/files/test-logo.svg"],
     ["name only", { app_name: "Example Hotels" }, false, "Example Hotels", "kamra-mark.svg"],
