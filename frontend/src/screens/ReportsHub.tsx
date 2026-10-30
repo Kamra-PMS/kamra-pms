@@ -36,7 +36,7 @@ interface ReportLink {
 const MONEY_ROLES = ["Finance", "Hotel Admin", "System Manager", "Administrator"]
 // the report builder's own gate (custom_reports.py), not one app's
 const BUILDER_ROLES = [...MONEY_ROLES, "Front Desk", "Revenue Manager", "Night Auditor",
-  "Housekeeping", "Housekeeping Supervisor"]
+  "Housekeeping", "Housekeeping Supervisor", "F&B Manager"]
 
 const SECTIONS: { title: string; items: ReportLink[] }[] = [
   {

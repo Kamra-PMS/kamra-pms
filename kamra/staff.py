@@ -35,6 +35,8 @@ ROLES = (
 	 "Billing, ledgers, night audit, exports, tax and cashier controls."),
 	("Night Auditor", "Night Auditor",
 	 "End of Day: arrivals, departures, cashier closure, room and tax posting, the audit pack."),
+	("F&B Manager", "F&B Manager",
+	 "Outlets, the menu, waiters and tables, the kitchen display, F&B reports and approving POS voids."),
 	("Housekeeping Supervisor", "Housekeeping Supervisor",
 	 "The room board, inspections, task deadlines and laundry pricing."),
 	("Housekeeping", "Housekeeping",

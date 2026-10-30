@@ -22,7 +22,7 @@ ALL_MODULES = ("front-desk", "housekeeping", "operations", "fnb", "events",
 
 @frappe.whitelist()
 @require_roles("Front Desk", "Finance", "Revenue Manager", "Housekeeping",
-               "Housekeeping Supervisor", "Kamra Agent", "Night Auditor")
+               "Housekeeping Supervisor", "Kamra Agent", "Night Auditor", "F&B Manager")
 def enabled_modules(property: str) -> list:
 	"""Which parts of Kamra this property runs. Empty setting = all of
 	them, so an existing property keeps working untouched."""
@@ -5968,7 +5968,8 @@ def release_room_block(name: str):
 
 
 @frappe.whitelist()
-@require_roles("Finance", "Front Desk", "Revenue Manager", "Housekeeping")
+@require_roles("Finance", "Front Desk", "Revenue Manager", "Housekeeping",
+               "F&B Manager")
 def cashier_pin_status(property: str):
 	"""Does this property demand a PIN on money actions, and does the
 	signed-in user have one set yet? Includes unlock / lockout state."""
@@ -5977,7 +5978,8 @@ def cashier_pin_status(property: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Finance", "Front Desk", "Revenue Manager", "Housekeeping")
+@require_roles("Finance", "Front Desk", "Revenue Manager", "Housekeeping",
+               "F&B Manager")
 def set_cashier_pin(pin: str, current_pin: str | None = None):
 	"""Set or change your own cashier PIN (4-8 digits). Changing an existing
 	PIN needs the current one — unless must_reset was set by an admin."""
@@ -6038,7 +6040,8 @@ def reset_cashier_pin(user: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Finance", "Front Desk", "Revenue Manager", "Housekeeping")
+@require_roles("Finance", "Front Desk", "Revenue Manager", "Housekeeping",
+               "F&B Manager")
 def verify_cashier_pin(property: str, pin: str):
 	"""PinPad unlock: validate PIN and open a 15-minute sliding window."""
 	from kamra.authz import unlock_cashier_session
@@ -6344,7 +6347,8 @@ def linked_records(doctype: str, name: str):
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Finance", "Revenue Manager", "Housekeeping", "Kamra Agent")
+@require_roles("Front Desk", "Finance", "Revenue Manager", "Housekeeping", "Kamra Agent",
+               "F&B Manager")
 def property_locale(property: str):
 	"""Currency, number locale and tax vocabulary for this property, from its
 	localization pack. Drives the frontend's money formatting and tax dropdowns

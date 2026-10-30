@@ -40,7 +40,7 @@ from kamra.authz import require_roles
 # consumption is a byproduct of service, not an inventory action. Receiving
 # and counting are money - a goods-in is an asset movement, a stock take is a
 # P&L event - so they sit with Finance (require_roles widens that to admins).
-INVENTORY_READ = ("Front Desk", "Finance", "Kamra Agent", "Hotel Admin")
+INVENTORY_READ = ("Front Desk", "Finance", "F&B Manager", "Kamra Agent", "Hotel Admin")
 INVENTORY_WRITE = ("Finance",)
 
 STATUS_OK, STATUS_LOW, STATUS_OUT, STATUS_NEGATIVE = "OK", "LOW", "OUT", "NEGATIVE"
@@ -304,7 +304,7 @@ def recipe_overview(property: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Finance", "Hotel Admin")
+@require_roles("Finance", "F&B Manager", "Hotel Admin")
 def save_recipe(menu_item: str, rows):
 	"""Replace a dish's recipe wholesale. An empty list is valid and means
 	"this dish never touches inventory" - the optional in the requirement."""
@@ -611,7 +611,7 @@ def wastage_report(property: str, outlet: str | None = None, days: int = 30):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Finance", "Hotel Admin")
+@require_roles("Finance", "F&B Manager", "Hotel Admin")
 def set_menu_availability(menu_item: str, available: int):
 	"""86 a dish, or put it back. This is the ONLY thing that ever pulls an
 	item off the menu for stock reasons, and a human has to press it.

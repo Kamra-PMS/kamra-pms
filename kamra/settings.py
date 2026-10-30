@@ -277,7 +277,7 @@ MODULES: tuple[Module, ...] = (
 	),
 	Module(
 		"fnb", "F&B", "Restaurant outlets, the menu and table reservations.",
-		editors=("Hotel Admin", "Finance"), toggle=True,
+		editors=("Hotel Admin", "Finance", "F&B Manager"), toggle=True,
 		related=(("Outlets", "/outlets"), ("Menu", "/menu-items"), ("Ingredients", "/ingredients"),
 		         ("Kitchen inventory", "/inventory"),
 		         ("Kitchen display", "/kitchen"), ("Printers", "/printers")),
@@ -615,7 +615,7 @@ def _spec_json(s: S) -> dict:
 
 
 @frappe.whitelist()
-@require_roles("Finance", "Front Desk", "Night Auditor", "Kamra Agent")
+@require_roles("Finance", "Front Desk", "Night Auditor", "F&B Manager", "Kamra Agent")
 def menu_masters(property: str) -> dict:
 	"""Allergen tags, prep stations, courses and category suggestions for
 	the Menu form and kitchen display. Edited under Settings → F&B → Menu
@@ -631,7 +631,7 @@ def menu_masters(property: str) -> dict:
 
 @frappe.whitelist()
 @require_roles("Front Desk", "Finance", "Revenue Manager", "Housekeeping",
-               "Housekeeping Supervisor")
+               "Housekeeping Supervisor", "F&B Manager")
 def settings_schema(property: str) -> dict:
 	"""Every settings page this user may see for the property, with current
 	values. Pages they can't change come back read-only (can_edit=False)."""
@@ -689,7 +689,7 @@ def _validate(spec: S, val):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Finance", "Revenue Manager", "Housekeeping Supervisor")
+@require_roles("Finance", "Revenue Manager", "Housekeeping Supervisor", "F&B Manager")
 def save_settings(property: str, module: str, changes) -> dict:
 	"""Change some settings on one module page. Validates every key against
 	the registry, refuses keys from another module, and writes one

@@ -6761,7 +6761,7 @@
         "kamra.pos.void_approvers"
        ]
       },
-      "description": "Who can approve a void at this outlet's till: enabled Hotel Admin and\nFinance users with access to the property and a cashier PIN set. Names\nonly.",
+      "description": "Who can approve a void at this outlet's till: enabled Hotel Admin,\nFinance and F&B Manager users with access to the property and a cashier PIN set. Names\nonly.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"outlet\": \"Your Property-Restaurant\"\n}",

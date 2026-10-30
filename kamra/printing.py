@@ -30,7 +30,7 @@ from frappe.utils import add_to_date, now_datetime
 from kamra.authz import assert_property_access, require_roles
 
 # Kitchen screens and tills run as these roles; they claim and ack jobs.
-STATION_ROLES = ("Front Desk", "Finance", "Kamra Agent")
+STATION_ROLES = ("Front Desk", "Finance", "F&B Manager", "Kamra Agent")
 # Who may add, change and remove printers (admins always may) - the F&B
 # settings editors.
 EDITOR_ROLES = ("Finance",)

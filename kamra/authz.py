@@ -338,10 +338,10 @@ def require_cashier_pin(property: str, pin=None):
 	frappe.cache.set_value(cache_key, 1, expires_in_sec=lock_minutes * 60)
 
 
-# Who may approve what a captain cannot do alone (voiding food the kitchen
-# has already started, say). The same roles the reason-code supervisor
-# rule accepts (kamra.ledger.require_reason).
-SUPERVISOR_ROLES = ("Hotel Admin", "Finance", "System Manager", "Administrator")
+# Who may approve what a captain cannot do alone at the POS (voiding food
+# the kitchen has already started, say). The reason-code supervisor rule
+# plus the F&B Manager, who runs the floor but never touches folios.
+SUPERVISOR_ROLES = ("Hotel Admin", "Finance", "F&B Manager", "System Manager", "Administrator")
 
 
 def is_supervisor(user: str | None = None) -> bool:
@@ -363,7 +363,7 @@ def verify_supervisor(property: str, supervisor: str | None, pin) -> str:
 	if not frappe.db.get_value("User", supervisor, "enabled") or \
 			not is_supervisor(supervisor):
 		frappe.throw(f"{supervisor} cannot approve this. It needs a Hotel "
-		             "Admin or Finance user.", frappe.PermissionError)
+		             "Admin, Finance or F&B Manager user.", frappe.PermissionError)
 	allowed = restricted_properties(supervisor)
 	if property and allowed is not None and property not in allowed:
 		frappe.throw(f"{supervisor} has no access to {property}.",

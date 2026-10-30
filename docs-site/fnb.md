@@ -3,8 +3,16 @@
 The F&B module runs your restaurants, bars and room service: captains take
 orders on the **Restaurant POS**, the kitchen works from the **Kitchen
 display** and **kitchen printers**, and bills are settled at the outlet or
-posted to the guest's room. Front Desk and Finance staff can use the POS;
-Hotel Admin and Finance set it up.
+posted to the guest's room. Front Desk, Finance and F&B Manager staff can
+use the POS; Hotel Admin, Finance and the F&B Manager set it up.
+
+**The F&B Manager role** runs the restaurant side without the rest of the
+hotel. They open the whole F&B app (POS, kitchen display, menu, outlets,
+tables, waiter list, F&B dashboard, kitchen stock read-only, F&B reports
+and the F&B pack), change **Settings → F&B**, and approve voids of food the
+kitchen has started. They don't open folios, the cashier till, Finance,
+the front desk or Revenue. Give the role under **Settings → Staff &
+access**; like every role, it reaches only the properties ticked there.
 
 ![The restaurant POS: open bills along the top, the menu by category in the middle and the running bill for Table T2 on the right](/img/fnb/pos-bill.png)
 
@@ -26,6 +34,10 @@ Hotel Admin and Finance set it up.
    ```
 
    ![An outlet record with its type, tax rate, tables and the KOT on send setting](/img/fnb/outlet-form.png)
+
+   Under **Waiters** on the outlet, add the people who serve there. The
+   till offers them first in its **Waiter** box; they don't need a login.
+   Hotel Admin, Finance and F&B Manager keep this list.
 
 3. **Set the menu master lists (once).** **Settings → F&B → Menu master
    lists**: allergens and dietary tags (Egg, Dairy, Nuts…), prep stations,
@@ -148,7 +160,7 @@ deleted. When you cancel the bill, or void a line with the cross icon:
 
 1. Pick a void reason (the same list the front desk uses for folio voids)
    and add details if you like.
-2. A supervisor approves. A Hotel Admin or Finance user picks their name
+2. A supervisor approves. A Hotel Admin, Finance or F&B Manager user picks their name
    and types their own cashier PIN on your till. A supervisor signed in on
    the till approves with their PIN pad.
 3. The lines stay on the bill, struck through, with who voided them and
@@ -405,7 +417,7 @@ a line starts the moment it is sent.
 
 ## Settings
 
-All under **Settings → F&B** (Hotel Admin and Finance can change them):
+All under **Settings → F&B** (Hotel Admin, Finance and F&B Manager can change them):
 
 | Setting | Default | What it does |
 | --- | --- | --- |

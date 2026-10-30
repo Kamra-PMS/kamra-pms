@@ -29,7 +29,7 @@ Content-Type: application/json
 
 ### `kamra.api.enabled_modules`
 
-**GET/POST** · roles: `Front Desk`, `Finance`, `Revenue Manager`, `Housekeeping`, `Housekeeping Supervisor`, `Kamra Agent`, `Night Auditor`
+**GET/POST** · roles: `Front Desk`, `Finance`, `Revenue Manager`, `Housekeeping`, `Housekeeping Supervisor`, `Kamra Agent`, `Night Auditor`, `F&B Manager`
 
 Which parts of Kamra this property runs. Empty setting = all of
 them, so an existing property keeps working untouched.
@@ -1842,7 +1842,7 @@ Free a held room before its end date (the room returns to sale).
 
 ### `kamra.api.cashier_pin_status`
 
-**GET/POST** · roles: `Finance`, `Front Desk`, `Revenue Manager`, `Housekeeping`
+**GET/POST** · roles: `Finance`, `Front Desk`, `Revenue Manager`, `Housekeeping`, `F&B Manager`
 
 Does this property demand a PIN on money actions, and does the
 signed-in user have one set yet? Includes unlock / lockout state.
@@ -1853,7 +1853,7 @@ signed-in user have one set yet? Includes unlock / lockout state.
 
 ### `kamra.api.set_cashier_pin`
 
-**POST** · roles: `Finance`, `Front Desk`, `Revenue Manager`, `Housekeeping`
+**POST** · roles: `Finance`, `Front Desk`, `Revenue Manager`, `Housekeeping`, `F&B Manager`
 
 Set or change your own cashier PIN (4-8 digits). Changing an existing
 PIN needs the current one  -  unless must_reset was set by an admin.
@@ -1875,7 +1875,7 @@ Admin reset: wipe the user's PIN and force re-enrollment.
 
 ### `kamra.api.verify_cashier_pin`
 
-**POST** · roles: `Finance`, `Front Desk`, `Revenue Manager`, `Housekeeping`
+**POST** · roles: `Finance`, `Front Desk`, `Revenue Manager`, `Housekeeping`, `F&B Manager`
 
 PinPad unlock: validate PIN and open a 15-minute sliding window.
 
@@ -1982,7 +1982,7 @@ can offer one-tap paths to billing and editing. One endpoint, all types.
 
 ### `kamra.api.property_locale`
 
-**GET/POST** · roles: `Front Desk`, `Finance`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`
+**GET/POST** · roles: `Front Desk`, `Finance`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`, `F&B Manager`
 
 Currency, number locale and tax vocabulary for this property, from its
 localization pack. Drives the frontend's money formatting and tax dropdowns
@@ -2646,8 +2646,8 @@ line (cancel the bill instead).
 
 **GET/POST**
 
-Who can approve a void at this outlet's till: enabled Hotel Admin and
-Finance users with access to the property and a cashier PIN set. Names
+Who can approve a void at this outlet's till: enabled Hotel Admin,
+Finance and F&B Manager users with access to the property and a cashier PIN set. Names
 only.
 
 | Param | Required | Default |
@@ -4195,7 +4195,7 @@ movers - but you cannot decide that without seeing the list.
 
 ### `kamra.inventory.save_recipe`
 
-**POST** · roles: `Finance`, `Hotel Admin`
+**POST** · roles: `Finance`, `F&B Manager`, `Hotel Admin`
 
 Replace a dish's recipe wholesale. An empty list is valid and means
 "this dish never touches inventory" - the optional in the requirement.
@@ -4350,7 +4350,7 @@ destroyed outside a sale, so SUM(qty_change) always equals reality.
 
 ### `kamra.inventory.set_menu_availability`
 
-**POST** · roles: `Finance`, `Hotel Admin`
+**POST** · roles: `Finance`, `F&B Manager`, `Hotel Admin`
 
 86 a dish, or put it back. This is the ONLY thing that ever pulls an
 item off the menu for stock reasons, and a human has to press it.
@@ -4567,7 +4567,7 @@ breached if it was resolved after due_by, or is still open past due_by.
 
 ### `kamra.custom_reports.list_report_datasets`
 
-**GET/POST** · roles: `Front Desk`, `Finance`, `Hotel Admin`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`, `Night Auditor`
+**GET/POST** · roles: `Front Desk`, `Finance`, `Hotel Admin`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`, `Night Auditor`, `F&B Manager`
 
 Whitelisted datasets the current user may run on this property.
 
@@ -4577,7 +4577,7 @@ Whitelisted datasets the current user may run on this property.
 
 ### `kamra.custom_reports.list_report_packs`
 
-**GET/POST** · roles: `Front Desk`, `Finance`, `Hotel Admin`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`, `Night Auditor`
+**GET/POST** · roles: `Front Desk`, `Finance`, `Hotel Admin`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`, `Night Auditor`, `F&B Manager`
 
 Department packs with the sections this user may run here.
 
@@ -4587,7 +4587,7 @@ Department packs with the sections this user may run here.
 
 ### `kamra.custom_reports.run_report_pack`
 
-**GET/POST** · roles: `Front Desk`, `Finance`, `Hotel Admin`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`, `Night Auditor`
+**GET/POST** · roles: `Front Desk`, `Finance`, `Hotel Admin`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`, `Night Auditor`, `F&B Manager`
 
 Run a department pack (id from list_report_packs) for a date range.
 format=json (sections of rows) or html (one printable page).
@@ -4605,7 +4605,7 @@ compare=1 (default) adds this-vs-previous totals on each section.
 
 ### `kamra.custom_reports.list_custom_reports`
 
-**GET/POST** · roles: `Front Desk`, `Finance`, `Hotel Admin`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`, `Night Auditor`
+**GET/POST** · roles: `Front Desk`, `Finance`, `Hotel Admin`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`, `Night Auditor`, `F&B Manager`
 
 Saved reports visible to this user on the property.
 
@@ -4615,7 +4615,7 @@ Saved reports visible to this user on the property.
 
 ### `kamra.custom_reports.get_custom_report`
 
-**GET/POST** · roles: `Front Desk`, `Finance`, `Hotel Admin`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`, `Night Auditor`
+**GET/POST** · roles: `Front Desk`, `Finance`, `Hotel Admin`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`, `Night Auditor`, `F&B Manager`
 
 Full saved definition for the builder.
 
@@ -4626,7 +4626,7 @@ Full saved definition for the builder.
 
 ### `kamra.custom_reports.save_custom_report`
 
-**POST** · roles: `Finance`, `Hotel Admin`, `System Manager`, `Front Desk`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`, `Night Auditor`
+**POST** · roles: `Finance`, `Hotel Admin`, `System Manager`, `Front Desk`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`, `Night Auditor`, `F&B Manager`
 
 Create or update a saved custom report definition. lang (en, es, ar)
 is the language its scheduled emails go out in.
@@ -4650,7 +4650,7 @@ is the language its scheduled emails go out in.
 
 ### `kamra.custom_reports.delete_custom_report`
 
-**POST** · roles: `Finance`, `Hotel Admin`, `System Manager`, `Front Desk`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`, `Night Auditor`
+**POST** · roles: `Finance`, `Hotel Admin`, `System Manager`, `Front Desk`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`, `Night Auditor`, `F&B Manager`
 
 Delete a saved report the user can edit.
 
@@ -4661,7 +4661,7 @@ Delete a saved report the user can edit.
 
 ### `kamra.custom_reports.run_custom_report`
 
-**GET/POST** · roles: `Front Desk`, `Finance`, `Hotel Admin`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`, `Night Auditor`
+**GET/POST** · roles: `Front Desk`, `Finance`, `Hotel Admin`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`, `Night Auditor`, `F&B Manager`
 
 Run a saved report or an ad-hoc definition. format=json|csv|html.
 compare=1 adds this-vs-previous totals for number columns.
@@ -4683,7 +4683,7 @@ compare=1 adds this-vs-previous totals for number columns.
 
 ### `kamra.custom_reports.email_custom_report`
 
-**POST** · roles: `Finance`, `Hotel Admin`, `System Manager`, `Front Desk`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`, `Night Auditor`
+**POST** · roles: `Finance`, `Hotel Admin`, `System Manager`, `Front Desk`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`, `Night Auditor`, `F&B Manager`
 
 Run a report and email it (CSV or HTML attachment).
 
@@ -4953,7 +4953,7 @@ Quick-checkout every Checked In reservation on a group.
 
 ### `kamra.ledger.list_reason_codes`
 
-**GET/POST** · roles: `Front Desk`, `Finance`, `Kamra Agent`
+**GET/POST** · roles: `Front Desk`, `Finance`, `F&B Manager`, `Kamra Agent`
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -5245,7 +5245,7 @@ the attempt worked. IP addresses are left out.
 
 ### `kamra.settings.menu_masters`
 
-**GET/POST** · roles: `Finance`, `Front Desk`, `Night Auditor`, `Kamra Agent`
+**GET/POST** · roles: `Finance`, `Front Desk`, `Night Auditor`, `F&B Manager`, `Kamra Agent`
 
 Allergen tags, prep stations, courses and category suggestions for
 the Menu form and kitchen display. Edited under Settings → F&B → Menu
@@ -5257,7 +5257,7 @@ master lists.
 
 ### `kamra.settings.settings_schema`
 
-**GET/POST** · roles: `Front Desk`, `Finance`, `Revenue Manager`, `Housekeeping`, `Housekeeping Supervisor`
+**GET/POST** · roles: `Front Desk`, `Finance`, `Revenue Manager`, `Housekeeping`, `Housekeeping Supervisor`, `F&B Manager`
 
 Every settings page this user may see for the property, with current
 values. Pages they can't change come back read-only (can_edit=False).
@@ -5268,7 +5268,7 @@ values. Pages they can't change come back read-only (can_edit=False).
 
 ### `kamra.settings.save_settings`
 
-**POST** · roles: `Finance`, `Revenue Manager`, `Housekeeping Supervisor`
+**POST** · roles: `Finance`, `Revenue Manager`, `Housekeeping Supervisor`, `F&B Manager`
 
 Change some settings on one module page. Validates every key against
 the registry, refuses keys from another module, and writes one

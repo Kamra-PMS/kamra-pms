@@ -45,6 +45,9 @@ EXPECTED = {
 		| FNB | FO_EXTRA | OPS,
 		{"front_office", "fnb", "engineering", "hotel_manager"}),
 	"Housekeeping": (BUILDER, HK | OPS, {"housekeeping", "laundry", "engineering"}),
+	"F&B Manager": (
+		{"outlets", "outlet_dashboard", "wastage_report", *BUILDER},
+		FNB, {"fnb"}),
 }
 
 
@@ -57,7 +60,7 @@ class AgentReportAccessTestCase(AuditTestCase):
 
 	def test_each_role_gets_exactly_its_reports(self):
 		for role, (tools, datasets, packs) in EXPECTED.items():
-			email = f"ut.reports.{role.lower().replace(' ', '')}@test.local"
+			email = f"ut.reports.{''.join(c for c in role.lower() if c.isalnum())}@test.local"
 			ensure_user(email, [role])
 			frappe.set_user(email)  # nosemgrep: frappe-setuser -- acting as the persona
 			try:

@@ -9,11 +9,12 @@ import RecipeManager from "./RecipeManager"
 import { t as translate, useUILanguage } from "../lib/i18n"
 
 /** The Menu screen: the generic resource list plus bulk upload. Menu Item is
- * writable by Finance / Hotel Admin / System Manager (Front Desk is read-only
+ * writable by Finance / F&B Manager / Hotel Admin / System Manager (Front Desk is read-only
  * on the doctype), so the import button follows the same line. */
 
 const MENU_WRITE_ROLES = [
   "Finance",
+  "F&B Manager",
   "Hotel Admin",
   "System Manager",
   "Administrator",

@@ -110,6 +110,7 @@ someone a report their role can't open.
 | Night Auditor | Manager flash, shift report | Arrivals, departures, in-house, no-shows, occupancy, folio charges, payments | Front Office, Hotel Manager |
 | Finance | Manager flash, shift report, voids, F&B dashboard, wastage, banquet registers | Front office datasets, folio charges, payments, voids, contribution, POS orders | Front Office, F&B, Hotel Manager |
 | Housekeeping, Housekeeping Supervisor | None | Housekeeping tasks, room status, lost and found | Housekeeping |
+| F&B Manager | F&B dashboard, wastage | POS orders, POS items, kitchen times | F&B |
 
 Hotel Admin sees everything. A dataset also needs its module switched on
 for the property (**Settings → Modules**).

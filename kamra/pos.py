@@ -20,7 +20,7 @@ from frappe.utils import cint
 
 from kamra.authz import assert_record_access, require_roles
 
-POS_ROLES = ("Front Desk", "Finance", "Kamra Agent")
+POS_ROLES = ("Front Desk", "Finance", "F&B Manager", "Kamra Agent")
 # Menus written before coursing existed have no course; they behave as mains.
 DEFAULT_COURSE = "Main"
 COURSE_ORDER = ("Starter", "Main", "Dessert", "Drink")
@@ -1045,7 +1045,7 @@ def set_waiter(order: str, waiter: str = ""):
 
 
 # who keeps an outlet's waiter list (admins pass too), as for the menu
-WAITER_EDIT_ROLES = ("Finance",)
+WAITER_EDIT_ROLES = ("Finance", "F&B Manager")
 
 
 @frappe.whitelist()
@@ -1090,7 +1090,7 @@ def save_outlet_waiter(outlet: str, waiter_name: str, active: int = 1):
 		row.active = cint(active)
 	else:
 		doc.append("waiters", {"waiter_name": name, "active": cint(active)})
-	doc.save(ignore_permissions=True)  # gated above: Finance or an admin
+	doc.save(ignore_permissions=True)  # gated above: Finance, F&B Manager or an admin
 	return outlet_waiters(outlet)
 
 
@@ -1455,8 +1455,8 @@ def remove_item(order: str, item_row: str):
 @frappe.whitelist()
 @require_roles(*POS_ROLES)
 def void_approvers(outlet: str):
-	"""Who can approve a void at this outlet's till: enabled Hotel Admin and
-	Finance users with access to the property and a cashier PIN set. Names
+	"""Who can approve a void at this outlet's till: enabled Hotel Admin,
+	Finance and F&B Manager users with access to the property and a cashier PIN set. Names
 	only."""
 	from kamra.authz import SUPERVISOR_ROLES, restricted_properties
 	prop = frappe.db.get_value("POS Outlet", outlet, "property")

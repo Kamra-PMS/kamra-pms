@@ -93,7 +93,7 @@
   }
  ],
  "links": [],
- "modified": "2026-07-14 10:00:00.000000",
+ "modified": "2026-10-30 19:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "POS Table Reservation",
@@ -147,6 +147,15 @@
    "report": 1,
    "role": "Kamra Agent",
    "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "write": 1,
+   "role": "F&B Manager"
   }
  ],
  "sort_field": "reserved_at",
