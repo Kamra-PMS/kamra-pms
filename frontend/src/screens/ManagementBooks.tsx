@@ -19,6 +19,7 @@ type PnL = {
   revenue_total: number
   supplier_bills: Line[]
   petty_cash: Line[]
+  paid_outs: { amount: number; count: number }
   expense_total: number
   net: number
   tax_collected: number
@@ -147,6 +148,7 @@ function ProfitAndLoss() {
               <p className="mt-2 text-xs font-medium uppercase text-zinc-400">{translate("Petty cash")}</p>
               {data.petty_cash.map((r) => <Row key={`p-${r.category}`} label={translate(r.category ?? "")} amount={r.amount} indent />)}
               {!data.petty_cash.length ? <p className="py-1.5 pl-4 text-zinc-400">{translate("None in this period.")}</p> : null}
+              {data.paid_outs.amount ? <Row label={translate("Paid outs")} amount={data.paid_outs.amount} /> : null}
               <Row label={translate("Total expenses")} amount={data.expense_total} strong />
             </CardContent>
           </Card>

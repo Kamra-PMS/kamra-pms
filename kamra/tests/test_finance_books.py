@@ -70,8 +70,9 @@ class TestFinanceBooks(AuditTestCase):
 		# and /api/resource can't approve, pay, re-price or delete a bill
 		for user in (FIN, ADMIN):
 			for ptype in ("write", "create", "delete"):
-				self.assertFalse(frappe.has_permission("Vendor Bill", ptype, user=user),
-				                 (user, ptype))
+				for dt in ("Vendor Bill", "Vendor"):
+					self.assertFalse(frappe.has_permission(dt, ptype, user=user),
+					                 (dt, user, ptype))
 		frappe.set_user(FD)
 		with self.assertRaises(frappe.PermissionError):
 			self.bill()
@@ -193,6 +194,38 @@ class TestFinanceBooks(AuditTestCase):
 		self.assertEqual(books.payables_at(PROP_A, d(-1)), 0)
 		with self.assertRaises(frappe.ValidationError):
 			books.balance_sheet(PROP_A, d(1))
+
+	def test_pnl_credit_notes_paid_outs_and_approved_bills_only(self):
+		def ins(doc):
+			doc = frappe.get_doc(doc)
+			doc.flags.ignore_links = doc.flags.ignore_mandatory = True
+			doc.flags.ignore_validate = True
+			return doc.insert(ignore_permissions=True)
+		# a credit note issued while the folio was open is its Allowance line
+		ins({"doctype": "Folio", "property": PROP_A, "status": "Open",
+		     "folio_type": "Guest", "charges": [
+		         {"posting_date": d(0), "charge_type": "Allowance",
+		          "description": "Credit note UT-CN-1: late", "qty": 1,
+		          "rate": -50, "amount": -50}]})
+		folio = frappe.get_all("Folio", filters={"property": PROP_A}, pluck="name",
+		                       order_by="creation desc", limit=1)[0]
+		for number, amount, f in (("UT-CN-1", 50, folio), ("UT-CN-2", 200, "UT-CLOSED")):
+			ins({"doctype": "Credit Note", "property": PROP_A, "folio": f,
+			     "credit_note_number": number, "issue_date": d(0), "amount": amount,
+			     "status": "Issued", "reason": "ut"})
+		ins({"doctype": "Cashier Transaction", "property": PROP_A, "session": "UT-S",
+		     "kind": "Paid Out", "mode": "Cash", "amount": -80, "business_date": d(0)})
+		self.bill(500, bill_date=d(0))  # awaiting approval: not a cost yet
+		ins({"doctype": "Venue Booking", "property": PROP_A, "status": "Confirmed",
+		     "event_date": d(2), "taxable_amount": 1000, "tax_amount": 180})
+		p = books.profit_and_loss(PROP_A, d(0), d(5))
+		rev = {r["key"]: r["amount"] for r in p["revenue"]}
+		self.assertEqual(rev["allowances"], -250)
+		self.assertEqual(rev["banquets"], 0)        # not held yet
+		self.assertEqual(p["tax_collected"], 0)     # nor its tax
+		self.assertEqual(p["paid_outs"], {"amount": 80, "count": 1})
+		self.assertEqual(p["expense_total"], 80)
+		self.assertEqual(books.payables_at(PROP_A, d(0)), 0)
 
 	def test_forecast_deposit_and_departure_count_once(self):
 		from kamra.tests.audit_fixtures import make_reservation, make_room_type

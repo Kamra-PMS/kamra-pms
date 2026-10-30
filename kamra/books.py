@@ -32,6 +32,12 @@ NOT_FOLIO = """IFNULL(fc.description, '') NOT LIKE '%%(ORD-%%'
 	  AND IFNULL(fc.description, '') NOT LIKE 'EVT-%%'"""
 
 
+# a function is revenue (and its tax collected) once it has been held
+BANQUET_HELD = "(status = 'Completed' OR (status = 'Confirmed' AND event_date <= %(t)s))"
+# a supplier bill is a cost once approved; drafts only show in the cash view
+BILL_COUNTS = "status IN ('Approved', 'Part Paid', 'Paid')"
+
+
 def _r(x) -> float:
 	return round(flt(x), 2)
 
@@ -210,10 +216,20 @@ def _revenue(property: str, start, end) -> dict:
 		{"p": property, "s": start, "e": end})[0][0])
 	# a confirmed function counts once it has been held
 	rev["banquets"] += flt(frappe.db.sql(
-		"""SELECT COALESCE(SUM(taxable_amount), 0) FROM `tabVenue Booking`
+		f"""SELECT COALESCE(SUM(taxable_amount), 0) FROM `tabVenue Booking`
 		   WHERE property = %(p)s AND event_date BETWEEN %(s)s AND %(e)s
-		     AND (status = 'Completed' OR (status = 'Confirmed' AND event_date <= %(t)s))""",
+		     AND {BANQUET_HELD}""",
 		{"p": property, "s": start, "e": end, "t": nowdate()})[0][0])
+	# a credit note on a closed bill writes no charge line (on an open one
+	# it is an Allowance line, already counted above)
+	rev["allowances"] -= flt(frappe.db.sql(
+		"""SELECT COALESCE(SUM(cn.amount), 0) FROM `tabCredit Note` cn
+		   WHERE cn.property = %(p)s AND cn.status = 'Issued'
+		     AND cn.issue_date BETWEEN %(s)s AND %(e)s
+		     AND NOT EXISTS (SELECT 1 FROM `tabFolio Charge` fc
+		                     WHERE fc.parent = cn.folio AND fc.charge_type = 'Allowance'
+		                       AND fc.description LIKE CONCAT('Credit note ', cn.credit_note_number, ':%%'))""",
+		{"p": property, "s": start, "e": end})[0][0])
 	return {k: _r(v) for k, v in rev.items()}
 
 
@@ -227,19 +243,19 @@ def tax_collected(property: str, start, end) -> float:
 		     AND fc.charge_type NOT IN ('Opening Balance')""",
 		{"p": property, "s": start, "e": end})[0][0]
 	banquet = frappe.db.sql(
-		"""SELECT COALESCE(SUM(tax_amount), 0) FROM `tabVenue Booking`
+		f"""SELECT COALESCE(SUM(tax_amount), 0) FROM `tabVenue Booking`
 		   WHERE property = %(p)s AND event_date BETWEEN %(s)s AND %(e)s
-		     AND status IN ('Confirmed', 'Completed') AND IFNULL(posted_to_folio, 0) = 0""",
-		{"p": property, "s": start, "e": end})[0][0]
+		     AND {BANQUET_HELD} AND IFNULL(posted_to_folio, 0) = 0""",
+		{"p": property, "s": start, "e": end, "t": nowdate()})[0][0]
 	return _r(flt(folio) + flt(banquet))
 
 
 def _bills_in(property: str, start, end):
 	return frappe.db.sql(
-		"""SELECT expense_category AS category, COALESCE(SUM(amount), 0) AS amount,
+		f"""SELECT expense_category AS category, COALESCE(SUM(amount), 0) AS amount,
 		          COALESCE(SUM(tax_amount), 0) AS tax, COUNT(*) AS bills
 		   FROM `tabVendor Bill`
-		   WHERE property = %(p)s AND status != 'Cancelled'
+		   WHERE property = %(p)s AND {BILL_COUNTS}
 		     AND bill_date BETWEEN %(s)s AND %(e)s
 		   GROUP BY expense_category ORDER BY amount DESC""",
 		{"p": property, "s": start, "e": end}, as_dict=True)
@@ -259,8 +275,9 @@ def _dates(from_date, to_date):
 def profit_and_loss(property: str, from_date: str, to_date: str):
 	"""A management P&L for the period, before tax: revenue by department
 	(rooms, food and beverage, banquets, other, less allowances) and
-	expenses (supplier bills by category on their bill date, petty cash by
-	category). Not statutory accounts: payroll, depreciation and anything
+	expenses (approved supplier bills by category on their bill date, petty
+	cash by category, cash paid out from the tills). Credit notes on
+	closed bills count under allowances. Not statutory accounts: payroll, depreciation and anything
 	paid outside Kamra are not in it."""
 	start, end = _dates(from_date, to_date)
 	rev = _revenue(property, start, end)
@@ -272,10 +289,17 @@ def profit_and_loss(property: str, from_date: str, to_date: str):
 		     AND voucher_date BETWEEN %(s)s AND %(e)s
 		   GROUP BY category ORDER BY amount DESC""",
 		{"p": property, "s": start, "e": end}, as_dict=True)
+	# cash paid to suppliers straight from a till (kamra.cashier.post_paid_out)
+	paid_out = frappe.db.sql(
+		"""SELECT COALESCE(SUM(-amount), 0), COUNT(*) FROM `tabCashier Transaction`
+		   WHERE property = %(p)s AND kind = 'Paid Out' AND IFNULL(folio, '') = ''
+		     AND business_date BETWEEN %(s)s AND %(e)s""",
+		{"p": property, "s": start, "e": end})[0]
 	revenue = [{"key": k, "amount": rev[k]}
 	           for k in ("rooms", "fnb", "banquets", "other", "allowances")]
 	revenue_total = _r(sum(rev.values()))
-	expense_total = _r(sum(flt(b.amount) for b in bills) + sum(flt(p.amount) for p in petty))
+	expense_total = _r(sum(flt(b.amount) for b in bills) + sum(flt(p.amount) for p in petty)
+	                   + flt(paid_out[0]))
 	return {
 		"from_date": str(start), "to_date": str(end),
 		"revenue": revenue, "revenue_total": revenue_total,
@@ -283,6 +307,7 @@ def profit_and_loss(property: str, from_date: str, to_date: str):
 		                    "count": int(b.bills)} for b in bills],
 		"petty_cash": [{"category": p.category, "amount": _r(p.amount),
 		                "count": int(p.vouchers)} for p in petty],
+		"paid_outs": {"amount": _r(paid_out[0]), "count": int(paid_out[1])},
 		"expense_total": expense_total,
 		"net": _r(revenue_total - expense_total),
 		"tax_collected": tax_collected(property, start, end),
@@ -303,13 +328,13 @@ def payables_at(property: str, as_of) -> float:
 	"""Supplier bills dated on or before `as_of` less what was paid on
 	them by then."""
 	billed = frappe.db.sql(
-		"""SELECT COALESCE(SUM(total), 0) FROM `tabVendor Bill`
-		   WHERE property = %s AND status != 'Cancelled' AND bill_date <= %s""",
+		f"""SELECT COALESCE(SUM(total), 0) FROM `tabVendor Bill`
+		   WHERE property = %s AND {BILL_COUNTS} AND bill_date <= %s""",
 		(property, as_of))[0][0]
 	paid = frappe.db.sql(
-		"""SELECT COALESCE(SUM(p.amount), 0) FROM `tabVendor Bill Payment` p
+		f"""SELECT COALESCE(SUM(p.amount), 0) FROM `tabVendor Bill Payment` p
 		   JOIN `tabVendor Bill` b ON b.name = p.parent
-		   WHERE b.property = %s AND b.status != 'Cancelled'
+		   WHERE b.property = %s AND b.{BILL_COUNTS}
 		     AND b.bill_date <= %s AND p.payment_date <= %s""",
 		(property, as_of, as_of))[0][0]
 	return _r(flt(billed) - flt(paid))

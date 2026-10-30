@@ -804,7 +804,7 @@ Apply,Apply,تطبيق,Aplicar,screens/PublicBooking.tsx,,translated
 Apply count · ,Apply count · ,تطبيق العدد · ,Aplicar recuento · ,screens/Inventory.tsx,,translated
 Apply discount,Apply discount,تطبيق الخصم,Aplicar descuento,,,translated
 Approve,Approve,موافقة,Aprobar,screens/CashierBoard.tsx; screens/Payables.tsx,,translated
-Approved,Approved,معتمدة,Aprobada,,,translated
+Approved,Approved,تمت الموافقة,Aprobada,,,translated
 approved by {name},approved by {name},بموافقة {name},aprobado por {name},screens/VoidAllowanceReport.tsx; screens/pos/PosSidePanel.tsx,name,translated
 Approver,Approver,المعتمِد,Aprobado por,,,translated
 AR balance,AR balance,رصيد الذمم المدينة,Saldo de cuentas por cobrar,,,translated
@@ -2222,7 +2222,7 @@ Food,Food,الطعام,Alimentos,screens/banquet/Economics.tsx,,translated
 Food & Beverage,Food & Beverage,الطعام والمشروبات,Alimentos y bebidas,,,translated
 Food & beverage is taxed at the property's F&B rate.,Food & beverage is taxed at the property's F&B rate.,تخضع الأطعمة والمشروبات لنسبة ضريبة الأطعمة والمشروبات في المنشأة.,Los alimentos y bebidas tributan según la tasa de impuesto configurada para alimentos y bebidas en el alojamiento.,screens/FolioView.tsx,,translated
 Food & Beverage Supplies,Food & Beverage Supplies,مستلزمات الأغذية والمشروبات,Insumos de alimentos y bebidas,,,translated
-Food and beverage,Food and beverage,الأغذية والمشروبات,Alimentos y bebidas,,,translated
+Food and beverage,Food and beverage,الطعام والمشروبات,Alimentos y bebidas,,,translated
 Food type,Food type,نوع الطعام,Tipo de alimentación,screens/BanquetCatalogue.tsx,,translated
 for,for,لـ,para,lib/thermal.ts,,translated
 For,For,لـ,Para,components/StayInstructions.tsx; screens/BanquetDocument.tsx; screens/settings/cards.tsx,,translated
@@ -3778,7 +3778,7 @@ Paid more than the bill,Paid more than the bill,دفع أكثر من قيمة ا
 paid out,paid out,مدفوع للخارج,salida de efectivo,,,translated
 Paid out,Paid out,مدفوع للخارج,Egreso de caja,screens/CashierTill.tsx,,translated
 Paid Out,Paid Out,مدفوع للخارج,Salida de efectivo,,,translated
-Paid outs,Paid outs,مدفوعات للخارج,Egresos de caja,screens/CashierShiftReport.tsx; screens/CashierTill.tsx,,translated
+Paid outs,Paid outs,مدفوعات للخارج,Egresos de caja,screens/CashierShiftReport.tsx; screens/CashierTill.tsx; screens/ManagementBooks.tsx,,translated
 Paid so far,Paid so far,المدفوع حتى الآن,Pagado hasta ahora,components/CheckInDialog.tsx,,translated
 PAN,PAN,PAN,PAN,,,translated
 "Paneer tikka, Hara bhara kebab, Corn seekh","Paneer tikka, Hara bhara kebab, Corn seekh",بانير تكا، هارا بهارا كباب، سيخ الذرة,"Paneer tikka, hara bhara kebab, brochetas de maíz",screens/BanquetCatalogue.tsx,,translated

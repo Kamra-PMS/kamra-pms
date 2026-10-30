@@ -106,12 +106,15 @@ not in it, and neither are extras guests may still spend.
 any dates up to a year):
 
 - **Revenue** before tax by department: rooms (less room discounts),
-  food and beverage, banquets and other income, less allowances. Each sale
+  food and beverage, banquets and other income, less allowances (credit
+  notes on settled bills included). Each sale
   is counted once: a restaurant bill charged to a room counts from the
   restaurant bill, and a banquet from the function on its event date.
   The room levy and go-live balances are not revenue.
-- **Expenses**: supplier bills by category on their bill date, and petty
-  cash by category.
+- **Expenses**: approved supplier bills by category on their bill date,
+  petty cash by category, and cash paid out from the tills. Bills still
+  awaiting approval are left out until approved (the cash outlook shows
+  them as drafts).
 - **Profit for the period**, plus the tax collected on bills and the tax
   paid on supplier bills, for reference.
 
@@ -122,8 +125,8 @@ of a date:
 
 - **Owed to the hotel**: guests in house (guest ledger), companies (city
   ledger) and, for today only, the cash in open tills.
-- **Owed by the hotel**: advance deposits held and supplier bills not yet
-  paid.
+- **Owed by the hotel**: advance deposits held and approved supplier bills
+  not yet paid.
 
 Tax collected this month is shown under the totals for reference. Kamra
 does not record what you have paid to the government, so it is not in the
