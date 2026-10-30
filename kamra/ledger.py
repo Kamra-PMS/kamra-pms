@@ -510,10 +510,22 @@ def due_date_for(account: str | None, invoice_date, property: str | None = None)
 	return str(add_days(invoice_date, effective_credit_days(account, property)))
 
 
+def _transfer_company(folio, company: str | None = None) -> str | None:
+	"""Who a city ledger transfer bills: the company asked for, else the
+	stay's, else the group's."""
+	if not company and folio.get("reservation"):
+		company = frappe.db.get_value("Reservation", folio.reservation, "company")
+	if not company and folio.get("group_booking"):
+		company = frappe.db.get_value(
+			"Group Booking", folio.group_booking, "company")
+	return company
+
+
 def transfer_to_city_ledger(folio: str, company: str | None = None,
                             invoice_date: str | None = None,
                             credit_check: bool = True,
-                            credit_override_reason: str | None = None) -> dict:
+                            credit_override_reason: str | None = None,
+                            account: str | None = None) -> dict:
 	"""Move an unpaid folio balance to company AR at checkout.
 	`invoice_date` dates the AR invoice when it is older than today - an
 	unpaid bill carried over from the old system at go-live, so aging
@@ -524,16 +536,15 @@ def transfer_to_city_ledger(folio: str, company: str | None = None,
 	warn lets it through with a warning, block refuses unless Finance or a
 	Hotel Admin overrides with a reason. Go-live passes False - those bills
 	were already on credit in the old system - and checkout passes False
-	because it has checked every company of the stay at once."""
+	because it has checked every company of the stay at once.
+
+	`account` bills that exact City Ledger Account (it must be the
+	company's) instead of the company's first open one."""
 	doc = frappe.get_doc("Folio", folio)
 	balance = float(doc.balance or 0)
 	if balance <= 0:
 		frappe.throw("No balance to transfer to city ledger.")
-	if not company and doc.get("reservation"):
-		company = frappe.db.get_value("Reservation", doc.reservation, "company")
-	if not company and doc.get("group_booking"):
-		company = frappe.db.get_value(
-			"Group Booking", doc.group_booking, "company")
+	company = _transfer_company(doc, company)
 	if not company:
 		frappe.throw("A company is required for city ledger transfer.")
 	if not frappe.db.get_value("Corporate Account", company, "credit_allowed"):
@@ -547,7 +558,11 @@ def transfer_to_city_ledger(folio: str, company: str | None = None,
 			context="city ledger transfer",
 			reference_doctype="Folio", reference_name=doc.name,
 			exclude_folios=[doc.name])
-	account = _ar_account(doc.property, company)
+	if account and frappe.db.get_value(
+			"City Ledger Account", account, ["property", "company"]) != (
+			doc.property, company):
+		frappe.throw(f"{account} is not {company}'s account at this property.")
+	account = account or _ar_account(doc.property, company)
 	bd = get_business_date(doc.property)
 	inv_date = invoice_date or bd
 	# Zero the guest folio with a Company Credit payment
@@ -616,12 +631,15 @@ def city_ledger_transfer(folio: str, company: str | None = None,
 	passes `credit_override_reason`. Agents can't override."""
 	from kamra.authz import require_cashier_pin
 	from kamra.receivables import assert_billable
-	prop = frappe.db.get_value("Folio", folio, "property")
-	require_cashier_pin(prop, pin)
+	doc = frappe.get_doc("Folio", folio)
+	require_cashier_pin(doc.property, pin)
+	# the stay's company too, not only one passed in: a restricted account
+	# takes no new bills either way
+	company = _transfer_company(doc, company)
 	if company:
 		assert_billable(frappe.db.get_value(
 			"City Ledger Account",
-			{"property": prop, "company": company, "disabled": 0}, "name"))
+			{"property": doc.property, "company": company, "disabled": 0}, "name"))
 	return transfer_to_city_ledger(
 		folio, company, credit_override_reason=credit_override_reason)
 
@@ -646,7 +664,8 @@ def city_ledger_open_folios(account: str) -> list[dict]:
 	billed = frappe.db.sql(
 		"""
 		SELECT folio,
-		       MIN(CASE WHEN kind = 'Invoice' THEN posting_date END) AS invoice_date,
+		       MIN(CASE WHEN kind = 'Invoice'
+		                 THEN COALESCE(invoice_date, posting_date) END) AS invoice_date,
 		       MIN(CASE WHEN kind = 'Invoice' THEN due_date END) AS due_date,
 		       MIN(posting_date) AS first_date,
 		       MAX(invoice_number) AS invoice_number,

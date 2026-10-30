@@ -226,7 +226,8 @@ def create_ar_invoice(account: str, lines, reference: str | None = None,
 	_recalculate(folio)
 	save_folio(folio)
 	out = transfer_to_city_ledger(
-		folio.name, acc.company, credit_override_reason=credit_override_reason)
+		folio.name, acc.company, credit_override_reason=credit_override_reason,
+		account=account)
 	invoice = close_folio(folio.name)
 	ref = (reference or "").strip()[:140] or None
 	frappe.db.set_value(
@@ -301,8 +302,11 @@ def transfer_ar_invoice(account: str, folio: str, to_account: str,
 	                "kind": "Adjustment", "debit": 0, "credit": amount,
 	                "reference": f"Transferred to {dst.company}"[:140],
 	                "notes": note or None}).insert(ignore_permissions=True)
+	# both legs post today (the books see the move when it happened); the
+	# bill ages from its original date, kept in invoice_date
 	frappe.get_doc({**common, "account": to_account,
-	                "posting_date": item["invoice_date"], "kind": "Invoice",
+	                "posting_date": bd, "invoice_date": item["invoice_date"],
+	                "kind": "Invoice",
 	                "due_date": due_date_for(to_account, item["invoice_date"]),
 	                "debit": amount, "credit": 0,
 	                "reference": f"Transferred from {src.company}"[:140],

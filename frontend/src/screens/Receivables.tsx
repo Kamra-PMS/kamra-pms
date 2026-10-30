@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { Link, useNavigate, useParams } from "react-router-dom"
-import { ArrowLeft, Plus } from "lucide-react"
+import { ArrowLeft, Plus, Printer } from "lucide-react"
 import { call, getCurrentProperty } from "../lib/api"
 import { listResource, serverError } from "../lib/resource"
 import { Button } from "../components/ui/button"
@@ -825,6 +825,11 @@ function InvoiceView(props: { folio: string; company: string; onClose: () => voi
           {inv?.reservation ? (
             <Link to={`/billing/${encodeURIComponent(inv.folio)}`}>
               <Button variant="outline">{translate("Open the stay's bill")}</Button>
+            </Link>
+          ) : inv ? (
+            // the account invoice prints on the same tax invoice as any folio
+            <Link to={`/billing/${encodeURIComponent(inv.folio)}`}>
+              <Button variant="outline"><Printer className="size-4" />{translate("Print invoice")}</Button>
             </Link>
           ) : null}
           <Button onClick={props.onClose}>{translate("Close")}</Button>

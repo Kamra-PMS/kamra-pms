@@ -177,3 +177,75 @@ class ReceivablesTestCase(cc.CreditControlTestCase):
 				fields=["write", "create", "delete"])
 			self.assertTrue(perms, role)
 			self.assertFalse(any(p.write or p.create or p.delete for p in perms), role)
+
+	# second review ---------------------------------------------------------
+
+	def test_account_invoice_prints_and_exports_as_a_tax_invoice(self):
+		from kamra import accounting, api
+		frappe.db.set_value("Corporate Account", self.company, "gstin", "29ABCDE1234F1Z5")
+		out = self.invoice({"charge_type": "Misc", "description": "Hall",
+		                    "amount": 1000, "gst_rate": 18})
+		inv = api.folio_invoice(out["folio"])
+		self.assertEqual(inv["bill_to"]["gstin"], "29ABCDE1234F1Z5")
+		self.assertIsNone(inv["stay"]["reservation"])
+		self.assertTrue(inv["document"]["is_final"])
+		rows = accounting.export_invoices(PROP_A, "2000-01-01", "2100-12-31")["rows"]
+		row = next(r for r in rows if r["invoice_number"] == out["invoice_number"])
+		self.assertEqual(row["party_tax_id"], "29ABCDE1234F1Z5")
+		self.assertAlmostEqual(row["grand_total"], 1180, 2)
+
+	def test_account_invoice_cant_be_cancelled(self):
+		from kamra import api
+		out = self.invoice({"charge_type": "Misc", "description": "Hall",
+		                    "amount": 100})
+		with self.assertRaises(frappe.ValidationError):
+			api.cancel_invoice(out["folio"], "wrong amount")
+		self.assertEqual(frappe.db.get_value("Folio", out["folio"], "status"), "Closed")
+
+	def test_transfer_to_the_stays_company_checks_a_restricted_account(self):
+		res = cc.make_reservation(PROP_A, self.rt, cc.d(-1), cc.d(1),
+		                          status="Checked In", room=self.room,
+		                          company=self.company)
+		folio = cc.guest_folio(res.name)
+		cc.api.add_folio_charge(folio, "Misc", "UT bill", 200, gst_rate=0)
+		frappe.db.set_value("City Ledger Account", self.account,
+		                    {"restricted": 1, "restricted_reason": "Disputed"})
+		with self.assertRaises(frappe.ValidationError):
+			ledger.city_ledger_transfer(folio)  # no company passed
+
+	def test_invoice_bills_the_account_it_was_raised_on(self):
+		second = frappe.get_doc({"doctype": "City Ledger Account", "property": PROP_A,
+		                         "company": self.company, "account_number": "UT-2ND",
+		                         "balance": 0}).insert(ignore_permissions=True).name
+		frappe.db.set_value("City Ledger Account", self.account, "credit_limit", 0)
+		out = receivables.create_ar_invoice(
+			second, [{"charge_type": "Misc", "description": "Hall", "amount": 100}])
+		self.assertEqual(frappe.db.get_value(
+			"City Ledger Entry", {"folio": out["folio"], "kind": "Invoice"}, "account"),
+			second)
+
+	def test_transfer_posts_today_and_ages_from_the_original_date(self):
+		parent = receivables.save_ar_account(
+			PROP_A, self.other_company(), account_number="UT-PARENT")["account"]
+		res = cc.make_reservation(PROP_A, self.rt, cc.d(-1), cc.d(1),
+		                          status="Checked In", room=self.room)
+		folio = cc.guest_folio(res.name)
+		cc.api.add_folio_charge(folio, "Misc", "UT bill", 300, gst_rate=0)
+		ledger.transfer_to_city_ledger(folio, self.company, invoice_date=cc.d(-20),
+		                               credit_check=False)
+		receivables.transfer_ar_invoice(self.account, folio, parent)
+		legs = frappe.get_all("City Ledger Entry", filters={"folio": folio},
+		                      fields=["account", "kind", "posting_date", "invoice_date"],
+		                      order_by="creation asc")
+		moved = [r for r in legs if r.account == parent or r.kind == "Adjustment"]
+		self.assertEqual({str(r.posting_date) for r in moved}, {str(cc.TODAY)})
+		self.assertEqual(_open(parent)[folio]["invoice_date"], str(cc.d(-20)))
+
+	def test_reminders_are_per_company(self):
+		from kamra import statements
+		from kamra.savings import log_action
+		_, folio = self.bill(100)
+		log_action(statements.LOG_PREFIX + "pre", "Folio", folio, PROP_A,
+		           rationale=f"{self.company}: pre reminder")
+		self.assertTrue(statements._reminded(folio, "pre", self.company))
+		self.assertFalse(statements._reminded(folio, "pre", self.other_company()))

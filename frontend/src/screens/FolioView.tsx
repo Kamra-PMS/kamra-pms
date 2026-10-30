@@ -26,6 +26,7 @@ interface InvoiceData {
   folio: {
     name: string
     status: "Open" | "Closed"
+    folio_type?: string
     invoice_number: string | null
     guest_name: string
     charges: {
@@ -64,8 +65,10 @@ interface InvoiceData {
     place_of_supply: string | null
     tax_id_label?: string
   }
+  /** an Account folio (raised on a company's AR account) has no stay:
+   *  only reservation (null) and company come back */
   stay: {
-    reservation: string
+    reservation: string | null
     check_in: string
     check_out: string
     arrival: string | null
@@ -279,9 +282,11 @@ export default function FolioView() {
         .then((d) => {
           setData(d)
           setPayment((p) => ({ ...p, amount: String(d.folio.balance || "") }))
-          return call<SiblingFolio[]>("kamra.api.reservation_folios", {
-            reservation: d.stay.reservation,
-          })
+          return d.stay.reservation
+            ? call<SiblingFolio[]>("kamra.api.reservation_folios", {
+                reservation: d.stay.reservation,
+              })
+            : []
         })
         .then((s) => s && setSiblings(s))
         .catch((e) => setError(serverError(e)))
@@ -522,7 +527,7 @@ export default function FolioView() {
                 {t("Settle & continue stay")}
               </Button>
             )}
-          {!open && folio.invoice_number && (
+          {!open && folio.invoice_number && folio.folio_type !== "Account" && (
             <Button
               variant="outline"
               disabled={busy}
@@ -576,9 +581,11 @@ export default function FolioView() {
         </div>
       )}
 
-      <div className="mb-4 print:hidden">
-        <LinkedRecords doctype="Reservation" name={stay.reservation} />
-      </div>
+      {stay.reservation && (
+        <div className="mb-4 print:hidden">
+          <LinkedRecords doctype="Reservation" name={stay.reservation} />
+        </div>
+      )}
 
       {pinStatus?.required ? (
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-2 text-sm print:hidden">
@@ -707,6 +714,7 @@ export default function FolioView() {
                 <span className="text-zinc-500"> · {stay.company}</span>
               )}
             </Fact>
+            {stay.reservation && (<>
             <Fact label={t("Room")}>
               {stay.room ? stay.room.split("-").pop() : "-"}
               {stay.room_type && (
@@ -739,6 +747,7 @@ export default function FolioView() {
                 {(stay.departure ?? "").slice(0, 16).replace("T", " ") || "-"}
               </Fact>
             )}
+            </>)}
             {data.guest?.guest_id && (
               <Fact label={t("Nationality")}>
                 <EditableNationality
