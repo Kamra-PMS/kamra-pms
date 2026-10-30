@@ -131,6 +131,18 @@ def property_query_conditions(user: str | None = None, doctype: str | None = Non
 	return f"`tab{doctype}`.`property` IN ({props})"
 
 
+def copilot_query_conditions(user: str | None = None, doctype: str | None = None) -> str:
+	"""Copilot chats are their owner's (System Manager aside), as _own_convo
+	says. Frappe's if_owner rows did this on lists until the Permission Type
+	rows (which need `select`) arrived: any non-if_owner select drops the
+	owner filter, so it is stated here instead (property scope is a
+	separate hook alongside)."""
+	user = user or frappe.session.user
+	if user == "Administrator" or "System Manager" in frappe.get_roles(user):
+		return ""
+	return f"`tabCopilot Conversation`.`owner` = {frappe.db.escape(user)}"
+
+
 def property_has_permission(doc, ptype: str | None = None, user: str | None = None,
                             debug: bool = False) -> bool:
 	"""has_permission hook matching property_query_conditions for single

@@ -118,6 +118,16 @@ class RbacTestCase(IntegrationTestCase):
 			# nobody beyond the old list: no Guest / All / Desk User grant
 			self.assertEqual(got, set(roles), dotted)
 
+	def test_each_builtin_role_passes_the_real_check_as_before(self):
+		"""_kamra_roles reads the DocPerm rows; the gate is frappe.has_permission
+		(if_owner, select-only rows...). Both must agree with the old lists."""
+		users = {r: _user(f"rbac.{r.lower().replace(' ', '')}@test.local", r) for r in BUILTIN}
+		for dotted, roles in BASELINE.items():
+			perm = _endpoint(dotted)._kamra_perm
+			for role, user in users.items():
+				self.assertEqual(frappe.has_permission(*perm, user=user, ignore_share_permissions=True),
+				                 role in roles, f"{dotted}: {role}")
+
 	def test_a_real_user_passes_the_same_gate(self):
 		from kamra import api
 		self.as_user(DESK_USER)
@@ -312,3 +322,38 @@ class RbacTestCase(IntegrationTestCase):
 		sync_permission_types()
 		frappe.clear_cache(doctype=dt)
 		self.assertNotIn("Front Desk", authz.perm_roles(dt, ptype))
+
+	# --- staff & access ---------------------------------------------------------
+
+	def _save_staff(self, email, roles):
+		from kamra.staff import save_staff
+		return save_staff(property=_property(HOME), email=email, full_name="Rbac Person",
+		                  roles=json.dumps(roles))
+
+	def test_save_staff_removes_roles(self):
+		target = _user("rbac.target@test.local", "Finance", "Front Desk")
+		self.as_user(_user("rbac.gm@test.local", "Hotel Admin"))
+		self._save_staff(target, ["Front Desk"])
+		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- read back the result
+		self.assertNotIn("Finance", frappe.get_roles(target))
+		self.assertIn("Front Desk", frappe.get_roles(target))
+
+	def test_property_configure_does_not_mint_hotel_admins(self):
+		_grant("Property", "configure")
+		self.as_user(CUSTOM_USER)
+		with self.assertRaises(frappe.PermissionError):
+			self._save_staff("rbac.sock@test.local", ["Hotel Admin"])
+		self._save_staff("rbac.sock@test.local", [ROLE])  # its own role is fine
+
+	def test_a_role_with_rights_outside_kamra_is_not_hotel_assignable(self):
+		from kamra.staff import role_names
+		_grant(*SOP)
+		self.assertIn(ROLE, role_names())
+		add_permission("ToDo", ROLE, 0, "read")
+		self.assertNotIn(ROLE, role_names())
+
+	def test_copilot_chats_stay_private_on_rest(self):
+		frappe.get_doc({"doctype": "Copilot Conversation", "title": "GM only",
+		                "property": _property(HOME)}).insert(ignore_permissions=True)
+		self.as_user(DESK_USER)
+		self.assertFalse(frappe.get_list("Copilot Conversation", filters={"title": "GM only"}))

@@ -271,6 +271,9 @@ _PROPERTY_SCOPED = (
 permission_query_conditions = {
 	"Guest": "kamra.authz.guest_query_conditions",
 	**{dt: "kamra.authz.property_query_conditions" for dt in _PROPERTY_SCOPED},
+	# both apply (Frappe ANDs a doctype's conditions): chats stay their owner's
+	"Copilot Conversation": ["kamra.authz.property_query_conditions",
+	                         "kamra.authz.copilot_query_conditions"],
 }
 
 has_permission = {

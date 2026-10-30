@@ -56,7 +56,12 @@ def custom_roles() -> list[str]:
 	roles = set(frappe.get_all("Custom DocPerm", filters={"parent": ("in", kamra_dts)},
 	                           pluck="role", distinct=True))
 	enabled = set(frappe.get_all("Role", filters={"disabled": 0}, pluck="name"))
-	return sorted((roles & enabled) - set(_NOT_CUSTOM))
+	# a role that also carries rights outside Kamra (another app's role, or
+	# one IT gave Desk powers) is IT's to hand out, not a Hotel Admin's
+	outside = {"parent": ("not in", kamra_dts), "role": ("in", list(roles) or [""])}
+	wider = set(frappe.get_all("DocPerm", filters=outside, pluck="role", distinct=True)) | \
+		set(frappe.get_all("Custom DocPerm", filters=outside, pluck="role", distinct=True))
+	return sorted((roles & enabled) - wider - set(_NOT_CUSTOM))
 
 
 def role_names() -> tuple:
@@ -170,8 +175,8 @@ def save_staff(property: str, email: str, full_name: str, roles, properties=None
 		frappe.throw(_("That account can't be managed here."), frappe.PermissionError)
 
 	want_roles = _parse_list(roles) or []
-	names = role_names()
-	unknown = [r for r in want_roles if r not in names]
+	kamra_roles = role_names()
+	unknown = [r for r in want_roles if r not in kamra_roles]
 	if unknown:
 		frappe.throw(_("Unknown role: {0}").format(", ".join(unknown)))
 	if not want_roles:
@@ -209,7 +214,7 @@ def save_staff(property: str, email: str, full_name: str, roles, properties=None
 		if mine is not None and (cur_props is None or any(p not in mine for p in cur_props)):
 			frappe.throw(_("This person has access beyond your properties - ask IT."),
 			             frappe.PermissionError)
-		before = {"roles": [r for r in names if r in held],
+		before = {"roles": [r for r in kamra_roles if r in held],
 		          "properties": cur_props, "enabled": user.enabled}
 	else:
 		held = []
@@ -220,17 +225,23 @@ def save_staff(property: str, email: str, full_name: str, roles, properties=None
 
 	if not it:
 		gained = set(want_roles) - set(held)
-		lost = (set(held) & set(names)) - set(want_roles)
+		lost = (set(held) & set(kamra_roles)) - set(want_roles)
 		if (gained | lost) & set(IT_ONLY):
 			frappe.throw(_("Only IT can grant or remove the IT administrator role."),
 			             frappe.PermissionError)
+		# a role given Property: Configure without being a Hotel Admin
+		# manages staff, but can't hand out (or take away) more than it holds
+		mine_roles = set(frappe.get_roles())
+		if "Hotel Admin" not in mine_roles and (gained | lost) - mine_roles:
+			frappe.throw(_("Only a Hotel Admin can grant or remove {0}.").format(
+				", ".join(sorted((gained | lost) - mine_roles))), frappe.PermissionError)
 
 	# --- write ----------------------------------------------------------------
 	names = full_name.split(" ", 1)
 	user.first_name = names[0]
 	user.last_name = names[1] if len(names) > 1 else ""
 	user.enabled = 1 if on else 0
-	keep = [r for r in user.roles if r.role not in names]
+	keep = [r for r in user.roles if r.role not in kamra_roles]
 	user.set("roles", [])
 	for r in keep:
 		user.append("roles", {"role": r.role})
