@@ -31,6 +31,7 @@ import { serverError, updateResource, type Row } from "../lib/resource"
 import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
 import CancelPanel from "../components/CancelPanel"
+import ReinstatePanel from "../components/ReinstatePanel"
 import LinkedRecords from "../components/LinkedRecords"
 import DepositPanel from "../components/DepositPanel"
 import SecurityDepositPanel from "../components/SecurityDepositPanel"
@@ -191,6 +192,7 @@ export default function ReservationDetail({
   const [d, setD] = useState<Detail | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [reinstated, setReinstated] = useState<string[]>([])
   const [changingRoom, setChangingRoom] = useState(false)
   const [declineReason, setDeclineReason] = useState("")
 
@@ -682,6 +684,14 @@ export default function ReservationDetail({
         {d.actions.can_check_out && (
           <Button disabled={busy} onClick={() => setCheckingOut(true)}>
             <LogOut className="size-4" />{translate(" Check out")}</Button>
+        )}
+        {d.actions.can_reinstate && (
+          <ReinstatePanel reservation={name} onDone={(w) => { setReinstated(w); refresh(); reload() }} />
+        )}
+        {reinstated.length > 0 && (
+          <div className="w-full space-y-1 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+            {reinstated.map((w) => <p key={w}>{w}</p>)}
+          </div>
         )}
         <Link
           to={`/grc/${encodeURIComponent(name)}`}

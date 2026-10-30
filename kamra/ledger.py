@@ -622,6 +622,61 @@ def transfer_to_city_ledger(folio: str, company: str | None = None,
 	return out
 
 
+def reverse_city_ledger_transfer(folio: str, reason: str) -> float:
+	"""Undo transfer_to_city_ledger for a folio whose checkout is being
+	reinstated: the bill comes back to the stay and leaves the company's
+	account. Refused once the company has paid any of it. Returns the
+	amount brought back (0 when the folio was never billed on)."""
+	doc = frappe.get_doc("Folio", folio)
+	out = [p for p in doc.payments if p.mode == "Company Credit"
+	       and (p.reference or "").startswith(("city-ledger:", "city-ledger-back:"))]
+	net = round(sum(float(p.amount or 0) for p in out), 2)
+	if net <= 0.009:
+		return 0
+	account = out[0].reference.split(":", 1)[1]
+	# company payments are applied to the bill on its ledger (as in
+	# city_ledger_open_folios); a credit note lowers what is billed
+	paid = frappe.db.sql(
+		"""SELECT COALESCE(SUM(credit - debit), 0) FROM `tabFolio Ledger Entry`
+		   WHERE folio = %s AND source_doctype = 'City Ledger Entry'""", doc.name)[0][0]
+	billed = float(frappe.db.sql(
+		"""SELECT COALESCE(SUM(debit - credit), 0) FROM `tabCity Ledger Entry`
+		   WHERE folio = %s AND account = %s AND kind != 'Payment'""",
+		(doc.name, account))[0][0] or 0)
+	if float(paid or 0) > 0.009:
+		frappe.throw(frappe._("The company has already paid part of this bill (or money it "
+		              "paid ahead was applied), so the checkout can't be undone. Finance "
+		              "can correct it on the account."))
+	if billed < net - 0.009:
+		frappe.throw(frappe._("A credit note or adjustment already changed this bill on the "
+		              "company's account, so the checkout can't be undone. Finance can "
+		              "correct it on the account."))
+	bd = get_business_date(doc.property)
+	row = doc.append("payments", {
+		"posting_date": bd, "payment_kind": "Payment", "mode": "Company Credit",
+		"amount": -net, "reference": f"city-ledger-back:{account}",
+	})
+	from kamra.folio import _recalculate
+	_recalculate(doc)
+	doc.save(ignore_permissions=True)
+	record_payment_ledger(doc, row.as_dict())
+	company = frappe.db.get_value("City Ledger Account", account, "company")
+	write_ledger_entry(
+		property=doc.property, folio=doc.name, ledger="AR", credit=net,
+		description=f"Back from city ledger {company}",
+		source_doctype="Folio", source_name=doc.name)
+	frappe.get_doc({
+		"doctype": "City Ledger Entry", "account": account,
+		"property": doc.property, "posting_date": bd, "kind": "Credit Note",
+		"folio": doc.name, "debit": 0, "credit": net, "reference": doc.name,
+		"notes": f"Checkout reinstated: {reason}",
+	}).insert(ignore_permissions=True)
+	acc = frappe.get_doc("City Ledger Account", account)
+	acc.balance = float(acc.balance or 0) - net
+	acc.save(ignore_permissions=True)
+	return net
+
+
 @frappe.whitelist(methods=["POST"])
 @require_roles("Finance", "Front Desk", "Kamra Agent")
 def city_ledger_transfer(folio: str, company: str | None = None,

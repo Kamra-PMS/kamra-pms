@@ -3660,6 +3660,7 @@ def _checkin_backfill(res) -> list[dict]:
 def reservation_detail(reservation: str):
 	"""Everything about one booking in a single call - stay, money, guest,
 	booker and the actions currently available. Powers the reservation drawer."""
+	from kamra.business_date import get_business_date
 	from kamra.kamra.doctype.reservation.reservation import uses_member_rooms
 	res = frappe.get_doc("Reservation", reservation)
 
@@ -3764,6 +3765,9 @@ def reservation_detail(reservation: str):
 			"can_check_out": res.status == "Checked In",
 			"can_cancel": res.status in ("Confirmed", "Checked In"),
 			"can_amend": res.status in ("Confirmed", "Checked In"),
+			# undo checkout: same business day only (reinstate_checkout)
+			"can_reinstate": res.status == "Checked Out" and bool(res.get("check_out_business_date"))
+			and str(res.check_out_business_date) == str(get_business_date(res.property)),
 		},
 		# Warnings are NOT capabilities, and they live apart on purpose. A
 		# missing ID must never appear in `actions` - the guest is standing
@@ -4567,6 +4571,87 @@ def checkout_context(reservation: str):
 		"next_tip": next_tip(evaluated),
 	}
 	return ctx
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Front Desk", "Finance")
+def reinstate_checkout(reservation: str, reason: str, pin: str | None = None):
+	"""Undo a checkout made by mistake, the same business day: before the
+	night audit runs. Each bill closed at checkout has its invoice
+	cancelled the auditable way (the number goes to the Cancelled Invoice
+	register; where the country needs it, a credit note is issued), a
+	company bill comes back off the company's account, and the guest is
+	in house again in the same room. Refused once the night audit has run,
+	when someone else is in the room, or when the company has paid."""
+	from kamra.authz import require_cashier_pin
+	from kamra.folio import cancel_invoice
+	from kamra.ledger import reverse_city_ledger_transfer
+
+	reason = (reason or "").strip()
+	if not reason:
+		frappe.throw(_("Say why the checkout is being undone."))
+	doc = frappe.get_doc("Reservation", reservation)
+	if doc.status != "Checked Out":
+		frappe.throw(_("Only a checked-out stay can be reinstated."))
+	require_cashier_pin(doc.property, pin)
+	from kamra.business_date import get_business_date
+	from kamra.kamra.doctype.reservation.reservation import villa_lockout_bookings
+	bd = get_business_date(doc.property)
+	out_bd = doc.get("check_out_business_date")
+	if not out_bd or str(out_bd) != str(bd):
+		frappe.throw(_("The night audit has run since this checkout, so it can't "
+		              "be undone. Make a new booking, or ask Finance to correct the bills."))
+	# the room may already be re-let: a guest in house, or today's arrival
+	# given it. The overlap guard on save misses a stay that ended today.
+	rooms = doc._occupied_rooms(checking_in=False)
+	taken = rooms and frappe.db.sql(
+		"""SELECT name FROM `tabReservation` WHERE name != %s AND room IN %s
+		   AND (status = 'Checked In'
+		        OR (status IN ('Confirmed', 'Held') AND check_in_date <= %s))
+		   LIMIT 1""", (doc.name, tuple(rooms), bd), as_dict=True)
+	taken = taken or villa_lockout_bookings(doc.property, doc.room_type, bd,
+	                                        add_days(bd, 1), exclude=doc.name, limit=1)
+	if taken:
+		frappe.throw(_("The room has been given to {0} since the checkout, so it "
+		              "can't be undone. Move that stay first, or make a new booking.").format(
+			taken[0].name))
+	# only the bills this checkout closed (since the last night audit) or
+	# left open; a bill settled earlier in the stay keeps its invoice and
+	# its company account entry
+	day_start = frappe.db.get_value(
+		"Night Audit Run", {"property": doc.property, "status": ("!=", "Draft")},
+		"creation", order_by="creation desc")
+	folios = [f for f in frappe.get_all(
+		"Folio", filters={"reservation": doc.name},
+		fields=["name", "status", "invoice_number", "closed_on"])
+		if f.status != "Closed" or not day_start
+		or (f.closed_on and get_datetime(f.closed_on) >= get_datetime(day_start))]
+	cancelled, brought_back = [], 0.0
+	for f in folios:
+		if f.status == "Closed" and f.invoice_number:
+			cancelled.append(cancel_invoice(f.name, f"Checkout reinstated: {reason}")["cancelled"])
+	for f in folios:
+		brought_back += reverse_city_ledger_transfer(f.name, reason)
+	doc.status = "Checked In"
+	frappe.flags.kamra_status_transition = True
+	try:
+		doc.save()
+	finally:
+		frappe.flags.kamra_status_transition = False
+	from kamra.savings import log_action
+	log_action("reinstate_checkout", "Reservation", doc.name, doc.property,
+	           rationale=f"{doc.guest_name}: {reason}"
+	                     + (f"; invoices cancelled {', '.join(cancelled)}" if cancelled else ""))
+	warnings = []
+	if frappe.db.get_value("Security Deposit", {"reservation": doc.name, "status": "Withheld"}):
+		warnings.append(_("The security deposit was applied to the bill at checkout and "
+		                  "stays applied. Take a new deposit if the guest needs one."))
+	if frappe.db.get_value("Property", doc.property, "id_retention") == "Verify & Discard":
+		warnings.append(_("The guest's ID was discarded at checkout. Capture it again "
+		                  "in the check-in steps."))
+	return {"ok": True, "reservation": doc.name, "status": doc.status,
+	        "cancelled_invoices": cancelled, "from_city_ledger": round(brought_back, 2),
+	        "warnings": warnings}
 
 
 @frappe.whitelist()

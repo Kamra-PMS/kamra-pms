@@ -1299,6 +1299,24 @@ Safe to call again and again: opening the sheet writes nothing.
 | --- | --- | --- |
 | `reservation` | yes |  |
 
+### `kamra.api.reinstate_checkout`
+
+**POST** · roles: `Front Desk`, `Finance`
+
+Undo a checkout made by mistake, the same business day: before the
+night audit runs. Each bill closed at checkout has its invoice
+cancelled the auditable way (the number goes to the Cancelled Invoice
+register; where the country needs it, a credit note is issued), a
+company bill comes back off the company's account, and the guest is
+in house again in the same room. Refused once the night audit has run,
+when someone else is in the room, or when the company has paid.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `reservation` | yes |  |
+| `reason` | yes |  |
+| `pin` | no | `None` |
+
 ### `kamra.api.check_out`
 
 **GET/POST** · roles: `Front Desk`, `Night Auditor`, `Kamra Agent`

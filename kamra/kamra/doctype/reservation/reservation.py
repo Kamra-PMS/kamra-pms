@@ -772,7 +772,9 @@ class Reservation(Document):
 		old_status = previous.status if previous else None
 		if self.status == old_status:
 			return
-		if self.status == "Checked In":
+		if self.status == "Checked In" and old_status == "Checked Out":
+			self.handle_reinstate()
+		elif self.status == "Checked In":
 			self.handle_check_in()
 		elif self.status == "Checked Out":
 			self.handle_check_out()
@@ -820,8 +822,25 @@ class Reservation(Document):
 		transfer_advances_to_guest(self.name)
 		self.log_action("check_in", minutes_saved=10)
 
+	def handle_reinstate(self):
+		"""Back in house after a checkout undone the same day: the rooms are
+		occupied again and the checkout clean is dropped. The folios stay as they are (kamra.api.reinstate_checkout
+		reopened them)."""
+		self.db_set({"actual_check_out": None, "check_out_business_date": None},
+		            update_modified=False)
+		# occupied again; it stays Dirty (the guest used it) for the next service
+		for room in self._occupied_rooms(checking_in=False):
+			frappe.db.set_value("Room", room, "occupancy_status", "Occupied")
+		for task in frappe.get_all("Housekeeping Task", pluck="name", filters={
+				"reservation": self.name, "task_type": "Checkout Clean",
+				"status": ("in", ["Pending", "In Progress"])}):
+			frappe.delete_doc("Housekeeping Task", task, ignore_permissions=True)
+
 	def handle_check_out(self):
-		self.db_set("actual_check_out", now_datetime(), update_modified=False)
+		from kamra.business_date import get_business_date
+		self.db_set({"actual_check_out": now_datetime(),
+		             "check_out_business_date": get_business_date(self.property)},
+		            update_modified=False)
 		from kamra.folio import post_remaining_nights
 		from kamra.ledger import transfer_advances_to_guest
 
