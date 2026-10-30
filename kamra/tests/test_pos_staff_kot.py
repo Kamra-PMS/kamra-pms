@@ -67,13 +67,13 @@ class PosStaffKotTestCase(AuditTestCase):
 		self.assertNotIn("@", served)
 
 		pos.set_waiter(o["order"], "Meena")
-		frappe.set_user(captain)
+		frappe.set_user(captain)  # nosemgrep: frappe-setuser -- test fixture
 		try:
 			from kamra import cashier
 			cashier.open_session(PROP_A, 0)
 			pos.pay_order(o["order"], "Cash")
 		finally:
-			frappe.set_user("Administrator")
+			frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- test fixture
 		name = frappe.utils.get_fullname(captain)
 		self.assertEqual(frappe.db.get_value("POS Order", o["order"], "settled_by"), captain)
 		bill = pos.bill_data(o["order"])
@@ -183,11 +183,11 @@ class PosStaffKotTestCase(AuditTestCase):
 
 		# the till lists it; only Finance or an admin changes it
 		desk = ensure_user("ut.kot.desk@example.com", ["Front Desk"])
-		frappe.set_user(desk)
+		frappe.set_user(desk)  # nosemgrep: frappe-setuser -- test fixture
 		try:
 			self.assertFalse(pos.outlet_waiters(self.outlet)["can_edit"])
 			self.assertIn("Asha", pos.waiters(self.outlet))
 			with self.assertRaises(frappe.PermissionError):
 				pos.save_outlet_waiter(self.outlet, "Sneaky")
 		finally:
-			frappe.set_user("Administrator")
+			frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- test fixture

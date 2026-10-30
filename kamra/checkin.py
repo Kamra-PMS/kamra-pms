@@ -799,8 +799,9 @@ def log_checkin_requests(reservation: str, requests=None, note: str | None = Non
 	# charges do, and the step record below keeps who did it
 	from kamra.authz import act_as
 	from kamra.install import AGENT_EMAIL
-	as_agent = not (frappe.has_permission("Folio", "write")
-	                and frappe.has_permission("Service Ticket", "create"))
+	can_bill = frappe.has_permission("Folio", "write")
+	can_ticket = frappe.has_permission("Service Ticket", "create")
+	as_agent = not (can_bill and can_ticket)
 	with act_as(AGENT_EMAIL) if as_agent else nullcontext():
 		for key in requests:
 			subject, category, priority, charge_type = REQUEST_PRESETS[key]

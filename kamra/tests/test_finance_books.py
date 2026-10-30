@@ -73,29 +73,29 @@ class TestFinanceBooks(AuditTestCase):
 				for dt in ("Vendor Bill", "Vendor"):
 					self.assertFalse(frappe.has_permission(dt, ptype, user=user),
 					                 (dt, user, ptype))
-		frappe.set_user(FD)
+		frappe.set_user(FD)  # nosemgrep: frappe-setuser -- test fixture
 		with self.assertRaises(frappe.PermissionError):
 			self.bill()
-		frappe.set_user(FIN)
+		frappe.set_user(FIN)  # nosemgrep: frappe-setuser -- test fixture
 		self.bill(10)  # Finance enters
 		with self.assertRaises(frappe.PermissionError):
 			payables.approve_vendor_bill(b["name"])
 		with self.assertRaises(frappe.ValidationError):
 			payables.pay_vendor_bill(b["name"], 100)  # not approved yet
-		frappe.set_user("Administrator")
+		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- test fixture
 		payables.approve_vendor_bill(b["name"])
-		frappe.set_user(FIN)
+		frappe.set_user(FIN)  # nosemgrep: frappe-setuser -- test fixture
 		self.assertEqual(payables.pay_vendor_bill(b["name"], 100)["status"], "Part Paid")
-		frappe.set_user(FD)
+		frappe.set_user(FD)  # nosemgrep: frappe-setuser -- test fixture
 		with self.assertRaises(frappe.PermissionError):
 			payables.pay_vendor_bill(b["name"], 100)
-		frappe.set_user("Administrator")
+		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- test fixture
 		frappe.db.delete("User Permission", {"user": ADMIN})
 		frappe.get_doc({"doctype": "User Permission", "user": ADMIN,
 		                "allow": "Property", "for_value": PROP_B}).insert(
 			ignore_permissions=True)
 		frappe.clear_cache(user=ADMIN)
-		frappe.set_user(ADMIN)
+		frappe.set_user(ADMIN)  # nosemgrep: frappe-setuser -- test fixture
 		with self.assertRaises(frappe.PermissionError):
 			payables.approve_vendor_bill(b["name"])  # PROP_A's bill
 		with self.assertRaises(frappe.PermissionError):

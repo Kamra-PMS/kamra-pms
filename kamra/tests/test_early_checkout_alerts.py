@@ -136,13 +136,13 @@ class EarlyCheckoutTestCase(_Base):
 		self.setting("early_departure_fee", "One Night")
 		res = self.stay()
 		desk = ensure_user("ut-early-desk@example.com", ["Front Desk"])
-		frappe.set_user(desk)
+		frappe.set_user(desk)  # nosemgrep: frappe-setuser -- test fixture
 		with self.assertRaises(frappe.PermissionError):
 			api.early_departure(res.name, "Flight moved", fee="None")
 		from kamra.reports import _day_stats
 		before = _day_stats(PROP_A, TODAY, 10)
 		out = api.early_departure(res.name, "Flight moved")
-		frappe.set_user("Administrator")
+		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- test fixture
 		self.assertEqual(out["unused_nights"], 3)
 		self.assertEqual(out["amount"], 1000)
 		fee = [c for c in charges(res.name, "Early Departure") if "Early departure" in c.description]
@@ -205,9 +205,9 @@ class EarlyCheckoutTestCase(_Base):
 		self.setting("early_departure_fee", "All Nights")
 		res = self.stay()
 		fin = ensure_user("ut-early-fin@example.com", ["Finance"])
-		frappe.set_user(fin)
+		frappe.set_user(fin)  # nosemgrep: frappe-setuser -- test fixture
 		out = api.early_departure(res.name, "Complaint, GM waived", fee="None")
-		frappe.set_user("Administrator")
+		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- test fixture
 		self.assertEqual(out["amount"], 0)
 
 	def test_morning_before_the_audit_counts_last_night_as_slept(self):

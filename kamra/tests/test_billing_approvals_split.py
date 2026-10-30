@@ -103,7 +103,7 @@ class BillingApprovalsSplitTestCase(AuditTestCase):
 		folio = guest_folio(res.name)
 		api.add_folio_charge(folio, "Laundry", "UT Laundry", 500, gst_rate=0)
 
-		frappe.set_user(DESK)
+		frappe.set_user(DESK)  # nosemgrep: frappe-setuser -- test fixture
 		small = api.post_allowance(folio, 50, "UT stain")
 		self.assertNotIn("pending", small)  # under the threshold: posts
 		out = api.post_allowance(folio, 200, "UT late towels")
@@ -111,15 +111,15 @@ class BillingApprovalsSplitTestCase(AuditTestCase):
 		self.assertEqual(bal(folio), 450)  # the folio is untouched
 
 		# Finance is not the approver here
-		frappe.set_user(FINANCE)
+		frappe.set_user(FINANCE)  # nosemgrep: frappe-setuser -- test fixture
 		with self.assertRaises(frappe.PermissionError):
 			api.decide_allowance(out["request"], approve=1)
 
 		set_pin(GM, "2468")
-		frappe.set_user(GM)
+		frappe.set_user(GM)  # nosemgrep: frappe-setuser -- test fixture
 		self.assertTrue(api.allowance_requests(PROP_A)["can_decide"])
 		api.decide_allowance(out["request"], approve=1, pin="2468")
-		frappe.set_user("Administrator")
+		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- test fixture
 		self.assertEqual(bal(folio), 250)
 		self.assertEqual(ledger_net(folio), 250)
 		req = frappe.get_doc("Allowance Request", out["request"])
@@ -146,14 +146,14 @@ class BillingApprovalsSplitTestCase(AuditTestCase):
 		res = self.stay()
 		folio = guest_folio(res.name)
 		api.add_folio_charge(folio, "Laundry", "UT Laundry", 500, gst_rate=0)
-		frappe.set_user(DESK)
+		frappe.set_user(DESK)  # nosemgrep: frappe-setuser -- test fixture
 		out = api.post_allowance(folio, 100, "UT own")
-		frappe.set_user("Administrator")
+		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- test fixture
 		frappe.db.set_value("Allowance Request", out["request"], "requested_by", GM)
-		frappe.set_user(GM)
+		frappe.set_user(GM)  # nosemgrep: frappe-setuser -- test fixture
 		with self.assertRaisesRegex(frappe.PermissionError, "another manager"):
 			api.decide_allowance(out["request"], approve=1, pin="2468")
-		frappe.set_user("Administrator")
+		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- test fixture
 		self.assertEqual(bal(folio), 500)
 
 	def test_rejection_is_kept_with_who_and_why(self):
@@ -161,14 +161,14 @@ class BillingApprovalsSplitTestCase(AuditTestCase):
 		res = self.stay()
 		folio = guest_folio(res.name)
 		api.add_folio_charge(folio, "Laundry", "UT Laundry", 500, gst_rate=0)
-		frappe.set_user(DESK)
+		frappe.set_user(DESK)  # nosemgrep: frappe-setuser -- test fixture
 		out = api.post_allowance(folio, 10, "UT goodwill")
 		self.assertTrue(out["pending"])  # 0 = every allowance
-		frappe.set_user(FINANCE)
+		frappe.set_user(FINANCE)  # nosemgrep: frappe-setuser -- test fixture
 		with self.assertRaisesRegex(frappe.ValidationError, "Say why"):
 			api.decide_allowance(out["request"], approve=0)
 		api.decide_allowance(out["request"], approve=0, note="UT not ours")
-		frappe.set_user("Administrator")
+		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- test fixture
 		self.assertEqual(bal(folio), 500)
 		req = frappe.get_doc("Allowance Request", out["request"])
 		self.assertEqual((req.status, req.decided_by, req.decision_note),
@@ -182,13 +182,13 @@ class BillingApprovalsSplitTestCase(AuditTestCase):
 		res = self.stay()
 		folio = guest_folio(res.name)
 		api.add_folio_charge(folio, "Laundry", "UT Laundry", 500, gst_rate=0)
-		frappe.set_user(DESK)
+		frappe.set_user(DESK)  # nosemgrep: frappe-setuser -- test fixture
 		out = api.post_allowance(folio, 100, "UT noisy room")
 		self.assertIn(GM, [a["user"] for a in api.allowance_approvers(PROP_A)])
 		with self.assertRaises(frappe.ValidationError):
 			api.decide_allowance(out["request"], supervisor=GM, supervisor_pin="0000")
 		api.decide_allowance(out["request"], supervisor=GM, supervisor_pin="2468")
-		frappe.set_user("Administrator")
+		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- test fixture
 		self.assertEqual(bal(folio), 400)
 		self.assertEqual(frappe.db.get_value("Allowance Request", out["request"],
 		                                     "decided_by"), GM)
@@ -214,9 +214,9 @@ class BillingApprovalsSplitTestCase(AuditTestCase):
 		res = self.stay()
 		folio = guest_folio(res.name)
 		api.add_folio_charge(folio, "Laundry", "UT Laundry", 500, gst_rate=0)
-		frappe.set_user(DESK)
+		frappe.set_user(DESK)  # nosemgrep: frappe-setuser -- test fixture
 		out = api.post_allowance(folio, 100, "UT rest bypass")
-		frappe.set_user("Administrator")
+		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- test fixture
 		req = frappe.get_doc("Allowance Request", out["request"])
 		req.amount = 400  # what was asked for is fixed
 		with self.assertRaises(frappe.ValidationError):
@@ -243,7 +243,7 @@ class BillingApprovalsSplitTestCase(AuditTestCase):
 		res = self.stay()
 		folio = guest_folio(res.name)
 		api.add_folio_charge(folio, "Laundry", "UT Laundry", 500, gst_rate=0)
-		frappe.set_user(DESK)
+		frappe.set_user(DESK)  # nosemgrep: frappe-setuser -- test fixture
 		self.assertNotIn("pending", api.post_allowance(folio, 20, "", reason_code="ADJ-RATE"))
 		self.assertTrue(api.post_allowance(folio, 20, "UT", reason_code="ADJ-COMP")["pending"])
 		with self.assertRaisesRegex(frappe.ValidationError, "Adjust"):
@@ -255,13 +255,13 @@ class BillingApprovalsSplitTestCase(AuditTestCase):
 		res = self.stay()
 		folio = guest_folio(res.name)
 		api.add_folio_charge(folio, "Laundry", "UT Laundry", 500, gst_rate=0)
-		frappe.set_user(DESK)
+		frappe.set_user(DESK)  # nosemgrep: frappe-setuser -- test fixture
 		asked = api.post_allowance(folio, 30, "UT asked")
 		refused = api.post_allowance(folio, 40, "UT refused")
-		frappe.set_user("Administrator")
+		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- test fixture
 		# asking gives no number
 		self.assertFalse(frappe.db.get_value("Allowance Request", asked["request"], "serial"))
-		frappe.set_user(GM)
+		frappe.set_user(GM)  # nosemgrep: frappe-setuser -- test fixture
 		api.decide_allowance(refused["request"], approve=0, note="UT no")
 		with self.assertRaises(frappe.ValidationError):  # approving takes the PIN
 			api.decide_allowance(asked["request"], approve=1)
@@ -270,7 +270,7 @@ class BillingApprovalsSplitTestCase(AuditTestCase):
 		with self.assertRaises(frappe.ValidationError):
 			api.post_allowance(folio, 20, "UT own")
 		own = api.post_allowance(folio, 20, "UT own", pin="2468")
-		frappe.set_user("Administrator")
+		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- test fixture
 		self.assertFalse(frappe.db.get_value("Allowance Request", refused["request"], "serial"))
 		code = frappe.db.get_value("Property", PROP_A, "short_code")
 		self.assertRegex(first, rf"^ALW-{code}-\d\d-\d{{5}}$")
@@ -318,12 +318,12 @@ class BillingApprovalsSplitTestCase(AuditTestCase):
 		self.assertNotEqual(b, first)
 
 		# a new short code starts a new series: no number comes back
-		frappe.set_user("Administrator")
+		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- test fixture
 		prop = frappe.get_doc("Property", PROP_A)
 		prop.short_code = "utz9"
 		prop.save(ignore_permissions=True)
 		self.assertEqual(prop.short_code, "UTZ9")
-		frappe.set_user(GM)
+		frappe.set_user(GM)  # nosemgrep: frappe-setuser -- test fixture
 		new = api.post_allowance(folio, 5, "UT new code", pin="2468")["serial"]
 		self.assertTrue(new.startswith("ALW-UTZ9-"), new)
 		self.assertNotIn(new, (first, own["serial"]))
@@ -364,7 +364,7 @@ class BillingApprovalsSplitTestCase(AuditTestCase):
 	def test_staff_job_title_set_in_staff_and_access(self):
 		from kamra import staff
 		ensure_user("ut.bill.duty@test.local", ["Front Desk"])
-		frappe.set_user(GM)
+		frappe.set_user(GM)  # nosemgrep: frappe-setuser -- test fixture
 		staff.save_staff(PROP_A, "ut.bill.duty@test.local", "Duty Person", ["Front Desk"],
 		                 job_title=" Duty Manager ")
 		row = next(r for r in staff.list_staff(PROP_A) if r["user"] == "ut.bill.duty@test.local")
@@ -379,7 +379,7 @@ class BillingApprovalsSplitTestCase(AuditTestCase):
 		with self.assertRaises(frappe.PermissionError):
 			staff.save_staff(PROP_A, GM, "UT General", ["Front Desk"], "all")
 		self.assertEqual(frappe.db.get_value("User", GM, "kamra_job_title") or "", "")
-		frappe.set_user("Administrator")
+		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- test fixture
 
 	def test_staff_cannot_retitle_themselves_from_their_profile(self):
 		from frappe.client import set_value
@@ -387,13 +387,13 @@ class BillingApprovalsSplitTestCase(AuditTestCase):
 		ensure_user_fields()
 		desk = ensure_user("ut.bill.selftitle@test.local", ["Front Desk"])
 		frappe.db.set_value("User", desk, "kamra_job_title", "Receptionist")
-		frappe.set_user(desk)
+		frappe.set_user(desk)  # nosemgrep: frappe-setuser -- test fixture
 		try:
 			set_value("User", desk, "kamra_job_title", "General Manager")
 		except frappe.PermissionError:
 			pass
 		finally:
-			frappe.set_user("Administrator")
+			frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- test fixture
 		self.assertEqual(frappe.db.get_value("User", desk, "kamra_job_title"), "Receptionist")
 
 	def test_new_property_starts_with_approval_on(self):
@@ -553,7 +553,7 @@ class BillingApprovalsSplitTestCase(AuditTestCase):
 		self.assertTrue(acct.name)
 		res = self.stay(company=self.corp, booking_type="Corporate")
 		folio_mod.post_room_night(res, d(-1))
-		frappe.set_user(DESK)
+		frappe.set_user(DESK)  # nosemgrep: frappe-setuser -- test fixture
 		with self.assertRaises(CreditBlocked):
 			api.change_stay_company(res.name, "UT", company=self.corp_b)
 
