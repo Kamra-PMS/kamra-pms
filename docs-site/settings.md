@@ -90,6 +90,7 @@ API call and AI tool checks them on the server.
 | Revenue Manager | Rates, seasons, guardrails, channels, the booking engine, banquet sales |
 | Finance | Billing, ledgers, night audit, exports, tax and cashier controls |
 | Night Auditor | End of Day: arrivals, departures, cashier closure, the audit pack |
+| F&B Manager | Outlets, the menu, waiters and tables, the kitchen display, F&B reports and settings, approving POS voids. No folios, till or finance |
 | Housekeeping Supervisor | The room board, inspections, task deadlines, laundry pricing |
 | Housekeeping | Their own tasks, room status, lost & found, usually on the phone app |
 

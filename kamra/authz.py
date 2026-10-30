@@ -372,12 +372,15 @@ def require_cashier_pin(property: str, pin=None):
 # has already started, say). The same roles the reason-code supervisor
 # rule accepts (kamra.ledger.require_reason).
 SUPERVISOR_ROLES = ("Hotel Admin", "Finance", "System Manager", "Administrator")
+# At the POS only (void approvals): the F&B Manager runs the floor too, but
+# never approves folio corrections or sees full guest phones.
+POS_SUPERVISOR_ROLES = SUPERVISOR_ROLES + ("F&B Manager",)
 
 
-def is_supervisor(user: str | None = None) -> bool:
+def is_supervisor(user: str | None = None, roles=SUPERVISOR_ROLES) -> bool:
 	user = user or frappe.session.user
 	return user == "Administrator" or bool(
-		set(SUPERVISOR_ROLES) & set(frappe.get_roles(user)))
+		set(roles) & set(frappe.get_roles(user)))
 
 
 def supervisors_for(property: str, roles=SUPERVISOR_ROLES) -> list[dict]:
@@ -399,7 +402,8 @@ def supervisors_for(property: str, roles=SUPERVISOR_ROLES) -> list[dict]:
 	return out
 
 
-def verify_supervisor(property: str, supervisor: str | None, pin) -> str:
+def verify_supervisor(property: str, supervisor: str | None, pin,
+                      roles=SUPERVISOR_ROLES) -> str:
 	"""A supervisor approves at someone else's till with their user id and
 	their own cashier PIN. The PIN is always required here, whatever the
 	property's PIN setting, because it is the only proof the supervisor was
@@ -410,7 +414,7 @@ def verify_supervisor(property: str, supervisor: str | None, pin) -> str:
 		frappe.throw("SUPERVISOR_REQUIRED: pick the supervisor who approves this.",
 		             frappe.PermissionError)
 	if not frappe.db.get_value("User", supervisor, "enabled") or \
-			not is_supervisor(supervisor):
+			not is_supervisor(supervisor, roles):
 		frappe.throw(f"{supervisor} cannot approve this. It needs a Hotel "
 		             "Admin or Finance user.", frappe.PermissionError)
 	allowed = restricted_properties(supervisor)

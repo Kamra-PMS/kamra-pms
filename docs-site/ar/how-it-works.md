@@ -196,7 +196,7 @@ flowchart LR
 ## الدخول والأدوار ونطاق العقار
 
 الأدوار (أمثلة): Front Desk، وRevenue Manager، وFinance، وHousekeeping،
-وHotel Admin، وSystem Manager، وKamra Agent، وNight Auditor.
+وHotel Admin، وSystem Manager، وKamra Agent، وNight Auditor، وF&B Manager.
 
 القيود موجودة على نقطة النهاية (`@require_roles` / `_kamra_roles`)، وليس
 على DocPerms فقط. التثبيتات متعددة العقارات تستخدم Property User

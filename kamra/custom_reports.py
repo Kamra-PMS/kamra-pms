@@ -18,6 +18,7 @@ from frappe import _
 from frappe.utils import add_days, date_diff, getdate, now_datetime, nowdate
 
 from kamra.authz import require_roles
+from kamra.pos import _full_name, _served_by
 from kamra.crs import assert_property_access
 
 MAX_RANGE_DAYS = 92
@@ -295,7 +296,7 @@ DATASETS: dict[str, Dataset] = {
 		"label": "POS orders",
 		"description": "Restaurant / outlet orders by creation date.",
 		"module": "fnb",
-		"roles": ("Finance", "Hotel Admin", "Kamra Agent", "Front Desk"),
+		"roles": ("Finance", "Hotel Admin", "Kamra Agent", "Front Desk", "F&B Manager"),
 		"date_field": "creation",
 		"needs_range": True,
 		"columns": [
@@ -307,6 +308,8 @@ DATASETS: dict[str, Dataset] = {
 			_col("room", "Room"),
 			_col("covers", "Covers", "number"),
 			_col("grand_total", "Total", "number"),
+			_col("served_by", "Served by"),
+			_col("cashier", "Cashier"),
 		],
 	},
 	"pos_items": {
@@ -314,7 +317,7 @@ DATASETS: dict[str, Dataset] = {
 		"label": "POS items",
 		"description": "Sold menu items by order date (voids excluded).",
 		"module": "fnb",
-		"roles": ("Finance", "Hotel Admin", "Kamra Agent", "Front Desk"),
+		"roles": ("Finance", "Hotel Admin", "Kamra Agent", "Front Desk", "F&B Manager"),
 		"date_field": "creation",
 		"needs_range": True,
 		"columns": [
@@ -325,6 +328,33 @@ DATASETS: dict[str, Dataset] = {
 			_col("rate", "Rate", "number"),
 			_col("amount", "Amount", "number"),
 			_col("order", "Order"),
+		],
+	},
+	"kitchen_times": {
+		"id": "kitchen_times",
+		"label": "Kitchen times",
+		"description": "Each kitchen line: minutes from order to start, start to plated, and plated to pickup.",
+		"module": "fnb",
+		"roles": ("Finance", "Hotel Admin", "Kamra Agent", "Front Desk", "F&B Manager"),
+		"date_field": "creation",
+		"needs_range": True,
+		"averages": ("wait_minutes", "cook_minutes", "pass_minutes", "total_minutes"),
+		"columns": [
+			_col("order", "Order"),
+			_col("kot_no", "KOT", "number"),
+			_col("outlet", "Outlet"),
+			_col("posting_date", "Date", "date"),
+			_col("item_name", "Item"),
+			_col("qty", "Qty", "number"),
+			_col("served_by", "Served by"),
+			_col("fired_at", "Ordered at"),
+			_col("started_at", "Started at"),
+			_col("prepared_at", "Plated at"),
+			_col("picked_up_at", "Picked up at"),
+			_col("wait_minutes", "Order to start minutes", "number"),
+			_col("cook_minutes", "Start to plated minutes", "number"),
+			_col("pass_minutes", "Plated to pickup minutes", "number"),
+			_col("total_minutes", "Order to pickup minutes", "number"),
 		],
 	},
 	"service_tickets": {
@@ -511,8 +541,8 @@ PACKS: dict[str, dict] = {
 	},
 	"fnb": {
 		"label": "F&B pack",
-		"description": "Sales and covers by outlet, orders by status, and "
-		               "items sold by menu name.",
+		"description": "Sales and covers by outlet, orders by status, "
+		               "items sold by menu name, and kitchen turnaround.",
 		"sections": [
 			{"title": "Sales by outlet", "dataset": "pos_orders",
 			 "columns": ["outlet", "covers", "grand_total"], "group_by": ["outlet"]},
@@ -520,6 +550,9 @@ PACKS: dict[str, dict] = {
 			 "columns": ["status", "covers", "grand_total"], "group_by": ["status"]},
 			{"title": "Items by menu", "dataset": "pos_items",
 			 "columns": ["item_name", "qty", "amount"], "group_by": ["item_name"]},
+			{"title": "Kitchen turnaround", "dataset": "kitchen_times",
+			 "columns": ["outlet", "qty", "wait_minutes", "cook_minutes",
+			             "pass_minutes", "total_minutes"], "group_by": ["outlet"]},
 		],
 	},
 	"engineering": {
@@ -826,7 +859,7 @@ def _fetch_pos_orders(property: str, from_date: str, to_date: str,
 		},
 		fields=[
 			"name", "outlet", "status", "room", "customer_name", "guest",
-			"guests", "order_total", "creation",
+			"guests", "order_total", "creation", "captain", "waiter", "settled_by",
 		],
 		order_by="creation desc",
 		limit_page_length=MAX_ROWS,
@@ -842,8 +875,46 @@ def _fetch_pos_orders(property: str, from_date: str, to_date: str,
 			"room": r.get("room"),
 			"covers": int(r.get("guests") or 0),
 			"grand_total": float(r.get("order_total") or 0),
+			"served_by": _served_by(r) or "",
+			"cashier": _full_name(r.settled_by) or "",
 		})
 	return out
+
+
+def _fetch_kitchen_times(property: str, from_date: str, to_date: str,
+                         **_) -> list[dict]:
+	"""Fired lines with their kitchen stamps. A step nobody tapped (no
+	Start on an auto-KOT outlet is filled at fire; no Picked up) stays
+	blank rather than guessed."""
+	rows = frappe.db.sql(
+		"""
+		SELECT po.name AS `order`, po.kot_no, po.outlet,
+		       DATE(po.creation) AS posting_date, po.captain, po.waiter,
+		       COALESCE(poi.item_name, poi.menu_item) AS item_name, poi.qty,
+		       poi.fired_at, poi.started_at, poi.prepared_at, poi.picked_up_at
+		FROM `tabPOS Order Item` poi
+		JOIN `tabPOS Order` po ON poi.parent = po.name
+		WHERE po.property = %(p)s
+		  AND po.creation BETWEEN %(f)s AND %(t)s
+		  AND IFNULL(poi.voided, 0) = 0
+		  AND poi.fired_at IS NOT NULL
+		ORDER BY po.creation DESC, poi.idx
+		LIMIT %(lim)s
+		""",
+		{"p": property, "f": from_date, "t": f"{to_date} 23:59:59",
+		 "lim": MAX_ROWS},
+		as_dict=True,
+	)
+	for r in rows:
+		r["served_by"] = _served_by(r) or ""
+		r["wait_minutes"] = _elapsed_minutes(r.fired_at, r.started_at)
+		r["cook_minutes"] = _elapsed_minutes(r.started_at, r.prepared_at)
+		r["pass_minutes"] = _elapsed_minutes(r.prepared_at, r.picked_up_at)
+		r["total_minutes"] = _elapsed_minutes(r.fired_at, r.picked_up_at)
+		for k in ("fired_at", "started_at", "prepared_at", "picked_up_at"):
+			r[k] = str(r[k])[:16] if r[k] else ""
+		del r["captain"], r["waiter"]
+	return rows
 
 
 def _elapsed_minutes(start, end) -> float | None:
@@ -1087,6 +1158,7 @@ FETCHERS: dict[str, Callable[..., list[dict]]] = {
 	"lost_found": _fetch_lost_found,
 	"pos_orders": _fetch_pos_orders,
 	"pos_items": _fetch_pos_items,
+	"kitchen_times": _fetch_kitchen_times,
 	"service_tickets": _fetch_service_tickets,
 	"laundry_orders": _fetch_laundry_orders,
 	"shift_handover": _fetch_shift_handover,
@@ -1496,7 +1568,7 @@ def _pack_html(pack: dict, lang: str = "en") -> str:
 
 @frappe.whitelist()
 @require_roles("Front Desk", "Finance", "Hotel Admin", "Revenue Manager",
-               "Housekeeping", "Kamra Agent", "Night Auditor")
+               "Housekeeping", "Kamra Agent", "Night Auditor", "F&B Manager")
 def list_report_datasets(property: str):
 	"""Whitelisted datasets the current user may run on this property."""
 	assert_property_access(property)
@@ -1520,7 +1592,7 @@ def list_report_datasets(property: str):
 
 @frappe.whitelist()
 @require_roles("Front Desk", "Finance", "Hotel Admin", "Revenue Manager",
-               "Housekeeping", "Kamra Agent", "Night Auditor")
+               "Housekeeping", "Kamra Agent", "Night Auditor", "F&B Manager")
 def list_report_packs(property: str):
 	"""Department packs with the sections this user may run here."""
 	assert_property_access(property)
@@ -1536,7 +1608,7 @@ def list_report_packs(property: str):
 
 @frappe.whitelist()
 @require_roles("Front Desk", "Finance", "Hotel Admin", "Revenue Manager",
-               "Housekeeping", "Kamra Agent", "Night Auditor")
+               "Housekeeping", "Kamra Agent", "Night Auditor", "F&B Manager")
 def run_report_pack(property: str, pack: str, from_date: str | None = None,
                     to_date: str | None = None, format: str | None = "json",
                     lang: str | None = "en", compare: int | str | None = 1):
@@ -1577,7 +1649,7 @@ def run_report_pack(property: str, pack: str, from_date: str | None = None,
 
 @frappe.whitelist()
 @require_roles("Front Desk", "Finance", "Hotel Admin", "Revenue Manager",
-               "Housekeeping", "Kamra Agent", "Night Auditor")
+               "Housekeeping", "Kamra Agent", "Night Auditor", "F&B Manager")
 def list_custom_reports(property: str):
 	"""Saved reports visible to this user on the property."""
 	assert_property_access(property)
@@ -1629,7 +1701,7 @@ def _assert_can_edit_doc(doc):
 
 @frappe.whitelist()
 @require_roles("Front Desk", "Finance", "Hotel Admin", "Revenue Manager",
-               "Housekeeping", "Kamra Agent", "Night Auditor")
+               "Housekeeping", "Kamra Agent", "Night Auditor", "F&B Manager")
 def get_custom_report(name: str, property: str | None = None):
 	"""Full saved definition for the builder."""
 	doc = _load_report(name, property)
@@ -1661,7 +1733,7 @@ def get_custom_report(name: str, property: str | None = None):
 
 @frappe.whitelist(methods=["POST"])
 @require_roles("Finance", "Hotel Admin", "System Manager", "Front Desk",
-               "Revenue Manager", "Housekeeping", "Kamra Agent", "Night Auditor")
+               "Revenue Manager", "Housekeeping", "Kamra Agent", "Night Auditor", "F&B Manager")
 def save_custom_report(
 	property: str,
 	title: str,
@@ -1739,7 +1811,7 @@ def save_custom_report(
 
 @frappe.whitelist(methods=["POST"])
 @require_roles("Finance", "Hotel Admin", "System Manager", "Front Desk",
-               "Revenue Manager", "Housekeeping", "Kamra Agent", "Night Auditor")
+               "Revenue Manager", "Housekeeping", "Kamra Agent", "Night Auditor", "F&B Manager")
 def delete_custom_report(name: str, property: str | None = None):
 	"""Delete a saved report the user can edit."""
 	doc = _load_report(name, property)
@@ -1751,7 +1823,7 @@ def delete_custom_report(name: str, property: str | None = None):
 
 @frappe.whitelist()
 @require_roles("Front Desk", "Finance", "Hotel Admin", "Revenue Manager",
-               "Housekeeping", "Kamra Agent", "Night Auditor")
+               "Housekeeping", "Kamra Agent", "Night Auditor", "F&B Manager")
 def run_custom_report(
 	property: str,
 	dataset: str | None = None,
@@ -1823,7 +1895,7 @@ def _filename(payload: dict, ext: str) -> str:
 
 @frappe.whitelist(methods=["POST"])
 @require_roles("Finance", "Hotel Admin", "System Manager", "Front Desk",
-               "Revenue Manager", "Housekeeping", "Kamra Agent", "Night Auditor")
+               "Revenue Manager", "Housekeeping", "Kamra Agent", "Night Auditor", "F&B Manager")
 def email_custom_report(
 	property: str,
 	recipients: str,

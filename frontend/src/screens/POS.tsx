@@ -15,6 +15,7 @@ import { useNavigate } from "react-router-dom"
 import { call, getCurrentProperty } from "../lib/api"
 import { subscribeRealtime } from "../lib/realtime"
 import { serverError } from "../lib/resource"
+import type { OutletWaiterList } from "../components/OutletWaiters"
 import { useCashierAuth } from "../lib/cashierAuth"
 import { printThermal, kotHtml, billHtml, PRINT_DIALOG_EVENT, type BillData, type KotLine } from "../lib/thermal"
 import { useFloorFullscreen } from "../lib/kiosk"
@@ -113,6 +114,8 @@ interface OrderItem {
   instructions: string | null
   kot_status: string
   voided: number
+  started_at?: string | null
+  picked_up_at?: string | null
 }
 interface KotTicket {
   kot_no: number | null
@@ -156,6 +159,9 @@ interface Detail {
   kitchen_lines?: number
   /** the signed-in user may approve voids of food the kitchen has */
   can_approve?: 0 | 1
+  waiter?: string | null
+  /** the waiter, else the captain's name */
+  served_by?: string | null
 }
 
 type OrderType = "Dine In" | "Room Service" | "Takeaway" | "Delivery"
@@ -224,6 +230,9 @@ export default function POS() {
   const [postRoom, setPostRoom] = useState("") // settle sheet: charge a running bill to a room
   const [table, setTable] = useState("")
   const [guests, setGuests] = useState("")
+  const [waiter, setWaiter] = useState("")
+  const [waiterNames, setWaiterNames] = useState<string[]>([])
+  const [staffList, setStaffList] = useState<OutletWaiterList | null>(null)
   const [custName, setCustName] = useState("")
   const [custPhone, setCustPhone] = useState("")
   const [custAddr, setCustAddr] = useState("")
@@ -302,6 +311,21 @@ export default function POS() {
       .catch((e) => setError(serverError(e)))
   }, [outlet])
   useEffect(loadMenu, [loadMenu])
+  const loadWaiters = useCallback(() => {
+    if (!outlet) return
+    call<string[]>("kamra.pos.waiters", { outlet }).then(setWaiterNames).catch(() => {})
+    call<OutletWaiterList>("kamra.pos.outlet_waiters", { outlet }).then(setStaffList).catch(() => {})
+  }, [outlet])
+  useEffect(loadWaiters, [loadWaiters])
+  // a manager can put a typed name on the outlet's waiter list
+  const canAddWaiter = !!staffList?.can_edit && !!waiter.trim() &&
+    !staffList.waiters.some((w) => w.active && w.waiter_name.toLowerCase() === waiter.trim().toLowerCase())
+  async function addWaiterToList() {
+    await act(async () => {
+      await call("kamra.pos.save_outlet_waiter", { outlet, waiter_name: waiter.trim(), active: 1 })
+      loadWaiters()
+    })
+  }
 
   const loadOpen = useCallback(() => {
     if (!outlet) return
@@ -333,6 +357,7 @@ export default function POS() {
     setSelected(null); setDetail(null); setRoom(""); setPostRoom(""); resetPanel()
     setTable(atTable || ""); setCustomTable(false)
     setGuests(""); setCustName(""); setCustPhone(""); setCustAddr("")
+    setWaiter("")
     setDraftGuest(null)
     if (atTable) setOrderType("Dine In")
     setTablesOpen(false)
@@ -372,6 +397,22 @@ export default function POS() {
     if (opts?.popup) setBillsPopupOpen(true)
     const d = await call<Detail>("kamra.pos.order_detail", { order: name })
     setDetail(d)
+  }
+  // the waiter box follows the bill that is open
+  useEffect(() => { setWaiter(detail?.waiter || "") }, [detail?.name]) // eslint-disable-line react-hooks/exhaustive-deps
+  async function saveWaiter() {
+    if (!selected || !detail || waiter.trim() === (detail.waiter || "")) return
+    await act(async () => {
+      await call("kamra.pos.set_waiter", { order: selected, waiter: waiter.trim() })
+      await reloadDetail()
+    })
+  }
+  async function pickedUp(row?: string) {
+    if (!selected) return
+    await act(async () => {
+      await call("kamra.pos.mark_picked_up", { order: selected, item_row: row })
+      await reloadDetail()
+    })
   }
   async function reloadDetail() {
     if (!selected) return
@@ -490,6 +531,7 @@ export default function POS() {
       room: orderType === "Room Service" || orderType === "Dine In" ? room || null : null,
       table_no: orderType === "Dine In" ? table || null : null,
       guests: guests || null,
+      waiter: waiter.trim() || null,
       customer_name: orderType === "Takeaway" || orderType === "Delivery" ? custName || null : null,
       customer_phone: orderType === "Takeaway" || orderType === "Delivery" ? custPhone || null : null,
       delivery_address: orderType === "Delivery" ? custAddr || null : null,
@@ -1452,6 +1494,27 @@ export default function POS() {
                 </button>
               )
             })()}
+            {(!detail || (detail.status !== "Delivered" && detail.status !== "Cancelled")) && (
+              <>
+                <div className="flex items-center gap-1.5">
+                <input list="pos-waiters" className={inputCls + " !py-1 text-xs"} value={waiter}
+                  aria-label={t("Waiter")}
+                  placeholder={detail?.served_by ? t("Waiter: {name}", { name: detail.served_by }) : t("Waiter (optional)")}
+                  onChange={(e) => setWaiter(e.target.value)}
+                  onBlur={() => { void saveWaiter() }}
+                  onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur() }} />
+                <datalist id="pos-waiters">
+                  {waiterNames.map((n) => <option key={n} value={n} />)}
+                </datalist>
+                {canAddWaiter && (
+                  <button type="button" onClick={() => { void addWaiterToList() }}
+                    className="shrink-0 rounded-md border border-zinc-300 px-2 py-1 text-[11px] font-semibold text-zinc-600 hover:border-brand-500 hover:text-brand-700">
+                    {t("Add to list")}
+                  </button>
+                )}
+                </div>
+              </>
+            )}
           </div>
 
           {/* row 2 - THIS is the cart: tall scroll, large readable lines */}
@@ -1542,10 +1605,20 @@ export default function POS() {
                                 {Math.round(it.qty)}× {it.item_name}
                               </div>
                               {!it.voided && (
-                                <div className="mt-0.5 text-xs text-zinc-500">
-                                  {it.kot_status === "New" ? t("not sent")
-                                    : it.kot_status === "Prepared" ? t("Prepared") : t("In kitchen")}
-                                  {it.instructions ? ` · ${it.instructions}` : ""}
+                                <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-xs text-zinc-500">
+                                  <span>
+                                    {it.kot_status === "New" ? t("not sent")
+                                      : it.kot_status === "Prepared"
+                                        ? (it.picked_up_at ? t("Picked up {time}", { time: it.picked_up_at.slice(11, 16) }) : t("Ready at the pass"))
+                                        : it.started_at ? t("Cooking") : t("In kitchen")}
+                                    {it.instructions ? ` · ${it.instructions}` : ""}
+                                  </span>
+                                  {!splitMode && it.kot_status === "Prepared" && !it.picked_up_at && detail.status !== "Cancelled" && (
+                                    <button type="button" disabled={busy} onClick={() => { void pickedUp(it.row) }}
+                                      className="rounded-full border border-brand-300 bg-brand-50 px-2 py-0.5 text-[11px] font-semibold text-brand-700 hover:bg-brand-100">
+                                      {t("Picked up")}
+                                    </button>
+                                  )}
                                 </div>
                               )}
                             </div>

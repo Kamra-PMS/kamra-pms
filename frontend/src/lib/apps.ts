@@ -194,7 +194,7 @@ export const APPS: AppDef[] = [
     icon: UtensilsCrossed,
     tint: APP_TILE,
     description: "Restaurant POS, kitchen display, the menu and kitchen stock.",
-    roles: ["Front Desk", "Finance", "Hotel Admin", "System Manager", "Administrator"],
+    roles: ["Front Desk", "Finance", "F&B Manager", "Hotel Admin", "System Manager", "Administrator"],
     items: [
       { to: "/pos", label: "Restaurant POS", icon: UtensilsCrossed },
       { to: "/pos-dashboard", label: "F&B Dashboard", icon: TrendingUp },
@@ -206,8 +206,9 @@ export const APPS: AppDef[] = [
       { to: "/outlets", label: "Outlets", icon: Store },
       { to: "/printers", label: "Printers", icon: Printer,
         keywords: ["Kitchen printers", "KOT", "Print station", "Thermal"] },
+      { to: "/reports", label: "Reports", icon: ChartLine },
       { to: "/settings/fnb", label: "Settings", icon: SettingsIcon,
-        roles: ["Finance", "Hotel Admin", "System Manager", "Administrator"] },
+        roles: ["Finance", "F&B Manager", "Hotel Admin", "System Manager", "Administrator"] },
     ],
   },
   {

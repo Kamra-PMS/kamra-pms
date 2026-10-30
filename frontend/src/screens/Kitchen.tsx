@@ -33,6 +33,7 @@ interface KotItem {
   allergens: string | null
   allergy_hits: string[]
   fired_at: string | null
+  started_at: string | null
   prepared_at: string | null
   void_reason: string | null
 }
@@ -48,6 +49,8 @@ interface KotOrder {
   order_type: string | null
   guests: number | null
   captain: string | null
+  /** the waiter on the bill, else the captain's name */
+  served_by: string | null
   order_total: number | null
   accepted_at: string | null
   held_courses: string[]
@@ -101,18 +104,27 @@ function statusWord(secs: number | null): string {
   return m >= LATE_AT ? "LATE" : m >= AMBER_AT ? "COOKING" : "NEW"
 }
 
-/* Ordered -> Fired -> Ready. Fired is the earliest line sent (a coursed table
-   fires more than once); Ready only lands once every live line is away. */
+/* Ordered -> Fired -> Started -> Ready. Fired is the earliest line sent (a
+   coursed table fires more than once); Started the first Start; Ready only
+   lands once every live line is away. */
 function timeline(o: KotOrder) {
   const firedStamps = o.items.filter((i) => i.fired_at).map((i) => parse(i.fired_at!))
+  const startStamps = o.items.filter((i) => i.started_at).map((i) => parse(i.started_at!))
   const live = o.items.filter((i) => i.state === "cooking" || i.state === "done")
   const readyStamps = live.filter((i) => i.prepared_at).map((i) => parse(i.prepared_at!))
   const allAway = live.length > 0 && live.every((i) => i.state === "done")
   return {
     ordered: parse(o.creation),
     fired: firedStamps.length ? Math.min(...firedStamps) : null,
+    started: startStamps.length ? Math.min(...startStamps) : o.accepted_at ? parse(o.accepted_at) : null,
     ready: allAway && readyStamps.length ? Math.max(...readyStamps) : null,
   }
+}
+
+/* Start is due while a fired line has no start: a new ticket, or a later
+   round on one the kitchen already took. Auto KOT starts lines at fire. */
+function needsStart(o: KotOrder) {
+  return o.items.some((i) => i.state === "cooking" && !i.started_at)
 }
 
 function progressOf(o: KotOrder) {
@@ -208,7 +220,8 @@ function Timeline({ order, now }: { order: KotOrder; now: number }) {
   const tl = timeline(order)
   const p = progressOf(order)
   const steps: [typeof Inbox, string, number | null][] = [
-    [Inbox, t("Ordered"), tl.ordered], [Flame, t("Fired"), tl.fired], [Check, t("Ready"), tl.ready],
+    [Inbox, t("Ordered"), tl.ordered], [Flame, t("Fired"), tl.fired],
+    [Play, t("Started"), tl.started], [Check, t("Ready"), tl.ready],
   ]
   return (
     <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 border-b border-zinc-200 bg-zinc-50/70 px-5 py-2.5">
@@ -335,7 +348,7 @@ function TicketDetail({ order, onClose, onAction, busy, now, stations }: {
             )}
           </div>
           <div className="mt-1 text-sm text-zinc-500">
-            {[order.captain ? translate("Captain: {name}", { name: String(order.captain.split("@")[0]) }) : null,
+            {[order.served_by ? translate("Served by: {name}", { name: order.served_by }) : null,
               order.guests ? translate("{diners} guests", { diners: String(order.guests) }) : null,
               order.outlet_name,
               order.order_total ? translate("Order {amount}", { amount: String(`${cur()}${Math.round(order.order_total)}`) }) : null]
@@ -448,7 +461,7 @@ function TicketDetail({ order, onClose, onAction, busy, now, stations }: {
             <Undo2 className="size-5" />{t("Recall")}
           </Button>
         )}
-        {!order.accepted_at && anyCooking ? (
+        {needsStart(order) ? (
           <Button disabled={busy === order.name} onClick={() => onAction("accept_ticket", {})}
             className="h-16 flex-1 justify-center bg-amber-600 text-lg font-bold hover:bg-amber-700">
             <Play className="size-6" />{t("Start")}
@@ -677,7 +690,7 @@ export default function Kitchen() {
             const stations = [...new Set(live.map((i) => i.prep_station).filter(Boolean))]
             const tags = [...stations, ...serviceTags(o)]
             const anyCooking = live.some((i) => i.state === "cooking")
-            const waiting = !o.accepted_at && anyCooking
+            const waiting = needsStart(o)
             return (
               <div key={o.name}
                 className={cn("flex flex-col overflow-hidden rounded-2xl border-2 bg-white",
@@ -707,8 +720,18 @@ export default function Kitchen() {
                   </div>
                   <div className="truncate text-xs text-zinc-400">
                     {[o.guests ? translate("{diners} guests", { diners: String(o.guests) }) : null,
-                      o.captain ? translate("Capt. {name}", { name: String(o.captain.split("@")[0]) }) : null].filter(Boolean).join(" · ")}
+                      o.served_by].filter(Boolean).join(" · ")}
                   </div>
+                  {(() => {
+                    const tl = timeline(o)
+                    return (
+                      <div className="truncate text-[11px] tabular-nums text-zinc-500">
+                        {[tl.fired ? translate("Fired {time}", { time: clockOf(tl.fired) }) : null,
+                          tl.started ? translate("Started {time}", { time: clockOf(tl.started) }) : null]
+                          .filter(Boolean).join(" · ")}
+                      </div>
+                    )
+                  })()}
                   {tags.length > 0 && (
                     <div className="mt-1.5 flex flex-wrap gap-1">
                       {tags.map((t) => (

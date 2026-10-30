@@ -1825,7 +1825,9 @@ TOOLS: tuple[ToolSpec, ...] = (
 	_t(
 		"pos_order_detail",
 		"pos.order_detail",
-		"One POS order: items, KOTs, totals, payment state.",
+		"""One POS order: items, KOTs, totals, payment state, who served it
+		(served_by) and who settled it (cashier), and each line's kitchen
+		times (fired_at, started_at, prepared_at, picked_up_at).""",
 		{"order": _p("string")},
 		required=("order",),
 		group="F&B",
@@ -1902,6 +1904,7 @@ TOOLS: tuple[ToolSpec, ...] = (
 			"delivery_address": _p("string"),
 			"allergy_note": _p("string"),
 			"notes": _p("string"),
+			"waiter": _p("string", description="who serves the table; blank = the captain"),
 		},
 		required=("outlet", "items"),
 		property=True,

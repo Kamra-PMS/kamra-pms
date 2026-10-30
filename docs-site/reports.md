@@ -52,7 +52,7 @@ departures, in-house, revenue, collected and outstanding for each hotel.
 Open **Reports → Custom reports**. You build a report from a **dataset**:
 arrivals, departures, in-house, no-shows and cancellations, occupancy by
 day, folio charges, payments, voids, contribution, housekeeping tasks,
-room status, lost and found, and POS orders. You only see the datasets
+room status, lost and found, POS orders and kitchen times. You only see the datasets
 your role can open (see [Who sees which report](#who-sees-which-report)).
 
 1. Open **New report**, pick a dataset, choose columns and optional
@@ -83,7 +83,7 @@ on one page:
 |---|---|
 | **Front Office pack** | Occupancy by day, arrivals by source, in house by room type, no-shows and cancellations |
 | **Housekeeping pack** | Room status now, tasks by type and by attendant with average clean minutes, lost and found |
-| **F&B pack** | Sales and covers by outlet, orders by status |
+| **F&B pack** | Sales and covers by outlet, orders by status, items sold, kitchen turnaround |
 | **Hotel Manager pack** | Occupancy and revenue, revenue by source, collections by mode, charges by type, voids and allowances |
 
 1. Set the **From** and **To** dates.
@@ -110,6 +110,7 @@ someone a report their role can't open.
 | Night Auditor | Manager flash, shift report | Arrivals, departures, in-house, no-shows, occupancy, folio charges, payments | Front Office, Hotel Manager |
 | Finance | Manager flash, shift report, voids, F&B dashboard, wastage, banquet registers | Front office datasets, folio charges, payments, voids, contribution, POS orders | Front Office, F&B, Hotel Manager |
 | Housekeeping, Housekeeping Supervisor | None | Housekeeping tasks, room status, lost and found | Housekeeping |
+| F&B Manager | F&B dashboard, wastage | POS orders, POS items, kitchen times | F&B |
 
 Hotel Admin sees everything. A dataset also needs its module switched on
 for the property (**Settings → Modules**).

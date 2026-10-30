@@ -1022,7 +1022,9 @@ Endpoint: `kamra.pos.open_orders`.
 
 ### `pos_order_detail(order)`
 
-One POS order: items, KOTs, totals, payment state.
+One POS order: items, KOTs, totals, payment state, who served it
+(served_by) and who settled it (cashier), and each line's kitchen
+times (fired_at, started_at, prepared_at, picked_up_at).
 
 Endpoint: `kamra.pos.order_detail`.
 
@@ -1055,7 +1057,7 @@ Fire a kitchen order ticket (whole check or one course).
 Endpoint: `kamra.pos.fire_kot`.
 Mutating - logged to the activity ledger.
 
-### `pos_send_order(outlet, items, table_no, room, reservation, guests, order_type, customer_name, customer_phone, delivery_address, allergy_note, notes)`
+### `pos_send_order(outlet, items, table_no, room, reservation, guests, order_type, customer_name, customer_phone, delivery_address, allergy_note, notes, waiter)`
 
 Open a new POS check and send it straight to the kitchen in one
 step (create, confirm and fire the KOT). Use this for a normal order;

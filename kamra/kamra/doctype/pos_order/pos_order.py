@@ -22,6 +22,24 @@ class POSOrder(Document):
 		self.order_total = 0.0 if self.nc else subtotal - discount
 		self.guard_room_posting()
 		self.guard_bill_close()
+		self.stamp_cashier()
+
+	def stamp_cashier(self):
+		"""The cashier on the bill: whoever closes it (pay_order, a room
+		posting or an NC close all land here). Set once, on the close, and
+		only here: a value sent by a client is put back. A user with no till
+		role (Guest, Administrator, an integration account) leaves it blank."""
+		previous = self.get_doc_before_save()
+		self.settled_by = previous.settled_by if previous else None
+		if self.status != "Delivered" or self.settled_by or \
+				(previous and previous.status == "Delivered"):
+			return
+		from kamra.authz import ADMIN
+		from kamra.pos import POS_ROLES
+		user = frappe.session.user
+		if user not in ("Guest", "Administrator") and \
+				set(POS_ROLES + ADMIN) & set(frappe.get_roles(user)):
+			self.settled_by = user
 
 	def charges_to_room(self) -> bool:
 		"""The bill is meant for a guest's room: room service, or any order

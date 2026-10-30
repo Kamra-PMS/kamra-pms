@@ -13,6 +13,7 @@
 <<<<<<<< HEAD:kamra/public/frontend/assets/thermal-lR5O1Zqo.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/thermal-lR5O1Zqo.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/thermal-lR5O1Zqo.js
+<<<<<<<< HEAD:kamra/public/frontend/assets/thermal-lR5O1Zqo.js
 import{t as a,a as c,m as o,c as m}from"./index-B3i2Wflk.js";const v=`
 ========
 import{t as a,a as c,m as o,c as m}from"./index-DwNNU3P0.js";const v=`
@@ -59,6 +60,9 @@ import{t as a,a as c,m as o,c as m}from"./index-i8IifY61.js";const v=`
 ========
 import{t as a,a as c,m as o,c as m}from"./index-BbJZgv25.js";const v=`
 >>>>>>>> origin/feat/itinerary:kamra/public/frontend/assets/thermal-CorM51QT.js
+========
+import{t as a,a as o,m as c,c as m}from"./index-D-c5c65H.js";const p=`
+>>>>>>>> origin/feat/pos-staff-kot-times:kamra/public/frontend/assets/thermal-DmD1XGrm.js
   @page { size: 80mm auto; margin: 0 }
   * { margin: 0; padding: 0; box-sizing: border-box }
   html, body { background: #fff; color: #000 }
@@ -76,7 +80,7 @@ import{t as a,a as c,m as o,c as m}from"./index-BbJZgv25.js";const v=`
   .num { text-align: right; white-space: nowrap; font-weight: 700; width: 28px }
   .ins { font-size: 12px; font-weight: 700; padding-left: 28px }
   .cut { text-align: center; font-size: 10px; margin-top: 10px; letter-spacing: 0.2em }
-`,s=t=>String(t??"").replace(/[&<>"]/g,d=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[d]),l=t=>Number(t??0).toLocaleString(o(),{minimumFractionDigits:2,maximumFractionDigits:2});function y(t,d){document.querySelectorAll("iframe[data-kamra-print]").forEach(i=>i.remove());const n=document.createElement("iframe");n.setAttribute("data-kamra-print","1"),n.setAttribute("title",a(t)),n.style.cssText="position:fixed;right:0;bottom:0;width:0;height:0;border:0;opacity:0",document.body.appendChild(n);const e=n.contentWindow;if(!e)return n.remove(),!1;e.document.open(),e.document.write(`<!doctype html><html><head><title>${s(a(t))}</title><style>${v}</style></head><body>${d}</body></html>`),e.document.close();const r=()=>{try{n.remove()}catch{}};return e.onafterprint=r,setTimeout(()=>{try{e.focus();const i=performance.now();e.print(),performance.now()-i>1500&&window.dispatchEvent(new CustomEvent($))}catch{r()}},0),setTimeout(r,12e4),!0}const $="kamra:print-dialog";function h(t){const d=new Date().toLocaleString(c(o()),{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"}),n=t.items.map(e=>`<tr><td class="num b" style="width:24px">${Math.round(e.qty)}×</td><td class="b">${s(e.item_name)}</td></tr>`+(e.instructions?`<tr><td></td><td class="ins">» ${s(e.instructions)}</td></tr>`:"")).join("");return`
+`,s=t=>String(t??"").replace(/[&<>"]/g,d=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[d]),l=t=>Number(t??0).toLocaleString(c(),{minimumFractionDigits:2,maximumFractionDigits:2});function y(t,d){document.querySelectorAll("iframe[data-kamra-print]").forEach(i=>i.remove());const n=document.createElement("iframe");n.setAttribute("data-kamra-print","1"),n.setAttribute("title",a(t)),n.style.cssText="position:fixed;right:0;bottom:0;width:0;height:0;border:0;opacity:0",document.body.appendChild(n);const e=n.contentWindow;if(!e)return n.remove(),!1;e.document.open(),e.document.write(`<!doctype html><html><head><title>${s(a(t))}</title><style>${p}</style></head><body>${d}</body></html>`),e.document.close();const r=()=>{try{n.remove()}catch{}};return e.onafterprint=r,setTimeout(()=>{try{e.focus();const i=performance.now();e.print(),performance.now()-i>1500&&window.dispatchEvent(new CustomEvent($))}catch{r()}},0),setTimeout(r,12e4),!0}const $="kamra:print-dialog";function h(t){const d=new Date().toLocaleString(o(c()),{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"}),n=t.items.map(e=>`<tr><td class="num b" style="width:24px">${Math.round(e.qty)}×</td><td class="b">${s(e.item_name)}</td></tr>`+(e.instructions?`<tr><td></td><td class="ins">» ${s(e.instructions)}</td></tr>`:"")).join("");return`
     <div class="c b lg">${s(t.outlet)}</div>
     <div class="c xl b">${t.kind==="Void"?s(a("*** VOID *** KOT #{number}",{number:String(t.kot_no??"-")})):t.kind==="Test"?s(a("TEST PAGE")):s(a("KOT #{number}",{number:String(t.kot_no??"-")}))}${t.reprint?s(a(" (REPRINT)")):""}</div>
     ${t.station?`<div class="c b">${s(t.station)}</div>`:""}
@@ -91,7 +95,7 @@ import{t as a,a as c,m as o,c as m}from"./index-BbJZgv25.js";const v=`
     <table>${n}</table>
     <div class="rule"></div>
     <div class="c sm">${t.items.length} ${s(a("item"))}${t.items.length===1?"":"s"}</div>
-    <div class="cut">${s(a("- cut -"))}</div>`}function _(t){return t.join('<div style="break-after:page;page-break-after:always"></div>')}function w(t){const d=new Date().toLocaleString(c(o()),{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"}),n=t.items.map(e=>`<tr><td class="num b" style="width:26px">${Math.round(e.qty)}×</td><td class="b">${s(e.item_name)}<div class="sm" style="font-weight:400">${s(a(e.service_type))}</div></td></tr>`).join("");return`
+    <div class="cut">${s(a("- cut -"))}</div>`}function _(t){return t.join('<div style="break-after:page;page-break-after:always"></div>')}function w(t){const d=new Date().toLocaleString(o(c()),{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"}),n=t.items.map(e=>`<tr><td class="num b" style="width:26px">${Math.round(e.qty)}×</td><td class="b">${s(e.item_name)}<div class="sm" style="font-weight:400">${s(a(e.service_type))}</div></td></tr>`).join("");return`
     <div class="c b lg">${s(t.property_name||a("Laundry"))}</div>
     <div class="c xl b">${s(a("LAUNDRY DOCKET"))}</div>
     <div class="rule"></div>
@@ -104,7 +108,7 @@ import{t as a,a as c,m as o,c as m}from"./index-BbJZgv25.js";const v=`
     <table>${n}</table>
     <div class="rule"></div>
     <div class="row b lg"><span>${s(a("Total"))}</span><span class="num">${m()}${l(t.total)}</span></div>
-    <div class="c sm">${s(a("Counted with the guest. Billed to the room."))}</div>`}function f(t){const d=new Date().toLocaleString(c(o()),{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"}),n=t.table_no?a("Table {n}",{n:String(t.table_no)}):t.room_no?a("Room {n}",{n:String(t.room_no)}):a(t.order_type||"Counter"),e=t.items.map(i=>`<tr><td>${s(i.item_name)}</td><td class="num" style="width:28px">${Math.round(i.qty)}</td><td class="num" style="width:52px">${l(i.rate)}</td><td class="num" style="width:62px">${l(i.amount)}</td></tr>`).join(""),r=(i,u,p="")=>`<div class="row ${p}"><span>${i}</span><span class="num">${m()}${l(u)}</span></div>`;return`
+    <div class="c sm">${s(a("Counted with the guest. Billed to the room."))}</div>`}function f(t){const d=new Date().toLocaleString(o(c()),{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"}),n=t.table_no?a("Table {n}",{n:String(t.table_no)}):t.room_no?a("Room {n}",{n:String(t.room_no)}):a(t.order_type||"Counter"),e=t.items.map(i=>`<tr><td>${s(i.item_name)}</td><td class="num" style="width:28px">${Math.round(i.qty)}</td><td class="num" style="width:52px">${l(i.rate)}</td><td class="num" style="width:62px">${l(i.amount)}</td></tr>`).join(""),r=(i,u,v="")=>`<div class="row ${v}"><span>${i}</span><span class="num">${m()}${l(u)}</span></div>`;return`
     <div class="c b lg">${s(t.property_name)}</div>
     <div class="c">${s(t.outlet_name)}</div>
     ${t.statutory?`<div class="c b sm">${s(t.statutory.title)}</div><div class="c b sm" dir="rtl">${s(t.statutory.title_ar)}</div>`:""}
@@ -126,6 +130,8 @@ import{t as a,a as c,m as o,c as m}from"./index-BbJZgv25.js";const v=`
     ${r(s(a("TOTAL")),t.grand_total,"b lg")}
     ${t.nc?`<div class="c b" style="margin-top:4px">${s(a("COMPLIMENTARY - NO CHARGE"))}</div><div class="c sm">${s(a("auth:"))} ${s(t.nc_authorized_by||"-")}${t.nc_note?` · ${s(t.nc_note)}`:""}</div>`:""}
     ${t.paid?`<div class="c b" style="margin-top:4px">${s(a("PAID"))} · ${s(a(t.payment_mode))}</div>`:""}
+    ${t.served_by?`<div class="sm">${s(a("Served by: {name}",{name:t.served_by}))}</div>`:""}
+    ${t.cashier?`<div class="sm">${s(a("Cashier: {name}",{name:t.cashier}))}</div>`:""}
     <div class="rule"></div>
     ${t.statutory?`<div class="c"><img src="${t.statutory.qr_image}" alt="QR" style="width:120px;height:120px"/></div><div class="c sm">ICV ${t.statutory.icv}</div>`:""}
     <div class="c sm">${s(a("Thank you. See you again."))}</div>

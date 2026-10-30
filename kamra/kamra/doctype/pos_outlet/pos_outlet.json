@@ -15,7 +15,8 @@
   "gst_rate",
   "disabled",
   "kot_mode",
-  "tables"
+  "tables",
+  "waiters"
  ],
  "fields": [
   {
@@ -70,12 +71,19 @@
    "fieldtype": "Small Text",
    "label": "Tables",
    "description": "One table name per line (T1, T2, Patio 1…). Powers the table map in the POS."
+  },
+  {
+   "fieldname": "waiters",
+   "fieldtype": "Table",
+   "label": "Waiters",
+   "options": "POS Outlet Waiter",
+   "description": "Staff the till offers in its Waiter box. No login needed. Untick Active when someone leaves; past bills keep the name."
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-19 12:00:00.000000",
+ "modified": "2026-10-30 19:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "POS Outlet",
@@ -133,6 +141,15 @@
    "report": 1,
    "print": 1,
    "role": "Night Auditor"
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "write": 1,
+   "role": "F&B Manager"
   }
  ],
  "row_format": "Dynamic",

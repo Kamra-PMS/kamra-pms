@@ -25,6 +25,8 @@
   "notes",
   "allergy_note",
   "captain",
+  "waiter",
+  "settled_by",
   "table_no",
   "discount_amount",
   "discount_reason",
@@ -159,6 +161,20 @@
    "label": "Captain",
    "options": "User",
    "read_only": 1
+  },
+  {
+   "fieldname": "waiter",
+   "fieldtype": "Data",
+   "label": "Waiter",
+   "description": "Who serves the table. Free text: stewards often have no login. Blank means the captain."
+  },
+  {
+   "fieldname": "settled_by",
+   "fieldtype": "Link",
+   "options": "User",
+   "label": "Settled By",
+   "read_only": 1,
+   "description": "The cashier: who took payment or closed the bill."
   },
   {
    "fieldname": "table_no",
@@ -311,7 +327,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-29 12:00:00.000000",
+ "modified": "2026-10-30 19:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "POS Order",
@@ -371,6 +387,15 @@
    "report": 1,
    "print": 1,
    "role": "Night Auditor"
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "write": 1,
+   "role": "F&B Manager"
   }
  ],
  "row_format": "Dynamic",

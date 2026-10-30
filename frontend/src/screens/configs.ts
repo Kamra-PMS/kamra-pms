@@ -6,6 +6,7 @@ const CompanyExtras = lazy(() => import("../components/CompanyExtras"))
 const EventLinks = lazy(() => import("../components/EventLinks"))
 const GroupControl = lazy(() => import("../components/GroupControl"))
 const RoomTypeMedia = lazy(() => import("../components/RoomTypeMedia"))
+const OutletWaiters = lazy(() => import("../components/OutletWaiters"))
 const HkTaskMediaPanel = lazy(() =>
   import("../components/HkMedia").then((m) => ({ default: m.HkTaskMediaPanel })),
 )
@@ -677,6 +678,7 @@ export const outletsConfig: ScreenConfig = {
       hint: "Auto-accept and print: sending an order prints the KOT and shows it on the kitchen display as started. Kitchen presses Start: the pass accepts each ticket. Use F&B setting follows Settings > F&B.",
     },
   ],
+  extra: OutletWaiters,
 }
 
 export const ingredientsConfig: ScreenConfig = {

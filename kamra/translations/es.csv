@@ -213,3 +213,16 @@ Payments this month,Pagos de este mes
 Taxable value,Base imponible
 "Your bill for {0} is attached: {1} billed, {2} due.","Adjuntamos tu factura de {0}: {1} facturado, {2} pendiente."
 Reason,Motivo
+Cashier,Cajero
+KOT,Comanda (KOT)
+Kitchen times,Tiempos de cocina
+Kitchen turnaround,Tiempos de cocina por punto de venta
+Order to pickup minutes,Minutos del pedido a la recogida
+Order to start minutes,Minutos del pedido al inicio
+Ordered at,Pedido a las
+Picked up at,Recogido a las
+Plated at,Emplatado a las
+Plated to pickup minutes,Minutos del emplatado a la recogida
+Served by,Atendido por
+Start to plated minutes,Minutos del inicio al emplatado
+Started at,Iniciado a las

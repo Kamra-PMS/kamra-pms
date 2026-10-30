@@ -5,7 +5,7 @@ AGENT_ROLE = "Kamra Agent"
 
 
 # business roles a hotel assigns to staff that no doctype perm creates
-STAFF_ROLES = ("Housekeeping Supervisor", "Night Auditor",
+STAFF_ROLES = ("Housekeeping Supervisor", "Night Auditor", "F&B Manager",
                # service account of a third-party POS (kamra.pos_interface)
                "POS Integrator")
 

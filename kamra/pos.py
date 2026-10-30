@@ -20,7 +20,7 @@ from frappe.utils import cint
 
 from kamra.authz import assert_record_access, require_roles
 
-POS_ROLES = ("Front Desk", "Finance", "Kamra Agent")
+POS_ROLES = ("Front Desk", "Finance", "F&B Manager", "Kamra Agent")
 # Menus written before coursing existed have no course; they behave as mains.
 DEFAULT_COURSE = "Main"
 COURSE_ORDER = ("Starter", "Main", "Dessert", "Drink")
@@ -306,7 +306,8 @@ def create_order(outlet: str, items, property: str | None = None,
                  guests=None, customer_name: str | None = None,
                  customer_phone: str | None = None,
                  delivery_address: str | None = None,
-                 allergy_note: str | None = None, guest: str | None = None):
+                 allergy_note: str | None = None, guest: str | None = None,
+                 waiter: str | None = None):
 	"""Captain takes an order. A room (room service, or a dine-in guest
 	charging to their room) must have a checked-in stay: it is resolved now
 	so the bill posts to that folio on delivery. A room with nobody in house
@@ -316,7 +317,8 @@ def create_order(outlet: str, items, property: str | None = None,
 	attach_customer); a room bill takes the in-house guest by itself."""
 	doc = _build_order(outlet, items, property, room, reservation, table_no,
 	                   source, notes, order_type, guests, customer_name,
-	                   customer_phone, delivery_address, allergy_note, guest)
+	                   customer_phone, delivery_address, allergy_note, guest,
+	                   waiter)
 	doc.insert()
 	return {"ok": True, "order": doc.name, "order_total": doc.order_total,
 	        "status": doc.status}
@@ -325,7 +327,8 @@ def create_order(outlet: str, items, property: str | None = None,
 def _build_order(outlet, items, property=None, room=None, reservation=None,
                  table_no=None, source="Manual", notes=None, order_type=None,
                  guests=None, customer_name=None, customer_phone=None,
-                 delivery_address=None, allergy_note=None, guest=None):
+                 delivery_address=None, allergy_note=None, guest=None,
+                 waiter=None):
 	"""A new, unsaved POS Order with its lines priced from the menu."""
 	property = property or frappe.db.get_value("POS Outlet", outlet, "property")
 	room, reservation = _in_house_stay(property, room, reservation)
@@ -351,6 +354,7 @@ def _build_order(outlet, items, property=None, room=None, reservation=None,
 		"customer_phone": (customer_phone or "").strip() or None,
 		"delivery_address": (delivery_address or "").strip() or None,
 		"captain": frappe.session.user if source != "QR" else None,
+		"waiter": (waiter or "").strip()[:140] or None,
 		"notes": notes or None,
 		"allergy_note": (allergy_note or "").strip() or None,
 		"guest": _bill_guest(reservation, guest),
@@ -654,6 +658,7 @@ def split_order(order: str, item_rows, table_no: str | None = None):
 		"nc_note": src.nc_note,
 		"table_no": table_no or src.table_no,
 		"captain": frappe.session.user,
+		"waiter": src.waiter,
 		"kot_fired": 1 if any(it.kot_status != "New" for it in move) else 0,
 		"kot_no": src.kot_no,  # shared: the kitchen knows it by this ticket
 		"notes": src.notes,
@@ -661,6 +666,8 @@ def split_order(order: str, item_rows, table_no: str | None = None):
 			"menu_item": it.menu_item, "item_name": it.item_name,
 			"qty": it.qty, "rate": it.rate,
 			"instructions": it.instructions, "kot_status": it.kot_status,
+			"fired_at": it.fired_at, "started_at": it.started_at,
+			"prepared_at": it.prepared_at, "picked_up_at": it.picked_up_at,
 			# a split moves food that is already cooked and already deducted;
 			# carrying the flag is what stops the new bill deducting it twice
 			"stock_posted": it.stock_posted,
@@ -681,7 +688,7 @@ def order_detail(order: str):
 	or to look at a closed one from the orders list. `kitchen_lines` counts
 	the live lines the kitchen already has: while it is zero the captain can
 	cancel the bill alone; after that a supervisor approves."""
-	from kamra.authz import is_supervisor
+	from kamra.authz import POS_SUPERVISOR_ROLES, is_supervisor
 	doc = frappe.get_doc("POS Order", order)
 	return {
 		"state": _order_list_state(doc),
@@ -692,7 +699,9 @@ def order_detail(order: str):
 		"cancelled_at": str(doc.cancelled_at) if doc.cancelled_at else None,
 		"cancel_approved_by": doc.cancel_approved_by,
 		"kitchen_lines": len(_kitchen_lines(doc)),
-		"can_approve": 1 if is_supervisor() else 0,
+		"can_approve": 1 if is_supervisor(roles=POS_SUPERVISOR_ROLES) else 0,
+		"captain": doc.captain, "waiter": doc.waiter,
+		"served_by": _served_by(doc), "cashier": _full_name(doc.settled_by),
 		"name": doc.name, "outlet": doc.outlet, "status": doc.status,
 		"source": doc.source, "room": doc.room, "table_no": doc.table_no,
 		"order_type": doc.order_type, "kot_no": doc.kot_no,
@@ -710,6 +719,8 @@ def order_detail(order: str):
 			{"row": it.name, "menu_item": it.menu_item, "item_name": it.item_name,
 			 "qty": it.qty, "rate": it.rate, "amount": it.amount,
 			 "instructions": it.instructions, "kot_status": it.kot_status,
+			 "fired_at": it.fired_at, "started_at": it.started_at,
+			 "prepared_at": it.prepared_at, "picked_up_at": it.picked_up_at,
 			 "voided": it.voided, "void_reason": it.void_reason,
 			 "voided_by": it.voided_by, "void_approved_by": it.void_approved_by}
 			for it in doc.items],
@@ -787,6 +798,8 @@ def _fire(doc, course: str | None = None) -> dict:
 				continue
 			it.kot_status = "Fired"
 			it.fired_at = now
+			if auto:
+				it.started_at = now  # auto KOT: nobody presses Start
 			# what the till prints on the thermal ticket...
 			fired.append({"item_name": it.item_name, "qty": it.qty,
 			              "instructions": it.instructions})
@@ -858,14 +871,15 @@ def send_order(outlet: str, items, property: str | None = None,
                delivery_address: str | None = None,
                allergy_note: str | None = None,
                discount: float = 0, discount_reason: str = "",
-               guest: str | None = None):
+               guest: str | None = None, waiter: str | None = None):
 	"""A captain's new bill straight to the kitchen, in one call: what
 	create_order, apply_discount, confirm_order and fire_kot do one after
 	another, in one request and one transaction. The till waits for one
 	round trip instead of four, and the kitchen gets a single update."""
 	doc = _build_order(outlet, items, property, room, reservation, table_no,
 	                   "Manual", notes, order_type, guests, customer_name,
-	                   customer_phone, delivery_address, allergy_note, guest)
+	                   customer_phone, delivery_address, allergy_note, guest,
+	                   waiter)
 	doc.status = "Confirmed"
 	if float(discount or 0) > 0:
 		doc.discount_amount = float(discount)
@@ -924,7 +938,7 @@ def kitchen_queue(property: str, outlet: str | None = None,
 	if outlet:
 		filters["outlet"] = outlet
 	fields = ["name", "outlet", "room", "table_no", "creation", "notes",
-	          "kot_no", "order_type", "guests", "captain", "allergy_note",
+	          "kot_no", "order_type", "guests", "captain", "waiter", "allergy_note",
 	          "order_total", "accepted_at", "status"]
 	orders = frappe.get_all("POS Order", filters=filters, fields=fields,
 	                        order_by="creation asc")
@@ -949,7 +963,7 @@ def kitchen_queue(property: str, outlet: str | None = None,
 		"POS Order Item", filters={"parent": ["in", [o.name for o in orders]]},
 		fields=["name", "parent", "item_name", "qty", "instructions",
 		        "kot_status", "menu_item", "voided", "void_reason",
-		        "void_seen", "fired_at", "prepared_at", "idx"],
+		        "void_seen", "fired_at", "started_at", "prepared_at", "idx"],
 		order_by="idx asc")
 	menu = {
 		m.name: m for m in frappe.get_all(
@@ -995,6 +1009,7 @@ def kitchen_queue(property: str, outlet: str | None = None,
 		if not any(i["state"] in ("cooking", "held", "cancelled") for i in items):
 			continue
 		o["outlet_name"] = outlet_names.get(o.outlet)
+		o["served_by"] = _served_by(o)
 		o["room_no"] = (o.room or "").split("-")[-1]
 		o["items"] = items
 		# courses still held back, in the order they would be served
@@ -1013,12 +1028,15 @@ def mark_prepared(order: str, item_row: str | None = None):
 	are never swept up by "all ready" - that food is cancelled, not cooked."""
 	doc = frappe.get_doc("POS Order", order)
 	now = frappe.utils.now()
-	for it in doc.items:
-		if it.voided:
-			continue
-		if (item_row and it.name == item_row) or (not item_row and it.kot_status == "Fired"):
-			it.kot_status = "Prepared"
-			it.prepared_at = now
+	# only a line the kitchen has (Fired): never one still on the till or
+	# one already prepared, whose times would be overwritten
+	lines = [it for it in doc.items if not it.voided and it.kot_status == "Fired"
+	         and (not item_row or it.name == item_row)]
+	if item_row and not lines:
+		frappe.throw(_("Only an item the kitchen is cooking can be marked ready."))
+	for it in lines:
+		it.kot_status = "Prepared"
+		it.prepared_at = now
 	doc.save()
 	live = [it for it in doc.items if not it.voided]
 	all_done = bool(live) and all(it.kot_status == "Prepared" for it in live)
@@ -1031,10 +1049,17 @@ def accept_ticket(order: str):
 	"""The kitchen takes the ticket on. Until a ticket is accepted the floor
 	has no evidence anyone has seen it - a KOT can print to an empty pass."""
 	doc = frappe.get_doc("POS Order", order)
-	if not doc.accepted_at:
-		doc.accepted_at = frappe.utils.now()
+	now = frappe.utils.now()
+	# every fired line not started yet: a later round on an accepted ticket
+	# gets its own Start, so its cook time is its own
+	started = [it for it in doc.items if not it.voided
+	           and it.kot_status == "Fired" and not it.started_at]
+	for it in started:
+		it.started_at = now
+	if started or not doc.accepted_at:
+		doc.accepted_at = doc.accepted_at or now
 		doc.save()
-	return {"ok": True, "accepted_at": doc.accepted_at}
+	return {"ok": True, "accepted_at": doc.accepted_at, "started": len(started)}
 
 
 @frappe.whitelist(methods=["POST"])
@@ -1051,8 +1076,105 @@ def recall_prepared(order: str, item_row: str | None = None):
 		if (item_row and it.name == item_row) or (not item_row and it.kot_status == "Prepared"):
 			it.kot_status = "Fired"
 			it.prepared_at = None
+			it.picked_up_at = None
 	doc.save()
 	return {"ok": True}
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles(*POS_ROLES)
+def mark_picked_up(order: str, item_row: str | None = None):
+	"""A waiter takes food from the pass: one prepared line, or every
+	prepared line still waiting there. Stamps picked_up_at; kot_status stays
+	Prepared so nothing that reads it changes."""
+	doc = frappe.get_doc("POS Order", order)
+	if doc.status == "Cancelled":
+		frappe.throw(_("This order was cancelled."))
+	now = frappe.utils.now()
+	picked = [it for it in doc.items
+	          if not it.voided and it.kot_status == "Prepared" and not it.picked_up_at
+	          and (not item_row or it.name == item_row)]
+	if not picked:
+		frappe.throw(_("Nothing is waiting at the pass."))
+	for it in picked:
+		it.picked_up_at = now
+	doc.save()
+	return {"ok": True, "picked_up": len(picked), "picked_up_at": now}
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles(*POS_ROLES)
+def set_waiter(order: str, waiter: str = ""):
+	"""Name who serves this bill (a steward may have no login). Blank
+	clears it, and the bill shows the captain instead."""
+	doc = frappe.get_doc("POS Order", order)
+	if doc.status == "Cancelled":
+		frappe.throw(_("This order was cancelled."))
+	if doc.status == "Delivered":
+		frappe.throw(_("This bill is closed. The waiter on it cannot change."))
+	doc.waiter = (waiter or "").strip()[:140] or None
+	doc.save()
+	return {"ok": True, "waiter": doc.waiter, "served_by": _served_by(doc)}
+
+
+# who keeps an outlet's waiter list (admins pass too), as for the menu
+WAITER_EDIT_ROLES = ("Finance", "F&B Manager")
+
+
+@frappe.whitelist()
+@require_roles(*POS_ROLES)
+def waiters(outlet: str):
+	"""Till suggestions: the outlet's active staff list first, then other
+	names typed as waiter here in the last 60 days, most used first."""
+	staff = [w["waiter_name"] for w in outlet_waiters(outlet)["waiters"] if w["active"]]
+	rows = frappe.db.sql(
+		"""select waiter from `tabPOS Order`
+		   where outlet=%s and ifnull(waiter, '') != '' and creation >= %s
+		   group by waiter order by count(*) desc limit 50""",
+		(outlet, frappe.utils.add_days(frappe.utils.nowdate(), -60)))
+	known = {n.lower() for n in staff}
+	return staff + [r[0] for r in rows if r[0].lower() not in known]
+
+
+@frappe.whitelist()
+@require_roles(*POS_ROLES)
+def outlet_waiters(outlet: str):
+	"""The outlet's waiter list (active and not), and whether this user
+	may change it."""
+	from kamra.authz import ADMIN
+	rows = frappe.get_all("POS Outlet Waiter", filters={"parent": outlet, "parenttype": "POS Outlet"},
+	                      fields=["waiter_name", "active"], order_by="idx")
+	can_edit = bool(set(WAITER_EDIT_ROLES + ADMIN) & set(frappe.get_roles()))
+	return {"waiters": [{"waiter_name": r.waiter_name, "active": cint(r.active)} for r in rows],
+	        "can_edit": can_edit}
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles(*WAITER_EDIT_ROLES)
+def save_outlet_waiter(outlet: str, waiter_name: str, active: int = 1):
+	"""Add a name to the outlet's waiter list, or set it active / inactive.
+	A name already on the list (any case) is updated, never doubled."""
+	name = (waiter_name or "").strip()[:140]
+	if not name:
+		frappe.throw(_("Type the waiter's name."))
+	doc = frappe.get_doc("POS Outlet", outlet)
+	row = next((w for w in doc.waiters if w.waiter_name.lower() == name.lower()), None)
+	if row:
+		row.active = cint(active)
+	else:
+		doc.append("waiters", {"waiter_name": name, "active": cint(active)})
+	doc.save(ignore_permissions=True)  # gated above: Finance, F&B Manager or an admin
+	return outlet_waiters(outlet)
+
+
+def _full_name(user: str | None) -> str | None:
+	"""A user's display name, never the email (per-request cached)."""
+	return frappe.utils.get_fullname(user) if user else None
+
+
+def _served_by(doc) -> str | None:
+	"""The waiter named on the bill, else the captain who took it."""
+	return doc.get("waiter") or _full_name(doc.get("captain"))
 
 
 @frappe.whitelist(methods=["POST"])
@@ -1279,15 +1401,18 @@ def _approve_kitchen_void(doc, supervisor: str | None, supervisor_pin) -> str:
 		frappe.throw(_("The kitchen already has items on this bill. An agent "
 		              "cannot void them: a supervisor does that at the till."),
 		             SupervisorRequired)
-	from kamra.authz import is_supervisor, require_cashier_pin, verify_supervisor
-	if is_supervisor() and (not supervisor or supervisor == frappe.session.user):
+	from kamra.authz import (POS_SUPERVISOR_ROLES, is_supervisor,
+	                         require_cashier_pin, verify_supervisor)
+	if is_supervisor(roles=POS_SUPERVISOR_ROLES) and \
+			(not supervisor or supervisor == frappe.session.user):
 		require_cashier_pin(doc.property, supervisor_pin)
 		return frappe.session.user
 	if not supervisor:
 		frappe.throw(_("SUPERVISOR_REQUIRED: the kitchen already has items on "
 		              "this bill. A supervisor approves voiding them with "
 		              "their PIN."), SupervisorRequired)
-	return verify_supervisor(doc.property, supervisor, supervisor_pin)
+	return verify_supervisor(doc.property, supervisor, supervisor_pin,
+	                         POS_SUPERVISOR_ROLES)
 
 
 def _void_lines(doc, lines, reason: str, approver: str | None):
@@ -1411,11 +1536,12 @@ def remove_item(order: str, item_row: str):
 @frappe.whitelist()
 @require_roles(*POS_ROLES)
 def void_approvers(outlet: str):
-	"""Who can approve a void at this outlet's till: enabled Hotel Admin and
-	Finance users with access to the property and a cashier PIN set. Names
+	"""Who can approve a void at this outlet's till: enabled Hotel Admin,
+	Finance and F&B Manager users with access to the property and a cashier PIN set. Names
 	only."""
-	from kamra.authz import supervisors_for
-	return supervisors_for(frappe.db.get_value("POS Outlet", outlet, "property"))
+	from kamra.authz import POS_SUPERVISOR_ROLES, supervisors_for
+	return supervisors_for(frappe.db.get_value("POS Outlet", outlet, "property"),
+	                       POS_SUPERVISOR_ROLES)
 
 
 # ── the orders list ───────────────────────────────────────────────────────
@@ -1481,7 +1607,7 @@ def orders_list(outlet: str, date: str | None = None, to_date: str | None = None
 	fields = ["name", "status", "order_type", "room", "reservation", "table_no",
 	          "customer_name", "guest", "order_total", "paid", "payment_mode",
 	          "nc", "posted_to_folio", "kot_fired", "kot_no", "guests",
-	          "creation", "cancel_reason", "captain"]
+	          "creation", "cancel_reason", "captain", "waiter", "settled_by"]
 	or_filters = None
 	qq = (q or "").strip()[:60]
 	if qq:
@@ -1577,6 +1703,7 @@ def orders_list(outlet: str, date: str | None = None, to_date: str | None = None
 			"guests": r.guests, "time": str(r.creation), "age_min": age,
 			"stale": 1 if st == "open" and age >= stale_after else 0,
 			"carried": r.get("carried", 0), "cancel_reason": r.cancel_reason,
+			"served_by": _served_by(r), "cashier": _full_name(r.settled_by),
 		})
 	return {"from": str(start), "to": str(end), "rows": out, "counts": counts,
 	        "total": len(shown), "has_more": skip + page < len(shown),
@@ -1586,7 +1713,7 @@ def orders_list(outlet: str, date: str | None = None, to_date: str | None = None
 EXPORT_COLUMNS = ("Bill", "KOT", "Date", "Time", "Outlet", "Type", "Table", "Room",
                   "Guest or customer", "Phone", "State", "Payment mode", "Lines",
                   "Discount", "Amount before tax", "Complimentary authorised by",
-                  "Captain", "Cancel reason", "Cancelled by")
+                  "Captain", "Cancel reason", "Cancelled by", "Served by", "Cashier")
 
 
 @frappe.whitelist()
@@ -1636,7 +1763,7 @@ def orders_export(outlet: str, date: str | None = None, to_date: str | None = No
 		        "customer_name", "customer_phone", "order_total", "discount_amount",
 		        "paid", "payment_mode", "nc", "nc_authorized_by", "posted_to_folio",
 		        "kot_fired", "kot_no", "creation", "cancel_reason", "cancelled_by",
-		        "captain"],
+		        "captain", "waiter", "settled_by"],
 		order_by="creation desc", limit_page_length=20000)
 	names = [r.name for r in rows]
 	live: dict[str, int] = {}
@@ -1668,7 +1795,8 @@ def orders_export(outlet: str, date: str | None = None, to_date: str | None = No
 			r.payment_mode if st == "paid" else ("Room" if st == "room" else ""),
 			live.get(r.name, 0), float(r.discount_amount or 0),
 			float(r.order_total or 0), r.nc_authorized_by or "", r.captain or "",
-			r.cancel_reason or "", r.cancelled_by or ""])
+			r.cancel_reason or "", r.cancelled_by or "",
+			_served_by(r) or "", _full_name(r.settled_by) or ""])
 	return {"filename": f"orders-{outlet_name}-{start}_{end}.csv".replace(" ", "-"),
 	        "csv": "\ufeff" + buf.getvalue(), "rows": n}
 
@@ -1951,6 +2079,7 @@ def bill_data(order: str):
 		"customer_phone": doc.customer_phone,
 		"delivery_address": doc.delivery_address,
 		"captain": doc.captain, "created": str(doc.creation),
+		"served_by": _served_by(doc), "cashier": _full_name(doc.settled_by),
 		"items": [
 			{"item_name": it.item_name, "qty": it.qty, "rate": it.rate,
 			 "amount": it.amount}

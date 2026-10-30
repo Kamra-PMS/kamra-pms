@@ -567,7 +567,7 @@ Actual check-out,Actual check-out,المغادرة الفعلية,Hora real de s
 "Actual counts room nights posted to folios - End of Day posts each night, so tonight counts after tonight's audit.","Actual counts room nights posted to folios - End of Day posts each night, so tonight counts after tonight's audit.",الفعلي يحتسب ليالي الغرف المرحّلة إلى الفواتير. إغلاق اليوم يرحّل كل ليلة، لذا تُحتسب ليلة اليوم بعد تدقيق الليلة.,Los resultados cuentan las noches registradas en los folios. El cierre del día registra cada noche; la de hoy se incluye después de la auditoría de esta noche.,screens/RevenueReports.tsx,,translated
 Actual pax,Actual pax,العدد الفعلي,Asistentes reales,screens/BanquetFunction.tsx,,translated
 Ad/Ch,Ad/Ch,بالغ/طفل,Ad./Ni.,,,translated
-Add,Add,إضافة,Agregar,components/StayInstructions.tsx; screens/BanquetFunction.tsx; screens/PublicBooking.tsx,,translated
+Add,Add,إضافة,Agregar,components/OutletWaiters.tsx; components/StayInstructions.tsx; screens/BanquetFunction.tsx; screens/PublicBooking.tsx,,translated
 Add a cash office (central safe),Add a cash office (central safe),إضافة مكتب نقدي (الخزنة المركزية),Agregar caja central,screens/Setup.tsx,,translated
 Add a customer email on the Enquiry step first,Add a customer email on the Enquiry step first,أضف بريد العميل في خطوة الاستفسار أولًا,Agregue primero el correo del cliente en la etapa Consulta,screens/BanquetFunction.tsx,,translated
 Add a customer phone on the Enquiry step first,Add a customer phone on the Enquiry step first,أضف هاتف العميل في خطوة الاستفسار أولًا,Agregue primero el teléfono del cliente en la etapa Consulta,screens/BanquetFunction.tsx,,translated
@@ -611,6 +611,7 @@ Add terminal,Add terminal,إضافة جهاز,Agregar terminal,screens/CashierBo
 Add the menu and the extras,Add the menu and the extras,أضف القائمة والإضافات,Agregue el menú y los servicios adicionales,,,translated
 Add tier,Add tier,إضافة شريحة,Agregar nivel,screens/settings/cards.tsx,,translated
 Add till,Add till,إضافة صندوق,Agregar caja,screens/Setup.tsx,,translated
+Add to list,Add to list,إضافة إلى القائمة,Agregar a la lista,screens/POS.tsx,,translated
 Add to pickup queue,Add to pickup queue,إضافة إلى قائمة الاستلام,Agregar a la cola de recogida,screens/HkLaundry.tsx; screens/Laundry.tsx,,translated
 Add webhook,Add webhook,إضافة Webhook,Agregar webhook,screens/settings/WebhooksPage.tsx,,translated
 Add-ons,Add-ons,الإضافات,Servicios adicionales,components/BookingDialog.tsx,,translated
@@ -1172,10 +1173,10 @@ Cancelled bills (,Cancelled bills (,الفواتير الملغاة (,Cuentas ca
 Cancelling…,Cancelling…,جارٍ الإلغاء…,Cancelando…,components/CancelPanel.tsx,,translated
 cannot close,cannot close,لا يمكن الإغلاق,no se puede cerrar,,,translated
 capped at 300,capped at 300,بحد أقصى 300,limitado a 300,screens/pos/PosSidePanel.tsx,,translated
-Capt. {name},Capt. {name},الكابتن {name},Jefe de servicio: {name},screens/Kitchen.tsx,name,translated
+Capt. {name},Capt. {name},الكابتن {name},Jefe de servicio: {name},,name,translated
 Captain,Captain,الكابتن,Jefe de servicio,,,translated
 Captain / GM name,Captain / GM name,اسم الكابتن / المدير,Nombre del jefe de servicio o gerente general,,,translated
-Captain: {name},Captain: {name},الكابتن: {name},Jefe de servicio: {name},screens/Kitchen.tsx,name,translated
+Captain: {name},Captain: {name},الكابتن: {name},Jefe de servicio: {name},,name,translated
 Caption,Caption,التعليق,Descripción de la imagen,components/RoomTypeMedia.tsx; screens/BookingEngine.tsx,,translated
 Capture,Capture,التقاط,Capturar,screens/RegistrationCard.tsx,,translated
 Capture ID,Capture ID,التقاط الهوية,Capturar documento,screens/RegistrationCard.tsx,,translated
@@ -1217,6 +1218,7 @@ Cashier till,Cashier till,صندوق أمين الصندوق,Caja del cajero,scr
 Cashier total,Cashier total,إجمالي الصراف,Total del cajero,screens/AuditPack.tsx,,translated
 Cashier unlocked - money actions are open for {n} minutes.,Cashier unlocked - money actions are open for {n} minutes.,تم فتح أمين الصندوق - إجراءات المال مفتوحة لمدة {n} دقيقة.,Caja desbloqueada: las operaciones de cobro y caja estarán habilitadas durante {n} minutos.,screens/FolioView.tsx,n,translated
 Cashier unlocked - money actions are open for 15 minutes.,Cashier unlocked - money actions are open for 15 minutes.,تم فتح أمين الصندوق - إجراءات المال مفتوحة لمدة 15 دقيقة.,Caja desbloqueada: las operaciones de cobro y caja estarán habilitadas durante 15 minutos.,,,translated
+Cashier: {name},Cashier: {name},أمين الصندوق: {name},Cajero: {name},lib/thermal.ts; screens/pos/OrderHistory.tsx; screens/pos/PosSidePanel.tsx,name,translated
 Categories,Categories,الفئات,Categorías,screens/POS.tsx,,translated
 Categories with occupancy-based pricing.,Categories with occupancy-based pricing.,فئات بأسعار حسب الإشغال.,Categorías con tarifas según la ocupación.,,,translated
 Category,Category,الفئة,Categoría,components/RoomDrawer.tsx; screens/BanquetCatalogue.tsx; screens/BookingEngine.tsx; screens/GoLiveImport.tsx; screens/Inventory.tsx; screens/MenuImport.tsx; screens/OpsSLA.tsx; screens/PettyCash.tsx; screens/Setup.tsx; screens/Tickets.tsx,,translated
@@ -1565,6 +1567,7 @@ Contract signed on,Contract signed on,تاريخ توقيع العقد,Fecha de 
 Contribution analysis,Contribution analysis,تحليل المساهمة,Análisis de aportación,screens/RevenueReports.tsx,,translated
 Contribution by source,Contribution by source,المساهمة حسب المصدر,Contribución por origen,,,translated
 Conversion,Conversion,التحويل,Conversión,screens/Banquet.tsx,,translated
+Cooking,Cooking,قيد الطهي,Cocinando,screens/POS.tsx,,translated
 COOKING,COOKING,قيد الطبخ,EN PREPARACIÓN,screens/Kitchen.tsx,,translated
 Coordinated by {brand},Coordinated by {brand},بتنسيق من {brand},Coordinado por {brand},screens/PublicListing.tsx,brand,translated
 Copied,Copied,تم النسخ,Copiado,components/DepositPanel.tsx; screens/Agents.tsx; screens/Developers.tsx; screens/settings/WebhooksPage.tsx,,translated
@@ -1897,6 +1900,7 @@ e.g. Sharma Wedding,e.g. Sharma Wedding,مثال: زفاف شارما,"p. ej., B
 "Each business date, rates missing for these currencies are fetched online. Off: Finance fetches or types them on the Currency Desk.","Each business date, rates missing for these currencies are fetched online. Off: Finance fetches or types them on the Currency Desk.",في كل تاريخ عمل تُجلب عبر الإنترنت الأسعار الناقصة لهذه العملات. عند الإيقاف: يجلبها قسم المالية أو يُدخلها في مكتب العملات.,En cada fecha operativa se obtienen en línea los tipos que falten para estas monedas. Desactivado: Finanzas los obtiene o los introduce en el Mostrador de divisas.,,,translated
 Each closed business date and its audit pack.,Each closed business date and its audit pack.,كل تاريخ عمل مغلق وحزمة التدقيق الخاصة به.,Cada fecha de negocio cerrada y su paquete de auditoría.,,,translated
 Each hotel / branch keeps its own float and voucher list. Changing property in the header switches the box.,Each hotel / branch keeps its own float and voucher list. Changing property in the header switches the box.,لكل فندق أو فرع صندوقه الثابت وقائمة قسائمه. تغيير العقار في الترويسة يبدّل الصندوق.,"Cada hotel o sucursal tiene su propio fondo de caja chica y sus vales. Al cambiar de alojamiento en el encabezado, se cambia también de caja chica.",screens/PettyCash.tsx,,translated
+"Each kitchen line: minutes from order to start, start to plated, and plated to pickup.","Each kitchen line: minutes from order to start, start to plated, and plated to pickup.",كل صنف في المطبخ: الدقائق من الطلب إلى البدء، ومن البدء إلى التجهيز، ومن التجهيز إلى الاستلام.,"Cada línea de cocina: minutos del pedido al inicio, del inicio al emplatado y del emplatado a la recogida.",,,translated
 "Each morning, email a company's billing contact 3 days before a bill is due, on the due date and 15 days after, with its statement attached. Each reminder goes once per bill, and Finance gets a notice of what was sent.","Each morning, email a company's billing contact 3 days before a bill is due, on the due date and 15 days after, with its statement attached. Each reminder goes once per bill, and Finance gets a notice of what was sent.",كل صباح، يُرسل بريد إلكتروني إلى جهة الفوترة لدى الشركة قبل 3 أيام من استحقاق الفاتورة، وفي تاريخ الاستحقاق، وبعده بـ 15 يومًا، مع إرفاق كشف الحساب. يُرسل كل تذكير مرة واحدة لكل فاتورة، ويتلقى قسم المالية إشعارًا بما أُرسل.,"Cada mañana, envía un correo al contacto de facturación de la empresa 3 días antes del vencimiento de una factura, en la fecha de vencimiento y 15 días después, con su estado de cuenta adjunto. Cada recordatorio se envía una sola vez por factura y Finanzas recibe un aviso de lo enviado.",,,translated
 Each place that sells food or drink.,Each place that sells food or drink.,كل مكان يبيع الطعام أو المشروبات.,Cada punto donde se venden alimentos o bebidas.,../../kamra/onboarding.py,,translated
 Each request becomes a task for the right team.,Each request becomes a task for the right team.,يصبح كل طلب مهمة للفريق المختص.,Cada solicitud se convierte en una tarea para el equipo adecuado.,components/CheckInDialog.tsx,,translated
@@ -2161,6 +2165,7 @@ Fire {course},Fire {course},أرسل {course},Enviar {course} a preparación,scr
 Fire → ready,Fire → ready,الإرسال ← الجاهزية,Preparación → listo,screens/PosDashboard.tsx,,translated
 Fire KOT,Fire KOT,إرسال أمر المطبخ,Enviar comanda a preparación,,,translated
 Fired,Fired,أُرسل للطبخ,Enviado a preparación,screens/Kitchen.tsx,,translated
+Fired {time},Fired {time},أُرسل {time},Enviado {time},screens/Kitchen.tsx,time,translated
 First ,First ,أول ,Primeras ,screens/MenuImport.tsx,,translated
 First Night,First Night,الليلة الأولى,Primera noche,,,translated
 First response,First response,أول رد,Primera respuesta,screens/Tickets.tsx,,translated
@@ -2607,6 +2612,7 @@ In-house folios over the high-balance threshold and balances left on departed st
 In-house guest,In-house guest,نزيل مقيم,Huésped alojado,screens/POS.tsx; screens/pos/PosSidePanel.tsx,,translated
 In-house guests,In-house guests,الضيوف داخل الفندق,Huéspedes alojados,screens/Today.tsx,,translated
 In-house guests whose balance is above the alert threshold.,In-house guests whose balance is above the alert threshold.,الضيوف المقيمون الذين يتجاوز رصيدهم حد التنبيه.,Huéspedes alojados cuyo saldo supera el límite de alerta.,,,translated
+Inactive,Inactive,غير نشط,Inactivo,components/OutletWaiters.tsx,,translated
 Inbound,Inbound,وارد,Entrante,,,translated
 incl. {tax},incl. {tax},شامل {tax},incl. {tax},screens/RegistrationCard.tsx,tax,translated
 Included,Included,مشمول,Incluido,,,translated
@@ -2753,6 +2759,8 @@ Kitchen pass,Kitchen pass,ممر المطبخ,Pase de cocina,screens/Kitchen.tsx
 Kitchen presses Start,Kitchen presses Start,المطبخ يضغط بدء,Inicio manual en cocina,,,translated
 Kitchen printers,Kitchen printers,طابعات المطبخ,Impresoras de cocina,../../kamra/onboarding.py; screens/KitchenPrinters.tsx; screens/settings/cards.tsx,,translated
 Kitchen stations,Kitchen stations,محطات المطبخ,Estaciones de cocina,screens/Setup.tsx,,translated
+Kitchen times,Kitchen times,أوقات المطبخ,Tiempos de cocina,,,translated
+Kitchen turnaround,Kitchen turnaround,سرعة المطبخ,Tiempos de cocina por punto de venta,,,translated
 KOT,KOT,أمر المطبخ,Comanda (KOT),screens/POS.tsx,,translated
 KOT ,KOT ,أمر المطبخ ,Comanda ,screens/pos/OrderHistory.tsx,,translated
 KOT - ,KOT - ,أمر المطبخ - ,Comanda: ,screens/Kitchen.tsx,,translated
@@ -3062,6 +3070,7 @@ Name (Deluxe),Name (Deluxe),الاسم (ديلوكس),Nombre (De lujo),screens/S
 "Name each till, tie it to an outlet, and choose the printer that prints its bills. Without terminals everyone uses the Default till.","Name each till, tie it to an outlet, and choose the printer that prints its bills. Without terminals everyone uses the Default till.",سمِّ كل صندوق، واربطه بمنفذ، واختر الطابعة التي تطبع فواتيره. بدون أجهزة طرفية يستخدم الجميع الصندوق الافتراضي.,"Asigne un nombre a cada caja, vincúlela con un punto de venta y elija la impresora que imprimirá sus cuentas. Si no hay terminales, todos usan la caja predeterminada.",screens/CashierBoard.tsx,,translated
 "Name each till, tie it to an outlet. Without any, everyone uses the Default till.","Name each till, tie it to an outlet. Without any, everyone uses the Default till.",سمِّ كل صندوق واربطه بمنفذ. إن لم يوجد أي صندوق، يستخدم الجميع الصندوق الافتراضي.,"Asigne un nombre a cada caja y vincúlela a un punto de venta. Si no configura ninguna, todos usarán la caja predeterminada.",../../kamra/onboarding.py,,translated
 Name or phone…,Name or phone…,الاسم أو الهاتف…,Nombre o teléfono…,screens/Guests.tsx,,translated
+Names the till offers in its Waiter box. No login needed.,Names the till offers in its Waiter box. No login needed.,الأسماء التي يعرضها الصندوق في خانة النادل. لا يلزم تسجيل دخول.,Nombres que la caja ofrece en su campo Mesero. No necesitan usuario.,components/OutletWaiters.tsx,,translated
 Narrow column,Narrow column,العمود الضيق,Columna estrecha,components/CustomizeToday.tsx,,translated
 National ID,National ID,الهوية الوطنية,Documento nacional de identidad,,,translated
 Nationality,Nationality,الجنسية,Nacionalidad,components/BookingDialog.tsx; components/CheckInDialog.tsx; components/EditableNationality.tsx; screens/FolioView.tsx; screens/GuestJourney.tsx; screens/PublicCheckin.tsx; screens/RegistrationCard.tsx,,translated
@@ -3326,6 +3335,7 @@ No unassigned rooms right now.,No unassigned rooms right now.,لا غرف غير
 No vacant rooms.,No vacant rooms.,لا غرف شاغرة.,No hay habitaciones desocupadas.,screens/EndOfDayWizard.tsx,,translated
 "No voids, allowances or cancelled invoices in this window.","No voids, allowances or cancelled invoices in this window.",لا توجد إلغاءات أو خصومات أو فواتير ملغاة في هذه الفترة.,"No hay anulaciones, bonificaciones ni facturas anuladas en este periodo.",screens/VoidAllowanceReport.tsx,,translated
 No voids.,No voids.,لا إلغاءات.,Sin anulaciones.,screens/PosDashboard.tsx,,translated
+No waiters on the list yet.,No waiters on the list yet.,لا يوجد نُدُل في القائمة بعد.,Aún no hay meseros en la lista.,components/OutletWaiters.tsx,,translated
 "No webhooks yet. Add one to send bookings, check-ins, folio postings and the night audit to another system.","No webhooks yet. Add one to send bookings, check-ins, folio postings and the night audit to another system.",لا Webhooks بعد. أضف واحدا لإرسال الحجوزات وتسجيلات الوصول وقيود الفواتير والتدقيق الليلي إلى نظام آخر.,"Aún no hay webhooks. Agregue uno para enviar reservas, registros de entrada, movimientos de folio y la auditoría nocturna a otro sistema.",screens/settings/WebhooksPage.tsx,,translated
 No zero-rate rooms tonight.,No zero-rate rooms tonight.,لا غرف بسعر صفر الليلة.,No hay habitaciones con tarifa cero para esta noche.,screens/EndOfDayWizard.tsx,,translated
 No-show charge,No-show charge,رسوم عدم الحضور,Cargo por no presentación,,,translated
@@ -3649,8 +3659,12 @@ Order,Order,الطلب,Pedido,,,translated
 Order {amount},Order {amount},طلب {amount},Pedido: {amount},screens/Kitchen.tsx,amount,translated
 Order history,Order history,سجل الطلبات,Historial de pedidos,screens/POS.tsx; screens/pos/OrderHistory.tsx,,translated
 Order items,Order items,عناصر الطلب,Artículos del pedido,screens/pos/OpenBillsPopup.tsx,,translated
+Order to pickup minutes,Order to pickup minutes,دقائق من الطلب إلى الاستلام,Minutos del pedido a la recogida,,,translated
+Order to start minutes,Order to start minutes,دقائق من الطلب إلى البدء,Minutos del pedido al inicio,,,translated
 Order type,Order type,نوع الطلب,Tipo de pedido,screens/pos/OrderHistory.tsx,,translated
 Ordered,Ordered,طُلب,Pedido,screens/Kitchen.tsx,,translated
+Ordered {time},Ordered {time},طُلب {time},Pedido {time},screens/pos/PosSidePanel.tsx,time,translated
+Ordered at,Ordered at,وقت الطلب,Pedido a las,,,translated
 Ordered on the night,Ordered on the night,طُلب خلال المناسبة,Pedidos durante el evento,screens/banquet/Economics.tsx,,translated
 Orders,Orders,الطلبات,Pedidos,screens/POS.tsx; screens/pos/PosSidePanel.tsx,,translated
 Orders by status,Orders by status,الطلبات حسب الحالة,Pedidos por estado,,,translated
@@ -3865,6 +3879,9 @@ Pick up a room,Pick up a room,حجز غرفة من الكتلة,Reservar una hab
 Pick who pays: {v0}.,Pick who pays: {v0}.,اختر من يدفع: {v0}.,Seleccione quién paga: {v0}.,,v0,translated
 "Pick your region and name the property. Currency, time zone, tax and language follow the region. Add rooms, rates and the rest later, at your pace.","Pick your region and name the property. Currency, time zone, tax and language follow the region. Add rooms, rates and the rest later, at your pace.",اختر منطقتك وسمِّ العقار. العملة والمنطقة الزمنية والضريبة واللغة تتبع المنطقة. أضف الغرف والأسعار وغيرها لاحقاً حسب وتيرتك.,"Seleccione su región y asigne un nombre al alojamiento. La moneda, la zona horaria, los impuestos y el idioma se configuran según la región. Después podrá agregar habitaciones, tarifas y el resto de la configuración a su ritmo.",screens/Setup.tsx,,translated
 Pick…,Pick…,اختر…,Seleccione…,screens/RecipeManager.tsx,,translated
+Picked up,Picked up,تم الاستلام,Recogido,screens/POS.tsx,,translated
+Picked up {time},Picked up {time},استُلم {time},Recogido {time},screens/POS.tsx; screens/pos/PosSidePanel.tsx,time,translated
+Picked up at,Picked up at,وقت الاستلام,Recogido a las,,,translated
 "Pickup requested, nothing collected yet: there is nothing to bill.","Pickup requested, nothing collected yet: there is nothing to bill.",طُلب الاستلام ولم يُجمع شيء بعد: لا يوجد ما يُحاسب عليه.,"Se solicitó la recogida, pero aún no se han recibido prendas. No hay nada que facturar.",,,translated
 Pickup requests,Pickup requests,طلبات الاستلام,Solicitudes de recogida,screens/HkLaundry.tsx; screens/Laundry.tsx,,translated
 "Pickup, pace, source and segment mix.","Pickup, pace, source and segment mix.",الحجوزات المكتسبة والوتيرة والمصدر ومزيج الشرائح.,"Recogida, ritmo, origen y mezcla de segmentos.",,,translated
@@ -3884,6 +3901,9 @@ Places to stay,Places to stay,أماكن الإقامة,Alojamientos,screens/Pub
 Places to stay - book direct,Places to stay - book direct,أماكن الإقامة · احجز مباشرة,Alojamientos · reserva directa,screens/PublicBooking.tsx,,translated
 Planned,Planned,مخطط,Previsto,,,translated
 Plated,Plated,أطباق مقدّمة,Emplatado,,,translated
+Plated {time},Plated {time},جُهّز {time},Emplatado {time},screens/pos/PosSidePanel.tsx,time,translated
+Plated at,Plated at,وقت التجهيز,Emplatado a las,,,translated
+Plated to pickup minutes,Plated to pickup minutes,دقائق من التجهيز إلى الاستلام,Minutos del emplatado a la recogida,,,translated
 Play a sound with those alerts.,Play a sound with those alerts.,شغّل صوتًا مع هذه التنبيهات.,Reproduce un sonido con esas alertas.,components/AlertSettings.tsx,,translated
 Please keep the cancellation number,Please keep the cancellation number,يرجى الاحتفاظ برقم الإلغاء,Conserve el número de cancelación,screens/CancellationLetter.tsx,,translated
 "Please try again in a few minutes, or contact the property directly.","Please try again in a few minutes, or contact the property directly.",يُرجى المحاولة مجددًا بعد بضع دقائق، أو التواصل مع العقار مباشرة.,Inténtelo de nuevo en unos minutos o contacte directamente con el alojamiento.,screens/PublicBooking.tsx,,translated
@@ -3947,7 +3967,7 @@ Premium +,Premium +,رسوم إضافية +,Recargo +,screens/settings/cards.tsx
 Prep station,Prep station,محطة التحضير,Estación de preparación,,,translated
 Prep stations,Prep stations,محطات التحضير,Estaciones de preparación,,,translated
 Prepare End of Day,Prepare End of Day,التحضير لنهاية اليوم,Preparar cierre del día,,,translated
-Prepared,Prepared,جاهز,Preparado,screens/POS.tsx; screens/pos/OpenBillsPopup.tsx,,translated
+Prepared,Prepared,جاهز,Preparado,screens/pos/OpenBillsPopup.tsx,,translated
 Preparing,Preparing,قيد التحضير,Preparando,,,translated
 Preparing End of Day…,Preparing End of Day…,جارٍ التحضير لنهاية اليوم…,Preparando el cierre del día…,screens/EndOfDayWizard.tsx,,translated
 Preparing…,Preparing…,جارٍ التحضير…,Preparando...,screens/pos/OrderHistory.tsx,,translated
@@ -4124,6 +4144,7 @@ Reading…,Reading…,جارٍ القراءة…,Leyendo…,screens/Registration
 ready,ready,جاهز,listo,screens/Kitchen.tsx,,translated
 Ready,Ready,جاهز,Listo,screens/EndOfDay.tsx; screens/EndOfDayWizard.tsx; screens/Kitchen.tsx,,translated
 Ready / unpaid,Ready / unpaid,جاهز / غير مدفوع,Listo / pendiente de pago,screens/POS.tsx; screens/pos/OpenBillsPopup.tsx,,translated
+Ready at the pass,Ready at the pass,جاهز عند نافذة التسليم,Listo en el pase,screens/POS.tsx,,translated
 Ready by,Ready by,جاهز بحلول,Entrega prevista para,screens/Laundry.tsx,,translated
 Ready by:,Ready by:,جاهز بحلول:,Entrega prevista:,lib/thermal.ts,,translated
 Ready for go-live,Ready for go-live,جاهز للتشغيل الفعلي,Listo para entrar en funcionamiento,screens/GoLiveImport.tsx,,translated
@@ -4487,6 +4508,7 @@ Salad,Salad,السلطة,Ensalada,,,translated
 Sales,Sales,المبيعات,Ventas,screens/pos/OrderHistory.tsx,,translated
 "Sales and covers by outlet, and orders by status.","Sales and covers by outlet, and orders by status.",المبيعات وعدد الضيوف حسب المنفذ، والطلبات حسب الحالة.,"Ventas y comensales por punto de venta, y pedidos por estado.",,,translated
 "Sales and covers by outlet, orders by status, and items sold by menu name.","Sales and covers by outlet, orders by status, and items sold by menu name.",المبيعات وعدد الضيوف حسب المنفذ، والطلبات حسب الحالة، والأصناف المباعة حسب اسم القائمة.,"Ventas y comensales por punto de venta, pedidos por estado y artículos vendidos por nombre de menú.",,,translated
+"Sales and covers by outlet, orders by status, items sold by menu name, and kitchen turnaround.","Sales and covers by outlet, orders by status, items sold by menu name, and kitchen turnaround.",المبيعات وعدد الضيوف حسب المنفذ، والطلبات حسب الحالة، والأصناف المباعة حسب اسم القائمة، وسرعة المطبخ.,"Ventas y comensales por punto de venta, pedidos por estado, artículos vendidos por nombre de menú y tiempos de cocina.",,,translated
 Sales by order type,Sales by order type,المبيعات حسب نوع الطلب,Ventas por tipo de pedido,screens/PosDashboard.tsx,,translated
 Sales by outlet,Sales by outlet,المبيعات حسب المنفذ,Ventas por punto de venta,,,translated
 Sales by tender,Sales by tender,المبيعات حسب وسيلة الدفع,Ventas por medio de pago,screens/PosDashboard.tsx,,translated
@@ -4631,6 +4653,8 @@ Send updates to,Send updates to,إرسال التحديثات إلى,Enviar nove
 SEO,SEO,تحسين محركات البحث,SEO,,,translated
 Served,Served,المقدَّم,Servido,screens/banquet/Economics.tsx,,translated
 Served as,Served as,طريقة التقديم,Forma de servicio,screens/BanquetCatalogue.tsx,,translated
+Served by,Served by,قدّمه,Atendido por,,,translated
+Served by: {name},Served by: {name},قدّمه: {name},Atendido por: {name},lib/thermal.ts; screens/Kitchen.tsx; screens/pos/PosSidePanel.tsx,name,translated
 Server date,Server date,تاريخ الخادم,Fecha del servidor,screens/EndOfDayWizard.tsx,,translated
 Server work {ms} ms - fine.,Server work {ms} ms - fine.,عمل الخادم {ms} ms، جيد.,Tiempo de procesamiento del servidor: {ms} ms. Adecuado.,screens/settings/cards.tsx,ms,translated
 Server work {ms} ms - slow. The server is busy or under-sized.,Server work {ms} ms - slow. The server is busy or under-sized.,عمل الخادم {ms} ms، بطيء. الخادم مشغول أو موارده غير كافية.,Tiempo de procesamiento del servidor: {ms} ms. Es lento. El servidor está sobrecargado o tiene recursos insuficientes.,screens/settings/cards.tsx,ms,translated
@@ -4827,6 +4851,7 @@ Split folio,Split folio,تقسيم الفاتورة,Dividir folio,screens/FolioV
 Splits the event order,Splits the event order,يقسّم أمر المناسبة حسب القسم,Divide la orden del evento por sección,screens/BanquetCatalogue.tsx,,translated
 "Square, 512×512px · PNG or SVG with a transparent background. Shown on the booking page and invoices. Uploads save automatically.","Square, 512×512px · PNG or SVG with a transparent background. Shown on the booking page and invoices. Uploads save automatically.",مربعة، 512×512px · PNG أو SVG بخلفية شفافة. تظهر في صفحة الحجز والفواتير. يُحفظ الرفع تلقائيًا.,"Formato cuadrado de 512 × 512 px, PNG o SVG con fondo transparente. Aparece en la página de reservas y las facturas. Se guarda automáticamente.",screens/BookingEngine.tsx,,translated
 "Square, 512px+ - PNG or SVG with transparency looks best.","Square, 512px+ - PNG or SVG with transparency looks best.",مربعة، 512px أو أكثر. يُفضَّل PNG أو SVG بخلفية شفافة.,Formato cuadrado de al menos 512 px. Se recomienda PNG o SVG con transparencia.,,,translated
+Staff,Staff,الموظفون,Personal,screens/pos/OrderHistory.tsx; screens/pos/PosSidePanel.tsx,,translated
 Staff & access,Staff & access,الموظفون والصلاحيات,Personal y acceso,,,translated
 Staff & Access,Staff & Access,الموظفون والصلاحيات,Personal y acceso,,,translated
 Staff open,Staff open,يفتحها الموظفون,El personal abre,,,translated
@@ -4845,8 +4870,11 @@ Standard service,Standard service,الخدمة القياسية,Servicio estánd
 Start,Start,بدء,Iniciar,components/RoomStayPanels.tsx; screens/EndOfDayWizard.tsx; screens/HkApp.tsx; screens/Kitchen.tsx,,translated
 Start / accept,Start / accept,بدء / قبول,Iniciar o aceptar,,,translated
 Start date,Start date,تاريخ البدء,Fecha de inicio,,,translated
+Start to plated minutes,Start to plated minutes,دقائق من البدء إلى التجهيز,Minutos del inicio al emplatado,,,translated
 Start work,Start work,بدء العمل,Iniciar trabajo,screens/Tickets.tsx,,translated
-Started,Started,البدء,Inicio,screens/settings/cards.tsx,,translated
+Started,Started,البدء,Inicio,screens/Kitchen.tsx; screens/settings/cards.tsx,,translated
+Started {time},Started {time},بدأ {time},Iniciado {time},screens/Kitchen.tsx; screens/pos/PosSidePanel.tsx,time,translated
+Started at,Started at,وقت البدء,Iniciado a las,,,translated
 Starter,Starter,طبق مقبلات,Entrada,../../kamra/settings.py,,translated
 Starters,Starters,المقبلات,Entradas,../../kamra/settings.py,,translated
 Starters (Veg),Starters (Veg),المقبلات (نباتية),Entradas vegetarianas,screens/BanquetCatalogue.tsx,,translated
@@ -5479,6 +5507,11 @@ Voucher Type,Voucher Type,نوع السند,Tipo de comprobante,,,translated
 Vouchers,Vouchers,القسائم,Vales,screens/PettyCash.tsx,,translated
 vs previous period,vs previous period,مقارنة بالفترة السابقة,vs período anterior,,,translated
 Wait after that time,Wait after that time,الانتظار بعد هذا الوقت,Esperar después de esa hora,,,translated
+Waiter,Waiter,النادل,Mesero,screens/POS.tsx,,translated
+Waiter (optional),Waiter (optional),النادل (اختياري),Mesero (opcional),screens/POS.tsx,,translated
+Waiter name,Waiter name,اسم النادل,Nombre del mesero,components/OutletWaiters.tsx,,translated
+Waiter: {name},Waiter: {name},النادل: {name},Mesero: {name},screens/POS.tsx,name,translated
+Waiters,Waiters,النُدُل,Meseros,components/OutletWaiters.tsx,,translated
 WAITING,WAITING,بانتظار البدء,EN ESPERA,screens/Kitchen.tsx,,translated
 Waitlist,Waitlist,قائمة الانتظار,Lista de espera,components/BookingDialog.tsx,,translated
 Waitlisted · {ref},Waitlisted · {ref},قائمة انتظار · {ref},En lista de espera · {ref},components/BookingDialog.tsx,ref,translated
