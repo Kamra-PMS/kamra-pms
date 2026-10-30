@@ -396,6 +396,7 @@ export const APPS: AppDef[] = [
  *  the first one *among* the apps given - pass the user's visible apps so
  *  the page opens inside an app they can actually see. */
 export function appForPath(pathname: string, among: AppDef[] = APPS, keep?: string): AppDef {
+  if (!among.length) return { ...APPS[0], items: [] }
   const pool = among.length ? among : APPS
   // The app you are in stays put: a page it lists (Rooms from Housekeeping,
   // Reports from Finance) or a drill-in (a folio, a GRC, a guest) opens
