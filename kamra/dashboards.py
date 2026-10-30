@@ -7,7 +7,6 @@ metrics rolled up across every property the signed-in user can access, with
 a per-property table - the chain's central view.
 """
 
-from datetime import date as date_type
 from decimal import ROUND_HALF_UP, Decimal
 
 import frappe
@@ -139,16 +138,6 @@ def _held_by_night(property: str, start, end) -> dict[str, int]:
 COMPARE_METRICS = ("occupancy_pct", "rooms_sold", "room_revenue", "total_revenue", "adr", "revpar")
 
 
-def financial_year_start(property: str, date) -> date_type:
-	"""The first day of the financial year date falls in, from the country
-	pack's FINANCIAL_YEAR_START (month, day); 1 January when it has none."""
-	from kamra.localization import pack_for
-	month, day = getattr(pack_for(property), "FINANCIAL_YEAR_START", (1, 1))
-	d = getdate(date)
-	start = d.replace(month=month, day=day)
-	return start if start <= d else start.replace(year=d.year - 1)
-
-
 def _change(this, last):
 	return round(100 * (this - last) / last, 1) if last else None
 
@@ -158,10 +147,11 @@ def comparison(property: str, date: str, total_rooms: int, forecast: list[dict])
 	each against the same dates one year back. Year to date starts at the
 	country pack's financial year (April in India). The 90 days are the
 	forecast's nights from tonight, over sellable rooms like the forecast."""
+	from kamra.localization import financial_year_start, pack_for
 	from kamra.reports import range_stats
 	d = getdate(date)
 	ly = lambda x: getdate(add_years(x, -1))  # noqa: E731 - 29 Feb -> 28 Feb
-	fy = financial_year_start(property, d)
+	fy = financial_year_start(pack_for(property), d)
 	periods = []
 	for pid, start, end in (("today", d, d), ("mtd", d.replace(day=1), d), ("ytd", fy, d)):
 		this = range_stats(property, start, end, total_rooms)
