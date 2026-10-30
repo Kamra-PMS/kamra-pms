@@ -18,6 +18,7 @@ import {
 import {
   acceptBookingRequest,
   amendStayConfirmed,
+  call,
   declineBookingRequest,
   idDocumentImage,
   promoteWaitlist,
@@ -250,6 +251,28 @@ export default function ReservationDetail({
   const navigate = useNavigate()
   const [checkingOut, setCheckingOut] = useState(false)
   const [checkingIn, setCheckingIn] = useState(false)
+  const [groupNotice, setGroupNotice] = useState<string | null>(null)
+
+  function checkInGroup(group: NonNullable<Detail["group"]>) {
+    if (!confirm(translate("Check in all {v0} waiting rooms of {v1}? Rooms with no room number get a free room of their type.", {
+      v0: String(group.to_check_in), v1: group.group_name,
+    }))) return
+    act(async () => {
+      const out = await call<{ results: { checked_in?: number; skipped?: string; error?: string }[] }>(
+        "kamra.api.group_check_in", { group_booking: group.name })
+      const done = out.results.filter((r) => r.checked_in).length
+      const failed = out.results.filter((r) => r.skipped || r.error)
+      setGroupNotice([
+        translate("{v0} checked in", { v0: String(done) }),
+        failed.length
+          ? translate("{v0} skipped: {v1}", {
+              v0: String(failed.length),
+              v1: [...new Set(failed.map((r) => translate(r.skipped ?? r.error ?? "")))].join("; "),
+            })
+          : "",
+      ].filter(Boolean).join(", "))
+    })
+  }
 
   async function act(fn: () => Promise<unknown>) {
     setBusy(true)
@@ -668,6 +691,17 @@ export default function ReservationDetail({
         {d.actions.can_check_in && (
           <Button disabled={busy} onClick={() => setCheckingIn(true)}>
             <LogIn className="size-4" />{translate(" Check in")}</Button>
+        )}
+        {d.group && d.group.to_check_in > 1 && (
+          <Button variant="outline" disabled={busy} onClick={() => checkInGroup(d.group!)}>
+            <LogIn className="size-4" />
+            {translate("Check in whole group ({v0})", { v0: String(d.group.to_check_in) })}
+          </Button>
+        )}
+        {groupNotice && (
+          <span className="rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-xs font-medium text-emerald-800">
+            {d.group?.group_name}: {groupNotice}
+          </span>
         )}
         {d.status === "Checked In" && (d.checkin_backfill?.length ?? 0) > 0 && (
           <Button variant="outline" disabled={busy} onClick={() => setCheckingIn(true)}>

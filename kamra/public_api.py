@@ -529,7 +529,50 @@ def precheckin_info(token: str):
 			"has_id_document": bool(res.get("id_document")),
 			"id_document_on": str(res.get("id_document_on") or ""),
 		},
+		# the others staying, as named at booking: name and age only - their
+		# ID details are never sent back to the link
+		"occupants": [{"full_name": o.full_name, "age": o.age,
+		               "has_id": bool(o.id_number or o.get("id_file"))}
+		              for o in res.get("occupants") or []],
 	}
+
+
+def _merge_precheckin_occupants(res, rows) -> None:
+	"""The people staying with the guest, from the pre-check-in page: a
+	name already on the register gets its missing age / ID filled, a new
+	name is added. A child keeps name and age only, unless the country's
+	register needs their ID."""
+	from kamra.localization import is_minor, minor_id_kept, pack_for, validate_id_type
+	if isinstance(rows, str):
+		rows = frappe.parse_json(rows) if rows.strip() else []
+	doc = frappe.get_doc("Reservation", res.name)
+	pack = pack_for(doc.property)
+	default_nat = getattr(pack, "DEFAULT_NATIONALITY", "")
+	by_name = {(o.full_name or "").strip().lower(): o for o in doc.get("occupants") or []}
+	for o in (rows or [])[:20]:
+		name = str(o.get("full_name") or "").strip()[:140]
+		if not name or name.lower() == (doc.guest_name or "").strip().lower():
+			continue
+		age = cint(o.get("age")) if str(o.get("age") or "").strip() else None
+		if age is not None and not 0 <= age <= 120:
+			age = None
+		id_type = str(o.get("id_type") or "").strip()[:60]
+		id_number = str(o.get("id_number") or "").strip()[:40]
+		if is_minor(pack, age) and not minor_id_kept(pack, default_nat):
+			id_type = id_number = ""
+		if id_type and id_number:
+			validate_id_type(doc.property, id_type)
+		else:
+			id_type = id_number = ""
+		row = by_name.get(name.lower())
+		if row is None:
+			row = doc.append("occupants", {"full_name": name, "nationality": default_nat})
+			by_name[name.lower()] = row
+		if age is not None and not row.age:
+			row.age = age
+		if id_number and not row.id_number:
+			row.id_type, row.id_number = id_type, id_number
+	doc.save(ignore_permissions=True)
 
 
 def _save_id_image(guest: str, data_url: str,
@@ -572,7 +615,8 @@ def precheckin_submit(token: str, id_type: str, id_number: str,
                       address_line: str = "", city: str = "",
                       eta: str = "", special_requests: str = "",
                       signature: str = "", consent: int = 0,
-                      id_image: str = "", address_image: str = ""):
+                      id_image: str = "", address_image: str = "",
+                      occupants: str = ""):
 	"""Guest completes pre-arrival check-in and signs the registration card
 	(PRD FR-20 - details + declaration + e-signature; the signed card becomes
 	the paperless GRC the desk views at arrival). The guest can attach a
@@ -613,6 +657,8 @@ def precheckin_submit(token: str, id_type: str, id_number: str,
 		"precheckin_signature": signature if signed else None,
 		"precheckin_consent": 1 if int(consent or 0) else 0,
 	})
+	if occupants:
+		_merge_precheckin_occupants(res, occupants)
 
 	from kamra.savings import log_action
 	log_action(

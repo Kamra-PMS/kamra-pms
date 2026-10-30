@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function - the same governed layer
-the UI and the AI use. **421 endpoints**, generated from the source
+the UI and the AI use. **431 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -648,6 +648,19 @@ What this company pays when it has no billing rules: the property's
 | --- | --- | --- |
 | `company` | yes |  |
 | `property` | no | `None` |
+
+### `kamra.api.add_occupant_names`
+
+**POST** · roles: `Front Desk`, `Kamra Agent`
+
+Add the other people staying to the stay's occupant register by name
+(at booking, before anyone's ID is seen). Names already on the register
+are left as they are; age and ID are filled at check-in.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `reservation` | yes |  |
+| `names` | yes |  |
 
 ### `kamra.api.update_occupants`
 
@@ -1764,6 +1777,56 @@ room locked to its share.
 | `master_index` | no | `None` |
 | `master_pays` | no | `None` |
 
+### `kamra.api.rooming_list_template`
+
+**GET/POST** · roles: `Front Desk`, `Revenue Manager`, `Hotel Admin`
+
+An Excel rooming list for the group booking screen to paste or
+upload: Name, Phone, Room type (a dropdown of this property's room
+types) and Other guests, with a sheet explaining how to fill it.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+
+### `kamra.api.create_group_with_rooming_list`
+
+**POST** · roles: `Front Desk`, `Kamra Agent`
+
+The desk's group flow: group -> room blocks -> rooming list ->
+reservations. A Confirmed group holds `blocks` ([{room_type,
+rooms_blocked, block_rate, nightly_counts}]) off sale - nightly_counts
+({"YYYY-MM-DD": rooms}) when the number differs night to night, and
+block_rate the negotiated rate its rooms are billed. Each `guests` row
+({room_type, guest_name, phone, others, check_in_date, check_out_date})
+is booked now against that hold, on the group's dates or its own nights
+inside them. Blocked rooms with no guest stay held until the cutoff.
+
+`master_index` is the guests row whose room pays `master_pays` for the
+group (omit both, or pass `company`, for a company-paid group).
+`quotation_only` saves an Open group (a proposal): nothing is held or
+booked until the block is confirmed. Everything is checked before the
+group is made, so a refusal leaves nothing behind.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `group_name` | yes |  |
+| `check_in_date` | yes |  |
+| `check_out_date` | yes |  |
+| `blocks` | yes |  |
+| `guests` | no | `None` |
+| `guest_name` | no | `None` |
+| `phone` | no | `None` |
+| `company` | no | `None` |
+| `group_type` | no | `None` |
+| `cutoff_date` | no | `None` |
+| `master_index` | no | `None` |
+| `master_pays` | no | `None` |
+| `attrition_pct` | no | `0` |
+| `deposit_due` | no | `0` |
+| `quotation_only` | no | `0` |
+
 ### `kamra.api.inventory_availability`
 
 **GET/POST** · roles: `Front Desk`, `Kamra Agent`, `Revenue Manager`, `Hotel Admin`
@@ -1884,6 +1947,31 @@ PinPad unlock: validate PIN and open a 15-minute sliding window.
 | `property` | yes |  |
 | `pin` | yes |  |
 
+### `kamra.api.group_price_preview`
+
+**GET/POST** · roles: `Front Desk`, `Revenue Manager`, `Kamra Agent`
+
+The price of a block before it is booked (New group booking).
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `check_in_date` | yes |  |
+| `check_out_date` | yes |  |
+| `blocks` | yes |  |
+
+### `kamra.api.group_quotation`
+
+**GET/POST** · roles: `Front Desk`, `Revenue Manager`, `Hotel Admin`, `Kamra Agent`
+
+The group's quotation / proforma: the hotel, the group, its rooms per
+type and night with the rate and tax, the total, the deposit asked and
+the terms (cutoff, allowed shortfall, who pays). Nothing is posted.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `group_booking` | yes |  |
+
 ### `kamra.api.group_detail`
 
 **GET/POST** · roles: `Front Desk`, `Revenue Manager`, `Kamra Agent`
@@ -1895,12 +1983,87 @@ the rooming list, the tied event and the master folio.
 | --- | --- | --- |
 | `group_booking` | yes |  |
 
+### `kamra.api.set_rooming_names`
+
+**POST** · roles: `Front Desk`, `Kamra Agent`
+
+Name the rooms of a group from the rooming list.
+`names` = [{"reservation": ..., "guest_name": ..., "phone": ...}, ...].
+Each named room gets its own guest profile (an existing one when the
+phone matches) and its open guest folio follows. Rows left blank or
+unchanged are skipped.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `group_booking` | yes |  |
+| `names` | yes |  |
+
+### `kamra.api.group_check_in`
+
+**POST** · roles: `Front Desk`, `Night Auditor`, `Kamra Agent`
+
+Check in the group's confirmed rooms (the picked ones, or all).
+A room with no room number gets a free one of its type first; it is
+skipped and reported only when none is free.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `group_booking` | yes |  |
+| `reservations` | no | `None` |
+
+### `kamra.api.group_assign_rooms`
+
+**POST** · roles: `Front Desk`, `Kamra Agent`
+
+Give every confirmed room of the group that has no room number a
+free room of its type (the picked ones, or all).
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `group_booking` | yes |  |
+| `reservations` | no | `None` |
+
+### `kamra.api.group_cancel`
+
+**POST** · roles: `Front Desk`, `Kamra Agent`
+
+Cancel the group's confirmed rooms (the picked ones, or all), each
+under the cancellation policy. When no active room is left the group
+itself is marked Cancelled.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `group_booking` | yes |  |
+| `reservations` | no | `None` |
+| `reason` | no | `'Guest request'` |
+| `waive_fee` | no | `0` |
+
+### `kamra.api.group_amend_dates`
+
+**POST** · roles: `Front Desk`, `Kamra Agent`
+
+Move the group's rooms (the picked ones, or all) to new dates. Each
+stay is re-quoted as amend_stay does, so pass confirm_price=1 once the
+desk has accepted that prices may change. Changing every room also
+moves the group's own dates.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `group_booking` | yes |  |
+| `check_in_date` | yes |  |
+| `check_out_date` | yes |  |
+| `reservations` | no | `None` |
+| `confirm_price` | no | `0` |
+
 ### `kamra.api.save_group_blocks`
 
 **POST** · roles: `Front Desk`, `Revenue Manager`, `Kamra Agent`
 
-Set the room block (list of {room_type, rooms_blocked, block_rate})
-and optionally the cutoff/status. Confirmed blocks hold inventory.
+Set the room block (list of {room_type, rooms_blocked, block_rate,
+nightly_counts}) and optionally the cutoff/status, allowed shortfall %
+and deposit due. Confirmed blocks hold inventory. A row sent without
+nightly_counts keeps its rooms per night while its Rooms Blocked is
+unchanged; a new Rooms Blocked makes every night that number.
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -1908,6 +2071,8 @@ and optionally the cutoff/status. Confirmed blocks hold inventory.
 | `blocks` | yes |  |
 | `cutoff_date` | no | `None` |
 | `status` | no | `None` |
+| `attrition_pct` | no | `None` |
+| `deposit_due` | no | `None` |
 
 ### `kamra.api.pickup_group_room`
 
@@ -4827,12 +4992,14 @@ the company.
 
 **POST** · roles: `Front Desk`, `Kamra Agent`
 
-Quick-checkout every Checked In reservation on a group.
+Quick-checkout every Checked In reservation on a group, or only the
+`reservations` picked on the rooming list.
 
 | Param | Required | Default |
 | --- | --- | --- |
 | `group` | yes |  |
 | `pin` | no | `None` |
+| `reservations` | no | `None` |
 
 ### `kamra.ledger.list_exchange_rates`
 
@@ -5827,6 +5994,12 @@ Everything the public booking page needs to render.
 
 Availability + real quoted price per room type for the stay.
 
+Each available row also carries `plans`: the stay quoted room only
+(first) and with each meal plan, so the page lists real totals per plan. A valid
+`voucher_code` discounts every quote, and each plan then keeps its
+undiscounted `list_amount` for the strike-through; an invalid one is
+ignored here (check_voucher tells the guest why).
+
 `child_ages` (e.g. [3, 8, 13]) lets each room type's age bands decide who
 is free, a child or an adult; without it `children` are all children.
 Each row says whether the room type can take the party: `available`, a
@@ -5844,6 +6017,7 @@ what it sleeps but within the extra guests it allows by arrangement.
 | `location_slug` | no | `None` |
 | `pets` | no | `0` |
 | `child_ages` | no | `None` |
+| `voucher_code` | no | `None` |
 
 ### `kamra.public_api.precheckin_info` <Badge type='tip' text='public' />
 
@@ -5879,6 +6053,7 @@ photo of their ID - camera capture or upload - stored privately.
 | `consent` | no | `0` |
 | `id_image` | no | `''` |
 | `address_image` | no | `''` |
+| `occupants` | no | `''` |
 
 ### `kamra.public_api.precheckin_upload_id` <Badge type='tip' text='public' />
 

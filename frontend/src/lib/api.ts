@@ -1638,6 +1638,8 @@ export const setHousekeepingStatus = (room: string, status: string) =>
 
 export interface ReservationDetail {
   name: string
+  /** set when the stay is one room of a group booking */
+  group: { name: string; group_name: string; rooms: number; to_check_in: number } | null
   status: string
   source: string | null
   channel: string | null

@@ -1305,13 +1305,15 @@ def quick_checkout(reservation: str, pin: str | None = None):
 
 @frappe.whitelist(methods=["POST"])
 @require_roles("Front Desk", "Kamra Agent")
-def group_checkout(group: str, pin: str | None = None):
-	"""Quick-checkout every Checked In reservation on a group."""
-	res_names = frappe.get_all(
-		"Reservation",
-		filters={"group_booking": group, "status": "Checked In"},
-		pluck="name",
-	)
+def group_checkout(group: str, pin: str | None = None, reservations=None):
+	"""Quick-checkout every Checked In reservation on a group, or only the
+	`reservations` picked on the rooming list."""
+	if isinstance(reservations, str):
+		reservations = json.loads(reservations) if reservations.strip() else []
+	filters = {"group_booking": group, "status": "Checked In"}
+	if reservations:
+		filters["name"] = ("in", list(reservations))
+	res_names = frappe.get_all("Reservation", filters=filters, pluck="name")
 	results = []
 	for r in res_names:
 		try:
