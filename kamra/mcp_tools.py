@@ -660,8 +660,8 @@ TOOLS: tuple[ToolSpec, ...] = (
 	_t(
 		"record_payment",
 		"api.add_folio_payment",
-		"""Record money received on a folio. mode: Cash, UPI, Card, Bank,
-		Link. kind: Payment (default), Advance, or Security Deposit.
+		"""Record money received on a folio. mode: Cash, Card, Bank, Link
+		or another payment mode the property offers. kind: Payment (default), Advance, or Security Deposit.
 		Confirm the amount with staff before calling.""",
 		{
 			"folio": _p("string"),
@@ -819,7 +819,7 @@ TOOLS: tuple[ToolSpec, ...] = (
 	_t(
 		"send_payment_link",
 		"api.folio_payment_link",
-		"""Create a Razorpay payment link for a folio's outstanding balance
+		"""Create an online payment link (the property's payment gateway) for a folio's outstanding balance
 		(SMS/email to the guest when contact details exist).""",
 		{"folio": _p("string")},
 		required=("folio",),
@@ -1518,7 +1518,7 @@ TOOLS: tuple[ToolSpec, ...] = (
 	_t(
 		"pos_pay_order",
 		"pos.pay_order",
-		"""Settle a POS check. mode: Cash, UPI, Card, Room Charge, etc.
+		"""Settle a POS check. mode: a payment mode the property offers (Cash, Card, ...) or Room Charge.
 		Confirm the total with staff before calling.""",
 		{"order": _p("string"), "mode": _p("string")},
 		required=("order", "mode"),

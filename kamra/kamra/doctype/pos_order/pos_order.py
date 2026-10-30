@@ -5,6 +5,8 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 
+from kamra.localization import money_text
+
 
 class POSOrder(Document):
 	def validate(self):
@@ -143,5 +145,5 @@ class POSOrder(Document):
 		from kamra.savings import log_action
 		log_action("post_pos_order", "POS Order", self.name, self.property,
 		           minutes_saved=5 if self.source in ("AI Agent", "QR") else 0,
-		           rationale=f"₹{self.order_total:,.0f} {detail} → {folio.name}",
+		           rationale=f"{money_text(self.property, round(self.order_total or 0))} {detail} → {folio.name}",
 		           channel="API")

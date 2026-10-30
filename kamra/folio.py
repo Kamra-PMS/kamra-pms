@@ -729,7 +729,8 @@ def split_charge(from_folio: str, charge_row: str, to_folio: str,
 	else:
 		frappe.throw("Give a percent or an amount to split off.")
 	if part <= 0 or part >= base:
-		frappe.throw(f"Split must be between 0 and ₹{base} (exclusive).")
+		from kamra.localization import money_text
+		frappe.throw(f"Split must be between 0 and {money_text(src.property, base)} (exclusive).")
 	if row.get("is_alcohol") and dst.folio_type in ("Company", "Group"):
 		frappe.throw("Alcohol cannot be billed to a company folio.")
 
@@ -901,9 +902,10 @@ def post_allowance(folio_name: str, amount: float, reason: str,
 	_recalculate(folio)
 	from kamra.ledger import save_folio
 	save_folio(folio)
+	from kamra.localization import money_text
 	from kamra.savings import log_action
 	log_action("post_allowance", "Folio", folio.name, folio.property,
-	           rationale=f"Allowance ₹{amount:.0f} - {reason.strip()}")
+	           rationale=f"Allowance {money_text(folio.property, round(amount))} - {reason.strip()}")
 	return folio.name
 
 
@@ -933,10 +935,12 @@ def void_charge(folio_name: str, charge_row: str, reason: str = "") -> dict:
 	folio.remove(row)
 	_recalculate(folio)
 	folio.save(ignore_permissions=True)
+	from kamra.localization import money_text
 	from kamra.savings import log_action
 	log_action("void_charge", "Folio", folio.name, folio.property,
 	           rationale=f"Removed {removed['charge_type']} "
-	                     f"{removed['description']} ₹{removed['amount']}"
+	                     f"{removed['description']} "
+	                     f"{money_text(folio.property, removed['amount'])}"
 	                     + (f" - {reason}" if reason else ""))
 	return {"folio": folio.name, "removed": removed, "balance": folio.balance}
 

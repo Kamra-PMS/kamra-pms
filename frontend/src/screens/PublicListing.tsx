@@ -909,7 +909,7 @@ export default function PublicListing() {
                 <input
                   className={inputCls}
                   value={form.phone}
-                  placeholder="+91 …"
+                  placeholder="+…"
                   onChange={(e) => setForm({ ...form, phone: e.target.value })}
                 />
               </label>

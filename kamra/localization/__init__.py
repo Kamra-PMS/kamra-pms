@@ -69,6 +69,11 @@ def services_tax_rate(pack, property: str | None) -> float:
 	return float(pack.fnb_tax_rate(property))
 
 
+def default_currency(pack) -> str:
+	"""The pack's home currency, for a property that has none set."""
+	return getattr(pack, "DEFAULT_CURRENCY", None) or "USD"
+
+
 def money_text(property: str | None, amount) -> str:
 	"""An amount in the property's currency for server-written text (the
 	activity log, alerts) - never a hardcoded rupee sign."""
@@ -109,6 +114,12 @@ def tax_split(pack, prop_doc, buyer_tax_id: str | None = None):
 	return pack.invoice_context(prop_doc)["split"]
 
 
+def invoice_tax_note(pack) -> str:
+	"""A line under the invoice on how tax is shown (India: GST inclusive),
+	or "" where the pack has none."""
+	return getattr(pack, "INVOICE_TAX_NOTE", None) or ""
+
+
 def amount_in_words(pack, prop_doc, amount) -> str:
 	fn = getattr(pack, "amount_in_words", None)
 	if fn:
@@ -142,6 +153,8 @@ def payment_modes(pack) -> list[str]:
 def front_desk_vocabulary(pack) -> dict:
 	return {
 		"id_types": id_types(pack),
+		# a help line per ID type, e.g. which copy of a national ID is fine
+		"id_type_hints": dict(getattr(pack, "ID_TYPE_HINTS", None) or {}),
 		"payment_modes": payment_modes(pack),
 		"default_nationality": getattr(pack, "DEFAULT_NATIONALITY", "") or "",
 		"adult_age": adult_age(pack),

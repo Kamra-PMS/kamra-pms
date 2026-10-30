@@ -245,7 +245,7 @@ export default function CRS() {
             </label>
             <label className="block">
               <span className="mb-1 block text-sm font-medium text-zinc-600">{t("Phone")}</span>
-              <input className={inputCls} value={guest.phone} placeholder="+91 …"
+              <input className={inputCls} value={guest.phone} placeholder="+…"
                 onChange={(e) => setGuest({ ...guest, phone: e.target.value })} />
             </label>
           </div>

@@ -201,6 +201,7 @@ def set_room_rate(property: str, room_type: str, start_date: str,
 	from frappe.utils import add_days, date_diff
 
 	# Validate hurdle rates for each day in range
+	from kamra.localization import money_text
 	from kamra.pricing import demand_tier
 	for i in range(min(int(date_diff(end_date, start_date)) + 1, 92)):
 		day = add_days(start_date, i)
@@ -209,7 +210,8 @@ def set_room_rate(property: str, room_type: str, start_date: str,
 			frappe.throw(
 				f"Blocked by the hurdle rate: occupancy for {day} is "
 				f"{tier['occupancy']:.0f}%, so the minimum sell rate is "
-				f"₹{tier['min_rate']:,.0f} - ₹{rate:,.0f} undercuts it."
+				f"{money_text(property, round(tier['min_rate']))} - "
+				f"{money_text(property, round(rate))} undercuts it."
 			)
 
 	from frappe.utils import date_diff
@@ -232,10 +234,12 @@ def set_room_rate(property: str, room_type: str, start_date: str,
 		"days_of_week": days_str
 	})
 	season.insert()
+	from kamra.localization import money_text
 	from kamra.savings import log_action
 	log_action("set_room_rate", "Season", season.name, property,
 	           minutes_saved=6, rationale=reason or (
-	               f"Set {room_type.split('-')[-1]} rate ₹{rate:,.0f} "
+	               f"Set {room_type.split('-')[-1]} rate "
+	               f"{money_text(property, round(rate))} "
 	               f"for {start_date}→{end_date}"))
 	return {
 		"season": season.name, "rate": rate,
@@ -1509,9 +1513,11 @@ def _post_folio_charge(folio: str, charge_type: str, description: str,
 		record_charge_ledger(doc, charge.as_dict())
 	except Exception:
 		frappe.log_error(title="ledger charge write failed")
+	from kamra.localization import money_text
 	from kamra.savings import log_action
 	log_action("post_charge", "Folio", doc.name, doc.property,
-	           rationale=f"{charge_type}: {description} ₹{amount}")
+	           rationale=f"{charge_type}: {description} "
+	                     f"{money_text(doc.property, amount)}")
 	from kamra.webhooks import emit_folio_posted
 	emit_folio_posted(doc, charge)
 	return doc.as_dict()
@@ -1542,8 +1548,9 @@ def add_folio_payment(folio: str, mode: str, amount: float,
 	from kamra.cashier import record_cashier_txn, require_open_session
 	bd = get_business_date(doc.property)
 	# Property currency — never leave Folio Payment on the INR schema default (#341)
+	from kamra.localization import default_currency, pack_for
 	currency = (frappe.get_cached_value("Property", doc.property, "currency")
-	            or "INR")
+	            or default_currency(pack_for(doc.property)))
 	sess = None
 	try:
 		sess = require_open_session(doc.property)
@@ -1635,7 +1642,8 @@ def _refund_folio_payment(folio: str, amount: float, mode: str, reason: str,
 	refunded = -sum(float(p.amount or 0) for p in doc.payments
 	                if float(p.amount or 0) < 0)
 	if float(amount) > received - refunded:
-		frappe.throw(f"Only ₹{received - refunded:,.2f} was collected on "
+		from kamra.localization import money_text
+		frappe.throw(f"Only {money_text(doc.property, received - refunded)} was collected on "
 		             "this folio - can't refund more than that.")
 	# Pre-arrival advance: release Deposit liability, not Guest (#343)
 	release_advance = False
@@ -1645,8 +1653,9 @@ def _refund_folio_payment(folio: str, amount: float, mode: str, reason: str,
 	from kamra.business_date import get_business_date
 	from kamra.cashier import record_cashier_txn, require_open_session
 	bd = get_business_date(doc.property)
+	from kamra.localization import default_currency, pack_for
 	currency = (frappe.get_cached_value("Property", doc.property, "currency")
-	            or "INR")
+	            or default_currency(pack_for(doc.property)))
 	sess = None
 	try:
 		sess = require_open_session(doc.property)
@@ -2003,8 +2012,9 @@ def split_folio_charge(from_folio: str, charge_row: str, to_folio: str,
 	                   percent=float(percent) if percent else None,
 	                   amount=float(amount) if amount else None)
 	from kamra.savings import log_action
+	from kamra.localization import money_text
 	log_action("split_charge", "Folio", to_folio,
-	           rationale=f"Split ₹{out['moved']:,.2f} of {charge_row} "
+	           rationale=f"Split {money_text(frappe.db.get_value('Folio', to_folio, 'property'), out['moved'])} of {charge_row} "
 	                     f"{from_folio} → {to_folio}")
 	return out
 
@@ -2182,8 +2192,10 @@ def post_allowance(folio: str, amount: float, reason: str,
 	from kamra.folio import post_allowance as _allow
 	_allow(folio, float(amount), reason, float(gst_rate or 0))
 	from kamra.savings import log_action
+	from kamra.localization import money_text
+	prop = frappe.db.get_value("Folio", folio, "property")
 	log_action("allowance", "Folio", folio,
-	           rationale=f"Allowance ₹{abs(float(amount)):,.2f}: {reason}")
+	           rationale=f"Allowance {money_text(prop, abs(float(amount)))}: {reason}")
 	return {"ok": True, "folio": folio}
 
 
@@ -2309,6 +2321,7 @@ def folio_invoice(folio: str):
 			"place_of_supply": _loc_ctx["place_of_supply"],
 			"tax_label": _loc_ctx["tax_label"],
 			"tax_id_label": _loc_ctx["tax_id_label"],
+			"tax_note": loc.invoice_tax_note(pack),
 		},
 		"guest": _invoice_guest(res),
 		"stay": {

@@ -10,7 +10,7 @@ const HkTaskMediaPanel = lazy(() =>
   import("../components/HkMedia").then((m) => ({ default: m.HkTaskMediaPanel })),
 )
 const ReservationDetail = lazy(() => import("./ReservationDetail"))
-import { cur } from "../lib/money"
+import { cur, locale } from "../lib/money"
 
 export const roomsConfig: ScreenConfig = {
   doctype: "Room",
@@ -509,14 +509,14 @@ export const companiesConfig: ScreenConfig = {
   pageSize: 25,
   columns: [
     { field: "company_name", label: "Company" },
-    { field: "gstin", label: "GSTIN" },
+    { field: "gstin", get label() { return locale().tax_id_label } },
     { field: "contact_name", label: "Contact" },
     { field: "contact_phone", label: "Phone" },
     { field: "credit_allowed", label: "Credit" },
   ],
   form: [
     { field: "company_name", label: "Company name", type: "data", required: true },
-    { field: "gstin", label: "GSTIN", type: "data" },
+    { field: "gstin", get label() { return locale().tax_id_label }, type: "data" },
     { field: "contact_name", label: "Contact name", type: "data" },
     { field: "contact_phone", label: "Contact phone", type: "data" },
     { field: "contact_email", label: "Contact email", type: "data" },

@@ -291,10 +291,10 @@ def _public_locale(property: str) -> dict:
 	prop = frappe.get_cached_doc("Property", property)
 	pack = pack_for(property)
 	loc = pack.locale(prop)
-	# "" is a valid symbol (generic pack shows bare numbers) - only the
-	# missing key falls back to the rupee
-	return {"currency_symbol": loc.get("currency_symbol", "₹"),
-	        "locale": loc.get("locale") or "en-IN",
+	# "" is a valid symbol (generic pack shows bare numbers)
+	return {"currency_symbol": loc.get("currency_symbol") or "",
+	        "locale": loc.get("locale") or "en",
+	        "currency": loc.get("currency") or "",
 	        **privacy_terms(pack)}
 
 
@@ -487,6 +487,7 @@ def precheckin_info(token: str):
 		"ui_locale": _public_locale(res.property),
 		# which IDs this country accepts, and the likely nationality
 		"id_types": vocab["id_types"],
+		"id_type_hints": vocab["id_type_hints"],
 		"default_nationality": vocab["default_nationality"],
 		"property": {
 			"property_name": prop.property_name,
@@ -1008,8 +1009,9 @@ def check_voucher(property: str, code: str, nights: int = 1):
 		v = validate_voucher(property, code, int(nights or 1))
 	except Exception as e:
 		return {"ok": False, "message": str(e)}
+	from kamra.localization import money_text
 	label = (f"{v.value:g}% off" if v.discount_type == "Percent"
-	         else f"₹{v.value:,.0f} off")
+	         else f"{money_text(property, round(v.value))} off")
 	return {"ok": True, "message": f"'{v.voucher_code}' applied - {label}.",
 	        "discount_type": v.discount_type, "value": float(v.value)}
 
