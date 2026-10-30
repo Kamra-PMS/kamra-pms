@@ -120,10 +120,56 @@ class ReinstateCheckoutTestCase(AuditTestCase):
 		api.add_folio_payment(folio, "Cash", leaks._balance(folio))
 		earlier = folio_mod.close_folio(folio)
 		frappe.db.set_value("Folio", folio, "closed_on", "2000-01-01 10:00:00")
+		self.audit_ran()
 		api.check_out(res.name)
 		out = api.reinstate_checkout(res.name, "came back")
 		self.assertNotIn(earlier, out["cancelled_invoices"])
 		self.assertEqual(frappe.db.get_value("Folio", folio, "invoice_number"), earlier)
+
+	def audit_ran(self):
+		"""A night audit finished after the earlier bill closed."""
+		frappe.get_doc({"doctype": "Night Audit Run", "property": PROP_A,
+		                "business_date": d(-1), "status": "Completed"}).insert(
+			ignore_permissions=True)
+
+	def test_an_earlier_company_bill_stays_on_the_account(self):
+		res = make_reservation(PROP_A, self.rt, d(-1), d(1), status="Checked In",
+		                       room=self.room, booking_type="Corporate", company=self.company)
+		folio_mod.post_remaining_nights(res)
+		company = frappe.db.get_value("Folio", {"reservation": res.name,
+		                                        "folio_type": "Company"})
+		ledger.transfer_to_city_ledger(company)
+		earlier = folio_mod.close_folio(company)
+		frappe.db.set_value("Folio", company, "closed_on", "2000-01-01 10:00:00")
+		self.audit_ran()
+		account = frappe.db.get_value("City Ledger Account",
+		                              {"company": self.company, "property": PROP_A}, "name")
+		balance = frappe.db.get_value("City Ledger Account", account, "balance")
+		api.check_out(res.name)
+		out = api.reinstate_checkout(res.name, "came back")
+		self.assertEqual(out["from_city_ledger"], 0)
+		self.assertEqual(frappe.db.get_value("Folio", company, ["status", "invoice_number"]),
+		                 ("Closed", earlier))
+		self.assertEqual(frappe.db.get_value("City Ledger Account", account, "balance"), balance)
+
+	def test_refused_when_the_room_was_relet_today(self):
+		# departed today; the room went to a new guest the same day
+		res = make_reservation(PROP_A, self.rt, d(-1), TODAY, status="Checked In",
+		                       room=self.room)
+		folio_mod.post_remaining_nights(res)
+		folio = guest_folio(res.name)
+		api.add_folio_payment(folio, "Cash", leaks._balance(folio))
+		api.check_out(res.name)
+		make_reservation(PROP_A, self.rt, TODAY, d(2), status="Checked In", room=self.room)
+		with self.assertRaisesRegex(frappe.ValidationError, "given to"):
+			api.reinstate_checkout(res.name, "room gone")
+		self.assertEqual(frappe.db.get_value("Reservation", res.name, "status"), "Checked Out")
+
+	def test_undo_offered_only_the_same_business_day(self):
+		res, _folio, _n = self.guest_stay_out()
+		self.assertTrue(api.reservation_detail(res.name)["actions"]["can_reinstate"])
+		frappe.db.set_value("Property", PROP_A, "business_date", d(1))
+		self.assertFalse(api.reservation_detail(res.name)["actions"]["can_reinstate"])
 
 	def test_refused_when_the_room_is_taken(self):
 		res, _folio, _n = self.guest_stay_out()

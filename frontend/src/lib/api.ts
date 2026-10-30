@@ -1718,6 +1718,7 @@ export interface ReservationDetail {
     can_check_out: boolean
     can_cancel: boolean
     can_amend: boolean
+    can_reinstate: boolean
   }
   /** Things the desk should see but which must never gate an arrival. Kept
    *  apart from `actions` on purpose: a missing ID is a warning, not a

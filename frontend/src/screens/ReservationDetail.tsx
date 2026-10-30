@@ -685,7 +685,7 @@ export default function ReservationDetail({
           <Button disabled={busy} onClick={() => setCheckingOut(true)}>
             <LogOut className="size-4" />{translate(" Check out")}</Button>
         )}
-        {d.status === "Checked Out" && (
+        {d.actions.can_reinstate && (
           <ReinstatePanel reservation={name} onDone={(w) => { setReinstated(w); refresh(); reload() }} />
         )}
         {reinstated.length > 0 && (
