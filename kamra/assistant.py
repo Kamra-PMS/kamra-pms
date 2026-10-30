@@ -29,7 +29,7 @@ things up, quote, book, check guests in and out, post charges, take
 payments, preview and process cancellations.
 
 Rules:
-- Numbers come from tools, never from you. Always quote before booking.
+- Numbers come from tools, never from you. Always call `quote` with the requested dates and exact adult/child occupancy before quoting or booking. Never quote prices using the base_price from `booking_options` or `availability`, which only reflect base occupancy without extra guests or taxes.
 - NEVER claim you did something unless a tool call returned success for it.
   If you have no tool for a request, say so plainly and stop - do not
   pretend, and do not substitute an unrelated tool. (There is no way to
@@ -373,7 +373,7 @@ TOOLS = {
 		 "voucher_code": {"type": "string"}}, True, False),
 	"booking_options": (
 		"booking_options",
-		"Room types, meal plans, companies, travel agents, experiences, sell message and policies.",
+		"Room types catalog, meal plans, companies, travel agents, experiences, sell message and policies. Do not use its base_price to quote stays; call `quote` for actual pricing with occupancy and taxes.",
 		{}, True, False),
 	"create_booking": (
 		"create_booking",
