@@ -13226,6 +13226,460 @@
    ]
   },
   {
+   "name": "Accounts payable (vendors, supplier bills, approval, payments)",
+   "item": [
+    {
+     "name": "vendors",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.payables.vendors",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.payables.vendors"
+       ]
+      },
+      "description": "Every vendor at the property with what the hotel still owes them,\naged by due date - the payables list.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"include_disabled\": 0\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "save_vendor",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.payables.save_vendor",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.payables.save_vendor"
+       ]
+      },
+      "description": "Add a supplier at the property, or edit one (`vendor`). Names are\nunique per property, so a bill can name its vendor by name.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"vendor_name\": \"<vendor_name>\",\n  \"payment_terms_days\": 30,\n  \"phone\": \"+91 90000 00000\",\n  \"email\": \"guest@example.com\",\n  \"disabled\": 0\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "create_vendor_bill",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.payables.create_vendor_bill",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.payables.create_vendor_bill"
+       ]
+      },
+      "description": "Enter a supplier's bill. `amount` is before tax; the tax is\namount x `tax_rate` %. The due date is the bill date plus the vendor's\npayment terms unless `due_date` is given. The bill then waits for a\nHotel Admin to approve it.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"vendor\": \"<vendor>\",\n  \"bill_date\": \"<bill_date>\",\n  \"amount\": 1000,\n  \"tax_rate\": 0\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "approve_vendor_bill",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.payables.approve_vendor_bill",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.payables.approve_vendor_bill"
+       ]
+      },
+      "description": "Approve a bill so it can be paid.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"bill\": \"<bill>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "pay_vendor_bill",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.payables.pay_vendor_bill",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.payables.pay_vendor_bill"
+       ]
+      },
+      "description": "Record a payment against an approved bill: all of it or part. It\ncan't be more than the bill still owes. This records the payment; it\ndoes not move money in a till (cash from the till is petty cash).",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"bill\": \"<bill>\",\n  \"amount\": 1000,\n  \"mode\": \"Bank Transfer\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "cancel_vendor_bill",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.payables.cancel_vendor_bill",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.payables.cancel_vendor_bill"
+       ]
+      },
+      "description": "Cancel a bill entered by mistake. A bill with payments on it can't\nbe cancelled.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"bill\": \"<bill>\",\n  \"reason\": \"<reason>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "vendor_bill",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.payables.vendor_bill",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.payables.vendor_bill"
+       ]
+      },
+      "description": "One bill with its payments.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"bill\": \"<bill>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "vendor_bills",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.payables.vendor_bills",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.payables.vendor_bills"
+       ]
+      },
+      "description": "Bills at the property, most urgent first. `status` is \"open\"\n(not paid or cancelled, the default), \"all\", or one status.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"status\": \"open\",\n  \"limit\": 500\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "payables_aging",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.payables.payables_aging",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.payables.payables_aging"
+       ]
+      },
+      "description": "What the hotel owes each vendor, aged by due date: not_due, d1_30,\nd31_60, d61_90, d90p and their sum `overdue`, plus totals.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "name": "Management books (next days of cash, P&L, balance sheet)",
+   "item": [
+    {
+     "name": "cash_forecast",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.books.cash_forecast",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.books.cash_forecast"
+       ]
+      },
+      "description": "Money expected in and out over the next `days` days (5, 15 or 30;\ndefault 5), day by day from today, with a running position and\nsubtotals by week.\n\nIn: company (city ledger) bills falling due, what departing guests\nstill owe, advance deposits due from arrivals. Out: supplier bills\nfalling due, drafts awaiting approval included and flagged `draft`.\nAnything already overdue is counted today. `opening` is\nthe cash and bank to start from; without it, the cash in open tills.\nRead-only.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"days\": 5\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "profit_and_loss",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.books.profit_and_loss",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.books.profit_and_loss"
+       ]
+      },
+      "description": "A management P&L for the period, before tax: revenue by department\n(rooms, food and beverage, banquets, other, less allowances) and\nexpenses (supplier bills by category on their bill date, petty cash by\ncategory). Not statutory accounts: payroll, depreciation and anything\npaid outside Kamra are not in it.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"from_date\": \"2026-08-01\",\n  \"to_date\": \"2026-08-31\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "balance_sheet",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.books.balance_sheet",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.books.balance_sheet"
+       ]
+      },
+      "description": "What is owed to the hotel and what it owes, as of a date (default\ntoday): guest ledger and city ledger against advance deposits and\nsupplier bills, plus cash in open tills when the date is today. Tax\ncollected this month is shown for reference, not in the totals: Kamra\ndoes not record tax paid to the government. Not a full balance sheet:\nthe bank, fixed assets, loans and equity are not in Kamra.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
    "name": "Night audit (End of Day checklist, audit pack)",
    "item": [
     {

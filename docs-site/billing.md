@@ -365,6 +365,9 @@ business dates (up to 92 days).
 
 ![The Petty Cash screen with the New voucher form and a posted voucher](/img/billing/petty-cash.png)
 
+A supplier who sends a bill and is paid later is not petty cash: enter it
+under **Finance → Payables** (see [Books](/books)).
+
 ## Change foreign currency
 
 1. Open **Finance → Currency Desk**.

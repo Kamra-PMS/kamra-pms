@@ -264,7 +264,7 @@ _PROPERTY_SCOPED = (
 	"Reservation",
 	"Revenue Budget", "Room", "Room Block", "Room Type", "Season",
 	"Security Deposit", "Sellable Unit", "Service Ticket", "Shift Handover", "SOP Template", "Ticket Event",
-	"Transaction Code", "Turnover Profile", "Venue", "Venue Booking",
+	"Transaction Code", "Turnover Profile", "Vendor", "Vendor Bill", "Venue", "Venue Booking",
 	"WhatsApp Message", "ZATCA Invoice", "ZATCA Settings",
 )
 

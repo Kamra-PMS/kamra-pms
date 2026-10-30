@@ -5,6 +5,7 @@
 <<<<<<<< HEAD:kamra/public/frontend/assets/stat-card-DrZW9k6F.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/stat-card-DrZW9k6F.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/stat-card-DrZW9k6F.js
+<<<<<<<< HEAD:kamra/public/frontend/assets/stat-card-DrZW9k6F.js
 import{j as s,L as $}from"./vendor-D6bHyl-8.js";import{b as k,i as z,t as N,e as v}from"./index-B3i2Wflk.js";import{A as M}from"./arrow-up-right-BrdATTMK.js";/**
 ========
 import{j as s,L as $}from"./vendor-D6bHyl-8.js";import{b as k,i as z,t as N,e as v}from"./index-DwNNU3P0.js";import{A as M}from"./arrow-up-right-971FtmbA.js";/**
@@ -27,6 +28,9 @@ import{j as s,L as $}from"./vendor-D6bHyl-8.js";import{b as k,i as z,t as N,e as
 ========
 import{j as s,L as $}from"./vendor-D6bHyl-8.js";import{b as k,i as z,t as N,e as v}from"./index-Cs1-hUvj.js";import{A as M}from"./arrow-up-right-DfGNHGSG.js";/**
 >>>>>>>> origin/feat/monthly-company-bill:kamra/public/frontend/assets/stat-card-ClP5u2nQ.js
+========
+import{j as s,L as $}from"./vendor-D6bHyl-8.js";import{b as k,i as z,t as N,e as v}from"./index-BDXVoczZ.js";import{A as M}from"./arrow-up-right-ypHjeNIv.js";/**
+>>>>>>>> origin/feat/finance-books:kamra/public/frontend/assets/stat-card-IOu_klX7.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.

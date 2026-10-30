@@ -5,6 +5,7 @@
 <<<<<<<< HEAD:kamra/public/frontend/assets/thermal-lR5O1Zqo.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/thermal-lR5O1Zqo.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/thermal-lR5O1Zqo.js
+<<<<<<<< HEAD:kamra/public/frontend/assets/thermal-lR5O1Zqo.js
 import{t as a,a as c,m as o,c as m}from"./index-B3i2Wflk.js";const v=`
 ========
 import{t as a,a as c,m as o,c as m}from"./index-DwNNU3P0.js";const v=`
@@ -27,6 +28,9 @@ import{t as a,a as c,m as o,c as m}from"./index-CE8_F8LC.js";const v=`
 ========
 import{t as a,a as c,m as o,c as m}from"./index-Cs1-hUvj.js";const v=`
 >>>>>>>> origin/feat/monthly-company-bill:kamra/public/frontend/assets/thermal-BXHKwxyT.js
+========
+import{t as a,a as c,m as o,c as m}from"./index-BDXVoczZ.js";const v=`
+>>>>>>>> origin/feat/finance-books:kamra/public/frontend/assets/thermal-D9sMZPlS.js
   @page { size: 80mm auto; margin: 0 }
   * { margin: 0; padding: 0; box-sizing: border-box }
   html, body { background: #fff; color: #000 }
