@@ -19,6 +19,8 @@ older ones. Finance gets an in-app notice of what went out.
 
 from __future__ import annotations
 
+import re
+
 import frappe
 from frappe import _
 from frappe.utils import cint, flt, nowdate
@@ -180,10 +182,9 @@ def monthly_bill(account: str, month: str) -> dict:
 	from frappe.utils import get_last_day, getdate
 
 	from kamra.credit import _symbol
-	try:
-		start = getdate(f"{month}-01")
-	except Exception:
-		frappe.throw(_("Pick a month, like 2026-10."))
+	if not re.fullmatch(r"\d{4}-(0[1-9]|1[0-2])", str(month or "")):
+		frappe.throw(_("Pick a month as YYYY-MM, like 2026-10."))
+	start = getdate(f"{month}-01")
 	end = get_last_day(start)
 	acc = frappe.db.get_value("City Ledger Account", account,
 	                          ["property", "company", "account_number", "credit_days",
@@ -334,10 +335,11 @@ def email_monthly_bill(account: str, month: str, recipients: str | None = None,
 
 # --- reminders ---------------------------------------------------------------
 
-def _reminded(folio: str, stage: str) -> bool:
+def _reminded(folio: str, stage: str, company: str) -> bool:
+	# per company: a bill moved to another account gets its own reminders
 	return bool(frappe.db.exists("Agent Action Log", {
 		"action_type": LOG_PREFIX + stage, "reference_doctype": "Folio",
-		"reference_name": folio}))
+		"reference_name": folio, "rationale": ["like", f"{company}:%"]}))
 
 
 def _line(r: dict, amount: float, stage: str, late: int, sym: str) -> str:
@@ -365,7 +367,7 @@ def send_property_reminders(property: str) -> dict:
 		for r, amount in _netted(st["open_items"], st["unapplied_credit"]):
 			late = days_overdue(r, today)
 			stage = reminder_stage(late)
-			if stage and not _reminded(r["folio"], stage):
+			if stage and not _reminded(r["folio"], stage, st["company"]):
 				due.append((r, amount, stage, late))
 		if not due:
 			continue

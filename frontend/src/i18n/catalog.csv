@@ -3999,7 +3999,7 @@ Print final reports,Print final reports,طباعة التقارير النهائ
 Print folio,Print folio,طباعة كشف الحساب,Imprimir folio,screens/FolioView.tsx,,translated
 Print for {printer},Print for {printer},طباعة لـ {printer},Imprimir para {printer},screens/Kitchen.tsx,printer,translated
 Print GRC,Print GRC,طباعة بطاقة التسجيل,Imprimir ficha de registro,screens/RegistrationCard.tsx,,translated
-Print invoice,Print invoice,طباعة الفاتورة,Imprimir factura,screens/FolioView.tsx,,translated
+Print invoice,Print invoice,طباعة الفاتورة,Imprimir factura,screens/FolioView.tsx; screens/Receivables.tsx,,translated
 "Print it, or send the PDF straight from the print dialog.","Print it, or send the PDF straight from the print dialog.",اطبعه، أو أرسل ملف PDF مباشرة من نافذة الطباعة.,Imprímalo o envíe el PDF desde el diálogo de impresión.,screens/BanquetFunction.tsx,,translated
 Print KOT,Print KOT,طباعة أمر المطبخ,Imprimir comandas,,,translated
 Print pack,Print pack,طباعة الحزمة,Imprimir paquete,screens/EndOfDay.tsx,,translated

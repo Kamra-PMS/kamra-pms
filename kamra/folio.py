@@ -985,6 +985,11 @@ def cancel_invoice(folio_name: str, reason: str) -> dict:
 	folio = frappe.get_doc("Folio", folio_name)
 	if folio.status != "Closed" or not folio.invoice_number:
 		frappe.throw("Only a settled folio with an invoice can be cancelled.")
+	if folio.folio_type == "Account":
+		# reopened, an account invoice has no stay to correct it from and
+		# nothing would reissue it: the AR way out is a credit note
+		frappe.throw("An account invoice can't be cancelled - issue a credit "
+		             "note against it instead.")
 	if not (reason or "").strip():
 		frappe.throw("A cancellation needs a reason - it goes on the record.")
 	frappe.get_doc({
