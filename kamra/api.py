@@ -1544,6 +1544,8 @@ def add_folio_payment(folio: str, mode: str, amount: float,
 		frappe.throw("Amount must be positive.")
 	_pin_guard(folio, pin)
 	doc = frappe.get_doc("Folio", folio)
+	from kamra.localization import assert_payment_mode
+	assert_payment_mode(doc.property, mode)
 	from kamra.business_date import get_business_date
 	from kamra.cashier import record_cashier_txn, require_open_session
 	bd = get_business_date(doc.property)

@@ -14,7 +14,7 @@ import {
 } from "lucide-react"
 import { call } from "../../lib/api"
 import { serverError } from "../../lib/resource"
-import { cur, moneyLocale } from "../../lib/money"
+import { cur, locale, moneyLocale } from "../../lib/money"
 import { useT, t as translate, uiDateLocale } from "../../lib/i18n"
 import { cn } from "../../lib/utils"
 import { Button } from "../../components/ui/button"
@@ -577,7 +577,7 @@ export function OrderView({ name, onBack, onOpenBill }: {
                 {changing ? (
                   <div className="flex flex-wrap items-center gap-1.5">
                     <span className="text-xs text-zinc-500">{t("It was paid by")}</span>
-                    {["Cash", "Card", "UPI"].filter((m) => m !== d.payment_mode).map((m) => (
+                    {locale().outlet_payment_modes.filter((m) => m !== d.payment_mode).map((m) => (
                       <Button key={m} variant="outline" className="h-9" disabled={busy} onClick={() => changeMode(m)}>{m}</Button>
                     ))}
                     <Button variant="ghost" className="h-9" onClick={() => setChanging(false)}>{t("Back")}</Button>

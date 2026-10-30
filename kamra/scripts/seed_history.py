@@ -202,6 +202,12 @@ def after_reset():
 		end_rebuild()
 
 
+def _instant_modes() -> list[str]:
+	"""The demo country's instant modes (a wallet / instant transfer)."""
+	from kamra.localization import instant_payment_modes, pack_for
+	return instant_payment_modes(pack_for(PROPERTY))
+
+
 class History:
 	def __init__(self, days: int):
 		self.rng = random.Random(SEED)
@@ -566,7 +572,8 @@ class History:
 
 	def _check_out(self, s: dict) -> None:
 		from kamra.api import add_folio_payment, check_out, close_folio
-		modes = ["Card", "UPI", "Cash", "UPI", "Card"]
+		inst = _instant_modes()
+		modes = ["Card", *inst, "Cash", *inst, "Card"]
 		for f in self._folios(s):
 			if f.folio_type == "Company" or float(f.balance or 0) <= 0:
 				continue
@@ -704,7 +711,7 @@ class History:
 					self.attempt("pos_room_charges", deliver_order, name)
 				else:
 					self.attempt("pos_paid", pay_order, name,
-					             self.rng.choice(["Card", "UPI", "Cash", "Card"]))
+					             self.rng.choice(["Card", *_instant_modes(), "Cash", "Card"]))
 
 	# -- money in from companies ---------------------------------------------
 

@@ -55,3 +55,33 @@ class TestCountryNeutralCore(unittest.TestCase):
 		self.assertEqual(localization.front_desk_vocabulary(generic)["id_type_hints"], {})
 		self.assertIn("GST", localization.invoice_tax_note(india))
 		self.assertEqual(localization.invoice_tax_note(generic), "")
+
+	def test_instant_modes_come_from_the_pack(self):
+		from kamra.localization import saudi, thailand
+		self.assertIn("UPI", localization.payment_modes(india))
+		self.assertEqual(localization.outlet_payment_modes(india), ["Cash", "Card", "UPI"])
+		for pack in (saudi, thailand, generic):
+			with self.subTest(pack=pack.__name__):
+				self.assertNotIn("UPI", localization.payment_modes(pack))
+				self.assertEqual(localization.instant_payment_modes(pack), [])
+				self.assertEqual(localization.outlet_payment_modes(pack), ["Cash", "Card"])
+		from kamra import zatca
+		self.assertNotIn("UPI", zatca.PAYMENT_MEANS)
+
+	def test_a_country_mode_is_refused_where_the_pack_has_none(self):
+		from kamra import cashier, pos
+		from kamra.localization import thailand
+		with patch.object(localization, "pack_for", return_value=thailand):
+			for mode in ("Cash", "Card", "Payment Link", "OTA Prepaid", None):
+				localization.assert_payment_mode("P", mode)
+			with self.assertRaises(frappe.ValidationError):
+				localization.assert_payment_mode("P", "UPI")
+			# the shared writers: the till (every folio, POS and refund
+			# payment lands there) and the outlet's settle check
+			with self.assertRaises(frappe.ValidationError):
+				cashier.record_cashier_txn("P", "Payment", "UPI", 100)
+			with self.assertRaises(frappe.ValidationError):
+				pos._assert_outlet_mode("P", "UPI")
+		with patch.object(localization, "pack_for", return_value=india):
+			localization.assert_payment_mode("P", "UPI")
+			pos._assert_outlet_mode("P", "UPI")

@@ -193,9 +193,9 @@ const OUTLET_KEY = "kamra_pos_outlet"
 export default function POS() {
   const { t } = useT()
   const { ensureUnlocked } = useCashierAuth()
-  // pay_order settles Cash / Card / UPI; offer the ones this country uses
+  // pay_order settles Cash, Card and the country's instant modes
   const loc = useLocale()
-  const posModes = ["Cash", "Card", "UPI"].filter((m) => loc.payment_modes.includes(m))
+  const posModes = loc.outlet_payment_modes
   const rootRef = useRef<HTMLDivElement>(null)
   const [outlets, setOutlets] = useState<Outlet[]>([])
   const [outlet, setOutlet] = useState("")

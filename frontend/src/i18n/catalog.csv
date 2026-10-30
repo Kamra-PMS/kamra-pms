@@ -754,7 +754,8 @@ Amt,Amt,المبلغ,Importe,lib/thermal.ts,,translated
 "An outlet is a place that sells food or drink: a restaurant, bar, room service, a spa cafe. Each has its own menu and bills. How many do you run?","An outlet is a place that sells food or drink: a restaurant, bar, room service, a spa cafe. Each has its own menu and bills. How many do you run?",المنفذ مكان يبيع الطعام أو الشراب: مطعم، بار، خدمة الغرف، مقهى سبا. لكل منفذ قائمته وفواتيره. كم منفذًا تدير؟,"Un punto de venta ofrece alimentos o bebidas, por ejemplo, un restaurante, un bar, servicio a la habitación o una cafetería de spa. Cada uno tiene su propio menú y sus cuentas. ¿Cuántos opera?",screens/Setup.tsx,,translated
 and choose Print for this printer.,and choose Print for this printer.,واختر الطباعة لهذه الطابعة.,y elija Imprimir para esta impresora.,screens/KitchenPrinters.tsx,,translated
 and click ,and click ,وانقر ,y selecciona ,,,translated
-"and take UPI, cards and netbanking for advances and bills.","and take UPI, cards and netbanking for advances and bills.",واقبل UPI والبطاقات والخدمات المصرفية عبر الإنترنت للدفعات المقدمة والفواتير.,"y acepte UPI, tarjetas y banca en línea para cobrar anticipos y cuentas.",screens/settings/cards.tsx,,translated
+and take online payments for advances and bills.,and take online payments for advances and bills.,,,screens/settings/cards.tsx,,needs_translation
+"and take UPI, cards and netbanking for advances and bills.","and take UPI, cards and netbanking for advances and bills.",واقبل UPI والبطاقات والخدمات المصرفية عبر الإنترنت للدفعات المقدمة والفواتير.,"y acepte UPI, tarjetas y banca en línea para cobrar anticipos y cuentas.",,,translated
 Anniversary,Anniversary,ذكرى سنوية,Aniversario,,,translated
 Anonymize profile,Anonymize profile,إخفاء هوية الملف,Anonimizar perfil,screens/GuestJourney.tsx,,translated
 "Another round at the bar, twenty extra plates, a second cake - it bills on top of the agreed quote.","Another round at the bar, twenty extra plates, a second cake - it bills on top of the agreed quote.",جولة أخرى في البار، عشرون طبقًا إضافيًا، كعكة ثانية: تُفوتر فوق عرض السعر المتفق عليه.,"Otra ronda de bar, veinte platos adicionales o un segundo pastel: se factura además de la cotización acordada.",screens/banquet/Economics.tsx,,translated
@@ -5340,7 +5341,7 @@ Updating quote,Updating quote,تحديث العرض,Actualizando cotización,com
 Updating…,Updating…,جارٍ التحديث…,Actualizando…,screens/ReservationDetail.tsx,,translated
 Upgrade,Upgrade,ترقية,Mejora de categoría,,,translated
 Upgrade or another type,Upgrade or another type,ترقية أو نوع آخر,Mejora de categoría u otro tipo de habitación,components/CheckInDialog.tsx,,translated
-UPI,UPI,UPI,UPI,screens/CashierShiftReport.tsx; screens/CashierTill.tsx,,translated
+UPI,UPI,UPI,UPI,,,translated
 Upload,Upload,رفع,Subir,components/GuestDocuments.tsx; components/ImageField.tsx,,translated
 Upload .csv,Upload .csv,رفع ملف .csv,Subir archivo .csv,screens/MenuImport.tsx,,translated
 Upload CSV file,Upload CSV file,رفع ملف CSV,Subir archivo CSV,screens/GoLiveImport.tsx,,translated

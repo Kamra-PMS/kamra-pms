@@ -132,22 +132,48 @@ def amount_in_words(pack, prop_doc, amount) -> str:
 
 # ── front-desk vocabulary: IDs and ways to pay ───────────────────────────
 # A pack declares ID_TYPES / PAYMENT_MODES / DEFAULT_* as module constants.
-# Payment modes are always drawn from the canonical Folio Payment modes, so
-# a pack chooses what the desk is offered - never invents a mode the till,
-# ledger and night audit do not know.
+# The desk offers Cash, Card and Bank Transfer everywhere. A pack may add
+# its own instant / wallet modes (INSTANT_PAYMENT_MODES, e.g. India's UPI):
+# each must also be a Folio Payment / Cashier Transaction option, and the
+# till keeps them in their own bucket (Cashier Session.system_upi).
 
 GENERIC_ID_TYPES = ["Passport", "National ID", "Driving License", "Other"]
 GENERIC_PAYMENT_MODES = ["Cash", "Card", "Bank Transfer"]
-CANONICAL_PAYMENT_MODES = ("Cash", "Card", "UPI", "Bank Transfer")
+# modes that are not a country's: any property may record them
+CORE_PAYMENT_MODES = ("Cash", "Card", "Bank Transfer", "OTA Prepaid",
+                      "Company Credit", "Payment Link", "Cheque", "Other")
 
 
 def id_types(pack) -> list[str]:
 	return list(getattr(pack, "ID_TYPES", None) or GENERIC_ID_TYPES)
 
 
+def instant_payment_modes(pack) -> list[str]:
+	return list(getattr(pack, "INSTANT_PAYMENT_MODES", None) or [])
+
+
 def payment_modes(pack) -> list[str]:
 	modes = getattr(pack, "PAYMENT_MODES", None) or GENERIC_PAYMENT_MODES
-	return [m for m in modes if m in CANONICAL_PAYMENT_MODES]
+	allowed = (*GENERIC_PAYMENT_MODES, *instant_payment_modes(pack))
+	return [m for m in modes if m in allowed]
+
+
+def outlet_payment_modes(pack) -> list[str]:
+	"""What a bill is settled with at an outlet (POS): cash, card and the
+	pack's instant modes."""
+	instant = instant_payment_modes(pack)
+	return [m for m in payment_modes(pack) if m in ("Cash", "Card") or m in instant]
+
+
+def assert_payment_mode(property: str, mode: str | None) -> None:
+	"""Refuse a country's own mode (UPI and alike) where the property's
+	pack does not offer it. The shared money writers call this."""
+	if not mode or mode in CORE_PAYMENT_MODES:
+		return
+	modes = payment_modes(pack_for(property))
+	if mode not in modes:
+		frappe.throw(frappe._("{0} is not a payment mode here. Pick one of: {1}.")
+		             .format(mode, ", ".join(modes)))
 
 
 def front_desk_vocabulary(pack) -> dict:
@@ -156,6 +182,8 @@ def front_desk_vocabulary(pack) -> dict:
 		# a help line per ID type, e.g. which copy of a national ID is fine
 		"id_type_hints": dict(getattr(pack, "ID_TYPE_HINTS", None) or {}),
 		"payment_modes": payment_modes(pack),
+		"instant_payment_modes": instant_payment_modes(pack),
+		"outlet_payment_modes": outlet_payment_modes(pack),
 		"default_nationality": getattr(pack, "DEFAULT_NATIONALITY", "") or "",
 		"adult_age": adult_age(pack),
 		"minor_ids": minor_ids(pack),

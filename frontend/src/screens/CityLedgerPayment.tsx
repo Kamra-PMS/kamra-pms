@@ -3,7 +3,7 @@ import { call } from "../lib/api"
 import { serverError } from "../lib/resource"
 import { Button } from "../components/ui/button"
 import { Sheet } from "../components/ui/sheet"
-import { fmtMoney } from "../lib/money"
+import { fmtMoney, locale } from "../lib/money"
 import { t as translate, useUILanguage } from "../lib/i18n"
 
 // Record a company's payment against its city ledger (AR) balance. The
@@ -49,7 +49,8 @@ type Result = {
   unapplied: number
 }
 
-const MODES = ["Bank Transfer", "Cheque", "Card", "UPI", "Cash", "Other"]
+// plus the country's instant modes (a wallet / instant transfer)
+const modes = () => ["Bank Transfer", "Cheque", "Card", ...locale().instant_payment_modes, "Cash", "Other"]
 
 const r2 = (n: number) => Math.round(n * 100) / 100
 
@@ -62,7 +63,7 @@ export default function CityLedgerPayment(props: {
   const [acc, setAcc] = useState<Account | null>(null)
   const [err, setErr] = useState<string | null>(null)
   const [amount, setAmount] = useState("")
-  const [mode, setMode] = useState(MODES[0])
+  const [mode, setMode] = useState("Bank Transfer")
   const [reference, setReference] = useState("")
   const [manual, setManual] = useState(false)
   const [picks, setPicks] = useState<Record<string, string>>({})
@@ -277,7 +278,7 @@ export default function CityLedgerPayment(props: {
                 value={translate(mode)}
                 onChange={(e) => setMode(e.target.value)}
               >
-                {MODES.map((m) => <option key={m} value={m}>{translate(m)}</option>)}
+                {modes().map((m) => <option key={m} value={m}>{translate(m)}</option>)}
               </select>
             </label>
             <label className="text-sm">

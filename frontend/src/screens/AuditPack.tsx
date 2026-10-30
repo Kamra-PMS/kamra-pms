@@ -11,7 +11,7 @@ import { serverError } from "../lib/resource"
 import { Button } from "../components/ui/button"
 import { Card } from "../components/ui/card"
 import { Badge } from "../components/ui/badge"
-import { cur, moneyLocale } from "../lib/money"
+import { cur, instantLabel, moneyLocale } from "../lib/money"
 import { useT, t as translate, useUILanguage, uiDateLocale } from "../lib/i18n"
 import { cn } from "../lib/utils"
 
@@ -258,13 +258,15 @@ function Journal({ p }: { p: Pack }) {
   )
 }
 
-export const SESSION_COLS: Col[] = [
+/** Till columns; the instant-mode bucket (system_upi) only where the
+ *  country pack has instant modes. */
+export const sessionCols = (): Col[] => [
   { key: "cashier_id", label: "Cashier", render: (r) => r.cashier_id || r.user_name || r.user },
   { key: "status", label: "Status" },
   { key: "opening_float", label: "Float", kind: "money" },
   { key: "cash", label: "Cash", kind: "money" },
   { key: "card", label: "Card", kind: "money" },
-  { key: "upi", label: "UPI", kind: "money" },
+  ...(instantLabel() ? [{ key: "upi", label: instantLabel(), kind: "money" as const }] : []),
   { key: "paid_outs", label: "Paid out", kind: "money" },
   { key: "expected_cash", label: "Expected", kind: "money" },
   { key: "counted_cash", label: "Counted", kind: "money" },
@@ -276,7 +278,7 @@ function CashierSummary({ p }: { p: Pack }) {
   const rows = p.cashier_sessions || []
   return (
     <DataTable
-      cols={SESSION_COLS}
+      cols={sessionCols()}
       rows={rows}
       empty={translate("No cashier sessions on this business date.")}
       total={{

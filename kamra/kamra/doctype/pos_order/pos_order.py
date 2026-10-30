@@ -52,14 +52,14 @@ class POSOrder(Document):
 				if self.room else _("this bill"))
 			frappe.throw(_(
 				"{0} has no checked-in guest to post to. Take payment at the "
-				"outlet (Cash, Card or UPI) to close it.").format(where))
+				"outlet to close it.").format(where))
 
 	def guard_bill_close(self):
 		"""Delivered means the BILL is closed, not that the food left the
 		pass (the kitchen tracks that per line: kot_status Prepared). A bill
 		closes only when it is settled one of three ways:
 
-		- paid at the outlet (pay_order: Cash / Card / UPI),
+		- paid at the outlet (pay_order: Cash / Card / the country's instant modes),
 		- signed to a checked-in guest's room (guard_room_posting checks the
 		  stay; on_update posts it to the folio),
 		- complimentary (NC) authorized through mark_nc.
@@ -73,8 +73,7 @@ class POSOrder(Document):
 			return
 		if self.paid:
 			if not self.payment_mode:
-				frappe.throw(_("A paid bill needs its payment mode "
-				              "(Cash, Card or UPI)."))
+				frappe.throw(_("A paid bill needs its payment mode."))
 			return
 		if self.nc:
 			if not (self.nc_authorized_by or "").strip():
@@ -88,7 +87,7 @@ class POSOrder(Document):
 		if not any(not it.voided for it in self.items):
 			return
 		frappe.throw(_(
-			"This bill is not settled. Take payment (Cash, Card or UPI), "
+			"This bill is not settled. Take payment at the outlet, "
 			"charge it to an in-house guest's room, or mark it NC with "
 			"an authorization before closing it."))
 
@@ -99,7 +98,7 @@ class POSOrder(Document):
 			return
 		if self.posted_to_folio or not self.reservation:
 			return
-		# settled at the outlet (cash/card/UPI) - never also post to the room
+		# settled at the outlet (cash, card...) - never also post to the room
 		if self.paid:
 			return
 		# complimentary - there is nothing to charge anywhere

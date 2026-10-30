@@ -28,6 +28,8 @@ ID_TYPES = ["Aadhaar", "Passport", "Driving License", "Voter ID", "PAN", "Other"
 ID_TYPE_HINTS = {"Aadhaar": "A masked Aadhaar (last 4 digits showing) is fine."}
 INVOICE_TAX_NOTE = "Amounts are inclusive of GST at the rates shown."
 PAYMENT_MODES = ["Cash", "Card", "UPI", "Bank Transfer"]
+# settled like a card but counted in its own till bucket
+INSTANT_PAYMENT_MODES = ["UPI"]
 # Indian hotels keep a signed registration card (the hotel register the
 # police may inspect), so the guided check-in makes the GRC a required step
 # by default. A property can still change it in its check-in steps.

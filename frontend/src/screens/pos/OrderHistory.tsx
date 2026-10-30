@@ -12,7 +12,7 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import { Download, Receipt, Search, X } from "lucide-react"
 import { call } from "../../lib/api"
 import { serverError } from "../../lib/resource"
-import { cur } from "../../lib/money"
+import { cur, locale } from "../../lib/money"
 import { useT, t as translate, useUILanguage } from "../../lib/i18n"
 import { cn } from "../../lib/utils"
 import { Button } from "../../components/ui/button"
@@ -57,7 +57,6 @@ interface Out {
 
 const PAGE = 100
 const ORDER_TYPES = ["Dine In", "Room Service", "Takeaway", "Delivery"]
-const MODES = ["Cash", "Card", "UPI", "Room"]
 
 type Preset = "today" | "yesterday" | "week" | "month30" | "thismonth" | "year" | "custom"
 
@@ -227,7 +226,7 @@ export default function OrderHistory({ outlet, onClose, onOpenBill }: {
               <select value={mode} onChange={(e) => setMode(e.target.value)}
                 aria-label={t("Payment mode")} className={selectCls}>
                 <option value="">{t("All payment modes")}</option>
-                {MODES.map((m) => <option key={m} value={m}>{m === "Room" ? t("Posted to room") : m}</option>)}
+                {[...locale().outlet_payment_modes, "Room"].map((m) => <option key={m} value={m}>{m === "Room" ? t("Posted to room") : m}</option>)}
               </select>
             </div>
 

@@ -2602,7 +2602,7 @@ closed or cancelled, with the table, who it was for, the amount and the
 time. `q` searches the bill and KOT number, table, room, customer name
 and phone, and the in-house guest's name. `state` keeps one state,
 `order_type` one kind of order and `mode` one way of paying (Cash, Card,
-UPI, Room). Pages come back `limit` at a time from `offset`; `total`,
+the country's instant modes, Room). Pages come back `limit` at a time from `offset`; `total`,
 `has_more`, `counts` and `totals` always cover every bill the filters
 match, not only the page, so nothing is hidden by paging.
 Looking at today also brings in bills still open from earlier days
@@ -2627,7 +2627,7 @@ Looking at today also brings in bills still open from earlier days
 The outlet's bill history as CSV for a day or up to a year: every
 bill with its state, payment mode, amount, discount, who it was for and
 who cancelled it. Same search and state filters as the orders list;
-`mode` keeps one payment mode (Cash, Card, UPI). A phone number is masked
+`mode` keeps one payment mode (Cash, Card, ...) or Room. A phone number is masked
 except to a supervisor, as on the till. Returns {filename, csv, rows}.
 
 | Param | Required | Default |

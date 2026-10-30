@@ -1,8 +1,12 @@
 <<<<<<<< HEAD:kamra/public/frontend/assets/settings-2--fzGYZHe.js
+<<<<<<<< HEAD:kamra/public/frontend/assets/settings-2--fzGYZHe.js
 import{b as c}from"./index-B3i2Wflk.js";/**
 ========
 import{b as c}from"./index-DwNNU3P0.js";/**
 >>>>>>>> origin/fix/country-neutral-core:kamra/public/frontend/assets/settings-2-NW3vToCi.js
+========
+import{b as c}from"./index-CTnWcLsp.js";/**
+>>>>>>>> origin/fix/upi-india-pack:kamra/public/frontend/assets/settings-2-Esv2vSfI.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.

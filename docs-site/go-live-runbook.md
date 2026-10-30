@@ -73,7 +73,7 @@ From the old system, fill in the templates:
    | --- | --- | --- |
    | `In-house` | what the guest owes on the old folio. Use a negative amount if the guest is in credit. Use **0 if the guest is settled**. | One *Opening Balance* line on the guest folio (Guest ledger). |
    | `City ledger` | one unpaid company invoice, with Company, Invoice No and Invoice Date. Use a negative amount for money a company paid ahead. | Billed to the company's city ledger, dated on the original invoice, so aging stays correct. A credit becomes an unapplied payment. |
-   | `Deposit` | an advance a future booking has already paid, with Mode (Cash, Card, UPI, Bank Transfer). | An *Advance* payment on the booking (Deposit ledger). The booking's advance paid goes up. |
+   | `Deposit` | an advance a future booking has already paid, with Mode (Cash, Card, Bank Transfer, or your country's instant mode such as UPI in India). | An *Advance* payment on the booking (Deposit ledger). The booking's advance paid goes up. |
 
    Include **every in-house guest**, even at 0. The row also tells
    Kamra that the nights before go-live were billed by the old system.

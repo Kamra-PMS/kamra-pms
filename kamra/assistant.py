@@ -503,7 +503,8 @@ TOOLS = {
 	"record_payment": (
 		"add_folio_payment",
 		"Record a payment staff say was received, against a folio (mode: "
-		"Cash, UPI, Card, Bank, Link). folio is "
+		"Cash, Card, Bank Transfer, Payment Link or the country's own modes "
+		"from the property locale). folio is "
 		"the folio id from checkout_context folios[].folio or get_folio. If you "
 		"only have the booking, pass reservation instead and leave folio out: "
 		"the stay's open guest folio is used.",

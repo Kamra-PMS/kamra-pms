@@ -354,7 +354,7 @@ function GatewayHelp({ property, gateway, hasKeys }: {
           {t("No {gateway} account yet?", { gateway: info.gateway })}{" "}
           <a className="font-medium text-brand-700 underline" href={info.signup_url}
              target="_blank" rel="noopener">{t("Create one free")}</a>
-          {" "}{t("and take UPI, cards and netbanking for advances and bills.")}
+          {" "}{t("and take online payments for advances and bills.")}
         </p>
       )}
       {info.needs_webhook ? (

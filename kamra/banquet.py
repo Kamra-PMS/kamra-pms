@@ -797,6 +797,8 @@ def record_receipt(function: str, amount: float, mode: str = "Bank Transfer",
 	if kind not in ("Advance", "Payment", "Security Deposit", "Refund"):
 		frappe.throw(_("Unknown receipt kind: {0}").format(kind))
 	doc = _fn(function)
+	from kamra.localization import assert_payment_mode
+	assert_payment_mode(doc.property, mode)
 	from kamra.business_date import assert_transaction_date
 	rd = assert_transaction_date(doc.property, receipt_date, label="Receipt date")
 	doc.append("receipts", {

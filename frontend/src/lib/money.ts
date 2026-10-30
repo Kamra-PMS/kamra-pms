@@ -19,6 +19,11 @@ interface Locale {
   id_type_hints: Record<string, string>
   /** Ways to pay the desk offers - always canonical Folio Payment modes. */
   payment_modes: string[]
+  /** The pack's own instant / wallet modes; the till keeps
+   *  them in their own bucket (system_upi). Empty where there are none. */
+  instant_payment_modes: string[]
+  /** What an outlet bill settles with: Cash, Card and the instant modes. */
+  outlet_payment_modes: string[]
   default_nationality: string
   /** Under this age an occupant is a minor: name and age only. */
   adult_age: number
@@ -50,6 +55,8 @@ let cache: Locale = {
   tax_rates: [],
   id_types: [],
   payment_modes: [],
+  instant_payment_modes: [],
+  outlet_payment_modes: [],
   id_type_hints: {},
   default_nationality: "",
   adult_age: 18,
@@ -115,6 +122,8 @@ export const fmtMoney = (n: unknown) =>
   Number(n ?? 0).toLocaleString(cache.locale, { maximumFractionDigits: 2 })
 export const taxRates = () => cache.tax_rates
 export const taxLabel = () => cache.tax_label
+/** Heading for the till's instant-mode bucket, "" where the country has none. */
+export const instantLabel = () => (cache.instant_payment_modes ?? []).join(" / ")
 
 /** The property's locale, re-rendering when the country pack resolves. */
 export function useLocale(): Locale {

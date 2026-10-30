@@ -1,8 +1,12 @@
 <<<<<<<< HEAD:kamra/public/frontend/assets/log-in-DL9OskLm.js
+<<<<<<<< HEAD:kamra/public/frontend/assets/log-in-DL9OskLm.js
 import{b as o}from"./index-B3i2Wflk.js";/**
 ========
 import{b as o}from"./index-DwNNU3P0.js";/**
 >>>>>>>> origin/fix/country-neutral-core:kamra/public/frontend/assets/log-in-CuaEAtts.js
+========
+import{b as o}from"./index-CTnWcLsp.js";/**
+>>>>>>>> origin/fix/upi-india-pack:kamra/public/frontend/assets/log-in-CTk7Hbp7.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.
