@@ -96,7 +96,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-10-19 12:00:00.000000",
+ "modified": "2026-10-30 12:32:21.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "City Ledger Entry",
@@ -112,7 +112,9 @@
    "print": 1,
    "report": 1,
    "share": 1,
-   "email": 1
+   "email": 1,
+   "view_financials": 1,
+   "view_ledgers": 1
   },
   {
    "role": "Hotel Admin",
@@ -124,7 +126,9 @@
    "print": 1,
    "report": 1,
    "share": 1,
-   "email": 1
+   "email": 1,
+   "view_financials": 1,
+   "view_ledgers": 1
   },
   {
    "role": "Finance",
@@ -134,7 +138,9 @@
    "export": 1,
    "print": 1,
    "report": 1,
-   "email": 1
+   "email": 1,
+   "view_financials": 1,
+   "view_ledgers": 1
   },
   {
    "role": "Front Desk",
@@ -143,7 +149,8 @@
    "create": 1,
    "print": 1,
    "report": 1,
-   "email": 1
+   "email": 1,
+   "view_ledgers": 1
   },
   {
    "role": "Kamra Agent",
@@ -152,7 +159,14 @@
    "create": 1,
    "print": 1,
    "report": 1,
-   "email": 1
+   "email": 1,
+   "view_financials": 1,
+   "view_ledgers": 1
+  },
+  {
+   "role": "Night Auditor",
+   "view_ledgers": 1,
+   "select": 1
   }
  ],
  "sort_field": "modified",

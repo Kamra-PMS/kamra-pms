@@ -74,7 +74,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-09-07 00:00:00",
+ "modified": "2026-10-30 12:32:21.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Exchange Rate",
@@ -90,7 +90,9 @@
    "print": 1,
    "report": 1,
    "share": 1,
-   "email": 1
+   "email": 1,
+   "set_rates": 1,
+   "use_currency_desk": 1
   },
   {
    "role": "Hotel Admin",
@@ -102,7 +104,9 @@
    "print": 1,
    "report": 1,
    "share": 1,
-   "email": 1
+   "email": 1,
+   "set_rates": 1,
+   "use_currency_desk": 1
   },
   {
    "role": "Finance",
@@ -112,7 +116,9 @@
    "export": 1,
    "print": 1,
    "report": 1,
-   "email": 1
+   "email": 1,
+   "set_rates": 1,
+   "use_currency_desk": 1
   },
   {
    "role": "Front Desk",
@@ -121,7 +127,8 @@
    "create": 1,
    "print": 1,
    "report": 1,
-   "email": 1
+   "email": 1,
+   "use_currency_desk": 1
   },
   {
    "role": "Kamra Agent",
@@ -130,7 +137,9 @@
    "create": 1,
    "print": 1,
    "report": 1,
-   "email": 1
+   "email": 1,
+   "set_rates": 1,
+   "use_currency_desk": 1
   }
  ],
  "sort_field": "modified",

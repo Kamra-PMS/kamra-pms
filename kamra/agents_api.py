@@ -7,11 +7,11 @@ from __future__ import annotations
 
 import frappe
 
-from kamra.authz import require_roles
+from kamra.authz import require_perm
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Finance", "Revenue Manager", "Kamra Agent")
+@require_perm("Agent Action Log", "view_activity")
 def activity_feed(property: str | None = None, actor_kind: str | None = None,
                   action_type: str | None = None, limit: int = 50,
                   start: int = 0) -> list[dict]:
@@ -46,7 +46,7 @@ def activity_feed(property: str | None = None, actor_kind: str | None = None,
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Finance", "Revenue Manager", "Kamra Agent", scope={"name": "Agent Action Log"})
+@require_perm("Agent Action Log", "view_activity", scope={"name": "Agent Action Log"})
 def activity_detail(name: str) -> dict:
 	"""Everything one ledger row knows — including the before/after
 	snapshots that are too heavy for the feed."""
@@ -99,7 +99,7 @@ def _property_staff(property: str) -> list[str]:
 
 
 @frappe.whitelist()
-@require_roles("Hotel Admin", "Finance", "System Manager")
+@require_perm("Agent Action Log", "view_sign_ins")
 def staff_sign_ins(property: str, limit: int = 50, start: int = 0,
                    user: str | None = None) -> list[dict]:
 	"""Who signed in to and out of Kamra, newest first: Frappe's own Login /

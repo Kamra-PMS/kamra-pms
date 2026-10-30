@@ -13,7 +13,7 @@ import frappe
 from frappe import _
 from frappe.utils import add_to_date, get_datetime, now_datetime
 
-from kamra.authz import act_as, require_roles
+from kamra.authz import act_as, require_perm
 from kamra.install import AGENT_EMAIL
 
 LAUNDRY_ROLES = ("Housekeeping", "Front Desk", "Kamra Agent")
@@ -31,7 +31,7 @@ def express_multiplier(property: str | None) -> float:
 	return float(get_setting(property, "laundry_express_multiplier"))
 
 @frappe.whitelist()
-@require_roles(*LAUNDRY_ROLES, "Finance")
+@require_perm("Laundry Order", "view_laundry")
 def laundry_rates(property: str):
 	"""The property's laundry price list (the card the attendant quotes
 	from). Grouped by item for the pickers."""
@@ -46,7 +46,7 @@ def laundry_rates(property: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*RATE_ROLES, scope={"name": "Laundry Rate"})
+@require_perm("Laundry Order", "price_laundry", scope={"name": "Laundry Rate"})
 def save_laundry_rate(property: str, item_name: str, service_type: str,
                       rate: float, express_rate=None, name: str | None = None,
                       disabled: int = 0):
@@ -76,14 +76,14 @@ def save_laundry_rate(property: str, item_name: str, service_type: str,
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*RATE_ROLES, scope={"name": "Laundry Rate"})
+@require_perm("Laundry Order", "price_laundry", scope={"name": "Laundry Rate"})
 def delete_laundry_rate(name: str):
 	frappe.delete_doc("Laundry Rate", name)
 	return {"ok": True}
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*RATE_ROLES)
+@require_perm("Laundry Order", "price_laundry")
 def import_laundry_rates(property: str, csv_text: str):
 	"""Bulk-load or bulk-update the rate card from a CSV - the same file
 	the Export button produces (item, service, rate, express rate).
@@ -194,7 +194,7 @@ def _ready_by(express: bool):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*LAUNDRY_ROLES)
+@require_perm("Laundry Order", "handle_laundry")
 def request_pickup(property: str, room: str | None = None,
                    notes: str | None = None, express: int = 0,
                    order_type: str = "Guest", house_label: str | None = None):
@@ -223,7 +223,7 @@ def request_pickup(property: str, room: str | None = None,
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*LAUNDRY_ROLES)
+@require_perm("Laundry Order", "handle_laundry")
 def collect_laundry(property: str, room: str | None = None, items=None,
                     order: str | None = None, express=None,
                     notes: str | None = None, order_type: str = "Guest",
@@ -269,7 +269,7 @@ def collect_laundry(property: str, room: str | None = None, items=None,
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*LAUNDRY_ROLES)
+@require_perm("Laundry Order", "handle_laundry")
 def laundry_status(order: str, status: str):
 	"""Move the bag along: Collected -> In Process -> Ready."""
 	flow = {"Collected": "In Process", "In Process": "Ready"}
@@ -283,7 +283,7 @@ def laundry_status(order: str, status: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*LAUNDRY_ROLES)
+@require_perm("Laundry Order", "handle_laundry")
 def return_items(order: str, rows):
 	"""Tick items back in as they return from the laundry. rows =
 	{child_row_name: returned_qty} - counts, not deltas."""
@@ -305,7 +305,7 @@ def return_items(order: str, rows):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*LAUNDRY_ROLES)
+@require_perm("Laundry Order", "handle_laundry")
 def deliver_laundry(order: str, shortage_note: str | None = None):
 	"""Hand the bag back and bill the stay. If pieces are still pending, a
 	shortage note is required - the discrepancy is recorded, never silent.
@@ -362,7 +362,7 @@ def deliver_laundry(order: str, shortage_note: str | None = None):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*LAUNDRY_ROLES)
+@require_perm("Laundry Order", "handle_laundry")
 def cancel_laundry(order: str, reason: str):
 	if not (reason or "").strip():
 		frappe.throw(_("A cancellation reason is required."))
@@ -379,7 +379,7 @@ def cancel_laundry(order: str, reason: str):
 # ── the board ────────────────────────────────────────────────────────────
 
 @frappe.whitelist()
-@require_roles(*LAUNDRY_ROLES, "Finance")
+@require_perm("Laundry Order", "view_laundry")
 def laundry_board(property: str):
 	"""Everything the floor and the desk need at a glance: open bags by
 	status with piece counts and what's still pending, plus the last few
@@ -420,7 +420,7 @@ def laundry_board(property: str):
 
 
 @frappe.whitelist()
-@require_roles("Finance", "Front Desk", "Hotel Admin", "Kamra Agent")
+@require_perm("Laundry Order", "price_laundry")
 def laundry_revenue(property: str, days: int = 30):
 	"""Delivered-laundry revenue over the last N days, with a per-service
 	breakdown. Only billed guest orders count as revenue; House and

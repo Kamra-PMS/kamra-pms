@@ -19,7 +19,7 @@ import re
 import frappe
 from frappe import _
 
-from kamra.authz import require_roles
+from kamra.authz import require_perm
 
 # who a header column really is, whatever the vendor called it
 SYNONYMS = {
@@ -272,7 +272,7 @@ def _normalize(property: str, csv_text: str, preset: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles()
+@require_perm("Property", "configure")
 def preview_import(property: str, csv_text: str, preset: str = "auto"):
 	"""Dry run: how the file's columns map, which date convention was
 	detected, and every row that would be skipped - nothing is written."""
@@ -296,7 +296,7 @@ def preview_import(property: str, csv_text: str, preset: str = "auto"):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles()
+@require_perm("Property", "configure")
 def run_import(property: str, csv_text: str, preset: str = "auto"):
 	"""Import the file (see _run_import). Migrated stays are not new
 	business, so they never reach outbound webhook subscribers."""

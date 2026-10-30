@@ -13,7 +13,7 @@ import json
 
 import frappe
 
-from kamra.authz import require_roles
+from kamra.authz import require_perm
 
 DEFAULT_HUB = "https://hub.kamrapms.com"
 HUB_API = "kamra_hub.api"
@@ -89,14 +89,14 @@ def call(name: str, s=None, *, key: str | None = None, json_body: dict | None = 
 
 
 @frappe.whitelist()
-@require_roles("System Manager", "Hotel Admin")
+@require_perm("Property", "configure")
 def status() -> dict:
 	s = _settings()
 	return {"linked": bool(s.linked), "hub_url": _hub(s)}
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("System Manager", "Hotel Admin")
+@require_perm("Property", "configure")
 def link(connect_key: str, hub_url: str | None = None) -> dict:
 	"""Link with a key issued by Kamra or a partner. The hub must know the
 	key before it is saved."""
@@ -112,7 +112,7 @@ def link(connect_key: str, hub_url: str | None = None) -> dict:
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("System Manager", "Hotel Admin")
+@require_perm("Property", "configure")
 def unlink() -> dict:
 	s = _settings()
 	s.connect_key = ""

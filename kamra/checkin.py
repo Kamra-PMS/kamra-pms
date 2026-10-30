@@ -26,7 +26,7 @@ import frappe
 from frappe import _
 from frappe.utils import cint, flt, now_datetime
 
-from kamra.authz import require_roles
+from kamra.authz import require_perm
 from kamra.guest_documents import id_status, used_stays_count
 
 DESK = ("Front Desk", "Night Auditor", "Kamra Agent")
@@ -449,7 +449,7 @@ def _step(res, key: str) -> dict:
 
 
 @frappe.whitelist()
-@require_roles(*DESK)
+@require_perm("Reservation", "check_in_out")
 def checkin_flow(reservation: str):
 	"""Everything the guided check-in shows, in one round trip: the steps
 	(required or optional, done, skipped or to do, and who did them), plus
@@ -517,7 +517,7 @@ def _flow_payload(res, steps, ctx, guest) -> dict:
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Night Auditor", "Finance", "Hotel Admin", "Kamra Agent")
+@require_perm("Folio", "view_folio")
 def check_in_readiness(reservation: str):
 	"""Read-only: which check-in steps are done, whether check_in would go
 	through now (room assigned), and which soft-required steps are still
@@ -542,7 +542,7 @@ def check_in_readiness(reservation: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*STAFF)
+@require_perm("Reservation", "guided_check_in")
 def complete_checkin_step(reservation: str, step: str, note: str | None = None):
 	"""The desk marks a step done (a confirm-only step, or the review of
 	what the guest sent online). Refused while what the step stands for is
@@ -561,7 +561,7 @@ def complete_checkin_step(reservation: str, step: str, note: str | None = None):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*STAFF)
+@require_perm("Reservation", "guided_check_in")
 def skip_checkin_step(reservation: str, step: str, reason: str | None = None):
 	"""Skip a step to finish later. Only the room cannot be skipped."""
 	from kamra.sop import CHECKIN_ALWAYS_REQUIRED
@@ -577,7 +577,7 @@ def skip_checkin_step(reservation: str, step: str, reason: str | None = None):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*STAFF)
+@require_perm("Reservation", "guided_check_in")
 def save_guest_details(reservation: str, phone: str | None = None,
                        email: str | None = None, id_type: str | None = None,
                        id_number: str | None = None,
@@ -616,7 +616,7 @@ def save_guest_details(reservation: str, phone: str | None = None,
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*STAFF)
+@require_perm("Reservation", "guided_check_in")
 def confirm_billing(reservation: str, payer: str, note: str | None = None):
 	"""The desk confirms who pays (OTA, guest, company, group)."""
 	res = _res(reservation)
@@ -632,7 +632,7 @@ def confirm_billing(reservation: str, payer: str, note: str | None = None):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*STAFF)
+@require_perm("Reservation", "guided_check_in")
 def assign_checkin_room(reservation: str, room: str | None = None):
 	"""Keep the assigned room, or put the guest in another free room of
 	the booked type. Upgrades and downgrades (a different type, maybe a
@@ -661,7 +661,7 @@ def assign_checkin_room(reservation: str, room: str | None = None):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*STAFF)
+@require_perm("Reservation", "guided_check_in")
 def sign_registration_card(reservation: str, signature: str | None = None,
                            on_paper: int = 0):
 	"""The guest signs the registration card on screen (stored like the
@@ -685,7 +685,7 @@ def sign_registration_card(reservation: str, signature: str | None = None,
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*STAFF)
+@require_perm("Reservation", "guided_check_in")
 def issue_keys(reservation: str, key_count: int = 1,
                key_cards: str | None = None):
 	"""Record the keys handed to the guest, and who handed them. With a
@@ -722,7 +722,7 @@ def issue_keys(reservation: str, key_count: int = 1,
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*STAFF)
+@require_perm("Reservation", "guided_check_in")
 def log_checkin_requests(reservation: str, requests=None, note: str | None = None):
 	"""Quick requests at check-in become service tickets (one each); a free
 	note is kept on the step and, if given alone, raised as one ticket."""
@@ -754,7 +754,7 @@ def log_checkin_requests(reservation: str, requests=None, note: str | None = Non
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Night Auditor", "Finance", "Hotel Admin")
+@require_perm("Reservation", "set_room_charges")
 def set_room_charges(reservation: str, allowed: int = 1, reason: str | None = None):
 	"""May the guest charge outlets, laundry and minibar to the room? POS,
 	laundry and minibar postings check this flag. Changeable later in the

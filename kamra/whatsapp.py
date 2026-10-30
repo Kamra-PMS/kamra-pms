@@ -33,7 +33,7 @@ import json
 import frappe
 from frappe import _
 
-from kamra.authz import require_roles
+from kamra.authz import require_perm
 
 GRAPH_BASE = "https://graph.facebook.com/v19.0"
 
@@ -218,7 +218,7 @@ def send_payment_request(reservation: str, amount, note: str = "") -> dict:
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Hotel Admin", "Kamra Agent", scope={"guest": "Guest"})
+@require_perm("Guest", "handle_guests", scope={"guest": "Guest"})
 def send_marketing(property: str, guest: str, template: str, args=None) -> dict:
 	"""A promotional template to one guest, refused without their consent."""
 	if isinstance(args, str):
@@ -382,7 +382,7 @@ def _handle_inbound(value: dict) -> None:
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Hotel Admin", "Kamra Agent")
+@require_perm("WhatsApp Message", "reply_messages")
 def threads(property: str):
 	"""One row per guest number: who, the last message, when. The desk's
 	inbox - modeled on Frappe CRM's WhatsApp tab, but per hotel."""
@@ -413,7 +413,7 @@ def threads(property: str):
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Hotel Admin", "Kamra Agent")
+@require_perm("WhatsApp Message", "reply_messages")
 def thread(property: str, number: str):
 	"""Full conversation with one number, oldest first, plus whether the
 	24-hour session window is open (a guest message in the last day)."""
@@ -436,7 +436,7 @@ def thread(property: str, number: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Hotel Admin", "Kamra Agent")
+@require_perm("WhatsApp Message", "reply_messages")
 def reply(property: str, number: str, text: str):
 	"""Desk reply into the guest's session window."""
 	if not (text or "").strip():

@@ -12,7 +12,7 @@ from decimal import ROUND_HALF_UP, Decimal
 import frappe
 from frappe.utils import nowdate
 
-from kamra.authz import require_roles
+from kamra.authz import require_perm
 
 
 def _housekeeping_slice(property: str):
@@ -63,7 +63,7 @@ def _finance_slice(property: str, date: str):
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Finance", "Revenue Manager", "Hotel Admin", "Kamra Agent")
+@require_perm("Property", "view_dashboard")
 def property_dashboard(property: str, date: str | None = None):
 	"""Everything one hotel's dashboard needs, by department."""
 	from kamra.crs import assert_property_access
@@ -157,7 +157,7 @@ def _property_summary(property: str, date: str):
 
 
 @frappe.whitelist()
-@require_roles("Finance", "Revenue Manager", "Hotel Admin", "Kamra Agent")
+@require_perm("Property", "view_performance")
 def portfolio_dashboard(date: str | None = None):
 	"""The chain's central view: headline metrics rolled up across every
 	property the signed-in user may access, plus a per-property table."""

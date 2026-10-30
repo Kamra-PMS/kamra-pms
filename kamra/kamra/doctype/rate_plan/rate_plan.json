@@ -78,7 +78,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-07-04 13:57:41.944631",
+ "modified": "2026-10-30 12:32:21.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Rate Plan",
@@ -95,7 +95,11 @@
    "report": 1,
    "role": "System Manager",
    "share": 1,
-   "write": 1
+   "write": 1,
+   "configure": 1,
+   "quote": 1,
+   "set_rates": 1,
+   "view_rates": 1
   },
   {
    "create": 1,
@@ -106,14 +110,20 @@
    "report": 1,
    "role": "Hotel Admin",
    "share": 1,
-   "write": 1
+   "write": 1,
+   "configure": 1,
+   "quote": 1,
+   "set_rates": 1,
+   "view_rates": 1
   },
   {
    "email": 1,
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "Front Desk"
+   "role": "Front Desk",
+   "quote": 1,
+   "view_rates": 1
   },
   {
    "create": 1,
@@ -123,14 +133,19 @@
    "read": 1,
    "report": 1,
    "role": "Revenue Manager",
-   "write": 1
+   "write": 1,
+   "set_rates": 1,
+   "view_rates": 1
   },
   {
    "email": 1,
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "Kamra Agent"
+   "role": "Kamra Agent",
+   "quote": 1,
+   "set_rates": 1,
+   "view_rates": 1
   }
  ],
  "row_format": "Dynamic",

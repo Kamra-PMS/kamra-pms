@@ -13,7 +13,7 @@ can be layered on top, but the hotel is never blocked on a model being up."""
 
 import frappe
 
-from kamra.authz import require_roles
+from kamra.authz import require_perm
 
 # free-text preference cues -> how they score a candidate room
 _VIEW_WORDS = ("view", "lake", "sea", "ocean", "pool", "garden", "city",
@@ -88,7 +88,7 @@ def _score(prefs: str, vip: bool, room: dict, max_floor, min_floor):
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Revenue Manager", "Kamra Agent")
+@require_perm("Reservation", "plan_stays")
 def suggest_allocation(property: str, date: str | None = None):
 	"""Propose a room for every unassigned arrival on `date`. No mutation."""
 	from frappe.utils import nowdate
@@ -167,7 +167,7 @@ def suggest_allocation(property: str, date: str | None = None):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Revenue Manager", "Kamra Agent")
+@require_perm("Reservation", "plan_stays")
 def apply_allocation(property: str, assignments):
 	"""Assign the proposed rooms - run by a person from the tape chart, or by
 	an AI client on their behalf. Every pair is checked again before it is

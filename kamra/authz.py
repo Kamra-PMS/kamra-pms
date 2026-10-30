@@ -5,6 +5,7 @@ for staff restricted to some properties, which properties it may touch."""
 
 import inspect
 import json
+from collections.abc import Set
 from contextlib import contextmanager
 from functools import wraps
 
@@ -262,8 +263,81 @@ def _enforce_property_scope(fn, args, kwargs, scope: dict):
 					break
 
 
+def perm_roles(doctype: str, ptype: str) -> frozenset:
+	"""Roles granted `ptype` on `doctype` right now: DocPerm, or the site's
+	Custom DocPerm when Role Permission Manager has edited the doctype."""
+	return frozenset({p.role for p in frappe.get_meta(doctype).permissions
+	                  if cint(p.get(ptype)) and not cint(p.permlevel)} | {"Administrator"})
+
+
+class PermRoles(Set):
+	"""`fn._kamra_roles` for a require_perm endpoint: a live, read-only view
+	of perm_roles, so the MCP tool list, the in-app copilot and the tests
+	follow Role Permission Manager edits without knowing about them."""
+
+	__slots__ = ("doctype", "ptype")
+
+	def __init__(self, doctype: str, ptype: str):
+		self.doctype, self.ptype = doctype, ptype
+
+	@classmethod
+	def _from_iterable(cls, it):
+		return frozenset(it)
+
+	def __contains__(self, role):
+		return role in perm_roles(self.doctype, self.ptype)
+
+	def __iter__(self):
+		return iter(perm_roles(self.doctype, self.ptype))
+
+	def __len__(self):
+		return len(perm_roles(self.doctype, self.ptype))
+
+	def __repr__(self):
+		return f"PermRoles({self.doctype!r}, {self.ptype!r})"
+
+
+def require_perm(doctype: str, ptype: str, scope: dict | None = None):
+	"""Allow a whitelisted action to whoever holds permission `ptype` on
+	`doctype` - Frappe's own role permissions (DocPerm / Custom DocPerm),
+	so a hotel changes who may do it in Role Permission Manager. Usage -
+	below the whitelist decorator:
+
+	    @frappe.whitelist()
+	    @require_perm("Reservation", "check_in_out")
+	    def check_in(...): ...
+
+	`ptype` is usually a custom Permission Type (kamra/kamra/permission_type)
+	named for the action. The check is at doctype level, ignoring shares
+	(sharing one folio must not unlock an action on every folio); record
+	access is property scope, enforced exactly as require_roles does (see
+	_enforce_property_scope and `scope`). Administrator always passes.
+	"""
+	scope = scope or {}
+
+	def deco(fn):
+		@wraps(fn)
+		def guarded(*args, **kwargs):
+			if not frappe.has_permission(doctype, ptype,
+			                             ignore_share_permissions=True):
+				shown = sorted(perm_roles(doctype, ptype) - set(ADMIN))
+				frappe.throw(
+					f"Not permitted - needs one of: {', '.join(shown)}."
+					if shown else "Not permitted - needs Hotel Admin.",
+					frappe.PermissionError)
+			_enforce_property_scope(fn, args, kwargs, scope)
+			return fn(*args, **kwargs)
+		guarded._kamra_perm = (doctype, ptype)
+		# introspectable RBAC: Kamra Agent filters its tool list by this
+		guarded._kamra_roles = PermRoles(doctype, ptype)
+		return guarded
+	return deco
+
+
 def require_roles(*roles, scope: dict | None = None):
-	"""Allow the listed roles (plus admins). Usage - below the
+	"""Legacy: a fixed role list that a hotel can't change. Use require_perm
+	for new endpoints (kamra/tests/test_rbac.py fails on any left in Kamra).
+	Allow the listed roles (plus admins). Usage - below the
 	whitelist decorator so the registered function is the guarded one:
 
 	    @frappe.whitelist()

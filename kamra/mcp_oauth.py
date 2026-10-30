@@ -18,7 +18,7 @@ from urllib.parse import parse_qs, quote, urlencode, urlparse
 import frappe
 from frappe.utils import add_to_date, get_url, now_datetime
 
-from kamra.authz import require_roles
+from kamra.authz import require_perm
 from kamra.mcp_tools import TOOL_COUNT
 
 SCOPE = "kamra.mcp"
@@ -420,7 +420,7 @@ def revoke_grants(user: str, property: str | None = None) -> int:
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Finance", "Revenue Manager", "Housekeeping")
+@require_perm("Property", "use_settings")
 def connect_info(property: str) -> dict:
 	"""AI Provider panel: public MCP URL, Claude shortcut and connection status."""
 	prop_name = frappe.db.get_value("Property", property, "property_name") or property
@@ -456,7 +456,7 @@ def connect_info(property: str) -> dict:
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Finance", "Revenue Manager", "Housekeeping")
+@require_perm("Property", "use_settings")
 def revoke_my_grants(property: str | None = None) -> dict:
 	n = revoke_grants(frappe.session.user, property or None)
 	from kamra.savings import log_action

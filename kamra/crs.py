@@ -13,7 +13,7 @@ at a hotel the user isn't allowed to touch.
 import frappe
 from frappe.utils import date_diff
 
-from kamra.authz import require_roles
+from kamra.authz import require_perm
 
 
 def permitted_properties() -> set[str]:
@@ -31,7 +31,7 @@ def assert_property_access(property: str):
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Revenue Manager", "Hotel Admin", "Kamra Agent")
+@require_perm("Reservation", "plan_stays")
 def crs_search(check_in_date: str, check_out_date: str,
                adults: int = 2, children: int = 0):
 	"""Find a room across the chain: for every property the user can access,

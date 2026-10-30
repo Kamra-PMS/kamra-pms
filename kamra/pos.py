@@ -18,7 +18,7 @@ import frappe
 from frappe import _
 from frappe.utils import cint
 
-from kamra.authz import assert_record_access, require_roles
+from kamra.authz import assert_record_access, require_perm
 
 POS_ROLES = ("Front Desk", "Finance", "Kamra Agent")
 # Menus written before coursing existed have no course; they behave as mains.
@@ -42,7 +42,7 @@ def _unfired_alert_min(outlet: str) -> int:
 
 
 @frappe.whitelist()
-@require_roles(*POS_ROLES)
+@require_perm("POS Order", "take_orders")
 def outlets(property: str):
 	"""Open outlets, each with `auto_kot` already resolved against the F&B
 	setting, so the till never has to know where the answer came from."""
@@ -72,7 +72,7 @@ def outlet_auto_kot(outlet: str) -> bool:
 
 
 @frappe.whitelist()
-@require_roles(*POS_ROLES)
+@require_perm("POS Order", "take_orders")
 def pos_menu(outlet: str):
 	"""The digital menu for an outlet: available items grouped by category."""
 	items = frappe.get_all(
@@ -186,7 +186,7 @@ def assert_room_charges_allowed(reservation: str) -> None:
 
 
 @frappe.whitelist()
-@require_roles(*POS_ROLES)
+@require_perm("POS Order", "take_orders")
 def in_house_rooms(property: str):
 	"""Rooms with a checked-in guest, for the till's room picker: only these
 	can take a room charge. "101 · Guest Name". `room_charges_allowed` is the
@@ -213,7 +213,7 @@ def in_house_rooms(property: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*POS_ROLES)
+@require_perm("POS Order", "take_orders")
 def charge_to_room(order: str, room: str):
 	"""Point a running bill (a dine-in table, say) at an in-house guest's
 	room, so Deliver posts it to their folio through the same controller
@@ -230,7 +230,7 @@ def charge_to_room(order: str, room: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*POS_ROLES)
+@require_perm("POS Order", "take_orders")
 def create_order(outlet: str, items, property: str | None = None,
                  room: str | None = None, reservation: str | None = None,
                  table_no: str | None = None, source: str = "Manual",
@@ -309,7 +309,7 @@ def _bill_guest(reservation: str | None, guest: str | None) -> str | None:
 
 
 @frappe.whitelist()
-@require_roles(*POS_ROLES)
+@require_perm("POS Order", "take_orders")
 def open_orders(outlet: str):
 	"""Every running tab at an outlet - the tables/rooms being served right
 	now, so a captain can juggle several at once. A bill nobody has sent to
@@ -427,7 +427,7 @@ def _parse_tables(raw: str) -> list[tuple[str, int | None, str | None]]:
 
 
 @frappe.whitelist()
-@require_roles(*POS_ROLES)
+@require_perm("POS Order", "take_orders")
 def table_map(outlet: str):
 	"""The table view a captain starts from: every table at the outlet with
 	its live state - vacant, running (open bill), fired (KOT in the kitchen)
@@ -487,7 +487,7 @@ def table_map(outlet: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*POS_ROLES)
+@require_perm("POS Order", "take_orders")
 def reserve_table(outlet: str, table_no: str, guest_name: str,
                   reserved_at: str, phone: str | None = None,
                   party_size=None, notes: str | None = None):
@@ -510,7 +510,7 @@ def reserve_table(outlet: str, table_no: str, guest_name: str,
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*POS_ROLES)
+@require_perm("POS Order", "take_orders")
 def set_reservation(reservation: str, status: str):
 	"""Seat / cancel / no-show a table reservation."""
 	if status not in ("Seated", "Cancelled", "No Show"):
@@ -522,7 +522,7 @@ def set_reservation(reservation: str, status: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*POS_ROLES)
+@require_perm("POS Order", "take_orders")
 def mark_table_clean(outlet: str, table_no: str):
 	"""Housekeeping done - the table goes back to vacant on the map."""
 	frappe.cache.delete_value(_cleaning_key(outlet, table_no))
@@ -530,7 +530,7 @@ def mark_table_clean(outlet: str, table_no: str):
 
 
 @frappe.whitelist()
-@require_roles(*POS_ROLES)
+@require_perm("POS Order", "take_orders")
 def recent_orders(outlet: str, limit: int = 8):
 	"""The outlet's latest bills, newest first - open or settled - so a
 	captain can jump back to a running bill or reprint a settled one."""
@@ -547,7 +547,7 @@ def recent_orders(outlet: str, limit: int = 8):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*POS_ROLES)
+@require_perm("POS Order", "take_orders")
 def split_order(order: str, item_rows, table_no: str | None = None):
 	"""Split a bill: move the chosen lines to a new bill on the same table
 	(or a named one) - separate bills for two parties sharing a table, or
@@ -607,7 +607,7 @@ def split_order(order: str, item_rows, table_no: str | None = None):
 
 
 @frappe.whitelist()
-@require_roles(*POS_ROLES)
+@require_perm("POS Order", "take_orders")
 def order_detail(order: str):
 	"""One order's full contents - to load a running tab back into the till,
 	or to look at a closed one from the orders list. `kitchen_lines` counts
@@ -649,7 +649,7 @@ def order_detail(order: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*POS_ROLES)
+@require_perm("POS Order", "take_orders")
 def add_items(order: str, items):
 	"""Add rounds to a running tab - new lines are priced from the menu and
 	start as New (a later fire_kot sends them to the kitchen)."""
@@ -663,7 +663,7 @@ def add_items(order: str, items):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*POS_ROLES)
+@require_perm("POS Order", "take_orders")
 def confirm_order(order: str):
 	"""Captain confirmation for a Placed order that has no captain yet
 	(legacy guest QR). Sets the captain and moves Placed -> Confirmed."""
@@ -676,7 +676,7 @@ def confirm_order(order: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*POS_ROLES)
+@require_perm("POS Order", "take_orders")
 def apply_discount(order: str, amount: float, reason: str = ""):
 	"""The guest-discount popup - a captain grants a discount with a reason."""
 	doc = frappe.get_doc("POS Order", order)
@@ -688,7 +688,7 @@ def apply_discount(order: str, amount: float, reason: str = ""):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*POS_ROLES)
+@require_perm("POS Order", "take_orders")
 def fire_kot(order: str, course: str | None = None):
 	"""Send the order to the kitchen: new lines become Fired and show on the
 	kitchen display. Stamps the KOT number (a daily sequence per outlet) and
@@ -780,7 +780,7 @@ def _fire(doc, course: str | None = None) -> dict:
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*POS_ROLES)
+@require_perm("POS Order", "take_orders")
 def send_order(outlet: str, items, property: str | None = None,
                room: str | None = None, reservation: str | None = None,
                table_no: str | None = None, notes: str | None = None,
@@ -809,7 +809,7 @@ def send_order(outlet: str, items, property: str | None = None,
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*POS_ROLES)
+@require_perm("POS Order", "take_orders")
 def send_round(order: str, items):
 	"""Another round on a running bill, straight to the kitchen: add_items
 	and fire_kot in one call and one save."""
@@ -832,7 +832,7 @@ def _next_kot_round(doc) -> int:
 
 
 @frappe.whitelist()
-@require_roles(*POS_ROLES)
+@require_perm("POS Order", "take_orders")
 def kitchen_queue(property: str, outlet: str | None = None,
                   station: str | None = None):
 	"""The kitchen display: fired orders the kitchen still has work on. Scope
@@ -939,7 +939,7 @@ def kitchen_queue(property: str, outlet: str | None = None,
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*POS_ROLES)
+@require_perm("POS Order", "take_orders")
 def mark_prepared(order: str, item_row: str | None = None):
 	"""Kitchen marks one line (or every cooking line) prepared. Voided lines
 	are never swept up by "all ready" - that food is cancelled, not cooked."""
@@ -958,7 +958,7 @@ def mark_prepared(order: str, item_row: str | None = None):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*POS_ROLES)
+@require_perm("POS Order", "take_orders")
 def accept_ticket(order: str):
 	"""The kitchen takes the ticket on. Until a ticket is accepted the floor
 	has no evidence anyone has seen it - a KOT can print to an empty pass."""
@@ -970,7 +970,7 @@ def accept_ticket(order: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*POS_ROLES)
+@require_perm("POS Order", "take_orders")
 def recall_prepared(order: str, item_row: str | None = None):
 	"""Undo a mark-prepared: the line goes back to Fired and reappears on the
 	display. A mis-tap on a greasy touchscreen must not be one-way."""
@@ -988,7 +988,7 @@ def recall_prepared(order: str, item_row: str | None = None):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*POS_ROLES)
+@require_perm("POS Order", "take_orders")
 def acknowledge_void(order: str, item_row: str):
 	"""The chef has seen that a fired line was cancelled and can stop cooking
 	it; drop it from the display. The void itself stays on the order."""
@@ -1004,7 +1004,7 @@ def acknowledge_void(order: str, item_row: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*POS_ROLES)
+@require_perm("POS Order", "take_orders")
 def deliver_order(order: str):
 	"""Order served - moves to Delivered, which posts it to the room folio
 	(controller) when there's a linked stay."""
@@ -1017,7 +1017,7 @@ def deliver_order(order: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*POS_ROLES)
+@require_perm("POS Order", "take_orders")
 def pay_order(order: str, mode: str, pin: str | None = None):
 	"""Settle a bill at the outlet (walk-ins, takeaway - or a guest who'd
 	rather pay now than post to the room). Records the payment mode and
@@ -1064,7 +1064,7 @@ def pay_order(order: str, mode: str, pin: str | None = None):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*POS_ROLES)
+@require_perm("POS Order", "take_orders")
 def change_payment_mode(order: str, mode: str, reason: str = "",
                         pin: str | None = None):
 	"""Correct the tender on a bill that was settled with the wrong mode (Card
@@ -1114,7 +1114,7 @@ def change_payment_mode(order: str, mode: str, reason: str = "",
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*POS_ROLES)
+@require_perm("POS Order", "take_orders")
 def mark_nc(order: str, authorized_by: str, note: str = "", undo: int = 0):
 	"""Mark a bill NC (no charge / complimentary). Needs who authorized it
 	(captain, chef, GM, management…) and takes a free-text reference (the
@@ -1233,7 +1233,7 @@ def _value(lines) -> float:
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*POS_ROLES)
+@require_perm("POS Order", "take_orders")
 def cancel_order(order: str, reason: str = "", reason_code: str | None = None,
                  supervisor: str | None = None, supervisor_pin: str | None = None):
 	"""Cancel an open bill with a reason. Nothing sent to the kitchen yet: the
@@ -1279,7 +1279,7 @@ def cancel_order(order: str, reason: str = "", reason_code: str | None = None,
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*POS_ROLES)
+@require_perm("POS Order", "take_orders")
 def void_item(order: str, item_row: str, reason: str = "",
               reason_code: str | None = None, supervisor: str | None = None,
               supervisor_pin: str | None = None):
@@ -1313,7 +1313,7 @@ def void_item(order: str, item_row: str, reason: str = "",
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*POS_ROLES)
+@require_perm("POS Order", "take_orders")
 def remove_item(order: str, item_row: str):
 	"""Take a line off a bill before it goes to the kitchen: a mis-tap or a
 	change of mind. No reason and no approval, because nothing was cooked.
@@ -1336,7 +1336,7 @@ def remove_item(order: str, item_row: str):
 
 
 @frappe.whitelist()
-@require_roles(*POS_ROLES)
+@require_perm("POS Order", "take_orders")
 def void_approvers(outlet: str):
 	"""Who can approve a void at this outlet's till: enabled Hotel Admin and
 	Finance users with access to the property and a cashier PIN set. Names
@@ -1393,7 +1393,7 @@ def _like(q: str) -> str:
 
 
 @frappe.whitelist()
-@require_roles(*POS_ROLES)
+@require_perm("POS Order", "take_orders")
 def orders_list(outlet: str, date: str | None = None, to_date: str | None = None,
                 q: str | None = None, state: str | None = None, limit: int = 200,
                 offset: int = 0, order_type: str | None = None, mode: str | None = None):
@@ -1531,7 +1531,7 @@ EXPORT_COLUMNS = ("Bill", "KOT", "Date", "Time", "Outlet", "Type", "Table", "Roo
 
 
 @frappe.whitelist()
-@require_roles(*POS_ROLES)
+@require_perm("POS Order", "take_orders")
 def orders_export(outlet: str, date: str | None = None, to_date: str | None = None,
                   q: str | None = None, state: str | None = None,
                   mode: str | None = None, order_type: str | None = None):
@@ -1657,7 +1657,7 @@ def _guest_by_phone(phone: str | None) -> str | None:
 
 
 @frappe.whitelist()
-@require_roles(*POS_ROLES)
+@require_perm("POS Order", "take_orders")
 def find_customer(outlet: str, q: str):
 	"""Find a guest profile for a bill by phone (4+ digits) or name (3+
 	letters): the same guest records the front desk uses. Each match says
@@ -1696,7 +1696,7 @@ def find_customer(outlet: str, q: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*POS_ROLES)
+@require_perm("POS Order", "take_orders")
 def attach_customer(outlet: str, order: str | None = None, guest: str | None = None,
                     customer_name: str | None = None, phone: str | None = None,
                     clear: int = 0):
@@ -1746,7 +1746,7 @@ def attach_customer(outlet: str, order: str | None = None, guest: str | None = N
 
 
 @frappe.whitelist()
-@require_roles(*POS_ROLES)
+@require_perm("POS Order", "take_orders")
 def guest_panel(outlet: str, order: str | None = None, guest: str | None = None,
                 room: str | None = None):
 	"""Who a bill is for, without leaving the till. For a room bill: the
@@ -1857,7 +1857,7 @@ def _outlet_history(outlet: str, order: str | None, g, stay) -> dict:
 
 
 @frappe.whitelist()
-@require_roles(*POS_ROLES)
+@require_perm("POS Order", "take_orders")
 def bill_data(order: str):
 	"""Everything the thermal bill print needs: outlet and property names,
 	live lines, the discount, and the CGST/SGST split at the outlet's rate."""
@@ -1907,7 +1907,7 @@ def bill_data(order: str):
 
 
 @frappe.whitelist()
-@require_roles(*POS_ROLES)
+@require_perm("POS Order", "take_orders")
 def outlet_dashboard(outlet: str, date: str | None = None,
                      to_date: str | None = None):
 	"""One shift at a glance: what the outlet sold, what's still open, the
@@ -2039,7 +2039,7 @@ def outlet_dashboard(outlet: str, date: str | None = None,
 
 
 @frappe.whitelist()
-@require_roles("Hotel Admin", "Finance")
+@require_perm("POS Order", "manage_outlet")
 def speed_check(property: str, outlet: str | None = None, echo: int = 0):
 	"""Why does the POS feel slow here? Times what a till and a kitchen
 	display ask for on every refresh and reports the server's set-up, so

@@ -19,7 +19,7 @@ import frappe
 from frappe import _
 from frappe.utils import getdate, now_datetime, nowdate
 
-from kamra.authz import require_roles
+from kamra.authz import require_perm
 
 # an existing cancellation reason, so reports and the cancellation letter
 # need nothing new; the note carries "Request declined: <why>"
@@ -56,7 +56,7 @@ def _availability(res) -> dict:
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Kamra Agent")
+@require_perm("Reservation", "handle_stays")
 def booking_requests(property: str):
 	"""Pending Request-to-Book stays (status Requested), oldest first, each
 	with whether it can be accepted right now. Requests hold no inventory
@@ -98,7 +98,7 @@ def _load_request(reservation: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Kamra Agent")
+@require_perm("Reservation", "handle_stays")
 def accept_booking_request(reservation: str, room: str | None = None):
 	"""Accept a Request-to-Book stay: confirm it and take the inventory,
 	assigning a free room of its type (or `room`). Every booking rule runs
@@ -179,7 +179,7 @@ def accept_booking_request(reservation: str, room: str | None = None):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Kamra Agent")
+@require_perm("Reservation", "handle_stays")
 def decline_booking_request(reservation: str, reason: str):
 	"""Decline a Request-to-Book stay with a reason (required). The stay is
 	cancelled with no cancellation fee - a request was never confirmed - and

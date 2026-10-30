@@ -2,7 +2,7 @@
 
 Each tool wraps a governed Kamra API endpoint. Money and availability stay
 in the PMS; the model only calls these tools. Visibility is the intersection
-of (1) the signed-in user's Frappe roles via `require_roles` / `_kamra_roles`
+of (1) the signed-in user's Frappe permissions via `require_perm` / `_kamra_perm`
 and (2) the property's `enabled_modules` (tool `module` must be on).
 """
 
@@ -1986,7 +1986,16 @@ def resolve_endpoint(dotted: str):
 
 
 def tool_allowed(spec: ToolSpec, roles: set[str] | None = None) -> bool:
+	"""The endpoint's own gate: for the signed-in user, Frappe's permission
+	check on the endpoint's (doctype, permission type) - so Role Permission
+	Manager edits change the tool list too; for an explicit role set (tests,
+	previews), whether any of those roles holds that permission."""
 	fn = resolve_endpoint(spec.dotted)
+	perm = getattr(fn, "_kamra_perm", None)
+	if roles is None and perm:
+		import frappe
+
+		return frappe.has_permission(*perm, ignore_share_permissions=True)
 	allowed = getattr(fn, "_kamra_roles", None)
 	if not allowed:
 		return True

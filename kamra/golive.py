@@ -35,7 +35,7 @@ import frappe
 from frappe import _
 from frappe.utils import add_days, flt, getdate, now_datetime
 
-from kamra.authz import require_roles
+from kamra.authz import require_perm
 from kamra.migrate import (
 	_detect_dayfirst,
 	_map_headers,
@@ -71,7 +71,7 @@ TEMPLATES = {
 
 
 @frappe.whitelist()
-@require_roles("Finance")
+@require_perm("Property", "go_live")
 def csv_template(kind: str):
 	"""The header row of one of Kamra's go-live CSV templates."""
 	if kind not in TEMPLATES:
@@ -219,7 +219,7 @@ def _account(property: str, company: str) -> str | None:
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Finance")
+@require_perm("Property", "go_live")
 def preview_companies(property: str, csv_text: str):
 	"""Dry run of the companies file: column mapping, which companies are
 	new and which already exist (they are updated, never duplicated)."""
@@ -236,7 +236,7 @@ def preview_companies(property: str, csv_text: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Finance")
+@require_perm("Property", "go_live")
 def run_companies(property: str, csv_text: str):
 	"""Create or update each company (an upsert, so a re-run changes
 	nothing) and, for a company on credit, its city ledger account at this
@@ -519,7 +519,7 @@ def _summary(items: list, issues: list) -> list[dict]:
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Finance")
+@require_perm("Property", "go_live")
 def preview_opening(property: str, csv_text: str):
 	"""Dry run of the opening-balance file: what each row matched, totals
 	per category, what is already posted (a re-run skips it) and every row
@@ -682,7 +682,7 @@ def _post_ar_credit(property: str, item: dict):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Finance")
+@require_perm("Property", "go_live")
 def run_opening(property: str, csv_text: str):
 	"""Post the opening balances. Each item is posted once: a re-run of the
 	same file finds it in Kamra and skips it (and says so). Company bills
@@ -813,7 +813,7 @@ def _guest(res: str) -> str:
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Finance")
+@require_perm("Property", "go_live")
 def reconcile(property: str, opening_csv: str | None = None,
               companies_csv: str | None = None,
               bookings_csv: str | None = None):

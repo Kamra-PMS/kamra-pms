@@ -11,7 +11,7 @@ from typing import Any
 import frappe
 from frappe.utils import now_datetime
 
-from kamra.authz import require_roles
+from kamra.authz import require_perm
 from kamra.business_date import ensure_business_date, get_business_date
 from kamra.business_date import report_range_end as _range_end
 from kamra.settings import get_setting
@@ -293,7 +293,7 @@ def _session_view(name: str) -> dict[str, Any]:
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Finance", "Kamra Agent")
+@require_perm("Cashier Session", "operate_till")
 def open_session(property: str, opening_float: float | None = None,
                  terminal: str | None = None, cashier_terminal: str | None = None):
 	"""Open the caller's till for the current business date.
@@ -354,7 +354,7 @@ def open_session(property: str, opening_float: float | None = None,
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Finance", "Night Auditor", "Kamra Agent")
+@require_perm("Cashier Session", "view_tills")
 def current_session(property: str, cashier_terminal: str | None = None):
 	"""Caller's open session, or null. With several open, the newest unless
 	`cashier_terminal` names one."""
@@ -388,7 +388,7 @@ def current_session(property: str, cashier_terminal: str | None = None):
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Finance", "Night Auditor", "Kamra Agent")
+@require_perm("Cashier Session", "view_tills")
 def my_till(property: str):
 	"""Read-only: does taking money here need a till, is the caller's open,
 	and may the caller open one (open_session). The check-in, walk-in and
@@ -397,7 +397,7 @@ def my_till(property: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Finance", "Night Auditor", "Kamra Agent")
+@require_perm("Cashier Session", "view_tills")
 def close_session(session: str, counted_cash: float,
                   notes: str | None = None, pin: str | None = None):
 	"""Count the drawer and close the till."""
@@ -474,7 +474,7 @@ def _sync_shift_handover(sess) -> None:
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Finance", "Kamra Agent")
+@require_perm("Cashier Session", "operate_till")
 def post_paid_out(property: str, amount: float, reason: str,
                   payee: str | None = None, pin: str | None = None):
 	"""Cash leaving the drawer (vendor / guest paid-out)."""
@@ -495,7 +495,7 @@ def post_paid_out(property: str, amount: float, reason: str,
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Finance", "Kamra Agent")
+@require_perm("Cashier Session", "operate_till")
 def cash_drop(property: str, amount: float, location: str | None = None,
               pin: str | None = None, to_terminal: str | None = None):
 	"""Move cash from the till to a drop safe / general cashier.
@@ -538,7 +538,7 @@ def cash_drop(property: str, amount: float, location: str | None = None,
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Finance", "Kamra Agent")
+@require_perm("Cashier Session", "operate_till")
 def post_petty_cash(property: str, amount: float, payee: str, category: str,
                     reason: str, pin: str | None = None):
 	if float(amount) <= 0:
@@ -573,7 +573,7 @@ def post_petty_cash(property: str, amount: float, payee: str, category: str,
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Finance", "Hotel Admin", "Night Auditor", "Kamra Agent")
+@require_perm("Cashier Session", "view_tills")
 def petty_cash_report(property: str, limit: int = 50):
 	"""Vouchers and totals for one property only — never mixed across hotels."""
 	from kamra.authz import assert_property_access
@@ -619,7 +619,7 @@ def petty_cash_report(property: str, limit: int = 50):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Finance", "Hotel Admin", "Kamra Agent")
+@require_perm("Cashier Session", "set_float")
 def set_petty_cash_float(property: str, amount: float):
 	"""Set this property's standing petty-cash imprest (per hotel, not shared)."""
 	from kamra.authz import assert_property_access
@@ -633,7 +633,7 @@ def set_petty_cash_float(property: str, amount: float):
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Finance", "Hotel Admin", "Night Auditor", "Kamra Agent")
+@require_perm("Cashier Session", "view_tills")
 def list_sessions(property: str, business_date: str | None = None,
                   status: str | None = None):
 	filters: dict[str, Any] = {"property": property}
@@ -656,13 +656,13 @@ def list_sessions(property: str, business_date: str | None = None,
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Finance", "Hotel Admin", "Night Auditor", "Kamra Agent")
+@require_perm("Cashier Session", "view_tills")
 def session_report(session: str):
 	return _session_view(session)
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Finance", "Hotel Admin", "Night Auditor", "Kamra Agent")
+@require_perm("Cashier Session", "view_tills")
 def cash_summary_v2(property: str, date: str | None = None,
                     to_date: str | None = None):
 	"""Unified FO + POS cash for a business date, or date..to_date
@@ -716,7 +716,7 @@ def cash_summary_v2(property: str, date: str | None = None,
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Finance", "Hotel Admin", "Night Auditor", "Kamra Agent")
+@require_perm("Cashier Session", "view_tills")
 def shift_report(property: str, business_date: str | None = None,
                  to_date: str | None = None):
 	"""Per-cashier totals for a business date, or business_date..to_date."""
@@ -763,7 +763,7 @@ def _terminal_row(t: dict) -> dict:
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Finance", "Hotel Admin", "Night Auditor", "Kamra Agent")
+@require_perm("Cashier Session", "view_tills")
 def terminals(property: str, include_disabled: int = 0):
 	"""A property's configured tills. Sessions opened without a terminal are
 	the Default till and are not listed here."""
@@ -779,7 +779,7 @@ def terminals(property: str, include_disabled: int = 0):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*TERMINAL_EDITORS)
+@require_perm("Cashier Session", "manage_cash_office")
 def save_terminal(property: str, terminal_name: str, kind: str = "Front Desk",
                   outlet: str | None = None, bill_printer: str | None = None,
                   default_float: float = 0, disabled: int = 0,
@@ -842,7 +842,7 @@ def _safe_balance(terminal: str) -> dict[str, float]:
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Finance", "Hotel Admin", "Night Auditor", "Kamra Agent")
+@require_perm("Cashier Session", "view_tills")
 def tills_board(property: str):
 	"""Every till right now: who holds it, what should be in it, what is on
 	its way to the cash office. The Default till (sessions opened without a
@@ -883,7 +883,7 @@ def tills_board(property: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Finance", "Hotel Admin", "Kamra Agent")
+@require_perm("Cashier Session", "operate_till")
 def receive_transfer(transfer: str, pin: str | None = None):
 	"""The cash office confirms a drop arrived."""
 	t = frappe.get_doc("Cash Transfer", transfer)
@@ -903,7 +903,7 @@ def receive_transfer(transfer: str, pin: str | None = None):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Finance", "Hotel Admin")
+@require_perm("Cashier Session", "manage_cash_office")
 def bank_deposit(cash_office: str, amount: float, notes: str | None = None,
                  pin: str | None = None):
 	"""Cash leaves the safe for the bank."""
@@ -931,7 +931,7 @@ def bank_deposit(cash_office: str, amount: float, notes: str | None = None,
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Finance", "Hotel Admin")
+@require_perm("Cashier Session", "manage_cash_office")
 def approve_variance(session: str, note: str | None = None):
 	"""A manager signs off a till that closed over or short."""
 	doc = frappe.get_doc("Cashier Session", session)

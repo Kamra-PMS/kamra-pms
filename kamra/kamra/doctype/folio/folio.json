@@ -198,7 +198,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-09-28 20:00:00.000000",
+ "modified": "2026-10-30 12:32:21.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Folio",
@@ -215,7 +215,13 @@
    "report": 1,
    "role": "System Manager",
    "share": 1,
-   "write": 1
+   "write": 1,
+   "audit_voids": 1,
+   "bill": 1,
+   "find_invoices": 1,
+   "issue_credit_note": 1,
+   "post_from_pos": 1,
+   "view_folio": 1
   },
   {
    "create": 1,
@@ -226,7 +232,13 @@
    "report": 1,
    "role": "Hotel Admin",
    "share": 1,
-   "write": 1
+   "write": 1,
+   "audit_voids": 1,
+   "bill": 1,
+   "find_invoices": 1,
+   "issue_credit_note": 1,
+   "post_from_pos": 1,
+   "view_folio": 1
   },
   {
    "create": 1,
@@ -235,7 +247,10 @@
    "read": 1,
    "report": 1,
    "role": "Front Desk",
-   "write": 1
+   "write": 1,
+   "bill": 1,
+   "find_invoices": 1,
+   "view_folio": 1
   },
   {
    "create": 1,
@@ -245,7 +260,12 @@
    "read": 1,
    "report": 1,
    "role": "Finance",
-   "write": 1
+   "write": 1,
+   "audit_voids": 1,
+   "bill": 1,
+   "find_invoices": 1,
+   "issue_credit_note": 1,
+   "view_folio": 1
   },
   {
    "create": 1,
@@ -254,13 +274,29 @@
    "read": 1,
    "report": 1,
    "role": "Kamra Agent",
-   "write": 1
+   "write": 1,
+   "bill": 1,
+   "find_invoices": 1,
+   "issue_credit_note": 1,
+   "post_from_pos": 1,
+   "view_folio": 1
   },
   {
    "read": 1,
    "report": 1,
    "print": 1,
-   "role": "Night Auditor"
+   "role": "Night Auditor",
+   "view_folio": 1
+  },
+  {
+   "role": "Revenue Manager",
+   "find_invoices": 1,
+   "select": 1
+  },
+  {
+   "role": "POS Integrator",
+   "post_from_pos": 1,
+   "select": 1
   }
  ],
  "row_format": "Dynamic",

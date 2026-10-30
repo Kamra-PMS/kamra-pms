@@ -14,7 +14,7 @@ import requests
 from frappe.utils import cint, nowdate
 
 from kamra.assistant_privacy import processor_disclosure, scrub_for_llm
-from kamra.authz import require_roles
+from kamra.authz import require_perm
 from kamra.llm_compat import chat_payload, retry_chat_payload
 # one set of booking-reference parameter docs for MCP and the copilot
 from kamra.mcp_tools import (MEAL_PLAN_PARAM,
@@ -734,7 +734,7 @@ AI_PROVIDER_PRESETS = (
 
 
 @frappe.whitelist()
-@require_roles("Hotel Admin", "System Manager", "Front Desk")
+@require_perm("Copilot Conversation", "view_presets")
 def provider_presets():
 	"""Dropdown options for Settings — kill 'paste Claude key into OpenAI' tickets."""
 	out = []
@@ -746,7 +746,7 @@ def provider_presets():
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Hotel Admin", "System Manager")
+@require_perm("Copilot Conversation", "configure")
 def test_connection(property: str, base_url: str | None = None,
                     model: str | None = None, api_key: str | None = None):
 	"""One cheap Chat Completions call with no tools. Returns the provider
@@ -824,6 +824,9 @@ def _tool_allowed(name: str) -> bool:
 	signed-in user's roles pass the SAME gate as the underlying API
 	endpoint. The model never even sees tools this user couldn't use."""
 	fn = _resolve(TOOLS[name][0])
+	perm = getattr(fn, "_kamra_perm", None)
+	if perm:
+		return frappe.has_permission(*perm, ignore_share_permissions=True)
 	allowed = getattr(fn, "_kamra_roles", None)
 	if not allowed:
 		return True
@@ -1039,7 +1042,7 @@ def _tool_json_for_provider(result, settings):
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Finance", "Revenue Manager")
+@require_perm("Copilot Conversation", "ask_agent")
 def ask(property: str, messages):
 	"""One Kamra Agent turn: history in, answer out. The model may call
 	governed tools along the way; every call is returned so the UI can
@@ -1103,7 +1106,7 @@ def ask(property: str, messages):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Finance", "Revenue Manager")
+@require_perm("Copilot Conversation", "ask_agent")
 def ask_stream(property: str, messages):
 	"""Streaming Kamra Agent turn (Server-Sent Events). Governed tools run FIRST
 	(they need the DB, which the request context still holds), emitting an
@@ -1257,7 +1260,7 @@ the docs (github.com/Kamra-PMS/kamra-pms/tree/main/docs)."""
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Finance", "Revenue Manager", "Housekeeping")
+@require_perm("Copilot Conversation", "ask_help")
 def help_ask(property: str, messages):
 	"""Streaming how-to help (SSE). No tools, no data access - just explains
 	how to use Kamra, grounded in the app's features. Reuses the property's
@@ -1332,7 +1335,7 @@ def _own_convo(name):
 
 
 @frappe.whitelist()
-@require_roles(*CONVO_ROLES)
+@require_perm("Copilot Conversation", "keep_conversations")
 def list_conversations(property: str):
 	"""The signed-in user's chats for this property, most recent first."""
 	return frappe.get_all(
@@ -1343,7 +1346,7 @@ def list_conversations(property: str):
 
 
 @frappe.whitelist()
-@require_roles(*CONVO_ROLES)
+@require_perm("Copilot Conversation", "keep_conversations")
 def get_conversation(name: str):
 	_own_convo(name)
 	doc = frappe.get_doc("Copilot Conversation", name)
@@ -1354,7 +1357,7 @@ def get_conversation(name: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*CONVO_ROLES)
+@require_perm("Copilot Conversation", "keep_conversations")
 def create_conversation(property: str, title: str = "New chat"):
 	doc = frappe.new_doc("Copilot Conversation")
 	doc.property = property
@@ -1366,7 +1369,7 @@ def create_conversation(property: str, title: str = "New chat"):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*CONVO_ROLES)
+@require_perm("Copilot Conversation", "keep_conversations")
 def save_conversation(name: str, messages, title: str | None = None):
 	_own_convo(name)
 	if isinstance(messages, str):
@@ -1380,7 +1383,7 @@ def save_conversation(name: str, messages, title: str | None = None):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*CONVO_ROLES)
+@require_perm("Copilot Conversation", "keep_conversations")
 def rename_conversation(name: str, title: str):
 	_own_convo(name)
 	frappe.db.set_value("Copilot Conversation", name, "title",
@@ -1390,7 +1393,7 @@ def rename_conversation(name: str, title: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*CONVO_ROLES)
+@require_perm("Copilot Conversation", "keep_conversations")
 def delete_conversation(name: str):
 	_own_convo(name)
 	frappe.delete_doc("Copilot Conversation", name, ignore_permissions=True)

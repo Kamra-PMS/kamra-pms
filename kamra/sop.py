@@ -15,7 +15,7 @@ import frappe
 from frappe import _
 from frappe.utils import flt
 
-from kamra.authz import require_roles
+from kamra.authz import require_perm
 
 # Charge types → review groups shown in the checkout wizard.
 CHARGE_GROUPS = {
@@ -1157,7 +1157,7 @@ def _template_steps(property: str, key: str) -> tuple[dict | None, list[dict]]:
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Kamra Agent", "Hotel Admin")
+@require_perm("SOP Template", "read_sops")
 def get_sop(property: str, key: str, context=None):
 	"""Return evaluated SOP steps for a procedure.
 
@@ -1187,7 +1187,7 @@ def get_sop(property: str, key: str, context=None):
 
 
 @frappe.whitelist()
-@require_roles("Hotel Admin", "System Manager", "Front Desk", "Kamra Agent")
+@require_perm("SOP Template", "read_sops")
 def list_sops(property: str):
 	"""List SOP templates for the settings editor."""
 	ensure_default_sops(property)
@@ -1201,7 +1201,7 @@ def list_sops(property: str):
 
 
 @frappe.whitelist()
-@require_roles("Hotel Admin", "System Manager")
+@require_perm("SOP Template", "configure")
 def get_sop_template(name: str):
 	doc = frappe.get_doc("SOP Template", name)
 	return {
@@ -1227,7 +1227,7 @@ def get_sop_template(name: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Hotel Admin", "System Manager")
+@require_perm("SOP Template", "configure")
 def save_sop_template(name: str | None = None, property: str | None = None,
                       key: str | None = None, title: str | None = None,
                       active: int = 1, steps=None):
@@ -1269,7 +1269,7 @@ def save_sop_template(name: str | None = None, property: str | None = None,
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Hotel Admin", "System Manager")
+@require_perm("SOP Template", "configure")
 def seed_sop_templates(property: str):
 	n = ensure_default_sops(property)
 	return {"ok": True, "created": n}

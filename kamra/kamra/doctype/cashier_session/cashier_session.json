@@ -226,7 +226,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-10-20 12:00:00.000000",
+ "modified": "2026-10-30 12:32:21.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Cashier Session",
@@ -242,7 +242,13 @@
    "print": 1,
    "report": 1,
    "share": 1,
-   "email": 1
+   "email": 1,
+   "configure": 1,
+   "manage_cash_office": 1,
+   "operate_till": 1,
+   "set_float": 1,
+   "use_pin": 1,
+   "view_tills": 1
   },
   {
    "role": "Hotel Admin",
@@ -254,7 +260,13 @@
    "print": 1,
    "report": 1,
    "share": 1,
-   "email": 1
+   "email": 1,
+   "configure": 1,
+   "manage_cash_office": 1,
+   "operate_till": 1,
+   "set_float": 1,
+   "use_pin": 1,
+   "view_tills": 1
   },
   {
    "role": "Finance",
@@ -264,7 +276,12 @@
    "export": 1,
    "print": 1,
    "report": 1,
-   "email": 1
+   "email": 1,
+   "manage_cash_office": 1,
+   "operate_till": 1,
+   "set_float": 1,
+   "use_pin": 1,
+   "view_tills": 1
   },
   {
    "role": "Front Desk",
@@ -273,7 +290,10 @@
    "create": 1,
    "print": 1,
    "report": 1,
-   "email": 1
+   "email": 1,
+   "operate_till": 1,
+   "use_pin": 1,
+   "view_tills": 1
   },
   {
    "role": "Kamra Agent",
@@ -282,13 +302,32 @@
    "create": 1,
    "print": 1,
    "report": 1,
-   "email": 1
+   "email": 1,
+   "operate_till": 1,
+   "set_float": 1,
+   "view_tills": 1
   },
   {
    "read": 1,
    "report": 1,
    "print": 1,
-   "role": "Night Auditor"
+   "role": "Night Auditor",
+   "view_tills": 1
+  },
+  {
+   "role": "Housekeeping",
+   "use_pin": 1,
+   "select": 1
+  },
+  {
+   "role": "Housekeeping Supervisor",
+   "use_pin": 1,
+   "select": 1
+  },
+  {
+   "role": "Revenue Manager",
+   "use_pin": 1,
+   "select": 1
   }
  ],
  "sort_field": "modified",

@@ -1,0 +1,10 @@
+{
+ "creation": "2026-10-30 12:32:21.000000",
+ "doc_type": "Corporate Account",
+ "doctype": "Permission Type",
+ "modified": "2026-10-30 12:32:21.000000",
+ "modified_by": "Administrator",
+ "name": "corporate_account_view_terms",
+ "owner": "Administrator",
+ "perm_type": "view_terms"
+}

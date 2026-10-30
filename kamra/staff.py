@@ -22,7 +22,7 @@ from frappe import _
 from frappe.rate_limiter import rate_limit
 from frappe.utils import validate_email_address
 
-from kamra.authz import IT_ADMIN, require_roles, restricted_properties
+from kamra.authz import IT_ADMIN, require_perm, restricted_properties
 
 ROLES = (
 	("Hotel Admin", "Hotel Admin",
@@ -65,7 +65,7 @@ def _user_properties(user: str) -> list | None:
 
 
 @frappe.whitelist()
-@require_roles()
+@require_perm("Property", "configure")
 def staff_roles() -> list:
 	"""The roles a person can hold, and whether the caller may hand each out."""
 	it = _caller_is_it()
@@ -74,7 +74,7 @@ def staff_roles() -> list:
 
 
 @frappe.whitelist()
-@require_roles()
+@require_perm("Property", "configure")
 def list_staff(property: str) -> list:
 	"""Everyone with a Kamra role who can reach this property."""
 	it = _caller_is_it()
@@ -131,7 +131,7 @@ def _parse_list(val) -> list | None:
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles()
+@require_perm("Property", "configure")
 @rate_limit(limit=120, seconds=3600)
 def save_staff(property: str, email: str, full_name: str, roles, properties=None,
                enabled=1, send_welcome=0) -> dict:
@@ -245,7 +245,7 @@ def save_staff(property: str, email: str, full_name: str, roles, properties=None
 
 
 @frappe.whitelist()
-@require_roles()
+@require_perm("Property", "configure")
 def role_matrix() -> dict:
 	"""Per role, the settings pages it may change (admins: all of them)."""
 	from kamra.authz import ADMIN

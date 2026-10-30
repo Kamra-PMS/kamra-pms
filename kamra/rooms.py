@@ -18,7 +18,7 @@ from frappe import _
 from frappe.utils import add_days, cint, date_diff, get_datetime, getdate, nowdate
 
 from kamra.api import HK_SUPERVISOR, _is_room_supervisor, _stay_balances
-from kamra.authz import ADMIN, assert_property_access, require_roles
+from kamra.authz import ADMIN, assert_property_access, require_perm
 
 # who may look at rooms: the desk, housekeeping supervisors, night audit,
 # revenue, and the agent. Admins always pass.
@@ -74,7 +74,7 @@ def _room_or_404(room: str) -> dict:
 # --- the board -----------------------------------------------------------------
 
 @frappe.whitelist()
-@require_roles(*BOARD_ROLES)
+@require_perm("Room", "view_rooms")
 def rooms_board(property: str):
 	"""Every room of the property as a tile: housekeeping status, who is in
 	it, who arrives or leaves today, whether it is out of service, and its
@@ -168,7 +168,7 @@ def _permissions() -> dict:
 # --- one room ------------------------------------------------------------------
 
 @frappe.whitelist()
-@require_roles(*BOARD_ROLES)
+@require_perm("Room", "view_rooms")
 def room_detail(room: str):
 	"""Everything about one room right now: what it is, its status, who is
 	in it (with the balance), who arrives next, whether it is held out of
@@ -250,7 +250,7 @@ def room_detail(room: str):
 
 
 @frappe.whitelist()
-@require_roles(*BOARD_ROLES)
+@require_perm("Room", "view_rooms")
 def room_availability(room: str, start_date: str | None = None, days: int = 14):
 	"""This room, night by night: booked (by whom), held out of service, or
 	free. Same overlap rules as the tape chart and the block guard (the
@@ -362,7 +362,7 @@ def _parse_move(rationale: str) -> tuple[str | None, str | None]:
 
 
 @frappe.whitelist()
-@require_roles(*BOARD_ROLES)
+@require_perm("Room", "view_rooms")
 def room_history(room: str, limit: int = 15):
 	"""Who stayed in this room lately (nights, room revenue), who cleaned
 	and checked it and when, its service tickets, and the guests moved in
@@ -506,7 +506,7 @@ def _overlap(a_start, a_end, b_start, b_end) -> int:
 
 
 @frappe.whitelist()
-@require_roles(*BOARD_ROLES)
+@require_perm("Room", "view_rooms")
 def room_insights(property: str, days: int = 30, refresh: int = 0,
                   from_date: str | None = None, to_date: str | None = None):
 	"""Per-room numbers for the last `days` nights (7, 30, 90, 180 or 365,

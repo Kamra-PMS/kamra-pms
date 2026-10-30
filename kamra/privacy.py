@@ -26,7 +26,7 @@ register, and one audit line saying the erasure happened (without the name).
 import frappe
 from frappe.utils import add_days, add_months, cint, getdate, now_datetime, nowdate
 
-from kamra.authz import require_roles
+from kamra.authz import require_perm
 
 
 def _mask(value: str | None) -> str | None:
@@ -130,7 +130,7 @@ def erase_guest(guest: str, reason: str = "request") -> dict:
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(scope={"guest": "Guest"})
+@require_perm("Guest", "configure", scope={"guest": "Guest"})
 def export_guest_data(guest: str) -> dict:
 	"""Right to access: everything Kamra holds about one guest, readable."""
 	g = frappe.get_doc("Guest", guest)
@@ -251,7 +251,7 @@ def set_marketing_consent(guest: str, consent, source: str, property: str | None
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Kamra Agent", scope={"guest": "Guest"})
+@require_perm("Guest", "handle_guests", scope={"guest": "Guest"})
 def update_marketing_consent(guest: str, consent) -> dict:
 	"""Desk toggle in the guest profile: record or withdraw consent."""
 	set_marketing_consent(guest, consent, "Desk")

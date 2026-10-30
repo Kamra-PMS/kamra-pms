@@ -1,0 +1,3657 @@
+{
+"accounting.export_invoices": [
+"Administrator",
+"Finance",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"agents_api.activity_detail": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"agents_api.activity_feed": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"agents_api.staff_sign_ins": [
+"Administrator",
+"Finance",
+"Hotel Admin",
+"System Manager"
+],
+"agents_channels.channel_connections": [
+"Administrator",
+"Hotel Admin",
+"System Manager"
+],
+"allocation.apply_allocation": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"allocation.suggest_allocation": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"api.add_folio_charge": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.add_folio_payment": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.add_stay_instruction": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.advance_ticket": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.amend_stay": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.amend_stay_preview": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.anonymize_guest": [
+"Administrator",
+"Hotel Admin",
+"System Manager"
+],
+"api.availability_calendar": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.available_rooms": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.booking_options": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.cancel_invoice": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.cancel_reservation": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.cancellation_letter": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.cancellation_preview": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.cash_summary": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Night Auditor",
+"System Manager"
+],
+"api.cashier_pin_status": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Revenue Manager",
+"System Manager"
+],
+"api.check_in": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Night Auditor",
+"System Manager"
+],
+"api.check_out": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Night Auditor",
+"System Manager"
+],
+"api.checkin_context": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Night Auditor",
+"System Manager"
+],
+"api.checkout_context": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Night Auditor",
+"System Manager"
+],
+"api.close_folio": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.collect_security_deposit": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.company_billing_default": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.confirm_pending_reservation": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.create_booking": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.create_group_block": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"api.create_group_booking": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.create_room_block": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.create_ticket": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.delete_folio": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.delete_hurdle_rate": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"api.deposit_payment_link": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.enabled_modules": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"Night Auditor",
+"Revenue Manager",
+"System Manager"
+],
+"api.find_invoices": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"api.find_reservations": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"api.folio_invoice": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.folio_payment_link": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.front_desk_snapshot": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Night Auditor",
+"Revenue Manager",
+"System Manager"
+],
+"api.get_billing_rules": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.get_folio": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Night Auditor",
+"System Manager"
+],
+"api.get_quote": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.group_detail": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"api.group_folios": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.group_master_folio": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.gstr1_rows": [
+"Administrator",
+"Hotel Admin",
+"System Manager"
+],
+"api.guest_alert": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.guest_journey": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.guest_search": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.guests_with_stats": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.hk_accept_task": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"System Manager"
+],
+"api.hk_assign_task": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"System Manager"
+],
+"api.hk_claim_task": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"System Manager"
+],
+"api.hk_delete_media": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"System Manager"
+],
+"api.hk_log_item": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"System Manager"
+],
+"api.hk_post_consumable": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"System Manager"
+],
+"api.hk_queue": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"System Manager"
+],
+"api.hk_reject_task": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"System Manager"
+],
+"api.hk_room_media": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"System Manager"
+],
+"api.hk_staff": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"System Manager"
+],
+"api.hk_task_media": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"System Manager"
+],
+"api.hk_update_task": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"System Manager"
+],
+"api.hk_upload_media": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"System Manager"
+],
+"api.hurdle_rates": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"api.id_document_image": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.inventory_availability": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"api.linked_records": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Revenue Manager",
+"System Manager"
+],
+"api.merge_guests": [
+"Administrator",
+"Hotel Admin",
+"System Manager"
+],
+"api.movable_rooms": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.move_reservation": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.my_connector_credentials": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Revenue Manager",
+"System Manager"
+],
+"api.owner_briefing": [
+"Administrator",
+"Hotel Admin",
+"System Manager"
+],
+"api.part_settle_folio": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.pending_deposit_refunds": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.pickup_group_room": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.position_briefing": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.post_allowance": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.post_stay_charge": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.promote_waitlist": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.property_locale": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"api.record_advance": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.refund_folio_payment": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.refund_security_deposit": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"System Manager"
+],
+"api.registration_card": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.release_access_instructions": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.release_room_block": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.reservation_detail": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"api.reservation_folios": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.reset_cashier_pin": [
+"Administrator",
+"Hotel Admin",
+"System Manager"
+],
+"api.room_blocks": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.room_board": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"System Manager"
+],
+"api.room_move_preview": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.run_night_audit": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Night Auditor",
+"System Manager"
+],
+"api.save_group_blocks": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"api.save_hurdle_rate": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"api.security_deposit": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.send_precheckin_link": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.set_actual_times": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.set_billing_rules": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.set_cashier_pin": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Revenue Manager",
+"System Manager"
+],
+"api.set_day_use_times": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.set_enabled_modules": [
+"Administrator",
+"Hotel Admin",
+"System Manager"
+],
+"api.set_group_master": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"api.set_guest_blacklist": [
+"Administrator",
+"Hotel Admin",
+"System Manager"
+],
+"api.set_housekeeping_status": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"System Manager"
+],
+"api.set_late_arrival": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.set_pays_own_charges": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"api.set_room_rate": [
+"Administrator",
+"Hotel Admin",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"api.set_stay_instruction_status": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"System Manager"
+],
+"api.set_stay_times": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.settle_group_bill": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.simulate_payment_link": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"System Manager"
+],
+"api.split_folio": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.split_folio_charge": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.stay_instructions": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"System Manager"
+],
+"api.tape_chart": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.tape_chart_hourly": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.tickets_list": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.transfer_folio_charge": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.transfer_folio_charges": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.update_occupants": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.upload_guest_document": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.upload_id_document": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.upload_occupant_id": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.upload_room_image": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.venue_calendar": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"api.verify_cashier_pin": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Revenue Manager",
+"System Manager"
+],
+"api.verify_guest_id": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"System Manager"
+],
+"api.verify_precheckin": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.verify_tax_id": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"System Manager"
+],
+"api.void_folio_charge": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.waitlist": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"api.waitlist_ready": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.waive_security_deposit": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.walk_in": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.withhold_security_deposit": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"System Manager"
+],
+"api.zatca_invoice_xml": [
+"Administrator",
+"Finance",
+"Hotel Admin",
+"System Manager"
+],
+"api.zatca_settings": [
+"Administrator",
+"Finance",
+"Hotel Admin",
+"System Manager"
+],
+"assistant.ask": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Revenue Manager",
+"System Manager"
+],
+"assistant.ask_stream": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Revenue Manager",
+"System Manager"
+],
+"assistant.create_conversation": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"assistant.delete_conversation": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"assistant.get_conversation": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"assistant.help_ask": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Revenue Manager",
+"System Manager"
+],
+"assistant.list_conversations": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"assistant.provider_presets": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"System Manager"
+],
+"assistant.rename_conversation": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"assistant.save_conversation": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"assistant.test_connection": [
+"Administrator",
+"Hotel Admin",
+"System Manager"
+],
+"banquet.add_menu": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"banquet.add_service": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"banquet.add_supplementary": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"banquet.assign_green_room": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"banquet.banquet_calendar": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"banquet.banquet_catalogue": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"banquet.banquet_document": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"banquet.banquet_pipeline": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"banquet.banquet_register": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"banquet.banquet_reminders": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"banquet.close_out": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"banquet.compose_menu": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"banquet.create_enquiry": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"banquet.customer_profile": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"banquet.default_payment_terms": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"banquet.delete_banquet_menu": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Revenue Manager",
+"System Manager"
+],
+"banquet.delete_dish": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Revenue Manager",
+"System Manager"
+],
+"banquet.delete_service_item": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Revenue Manager",
+"System Manager"
+],
+"banquet.dish_library": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"banquet.function_economics": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"banquet.function_sheet": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"banquet.generate_beo": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"banquet.generate_invoice": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"banquet.generate_quote": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"banquet.issue_indent": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"banquet.kitchen_indent": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"banquet.link_customer": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"banquet.link_group": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"banquet.linkable_groups": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"banquet.menu_card": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"banquet.menu_choices": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"banquet.menu_cost": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"banquet.month_availability": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"banquet.negotiate": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"banquet.offer_amenities": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"banquet.post_to_folio": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"banquet.quote_advisor": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"banquet.receipt_document": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"banquet.record_consumption": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"banquet.record_receipt": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"banquet.recost_dishes": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Revenue Manager",
+"System Manager"
+],
+"banquet.remove_item": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"banquet.reopen_function": [
+"Administrator",
+"Finance",
+"Hotel Admin",
+"Revenue Manager",
+"System Manager"
+],
+"banquet.save_banquet_menu": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Revenue Manager",
+"System Manager"
+],
+"banquet.save_dish": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Revenue Manager",
+"System Manager"
+],
+"banquet.save_items": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"banquet.save_open_items": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"banquet.save_service_item": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Revenue Manager",
+"System Manager"
+],
+"banquet.set_payment_terms": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"banquet.set_status": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"banquet.update_function": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"banquet.venue_availability": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"banquet.venue_detail": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"banquet_ops.complete_function_task": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"banquet_ops.function_tasks": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"banquet_ops.record_guest_response": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"banquet_ops.seed_banquet_checklist_templates": [
+"Administrator",
+"Hotel Admin",
+"System Manager"
+],
+"banquet_ops.send_quotation": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"booking_requests.accept_booking_request": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"booking_requests.booking_requests": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"booking_requests.decline_booking_request": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"cashier.approve_variance": [
+"Administrator",
+"Finance",
+"Hotel Admin",
+"System Manager"
+],
+"cashier.bank_deposit": [
+"Administrator",
+"Finance",
+"Hotel Admin",
+"System Manager"
+],
+"cashier.cash_drop": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"cashier.cash_summary_v2": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Night Auditor",
+"System Manager"
+],
+"cashier.close_session": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Night Auditor",
+"System Manager"
+],
+"cashier.current_session": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Night Auditor",
+"System Manager"
+],
+"cashier.list_sessions": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Night Auditor",
+"System Manager"
+],
+"cashier.my_till": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Night Auditor",
+"System Manager"
+],
+"cashier.open_session": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"cashier.petty_cash_report": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Night Auditor",
+"System Manager"
+],
+"cashier.post_paid_out": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"cashier.post_petty_cash": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"cashier.receive_transfer": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"cashier.save_terminal": [
+"Administrator",
+"Finance",
+"Hotel Admin",
+"System Manager"
+],
+"cashier.session_report": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Night Auditor",
+"System Manager"
+],
+"cashier.set_petty_cash_float": [
+"Administrator",
+"Finance",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"cashier.shift_report": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Night Auditor",
+"System Manager"
+],
+"cashier.terminals": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Night Auditor",
+"System Manager"
+],
+"cashier.tills_board": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Night Auditor",
+"System Manager"
+],
+"channel_manager.connection_status": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"channel_manager.import_room_mappings": [
+"Administrator",
+"Hotel Admin",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"channel_manager.push_ari": [
+"Administrator",
+"Hotel Admin",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"checkin.assign_checkin_room": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Night Auditor",
+"System Manager"
+],
+"checkin.check_in_readiness": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Night Auditor",
+"System Manager"
+],
+"checkin.checkin_flow": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Night Auditor",
+"System Manager"
+],
+"checkin.complete_checkin_step": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Night Auditor",
+"System Manager"
+],
+"checkin.confirm_billing": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Night Auditor",
+"System Manager"
+],
+"checkin.issue_keys": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Night Auditor",
+"System Manager"
+],
+"checkin.log_checkin_requests": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Night Auditor",
+"System Manager"
+],
+"checkin.save_guest_details": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Night Auditor",
+"System Manager"
+],
+"checkin.set_room_charges": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Night Auditor",
+"System Manager"
+],
+"checkin.sign_registration_card": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Night Auditor",
+"System Manager"
+],
+"checkin.skip_checkin_step": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Night Auditor",
+"System Manager"
+],
+"connect.client.link": [
+"Administrator",
+"Hotel Admin",
+"System Manager"
+],
+"connect.client.status": [
+"Administrator",
+"Hotel Admin",
+"System Manager"
+],
+"connect.client.unlink": [
+"Administrator",
+"Hotel Admin",
+"System Manager"
+],
+"credit.checkout_credit_preview": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Night Auditor",
+"System Manager"
+],
+"credit.company_credit_status": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Night Auditor",
+"Revenue Manager",
+"System Manager"
+],
+"credit.company_credit_terms": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Revenue Manager",
+"System Manager"
+],
+"credit.set_company_credit_terms": [
+"Administrator",
+"Finance",
+"Hotel Admin",
+"System Manager"
+],
+"crs.crs_search": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"custom_reports.delete_custom_report": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"Night Auditor",
+"Revenue Manager",
+"System Manager"
+],
+"custom_reports.email_custom_report": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"Night Auditor",
+"Revenue Manager",
+"System Manager"
+],
+"custom_reports.get_custom_report": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"Night Auditor",
+"Revenue Manager",
+"System Manager"
+],
+"custom_reports.list_custom_reports": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"Night Auditor",
+"Revenue Manager",
+"System Manager"
+],
+"custom_reports.list_report_datasets": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"Night Auditor",
+"Revenue Manager",
+"System Manager"
+],
+"custom_reports.list_report_packs": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"Night Auditor",
+"Revenue Manager",
+"System Manager"
+],
+"custom_reports.run_custom_report": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"Night Auditor",
+"Revenue Manager",
+"System Manager"
+],
+"custom_reports.run_report_pack": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"Night Auditor",
+"Revenue Manager",
+"System Manager"
+],
+"custom_reports.save_custom_report": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"Night Auditor",
+"Revenue Manager",
+"System Manager"
+],
+"dashboards.portfolio_dashboard": [
+"Administrator",
+"Finance",
+"Hotel Admin",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"dashboards.property_dashboard": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"golive.csv_template": [
+"Administrator",
+"Finance",
+"Hotel Admin",
+"System Manager"
+],
+"golive.preview_companies": [
+"Administrator",
+"Finance",
+"Hotel Admin",
+"System Manager"
+],
+"golive.preview_opening": [
+"Administrator",
+"Finance",
+"Hotel Admin",
+"System Manager"
+],
+"golive.reconcile": [
+"Administrator",
+"Finance",
+"Hotel Admin",
+"System Manager"
+],
+"golive.run_companies": [
+"Administrator",
+"Finance",
+"Hotel Admin",
+"System Manager"
+],
+"golive.run_opening": [
+"Administrator",
+"Finance",
+"Hotel Admin",
+"System Manager"
+],
+"guest_documents.guest_file": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"guest_documents.remove_guest_file": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"guest_documents.save_guest_file": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"health.dismiss_update_nag": [
+"Administrator",
+"Hotel Admin",
+"System Manager"
+],
+"health.system_health": [
+"Administrator",
+"Hotel Admin",
+"System Manager"
+],
+"health.update_nag": [
+"Administrator",
+"Hotel Admin",
+"System Manager"
+],
+"inventory.adjust_stock": [
+"Administrator",
+"Finance",
+"Hotel Admin",
+"System Manager"
+],
+"inventory.delete_ingredient": [
+"Administrator",
+"Finance",
+"Hotel Admin",
+"System Manager"
+],
+"inventory.ingredient_ledger": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"inventory.ingredients": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"inventory.low_stock": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"inventory.menu_recipe": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"inventory.receive_stock": [
+"Administrator",
+"Finance",
+"Hotel Admin",
+"System Manager"
+],
+"inventory.recipe_overview": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"inventory.record_wastage": [
+"Administrator",
+"Finance",
+"Hotel Admin",
+"System Manager"
+],
+"inventory.save_ingredient": [
+"Administrator",
+"Finance",
+"Hotel Admin",
+"System Manager"
+],
+"inventory.save_recipe": [
+"Administrator",
+"Finance",
+"Hotel Admin",
+"System Manager"
+],
+"inventory.set_menu_availability": [
+"Administrator",
+"Finance",
+"Hotel Admin",
+"System Manager"
+],
+"inventory.set_par_level": [
+"Administrator",
+"Finance",
+"Hotel Admin",
+"System Manager"
+],
+"inventory.stock_list": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"inventory.wastage_report": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"laundry.cancel_laundry": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"System Manager"
+],
+"laundry.collect_laundry": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"System Manager"
+],
+"laundry.delete_laundry_rate": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"laundry.deliver_laundry": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"System Manager"
+],
+"laundry.import_laundry_rates": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"laundry.laundry_board": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"System Manager"
+],
+"laundry.laundry_rates": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"System Manager"
+],
+"laundry.laundry_revenue": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"laundry.laundry_status": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"System Manager"
+],
+"laundry.request_pickup": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"System Manager"
+],
+"laundry.return_items": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"System Manager"
+],
+"laundry.save_laundry_rate": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"ledger.batch_post_charge": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"ledger.batch_print_folios": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"ledger.city_ledger_account": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"ledger.city_ledger_aging": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Night Auditor",
+"System Manager"
+],
+"ledger.city_ledger_settle": [
+"Administrator",
+"Finance",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"ledger.city_ledger_transfer": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"ledger.currency_calculator": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"ledger.exchange_history": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"ledger.financial_activity": [
+"Administrator",
+"Finance",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"ledger.folio_history": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Night Auditor",
+"System Manager"
+],
+"ledger.force_advance_bill": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"ledger.generate_proforma": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"ledger.group_checkout": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"ledger.issue_credit_note": [
+"Administrator",
+"Finance",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"ledger.journal_by_transaction_code": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Night Auditor",
+"System Manager"
+],
+"ledger.ledger_balances": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Night Auditor",
+"System Manager"
+],
+"ledger.list_exchange_rates": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"ledger.list_reason_codes": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"ledger.post_exchange": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"ledger.quick_checkout": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Night Auditor",
+"System Manager"
+],
+"ledger.record_folio_reprint": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"ledger.upsert_exchange_rate": [
+"Administrator",
+"Finance",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"marketplace.connect_heykoala": [
+"Administrator",
+"Hotel Admin",
+"System Manager"
+],
+"marketplace.disconnect_channel": [
+"Administrator",
+"Hotel Admin",
+"System Manager"
+],
+"marketplace.enterprise_enquiry": [
+"Administrator",
+"Hotel Admin",
+"System Manager"
+],
+"marketplace.registry": [
+"Administrator",
+"Hotel Admin",
+"System Manager"
+],
+"mcp_access.access_overview": [
+"Administrator",
+"Hotel Admin",
+"System Manager"
+],
+"mcp_access.revoke_connection": [
+"Administrator",
+"Hotel Admin",
+"System Manager"
+],
+"mcp_access.set_mcp_level": [
+"Administrator",
+"Hotel Admin",
+"System Manager"
+],
+"mcp_access.set_mcp_policy": [
+"Administrator",
+"Hotel Admin",
+"System Manager"
+],
+"mcp_oauth.connect_info": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Revenue Manager",
+"System Manager"
+],
+"mcp_oauth.revoke_my_grants": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Revenue Manager",
+"System Manager"
+],
+"menu_import.menu_template": [
+"Administrator",
+"Finance",
+"Hotel Admin",
+"System Manager"
+],
+"menu_import.preview_menu_import": [
+"Administrator",
+"Finance",
+"Hotel Admin",
+"System Manager"
+],
+"menu_import.run_menu_import": [
+"Administrator",
+"Finance",
+"Hotel Admin",
+"System Manager"
+],
+"migrate.preview_import": [
+"Administrator",
+"Hotel Admin",
+"System Manager"
+],
+"migrate.run_import": [
+"Administrator",
+"Hotel Admin",
+"System Manager"
+],
+"night_audit.eod_acknowledge": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Night Auditor",
+"System Manager"
+],
+"night_audit.eod_mark_no_show": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Night Auditor",
+"System Manager"
+],
+"night_audit.eod_overview": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Night Auditor",
+"System Manager"
+],
+"night_audit.eod_progress": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Night Auditor",
+"System Manager"
+],
+"night_audit.eod_session": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Night Auditor",
+"System Manager"
+],
+"night_audit.night_audit_history": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Night Auditor",
+"System Manager"
+],
+"night_audit.night_audit_pack": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Night Auditor",
+"System Manager"
+],
+"night_audit.night_audit_precheck": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Night Auditor",
+"System Manager"
+],
+"night_audit.night_audit_schedule": [
+"Administrator",
+"Finance",
+"Hotel Admin",
+"Night Auditor",
+"System Manager"
+],
+"night_audit.rebuild_audit_pack": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Night Auditor",
+"System Manager"
+],
+"night_audit.recover_stuck_business_date": [
+"Administrator",
+"Finance",
+"Hotel Admin",
+"Kamra Agent",
+"Night Auditor",
+"System Manager"
+],
+"onboarding.setup_checklist": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"payments.gateway_info": [
+"Administrator",
+"Finance",
+"Hotel Admin",
+"System Manager"
+],
+"pos.accept_ticket": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"pos.acknowledge_void": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"pos.add_items": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"pos.apply_discount": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"pos.attach_customer": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"pos.bill_data": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"pos.cancel_order": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"pos.change_payment_mode": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"pos.charge_to_room": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"pos.confirm_order": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"pos.create_order": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"pos.deliver_order": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"pos.find_customer": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"pos.fire_kot": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"pos.guest_panel": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"pos.in_house_rooms": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"pos.kitchen_queue": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"pos.mark_nc": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"pos.mark_prepared": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"pos.mark_table_clean": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"pos.open_orders": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"pos.order_detail": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"pos.orders_export": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"pos.orders_list": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"pos.outlet_dashboard": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"pos.outlets": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"pos.pay_order": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"pos.pos_menu": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"pos.recall_prepared": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"pos.recent_orders": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"pos.remove_item": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"pos.reserve_table": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"pos.send_order": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"pos.send_round": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"pos.set_reservation": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"pos.speed_check": [
+"Administrator",
+"Finance",
+"Hotel Admin",
+"System Manager"
+],
+"pos.split_order": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"pos.table_map": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"pos.void_approvers": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"pos.void_item": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"pos_interface.pos_post_room_charge": [
+"Administrator",
+"Hotel Admin",
+"Kamra Agent",
+"POS Integrator",
+"System Manager"
+],
+"pos_interface.pos_room_lookup": [
+"Administrator",
+"Hotel Admin",
+"Kamra Agent",
+"POS Integrator",
+"System Manager"
+],
+"printing.ack_jobs": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"printing.claim_jobs": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"printing.delete_printer": [
+"Administrator",
+"Finance",
+"Hotel Admin",
+"System Manager"
+],
+"printing.order_print_status": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"printing.print_bill": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"printing.printers": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"printing.reprint": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"printing.save_printer": [
+"Administrator",
+"Finance",
+"Hotel Admin",
+"System Manager"
+],
+"printing.test_print": [
+"Administrator",
+"Finance",
+"Hotel Admin",
+"System Manager"
+],
+"privacy.export_guest_data": [
+"Administrator",
+"Hotel Admin",
+"System Manager"
+],
+"privacy.update_marketing_consent": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"rates.rate_calendar": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"rates.rate_options": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"reports.budget_vs_actual": [
+"Administrator",
+"Finance",
+"Hotel Admin",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"reports.contribution": [
+"Administrator",
+"Finance",
+"Hotel Admin",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"reports.manager_flash": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Night Auditor",
+"System Manager"
+],
+"reports.save_budget": [
+"Administrator",
+"Finance",
+"Hotel Admin",
+"Revenue Manager",
+"System Manager"
+],
+"reports.sla_report": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"reports.void_allowance_report": [
+"Administrator",
+"Finance",
+"Hotel Admin",
+"System Manager"
+],
+"rooms.room_availability": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"Night Auditor",
+"Revenue Manager",
+"System Manager"
+],
+"rooms.room_detail": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"Night Auditor",
+"Revenue Manager",
+"System Manager"
+],
+"rooms.room_history": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"Night Auditor",
+"Revenue Manager",
+"System Manager"
+],
+"rooms.room_insights": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"Night Auditor",
+"Revenue Manager",
+"System Manager"
+],
+"rooms.rooms_board": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"Night Auditor",
+"Revenue Manager",
+"System Manager"
+],
+"settings.menu_masters": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Night Auditor",
+"System Manager"
+],
+"settings.save_settings": [
+"Administrator",
+"Finance",
+"Hotel Admin",
+"Housekeeping Supervisor",
+"Revenue Manager",
+"System Manager"
+],
+"settings.set_module_enabled": [
+"Administrator",
+"Hotel Admin",
+"System Manager"
+],
+"settings.settings_schema": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Revenue Manager",
+"System Manager"
+],
+"sop.get_sop": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"sop.get_sop_template": [
+"Administrator",
+"Hotel Admin",
+"System Manager"
+],
+"sop.list_sops": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"sop.save_sop_template": [
+"Administrator",
+"Hotel Admin",
+"System Manager"
+],
+"sop.seed_sop_templates": [
+"Administrator",
+"Hotel Admin",
+"System Manager"
+],
+"staff.list_staff": [
+"Administrator",
+"Hotel Admin",
+"System Manager"
+],
+"staff.role_matrix": [
+"Administrator",
+"Hotel Admin",
+"System Manager"
+],
+"staff.save_staff": [
+"Administrator",
+"Hotel Admin",
+"System Manager"
+],
+"staff.staff_roles": [
+"Administrator",
+"Hotel Admin",
+"System Manager"
+],
+"statements.company_statement": [
+"Administrator",
+"Finance",
+"Hotel Admin",
+"System Manager"
+],
+"statements.email_company_statement": [
+"Administrator",
+"Finance",
+"Hotel Admin",
+"System Manager"
+],
+"tickets.add_ticket_note": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"System Manager"
+],
+"tickets.assign_ticket": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"System Manager"
+],
+"tickets.claim_ticket": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"System Manager"
+],
+"tickets.reopen_ticket": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"System Manager"
+],
+"tickets.resolve_ticket": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"System Manager"
+],
+"tickets.start_ticket": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"System Manager"
+],
+"tickets.ticket_assignees": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"System Manager"
+],
+"tickets.ticket_detail": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"System Manager"
+],
+"tickets.tickets_search": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"System Manager"
+],
+"today_layout.get_today_layout": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"Night Auditor",
+"Revenue Manager",
+"System Manager"
+],
+"today_layout.reset_today_layout": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"Night Auditor",
+"Revenue Manager",
+"System Manager"
+],
+"today_layout.save_today_layout": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Housekeeping",
+"Housekeeping Supervisor",
+"Kamra Agent",
+"Night Auditor",
+"Revenue Manager",
+"System Manager"
+],
+"today_layout.save_today_layout_default": [
+"Administrator",
+"Hotel Admin",
+"System Manager"
+],
+"webhooks.delete_webhook": [
+"Administrator",
+"Hotel Admin",
+"System Manager"
+],
+"webhooks.delivery_detail": [
+"Administrator",
+"Hotel Admin",
+"System Manager"
+],
+"webhooks.list_webhooks": [
+"Administrator",
+"Hotel Admin",
+"System Manager"
+],
+"webhooks.resend_delivery": [
+"Administrator",
+"Hotel Admin",
+"System Manager"
+],
+"webhooks.rotate_webhook_secret": [
+"Administrator",
+"Hotel Admin",
+"System Manager"
+],
+"webhooks.save_webhook": [
+"Administrator",
+"Hotel Admin",
+"System Manager"
+],
+"webhooks.send_test_event": [
+"Administrator",
+"Hotel Admin",
+"System Manager"
+],
+"webhooks.webhook_deliveries": [
+"Administrator",
+"Hotel Admin",
+"System Manager"
+],
+"webhooks.webhook_events": [
+"Administrator",
+"Hotel Admin",
+"System Manager"
+],
+"whatsapp.reply": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"whatsapp.send_marketing": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"whatsapp.thread": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"whatsapp.threads": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+]
+}

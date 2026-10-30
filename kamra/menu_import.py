@@ -16,7 +16,7 @@ import re
 
 import frappe
 
-from kamra.authz import require_roles
+from kamra.authz import require_perm
 from kamra.migrate import _norm, _parse_csv
 
 # Menu Item is written by Finance / Hotel Admin / System Manager (Front Desk
@@ -187,7 +187,7 @@ def _normalize_menu(property: str, csv_text: str, outlet: str | None = None):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*MENU_ROLES)
+@require_perm("Menu Item", "edit_menu")
 def preview_menu_import(property: str, csv_text: str,
                         outlet: str | None = None):
 	"""Dry run: how the columns map, what would be created vs updated, and
@@ -209,7 +209,7 @@ def preview_menu_import(property: str, csv_text: str,
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*MENU_ROLES)
+@require_perm("Menu Item", "edit_menu")
 def run_menu_import(property: str, csv_text: str, outlet: str | None = None,
                     update_existing: int = 1):
 	"""Import the file. Upserts by (property, outlet, item_name): a dish
@@ -265,7 +265,7 @@ def run_menu_import(property: str, csv_text: str, outlet: str | None = None,
 
 
 @frappe.whitelist()
-@require_roles(*MENU_ROLES)
+@require_perm("Menu Item", "edit_menu")
 def menu_template():
 	"""The CSV headers + one sample row, so the file starts out right."""
 	return {

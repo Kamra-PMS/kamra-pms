@@ -17,7 +17,7 @@ import frappe
 from frappe import _
 from frappe.utils import add_days, date_diff, getdate, now_datetime, nowdate
 
-from kamra.authz import require_roles
+from kamra.authz import require_perm
 from kamra.crs import assert_property_access
 
 MAX_RANGE_DAYS = 92
@@ -1477,8 +1477,7 @@ def _pack_html(pack: dict, lang: str = "en") -> str:
 # ---------------------------------------------------------------------------
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Finance", "Hotel Admin", "Revenue Manager",
-               "Housekeeping", "Kamra Agent", "Night Auditor")
+@require_perm("Kamra Custom Report", "run_reports")
 def list_report_datasets(property: str):
 	"""Whitelisted datasets the current user may run on this property."""
 	assert_property_access(property)
@@ -1501,8 +1500,7 @@ def list_report_datasets(property: str):
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Finance", "Hotel Admin", "Revenue Manager",
-               "Housekeeping", "Kamra Agent", "Night Auditor")
+@require_perm("Kamra Custom Report", "run_reports")
 def list_report_packs(property: str):
 	"""Department packs with the sections this user may run here."""
 	assert_property_access(property)
@@ -1517,8 +1515,7 @@ def list_report_packs(property: str):
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Finance", "Hotel Admin", "Revenue Manager",
-               "Housekeeping", "Kamra Agent", "Night Auditor")
+@require_perm("Kamra Custom Report", "run_reports")
 def run_report_pack(property: str, pack: str, from_date: str | None = None,
                     to_date: str | None = None, format: str | None = "json",
                     lang: str | None = "en", compare: int | str | None = 1):
@@ -1558,8 +1555,7 @@ def run_report_pack(property: str, pack: str, from_date: str | None = None,
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Finance", "Hotel Admin", "Revenue Manager",
-               "Housekeeping", "Kamra Agent", "Night Auditor")
+@require_perm("Kamra Custom Report", "run_reports")
 def list_custom_reports(property: str):
 	"""Saved reports visible to this user on the property."""
 	assert_property_access(property)
@@ -1610,8 +1606,7 @@ def _assert_can_edit_doc(doc):
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Finance", "Hotel Admin", "Revenue Manager",
-               "Housekeeping", "Kamra Agent", "Night Auditor")
+@require_perm("Kamra Custom Report", "run_reports")
 def get_custom_report(name: str, property: str | None = None):
 	"""Full saved definition for the builder."""
 	doc = _load_report(name, property)
@@ -1642,8 +1637,7 @@ def get_custom_report(name: str, property: str | None = None):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Finance", "Hotel Admin", "System Manager", "Front Desk",
-               "Revenue Manager", "Housekeeping", "Kamra Agent", "Night Auditor")
+@require_perm("Kamra Custom Report", "run_reports")
 def save_custom_report(
 	property: str,
 	title: str,
@@ -1720,8 +1714,7 @@ def save_custom_report(
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Finance", "Hotel Admin", "System Manager", "Front Desk",
-               "Revenue Manager", "Housekeeping", "Kamra Agent", "Night Auditor")
+@require_perm("Kamra Custom Report", "run_reports")
 def delete_custom_report(name: str, property: str | None = None):
 	"""Delete a saved report the user can edit."""
 	doc = _load_report(name, property)
@@ -1732,8 +1725,7 @@ def delete_custom_report(name: str, property: str | None = None):
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Finance", "Hotel Admin", "Revenue Manager",
-               "Housekeeping", "Kamra Agent", "Night Auditor")
+@require_perm("Kamra Custom Report", "run_reports")
 def run_custom_report(
 	property: str,
 	dataset: str | None = None,
@@ -1804,8 +1796,7 @@ def _filename(payload: dict, ext: str) -> str:
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Finance", "Hotel Admin", "System Manager", "Front Desk",
-               "Revenue Manager", "Housekeeping", "Kamra Agent", "Night Auditor")
+@require_perm("Kamra Custom Report", "run_reports")
 def email_custom_report(
 	property: str,
 	recipients: str,

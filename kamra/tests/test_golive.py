@@ -7,7 +7,6 @@ posting, idempotency and reconciliation paths run end to end in the eval
 harness (t220-t224)."""
 
 import unittest
-from unittest.mock import patch
 
 import frappe
 
@@ -95,6 +94,16 @@ class TestRoleGate(unittest.TestCase):
 				fn.__name__)
 
 	def test_front_desk_refused(self):
-		with patch("frappe.get_roles", return_value=["Front Desk"]):
+		# the gate is Frappe's role permissions (require_perm), so act as a
+		# real Front Desk user rather than patching get_roles
+		user = "golive.desk@test.local"
+		if not frappe.db.exists("User", user):
+			frappe.get_doc({"doctype": "User", "email": user, "first_name": "Desk",
+			                "send_welcome_email": 0, "user_type": "System User",
+			                "roles": [{"role": "Front Desk"}]}).insert(ignore_permissions=True)
+		frappe.set_user(user)  # nosemgrep: frappe-setuser -- the role under test
+		try:
 			with self.assertRaises(frappe.PermissionError):
 				golive.run_opening("P", "Type,Amount\nIn-house,1\n")
+		finally:
+			frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- restore test context

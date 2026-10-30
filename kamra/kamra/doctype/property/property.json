@@ -718,7 +718,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-24 12:00:00.000000",
+ "modified": "2026-10-30 12:32:21.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Property",
@@ -735,7 +735,20 @@
    "report": 1,
    "role": "System Manager",
    "share": 1,
-   "write": 1
+   "write": 1,
+   "configure": 1,
+   "edit_settings": 1,
+   "go_live": 1,
+   "upload_images": 1,
+   "use_console": 1,
+   "use_settings": 1,
+   "verify_tax_id": 1,
+   "view_briefing": 1,
+   "view_dashboard": 1,
+   "view_flash": 1,
+   "view_locale": 1,
+   "view_performance": 1,
+   "view_snapshot": 1
   },
   {
    "create": 1,
@@ -746,55 +759,113 @@
    "report": 1,
    "role": "Hotel Admin",
    "share": 1,
-   "write": 1
+   "write": 1,
+   "configure": 1,
+   "edit_settings": 1,
+   "go_live": 1,
+   "upload_images": 1,
+   "use_console": 1,
+   "use_settings": 1,
+   "verify_tax_id": 1,
+   "view_briefing": 1,
+   "view_dashboard": 1,
+   "view_flash": 1,
+   "view_locale": 1,
+   "view_performance": 1,
+   "view_snapshot": 1
   },
   {
    "email": 1,
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "Front Desk"
+   "role": "Front Desk",
+   "upload_images": 1,
+   "use_console": 1,
+   "use_settings": 1,
+   "verify_tax_id": 1,
+   "view_briefing": 1,
+   "view_dashboard": 1,
+   "view_flash": 1,
+   "view_locale": 1,
+   "view_snapshot": 1
   },
   {
    "email": 1,
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "Finance"
+   "role": "Finance",
+   "edit_settings": 1,
+   "go_live": 1,
+   "use_console": 1,
+   "use_settings": 1,
+   "verify_tax_id": 1,
+   "view_briefing": 1,
+   "view_dashboard": 1,
+   "view_flash": 1,
+   "view_locale": 1,
+   "view_performance": 1,
+   "view_snapshot": 1
   },
   {
    "email": 1,
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "Revenue Manager"
+   "role": "Revenue Manager",
+   "edit_settings": 1,
+   "use_console": 1,
+   "use_settings": 1,
+   "view_dashboard": 1,
+   "view_locale": 1,
+   "view_performance": 1,
+   "view_snapshot": 1
   },
   {
    "email": 1,
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "Housekeeping"
+   "role": "Housekeeping",
+   "use_console": 1,
+   "use_settings": 1,
+   "view_locale": 1
   },
   {
    "email": 1,
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "Kamra Agent"
+   "role": "Kamra Agent",
+   "upload_images": 1,
+   "use_console": 1,
+   "view_briefing": 1,
+   "view_dashboard": 1,
+   "view_flash": 1,
+   "view_locale": 1,
+   "view_performance": 1,
+   "view_snapshot": 1
   },
   {
    "email": 1,
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "Housekeeping Supervisor"
+   "role": "Housekeeping Supervisor",
+   "edit_settings": 1,
+   "use_console": 1,
+   "use_settings": 1,
+   "view_locale": 1
   },
   {
    "read": 1,
    "report": 1,
    "print": 1,
-   "role": "Night Auditor"
+   "role": "Night Auditor",
+   "use_console": 1,
+   "view_flash": 1,
+   "view_snapshot": 1
   }
  ],
  "row_format": "Dynamic",

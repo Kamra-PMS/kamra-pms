@@ -19,7 +19,7 @@ import frappe
 from frappe.utils import add_to_date, cint, get_datetime, now_datetime
 
 from kamra import __version__ as KAMRA_VERSION
-from kamra.authz import require_roles
+from kamra.authz import require_perm
 
 GITHUB_REPO = "Kamra-PMS/kamra-pms"
 GITHUB_LATEST = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
@@ -342,7 +342,7 @@ def poll_github_releases():
 
 
 @frappe.whitelist()
-@require_roles("Hotel Admin", "System Manager", "Administrator")
+@require_perm("Property", "configure")
 def update_nag():
 	"""Lightweight check for the in-app update banner (admins only)."""
 	# Shared playground installs are not upgradable by the visitor.
@@ -375,7 +375,7 @@ def update_nag():
 
 
 @frappe.whitelist()
-@require_roles("Hotel Admin", "System Manager", "Administrator")
+@require_perm("Property", "configure")
 def dismiss_update_nag(tag: str, snooze_days: int = 0):
 	"""Hide the nag for this release.
 
@@ -398,7 +398,7 @@ def dismiss_update_nag(tag: str, snooze_days: int = 0):
 
 
 @frappe.whitelist()
-@require_roles("Hotel Admin", "System Manager", "Administrator")
+@require_perm("Property", "configure")
 def system_health(refresh: int = 0):
 	"""Admin diagnostics: version vs GitHub + site component checks."""
 	if cint(refresh):

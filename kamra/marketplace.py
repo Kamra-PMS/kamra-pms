@@ -13,7 +13,7 @@ Three kinds of card, three install models - never conflated:
 
 import frappe
 
-from kamra.authz import require_roles
+from kamra.authz import require_perm
 
 
 def _channel_status(property: str, provider: str, channel: str):
@@ -29,7 +29,7 @@ def _channel_status(property: str, provider: str, channel: str):
 
 
 @frappe.whitelist()
-@require_roles("Hotel Admin", "System Manager")
+@require_perm("Property", "configure")
 def registry(property: str):
 	"""Everything on offer, grouped, with this property's live status."""
 	ai = frappe.db.get_value(
@@ -233,7 +233,7 @@ def _bench(name, blurb, command, status="planned"):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Hotel Admin", "System Manager")
+@require_perm("Property", "configure")
 def connect_heykoala(property: str, channel: str, phone_number: str):
 	"""Wire a HeyKoala Voice/WhatsApp channel to this property. Creates (or
 	revives) the Channel Provider Connection, mints an inbound webhook secret,
@@ -276,7 +276,7 @@ def connect_heykoala(property: str, channel: str, phone_number: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Hotel Admin", "System Manager")
+@require_perm("Channel Manager Connection", "configure")
 def disconnect_channel(connection: str):
 	frappe.db.set_value("Channel Provider Connection", connection, "active", 0)
 	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- persists the completed operation before returning to an external/public caller; reviewed as intentional
@@ -284,7 +284,7 @@ def disconnect_channel(connection: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Hotel Admin", "System Manager")
+@require_perm("Property", "configure")
 def enterprise_enquiry(property: str, item: str, note: str = "",
                        contact: str = ""):
 	"""Register interest in an enterprise / custom integration. Lands in the
