@@ -10,6 +10,7 @@
  "field_order": [
   "property_name",
   "legal_name",
+  "short_code",
   "property_kind",
   "column_break_a",
   "phone",
@@ -120,6 +121,14 @@
    "fieldname": "legal_name",
    "fieldtype": "Data",
    "label": "Legal Name"
+  },
+  {
+   "description": "2 to 6 letters or digits. Numbers allowance vouchers (ALW-<code>-YY-#####). Changing it starts a new voucher series.",
+   "fieldname": "short_code",
+   "fieldtype": "Data",
+   "label": "Short Code",
+   "length": 6,
+   "unique": 1
   },
   {
    "default": "Hotel",
@@ -718,7 +727,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-24 12:00:00.000000",
+ "modified": "2026-10-30 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Property",

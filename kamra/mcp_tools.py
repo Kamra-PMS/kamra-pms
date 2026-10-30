@@ -727,14 +727,75 @@ TOOLS: tuple[ToolSpec, ...] = (
 		"api.post_allowance",
 		"""Credit back part of a bill on an open folio without deleting the
 		original line (service recovery, dispute, agreed discount). Needs a
-		reason; it goes on the record.""",
+		reason (or an Adjust reason_code); it goes on the record. When the
+		property wants a manager's approval the result is pending: true
+		with a request id, and nothing is on the bill until a manager
+		approves it. You can ask, never approve.""",
 		{
 			"folio": _p("string"),
 			"amount": _p("number"),
 			"reason": _p("string"),
 			"gst_rate": _p("number"),
+			"reason_code": _p("string", description="Optional Adjust reason code, e.g. ADJ-RATE"),
 		},
 		required=("folio", "amount", "reason"),
+		mutating=True,
+		group="Billing",
+	),
+	_t(
+		"allowance_requests",
+		"api.allowance_requests",
+		"""Allowances waiting for a manager's approval (status Pending), or
+		decided ones (Approved / Rejected) with who decided and why.""",
+		{"status": _p("string"), "folio": _p("string")},
+		property=True,
+		group="Billing",
+	),
+	_t(
+		"open_guest_bills",
+		"api.open_guest_bills",
+		"""A separate bill for each guest sharing a room: opens one folio per
+		other occupant (or per name given), invoiced in that guest's name.
+		The main guest keeps the stay's Guest folio. Then use
+		share_folio_charges to share the room nights.""",
+		{"reservation": _p("string"),
+		 "names": _p("array", items=_p("string"))},
+		required=("reservation",),
+		mutating=True,
+		group="Billing",
+	),
+	_t(
+		"share_folio_charges",
+		"api.share_folio_charges",
+		"""Share charge lines (room nights) from one bill with the other
+		guests' bills: evenly, or by shares (a percent per other bill, in
+		the order of to_folios). The source bill keeps the rest.""",
+		{
+			"from_folio": _p("string"),
+			"charge_rows": _p("array", items=_p("string")),
+			"to_folios": _p("array", items=_p("string")),
+			"shares": _p("array", items=_p("number")),
+		},
+		required=("from_folio", "charge_rows", "to_folios"),
+		mutating=True,
+		group="Billing",
+	),
+	_t(
+		"change_stay_company",
+		"api.change_stay_company",
+		"""Change (or remove, company empty) the company a stay bills to.
+		move=rules re-routes posted charges by the new company's billing
+		rules; move=guest sends the company bill back to the guest.
+		Refused once an invoice went to the old company. Runs credit
+		control; an agent can't override a credit block. Confirm with
+		staff first and give the reason.""",
+		{
+			"reservation": _p("string"),
+			"company": _p("string", description="Corporate Account id, or empty for none"),
+			"reason": _p("string"),
+			"move": _p("string", enum=["rules", "guest"]),
+		},
+		required=("reservation", "reason"),
 		mutating=True,
 		group="Billing",
 	),
@@ -2102,7 +2163,7 @@ DESTRUCTIVE = frozenset({
 IDEMPOTENT = frozenset({
 	"create_booking", "add_to_waitlist", "pickup_group_room", "set_late_arrival",
 	"set_room_hk_status", "set_room_rate", "run_night_audit", "rebuild_audit_pack",
-	"assign_rooms_apply",
+	"assign_rooms_apply", "open_guest_bills",
 })
 # Tools that reach someone outside Kamra (a message to the guest)
 OPEN_WORLD = frozenset({"send_payment_link", "send_deposit_link"})

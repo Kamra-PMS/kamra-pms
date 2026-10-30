@@ -11,7 +11,7 @@ import frappe
 from frappe import _
 from frappe.utils import add_days, cint, flt, get_datetime, getdate, now_datetime, nowdate
 
-from kamra.authz import act_as, require_it_admin, require_roles
+from kamra.authz import act_as, assert_property_access, require_it_admin, require_roles
 from kamra.install import AGENT_EMAIL
 
 # The apps a property actually runs. The launcher and the sidebar read
@@ -2062,8 +2062,168 @@ def split_folio_charge(from_folio: str, charge_row: str, to_folio: str,
 	return out
 
 
+@frappe.whitelist(methods=["POST"])
+@require_roles("Finance", "Front Desk", "Kamra Agent")
+def open_guest_bills(reservation: str, names=None):
+	"""A separate bill for each guest sharing the room: one Extra folio per
+	other occupant (or per name given), invoiced in that guest's name. The
+	main guest keeps the Guest folio."""
+	if isinstance(names, str):
+		names = frappe.parse_json(names) if names.strip().startswith("[") \
+			else [n for n in names.split(",")]
+	from kamra.folio import open_guest_bills as _open
+	out = _open(reservation, names)
+	from kamra.savings import log_action
+	log_action("open_guest_bills", "Reservation", reservation,
+	           frappe.db.get_value("Reservation", reservation, "property"),
+	           rationale="Separate bills for " + ", ".join(b["name"] for b in out))
+	return {"bills": out}
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Finance", "Front Desk", "Kamra Agent")
+def share_folio_charges(from_folio: str, charge_rows, to_folios,
+                        shares=None):
+	"""Share charge lines (room nights) between the guests' bills: evenly,
+	or by a percent per other bill (`shares`); the source keeps the rest."""
+	charge_rows, to_folios, shares = (
+		frappe.parse_json(v) if isinstance(v, str) else v
+		for v in (charge_rows, to_folios, shares))
+	from kamra.folio import share_charges
+	out = share_charges(from_folio, charge_rows or [], to_folios or [],
+	                    shares or None)
+	from kamra.savings import log_action
+	log_action("split_charge", "Folio", from_folio,
+	           rationale=f"Shared {out['lines']} charges from {from_folio} "
+	                     f"with {', '.join(to_folios)}")
+	return out
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Finance", "Front Desk", "Kamra Agent")
+def change_stay_company(reservation: str, reason: str,
+                        company: str | None = None, move: str = "rules",
+                        override_reason: str | None = None):
+	"""Change (or remove) the company a stay bills to, mid-stay or at
+	check-out. Charges posted from now on route by the new company's
+	billing rules. Charges already posted move too: `move="rules"` puts
+	each line where the new company's rules send it (company bill or the
+	guest's), `move="guest"` sends everything on the company bill back to
+	the guest. Refused once a bill was issued to the old company. Credit
+	control runs for the new company. The rate stays as booked; who and
+	why go on the record."""
+	from kamra.credit import credit_applies, enforce_company_credit
+	from kamra.folio import _company_pays, open_company_folio, transfer_charges
+	res = frappe.get_doc("Reservation", reservation)
+	if res.status in ("Checked Out", "Cancelled", "No Show"):
+		frappe.throw(_("This stay is {0}; its company can't change now.").format(
+			_(res.status).lower()))
+	if not (reason or "").strip():
+		frappe.throw(_("Say why the company changes - it goes on the record."))
+	if move not in ("rules", "guest"):
+		frappe.throw(_("move must be rules or guest."))
+	company = (company or "").strip() or None
+	old = res.company or None
+	if company == old:
+		frappe.throw(_("The stay already bills to that company."))
+	if company and not frappe.db.exists("Corporate Account",
+	                                    {"name": company, "disabled": 0}):
+		frappe.throw(_("Pick an active company."))
+	company_folios = frappe.get_all(
+		"Folio", filters={"reservation": res.name, "folio_type": "Company"},
+		fields=["name", "status", "invoice_number", "payments_total"])
+	for f in company_folios:
+		if f.status == "Closed":
+			frappe.throw(_("Invoice {0} was already issued to the old company. "
+			               "Cancel that invoice first, then change the company.")
+			             .format(f.invoice_number or f.name))
+		if flt(f.payments_total):
+			frappe.throw(_("The company bill {0} already has payments or was "
+			               "moved to the city ledger. Settle that with the old "
+			               "company first.").format(f.name))
+	booking_type = res.booking_type
+	if company and booking_type == "Individual":
+		booking_type = "Corporate"
+	elif not company and booking_type == "Corporate":
+		booking_type = "Individual"
+	# db_set, not save: a company change must not re-price the stay
+	res.db_set({"company": company, "booking_type": booking_type})
+
+	def company_pays(c) -> bool:
+		return bool(company) and not c.is_alcohol and _company_pays(
+			company, c.charge_type, res.property)
+
+	moved = 0
+	guest = frappe.db.get_value(
+		"Folio", {"reservation": res.name, "folio_type": "Guest",
+		          "status": "Open"})
+	for f in company_folios:
+		doc = frappe.get_doc("Folio", f.name)
+		# rules: an allowance stays with the bill it wrote down
+		back = [c.name for c in doc.charges
+		        if move == "guest" or not company
+		        or (c.charge_type != "Allowance" and not company_pays(c))]
+		# an allowance wrote down the charges on this bill and has no link to
+		# one line: it follows the charges that leave, in proportion
+		allowances = [c for c in doc.charges
+		              if c.charge_type == "Allowance" and c.name not in back]
+		out_total = sum(flt(c.amount) for c in doc.charges if c.name in back)
+		kept_total = sum(flt(c.amount) for c in doc.charges
+		                 if c.charge_type != "Allowance" and c.name not in back)
+		if allowances and out_total > 0 and kept_total <= 0:
+			back += [c.name for c in allowances]
+			allowances = []
+		if back:
+			if not guest:
+				frappe.throw(_("The guest has no open folio to take these charges."))
+			transfer_charges(doc.name, back, guest)
+			moved += len(back)
+		if out_total > 0:
+			from kamra.folio import split_charge
+			share = out_total / (out_total + kept_total)
+			for a in allowances:
+				part = round(abs(flt(a.amount)) * share, 2)
+				if 0 < part < abs(flt(a.amount)):
+					split_charge(doc.name, a.name, guest, amount=part, credit=True)
+					moved += 1
+	# a group stay's routing is the group's: only its own company bill moves
+	if move == "rules" and company and guest and not res.get("group_booking"):
+		gdoc = frappe.get_doc("Folio", guest)
+		inbound = [c.name for c in gdoc.charges
+		           if c.charge_type != "Allowance" and company_pays(c)]
+		if inbound:
+			transfer_charges(guest, inbound, open_company_folio(res))
+			moved += len(inbound)
+	credit = None
+	if company and credit_applies(company):
+		cf = frappe.db.get_value("Folio", {"reservation": res.name,
+		                                   "folio_type": "Company",
+		                                   "status": "Open"},
+		                         ["name", "balance"], as_dict=True)
+		credit = enforce_company_credit(
+			company, res.property, flt(cf.balance) if cf else 0,
+			override_reason=override_reason, context=_("company change"),
+			reference_doctype="Reservation", reference_name=res.name,
+			exclude_folios=[cf.name] if cf else None)
+	from kamra.savings import log_action
+
+	def label(c):
+		return (frappe.db.get_value("Corporate Account", c, "company_name") or c) \
+			if c else "no company"
+	log_action("change_company", "Reservation", res.name, res.property,
+	           rationale=f"Company {label(old)} -> {label(company)}: "
+	                     f"{reason.strip()[:300]}. {moved} charge lines moved.",
+	           channel=agent_channel() or "Desk",
+	           before_snapshot={"company": old},
+	           after_snapshot={"company": company, "move": move, "moved": moved})
+	return {"ok": True, "reservation": res.name, "company": company,
+	        "previous_company": old, "moved": moved,
+	        "credit_warning": (credit or {}).get("warning")}
+
+
 _FOLIO_LIST_FIELDS = ["name", "folio_type", "status", "invoice_number",
-                      "grand_total", "payments_total", "balance"]
+                      "grand_total", "payments_total", "balance",
+                      "bill_to_name"]
 
 
 @frappe.whitelist()
@@ -2228,18 +2388,336 @@ def close_folio(folio: str, pin: str | None = None):
 
 @frappe.whitelist(methods=["POST"])
 @require_roles("Finance", "Front Desk", "Kamra Agent")
-def post_allowance(folio: str, amount: float, reason: str,
-                   gst_rate: float = 0, pin: str | None = None):
-	"""Write off part of a bill against a specific folio, with a reason."""
+def post_allowance(folio: str, amount: float, reason: str = "",
+                   gst_rate: float = 0, pin: str | None = None,
+                   reason_code: str | None = None):
+	"""Write off part of a bill against a specific folio, with a reason.
+
+	When the property wants a manager's approval (Settings, Finance:
+	allowance_approval / allowance_approval_above) or the reason code needs
+	a supervisor, the allowance does not touch the folio yet: it becomes a
+	Pending Allowance Request ({"pending": True, "request": ...}) that a
+	manager approves on the spot with their PIN, or later from the list
+	(decide_allowance). A manager's own allowance posts at once, signed
+	with their own PIN (`pin`) whatever the property's cashier PIN setting.
+	AI agents can ask, never approve. Every allowance that posts gets a
+	voucher serial (allowance_voucher)."""
+	from kamra.localization import money_text
 	_pin_guard(folio, pin)
+	doc = frappe.get_doc("Folio", folio)
+	if doc.status == "Closed":
+		frappe.throw(_("This folio is settled - pass the allowance on the "
+		               "guest's open folio, or cancel the invoice first."))
+	amount = round(abs(flt(amount)), 2)
+	if not amount:
+		frappe.throw(_("Allowance amount is required."))
+	text = _allowance_reason(reason_code, reason)
+	if _allowance_needs_approval(doc.property, amount, reason_code):
+		from kamra.credit import _is_agent
+		if _is_agent() or not _may_approve_allowance(doc.property):
+			req = frappe.get_doc({
+				"doctype": "Allowance Request", "property": doc.property,
+				"folio": doc.name, "reservation": doc.reservation,
+				"amount": amount, "gst_rate": flt(gst_rate),
+				"reason_code": reason_code or None, "reason": text,
+				"status": "Pending", "requested_by": frappe.session.user,
+				"requested_on": now_datetime(),
+				"channel": agent_channel() or "Desk",
+			}).insert(ignore_permissions=True)
+			from kamra.savings import log_action
+			log_action("allowance_requested", "Folio", doc.name, doc.property,
+			           rationale=f"Asked for an allowance of "
+			                     f"{money_text(doc.property, amount)}: {text}",
+			           channel=agent_channel() or "Desk",
+			           approval_status="Pending")
+			return {"ok": True, "pending": True, "request": req.name,
+			        "folio": folio}
+		# a manager's own allowance: they are the approval, and sign it
+		# with their PIN like the paper voucher
+		from kamra.authz import verify_supervisor
+		approver = verify_supervisor(doc.property, frappe.session.user, pin)
+		serial = _post_allowance(doc.name, amount, text, gst_rate, approver,
+		                         reason_code=reason_code)
+		return {"ok": True, "folio": folio, "approved_by": approver,
+		        "serial": serial}
+	serial = _post_allowance(doc.name, amount, text, gst_rate,
+	                         reason_code=reason_code)
+	return {"ok": True, "folio": folio, "serial": serial}
+
+
+_ALLOWANCE_APPROVERS = {
+	"Hotel Admin": ("Hotel Admin",),
+	"Hotel Admin or Finance": ("Hotel Admin", "Finance"),
+}
+
+
+def _allowance_approver_roles(prop: str) -> tuple:
+	"""Roles that approve an allowance here. With the setting Off, only a
+	supervisor reason code asks, and the usual supervisor roles decide."""
+	from kamra.settings import get_setting
+	return _ALLOWANCE_APPROVERS.get(get_setting(prop, "allowance_approval"),
+	                                ("Hotel Admin", "Finance"))
+
+
+def _may_approve_allowance(prop: str, user: str | None = None) -> bool:
+	user = user or frappe.session.user
+	return user == "Administrator" or bool(
+		set(_allowance_approver_roles(prop) + ("System Manager",))
+		& set(frappe.get_roles(user)))
+
+
+def _allowance_needs_approval(prop: str, amount: float,
+                              reason_code: str | None) -> bool:
+	from kamra.settings import get_setting
+	if reason_code and frappe.db.get_value("Reason Code", reason_code,
+	                                       "requires_supervisor"):
+		return True
+	if get_setting(prop, "allowance_approval") not in _ALLOWANCE_APPROVERS:
+		return False
+	return amount > flt(get_setting(prop, "allowance_approval_above"))
+
+
+def _allowance_reason(reason_code: str | None, reason: str) -> str:
+	"""The text that goes on the bill and the record: the reason code's
+	description (an Adjust code), then the desk's note."""
+	note = (reason or "").strip()
+	if reason_code:
+		from kamra.ledger import ensure_default_reason_codes
+		ensure_default_reason_codes()
+		row = frappe.db.get_value("Reason Code", reason_code,
+		                          ["category", "description", "disabled"],
+		                          as_dict=True)
+		if not row or row.disabled:
+			frappe.throw(_("That reason code is not in use."))
+		if row.category != "Adjust":
+			frappe.throw(_("Pick an Adjust reason code for an allowance."))
+		return f"{row.description}: {note}" if note else row.description
+	if not note:
+		frappe.throw(_("An allowance needs a reason - it goes on the record."))
+	return note
+
+
+def _allowance_serial(prop: str) -> str:
+	"""The next voucher number: ALW-<property short code>-<YY>-#####, one
+	series per short code, taken only when an allowance posts. A changed
+	short code starts a new series; the old one is never reused."""
+	from frappe.model.naming import make_autoname
+	from kamra.kamra.doctype.property.property import default_short_code
+	code = (frappe.db.get_value("Property", prop, "short_code")
+	        or default_short_code(prop, exclude=prop))
+	return make_autoname(f"ALW-{code}-.YY.-.#####")
+
+
+def _post_allowance(folio: str, amount: float, text: str, gst_rate,
+                    approver: str | None = None,
+                    requested_by: str | None = None, req=None,
+                    reason_code: str | None = None) -> str:
+	"""The one allowance writer behind the desk, approvals and agents.
+	Every allowance that posts gets a voucher serial, kept on the bill line
+	and on its Allowance Request: the approved request (`req`, the caller
+	saves it), or an Approved one written here for an allowance that
+	posted straight away. Returns the serial."""
+	prop = frappe.db.get_value("Folio", folio, "property")
+	serial = _allowance_serial(prop)
 	from kamra.folio import post_allowance as _allow
-	_allow(folio, float(amount), reason, float(gst_rate or 0))
+	_allow(folio, amount, text, flt(gst_rate), approver=approver,
+	       requested_by=requested_by, serial=serial)
+	if req is None:
+		now = now_datetime()
+		req = frappe.get_doc({
+			"doctype": "Allowance Request", "property": prop, "folio": folio,
+			"reservation": frappe.db.get_value("Folio", folio, "reservation"),
+			"amount": amount, "gst_rate": flt(gst_rate),
+			"reason_code": reason_code or None, "reason": text,
+			"status": "Approved", "requested_by": frappe.session.user,
+			"requested_on": now, "channel": agent_channel() or "Desk",
+			"decided_by": approver, "decided_on": now if approver else None,
+			"serial": serial})
+		req.flags.kamra_decision = True
+		req.insert(ignore_permissions=True)
+	else:
+		req.serial = serial
 	from kamra.savings import log_action
 	from kamra.localization import money_text
-	prop = frappe.db.get_value("Folio", folio, "property")
 	log_action("allowance", "Folio", folio,
-	           rationale=f"Allowance {money_text(prop, abs(float(amount)))}: {reason}")
-	return {"ok": True, "folio": folio}
+	           rationale=f"Allowance {serial} {money_text(prop, amount)}: {text}",
+	           approver=approver)
+	return serial
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Finance", "Front Desk", "Hotel Admin")
+def decide_allowance(allowance_request: str, approve: int = 1,
+                     note: str = "", pin: str | None = None,
+                     supervisor: str | None = None,
+                     supervisor_pin: str | None = None):
+	"""Approve or reject a pending allowance. The approver is the signed-in
+	manager, or, on the spot at the desk, a manager who picks their name
+	and types their own PIN (supervisor + supervisor_pin). Approving posts
+	it on the folio; a rejection needs a note and is kept with who and why.
+	AI agents never decide."""
+	from kamra.credit import _is_agent
+	from kamra.localization import money_text
+	if _is_agent():
+		frappe.throw(_("An AI agent can't approve or reject an allowance. "
+		               "Ask a manager."), frappe.PermissionError)
+	req = frappe.get_doc("Allowance Request", allowance_request, for_update=True)
+	if req.status != "Pending":
+		frappe.throw(_("This allowance was already {0}.").format(
+			_(req.status).lower()))
+	approver = (supervisor or "").strip() or frappe.session.user
+	if cint(approve) and approver == req.requested_by:
+		frappe.throw(_("You asked for this allowance; another manager approves it."),
+		             frappe.PermissionError)
+	if not _may_approve_allowance(req.property, approver):
+		frappe.throw(_("{0} can't approve allowances here. It needs: {1}.").format(
+			approver, ", ".join(_(r) for r in _allowance_approver_roles(req.property))),
+			frappe.PermissionError)
+	if supervisor or cint(approve):
+		# an approval is signed with the manager's own PIN every time, even
+		# when they are the one signed in and the property's cashier PIN is off
+		from kamra.authz import verify_supervisor
+		verify_supervisor(req.property, approver,
+		                  supervisor_pin if supervisor else (pin or supervisor_pin))
+	else:
+		_pin_guard(req.folio, pin)
+	note = (note or "").strip()
+	if cint(approve):
+		if frappe.db.get_value("Folio", req.folio, "status") == "Closed":
+			frappe.throw(_("This folio is settled now. Reject this request and "
+			               "pass the allowance on the guest's open folio."))
+		_post_allowance(req.folio, flt(req.amount), req.reason, req.gst_rate,
+		                approver, requested_by=req.requested_by, req=req)
+		req.status = "Approved"
+	else:
+		if not note:
+			frappe.throw(_("Say why the allowance is rejected - it goes on the record."))
+		req.status = "Rejected"
+		from kamra.savings import log_action
+		log_action("allowance_rejected", "Folio", req.folio, req.property,
+		           rationale=f"Rejected {money_text(req.property, req.amount)} "
+		                     f"({req.reason}) asked by {req.requested_by}: {note}",
+		           approver=approver, approval_status="Rejected")
+	req.decided_by = approver
+	req.decided_on = now_datetime()
+	req.decision_note = note
+	req.flags.kamra_decision = True
+	req.save(ignore_permissions=True)
+	return {"ok": True, "request": req.name, "status": req.status,
+	        "decided_by": approver, "serial": req.serial}
+
+
+@frappe.whitelist()
+@require_roles("Finance", "Front Desk", "Hotel Admin", "Kamra Agent")
+def allowance_requests(property: str, status: str = "Pending",
+                       folio: str | None = None):
+	"""Allowances waiting for a manager (or decided ones, by status), with
+	the stay they are for. can_decide says if the caller may approve."""
+	assert_property_access(property)
+	filters = {"property": property}
+	if status:
+		filters["status"] = status
+	if folio:
+		filters["folio"] = folio
+	rows = frappe.get_all(
+		"Allowance Request", filters=filters,
+		fields=["name", "serial", "folio", "reservation", "amount", "gst_rate",
+		        "reason_code", "reason", "status", "requested_by",
+		        "requested_on", "channel", "decided_by", "decided_on",
+		        "decision_note"],
+		order_by="requested_on desc", limit_page_length=200)
+	stays = {r.name: r for r in frappe.get_all(
+		"Reservation",
+		filters={"name": ["in", list({r.reservation for r in rows if r.reservation}) or [""]]},
+		fields=["name", "guest_name", "room"])}
+	folios = {f.name: f for f in frappe.get_all(
+		"Folio", filters={"name": ["in", list({r.folio for r in rows}) or [""]]},
+		fields=["name", "status", "bill_to_name"])}
+	people = {u.name: u for u in frappe.get_all(
+		"User", filters={"name": ["in", list({r.decided_by for r in rows if r.decided_by}) or [""]]},
+		fields=["name", "full_name", "kamra_job_title"])}
+	for r in rows:
+		s = stays.get(r.reservation) or {}
+		f = folios.get(r.folio) or {}
+		u = people.get(r.decided_by) or {}
+		r.update(guest_name=s.get("guest_name"), room=s.get("room"),
+		         folio_status=f.get("status"),
+		         bill_to_name=f.get("bill_to_name"),
+		         decided_by_name=u.get("full_name"),
+		         decided_by_title=u.get("kamra_job_title"))
+	from kamra.credit import _is_agent
+	return {"requests": rows,
+	        "can_decide": not _is_agent() and _may_approve_allowance(property)}
+
+
+@frappe.whitelist()
+@require_roles("Finance", "Front Desk", "Hotel Admin")
+def allowance_voucher(allowance_request: str):
+	"""The printable allowance voucher for a posted allowance, by request
+	name or serial: who asked, the manager who approved it with their PIN,
+	and what it took off the bill. Rejected or waiting requests have none."""
+	name = frappe.db.get_value("Allowance Request",
+	                           {"serial": allowance_request}) or allowance_request
+	if not frappe.db.exists("Allowance Request", name):
+		frappe.throw(_("No such allowance."), frappe.DoesNotExistError)
+	req = frappe.get_doc("Allowance Request", name)
+	assert_property_access(req.property)
+	if req.status != "Approved" or not req.serial:
+		frappe.throw(_("Only a posted allowance has a voucher."))
+	prop = frappe.get_doc("Property", req.property)
+	stay = frappe.db.get_value("Reservation", req.reservation,
+	                           ["guest_name", "room"], as_dict=True) or {}
+	line = frappe.db.get_value(
+		"Folio Charge", {"parent": req.folio, "allowance_serial": req.serial},
+		["amount", "gst_amount", "total"], as_dict=True) or {}
+	from frappe.utils import get_fullname
+	approver_roles = frappe.get_roles(req.decided_by) if req.decided_by else []
+	role = next((r for r in _allowance_approver_roles(req.property)
+	             + ("System Manager",) if r in approver_roles), None)
+	title = (frappe.db.get_value("User", req.decided_by, "kamra_job_title")
+	         if req.decided_by else None)
+	return {
+		"property": {
+			"property_name": prop.property_name,
+			"address": ", ".join(p for p in (prop.address_line, prop.city,
+			                                 prop.state, prop.pincode) if p),
+			"phone": prop.phone,
+		},
+		"name": req.name, "serial": req.serial,
+		"posted_on": str(req.decided_on or req.modified),
+		"folio": req.folio,
+		"bill_to_name": frappe.db.get_value("Folio", req.folio, "bill_to_name"),
+		"reservation": req.reservation,
+		"guest_name": stay.get("guest_name"),
+		"room": frappe.db.get_value("Room", stay.get("room"), "room_number")
+		if stay.get("room") else None,
+		"amount": flt(req.amount), "gst_rate": flt(req.gst_rate),
+		"tax": abs(flt(line.get("gst_amount"))),
+		"total": abs(flt(line.get("total"))) or flt(req.amount),
+		"reason_code": req.reason_code, "reason": req.reason,
+		"requested_by": req.requested_by,
+		"requested_by_name": get_fullname(req.requested_by),
+		"requested_on": str(req.requested_on or ""),
+		"channel": req.channel,
+		"approved_by": req.decided_by,
+		"approved_by_name": get_fullname(req.decided_by) if req.decided_by else None,
+		"approved_by_role": role,
+		# the staff job title from Staff & access, or the role when unset
+		"approved_by_title": title or role,
+		# every approval since vouchers began is signed with the PIN
+		"approved_with_pin": bool(req.decided_by),
+		"approved_on": str(req.decided_on or ""),
+	}
+
+
+@frappe.whitelist()
+@require_roles("Finance", "Front Desk", "Hotel Admin")
+def allowance_approvers(property: str):
+	"""Managers who can approve an allowance on the spot here (role from
+	the property setting, cashier PIN set). Names only."""
+	assert_property_access(property)
+	from kamra.authz import supervisors_for
+	return supervisors_for(property, _allowance_approver_roles(property))
 
 
 @frappe.whitelist(methods=["POST"])
@@ -2289,7 +2767,9 @@ def folio_invoice(folio: str):
 	# B2B: corporate bookings carry the buyer's GSTIN on the invoice.
 	# A group master folio bills to the GROUP's company.
 	bill_to = None
-	bill_company = res.company if res else None
+	# a guest's own bill in a shared room is made out to that guest, never
+	# the company
+	bill_company = None if doc.get("bill_to_name") or not res else res.company
 	if doc.folio_type == "Group" and doc.get("group_booking"):
 		bill_company = frappe.db.get_value(
 			"Group Booking", doc.group_booking, "company") or bill_company
@@ -2306,6 +2786,8 @@ def folio_invoice(folio: str):
 		if company:
 			bill_to = {"name": company.company_name, "gstin": company.gstin}
 
+	if doc.get("bill_to_name"):
+		bill_to = {"name": doc.bill_to_name, "gstin": None}
 	buyer_tax_id = (bill_to or {}).get("gstin")
 	split = loc.tax_split(pack, prop, buyer_tax_id)
 

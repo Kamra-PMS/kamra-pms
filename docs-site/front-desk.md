@@ -313,6 +313,9 @@ The sheet shows only the steps this stay needs, in this order:
    ledger) and the company's credit check. Tick the box once the guest
    agrees. If the company's credit is blocked, Finance or a Hotel Admin
    can type a reason to override it; the reason is logged with their name.
+   If the company changed, press **Change company** here (or under **Who
+   pays** on the first step); see
+   [Bill a company](/billing#bill-a-company).
 4. **Payment.** Only when money is still owed either way.
    - The guest owes money: pick the payment mode, add a reference if you
      like, and press **Collect**.

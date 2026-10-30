@@ -5,6 +5,8 @@ Everything is computed from folios (posted money) and reservations
 cash drawer reconcile to.
 """
 
+import json
+
 import frappe
 from frappe.utils import add_days, getdate, nowdate
 
@@ -69,8 +71,9 @@ def void_allowance_report(
 	from_date: str | None = None,
 	to_date: str | None = None,
 ):
-	"""Audit trail of every void, allowance and invoice cancellation on a
-	property: who reversed what, when, and why. The compliance answer to
+	"""Audit trail of every void, allowance (with the manager who approved
+	it, when one had to) and invoice cancellation on a property, plus
+	allowances a manager rejected: who reversed what, when, and why. The compliance answer to
 	"show me every write-off" - read straight from the action log, so it
 	cannot drift from what actually happened."""
 	from kamra.crs import assert_property_access
@@ -81,8 +84,8 @@ def void_allowance_report(
 		[
 			"action_type",
 			"in",
-			["void_charge", "post_allowance", "cancel_invoice",
-			 "pos_void_item", "pos_cancel_order"],
+			["void_charge", "post_allowance", "allowance_rejected",
+			 "cancel_invoice", "pos_void_item", "pos_cancel_order"],
 		],
 	]
 	if from_date:
@@ -93,19 +96,31 @@ def void_allowance_report(
 		"Agent Action Log",
 		filters=filters,
 		fields=["creation", "actor", "action_type", "reference_doctype",
-		        "reference_name", "rationale", "approver"],
+		        "reference_name", "rationale", "approver", "after_snapshot"],
 		order_by="creation desc",
 		limit_page_length=0,
 	)
 	label = {
 		"void_charge": "Void",
 		"post_allowance": "Allowance",
+		# asked for, refused by a manager: kept so the trail shows both
+		"allowance_rejected": "Allowance rejected",
 		"cancel_invoice": "Invoice cancelled",
 		# restaurant bills: a voided line, or a whole bill cancelled
 		"pos_void_item": "POS void",
 		"pos_cancel_order": "POS bill cancelled",
 	}
 	pos = {"pos_void_item", "pos_cancel_order"}
+
+	def serial(r):
+		# the allowance voucher number (kamra.api.allowance_voucher)
+		if r.action_type != "post_allowance" or not r.after_snapshot:
+			return None
+		try:
+			return (json.loads(r.after_snapshot) or {}).get("serial")
+		except ValueError:
+			return None
+
 	return [
 		{
 			"when": str(r.creation),
@@ -115,6 +130,7 @@ def void_allowance_report(
 			"folio": None if r.action_type in pos else r.reference_name,
 			"pos_order": r.reference_name if r.action_type in pos else None,
 			"approver": r.approver,
+			"serial": serial(r),
 			"detail": r.rationale,
 		}
 		for r in rows

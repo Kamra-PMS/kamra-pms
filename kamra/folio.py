@@ -707,11 +707,14 @@ def transfer_charges(from_folio: str, charge_rows: list, to_folio: str):
 
 def split_charge(from_folio: str, charge_row: str, to_folio: str,
                  percent: float | None = None,
-                 amount: float | None = None) -> dict:
+                 amount: float | None = None, credit: bool = False) -> dict:
 	"""Split one charge line between two open folios of the same stay -
 	the 70/30 corporate deal, the shared room, the disputed minibar.
 	Give either a percent (of the line) or an absolute amount to move.
-	Conservation is exact: source keeps base − part, target gets part."""
+	Conservation is exact: source keeps base − part, target gets part.
+	credit=True splits an allowance line instead (both parts stay
+	negative); only the server does that, following the charges it wrote
+	down."""
 	src = frappe.get_doc("Folio", from_folio)
 	dst = frappe.get_doc("Folio", to_folio)
 	if from_folio == to_folio:
@@ -723,12 +726,14 @@ def split_charge(from_folio: str, charge_row: str, to_folio: str,
 	if not row:
 		frappe.throw(f"Charge {charge_row} not found on {from_folio}.")
 	base = Decimal(str(row.amount or 0))
-	if base <= 0:
+	sign = -1 if credit else 1
+	base *= sign  # work on the line's size; the sign goes back on below
+	if base <= 0 or (credit and row.charge_type != "Allowance"):
 		frappe.throw("Only positive charge lines can be split.")
 	if percent:
 		part = (base * Decimal(str(percent)) / 100).quantize(Decimal("0.01"))
 	elif amount:
-		part = Decimal(str(amount)).quantize(Decimal("0.01"))
+		part = abs(Decimal(str(amount))).quantize(Decimal("0.01"))
 	else:
 		frappe.throw("Give a percent or an amount to split off.")
 	if part <= 0 or part >= base:
@@ -737,7 +742,8 @@ def split_charge(from_folio: str, charge_row: str, to_folio: str,
 	if row.get("is_alcohol") and dst.folio_type in ("Company", "Group"):
 		frappe.throw("Alcohol cannot be billed to a company folio.")
 
-	remainder = base - part
+	remainder = (base - part) * sign
+	part *= sign
 	row.amount = float(remainder)
 	row.rate = float(remainder)
 	row.qty = 1
@@ -746,6 +752,7 @@ def split_charge(from_folio: str, charge_row: str, to_folio: str,
 		"charge_type": row.charge_type,
 		"reservation": row.get("reservation"),
 		"description": f"{row.description} · split",
+		"allowance_serial": row.get("allowance_serial"),
 		"qty": 1,
 		"rate": float(part),
 		"amount": float(part),
@@ -766,6 +773,86 @@ def split_charge(from_folio: str, charge_row: str, to_folio: str,
 	                          prefix="SPLIT")
 	ledger_charges(dst, [part_row])
 	return {"kept": float(remainder), "moved": float(part)}
+
+
+def open_guest_bills(reservation: str, names: list | None = None) -> list[dict]:
+	"""A separate bill for each guest sharing the room. The main guest keeps
+	the stay's Guest folio; everyone else gets an Extra folio made out to
+	them (bill_to_name), so each bill is invoiced in that guest's name.
+	`names` defaults to the stay's other occupants. Asking twice for the
+	same name returns the bill that is already open."""
+	res = frappe.get_doc("Reservation", reservation)
+	if res.status != "Checked In":
+		frappe.throw(frappe._("Separate bills open once the guests are checked in."))
+	main = (res.guest_name or "").strip().lower()
+	if names is None:
+		names = [o.full_name for o in res.get("occupants") or []]
+	wanted = []
+	for n in names:
+		n = (n or "").strip()
+		if n and n.lower() != main and n.lower() not in {w.lower() for w in wanted}:
+			wanted.append(n)
+	if not wanted:
+		frappe.throw(frappe._("Add the other guests' names to the stay first."))
+	out = []
+	for n in wanted:
+		existing = frappe.db.get_value(
+			"Folio", {"reservation": res.name, "folio_type": "Extra",
+			          "status": "Open", "bill_to_name": n})
+		if not existing:
+			folio = frappe.get_doc({
+				"doctype": "Folio", "property": res.property,
+				"reservation": res.name, "guest": res.guest,
+				"folio_type": "Extra", "bill_to_name": n[:140],
+				"status": "Open", "opened_on": now_datetime(),
+			})
+			_recalculate(folio)
+			folio.insert(ignore_permissions=True)
+			existing = folio.name
+		out.append({"folio": existing, "name": n})
+	return out
+
+
+def share_charges(from_folio: str, charge_rows: list, to_folios: list,
+                  shares: list | None = None) -> dict:
+	"""Share charge lines (the room nights, usually) between the guests'
+	bills: each line is cut into one part per target bill, evenly by
+	default or by `shares` (a percent per target), and the source bill
+	keeps the rest, rounding included. Every cut goes through split_charge,
+	so each part keeps its line's tax rate and its own ledger legs."""
+	to_folios = [f for f in to_folios if f and f != from_folio]
+	if not to_folios or len(set(to_folios)) != len(to_folios):
+		frappe.throw(frappe._("Pick the other guests' bills to share with."))
+	# a line listed twice would be cut twice: more than its share leaves
+	charge_rows = list(dict.fromkeys(charge_rows or []))
+	if not charge_rows:
+		frappe.throw(frappe._("Pick the charges to share."))
+	if shares:
+		shares = [Decimal(str(x)) for x in shares]
+		if len(shares) != len(to_folios) or any(x <= 0 for x in shares) \
+				or sum(shares) >= 100:
+			frappe.throw(frappe._("Give each other bill a share above 0%; "
+			                      "together under 100%."))
+	else:
+		shares = [Decimal(100) / (len(to_folios) + 1)] * len(to_folios)
+	src = frappe.get_doc("Folio", from_folio)
+	bases = {c.name: Decimal(str(c.amount or 0)) for c in src.charges}
+	moved = Decimal(0)
+	for row in charge_rows:
+		if row not in bases:
+			frappe.throw(frappe._("Charge {0} is not on {1}.").format(row, from_folio))
+		if bases[row] <= 0:
+			frappe.throw(frappe._("Only charges above zero can be shared."))
+		left = bases[row]
+		for target, pct in zip(to_folios, shares):
+			part = (bases[row] * pct / 100).quantize(Decimal("0.01"))
+			# a line too small to cut for everyone (0.02 three ways): skip
+			# the parts that would round to nothing or take all of it
+			if 0 < part < left:
+				split_charge(from_folio, row, target, amount=float(part))
+				moved += part
+				left -= part
+	return {"lines": len(charge_rows), "moved": float(moved)}
 
 
 def percent_fee(reservation, pct: float) -> float:
@@ -884,7 +971,9 @@ def close_folio(folio_name: str) -> str:
 
 
 def post_allowance(folio_name: str, amount: float, reason: str,
-                   gst_rate: float = 0) -> str:
+                   gst_rate: float = 0, approver: str | None = None,
+                   requested_by: str | None = None,
+                   serial: str | None = None) -> str:
 	"""A negative adjustment against a specific folio - the hotel writes off
 	part of a charge (service recovery, dispute) WITHOUT touching the original
 	line, so the trail stays honest. GST reverses at the same rate as the
@@ -902,6 +991,7 @@ def post_allowance(folio_name: str, amount: float, reason: str,
 		"posting_date": frappe.utils.nowdate(),
 		"charge_type": "Allowance",
 		"description": reason.strip(),
+		"allowance_serial": serial,
 		"qty": 1,
 		"rate": -amount,
 		"amount": -amount,
@@ -913,7 +1003,12 @@ def post_allowance(folio_name: str, amount: float, reason: str,
 	from kamra.localization import money_text
 	from kamra.savings import log_action
 	log_action("post_allowance", "Folio", folio.name, folio.property,
-	           rationale=f"Allowance {money_text(folio.property, round(amount))} - {reason.strip()}")
+	           rationale=f"Allowance {money_text(folio.property, amount)} - {reason.strip()}"
+	                     + (f" (asked by {requested_by})"
+	                        if requested_by and requested_by != frappe.session.user
+	                        else ""),
+	           approver=approver,
+	           after_snapshot={"serial": serial} if serial else None)
 	return folio.name
 
 

@@ -12,6 +12,7 @@
   "reservation",
   "guest",
   "guest_name",
+  "bill_to_name",
   "column_break_a",
   "status",
   "folio_type",
@@ -62,6 +63,13 @@
    "in_list_view": 1,
    "label": "Guest Name",
    "read_only": 1
+  },
+  {
+   "fieldname": "bill_to_name",
+   "fieldtype": "Data",
+   "label": "Bill To Name",
+   "read_only": 1,
+   "description": "Set on a separate guest bill: the invoice is made out to this name, not the company."
   },
   {
    "fieldname": "column_break_a",

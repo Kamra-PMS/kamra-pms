@@ -6136,6 +6136,7 @@ def t133():
 		kinds = {c.charge_type for c in frappe.get_doc("Folio", folio).charges}
 		assert {"Cleaning Fee", "Misc"} <= kinds, kinds
 		_assert_folio_on_ledger(folio)
+		_allowance_approval_off()
 		api.post_allowance(folio, 100, "eval service recovery")
 		_assert_folio_on_ledger(folio)
 	finally:
@@ -7549,6 +7550,14 @@ def t327():
 		assert wiz["open_pos_bills"]["count"] == row["open_pos_bills"]
 
 
+def _allowance_approval_off():
+	"""A new property asks a manager for every allowance; these checks are
+	about the ledger, so the eval property posts allowances straight away."""
+	from kamra.settings import clear_cache, write_kv
+	write_kv(P, "allowance_approval", "Off")
+	clear_cache(P)
+
+
 @check("voids & allowances report lists an allowance with its folio and reason")
 def t328():
 	from kamra import api
@@ -7556,6 +7565,7 @@ def t328():
 	res, folio = _in_house("Eval Void Report", "+91 70000 00328", "2037-01-18",
 	                       "2037-01-20", _ledger_room("L328"))
 	api.add_folio_charge(folio, "Misc", "eval void report", 500, gst_rate=0)
+	_allowance_approval_off()
 	api.post_allowance(folio, 100, "eval void report reason")
 	rows = void_allowance_report(P, nowdate(), nowdate())
 	assert any(r["folio"] == folio and r["action"] == "Allowance" for r in rows), rows[:3]

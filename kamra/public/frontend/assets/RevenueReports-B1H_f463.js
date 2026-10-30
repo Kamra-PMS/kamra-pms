@@ -7,6 +7,7 @@
 <<<<<<<< HEAD:kamra/public/frontend/assets/RevenueReports-B1H_f463.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/RevenueReports-B1H_f463.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/RevenueReports-B1H_f463.js
+<<<<<<<< HEAD:kamra/public/frontend/assets/RevenueReports-B1H_f463.js
 import{j as e,r as c}from"./vendor-D6bHyl-8.js";import{b as I,i as S,t,f as k,s as w,B as N,a1 as z,c as B,g as R,m as L}from"./index-B3i2Wflk.js";import{C as T,a as E,b as A,c as P}from"./card-P9sLO7kR.js";import{C as O}from"./chevron-left-DfSVqj-T.js";import{C as $}from"./chevron-right-DN5-CUeL.js";/**
 ========
 import{j as e,r as c}from"./vendor-D6bHyl-8.js";import{b as I,i as S,t,f as k,s as w,B as N,a1 as z,c as B,g as R,m as L}from"./index-DwNNU3P0.js";import{C as T,a as E,b as A,c as P}from"./card-BUFQtSyT.js";import{C as O}from"./chevron-left-BK_a8s7o.js";import{C as $}from"./chevron-right-BYZ4UMyK.js";/**
@@ -35,6 +36,9 @@ import{j as e,r as c}from"./vendor-D6bHyl-8.js";import{b as I,i as S,t,f as k,s 
 ========
 import{j as e,r as c}from"./vendor-D6bHyl-8.js";import{b as I,i as S,t,f as k,s as w,B as N,a1 as z,c as B,g as R,m as L}from"./index-D-JDmDQB.js";import{C as T,a as E,b as A,c as P}from"./card-BPlofO-I.js";import{C as O}from"./chevron-left-DqSBIXrP.js";import{C as $}from"./chevron-right-Cx3ZjjeR.js";/**
 >>>>>>>> origin/feat/multi-currency:kamra/public/frontend/assets/RevenueReports-CkJfbewi.js
+========
+import{j as e,r as c}from"./vendor-D6bHyl-8.js";import{b as I,i as S,t,f as k,s as w,B as N,a1 as z,c as B,g as R,m as L}from"./index-ScsL9c4t.js";import{C as T,a as E,b as A,c as P}from"./card-DWKQcu9d.js";import{C as O}from"./chevron-left-Dh7-Fqth.js";import{C as $}from"./chevron-right-M6iaAM3U.js";/**
+>>>>>>>> origin/feat/billing-approvals-split:kamra/public/frontend/assets/RevenueReports-B9QTnCsv.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.

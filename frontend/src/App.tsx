@@ -26,6 +26,7 @@ const HkApp = lazy(() => import("./screens/HkApp"))
 const Guests = lazy(() => import("./screens/Guests"))
 const RegistrationCard = lazy(() => import("./screens/RegistrationCard"))
 const CancellationLetter = lazy(() => import("./screens/CancellationLetter"))
+const AllowanceVoucher = lazy(() => import("./screens/AllowanceVoucher"))
 const Setup = lazy(() => import("./screens/Setup"))
 const GoLiveImport = lazy(() => import("./screens/GoLiveImport"))
 const HousekeepingBoard = lazy(() => import("./screens/HousekeepingBoard"))
@@ -63,6 +64,7 @@ const Payables = lazy(() => import("./screens/Payables"))
 const CashForecast = lazy(() => import("./screens/CashForecast"))
 const ManagementBooks = lazy(() => import("./screens/ManagementBooks"))
 const VoidAllowanceReport = lazy(() => import("./screens/VoidAllowanceReport"))
+const AllowanceApprovals = lazy(() => import("./screens/AllowanceApprovals"))
 const TapeChart = lazy(() => import("./screens/TapeChart"))
 const Tickets = lazy(() => import("./screens/Tickets"))
 const Laundry = lazy(() => import("./screens/Laundry"))
@@ -303,6 +305,8 @@ export default function App() {
           <Route path="arrivals" element={<Navigate to="/in-house?tab=arrivals" replace />} />
           <Route path="departures" element={<Navigate to="/in-house?tab=departures" replace />} />
           <Route path="voids-allowances" element={<VoidAllowanceReport />} />
+          <Route path="allowances" element={<AllowanceApprovals />} />
+          <Route path="allowance-voucher/:name" element={<AllowanceVoucher />} />
           <Route path="rate-calendar" element={<RateCalendar />} />
           <Route path="revenue-reports" element={<RevenueReports />} />
           <Route path="ops-sla" element={<OpsSLA />} />

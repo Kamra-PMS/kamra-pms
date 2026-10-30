@@ -73,7 +73,7 @@ def require_it_admin(fn):
 SCOPED_ARGS = {
 	"reservation": ("Reservation", "POS Table Reservation"),
 	"folio": ("Folio",), "from_folio": ("Folio",), "to_folio": ("Folio",),
-	"folios": ("Folio",),
+	"folios": ("Folio",), "allowance_request": ("Allowance Request",),
 	"group_booking": ("Group Booking",), "group": ("Group Booking",),
 	"order": ("POS Order", "Laundry Order"),
 	"outlet": ("POS Outlet",),
@@ -348,6 +348,25 @@ def is_supervisor(user: str | None = None) -> bool:
 	user = user or frappe.session.user
 	return user == "Administrator" or bool(
 		set(SUPERVISOR_ROLES) & set(frappe.get_roles(user)))
+
+
+def supervisors_for(property: str, roles=SUPERVISOR_ROLES) -> list[dict]:
+	"""Who can approve on a till at this property: enabled users holding
+	one of `roles`, with access to the property and a cashier PIN set.
+	Names only."""
+	users = set(frappe.get_all(
+		"Has Role", filters={"role": ["in", [r for r in roles if r != "Administrator"]],
+		                     "parenttype": "User"},
+		pluck="parent", distinct=True))
+	users &= set(frappe.get_all("Cashier PIN", pluck="name"))
+	out = []
+	for u in frappe.get_all("User", filters={"name": ["in", list(users) or [""]],
+	                                         "enabled": 1, "user_type": "System User"},
+	                        fields=["name", "full_name"], order_by="full_name"):
+		allowed = restricted_properties(u.name)
+		if allowed is None or property in allowed:
+			out.append({"user": u.name, "full_name": u.full_name or u.name})
+	return out
 
 
 def verify_supervisor(property: str, supervisor: str | None, pin) -> str:

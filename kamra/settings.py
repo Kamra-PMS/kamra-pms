@@ -72,6 +72,8 @@ MODULES: tuple[Module, ...] = (
 			Section("identity", "Identity", "", (
 				S("property_name", "Property name", store=P),
 				S("legal_name", "Legal name", store=P, hint="As registered - printed on invoices."),
+				S("short_code", "Short code", store=P,
+				  hint="2 to 6 letters or digits in allowance voucher numbers (ALW-SR-26-00001). Changing it starts a new voucher series. Invoice numbers keep their own series."),
 				S("property_kind", "Property kind", "select", store=P, options=("Hotel", "Short Term Rental")),
 				S("logo_url", "Logo", "image", store=P, hint="Square, 512px+ - PNG or SVG with transparency looks best."),
 			)),
@@ -420,6 +422,13 @@ MODULES: tuple[Module, ...] = (
 				S("max_cash_refund", "Cash refund limit for new cashiers", "number", 5000, min=0),
 				S("till_variance_tolerance", "Till variance that needs a manager", "number", 0, min=0,
 				  hint="A till closed over or short by more than this is flagged for a manager to review. 0 turns the check off."),
+				S("allowance_approval", "Allowances need a manager's approval", "select", "Off",
+				  options=("Off", "Hotel Admin", "Hotel Admin or Finance"),
+				  hint="Who approves an allowance the desk asks for. Until approved it stays off the bill. "
+				       "A manager approves on the spot with their PIN, or later from Allowances to approve. "
+				       "AI agents can ask, never approve."),
+				S("allowance_approval_above", "Only allowances above", "number", 0, min=0,
+				  hint="Smaller allowances post straight away. 0 means every allowance needs approval."),
 			)),
 			Section("fx", "Exchange rates",
 			        "A guest paying in foreign money needs today's rate: typed in on the Currency Desk, "

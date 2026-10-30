@@ -2018,6 +2018,117 @@
      }
     },
     {
+     "name": "open_guest_bills",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.open_guest_bills",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.open_guest_bills"
+       ]
+      },
+      "description": "A separate bill for each guest sharing the room: one Extra folio per\nother occupant (or per name given), invoiced in that guest's name. The\nmain guest keeps the Guest folio.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"reservation\": \"RES-2026-00001\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "share_folio_charges",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.share_folio_charges",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.share_folio_charges"
+       ]
+      },
+      "description": "Share charge lines (room nights) between the guests' bills: evenly,\nor by a percent per other bill (`shares`); the source keeps the rest.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"from_folio\": \"<from_folio>\",\n  \"charge_rows\": \"<charge_rows>\",\n  \"to_folios\": \"<to_folios>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "change_stay_company",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.change_stay_company",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.change_stay_company"
+       ]
+      },
+      "description": "Change (or remove) the company a stay bills to, mid-stay or at\ncheck-out. Charges posted from now on route by the new company's\nbilling rules. Charges already posted move too: `move=\"rules\"` puts\neach line where the new company's rules send it (company bill or the\nguest's), `move=\"guest\"` sends everything on the company bill back to\nthe guest. Refused once a bill was issued to the old company. Credit\ncontrol runs for the new company. The rate stays as booked; who and\nwhy go on the record.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"reason\": \"<reason>\",\n  \"move\": \"rules\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
      "name": "reservation_folios",
      "request": {
       "method": "POST",
@@ -2301,10 +2412,158 @@
         "kamra.api.post_allowance"
        ]
       },
-      "description": "Write off part of a bill against a specific folio, with a reason.",
+      "description": "Write off part of a bill against a specific folio, with a reason.\n\nWhen the property wants a manager's approval (Settings, Finance:\nallowance_approval / allowance_approval_above) or the reason code needs\na supervisor, the allowance does not touch the folio yet: it becomes a\nPending Allowance Request ({\"pending\": True, \"request\": ...}) that a\nmanager approves on the spot with their PIN, or later from the list\n(decide_allowance). A manager's own allowance posts at once, signed\nwith their own PIN (`pin`) whatever the property's cashier PIN setting.\nAI agents can ask, never approve. Every allowance that posts gets a\nvoucher serial (allowance_voucher).",
       "body": {
        "mode": "raw",
-       "raw": "{\n  \"folio\": \"FOLIO-2026-00001\",\n  \"amount\": 1000,\n  \"reason\": \"<reason>\",\n  \"gst_rate\": 0\n}",
+       "raw": "{\n  \"folio\": \"FOLIO-2026-00001\",\n  \"amount\": 1000,\n  \"reason\": \"\",\n  \"gst_rate\": 0\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "decide_allowance",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.decide_allowance",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.decide_allowance"
+       ]
+      },
+      "description": "Approve or reject a pending allowance. The approver is the signed-in\nmanager, or, on the spot at the desk, a manager who picks their name\nand types their own PIN (supervisor + supervisor_pin). Approving posts\nit on the folio; a rejection needs a note and is kept with who and why.\nAI agents never decide.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"allowance_request\": \"<allowance_request>\",\n  \"approve\": 1,\n  \"note\": \"\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "allowance_requests",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.allowance_requests",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.allowance_requests"
+       ]
+      },
+      "description": "Allowances waiting for a manager (or decided ones, by status), with\nthe stay they are for. can_decide says if the caller may approve.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"status\": \"Pending\",\n  \"folio\": \"FOLIO-2026-00001\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "allowance_voucher",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.allowance_voucher",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.allowance_voucher"
+       ]
+      },
+      "description": "The printable allowance voucher for a posted allowance, by request\nname or serial: who asked, the manager who approved it with their PIN,\nand what it took off the bill. Rejected or waiting requests have none.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"allowance_request\": \"<allowance_request>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "allowance_approvers",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.allowance_approvers",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.allowance_approvers"
+       ]
+      },
+      "description": "Managers who can approve an allowance on the spot here (role from\nthe property setting, cashier PIN set). Names only.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\"\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -11340,7 +11599,7 @@
         "kamra.reports.void_allowance_report"
        ]
       },
-      "description": "Audit trail of every void, allowance and invoice cancellation on a\nproperty: who reversed what, when, and why. The compliance answer to\n\"show me every write-off\" - read straight from the action log, so it\ncannot drift from what actually happened.",
+      "description": "Audit trail of every void, allowance (with the manager who approved\nit, when one had to) and invoice cancellation on a property, plus\nallowances a manager rejected: who reversed what, when, and why. The compliance answer to\n\"show me every write-off\" - read straight from the action log, so it\ncannot drift from what actually happened.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\",\n  \"from_date\": \"2026-08-01\",\n  \"to_date\": \"2026-08-31\"\n}",
@@ -15463,7 +15722,7 @@
         "kamra.staff.save_staff"
        ]
       },
-      "description": "Add a person, or change an existing person's roles, property access\nand whether they can sign in.",
+      "description": "Add a person, or change an existing person's roles, property access,\njob title and whether they can sign in. Your own record: name and job\ntitle only.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\",\n  \"email\": \"guest@example.com\",\n  \"full_name\": \"A. Guest\",\n  \"roles\": \"<roles>\",\n  \"enabled\": 1,\n  \"send_welcome\": 0\n}",

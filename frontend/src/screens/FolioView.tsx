@@ -4,6 +4,8 @@ import { Link, useNavigate, useParams } from "react-router-dom"
 import { call, getCurrentProperty } from "../lib/api"
 import EditableNationality from "../components/EditableNationality"
 import LinkedRecords from "../components/LinkedRecords"
+import AllowanceRequests from "../components/AllowanceRequests"
+import ChangeCompany from "../components/ChangeCompany"
 import { loadLocale, taxRates } from "../lib/money"
 import { serverError } from "../lib/resource"
 import { useCashierAuth } from "../lib/cashierAuth"
@@ -25,6 +27,7 @@ const inr = (n: unknown) =>
 interface InvoiceData {
   folio: {
     name: string
+    property?: string
     status: "Open" | "Closed"
     folio_type?: string
     invoice_number: string | null
@@ -34,6 +37,7 @@ interface InvoiceData {
       posting_date: string
       charge_type: string
       description: string
+      allowance_serial?: string | null
       amount: number
       gst_rate: number
       gst_amount: number
@@ -178,6 +182,8 @@ interface SiblingFolio {
   balance: number
   grand_total: number
   payments_total: number
+  /** a guest's own bill in a shared room, made out to them */
+  bill_to_name?: string | null
 }
 
 /** A distinct label per folio. Extras get numbered when there's more than
@@ -185,6 +191,7 @@ interface SiblingFolio {
  *  folio and opens a fresh one) names the settled one by its invoice number,
  *  and numbers open ones that still share a type. */
 function folioLabel(siblings: SiblingFolio[], s: SiblingFolio, tr: (s: string, v?: Record<string, string | number>) => string) {
+  if (s.bill_to_name) return s.bill_to_name
   const same = siblings.filter((x) => x.folio_type === s.folio_type)
   if (s.folio_type === "Extra") {
     if (same.length <= 1) return tr("Extra")
@@ -295,7 +302,14 @@ export default function FolioView() {
   const [refund, setRefund] = useState<{ amount: string; mode: string; reason: string } | null>(null)
   const [showCancel, setShowCancel] = useState(false)
   const [cancelReason, setCancelReason] = useState("")
-  const [allowance, setAllowance] = useState({ amount: "", reason: "", gst_rate: "0" })
+  const [allowance, setAllowance] = useState({ amount: "", reason: "", gst_rate: "0", reason_code: "" })
+  const [adjustCodes, setAdjustCodes] = useState<{ name: string; description: string }[]>([])
+  const [allowanceNote, setAllowanceNote] = useState<string | null>(null)
+  const [allowanceKey, setAllowanceKey] = useState(0)
+  // a manager's own allowance is signed with their PIN, asked when needed
+  const [allowancePin, setAllowancePin] = useState<string | null>(null)
+  const [panel, setPanel] = useState<"company" | "share" | null>(null)
+  const [shares, setShares] = useState<Record<string, string>>({})
   const { ensureUnlocked, status: pinStatus } = useCashierAuth()
 
   const load = useCallback(() => {
@@ -316,6 +330,10 @@ export default function FolioView() {
   }, [name])
 
   useEffect(load, [load])
+  useEffect(() => {
+    call<{ name: string; description: string }[]>("kamra.ledger.list_reason_codes", { category: "Adjust" })
+      .then(setAdjustCodes).catch(() => {})
+  }, [])
 
   const balanceNow = data?.folio.balance
   useEffect(() => {
@@ -482,6 +500,27 @@ export default function FolioView() {
               {t("Split folio")}
             </Button>
           )}
+          {open && siblings.find((s) => s.folio_type === "Guest" && s.status === "Open")?.name === folio.name && (
+            <Button
+              variant="outline"
+              disabled={busy}
+              title={t("A separate bill for each guest sharing the room, in their own name")}
+              onClick={() =>
+                act(async () => {
+                  await call("kamra.api.open_guest_bills", { reservation: data.stay.reservation })
+                  setPanel("share")
+                })
+              }
+            >
+              {t("Bill each guest")}
+            </Button>
+          )}
+          {open && (
+            <Button variant="outline" disabled={busy}
+              onClick={() => setPanel(panel === "company" ? null : "company")}>
+              {t("Change company")}
+            </Button>
+          )}
           {open &&
             data.stay.group_booking &&
             !siblings.some((s) => s.folio_type === "Group") && (
@@ -643,6 +682,67 @@ export default function FolioView() {
           {translate(error)}
         </div>
       )}
+      {panel === "company" && (
+        <div className="mb-4 print:hidden">
+          <ChangeCompany reservation={data.stay.reservation} current={data.stay.company}
+            onCancel={() => setPanel(null)}
+            onDone={() => { setPanel(null); load() }} />
+        </div>
+      )}
+      {panel === "share" && open && (() => {
+        const bills = siblings.filter((s) => s.bill_to_name && s.status === "Open" && s.name !== folio.name)
+        const rows = selected.size
+          ? folio.charges.filter((c) => selected.has(c.name))
+          : folio.charges.filter((c) => ["Room", "Meal Plan", "Room Levy"].includes(c.charge_type) && c.amount > 0)
+        const even = (100 / (bills.length + 1)).toFixed(2)
+        const pct = (f: string) => shares[f] ?? even
+        const total = bills.reduce((n, b) => n + Number(pct(b.name) || 0), 0)
+        return (
+          <div className="mb-4 space-y-2 rounded-lg border border-zinc-200 bg-white p-3 text-sm print:hidden">
+            <p className="font-medium text-zinc-800">{t("Share charges with the other guests' bills")}</p>
+            {bills.length === 0 ? (
+              <p className="text-zinc-500">{t("Add the other guests' names to the stay, then press Bill each guest.")}</p>
+            ) : (
+              <>
+                <p className="text-xs text-zinc-500">
+                  {selected.size
+                    ? t("{n} ticked line(s) are shared.", { n: rows.length })
+                    : t("{n} room line(s) are shared. Tick lines on the bill to share others.", { n: rows.length })}
+                </p>
+                {bills.map((b) => (
+                  <label key={b.name} className="flex items-center gap-2">
+                    <span className="w-40 truncate">{b.bill_to_name}</span>
+                    <input className={`${inputCls} w-20`} type="number" min={0} max={100}
+                      value={pct(b.name)} onChange={(e) => setShares({ ...shares, [b.name]: e.target.value })} />
+                    <span className="text-zinc-500">%</span>
+                  </label>
+                ))}
+                <p className="text-xs text-zinc-500">
+                  {t("This bill keeps {pct}%.", { pct: (100 - total).toFixed(2) })}
+                </p>
+                <div className="flex gap-2">
+                  <Button variant="outline" disabled={busy || !rows.length || total >= 100}
+                    onClick={() =>
+                      act(async () => {
+                        await call("kamra.api.share_folio_charges", {
+                          from_folio: folio.name,
+                          charge_rows: rows.map((c) => c.name),
+                          to_folios: bills.map((b) => b.name),
+                          shares: bills.map((b) => Number(pct(b.name))),
+                        })
+                        setSelected(new Set())
+                        setPanel(null)
+                      })
+                    }>
+                    {t("Share")}
+                  </Button>
+                  <Button variant="ghost" onClick={() => setPanel(null)}>{t("Cancel")}</Button>
+                </div>
+              </>
+            )}
+          </div>
+        )
+      })()}
 
       {/* printable document */}
       <Card className="print:border-0 print:shadow-none">
@@ -1006,6 +1106,13 @@ export default function FolioView() {
                             <span className="font-medium">{translate(c.charge_type)}</span>
                             {c.description && (
                               <span className="text-zinc-500"> - {c.description}</span>
+                            )}
+                            {c.allowance_serial && (
+                              <Link to={`/allowance-voucher/${encodeURIComponent(c.allowance_serial)}`}
+                                className="ml-1 font-mono text-xs text-brand-700 hover:underline print:text-zinc-500 print:no-underline"
+                                title={t("Print voucher")}>
+                                {c.allowance_serial}
+                              </Link>
                             )}
                           </td>
                           <td className="hidden py-2 pr-3 font-mono text-xs text-zinc-400 print:table-cell">
@@ -1416,31 +1523,77 @@ export default function FolioView() {
                       </option>
                     ))}
                   </select>
+                  {adjustCodes.length > 0 && (
+                    <select
+                      className={inputCls}
+                      aria-label={t("Allowance reason")}
+                      value={allowance.reason_code}
+                      onChange={(e) => setAllowance({ ...allowance, reason_code: e.target.value })}
+                    >
+                      <option value="">{t("Reason…")}</option>
+                      {adjustCodes.map((c) => (
+                        <option key={c.name} value={c.name}>{translate(c.description)}</option>
+                      ))}
+                    </select>
+                  )}
                   <input
                     className={`${inputCls} min-w-40 flex-1`}
-                    placeholder={t("Reason (required)")}
+                    placeholder={allowance.reason_code ? t("Details (optional)") : t("Reason (required)")}
                     value={allowance.reason}
                     onChange={(e) =>
                       setAllowance({ ...allowance, reason: e.target.value })
                     }
                   />
+                  {allowancePin !== null && (
+                    <input
+                      className={`${inputCls} w-24`}
+                      type="password" inputMode="numeric" autoComplete="off" autoFocus
+                      value={allowancePin}
+                      onChange={(e) => setAllowancePin(e.target.value.replace(/\D/g, "").slice(0, 8))}
+                      placeholder={t("Your PIN")} aria-label={t("Your PIN")}
+                    />
+                  )}
                   <Button
                     variant="outline"
-                    disabled={busy || !allowance.amount || !allowance.reason.trim()}
+                    disabled={busy || !allowance.amount || !(allowance.reason.trim() || allowance.reason_code)
+                      || allowancePin === ""}
                     onClick={() =>
                       act(async () => {
-                        await call("kamra.api.post_allowance", withPin({
+                        const r = await call<{ pending?: boolean }>("kamra.api.post_allowance", withPin({
                           folio: folio.name,
                           amount: Number(allowance.amount),
                           reason: allowance.reason.trim(),
                           gst_rate: Number(allowance.gst_rate),
-                        }))
-                        setAllowance({ amount: "", reason: "", gst_rate: "0" })
+                          reason_code: allowance.reason_code || undefined,
+                          pin: allowancePin || undefined,
+                        })).catch((e) => {
+                          // the manager approves their own allowance: ask for their PIN
+                          if (serverError(e).includes("SUPERVISOR_PIN_REQUIRED")) {
+                            setAllowancePin("")
+                            return null
+                          }
+                          throw e
+                        })
+                        if (!r) return
+                        setAllowancePin(null)
+                        setAllowance({ amount: "", reason: "", gst_rate: "0", reason_code: "" })
+                        setAllowanceNote(r?.pending
+                          ? t("Sent to a manager. It goes on the bill once approved.")
+                          : null)
+                        setAllowanceKey((k) => k + 1)
                       })
                     }
                   >
                     {t("Allow")}
                   </Button>
+                </div>
+                {allowancePin !== null && (
+                  <p className="mt-2 text-xs text-zinc-600">{t("Your PIN signs this allowance, like the paper voucher.")}</p>
+                )}
+                {allowanceNote && <p className="mt-2 text-xs text-amber-700">{allowanceNote}</p>}
+                <div className="mt-2">
+                  <AllowanceRequests property={folio.property ?? getCurrentProperty()} folio={folio.name}
+                    refreshKey={allowanceKey} onChanged={load} />
                 </div>
               </div>
             </CardContent>

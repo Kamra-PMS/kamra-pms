@@ -1346,22 +1346,8 @@ def void_approvers(outlet: str):
 	"""Who can approve a void at this outlet's till: enabled Hotel Admin and
 	Finance users with access to the property and a cashier PIN set. Names
 	only."""
-	from kamra.authz import SUPERVISOR_ROLES, restricted_properties
-	prop = frappe.db.get_value("POS Outlet", outlet, "property")
-	users = set(frappe.get_all(
-		"Has Role", filters={"role": ["in", [r for r in SUPERVISOR_ROLES
-		                                      if r != "Administrator"]],
-		                     "parenttype": "User"},
-		pluck="parent", distinct=True))
-	users &= set(frappe.get_all("Cashier PIN", pluck="name"))
-	out = []
-	for u in frappe.get_all("User", filters={"name": ["in", list(users) or [""]],
-	                                         "enabled": 1, "user_type": "System User"},
-	                        fields=["name", "full_name"], order_by="full_name"):
-		allowed = restricted_properties(u.name)
-		if allowed is None or prop in allowed:
-			out.append({"user": u.name, "full_name": u.full_name or u.name})
-	return out
+	from kamra.authz import supervisors_for
+	return supervisors_for(frappe.db.get_value("POS Outlet", outlet, "property"))
 
 
 # ── the orders list ───────────────────────────────────────────────────────
