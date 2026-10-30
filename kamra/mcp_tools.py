@@ -335,9 +335,31 @@ TOOLS: tuple[ToolSpec, ...] = (
 		(credit_warnings in the result) or is refused with CREDIT_BLOCKED and
 		the reason. An agent can never override a credit block - tell the
 		user; Finance or a Hotel Admin can override it at the desk. Confirm
-		with the user first.""",
-		{"reservation": _p("string")},
+		with the user first.
+
+		Leaving before the booked date (checkout_context shows
+		`early_departure`): call early_departure first so the stay is
+		shortened and only the nights stayed are billed, settle, then check
+		out. Passing early_reason here does both in one call, but is refused
+		as a whole if the new bill is not settled.""",
+		{"reservation": _p("string"),
+		 "early_reason": _p("string", description="Why the guest leaves before the booked date"),
+		 "early_fee": _p("string", description="None, One Night or All Nights; leave out to apply the property's policy")},
 		required=("reservation",),
+		mutating=True,
+	),
+	_t(
+		"early_departure",
+		"api.early_departure",
+		"""A guest in house leaves before the booked date: shorten the stay to
+		today (availability, channel manager and price follow) and post the
+		property's early-departure charge for the unused nights (None, One
+		Night or All Nights of room rate). Give the guest's reason. An agent
+		always applies the property's policy; only Finance or a Hotel Admin
+		can change the charge for one stay. checkout_context shows the plan
+		and amounts first. Confirm with the user first.""",
+		{"reservation": _p("string"), "reason": _p("string")},
+		required=("reservation", "reason"),
 		mutating=True,
 	),
 	_t(
@@ -842,7 +864,11 @@ TOOLS: tuple[ToolSpec, ...] = (
 		"api.update_occupants",
 		"""Record everyone staying in the room (the legal hotel register,
 		printed on the GRC). occupants = [{full_name, age, gender,
-		nationality, id_type, id_number, phone}] - replaces the list.""",
+		nationality, id_type, id_number, phone, arrived_at, left_at}] -
+		replaces the list. arrived_at / left_at ("YYYY-MM-DD HH:MM") are
+		optional: a guest already on the register keeps their times, and
+		one added while the stay is checked in arrived now. Set left_at
+		when a guest leaves before the room checks out.""",
 		{
 			"reservation": _p("string"),
 			"occupants": _p("array", items=_p("object")),
@@ -2167,7 +2193,7 @@ def input_schema(spec: ToolSpec) -> dict[str, Any]:
 
 # Writes that can't simply be undone: MCP clients may ask before each one
 DESTRUCTIVE = frozenset({
-	"cancel_booking", "decline_booking_request", "check_out", "void_charge",
+	"cancel_booking", "decline_booking_request", "check_out", "early_departure", "void_charge",
 	"close_folio", "waive_security_deposit", "pos_cancel_order", "pos_remove_item",
 	"run_night_audit", "recover_stuck_business_date",
 })

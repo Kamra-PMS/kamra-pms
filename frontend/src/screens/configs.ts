@@ -766,6 +766,7 @@ export const channelConnectionsConfig: ScreenConfig = {
     { field: "tpl_booking_confirmation", label: "Template: booking confirmation", type: "data", hint: "Args: guest, property, check-in, check-out" },
     { field: "tpl_precheckin", label: "Template: self check-in link", type: "data", hint: "Args: guest, link" },
     { field: "tpl_payment_request", label: "Template: payment request", type: "data", hint: "Args: guest, amount, note" },
+    { field: "tpl_room_charge", label: "Template: room charge alert", type: "data", hint: "Args: guest, amount, what and where, balance. Sent only when Front Desk settings turn on room charge alerts" },
     { field: "active", label: "Active", type: "check" },
   ],
 }
@@ -894,7 +895,7 @@ export const transactionCodesConfig: ScreenConfig = {
     { field: "charge_type", label: "Legacy charge type", type: "select",
       options: [
         "Room", "Meal Plan", "Food & Beverage", "Minibar", "Laundry", "Spa", "Taxi",
-        "Early Check-in", "Late Checkout", "Cleaning Fee", "Extra Guests",
+        "Early Check-in", "Late Checkout", "Early Departure", "Cleaning Fee", "Extra Guests",
         "Pet Charge", "Room Levy", "Discount", "Misc", "Allowance", "Opening Balance",
       ],
       hint: "Maps to Folio Charge.charge_type for display on older lines." },

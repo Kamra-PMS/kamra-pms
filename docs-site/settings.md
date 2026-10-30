@@ -34,9 +34,9 @@ each page title lists those roles; Hotel Admin can change all of them.
 | Page | What's on it | Guide |
 | --- | --- | --- |
 | Property | Name, legal name, short code (numbers allowance vouchers; changing it starts a new series, invoice numbers are not affected), logo, country (which selects the tax and invoicing pack), currency, time zone, address, tax registration number | [Country setup](/country-setup) |
-| Stay policies | Check-in and check-out times, minimum stay, free cancellation window, cancellation and no-show fees, deposits | [Reservations](/reservations) |
+| Stay policies | Check-in and check-out times, minimum stay, free cancellation window, cancellation, no-show and early departure charges, deposits | [Reservations](/reservations) |
 | Privacy & data | How long guest data and messages are kept, the privacy contact | |
-| Front Desk | Arrivals, holds, no-shows and the day view | [Front desk](/front-desk) |
+| Front Desk | Arrivals, guest alerts (WhatsApp room charge messages), holds, no-shows and the day view | [Front desk](/front-desk) |
 | Housekeeping | Task deadlines, room turnover and laundry pricing | [Housekeeping](/housekeeping) |
 | Operations | Guest request deadlines by priority | [Operations](/operations) |
 | F&B | Auto-accept KOT, void slips, table reservation window, kitchen printers, POS speed check | [F&B](/fnb#settings) |

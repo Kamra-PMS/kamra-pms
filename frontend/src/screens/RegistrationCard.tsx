@@ -24,6 +24,9 @@ interface Occupant {
   id_type: string | null
   id_number: string | null
   phone: string | null
+  /** "YYYY-MM-DD HH:MM:SS"; guests sharing a room can arrive and leave apart */
+  arrived_at?: string | null
+  left_at?: string | null
 }
 
 interface Grc {
@@ -123,6 +126,38 @@ const emptyOccupant = (): Occupant => ({
 const editInputCls =
   "rounded-lg border border-zinc-300 bg-white px-2 py-1 text-sm " +
   "focus:outline-2 focus:outline-offset-1 focus:outline-brand-600"
+
+/** One occupant's arrival or departure: a time the desk can correct, or
+ *  stamp with the current time. Empty is sent as null (clears it). */
+function OccupantTime(props: {
+  label: string
+  value?: string | null
+  nowLabel: string
+  onChange: (v: string | null) => void
+}) {
+  const toServer = (v: string) => (v ? `${v.replace("T", " ")}:00` : null)
+  return (
+    <span className="flex items-center gap-1 text-xs text-zinc-500">
+      {props.label}
+      <input
+        type="datetime-local"
+        className={`${editInputCls} w-44`}
+        aria-label={props.label}
+        value={props.value ? toDatetimeLocalValue(props.value) : ""}
+        onChange={(e) => props.onChange(toServer(e.target.value))}
+      />
+      {!props.value && (
+        <button
+          type="button"
+          className="rounded-lg border border-zinc-200 px-2 py-1 font-medium text-zinc-600 hover:border-brand-400 hover:text-brand-700"
+          onClick={() => props.onChange(toServer(toDatetimeLocalValue(null)))}
+        >
+          {props.nowLabel}
+        </button>
+      )}
+    </span>
+  )
+}
 
 function OccupantsEditor(props: {
   reservation: string
@@ -263,6 +298,20 @@ function OccupantsEditor(props: {
               <span className="text-xs text-zinc-400" title={translate("Save the register first, then capture this occupant's ID")}>{translate("save row → ID")}</span>
             )}
             </>)}
+            <OccupantTime
+              label={translate("Arrived")}
+              value={o.arrived_at}
+              nowLabel={translate("Arrived now")}
+              onChange={(v) => set(i, { arrived_at: v })}
+            />
+            {(o.arrived_at || o.left_at) && (
+              <OccupantTime
+                label={translate("Left")}
+                value={o.left_at}
+                nowLabel={translate("Left now")}
+                onChange={(v) => set(i, { left_at: v })}
+              />
+            )}
             <button
               className="rounded p-1 text-zinc-400 hover:text-rose-500"
               aria-label={translate("Remove occupant")}
@@ -713,7 +762,8 @@ export default function RegistrationCard() {
                   <th className="py-1 pe-3 font-medium">{t("Age")}</th>
                   <th className="py-1 pe-3 font-medium">{t("Gender")}</th>
                   <th className="py-1 pe-3 font-medium">{t("Nationality")}</th>
-                  <th className="py-1 font-medium">{t("ID")}</th>
+                  <th className="py-1 pe-3 font-medium">{t("ID")}</th>
+                  <th className="py-1 font-medium">{t("Arrived")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -723,13 +773,17 @@ export default function RegistrationCard() {
                     <td className="py-1.5 pe-3">{o.age ?? "-"}</td>
                     <td className="py-1.5 pe-3">{o.gender ? t(o.gender) : "-"}</td>
                     <td className="py-1.5 pe-3">{o.nationality || "-"}</td>
-                    <td className="py-1.5">{o.id_type ? `${t(o.id_type)} · ${o.id_number ?? ""}` : "-"}</td>
+                    <td className="py-1.5 pe-3">{o.id_type ? `${t(o.id_type)} · ${o.id_number ?? ""}` : "-"}</td>
+                    <td className="py-1.5 tabular-nums">
+                      {o.arrived_at ? o.arrived_at.slice(0, 16) : "-"}
+                      {o.left_at && <span className="block text-xs text-zinc-500">{t("Left {time}", { time: o.left_at.slice(0, 16) })}</span>}
+                    </td>
                   </tr>
                 ))}
                 {d.occupants.length === 0 &&
                   [0, 1, 2].map((i) => (
                     <tr key={i} className="border-b border-zinc-200">
-                      <td className="py-4" colSpan={5} />
+                      <td className="py-4" colSpan={6} />
                     </tr>
                   ))}
               </tbody>

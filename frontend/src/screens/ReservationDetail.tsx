@@ -474,6 +474,28 @@ export default function ReservationDetail({
               <Field label={translate("Pre-check-in")} value={d.precheckin_status} />
             )}
           </dl>
+          {d.booked_check_out_date && (
+            <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
+              {translate("Left early: booked to {date}.", { date: d.booked_check_out_date })}
+              {d.early_departure_reason ? ` ${d.early_departure_reason}` : ""}
+            </p>
+          )}
+          {(d.occupants ?? []).length > 0 && (
+            <div className="mt-3">
+              <span className="text-xs text-zinc-400">{translate("In the room")}</span>
+              <ul className="mt-1 space-y-0.5 text-sm">
+                {(d.occupants ?? []).map((o, i) => (
+                  <li key={i} className="flex flex-wrap justify-between gap-x-2">
+                    <span className={o.left_at ? "text-zinc-400 line-through" : ""}>{o.full_name}</span>
+                    <span className="text-xs tabular-nums text-zinc-500">
+                      {o.arrived_at ? translate("Arrived {time}", { time: o.arrived_at.slice(0, 16) }) : ""}
+                      {o.left_at ? ` · ${translate("Left {time}", { time: o.left_at.slice(0, 16) })}` : ""}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </Card>
 
         <IdentityCard d={d} reload={refresh} />

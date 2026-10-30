@@ -1660,6 +1660,11 @@ export interface ReservationDetail {
   eta: string | null
   /** Flagged late: the night audit holds it as Due In, not a no-show. */
   late_arrival?: number
+  /** Everyone on the register and when each arrived / left */
+  occupants?: { full_name: string; arrived_at: string | null; left_at: string | null }[]
+  /** Set when an early check-out shortened the stay */
+  booked_check_out_date?: string | null
+  early_departure_reason?: string | null
   /** Room rate confirmed per night at booking - what the folio bills. */
   night_rates?: { date: string; rate: number; demand_premium_pct: number }[]
   precheckin_status: string | null

@@ -101,6 +101,12 @@ check-in, check-out:
 > Hello {{1}}, a payment of {{2}} is due for your stay ({{3}}). You
 > can pay online or at the front desk.
 
+**`kamra_room_charge`** (optional) - guest, amount, what and where,
+balance:
+
+> Hello {{1}}, {{2}} was added to your room bill: {{3}}. Your balance is
+> now {{4}}. Questions? Reply here or call the front desk.
+
 Approval usually takes minutes for Utility templates. Once approved,
 type each template's exact name into the matching field on the
 Channels connection.
@@ -131,6 +137,17 @@ Nothing else to configure:
   accepts templates, and the screen tells you so.
 - **Payment requests**: from the stay, `send_payment_request` posts
   the amount with your payment template.
+- **Room charge alerts** (off until you turn them on): with the
+  `kamra_room_charge` template on the connection and **Settings → Front
+  Desk → Guest alerts → WhatsApp the guest when a charge is posted to the
+  room** ticked, an in-house guest gets a message when a restaurant bill,
+  laundry, minibar or desk charge is posted to their room, with the
+  running balance. Room nights from the night audit, company and group
+  bills, discounts and zero amounts never send one, and a bill gets at
+  most one message every 10 minutes (the next one shows the new
+  balance). The message is sent after the charge is saved, so a WhatsApp
+  outage never stops a posting. It is a stay message, so a guest's STOP
+  (marketing opt-out) does not turn it off.
 - Every message in both directions is stored as a *WhatsApp Message*
   record, so the history is queryable and auditable.
 

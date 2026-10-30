@@ -92,6 +92,7 @@ SAC_CODES = {
 	"Room": "996311",              # room or unit accommodation
 	"Early Check-in": "996311",
 	"Late Checkout": "996311",
+	"Early Departure": "996311",   # charged for the booked room supply
 	"Pet Charge": "996311",        # part of the stay, billed with the room
 	"Meal Plan": "996311",         # bundled into the accommodation supply
 	"Extra Guests": "996311",      # extra beds in a let unit, same supply

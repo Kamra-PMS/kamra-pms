@@ -424,6 +424,7 @@ DATASETS: dict[str, Dataset] = {
 			_col("nights_short", "Nights short", "number"),
 			_col("company", "Company"),
 			_col("source", "Source"),
+			_col("reason", "Reason"),
 		],
 	},
 	"overdue_by_company": {
@@ -1002,12 +1003,14 @@ def _fetch_early_departures(property: str, from_date: str, to_date: str,
 	rows = frappe.db.sql(
 		"""
 		SELECT name, guest_name, room_type, room, check_in_date,
-		       check_out_date, actual_check_out, company, source
+		       COALESCE(booked_check_out_date, check_out_date) AS check_out_date,
+		       actual_check_out, company, source, early_departure_reason
 		FROM `tabReservation`
 		WHERE property = %(p)s
 		  AND status = 'Checked Out'
 		  AND actual_check_out IS NOT NULL
-		  AND DATE(actual_check_out) < check_out_date
+		  AND (booked_check_out_date IS NOT NULL
+		       OR DATE(actual_check_out) < check_out_date)
 		  AND DATE(actual_check_out) BETWEEN %(f)s AND %(t)s
 		ORDER BY actual_check_out DESC
 		LIMIT %(lim)s
@@ -1029,6 +1032,7 @@ def _fetch_early_departures(property: str, from_date: str, to_date: str,
 			"nights_short": max(int(short or 0), 0),
 			"company": r.get("company") or "",
 			"source": r.get("source") or "",
+			"reason": r.get("early_departure_reason") or "",
 		})
 	return out
 

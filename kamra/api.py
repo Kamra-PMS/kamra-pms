@@ -698,7 +698,8 @@ def registration_card(reservation: str):
 			{"row": o.name, "full_name": o.full_name, "age": o.age,
 			 "gender": o.gender, "nationality": o.nationality,
 			 "id_type": o.id_type, "id_number": o.id_number,
-			 "phone": o.phone, "id_file": o.get("id_file")}
+			 "phone": o.phone, "id_file": o.get("id_file"),
+			 "arrived_at": _dt(o.get("arrived_at")), "left_at": _dt(o.get("left_at"))}
 			for o in (res.get("occupants") or [])
 		],
 	}
@@ -1520,6 +1521,8 @@ def _post_folio_charge(folio: str, charge_type: str, description: str,
 	                     f"{money_text(doc.property, amount)}")
 	from kamra.webhooks import emit_folio_posted
 	emit_folio_posted(doc, charge)
+	from kamra.whatsapp import queue_room_charge_alert
+	queue_room_charge_alert(doc, charge)
 	return doc.as_dict()
 
 
@@ -1930,7 +1933,10 @@ def company_billing_default(company: str, property: str | None = None):
 @require_roles("Front Desk", "Kamra Agent")
 def update_occupants(reservation: str, occupants):
 	"""Replace the stay's occupant register.
-	occupants = [{full_name, age, gender, nationality, id_type, id_number, phone}]
+	occupants = [{full_name, age, gender, nationality, id_type, id_number, phone,
+	              arrived_at, left_at}]
+	Guests sharing a room can arrive and leave at different times: see
+	_occupant_times for how arrived_at / left_at are kept.
 	A child keeps name and age only: no phone, and ID details only where the
 	country's register needs them (see localization.minor_id_kept)."""
 	if isinstance(occupants, str):
@@ -1950,6 +1956,16 @@ def update_occupants(reservation: str, occupants):
 	carried = ("full_name", "age", "gender", "nationality", "id_type", "id_number", "phone")
 	existing_rows = {o.name: {k: o.get(k) for k in carried}
 	                 for o in (doc.get("occupants") or [])}
+	# who arrived (or left) when: kept for rows the client sends back without
+	# it; a guest added to a stay already in house arrived now
+	existing_times = {o.name: (o.get("arrived_at"), o.get("left_at"))
+	                  for o in (doc.get("occupants") or [])}
+	# a client that replaces the list without row ids (an agent) still
+	# keeps each guest's times: match by name
+	times_by_name = {(o.full_name or "").strip().casefold(): existing_times[o.name]
+	                 for o in (doc.get("occupants") or [])}
+	in_house_now = now_datetime().replace(microsecond=0) \
+		if doc.status == "Checked In" else None
 	doc.set("occupants", [])
 	stale_scans, minors_trimmed = [], 0
 	for o in occupants or []:
@@ -1981,6 +1997,9 @@ def update_occupants(reservation: str, occupants):
 			           or existing_scans.get(o.get("row")) or None,
 			"photo": existing_photos.get(o.get("row")) or None,
 		}
+		row.update(_occupant_times(
+			o, existing_times.get(o.get("row"))
+			or times_by_name.get(row["full_name"].casefold()), in_house_now))
 		if is_minor(pack, row["age"]):
 			# a child's phone is never needed; ID only where the register asks
 			trim = {"phone": ""} if minor_id_kept(pack, nationality) else \
@@ -2009,8 +2028,31 @@ def update_occupants(reservation: str, occupants):
 	             "gender": o.gender, "nationality": o.nationality,
 	             "id_type": o.id_type, "id_number": o.id_number,
 	             "phone": o.phone, "id_file": o.get("id_file"),
-	             "photo": o.get("photo")}
+	             "photo": o.get("photo"),
+	             "arrived_at": _dt(o.get("arrived_at")),
+	             "left_at": _dt(o.get("left_at"))}
 	            for o in doc.occupants]}
+
+
+def _dt(v) -> str | None:
+	return str(v)[:19] if v else None
+
+
+def _occupant_times(o: dict, existing, in_house_now) -> dict:
+	"""arrived_at / left_at for one register row. A value the client sends
+	wins (the desk's "arrived now", or a corrected time; an empty one clears
+	it); a row sent back without the key keeps what it had; a new row on a
+	stay already in house arrived now."""
+	had_in, had_out = existing or (None, None)
+	out = {}
+	for key, had in (("arrived_at", had_in), ("left_at", had_out)):
+		out[key] = (get_datetime(o[key]) if o.get(key) else None) if key in o else had
+	if out["arrived_at"] is None and existing is None:
+		out["arrived_at"] = in_house_now
+	if out["arrived_at"] and out["left_at"] and out["left_at"] < out["arrived_at"]:
+		frappe.throw(_("{0} cannot leave before they arrived.").format(
+			o.get("full_name") or _("A guest")))
+	return out
 
 
 @frappe.whitelist()
@@ -3732,6 +3774,13 @@ def reservation_detail(reservation: str):
 		"special_requests": res.special_requests,
 		"eta": res.eta,
 		"late_arrival": int(res.get("late_arrival") or 0),
+		# who is in the room and when each arrived / left (names only here;
+		# IDs stay on the registration card)
+		"occupants": [{"full_name": o.full_name, "arrived_at": _dt(o.get("arrived_at")),
+		               "left_at": _dt(o.get("left_at"))}
+		              for o in (res.get("occupants") or [])],
+		"booked_check_out_date": str(res.get("booked_check_out_date") or "") or None,
+		"early_departure_reason": res.get("early_departure_reason"),
 		# the nightly rates confirmed at booking - what the folio bills
 		"night_rates": [
 			{"date": str(n.stay_date), "rate": float(n.rate or 0),
@@ -4656,13 +4705,34 @@ def reinstate_checkout(reservation: str, reason: str, pin: str | None = None):
 
 @frappe.whitelist()
 @require_roles("Front Desk", "Night Auditor", "Kamra Agent")
-def check_out(reservation: str, credit_override_reason: str | None = None):
+def check_out(reservation: str, credit_override_reason: str | None = None,
+              early_reason: str | None = None, early_fee: str | None = None):
 	"""Check a guest out. What the company pays moves to the city ledger,
 	after the property's credit control: a warning comes back in
 	`credit_warnings`; a block refuses (CREDIT_BLOCKED) unless Finance or a
 	Hotel Admin passes `credit_override_reason` (logged). Agents can't
-	override."""
+	override.
+
+	Leaving before the booked date: pass `early_reason` and the stay is
+	first shortened to today with the property's early-departure charge
+	(early_departure, below). Without it, a property whose charge is not
+	"All Nights" refuses, so unused nights are never billed by accident;
+	under "All Nights" every booked night is billed as before."""
 	doc = frappe.get_doc("Reservation", reservation)
+	from kamra.checkout import apply_early_departure, early_departure_plan
+	if (early_reason or "").strip():
+		apply_early_departure(doc.name, early_reason, early_fee)
+		doc = frappe.get_doc("Reservation", reservation)
+	else:
+		plan = early_departure_plan(doc)
+		if plan and plan["policy"] != "All Nights":
+			frappe.throw(
+				_("{0} is leaving {1} night(s) early (booked to {2}). Give the reason "
+				  "(early_reason) so the stay is shortened and the property's early "
+				  "departure charge ({3}) applies.").format(
+					doc.guest_name, plan["unused_nights"], plan["booked_check_out"],
+					_(plan["policy"])),
+				title=_("Leaving early"))
 	credit = _assert_settled(doc, credit_override_reason)
 	# a held security deposit that the settled bill used up is recorded as
 	# applied, so the Deposit ledger doesn't keep a departed guest's money
@@ -4680,6 +4750,22 @@ def check_out(reservation: str, credit_override_reason: str | None = None):
 			{"company": c["company"], "reasons": c["reasons"],
 			 "overridden": bool(c.get("overridden"))} for c in credit]
 	return out
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Front Desk", "Finance", "Kamra Agent")
+def early_departure(reservation: str, reason: str, fee: str | None = None):
+	"""A guest in house is leaving before the booked date: shorten the stay
+	to today through the amend path (availability, channel manager and
+	price follow), post the property's early-departure charge for the
+	unused nights (None / One Night / All Nights) and log the reason. Then
+	settle and check out as usual. `fee` other than the property's policy
+	needs Finance or a Hotel Admin. checkout_context shows the plan
+	(`early_departure`) before anything changes."""
+	from kamra.crs import assert_property_access
+	assert_property_access(frappe.db.get_value("Reservation", reservation, "property"))
+	from kamra.checkout import apply_early_departure
+	return apply_early_departure(reservation, reason, fee)
 
 
 HK_SUPERVISOR = "Housekeeping Supervisor"
@@ -5523,6 +5609,13 @@ def amend_stay(reservation: str, check_in_date: str, check_out_date: str,
 	doc = frappe.get_doc("Reservation", reservation)
 	from kamra.crs import assert_property_access
 	assert_property_access(doc.property)
+	return _amend_dates(doc, check_in_date, check_out_date, confirm_price)
+
+
+def _amend_dates(doc, check_in_date: str, check_out_date: str,
+                 confirm_price: int = 0, note: str = "") -> dict:
+	"""amend_stay's writer, for callers that already checked access (the
+	early check-out shortens a stay through it)."""
 	if doc.status not in ("Confirmed", "Checked In"):
 		frappe.throw("Only active reservations can be amended.")
 	old = f"{doc.check_in_date}→{doc.check_out_date}"
@@ -5536,7 +5629,8 @@ def amend_stay(reservation: str, check_in_date: str, check_out_date: str,
 	           rationale=f"{old} → {check_in_date}→{check_out_date}; "
 	                     f"total {old_amount:,.2f} → "
 	                     f"{float(doc.amount_after_tax or 0):,.2f}"
-	                     + (" (new price confirmed)" if cint(confirm_price) else ""))
+	                     + (" (new price confirmed)" if cint(confirm_price) else "")
+	                     + (f"; {note}" if note else ""))
 	return {"ok": True, "nights": doc.nights,
 	        "previous_amount": old_amount,
 	        "amount_after_tax": doc.amount_after_tax}

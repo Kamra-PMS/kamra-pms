@@ -111,6 +111,11 @@ MODULES: tuple[Module, ...] = (
 				S("cancellation_fee", "Late cancellation fee", "select", "First Night", P, options=("None", "First Night", "Full Stay")),
 				S("no_show_charge", "No-show charge", "select", "First Night", P, options=("None", "First Night", "Full Stay"),
 				  hint="Posted automatically by the night audit."),
+				S("early_departure_fee", "Early departure charge", "select", "All Nights",
+				  options=("None", "One Night", "All Nights"),
+				  hint="A guest checking out before the booked date: the stay is shortened and the unused "
+				       "nights are charged at none, one or all of them. Finance or a Hotel Admin can "
+				       "change it for one stay, with a reason."),
 			)),
 			Section("deposits", "Deposits", "", (
 				S("deposit_pct", "Deposit expected at booking", "number", 0, P, min=0, max=100, unit="%"),
@@ -165,6 +170,12 @@ MODULES: tuple[Module, ...] = (
 				S("emergency_number", "Emergency number", hint="Reception or duty manager, day and night."),
 				S("guest_info_note", "Anything else for guests", "textarea",
 				  hint="Pool hours, parking, quiet hours. Keep it short."),
+			)),
+			Section("guest_alerts", "Guest alerts", "Messages the guest gets on WhatsApp during the stay.", (
+				S("room_charge_whatsapp", "WhatsApp the guest when a charge is posted to the room", "check", 0,
+				  hint="Restaurant, laundry, minibar and desk charges, with the running balance. Needs the "
+				       "room charge template on the WhatsApp connection. At most one message per bill "
+				       "every 10 minutes; room nights and company bills never send one."),
 			)),
 			Section("holds", "Holds & selling", "", (
 				S("hold_minutes", "Hold unconfirmed bookings for", "number", 120, P, min=5, max=10080, unit="min"),
