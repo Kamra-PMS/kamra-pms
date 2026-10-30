@@ -137,8 +137,7 @@ def _parse_list(val) -> list | None:
 def save_staff(property: str, email: str, full_name: str, roles, properties=None,
                enabled=1, send_welcome=0, job_title=None) -> dict:
 	"""Add a person, or change an existing person's roles, property access,
-	job title and whether they can sign in. Your own record: name and job
-	title only."""
+	job title and whether they can sign in. Your own record: name only."""
 	it = _caller_is_it()
 	me = frappe.session.user
 	email = (email or "").strip().lower()
@@ -193,6 +192,10 @@ def save_staff(property: str, email: str, full_name: str, roles, properties=None
 				or (sorted(want_props) if want_props is not None else None) != cur_props
 				or on != bool(user.enabled)):
 			frappe.throw(_("You can't change your own access - ask another admin."),
+			             frappe.PermissionError)
+		if email == me.lower() and job_title is not None \
+				and str(job_title).strip()[:140] != (user.kamra_job_title or ""):
+			frappe.throw(_("You can't change your own job title - ask another admin."),
 			             frappe.PermissionError)
 	else:
 		held = []

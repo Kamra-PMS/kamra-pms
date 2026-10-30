@@ -316,6 +316,7 @@ function StaffSheet({
               className={inputCls}
               list="kamra-job-titles"
               value={f.job_title}
+              disabled={row?.is_self}
               placeholder={t("e.g. Duty Manager")}
               onChange={(e) => setF({ ...f, job_title: e.target.value })}
             />
@@ -338,7 +339,7 @@ function StaffSheet({
 
         {row?.is_self && (
           <p className="rounded-lg bg-zinc-50 px-3 py-2 text-xs text-zinc-600">
-            {t("You can change your name and job title. Ask another admin to change your access.")}
+            {t("You can change your name. Ask another admin to change your job title or access.")}
           </p>
         )}
         <fieldset disabled={row?.is_self} className="space-y-6 disabled:opacity-60">

@@ -27,12 +27,14 @@ def after_migrate():
 
 
 def ensure_user_fields():
-	"""A job title on the staff member's User (Frappe has none), set in
-	Staff & access and printed on allowance vouchers."""
+	"""A job title on the staff member's User (Frappe has none), set by a
+	Hotel Admin in Staff & access and printed on allowance vouchers. Level 1
+	(System Manager only in the desk) so nobody retitles themselves from
+	their own profile."""
 	from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
 	create_custom_fields({"User": [{
 		"fieldname": "kamra_job_title", "label": "Job Title", "fieldtype": "Data",
-		"insert_after": "last_name",
+		"insert_after": "last_name", "permlevel": 1,
 	}]}, update=True)
 
 

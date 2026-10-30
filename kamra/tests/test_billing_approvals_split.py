@@ -369,15 +369,32 @@ class BillingApprovalsSplitTestCase(AuditTestCase):
 		                 job_title=" Duty Manager ")
 		row = next(r for r in staff.list_staff(PROP_A) if r["user"] == "ut.bill.duty@test.local")
 		self.assertEqual(row["job_title"], "Duty Manager")
-		# your own name and title, never your own access
+		# your own name, never your own title or access
 		me = next(r for r in staff.list_staff(PROP_A) if r["is_self"])
 		staff.save_staff(PROP_A, GM, "UT General", me["roles"], me["properties"] or "all",
-		                 job_title="General Manager")
-		self.assertEqual(frappe.db.get_value("User", GM, "kamra_job_title"), "General Manager")
+		                 job_title=me["job_title"])
+		with self.assertRaises(frappe.PermissionError):
+			staff.save_staff(PROP_A, GM, "UT General", me["roles"], me["properties"] or "all",
+			                 job_title="General Manager")
 		with self.assertRaises(frappe.PermissionError):
 			staff.save_staff(PROP_A, GM, "UT General", ["Front Desk"], "all")
+		self.assertEqual(frappe.db.get_value("User", GM, "kamra_job_title") or "", "")
 		frappe.set_user("Administrator")
-		frappe.db.set_value("User", GM, "kamra_job_title", "")
+
+	def test_staff_cannot_retitle_themselves_from_their_profile(self):
+		from frappe.client import set_value
+		from kamra.install import ensure_user_fields
+		ensure_user_fields()
+		desk = ensure_user("ut.bill.selftitle@test.local", ["Front Desk"])
+		frappe.db.set_value("User", desk, "kamra_job_title", "Receptionist")
+		frappe.set_user(desk)
+		try:
+			set_value("User", desk, "kamra_job_title", "General Manager")
+		except frappe.PermissionError:
+			pass
+		finally:
+			frappe.set_user("Administrator")
+		self.assertEqual(frappe.db.get_value("User", desk, "kamra_job_title"), "Receptionist")
 
 	def test_new_property_starts_with_approval_on(self):
 		from kamra.settings import get_setting
