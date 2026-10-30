@@ -21,6 +21,7 @@ import { Badge } from "./ui/badge"
 import { Sheet } from "./ui/sheet"
 import { IdDocumentField } from "./IdDocumentField"
 import CheckInGuests, { type GuestOccupant } from "./CheckInGuests"
+import type { IdRead } from "./IdScan"
 import { SignaturePad } from "./SignaturePad"
 import DepositPanel, { type DepositState } from "./DepositPanel"
 import SecurityDepositPanel, { type SecurityDepositState } from "./SecurityDepositPanel"
@@ -316,6 +317,8 @@ export default function CheckInDialog(props: {
   // per-step drafts
   const [details, setDetails] = useState({ phone: "", email: "", nationality: "", id_type: "", id_number: "" })
   const [detailsDirty, setDetailsDirty] = useState(false)
+  // what an ID scan read beyond the form's fields; saved with the details
+  const [scanned, setScanned] = useState<IdRead | null>(null)
   const [payer, setPayer] = useState("")
   const [room, setRoom] = useState("")
   const [changeRoom, setChangeRoom] = useState(false)
@@ -426,9 +429,15 @@ export default function CheckInDialog(props: {
       nationality: details.nationality,
       id_type: details.id_type || undefined,
       id_number: details.id_number || undefined,
+      date_of_birth: scanned?.date_of_birth ?? undefined,
+      gender: scanned?.gender ?? undefined,
+      id_expiry_date: scanned?.id_expiry_date ?? undefined,
+      address_line: scanned?.address || undefined,
+      city: scanned?.city || undefined,
     }, false)
     if (f) {
       setDetailsDirty(false)
+      setScanned(null)
       setDetails((d) => ({ ...d, id_number: "" }))
     }
     return !!f
@@ -799,6 +808,16 @@ export default function CheckInDialog(props: {
                 occupants={flow.ids.occupants}
                 idTypes={flow.vocabulary.id_types}
                 onChanged={load}
+                onMainRead={(read) => {
+                  setDetails((d) => ({
+                    ...d,
+                    id_type: read.id_type || d.id_type,
+                    id_number: read.id_number || d.id_number,
+                    nationality: read.nationality ?? d.nationality,
+                  }))
+                  setScanned(read)
+                  setDetailsDirty(true)
+                }}
               />
               {!flow.ids.ok && (
                 <p className="text-sm font-medium text-rose-700">

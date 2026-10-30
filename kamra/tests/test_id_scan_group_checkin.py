@@ -80,7 +80,7 @@ class IdScanTestCase(AuditTestCase):
 		                 b"100 Ft Rd", b"Bengaluru North", b"Bengaluru", b"5678")
 		out = aadhaar_qr.read(text)
 		self.assertEqual((out["id_type"], out["id_number"], out["full_name"]),
-		                 ("Aadhaar", "XXXX XXXX 1234", "Asha Rao"))
+		                 ("Aadhaar", "••••••••1234", "Asha Rao"))
 		self.assertEqual((out["date_of_birth"], out["gender"], out["city"]),
 		                 ("1990-02-01", "Female", "Bengaluru"))
 		self.assertIn("560038", out["address"])
@@ -92,13 +92,13 @@ class IdScanTestCase(AuditTestCase):
 		text = secure_qr(b"V2", b"3", b"987620190101120000000", b"Ravi Rao",
 		                 b"02-03-1991", b"M", *([b"x"] * 11), photo=os.urandom(2600))
 		self.assertGreater(len(text), 4300)
-		self.assertEqual(aadhaar_qr.read(text)["id_number"], "XXXX XXXX 9876")
+		self.assertEqual(aadhaar_qr.read(text)["id_number"], "••••••••9876")
 
 	def test_old_aadhaar_qr(self):
 		out = aadhaar_qr.read('<?xml version="1.0"?><PrintLetterBarcodeData uid="987654321012" '
 		                      'name="Ravi Kumar" gender="M" yob="1985" vtc="Mysuru" pc="570001"/>')
 		self.assertEqual((out["id_number"], out["gender"], out["year_of_birth"]),
-		                 ("XXXX XXXX 1012", "Male", "1985"))
+		                 ("••••••••1012", "Male", "1985"))
 
 	def test_the_endpoint_routes_through_the_property_pack(self):
 		out = id_scan.read(PROP_A, TD3)
@@ -133,6 +133,28 @@ class IdScanTestCase(AuditTestCase):
 			 "id_number": shown["id_number"]}])["rows"][0]
 		self.assertEqual((saved["id_number"], saved["phone"], saved["age"]),
 		                 ("Z1234567", "999", 31))
+
+	def test_aadhaar_is_kept_as_its_last_four(self):
+		res = make_reservation(PROP_A, self.rt, TODAY, d(2))
+		row = api.update_occupants(res.name, [
+			{"full_name": "UT Second", "age": 30, "id_type": "Aadhaar",
+			 "id_number": "9876 5432 1012"}])["rows"][0]
+		self.assertEqual(row["id_number"], "••••••••1012")
+		# a scan's masked number for a new card saves as it is
+		new = api.update_occupants(res.name, [
+			{"row": row["row"], "full_name": "UT Second"},
+			{"full_name": "UT Third", "age": 30, "id_type": "Aadhaar",
+			 "id_number": "••••••••3456"}])["rows"]
+		self.assertEqual([r["id_number"] for r in new], ["••••••••1012", "••••••••3456"])
+		checkin.save_guest_details(res.name, id_type="Aadhaar", id_number="987654321099")
+		self.assertEqual(frappe.db.get_value("Guest", res.guest, "id_number"), "••••••••1099")
+
+	def test_a_child_photo_is_not_kept_either(self):
+		from kamra.tests.test_guest_documents import _png
+		res = make_reservation(PROP_A, self.rt, TODAY, d(2))
+		row = api.update_occupants(res.name, [{"full_name": "UT Child", "age": 5}])["rows"][0]
+		with self.assertRaisesRegex(frappe.ValidationError, "photo"):
+			api.upload_occupant_id(res.name, row["row"], _png(), kind="photo")
 
 	def test_scan_fills_the_main_guest(self):
 		res = make_reservation(PROP_A, self.rt, TODAY, d(2))

@@ -31,7 +31,8 @@ _ADDRESS = ("house", "street", "landmark", "location", "vtc", "post_office",
 
 
 def _masked(last4: str) -> str:
-	return f"XXXX XXXX {last4}" if last4 else ""
+	from kamra.api import mask_aadhaar
+	return mask_aadhaar(last4)
 
 
 def _dob(value: str) -> str | None:

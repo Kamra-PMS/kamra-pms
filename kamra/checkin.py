@@ -627,8 +627,12 @@ def save_guest_details(reservation: str, phone: str | None = None,
 		if id_type != frappe.db.get_value("Guest", res.guest, "id_type"):
 			validate_id_type(res.property, id_type)
 		changes["id_type"] = id_type
-	if id_number is not None and id_number.strip() and "•" not in id_number:
-		changes["id_number"] = id_number.strip()
+	if id_number is not None and id_number.strip():
+		if (id_type or frappe.db.get_value("Guest", res.guest, "id_type")) == "Aadhaar":
+			from kamra.api import mask_aadhaar
+			changes["id_number"] = mask_aadhaar(id_number)
+		elif "•" not in id_number:
+			changes["id_number"] = id_number.strip()
 	current = frappe.db.get_value("Guest", res.guest, list(changes), as_dict=True) \
 		if changes else {}
 	changes = {k: v for k, v in changes.items() if (current or {}).get(k) != v}

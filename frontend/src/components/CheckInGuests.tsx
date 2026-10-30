@@ -61,7 +61,7 @@ const inputCls =
 type Shot = { who: "main" } | { who: number; kind: "id" | "photo" }
 
 export default function CheckInGuests({ reservation, guest, guestName, guestHasPhoto,
-  adults, children, occupants, idTypes, onChanged }: {
+  adults, children, occupants, idTypes, onChanged, onMainRead: fillMain }: {
   reservation: string
   guest: string | null
   guestName: string
@@ -71,6 +71,8 @@ export default function CheckInGuests({ reservation, guest, guestName, guestHasP
   occupants: GuestOccupant[]
   idTypes: string[]
   onChanged: () => void
+  /** a scan of the main guest's ID fills the details form; it saves with it */
+  onMainRead: (r: IdRead) => void
 }) {
   const { t } = useT()
   const loc = useLocale()
@@ -126,16 +128,7 @@ export default function CheckInGuests({ reservation, guest, guestName, guestHasP
   function onMainRead(r: IdRead) {
     setScanning(null)
     setMainRead(r)
-    void busyDo(() => call("kamra.checkin.save_guest_details", {
-      reservation,
-      id_type: r.id_type, id_number: r.id_number,
-      nationality: r.nationality ?? undefined,
-      date_of_birth: r.date_of_birth ?? undefined,
-      gender: r.gender ?? undefined,
-      id_expiry_date: r.id_expiry_date ?? undefined,
-      address_line: r.address || undefined,
-      city: r.city || undefined,
-    }).then(onChanged))
+    fillMain(r)
   }
 
   function onOtherRead(i: number, r: IdRead) {
@@ -212,10 +205,10 @@ export default function CheckInGuests({ reservation, guest, guestName, guestHasP
             <span className="flex-1 text-xs font-semibold uppercase tracking-wider text-zinc-500">
               {t("Guest {n}", { n: i + 2 })}
             </span>
-            <PhotoButton has={d.has_photo} disabled={busy || !d.full_name.trim()}
-              onClick={() => setShot({ who: i, kind: "photo" })} />
             {!noId(d) && (
               <>
+                <PhotoButton has={d.has_photo} disabled={busy || !d.full_name.trim()}
+                  onClick={() => setShot({ who: i, kind: "photo" })} />
                 <Button type="button" variant="outline" disabled={busy || !d.full_name.trim()}
                   onClick={() => setShot({ who: i, kind: "id" })}
                   title={t("Take a picture of this guest's ID")}>

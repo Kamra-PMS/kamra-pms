@@ -4096,7 +4096,7 @@ def t82c():
 	])
 	rows = {o["full_name"]: o for o in out["rows"]}
 	adult, child, visitor = rows["Evalfam Parent"], rows["Evalfam Child"], rows["Evalfam Visitor"]
-	assert adult["id_number"] == "987654321012" and adult["phone"], adult
+	assert adult["id_number"] == "••••••••1012" and adult["phone"], adult  # Aadhaar: last 4 only
 	assert child["age"] == 9 and not (child["id_type"] or child["id_number"] or child["phone"]), child
 	# Form C: a foreign child's passport is part of the register; a phone is not
 	assert visitor["id_number"] == "19FR12345" and not visitor["phone"], visitor

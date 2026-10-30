@@ -1895,8 +1895,8 @@ def update_occupants(reservation: str, occupants):
 	                  for o in (doc.get("occupants") or [])}
 	existing_photos = {o.name: o.get("photo")
 	                   for o in (doc.get("occupants") or [])}
-	kept = ("full_name", "age", "gender", "nationality", "id_type", "id_number", "phone")
-	existing_rows = {o.name: {k: o.get(k) for k in kept}
+	carried = ("full_name", "age", "gender", "nationality", "id_type", "id_number", "phone")
+	existing_rows = {o.name: {k: o.get(k) for k in carried}
 	                 for o in (doc.get("occupants") or [])}
 	doc.set("occupants", [])
 	stale_scans, minors_trimmed = [], 0
@@ -1904,11 +1904,13 @@ def update_occupants(reservation: str, occupants):
 		# a saved row keeps what the client left out, and the stored ID
 		# number when the client only has the masked one (check-in shows it so)
 		prev = existing_rows.get(o.get("row")) or {}
-		if "•" in str(o.get("id_number") or "") and not prev:
-			# a masked number for a row that is gone: saving it would wipe the ID
-			frappe.throw(_("The guest list changed since you opened it. Reload and save again."))
 		o = {**prev, **{k: v for k, v in o.items() if v is not None}}
-		if "•" in str(o.get("id_number") or ""):
+		if o.get("id_type") == "Aadhaar":
+			o["id_number"] = mask_aadhaar(o.get("id_number"))
+		elif "•" in str(o.get("id_number") or ""):
+			if not prev:
+				# a masked number for a row that is gone: saving it would wipe the ID
+				frappe.throw(_("The guest list changed since you opened it. Reload and save again."))
 			o["id_number"] = prev.get("id_number") or ""
 		if not (o.get("full_name") or "").strip():
 			continue
@@ -3593,6 +3595,9 @@ def upload_occupant_id(reservation: str, row: str, image: str, kind: str = "id")
 	occ = match[0]
 	from kamra.localization import adult_age, is_minor, minor_id_kept, pack_for
 	pack = pack_for(res.property)
+	if is_minor(pack, occ.age) and not minor_id_kept(pack, occ.nationality):
+		frappe.throw(f"Registration law needs only the name and age of a guest under "
+		             f"{adult_age(pack)}; their ID and photo are not kept.")
 	if kind == "photo":
 		content = _sanitise(_decode(image))
 		old_photo = occ.get("photo")
@@ -3613,9 +3618,6 @@ def upload_occupant_id(reservation: str, row: str, image: str, kind: str = "id")
 		log_action("occupant_photo_capture", "Reservation", res.name, res.property,
 		           rationale=f"Photo taken for occupant {occ.full_name}")
 		return {"ok": True, "file": fdoc.file_url, "row": occ.name}
-	if is_minor(pack, occ.age) and not minor_id_kept(pack, occ.nationality):
-		frappe.throw(f"Registration law needs only the name and age of a guest under "
-		             f"{adult_age(pack)}; their ID is not kept.")
 	content = _sanitise(_decode(image))
 	fdoc = frappe.get_doc({
 		"doctype": "File",
@@ -3656,6 +3658,14 @@ def _mask_id(value: str | None) -> str | None:
 	if not value or len(value) <= 4 or value.startswith("•"):
 		return value
 	return "•" * (len(value) - 4) + value[-4:]
+
+
+def mask_aadhaar(value: str | None) -> str:
+	"""Aadhaar is never held whole: its last 4 digits in the register mask,
+	'••••••••1012'. Takes a full number, a masked one or just the last 4."""
+	import re
+	digits = re.sub(r"\D", "", value or "")
+	return "•" * 8 + digits[-4:] if digits else ""
 
 
 def _scrub_stay_ids(res):
