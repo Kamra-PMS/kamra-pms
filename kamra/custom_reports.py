@@ -1903,7 +1903,7 @@ def run_scheduled_custom_reports():
 		"Kamra Custom Report",
 		filters={"schedule_frequency": ["in", ["Daily", "Weekly"]]},
 		fields=[
-			"name", "property", "title", "dataset", "schedule_frequency",
+			"name", "owner", "property", "title", "dataset", "schedule_frequency",
 			"schedule_time", "schedule_weekday", "recipients", "last_sent_on",
 			"columns_json", "filters_json", "group_by_json", "sort_json", "lang",
 		],
@@ -1929,9 +1929,13 @@ def run_scheduled_custom_reports():
 				from_date = add_days(to_date, -6)
 			from kamra.authz import act_as
 
-			# Scheduler has no session roles; run as Administrator for the
-			# property-scoped send (same pattern as other nightly jobs).
-			with act_as("Administrator"):
+			# Scheduler has no session roles; send as the report's owner so
+			# the mail carries only the sections and columns they may see (a
+			# receptionist scheduling a manager's pack gets no money). A
+			# disabled owner's schedule stops.
+			if not frappe.db.get_value("User", r.owner, "enabled"):
+				continue
+			with act_as(r.owner):
 				email_custom_report(
 					property=r.property,
 					recipients=r.recipients,

@@ -9,9 +9,11 @@ server leaves the money out, so it is not just hidden on screen.
 
 from __future__ import annotations
 
+import json
+
 import frappe
 
-from kamra import dashboards, reports
+from kamra import dashboards, night_audit, reports
 from kamra.tests.audit_fixtures import (
 	PROP_A,
 	TODAY,
@@ -147,7 +149,8 @@ class DashboardRolesTestCase(AuditTestCase):
 			self._charge(folio, day, kind, amount)
 		rooms = frappe.db.count("Room", {"property": PROP_A})
 		frappe.set_user(FIN)  # nosemgrep: frappe-setuser -- finance
-		out = dashboards.property_dashboard(PROP_A, TODAY)
+		self.assertNotIn("comparison", dashboards.property_dashboard(PROP_A, TODAY))
+		out = dashboards.property_dashboard(PROP_A, TODAY, with_comparison=1)
 		cmp = out["comparison"]
 		# India's financial year starts 1 April
 		self.assertEqual(cmp["financial_year_start"], "2030-04-01")
@@ -185,11 +188,71 @@ class DashboardRolesTestCase(AuditTestCase):
 		self.assertEqual(ytd["last_year"]["room_revenue"], 2300)
 		self.assertEqual(ytd["change_pct"]["room_revenue"], round(100 * 3700 / 2300, 1))
 
+		# the forecast's 90 nights from tonight, over sellable rooms
 		ahead = p["on_the_books"]
-		self.assertEqual(ahead["from_date"], "2031-03-13")
-		self.assertEqual(ahead["this_year"]["rooms_sold"], 1)
-		# last year's 2030-05-01 night falls in the same 89 days
-		self.assertEqual(ahead["last_year"]["rooms_sold"], 1)
+		self.assertEqual((ahead["from_date"], ahead["to_date"]), (TODAY, "2031-06-09"))
+		self.assertEqual(ahead["rooms_basis"], "sellable")
+		sellable = out["occupancy_now"]["sellable"]
+		self.assertEqual(ahead["this_year"]["rooms_sold"], 2)  # the 12th and 13th
+		self.assertEqual(ahead["this_year"]["occupancy_pct"], round(100 * 2 / (sellable * 90), 1))
+		# last year's 2030-03-12 and 2030-05-01 nights fall in the same 90
+		self.assertEqual(ahead["last_year"]["rooms_sold"], 2)
+		self.assertEqual(ahead["last_year"]["occupancy_pct"], round(100 * 2 / (sellable * 90), 1))
 		self.assertEqual(ahead["change_pct"]["rooms_sold"], 0.0)
 		self.assertNotIn("room_revenue", ahead["this_year"])  # nothing posted yet
 		self.assertEqual(len(out["forecast"]), 90)
+
+	def test_forecast_counts_held_and_pending_payment_stays(self):
+		for no in ("103", "104"):
+			make_room(PROP_A, self.rt, no)
+		for status in ("Held", "Pending Payment", "Cancelled"):
+			make_reservation(PROP_A, self.rt, "2031-03-12", "2031-03-13", status=status)
+		fc = dashboards.property_dashboard(PROP_A, TODAY)["forecast"]
+		self.assertEqual(fc[0]["booked"], 2)  # live, as group_blocks counts a pick up
+
+	def _audit_run(self) -> str:
+		pack = {"business_date": TODAY, "in_house": [], "journal": {"rows": []},
+		        **{k: {"x": 1} for k in night_audit.PACK_FIGURE_SECTIONS},
+		        "reports": [{"key": k, "title": t} for k, t in night_audit.REPORTS]}
+		return frappe.get_doc({
+			"doctype": "Night Audit Run", "property": PROP_A, "business_date": TODAY,
+			"status": "Completed", "report_pack": json.dumps(pack),
+		}).insert(ignore_permissions=True).name
+
+	def test_audit_pack_has_no_money_for_the_desk(self):
+		run = self._audit_run()
+		frappe.set_user(DESK)  # nosemgrep: frappe-setuser -- the receptionist
+		pack = night_audit.night_audit_pack(run)["pack"]
+		self.assertTrue(pack["figures_hidden"])
+		for key in night_audit.PACK_FIGURE_SECTIONS:
+			self.assertNotIn(key, pack)
+		self.assertIn("in_house", pack)
+		self.assertIn("journal", pack)
+		keys = {r["key"] for r in pack["reports"]}
+		self.assertFalse(keys & set(night_audit.PACK_FIGURE_REPORTS))
+		self.assertIn("no_shows", keys)
+		frappe.set_user(FIN)  # nosemgrep: frappe-setuser -- finance
+		pack = night_audit.night_audit_pack(run)["pack"]
+		self.assertIn("manager_flash", pack)
+		self.assertNotIn("figures_hidden", pack)
+
+	def test_scheduled_report_is_sent_as_its_owner(self):
+		from unittest.mock import patch
+
+		from frappe.utils import now_datetime
+
+		from kamra import custom_reports
+		frappe.set_user(DESK)  # nosemgrep: frappe-setuser -- the receptionist saves it
+		frappe.get_doc({
+			"doctype": "Kamra Custom Report", "property": PROP_A, "title": "UT sched",
+			"dataset": custom_reports.PACK_PREFIX + "hotel_manager", "schedule_frequency": "Daily",
+			"schedule_time": now_datetime().strftime("%H:00"),
+			"recipients": "ut@kamra.local",
+		}).insert(ignore_permissions=True)
+		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- the scheduler
+		sent_as = []
+		with patch.object(custom_reports, "email_custom_report",
+		                  lambda **kw: sent_as.append(frappe.session.user)):
+			custom_reports.run_scheduled_custom_reports()
+		self.assertIn(DESK, sent_as)
+		self.assertEqual(frappe.session.user, "Administrator")

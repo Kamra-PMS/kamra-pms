@@ -128,6 +128,7 @@ export default function Dashboard() {
     if (scope === "property") {
       call<PropDash & { figures_hidden?: boolean }>("kamra.dashboards.property_dashboard", {
         property: getCurrentProperty(),
+        with_comparison: 1,
       }).then((d) => d.figures_hidden
         ? setError(t("The revenue dashboard is for Finance, Revenue and managers."))
         : setProp(d)).catch((e) => setError(serverError(e)))

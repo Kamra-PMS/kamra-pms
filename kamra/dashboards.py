@@ -88,19 +88,21 @@ def occupancy_now(property: str, hk: dict) -> dict:
 
 def occupancy_forecast(property: str, date: str, days: int = FORECAST_DAYS) -> list[dict]:
 	"""On the books for each night from date: live reservations covering the
-	night (the count pricing.forecast_occupancy makes) over sellable rooms,
+	night (every live status, as group_blocks counts a pick up) over sellable rooms,
 	plus group block rooms held but not yet picked up. Rooms only, no money."""
 	sellable = _sellable(property)
 	start = getdate(date)
 	end = getdate(add_days(start, days))
+	from kamra.reservation_state import LIVE_STATUSES
 	stays = frappe.db.sql(
 		"""SELECT check_in_date AS ci,
 		          GREATEST(check_out_date, DATE_ADD(check_in_date, INTERVAL 1 DAY)) AS co
 		   FROM `tabReservation`
-		   WHERE property = %(p)s AND status IN ('Confirmed', 'Checked In')
+		   WHERE property = %(p)s AND status IN %(live)s
 		     AND check_in_date < %(e)s
 		     AND GREATEST(check_out_date, DATE_ADD(check_in_date, INTERVAL 1 DAY)) > %(s)s""",
-		{"p": property, "s": str(start), "e": str(end)}, as_dict=True)
+		{"p": property, "s": str(start), "e": str(end), "live": tuple(LIVE_STATUSES)},
+		as_dict=True)
 	held_by_night = _held_by_night(property, start, end)
 	pct = lambda n: round(100 * n / sellable, 1) if sellable else 0  # noqa: E731
 	out = []
@@ -154,7 +156,8 @@ def _change(this, last):
 def comparison(property: str, date: str, total_rooms: int, forecast: list[dict]) -> dict:
 	"""Today, month to date, year to date and the next 90 days on the books,
 	each against the same dates one year back. Year to date starts at the
-	country pack's financial year (April in India)."""
+	country pack's financial year (April in India). The 90 days are the
+	forecast's nights from tonight, over sellable rooms like the forecast."""
 	from kamra.reports import range_stats
 	d = getdate(date)
 	ly = lambda x: getdate(add_years(x, -1))  # noqa: E731 - 29 Feb -> 28 Feb
@@ -168,14 +171,15 @@ def comparison(property: str, date: str, total_rooms: int, forecast: list[dict])
 		                "this_year": this, "last_year": last,
 		                "change_pct": {k: _change(this[k], last[k]) for k in COMPARE_METRICS}})
 	# the future: rooms on the books against what last year actually sold
-	ahead = forecast[1:]
-	if ahead:
-		start, end = getdate(ahead[0]["date"]), getdate(ahead[-1]["date"])
-		sold = sum(x["booked"] for x in ahead)
-		n = total_rooms * len(ahead)
+	if forecast:
+		start, end = getdate(forecast[0]["date"]), getdate(forecast[-1]["date"])
+		sellable = _sellable(property)
+		sold = sum(x["booked"] for x in forecast)
+		n = sellable * len(forecast)
 		this = {"rooms_sold": sold, "occupancy_pct": round(100 * sold / n, 1) if n else 0}
-		last = range_stats(property, ly(start), ly(end), total_rooms)
-		periods.append({"id": "on_the_books", "from_date": str(start), "to_date": str(end),
+		last = range_stats(property, ly(start), ly(end), sellable)
+		periods.append({"id": "on_the_books", "rooms_basis": "sellable",
+		                "from_date": str(start), "to_date": str(end),
 		                "ly_from_date": str(ly(start)), "ly_to_date": str(ly(end)),
 		                "this_year": this, "last_year": last,
 		                "change_pct": {k: _change(this[k], last[k]) for k in this}})
@@ -189,8 +193,9 @@ def sees_figures() -> bool:
 @frappe.whitelist()
 @require_roles("Front Desk", "Finance", "Revenue Manager", "Night Auditor", "Hotel Admin",
                "Kamra Agent")
-def property_dashboard(property: str, date: str | None = None):
-	"""Everything one hotel's dashboard needs, by department."""
+def property_dashboard(property: str, date: str | None = None, with_comparison: int = 0):
+	"""Everything one hotel's dashboard needs, by department. The year on
+	year comparison is heavy, so only the Dashboard screen asks for it."""
 	from kamra.crs import assert_property_access
 	assert_property_access(property)
 	date = date or nowdate()
@@ -259,7 +264,8 @@ def property_dashboard(property: str, date: str | None = None):
 		"outlook": flash.get("outlook", []),
 		"occupancy_now": occupancy_now(property, hk),
 		"forecast": forecast,
-		"comparison": comparison(property, date, flash.get("total_rooms", 0), forecast),
+		**({"comparison": comparison(property, date, flash.get("total_rooms", 0), forecast)}
+		   if int(with_comparison or 0) else {}),
 	}
 
 
