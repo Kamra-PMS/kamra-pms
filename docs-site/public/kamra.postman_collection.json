@@ -3541,10 +3541,10 @@
         "kamra.api.upload_occupant_id"
        ]
       },
-      "description": "ID document for one occupant on the stay register. Same security\npipeline as every ID image: decoded, re-encoded through PIL (the\nsanitisation boundary), stored private, attached to the reservation\nso checkout retention rules find it.",
+      "description": "ID document (kind \"id\") or face photo (kind \"photo\") for one\noccupant on the stay register. Same security pipeline as every ID\nimage: decoded, re-encoded through PIL (the sanitisation boundary),\nstored private, attached to the reservation so checkout retention\nrules find it. Checkout discards the ID, never the photo.",
       "body": {
        "mode": "raw",
-       "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"row\": \"<row>\",\n  \"image\": \"<image>\"\n}",
+       "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"row\": \"<row>\",\n  \"image\": \"<image>\",\n  \"kind\": \"id\"\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -5096,6 +5096,43 @@
        ]
       },
       "description": "Everything Group Rooms Control needs: the block, per-type pickup,\nthe rooming list, the tied event and the master folio.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"group_booking\": \"<group_booking>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "group_check_in",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.group_check_in",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.group_check_in"
+       ]
+      },
+      "description": "Check in a group's arrivals in one go. Rooms still unassigned get\nthe same suggestion the tape chart makes; then each stay goes through\ncheck_in, the same call as a single check-in. One stay that cannot go\nin (no free room) does not stop the rest. IDs, deposits and the\nregistration card stay open per room to finish later, as with any\ncheck-in. `reservations` limits it to some of the group.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"group_booking\": \"<group_booking>\"\n}",
@@ -7594,6 +7631,48 @@
       "body": {
        "mode": "raw",
        "raw": "{\n  \"ticket\": \"<ticket>\",\n  \"reason\": \"<reason>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "name": "ID scanner (passport strip, Aadhaar QR)",
+   "item": [
+    {
+     "name": "read_id_scan",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.id_scan.read_id_scan",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.id_scan.read_id_scan"
+       ]
+      },
+      "description": "Turn what an ID scanner (or a camera reading a QR) sent into guest\nfields: name, ID type and number, date of birth, age, gender,\nnationality, expiry, and an address where the ID carries one. Read\nonly: nothing is saved until the desk saves the guest.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"text\": \"<text>\"\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -15393,7 +15472,7 @@
         "kamra.checkin.save_guest_details"
        ]
       },
-      "description": "Correct the primary guest's contact and ID details at the desk. Only\nwhat is passed changes; an ID type must be one the country recognises.",
+      "description": "Correct the primary guest's contact and ID details at the desk, or\nkeep what an ID scan read. Only what is passed changes; an ID type must\nbe one the country recognises.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"phone\": \"+91 90000 00000\",\n  \"email\": \"guest@example.com\"\n}",

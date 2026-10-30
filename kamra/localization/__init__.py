@@ -70,9 +70,29 @@ def services_tax_rate(pack, property: str | None) -> float:
 	return float(pack.fnb_tax_rate(property))
 
 
-def default_currency(pack) -> str:
-	"""The pack's home currency, for a property that has none set."""
-	return getattr(pack, "DEFAULT_CURRENCY", None) or "USD"
+def store_id_number(pack, id_type: str | None, value: str | None) -> str | None:
+	"""How a guest's ID number is kept. Core treats every ID as a plain card
+	and keeps what was typed; a pack can hold a national ID differently
+	(India: Aadhaar keeps only its last 4 digits). None means no rule."""
+	fn = getattr(pack, "store_id_number", None)
+	return fn(id_type, value) if fn else None
+
+
+def read_id_scan(pack, text: str) -> dict | None:
+	"""Guest fields from a national ID's own code (India: the Aadhaar QR).
+	Core reads passport MRZ itself; None means the pack has no reader or
+	the scan is not one it knows."""
+	fn = getattr(pack, "read_id_scan", None)
+	return fn(text) if fn else None
+
+
+def home_country_iso3(pack) -> str | None:
+	"""The 3-letter code a passport MRZ uses for the pack's own country."""
+	return getattr(pack, "HOME_COUNTRY_ISO3", None)
+
+
+def default_nationality(pack) -> str:
+	return getattr(pack, "DEFAULT_NATIONALITY", "") or ""
 
 
 def money_text(property: str | None, amount) -> str:

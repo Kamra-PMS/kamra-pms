@@ -28,6 +28,8 @@ DEFAULT_CURRENCY = "BRL"
 FX_CURRENCIES = ["USD", "EUR", "ARS", "GBP", "CLP", "UYU", "PYG"]
 DEFAULT_TIMEZONE = "America/Sao_Paulo"
 DEFAULT_NATIONALITY = "Brazilian"
+# a passport or ID card MRZ names the country by this code
+HOME_COUNTRY_ISO3 = "BRA"
 ID_TYPES = ["CPF", "RG", "Passport", "Driving License (CNH)", "Other"]
 PAYMENT_MODES = ["Cash", "Card", "Bank Transfer"]
 

@@ -43,6 +43,7 @@ MODULES = [
     ("onboarding", "Setup checklist (finish setting up a property)", ""),
     ("rates", "Rates (rate calendar, what moves a rate)", "These explain a price; they never set one. The quote is the only source of a charge."),
     ("tickets", "Service tickets (assign, resolve, timeline)", ""),
+    ("id_scan", "ID scanner (passport strip, Aadhaar QR)", "Read only: turns what a scanner or camera read into guest fields. Nothing is saved."),
     ("guest_documents", "Guest documents (photo, ID and address proof images)", "Stored privately and served as data URLs to the desk. A property on Verify & Discard keeps no ID images."),
     ("printing", "Kitchen printers (routing, print stations, print queue)", ""),
     ("laundry", "Laundry (housekeeping)", ""),

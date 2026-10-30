@@ -144,6 +144,17 @@ check_in_readiness first and tell the desk what is missing.
 Endpoint: `kamra.api.check_in`.
 Mutating - logged to the activity ledger.
 
+### `group_check_in(group_booking, reservations)`
+
+Check in every arrival of a group booking due today (or only the
+reservations listed). Rooms still unassigned get the suggested free
+room of the booked type. Returns who went in, who did not and why,
+and how many rooms still have IDs, deposit or the registration card
+to finish. Confirm with the user first.
+
+Endpoint: `kamra.api.group_check_in`.
+Mutating - logged to the activity ledger.
+
 ### `check_out(reservation)`
 
 Check a guest out (posts remaining nights to the folio, frees the

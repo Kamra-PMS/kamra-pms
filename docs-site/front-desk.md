@@ -123,7 +123,7 @@ registration card to print.
 
 | Step | What you do | Required by default |
 | --- | --- | --- |
-| **Guest and IDs** | Check the name and phone, then the ID for the guest and everyone staying. If the guest checked in online you see **Done online**: check what they sent against the person. Add other guests and their IDs on the registration card (**Add guests and their IDs**). Children only need their ID where your country's register asks for it. | Yes |
+| **Guest and IDs** | Check the name and phone, then the ID for the guest and everyone staying. You get one card per person on the booking (adults plus children): take each person's **Photo**, an **ID picture**, and the ID details, or press **Scan ID** to fill them from a scanner. Every adult needs an ID; a child only where your country's register asks for it. If the guest checked in online you see **Done online**: check what they sent against the person. | Yes |
 | **Who pays** | Pick who pays: the OTA (already paid, or guest pays here), the guest, the company, or the group. You see the stay total, what is paid and what is left. | Yes |
 | **Room** | Keep the assigned room, or pick a free room of the booked type. Clean rooms come first. **Upgrade or another type** shows the new price before you confirm. | Always |
 | **Deposit and advance** | Take the security deposit, or waive it with a reason, and any advance still owed. Shown only when your property asks for a deposit or the booking owes an advance. | Yes |
@@ -161,6 +161,33 @@ AI agent.
   folio shows it as **Advance**, not as a negative balance.
 - **Reservation numbers** restart each financial year: in India in April
   (RES-2026-… runs April 2026 to March 2027), elsewhere in January.
+### Scan an ID
+
+**Scan ID** fills the guest's details from the ID itself, so nobody types
+a passport number.
+
+- **Passport or ID card**: the two or three lines of letters and `<` at the
+  bottom of the photo page. Kamra checks the check digits, so a misread
+  line is refused instead of saved wrong.
+- **Aadhaar** (Indian properties): the QR code on the card or the e-Aadhaar
+  print. Only the last 4 digits of the Aadhaar number are kept.
+
+Any USB or Bluetooth scanner that works in **keyboard mode** (most 2D
+barcode scanners, and passport readers with a keyboard setting) works
+with no driver: press **Scan ID**, then scan. On a tablet or Mac, **Use
+camera** reads the QR with the camera instead. Always compare what was
+read with the person at the desk, and still take the **ID picture** where
+your register needs a copy.
+
+### Check in a whole group
+
+Open the group under **Groups & Blocks**. In the **Rooming list**, press
+**Check in the group** and confirm. Every room arriving today goes in at
+once; a room not given yet gets a free room of the booked type. If no
+room is free for someone, they are listed and the rest still go in.
+
+IDs, deposits and the registration card can then be finished room by room
+with **Finish** on each row, while the group is already on its way up.
 
 ## Check in a walk-in
 

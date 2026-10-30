@@ -29,6 +29,8 @@ DEFAULT_CURRENCY = "MYR"
 FX_CURRENCIES = ["USD", "SGD", "EUR", "GBP", "AUD", "CNY", "JPY", "IDR"]
 DEFAULT_TIMEZONE = "Asia/Kuala_Lumpur"
 DEFAULT_NATIONALITY = "Malaysian"
+# a passport or ID card MRZ names the country by this code
+HOME_COUNTRY_ISO3 = "MYS"
 ID_TYPES = ["MyKad", "Passport", "Driving License", "Other"]
 PAYMENT_MODES = ["Cash", "Card", "Bank Transfer"]
 

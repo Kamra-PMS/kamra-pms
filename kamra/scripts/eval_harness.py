@@ -4096,7 +4096,7 @@ def t82c():
 	])
 	rows = {o["full_name"]: o for o in out["rows"]}
 	adult, child, visitor = rows["Evalfam Parent"], rows["Evalfam Child"], rows["Evalfam Visitor"]
-	assert adult["id_number"] == "987654321012" and adult["phone"], adult
+	assert adult["id_number"] == "••••••••1012" and adult["phone"], adult  # Aadhaar: last 4 only
 	assert child["age"] == 9 and not (child["id_type"] or child["id_number"] or child["phone"]), child
 	# Form C: a foreign child's passport is part of the register; a phone is not
 	assert visitor["id_number"] == "19FR12345" and not visitor["phone"], visitor
@@ -8792,7 +8792,13 @@ def _ci_room(number):
 
 def _ci_stay(name, phone, room=None):
 	g = _guest(name, phone)
-	return _res(g, nowdate(), add_days(nowdate(), 2), room=room)
+	res = _res(g, nowdate(), add_days(nowdate(), 2), room=room)
+	# the second adult is on the register with an ID: these checks are
+	# about the main guest's, and every adult on a booking needs one
+	res.append("occupants", {"full_name": f"{name} Partner", "age": 30,
+	                         "id_type": "Passport", "id_number": "E7654321"})
+	res.save(ignore_permissions=True)
+	return res
 
 
 def _refused(fn, *args, exc=None, contains=None, **kwargs):

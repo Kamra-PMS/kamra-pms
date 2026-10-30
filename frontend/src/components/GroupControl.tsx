@@ -26,6 +26,7 @@ interface PickupRow {
   remaining: number
 }
 interface Detail {
+  business_date?: string
   group: {
     name: string
     group_name: string
@@ -66,6 +67,12 @@ interface Detail {
   master_folio_balance: number
 }
 
+interface GroupCheckIn {
+  checked_in: { reservation: string; guest_name: string; pending: string[] }[]
+  skipped: { reservation: string; guest_name: string; reason: string }[]
+  to_finish: number
+}
+
 interface BlockDraft {
   room_type: string
   rooms_blocked: string
@@ -102,6 +109,9 @@ export default function GroupControl({
   const [notice, setNotice] = useState<string | null>(null)
   const [checkingIn, setCheckingIn] = useState<string | null>(null)
   const [checkingOut, setCheckingOut] = useState<string | null>(null)
+  const [groupIn, setGroupIn] = useState<"ask" | GroupCheckIn | null>(null)
+  // rooms checked in by the group button that still have steps to finish
+  const [unfinished, setUnfinished] = useState<Set<string>>(new Set())
   const loc = useLocale()
   const { ensureUnlocked, status: pinStatus } = useCashierAuth()
 
@@ -170,6 +180,8 @@ export default function GroupControl({
     )
 
   const g = d.group
+  const today = d.business_date ?? new Date().toLocaleDateString("en-CA")
+  const arriving = d.rooming_list.filter((r) => r.status === "Confirmed" && r.check_in_date <= today).length
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center gap-3">
@@ -471,8 +483,44 @@ export default function GroupControl({
 
       {/* rooming list */}
       <div>
-        <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-zinc-500">{translate("Rooming list (")}{d.rooming_list.length})
-        </h3>
+        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">{translate("Rooming list (")}{d.rooming_list.length})
+          </h3>
+          {arriving > 0 && groupIn === null && (
+            <Button disabled={busy} onClick={() => setGroupIn("ask")}>
+              {translate("Check in the group ({n})", { n: String(arriving) })}
+            </Button>
+          )}
+        </div>
+        {groupIn === "ask" && (
+          <div className="mb-3 rounded-xl border border-brand-200 bg-brand-50/50 p-3 text-sm">
+            <p>{translate("Check in all {n} rooms arriving now? A room not given yet gets a free room of the booked type. IDs, deposits and the registration card can be finished room by room afterwards.", { n: String(arriving) })}</p>
+            <div className="mt-2 flex gap-2">
+              <Button disabled={busy} onClick={() =>
+                act(async () => {
+                  const out = await call<GroupCheckIn>("kamra.api.group_check_in", { group_booking: name })
+                  setGroupIn(out)
+                  setUnfinished(new Set(out.checked_in.filter((x) => x.pending.length).map((x) => x.reservation)))
+                })
+              }>{translate("Check them in")}</Button>
+              <Button variant="outline" disabled={busy} onClick={() => setGroupIn(null)}>{translate("Cancel")}</Button>
+            </div>
+          </div>
+        )}
+        {groupIn && groupIn !== "ask" && (
+          <div className="mb-3 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900">
+            <p className="font-semibold">
+              {translate("{n} rooms checked in.", { n: String(groupIn.checked_in.length) })}
+              {groupIn.to_finish > 0 && " " + translate("{n} still need IDs or other steps: use Finish on each room.", { n: String(groupIn.to_finish) })}
+            </p>
+            {groupIn.skipped.map((x) => (
+              <p key={x.reservation} className="mt-1 text-rose-700">{x.guest_name}: {x.reason}</p>
+            ))}
+            <button className="mt-1 text-xs font-medium text-emerald-800 hover:underline" onClick={() => setGroupIn(null)}>
+              {translate("Close")}
+            </button>
+          </div>
+        )}
         {d.rooming_list.length === 0 ? (
           <p className="text-sm text-zinc-400">{translate("No guests named into the block yet.")}</p>
         ) : (
@@ -510,6 +558,9 @@ export default function GroupControl({
                     <div className="flex flex-wrap items-center justify-end gap-2 text-xs">
                       {r.status === "Confirmed" && (
                         <Button variant="outline" onClick={() => setCheckingIn(r.name)}>{translate("Check in")}</Button>
+                      )}
+                      {r.status === "Checked In" && unfinished.has(r.name) && (
+                        <Button variant="outline" onClick={() => setCheckingIn(r.name)}>{translate("Finish")}</Button>
                       )}
                       {r.status === "Checked In" && (
                         <Button variant="outline" onClick={() => setCheckingOut(r.name)}>{translate("Check out")}</Button>

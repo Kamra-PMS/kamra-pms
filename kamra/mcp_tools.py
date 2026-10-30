@@ -312,6 +312,19 @@ TOOLS: tuple[ToolSpec, ...] = (
 		mutating=True,
 	),
 	_t(
+		"group_check_in",
+		"api.group_check_in",
+		"""Check in every arrival of a group booking due today (or only the
+		reservations listed). Rooms still unassigned get the suggested free
+		room of the booked type. Returns who went in, who did not and why,
+		and how many rooms still have IDs, deposit or the registration card
+		to finish. Confirm with the user first.""",
+		{"group_booking": _p("string"),
+		 "reservations": _p("array", items={"type": "string"})},
+		required=("group_booking",),
+		mutating=True,
+	),
+	_t(
 		"check_out",
 		"api.check_out",
 		"""Check a guest out (posts remaining nights to the folio, frees the

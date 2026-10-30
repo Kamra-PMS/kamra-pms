@@ -142,17 +142,25 @@ def _ids(res, guest) -> dict:
 	                  or res.get("id_document"))
 	if not primary_ok:
 		missing.append(res.guest_name or _("the guest"))
-	occupants = []
+	occupants, adults_named = [], 1
 	for o in res.get("occupants") or []:
-		exempt = is_minor(pack, o.age) and not minor_id_kept(pack, o.nationality)
+		minor = is_minor(pack, o.age)
+		adults_named += 0 if minor else 1
+		exempt = minor and not minor_id_kept(pack, o.nationality)
 		has = bool(o.id_number or o.get("id_file"))
 		if not exempt and not has:
 			missing.append(o.full_name)
 		occupants.append({
 			"row": o.name, "full_name": o.full_name, "age": o.age,
-			"nationality": o.nationality, "id_type": o.id_type,
+			"gender": o.gender, "nationality": o.nationality, "id_type": o.id_type,
 			"id_number": _mask(o.id_number), "has_id": has, "exempt": exempt,
+			"has_photo": bool(o.get("photo")),
 		})
+	# every adult on the booking is in the register, by name and ID
+	unnamed = max(0, cint(res.adults) - adults_named)
+	if unnamed:
+		missing.append(_("1 more adult") if unnamed == 1
+		               else _("{0} more adults").format(unnamed))
 	status = res.get("precheckin_status") or "Not Started"
 	return {
 		"ok": not missing,
@@ -500,6 +508,9 @@ def _flow_payload(res, steps, ctx, guest) -> dict:
 				guest.get("id_number") or guest.get("id_file") or res.get("id_document")))
 			if guest else "none",
 			"id_used_count": used_stays_count(guest.name) if guest else 0,
+			"has_photo": bool(guest and guest.get("photo")),
+			"gender": guest.get("gender") if guest else None,
+			"date_of_birth": str(guest.get("date_of_birth") or "") or None if guest else None,
 			"address": ", ".join(x for x in [guest.get("address_line"), guest.get("city")]
 			                     if x) if guest else "",
 		},
@@ -585,9 +596,15 @@ def skip_checkin_step(reservation: str, step: str, reason: str | None = None):
 def save_guest_details(reservation: str, phone: str | None = None,
                        email: str | None = None, id_type: str | None = None,
                        id_number: str | None = None,
-                       nationality: str | None = None):
-	"""Correct the primary guest's contact and ID details at the desk. Only
-	what is passed changes; an ID type must be one the country recognises."""
+                       nationality: str | None = None,
+                       date_of_birth: str | None = None,
+                       gender: str | None = None,
+                       id_expiry_date: str | None = None,
+                       address_line: str | None = None,
+                       city: str | None = None):
+	"""Correct the primary guest's contact and ID details at the desk, or
+	keep what an ID scan read. Only what is passed changes; an ID type must
+	be one the country recognises."""
 	res = _res(reservation)
 	_open(res)
 	if not res.guest:
@@ -600,12 +617,29 @@ def save_guest_details(reservation: str, phone: str | None = None,
 		changes["email"] = email.strip() or None
 	if nationality is not None:
 		changes["nationality"] = nationality.strip() or None
+	from frappe.utils import getdate
+	for field, value in (("date_of_birth", date_of_birth), ("id_expiry_date", id_expiry_date)):
+		if value:
+			changes[field] = str(getdate(value))
+	# Data fields hold 140 characters; an Aadhaar address can run longer
+	for field, value in (("address_line", address_line), ("city", city)):
+		if value and value.strip():
+			changes[field] = value.strip()[:140]
+	if gender in ("Male", "Female", "Other"):
+		changes["gender"] = gender
 	if id_type:
 		if id_type != frappe.db.get_value("Guest", res.guest, "id_type"):
 			validate_id_type(res.property, id_type)
 		changes["id_type"] = id_type
-	if id_number is not None and id_number.strip() and "•" not in id_number:
-		changes["id_number"] = id_number.strip()
+	if id_number is not None and id_number.strip():
+		from kamra import localization as loc
+		stored = loc.store_id_number(loc.pack_for(res.property),
+		                           id_type or frappe.db.get_value("Guest", res.guest, "id_type"),
+		                           id_number)
+		if stored is not None:
+			changes["id_number"] = stored
+		elif "•" not in id_number:
+			changes["id_number"] = id_number.strip()
 	current = frappe.db.get_value("Guest", res.guest, list(changes), as_dict=True) \
 		if changes else {}
 	changes = {k: v for k, v in changes.items() if (current or {}).get(k) != v}
