@@ -1348,7 +1348,7 @@ def list_exchange_rates(property: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Finance", "Hotel Admin", "Kamra Agent")
+@require_roles("Finance", "Hotel Admin")  # payments convert at this: no agent sets it
 def upsert_exchange_rate(property: str, currency: str, buy_rate: float,
                          sell_rate: float, service_tax_pct: float = 0,
                          max_exchange: float | None = None):
@@ -1473,11 +1473,15 @@ def _fetch_rates(property: str, only_missing: bool = False) -> dict:
 		fields=["name", "currency", "source"])}
 	out = {"business_date": str(bd), "updated": [], "kept_manual": [],
 	       "not_offered": [], "as_of": None}
+	skip_key = f"kamra:fx_not_offered:{property}:{bd}"
 	if only_missing:
-		wanted = [c for c in wanted if c not in existing]
+		skipped = set(frappe.cache.get_value(skip_key) or ())
+		wanted = [c for c in wanted if c not in existing and c not in skipped]
 		if not wanted:
 			return out
-	mids, out["as_of"] = market_rates(home)
+		mids, out["as_of"] = _market_rates_hourly(home)
+	else:
+		mids, out["as_of"] = market_rates(home)
 	margin = float(get_setting(property, "fx_margin_pct") or 0) / 100
 	for cur in wanted:
 		row = existing.get(cur)
@@ -1488,9 +1492,10 @@ def _fetch_rates(property: str, only_missing: bool = False) -> dict:
 		if not mid:
 			out["not_offered"].append(cur)
 			continue
-		values = {"buy_rate": round(mid * (1 - margin), 6),
-		          "sell_rate": round(mid * (1 + margin), 6),
-		          "market_rate": round(mid, 6), "source": "Online",
+		# 9 places: a weak currency (JPY, IDR) is a tiny rate against a strong home
+		values = {"buy_rate": round(mid * (1 - margin), 9),
+		          "sell_rate": round(mid * (1 + margin), 9),
+		          "market_rate": round(mid, 9), "source": "Online",
 		          "set_by": frappe.session.user}
 		if row:
 			doc = frappe.get_doc("Exchange Rate", row.name)
@@ -1508,7 +1513,24 @@ def _fetch_rates(property: str, only_missing: bool = False) -> dict:
 			                "max_exchange": prev.get("max_exchange"),
 			                **values}).insert(ignore_permissions=True)
 		out["updated"].append(cur)
+	if only_missing and out["not_offered"]:
+		# the provider lacks it: stop asking every hour until the date rolls
+		frappe.cache.set_value(skip_key, sorted(skipped | set(out["not_offered"])),
+		                       expires_in_sec=86400)
 	return out
+
+
+def _market_rates_hourly(home: str) -> tuple[dict, str | None]:
+	"""market_rates for the scheduler: one provider call per home currency
+	an hour, however many properties share it (the provider asks for no
+	more than about hourly). A failure is not cached."""
+	key = f"kamra:fx_market:{home}"
+	hit = frappe.cache.get_value(key)
+	if hit:
+		return hit[0], hit[1]
+	mids, as_of = market_rates(home)
+	frappe.cache.set_value(key, [mids, as_of], expires_in_sec=3600)
+	return mids, as_of
 
 
 def auto_fetch_exchange_rates():
@@ -1534,16 +1556,15 @@ def auto_fetch_exchange_rates():
 def currency_calculator(property: str, currency: str, fx_amount: float,
                         direction: str = "Buy"):
 	currency = (currency or "").strip().upper()
-	rate_row = frappe.get_all(
+	bd = get_business_date(property)
+	# today's rate only, like payment_rate: an old rate is refused, not reused
+	rate_row = frappe.db.get_value(
 		"Exchange Rate",
-		filters={"property": property, "currency": currency, "disabled": 0},
-		fields=["buy_rate", "sell_rate", "service_tax_pct", "max_exchange"],
-		order_by="rate_date desc",
-		limit_page_length=1,
-	)
-	rate_row = rate_row[0] if rate_row else None
+		{"property": property, "currency": currency, "rate_date": bd, "disabled": 0},
+		["buy_rate", "sell_rate", "service_tax_pct", "max_exchange"], as_dict=True)
 	if not rate_row:
-		frappe.throw(f"No exchange rate for {currency}.")
+		frappe.throw(f"No {currency} rate set for {bd}. Finance fetches "
+		             "or types today's rate on the Currency Desk first.")
 	rate = float(rate_row.buy_rate if direction == "Buy" else rate_row.sell_rate)
 	local = float(fx_amount) * rate
 	tax = local * float(rate_row.service_tax_pct or 0) / 100.0
@@ -1609,6 +1630,11 @@ def home_currency(property: str) -> str:
 
 def _money(value) -> Decimal:
 	return Decimal(str(value or 0))
+
+
+def round_cents(value) -> float:
+	"""Half up to the cent, in Decimal (float round(2.345, 2) gives 2.34)."""
+	return float(_money(value).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP))
 
 
 def fx_to_home(fx_amount, rate) -> float:

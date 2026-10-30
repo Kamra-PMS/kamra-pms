@@ -2208,6 +2208,7 @@ For {name},For {name},لـ {name},Para {name},screens/FolioView.tsx,name,transla
 "For properties that host weddings, conferences or parties.","For properties that host weddings, conferences or parties.",للعقارات التي تستضيف حفلات الزفاف أو المؤتمرات أو الحفلات.,"Para alojamientos que organizan bodas, conferencias o celebraciones.",,,translated
 for your records. We'd love to host you another time -,for your records. We'd love to host you another time -,لسجلاتك. يسعدنا استضافتك مرة أخرى:,para sus registros. Será un gusto recibirle en otra ocasión:,screens/CancellationLetter.tsx,,translated
 For:,For:,لـ:,Para:,lib/thermal.ts,,translated
+Foreign cash,Foreign cash,نقد أجنبي,Efectivo extranjero,screens/CashierTill.tsx,,translated
 Foreign currencies taken,Foreign currencies taken,العملات الأجنبية المقبولة,Monedas extranjeras aceptadas,,,translated
 Format,Format,الصيغة,Formato,screens/AccountingExport.tsx,,translated
 Found,Found,موجود,Encontrado,,,translated

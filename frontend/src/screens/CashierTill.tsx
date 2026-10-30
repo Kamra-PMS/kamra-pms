@@ -339,6 +339,9 @@ export default function CashierTill() {
               ...(hasUpi || Number(session?.system_upi ?? session?.totals?.upi)
                 ? [[t("UPI"), session?.system_upi ?? session?.totals?.upi]]
                 : []),
+              ...(Number(session?.totals?.foreign_cash)
+                ? [[t("Foreign cash"), session?.totals?.foreign_cash]]
+                : []),
               [t("Paid outs"), session?.paid_outs],
               [t("Drops"), session?.drops],
               [t("Petty cash"), session?.petty_cash],

@@ -660,8 +660,8 @@ TOOLS: tuple[ToolSpec, ...] = (
 	_t(
 		"record_payment",
 		"api.add_folio_payment",
-		"""Record money received on a folio. mode: Cash, UPI, Card, Bank,
-		Link. kind: Payment (default), Advance, or Security Deposit.
+		"""Record money received on a folio. mode: Cash, Card, UPI, Bank
+		Transfer or Payment Link. kind: Payment (default), Advance, or Security Deposit.
 		Foreign money: pass currency (e.g. USD) and the foreign amount
 		as amount, mode Cash or Bank Transfer; the PMS converts at the
 		hotel's rate for today (see exchange_rates) and refuses if none

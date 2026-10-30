@@ -1549,12 +1549,17 @@ def add_folio_payment(folio: str, mode: str, amount: float,
 	doc = frappe.get_doc("Folio", folio)
 	from kamra.business_date import get_business_date
 	from kamra.cashier import record_cashier_txn, require_open_session
-	from kamra.ledger import fx_to_home, home_currency, payment_rate
+	from kamra.ledger import fx_to_home, home_currency, payment_rate, round_cents
 	bd = get_business_date(doc.property)
 	# Property currency — never leave Folio Payment on the INR schema default (#341)
 	currency_home = home_currency(doc.property)
 	fx = None
-	if currency and currency.strip().upper() != currency_home:
+	foreign = bool(currency and currency.strip().upper() != currency_home)
+	if mode == "Foreign Cash":
+		if not foreign:
+			frappe.throw("Foreign Cash needs the currency of the notes received.")
+		mode = "Cash"
+	if foreign:
 		if mode not in FX_PAYMENT_MODES:
 			frappe.throw("Foreign currency is taken as Cash or Bank Transfer "
 			             "only. A card is charged in the hotel's currency.")
@@ -1562,12 +1567,16 @@ def add_folio_payment(folio: str, mode: str, amount: float,
 			frappe.throw("Take a security deposit in the hotel's currency: "
 			             "it is refunded in that currency.")
 		r = payment_rate(doc.property, currency)
-		fx = {"currency": r["currency"], "fx_amount": round(float(amount), 2),
+		fx = {"currency": r["currency"], "fx_amount": round_cents(amount),
 		      "exchange_rate": r["rate"]}
 		amount = fx_to_home(fx["fx_amount"], r["rate"])
 		if amount <= 0:
 			frappe.throw("Amount must be positive.")
 	currency = currency_home
+	if fx and mode == "Cash":
+		# foreign notes are not home cash: their own mode on the folio and
+		# the till, so reports agree and the drawer count stays home cash
+		mode = "Foreign Cash"
 	sess = None
 	try:
 		sess = require_open_session(doc.property)
@@ -1590,10 +1599,8 @@ def add_folio_payment(folio: str, mode: str, amount: float,
 	pay = doc.payments[-1]
 	fx_note = (f"{fx['currency']} {fx['fx_amount']:,.2f} @ {fx['exchange_rate']}"
 	           if fx else None)
-	# foreign notes are not home cash: keep them out of the drawer count
 	record_cashier_txn(
-		doc.property, "Payment",
-		"Other" if fx and mode == "Cash" else mode, float(amount),
+		doc.property, "Payment", mode, float(amount),
 		folio=doc.name, reference=reference, notes=fx_note, session=sess)
 	try:
 		from kamra.ledger import record_payment_ledger

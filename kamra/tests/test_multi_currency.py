@@ -77,9 +77,16 @@ class MultiCurrencyTestCase(AuditTestCase):
 		# foreign notes do not inflate the home-cash drawer count
 		txn = frappe.get_all("Cashier Transaction", {"session": self.sess, "folio": self.folio},
 		                     ["mode", "amount", "notes"])
-		self.assertEqual(txn[0].mode, "Other")
+		# folio row and till row both say Foreign Cash, so reports agree
+		self.assertEqual((pay.mode, txn[0].mode), ("Foreign Cash", "Foreign Cash"))
 		self.assertIn("USD 100.00 @ 83.105", txn[0].notes)
-		self.assertEqual(cashier._recompute_session_totals(self.sess)["expected_cash"], 500)
+		totals = cashier._recompute_session_totals(self.sess)
+		self.assertEqual((totals["expected_cash"], totals["foreign_cash"]), (500, 8310.50))
+		modes = {m["mode"] for m in cashier.cash_summary_v2(PROP_A)["modes"]}
+		self.assertIn("Foreign Cash", modes)
+		# Foreign Cash without a currency is not a payment
+		with self.assertRaises(frappe.ValidationError):
+			api.add_folio_payment(self.folio, "Foreign Cash", 100)
 		# a later rate change never rewrites history
 		self.rate(buy=90)
 		self.assertEqual(frappe.db.get_value("Folio Payment", pay.name, "amount"), 8310.50)
@@ -131,6 +138,28 @@ class MultiCurrencyTestCase(AuditTestCase):
 			api.refund_folio_payment(self.folio, change, "Cash", "Change")
 			self.assertAlmostEqual(frappe.get_doc("Folio", self.folio).balance, 0, places=2)
 
+	def test_fx_amount_rounds_half_up(self):
+		self.rate(buy=1)
+		api.add_folio_payment(self.folio, "Cash", 2.345, currency="USD")
+		self.assertEqual(frappe.get_doc("Folio", self.folio).payments[-1].fx_amount, 2.35)
+
+	def test_exchange_desk_needs_todays_rate(self):
+		frappe.get_doc({"doctype": "Exchange Rate", "property": PROP_A,
+		                "currency": "USD", "rate_date": YESTERDAY,
+		                "buy_rate": 80, "sell_rate": 81}).insert()
+		with self.assertRaisesRegex(frappe.ValidationError, "No USD rate set for"):
+			ledger.currency_calculator(PROP_A, "USD", 10)
+		with self.assertRaisesRegex(frappe.ValidationError, "No USD rate set for"):
+			ledger.post_exchange(PROP_A, "USD", 10)
+		self.rate(buy=83, sell=84)
+		self.assertEqual(ledger.currency_calculator(PROP_A, "usd", 10)["local_amount"], 830)
+
+	def test_rates_set_by_finance_not_agents(self):
+		from kamra import mcp_tools
+		self.assertNotIn("Kamra Agent", ledger.upsert_exchange_rate._kamra_roles)
+		targets = {t.dotted for t in mcp_tools.TOOLS}
+		self.assertFalse(targets & {"ledger.upsert_exchange_rate", "ledger.fetch_exchange_rates"})
+
 	def test_display_needs_todays_rate(self):
 		with self.assertRaises(frappe.ValidationError):
 			ledger.folio_in_currency(self.folio, "EUR")
@@ -166,6 +195,8 @@ class OnlineRatesTestCase(AuditTestCase):
 		settings.write_kv(PROP_A, "fx_margin_pct", 2)
 		settings.clear_cache(PROP_A)
 		self.addCleanup(settings.clear_cache, PROP_A)
+		for k in ("kamra:fx_not_offered:", "kamra:fx_market:"):
+			frappe.cache.delete_keys(k)
 
 	rate = MultiCurrencyTestCase.rate
 
@@ -251,6 +282,25 @@ class OnlineRatesTestCase(AuditTestCase):
 			settings.clear_cache(PROP_A)
 			ledger.auto_fetch_exchange_rates()  # nothing missing: no call
 			self.assertEqual(fake.call_count, calls)
+
+	def test_weak_currency_rate_keeps_precision(self):
+		self.fetch(_fake_api({"USD": 0.0125, "EUR": 1 / 0.000123456789}))
+		self.assertAlmostEqual(self.row("EUR").market_rate, 0.000123457, places=9)
+
+	def test_scheduled_fetch_remembers_gaps_and_caches_reply(self):
+		from unittest.mock import patch
+
+		from kamra import settings
+		settings.write_kv(PROP_A, "fx_auto_fetch", 1)
+		settings.clear_cache(PROP_A)
+		with patch("requests.get", _fake_api()) as fake, patch("frappe.db.commit"):
+			ledger.auto_fetch_exchange_rates()  # USD, EUR filled; GBP not offered
+			self.assertEqual(fake.call_count, 1)
+			ledger.auto_fetch_exchange_rates()  # GBP remembered: no call
+			self.assertEqual(fake.call_count, 1)
+			frappe.cache.delete_keys("kamra:fx_not_offered:")
+			ledger.auto_fetch_exchange_rates()  # GBP asked again, from the hour's reply
+			self.assertEqual(fake.call_count, 1)
 
 	def test_fetch_needs_finance(self):
 		self.assertNotIn("Kamra Agent", ledger.fetch_exchange_rates._kamra_roles)
