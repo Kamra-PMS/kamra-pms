@@ -10334,6 +10334,19 @@ def t_nicaragua_pack():
 		frappe.clear_document_cache("Property", "EVAL Nicaragua Hotel")
 
 
+@check("SPA branding: native Website Settings")
+def t_native_website_branding():
+	from unittest.mock import patch
+
+	from kamra.public_api import site_info
+
+	values = {"app_name": "Example Hotels", "app_logo": "/files/example.svg"}
+	with patch.object(frappe, "get_website_settings", side_effect=values.get):
+		info = site_info()
+	assert info.get("app_name") == "Example Hotels", info
+	assert info.get("app_logo") == "/files/example.svg", info
+
+
 def execute():
 	global RT, ROOM
 	# frappe.locale.get_locale_value crashes (UnboundLocalError) when no
@@ -10349,7 +10362,7 @@ def execute():
 	frappe.db.savepoint("eval_start")
 	try:
 		RT, ROOM = setup()
-		for fn in (t1, t2, t3, t3b, t3c, t3d, t3f, t3g, t3h, t3i, t3j, t4,
+		for fn in (t_native_website_branding, t1, t2, t3, t3b, t3c, t3d, t3f, t3g, t3h, t3i, t3j, t4,
 		           t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16,
 		           t17, t18, t19, t20, t21, t22, t23, t24, t25, t26, t27, t28,
 		           t29, t30, t31, t32, t33, t34, t35, t36, t37, t38, t39, t39b, t39c, t39d,
