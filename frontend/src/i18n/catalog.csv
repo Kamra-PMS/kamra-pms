@@ -404,6 +404,7 @@
 {v0} rooms have a status mismatch on {v1}. For each say which side looks wrong.,{v0} rooms have a status mismatch on {v1}. For each say which side looks wrong.,{v0} غرف بها عدم تطابق في الحالة في {v1}. بيّن لكل منها أي طرف يبدو خاطئًا.,Hay {v0} habitaciones con discrepancias de estado el {v1}. Indique qué registro parece incorrecto en cada caso.,,v0 v1,translated
 {v0} row(s) couldn't be imported,{v0} row(s) couldn't be imported,تعذّر استيراد {v0} صف,Filas que no se pudieron importar: {v0},screens/MenuImport.tsx,v0,translated
 {v0} row(s) will be skipped,{v0} row(s) will be skipped,سيتم تخطي {v0} صف,Filas que se omitirán: {v0},screens/MenuImport.tsx,v0,translated
+{v0} sent to {v1},{v0} sent to {v1},أُرسل {v0} إلى {v1},{v0} enviado a {v1},screens/Receivables.tsx,v0 v1,translated
 {v0} served,{v0} served,تمت خدمة {v0},Comensales atendidos: {v0},screens/banquet/Steps.tsx,v0,translated
 {v0} still has open items - resolve them or acknowledge with a reason.,{v0} still has open items - resolve them or acknowledge with a reason.,لا يزال لدى {v0} بنود مفتوحة: عالجها أو أقرّ بها مع ذكر السبب.,{v0} aún tiene pendientes. Resuélvalos o autorice la excepción con un motivo.,,v0,translated
 {v0}: pick one of {v1}.,{v0}: pick one of {v1}.,{v0}: اختر أحد {v1}.,{v0}: seleccione una opción de {v1}.,,v0 v1,translated
@@ -1912,7 +1913,7 @@ Edit the menu,Edit the menu,تعديل القائمة,Editar el menú,,,translat
 Egg,Egg,بيض,Huevo,../../kamra/settings.py,,translated
 EGS serial (Phase 2),EGS serial (Phase 2),الرقم التسلسلي لـ EGS (المرحلة 2),Número de serie EGS (fase 2),,,translated
 elapsed,elapsed,منقضي,transcurrido,screens/Kitchen.tsx,,translated
-Email,Email,البريد الإلكتروني,Correo electrónico,components/CheckInDialog.tsx; screens/Banquet.tsx; screens/BanquetFunction.tsx; screens/BookingEngine.tsx; screens/PublicCheckin.tsx; screens/RegistrationCard.tsx; screens/Reports.tsx; screens/ReservationDetail.tsx; screens/settings/AccessPages.tsx,,translated
+Email,Email,البريد الإلكتروني,Correo electrónico,components/CheckInDialog.tsx; screens/Banquet.tsx; screens/BanquetFunction.tsx; screens/BookingEngine.tsx; screens/PublicCheckin.tsx; screens/Receivables.tsx; screens/RegistrationCard.tsx; screens/Reports.tsx; screens/ReservationDetail.tsx; screens/settings/AccessPages.tsx,,translated
 Email (optional),Email (optional),البريد الإلكتروني (اختياري),Correo electrónico (opcional),screens/PublicBooking.tsx; screens/PublicListing.tsx,,translated
 Email addresses (comma-separated),Email addresses (comma-separated),عناوين البريد (مفصولة بفواصل),Direcciones de correo (separadas por comas),screens/Reports.tsx,,translated
 Email every Monday,Email every Monday,أرسل كل يوم اثنين,Enviar cada lunes,screens/Reports.tsx,,translated
@@ -3000,10 +3001,12 @@ Module on,Module on,الوحدة مفعلة,Módulo activado,screens/settings/Se
 Modules,Modules,الوحدات,Módulos,components/CommandPalette.tsx,,translated
 Money,Money,المبالغ,Resumen de pagos,screens/RegistrationCard.tsx,,translated
 money goes straight to this property's own gateway account,money goes straight to this property's own gateway account,تذهب الأموال مباشرة إلى حساب بوابة الدفع الخاص بهذا العقار,el dinero llega directamente a la cuenta de la pasarela de este alojamiento,,,translated
+Month,Month,الشهر,Mes,screens/Receivables.tsx,,translated
 Month Availability,Month Availability,توفر الشهر,Disponibilidad mensual,,,translated
 Month by month,Month by month,شهراً بشهر,Mes a mes,screens/Banquet.tsx,,translated
 month to date,month to date,من بداية الشهر,acumulado del mes,screens/Dashboard.tsx,,translated
 Month to date,Month to date,من بداية الشهر حتى اليوم,Acumulado del mes,screens/AuditPack.tsx,,translated
+Month-end bill,Month-end bill,فاتورة نهاية الشهر,Factura de fin de mes,screens/Receivables.tsx,,translated
 Month-to-date performance against your targets.,Month-to-date performance against your targets.,الأداء من بداية الشهر حتى الآن مقابل أهدافك.,Resultados del mes a la fecha respecto a sus metas.,screens/RevenueReports.tsx,,translated
 months,months,أشهر,meses,,,translated
 more,more,المزيد,más,screens/HkLaundry.tsx; screens/Laundry.tsx,,translated

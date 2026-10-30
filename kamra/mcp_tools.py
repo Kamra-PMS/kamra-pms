@@ -889,6 +889,18 @@ TOOLS: tuple[ToolSpec, ...] = (
 		group="Billing",
 	),
 	_t(
+		"company_monthly_bill",
+		"statements.company_monthly_bill",
+		"""A company's month-end bill for one account: every bill of the month
+		(month as YYYY-MM) with its invoice number, taxable value and tax, the
+		company's payments, and the balance brought and carried forward.
+		Each stay keeps its own tax invoice; this is the monthly summary.
+		Read-only.""",
+		{"account": _p("string"), "month": _p("string")},
+		required=("account", "month"),
+		group="Billing",
+	),
+	_t(
 		"create_ar_invoice",
 		"receivables.create_ar_invoice",
 		"""Bill a company account directly for something that was not a stay

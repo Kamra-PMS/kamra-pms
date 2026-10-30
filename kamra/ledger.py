@@ -669,7 +669,7 @@ def city_ledger_open_folios(account: str) -> list[dict]:
 		                 THEN COALESCE(invoice_date, posting_date) END) AS invoice_date,
 		       MIN(CASE WHEN kind = 'Invoice' THEN due_date END) AS due_date,
 		       MIN(posting_date) AS first_date,
-		       MAX(invoice_number) AS invoice_number,
+		       MAX(CASE WHEN kind = 'Invoice' THEN invoice_number END) AS invoice_number,
 		       COALESCE(SUM(debit - credit), 0) AS billed
 		FROM `tabCity Ledger Entry`
 		WHERE account = %s AND IFNULL(folio, '') != '' AND kind != 'Payment'

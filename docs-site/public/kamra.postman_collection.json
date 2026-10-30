@@ -12958,6 +12958,80 @@
        }
       }
      }
+    },
+    {
+     "name": "company_monthly_bill",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.statements.company_monthly_bill",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.statements.company_monthly_bill"
+       ]
+      },
+      "description": "A company's month-end bill: every bill of the month with its invoice\nnumber, taxable value and tax, the company's payments, and the balance\nbrought and carried forward. format=html returns the printable page.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"account\": \"<account>\",\n  \"month\": \"<month>\",\n  \"format\": \"json\",\n  \"lang\": \"en\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "email_monthly_bill",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.statements.email_monthly_bill",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.statements.email_monthly_bill"
+       ]
+      },
+      "description": "Email a company its month-end bill (HTML attachment). Without\nrecipients it goes to the company's billing contact email.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"account\": \"<account>\",\n  \"month\": \"<month>\",\n  \"lang\": \"en\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
     }
    ]
   },

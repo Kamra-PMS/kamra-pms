@@ -240,6 +240,12 @@ function AccountPage({ account }: { account: string }) {
   const [acc, setAcc] = useState<Account | null>(null)
   const [err, setErr] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
+  // last month by default: the month-end bill goes out after the month closes
+  const [month, setMonth] = useState(() => {
+    const d = new Date()
+    d.setDate(0)
+    return d.toLocaleDateString("en-CA").slice(0, 7)
+  })
   const [sheet, setSheet] = useState<
     null | "setup" | "invoice" | "payment" | { view: string } | { transfer: OpenItem }
   >(null)
@@ -257,11 +263,12 @@ function AccountPage({ account }: { account: string }) {
     load()
   }
 
-  // the statement is an HTML page: the browser prints it or saves it as PDF
-  const openStatement = async () => {
+  // the statement and the month-end bill are HTML pages: the browser
+  // prints them or saves them as PDF
+  const openPage = async (method: string, args: Record<string, unknown> = {}) => {
     try {
-      const res = await call<{ content: string }>("kamra.statements.company_statement", {
-        account, format: "html", lang: language,
+      const res = await call<{ content: string }>(method, {
+        account, format: "html", lang: language, ...args,
       })
       const w = window.open("", "_blank")
       if (w) {
@@ -269,6 +276,17 @@ function AccountPage({ account }: { account: string }) {
         w.document.close()
         w.print()
       }
+    } catch (e) {
+      setErr(serverError(e))
+    }
+  }
+
+  const emailMonthly = async () => {
+    try {
+      const res = await call<{ sent_to: string[]; number: string }>("kamra.statements.email_monthly_bill", {
+        account, month, lang: language,
+      })
+      setNotice(translate("{v0} sent to {v1}", { v0: res.number, v1: res.sent_to.join(", ") }))
     } catch (e) {
       setErr(serverError(e))
     }
@@ -314,8 +332,15 @@ function AccountPage({ account }: { account: string }) {
         {isFinance ? (
           <div className="flex flex-wrap gap-2">
             <Button variant="outline" onClick={() => setSheet("setup")}>{translate("Account setup")}</Button>
-            <Button variant="outline" onClick={() => void openStatement()}>{translate("Statement")}</Button>
+            <Button variant="outline" onClick={() => void openPage("kamra.statements.company_statement")}>{translate("Statement")}</Button>
             <Button variant="outline" onClick={() => void emailStatement()}>{translate("Email statement")}</Button>
+            <span className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 bg-white pl-2">
+              <input type="month" value={month} onChange={(e) => setMonth(e.target.value)}
+                aria-label={translate("Month")} className="bg-transparent text-sm outline-none" />
+              <Button variant="ghost" disabled={!month}
+                onClick={() => void openPage("kamra.statements.company_monthly_bill", { month })}>{translate("Month-end bill")}</Button>
+              <Button variant="ghost" disabled={!month} onClick={() => void emailMonthly()}>{translate("Email")}</Button>
+            </span>
             <Button variant="outline" onClick={() => setSheet("payment")}>{translate("Record payment")}</Button>
             <Button disabled={acc.restricted} onClick={() => setSheet("invoice")}>
               <Plus className="size-4" />{translate("New invoice")}

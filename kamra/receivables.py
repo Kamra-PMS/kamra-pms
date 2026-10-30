@@ -232,7 +232,7 @@ def create_ar_invoice(account: str, lines, reference: str | None = None,
 	ref = (reference or "").strip()[:140] or None
 	frappe.db.set_value(
 		"City Ledger Entry", {"folio": folio.name, "kind": "Invoice"},
-		{"invoice_number": invoice, "reference": ref or folio.name})
+		"reference", ref or folio.name)
 	from kamra.savings import log_action
 	log_action("create_ar_invoice", "Folio", folio.name, acc.property,
 	           rationale=f"{acc.company}: invoice {invoice} for "

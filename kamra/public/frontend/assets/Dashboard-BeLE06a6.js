@@ -3,6 +3,7 @@
 <<<<<<<< HEAD:kamra/public/frontend/assets/Dashboard-BeLE06a6.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/Dashboard-BeLE06a6.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/Dashboard-BeLE06a6.js
+<<<<<<<< HEAD:kamra/public/frontend/assets/Dashboard-BeLE06a6.js
 import{r as d,j as e}from"./vendor-D6bHyl-8.js";import{b as w,u as D,f,g as A,s as _,aK as P,t as x,ay as T,c as l,ac as I,aT as $,W as k,a5 as C,aq as L,q as E,U as B,i as z,m as F}from"./index-B3i2Wflk.js";import{C as m,a as h,b as j,c as b}from"./card-P9sLO7kR.js";import{S as U}from"./stat-card-DrZW9k6F.js";import{C as q}from"./chart-pie-Cy3ygvWP.js";import{L as M}from"./log-in-DL9OskLm.js";import"./arrow-up-right-BrdATTMK.js";/**
 ========
 import{r as d,j as e}from"./vendor-D6bHyl-8.js";import{b as w,u as D,f,g as A,s as _,aK as P,t as x,ay as T,c as l,ac as I,aT as $,W as k,a5 as C,aq as L,r as E,U as B,i as z,m as F}from"./index-DwNNU3P0.js";import{C as m,a as h,b as j,c as b}from"./card-BUFQtSyT.js";import{S as U}from"./stat-card-Cx0BF9XS.js";import{C as M}from"./chart-pie-1SA-PGcH.js";import{L as q}from"./log-in-CuaEAtts.js";import"./arrow-up-right-971FtmbA.js";/**
@@ -19,6 +20,9 @@ import{r as d,j as e}from"./vendor-D6bHyl-8.js";import{b as w,u as D,f,g as A,s 
 ========
 import{r as d,j as e}from"./vendor-D6bHyl-8.js";import{b as w,u as D,f,g as A,s as _,aK as P,t as x,ay as T,c as l,ac as I,aT as $,W as k,a5 as C,aq as L,q as E,U as B,i as z,m as F}from"./index-CE8_F8LC.js";import{C as m,a as h,b as j,c as b}from"./card-BjNHKDFz.js";import{S as U}from"./stat-card-Cjne5ABq.js";import{C as q}from"./chart-pie-BSa4tz0I.js";import{L as M}from"./log-in-CTJAUWdJ.js";import"./arrow-up-right-BNQpYBpq.js";/**
 >>>>>>>> origin/feat/accounts-receivable:kamra/public/frontend/assets/Dashboard-P9FA0LZO.js
+========
+import{r as d,j as e}from"./vendor-D6bHyl-8.js";import{b as w,u as D,f,g as A,s as _,aK as P,t as x,ay as T,c as l,ac as I,aT as $,W as k,a5 as C,aq as L,q as E,U as B,i as z,m as F}from"./index-Cs1-hUvj.js";import{C as m,a as h,b as j,c as b}from"./card-hPBUXp1-.js";import{S as U}from"./stat-card-ClP5u2nQ.js";import{C as q}from"./chart-pie-BVo5aBuX.js";import{L as M}from"./log-in-tJSVuXXB.js";import"./arrow-up-right-DfGNHGSG.js";/**
+>>>>>>>> origin/feat/monthly-company-bill:kamra/public/frontend/assets/Dashboard-C68dSVsq.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.

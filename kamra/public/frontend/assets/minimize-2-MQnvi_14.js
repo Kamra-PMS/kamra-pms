@@ -4,6 +4,7 @@
 <<<<<<<< HEAD:kamra/public/frontend/assets/minimize-2-MQnvi_14.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/minimize-2-MQnvi_14.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/minimize-2-MQnvi_14.js
+<<<<<<<< HEAD:kamra/public/frontend/assets/minimize-2-MQnvi_14.js
 import{b as a}from"./index-B3i2Wflk.js";/**
 ========
 import{b as a}from"./index-DwNNU3P0.js";/**
@@ -23,6 +24,9 @@ import{b as a}from"./index-A1luJzPY.js";/**
 ========
 import{b as a}from"./index-CE8_F8LC.js";/**
 >>>>>>>> origin/feat/accounts-receivable:kamra/public/frontend/assets/minimize-2-BHn42Tck.js
+========
+import{b as a}from"./index-Cs1-hUvj.js";/**
+>>>>>>>> origin/feat/monthly-company-bill:kamra/public/frontend/assets/minimize-2-BoHwDFE5.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.

@@ -178,6 +178,53 @@ class ReceivablesTestCase(cc.CreditControlTestCase):
 			self.assertTrue(perms, role)
 			self.assertFalse(any(p.write or p.create or p.delete for p in perms), role)
 
+	# month-end bill ------------------------------------------------------------
+
+	def test_checkout_bill_gets_its_invoice_number_on_the_account(self):
+		from kamra import folio as folio_mod
+		_, folio = self.bill(500)
+		self.assertFalse(frappe.db.get_value("City Ledger Entry",
+		                                     {"folio": folio, "kind": "Invoice"}, "invoice_number"))
+		number = folio_mod.close_folio(folio)
+		self.assertEqual(_open(self.account)[folio]["invoice_number"], number)
+
+	def test_monthly_bill_rolls_up_the_month(self):
+		from frappe.utils import getdate
+
+		from kamra import statements
+		out = self.invoice({"charge_type": "Misc", "description": "Hall", "amount": 1000,
+		                    "gst_rate": 18})
+		ledger.city_ledger_settle(self.account, 500)
+		month = str(getdate(frappe.db.get_value(
+			"City Ledger Entry", {"folio": out["folio"], "kind": "Invoice"},
+			"creation")))[:7]
+		mb = statements.monthly_bill(self.account, month)
+		line = next(b for b in mb["bills"] if b["invoice"] == out["invoice_number"])
+		self.assertEqual((line["taxable"], line["tax"], line["amount"]), (1000, 180, 1180))
+		self.assertAlmostEqual(mb["paid"], 500, 2)
+		self.assertAlmostEqual(mb["closing"], mb["opening"] + mb["billed"] - 500, 2)
+		self.assertTrue(mb["number"].startswith("SOA-") and mb["number"].endswith(month.replace("-", "")))
+		# an account invoice is corrected by credit note, never cancelled; a
+		# cancelled stay bill's number leaves the account until it re-closes
+		from kamra import folio as folio_mod
+		with self.assertRaises(frappe.ValidationError):
+			folio_mod.cancel_invoice(out["folio"], "UT wrong GSTIN")
+		_, stay_folio = self.bill(300)
+		folio_mod.close_folio(stay_folio)
+		ledger.issue_credit_note(stay_folio, 50, "UT goodwill")
+		folio_mod.cancel_invoice(stay_folio, "UT wrong GSTIN")
+		self.assertIsNone(frappe.db.get_value("City Ledger Entry",
+		                                      {"folio": stay_folio, "kind": "Invoice"},
+		                                      "invoice_number"))
+		# the credit note's CN- number doesn't stand in for the bill's
+		self.assertIsNone(_open(self.account)[stay_folio]["invoice_number"])
+		for bad in ("2026-13", "2026-1", "202610", "2026-10-05", ""):
+			with self.assertRaises(frappe.ValidationError, msg=bad):
+				statements.monthly_bill(self.account, bad)
+		html = statements.monthly_bill_html(mb)
+		self.assertIn(out["invoice_number"], html)
+		self.assertIn("not a tax invoice", html)
+
 	# second review ---------------------------------------------------------
 
 	def test_account_invoice_prints_and_exports_as_a_tax_invoice(self):

@@ -4,6 +4,7 @@
 <<<<<<<< HEAD:kamra/public/frontend/assets/Inventory-C_LZM_fp.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/Inventory-C_LZM_fp.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/Inventory-C_LZM_fp.js
+<<<<<<<< HEAD:kamra/public/frontend/assets/Inventory-C_LZM_fp.js
 import{r as a,j as e}from"./vendor-D6bHyl-8.js";import{b as B,i as z,J as G,f as _,g as S,t,Y as D,B as y,ao as H,R as P,e as w,aC as $,a as F,X as Q}from"./index-B3i2Wflk.js";import{T as U}from"./trash-2-BIKDb3Jw.js";import{T as W}from"./triangle-alert-SK9yi8mQ.js";import{B as K}from"./ban--PWWPlme.js";/**
 ========
 import{r as a,j as e}from"./vendor-D6bHyl-8.js";import{b as B,i as z,J as G,f as _,g as S,t,Y as D,B as y,ao as H,R as P,e as w,aC as $,a as F,X as Q}from"./index-DwNNU3P0.js";import{T as U}from"./trash-2-z-RY0FyS.js";import{T as W}from"./triangle-alert-B8uoa2Dq.js";import{B as K}from"./ban-D_SCBBhQ.js";/**
@@ -23,6 +24,9 @@ import{r as a,j as e}from"./vendor-D6bHyl-8.js";import{b as B,i as z,J as G,f as
 ========
 import{r as a,j as e}from"./vendor-D6bHyl-8.js";import{b as B,i as z,J as G,f as _,g as S,t,Y as D,B as y,ao as H,R as P,e as w,aC as $,a as F,X as Q}from"./index-CE8_F8LC.js";import{T as U}from"./trash-2-DUmKyXVy.js";import{T as W}from"./triangle-alert-Fmj1LO31.js";import{B as K}from"./ban-CmeuHjNe.js";/**
 >>>>>>>> origin/feat/accounts-receivable:kamra/public/frontend/assets/Inventory-B90n_zxD.js
+========
+import{r as a,j as e}from"./vendor-D6bHyl-8.js";import{b as B,i as z,J as G,f as _,g as S,t,Y as D,B as y,ao as H,R as P,e as w,aC as $,a as F,X as Q}from"./index-Cs1-hUvj.js";import{T as U}from"./trash-2-DI43FUUZ.js";import{T as W}from"./triangle-alert-DOzu7K3j.js";import{B as K}from"./ban-B4aYiP4D.js";/**
+>>>>>>>> origin/feat/monthly-company-bill:kamra/public/frontend/assets/Inventory-Bt85jYMB.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.
