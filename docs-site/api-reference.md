@@ -2207,6 +2207,23 @@ path as room service - billing rules and the alcohol rule included.
 | `order` | yes |  |
 | `room` | yes |  |
 
+### `kamra.pos.move_room_bill`
+
+**POST**
+
+A bill charged to the wrong room: move it to the right one, the same
+business day it was posted. The charge leaves the first guest's folio
+(ledger reversed) and lands on the right guest's, by the same billing
+rules as room service, so liquor never reaches a company bill. Later
+than that day it is a correction for Finance (allowance, then repost).
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `order` | yes |  |
+| `room` | yes |  |
+| `reason` | yes |  |
+| `pin` | no | `None` |
+
 ### `kamra.pos.create_order`
 
 **POST**

@@ -11,6 +11,7 @@
 <<<<<<<< HEAD:kamra/public/frontend/assets/thermal-lR5O1Zqo.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/thermal-lR5O1Zqo.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/thermal-lR5O1Zqo.js
+<<<<<<<< HEAD:kamra/public/frontend/assets/thermal-lR5O1Zqo.js
 import{t as a,a as c,m as o,c as m}from"./index-B3i2Wflk.js";const v=`
 ========
 import{t as a,a as c,m as o,c as m}from"./index-DwNNU3P0.js";const v=`
@@ -51,6 +52,9 @@ import{t as a,a as c,m as o,c as m}from"./index-NvI1m427.js";const v=`
 ========
 import{t as a,a as c,m as o,c as m}from"./index-C2hAgVSl.js";const v=`
 >>>>>>>> origin/feat/frontdesk-early-checkout:kamra/public/frontend/assets/thermal-CoGQj6uR.js
+========
+import{t as a,a as c,m as o,c as m}from"./index-i8IifY61.js";const v=`
+>>>>>>>> origin/feat/pos-reroute:kamra/public/frontend/assets/thermal--ZYzLO17.js
   @page { size: 80mm auto; margin: 0 }
   * { margin: 0; padding: 0; box-sizing: border-box }
   html, body { background: #fff; color: #000 }

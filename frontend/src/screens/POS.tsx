@@ -9,6 +9,7 @@ import PosSidePanel from "./pos/PosSidePanel"
 import SettleSheet from "./pos/SettleSheet"
 import OpenBillsPopup from "./pos/OpenBillsPopup"
 import OrderHistory from "./pos/OrderHistory"
+import MoveRoomBill from "./pos/MoveRoomBill"
 import VoidApproval, { type VoidArgs } from "./pos/VoidApproval"
 import { useNavigate } from "react-router-dom"
 import { call, getCurrentProperty } from "../lib/api"
@@ -142,6 +143,7 @@ interface Detail {
   nc_note: string | null
   kot_tickets: KotTicket[]
   paid: number
+  posted_to_folio?: number
   payment_mode: string | null
   discount_amount: number
   subtotal: number
@@ -1326,6 +1328,10 @@ export default function POS() {
                   </div>
                 </div>
                 <div className="flex shrink-0 items-center gap-1">
+                  {detail.status === "Delivered" && !!detail.posted_to_folio && !detail.paid && !detail.nc && (
+                    <MoveRoomBill order={detail.name} currentRoom={detail.room} rooms={rooms}
+                      onMoved={() => { void reloadDetail(); loadRooms() }} />
+                  )}
                   {detail.table_no && detail.status !== "Delivered" && (
                     <button type="button" title={t("New bill on this table")}
                       onClick={() => newOrder(detail.table_no!)}

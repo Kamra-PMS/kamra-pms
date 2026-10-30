@@ -671,6 +671,14 @@ def transfer_charges(from_folio: str, charge_rows: list, to_folio: str):
 	src = frappe.get_doc("Folio", from_folio)
 	dst = frappe.get_doc("Folio", to_folio)
 	_assert_same_stay(src, dst)
+	move_charges(src, dst, charge_rows)
+
+
+def move_charges(src, dst, charge_rows: list, reservation: str | None = None):
+	"""Take charge lines off one open folio and put them on another, ledger
+	and all. Callers decide whose bill a line may move to: transfer_charges
+	keeps it within a stay or group, pos.move_room_bill to the right room.
+	`reservation` re-points the lines at another stay."""
 	if "Closed" in (src.status, dst.status):
 		frappe.throw("Both folios must be open to transfer charges.")
 	from kamra.ledger import ledger_charges, reverse_ledger_for_charge
@@ -678,13 +686,13 @@ def transfer_charges(from_folio: str, charge_rows: list, to_folio: str):
 	for charge_row in charge_rows:
 		row = next((c for c in src.charges if c.name == charge_row), None)
 		if not row:
-			frappe.throw(f"Charge {charge_row} not found on {from_folio}.")
+			frappe.throw(f"Charge {charge_row} not found on {src.name}.")
 		if row.get("is_alcohol") and dst.folio_type in ("Company", "Group"):
 			frappe.throw("Alcohol cannot be billed to a company folio.")
 		dst.append("charges", {
 			"posting_date": row.posting_date,
 			"charge_type": row.charge_type,
-			"reservation": row.get("reservation"),
+			"reservation": reservation or row.get("reservation"),
 			"description": row.description,
 			"qty": row.qty,
 			"rate": row.rate,
@@ -703,6 +711,7 @@ def transfer_charges(from_folio: str, charge_rows: list, to_folio: str):
 	src.save(ignore_permissions=True)
 	dst.save(ignore_permissions=True)
 	ledger_charges(dst, moved)
+	return moved
 
 
 def split_charge(from_folio: str, charge_row: str, to_folio: str,

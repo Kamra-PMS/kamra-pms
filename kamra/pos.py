@@ -231,6 +231,74 @@ def charge_to_room(order: str, room: str):
 
 @frappe.whitelist(methods=["POST"])
 @require_roles(*POS_ROLES)
+def move_room_bill(order: str, room: str, reason: str, pin: str | None = None):
+	"""A bill charged to the wrong room: move it to the right one, the same
+	business day it was posted. The charge leaves the first guest's folio
+	(ledger reversed) and lands on the right guest's, by the same billing
+	rules as room service, so liquor never reaches a company bill. Later
+	than that day it is a correction for Finance (allowance, then repost)."""
+	from kamra.authz import require_cashier_pin
+	from kamra.business_date import get_business_date
+	from kamra.folio import move_charges, target_folio
+
+	reason = (reason or "").strip()
+	if not reason:
+		frappe.throw(_("Say why the bill is moving."))
+	doc = frappe.get_doc("POS Order", order)
+	require_cashier_pin(doc.property, pin)
+	if not doc.posted_to_folio or not doc.reservation:
+		frappe.throw(_("This bill is not on a room yet. Use Charge to room instead."))
+	if doc.paid or doc.nc:
+		frappe.throw(_("This bill was settled at the outlet, so it is on no room."))
+	rows = frappe.get_all(
+		"Folio Charge",
+		filters={"parenttype": "Folio", "description": ("like", f"%({doc.name})%"),
+		         "reservation": doc.reservation},
+		fields=["name", "parent", "idx", "posting_date", "is_alcohol", "amount"])
+	if not rows:
+		frappe.throw(_("Couldn't find this bill on the room's folio. It may have "
+		              "been moved or voided already."))
+	# split on the folio, or partly allowed off: moving one piece would
+	# leave the rest on the wrong guest
+	if len(rows) != 1 or abs(float(rows[0].amount or 0) - float(doc.order_total or 0)) > 0.009:
+		frappe.throw(_("This bill was split or changed on the folio, so it can't be "
+		              "moved in one go. Move its lines from the folio instead."))
+	row = rows[0]
+	# an allowance carries no link to its charge: one posted after this bill
+	# on the same folio may be against it, and would stay with the wrong guest
+	if frappe.db.exists("Folio Charge", {"parenttype": "Folio", "parent": row.parent,
+	                                     "charge_type": "Allowance", "idx": (">", row.idx)}):
+		frappe.throw(_("An allowance was posted on this folio after the bill. Reverse "
+		              "the allowance first, then move the bill."))
+	if frappe.db.get_value("Folio", row.parent, "status") == "Closed":
+		frappe.throw(_("The bill is on a folio that is already closed. Ask Finance "
+		              "to correct it."))
+	if str(row.posting_date) != str(get_business_date(doc.property)):
+		frappe.throw(_("Only a bill posted today can be moved. For an earlier "
+		              "day, ask Finance to correct both folios."))
+	old_room = doc.room
+	new_room, new_res = _in_house_stay(doc.property, room, None)
+	if new_res == doc.reservation:
+		frappe.throw(_("The bill is already on this room."))
+	src = frappe.get_doc("Folio", row.parent)
+	dst = frappe.get_doc("Folio", target_folio(
+		frappe.get_doc("Reservation", new_res), "Food & Beverage",
+		is_alcohol=bool(row.is_alcohol)))
+	from kamra.webhooks import emit_folio_posted
+	for line in move_charges(src, dst, [row.name], reservation=new_res):
+		emit_folio_posted(dst, line)
+	doc.db_set({"room": new_room, "reservation": new_res,
+	            "guest": _bill_guest(new_res, None)}, update_modified=False)
+	number = lambda r: frappe.db.get_value("Room", r, "room_number") or r  # noqa: E731
+	from kamra.savings import log_action
+	log_action("pos_move_room_bill", "POS Order", doc.name, doc.property,
+	           rationale=f"Room {number(old_room)} to {number(new_room)}: {reason}")
+	return {"ok": True, "order": doc.name, "room": new_room,
+	        "reservation": new_res, "folio": dst.name}
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles(*POS_ROLES)
 def create_order(outlet: str, items, property: str | None = None,
                  room: str | None = None, reservation: str | None = None,
                  table_no: str | None = None, source: str = "Manual",

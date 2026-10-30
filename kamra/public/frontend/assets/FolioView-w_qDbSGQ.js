@@ -4,6 +4,7 @@
 <<<<<<<< HEAD:kamra/public/frontend/assets/FolioView-w_qDbSGQ.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/FolioView-w_qDbSGQ.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/FolioView-w_qDbSGQ.js
+<<<<<<<< HEAD:kamra/public/frontend/assets/FolioView-w_qDbSGQ.js
 import{f as Ae,u as Le,r as m,j as e,L as _e}from"./vendor-D6bHyl-8.js";import{b as Fe,u as ke,w as Be,x as Ge,d as De,f as d,s as ee,y as Ve,z as qe,c,X as Me,B as f,t as v,P as Ue,A as I,m as Oe,g as He,i as We}from"./index-B3i2Wflk.js";import{E as Ke}from"./EditableNationality-u7NbnMF7.js";import{L as Ye}from"./LinkedRecords-CozrDlf5.js";import{B as Qe}from"./badge-BYCHF313.js";import{C as ie,c as le,a as ve,b as Ne}from"./card-P9sLO7kR.js";import{A as Xe}from"./arrow-left-vZ-cAWut.js";import{T as Ze}from"./trash-2-BIKDb3Jw.js";import"./resource-DLz1Dbte.js";import"./circle-user-round-BFei2LQ4.js";import"./party-popper-CSGOjV0N.js";/**
 ========
 import{f as Ae,u as Le,r as m,j as e,L as _e}from"./vendor-D6bHyl-8.js";import{b as Fe,u as ke,w as Be,x as Ge,d as De,f as d,s as ee,y as Ve,z as qe,c,X as Me,B as f,t as v,P as Ue,A as I,m as Oe,g as He,i as We}from"./index-BBOVPGnf.js";import{E as Ke}from"./EditableNationality-DUms_V-_.js";import{L as Ye}from"./LinkedRecords-DkcTX_pP.js";import{B as Qe}from"./badge-CC-hMXr2.js";import{C as ie,c as le,a as ve,b as Ne}from"./card-CZGdWoql.js";import{A as Xe}from"./arrow-left-Bx7clWId.js";import{T as Ze}from"./trash-2-NEVN-Kyd.js";import"./resource-B9yWZwLd.js";import"./circle-user-round-CeX0GNfc.js";import"./party-popper-Ddd1bThS.js";/**
@@ -23,6 +24,9 @@ import{f as Ae,u as Le,r as m,j as e,L as _e}from"./vendor-D6bHyl-8.js";import{b
 ========
 import{f as Ae,u as Le,r as m,j as e,L as _e}from"./vendor-D6bHyl-8.js";import{b as Fe,u as ke,w as Be,x as Ge,d as De,f as d,s as ee,y as Ve,z as qe,c,X as Me,B as f,t as v,P as Ue,A as I,m as Oe,g as He,i as We}from"./index-C2hAgVSl.js";import{E as Ke}from"./EditableNationality-Da1vqmdl.js";import{L as Ye}from"./LinkedRecords-B8M5QLwJ.js";import{B as Qe}from"./badge-C4I41byB.js";import{C as ie,c as le,a as ve,b as Ne}from"./card-CAcUyZXQ.js";import{A as Xe}from"./arrow-left-D4rncYLj.js";import{T as Ze}from"./trash-2-yfWbG9CN.js";import"./resource-DXBHY7a7.js";import"./circle-user-round-DRa7QAJg.js";import"./party-popper-DwQ4yzIS.js";/**
 >>>>>>>> origin/feat/frontdesk-early-checkout:kamra/public/frontend/assets/FolioView-uHGtfhfB.js
+========
+import{f as Ae,u as Le,r as m,j as e,L as _e}from"./vendor-D6bHyl-8.js";import{b as Fe,u as ke,w as Be,x as Ge,d as De,f as d,s as ee,y as Ve,z as qe,c,X as Me,B as f,t as v,P as Ue,A as I,m as Oe,g as He,i as We}from"./index-i8IifY61.js";import{E as Ke}from"./EditableNationality-zbim-x1H.js";import{L as Ye}from"./LinkedRecords-ClD_hWfX.js";import{B as Qe}from"./badge-B199vgL_.js";import{C as ie,c as le,a as ve,b as Ne}from"./card-RP8sY0zS.js";import{A as Xe}from"./arrow-left-CA6hrhvD.js";import{T as Ze}from"./trash-2-Cpo6hfSu.js";import"./resource-VJ8zdEcp.js";import"./circle-user-round-Bl-p9NZd.js";import"./party-popper-eJ9DyAxA.js";/**
+>>>>>>>> origin/feat/pos-reroute:kamra/public/frontend/assets/FolioView-CC_zCzH2.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.
