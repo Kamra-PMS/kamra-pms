@@ -1542,9 +1542,8 @@ def require_reason(category: str, reason_code: str | None, free_text: str = "",
 		if row.category != category:
 			frappe.throw(f"Reason code is for {row.category}, not {category}.")
 		if row.requires_supervisor:
-			roles = set(frappe.get_roles())
-			if not (roles & {"Hotel Admin", "Finance", "System Manager",
-			                 "Administrator"}):
+			from kamra.authz import is_supervisor
+			if not is_supervisor():  # Folio: Approve (Role Permission Manager)
 				frappe.throw("Supervisor role required for this reason.", frappe.PermissionError)
 			pin_required = not property or bool(frappe.db.get_value(
 				"Property", property, "require_cashier_pin"))

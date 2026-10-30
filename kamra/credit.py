@@ -82,7 +82,10 @@ def can_override() -> bool:
 	Hotel Admin (System Manager / Administrator too), never an agent."""
 	if _is_agent():
 		return False
-	return bool(OVERRIDE_ROLES & set(frappe.get_roles()))
+	# Corporate Account: Override Credit in Role Permission Manager
+	# (defaults: OVERRIDE_ROLES)
+	return frappe.has_permission("Corporate Account", "override_credit",
+	                             ignore_share_permissions=True)
 
 
 # --- the check ---------------------------------------------------------------

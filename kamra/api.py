@@ -56,11 +56,29 @@ def whoami():
 	{user: "Guest"} cleanly instead of a 403 in the console.
 	"""
 	user = frappe.session.user
-	return {
+	out = {
 		"user": user,
 		"full_name": frappe.db.get_value("User", user, "full_name") or user,
 		"roles": frappe.get_roles(user),
 	}
+	if user != "Guest":
+		out["can"] = my_permissions()
+	return out
+
+
+def my_permissions() -> dict:
+	"""{doctype: [permission types]} the signed-in user holds on Kamra's
+	doctypes - Frappe's role permissions, as Role Permission Manager has
+	them. The SPA draws apps (Property: app_*), menus and buttons from it."""
+	from frappe.permissions import get_role_permissions
+	out = {}
+	for dt in frappe.get_all("DocType", filters={"module": "Kamra", "istable": 0}, pluck="name"):
+		perms = get_role_permissions(frappe.get_meta(dt))
+		held = sorted(k for k, v in perms.items()
+		              if v == 1 and k not in ("has_if_owner_enabled", "if_owner"))
+		if held:
+			out[dt] = held
+	return out
 
 
 @frappe.whitelist()

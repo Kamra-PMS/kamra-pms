@@ -413,15 +413,31 @@ def require_cashier_pin(property: str, pin=None):
 
 
 # Who may approve what a captain cannot do alone (voiding food the kitchen
-# has already started, say). The same roles the reason-code supervisor
-# rule accepts (kamra.ledger.require_reason).
-SUPERVISOR_ROLES = ("Hotel Admin", "Finance", "System Manager", "Administrator")
+# has already started, say): permission "approve" on Folio, so a hotel
+# picks its approvers in Role Permission Manager. Defaults: Hotel Admin
+# and Finance. The same rule the reason-code supervisor check uses
+# (kamra.ledger.require_reason).
+APPROVE = ("Folio", "approve")
+SUPERVISOR_ROLES = ("Hotel Admin", "Finance", "System Manager", "Administrator")  # the defaults
+_HUMAN_SUPERVISOR = {"Hotel Admin", "Finance", "System Manager"}
+
+
+def supervisor_roles() -> list[str]:
+	"""Roles that may approve now (Role Permission Manager), Administrator aside."""
+	return sorted(perm_roles(*APPROVE) - {"Administrator"})
 
 
 def is_supervisor(user: str | None = None) -> bool:
 	user = user or frappe.session.user
-	return user == "Administrator" or bool(
-		set(SUPERVISOR_ROLES) & set(frappe.get_roles(user)))
+	if user == "Administrator":
+		return True
+	roles = set(frappe.get_roles(user))
+	# hard rule: an AI agent's own identity never approves, whatever a
+	# site grants the Kamra Agent role (an agent that is also a human
+	# supervisor's account keeps that account's rights, as before)
+	if "Kamra Agent" in roles and not roles & _HUMAN_SUPERVISOR:
+		return False
+	return frappe.has_permission(*APPROVE, user=user, ignore_share_permissions=True)
 
 
 def verify_supervisor(property: str, supervisor: str | None, pin) -> str:
@@ -437,7 +453,8 @@ def verify_supervisor(property: str, supervisor: str | None, pin) -> str:
 	if not frappe.db.get_value("User", supervisor, "enabled") or \
 			not is_supervisor(supervisor):
 		frappe.throw(f"{supervisor} cannot approve this. It needs a Hotel "
-		             "Admin or Finance user.", frappe.PermissionError)
+		             "Admin or Finance user (or a role given Folio: Approve).",
+		             frappe.PermissionError)
 	allowed = restricted_properties(supervisor)
 	if property and allowed is not None and property not in allowed:
 		frappe.throw(f"{supervisor} has no access to {property}.",

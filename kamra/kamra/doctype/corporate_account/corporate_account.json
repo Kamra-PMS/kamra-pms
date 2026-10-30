@@ -104,7 +104,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-30 12:32:21.000000",
+ "modified": "2026-10-30 15:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Corporate Account",
@@ -124,7 +124,8 @@
    "write": 1,
    "set_credit": 1,
    "view_credit": 1,
-   "view_terms": 1
+   "view_terms": 1,
+   "override_credit": 1
   },
   {
    "create": 1,
@@ -138,7 +139,8 @@
    "write": 1,
    "set_credit": 1,
    "view_credit": 1,
-   "view_terms": 1
+   "view_terms": 1,
+   "override_credit": 1
   },
   {
    "email": 1,
@@ -160,7 +162,8 @@
    "write": 1,
    "set_credit": 1,
    "view_credit": 1,
-   "view_terms": 1
+   "view_terms": 1,
+   "override_credit": 1
   },
   {
    "email": 1,

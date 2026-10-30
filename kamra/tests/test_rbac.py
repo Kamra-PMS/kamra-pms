@@ -96,7 +96,7 @@ class RbacTestCase(IntegrationTestCase):
 		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- test fixture teardown
 		frappe.flags.kamra_agent_call = None
 		frappe.db.rollback()
-		for dt in (SOP[0], TICKETS[0], "Corporate Account"):
+		for dt in (SOP[0], TICKETS[0], "Corporate Account", "Folio", "Property"):
 			frappe.clear_cache(doctype=dt)
 		for u in (CUSTOM_USER, DESK_USER, AGENT_USER):
 			frappe.clear_cache(user=u)
@@ -212,12 +212,73 @@ class RbacTestCase(IntegrationTestCase):
 
 	def test_agent_money_refusals_ignore_permissions(self):
 		from kamra import credit, pos
-		_grant("Corporate Account", "set_credit")
+		_grant("Corporate Account", "override_credit")
+		_grant("Folio", "approve")
 		self.as_user(AGENT_USER)
 		self.assertFalse(credit.can_override())
+		self.assertFalse(authz.is_supervisor())
 		self.assertTrue(pos._agent_call())
 		frappe.flags.kamra_agent_call = "MCP"
 		self.assertFalse(credit.can_override())
+
+	# --- approvals are permissions too ---------------------------------------------
+
+	def test_approvers_are_chosen_in_role_permission_manager(self):
+		from kamra import credit
+		self.assertEqual(set(authz.supervisor_roles()), {"Hotel Admin", "Finance", "System Manager"})
+		self.as_user(CUSTOM_USER)
+		self.assertFalse(authz.is_supervisor())
+		self.assertFalse(credit.can_override())
+		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- admin edits permissions
+		_grant("Folio", "approve")
+		_grant("Corporate Account", "override_credit")
+		self.as_user(CUSTOM_USER)
+		self.assertTrue(authz.is_supervisor())
+		self.assertTrue(credit.can_override())
+		self.assertIn(ROLE, authz.supervisor_roles())
+		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- admin edits permissions
+		_revoke("Folio", "approve", "Finance")
+		self.assertFalse(authz.is_supervisor(_user("rbac.fin@test.local", "Finance")))
+
+	# --- roles, profiles and what the SPA is told ----------------------------------
+
+	def test_role_profiles_ship_as_job_bundles(self):
+		from kamra.install import ROLE_PROFILES, ensure_role_profiles
+		for name in ROLE_PROFILES:  # a rolled-back earlier run leaves its lock
+			stale = frappe.new_doc("Role Profile")
+			stale.name = name
+			stale.unlock()
+		# run the user resync inline, as it does during install / migrate
+		frappe.flags.in_install = True
+		try:
+			ensure_role_profiles()
+		finally:
+			frappe.flags.in_install = False
+		for name, roles in ROLE_PROFILES.items():
+			got = {r.role for r in frappe.get_doc("Role Profile", name).roles}
+			self.assertTrue(set(roles) <= got, name)
+
+	def test_a_desk_role_with_kamra_permissions_is_assignable(self):
+		from kamra.staff import role_names, staff_roles
+		self.assertNotIn(ROLE, role_names())
+		_grant(*SOP)
+		self.assertIn(ROLE, role_names())
+		self.assertIn(ROLE, [r["role"] for r in staff_roles()])
+
+	def test_whoami_tells_the_spa_what_the_user_can_do(self):
+		from kamra import api
+		self.as_user(DESK_USER)
+		can = api.whoami()["can"]
+		self.assertIn("app_front_desk", can["Property"])
+		self.assertNotIn("app_revenue", can["Property"])
+		self.assertIn("check_in_out", can["Reservation"])
+		self.as_user(CUSTOM_USER)
+		self.assertNotIn("Property", api.whoami()["can"])
+		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- admin edits permissions
+		_grant("Property", "app_operations")
+		self.as_user(CUSTOM_USER)
+		apps = [p for p in api.whoami()["can"]["Property"] if p.startswith("app_")]
+		self.assertEqual(apps, ["app_operations"])
 
 	def test_it_only_actions_stay_it_only(self):
 		from kamra import api

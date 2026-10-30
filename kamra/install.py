@@ -15,6 +15,7 @@ def after_install():
 	ensure_agent_identity()
 	ensure_staff_roles()
 	ensure_mcp_roles()
+	ensure_role_profiles()
 
 
 def after_migrate():
@@ -23,6 +24,7 @@ def after_migrate():
 	ensure_staff_roles()
 	ensure_mcp_roles()
 	sync_permission_types()
+	ensure_role_profiles()
 
 
 def ensure_mcp_roles():
@@ -166,3 +168,26 @@ def sync_permission_types():
 	frappe.db.set_default(SYNCED_PTYPES, json.dumps(sorted(done)))
 	if changed:
 		frappe.clear_cache()
+
+
+# Job bundles: a Role Profile on a user sets their roles in one pick (Desk:
+# User > Role Profiles). Created once; the hotel edits them freely after.
+ROLE_PROFILES = {
+	"Receptionist": ("Front Desk",),
+	"Front Office Manager": ("Front Desk", "Night Auditor", "Revenue Manager"),
+	"Duty Manager": ("Front Desk", "Night Auditor", "Housekeeping Supervisor"),
+	"Night Auditor": ("Night Auditor", "Front Desk"),
+	"F&B Manager": ("Front Desk", "Finance"),
+	"Finance Manager": ("Finance", "Night Auditor"),
+	"General Manager": ("Hotel Admin",),
+}
+
+
+def ensure_role_profiles():
+	for name, roles in ROLE_PROFILES.items():
+		if frappe.db.exists("Role Profile", name):
+			continue
+		frappe.get_doc({
+			"doctype": "Role Profile", "role_profile": name,
+			"roles": [{"role": r} for r in roles],
+		}).insert(ignore_permissions=True)

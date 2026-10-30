@@ -45,6 +45,23 @@ ROLES = (
 	 "Site administration: developer keys, new properties, every setting."),
 )
 ROLE_NAMES = tuple(r for r, _l, _d in ROLES)
+_NOT_CUSTOM = (*ROLE_NAMES, "Administrator", "Guest", "All", "Desk User", "Kamra Agent",
+               "MCP Read", "MCP Manage")
+
+
+def custom_roles() -> list[str]:
+	"""The hotel's own roles: any Role created in Desk that Role Permission
+	Manager has given a permission on a Kamra doctype."""
+	kamra_dts = frappe.get_all("DocType", filters={"module": "Kamra"}, pluck="name")
+	roles = set(frappe.get_all("Custom DocPerm", filters={"parent": ("in", kamra_dts)},
+	                           pluck="role", distinct=True))
+	enabled = set(frappe.get_all("Role", filters={"disabled": 0}, pluck="name"))
+	return sorted((roles & enabled) - set(_NOT_CUSTOM))
+
+
+def role_names() -> tuple:
+	"""Built-in roles, then the hotel's own (see custom_roles)."""
+	return ROLE_NAMES + tuple(custom_roles())
 IT_ONLY = ("System Manager",)
 NEVER_LISTED = ("Administrator", "Guest")
 
@@ -70,7 +87,10 @@ def staff_roles() -> list:
 	"""The roles a person can hold, and whether the caller may hand each out."""
 	it = _caller_is_it()
 	return [{"role": r, "label": label, "description": desc,
-	         "assignable": it or r not in IT_ONLY} for r, label, desc in ROLES]
+	         "assignable": it or r not in IT_ONLY} for r, label, desc in ROLES] + [
+		{"role": r, "label": r, "assignable": True, "custom": True,
+		 "description": _("Your own role. What it may do is set in Role Permission Manager.")}
+		for r in custom_roles()]
 
 
 @frappe.whitelist()
@@ -79,8 +99,9 @@ def list_staff(property: str) -> list:
 	"""Everyone with a Kamra role who can reach this property."""
 	it = _caller_is_it()
 	me = frappe.session.user
+	names = role_names()
 	holders = frappe.get_all("Has Role",
-	                         filters={"role": ("in", ROLE_NAMES), "parenttype": "User"},
+	                         filters={"role": ("in", names), "parenttype": "User"},
 	                         fields=["parent", "role"])
 	by_user: dict[str, list] = {}
 	for h in holders:
@@ -107,7 +128,7 @@ def list_staff(property: str) -> list:
 		props = sorted(perms[u.name]) if u.name in perms else None
 		if not _visible_to(set(props) if props is not None else None, property):
 			continue
-		roles = [r for r in ROLE_NAMES if r in by_user[u.name]]
+		roles = [r for r in names if r in by_user[u.name]]
 		is_it_user = any(r in IT_ONLY for r in roles)
 		out.append({
 			"user": u.name, "full_name": u.full_name or "", "email": u.email or u.name,
@@ -149,7 +170,8 @@ def save_staff(property: str, email: str, full_name: str, roles, properties=None
 		frappe.throw(_("That account can't be managed here."), frappe.PermissionError)
 
 	want_roles = _parse_list(roles) or []
-	unknown = [r for r in want_roles if r not in ROLE_NAMES]
+	names = role_names()
+	unknown = [r for r in want_roles if r not in names]
 	if unknown:
 		frappe.throw(_("Unknown role: {0}").format(", ".join(unknown)))
 	if not want_roles:
@@ -187,7 +209,7 @@ def save_staff(property: str, email: str, full_name: str, roles, properties=None
 		if mine is not None and (cur_props is None or any(p not in mine for p in cur_props)):
 			frappe.throw(_("This person has access beyond your properties - ask IT."),
 			             frappe.PermissionError)
-		before = {"roles": [r for r in ROLE_NAMES if r in held],
+		before = {"roles": [r for r in names if r in held],
 		          "properties": cur_props, "enabled": user.enabled}
 	else:
 		held = []
@@ -198,7 +220,7 @@ def save_staff(property: str, email: str, full_name: str, roles, properties=None
 
 	if not it:
 		gained = set(want_roles) - set(held)
-		lost = (set(held) & set(ROLE_NAMES)) - set(want_roles)
+		lost = (set(held) & set(names)) - set(want_roles)
 		if (gained | lost) & set(IT_ONLY):
 			frappe.throw(_("Only IT can grant or remove the IT administrator role."),
 			             frappe.PermissionError)
@@ -208,7 +230,7 @@ def save_staff(property: str, email: str, full_name: str, roles, properties=None
 	user.first_name = names[0]
 	user.last_name = names[1] if len(names) > 1 else ""
 	user.enabled = 1 if on else 0
-	keep = [r for r in user.roles if r.role not in ROLE_NAMES]
+	keep = [r for r in user.roles if r.role not in names]
 	user.set("roles", [])
 	for r in keep:
 		user.append("roles", {"role": r.role})

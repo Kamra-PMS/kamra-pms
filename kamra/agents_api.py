@@ -84,9 +84,9 @@ def activity_detail(name: str) -> dict:
 def _property_staff(property: str) -> list[str]:
 	"""Users with a Kamra role who can reach this property (unrestricted,
 	or given it as a User Permission) - the people on its staff list."""
-	from kamra.staff import NEVER_LISTED, ROLE_NAMES
+	from kamra.staff import NEVER_LISTED, role_names
 	users = set(frappe.get_all(
-		"Has Role", filters={"role": ("in", ROLE_NAMES), "parenttype": "User"},
+		"Has Role", filters={"role": ("in", role_names()), "parenttype": "User"},
 		pluck="parent")) - set(NEVER_LISTED)
 	if not users:
 		return []

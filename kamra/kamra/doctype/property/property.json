@@ -718,7 +718,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-30 12:32:21.000000",
+ "modified": "2026-10-30 15:30:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Property",
@@ -748,7 +748,16 @@
    "view_flash": 1,
    "view_locale": 1,
    "view_performance": 1,
-   "view_snapshot": 1
+   "view_snapshot": 1,
+   "app_front_desk": 1,
+   "app_housekeeping": 1,
+   "app_operations": 1,
+   "app_fnb": 1,
+   "app_events": 1,
+   "app_revenue": 1,
+   "app_finance": 1,
+   "app_booking_engine": 1,
+   "app_admin": 1
   },
   {
    "create": 1,
@@ -772,7 +781,16 @@
    "view_flash": 1,
    "view_locale": 1,
    "view_performance": 1,
-   "view_snapshot": 1
+   "view_snapshot": 1,
+   "app_front_desk": 1,
+   "app_housekeeping": 1,
+   "app_operations": 1,
+   "app_fnb": 1,
+   "app_events": 1,
+   "app_revenue": 1,
+   "app_finance": 1,
+   "app_booking_engine": 1,
+   "app_admin": 1
   },
   {
    "email": 1,
@@ -788,7 +806,13 @@
    "view_dashboard": 1,
    "view_flash": 1,
    "view_locale": 1,
-   "view_snapshot": 1
+   "view_snapshot": 1,
+   "app_front_desk": 1,
+   "app_housekeeping": 1,
+   "app_operations": 1,
+   "app_fnb": 1,
+   "app_events": 1,
+   "app_finance": 1
   },
   {
    "email": 1,
@@ -806,7 +830,9 @@
    "view_flash": 1,
    "view_locale": 1,
    "view_performance": 1,
-   "view_snapshot": 1
+   "view_snapshot": 1,
+   "app_fnb": 1,
+   "app_finance": 1
   },
   {
    "email": 1,
@@ -820,7 +846,10 @@
    "view_dashboard": 1,
    "view_locale": 1,
    "view_performance": 1,
-   "view_snapshot": 1
+   "view_snapshot": 1,
+   "app_events": 1,
+   "app_revenue": 1,
+   "app_booking_engine": 1
   },
   {
    "email": 1,
@@ -830,7 +859,8 @@
    "role": "Housekeeping",
    "use_console": 1,
    "use_settings": 1,
-   "view_locale": 1
+   "view_locale": 1,
+   "app_housekeeping": 1
   },
   {
    "email": 1,
@@ -856,7 +886,8 @@
    "edit_settings": 1,
    "use_console": 1,
    "use_settings": 1,
-   "view_locale": 1
+   "view_locale": 1,
+   "app_housekeeping": 1
   },
   {
    "read": 1,
@@ -865,7 +896,9 @@
    "role": "Night Auditor",
    "use_console": 1,
    "view_flash": 1,
-   "view_snapshot": 1
+   "view_snapshot": 1,
+   "app_front_desk": 1,
+   "app_finance": 1
   }
  ],
  "row_format": "Dynamic",
