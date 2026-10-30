@@ -992,8 +992,9 @@ def post_allowance(folio_name: str, amount: float, reason: str,
 	from kamra.ledger import save_folio
 	save_folio(folio)
 	from kamra.savings import log_action
+	from kamra.localization import money_text
 	log_action("post_allowance", "Folio", folio.name, folio.property,
-	           rationale=f"Allowance ₹{amount:.0f} - {reason.strip()}"
+	           rationale=f"Allowance {money_text(folio.property, amount)} - {reason.strip()}"
 	                     + (f" (asked by {requested_by})"
 	                        if requested_by and requested_by != frappe.session.user
 	                        else ""),

@@ -130,6 +130,16 @@ class BillingApprovalsSplitTestCase(AuditTestCase):
 		with self.assertRaisesRegex(frappe.ValidationError, "already approved"):
 			api.decide_allowance(out["request"], approve=1, pin="2468")
 
+	def test_allowance_log_shows_the_property_currency(self):
+		make_property(PROP_A, business_date=TODAY, country="Saudi Arabia")
+		folio = guest_folio(self.stay().name)
+		api.add_folio_charge(folio, "Laundry", "UT Laundry", 500, gst_rate=0)
+		api.post_allowance(folio, 50, "UT stain")
+		why = frappe.db.get_value("Agent Action Log", {
+			"action_type": "post_allowance", "reference_name": folio}, "rationale")
+		self.assertIn("Allowance SAR 50 - UT stain", why)
+		self.assertNotIn("₹", why)
+
 	def test_requester_cannot_approve_their_own_allowance(self):
 		set_setting(PROP_A, "allowance_approval", "Hotel Admin")
 		set_pin(GM, "2468")
