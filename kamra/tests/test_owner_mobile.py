@@ -59,6 +59,17 @@ class OwnerSnapshotTestCase(AuditTestCase):
 		self.assertEqual(out["from_date"], start)
 		self.assertEqual(out["today"]["rooms_sold"], out["mtd"]["rooms_sold"])
 
+	def test_period_counts_from_the_business_date(self):
+		# the phone sends only the period; the hotel's business date decides
+		bd = frappe.utils.add_days(TODAY, -3)
+		frappe.db.set_value("Property", PROP_A, "business_date", bd)
+		self.as_user(FIN)
+		self.assertEqual(str(dashboards.owner_snapshot(PROP_A)["date"]), bd)
+		y = dashboards.owner_snapshot(PROP_A, period="yesterday")
+		self.assertEqual(str(y["date"]), frappe.utils.add_days(bd, -1))
+		m = dashboards.owner_snapshot(PROP_A, period="month")
+		self.assertEqual((str(m["date"]), m["from_date"]), (bd, bd[:8] + "01"))
+
 	def test_revenue_manager_sees_figures_not_audit_packs(self):
 		# the flash's collections and the ledger aging have their own, older
 		# gates without Revenue Manager; the owner view must still answer

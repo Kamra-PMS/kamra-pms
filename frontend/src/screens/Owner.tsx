@@ -53,16 +53,6 @@ interface PortfolioRow {
 
 type Period = "today" | "yesterday" | "month"
 
-const iso = (d: Date) =>
-  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
-
-function range(p: Period) {
-  const d = new Date()
-  if (p === "yesterday") d.setDate(d.getDate() - 1)
-  const date = iso(d)
-  return { date, from_date: p === "month" ? date.slice(0, 8) + "01" : undefined }
-}
-
 const money = (n: unknown) =>
   cur() + Number(n ?? 0).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
 
@@ -135,7 +125,8 @@ export default function Owner() {
         .catch((e) => setError(serverError(e)))
       return
     }
-    call<Snapshot>("kamra.dashboards.owner_snapshot", { property: getCurrentProperty(), ...range(period) })
+    // the server counts the period from the property's business date, never the phone's clock
+    call<Snapshot>("kamra.dashboards.owner_snapshot", { property: getCurrentProperty(), period })
       .then(setSnap)
       .catch((e) => setError(serverError(e)))
   }, [period, scope])
@@ -279,6 +270,7 @@ export default function Owner() {
               </div>
             ))}
             <div className="my-2 border-t border-zinc-100" />
+            <div className="text-xs text-zinc-400">{t("Balances as of now")}</div>
             <Line
               label={t("Guest balances ({n} open bills)", { n: snap.open_folios })}
               value={money(snap.guest_balances)}

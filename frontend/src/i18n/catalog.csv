@@ -920,6 +920,7 @@ Balance due,Balance due,الرصيد المستحق,Saldo pendiente,screens/Banq
 Balance due: {0},Balance due: {0},الرصيد المستحق: {0},Saldo pendiente: {0},,0,translated
 "Balance due: collect it from the row's Check out, or move the balance to a company or city ledger.","Balance due: collect it from the row's Check out, or move the balance to a company or city ledger.",الرصيد المستحق: حصّله من زر تسجيل المغادرة في الصف، أو انقل الرصيد إلى حساب شركة أو دفتر المدينة.,Saldo pendiente: cóbrelo desde Registrar salida en la fila o transfiéralo a una cuenta de empresa.,,,translated
 Balance payable at the hotel: {amount},Balance payable at the hotel: {amount},الرصيد المستحق الدفع في الفندق: {amount},Saldo a pagar en el hotel: {amount},,amount,translated
+Balances as of now,Balances as of now,الأرصدة حتى الآن,Saldos a este momento,screens/Owner.tsx,,translated
 Balances on departed stays,Balances on departed stays,أرصدة على إقامات مغادرة,Saldos pendientes de estancias finalizadas,,,translated
 Bank it,Bank it,إيداع في البنك,Depositar en el banco,screens/CashierBoard.tsx,,translated
 Bank Transfer,Bank Transfer,تحويل بنكي,Transferencia bancaria,,,translated
