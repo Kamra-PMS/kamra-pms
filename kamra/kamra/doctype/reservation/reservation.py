@@ -556,12 +556,33 @@ class Reservation(Document):
 			snap = dict(q)
 			snap["idempotency_key"] = getattr(self, "idempotency_key", None)
 			self.quote_snapshot = json.dumps(snap, default=str)
-		self.set_night_rates(q)
+		# nights already charged keep what the folio holds for them (or
+		# get their adjustment lines): the totals follow the same nights
+		d_base, d_tax = self.set_night_rates(q)
+		if d_base or d_tax:
+			self.amount_before_tax = round(flt(self.amount_before_tax) + d_base, 2)
+			self.tax_amount = round(flt(self.tax_amount) + d_tax, 2)
+			self.amount_after_tax = round(
+				flt(self.amount_before_tax) + flt(self.tax_amount), 2)
 		self.rate_lock_key = key
 		self._apply_commission()
 
-	def set_night_rates(self, q: dict):
+	def set_night_rates(self, q: dict) -> tuple[float, float]:
 		"""Lock the quote's nights on the booking - the rates the folio bills.
+
+		Nights already charged to the folio are held by the property's
+		rate-change policy (hold_charged_nights); returns what that changes
+		in the quote's totals (before tax, tax). Lines it decides to post
+		wait in flags until on_update."""
+		rows = self.quote_night_rows(q)
+		hold = self.hold_charged_nights(
+			rows, correct=bool(self.flags.get("correct_charged_nights")))
+		self.flags.rate_change_lines = hold["lines"]
+		self.set("night_rates", rows)
+		return hold["base"], hold["tax"]
+
+	def quote_night_rows(self, q: dict) -> list[dict]:
+		"""The quote's nights as night-rate rows.
 
 		A rate plan works on the stay total, so each night carries its share
 		of the planned total (same spread as folio._rate_plan_factor), and
@@ -591,7 +612,79 @@ class Reservation(Document):
 				"meal_amount": meal,
 				"demand_premium_pct": float(n.get("demand_premium_pct") or 0),
 			})
-		self.set("night_rates", rows)
+		return rows
+
+	def hold_charged_nights(self, rows: list[dict], correct: bool = False) -> dict:
+		"""Apply the property's rate-change policy to the nights already
+		charged (kamra.settings charged_night_rate_change). Nobody changes
+		the rate of a night on the folio in place:
+
+		- Keep charged nights (default): the night keeps what the folio
+		  holds; only nights still to come take the new rate.
+		- Credit the difference: a lower new rate is credited per night
+		  (one Rate Adjustment line, taxed like the night); a higher one is
+		  kept, as with Keep.
+		- Correct back-dated rates: as Keep, except inside the dedicated
+		  correction (correct=True), which reverses each changed night and
+		  posts it again at the new rate.
+
+		Mutates `rows` so each charged night carries what the folio will
+		hold for it. Returns {base, tax} - the change against the quote's
+		totals - plus `lines` to post and `nights` for a preview."""
+		out = {"base": 0.0, "tax": 0.0, "lines": [], "nights": [],
+		       "policy": None}
+		if self.is_new() or not rows:
+			return out
+		from kamra.folio import charged_nights
+		charged = charged_nights(self.name)
+		if not charged:
+			return out
+		from kamra.settings import get_setting
+		policy = get_setting(self.property, "charged_night_rate_change")
+		out["policy"] = policy
+		prop = frappe.get_cached_doc("Property", self.property)
+		levy_pct = flt(prop.get("room_levy_percent")) / 100
+		levy_taxed = cint(prop.get("room_levy_taxable")
+		                  if prop.get("room_levy_taxable") is not None else 1)
+		for row in rows:
+			c = charged.get(str(row["stay_date"]))
+			if not c:
+				continue
+			night = str(row["stay_date"])
+			new, new_gst = flt(row["rate"]), flt(row["gst_rate"])
+			base, gst = c["base"], c["gst_rate"]
+			changed = abs(new - base) >= 0.01 or (correct and abs(new_gst - gst) >= 0.01)
+			action = "kept" if changed else "same"
+			if changed and correct:
+				out["lines"] += [
+					{"night": night, "folio": c["folio"], "amount": -base,
+					 "gst_rate": gst,
+					 "description": f"Rate correction: night of {night} reversed at {base:,.2f}"},
+					{"night": night, "folio": c["folio"], "amount": round(new, 2),
+					 "gst_rate": new_gst,
+					 "description": f"Rate correction: night of {night} at {new:,.2f}"},
+				]
+				base, gst, action = new, new_gst, "corrected"
+			elif changed and policy == "Credit the difference" and new < base:
+				out["lines"].append(
+					{"night": night, "folio": c["folio"],
+					 "amount": round(new - base, 2), "gst_rate": gst,
+					 "description": f"Rate change: night of {night} {base:,.2f} to {new:,.2f}"})
+				action = "credited"
+				base = new
+			# the folio's levy for the night stays as posted
+			# ponytail: the quote taxes its levy at the stay's average rate;
+			# a per-night levy rate here can differ by a rounding paisa
+			levy_new = new * levy_pct
+			out["base"] += (base - new) + (c["levy_base"] - levy_new)
+			out["tax"] += (base * gst - new * new_gst) / 100 + c["levy_tax"] - (
+				levy_new * new_gst / 100 if levy_taxed else 0)
+			if action != "same":
+				out["nights"].append({"date": night, "charged": c["base"],
+				                      "new": round(new, 2), "action": action})
+			row["rate"], row["gst_rate"] = round(base, 2), gst
+		out["base"], out["tax"] = round(out["base"], 2), round(out["tax"], 2)
+		return out
 
 	def _apply_commission(self):
 		if getattr(self, "travel_agent", None):
@@ -760,6 +853,10 @@ class Reservation(Document):
 		)
 
 	def on_update(self):
+		lines = self.flags.pop("rate_change_lines", None)
+		if lines:
+			from kamra.folio import post_rate_lines
+			post_rate_lines(self, lines)
 		previous = self.get_doc_before_save()
 		old_status = previous.status if previous else None
 		if self.status == old_status:

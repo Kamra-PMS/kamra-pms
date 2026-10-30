@@ -116,6 +116,27 @@ bill and the allowance shows as a minus line, so the trail stays honest.
 Voids work only on an open folio. Once the folio is invoiced, use a
 [credit note](#cancel-an-invoice-or-issue-a-credit-note) instead.
 
+## Correct charged nights
+
+For a hotel that finds a wrong tariff after nights were charged. It is
+there only when **Settings → Stay policies → Rate changes in house** is
+**Correct back-dated rates**, and only for Finance and Hotel Admins.
+
+1. Fix the tariff (room type, season or rate plan) first.
+2. Open the guest's folio. Under **Post a charge**, **Correct charged
+   nights** lists each charged night with its charged and current rate.
+3. Type the reason and your cashier PIN, then press **Correct**.
+
+Kamra reverses each night and posts it again at the current rate. Both
+lines are **Rate Adjustment** lines dated today, with the night in the
+description, each taxed at its own rate. The original night line stays on
+the folio; nothing posted is edited. The correction goes to the activity
+log with the reason, who approved it and every night changed.
+
+When the rate of a stay in house changes for any other reason (new dates,
+a room move), charged nights keep their rate or get a credit; see
+[Change the rate of a guest in house](/front-desk#change-the-rate-of-a-guest-in-house).
+
 ## Split or move charges to another folio
 
 A stay can have more than one folio: the **Guest** folio, a **Company**
@@ -405,6 +426,7 @@ it.
 | Setting | Where | Default | What it does |
 | --- | --- | --- | --- |
 | Take money through cashier tills | Settings → Finance → Cashier controls | On | Staff open their till (with an opening float) before taking or giving back money, and close it with a cash count. The check-in, walk-in and check-out sheets offer **Open my till** in place. Off, for a small place with no cash drawer: payments and refunds are recorded without a till; paid-outs, drops, petty cash and exchange still need one. |
+| When a stay's rate changes after nights are charged | Settings → Stay policies → Rate changes in house | Keep charged nights | Keep: charged nights keep their rate. Credit the difference: a lower rate is credited per charged night. Correct back-dated rates: Finance or a Hotel Admin can [correct charged nights](#correct-charged-nights). |
 | Require cashier PIN on money actions | Settings → Finance → Cashier controls | Off | Payments, invoices, allowances, voids, refunds and till actions ask for the cashier's PIN. AI agents are exempt; their actions are logged instead. |
 | Lock a PIN after | Settings → Finance → Cashier controls | 5 wrong tries | Locks the PIN after this many wrong entries. |
 | Lock for / stay unlocked for | Settings → Finance → Cashier controls | 15 min | How long a locked PIN stays locked, and how long money actions stay unlocked after a correct PIN. |

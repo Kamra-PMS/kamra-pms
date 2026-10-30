@@ -346,6 +346,27 @@ The journey shows every stay and event, with:
 
 ![A guest's journey: stay history, totals, notes and preferences, VIP, and profile actions](/img/front-desk/guest-journey.png)
 
+## Change the rate of a guest in house
+
+Extending a stay can change its rate: five nights may reach a long-stay
+discount that four nights did not. Kamra never re-prices a night already
+charged to the folio. Your property's rate-change setting decides what
+happens to those nights:
+
+- **Keep charged nights** (default): charged nights keep their rate; only
+  the nights still to come take the new rate. The booking total and the
+  folio stay equal. When you change the dates on the tape chart, the price
+  line says how much the guest would have saved on the charged nights; you
+  can give it back with an [allowance](/billing#correct-a-charge) and a
+  reason.
+- **Credit the difference**: when the new rate is lower, Kamra posts a
+  **Rate Adjustment** credit for each charged night, dated today, taxed
+  like that night and on the folio the night went to. A higher rate is
+  never added to a charged night.
+- **Correct back-dated rates**: dates change as with Keep. Finance or a
+  Hotel Admin can then correct the charged nights from the folio, see
+  [Correct charged nights](/billing#correct-charged-nights).
+
 ## Settings
 
 | Setting | Where | Default | What it does |
@@ -355,6 +376,7 @@ The journey shows every stay and event, with:
 | Send links this far ahead | Settings → Front Desk → Arrivals | 2 days | How far ahead of arrival the automatic link goes out. |
 | Require pre-check-in before access details | Settings → Front Desk → Arrivals | Off | Holds back the **Access instructions** (door codes, Wi-Fi) until the guest has checked in online. |
 | Guest ID retention | Settings → Privacy & data | Verify & Discard | Verify & Discard masks ID numbers to the last 4 digits and deletes ID photos at check-out. Store keeps them. |
+| When a stay's rate changes after nights are charged | Settings → Stay policies → Rate changes in house | Keep charged nights | See [Change the rate of a guest in house](#change-the-rate-of-a-guest-in-house). |
 | Security deposit | Settings → Stay policies → Deposits | 0 | A refundable amount to hold during the stay. When set, check-in has a **Deposit and advance** step. While it is held, the booking warns you before check-out. |
 | Check-in steps | Settings → Front Desk → Check-in steps | See [The steps](#the-steps) | Which check-in steps are required. Required steps cannot be skipped and block the check-in until done. |
 | Wi-Fi name, Wi-Fi password, Breakfast times, Emergency number, Anything else for guests | Settings → Front Desk → Guest info at check-in | Empty | Shown in the **Wi-Fi and stay info** step, to tell, print or send on WhatsApp. The password is never written to the activity log. |

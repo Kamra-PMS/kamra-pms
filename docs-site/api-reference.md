@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function - the same governed layer
-the UI and the AI use. **430 endpoints**, generated from the source
+the UI and the AI use. **431 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -1553,7 +1553,10 @@ booking's current type is listed first.
 What new dates would do to the bill, before anything changes: the
 current and new totals and the new nightly rates, priced by the engine
 from today's rules. amend_stay needs confirm_price=1 when the total
-changes.
+changes. For a stay in house, `charged_nights` says what the property's
+rate-change policy does to nights already on the folio: kept at their
+charged rate (kept_difference is what the desk may give back as an
+allowance) or credited (credit_total, posted by Kamra).
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -1571,7 +1574,9 @@ An auto-priced stay is re-quoted for its new dates and its nightly
 rates re-locked. That changes what the guest pays, so call
 amend_stay_preview first, show the new price, and pass confirm_price=1;
 without it a change in the total is refused. A manually-priced stay
-keeps its amount.
+keeps its amount. Nights already charged are never re-priced in place:
+the property's rate-change policy keeps them or credits them
+(Reservation.hold_charged_nights).
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -1579,6 +1584,28 @@ keeps its amount.
 | `check_in_date` | yes |  |
 | `check_out_date` | yes |  |
 | `confirm_price` | no | `0` |
+
+### `kamra.api.correct_charged_nights`
+
+**POST** · roles: `Finance`, `Hotel Admin`
+
+Correct the rate of nights already charged, for a hotel that fixed a
+wrong tariff: each charged night whose rate differs from today's quote
+is reversed and posted again at that rate (both lines dated the business
+date, the night named in the description, each taxed at its own rate);
+nights still to come take the rate directly. Posted lines are never
+edited. Only when the property's rate-change policy is Correct
+back-dated rates; needs a reason and the PIN of the Finance / Hotel
+Admin user approving it (supervisor, default the caller). dry_run=1
+lists the nights without changing anything. Not an agent tool.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `reservation` | yes |  |
+| `reason` | no | `None` |
+| `pin` | no | `None` |
+| `supervisor` | no | `None` |
+| `dry_run` | no | `0` |
 
 ### `kamra.api.set_late_arrival`
 

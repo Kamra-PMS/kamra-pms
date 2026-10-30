@@ -1502,6 +1502,9 @@ def _refuse_opening_balance(charge_type: str):
 	if charge_type == "Opening Balance":
 		frappe.throw("Opening balances are posted by the go-live import "
 		             "only (Go-live import screen).")
+	if charge_type == "Rate Adjustment":
+		frappe.throw("Rate adjustments are posted by Kamra when a stay's rate "
+		             "changes. Post an allowance to give money back.")
 
 
 def _post_folio_charge(folio: str, charge_type: str, description: str,
@@ -4768,19 +4771,37 @@ def _reprice_preview(res, **changes) -> dict:
 	if res.get("night_rates") and old_key == res.rate_lock_key_for(inputs):
 		return out  # same stay, same locked rates
 	q = res.requote()
-	plan_free = sum(float(n["rate"]) for n in q["nightly"]) or 1.0
-	factor = float(q["room_total"]) / plan_free
-	new = round(float(q["amount_after_tax"]), 2)
+	# the same nights the save locks: charged nights held by the policy
+	rows = res.quote_night_rows(q)
+	hold = res.hold_charged_nights(rows)
+	new = round(float(q["amount_after_tax"]) + hold["base"] + hold["tax"], 2)
 	out.update({
 		"new_amount": new,
 		"difference": round(new - current, 2),
 		"reprices": True,
 		"needs_confirmation": abs(new - current) >= 0.01,
-		"nights": [{"date": n["date"], "rate": round(float(n["rate"]) * factor, 2),
-		            "demand_premium_pct": n.get("demand_premium_pct") or 0}
-		           for n in q["nightly"]],
+		"nights": [{"date": str(r["stay_date"]), "rate": r["rate"],
+		            "demand_premium_pct": r["demand_premium_pct"]}
+		           for r in rows],
 	})
+	if hold["nights"]:
+		out["charged_nights"] = _charged_nights_summary(hold)
 	return out
+
+
+def _charged_nights_summary(hold: dict) -> dict:
+	"""What a rate change does to the nights already on the folio, for a
+	preview: the policy, each night touched, what stays above the new price
+	(kept nights - the desk may give it back as an allowance) and the
+	credit lines Kamra posts (tax included)."""
+	lines = hold["lines"]
+	return {
+		"policy": hold["policy"],
+		"nights": hold["nights"],
+		"kept_difference": round(hold["base"] + hold["tax"], 2),
+		"credit_total": round(sum(
+			l["amount"] * (1 + l["gst_rate"] / 100) for l in lines), 2),
+	}
 
 
 def _require_price_confirmation(preview: dict, confirm_price) -> None:
@@ -4874,7 +4895,10 @@ def amend_stay_preview(reservation: str, check_in_date: str, check_out_date: str
 	"""What new dates would do to the bill, before anything changes: the
 	current and new totals and the new nightly rates, priced by the engine
 	from today's rules. amend_stay needs confirm_price=1 when the total
-	changes."""
+	changes. For a stay in house, `charged_nights` says what the property's
+	rate-change policy does to nights already on the folio: kept at their
+	charged rate (kept_difference is what the desk may give back as an
+	allowance) or credited (credit_total, posted by Kamra)."""
 	doc = frappe.get_doc("Reservation", reservation)
 	from kamra.crs import assert_property_access
 	assert_property_access(doc.property)
@@ -4892,7 +4916,9 @@ def amend_stay(reservation: str, check_in_date: str, check_out_date: str,
 	rates re-locked. That changes what the guest pays, so call
 	amend_stay_preview first, show the new price, and pass confirm_price=1;
 	without it a change in the total is refused. A manually-priced stay
-	keeps its amount."""
+	keeps its amount. Nights already charged are never re-priced in place:
+	the property's rate-change policy keeps them or credits them
+	(Reservation.hold_charged_nights)."""
 	doc = frappe.get_doc("Reservation", reservation)
 	from kamra.crs import assert_property_access
 	assert_property_access(doc.property)
@@ -4913,6 +4939,57 @@ def amend_stay(reservation: str, check_in_date: str, check_out_date: str,
 	return {"ok": True, "nights": doc.nights,
 	        "previous_amount": old_amount,
 	        "amount_after_tax": doc.amount_after_tax}
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Finance", "Hotel Admin")
+def correct_charged_nights(reservation: str, reason: str | None = None,
+                           pin: str | None = None,
+                           supervisor: str | None = None, dry_run: int = 0):
+	"""Correct the rate of nights already charged, for a hotel that fixed a
+	wrong tariff: each charged night whose rate differs from today's quote
+	is reversed and posted again at that rate (both lines dated the business
+	date, the night named in the description, each taxed at its own rate);
+	nights still to come take the rate directly. Posted lines are never
+	edited. Only when the property's rate-change policy is Correct
+	back-dated rates; needs a reason and the PIN of the Finance / Hotel
+	Admin user approving it (supervisor, default the caller). dry_run=1
+	lists the nights without changing anything. Not an agent tool."""
+	doc = frappe.get_doc("Reservation", reservation)
+	from kamra.crs import assert_property_access
+	assert_property_access(doc.property)
+	from kamra.settings import get_setting
+	if get_setting(doc.property, "charged_night_rate_change") != "Correct back-dated rates":
+		frappe.throw(_("Correcting charged nights is off. Choose Correct back-dated "
+		               "rates under Settings, Stay policies, Rate changes in house."))
+	if not doc.get("auto_price") or not doc.room_type:
+		frappe.throw(_("This stay is priced by hand; its rates are not re-quoted."))
+	if doc.status not in ("Checked In", "Checked Out"):
+		frappe.throw(_("Only a stay with charged nights can be corrected."))
+	hold = doc.hold_charged_nights(doc.quote_night_rows(doc.requote()), correct=True)
+	corrected = [n for n in hold["nights"] if n["action"] == "corrected"]
+	summary = {"nights": corrected, "lines": len(hold["lines"]),
+	           "current_amount": float(doc.amount_after_tax or 0)}
+	if cint(dry_run):
+		return summary
+	if not corrected:
+		frappe.throw(_("Every charged night already has the current rate."))
+	if not (reason or "").strip():
+		frappe.throw(_("A correction needs a reason. It goes on the record."))
+	from kamra.authz import verify_supervisor
+	approver = verify_supervisor(doc.property, supervisor or frappe.session.user, pin)
+	doc.flags.correct_charged_nights = True
+	doc.rate_lock_key = None  # re-quote, so the save runs the correction
+	# Finance has no write on Reservation; the gate is this endpoint
+	doc.save(ignore_permissions=True)
+	from kamra.savings import log_action
+	log_action("correct_charged_nights", "Reservation", doc.name, doc.property,
+	           rationale=f"{reason.strip()}; approved by {approver}; "
+	                     + ", ".join(f"{n['date']} {n['charged']:,.2f} to {n['new']:,.2f}"
+	                                 for n in corrected)
+	                     + f"; total {summary['current_amount']:,.2f} to "
+	                       f"{float(doc.amount_after_tax or 0):,.2f}")
+	return {**summary, "ok": True, "amount_after_tax": doc.amount_after_tax}
 
 
 @frappe.whitelist(methods=["POST"])

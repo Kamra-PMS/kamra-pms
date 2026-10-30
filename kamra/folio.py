@@ -247,7 +247,7 @@ def open_company_folio(reservation) -> str:
 # bill liquor to a company.
 _ROOM_CHARGES = frozenset({
 	"Room", "Meal Plan", "Room Levy", "Early Check-in", "Late Checkout",
-	"Cleaning Fee", "Extra Guests", "Discount",
+	"Cleaning Fee", "Extra Guests", "Discount", "Rate Adjustment",
 })
 COMPANY_BILLING_DEFAULTS = {
 	"Room and F&B (liquor to guest)": _ROOM_CHARGES | {"Food & Beverage"},
@@ -568,6 +568,78 @@ def _post_room_levy(folios, reservation, date, night_rate):
 	})
 
 
+# A posted night is never re-priced in place: a later rate change reaches it
+# only through these lines (kamra.settings "charged_night_rate_change"),
+# dated the business date, with the night they belong to in stay_date.
+RATE_ADJUSTMENT = "Rate Adjustment"
+
+
+def charged_nights(reservation_name: str) -> dict:
+	"""What the folios hold for each night of the stay already charged: the
+	room line(s) posted for the night plus every rate adjustment made to it
+	since, and the night's levy. {night: {base, tax, gst_rate, levy_base,
+	levy_tax, folio}} - folio is where the night's room line went."""
+	rows = frappe.db.sql(
+		"""
+		SELECT IF(fc.charge_type = %(adj)s, fc.stay_date, fc.posting_date) AS night,
+		       fc.charge_type, fc.amount, fc.gst_rate, fc.parent
+		FROM `tabFolio Charge` fc
+		JOIN `tabFolio` f ON fc.parent = f.name
+		WHERE (fc.reservation = %(res)s
+		       OR (IFNULL(fc.reservation, '') = '' AND f.reservation = %(res)s))
+		  AND (fc.charge_type IN ('Room', 'Room Levy')
+		       OR (fc.charge_type = %(adj)s AND fc.stay_date IS NOT NULL))
+		ORDER BY fc.charge_type = 'Room' DESC, fc.amount DESC
+		""", {"res": reservation_name, "adj": RATE_ADJUSTMENT}, as_dict=True)
+	out: dict = {}
+	for r in rows:
+		key = str(r.night)
+		amount = float(r.amount or 0)
+		tax = amount * float(r.gst_rate or 0) / 100
+		if r.charge_type == "Room Levy":
+			if key in out:
+				out[key]["levy_base"] += amount
+				out[key]["levy_tax"] += tax
+			continue  # a levy with no room line is not a charged night
+		n = out.setdefault(key, {"base": 0.0, "tax": 0.0, "levy_base": 0.0,
+		                         "levy_tax": 0.0, "folio": r.parent})
+		n["base"] += amount
+		n["tax"] += tax
+	for n in out.values():
+		n["base"] = round(n["base"], 2)
+		n["gst_rate"] = round(n["tax"] / n["base"] * 100, 2) if n["base"] else 0.0
+	return out
+
+
+def post_rate_lines(reservation, lines: list) -> None:
+	"""Post rate-change / rate-correction lines (from
+	Reservation.hold_charged_nights) on the folio each night went to, dated
+	the business date. Posted lines are never edited or deleted; a night
+	whose folio has since been invoiced takes its line on the open folio."""
+	from kamra.business_date import get_business_date
+	day = get_business_date(reservation.property)
+	folios: dict = {}
+	for line in lines:
+		name = line["folio"]
+		if frappe.db.get_value("Folio", name, "status") == "Closed":
+			name = target_folio(reservation, "Room")
+		if name not in folios:
+			folios[name] = frappe.get_doc("Folio", name)
+		folios[name].append("charges", {
+			"posting_date": day,
+			"stay_date": line["night"],
+			"charge_type": RATE_ADJUSTMENT,
+			"reservation": reservation.name,
+			"description": line["description"],
+			"qty": 1,
+			"rate": line["amount"],
+			"amount": line["amount"],
+			"gst_rate": line["gst_rate"],
+			"auto_posted": 1,
+		})
+	save_folios(folios)
+
+
 def save_folios(folios: dict):
 	"""Save each touched folio and post its new lines to the ledger."""
 	from kamra.ledger import save_folio
@@ -680,6 +752,7 @@ def transfer_charges(from_folio: str, charge_rows: list, to_folio: str):
 			frappe.throw("Alcohol cannot be billed to a company folio.")
 		dst.append("charges", {
 			"posting_date": row.posting_date,
+			"stay_date": row.get("stay_date"),
 			"charge_type": row.charge_type,
 			"reservation": row.get("reservation"),
 			"description": row.description,
@@ -739,6 +812,7 @@ def split_charge(from_folio: str, charge_row: str, to_folio: str,
 	row.qty = 1
 	dst.append("charges", {
 		"posting_date": row.posting_date,
+		"stay_date": row.get("stay_date"),
 		"charge_type": row.charge_type,
 		"reservation": row.get("reservation"),
 		"description": f"{row.description} · split",

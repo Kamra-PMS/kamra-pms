@@ -949,6 +949,19 @@ export default function TapeChart() {
                         })}
                   </p>
                 )}
+                {datesChanged && datesValid && datePreview?.charged_nights && (
+                  <p className="text-xs text-zinc-500">
+                    {datePreview.charged_nights.credit_total < 0
+                      ? t("Nights already charged keep their line; Kamra credits {amt} for the lower rate.", {
+                          amt: money(-datePreview.charged_nights.credit_total),
+                        })
+                      : datePreview.charged_nights.kept_difference > 0
+                        ? t("Nights already charged keep their rate; difference {amt} can be given as an allowance.", {
+                            amt: money(datePreview.charged_nights.kept_difference),
+                          })
+                        : t("Nights already charged keep their rate.")}
+                  </p>
+                )}
                 <div className="flex justify-end gap-2">
                   <Button variant="ghost" onClick={() => {
                     setDatesOpen(false)

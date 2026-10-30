@@ -30,6 +30,9 @@ CHARGE_TYPE_TO_CODE = {
 	"Pet Charge": ("1330", "Pet Charge", "Rooms", "Pet Charge"),
 	# collected for the municipality / city - a levy, not hotel revenue
 	"Room Levy": ("1310", "Room Levy", "Levies", "Room Levy"),
+	# a later rate change or correction on a night already charged: room
+	# revenue, posted on the business date (folio.post_rate_lines)
+	"Rate Adjustment": ("1010", "Room Rate Adjustment", "Rooms", "Rate Adjustment"),
 	"Discount": ("9000", "Discount", "Adjustment", "Discount"),
 	"Misc": ("8000", "Miscellaneous", "Other", "Misc"),
 	"Allowance": ("9100", "Allowance", "Adjustment", "Allowance"),

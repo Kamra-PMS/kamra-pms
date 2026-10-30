@@ -25,6 +25,7 @@ CHARGE_GROUPS = {
 	"Late Checkout": "Room",
 	"Cleaning Fee": "Room",
 	"Room Levy": "Room",
+	"Rate Adjustment": "Room",
 	"Food & Beverage": "Restaurant",
 	"Minibar": "Restaurant",
 	"Laundry": "Laundry",

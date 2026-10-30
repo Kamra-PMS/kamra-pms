@@ -4133,7 +4133,7 @@
         "kamra.api.amend_stay_preview"
        ]
       },
-      "description": "What new dates would do to the bill, before anything changes: the\ncurrent and new totals and the new nightly rates, priced by the engine\nfrom today's rules. amend_stay needs confirm_price=1 when the total\nchanges.",
+      "description": "What new dates would do to the bill, before anything changes: the\ncurrent and new totals and the new nightly rates, priced by the engine\nfrom today's rules. amend_stay needs confirm_price=1 when the total\nchanges. For a stay in house, `charged_nights` says what the property's\nrate-change policy does to nights already on the folio: kept at their\ncharged rate (kept_difference is what the desk may give back as an\nallowance) or credited (credit_total, posted by Kamra).",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"check_in_date\": \"2026-08-01\",\n  \"check_out_date\": \"2026-08-03\"\n}",
@@ -4170,10 +4170,47 @@
         "kamra.api.amend_stay"
        ]
       },
-      "description": "Extend / shorten a stay; the overlap guard validates the new window.\n\nAn auto-priced stay is re-quoted for its new dates and its nightly\nrates re-locked. That changes what the guest pays, so call\namend_stay_preview first, show the new price, and pass confirm_price=1;\nwithout it a change in the total is refused. A manually-priced stay\nkeeps its amount.",
+      "description": "Extend / shorten a stay; the overlap guard validates the new window.\n\nAn auto-priced stay is re-quoted for its new dates and its nightly\nrates re-locked. That changes what the guest pays, so call\namend_stay_preview first, show the new price, and pass confirm_price=1;\nwithout it a change in the total is refused. A manually-priced stay\nkeeps its amount. Nights already charged are never re-priced in place:\nthe property's rate-change policy keeps them or credits them\n(Reservation.hold_charged_nights).",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"check_in_date\": \"2026-08-01\",\n  \"check_out_date\": \"2026-08-03\",\n  \"confirm_price\": 0\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "correct_charged_nights",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.correct_charged_nights",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.correct_charged_nights"
+       ]
+      },
+      "description": "Correct the rate of nights already charged, for a hotel that fixed a\nwrong tariff: each charged night whose rate differs from today's quote\nis reversed and posted again at that rate (both lines dated the business\ndate, the night named in the description, each taxed at its own rate);\nnights still to come take the rate directly. Posted lines are never\nedited. Only when the property's rate-change policy is Correct\nback-dated rates; needs a reason and the PIN of the Finance / Hotel\nAdmin user approving it (supervisor, default the caller). dry_run=1\nlists the nights without changing anything. Not an agent tool.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"dry_run\": 0\n}",
        "options": {
         "raw": {
          "language": "json"

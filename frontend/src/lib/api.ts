@@ -1780,6 +1780,14 @@ export interface RepricePreview {
   difference: number
   needs_confirmation: boolean
   nights: { date: string; rate: number; demand_premium_pct: number }[]
+  /** a stay in house: what the rate-change policy does to nights already
+   * on the folio (kept at their charged rate, or credited by Kamra) */
+  charged_nights?: {
+    policy: string
+    nights: { date: string; charged: number; new: number; action: string }[]
+    kept_difference: number
+    credit_total: number
+  }
 }
 
 export const amendStayPreview = (

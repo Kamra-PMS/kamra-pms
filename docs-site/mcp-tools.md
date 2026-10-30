@@ -267,7 +267,10 @@ Endpoint: `kamra.api.reservation_detail`.
 What new dates would do to a stay's bill before anything changes:
 current and new totals, the difference and the new nightly rates,
 priced by the engine. Read-only. Call before amend_stay and tell the
-guest / staff the new price.
+guest / staff the new price. For a guest in house, charged_nights
+shows what happens to nights already on the folio: kept at their
+charged rate (kept_difference can be given back as an allowance) or
+credited (credit_total).
 
 Endpoint: `kamra.api.amend_stay_preview`.
 
