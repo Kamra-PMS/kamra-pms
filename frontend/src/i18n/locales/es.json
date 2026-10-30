@@ -5067,6 +5067,7 @@
   "stayed": "estancia finalizada",
   "staying over": "continúa alojado",
   "stay{s}": "estancia{s}",
+  "still held on cancelled stays {amount}": "aún retenido en estancias canceladas {amount}",
   "still open - the slots worth selling first.": "aún disponibles: horarios que conviene vender primero.",
   "swap room": "cambiar habitación",
   "tax invoice": "factura fiscal",

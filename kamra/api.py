@@ -4978,6 +4978,12 @@ def correct_charged_nights(reservation: str, reason: str | None = None,
 		frappe.throw(_("A correction needs a reason. It goes on the record."))
 	from kamra.authz import verify_supervisor
 	approver = verify_supervisor(doc.property, supervisor or frappe.session.user, pin)
+	# a folio correction: Finance or Hotel Admin only, whatever other roles
+	# a supervisor list may grow to (the POS's F&B Manager, say)
+	if not {"Finance", "Hotel Admin"} & set(frappe.get_roles(approver)):
+		frappe.throw(_("{0} cannot approve this. A rate correction needs a "
+		               "Finance or Hotel Admin user.").format(approver),
+		             frappe.PermissionError)
 	doc.flags.correct_charged_nights = True
 	doc.rate_lock_key = None  # re-quote, so the save runs the correction
 	# Finance has no write on Reservation; the gate is this endpoint

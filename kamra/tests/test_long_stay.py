@@ -60,6 +60,20 @@ class LongStayTestCase(AuditTestCase):
 		self.assertAlmostEqual(q["room_total"], 2400)
 		self.assertAlmostEqual(q["long_stay"]["amount"], 600)
 
+	def test_hurdle_minimum_holds(self):
+		# a 10,000 room in a hurdle tier with an 8,000 minimum: 25% off would
+		# be 7,500, but the tier's minimum is a floor too
+		rt = make_room_type(PROP_A, "LUX", base_price=10000)
+		frappe.db.delete("Hurdle Rate", {"property": PROP_A})
+		frappe.get_doc({"doctype": "Hurdle Rate", "property": PROP_A, "room_type": rt,
+		                "occupancy_from": 0, "premium_pct": 0,
+		                "min_rate": 8000}).insert()
+		self.rule(3, 25)
+		q = api.get_quote(property=PROP_A, room_type=rt,
+		                  check_in_date=d(1), check_out_date=d(4))
+		self.assertAlmostEqual(q["room_total"], 24000)
+		self.assertAlmostEqual(q["long_stay"]["amount"], 6000)
+
 	def test_bad_rule_is_refused(self):
 		with self.assertRaises(frappe.ValidationError):
 			self.rule(3, 100)

@@ -4917,6 +4917,7 @@ Steps,Steps,الخطوات,Pasos,components/StepFlow.tsx,,translated
 Still being served overnight (a late bar): leave it and override with a reason.,Still being served overnight (a late bar): leave it and override with a reason.,ما زالت الخدمة مستمرة ليلًا (بار متأخر): اتركها وتجاوز مع ذكر السبب.,"Si el servicio continúa durante la madrugada, conserve la cuenta y autorice la excepción con un motivo.",,,translated
 Still due,Still due,المتبقي,Pendiente de pago,components/DepositPanel.tsx,,translated
 Still Due In. The next night audit marks them no-show if they have not checked in.,Still Due In. The next night audit marks them no-show if they have not checked in.,لا يزالون في قائمة الوصول. يسجّلهم تدقيق الليل التالي كعدم حضور إن لم يسجّلوا الدخول.,La llegada sigue pendiente de registrar. La próxima auditoría nocturna marcará al huésped como no presentado si aún no ha registrado su entrada.,,,translated
+still held on cancelled stays {amount},still held on cancelled stays {amount},ما زال محتجزًا على إقامات ملغاة {amount},aún retenido en estancias canceladas {amount},screens/CRS.tsx,amount,translated
 Still in play,Still in play,لا يزال قيد التنفيذ,En negociación,screens/Banquet.tsx,,translated
 Still not on the bill,Still not on the bill,ما زالت غير مضافة إلى الفاتورة,Aún no está en la cuenta,components/CheckOutDialog.tsx,,translated
 still open - the slots worth selling first.,still open - the slots worth selling first.,ما زالت متاحة: الفترات الأولى بالبيع.,aún disponibles: horarios que conviene vender primero.,screens/BanquetMonth.tsx,,translated

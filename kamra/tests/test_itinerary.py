@@ -137,8 +137,13 @@ class ItineraryTestCase(_TripBase):
 		frappe.set_user(USER)  # nosemgrep: frappe-setuser -- acting as the restricted persona
 		with self.assertRaises(frappe.PermissionError):
 			crs.quote_itinerary(legs=self.legs())
-		with self.assertRaises(frappe.PermissionError):
+		# refused exactly like a trip that doesn't exist: hotel B is never named
+		with self.assertRaises(frappe.DoesNotExistError) as cm:
 			crs.get_itinerary(itn["name"])
+		self.assertNotIn(PROP_B, str(cm.exception))
+		with self.assertRaises(frappe.DoesNotExistError) as missing:
+			crs.get_itinerary("ITN-NONE")
+		self.assertEqual(str(cm.exception), str(missing.exception))
 		self.assertNotIn(itn["name"], [r["name"] for r in crs.list_itineraries()])
 		# Desk and /api/resource: the Itinerary doctype has no property field,
 		# so the permission hooks carry the same rule
@@ -149,6 +154,64 @@ class ItineraryTestCase(_TripBase):
 		frappe.set_user(USER)  # nosemgrep: frappe-setuser -- acting as the restricted persona
 		self.assertIn(own["name"], [r["name"] for r in crs.list_itineraries()])
 		self.assertTrue(frappe.has_permission("Itinerary", doc=own["name"]))
+
+	def restricted(self):
+		ensure_user(USER, ["Front Desk"])
+		if not frappe.db.exists("User Permission", {"user": USER, "allow": "Property"}):
+			frappe.get_doc({"doctype": "User Permission", "user": USER, "allow": "Property",
+			                "for_value": PROP_A}).insert(ignore_permissions=True)
+		frappe.clear_cache(user=USER)
+		frappe.set_user(USER)  # nosemgrep: frappe-setuser -- acting as the restricted persona
+
+	def tearDown(self):
+		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- restore
+		super().tearDown()
+
+	def test_restricted_overlap_never_shows_the_other_hotels_dates(self):
+		itn = self.book()
+		self.restricted()
+		first = frappe.get_doc("Reservation", itn["legs"][0]["reservation"])
+		first.check_out_date = d(4)
+		with self.assertRaisesRegex(frappe.ValidationError, "another stay on this trip") as cm:
+			first.save()
+		self.assertNotIn(d(6), str(cm.exception))
+		self.assertNotIn(PROP_B, str(cm.exception))
+
+	def test_trip_links_are_written_only_by_the_trip(self):
+		itn = self.book()
+		other = crs.create_itinerary(legs=[self.legs(a=(10, 12))[1]], guest_name="UT Other Trip")
+		res = frappe.get_doc("Reservation", itn["legs"][0]["reservation"])
+		res.itinerary = other["name"]
+		with self.assertRaises(frappe.PermissionError):
+			res.save()
+		res.reload()
+		res.itinerary = None
+		with self.assertRaises(frappe.PermissionError):
+			res.save()
+		# the desk reads trips; only kamra.crs writes them
+		self.restricted()
+		self.assertTrue(frappe.has_permission("Itinerary", "read"))
+		self.assertFalse(frappe.has_permission("Itinerary", "create"))
+		self.assertFalse(frappe.has_permission("Itinerary", "write"))
+
+	def test_a_trip_with_no_legs_is_hidden_from_restricted_users(self):
+		empty = frappe.get_doc({"doctype": "Itinerary", "guest": self.book()["guest"]}
+		                       ).insert(ignore_permissions=True).name
+		self.restricted()
+		self.assertNotIn(empty, frappe.get_list("Itinerary", pluck="name"))
+		self.assertFalse(frappe.has_permission("Itinerary", doc=empty))
+		with self.assertRaises(frappe.DoesNotExistError):
+			crs.get_itinerary(empty)
+
+	def test_a_leg_with_no_children_keeps_zero(self):
+		legs = self.legs()
+		legs[0]["children"] = 0  # B: adults only, though the trip has a child
+		q = crs.quote_itinerary(legs=legs, adults=2, children=1)
+		by_prop = {leg["property"]: leg for leg in q["legs"]}
+		self.assertEqual(by_prop[PROP_B]["children"], 0)
+		itn = crs.create_itinerary(legs=legs, guest_name="UT Kids", adults=2, children=1)
+		kids = {leg["property"]: leg["children"] for leg in itn["legs"]}
+		self.assertEqual(kids, {PROP_A: 1, PROP_B: 0})
 
 	def test_leg_booked_after_a_lost_transaction_is_refused(self):
 		# create_booking's deadlock retry rolls the whole transaction back,
@@ -262,6 +325,26 @@ class TripAdvanceTestCase(_TripBase):
 				"currency": "USD" if p == PROP_B else "INR", "currency_symbol": ""}):
 			with self.assertRaises(frappe.ValidationError):
 				crs.trip_advance_preview(itn["name"])
+
+	def test_advance_left_on_a_cancelled_leg_is_reported(self):
+		itn = self.book()
+		out = crs.record_trip_advance(itn["name"], itn["advance_due"], mode="Cash")
+		b = out["legs"][1]
+		api.cancel_reservation(b["reservation"], waive_fee=1)
+		after = crs.get_itinerary(itn["name"])
+		self.assertAlmostEqual(after["advance_paid"], out["legs"][0]["advance_paid"])
+		self.assertAlmostEqual(after["advance_held_cancelled"], b["advance_paid"])
+
+	def test_season_advance_between_25_and_100(self):
+		def season(pct, name):
+			return frappe.get_doc({"doctype": "Season", "property": PROP_A,
+			                       "season_name": name, "start_date": d(20),
+			                       "end_date": d(22), "adjustment_type": "Percent",
+			                       "adjustment_value": 0, "advance_percent": pct}).insert()
+		with self.assertRaises(frappe.ValidationError):
+			season(10, "UT Low Advance")
+		season(25, "UT Quarter Advance")
+		season(0, "UT Default Advance")  # empty: the property's usual deposit
 
 	def test_season_advance_over_100_is_refused(self):
 		# more than the bill would be charged online by the booking page

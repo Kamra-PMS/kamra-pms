@@ -95,22 +95,18 @@
    "write": 1
   },
   {
-   "create": 1,
    "email": 1,
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "Hotel Admin",
-   "write": 1
+   "role": "Hotel Admin"
   },
   {
-   "create": 1,
    "email": 1,
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "Front Desk",
-   "write": 1
+   "role": "Front Desk"
   },
   {
    "email": 1,
@@ -120,10 +116,8 @@
    "role": "Finance"
   },
   {
-   "create": 1,
    "read": 1,
-   "role": "Kamra Agent",
-   "write": 1
+   "role": "Kamra Agent"
   }
  ],
  "row_format": "Dynamic",

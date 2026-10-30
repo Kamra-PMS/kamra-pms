@@ -177,6 +177,25 @@ class ChargedNightRatesTestCase(AuditTestCase):
 			pluck="amount")), [1000, 1000])
 		self.assert_booking_matches_folio(res)
 
+	def test_correction_needs_a_finance_or_admin_approver(self):
+		# a supervisor by another role (System Manager here; the POS's F&B
+		# Manager on that branch) never approves a folio correction
+		self.policy("Correct back-dated rates")
+		_, res = self.extend()
+		ensure_user(FIN, ["Finance"])
+		sm = ensure_user("ut-charged-sm@example.com", ["System Manager"])
+		if not frappe.db.exists("Cashier PIN", sm):
+			frappe.get_doc({"doctype": "Cashier PIN", "user": sm, "pin": "4321",
+			                "must_reset": 0}).insert(ignore_permissions=True)
+		frappe.set_user(FIN)  # nosemgrep: frappe-setuser -- test persona
+		try:
+			with self.assertRaisesRegex(frappe.PermissionError, "Finance or Hotel Admin"):
+				api.correct_charged_nights(res.name, reason="Wrong tariff",
+				                           supervisor=sm, pin="4321")
+		finally:
+			frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- cleanup
+		self.assertFalse(self.adjustments())
+
 	def test_correction_is_off_by_default(self):
 		with self.assertRaisesRegex(frappe.ValidationError, "is off"):
 			api.correct_charged_nights(self.res.name, reason="x", pin="1")

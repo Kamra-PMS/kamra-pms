@@ -88,6 +88,7 @@ export interface Itinerary {
   advance_paid: number | null
   advance_required: number | null
   advance_due: number | null
+  advance_held_cancelled: number | null
 }
 interface AdvancePlan {
   amount: number
@@ -590,6 +591,11 @@ function TripSheet({ name, onClose, onChanged }: { name: string; onClose: () => 
                 {(d.advance_due ?? 0) > 0 && (
                   <span className="text-amber-700">
                     {" · "}{t("advance due {amount}", { amount: `${sym}${inr(d.advance_due)}` })}
+                  </span>
+                )}
+                {(d.advance_held_cancelled ?? 0) > 0 && (
+                  <span>
+                    {" · "}{t("still held on cancelled stays {amount}", { amount: `${sym}${inr(d.advance_held_cancelled)}` })}
                   </span>
                 )}
               </span>

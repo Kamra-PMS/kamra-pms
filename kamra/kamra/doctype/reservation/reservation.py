@@ -774,12 +774,20 @@ class Reservation(Document):
 	def validate_itinerary_leg(self):
 		"""A leg of an itinerary can't overlap another live leg of the same
 		trip - the guest can't sleep in two hotels on one night. Runs on
-		every save, so amend_stay on one leg is held to it too."""
+		every save, so amend_stay on one leg is held to it too.
+
+		The link itself is kamra.crs's alone (it sets it with db.set_value
+		when it books a leg): a save that adds, moves or drops it, from
+		/api/resource say, is refused."""
+		previous = None if self.is_new() else self.get_doc_before_save()
+		if (self.get("itinerary") or None) != ((previous and previous.get("itinerary")) or None):
+			frappe.throw(_("A stay joins or leaves a trip only through the "
+			               "trip itself."), frappe.PermissionError)
 		from kamra.reservation_state import holds_inventory
 		if self.get("itinerary") and holds_inventory(self.status):
 			from kamra.crs import assert_leg_fits
 			assert_leg_fits(self.itinerary, self.check_in_date,
-			                self.check_out_date, self.name)
+			                self.check_out_date, self.name, self.property)
 
 	def validate_room_vacant(self):
 		"""One guest in a room at a time. The night-based overlap guard lets a

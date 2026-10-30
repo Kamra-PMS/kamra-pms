@@ -5061,6 +5061,7 @@
   "Step status must be done, skipped or pending.": "يجب أن تكون حالة الخطوة: مكتملة أو متخطاة أو معلقة.",
   "Still at the laundry ({v0}). It can be billed once it is back: when the bag is at the desk, mark it ready, then post it to the room.": "ما زالت في المغسلة ({v0}). يمكن فوترتها عند عودتها: عندما تصل الحقيبة إلى الاستقبال، اجعلها جاهزة ثم رحّلها إلى الغرفة.",
   "Still being served overnight (a late bar): leave it and override with a reason.": "ما زالت الخدمة مستمرة ليلًا (بار متأخر): اتركها وتجاوز مع ذكر السبب.",
+  "still held on cancelled stays {amount}": "ما زال محتجزًا على إقامات ملغاة {amount}",
   "still open - the slots worth selling first.": "ما زالت متاحة: الفترات الأولى بالبيع.",
   "Still to be agreed": "بانتظار الاتفاق",
   "Still to choose:": "بانتظار الاختيار:",

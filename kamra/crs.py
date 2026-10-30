@@ -135,9 +135,17 @@ def _parse_legs(legs) -> list[dict]:
 
 
 def _refuse_overlap(legs: list[dict]):
-	"""legs in check-in order; refuse the first pair that shares a night."""
+	"""legs in check-in order; refuse the first pair that shares a night.
+	A leg at a property the user can't access is never described: its
+	dates would tell a restricted user about a stay at another hotel."""
+	from kamra.authz import restricted_properties
+	allowed = restricted_properties()
 	for prev, nxt in zip(legs, legs[1:]):
 		if getdate(nxt["check_in_date"]) < getdate(prev["check_out_date"]):
+			if allowed is not None and any(
+					leg.get("property") not in allowed for leg in (prev, nxt)):
+				frappe.throw(_("These dates conflict with another stay on this "
+				               "trip."), title=_("Itinerary dates overlap"))
 			frappe.throw(_("Stays overlap: {0} to {1} and {2} to {3}. A guest "
 			               "can't be in two places on one night.").format(
 				prev["check_in_date"], prev["check_out_date"],
@@ -151,17 +159,25 @@ def _live_legs(itinerary: str, exclude: str | None = None) -> list[dict]:
 	if exclude:
 		filters["name"] = ("!=", exclude)
 	return frappe.get_all("Reservation", filters=filters,
-	                      fields=["name", "check_in_date", "check_out_date"])
+	                      fields=["name", "property", "check_in_date", "check_out_date"])
 
 
 def assert_leg_fits(itinerary: str, check_in_date, check_out_date,
-                    reservation: str | None = None):
+                    reservation: str | None = None, property: str | None = None):
 	"""Reservation.validate: a live leg can't overlap another live leg of
 	its itinerary (covers amend_stay on one leg)."""
 	legs = _live_legs(itinerary, exclude=reservation) + [{
+		"property": property,
 		"check_in_date": check_in_date, "check_out_date": check_out_date}]
 	legs.sort(key=lambda leg: getdate(leg["check_in_date"]))
 	_refuse_overlap(legs)
+
+
+def _leg_int(leg: dict, key: str, default) -> int:
+	"""A leg's own adults / children, else the trip's. An explicit 0 on
+	the leg (no children on this stay) is kept, not replaced."""
+	v = leg.get(key)
+	return cint(default if v in (None, "") else v)
 
 
 def _locale(property: str) -> dict:
@@ -196,8 +212,8 @@ def quote_itinerary(legs, adults: int = 2, children: int = 0,
 		q = get_quote(property=prop, room_type=leg["room_type"],
 		              check_in_date=leg["check_in_date"],
 		              check_out_date=leg["check_out_date"],
-		              adults=cint(leg.get("adults") or adults),
-		              children=cint(leg.get("children") or children),
+		              adults=_leg_int(leg, "adults", adults),
+		              children=_leg_int(leg, "children", children),
 		              meal_plan=leg.get("meal_plan"),
 		              rate_plan=leg.get("rate_plan"), company=company)
 		rt = resolve_room_type(prop, leg["room_type"])
@@ -233,8 +249,8 @@ def _book_legs(itn, legs: list[dict], adults, children, phone,
 			check_in_date=leg["check_in_date"],
 			check_out_date=leg["check_out_date"],
 			guest_name=itn.guest_name, phone=phone, guest=itn.guest,
-			adults=cint(leg.get("adults") or adults),
-			children=cint(leg.get("children") or children),
+			adults=_leg_int(leg, "adults", adults),
+			children=_leg_int(leg, "children", children),
 			meal_plan=leg.get("meal_plan"), rate_plan=leg.get("rate_plan"),
 			company=itn.company, travel_agent=itn.travel_agent,
 			booking_type="Corporate" if itn.company else "Individual",
@@ -251,8 +267,10 @@ def _book_legs(itn, legs: list[dict], adults, children, phone,
 		if other and other != itn.name:
 			# create_booking handed back a booking that already belongs to
 			# another trip (an agent retry): never move it between trips
-			frappe.throw(_("{0} is already part of itinerary {1}.").format(
-				r["reservation"], other), title=_("Already booked"))
+			# (named neither: the other trip may be at a hotel the user
+			# can't see)
+			frappe.throw(_("This booking already belongs to another trip."),
+			             title=_("Already booked"))
 		frappe.db.set_value("Reservation", r["reservation"], "itinerary",
 		                    itn.name)
 
@@ -312,7 +330,7 @@ def create_itinerary(legs, guest_name: str | None = None,
 			"booked_by_name": booked_by_name or None,
 			"booked_by_phone": booked_by_phone or None,
 			"notes": notes or None, "idempotency_key": key,
-		}).insert()
+		}).insert(ignore_permissions=True)  # gated above; the doctype is read only
 		_book_legs(itn, legs, adults, children, phone, key)
 		return itn.name
 
@@ -334,11 +352,13 @@ def add_itinerary_leg(itinerary: str, property: str, room_type: str,
                       rate_plan: str | None = None):
 	"""Add one more stay to an existing trip. It can't overlap a live leg."""
 	itn = _itinerary(itinerary)
+	# two adds at once: the second waits here and then sees the first's leg
+	frappe.db.get_value("Itinerary", itn.name, "name", for_update=True)
 	leg = _parse_legs([{
 		"property": property, "room_type": room_type,
 		"check_in_date": check_in_date, "check_out_date": check_out_date,
 		"meal_plan": meal_plan, "rate_plan": rate_plan}])[0]
-	assert_leg_fits(itn.name, check_in_date, check_out_date)
+	assert_leg_fits(itn.name, check_in_date, check_out_date, property=property)
 	phone = frappe.db.get_value("Guest", itn.guest, "phone")
 	_savepoint(lambda: _book_legs(itn, [leg], adults, children, phone, None))
 	return get_itinerary(itn.name)
@@ -346,13 +366,19 @@ def add_itinerary_leg(itinerary: str, property: str, room_type: str,
 
 def _itinerary(itinerary: str):
 	"""The itinerary, if the user may access every property it touches -
-	a trip is worked as a whole, so a partial view is refused."""
-	if not frappe.db.exists("Itinerary", itinerary):
-		frappe.throw(_("Itinerary {0} not found.").format(itinerary),
-		             frappe.DoesNotExistError)
-	for prop in frappe.get_all("Reservation", filters={"itinerary": itinerary},
-	                           pluck="property", distinct=True):
-		assert_property_access(prop)
+	a trip is worked as a whole, so a partial view is refused. The refusal
+	is the same as for a trip that doesn't exist: it never names (or
+	confirms) a hotel the user can't see. A trip with no legs yet is shown
+	only to users with no property restriction (authz.itinerary_has_permission)."""
+	from kamra.authz import restricted_properties
+	exists = frappe.db.exists("Itinerary", itinerary)
+	allowed = restricted_properties()
+	if exists and allowed is not None:
+		props = set(frappe.get_all("Reservation", filters={"itinerary": itinerary},
+		                           pluck="property", distinct=True))
+		exists = bool(props) and props <= allowed
+	if not exists:
+		frappe.throw(_("Itinerary not found."), frappe.DoesNotExistError)
 	return frappe.get_doc("Itinerary", itinerary)
 
 
@@ -428,6 +454,11 @@ def get_itinerary(itinerary: str):
 		"advance_paid": _sum(live, "advance_paid"),
 		"advance_required": _sum(live, "advance_required"),
 		"advance_due": _sum(live, "deposit_due"),
+		# advances taken on legs since cancelled and not refunded: still on
+		# those folios (the fee kept, or a refund to make). Not in advance_paid,
+		# which is the live stays' only
+		"advance_held_cancelled": _sum(
+			[leg for leg in legs if leg["status"] == "Cancelled"], "advance_paid"),
 		"cancellation_fees": _sum(legs, "cancellation_fee"),
 	}
 

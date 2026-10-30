@@ -591,6 +591,9 @@ def quote(
 		         "room_type": ("in", [room_type, "", None])},
 		fields=["name", "room_type", "floor_price", "days_of_week"]) if los else []
 	los_saved = Decimal(0)
+	# the nights' floors (net of tax) on a long-stay discounted stay: the
+	# rate plan and a voucher stack on top and must not undercut them either
+	los_floor = Decimal(0)
 	# a day-use stay bills one "night" on the check-in date
 	for i in range(max(nights, 1)):
 		date = add_days(check_in_date, i)
@@ -613,16 +616,20 @@ def quote(
 			rate, tier = _dec(agreed_rate), None
 		if los_pct:
 			off = rate * (Decimal(1) - los_pct / Decimal(100))
-			# never below the owner's floor for this night (a rate already
-			# under the floor is not raised by it)
+			# never below the owner's floor or the hurdle tier's minimum for
+			# this night (a rate already under them is not raised by them)
 			rail = rail_for_day(rails, room_type,
 			                    getdate(date).strftime("%a").lower())
-			floor = min(rate, _dec(rail.floor_price)) if rail else Decimal(0)
+			floor = max(_dec(rail.floor_price) if rail else Decimal(0),
+			            _dec(tier["min_rate"]) if tier else Decimal(0))
+			floor = min(rate, floor)
 			off = max(off, floor)
 			gst_off = room_gst_rate(property, rt, off + night_over_cap)
 			saved = rate - off
 			los_saved += (saved / (Decimal(1) + gst_off / Decimal(100))
 			              if inclusive else saved)
+			los_floor += (floor / (Decimal(1) + gst_off / Decimal(100))
+			              if inclusive else floor)
 			rate = off
 		# The agreed amount for extra beds counts toward the slab even though
 		# it bills as its own line: GST reads what the unit fetches for the
@@ -646,7 +653,7 @@ def quote(
 
 	if rate_plan and not agreed_rate:
 		old_room_total = room_total
-		room_total = apply_rate_plan(rate_plan, room_total)
+		room_total = max(apply_rate_plan(rate_plan, room_total), los_floor)
 		if old_room_total:
 			room_tax *= room_total / old_room_total
 			los_saved *= room_total / old_room_total
@@ -678,6 +685,9 @@ def quote(
 			discount = subtotal * _dec(v.value) / Decimal(100)
 		else:
 			discount = min(_dec(v.value), subtotal)
+		# ponytail: the floor guard covers long-stay stays only; a voucher
+		# or rate plan alone keeps its old behaviour
+		discount = min(discount, max(Decimal(0), subtotal - los_floor))
 
 	taxable = subtotal - discount
 	# discount reduces tax proportionally across the blended rate
