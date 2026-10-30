@@ -26,6 +26,26 @@ upgrade-breaking changes (removed doctypes / API contracts).
   quotation, desk-led guest response, department checklists + notify on
   Confirm (Sales/Finance/HK/F&B), and quote no-response chase reminders
 
+## [2.7.0](https://github.com/Kamra-PMS/kamra-pms/compare/v2.6.23...v2.7.0) (2026-10-30)
+
+
+### Features
+
+* **groups:** main room pays for the group, staggered check-in, group booking flow ([#397](https://github.com/Kamra-PMS/kamra-pms/issues/397)) ([a4e2c31](https://github.com/Kamra-PMS/kamra-pms/commit/a4e2c31e469a2cf29e6ebd021aeb55706d184146))
+* **localization:** add Nicaragua country pack ([#398](https://github.com/Kamra-PMS/kamra-pms/issues/398)) ([d3a68bf](https://github.com/Kamra-PMS/kamra-pms/commit/d3a68bfac78106509790611455ae5744b00d6692))
+* SI call list release ([#411](https://github.com/Kamra-PMS/kamra-pms/issues/411)) ([#425](https://github.com/Kamra-PMS/kamra-pms/issues/425)) ([cfa3b89](https://github.com/Kamra-PMS/kamra-pms/commit/cfa3b8901114919c1a92793cd7885fa1411d9d5a))
+
+
+### Bug Fixes
+
+* **booking-engine:** stop /book crashing on bad URLs, redesign the page, dress the demo ([#400](https://github.com/Kamra-PMS/kamra-pms/issues/400)) ([15aa82a](https://github.com/Kamra-PMS/kamra-pms/commit/15aa82ac743ff3c254f9608e8418c5b5dfee68d2))
+* **ui:** friendly crash, offline and session-ended handling ([#399](https://github.com/Kamra-PMS/kamra-pms/issues/399)) ([082323f](https://github.com/Kamra-PMS/kamra-pms/commit/082323f3849fbf23dc08e4a03c4a0f2b377c136f))
+
+
+### Miscellaneous Chores
+
+* release 2.7.0 ([#428](https://github.com/Kamra-PMS/kamra-pms/issues/428)) ([04c3dcc](https://github.com/Kamra-PMS/kamra-pms/commit/04c3dccf5d187f9211a63ceb64a3ff792811ea58))
+
 ## [2.6.23](https://github.com/Kamra-PMS/kamra-pms/compare/v2.6.22...v2.6.23) (2026-10-28)
 
 
