@@ -161,6 +161,7 @@ AI agent.
   folio shows it as **Advance**, not as a negative balance.
 - **Reservation numbers** restart each financial year: in India in April
   (RES-2026-… runs April 2026 to March 2027), elsewhere in January.
+
 ### Scan an ID
 
 **Scan ID** fills the guest's details from the ID itself, so nobody types

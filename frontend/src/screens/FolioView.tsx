@@ -534,7 +534,7 @@ export default function FolioView() {
               {t("Bill each guest")}
             </Button>
           )}
-          {open && (
+          {open && data.stay.reservation && (
             <Button variant="outline" disabled={busy}
               onClick={() => setPanel(panel === "company" ? null : "company")}>
               {t("Change company")}
@@ -701,7 +701,7 @@ export default function FolioView() {
           {translate(error)}
         </div>
       )}
-      {panel === "company" && (
+      {panel === "company" && data.stay.reservation && (
         <div className="mb-4 print:hidden">
           <ChangeCompany reservation={data.stay.reservation} current={data.stay.company}
             onCancel={() => setPanel(null)}
