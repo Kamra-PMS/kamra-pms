@@ -110,6 +110,8 @@ interface Flow {
       row: string
       full_name: string
       age: number | null
+      /** the age the guest gave online, for the desk to confirm */
+      guest_stated_age: number | null
       has_id: boolean
       exempt: boolean
     }[]
@@ -816,6 +818,9 @@ export default function CheckInDialog(props: {
                         <span>
                           {o.full_name}
                           {o.age != null ? ` · ${o.age}` : ""}
+                          {o.age == null && o.guest_stated_age != null
+                            ? ` · ${t("guest says age {v0}, not confirmed", { v0: String(o.guest_stated_age) })}`
+                            : ""}
                         </span>
                         <span
                           className={cn(

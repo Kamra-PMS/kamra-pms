@@ -388,6 +388,7 @@
 {v0} in · {v1} due,{v0} in · {v1} due,{v0} مستلم · {v1} مستحق,Recibido: {v0} · pendiente: {v1},screens/banquet/Steps.tsx,v0 v1,translated
 {v0} in-house folios are over the balance threshold on {v1}. List them with what each owes and any deposit held.,{v0} in-house folios are over the balance threshold on {v1}. List them with what each owes and any deposit held.,{v0} فواتير لنزلاء مقيمين تتجاوز حد الرصيد في {v1}. اعرضها مع المستحق على كل منها وأي تأمين محتجز.,Hay {v0} folios de huéspedes alojados que superan el límite de saldo el {v1}. Indique saldos y depósitos retenidos.,,v0 v1,translated
 {v0} ingredient{v1},{v0} ingredient{v1},{v0} مكوّن{v1},{v0} ingrediente{v1},screens/BanquetCatalogue.tsx,v0 v1,translated
+"{v0} is booked, but the others staying were not saved: {v1}","{v0} is booked, but the others staying were not saved: {v1}",,,components/GroupBookingDialog.tsx,v0 v1,needs_translation
 {v0} is not a check-in step at this property.,{v0} is not a check-in step at this property.,{v0} ليست خطوة تسجيل وصول في هذا العقار.,{v0} no es un paso de registro de llegada de este alojamiento.,,v0,translated
 {v0} is not blocking the audit - nothing to acknowledge.,{v0} is not blocking the audit - nothing to acknowledge.,{v0} لا يمنع التدقيق، لا شيء للإقرار به.,{v0} no impide la auditoría; no requiere autorización.,,v0,translated
 {v0} is required at this property and cannot be skipped.,{v0} is required at this property and cannot be skipped.,{v0} مطلوب في هذا العقار ولا يمكن تخطيه.,{v0} es obligatorio en este alojamiento y no se puede omitir.,,v0,translated
@@ -418,9 +419,10 @@
 "{v0} restaurant bills are open for {v1}. Show each one with its table or room and total, and say which ones I can safely settle or charge to a room.","{v0} restaurant bills are open for {v1}. Show each one with its table or room and total, and say which ones I can safely settle or charge to a room.",{v0} فواتير مطعم مفتوحة ليوم {v1}. اعرض كل فاتورة مع طاولتها أو غرفتها وإجماليها، وحدد أيها يمكنني تسويته أو تحميله على غرفة بأمان.,"Hay {v0} cuentas de restaurante abiertas del {v1}. Muestre cada una con su mesa o habitación y total, e indique cuáles se pueden liquidar o cargar a una habitación.",,v0 v1,translated
 "{v0} room nights for {v1} differ from the booked rate. List them with the reason, manual or not.","{v0} room nights for {v1} differ from the booked rate. List them with the reason, manual or not.",{v0} ليالي غرف ليوم {v1} تختلف عن السعر المحجوز. اعرضها مع السبب، يدويًا كان أم لا.,"Hay {v0} noches del {v1} con tarifa distinta de la reservada. Enumérelas e indique el motivo, sea manual o no.",,v0 v1,translated
 {v0} room(s) are kept free for the group until {v1}.,{v0} room(s) are kept free for the group until {v1}.,,,components/GroupControl.tsx,v0 v1,needs_translation
-{v0} room(s) are still in house - their later room charges start a new group bill.,{v0} room(s) are still in house - their later room charges start a new group bill.,,,components/GroupControl.tsx,v0,needs_translation
 {v0} room(s) are still in house. Their new charges open a new group bill.,{v0} room(s) are still in house. Their new charges open a new group bill.,لا تزال {v0} غرفة مشغولة. رسومها الجديدة تفتح فاتورة مجموعة جديدة.,{v0} habitación(es) siguen alojadas. Sus nuevos cargos abren una nueva cuenta de grupo.,,v0,translated
 {v0} room(s) arriving - check them in.,{v0} room(s) arriving - check them in.,,,components/GroupControl.tsx,v0,needs_translation
+"{v0} room(s) have not checked out yet. Settle after they leave, unless you mean to bill in parts.","{v0} room(s) have not checked out yet. Settle after they leave, unless you mean to bill in parts.",,,components/GroupControl.tsx,v0,needs_translation
+"{v0} room(s) have not checked out yet. Settling now closes this bill, and their room charges start a new group bill.","{v0} room(s) have not checked out yet. Settling now closes this bill, and their room charges start a new group bill.",,,components/GroupControl.tsx,v0,needs_translation
 {v0} room(s) in house.,{v0} room(s) in house.,,,components/GroupControl.tsx,v0,needs_translation
 {v0} rooms are at zero rate on {v1}. List them and whether each is a booked complimentary.,{v0} rooms are at zero rate on {v1}. List them and whether each is a booked complimentary.,{v0} غرف بسعر صفر في {v1}. اعرضها وبيّن ما إذا كانت كل منها حجزًا مجانيًا.,Hay {v0} habitaciones con tarifa cero el {v1}. Indique cuáles son reservas de cortesía intencionales.,,v0 v1,translated
 {v0} rooms have a status mismatch on {v1}. For each say which side looks wrong.,{v0} rooms have a status mismatch on {v1}. For each say which side looks wrong.,{v0} غرف بها عدم تطابق في الحالة في {v1}. بيّن لكل منها أي طرف يبدو خاطئًا.,Hay {v0} habitaciones con discrepancias de estado el {v1}. Indique qué registro parece incorrecto en cada caso.,,v0 v1,translated
@@ -2479,6 +2481,7 @@ Guest requests become tickets with a promised time. You see who has each and who
 Guest requests with deadlines by priority - set them in Settings → Operations,Guest requests with deadlines by priority - set them in Settings → Operations,طلبات الضيوف بمهل حسب الأولوية، اضبطها من الإعدادات ← العمليات,Solicitudes de huéspedes con plazos de atención según la prioridad. Configúrelos en Configuración → Operaciones,screens/Tickets.tsx,,translated
 Guest requests with SLA - Urgent 15m · High 30m · Medium 1h · Low 4h,Guest requests with SLA - Urgent 15m · High 30m · Medium 1h · Low 4h,طلبات الضيوف بمستوى خدمة - عاجل 15د · عالي 30د · متوسط 1س · منخفض 4س,Plazos de atención de solicitudes: urgente 15 min · alta 30 min · media 1 h · baja 4 h,,,translated
 Guest response,Guest response,رد الضيف,Respuesta del huésped,screens/BanquetFunction.tsx,,translated
+"guest says age {v0}, not confirmed","guest says age {v0}, not confirmed",,,components/CheckInDialog.tsx,v0,needs_translation
 Guest signature,Guest signature,توقيع النزيل,Firma del huésped,screens/RegistrationCard.tsx,,translated
 Guest signs here,Guest signs here,يوقع الضيف هنا,El huésped firma aquí,components/CheckInDialog.tsx,,translated
 Guest told by {via}.,Guest told by {via}.,تم إبلاغ الضيف عبر {via}.,Se informó al huésped por {via}.,components/BookingRequests.tsx,via,translated
@@ -3618,6 +3621,7 @@ Only a confirmed or in-house stay can change this.,Only a confirmed or in-house 
 Only a confirmed or in-house stay has check-in steps (this one is {v0}).,Only a confirmed or in-house stay has check-in steps (this one is {v0}).,الإقامة المؤكدة أو داخل الفندق فقط لها خطوات تسجيل وصول (هذه {v0}).,Solo las estancias confirmadas o en curso tienen pasos de registro de llegada; esta está en estado {v0}.,,v0,translated
 Only a Hotel Admin can book a blacklisted guest.,Only a Hotel Admin can book a blacklisted guest.,يمكن لمدير الفندق فقط حجز نزيل في القائمة السوداء.,Solo un administrador del hotel puede crear una reserva para un huésped en la lista negra.,components/BookingDialog.tsx,,translated
 Only a name and phone are kept. A phone already on file reuses that guest.,Only a name and phone are kept. A phone already on file reuses that guest.,يُحفظ الاسم والهاتف فقط. الهاتف المسجل مسبقًا يعيد استخدام ملف النزيل نفسه.,Solo se conservan un nombre y un teléfono. Un teléfono que ya está registrado reutiliza a ese huésped.,screens/pos/PosSidePanel.tsx,,translated
+Only a Revenue Manager or Hotel Admin can set a group rate.,Only a Revenue Manager or Hotel Admin can set a group rate.,,,components/GroupBookingDialog.tsx; components/GroupControl.tsx,,needs_translation
 Only Finance / Hotel Admin may use this code when ticked.,Only Finance / Hotel Admin may use this code when ticked.,عند التفعيل، يستخدم هذا الرمز المالية / مدير الفندق فقط.,"Si se marca, solo Finanzas o Administración del hotel pueden usar este código.",,,translated
 Only Finance or a Hotel Admin can override it.,Only Finance or a Hotel Admin can override it.,المالية أو مدير الفندق فقط يمكنهم تجاوزه.,Solo Finanzas o un administrador del hotel pueden autorizar la excepción.,components/BookingDialog.tsx,,translated
 Only for a single unit with no second room to split into. 0 = never over capacity; the price is agreed on each booking,Only for a single unit with no second room to split into. 0 = never over capacity; the price is agreed on each booking,لوحدة واحدة فقط بلا غرفة ثانية للتقسيم إليها. 0 = لا تجاوز للسعة أبدا، ويُتفق على السعر في كل حجز,Solo para una unidad sin otra habitación donde distribuir al grupo. 0 = no superar la capacidad; el precio se acuerda en cada reserva,,,translated
@@ -3667,8 +3671,10 @@ Open full size,Open full size,عرض بالحجم الكامل,Abrir tamaño com
 Open full view,Open full view,فتح العرض الكامل,Abrir vista completa,screens/Today.tsx,,translated
 Open GRC,Open GRC,فتح بطاقة التسجيل,Abrir ficha de registro,,,translated
 Open group,Open group,,,components/GroupBookingDialog.tsx,,needs_translation
+Open group bill - {v0} in credit →,Open group bill - {v0} in credit →,,,components/GroupControl.tsx,v0,needs_translation
 Open group bill - balance {v0} →,Open group bill - balance {v0} →,,,components/GroupControl.tsx,v0,needs_translation
 Open group bill ({v0}) →,Open group bill ({v0}) →,فتح فاتورة المجموعة ({v0}) ←,Abrir cuenta del grupo ({v0}) →,,v0,translated
+Open group bill (closed) →,Open group bill (closed) →,,,components/GroupControl.tsx,,needs_translation
 Open group folio,Open group folio,فتح فاتورة المجموعة,Abrir folio del grupo,,,translated
 Open group folio (bill this event),Open group folio (bill this event),فتح فاتورة المجموعة (فوترة هذه المناسبة),Abrir folio del grupo (facturar este evento),components/EventLinks.tsx,,translated
 Open groups,Open groups,فتح المجموعات,Abrir grupos,screens/BanquetFunction.tsx,,translated
@@ -3832,14 +3838,13 @@ PAID,PAID,مدفوع,PAGADO,lib/thermal.ts,,translated
 Paid {cur},Paid {cur},مدفوع {cur},Pagado {cur},screens/Billing.tsx,cur,translated
 Paid by,Paid by,طريقة الدفع,Pagado por,screens/pos/OrderHistory.tsx,,translated
 Paid by {mode},Paid by {mode},مدفوعة عبر {mode},Pagado por {mode},screens/pos/PosSidePanel.tsx,mode,translated
-Paid in advance,Paid in advance,,,components/GroupControl.tsx,,needs_translation
 Paid in full.,Paid in full.,مدفوع بالكامل.,Pagado en su totalidad.,components/BookingDialog.tsx,,translated
 Paid more than the bill,Paid more than the bill,دفع أكثر من قيمة الفاتورة,Pagó más que la cuenta,components/CheckOutDialog.tsx,,translated
 paid out,paid out,مدفوع للخارج,salida de efectivo,,,translated
 Paid out,Paid out,مدفوع للخارج,Egreso de caja,screens/CashierTill.tsx,,translated
 Paid Out,Paid Out,مدفوع للخارج,Salida de efectivo,,,translated
 Paid outs,Paid outs,مدفوعات للخارج,Egresos de caja,screens/CashierShiftReport.tsx; screens/CashierTill.tsx,,translated
-Paid so far,Paid so far,المدفوع حتى الآن,Pagado hasta ahora,components/CheckInDialog.tsx,,translated
+Paid so far,Paid so far,المدفوع حتى الآن,Pagado hasta ahora,components/CheckInDialog.tsx; components/GroupControl.tsx,,translated
 PAN,PAN,PAN,PAN,,,translated
 "Paneer tikka, Hara bhara kebab, Corn seekh","Paneer tikka, Hara bhara kebab, Corn seekh",بانير تكا، هارا بهارا كباب، سيخ الذرة,"Paneer tikka, hara bhara kebab, brochetas de maíz",screens/BanquetCatalogue.tsx,,translated
 Paper width,Paper width,عرض الورق,Ancho del papel,screens/KitchenPrinters.tsx,,translated
@@ -3847,6 +3852,7 @@ Par,Par,المستوى المعياري,Existencia objetivo,screens/Inventory.ts
 Park this stay with no room; promote when inventory frees,Park this stay with no room; promote when inventory frees,علّق هذه الإقامة بلا غرفة؛ رقِّها عند توفر المخزون,"Poner la reserva en lista de espera, sin habitación; confirmar cuando haya disponibilidad",components/BookingDialog.tsx,,translated
 Parked with no room. Promote it from the reservation when a room frees. Auto-purges 2 days after departure.,Parked with no room. Promote it from the reservation when a room frees. Auto-purges 2 days after departure.,معلّقة بلا غرفة. رقِّها من الحجز عند توفر غرفة. تُحذف تلقائياً بعد يومين من المغادرة.,"Reserva en lista de espera, sin habitación. Confírmela desde la reserva cuando haya disponibilidad. Se elimina automáticamente 2 días después de la fecha de salida.",components/BookingDialog.tsx,,translated
 Part of {v0} →,Part of {v0} →,,,components/LinkedRecords.tsx,v0,needs_translation
+Part of a group: this guest pays only what is on their own bill. The rest is on the group bill.,Part of a group: this guest pays only what is on their own bill. The rest is on the group bill.,,,components/CheckOutDialog.tsx,,needs_translation
 Part of a group. This checks out this room only; {v0} other room(s) of the group are still in house.,Part of a group. This checks out this room only; {v0} other room(s) of the group are still in house.,جزء من مجموعة. يسجل هذا مغادرة هذه الغرفة فقط، ولا تزال {v0} غرفة أخرى من المجموعة داخل الفندق.,Forma parte de un grupo. Se registra solo la salida de esta habitación; aún hay {v0} habitaciones del grupo ocupadas.,,v0,translated
 Part of a multi-day function,Part of a multi-day function,جزء من مناسبة متعددة الأيام,Parte de un evento de varios días,screens/BanquetMonth.tsx,,translated
 Part paid,Part paid,مدفوع جزئيًا,Pago parcial,components/DepositPanel.tsx,,translated
@@ -4515,7 +4521,7 @@ Room details,Room details,تفاصيل الغرفة,Detalles de la habitación,s
 Room given by {who},Room given by {who},خصّص الغرفة {who},Habitación asignada por {who},components/RoomDrawer.tsx,who,translated
 Room history,Room history,سجل الغرفة,Historial de la habitación,,,translated
 Room insights,Room insights,تحليلات الغرف,Análisis de habitaciones,,,translated
-Room levy,Room levy,رسم الإقامة,Tasa de alojamiento,,,translated
+Room levy,Room levy,رسم الإقامة,Tasa de alojamiento,screens/GroupQuotation.tsx,,translated
 Room Levy,Room Levy,رسم الغرفة,Tasa de alojamiento,,,translated
 Room levy %,Room levy %,نسبة الرسم على الغرفة,Tasa de alojamiento (%),,,translated
 Room levy name,Room levy name,اسم الرسم على الغرفة,Nombre de la tasa de alojamiento,,,translated
@@ -4561,7 +4567,6 @@ Room Types,Room Types,أنواع الغرف,Tipos de habitación,,,translated
 Room types and rates,Room types and rates,أنواع الغرف والأسعار,Tipos de habitación y tarifas,../../kamra/onboarding.py,,translated
 "Room types, meal & rate plans, add-ons","Room types, meal & rate plans, add-ons",أنواع الغرف، خطط الوجبات والأسعار، الإضافات,"Tipos de habitación, planes de comidas, planes tarifarios y servicios adicionales",,,translated
 Room-nights,Room-nights,,,components/GroupBookingDialog.tsx; screens/GroupQuotation.tsx,,needs_translation
-Room-nights not picked up by the release date are charged.,Room-nights not picked up by the release date are charged.,,,screens/GroupQuotation.tsx,,needs_translation
 Room…,Room…,غرفة…,Habitación…,screens/HkLaundry.tsx; screens/Laundry.tsx; screens/POS.tsx,,translated
 Rooming list (,Rooming list (,قائمة نزلاء المجموعة (,Lista de huéspedes del grupo (,,,translated
 Rooms,Rooms,الغرف,Habitaciones,../../kamra/onboarding.py; components/BookingDialog.tsx; components/GroupBookingDialog.tsx; components/GroupControl.tsx; screens/GroupQuotation.tsx; screens/HkApp.tsx; screens/HousekeepingBoard.tsx; screens/Rooms.tsx,,translated

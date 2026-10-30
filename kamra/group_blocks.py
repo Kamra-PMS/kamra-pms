@@ -167,38 +167,6 @@ def group_rate(group: str | None, room_type: str | None) -> float:
 		"block_rate") or 0)
 
 
-def apply_group_rate(doc) -> bool:
-	"""Bill a new group stay at its block's negotiated rate: each night's
-	room rate is the group rate (tax at its own slab), meals stay as the
-	meal plan prices them. Locks the nights like an OTA price, so later
-	rate changes never re-price it. Returns whether a rate was applied."""
-	rate = group_rate(doc.get("group_booking"), doc.room_type)
-	if rate <= 0:
-		return False
-	from decimal import Decimal
-
-	from kamra.pricing import quote, room_gst_rate
-	q = quote(doc.property, doc.room_type, str(doc.check_in_date),
-	          str(doc.check_out_date), adults=doc.adults or 1,
-	          children=doc.children or 0, meal_plan=doc.meal_plan)
-	rt = frappe.get_doc("Room Type", doc.room_type)
-	gst = float(room_gst_rate(doc.property, rt, Decimal(str(rate))))
-	doc.set_night_rates(q)  # meals and dates as the engine prices them
-	q_room_tax = 0.0
-	for row in doc.night_rates:
-		q_room_tax += float(row.rate) * float(row.gst_rate or 0) / 100
-		row.rate, row.gst_rate, row.demand_premium_pct = rate, gst, 0
-	nights = len(doc.night_rates)
-	room_pre, room_tax = rate * nights, rate * gst / 100 * nights
-	doc.auto_price = 0
-	doc.amount_before_tax = round(float(q["amount_before_tax"]) - float(q.get("room_total") or 0) + room_pre, 2)
-	doc.tax_amount = round(float(q["tax_amount"]) - q_room_tax + room_tax, 2)
-	doc.amount_after_tax = round(doc.amount_before_tax + doc.tax_amount, 2)
-	doc.discount_amount = 0
-	doc.rate_lock_key = None
-	return True
-
-
 def release_expired_blocks() -> list[dict]:
 	"""Scheduler (every 15 min): a Confirmed group whose cutoff has passed
 	gives its unpicked rooms back to sale. Writes the release record once

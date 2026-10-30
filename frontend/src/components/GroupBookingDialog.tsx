@@ -39,17 +39,20 @@ interface Guest {
 }
 interface Prices {
   rows: { room_type: string; room_type_name: string; rooms: number; room_nights: number;
-          group_rate: boolean; rate: number; before_tax: number; tax: number; total: number }[]
+          group_rate: boolean; rate: number; before_tax: number; tax: number; levy: number; total: number }[]
   nights: number
   before_tax: number
   tax: number
+  levy: number
   total: number
+  can_set_rate: boolean
 }
 interface Result {
   group_booking: string
   status: string
   created: string[]
   skipped: { room_type: string; guest_name: string; reason: string }[]
+  warnings: { reservation: string; guest_name: string; reason: string }[]
   blocked: number
   held: number
   cutoff_date: string
@@ -118,6 +121,7 @@ export default function GroupBookingDialog(props: {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
+  const [noticeShort, setNoticeShort] = useState(false)
   const [g, setG] = useState({
     group_name: "",
     group_type: "Wedding",
@@ -215,8 +219,23 @@ export default function GroupBookingDialog(props: {
   // each guest's own nights: offered whenever rooms differ per night
   const datesOn = ownDates || anyNightly
   const total = Object.values(blockedByType).reduce((s, n) => s + n, 0)
+  // rooms of a type kept on one night
+  const roomsOnNight = (rt: string, d: string) =>
+    blocks.filter((b) => b.room_type === rt).reduce((s, b) => {
+      const nightly = perNight(b)
+      return s + (nightly ? nightly[d] ?? 0 : b.count)
+    }, 0)
+  // the nights a room is there follow the rooms kept per night: with 2 rooms on
+  // Friday and 1 on Saturday, the second room is Friday only
+  const autoDates = (rt: string, k: number) => {
+    const first = anyNightly ? nights.findIndex((d) => roomsOnNight(rt, d) > k) : -1
+    if (first < 0) return { ci: g.check_in_date, co: g.check_out_date }
+    let last = first
+    while (last + 1 < nights.length && roomsOnNight(rt, nights[last + 1]) > k) last++
+    return { ci: nights[first], co: addDay(nights[last]) }
+  }
   const slots = Object.entries(blockedByType).flatMap(([rt, n]) =>
-    Array.from({ length: n }, (_, k) => ({ key: `${rt}#${k}`, room_type: rt })))
+    Array.from({ length: n }, (_, k) => ({ key: `${rt}#${k}`, room_type: rt, auto: autoDates(rt, k) })))
   const named = slots.filter((s) => rooming[s.key]?.guest_name.trim())
   // a type whose rooms differ per night is checked night by night on save
   const shortTypes = Object.entries(blockedByType).filter(
@@ -305,6 +324,7 @@ export default function GroupBookingDialog(props: {
     }
     setRooming(next)
     const added = Object.values(grown).reduce((s, n) => s + n, 0)
+    setNoticeShort(left > 0)
     setNotice(
       [
         t("{n} guest(s) added.", { n: String(placed) }),
@@ -328,8 +348,8 @@ export default function GroupBookingDialog(props: {
       guest_name: rooming[s.key].guest_name.trim(),
       phone: rooming[s.key].phone || undefined,
       others: rooming[s.key].others?.trim() || undefined,
-      check_in_date: (datesOn && rooming[s.key].check_in_date) || undefined,
-      check_out_date: (datesOn && rooming[s.key].check_out_date) || undefined,
+      check_in_date: datesOn ? rooming[s.key].check_in_date || s.auto.ci : undefined,
+      check_out_date: datesOn ? rooming[s.key].check_out_date || s.auto.co : undefined,
     }))
     const masterIndex = named.findIndex((s) => s.key === masterKey)
     try {
@@ -344,7 +364,6 @@ export default function GroupBookingDialog(props: {
         deposit_due: Number(contract.deposit_due) || 0,
         attrition_pct: Number(contract.attrition_pct) || 0,
         quotation_only: quotationOnly ? 1 : 0,
-        guest_name: g.guest_name.trim(),
         phone: g.phone || undefined,
         company: byMain ? undefined : g.company,
         ...(byMain ? { master_index: Math.max(0, masterIndex), master_pays: pays } : {}),
@@ -416,6 +435,15 @@ export default function GroupBookingDialog(props: {
                 <ul className="list-disc space-y-1 pl-5 text-amber-700">
                   {result.skipped.map((s, i) => (
                     <li key={i}>{s.guest_name} ({typeName(s.room_type)}): {s.reason}</li>
+                  ))}
+                </ul>
+              )}
+              {(result.warnings ?? []).length > 0 && (
+                <ul className="list-disc space-y-1 pl-5 text-amber-700">
+                  {result.warnings.map((w) => (
+                    <li key={w.reservation}>
+                      {t("{v0} is booked, but the others staying were not saved: {v1}", { v0: w.guest_name, v1: w.reason })}
+                    </li>
                   ))}
                 </ul>
               )}
@@ -501,6 +529,8 @@ export default function GroupBookingDialog(props: {
                       <label className="block">
                         <span className="mb-1 block text-xs text-zinc-500">{t("Group rate / night")}</span>
                         <input type="number" min={0} className={inputCls} value={b.rate} placeholder={t("Normal price")}
+                          disabled={prices?.can_set_rate === false}
+                          title={prices?.can_set_rate === false ? t("Only a Revenue Manager or Hotel Admin can set a group rate.") : undefined}
                           onChange={(e) => setBlock(i, { rate: e.target.value })} />
                       </label>
                     ) : <span />}
@@ -549,7 +579,7 @@ export default function GroupBookingDialog(props: {
                 </button>
               </div>
               <div className="rounded-lg bg-zinc-50 px-4 py-2 text-sm text-zinc-600">
-                {Object.entries(blockedByType).map(([rt, n]) => `${typeName(rt)} – ${n}`).join(" · ")}
+                {Object.entries(blockedByType).map(([rt, n]) => `${typeName(rt)}: ${n}`).join(" · ")}
                 {" · "}{t("{n} room(s)", { n: String(total) })}
                 {prices && (
                   <span className="block font-medium text-zinc-900">
@@ -599,7 +629,7 @@ export default function GroupBookingDialog(props: {
                 </div>
               )}
               {notice && (
-                <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-emerald-800">{notice}</div>
+                <div className={`rounded-lg border px-3 py-2 ${noticeShort ? "border-amber-300 bg-amber-50 text-amber-900" : "border-emerald-200 bg-emerald-50 text-emerald-800"}`}>{notice}</div>
               )}
               <label className="flex items-center gap-2 text-xs text-zinc-600">
                 <input type="checkbox" checked={datesOn} disabled={anyNightly}
@@ -634,12 +664,12 @@ export default function GroupBookingDialog(props: {
                           <div className="mt-1 flex items-center gap-1 text-xs">
                             <input type="date" className={`${inputCls} py-1 text-xs`} aria-label={t("Arrival for room {n}", { n: String(i + 1) })}
                               min={g.check_in_date} max={nights[nights.length - 1]}
-                              value={rooming[s.key]?.check_in_date || g.check_in_date}
+                              value={rooming[s.key]?.check_in_date || s.auto.ci}
                               onChange={(e) => setGuest(s.key, { check_in_date: e.target.value })} />
                             →
                             <input type="date" className={`${inputCls} py-1 text-xs`} aria-label={t("Departure for room {n}", { n: String(i + 1) })}
-                              min={addDay(rooming[s.key]?.check_in_date || g.check_in_date)} max={g.check_out_date}
-                              value={rooming[s.key]?.check_out_date || g.check_out_date}
+                              min={addDay(rooming[s.key]?.check_in_date || s.auto.ci)} max={g.check_out_date}
+                              value={rooming[s.key]?.check_out_date || s.auto.co}
                               onChange={(e) => setGuest(s.key, { check_out_date: e.target.value })} />
                           </div>
                         )}

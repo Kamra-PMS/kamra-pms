@@ -4580,7 +4580,7 @@
       "description": "The desk's group flow: group -> room blocks -> rooming list ->\nreservations. A Confirmed group holds `blocks` ([{room_type,\nrooms_blocked, block_rate, nightly_counts}]) off sale - nightly_counts\n({\"YYYY-MM-DD\": rooms}) when the number differs night to night, and\nblock_rate the negotiated rate its rooms are billed. Each `guests` row\n({room_type, guest_name, phone, others, check_in_date, check_out_date})\nis booked now against that hold, on the group's dates or its own nights\ninside them. Blocked rooms with no guest stay held until the cutoff.\n\n`master_index` is the guests row whose room pays `master_pays` for the\ngroup (omit both, or pass `company`, for a company-paid group).\n`quotation_only` saves an Open group (a proposal): nothing is held or\nbooked until the block is confirmed. Everything is checked before the\ngroup is made, so a refusal leaves nothing behind.",
       "body": {
        "mode": "raw",
-       "raw": "{\n  \"property\": \"Your Property\",\n  \"group_name\": \"<group_name>\",\n  \"check_in_date\": \"2026-08-01\",\n  \"check_out_date\": \"2026-08-03\",\n  \"blocks\": \"<blocks>\",\n  \"guest_name\": \"A. Guest\",\n  \"phone\": \"+91 90000 00000\",\n  \"attrition_pct\": 0,\n  \"deposit_due\": 0,\n  \"quotation_only\": 0\n}",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"group_name\": \"<group_name>\",\n  \"check_in_date\": \"2026-08-01\",\n  \"check_out_date\": \"2026-08-03\",\n  \"blocks\": \"<blocks>\",\n  \"phone\": \"+91 90000 00000\",\n  \"attrition_pct\": 0,\n  \"deposit_due\": 0,\n  \"quotation_only\": 0\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -5169,7 +5169,7 @@
         "kamra.api.group_cancel"
        ]
       },
-      "description": "Cancel the group's confirmed rooms (the picked ones, or all), each\nunder the cancellation policy. When no active room is left the group\nitself is marked Cancelled.",
+      "description": "Cancel the group's confirmed rooms (the picked ones, or all), each\nunder the cancellation policy. When no active room is left the group\nitself is marked Cancelled - unless nothing was cancelled here, or a\nroom has already stayed.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"group_booking\": \"<group_booking>\",\n  \"reason\": \"Guest request\",\n  \"waive_fee\": 0\n}",
@@ -5206,7 +5206,7 @@
         "kamra.api.group_amend_dates"
        ]
       },
-      "description": "Move the group's rooms (the picked ones, or all) to new dates. Each\nstay is re-quoted as amend_stay does, so pass confirm_price=1 once the\ndesk has accepted that prices may change. Changing every room also\nmoves the group's own dates.",
+      "description": "Move the group's rooms (the picked ones, or all) to new dates. Each\nstay is re-quoted as amend_stay does, so pass confirm_price=1 once the\ndesk has accepted that prices may change. A guest on their own nights\nkeeps them relative to the group's arrival, inside the new dates.\n\nWhen every room moved, the group moves too: its rooms per night shift\nwith it, and the rooms it still holds must be free on the new dates, or\nthe whole change is refused.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"group_booking\": \"<group_booking>\",\n  \"check_in_date\": \"2026-08-01\",\n  \"check_out_date\": \"2026-08-03\",\n  \"confirm_price\": 0\n}",

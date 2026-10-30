@@ -748,7 +748,9 @@ export default function CheckOutDialog(props: {
                     </div>
                   ) : (
                     <p className="text-sm text-zinc-700">
-                      {t("No corporate account on this stay - the guest pays the full bill.")}
+                      {ctx.folios.some((f) => f.side === "group")
+                        ? t("Part of a group: this guest pays only what is on their own bill. The rest is on the group bill.")
+                        : t("No corporate account on this stay - the guest pays the full bill.")}
                     </p>
                   )}
                 </Section>

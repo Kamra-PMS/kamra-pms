@@ -65,7 +65,7 @@ interface Detail {
     deposit_due: number
   }
   pickup: PickupRow[]
-  money: { block_value: number; booked: number; deposits: number; deposit_due: number; due: number }
+  money: { block_value: number; booked: number; deposits: number; paid: number; deposit_due: number; due: number }
   attrition: {
     blocked_room_nights: number
     picked_room_nights: number
@@ -77,6 +77,8 @@ interface Detail {
     warn: boolean
   }
   room_types: { name: string; room_type_name: string }[]
+  /** may this user set the billed group rate (Revenue Manager / Hotel Admin) */
+  can_set_rate: boolean
   rooming_list: Guest[]
   event: {
     name: string
@@ -260,6 +262,8 @@ export default function GroupControl({
   const g = d.group
   const list = d.rooming_list
   const active = (r: Guest) => r.status === "Confirmed" || r.status === "Checked In"
+  // every room with a guest, including those who have already checked out
+  const namedCount = list.filter((r) => active(r) || r.status === "Checked Out").length
   // a group action works on the ticked rooms, or on every room
   const targets = selected.size ? list.filter((r) => selected.has(r.name)) : list
   const countOf = (...statuses: string[]) => targets.filter((r) => statuses.includes(r.status)).length
@@ -394,7 +398,7 @@ export default function GroupControl({
           tone: "brand",
           text: [
             days > 0 ? translate("Arrives in {v0} day(s).", { v0: String(days) }) : translate("Arrives today."),
-            translate("{v0} of {v1} rooms have a guest name.", { v0: String(list.filter(active).length), v1: String(kept) }),
+            translate("{v0} of {v1} rooms have a guest name.", { v0: String(namedCount), v1: String(kept) }),
             stillFree > 0 && g.cutoff_date
               ? translate("{v0} room(s) are kept free for the group until {v1}.", { v0: String(stillFree), v1: g.cutoff_date })
               : "",
@@ -453,7 +457,7 @@ export default function GroupControl({
   }
 
   const tabs: { key: Tab; label: string }[] = [
-    { key: "guests", label: translate("Guests ({v0})", { v0: String(list.filter(active).length) }) },
+    { key: "guests", label: translate("Guests ({v0})", { v0: String(namedCount) }) },
     { key: "rooms", label: translate("Rooms") },
     { key: "bill", label: translate("Bill") },
   ]
@@ -485,15 +489,15 @@ export default function GroupControl({
       <div className="grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
         <div className="rounded-lg border border-zinc-200 px-3 py-2">
           <div className="text-xs text-zinc-500">{translate("Rooms")}</div>
-          <div className="font-semibold">{translate("{v0} named of {v1}", { v0: String(list.filter(active).length), v1: String(kept) })}</div>
+          <div className="font-semibold">{translate("{v0} named of {v1}", { v0: String(namedCount), v1: String(kept) })}</div>
         </div>
         <div className="rounded-lg border border-zinc-200 px-3 py-2">
           <div className="text-xs text-zinc-500">{translate("Room charges (with tax)")}</div>
           <div className="font-semibold">{inr(Math.max(d.money.block_value, d.money.booked))}</div>
         </div>
         <div className="rounded-lg border border-zinc-200 px-3 py-2">
-          <div className="text-xs text-zinc-500">{translate("Paid in advance")}</div>
-          <div className="font-semibold">{inr(d.money.deposits)}</div>
+          <div className="text-xs text-zinc-500">{translate("Paid so far")}</div>
+          <div className="font-semibold">{inr(d.money.paid)}</div>
         </div>
         <div className="rounded-lg border border-zinc-200 px-3 py-2">
           <div className="text-xs text-zinc-500">{translate("Still to pay")}</div>
@@ -797,6 +801,8 @@ export default function GroupControl({
                     <label className="flex items-center gap-1 text-xs text-zinc-500">
                       {translate("Group rate / night")}
                       <input type="number" min={0} className={`${inputSm} w-28`} placeholder={translate("Normal price")} value={b.block_rate}
+                        disabled={!d.can_set_rate}
+                        title={d.can_set_rate ? undefined : translate("Only a Revenue Manager or Hotel Admin can set a group rate.")}
                         onChange={(e) => setBlocks((bs) => bs.map((x, j) => (j === i ? { ...x, block_rate: e.target.value } : x)))} />
                     </label>
                     {p && (
@@ -877,15 +883,19 @@ export default function GroupControl({
               ) : (
                 <div className="flex flex-wrap items-center gap-2">
                   <span>{translate("Main guest who pays for the rooms:")}</span>
-                  <select
-                    className={inputSm}
-                    value={main?.name ?? ""}
-                    disabled={busy}
-                    onChange={(e) => e.target.value && act(() => call("kamra.api.set_group_master", { group_booking: name, reservation: e.target.value }))}
-                  >
-                    <option value="">{translate("Choose…")}</option>
-                    {list.filter(active).map((r) => <option key={r.name} value={r.name}>{r.guest_name}</option>)}
-                  </select>
+                  {list.some(active) ? (
+                    <select
+                      className={inputSm}
+                      value={main?.name ?? ""}
+                      disabled={busy}
+                      onChange={(e) => e.target.value && act(() => call("kamra.api.set_group_master", { group_booking: name, reservation: e.target.value }))}
+                    >
+                      <option value="">{translate("Choose…")}</option>
+                      {list.filter((r) => active(r) || r.is_master).map((r) => <option key={r.name} value={r.name}>{r.guest_name}</option>)}
+                    </select>
+                  ) : (
+                    <span className="font-medium">{main?.guest_name ?? "-"}</span>
+                  )}
                   {g.master_pays && <span className="text-zinc-500">{translate("pays: {v0}", { v0: translate(g.master_pays) })}</span>}
                 </div>
               )}
@@ -953,7 +963,11 @@ export default function GroupControl({
               <div className="flex flex-wrap items-center gap-3">
                 {d.master_folio ? (
                   <Link to={`/billing/${encodeURIComponent(d.master_folio)}`} className="font-medium text-brand-700 hover:underline">
-                    {translate("Open group bill - balance {v0} →", { v0: inr(d.master_folio_balance) })}
+                    {d.master_folio_status === "Closed"
+                      ? translate("Open group bill (closed) →")
+                      : d.master_folio_balance < -0.5
+                        ? translate("Open group bill - {v0} in credit →", { v0: inr(-d.master_folio_balance) })
+                        : translate("Open group bill - balance {v0} →", { v0: inr(d.master_folio_balance) })}
                   </Link>
                 ) : (
                   <span className="text-zinc-500">{translate("The group bill starts when the first room charge or deposit is posted.")}</span>
@@ -963,7 +977,8 @@ export default function GroupControl({
                 </Link>
               </div>
 
-              {/* deposit */}
+              {/* deposit: not once the bill is closed and nobody is left to stay */}
+              {(d.master_folio_status !== "Closed" || toArrive + inHouse > 0) && (
               <div className="flex flex-wrap items-center gap-2">
                 <span>{translate("Advance paid: {v0}", { v0: inr(d.money.deposits) })}</span>
                 <label className="flex items-center gap-1 text-xs text-zinc-500">
@@ -989,17 +1004,27 @@ export default function GroupControl({
                   </>
                 )}
               </div>
+              )}
 
-              {/* settle */}
-              {d.master_folio_status === "Open" && !settle && (
-                <Button disabled={busy} onClick={openSettle}>{translate("Settle group bill")}</Button>
+              {/* settle: only when the bill has something to settle */}
+              {groupBillDue > 0.5 && !settle && (
+                toArrive + inHouse > 0 ? (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Button variant="outline" disabled={busy} onClick={openSettle}>{translate("Settle group bill")}</Button>
+                    <span className="text-xs text-amber-700">
+                      {translate("{v0} room(s) have not checked out yet. Settle after they leave, unless you mean to bill in parts.", { v0: String(toArrive + inHouse) })}
+                    </span>
+                  </div>
+                ) : (
+                  <Button disabled={busy} onClick={openSettle}>{translate("Settle group bill")}</Button>
+                )
               )}
               {settle && (
                 <div className="space-y-2 rounded-lg bg-zinc-50 p-3">
                   <div className="font-medium">{translate("Settle group bill ({v0})", { v0: inr(groupBillDue) })}</div>
-                  {g.in_house > 0 && (
+                  {toArrive + inHouse > 0 && (
                     <p className="text-xs text-amber-700">
-                      {translate("{v0} room(s) are still in house - their later room charges start a new group bill.", { v0: String(g.in_house) })}
+                      {translate("{v0} room(s) have not checked out yet. Settling now closes this bill, and their room charges start a new group bill.", { v0: String(toArrive + inHouse) })}
                     </p>
                   )}
                   {g.company && (
@@ -1056,6 +1081,7 @@ export default function GroupControl({
           onClose={() => setCheckingIn(null)}
           onDone={() => {
             setCheckingIn(null)
+            setNotice(null)
             load()
           }}
         />
@@ -1066,6 +1092,7 @@ export default function GroupControl({
           onClose={() => setCheckingOut(null)}
           onDone={() => {
             setCheckingOut(null)
+            setNotice(null)
             load()
           }}
           onOpenReservation={(res) => setCheckingOut(res)}

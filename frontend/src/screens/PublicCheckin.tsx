@@ -128,11 +128,14 @@ interface Info {
     has_id_document: boolean
     id_document_on: string
   }
-  /** the others staying, as named at booking (name and age only) */
-  occupants?: { full_name: string; age: number | null; has_id: boolean }[]
+  /** the others staying, as named at booking (name and age only). A locked
+   *  row was confirmed by the desk and cannot be changed here. */
+  occupants?: { row: string; full_name: string; age: number | null; has_id: boolean; locked: boolean }[]
 }
 
 interface Companion {
+  row?: string
+  locked: boolean
   full_name: string
   age: string
   id_type: string
@@ -180,6 +183,7 @@ export default function PublicCheckin() {
         // reload this is all we can honestly say
         setIdUploaded(i.guest.has_id_document)
         setOthers((i.occupants ?? []).map((o) => ({
+          row: o.row, locked: o.locked,
           full_name: o.full_name, age: o.age != null ? String(o.age) : "",
           id_type: i.id_types[0] ?? "", id_number: "", has_id: o.has_id,
         })))
@@ -197,7 +201,7 @@ export default function PublicCheckin() {
         address_image: addrImage || "",
         occupants: JSON.stringify(
           others.filter((o) => o.full_name.trim()).map((o) => ({
-            full_name: o.full_name.trim(), age: o.age,
+            row: o.row, full_name: o.full_name.trim(), age: o.age,
             id_type: o.id_number.trim() ? o.id_type : "", id_number: o.id_number.trim(),
           })),
         ),
@@ -398,10 +402,10 @@ export default function PublicCheckin() {
                 {t("Add everyone else in your room. Adults need an ID number; for children, name and age are enough.")}
               </p>
               {others.map((o, i) => (
-                <div key={i} className="grid gap-2 rounded-lg bg-zinc-50 p-2 sm:grid-cols-[2fr_4rem_1.5fr_1.5fr_auto]">
-                  <input className={inputCls} placeholder={t("Full name")} aria-label={t("Full name")}
+                <div key={i} className="grid grid-cols-2 gap-2 rounded-lg bg-zinc-50 p-2">
+                  <input className={inputCls} placeholder={t("Full name")} aria-label={t("Full name")} readOnly={o.locked}
                     value={o.full_name} onChange={(e) => setOther(i, { full_name: e.target.value })} />
-                  <input className={inputCls} placeholder={t("Age")} aria-label={t("Age")} inputMode="numeric"
+                  <input className={inputCls} placeholder={t("Age")} aria-label={t("Age")} inputMode="numeric" readOnly={o.locked}
                     value={o.age} onChange={(e) => setOther(i, { age: e.target.value.replace(/\D/g, "").slice(0, 3) })} />
                   <select className={inputCls} aria-label={t("ID type")} value={o.id_type}
                     onChange={(e) => setOther(i, { id_type: e.target.value })}>
@@ -410,13 +414,15 @@ export default function PublicCheckin() {
                   <input className={inputCls} aria-label={t("ID number")}
                     placeholder={o.has_id ? t("ID already given") : t("ID number")}
                     value={o.id_number} onChange={(e) => setOther(i, { id_number: e.target.value })} />
-                  <button type="button" className="text-sm text-zinc-400 hover:text-rose-600"
-                    onClick={() => setOthers((os) => os.filter((_, j) => j !== i))}>{t("Remove")}</button>
+                  {!o.locked && (
+                    <button type="button" className="col-span-2 text-right text-sm text-zinc-400 hover:text-rose-600"
+                      onClick={() => setOthers((os) => os.filter((_, j) => j !== i))}>{t("Remove")}</button>
+                  )}
                 </div>
               ))}
               <button type="button" className="text-sm font-medium text-brand-700 hover:underline"
                 onClick={() => setOthers((os) => [...os, {
-                  full_name: "", age: "", id_type: info?.id_types[0] ?? "", id_number: "", has_id: false,
+                  locked: false, full_name: "", age: "", id_type: info?.id_types[0] ?? "", id_number: "", has_id: false,
                 }])}>
                 + {t("Add a person")}
               </button>

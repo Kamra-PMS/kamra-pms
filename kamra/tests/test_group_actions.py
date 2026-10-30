@@ -97,6 +97,14 @@ class GroupActionsTestCase(IntegrationTestCase):
 				[{"room_type": "No Such Type", "count": 2}], "Lead Guest")
 		self.assertEqual(frappe.db.count("Group Booking", {"property": self.property}), before)
 
+	def test_a_phone_matching_another_guest_keeps_the_typed_name(self):
+		gb, (r1, r2, _r3) = self.group()
+		frappe.get_doc({"doctype": "Guest", "first_name": "Someone", "last_name": "Else",
+			"phone": "+256700000077"}).insert(ignore_permissions=True)
+		set_rooming_names(gb, [{"reservation": r2, "guest_name": "Priya Sharma",
+		                        "phone": "+256700000077"}])
+		self.assertEqual(frappe.db.get_value("Reservation", r2, "guest_name"), "Priya Sharma")
+
 	def test_cancel_picked_rooms_keeps_the_group(self):
 		gb, (r1, r2, r3) = self.group()
 		group_cancel(gb, [r1], waive_fee=1)

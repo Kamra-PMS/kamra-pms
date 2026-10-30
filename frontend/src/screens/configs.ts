@@ -606,6 +606,8 @@ export const groupsConfig: ScreenConfig = {
   title: "Groups & Blocks",
   description: "Group Rooms Control - blocks, pickup and rooming lists.",
   propertyScoped: true,
+  // a group is made with New group booking (screens/Groups), never this form
+  allowCreate: false,
   orderBy: "check_in_date desc",
   pageSize: 25,
   searchFields: ["group_name", "company"],

@@ -141,12 +141,15 @@ def _ids(res, guest) -> dict:
 		missing.append(res.guest_name or _("the guest"))
 	occupants = []
 	for o in res.get("occupants") or []:
-		exempt = is_minor(pack, o.age) and not minor_id_kept(pack, o.nationality)
+		# a blank age is stored as 0: it means not given, not a baby
+		age = o.age or None
+		exempt = is_minor(pack, age) and not minor_id_kept(pack, o.nationality)
 		has = bool(o.id_number or o.get("id_file"))
 		if not exempt and not has:
 			missing.append(o.full_name)
 		occupants.append({
-			"row": o.name, "full_name": o.full_name, "age": o.age,
+			"row": o.name, "full_name": o.full_name, "age": age,
+			"guest_stated_age": o.get("guest_stated_age") or None,
 			"nationality": o.nationality, "id_type": o.id_type,
 			"id_number": _mask(o.id_number), "has_id": has, "exempt": exempt,
 		})

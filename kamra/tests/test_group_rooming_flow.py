@@ -33,7 +33,7 @@ class GroupRoomingFlowTestCase(IntegrationTestCase):
 				{"room_type": self.room_type, "guest_name": "Anil Sharma", "phone": "+256700000011"},
 				{"room_type": self.room_type, "guest_name": "Priya Sharma"},
 			],
-			guest_name="Anil Sharma", phone="+256700000011", **kw)
+			phone="+256700000011", **kw)
 
 	def test_named_guests_are_booked_and_the_rest_stay_held(self):
 		out = self.make(master_index=0, master_pays="Room only")
@@ -60,7 +60,7 @@ class GroupRoomingFlowTestCase(IntegrationTestCase):
 		with self.assertRaises(frappe.ValidationError):
 			create_group_with_rooming_list(
 				self.property, "Late", str(add_days(nowdate(), -1)), self.co,
-				[{"room_type": self.room_type, "rooms_blocked": 1}], [], guest_name="X")
+				[{"room_type": self.room_type, "rooms_blocked": 1}], [])
 		self.assertEqual(frappe.db.count("Group Booking", {"property": self.property}), before)
 
 	def test_more_guests_than_blocked_rooms_is_refused(self):
@@ -97,8 +97,97 @@ class GroupRoomingFlowTestCase(IntegrationTestCase):
 		])
 		occ = {o.full_name: o for o in frappe.get_doc("Reservation", res.name).occupants}
 		self.assertEqual(set(occ), {"Ravi Sharma", "Little Sharma"})
-		self.assertEqual((occ["Ravi Sharma"].age, occ["Ravi Sharma"].id_number), (34, "P123"))
-		self.assertEqual(occ["Little Sharma"].age, 6)
+		# an age from the link is only what the guest says, for the desk to confirm
+		self.assertEqual(occ["Ravi Sharma"].id_number, "P123")
+		self.assertEqual((occ["Ravi Sharma"].age, occ["Ravi Sharma"].guest_stated_age), (0, 34))
+		self.assertEqual((occ["Little Sharma"].age, occ["Little Sharma"].guest_stated_age), (0, 6))
+
+	def test_a_name_with_no_age_is_an_adult_until_told_otherwise(self):
+		from kamra.checkin import checkin_flow
+		from kamra.public_api import _merge_precheckin_occupants, precheckin_info
+		out = self.make(guests=[{"room_type": self.room_type, "guest_name": "Anil Sharma",
+		                         "others": "Ravi Sharma"}])
+		res = frappe.get_doc("Reservation", out["created"][0])
+		from kamra.api import registration_card
+		self.assertIsNone(registration_card(res.name)["occupants"][0]["age"])
+		# the link shows an empty age, not 0
+		info = precheckin_info(res.precheckin_token)
+		self.assertIsNone(info["occupants"][0]["age"])
+		# and the desk still asks for this person's ID
+		row = checkin_flow(res.name)["ids"]["occupants"][0]
+		self.assertEqual((row["age"], row["exempt"]), (None, False))
+		# an ID typed on the link is kept, even if the form sends 0 for the age
+		_merge_precheckin_occupants(res, [{"row": info["occupants"][0]["row"],
+			"full_name": "Ravi Sharma", "age": "0", "id_type": "Passport", "id_number": "P9"}])
+		saved = frappe.get_doc("Reservation", res.name).occupants[0]
+		self.assertEqual((saved.id_number, saved.guest_stated_age), ("P9", 0))
+
+	def _with_billed_child(self):
+		"""A stay with a child being charged, and a free-child age of 6."""
+		frappe.db.set_value("Room Type", self.room_type, {
+			"free_child_age": 6, "adults_capacity": 4, "children_capacity": 2,
+			"child_price": 500, "child_age_limit": 12})
+		frappe.clear_document_cache("Room Type", self.room_type)
+		out = self.make(guests=[{"room_type": self.room_type, "guest_name": "Anil Sharma",
+		                         "adults": 2, "children": 1}])
+		return frappe.get_doc("Reservation", out["created"][0])
+
+	def test_an_age_from_the_guest_link_never_changes_the_price(self):
+		from kamra.public_api import _merge_precheckin_occupants
+		from kamra.pricing import quote
+		res = self._with_billed_child()
+		total = res.amount_after_tax
+		key = res.rate_lock_key
+		# the child really is being charged, so a free age would lower this
+		no_child = quote(self.property, self.room_type, self.ci, self.co, 2, 0)
+		self.assertGreater(total, no_child["amount_after_tax"])
+		_merge_precheckin_occupants(res, [{"full_name": "Little Sharma", "age": "2"}])
+		res = frappe.get_doc("Reservation", res.name)
+		self.assertEqual((res.amount_after_tax, res.rate_lock_key), (total, key))
+		# nor does the next ordinary save at the desk
+		res.special_requests = "Late arrival"
+		res.save()
+		self.assertEqual(frappe.get_doc("Reservation", res.name).amount_after_tax, total)
+
+	def test_the_guest_link_can_rename_and_remove_but_not_touch_a_confirmed_row(self):
+		from kamra.public_api import _merge_precheckin_occupants, precheckin_info
+		out = self.make(guests=[{"room_type": self.room_type, "guest_name": "Anil Sharma",
+		                         "others": "Ravi Sharma; Meera Sharma; Desk Guest"}])
+		res = frappe.get_doc("Reservation", out["created"][0])
+		rows = {o.full_name: o for o in res.occupants}
+		frappe.db.set_value("Stay Occupant", rows["Desk Guest"].name, "age", 40)
+		_merge_precheckin_occupants(res, [
+			{"row": rows["Ravi Sharma"].name, "full_name": "Ravi K Sharma"},
+			{"row": rows["Desk Guest"].name, "full_name": "Changed By Guest"},
+		])
+		names = sorted(o.full_name for o in frappe.get_doc("Reservation", res.name).occupants)
+		# renamed in place (no duplicate), Meera removed, the confirmed row untouched
+		self.assertEqual(names, ["Desk Guest", "Ravi K Sharma"])
+
+	def test_a_room_is_priced_for_the_people_named_in_it(self):
+		out = self.make(guests=[
+			{"room_type": self.room_type, "guest_name": "Solo"},
+			{"room_type": self.room_type, "guest_name": "Pair", "others": "Partner"},
+			{"room_type": self.room_type, "guest_name": "Crowd", "others": "One; Two; Three"},
+		])
+		adults = [frappe.db.get_value("Reservation", r, "adults") for r in out["created"]]
+		self.assertEqual(adults, [1, 2, 2])  # capped at what the room sleeps
+
+	def test_a_shared_phone_keeps_each_typed_name(self):
+		out = self.make(guests=[
+			{"room_type": self.room_type, "guest_name": "Anil Sharma", "phone": "+256700000099"},
+			{"room_type": self.room_type, "guest_name": "Priya Sharma", "phone": "+256700000099"},
+		])
+		names = [frappe.db.get_value("Reservation", r, "guest_name") for r in out["created"]]
+		self.assertEqual(names, ["Anil Sharma", "Priya Sharma"])
+
+	def test_names_that_fail_to_save_are_a_warning_not_a_skipped_room(self):
+		from unittest.mock import patch
+		with patch("kamra.api.add_occupant_names", side_effect=frappe.ValidationError("boom")):
+			out = self.make(guests=[{"room_type": self.room_type, "guest_name": "Anil Sharma",
+			                         "others": "Ravi"}])
+		self.assertEqual((len(out["created"]), out["skipped"]), (1, []))
+		self.assertEqual(out["warnings"][0]["reservation"], out["created"][0])
 
 	def test_rooming_list_template_lists_the_room_types(self):
 		from io import BytesIO
@@ -108,4 +197,6 @@ class GroupRoomingFlowTestCase(IntegrationTestCase):
 		wb = load_workbook(BytesIO(frappe.response["filecontent"]))
 		ws = wb["Rooming List"]
 		self.assertEqual([c.value for c in ws[1]], ["Name", "Phone", "Room type", "Other guests"])
-		self.assertIn("Standard", ws.data_validations.dataValidation[0].formula1)
+		self.assertEqual(wb["Lists"]["A1"].value, "Standard")
+		self.assertEqual(wb["Lists"].sheet_state, "hidden")
+		self.assertIn("Lists!", ws.data_validations.dataValidation[0].formula1)

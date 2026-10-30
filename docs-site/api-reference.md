@@ -1816,7 +1816,6 @@ group is made, so a refusal leaves nothing behind.
 | `check_out_date` | yes |  |
 | `blocks` | yes |  |
 | `guests` | no | `None` |
-| `guest_name` | no | `None` |
 | `phone` | no | `None` |
 | `company` | no | `None` |
 | `group_type` | no | `None` |
@@ -2029,7 +2028,8 @@ free room of its type (the picked ones, or all).
 
 Cancel the group's confirmed rooms (the picked ones, or all), each
 under the cancellation policy. When no active room is left the group
-itself is marked Cancelled.
+itself is marked Cancelled - unless nothing was cancelled here, or a
+room has already stayed.
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -2044,8 +2044,12 @@ itself is marked Cancelled.
 
 Move the group's rooms (the picked ones, or all) to new dates. Each
 stay is re-quoted as amend_stay does, so pass confirm_price=1 once the
-desk has accepted that prices may change. Changing every room also
-moves the group's own dates.
+desk has accepted that prices may change. A guest on their own nights
+keeps them relative to the group's arrival, inside the new dates.
+
+When every room moved, the group moves too: its rooms per night shift
+with it, and the rooms it still holds must be free on the new dates, or
+the whole change is refused.
 
 | Param | Required | Default |
 | --- | --- | --- |

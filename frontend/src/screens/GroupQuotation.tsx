@@ -21,6 +21,7 @@ interface PriceRow {
   rate: number
   before_tax: number
   tax: number
+  levy: number
   total: number
 }
 interface Quote {
@@ -49,7 +50,7 @@ interface Quote {
     attrition_pct: number
     deposit_due: number
   }
-  prices: { rows: PriceRow[]; nights: number; before_tax: number; tax: number; total: number }
+  prices: { rows: PriceRow[]; nights: number; before_tax: number; tax: number; levy: number; total: number }
   issued_on: string
 }
 
@@ -149,6 +150,9 @@ export default function GroupQuotation() {
           <tfoot>
             <tr><td colSpan={5} className="pt-3 text-right text-zinc-500">{translate("Rooms before tax")}</td><td className="pt-3 text-right">{money(prices.before_tax)}</td></tr>
             <tr><td colSpan={5} className="text-right text-zinc-500">{translate(p.tax_label)}</td><td className="text-right">{money(prices.tax)}</td></tr>
+            {prices.levy > 0 && (
+              <tr><td colSpan={5} className="text-right text-zinc-500">{translate("Room levy")}</td><td className="text-right">{money(prices.levy)}</td></tr>
+            )}
             <tr className="text-base font-semibold"><td colSpan={5} className="pt-1 text-right">{translate("Total")}</td><td className="pt-1 text-right">{money(prices.total)}</td></tr>
             {g.deposit_due > 0 && (
               <tr><td colSpan={5} className="pt-2 text-right text-zinc-600">{translate("Deposit to confirm")}</td><td className="pt-2 text-right font-medium">{money(g.deposit_due)}</td></tr>
@@ -160,10 +164,8 @@ export default function GroupQuotation() {
           <div className="font-medium text-zinc-800">{translate("Terms")}</div>
           <ul className="list-disc space-y-1 pl-5">
             <li>{translate("Rooms are held until {v0}. Rooms not named by then are released.", { v0: g.cutoff_date })}</li>
-            {g.attrition_pct > 0 ? (
+            {g.attrition_pct > 0 && (
               <li>{translate("Up to {v0}% of the room-nights can be released without charge; room-nights released beyond that are charged.", { v0: String(g.attrition_pct) })}</li>
-            ) : (
-              <li>{translate("Room-nights not picked up by the release date are charged.")}</li>
             )}
             {g.master_pays && <li>{translate("The main room pays: {v0}. Each guest pays their own extras.", { v0: translate(g.master_pays) })}</li>}
             <li>{translate("Room prices exclude meals and extras unless stated. Tax as applicable on the day of stay.")}</li>
