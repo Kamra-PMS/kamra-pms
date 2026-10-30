@@ -180,6 +180,47 @@ try {
     } finally { await s.close() }
   })
 
+  await test("same-property route transition hides assistant while refreshed status is pending", async () => {
+    const s = await session({ enabled: true })
+    let release
+    const held = new Promise((resolve) => { release = resolve })
+    try {
+      await settled(s.page)
+      await s.page.evaluate(async () => {
+        await import("/src/screens/Agents.tsx")
+        window.headingMutations = 0
+        window.headingFrames = 0
+        const visibleHeading = () => [...document.querySelectorAll("h1")].some((h) =>
+          h.textContent === "Kamra Agent" && h.getClientRects().length > 0 &&
+          h.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true }))
+        new MutationObserver(() => { if (visibleHeading()) window.headingMutations++ })
+          .observe(document.body, { childList: true, subtree: true })
+        const frame = () => {
+          if (visibleHeading()) window.headingFrames++
+          window.headingFrame = requestAnimationFrame(frame)
+        }
+        window.headingFrame = requestAnimationFrame(frame)
+      })
+      await s.page.route("**/api/method/kamra.assistant.assistant_status", async (route) => {
+        await held
+        await route.fulfill({ json: { message: { enabled: false } } })
+      })
+      await s.page.locator('a[href="/assistant"]').click()
+      await s.page.waitForTimeout(200)
+      const observed = await s.page.evaluate(() => {
+        cancelAnimationFrame(window.headingFrame)
+        return { mutations: window.headingMutations, frames: window.headingFrames }
+      })
+      assert.equal(observed.frames, 0, "No assistant heading may be painted while status is pending")
+      assert.equal(observed.mutations, 0, "No visible assistant heading may mount while status is pending")
+      assert.equal(await assistantLinks(s.page), 0)
+      assert.equal(await s.page.getByRole("button", { name: "Open help", exact: true }).count(), 0)
+    } finally {
+      release()
+      await s.close()
+    }
+  })
+
   for (const [name, branding, siteError, wantName, wantLogo] of [
     ["native branding", { app_name: "Example Hotels", app_logo: "/files/test-logo.svg" }, false, "Example Hotels", "/files/test-logo.svg"],
     ["name only", { app_name: "Example Hotels" }, false, "Example Hotels", "kamra-mark.svg"],
