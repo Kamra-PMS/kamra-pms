@@ -1,6 +1,6 @@
 # MCP tool reference
 
-Kamra exposes **134 governed tools** on the hosted MCP
+Kamra exposes **161 governed tools** on the hosted MCP
 endpoint (`/mcp`) and the stdio sidecar (`mcp/kamra_mcp.py`). Every
 call runs as the connected user - **role** permissions apply, tools
 are further filtered by the property's **enabled modules**, prices
@@ -98,6 +98,81 @@ the waiver is logged.
 Endpoint: `kamra.api.cancel_reservation`.
 Mutating - logged to the activity ledger.
 
+### `quote_itinerary(legs, adults, children, company)`
+
+Price a trip across several properties of the chain (e.g. 2 nights
+at one hotel, then 3 at another) before booking it: each leg priced by
+the same engine as quote, rooms free per leg, and the combined total
+(null when legs are in different currencies). Legs can't overlap; a
+leg may start the day the previous one ends.
+
+Endpoint: `kamra.crs.quote_itinerary`.
+
+### `create_itinerary(legs, guest_name, phone, adults, children, company, booked_by_name, booked_by_phone, notes, idempotency_key)`
+
+Book a multi-property trip in one call: one normal reservation per
+leg (each with its own folio and its own property's cancellation
+policy) under one itinerary reference (ITN-...) to give the guest.
+All legs book or none do. Always quote_itinerary first. Take the
+advance per leg, or once for the trip with record_trip_advance.
+
+Endpoint: `kamra.crs.create_itinerary`.
+Mutating - logged to the activity ledger.
+
+### `get_itinerary(itinerary)`
+
+A trip (ITN-...) with its legs in date order: property, dates,
+status, price, advance %, advance required, paid and still due per
+leg, and the trip totals.
+
+Endpoint: `kamra.crs.get_itinerary`.
+
+### `trip_advance_preview(itinerary, amount)`
+
+How one advance for a whole trip would be split across its legs:
+each leg up to its own advance still due (earliest stay first), any
+rest to the earliest leg up to its bill. Without an amount, the
+trip's advance still due. ALWAYS show this split to the staff
+member before record_trip_advance.
+
+Endpoint: `kamra.crs.trip_advance_preview`.
+
+### `record_trip_advance(itinerary, amount, mode, reference, idempotency_key)`
+
+Take one advance payment for a whole trip. It is split as
+trip_advance_preview shows and each share posts as an Advance on
+that leg's folio at its own property. mode: one of the
+payment modes every leg's property accepts.
+Confirm the amount and the split with staff before calling.
+
+Endpoint: `kamra.crs.record_trip_advance`.
+Mutating - logged to the activity ledger.
+
+### `add_itinerary_leg(itinerary, property, room_type, check_in_date, check_out_date, adults, children)`
+
+Add one more stay to an existing trip. It can't overlap a live leg.
+
+Endpoint: `kamra.crs.add_itinerary_leg`.
+Mutating - logged to the activity ledger.
+
+### `cancel_itinerary_preview(itinerary)`
+
+What cancelling a whole trip would cost now: each leg's own
+cancellation terms and the total fee. ALWAYS read this to the guest
+before cancel_itinerary. To cancel one leg, use cancellation_preview
+and cancel_booking on that leg's reservation.
+
+Endpoint: `kamra.crs.cancel_itinerary_preview`.
+
+### `cancel_itinerary(itinerary, reason, note, waive_fee)`
+
+Cancel every confirmed leg of a trip, each under its own property's
+policy (fees post to that leg's folio). Returns a cancellation number
+per leg. Only waive fees when a manager authorizes it (logged).
+
+Endpoint: `kamra.crs.cancel_itinerary`.
+Mutating - logged to the activity ledger.
+
 ### `booking_requests()`
 
 Pending Request-to-Book stays (status Requested) waiting for the
@@ -155,7 +230,7 @@ to finish. Confirm with the user first.
 Endpoint: `kamra.api.group_check_in`.
 Mutating - logged to the activity ledger.
 
-### `check_out(reservation)`
+### `check_out(reservation, early_reason, early_fee)`
 
 Check a guest out (posts remaining nights to the folio, frees the
 room, queues housekeeping). Refused while any folio has a balance:
@@ -167,7 +242,26 @@ the reason. An agent can never override a credit block - tell the
 user; Finance or a Hotel Admin can override it at the desk. Confirm
 with the user first.
 
+Leaving before the booked date (checkout_context shows
+`early_departure`): call early_departure first so the stay is
+shortened and only the nights stayed are billed, settle, then check
+out. Passing early_reason here does both in one call, but is refused
+as a whole if the new bill is not settled.
+
 Endpoint: `kamra.api.check_out`.
+Mutating - logged to the activity ledger.
+
+### `early_departure(reservation, reason)`
+
+A guest in house leaves before the booked date: shorten the stay to
+today (availability, channel manager and price follow) and post the
+property's early-departure charge for the unused nights (None, One
+Night or All Nights of room rate). Give the guest's reason. An agent
+always applies the property's policy; only Finance or a Hotel Admin
+can change the charge for one stay. checkout_context shows the plan
+and amounts first. Confirm with the user first.
+
+Endpoint: `kamra.api.early_departure`.
 Mutating - logged to the activity ledger.
 
 ### `checkout_context(reservation)`
@@ -204,7 +298,10 @@ Endpoint: `kamra.api.reservation_detail`.
 What new dates would do to a stay's bill before anything changes:
 current and new totals, the difference and the new nightly rates,
 priced by the engine. Read-only. Call before amend_stay and tell the
-guest / staff the new price.
+guest / staff the new price. For a guest in house, charged_nights
+shows what happens to nights already on the folio: kept at their
+charged rate (kept_difference can be given back as an allowance) or
+credited (credit_total).
 
 Endpoint: `kamra.api.amend_stay_preview`.
 
@@ -287,7 +384,11 @@ Endpoint: `kamra.api.guest_journey`.
 
 Record everyone staying in the room (the legal hotel register,
 printed on the GRC). occupants = [{full_name, age, gender,
-nationality, id_type, id_number, phone}] - replaces the list.
+nationality, id_type, id_number, phone, arrived_at, left_at}] -
+replaces the list. arrived_at / left_at ("YYYY-MM-DD HH:MM") are
+optional: a guest already on the register keeps their times, and
+one added while the stay is checked in arrived now. Set left_at
+when a guest leaves before the room checks out.
 
 Endpoint: `kamra.api.update_occupants`.
 Mutating - logged to the activity ledger.
@@ -470,14 +571,37 @@ balances - plus the group master when the stay is on a block.
 
 Endpoint: `kamra.api.reservation_folios`.
 
-### `record_payment(folio, mode, amount, reference, kind)`
+### `record_payment(folio, mode, amount, reference, kind, currency, idempotency_key)`
 
-Record money received on a folio. mode: Cash, Card, Bank, Link
-or another payment mode the property offers. kind: Payment (default), Advance, or Security Deposit.
-Confirm the amount with staff before calling.
+Record money received on a folio. mode: one of the
+property's payment modes, or Payment Link. kind: Payment
+(default), Advance, or Security Deposit.
+Foreign money: pass currency (e.g. USD) and the foreign amount
+as amount, mode Cash or Bank Transfer; the PMS converts at the
+hotel's rate for today (see exchange_rates) and refuses if none
+is set. Confirm the amount and currency with staff before calling.
 
 Endpoint: `kamra.api.add_folio_payment`.
 Mutating - logged to the activity ledger.
+
+### `exchange_rates()`
+
+The hotel's exchange rates: latest buy and sell rate per foreign
+currency (home-currency units per 1 foreign unit), the date each
+was set, and its source: Manual (typed in by set_by) or Online
+(fetched market_rate with the hotel's margin). Foreign payments
+convert at the buy rate set for today's business date. Finance
+fetches or types missing rates; agents cannot. Read-only.
+
+Endpoint: `kamra.ledger.list_exchange_rates`.
+
+### `folio_in_currency(folio, currency)`
+
+A folio's total and balance shown in a foreign currency at
+today's rate, rounded up to the cent. Display only: the bill and
+tax invoice stay in the hotel's currency. Read-only.
+
+Endpoint: `kamra.ledger.folio_in_currency`.
 
 ### `void_charge(folio, charge_row, reason)`
 
@@ -488,13 +612,54 @@ from get_folio). For settled/invoiced bills use apply_allowance.
 Endpoint: `kamra.api.void_folio_charge`.
 Mutating - logged to the activity ledger.
 
-### `apply_allowance(folio, amount, reason, gst_rate)`
+### `apply_allowance(folio, amount, reason, gst_rate, reason_code)`
 
 Credit back part of a bill on an open folio without deleting the
 original line (service recovery, dispute, agreed discount). Needs a
-reason; it goes on the record.
+reason (or an Adjust reason_code); it goes on the record. When the
+property wants a manager's approval the result is pending: true
+with a request id, and nothing is on the bill until a manager
+approves it. You can ask, never approve.
 
 Endpoint: `kamra.api.post_allowance`.
+Mutating - logged to the activity ledger.
+
+### `allowance_requests(status, folio)`
+
+Allowances waiting for a manager's approval (status Pending), or
+decided ones (Approved / Rejected) with who decided and why.
+
+Endpoint: `kamra.api.allowance_requests`.
+
+### `open_guest_bills(reservation, names)`
+
+A separate bill for each guest sharing a room: opens one folio per
+other occupant (or per name given), invoiced in that guest's name.
+The main guest keeps the stay's Guest folio. Then use
+share_folio_charges to share the room nights.
+
+Endpoint: `kamra.api.open_guest_bills`.
+Mutating - logged to the activity ledger.
+
+### `share_folio_charges(from_folio, charge_rows, to_folios, shares)`
+
+Share charge lines (room nights) from one bill with the other
+guests' bills: evenly, or by shares (a percent per other bill, in
+the order of to_folios). The source bill keeps the rest.
+
+Endpoint: `kamra.api.share_folio_charges`.
+Mutating - logged to the activity ledger.
+
+### `change_stay_company(reservation, company, reason, move)`
+
+Change (or remove, company empty) the company a stay bills to.
+move=rules re-routes posted charges by the new company's billing
+rules; move=guest sends the company bill back to the guest.
+Refused once an invoice went to the old company. Runs credit
+control; an agent can't override a credit block. Confirm with
+staff first and give the reason.
+
+Endpoint: `kamra.api.change_stay_company`.
 Mutating - logged to the activity ledger.
 
 ### `move_charges(from_folio, charge_rows, to_folio)`
@@ -551,6 +716,107 @@ due date. Buckets per account and in totals: not due, 1 to 30 days,
 Read-only  -  use it to answer who owes money and how late.
 
 Endpoint: `kamra.ledger.city_ledger_aging`.
+
+### `ar_accounts()`
+
+Every company account (AR) at this property: account number,
+billing contact, credit limit, payment terms, balance, overdue and
+whether it is restricted. Use the `name` it returns as `account` for
+ar_account_detail and create_ar_invoice. Read-only.
+
+Endpoint: `kamra.receivables.ar_accounts`.
+
+### `ar_account_detail(account)`
+
+One company account: balance, aging by due date, credit available
+under the limit (stays in house count against it), money paid ahead,
+each open bill with its due date and days late, and recent payments.
+Read-only.
+
+Endpoint: `kamra.ledger.city_ledger_account`.
+
+### `company_monthly_bill(account, month)`
+
+A company's month-end bill for one account: every bill of the month
+(month as YYYY-MM) with its invoice number, taxable value and tax, the
+company's payments, and the balance brought and carried forward.
+Each stay keeps its own tax invoice; this is the monthly summary.
+Read-only.
+
+Endpoint: `kamra.statements.company_monthly_bill`.
+
+### `create_ar_invoice(account, lines, reference)`
+
+Bill a company account directly for something that was not a stay
+(meeting room, contract fee). `lines` is [{charge_type, description,
+amount, qty, gst_rate}]: amount is the unit price before tax,
+charge_type one of Room, Meal Plan, Food & Beverage, Minibar, Laundry,
+Spa, Misc (and the room fees); the PMS taxes F&B at the hotel's rate
+and refuses an unknown rate. Credit control runs as at check-out and
+an agent can't override a block. Refused on a restricted account.
+Confirm the lines and total with the user first.
+
+Endpoint: `kamra.receivables.create_ar_invoice`.
+Mutating - logged to the activity ledger.
+
+### `payables_aging()`
+
+What the hotel owes each supplier (accounts payable), aged by due
+date: not due, 1 to 30, 31 to 60, 61 to 90 and 90+ days overdue, with
+totals. Read-only.
+
+Endpoint: `kamra.payables.payables_aging`.
+
+### `vendor_bills(status, vendor)`
+
+Supplier bills at this property, most urgent first: amount, tax,
+total, paid, still owed, due date and status. `status` is "open" (the
+default: not paid or cancelled), "all", or one of Awaiting Approval,
+Approved, Part Paid, Paid, Cancelled. Read-only.
+
+Endpoint: `kamra.payables.vendor_bills`.
+
+### `create_vendor_bill(vendor, bill_date, amount, tax_rate, expense_category, bill_number, due_date, description)`
+
+Enter a supplier's bill so it can be approved and paid. `vendor` is
+the vendor's id or exact name at this property. `amount` is before
+tax; the PMS works out the tax from `tax_rate` (%) and the due date
+from the vendor's terms unless `due_date` is on the bill. Dates are
+YYYY-MM-DD. The bill waits for a Hotel Admin to approve it; once
+approved, Finance or a Hotel Admin pays it in Payables. Agents cannot
+approve or pay.
+
+Endpoint: `kamra.payables.create_vendor_bill`.
+Mutating - logged to the activity ledger.
+
+### `cash_forecast(days, opening)`
+
+Money expected in and out over the next 5, 15 or 30 days (`days`,
+default 5), day by day with weekly subtotals: company bills falling
+due, departing guests' balances and advance deposits in; supplier
+bills out, including draft bills still awaiting approval (flagged
+`draft`, totalled in `draft_out`). Overdue items count today.
+`opening` is today's cash and bank; without it, cash in open tills.
+Read-only.
+
+Endpoint: `kamra.books.cash_forecast`.
+
+### `profit_and_loss(from_date, to_date)`
+
+Management P&L for a period (from_date, to_date as YYYY-MM-DD, a
+year at most): revenue by department before tax, less supplier bills
+by category and petty cash. Not statutory accounts. Read-only.
+
+Endpoint: `kamra.books.profit_and_loss`.
+
+### `balance_sheet(as_of)`
+
+What is owed to the hotel (guest ledger, city ledger, cash in open
+tills today) and what it owes (advance deposits, supplier bills) as of
+a date (default today). Not a full balance sheet: no bank, assets,
+loans or equity. Read-only.
+
+Endpoint: `kamra.books.balance_sheet`.
 
 ### `security_deposit_status(reservation)`
 
