@@ -63,6 +63,8 @@ interface InvoiceData {
     sac: string | null
     place_of_supply: string | null
     tax_id_label?: string
+    /** the pack's line on how tax is shown (India: GST inclusive) */
+    tax_note?: string
   }
   stay: {
     reservation: string
@@ -653,7 +655,7 @@ export default function FolioView() {
                 <p className="text-sm text-zinc-500">
                   {property.gstin && (
                     <>
-                      {property.tax_id_label ?? translate("GSTIN")}:{" "}
+                      {translate(property.tax_id_label ?? "Tax ID")}:{" "}
                       <span className="font-medium">{property.gstin}</span>{" "}
                       ·{" "}
                     </>
@@ -688,7 +690,7 @@ export default function FolioView() {
               <span className="text-zinc-500">{t("Bill to")}: </span>
               <span className="font-medium">{data.bill_to.name}</span>
               {data.bill_to.gstin && (
-                <span className="text-zinc-500">{translate(" · GSTIN ")}{data.bill_to.gstin}</span>
+                <span className="text-zinc-500">{" · "}{translate(property.tax_id_label ?? "Tax ID")}{" "}{data.bill_to.gstin}</span>
               )}
               {data.bill_to.gstin && loc.integrations.verify_tax_id && (
                 <VerifyTaxId taxId={data.bill_to.gstin} name={data.bill_to.name} />
@@ -1219,8 +1221,8 @@ export default function FolioView() {
                 {doc?.footer
                   ? t(doc.footer)
                   : t("This is a computer-generated invoice.")}
-                {property.gstin && property.tax_id_label === "GSTIN"
-                  ? ` ${t("Amounts are inclusive of GST at the rates shown.")}`
+                {property.gstin && property.tax_note
+                  ? ` ${t(property.tax_note)}`
                   : ""}
               </p>
               <div className="text-center">

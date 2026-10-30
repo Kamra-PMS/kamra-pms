@@ -11,6 +11,8 @@ from decimal import Decimal
 import frappe
 from frappe.utils import add_days, cint, date_diff, getdate, nowdate
 
+from kamra.localization import default_currency, pack_for
+
 
 def _dec(v) -> Decimal:
 	return Decimal(str(v or 0))
@@ -755,7 +757,7 @@ def quote(
 			"total": float(total),
 			"deposit_required": deposit_required,
 		},
-		"currency": prop.get("currency") or "INR",
+		"currency": prop.get("currency") or default_currency(pack_for(property)),
 		"quote_version": 1,
 		# the date rules this stay runs into, so a booking page or an agent
 		# can say why a stay needs two nights or full payment

@@ -34,6 +34,7 @@ import frappe
 from frappe import _
 
 from kamra.authz import require_roles
+from kamra.localization import money_text
 
 # Who may look at stock, and who may move it. Chefs never appear here: they
 # consume implicitly through fire_kot (already gated on POS_ROLES), because
@@ -443,7 +444,7 @@ def adjust_stock(property: str, outlet: str, rows, note: str):
 		                                        "cost_per_unit") or 0)
 		            for r in out)
 		log_action("stock_count", "POS Outlet", outlet, property,
-		           rationale=f"{len(out)} variance(s), ~₹{value:,.0f} adjusted - "
+		           rationale=f"{len(out)} variance(s), ~{money_text(property, round(value))} adjusted - "
 		                     f"{note.strip()[:80]}",
 		           channel="API")
 	return {"ok": True, "batch_id": batch, "adjusted": out}
@@ -470,7 +471,7 @@ def record_wastage(property: str, outlet: str, ingredient: str, qty: float,
 	from kamra.savings import log_action
 	cost = float(frappe.db.get_value("Ingredient", ingredient, "cost_per_unit") or 0)
 	log_action("stock_wastage", "Ingredient", ingredient, property,
-	           rationale=f"{qty} wasted (~₹{qty * cost:,.0f}) - "
+	           rationale=f"{qty} wasted (~{money_text(property, round(qty * cost))}) - "
 	                     f"{reason_note.strip()[:80]}",
 	           channel="API")
 	return {"ok": True, "qty_on_hand": after}

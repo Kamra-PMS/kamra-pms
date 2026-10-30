@@ -598,7 +598,7 @@ export default function RegistrationCard() {
                 <p className="text-xs text-zinc-500">
                   {d.property.gstin && (
                     <>
-                      {d.property.tax_id_label ?? translate("GSTIN")} {d.property.gstin} ·{" "}
+                      {translate(d.property.tax_id_label ?? "Tax ID")} {d.property.gstin} ·{" "}
                     </>
                   )}
                   {d.property.phone}

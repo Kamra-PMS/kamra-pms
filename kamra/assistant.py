@@ -1229,7 +1229,8 @@ What Kamra does and where to find it:
   cancel, registration card.
 - Guests: profiles with stay history, VIP/blacklist, merge and anonymize.
 - Billing: folios, post charges, take payments, payment links. Closing a folio
-  assigns a GST tax invoice (logo, GSTIN, place of supply, SAC 996311).
+  assigns a tax invoice number (logo, tax ID and the tax details the
+  property's country requires).
 - Reports: one Reports hub - manager flash, shift report, F&B dashboard,
   banquet registers, SLA, voids, department packs (Front Office,
   Housekeeping, F&B, Hotel Manager) and custom reports (build, save, group

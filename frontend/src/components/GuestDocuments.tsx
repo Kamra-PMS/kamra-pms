@@ -10,6 +10,7 @@ import { Camera, FileX2, ImageOff, ShieldCheck, Trash2, Upload, UserRound } from
 import { guestFile, idDocumentImage, removeGuestFile, saveGuestFile, type GuestFileKind } from "../lib/api"
 import { serverError, updateResource } from "../lib/resource"
 import { useT, t as translate } from "../lib/i18n"
+import { useLocale } from "../lib/money"
 import { cn } from "../lib/utils"
 import { Badge } from "./ui/badge"
 import { Button } from "./ui/button"
@@ -37,8 +38,6 @@ export interface GuestDocs {
   retention: "Store" | "Verify & Discard" | null
 }
 
-const ID_TYPES = ["Aadhaar", "Passport", "Driving License", "Voter ID", "PAN", "Other"]
-
 const label = "mb-1 block text-xs font-medium uppercase tracking-wider text-zinc-400"
 const input =
   "w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm focus:outline-2 focus:outline-offset-1 focus:outline-brand-600"
@@ -49,6 +48,7 @@ export default function GuestDocuments({ guestId, docs, onSaved }: {
   onSaved: () => void
 }) {
   const { t } = useT()
+  const idTypes = useLocale().id_types
   const id = docs.id
   const [type, setType] = useState(id.type ?? "")
   const [number, setNumber] = useState(id.number ?? "")
@@ -121,7 +121,7 @@ export default function GuestDocuments({ guestId, docs, onSaved }: {
             <input list="guest-id-types" className={input} value={type}
               onChange={(e) => setType(e.target.value)} />
             <datalist id="guest-id-types">
-              {ID_TYPES.map((x) => <option key={x} value={x} />)}
+              {idTypes.map((x) => <option key={x} value={x} />)}
             </datalist>
           </label>
           <label className="block text-sm">

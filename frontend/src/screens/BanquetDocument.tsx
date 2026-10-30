@@ -336,7 +336,7 @@ function Letterhead({ doc }: { doc: Doc }) {
                 <>
                   <br />
                   <span className="font-medium text-zinc-700">
-                    {h.tax_id_label ?? translate("GSTIN")}: {p.gstin}
+                    {translate(h.tax_id_label ?? "Tax ID")}: {p.gstin}
                   </span>
                 </>
               )}

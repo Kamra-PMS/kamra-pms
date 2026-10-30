@@ -461,8 +461,8 @@ Endpoint: `kamra.api.reservation_folios`.
 
 ### `record_payment(folio, mode, amount, reference, kind)`
 
-Record money received on a folio. mode: Cash, UPI, Card, Bank,
-Link. kind: Payment (default), Advance, or Security Deposit.
+Record money received on a folio. mode: Cash, Card, Bank, Link
+or another payment mode the property offers. kind: Payment (default), Advance, or Security Deposit.
 Confirm the amount with staff before calling.
 
 Endpoint: `kamra.api.add_folio_payment`.
@@ -505,7 +505,7 @@ Mutating - logged to the activity ledger.
 
 ### `send_payment_link(folio)`
 
-Create a Razorpay payment link for a folio's outstanding balance
+Create an online payment link (the property's payment gateway) for a folio's outstanding balance
 (SMS/email to the guest when contact details exist).
 
 Endpoint: `kamra.api.folio_payment_link`.
@@ -1058,7 +1058,7 @@ Endpoint: `kamra.pos.kitchen_queue`.
 
 ### `pos_pay_order(order, mode)`
 
-Settle a POS check. mode: Cash, UPI, Card, Room Charge, etc.
+Settle a POS check. mode: a payment mode the property offers (Cash, Card, ...) or Room Charge.
 Confirm the total with staff before calling.
 
 Endpoint: `kamra.pos.pay_order`.
