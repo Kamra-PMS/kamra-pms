@@ -122,7 +122,7 @@ class EarlyCheckoutTestCase(_Base):
 		self.assertEqual(str(res.booked_check_out_date), d(3))
 		self.assertEqual(res.early_departure_reason, "Family emergency")
 		self.assertEqual(self.nights(res), [d(-1)])
-		self.assertFalse([c for c in charges(res.name, "Misc")
+		self.assertFalse([c for c in charges(res.name, "Early Departure")
 		                  if "Early departure" in (c.description or "")])
 		from kamra.custom_reports import _fetch_early_departures
 		real = str(res.actual_check_out)[:10]  # stamped by the wall clock
@@ -138,13 +138,23 @@ class EarlyCheckoutTestCase(_Base):
 		frappe.set_user(desk)
 		with self.assertRaises(frappe.PermissionError):
 			api.early_departure(res.name, "Flight moved", fee="None")
+		from kamra.reports import _day_stats
+		before = _day_stats(PROP_A, TODAY, 10)
 		out = api.early_departure(res.name, "Flight moved")
 		frappe.set_user("Administrator")
 		self.assertEqual(out["unused_nights"], 3)
 		self.assertEqual(out["amount"], 1000)
-		fee = [c for c in charges(res.name, "Misc") if "Early departure" in c.description]
+		fee = [c for c in charges(res.name, "Early Departure") if "Early departure" in c.description]
 		self.assertEqual([c.amount for c in fee], [1000])
 		self.assertEqual(fee[0].parent, guest_folio(res.name))
+		# its own code, other income: never a room night or room revenue
+		self.assertEqual(frappe.db.get_value("Folio Ledger Entry", {
+			"folio": fee[0].parent, "description": ("like", "Early departure%")},
+			"transaction_code"), "1220")
+		after = _day_stats(PROP_A, TODAY, 10)
+		self.assertEqual((after["rooms_sold"], after["room_revenue"]),
+		                 (before["rooms_sold"], before["room_revenue"]))
+		self.assertEqual(after["other_revenue"] - before["other_revenue"], 1000)
 		folio_mod.post_remaining_nights(frappe.get_doc("Reservation", res.name))
 		self.assertEqual(self.nights(res), [d(-1)])
 
@@ -158,7 +168,7 @@ class EarlyCheckoutTestCase(_Base):
 			               ).insert(ignore_permissions=True)
 		res = self.stay(company=name, booking_type="Corporate")
 		api.early_departure(res.name, "Meeting ended early")
-		fee = [c for c in charges(res.name, "Misc") if "Early departure" in c.description]
+		fee = [c for c in charges(res.name, "Early Departure") if "Early departure" in c.description]
 		self.assertEqual(frappe.db.get_value("Folio", fee[0].parent, "folio_type"), "Company")
 
 	def test_unused_nights_in_different_slabs_bill_one_line_per_rate(self):
@@ -182,7 +192,7 @@ class EarlyCheckoutTestCase(_Base):
 		rooms = lines(twin.name, "Room")
 
 		api.early_departure(res.name, "Flight moved")  # All Nights by default
-		fee = [c for c in lines(res.name, "Misc") if "Early departure" in c.description]
+		fee = [c for c in lines(res.name, "Early Departure") if "Early departure" in c.description]
 		self.assertEqual([(c.amount, c.gst_rate) for c in fee],
 		                 [(14000, 5), (9000, 18)])
 		self.assertIn("2 of 3", fee[0].description)

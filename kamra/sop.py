@@ -23,6 +23,7 @@ CHARGE_GROUPS = {
 	"Meal Plan": "Room",
 	"Early Check-in": "Room",
 	"Late Checkout": "Room",
+	"Early Departure": "Room",
 	"Cleaning Fee": "Room",
 	"Room Levy": "Room",
 	"Food & Beverage": "Restaurant",

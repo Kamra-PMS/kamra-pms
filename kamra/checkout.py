@@ -807,12 +807,13 @@ def apply_early_departure(reservation: str, reason: str,
 		# (a company that pays the room pays it), as check-out would have
 		# billed those nights
 		folio = frappe.get_doc("Folio", target_folio(res, "Room"))
-		# Misc, not Room: a Room line is a posted night (deduped by date),
-		# and the rate rides on the line, so Misc carries the slab exactly
+		# its own charge type, not Room: a Room line is a posted night
+		# (deduped by date, counted in room nights and ADR); the rate rides
+		# on the line, so each slab bills exactly
 		for line in plan["lines"][fee]:
 			folio.append("charges", {
 				"posting_date": get_business_date(res.property),
-				"charge_type": "Misc",
+				"charge_type": "Early Departure",
 				"reservation": res.name,
 				"description": _("Early departure: {0} of {1} unused night(s) at {2}% tax").format(
 					line["nights"], plan["unused_nights"], f"{line['tax_rate']:g}"),

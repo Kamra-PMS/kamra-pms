@@ -273,7 +273,11 @@ leaving before the booked date starts with **Leaving early**:
    bills only those nights, plus an **Early departure** line for the
    charge, on the bill that pays the room (the company's, when it pays
    the room). Each unused night is taxed as its room charge would have
-   been, so nights in different tax slabs get one line per rate. Finance and Hotel Admins can pick a different charge for this
+   been, so nights in different tax slabs get one line per rate. The line
+   is its own charge type, **Early Departure** (transaction code 1220,
+   revenue group Other): it shows as other income on the flash and day
+   reports, never as a room night, so occupancy, ADR and RevPAR count only
+   the nights the guest stayed. Finance and Hotel Admins can pick a different charge for this
    stay; everyone else gets the property's policy. The booked date and the
    reason stay on the booking and show in the **Early departures** report.
    With the policy at **All unused nights** you can **Skip** the step and

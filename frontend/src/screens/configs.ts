@@ -895,7 +895,7 @@ export const transactionCodesConfig: ScreenConfig = {
     { field: "charge_type", label: "Legacy charge type", type: "select",
       options: [
         "Room", "Meal Plan", "Food & Beverage", "Minibar", "Laundry", "Spa",
-        "Early Check-in", "Late Checkout", "Cleaning Fee", "Extra Guests",
+        "Early Check-in", "Late Checkout", "Early Departure", "Cleaning Fee", "Extra Guests",
         "Pet Charge", "Room Levy", "Discount", "Misc", "Allowance", "Opening Balance",
       ],
       hint: "Maps to Folio Charge.charge_type for display on older lines." },

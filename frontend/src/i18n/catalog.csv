@@ -1908,6 +1908,7 @@ Each unit / room sells on its own (hotel-style inventory).,Each unit / room sell
 Earlier,Earlier,السابق,Anterior,screens/BanquetDiary.tsx; screens/RateCalendar.tsx,,translated
 Early check-in,Early check-in,وصول مبكر,Entrada anticipada,,,translated
 Early Check-in,Early Check-in,وصول مبكر,Entrada anticipada,,,translated
+Early Departure,Early Departure,مغادرة مبكرة,Salida anticipada,,,translated
 Early departure charge,Early departure charge,رسوم المغادرة المبكرة,Cargo por salida anticipada,,,translated
 Early departures,Early departures,مغادرات مبكرة,Salidas anticipadas,,,translated
 edit,edit,تعديل,editar,components/EditableNationality.tsx; screens/RegistrationCard.tsx,,translated

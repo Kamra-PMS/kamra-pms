@@ -246,7 +246,7 @@ def open_company_folio(reservation) -> str:
 # Alcohol is filtered out before any of this (target_folio), so no option can
 # bill liquor to a company.
 _ROOM_CHARGES = frozenset({
-	"Room", "Meal Plan", "Room Levy", "Early Check-in", "Late Checkout",
+	"Room", "Meal Plan", "Room Levy", "Early Check-in", "Late Checkout", "Early Departure",
 	"Cleaning Fee", "Extra Guests", "Discount",
 })
 COMPANY_BILLING_DEFAULTS = {

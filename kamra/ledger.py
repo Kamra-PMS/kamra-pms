@@ -24,6 +24,10 @@ CHARGE_TYPE_TO_CODE = {
 	"Spa": ("3100", "Spa", "Other", "Spa"),
 	"Early Check-in": ("1200", "Early Check-in", "Rooms", "Early Check-in"),
 	"Late Checkout": ("1210", "Late Checkout", "Rooms", "Late Checkout"),
+	# the charge for booked nights a guest leaving early did not use: earned
+	# income, but not a night sold, so it stays out of room revenue (ADR,
+	# RevPAR) and sits with other income
+	"Early Departure": ("1220", "Early Departure", "Other", "Early Departure"),
 	"Cleaning Fee": ("1300", "Cleaning Fee", "Rooms", "Cleaning Fee"),
 	# extra beds in a let room - room revenue, so it lands in the Rooms group
 	"Extra Guests": ("1320", "Extra Guests", "Rooms", "Extra Guests"),
