@@ -116,6 +116,12 @@ class MultiCurrencyTestCase(AuditTestCase):
 		self.assertFalse(frappe.db.exists("Folio Payment", {"parent": self.folio,
 		                                                   "currency": "USD"}))
 
+	def test_home_currency_falls_back_to_the_country_pack(self):
+		make_property(PROP_A, business_date=TODAY, country="Thailand")
+		frappe.db.set_value("Property", PROP_A, "currency", None)
+		frappe.clear_document_cache("Property", PROP_A)
+		self.assertEqual(ledger.home_currency(PROP_A), "THB")
+
 	def test_home_currency_payment_is_unchanged(self):
 		api.add_folio_payment(self.folio, "Cash", 250, currency="INR")
 		api.add_folio_payment(self.folio, "Cash", 250)

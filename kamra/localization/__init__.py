@@ -139,6 +139,11 @@ def payment_modes(pack) -> list[str]:
 	return [m for m in modes if m in CANONICAL_PAYMENT_MODES]
 
 
+def default_currency(pack) -> str:
+	"""The pack's home currency, for a property that has none set."""
+	return getattr(pack, "DEFAULT_CURRENCY", None) or "USD"
+
+
 def front_desk_vocabulary(pack) -> dict:
 	return {
 		"id_types": id_types(pack),

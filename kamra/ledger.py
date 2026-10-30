@@ -1625,7 +1625,9 @@ def post_exchange(property: str, currency: str, fx_amount: float,
 
 def home_currency(property: str) -> str:
 	"""The currency the hotel's books are kept in."""
-	return frappe.get_cached_value("Property", property, "currency") or "INR"
+	from kamra import localization as loc
+	return (frappe.get_cached_value("Property", property, "currency")
+	        or loc.default_currency(loc.pack_for(property)))
 
 
 def _money(value) -> Decimal:
