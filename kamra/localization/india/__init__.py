@@ -15,6 +15,8 @@ FNB_GST = 5.0  # F&B / meal-plan GST rate
 SERVICES_GST = 18.0  # laundry and other guest services
 
 DEFAULT_CURRENCY = "INR"
+# foreign money guests bring most; Settings, Finance, Exchange rates can change it
+FX_CURRENCIES = ["USD", "EUR", "GBP", "AED", "SAR", "SGD", "AUD", "JPY"]
 DEFAULT_TIMEZONE = "Asia/Kolkata"
 DEFAULT_NATIONALITY = "Indian"
 # named in the guest privacy notice

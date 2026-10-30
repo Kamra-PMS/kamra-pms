@@ -28,6 +28,8 @@ import frappe
 
 DEFAULT_VAT = Decimal("15")
 DEFAULT_CURRENCY = "NIO"
+# foreign money guests bring most; Settings, Finance, Exchange rates can change it
+FX_CURRENCIES = ["USD", "EUR", "CRC", "HNL", "MXN", "CAD"]
 DEFAULT_TIMEZONE = "America/Managua"
 DEFAULT_NATIONALITY = "Nicaraguan"
 ID_TYPES = ["National ID", "Passport", "Residence Card", "Driving License", "Other"]

@@ -24,6 +24,8 @@ import frappe
 DEFAULT_ISS = Decimal("5")
 
 DEFAULT_CURRENCY = "BRL"
+# foreign money guests bring most; Settings, Finance, Exchange rates can change it
+FX_CURRENCIES = ["USD", "EUR", "ARS", "GBP", "CLP", "UYU", "PYG"]
 DEFAULT_TIMEZONE = "America/Sao_Paulo"
 DEFAULT_NATIONALITY = "Brazilian"
 ID_TYPES = ["CPF", "RG", "Passport", "Driving License (CNH)", "Other"]

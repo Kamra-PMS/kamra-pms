@@ -425,7 +425,8 @@ MODULES: tuple[Module, ...] = (
 			        "A guest paying in foreign money needs today's rate: typed in on the Currency Desk, "
 			        "or fetched from an online market rate. A rate typed in by staff always wins over "
 			        "a fetched one for the same day.", (
-				S("fx_currencies", "Foreign currencies taken", "text", "USD, EUR, GBP, AED",
+				S("fx_currencies", "Foreign currencies taken", "text",
+				  "USD, EUR, GBP, AED, SAR, SGD, AUD, JPY",
 				  hint="ISO codes, separated by commas. Fetch today's rates gets these."),
 				S("fx_margin_pct", "Margin on the market rate", "number", 2.0, min=0, max=20, unit="%",
 				  hint="Buy rate = market rate less this; sell rate = market rate plus this."),
@@ -515,12 +516,37 @@ def _turnover_name(property: str) -> str | None:
 	return frappe.db.get_value("Turnover Profile", {"property": property, "is_default": 1}, "name")
 
 
+def fx_currencies_default(property: str) -> str:
+	"""The country pack's usual foreign currencies (FX_CURRENCIES, else the
+	generic list), less the property's own currency."""
+	from kamra.ledger import home_currency
+	from kamra.localization import generic, pack_for
+	home = home_currency(property)
+	codes = getattr(pack_for(property), "FX_CURRENCIES", generic.FX_CURRENCIES)
+	return ", ".join(c for c in codes if c != home)
+
+
+# ponytail: one setting whose default depends on the property; a callable
+# field on S when a second one appears
+PROPERTY_DEFAULTS = {"fx_currencies": fx_currencies_default}
+
+
+def _default(property: str | None, spec: S):
+	fn = PROPERTY_DEFAULTS.get(spec.key)
+	if fn and property:
+		try:
+			return fn(property)
+		except Exception:
+			return spec.default
+	return spec.default
+
+
 def get_setting(property: str | None, key: str, default=None):
 	"""The value of one registry setting for a property, or its default.
 	Safe to call from anywhere (scheduler, hooks) - never raises on a
 	missing property or row."""
 	_, spec = SETTINGS[key]
-	fallback = spec.default if default is None else default
+	fallback = _default(property, spec) if default is None else default
 	if not property:
 		return fallback
 	try:
@@ -592,7 +618,7 @@ def _values(property: str, module: Module) -> dict:
 	for s in keys:
 		raw = (prop or {}).get(s.key) if s.store == P else \
 			(turnover or {}).get(s.key) if s.store == "turnover" else kv.get(s.key)
-		out[s.key] = s.default if raw is None or raw == "" else _coerce(s, raw)
+		out[s.key] = _default(property, s) if raw is None or raw == "" else _coerce(s, raw)
 	return out
 
 
@@ -616,8 +642,8 @@ def _enabled_modules(property: str) -> list:
 
 # --- endpoints ---------------------------------------------------------------
 
-def _spec_json(s: S) -> dict:
-	d = {"key": s.key, "label": s.label, "type": s.type, "default": s.default,
+def _spec_json(s: S, property: str | None = None) -> dict:
+	d = {"key": s.key, "label": s.label, "type": s.type, "default": _default(property, s),
 	     "hint": s.hint, "store": s.store}
 	for k in ("options", "options_source", "min", "max", "unit"):
 		v = getattr(s, k)
@@ -662,7 +688,7 @@ def settings_schema(property: str) -> dict:
 			"editors": list(m.editors), "can_edit": editable,
 			"related": [{"label": a, "to": b} for a, b in m.related],
 			"sections": [{"id": sec.id, "title": sec.title, "description": sec.description,
-			              "settings": [_spec_json(s) for s in sec.settings]} for sec in m.sections],
+			              "settings": [_spec_json(s, property) for s in sec.settings]} for sec in m.sections],
 			"values": _values(property, m),
 		})
 	return {

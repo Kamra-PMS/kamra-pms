@@ -255,3 +255,40 @@ class OnlineRatesTestCase(AuditTestCase):
 	def test_fetch_needs_finance(self):
 		self.assertNotIn("Kamra Agent", ledger.fetch_exchange_rates._kamra_roles)
 		self.assertNotIn("Front Desk", ledger.fetch_exchange_rates._kamra_roles)
+
+
+class PackCurrenciesTestCase(AuditTestCase):
+	"""The foreign currencies listed come from the property's country pack
+	until Settings says otherwise, never including its own currency."""
+	properties = (PROP_A,)
+
+	def setUp(self):
+		super().setUp()
+		from kamra import settings
+		self.settings = settings
+		frappe.db.delete("Property Setting", {"property": PROP_A, "setting_key": "fx_currencies"})
+		settings.clear_cache(PROP_A)
+		self.addCleanup(settings.clear_cache, PROP_A)
+
+	def listed(self, country, currency):
+		make_property(PROP_A, country=country, currency=currency)
+		frappe.clear_document_cache("Property", PROP_A)
+		self.settings.clear_cache(PROP_A)
+		return self.settings.list_setting(PROP_A, "fx_currencies")
+
+	def test_india_property_defaults(self):
+		self.assertEqual(self.listed("India", "INR"),
+		                 ["USD", "EUR", "GBP", "AED", "SAR", "SGD", "AUD", "JPY"])
+
+	def test_saudi_property_defaults(self):
+		self.assertEqual(self.listed("Saudi Arabia", "SAR"),
+		                 ["USD", "EUR", "GBP", "AED", "INR", "PKR", "EGP"])
+
+	def test_home_currency_left_out_of_the_generic_list(self):
+		self.assertNotIn("SGD", self.listed("Singapore", "SGD"))
+
+	def test_explicit_setting_wins(self):
+		make_property(PROP_A, country="India", currency="INR")
+		self.settings.write_kv(PROP_A, "fx_currencies", "USD, THB")
+		self.settings.clear_cache(PROP_A)
+		self.assertEqual(self.settings.list_setting(PROP_A, "fx_currencies"), ["USD", "THB"])

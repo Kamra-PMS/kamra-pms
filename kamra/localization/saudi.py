@@ -22,6 +22,8 @@ import frappe
 DEFAULT_VAT = Decimal("15")
 
 DEFAULT_CURRENCY = "SAR"
+# foreign money guests bring most; Settings, Finance, Exchange rates can change it
+FX_CURRENCIES = ["USD", "EUR", "GBP", "AED", "INR", "PKR", "EGP"]
 DEFAULT_TIMEZONE = "Asia/Riyadh"
 # charged per night on the room rate; the rate is set per property
 ROOM_LEVY_LABEL = "Municipality fee"

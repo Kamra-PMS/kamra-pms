@@ -363,9 +363,25 @@ Set it up under **Settings → Finance → Exchange rates**:
 
 | Setting | Default | What it does |
 | --- | --- | --- |
-| Foreign currencies taken | USD, EUR, GBP, AED | ISO codes the fetch gets. |
+| Foreign currencies taken | From your country pack (see below) | ISO codes the fetch gets. |
 | Margin on the market rate | 2% | Taken off for Buy, added for Sell. |
 | Fetch rates automatically every day | Off | Each business date, any listed currency still without a rate is fetched (checked hourly, so it also fills in after the night audit rolls the date). |
+
+Until you set the list, it comes from the property's country, never
+including your own currency:
+
+| Country | Foreign currencies by default |
+| --- | --- |
+| India, and countries without their own pack | USD, EUR, GBP, AED, SAR, SGD, AUD, JPY |
+| Saudi Arabia | USD, EUR, GBP, AED, INR, PKR, EGP |
+| United Arab Emirates | USD, EUR, GBP, SAR, INR, PKR, CNY, RUB |
+| Brazil | USD, EUR, ARS, GBP, CLP, UYU, PYG |
+| Nicaragua | USD, EUR, CRC, HNL, MXN, CAD |
+| Malaysia | USD, SGD, EUR, GBP, AUD, CNY, JPY, IDR |
+| Indonesia | USD, SGD, AUD, EUR, JPY, CNY, MYR, SAR |
+| Thailand | USD, EUR, GBP, CNY, JPY, AUD, SGD, INR |
+
+Finance and Hotel Admin can fetch rates or type them in.
 
 A rate typed in by staff is **Manual** and always wins: fetching again the
 same day leaves it as it is, and typing over a fetched rate turns it
