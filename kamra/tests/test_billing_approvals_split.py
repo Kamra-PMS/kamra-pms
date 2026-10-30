@@ -130,6 +130,22 @@ class BillingApprovalsSplitTestCase(AuditTestCase):
 		with self.assertRaisesRegex(frappe.ValidationError, "already approved"):
 			api.decide_allowance(out["request"], approve=1, pin="2468")
 
+	def test_requester_cannot_approve_their_own_allowance(self):
+		set_setting(PROP_A, "allowance_approval", "Hotel Admin")
+		set_pin(GM, "2468")
+		res = self.stay()
+		folio = guest_folio(res.name)
+		api.add_folio_charge(folio, "Laundry", "UT Laundry", 500, gst_rate=0)
+		frappe.set_user(DESK)
+		out = api.post_allowance(folio, 100, "UT own")
+		frappe.set_user("Administrator")
+		frappe.db.set_value("Allowance Request", out["request"], "requested_by", GM)
+		frappe.set_user(GM)
+		with self.assertRaisesRegex(frappe.PermissionError, "another manager"):
+			api.decide_allowance(out["request"], approve=1, pin="2468")
+		frappe.set_user("Administrator")
+		self.assertEqual(bal(folio), 500)
+
 	def test_rejection_is_kept_with_who_and_why(self):
 		set_setting(PROP_A, "allowance_approval", "Hotel Admin or Finance")
 		res = self.stay()
@@ -416,6 +432,15 @@ class BillingApprovalsSplitTestCase(AuditTestCase):
 		moved = frappe.get_doc("Folio", bill).charges[0].amount
 		self.assertAlmostEqual(moved, round(base * 0.3, 2), places=2)
 
+	def test_tiny_line_shares_without_error(self):
+		res = self.stay(occupants=[{"full_name": "Dev Pai"}, {"full_name": "Eli Roy"}])
+		main = guest_folio(res.name)
+		api.add_folio_charge(main, "Laundry", "UT tiny", 0.02, gst_rate=0)
+		row = frappe.get_doc("Folio", main).charges[-1].name
+		bills = [b["folio"] for b in api.open_guest_bills(res.name)["bills"]]
+		api.share_folio_charges(main, [row], bills)
+		self.assertAlmostEqual(bal(main) + sum(bal(f) for f in bills), 0.02, places=2)
+
 	# 3. change the company ----------------------------------------------
 
 	def test_change_company_reroutes_and_logs(self):
@@ -451,6 +476,33 @@ class BillingApprovalsSplitTestCase(AuditTestCase):
 		self.assertEqual(bal(main), room_total + 300)
 		self.assertEqual(frappe.db.get_value("Reservation", res.name,
 		                                     "booking_type"), "Individual")
+
+	def test_change_company_moves_allowance_with_its_charges(self):
+		corp_c = company("UT Bill Laundry Corp", [("Laundry", "Company")])
+		res = self.stay(company=self.corp, booking_type="Corporate")
+		cf = folio_mod.open_company_folio(res)
+		main = guest_folio(res.name)
+		api.add_folio_charge(cf, "Room", "UT Room", 5000, gst_rate=0)
+		folio_mod.post_allowance(cf, 500, "UT goodwill")
+		self.assertEqual(bal(cf), 4500)
+		# the new company pays no room: room AND its allowance go to the guest
+		api.change_stay_company(res.name, "UT employer changed", company=corp_c)
+		self.assertEqual((bal(cf), bal(main)), (0, 4500))
+		for f in (cf, main):
+			self.assertEqual(ledger_net(f), bal(f))
+
+	def test_change_company_splits_allowance_in_proportion(self):
+		res = self.stay(company=self.corp_b, booking_type="Corporate")
+		cf = folio_mod.open_company_folio(res)
+		main = guest_folio(res.name)
+		api.add_folio_charge(cf, "Room", "UT Room", 5000, gst_rate=0)
+		api.add_folio_charge(cf, "Laundry", "UT Laundry", 1000, gst_rate=0)
+		folio_mod.post_allowance(cf, 600, "UT goodwill")
+		# company A pays room only: laundry (1/6 of the bill) takes 1/6 of it
+		api.change_stay_company(res.name, "UT", company=self.corp)
+		self.assertEqual((bal(cf), bal(main)), (4500, 900))
+		for f in (cf, main):
+			self.assertEqual(ledger_net(f), bal(f))
 
 	def test_change_company_refused_after_an_invoice_to_the_old_one(self):
 		from kamra import ledger

@@ -2110,11 +2110,29 @@ def change_stay_company(reservation: str, reason: str,
 		back = [c.name for c in doc.charges
 		        if move == "guest" or not company
 		        or (c.charge_type != "Allowance" and not company_pays(c))]
+		# an allowance wrote down the charges on this bill and has no link to
+		# one line: it follows the charges that leave, in proportion
+		allowances = [c for c in doc.charges
+		              if c.charge_type == "Allowance" and c.name not in back]
+		out_total = sum(flt(c.amount) for c in doc.charges if c.name in back)
+		kept_total = sum(flt(c.amount) for c in doc.charges
+		                 if c.charge_type != "Allowance" and c.name not in back)
+		if allowances and out_total > 0 and kept_total <= 0:
+			back += [c.name for c in allowances]
+			allowances = []
 		if back:
 			if not guest:
 				frappe.throw(_("The guest has no open folio to take these charges."))
 			transfer_charges(doc.name, back, guest)
 			moved += len(back)
+		if out_total > 0:
+			from kamra.folio import split_charge
+			share = out_total / (out_total + kept_total)
+			for a in allowances:
+				part = round(abs(flt(a.amount)) * share, 2)
+				if 0 < part < abs(flt(a.amount)):
+					split_charge(doc.name, a.name, guest, amount=part, credit=True)
+					moved += 1
 	# a group stay's routing is the group's: only its own company bill moves
 	if move == "rules" and company and guest and not res.get("group_booking"):
 		gdoc = frappe.get_doc("Folio", guest)
@@ -2495,6 +2513,9 @@ def decide_allowance(allowance_request: str, approve: int = 1,
 		frappe.throw(_("This allowance was already {0}.").format(
 			_(req.status).lower()))
 	approver = (supervisor or "").strip() or frappe.session.user
+	if cint(approve) and approver == req.requested_by:
+		frappe.throw(_("You asked for this allowance; another manager approves it."),
+		             frappe.PermissionError)
 	if not _may_approve_allowance(req.property, approver):
 		frappe.throw(_("{0} can't approve allowances here. It needs: {1}.").format(
 			approver, ", ".join(_(r) for r in _allowance_approver_roles(req.property))),
