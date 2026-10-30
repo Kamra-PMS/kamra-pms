@@ -42,7 +42,7 @@ for booking at this property.
 
 Endpoint: `kamra.api.booking_options`.
 
-### `create_booking(guest_name, room_type, check_in_date, check_out_date, phone, adults, children, meal_plan, rate_plan, voucher_code, company, idempotency_key)`
+### `create_booking(guest_name, room_type, check_in_date, check_out_date, phone, adults, children, meal_plan, rate_plan, voucher_code, company, market_segment, idempotency_key)`
 
 Create a reservation. Dedupes the guest by phone, auto-assigns a
 free room, applies the voucher, prices via the engine. Room type,

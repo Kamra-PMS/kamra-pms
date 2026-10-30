@@ -79,7 +79,7 @@
    "fieldname": "charge_type",
    "fieldtype": "Select",
    "label": "Legacy Charge Type",
-   "options": "Room\nMeal Plan\nFood & Beverage\nMinibar\nLaundry\nSpa\nEarly Check-in\nLate Checkout\nCleaning Fee\nExtra Guests\nPet Charge\nRoom Levy\nDiscount\nMisc\nAllowance\nOpening Balance",
+   "options": "Room\nMeal Plan\nFood & Beverage\nMinibar\nLaundry\nSpa\nTaxi\nEarly Check-in\nLate Checkout\nCleaning Fee\nExtra Guests\nPet Charge\nRoom Levy\nDiscount\nMisc\nAllowance\nOpening Balance",
    "description": "Maps to Folio Charge.charge_type for display"
   },
   {

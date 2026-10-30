@@ -1777,13 +1777,18 @@ def _resolve_charge_gst(property: str, charge_type: str, description: str,
                         is_alcohol: int, provided: float) -> float:
 	"""The tax rate a charge actually carries, decided server-side so a caller
 	(human or agent) cannot mis-tax it. Food & beverage uses the F&B rate from
-	the localization pack; alcohol its own rate; otherwise the given rate."""
+	the localization pack; alcohol its own rate; a taxi with no rate the
+	services rate; otherwise the given rate."""
 	text = f"{charge_type} {description}".lower()
 	if is_alcohol:
 		return float(provided) if provided else 18.0
 	if any(w in text for w in _FNB_WORDS):
 		from kamra.folio import _fnb_gst
 		return float(_fnb_gst(property))
+	# a taxi is a taxable guest service: the desk form sends no rate
+	if charge_type == "Taxi" and not provided:
+		from kamra.localization import pack_for, services_tax_rate
+		return services_tax_rate(pack_for(property), property)
 	return float(provided or 0)
 
 
@@ -5334,7 +5339,8 @@ def create_booking(property: str, room_type: str, check_in_date: str,
                    ota_ref: str | None = None,
                    ota_total: float = 0,
                    ota_commission_pct: float | None = None,
-                   marketing_consent: int = 0):
+                   marketing_consent: int = 0,
+                   market_segment: str | None = None):
 	"""One-call booking: attach to an existing guest profile when given,
 	else dedup by phone / create one. Optional auto room assignment,
 	voucher applied, price computed by the engine.
@@ -5483,6 +5489,8 @@ def create_booking(property: str, room_type: str, check_in_date: str,
 		"rate_plan": rate_plan or None,
 		"voucher": voucher,
 		"booking_type": booking_type,
+		# corporate business defaults to the Corporate segment
+		"market_segment": market_segment or ("Corporate" if company else None),
 		"company": company or None,
 		"group_booking": group_booking or None,
 		"source": source,

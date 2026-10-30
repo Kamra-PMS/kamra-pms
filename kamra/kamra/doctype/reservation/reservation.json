@@ -14,6 +14,7 @@
   "column_break_a",
   "status",
   "booking_type",
+  "market_segment",
   "company",
   "group_booking",
   "pays_own_charges",
@@ -420,6 +421,14 @@
    "fieldtype": "Select",
    "label": "Booking Type",
    "options": "Individual\nGroup\nCorporate"
+  },
+  {
+   "fieldname": "market_segment",
+   "fieldtype": "Select",
+   "label": "Market Segment",
+   "options": "\nCorporate\nLeisure\nGroup\nMICE\nGovernment\nWedding\nLong Stay\nAirline Crew\nComplimentary\nHouse Use",
+   "in_standard_filter": 1,
+   "description": "Who the business is (corporate, leisure, group…), for revenue reports by segment"
   },
   {
    "fieldname": "company",

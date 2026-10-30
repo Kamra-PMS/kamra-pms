@@ -1691,6 +1691,7 @@ a block refuses (CREDIT_BLOCKED) unless Finance or a Hotel Admin passes
 | `ota_total` | no | `0` |
 | `ota_commission_pct` | no | `None` |
 | `marketing_consent` | no | `0` |
+| `market_segment` | no | `None` |
 
 ### `kamra.api.waitlist`
 
@@ -5561,12 +5562,15 @@ encodes the cards at the encoder and notes the card numbers here.
 
 Quick requests at check-in become service tickets (one each); a free
 note is kept on the step and, if given alone, raised as one ticket.
+`prices` ({request: amount}) bills a paid request (an extra bed, an
+airport drop) to the stay, by the hotel's tax rules and billing rules.
 
 | Param | Required | Default |
 | --- | --- | --- |
 | `reservation` | yes |  |
 | `requests` | no | `None` |
 | `note` | no | `None` |
+| `prices` | no | `None` |
 
 ### `kamra.checkin.set_room_charges`
 

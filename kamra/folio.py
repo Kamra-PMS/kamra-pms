@@ -321,12 +321,15 @@ def _charge_posted(reservation_name: str, charge_type: str, date: str) -> bool:
 	of the stay? Routing can land a member's room night on the GROUP
 	master (anchored to the lead reservation), so we match on the line's
 	own provenance first and fall back to the folio's reservation for
-	lines predating the provenance field."""
+	lines predating the provenance field. Only automated lines count: a
+	charge the desk posted by hand (an extra bed asked for at check-in) is
+	not the night's own posting and must not suppress it."""
 	return bool(frappe.db.sql(
 		"""
 		SELECT 1 FROM `tabFolio Charge` fc
 		JOIN `tabFolio` f ON fc.parent = f.name
 		WHERE fc.charge_type = %(ct)s AND fc.posting_date = %(date)s
+		  AND fc.auto_posted = 1
 		  AND (fc.reservation = %(res)s
 		       OR (IFNULL(fc.reservation, '') = '' AND f.reservation = %(res)s))
 		LIMIT 1

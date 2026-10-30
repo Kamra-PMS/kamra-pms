@@ -14527,7 +14527,7 @@
         "kamra.checkin.log_checkin_requests"
        ]
       },
-      "description": "Quick requests at check-in become service tickets (one each); a free\nnote is kept on the step and, if given alone, raised as one ticket.",
+      "description": "Quick requests at check-in become service tickets (one each); a free\nnote is kept on the step and, if given alone, raised as one ticket.\n`prices` ({request: amount}) bills a paid request (an extra bed, an\nairport drop) to the stay, by the hotel's tax rules and billing rules.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"reservation\": \"RES-2026-00001\"\n}",

@@ -95,6 +95,7 @@ SAC_CODES = {
 	"Minibar": "996331",
 	"Laundry": "999712",           # washing, cleaning and dyeing
 	"Spa": "999722",               # physical well-being incl. health club
+	"Taxi": "996412",              # taxi services
 	"Misc": "999799",              # other services n.e.c.
 	# banquet line types
 	"Venue Rental": "997212",      # renting of non-residential property

@@ -2,6 +2,7 @@
 <<<<<<<< HEAD:kamra/public/frontend/assets/Kitchen-CEVyo3bZ.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/Kitchen-CEVyo3bZ.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/Kitchen-CEVyo3bZ.js
+<<<<<<<< HEAD:kamra/public/frontend/assets/Kitchen-CEVyo3bZ.js
 import{r as d,u as Te,j as e}from"./vendor-D6bHyl-8.js";import{b as G,T as le,f as E,u as O,aW as Ee,aV as Oe,g as F,aX as Me,aY as Le,e as h,a as ce,t as f,aZ as Ae,a_ as Ie,K as De,R as Pe,p as Re,ad as oe,B as z,c as Fe,X as Ke}from"./index-B3i2Wflk.js";import{k as Be,p as $e,j as Ge}from"./thermal-lR5O1Zqo.js";import{C as de}from"./chef-hat-Dg_B5qSr.js";import{a as He,F as Ue,b as Ve,M as We}from"./minimize-2-MQnvi_14.js";import{T as M}from"./triangle-alert-SK9yi8mQ.js";import{F as D}from"./flame-jTZG9iKl.js";import{C as H}from"./check-BVGXkByb.js";import{I as qe}from"./inbox-BjN7DED7.js";import{C as Ye}from"./cooking-pot-DAoECi4_.js";/**
 ========
 import{r as d,u as Te,j as e}from"./vendor-D6bHyl-8.js";import{b as G,T as le,f as E,u as O,aW as Ee,aV as Oe,g as F,aX as Me,aY as Le,e as h,a as ce,t as f,aZ as Ae,a_ as Ie,K as De,R as Pe,q as Re,ad as oe,B as z,c as Fe,X as Ke}from"./index-DwNNU3P0.js";import{k as Be,p as $e,j as Ge}from"./thermal-DwfxWbRG.js";import{C as de}from"./chef-hat-C5QcyIn8.js";import{a as He,F as Ue,b as qe,M as Ve}from"./minimize-2-Cep9fCMD.js";import{T as M}from"./triangle-alert-B8uoa2Dq.js";import{F as D}from"./flame-CSjMbQmV.js";import{C as H}from"./check-Cw_5SW30.js";import{I as We}from"./inbox-eTykMBoI.js";import{C as Ye}from"./cooking-pot-LQQgVi5p.js";/**
@@ -15,6 +16,9 @@ import{r as d,u as Te,j as e}from"./vendor-D6bHyl-8.js";import{b as G,T as le,f 
 ========
 import{r as d,u as Te,j as e}from"./vendor-D6bHyl-8.js";import{b as G,T as le,f as E,u as O,aW as Ee,aV as Oe,g as F,aX as Me,aY as Le,e as h,a as ce,t as f,aZ as Ae,a_ as Ie,K as De,R as Pe,p as Re,ad as oe,B as z,c as Fe,X as Ke}from"./index-CLKM8cqz.js";import{k as Be,p as $e,j as Ge}from"./thermal-Xx2JhQQH.js";import{C as de}from"./chef-hat-o-pGX6h9.js";import{a as He,F as Ue,b as Ve,M as We}from"./minimize-2-DirGhFkN.js";import{T as M}from"./triangle-alert-CyH8JGiB.js";import{F as D}from"./flame-B0uApymn.js";import{C as H}from"./check-nt2k-5wK.js";import{I as qe}from"./inbox-B1VLFESm.js";import{C as Ye}from"./cooking-pot-BjMEJkSi.js";/**
 >>>>>>>> origin/feat/audit-report-ytd:kamra/public/frontend/assets/Kitchen-BD8jalOp.js
+========
+import{r as d,u as Te,j as e}from"./vendor-D6bHyl-8.js";import{b as G,T as le,f as E,u as O,aW as Ee,aV as Oe,g as F,aX as Me,aY as Le,e as h,a as ce,t as f,aZ as Ae,a_ as Ie,K as De,R as Pe,p as Re,ad as oe,B as z,c as Fe,X as Ke}from"./index-A1luJzPY.js";import{k as Be,p as $e,j as Ge}from"./thermal-rfcUuvTS.js";import{C as de}from"./chef-hat-aiu3avvl.js";import{a as He,F as Ue,b as Ve,M as We}from"./minimize-2-Cb43N70C.js";import{T as M}from"./triangle-alert-CtuaqYZO.js";import{F as D}from"./flame-DYPXliLM.js";import{C as H}from"./check-C4V8MP3Z.js";import{I as qe}from"./inbox-sWDwZtvQ.js";import{C as Ye}from"./cooking-pot-Bqirt5wq.js";/**
+>>>>>>>> origin/feat/quick-fixes:kamra/public/frontend/assets/Kitchen-CpP8FZdi.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.

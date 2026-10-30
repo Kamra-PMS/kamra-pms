@@ -135,6 +135,25 @@ def villa_locked_nights(property: str, room_type: str | None, start,
 
 
 class Reservation(Document):
+	def autoname(self):
+		# RES-<year>-00001, the year being the property's financial year, so
+		# the count restarts in April in India and in January elsewhere
+		from frappe.model.naming import make_autoname
+
+		from kamra.localization import financial_year, pack_for
+		prefix = f"RES-{financial_year(pack_for(self.property), today())}-"
+		# a year's counter is seeded once, after the highest number that year
+		# already has. Plain reads: an INSERT ... SELECT would hold shared
+		# locks on Reservation rows and deadlock two bookings saved at once.
+		if not frappe.db.sql("SELECT 1 FROM `tabSeries` WHERE name = %s", prefix):
+			top = frappe.db.sql(
+				"""SELECT MAX(CAST(SUBSTRING(name, %s) AS UNSIGNED))
+				   FROM `tabReservation` WHERE name LIKE %s""",
+				(len(prefix) + 1, f"{prefix}%"))[0][0]
+			frappe.db.sql("INSERT IGNORE INTO `tabSeries` (name, current) VALUES (%s, %s)",
+			              (prefix, int(top or 0)))
+		self.name = make_autoname(f"{prefix}.#####")
+
 	def after_insert(self):
 		# every booking gets a pre-arrival check-in link
 		self.db_set(

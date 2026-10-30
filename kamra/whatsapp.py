@@ -211,10 +211,40 @@ def send_payment_request(reservation: str, amount, note: str = "") -> dict:
 	phone = frappe.db.get_value("Guest", res.guest, "phone")
 	if not phone:
 		frappe.throw("This guest has no phone number on file.")
-	return send_template(
+	link = None if note else _payment_link(res, amount)
+	out = send_template(
 		res.property, phone, conn.tpl_payment_request,
-		[res.guest_name or "Guest", str(amount), note or "at the front desk"],
+		[res.guest_name or "Guest", str(amount), note or link or "at the front desk"],
 		guest=res.guest, reservation=res.name)
+	if link:
+		out["payment_link"] = link
+	return out
+
+
+def _payment_link(res, amount) -> str | None:
+	"""A pay-online link for the guest's open bill, so the message carries
+	it without the desk copying one in. None where the property has no
+	payment gateway (the guest is asked to pay at the desk instead)."""
+	folio = frappe.db.get_value("Folio", {"reservation": res.name, "folio_type": "Guest",
+	                                      "status": "Open"}, "name")
+	if not folio:
+		return None
+	# a test-mode gateway makes a fake link a guest cannot pay
+	if frappe.db.get_value("Payment Gateway Settings",
+	                       {"property": res.property, "enabled": 1}, "test_mode"):
+		return None
+	try:
+		from kamra.payments import create_payment_link
+		return (create_payment_link(folio, amount) or {}).get("url")
+	except frappe.ValidationError:
+		# no gateway here: the guest is asked to pay at the desk
+		frappe.clear_messages()
+		return None
+	except Exception:
+		# the gateway is down: the message still goes, with the desk wording
+		frappe.log_error(title="WhatsApp payment link failed")
+		frappe.clear_messages()
+		return None
 
 
 @frappe.whitelist(methods=["POST"])
