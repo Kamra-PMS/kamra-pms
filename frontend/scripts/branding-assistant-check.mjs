@@ -9,7 +9,7 @@ import { chromium } from "playwright"
 import { createServer } from "vite"
 
 const server = await createServer({
-  server: { host: "127.0.0.1", port: 0, strictPort: true, proxy: {} },
+  server: { host: "127.0.0.1", port: 0, strictPort: false, proxy: {} },
 })
 await server.listen()
 const base = `http://127.0.0.1:${server.httpServer.address().port}`
@@ -84,6 +84,22 @@ async function assistantLinks(page) {
 }
 
 try {
+  await test("fallback navigation keeps assistant filtering on non-menu routes", async () => {
+    const s = await session({ pending: true })
+    try {
+      await settled(s.page, "/apps", true)
+      const routes = await s.page.evaluate(async () => {
+        const { appForPath, visibleApps } = await import("/src/lib/apps.ts")
+        return appForPath("/apps", visibleApps(["Hotel Admin"], undefined, false))
+          .items.map((item) => item.to)
+      })
+      assert.equal(routes.includes("/assistant"), false)
+    } finally {
+      s.releaseStatus()
+      await s.close()
+    }
+  })
+
   for (const [name, options] of [
     ["disabled or unconfigured", { enabled: false }],
     ["status failure", { statusError: true }],
