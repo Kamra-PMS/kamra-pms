@@ -430,10 +430,13 @@ export function appForPath(pathname: string, among: AppDef[] = APPS, keep?: stri
  *  property must actually run it. Roles alone were never enough - Front
  *  Desk unlocks both F&B and Banquets, so a serviced-apartment operator
  *  had no way to not see them. */
-export function visibleApps(roles: string[], modules?: string[]): AppDef[] {
+export function visibleApps(roles: string[], modules?: string[], assistantEnabled = false): AppDef[] {
   return APPS.filter(
     (a) =>
       a.roles.some((r) => roles.includes(r)) &&
       (!modules?.length || modules.includes(a.id)),
-  )
+  ).map((app) => ({
+    ...app,
+    items: app.items.filter((item) => assistantEnabled || item.to !== "/assistant"),
+  }))
 }

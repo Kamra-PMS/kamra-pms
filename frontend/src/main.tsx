@@ -9,9 +9,13 @@ import { asset } from "./lib/asset"
 import { AuthProvider } from "./lib/auth"
 import { CashierAuthProvider } from "./lib/cashierAuth"
 import { ROUTER_BASENAME } from "./lib/routing"
+import { getSiteInfo } from "./lib/siteInfo"
 
 initTheme()
 initLang()
+getSiteInfo().then((info) => {
+  document.title = info.app_name?.trim() || "Kamra PMS"
+})
 
 // Favicons, base-aware (see index.html note).
 function setIcon(rel: string, href: string, type?: string) {

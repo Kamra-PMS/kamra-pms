@@ -145,8 +145,8 @@ export default function Assistant() {
     call<{ enabled: boolean }>("kamra.assistant.assistant_status", {
       property: getCurrentProperty(),
     })
-      .then((s) => setAiEnabled(s.enabled))
-      .catch(() => setAiEnabled(true))
+      .then((s) => setAiEnabled(s?.enabled === true))
+      .catch(() => setAiEnabled(false))
   }, [])
 
   const refreshList = useCallback(
@@ -155,8 +155,8 @@ export default function Assistant() {
   )
 
   useEffect(() => {
-    refreshList()
-  }, [refreshList])
+    if (aiEnabled === true) refreshList()
+  }, [refreshList, aiEnabled])
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" })
@@ -190,7 +190,7 @@ export default function Assistant() {
 
   async function send(text: string) {
     const q = text.trim()
-    if (!q || busy) return
+    if (!q || busy || aiEnabled !== true) return
     setInput("")
     setError(null)
     const isFirst = msgs.length === 0
@@ -332,12 +332,12 @@ export default function Assistant() {
           <span
             className={cn(
               "size-2 rounded-full",
-              aiEnabled === false ? "bg-zinc-300" : "bg-brand-500",
+              aiEnabled === true ? "bg-brand-500" : "bg-zinc-300",
             )}
             aria-hidden
           />
           <span className="truncate">
-            {aiEnabled === false ? translate("Not set up") : translate("Acting as you")} ·{" "}
+            {aiEnabled === true ? translate("Acting as you") : translate("Not set up")} ·{" "}
             <span className="font-medium text-zinc-700">
               {getCurrentProperty()?.split("-")[0] ?? translate("your hotel")}
             </span>
@@ -350,7 +350,7 @@ export default function Assistant() {
               <AiSetupNotice />
             </div>
           )}
-          {msgs.length === 0 && aiEnabled !== false && (
+          {msgs.length === 0 && aiEnabled === true && (
             <div className="mx-auto max-w-xl space-y-3 py-8 text-center">
               <Sparkles className="mx-auto size-8 text-brand-500" />
               <h2 className="text-lg font-semibold">{translate("Your AI, acting as you")}</h2>
@@ -435,7 +435,7 @@ export default function Assistant() {
           <div ref={endRef} />
         </div>
 
-        {aiEnabled !== false && (
+        {aiEnabled === true && (
           <div className="flex gap-1.5 overflow-x-auto border-t border-zinc-100 px-3 pt-2.5">
             {SHORTCUTS.map((sc) => (
               <button
@@ -469,12 +469,12 @@ export default function Assistant() {
               }
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              disabled={busy || aiEnabled === false}
+              disabled={busy || aiEnabled !== true}
             />
             <button
               type="submit"
               aria-label={translate("Send")}
-              disabled={busy || aiEnabled === false || !input.trim()}
+              disabled={busy || aiEnabled !== true || !input.trim()}
               className="flex size-9 items-center justify-center rounded-full bg-brand-600 text-white transition hover:bg-brand-700 disabled:opacity-40"
             >
               {busy ? (

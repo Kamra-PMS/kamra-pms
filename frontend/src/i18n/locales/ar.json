@@ -921,7 +921,7 @@
   "KOT {n}": "تذكرة مطبخ {n}",
   "Kamra Agent": "وكيل كامرا",
   "Kamra will create a whole-property sellable unit for each listing. You can add physical rooms later for housekeeping if needed.": "ستنشئ كامرا وحدة قابلة للبيع للعقار بالكامل لكل قائمة. يمكنك إضافة غرف فعلية لاحقاً للتدبير المنزلي إن لزم.",
-  "Kamra {latest} is available - you are on {installed}.": "كامرا {latest} متاح - أنت على {installed}.",
+  "Version {latest} is available - you are on {installed}.": "الإصدار {latest} متاح - أنت على {installed}.",
   "Keep": "إبقاء",
   "Keep charged nights": "الإبقاء على الليالي المحتسبة",
   "Keep charged nights: charged nights keep their rate, only the nights still to come take the new one; give any difference back as an allowance. Credit the difference: when the new rate is lower, Kamra posts a credit for each charged night, dated today. Correct back-dated rates: as Keep, plus Finance or a Hotel Admin can correct charged nights to the current rate with a reason and their PIN; each night is reversed and posted again.": "الإبقاء على الليالي المحتسبة: تحتفظ الليالي المحتسبة بسعرها ولا يطبق السعر الجديد إلا على الليالي القادمة؛ ويُرد أي فرق كخصم تسوية. قيد الفرق رصيدًا: عندما يكون السعر الجديد أقل، يقيد Kamra رصيدًا لكل ليلة محتسبة بتاريخ اليوم. تصحيح أسعار التواريخ السابقة: مثل الإبقاء، ويمكن أيضًا للمالية أو مدير الفندق تصحيح الليالي المحتسبة إلى السعر الحالي مع ذكر السبب ورمزهم السري؛ تُعكس كل ليلة وتُقيد من جديد.",

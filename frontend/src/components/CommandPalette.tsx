@@ -65,13 +65,13 @@ function rank(text: string, q: string): number | null {
 // sidebar uses, so the palette reaches exactly the pages the user may open -
 // no second list to keep in sync, and item-level gates (Developers, Frappe
 // Desk) are honoured too.
-function navItemsForRoles(roles: string[]): {
+function navItemsForRoles(roles: string[], assistantEnabled: boolean): {
   item: AppNavItem
   app: string
 }[] {
   const out: { item: AppNavItem; app: string }[] = []
   const seen = new Set<string>()
-  for (const app of visibleApps(roles)) {
+  for (const app of visibleApps(roles, undefined, assistantEnabled)) {
     for (const item of app.items) {
       if (item.roles && !item.roles.some((r) => roles.includes(r))) continue
       const key = item.to ?? item.href ?? item.label
@@ -83,7 +83,7 @@ function navItemsForRoles(roles: string[]): {
   return out
 }
 
-export function CommandPalette() {
+export function CommandPalette({ assistantEnabled }: { assistantEnabled: boolean }) {
   const { t } = useT()
   const { roles } = useAuth()
   const [open, setOpen] = useState(false)
@@ -225,7 +225,7 @@ export function CommandPalette() {
     }
   }, [searchQ, open])
 
-  const navItems = useMemo(() => navItemsForRoles(roles), [roles])
+  const navItems = useMemo(() => navItemsForRoles(roles, assistantEnabled), [roles, assistantEnabled])
 
   const navResults = useMemo<Result[]>(
     () =>
@@ -297,7 +297,7 @@ export function CommandPalette() {
   // The apps themselves: "revenue", "housekeeping" open that module.
   const moduleResults = useMemo<Result[]>(() => {
     if (!q.trim()) return []
-    return visibleApps(roles)
+    return visibleApps(roles, undefined, assistantEnabled)
       .map((a) => ({ a, score: rank(`${t(a.name)} ${a.name} ${a.description} module app`, q) }))
       .filter((r) => r.score !== null && r.a.items.some((i) => i.to))
       .sort((x, y) => (x.score ?? 0) - (y.score ?? 0))
@@ -312,7 +312,7 @@ export function CommandPalette() {
           navigate(a.items.find((i) => i.to)!.to!, { state: { app: a.id } })
         },
       }))
-  }, [q, roles, navigate, t])
+  }, [q, roles, assistantEnabled, navigate, t])
 
   const guestResults = useMemo<Result[]>(
     () =>

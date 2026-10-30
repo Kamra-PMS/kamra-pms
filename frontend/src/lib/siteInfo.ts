@@ -4,6 +4,8 @@ export type SiteInfo = {
   demo_mode: boolean
   version?: string
   app?: string
+  app_name?: string | null
+  app_logo?: string | null
   site?: string
   channel?: string | null
   build?: string | null

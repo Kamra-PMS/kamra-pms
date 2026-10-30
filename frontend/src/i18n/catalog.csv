@@ -2872,7 +2872,6 @@ Journal by transaction code,Journal by transaction code,اليومية حسب ر
 Journey,Journey,الرحلة,Historial de la estancia,screens/GuestJourney.tsx,,translated
 JPG/PNG/WebP · under 1 MB,JPG/PNG/WebP · under 1 MB,JPG/PNG/WebP · أقل من 1 ميجابايت,"JPG, PNG o WebP · menos de 1 MB",,,translated
 Jump to date,Jump to date,الانتقال إلى تاريخ,Ir a una fecha,components/CalendarView.tsx,,translated
-Kamra {latest} is available - you are on {installed}.,Kamra {latest} is available - you are on {installed}.,كامرا {latest} متاح - أنت على {installed}.,Kamra {latest} está disponible: usted está en {installed}.,components/UpdateNag.tsx,latest installed,translated
 Kamra Agent,Kamra Agent,وكيل كامرا,Agente Kamra,screens/Agents.tsx,,translated
 Kamra Agent → AI Provider,Kamra Agent → AI Provider,وكيل Kamra ← مزوّد الذكاء الاصطناعي,Agente Kamra → Proveedor de IA,screens/Developers.tsx; screens/settings/cards.tsx,,translated
 Kamra Agent → Connect Claude,Kamra Agent → Connect Claude,Kamra Agent ← ربط Claude,Kamra Agent → Conectar Claude,,,translated
@@ -5830,6 +5829,7 @@ Verify & Discard masks ID numbers to the last 4 digits and deletes ID photos at 
 Verify restaurant & minibar charges,Verify restaurant & minibar charges,تحقق من رسوم المطعم والميني بار,Verificar consumos de restaurante y minibar,,,translated
 Verifying a delivery,Verifying a delivery,التحقق من تسليم,Verificando una entrega,screens/settings/WebhooksPage.tsx,,translated
 Version,Version,الإصدار,Versión,,,translated
+Version {latest} is available - you are on {installed}.,Version {latest} is available - you are on {installed}.,الإصدار {latest} متاح - أنت على {installed}.,La versión {latest} está disponible: usted está en {installed}.,components/UpdateNag.tsx,latest installed,translated
 via {name},via {name},عبر {name},vía {name},screens/Today.tsx,name,translated
 Video,Video,فيديو,Video,,,translated
 View,View,عرض,Ver,components/RoomDrawer.tsx; screens/Receivables.tsx,,translated

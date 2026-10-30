@@ -15,8 +15,8 @@ export default function AppLauncher() {
   const navigate = useNavigate()
   // only the apps this property runs (enabled_modules, empty = all) -
   // the same rule as the sidebar and the MCP tool list
-  const { modules } = useOutletContext<ShellContext>()
-  const apps = visibleApps(roles, modules)
+  const { modules, assistantEnabled } = useOutletContext<ShellContext>()
+  const apps = visibleApps(roles, modules, assistantEnabled === true)
   const canMarket = ["Hotel Admin", "System Manager", "Administrator"].some(
     (r) => roles.includes(r),
   )

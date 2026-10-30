@@ -252,6 +252,8 @@ def site_info():
 	return {
 		"demo_mode": frappe.db.get_default("kamra_demo_mode") == "1",
 		"app": "kamra",
+		"app_name": frappe.get_website_settings("app_name"),
+		"app_logo": frappe.get_website_settings("app_logo"),
 		"version": __version__,
 		# `bench --site <site> set-config kamra_channel nightly` labels a
 		# channel build so it isn't mistaken for the last stable release;

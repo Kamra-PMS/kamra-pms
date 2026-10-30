@@ -114,6 +114,14 @@ function RequireAuth() {
   return <Outlet />
 }
 
+/** Match navigation: a disabled/unconfigured assistant has no chat route. */
+function RequireAssistant() {
+  const context = useOutletContext<ShellContext>()
+  if (context.assistantEnabled === null) return <Splash />
+  if (!context.assistantEnabled) return <Navigate to="/apps" replace />
+  return <Outlet context={context} />
+}
+
 /** The /login route. Already signed in → bounce to where you came from.
  *  On success, a full-page nav re-boots with the authenticated session's CSRF
  *  token (login rotates it); dev soft-navigates. */
@@ -185,9 +193,11 @@ export default function App() {
           <Route index element={<Today />} />
           <Route path="apps" element={<AppLauncher />} />
           <Route path="marketplace" element={<Marketplace />} />
-          <Route path="agents" element={<Agents />} />
+          <Route element={<RequireAssistant />}>
+            <Route path="agents" element={<Agents />} />
+            <Route path="assistant" element={<Agents />} />
+          </Route>
           <Route path="activity" element={<Activity />} />
-          <Route path="assistant" element={<Agents />} />
           <Route path="calendar" element={<CalendarScreen />} />
           <Route path="tape" element={<TapeChart />} />
           <Route

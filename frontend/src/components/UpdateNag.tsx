@@ -76,7 +76,7 @@ export default function UpdateNag() {
       <div className="flex min-w-0 items-center gap-2">
         <ArrowUpCircle className="size-4 shrink-0 text-sky-700" aria-hidden />
         <p className="min-w-0">
-          {t("Kamra {latest} is available - you are on {installed}.", {
+          {t("Version {latest} is available - you are on {installed}.", {
             latest: latestLabel,
             installed: nag.installed ?? "-",
           })}
