@@ -50,7 +50,7 @@ flowchart TB
   end
 
   subgraph gate [One write path]
-    WL["kamra.*.fn<br/>@whitelist + @require_roles"]
+    WL["kamra.*.fn<br/>@whitelist + @require_perm"]
   end
 
   subgraph core [Deterministic core]
@@ -196,10 +196,14 @@ Hard rules enforced in code:
 Roles (examples): Front Desk, Revenue Manager, Finance, Housekeeping,
 Hotel Admin, System Manager, Kamra Agent, Night Auditor.
 
-Gates live on the endpoint (`@require_roles` / `_kamra_roles`), not only
-on DocPerms. Multi-property installs use Property User Permissions plus
-Kamra hooks so a restricted user cannot read or overwrite another
-property's reservations, folios or guest PII through Desk or REST.
+Every endpoint checks a Frappe permission on the record it touches
+(`@require_perm("Reservation", "check_in_out")`): a permission type that
+ships in the doctype's DocPerm, so a hotel changes who may do what in Role
+Permission Manager and creates its own roles in Desk. MCP and the in-app
+agent filter their tools with the same check. Multi-property installs use
+Property User Permissions plus Kamra hooks so a restricted user cannot
+read or overwrite another property's reservations, folios or guest PII
+through Desk or REST. See [Roles and access](/roles-and-access).
 
 ## How AI fits in
 

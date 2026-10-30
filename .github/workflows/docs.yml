@@ -65,6 +65,7 @@ jobs:
         run: |
           python3 gen_mcp_tools.py
           python3 gen_api.py
+          python3 gen_permissions.py
 
       - name: Reject em dashes in published markdown
         run: |

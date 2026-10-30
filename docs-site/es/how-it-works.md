@@ -52,7 +52,7 @@ flowchart TB
   end
 
   subgraph gate [One write path]
-    WL["kamra.*.fn<br/>@whitelist + @require_roles"]
+    WL["kamra.*.fn<br/>@whitelist + @require_perm"]
   end
 
   subgraph core [Deterministic core]
@@ -209,7 +209,7 @@ Roles (ejemplos): Recepción, Responsable de ingresos, Finanzas, Limpieza,
 Administrador del hotel, Administrador del sistema, Agente Kamra, Auditor
 nocturno.
 
-Los controles están en el endpoint (`@require_roles` / `_kamra_roles`), no
+Los controles están en el endpoint (`@require_perm`, permisos de Frappe en Role Permission Manager), no
 solo en los DocPerms. Las instalaciones con varios alojamientos usan
 Property User Permissions y hooks de Kamra para que un usuario restringido
 no pueda leer ni sobrescribir las reservas, los folios ni los datos

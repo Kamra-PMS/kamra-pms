@@ -50,7 +50,7 @@ flowchart TB
   end
 
   subgraph gate [One write path]
-    WL["kamra.*.fn<br/>@whitelist + @require_roles"]
+    WL["kamra.*.fn<br/>@whitelist + @require_perm"]
   end
 
   subgraph core [Deterministic core]
@@ -198,7 +198,7 @@ flowchart LR
 الأدوار (أمثلة): Front Desk، وRevenue Manager، وFinance، وHousekeeping،
 وHotel Admin، وSystem Manager، وKamra Agent، وNight Auditor.
 
-القيود موجودة على نقطة النهاية (`@require_roles` / `_kamra_roles`)، وليس
+القيود موجودة على نقطة النهاية (`@require_perm`، صلاحيات Frappe في Role Permission Manager)، وليس
 على DocPerms فقط. التثبيتات متعددة العقارات تستخدم Property User
 Permissions مع hooks خاصة بـ Kamra، حتى لا يستطيع مستخدم مقيّد قراءة
 حجوزات عقار آخر أو فواتيره أو بيانات ضيوفه الشخصية، أو الكتابة فوقها، عبر
