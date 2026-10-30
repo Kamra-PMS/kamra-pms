@@ -11943,6 +11943,43 @@
        }
       }
      }
+    },
+    {
+     "name": "owner_snapshot",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.dashboards.owner_snapshot",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.dashboards.owner_snapshot"
+       ]
+      },
+      "description": "The owner's phone view of one hotel: the flash for a day (or\nfrom_date..date), what guests and companies still owe, and the last few\nnight audits. Read only; the same figures as the flash and the ledgers.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"date\": \"2026-08-01\",\n  \"from_date\": \"2026-08-01\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
     }
    ]
   },

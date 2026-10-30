@@ -55,6 +55,7 @@ const RateCalendar = lazy(() => import("./screens/RateCalendar"))
 const RevenueReports = lazy(() => import("./screens/RevenueReports"))
 const OpsSLA = lazy(() => import("./screens/OpsSLA"))
 const Dashboard = lazy(() => import("./screens/Dashboard"))
+const Owner = lazy(() => import("./screens/Owner"))
 const CRS = lazy(() => import("./screens/CRS"))
 const POS = lazy(() => import("./screens/POS"))
 const Kitchen = lazy(() => import("./screens/Kitchen"))
@@ -330,6 +331,7 @@ export default function App() {
             element={<ConfiguredScreen config="channelRoomMappingsConfig" />}
           />
           <Route path="dashboard" element={<Dashboard />} />
+          <Route path="owner" element={<Owner />} />
           <Route path="crs" element={<CRS />} />
           <Route path="pos" element={<POS />} />
           <Route path="pos-dashboard" element={<PosDashboard />} />

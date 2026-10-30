@@ -1033,11 +1033,11 @@ function FlashPanel(props: {
 
   return (
     <div>
-      <div className="mb-4 flex justify-end gap-2 print:hidden">
+      <div className="mb-4 flex flex-wrap justify-end gap-2 print:hidden">
         <input
           type="date"
           aria-label={t("From")}
-          className="rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-sm"
+          className="min-w-0 flex-1 rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-sm sm:flex-none"
           value={from || date}
           max={date}
           onChange={(e) => setFrom(e.target.value === date ? "" : e.target.value)}
@@ -1046,7 +1046,7 @@ function FlashPanel(props: {
         <input
           type="date"
           aria-label={t("Report date")}
-          className="rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-sm"
+          className="min-w-0 flex-1 rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-sm sm:flex-none"
           value={date}
           onChange={(e) => e.target.value && setDate(e.target.value)}
         />

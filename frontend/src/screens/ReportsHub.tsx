@@ -10,6 +10,7 @@ import {
   LayoutDashboard,
   MoonStar,
   ScrollText,
+  Smartphone,
   Timer,
   TrendingUp,
   type LucideIcon,
@@ -38,6 +39,9 @@ const MONEY_ROLES = ["Finance", "Hotel Admin", "System Manager", "Administrator"
 const BUILDER_ROLES = [...MONEY_ROLES, "Front Desk", "Revenue Manager", "Night Auditor",
   "Housekeeping", "Housekeeping Supervisor", "F&B Manager"]
 
+// who sees the hotel's figures (kamra.dashboards.owner_snapshot)
+const FIGURE_ROLES = [...MONEY_ROLES, "Revenue Manager", "Night Auditor"]
+
 const SECTIONS: { title: string; items: ReportLink[] }[] = [
   {
     title: "Your reports",
@@ -49,6 +53,7 @@ const SECTIONS: { title: string; items: ReportLink[] }[] = [
   {
     title: "Daily",
     items: [
+      { to: "/owner", label: "Owner view", blurb: "Today, yesterday or the month on your phone: revenue, occupancy, money owed, the next 7 days and the last night audits.", icon: Smartphone, roles: FIGURE_ROLES },
       { to: "/reports/flash", label: "Manager flash", blurb: "Occupancy, ADR, RevPAR, revenue and collections for a day, with the month to date.", icon: ChartLine, app: "finance" },
       { to: "/end-of-day", label: "Night audit history", blurb: "Each closed business date and its audit pack.", icon: MoonStar, app: "finance" },
       { to: "/cashier/shift-report", label: "Shift report", blurb: "What each till took, by payment mode.", icon: ScrollText, app: "finance" },

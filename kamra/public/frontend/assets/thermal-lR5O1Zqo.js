@@ -14,6 +14,7 @@
 <<<<<<<< HEAD:kamra/public/frontend/assets/thermal-lR5O1Zqo.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/thermal-lR5O1Zqo.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/thermal-lR5O1Zqo.js
+<<<<<<<< HEAD:kamra/public/frontend/assets/thermal-lR5O1Zqo.js
 import{t as a,a as c,m as o,c as m}from"./index-B3i2Wflk.js";const v=`
 ========
 import{t as a,a as c,m as o,c as m}from"./index-DwNNU3P0.js";const v=`
@@ -63,6 +64,9 @@ import{t as a,a as c,m as o,c as m}from"./index-BbJZgv25.js";const v=`
 ========
 import{t as a,a as o,m as c,c as m}from"./index-D-c5c65H.js";const p=`
 >>>>>>>> origin/feat/pos-staff-kot-times:kamra/public/frontend/assets/thermal-DmD1XGrm.js
+========
+import{t as a,a as c,m as o,c as m}from"./index-CUYfusMX.js";const v=`
+>>>>>>>> origin/feat/owner-mobile:kamra/public/frontend/assets/thermal-DZLV3_-a.js
   @page { size: 80mm auto; margin: 0 }
   * { margin: 0; padding: 0; box-sizing: border-box }
   html, body { background: #fff; color: #000 }

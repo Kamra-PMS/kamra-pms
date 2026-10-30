@@ -669,7 +669,8 @@ def session_report(session: str):
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Finance", "Hotel Admin", "Night Auditor", "Kamra Agent")
+@require_roles("Front Desk", "Finance", "Hotel Admin", "Night Auditor", "Revenue Manager",
+               "Kamra Agent")
 def cash_summary_v2(property: str, date: str | None = None,
                     to_date: str | None = None):
 	"""Unified FO + POS cash for a business date, or date..to_date

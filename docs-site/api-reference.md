@@ -156,7 +156,7 @@ Everything the printed GRC (guest registration card) needs.
 
 ### `kamra.api.cash_summary`
 
-**GET/POST** · roles: `Finance`, `Front Desk`, `Night Auditor`, `Kamra Agent`
+**GET/POST** · roles: `Finance`, `Front Desk`, `Night Auditor`, `Revenue Manager`, `Kamra Agent`
 
 Cashier reconciliation: what the system says was collected today,
 per payment mode - the number the drawer must match at shift close.
@@ -4463,6 +4463,20 @@ property the signed-in user may access, plus a per-property table.
 | Param | Required | Default |
 | --- | --- | --- |
 | `date` | no | `None` |
+
+### `kamra.dashboards.owner_snapshot`
+
+**GET/POST** · roles: `Finance`, `Revenue Manager`, `Night Auditor`, `Kamra Agent`
+
+The owner's phone view of one hotel: the flash for a day (or
+from_date..date), what guests and companies still owe, and the last few
+night audits. Read only; the same figures as the flash and the ledgers.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `date` | no | `None` |
+| `from_date` | no | `None` |
 
 
 ## Reports

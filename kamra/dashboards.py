@@ -48,16 +48,11 @@ def _finance_slice(property: str, date: str):
 	"""Collections today (by mode), and money still owed on open folios."""
 	from kamra.api import cash_summary
 	collections = cash_summary(property, date)
-	outstanding = frappe.db.sql(
-		"""SELECT COALESCE(SUM(balance), 0) FROM `tabFolio`
-		   WHERE property = %(p)s AND status = 'Open'""",
-		{"p": property})[0][0]
-	open_folios = frappe.db.count(
-		"Folio", {"property": property, "status": "Open"})
+	outstanding, open_folios = _open_folio_totals(property)
 	return {
 		"collections_today": collections.get("grand_total", 0),
 		"collections_by_mode": collections.get("modes", []),
-		"outstanding": float(outstanding or 0),
+		"outstanding": outstanding,
 		"open_folios": open_folios,
 	}
 
@@ -178,6 +173,15 @@ def comparison(property: str, date: str, total_rooms: int, forecast: list[dict])
 
 def sees_figures() -> bool:
 	return bool(set(FIGURE_ROLES) & set(frappe.get_roles()))
+
+
+def _open_folio_totals(property: str) -> tuple[float, int]:
+	"""What guests owe on open folios right now, and how many are open."""
+	total, count = frappe.db.sql(
+		"""SELECT COALESCE(SUM(balance), 0), COUNT(*) FROM `tabFolio`
+		   WHERE property = %(p)s AND status = 'Open'""",
+		{"p": property})[0]
+	return float(total or 0), int(count or 0)
 
 
 @frappe.whitelist()
@@ -321,3 +325,43 @@ def portfolio_dashboard(date: str | None = None):
 	}
 	rows.sort(key=lambda r: r["revenue_today"], reverse=True)
 	return {"date": date, "totals": totals, "properties": rows}
+
+
+@frappe.whitelist()
+@require_roles("Finance", "Revenue Manager", "Night Auditor", "Kamra Agent")
+def owner_snapshot(property: str, date: str | None = None, from_date: str | None = None,
+                   period: str | None = None):
+	"""The owner's phone view of one hotel: the flash for a day (or
+	from_date..date), what guests and companies still owe (as of now), and
+	the last few night audits. Read only; the same figures as the flash and
+	the ledgers. `period` (today, yesterday, month) counts from the
+	property's business date, never the phone's clock."""
+	from inspect import unwrap
+
+	from kamra.business_date import get_business_date
+	from kamra.ledger import DUE_BUCKETS, city_ledger_aging
+	from kamra.night_audit import AUDIT_ROLES, night_audit_history
+	from kamra.reports import manager_flash
+
+	if not date:
+		date = get_business_date(property)
+		if period == "yesterday":
+			date = add_days(date, -1)
+		elif period == "month":
+			from_date = str(date)[:8] + "01"
+	# this endpoint's gate stands in for the inner endpoints' own gates,
+	# which predate the owner view and leave out some of its roles
+	flash = unwrap(manager_flash)(property, str(date), from_date)
+	outstanding, open_folios = _open_folio_totals(property)
+	ar = unwrap(city_ledger_aging)(property)["totals"]
+	sees_audits = (set(AUDIT_ROLES) | set(ADMIN)) & set(frappe.get_roles())
+	return {
+		**flash,
+		"property": property,
+		"property_name": frappe.db.get_value("Property", property, "property_name"),
+		"guest_balances": outstanding,
+		"open_folios": open_folios,
+		"city_ledger": round(sum(ar[k] for k in DUE_BUCKETS), 2),
+		"city_ledger_overdue": ar["overdue"],
+		"audits": unwrap(night_audit_history)(property, 5) if sees_audits else None,
+	}
