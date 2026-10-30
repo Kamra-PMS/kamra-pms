@@ -29,6 +29,8 @@ DEFAULT_PBJT = Decimal("10")
 DEFAULT_CURRENCY = "IDR"
 DEFAULT_TIMEZONE = "Asia/Jakarta"
 DEFAULT_NATIONALITY = "Indonesian"
+# a passport or ID card MRZ names the country by this code
+HOME_COUNTRY_ISO3 = "IDN"
 ID_TYPES = ["KTP", "Passport", "KITAS", "Driving License", "Other"]
 # QRIS settles like a card through the acquirer - book it as Card
 PAYMENT_MODES = ["Cash", "Card", "Bank Transfer"]

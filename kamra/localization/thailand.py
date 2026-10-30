@@ -27,6 +27,8 @@ DEFAULT_VAT = Decimal("7")
 DEFAULT_CURRENCY = "THB"
 DEFAULT_TIMEZONE = "Asia/Bangkok"
 DEFAULT_NATIONALITY = "Thai"
+# a passport or ID card MRZ names the country by this code
+HOME_COUNTRY_ISO3 = "THA"
 ID_TYPES = ["Thai ID Card", "Passport", "Driving License", "Other"]
 PAYMENT_MODES = ["Cash", "Card", "Bank Transfer"]
 

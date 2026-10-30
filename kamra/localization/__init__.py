@@ -77,6 +77,23 @@ def store_id_number(pack, id_type: str | None, value: str | None) -> str | None:
 	return fn(id_type, value) if fn else None
 
 
+def read_id_scan(pack, text: str) -> dict | None:
+	"""Guest fields from a national ID's own code (India: the Aadhaar QR).
+	Core reads passport MRZ itself; None means the pack has no reader or
+	the scan is not one it knows."""
+	fn = getattr(pack, "read_id_scan", None)
+	return fn(text) if fn else None
+
+
+def home_country_iso3(pack) -> str | None:
+	"""The 3-letter code a passport MRZ uses for the pack's own country."""
+	return getattr(pack, "HOME_COUNTRY_ISO3", None)
+
+
+def default_nationality(pack) -> str:
+	return getattr(pack, "DEFAULT_NATIONALITY", "") or ""
+
+
 def money_text(property: str | None, amount) -> str:
 	"""An amount in the property's currency for server-written text (the
 	activity log, alerts) - never a hardcoded rupee sign."""

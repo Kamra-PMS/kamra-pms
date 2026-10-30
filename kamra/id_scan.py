@@ -127,22 +127,20 @@ def read(property: str, text: str) -> dict:
 		frappe.throw(_("Nothing was scanned."))
 	if len(text) > MAX_LEN:
 		frappe.throw(_("That scan is too long to be an ID."))
+	from kamra import localization as loc
+	pack = loc.pack_for(property)
 	out = parse_mrz(text)
 	if out is None:
-		from kamra.localization import pack_for
-		reader = getattr(pack_for(property), "read_id_scan", None)
-		out = reader(text) if reader else None
+		out = loc.read_id_scan(pack, text)
 	if out is None:
 		frappe.throw(_("Kamra can't read this ID's code. Type the details in, "
 		               "and take a picture of the ID."))
-	from kamra.localization import pack_for
-	pack = pack_for(property)
 	code = out.pop("nationality_code", None)
 	if code and not out.get("nationality"):
 		# ponytail: home country by code, others keep the 3-letter code the
 		# desk can edit; add an ISO 3166 table if foreign walk-ins complain
-		home = getattr(pack, "HOME_COUNTRY_ISO3", None)
-		out["nationality"] = getattr(pack, "DEFAULT_NATIONALITY", "") if code == home else code
+		home = loc.home_country_iso3(pack)
+		out["nationality"] = loc.default_nationality(pack) if code == home else code
 	out["age"] = _age(out.get("date_of_birth"))
 	return out
 

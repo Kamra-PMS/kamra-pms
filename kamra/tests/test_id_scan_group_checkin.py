@@ -107,6 +107,12 @@ class IdScanTestCase(AuditTestCase):
 		with self.assertRaises(frappe.ValidationError):
 			id_scan.read(PROP_A, "not an id at all")
 
+	def test_home_passport_gets_the_pack_nationality(self):
+		make_property(PROP_A, business_date=TODAY, country="Saudi Arabia")
+		out = id_scan.read(PROP_A, TD3.replace("UTO", "SAU"))
+		self.assertEqual(out["nationality"], "Saudi")
+		self.assertEqual(id_scan.read(PROP_A, TD3)["nationality"], "UTO")
+
 	# one card per guest ------------------------------------------------------
 
 	def test_every_adult_on_the_booking_needs_an_id(self):
