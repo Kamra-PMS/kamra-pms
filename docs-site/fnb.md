@@ -98,7 +98,8 @@ Hall, Patio…) or search a table.
 ## Settle a bill
 
 1. Open the bill and press **Settle** (or **F4**).
-2. Pick how the guest pays: **Cash**, **Card** or **UPI**. Or post it to an
+2. Pick how the guest pays: **Cash**, **Card** or your country's instant mode
+   (**UPI** in India). Or post it to an
    in-house guest's room with **Charge to room**.
 3. **Print bill** prints the bill on the till's printer, with the tax split
    your country uses.

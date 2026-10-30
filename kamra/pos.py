@@ -1016,6 +1016,13 @@ def deliver_order(order: str):
 	        "posted_to_folio": bool(doc.posted_to_folio)}
 
 
+def _assert_outlet_mode(property: str, mode: str) -> None:
+	from kamra.localization import outlet_payment_modes, pack_for
+	modes = outlet_payment_modes(pack_for(property))
+	if mode not in modes:
+		frappe.throw(_("Pick a payment mode: {0}.").format(", ".join(modes)))
+
+
 @frappe.whitelist(methods=["POST"])
 @require_roles(*POS_ROLES)
 def pay_order(order: str, mode: str, pin: str | None = None):
@@ -1023,9 +1030,8 @@ def pay_order(order: str, mode: str, pin: str | None = None):
 	rather pay now than post to the room). Records the payment mode and
 	closes the order without touching any folio. Posts into the open
 	cashier session so FO + POS cash reconcile together."""
-	if mode not in ("Cash", "Card", "UPI"):
-		frappe.throw(_("Pick a payment mode: Cash, Card or UPI."))
 	doc = frappe.get_doc("POS Order", order)
+	_assert_outlet_mode(doc.property, mode)
 	if doc.status == "Cancelled":
 		frappe.throw(_("This order was cancelled."))
 	if doc.posted_to_folio:
@@ -1073,9 +1079,8 @@ def change_payment_mode(order: str, mode: str, reason: str = "",
 	comment on the bill. Only while that till is still open - once it is
 	counted and closed, the day's cash is final and a manager must correct it
 	from the till screens."""
-	if mode not in ("Cash", "Card", "UPI"):
-		frappe.throw(_("Pick a payment mode: Cash, Card or UPI."))
 	doc = frappe.get_doc("POS Order", order)
+	_assert_outlet_mode(doc.property, mode)
 	if not doc.paid or doc.status == "Cancelled":
 		frappe.throw(_("Only a bill that was paid at the outlet can change its payment mode."))
 	if doc.posted_to_folio or doc.nc:
@@ -1403,7 +1408,7 @@ def orders_list(outlet: str, date: str | None = None, to_date: str | None = None
 	time. `q` searches the bill and KOT number, table, room, customer name
 	and phone, and the in-house guest's name. `state` keeps one state,
 	`order_type` one kind of order and `mode` one way of paying (Cash, Card,
-	UPI, Room). Pages come back `limit` at a time from `offset`; `total`,
+	the country's instant modes, Room). Pages come back `limit` at a time from `offset`; `total`,
 	`has_more`, `counts` and `totals` always cover every bill the filters
 	match, not only the page, so nothing is hidden by paging.
 	Looking at today also brings in bills still open from earlier days
@@ -1538,7 +1543,7 @@ def orders_export(outlet: str, date: str | None = None, to_date: str | None = No
 	"""The outlet's bill history as CSV for a day or up to a year: every
 	bill with its state, payment mode, amount, discount, who it was for and
 	who cancelled it. Same search and state filters as the orders list;
-	`mode` keeps one payment mode (Cash, Card, UPI). A phone number is masked
+	`mode` keeps one payment mode (Cash, Card, ...) or Room. A phone number is masked
 	except to a supervisor, as on the till. Returns {filename, csv, rows}."""
 	import csv
 	import io
@@ -1565,10 +1570,10 @@ def orders_export(outlet: str, date: str | None = None, to_date: str | None = No
 			or_filters.append(["kot_no", "=", int(qq)])
 	filters = {"outlet": outlet, "creation": ["between", [
 		f"{start} 00:00:00", f"{end} 23:59:59.999999"]]}
-	if mode in ("Cash", "Card", "UPI"):
-		filters["payment_mode"] = mode
-	elif mode == "Room":
+	if mode == "Room":
 		filters["posted_to_folio"] = 1
+	elif mode:
+		filters["payment_mode"] = mode
 	if order_type:
 		filters["order_type"] = order_type
 	rows = frappe.get_all(

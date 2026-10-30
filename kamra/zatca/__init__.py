@@ -29,7 +29,8 @@ SETTINGS = "ZATCA Settings"
 RECORD = "ZATCA Invoice"
 
 # Folio / POS payment modes → UN/ECE 4461 payment means codes
-PAYMENT_MEANS = {"Cash": "10", "Card": "48", "Bank Transfer": "42", "UPI": "42"}
+PAYMENT_MEANS = {"Cash": "10", "Card": "48", "Bank Transfer": "42",
+                 "Payment Link": "48", "Company Credit": "30"}
 
 
 # ── settings ─────────────────────────────────────────────────────────────

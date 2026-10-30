@@ -71,7 +71,7 @@ def execute():
 		f("mode", "Select", options=PAYMENT_MODES, reqd=1, in_list_view=1),
 		f("amount", "Currency", reqd=1, in_list_view=1),
 		f("reference", "Data", in_list_view=1,
-		  description="Txn id / card last-4 / UPI ref"),
+		  description="Txn id / card last-4 / transfer ref"),
 	], istable=1)
 
 	# ── Folio ────────────────────────────────────────────────────────────

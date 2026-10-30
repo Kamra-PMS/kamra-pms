@@ -159,14 +159,11 @@ export const SERVICE_STYLES = [
   "Boxed",
   "Cocktail",
 ]
-/** Banquet receipt modes, minus UPI where the country pack has no UPI. */
-export const payModes = () =>
-  PAY_MODES.filter((m) => m !== "UPI" || locale().payment_modes.includes("UPI"))
-
-export const PAY_MODES = [
+/** Banquet receipt modes, with the country's instant modes after Card. */
+export const payModes = () => [
   "Cash",
   "Card",
-  "UPI",
+  ...(locale().instant_payment_modes ?? []),
   "Bank Transfer",
   "Cheque",
   "Other",

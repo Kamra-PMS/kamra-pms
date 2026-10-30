@@ -6613,7 +6613,7 @@
         "kamra.pos.orders_list"
        ]
       },
-      "description": "The outlet's bills for a day, or a range of up to a year, newest\nfirst: open (not sent to the kitchen), sent, paid, posted to a room, NC,\nclosed or cancelled, with the table, who it was for, the amount and the\ntime. `q` searches the bill and KOT number, table, room, customer name\nand phone, and the in-house guest's name. `state` keeps one state,\n`order_type` one kind of order and `mode` one way of paying (Cash, Card,\nUPI, Room). Pages come back `limit` at a time from `offset`; `total`,\n`has_more`, `counts` and `totals` always cover every bill the filters\nmatch, not only the page, so nothing is hidden by paging.\nLooking at today also brings in bills still open from earlier days\n(`carried`), so a forgotten order cannot hide. Only this outlet's bills.",
+      "description": "The outlet's bills for a day, or a range of up to a year, newest\nfirst: open (not sent to the kitchen), sent, paid, posted to a room, NC,\nclosed or cancelled, with the table, who it was for, the amount and the\ntime. `q` searches the bill and KOT number, table, room, customer name\nand phone, and the in-house guest's name. `state` keeps one state,\n`order_type` one kind of order and `mode` one way of paying (Cash, Card,\nthe country's instant modes, Room). Pages come back `limit` at a time from `offset`; `total`,\n`has_more`, `counts` and `totals` always cover every bill the filters\nmatch, not only the page, so nothing is hidden by paging.\nLooking at today also brings in bills still open from earlier days\n(`carried`), so a forgotten order cannot hide. Only this outlet's bills.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"outlet\": \"Your Property-Restaurant\",\n  \"date\": \"2026-08-01\",\n  \"to_date\": \"2026-08-31\",\n  \"limit\": 200,\n  \"offset\": 0\n}",
@@ -6650,7 +6650,7 @@
         "kamra.pos.orders_export"
        ]
       },
-      "description": "The outlet's bill history as CSV for a day or up to a year: every\nbill with its state, payment mode, amount, discount, who it was for and\nwho cancelled it. Same search and state filters as the orders list;\n`mode` keeps one payment mode (Cash, Card, UPI). A phone number is masked\nexcept to a supervisor, as on the till. Returns {filename, csv, rows}.",
+      "description": "The outlet's bill history as CSV for a day or up to a year: every\nbill with its state, payment mode, amount, discount, who it was for and\nwho cancelled it. Same search and state filters as the orders list;\n`mode` keeps one payment mode (Cash, Card, ...) or Room. A phone number is masked\nexcept to a supervisor, as on the till. Returns {filename, csv, rows}.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"outlet\": \"Your Property-Restaurant\",\n  \"date\": \"2026-08-01\",\n  \"to_date\": \"2026-08-31\"\n}",

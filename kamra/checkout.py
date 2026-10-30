@@ -30,7 +30,6 @@ from frappe.utils import flt, getdate
 EPS = 0.009
 OPEN_POS_STATUSES = ("Placed", "Confirmed", "Preparing")
 OPEN_LAUNDRY_STATUSES = ("Requested", "Collected", "In Process", "Ready")
-POS_PAY_MODES = ("Cash", "Card", "UPI")  # what pos.pay_order accepts
 
 
 def settlement_position(reservation: str) -> dict:
@@ -134,6 +133,12 @@ def _modes(property: str) -> list[str]:
 	return payment_modes(pack_for(property))
 
 
+def _outlet_modes(property: str) -> list[str]:
+	"""What pos.pay_order accepts here."""
+	from kamra.localization import outlet_payment_modes, pack_for
+	return outlet_payment_modes(pack_for(property))
+
+
 def _main_mode(payments, modes: list[str]) -> str | None:
 	"""The mode most of the money came in by (what a refund goes back by).
 	A security deposit goes back through its own refund, by its own mode."""
@@ -227,7 +232,7 @@ def _pending_bills(res, modes: list[str]) -> list[dict]:
 				"can_mark_ready": False,
 				"billable": not o.nc,
 				"pay_modes": [] if (o.nc or not can_pos)
-				else [m for m in modes if m in POS_PAY_MODES],
+				else _outlet_modes(res.property),
 				"hint": _("Not on the bill yet. Post it to the room, or the guest pays "
 				          "for it at the outlet."),
 				"act_roles": list(POS_ROLES[:2])})
