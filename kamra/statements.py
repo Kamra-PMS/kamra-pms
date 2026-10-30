@@ -19,6 +19,8 @@ older ones. Finance gets an in-app notice of what went out.
 
 from __future__ import annotations
 
+import re
+
 import frappe
 from frappe import _
 from frappe.utils import cint, flt, nowdate
@@ -169,12 +171,175 @@ def email_company_statement(account: str, recipients: str | None = None,
 	return {"ok": True, "sent_to": emails}
 
 
+# --- month-end bill ----------------------------------------------------------
+# One page per company per month: what was billed that month (each stay's
+# tax invoice, with its taxable value and tax), what the company paid, and
+# the balance brought and carried forward. Each stay keeps its own tax
+# invoice; this is the summary corporates pay against, not a tax invoice.
+
+def monthly_bill(account: str, month: str) -> dict:
+	"""month is YYYY-MM."""
+	from frappe.utils import get_last_day, getdate
+
+	from kamra.credit import _symbol
+	if not re.fullmatch(r"\d{4}-(0[1-9]|1[0-2])", str(month or "")):
+		frappe.throw(_("Pick a month as YYYY-MM, like 2026-10."))
+	start = getdate(f"{month}-01")
+	end = get_last_day(start)
+	acc = frappe.db.get_value("City Ledger Account", account,
+	                          ["property", "company", "account_number", "credit_days",
+	                           "billing_address"], as_dict=True)
+	if not acc:
+		frappe.throw(_("No such account."))
+
+	# a month holds what reached the account in it (by when the entry was
+	# made): a bill moved in later with its old invoice date lands in the
+	# month it moved, so a bill already sent never changes
+	rows = frappe.db.sql(
+		"""SELECT c.posting_date, c.kind, c.folio, c.invoice_number, c.debit, c.credit,
+		          c.reference, f.guest_name, f.charges_total, f.tax_total, f.grand_total
+		   FROM `tabCity Ledger Entry` c LEFT JOIN `tabFolio` f ON f.name = c.folio
+		   WHERE c.account = %s AND DATE(c.creation) BETWEEN %s AND %s
+		   ORDER BY c.creation""", (account, start, end), as_dict=True)
+
+	def whole(r) -> bool:
+		# the invoice's taxable value and tax describe this line only when
+		# the whole invoice came to the account (no guest part-payment, no
+		# partial transfer)
+		return r.kind == "Invoice" and abs(flt(r.debit) - flt(r.grand_total)) < 0.01
+
+	bills = [{
+		"date": str(r.posting_date), "kind": r.kind,
+		"invoice": r.invoice_number or r.folio or r.reference or "",
+		"guest": r.guest_name or "",
+		"taxable": flt(r.charges_total) if whole(r) else None,
+		"tax": flt(r.tax_total) if whole(r) else None,
+		"amount": flt(r.debit) - flt(r.credit),
+	} for r in rows if r.kind != "Payment"]
+	payments = [{"date": str(r.posting_date), "reference": r.reference or "",
+	             "amount": flt(r.credit) - flt(r.debit)}
+	            for r in rows if r.kind == "Payment"]
+	opening = flt(frappe.db.sql(
+		"""SELECT COALESCE(SUM(debit - credit), 0) FROM `tabCity Ledger Entry`
+		   WHERE account = %s AND DATE(creation) < %s""", (account, start))[0][0])
+	billed = sum(b["amount"] for b in bills)
+	paid = sum(p["amount"] for p in payments)
+	prop = acc.property
+	return {
+		"account": account, "company": acc.company, "property": prop,
+		"property_name": frappe.db.get_value("Property", prop, "property_name") or prop,
+		"contact_email": frappe.db.get_value("Corporate Account", acc.company, "contact_email"),
+		"billing_address": acc.billing_address or "",
+		# one number per account and month, so a reprint keeps it
+		"number": "SOA-{0}-{1}-{2}".format(
+			"".join(w[0] for w in prop.split())[:3].upper(),
+			acc.account_number or account, start.strftime("%Y%m")),
+		"month": start.strftime("%Y-%m"), "from_date": str(start), "to_date": str(end),
+		"credit_days": acc.credit_days, "currency_symbol": _symbol(prop),
+		"opening": opening, "billed": billed, "paid": paid,
+		"closing": opening + billed - paid,
+		"taxable": sum(b["taxable"] or 0 for b in bills),
+		"tax": sum(b["tax"] or 0 for b in bills),
+		"bills": bills, "payments": payments,
+	}
+
+
+def monthly_bill_html(mb: dict, lang: str = "en") -> str:
+	from kamra.custom_reports import _kpi_html, _page_html, _table_html, _tr
+	sym = mb.get("currency_symbol") or ""
+	kpis = [{"label": label, "value": f"{sym}{_money(mb[f])}"} for f, label in (
+		("opening", "Brought forward"), ("billed", "Billed this month"),
+		("paid", "Paid this month"), ("closing", "Balance due"))]
+	bills = {
+		"columns": [{"id": i, "label": label} for i, label in (
+			("date", "Date"), ("invoice", "Invoice"), ("guest", "Guest"),
+			("taxable", "Taxable value"), ("tax", "Tax"), ("amount", "Amount"))],
+		"rows": [{**b, "taxable": "" if b["taxable"] is None else _money(b["taxable"]),
+		          "tax": "" if b["tax"] is None else _money(b["tax"]),
+		          "invoice": b["invoice"] if b["kind"] == "Invoice"
+		          else f"{_tr(b['kind'], lang)} {b['invoice']}".strip(),
+		          "amount": _money(b["amount"])} for b in mb["bills"]],
+	}
+	bills["rows"].append({"invoice": _tr("Total", lang), "taxable": _money(mb["taxable"]),
+	                      "tax": _money(mb["tax"]), "amount": _money(mb["billed"])})
+	payments = {
+		"columns": [{"id": i, "label": label} for i, label in (
+			("date", "Date"), ("reference", "Reference"), ("amount", "Amount"))],
+		"rows": [{**p, "amount": _money(p["amount"])} for p in mb["payments"]],
+	}
+	esc = frappe.utils.escape_html
+	body = ""
+	if mb["billing_address"]:
+		body += f"<p>{esc(mb['company'])}<br>{esc(mb['billing_address'])}</p>"
+	body += (_kpi_html(kpis, lang)
+	         + f"<h2>{esc(_tr('Bills this month', lang))}</h2>" + _table_html(bills, lang))
+	if payments["rows"]:
+		body += f"<h2>{esc(_tr('Payments this month', lang))}</h2>" + _table_html(payments, lang)
+	body += ("<p>" + esc(_tr("Each bill above is a tax invoice of its own; this is a "
+	                         "summary of the month, not a tax invoice. Taxable value and "
+	                         "tax show where the whole invoice is on this account.", lang)) + "</p>")
+	meta = " · ".join([
+		mb["number"], mb["company"], mb["property_name"],
+		_tr("{0} to {1}", lang).format(mb["from_date"], mb["to_date"]),
+		_tr("Payment terms: {0} days", lang).format(mb["credit_days"]),
+	])
+	return _page_html(_tr("Monthly bill", lang), meta, body, lang)
+
+
+@frappe.whitelist()
+@require_roles("Finance", "Hotel Admin", "Kamra Agent")
+def company_monthly_bill(account: str, month: str, format: str = "json", lang: str = "en"):
+	"""A company's month-end bill: every bill of the month with its invoice
+	number, taxable value and tax, the company's payments, and the balance
+	brought and carried forward. format=html returns the printable page."""
+	mb = monthly_bill(account, month)
+	assert_property_access(mb["property"])
+	if (format or "").lower() == "html":
+		return {"format": "html", "filename": f"{mb['number']}.html",
+		        "content": monthly_bill_html(mb, lang or "en")}
+	return mb
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Finance", "Hotel Admin")
+def email_monthly_bill(account: str, month: str, recipients: str | None = None,
+                       lang: str = "en"):
+	"""Email a company its month-end bill (HTML attachment). Without
+	recipients it goes to the company's billing contact email."""
+	from kamra.custom_reports import _tr
+	mb = monthly_bill(account, month)
+	assert_property_access(mb["property"])
+	emails = [e.strip() for e in (recipients or mb.get("contact_email") or "").split(",")
+	          if e.strip()]
+	if not emails:
+		frappe.throw(_("{0} has no billing contact email. Add one on the corporate account or type an address.").format(mb["company"]))
+	lang = lang or "en"
+	esc = frappe.utils.escape_html
+	sym = mb["currency_symbol"]
+	paras = "".join(f"<p>{esc(x)}</p>" for x in [
+		_tr("Dear {0},", lang).format(mb["company"]),
+		_tr("Your bill for {0} is attached: {1} billed, {2} due.", lang).format(
+			mb["month"], f"{sym}{_money(mb['billed'])}", f"{sym}{_money(mb['closing'])}"),
+		mb["property_name"]])
+	frappe.sendmail(
+		recipients=emails,
+		subject=_tr("{0} bill from {1}", lang).format(mb["month"], mb["property_name"]),
+		message=f'<div dir="{"rtl" if lang == "ar" else "ltr"}">{paras}</div>',
+		attachments=[{"fname": f"{mb['number']}.html",
+		              "fcontent": monthly_bill_html(mb, lang).encode("utf-8")}])
+	from kamra.savings import log_action
+	log_action("company_monthly_bill_emailed", "City Ledger Account", account,
+	           mb["property"], rationale=f"{mb['company']}: {mb['number']} to {', '.join(emails)}")
+	return {"ok": True, "sent_to": emails, "number": mb["number"]}
+
+
 # --- reminders ---------------------------------------------------------------
 
-def _reminded(folio: str, stage: str) -> bool:
+def _reminded(folio: str, stage: str, company: str) -> bool:
+	# per company: a bill moved to another account gets its own reminders
 	return bool(frappe.db.exists("Agent Action Log", {
 		"action_type": LOG_PREFIX + stage, "reference_doctype": "Folio",
-		"reference_name": folio}))
+		"reference_name": folio, "rationale": ["like", f"{company}:%"]}))
 
 
 def _line(r: dict, amount: float, stage: str, late: int, sym: str) -> str:
@@ -202,7 +367,7 @@ def send_property_reminders(property: str) -> dict:
 		for r, amount in _netted(st["open_items"], st["unapplied_credit"]):
 			late = days_overdue(r, today)
 			stage = reminder_stage(late)
-			if stage and not _reminded(r["folio"], stage):
+			if stage and not _reminded(r["folio"], stage, st["company"]):
 				due.append((r, amount, stage, late))
 		if not due:
 			continue

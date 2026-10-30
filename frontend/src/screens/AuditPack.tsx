@@ -11,7 +11,7 @@ import { serverError } from "../lib/resource"
 import { Button } from "../components/ui/button"
 import { Card } from "../components/ui/card"
 import { Badge } from "../components/ui/badge"
-import { cur, moneyLocale } from "../lib/money"
+import { cur, instantLabel, moneyLocale } from "../lib/money"
 import { useT, t as translate, useUILanguage, uiDateLocale } from "../lib/i18n"
 import { cn } from "../lib/utils"
 
@@ -65,7 +65,8 @@ export function DataTable({
   const right = (c: Col) => (c.kind === "money" || c.kind === "num" ? "text-end tabular-nums" : "")
   return (
     <div className="overflow-x-auto print:overflow-visible">
-      <table className={cn("w-full table-fixed text-sm", dense && "text-xs")}>
+      {/* table-fixed squeezes every column to a sliver on a phone; scroll instead */}
+      <table className={cn("w-full min-w-[32rem] table-fixed text-sm print:min-w-0", dense && "text-xs")}>
         <thead>
           <tr className="border-b border-zinc-200 text-start text-[11px] font-medium uppercase tracking-wider text-zinc-500">
             {cols.map((c, i) => (
@@ -258,13 +259,15 @@ function Journal({ p }: { p: Pack }) {
   )
 }
 
-export const SESSION_COLS: Col[] = [
+/** Till columns; the instant-mode bucket (system_upi) only where the
+ *  country pack has instant modes. */
+export const sessionCols = (): Col[] => [
   { key: "cashier_id", label: "Cashier", render: (r) => r.cashier_id || r.user_name || r.user },
   { key: "status", label: "Status" },
   { key: "opening_float", label: "Float", kind: "money" },
   { key: "cash", label: "Cash", kind: "money" },
   { key: "card", label: "Card", kind: "money" },
-  { key: "upi", label: "UPI", kind: "money" },
+  ...(instantLabel() ? [{ key: "upi", label: instantLabel(), kind: "money" as const }] : []),
   { key: "paid_outs", label: "Paid out", kind: "money" },
   { key: "expected_cash", label: "Expected", kind: "money" },
   { key: "counted_cash", label: "Counted", kind: "money" },
@@ -276,7 +279,7 @@ function CashierSummary({ p }: { p: Pack }) {
   const rows = p.cashier_sessions || []
   return (
     <DataTable
-      cols={SESSION_COLS}
+      cols={sessionCols()}
       rows={rows}
       empty={translate("No cashier sessions on this business date.")}
       total={{
@@ -572,7 +575,71 @@ function Exceptions({ p }: { p: Pack }) {
   )
 }
 
+/* Day, month to date and year to date side by side; packs saved before
+   this report existed simply have no audit_report section. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Period = Record<string, any>
+function AuditReport({ p }: { p: Pack }) {
+  const { t } = useT()
+  const r = p.audit_report
+  if (!r) return <p className="text-sm text-zinc-500">{t("This audit was closed before the night audit report existed.")}</p>
+  const periods: Period[] = r.periods || []
+  const col = (key: string, label: string, kind: "num" | "money" = "money") => ({ key, label, kind })
+  const outlets = new Map<string, Period>()
+  periods.forEach((per, i) => (per.outlets || []).forEach((o: Period) => {
+    const row = outlets.get(o.outlet) || { name: o.name }
+    row[`food${i}`] = o.food
+    row[`beverage${i}`] = o.beverage
+    outlets.set(o.outlet, row)
+  }))
+  return (
+    <div>
+      <DataTable
+        cols={[
+          { key: "label", label: "" },
+          col("rooms_sold", "Room nights", "num"), col("occupancy_pct", "Occ %", "num"),
+          col("room_revenue", "Rooms (net of discounts)"), col("adr", "ADR"), col("revpar", "RevPAR"),
+          col("food", "Food"), col("beverage", "Beverage"), col("banquets", "Banquets"),
+          col("meal_plan_minibar", "Meal plan & minibar"), col("other", "Other"),
+          col("total_revenue", "Total"),
+        ]}
+        rows={periods.map((per) => ({ ...per, label: t(per.label) }))}
+      />
+      <Sub>{t("Food and beverage by outlet")}</Sub>
+      <DataTable
+        cols={[
+          { key: "name", label: "Outlet" },
+          col("food0", "Food, day"), col("beverage0", "Beverage, day"),
+          col("food1", "Food, MTD"), col("beverage1", "Beverage, MTD"),
+          col("food2", "Food, YTD"), col("beverage2", "Beverage, YTD"),
+        ]}
+        rows={[...outlets.values()]}
+      />
+      <Sub>{t("Banquets")}</Sub>
+      <DataTable
+        cols={[
+          { key: "label", label: "" }, col("functions", "Functions", "num"),
+          col("fnb", "Food & beverage"), col("hall", "Hall"), col("other", "Other"), col("total", "Total"),
+        ]}
+        rows={periods.map((per) => ({ label: t(per.label), ...per.banquet }))}
+      />
+      <Sub>{t("Balances brought and carried forward")}</Sub>
+      <DataTable
+        cols={[
+          { key: "label", label: "" }, col("brought_forward", "Brought forward"),
+          col("debit", "Debits today"), col("credit", "Credits today"), col("carried_forward", "Carried forward"),
+        ]}
+        rows={(r.balances || []).map((b: Period) => ({ ...b, label: t(b.label) }))}
+      />
+      <p className="mt-2 text-xs text-zinc-500">
+        {t("Food and beverage come from the restaurant bills (paid at the outlet or charged to a room), split by whether the item is liquor. Year to date starts {d}.", { d: fmtDay(periods[2]?.from_date) })}
+      </p>
+    </div>
+  )
+}
+
 export const REPORTS: { key: string; title: string; Body: (props: { p: Pack }) => ReactNode }[] = [
+  { key: "audit_report", title: "Night audit report", Body: AuditReport },
   { key: "manager_flash", title: "Manager's flash", Body: ManagerFlash },
   { key: "journal", title: "Journal by cashier and transaction code", Body: Journal },
   { key: "cashier_summary", title: "Cashier summary", Body: CashierSummary },
@@ -656,7 +723,10 @@ export function AuditPackView({ audit, embedded = false }: { audit: string; embe
       </Card>
     )
   const p = data.pack
-  const shown = all ? REPORTS : REPORTS.filter((r) => r.key === active)
+  // the server leaves the money reports out of the pack for the front desk
+  const reports = p.reports ? REPORTS.filter((r) => p.reports.some((x: { key: string }) => x.key === r.key)) : REPORTS
+  const current = reports.some((r) => r.key === active) ? active : reports[0]?.key
+  const shown = all ? reports : reports.filter((r) => r.key === current)
   return (
     <div className={cn("grid gap-4 print:block", !embedded && "lg:grid-cols-[260px_1fr]", embedded && "2xl:grid-cols-[240px_1fr]")}>
       <Card className="h-fit p-2 print:hidden">
@@ -664,7 +734,7 @@ export function AuditPackView({ audit, embedded = false }: { audit: string; embe
           {t("Final reports")}
         </div>
         <ul className={cn(embedded && "flex flex-wrap gap-1 2xl:block")}>
-          {REPORTS.map((r) => (
+          {reports.map((r) => (
             <li key={r.key}>
               <button
                 type="button"
@@ -672,7 +742,7 @@ export function AuditPackView({ audit, embedded = false }: { audit: string; embe
                 className={cn(
                   "rounded-lg px-2 py-1.5 text-start text-sm hover:bg-zinc-100",
                   embedded ? "2xl:w-full" : "w-full",
-                  active === r.key && "bg-brand-50 font-medium text-brand-700",
+                  current === r.key && "bg-brand-50 font-medium text-brand-700",
                 )}
               >
                 {t(r.title)}

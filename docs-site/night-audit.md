@@ -141,6 +141,14 @@ Step 11 lists the final reports on the left. Pick one to read it, then
 **Print** or **Download PDF** (choose *Save as PDF* in the print dialog);
 **Print all** prints the whole pack on A4:
 
+- Night audit report: the day, month to date and year to date side by
+  side (room nights, occupancy, rooms, ADR, RevPAR, food, beverage,
+  banquets, meal plan and minibar, other, total); food and beverage for
+  each outlet; banquets; and the guest ledger, advance deposits and city
+  ledger brought forward, moved today and carried forward. Food and
+  beverage come from the restaurant bills, paid at the outlet or charged
+  to a room, with liquor items as beverage. In India the year runs from
+  1 April. Audits closed before this report have no copy of it.
 - Manager's flash
 - Journal by cashier and transaction code
 - Cashier summary

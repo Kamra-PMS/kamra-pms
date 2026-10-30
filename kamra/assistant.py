@@ -503,7 +503,8 @@ TOOLS = {
 	"record_payment": (
 		"add_folio_payment",
 		"Record a payment staff say was received, against a folio (mode: "
-		"Cash, UPI, Card, Bank, Link). folio is "
+		"Cash, Card, Bank Transfer, Payment Link or the country's own modes "
+		"from the property locale). folio is "
 		"the folio id from checkout_context folios[].folio or get_folio. If you "
 		"only have the booking, pass reservation instead and leave folio out: "
 		"the stay's open guest folio is used.",
@@ -1229,7 +1230,8 @@ What Kamra does and where to find it:
   cancel, registration card.
 - Guests: profiles with stay history, VIP/blacklist, merge and anonymize.
 - Billing: folios, post charges, take payments, payment links. Closing a folio
-  assigns a GST tax invoice (logo, GSTIN, place of supply, SAC 996311).
+  assigns a tax invoice number (logo, tax ID and the tax details the
+  property's country requires).
 - Reports: one Reports hub - manager flash, shift report, F&B dashboard,
   banquet registers, SLA, voids, department packs (Front Office,
   Housekeeping, F&B, Hotel Manager) and custom reports (build, save, group

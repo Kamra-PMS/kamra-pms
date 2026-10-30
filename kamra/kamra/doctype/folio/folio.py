@@ -16,7 +16,9 @@ class Folio(Document):
 		set one (FX rows do). One guard here covers all writers (#341)."""
 		missing = [p for p in self.payments if not p.currency]
 		if missing:
-			cur = frappe.get_cached_value("Property", self.property, "currency") or "INR"
+			from kamra.localization import default_currency, pack_for
+			cur = (frappe.get_cached_value("Property", self.property, "currency")
+			       or default_currency(pack_for(self.property)))
 			for p in missing:
 				p.currency = cur
 

@@ -30,10 +30,10 @@ from frappe.utils import add_to_date, now_datetime
 from kamra.authz import assert_property_access, require_roles
 
 # Kitchen screens and tills run as these roles; they claim and ack jobs.
-STATION_ROLES = ("Front Desk", "Finance", "Kamra Agent")
+STATION_ROLES = ("Front Desk", "Finance", "F&B Manager", "Kamra Agent")
 # Who may add, change and remove printers (admins always may) - the F&B
 # settings editors.
-EDITOR_ROLES = ("Finance",)
+EDITOR_ROLES = ("Finance", "F&B Manager")
 # A claimed job with no answer after this long is offered again.
 STALE_CLAIM_S = 60
 # A print station that hasn't asked for work in this long shows as offline.
@@ -275,7 +275,11 @@ def escpos(ticket: dict, width_mm: str = "80 mm") -> bytes:
 		out.append(ESC + b"a" + (b"\x01" if center else b"\x00"))
 		out.append(GS + b"!" + (b"\x11" if big else b"\x00"))
 		out.append(ESC + b"E" + (b"\x01" if bold else b"\x00"))
-		out.append(str(text).encode("ascii", "replace") + b"\n")
+		# free text (a waiter, a customer, an instruction) is printed, never
+		# obeyed: control bytes would reach the printer as commands (ESC p
+		# kicks the cash drawer open)
+		text = "".join(c for c in str(text) if " " <= c != "\x7f")
+		out.append(text.encode("ascii", "replace") + b"\n")
 
 	kind = ticket.get("kind") or "KOT"
 	if kind == "Bill":
@@ -341,6 +345,10 @@ def _escpos_bill(ticket: dict, cols: int, line, out: list) -> bytes:
 	money("TOTAL", ticket.get("grand_total"))
 	if ticket.get("nc"):
 		line("NC - NO CHARGE", bold=True, center=True)
+	if ticket.get("served_by"):
+		line(f"Served by: {ticket['served_by']}"[:cols])
+	if ticket.get("cashier"):
+		line(f"Cashier: {ticket['cashier']}"[:cols])
 	out.append(b"\n\n\n" + GS + b"V\x41\x03")
 	return b"".join(out)
 

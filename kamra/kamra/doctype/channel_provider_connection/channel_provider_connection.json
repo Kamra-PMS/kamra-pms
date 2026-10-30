@@ -31,7 +31,8 @@
   "column_break_meta",
   "tpl_booking_confirmation",
   "tpl_precheckin",
-  "tpl_payment_request"
+  "tpl_payment_request",
+  "tpl_room_charge"
  ],
  "fields": [
   {
@@ -182,12 +183,18 @@
    "fieldtype": "Data",
    "label": "Template: payment request",
    "description": "Args: guest, amount, note"
+  },
+  {
+   "fieldname": "tpl_room_charge",
+   "fieldtype": "Data",
+   "label": "Template: room charge alert",
+   "description": "Args: guest, amount, what and where, balance. Sent only when the property turns on room charge alerts."
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-09-28 12:00:00.000000",
+ "modified": "2026-10-29 14:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Channel Provider Connection",

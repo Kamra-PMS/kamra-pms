@@ -187,6 +187,13 @@ export async function frappeFetch<T = unknown>(
   return (await doFetch(path, init)) as T
 }
 
+/** A fresh idempotency key: one per money action, reused on its retries. */
+export function newIdempotencyKey(): string {
+  return typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? crypto.randomUUID()
+    : `k-${Date.now()}-${Math.random().toString(36).slice(2)}`
+}
+
 export async function call<T = unknown>(
   method: string,
   params: Record<string, unknown> = {},
@@ -373,6 +380,10 @@ export interface Quote {
   over_capacity_total?: number
   pet_charge?: number
   discount: number
+  /** long-stay discount already taken off room_total */
+  long_stay?: { rule: string; min_nights: number; percent: number; amount: number } | null
+  /** advance the stay's dates ask for: a season's %, else the property's */
+  advance?: { percent: number; season: string | null; amount: number }
   amount_before_tax: number
   tax_percent: number
   tax_amount: number
@@ -525,6 +536,7 @@ export const createBooking = (
     ota_total?: number
     ota_commission_pct?: number
     marketing_consent?: number
+    market_segment?: string
   },
 ) =>
   call<{
@@ -1659,6 +1671,11 @@ export interface ReservationDetail {
   eta: string | null
   /** Flagged late: the night audit holds it as Due In, not a no-show. */
   late_arrival?: number
+  /** Everyone on the register and when each arrived / left */
+  occupants?: { full_name: string; arrived_at: string | null; left_at: string | null }[]
+  /** Set when an early check-out shortened the stay */
+  booked_check_out_date?: string | null
+  early_departure_reason?: string | null
   /** Room rate confirmed per night at booking - what the folio bills. */
   night_rates?: { date: string; rate: number; demand_premium_pct: number }[]
   precheckin_status: string | null
@@ -1718,6 +1735,7 @@ export interface ReservationDetail {
     can_check_out: boolean
     can_cancel: boolean
     can_amend: boolean
+    can_reinstate: boolean
   }
   /** Things the desk should see but which must never gate an arrival. Kept
    *  apart from `actions` on purpose: a missing ID is a warning, not a
@@ -1769,6 +1787,14 @@ export interface RepricePreview {
   difference: number
   needs_confirmation: boolean
   nights: { date: string; rate: number; demand_premium_pct: number }[]
+  /** a stay in house: what the rate-change policy does to nights already
+   * on the folio (kept at their charged rate, or credited by Kamra) */
+  charged_nights?: {
+    policy: string
+    nights: { date: string; charged: number; new: number; action: string }[]
+    kept_difference: number
+    credit_total: number
+  }
 }
 
 export const amendStayPreview = (

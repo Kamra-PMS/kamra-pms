@@ -291,10 +291,10 @@ def _public_locale(property: str) -> dict:
 	prop = frappe.get_cached_doc("Property", property)
 	pack = pack_for(property)
 	loc = pack.locale(prop)
-	# "" is a valid symbol (generic pack shows bare numbers) - only the
-	# missing key falls back to the rupee
-	return {"currency_symbol": loc.get("currency_symbol", "₹"),
-	        "locale": loc.get("locale") or "en-IN",
+	# "" is a valid symbol (generic pack shows bare numbers)
+	return {"currency_symbol": loc.get("currency_symbol") or "",
+	        "locale": loc.get("locale") or "en",
+	        "currency": loc.get("currency") or "",
 	        **privacy_terms(pack)}
 
 
@@ -426,8 +426,8 @@ def search_stay(property: str, check_in_date: str, check_out_date: str,
 					           a, c, mp or None, voucher_code=voucher,
 					           pets=int(pets or 0))
 					plan = {"meal_plan": mp, "amount_after_tax": pq["amount_after_tax"],
-					        **_payment_split(prop, pq["amount_after_tax"], (
-					            pq.get("stay_rules") or {}).get("full_payment"))}
+					        **_payment_split(prop, pq["amount_after_tax"],
+					                         pq.get("stay_rules"))}
 					if voucher:
 						plan["list_amount"] = quote(
 							property, rt, check_in_date, check_out_date, a, c,
@@ -436,8 +436,7 @@ def search_stay(property: str, check_in_date: str, check_out_date: str,
 						q = pq
 					plans.append(plan)
 				rules = q.get("stay_rules") or {}
-				q.update(_payment_split(prop, q.get("amount_after_tax"),
-				                        rules.get("full_payment")))
+				q.update(_payment_split(prop, q.get("amount_after_tax"), rules))
 				row["quote"] = q
 				row["plans"] = plans
 				need = max(int(rules.get("minimum_nights") or 0),
@@ -487,6 +486,7 @@ def precheckin_info(token: str):
 		"ui_locale": _public_locale(res.property),
 		# which IDs this country accepts, and the likely nationality
 		"id_types": vocab["id_types"],
+		"id_type_hints": vocab["id_type_hints"],
 		"default_nationality": vocab["default_nationality"],
 		"property": {
 			"property_name": prop.property_name,
@@ -794,19 +794,22 @@ def _over_capacity_note(above: int) -> str:
 	        "confirms the arrangement and the price for them.")
 
 
-def _advance_terms(prop, total: float, full_payment: bool = False) -> tuple[float, str]:
+def _advance_terms(prop, total: float, rules: dict | None = None) -> tuple[float, str]:
 	"""What the guest pays online now, and a human label - computed from the
 	property's CURRENT booking-payment policy. Snapshotted onto the booking so
 	a later policy change never re-bills an existing guest. A season marked
 	full payment (holidays, December) takes the whole amount whatever the
-	usual advance."""
+	usual advance; a season with its own advance % (25, 50) asks that % for
+	these dates. `rules` is the quote's stay_rules."""
+	rules = rules or {}
 	mode = prop.get("booking_payment_mode") or "Pay at hotel"
 	total = float(total or 0)
 	sym = _public_locale(prop.name).get("currency_symbol", "") if prop.get("name") else ""
-	if full_payment and mode != "Pay at hotel":
+	season_pct = float(rules.get("advance_percent") or 0)
+	if rules.get("full_payment") and mode != "Pay at hotel":
 		return total, f"Full payment ({sym}{total:,.0f}) on booking for these dates"
-	if mode == "Advance percent":
-		pct = float(prop.get("advance_percent") or 0)
+	if mode == "Advance percent" or (season_pct and mode != "Pay at hotel"):
+		pct = season_pct or float(prop.get("advance_percent") or 0)
 		due = round(total * pct / 100, 2)
 		return due, f"{pct:g}% advance ({sym}{due:,.0f}) now, rest at the hotel"
 	if mode == "Registration fee":
@@ -817,11 +820,11 @@ def _advance_terms(prop, total: float, full_payment: bool = False) -> tuple[floa
 	return 0.0, "Pay at the hotel"
 
 
-def _payment_split(prop, total: float, full_payment: bool = False) -> dict:
+def _payment_split(prop, total: float, rules: dict | None = None) -> dict:
 	"""Server-computed split the booking page shows: what is due now and
 	what is left to pay at the hotel. The browser never derives these."""
 	total = float(total or 0)
-	due, policy = _advance_terms(prop, total, full_payment)
+	due, policy = _advance_terms(prop, total, rules)
 	return {
 		"advance_due": due,
 		"balance_at_hotel": round(max(0.0, total - due), 2),
@@ -889,9 +892,9 @@ def book(property: str, room_type: str, check_in_date: str,
 		int(adults), int(children), meal_plan or None,
 		voucher_code=voucher_code or None, pets=int(pets or 0),
 	)
-	full_payment = bool((q.get("stay_rules") or {}).get("full_payment"))
+	stay_rules = q.get("stay_rules") or {}
 	advance_due, policy = _advance_terms(
-		prop, float(q["amount_after_tax"] or 0), full_payment)
+		prop, float(q["amount_after_tax"] or 0), stay_rules)
 
 	status = None
 	hold_expires_on = None
@@ -934,7 +937,7 @@ def book(property: str, room_type: str, check_in_date: str,
 		# later change to the property's payment config never re-bills this guest
 		total = float(result["amount_after_tax"] or 0)
 		# Recompute against the saved total (voucher / engine may differ).
-		advance_due, policy = _advance_terms(prop, total, full_payment)
+		advance_due, policy = _advance_terms(prop, total, stay_rules)
 		updates = {
 			"advance_due": advance_due,
 			"payment_policy": policy,
@@ -1008,8 +1011,9 @@ def check_voucher(property: str, code: str, nights: int = 1):
 		v = validate_voucher(property, code, int(nights or 1))
 	except Exception as e:
 		return {"ok": False, "message": str(e)}
+	from kamra.localization import money_text
 	label = (f"{v.value:g}% off" if v.discount_type == "Percent"
-	         else f"₹{v.value:,.0f} off")
+	         else f"{money_text(property, round(v.value))} off")
 	return {"ok": True, "message": f"'{v.voucher_code}' applied - {label}.",
 	        "discount_type": v.discount_type, "value": float(v.value)}
 

@@ -92,6 +92,8 @@ const inputCls =
 interface Info {
   /** ID documents the property's country accepts (its localization pack). */
   id_types: string[]
+  /** a help line per ID type from the pack (which copy is fine) */
+  id_type_hints?: Record<string, string>
   default_nationality?: string
   property: {
     property_name: string
@@ -284,7 +286,7 @@ export default function PublicCheckin() {
               {p.id_retention === "Verify & Discard"
                 ? t("Your ID photo is used only to confirm your identity at arrival, and is permanently deleted when you check out. Only hotel staff can see it.")
                 : t("Your ID photo is kept with the guest register the hotel is required by law to maintain. Only hotel staff can see it.")}
-              {form.id_type === "Aadhaar" && " " + t("A masked Aadhaar (last 4 digits showing) is fine.")}
+              {info?.id_type_hints?.[form.id_type] && " " + t(info.id_type_hints[form.id_type])}
             </p>
 
             <DocCapture

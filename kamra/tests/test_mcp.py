@@ -363,6 +363,19 @@ class TestRemoteMCP(IntegrationTestCase):
 		self.assertIn("quote", names)
 		self.assertEqual(len(names), len(set(names)))
 
+	def test_tools_call_structured_content_is_object(self):
+		from types import SimpleNamespace
+		from unittest.mock import patch
+
+		grant = SimpleNamespace(user="Administrator", property=None)
+		for result, has_structured in (([{"name": "R1"}], False), (None, False), ({"a": 1}, True)):
+			with patch.object(mcp_http, "call_tool", return_value=result):
+				out = mcp_http._tools_call({"name": "quote", "arguments": {}}, grant)
+			self.assertFalse(out["isError"])
+			self.assertEqual("structuredContent" in out, has_structured)
+			if has_structured:
+				self.assertIsInstance(out["structuredContent"], dict)
+
 	def _key_user(self, email, *, restrict=True, enabled=1, mcp="MCP Manage"):
 		"""A Front Desk user with an API key, limited to the test property,
 		holding the given MCP role (None for no MCP access)."""

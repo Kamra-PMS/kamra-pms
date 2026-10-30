@@ -4096,7 +4096,7 @@ def t82c():
 	])
 	rows = {o["full_name"]: o for o in out["rows"]}
 	adult, child, visitor = rows["Evalfam Parent"], rows["Evalfam Child"], rows["Evalfam Visitor"]
-	assert adult["id_number"] == "987654321012" and adult["phone"], adult
+	assert adult["id_number"] == "••••••••1012" and adult["phone"], adult  # Aadhaar: last 4 only
 	assert child["age"] == 9 and not (child["id_type"] or child["id_number"] or child["phone"]), child
 	# Form C: a foreign child's passport is part of the register; a phone is not
 	assert visitor["id_number"] == "19FR12345" and not visitor["phone"], visitor
@@ -6136,6 +6136,7 @@ def t133():
 		kinds = {c.charge_type for c in frappe.get_doc("Folio", folio).charges}
 		assert {"Cleaning Fee", "Misc"} <= kinds, kinds
 		_assert_folio_on_ledger(folio)
+		_allowance_approval_off()
 		api.post_allowance(folio, 100, "eval service recovery")
 		_assert_folio_on_ledger(folio)
 	finally:
@@ -7549,6 +7550,14 @@ def t327():
 		assert wiz["open_pos_bills"]["count"] == row["open_pos_bills"]
 
 
+def _allowance_approval_off():
+	"""A new property asks a manager for every allowance; these checks are
+	about the ledger, so the eval property posts allowances straight away."""
+	from kamra.settings import clear_cache, write_kv
+	write_kv(P, "allowance_approval", "Off")
+	clear_cache(P)
+
+
 @check("voids & allowances report lists an allowance with its folio and reason")
 def t328():
 	from kamra import api
@@ -7556,6 +7565,7 @@ def t328():
 	res, folio = _in_house("Eval Void Report", "+91 70000 00328", "2037-01-18",
 	                       "2037-01-20", _ledger_room("L328"))
 	api.add_folio_charge(folio, "Misc", "eval void report", 500, gst_rate=0)
+	_allowance_approval_off()
 	api.post_allowance(folio, 100, "eval void report reason")
 	rows = void_allowance_report(P, nowdate(), nowdate())
 	assert any(r["folio"] == folio and r["action"] == "Allowance" for r in rows), rows[:3]
@@ -8782,7 +8792,13 @@ def _ci_room(number):
 
 def _ci_stay(name, phone, room=None):
 	g = _guest(name, phone)
-	return _res(g, nowdate(), add_days(nowdate(), 2), room=room)
+	res = _res(g, nowdate(), add_days(nowdate(), 2), room=room)
+	# the second adult is on the register with an ID: these checks are
+	# about the main guest's, and every adult on a booking needs one
+	res.append("occupants", {"full_name": f"{name} Partner", "age": 30,
+	                         "id_type": "Passport", "id_number": "E7654321"})
+	res.save(ignore_permissions=True)
+	return res
 
 
 def _refused(fn, *args, exc=None, contains=None, **kwargs):

@@ -207,7 +207,7 @@ Reglas estrictas aplicadas en el código:
 
 Roles (ejemplos): Recepción, Responsable de ingresos, Finanzas, Limpieza,
 Administrador del hotel, Administrador del sistema, Agente Kamra, Auditor
-nocturno.
+nocturno, Gerente de alimentos y bebidas.
 
 Los controles están en el endpoint (`@require_roles` / `_kamra_roles`), no
 solo en los DocPerms. Las instalaciones con varios alojamientos usan

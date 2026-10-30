@@ -22,10 +22,14 @@ import frappe
 DEFAULT_VAT = Decimal("15")
 
 DEFAULT_CURRENCY = "SAR"
+# foreign money guests bring most; Settings, Finance, Exchange rates can change it
+FX_CURRENCIES = ["USD", "EUR", "GBP", "AED", "INR", "PKR", "EGP"]
 DEFAULT_TIMEZONE = "Asia/Riyadh"
 # charged per night on the room rate; the rate is set per property
 ROOM_LEVY_LABEL = "Municipality fee"
 DEFAULT_NATIONALITY = "Saudi"
+# a passport or ID card MRZ names the country by this code
+HOME_COUNTRY_ISO3 = "SAU"
 # named in the guest privacy notice (PDPL; hotels register guests in Shomoos)
 PRIVACY_AUTHORITY = "the Saudi Data & AI Authority (SDAIA)"
 GUEST_REPORT = "guest registration with the Shomoos security system"

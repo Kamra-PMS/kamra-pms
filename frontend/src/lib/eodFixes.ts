@@ -44,7 +44,7 @@ export const CHECK_FIXES: Record<string, CheckFix> = {
   open_pos_bills: {
     why: "Restaurant, bar and room-service bills that are still open. Closing the day with them open loses or misdates the revenue.",
     steps: [
-      { text: "Settle each bill in the POS (cash, card, UPI), or charge it to the guest's room.", to: "/pos", cta: "Open POS" },
+      { text: "Settle each bill in the POS, or charge it to the guest's room.", to: "/pos", cta: "Open POS" },
       { text: "Bill for a guest who left or a mistake: cancel it, or mark it complimentary (NC) with who authorised it." },
       { text: "Still being served overnight (a late bar): leave it and override with a reason." },
     ],

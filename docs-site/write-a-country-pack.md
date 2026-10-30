@@ -34,7 +34,8 @@ This guide is for contributors who want to write a country pack so that the coun
 	| `DEFAULT_TIMEZONE` | The time zone the setup screen fills in. Use a time zone name from the tz database. |
 	| `DEFAULT_NATIONALITY` | The nationality the front desk starts with |
 	| `ID_TYPES` | The ID documents the desk and self check-in accept |
-	| `PAYMENT_MODES` | The ways to pay at the counter, POS and till. Use only **Cash**, **Card**, **UPI** and **Bank Transfer**. Kamra drops any other value, because the till, the ledger and the night audit only know those four. |
+	| `PAYMENT_MODES` | The ways to pay at the counter, POS and till: **Cash**, **Card**, **Bank Transfer**, plus any of your `INSTANT_PAYMENT_MODES`. Kamra drops any other value. |
+	| `INSTANT_PAYMENT_MODES` | Optional. Your country's own instant or wallet modes (India: `["UPI"]`). The POS settles with them and the till counts them in their own column. Each must already be a payment mode option on Folio Payment and Cashier Transaction. Other countries' properties are refused these modes. |
 5. Write the tax functions
 	```python
 	def calculate_room_tax(property, room_type_doc, nightly_rate) -> Decimal:

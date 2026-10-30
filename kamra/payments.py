@@ -41,7 +41,7 @@ def create_payment_link(folio_name: str, amount: float | None = None,
 	settings = _settings(folio.property)
 	guest = frappe.get_doc("Guest", folio.guest)
 	currency = frappe.get_cached_value("Property", folio.property,
-	                                   "currency") or "INR"
+	                                   "currency") or loc.default_currency(pack)
 
 	if settings.test_mode:
 		# local demo: fake link, settle via the webhook simulator
