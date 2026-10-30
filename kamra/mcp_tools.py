@@ -340,7 +340,8 @@ TOOLS: tuple[ToolSpec, ...] = (
 		"crs.record_trip_advance",
 		"""Take one advance payment for a whole trip. It is split as
 		trip_advance_preview shows and each share posts as an Advance on
-		that leg's folio at its own property. mode: Cash, UPI, Card, Bank.
+		that leg's folio at its own property. mode: one of the
+		payment modes every leg's property accepts.
 		Confirm the amount and the split with staff before calling.""",
 		{
 			"itinerary": _p("string"),
