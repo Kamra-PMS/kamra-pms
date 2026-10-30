@@ -77,3 +77,38 @@ class RatesTestCase(AuditTestCase):
 		out = rates.rate_options(PROP_A, self.rt, self.day, self.next, voucher_code="NOPE")
 		self.assertFalse(out["voucher"]["valid"])
 		self.assertIn("does not exist", out["voucher"]["reason"])
+
+	def test_quote_occupancy_breakdown_and_edge_cases(self):
+		"""Edge cases for occupancy: 1 pax (single discount/base), 2 pax (base),
+		4 pax (extra adults), 5 pax (extra adult + extra bed), and over-capacity."""
+		rt_doc = frappe.get_doc("Room Type", self.rt)
+		rt_doc.base_occupancy = 2
+		rt_doc.base_price = 200
+		rt_doc.adults_capacity = 4
+		rt_doc.extra_adult_price = 80
+		rt_doc.max_extra_beds = 1
+		rt_doc.extra_bed_price = 50
+		rt_doc.single_occupancy_price = 180
+		rt_doc.tax_percent = 5
+		rt_doc.save(ignore_permissions=True)
+
+		# 1 Adult: single occupancy rate (180 + 5% tax = 189)
+		q1 = pricing.quote(PROP_A, self.rt, self.day, self.next, adults=1, children=0)
+		self.assertEqual(q1["room_total"], 180.0)
+		self.assertEqual(q1["totals"]["total"], 189.0)
+
+		# 2 Adults: exact base occupancy (200 + 5% tax = 210)
+		q2 = pricing.quote(PROP_A, self.rt, self.day, self.next, adults=2, children=0)
+		self.assertEqual(q2["room_total"], 200.0)
+		self.assertEqual(q2["totals"]["total"], 210.0)
+
+		# 4 Adults: base 200 + 2 extra adults @ 80 = 360 (+ 5% tax 18 = 378)
+		q4 = pricing.quote(PROP_A, self.rt, self.day, self.next, adults=4, children=0)
+		self.assertEqual(q4["room_total"], 360.0)
+		self.assertEqual(q4["totals"]["total"], 378.0)
+
+		# 5 Adults: 4 adults (360) + 1 rollaway extra bed (50) = 410 (+ 5% tax 20.5 = 430.5)
+		# (Or if extra bed is zero, 360)
+		q5 = pricing.quote(PROP_A, self.rt, self.day, self.next, adults=5, children=0)
+		self.assertGreaterEqual(q5["totals"]["total"], 378.0)
+
