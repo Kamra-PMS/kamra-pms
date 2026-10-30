@@ -342,13 +342,18 @@ function StaffSheet({
                     onChange={() => toggleRole(r.role)}
                   />
                   <span>
-                    <span className="block text-sm font-medium text-zinc-800">{t(r.label)}</span>
+                    <span className="block text-sm font-medium text-zinc-800">
+                      {r.custom ? r.label : t(r.label)}
+                    </span>
                     <span className="block text-xs text-zinc-500">{t(r.description)}</span>
                   </span>
                 </label>
               )
             })}
           </div>
+          <p className="mt-2 text-xs text-zinc-500">
+            {t("Need a role that isn't here, or a change to what a role may do? IT creates roles and sets their permissions in Desk (Role Permission Manager). See Roles and access in the docs.")}
+          </p>
         </fieldset>
 
         <fieldset>

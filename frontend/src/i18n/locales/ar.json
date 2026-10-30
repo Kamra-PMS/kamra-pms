@@ -4073,6 +4073,7 @@
   "Name each till, tie it to an outlet. Without any, everyone uses the Default till.": "سمِّ كل صندوق واربطه بمنفذ. إن لم يوجد أي صندوق، يستخدم الجميع الصندوق الافتراضي.",
   "Need": "المطلوب",
   "Need a platform-wide or service key (HeyKoala, unattended jobs)? That is issued by your system admin under Developers. Staff should use Connect Claude - no API secrets on a laptop.": "تحتاج مفتاحا على مستوى المنصة أو مفتاح خدمة (HeyKoala، مهام آلية)؟ يصدره مسؤول النظام ضمن المطورون. على الموظفين استخدام ربط Claude، بلا أسرار API على الحاسوب المحمول.",
+  "Need a role that isn't here, or a change to what a role may do? IT creates roles and sets their permissions in Desk (Role Permission Manager). See Roles and access in the docs.": "هل تحتاج إلى دور غير موجود هنا، أو إلى تغيير ما يمكن لدور ما فعله؟ يُنشئ فريق تقنية المعلومات الأدوار ويضبط صلاحياتها في Desk (Role Permission Manager). راجع «الأدوار والوصول» في الوثائق.",
   "need a room": "بحاجة إلى غرفة",
   "Need clothes washed? Ask housekeeping to pick them up - they'll count and price the bag with you at the door.": "تحتاج غسل ملابسك؟ اطلب من التدبير المنزلي استلامها، وسيعدّون القطع ويسعّرون الكيس معك عند الباب.",
   "Needs attention · ": "تحتاج إلى انتباه · ",

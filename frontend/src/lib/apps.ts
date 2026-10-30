@@ -69,6 +69,8 @@ import {
   ListOrdered,
 } from "lucide-react"
 
+import { hasPerm, type Can } from "./can"
+
 /** "Night audit" is what most hotels call End of Day; EOD is what they type. */
 const EOD_KEYWORDS = ["End of day", "EOD", "Close the day", "Roll the date"]
 
@@ -81,7 +83,9 @@ export interface AppNavItem {
   href?: string // external (Frappe Desk, HK mobile app) - opens a new tab
   label: string
   icon: React.ComponentType<{ className?: string; strokeWidth?: number }>
-  roles?: string[] // per-item gate on top of the app's gate
+  roles?: string[] // per-item gate on top of the app's gate (fallback when `perm` is set)
+  /** [doctype, permission type] that shows this item (Role Permission Manager) */
+  perm?: [string, string]
   /** Sidebar section label within an app (e.g. Cashier / Billing / Books). */
   group?: string
   /** Other words search (Ctrl/Cmd+K) finds this page by. */
@@ -97,7 +101,9 @@ export interface AppDef {
   /** @deprecated kept for callers; all apps share APP_TILE */
   tint: string
   description: string
-  roles: string[] // any of these roles can see the app
+  /** fallback only: the app shows when the user holds Property: app_<id>
+   *  (Role Permission Manager); these were its defaults */
+  roles: string[]
   items: AppNavItem[]
   /** extra route prefixes that belong to this app (detail pages etc.) */
   extraPrefixes?: string[]
@@ -149,9 +155,11 @@ export const APPS: AppDef[] = [
       // the board is oversight - supervisors and the desk; attendants work
       // from their task list and the phone app
       { to: "/housekeeping-board", label: "Room Board", icon: LayoutGrid,
+        perm: ["Room", "view_board"],
         roles: ["Housekeeping Supervisor", "Front Desk", "Hotel Admin",
                 "System Manager", "Administrator"] },
       { to: "/room-board", label: "Rooms", icon: DoorOpen,
+        perm: ["Room", "view_board"],
         roles: ["Housekeeping Supervisor", "Front Desk", "Hotel Admin",
                 "System Manager", "Administrator"],
         keywords: ["Room history", "Who cleaned", "Room insights"] },
@@ -402,10 +410,19 @@ export function appForPath(pathname: string, among: AppDef[] = APPS, keep?: stri
  *  property must actually run it. Roles alone were never enough - Front
  *  Desk unlocks both F&B and Banquets, so a serviced-apartment operator
  *  had no way to not see them. */
-export function visibleApps(roles: string[], modules?: string[]): AppDef[] {
+export function visibleApps(roles: string[], modules?: string[], can: Can = null): AppDef[] {
   return APPS.filter(
     (a) =>
-      a.roles.some((r) => roles.includes(r)) &&
+      hasPerm(can, roles, "Property", appPerm(a.id), a.roles) &&
       (!modules?.length || modules.includes(a.id)),
   )
+}
+
+/** The Property permission type that opens an app: app_front_desk, ... */
+export const appPerm = (id: string) => `app_${id.replace(/-/g, "_")}`
+
+/** Is this menu item for this user? Its permission, else its role list. */
+export function itemVisible(item: AppNavItem, roles: string[], can: Can = null): boolean {
+  if (item.perm) return hasPerm(can, roles, item.perm[0], item.perm[1], item.roles)
+  return !item.roles || item.roles.some((r) => roles.includes(r))
 }

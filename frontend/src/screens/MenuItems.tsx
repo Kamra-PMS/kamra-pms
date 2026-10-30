@@ -21,8 +21,8 @@ const MENU_WRITE_ROLES = [
 
 export default function MenuItems() {
   useUILanguage()
-  const { roles } = useAuth()
-  const canImport = roles.some((r) => MENU_WRITE_ROLES.includes(r))
+  const { allowed } = useAuth()
+  const canImport = allowed("Menu Item", "edit_menu", MENU_WRITE_ROLES)
   const [importing, setImporting] = useState(false)
   const [recipes, setRecipes] = useState(false)
   // bumping the key remounts the list so imported rows show up

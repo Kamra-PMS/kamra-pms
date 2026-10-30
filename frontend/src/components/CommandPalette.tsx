@@ -28,7 +28,8 @@ import {
 } from "lucide-react"
 import { call, getCurrentProperty } from "../lib/api"
 import { useAuth } from "../lib/auth"
-import { visibleApps, type AppNavItem } from "../lib/apps"
+import { itemVisible, visibleApps, type AppNavItem } from "../lib/apps"
+import type { Can } from "../lib/can"
 import { FEATURES } from "../lib/searchIndex"
 import { cn } from "../lib/utils"
 import { cur, moneyLocale } from "../lib/money"
@@ -65,15 +66,15 @@ function rank(text: string, q: string): number | null {
 // sidebar uses, so the palette reaches exactly the pages the user may open -
 // no second list to keep in sync, and item-level gates (Developers, Frappe
 // Desk) are honoured too.
-function navItemsForRoles(roles: string[]): {
+function navItemsForRoles(roles: string[], can: Can): {
   item: AppNavItem
   app: string
 }[] {
   const out: { item: AppNavItem; app: string }[] = []
   const seen = new Set<string>()
-  for (const app of visibleApps(roles)) {
+  for (const app of visibleApps(roles, undefined, can)) {
     for (const item of app.items) {
-      if (item.roles && !item.roles.some((r) => roles.includes(r))) continue
+      if (!itemVisible(item, roles, can)) continue
       const key = item.to ?? item.href ?? item.label
       if (seen.has(key)) continue
       seen.add(key)
@@ -85,7 +86,7 @@ function navItemsForRoles(roles: string[]): {
 
 export function CommandPalette() {
   const { t } = useT()
-  const { roles } = useAuth()
+  const { roles, can } = useAuth()
   const [open, setOpen] = useState(false)
   const [q, setQ] = useState("")
   const [guests, setGuests] = useState<{ name: string; full_name: string; phone?: string }[]>([])
@@ -225,7 +226,7 @@ export function CommandPalette() {
     }
   }, [searchQ, open])
 
-  const navItems = useMemo(() => navItemsForRoles(roles), [roles])
+  const navItems = useMemo(() => navItemsForRoles(roles, can), [roles, can])
 
   const navResults = useMemo<Result[]>(
     () =>
@@ -297,7 +298,7 @@ export function CommandPalette() {
   // The apps themselves: "revenue", "housekeeping" open that module.
   const moduleResults = useMemo<Result[]>(() => {
     if (!q.trim()) return []
-    return visibleApps(roles)
+    return visibleApps(roles, undefined, can)
       .map((a) => ({ a, score: rank(`${t(a.name)} ${a.name} ${a.description} module app`, q) }))
       .filter((r) => r.score !== null && r.a.items.some((i) => i.to))
       .sort((x, y) => (x.score ?? 0) - (y.score ?? 0))
@@ -312,7 +313,7 @@ export function CommandPalette() {
           navigate(a.items.find((i) => i.to)!.to!, { state: { app: a.id } })
         },
       }))
-  }, [q, roles, navigate, t])
+  }, [q, roles, can, navigate, t])
 
   const guestResults = useMemo<Result[]>(
     () =>

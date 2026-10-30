@@ -2939,6 +2939,7 @@
   "NC": "NC",
   "Need": "Precisa",
   "Need a platform-wide or service key (HeyKoala, unattended jobs)? That is issued by your system admin under Developers. Staff should use Connect Claude - no API secrets on a laptop.": "Precisa de uma chave de serviço ou de toda a plataforma (HeyKoala, trabalhos autônomos)? Isso é emitido pelo administrador do sistema em Desenvolvedores. A equipe deve usar o Connect Claude - sem segredos de API em um laptop.",
+  "Need a role that isn't here, or a change to what a role may do? IT creates roles and sets their permissions in Desk (Role Permission Manager). See Roles and access in the docs.": "Precisa de uma função que não está aqui, ou mudar o que uma função pode fazer? A TI cria as funções e define as permissões no Desk (Role Permission Manager). Veja Funções e acesso na documentação.",
   "night audit": "auditoria noturna",
   "Night audit": "Auditoria noturna",
   "Night Audit": "Auditoria noturna",

@@ -57,8 +57,8 @@ type Tab = "menus" | "services" | "dishes"
 
 export default function BanquetCatalogue() {
   useUILanguage()
-  const { roles } = useAuth()
-  const canEdit = roles.some((r) => EDIT_ROLES.includes(r))
+  const { allowed } = useAuth()
+  const canEdit = allowed("Banquet Menu", "edit_catalogue", EDIT_ROLES)
   const [cat, setCat] = useState<Cat | null>(null)
   const [dishes, setDishes] = useState<BanquetDish[] | null>(null)
   const [tab, setTab] = useState<Tab>("menus")

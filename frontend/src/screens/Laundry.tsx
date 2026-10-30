@@ -53,10 +53,10 @@ type Tab = "board" | "menu" | "billing"
 
 export default function Laundry() {
   const { t } = useT()
-  const { roles } = useAuth()
+  const { allowed } = useAuth()
   const property = getCurrentProperty()
-  const canOperate = roles.some((r) => OPERATOR_ROLES.includes(r))
-  const canEditRates = roles.some((r) => RATE_EDIT_ROLES.includes(r))
+  const canOperate = allowed("Laundry Order", "handle_laundry", OPERATOR_ROLES)
+  const canEditRates = allowed("Laundry Order", "price_laundry", RATE_EDIT_ROLES)
 
   const { board, rates, error, busy, act, reload } = useLaundryBoard(property)
   const [rooms, setRooms] = useState<Room[]>([])

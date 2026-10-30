@@ -234,6 +234,9 @@ export interface WhoAmI {
   user: string
   full_name: string
   roles: string[]
+  /** {doctype: [permission types]} from Frappe's role permissions
+   *  (Role Permission Manager). Missing on an older server. */
+  can?: Record<string, string[]>
 }
 
 export const whoami = () => call<WhoAmI>("kamra.api.whoami")

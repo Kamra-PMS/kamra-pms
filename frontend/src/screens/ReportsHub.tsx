@@ -83,9 +83,9 @@ const SECTIONS: { title: string; items: ReportLink[] }[] = [
 
 export default function ReportsHub() {
   const { t } = useT()
-  const { roles } = useAuth()
+  const { roles, can } = useAuth()
   const shell = useOutletContext<ShellContext | undefined>()
-  const apps = new Set(visibleApps(roles, shell?.modules).map((a) => a.id))
+  const apps = new Set(visibleApps(roles, shell?.modules, can).map((a) => a.id))
   const sections = SECTIONS.map((s) => ({
     ...s,
     items: s.items.filter(

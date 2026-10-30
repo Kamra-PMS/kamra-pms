@@ -131,8 +131,8 @@ function Stat(props: { label: string; value: string; sub?: string }) {
 
 export default function Reports({ initialTab = "saved" }: { initialTab?: Tab }) {
   const { t, lang: language } = useT()
-  const { roles } = useAuth()
-  const canSeeVoids = roles.some((r) => VOID_REPORT_ROLES.includes(r))
+  const { roles, allowed } = useAuth()
+  const canSeeVoids = allowed("Folio", "audit_voids", VOID_REPORT_ROLES)
   const canShare = roles.some((r) => EDIT_ROLES.includes(r))
 
   const [tab, setTab] = useState<Tab>(initialTab)

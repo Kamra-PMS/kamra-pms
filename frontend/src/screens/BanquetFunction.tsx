@@ -283,8 +283,8 @@ function StatusActions({
   onCloseOut: () => void
 }) {
   useUILanguage()
-  const { roles } = useAuth()
-  const canReopen = roles.some((r) => REOPEN_ROLES.includes(r))
+  const { allowed } = useAuth()
+  const canReopen = allowed("Venue Booking", "reopen_function", REOPEN_ROLES)
   const [reopening, setReopening] = useState(false)
   const [reopenWhy, setReopenWhy] = useState("")
   const [ask, setAsk] = useState<FunctionStatus | null>(null)
