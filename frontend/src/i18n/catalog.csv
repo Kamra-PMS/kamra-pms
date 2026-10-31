@@ -1171,7 +1171,7 @@ Booking confirmed,Booking confirmed,تم تأكيد الحجز,Reserva confirmad
 Booking confirmed - the rooms are now kept for the group.,Booking confirmed - the rooms are now kept for the group.,,,components/GroupControl.tsx,,needs_translation
 Booking Engine,Booking Engine,محرك الحجز,Motor de reservas,,,translated
 Booking Engine Console,Booking Engine Console,لوحة محرك الحجز,Administración del motor de reservas,screens/BookingEngine.tsx,,translated
-Booking engine language,Booking engine language,,,screens/BookingEngine.tsx,,needs_translation
+Booking engine language,Booking engine language,لغة محرك الحجز,Idioma del motor de reservas,screens/BookingEngine.tsx,,translated
 Booking mode,Booking mode,نوع الحجز,Modo de reserva,components/BookingDialog.tsx,,translated
 Booking notes,Booking notes,ملاحظات الحجز,Notas de reserva,components/CheckInDialog.tsx,,translated
 Booking number,Booking number,رقم الحجز,Número de reserva,screens/PublicBooking.tsx,,translated
@@ -2665,7 +2665,7 @@ Guest told their ID is read by our verification partner,Guest told their ID is r
 "Guest, city ledger, deposit and AR aging.","Guest, city ledger, deposit and AR aging.",النزلاء ودفتر المدينة والتأمينات وأعمار الذمم.,"Huésped, cuentas por cobrar, depósitos y antigüedad de saldos.",,,translated
 Guest: {v0},Guest: {v0},الضيف: {v0},Huésped: {v0},screens/BanquetFunction.tsx,v0,translated
 Guest's balance,Guest's balance,رصيد الضيف,Saldo del huésped,components/CheckOutDialog.tsx,,translated
-Guest's browser language,Guest's browser language,,,screens/BookingEngine.tsx,,needs_translation
+Guest's browser language,Guest's browser language,لغة متصفح الضيف,Idioma del navegador del huésped,screens/BookingEngine.tsx,,translated
 Guests,Guests,الضيوف,Huéspedes,components/BookingDialog.tsx; components/CommandPalette.tsx; screens/Owner.tsx; screens/POS.tsx; screens/PublicBooking.tsx; screens/RegistrationCard.tsx; screens/ReservationDetail.tsx,,translated
 Guests ({v0}),Guests ({v0}),,,components/GroupControl.tsx,v0,needs_translation
 Guests allowed above capacity,Guests allowed above capacity,الضيوف المسموح بهم فوق السعة,Huéspedes permitidos por encima de la capacidad,,,translated
@@ -6115,7 +6115,7 @@ What each dish takes off its outlet's stock when the kitchen fires it.,What each
 What everyone at this hotel sees until they customise their own Today.,What everyone at this hotel sees until they customise their own Today.,ما يراه الجميع في هذا الفندق حتى يخصّصوا صفحة اليوم الخاصة بهم.,El diseño que verá el personal del hotel hasta que personalice su propia pantalla Hoy.,components/CustomizeToday.tsx,,translated
 What for,What for,مقابل ماذا,Concepto,components/RoomStayPanels.tsx,,translated
 What guests pay online when booking on your public page. Existing bookings keep the terms they were made under - a change here only affects new bookings.,What guests pay online when booking on your public page. Existing bookings keep the terms they were made under - a change here only affects new bookings.,ما يدفعه الضيوف عبر الإنترنت عند الحجز من صفحتك العامة. تحتفظ الحجوزات الحالية بشروطها، والتغيير هنا يؤثر على الحجوزات الجديدة فقط.,Importe que pagan los huéspedes al reservar en su página pública. Las reservas existentes conservan sus condiciones; estos cambios solo se aplican a las nuevas reservas.,screens/BookingEngine.tsx,,translated
-What guests see first on the booking page and self check-in. They can still switch. Your own screen language does not change.,What guests see first on the booking page and self check-in. They can still switch. Your own screen language does not change.,,,screens/BookingEngine.tsx,,needs_translation
+What guests see first on the booking page and self check-in. They can still switch. Your own screen language does not change.,What guests see first on the booking page and self check-in. They can still switch. Your own screen language does not change.,ما يراه الضيوف أولاً في صفحة الحجز وتسجيل الوصول الذاتي. يمكنهم تغييره. لا تتغير لغة شاشتك.,Lo que los huéspedes ven primero en la página de reservas y en el check-in en línea. Pueden cambiarlo. El idioma de su propia pantalla no cambia.,screens/BookingEngine.tsx,,translated
 What happened?,What happened?,ماذا حدث؟,¿Qué sucedió?,screens/BanquetFunction.tsx,,translated
 What happened? (required),What happened? (required),ماذا حدث؟ (مطلوب),¿Qué sucedió? (obligatorio),screens/Inventory.tsx,,translated
 What happens when a captain sends an order to the kitchen.,What happens when a captain sends an order to the kitchen.,ما يحدث عندما يرسل الكابتن طلبًا إلى المطبخ.,Qué sucede cuando el jefe de servicio envía un pedido a cocina.,,,translated
