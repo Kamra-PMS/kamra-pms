@@ -205,6 +205,9 @@ Borrado de datos del huésped y exportación para el derecho de acceso,
 plazos de conservación para los archivos de documentos de identidad y el
 texto de los chats, y un aviso de privacidad para huéspedes en varias
 lenguas de la India. Los datos de contacto no se envían al proveedor de IA.
+El WhatsApp promocional solo llega a los huéspedes que lo aceptaron, y
+responder STOP los da de baja
+([detalles](/whatsapp#marketing-consent-and-opt-out)).
 
 ## IA, de forma segura
 

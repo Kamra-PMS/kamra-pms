@@ -391,7 +391,7 @@ class BillingApprovalsSplitTestCase(AuditTestCase):
 		try:
 			set_value("User", desk, "kamra_job_title", "General Manager")
 		except frappe.PermissionError:
-			pass
+			pass  # refused outright is fine; the value check below is the test
 		finally:
 			frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- test fixture
 		self.assertEqual(frappe.db.get_value("User", desk, "kamra_job_title"), "Receptionist")
@@ -503,6 +503,14 @@ class BillingApprovalsSplitTestCase(AuditTestCase):
 		self.assertEqual(bal(main), room_total + 300)
 		self.assertEqual(frappe.db.get_value("Reservation", res.name,
 		                                     "booking_type"), "Individual")
+
+	def test_stay_folios_name_the_current_company(self):
+		res = self.stay(company=self.corp, booking_type="Corporate")
+		folio_mod.post_room_night(res, d(-1))
+		api.change_stay_company(res.name, "UT employer changed", company=self.corp_b)
+		rows = {r.folio_type: r for r in api.reservation_folios(res.name)}
+		self.assertEqual(rows["Company"]["company"], self.corp_b)
+		self.assertNotIn("company", rows["Guest"])
 
 	def test_change_company_moves_allowance_with_its_charges(self):
 		corp_c = company("UT Bill Laundry Corp", [("Laundry", "Company")])

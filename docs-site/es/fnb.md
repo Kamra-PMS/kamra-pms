@@ -5,8 +5,20 @@ servicio a la habitación: los jefes de sala toman pedidos en el **Punto
 de venta del restaurante**, la cocina trabaja con la **Pantalla de
 cocina** y las **impresoras de cocina**, y las cuentas se liquidan en el
 punto de venta o se cargan a la habitación del huésped. El personal de
-Recepción y Finanzas puede usar el punto de venta; Administrador del
-hotel y Finanzas lo configuran.
+Recepción, Finanzas y el Gerente de alimentos y bebidas puede usar el
+punto de venta; el Administrador del hotel, Finanzas y el Gerente de
+alimentos y bebidas lo configuran.
+
+**El rol Gerente de alimentos y bebidas** lleva el restaurante sin el
+resto del hotel. Abre toda la parte de Alimentos y bebidas (punto de
+venta, pantalla de cocina, menú, puntos de venta, mesas, lista de
+meseros, panel de Alimentos y bebidas, inventario de cocina en solo
+lectura, informes de Alimentos y bebidas y el paquete de Alimentos y
+bebidas), cambia **Configuración → Alimentos y bebidas** y aprueba las
+anulaciones de comida que la cocina ya empezó. No abre folios, la caja,
+Finanzas, la recepción ni Ingresos. Asigne el rol en **Configuración →
+Personal y acceso**; como todo rol, solo llega a los alojamientos
+marcados allí.
 
 ![El punto de venta del restaurante: las cuentas abiertas arriba, el menú por categoría en el centro y la cuenta en curso de la mesa T2 a la derecha](/img/fnb/pos-bill.png)
 
@@ -30,6 +42,11 @@ hotel y Finanzas lo configuran.
    ```
 
    ![La ficha de un punto de venta con su tipo, tipo de impuesto, mesas y el ajuste Comanda al enviar](/img/fnb/outlet-form.png)
+
+   En **Meseros**, dentro del punto de venta, añada a las personas que
+   sirven allí. La caja las ofrece primero en su cuadro **Mesero**; no
+   necesitan usuario. El Administrador del hotel, Finanzas y el Gerente
+   de alimentos y bebidas mantienen esta lista.
 
 3. **Defina las listas del menú (una sola vez).** **Configuración →
    Alimentos y bebidas → Listas del menú**: alérgenos y etiquetas
@@ -67,6 +84,10 @@ hotel y Finanzas lo configuran.
    lista **Mesa...**) y el número de comensales. Para llevar y entrega a
    domicilio, introduzca el nombre y el teléfono del cliente, y la
    dirección para la entrega.
+   Escriba el **Mesero** que atiende la mesa si no es usted. Se sugieren
+   los nombres usados antes. Si lo deja en blanco, la cuenta muestra al
+   jefe de sala que tomó el pedido. Puede cambiarlo en una cuenta en
+   curso.
 4. Toque los platos para agregarlos. Use **+** / **−** en una línea para
    cambiar la cantidad, y agregue una indicación a una línea ("menos
    picante") si hace falta.
@@ -115,11 +136,14 @@ el pedido. Filtre por zona (Salón principal, Patio…) o busque una mesa.
 ## Liquide una cuenta
 
 1. Abra la cuenta y pulse **Liquidar** (o **F4**).
-2. Elija cómo paga el cliente: **Efectivo**, **Tarjeta** o **UPI**. O
+2. Elija cómo paga el cliente: **Efectivo**, **Tarjeta** o el pago
+   instantáneo de su país (**UPI** en India). O
    cárguela a la habitación de un huésped alojado con **Cargo a
    habitación**.
 3. **Imprimir cuenta** imprime la cuenta en la impresora de la caja, con
-   el desglose de impuestos que usa su país.
+   el desglose de impuestos que usa su país. La cuenta muestra
+   **Atendido por** (el mesero, o el jefe de sala) y **Cajero** (quien
+   cobró o cerró la cuenta), con su nombre.
 
 - Los **cargos a habitación** necesitan un huésped con entrada registrada
   en esa habitación. Una habitación sin nadie alojado se rechaza: cobre
@@ -132,6 +156,12 @@ el pedido. Filtre por zona (Salón principal, Patio…) o busque una mesa.
   habitaciones y no se puede elegir, y el panel del huésped lo indica.
   Cobre en el punto de venta. El servidor también rechaza el cargo, así
   que ninguna caja puede saltárselo.
+- **¿Habitación equivocada?** Abra la cuenta, pulse **Mover a
+  habitación**, elija la habitación correcta e indique el motivo. El
+  cargo sale de la cuenta del primer huésped y pasa a la del huésped
+  correcto, sin que el alcohol vaya nunca a una cuenta de empresa.
+  Funciona el mismo día operativo en que se cargó la cuenta; después de
+  la auditoría nocturna, Finanzas corrige las dos cuentas.
 - **Dividir** mueve los artículos elegidos a una cuenta nueva,
   conservando su estado en cocina. Los totales siempre suman el
   original.
@@ -154,7 +184,7 @@ la cuenta indica **no enviado**, **En la cocina** o **Preparado**.
 | Nada enviado a la cocina | **Cancelar** con un motivo. La mesa queda libre al momento. | El jefe de sala |
 | Una línea aún no enviada | El icono de papelera de la línea la quita. No hace falta motivo: no se cocinó nada. | El jefe de sala |
 | Líneas que ya tiene la cocina | **Anular** la línea, o **Cancelar** la cuenta, con un motivo de anulación y la aprobación de un supervisor. | Un supervisor |
-| Pagada, cargada a una habitación o NC | Cerrada. Corríjala en el folio o haga un reembolso. | Finanzas |
+| Pagada, cargada a una habitación o NC | Cerrada. Corríjala en el folio o haga un reembolso. Una cuenta cargada a la habitación equivocada se mueve con **Mover a habitación** el mismo día. | Finanzas |
 
 **Aún no se envió nada.** Abra la cuenta, pulse **Cancelar**, escriba el
 motivo ("los clientes se fueron antes de pedir") y pulse **Anular
@@ -167,8 +197,8 @@ cruz:
 
 1. Elija un motivo de anulación (la misma lista que usa la recepción para
    anular cargos del folio) y agregue detalles si quiere.
-2. Un supervisor lo aprueba. Un usuario Administrador del hotel o
-   Finanzas elige su nombre y escribe su propio PIN de cajero en su caja.
+2. Un supervisor lo aprueba. Un usuario Administrador del hotel,
+   Finanzas o Gerente de alimentos y bebidas elige su nombre y escribe su propio PIN de cajero en su caja.
    Un supervisor con sesión iniciada en la caja aprueba con su teclado de
    PIN.
 3. Las líneas quedan en la cuenta, tachadas, con quién las anuló y quién
@@ -203,9 +233,12 @@ sobre la caja, así que nunca sale del punto de venta.
   nombre o teléfono del cliente, o nombre del huésped alojado. Toque un
   estado para ver solo esas cuentas.
 - **Elija otro día** con el cuadro de fecha.
+- **Personal** muestra quién atendió cada cuenta y, una vez cerrada, el
+  cajero.
 - **Toque una cuenta.** Una cuenta abierta se abre en la caja. Una
   cerrada se abre en modo de solo lectura, con sus líneas, anulaciones y
-  quién las aprobó, y **Reimprimir cuenta**.
+  quién las aprobó, los tiempos de cocina de cada línea (pedido,
+  iniciado, emplatado, recogido) y **Reimprimir cuenta**.
 
 La lista solo muestra las cuentas de este punto de venta.
 
@@ -254,20 +287,24 @@ suena (desactive el sonido con **Sonido activado**).
 
 1. Filtre por punto de venta y por estación (**Cocina**, **Horno
    tandoor**, **Bar** …) para que cada partida vea solo sus platos.
-2. Pulse **Iniciar** cuando la cocina tome una comanda. Hasta entonces la
+2. Pulse **Iniciar** cuando la cocina empiece a cocinar. Hasta entonces la
    comanda muestra **EN ESPERA**, y el reloj del cocinero corre desde el
-   momento en que se envió el pedido.
+   momento en que se envió el pedido. Otra ronda de la misma comanda
+   espera su propio **Iniciar**.
 3. Pulse **Marcar listo** en cada plato, o **Todo listo** para la
    comanda. El recuadro del punto de venta pasa a **Listo** para que el
    jefe de sala sepa que debe recogerlo.
-4. ¿Marcó un plato demasiado pronto? Abra la comanda y pulse
-   **recuperar**; vuelve a la pantalla.
+4. En la caja, el plato muestra **Listo en el pase**. El mesero toca
+   **Recogido** en la línea cuando se lo lleva.
+5. ¿Marcó un plato demasiado pronto? Abra la comanda y pulse
+   **recuperar**; vuelve a la pantalla y se borran sus horas de listo y
+   de recogida.
 
 ![Inicio de una comanda y marcado como lista en la pantalla de cocina](/img/fnb/kitchen-flow.gif)
 
 Las comandas cambian de verde a ámbar y a **CON RETRASO** según su
-antigüedad. Cada tarjeta muestra la mesa, los comensales, el jefe de
-sala, las estaciones implicadas y las indicaciones en rojo. Si el pedido
+antigüedad. Cada tarjeta muestra la mesa, los comensales, quién la
+atiende, cuándo se envió y cuándo se inició, las estaciones implicadas y las indicaciones en rojo. Si el pedido
 tiene una nota de alergias, se resaltan los platos cuyos alérgenos
 coinciden; tómelo como un recordatorio, no como una garantía. Una línea
 anulada después de enviarse muestra un aviso en la comanda.
@@ -440,10 +477,20 @@ cada cuenta NC, línea anulada y cuenta cancelada con su motivo.
 
 ![El panel de alimentos y bebidas](/img/fnb/dashboard.png)
 
+**Tiempos de cocina.** Cada línea guarda cuatro horas: enviada a cocina,
+iniciada, emplatada (marcada como lista) y recogida. El informe **Tiempos
+de cocina** (**Informes → Informes personalizados**) las muestra por
+línea con los minutos de cada paso: del pedido al inicio, del inicio al
+emplatado, del emplatado a la recogida y del pedido a la recogida. El
+**Paquete de Alimentos y bebidas** tiene una sección **Tiempos de cocina
+por punto de venta** con las medias por punto de venta. Un paso que nadie
+tocó queda en blanco. Con la aceptación automática activada, una línea
+se inicia en el momento en que se envía.
+
 ## Configuración
 
-Todo en **Configuración → Alimentos y bebidas** (Administrador del hotel
-y Finanzas pueden cambiarlo):
+Todo en **Configuración → Alimentos y bebidas** (el Administrador del
+hotel, Finanzas y el Gerente de alimentos y bebidas pueden cambiarlo):
 
 | Ajuste | Valor predeterminado | Qué hace |
 | --- | --- | --- |
@@ -506,7 +553,16 @@ tiene la cocina salvo que un supervisor lo apruebe (`supervisor` +
 `supervisor_pin`, comprobado con el PIN de cajero de ese usuario), y
 siempre rechazan a un agente. Un agente puede cancelar una cuenta sin
 nada enviado (`pos_cancel_order`, queda registrado) y quitar una línea
-no enviada, pero nunca anula comida que la cocina ya empezó. La lista de
+no enviada, pero nunca anula comida que la cocina ya empezó.
+
+Los tiempos de cocina están en cada POS Order Item: `fired_at`,
+`started_at` (`accept_ticket`, o la hora de envío con la comanda
+automática), `prepared_at` (`mark_prepared`) y `picked_up_at`
+(`mark_picked_up`). `kot_status` sigue siendo `New`, `Fired` o
+`Prepared`. El mesero es `waiter` en el POS Order (texto libre,
+`set_waiter`), y `settled_by` se registra cuando se cierra la cuenta;
+`order_detail`, `orders_list` y `bill_data` los devuelven como
+`served_by` y `cashier`, con su nombre. La lista de
 pedidos (`orders_list`) y el panel del huésped (`guest_panel`,
 `find_customer`, `attach_customer`) se limitan al alojamiento del punto
 de venta.

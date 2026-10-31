@@ -340,6 +340,8 @@ advance due against paid.
 You only see a trip if you can access every property in it.
 
 
+## Hold rooms for a group
+
 For a wedding, conference or tour, hold a block of rooms first and name
 the guests later. Groups live in **Banquets & Groups → Groups & Blocks**.
 

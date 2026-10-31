@@ -1,14 +1,14 @@
-# Habitaciones: cada habitación, su estado y su historia
+# Panel de habitaciones: cada habitación, su estado y su historia
 
-La pantalla Habitaciones es el gran panel de habitaciones: cada habitación
+El Panel de habitaciones muestra cada habitación
 como un recuadro, agrupada por piso, con lo que ocurre en ella hoy. Toque
 una habitación para cambiar su estado, atender al huésped que la ocupa, ver
 las próximas semanas y ver quién se alojó y quién la limpió.
 **Estadísticas** muestra qué habitaciones se venden, cuánto ingresan y cómo
 se limpian, y con qué rapidez.
 
-Ábrala desde **Recepción → Habitaciones**, desde **Limpieza →
-Habitaciones** (supervisores) o con **Abrir vista completa** en el panel de
+Ábralo desde **Recepción → Panel de habitaciones**, desde **Limpieza →
+Panel de habitaciones** (supervisores) o con **Abrir vista completa** en el panel de
 habitaciones de Hoy. Pueden abrirla los usuarios con Recepción, Supervisor
 de limpieza, Auditor nocturno, Responsable de ingresos, Finanzas y
 Administrador del hotel. Las camareras de limpieza trabajan con su lista de
