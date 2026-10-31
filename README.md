@@ -401,6 +401,8 @@ release notes and below.
 
 **AGPL-3.0**: free forever. Anyone offering Kamra as a hosted service must share modifications back.
 
+The Kamra name and mark are covered by [TRADEMARK.md](TRADEMARK.md): run, host and resell Kamra freely; a changed fork takes its own name.
+
 Contributions welcome: see [CONTRIBUTING.md](CONTRIBUTING.md). The full list lives on the docs site: [Contributors](https://kamrapms.com/docs/contributors).
 
 **Code**
