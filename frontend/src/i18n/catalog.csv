@@ -246,7 +246,7 @@
 {n} booking{s} imported{history},{n} booking{s} imported{history},تم استيراد {n} حجز{s}{history},{n} reserva{s} importada{s}{history},,n s history,translated
 {n} changeover conflict{s},{n} changeover conflict{s},{n} تعارض تبديل{s},{n} conflicto{s} entre salidas y entradas,screens/TapeChart.tsx,n s,translated
 {n} child,{n} child,{n} طفل,{n} niño,components/BookingDialog.tsx; components/RoomDrawer.tsx; screens/CRS.tsx; screens/PublicCheckin.tsx; screens/RegistrationCard.tsx,n,translated
-{n} children,{n} children,{n} أطفال,{n} niños,components/BookingDialog.tsx; components/RoomDrawer.tsx; screens/CRS.tsx,n,translated
+{n} children,{n} children,{n} أطفال,{n} niños,components/AgentCards.tsx; components/BookingDialog.tsx; components/RoomDrawer.tsx; screens/CRS.tsx,n,translated
 {n} codes,{n} codes,{n} رمز,Códigos: {n},,n,translated
 {n} day{s} before arrival.,{n} day{s} before arrival.,{n} يوم{s} قبل الوصول.,{n} día{s} antes de la llegada.,components/CancelPanel.tsx,n s,translated
 {n} days,{n} days,{n} أيام,{n} días,screens/Payables.tsx; screens/RateCalendar.tsx; screens/Receivables.tsx; screens/Today.tsx,n,translated
@@ -683,6 +683,7 @@ Add webhook,Add webhook,إضافة Webhook,Agregar webhook,screens/settings/Webh
 Add-ons,Add-ons,الإضافات,Servicios adicionales,components/BookingDialog.tsx,,translated
 Add-ons (incl. {tax}),Add-ons (incl. {tax}),الإضافات (شامل {tax}),Complementos (incluido {tax}),components/BookingDialog.tsx,tax,translated
 "Add-ons sold with a stay - spa, tours, dinners, transfers. Ticked ones show on /book.","Add-ons sold with a stay - spa, tours, dinners, transfers. Ticked ones show on /book.",إضافات تُباع مع الإقامة: سبا، جولات، عشاء، نقل. المحددة تظهر في /book.,"Servicios adicionales para la estancia: spa, excursiones, cenas y traslados. Los marcados se muestran en /book.",,,translated
+Additional charge per child per night (0 = free),Additional charge per child per night (0 = free),رسوم إضافية لكل طفل في الليلة (0 = مجاناً),Cargo adicional por menor por noche (0 = gratis),,,translated
 Additional number,Additional number,رقم إضافي,Número adicional,,,translated
 Address,Address,العنوان,Dirección,screens/FolioView.tsx; screens/PublicCheckin.tsx; screens/RegistrationCard.tsx,,translated
 Address Line,Address Line,سطر العنوان,Dirección,screens/BookingEngine.tsx,,translated
@@ -2291,13 +2292,14 @@ Extend stay,Extend stay,تمديد الإقامة,Extender estancia,screens/EndO
 External POS,External POS,نقاط بيع خارجية,Punto de venta externo,,,translated
 Extra,Extra,إضافية,Extra,,,translated
 Extra adult {v0},Extra adult {v0},بالغ إضافي {v0},Adulto adicional {v0},,v0,translated
-Extra adult / night,Extra adult / night,بالغ إضافي / ليلة,Adulto adicional / noche,,,translated
+Extra adult / night,Extra adult / night,بالغ إضافي / ليلة,Precio adulto extra / noche,,,translated
 Extra bar round,Extra bar round,جولة بار إضافية,Ronda adicional de bar,screens/banquet/Economics.tsx,,translated
 Extra bed,Extra bed,سرير إضافي,Cama adicional,components/CheckInDialog.tsx,,translated
 "Extra bed available for select rooms at {v0}1,000 per night.","Extra bed available for select rooms at {v0}1,000 per night.","سرير إضافي متاح لغرف مختارة مقابل {v0}1,000 لليلة.","Cama adicional disponible en ciertas habitaciones por {v0}1,000 por noche.",screens/BookingEngine.tsx,v0,translated
 Extra Bed Policy,Extra Bed Policy,سياسة السرير الإضافي,Política sobre camas adicionales,screens/BookingEngine.tsx; screens/PublicBooking.tsx,,translated
 Extra Bed Policy:,Extra Bed Policy:,سياسة السرير الإضافي:,Política sobre camas adicionales:,screens/PublicCheckin.tsx,,translated
 Extra beds,Extra beds,أسرّة إضافية,Camas adicionales,components/BookingDialog.tsx; components/RoomDrawer.tsx,,translated
+Extra child / night,Extra child / night,سعر الطفل الإضافي / ليلة,Precio menor extra / noche,,,translated
 "Extra delay, for a bar or restaurant still posting after the set time.","Extra delay, for a bar or restaurant still posting after the set time.",تأخير إضافي، لبار أو مطعم ما زال يسجل الرسوم بعد الوقت المحدد.,"Retraso adicional, para un bar o restaurante que sigue registrando cargos después de la hora fijada.",,,translated
 Extra guest price / night,Extra guest price / night,سعر الضيف الإضافي / ليلة,Tarifa por huésped adicional y por noche,screens/Setup.tsx,,translated
 Extra guests,Extra guests,ضيوف إضافيون,Huéspedes adicionales,components/BookingDialog.tsx,,translated
