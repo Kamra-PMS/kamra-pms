@@ -81,30 +81,45 @@ posterior solo afecta a las reservas nuevas.
 
 ## Qué hace el huésped
 
-1. Abre `/book`, elige **Registro de entrada**, **Salida**, **Adultos** y
-   **Niños**, y hace clic en **Consultar disponibilidad**.
-2. Elige una habitación y hace clic en **Reservar ahora**. (En un
-   alquiler de corta estancia el botón dice **Reservar esta opción**; en
-   el modo Solicitar reserva, **Solicitar una reserva**).
-3. Introduce **Nombre completo** y **Teléfono**; **Correo electrónico
+1. Abre `/book`. Las fechas y los huéspedes están en la barra superior;
+   hace clic en ella para cambiar **Registro de entrada**, **Salida**,
+   **Adultos** y **Niños**, o introduce un código en **¿Tienes un
+   código?** y hace clic en **Aplicar**, y luego en **Consultar
+   disponibilidad**.
+2. Cada habitación muestra sus tarifas: **Solo habitación** y una por
+   plan de comidas, cada una con el total de la estancia (impuestos y
+   cargos incluidos), el precio por noche y las condiciones de
+   cancelación. Un código promocional muestra el precio anterior
+   tachado. Filtre por plan de comidas, o active **Solo disponibles**.
+3. Hace clic en **Seleccionar** en una tarifa y luego en **Continuar** en
+   el resumen (la barra lateral en un ordenador, la barra inferior en un
+   teléfono).
+4. Introduce **Nombre completo** y **Teléfono**; **Correo electrónico
    (opcional)**.
-4. Elige un **Plan de comidas**, o **Solo habitación**.
-5. Opcional: **Agregar experiencias**, un cupón en **¿Tienes un
-   código?** y **Solicitudes especiales**.
-6. Hace clic en **Reservar ahora**. La página muestra el número de
-   reserva y lo que se paga ahora y en el hotel.
+5. Opcional: **Agregar experiencias** y **Solicitudes especiales**.
+6. Hace clic en **Reservar ahora**. (En un alquiler de corta estancia el
+   botón dice **Reservar esta opción**; en el modo Solicitar reserva,
+   **Solicitar una reserva**). La página muestra el número de reserva y
+   lo que se paga ahora y en el hotel.
+
+Las notas bajo el nombre del hotel salen de su configuración: cancelación
+gratuita cuando la política lo permite, pago en el hotel cuando ese es el
+modo de pago, confirmación inmediata en el modo Inmediata, y las horas
+de entrada y de salida.
 
 ![Un huésped reserva una habitación Deluxe para dos noches en /book, agrega Yoga at Dawn y recibe un número de reserva](/img/booking-engine/guest-booking.gif)
 
 ![Cada tipo de habitación con su capacidad, sus comodidades, el total de la estancia y el depósito](/img/booking-engine/rooms.png)
 
-![Complete su reserva: nombre y teléfono, plan de comidas y diez experiencias para agregar, con Yoga at Dawn agregada](/img/booking-engine/booking-sheet.png)
+![Complete su reserva: la habitación y la tarifa, nombre y teléfono, y experiencias para agregar, con Yoga at Dawn agregada](/img/booking-engine/booking-sheet.png)
 
 ![Reserva confirmada: el número de reserva y el total, a pagar en el hotel](/img/booking-engine/confirmed.png)
 
 Las fechas y el número de huéspedes forman parte de la dirección, por
 ejemplo `/book/2026-11-18/2026-11-20/2/0`, así que puede enlazar
-directamente a una estancia.
+directamente a una estancia. Una fecha pasada abre hoy, y un enlace que
+no es una fecha (como `/book/su-hotel`) abre ese alojamiento con las
+fechas de mañana.
 
 ## Ofrezca experiencias
 
