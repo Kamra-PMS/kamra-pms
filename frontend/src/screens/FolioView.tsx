@@ -757,7 +757,7 @@ export default function FolioView() {
                         setPanel(null)
                       })
                     }>
-                    {t("Share")}
+                    {t("Share these charges")}
                   </Button>
                   <Button variant="ghost" onClick={() => setPanel(null)}>{t("Cancel")}</Button>
                 </div>
