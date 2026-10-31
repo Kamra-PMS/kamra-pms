@@ -1,7 +1,8 @@
 // Sample money for the Billing guide: opens the docs user's till and puts
 // charges, payments, a void and an allowance on folios of stays the seed
 // already has in house. Run once before billing.mjs; running it again adds
-// the same lines again, so don't.
+// the same lines again, so don't. Allowances need the docs user's cashier
+// PIN: set KAMRA_DOCS_PIN (4-8 digits; it is set on first run).
 import { session, api, done, PROPERTY } from "./lib.mjs"
 
 const ctx = await session()
@@ -11,6 +12,10 @@ const guestFolio = async (guest) =>
   (await L("Folio", ["name"], { property: PROPERTY, guest_name: guest, folio_type: "Guest", status: "Open" }))[0]?.name
 
 await api(ctx, "kamra.cashier.open_session", { property: PROPERTY, opening_float: 5000 })
+const PIN = process.env.KAMRA_DOCS_PIN
+if (!PIN) throw new Error("Set KAMRA_DOCS_PIN")
+if (!(await api(ctx, "kamra.api.cashier_pin_status", { property: PROPERTY })).has_pin)
+  await api(ctx, "kamra.api.set_cashier_pin", { pin: PIN })
 
 const priya = await guestFolio("Priya Nair")
 const charge = (folio, charge_type, description, amount, gst_rate = 0, is_alcohol = 0) =>
@@ -24,7 +29,7 @@ await charge(priya, "Spa", "Spa - 60 min massage", 3500, 18)
 const dup = await charge(priya, "Minibar", "Minibar - water, nuts", 420, 18)
 const dupRow = dup.charges.at(-1).name
 await api(ctx, "kamra.api.void_folio_charge", { folio: priya, charge_row: dupRow, reason: "Posted twice by mistake" })
-await api(ctx, "kamra.api.post_allowance", { folio: priya, amount: 300, reason: "Late room service - goodwill", gst_rate: 5 })
+await api(ctx, "kamra.api.post_allowance", { folio: priya, amount: 300, reason: "Late room service - goodwill", gst_rate: 5, pin: PIN })
 await api(ctx, "kamra.api.add_folio_payment", { folio: priya, mode: "Cash", amount: 3000, kind: "Payment" })
 await api(ctx, "kamra.api.add_folio_payment", { folio: priya, mode: "Card", amount: 5000, kind: "Security Deposit", reference: "Slip 4471" })
 

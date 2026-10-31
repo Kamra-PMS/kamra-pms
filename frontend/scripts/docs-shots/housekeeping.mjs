@@ -98,7 +98,7 @@ await shot(page, "housekeeping/new-task", { clip: { x: 480, y: 0, width: 960, he
 await open(page, "/settings/housekeeping", 2500)
 await page.setViewportSize({ width: 1440, height: 1500 })
 await page.waitForTimeout(400)
-await shot(page, "housekeeping/settings", { clip: { x: 530, y: 80, width: 880, height: 895 } })
+await shot(page, "housekeeping/settings", { clip: { x: 504, y: 75, width: 924, height: 825 } })
 await page.setViewportSize({ width: 1440, height: 900 })
 
 // --- laundry ----------------------------------------------------------------
@@ -106,7 +106,7 @@ await open(page, "/laundry", 2500)
 await shot(page, "housekeeping/laundry-board")
 await page.getByRole("button", { name: "Price menu" }).click()
 await page.waitForTimeout(800)
-await shot(page, "housekeeping/laundry-price-menu", { clip: { x: 430, y: 80, width: 805, height: 520 } })
+await shot(page, "housekeeping/laundry-price-menu", { clip: { x: 248, y: 80, width: 1168, height: 520 } })
 await page.getByRole("button", { name: "Board" }).click()
 await page.waitForTimeout(500)
 await page.setViewportSize({ width: 1440, height: 640 })
@@ -121,7 +121,7 @@ await page.setViewportSize({ width: 1440, height: 900 })
 
 // --- lost & found, shift handover -------------------------------------------
 await open(page, "/shifts", 2500)
-await shot(page, "housekeeping/shift-handover", { locator: page.locator("main .rounded-xl, main [class*=card]").first() })
+await shot(page, "housekeeping/shift-handover", { clip: { x: 248, y: 75, width: 1168, height: 520 } })
 
 // --- the phone app --------------------------------------------------------------
 const phone = await session({ viewport: PHONE })
@@ -148,7 +148,8 @@ await p.waitForTimeout(500)
 await shot(p, "housekeeping/hk-available", { clip: { x: 0, y: 0, width: 390, height: 580 } })
 await p.getByRole("button", { name: /^Rooms$/ }).click()
 await p.waitForTimeout(500)
-await p.getByRole("button", { name: /^101/ }).click()
+// only occupied rooms take a charge; the rest are disabled
+await p.locator("button:not([disabled])").filter({ hasText: /^\d{3}/ }).first().click()
 await p.waitForTimeout(300)
 await p.getByPlaceholder("e.g. 2 cola, 1 water").fill("2 cola, 1 water")
 await p.getByPlaceholder(/^Amount/).fill("240")

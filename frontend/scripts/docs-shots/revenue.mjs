@@ -8,9 +8,15 @@ const ctx = await session()
 const page = await ctx.newPage()
 const made = []
 async function add(doc) {
-  const d = await api(ctx, "frappe.client.insert", { doc })
-  made.push([doc.doctype, d.name])
-  return d
+  try {
+    const d = await api(ctx, "frappe.client.insert", { doc })
+    made.push([doc.doctype, d.name])
+    return d
+  } catch (e) {
+    // the seed already has it (rate plans): use that one and keep it
+    if (!String(e).includes("DuplicateEntryError")) throw e
+    return null
+  }
 }
 const card = () => page.locator("div.rounded-xl.border.bg-white.shadow-sm").first()
 async function openRow(text) {
@@ -53,7 +59,7 @@ try {
     discount_type: "Amount", value: 500, valid_to: `${year}-12-31`, min_nights: 1 })
   await add({ doctype: "Corporate Account", company_name: "Northwind Analytics",
     contact_name: "Meera Rao", contact_phone: "+91 98450 22001",
-    negotiated_rate_plan: made.find((m) => m[0] === "Rate Plan" && m[1].includes("CORP"))?.[1] ?? null,
+    negotiated_rate_plan: made.find((m) => m[0] === "Rate Plan" && m[1].includes("CORP"))?.[1] ?? `${P}-CORP`,
     credit_allowed: 1 })
   await add({ doctype: "Travel Agent", agent_name: "Coastline Holidays",
     agent_type: "Travel Agent", commission_pct: 10, contact_phone: "+91 98860 33002" })

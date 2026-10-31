@@ -1,13 +1,17 @@
 // Images for docs-site/banquets.md.
-// Uses the seeded functions (EVT-2026-0088 confirmed wedding reception,
-// EVT-2026-0096 tentative offsite). The sample group is removed at the
+// Uses the seeded functions (the next confirmed reception and the next
+// tentative hold). The sample group is removed at the
 // end; the enquiry the GIF opens is kept as sample data.
 import { session, api, open, shot, gif, typeSlow, done, PROPERTY } from "./lib.mjs"
 
 const P = PROPERTY
-const CONFIRMED = "EVT-2026-0088"
-const TENTATIVE = "EVT-2026-0096"
 const ctx = await session()
+const nextEvent = async (filters) => (await api(ctx, "frappe.client.get_list", {
+  doctype: "Venue Booking", filters: { property: PROPERTY, event_date: [">=", new Date().toISOString().slice(0, 10)], ...filters },
+  fields: ["name"], order_by: "event_date asc", limit_page_length: 1,
+}))[0].name
+const CONFIRMED = await nextEvent({ status: "Confirmed", event_type: "Reception" })
+const TENTATIVE = await nextEvent({ status: "Tentative" })
 const page = await ctx.newPage()
 const made = []
 

@@ -34,19 +34,14 @@ prioridad. La lista la muestra como *vence 10-19 22:40* (mes-día, hora).
 
 ## Gestionar una solicitud
 
-Cada solicitud abierta tiene dos botones:
+Cada solicitud abierta tiene el botón **Asignarme la solicitud**, que se la asigna a usted. Al abrirla, **Iniciar trabajo** la pasa a **En curso**; cuando está hecha, escriba qué se hizo y pulse **Marcar como resuelto**. La solicitud pasa a **Resuelto** y sale de la pestaña **Abierto**.
 
-- **Iniciar** cuando alguien se ocupa de ella. La solicitud pasa a **En curso**.
-- **Resolver** cuando está hecha. La solicitud pasa a **Resuelto** y
-  sale de la lista.
+![Registrar una solicitud de almohadas adicionales en la habitación 201, asignársela e iniciar el trabajo](/img/operations/new-ticket.gif)
 
-![Registrar una solicitud de almohadas adicionales en la habitación 201 e iniciarla](/img/operations/new-ticket.gif)
-
-Una solicitud que ha superado su plazo muestra **vencido** en rojo. Marque **Mostrar
-cerrados** para ver también las solicitudes resueltas, cerradas y canceladas; una solicitud
+Una solicitud que ha superado su plazo muestra **vencido** en rojo. La pestaña **Resuelto** muestra las solicitudes resueltas; una solicitud
 resuelta después de su plazo muestra **SLA incumplido**.
 
-![La lista con Mostrar cerrados marcado: las solicitudes resueltas y cerradas en gris, una marcada como SLA incumplido](/img/operations/show-closed.png)
+![La pestaña Resuelto: las solicitudes resueltas, varias marcadas como SLA incumplido](/img/operations/show-closed.png)
 
 **Cerrado** y **Cancelado** los fijan los agentes de IA y las integraciones; la
 pantalla los muestra, pero no tiene botón para ellos.
