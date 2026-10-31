@@ -242,17 +242,18 @@ between **Functions**, **Quotations**, **Enquiries**, **Cash book** and
 
 ## Block rooms for a group
 
-For the guests' rooms, use **Groups & Blocks**:
+For the guests' rooms, use **Front Desk → Group Booking** (see
+[Hold rooms for a group](/reservations#hold-rooms-for-a-group)):
 
-1. Click **New**, enter the **Group name**, **Arrival**, **Departure** and
-   **Block cutoff**, and **Save**.
-2. Open the group. Click **Add room type**, enter how many rooms, and
-   **Save block**.
-3. Click **Confirm block** when the guest agrees.
-4. As names come in, use **Pick up a room** to book a guest into the
-   block. Unsold blocked rooms go back on sale after the cutoff.
+1. Click **New group booking**, fill in the group, the rooms by room type
+   and any guest names you have, and click **Book group**, or **Save as
+   quotation** while the client decides.
+2. A quotation keeps no rooms. Open it and, on the **Rooms** tab, click
+   **Confirm booking** when the client agrees.
+3. As names come in, add them on the **Guests** tab. Rooms without a
+   guest name go back on sale after **Keep free rooms until**.
 
-![A group: Sharma-Verma wedding guests, Open, with Add room type, Confirm block and Open group folio](/img/banquets/group.png)
+![The Sharma-Verma wedding guests group as a quotation: what to do next with Print quotation and Confirm booking, and the Rooms tab with Add room type and Keep free rooms until](/img/banquets/group.png)
 
 To hold a changing room for the wedding party, use **Green room** on the
 function's Enquiry step. It puts a real room block on that room, so it

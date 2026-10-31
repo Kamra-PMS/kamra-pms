@@ -17,7 +17,6 @@ const addDays = (d, n) => {
   x.setUTCDate(x.getUTCDate() + n)
   return x.toISOString().slice(0, 10)
 }
-const ddmmyyyy = (d) => d.split("-").reverse().join("")
 
 const ctx = await session()
 const page = await ctx.newPage()
@@ -41,10 +40,10 @@ async function fillBooking(p, { guest, phone, type, checkIn, nights }, slow) {
   slow ? await typeSlow(name, guest, 50) : await name.fill(guest)
   const tel = dlg.locator("input[type=tel]").first()
   slow ? await typeSlow(tel, phone, 40) : await tel.fill(phone)
-  await dlg.locator("select").first().selectOption(`${PROPERTY}-${type}`)
-  const ci = dlg.locator("input[type=date]").first()
-  await ci.click()
-  await ci.pressSequentially(ddmmyyyy(checkIn))
+  await dlg.locator("label").filter({ hasText: "Room type" }).locator("select").first().selectOption(`${PROPERTY}-${type}`)
+  // fill, not typed keys: a half-typed date is empty and the dialog's
+  // check-out maths throws on it
+  await dlg.locator("input[type=date]").first().fill(checkIn)
   const n = dlg.locator("label").filter({ hasText: "Nights" }).locator("input")
   await n.fill(String(nights))
   await p.waitForTimeout(1800)
@@ -159,40 +158,38 @@ if (want("cancel")) {
 // ------------------------------------------------------ central search
 if (want("crs")) {
   await open(page, "/crs", 2000)
-  await page.getByRole("button", { name: "Search", exact: true }).click()
+  await page.getByRole("button", { name: "Search", exact: true }).first().click()
   await page.waitForTimeout(3000)
   await shot(page, "reservations/crs")
 }
 
 // ------------------------------------------------------ groups & blocks
 if (want("group")) {
+  // made the way the desk makes one: a block of rooms, two of them named
+  const GROUP = "Mehta-Rao wedding"
   const g = (await api(ctx, "frappe.client.get_list", {
-    doctype: "Group Booking", filters: { property: PROPERTY, group_name: "Infosys offsite" },
+    doctype: "Group Booking", filters: { property: PROPERTY, group_name: GROUP },
     fields: ["name"], limit_page_length: 1,
   }))[0]
   if (!g) {
-    await api(ctx, "kamra.api.create_group_booking", {
-      property: PROPERTY, group_name: "Infosys offsite",
-      check_in_date: addDays(today, 15), check_out_date: addDays(today, 17),
-      rooms: [{ room_type: `${PROPERTY}-DLX`, count: 2 }],
-      guest_name: "Sanjay Kulkarni", phone: "+919810011081",
+    await api(ctx, "kamra.api.create_group_with_rooming_list", {
+      property: PROPERTY, group_name: GROUP, group_type: "Wedding",
+      check_in_date: addDays(today, 20), check_out_date: addDays(today, 22),
+      blocks: [{ room_type: `${PROPERTY}-DLX`, rooms_blocked: 4 }],
+      guests: [
+        { room_type: `${PROPERTY}-DLX`, guest_name: "Anil Mehta", phone: "+919810011091" },
+        { room_type: `${PROPERTY}-DLX`, guest_name: "Kavita Rao", phone: "+919810011092" },
+      ],
+      phone: "+919810011091", master_index: 0, master_pays: "Room only",
     })
   }
   await open(page, "/groups", 2500)
-  await page.locator("tr").filter({ hasText: "Infosys offsite" }).first().click()
-  await page.getByText("Room block").first().waitFor()
+  await page.locator("tr").filter({ hasText: GROUP }).first().click()
+  await page.getByText("Guest list").first().waitFor()
   await page.waitForTimeout(2000)
   const dlg = page.locator("[role=dialog] > div").last()
-  if (!(await dlg.getByText(/picked/).count())) {
-    await dlg.getByRole("button", { name: "Add room type" }).click()
-    await dlg.locator("select").last().selectOption(`${PROPERTY}-DLX`)
-    await dlg.getByPlaceholder("Rooms").last().fill("4")
-    await dlg.locator("input[type=number]").last().fill("3800")
-    await dlg.getByRole("button", { name: "Save block" }).click()
-    await page.waitForTimeout(2500)
-  }
   const b = await dlg.boundingBox()
-  await shot(page, "reservations/group", { clip: { x: b.x, y: 0, width: b.width, height: 480 } })
+  await shot(page, "reservations/group", { clip: { x: b.x, y: 0, width: b.width, height: 720 } })
   await page.keyboard.press("Escape")
 }
 

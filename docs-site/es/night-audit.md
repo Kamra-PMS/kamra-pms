@@ -25,13 +25,13 @@ Administrador del hotel.
 
 ## Abrir el cierre del día
 
-Abra **Finanzas → Cierre del día** (también en **Recepción**, o escriba *night
-audit*, *end of day* o *EOD* en la búsqueda, Ctrl/Cmd+K). **Gestionar cierre del
-día** muestra una tarjeta por alojamiento: su fecha operativa y su hora local,
+Abra **Finanzas → Auditoría nocturna** (también en **Recepción**, o escriba *night
+audit*, *end of day* o *EOD* en la búsqueda, Ctrl/Cmd+K). **Administrar auditoría
+nocturna** muestra una tarjeta por alojamiento: su fecha operativa y su hora local,
 las llegadas y salidas pendientes, las cajas abiertas, las cuentas abiertas del punto de venta, y
 **Listo** o el número de bloqueos.
 
-![Gestionar cierre del día: una tarjeta por alojamiento con las llegadas y salidas pendientes, las cajas abiertas y las cuentas abiertas del punto de venta, y el historial de auditoría debajo](/img/night-audit/manage.png)
+![Administrar auditoría nocturna: una tarjeta por alojamiento con las llegadas y salidas pendientes, las cajas abiertas y las cuentas abiertas del punto de venta, y el historial de auditoría debajo](/img/night-audit/manage.png)
 
 Pulse **Administrar** en el alojamiento (muestra **Continuar** si ya
 empezó esta noche). Su progreso se guarda sobre la marcha, así que puede salir y
@@ -76,7 +76,7 @@ liquide la cuenta del restaurante, cierre la caja) o confírmelo:
 
 1. Escriba el motivo en el cuadro bajo la lista, por ejemplo *"Salidas
    tardías aprobadas por el gerente de turno"*.
-2. Pulse **Confirmar revisión**.
+2. Pulse **Autorizar excepción con un motivo**.
 
 ![Paso 3, Salidas pendientes de registrar: dos huéspedes con salida prevista que siguen alojados, el botón para registrar rápidamente la salida y el cuadro para confirmar el bloqueo con un motivo](/img/night-audit/departures.png)
 
@@ -166,7 +166,7 @@ El paso 11 muestra los informes finales a la izquierda. Elija uno para leerlo y 
 
 El paquete se guarda en la auditoría cuando se ejecuta, así que reimprimir una noche pasada
 da exactamente lo que se imprimió esa noche. Encuentre las auditorías pasadas en **Historial
-de auditoría** al pie de **Gestionar cierre del día**: busque por fecha y pulse
+de auditoría** al pie de **Administrar auditoría nocturna**: busque por fecha y pulse
 **Imprimir** en la columna **Paquete de auditoría**. Las ejecuciones automáticas (03:00) aparecen
 ahí con el origen **Programado**. Si falta un paquete, pulse
 **Reconstruir paquete**: vuelve a crear los informes imprimibles sin registrar
@@ -199,8 +199,7 @@ que la ejecución manual. Si una comprobación que bloquea sigue pendiente, sigu
 - **Ejecutar y registrar incidencias** (por defecto): la fecha avanza y los elementos
   pendientes se registran como incidencias en el paquete.
 - **Detener y avisar**: la fecha operativa no cambia, y los usuarios Administrador del hotel
-  y Finanzas reciben una notificación en la aplicación y un correo electrónico. Gestionar
-  cierre del día muestra **03:00 en espera**: resuelva los bloqueos y pulse **Ejecutar cierre del
+  y Finanzas reciben una notificación en la aplicación y un correo electrónico. Administrar auditoría nocturna muestra **03:00 en espera**: resuelva los bloqueos y pulse **Ejecutar cierre del
   día**, y luego imprima el paquete.
 
 Si alguien ya cerró el día a mano, la ejecución de las 03:00 lo omite.

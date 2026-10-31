@@ -222,7 +222,7 @@ escalation is only written to the activity log.
    water") and the amount.
 4. Tap **Post**.
 
-![Posting a minibar charge of 240 to room 101 from the phone app](/img/housekeeping/hk-post-charge.png)
+![Posting a minibar charge of 240 to room 103 from the phone app](/img/housekeeping/hk-post-charge.png)
 
 The charge goes on the in-house guest's folio. Housekeeping can only post
 **Minibar** or **Laundry**, the amount must be more than zero, and the
@@ -310,7 +310,7 @@ The item lands in **Housekeeping → Lost & Found** as **In Storage**, with
 today's date and your name. The desk can also add items there with
 **New**.
 
-![The Lost & Found register with four items in storage](/img/housekeeping/lost-found.png)
+![The Lost & Found register: found and missing items with their room, the day they were logged and In Storage](/img/housekeeping/lost-found.png)
 
 When the guest collects the item, open it and set **Status** to
 **Returned**, the **Guest** and **Returned on**. Use **Disposed** for
@@ -325,7 +325,7 @@ cash, who you handed over to, and notes for the next shift. Press
 **New**, fill it in, and set **Status** to **Closed** when the next shift
 has taken over.
 
-![The Shift Handover list with three shifts and their closing cash](/img/housekeeping/shift-handover.png)
+![The Shift Handover list: one row per shift with its date, slot, status and closing cash](/img/housekeeping/shift-handover.png)
 
 It is a plain record: Kamra doesn't calculate the cash figures. For the
 till count with variance, use the cashier's **My Till** and **Shift

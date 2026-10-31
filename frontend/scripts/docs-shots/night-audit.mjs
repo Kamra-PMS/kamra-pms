@@ -21,7 +21,7 @@ const step = (page, title) =>
   page.locator("ol button", { hasText: title }).first().click().then(() => page.waitForTimeout(1200))
 /** The wizard (step list + panel) as laid out, however wide its tables make it. */
 async function wizShot(page, name, height) {
-  const root = page.getByText("Manage End of Day").first().locator("xpath=ancestor::div[contains(@class,'space-y-4')][1]")
+  const root = page.getByText("Manage Night Audit").first().locator("xpath=ancestor::div[contains(@class,'space-y-4')][1]")
   const b = await root.boundingBox()
   const sx = await page.evaluate(() => window.scrollX)
   const sy = await page.evaluate(() => window.scrollY)
@@ -34,7 +34,7 @@ const page = await ctx.newPage()
 if (STAGE === "before") {
   if (want("manage")) {
     await open(page, "/end-of-day", 3000)
-    await shot(page, "night-audit/manage", { clip: { x: 260, y: 75, width: 1145, height: 715 } })
+    await shot(page, "night-audit/manage", { clip: { x: 248, y: 75, width: 1168, height: 715 } })
   }
   if (want("prepare")) {
     await openWizard(page)
@@ -43,17 +43,17 @@ if (STAGE === "before") {
   if (want("arrivals")) {
     await openWizard(page)
     await step(page, "Arrivals not checked in")
-    await wizShot(page, "night-audit/arrivals", 560)
+    await wizShot(page, "night-audit/arrivals", 820)
   }
   if (want("departures")) {
     await openWizard(page)
     await step(page, "Departures not checked out")
-    await wizShot(page, "night-audit/departures", 620)
+    await wizShot(page, "night-audit/departures", 900)
   }
   if (want("cashiers")) {
     await openWizard(page)
     await step(page, "Cashier closure")
-    await wizShot(page, "night-audit/cashier-closure", 520)
+    await wizShot(page, "night-audit/cashier-closure", 760)
   }
   if (want("settings")) {
     await open(page, "/settings/front-desk", 3000)
@@ -75,7 +75,7 @@ if (STAGE === "run") {
       const box = p.getByPlaceholder("Reason")
       if (!(await box.count())) return
       await typeSlow(box.first(), why, 25)
-      await p.getByRole("button", { name: "Acknowledge" }).first().click()
+      await p.getByRole("button", { name: "Override with reason" }).first().click()
       await p.waitForTimeout(1500)
     }
     await ack("Departures not checked out", "Late checkouts approved by the duty manager")
@@ -103,15 +103,19 @@ if (STAGE === "run") {
 if (STAGE === "after") {
   if (want("result")) {
     await open(page, "/end-of-day", 3000)
-    await shot(page, "night-audit/history", { clip: { x: 260, y: 75, width: 1145, height: 690 } })
+    await shot(page, "night-audit/history", { clip: { x: 248, y: 75, width: 1168, height: 690 } })
   }
   if (want("pack")) {
     await open(page, "/end-of-day", 3000)
-    await page.getByRole("button", { name: "View" }).first().click().catch(async () => {
-      await page.getByText("View", { exact: true }).first().click()
-    })
-    await page.waitForTimeout(3500)
-    await shot(page, "night-audit/audit-pack", { fullPage: true, clip: { x: 260, y: 75, width: 1145, height: 700 } })
+    // the pack opens from Print in the history's Audit pack column, maybe in a new tab
+    const [tab] = await Promise.all([
+      page.context().waitForEvent("page", { timeout: 6000 }).catch(() => null),
+      page.getByText("Print", { exact: true }).first().click(),
+    ])
+    const p = tab ?? page
+    await p.waitForLoadState("networkidle").catch(() => {})
+    await p.waitForTimeout(3500)
+    await shot(p, "night-audit/audit-pack", { fullPage: true, clip: { x: 0, y: 0, width: 1440, height: 900 } })
   }
 }
 

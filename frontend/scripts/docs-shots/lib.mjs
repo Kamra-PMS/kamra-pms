@@ -9,6 +9,11 @@
 //   KAMRA_DOCS_USER=docs@kamra.localhost KAMRA_DOCS_PASSWORD=... \
 //   node scripts/docs-shots/<section>.mjs
 //
+// The Vite dev server proxies /api only. Proxy /assets and /files to the
+// bench too (and serve this checkout's kamra/public at /assets/kamra), or
+// the hotel logo and the demo photos come out as broken images.
+// billing-setup.mjs also needs KAMRA_DOCS_PIN (the docs user's cashier PIN).
+//
 // Every image is captured fresh from the real app at 1440x900, so the docs
 // show what the code does today. GIFs are recorded with Playwright and
 // encoded with ffmpeg (must be on PATH).

@@ -41,7 +41,7 @@ night at 04:15 (site time). Don't put real guests or payments here.
 | Front Desk | Bookings, check-in/out, folios, night audit |
 | Revenue | Rate plans, seasons, vouchers, guardrails |
 | Finance | Billing, GST invoices, reports |
-| Housekeeping | The room board and the floor phone app |
+| Housekeeping | The Housekeeping Board and the floor phone app |
 
 ## Worth trying
 

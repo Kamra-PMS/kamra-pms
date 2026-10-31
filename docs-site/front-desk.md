@@ -182,8 +182,9 @@ your register needs a copy.
 
 ### Check in a whole group
 
-Open the group under **Groups & Blocks**. In the **Rooming list**, press
-**Check in the group** and confirm. Every room arriving today goes in at
+Open the group under **Front Desk → Group Booking**. Under **What to do
+next**, press **Check in all**, or on the **Guests** tab press **Check in**
+with no rooms ticked (tick rooms to check in only those), and confirm. Every room arriving today goes in at
 once; a room not given yet gets a free room of the booked type. If no
 room is free for someone, they are listed and the rest still go in.
 
@@ -213,7 +214,7 @@ and takes the payment. The check-in steps open right after.
 8. The check-in steps open. **Who pays**, the **Room** and the ID you typed
    are already done; finish the rest and click **Check in to room 105**.
 
-![The walk-in screen filled in: guest, phone, Aadhaar ID, Standard room 105, one night, cash payment, and the live quote on the right](/img/front-desk/walkin.png)
+![The walk-in screen filled in: guest, phone, Aadhaar ID, Deluxe room 205, one night, and the live quote with Continue to check-in on the right](/img/front-desk/walkin.png)
 
 If the room was just taken, or your till is closed, nothing is saved and
 the screen tells you why. If you close the check-in steps before the end,
@@ -302,7 +303,7 @@ goes to the folio.
    / complaint**, **Other**), add a note if you like, and click **Move to
    303**.
 
-![The Change room window with All types selected, room 303 picked, and the price line showing the Suite costs ₹10,395 more](/img/front-desk/change-room.png)
+![The Change room window with All types (upgrade) selected, room 303 picked, and the price line showing what the Suite adds to the stay](/img/front-desk/change-room.png)
 
 When the guest is already in-house, the old room is marked Dirty for
 housekeeping. Every move is written to the activity log with its reason.
@@ -344,7 +345,7 @@ leaving before the booked date starts with **Leaving early**:
    every booked night stays on the bill, as before; with any other policy
    the stay must be shortened before check-out.
 
-![The check-out sheet for Priya Nair on the Bill step: who pays, why this total, and the stay summary](/img/front-desk/checkout-sheet.png)
+![The check-out sheet on the Bill step: the amount to collect, who pays, the stay summary and the charges by type](/img/front-desk/checkout-sheet.png)
 
 1. **Bill.** Every folio of the stay with its lines, as it will stand at
    check-out: nights the night audit has not posted yet are counted in.
@@ -434,7 +435,7 @@ corrects those on the account.
 
 ## Look up a guest
 
-**Front Desk → Guests** lists every guest with their bookings, stays,
+**Front Desk → Guest History** lists every guest with their bookings, stays,
 nights, lifetime value and last stay. Search by name or phone, and click a
 guest to open their journey.
 
@@ -443,7 +444,7 @@ guest to open their journey.
 - **Export** downloads the list as a CSV file with the columns you see.
   The list shows up to 200 guests, so search first for a longer list.
 
-![The guests list with phone, bookings, stays, nights, lifetime value and last stay](/img/front-desk/guests.png)
+![Guest History: each guest with phone, bookings, stays, nights, lifetime value and last stay](/img/front-desk/guests.png)
 
 The journey shows every stay and event, with:
 

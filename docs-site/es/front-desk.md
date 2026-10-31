@@ -443,7 +443,7 @@ casos los corrige Finanzas en la cuenta de la empresa.
 
 ## Buscar un huésped
 
-**Recepción → Huéspedes** muestra todos los huéspedes con sus reservas, estancias,
+**Recepción → Historial de huéspedes** muestra todos los huéspedes con sus reservas, estancias,
 noches, valor total y última estancia. Busque por nombre o teléfono, y pulse un
 huésped para abrir su historial.
 
