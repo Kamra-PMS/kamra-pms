@@ -29,6 +29,7 @@ def default_short_code(name: str, exclude: str | None = None) -> str:
 		if code not in taken:
 			return code
 	frappe.throw(_("Pick a short code for this property."))
+	raise  # frappe.throw always raises; CodeQL does not treat it as noreturn
 
 
 class Property(Document):

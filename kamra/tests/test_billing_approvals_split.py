@@ -391,7 +391,7 @@ class BillingApprovalsSplitTestCase(AuditTestCase):
 		try:
 			set_value("User", desk, "kamra_job_title", "General Manager")
 		except frappe.PermissionError:
-			pass
+			pass  # refused outright is fine; the value check below is the test
 		finally:
 			frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- test fixture
 		self.assertEqual(frappe.db.get_value("User", desk, "kamra_job_title"), "Receptionist")
