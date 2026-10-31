@@ -108,6 +108,19 @@ class GroupContractTestCase(IntegrationTestCase):
 			                  [{"room_type": self.room_type, "rooms_blocked": 2, "block_rate": 800}])
 		self.assertEqual(group_detail(out["group_booking"])["pickup"][0]["rooms_blocked"], 2)
 
+	def test_a_direct_save_cannot_change_the_rate_either(self):
+		from unittest.mock import patch
+		out = self.make([{"room_type": self.room_type, "rooms_blocked": 1, "block_rate": 800}])
+		gb = frappe.get_doc("Group Booking", out["group_booking"])
+		gb.blocks[0].block_rate = 500
+		with patch("kamra.api._can_set_rate", return_value=False):
+			# the REST resource path saves the doc as it is
+			with self.assertRaises(frappe.PermissionError):
+				gb.save(ignore_permissions=True)
+			gb.reload()
+			gb.notes = "rooming list sent"
+			gb.save(ignore_permissions=True)
+
 	def test_moving_the_group_shifts_its_nights_and_keeps_own_dates(self):
 		from kamra.api import group_amend_dates
 		out = self.make(

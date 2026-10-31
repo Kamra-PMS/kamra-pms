@@ -7480,9 +7480,7 @@ def group_detail(group_booking: str):
 			"nightly_counts": parse_nightly(b.get("nightly_counts")),
 			"picked_up": picked,
 			"remaining": _unpicked(gb.name, b.room_type),
-			"rooms_released": int(frappe.db.get_value(
-				"Group Room Block", b.name, "rooms_released") or 0)
-			if released_on else 0,
+			"rooms_released": int(b.get("rooms_released") or 0) if released_on else 0,
 		})
 	prices = _block_prices(gb.property, str(gb.check_in_date), str(gb.check_out_date), [
 		{"room_type": b.room_type, "rooms_blocked": b.rooms_blocked,
