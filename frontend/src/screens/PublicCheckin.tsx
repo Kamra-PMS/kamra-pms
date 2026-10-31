@@ -9,7 +9,7 @@ import { IdDocumentField } from "../components/IdDocumentField"
 import { GuestLaundryCard } from "./laundry/GuestLaundryCard"
 import { adoptUiLocale } from "../lib/money"
 import { useT, t as translate } from "../lib/i18n"
-import { adoptBrowserLanguage } from "../lib/dir"
+import { adoptGuestLanguage } from "../lib/dir"
 import { LanguageSwitcher } from "../components/LanguageSwitcher"
 
 
@@ -130,13 +130,26 @@ interface Info {
     has_id_document: boolean
     id_document_on: string
   }
+  /** the others staying, as named at booking (name and age only). A locked
+   *  row was confirmed by the desk and cannot be changed here. */
+  occupants?: { row: string; full_name: string; age: number | null; has_id: boolean; locked: boolean }[]
+}
+
+interface Companion {
+  row?: string
+  locked: boolean
+  full_name: string
+  age: string
+  id_type: string
+  id_number: string
+  has_id: boolean
 }
 
 export default function PublicCheckin() {
   const { token } = useParams()
   const { t } = useT()
   // a guest's phone speaks their language: follow it until they choose
-  useEffect(() => adoptBrowserLanguage(), [])
+  useEffect(() => adoptGuestLanguage(), [])
   const [info, setInfo] = useState<Info | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
@@ -149,6 +162,10 @@ export default function PublicCheckin() {
   const [addrImage, setAddrImage] = useState("") // data-URL of the address proof
   const [consent, setConsent] = useState(false)
   const [idUploaded, setIdUploaded] = useState(false)
+  // everyone else staying in the room: named at booking, or added here
+  const [others, setOthers] = useState<Companion[]>([])
+  const setOther = (i: number, patch: Partial<Companion>) =>
+    setOthers((os) => os.map((o, j) => (j === i ? { ...o, ...patch } : o)))
 
   useEffect(() => {
     if (!token) return
@@ -167,6 +184,11 @@ export default function PublicCheckin() {
         // back (Frappe refuses a Guest session any private file), so after a
         // reload this is all we can honestly say
         setIdUploaded(i.guest.has_id_document)
+        setOthers((i.occupants ?? []).map((o) => ({
+          row: o.row, locked: o.locked,
+          full_name: o.full_name, age: o.age != null ? String(o.age) : "",
+          id_type: i.id_types[0] ?? "", id_number: "", has_id: o.has_id,
+        })))
         if (i.stay.status === "Submitted") setDone(true)
       })
       .catch(() => setError(t("This check-in link isn't valid. Please contact the hotel.")))
@@ -179,6 +201,12 @@ export default function PublicCheckin() {
       await call("kamra.public_api.precheckin_submit", {
         token, ...form, signature, consent: consent ? 1 : 0,
         address_image: addrImage || "",
+        occupants: JSON.stringify(
+          others.filter((o) => o.full_name.trim()).map((o) => ({
+            row: o.row, full_name: o.full_name.trim(), age: o.age,
+            id_type: o.id_number.trim() ? o.id_type : "", id_number: o.id_number.trim(),
+          })),
+        ),
       })
       setDone(true)
     } catch {
@@ -369,6 +397,38 @@ export default function PublicCheckin() {
                 </div>
               </details>
             )}
+
+            <div className="space-y-2 rounded-lg border border-zinc-200 p-3">
+              <span className="block text-sm font-medium text-zinc-600">{t("People staying with you")}</span>
+              <p className="text-xs text-zinc-500">
+                {t("Add everyone else in your room. Adults need an ID number; for children, name and age are enough.")}
+              </p>
+              {others.map((o, i) => (
+                <div key={i} className="grid grid-cols-2 gap-2 rounded-lg bg-zinc-50 p-2">
+                  <input className={inputCls} placeholder={t("Full name")} aria-label={t("Full name")} readOnly={o.locked}
+                    value={o.full_name} onChange={(e) => setOther(i, { full_name: e.target.value })} />
+                  <input className={inputCls} placeholder={t("Age")} aria-label={t("Age")} inputMode="numeric" readOnly={o.locked}
+                    value={o.age} onChange={(e) => setOther(i, { age: e.target.value.replace(/\D/g, "").slice(0, 3) })} />
+                  <select className={inputCls} aria-label={t("ID type")} value={o.id_type}
+                    onChange={(e) => setOther(i, { id_type: e.target.value })}>
+                    {(info?.id_types ?? []).map((x) => <option key={x} value={x}>{t(x)}</option>)}
+                  </select>
+                  <input className={inputCls} aria-label={t("ID number")}
+                    placeholder={o.has_id ? t("ID already given") : t("ID number")}
+                    value={o.id_number} onChange={(e) => setOther(i, { id_number: e.target.value })} />
+                  {!o.locked && (
+                    <button type="button" className="col-span-2 text-right text-sm text-zinc-400 hover:text-rose-600"
+                      onClick={() => setOthers((os) => os.filter((_, j) => j !== i))}>{t("Remove")}</button>
+                  )}
+                </div>
+              ))}
+              <button type="button" className="text-sm font-medium text-brand-700 hover:underline"
+                onClick={() => setOthers((os) => [...os, {
+                  locked: false, full_name: "", age: "", id_type: info?.id_types[0] ?? "", id_number: "", has_id: false,
+                }])}>
+                + {t("Add a person")}
+              </button>
+            </div>
 
             <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3">
               <span className="mb-1.5 block text-sm font-medium text-zinc-600">

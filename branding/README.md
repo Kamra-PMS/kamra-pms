@@ -27,3 +27,4 @@ The mark: a door opening into a **K** — kamra means *room*.
 - Regenerate PNGs: see `render-logos.mjs` pattern (sharp) — render from
   the SVGs at 300dpi density.
 - Clear space: keep at least the dot's diameter around the mark.
+- Use of the name and mark: see [TRADEMARK.md](../TRADEMARK.md).

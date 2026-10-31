@@ -1,32 +1,30 @@
+import { Globe } from "lucide-react"
 import { LANGS, setLang } from "../lib/dir"
 import { useT } from "../lib/i18n"
 
-/** Compact language toggle for public pages and shells. */
+/** Language dropdown for the public guest pages. */
 export function LanguageSwitcher(props?: { className?: string }) {
   const { t, lang } = useT()
   return (
-    <div
+    <label
       className={
-        "flex shrink-0 rounded-lg border border-zinc-200 bg-white p-0.5 text-xs " +
+        "flex shrink-0 items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 py-1 text-xs text-zinc-700 " +
         (props?.className ?? "")
       }
-      role="group"
-      aria-label={t("Language")}
     >
-      {LANGS.map((l) => (
-        <button
-          key={l.code}
-          type="button"
-          aria-pressed={lang === l.code}
-          onClick={() => setLang(l.code)}
-          className={
-            "rounded-md px-2 py-1 " +
-            (lang === l.code ? "bg-zinc-900 text-white" : "text-zinc-600")
-          }
-        >
-          {l.nativeLabel}
-        </button>
-      ))}
-    </div>
+      <Globe className="size-3.5 text-zinc-500" aria-hidden />
+      <select
+        aria-label={t("Language")}
+        value={lang}
+        onChange={(e) => setLang(e.target.value)}
+        className="bg-transparent pe-1 outline-none"
+      >
+        {LANGS.map((l) => (
+          <option key={l.code} value={l.code}>
+            {l.nativeLabel}
+          </option>
+        ))}
+      </select>
+    </label>
   )
 }
