@@ -21,6 +21,8 @@ export interface GuestOccupant {
   row: string
   full_name: string
   age: number | null
+  /** the age the guest gave online, for the desk to confirm */
+  guest_stated_age?: number | null
   gender?: string | null
   nationality?: string | null
   id_type?: string | null
@@ -40,6 +42,7 @@ interface Draft {
   id_number: string
   has_id: boolean
   has_photo: boolean
+  stated: number | null
 }
 
 const draft = (o?: GuestOccupant): Draft => ({
@@ -52,6 +55,7 @@ const draft = (o?: GuestOccupant): Draft => ({
   id_number: o?.id_number ?? "",
   has_id: !!o?.has_id,
   has_photo: !!o?.has_photo,
+  stated: o?.guest_stated_age ?? null,
 })
 
 const inputCls =
@@ -252,6 +256,11 @@ export default function CheckInGuests({ reservation, guest, guestName, guestHasP
               </>
             )}
           </div>
+          {d.age === "" && d.stated != null && (
+            <p className="mt-1 text-xs text-amber-700">
+              {t("guest says age {v0}, not confirmed", { v0: String(d.stated) })}
+            </p>
+          )}
         </div>
       ))}
 

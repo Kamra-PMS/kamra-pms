@@ -99,11 +99,15 @@ export default function LinkedRecords({
       <button
         key="group"
         className={chipCls}
-        onClick={() => navigate("/groups")}
-        title={translate("Open Groups & Blocks")}
+        onClick={() =>
+          navigate(`/groups?open=${encodeURIComponent(links.group_booking!)}`)
+        }
+        title={translate("Open this group")}
       >
         <Users className="size-3.5" aria-hidden />
-        {links.group_name || translate("Group")}
+        {translate("Part of {v0} →", {
+          v0: links.group_name || translate("Group"),
+        })}
       </button>,
     )
   if (links.event && !exclude.includes("event"))

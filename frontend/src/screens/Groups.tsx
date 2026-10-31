@@ -38,9 +38,11 @@ export default function Groups() {
       {creating && (
         <GroupBookingDialog
           onClose={close}
-          onDone={() => {
-            close()
+          onDone={(group) => {
+            setCreating(false)
             setReloadKey((k) => k + 1)
+            // ?open= opens the new group's dashboard (ResourceScreen)
+            setParams(group ? { open: group } : {}, { replace: true })
           }}
         />
       )}

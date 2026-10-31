@@ -6,6 +6,7 @@ import {
   type ComponentType,
   type ReactNode,
 } from "react"
+import { useSearchParams } from "react-router-dom"
 import { Columns3, Download, Plus, Search, Trash2 } from "lucide-react"
 import { Sheet } from "./ui/sheet"
 import { call, getCurrentProperty } from "../lib/api"
@@ -426,6 +427,22 @@ export function ResourceScreen({
   }, [config.doctype, debounced, filterVals, page, dateFrom, dateTo])
 
   useEffect(load, [load])
+
+  // ?open=<name> - a link from another record opens that row's panel
+  const [searchParams, setSearchParams] = useSearchParams()
+  const openParam = searchParams.get("open")
+  useEffect(() => {
+    if (!openParam) return
+    openEdit({ name: openParam })
+    setSearchParams(
+      (p) => {
+        p.delete("open")
+        return p
+      },
+      { replace: true },
+    )
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openParam])
 
   async function exportCsv() {
     const filters: (string | number)[][] = []

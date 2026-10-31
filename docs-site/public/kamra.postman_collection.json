@@ -1796,6 +1796,43 @@
      }
     },
     {
+     "name": "add_occupant_names",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.add_occupant_names",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.add_occupant_names"
+       ]
+      },
+      "description": "Add the other people staying to the stay's occupant register by name\n(at booking, before anyone's ID is seen). Names already on the register\nare left as they are; age and ID are filled at check-in.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"names\": \"<names>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
      "name": "update_occupants",
      "request": {
       "method": "POST",
@@ -4849,6 +4886,80 @@
      }
     },
     {
+     "name": "rooming_list_template",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.rooming_list_template",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.rooming_list_template"
+       ]
+      },
+      "description": "An Excel rooming list for the group booking screen to paste or\nupload: Name, Phone, Room type (a dropdown of this property's room\ntypes) and Other guests, with a sheet explaining how to fill it.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "create_group_with_rooming_list",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.create_group_with_rooming_list",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.create_group_with_rooming_list"
+       ]
+      },
+      "description": "The desk's group flow: group -> room blocks -> rooming list ->\nreservations. A Confirmed group holds `blocks` ([{room_type,\nrooms_blocked, block_rate, nightly_counts}]) off sale - nightly_counts\n({\"YYYY-MM-DD\": rooms}) when the number differs night to night, and\nblock_rate the negotiated rate its rooms are billed. Each `guests` row\n({room_type, guest_name, phone, others, check_in_date, check_out_date})\nis booked now against that hold, on the group's dates or its own nights\ninside them. Blocked rooms with no guest stay held until the cutoff.\n\n`master_index` is the guests row whose room pays `master_pays` for the\ngroup (omit both, or pass `company`, for a company-paid group).\n`quotation_only` saves an Open group (a proposal): nothing is held or\nbooked until the block is confirmed. Everything is checked before the\ngroup is made, so a refusal leaves nothing behind.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"group_name\": \"<group_name>\",\n  \"check_in_date\": \"2026-08-01\",\n  \"check_out_date\": \"2026-08-03\",\n  \"blocks\": \"<blocks>\",\n  \"phone\": \"+91 90000 00000\",\n  \"attrition_pct\": 0,\n  \"deposit_due\": 0,\n  \"quotation_only\": 0\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
      "name": "inventory_availability",
      "request": {
       "method": "POST",
@@ -5182,6 +5293,80 @@
      }
     },
     {
+     "name": "group_price_preview",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.group_price_preview",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.group_price_preview"
+       ]
+      },
+      "description": "The price of a block before it is booked (New group booking).",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"check_in_date\": \"2026-08-01\",\n  \"check_out_date\": \"2026-08-03\",\n  \"blocks\": \"<blocks>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "group_quotation",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.group_quotation",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.group_quotation"
+       ]
+      },
+      "description": "The group's quotation / proforma: the hotel, the group, its rooms per\ntype and night with the rate and tax, the total, the deposit asked and\nthe terms (cutoff, allowed shortfall, who pays). Nothing is posted.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"group_booking\": \"<group_booking>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
      "name": "group_detail",
      "request": {
       "method": "POST",
@@ -5210,6 +5395,154 @@
       "body": {
        "mode": "raw",
        "raw": "{\n  \"group_booking\": \"<group_booking>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "set_rooming_names",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.set_rooming_names",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.set_rooming_names"
+       ]
+      },
+      "description": "Name the rooms of a group from the rooming list.\n`names` = [{\"reservation\": ..., \"guest_name\": ..., \"phone\": ...}, ...].\nEach named room gets its own guest profile (an existing one when the\nphone matches) and its open guest folio follows. Rows left blank or\nunchanged are skipped.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"group_booking\": \"<group_booking>\",\n  \"names\": \"<names>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "group_assign_rooms",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.group_assign_rooms",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.group_assign_rooms"
+       ]
+      },
+      "description": "Give every confirmed room of the group that has no room number a\nfree room of its type (the picked ones, or all).",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"group_booking\": \"<group_booking>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "group_cancel",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.group_cancel",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.group_cancel"
+       ]
+      },
+      "description": "Cancel the group's confirmed rooms (the picked ones, or all), each\nunder the cancellation policy. When no active room is left the group\nitself is marked Cancelled - unless nothing was cancelled here, or a\nroom has already stayed.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"group_booking\": \"<group_booking>\",\n  \"reason\": \"Guest request\",\n  \"waive_fee\": 0\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "group_amend_dates",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.group_amend_dates",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.group_amend_dates"
+       ]
+      },
+      "description": "Move the group's rooms (the picked ones, or all) to new dates. Each\nstay is re-quoted as amend_stay does, so pass confirm_price=1 once the\ndesk has accepted that prices may change. A guest on their own nights\nkeeps them relative to the group's arrival, inside the new dates.\n\nWhen every room moved, the group moves too: its rooms per night shift\nwith it, and the rooms it still holds must be free on the new dates, or\nthe whole change is refused.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"group_booking\": \"<group_booking>\",\n  \"check_in_date\": \"2026-08-01\",\n  \"check_out_date\": \"2026-08-03\",\n  \"confirm_price\": 0\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -5280,7 +5613,7 @@
         "kamra.api.save_group_blocks"
        ]
       },
-      "description": "Set the room block (list of {room_type, rooms_blocked, block_rate})\nand optionally the cutoff/status. Confirmed blocks hold inventory.",
+      "description": "Set the room block (list of {room_type, rooms_blocked, block_rate,\nnightly_counts}) and optionally the cutoff/status, allowed shortfall %\nand deposit due. Confirmed blocks hold inventory. A row sent without\nnightly_counts keeps its rooms per night while its Rooms Blocked is\nunchanged; a new Rooms Blocked makes every night that number.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"group_booking\": \"<group_booking>\",\n  \"blocks\": \"<blocks>\"\n}",
@@ -13543,7 +13876,7 @@
         "kamra.ledger.group_checkout"
        ]
       },
-      "description": "Quick-checkout every Checked In reservation on a group.",
+      "description": "Quick-checkout every Checked In reservation on a group, or only the\n`reservations` picked on the rooming list.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"group\": \"<group>\"\n}",
@@ -17185,7 +17518,7 @@
       "description": "Guest completes pre-arrival check-in and signs the registration card\n(PRD FR-20 - details + declaration + e-signature; the signed card becomes\nthe paperless GRC the desk views at arrival). The guest can attach a\nphoto of their ID - camera capture or upload - stored privately.",
       "body": {
        "mode": "raw",
-       "raw": "{\n  \"token\": \"<token>\",\n  \"id_type\": \"<id_type>\",\n  \"id_number\": \"<id_number>\",\n  \"email\": \"guest@example.com\",\n  \"nationality\": \"\",\n  \"address_line\": \"\",\n  \"city\": \"\",\n  \"eta\": \"\",\n  \"special_requests\": \"\",\n  \"signature\": \"\",\n  \"consent\": 0,\n  \"id_image\": \"\",\n  \"address_image\": \"\"\n}",
+       "raw": "{\n  \"token\": \"<token>\",\n  \"id_type\": \"<id_type>\",\n  \"id_number\": \"<id_number>\",\n  \"email\": \"guest@example.com\",\n  \"nationality\": \"\",\n  \"address_line\": \"\",\n  \"city\": \"\",\n  \"eta\": \"\",\n  \"special_requests\": \"\",\n  \"signature\": \"\",\n  \"consent\": 0,\n  \"id_image\": \"\",\n  \"address_image\": \"\",\n  \"occupants\": \"\"\n}",
        "options": {
         "raw": {
          "language": "json"

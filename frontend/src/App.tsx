@@ -26,6 +26,7 @@ const GuestJourney = lazy(() => import("./screens/GuestJourney"))
 const HkApp = lazy(() => import("./screens/HkApp"))
 const Guests = lazy(() => import("./screens/Guests"))
 const RegistrationCard = lazy(() => import("./screens/RegistrationCard"))
+const GroupQuotation = lazy(() => import("./screens/GroupQuotation"))
 const CancellationLetter = lazy(() => import("./screens/CancellationLetter"))
 const AllowanceVoucher = lazy(() => import("./screens/AllowanceVoucher"))
 const TripConfirmation = lazy(() => import("./screens/TripConfirmation"))
@@ -199,6 +200,7 @@ export default function App() {
             element={<ConfiguredScreen config="reservationsConfig" />}
           />
           <Route path="grc/:name" element={<RegistrationCard />} />
+          <Route path="group-quote/:name" element={<GroupQuotation />} />
           <Route path="cancelled/:name" element={<CancellationLetter />} />
           <Route path="trip/:name" element={<TripConfirmation />} />
           <Route path="guests" element={<Guests />} />
