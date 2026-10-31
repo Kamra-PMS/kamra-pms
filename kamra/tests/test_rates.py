@@ -114,5 +114,6 @@ class RatesTestCase(AuditTestCase):
 		self.assertEqual(q5["totals"]["total"], 378.0)
 		q5b = pricing.quote(PROP_A, self.rt, self.day, self.next, adults=5, children=0,
 		                    over_capacity_charge=50)
-		print("Q5B", q5b["room_total"], q5b["totals"]["total"])
+		self.assertEqual(q5b["room_total"], 360.0)
+		self.assertEqual(q5b["totals"]["total"], 430.5)
 
