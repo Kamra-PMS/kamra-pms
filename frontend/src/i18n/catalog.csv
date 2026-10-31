@@ -5192,9 +5192,10 @@ Setup style,Setup style,نمط التجهيز,Tipo de montaje,screens/BanquetFun
 setup wizard,setup wizard,معالج الإعداد,asistente de configuración,,,translated
 Severity,Severity,الأهمية,Gravedad,,,translated
 SGST ({rate}%),SGST ({rate}%),SGST ({rate}%),SGST ({rate}%),,rate,translated
-Share,Share,الحصة,Participación,screens/FolioView.tsx; screens/RevenueReports.tsx,,translated
+Share,Share,الحصة,Participación,screens/RevenueReports.tsx,,translated
 Share %,Share %,الحصة %,Participación %,,,translated
 Share charges with the other guests' bills,Share charges with the other guests' bills,مشاركة الرسوم مع فواتير الضيوف الآخرين,Compartir cargos con las cuentas de los otros huéspedes,screens/FolioView.tsx,,translated
+Share these charges,Share these charges,تقسيم هذه الرسوم,Repartir estos cargos,screens/FolioView.tsx,,translated
 Share with property,Share with property,مشاركة مع العقار,Compartir con la propiedad,screens/Reports.tsx,,translated
 Shared,Shared,مشترك,Compartido,screens/Reports.tsx; screens/Setup.tsx,,translated
 Shared playground - not your hotel. Data is wiped every night.,Shared playground - not your hotel. Data is wiped every night.,ملعب مشترك - ليس فندقك. تُمسح البيانات كل ليلة.,Entorno de demostración compartido. Los datos se borran cada noche.,,,translated

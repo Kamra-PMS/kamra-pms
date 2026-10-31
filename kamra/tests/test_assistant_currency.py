@@ -156,3 +156,26 @@ class AssistantCurrencyTestCase(unittest.TestCase):
 		tool_desc = assistant.TOOLS["booking_options"][1]
 		self.assertIn("Do not use its base_price to quote stays", tool_desc)
 		self.assertIn("call `quote` for actual pricing", tool_desc)
+
+	def test_out_of_credit_is_said_plainly_on_every_chat_path(self):
+		settings = SimpleNamespace(enabled=True, base_url="https://provider.example.test/v1",
+		                           model="m", get_password=Mock(return_value="k"))
+		broke = Mock(status_code=429, text=json.dumps(
+			{"error": {"code": "insufficient_quota", "message": "You exceeded your current quota"}}))
+		history = [{"role": "user", "content": "hi"}]
+		with ExitStack() as stack:
+			stack.enter_context(patch.object(assistant, "_settings", return_value=settings))
+			stack.enter_context(patch.object(assistant, "_system_prompt", return_value="sys"))
+			stack.enter_context(patch.object(assistant, "_tool_defs", return_value=[]))
+			stack.enter_context(patch.object(assistant, "_post_chat", return_value=broke))
+			with self.assertRaises(frappe.ValidationError) as err:
+				unwrap(assistant.ask)("P", history)
+			self.assertIn("out of credit", str(err.exception))
+			for fn in (assistant.ask_stream, assistant.help_ask):
+				body = unwrap(fn)("P", history).get_data(as_text=True)
+				self.assertIn('"code": "out_of_credit"', body, fn.__name__)
+				self.assertNotIn("AI provider error", body)
+		# any other failure keeps the provider's own error
+		self.assertIn("AI provider error (500)",
+		              assistant._provider_error(Mock(status_code=500, text="boom")))
+		self.assertTrue(assistant._out_of_credit(Mock(status_code=402, text="")))

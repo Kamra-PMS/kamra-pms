@@ -225,6 +225,8 @@ interface FolioRow {
   grand_total: number
   payments_total: number
   balance: number
+  /** the company a Company or Group bill goes to */
+  company?: string | null
 }
 
 interface FolioDoc {
@@ -341,6 +343,7 @@ export function StayBilling({ d, onChanged }: { d: RoomDetail; onChanged: () => 
               <span className="min-w-0">
                 <span className="block font-medium text-zinc-800">
                   {t("{type} folio", { type: t(f.folio_type) })}
+                  {f.company && ` · ${f.company}`}
                   {f.status === "Closed" && ` · ${t("Closed")}`}
                 </span>
                 <span className="block text-xs text-zinc-500">
@@ -487,7 +490,7 @@ export function StayBilling({ d, onChanged }: { d: RoomDetail; onChanged: () => 
               >
                 {(folios ?? []).map((f) => (
                   <option key={f.name} value={f.name}>
-                    {t("{type} folio", { type: t(f.folio_type) })} · {fmtMoney(f.balance)}
+                    {t("{type} folio", { type: t(f.folio_type) })}{f.company ? ` · ${f.company}` : ""} · {fmtMoney(f.balance)}
                   </option>
                 ))}
               </select>

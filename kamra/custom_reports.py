@@ -605,12 +605,17 @@ PACKS: dict[str, dict] = {
 			 "columns": ["charge_type", "amount"], "group_by": ["charge_type"]},
 			{"title": "Voids and allowances", "dataset": "voids"},
 		],
+		# a manager's pack: occupancy and money, so never the front desk
+		"figures": True,
 	},
 }
 
 
 def _pack_sections(property: str, pack_id: str) -> list[dict]:
 	"""The sections of a pack this user may run on this property."""
+	from kamra.dashboards import sees_figures
+	if PACKS[pack_id].get("figures") and not sees_figures():
+		return []
 	return [s for s in PACKS[pack_id]["sections"]
 	        if _dataset_allowed(DATASETS[s["dataset"]])
 	        and _module_enabled(property, DATASETS[s["dataset"]].get("module"))]
