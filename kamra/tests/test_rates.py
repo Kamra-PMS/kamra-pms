@@ -107,8 +107,12 @@ class RatesTestCase(AuditTestCase):
 		self.assertEqual(q4["room_total"], 360.0)
 		self.assertEqual(q4["totals"]["total"], 378.0)
 
-		# 5 Adults: 4 adults (360) + 1 rollaway extra bed (50) = 410 (+ 5% tax 20.5 = 430.5)
-		# (Or if extra bed is zero, 360)
+		# 5 Adults: above capacity. The quote prices the room for its 4; the
+		# guest over capacity is charged by the caller's over_capacity_charge
 		q5 = pricing.quote(PROP_A, self.rt, self.day, self.next, adults=5, children=0)
-		self.assertGreaterEqual(q5["totals"]["total"], 378.0)
+		self.assertEqual(q5["room_total"], 360.0)
+		self.assertEqual(q5["totals"]["total"], 378.0)
+		q5b = pricing.quote(PROP_A, self.rt, self.day, self.next, adults=5, children=0,
+		                    over_capacity_charge=50)
+		print("Q5B", q5b["room_total"], q5b["totals"]["total"])
 
