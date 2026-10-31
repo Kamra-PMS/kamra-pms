@@ -185,6 +185,8 @@ interface SiblingFolio {
   payments_total: number
   /** a guest's own bill in a shared room, made out to them */
   bill_to_name?: string | null
+  /** the company a Company or Group bill goes to */
+  company?: string | null
 }
 
 /** A distinct label per folio. Extras get numbered when there's more than
@@ -198,7 +200,9 @@ function folioLabel(siblings: SiblingFolio[], s: SiblingFolio, tr: (s: string, v
     if (same.length <= 1) return tr("Extra")
     return tr("Extra {n}", { n: same.findIndex((x) => x.name === s.name) + 1 })
   }
-  const type = tr(s.folio_type)
+  // a company bill names its company: a group member can carry its own
+  // company's bill next to the group's
+  const type = s.company ? `${tr(s.folio_type)} · ${s.company}` : tr(s.folio_type)
   if (same.length <= 1) return type
   if (s.status === "Closed")
     return s.invoice_number ? `${type} · ${s.invoice_number}` : tr("{type} · settled", { type })
