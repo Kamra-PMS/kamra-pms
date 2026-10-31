@@ -56,7 +56,7 @@ pantalla los muestra, pero no tiene botón para ellos.
 Cuando pulsa **Iniciar** en una solicitud de **Mantenimiento** que tiene habitación,
 Kamra añade una tarea de **Mantenimiento** a la cola de limpieza de esa habitación,
 con la prioridad de la solicitud y una nota *From ticket TKT-…*. Aparece en
-el [Panel de habitaciones y la aplicación del teléfono](/es/housekeeping). Si la habitación ya
+el [Panel de limpieza y la aplicación del teléfono](/es/housekeeping). Si la habitación ya
 tiene una tarea de mantenimiento abierta, no se crea una segunda.
 
 ## De dónde vienen las solicitudes

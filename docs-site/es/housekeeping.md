@@ -2,12 +2,12 @@
 
 El módulo de Limpieza mantiene al día el estado de cada habitación y
 organiza las limpiezas en el orden correcto. Los supervisores y la
-recepción siguen el **Panel de habitaciones**; el personal de limpieza
+recepción siguen el **Panel de limpieza**; el personal de limpieza
 trabaja desde la **aplicación móvil**, donde toma habitaciones, las marca
 como terminadas, registra cargos de minibar y anota objetos perdidos. La
 lavandería de huéspedes funciona desde el mismo módulo.
 
-![El Panel de habitaciones: cada habitación por piso, con un color según su estado, el huésped alojado y la tarea abierta con su responsable](/img/housekeeping/room-board.png)
+![El Panel de limpieza: cada habitación por piso, con un color según su estado, el huésped alojado y la tarea abierta con su responsable](/img/housekeeping/room-board.png)
 
 ## Antes de empezar
 
@@ -16,12 +16,12 @@ lavandería de huéspedes funciona desde el mismo módulo.
      aplicación móvil, la lista de tareas, la lavandería y los objetos
      perdidos, y puede marcar habitaciones como **Limpia** o **Sucia**.
    - **Supervisor de limpieza** para los supervisores. Incluye todo lo
-     que puede hacer Limpieza, más el **Panel de habitaciones**, el
+     que puede hacer Limpieza, más el **Panel de limpieza**, el
      permiso para marcar habitaciones como **Inspeccionada**, **Listo** o
      **Fuera de servicio**, aprobar inspecciones y asignar tareas, y
      **Configuración → Limpieza**.
    - Los roles **Recepción** y **Administrador del hotel** también pueden
-     usar el Panel de habitaciones y poner cualquier estado.
+     usar el Panel de limpieza y poner cualquier estado.
 2. **Defina los plazos de las tareas** en **Configuración → Limpieza →
    Plazos de las tareas** (consulte [Configuración](#configuracion)).
    Kamra los usa para marcar las limpiezas atrasadas y escalarlas.
@@ -56,9 +56,9 @@ lavandería de huéspedes funciona desde el mismo módulo.
 Cada tarea recibe un plazo al crearse: los minutos de su prioridad en
 **Plazos de las tareas**.
 
-## Revise todas las habitaciones en el Panel de habitaciones
+## Revise todas las habitaciones en el Panel de limpieza
 
-1. Abra **Limpieza → Panel de habitaciones**.
+1. Abra **Limpieza → Panel de limpieza**.
 2. Cada recuadro muestra el número de habitación, su estado, el huésped
    alojado y la tarea abierta con su tipo y responsable. Un icono de cama
    indica que la habitación está ocupada; un icono de flecha indica que
@@ -79,12 +79,12 @@ limpió y cuándo, incidencias, las próximas semanas) y sus cifras, abra
 
 ## Cambie el estado de una habitación
 
-1. En el Panel de habitaciones, haga clic en la habitación.
+1. En el Panel de limpieza, haga clic en la habitación.
 2. Elija **Marcar como Limpia**, **Marcar como Sucia**, **Marcar como
    Inspeccionada**, **Marcar como Listo** o **Marcar como Fuera de
    servicio**.
 
-![El menú de una habitación en el Panel de habitaciones con las opciones Marcar y, debajo, la lista para asignar la tarea de la habitación a un miembro del personal de limpieza](/img/housekeeping/room-board-menu.png)
+![El menú de una habitación en el Panel de limpieza con las opciones Marcar y, debajo, la lista para asignar la tarea de la habitación a un miembro del personal de limpieza](/img/housekeeping/room-board-menu.png)
 
 **Listo** significa que la habitación pasó su inspección, en los hoteles
 que inspeccionan cada limpieza por salida (consulte
@@ -189,7 +189,7 @@ El personal toma habitaciones de **Disponibles** por su cuenta. Un
 supervisor también puede entregar la tarea abierta de una habitación a
 una persona concreta:
 
-1. En el Panel de habitaciones, haga clic en la habitación.
+1. En el Panel de limpieza, haga clic en la habitación.
 2. En **Asignar *tarea* a** (por ejemplo **Asignar Limpieza por salida
    a**), elija a la persona en **Seleccione a un miembro del personal de
    limpieza…**.
@@ -385,7 +385,7 @@ limpieza). **Módulo activado** oculta o muestra todo el módulo.
   la habitación como **Inspeccionada**, o **Listo** cuando las
   inspecciones están activadas.
 - Las fotos y vídeos de una tarea pueden ocupar hasta 25 MB cada uno.
-- La aplicación móvil y el Panel de habitaciones se actualizan solos
+- La aplicación móvil y el Panel de limpieza se actualizan solos
   cada 20 y 30 segundos; toque **Actualizar** después de un cambio hecho
   en otro dispositivo.
 - Una solicitud de recogida de lavandería necesita un huésped con entrada
@@ -427,7 +427,7 @@ las tareas esperan allí hasta que alguien las tome.
 
 ## Para desarrolladores
 
-La aplicación móvil, el Panel de habitaciones y las tareas funcionan con
+La aplicación móvil, el Panel de limpieza y las tareas funcionan con
 endpoints de `kamra.api` (`hk_queue`, `hk_update_task`, `hk_claim_task`,
 `hk_accept_task`, `hk_reject_task`, `hk_assign_task`, `hk_staff`,
 `hk_post_consumable`, `hk_log_item`, `room_board`,
