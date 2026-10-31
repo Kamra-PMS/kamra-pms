@@ -258,7 +258,19 @@ def site_info():
 		# kamra_build (a short commit id) is optional.
 		"channel": (frappe.conf.get("kamra_channel") or "")[:20] or None,
 		"build": (frappe.conf.get("kamra_build") or "")[:12] or None,
+		**_brand(),
 	}
+
+
+def _brand() -> dict:
+	"""A hotel's or partner's own name and logo, shown next to Kamra's
+	(co-branding, as ERPNext does). Read from Frappe's own Website and Navbar
+	Settings; Frappe's stock app name "Frappe" counts as not set."""
+	name = (frappe.get_website_settings("app_name") or "").strip()
+	logo = (frappe.get_website_settings("app_logo")
+	        or frappe.db.get_single_value("Navbar Settings", "app_logo"))
+	return {"brand_name": None if name in ("", "Frappe") else name,
+	        "brand_logo": logo or None}
 
 
 @frappe.whitelist(allow_guest=True)
