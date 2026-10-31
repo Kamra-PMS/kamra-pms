@@ -1,10 +1,15 @@
 {
-  "latest": "2.7.1",
+  "latest": "2.7.2",
   "versions": [
     {
-      "version": "2.7.1",
-      "label": "2.7.1 (latest)",
+      "version": "2.7.2",
+      "label": "2.7.2 (latest)",
       "path": "/"
+    },
+    {
+      "version": "2.7.1",
+      "label": "2.7.1",
+      "path": "/v2.7.1/"
     },
     {
       "version": "2.7.0",
