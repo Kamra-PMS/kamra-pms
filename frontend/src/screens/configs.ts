@@ -51,7 +51,7 @@ export const roomTypesConfig: ScreenConfig = {
     { field: "base_price", label: `Base ${cur()}/night` },
     { field: "base_occupancy", label: "Base occ." },
     { field: "extra_adult_price", label: `Extra adult ${cur()}` },
-    { field: "tax_percent", label: "GST %" },
+    { field: "tax_percent", label: "Tax %" },
   ],
   form: [
     { field: "room_type_name", label: "Name", type: "data", required: true },
@@ -63,7 +63,7 @@ export const roomTypesConfig: ScreenConfig = {
     { field: "single_occupancy_price", label: "Single occupancy price", type: "currency", dependsOn: (d) => d.room_category !== "Villa" },
     { field: "extra_adult_price", label: "Extra adult / night", type: "currency" },
     { field: "child_price", label: "Extra child / night", type: "currency", hint: "Additional charge per child per night (0 = free)" },
-    { field: "tax_percent", label: "GST %", type: "float" },
+    { field: "tax_percent", label: "Tax %", type: "float" },
     { field: "children_within_base_occupancy", label: "Children count towards base occupancy", type: "check", hint: "Only guests beyond the base occupancy are charged, children included" },
     { field: "adults_capacity", label: "Max adults", type: "int" },
     { field: "children_capacity", label: "Max children", type: "int" },
@@ -665,12 +665,12 @@ export const outletsConfig: ScreenConfig = {
   columns: [
     { field: "outlet_name", label: "Outlet" },
     { field: "outlet_type", label: "Type", badge: true },
-    { field: "gst_rate", label: "GST %" },
+    { field: "gst_rate", label: "Tax %" },
   ],
   form: [
     { field: "outlet_name", label: "Outlet name", type: "data", required: true },
     { field: "outlet_type", label: "Type", type: "select", options: ["Restaurant", "Room Service", "Bar", "Spa", "Other"] },
-    { field: "gst_rate", label: "GST %", type: "float" },
+    { field: "gst_rate", label: "Tax %", type: "float" },
     { field: "disabled", label: "Disabled", type: "check" },
     {
       field: "kot_mode",
