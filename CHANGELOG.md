@@ -26,6 +26,13 @@ upgrade-breaking changes (removed doctypes / API contracts).
   quotation, desk-led guest response, department checklists + notify on
   Confirm (Sales/Finance/HK/F&B), and quote no-response chase reminders
 
+## [2.7.2](https://github.com/Kamra-PMS/kamra-pms/compare/v2.7.1...v2.7.2) (2026-10-31)
+
+
+### Bug Fixes
+
+* SI call list leftovers, room screen names, room pricing, es/ar help ([#447](https://github.com/Kamra-PMS/kamra-pms/issues/447)) ([e9aa8aa](https://github.com/Kamra-PMS/kamra-pms/commit/e9aa8aa27539ca9e730b62811f6c197e657644ab))
+
 ## [2.7.1](https://github.com/Kamra-PMS/kamra-pms/compare/v2.7.0...v2.7.1) (2026-10-31)
 
 
