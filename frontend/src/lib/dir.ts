@@ -22,7 +22,10 @@ export const LANGS: LangDef[] = [
 
 export type Lang = string
 
-const KEY = "kamra-lang"
+// Guest pages keep their own choice: a guest (or staff previewing /book)
+// picking Spanish there must not switch the desk, and the reverse.
+const GUEST_PAGE = /^(\/kamra)?\/(book|stay|checkin)(\/|$)/
+const key = () => (GUEST_PAGE.test(window.location.pathname) ? "kamra-guest-lang" : "kamra-lang")
 const codes = new Set(LANGS.map((l) => l.code))
 
 export function langDef(code: string): LangDef {
@@ -30,7 +33,7 @@ export function langDef(code: string): LangDef {
 }
 
 export const getLang = (): Lang => {
-  const raw = localStorage.getItem(KEY) || "en"
+  const raw = localStorage.getItem(key()) || "en"
   return codes.has(raw) ? raw : "en"
 }
 
@@ -43,7 +46,7 @@ export function applyLang(l: Lang) {
 
 export function setLang(l: Lang) {
   const code = codes.has(l) ? l : "en"
-  localStorage.setItem(KEY, code)
+  localStorage.setItem(key(), code)
   applyLang(code)
   // let listeners (React trees) re-render with the new direction/strings
   window.dispatchEvent(new Event("kamra:lang"))
@@ -52,7 +55,7 @@ export function setLang(l: Lang) {
 /** Public guest pages follow the browser language until the guest chooses. */
 export function adoptBrowserLanguage() {
   try {
-    if (localStorage.getItem(KEY)) return
+    if (localStorage.getItem(key())) return
     const browserLang = navigator.language?.toLowerCase().split("-")[0]
     if (browserLang && browserLang !== "en" && codes.has(browserLang))
       setLang(browserLang)

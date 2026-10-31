@@ -56,3 +56,23 @@ class PublicBookingTestCase(IntegrationTestCase):
 
 	def test_showcase_says_whether_tiers_apply(self):
 		self.assertIs(showcase(self.property)["property"]["has_cancellation_tiers"], False)
+
+	def test_link_previews_get_the_hotels_meta_and_staff_pages_stay_private(self):
+		from kamra.www.kamra import _with_meta
+
+		frappe.db.set_value("Property", self.property, {"meta_title": "Sea View Inn",
+			"meta_description": "Rooms <b>by</b> the sea.", "og_image": "/files/sea.jpg"})
+		shell = '<html><head><meta\n  name="description"\n  content="Kamra" />\n<title>Kamra PMS</title></head></html>'
+		from kamra.booking_slugs import slugify
+		frappe.form_dict.property = slugify(frappe.db.get_value("Property", self.property, "property_name"))
+		try:
+			page = _with_meta(shell, "/kamra/book")
+		finally:
+			frappe.form_dict.pop("property", None)
+		self.assertIn("<title>Sea View Inn</title>", page)
+		self.assertIn('property="og:image" content="http', page)
+		self.assertIn("&lt;b&gt;by&lt;/b&gt;", page)  # escaped, never raw HTML
+		self.assertNotIn('content="Kamra"', page)
+		self.assertNotIn("noindex", page)
+		self.assertIn("noindex", _with_meta(shell, "/kamra/folio/F-1"))
+		self.assertIn("noindex", _with_meta(shell, "/kamra/checkin/abc"))
