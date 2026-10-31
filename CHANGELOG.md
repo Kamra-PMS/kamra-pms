@@ -32,6 +32,19 @@ upgrade-breaking changes (removed doctypes / API contracts).
 ### Features
 
 * groups, booking engine language and previews, co-branding ([#437](https://github.com/Kamra-PMS/kamra-pms/issues/437)) ([6110409](https://github.com/Kamra-PMS/kamra-pms/commit/611040964a012fee1157bf6b8f9e5c5fcffcdffd))
+  * **groups:** rooming-list booking with group rate, deposit and quotation; group rates price through the stay's agreed rate; changing a group's rate needs Revenue Manager or Hotel Admin; a guest's self check-in link never changes the price ([#422](https://github.com/Kamra-PMS/kamra-pms/pull/422), @Kruthikagowda12)
+  * **booking-engine:** link previews and search show the hotel's title, description and image; a booking engine language in Booking engine settings; a language dropdown; the booking page and the desk keep separate languages ([#435](https://github.com/Kamra-PMS/kamra-pms/pull/435))
+  * **assistant:** quotes with the exact guests and dates and gives the total payable; booking from a quote keeps its guests and nights ([#432](https://github.com/Kamra-PMS/kamra-pms/pull/432), @SandroG1977)
+  * **branding:** the hotel's own name and logo next to Kamra's ([#436](https://github.com/Kamra-PMS/kamra-pms/pull/436), building on [#431](https://github.com/Kamra-PMS/kamra-pms/pull/431) by @pmwanje2); TRADEMARK.md ([#434](https://github.com/Kamra-PMS/kamra-pms/pull/434))
+  * **i18n:** Portuguese city ledger labels and "Reservar" ([#433](https://github.com/Kamra-PMS/kamra-pms/pull/433))
+
+### Upgrade notes
+
+* Run `bench migrate`: new Property field `booking_language`, new Stay Occupant field `guest_stated_age`, Group Booking and Group Room Block changes
+
+### Thanks
+
+@Kruthikagowda12, @SandroG1977 and @pmwanje2 for this release.
 
 ## [2.7.0](https://github.com/Kamra-PMS/kamra-pms/compare/v2.6.23...v2.7.0) (2026-10-30)
 
