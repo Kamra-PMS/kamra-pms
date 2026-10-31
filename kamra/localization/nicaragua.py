@@ -28,8 +28,12 @@ import frappe
 
 DEFAULT_VAT = Decimal("15")
 DEFAULT_CURRENCY = "NIO"
+# foreign money guests bring most; Settings, Finance, Exchange rates can change it
+FX_CURRENCIES = ["USD", "EUR", "CRC", "HNL", "MXN", "CAD"]
 DEFAULT_TIMEZONE = "America/Managua"
 DEFAULT_NATIONALITY = "Nicaraguan"
+# a passport or ID card MRZ names the country by this code
+HOME_COUNTRY_ISO3 = "NIC"
 ID_TYPES = ["National ID", "Passport", "Residence Card", "Driving License", "Other"]
 PAYMENT_MODES = ["Cash", "Card", "Bank Transfer"]
 ROOM_LEVY_LABEL = "INTUR"

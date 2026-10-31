@@ -26,6 +26,36 @@ upgrade-breaking changes (removed doctypes / API contracts).
   quotation, desk-led guest response, department checklists + notify on
   Confirm (Sales/Finance/HK/F&B), and quote no-response chase reminders
 
+## [2.7.0](https://github.com/Kamra-PMS/kamra-pms/compare/v2.6.23...v2.7.0) (2026-10-30)
+
+
+### Features
+
+* **groups:** main room pays for the group, staggered check-in, group booking flow ([#397](https://github.com/Kamra-PMS/kamra-pms/issues/397)) ([a4e2c31](https://github.com/Kamra-PMS/kamra-pms/commit/a4e2c31e469a2cf29e6ebd021aeb55706d184146))
+* **localization:** add Nicaragua country pack ([#398](https://github.com/Kamra-PMS/kamra-pms/issues/398)) ([d3a68bf](https://github.com/Kamra-PMS/kamra-pms/commit/d3a68bfac78106509790611455ae5744b00d6692))
+* SI call list release ([#411](https://github.com/Kamra-PMS/kamra-pms/issues/411)) ([#425](https://github.com/Kamra-PMS/kamra-pms/issues/425)) ([cfa3b89](https://github.com/Kamra-PMS/kamra-pms/commit/cfa3b8901114919c1a92793cd7885fa1411d9d5a))
+  * **front-desk:** ID scanning with a card per guest and group check-in; undo a checkout the same business day; extra guest arrival times and early checkout; quick fixes from the call list
+  * **finance:** accounts receivable with company accounts, direct invoices and transfers; month-end bill per company; accounts payable, a five-day cash view, P&L and balance sheet
+  * **billing:** pay and show bills in another currency; allowance approval; a bill per guest sharing a room; change company
+  * **pos:** move a restaurant bill to the right room the same day; waiter and cashier on the bill; kitchen start and pickup times; F&B Manager role
+  * **night-audit:** report with year to date, food and beverage, outlets, banquets, brought and carried forward; owner view for phones
+  * **crs:** itineraries, one trip across several properties
+  * **security:** ledger entries are read-only outside Kamra's money code; the dashboard hides money and occupancy from the front desk
+  * **localization:** core is country-neutral: ID rules, financial year, UPI and invoice tax notes live in the country packs
+  * **i18n:** Portuguese hotel wording across the pack (review by @SandroG1977)
+
+
+### Bug Fixes
+
+* **booking-engine:** stop /book crashing on bad URLs, redesign the page, dress the demo ([#400](https://github.com/Kamra-PMS/kamra-pms/issues/400)) ([15aa82a](https://github.com/Kamra-PMS/kamra-pms/commit/15aa82ac743ff3c254f9608e8418c5b5dfee68d2))
+* **ui:** friendly crash, offline and session-ended handling ([#399](https://github.com/Kamra-PMS/kamra-pms/issues/399)) ([082323f](https://github.com/Kamra-PMS/kamra-pms/commit/082323f3849fbf23dc08e4a03c4a0f2b377c136f))
+
+### Upgrade notes
+
+* Run `bench migrate`: new fields and doctypes, and the patches `kamra.patches.v46.ledger_custom_perms_readonly`, `kamra.patches.v46.backfill_pos_order_business_date` and `kamra.patches.v46.backfill_property_short_code`
+* New role F&B Manager. Folio Ledger Entry, City Ledger Entry, Credit Note, Vendor and Itinerary are read-only for business roles in Desk
+* ChatGPT users connected over MCP before this release reconnect once
+
 ## [2.6.23](https://github.com/Kamra-PMS/kamra-pms/compare/v2.6.22...v2.6.23) (2026-10-28)
 
 

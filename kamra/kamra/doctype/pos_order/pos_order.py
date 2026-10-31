@@ -5,6 +5,8 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 
+from kamra.localization import money_text
+
 
 class POSOrder(Document):
 	def validate(self):
@@ -20,6 +22,24 @@ class POSOrder(Document):
 		self.order_total = 0.0 if self.nc else subtotal - discount
 		self.guard_room_posting()
 		self.guard_bill_close()
+		self.stamp_cashier()
+
+	def stamp_cashier(self):
+		"""The cashier on the bill: whoever closes it (pay_order, a room
+		posting or an NC close all land here). Set once, on the close, and
+		only here: a value sent by a client is put back. A user with no till
+		role (Guest, Administrator, an integration account) leaves it blank."""
+		previous = self.get_doc_before_save()
+		self.settled_by = previous.settled_by if previous else None
+		if self.status != "Delivered" or self.settled_by or \
+				(previous and previous.status == "Delivered"):
+			return
+		from kamra.authz import ADMIN
+		from kamra.pos import POS_ROLES
+		user = frappe.session.user
+		if user not in ("Guest", "Administrator") and \
+				set(POS_ROLES + ADMIN) & set(frappe.get_roles(user)):
+			self.settled_by = user
 
 	def charges_to_room(self) -> bool:
 		"""The bill is meant for a guest's room: room service, or any order
@@ -50,14 +70,14 @@ class POSOrder(Document):
 				if self.room else _("this bill"))
 			frappe.throw(_(
 				"{0} has no checked-in guest to post to. Take payment at the "
-				"outlet (Cash, Card or UPI) to close it.").format(where))
+				"outlet to close it.").format(where))
 
 	def guard_bill_close(self):
 		"""Delivered means the BILL is closed, not that the food left the
 		pass (the kitchen tracks that per line: kot_status Prepared). A bill
 		closes only when it is settled one of three ways:
 
-		- paid at the outlet (pay_order: Cash / Card / UPI),
+		- paid at the outlet (pay_order: Cash / Card / the country's instant modes),
 		- signed to a checked-in guest's room (guard_room_posting checks the
 		  stay; on_update posts it to the folio),
 		- complimentary (NC) authorized through mark_nc.
@@ -71,8 +91,7 @@ class POSOrder(Document):
 			return
 		if self.paid:
 			if not self.payment_mode:
-				frappe.throw(_("A paid bill needs its payment mode "
-				              "(Cash, Card or UPI)."))
+				frappe.throw(_("A paid bill needs its payment mode."))
 			return
 		if self.nc:
 			if not (self.nc_authorized_by or "").strip():
@@ -86,7 +105,7 @@ class POSOrder(Document):
 		if not any(not it.voided for it in self.items):
 			return
 		frappe.throw(_(
-			"This bill is not settled. Take payment (Cash, Card or UPI), "
+			"This bill is not settled. Take payment at the outlet, "
 			"charge it to an in-house guest's room, or mark it NC with "
 			"an authorization before closing it."))
 
@@ -95,9 +114,11 @@ class POSOrder(Document):
 		old_status = previous.status if previous else None
 		if self.status != "Delivered" or old_status == "Delivered":
 			return
+		from kamra.business_date import get_business_date
+		self.db_set("business_date", get_business_date(self.property), update_modified=False)
 		if self.posted_to_folio or not self.reservation:
 			return
-		# settled at the outlet (cash/card/UPI) - never also post to the room
+		# settled at the outlet (cash, card...) - never also post to the room
 		if self.paid:
 			return
 		# complimentary - there is nothing to charge anywhere
@@ -139,9 +160,11 @@ class POSOrder(Document):
 		self.db_set("posted_to_folio", 1, update_modified=False)
 		from kamra.webhooks import emit_folio_posted
 		emit_folio_posted(folio, folio.charges[-1])
+		from kamra.whatsapp import queue_room_charge_alert
+		queue_room_charge_alert(folio, folio.charges[-1])
 
 		from kamra.savings import log_action
 		log_action("post_pos_order", "POS Order", self.name, self.property,
 		           minutes_saved=5 if self.source in ("AI Agent", "QR") else 0,
-		           rationale=f"₹{self.order_total:,.0f} {detail} → {folio.name}",
+		           rationale=f"{money_text(self.property, round(self.order_total or 0))} {detail} → {folio.name}",
 		           channel="API")

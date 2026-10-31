@@ -175,6 +175,14 @@ def check_company_credit(account_or_company: str, property: str,
 			"Over the credit limit by {0}{1:,.2f} (limit {0}{2:,.2f}, owed and "
 			"billed with this {0}{3:,.2f}).").format(
 				sym, out["over_limit_by"], limit, exposure))
+	restricted = account and frappe.db.get_value(
+		"City Ledger Account", account, ["restricted", "restricted_reason"],
+		as_dict=True)
+	if restricted and restricted.restricted:
+		out["restricted"] = True
+		out["reasons"].append(_("The account is restricted{0}.").format(
+			f" ({restricted.restricted_reason})"
+			if restricted.restricted_reason else ""))
 	if out["overdue_amount"] > 0.005:
 		if out["grace_days"]:
 			out["reasons"].append(_(

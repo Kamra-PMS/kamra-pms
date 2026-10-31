@@ -70,7 +70,8 @@ type Session = {
 export default function CashierTill() {
   const { t } = useT()
   const { ensureUnlocked, withPin } = useCashierAuth()
-  const hasUpi = useLocale().payment_modes.includes("UPI")
+  // the country's instant modes (system_upi bucket), "" where it has none
+  const instant = useLocale().instant_payment_modes.join(" / ")
   const [session, setSession] = useState<Session | null>(null)
   const [floatAmt, setFloatAmt] = useState("2000")
   const [counted, setCounted] = useState("")
@@ -336,8 +337,9 @@ export default function CashierTill() {
               [t("Float"), session?.opening_float],
               [t("Cash in"), session?.system_cash ?? session?.totals?.cash],
               [t("Card"), session?.system_card ?? session?.totals?.card],
-              ...(hasUpi || Number(session?.system_upi ?? session?.totals?.upi)
-                ? [[t("UPI"), session?.system_upi ?? session?.totals?.upi]]
+              ...(instant ? [[t(instant), session?.system_upi ?? session?.totals?.upi]] : []),
+              ...(Number(session?.totals?.foreign_cash)
+                ? [[t("Foreign cash"), session?.totals?.foreign_cash]]
                 : []),
               [t("Paid outs"), session?.paid_outs],
               [t("Drops"), session?.drops],

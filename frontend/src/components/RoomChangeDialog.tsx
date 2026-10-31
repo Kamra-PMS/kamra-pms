@@ -164,6 +164,7 @@ export default function RoomChangeDialog(props: {
   }
 
   const freeCount = (rooms ?? []).filter((r) => r.free && !r.current).length
+  const currentType = (rooms ?? []).find((r) => r.current)?.room_type_name
 
   return (
     <div className="fixed inset-0 z-[60] flex items-end justify-center sm:items-center" role="dialog" aria-modal="true" aria-label={t("Change room")}>
@@ -175,7 +176,7 @@ export default function RoomChangeDialog(props: {
             <p className="text-sm text-zinc-500">
               {props.currentRoomNumber
                 ? t("Now in {room} · {n} rooms free for these dates", {
-                    room: props.currentRoomNumber,
+                    room: currentType ? `${props.currentRoomNumber} (${currentType})` : props.currentRoomNumber,
                     n: freeCount,
                   })
                 : t("{n} rooms free for these dates", { n: freeCount })}
@@ -278,7 +279,7 @@ export default function RoomChangeDialog(props: {
           {pick && (
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
               <span className="font-medium text-zinc-900">
-                {props.currentRoomNumber ?? "-"} <ArrowRight className="inline size-3.5" aria-hidden /> {pick.room_number}
+                {props.currentRoomNumber ?? "-"}{currentType ? ` (${currentType})` : ""} <ArrowRight className="inline size-3.5" aria-hidden /> {pick.room_number} ({pick.room_type_name})
               </span>
               {preview ? (
                 preview.difference === 0 ? (

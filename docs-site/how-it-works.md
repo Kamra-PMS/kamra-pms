@@ -194,7 +194,7 @@ Hard rules enforced in code:
 ## Auth, roles and property scope
 
 Roles (examples): Front Desk, Revenue Manager, Finance, Housekeeping,
-Hotel Admin, System Manager, Kamra Agent, Night Auditor.
+Hotel Admin, System Manager, Kamra Agent, Night Auditor, F&B Manager.
 
 Gates live on the endpoint (`@require_roles` / `_kamra_roles`), not only
 on DocPerms. Multi-property installs use Property User Permissions plus

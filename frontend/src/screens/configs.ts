@@ -6,11 +6,12 @@ const CompanyExtras = lazy(() => import("../components/CompanyExtras"))
 const EventLinks = lazy(() => import("../components/EventLinks"))
 const GroupControl = lazy(() => import("../components/GroupControl"))
 const RoomTypeMedia = lazy(() => import("../components/RoomTypeMedia"))
+const OutletWaiters = lazy(() => import("../components/OutletWaiters"))
 const HkTaskMediaPanel = lazy(() =>
   import("../components/HkMedia").then((m) => ({ default: m.HkTaskMediaPanel })),
 )
 const ReservationDetail = lazy(() => import("./ReservationDetail"))
-import { cur } from "../lib/money"
+import { cur, locale } from "../lib/money"
 
 export const roomsConfig: ScreenConfig = {
   doctype: "Room",
@@ -142,6 +143,7 @@ export const seasonsConfig: ScreenConfig = {
     { field: "minimum_nights", label: "Minimum nights", type: "int", hint: "Shortest stay allowed on these dates. 0 = no minimum" },
     { field: "non_refundable", label: "Non-refundable", type: "check", hint: "A stay touching these dates cannot be cancelled free of charge" },
     { field: "full_payment", label: "Full payment on booking", type: "check", hint: "Online bookings on these dates pay the whole amount, not the usual advance" },
+    { field: "advance_percent", label: "Advance % at booking", type: "float", hint: "Advance a booking on these dates owes (25, 50, 100). 0 = the property's usual deposit %. A stay crossing seasons owes the highest" },
     { field: "no_small_group", label: "No small-group rate", type: "check", hint: "Small parties pay the house rate on these dates, as on a weekend" },
     { field: "is_holiday", label: "Holiday / long weekend", type: "check", hint: "Quotes say these are holiday dates" },
     { field: "disabled", label: "Disabled", type: "check", hint: "Tick to deactivate; clear to activate" },
@@ -175,6 +177,27 @@ export const vouchersConfig: ScreenConfig = {
     { field: "min_nights", label: "Minimum nights", type: "int" },
     { field: "max_uses", label: "Max uses (0 = unlimited)", type: "int" },
     { field: "times_used", label: "Times used", type: "readonly" },
+    { field: "disabled", label: "Disabled", type: "check", hint: "Tick to deactivate; clear to activate" },
+  ],
+}
+
+export const longStayConfig: ScreenConfig = {
+  doctype: "Long Stay Discount",
+  title: "Long-stay Discounts",
+  description:
+    "A percentage off each room night for stays of N nights or more. The highest tier a stay reaches applies, and no night goes below its guardrail floor.",
+  propertyScoped: true,
+  orderBy: "min_nights asc",
+  columns: [
+    { field: "min_nights", label: "From nights" },
+    { field: "discount_percent", label: "Discount %" },
+    { field: "room_type", label: "Room type (blank = all)" },
+    { field: "disabled", label: "Status", statusCheck: true },
+  ],
+  form: [
+    { field: "min_nights", label: "Stays of at least (nights)", type: "int", required: true },
+    { field: "discount_percent", label: "Discount % off the room rate", type: "float", required: true },
+    { field: "room_type", label: "Room type (blank = all)", type: "link", linkDoctype: "Room Type" },
     { field: "disabled", label: "Disabled", type: "check", hint: "Tick to deactivate; clear to activate" },
   ],
 }
@@ -503,20 +526,20 @@ export const guardrailsConfig: ScreenConfig = {
 
 export const companiesConfig: ScreenConfig = {
   doctype: "Corporate Account",
-  title: "Corporate Accounts",
+  title: "Accounts Receivable",
   description: "Companies with negotiated rates and credit terms.",
   searchFields: ["company_name", "gstin"],
   pageSize: 25,
   columns: [
     { field: "company_name", label: "Company" },
-    { field: "gstin", label: "GSTIN" },
+    { field: "gstin", get label() { return locale().tax_id_label } },
     { field: "contact_name", label: "Contact" },
     { field: "contact_phone", label: "Phone" },
     { field: "credit_allowed", label: "Credit" },
   ],
   form: [
     { field: "company_name", label: "Company name", type: "data", required: true },
-    { field: "gstin", label: "GSTIN", type: "data" },
+    { field: "gstin", get label() { return locale().tax_id_label }, type: "data" },
     { field: "contact_name", label: "Contact name", type: "data" },
     { field: "contact_phone", label: "Contact phone", type: "data" },
     { field: "contact_email", label: "Contact email", type: "data" },
@@ -657,6 +680,7 @@ export const outletsConfig: ScreenConfig = {
       hint: "Auto-accept and print: sending an order prints the KOT and shows it on the kitchen display as started. Kitchen presses Start: the pass accepts each ticket. Use F&B setting follows Settings > F&B.",
     },
   ],
+  extra: OutletWaiters,
 }
 
 export const ingredientsConfig: ScreenConfig = {
@@ -768,6 +792,7 @@ export const channelConnectionsConfig: ScreenConfig = {
     { field: "tpl_booking_confirmation", label: "Template: booking confirmation", type: "data", hint: "Args: guest, property, check-in, check-out" },
     { field: "tpl_precheckin", label: "Template: self check-in link", type: "data", hint: "Args: guest, link" },
     { field: "tpl_payment_request", label: "Template: payment request", type: "data", hint: "Args: guest, amount, note" },
+    { field: "tpl_room_charge", label: "Template: room charge alert", type: "data", hint: "Args: guest, amount, what and where, balance. Sent only when Front Desk settings turn on room charge alerts" },
     { field: "active", label: "Active", type: "check" },
   ],
 }
@@ -895,8 +920,8 @@ export const transactionCodesConfig: ScreenConfig = {
       hint: "Alcohol never bills a Company folio." },
     { field: "charge_type", label: "Legacy charge type", type: "select",
       options: [
-        "Room", "Meal Plan", "Food & Beverage", "Minibar", "Laundry", "Spa",
-        "Early Check-in", "Late Checkout", "Cleaning Fee", "Extra Guests",
+        "Room", "Meal Plan", "Food & Beverage", "Minibar", "Laundry", "Spa", "Taxi",
+        "Early Check-in", "Late Checkout", "Early Departure", "Cleaning Fee", "Extra Guests",
         "Pet Charge", "Room Levy", "Discount", "Misc", "Allowance", "Opening Balance",
       ],
       hint: "Maps to Folio Charge.charge_type for display on older lines." },

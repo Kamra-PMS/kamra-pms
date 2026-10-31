@@ -48,6 +48,7 @@ interface Guest {
   amount: number
 }
 interface Detail {
+  business_date?: string
   group: {
     name: string
     group_name: string
@@ -166,6 +167,8 @@ export default function GroupControl({
   const [settle, setSettle] = useState<{ mode: string; amount: string; cityLedger: boolean } | null>(null)
   const [checkingIn, setCheckingIn] = useState<string | null>(null)
   const [checkingOut, setCheckingOut] = useState<string | null>(null)
+  // rooms checked in by the group button that still have steps to finish
+  const [unfinished, setUnfinished] = useState<Set<string>>(new Set())
   const loc = useLocale()
   const { ensureUnlocked, status: pinStatus } = useCashierAuth()
   const [names, setNames] = useState<Record<string, { guest_name: string; phone: string }>>({})
@@ -284,7 +287,7 @@ export default function GroupControl({
   const kept = d.pickup.reduce((s, p) => s + p.rooms_blocked, 0)
   const stillFree = d.pickup.reduce((s, p) => s + p.remaining, 0)
   const guestsOwe = list.filter((r) => r.own_balance > 0.5)
-  const today = todayLocal()
+  const today = d.business_date ?? todayLocal()
   const groupBillDue = d.master_folio_status === "Open" ? d.master_folio_balance : 0
 
   const stage: Stage =
@@ -305,12 +308,16 @@ export default function GroupControl({
       setNotice(summarize(out.results, doneLabel))
     })
   }
-  const checkInAll = () =>
-    groupAction(
-      "kamra.api.group_check_in", { group_booking: name },
-      translate("Check in {v0} room(s)? Rooms with no room number get a free one. Add each guest's ID afterwards from their check-in.", { v0: String(ciCount) }),
-      translate("checked in"),
-    )
+  const checkInAll = () => {
+    if (!confirm(translate("Check in {v0} room(s)? Rooms with no room number get a free one. Add each guest's ID afterwards from their check-in.", { v0: String(ciCount) }))) return
+    act(async () => {
+      const out = await call<{ results: RoomResult[]; checked_in: { reservation: string; pending: string[] }[] }>(
+        "kamra.api.group_check_in", { group_booking: name, reservations })
+      setSelected(new Set())
+      setUnfinished(new Set(out.checked_in.filter((x) => x.pending.length).map((x) => x.reservation)))
+      setNotice(summarize(out.results, translate("checked in")))
+    })
+  }
   const giveRooms = () =>
     groupAction(
       "kamra.api.group_assign_rooms", { group_booking: name },
@@ -723,6 +730,9 @@ export default function GroupControl({
                     <td className="py-1.5 text-right">
                       {r.status === "Confirmed" && (
                         <Button variant="outline" onClick={() => setCheckingIn(r.name)}>{translate("Check in")}</Button>
+                      )}
+                      {r.status === "Checked In" && unfinished.has(r.name) && (
+                        <Button variant="outline" onClick={() => setCheckingIn(r.name)}>{translate("Finish")}</Button>
                       )}
                       {r.status === "Checked In" && (
                         <Button variant="outline" onClick={() => setCheckingOut(r.name)}>

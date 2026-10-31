@@ -98,7 +98,7 @@
   }
  ],
  "links": [],
- "modified": "2026-10-20 13:00:00.000000",
+ "modified": "2026-10-30 19:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Print Job",
@@ -134,6 +134,12 @@
    "read": 1,
    "report": 1,
    "print": 1
+  },
+  {
+   "read": 1,
+   "report": 1,
+   "print": 1,
+   "role": "F&B Manager"
   }
  ],
  "row_format": "Dynamic",

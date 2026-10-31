@@ -18,7 +18,6 @@ from kamra.settings import get_setting
 
 CASH_MODES = ("Cash",)
 CARD_MODES = ("Card",)
-UPI_MODES = ("UPI",)
 
 
 def _agent_bypass() -> bool:
@@ -167,7 +166,12 @@ def _recompute_session_totals(session: str, persist: bool = True) -> dict[str, f
 		""",
 		session, as_dict=True,
 	)
-	cash = card = upi = other = paid_outs = drops = petty = 0.0
+	sess = frappe.get_doc("Cashier Session", session)
+	# the pack's instant modes keep their own bucket, stored
+	# in system_upi / "upi" - field kept by name so existing tills read on
+	from kamra.localization import instant_payment_modes, pack_for
+	instant_modes = instant_payment_modes(pack_for(sess.property))
+	cash = card = upi = other = foreign = paid_outs = drops = petty = 0.0
 	for r in rows:
 		amt = float(r.total or 0)
 		kind = r.kind
@@ -179,11 +183,13 @@ def _recompute_session_totals(session: str, persist: bool = True) -> dict[str, f
 		elif kind == "Petty Cash":
 			petty += abs(amt)
 		elif kind in ("Payment", "Exchange"):
-			if mode in CASH_MODES:
+			if mode == "Foreign Cash":
+				foreign += amt  # home value of foreign notes; not in expected cash
+			elif mode in CASH_MODES:
 				cash += amt
 			elif mode in CARD_MODES:
 				card += amt
-			elif mode in UPI_MODES:
+			elif mode in instant_modes:
 				upi += amt
 			else:
 				other += amt
@@ -193,12 +199,11 @@ def _recompute_session_totals(session: str, persist: bool = True) -> dict[str, f
 				cash += amt
 			elif mode in CARD_MODES:
 				card += amt
-			elif mode in UPI_MODES:
+			elif mode in instant_modes:
 				upi += amt
 			else:
 				other += amt
 
-	sess = frappe.get_doc("Cashier Session", session)
 	opening = float(sess.opening_float or 0)
 	expected = opening + cash - paid_outs - drops - petty
 	fresh = dict(zip(_TOTAL_FIELDS, (cash, card, upi, other, paid_outs, drops,
@@ -209,7 +214,7 @@ def _recompute_session_totals(session: str, persist: bool = True) -> dict[str, f
 		sess.save(ignore_permissions=True)
 	return {
 		"cash": cash, "card": card, "upi": upi, "other": other,
-		"paid_outs": paid_outs, "drops": drops, "petty_cash": petty,
+		"foreign_cash": foreign, "paid_outs": paid_outs, "drops": drops, "petty_cash": petty,
 		"opening_float": opening, "expected_cash": expected,
 	}
 
@@ -228,6 +233,8 @@ def record_cashier_txn(
 	outlet: str | None = None,
 ) -> str | None:
 	"""Append a Cashier Transaction. Returns session name (or None)."""
+	from kamra.localization import assert_payment_mode
+	assert_payment_mode(property, mode)
 	sess = session
 	if not outlet and pos_order:
 		outlet = frappe.db.get_value("POS Order", pos_order, "outlet")
@@ -662,7 +669,8 @@ def session_report(session: str):
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Finance", "Hotel Admin", "Night Auditor", "Kamra Agent")
+@require_roles("Front Desk", "Finance", "Hotel Admin", "Night Auditor", "Revenue Manager",
+               "Kamra Agent")
 def cash_summary_v2(property: str, date: str | None = None,
                     to_date: str | None = None):
 	"""Unified FO + POS cash for a business date, or date..to_date

@@ -124,7 +124,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-09-07 00:00:00",
+ "modified": "2026-10-30 10:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Folio Ledger Entry",
@@ -145,9 +145,6 @@
   {
    "role": "Hotel Admin",
    "read": 1,
-   "write": 1,
-   "create": 1,
-   "delete": 1,
    "export": 1,
    "print": 1,
    "report": 1,
@@ -157,8 +154,6 @@
   {
    "role": "Finance",
    "read": 1,
-   "write": 1,
-   "create": 1,
    "export": 1,
    "print": 1,
    "report": 1,
@@ -167,8 +162,6 @@
   {
    "role": "Front Desk",
    "read": 1,
-   "write": 1,
-   "create": 1,
    "print": 1,
    "report": 1,
    "email": 1
@@ -176,8 +169,6 @@
   {
    "role": "Kamra Agent",
    "read": 1,
-   "write": 1,
-   "create": 1,
    "print": 1,
    "report": 1,
    "email": 1

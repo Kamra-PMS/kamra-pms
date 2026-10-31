@@ -5,6 +5,8 @@ Everything is computed from folios (posted money) and reservations
 cash drawer reconcile to.
 """
 
+import json
+
 import frappe
 from frappe.utils import add_days, getdate, nowdate
 
@@ -17,12 +19,12 @@ def _day_stats(property: str, date: str, total_rooms: int) -> dict:
 		SELECT
 		  COUNT(DISTINCT CASE WHEN fc.charge_type = 'Room'
 		        THEN COALESCE(fc.reservation, f.reservation) END) AS rooms_sold,
-		  COALESCE(SUM(CASE WHEN fc.charge_type = 'Room'
+		  COALESCE(SUM(CASE WHEN fc.charge_type IN ('Room', 'Rate Adjustment')
 		        THEN fc.amount ELSE 0 END), 0) AS room_revenue,
 		  COALESCE(SUM(CASE WHEN fc.charge_type IN ('Food & Beverage',
 		        'Meal Plan', 'Minibar') THEN fc.amount ELSE 0 END), 0)
 		        AS fnb_revenue,
-		  COALESCE(SUM(CASE WHEN fc.charge_type NOT IN ('Room',
+		  COALESCE(SUM(CASE WHEN fc.charge_type NOT IN ('Room', 'Rate Adjustment',
 		        'Food & Beverage', 'Meal Plan', 'Minibar', 'Discount',
 		        'Opening Balance')
 		        THEN fc.amount ELSE 0 END), 0) AS other_revenue
@@ -69,8 +71,9 @@ def void_allowance_report(
 	from_date: str | None = None,
 	to_date: str | None = None,
 ):
-	"""Audit trail of every void, allowance and invoice cancellation on a
-	property: who reversed what, when, and why. The compliance answer to
+	"""Audit trail of every void, allowance (with the manager who approved
+	it, when one had to) and invoice cancellation on a property, plus
+	allowances a manager rejected: who reversed what, when, and why. The compliance answer to
 	"show me every write-off" - read straight from the action log, so it
 	cannot drift from what actually happened."""
 	from kamra.crs import assert_property_access
@@ -81,8 +84,8 @@ def void_allowance_report(
 		[
 			"action_type",
 			"in",
-			["void_charge", "post_allowance", "cancel_invoice",
-			 "pos_void_item", "pos_cancel_order"],
+			["void_charge", "post_allowance", "allowance_rejected",
+			 "cancel_invoice", "pos_void_item", "pos_cancel_order"],
 		],
 	]
 	if from_date:
@@ -93,19 +96,31 @@ def void_allowance_report(
 		"Agent Action Log",
 		filters=filters,
 		fields=["creation", "actor", "action_type", "reference_doctype",
-		        "reference_name", "rationale", "approver"],
+		        "reference_name", "rationale", "approver", "after_snapshot"],
 		order_by="creation desc",
 		limit_page_length=0,
 	)
 	label = {
 		"void_charge": "Void",
 		"post_allowance": "Allowance",
+		# asked for, refused by a manager: kept so the trail shows both
+		"allowance_rejected": "Allowance rejected",
 		"cancel_invoice": "Invoice cancelled",
 		# restaurant bills: a voided line, or a whole bill cancelled
 		"pos_void_item": "POS void",
 		"pos_cancel_order": "POS bill cancelled",
 	}
 	pos = {"pos_void_item", "pos_cancel_order"}
+
+	def serial(r):
+		# the allowance voucher number (kamra.api.allowance_voucher)
+		if r.action_type != "post_allowance" or not r.after_snapshot:
+			return None
+		try:
+			return (json.loads(r.after_snapshot) or {}).get("serial")
+		except ValueError:
+			return None
+
 	return [
 		{
 			"when": str(r.creation),
@@ -115,14 +130,31 @@ def void_allowance_report(
 			"folio": None if r.action_type in pos else r.reference_name,
 			"pos_order": r.reference_name if r.action_type in pos else None,
 			"approver": r.approver,
+			"serial": serial(r),
 			"detail": r.rationale,
 		}
 		for r in rows
 	]
 
 
+def movement_counts(property: str, start: str, date: str) -> dict:
+	"""Arrivals, departures, no-shows over start..date, and who is in house."""
+	def count(field, statuses):
+		return frappe.db.count("Reservation", {
+			"property": property, field: ("between", [start, date]),
+			"status": ("in", statuses)})
+
+	return {
+		"arrivals": count("check_in_date", ["Confirmed", "Checked In"]),
+		"departures": count("check_out_date", ["Checked In", "Checked Out"]),
+		"in_house": frappe.db.count("Reservation", {
+			"property": property, "status": "Checked In"}),
+		"no_shows": count("check_in_date", ["No Show"]),
+	}
+
+
 @frappe.whitelist()
-@require_roles("Finance", "Front Desk", "Night Auditor", "Kamra Agent")
+@require_roles("Finance", "Revenue Manager", "Night Auditor", "Kamra Agent")
 def manager_flash(property: str, date: str | None = None,
                   from_date: str | None = None):
 	"""The daily flash: yesterday's performance, month to date, today's
@@ -138,18 +170,7 @@ def manager_flash(property: str, date: str | None = None,
 	month = _days(property, getdate(date).replace(day=1), getdate(date), total_rooms)
 	days = _days(property, getdate(start), getdate(date), total_rooms)
 
-	def count(field, statuses):
-		return frappe.db.count("Reservation", {
-			"property": property, field: ("between", [start, date]),
-			"status": ("in", statuses)})
-
-	movement = {
-		"arrivals": count("check_in_date", ["Confirmed", "Checked In"]),
-		"departures": count("check_out_date", ["Checked In", "Checked Out"]),
-		"in_house": frappe.db.count("Reservation", {
-			"property": property, "status": "Checked In"}),
-		"no_shows": count("check_in_date", ["No Show"]),
-	}
+	movement = movement_counts(property, start, date)
 
 	from kamra.api import cash_summary
 	collections = cash_summary(property, start, date)
@@ -200,6 +221,35 @@ def _sum_days(days: list[dict], total_rooms: int) -> dict:
 	        "revpax": round(tot["total_revenue"] / tot["pax"], 0) if tot["pax"] else 0}
 
 
+def range_stats(property: str, start, end, total_rooms: int) -> dict:
+	"""start..end as one span in a single query: the totals _sum_days(_days())
+	would give (a room sold is one reservation on one posting date), without
+	a query per day - year to date is a year of days."""
+	row = frappe.db.sql(
+		"""
+		SELECT
+		  COUNT(DISTINCT CASE WHEN fc.charge_type = 'Room' THEN CONCAT(
+		        COALESCE(fc.reservation, f.reservation), '|', fc.posting_date) END)
+		        AS rooms_sold,
+		  COALESCE(SUM(CASE WHEN fc.charge_type = 'Room'
+		        THEN fc.amount ELSE 0 END), 0) AS room_revenue,
+		  COALESCE(SUM(CASE WHEN fc.charge_type NOT IN ('Discount', 'Opening Balance')
+		        THEN fc.amount ELSE 0 END), 0) AS total_revenue
+		FROM `tabFolio Charge` fc
+		JOIN `tabFolio` f ON fc.parent = f.name
+		WHERE f.property = %(p)s AND fc.posting_date BETWEEN %(s)s AND %(e)s
+		""",
+		{"p": property, "s": str(start), "e": str(end)}, as_dict=True)[0]
+	sold = int(row.rooms_sold or 0)
+	rev = float(row.room_revenue or 0)
+	n = total_rooms * ((getdate(end) - getdate(start)).days + 1)
+	return {"rooms_sold": sold, "room_revenue": rev,
+	        "total_revenue": float(row.total_revenue or 0),
+	        "occupancy_pct": round(100 * sold / n, 1) if n else 0,
+	        "adr": round(rev / sold, 0) if sold else 0,
+	        "revpar": round(rev / n, 0) if n else 0}
+
+
 def _month_bounds(period: str):
 	"""'2026-07' -> (first day, first day of next month, days in month)."""
 	from datetime import datetime
@@ -246,7 +296,8 @@ def budget_vs_actual(property: str, period: str | None = None):
 		SELECT
 		  COUNT(DISTINCT CASE WHEN fc.charge_type='Room'
 		        THEN CONCAT(COALESCE(fc.reservation,f.reservation),'|',fc.posting_date) END) AS rooms_sold,
-		  COALESCE(SUM(CASE WHEN fc.charge_type='Room' THEN fc.amount ELSE 0 END),0) AS room_revenue,
+		  COALESCE(SUM(CASE WHEN fc.charge_type IN ('Room','Rate Adjustment')
+		                    THEN fc.amount ELSE 0 END),0) AS room_revenue,
 		  MAX(CASE WHEN fc.charge_type='Room' THEN fc.posting_date END) AS posted_through
 		FROM `tabFolio Charge` fc JOIN `tabFolio` f ON fc.parent=f.name
 		WHERE f.property=%(p)s AND fc.posting_date>=%(s)s AND fc.posting_date<%(n)s

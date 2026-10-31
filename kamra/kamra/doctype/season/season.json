@@ -20,6 +20,7 @@
   "minimum_nights",
   "non_refundable",
   "full_payment",
+  "advance_percent",
   "no_small_group",
   "is_holiday",
   "disabled",
@@ -109,6 +110,12 @@
    "description": "A stay touching these dates pays the whole amount when booking online, instead of the property's usual advance."
   },
   {
+   "fieldname": "advance_percent",
+   "fieldtype": "Percent",
+   "label": "Advance %",
+   "description": "Advance a booking touching these dates owes when it is made (25, 50, 100). 0 = the property's usual deposit %. A stay crossing seasons owes the highest."
+  },
+  {
    "default": "0",
    "fieldname": "no_small_group",
    "fieldtype": "Check",
@@ -138,7 +145,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-20 15:00:00.000000",
+ "modified": "2026-10-29 23:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Season",

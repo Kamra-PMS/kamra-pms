@@ -12,6 +12,7 @@
   "reservation",
   "guest",
   "guest_name",
+  "bill_to_name",
   "column_break_a",
   "status",
   "folio_type",
@@ -47,14 +48,13 @@
    "fieldtype": "Link",
    "label": "Reservation",
    "options": "Reservation",
-   "reqd": 1
+   "description": "Empty on an Account folio (an invoice raised on a company's AR account, not a stay)."
   },
   {
    "fieldname": "guest",
    "fieldtype": "Link",
    "label": "Guest",
-   "options": "Guest",
-   "reqd": 1
+   "options": "Guest"
   },
   {
    "fetch_from": "guest.full_name",
@@ -63,6 +63,13 @@
    "in_list_view": 1,
    "label": "Guest Name",
    "read_only": 1
+  },
+  {
+   "fieldname": "bill_to_name",
+   "fieldtype": "Data",
+   "label": "Bill To Name",
+   "read_only": 1,
+   "description": "Set on a separate guest bill: the invoice is made out to this name, not the company."
   },
   {
    "fieldname": "column_break_a",
@@ -167,7 +174,7 @@
    "fieldname": "folio_type",
    "fieldtype": "Select",
    "label": "Folio Type",
-   "options": "Guest\nExtra\nCompany\nGroup"
+   "options": "Guest\nExtra\nCompany\nGroup\nAccount"
   },
   {
    "fieldname": "payment_link_url",
@@ -188,7 +195,7 @@
    "read_only": 1
   },
   {
-   "description": "Set on the group master folio \u2014 collects company-payable charges across every reservation of the group.",
+   "description": "Set on the group master folio — collects company-payable charges across every reservation of the group.",
    "fieldname": "group_booking",
    "fieldtype": "Link",
    "label": "Group Booking",
@@ -198,7 +205,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-09-28 20:00:00.000000",
+ "modified": "2026-10-29 18:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Folio",

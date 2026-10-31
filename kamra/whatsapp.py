@@ -192,6 +192,81 @@ def notify_booking_confirmed(reservation: str) -> dict:
 	return out
 
 
+# charges that are the stay itself, or not money the guest spent: no alert
+NO_ALERT_CHARGES = {"Room", "Meal Plan", "Room Levy", "Extra Guests", "Discount",
+                    "Allowance", "Opening Balance"}
+ROOM_CHARGE_ALERT_GAP = 600  # seconds: at most one alert per bill in this window
+
+
+def queue_room_charge_alert(folio, charge) -> bool:
+	"""After a charge is posted to a guest's bill (restaurant, laundry,
+	minibar, the desk): queue a WhatsApp alert, sent after the posting
+	commits. Off unless the property turns on room_charge_whatsapp and the
+	connection names tpl_room_charge. Skips company and group bills, room
+	nights (the night audit never comes here), zero and negative lines, and
+	stays not in house; at most one alert per bill every 10 minutes (the
+	next one carries the running balance), claimed when the job runs. Never raises: posting a charge
+	must not fail over a message. True when queued."""
+	try:
+		charge = charge if isinstance(charge, dict) else charge.as_dict()
+		if (folio.get("folio_type") or "Guest") not in ("Guest", "Extra") \
+				or charge.get("charge_type") in NO_ALERT_CHARGES \
+				or float(charge.get("amount") or 0) <= 0:
+			return False
+		from kamra.settings import get_setting
+		if not get_setting(folio.property, "room_charge_whatsapp"):
+			return False
+		conn = _conn(folio.property)
+		if not (conn and conn.get("tpl_room_charge")):
+			return False
+		reservation = charge.get("reservation") or folio.get("reservation")
+		if not reservation or frappe.db.get_value(
+				"Reservation", reservation, "status") != "Checked In":
+			return False
+		# the 10-minute throttle is claimed by the job, after the posting
+		# commits: a rolled-back posting never uses up the window
+		frappe.enqueue("kamra.whatsapp.send_room_charge_alert", queue="short",
+		               enqueue_after_commit=True, folio=folio.name,
+		               reservation=reservation,
+		               amount=float(charge.get("total") or 0) or float(charge.get("amount") or 0),
+		               description=charge.get("description") or charge.get("charge_type") or "")
+		return True
+	except Exception:
+		frappe.log_error(title="WhatsApp room charge alert not queued")
+		return False
+
+
+def send_room_charge_alert(folio: str, reservation: str, amount: float,
+                           description: str) -> dict:
+	"""The queued half of queue_room_charge_alert. Template args:
+	    {{1}} guest name  {{2}} amount  {{3}} what and where  {{4}} balance"""
+	cache = frappe.cache()
+	# ponytail: throttle, not batch - a charge inside the window shows up
+	# only in the next alert's balance
+	if not cache.set(cache.make_key(f"kamra_wa_room_charge:{folio}"), 1,
+	                 nx=True, ex=ROOM_CHARGE_ALERT_GAP):
+		return {"sent": False, "reason": "throttled"}
+	f = frappe.db.get_value("Folio", folio, ["property", "guest", "balance"], as_dict=True)
+	res = frappe.db.get_value("Reservation", reservation, ["guest", "guest_name"], as_dict=True)
+	if not (f and res):
+		return {"sent": False, "reason": "gone"}
+	guest = f.guest or res.guest
+	phone = frappe.db.get_value("Guest", guest, "phone") if guest else None
+	if not phone:
+		return {"sent": False, "reason": "guest_has_no_phone"}
+	conn = _conn(f.property)
+	if not (conn and conn.get("tpl_room_charge")):
+		return {"sent": False, "reason": "no_template_configured"}
+	from kamra.localization import pack_for
+	symbol = pack_for(f.property).locale(
+		frappe.get_cached_doc("Property", f.property)).get("currency_symbol", "")
+	return send_template(
+		f.property, phone, conn.tpl_room_charge,
+		[res.guest_name or "Guest", f"{symbol}{float(amount):,.2f}",
+		 (description or "")[:120], f"{symbol}{float(f.balance or 0):,.2f}"],
+		guest=guest, reservation=reservation)
+
+
 @frappe.whitelist()
 def send_payment_request(reservation: str, amount, note: str = "") -> dict:
 	"""Desk-triggered: ask the guest for an advance/balance over WhatsApp.
@@ -211,10 +286,40 @@ def send_payment_request(reservation: str, amount, note: str = "") -> dict:
 	phone = frappe.db.get_value("Guest", res.guest, "phone")
 	if not phone:
 		frappe.throw("This guest has no phone number on file.")
-	return send_template(
+	link = None if note else _payment_link(res, amount)
+	out = send_template(
 		res.property, phone, conn.tpl_payment_request,
-		[res.guest_name or "Guest", str(amount), note or "at the front desk"],
+		[res.guest_name or "Guest", str(amount), note or link or "at the front desk"],
 		guest=res.guest, reservation=res.name)
+	if link:
+		out["payment_link"] = link
+	return out
+
+
+def _payment_link(res, amount) -> str | None:
+	"""A pay-online link for the guest's open bill, so the message carries
+	it without the desk copying one in. None where the property has no
+	payment gateway (the guest is asked to pay at the desk instead)."""
+	folio = frappe.db.get_value("Folio", {"reservation": res.name, "folio_type": "Guest",
+	                                      "status": "Open"}, "name")
+	if not folio:
+		return None
+	# a test-mode gateway makes a fake link a guest cannot pay
+	if frappe.db.get_value("Payment Gateway Settings",
+	                       {"property": res.property, "enabled": 1}, "test_mode"):
+		return None
+	try:
+		from kamra.payments import create_payment_link
+		return (create_payment_link(folio, amount) or {}).get("url")
+	except frappe.ValidationError:
+		# no gateway here: the guest is asked to pay at the desk
+		frappe.clear_messages()
+		return None
+	except Exception:
+		# the gateway is down: the message still goes, with the desk wording
+		frappe.log_error(title="WhatsApp payment link failed")
+		frappe.clear_messages()
+		return None
 
 
 @frappe.whitelist(methods=["POST"])

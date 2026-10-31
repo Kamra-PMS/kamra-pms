@@ -32,6 +32,7 @@ import { serverError, updateResource, type Row } from "../lib/resource"
 import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
 import CancelPanel from "../components/CancelPanel"
+import ReinstatePanel from "../components/ReinstatePanel"
 import LinkedRecords from "../components/LinkedRecords"
 import DepositPanel from "../components/DepositPanel"
 import SecurityDepositPanel from "../components/SecurityDepositPanel"
@@ -192,6 +193,7 @@ export default function ReservationDetail({
   const [d, setD] = useState<Detail | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [reinstated, setReinstated] = useState<string[]>([])
   const [changingRoom, setChangingRoom] = useState(false)
   const [declineReason, setDeclineReason] = useState("")
 
@@ -495,6 +497,28 @@ export default function ReservationDetail({
               <Field label={translate("Pre-check-in")} value={d.precheckin_status} />
             )}
           </dl>
+          {d.booked_check_out_date && (
+            <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
+              {translate("Left early: booked to {date}.", { date: d.booked_check_out_date })}
+              {d.early_departure_reason ? ` ${d.early_departure_reason}` : ""}
+            </p>
+          )}
+          {(d.occupants ?? []).length > 0 && (
+            <div className="mt-3">
+              <span className="text-xs text-zinc-400">{translate("In the room")}</span>
+              <ul className="mt-1 space-y-0.5 text-sm">
+                {(d.occupants ?? []).map((o, i) => (
+                  <li key={i} className="flex flex-wrap justify-between gap-x-2">
+                    <span className={o.left_at ? "text-zinc-400 line-through" : ""}>{o.full_name}</span>
+                    <span className="text-xs tabular-nums text-zinc-500">
+                      {o.arrived_at ? translate("Arrived {time}", { time: o.arrived_at.slice(0, 16) }) : ""}
+                      {o.left_at ? ` · ${translate("Left {time}", { time: o.left_at.slice(0, 16) })}` : ""}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </Card>
 
         <IdentityCard d={d} reload={refresh} />
@@ -716,6 +740,14 @@ export default function ReservationDetail({
         {d.actions.can_check_out && (
           <Button disabled={busy} onClick={() => setCheckingOut(true)}>
             <LogOut className="size-4" />{translate(" Check out")}</Button>
+        )}
+        {d.actions.can_reinstate && (
+          <ReinstatePanel reservation={name} onDone={(w) => { setReinstated(w); refresh(); reload() }} />
+        )}
+        {reinstated.length > 0 && (
+          <div className="w-full space-y-1 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+            {reinstated.map((w) => <p key={w}>{w}</p>)}
+          </div>
         )}
         <Link
           to={`/grc/${encodeURIComponent(name)}`}

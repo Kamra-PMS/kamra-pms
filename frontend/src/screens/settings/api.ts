@@ -88,12 +88,14 @@ export interface StaffRow {
   pin: "set" | "none" | "reset"
   is_self: boolean
   editable: boolean
+  job_title?: string
   user_image?: string | null
 }
 
 export interface StaffInput {
   email: string
   full_name: string
+  job_title: string
   roles: string[]
   properties: string[] | null
   enabled: boolean
@@ -110,6 +112,7 @@ export const saveStaff = (s: StaffInput) =>
     property: getCurrentProperty(),
     email: s.email,
     full_name: s.full_name,
+    job_title: s.job_title,
     roles: s.roles,
     properties: s.properties ?? "all",
     enabled: s.enabled ? 1 : 0,

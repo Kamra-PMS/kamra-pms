@@ -21,7 +21,7 @@ from kamra.migrate import _norm, _parse_csv
 
 # Menu Item is written by Finance / Hotel Admin / System Manager (Front Desk
 # is read-only on the doctype) - the importer matches that.
-MENU_ROLES = ("Finance",)
+MENU_ROLES = ("Finance", "F&B Manager")
 
 # who a header column really is, whatever the spreadsheet called it
 SYNONYMS = {

@@ -345,7 +345,7 @@ def _posted_room_revenue(reservations: list) -> dict:
 		       COALESCE(SUM(fc.amount), 0) AS amount
 		FROM `tabFolio Charge` fc
 		JOIN `tabFolio` f ON fc.parent = f.name
-		WHERE fc.charge_type = 'Room'
+		WHERE fc.charge_type IN ('Room', 'Rate Adjustment')
 		  AND COALESCE(fc.reservation, f.reservation) IN %(names)s
 		GROUP BY res
 		""", {"names": tuple(reservations)}, as_dict=True)
@@ -578,7 +578,8 @@ def _compute_insights(property: str, days: int, today, money: bool,
 				FROM `tabFolio Charge` fc
 				JOIN `tabFolio` f ON fc.parent = f.name
 				JOIN `tabReservation` r ON r.name = COALESCE(fc.reservation, f.reservation)
-				WHERE f.property = %(p)s AND fc.charge_type = 'Room'
+				WHERE f.property = %(p)s
+				  AND fc.charge_type IN ('Room', 'Rate Adjustment')
 				  AND fc.posting_date >= %(start)s AND fc.posting_date < %(end)s
 				GROUP BY r.room
 				""", {"p": property, "start": start, "end": end}, as_dict=True):

@@ -25,8 +25,12 @@ DEFAULT_SST = Decimal("8")   # accommodation, since 2024-03-01
 FNB_SST = Decimal("6")       # food & beverage kept the old rate
 
 DEFAULT_CURRENCY = "MYR"
+# foreign money guests bring most; Settings, Finance, Exchange rates can change it
+FX_CURRENCIES = ["USD", "SGD", "EUR", "GBP", "AUD", "CNY", "JPY", "IDR"]
 DEFAULT_TIMEZONE = "Asia/Kuala_Lumpur"
 DEFAULT_NATIONALITY = "Malaysian"
+# a passport or ID card MRZ names the country by this code
+HOME_COUNTRY_ISO3 = "MYS"
 ID_TYPES = ["MyKad", "Passport", "Driving License", "Other"]
 PAYMENT_MODES = ["Cash", "Card", "Bank Transfer"]
 

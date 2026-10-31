@@ -94,7 +94,7 @@ class GuestDocumentsTestCase(_GuestCase):
 		g = make_guest("UT Arrive", id_type="Passport", id_number="P999",
 		               id_expiry_date=d(-1))
 		res = make_reservation(PROP_A, self.rt, d(0), d(2), "Confirmed", guest=g,
-		                       room=self.room)
+		                       room=self.room, adults=1)
 		flow = checkin.checkin_flow(res.name)
 		ctx = flow["guest"]
 		self.assertTrue(ctx["id_on_file"])
