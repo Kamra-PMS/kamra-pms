@@ -56,7 +56,7 @@ class GroupBillingTestCase(AuditTestCase):
 		                            is_alcohol=alcohol)
 
 	def test_main_room_pays_room_guest_pays_extras(self):
-		_gb, (r1, r2, _r3) = self.group()
+		r1, r2 = self.group()[1][:2]
 		room = self.post(r2, "Room", "UT R2 night")
 		self.assertEqual(room["folio_type"], "Group")
 		self.assertEqual(frappe.db.get_value("Folio", room["folio"], "reservation"),
@@ -65,19 +65,19 @@ class GroupBillingTestCase(AuditTestCase):
 		                 "Guest")
 
 	def test_room_that_pays_its_own_keeps_its_room_charge(self):
-		_gb, (_r1, _r2, r3) = self.group()
+		r3 = self.group()[1][2]
 		api.set_pays_own_charges(r3.name, 1)
 		self.assertEqual(self.post(r3, "Room", "UT R3 night")["folio_type"], "Guest")
 
 	def test_alcohol_never_routes(self):
-		_gb, (_r1, r2, _r3) = self.group(pays="Everything except liquor")
+		r2 = self.group(pays="Everything except liquor")[1][1]
 		self.assertEqual(self.post(r2, "Food & Beverage", "UT lunch", 500)["folio_type"],
 		                 "Group")
 		self.assertEqual(self.post(r2, "Food & Beverage", "UT whisky", 800, 1)["folio_type"],
 		                 "Guest")
 
 	def test_main_guest_leaves_and_the_bill_stays_open(self):
-		_gb, (r1, r2, _r3) = self.group()
+		r1, r2 = self.group()[1][:2]
 		bill = self.post(r2, "Room", "UT R2 night")["folio"]
 		self.assertNotIn(bill, [f["name"] for f in settlement_position(r1.name)["folios"]])
 		api.check_out(r1.name)
@@ -113,14 +113,14 @@ class GroupBillingTestCase(AuditTestCase):
 		                                     "master_reservation"), r2.name)
 
 	def test_company_group_without_main_room_is_unchanged(self):
-		_gb, (r1, r2, _r3) = self.group(company=_corp(), master=False)
+		r1, r2 = self.group(company=_corp(), master=False)[1][:2]
 		bill = self.post(r2, "Room", "UT R2 night")["folio"]
 		self.assertEqual(frappe.db.get_value("Folio", bill, "folio_type"), "Group")
 		self.assertIn(bill, [f for f, _c, _b in
 		                     settlement_position(r1.name)["to_city_ledger"]])
 
 	def test_plain_group_without_main_room_routes_nothing(self):
-		_gb, (_r1, r2, _r3) = self.group(master=False)
+		r2 = self.group(master=False)[1][1]
 		self.assertEqual(self.post(r2, "Room", "UT R2 night")["folio_type"], "Guest")
 
 	def test_create_group_booking_sets_the_main_room(self):

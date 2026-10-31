@@ -132,6 +132,8 @@ export default function Assistant() {
   const [input, setInput] = useState("")
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // the provider refused for money: the error gets a link to the AI settings
+  const [noCredit, setNoCredit] = useState(false)
   const endRef = useRef<HTMLDivElement>(null)
   const [aiEnabled, setAiEnabled] = useState<boolean | null>(null)
   // a screen can hand the agent a ready question (End of Day blockers);
@@ -193,6 +195,7 @@ export default function Assistant() {
     if (!q || busy) return
     setInput("")
     setError(null)
+    setNoCredit(false)
     const isFirst = msgs.length === 0
     const history: ChatMsg[] = [...msgs, { role: "user", content: q }]
     const aIdx = history.length
@@ -260,6 +263,7 @@ export default function Assistant() {
             patch((m) => ({ ...m, cards: [...cards] }))
           } else if (event === "error") {
             setError(d.message)
+            setNoCredit(d.code === "out_of_credit")
           }
         }
       }
@@ -430,6 +434,11 @@ export default function Assistant() {
           {error && (
             <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-600">
               {translate(error)}
+              {noCredit && (
+                <Link to="/settings/ai" className="ms-2 font-medium underline">
+                  {translate("Open AI settings")}
+                </Link>
+              )}
             </p>
           )}
           <div ref={endRef} />

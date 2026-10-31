@@ -2394,7 +2394,8 @@ def reservation_folios(reservation: str):
 		fields=_FOLIO_LIST_FIELDS,
 		order_by="creation asc",
 	)
-	group = frappe.db.get_value("Reservation", reservation, "group_booking")
+	stay_company, group = frappe.db.get_value(
+		"Reservation", reservation, ["company", "group_booking"]) or (None, None)
 	if group:
 		seen = {r.name for r in rows}
 		rows += [m for m in frappe.get_all(
@@ -2402,6 +2403,14 @@ def reservation_folios(reservation: str):
 			filters={"group_booking": group, "folio_type": "Group"},
 			fields=_FOLIO_LIST_FIELDS,
 		) if m.name not in seen]
+	# name the company each company bill goes to, as get_folio bills it: a
+	# group member billed to its own company also sees the group's bill
+	group_company = group and frappe.db.get_value("Group Booking", group, "company")
+	for r in rows:
+		if r.folio_type == "Company":
+			r["company"] = stay_company
+		elif r.folio_type == "Group":
+			r["company"] = group_company or stay_company
 	return rows
 
 
@@ -5296,7 +5305,7 @@ def position_briefing(property: str, date: str | None = None):
 		                "min_rate": tier["min_rate"] if tier else 0})
 
 	occ_today = outlook[0]["occupancy"]
-	return {
+	out = {
 		"date": d,
 		"occupancy": occ_today,
 		"sold": round(occ_today * capacity / 100) if capacity else 0,
@@ -5312,6 +5321,15 @@ def position_briefing(property: str, date: str | None = None):
 		                else None),
 		"outlook": outlook,
 	}
+	# the front desk sees no occupancy or rates, as on the dashboard
+	# (kamra.dashboards.FIGURE_ROLES); balances due stay, the desk collects them
+	from kamra.dashboards import sees_figures
+	if not sees_figures():
+		for k in ("occupancy", "sold", "overbooking_pct", "overbooking_limit",
+		          "demand_tier", "outlook"):
+			out.pop(k)
+		out["figures_hidden"] = True
+	return out
 
 
 # Demand tiers are a revenue control: the revenue manager sets them (the

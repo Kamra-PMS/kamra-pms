@@ -22,6 +22,33 @@ from kamra.mcp_tools import (MEAL_PLAN_PARAM,
 
 MAX_TOOL_ROUNDS = 6
 TIMEOUT = 60
+OUT_OF_CREDIT = ("Your AI key is out of credit. Top it up with your provider "
+                 "or change the key in Settings > AI assistant.")
+
+
+def _out_of_credit(resp) -> bool:
+	"""The provider refused for money, not for the request: OpenAI's 429
+	insufficient_quota, OpenRouter's 402, "credit balance is too low"."""
+	if resp.status_code == 402:
+		return True
+	text = (resp.text or "").lower()
+	return any(m in text for m in ("insufficient_quota", "billing", "credit"))
+
+
+def _no_credit() -> dict:
+	# the code lets the chat screen add a link to the AI settings
+	return {"message": frappe._(OUT_OF_CREDIT), "code": "out_of_credit"}
+
+
+def _sse(event, data):
+	return f"event: {event}\ndata: {json.dumps(data)}\n\n"
+
+
+def _provider_error(resp, limit: int = 300) -> str:
+	if _out_of_credit(resp):
+		return frappe._(OUT_OF_CREDIT)
+	return f"AI provider error ({resp.status_code}): {(resp.text or '')[:limit]}"
+
 
 SYSTEM = """You are Kamra Agent, the assistant for {property_name}, a hotel
 running Kamra PMS. Today is {today}. You help staff work faster: look
@@ -794,7 +821,8 @@ def test_connection(property: str, base_url: str | None = None,
 		return {
 			"ok": False,
 			"status": resp.status_code,
-			"error": (resp.text or "")[:400],
+			"error": (frappe._(OUT_OF_CREDIT) if _out_of_credit(resp)
+			          else (resp.text or "")[:400]),
 			"base_url": base,
 			"model": mdl,
 			"latency_ms": ms,
@@ -1077,8 +1105,7 @@ def ask(property: str, messages):
 		resp = _post_chat(base, headers, chat_payload(
 			model, convo, tools=_tool_defs(), temperature=0.2))
 		if resp.status_code != 200:
-			frappe.throw(f"AI provider error ({resp.status_code}): "
-			             f"{resp.text[:300]}")
+			frappe.throw(_provider_error(resp))
 		msg = resp.json()["choices"][0]["message"]
 		convo.append(msg)
 
@@ -1148,6 +1175,9 @@ def ask_stream(property: str, messages):
 		resp = _post_chat(base, headers, chat_payload(
 			model, convo, tools=_tool_defs(), temperature=0.2))
 		if resp.status_code != 200:
+			if _out_of_credit(resp):
+				return Response(_sse("error", _no_credit()) + _sse("done", {}),
+				                mimetype="text/event-stream")
 			frappe.throw(f"AI provider error ({resp.status_code}): {resp.text[:200]}")
 		msg = resp.json()["choices"][0]["message"]
 		calls = msg.get("tool_calls") or []
@@ -1168,10 +1198,9 @@ def ask_stream(property: str, messages):
 			convo.append({"role": "tool", "tool_call_id": call["id"],
 			              "content": _tool_json_for_provider(result, s)})
 
-	def sse(event, data):
-		return f"event: {event}\ndata: {json.dumps(data)}\n\n"
-
+	sse = _sse
 	# read now: the generator runs after the request context is gone
+	no_credit = _no_credit()
 	refs = list(getattr(frappe.local, "kamra_chat_refs", None) or [])
 	cards = _turn_cards()
 
@@ -1184,7 +1213,8 @@ def ask_stream(property: str, messages):
 			r = _post_chat(base, headers, chat_payload(
 				model, convo, stream=True, temperature=0.2), stream=True)
 			if r.status_code != 200:
-				yield sse("error", {"message": f"AI provider error ({r.status_code})"})
+				yield sse("error", no_credit if _out_of_credit(r)
+				          else {"message": f"AI provider error ({r.status_code})"})
 			else:
 				for raw in r.iter_lines():
 					if not raw:
@@ -1285,16 +1315,16 @@ def help_ask(property: str, messages):
 	headers = {"Authorization": f"Bearer {api_key}",
 	           "Content-Type": "application/json"}
 	convo = [{"role": "system", "content": HELP_SYSTEM}] + list(messages)
-
-	def sse(event, data):
-		return f"event: {event}\ndata: {json.dumps(data)}\n\n"
+	sse = _sse
+	no_credit = _no_credit()  # translated now, before the request context goes
 
 	def gen():
 		try:
 			r = _post_chat(base, headers, chat_payload(
 				model, convo, stream=True, temperature=0.3), stream=True)
 			if r.status_code != 200:
-				yield sse("error", {"message": f"AI provider error ({r.status_code})"})
+				yield sse("error", no_credit if _out_of_credit(r)
+				          else {"message": f"AI provider error ({r.status_code})"})
 			else:
 				for raw in r.iter_lines():
 					if not raw:

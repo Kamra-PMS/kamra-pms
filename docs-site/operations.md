@@ -56,7 +56,7 @@ screen shows them but has no button for them.
 When you press **Start** on a **Maintenance** ticket that has a room,
 Kamra adds a **Maintenance** task to that room's housekeeping queue,
 with the ticket's priority and a note *From ticket TKT-…*. It shows on
-the [Room Board and the phone app](/housekeeping). If the room already
+the [Housekeeping Board and the phone app](/housekeeping). If the room already
 has an open maintenance task, no second one is made.
 
 ## Where tickets come from

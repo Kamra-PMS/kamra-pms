@@ -33,6 +33,22 @@ segundos.
 - Debajo, la fila de dinero: **Cobrado hoy**, **Saldo pendiente**, **Folios
   abiertos** y, del mes en curso, **ADR**, **RevPAR** y **Ocupación**, cada uno un
   enlace al panel de cajas, las cuentas, la facturación o el informe.
+- **Ocupación** son las habitaciones ocupadas ahora sobre las que puede vender
+  (sin contar las fuera de servicio). Bajo las tarjetas, **Ocupación reservada,
+  próximos 90 días** muestra una celda por noche, más oscura cuanto más llena,
+  con las medias de 30, 60 y 90 días. Las habitaciones **Retenidas para grupos**
+  (las de un bloqueo de grupo que aún no tienen reserva con nombre) se suman
+  encima de las reservadas en un tono más claro; cuando pasa la fecha límite
+  del bloqueo se liberan y desaparecen. Pase el cursor por una celda para ver
+  las habitaciones reservadas y retenidas esa noche y la ocupación sin y con
+  retenciones, o abra **Por semana** para ver una tabla con una columna de
+  retenidas. Consúltelo antes de aceptar una reserva grande.
+- Los ingresos y la fila de dinero son para Finanzas, Ingresos, el auditor
+  nocturno y los gerentes. Un recepcionista ve **Llegadas**, **Salidas**,
+  **Alojados**, **Ocupación**, la previsión de 90 días y **Tareas abiertas**,
+  nunca ingresos, ADR, RevPAR, cobros ni saldos pendientes. El panel de
+  ingresos y el Resumen gerencial siguen cerrados para él, y el informe de
+  ocupación no le muestra sus columnas de dinero.
 - **Llegadas** y **Salidas** muestran las estancias de hoy. Cada fila muestra el
   origen (Sitio web, Teléfono, OTA, Agente de IA…), una etiqueta de pago (**Pagado**,
   **Pendiente ₹…** o **Sin pagar**) y **Registro previo completado** cuando el huésped ha rellenado
@@ -107,7 +123,7 @@ ficha de registro para imprimirla.
 
 | Paso | Qué hace | Obligatorio por defecto |
 | --- | --- | --- |
-| **Huésped y documentos de identidad** | Compruebe el nombre y el teléfono, y luego el documento de identidad del huésped y de todos los que se alojan. Si el huésped hizo el registro en línea, verá **Hecho en línea**: compare lo que envió con la persona. Añada otros huéspedes y sus documentos en la ficha de registro (**Agregar huéspedes y sus documentos de identidad**). Los niños solo necesitan documento cuando el registro de su país lo pide. | Sí |
+| **Huésped y documentos de identidad** | Compruebe el nombre y el teléfono, y luego el documento de identidad del huésped y de todos los que se alojan. Hay una tarjeta por cada persona de la reserva (adultos y niños): tome la **Foto** de cada persona, una **Foto de la identificación** y los datos del documento, o pulse **Escanear identificación** para rellenarlos con un escáner. Todo adulto necesita documento; un niño, solo cuando el registro de su país lo pide. Si el huésped hizo el registro en línea, verá **Hecho en línea**: compare lo que envió con la persona. | Sí |
 | **Quién paga** | Elija quién paga: la OTA (ya pagado, o el huésped paga aquí), el huésped, la empresa o el grupo. Verá el total de la estancia, lo pagado y lo pendiente. | Sí |
 | **Habitación** | Mantenga la habitación asignada o elija una habitación libre del tipo reservado. Las habitaciones limpias aparecen primero. **Mejora de categoría u otro tipo de habitación** muestra el nuevo precio antes de confirmar. | Siempre |
 | **Depósito de garantía y anticipo** | Cobre el depósito de garantía, o exímalo indicando un motivo, y cualquier anticipo aún pendiente. Solo aparece cuando su alojamiento pide un depósito o la reserva debe un anticipo. | Sí |
@@ -128,6 +144,57 @@ queda en el **Registro de actividad**.
 obligatorio. Un paso obligatorio no se puede saltar en recepción, y Kamra no
 registra la entrada del huésped hasta que esté hecho, lo pida quien lo pida: la recepción, la API o un
 agente de IA.
+
+### Detalles del día a día en recepción
+
+- **Llegadas previstas de varios días:** en **Alojados**, la pestaña Llegadas
+  tiene una fecha **Hasta**: elija hasta dos semanas por delante para ver a
+  todos los que llegan.
+- **Segmento de mercado:** una reserva puede llevar su segmento (Corporativo,
+  Vacaciones, Grupo, MICE, Gobierno, Boda, Estancia larga, Tripulación aérea,
+  De cortesía, Uso interno). Una reserva de empresa es Corporativo salvo que
+  elija otro.
+- **Peticiones con precio:** en el registro de entrada, una cama adicional, un
+  traslado al aeropuerto o una ocasión especial pueden llevar un precio; va a
+  la cuenta del huésped (el traslado al aeropuerto como **Taxi**). Una llamada
+  despertador o una nota alimentaria nunca se cobran.
+- **Cambio de habitación** muestra el tipo de habitación en la que está ahora
+  el huésped y el tipo al que pasa.
+- **Folio:** cuando el huésped ha pagado más de lo cargado hasta ahora, el
+  folio lo muestra como **Anticipo**, no como saldo negativo.
+- **Los números de reserva** vuelven a empezar cada ejercicio fiscal: en India
+  en abril (RES-2026-… va de abril de 2026 a marzo de 2027), en los demás
+  países en enero.
+
+### Escanear un documento de identidad
+
+**Escanear identificación** rellena los datos del huésped desde el propio
+documento, así nadie teclea un número de pasaporte.
+
+- **Pasaporte o documento de identidad**: las dos o tres líneas de letras y `<`
+  al pie de la página con la foto. Kamra comprueba los dígitos de control, así
+  que una línea mal leída se rechaza en lugar de guardarse mal.
+- **Aadhaar** (alojamientos en India): el código QR de la tarjeta o del
+  e-Aadhaar impreso. Solo se guardan los 4 últimos dígitos del número Aadhaar.
+
+Cualquier escáner USB o Bluetooth que funcione en **modo teclado** (la mayoría
+de los lectores de códigos 2D, y los lectores de pasaportes con ajuste de
+teclado) funciona sin controlador: pulse **Escanear identificación** y escanee.
+En una tableta o un Mac, **Usar cámara** lee el QR con la cámara. Compare
+siempre lo leído con la persona que tiene delante, y tome igualmente la
+**Foto de la identificación** cuando su registro necesite una copia.
+
+### Registrar la entrada de un grupo completo
+
+Abra el grupo en **Grupos y bloqueos**. En la **Lista de huéspedes del grupo**,
+pulse **Registrar entrada del grupo** y confirme. Todas las habitaciones que
+llegan hoy entran a la vez; a una habitación aún sin asignar se le da una
+habitación libre del tipo reservado. Si no queda habitación libre para alguien,
+aparece en una lista y los demás entran igualmente.
+
+Los documentos, los depósitos y la ficha de registro se pueden terminar después
+habitación por habitación con **Finalizar** en cada fila, mientras el grupo ya
+sube a sus habitaciones.
 
 ## Registrar la entrada de un huésped sin reserva previa
 
@@ -203,6 +270,15 @@ huésped alojado o con **Ficha de registro** en la reserva.
    **Guardar registro**. Cuando una fila está guardada, **Capturar documento** en esa fila captura
    el documento del ocupante. La fila de un niño pide solo nombre y edad, salvo que el
    registro de su país también pida documentos de los niños.
+
+   Los huéspedes que comparten habitación no siempre llegan juntos. Cada fila
+   tiene su propia hora de **Llegó**: en el registro de entrada, todos los que
+   ya están en el registro reciben la hora de entrada, y un huésped añadido
+   durante la estancia recibe la hora en que se guardó. Corríjala en la fila,
+   o pulse **Llegó ahora**. Cuando un huésped se va antes que los demás, fije
+   **Se fue** (o **Se fue ahora**). La ficha de registro imprime la llegada de
+   cada huésped, y la tarjeta **Estancia** de la reserva muestra quién está en
+   la habitación.
 6. Pulse **Imprimir ficha de registro** y pida al huésped que firme. Un huésped que firmó en línea
    ya tiene su firma en la ficha.
 
@@ -251,7 +327,31 @@ La salida es una hoja guiada corta. Ábrala desde cualquiera de estos sitios:
 
 ![La lista de salidas con un botón Registrar salida en cada fila](/img/front-desk/departures.png)
 
-La hoja muestra solo los pasos que necesita esta estancia, en este orden:
+La hoja muestra solo los pasos que necesita esta estancia, en este orden. Un
+huésped que se va antes de la fecha reservada empieza por **Salida anticipada**:
+
+0. **Salida anticipada.** Muestra cuántas noches reservadas no usará el
+   huésped y lo que su **Cargo por salida anticipada** hace con ellas: **Sin
+   cargo**, **Una noche** o **Todas las noches sin usar**, cada opción con su
+   importe (la tarifa de esas noches). Escriba el motivo y pulse **Acortar la
+   estancia**. La estancia termina ahora hoy, por el mismo camino que cambiar
+   las fechas de la reserva: la habitación vuelve a la venta, se avisa al
+   channel manager y el precio se recalcula para las noches alojadas. La
+   salida factura entonces solo esas noches, más una línea **Salida
+   anticipada** por el cargo, en la cuenta que paga la habitación (la de la
+   empresa, cuando paga la habitación). Cada noche sin usar lleva el impuesto
+   que habría llevado su cargo de habitación, así que las noches en tramos de
+   impuesto distintos dan una línea por tipo. La línea es su propio tipo de
+   cargo, **Salida anticipada** (código de transacción 1220, grupo de ingresos
+   Otros): aparece como otros ingresos en el Resumen gerencial y en los informes del día,
+   nunca como noche de habitación, así que la ocupación, el ADR y el RevPAR
+   cuentan solo las noches que el huésped se alojó. Finanzas y los
+   Administradores del hotel pueden elegir otro cargo para esta estancia; los
+   demás aplican la política del alojamiento. La fecha reservada y el motivo
+   quedan en la reserva y aparecen en el informe **Salidas anticipadas**. Con
+   la política en **Todas las noches sin usar** puede **Saltar** el paso y
+   todas las noches reservadas siguen en la cuenta, como antes; con cualquier
+   otra política hay que acortar la estancia antes de la salida.
 
 ![La hoja de salida de Priya Nair en el paso Cuenta: quién paga, por qué este total y el resumen de la estancia](/img/front-desk/checkout-sheet.png)
 
@@ -280,6 +380,9 @@ La hoja muestra solo los pasos que necesita esta estancia, en este orden:
    por cobrar a empresas) y la comprobación de crédito de la empresa. Marque la casilla cuando el huésped
    esté de acuerdo. Si el crédito de la empresa está bloqueado, Finanzas o un Administrador del hotel
    pueden escribir un motivo para anularlo; el motivo queda registrado con su nombre.
+   Si la empresa cambió, pulse aquí **Cambiar empresa** (o en **Quién
+   paga**, en el primer paso); consulte
+   [Facturar a una empresa](/es/billing#facturar-a-una-empresa).
 4. **Pago.** Solo cuando todavía se debe dinero en un sentido u otro.
    - El huésped debe dinero: elija el medio de pago, añada una referencia si
      quiere y pulse **Cobrar**.
@@ -322,6 +425,22 @@ una limpieza de salida de prioridad alta. Cada paso (pago, reembolso, salida,
 factura) queda en el registro de actividad con el nombre de la persona que lo
 hizo.
 
+### Deshacer una salida
+
+¿Registró la salida de la habitación equivocada, o el huésped se queda al
+final? Abra la estancia, pulse **Deshacer salida** e indique el motivo. El
+huésped vuelve a estar alojado en la misma habitación:
+
+- la factura emitida en la salida se cancela y se conserva en el registro de
+  facturas canceladas (donde el país lo exige, se emite una nota de crédito);
+  la siguiente salida recibe un número nuevo
+- una cuenta que pasó a la cuenta de la empresa sale de ella
+- la habitación vuelve a estar ocupada y se elimina la limpieza de salida
+
+Funciona hasta que se ejecuta la auditoría nocturna. Se rechaza si hay otra
+persona en la habitación, o si la empresa ya pagó parte de la cuenta; esos
+casos los corrige Finanzas en la cuenta de la empresa.
+
 ## Buscar un huésped
 
 **Recepción → Huéspedes** muestra todos los huéspedes con sus reservas, estancias,
@@ -345,6 +464,31 @@ El historial muestra cada estancia y cada evento, con:
 
 ![El historial de un huésped: estancias anteriores, totales, notas y preferencias, VIP y acciones del perfil](/img/front-desk/guest-journey.png)
 
+## Cambiar la tarifa de un huésped alojado
+
+Alargar una estancia puede cambiar su tarifa: cinco noches pueden alcanzar un
+descuento por estancia larga que cuatro no alcanzaban. Kamra nunca vuelve a
+tarifar una noche ya cargada en el folio. El ajuste de cambio de tarifa de su
+alojamiento decide qué pasa con esas noches:
+
+- **Mantener las noches cargadas** (por defecto): las noches cargadas
+  conservan su tarifa; solo las noches que quedan toman la nueva. El total de
+  la reserva y el folio siguen iguales. Cuando cambia las fechas en el
+  calendario de ocupación, la línea de precio indica cuánto se habría ahorrado
+  el huésped en las noches cargadas; puede devolvérselo con una
+  [bonificación](/es/billing#corregir-un-cargo) y un motivo.
+- **Abonar la diferencia**: cuando la nueva tarifa es más baja, Kamra registra
+  un abono **Rate Adjustment** por cada noche cargada, con fecha de hoy, en el
+  folio al que fue la noche. El abono lleva el impuesto de la tarifa original
+  de la noche, aunque la tarifa más baja caiga en un tramo de impuesto
+  inferior: corrige la venta original. Una tarifa más alta nunca se suma a una
+  noche ya cargada. Los ajustes de tarifa cuentan como ingresos de habitación
+  (ADR, RevPAR, Resumen gerencial) pero no como habitaciones vendidas.
+- **Corregir tarifas de fechas pasadas**: las fechas cambian igual que con
+  Mantener. Después, Finanzas o un Administrador del hotel pueden corregir las
+  noches cargadas desde el folio; consulte
+  [Corregir noches cargadas](/es/billing#corregir-noches-cargadas).
+
 ## Configuración
 
 | Ajuste | Dónde | Valor por defecto | Qué hace |
@@ -354,8 +498,11 @@ El historial muestra cada estancia y cada evento, con:
 | Días de anticipación para enviar enlaces | Configuración → Recepción → Llegadas | 2 días | Con cuánta antelación a la llegada se envía el enlace automático. |
 | Exigir registro previo antes de dar instrucciones de acceso | Configuración → Recepción → Llegadas | Desactivado | Retiene las **Instrucciones de acceso** (códigos de puerta, wifi) hasta que el huésped haya hecho el registro en línea. |
 | Conservación de documentos de huéspedes | Configuración → Privacidad y datos | Verificar y eliminar | Verificar y eliminar oculta los números de documento salvo los 4 últimos dígitos y borra las fotos de los documentos en la salida. Conservar los guarda. |
+| Cuando cambia la tarifa de una estancia con noches ya cargadas | Configuración → Políticas de estancia → Cambios de tarifa durante la estancia | Mantener las noches cargadas | Consulte [Cambiar la tarifa de un huésped alojado](#cambiar-la-tarifa-de-un-huesped-alojado). |
 | Depósito de garantía | Configuración → Políticas de estancia → Anticipos y depósitos de garantía | 0 | Un importe reembolsable que se retiene durante la estancia. Si se fija, el registro de entrada tiene un paso **Depósito de garantía y anticipo**. Mientras está retenido, la reserva le avisa antes de la salida. |
 | Pasos del registro de entrada | Configuración → Recepción → Pasos del registro de entrada | Consulte [Los pasos](#los-pasos) | Qué pasos del registro de entrada son obligatorios. Los pasos obligatorios no se pueden saltar y bloquean el registro de entrada hasta que se completan. |
+| Cargo por salida anticipada | Configuración → Políticas de estancia → Cancelación y no presentación | Todas las noches | Lo que paga por las noches sin usar un huésped que se va antes de la fecha reservada: Ninguno, Una noche o Todas las noches (tarifa de la habitación). Finanzas o un Administrador del hotel pueden cambiarlo para una estancia, con un motivo. |
+| Enviar un WhatsApp al huésped cuando se carga algo a la habitación | Configuración → Recepción → Avisos al huésped | Desactivado | Envía la plantilla de cargo a la habitación (consulte [WhatsApp](/whatsapp)) cuando un cargo del restaurante, la lavandería, el minibar o recepción llega a la cuenta de un huésped alojado. |
 | Nombre de la red wifi, Contraseña Wi-Fi, Horario del desayuno, Número de emergencia, Información adicional para huéspedes | Configuración → Recepción → Información al huésped durante la llegada | Vacío | Se muestra en el paso **Wifi e información de la estancia**, para decirlo, imprimirlo o enviarlo por WhatsApp. La contraseña nunca se escribe en el registro de actividad. |
 
 ## Conviene saber
@@ -443,11 +590,14 @@ paso (`save_guest_details`, `confirm_billing`, `assign_checkin_room`,
 (`kamra.checkin.check_in_readiness` indica lo que falta). Los pasos y
 cuáles son obligatorios están en el procedimiento de registro de entrada del alojamiento (`kamra.sop`). El
 huésped sin reserva previa es `kamra.api.walk_in` (`defer_check_in=1` reserva y pasa a
-los pasos); la salida es `kamra.api.check_out`; los cambios de
+los pasos); la salida es `kamra.api.check_out` (con `early_reason` /
+`early_fee` acorta primero una salida anticipada); la salida anticipada por
+sí sola es `kamra.api.early_departure` y su plan es `early_departure` en
+`kamra.api.checkout_context`; los cambios de
 habitación usan `kamra.api.movable_rooms`, `kamra.api.room_move_preview` y
 `kamra.api.move_reservation`. El diseño de Hoy es
 `kamra.today_layout.get_today_layout`, `save_today_layout`,
 `reset_today_layout` y `save_today_layout_default` (Administrador del hotel). Los agentes de IA usan las herramientas `front_desk_today`,
-`check_in_readiness`, `check_in`, `check_out`, `move_room`, `guest_lookup`, `guest_journey` y
+`check_in_readiness`, `check_in`, `check_out`, `early_departure`, `move_room`, `guest_lookup`, `guest_journey` y
 `update_occupants`. Consulte [MCP tools](/mcp-tools) y la
 [referencia de la API](/api-reference).
