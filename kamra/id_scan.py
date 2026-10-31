@@ -18,7 +18,7 @@ from datetime import date
 import frappe
 from frappe import _
 
-from kamra.authz import require_roles
+from kamra.authz import require_perm
 
 _WEIGHTS = (7, 3, 1)
 # a scan is a few hundred characters; an Aadhaar secure QR a few thousand
@@ -146,7 +146,7 @@ def read(property: str, text: str) -> dict:
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Kamra Agent")
+@require_perm("Guest", "handle_guests")
 def read_id_scan(property: str, text: str) -> dict:
 	"""Turn what an ID scanner (or a camera reading a QR) sent into guest
 	fields: name, ID type and number, date of birth, age, gender,

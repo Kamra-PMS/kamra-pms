@@ -11,12 +11,12 @@ import { useT } from "../lib/i18n"
  *  first screen. Also the front door to the Marketplace. */
 export default function AppLauncher() {
   const { t } = useT()
-  const { roles } = useAuth()
+  const { roles, can } = useAuth()
   const navigate = useNavigate()
   // only the apps this property runs (enabled_modules, empty = all) -
   // the same rule as the sidebar and the MCP tool list
   const { modules } = useOutletContext<ShellContext>()
-  const apps = visibleApps(roles, modules)
+  const apps = visibleApps(roles, modules, can)
   const canMarket = ["Hotel Admin", "System Manager", "Administrator"].some(
     (r) => roles.includes(r),
   )

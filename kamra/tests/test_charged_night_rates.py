@@ -178,20 +178,22 @@ class ChargedNightRatesTestCase(AuditTestCase):
 		self.assert_booking_matches_folio(res)
 
 	def test_correction_needs_a_finance_or_admin_approver(self):
-		# a supervisor by another role (System Manager here; the POS's F&B
-		# Manager on that branch) never approves a folio correction
+		# a supervisor by another role (one a site gave Folio: Approve) never
+		# approves a folio correction without Folio: Correct charges
+		from unittest.mock import patch
 		self.policy("Correct back-dated rates")
 		_, res = self.extend()
 		ensure_user(FIN, ["Finance"])
-		sm = ensure_user("ut-charged-sm@example.com", ["System Manager"])
-		if not frappe.db.exists("Cashier PIN", sm):
-			frappe.get_doc({"doctype": "Cashier PIN", "user": sm, "pin": "4321",
+		other = ensure_user("ut-charged-other@example.com", ["Front Desk"])
+		if not frappe.db.exists("Cashier PIN", other):
+			frappe.get_doc({"doctype": "Cashier PIN", "user": other, "pin": "4321",
 			                "must_reset": 0}).insert(ignore_permissions=True)
 		frappe.set_user(FIN)  # nosemgrep: frappe-setuser -- test persona
 		try:
-			with self.assertRaisesRegex(frappe.PermissionError, "Finance or Hotel Admin"):
+			with patch("kamra.authz.is_supervisor", return_value=True), \
+					self.assertRaisesRegex(frappe.PermissionError, "Finance or Hotel Admin"):
 				api.correct_charged_nights(res.name, reason="Wrong tariff",
-				                           supervisor=sm, pin="4321")
+				                           supervisor=other, pin="4321")
 		finally:
 			frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- cleanup
 		self.assertFalse(self.adjustments())

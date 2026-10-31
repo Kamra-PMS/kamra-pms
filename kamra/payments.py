@@ -9,7 +9,7 @@ speaks a gateway's API itself.
 import frappe
 from frappe.utils import nowdate
 
-from kamra.authz import require_roles
+from kamra.authz import require_perm
 
 
 def _settings(property: str):
@@ -146,7 +146,7 @@ def cashfree_webhook():
 
 
 @frappe.whitelist()
-@require_roles("Hotel Admin", "Finance")
+@require_perm("Folio", "audit_voids")
 def gateway_info(property: str, gateway: str = "") -> dict:
 	"""What the Payments settings card shows beside the keys: where the
 	gateway reports payments, and where to open an account."""

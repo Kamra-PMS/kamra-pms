@@ -171,7 +171,7 @@
   }
  ],
  "links": [],
- "modified": "2026-09-28 12:51:22.820746",
+ "modified": "2026-10-30 12:32:21.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Laundry Order",
@@ -187,7 +187,10 @@
    "report": 1,
    "role": "System Manager",
    "share": 1,
-   "write": 1
+   "write": 1,
+   "handle_laundry": 1,
+   "price_laundry": 1,
+   "view_laundry": 1
   },
   {
    "create": 1,
@@ -198,7 +201,10 @@
    "report": 1,
    "role": "Hotel Admin",
    "share": 1,
-   "write": 1
+   "write": 1,
+   "handle_laundry": 1,
+   "price_laundry": 1,
+   "view_laundry": 1
   },
   {
    "create": 1,
@@ -207,14 +213,19 @@
    "read": 1,
    "report": 1,
    "role": "Front Desk",
-   "write": 1
+   "write": 1,
+   "handle_laundry": 1,
+   "price_laundry": 1,
+   "view_laundry": 1
   },
   {
    "email": 1,
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "Finance"
+   "role": "Finance",
+   "price_laundry": 1,
+   "view_laundry": 1
   },
   {
    "create": 1,
@@ -223,7 +234,10 @@
    "read": 1,
    "report": 1,
    "role": "Kamra Agent",
-   "write": 1
+   "write": 1,
+   "handle_laundry": 1,
+   "price_laundry": 1,
+   "view_laundry": 1
   },
   {
    "create": 1,
@@ -233,7 +247,9 @@
    "report": 1,
    "role": "Housekeeping",
    "share": 1,
-   "write": 1
+   "write": 1,
+   "handle_laundry": 1,
+   "view_laundry": 1
   },
   {
    "create": 1,
@@ -243,7 +259,9 @@
    "report": 1,
    "role": "Housekeeping Supervisor",
    "share": 1,
-   "write": 1
+   "write": 1,
+   "handle_laundry": 1,
+   "view_laundry": 1
   }
  ],
  "sort_field": "modified",

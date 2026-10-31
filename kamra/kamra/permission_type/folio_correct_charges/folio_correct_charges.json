@@ -1,0 +1,10 @@
+{
+ "creation": "2026-10-31 12:00:00.000000",
+ "doc_type": "Folio",
+ "doctype": "Permission Type",
+ "modified": "2026-10-31 12:00:00.000000",
+ "modified_by": "Administrator",
+ "name": "folio_correct_charges",
+ "owner": "Administrator",
+ "perm_type": "correct_charges"
+}

@@ -10,7 +10,7 @@ import frappe
 from frappe import _
 from frappe.utils import add_days, getdate, now_datetime, nowdate
 
-from kamra.authz import require_roles
+from kamra.authz import require_perm
 
 BANQUET_ROLES = ("Front Desk", "Revenue Manager", "Kamra Agent")
 READ_ROLES = BANQUET_ROLES + ("Finance", "Housekeeping")
@@ -212,7 +212,7 @@ def _quote_html(doc, payload: dict) -> str:
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*BANQUET_ROLES)
+@require_perm("Venue Booking", "manage_functions")
 def send_quotation(function: str, channels: str | list | None = None):
 	"""Email (and optional WhatsApp) the stamped quotation to the guest.
 
@@ -302,7 +302,7 @@ def send_quotation(function: str, channels: str | list | None = None):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*BANQUET_ROLES)
+@require_perm("Venue Booking", "manage_functions")
 def record_guest_response(
 	function: str,
 	outcome: str,
@@ -358,7 +358,7 @@ def record_guest_response(
 
 
 @frappe.whitelist()
-@require_roles(*READ_ROLES)
+@require_perm("Venue Booking", "view_functions")
 def function_tasks(function: str):
 	"""Checklist tasks for one function, grouped by department."""
 	rows = frappe.get_all(
@@ -385,7 +385,7 @@ def function_tasks(function: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*BANQUET_ROLES, "Finance", "Housekeeping")
+@require_perm("Venue Booking", "view_functions")
 def complete_function_task(task: str, done: int = 1):
 	"""Mark a department checklist task done (or reopen)."""
 	doc = frappe.get_doc("Banquet Function Task", task)
@@ -402,7 +402,7 @@ def complete_function_task(task: str, done: int = 1):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Hotel Admin", "System Manager", "Administrator")
+@require_perm("Venue Booking", "configure")
 def seed_banquet_checklist_templates(property: str):
 	"""Ensure default department templates exist for this property."""
 	n = ensure_default_templates(property)

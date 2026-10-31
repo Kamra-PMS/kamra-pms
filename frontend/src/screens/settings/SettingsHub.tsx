@@ -509,7 +509,7 @@ function CustomPageBody({
     case "staff":
       return <StaffPage />
     case "roles":
-      // Roles are fixed in code; assignment lives on Staff & access.
+      // Roles live in Desk (Role Permission Manager); assignment is on Staff & access.
       return <Navigate to="/settings/staff" replace />
     case "modules":
       return <ModulesPage modules={schema.modules} canToggle={schema.is_admin} onChanged={onModulesChanged} />

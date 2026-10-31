@@ -41,7 +41,14 @@ export interface SecurityDepositState {
 type Mode = "collect" | "waive" | "withhold" | "refund"
 
 const ADMIN = ["System Manager", "Administrator"]
-// mirrors the server's gates (the server decides; this only hides buttons)
+// the server's gates (it decides; this only hides buttons): the permission
+// each endpoint checks, with the old role lists as the fallback
+const PERMS: Record<Mode, [string, string]> = {
+  collect: ["Folio", "bill"],
+  waive: ["Reservation", "handle_stays"],
+  withhold: ["Security Deposit", "refund_deposit"],
+  refund: ["Security Deposit", "refund_deposit"],
+}
 const GATES: Record<Mode, string[]> = {
   collect: ["Front Desk", "Finance", "Hotel Admin", ...ADMIN],
   waive: ["Front Desk", "Hotel Admin", ...ADMIN],
@@ -75,7 +82,7 @@ export default function SecurityDepositPanel(props: {
 }) {
   const { t } = useT()
   const loc = useLocale()
-  const { roles } = useAuth()
+  const { allowed: may } = useAuth()
   const { ensureUnlocked, status: pinStatus } = useCashierAuth()
   const d = props.deposit
   const [mode, setMode] = useState<Mode | null>(null)
@@ -85,7 +92,7 @@ export default function SecurityDepositPanel(props: {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const allowed = (m: Mode) => GATES[m].some((r) => roles.includes(r))
+  const allowed = (m: Mode) => may(PERMS[m][0], PERMS[m][1], GATES[m])
   const nothingYet = d.status === "None" && d.history.length === 0
   if (nothingYet && !props.canStart) return null
 

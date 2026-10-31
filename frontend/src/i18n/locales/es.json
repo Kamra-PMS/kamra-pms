@@ -2711,6 +2711,7 @@
   "Navigate": "Navegar",
   "Need": "Necesario",
   "Need a platform-wide or service key (HeyKoala, unattended jobs)? That is issued by your system admin under Developers. Staff should use Connect Claude - no API secrets on a laptop.": "¿Necesita una clave de servicio o para toda la plataforma, por ejemplo para HeyKoala o tareas automáticas? Su administrador la emite en Desarrolladores. El personal debe usar Conectar Claude, sin guardar secretos de API en su equipo.",
+  "Need a role that isn't here, or a change to what a role may do? IT creates roles and sets their permissions in Desk (Role Permission Manager). See Roles and access in the docs.": "¿Necesita un rol que no está aquí, o cambiar lo que un rol puede hacer? TI crea los roles y define sus permisos en Desk (Role Permission Manager). Consulte Roles y acceso en la documentación.",
   "Need clothes washed? Ask housekeeping to pick them up - they'll count and price the bag with you at the door.": "¿Necesita lavar ropa? Solicite la recogida a Limpieza; contarán las prendas y confirmarán el precio con usted en la puerta.",
   "Needs attention": "Requiere atención",
   "Needs attention · ": "Requieren atención · ",

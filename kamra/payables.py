@@ -29,7 +29,7 @@ import frappe
 from frappe import _
 from frappe.utils import add_days, flt, getdate, now_datetime, nowdate
 
-from kamra.authz import require_roles
+from kamra.authz import require_perm
 from kamra.ledger import DUE_BUCKETS, _due_bucket
 
 EXPENSE_CATEGORIES = (
@@ -82,7 +82,7 @@ def _bill_row(b) -> dict:
 # ── vendors ─────────────────────────────────────────────────────────────────
 
 @frappe.whitelist()
-@require_roles("Finance", "Hotel Admin", "Kamra Agent")
+@require_perm("Vendor Bill", "view_payables")
 def vendors(property: str, include_disabled: int = 0):
 	"""Every vendor at the property with what the hotel still owes them,
 	aged by due date - the payables list."""
@@ -104,7 +104,7 @@ def vendors(property: str, include_disabled: int = 0):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Finance", "Hotel Admin", scope={"vendor": "Vendor"})
+@require_perm("Vendor", "manage_vendors", scope={"vendor": "Vendor"})
 def save_vendor(property: str, vendor_name: str, expense_category: str | None = None,
                 payment_terms_days: int = 30, tax_id: str | None = None,
                 contact_name: str | None = None, phone: str | None = None,
@@ -148,7 +148,7 @@ def save_vendor(property: str, vendor_name: str, expense_category: str | None = 
 # ── bills ───────────────────────────────────────────────────────────────────
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Finance", "Hotel Admin", "Kamra Agent")
+@require_perm("Vendor Bill", "enter_bills")
 def create_vendor_bill(property: str, vendor: str, bill_date: str, amount: float,
                        tax_rate: float = 0, expense_category: str | None = None,
                        bill_number: str | None = None, due_date: str | None = None,
@@ -201,7 +201,7 @@ def _open_bill(bill: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Hotel Admin", scope=BILL)
+@require_perm("Vendor Bill", "approve_bills", scope=BILL)
 def approve_vendor_bill(bill: str):
 	"""Approve a bill so it can be paid."""
 	doc = _open_bill(bill)
@@ -218,7 +218,7 @@ def approve_vendor_bill(bill: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Finance", "Hotel Admin", scope=BILL)
+@require_perm("Vendor Bill", "pay_bills", scope=BILL)
 def pay_vendor_bill(bill: str, amount: float, mode: str = "Bank Transfer",
                     reference: str | None = None, payment_date: str | None = None):
 	"""Record a payment against an approved bill: all of it or part. It
@@ -252,7 +252,7 @@ def pay_vendor_bill(bill: str, amount: float, mode: str = "Bank Transfer",
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Finance", "Hotel Admin", scope=BILL)
+@require_perm("Vendor Bill", "pay_bills", scope=BILL)
 def cancel_vendor_bill(bill: str, reason: str):
 	"""Cancel a bill entered by mistake. A bill with payments on it can't
 	be cancelled."""
@@ -272,7 +272,7 @@ def cancel_vendor_bill(bill: str, reason: str):
 
 
 @frappe.whitelist()
-@require_roles("Finance", "Hotel Admin", "Kamra Agent", scope=BILL)
+@require_perm("Vendor Bill", "view_payables", scope=BILL)
 def vendor_bill(bill: str):
 	"""One bill with its payments."""
 	doc = frappe.get_doc("Vendor Bill", bill)
@@ -286,7 +286,7 @@ def vendor_bill(bill: str):
 
 
 @frappe.whitelist()
-@require_roles("Finance", "Hotel Admin", "Kamra Agent", scope={"vendor": "Vendor"})
+@require_perm("Vendor Bill", "view_payables", scope={"vendor": "Vendor"})
 def vendor_bills(property: str, status: str = "open", vendor: str | None = None,
                  limit: int = 500):
 	"""Bills at the property, most urgent first. `status` is "open"
@@ -310,7 +310,7 @@ def vendor_bills(property: str, status: str = "open", vendor: str | None = None,
 
 
 @frappe.whitelist()
-@require_roles("Finance", "Hotel Admin", "Kamra Agent")
+@require_perm("Vendor Bill", "view_payables")
 def payables_aging(property: str):
 	"""What the hotel owes each vendor, aged by due date: not_due, d1_30,
 	d31_60, d61_90, d90p and their sum `overdue`, plus totals."""

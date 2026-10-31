@@ -85,7 +85,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-10-30 12:00:00.000000",
+ "modified": "2026-10-31 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Vendor",
@@ -108,7 +108,8 @@
    "print": 1,
    "report": 1,
    "share": 1,
-   "email": 1
+   "email": 1,
+   "manage_vendors": 1
   },
   {
    "role": "Hotel Admin",
@@ -116,7 +117,8 @@
    "export": 1,
    "print": 1,
    "report": 1,
-   "email": 1
+   "email": 1,
+   "manage_vendors": 1
   },
   {
    "role": "Finance",
@@ -124,7 +126,8 @@
    "export": 1,
    "print": 1,
    "report": 1,
-   "email": 1
+   "email": 1,
+   "manage_vendors": 1
   },
   {
    "role": "Kamra Agent",

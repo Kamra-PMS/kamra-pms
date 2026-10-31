@@ -16,6 +16,7 @@ def after_install():
 	ensure_staff_roles()
 	ensure_mcp_roles()
 	ensure_user_fields()
+	ensure_role_profiles()
 
 
 def after_migrate():
@@ -24,6 +25,8 @@ def after_migrate():
 	ensure_staff_roles()
 	ensure_mcp_roles()
 	ensure_user_fields()
+	sync_permission_types()
+	ensure_role_profiles()
 
 
 def ensure_user_fields():
@@ -137,3 +140,72 @@ def set_site_home_and_favicon():
 
 # Back-compat for patches that import the old name.
 set_site_favicon = set_site_home_and_favicon
+
+
+SYNCED_PTYPES = "kamra_synced_permission_types"
+
+
+def sync_permission_types():
+	"""Kamra's actions are Permission Types on its doctypes (require_perm),
+	granted in the doctype JSON. But a site that has edited a doctype in
+	Role Permission Manager has Custom DocPerms, which replace the JSON
+	perms wholesale - a Permission Type shipped later would grant nobody
+	there and the action would lock everyone but Administrator out. Copy
+	each new Permission Type's standard grants into the Custom DocPerms,
+	once per Permission Type; what the site changes afterwards is theirs."""
+	import json
+
+	done = set(json.loads(frappe.db.get_default(SYNCED_PTYPES) or "[]"))
+	ours = set(frappe.get_all("DocType", filters={"module": "Kamra"}, pluck="name"))
+	customised = set(frappe.get_all("Custom DocPerm", pluck="parent", distinct=True))
+	changed = False
+	for pt in frappe.get_all("Permission Type", fields=["name", "doc_type", "perm_type"]):
+		if pt.name in done or pt.doc_type not in ours:
+			continue
+		if pt.doc_type in customised:
+			for role in frappe.get_all("DocPerm", pluck="role", filters={
+					"parent": pt.doc_type, "permlevel": 0, pt.perm_type: 1}):
+				row = frappe.db.get_value("Custom DocPerm", {
+					"parent": pt.doc_type, "role": role, "permlevel": 0, "if_owner": 0})
+				if row:
+					frappe.db.set_value("Custom DocPerm", row, pt.perm_type, 1)
+				else:
+					frappe.get_doc({
+						"doctype": "Custom DocPerm", "parent": pt.doc_type,
+						"parenttype": "DocType", "parentfield": "permissions",
+						# Frappe wants one basic right per row: select only
+						# lets the role pick the record in a link field
+						"role": role, "permlevel": 0, "select": 1, pt.perm_type: 1,
+					}).insert(ignore_permissions=True)
+			changed = True
+		done.add(pt.name)
+	frappe.db.set_default(SYNCED_PTYPES, json.dumps(sorted(done)))
+	if changed:
+		frappe.clear_cache()
+
+
+# Job bundles: a Role Profile on a user sets their roles in one pick (Desk:
+# User > Role Profiles). Created once; the hotel edits them freely after.
+ROLE_PROFILES = {
+	"Receptionist": ("Front Desk",),
+	"Front Office Manager": ("Front Desk", "Night Auditor", "Revenue Manager"),
+	"Duty Manager": ("Front Desk", "Night Auditor", "Housekeeping Supervisor"),
+	"Night Auditor": ("Night Auditor", "Front Desk"),
+	# takes orders and charges bills to rooms (POS Order: take_orders),
+	# approves POS voids (POS Order: approve_voids), runs kitchen stock
+	# (Ingredient: manage_stock), the menu (Menu Item: edit_menu) and kitchen
+	# printers and stations (Kitchen Printer: configure_printers)
+	"F&B Manager": ("F&B Manager",),
+	"Finance Manager": ("Finance", "Night Auditor"),
+	"General Manager": ("Hotel Admin", "Finance"),
+}
+
+
+def ensure_role_profiles():
+	for name, roles in ROLE_PROFILES.items():
+		if frappe.db.exists("Role Profile", name):
+			continue
+		frappe.get_doc({
+			"doctype": "Role Profile", "role_profile": name,
+			"roles": [{"role": r} for r in roles],
+		}).insert(ignore_permissions=True)

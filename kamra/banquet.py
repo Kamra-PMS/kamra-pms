@@ -43,7 +43,7 @@ from frappe.utils import (
 	nowdate,
 )
 
-from kamra.authz import require_roles
+from kamra.authz import require_perm
 from kamra.localization import money_text
 from kamra.settings import get_setting
 
@@ -118,7 +118,7 @@ def _map(value) -> dict:
 # ══ the catalogue ════════════════════════════════════════════════════════
 
 @frappe.whitelist()
-@require_roles(*READ_ROLES)
+@require_perm("Venue Booking", "view_functions")
 def banquet_catalogue(property: str):
 	"""What the property sells: the menu packages (with their courses) and
 	the service list. This is the picker behind every line item."""
@@ -150,7 +150,7 @@ def banquet_catalogue(property: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*CATALOGUE_ROLES, scope={"name": "Banquet Menu"})
+@require_perm("Banquet Menu", "edit_catalogue", scope={"name": "Banquet Menu"})
 def save_banquet_menu(property: str, menu_name: str, rate_per_pax: float,
                       courses=None, name: str | None = None, **kw):
 	"""Add or edit one menu package. Courses replace wholesale - the grid
@@ -187,14 +187,14 @@ def save_banquet_menu(property: str, menu_name: str, rate_per_pax: float,
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*CATALOGUE_ROLES, scope={"name": "Banquet Menu"})
+@require_perm("Banquet Menu", "edit_catalogue", scope={"name": "Banquet Menu"})
 def delete_banquet_menu(name: str):
 	frappe.delete_doc("Banquet Menu", name)
 	return {"ok": True}
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*CATALOGUE_ROLES, scope={"name": "Banquet Service Item"})
+@require_perm("Banquet Menu", "edit_catalogue", scope={"name": "Banquet Service Item"})
 def save_service_item(property: str, item_name: str, category: str,
                       rate: float = 0, uom: str = "Per Event",
                       name: str | None = None, **kw):
@@ -221,7 +221,7 @@ def save_service_item(property: str, item_name: str, category: str,
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*CATALOGUE_ROLES, scope={"name": "Banquet Service Item"})
+@require_perm("Banquet Menu", "edit_catalogue", scope={"name": "Banquet Service Item"})
 def delete_service_item(name: str):
 	frappe.delete_doc("Banquet Service Item", name)
 	return {"ok": True}
@@ -230,7 +230,7 @@ def delete_service_item(name: str):
 # ══ prospecting ══════════════════════════════════════════════════════════
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*BANQUET_ROLES)
+@require_perm("Venue Booking", "manage_functions")
 def create_enquiry(property: str, venue: str, event_date: str,
                    customer_name: str, event_type: str = "Wedding",
                    attendees: int = 0, customer_phone: str | None = None,
@@ -306,7 +306,7 @@ def create_enquiry(property: str, venue: str, event_date: str,
 
 
 @frappe.whitelist()
-@require_roles(*READ_ROLES)
+@require_perm("Venue Booking", "view_functions")
 def function_sheet(function: str):
 	"""One function, everything about it - the sheet the banquet screen
 	renders and Kamra Agent reads."""
@@ -336,7 +336,7 @@ def function_sheet(function: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*BANQUET_ROLES)
+@require_perm("Venue Booking", "manage_functions")
 def update_function(function: str, fields):
 	"""Edit the sheet's own fields (not its tables - those have their own
 	calls, because each one means something different)."""
@@ -409,7 +409,7 @@ def _set_group_link(doc, group: str | None):
 
 
 @frappe.whitelist()
-@require_roles(*READ_ROLES)
+@require_perm("Venue Booking", "view_functions")
 def linkable_groups(function: str):
 	"""Group bookings this function could ride: same property, not
 	cancelled, staying within a month either side of the event."""
@@ -436,7 +436,7 @@ def linkable_groups(function: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*BANQUET_ROLES)
+@require_perm("Venue Booking", "manage_functions")
 def link_group(function: str, group_booking: str | None = None):
 	"""Tie a function to a group booking so its bill can ride the group's
 	master folio (post_to_folio), or untie it (group_booking empty)."""
@@ -459,7 +459,7 @@ def link_group(function: str, group_booking: str | None = None):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*BANQUET_ROLES)
+@require_perm("Venue Booking", "manage_functions")
 def set_status(function: str, status: str, reason: str | None = None,
                tentative_until: str | None = None):
 	"""Move the function along its pipeline. Confirming takes the hall -
@@ -510,7 +510,7 @@ def set_status(function: str, status: str, reason: str | None = None,
 # ══ building the function ════════════════════════════════════════════════
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*BANQUET_ROLES)
+@require_perm("Venue Booking", "manage_functions")
 def add_menu(function: str, menu: str, qty=None, rate=None, chargeable: int = 1,
              notes: str | None = None):
 	"""Put a menu package on the function. Left alone the quantity follows
@@ -540,7 +540,7 @@ def add_menu(function: str, menu: str, qty=None, rate=None, chargeable: int = 1,
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*BANQUET_ROLES)
+@require_perm("Venue Booking", "manage_functions")
 def add_service(function: str, service_item: str, qty=None, rate=None,
                 chargeable=None, notes: str | None = None):
 	"""Put a service on the function - projector, LED wall, DJ, podium,
@@ -575,7 +575,7 @@ def add_service(function: str, service_item: str, qty=None, rate=None,
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*BANQUET_ROLES)
+@require_perm("Venue Booking", "manage_functions")
 def save_items(function: str, items):
 	"""Replace the line grid wholesale - what the user is looking at is the
 	truth. Rows keep their catalogue links so the event order can still
@@ -611,7 +611,7 @@ def save_items(function: str, items):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*BANQUET_ROLES)
+@require_perm("Venue Booking", "manage_functions")
 def remove_item(function: str, row: str):
 	doc = _fn(function)
 	_guard_closed(doc)
@@ -632,7 +632,7 @@ def _line_result(doc):
 # ══ negotiation ══════════════════════════════════════════════════════════
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*BANQUET_ROLES)
+@require_perm("Venue Booking", "manage_functions")
 def negotiate(function: str, rows=None, discount_amount=None,
               note: str | None = None, venue_rental=None):
 	"""The price moves. `rows` is {line_row_name: new_rate} - or pass
@@ -699,7 +699,7 @@ def _snapshot(doc, note: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*BANQUET_ROLES)
+@require_perm("Venue Booking", "manage_functions")
 def save_open_items(function: str, rows):
 	"""What is still unsettled while the price is being agreed - the
 	sangeet stage, whether the bar is on consumption, who pays for the
@@ -727,7 +727,7 @@ def save_open_items(function: str, rows):
 # ══ terms and money ══════════════════════════════════════════════════════
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*BANQUET_ROLES, "Finance")
+@require_perm("Venue Booking", "bill_functions")
 def set_payment_terms(function: str, terms, note: str | None = None):
 	"""The schedule the customer signs up to. A term stated as a percentage
 	follows the quote as it moves; one stated as an amount is a number both
@@ -756,7 +756,7 @@ def set_payment_terms(function: str, terms, note: str | None = None):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*BANQUET_ROLES, "Finance")
+@require_perm("Venue Booking", "bill_functions")
 def default_payment_terms(function: str, advance_percent: float | None = None,
                           interim_percent: float | None = None,
                           interim_days_before: int | None = None):
@@ -785,7 +785,7 @@ def default_payment_terms(function: str, advance_percent: float | None = None,
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*BANQUET_ROLES, "Finance")
+@require_perm("Venue Booking", "bill_functions")
 def record_receipt(function: str, amount: float, mode: str = "Bank Transfer",
                    kind: str = "Advance", reference: str | None = None,
                    receipt_date: str | None = None, settle_term: str | None = None):
@@ -824,7 +824,7 @@ def record_receipt(function: str, amount: float, mode: str = "Bank Transfer",
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*BANQUET_ROLES)
+@require_perm("Venue Booking", "manage_functions")
 def assign_green_room(function: str, room: str | None = None,
                       from_date: str | None = None, to_date: str | None = None,
                       complimentary: int = 1, rate: float = 0):
@@ -862,7 +862,7 @@ def assign_green_room(function: str, room: str | None = None,
 # ══ availability and the diary ═══════════════════════════════════════════
 
 @frappe.whitelist()
-@require_roles(*READ_ROLES)
+@require_perm("Venue Booking", "view_functions")
 def venue_availability(property: str, event_date: str,
                        end_date: str | None = None,
                        start_time: str | None = None,
@@ -900,7 +900,7 @@ def venue_availability(property: str, event_date: str,
 
 
 @frappe.whitelist()
-@require_roles(*READ_ROLES)
+@require_perm("Venue Booking", "view_functions")
 def banquet_calendar(property: str, start_date: str | None = None,
                      days: int = 31, status: str | None = None):
 	"""The function diary - halls down the side, days across the top, every
@@ -953,7 +953,7 @@ def banquet_calendar(property: str, start_date: str | None = None,
 # ══ month-wise tracking ══════════════════════════════════════════════════
 
 @frappe.whitelist()
-@require_roles(*REPORT_ROLES, "Hotel Admin")
+@require_perm("Venue Booking", "bill_functions")
 def banquet_pipeline(property: str, from_date: str | None = None,
                      to_date: str | None = None, months: int = 6):
 	"""The sales view: where the business is by month and by status, what
@@ -1108,7 +1108,7 @@ def _function_alerts(doc):
 
 
 @frappe.whitelist()
-@require_roles(*READ_ROLES)
+@require_perm("Venue Booking", "view_functions")
 def banquet_reminders(property: str, days: int = 30):
 	"""Everything across the property that needs chasing - the banquet
 	team's morning list."""
@@ -1195,7 +1195,7 @@ _DOC_KINDS = ("quote", "contract", "beo", "pack_list", "invoice")
 
 
 @frappe.whitelist()
-@require_roles(*READ_ROLES)
+@require_perm("Venue Booking", "view_functions")
 def banquet_document(function: str, kind: str = "quote"):
 	"""The paper. One shape for every document so the front end can print
 	them all the same way:
@@ -1455,7 +1455,7 @@ def _pack_list(doc):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*BANQUET_ROLES)
+@require_perm("Venue Booking", "manage_functions")
 def generate_quote(function: str, valid_days: int = 15,
                    note: str | None = None):
 	"""Stamp a quotation. Bumps the version, dates it, and snapshots what
@@ -1481,7 +1481,7 @@ def generate_quote(function: str, valid_days: int = 15,
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*BANQUET_ROLES)
+@require_perm("Venue Booking", "manage_functions")
 def generate_beo(function: str):
 	"""Issue the banquet event order - the sheet the banquet, kitchen and
 	AV teams run the day from. Only a confirmed function gets one; the
@@ -1503,7 +1503,7 @@ def generate_beo(function: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*BANQUET_ROLES, "Finance")
+@require_perm("Venue Booking", "bill_functions")
 def generate_invoice(function: str):
 	"""Raise the tax invoice for a function.
 
@@ -1542,7 +1542,7 @@ _FOLIO_CHARGE_TYPE = {
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*BANQUET_ROLES, "Finance")
+@require_perm("Venue Booking", "bill_functions")
 def post_to_folio(function: str, folio: str | None = None):
 	"""Push the chargeable lines onto a bill. A function tied to a group
 	rides the group's master folio; otherwise pass one explicitly.
@@ -1617,7 +1617,7 @@ def post_to_folio(function: str, folio: str | None = None):
 # ══ the close-out ════════════════════════════════════════════════════════
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*BANQUET_ROLES, "Finance")
+@require_perm("Venue Booking", "bill_functions")
 def close_out(function: str, damage_amount: float = 0,
               damage_note: str | None = None, refund_deposit: int = 1,
               refund_mode: str = "Bank Transfer",
@@ -1729,7 +1729,7 @@ REOPEN_ROLES = ("Revenue Manager", "Finance", "Hotel Admin")
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*REOPEN_ROLES)
+@require_perm("Venue Booking", "reopen_function")
 def reopen_function(function: str, reason: str):
 	"""Reopen a closed (Completed) function so its sheet can be corrected.
 	It goes back to Confirmed; receipts, refunds and the damage line stay
@@ -1761,7 +1761,7 @@ def reopen_function(function: str, reason: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*BANQUET_ROLES, "Finance")
+@require_perm("Venue Booking", "bill_functions")
 def receipt_document(function: str, receipt: str):
 	"""One receipt, as a document the customer can keep. Every advance a
 	banquet office takes needs a piece of paper against it - this is that
@@ -1814,7 +1814,7 @@ def receipt_document(function: str, receipt: str):
 
 
 @frappe.whitelist()
-@require_roles(*READ_ROLES)
+@require_perm("Venue Booking", "view_functions")
 def menu_card(function: str):
 	"""The menu the customer signs off - what will actually be served,
 	course by course, with nothing about money on it. The kitchen and the
@@ -1860,7 +1860,7 @@ def menu_card(function: str):
 # ══ the month at a glance ════════════════════════════════════════════════
 
 @frappe.whitelist()
-@require_roles(*READ_ROLES)
+@require_perm("Venue Booking", "view_functions")
 def month_availability(property: str, month: str | None = None):
 	"""Every hall × every session, across a whole month.
 
@@ -1934,7 +1934,7 @@ _REGISTERS = ("functions", "quotations", "enquiries", "receipts", "sales")
 
 
 @frappe.whitelist()
-@require_roles(*REPORT_ROLES, "Hotel Admin")
+@require_perm("Venue Booking", "bill_functions")
 def banquet_register(property: str, register: str = "functions",
                      from_date: str | None = None, to_date: str | None = None):
 	"""The listings a banquet office runs the week on - the same five books
@@ -2064,7 +2064,7 @@ def _dish_cost(doc) -> float:
 
 
 @frappe.whitelist()
-@require_roles(*READ_ROLES)
+@require_perm("Venue Booking", "view_functions")
 def dish_library(property: str, course_type: str | None = None):
 	"""Every dish the banquet kitchen can produce, with what it costs to
 	make. This is the picker behind menu building and the spine of margin."""
@@ -2086,7 +2086,7 @@ def dish_library(property: str, course_type: str | None = None):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*CATALOGUE_ROLES, scope={"name": "Banquet Dish"})
+@require_perm("Banquet Menu", "edit_catalogue", scope={"name": "Banquet Dish"})
 def save_dish(property: str, dish_name: str, recipe=None,
               name: str | None = None, **kw):
 	"""Add or edit a dish. The recipe is what makes it cost something -
@@ -2115,14 +2115,14 @@ def save_dish(property: str, dish_name: str, recipe=None,
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*CATALOGUE_ROLES, scope={"name": "Banquet Dish"})
+@require_perm("Banquet Menu", "edit_catalogue", scope={"name": "Banquet Dish"})
 def delete_dish(name: str):
 	frappe.delete_doc("Banquet Dish", name)
 	return {"ok": True}
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*CATALOGUE_ROLES)
+@require_perm("Banquet Menu", "edit_catalogue")
 def recost_dishes(property: str):
 	"""Ingredient prices moved - re-cost every dish. Run it after a delivery
 	or a price revision, so quotes stop being priced off last season's
@@ -2173,7 +2173,7 @@ def _dish_options(menu_doc) -> dict:
 
 
 @frappe.whitelist()
-@require_roles(*READ_ROLES)
+@require_perm("Venue Booking", "view_functions")
 def menu_cost(menu: str, pax: int = 0):
 	"""What one plate of this menu costs to make, and what it earns.
 
@@ -2216,7 +2216,7 @@ def menu_cost(menu: str, pax: int = 0):
 # ══ what the customer chose ══════════════════════════════════════════════
 
 @frappe.whitelist()
-@require_roles(*READ_ROLES)
+@require_perm("Venue Booking", "view_functions")
 def menu_choices(function: str, menu: str):
 	"""The course-by-course picker for one menu on one function: what the
 	course offers, how many the guest may take, and what's chosen so far."""
@@ -2255,7 +2255,7 @@ def menu_choices(function: str, menu: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*BANQUET_ROLES)
+@require_perm("Venue Booking", "manage_functions")
 def compose_menu(function: str, menu: str, picks):
 	"""Record what the customer actually chose - "one soup of these two, the
 	paneer not the mushroom".
@@ -2328,7 +2328,7 @@ def _sync_supplement(doc, menu: str, per_pax: float):
 # ══ the kitchen ══════════════════════════════════════════════════════════
 
 @frappe.whitelist()
-@require_roles(*READ_ROLES, "Housekeeping")
+@require_perm("Venue Booking", "view_functions")
 def kitchen_indent(function: str):
 	"""What the kitchen has to buy and pull for this function.
 
@@ -2415,7 +2415,7 @@ def kitchen_indent(function: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*BANQUET_ROLES, "Housekeeping")
+@require_perm("Venue Booking", "issue_indent")
 def issue_indent(function: str, outlet: str, rows=None):
 	"""Pull the indent off the shelf. Writes real stock movements through
 	the same single writer the restaurant uses, so the store room reflects
@@ -2450,7 +2450,7 @@ def issue_indent(function: str, outlet: str, rows=None):
 # ══ during the event ═════════════════════════════════════════════════════
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*BANQUET_ROLES)
+@require_perm("Venue Booking", "manage_functions")
 def record_consumption(function: str, rows=None, pax_actual: int | None = None):
 	"""What was actually served, against what was quoted.
 
@@ -2483,7 +2483,7 @@ def record_consumption(function: str, rows=None, pax_actual: int | None = None):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*BANQUET_ROLES)
+@require_perm("Venue Booking", "manage_functions")
 def add_supplementary(function: str, item_name: str, qty: float, rate: float,
                       item_type: str = "Food & Beverage",
                       uom: str = "Unit", cost_rate: float = 0,
@@ -2510,7 +2510,7 @@ def add_supplementary(function: str, item_name: str, qty: float, rate: float,
 
 
 @frappe.whitelist()
-@require_roles(*READ_ROLES)
+@require_perm("Venue Booking", "view_functions")
 def function_economics(function: str):
 	"""The P&L of one function: what it sold, what it cost, what the input
 	credit is worth, and what's left - plus where the quote and the night
@@ -2564,7 +2564,7 @@ def function_economics(function: str):
 # ══ the customer ═════════════════════════════════════════════════════════
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*BANQUET_ROLES)
+@require_perm("Venue Booking", "manage_functions")
 def link_customer(function: str, guest: str | None = None):
 	"""Tie the function to a real guest record instead of a name in a box.
 
@@ -2603,7 +2603,7 @@ def _find_or_create_guest(doc):
 
 
 @frappe.whitelist()
-@require_roles(*REPORT_ROLES)
+@require_perm("Venue Booking", "bill_functions")
 def customer_profile(property: str, guest: str | None = None,
                      phone: str | None = None):
 	"""Everything the banquet office should know before picking up the
@@ -2675,7 +2675,7 @@ def _margins(property: str | None) -> tuple[float, float]:
 
 
 @frappe.whitelist()
-@require_roles(*BANQUET_ROLES, "Finance")
+@require_perm("Venue Booking", "bill_functions")
 def quote_advisor(function: str, at_discount: float | None = None):
 	"""Would this function make money at the price we're about to send?
 
@@ -2781,7 +2781,7 @@ def _verdict(pct: float, uncosted: bool, cost,
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*BANQUET_ROLES)
+@require_perm("Venue Booking", "manage_functions")
 def offer_amenities(function: str, amenities=None, as_open_items: int = 0):
 	"""Put the hall's chargeable extras on the function.
 
@@ -2835,7 +2835,7 @@ _AMENITY_TYPE = {
 
 
 @frappe.whitelist()
-@require_roles(*READ_ROLES)
+@require_perm("Venue Booking", "view_functions")
 def venue_detail(venue: str):
 	"""One hall in full: what it holds, what it comes with, what it costs
 	to open, and which other spaces it shares its floor with."""

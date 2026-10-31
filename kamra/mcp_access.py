@@ -26,7 +26,7 @@ import frappe
 from frappe import _
 from frappe.utils import add_to_date, now_datetime
 
-from kamra.authz import ADMIN, IT_ADMIN, require_it_admin, require_roles, restricted_properties
+from kamra.authz import ADMIN, IT_ADMIN, require_it_admin, require_perm, restricted_properties
 
 MCP_READ = "MCP Read"
 MCP_MANAGE = "MCP Manage"
@@ -189,7 +189,7 @@ def _staff_for(property: str) -> list[dict]:
 
 
 @frappe.whitelist()
-@require_roles()
+@require_perm("Property", "configure")
 def access_overview(property: str) -> dict:
 	"""Everything the AI access page shows: the property switches, who has
 	which MCP role, the live connections and the recent AI actions."""
@@ -252,7 +252,7 @@ def access_overview(property: str) -> dict:
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles()
+@require_perm("Property", "configure")
 def set_mcp_level(property: str, user: str, level: str) -> dict:
 	"""Give a person no MCP access, MCP Read or MCP Manage. Their other
 	roles are left alone; admins already have full access."""
@@ -291,7 +291,7 @@ def set_mcp_level(property: str, user: str, level: str) -> dict:
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles()
+@require_perm("Property", "configure")
 def set_mcp_policy(property: str, enabled=None, read_only=None, blocked_tools=None) -> dict:
 	"""Change this property's AI switches. Pass only what changes."""
 	_assert_admin()
@@ -326,7 +326,7 @@ def set_mcp_policy(property: str, enabled=None, read_only=None, blocked_tools=No
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles()
+@require_perm("Property", "configure")
 def revoke_connection(property: str, grant: str) -> dict:
 	"""Disconnect one AI client. It has to sign in again to come back."""
 	_assert_admin()

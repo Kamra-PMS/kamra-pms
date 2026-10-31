@@ -44,7 +44,7 @@ import frappe
 from frappe import _
 from frappe.utils import add_to_date, cint, now_datetime
 
-from kamra.authz import require_roles
+from kamra.authz import require_perm
 
 WEBHOOK = "Outbound Webhook"
 DELIVERY = "Outbound Webhook Delivery"
@@ -468,14 +468,14 @@ def _log(action: str, name: str, property: str, rationale: str):
 
 
 @frappe.whitelist()
-@require_roles("Hotel Admin")
+@require_perm("Outbound Webhook", "configure")
 def webhook_events() -> list:
 	"""The events a webhook can subscribe to."""
 	return [{"event": k, "description": v} for k, v in EVENTS.items()]
 
 
 @frappe.whitelist()
-@require_roles("Hotel Admin")
+@require_perm("Outbound Webhook", "configure")
 def list_webhooks(property: str) -> list:
 	"""This property's webhook subscriptions (never the secrets)."""
 	return [_row(frappe.get_doc(WEBHOOK, n)) for n in frappe.get_all(
@@ -484,7 +484,7 @@ def list_webhooks(property: str) -> list:
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Hotel Admin", scope=_SCOPE)
+@require_perm("Outbound Webhook", "configure", scope=_SCOPE)
 def save_webhook(property: str, url: str, events, label: str | None = None,
                  active: int = 1, name: str | None = None) -> dict:
 	"""Create or update a subscription. A new one gets a signing secret,
@@ -509,7 +509,7 @@ def save_webhook(property: str, url: str, events, label: str | None = None,
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Hotel Admin", scope=_SCOPE)
+@require_perm("Outbound Webhook", "configure", scope=_SCOPE)
 def rotate_webhook_secret(name: str, property: str | None = None) -> dict:
 	"""Issue a new signing secret (returned once); the old one stops working."""
 	doc = _own(WEBHOOK, name, property)
@@ -522,7 +522,7 @@ def rotate_webhook_secret(name: str, property: str | None = None) -> dict:
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Hotel Admin", scope=_SCOPE)
+@require_perm("Outbound Webhook", "configure", scope=_SCOPE)
 def delete_webhook(name: str, property: str | None = None) -> dict:
 	"""Remove a subscription and its delivery log."""
 	doc = _own(WEBHOOK, name, property)
@@ -533,7 +533,7 @@ def delete_webhook(name: str, property: str | None = None) -> dict:
 
 
 @frappe.whitelist()
-@require_roles("Hotel Admin", scope=_SCOPE)
+@require_perm("Outbound Webhook", "configure", scope=_SCOPE)
 def webhook_deliveries(property: str, webhook: str | None = None,
                        status: str | None = None, limit: int = 50) -> list:
 	"""The delivery log, newest first."""
@@ -550,7 +550,7 @@ def webhook_deliveries(property: str, webhook: str | None = None,
 
 
 @frappe.whitelist()
-@require_roles("Hotel Admin", scope=_SCOPE)
+@require_perm("Outbound Webhook", "configure", scope=_SCOPE)
 def delivery_detail(delivery: str) -> dict:
 	"""One delivery with the exact payload that was (or will be) sent."""
 	d = frappe.get_doc(DELIVERY, delivery)
@@ -561,7 +561,7 @@ def delivery_detail(delivery: str) -> dict:
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Hotel Admin", scope=_SCOPE)
+@require_perm("Outbound Webhook", "configure", scope=_SCOPE)
 def resend_delivery(delivery: str) -> dict:
 	"""Send a delivery again now - same event id, so the receiver can tell
 	it is the same event."""
@@ -575,7 +575,7 @@ def resend_delivery(delivery: str) -> dict:
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Hotel Admin", scope=_SCOPE)
+@require_perm("Outbound Webhook", "configure", scope=_SCOPE)
 def send_test_event(name: str, property: str | None = None) -> dict:
 	"""Send a signed `ping` to one endpoint right now and report the result."""
 	doc = _own(WEBHOOK, name, property)

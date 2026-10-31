@@ -49,8 +49,8 @@ export default function Ledgers() {
   const [err, setErr] = useState<string | null>(null)
   const [paying, setPaying] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
-  const { roles } = useAuth()
-  const canSettle = roles.some((r) => CAN_SETTLE.includes(r))
+  const { allowed } = useAuth()
+  const canSettle = allowed("City Ledger Account", "settle_account", CAN_SETTLE)
 
   const load = useCallback(async () => {
     try {

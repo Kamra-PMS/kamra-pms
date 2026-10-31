@@ -74,7 +74,7 @@
   }
  ],
  "links": [],
- "modified": "2026-10-30 21:00:00.000000",
+ "modified": "2026-10-31 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Ingredient",
@@ -90,7 +90,9 @@
    "report": 1,
    "role": "System Manager",
    "share": 1,
-   "write": 1
+   "write": 1,
+   "manage_stock": 1,
+   "view_stock": 1
   },
   {
    "create": 1,
@@ -101,7 +103,9 @@
    "report": 1,
    "role": "Hotel Admin",
    "share": 1,
-   "write": 1
+   "write": 1,
+   "manage_stock": 1,
+   "view_stock": 1
   },
   {
    "create": 1,
@@ -112,21 +116,25 @@
    "report": 1,
    "role": "Finance",
    "share": 1,
-   "write": 1
+   "write": 1,
+   "manage_stock": 1,
+   "view_stock": 1
   },
   {
    "email": 1,
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "Front Desk"
+   "role": "Front Desk",
+   "view_stock": 1
   },
   {
    "email": 1,
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "Kamra Agent"
+   "role": "Kamra Agent",
+   "view_stock": 1
   },
   {
    "create": 1,
@@ -135,7 +143,9 @@
    "read": 1,
    "report": 1,
    "print": 1,
-   "role": "F&B Manager"
+   "role": "F&B Manager",
+   "manage_stock": 1,
+   "view_stock": 1
   }
  ],
  "sort_field": "modified",

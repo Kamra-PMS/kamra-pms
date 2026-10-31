@@ -61,8 +61,8 @@ const blankPrinter = (): PrinterDraft => ({
 
 export default function KitchenPrinters() {
   const { t } = useT()
-  const { roles } = useAuth()
-  const canEdit = roles.some((r) => WRITE_ROLES.includes(r))
+  const { allowed } = useAuth()
+  const canEdit = allowed("Kitchen Printer", "configure_printers", WRITE_ROLES)
   const property = getCurrentProperty()
 
   const [printers, setPrinters] = useState<KitchenPrinter[]>([])

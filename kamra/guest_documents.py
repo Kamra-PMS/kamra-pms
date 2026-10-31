@@ -27,7 +27,7 @@ import frappe
 from frappe import _
 from frappe.utils import add_days, getdate, nowdate
 
-from kamra.authz import require_roles
+from kamra.authz import require_perm
 
 # a document that ends within this many days is flagged as "expiring"
 EXPIRING_DAYS = 30
@@ -151,7 +151,7 @@ def _field(kind: str) -> str:
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Kamra Agent", scope={"guest": "Guest"})
+@require_perm("Guest", "handle_guests", scope={"guest": "Guest"})
 def save_guest_file(guest: str, kind: str, data: str) -> dict:
 	"""Keep a photo, ID image or address proof on the profile, replacing the
 	previous one. A property on Verify & Discard keeps no ID images, so only
@@ -172,7 +172,7 @@ def save_guest_file(guest: str, kind: str, data: str) -> dict:
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Kamra Agent", scope={"guest": "Guest"})
+@require_perm("Guest", "handle_guests", scope={"guest": "Guest"})
 def guest_file(guest: str, kind: str) -> dict:
 	"""One of the profile's images as a data URL."""
 	field = _field(kind)
@@ -190,7 +190,7 @@ def guest_file(guest: str, kind: str) -> dict:
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Kamra Agent", scope={"guest": "Guest"})
+@require_perm("Guest", "handle_guests", scope={"guest": "Guest"})
 def remove_guest_file(guest: str, kind: str) -> dict:
 	_drop(guest, _field(kind))
 	frappe.db.set_value("Guest", guest, _field(kind), None)

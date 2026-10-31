@@ -22,7 +22,7 @@ from frappe import _
 from frappe.rate_limiter import rate_limit
 from frappe.utils import validate_email_address
 
-from kamra.authz import IT_ADMIN, require_roles, restricted_properties
+from kamra.authz import IT_ADMIN, require_perm, restricted_properties
 
 ROLES = (
 	("Hotel Admin", "Hotel Admin",
@@ -47,6 +47,28 @@ ROLES = (
 	 "Site administration: developer keys, new properties, every setting."),
 )
 ROLE_NAMES = tuple(r for r, _l, _d in ROLES)
+_NOT_CUSTOM = (*ROLE_NAMES, "Administrator", "Guest", "All", "Desk User", "Kamra Agent",
+               "MCP Read", "MCP Manage")
+
+
+def custom_roles() -> list[str]:
+	"""The hotel's own roles: any Role created in Desk that Role Permission
+	Manager has given a permission on a Kamra doctype."""
+	kamra_dts = frappe.get_all("DocType", filters={"module": "Kamra"}, pluck="name")
+	roles = set(frappe.get_all("Custom DocPerm", filters={"parent": ("in", kamra_dts)},
+	                           pluck="role", distinct=True))
+	enabled = set(frappe.get_all("Role", filters={"disabled": 0}, pluck="name"))
+	# a role that also carries rights outside Kamra (another app's role, or
+	# one IT gave Desk powers) is IT's to hand out, not a Hotel Admin's
+	outside = {"parent": ("not in", kamra_dts), "role": ("in", list(roles) or [""])}
+	wider = set(frappe.get_all("DocPerm", filters=outside, pluck="role", distinct=True)) | \
+		set(frappe.get_all("Custom DocPerm", filters=outside, pluck="role", distinct=True))
+	return sorted((roles & enabled) - wider - set(_NOT_CUSTOM))
+
+
+def role_names() -> tuple:
+	"""Built-in roles, then the hotel's own (see custom_roles)."""
+	return ROLE_NAMES + tuple(custom_roles())
 IT_ONLY = ("System Manager",)
 NEVER_LISTED = ("Administrator", "Guest")
 
@@ -67,22 +89,26 @@ def _user_properties(user: str) -> list | None:
 
 
 @frappe.whitelist()
-@require_roles()
+@require_perm("Property", "configure")
 def staff_roles() -> list:
 	"""The roles a person can hold, and whether the caller may hand each out."""
 	it = _caller_is_it()
 	return [{"role": r, "label": label, "description": desc,
-	         "assignable": it or r not in IT_ONLY} for r, label, desc in ROLES]
+	         "assignable": it or r not in IT_ONLY} for r, label, desc in ROLES] + [
+		{"role": r, "label": r, "assignable": True, "custom": True,
+		 "description": _("Your own role. What it may do is set in Role Permission Manager.")}
+		for r in custom_roles()]
 
 
 @frappe.whitelist()
-@require_roles()
+@require_perm("Property", "configure")
 def list_staff(property: str) -> list:
 	"""Everyone with a Kamra role who can reach this property."""
 	it = _caller_is_it()
 	me = frappe.session.user
+	names = role_names()
 	holders = frappe.get_all("Has Role",
-	                         filters={"role": ("in", ROLE_NAMES), "parenttype": "User"},
+	                         filters={"role": ("in", names), "parenttype": "User"},
 	                         fields=["parent", "role"])
 	by_user: dict[str, list] = {}
 	for h in holders:
@@ -109,7 +135,7 @@ def list_staff(property: str) -> list:
 		props = sorted(perms[u.name]) if u.name in perms else None
 		if not _visible_to(set(props) if props is not None else None, property):
 			continue
-		roles = [r for r in ROLE_NAMES if r in by_user[u.name]]
+		roles = [r for r in names if r in by_user[u.name]]
 		is_it_user = any(r in IT_ONLY for r in roles)
 		out.append({
 			"user": u.name, "full_name": u.full_name or "", "email": u.email or u.name,
@@ -134,7 +160,7 @@ def _parse_list(val) -> list | None:
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles()
+@require_perm("Property", "configure")
 @rate_limit(limit=120, seconds=3600)
 def save_staff(property: str, email: str, full_name: str, roles, properties=None,
                enabled=1, send_welcome=0, job_title=None) -> dict:
@@ -152,7 +178,8 @@ def save_staff(property: str, email: str, full_name: str, roles, properties=None
 		frappe.throw(_("That account can't be managed here."), frappe.PermissionError)
 
 	want_roles = _parse_list(roles) or []
-	unknown = [r for r in want_roles if r not in ROLE_NAMES]
+	kamra_roles = role_names()
+	unknown = [r for r in want_roles if r not in kamra_roles]
 	if unknown:
 		frappe.throw(_("Unknown role: {0}").format(", ".join(unknown)))
 	if not want_roles:
@@ -187,7 +214,7 @@ def save_staff(property: str, email: str, full_name: str, roles, properties=None
 		if mine is not None and (cur_props is None or any(p not in mine for p in cur_props)):
 			frappe.throw(_("This person has access beyond your properties - ask IT."),
 			             frappe.PermissionError)
-		before = {"roles": [r for r in ROLE_NAMES if r in held],
+		before = {"roles": [r for r in kamra_roles if r in held],
 		          "properties": cur_props, "enabled": user.enabled}
 		if email == me.lower() and (
 				set(want_roles) != set(before["roles"])
@@ -208,10 +235,20 @@ def save_staff(property: str, email: str, full_name: str, roles, properties=None
 
 	if not it:
 		gained = set(want_roles) - set(held)
-		lost = (set(held) & set(ROLE_NAMES)) - set(want_roles)
+		lost = (set(held) & set(kamra_roles)) - set(want_roles)
 		if (gained | lost) & set(IT_ONLY):
 			frappe.throw(_("Only IT can grant or remove the IT administrator role."),
 			             frappe.PermissionError)
+		# a role given Property: Configure without being a Hotel Admin
+		# manages staff, but can't hand out (or take away) more than it holds
+		mine_roles = set(frappe.get_roles())
+		if "Hotel Admin" not in mine_roles and (gained | lost) - mine_roles:
+			frappe.throw(_("Only a Hotel Admin can grant or remove {0}.").format(
+				", ".join(sorted((gained | lost) - mine_roles))), frappe.PermissionError)
+		# job titles print on vouchers: a Hotel Admin's call (owner decision)
+		if "Hotel Admin" not in mine_roles and job_title is not None \
+				and str(job_title).strip()[:140] != (user.get("kamra_job_title") or ""):
+			frappe.throw(_("Only a Hotel Admin can set a job title."), frappe.PermissionError)
 
 	# --- write ----------------------------------------------------------------
 	names = full_name.split(" ", 1)
@@ -220,7 +257,7 @@ def save_staff(property: str, email: str, full_name: str, roles, properties=None
 	user.enabled = 1 if on else 0
 	if job_title is not None:
 		user.kamra_job_title = str(job_title).strip()[:140]
-	keep = [r for r in user.roles if r.role not in ROLE_NAMES]
+	keep = [r for r in user.roles if r.role not in kamra_roles]
 	user.set("roles", [])
 	for r in keep:
 		user.append("roles", {"role": r.role})
@@ -257,7 +294,7 @@ def save_staff(property: str, email: str, full_name: str, roles, properties=None
 
 
 @frappe.whitelist()
-@require_roles()
+@require_perm("Property", "configure")
 def role_matrix() -> dict:
 	"""Per role, the settings pages it may change (admins: all of them)."""
 	from kamra.authz import ADMIN

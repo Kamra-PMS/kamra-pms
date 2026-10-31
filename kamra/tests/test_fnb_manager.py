@@ -101,9 +101,9 @@ class FnbManagerTestCase(AuditTestCase):
 	def test_pos_supervisor_only(self):
 		"""A POS void approver, never a folio supervisor: no full guest
 		phones, no folio corrections."""
-		from kamra.authz import POS_SUPERVISOR_ROLES, is_supervisor, verify_supervisor
+		from kamra.authz import POS_APPROVE, is_supervisor, verify_supervisor
 		self.assertFalse(is_supervisor(self.fnb))
-		self.assertTrue(is_supervisor(self.fnb, POS_SUPERVISOR_ROLES))
+		self.assertTrue(is_supervisor(self.fnb, POS_APPROVE))
 		self.as_(self.fnb)
 		self.assertTrue(pos._shown_phone("+91 98450 12345").startswith("\u2022"))
 		with self.assertRaises(frappe.PermissionError):

@@ -13,7 +13,7 @@ from typing import Any
 import frappe
 from frappe.utils import now_datetime, nowdate
 
-from kamra.authz import require_roles
+from kamra.authz import require_perm
 from kamra.business_date import get_business_date
 
 CHARGE_TYPE_TO_CODE = {
@@ -324,7 +324,7 @@ def reverse_ledger_for_charge(property: str, folio: str, charge_row_name: str,
 
 
 @frappe.whitelist()
-@require_roles("Finance", "Front Desk", "Hotel Admin", "Night Auditor", "Kamra Agent")
+@require_perm("City Ledger Entry", "view_ledgers")
 def ledger_balances(property: str, business_date: str | None = None):
 	"""Four-ledger trial balance for a property (optionally as-of a date)."""
 	date = business_date or get_business_date(property)
@@ -416,7 +416,7 @@ def folio_reconciliation(property: str, limit: int = 20) -> dict:
 
 
 @frappe.whitelist()
-@require_roles("Finance", "Front Desk", "Hotel Admin", "Night Auditor", "Kamra Agent")
+@require_perm("City Ledger Entry", "view_ledgers")
 def journal_by_transaction_code(property: str, business_date: str | None = None):
 	date = business_date or get_business_date(property)
 	rows = frappe.db.sql(
@@ -439,7 +439,7 @@ def journal_by_transaction_code(property: str, business_date: str | None = None)
 
 
 @frappe.whitelist()
-@require_roles("Finance", "Hotel Admin", "Kamra Agent")
+@require_perm("City Ledger Entry", "view_financials")
 def financial_activity(property: str, business_date: str | None = None,
                        user: str | None = None):
 	date = business_date or get_business_date(property)
@@ -685,7 +685,7 @@ def reverse_city_ledger_transfer(folio: str, reason: str) -> float:
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Finance", "Front Desk", "Kamra Agent")
+@require_perm("Folio", "bill")
 def city_ledger_transfer(folio: str, company: str | None = None,
                          pin: str | None = None,
                          credit_override_reason: str | None = None):
@@ -889,7 +889,7 @@ def apply_unapplied_credit(account: str, only_folio: str | None = None,
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Finance", "Hotel Admin", "Kamra Agent")
+@require_perm("City Ledger Account", "settle_account")
 def city_ledger_settle(account: str, amount: float, mode: str = "Bank Transfer",
                        reference: str | None = None, allocations=None):
 	"""Record a company's payment against its city ledger account and clear
@@ -1025,7 +1025,7 @@ def _account_position(account: str) -> dict:
 
 
 @frappe.whitelist()
-@require_roles("Finance", "Hotel Admin", "Front Desk", "Night Auditor", "Kamra Agent")
+@require_perm("City Ledger Entry", "view_ledgers")
 def city_ledger_aging(property: str):
 	"""Every company's AR at the property, aged by due date (not_due,
 	d1_30, d31_60, d61_90, d90p and their sum `overdue`). The invoice-age
@@ -1046,7 +1046,7 @@ def city_ledger_aging(property: str):
 
 
 @frappe.whitelist()
-@require_roles("Finance", "Hotel Admin", "Front Desk", "Kamra Agent")
+@require_perm("City Ledger Account", "view_account")
 def city_ledger_account(account: str):
 	"""One company's city ledger: balance, aging, each open bill (oldest
 	first) and recent payments - what the payment screen needs."""
@@ -1098,7 +1098,7 @@ def city_ledger_account(account: str):
 # ── Advance / Force bill ─────────────────────────────────────────────────────
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Finance", "Kamra Agent")
+@require_perm("Folio", "bill")
 def force_advance_bill(reservation: str, nights: str = "entire",
                        pin: str | None = None):
 	"""Post future room (+ meal) charges ahead of night audit.
@@ -1162,7 +1162,7 @@ def force_advance_bill(reservation: str, nights: str = "entire",
 # ── Proforma + Credit Note ───────────────────────────────────────────────────
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Finance", "Kamra Agent")
+@require_perm("Folio", "bill")
 def generate_proforma(folio: str, notes: str | None = None):
 	from kamra.api import folio_invoice
 	inv = folio_invoice(folio)
@@ -1184,7 +1184,7 @@ def generate_proforma(folio: str, notes: str | None = None):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Finance", "Hotel Admin", "Kamra Agent")
+@require_perm("Folio", "issue_credit_note")
 def issue_credit_note(folio: str, amount: float, reason: str,
                       pin: str | None = None):
 	from kamra.authz import require_cashier_pin
@@ -1272,7 +1272,7 @@ def issue_credit_note(folio: str, amount: float, reason: str,
 # ── Folio history / reprints / batch ─────────────────────────────────────────
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Finance", "Kamra Agent")
+@require_perm("Folio", "bill")
 def record_folio_reprint(folio: str, document: str = "Guest Folio",
                          reason: str | None = None):
 	prop, inv = frappe.db.get_value(
@@ -1294,7 +1294,7 @@ def record_folio_reprint(folio: str, document: str = "Guest Folio",
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Finance", "Hotel Admin", "Night Auditor", "Kamra Agent")
+@require_perm("City Ledger Entry", "view_ledgers")
 def folio_history(property: str, query: str | None = None,
                   status: str | None = None, from_date: str | None = None,
                   to_date: str | None = None):
@@ -1330,7 +1330,7 @@ def folio_history(property: str, query: str | None = None,
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Finance", "Kamra Agent")
+@require_perm("Folio", "bill")
 def batch_post_charge(folios: str | list, charge_type: str, amount: float,
                       description: str | None = None, pin: str | None = None):
 	"""Post the same charge to many folios (group / event)."""
@@ -1378,7 +1378,7 @@ def batch_post_charge(folios: str | list, charge_type: str, amount: float,
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Finance", "Kamra Agent")
+@require_perm("Folio", "bill")
 def batch_print_folios(folios: str | list):
 	import json as _json
 	if isinstance(folios, str):
@@ -1390,7 +1390,7 @@ def batch_print_folios(folios: str | list):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Night Auditor", "Kamra Agent")
+@require_perm("Reservation", "check_in_out")
 def quick_checkout(reservation: str, pin: str | None = None):
 	"""Check out and close the guest folio in one step. check_out settles the
 	stay the one way: the company's folio (Company, or the group master)
@@ -1409,7 +1409,7 @@ def quick_checkout(reservation: str, pin: str | None = None):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Kamra Agent")
+@require_perm("Group Booking", "book_group")
 def group_checkout(group: str, pin: str | None = None, reservations=None):
 	"""Quick-checkout every Checked In reservation on a group, or only the
 	`reservations` picked on the rooming list."""
@@ -1431,7 +1431,7 @@ def group_checkout(group: str, pin: str | None = None, reservations=None):
 # ── FX desk ──────────────────────────────────────────────────────────────────
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Finance", "Kamra Agent")
+@require_perm("Exchange Rate", "use_currency_desk")
 def list_exchange_rates(property: str):
 	today = get_business_date(property)
 	rows = frappe.get_all(
@@ -1454,7 +1454,7 @@ def list_exchange_rates(property: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Finance", "Hotel Admin")  # payments convert at this: no agent sets it
+@require_perm("Exchange Rate", "set_rates")
 def upsert_exchange_rate(property: str, currency: str, buy_rate: float,
                          sell_rate: float, service_tax_pct: float = 0,
                          max_exchange: float | None = None):
@@ -1555,7 +1555,7 @@ def market_rates(home: str) -> tuple[dict, str | None]:
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Finance", "Hotel Admin")
+@require_perm("Exchange Rate", "set_rates")
 def fetch_exchange_rates(property: str):
 	"""Fetch today's market rates for the property's listed currencies
 	(Settings, Finance, Exchange rates) and store them for the business
@@ -1658,7 +1658,7 @@ def auto_fetch_exchange_rates():
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Finance", "Kamra Agent")
+@require_perm("Exchange Rate", "use_currency_desk")
 def currency_calculator(property: str, currency: str, fx_amount: float,
                         direction: str = "Buy"):
 	currency = (currency or "").strip().upper()
@@ -1687,7 +1687,7 @@ def currency_calculator(property: str, currency: str, fx_amount: float,
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Finance", "Kamra Agent")
+@require_perm("Folio", "bill")
 def post_exchange(property: str, currency: str, fx_amount: float,
                   direction: str = "Buy", folio: str | None = None,
                   guest: str | None = None, pin: str | None = None):
@@ -1780,7 +1780,7 @@ def payment_rate(property: str, currency: str) -> dict:
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Finance", "Night Auditor", "Kamra Agent")
+@require_perm("Folio", "view_folio")
 def folio_in_currency(folio: str, currency: str):
 	"""A folio's total and balance shown in another currency, at today's
 	rate. Display only: the bill and tax invoice stay in home currency."""
@@ -1795,7 +1795,7 @@ def folio_in_currency(folio: str, currency: str):
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Finance", "Hotel Admin", "Kamra Agent")
+@require_perm("Exchange Rate", "use_currency_desk")
 def exchange_history(property: str, business_date: str | None = None):
 	date = business_date or get_business_date(property)
 	rows = frappe.get_all(
@@ -1840,7 +1840,7 @@ def ensure_default_reason_codes() -> None:
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Finance", "F&B Manager", "Kamra Agent")  # POS void reasons
+@require_perm("Reason Code", "view_codes")
 def list_reason_codes(category: str | None = None):
 	ensure_default_reason_codes()
 	filters: dict[str, Any] = {"disabled": 0}
@@ -1868,9 +1868,8 @@ def require_reason(category: str, reason_code: str | None, free_text: str = "",
 		if row.category != category:
 			frappe.throw(f"Reason code is for {row.category}, not {category}.")
 		if row.requires_supervisor:
-			roles = set(frappe.get_roles())
-			if not (roles & {"Hotel Admin", "Finance", "System Manager",
-			                 "Administrator"}):
+			from kamra.authz import is_supervisor
+			if not is_supervisor():  # Folio: Approve (Role Permission Manager)
 				frappe.throw("Supervisor role required for this reason.", frappe.PermissionError)
 			pin_required = not property or bool(frappe.db.get_value(
 				"Property", property, "require_cashier_pin"))

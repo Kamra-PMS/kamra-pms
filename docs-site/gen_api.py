@@ -128,6 +128,20 @@ def literal(node):
         return None
 
 
+def perm_roles(doctype, ptype):
+    """Default roles for a permission type: the doctype JSON's DocPerm."""
+    import json
+    import os
+    slug = doctype.replace(" ", "_").lower()
+    path = os.path.join(os.path.dirname(__file__), "..", "kamra", "kamra", "doctype",
+                        slug, slug + ".json")
+    try:
+        perms = json.load(open(path)).get("permissions", [])  # nosemgrep: frappe-security-file-traversal -- path is derived from the app source tree, not from user input
+    except OSError:
+        return []
+    return [p["role"] for p in perms if p.get(ptype) and not p.get("permlevel")]
+
+
 def decorators(fn):
     """(is_whitelisted, allow_guest, methods, roles)"""
     wl = guest = False
@@ -143,6 +157,10 @@ def decorators(fn):
                         guest = True
                     if kw.arg == "methods":
                         methods = literal(kw.value) or methods
+        elif name.endswith("require_perm") and isinstance(d, ast.Call):
+            dt, pt = (literal(a) for a in d.args[:2])
+            # the permission, then who holds it by default (Role Permission Manager)
+            roles = [f"{dt}: {pt}", *perm_roles(dt, pt)]
         elif name.endswith("require_roles") and isinstance(d, ast.Call):
             roles = [literal(a) for a in d.args if literal(a)]
         elif name.endswith("require_it_admin"):
@@ -245,7 +263,10 @@ Content-Type: application/json
             badge = " <Badge type='tip' text='public' />" if e["guest"] else ""
             out.append(f"### `kamra.{e['module']}.{e['name']}`{badge}\n")
             meta = [f"**{e['method']}**"]
-            if e["roles"]:
+            if e["roles"] and ": " in e["roles"][0]:
+                meta.append(f"permission: `{e['roles'][0]}`")
+                meta.append("default roles: " + ", ".join(f"`{r}`" for r in e["roles"][1:]))
+            elif e["roles"]:
                 meta.append("roles: " + ", ".join(f"`{r}`" for r in e["roles"]))
             out.append(" · ".join(meta) + "\n")
             if e["doc"]:

@@ -78,8 +78,10 @@ title), and only IT can change an IT administrator.
 ## What each role can do
 
 **Settings → Roles & permissions** shows which apps each role opens and
-which settings pages it may change. Roles are fixed bundles: every screen,
-API call and AI tool checks them on the server.
+which settings pages it may change. Every screen, API call and AI tool
+checks the role's permissions on the server. IT can create roles and
+change what each role may do in Desk (Role Permission Manager): see
+[Roles and access](/roles-and-access).
 
 ![The roles matrix: apps each role opens and settings each role may change](/img/settings/roles.png)
 

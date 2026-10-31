@@ -72,9 +72,9 @@ const blank = (): Draft => ({
 
 export default function CashierBoard() {
   const { t } = useT()
-  const { roles } = useAuth()
+  const { allowed } = useAuth()
   const { withPin } = useCashierAuth()
-  const canEdit = roles.some((r) => WRITE_ROLES.includes(r))
+  const canEdit = allowed("Cashier Session", "manage_cash_office", WRITE_ROLES)
   const property = getCurrentProperty()
   const [board, setBoard] = useState<Board | null>(null)
   const [terminals, setTerminals] = useState<TerminalRow[]>([])

@@ -20,7 +20,7 @@ import frappe
 from frappe import _
 from frappe.utils import add_days, date_diff, getdate
 
-from kamra.authz import assert_property_access, require_roles
+from kamra.authz import assert_property_access, require_perm
 
 RATE_ROLES = ("Front Desk", "Revenue Manager", "Hotel Admin", "Kamra Agent")
 
@@ -58,7 +58,7 @@ def explain_night(property: str, rt, date, adults: int = 2, children: int = 0,
 
 
 @frappe.whitelist()
-@require_roles(*RATE_ROLES)
+@require_perm("Rate Plan", "view_rates")
 def rate_calendar(property: str, from_date: str | None = None, days: int = 14,
                   adults: int = 2, children: int = 0):
 	"""Every room type's rate for each of the next `days` dates, with what
@@ -87,7 +87,7 @@ def rate_calendar(property: str, from_date: str | None = None, days: int = 14,
 
 
 @frappe.whitelist()
-@require_roles(*RATE_ROLES)
+@require_perm("Rate Plan", "view_rates")
 def rate_options(property: str, room_type: str, check_in_date: str, check_out_date: str,
                  adults: int = 2, children: int = 0, meal_plan: str | None = None,
                  voucher_code: str | None = None):

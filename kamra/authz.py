@@ -5,6 +5,7 @@ for staff restricted to some properties, which properties it may touch."""
 
 import inspect
 import json
+from collections.abc import Set
 from contextlib import contextmanager
 from functools import wraps
 
@@ -128,6 +129,18 @@ def property_query_conditions(user: str | None = None, doctype: str | None = Non
 		return "1=0"
 	props = ", ".join(frappe.db.escape(p) for p in sorted(allowed))
 	return f"`tab{doctype}`.`property` IN ({props})"
+
+
+def copilot_query_conditions(user: str | None = None, doctype: str | None = None) -> str:
+	"""Copilot chats are their owner's (System Manager aside), as _own_convo
+	says. Frappe's if_owner rows did this on lists until the Permission Type
+	rows (which need `select`) arrived: any non-if_owner select drops the
+	owner filter, so it is stated here instead (property scope is a
+	separate hook alongside)."""
+	user = user or frappe.session.user
+	if user == "Administrator" or "System Manager" in frappe.get_roles(user):
+		return ""
+	return f"`tabCopilot Conversation`.`owner` = {frappe.db.escape(user)}"
 
 
 def property_has_permission(doc, ptype: str | None = None, user: str | None = None,
@@ -292,8 +305,81 @@ def _enforce_property_scope(fn, args, kwargs, scope: dict):
 					break
 
 
+def perm_roles(doctype: str, ptype: str) -> frozenset:
+	"""Roles granted `ptype` on `doctype` right now: DocPerm, or the site's
+	Custom DocPerm when Role Permission Manager has edited the doctype."""
+	return frozenset({p.role for p in frappe.get_meta(doctype).permissions
+	                  if cint(p.get(ptype)) and not cint(p.permlevel)} | {"Administrator"})
+
+
+class PermRoles(Set):
+	"""`fn._kamra_roles` for a require_perm endpoint: a live, read-only view
+	of perm_roles, so the MCP tool list, the in-app copilot and the tests
+	follow Role Permission Manager edits without knowing about them."""
+
+	__slots__ = ("doctype", "ptype")
+
+	def __init__(self, doctype: str, ptype: str):
+		self.doctype, self.ptype = doctype, ptype
+
+	@classmethod
+	def _from_iterable(cls, it):
+		return frozenset(it)
+
+	def __contains__(self, role):
+		return role in perm_roles(self.doctype, self.ptype)
+
+	def __iter__(self):
+		return iter(perm_roles(self.doctype, self.ptype))
+
+	def __len__(self):
+		return len(perm_roles(self.doctype, self.ptype))
+
+	def __repr__(self):
+		return f"PermRoles({self.doctype!r}, {self.ptype!r})"
+
+
+def require_perm(doctype: str, ptype: str, scope: dict | None = None):
+	"""Allow a whitelisted action to whoever holds permission `ptype` on
+	`doctype` - Frappe's own role permissions (DocPerm / Custom DocPerm),
+	so a hotel changes who may do it in Role Permission Manager. Usage -
+	below the whitelist decorator:
+
+	    @frappe.whitelist()
+	    @require_perm("Reservation", "check_in_out")
+	    def check_in(...): ...
+
+	`ptype` is usually a custom Permission Type (kamra/kamra/permission_type)
+	named for the action. The check is at doctype level, ignoring shares
+	(sharing one folio must not unlock an action on every folio); record
+	access is property scope, enforced exactly as require_roles does (see
+	_enforce_property_scope and `scope`). Administrator always passes.
+	"""
+	scope = scope or {}
+
+	def deco(fn):
+		@wraps(fn)
+		def guarded(*args, **kwargs):
+			if not frappe.has_permission(doctype, ptype,
+			                             ignore_share_permissions=True):
+				shown = sorted(perm_roles(doctype, ptype) - set(ADMIN))
+				frappe.throw(
+					f"Not permitted - needs one of: {', '.join(shown)}."
+					if shown else "Not permitted - needs Hotel Admin.",
+					frappe.PermissionError)
+			_enforce_property_scope(fn, args, kwargs, scope)
+			return fn(*args, **kwargs)
+		guarded._kamra_perm = (doctype, ptype)
+		# introspectable RBAC: Kamra Agent filters its tool list by this
+		guarded._kamra_roles = PermRoles(doctype, ptype)
+		return guarded
+	return deco
+
+
 def require_roles(*roles, scope: dict | None = None):
-	"""Allow the listed roles (plus admins). Usage - below the
+	"""Legacy: a fixed role list that a hotel can't change. Use require_perm
+	for new endpoints (kamra/tests/test_rbac.py fails on any left in Kamra).
+	Allow the listed roles (plus admins). Usage - below the
 	whitelist decorator so the registered function is the guarded one:
 
 	    @frappe.whitelist()
@@ -369,28 +455,51 @@ def require_cashier_pin(property: str, pin=None):
 
 
 # Who may approve what a captain cannot do alone (voiding food the kitchen
-# has already started, say). The same roles the reason-code supervisor
-# rule accepts (kamra.ledger.require_reason).
-SUPERVISOR_ROLES = ("Hotel Admin", "Finance", "System Manager", "Administrator")
-# At the POS only (void approvals): the F&B Manager runs the floor too, but
-# never approves folio corrections or sees full guest phones.
-POS_SUPERVISOR_ROLES = SUPERVISOR_ROLES + ("F&B Manager",)
+# has already started, say): permission "approve" on Folio, so a hotel
+# picks its approvers in Role Permission Manager. Defaults: Hotel Admin
+# and Finance. The same rule the reason-code supervisor check uses
+# (kamra.ledger.require_reason).
+APPROVE = ("Folio", "approve")
+SUPERVISOR_ROLES = ("Hotel Admin", "Finance", "System Manager", "Administrator")  # the defaults
+# At the POS only (void approvals): POS Order "approve_voids". The F&B
+# Manager runs the floor too, but never approves folio corrections.
+POS_APPROVE = ("POS Order", "approve_voids")
+POS_SUPERVISOR_ROLES = SUPERVISOR_ROLES + ("F&B Manager",)  # the defaults
+_HUMAN_SUPERVISOR = {"Hotel Admin", "Finance", "System Manager", "F&B Manager"}
 
 
-def is_supervisor(user: str | None = None, roles=SUPERVISOR_ROLES) -> bool:
+def supervisor_roles(perm=APPROVE) -> list[str]:
+	"""Roles that may approve now (Role Permission Manager), Administrator aside."""
+	return sorted(perm_roles(*perm) - {"Administrator"})
+
+
+def is_supervisor(user: str | None = None, perm=APPROVE) -> bool:
 	user = user or frappe.session.user
-	return user == "Administrator" or bool(
-		set(roles) & set(frappe.get_roles(user)))
+	if user == "Administrator":
+		return True
+	roles = set(frappe.get_roles(user))
+	# hard rule: an AI agent's own identity never approves, whatever a
+	# site grants the Kamra Agent role (an agent that is also a human
+	# supervisor's account keeps that account's rights, as before)
+	if "Kamra Agent" in roles and not roles & _HUMAN_SUPERVISOR:
+		return False
+	return frappe.has_permission(*perm, user=user, ignore_share_permissions=True)
 
 
-def supervisors_for(property: str, roles=SUPERVISOR_ROLES) -> list[dict]:
+def supervisors_for(property: str, perm=APPROVE, roles=None) -> list[dict]:
 	"""Who can approve on a till at this property: enabled users holding
-	one of `roles`, with access to the property and a cashier PIN set.
-	Names only."""
-	users = set(frappe.get_all(
-		"Has Role", filters={"role": ["in", [r for r in roles if r != "Administrator"]],
-		                     "parenttype": "User"},
-		pluck="parent", distinct=True))
+	`perm` (or one of `roles`, when a property setting names them), with
+	access to the property and a cashier PIN set. Names only."""
+	if roles is not None:
+		users = set(frappe.get_all(
+			"Has Role", filters={"role": ["in", [r for r in roles if r != "Administrator"]],
+			                     "parenttype": "User"},
+			pluck="parent", distinct=True))
+	else:
+		users = {u for u in frappe.get_all(
+			"Has Role", filters={"role": ["in", supervisor_roles(perm) or [""]],
+			                     "parenttype": "User"},
+			pluck="parent", distinct=True) if is_supervisor(u, perm)}
 	users &= set(frappe.get_all("Cashier PIN", pluck="name"))
 	out = []
 	for u in frappe.get_all("User", filters={"name": ["in", list(users) or [""]],
@@ -403,7 +512,7 @@ def supervisors_for(property: str, roles=SUPERVISOR_ROLES) -> list[dict]:
 
 
 def verify_supervisor(property: str, supervisor: str | None, pin,
-                      roles=SUPERVISOR_ROLES) -> str:
+                      perm=APPROVE) -> str:
 	"""A supervisor approves at someone else's till with their user id and
 	their own cashier PIN. The PIN is always required here, whatever the
 	property's PIN setting, because it is the only proof the supervisor was
@@ -414,9 +523,9 @@ def verify_supervisor(property: str, supervisor: str | None, pin,
 		frappe.throw("SUPERVISOR_REQUIRED: pick the supervisor who approves this.",
 		             frappe.PermissionError)
 	if not frappe.db.get_value("User", supervisor, "enabled") or \
-			not is_supervisor(supervisor, roles):
-		frappe.throw(f"{supervisor} cannot approve this. It needs a Hotel "
-		             "Admin or Finance user.", frappe.PermissionError)
+			not is_supervisor(supervisor, perm):
+		frappe.throw(f"{supervisor} cannot approve this. It needs one of: "
+		             f"{', '.join(supervisor_roles(perm))}.", frappe.PermissionError)
 	allowed = restricted_properties(supervisor)
 	if property and allowed is not None and property not in allowed:
 		frappe.throw(f"{supervisor} has no access to {property}.",

@@ -124,7 +124,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-10-30 10:00:00.000000",
+ "modified": "2026-10-30 14:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Folio Ledger Entry",
@@ -140,7 +140,8 @@
    "print": 1,
    "report": 1,
    "share": 1,
-   "email": 1
+   "email": 1,
+   "export_books": 1
   },
   {
    "role": "Hotel Admin",
@@ -149,7 +150,8 @@
    "print": 1,
    "report": 1,
    "share": 1,
-   "email": 1
+   "email": 1,
+   "export_books": 1
   },
   {
    "role": "Finance",
@@ -157,7 +159,8 @@
    "export": 1,
    "print": 1,
    "report": 1,
-   "email": 1
+   "email": 1,
+   "export_books": 1
   },
   {
    "role": "Front Desk",
@@ -171,7 +174,8 @@
    "read": 1,
    "print": 1,
    "report": 1,
-   "email": 1
+   "email": 1,
+   "export_books": 1
   }
  ],
  "sort_field": "modified",

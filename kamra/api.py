@@ -11,7 +11,7 @@ import frappe
 from frappe import _
 from frappe.utils import add_days, cint, flt, get_datetime, getdate, now_datetime, nowdate
 
-from kamra.authz import act_as, assert_property_access, require_it_admin, require_roles
+from kamra.authz import act_as, assert_property_access, require_it_admin, require_perm
 from kamra.install import AGENT_EMAIL
 
 # The apps a property actually runs. The launcher and the sidebar read
@@ -21,8 +21,7 @@ ALL_MODULES = ("front-desk", "housekeeping", "operations", "fnb", "events",
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Finance", "Revenue Manager", "Housekeeping",
-               "Housekeeping Supervisor", "Kamra Agent", "Night Auditor", "F&B Manager")
+@require_perm("Property", "view_modules")
 def enabled_modules(property: str) -> list:
 	"""Which parts of Kamra this property runs. Empty setting = all of
 	them, so an existing property keeps working untouched."""
@@ -32,7 +31,7 @@ def enabled_modules(property: str) -> list:
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Hotel Admin")
+@require_perm("Property", "configure")
 def set_enabled_modules(property: str, modules) -> dict:
 	"""Turn parts of the product on or off for one property."""
 	if isinstance(modules, str):
@@ -57,11 +56,29 @@ def whoami():
 	{user: "Guest"} cleanly instead of a 403 in the console.
 	"""
 	user = frappe.session.user
-	return {
+	out = {
 		"user": user,
 		"full_name": frappe.db.get_value("User", user, "full_name") or user,
 		"roles": frappe.get_roles(user),
 	}
+	if user != "Guest":
+		out["can"] = my_permissions()
+	return out
+
+
+def my_permissions() -> dict:
+	"""{doctype: [permission types]} the signed-in user holds on Kamra's
+	doctypes - Frappe's role permissions, as Role Permission Manager has
+	them. The SPA draws apps (Property: app_*), menus and buttons from it."""
+	from frappe.permissions import get_role_permissions
+	out = {}
+	for dt in frappe.get_all("DocType", filters={"module": "Kamra", "istable": 0}, pluck="name"):
+		perms = get_role_permissions(frappe.get_meta(dt))
+		held = sorted(k for k, v in perms.items()
+		              if v == 1 and k not in ("has_if_owner_enabled", "if_owner"))
+		if held:
+			out[dt] = held
+	return out
 
 
 @frappe.whitelist()
@@ -103,7 +120,7 @@ def generate_api_key():
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Kamra Agent", "Hotel Admin", "System Manager")
+@require_perm("Property", "upload_images")
 def upload_room_image():
 	"""Uploads an image file for room types / properties to public files."""
 	req = getattr(frappe.local, "request", None)
@@ -164,7 +181,7 @@ def _assert_within_guardrails(guardrails, room_type, rate: float,
 
 
 @frappe.whitelist()
-@require_roles("Revenue Manager", "Kamra Agent")
+@require_perm("Rate Plan", "set_rates")
 def set_room_rate(property: str, room_type: str, start_date: str,
                   end_date: str, rate: float, reason: str = "",
                   agent: str | None = None, days_of_week: list | str | None = None):
@@ -241,7 +258,7 @@ def set_room_rate(property: str, room_type: str, start_date: str,
 
 
 @frappe.whitelist()
-@require_roles()
+@require_perm("Rate Plan", "configure")
 def owner_briefing(property: str, date: str | None = None):
 	"""Deterministic numbers for the owner's morning briefing (PRD FR-70).
 	An LLM turns this into prose; it never invents the figures."""
@@ -624,7 +641,7 @@ def _stay_money(res):
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Kamra Agent")
+@require_perm("Reservation", "handle_stays")
 def registration_card(reservation: str):
 	"""Everything the printed GRC (guest registration card) needs."""
 	res = frappe.get_doc("Reservation", reservation)
@@ -699,7 +716,7 @@ def registration_card(reservation: str):
 
 
 @frappe.whitelist()
-@require_roles("Finance", "Front Desk", "Night Auditor", "Revenue Manager", "Kamra Agent")
+@require_perm("Cashier Session", "view_cash_summary")
 def cash_summary(property: str, date: str | None = None,
                  to_date: str | None = None):
 	"""Cashier reconciliation: what the system says was collected today,
@@ -821,7 +838,7 @@ def _deposit_reservation(reservation: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Finance", "Kamra Agent")
+@require_perm("Folio", "bill")
 def record_advance(reservation: str, amount: float, mode: str = "Cash",
                    reference: str | None = None, pin: str | None = None,
                    idempotency_key: str | None = None):
@@ -876,7 +893,7 @@ def record_advance(reservation: str, amount: float, mode: str = "Cash",
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Finance", "Kamra Agent")
+@require_perm("Folio", "bill")
 def deposit_payment_link(reservation: str, amount: float | None = None):
 	"""A payment link for the booking deposit - the deposit still due by
 	default, or any amount the desk agrees with the guest. Paid through the
@@ -902,7 +919,7 @@ def deposit_payment_link(reservation: str, amount: float | None = None):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Finance", "Hotel Admin")
+@require_perm("Security Deposit", "refund_deposit")
 def simulate_payment_link(reservation: str):
 	"""Test mode only: act as the gateway and mark the outstanding link
 	paid - for demos and training, never on a live gateway."""
@@ -925,7 +942,7 @@ def simulate_payment_link(reservation: str):
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Finance", "Hotel Admin", "Kamra Agent")
+@require_perm("Folio", "bill")
 def security_deposit(reservation: str):
 	"""The stay's refundable security (damage) deposit: policy amount, what
 	is held, withheld and refunded, its history and which actions are open."""
@@ -934,7 +951,7 @@ def security_deposit(reservation: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Finance", "Kamra Agent")
+@require_perm("Folio", "bill")
 def collect_security_deposit(reservation: str, amount: float,
                              mode: str = "Cash", reference: str | None = None,
                              pin: str | None = None):
@@ -948,7 +965,7 @@ def collect_security_deposit(reservation: str, amount: float,
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Hotel Admin", "Kamra Agent")
+@require_perm("Reservation", "handle_stays")
 def waive_security_deposit(reservation: str, reason: str):
 	"""Waive the property's security deposit for this stay (reason required).
 	Refused once money has been taken - refund it instead."""
@@ -957,7 +974,7 @@ def waive_security_deposit(reservation: str, reason: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Finance", "Hotel Admin")
+@require_perm("Security Deposit", "refund_deposit")
 def withhold_security_deposit(reservation: str, amount: float, reason: str,
                               evidence: str | None = None,
                               pin: str | None = None):
@@ -969,7 +986,7 @@ def withhold_security_deposit(reservation: str, amount: float, reason: str,
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Finance", "Hotel Admin")
+@require_perm("Security Deposit", "refund_deposit")
 def refund_security_deposit(reservation: str, amount: float | None = None,
                             mode: str | None = None, note: str | None = None,
                             pin: str | None = None):
@@ -980,14 +997,14 @@ def refund_security_deposit(reservation: str, amount: float | None = None,
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Hotel Admin", "Kamra Agent")
+@require_perm("Reservation", "handle_stays")
 def release_access_instructions(reservation: str, force: int = 0):
 	from kamra.access import release_access
 	return release_access(reservation, force=int(force or 0))
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Hotel Admin", "Kamra Agent")
+@require_perm("Reservation", "handle_stays")
 def confirm_pending_reservation(reservation: str):
 	"""Mark Held / Pending Payment / Requested as Confirmed (host or payment)."""
 	res = frappe.get_doc("Reservation", reservation)
@@ -1009,14 +1026,14 @@ def confirm_pending_reservation(reservation: str):
 
 
 @frappe.whitelist()
-@require_roles("Finance", "Front Desk", "Kamra Agent")
+@require_perm("Folio", "bill")
 def folio_payment_link(folio: str):
 	from kamra.payments import create_payment_link
 	return create_payment_link(folio)
 
 
 @frappe.whitelist()
-@require_roles("Housekeeping", "Front Desk", "Kamra Agent")
+@require_perm("Housekeeping Task", "do_housekeeping")
 def hk_queue(property: str):
 	"""The housekeeper's phone view: prioritized task queue + room board.
 	Checkout cleans for rooms with an arrival today jump the queue."""
@@ -1122,7 +1139,7 @@ def hk_queue(property: str):
 
 
 @frappe.whitelist()
-@require_roles("Housekeeping", "Front Desk", "Kamra Agent")
+@require_perm("Housekeeping Task", "do_housekeeping")
 def hk_update_task(task: str, status: str):
 	"""Start or complete a housekeeping task from the phone.
 
@@ -1151,7 +1168,7 @@ def hk_update_task(task: str, status: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Housekeeping", "Front Desk", "Kamra Agent")
+@require_perm("Housekeeping Task", "do_housekeeping")
 def hk_upload_media(task: str):
 	"""Attach a completion photo/video (proof of clean) to a housekeeping task.
 
@@ -1186,7 +1203,7 @@ def hk_upload_media(task: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Housekeeping", "Front Desk", "Kamra Agent")
+@require_perm("Housekeeping Task", "do_housekeeping")
 def hk_delete_media(task: str, file_url: str):
 	"""Remove a completion photo/video from a housekeeping task."""
 	name = frappe.db.get_value("File", {
@@ -1201,7 +1218,7 @@ def hk_delete_media(task: str, file_url: str):
 
 
 @frappe.whitelist()
-@require_roles("Housekeeping", "Front Desk", "Hotel Admin", "Kamra Agent")
+@require_perm("Housekeeping Task", "do_housekeeping")
 def hk_task_media(task: str):
 	"""Completion photos/videos attached to one housekeeping task (newest first)."""
 	return frappe.get_all(
@@ -1212,7 +1229,7 @@ def hk_task_media(task: str):
 
 
 @frappe.whitelist()
-@require_roles("Housekeeping", "Front Desk", "Hotel Admin", "Kamra Agent")
+@require_perm("Room", "update_rooms")
 def hk_room_media(room: str):
 	"""Photos/videos from the room's LATEST cleaning only - so the front desk
 	sees just the most recent clean, not older cycles. Lets reception confirm a
@@ -1261,7 +1278,7 @@ def _hk_staff(property: str) -> list[dict]:
 
 
 @frappe.whitelist()
-@require_roles("Housekeeping Supervisor", "Front Desk", "Kamra Agent")
+@require_perm("Housekeeping Task", "supervise")
 def hk_staff(property: str):
 	"""Who a supervisor can hand a housekeeping task to at this property."""
 	from kamra.crs import assert_property_access
@@ -1270,7 +1287,7 @@ def hk_staff(property: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Housekeeping", "Kamra Agent")
+@require_perm("Housekeeping Task", "do_housekeeping")
 def hk_assign_task(task: str, user: str):
 	"""A supervisor hands a task to a specific housekeeper (awaits accept).
 	Attendants take work from the pool with hk_claim_task; handing a task to
@@ -1294,7 +1311,7 @@ def hk_assign_task(task: str, user: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Housekeeping", "Front Desk", "Kamra Agent")
+@require_perm("Housekeeping Task", "do_housekeeping")
 def hk_claim_task(task: str):
 	"""A housekeeper takes an unassigned task from the pool for themselves."""
 	doc = frappe.get_doc("Housekeeping Task", task)
@@ -1307,7 +1324,7 @@ def hk_claim_task(task: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Housekeeping", "Front Desk", "Kamra Agent")
+@require_perm("Housekeeping Task", "do_housekeeping")
 def hk_accept_task(task: str):
 	"""The assigned housekeeper accepts the task handed to them."""
 	doc = frappe.get_doc("Housekeeping Task", task)
@@ -1319,7 +1336,7 @@ def hk_accept_task(task: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Housekeeping", "Front Desk", "Kamra Agent")
+@require_perm("Housekeeping Task", "do_housekeeping")
 def hk_reject_task(task: str, reason: str = ""):
 	"""Decline a task - it drops back into the pool for someone else,
 	keeping the reason on record."""
@@ -1336,7 +1353,7 @@ def hk_reject_task(task: str, reason: str = ""):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Housekeeping", "Front Desk", "Kamra Agent")
+@require_perm("Room", "update_rooms")
 def hk_log_item(property: str, item_description: str, condition: str = "Found",
                 room: str | None = None):
 	"""A floor housekeeper logs a lost/found/missing/damaged item from the
@@ -1359,7 +1376,7 @@ def hk_log_item(property: str, item_description: str, condition: str = "Found",
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Housekeeping", "Front Desk", "Kamra Agent")
+@require_perm("Room", "update_rooms")
 def hk_post_consumable(room: str, charge_type: str, description: str,
                        amount: float):
 	"""Housekeeping posts what they find in the room - minibar consumption or
@@ -1399,7 +1416,7 @@ def hk_post_consumable(room: str, charge_type: str, description: str,
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Kamra Agent")
+@require_perm("Service Ticket", "handle_requests")
 def create_ticket(property: str, subject: str, category: str,
                   priority: str = "Medium", room: str | None = None,
                   reservation: str | None = None, guest: str | None = None,
@@ -1433,7 +1450,7 @@ def create_ticket(property: str, subject: str, category: str,
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Kamra Agent")
+@require_perm("Service Ticket", "handle_requests")
 def tickets_list(property: str, show_closed: int = 0):
 	filters = {"property": property}
 	if not int(show_closed):
@@ -1457,7 +1474,7 @@ def tickets_list(property: str, show_closed: int = 0):
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Kamra Agent")
+@require_perm("Service Ticket", "handle_requests")
 def advance_ticket(ticket: str, status: str, resolution_note: str | None = None):
 	allowed = {"In Progress", "Resolved", "Closed", "Cancelled"}
 	if status not in allowed:
@@ -1472,7 +1489,7 @@ def advance_ticket(ticket: str, status: str, resolution_note: str | None = None)
 
 
 @frappe.whitelist()
-@require_roles("Finance", "Front Desk", "Night Auditor", "Kamra Agent")
+@require_perm("Folio", "view_folio")
 def get_folio(reservation: str):
 	"""Folio for a reservation - opens one if the guest is checked in."""
 	name = frappe.db.get_value(
@@ -1489,7 +1506,7 @@ def get_folio(reservation: str):
 
 
 @frappe.whitelist()
-@require_roles("Finance", "Front Desk", "Kamra Agent")
+@require_perm("Folio", "bill")
 def add_folio_charge(folio: str, charge_type: str, description: str,
                      amount: float, gst_rate: float = 0,
                      posting_date: str | None = None, is_alcohol: int = 0,
@@ -1580,7 +1597,7 @@ def _pin_guard(folio: str, pin=None):
 	require_cashier_pin(frappe.db.get_value("Folio", folio, "property"), pin)
 
 @frappe.whitelist()
-@require_roles("Finance", "Front Desk", "Kamra Agent")
+@require_perm("Folio", "bill")
 def add_folio_payment(folio: str, mode: str, amount: float,
                       reference: str | None = None, pin: str | None = None,
                       kind: str = "Payment", currency: str | None = None,
@@ -1696,7 +1713,7 @@ def add_folio_payment(folio: str, mode: str, amount: float,
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Finance", "Front Desk", "Kamra Agent")
+@require_perm("Folio", "bill")
 def refund_folio_payment(folio: str, amount: float, mode: str,
                          reason: str, pin: str | None = None,
                          reason_code: str | None = None,
@@ -1817,7 +1834,7 @@ def _prearrival_advance_refund_ledger(doc) -> str | None:
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Kamra Agent")
+@require_perm("Reservation", "handle_stays")
 def set_actual_times(reservation: str, actual_check_in: str | None = None,
                      actual_check_out: str | None = None):
 	"""Correct the recorded arrival/departure moments - early check-ins
@@ -1887,7 +1904,7 @@ def _resolve_charge_gst(property: str, charge_type: str, description: str,
 
 
 @frappe.whitelist()
-@require_roles("Finance", "Front Desk", "Kamra Agent")
+@require_perm("Folio", "bill")
 def void_folio_charge(folio: str, charge_row: str, reason: str = "",
                       pin: str | None = None,
                       reason_code: str | None = None,
@@ -1910,7 +1927,7 @@ def void_folio_charge(folio: str, charge_row: str, reason: str = "",
 
 
 @frappe.whitelist()
-@require_roles("Finance", "Front Desk", "Kamra Agent")
+@require_perm("Folio", "bill")
 def post_stay_charge(reservation: str, charge_type: str, description: str,
                      amount: float, gst_rate: float = 0, is_alcohol: int = 0):
 	"""Post a charge to a stay letting the billing rules pick the folio -
@@ -1936,7 +1953,7 @@ def post_stay_charge(reservation: str, charge_type: str, description: str,
 
 
 @frappe.whitelist()
-@require_roles("Finance", "Front Desk", "Kamra Agent")
+@require_perm("Folio", "bill")
 def set_billing_rules(company: str, rules):
 	"""Replace a company's billing rules. rules = [{charge_type, pay_by}]."""
 	if isinstance(rules, str):
@@ -1953,7 +1970,7 @@ def set_billing_rules(company: str, rules):
 
 
 @frappe.whitelist()
-@require_roles("Finance", "Front Desk", "Kamra Agent")
+@require_perm("Folio", "bill")
 def get_billing_rules(company: str):
 	doc = frappe.get_doc("Corporate Account", company)
 	return [{"charge_type": r.charge_type, "pay_by": r.pay_by}
@@ -1961,7 +1978,7 @@ def get_billing_rules(company: str):
 
 
 @frappe.whitelist()
-@require_roles("Finance", "Front Desk", "Kamra Agent")
+@require_perm("Folio", "bill")
 def company_billing_default(company: str, property: str | None = None):
 	"""What this company pays when it has no billing rules: the property's
 	`default_company_billing` for a credit company, nothing otherwise.
@@ -1998,7 +2015,7 @@ def split_names(names) -> list[str]:
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Kamra Agent")
+@require_perm("Reservation", "handle_stays")
 def add_occupant_names(reservation: str, names):
 	"""Add the other people staying to the stay's occupant register by name
 	(at booking, before anyone's ID is seen). Names already on the register
@@ -2018,7 +2035,7 @@ def add_occupant_names(reservation: str, names):
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Kamra Agent")
+@require_perm("Reservation", "handle_stays")
 def update_occupants(reservation: str, occupants):
 	"""Replace the stay's occupant register.
 	occupants = [{full_name, age, gender, nationality, id_type, id_number, phone,
@@ -2147,14 +2164,14 @@ def _occupant_times(o: dict, existing, in_house_now) -> dict:
 
 
 @frappe.whitelist()
-@require_roles("Finance", "Front Desk", "Kamra Agent")
+@require_perm("Folio", "bill")
 def split_folio(reservation: str, folio_type: str = "Extra"):
 	from kamra.folio import split_folio as _split
 	return {"folio": _split(reservation, folio_type)}
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Finance", "Front Desk", "Kamra Agent")
+@require_perm("Folio", "bill")
 def delete_folio(folio: str):
 	"""Remove an empty split/extra folio created by mistake.
 
@@ -2175,7 +2192,7 @@ def delete_folio(folio: str):
 
 
 @frappe.whitelist()
-@require_roles("Finance", "Front Desk", "Kamra Agent")
+@require_perm("Folio", "bill")
 def transfer_folio_charge(from_folio: str, charge_row: str, to_folio: str):
 	from kamra.folio import transfer_charge
 	transfer_charge(from_folio, charge_row, to_folio)
@@ -2186,7 +2203,7 @@ def transfer_folio_charge(from_folio: str, charge_row: str, to_folio: str):
 
 
 @frappe.whitelist()
-@require_roles("Finance", "Front Desk", "Kamra Agent")
+@require_perm("Folio", "bill")
 def transfer_folio_charges(from_folio: str, charge_rows, to_folio: str):
 	"""Bulk move: several charge lines to another folio of the stay."""
 	if isinstance(charge_rows, str):
@@ -2201,7 +2218,7 @@ def transfer_folio_charges(from_folio: str, charge_rows, to_folio: str):
 
 
 @frappe.whitelist()
-@require_roles("Finance", "Front Desk", "Kamra Agent")
+@require_perm("Folio", "bill")
 def split_folio_charge(from_folio: str, charge_row: str, to_folio: str,
                        percent: float | None = None,
                        amount: float | None = None):
@@ -2219,7 +2236,7 @@ def split_folio_charge(from_folio: str, charge_row: str, to_folio: str,
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Finance", "Front Desk", "Kamra Agent")
+@require_perm("Folio", "bill")
 def open_guest_bills(reservation: str, names=None):
 	"""A separate bill for each guest sharing the room: one Extra folio per
 	other occupant (or per name given), invoiced in that guest's name. The
@@ -2237,7 +2254,7 @@ def open_guest_bills(reservation: str, names=None):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Finance", "Front Desk", "Kamra Agent")
+@require_perm("Folio", "bill")
 def share_folio_charges(from_folio: str, charge_rows, to_folios,
                         shares=None):
 	"""Share charge lines (room nights) between the guests' bills: evenly,
@@ -2256,7 +2273,7 @@ def share_folio_charges(from_folio: str, charge_rows, to_folios,
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Finance", "Front Desk", "Kamra Agent")
+@require_perm("Folio", "bill")
 def change_stay_company(reservation: str, reason: str,
                         company: str | None = None, move: str = "rules",
                         override_reason: str | None = None):
@@ -2383,7 +2400,7 @@ _FOLIO_LIST_FIELDS = ["name", "folio_type", "status", "invoice_number",
 
 
 @frappe.whitelist()
-@require_roles("Finance", "Front Desk", "Kamra Agent")
+@require_perm("Folio", "bill")
 def reservation_folios(reservation: str):
 	"""All folios of a stay (guest + splits) with balances - plus the
 	group master folio when the stay belongs to a group, so charges can
@@ -2415,7 +2432,7 @@ def reservation_folios(reservation: str):
 
 
 @frappe.whitelist()
-@require_roles("Finance", "Front Desk", "Kamra Agent")
+@require_perm("Group Booking", "bill_group")
 def group_master_folio(group_booking: str):
 	"""Get-or-create the group's consolidated company folio."""
 	from kamra.folio import open_group_folio
@@ -2423,7 +2440,7 @@ def group_master_folio(group_booking: str):
 
 
 @frappe.whitelist()
-@require_roles("Finance", "Front Desk", "Kamra Agent")
+@require_perm("Group Booking", "bill_group")
 def group_folios(group_booking: str):
 	"""The whole group's billing picture: the master folio plus every
 	member reservation's folios, with balances."""
@@ -2444,7 +2461,7 @@ def group_folios(group_booking: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Revenue Manager", "Kamra Agent")
+@require_perm("Group Booking", "manage_group")
 def set_group_master(group_booking: str, reservation: str):
 	"""Make this room the group's main room: its guest pays for the group.
 	An open group bill moves with it (re-anchored to the new main room)."""
@@ -2471,7 +2488,7 @@ def set_group_master(group_booking: str, reservation: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Revenue Manager", "Kamra Agent")
+@require_perm("Reservation", "plan_stays")
 def set_pays_own_charges(reservation: str, value: int = 1):
 	"""Opt a group room out of the main room's bill (or back in). Affects new
 	charges only; move lines already posted with transfer_folio_charges."""
@@ -2486,7 +2503,7 @@ def set_pays_own_charges(reservation: str, value: int = 1):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Finance", "Front Desk", "Kamra Agent")
+@require_perm("Group Booking", "bill_group")
 def settle_group_bill(group_booking: str, mode: str | None = None,
                       amount: float | None = None, to_city_ledger: int = 0,
                       reference: str | None = None, pin: str | None = None,
@@ -2530,7 +2547,7 @@ def settle_group_bill(group_booking: str, mode: str | None = None,
 
 
 @frappe.whitelist()
-@require_roles("Finance", "Front Desk", "Kamra Agent")
+@require_perm("Folio", "bill")
 def close_folio(folio: str, pin: str | None = None):
 	_pin_guard(folio, pin)
 	prop = frappe.db.get_value("Folio", folio, "property")
@@ -2552,7 +2569,7 @@ def close_folio(folio: str, pin: str | None = None):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Finance", "Front Desk", "Kamra Agent")
+@require_perm("Folio", "bill")
 def post_allowance(folio: str, amount: float, reason: str = "",
                    gst_rate: float = 0, pin: str | None = None,
                    reason_code: str | None = None):
@@ -2711,7 +2728,7 @@ def _post_allowance(folio: str, amount: float, text: str, gst_rate,
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Finance", "Front Desk", "Hotel Admin")
+@require_perm("Folio", "handle_allowances")
 def decide_allowance(allowance_request: str, approve: int = 1,
                      note: str = "", pin: str | None = None,
                      supervisor: str | None = None,
@@ -2773,7 +2790,7 @@ def decide_allowance(allowance_request: str, approve: int = 1,
 
 
 @frappe.whitelist()
-@require_roles("Finance", "Front Desk", "Hotel Admin", "Kamra Agent")
+@require_perm("Folio", "bill")
 def allowance_requests(property: str, status: str = "Pending",
                        folio: str | None = None):
 	"""Allowances waiting for a manager (or decided ones, by status), with
@@ -2816,7 +2833,7 @@ def allowance_requests(property: str, status: str = "Pending",
 
 
 @frappe.whitelist()
-@require_roles("Finance", "Front Desk", "Hotel Admin")
+@require_perm("Folio", "handle_allowances")
 def allowance_voucher(allowance_request: str):
 	"""The printable allowance voucher for a posted allowance, by request
 	name or serial: who asked, the manager who approved it with their PIN,
@@ -2876,17 +2893,17 @@ def allowance_voucher(allowance_request: str):
 
 
 @frappe.whitelist()
-@require_roles("Finance", "Front Desk", "Hotel Admin")
+@require_perm("Folio", "handle_allowances")
 def allowance_approvers(property: str):
 	"""Managers who can approve an allowance on the spot here (role from
 	the property setting, cashier PIN set). Names only."""
 	assert_property_access(property)
 	from kamra.authz import supervisors_for
-	return supervisors_for(property, _allowance_approver_roles(property))
+	return supervisors_for(property, roles=_allowance_approver_roles(property))
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Finance", "Front Desk", "Kamra Agent")
+@require_perm("Folio", "bill")
 def part_settle_folio(folio: str, pin: str | None = None):
 	"""Interim invoice mid-stay: freeze the paid folio, open a fresh one."""
 	_pin_guard(folio, pin)
@@ -2895,7 +2912,7 @@ def part_settle_folio(folio: str, pin: str | None = None):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Finance", "Front Desk", "Kamra Agent")
+@require_perm("Folio", "bill")
 def cancel_invoice(folio: str, reason: str, pin: str | None = None):
 	"""Void an invoice into the register and reopen the folio for correction."""
 	_pin_guard(folio, pin)
@@ -2908,7 +2925,7 @@ def cancel_invoice(folio: str, reason: str, pin: str | None = None):
 
 
 @frappe.whitelist()
-@require_roles("Finance", "Front Desk", "Kamra Agent")
+@require_perm("Folio", "bill")
 def folio_invoice(folio: str):
 	"""Everything the bill needs to print itself.
 
@@ -3078,7 +3095,7 @@ def _invoice_guest(res) -> dict:
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Finance", "Night Auditor", "Kamra Agent")
+@require_perm("Night Audit Run", "run_audit")
 def run_night_audit(property: str, business_date: str | None = None,
                     acknowledge=None, note: str | None = None):
 	"""Close the current business date. Refused while a blocking pre-check
@@ -3092,7 +3109,7 @@ def run_night_audit(property: str, business_date: str | None = None,
 
 
 @frappe.whitelist()
-@require_roles()
+@require_perm("Night Audit Run", "configure")
 def gstr1_rows(from_date: str, to_date: str, property: str | None = None):
 	"""Invoice-level rows for a GSTR-1 style export (v0: B2C summary).
 	Filter by property - each GSTIN files its own return. The return is the
@@ -3110,7 +3127,7 @@ def gstr1_rows(from_date: str, to_date: str, property: str | None = None):
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Kamra Agent")
+@require_perm("Guest", "handle_guests")
 def guests_with_stats(search: str | None = None):
 	"""Guest list with stay stats - the CRM index."""
 	from kamra.authz import guest_scope_sql
@@ -3143,7 +3160,7 @@ def guests_with_stats(search: str | None = None):
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Kamra Agent")
+@require_perm("Guest", "handle_guests")
 def guest_search(q: str):
 	"""Typeahead for attaching a booking to an existing profile."""
 	q = (q or "").strip()
@@ -3170,7 +3187,7 @@ def guest_search(q: str):
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Kamra Agent")
+@require_perm("Guest", "handle_guests")
 def guest_alert(guest: str | None = None, phone: str | None = None):
 	"""Is the guest a booking would attach to blacklisted? The desk asks
 	before booking so the warning shows up front, not as a refusal at the
@@ -3205,7 +3222,7 @@ def _is_admin() -> bool:
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(scope={"guest": "Guest"})
+@require_perm("Guest", "configure", scope={"guest": "Guest"})
 def set_guest_blacklist(guest: str, blacklisted: int, reason: str):
 	"""Blacklist a guest, or lift it. Hotel Admin only; a reason is required
 	either way and lands in the activity log with the before/after."""
@@ -3250,7 +3267,7 @@ _GUEST_LINKS = [  # every doctype that points at a Guest
 
 
 @frappe.whitelist()
-@require_roles(scope={"source": "Guest", "target": "Guest"})
+@require_perm("Guest", "configure", scope={"source": "Guest", "target": "Guest"})
 def merge_guests(source: str, target: str):
 	"""Merge a duplicate profile into the surviving one: every linked
 	document is repointed, missing contact fields are copied over, and
@@ -3300,7 +3317,7 @@ def merge_guests(source: str, target: str):
 
 
 @frappe.whitelist()
-@require_roles(scope={"guest": "Guest"})
+@require_perm("Guest", "configure", scope={"guest": "Guest"})
 def anonymize_guest(guest: str):
 	"""Right to erasure (DPDP s.12): see kamra.privacy.erase_guest. Stays
 	and bills stay for the books. Irreversible."""
@@ -3310,7 +3327,7 @@ def anonymize_guest(guest: str):
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Kamra Agent", scope={"guest": "Guest"})
+@require_perm("Guest", "handle_guests", scope={"guest": "Guest"})
 def guest_journey(guest: str):
 	"""One guest's full story: profile, stats, chronological timeline.
 	This is the CRM detail view - and the context an AI concierge loads
@@ -3580,7 +3597,7 @@ def _stay_balance(reservation: str) -> dict:
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Night Auditor", "Kamra Agent", "Finance", "Revenue Manager")
+@require_perm("Property", "view_snapshot")
 def front_desk_snapshot(property: str | None = None, date: str | None = None):
 	"""Everything the front desk needs for one day, in one call."""
 	date = date or nowdate()
@@ -3652,7 +3669,7 @@ def front_desk_snapshot(property: str | None = None, date: str | None = None):
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Kamra Agent", "Finance", "Revenue Manager")
+@require_perm("Reservation", "view_stays")
 def find_reservations(property: str, query: str | None = None,
                       status: str | None = None, limit: int = 20):
 	"""Search reservations by guest name, room number, or reference - optionally
@@ -3684,7 +3701,7 @@ def find_reservations(property: str, query: str | None = None,
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Finance", "Revenue Manager", "Kamra Agent")
+@require_perm("Folio", "find_invoices")
 def find_invoices(property: str, query: str | None = None, limit: int = 8):
 	"""Resolve an invoice number (or partial) to its folio and stay, so the
 	command palette can jump straight from 'INV-KDP-26-00042' to the bill."""
@@ -3717,7 +3734,7 @@ def _stay_instruction_rows(reservation: str) -> list:
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Housekeeping", "Kamra Agent")
+@require_perm("Reservation", "follow_instructions")
 def stay_instructions(reservation: str):
 	"""The special instructions on a stay (a VIP amenity, a 6am wake-up, a
 	no-feather pillow) - each for one department, Open until someone marks
@@ -3729,7 +3746,7 @@ def stay_instructions(reservation: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Kamra Agent")
+@require_perm("Reservation", "handle_stays")
 def add_stay_instruction(reservation: str, department: str, instruction: str):
 	"""Add an instruction to a stay for one department. Written as its own
 	child row so it never re-saves (and re-validates) the whole booking."""
@@ -3764,7 +3781,7 @@ def add_stay_instruction(reservation: str, department: str, instruction: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Housekeeping", "Kamra Agent")
+@require_perm("Reservation", "follow_instructions")
 def set_stay_instruction_status(reservation: str, row: str, status: str):
 	"""Mark one instruction Done (stamping who and when), or reopen it."""
 	if status not in ("Open", "Done"):
@@ -3798,7 +3815,7 @@ def _checkin_backfill(res) -> list[dict]:
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Kamra Agent", "Finance", "Revenue Manager")
+@require_perm("Reservation", "view_stays")
 def reservation_detail(reservation: str):
 	"""Everything about one booking in a single call - stay, money, guest,
 	booker and the actions currently available. Powers the reservation drawer."""
@@ -3946,7 +3963,7 @@ def reservation_detail(reservation: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Kamra Agent")
+@require_perm("Reservation", "handle_stays")
 def upload_id_document(reservation: str, data: str):
 	"""Capture the guest's ID at the counter, when they never uploaded one.
 
@@ -3966,7 +3983,7 @@ def upload_id_document(reservation: str, data: str):
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Kamra Agent")
+@require_perm("Reservation", "handle_stays")
 def id_document_image(reservation: str):
 	"""The ID scan as a data URL, for the desk to eyeball.
 
@@ -4000,7 +4017,7 @@ def id_document_image(reservation: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Kamra Agent")
+@require_perm("Reservation", "handle_stays")
 def verify_precheckin(reservation: str):
 	"""The desk has held the document against the human and agrees.
 
@@ -4025,7 +4042,7 @@ def verify_precheckin(reservation: str):
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Night Auditor", "Kamra Agent")
+@require_perm("Reservation", "check_in_out")
 def checkin_context(reservation: str):
 	"""Everything the check-in flow needs in one round trip: how complete
 	the guest's registration is, the assigned room - or the allocator's
@@ -4102,7 +4119,7 @@ def checkin_context(reservation: str):
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Night Auditor", "Kamra Agent")
+@require_perm("Reservation", "check_in_out")
 def check_in(reservation: str, room: str | None = None):
 	"""Check the guest in: the last step of the guided check-in.
 
@@ -4141,7 +4158,7 @@ def check_in(reservation: str, room: str | None = None):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Kamra Agent")
+@require_perm("Reservation", "handle_stays")
 def walk_in(property: str, room_type: str, room: str, check_out_date: str,
             guest_name: str, phone: str | None = None,
             guest: str | None = None, adults: int = 2, children: int = 0,
@@ -4291,7 +4308,7 @@ def walk_in(property: str, room_type: str, room: str, check_out_date: str,
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Kamra Agent")
+@require_perm("Reservation", "handle_stays")
 def upload_occupant_id(reservation: str, row: str, image: str, kind: str = "id"):
 	"""ID document (kind "id") or face photo (kind "photo") for one
 	occupant on the stay register. Same security pipeline as every ID
@@ -4350,7 +4367,7 @@ def upload_occupant_id(reservation: str, row: str, image: str, kind: str = "id")
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Kamra Agent", scope={"guest": "Guest"})
+@require_perm("Guest", "handle_guests", scope={"guest": "Guest"})
 def upload_guest_document(guest: str, kind: str, image: str):
 	"""The desk captures or replaces a guest's document while preparing
 	the GRC - walk-ins, or a newer copy over last visit's. kind is 'id'
@@ -4505,7 +4522,7 @@ def _cancellation_terms(res):
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Kamra Agent")
+@require_perm("Reservation", "handle_stays")
 def cancellation_preview(reservation: str):
 	"""What cancelling right now would cost - shown before confirming."""
 	res = frappe.get_doc("Reservation", reservation)
@@ -4588,7 +4605,7 @@ def _do_cancel(res, reason: str = "Guest request", note: str | None = None,
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Kamra Agent")
+@require_perm("Reservation", "handle_stays")
 def cancel_reservation(reservation: str, reason: str = "Guest request",
                        note: str | None = None, waive_fee: int = 0,
                        agent: str | None = None, issue_credit_note: int = 0):
@@ -4608,7 +4625,7 @@ def cancel_reservation(reservation: str, reason: str = "Guest request",
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Kamra Agent")
+@require_perm("Reservation", "handle_stays")
 def cancellation_letter(reservation: str):
 	"""Everything the printable cancellation confirmation needs."""
 	res = frappe.get_doc("Reservation", reservation)
@@ -4705,7 +4722,7 @@ def _assert_settled(doc, credit_override_reason: str | None = None) -> list[dict
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Finance", "Night Auditor", "Kamra Agent")
+@require_perm("Folio", "view_folio")
 def checkout_context(reservation: str):
 	"""Everything the guided check-out needs in one round trip, without
 	changing anything: each folio with its lines and invoice, as it will
@@ -4737,7 +4754,7 @@ def checkout_context(reservation: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Finance")
+@require_perm("Reservation", "reinstate_checkout")
 def reinstate_checkout(reservation: str, reason: str, pin: str | None = None):
 	"""Undo a checkout made by mistake, the same business day: before the
 	night audit runs. Each bill closed at checkout has its invoice
@@ -4818,7 +4835,7 @@ def reinstate_checkout(reservation: str, reason: str, pin: str | None = None):
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Night Auditor", "Kamra Agent")
+@require_perm("Reservation", "check_in_out")
 def check_out(reservation: str, credit_override_reason: str | None = None,
               early_reason: str | None = None, early_fee: str | None = None):
 	"""Check a guest out. What the company pays moves to the city ledger,
@@ -4867,7 +4884,7 @@ def check_out(reservation: str, credit_override_reason: str | None = None,
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Finance", "Kamra Agent")
+@require_perm("Folio", "bill")
 def early_departure(reservation: str, reason: str, fee: str | None = None):
 	"""A guest in house is leaving before the booked date: shorten the stay
 	to today through the amend path (availability, channel manager and
@@ -4897,7 +4914,7 @@ def _is_room_supervisor() -> bool:
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Housekeeping", HK_SUPERVISOR, "Front Desk", "Kamra Agent")
+@require_perm("Room", "update_rooms")
 def set_housekeeping_status(room: str, status: str):
 	"""Change a room's housekeeping status - role, property and DocPerm
 	checked (#99): an attendant can mark Clean / Dirty, only a supervisor
@@ -4928,7 +4945,7 @@ def set_housekeeping_status(room: str, status: str):
 
 
 @frappe.whitelist()
-@require_roles(HK_SUPERVISOR, "Front Desk", "Kamra Agent")
+@require_perm("Room", "view_board")
 def room_board(property: str):
 	"""Every room at a glance for the housekeeping supervisor: status,
 	occupancy, who is in it, and its open task - the board the desk has,
@@ -4980,7 +4997,7 @@ def room_board(property: str):
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Kamra Agent")
+@require_perm("Room", "view_tape")
 def availability_calendar(property: str, start_date: str | None = None, days: int = 14):
 	"""Per room-type, per date: rooms available and the 2-adult rate.
 	Powers the calendar view and, later, the agent's availability tool."""
@@ -5067,7 +5084,7 @@ def availability_calendar(property: str, start_date: str | None = None, days: in
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Kamra Agent")
+@require_perm("Room", "view_tape")
 def tape_chart(property: str, start_date: str | None = None, days: int = 14):
 	"""Rooms × dates grid with reservation bars - the front desk's home."""
 	from frappe.utils import getdate
@@ -5178,7 +5195,7 @@ def tape_chart(property: str, start_date: str | None = None, days: int = 14):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Kamra Agent")
+@require_perm("Reservation", "handle_stays")
 def send_precheckin_link(reservation: str, channel: str = "WhatsApp"):
 	"""Send the guest their self check-in link (mints a token if needed). Sends
 	over a connected channel when there is one; otherwise returns the link for
@@ -5219,7 +5236,7 @@ def send_precheckin_link(reservation: str, channel: str = "WhatsApp"):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Kamra Agent")
+@require_perm("Reservation", "handle_stays")
 def set_stay_times(reservation: str, eta: str | None = None,
                    etd: str | None = None):
 	"""Set the planned arrival (ETA) and departure (ETD) times for any stay.
@@ -5235,7 +5252,7 @@ def set_stay_times(reservation: str, eta: str | None = None,
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Kamra Agent")
+@require_perm("Reservation", "handle_stays")
 def set_day_use_times(reservation: str, from_time: str, to_time: str):
 	"""Set planned check-in/out times for a day-use booking (drives the hourly
 	tape view)."""
@@ -5243,7 +5260,7 @@ def set_day_use_times(reservation: str, from_time: str, to_time: str):
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Finance", "Kamra Agent")
+@require_perm("Property", "view_briefing")
 def position_briefing(property: str, date: str | None = None):
 	"""The GM / front-desk position briefing - what Kamra Agent reads out
 	at the morning meeting: today's occupancy against the overbooking
@@ -5338,7 +5355,7 @@ HURDLE_ROLES = ("Front Desk", "Finance", "Revenue Manager", "Kamra Agent")
 
 
 @frappe.whitelist()
-@require_roles(*HURDLE_ROLES)
+@require_perm("Hurdle Rate", "manage_hurdles")
 def hurdle_rates(property: str):
 	"""The demand tiers: at each occupancy threshold, the premium applied
 	and the minimum sell rate enforced. A row with a room type applies to
@@ -5358,7 +5375,7 @@ def hurdle_rates(property: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*HURDLE_ROLES, scope={"name": "Hurdle Rate"})
+@require_perm("Hurdle Rate", "manage_hurdles", scope={"name": "Hurdle Rate"})
 def save_hurdle_rate(property: str, occupancy_from: float,
                      premium_pct: float = 0, min_rate: float = 0,
                      room_type: str | None = None, name: str | None = None):
@@ -5383,14 +5400,14 @@ def save_hurdle_rate(property: str, occupancy_from: float,
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*HURDLE_ROLES, scope={"name": "Hurdle Rate"})
+@require_perm("Hurdle Rate", "manage_hurdles", scope={"name": "Hurdle Rate"})
 def delete_hurdle_rate(name: str):
 	frappe.delete_doc("Hurdle Rate", name, ignore_permissions=True)
 	return {"ok": True}
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Kamra Agent")
+@require_perm("Room", "view_tape")
 def tape_chart_hourly(property: str, date: str | None = None):
 	"""Single-day, rooms x hours. Day-use bookings sit at their planned times;
 	an overnight stay covering this day shows as a full-width occupied band."""
@@ -5454,7 +5471,7 @@ def tape_chart_hourly(property: str, date: str | None = None):
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Revenue Manager", "Kamra Agent")
+@require_perm("Venue Booking", "manage_functions")
 def venue_calendar(property: str, start_date: str | None = None, days: int = 14):
 	"""Venues × dates with their bookings - the banquet/function diary. Shows
 	each venue's schedule so you can see availability and spot conflicts."""
@@ -5491,7 +5508,7 @@ def venue_calendar(property: str, start_date: str | None = None, days: int = 14)
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Kamra Agent")
+@require_perm("Reservation", "handle_stays")
 def move_reservation(reservation: str, new_room: str,
                      reason: str | None = None, confirm_price: int = 0,
                      rate_mode: str = "destination",
@@ -5648,7 +5665,7 @@ def _require_price_confirmation(preview: dict, confirm_price) -> None:
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Kamra Agent")
+@require_perm("Reservation", "handle_stays")
 def room_move_preview(reservation: str, new_room: str,
                       rate_mode: str = "destination",
                       agreed_rate: float | None = None):
@@ -5680,7 +5697,7 @@ def room_move_preview(reservation: str, new_room: str,
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Kamra Agent")
+@require_perm("Reservation", "handle_stays")
 def movable_rooms(reservation: str, check_in_date: str | None = None,
                   check_out_date: str | None = None):
 	"""Every room the booking could move into - across ALL room types, so the
@@ -5723,7 +5740,7 @@ def movable_rooms(reservation: str, check_in_date: str | None = None,
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Kamra Agent")
+@require_perm("Reservation", "handle_stays")
 def amend_stay_preview(reservation: str, check_in_date: str, check_out_date: str):
 	"""What new dates would do to the bill, before anything changes: the
 	current and new totals and the new nightly rates, priced by the engine
@@ -5740,7 +5757,7 @@ def amend_stay_preview(reservation: str, check_in_date: str, check_out_date: str
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Kamra Agent")
+@require_perm("Reservation", "handle_stays")
 def amend_stay(reservation: str, check_in_date: str, check_out_date: str,
                confirm_price: int = 0):
 	"""Extend / shorten a stay; the overlap guard validates the new window.
@@ -5783,7 +5800,7 @@ def _amend_dates(doc, check_in_date: str, check_out_date: str,
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Finance", "Hotel Admin")
+@require_perm("Folio", "correct_charges")
 def correct_charged_nights(reservation: str, reason: str | None = None,
                            pin: str | None = None,
                            supervisor: str | None = None, dry_run: int = 0):
@@ -5819,9 +5836,10 @@ def correct_charged_nights(reservation: str, reason: str | None = None,
 		frappe.throw(_("A correction needs a reason. It goes on the record."))
 	from kamra.authz import verify_supervisor
 	approver = verify_supervisor(doc.property, supervisor or frappe.session.user, pin)
-	# a folio correction: Finance or Hotel Admin only, whatever other roles
-	# a supervisor list may grow to (the POS's F&B Manager, say)
-	if not {"Finance", "Hotel Admin"} & set(frappe.get_roles(approver)):
+	# a folio correction: the approver must also hold Folio "correct_charges"
+	# (defaults Finance, Hotel Admin), whatever else a site lets approve
+	if not frappe.has_permission("Folio", "correct_charges", user=approver,
+	                             ignore_share_permissions=True):
 		frappe.throw(_("{0} cannot approve this. A rate correction needs a "
 		               "Finance or Hotel Admin user.").format(approver),
 		             frappe.PermissionError)
@@ -5840,7 +5858,7 @@ def correct_charged_nights(reservation: str, reason: str | None = None,
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Kamra Agent")
+@require_perm("Reservation", "handle_stays")
 def set_late_arrival(reservation: str, late_arrival: int = 1,
                      eta: str | None = None):
 	"""Flag (or unflag) a confirmed arrival as arriving late, optionally with
@@ -5866,7 +5884,7 @@ def set_late_arrival(reservation: str, late_arrival: int = 1,
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Kamra Agent")
+@require_perm("Rate Plan", "quote")
 def booking_options(property: str):
 	"""Everything the booking form needs to render its dropdowns."""
 	from kamra.channel_manager import channel_commission_pcts
@@ -5954,7 +5972,7 @@ def _booking_property_policy(property: str) -> dict:
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Kamra Agent")
+@require_perm("Rate Plan", "quote")
 def get_quote(property: str, room_type: str, check_in_date: str,
               check_out_date: str, adults: int = 2, children: int = 0,
               meal_plan: str | None = None, rate_plan: str | None = None,
@@ -6277,7 +6295,7 @@ def _stay_slot(check_in_date, check_out_date, t_in=None, t_out=None):
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Kamra Agent")
+@require_perm("Reservation", "handle_stays")
 def create_booking(property: str, room_type: str, check_in_date: str,
                    check_out_date: str, guest_name: str,
                    phone: str | None = None, adults: int = 2,
@@ -6632,7 +6650,7 @@ def create_booking(property: str, room_type: str, check_in_date: str,
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Kamra Agent", "Revenue Manager")
+@require_perm("Reservation", "plan_stays")
 def waitlist(property: str):
 	"""All waitlisted stays for the property, by arrival date."""
 	return frappe.get_all(
@@ -6645,7 +6663,7 @@ def waitlist(property: str):
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Kamra Agent")
+@require_perm("Reservation", "handle_stays")
 def promote_waitlist(reservation: str):
 	"""Promote a waitlisted stay to Confirmed when a room is free for its
 	dates. Assigns the first free room; the overlap guard validates it."""
@@ -6666,7 +6684,7 @@ def promote_waitlist(reservation: str):
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Kamra Agent")
+@require_perm("Reservation", "handle_stays")
 def waitlist_ready(property: str):
 	"""Waitlisted stays that CAN now be accommodated - a room is free for
 	their dates. This is the signal the voice/WhatsApp agent watches so it
@@ -6689,7 +6707,7 @@ def waitlist_ready(property: str):
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Kamra Agent")
+@require_perm("Group Booking", "book_group")
 def create_group_booking(property: str, group_name: str, check_in_date: str,
                          check_out_date: str, rooms: str | list,
                          guest_name: str, phone: str | None = None,
@@ -6798,7 +6816,7 @@ def create_group_booking(property: str, group_name: str, check_in_date: str,
 
 
 @frappe.whitelist(methods=["GET"])
-@require_roles("Front Desk", "Revenue Manager", "Hotel Admin")
+@require_perm("Group Booking", "rooming_template")
 def rooming_list_template(property: str):
 	"""An Excel rooming list for the group booking screen to paste or
 	upload: Name, Phone, Room type (a dropdown of this property's room
@@ -6856,7 +6874,7 @@ def rooming_list_template(property: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Kamra Agent")
+@require_perm("Group Booking", "book_group")
 def create_group_with_rooming_list(property: str, group_name: str,
                                    check_in_date: str, check_out_date: str,
                                    blocks, guests=None,
@@ -7052,7 +7070,7 @@ def _block_hold(property: str, room_type: str, check_in_date: str,
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Kamra Agent", "Revenue Manager", "Hotel Admin")
+@require_perm("Room", "view_availability")
 def inventory_availability(property: str, check_in_date: str, check_out_date: str,
                            room_type: str | None = None, siu: str | None = None,
                            include_reasons: int = 0):
@@ -7069,7 +7087,7 @@ def inventory_availability(property: str, check_in_date: str, check_out_date: st
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Kamra Agent")
+@require_perm("Reservation", "handle_stays")
 def available_rooms(property: str, room_type: str, check_in_date: str,
                     check_out_date: str, group_booking: str | None = None,
                     ready_now: int = 0):
@@ -7161,7 +7179,7 @@ def _available_rooms_raw(property: str, room_type: str, check_in_date: str,
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Kamra Agent")
+@require_perm("Room Block", "manage_blocks")
 def room_blocks(property: str, active_only: int = 1):
 	"""Rooms held out of sale (house use, VIP, maintenance)."""
 	filters = {"property": property}
@@ -7182,7 +7200,7 @@ def room_blocks(property: str, active_only: int = 1):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Kamra Agent")
+@require_perm("Room Block", "manage_blocks")
 def create_room_block(property: str, room: str, from_date: str,
                       to_date: str, reason: str = "House Use",
                       note: str | None = None):
@@ -7206,7 +7224,7 @@ def create_room_block(property: str, room: str, from_date: str,
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Kamra Agent", scope={"name": "Room Block"})
+@require_perm("Room Block", "manage_blocks", scope={"name": "Room Block"})
 def release_room_block(name: str):
 	"""Free a held room before its end date (the room returns to sale)."""
 	doc = frappe.get_doc("Room Block", name)
@@ -7221,8 +7239,7 @@ def release_room_block(name: str):
 
 
 @frappe.whitelist()
-@require_roles("Finance", "Front Desk", "Revenue Manager", "Housekeeping",
-               "F&B Manager")
+@require_perm("Cashier Session", "use_pin")
 def cashier_pin_status(property: str):
 	"""Does this property demand a PIN on money actions, and does the
 	signed-in user have one set yet? Includes unlock / lockout state."""
@@ -7231,8 +7248,7 @@ def cashier_pin_status(property: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Finance", "Front Desk", "Revenue Manager", "Housekeeping",
-               "F&B Manager")
+@require_perm("Cashier Session", "use_pin")
 def set_cashier_pin(pin: str, current_pin: str | None = None):
 	"""Set or change your own cashier PIN (4-8 digits). Changing an existing
 	PIN needs the current one — unless must_reset was set by an admin."""
@@ -7263,7 +7279,7 @@ def set_cashier_pin(pin: str, current_pin: str | None = None):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Hotel Admin")
+@require_perm("Cashier Session", "configure")
 def reset_cashier_pin(user: str):
 	"""Admin reset: wipe the user's PIN and force re-enrollment."""
 	if not user:
@@ -7293,8 +7309,7 @@ def reset_cashier_pin(user: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Finance", "Front Desk", "Revenue Manager", "Housekeeping",
-               "F&B Manager")
+@require_perm("Cashier Session", "use_pin")
 def verify_cashier_pin(property: str, pin: str):
 	"""PinPad unlock: validate PIN and open a 15-minute sliding window."""
 	from kamra.authz import unlock_cashier_session
@@ -7364,7 +7379,7 @@ def _block_prices(property: str, check_in_date: str, check_out_date: str,
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Revenue Manager", "Kamra Agent")
+@require_perm("Group Booking", "manage_group")
 def group_price_preview(property: str, check_in_date: str, check_out_date: str,
                         blocks):
 	"""The price of a block before it is booked (New group booking)."""
@@ -7376,7 +7391,7 @@ def group_price_preview(property: str, check_in_date: str, check_out_date: str,
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Revenue Manager", "Hotel Admin", "Kamra Agent")
+@require_perm("Group Booking", "manage_group")
 def group_quotation(group_booking: str):
 	"""The group's quotation / proforma: the hotel, the group, its rooms per
 	type and night with the rate and tax, the total, the deposit asked and
@@ -7478,7 +7493,7 @@ def _group_attrition(gb, prices: dict) -> dict:
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Revenue Manager", "Kamra Agent")
+@require_perm("Group Booking", "manage_group")
 def group_detail(group_booking: str):
 	"""Everything Group Rooms Control needs: the block, per-type pickup,
 	the rooming list, the tied event and the master folio."""
@@ -7614,7 +7629,7 @@ def _each_room(rows: list, fn) -> dict:
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Kamra Agent")
+@require_perm("Group Booking", "book_group")
 def set_rooming_names(group_booking: str, names):
 	"""Name the rooms of a group from the rooming list.
 	`names` = [{"reservation": ..., "guest_name": ..., "phone": ...}, ...].
@@ -7669,7 +7684,7 @@ def _assign_free_room(reservation: str) -> str | None:
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Kamra Agent")
+@require_perm("Group Booking", "book_group")
 def group_assign_rooms(group_booking: str, reservations=None):
 	"""Give every confirmed room of the group that has no room number a
 	free room of its type (the picked ones, or all)."""
@@ -7687,7 +7702,7 @@ def group_assign_rooms(group_booking: str, reservations=None):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Kamra Agent")
+@require_perm("Group Booking", "book_group")
 def group_cancel(group_booking: str, reservations=None,
                  reason: str = "Guest request", waive_fee: int = 0):
 	"""Cancel the group's confirmed rooms (the picked ones, or all), each
@@ -7706,7 +7721,7 @@ def group_cancel(group_booking: str, reservations=None,
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Kamra Agent")
+@require_perm("Group Booking", "book_group")
 def group_amend_dates(group_booking: str, check_in_date: str,
                       check_out_date: str, reservations=None,
                       confirm_price: int = 0):
@@ -7778,7 +7793,7 @@ def group_amend_dates(group_booking: str, check_in_date: str,
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Kamra Agent")
+@require_perm("Group Booking", "book_group")
 def group_check_in(group_booking: str, reservations=None):
 	"""Check in a group's arrivals in one go. Rooms still unassigned get
 	the same suggestion the tape chart makes; then each stay goes through
@@ -7833,7 +7848,7 @@ def group_check_in(group_booking: str, reservations=None):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Revenue Manager", "Kamra Agent")
+@require_perm("Group Booking", "manage_group")
 def save_group_blocks(group_booking: str, blocks, cutoff_date: str | None = None,
                       status: str | None = None, attrition_pct: float | None = None,
                       deposit_due: float | None = None):
@@ -7891,7 +7906,7 @@ def save_group_blocks(group_booking: str, blocks, cutoff_date: str | None = None
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Kamra Agent")
+@require_perm("Group Booking", "book_group")
 def pickup_group_room(group_booking: str, room_type: str, guest_name: str,
                       phone: str | None = None, adults: int = 2,
                       children: int = 0, idempotency_key: str | None = None):
@@ -7919,7 +7934,7 @@ def pickup_group_room(group_booking: str, room_type: str, guest_name: str,
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Revenue Manager", "Kamra Agent")
+@require_perm("Venue Booking", "manage_functions")
 def create_group_block(property: str, group_name: str, check_in_date: str,
                        check_out_date: str, blocks,
                        company: str | None = None,
@@ -7989,7 +8004,7 @@ def create_group_block(property: str, group_name: str, check_in_date: str,
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Finance", "Revenue Manager", "Housekeeping")
+@require_perm("Property", "use_settings")
 def my_connector_credentials(property: str):
 	"""Personal MCP credentials for connecting Claude (or any MCP client)
 	AS YOURSELF. The key acts with exactly your roles - Frappe enforces the
@@ -8016,7 +8031,7 @@ def my_connector_credentials(property: str):
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Finance", "Revenue Manager", "Housekeeping")
+@require_perm("Property", "use_settings")
 def linked_records(doctype: str, name: str):
 	"""The connective tissue: for any record, everything it's attached to -
 	guest, reservation(s), folio(s), company, group, event - so every screen
@@ -8080,8 +8095,7 @@ def linked_records(doctype: str, name: str):
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Finance", "Revenue Manager", "Housekeeping", "Kamra Agent",
-               "F&B Manager")
+@require_perm("Property", "view_locale")
 def property_locale(property: str):
 	"""Currency, number locale and tax vocabulary for this property, from its
 	localization pack. Drives the frontend's money formatting and tax dropdowns
@@ -8101,7 +8115,7 @@ def property_locale(property: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Finance")
+@require_perm("Property", "verify_tax_id")
 def verify_tax_id(property: str, tax_id: str, business_name: str = ""):
 	"""Check a buyer's tax ID before the invoice goes out, where the
 	property's country pack offers it."""
@@ -8111,7 +8125,7 @@ def verify_tax_id(property: str, tax_id: str, business_name: str = ""):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", scope={"guest": "Guest"})
+@require_perm("Guest", "verify_id", scope={"guest": "Guest"})
 def verify_guest_id(property: str, guest: str, id_type: str, consent: int = 0):
 	"""Read the guest's ID document on file into the profile, where the
 	property's country pack offers it. consent: the desk confirms the guest
@@ -8122,7 +8136,7 @@ def verify_guest_id(property: str, guest: str, id_type: str, consent: int = 0):
 
 
 @frappe.whitelist()
-@require_roles("Finance")
+@require_perm("Night Audit Run", "e_invoicing")
 def zatca_settings(property: str):
 	"""The property's ZATCA (Saudi e-invoicing) settings, created from the
 	property on first use, plus what is still missing for a valid invoice
@@ -8142,7 +8156,7 @@ def zatca_settings(property: str):
 
 
 @frappe.whitelist()
-@require_roles("Finance")
+@require_perm("Night Audit Run", "e_invoicing")
 def zatca_invoice_xml(invoice_number: str, property: str,
                       document_type: str = "Invoice"):
 	"""The UBL XML behind an issued invoice or credit note - for the
@@ -8168,7 +8182,7 @@ def localization_countries():
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Kamra Agent")
+@require_perm("Security Deposit", "view_refunds")
 def pending_deposit_refunds(property: str):
 	"""Returns a list of checked-out reservations with pending security deposit refunds
 	for NEFT processing (e.g. Tuesday/Saturday payout batches).

@@ -25,7 +25,7 @@ import frappe
 from frappe import _
 from frappe.utils import cint, flt, nowdate
 
-from kamra.authz import assert_property_access, require_roles
+from kamra.authz import assert_property_access, require_perm
 
 # (stage, days past the due date it starts), latest stage first
 STAGES = (("late", 15), ("due", 0), ("pre", -3))
@@ -134,7 +134,7 @@ def _send(st: dict, recipients: list[str], subject: str, lines: list[str],
 
 
 @frappe.whitelist()
-@require_roles("Finance", "Hotel Admin")
+@require_perm("City Ledger Account", "send_statements")
 def company_statement(account: str, format: str = "json", lang: str = "en"):
 	"""One company's statement at its property: open bills with invoice
 	date, due date, days overdue and amounts, unapplied credit, recent
@@ -149,7 +149,7 @@ def company_statement(account: str, format: str = "json", lang: str = "en"):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Finance", "Hotel Admin")
+@require_perm("City Ledger Account", "send_statements")
 def email_company_statement(account: str, recipients: str | None = None,
                             lang: str = "en"):
 	"""Email a company its statement (HTML attachment). Without recipients
@@ -287,7 +287,7 @@ def monthly_bill_html(mb: dict, lang: str = "en") -> str:
 
 
 @frappe.whitelist()
-@require_roles("Finance", "Hotel Admin", "Kamra Agent")
+@require_perm("City Ledger Entry", "view_financials")
 def company_monthly_bill(account: str, month: str, format: str = "json", lang: str = "en"):
 	"""A company's month-end bill: every bill of the month with its invoice
 	number, taxable value and tax, the company's payments, and the balance
@@ -301,7 +301,7 @@ def company_monthly_bill(account: str, month: str, format: str = "json", lang: s
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Finance", "Hotel Admin")
+@require_perm("City Ledger Account", "send_statements")
 def email_monthly_bill(account: str, month: str, recipients: str | None = None,
                        lang: str = "en"):
 	"""Email a company its month-end bill (HTML attachment). Without

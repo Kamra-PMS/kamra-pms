@@ -74,6 +74,7 @@ const SIDEBAR: { text: ReturnType<typeof L>; collapsed?: boolean; items: [Return
       [L("Revenue & rates", "Ingresos y tarifas", "الإيرادات والأسعار"), "revenue"],
       [L("Booking engine", "Motor de reservas", "محرك الحجز"), "booking-engine"],
       [L("Settings & staff", "Configuración y personal", "الإعدادات والموظفون"), "settings"],
+      [L("Roles and access", "Roles y acceso", "الأدوار والوصول"), "roles-and-access"],
     ],
   },
   {

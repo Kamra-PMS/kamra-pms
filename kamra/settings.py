@@ -20,7 +20,7 @@ from dataclasses import dataclass, field
 import frappe
 from frappe import _
 
-from kamra.authz import ADMIN, assert_property_access, require_roles
+from kamra.authz import ADMIN, assert_property_access, require_perm
 
 CACHE_KEY = "kamra_settings"
 
@@ -684,7 +684,7 @@ def _spec_json(s: S, property: str | None = None) -> dict:
 
 
 @frappe.whitelist()
-@require_roles("Finance", "Front Desk", "Night Auditor", "F&B Manager", "Kamra Agent")
+@require_perm("Menu Item", "view_menu_lists")
 def menu_masters(property: str) -> dict:
 	"""Allergen tags, prep stations, courses and category suggestions for
 	the Menu form and kitchen display. Edited under Settings → F&B → Menu
@@ -699,8 +699,7 @@ def menu_masters(property: str) -> dict:
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Finance", "Revenue Manager", "Housekeeping",
-               "Housekeeping Supervisor", "F&B Manager")
+@require_perm("Property", "view_settings")
 def settings_schema(property: str) -> dict:
 	"""Every settings page this user may see for the property, with current
 	values. Pages they can't change come back read-only (can_edit=False)."""
@@ -758,7 +757,7 @@ def _validate(spec: S, val):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Finance", "Revenue Manager", "Housekeeping Supervisor", "F&B Manager")
+@require_perm("Property", "edit_settings")
 def save_settings(property: str, module: str, changes) -> dict:
 	"""Change some settings on one module page. Validates every key against
 	the registry, refuses keys from another module, and writes one
@@ -819,7 +818,7 @@ def save_settings(property: str, module: str, changes) -> dict:
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Hotel Admin")
+@require_perm("Property", "configure")
 def set_module_enabled(property: str, module: str, enabled) -> dict:
 	"""Switch one module on or off for the property."""
 	from kamra.api import set_enabled_modules

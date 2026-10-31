@@ -30,7 +30,7 @@ import frappe
 from frappe import _
 from frappe.utils import flt
 
-from kamra.authz import assert_property_access, require_roles
+from kamra.authz import assert_property_access, require_perm
 
 POLICIES = ("off", "warn", "block")
 DEFAULT_POLICY = "warn"
@@ -82,7 +82,10 @@ def can_override() -> bool:
 	Hotel Admin (System Manager / Administrator too), never an agent."""
 	if _is_agent():
 		return False
-	return bool(OVERRIDE_ROLES & set(frappe.get_roles()))
+	# Corporate Account: Override Credit in Role Permission Manager
+	# (defaults: OVERRIDE_ROLES)
+	return frappe.has_permission("Corporate Account", "override_credit",
+	                             ignore_share_permissions=True)
 
 
 # --- the check ---------------------------------------------------------------
@@ -269,8 +272,7 @@ def _for_ui(res: dict) -> dict:
 # --- endpoints ---------------------------------------------------------------
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Finance", "Hotel Admin", "Night Auditor",
-               "Revenue Manager", "Kamra Agent")
+@require_perm("Corporate Account", "view_credit")
 def company_credit_status(company: str, property: str, amount: float = 0):
 	"""The credit check for billing `amount` more to a company, without
 	doing anything: what the booking dialog shows before a company stay is
@@ -313,8 +315,7 @@ def checkout_credit_checks(reservation: str) -> list[dict]:
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Finance", "Hotel Admin", "Night Auditor",
-               "Kamra Agent")
+@require_perm("Folio", "view_folio")
 def checkout_credit_preview(reservation: str):
 	"""Before check-out: the credit check for each company the stay's bills
 	would move to, so the desk can warn, or ask Finance / a Hotel Admin to
@@ -342,7 +343,7 @@ def checkout_credit_preview(reservation: str):
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Finance", "Hotel Admin", "Revenue Manager")
+@require_perm("Corporate Account", "view_terms")
 def company_credit_terms(company: str, property: str):
 	"""A company's credit terms at one property: limit, credit days and
 	what it owes (for the corporate account editor)."""
@@ -373,7 +374,7 @@ def company_credit_terms(company: str, property: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Finance", "Hotel Admin")
+@require_perm("Corporate Account", "set_credit")
 def set_company_credit_terms(company: str, property: str,
                              credit_limit: float | None = None,
                              credit_days: int | None = None,

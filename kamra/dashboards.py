@@ -12,7 +12,7 @@ from decimal import ROUND_HALF_UP, Decimal
 import frappe
 from frappe.utils import add_days, add_years, getdate, nowdate
 
-from kamra.authz import ADMIN, require_roles
+from kamra.authz import ADMIN, require_perm
 
 
 def _housekeeping_slice(property: str):
@@ -172,7 +172,8 @@ def comparison(property: str, date: str, total_rooms: int, forecast: list[dict])
 
 
 def sees_figures() -> bool:
-	return bool(set(FIGURE_ROLES) & set(frappe.get_roles()))
+	"""Property "view_flash" (defaults FIGURE_ROLES), as the flash itself."""
+	return frappe.has_permission("Property", "view_flash", ignore_share_permissions=True)
 
 
 def _open_folio_totals(property: str) -> tuple[float, int]:
@@ -185,8 +186,7 @@ def _open_folio_totals(property: str) -> tuple[float, int]:
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Finance", "Revenue Manager", "Night Auditor", "Hotel Admin",
-               "Kamra Agent")
+@require_perm("Property", "view_dashboard")
 def property_dashboard(property: str, date: str | None = None, with_comparison: int = 0):
 	"""Everything one hotel's dashboard needs, by department. The year on
 	year comparison is heavy, so only the Dashboard screen asks for it."""
@@ -300,7 +300,7 @@ def _property_summary(property: str, date: str):
 
 
 @frappe.whitelist()
-@require_roles("Finance", "Revenue Manager", "Hotel Admin", "Kamra Agent")
+@require_perm("Property", "view_performance")
 def portfolio_dashboard(date: str | None = None):
 	"""The chain's central view: headline metrics rolled up across every
 	property the signed-in user may access, plus a per-property table."""
@@ -328,7 +328,7 @@ def portfolio_dashboard(date: str | None = None):
 
 
 @frappe.whitelist()
-@require_roles("Finance", "Revenue Manager", "Night Auditor", "Kamra Agent")
+@require_perm("Property", "view_flash")
 def owner_snapshot(property: str, date: str | None = None, from_date: str | None = None,
                    period: str | None = None):
 	"""The owner's phone view of one hotel: the flash for a day (or
@@ -340,7 +340,7 @@ def owner_snapshot(property: str, date: str | None = None, from_date: str | None
 
 	from kamra.business_date import get_business_date
 	from kamra.ledger import DUE_BUCKETS, city_ledger_aging
-	from kamra.night_audit import AUDIT_ROLES, night_audit_history
+	from kamra.night_audit import night_audit_history
 	from kamra.reports import manager_flash
 
 	if not date:
@@ -354,7 +354,8 @@ def owner_snapshot(property: str, date: str | None = None, from_date: str | None
 	flash = unwrap(manager_flash)(property, str(date), from_date)
 	outstanding, open_folios = _open_folio_totals(property)
 	ar = unwrap(city_ledger_aging)(property)["totals"]
-	sees_audits = (set(AUDIT_ROLES) | set(ADMIN)) & set(frappe.get_roles())
+	sees_audits = frappe.has_permission(*night_audit_history._kamra_perm,
+	                                    ignore_share_permissions=True)
 	return {
 		**flash,
 		"property": property,
