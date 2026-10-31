@@ -667,6 +667,7 @@ Add printer,Add printer,إضافة طابعة,Agregar impresora,screens/KitchenP
 Add rate,Add rate,إضافة سعر,Agregar tarifa,screens/Laundry.tsx; screens/settings/cards.tsx,,translated
 Add request,Add request,إضافة الطلب,Agregar solicitud,components/RoomStayPanels.tsx,,translated
 Add room type,Add room type,إضافة نوع غرفة,Agregar tipo de habitación,components/GroupBookingDialog.tsx; components/GroupControl.tsx; screens/Setup.tsx,,translated
+Add rooms,Add rooms,إضافة غرف,Añadir habitaciones,,,translated
 Add round & fire KOT,Add round & fire KOT,إضافة جولة وإرسال أمر المطبخ,Agregar ronda y enviar comanda a preparación,,,translated
 Add staff,Add staff,إضافة موظف,Agregar personal,screens/settings/AccessPages.tsx,,translated
 Add terminal,Add terminal,إضافة جهاز,Agregar terminal,screens/CashierBoard.tsx,,translated
@@ -957,6 +958,7 @@ Assign {task} to,Assign {task} to,إسناد {task} إلى,Asignar {task} a,scre
 Assign a room before check-in.,Assign a room before check-in.,خصّص غرفة قبل تسجيل الوصول.,Asigne una habitación antes de registrar la entrada.,components/CheckInDialog.tsx,,translated
 Assign housekeeping,Assign housekeeping,إسناد التدبير المنزلي,Asignar limpieza,,,translated
 Assign room,Assign room,تخصيص غرفة,Asignar habitación,screens/RegistrationCard.tsx; screens/ReservationDetail.tsx,,translated
+Assign rooms,Assign rooms,تعيين الغرف,Asignar habitaciones,,,translated
 Assign to me,Assign to me,إسناد إليّ,Asignarme,screens/Tickets.tsx,,translated
 Assigned,Assigned,مُسندة,Asignado,,,translated
 Assigned by {who} at {when},Assigned by {who} at {when},خصصها {who} في {when},"Asignado por {who}, {when}",components/CheckInDialog.tsx,who when,translated
@@ -1995,6 +1997,7 @@ Direct invoice,Direct invoice,فاتورة مباشرة,Factura directa,screens/
 Direct IP,Direct IP,IP مباشر,IP directa,screens/settings/cards.tsx,,translated
 Direct IP (Kamra on the hotel network),Direct IP (Kamra on the hotel network),IP مباشر (Kamra على شبكة الفندق),IP directa (Kamra en la red del hotel),screens/KitchenPrinters.tsx,,translated
 Dirty,Dirty,متسخة,Sucia,screens/Dashboard.tsx; screens/Rooms.tsx; screens/Today.tsx,,translated
+Dirty rooms,Dirty rooms,الغرف غير النظيفة,Habitaciones sucias,,,translated
 Disabled,Disabled,معطّل,Deshabilitado,screens/CashierBoard.tsx; screens/KitchenPrinters.tsx; screens/Payables.tsx; screens/settings/cards.tsx,,translated
 Disabled (no new bills),Disabled (no new bills),معطّل (لا فواتير جديدة),Desactivado (sin facturas nuevas),screens/Payables.tsx,,translated
 Disabled (unpublished),Disabled (unpublished),معطّل (غير منشور),Desactivado (sin publicar),,,translated
@@ -2406,6 +2409,7 @@ Floor {f},Floor {f},الطابق {f},Piso {f},components/RoomDrawer.tsx; screens
 Floor {v0},Floor {v0},الحد الأدنى {v0},Mínimo {v0},,v0,translated
 Floor margin,Floor margin,الحد الأدنى للهامش,Margen mínimo,,,translated
 Floor price / night,Floor price / night,السعر الأدنى / ليلة,Precio mínimo / noche,,,translated
+Floors,Floors,الطوابق,Pisos,,,translated
 Floors and ceilings no rate can cross.,Floors and ceilings no rate can cross.,حدود دنيا وعليا لا يتجاوزها أي سعر.,Precios mínimo y máximo que ninguna tarifa puede superar.,,,translated
 Focus mode - hide PMS menus,Focus mode - hide PMS menus,وضع التركيز - إخفاء قوائم النظام,Modo de enfoque: ocultar menús de PMS,screens/Kitchen.tsx; screens/POS.tsx,,translated
 Folio,Folio,الفاتورة,Folio,components/RoomStayPanels.tsx; screens/AllowanceVoucher.tsx; screens/Billing.tsx; screens/Laundry.tsx; screens/VoidAllowanceReport.tsx,,translated
@@ -2717,6 +2721,7 @@ Hide prices,Hide prices,إخفاء الأسعار,Ocultar precios,screens/laundr
 High,High,عالية,Alta,,,translated
 High balances in house,High balances in house,أرصدة مرتفعة للمقيمين,Saldos elevados de huéspedes alojados,,,translated
 History,History,السجل,Historial,components/RoomDrawer.tsx; screens/ReservationDetail.tsx,,translated
+HK board,HK board,لوحة التدبير المنزلي,Panel de limpieza,,,translated
 HK status,HK status,حالة التنظيف,Estado HK,,,translated
 Hold,Hold,تعليق,Mantener en espera,,,translated
 Hold and alert,Hold and alert,إيقاف وتنبيه,Detener y avisar,,,translated
@@ -2758,7 +2763,7 @@ House Rules:,House Rules:,قواعد الفندق:,Reglas del alojamiento:,scree
 House use,House use,استخدام داخلي,Uso interno,,,translated
 House Use,House Use,استخدام الفندق,Uso interno,,,translated
 Housekeeping,Housekeeping,التدبير المنزلي,Limpieza,screens/Dashboard.tsx; screens/HkApp.tsx; screens/Today.tsx,,translated
-Housekeeping Board,Housekeeping Board,,,screens/HousekeepingBoard.tsx,,needs_translation
+Housekeeping Board,Housekeeping Board,لوحة التدبير المنزلي,Panel de limpieza,screens/HousekeepingBoard.tsx,,translated
 Housekeeping has your laundry pickup - they'll be by shortly.,Housekeeping has your laundry pickup - they'll be by shortly.,استلم التدبير المنزلي طلب الغسيل، وسيصلون قريبا.,Limpieza recibió su solicitud de lavandería y pasará a recogerla en breve.,screens/laundry/GuestLaundryCard.tsx,,translated
 Housekeeping pack,Housekeeping pack,حزمة التدبير المنزلي,Paquete de Limpieza,,,translated
 Housekeeping status,Housekeeping status,حالة التدبير المنزلي,Estado de limpieza,components/RoomDrawer.tsx,,translated
@@ -4885,6 +4890,7 @@ Room nights sold,Room nights sold,ليالي الغرف المباعة,Noches de
 Room no.,Room no.,رقم الغرفة,Habitación núm.,components/RoomChangeDialog.tsx,,translated
 Room number,Room number,رقم الغرفة,Número de habitación,,,translated
 Room number or guest,Room number or guest,رقم الغرفة أو النزيل,Número de habitación o huésped,screens/Rooms.tsx,,translated
+Room numbers,Room numbers,أرقام الغرف,Números de habitación,,,translated
 "Room numbers per type, comma-separated.","Room numbers per type, comma-separated.",أرقام الغرف لكل نوع، مفصولة بفواصل.,"Números de habitación por tipo, separados por comas.",screens/Setup.tsx,,translated
 Room only,Room only,غرفة فقط,Solo habitación,components/BookingDialog.tsx; screens/PublicBooking.tsx,,translated
 Room Only,Room Only,الإقامة فقط,Solo alojamiento,,,translated
@@ -4898,6 +4904,7 @@ Room Revenue,Room Revenue,إيرادات الغرف,Ingresos por habitaciones,,,
 Room revenue (posted),Room revenue (posted),إيراد الغرف (المرحّل),Ingresos por habitaciones (registrados),components/RoomInsights.tsx,,translated
 room service,room service,خدمة الغرف,servicio a la habitación,,,translated
 Room Service,Room Service,خدمة الغرف,Servicio a la habitación,,,translated
+Room setup,Room setup,إعداد الغرف,Configuración de habitaciones,,,translated
 Room status,Room status,حالة الغرف,Estado de la habitación,,,translated
 "Room status board, lost & found, and the phone app.","Room status board, lost & found, and the phone app.",لوحة حالة الغرف والمفقودات وتطبيق الهاتف.,"Panel de habitaciones, objetos perdidos y encontrados y aplicación móvil.",,,translated
 "Room status board, tasks, lost & found, and the phone app.","Room status board, tasks, lost & found, and the phone app.",لوحة حالة الغرف، والمهام، والمفقودات، وتطبيق الهاتف.,"Estado de habitaciones, tareas, objetos perdidos y aplicación móvil.",,,translated
