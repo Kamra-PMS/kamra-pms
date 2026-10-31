@@ -56,3 +56,18 @@ class PublicBookingTestCase(IntegrationTestCase):
 
 	def test_showcase_says_whether_tiers_apply(self):
 		self.assertIs(showcase(self.property)["property"]["has_cancellation_tiers"], False)
+
+	def test_co_branding_uses_the_hotels_own_name_and_never_frappes_default(self):
+		from kamra.public_api import site_info
+
+		def brand(name):
+			frappe.db.set_single_value("Website Settings", "app_name", name)
+			frappe.clear_document_cache("Website Settings", "Website Settings")
+			if hasattr(frappe.local, "website_settings"):
+				del frappe.local.website_settings
+			return site_info()["brand_name"]
+
+		self.assertIsNone(brand("Frappe"))
+		self.assertIsNone(brand(""))
+		self.assertEqual(brand("Example Hotels"), "Example Hotels")
+		self.assertEqual(site_info()["app"], "kamra")
